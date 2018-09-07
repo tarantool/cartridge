@@ -1,0 +1,9 @@
+/* AntDesign antidot */
+body {
+  font-size: 12px !important;
+}
+
+/* We are now waiting for bootstrap manual fork */
+label {
+  margin-bottom: 0.2em;
+}

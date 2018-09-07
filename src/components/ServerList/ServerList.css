@@ -1,0 +1,73 @@
+@import 'src/styles/variables';
+
+.ServerList {}
+
+.ServerList-indicator {
+  display: inline-block;
+  width: 6px; // magic: SERVER_INDICATOR_WIDTH
+  height: 6px; // magic: SERVER_INDICATOR_WIDTH
+  background-color: $server-status-indicator--healthy;
+  border-radius: 50%;
+}
+
+.ServerList-indicator--error {
+  background-color: $server-status-indicator--error;
+}
+
+.ServerList-name {
+  display: inline-block;
+}
+
+.ServerList-alias,
+.ServerList-uri,
+.ServerList-message {
+  display: inline-block;
+}
+
+.ServerList-alias {
+  margin-right: 0.8em;
+}
+
+.ServerList-uri {}
+
+.ServerList-message {
+  color: #885050;
+}
+
+.ServerList-stat {
+  display: flex;
+  flex-direction: column;
+}
+
+.ServerList-statName {
+  display: inline-block;
+}
+
+.ServerList-statBar {
+  display: inline-block;
+  height: 4px;
+  background-color: #e04027;
+  border-radius: 2px;
+}
+
+.ServerList-statBar:before {
+  content: "";
+  display: block;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.70);
+}
+
+.ServerList-statBar--success {
+  background-color: $success-label-color;
+}
+
+.ServerList-statBar--warning {
+  background-color: $warning-label-color;
+}
+
+.ServerList-statBar--error {
+  background-color: $danger-label-color;
+}
+
+.ServerList-actionButtons {}

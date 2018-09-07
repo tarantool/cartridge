@@ -1,0 +1,21 @@
+.pages-Cluster {}
+
+.pages-Cluster-serverList {}
+
+.pages-Cluster-replicasetList {}
+
+.pages-Cluster-configurationCard {
+  margin-top: 4em;
+}
+
+.pages-Cluster-bottomConsole {
+  padding: 0 5vw 16px; /* magic: CONSOLE_BOTTOM_DISTANCE */
+}
+
+.pages-Cluster-serverConsole {
+  height: 100%;
+  font-size: 12px;
+  font-family: monospace;
+  border: 2px solid rgb(193, 190, 204);
+  border-radius: 2px;
+}

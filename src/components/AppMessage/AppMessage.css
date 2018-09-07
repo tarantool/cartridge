@@ -1,0 +1,10 @@
+.AppMessage-outer {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+}
+
+.AppMessage-inner {
+  padding-right: 40px;
+  padding-left: 40px;
+}

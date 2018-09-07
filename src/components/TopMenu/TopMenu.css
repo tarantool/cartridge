@@ -1,0 +1,92 @@
+@import 'src/styles/variables';
+
+.TopMenu-outer {
+  padding-top: 10px;
+  padding-bottom: 10px;
+  color: $khrushchev-color;
+  background-color: $khrushchev-bg;
+  box-shadow: 0 1px 2px $khrushchev-shadow;
+}
+
+.TopMenu-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.TopMenu-linkList {
+  display: flex;
+  align-items: center;
+}
+
+.TopMenu-menuItem {}
+
+.TopMenu-menuItem + .TopMenu-menuItem {
+  margin-left: 28px;
+}
+
+.TopMenu-link {
+  text-transform: uppercase;
+  font-size: 12px;
+  text-decoration: none;
+  letter-spacing: 0.6px;
+  transition: opacity 0.18s;
+  opacity: $khrushchev-mute-text-opacity;
+}
+
+.TopMenu-link,
+.TopMenu-link:hover,
+.TopMenu-link:visited,
+.TopMenu-link:active,
+.TopMenu-link:focus {
+  color: $khrushchev-color;
+  text-decoration: none;
+}
+
+.TopMenu-link--active {}
+
+.TopMenu-docsLink,
+.TopMenu-docsLink:hover,
+.TopMenu-docsLink:visited,
+.TopMenu-docsLink:active,
+.TopMenu-docsLink:focus {
+  color: rgb(193, 96, 96);
+}
+
+.TopMenu-link:hover,
+.TopMenu-link--active,
+.TopMenu-docsLink {
+  opacity: 1;
+}
+
+.TopMenu-optionList {
+  display: flex;
+  padding-right: 2px;
+}
+
+.TopMenu-option {
+  padding: 6px;
+  border-radius: 50%;
+  transition: background-color 0.18s;
+  cursor: pointer;
+}
+
+.TopMenu-option:hover {
+  background-color: #fbfbfb;
+}
+
+.TopMenu-option + .TopMenu-option {
+  margin-left: 8px;
+}
+
+.TopMenu-option > img {
+  position: relative;
+}
+
+.TopMenu-option-settings > img {
+  left: -2px;
+}
+
+.TopMenu-option-logout > img {
+  left: 1px;
+}
