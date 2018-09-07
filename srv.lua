@@ -8,10 +8,11 @@ local errors = require('errors')
 local console = require('console')
 local cluster = require('cluster')
 
-local init_error = errors.new_class('Cluster initialization failed')
-local ok, err = init_error:pcall(cluster.init, {
+local e_init = errors.new_class('Cluster initialization failed')
+local ok, err = e_init:pcall(cluster.init, {
     workdir = os.getenv('WORKDIR') or './dev/output',
     advertise_uri = os.getenv('ADVERTISE_URI') or 'localhost:3301',
+    -- TODO box_cfg_opts
 })
 
 if not ok then
