@@ -1,10 +1,8 @@
 import PropTypes from 'prop-types';
 import React from 'react';
 
-import Button from 'src/components/Button';
-import Icon from 'src/components/Icon';
 import Modal from 'src/components/Modal';
-import Upload from 'src/components/Upload';
+import UploadButton from 'src/components/UploadButton';
 
 import './ClusterConfigManagement.css';
 
@@ -50,11 +48,14 @@ class ClusterConfigManagement extends React.PureComponent {
           <p>Current configuration can be downloaded <a href="/config">here</a>.</p>
           <p>You can upload a ZIP archive with config.yml and all necessary files:</p>
           <div className="ClusterConfigManagement-uploadBlock">
-            <Upload {...this.uploadProps}>
+            <UploadButton
+              label="Click to upload config"
+              onChange={this.handleUploadConfig} />
+            {/*<Upload {...this.uploadProps}>
               <Button>
                 <Icon type="upload" /> Click to upload config
               </Button>
-            </Upload>
+            </Upload>*/}
           </div>
           {canTestConfigBeApplied
             ? this.renderApplyTestConfigSuggest()
@@ -83,14 +84,24 @@ class ClusterConfigManagement extends React.PureComponent {
     return (
       <React.Fragment>
         <p>You can also apply predefined test config:</p>
-        <Button
+        <button className="btn btn-primary"
           onClick={this.handleApplyTestConfigClick}
           disabled={isConfingApplying}
         >
-          <Icon type="to-top" /> Click to apply config
-        </Button>
+          Click to apply config
+        </button>
       </React.Fragment>
     );
+  };
+
+  handleUploadConfig = eventProps => {
+    const { files } = eventProps;
+    const { uploadConfig } = this.props;
+
+    const data = new FormData();
+    data.append('file', files[0]);
+
+    uploadConfig({ data });
   };
 
   handleApplyTestConfigClick = () => {
@@ -111,6 +122,7 @@ ClusterConfigManagement.propTypes = {
   isConfingApplying: PropTypes.bool,
   canTestConfigBeApplied: PropTypes.bool.isRequired,
   applyTestConfig: PropTypes.func,
+  uploadConfig: PropTypes.func.isRequired,
 };
 
 ClusterConfigManagement.defaultProps = {

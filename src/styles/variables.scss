@@ -3,8 +3,9 @@ $grid-breakpoint-sm: 576px;
 $grid-breakpoint-md: 768px;
 $grid-breakpoint-lg: 992px;
 $grid-breakpoint-xl: 1200px;
-$grid-gutter-width-sm: 10px;
+
 $grid-gutter-width: 20px;
+$grid-gutter-width-sm: 10px;
 $grid-gutter-width-lg: 30px;
 
 $container-max-width-sm: 540px;
@@ -13,8 +14,9 @@ $container-max-width-lg: 960px;
 $container-max-width-xl: 1140px;
 $container-gutter-width: 30px;
 
-$font-family-base: Arial, sans-serif;
 $font-family-monospace: monospace;
+
+$font-family-base: Arial, sans-serif;
 $font-size-base: 0.75rem;
 $font-weight-base: 400;
 $line-height-base: 1.5;
@@ -68,3 +70,6 @@ $cards-border-radius: 2px;
 // $cards-shadow: 0 0 5px 0 rgba(55, 52, 66, 0.04); // Base color variant
 $cards-shadow: 0 0 0 1px rgba(55, 52, 66, 0.01), 0 0 5px 0 rgba(55, 52, 66, 0.04); // Base color variant
 $cards-margin: 4em;
+$cards-padding: 2em;
+$cards-padding-sm: 1em;
+$cards-padding-lg: 3em;

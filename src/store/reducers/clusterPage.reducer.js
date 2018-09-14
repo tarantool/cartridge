@@ -25,6 +25,9 @@ import {
   CLUSTER_PAGE_REPLICASET_EDIT_REQUEST,
   CLUSTER_PAGE_REPLICASET_EDIT_REQUEST_SUCCESS,
   CLUSTER_PAGE_REPLICASET_EDIT_REQUEST_ERROR,
+  CLUSTER_PAGE_UPLOAD_CONFIG_REQUEST,
+  CLUSTER_PAGE_UPLOAD_CONFIG_REQUEST_SUCCESS,
+  CLUSTER_PAGE_UPLOAD_CONFIG_REQUEST_ERROR,
   CLUSTER_PAGE_APPLY_TEST_CONFIG_REQUEST,
   CLUSTER_PAGE_APPLY_TEST_CONFIG_REQUEST_SUCCESS,
   CLUSTER_PAGE_APPLY_TEST_CONFIG_REQUEST_ERROR,
@@ -52,6 +55,8 @@ export const initialState = {
   expellSerrverResponse: null,
   editReplicasetRequestStatus: getInitialRequestStatus(),
   editReplicasetResponse: null,
+  uploadConfigRequestStatus: getInitialRequestStatus(),
+  uploadConfigResponse: null,
   applyTestConfigRequestStatus: getInitialRequestStatus(),
   applyTestConfigResponse: null,
 };
@@ -107,6 +112,13 @@ const editReplicasetRequestReducer = getRequestReducer(
   'replicasetEditResponse',
 );
 
+const uploadConfigRequestReducer = getRequestReducer(
+  CLUSTER_PAGE_UPLOAD_CONFIG_REQUEST,
+  CLUSTER_PAGE_UPLOAD_CONFIG_REQUEST_SUCCESS,
+  CLUSTER_PAGE_UPLOAD_CONFIG_REQUEST_ERROR,
+  'uploadConfigResponse',
+);
+
 const applyTestConfigRequestReducer = getRequestReducer(
   CLUSTER_PAGE_APPLY_TEST_CONFIG_REQUEST,
   CLUSTER_PAGE_APPLY_TEST_CONFIG_REQUEST_SUCCESS,
@@ -126,6 +138,7 @@ export const reducer = baseReducer(
   createReplicasetRequestReducer,
   expellServerRequestReducer,
   editReplicasetRequestReducer,
+  uploadConfigRequestReducer,
   applyTestConfigRequestReducer,
   pageStateResetReducer,
 )(

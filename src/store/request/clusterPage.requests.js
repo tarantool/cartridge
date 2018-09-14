@@ -1,4 +1,5 @@
 import graphql from 'src/api/graphql';
+import rest from 'src/api/rest';
 
 const filterServerStat = response => {
   const serverStat = response.serverStat.filter(stat => stat.uuid);
@@ -215,6 +216,14 @@ export function joinSingleServer(params) {
     )
   }`;
   return graphql.fetch(graph, params);
+}
+
+export async function uploadConfig(params) {
+  return rest.post('/config', params.data)
+    .then(response => {
+      console.log(response);
+      return response;
+    });
 }
 
 export function applyTestConfig() {

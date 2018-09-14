@@ -3,7 +3,6 @@ import { defaultMemoize } from 'reselect';
 
 import { getServerName } from 'src/app/misc';
 import AppBottomConsole from 'src/components/AppBottomConsole';
-import Card from 'src/components/Card';
 import ClusterConfigManagement from 'src/components/ClusterConfigManagement';
 import ServerConsole from 'src/components/ServerConsole';
 import Modal from 'src/components/Modal';
@@ -139,9 +138,9 @@ class Cluster extends React.Component {
             <div className="container">
               {unlinkedServers.length
                 ? (
-                  <div className="tr-cards-margin">
-                    <div className="tr-cards-head">
-                      <div className="tr-cards-header">
+                  <div className="tr-card-margin">
+                    <div className="tr-card-head">
+                      <div className="tr-card-header">
                         Unconfigured instances
                       </div>
                       <div className="tr-cards-buttons">
@@ -164,9 +163,9 @@ class Cluster extends React.Component {
 
               {replicasetList.length
                 ? (
-                  <div className="tr-cards-margin">
-                    <div className="tr-cards-head">
-                      <div className="tr-cards-header">
+                  <div className="tr-card-margin">
+                    <div className="tr-card-head">
+                      <div className="tr-card-header">
                         Replicaset list
                       </div>
                       <div className="tr-cards-buttons">
@@ -189,16 +188,20 @@ class Cluster extends React.Component {
                 )
                 : null}
 
-              <Card
-                className="pages-Cluster-configurationCard"
-                title="Configuration"
-              >
-                <ClusterConfigManagement
-                  isConfingApplying={false}
-                  canTestConfigBeApplied={canTestConfigBeApplied}
-                  applyTestConfig={this.applyTestConfig}
-                  createMessage={createMessage} />
-              </Card>
+              <div className="pages-Cluster-configurationCard tr-card">
+                <div className="tr-card-head">
+                  <div className="tr-card-header">
+                    Configuration
+                  </div>
+                </div>
+                <div className="tr-card-content">
+                  <ClusterConfigManagement
+                    isConfingApplying={false}
+                    canTestConfigBeApplied={canTestConfigBeApplied}
+                    uploadConfig={this.uploadConfig}
+                    applyTestConfig={this.applyTestConfig} />
+                </div>
+              </div>
             </div>
             <div ref={this.setConsoleReserve} />
           </div>
@@ -517,6 +520,11 @@ class Cluster extends React.Component {
       consoleKey: connectedServer.uuid,
       consoleState: this.console.getConsoleState(),
     });
+  };
+
+  uploadConfig = data => {
+    const { uploadConfig } = this.props;
+    uploadConfig(data);
   };
 
   applyTestConfig = () => {

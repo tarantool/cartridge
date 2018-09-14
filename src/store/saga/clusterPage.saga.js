@@ -25,6 +25,9 @@ import {
   CLUSTER_PAGE_REPLICASET_EDIT_REQUEST,
   CLUSTER_PAGE_REPLICASET_EDIT_REQUEST_SUCCESS,
   CLUSTER_PAGE_REPLICASET_EDIT_REQUEST_ERROR,
+  CLUSTER_PAGE_UPLOAD_CONFIG_REQUEST,
+  CLUSTER_PAGE_UPLOAD_CONFIG_REQUEST_SUCCESS,
+  CLUSTER_PAGE_UPLOAD_CONFIG_REQUEST_ERROR,
   CLUSTER_PAGE_APPLY_TEST_CONFIG_REQUEST,
   CLUSTER_PAGE_APPLY_TEST_CONFIG_REQUEST_SUCCESS,
   CLUSTER_PAGE_APPLY_TEST_CONFIG_REQUEST_ERROR,
@@ -32,7 +35,7 @@ import {
 } from 'src/store/actionTypes';
 import { baseSaga, getRequestSaga, getSignalRequestSaga } from 'src/store/commonRequest';
 import { getPageData, refreshLists, getServerStat, probeServer, joinServer, createReplicaset, expellServer,
-  editReplicaset, joinSingleServer, applyTestConfig } from 'src/store/request/clusterPage.requests';
+  editReplicaset, joinSingleServer, uploadConfig, applyTestConfig } from 'src/store/request/clusterPage.requests';
 
 const REFRESH_LIST_INTERVAL = 2500;
 const STAT_REQUEST_PERIOD = 10;
@@ -134,6 +137,13 @@ const editReplicasetRequestSaga = getRequestSaga(
   editReplicaset,
 );
 
+const uploadConfigRequestSaga = getRequestSaga(
+  CLUSTER_PAGE_UPLOAD_CONFIG_REQUEST,
+  CLUSTER_PAGE_UPLOAD_CONFIG_REQUEST_SUCCESS,
+  CLUSTER_PAGE_UPLOAD_CONFIG_REQUEST_ERROR,
+  uploadConfig,
+);
+
 function* applyTestConfigRequestSaga() {
   yield takeLatest(CLUSTER_PAGE_APPLY_TEST_CONFIG_REQUEST, function* load(action) {
     const indicator = pageRequestIndicator.run();
@@ -163,5 +173,6 @@ export const saga = baseSaga(
   createReplicasetRequestSaga,
   expellServerRequestSaga,
   editReplicasetRequestSaga,
+  uploadConfigRequestSaga,
   applyTestConfigRequestSaga,
 );

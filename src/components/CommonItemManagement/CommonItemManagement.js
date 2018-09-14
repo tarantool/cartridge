@@ -98,9 +98,9 @@ class CommonItemManagement extends React.PureComponent {
         {itemEditModalVisible
           ? this.renderItemEditModal()
           : null}
-        <div className="tr-cards-margin">
-          <div className="tr-cards-head">
-            <div className="tr-cards-header">
+        <div className="tr-card-margin">
+          <div className="tr-card-head">
+            <div className="tr-card-header">
               {listHeader}
             </div>
             <div className="tr-cards-buttons">
