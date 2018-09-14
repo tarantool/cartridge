@@ -1,0 +1,18 @@
+stages:
+ - build
+
+build:
+  stage: build
+  tags:
+   - shell
+  artifacts:
+    untracked: true
+    paths:
+      - tarantool-enterprise-admin-ui.tar.gz
+  script:
+   - docker build -t build-admin-ui .
+   - docker rm -f build-admin-ui || true
+   - docker create --rm --name build-admin-ui build-admin-ui
+   - docker cp build-admin-ui:/tarantool-enterprise-admin-ui.tar.gz .
+   - docker rm -f build-admin-ui || true
+

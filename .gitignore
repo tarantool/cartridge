@@ -7,6 +7,8 @@
 /coverage
 
 # misc
+.rocks
+build
 .idea
 .DS_Store
 .env.local
