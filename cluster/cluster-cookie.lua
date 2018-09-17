@@ -1,9 +1,8 @@
 #!/usr/bin/env tarantool
 
-local log = require('log')
-
 local os = require('os')
 local fio = require('fio')
+local log = require('log')
 local errno = require('errno')
 
 local M = rawget(_G, '__module_cluster_cookie')
@@ -84,6 +83,10 @@ local function filename()
     return M.filename
 end
 
+local function username()
+    return 'cluster'
+end
+
 local function set_cookie(value)
     if M.workdir == nil then
         error('Cluster cookie not initialized')
@@ -104,5 +107,6 @@ return {
     init = init,
     cookie = cookie,
     set_cookie = set_cookie,
+    username = username,
     filename = filename,
 }

@@ -10,23 +10,12 @@ local checks = require('checks')
 local errors = require('errors')
 local membership = require('membership')
 
--- local utils = require('cluster.utils')
 local vars = require('cluster.vars').new('cluster.topology')
-
-local e_config = errors.new_class('Invalid cluster topology config')
+local pool = require('cluster.pool')
+local utils = require('cluster.utils')
 
 vars:new('servers', {})
-vars:new('password', 'storage')
-
-local username = 'storage'
-
-local function password()
-    return vars.password
-end
-
-local function set_password(new_pass)
-    vars.password = new_pass
-end
+local e_config = errors.new_class('Invalid cluster topology config')
 
 -- to be used in fun.filter
 local function not_expelled(uuid, srv)
@@ -41,12 +30,7 @@ local function is_storage(uuid, srv)
     if srv == 'expelled' then
         return false
     end
-    return utils.has_value(srv.roles, 'storage')
-end
-
-local function is_singleton(role)
-    return role == 'notifier'
-        or role == 'logger'
+    return utils.table_find(srv.roles, 'storage')
 end
 
 local function validate(servers_new, servers_old)
@@ -105,11 +89,8 @@ local function validate(servers_new, servers_old)
         )
 
         local roles_enabled = {
-            ['ib-core'] = false,
-            ['t-connect'] = false,
-            ['storage'] = false,
-            ['logger'] = false,
-            ['notifier'] = false
+            ['vshard-storage'] = false,
+            ['vshard-router'] = false,
         }
 
         for i, role in pairs(server_new.roles) do
@@ -121,12 +102,7 @@ local function validate(servers_new, servers_old)
                 roles_enabled[role] == false,
                 '%s.roles has duplicate roles %q', field, role
             )
-            e_config:assert(
-                not is_singleton(role) or not singletons[role],
-                "The role %q of the instance %q conflicts with same role of the instance %q",
-                role, instance_uuid, singletons[role])
 
-            singletons[role] = instance_uuid
             roles_enabled[role] = true
         end
 
@@ -263,13 +239,9 @@ local function get_sharding_config()
         or member.payload.error ~= nil then
             -- ignore
         else
-            local url = uri.parse(server.uri)
-            url.login = username
-            url.password = password()
-            url = uri.format(url, true)
             sharding[replicaset_uuid].replicas[instance_uuid] = {
                 name = server.uri,
-                uri = url,
+                uri = pool.format_uri(server.uri),
             }
         end
     end
@@ -299,13 +271,7 @@ local function get_replication_config(replicaset_uuid)
     for _it, instance_uuid, server in fun.filter(not_expelled, vars.servers) do
         if server.replicaset_uuid == replicaset_uuid
         and server.uri ~= advertise_uri then
-
-            local url = uri.parse(server.uri)
-            url.login = username
-            url.password = password()
-            local fullurl = uri.format(url, true)
-
-            table.insert(replication, fullurl)
+            table.insert(replication, pool.format_uri(server.uri))
         end
     end
 
@@ -350,9 +316,6 @@ return {
 
     not_expelled = not_expelled,
 
-    username = username,
-    password = password,
-    set_password = set_password,
     cluster_is_healthy = cluster_is_healthy,
     get_sharding_config = get_sharding_config,
     get_replication_config = get_replication_config,
