@@ -1,0 +1,16 @@
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+
+test:
+  stage: test
+  tags:
+    - docker
+  image: tarantool/tarantool:1.x-centos7
+
+  before_script:
+    - yum -y install https://centos7.iuscommunity.org/ius-release.rpm
+    - yum -y install make cmake gcc g++ git openssl python36u python36u-pip
+    - pip3.6 install -r pytest/requirements.txt
+    - ./deps.sh
+  script:
+    - pytest -v

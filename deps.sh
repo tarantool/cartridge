@@ -9,10 +9,7 @@ fi
 
 if [ -z "$ENTERPRISE_ROCKS_SERVER" ]
 then
-	echo "Usage: $0 ENTERPRISE_ROCKS_SERVER"
-	echo "Hint: use "
-	echo "    export ENTERPRISE_ROCKS_SERVER=file:///path/to/enterprise/rocks/repo"
-	exit 1
+	ENTERPRISE_ROCKS_SERVER="file://rocks"
 fi
 
 tarantoolctl rocks install http 1.0.5

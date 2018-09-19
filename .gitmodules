@@ -1,0 +1,3 @@
+[submodule "rocks"]
+	path = rocks
+	url = ../rocks.git

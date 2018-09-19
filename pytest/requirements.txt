@@ -1,2 +1,3 @@
 pytest==3.2.3
-tarantool==0.5.4
+requests==2.18.1
+tarantool==0.6.3
