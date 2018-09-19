@@ -6,10 +6,15 @@ local log = require('log')
 local fiber = require('fiber')
 local checks = require('checks')
 local errors = require('errors')
+local vshard = require('vshard')
 local membership = require('membership')
+_G.vshard = vshard
 
+local admin = require('cluster.admin')
+local webui = require('cluster.webui')
 local topology = require('cluster.topology')
 local bootstrap = require('cluster.bootstrap')
+local confapplier = require('cluster.confapplier')
 local cluster_cookie = require('cluster.cluster-cookie')
 
 local e_init = errors.new_class('Cluster initialization failed')
@@ -106,9 +111,15 @@ local function init(opts, box_opts)
                     fiber.sleep(1.0)
                 end
             end
-            package.loaded['cluster'].bootstrap = nil
+            package.loaded['cluster'].bootstrap = function()
+                return nil, e_init:new('Already bootstrapped')
+            end
         end)
         log.info('Ready for bootstrap')
+    end
+
+    package.loaded['cluster'].init = function()
+        return nil, e_init:new('Already initialized')
     end
 
     return true
@@ -116,5 +127,8 @@ end
 
 return {
     init = init,
+    admin = admin,
+    webui = webui,
     bootstrap = nil,
+    is_healthy = topology.cluster_is_healthy,
 }

@@ -30,7 +30,7 @@ local function is_storage(uuid, srv)
     if srv == 'expelled' then
         return false
     end
-    return utils.table_find(srv.roles, 'storage')
+    return utils.table_find(srv.roles, 'vshard-storage')
 end
 
 local function validate(servers_new, servers_old)
@@ -127,7 +127,7 @@ local function validate(servers_new, servers_old)
                 server_old.replicaset_uuid == server_new.replicaset_uuid,
                 '%s.replicaset_uuid can not be changed', field
             )
-            if utils.has_value(server_old.roles, 'storage') then
+            if utils.table_find(server_old.roles, 'vshard-storage') then
                 e_config:assert(
                     roles_enabled['storage'],
                     '%s.roles storage can not be disabled', field

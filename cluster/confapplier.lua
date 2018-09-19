@@ -3,7 +3,7 @@
 
 local log = require('log')
 local fio = require('fio')
-local yaml = require('yaml')
+local yaml = require('yaml').new()
 local fiber = require('fiber')
 local errors = require('errors')
 local checks = require('checks')
@@ -16,12 +16,17 @@ local utils = require('cluster.utils')
 local topology = require('cluster.topology')
 local service_registry = require('cluster.service-registry')
 
+yaml.cfg({
+    encode_load_metatables = false,
+})
+
 local e_yaml = errors.new_class('Parsing yaml failed')
 local e_atomic = errors.new_class('Atomic call failed')
 local e_config_load = errors.new_class('Loading configuration failed')
 local e_config_fetch = errors.new_class('Fetching configuration failed')
 local e_config_apply = errors.new_class('Applying configuration failed')
 local e_config_validate = errors.new_class('Invalid config')
+local e_bootstrap_vshard = errors.new_class('Can not bootstrap vshard router now')
 
 vars:new('conf')
 vars:new('locks', {})
@@ -185,7 +190,7 @@ end
 
 local function _apply(channel)
     while true do
-        local conf = unpack(channel:get())
+        local conf = channel:get()
         if not conf then
             return
         end
@@ -196,8 +201,9 @@ local function _apply(channel)
         local replication = topology.get_replication_config(
             box.info.cluster.uuid
         )
-        log.info('Setting replication to %s', table.concat(replication, ', '))
+        log.info('Setting replication to [%s]', table.concat(replication, ', '))
         local _, err = e_config_apply:pcall(box.cfg, {
+            replication_connect_quorum = 0,
             replication = replication,
         })
         if err then
@@ -210,6 +216,7 @@ local function _apply(channel)
             vshard.storage.cfg({
                 sharding = topology.get_sharding_config(),
                 bucket_count = conf.bucket_count,
+                listen = box.cfg.listen,
             }, box.info.uuid)
             service_registry.set('vshard-storage', vshard.storage)
 
@@ -281,7 +288,7 @@ local function _clusterwide(conf_new)
     end
 
     local servers_new = conf_new.servers
-    local servers_old = cluster_topology.get()
+    local servers_old = topology.get()
 
     local configured_uri_list = {}
     for uuid, _ in pairs(servers_new) do
@@ -297,9 +304,8 @@ local function _clusterwide(conf_new)
                 return nil, err
             end
             local ok, err = e_config_validate:pcall(
-                conn.call,
-                conn,
-                'confapplier.validate',
+                conn.eval, conn,
+                'return package.loaded["cluster.confapplier"].validate(...)',
                 {conf_new}
             )
             if not ok then
@@ -316,10 +322,9 @@ local function _clusterwide(conf_new)
             return nil, err
         end
         log.info('Applying config on %s', uri)
-        local ok, err = apply_error:pcall(
-            conn.call,
-            conn,
-            'confapplier.apply',
+        local ok, err = e_config_apply:pcall(
+            conn.eval, conn,
+            'return package.loaded["cluster.confapplier"].apply(...)',
             {conf_new}
         )
         configured_uri_list[uri] = true
@@ -332,24 +337,6 @@ local function _clusterwide(conf_new)
     end
 
     if not _apply_error then
-        local sharding_config = cluster_topology.get_sharding_config()
-
-        if utils.table_count(sharding_config) > 0 then
-
-            while not vshard_utils.is_vshard_ready_for_bootstrap() do
-                fiber.sleep(0.1)
-            end
-
-            log.info('Bootstrapping vshard.router from config applier...')
-
-            local ok, err = vshard.router.bootstrap({timeout=10})
-            -- NON_EMPTY means that the cluster has already been initialized,
-            -- and this failure is expected
-            if not ok and err.code ~= vshard.error.code['NON_EMPTY'] then
-                return nil, err
-            end
-        end
-
         return true
     end
 

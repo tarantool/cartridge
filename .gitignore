@@ -1,4 +1,6 @@
 .~*
 *~
 .rocks
+.cache
+__pycache__
 dev

@@ -164,7 +164,7 @@ local function bootstrap_from_membership(boot_opts, box_opts)
 
     if type(box.cfg) ~= 'function' then
         -- maybe the instance was bootstrapped
-        -- from file in another fiber
+        -- from scratch in another fiber
         -- while we were sleeping or fetching
         return true
     end
@@ -178,20 +178,26 @@ local function bootstrap_from_membership(boot_opts, box_opts)
         membership.set_payload('warning', tostring(err.err or err))
         return false
     end
+    local replicaset_uuid = conf.servers[instance_uuid].replicaset_uuid
 
     membership.set_payload('warning', nil)
 
     log.info('Config downloaded from membership')
+    topology.set(conf.servers)
+
+    local box_opts = table.deepcopy(box_opts or {})
+    box_opts.listen = boot_opts.binary_port
+    box_opts.wal_dir = boot_opts.workdir
+    box_opts.memtx_dir = boot_opts.workdir
+    box_opts.instance_uuid = instance_uuid
+    box_opts.replicaset_uuid = replicaset_uuid
+    box_opts.replication = topology.get_replication_config(replicaset_uuid)
     log.info('Bootstrapping box.cfg...')
 
-    local ok, err = init_error:pcall(init_box, conf, instance_uuid, opts)
-    if not ok then
-        log.error('%s', err)
-    end
+    init_box(box_opts)
+    -- TODO migrations.skip()
 
-    log.info('Box.cfg done')
-    migrations.skip()
-    local ok , err = init_error:pcall(init_roles, conf)
+    local ok , err = init_roles(conf)
     if not ok then
         log.error('%s', err)
     end
