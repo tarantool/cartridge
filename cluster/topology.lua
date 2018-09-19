@@ -72,11 +72,7 @@ local function validate(servers_new, servers_old)
         )
         e_config:assert(
             type(server_new.roles) == 'table',
-            '%s.roles must be a string, got %s', field, type(server_new.roles)
-        )
-        e_config:assert(
-            next(server_new.roles) ~= nil,
-            '%s.roles must have at least one role', field
+            '%s.roles must be a table, got %s', field, type(server_new.roles)
         )
         e_config:assert(
             type(server_new.replicaset_uuid) == 'string',
@@ -129,8 +125,8 @@ local function validate(servers_new, servers_old)
             )
             if utils.table_find(server_old.roles, 'vshard-storage') then
                 e_config:assert(
-                    roles_enabled['storage'],
-                    '%s.roles storage can not be disabled', field
+                    roles_enabled['vshard-storage'],
+                    '%s.roles vshard-storage can not be disabled', field
                 )
             end
         end
@@ -178,7 +174,7 @@ local function validate(servers_new, servers_old)
         if type(server_old) == 'table' then
             -- expelling now
             e_config:assert(
-                not utils.has_value(server_old.roles, 'storage')
+                not utils.table_find(server_old.roles, 'vshard-storage')
                 or replicasets[server_old.replicaset_uuid] ~= nil,
                 '%s is the last storage in replicaset and can not be expelled', field
             )
@@ -287,7 +283,7 @@ local function list_uri_with_enabled_role(role)
     for _it, instance_uuid, server in fun.filter(not_expelled, vars.servers) do
         local member = membership.get_member(server.uri) or {}
 
-        if (not utils.has_value(server.roles, role)) -- ignore members without role
+        if (not utils.table_find(server.roles, role)) -- ignore members without role
             or (member.status ~= 'alive') -- ignore non-alive members
             or (member.payload.uuid ~= instance_uuid) -- ignore misconfigured members
             or (member.payload.error ~= nil) -- ignore misconfigured members

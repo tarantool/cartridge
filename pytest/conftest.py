@@ -47,12 +47,6 @@ class Helpers:
 def helpers():
     return Helpers
 
-def consume_lines(port, pipe):
-    logger = logging.getLogger(':{}'.format(port))
-    with pipe:
-        for line in iter(pipe.readline, b''):
-            logger.warn(line.rstrip().decode('utf-8'))
-
 @pytest.fixture(scope='module')
 def module_tmpdir(request):
     dir = py.path.local(tempfile.mkdtemp())
@@ -113,11 +107,7 @@ class Server(object):
         logging.warn('export CLUSTER_COOKIE="{}"'.format(self.env['CLUSTER_COOKIE']))
         logging.warn(' '.join(command))
 
-        self.process = Popen(command, stdout=PIPE, stderr=STDOUT, env=self.env)
-        self.thread = Thread(
-            target=consume_lines,
-            args=[self.binary_port, self.process.stdout]
-        ).start()
+        self.process = Popen(command, env=self.env)
 
     def ping_udp(self):
         s = socket(AF_INET, SOCK_DGRAM)
@@ -156,8 +146,6 @@ class Server(object):
             self.conn = None
         self.process.kill()
         logging.warn('localhost:'+str(self.binary_port)+' killed')
-        if self.thread != None:
-            self.thread.join()
 
     def get(self, path, data=None, json=None, headers=None, **args):
         url = self.baseurl + '/' + path.lstrip('/')
@@ -275,7 +263,6 @@ def cluster(request, confdir, module_tmpdir, helpers):
         srv.conn.eval('require("membership.options").PROTOCOL_PERIOD_SECONDS = 0.2')
 
         cluster[srv.alias] = srv
-
 
     logging.warn('Bootstrapping vshard.router on {}'.format(bootserv.advertise_uri))
     bootserv.conn.eval("""
