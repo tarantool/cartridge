@@ -35,10 +35,11 @@ local function init(opts, box_opts)
         end
     end
 
-    local rc = fio.chdir(opts.workdir)
-    if not rc then
-        return nil, e_init:new('Can not change to working directory %q', opts.workdir)
-    end
+    -- Is this necessary?
+    -- local rc = fio.chdir(opts.workdir)
+    -- if not rc then
+    --     return nil, e_init:new('Can not change to working directory %q', opts.workdir)
+    -- end
 
     cluster_cookie.init(opts.workdir)
     if opts.cluster_cookie ~= nil then

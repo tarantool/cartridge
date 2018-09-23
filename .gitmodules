@@ -3,4 +3,4 @@
 	url = ../rocks.git
 [submodule "webui"]
 	path = webui
-	url = git@gitlab.com:tarantool/enterprise/cluster_ui.git
+	url = ../cluster_ui.git

@@ -10,6 +10,7 @@ local uuid_lib = require('uuid')
 local membership = require('membership')
 
 local admin = require('cluster.admin')
+local static = require('cluster.webui-static')
 local graphql = require('cluster.graphql')
 local gql_types = require('cluster.graphql.types')
 
@@ -293,9 +294,50 @@ local function edit_replicaset(_, args)
     return admin.edit_replicaset(args)
 end
 
--- local function load_config_example(self, _, args)
+local function file_mime_type(filename)
+    if string.endswith(filename, ".css") then
+        return "text/css; charset=utf-8"
+    elseif string.endswith(filename, ".js") then
+        return "application/javascript; charset=utf-8"
+    elseif string.endswith(filename, ".html") then
+        return "text/html; charset=utf-8"
+    elseif string.endswith(filename, ".jpeg") then
+        return "image/jpeg"
+    elseif string.endswith(filename, ".jpg") then
+        return "image/jpeg"
+    elseif string.endswith(filename, ".gif") then
+        return "image/gif"
+    elseif string.endswith(filename, ".png") then
+        return "image/png"
+    elseif string.endswith(filename, ".svg") then
+        return "image/svg+xml"
+    elseif string.endswith(filename, ".ico") then
+        return "image/x-icon"
+    elseif string.endswith(filename, "manifest.json") then
+        return "application/manifest+json"
+    end
 
--- end
+    return "application/octet-stream"
+end
+
+local function render_file(path)
+    local body = static[path]
+
+    if body == nil then
+        return {
+            status = 404,
+            body = string.format('File does not exist: %q', path)
+        }
+    end
+
+    return {
+        status = 200,
+        headers = {
+            ['content-type'] = file_mime_type(path)
+        },
+        body = body,
+    }
+end
 
 local function init(httpd)
     -- httpd:route(
@@ -315,21 +357,10 @@ local function init(httpd)
     -- )
 
     -- http.add_route({ public = true,
-    --                  path = '/login', method = 'POST' }, 'ib-common.admin.users', 'login')
-    -- http.add_route({ path = '/logout', method = 'GET' }, 'ib-common.admin.users', 'logout')
+    --                  path = '/login', method = 'POST' }, 'common.admin.users', 'login')
+    -- http.add_route({ path = '/logout', method = 'GET' }, 'common.admin.users', 'logout')
 
-    -- http.add_route({ public = true,
-    --                  path = '/' }, 'ib-common.admin', 'render_root')
-    -- http.add_route({ public = true,
-    --                  path = '/index.html' }, 'ib-common.http', 'render_file_doesnt_exist')
 
-    -- -- Paths w/o dot are treated as app routes
-    -- http.add_route({ public = true,
-    --                  path = '/[^.]*' }, 'ib-common.admin', 'render_root')
-
-    -- -- All other paths are treaded as file paths
-    -- http.add_route({ public = true,
-    --                  path = '/.*' }, 'ib-common.http', 'render_static_file')
 
     graphql.init(httpd)
     graphql.add_mutation_prefix('cluster', 'Cluster management')
@@ -440,6 +471,47 @@ local function init(httpd)
     --     kind = gql_types.string,
     --     callback = 'ib-common.admin.graphql_evaluate',
     -- })
+
+    httpd:route({
+            method = 'GET',
+            path = '/',
+            public = true,
+        },
+        function(req)
+            return render_file('index.html')
+        end
+    )
+    httpd:route({
+            method = 'GET',
+            path = '/index.html',
+            public = true,
+        },
+        function(req)
+            return { status = 404, body = '404 Not Found' }
+        end
+    )
+
+    -- Paths w/o dot are treated as app routes
+    httpd:route({
+            method = 'GET',
+            path = '/[^.]*',
+            public = true,
+        },
+        function(req)
+            return render_file('index.html')
+        end
+    )
+
+    -- All other paths are treaded as file paths
+    httpd:route({
+            method = 'GET',
+            path = '/.*',
+            public = true,
+        },
+        function(req)
+            return render_file(req.path)
+        end
+    )
 
     return true
 end
