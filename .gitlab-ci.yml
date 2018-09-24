@@ -5,12 +5,12 @@ test:
   stage: test
   tags:
     - docker
-  image: tarantool/tarantool:1.x-centos7
+  image: registry.gitlab.com/tarantool/enterprise/central:latest
 
   before_script:
     - yum -y install https://centos7.iuscommunity.org/ius-release.rpm
     - yum -y install make cmake gcc g++ git openssl python36u python36u-pip npm
     - pip3.6 install -r pytest/requirements.txt
-    - ./deps.sh
+    - ENTERPRISE_ROCKS_SERVER="file:///tarantool/rocks" ./deps.sh
   script:
     - pytest -v
