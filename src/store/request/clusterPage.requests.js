@@ -212,7 +212,7 @@ export function joinSingleServer(params) {
     ) {
     joinServerResponse: join_server(
       uri: $uri
-      roles: ["t-connect", "ib-core", "storage", "logger", "notifier"]
+      roles: ["vshard-router", "vshard-storage"]
     )
   }`;
   return graphql.fetch(graph, params);

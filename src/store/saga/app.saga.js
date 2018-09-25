@@ -28,7 +28,7 @@ import {
   APP_SET_MESSAGE_DONE,
 } from 'src/store/actionTypes';
 import { baseSaga, getRequestSaga } from 'src/store/commonRequest';
-import { getClusterSelf, getAnonymousAllowed, login, logout, denyAnonymous, allowAnonymous, evalString }
+import { getClusterSelf, login, logout, denyAnonymous, allowAnonymous, evalString }
   from 'src/store/request/app.requests';
 
 function* appDataRequestSaga() {
@@ -43,24 +43,16 @@ function* appDataRequestSaga() {
       const clusterSelfResponse = yield call(getClusterSelf);
       const { clusterSelf } = clusterSelfResponse;
 
-      let isAnonymousAllowed = true;
-      if (clusterSelf.configured) {
-        indicator.next();
-        const anonymousAllowedResponse = yield call(getAnonymousAllowed);
-        isAnonymousAllowed = anonymousAllowedResponse.isAnonymousAllowed;
-      }
-
-      const authenticated = isAnonymousAllowed ? null : true;
       response = {
         clusterSelf,
-        isAnonymousAllowed,
-        authenticated,
+        isAnonymousAllowed: true,
+        authenticated: null,
       };
     }
     catch (error) {
       yield put({ type: APP_DATA_REQUEST_ERROR, error, requestPayload, __errorMessage: false });
       indicator.error();
-      return;
+      return undefined;
     }
 
     yield put({ type: APP_DATA_REQUEST_SUCCESS, payload: response, requestPayload });

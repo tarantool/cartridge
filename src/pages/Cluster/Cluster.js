@@ -102,7 +102,7 @@ class Cluster extends React.Component {
   }
 
   renderContent = () => {
-    const { clusterSelf, serverList, selectedServerUri, selectedReplicasetUuid, createMessage } = this.props;
+    const { clusterSelf, serverList, selectedServerUri, selectedReplicasetUuid } = this.props;
     const { serverConsoleVisible, probeServerModalVisible, createReplicasetModalVisible, expellServerConfirmVisible }
       = this.state;
 

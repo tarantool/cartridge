@@ -16,25 +16,13 @@ const fields = [
     type: 'checkboxGroup',
     options: [
       {
-        key: 't-connect',
-        label: 't-connect',
+        key: 'vshard-router',
+        label: 'vshard-router',
       },
       {
-        key: 'ib-core',
-        label: 'ib-core',
+        key: 'vshard-storage',
+        label: 'vshard-storage',
       },
-      {
-        key: 'storage',
-        label: 'storage',
-      },
-      {
-        key: 'logger',
-        label: 'logger',
-      },
-      {
-        key: 'notifier',
-        label: 'notifier',
-      }
     ],
   },
 ];
