@@ -1,7 +1,8 @@
 package = 'cluster'
 version = 'scm-1'
 source  = {
-    url = '/dev/null',
+    url = 'git+ssh://git@gitlab.com:tarantool/enterprise/cluster.git',
+    branch = 'master',
 }
 dependencies = {
     'lua >= 5.1',
