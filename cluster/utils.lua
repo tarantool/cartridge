@@ -2,6 +2,8 @@
 
 local fio = require('fio')
 local ffi = require('ffi')
+local errno = require('errno')
+local checks = require('checks')
 local errors = require('errors')
 
 local e_fopen = errors.new_class('Can not open file')

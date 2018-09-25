@@ -4,6 +4,7 @@ local log = require('log')
 local fun = require('fun')
 local vshard = require('vshard')
 local errors = require('errors')
+local uuid_lib = require('uuid')
 local membership = require('membership')
 
 local pool = require('cluster.pool')
@@ -97,7 +98,7 @@ local function get_servers_and_replicasets()
                 uuid = '',
                 status = 'unconfigured',
                 message = m.payload.error or m.payload.warning or '',
-                alias = m.payload.node_name
+                alias = m.payload.alias
             })
         end
     end
@@ -108,7 +109,7 @@ end
 local function get_self()
     local myself = membership.myself()
     local result = {
-        alias = myself.payload.node_name,
+        alias = myself.payload.alias,
         uri = myself.uri,
         uuid = nil,
     }
@@ -185,7 +186,7 @@ local function join_server(args)
     local servers = topology.get()
 
     if args.instance_uuid == nil then
-        args.instance_uuid = uuid.str()
+        args.instance_uuid = uuid_lib.str()
     elseif servers[args.instance_uuid] ~= nil then
         return nil, e_topology_edit:new(
             'servers[%s] is already joined',
@@ -195,7 +196,7 @@ local function join_server(args)
 
     local replicaset_roles = nil
     if args.replicaset_uuid == nil then
-        args.replicaset_uuid = uuid.str()
+        args.replicaset_uuid = uuid_lib.str()
     else
         for _it, instance_uuid, server in fun.filter(topology.not_expelled, servers) do
             if server.replicaset_uuid == args.replicaset_uuid then

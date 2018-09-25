@@ -11,6 +11,7 @@ local cluster = require('cluster')
 
 local e_init = errors.new_class('Cluster initialization failed')
 local ok, err = e_init:pcall(cluster.init, {
+    alias = os.getenv('ALIAS'),
     workdir = os.getenv('WORKDIR') or './dev/output',
     advertise_uri = os.getenv('ADVERTISE_URI') or 'localhost:3301',
 }, {
@@ -25,7 +26,7 @@ end
 local http_port = os.getenv('HTTP_PORT') or 8080
 local httpd = http.new(
     '0.0.0.0', tonumber(http_port),
-    { log_requests = true }
+    { log_requests = false }
 )
 httpd:start()
 local ok, err = cluster.webui.init(httpd)
