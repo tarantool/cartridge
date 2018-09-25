@@ -43,7 +43,6 @@ build = {
     install_variables = {
         -- Installs lua module:
         -- ['cluster.webui-static']
-        LUA="$(LUA)",
         INST_LUADIR="$(LUADIR)",
     },
 }

@@ -10,4 +10,4 @@ $(DIR)/node_modules: $(DIR)/package.json
 
 install:
 	mkdir -p $(INST_LUADIR)/cluster
-	$(LUA) pack.lua $(DIR)/build $(INST_LUADIR)/cluster/webui-static.lua
+	tarantool pack.lua $(DIR)/build $(INST_LUADIR)/cluster/webui-static.lua
