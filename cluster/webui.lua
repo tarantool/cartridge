@@ -79,6 +79,10 @@ local function probe_server(_, args)
     return admin.probe_server(args.uri)
 end
 
+local function bootstrap_vshard(_, args)
+    return admin.bootstrap_vshard()
+end
+
 local function join_server(_, args)
     return admin.join_server(args)
 end
@@ -170,6 +174,13 @@ local function init(httpd)
         },
         kind = gql_types.boolean,
         callback = 'cluster.webui.probe_server',
+    })
+
+    graphql.add_mutation({
+        name = 'bootstrap_vshard',
+        args = {},
+        kind = gql_types.boolean,
+        callback = 'cluster.webui.bootstrap_vshard',
     })
 
     graphql.add_mutation({
@@ -286,4 +297,6 @@ return {
     edit_server = edit_server,
     edit_replicaset = edit_replicaset,
     expell_server = expell_server,
+
+    bootstrap_vshard = bootstrap_vshard,
 }

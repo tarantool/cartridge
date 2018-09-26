@@ -27,7 +27,6 @@ local function call(function_name, ...)
     local fun = mod[fun_name]
     if fun == nil then
         return nil, e_funcall:new(
-            mod ~= nil,
             'No function %q in module %q', fun_name, mod_name
         )
     end

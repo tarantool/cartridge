@@ -11,6 +11,7 @@ local pool = require('cluster.pool')
 local topology = require('cluster.topology')
 local confapplier = require('cluster.confapplier')
 
+local e_bootstrap_vshard = errors.new_class('Bootstrapping vshard failed')
 local e_topology_edit = errors.new_class('Editing cluster topology failed')
 local e_probe_server = errors.new_class('Can not probe server')
 
@@ -18,7 +19,7 @@ local function get_server_info(members, uuid, uri)
     local member = members[uri]
     local alias = nil
     if member and member.payload then
-        alias = member.payload.node_name
+        alias = member.payload.alias
     end
 
     local ret = {
@@ -346,10 +347,11 @@ local function bootstrap_vshard()
     log.info('Bootstrapping vshard.router...')
 
     local ok, err = vshard.router.bootstrap({timeout=10})
-    -- NON_EMPTY means that the cluster has already been initialized,
-    -- and this failure is expected
     if not ok then
-        return nil, err
+        return nil, e_bootstrap_vshard:new(
+            '%s (%s, %s)',
+            err.message, err.type, err.name
+        )
     end
 
     return true

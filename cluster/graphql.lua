@@ -285,10 +285,14 @@ local function _execute_graphql(req)
     local res, err = e_graphql_execute:pcall(execute.execute, schema_obj, ast, rootValue, variables, operationName)
 
     if not res then
-        log.error('%s', err)
+        log.error('%s', err or "Unknown error")
         return {
             status = 200,
-            body = json.encode({errors={{message=err.err}}})
+            body = json.encode({
+                errors = {{
+                    message = err and err.err or "Unknown error",
+                }}
+            })
         }
     end
 

@@ -265,10 +265,10 @@ def cluster(request, confdir, module_tmpdir, helpers):
         cluster[srv.alias] = srv
 
     logging.warn('Bootstrapping vshard.router on {}'.format(bootserv.advertise_uri))
-    bootserv.conn.eval("""
-        local log = require('log')
-        log.info('Bootstrapping vshard.router from pytest...')
-        package.loaded['cluster'].admin.bootstrap_vshard()
-        """)
+    bootserv.graphql(
+        query = """
+            mutation { bootstrap_vshard }
+        """
+    )
 
     return cluster

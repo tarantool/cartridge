@@ -37,7 +37,7 @@ if not ok then
     os.exit(1)
 end
 
-if term.isatty(io.stdout) then
+if term.isatty(io.stdin) then
     _G.cluster = cluster
     console.start()
     os.exit(0)

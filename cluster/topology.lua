@@ -105,7 +105,7 @@ local function validate(servers_new, servers_old)
         local replicaset = replicasets[server_new.replicaset_uuid]
         e_config:assert(
             not replicaset
-            or utils.cmpdeeply(roles_enabled, replicaset.roles),
+            or utils.deepcmp(roles_enabled, replicaset.roles),
             '%s.roles differ from %s.roles within same replicaset',
             field, (replicaset or {}).field
         )
