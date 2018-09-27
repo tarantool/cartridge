@@ -73,7 +73,7 @@ class ClusterConfigManagement extends React.PureComponent {
         onOk={this.confirmApplyTestConfig}
         onCancel={this.cancelApplyTestConfig}
       >
-        Are you really want to apply test config?
+        Do you really want to apply test config?
       </Modal>
     );
   };

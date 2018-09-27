@@ -274,7 +274,7 @@ class Cluster extends React.Component {
         onOk={this.handleBootstrapVshardSubmitRequest}
         onCancel={this.handleBootstrapVshardConfirmCloseRequest}
       >
-        Are you really want to bootstrap vshard?
+        Do you really want to bootstrap vshard?
       </Modal>
     );
   };
@@ -326,7 +326,7 @@ class Cluster extends React.Component {
         onOk={this.handleExpellServerSubmitRequest}
         onCancel={this.handleExpellServerConfirmCloseRequest}
       >
-        Are you really want to expell server {expellServerConfirmDataSource.uri}?
+        Do you really want to expell server {expellServerConfirmDataSource.uri}?
       </Modal>
     );
   };
