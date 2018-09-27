@@ -46,6 +46,8 @@ class Cluster extends React.Component {
     this.state = {
       serverConsoleVisible: false,
       serverConsoleUuid: null,
+      bootstrapVshardConfirmVisible: false,
+      bootstrapVshardConfirmDataSource: null,
       probeServerModalVisible: false,
       joinServerModalVisible: false,
       joinServerModalDataSource: null,
@@ -103,8 +105,8 @@ class Cluster extends React.Component {
 
   renderContent = () => {
     const { clusterSelf, serverList, selectedServerUri, selectedReplicasetUuid } = this.props;
-    const { serverConsoleVisible, probeServerModalVisible, createReplicasetModalVisible, expellServerConfirmVisible }
-      = this.state;
+    const { serverConsoleVisible, bootstrapVshardConfirmVisible, probeServerModalVisible, createReplicasetModalVisible,
+      expellServerConfirmVisible } = this.state;
 
     const joinServerModalVisible = !!selectedServerUri;
     const editReplicasetModalVisible = !!selectedReplicasetUuid;
@@ -114,6 +116,9 @@ class Cluster extends React.Component {
 
     return (
       <React.Fragment>
+        {bootstrapVshardConfirmVisible
+          ? this.renderBootstrapVshardConfirmModal()
+          : null}
         {probeServerModalVisible
           ? this.renderProbeServerModal()
           : null}
@@ -144,7 +149,7 @@ class Cluster extends React.Component {
                         Unconfigured instances
                       </div>
                       <div className="tr-cards-buttons">
-                        {this.renderProbeServerButton()}
+                        {this.renderProbeServerButtons()}
                       </div>
                     </div>
                     <div className="pages-Cluster-serverList">
@@ -171,7 +176,7 @@ class Cluster extends React.Component {
                       <div className="tr-cards-buttons">
                         {unlinkedServers.length
                           ? null
-                          : this.renderProbeServerButton()}
+                          : this.renderProbeServerButtons()}
                       </div>
                     </div>
                     <div className="pages-Cluster-replicasetList">
@@ -236,15 +241,37 @@ class Cluster extends React.Component {
     );
   };
 
-  renderProbeServerButton = () => {
+  renderProbeServerButtons = () => {
     return (
-      <button
-        type="button"
-        className="btn btn-light btn-sm"
-        onClick={this.handleProbeServerRequest}
+      <div className="tr-cards-buttons">
+        <button
+          type="button"
+          className="btn btn-light btn-sm"
+          onClick={this.handleBootstrapVshardRequest}
+        >
+          Bootstrap vshard
+        </button>
+        <button
+          type="button"
+          className="btn btn-light btn-sm"
+          onClick={this.handleProbeServerRequest}
+        >
+          Probe server
+        </button>
+      </div>
+    );
+  };
+
+  renderBootstrapVshardConfirmModal = () => {
+    return (
+      <Modal
+        visible
+        width={540}
+        onOk={this.handleBootstrapVshardSubmitRequest}
+        onCancel={this.handleBootstrapVshardConfirmCloseRequest}
       >
-        Probe server
-      </button>
+        Are you really want to bootstrap vshard?
+      </Modal>
     );
   };
 
@@ -390,6 +417,23 @@ class Cluster extends React.Component {
       serverConsoleUuid: null,
     });
     this.updateConsoleReserveHeight({ height: 0 });
+  };
+
+  handleBootstrapVshardRequest = () => {
+    this.setState({
+      bootstrapVshardConfirmVisible: true,
+    });
+  };
+
+  handleBootstrapVshardConfirmCloseRequest = () => {
+    this.setState({
+      bootstrapVshardConfirmVisible: false,
+    });
+  };
+
+  handleBootstrapVshardSubmitRequest = () => {
+    const { bootstrapVshard } = this.props;
+    this.setState({ bootstrapVshardConfirmVisible: false }, bootstrapVshard);
   };
 
   handleProbeServerRequest = () => {

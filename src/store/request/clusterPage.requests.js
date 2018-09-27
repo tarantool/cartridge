@@ -113,6 +113,14 @@ export function getServerStat() {
     .then(filterServerStat);
 }
 
+export function bootstrapVshard(params) {
+  const graph = `
+    mutation {
+      bootstrapVshardResponse: bootstrap_vshard
+    }`;
+  return graphql.fetch(graph, params);
+}
+
 /**
  * @param {Object} params
  * @param {string} params.uri

@@ -10,6 +10,9 @@ import {
   CLUSTER_PAGE_REFRESH_LISTS_REQUEST,
   CLUSTER_PAGE_REFRESH_LISTS_REQUEST_SUCCESS,
   CLUSTER_PAGE_REFRESH_LISTS_REQUEST_ERROR,
+  CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST,
+  CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST_SUCCESS,
+  CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST_ERROR,
   CLUSTER_PAGE_PROBE_SERVER_REQUEST,
   CLUSTER_PAGE_PROBE_SERVER_REQUEST_SUCCESS,
   CLUSTER_PAGE_PROBE_SERVER_REQUEST_ERROR,
@@ -34,8 +37,9 @@ import {
   CLUSTER_PAGE_STATE_RESET,
 } from 'src/store/actionTypes';
 import { baseSaga, getRequestSaga, getSignalRequestSaga } from 'src/store/commonRequest';
-import { getPageData, refreshLists, getServerStat, probeServer, joinServer, createReplicaset, expellServer,
-  editReplicaset, joinSingleServer, uploadConfig, applyTestConfig } from 'src/store/request/clusterPage.requests';
+import { getPageData, refreshLists, getServerStat, bootstrapVshard, probeServer, joinServer, createReplicaset,
+  expellServer, editReplicaset, joinSingleServer, uploadConfig, applyTestConfig }
+  from 'src/store/request/clusterPage.requests';
 
 const REFRESH_LIST_INTERVAL = 2500;
 const STAT_REQUEST_PERIOD = 10;
@@ -101,6 +105,13 @@ function* refreshListsRequestSaga() {
     yield cancel(refreshListsTask);
   }
 }
+
+const bootstrapVshardRequestSaga = getRequestSaga(
+  CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST,
+  CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST_SUCCESS,
+  CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST_ERROR,
+  bootstrapVshard,
+);
 
 const probeServerRequestSaga = getRequestSaga(
   CLUSTER_PAGE_PROBE_SERVER_REQUEST,
@@ -168,6 +179,7 @@ function* applyTestConfigRequestSaga() {
 export const saga = baseSaga(
   pageDataRequestSaga,
   refreshListsRequestSaga,
+  bootstrapVshardRequestSaga,
   probeServerRequestSaga,
   joinServerRequestSaga,
   createReplicasetRequestSaga,

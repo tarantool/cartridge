@@ -4,6 +4,7 @@ import {
   CLUSTER_PAGE_SERVER_POPUP_CLOSE,
   CLUSTER_PAGE_REPLICASET_LIST_ROW_SELECT,
   CLUSTER_PAGE_REPLICASET_POPUP_CLOSE,
+  CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST,
   CLUSTER_PAGE_PROBE_SERVER_REQUEST,
   CLUSTER_PAGE_JOIN_SERVER_REQUEST,
   CLUSTER_PAGE_CREATE_REPLICASET_REQUEST,
@@ -29,6 +30,10 @@ export const closeServerPopup = getActionCreator(CLUSTER_PAGE_SERVER_POPUP_CLOSE
 export const selectReplicaset = getActionCreator(CLUSTER_PAGE_REPLICASET_LIST_ROW_SELECT);
 
 export const closeReplicasetPopup = getActionCreator(CLUSTER_PAGE_REPLICASET_POPUP_CLOSE);
+
+export const bootstrapVshard = getActionCreator(CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST, null, {
+  successMessage: 'VShard bootstrap is OK. Please wait for list refresh...',
+});
 
 /**
  * @param {Object} payload

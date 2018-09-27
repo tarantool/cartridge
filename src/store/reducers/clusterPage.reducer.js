@@ -10,6 +10,9 @@ import {
   CLUSTER_PAGE_SERVER_POPUP_CLOSE,
   CLUSTER_PAGE_REPLICASET_LIST_ROW_SELECT,
   CLUSTER_PAGE_REPLICASET_POPUP_CLOSE,
+  CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST,
+  CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST_SUCCESS,
+  CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST_ERROR,
   CLUSTER_PAGE_PROBE_SERVER_REQUEST,
   CLUSTER_PAGE_PROBE_SERVER_REQUEST_SUCCESS,
   CLUSTER_PAGE_PROBE_SERVER_REQUEST_ERROR,
@@ -45,6 +48,8 @@ export const initialState = {
   serverList: null,
   replicasetList: null,
   serverStat: null,
+  bootstrapVshardRequestStatus: getInitialRequestStatus(),
+  bootstrapVshardResponse: null,
   probeServerRequestStatus: getInitialRequestStatus(),
   probeServerResponse: null,
   joinServerRequestStatus: getInitialRequestStatus(),
@@ -75,6 +80,13 @@ const refreshListsRequestReducer = getRequestReducer(
   CLUSTER_PAGE_REFRESH_LISTS_REQUEST_SUCCESS,
   CLUSTER_PAGE_REFRESH_LISTS_REQUEST_ERROR,
   'refreshListsRequestStatus',
+);
+
+const bootstrapVshardRequestReducer = getRequestReducer(
+  CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST,
+  CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST_SUCCESS,
+  CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST_ERROR,
+  'bootstrapVshardRequestStatus',
 );
 
 const probeServerRequestReducer = getRequestReducer(
@@ -133,6 +145,7 @@ export const reducer = baseReducer(
   pageMountReducer,
   pageDataRequestReducer,
   refreshListsRequestReducer,
+  bootstrapVshardRequestReducer,
   probeServerRequestReducer,
   joinServerRequestReducer,
   createReplicasetRequestReducer,
