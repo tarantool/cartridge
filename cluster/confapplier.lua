@@ -18,6 +18,7 @@ local service_registry = require('cluster.service-registry')
 
 yaml.cfg({
     encode_load_metatables = false,
+    decode_save_metatables = false,
 })
 
 local e_yaml = errors.new_class('Parsing yaml failed')
