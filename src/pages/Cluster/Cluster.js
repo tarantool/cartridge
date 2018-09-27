@@ -193,21 +193,25 @@ class Cluster extends React.Component {
                 )
                 : null}
 
-              <div className="pages-Cluster-configurationCard tr-card">
-                <div className="tr-card-head">
-                  <div className="tr-card-header">
-                    Configuration
+              {false
+                ? (
+                  <div className="pages-Cluster-configurationCard tr-card">
+                    <div className="tr-card-head">
+                      <div className="tr-card-header">
+                        Configuration
+                      </div>
+                    </div>
+                    <div className="tr-card-content">
+                      <ClusterConfigManagement
+                        isConfingApplying={false}
+                        canTestConfigBeApplied={canTestConfigBeApplied}
+                        uploadConfig={this.uploadConfig}
+                        applyTestConfig={this.applyTestConfig} />
+                    </div>
                   </div>
-                </div>
-                <div className="tr-card-content">
-                  <ClusterConfigManagement
-                    isConfingApplying={false}
-                    canTestConfigBeApplied={canTestConfigBeApplied}
-                    uploadConfig={this.uploadConfig}
-                    applyTestConfig={this.applyTestConfig} />
-                </div>
+                )
+                : null}
               </div>
-            </div>
             <div ref={this.setConsoleReserve} />
           </div>
         </div>
