@@ -115,7 +115,7 @@ const prepareColumnProps = (linked, clusterSelf, consoleServer, joinServer, crea
       key: 'action',
       title: 'Actions',
       render: record => {
-        const consoleButtonVisible = record.status !== 'unconfigured';
+        const consoleButtonVisible = false && record.status !== 'unconfigured';
         const handleConsoleClick = () => consoleServer(record);
         const joinButtonsVisible = !record.uuid;
         const handleJoinClick = () => joinServer(record);
