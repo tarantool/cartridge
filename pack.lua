@@ -23,7 +23,7 @@ function fpack(relpath)
     else
         log.info('-- Pack %s', relpath)
         local f = io.open(path, "r")
-        table.insert(files, string.format([[[%q] = %q]], relpath, f:read('*a')))
+        table.insert(files, string.format([[[%q] = %q]], '/'..relpath, f:read('*a')))
         f:close()
     end
 end

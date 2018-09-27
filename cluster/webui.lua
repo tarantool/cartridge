@@ -247,7 +247,7 @@ local function init(httpd)
             public = true,
         },
         function(req)
-            return render_file('index.html')
+            return render_file('/index.html')
         end
     )
     httpd:route({
@@ -267,7 +267,7 @@ local function init(httpd)
             public = true,
         },
         function(req)
-            return render_file('index.html')
+            return render_file('/index.html')
         end
     )
 
