@@ -170,7 +170,7 @@ local function probe_server(uri)
     checks('string')
     local ok, err = membership.probe_uri(uri)
     if not ok then
-        return e_probe_server:new(err)
+        return nil, e_probe_server:new('Probe %q failed: %s', uri, err)
     end
 
     return true

@@ -90,6 +90,27 @@ def test_replicasets(cluster):
         'servers': [{'uri': 'localhost:33009'}]
     } in replicasets
 
+def test_probe_server(cluster, module_tmpdir, helpers):
+    srv = cluster['router']
+    req = """mutation($uri: String!) { probe_server(uri:$uri) }"""
+
+    obj = srv.graphql(req,
+        variables={'uri': 'localhost:9'}
+    )
+    assert obj['errors'][0]['message'] == \
+        'Probe "localhost:9" failed: no responce'
+
+    obj = srv.graphql(req,
+        variables={'uri': 'bad-host'}
+    )
+    assert obj['errors'][0]['message'] == \
+        'Probe "bad-host" failed: ping was not sent'
+
+    obj = srv.graphql(req,
+        variables={'uri': srv.advertise_uri}
+    )
+    assert obj['data']['probe_server'] == True
+
 def test_edit_server(cluster):
     cluster['expelled'].kill()
     obj = cluster['router'].graphql("""
@@ -165,7 +186,7 @@ def test_edit_replicaset(cluster):
         'servers': [{'uri': 'localhost:33002'}]
     } in replicasets
 
-def test_join_server_fail(cluster, confdir, module_tmpdir, helpers):
+def test_join_server_fail(cluster, module_tmpdir, helpers):
     srv = Server(
         binary_port = 33003,
         http_port = 8083,
@@ -226,7 +247,7 @@ def test_join_server_fail(cluster, confdir, module_tmpdir, helpers):
     finally:
         srv.kill()
 
-def test_join_server_good(cluster, confdir, module_tmpdir, helpers):
+def test_join_server_good(cluster, module_tmpdir, helpers):
     srv = Server(
         binary_port = 33003,
         http_port = 8083,
