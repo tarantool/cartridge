@@ -81,7 +81,7 @@ const prepareColumnProps = (linked, clusterSelf, consoleServer, joinServer, crea
       render: record => {
         const { statistics } = record;
         if ( ! statistics) {
-          return <b>No statistics</b>;
+          return <span>No statistics</span>;
         }
 
         const { arenaUsed, quotaSize } = statistics;

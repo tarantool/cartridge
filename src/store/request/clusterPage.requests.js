@@ -2,7 +2,7 @@ import graphql from 'src/api/graphql';
 import rest from 'src/api/rest';
 
 const filterServerStat = response => {
-  const serverStat = response.serverStat.filter(stat => stat.uuid);
+  const serverStat = response.serverStat.filter(stat => stat.uuid && ! (stat.statistics.length === 0));
   return {
     ...response,
     serverStat
@@ -219,11 +219,7 @@ export function joinSingleServer(params) {
 }
 
 export async function uploadConfig(params) {
-  return rest.post('/config', params.data)
-    .then(response => {
-      console.log(response);
-      return response;
-    });
+  return rest.post('/config', params.data);
 }
 
 export function applyTestConfig() {

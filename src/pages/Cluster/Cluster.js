@@ -29,7 +29,7 @@ const prepareReplicasetList = (replicasetList, serverStat) => {
       const stat = serverStat.find(stat => stat.uuid === server.uuid);
       return {
         ...server,
-        statistics: stat.statistics,
+        statistics: stat ? stat.statistics : null,
       };
     });
     return {
