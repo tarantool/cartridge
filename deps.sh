@@ -2,16 +2,16 @@
 
 set -e
 
-if [ -z "$ENTERPRISE_ROCKS_SERVER" ]
+if [ -n "$1" ]
 then
-	ENTERPRISE_ROCKS_SERVER=$1
+    ROCKS_SERVER=$1
 fi
 
-if [ -z "$ENTERPRISE_ROCKS_SERVER" ]
+if [ -z "$ROCKS_SERVER" ]
 then
-	ENTERPRISE_ROCKS_SERVER="file://rocks"
+    echo "Usage: $0 ROCKS_SERVER"
+    exit 1
 fi
 
-tarantoolctl rocks install http 1.0.5 --server=$ENTERPRISE_ROCKS_SERVER
-tarantoolctl rocks install lua-term 0.7 --server=$ENTERPRISE_ROCKS_SERVER
-tarantoolctl rocks make --server=$ENTERPRISE_ROCKS_SERVER
+tarantoolctl rocks --server=$ROCKS_SERVER install http 1.0.5
+tarantoolctl rocks --server=$ROCKS_SERVER make

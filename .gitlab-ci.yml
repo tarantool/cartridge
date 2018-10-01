@@ -11,6 +11,6 @@ test:
     - yum -y install https://centos7.iuscommunity.org/ius-release.rpm
     - yum -y install make cmake gcc g++ git openssl python36u python36u-pip npm
     - pip3.6 install -r pytest/requirements.txt
-    - ENTERPRISE_ROCKS_SERVER="file:///tarantool/rocks" ./deps.sh
+    - ROCKS_SERVER="file:///tarantool/rocks" ./deps.sh
   script:
     - pytest -v
