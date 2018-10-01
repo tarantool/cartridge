@@ -185,6 +185,10 @@ local function validate(servers_new, servers_old)
 end
 
 local function cluster_is_healthy()
+    if next(vars.servers) == nil then
+        return nil, 'not bootstrapped yet'
+    end
+
     for _it, instance_uuid, server in fun.filter(not_expelled, vars.servers) do
         local member = membership.get_member(server.uri) or {}
 
@@ -214,7 +218,7 @@ local function cluster_is_healthy()
         end
     end
 
-    return true, nil
+    return true
 end
 
 local function get_sharding_config()

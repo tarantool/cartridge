@@ -136,8 +136,8 @@ class Server(object):
                 password=self.env['CLUSTER_COOKIE']
             )
         resp = self.conn.eval('return is_initialized()')
-        assert not resp[1] # in case of error display faulty member
-        assert resp[0]
+        err = resp[1] if len(resp) > 1 else None
+        assert (resp[0], err) == (True, None)
 
     def kill(self):
         if self.conn != None:
