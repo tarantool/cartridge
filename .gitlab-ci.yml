@@ -14,3 +14,4 @@ test:
     - ROCKS_SERVER="file:///tarantool/rocks" ./deps.sh
   script:
     - pytest -v
+    - ./taptest.lua
