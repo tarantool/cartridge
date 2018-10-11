@@ -23,6 +23,11 @@ local members = {
         status = 'alive',
         payload = { ['error'] = 'err' },
     },
+    ['localhost:3331'] = {
+        uri = 'localhost:3331',
+        status = 'alive',
+        payload = {},
+    },
 }
 package.loaded['membership'] = {
     get_member = function(uri)
@@ -35,162 +40,401 @@ local yaml = require('yaml')
 local topology = require('cluster.topology')
 local test = tap.test('topology.config')
 
-test:plan(18)
+test:plan(32)
 
 local function check_config(result, raw_new, raw_old)
-    local cfg_new = raw_new and yaml.decode(raw_new).servers or {}
-    local cfg_old = raw_old and yaml.decode(raw_old).servers or {}
+    local cfg_new = raw_new and yaml.decode(raw_new) or {}
+    local cfg_old = raw_old and yaml.decode(raw_old) or {}
 
     local ok, err = topology.validate(cfg_new, cfg_old)
     test:is(ok or err.err, result, result)
 end
 
-check_config('servers must have string keys',
-[[servers:
+-- check_schema
+test:diag('validate_schema()')
+
+test:diag('   servers keys')
+
+check_config('topology_new.servers must have string keys',
+[[---
+servers:
   - srv1
-]])
+...]])
 
-check_config('servers key "srv2" is not a valid UUID',
-[[servers:
+check_config('topology_new.servers key "srv2" is not a valid UUID',
+[[---
+servers:
   srv2:
-]])
+...]])
 
-check_config('servers[aaaaaaaa-aaaa-4000-b000-000000000001] must be either a table or the string "expelled"',
-[[servers:
+test:diag('   servers')
+
+check_config('topology_new.servers[aaaaaaaa-aaaa-4000-b000-000000000001]'..
+  ' must be either a table or the string "expelled"',
+[[---
+servers:
+  aaaaaaaa-aaaa-4000-b000-000000000001: foo
+...]])
+
+check_config('topology_new.servers[aaaaaaaa-aaaa-4000-b000-000000000001].uri'..
+  ' must be a string, got nil',
+[[---
+servers:
   aaaaaaaa-aaaa-4000-b000-000000000001:
-]])
+    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
+...]])
 
-check_config('servers[aaaaaaaa-aaaa-4000-b000-000000000002].uri must be a string, got nil',
-[[servers:
-  aaaaaaaa-aaaa-4000-b000-000000000002: {}
-]])
-
-check_config(true,
-[[servers:
-  aaaaaaaa-aaaa-4000-b000-000000000003:
-    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000003
+check_config('topology_new.servers[aaaaaaaa-aaaa-4000-b000-000000000001].replicaset_uuid'..
+  ' must be a string, got nil',
+[[---
+servers:
+  aaaaaaaa-aaaa-4000-b000-000000000001:
     uri: localhost:3301
-    roles: {}
-]])
-
-check_config('servers[aaaaaaaa-aaaa-4000-b000-000000000004].roles[1] unknown role "unknown"',
-[[servers:
-  aaaaaaaa-aaaa-4000-b000-000000000004:
-    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000004
+...]])
+check_config('topology_new.servers[aaaaaaaa-aaaa-4000-b000-000000000001].replicaset_uuid'..
+  ' "set1" is not a valid UUID',
+[[---
+servers:
+  aaaaaaaa-aaaa-4000-b000-000000000001:
     uri: localhost:3301
-    roles: ['unknown']
-]])
+    replicaset_uuid: set1
+...]])
 
-check_config('servers[aaaaaaaa-aaaa-4000-b000-000000000005].replicaset_uuid is not a valid UUID',
-[[servers:
-  aaaaaaaa-aaaa-4000-b000-000000000005:
+check_config('topology_new.servers[aaaaaaaa-aaaa-4000-b000-000000000001]'..
+  ' has unknown parameter "unknown"',
+[[---
+servers:
+  aaaaaaaa-aaaa-4000-b000-000000000001:
     uri: localhost:3301
-    roles: ['vshard-router']
-    replicaset_uuid: aaaaaaaa-0000-4000
-]])
-
-check_config('servers[aaaaaaaa-aaaa-4000-b000-000000000006] has unknown parameter "unknown"',
-[[servers:
-  aaaaaaaa-aaaa-4000-b000-000000000006:
-    uri: localhost:3301
-    roles: ['vshard-router']
-    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000006
+    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
     unknown: true
-]])
+...]])
 
-check_config('servers[aaaaaaaa-aaaa-4000-b000-000000000007] can not be removed from config',
-[[servers: {}]],
-[[servers:
-  aaaaaaaa-aaaa-4000-b000-000000000007: expelled
-]])
+test:diag('   replicasets keys')
 
-check_config('servers[aaaaaaaa-aaaa-4000-b000-000000000008] is already expelled',
-[[servers:
-  aaaaaaaa-aaaa-4000-b000-000000000008:
+check_config('topology_new.replicasets must have string keys',
+[[---
+replicasets:
+  - set1
+...]])
+
+check_config('topology_new.replicasets key "set2" is not a valid UUID',
+[[---
+replicasets:
+  set2:
+...]])
+
+test:diag('   replicasets')
+
+check_config('topology_new.replicasets[aaaaaaaa-0000-4000-b000-000000000001]'..
+  ' must be a table',
+[[---
+replicasets:
+  aaaaaaaa-0000-4000-b000-000000000001: foo
+...]])
+
+check_config('topology_new.replicasets[aaaaaaaa-0000-4000-b000-000000000001]'..
+  '.master must be a string, got nil',
+[[---
+replicasets:
+  aaaaaaaa-0000-4000-b000-000000000001:
+    roles: {"vshard-router": true}
+...]])
+
+check_config('topology_new.replicasets[aaaaaaaa-0000-4000-b000-000000000001]'..
+  '.roles must be a table, got nil',
+[[---
+replicasets:
+  aaaaaaaa-0000-4000-b000-000000000001:
+    master: aaaaaaaa-aaaa-4000-b000-000000000001
+...]])
+
+check_config('topology_new.replicasets[aaaaaaaa-0000-4000-b000-000000000001]'..
+  '.roles must have string keys',
+[[---
+replicasets:
+  aaaaaaaa-0000-4000-b000-000000000001:
+    master: aaaaaaaa-aaaa-4000-b000-000000000001
+    roles: ["vshard-router"]
+...]])
+
+check_config('topology_new.replicasets[aaaaaaaa-0000-4000-b000-000000000001]'..
+  '.roles["vshard-router"] must be true or false',
+[[---
+replicasets:
+  aaaaaaaa-0000-4000-b000-000000000001:
+    master: aaaaaaaa-aaaa-4000-b000-000000000001
+    roles: {"vshard-router": 2}
+...]])
+
+check_config('topology_new.replicasets[aaaaaaaa-0000-4000-b000-000000000001]'..
+  ' has unknown parameter "unknown"',
+[[---
+replicasets:
+  aaaaaaaa-0000-4000-b000-000000000001:
+    master: aaaaaaaa-aaaa-4000-b000-000000000001
+    roles: {"vshard-router": true}
+    unknown: true
+...]])
+
+test:diag('validate_consistency()')
+
+check_config('servers[aaaaaaaa-aaaa-4000-b000-000000000001]'..
+  '.replicaset_uuid is not configured in replicasets table',
+[[---
+servers:
+  aaaaaaaa-aaaa-4000-b000-000000000001:
     uri: localhost:3301
-    roles: ['vshard-storage']
-    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000000
-]],
-[[servers:
-  aaaaaaaa-aaaa-4000-b000-000000000008: expelled
-]])
+    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
+...]])
 
-check_config('servers[aaaaaaaa-aaaa-4000-b000-000000000009].replicaset_uuid can not be changed',
-[[servers:
-  aaaaaaaa-aaaa-4000-b000-000000000009:
-    uri: localhost:3301
-    roles: ['vshard-storage']
-    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000000
-]],
-[[servers:
-  aaaaaaaa-aaaa-4000-b000-000000000009:
-    uri: localhost:3301
-    roles: ['vshard-storage']
-    replicaset_uuid: aaaaaaaa-1111-4000-b000-111111111111
-]])
+check_config('replicasets[aaaaaaaa-0000-4000-b000-000000000001]'..
+  ' has no servers',
+[[---
+servers:
+  aaaaaaaa-aaaa-4000-b000-000000000001: expelled
+replicasets:
+  aaaaaaaa-0000-4000-b000-000000000001:
+    master: aaaaaaaa-aaaa-4000-b000-000000000001
+    roles: {}
+...]])
 
-check_config('servers[aaaaaaaa-aaaa-4000-b000-000000000010].uri "localhost:3311" is not in membership',
-[[servers:
+check_config('replicasets[aaaaaaaa-0000-4000-b000-000000000001]'..
+  '.master does not exist',
+[[---
+servers:
+  aaaaaaaa-aaaa-4000-b000-000000000001:
+    uri: localhost:3301
+    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
+replicasets:
+  aaaaaaaa-0000-4000-b000-000000000001:
+    master: aaaaaaaa-aaaa-4000-b000-000000000002
+    roles: {}
+...]])
+
+check_config('replicasets[aaaaaaaa-0000-4000-b000-000000000001]'..
+  '.master is expelled',
+[[---
+servers:
+  aaaaaaaa-aaaa-4000-b000-000000000001:
+    uri: localhost:3301
+    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
+  aaaaaaaa-aaaa-4000-b000-000000000002: expelled
+replicasets:
+  aaaaaaaa-0000-4000-b000-000000000001:
+    master: aaaaaaaa-aaaa-4000-b000-000000000002
+    roles: {}
+...]])
+
+check_config('replicasets[bbbbbbbb-0000-4000-b000-000000000001]'..
+  '.master belongs to another replicaset',
+[[---
+servers:
+  aaaaaaaa-aaaa-4000-b000-000000000001:
+    uri: localhost:3301
+    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
+  bbbbbbbb-bbbb-4000-b000-000000000001:
+    uri: localhost:3302
+    replicaset_uuid: bbbbbbbb-0000-4000-b000-000000000001
+replicasets:
+  aaaaaaaa-0000-4000-b000-000000000001:
+    master: aaaaaaaa-aaaa-4000-b000-000000000001
+    roles: {}
+  bbbbbbbb-0000-4000-b000-000000000001:
+    master: aaaaaaaa-aaaa-4000-b000-000000000001
+    roles: {}
+...]])
+
+check_config('replicasets[aaaaaaaa-0000-4000-b000-000000000001]'..
+  ' unknown role "unknown"',
+[[---
+servers:
+  aaaaaaaa-aaaa-4000-b000-000000000001:
+    uri: localhost:3301
+    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
+replicasets:
+  aaaaaaaa-0000-4000-b000-000000000001:
+    master: aaaaaaaa-aaaa-4000-b000-000000000001
+    roles: {"unknown": true}
+...]])
+
+
+test:diag('validate_availability()')
+
+check_config('server "localhost:3311" is not in membership',
+[[---
+servers:
   aaaaaaaa-aaaa-4000-b000-000000000010:
     uri: localhost:3311
-    roles: ['vshard-storage']
-    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000000
-]])
+    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000010
+replicasets:
+  aaaaaaaa-0000-4000-b000-000000000010:
+    master: aaaaaaaa-aaaa-4000-b000-000000000010
+    roles: {"vshard-storage": true}
+...]])
 
-check_config('servers[aaaaaaaa-aaaa-4000-b000-000000000011].uri "localhost:3302" is unreachable with status "dead"',
-[[servers:
-  aaaaaaaa-aaaa-4000-b000-000000000011:
+check_config('server "localhost:3302" is unreachable with status "dead"',
+[[---
+servers:
+  aaaaaaaa-aaaa-4000-b000-000000000010:
     uri: localhost:3302
-    roles: ['vshard-storage']
-    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000000
-]])
+    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000010
+replicasets:
+  aaaaaaaa-0000-4000-b000-000000000010:
+    master: aaaaaaaa-aaaa-4000-b000-000000000010
+    roles: {"vshard-storage": true}
+...]])
 
-check_config('servers[aaaaaaaa-aaaa-4000-b000-000000000012].uri "localhost:3303" bootstrapped with different uuid "alien"',
-[[servers:
-  aaaaaaaa-aaaa-4000-b000-000000000012:
+check_config('server "localhost:3303" bootstrapped with different uuid "alien"',
+[[---
+servers:
+  aaaaaaaa-aaaa-4000-b000-000000000010:
     uri: localhost:3303
-    roles: ['vshard-storage']
-    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000000
-]])
+    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000010
+replicasets:
+  aaaaaaaa-0000-4000-b000-000000000010:
+    master: aaaaaaaa-aaaa-4000-b000-000000000010
+    roles: {"vshard-storage": true}
+...]])
 
-check_config('servers[aaaaaaaa-aaaa-4000-b000-000000000013].uri "localhost:3304" has error: err',
-[[servers:
-  aaaaaaaa-aaaa-4000-b000-000000000013:
+check_config('server "localhost:3304" has error: err',
+[[---
+servers:
+  aaaaaaaa-aaaa-4000-b000-000000000010:
     uri: localhost:3304
-    roles: ['vshard-storage']
-    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000000
-]])
+    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000010
+replicasets:
+  aaaaaaaa-0000-4000-b000-000000000010:
+    master: aaaaaaaa-aaaa-4000-b000-000000000010
+    roles: {"vshard-storage": true}
+...]])
 
-check_config('servers[aaaaaaaa-bbbb-4000-b000-000000000014].roles differ from '
-  .. 'servers[aaaaaaaa-aaaa-4000-b000-000000000014].roles within same replicaset',
-[[servers:
-  aaaaaaaa-aaaa-4000-b000-000000000014:
-    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000000
-    uri: localhost:3301
-    roles: ['vshard-storage']
-  aaaaaaaa-bbbb-4000-b000-000000000014:
-    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000000
-    uri: localhost:3301
-    roles: ['vshard-router']
-]])
 
-check_config('servers[aaaaaaaa-aaaa-4000-b000-000000000015].roles has duplicate roles "vshard-storage"',
-[[servers:
-  aaaaaaaa-aaaa-4000-b000-000000000015:
-    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000000
-    uri: localhost:3301
-    roles: ['vshard-storage', 'vshard-storage']
-]])
+test:diag('validate_upgrade()')
 
-check_config('servers[aaaaaaaa-aaaa-4000-b000-000000000016] is the last storage in replicaset and can not be expelled',
-[[servers:
-  aaaaaaaa-aaaa-4000-b000-000000000016: expelled
-]],
-[[servers:
-  aaaaaaaa-aaaa-4000-b000-000000000016:
+check_config('servers[aaaaaaaa-aaaa-4000-b000-000000000001]'..
+  ' can not be removed from config',
+
+[[---
+servers: {}
+...]],
+
+[[---
+servers:
+  aaaaaaaa-aaaa-4000-b000-000000000001: expelled
+...]])
+
+check_config('servers[aaaaaaaa-aaaa-4000-b000-000000000001] is expelled',
+[[---
+servers:
+  aaaaaaaa-aaaa-4000-b000-000000000001:
     uri: localhost:3301
-    roles: ['vshard-storage']
-    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000000
-]])
+    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
+replicasets:
+  aaaaaaaa-0000-4000-b000-000000000001:
+    master: aaaaaaaa-aaaa-4000-b000-000000000001
+    roles: {"vshard-storage": true}
+...]],
+
+[[---
+servers:
+  aaaaaaaa-aaaa-4000-b000-000000000001: expelled
+...]])
+
+check_config('servers[aaaaaaaa-aaaa-4000-b000-000000000001]'..
+  '.replicaset_uuid can not be changed',
+
+[[---
+servers:
+  aaaaaaaa-aaaa-4000-b000-000000000001:
+    uri: localhost:3301
+    replicaset_uuid: bbbbbbbb-0000-4000-b000-000000000001
+replicasets:
+  bbbbbbbb-0000-4000-b000-000000000001:
+    master: aaaaaaaa-aaaa-4000-b000-000000000001
+    roles: {}
+...]],
+
+[[---
+servers:
+  aaaaaaaa-aaaa-4000-b000-000000000001:
+    uri: localhost:3301
+    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
+...]])
+
+check_config('replicasets[aaaaaaaa-0000-4000-b000-000000000001]'..
+  ' is a vshard-storage and can not be removed',
+
+[[---
+servers:
+  aaaaaaaa-aaaa-4000-b000-000000000001: expelled
+...]],
+
+[[---
+servers:
+  aaaaaaaa-aaaa-4000-b000-000000000001:
+    uri: localhost:3301
+    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
+replicasets:
+  aaaaaaaa-0000-4000-b000-000000000001:
+    master: aaaaaaaa-aaaa-4000-b000-000000000001
+    roles: {"vshard-storage": true}
+...]])
+
+check_config('replicasets[aaaaaaaa-0000-4000-b000-000000000001].roles'..
+  ' vshard-storage can not be disabled',
+
+[[---
+servers:
+  aaaaaaaa-aaaa-4000-b000-000000000001:
+    uri: localhost:3301
+    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
+replicasets:
+  aaaaaaaa-0000-4000-b000-000000000001:
+    master: aaaaaaaa-aaaa-4000-b000-000000000001
+    roles: {}
+...]],
+
+[[---
+servers:
+  aaaaaaaa-aaaa-4000-b000-000000000001:
+    uri: localhost:3301
+    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
+replicasets:
+  aaaaaaaa-0000-4000-b000-000000000001:
+    master: aaaaaaaa-aaaa-4000-b000-000000000001
+    roles: {"vshard-storage": true}
+...]])
+
+
+test:diag('valid configs')
+
+check_config(true,
+[[---
+servers:
+  aaaaaaaa-aaaa-4000-b000-000000000001:
+    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
+    uri: localhost:3301
+replicasets:
+  aaaaaaaa-0000-4000-b000-000000000001:
+    master: aaaaaaaa-aaaa-4000-b000-000000000001
+    roles: {}
+...]])
+
+check_config(true,
+[[---
+servers:
+  aaaaaaaa-aaaa-4000-b000-000000000001:
+    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
+    uri: localhost:3301
+  aaaaaaaa-aaaa-4000-b000-000000000002:
+    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
+    uri: localhost:3331
+  bbbbbbbb-bbbb-4000-b000-000000000001: expelled
+replicasets:
+  aaaaaaaa-0000-4000-b000-000000000001:
+    master: aaaaaaaa-aaaa-4000-b000-000000000001
+    roles: {}
+...]])
 
 os.exit(test:check() and 0 or 1)
