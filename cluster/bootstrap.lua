@@ -210,7 +210,7 @@ local function bootstrap_from_snapshot(boot_opts, box_opts)
         binary_port = 'number',
     }, '?table')
 
-    local conf, err = confapplier.get_current(boot_opts.workdir)
+    local conf, err = confapplier.restore_from_workdir(opts.workdir)
     if conf == nil then
         return nil, err
     end

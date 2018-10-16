@@ -26,6 +26,7 @@ local e_atomic = errors.new_class('Atomic call failed')
 local e_config_load = errors.new_class('Loading configuration failed')
 local e_config_fetch = errors.new_class('Fetching configuration failed')
 local e_config_apply = errors.new_class('Applying configuration failed')
+local e_config_restore = errors.new_class('Restoring configuration failed')
 local e_config_validate = errors.new_class('Invalid config')
 local e_bootstrap_vshard = errors.new_class('Can not bootstrap vshard router now')
 
@@ -78,16 +79,16 @@ local function load_from_file(filename)
     return conf, err
 end
 
-local function get_current(workdir)
-    if vars.conf ~= nil then
-        return table.deepcopy(vars.conf)
-    end
+local function get_current()
+    return table.deepcopy(vars.conf)
+end
 
-    if not workdir then
-        -- box was not configured yet
-        return nil, e_config_load:new(
-            "Failed to load config, because box.cfg hasn't been called yet")
-    end
+local function restore_from_workdir(workdir)
+    checks('string')
+    e_config_restore:assert(
+        vars.conf == nil,
+        'config already loaded'
+    )
 
     local conf, err = load_from_file(
         utils.pathjoin(workdir, 'config.yml')
@@ -98,9 +99,10 @@ local function get_current(workdir)
         return nil, err
     end
 
-    vars.conf = table.deepcopy(conf)
+    vars.conf = conf
     topology.set(conf.servers)
-    return conf
+
+    return table.deepcopy(conf)
 end
 
 local function fetch_from_uri(uri)
@@ -379,6 +381,7 @@ end
 return {
     get_current = get_current,
     load_from_file = load_from_file,
+    restore_from_workdir = restore_from_workdir,
     fetch_from_membership = fetch_from_membership,
 
     validate = function(conf)
