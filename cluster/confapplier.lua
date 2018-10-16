@@ -79,8 +79,13 @@ local function load_from_file(filename)
     return conf, err
 end
 
-local function get_current()
-    return table.deepcopy(vars.conf)
+local function get_current(section)
+    checks('?string')
+    if section == nil then
+        return table.deepcopy(vars.conf)
+    else
+        return table.deepcopy(vars.conf[section])
+    end
 end
 
 local function restore_from_workdir(workdir)
