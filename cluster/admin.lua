@@ -70,6 +70,12 @@ end
 local function get_servers_and_replicasets()
     local members = membership.members()
     local topology_cfg = confapplier.get_current('topology')
+    if topology_cfg == nil then
+        topology_cfg = {
+            servers = {},
+            replicasets = {},
+        }
+    end
 
     local servers = {}
     local replicasets = {}
