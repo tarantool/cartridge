@@ -32,6 +32,26 @@ cluster = [
     )
 ]
 
+def test_self(cluster):
+    obj = cluster['router'].graphql("""
+        {
+            cluster {
+                self {
+                    uri
+                    uuid
+                    alias
+                }
+            }
+        }
+    """)
+
+    server_self = obj['data']['cluster']['self']
+    assert server_self == {
+        'uri': 'localhost:33001',
+        'uuid': 'aaaaaaaa-aaaa-4000-b000-000000000001',
+        'alias': 'router',
+    }
+
 def test_servers(cluster):
     obj = cluster['router'].graphql("""
         {
