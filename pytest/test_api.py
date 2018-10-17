@@ -186,6 +186,51 @@ def test_edit_replicaset(cluster):
         'servers': [{'uri': 'localhost:33002'}]
     } in replicasets
 
+def test_uninitialized(module_tmpdir, helpers):
+    srv = Server(
+        binary_port = 33101,
+        http_port = 8181,
+        alias = 'dummy'
+    )
+    srv.start(
+        workdir="{}/localhost-{}".format(module_tmpdir, srv.binary_port),
+    )
+
+    try:
+        helpers.wait_for(srv.ping_udp, timeout=5)
+
+        obj = srv.graphql("""
+            {
+                servers {
+                    uri
+                    replicaset { roles }
+                }
+                replicasets {
+                    status
+                }
+                cluster {
+                    self {
+                        uri
+                        uuid
+                        alias
+                    }
+                }
+            }
+        """)
+
+        servers = obj['data']['servers']
+        assert len(servers) == 1
+        assert servers[0] == {'uri': 'localhost:33101'}
+
+        replicasets = obj['data']['replicasets']
+        assert len(replicasets) == 0
+
+        server_self = obj['data']['cluster']['self']
+        assert server_self == {'uri': 'localhost:33101', 'alias': 'dummy'}
+
+    finally:
+        srv.kill()
+
 def test_join_server_fail(cluster, module_tmpdir, helpers):
     srv = Server(
         binary_port = 33003,
