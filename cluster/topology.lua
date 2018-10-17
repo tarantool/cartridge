@@ -30,7 +30,7 @@ vars:new('topology', {
         --         ['role-1'] = true,
         --         ['role-2'] = true,
         --     },
-        --     master_uuid = 'instance-uuid-2',
+        --     master = 'instance-uuid-2',
         -- }
     },
 })
@@ -38,17 +38,6 @@ vars:new('topology', {
 -- to be used in fun.filter
 local function not_expelled(uuid, srv)
     return srv ~= 'expelled'
-end
-
-local function is_expelled(uuid, srv)
-    return srv == 'expelled'
-end
-
-local function is_storage(uuid, srv)
-    if srv == 'expelled' then
-        return false
-    end
-    return utils.table_find(srv.roles, 'vshard-storage')
 end
 
 local function validate_schema(field, topology)
@@ -404,29 +393,6 @@ local function get_replication_config(replicaset_uuid)
     return replication
 end
 
-local function list_uri_with_enabled_role(role)
-    checks('string')
-
-    local ret = {}
-
-    for _it, instance_uuid, server in fun.filter(not_expelled, vars.servers) do
-        local member = membership.get_member(server.uri) or {}
-
-        if (not utils.table_find(server.roles, role)) -- ignore members without role
-            or (member.status ~= 'alive') -- ignore non-alive members
-            or (member.payload.uuid ~= instance_uuid) -- ignore misconfigured members
-            or (member.payload.error ~= nil) -- ignore misconfigured members
-        then
-            -- do nothing
-        else
-            table.insert(ret, server.uri)
-        end
-    end
-
-    return ret
-end
-
-
 return {
     set = function(servers)
         checks('table')
@@ -444,6 +410,4 @@ return {
     cluster_is_healthy = cluster_is_healthy,
     get_sharding_config = get_sharding_config,
     get_replication_config = get_replication_config,
-
-    list_uri_with_enabled_role = list_uri_with_enabled_role,
 }
