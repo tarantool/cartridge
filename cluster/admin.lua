@@ -85,6 +85,7 @@ local function get_servers_and_replicasets()
             uuid = replicaset_uuid,
             roles = {},
             status = 'healthy',
+            master = nil,
             servers = {},
         }
 
@@ -102,6 +103,9 @@ local function get_servers_and_replicasets()
 
         srv.replicaset = replicasets[server.replicaset_uuid]
 
+        if topology_cfg.replicasets[server.replicaset_uuid].master == instance_uuid then
+            srv.replicaset.master = srv
+        end
         if srv.status ~= 'healthy' then
             srv.replicaset.status = 'unhealthy'
         end
@@ -321,7 +325,8 @@ end
 local function edit_replicaset(args)
     checks({
         uuid = 'string',
-        roles = 'table',
+        roles = '?table',
+        master = '?string',
     })
 
     local topology_cfg = confapplier.get_current('topology')
@@ -331,9 +336,15 @@ local function edit_replicaset(args)
         return nil, e_topology_edit:new('Replicaset %q not in config', args.uuid)
     end
 
-    replicaset.roles = {}
-    for _, role in pairs(args.roles) do
-        replicaset.roles[role] = true
+    if args.roles ~= nil then
+        replicaset.roles = {}
+        for _, role in pairs(args.roles) do
+            replicaset.roles[role] = true
+        end
+    end
+
+    if args.master ~= nil then
+        replicaset.master = args.master
     end
 
     local ok, err = apply_topology(topology_cfg)

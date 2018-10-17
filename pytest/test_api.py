@@ -77,13 +77,14 @@ def test_servers(cluster):
         'replicaset': {'roles': []}
     } in servers
 
-def test_replicasets(cluster):
+def test_replicasets(cluster, helpers):
     obj = cluster['router'].graphql("""
         {
             replicasets {
                 uuid
                 roles
                 status
+                master { uuid }
                 servers { uri }
             }
         }
@@ -95,20 +96,23 @@ def test_replicasets(cluster):
         'uuid': 'aaaaaaaa-0000-4000-b000-000000000000',
         'roles': ['vshard-router'],
         'status': 'healthy',
+        'master': {'uuid': 'aaaaaaaa-aaaa-4000-b000-000000000001'},
         'servers': [{'uri': 'localhost:33001'}]
-    } in replicasets
+    } == helpers.find(replicasets, 'uuid', 'aaaaaaaa-0000-4000-b000-000000000000')
     assert {
         'uuid': 'bbbbbbbb-0000-4000-b000-000000000000',
         'roles': ['vshard-storage'],
         'status': 'healthy',
+        'master': {'uuid': 'bbbbbbbb-bbbb-4000-b000-000000000001'},
         'servers': [{'uri': 'localhost:33002'}]
-    } in replicasets
+    } == helpers.find(replicasets, 'uuid', 'bbbbbbbb-0000-4000-b000-000000000000')
     assert {
         'uuid': 'cccccccc-0000-4000-b000-000000000000',
         'roles': [],
         'status': 'healthy',
+        'master': {'uuid': 'cccccccc-cccc-4000-b000-000000000001'},
         'servers': [{'uri': 'localhost:33009'}]
-    } in replicasets
+    } == helpers.find(replicasets, 'uuid', 'cccccccc-0000-4000-b000-000000000000')
 
 def test_probe_server(cluster, module_tmpdir, helpers):
     srv = cluster['router']

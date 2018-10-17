@@ -43,6 +43,12 @@ class Helpers:
         # after timeout call fn once more to propagate exception
         return fn(*args, **kwargs)
 
+    @staticmethod
+    def find(array, key, value):
+        for item in array:
+            if item[key] == value:
+                return item
+
 @pytest.fixture(scope='session')
 def helpers():
     return Helpers
