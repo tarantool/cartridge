@@ -185,6 +185,10 @@ local function join_server(args)
     })
 
     local servers = topology.get()
+    local roles = {}
+    for _, role in pairs(args.roles or {}) do
+        roles[role] = true
+    end
 
     if args.instance_uuid == nil then
         args.instance_uuid = uuid_lib.str()
@@ -225,7 +229,7 @@ local function join_server(args)
         --       'ib-common.bootstrap' module
         if args.uri == membership.myself().uri then
             return package.loaded['cluster'].bootstrap(
-                args.roles,
+                roles,
                 {
                     instance_uuid = args.instance_uuid,
                     replicaset_uuid = args.replicaset_uuid,
@@ -341,7 +345,7 @@ local function bootstrap_vshard()
     local sharding_config = topology.get_sharding_config()
 
     if next(sharding_config) == nil then
-        return false
+        return nil, e_bootstrap_vshard:new('Sharding config is empty')
     end
 
     log.info('Bootstrapping vshard.router...')

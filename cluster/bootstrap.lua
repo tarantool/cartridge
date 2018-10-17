@@ -90,7 +90,10 @@ local function bootstrap_from_scratch(boot_opts, box_opts, roles)
     }, '?table', '?table')
 
     if roles == nil then
-        roles = {'vshard-router', 'vshard-storage'}
+        roles = {
+            ['vshard-router'] = true,
+            ['vshard-storage'] = false,
+        }
     end
     if boot_opts.instance_uuid == nil then
         boot_opts.instance_uuid = uuid_lib.str()
@@ -103,18 +106,21 @@ local function bootstrap_from_scratch(boot_opts, box_opts, roles)
 
     local conf = {
         bucket_count = 30000,
+        topology = {
+            servers = {
+                [boot_opts.instance_uuid] = {
+                    uri = membership.myself().uri,
+                    replicaset_uuid = boot_opts.replicaset_uuid,
+                },
+            },
+            replicasets = {
+                [boot_opts.replicaset_uuid] = {
+                    roles = roles,
+                    master = boot_opts.instance_uuid,
+                },
+            },
+        },
     }
-
-    -- TODO Load conf from file
-
-    do
-        conf.servers = conf.servers or {}
-        conf.servers[boot_opts.instance_uuid] = {
-            uri = membership.myself().uri,
-            roles = roles,
-            replicaset_uuid = boot_opts.replicaset_uuid,
-        }
-    end
 
     -- conf, err = model_ddl.config_save_ddl({}, conf)
     -- if conf == nil then
