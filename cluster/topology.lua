@@ -298,6 +298,22 @@ local function validate(topology_new, topology_old)
     return true
 end
 
+local function get_myself_uuids(topology)
+    checks('?table')
+    if topology == nil or topology.servers == nil then
+        return nil, nil
+    end
+
+    local advertise_uri = membership.myself().uri
+    for _it, instance_uuid, server in fun.filter(not_expelled, topology.servers) do
+        if server.uri == advertise_uri then
+            return instance_uuid, server.replicaset_uuid
+        end
+    end
+
+    return nil, nil
+end
+
 local function cluster_is_healthy()
     if next(vars.servers) == nil then
         return nil, 'not bootstrapped yet'
@@ -408,6 +424,7 @@ return {
     not_expelled = not_expelled,
 
     cluster_is_healthy = cluster_is_healthy,
+    get_myself_uuids = get_myself_uuids,
     get_sharding_config = get_sharding_config,
     get_replication_config = get_replication_config,
 }

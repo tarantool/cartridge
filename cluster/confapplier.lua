@@ -152,48 +152,19 @@ local function fetch_from_membership()
     return e_config_fetch:pcall(fetch_from_uri, candidates[math.random(#candidates)])
 end
 
--- Perform all checks, and answer the question: "Can I apply the given config?"
--- on success return instance_uuid, nil
--- on failure raise error (which will be catched in validate() function)
 local function validate(conf_new)
     e_config_validate:assert(
         type(conf_new) == 'table',
         'config must be a table'
     )
-    e_config_validate:assert(
-        type(conf_new.servers) == 'table',
-        'servers must be a table, got %s', type(conf_new.servers)
-    )
 
-    local conf_old = nil
-    local myself_uuid = nil
-    if type(box.cfg) == 'function' then
-        -- box.cfg was not configured yet
-        conf_old = {}
-
-        -- find myself by uri:
-        local myself_uri = membership.myself().uri
-        for uuid, server in pairs(conf_new.servers) do
-            if server.uri == myself_uri then
-                myself_uuid = uuid
-                break
-            end
-        end
-
-        e_config_validate:assert(
-            myself_uuid ~= nil,
-            'instance is not in the config'
-        )
-    else
-        conf_old = vars.conf
-        myself_uuid = box.info.uuid
-    end
+    local conf_old = vars.conf or {}
 
     e_config_validate:assert(
-        topology.validate(conf_new.servers, conf_old.servers)
+        topology.validate(conf_new.topology, conf_old.topology)
     )
 
-    return myself_uuid
+    return true
 end
 
 local function _apply(channel)
