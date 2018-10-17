@@ -132,7 +132,7 @@ local function bootstrap_from_scratch(boot_opts, box_opts, roles)
         return nil, err
     end
 
-    topology.set(conf.servers)
+    topology.set(conf.topology)
     -- local myself = conf.servers[instance_uuid]
     -- if myself == 'expelled' then
     --     log.error('Instance is expelled. Aborting.')
@@ -194,7 +194,7 @@ local function bootstrap_from_membership(boot_opts, box_opts)
     membership.set_payload('warning', nil)
 
     log.info('Config downloaded from membership')
-    topology.set(conf.servers)
+    topology.set(conf.topology)
 
     local box_opts = table.deepcopy(box_opts or {})
     box_opts.listen = boot_opts.binary_port

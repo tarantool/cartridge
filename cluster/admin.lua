@@ -150,13 +150,9 @@ local function get_replicasets(uuid)
     return ret
 end
 
-local function apply_topology(servers)
-    local conf, err = confapplier.get_current()
-    if not conf then
-        return nil, err
-    end
-
-    conf.servers = servers
+local function apply_topology(topology)
+    local conf = confapplier.get_current()
+    conf.topology = topology
 
     local ok, err = confapplier.clusterwide(conf)
     if not ok then
@@ -184,17 +180,24 @@ local function join_server(args)
         roles = '?table',
     })
 
-    local servers = topology.get()
     local roles = {}
     for _, role in pairs(args.roles or {}) do
         roles[role] = true
     end
 
+    local topology_cfg = confapplier.get_current('topology')
+    if topology_cfg == nil then
+        topology_cfg = {
+            servers = {},
+            replicasets = {},
+        }
+    end
+
     if args.instance_uuid == nil then
         args.instance_uuid = uuid_lib.str()
-    elseif servers[args.instance_uuid] ~= nil then
+    elseif topology_cfg.servers[args.instance_uuid] ~= nil then
         return nil, e_topology_edit:new(
-            'servers[%s] is already joined',
+            'Server %q is already joined',
             args.instance_uuid
         )
     end
@@ -221,12 +224,9 @@ local function join_server(args)
         )
     end
 
-    -- This case should work when we are bootstrapping first instance
-    -- from the web UI
-    if next(servers) == nil then
-        -- TODO: we call bootstrap here, because we don't know workdir passed
-        --       as command line arg. Make it accessible then refactor to
-        --       'ib-common.bootstrap' module
+    -- This case should work when we are bootstrapping
+    -- first instance from the web UI
+    if next(topology_cfg.servers) == nil then
         if args.uri == membership.myself().uri then
             return package.loaded['cluster'].bootstrap(
                 roles,
@@ -242,13 +242,18 @@ local function join_server(args)
             )
         end
     else
-        servers[args.instance_uuid] = {
+        topology_cfg.servers[args.instance_uuid] = {
             uri = args.uri,
             replicaset_uuid = args.replicaset_uuid,
-            roles = replicaset_roles or args.roles,
         }
+        if topology_cfg.replicasets[args.replicaset_uuid] == nil then
+            topology_cfg.replicasets[args.replicaset_uuid] = {
+                roles = roles,
+                master = args.instance_uuid,
+            }
+        end
 
-        local ok, err = apply_topology(servers)
+        local ok, err = apply_topology(topology_cfg)
         if not ok then
             return nil, err
         end
@@ -263,7 +268,7 @@ local function edit_server(args)
         uri = 'string',
     })
 
-    local servers = topology.get()
+    local topology_cfg = confapplier.get_current('topology')
 
     if servers[args.uuid] == nil then
         return nil, e_topology_edit:new('server %q not in config', args.uuid)
@@ -271,9 +276,9 @@ local function edit_server(args)
         return nil, e_topology_edit:new('servers[%s] is expelled', args.uuid)
     end
 
-    servers[args.uuid].uri = args.uri
+    topology_cfg.servers[args.uuid].uri = args.uri
 
-    local ok, err = apply_topology(servers)
+    local ok, err = apply_topology(topology_cfg)
     if not ok then
         return nil, err
     end
@@ -284,7 +289,7 @@ end
 local function expell_server(uuid)
     checks('string')
 
-    local servers = topology.get()
+    local topology_cfg = confapplier.get_current('topology')
 
     if servers[uuid] == nil then
         return nil, e_topology_edit:new('server %q not in config', uuid)
@@ -294,7 +299,7 @@ local function expell_server(uuid)
 
     servers[uuid] = "expelled"
 
-    local ok, err = apply_topology(servers)
+    local ok, err = apply_topology(topology_cfg)
     if not ok then
         return nil, err
     end
@@ -308,8 +313,8 @@ local function edit_replicaset(args)
         roles = 'table',
     })
 
-    local servers = topology.get()
-    local ok = false
+    local topology_cfg = confapplier.get_current('topology')
+    local replicaset = topology_cfg.replicasets[args.uuid]
 
     for _it, instance_uuid, server in fun.filter(topology.not_expelled, servers) do
         if server.replicaset_uuid == args.uuid then
@@ -322,7 +327,7 @@ local function edit_replicaset(args)
         return nil, e_topology_edit:new('Replicaset %q not in config', args.uuid)
     end
 
-    local ok, err = apply_topology(servers)
+    local ok, err = apply_topology(topology_cfg)
     if not ok then
         return nil, err
     end
@@ -333,8 +338,8 @@ end
 local function bootstrap_vshard()
     local info = vshard.router.info()
 
-    for uid, replicasets in pairs(info.replicasets or {}) do
-        local uri = replicasets.master.uri
+    for uid, replicaset in pairs(info.replicasets or {}) do
+        local uri = replicaset.master.uri
         local conn, err = pool.connect(uri)
 
         if conn == nil or conn:eval('return box.space._bucket == nil') then

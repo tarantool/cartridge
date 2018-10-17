@@ -81,6 +81,10 @@ end
 
 local function get_current(section)
     checks('?string')
+    if vars.conf == nil then
+        return nil
+    end
+
     if section == nil then
         return table.deepcopy(vars.conf)
     else
@@ -175,7 +179,7 @@ local function _apply(channel)
         end
 
         vars.conf = conf
-        topology.set(conf.servers)
+        topology.set(conf.topology)
 
         local replication = topology.get_replication_config(
             box.info.cluster.uuid
@@ -189,9 +193,9 @@ local function _apply(channel)
             log.error('%s', err)
         end
 
-        local roles = conf.servers[box.info.uuid].roles
+        local roles = conf.topology.replicasets[box.info.cluster.uuid].roles
 
-        if utils.table_find(roles, 'vshard-storage') then
+        if roles['vshard-storage'] then
             vshard.storage.cfg({
                 sharding = topology.get_sharding_config(),
                 bucket_count = conf.bucket_count,
@@ -203,7 +207,7 @@ local function _apply(channel)
             -- srv:apply_config(conf)
         end
 
-        if utils.table_find(roles, 'vshard-router') then
+        if roles['vshard-router'] then
             -- local srv = ibcore.server.new()
             -- srv:apply_config(conf)
             -- service_registry.set('ib-core', srv)
@@ -261,13 +265,10 @@ local function _clusterwide(conf_new)
         return nil, err
     end
 
-    local conf_old, err = get_current()
-    if not conf_old then
-        return nil, err
-    end
+    local conf_old = get_current()
 
-    local servers_new = conf_new.servers
-    local servers_old = topology.get()
+    local servers_new = conf_new.topology.servers
+    local servers_old = vars.conf.topology.servers
 
     local configured_uri_list = {}
     for uuid, _ in pairs(servers_new) do

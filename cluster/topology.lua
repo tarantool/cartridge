@@ -315,11 +315,11 @@ local function get_myself_uuids(topology)
 end
 
 local function cluster_is_healthy()
-    if next(vars.servers) == nil then
+    if next(vars.topology.servers) == nil then
         return nil, 'not bootstrapped yet'
     end
 
-    for _it, instance_uuid, server in fun.filter(not_expelled, vars.servers) do
+    for _it, instance_uuid, server in fun.filter(not_expelled, vars.topology.servers) do
         local member = membership.get_member(server.uri) or {}
 
         if (member.status ~= 'alive') then
@@ -395,10 +395,11 @@ local function get_sharding_config()
 end
 
 local function get_replication_config(replicaset_uuid)
+    checks('string')
     local replication = {}
     local advertise_uri = membership.myself().uri
 
-    for _it, instance_uuid, server in fun.filter(not_expelled, vars.servers) do
+    for _it, instance_uuid, server in fun.filter(not_expelled, vars.topology.servers) do
         if server.replicaset_uuid == replicaset_uuid
         and server.uri ~= advertise_uri then
             table.insert(replication, pool.format_uri(server.uri))
@@ -410,12 +411,12 @@ local function get_replication_config(replicaset_uuid)
 end
 
 return {
-    set = function(servers)
+    set = function(topology)
         checks('table')
-        vars.servers = servers
+        vars.topology = topology
     end,
     get = function()
-        return table.deepcopy(vars.servers)
+        return table.deepcopy(vars.topology)
     end,
     validate = function(...)
         return e_config:pcall(validate, ...)
