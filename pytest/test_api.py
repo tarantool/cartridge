@@ -219,31 +219,6 @@ def test_join_server_fail(cluster, module_tmpdir, helpers):
         assert obj['errors'][0]['message'] == \
             'Server "cccccccc-cccc-4000-b000-000000000001" is already joined'
 
-        obj = cluster['router'].graphql("""
-            mutation {
-                join_server(
-                    uri: "localhost:33003"
-                    instance_uuid: "bbbbbbbb-bbbb-4000-b000-000000000002"
-                    replicaset_uuid: "bbbbbbbb-0000-4000-b000-000000000000"
-                    roles: []
-                )
-            }
-        """)
-        assert obj['errors'][0]['message'] == \
-            'join_server() can not edit existing replicaset'
-
-        obj = cluster['router'].graphql("""
-            mutation {
-                join_server(
-                    uri: "localhost:33003"
-                    instance_uuid: "dddddddd-dddd-4000-b000-000000000001"
-                    replicaset_uuid: "dddddddd-0000-4000-b000-000000000000"
-                )
-            }
-        """)
-        assert obj['errors'][0]['message'] == \
-            'join_server() missing roles for new replicaset'
-
     finally:
         srv.kill()
 

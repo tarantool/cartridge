@@ -354,40 +354,26 @@ end
 local function get_sharding_config()
     local sharding = {}
 
-    for _it, instance_uuid, server in fun.filter(is_storage, vars.servers) do
-        local replicaset_uuid = server.replicaset_uuid
-        if sharding[replicaset_uuid] == nil then
-            sharding[replicaset_uuid] = {
-                replicas = {},
-                weight = 1,
-            }
-        end
+    for _it, instance_uuid, server in fun.filter(not_expelled, vars.topology.servers) do
+        local replicaset = vars.topology.replicasets[server.replicaset_uuid]
+        if replicaset.roles['vshard-storage'] then
+            if sharding[server.replicaset_uuid] == nil then
+                sharding[server.replicaset_uuid] = {
+                    replicas = {},
+                    weight = 1,
+                }
+            end
 
-        local member = membership.get_member(server.uri)
-        if not member
-        or member.status ~= 'alive'
-        or member.payload.error ~= nil then
-            -- ignore
-        else
-            sharding[replicaset_uuid].replicas[instance_uuid] = {
+            local replicas = sharding[server.replicaset_uuid].replicas
+            replicas[instance_uuid] = {
                 name = server.uri,
                 uri = pool.format_uri(server.uri),
+                master = false,
             }
-        end
-    end
 
-    for uid, replicaset in pairs(sharding) do
-        local min_uuid = next(replicaset.replicas)
-        for uuid, replica in pairs(replicaset.replicas) do
-            replica.master = false
-            if uuid < min_uuid then
-                min_uuid = uuid
+            if replicaset.master == instance_uuid then
+                replicas[instance_uuid].master = true
             end
-        end
-        if min_uuid ~= nil then
-            replicaset.replicas[min_uuid].master = true
-        else
-            log.warn('Empty replicaset %s!', uid)
         end
     end
 

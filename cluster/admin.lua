@@ -69,19 +69,32 @@ end
 
 local function get_servers_and_replicasets()
     local members = membership.members()
+    local topology_cfg = confapplier.get_current('topology')
 
     local servers = {}
     local replicasets = {}
 
-    for _it, instance_uuid, server in fun.filter(topology.not_expelled, topology.get()) do
-        local srv = get_server_info(members, instance_uuid, server.uri)
-
-        srv.replicaset = replicasets[server.replicaset_uuid] or {
-            uuid = server.replicaset_uuid,
-            roles = server.roles,
+    for replicaset_uuid, replicaset in pairs(topology_cfg.replicasets) do
+        replicasets[replicaset_uuid] = {
+            uuid = replicaset_uuid,
+            roles = {},
             status = 'healthy',
             servers = {},
         }
+
+        if replicaset.roles['vshard-router'] then
+            table.insert(replicasets[replicaset_uuid].roles, 'vshard-router')
+        end
+
+        if replicaset.roles['vshard-storage'] then
+            table.insert(replicasets[replicaset_uuid].roles, 'vshard-storage')
+        end
+    end
+
+    for _it, instance_uuid, server in fun.filter(topology.not_expelled, topology_cfg.servers) do
+        local srv = get_server_info(members, instance_uuid, server.uri)
+
+        srv.replicaset = replicasets[server.replicaset_uuid]
 
         if srv.status ~= 'healthy' then
             srv.replicaset.status = 'unhealthy'
@@ -89,7 +102,6 @@ local function get_servers_and_replicasets()
         table.insert(srv.replicaset.servers, srv)
 
         servers[instance_uuid] = srv
-        replicasets[server.replicaset_uuid] = srv.replicaset
     end
 
     for _, m in pairs(members) do
@@ -202,26 +214,8 @@ local function join_server(args)
         )
     end
 
-    local replicaset_roles = nil
     if args.replicaset_uuid == nil then
         args.replicaset_uuid = uuid_lib.str()
-    else
-        for _it, instance_uuid, server in fun.filter(topology.not_expelled, servers) do
-            if server.replicaset_uuid == args.replicaset_uuid then
-                replicaset_roles = server.roles
-                break
-            end
-        end
-    end
-
-    if replicaset_roles and args.roles ~= nil then
-        return nil, e_topology_edit:new(
-            'join_server() can not edit existing replicaset'
-        )
-    elseif not replicaset_roles and args.roles == nil then
-        return nil, e_topology_edit:new(
-            'join_server() missing roles for new replicaset'
-        )
     end
 
     -- This case should work when we are bootstrapping
@@ -270,10 +264,10 @@ local function edit_server(args)
 
     local topology_cfg = confapplier.get_current('topology')
 
-    if servers[args.uuid] == nil then
-        return nil, e_topology_edit:new('server %q not in config', args.uuid)
-    elseif servers[args.uuid] == "expelled" then
-        return nil, e_topology_edit:new('servers[%s] is expelled', args.uuid)
+    if topology_cfg.servers[args.uuid] == nil then
+        return nil, e_topology_edit:new('Server %q not in config', args.uuid)
+    elseif topology_cfg.servers[args.uuid] == "expelled" then
+        return nil, e_topology_edit:new('Server %q is expelled', args.uuid)
     end
 
     topology_cfg.servers[args.uuid].uri = args.uri
@@ -291,13 +285,24 @@ local function expell_server(uuid)
 
     local topology_cfg = confapplier.get_current('topology')
 
-    if servers[uuid] == nil then
-        return nil, e_topology_edit:new('server %q not in config', uuid)
-    elseif servers[uuid] == "expelled" then
-        return nil, e_topology_edit:new('servers[%s] is expelled', uuid)
+    if topology_cfg.servers[uuid] == nil then
+        return nil, e_topology_edit:new('Server %q not in config', uuid)
+    elseif topology_cfg.servers[uuid] == "expelled" then
+        return nil, e_topology_edit:new('Server %q is already expelled', uuid)
     end
 
-    servers[uuid] = "expelled"
+    local expell_replicaset = topology_cfg.servers[uuid].replicaset_uuid
+
+    topology_cfg.servers[uuid] = "expelled"
+
+    for _it, instance_uuid, server in fun.filter(topology.not_expelled, topology_cfg.servers) do
+        if server.replicaset_uuid == expell_replicaset then
+            expell_replicaset = nil
+        end
+    end
+    if expell_replicaset ~= nil then
+        topology_cfg.replicasets[expell_replicaset] = nil
+    end
 
     local ok, err = apply_topology(topology_cfg)
     if not ok then
@@ -316,15 +321,13 @@ local function edit_replicaset(args)
     local topology_cfg = confapplier.get_current('topology')
     local replicaset = topology_cfg.replicasets[args.uuid]
 
-    for _it, instance_uuid, server in fun.filter(topology.not_expelled, servers) do
-        if server.replicaset_uuid == args.uuid then
-            server.roles = args.roles
-            ok = true
-        end
+    if replicaset == nil then
+        return nil, e_topology_edit:new('Replicaset %q not in config', args.uuid)
     end
 
-    if not ok then
-        return nil, e_topology_edit:new('Replicaset %q not in config', args.uuid)
+    replicaset.roles = {}
+    for _, role in pairs(args.roles) do
+        replicaset.roles[role] = true
     end
 
     local ok, err = apply_topology(topology_cfg)
