@@ -117,8 +117,9 @@ const prepareColumnProps = (linked, clusterSelf, consoleServer, joinServer, crea
       render: record => {
         const consoleButtonVisible = false && record.status !== 'unconfigured';
         const handleConsoleClick = () => consoleServer(record);
-        const joinButtonsVisible = !record.uuid;
+        const joinButtonVisible = clusterSelf.configured && !record.uuid;
         const handleJoinClick = () => joinServer(record);
+        const createButtonVisible = !record.uuid;
         const handleCreateClick = () => createReplicaset(record);
         const expellButtonVisible = !!record.uuid;
         const handleExpellClick = () => expellServer(record);
@@ -136,7 +137,7 @@ const prepareColumnProps = (linked, clusterSelf, consoleServer, joinServer, crea
                 </button>
               )
               : null}
-            {joinButtonsVisible
+            {joinButtonVisible
               ? (
                 <button
                   type="button"
@@ -147,7 +148,7 @@ const prepareColumnProps = (linked, clusterSelf, consoleServer, joinServer, crea
                 </button>
               )
               : null}
-            {joinButtonsVisible
+            {createButtonVisible
               ? (
                 <button
                   type="button"

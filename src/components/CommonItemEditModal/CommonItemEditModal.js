@@ -165,6 +165,7 @@ class CommonItemEditModal extends React.PureComponent {
             type="text"
             name={field.key}
             value={value}
+            placeholder={field.placeholder}
             onChange={this.handleInputFieldChange}
             className="form-control" />
           {field.helpText

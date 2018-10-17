@@ -454,7 +454,7 @@ class Cluster extends React.Component {
       {
         probeServerModalVisible: false,
       },
-      () => probeServer(server),
+      () => probeServer({ uri: server.uri }),
     );
   };
 

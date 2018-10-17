@@ -21,6 +21,7 @@ const prepareFields = (replicasetList = []) => {
           hidden: true,
         },
       },
+      placeholder: 'Server URI, e.g. localhost:3301',
     },
     {
       key: 'replicasetUuid',

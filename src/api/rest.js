@@ -20,7 +20,7 @@ export const isRestErrorResponse
 
 export const getRestErrorMessage
   = error =>
-      error.message;
+    error.message || error.response;
 
 export const isRestAccessDeniedError
   = error =>
