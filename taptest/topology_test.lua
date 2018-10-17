@@ -40,7 +40,7 @@ local yaml = require('yaml')
 local topology = require('cluster.topology')
 local test = tap.test('topology.config')
 
-test:plan(32)
+test:plan(34)
 
 local function check_config(result, raw_new, raw_old)
     local cfg_new = raw_new and yaml.decode(raw_new) or {}
@@ -54,6 +54,11 @@ end
 test:diag('validate_schema()')
 
 test:diag('   servers keys')
+
+check_config('topology_new.servers must be a table, got string',
+[[---
+servers:
+...]])
 
 check_config('topology_new.servers must have string keys',
 [[---
@@ -111,6 +116,11 @@ servers:
 ...]])
 
 test:diag('   replicasets keys')
+
+check_config('topology_new.replicasets must be a table, got string',
+[[---
+replicasets:
+...]])
 
 check_config('topology_new.replicasets must have string keys',
 [[---
@@ -261,7 +271,7 @@ replicasets:
 
 test:diag('validate_availability()')
 
-check_config('server "localhost:3311" is not in membership',
+check_config('Server "localhost:3311" is not in membership',
 [[---
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000010:
@@ -273,7 +283,7 @@ replicasets:
     roles: {"vshard-storage": true}
 ...]])
 
-check_config('server "localhost:3302" is unreachable with status "dead"',
+check_config('Server "localhost:3302" is unreachable with status "dead"',
 [[---
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000010:
@@ -285,7 +295,7 @@ replicasets:
     roles: {"vshard-storage": true}
 ...]])
 
-check_config('server "localhost:3303" bootstrapped with different uuid "alien"',
+check_config('Server "localhost:3303" bootstrapped with different uuid "alien"',
 [[---
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000010:
@@ -297,7 +307,7 @@ replicasets:
     roles: {"vshard-storage": true}
 ...]])
 
-check_config('server "localhost:3304" has error: err',
+check_config('Server "localhost:3304" has error: err',
 [[---
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000010:
@@ -363,7 +373,7 @@ servers:
 ...]])
 
 check_config('replicasets[aaaaaaaa-0000-4000-b000-000000000001]'..
-  ' is a vshard-storage and can not be removed',
+  ' is a vshard-storage and can not be expelled',
 
 [[---
 servers:

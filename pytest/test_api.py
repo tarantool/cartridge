@@ -131,7 +131,7 @@ def test_edit_server(cluster):
         }
     """)
     assert obj['errors'][0]['message'] == \
-        'servers[aaaaaaaa-aaaa-4000-b000-000000000001].uri "localhost:3303" is not in membership'
+        'Server "localhost:3303" is not in membership'
 
     obj = cluster['router'].graphql("""
         mutation {
@@ -142,7 +142,7 @@ def test_edit_server(cluster):
         }
     """)
     assert obj['errors'][0]['message'] == \
-        'servers[cccccccc-cccc-4000-b000-000000000001] is expelled'
+        'Server "cccccccc-cccc-4000-b000-000000000001" is expelled'
 
     obj = cluster['router'].graphql("""
         mutation {
@@ -153,7 +153,7 @@ def test_edit_server(cluster):
         }
     """)
     assert obj['errors'][0]['message'] == \
-        'server "dddddddd-dddd-4000-b000-000000000001" not in config'
+        'Server "dddddddd-dddd-4000-b000-000000000001" not in config'
 
 def test_edit_replicaset(cluster):
     obj = cluster['router'].graphql("""
@@ -217,7 +217,7 @@ def test_join_server_fail(cluster, module_tmpdir, helpers):
             }
         """)
         assert obj['errors'][0]['message'] == \
-            'servers[cccccccc-cccc-4000-b000-000000000001] is already joined'
+            'Server "cccccccc-cccc-4000-b000-000000000001" is already joined'
 
         obj = cluster['router'].graphql("""
             mutation {

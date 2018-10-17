@@ -56,6 +56,16 @@ local function validate_schema(field, topology)
     local servers = topology.servers or {}
     local replicasets = topology.replicasets or {}
 
+    e_config:assert(
+        type(servers) == 'table',
+        '%s.servers must be a table, got %s', field, type(servers)
+    )
+
+    e_config:assert(
+        type(replicasets) == 'table',
+        '%s.replicasets must be a table, got %s', field, type(replicasets)
+    )
+
     for instance_uuid, server in pairs(servers) do
         e_config:assert(
             type(instance_uuid) == 'string',
@@ -210,24 +220,23 @@ local function validate_availability(topology)
         local member = membership.get_member(server.uri)
         e_config:assert(
             member ~= nil,
-            'server %q is not in membership', server.uri
+            'Server %q is not in membership', server.uri
         )
         e_config:assert(
             member.status == 'alive',
-            'server %q is unreachable with status %q',
+            'Server %q is unreachable with status %q',
             server.uri, member.status
         )
         e_config:assert(
             (member.payload.uuid == nil) or (member.payload.uuid == instance_uuid),
-            'server %q bootstrapped with different uuid %q',
+            'Server %q bootstrapped with different uuid %q',
             server.uri, member.payload.uuid
         )
         e_config:assert(
             member.payload.error == nil,
-            'server %q has error: %s',
+            'Server %q has error: %s',
             server.uri, member.payload.error
         )
-
     end
 end
 
@@ -269,7 +278,7 @@ local function validate_upgrade(topology_new, topology_old)
         if replicaset_old.roles['vshard-storage'] then
             e_config:assert(
                 replicaset_new ~= nil,
-                'replicasets[%s] is a vshard-storage and can not be removed', replicaset_uuid
+                'replicasets[%s] is a vshard-storage and can not be expelled', replicaset_uuid
             )
             e_config:assert(
                 replicaset_new.roles['vshard-storage'] == true,
@@ -281,8 +290,15 @@ end
 
 
 local function validate(topology_new, topology_old)
-    checks('table', '?table')
     topology_old = topology_old or {}
+    e_config:assert(
+        type(topology_new) == 'table',
+        'topology_new must be a table, got %s', type(topology_new)
+    )
+    e_config:assert(
+        type(topology_old) == 'table',
+        'topology_old must be a table, got %s', type(topology_old)
+    )
 
     validate_schema('topology_old', topology_old)
     validate_schema('topology_new', topology_new)
