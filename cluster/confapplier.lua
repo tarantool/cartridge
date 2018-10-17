@@ -307,16 +307,16 @@ local function _clusterwide(conf_new)
             'return package.loaded["cluster.confapplier"].apply(...)',
             {conf_new}
         )
-        configured_uri_list[uri] = true
-
-        if not ok then
+        if ok then
+            configured_uri_list[uri] = true
+        else
             log.error('%s', err)
             _apply_error = err
             break
         end
     end
 
-    if not _apply_error then
+    if _apply_error == nil then
         return true
     end
 
@@ -328,9 +328,8 @@ local function _clusterwide(conf_new)
                 return nil, err
             end
             local ok, err = rollback_error:pcall(
-                conn.call,
-                conn,
-                'confapplier.apply',
+                conn.eval, conn,
+                'return package.loaded["cluster.confapplier"].apply(...)',
                 {conf_old}
             )
             if not ok then
