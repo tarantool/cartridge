@@ -40,7 +40,7 @@ local yaml = require('yaml')
 local topology = require('cluster.topology')
 local test = tap.test('topology.config')
 
-test:plan(34)
+test:plan(36)
 
 local function check_config(result, raw_new, raw_old)
     local cfg_new = raw_new and yaml.decode(raw_new) or {}
@@ -52,6 +52,18 @@ end
 
 -- check_schema
 test:diag('validate_schema()')
+
+test:diag('   top-level keys')
+
+check_config('topology_new.failover must be boolean, got string',
+[[---
+failover:
+...]])
+
+check_config('topology_new has unknown parameter "unknown"',
+[[---
+unknown:
+...]])
 
 test:diag('   servers keys')
 

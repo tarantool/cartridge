@@ -46,6 +46,11 @@ local function validate_schema(field, topology)
     local replicasets = topology.replicasets or {}
 
     e_config:assert(
+        topology.failover == nil or type(topology.failover) == 'boolean',
+        '%s.failover must be boolean, got %s', field, type(topology.failover)
+    )
+
+    e_config:assert(
         type(servers) == 'table',
         '%s.servers must be a table, got %s', field, type(servers)
     )
@@ -145,6 +150,18 @@ local function validate_schema(field, topology)
                 '%s has unknown parameter %q', field, k
             )
         end
+    end
+
+    local known_keys = {
+        ['servers'] = true,
+        ['replicasets'] = true,
+        ['failover'] = true,
+    }
+    for k, v in pairs(topology) do
+        e_config:assert(
+            known_keys[k],
+            '%s has unknown parameter %q', field, k
+        )
     end
 end
 
