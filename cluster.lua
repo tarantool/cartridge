@@ -64,7 +64,7 @@ local function init(opts, box_opts)
     -- topology.set_password(cluster_cookie.cookie())
     local ok, err = membership.probe_uri(membership.myself().uri)
     if not ok then
-        return nil, e_init('Can not ping myself: %s', err)
+        return nil, e_init:new('Can not ping myself: %s', err)
     end
 
     -- broadcast several popular ports

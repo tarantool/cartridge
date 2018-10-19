@@ -109,7 +109,7 @@ local function restore_from_workdir(workdir)
     end
 
     vars.conf = conf
-    topology.set(conf.servers)
+    topology.set(conf.topology)
 
     return table.deepcopy(conf)
 end
@@ -126,9 +126,9 @@ end
 local function fetch_from_membership()
     local conf = get_current()
     if conf then
-        if conf.servers[box.info.uuid] == nil
-        or conf.servers[box.info.uuid] == 'expelled'
-        or utils.table_count(conf.servers) == 1
+        if conf.topology.servers[box.info.uuid] == nil
+        or conf.topology.servers[box.info.uuid] == 'expelled'
+        or utils.table_count(conf.topology.servers) == 1
         then
             return conf
         end
@@ -140,7 +140,7 @@ local function fetch_from_membership()
         or (member.payload.uuid == nil)  -- ignore non-configured members
         or (member.payload.error ~= nil) -- ignore misconfigured members
         or (conf and member.payload.uuid == box.info.uuid) -- ignore myself
-        or (conf and conf.servers[member.payload.uuid] == nil) -- ignore aliens
+        or (conf and conf.topology.servers[member.payload.uuid] == nil) -- ignore aliens
         then
             -- ignore that member
         else

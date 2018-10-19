@@ -258,7 +258,7 @@ local function bootstrap_from_snapshot(boot_opts, box_opts)
     --     return nil, err
     -- end
 
-    for _, server in pairs(conf.servers) do
+    for _, server in pairs(conf.topology.servers) do
         if server ~= 'expelled' then
             membership.add_member(server.uri)
         end
@@ -274,7 +274,7 @@ local function bootstrap_from_snapshot(boot_opts, box_opts)
     end
     membership.set_payload('warning', nil)
 
-    if remote_conf.servers[box.info.uuid] == 'expelled' then
+    if remote_conf.topology.servers[box.info.uuid] == 'expelled' then
         log.error('Instance was expelled')
         membership.set_payload('error', 'Instance was expelled')
         return true
@@ -285,10 +285,10 @@ local function bootstrap_from_snapshot(boot_opts, box_opts)
     end
 
     local myself_uri = membership.myself().uri
-    if myself_uri ~= conf.servers[box.info.uuid].uri then
+    if myself_uri ~= conf.topology.servers[box.info.uuid].uri then
         log.error('Mismatching advertise_uri.' ..
             ' Configured as %q, but running as %q',
-            conf.servers[box.info.uuid].uri,
+            conf.topology.servers[box.info.uuid].uri,
             myself_uri
         )
         membership.set_payload('warning',
