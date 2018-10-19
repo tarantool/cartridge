@@ -58,7 +58,10 @@ local function init(opts, box_opts)
     end
 
     log.info('Using advertise_uri "%s:%d"', advertise.host, advertise.service)
-    membership.init(advertise.host, advertise.service)
+    local ok, err = e_init:pcall(membership.init, advertise.host, advertise.service)
+    if not ok then
+        return nil, err
+    end
     membership.set_encryption_key(cluster_cookie.cookie())
     membership.set_payload('alias', opts.alias)
     -- topology.set_password(cluster_cookie.cookie())
