@@ -190,6 +190,17 @@ def test_edit_replicaset(cluster):
     """)
     assert 'errors' not in obj
 
+    obj = cluster['router'].graphql("""
+        mutation {
+            edit_replicaset(
+                uuid: "bbbbbbbb-0000-4000-b000-000000000000"
+                master: "bbbbbbbb-bbbb-4000-b000-000000000002"
+            )
+        }
+    """)
+    assert obj['errors'][0]['message'] == \
+        'replicasets[bbbbbbbb-0000-4000-b000-000000000000].master does not exist'
+
     obj = cluster['storage'].graphql("""
         {
             replicasets(uuid: "bbbbbbbb-0000-4000-b000-000000000000") {
