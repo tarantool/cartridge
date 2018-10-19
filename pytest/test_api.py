@@ -32,6 +32,18 @@ cluster = [
     )
 ]
 
+@pytest.fixture(scope="module")
+def expelled(cluster):
+    cluster['expelled'].kill()
+    obj = cluster['router'].graphql("""
+        mutation {
+            expell_server(
+                uuid: "cccccccc-cccc-4000-b000-000000000001"
+            )
+        }
+    """)
+    assert 'errors' not in obj
+
 def test_self(cluster):
     obj = cluster['router'].graphql("""
         {
@@ -52,7 +64,7 @@ def test_self(cluster):
         'alias': 'router',
     }
 
-def test_servers(cluster):
+def test_servers(cluster, expelled, helpers):
     obj = cluster['router'].graphql("""
         {
             servers {
@@ -63,21 +75,17 @@ def test_servers(cluster):
     """)
 
     servers = obj['data']['servers']
-    assert len(servers) == 3
     assert {
         'uri': 'localhost:33001',
         'replicaset': {'roles': ['vshard-router']}
-    } in servers
+    } == helpers.find(servers, 'uri', 'localhost:33001')
     assert {
         'uri': 'localhost:33002',
         'replicaset': {'roles': ['vshard-storage']}
-    } in servers
-    assert {
-        'uri': 'localhost:33009',
-        'replicaset': {'roles': []}
-    } in servers
+    } == helpers.find(servers, 'uri', 'localhost:33002')
+    assert len(servers) == 2
 
-def test_replicasets(cluster, helpers):
+def test_replicasets(cluster, expelled, helpers):
     obj = cluster['router'].graphql("""
         {
             replicasets {
@@ -91,7 +99,6 @@ def test_replicasets(cluster, helpers):
     """)
 
     replicasets = obj['data']['replicasets']
-    assert len(replicasets) == 3
     assert {
         'uuid': 'aaaaaaaa-0000-4000-b000-000000000000',
         'roles': ['vshard-router'],
@@ -106,15 +113,9 @@ def test_replicasets(cluster, helpers):
         'master': {'uuid': 'bbbbbbbb-bbbb-4000-b000-000000000001'},
         'servers': [{'uri': 'localhost:33002'}]
     } == helpers.find(replicasets, 'uuid', 'bbbbbbbb-0000-4000-b000-000000000000')
-    assert {
-        'uuid': 'cccccccc-0000-4000-b000-000000000000',
-        'roles': [],
-        'status': 'healthy',
-        'master': {'uuid': 'cccccccc-cccc-4000-b000-000000000001'},
-        'servers': [{'uri': 'localhost:33009'}]
-    } == helpers.find(replicasets, 'uuid', 'cccccccc-0000-4000-b000-000000000000')
+    assert len(replicasets) == 2
 
-def test_probe_server(cluster, module_tmpdir, helpers):
+def test_probe_server(cluster, expelled, module_tmpdir, helpers):
     srv = cluster['router']
     req = """mutation($uri: String!) { probe_server(uri:$uri) }"""
 
@@ -135,17 +136,7 @@ def test_probe_server(cluster, module_tmpdir, helpers):
     )
     assert obj['data']['probe_server'] == True
 
-def test_edit_server(cluster):
-    cluster['expelled'].kill()
-    obj = cluster['router'].graphql("""
-        mutation {
-            expell_server(
-                uuid: "cccccccc-cccc-4000-b000-000000000001"
-            )
-        }
-    """)
-    assert 'errors' not in obj
-
+def test_edit_server(cluster, expelled):
     obj = cluster['router'].graphql("""
         mutation {
             edit_server(
@@ -179,7 +170,7 @@ def test_edit_server(cluster):
     assert obj['errors'][0]['message'] == \
         'Server "dddddddd-dddd-4000-b000-000000000001" not in config'
 
-def test_edit_replicaset(cluster):
+def test_edit_replicaset(cluster, expelled):
     obj = cluster['router'].graphql("""
         mutation {
             edit_replicaset(
@@ -219,7 +210,7 @@ def test_edit_replicaset(cluster):
         'roles': ['vshard-router', 'vshard-storage'],
         'status': 'healthy',
         'servers': [{'uri': 'localhost:33002'}]
-    } in replicasets
+    } == replicasets[0]
 
 def test_uninitialized(module_tmpdir, helpers):
     srv = Server(
@@ -266,7 +257,7 @@ def test_uninitialized(module_tmpdir, helpers):
     finally:
         srv.kill()
 
-def test_join_server_fail(cluster, module_tmpdir, helpers):
+def test_join_server_fail(cluster, expelled, module_tmpdir, helpers):
     srv = Server(
         binary_port = 33003,
         http_port = 8083,
@@ -302,7 +293,7 @@ def test_join_server_fail(cluster, module_tmpdir, helpers):
     finally:
         srv.kill()
 
-def test_join_server_good(cluster, module_tmpdir, helpers):
+def test_join_server_good(cluster, expelled, module_tmpdir, helpers):
     srv = Server(
         binary_port = 33003,
         http_port = 8083,
@@ -362,7 +353,7 @@ def test_join_server_good(cluster, module_tmpdir, helpers):
                 'roles': [],
                 'status': 'healthy',
             }
-        } in servers
+        } == helpers.find(servers, 'uuid', 'dddddddd-dddd-4000-b000-000000000001')
 
     finally:
         srv.kill()
