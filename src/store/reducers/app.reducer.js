@@ -21,6 +21,7 @@ import {
   APP_SERVER_CONSOLE_EVAL_STRING_REQUEST_SUCCESS,
   APP_SERVER_CONSOLE_EVAL_STRING_REQUEST_ERROR,
   APP_SAVE_CONSOLE_STATE,
+  CLUSTER_PAGE_CREATE_REPLICASET_REQUEST_SUCCESS,
   CLUSTER_PAGE_STATE_RESET,
   APP_CREATE_MESSAGE,
   APP_SET_MESSAGE_DONE,
@@ -189,6 +190,12 @@ export const reducer = baseReducer(
         else {
           return state;
         }
+
+      case CLUSTER_PAGE_CREATE_REPLICASET_REQUEST_SUCCESS:
+        return {
+          ...state,
+          clusterSelf: action.payload.clusterSelf,
+        };
 
       case APP_CREATE_MESSAGE:
         return {

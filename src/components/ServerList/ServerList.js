@@ -119,7 +119,7 @@ const prepareColumnProps = (linked, clusterSelf, consoleServer, joinServer, crea
         const handleConsoleClick = () => consoleServer(record);
         const joinButtonVisible = clusterSelf.configured && !record.uuid;
         const handleJoinClick = () => joinServer(record);
-        const createButtonVisible = !record.uuid;
+        const createButtonVisible = clusterSelf.configured ? !record.uuid : record.uri === clusterSelf.uri;
         const handleCreateClick = () => createReplicaset(record);
         const expellButtonVisible = !!record.uuid;
         const handleExpellClick = () => expellServer(record);

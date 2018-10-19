@@ -37,6 +37,7 @@ import {
   CLUSTER_PAGE_STATE_RESET,
 } from 'src/store/actionTypes';
 import { baseSaga, getRequestSaga, getSignalRequestSaga } from 'src/store/commonRequest';
+import { getClusterSelf } from 'src/store/request/app.requests';
 import { getPageData, refreshLists, getServerStat, bootstrapVshard, probeServer, joinServer, createReplicaset,
   expellServer, editReplicaset, joinSingleServer, uploadConfig, applyTestConfig }
   from 'src/store/request/clusterPage.requests';
@@ -127,12 +128,38 @@ const joinServerRequestSaga = getRequestSaga(
   joinServer,
 );
 
-const createReplicasetRequestSaga = getRequestSaga(
-  CLUSTER_PAGE_CREATE_REPLICASET_REQUEST,
-  CLUSTER_PAGE_CREATE_REPLICASET_REQUEST_SUCCESS,
-  CLUSTER_PAGE_CREATE_REPLICASET_REQUEST_ERROR,
-  createReplicaset,
-);
+// const createReplicasetRequestSaga = getRequestSaga(
+//   CLUSTER_PAGE_CREATE_REPLICASET_REQUEST,
+//   CLUSTER_PAGE_CREATE_REPLICASET_REQUEST_SUCCESS,
+//   CLUSTER_PAGE_CREATE_REPLICASET_REQUEST_ERROR,
+//   createReplicaset,
+// );
+
+function* createReplicasetRequestSaga() {
+  yield takeLatest(CLUSTER_PAGE_CREATE_REPLICASET_REQUEST, function* load(action) {
+    const indicator = pageRequestIndicator.run();
+
+    let response;
+    try {
+      const createReplicasetResponse = yield call(createReplicaset, action.payload);
+      indicator.next();
+      const clusterSelfResponse = yield call(getClusterSelf);
+      indicator.success();
+
+      response = {
+        ...createReplicasetResponse,
+        ...clusterSelfResponse,
+      };
+    }
+    catch (error) {
+      yield put({ type: CLUSTER_PAGE_CREATE_REPLICASET_REQUEST_ERROR, error });
+      indicator.error();
+      return;
+    }
+
+    yield put({ type: CLUSTER_PAGE_CREATE_REPLICASET_REQUEST_SUCCESS, payload: response });
+  });
+}
 
 const expellServerRequestSaga = getRequestSaga(
   CLUSTER_PAGE_EXPELL_SERVER_REQUEST,
