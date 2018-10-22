@@ -67,6 +67,22 @@ def test_api(cluster):
     set_master(cluster, uuid_replicaset, uuid_s2)
     assert get_master(cluster, uuid_replicaset) == uuid_s2
 
+    obj = cluster['router'].graphql("""
+        {
+            cluster { failover }
+        }
+    """)
+    assert 'errors' not in obj
+    assert obj['data']['cluster'] == {'failover': False}
+
+    obj = cluster['router'].graphql("""
+        mutation {
+            cluster { failover(enabled: true) }
+        }
+    """)
+    assert 'errors' not in obj
+    assert obj['data']['cluster'] == {'failover': True}
+
     try:
         set_master(cluster, uuid_replicaset, "bbbbbbbb-bbbb-4000-b000-000000000003")
     except AssertionError as e:

@@ -357,6 +357,24 @@ local function edit_replicaset(args)
     return true
 end
 
+local function get_failover()
+    local topology_cfg = confapplier.get_current('topology')
+    return topology_cfg.failover or false, "no error"
+end
+
+local function set_failover(value)
+    checks('boolean')
+    local topology_cfg = confapplier.get_current('topology')
+    topology_cfg.failover = value
+
+    local ok, err = apply_topology(topology_cfg)
+    if not ok then
+        return nil, err
+    end
+
+    return topology_cfg.failover
+end
+
 local function bootstrap_vshard()
     local vshard_router = service_registry.get('vshard-router')
     if vshard_router == nil then
@@ -402,6 +420,9 @@ return {
     edit_server = edit_server,
     expell_server = expell_server,
     edit_replicaset = edit_replicaset,
+
+    get_failover = get_failover,
+    set_failover = set_failover,
 
     bootstrap_vshard = bootstrap_vshard,
 

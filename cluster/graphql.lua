@@ -43,7 +43,7 @@ local function funcall_wrap(fun_name)
 
         local res, err = funcall.call(fun_name, ...)
 
-        if not res then
+        if res == nil then
             error(err)
         end
 
@@ -284,7 +284,7 @@ local function _execute_graphql(req)
 
     local res, err = e_graphql_execute:pcall(execute.execute, schema_obj, ast, rootValue, variables, operationName)
 
-    if not res then
+    if res == nil then
         log.error('%s', err or "Unknown error")
         return {
             status = 200,
@@ -310,7 +310,7 @@ end
 
 local function execute_graphql(req)
     local resp, err = e_graphql_internal:pcall(_execute_graphql, req)
-    if not resp then
+    if resp == nil then
         log.error('%s', err)
         return {
             status = 500,
