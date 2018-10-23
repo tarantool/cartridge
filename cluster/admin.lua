@@ -359,7 +359,7 @@ end
 
 local function get_failover()
     local topology_cfg = confapplier.get_current('topology')
-    return topology_cfg.failover or false, "no error"
+    return topology_cfg.failover or false
 end
 
 local function set_failover(value)

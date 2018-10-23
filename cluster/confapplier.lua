@@ -23,6 +23,8 @@ yaml.cfg({
 
 local e_yaml = errors.new_class('Parsing yaml failed')
 local e_atomic = errors.new_class('Atomic call failed')
+local e_rollback = errors.new_class('Rollback failed')
+local e_failover = errors.new_class('Vshard failover failed')
 local e_config_load = errors.new_class('Loading configuration failed')
 local e_config_fetch = errors.new_class('Fetching configuration failed')
 local e_config_apply = errors.new_class('Applying configuration failed')
@@ -34,6 +36,8 @@ vars:new('conf')
 vars:new('locks', {})
 vars:new('applier_fiber', nil)
 vars:new('applier_channel', nil)
+vars:new('failover_fiber', nil)
+vars:new('failover_cond', nil)
 
 local function load_from_file(filename)
     checks('string')
@@ -171,6 +175,55 @@ local function validate(conf_new)
     return true
 end
 
+local function _failover(cond)
+    while true do
+        cond:wait()
+        local bucket_count = vars.conf.bucket_count
+        local cfg_new = topology.get_sharding_config()
+        local cfg_old = nil
+
+        local vshard_router = service_registry.get('vshard-router')
+        local vshard_storage = service_registry.get('vshard-storage')
+
+        if vshard_router and vshard_router.internal.current_cfg then
+            local cfg_old = vshard_router.internal.current_cfg.sharding
+        elseif vshard_storage and vshard_storage.internal.current_cfg then
+            local cfg_old = vshard_storage.internal.current_cfg.sharding
+        end
+
+        if not utils.deepcmp(cfg_new, cfg_old) then
+            if vshard_storage then
+                log.info('Reconfiguring vshard.storage...')
+                local cfg = {
+                    sharding = cfg_new,
+                    listen = box.cfg.listen,
+                    bucket_count = bucket_count,
+                    -- replication_connect_quorum = 0,
+                }
+                local _, err = e_failover:pcall(vshard_storage.cfg, cfg, box.info.uuid)
+                if err then
+                    log.error('%s', err)
+                end
+            end
+
+            if vshard_router then
+                log.info('Reconfiguring vshard.router...')
+                local cfg = {
+                    sharding = cfg_new,
+                    bucket_count = bucket_count,
+                    -- replication_connect_quorum = 0,
+                }
+                local _, err = e_failover:pcall(vshard_router.cfg, cfg, box.info.uuid)
+                if err then
+                    log.error('%s', err)
+                end
+            end
+
+            log.info('Failover step finished')
+        end
+    end
+end
+
 local function _apply(channel)
     while true do
         local conf = channel:get()
@@ -186,6 +239,7 @@ local function _apply(channel)
         )
         log.info('Setting replication to [%s]', table.concat(replication, ', '))
         local _, err = e_config_apply:pcall(box.cfg, {
+            replication_connect_timeout = 0.000001,
             replication_connect_quorum = 0,
             replication = replication,
         })
@@ -216,6 +270,23 @@ local function _apply(channel)
                 bucket_count = conf.bucket_count,
             })
             service_registry.set('vshard-router', vshard.router)
+        end
+        log.info('Config applied')
+
+        local failover_enabled = conf.topology.failover and (roles['vshard-storage'] or roles['vshard-router'])
+        local failover_running = vars.failover_fiber and vars.failover_fiber:status() ~= 'dead'
+
+        if failover_enabled and not failover_running then
+            vars.failover_cond = membership.subscribe()
+            vars.failover_fiber = fiber.create(_failover, vars.failover_cond)
+            vars.failover_fiber:name('cluster.failover')
+            log.info('vshard failover enabled')
+        elseif not failover_enabled and failover_running then
+            membership.unsubscribe(vars.failover_cond)
+            vars.failover_fiber:cancel()
+            vars.failover_fiber = nil
+            vars.failover_cond = nil
+            log.info('vshard failover disabled')
         end
     end
 end
@@ -327,7 +398,7 @@ local function _clusterwide(conf_new)
             if conn == nil then
                 return nil, err
             end
-            local ok, err = rollback_error:pcall(
+            local ok, err = e_rollback:pcall(
                 conn.eval, conn,
                 'return package.loaded["cluster.confapplier"].apply(...)',
                 {conf_old}

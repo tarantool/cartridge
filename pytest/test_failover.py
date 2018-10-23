@@ -3,7 +3,12 @@
 import json
 import time
 import pytest
+import logging
 from conftest import Server
+
+uuid_replicaset = "bbbbbbbb-0000-4000-b000-000000000000"
+uuid_s1 = "bbbbbbbb-bbbb-4000-b000-000000033011"
+uuid_s2 = "bbbbbbbb-bbbb-4000-b000-000000033012"
 
 cluster = [
     Server(
@@ -16,19 +21,19 @@ cluster = [
     ),
     Server(
         alias = 'storage-1',
-        instance_uuid = 'bbbbbbbb-bbbb-4000-b000-000000000001',
-        replicaset_uuid = 'bbbbbbbb-0000-4000-b000-000000000000',
+        instance_uuid = uuid_s1,
+        replicaset_uuid = uuid_replicaset,
         roles = ['vshard-storage'],
-        binary_port = 33002,
-        http_port = 8082,
+        binary_port = 33011,
+        http_port = 8181,
     ),
     Server(
         alias = 'storage-2',
-        instance_uuid = 'bbbbbbbb-bbbb-4000-b000-000000000002',
-        replicaset_uuid = 'bbbbbbbb-0000-4000-b000-000000000000',
+        instance_uuid = uuid_s2,
+        replicaset_uuid = uuid_replicaset,
         roles = ['vshard-storage'],
-        binary_port = 33003,
-        http_port = 8083,
+        binary_port = 33012,
+        http_port = 8182,
     )
 ]
 
@@ -56,32 +61,37 @@ def set_master(cluster, replicaset_uuid, master_uuid):
     """ % (replicaset_uuid, master_uuid))
     assert 'errors' not in obj
 
-
-def test_api(cluster):
-    uuid_replicaset = "bbbbbbbb-0000-4000-b000-000000000000"
-    uuid_s1 = "bbbbbbbb-bbbb-4000-b000-000000000001"
-    uuid_s2 = "bbbbbbbb-bbbb-4000-b000-000000000002"
-
-    set_master(cluster, uuid_replicaset, uuid_s1)
-    assert get_master(cluster, uuid_replicaset) == uuid_s1
-    set_master(cluster, uuid_replicaset, uuid_s2)
-    assert get_master(cluster, uuid_replicaset) == uuid_s2
-
+def get_failover(cluster):
     obj = cluster['router'].graphql("""
         {
             cluster { failover }
         }
     """)
     assert 'errors' not in obj
-    assert obj['data']['cluster'] == {'failover': False}
+    return obj['data']['cluster']['failover']
 
+def set_failover(cluster, enabled):
     obj = cluster['router'].graphql("""
         mutation {
-            cluster { failover(enabled: true) }
+            cluster { failover(enabled: %s) }
         }
-    """)
+    """ % ("true" if enabled else "false"))
     assert 'errors' not in obj
-    assert obj['data']['cluster'] == {'failover': True}
+    logging.warn('Failover %s' % 'enabled' if enabled else 'disabled')
+    return obj['data']['cluster']['failover']
+
+def callrw(cluster, fn, args=[]):
+    conn = cluster['router'].conn
+    resp = conn.call('vshard.router.callrw', (1, fn, args))
+    err = resp[1] if len(resp) > 1 else None
+    assert err == None
+    return resp[0]
+
+def test_api_master(cluster):
+    set_master(cluster, uuid_replicaset, uuid_s2)
+    assert get_master(cluster, uuid_replicaset) == uuid_s2
+    set_master(cluster, uuid_replicaset, uuid_s1)
+    assert get_master(cluster, uuid_replicaset) == uuid_s1
 
     try:
         set_master(cluster, uuid_replicaset, "bbbbbbbb-bbbb-4000-b000-000000000003")
@@ -90,3 +100,26 @@ def test_api(cluster):
     else:
         raise RuntimeError('Invalid mutation succeded')
 
+def test_api_failover(cluster):
+    assert set_failover(cluster, False) == False
+    assert get_failover(cluster) == False
+    assert set_failover(cluster, True) == True
+    assert get_failover(cluster) == True
+
+def test_switchover(cluster, helpers):
+    set_failover(cluster, False)
+
+    set_master(cluster, uuid_replicaset, uuid_s1)
+    assert helpers.wait_for(callrw, [cluster, 'get_uuid']) == uuid_s1
+
+    set_master(cluster, uuid_replicaset, uuid_s2)
+    assert helpers.wait_for(callrw, [cluster, 'get_uuid']) == uuid_s2
+
+def test_failover(cluster, helpers):
+    set_failover(cluster, True)
+
+    set_master(cluster, uuid_replicaset, uuid_s1)
+    assert helpers.wait_for(callrw, [cluster, 'get_uuid']) == uuid_s1
+    cluster['storage-1'].kill()
+    # Wait when router reconfigures
+    assert helpers.wait_for(callrw, [cluster, 'get_uuid']) == uuid_s2
