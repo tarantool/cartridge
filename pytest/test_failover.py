@@ -59,7 +59,7 @@ def set_master(cluster, replicaset_uuid, master_uuid):
             )
         }
     """ % (replicaset_uuid, master_uuid))
-    assert 'errors' not in obj
+    assert 'errors' not in obj, obj['errors'][0]['message']
 
 def get_failover(cluster):
     obj = cluster['router'].graphql("""
@@ -93,12 +93,10 @@ def test_api_master(cluster):
     set_master(cluster, uuid_replicaset, uuid_s1)
     assert get_master(cluster, uuid_replicaset) == uuid_s1
 
-    try:
-        set_master(cluster, uuid_replicaset, "bbbbbbbb-bbbb-4000-b000-000000000003")
-    except AssertionError as e:
-        pass
-    else:
-        raise RuntimeError('Invalid mutation succeded')
+    with pytest.raises(AssertionError) as excinfo:
+        set_master(cluster, uuid_replicaset, 'bbbbbbbb-bbbb-4000-b000-000000000003')
+    assert str(excinfo.value).split('\n', 1)[0] \
+        == 'replicasets[bbbbbbbb-0000-4000-b000-000000000000].master does not exist'
 
 def test_api_failover(cluster):
     assert set_failover(cluster, False) == False
