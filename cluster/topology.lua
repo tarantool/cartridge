@@ -425,7 +425,6 @@ local function get_vshard_sharding_config()
         shard.replicas[master_uuid].master = true
     end
 
-    require('log').warn('sharding:\n%s', require('yaml').encode(sharding))
     return sharding
 end
 
