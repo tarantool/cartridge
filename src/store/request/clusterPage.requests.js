@@ -26,6 +26,9 @@ export function getPageData() {
         uuid
         status
         roles
+        master {
+          uuid
+        }
         servers {
           uuid
           alias
@@ -70,6 +73,10 @@ export function refreshLists(params = {}) {
         uuid
         status
         roles
+        master {
+          uuid
+        }
+        servers
         servers {
           uuid
           alias

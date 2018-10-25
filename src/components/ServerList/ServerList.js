@@ -39,11 +39,15 @@ const prepareColumnProps = (linked, clusterSelf, consoleServer, joinServer, crea
       title: 'Name',
       renderText: record => {
         const aliasText = record.alias || 'No alias';
-        const uriText = record.uri;
+        let nameText = record.uri;
+        if (record.master) {
+          nameText += ' (master)';
+        }
+
         return (
           <span className="ServerList-name">
             <b className="ServerList-alias">{aliasText}</b>
-            <span className="ServerList-uri">{uriText}</span>
+            <span className="ServerList-uri">{nameText}</span>
             {record.message
               ? (
                 <React.Fragment>

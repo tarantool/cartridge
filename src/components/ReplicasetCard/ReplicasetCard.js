@@ -1,28 +1,35 @@
 import PropTypes from 'prop-types';
 import React from 'react';
+import { defaultMemoize } from 'reselect';
 
 import ServerList from 'src/components/ServerList';
 import cn from 'src/misc/cn';
 
 import './ReplicasetCard.css';
 
+const prepareServers = replicaset => {
+  const masterUuid = replicaset.master.uuid;
+  return replicaset.servers.map(server => server.uuid === masterUuid ? { ...server, master: true } : server );
+};
+
 class ReplicasetCard extends React.PureComponent {
   render() {
     const { clusterSelf, replicaset, consoleServer, joinServer, expellServer, createReplicaset } = this.props;
-    const shortUuid = replicaset.uuid.slice(0, 8);
-    const rolesString = replicaset.roles.join(', ');
+    const shortUuidText = replicaset.uuid.slice(0, 8);
+    const rolesText = replicaset.roles.join(', ');
     const indicatorClassName = cn(
       'ReplicasetCard-indicator',
       replicaset.status !== 'healthy' && 'ReplicasetCard-indicator--error',
     );
+    const servers = this.getServers();
 
     return (
       <div className="ReplicasetCard">
         <div className="ReplicasetCard-head">
           <div className="ReplicasetCard-name">
             <span className={indicatorClassName} />
-            <span className="ReplicasetCard-namePrimary">{shortUuid}</span>
-            <span className="ReplicasetCard-nameSecondary">{rolesString}</span>
+            <span className="ReplicasetCard-namePrimary">{shortUuidText}</span>
+            <span className="ReplicasetCard-nameSecondary">{rolesText}</span>
           </div>
           <div className="ReplicasetCard-actions">
             <button
@@ -34,14 +41,14 @@ class ReplicasetCard extends React.PureComponent {
             </button>
           </div>
         </div>
-        {replicaset.servers
+        {servers
           ? (
             <div className="ReplicasetCard-serverList">
               <ServerList
                 skin="light"
                 linked
                 clusterSelf={clusterSelf}
-                dataSource={replicaset.servers}
+                dataSource={servers}
                 consoleServer={consoleServer}
                 joinServer={joinServer}
                 expellServer={expellServer}
@@ -57,6 +64,13 @@ class ReplicasetCard extends React.PureComponent {
     const { replicaset, editReplicaset } = this.props;
     editReplicaset(replicaset);
   };
+
+  getServers = () => {
+    const { replicaset } = this.props;
+    return this.prepareServers(replicaset);
+  };
+
+  prepareServers = defaultMemoize(prepareServers);
 }
 
 ReplicasetCard.propTypes = {
