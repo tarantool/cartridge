@@ -557,7 +557,7 @@ class Cluster extends React.Component {
     history.push({
       search: addSearchParams(location.search, { r: null }),
     });
-    editReplicaset(replicaset);
+    editReplicaset({ uuid: replicaset.uuid, roles: replicaset.roles, master: replicaset.master });
   };
 
   saveConnectedServerConsoleState = () => {

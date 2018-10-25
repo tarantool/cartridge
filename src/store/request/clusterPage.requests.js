@@ -202,6 +202,7 @@ export function expellServer(params) {
  * @param {Object} params
  * @param {string} params.uuid
  * @param {string[]} params.roles
+ * @param {string} params.master
  */
 export function editReplicaset(params) {
   const graph = `
@@ -212,6 +213,7 @@ export function editReplicaset(params) {
       editReplicasetResponse: edit_replicaset(
         uuid: $uuid
         roles: $roles
+        master: $master
       )
     }`;
   return graphql.fetch(graph, params);

@@ -14,7 +14,7 @@ const parseOptionFormName = optionFormName => {
   }
 };
 
-const prepareFields = (shouldCreateItem, fields) => fields
+const prepareFields = (shouldCreateItem, fields, dataSource) => fields
   .map(field => {
     const { customProps = {}, ...other } = field;
     return {
@@ -22,7 +22,17 @@ const prepareFields = (shouldCreateItem, fields) => fields
       ...(shouldCreateItem ? customProps.create : customProps.edit),
     };
   })
-  .filter(field => ! field.hidden);
+  .map(field => {
+    return typeof field.options === 'function'
+      ? { ...field, options: field.options(dataSource) }
+      : field;
+  })
+  .filter(field => {
+    return ! (typeof field.hidden === 'function'
+      ? field.hidden(dataSource)
+      : field.hidden
+    );
+  });
 
 class CommonItemEditModal extends React.PureComponent {
   constructor(props) {
@@ -308,8 +318,8 @@ class CommonItemEditModal extends React.PureComponent {
   };
 
   getFields = () => {
-    const { shouldCreateItem, fields } = this.props;
-    return this.prepareFields(shouldCreateItem, fields);
+    const { shouldCreateItem, fields, dataSource } = this.props;
+    return this.prepareFields(shouldCreateItem, fields, dataSource);
   };
 }
 
@@ -324,12 +334,18 @@ CommonItemEditModal.propTypes = {
   shouldCreateItem: PropTypes.bool,
   fields: PropTypes.arrayOf(PropTypes.shape({
     key: PropTypes.string.isRequired,
-    hidden: PropTypes.bool,
+    hidden: PropTypes.oneOfType([
+      PropTypes.bool,
+      PropTypes.func,
+    ]),
     type: PropTypes.oneOf(['input', 'checkboxGroup', 'optionGroup']),
-    options: PropTypes.arrayOf(PropTypes.shape({
-      key: PropTypes.string.isRequired,
-      label: PropTypes.node,
-    })),
+    options: PropTypes.oneOfType([
+      PropTypes.arrayOf(PropTypes.shape({
+        key: PropTypes.string.isRequired,
+        label: PropTypes.node,
+      })),
+      PropTypes.func,
+    ]),
     title: PropTypes.string,
     helpText: PropTypes.string,
     customProps: PropTypes.shape({

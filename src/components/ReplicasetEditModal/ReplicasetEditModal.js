@@ -1,5 +1,6 @@
 import PropTypes from 'prop-types';
 import React from 'react';
+import { defaultMemoize } from 'reselect';
 
 import CommonItemEditModal from 'src/components/CommonItemEditModal';
 
@@ -25,12 +26,36 @@ const fields = [
       },
     ],
   },
+  {
+    key: 'master',
+    title: 'Master',
+    type: 'optionGroup',
+    options: record => {
+      return record.servers.map(server => ({
+        key: server.uuid,
+        label: `${server.alias || 'No alias'} ${server.uri}`,
+      }));
+    },
+    hidden: record => record.servers.length <= 1,
+    customProps: {
+      create: {
+        hidden: true,
+      },
+    },
+  },
 ];
 
-const getReplicasetDefaultDataSource = () => {
+const defaultDataSource =  {
+  uuid: null,
+  roles: [],
+  master: null,
+  servers: [],
+};
+
+const prepareDataSource = replicaset => {
   return {
-    uuid: null,
-    roles: [],
+    ...replicaset,
+    master: replicaset.master.uuid,
   };
 };
 
@@ -41,7 +66,7 @@ class ReplicasetEditModal extends React.PureComponent {
 
     const dataSource = isLoading
       ? null
-      : shouldCreateReplicaset ? getReplicasetDefaultDataSource() : replicaset;
+      : shouldCreateReplicaset ? defaultDataSource : this.getDataSource(replicaset);
 
     return (
       <CommonItemEditModal
@@ -57,6 +82,13 @@ class ReplicasetEditModal extends React.PureComponent {
         onRequestClose={onRequestClose} />
     );
   }
+
+  getDataSource = () => {
+    const { replicaset } = this.props;
+    return this.prepareDataSource(replicaset);
+  };
+
+  prepareDataSource = defaultMemoize(prepareDataSource);
 }
 
 ReplicasetEditModal.propTypes = {
