@@ -36,7 +36,6 @@ const fields = [
         label: `${server.alias || 'No alias'} ${server.uri}`,
       }));
     },
-    hidden: record => record.servers.length <= 1,
     customProps: {
       create: {
         hidden: true,
