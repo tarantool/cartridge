@@ -208,7 +208,8 @@ export function editReplicaset(params) {
   const graph = `
     mutation(
       $uuid: String!,
-      $roles: [String!]
+      $roles: [String!],
+      $master: String!
     ) {
       editReplicasetResponse: edit_replicaset(
         uuid: $uuid
