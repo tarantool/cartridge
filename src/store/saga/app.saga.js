@@ -41,10 +41,9 @@ function* appDataRequestSaga() {
     let response;
     try {
       const clusterSelfResponse = yield call(getClusterSelf);
-      const { clusterSelf } = clusterSelfResponse;
 
       response = {
-        clusterSelf,
+        ...clusterSelfResponse,
         isAnonymousAllowed: true,
         authenticated: null,
       };

@@ -12,6 +12,7 @@ import {
   CLUSTER_PAGE_REPLICASET_EDIT_REQUEST,
   CLUSTER_PAGE_UPLOAD_CONFIG_REQUEST,
   CLUSTER_PAGE_APPLY_TEST_CONFIG_REQUEST,
+  CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST,
   CLUSTER_PAGE_STATE_RESET,
 } from 'src/store/actionTypes';
 import { getActionCreator, getPageMountActionCreator } from 'src/store/commonRequest';
@@ -69,7 +70,6 @@ export const expellServer = getActionCreator(CLUSTER_PAGE_EXPELL_SERVER_REQUEST,
   successMessage: 'Expell is OK. Please wait for list refresh...',
 });
 
-
 /**
  * @param {Object} payload
  * @param {string} payload.uuid
@@ -93,3 +93,11 @@ export const applyTestConfig = getActionCreator(CLUSTER_PAGE_APPLY_TEST_CONFIG_R
  * @param {object} params.consoleState
  */
 export const resetPageState = getActionCreator(CLUSTER_PAGE_STATE_RESET);
+
+/**
+ * @param {Object} payload
+ * @param {boolean} payload.enabled
+ */
+export const changeFailover = getActionCreator(CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST, null, {
+  successMessage: 'Failover change is OK...',
+});

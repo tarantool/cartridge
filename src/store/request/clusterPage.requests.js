@@ -1,5 +1,6 @@
 import graphql from 'src/api/graphql';
 import rest from 'src/api/rest';
+import { getClusterSelf } from 'src/store/request/app.requests';
 
 const filterServerStat = response => {
   const serverStat = response.serverStat.filter(stat => stat.uuid && ! (stat.statistics.length === 0));
@@ -248,4 +249,29 @@ export function applyTestConfig() {
       }
     }`;
   return graphql.fetch(graph);
+}
+
+/**
+ * @param {Object} params
+ * @param {boolean} params.enabled
+ */
+export async function changeFailover(params) {
+  const graph = `
+    mutation (
+      $enabled: Boolean!,
+    ) {
+      cluster {
+        failover(
+          enabled: $enabled
+        )
+      }
+    }`;
+  const changeFailoverResponse = await graphql.fetch(graph, params);
+  const clusterSelfResponse = await getClusterSelf();
+  return {
+    changeFailoverResponse: {
+      changeFailover: changeFailoverResponse,
+      clusterSelf: clusterSelfResponse,
+    },
+  };
 }

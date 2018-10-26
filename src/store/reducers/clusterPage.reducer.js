@@ -34,6 +34,9 @@ import {
   CLUSTER_PAGE_APPLY_TEST_CONFIG_REQUEST,
   CLUSTER_PAGE_APPLY_TEST_CONFIG_REQUEST_SUCCESS,
   CLUSTER_PAGE_APPLY_TEST_CONFIG_REQUEST_ERROR,
+  CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST,
+  CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_SUCCESS,
+  CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_ERROR,
   CLUSTER_PAGE_STATE_RESET,
 } from 'src/store/actionTypes';
 import { baseReducer, getInitialRequestStatus, getPageMountReducer, getReducer, getRequestReducer }
@@ -64,6 +67,8 @@ export const initialState = {
   uploadConfigResponse: null,
   applyTestConfigRequestStatus: getInitialRequestStatus(),
   applyTestConfigResponse: null,
+  changeFailoverRequestStatus: getInitialRequestStatus(),
+  changeFailoverResponse: null,
 };
 
 const pageMountReducer = getPageMountReducer(CLUSTER_PAGE_DID_MOUNT);
@@ -138,6 +143,13 @@ const applyTestConfigRequestReducer = getRequestReducer(
   'applyTestConfigResponse',
 );
 
+const changeFailoverRequestReducer = getRequestReducer(
+  CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST,
+  CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_SUCCESS,
+  CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_ERROR,
+  'changeFailoverRequestStatus',
+);
+
 const pageStateResetReducer = getReducer(CLUSTER_PAGE_STATE_RESET, initialState);
 
 export const reducer = baseReducer(
@@ -153,6 +165,7 @@ export const reducer = baseReducer(
   editReplicasetRequestReducer,
   uploadConfigRequestReducer,
   applyTestConfigRequestReducer,
+  changeFailoverRequestReducer,
   pageStateResetReducer,
 )(
   (state, action) => {

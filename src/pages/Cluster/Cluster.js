@@ -4,6 +4,7 @@ import { defaultMemoize } from 'reselect';
 import { getServerName } from 'src/app/misc';
 import AppBottomConsole from 'src/components/AppBottomConsole';
 import ClusterConfigManagement from 'src/components/ClusterConfigManagement';
+import FailoverManagement from 'src/components/FailoverManagement';
 import ServerConsole from 'src/components/ServerConsole';
 import Modal from 'src/components/Modal';
 import PageDataErrorMessage from 'src/components/PageDataErrorMessage';
@@ -193,6 +194,10 @@ class Cluster extends React.Component {
                 )
                 : null}
 
+              {clusterSelf.configured
+                ? this.renderFailoverManagement()
+                : null}
+
               {false
                 ? (
                   <div className="pages-Cluster-configurationCard tr-card">
@@ -216,6 +221,16 @@ class Cluster extends React.Component {
           </div>
         </div>
       </React.Fragment>
+    );
+  };
+
+  renderFailoverManagement = () => {
+    const { failover, changeFailover } = this.props;
+
+    return (
+      <FailoverManagement
+        failoverEnabled={failover}
+        onFailoverChangeRequest={changeFailover} />
     );
   };
 

@@ -4,13 +4,14 @@ import { evalString, saveConsoleState } from 'src/store/actions/app.actions';
 import { createMessage } from 'src/store/actions/app.actions';
 import { pageDidMount, selectServer, closeServerPopup, selectReplicaset, closeReplicasetPopup, bootstrapVshard,
   probeServer, joinServer, createReplicaset, expellServer, editReplicaset, uploadConfig, applyTestConfig,
-  resetPageState } from 'src/store/actions/clusterPage.actions';
+  changeFailover, resetPageState } from 'src/store/actions/clusterPage.actions';
 import Cluster from './Cluster';
 
 const mapStateToProps = state => {
   const {
     app: {
       clusterSelf,
+      failover,
       evalResult,
       savedConsoleState,
     },
@@ -28,6 +29,7 @@ const mapStateToProps = state => {
 
   return {
     clusterSelf,
+    failover,
     evalResult,
     savedConsoleState,
     pageMount,
@@ -58,6 +60,7 @@ const mapDispatchToProps = {
   uploadConfig,
   applyTestConfig,
   createMessage,
+  changeFailover,
   resetPageState,
 };
 

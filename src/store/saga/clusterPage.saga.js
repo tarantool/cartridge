@@ -34,12 +34,15 @@ import {
   CLUSTER_PAGE_APPLY_TEST_CONFIG_REQUEST,
   CLUSTER_PAGE_APPLY_TEST_CONFIG_REQUEST_SUCCESS,
   CLUSTER_PAGE_APPLY_TEST_CONFIG_REQUEST_ERROR,
+  CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST,
+  CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_SUCCESS,
+  CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_ERROR,
   CLUSTER_PAGE_STATE_RESET,
 } from 'src/store/actionTypes';
 import { baseSaga, getRequestSaga, getSignalRequestSaga } from 'src/store/commonRequest';
 import { getClusterSelf } from 'src/store/request/app.requests';
 import { getPageData, refreshLists, getServerStat, bootstrapVshard, probeServer, joinServer, createReplicaset,
-  expellServer, editReplicaset, joinSingleServer, uploadConfig, applyTestConfig }
+  expellServer, editReplicaset, joinSingleServer, uploadConfig, applyTestConfig, changeFailover }
   from 'src/store/request/clusterPage.requests';
 
 const REFRESH_LIST_INTERVAL = 2500;
@@ -128,13 +131,6 @@ const joinServerRequestSaga = getRequestSaga(
   joinServer,
 );
 
-// const createReplicasetRequestSaga = getRequestSaga(
-//   CLUSTER_PAGE_CREATE_REPLICASET_REQUEST,
-//   CLUSTER_PAGE_CREATE_REPLICASET_REQUEST_SUCCESS,
-//   CLUSTER_PAGE_CREATE_REPLICASET_REQUEST_ERROR,
-//   createReplicaset,
-// );
-
 function* createReplicasetRequestSaga() {
   yield takeLatest(CLUSTER_PAGE_CREATE_REPLICASET_REQUEST, function* load(action) {
     const indicator = pageRequestIndicator.run();
@@ -201,7 +197,14 @@ function* applyTestConfigRequestSaga() {
 
     yield put({ type: CLUSTER_PAGE_APPLY_TEST_CONFIG_REQUEST_SUCCESS, payload: response });
   });
-};
+}
+
+const changeFailoverRequestSaga = getRequestSaga(
+  CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST,
+  CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_SUCCESS,
+  CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_ERROR,
+  changeFailover,
+);
 
 export const saga = baseSaga(
   pageDataRequestSaga,
@@ -214,4 +217,5 @@ export const saga = baseSaga(
   editReplicasetRequestSaga,
   uploadConfigRequestSaga,
   applyTestConfigRequestSaga,
+  changeFailoverRequestSaga,
 );

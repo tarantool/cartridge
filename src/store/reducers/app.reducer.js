@@ -22,6 +22,7 @@ import {
   APP_SERVER_CONSOLE_EVAL_STRING_REQUEST_ERROR,
   APP_SAVE_CONSOLE_STATE,
   CLUSTER_PAGE_CREATE_REPLICASET_REQUEST_SUCCESS,
+  CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_SUCCESS,
   CLUSTER_PAGE_STATE_RESET,
   APP_CREATE_MESSAGE,
   APP_SET_MESSAGE_DONE,
@@ -37,6 +38,7 @@ const initialState = {
   appDataRequestStatus: getInitialRequestStatus(),
   appDataRequestErrorMessage: null,
   clusterSelf: null,
+  failover: null,
   isAnonymousAllowed: null,
   authenticated: null,
   loginRequestStatus: getInitialRequestStatus(),
@@ -195,6 +197,14 @@ export const reducer = baseReducer(
         return {
           ...state,
           clusterSelf: action.payload.clusterSelf,
+          failover: action.payload.failover,
+        };
+
+      case CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_SUCCESS:
+        return {
+          ...state,
+          clusterSelf: action.payload.changeFailoverResponse.clusterSelf.clusterSelf,
+          failover: action.payload.changeFailoverResponse.clusterSelf.failover,
         };
 
       case APP_CREATE_MESSAGE:
