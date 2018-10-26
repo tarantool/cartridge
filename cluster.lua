@@ -23,6 +23,7 @@ local function init(opts, box_opts)
         workdir = 'string',
         advertise_uri = 'string',
         cluster_cookie = '?string',
+        bucket_count = '?number',
         alias = '?string',
     }, '?table')
 
@@ -58,13 +59,16 @@ local function init(opts, box_opts)
     end
 
     log.info('Using advertise_uri "%s:%d"', advertise.host, advertise.service)
-    membership.init(advertise.host, advertise.service)
+    local ok, err = e_init:pcall(membership.init, advertise.host, advertise.service)
+    if not ok then
+        return nil, err
+    end
     membership.set_encryption_key(cluster_cookie.cookie())
     membership.set_payload('alias', opts.alias)
     -- topology.set_password(cluster_cookie.cookie())
     local ok, err = membership.probe_uri(membership.myself().uri)
     if not ok then
-        return nil, e_init('Can not ping myself: %s', err)
+        return nil, e_init:new('Can not ping myself: %s', err)
     end
 
     -- broadcast several popular ports
@@ -101,6 +105,7 @@ local function init(opts, box_opts)
             })
 
             local _boot_opts = table.copy(boot_opts)
+            _boot_opts.bucket_count = opts.bucket_count
             _boot_opts.instance_uuid = uuids.instance_uuid
             _boot_opts.replicaset_uuid = uuids.replicaset_uuid
             return bootstrap.from_scratch(_boot_opts, box_opts, roles)

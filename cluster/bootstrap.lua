@@ -85,12 +85,16 @@ local function bootstrap_from_scratch(boot_opts, box_opts, roles)
     checks({
         workdir = 'string',
         binary_port = 'number',
+        bucket_count = '?number',
         instance_uuid = '?uuid_str',
         replicaset_uuid = '?uuid_str',
     }, '?table', '?table')
 
     if roles == nil then
-        roles = {'vshard-router', 'vshard-storage'}
+        roles = {
+            ['vshard-router'] = true,
+            ['vshard-storage'] = false,
+        }
     end
     if boot_opts.instance_uuid == nil then
         boot_opts.instance_uuid = uuid_lib.str()
@@ -102,31 +106,34 @@ local function bootstrap_from_scratch(boot_opts, box_opts, roles)
     log.info('\nTrying to bootstrap from scratch...')
 
     local conf = {
-        bucket_count = 30000,
+        bucket_count = boot_opts.bucket_count or 30000,
+        topology = {
+            servers = {
+                [boot_opts.instance_uuid] = {
+                    uri = membership.myself().uri,
+                    replicaset_uuid = boot_opts.replicaset_uuid,
+                },
+            },
+            replicasets = {
+                [boot_opts.replicaset_uuid] = {
+                    roles = roles,
+                    master = boot_opts.instance_uuid,
+                },
+            },
+        },
     }
-
-    -- TODO Load conf from file
-
-    do
-        conf.servers = conf.servers or {}
-        conf.servers[boot_opts.instance_uuid] = {
-            uri = membership.myself().uri,
-            roles = roles,
-            replicaset_uuid = boot_opts.replicaset_uuid,
-        }
-    end
 
     -- conf, err = model_ddl.config_save_ddl({}, conf)
     -- if conf == nil then
     --     return nil, err
     -- end
 
-    local instance_uuid, err = confapplier.validate(conf)
-    if not instance_uuid then
+    local ok, err = confapplier.validate(conf)
+    if not ok then
         return nil, err
     end
 
-    topology.set(conf.servers)
+    topology.set(conf.topology)
     -- local myself = conf.servers[instance_uuid]
     -- if myself == 'expelled' then
     --     log.error('Instance is expelled. Aborting.')
@@ -173,17 +180,22 @@ local function bootstrap_from_membership(boot_opts, box_opts)
         return false
     end
 
-    local instance_uuid, err = confapplier.validate(conf)
+    local ok, err = confapplier.validate(conf)
     if err then
         membership.set_payload('warning', tostring(err.err or err))
         return false
     end
-    local replicaset_uuid = conf.servers[instance_uuid].replicaset_uuid
+
+    local instance_uuid, replicaset_uuid = topology.get_myself_uuids(conf.topology)
+    if instance_uuid == nil then
+        membership.set_payload('warning', 'Instance is not in config')
+        return false
+    end
 
     membership.set_payload('warning', nil)
 
     log.info('Config downloaded from membership')
-    topology.set(conf.servers)
+    topology.set(conf.topology)
 
     local box_opts = table.deepcopy(box_opts or {})
     box_opts.listen = boot_opts.binary_port
@@ -210,7 +222,7 @@ local function bootstrap_from_snapshot(boot_opts, box_opts)
         binary_port = 'number',
     }, '?table')
 
-    local conf, err = confapplier.get_current(boot_opts.workdir)
+    local conf, err = confapplier.restore_from_workdir(boot_opts.workdir)
     if conf == nil then
         return nil, err
     end
@@ -247,7 +259,7 @@ local function bootstrap_from_snapshot(boot_opts, box_opts)
     --     return nil, err
     -- end
 
-    for _, server in pairs(conf.servers) do
+    for _, server in pairs(conf.topology.servers) do
         if server ~= 'expelled' then
             membership.add_member(server.uri)
         end
@@ -263,7 +275,7 @@ local function bootstrap_from_snapshot(boot_opts, box_opts)
     end
     membership.set_payload('warning', nil)
 
-    if remote_conf.servers[box.info.uuid] == 'expelled' then
+    if remote_conf.topology.servers[box.info.uuid] == 'expelled' then
         log.error('Instance was expelled')
         membership.set_payload('error', 'Instance was expelled')
         return true
@@ -274,10 +286,10 @@ local function bootstrap_from_snapshot(boot_opts, box_opts)
     end
 
     local myself_uri = membership.myself().uri
-    if myself_uri ~= conf.servers[box.info.uuid].uri then
+    if myself_uri ~= conf.topology.servers[box.info.uuid].uri then
         log.error('Mismatching advertise_uri.' ..
             ' Configured as %q, but running as %q',
-            conf.servers[box.info.uuid].uri,
+            conf.topology.servers[box.info.uuid].uri,
             myself_uri
         )
         membership.set_payload('warning',

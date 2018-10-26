@@ -44,7 +44,19 @@ local statistics_schema = {
     end,
 }
 
-gql_types.object {
+local gql_type_replicaset = gql_types.object {
+    name = 'Replicaset',
+    description = 'Group of servers replicating the same data',
+    fields = {
+        uuid = gql_types.string.nonNull,
+        roles = gql_types.list(gql_types.string.nonNull),
+        status = gql_types.string.nonNull,
+        master = gql_types.nonNull('Server'),
+        servers = gql_types.list('Server'),
+    }
+}
+
+local gql_type_server = gql_types.object {
     name = 'Server',
     description = 'A server participating in tarantool cluster',
     fields = {
@@ -54,16 +66,7 @@ gql_types.object {
         status = gql_types.string.nonNull,
         message = gql_types.string.nonNull,
         statistics = statistics_schema,
-        replicaset = gql_types.object {
-            name = 'Replicaset',
-            description = 'Group of servers replicating the same data',
-            fields = {
-                uuid = gql_types.string.nonNull,
-                roles = gql_types.list(gql_types.string.nonNull),
-                status = gql_types.string.nonNull,
-                servers = gql_types.list('Server'),
-            }
-        },
+        replicaset = gql_type_replicaset,
     }
 }
 
@@ -219,6 +222,7 @@ local function init(httpd)
         args = {
             uuid = gql_types.string.nonNull,
             roles = gql_types.list(gql_types.string.nonNull),
+            master = gql_types.string,
         },
         kind = gql_types.boolean,
         callback = 'cluster.webui.edit_replicaset',

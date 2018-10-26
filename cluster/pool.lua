@@ -42,6 +42,7 @@ local function _connect(uri, options)
 end
 
 local function connect(uri, options)
+    checks('string', '?table')
     while vars.locks[uri] do
         fiber.sleep(0)
     end

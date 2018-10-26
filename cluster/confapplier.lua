@@ -26,6 +26,7 @@ local e_atomic = errors.new_class('Atomic call failed')
 local e_config_load = errors.new_class('Loading configuration failed')
 local e_config_fetch = errors.new_class('Fetching configuration failed')
 local e_config_apply = errors.new_class('Applying configuration failed')
+local e_config_restore = errors.new_class('Restoring configuration failed')
 local e_config_validate = errors.new_class('Invalid config')
 local e_bootstrap_vshard = errors.new_class('Can not bootstrap vshard router now')
 
@@ -78,16 +79,25 @@ local function load_from_file(filename)
     return conf, err
 end
 
-local function get_current(workdir)
-    if vars.conf ~= nil then
-        return table.deepcopy(vars.conf)
+local function get_current(section)
+    checks('?string')
+    if vars.conf == nil then
+        return nil
     end
 
-    if not workdir then
-        -- box was not configured yet
-        return nil, e_config_load:new(
-            "Failed to load config, because box.cfg hasn't been called yet")
+    if section == nil then
+        return table.deepcopy(vars.conf)
+    else
+        return table.deepcopy(vars.conf[section])
     end
+end
+
+local function restore_from_workdir(workdir)
+    checks('string')
+    e_config_restore:assert(
+        vars.conf == nil,
+        'config already loaded'
+    )
 
     local conf, err = load_from_file(
         utils.pathjoin(workdir, 'config.yml')
@@ -98,9 +108,10 @@ local function get_current(workdir)
         return nil, err
     end
 
-    vars.conf = table.deepcopy(conf)
-    topology.set(conf.servers)
-    return conf
+    vars.conf = conf
+    topology.set(conf.topology)
+
+    return table.deepcopy(conf)
 end
 
 local function fetch_from_uri(uri)
@@ -115,9 +126,9 @@ end
 local function fetch_from_membership()
     local conf = get_current()
     if conf then
-        if conf.servers[box.info.uuid] == nil
-        or conf.servers[box.info.uuid] == 'expelled'
-        or utils.table_count(conf.servers) == 1
+        if conf.topology.servers[box.info.uuid] == nil
+        or conf.topology.servers[box.info.uuid] == 'expelled'
+        or utils.table_count(conf.topology.servers) == 1
         then
             return conf
         end
@@ -129,7 +140,7 @@ local function fetch_from_membership()
         or (member.payload.uuid == nil)  -- ignore non-configured members
         or (member.payload.error ~= nil) -- ignore misconfigured members
         or (conf and member.payload.uuid == box.info.uuid) -- ignore myself
-        or (conf and conf.servers[member.payload.uuid] == nil) -- ignore aliens
+        or (conf and conf.topology.servers[member.payload.uuid] == nil) -- ignore aliens
         then
             -- ignore that member
         else
@@ -145,48 +156,19 @@ local function fetch_from_membership()
     return e_config_fetch:pcall(fetch_from_uri, candidates[math.random(#candidates)])
 end
 
--- Perform all checks, and answer the question: "Can I apply the given config?"
--- on success return instance_uuid, nil
--- on failure raise error (which will be catched in validate() function)
 local function validate(conf_new)
     e_config_validate:assert(
         type(conf_new) == 'table',
         'config must be a table'
     )
-    e_config_validate:assert(
-        type(conf_new.servers) == 'table',
-        'servers must be a table, got %s', type(conf_new.servers)
-    )
 
-    local conf_old = nil
-    local myself_uuid = nil
-    if type(box.cfg) == 'function' then
-        -- box.cfg was not configured yet
-        conf_old = {}
-
-        -- find myself by uri:
-        local myself_uri = membership.myself().uri
-        for uuid, server in pairs(conf_new.servers) do
-            if server.uri == myself_uri then
-                myself_uuid = uuid
-                break
-            end
-        end
-
-        e_config_validate:assert(
-            myself_uuid ~= nil,
-            'instance is not in the config'
-        )
-    else
-        conf_old = vars.conf
-        myself_uuid = box.info.uuid
-    end
+    local conf_old = vars.conf or {}
 
     e_config_validate:assert(
-        topology.validate(conf_new.servers, conf_old.servers)
+        topology.validate(conf_new.topology, conf_old.topology)
     )
 
-    return myself_uuid
+    return true
 end
 
 local function _apply(channel)
@@ -197,7 +179,7 @@ local function _apply(channel)
         end
 
         vars.conf = conf
-        topology.set(conf.servers)
+        topology.set(conf.topology)
 
         local replication = topology.get_replication_config(
             box.info.cluster.uuid
@@ -211,9 +193,9 @@ local function _apply(channel)
             log.error('%s', err)
         end
 
-        local roles = conf.servers[box.info.uuid].roles
+        local roles = conf.topology.replicasets[box.info.cluster.uuid].roles
 
-        if utils.table_find(roles, 'vshard-storage') then
+        if roles['vshard-storage'] then
             vshard.storage.cfg({
                 sharding = topology.get_sharding_config(),
                 bucket_count = conf.bucket_count,
@@ -225,7 +207,7 @@ local function _apply(channel)
             -- srv:apply_config(conf)
         end
 
-        if utils.table_find(roles, 'vshard-router') then
+        if roles['vshard-router'] then
             -- local srv = ibcore.server.new()
             -- srv:apply_config(conf)
             -- service_registry.set('ib-core', srv)
@@ -283,13 +265,10 @@ local function _clusterwide(conf_new)
         return nil, err
     end
 
-    local conf_old, err = get_current()
-    if not conf_old then
-        return nil, err
-    end
+    local conf_old = get_current()
 
-    local servers_new = conf_new.servers
-    local servers_old = topology.get()
+    local servers_new = conf_new.topology.servers
+    local servers_old = vars.conf.topology.servers
 
     local configured_uri_list = {}
     for uuid, _ in pairs(servers_new) do
@@ -328,16 +307,16 @@ local function _clusterwide(conf_new)
             'return package.loaded["cluster.confapplier"].apply(...)',
             {conf_new}
         )
-        configured_uri_list[uri] = true
-
-        if not ok then
+        if ok then
+            configured_uri_list[uri] = true
+        else
             log.error('%s', err)
             _apply_error = err
             break
         end
     end
 
-    if not _apply_error then
+    if _apply_error == nil then
         return true
     end
 
@@ -349,9 +328,8 @@ local function _clusterwide(conf_new)
                 return nil, err
             end
             local ok, err = rollback_error:pcall(
-                conn.call,
-                conn,
-                'confapplier.apply',
+                conn.eval, conn,
+                'return package.loaded["cluster.confapplier"].apply(...)',
                 {conf_old}
             )
             if not ok then
@@ -379,6 +357,7 @@ end
 return {
     get_current = get_current,
     load_from_file = load_from_file,
+    restore_from_workdir = restore_from_workdir,
     fetch_from_membership = fetch_from_membership,
 
     validate = function(conf)

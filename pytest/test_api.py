@@ -32,6 +32,26 @@ cluster = [
     )
 ]
 
+def test_self(cluster):
+    obj = cluster['router'].graphql("""
+        {
+            cluster {
+                self {
+                    uri
+                    uuid
+                    alias
+                }
+            }
+        }
+    """)
+
+    server_self = obj['data']['cluster']['self']
+    assert server_self == {
+        'uri': 'localhost:33001',
+        'uuid': 'aaaaaaaa-aaaa-4000-b000-000000000001',
+        'alias': 'router',
+    }
+
 def test_servers(cluster):
     obj = cluster['router'].graphql("""
         {
@@ -57,13 +77,14 @@ def test_servers(cluster):
         'replicaset': {'roles': []}
     } in servers
 
-def test_replicasets(cluster):
+def test_replicasets(cluster, helpers):
     obj = cluster['router'].graphql("""
         {
             replicasets {
                 uuid
                 roles
                 status
+                master { uuid }
                 servers { uri }
             }
         }
@@ -75,20 +96,23 @@ def test_replicasets(cluster):
         'uuid': 'aaaaaaaa-0000-4000-b000-000000000000',
         'roles': ['vshard-router'],
         'status': 'healthy',
+        'master': {'uuid': 'aaaaaaaa-aaaa-4000-b000-000000000001'},
         'servers': [{'uri': 'localhost:33001'}]
-    } in replicasets
+    } == helpers.find(replicasets, 'uuid', 'aaaaaaaa-0000-4000-b000-000000000000')
     assert {
         'uuid': 'bbbbbbbb-0000-4000-b000-000000000000',
         'roles': ['vshard-storage'],
         'status': 'healthy',
+        'master': {'uuid': 'bbbbbbbb-bbbb-4000-b000-000000000001'},
         'servers': [{'uri': 'localhost:33002'}]
-    } in replicasets
+    } == helpers.find(replicasets, 'uuid', 'bbbbbbbb-0000-4000-b000-000000000000')
     assert {
         'uuid': 'cccccccc-0000-4000-b000-000000000000',
         'roles': [],
         'status': 'healthy',
+        'master': {'uuid': 'cccccccc-cccc-4000-b000-000000000001'},
         'servers': [{'uri': 'localhost:33009'}]
-    } in replicasets
+    } == helpers.find(replicasets, 'uuid', 'cccccccc-0000-4000-b000-000000000000')
 
 def test_probe_server(cluster, module_tmpdir, helpers):
     srv = cluster['router']
@@ -131,7 +155,7 @@ def test_edit_server(cluster):
         }
     """)
     assert obj['errors'][0]['message'] == \
-        'servers[aaaaaaaa-aaaa-4000-b000-000000000001].uri "localhost:3303" is not in membership'
+        'Server "localhost:3303" is not in membership'
 
     obj = cluster['router'].graphql("""
         mutation {
@@ -142,7 +166,7 @@ def test_edit_server(cluster):
         }
     """)
     assert obj['errors'][0]['message'] == \
-        'servers[cccccccc-cccc-4000-b000-000000000001] is expelled'
+        'Server "cccccccc-cccc-4000-b000-000000000001" is expelled'
 
     obj = cluster['router'].graphql("""
         mutation {
@@ -153,7 +177,7 @@ def test_edit_server(cluster):
         }
     """)
     assert obj['errors'][0]['message'] == \
-        'server "dddddddd-dddd-4000-b000-000000000001" not in config'
+        'Server "dddddddd-dddd-4000-b000-000000000001" not in config'
 
 def test_edit_replicaset(cluster):
     obj = cluster['router'].graphql("""
@@ -186,6 +210,51 @@ def test_edit_replicaset(cluster):
         'servers': [{'uri': 'localhost:33002'}]
     } in replicasets
 
+def test_uninitialized(module_tmpdir, helpers):
+    srv = Server(
+        binary_port = 33101,
+        http_port = 8181,
+        alias = 'dummy'
+    )
+    srv.start(
+        workdir="{}/localhost-{}".format(module_tmpdir, srv.binary_port),
+    )
+
+    try:
+        helpers.wait_for(srv.ping_udp, timeout=5)
+
+        obj = srv.graphql("""
+            {
+                servers {
+                    uri
+                    replicaset { roles }
+                }
+                replicasets {
+                    status
+                }
+                cluster {
+                    self {
+                        uri
+                        uuid
+                        alias
+                    }
+                }
+            }
+        """)
+
+        servers = obj['data']['servers']
+        assert len(servers) == 1
+        assert servers[0] == {'uri': 'localhost:33101'}
+
+        replicasets = obj['data']['replicasets']
+        assert len(replicasets) == 0
+
+        server_self = obj['data']['cluster']['self']
+        assert server_self == {'uri': 'localhost:33101', 'alias': 'dummy'}
+
+    finally:
+        srv.kill()
+
 def test_join_server_fail(cluster, module_tmpdir, helpers):
     srv = Server(
         binary_port = 33003,
@@ -217,32 +286,7 @@ def test_join_server_fail(cluster, module_tmpdir, helpers):
             }
         """)
         assert obj['errors'][0]['message'] == \
-            'servers[cccccccc-cccc-4000-b000-000000000001] is already joined'
-
-        obj = cluster['router'].graphql("""
-            mutation {
-                join_server(
-                    uri: "localhost:33003"
-                    instance_uuid: "bbbbbbbb-bbbb-4000-b000-000000000002"
-                    replicaset_uuid: "bbbbbbbb-0000-4000-b000-000000000000"
-                    roles: []
-                )
-            }
-        """)
-        assert obj['errors'][0]['message'] == \
-            'join_server() can not edit existing replicaset'
-
-        obj = cluster['router'].graphql("""
-            mutation {
-                join_server(
-                    uri: "localhost:33003"
-                    instance_uuid: "dddddddd-dddd-4000-b000-000000000001"
-                    replicaset_uuid: "dddddddd-0000-4000-b000-000000000000"
-                )
-            }
-        """)
-        assert obj['errors'][0]['message'] == \
-            'join_server() missing roles for new replicaset'
+            'Server "cccccccc-cccc-4000-b000-000000000001" is already joined'
 
     finally:
         srv.kill()
