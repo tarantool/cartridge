@@ -23,6 +23,7 @@ local function init(opts, box_opts)
         workdir = 'string',
         advertise_uri = 'string',
         cluster_cookie = '?string',
+        bucket_count = '?number',
         alias = '?string',
     }, '?table')
 
@@ -104,6 +105,7 @@ local function init(opts, box_opts)
             })
 
             local _boot_opts = table.copy(boot_opts)
+            _boot_opts.bucket_count = opts.bucket_count
             _boot_opts.instance_uuid = uuids.instance_uuid
             _boot_opts.replicaset_uuid = uuids.replicaset_uuid
             return bootstrap.from_scratch(_boot_opts, box_opts, roles)

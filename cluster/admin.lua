@@ -323,6 +323,7 @@ local function expell_server(uuid)
 end
 
 local function edit_replicaset(args)
+    args = args or {}
     checks({
         uuid = 'string',
         roles = '?table',
