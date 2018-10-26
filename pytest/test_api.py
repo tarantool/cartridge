@@ -254,6 +254,20 @@ def test_uninitialized(module_tmpdir, helpers):
         server_self = obj['data']['cluster']['self']
         assert server_self == {'uri': 'localhost:33101', 'alias': 'dummy'}
 
+        obj = srv.graphql("""
+            {
+                cluster { failover }
+            }
+        """)
+        assert 'errors' not in obj, obj['errors'][0]['message']
+        assert obj['data']['cluster']['failover'] == False
+
+        obj = srv.graphql("""
+            mutation {
+                cluster { failover(enabled: false) }
+            }
+        """)
+        assert obj['errors'][0]['message'] == 'Not bootstrapped yet'
     finally:
         srv.kill()
 

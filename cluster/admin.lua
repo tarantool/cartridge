@@ -359,12 +359,18 @@ end
 
 local function get_failover()
     local topology_cfg = confapplier.get_current('topology')
+    if topology_cfg == nil then
+        return false
+    end
     return topology_cfg.failover or false
 end
 
 local function set_failover(value)
     checks('boolean')
     local topology_cfg = confapplier.get_current('topology')
+    if topology_cfg == nil then
+        return nil, e_topology_edit:new('Not bootstrapped yet')
+    end
     topology_cfg.failover = value
 
     local ok, err = apply_topology(topology_cfg)
