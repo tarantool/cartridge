@@ -41,6 +41,10 @@ local function not_expelled(uuid, srv)
     return srv ~= 'expelled'
 end
 
+local function not_disabled(uuid, srv)
+    return not srv.disabled
+end
+
 local function validate_schema(field, topology)
     checks('string', 'table')
     local servers = topology.servers or {}
@@ -248,6 +252,24 @@ local function validate_availability(topology)
             member.payload.error == nil,
             'Server %q has error: %s',
             server.uri, member.payload.error
+        )
+    end
+
+    local myself = membership.myself()
+    local myself_uuid = myself.payload.uuid
+    if myself_uuid ~= nil then
+        local srv = topology.servers[myself_uuid]
+        e_config:assert(
+            srv ~= nil,
+            'Current instance %q is not listed in config', myself.uri
+        )
+        e_config:assert(
+            not_expelled(myself_uuid, srv),
+            'Current instance %q can not be expelled', myself.uri
+        )
+        e_config:assert(
+            not_disabled(myself_uuid, srv),
+            'Current instance %q can not be disabled', myself.uri
         )
     end
 end
