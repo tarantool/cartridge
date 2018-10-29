@@ -275,7 +275,7 @@ local function validate_upgrade(topology_new, topology_old)
         if server_old then
             e_config:assert(
                 not_expelled(instance_uuid, server_old),
-                '%s is expelled', field
+                '%s has been expelled earlier', field
             )
             e_config:assert(
                 server_old.replicaset_uuid == server_new.replicaset_uuid,

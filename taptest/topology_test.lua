@@ -356,7 +356,7 @@ servers:
   aaaaaaaa-aaaa-4000-b000-000000000001: expelled
 ...]])
 
-check_config('servers[aaaaaaaa-aaaa-4000-b000-000000000001] is expelled',
+check_config('servers[aaaaaaaa-aaaa-4000-b000-000000000001] has been expelled earlier',
 [[---
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000001:
