@@ -344,16 +344,30 @@ replicasets:
 
 test:diag('validate_upgrade()')
 
-check_config('servers[aaaaaaaa-aaaa-4000-b000-000000000001]'..
+check_config('servers[aaaaaaaa-aaaa-4000-b000-000000000002]'..
   ' can not be removed from config',
 
 [[---
-servers: {}
+servers:
+  aaaaaaaa-aaaa-4000-b000-000000000001:
+    uri: localhost:3301
+    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
+replicasets:
+  aaaaaaaa-0000-4000-b000-000000000001:
+    master: aaaaaaaa-aaaa-4000-b000-000000000001
+    roles: {}
 ...]],
 
 [[---
 servers:
-  aaaaaaaa-aaaa-4000-b000-000000000001: expelled
+  aaaaaaaa-aaaa-4000-b000-000000000001:
+    uri: localhost:3301
+    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
+  aaaaaaaa-aaaa-4000-b000-000000000002: expelled
+replicasets:
+  aaaaaaaa-0000-4000-b000-000000000001:
+    master: aaaaaaaa-aaaa-4000-b000-000000000001
+    roles: {}
 ...]])
 
 check_config('servers[aaaaaaaa-aaaa-4000-b000-000000000001] has been expelled earlier',
@@ -394,12 +408,19 @@ servers:
     replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
 ...]])
 
-check_config('replicasets[aaaaaaaa-0000-4000-b000-000000000001]'..
+check_config('replicasets[bbbbbbbb-0000-4000-b000-000000000001]'..
   ' is a vshard-storage and can not be expelled',
 
 [[---
 servers:
-  aaaaaaaa-aaaa-4000-b000-000000000001: expelled
+  aaaaaaaa-aaaa-4000-b000-000000000001:
+    uri: localhost:3301
+    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
+  bbbbbbbb-bbbb-4000-b000-000000000001: expelled
+replicasets:
+  aaaaaaaa-0000-4000-b000-000000000001:
+    master: aaaaaaaa-aaaa-4000-b000-000000000001
+    roles: {"vshard-router": true}
 ...]],
 
 [[---
@@ -407,9 +428,15 @@ servers:
   aaaaaaaa-aaaa-4000-b000-000000000001:
     uri: localhost:3301
     replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
+  bbbbbbbb-bbbb-4000-b000-000000000001:
+    uri: localhost:3302
+    replicaset_uuid: bbbbbbbb-0000-4000-b000-000000000001
 replicasets:
   aaaaaaaa-0000-4000-b000-000000000001:
     master: aaaaaaaa-aaaa-4000-b000-000000000001
+    roles: {"vshard-router": true}
+  bbbbbbbb-0000-4000-b000-000000000001:
+    master: bbbbbbbb-bbbb-4000-b000-000000000001
     roles: {"vshard-storage": true}
 ...]])
 
