@@ -353,7 +353,7 @@ local function _clusterwide(conf_new)
     local configured_uri_list = {}
     local cnt = 0
     for uuid, _ in pairs(servers_new) do
-        if servers_new[uuid] == 'expelled' then
+        if not topology.not_expelled(uuid, servers_new[uuid]) then
             -- ignore expelled servers
         elseif servers_old[uuid] == nil then
             -- new servers bootstrap themselves through membership
@@ -370,6 +370,7 @@ local function _clusterwide(conf_new)
                 {conf_new}
             )
             if ok == nil then
+                log.error('Config validation failed at %q', uri)
                 local err_class = _G._error_classes[err.class_name]
                 if err_class ~= nil then
                     setmetatable(err, err_class.__instance_mt)

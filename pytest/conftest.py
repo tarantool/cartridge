@@ -227,10 +227,11 @@ def cluster(request, confdir, module_tmpdir, helpers):
                 timeout=TARANTOOL_CONNECTION_TIMEOUT
             )
         else:
-            helpers.wait_for(bootserv.conn.eval,
-                ["assert(require('membership').probe_uri('{}'))".format(srv.advertise_uri)],
-                timeout=TARANTOOL_CONNECTION_TIMEOUT
-            )
+            for instance in cluster.values():
+                helpers.wait_for(instance.conn.eval,
+                    ["assert(require('membership').probe_uri('{}'))".format(srv.advertise_uri)],
+                    timeout=TARANTOOL_CONNECTION_TIMEOUT
+                )
 
         bootserv.graphql(
             query = """
