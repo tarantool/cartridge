@@ -20,6 +20,7 @@ vars:new('topology', {
         -- ['instance-uuid-1'] = 'expelled',
         -- ['instance-uuid-2'] = {
         --     uri = 'localhost:3301',
+        --     disabled = false,
         --     replicaset_uuid = 'replicaset-uuid-2',
         -- },
     },
@@ -83,6 +84,10 @@ local function validate_schema(field, topology)
                 '%s.uri must be a string, got %s', field, type(server.uri)
             )
             e_config:assert(
+                type(server.disabled or false) == 'boolean',
+                '%s.disabled must be true or false', field
+            )
+            e_config:assert(
                 type(server.replicaset_uuid) == 'string',
                 '%s.replicaset_uuid must be a string, got %s', field, type(server.replicaset_uuid)
             )
@@ -93,6 +98,7 @@ local function validate_schema(field, topology)
 
             local known_keys = {
                 ['uri'] = true,
+                ['disabled'] = true,
                 ['replicaset_uuid'] = true,
             }
             for k, v in pairs(server) do

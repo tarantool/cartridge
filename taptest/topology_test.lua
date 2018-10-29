@@ -40,7 +40,7 @@ local yaml = require('yaml')
 local topology = require('cluster.topology')
 local test = tap.test('topology.config')
 
-test:plan(36)
+test:plan(37)
 
 local function check_config(result, raw_new, raw_old)
     local cfg_new = raw_new and yaml.decode(raw_new) or {}
@@ -115,6 +115,16 @@ servers:
   aaaaaaaa-aaaa-4000-b000-000000000001:
     uri: localhost:3301
     replicaset_uuid: set1
+...]])
+
+check_config('topology_new.servers[aaaaaaaa-aaaa-4000-b000-000000000001].disabled'..
+  ' must be true or false',
+[[---
+servers:
+  aaaaaaaa-aaaa-4000-b000-000000000001:
+    uri: localhost:3301
+    disabled: nope
+    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
 ...]])
 
 check_config('topology_new.servers[aaaaaaaa-aaaa-4000-b000-000000000001]'..
@@ -436,6 +446,7 @@ check_config(true,
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000001:
     replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
+    disabled: false
     uri: localhost:3301
 replicasets:
   aaaaaaaa-0000-4000-b000-000000000001:
