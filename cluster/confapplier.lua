@@ -239,6 +239,7 @@ local function _apply(channel)
         )
         log.info('Setting replication to [%s]', table.concat(replication, ', '))
         local _, err = e_config_apply:pcall(box.cfg, {
+            -- workaround for tarantool gh-3760
             replication_connect_timeout = 0.000001,
             replication_connect_quorum = 0,
             replication = replication,
