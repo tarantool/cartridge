@@ -376,7 +376,7 @@ local function get_vshard_sharding_config()
     local alive = {
         -- [instance_uuid] = true/false,
     }
-    local min_alive = {
+    local min_alive_uuid = {
         -- [replicaset_uuid] = instance_uuid,
     }
 
@@ -405,9 +405,9 @@ local function get_vshard_sharding_config()
                 alive[instance_uuid] = false
             else
                 alive[instance_uuid] = true
-                if min_alive[replicaset_uuid] == nil
-                or instance_uuid < min_alive[replicaset_uuid] then
-                    min_alive[replicaset_uuid] = instance_uuid
+                if min_alive_uuid[replicaset_uuid] == nil
+                or instance_uuid < min_alive_uuid[replicaset_uuid] then
+                    min_alive_uuid[replicaset_uuid] = instance_uuid
                 end
             end
         end
@@ -418,8 +418,8 @@ local function get_vshard_sharding_config()
 
         if vars.topology.failover
         and not alive[master_uuid]
-        and min_alive[replicaset_uuid] then
-            master_uuid = min_alive[replicaset_uuid]
+        and min_alive_uuid[replicaset_uuid] then
+            master_uuid = min_alive_uuid[replicaset_uuid]
         end
 
         shard.replicas[master_uuid].master = true
