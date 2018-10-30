@@ -10,6 +10,7 @@ local membership = require('membership')
 local pool = require('cluster.pool')
 local topology = require('cluster.topology')
 local confapplier = require('cluster.confapplier')
+local service_registry = require('cluster.service-registry')
 
 local e_bootstrap_vshard = errors.new_class('Bootstrapping vshard failed')
 local e_topology_edit = errors.new_class('Editing cluster topology failed')
@@ -356,9 +357,37 @@ local function edit_replicaset(args)
     return true
 end
 
-local function bootstrap_vshard()
-    local info = vshard.router.info()
+local function get_failover_enabled()
+    local topology_cfg = confapplier.get_current('topology')
+    if topology_cfg == nil then
+        return false
+    end
+    return topology_cfg.failover or false
+end
 
+local function set_failover_enabled(value)
+    checks('boolean')
+    local topology_cfg = confapplier.get_current('topology')
+    if topology_cfg == nil then
+        return nil, e_topology_edit:new('Not bootstrapped yet')
+    end
+    topology_cfg.failover = value
+
+    local ok, err = apply_topology(topology_cfg)
+    if not ok then
+        return nil, err
+    end
+
+    return topology_cfg.failover
+end
+
+local function bootstrap_vshard()
+    local vshard_router = service_registry.get('vshard-router')
+    if vshard_router == nil then
+        return nil, e_bootstrap_vshard:new('vshard-router role is disabled')
+    end
+
+    local info = vshard_router.info()
     for uid, replicaset in pairs(info.replicasets or {}) do
         local uri = replicaset.master.uri
         local conn, err = pool.connect(uri)
@@ -368,7 +397,7 @@ local function bootstrap_vshard()
         end
     end
 
-    local sharding_config = topology.get_sharding_config()
+    local sharding_config = topology.get_vshard_sharding_config()
 
     if next(sharding_config) == nil then
         return nil, e_bootstrap_vshard:new('Sharding config is empty')
@@ -376,7 +405,7 @@ local function bootstrap_vshard()
 
     log.info('Bootstrapping vshard.router...')
 
-    local ok, err = vshard.router.bootstrap({timeout=10})
+    local ok, err = vshard_router.bootstrap({timeout=10})
     if not ok then
         return nil, e_bootstrap_vshard:new(
             '%s (%s, %s)',
@@ -397,6 +426,9 @@ return {
     edit_server = edit_server,
     expell_server = expell_server,
     edit_replicaset = edit_replicaset,
+
+    get_failover_enabled = get_failover_enabled,
+    set_failover_enabled = set_failover_enabled,
 
     bootstrap_vshard = bootstrap_vshard,
 

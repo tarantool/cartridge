@@ -114,6 +114,7 @@ class Server(object):
         logging.warn(' '.join(command))
 
         self.process = Popen(command, env=self.env)
+        logging.warn('PID %d', self.process.pid)
 
     def ping_udp(self):
         s = socket(AF_INET, SOCK_DGRAM)

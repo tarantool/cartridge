@@ -102,6 +102,14 @@ local function edit_replicaset(_, args)
     return admin.edit_replicaset(args)
 end
 
+local function get_failover_enabled(_, args)
+    return admin.get_failover_enabled()
+end
+
+local function set_failover_enabled(_, args)
+    return admin.set_failover_enabled(args.enabled)
+end
+
 local function file_mime_type(filename)
     if string.endswith(filename, ".css") then
         return "text/css; charset=utf-8"
@@ -230,6 +238,27 @@ local function init(httpd)
 
     graphql.add_callback({
         prefix = 'cluster',
+        name = 'failover',
+        doc = 'Get current failover state.',
+        args = {},
+        kind = gql_types.boolean.nonNull,
+        callback = 'cluster.webui.get_failover_enabled',
+    })
+
+    graphql.add_mutation({
+        prefix = 'cluster',
+        name = 'failover',
+        doc = 'Enable or disable automatic failover. '
+            .. 'Returns new state.',
+        args = {
+            enabled = gql_types.boolean.nonNull,
+        },
+        kind = gql_types.boolean.nonNull,
+        callback = 'cluster.webui.set_failover_enabled',
+    })
+
+    graphql.add_callback({
+        prefix = 'cluster',
         name = 'self',
         doc = 'Get current server',
         args = {},
@@ -301,6 +330,9 @@ return {
     edit_server = edit_server,
     edit_replicaset = edit_replicaset,
     expell_server = expell_server,
+
+    get_failover_enabled = get_failover_enabled,
+    set_failover_enabled = set_failover_enabled,
 
     bootstrap_vshard = bootstrap_vshard,
 }
