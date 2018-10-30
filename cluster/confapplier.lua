@@ -176,8 +176,7 @@ local function validate(conf_new)
 end
 
 local function _failover(cond)
-    while true do
-        cond:wait()
+    local function failover_internal()
         local bucket_count = vars.conf.bucket_count
         local cfg_new = topology.get_sharding_config()
         local cfg_old = nil
@@ -220,6 +219,16 @@ local function _failover(cond)
             end
 
             log.info('Failover step finished')
+        end
+
+        return true
+    end
+
+    while true do
+        cond:wait()
+        local ok, err = e_failover:pcall(failover_internal)
+        if not ok then
+            log.warn('%s', err)
         end
     end
 end
