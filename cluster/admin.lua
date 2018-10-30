@@ -397,7 +397,7 @@ local function bootstrap_vshard()
         end
     end
 
-    local sharding_config = topology.get_sharding_config()
+    local sharding_config = topology.get_vshard_sharding_config()
 
     if next(sharding_config) == nil then
         return nil, e_bootstrap_vshard:new('Sharding config is empty')

@@ -368,7 +368,10 @@ local function cluster_is_healthy()
     return true
 end
 
-local function get_sharding_config()
+-- returns SHARDING table, which can be passed to
+-- vshard.router.cfg{sharding = SHARDING} and
+-- vshard.storage.cfg{sharding = SHARDING}
+local function get_vshard_sharding_config()
     local sharding = {}
     local alive = {
         -- [instance_uuid] = true/false,
@@ -458,6 +461,6 @@ return {
 
     cluster_is_healthy = cluster_is_healthy,
     get_myself_uuids = get_myself_uuids,
-    get_sharding_config = get_sharding_config,
     get_replication_config = get_replication_config,
+    get_vshard_sharding_config = get_vshard_sharding_config,
 }

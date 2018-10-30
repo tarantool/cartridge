@@ -178,7 +178,7 @@ end
 local function _failover(cond)
     local function failover_internal()
         local bucket_count = vars.conf.bucket_count
-        local cfg_new = topology.get_sharding_config()
+        local cfg_new = topology.get_vshard_sharding_config()
         local cfg_old = nil
 
         local vshard_router = service_registry.get('vshard-router')
@@ -261,7 +261,7 @@ local function _apply(channel)
 
         if roles['vshard-storage'] then
             vshard.storage.cfg({
-                sharding = topology.get_sharding_config(),
+                sharding = topology.get_vshard_sharding_config(),
                 bucket_count = conf.bucket_count,
                 listen = box.cfg.listen,
             }, box.info.uuid)
@@ -276,7 +276,7 @@ local function _apply(channel)
             -- srv:apply_config(conf)
             -- service_registry.set('ib-core', srv)
             vshard.router.cfg({
-                sharding = topology.get_sharding_config(),
+                sharding = topology.get_vshard_sharding_config(),
                 bucket_count = conf.bucket_count,
             })
             service_registry.set('vshard-router', vshard.router)
