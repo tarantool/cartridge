@@ -357,7 +357,7 @@ local function edit_replicaset(args)
     return true
 end
 
-local function get_failover()
+local function get_failover_enabled()
     local topology_cfg = confapplier.get_current('topology')
     if topology_cfg == nil then
         return false
@@ -365,7 +365,7 @@ local function get_failover()
     return topology_cfg.failover or false
 end
 
-local function set_failover(value)
+local function set_failover_enabled(value)
     checks('boolean')
     local topology_cfg = confapplier.get_current('topology')
     if topology_cfg == nil then
@@ -427,8 +427,8 @@ return {
     expell_server = expell_server,
     edit_replicaset = edit_replicaset,
 
-    get_failover = get_failover,
-    set_failover = set_failover,
+    get_failover_enabled = get_failover_enabled,
+    set_failover_enabled = set_failover_enabled,
 
     bootstrap_vshard = bootstrap_vshard,
 

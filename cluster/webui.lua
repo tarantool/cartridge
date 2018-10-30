@@ -102,12 +102,12 @@ local function edit_replicaset(_, args)
     return admin.edit_replicaset(args)
 end
 
-local function get_failover(_, args)
-    return admin.get_failover()
+local function get_failover_enabled(_, args)
+    return admin.get_failover_enabled()
 end
 
-local function set_failover(_, args)
-    return admin.set_failover(args.enabled)
+local function set_failover_enabled(_, args)
+    return admin.set_failover_enabled(args.enabled)
 end
 
 local function file_mime_type(filename)
@@ -242,7 +242,7 @@ local function init(httpd)
         doc = 'Get current failover state.',
         args = {},
         kind = gql_types.boolean.nonNull,
-        callback = 'cluster.webui.get_failover',
+        callback = 'cluster.webui.get_failover_enabled',
     })
 
     graphql.add_mutation({
@@ -254,7 +254,7 @@ local function init(httpd)
             enabled = gql_types.boolean.nonNull,
         },
         kind = gql_types.boolean.nonNull,
-        callback = 'cluster.webui.set_failover',
+        callback = 'cluster.webui.set_failover_enabled',
     })
 
     graphql.add_callback({
@@ -331,8 +331,8 @@ return {
     edit_replicaset = edit_replicaset,
     expell_server = expell_server,
 
-    get_failover = get_failover,
-    set_failover = set_failover,
+    get_failover_enabled = get_failover_enabled,
+    set_failover_enabled = set_failover_enabled,
 
     bootstrap_vshard = bootstrap_vshard,
 }
