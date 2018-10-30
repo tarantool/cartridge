@@ -167,13 +167,14 @@ class CommonItemList extends React.PureComponent {
   };
 
   renderRow = (record, columns) => {
-    const { rowKey } = this.props;
+    const { rowKey, rowClassName } = this.props;
     const key = record[rowKey];
+    const className = rowClassName ? `trTable-row ${rowClassName(record)}` : 'trTable-row';
 
     return (
       <div
         key={key}
-        className="trTable-row"
+        className={className}
       >
         {columns.map(column => this.renderCell(record, column))}
       </div>
@@ -232,6 +233,7 @@ class CommonItemList extends React.PureComponent {
 CommonItemList.propTypes = {
   skin: PropTypes.oneOf(['regular', 'light']),
   rowKey: PropTypes.string,
+  rowClassName: PropTypes.func,
   shouldRenderHead: PropTypes.bool,
   shouldRenderRowHeads: PropTypes.bool,
   rowHead: PropTypes.shape({

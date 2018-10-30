@@ -6,11 +6,14 @@
   display: inline-block;
   width: 6px; // magic: SERVER_INDICATOR_WIDTH
   height: 6px; // magic: SERVER_INDICATOR_WIDTH
-  background-color: $server-status-indicator--healthy;
   border-radius: 50%;
 }
 
-.ServerList-indicator--error {
+.ServerList-row--success .ServerList-indicator {
+  background-color: $server-status-indicator--healthy;
+}
+
+.ServerList-row--error .ServerList-indicator {
   background-color: $server-status-indicator--error;
 }
 
@@ -20,15 +23,23 @@
 
 .ServerList-alias,
 .ServerList-uri,
+.ServerList-master,
 .ServerList-message {
   display: inline-block;
 }
 
+.ServerList-alias,
+.ServerList-uri {
+  margin-right: 0.6em;
+}
+
 .ServerList-alias {
-  margin-right: 0.8em;
+  font-weight: bold;
 }
 
 .ServerList-uri {}
+
+.ServerList-master {}
 
 .ServerList-message {
   color: #885050;

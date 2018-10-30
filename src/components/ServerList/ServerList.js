@@ -3,7 +3,6 @@ import React from 'react';
 import { defaultMemoize } from 'reselect';
 
 import CommonItemList from 'src/components/CommonItemList';
-import cn from 'src/misc/cn';
 
 import './ServerList.css';
 
@@ -25,29 +24,24 @@ const prepareColumnProps = (linked, clusterSelf, consoleServer, joinServer, crea
   const columns = [
     {
       key: 'indicator',
-      render: record => {
-        const indicatorClassName = cn(
-          'ServerList-indicator',
-          record.status !== 'healthy' && 'ServerList-indicator--error',
-        );
-        return <span className={indicatorClassName} />;
-      },
+      render: () => <span className="ServerList-indicator" />,
       width: '6px', // magic: SERVER_INDICATOR_WIDTH
     },
     {
       key: 'name',
       title: 'Name',
       renderText: record => {
-        const aliasText = record.alias || 'No alias';
-        let nameText = record.uri;
+        const nameText = [
+          <span className="ServerList-alias">{record.alias || 'No alias'}</span>,
+          <span className="ServerList-uri">{record.uri}</span>,
+        ];
         if (record.master) {
-          nameText += ' (master)';
+          nameText.push(<span className="ServerList-master">master</span>);
         }
 
         return (
           <span className="ServerList-name">
-            <b className="ServerList-alias">{aliasText}</b>
-            <span className="ServerList-uri">{nameText}</span>
+            {nameText}
             {record.message
               ? (
                 <React.Fragment>
@@ -194,6 +188,10 @@ const prepareColumnProps = (linked, clusterSelf, consoleServer, joinServer, crea
   return columns.filter(column => ! removedColumns.includes(column.key));
 };
 
+const getRowCalssName = record => {
+  return record.status !== 'healthy' ? 'ServerList-row--error' : 'ServerList-row--success';
+};
+
 class ServerList extends React.PureComponent {
   constructor(props) {
     super(props);
@@ -211,6 +209,7 @@ class ServerList extends React.PureComponent {
       <div className="ServerList">
         <CommonItemList
           rowKey="uri"
+          rowClassName={getRowCalssName}
           skin={skin}
           shouldRenderHead={shouldRenderHead}
           columns={columns}
