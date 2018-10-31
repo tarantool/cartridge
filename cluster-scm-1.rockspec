@@ -6,11 +6,11 @@ source  = {
 }
 dependencies = {
     'lua >= 5.1',
-    'checks ~> 2.1',
-    'lulpeg ~> 0.1',
-    'errors ~> 1.0',
-    'vshard == 0.1.6',
-    'membership ~> 2.1',
+    'checks == 2.1.1-1',
+    'lulpeg == 0.1.2-1',
+    'errors == 1.0.0-1',
+    'vshard == 0.1.7-1',
+    'membership == 2.1.0-1',
 }
 
 build = {
