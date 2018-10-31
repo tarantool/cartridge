@@ -328,7 +328,6 @@ local function apply(conf)
         utils.pathjoin(box.cfg.memtx_dir, 'config.yml'),
         yaml.encode(conf)
     )
-
     if not ok then
         return nil, err
     end
@@ -352,8 +351,9 @@ local function _clusterwide(conf_new)
     local servers_old = vars.conf.topology.servers
 
     local configured_uri_list = {}
+    local cnt = 0
     for uuid, _ in pairs(servers_new) do
-        if servers_new[uuid] == 'expelled' then
+        if not topology.not_expelled(uuid, servers_new[uuid]) then
             -- ignore expelled servers
         elseif servers_old[uuid] == nil then
             -- new servers bootstrap themselves through membership
@@ -369,15 +369,27 @@ local function _clusterwide(conf_new)
                 'return package.loaded["cluster.confapplier"].validate(...)',
                 {conf_new}
             )
-            if not ok then
+            if ok == nil then
+                log.error('Config validation failed at %q', uri)
+                local err_class = _G._error_classes[err.class_name]
+                if err_class ~= nil then
+                    setmetatable(err, err_class.__instance_mt)
+                end
                 return nil, err
             end
+            cnt = cnt + 1
+            configured_uri_list[cnt] = uri
             configured_uri_list[uri] = false
         end
     end
 
+    -- this is mostly for testing purposes
+    -- it allows to determine apply order
+    -- in real world it does not affect anything
+    table.sort(configured_uri_list)
+
     local _apply_error = nil
-    for uri, _ in pairs(configured_uri_list) do
+    for _, uri in ipairs(configured_uri_list) do
         local conn, err = pool.connect(uri)
         if conn == nil then
             return nil, err
@@ -388,9 +400,15 @@ local function _clusterwide(conf_new)
             'return package.loaded["cluster.confapplier"].apply(...)',
             {conf_new}
         )
-        if ok then
+
+        if ok ~= nil then
             configured_uri_list[uri] = true
         else
+            local err_class = _G._error_classes[err.class_name]
+            if err_class ~= nil then
+                setmetatable(err, err_class.__instance_mt)
+            end
+
             log.error('%s', err)
             _apply_error = err
             break
@@ -401,8 +419,8 @@ local function _clusterwide(conf_new)
         return true
     end
 
-    for uri, configured in pairs(configured_uri_list) do
-        if configured then
+    for _, uri in ipairs(configured_uri_list) do
+        if configured_uri_list[uri] then
             log.info('Rollback config on %s', uri)
             local conn, err = pool.connect(uri)
             if conn == nil then
@@ -413,8 +431,12 @@ local function _clusterwide(conf_new)
                 'return package.loaded["cluster.confapplier"].apply(...)',
                 {conf_old}
             )
-            if not ok then
-                log.error(err)
+            if ok == nil then
+                local err_class = _G._error_classes[err.class_name]
+                if err_class ~= nil then
+                    setmetatable(err, err_class.__instance_mt)
+                end
+                log.error('%s', err)
             end
         end
     end

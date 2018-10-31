@@ -77,7 +77,7 @@ def set_failover(cluster, enabled):
         }
     """ % ("true" if enabled else "false"))
     assert 'errors' not in obj
-    logging.warn('Failover %s' % 'enabled' if enabled else 'disabled')
+    logging.warn('Failover %s' % ('enabled' if enabled else 'disabled'))
     return obj['data']['cluster']['failover']
 
 def callrw(cluster, fn, args=[]):
@@ -118,6 +118,43 @@ def test_failover(cluster, helpers):
 
     set_master(cluster, uuid_replicaset, uuid_s1)
     assert helpers.wait_for(callrw, [cluster, 'get_uuid']) == uuid_s1
+
     cluster['storage-1'].kill()
-    # Wait when router reconfigures
     assert helpers.wait_for(callrw, [cluster, 'get_uuid']) == uuid_s2
+
+    cluster['storage-1'].start()
+    helpers.wait_for(cluster['storage-1'].connect, timeout=5)
+    assert helpers.wait_for(callrw, [cluster, 'get_uuid']) == uuid_s1
+
+def test_rollback(cluster, helpers):
+    conn = cluster['storage-1'].conn
+
+    # hack confapplier to throw error on apply
+    conn.eval('''\
+        local confapplier = package.loaded["cluster.confapplier"]
+        _G._confapplier_apply = confapplier.apply
+        confapplier.apply = function()
+            error("Hacked from pytest")
+        end
+    ''')
+
+    # try to apply new config - it should fail
+    obj = cluster['router'].graphql("""
+        mutation {
+            cluster { failover(enabled: false) }
+        }
+    """)
+    assert obj['errors'][0]['message'] == 'eval:4: Hacked from pytest'
+
+    # restore confapplier
+    conn.eval('''
+        package.loaded["cluster.confapplier"].apply = _G._confapplier_apply
+    ''')
+
+    # try to apply new config - now it should succeed
+    obj = cluster['router'].graphql("""
+        mutation {
+            cluster { failover(enabled: false) }
+        }
+    """)
+    assert 'errors' not in obj
