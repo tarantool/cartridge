@@ -9,7 +9,7 @@ import './ReplicasetCard.css';
 
 const prepareServers = replicaset => {
   const masterUuid = replicaset.master.uuid;
-  return replicaset.servers.map(server => server.uuid === masterUuid ? { ...server, master: true } : server );
+  return replicaset.servers.map(server =>  ({ ...server, master: server.uuid === masterUuid }));
 };
 
 class ReplicasetCard extends React.PureComponent {

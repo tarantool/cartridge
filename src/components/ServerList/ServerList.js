@@ -192,18 +192,23 @@ const getRowCalssName = record => {
   return record.status !== 'healthy' ? 'ServerList-row--error' : 'ServerList-row--success';
 };
 
+const prepareDataSource = dataSource => {
+  return dataSource.sort((a, b) => {
+    return a.master !== b.master
+      ? !!a.master < !!b.master
+      : a.alias !== b.alias
+        ? (a.alias || '') > (b.alias || '')
+        : (a.uri || '') > (b.uri || '');
+  });
+};
+
 class ServerList extends React.PureComponent {
-  constructor(props) {
-    super(props);
-
-    this.prepareColumnProps = defaultMemoize(prepareColumnProps);
-  }
-
   render() {
-    const { linked, dataSource } = this.props;
-    const columns = this.getColumnProps();
-    const shouldRenderHead = ! linked;
+    const { linked } = this.props;
     const skin = linked ? 'light' : null;
+    const shouldRenderHead = ! linked;
+    const columns = this.getColumnProps();
+    const dataSource = this.getDataSource();
 
     return (
       <div className="ServerList">
@@ -222,6 +227,15 @@ class ServerList extends React.PureComponent {
     const { linked, clusterSelf, consoleServer, joinServer, createReplicaset, expellServer } = this.props;
     return this.prepareColumnProps(linked, clusterSelf, consoleServer, joinServer, createReplicaset, expellServer);
   };
+
+  getDataSource = () => {
+    const { dataSource } = this.props;
+    return this.prepareDataSource(dataSource);
+  };
+
+  prepareColumnProps = defaultMemoize(prepareColumnProps);
+
+  prepareDataSource = defaultMemoize(prepareDataSource);
 }
 
 ServerList.propTypes = {
