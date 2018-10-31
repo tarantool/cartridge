@@ -63,7 +63,7 @@ class ReplicasetEditModal extends React.PureComponent {
     const { isLoading, isSaving, replicasetNotFound, shouldCreateReplicaset, replicaset, submitStatusMessage, onSubmit,
       onRequestClose } = this.props;
 
-    const dataSource = isLoading
+    const dataSource = isLoading || replicasetNotFound
       ? null
       : shouldCreateReplicaset ? defaultDataSource : this.getDataSource(replicaset);
 

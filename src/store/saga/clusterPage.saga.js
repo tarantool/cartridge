@@ -87,7 +87,7 @@ function* refreshListsTaskSaga() {
       }
     }
     catch (error) {
-      yield put({ type: CLUSTER_PAGE_REFRESH_LISTS_REQUEST_ERROR, error });
+      yield put({ type: CLUSTER_PAGE_REFRESH_LISTS_REQUEST_ERROR, error, requestPayload: {} });
     }
     if (response) {
       if (response.serverStat) {
@@ -96,7 +96,7 @@ function* refreshListsTaskSaga() {
           serverStat: response.serverStat.filter(stat => stat.uuid),
         };
       }
-      yield put({ type: CLUSTER_PAGE_REFRESH_LISTS_REQUEST_SUCCESS, payload: response });
+      yield put({ type: CLUSTER_PAGE_REFRESH_LISTS_REQUEST_SUCCESS, payload: response, requestPayload: {} });
     }
   }
 }
@@ -133,11 +133,12 @@ const joinServerRequestSaga = getRequestSaga(
 
 function* createReplicasetRequestSaga() {
   yield takeLatest(CLUSTER_PAGE_CREATE_REPLICASET_REQUEST, function* load(action) {
+    const { payload: requestPayload = {} } = action;
     const indicator = pageRequestIndicator.run();
 
     let response;
     try {
-      const createReplicasetResponse = yield call(createReplicaset, action.payload);
+      const createReplicasetResponse = yield call(createReplicaset, requestPayload);
       indicator.next();
       const clusterSelfResponse = yield call(getClusterSelf);
       indicator.success();
@@ -148,12 +149,12 @@ function* createReplicasetRequestSaga() {
       };
     }
     catch (error) {
-      yield put({ type: CLUSTER_PAGE_CREATE_REPLICASET_REQUEST_ERROR, error });
+      yield put({ type: CLUSTER_PAGE_CREATE_REPLICASET_REQUEST_ERROR, error, requestPayload });
       indicator.error();
       return;
     }
 
-    yield put({ type: CLUSTER_PAGE_CREATE_REPLICASET_REQUEST_SUCCESS, payload: response });
+    yield put({ type: CLUSTER_PAGE_CREATE_REPLICASET_REQUEST_SUCCESS, payload: response, requestPayload });
   });
 }
 
@@ -180,22 +181,23 @@ const uploadConfigRequestSaga = getRequestSaga(
 
 function* applyTestConfigRequestSaga() {
   yield takeLatest(CLUSTER_PAGE_APPLY_TEST_CONFIG_REQUEST, function* load(action) {
+    const { payload: requestPayload = {} } = action;
     const indicator = pageRequestIndicator.run();
 
     let response;
     try {
-      yield call(joinSingleServer, action.payload);
+      yield call(joinSingleServer, requestPayload);
       indicator.next();
       response = yield call(applyTestConfig);
       indicator.success();
     }
     catch (error) {
-      yield put({ type: CLUSTER_PAGE_APPLY_TEST_CONFIG_REQUEST_ERROR, error });
+      yield put({ type: CLUSTER_PAGE_APPLY_TEST_CONFIG_REQUEST_ERROR, error, requestPayload });
       indicator.error();
       return;
     }
 
-    yield put({ type: CLUSTER_PAGE_APPLY_TEST_CONFIG_REQUEST_SUCCESS, payload: response });
+    yield put({ type: CLUSTER_PAGE_APPLY_TEST_CONFIG_REQUEST_SUCCESS, payload: response, requestPayload });
   });
 }
 

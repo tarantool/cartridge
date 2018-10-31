@@ -108,7 +108,7 @@ const unauthorizedReducer = (state, action) => {
     };
   }
   return state;
-}
+};
 
 export const reducer = baseReducer(
   initialState,
@@ -210,7 +210,7 @@ export const reducer = baseReducer(
       case APP_CREATE_MESSAGE:
         return {
           ...state,
-          messages: [...state.messages, { content: action.payload.content, done: false }],
+          messages: [...state.messages, { ...action.payload, done: false }],
         };
 
       case APP_SET_MESSAGE_DONE:

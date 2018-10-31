@@ -11,11 +11,11 @@ export default {
 
 export const isGraphqlErrorResponse
   = error =>
-    Array.isArray(error) && error.length === 1 && Object.keys(error[0]).length === 1 && error[0].message != null;
+    Array.isArray(error) && error.length === 1 && Object.keys(error[0]).length === 1 && 'message' in error[0];
 
 export const getGraphqlErrorMessage
   = error =>
-    error[0].message;
+    error[0].message || 'GraphQL error with empty message';
 
 export const isGraphqlAccessDeniedError
   = error =>

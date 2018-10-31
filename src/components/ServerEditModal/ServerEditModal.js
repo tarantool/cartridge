@@ -75,7 +75,7 @@ class ServerEditModal extends React.PureComponent {
       onRequestClose } = this.props;
 
     const fields = isLoading ? null : this.getFields();
-    const dataSource = isLoading
+    const dataSource = isLoading || serverNotFound
       ? null
       : shouldCreateServer ? getServerDefaultDataSource() : getServerDataSource(server);
 

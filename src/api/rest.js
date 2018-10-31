@@ -20,7 +20,7 @@ export const isRestErrorResponse
 
 export const getRestErrorMessage
   = error =>
-    error.message || error.response;
+    error.responseText || 'XMLHttpRequest error with empty message';
 
 export const isRestAccessDeniedError
   = error =>

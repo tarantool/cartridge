@@ -1,7 +1,7 @@
 import { delay } from 'redux-saga';
-import { call, put, take, takeEvery, takeLatest } from 'redux-saga/effects';
+import { call, put, select, take, takeEvery, takeLatest } from 'redux-saga/effects';
 
-import { getErrorMessage as getApiErrorMessage } from 'src/api';
+import { getErrorMessage as getApiErrorMessage, isDeadServerError, SERVER_NOT_REACHABLE_ERROR_TYPE } from 'src/api';
 import { pageRequestIndicator } from 'src/misc/pageRequestIndicator';
 import {
   APP_DID_MOUNT,
@@ -14,7 +14,6 @@ import {
   APP_LOGOUT_REQUEST,
   APP_LOGOUT_REQUEST_SUCCESS,
   APP_LOGOUT_REQUEST_ERROR,
-  APP_FORCE_LOGOUT,
   APP_DENY_ANONYMOUS_REQUEST,
   APP_DENY_ANONYMOUS_REQUEST_SUCCESS,
   APP_DENY_ANONYMOUS_REQUEST_ERROR,
@@ -94,26 +93,48 @@ const logoutRequestSaga = getRequestSaga(
   logout,
 );
 
-function* unauthenticatedSaga() {
-  while (true) {
-    const action = yield take('*');
-    const { error } = action;
-    if (error && error instanceof XMLHttpRequest && error.status === 401) {
-      yield put({ type: APP_FORCE_LOGOUT })
-    }
-  }
+function* getActiveDeadServerMessage() {
+  const messages = yield select(state => state.app.messages);
+  return messages.find(
+    message => message.type === SERVER_NOT_REACHABLE_ERROR_TYPE && !message.done
+  );
 }
 
 function* appMessageSaga() {
   while (true) {
     const action = yield take('*');
-    if (action.error && action.__errorMessage) {
-      const content = { type: 'danger', text: getApiErrorMessage(action.error) };
-      yield put({ type: APP_CREATE_MESSAGE, payload: { content } });
+
+    if (action.error && isDeadServerError(action.error)) {
+      const activeDeadServerMessage = yield call(getActiveDeadServerMessage);
+      if ( ! activeDeadServerMessage) {
+        const message = {
+          content: { type: 'danger', text: 'It seems like server is not reachable' },
+          type: SERVER_NOT_REACHABLE_ERROR_TYPE,
+        };
+        yield put({ type: APP_CREATE_MESSAGE, payload: message });
+      }
     }
+    else {
+      if (action.requestPayload) {
+        const activeDeadServerMessage = yield call(getActiveDeadServerMessage);
+        if (activeDeadServerMessage) {
+          yield put({ type: APP_SET_MESSAGE_DONE, payload: activeDeadServerMessage });
+        }
+      }
+
+      if (action.error && action.__errorMessage) {
+        const message = {
+          content: { type: 'danger', text: getApiErrorMessage(action.error) },
+        };
+        yield put({ type: APP_CREATE_MESSAGE, payload: message });
+      }
+    }
+
     if (action.__successMessage) {
-      const content = { type: 'success', text: action.__successMessage };
-      yield put({ type: APP_CREATE_MESSAGE, payload: { content } });
+      const message = {
+        content: { type: 'success', text: action.__successMessage },
+      };
+      yield put({ type: APP_CREATE_MESSAGE, payload: message });
     }
   }
 }
@@ -134,7 +155,6 @@ export const saga = baseSaga(
   evalStringRequestSaga,
   loginRequestSaga,
   logoutRequestSaga,
-  unauthenticatedSaga,
   appMessageSaga,
   doneMessage,
 );
