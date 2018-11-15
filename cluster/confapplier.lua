@@ -189,13 +189,14 @@ local function fetch_from_uri(uri)
 end
 
 local function fetch_from_membership()
-    local conf = get_readonly()
-    if conf then
-        if conf.topology.servers[box.info.uuid] == nil
-        or conf.topology.servers[box.info.uuid] == 'expelled'
-        or utils.table_count(conf.topology.servers) == 1
+    local topology_cfg = get_readonly('topology')
+
+    if topology_cfg ~= nil then
+        if topology_cfg.servers[box.info.uuid] == nil
+        or topology_cfg.servers[box.info.uuid] == 'expelled'
+        or utils.table_count(topology_cfg.servers) == 1
         then
-            return conf
+            return vars.conf
         end
     end
 
@@ -204,8 +205,8 @@ local function fetch_from_membership()
         if (member.status ~= 'alive') -- ignore non-alive members
         or (member.payload.uuid == nil)  -- ignore non-configured members
         or (member.payload.error ~= nil) -- ignore misconfigured members
-        or (conf and member.payload.uuid == box.info.uuid) -- ignore myself
-        or (conf and conf.topology.servers[member.payload.uuid] == nil) -- ignore aliens
+        or (topology_cfg and member.payload.uuid == box.info.uuid) -- ignore myself
+        or (topology_cfg and topology_cfg.servers[member.payload.uuid] == nil) -- ignore aliens
         then
             -- ignore that member
         else
