@@ -134,7 +134,7 @@ end
 
 --- Get read-write deepcopy of a config section
 -- Changing the section has no effect
--- unless it is used for `patch_clusterwide`
+-- unless it is passed to a `patch_clusterwide` call.
 -- @function get_deepcopy
 -- @tparam string section_name A name of a section to get
 -- @treturn table Read-write view on `cfg[section_name]`
@@ -398,8 +398,43 @@ local function apply(conf)
     return true
 end
 
-local function _clusterwide(conf_new)
+--- Edit clusterwide configuration.
+-- Top-level keys are merged with currend config.
+-- In order to remove a top-level section use
+-- `patch_clusterwide{key = box.NULL}`
+--
+-- Two-phase commit algorithm is used.
+-- In particular, the following steps are performed:
+--
+-- I. Current config is patched.
+--
+-- II. Patched config is validated on every server in a group.
+-- The group consists of all servers, excluding:
+--
+-- * expelled servers;
+-- * disabled server;
+-- * servers being joined during this call;
+--
+-- III. Patched config is sent to every server is the group.
+--
+-- IV. If any server reports an error during saving config,
+-- all servers are rolled back
+--
+-- @function patch_clusterwide
+-- @tparam table conf A patch to be applied
+-- @treturn true|nil Success indication
+-- @treturn ?error Error description
+local function _clusterwide(conf)
     checks('table')
+
+    local conf_new = set_readonly(table.deepcopy(vars.conf), false)
+    for k, v in pairs(conf) do
+        if v == nil then -- box.NULL
+            conf_new[k] = nil
+        else
+            conf_new[k] = v
+        end
+    end
 
     local ok, err = validate(conf_new)
     if not ok then
@@ -504,14 +539,14 @@ local function _clusterwide(conf_new)
     return nil, _apply_error
 end
 
-local function clusterwide(conf_new)
+local function patch_clusterwide(conf)
     if vars.locks['clusterwide'] == true  then
         return nil, e_atomic:new('confapplier.clusterwide is already running')
     end
 
     box.session.su('admin')
     vars.locks['clusterwide'] = true
-    local ok, err = e_config_apply:pcall(_clusterwide, conf_new)
+    local ok, err = e_config_apply:pcall(_clusterwide, conf)
     vars.locks['clusterwide'] = false
 
     return ok, err
@@ -528,5 +563,5 @@ return {
         return e_config_validate:pcall(validate, conf)
     end,
     apply = apply,
-    clusterwide = clusterwide,
+    patch_clusterwide = patch_clusterwide,
 }
