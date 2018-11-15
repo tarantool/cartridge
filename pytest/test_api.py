@@ -255,6 +255,16 @@ def test_uninitialized(module_tmpdir, helpers):
         assert server_self == {'uri': 'localhost:33101', 'alias': 'dummy'}
 
         obj = srv.graphql("""
+            mutation {
+                join_server(uri: "localhost:33001)")
+            }
+        """)
+        assert obj['errors'][0]['message'] == \
+            'Invalid attempt to call join_server()' + \
+            ' on instance which is not bootstrapped yet.\n' + \
+            'Call join_server with uri="localhost:33101" to bootstrap'
+
+        obj = srv.graphql("""
             {
                 cluster { failover }
             }

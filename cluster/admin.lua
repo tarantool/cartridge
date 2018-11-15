@@ -208,7 +208,8 @@ local function join_server(args)
     local topology_cfg = confapplier.get_deepcopy('topology')
     if topology_cfg == nil then
         -- Bootstrapping first instance from the web UI
-        if args.uri == membership.myself().uri then
+        local myself = membership.myself()
+        if args.uri == myself.uri then
             return package.loaded['cluster'].bootstrap(
                 roles,
                 {
@@ -218,8 +219,9 @@ local function join_server(args)
             )
         else
             return nil, e_topology_edit:new(
-                'invalid attempt to call join_server()' ..
-                ' on instance which is not bootstrapped yet'
+                'Invalid attempt to call join_server()' ..
+                ' on instance which is not bootstrapped yet.\n' ..
+                'Call join_server with uri=%q to bootstrap', myself.uri
             )
         end
     end
