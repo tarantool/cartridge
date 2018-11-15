@@ -1,6 +1,10 @@
 #!/usr/bin/env tarantool
 -- luacheck: globals box
 
+--- Clusterwide configuration.
+--
+-- @submodule cluster
+
 local log = require('log')
 local fio = require('fio')
 local yaml = require('yaml').new()
@@ -83,16 +87,69 @@ local function load_from_file(filename)
     return conf, err
 end
 
-local function get_current(section)
-    checks('?string')
+local mt_readonly = {
+    __newindex = function()
+        error('table is readonly')
+    end
+}
+
+--- Recursively change table readonly property.
+-- This is achieved by setting or removing a metatable.
+-- @function set_readonly
+-- @local
+-- @tparam table tbl A table to be processed
+-- @tparam boolean ro Desired readonliness
+-- @treturn table the same table
+local function set_readonly(tbl, ro)
+    checks("table", "boolean")
+
+    for _, v in pairs(tbl) do
+        if type(v) == 'table' then
+            set_readonly(v, ro)
+        end
+    end
+
+    if ro then
+        setmetatable(tbl, mt_readonly)
+    else
+        setmetatable(tbl, nil)
+    end
+
+    return tbl
+end
+
+--- Get readonly view of a config section
+-- Any attempt to modify the section or its children
+-- will raise the error "table is readonly"
+-- @function get_readonly
+-- @tparam string section_name
+-- @treturn table Read-only view on `cfg[section_name]`
+local function get_readonly(section_name)
+    checks('string')
+    if vars.conf == nil then
+        return nil
+    end
+    return vars.conf[section_name]
+end
+
+--- Get read-write deepcopy of a config section
+-- Changing the section has no effect
+-- unless it is used for `patch_clusterwide`
+-- @function get_deepcopy
+-- @tparam string section_name A name of a section to get
+-- @treturn table Read-write view on `cfg[section_name]`
+local function get_deepcopy(section_name)
+    checks('string')
     if vars.conf == nil then
         return nil
     end
 
-    if section == nil then
-        return table.deepcopy(vars.conf)
+    local ret = table.deepcopy(vars.conf[section_name])
+
+    if type(ret) == 'table' then
+        return set_readonly(ret, false)
     else
-        return table.deepcopy(vars.conf[section])
+        return ret
     end
 end
 
@@ -112,7 +169,7 @@ local function restore_from_workdir(workdir)
         return nil, err
     end
 
-    vars.conf = conf
+    vars.conf = set_readonly(conf, true)
     topology.set(conf.topology)
 
     return table.deepcopy(conf)
@@ -124,11 +181,15 @@ local function fetch_from_uri(uri)
         return nil, err
     end
 
-    return conn:eval('return package.loaded["cluster.confapplier"].get_current()')
+    return conn:eval([[
+        local vars_lib = package.loaded["cluster.vars"]
+        local vars = vars_lib.new('cluster.confapplier')
+        return vars.conf
+    ]])
 end
 
 local function fetch_from_membership()
-    local conf = get_current()
+    local conf = get_readonly()
     if conf then
         if conf.topology.servers[box.info.uuid] == nil
         or conf.topology.servers[box.info.uuid] == 'expelled'
@@ -240,7 +301,7 @@ local function _apply(channel)
             return
         end
 
-        vars.conf = conf
+        vars.conf = set_readonly(conf, true)
         topology.set(conf.topology)
 
         local replication = topology.get_replication_config(
@@ -345,10 +406,9 @@ local function _clusterwide(conf_new)
         return nil, err
     end
 
-    local conf_old = get_current()
-
+    local conf_old = vars.conf
     local servers_new = conf_new.topology.servers
-    local servers_old = vars.conf.topology.servers
+    local servers_old = conf_old.topology.servers
 
     local configured_uri_list = {}
     local cnt = 0
@@ -458,7 +518,8 @@ local function clusterwide(conf_new)
 end
 
 return {
-    get_current = get_current,
+    get_readonly = get_readonly,
+    get_deepcopy = get_deepcopy,
     load_from_file = load_from_file,
     restore_from_workdir = restore_from_workdir,
     fetch_from_membership = fetch_from_membership,
