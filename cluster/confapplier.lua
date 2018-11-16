@@ -223,16 +223,12 @@ local function fetch_from_membership()
 end
 
 local function validate(conf_new)
-    e_config_validate:assert(
-        type(conf_new) == 'table',
-        'config must be a table'
-    )
+    if type(conf_new) ~= 'table'  then
+        return nil, e_config_validate:new('config must be a table')
+    end
 
     local conf_old = vars.conf or {}
 
-    e_config_validate:assert(
-        topology.validate(conf_new.topology, conf_old.topology)
-    )
 
     return true
 end
@@ -429,20 +425,20 @@ local function _clusterwide(conf)
     checks('table')
 
     local conf_new = set_readonly(table.deepcopy(vars.conf), false)
+    local conf_old = vars.conf
     for k, v in pairs(conf) do
-        if v == nil then -- box.NULL
+        if v == box.NULL then
             conf_new[k] = nil
         else
             conf_new[k] = v
         end
     end
 
-    local ok, err = validate(conf_new)
+    local ok, err = topology.validate(conf_new.topology, conf_old.topology)
     if not ok then
         return nil, err
     end
 
-    local conf_old = vars.conf
     local servers_new = conf_new.topology.servers
     local servers_old = conf_old.topology.servers
 
@@ -560,9 +556,7 @@ return {
     restore_from_workdir = restore_from_workdir,
     fetch_from_membership = fetch_from_membership,
 
-    validate = function(conf)
-        return e_config_validate:pcall(validate, conf)
-    end,
+    validate = validate,
     apply = apply,
     patch_clusterwide = patch_clusterwide,
 }

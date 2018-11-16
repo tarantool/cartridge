@@ -128,6 +128,12 @@ local function bootstrap_from_scratch(boot_opts, box_opts, roles)
     --     return nil, err
     -- end
 
+    local ok, err = topology.validate(conf.topology, {})
+    if err then
+        membership.set_payload('warning', tostring(err.err or err))
+        return false
+    end
+
     local ok, err = confapplier.validate(conf)
     if not ok then
         return nil, err
@@ -177,6 +183,12 @@ local function bootstrap_from_membership(boot_opts, box_opts)
     end
 
     if not conf then
+        return false
+    end
+
+    local ok, err = topology.validate(conf.topology, {})
+    if err then
+        membership.set_payload('warning', tostring(err.err or err))
         return false
     end
 
