@@ -102,6 +102,7 @@ local function get_servers_and_replicasets()
     for _it, instance_uuid, server in fun.filter(topology.not_expelled, topology_cfg.servers) do
         local srv = get_server_info(members, instance_uuid, server.uri)
 
+        srv.disabled = not topology.not_disabled(instance_uuid, server)
         srv.replicaset = replicasets[server.replicaset_uuid]
 
         if topology_cfg.replicasets[server.replicaset_uuid].master == instance_uuid then
@@ -323,6 +324,36 @@ local function expell_server(uuid)
     return true
 end
 
+local function set_servers_disabled_state(uuids, state)
+    local topology_cfg = confapplier.get_current('topology')
+    for _, uuid in pairs(uuids) do
+        if topology_cfg.servers[uuid] == nil then
+            return nil, e_topology_edit:new('Server %q not in config', uuid)
+        elseif topology_cfg.servers[uuid] == "expelled" then
+            return nil, e_topology_edit:new('Server %q is already expelled', uuid)
+        end
+
+        topology_cfg.servers[uuid].disabled = state
+    end
+
+    local ok, err = apply_topology(topology_cfg)
+    if not ok then
+        return nil, err
+    end
+
+    return get_servers()
+end
+
+local function enable_servers(uuids)
+    checks('table')
+    return set_servers_disabled_state(uuids, false)
+end
+
+local function disable_servers(uuids)
+    checks('table')
+    return set_servers_disabled_state(uuids, true)
+end
+
 local function edit_replicaset(args)
     args = args or {}
     checks({
@@ -425,6 +456,9 @@ return {
     join_server = join_server,
     edit_server = edit_server,
     expell_server = expell_server,
+    enable_servers = enable_servers,
+    disable_servers = disable_servers,
+
     edit_replicaset = edit_replicaset,
 
     get_failover_enabled = get_failover_enabled,

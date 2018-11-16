@@ -20,6 +20,7 @@ vars:new('topology', {
         -- ['instance-uuid-1'] = 'expelled',
         -- ['instance-uuid-2'] = {
         --     uri = 'localhost:3301',
+        --     disabled = false,
         --     replicaset_uuid = 'replicaset-uuid-2',
         -- },
     },
@@ -38,6 +39,10 @@ vars:new('topology', {
 -- to be used in fun.filter
 local function not_expelled(uuid, srv)
     return srv ~= 'expelled'
+end
+
+local function not_disabled(uuid, srv)
+    return not_expelled(uuid, srv) and not srv.disabled
 end
 
 local function validate_schema(field, topology)
@@ -83,6 +88,10 @@ local function validate_schema(field, topology)
                 '%s.uri must be a string, got %s', field, type(server.uri)
             )
             e_config:assert(
+                type(server.disabled or false) == 'boolean',
+                '%s.disabled must be true or false', field
+            )
+            e_config:assert(
                 type(server.replicaset_uuid) == 'string',
                 '%s.replicaset_uuid must be a string, got %s', field, type(server.replicaset_uuid)
             )
@@ -93,6 +102,7 @@ local function validate_schema(field, topology)
 
             local known_keys = {
                 ['uri'] = true,
+                ['disabled'] = true,
                 ['replicaset_uuid'] = true,
             }
             for k, v in pairs(server) do
@@ -222,7 +232,7 @@ local function validate_availability(topology)
     checks('table')
     local servers = topology.servers or {}
 
-    for _it, instance_uuid, server in fun.filter(not_expelled, servers) do
+    for _it, instance_uuid, server in fun.filter(not_disabled, servers) do
         local member = membership.get_member(server.uri)
         e_config:assert(
             member ~= nil,
@@ -242,6 +252,24 @@ local function validate_availability(topology)
             member.payload.error == nil,
             'Server %q has error: %s',
             server.uri, member.payload.error
+        )
+    end
+
+    local myself = membership.myself()
+    local myself_uuid = myself.payload.uuid
+    if myself_uuid ~= nil then
+        local srv = topology.servers[myself_uuid]
+        e_config:assert(
+            srv ~= nil,
+            'Current instance %q is not listed in config', myself.uri
+        )
+        e_config:assert(
+            not_expelled(myself_uuid, srv),
+            'Current instance %q can not be expelled', myself.uri
+        )
+        e_config:assert(
+            not_disabled(myself_uuid, srv),
+            'Current instance %q can not be disabled', myself.uri
         )
     end
 end
@@ -269,7 +297,7 @@ local function validate_upgrade(topology_new, topology_old)
         if server_old then
             e_config:assert(
                 not_expelled(instance_uuid, server_old),
-                '%s is expelled', field
+                '%s has been expelled earlier', field
             )
             e_config:assert(
                 server_old.replicaset_uuid == server_new.replicaset_uuid,
@@ -336,7 +364,7 @@ local function cluster_is_healthy()
         return nil, 'not bootstrapped yet'
     end
 
-    for _it, instance_uuid, server in fun.filter(not_expelled, vars.topology.servers) do
+    for _it, instance_uuid, server in fun.filter(not_disabled, vars.topology.servers) do
         local member = membership.get_member(server.uri) or {}
 
         if (member.status ~= 'alive') then
@@ -380,7 +408,7 @@ local function get_vshard_sharding_config()
         -- [replicaset_uuid] = instance_uuid,
     }
 
-    for _it, instance_uuid, server in fun.filter(not_expelled, vars.topology.servers) do
+    for _it, instance_uuid, server in fun.filter(not_disabled, vars.topology.servers) do
         local replicaset_uuid = server.replicaset_uuid
         local replicaset = vars.topology.replicasets[replicaset_uuid]
         if replicaset.roles['vshard-storage'] then
@@ -433,7 +461,7 @@ local function get_replication_config(replicaset_uuid)
     local replication = {}
     local advertise_uri = membership.myself().uri
 
-    for _it, instance_uuid, server in fun.filter(not_expelled, vars.topology.servers) do
+    for _it, instance_uuid, server in fun.filter(not_disabled, vars.topology.servers) do
         if server.replicaset_uuid == replicaset_uuid
         and server.uri ~= advertise_uri then
             table.insert(replication, pool.format_uri(server.uri))
@@ -457,6 +485,7 @@ return {
     end,
 
     not_expelled = not_expelled,
+    not_disabled = not_disabled,
 
     cluster_is_healthy = cluster_is_healthy,
     get_myself_uuids = get_myself_uuids,

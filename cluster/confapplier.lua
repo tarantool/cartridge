@@ -353,8 +353,8 @@ local function _clusterwide(conf_new)
     local configured_uri_list = {}
     local cnt = 0
     for uuid, _ in pairs(servers_new) do
-        if not topology.not_expelled(uuid, servers_new[uuid]) then
-            -- ignore expelled servers
+        if not topology.not_disabled(uuid, servers_new[uuid]) then
+            -- ignore disabled servers
         elseif servers_old[uuid] == nil then
             -- new servers bootstrap themselves through membership
             -- dont call nex.box on them

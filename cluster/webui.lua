@@ -65,6 +65,7 @@ local gql_type_server = gql_types.object {
         uuid = gql_types.string.nonNull,
         status = gql_types.string.nonNull,
         message = gql_types.string.nonNull,
+        disabled = gql_types.boolean.nonNull,
         statistics = statistics_schema,
         replicaset = gql_type_replicaset,
     }
@@ -96,6 +97,10 @@ end
 
 local function expell_server(_, args)
     return admin.expell_server(args.uuid)
+end
+
+local function disable_servers(_, args)
+    return admin.disable_servers(args.uuids)
 end
 
 local function edit_replicaset(_, args)
@@ -257,6 +262,17 @@ local function init(httpd)
         callback = 'cluster.webui.set_failover_enabled',
     })
 
+    graphql.add_mutation({
+        prefix = 'cluster',
+        name = 'disable_servers',
+        doc = 'Disable listed servers by uuid',
+        args = {
+            uuids = gql_types.list(gql_types.string.nonNull),
+        },
+        kind = gql_types.list('Server'),
+        callback = 'cluster.webui.disable_servers',
+    })
+
     graphql.add_callback({
         prefix = 'cluster',
         name = 'self',
@@ -330,6 +346,7 @@ return {
     edit_server = edit_server,
     edit_replicaset = edit_replicaset,
     expell_server = expell_server,
+    disable_servers = disable_servers,
 
     get_failover_enabled = get_failover_enabled,
     set_failover_enabled = set_failover_enabled,

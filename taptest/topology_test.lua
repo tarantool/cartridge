@@ -6,7 +6,7 @@ local members = {
     ['localhost:3301'] = {
         uri = 'localhost:3301',
         status = 'alive',
-        payload = {},
+        payload = {uuid = 'aaaaaaaa-aaaa-4000-b000-000000000001'},
     },
     ['localhost:3302'] = {
         uri = 'localhost:3302',
@@ -33,6 +33,9 @@ package.loaded['membership'] = {
     get_member = function(uri)
         return members[uri]
     end,
+    myself = function(uri)
+        return members['localhost:3301']
+    end,
 }
 
 local tap = require('tap')
@@ -40,7 +43,7 @@ local yaml = require('yaml')
 local topology = require('cluster.topology')
 local test = tap.test('topology.config')
 
-test:plan(36)
+test:plan(40)
 
 local function check_config(result, raw_new, raw_old)
     local cfg_new = raw_new and yaml.decode(raw_new) or {}
@@ -115,6 +118,16 @@ servers:
   aaaaaaaa-aaaa-4000-b000-000000000001:
     uri: localhost:3301
     replicaset_uuid: set1
+...]])
+
+check_config('topology_new.servers[aaaaaaaa-aaaa-4000-b000-000000000001].disabled'..
+  ' must be true or false',
+[[---
+servers:
+  aaaaaaaa-aaaa-4000-b000-000000000001:
+    uri: localhost:3301
+    disabled: nope
+    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
 ...]])
 
 check_config('topology_new.servers[aaaaaaaa-aaaa-4000-b000-000000000001]'..
@@ -331,22 +344,59 @@ replicasets:
     roles: {"vshard-storage": true}
 ...]])
 
-
-test:diag('validate_upgrade()')
-
-check_config('servers[aaaaaaaa-aaaa-4000-b000-000000000001]'..
-  ' can not be removed from config',
-
+check_config('Current instance "localhost:3301" is not listed in config',
 [[---
 servers: {}
-...]],
+...]])
 
+check_config('Current instance "localhost:3301" can not be disabled',
+[[---
+servers:
+  aaaaaaaa-aaaa-4000-b000-000000000001:
+    uri: localhost:3301
+    disabled: true
+    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
+replicasets:
+  aaaaaaaa-0000-4000-b000-000000000001:
+    master: aaaaaaaa-aaaa-4000-b000-000000000001
+    roles: {}
+...]])
+
+check_config('Current instance "localhost:3301" can not be expelled',
 [[---
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000001: expelled
 ...]])
 
-check_config('servers[aaaaaaaa-aaaa-4000-b000-000000000001] is expelled',
+test:diag('validate_upgrade()')
+
+check_config('servers[aaaaaaaa-aaaa-4000-b000-000000000002]'..
+  ' can not be removed from config',
+
+[[---
+servers:
+  aaaaaaaa-aaaa-4000-b000-000000000001:
+    uri: localhost:3301
+    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
+replicasets:
+  aaaaaaaa-0000-4000-b000-000000000001:
+    master: aaaaaaaa-aaaa-4000-b000-000000000001
+    roles: {}
+...]],
+
+[[---
+servers:
+  aaaaaaaa-aaaa-4000-b000-000000000001:
+    uri: localhost:3301
+    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
+  aaaaaaaa-aaaa-4000-b000-000000000002: expelled
+replicasets:
+  aaaaaaaa-0000-4000-b000-000000000001:
+    master: aaaaaaaa-aaaa-4000-b000-000000000001
+    roles: {}
+...]])
+
+check_config('servers[aaaaaaaa-aaaa-4000-b000-000000000001] has been expelled earlier',
 [[---
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000001:
@@ -384,12 +434,19 @@ servers:
     replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
 ...]])
 
-check_config('replicasets[aaaaaaaa-0000-4000-b000-000000000001]'..
+check_config('replicasets[bbbbbbbb-0000-4000-b000-000000000001]'..
   ' is a vshard-storage and can not be expelled',
 
 [[---
 servers:
-  aaaaaaaa-aaaa-4000-b000-000000000001: expelled
+  aaaaaaaa-aaaa-4000-b000-000000000001:
+    uri: localhost:3301
+    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
+  bbbbbbbb-bbbb-4000-b000-000000000001: expelled
+replicasets:
+  aaaaaaaa-0000-4000-b000-000000000001:
+    master: aaaaaaaa-aaaa-4000-b000-000000000001
+    roles: {"vshard-router": true}
 ...]],
 
 [[---
@@ -397,9 +454,15 @@ servers:
   aaaaaaaa-aaaa-4000-b000-000000000001:
     uri: localhost:3301
     replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
+  bbbbbbbb-bbbb-4000-b000-000000000001:
+    uri: localhost:3302
+    replicaset_uuid: bbbbbbbb-0000-4000-b000-000000000001
 replicasets:
   aaaaaaaa-0000-4000-b000-000000000001:
     master: aaaaaaaa-aaaa-4000-b000-000000000001
+    roles: {"vshard-router": true}
+  bbbbbbbb-0000-4000-b000-000000000001:
+    master: bbbbbbbb-bbbb-4000-b000-000000000001
     roles: {"vshard-storage": true}
 ...]])
 
@@ -436,6 +499,7 @@ check_config(true,
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000001:
     replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
+    disabled: false
     uri: localhost:3301
 replicasets:
   aaaaaaaa-0000-4000-b000-000000000001:
