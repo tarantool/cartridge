@@ -122,38 +122,6 @@ local function file_write(path, data)
     return data
 end
 
-local function pathjoin(path, ...)
-    path = tostring(path)
-    if path == nil or path == '' then
-        error("Empty path part")
-    end
-    for i = 1, select('#', ...) do
-        if string.match(path, '/$') ~= nil then
-            path = string.gsub(path, '/$', '')
-        end
-
-        local sp = select(i, ...)
-        if sp == nil then
-            error("Undefined path part")
-        end
-        if string.match(sp, '^/') ~= nil then
-            sp = string.gsub(sp, '^/', '')
-        end
-        if sp ~= '' then
-            path = path .. '/' .. sp
-        end
-    end
-    if string.match(path, '/$') ~= nil and #path > 1 then
-        path = string.gsub(path, '/$', '')
-    end
-
-    if path == '' then
-        return '/'
-    end
-
-    return path
-end
-
 
 return {
 	deepcmp = deepcmp,
@@ -163,5 +131,4 @@ return {
     file_read = file_read,
     file_write = file_write,
     file_exists = file_exists,
-    pathjoin = pathjoin,
 }

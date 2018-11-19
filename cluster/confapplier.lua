@@ -161,7 +161,7 @@ local function restore_from_workdir(workdir)
     )
 
     local conf, err = load_from_file(
-        utils.pathjoin(workdir, 'config.yml')
+        fio.pathjoin(workdir, 'config.yml')
     )
 
     if not conf then
@@ -383,7 +383,7 @@ local function apply(conf)
     end
 
     local ok, err = utils.file_write(
-        utils.pathjoin(box.cfg.memtx_dir, 'config.yml'),
+        fio.pathjoin(box.cfg.memtx_dir, 'config.yml'),
         yaml.encode(conf)
     )
     if not ok then
