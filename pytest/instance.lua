@@ -7,7 +7,7 @@ local log = require('log')
 local http = require('http.server')
 local cluster = require('cluster')
 
-local ok, err = cluster.init({
+local ok, err = xpcall(cluster.init, debug.traceback, {
     alias = os.getenv('ALIAS'),
     workdir = os.getenv('WORKDIR'),
     advertise_uri = os.getenv('ADVERTISE_URI'),

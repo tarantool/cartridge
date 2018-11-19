@@ -106,22 +106,31 @@ local function file_read(path)
     return table.concat(buf, '')
 end
 
-local function file_write(path, data)
-    local file = fio.open(path, {'O_CREAT', 'O_WRONLY', 'O_TRUNC', 'O_SYNC'}, tonumber(644, 8))
+local function file_write(path, data, opts, perm)
+    checks('string', 'string', '?table', '?number')
+    opts = opts or {'O_CREAT', 'O_WRONLY', 'O_TRUNC'}
+    perm = perm or tonumber(644, 8)
+    local file = fio.open(path, opts, perm)
     if file == nil then
         return nil, e_fopen:new('%q %s', path, errno.strerror())
     end
 
     local res = file:write(data)
-
     if not res then
-        return nil, e_fwrite:new('%q %s', path, errno.strerror())
+        local err = e_fwrite:new('%q %s', path, errno.strerror())
+        fio.unlink(path)
+        return nil, err
     end
 
-    file:close()
+    local res = file:close()
+    if not res then
+        local err = e_fwrite:new('%q %s', path, errno.strerror())
+        fio.unlink(path)
+        return nil, err
+    end
+
     return data
 end
-
 
 return {
 	deepcmp = deepcmp,

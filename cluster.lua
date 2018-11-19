@@ -1,5 +1,16 @@
 #!/usr/bin/env tarantool
 
+--- High-level cluster management interface.
+-- Tarantool Enterprise cluster module provides you a simple way
+-- to manage operation of tarantool cluster.
+-- What we call a cluster is a several tarantool instances, connected together.
+-- Cluster module does not care about who starts those instances,
+-- it only cares about configuration of already running processes.
+--
+-- Cluster module automates vshard and replication configuration,
+-- simplifies configuration and administration tasks.
+-- @module cluster
+
 local fio = require('fio')
 local uri = require('uri')
 local log = require('log')
@@ -18,6 +29,13 @@ local confapplier = require('cluster.confapplier')
 local cluster_cookie = require('cluster.cluster-cookie')
 
 local e_init = errors.new_class('Cluster initialization failed')
+--- Initialize the cluster module.
+-- After the call user can operate the instance via tarantool console.
+-- Notice that this call does not initialize the database - `box.cfg` is not called yet.
+-- The user must not try to call `box.cfg` himself, the cluster will do it when it's time to.
+-- @function init
+-- @treturn true|nil Success indication
+-- @treturn ?error Error description
 local function init(opts, box_opts)
     checks({
         workdir = 'string',
@@ -35,6 +53,8 @@ local function init(opts, box_opts)
             return nil, e_init:new('Can not create working directory %q', opts.workdir)
         end
     end
+
+    confapplier.set_workdir(opts.workdir)
 
     -- Is this necessary?
     -- local rc = fio.chdir(opts.workdir)

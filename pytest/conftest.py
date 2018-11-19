@@ -271,11 +271,17 @@ def cluster(request, confdir, module_tmpdir, helpers):
 
         cluster[srv.alias] = srv
 
-    logging.warn('Bootstrapping vshard.router on {}'.format(bootserv.advertise_uri))
-    bootserv.graphql(
-        query = """
-            mutation { bootstrap_vshard }
-        """
-    )
+    routers = [srv for srv in servers if 'vshard-router' in srv.roles]
+    if len(routers) > 0:
+        srv = routers[0]
+        logging.warn('Bootstrapping vshard.router on {}'.format(srv.advertise_uri))
+        resp = srv.graphql(
+            query = """
+                mutation { bootstrap_vshard }
+            """
+        )
+        assert "errors" not in resp
+    else:
+        logging.warn('No vshard routers configured, skipping vshard bootstrap')
 
     return cluster
