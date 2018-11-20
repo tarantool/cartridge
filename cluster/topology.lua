@@ -213,17 +213,6 @@ local function validate_consistency(topology)
             master.replicaset_uuid == replicaset_uuid,
             '%s.master belongs to another replicaset', field
         )
-
-        local known_roles = {
-            ['vshard-router'] = true,
-            ['vshard-storage'] = true,
-        }
-        for role, _ in pairs(replicaset.roles) do
-            e_config:assert(
-                known_roles[role],
-                '%s unknown role %q', field, tostring(role)
-            )
-        end
     end
 end
 

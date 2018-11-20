@@ -7,6 +7,21 @@ local log = require('log')
 local http = require('http.server')
 local cluster = require('cluster')
 
+package.preload['mymodule'] = function()
+    local state = nil
+    return {
+        role_name = 'myrole',
+        get_state = function() return state end,
+        init = function() state = 'initialized' end,
+    }
+end
+
+local ok, err = xpcall(cluster.register_role, debug.traceback, 'mymodule')
+if not ok then
+    log.error('%s', err)
+    os.exit(1)
+end
+
 local ok, err = xpcall(cluster.init, debug.traceback, {
     alias = os.getenv('ALIAS'),
     workdir = os.getenv('WORKDIR'),

@@ -4,15 +4,7 @@ local vars = require('cluster.vars').new('cluster.service-registry')
 vars:new('registry', {})
 
 local function set(name, instance)
-    checks('string', 'table')
-    if vars.registry[name] ~= nil then
-        assert(
-            vars.registry[name] == instance,
-            "Service reinitialization is not implemented yet"
-        )
-        -- TODO release old instance ???
-        -- how? why?
-    end
+    checks('string', '?table')
     vars.registry[name] = instance
 end
 

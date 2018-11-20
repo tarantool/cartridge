@@ -34,8 +34,13 @@ local e_init = errors.new_class('Cluster initialization failed')
 -- Notice that this call does not initialize the database - `box.cfg` is not called yet.
 -- The user must not try to call `box.cfg` himself, the cluster will do it when it's time to.
 -- @function init
--- @treturn true|nil Success indication
--- @treturn ?error Error description
+-- @treturn nil
+-- @raise
+--
+-- * `Can not create workdir`
+-- * `Missing port in advertise_uri`
+-- * `Socket bind error`
+-- * `Can not ping myself`
 local function init(opts, box_opts)
     checks({
         workdir = 'string',
@@ -47,10 +52,10 @@ local function init(opts, box_opts)
 
     opts.workdir = fio.abspath(opts.workdir)
 
-    if not fio.path.exists(opts.workdir) then
+    if not fio.path.is_dir(opts.workdir) then
         local rc = os.execute(('mkdir -p \'%s\''):format(opts.workdir))
-        if not rc then
-            return nil, e_init:new('Can not create working directory %q', opts.workdir)
+        if rc ~= 0 then
+            error(('Can not create workdir %q'):format(opts.workdir))
         end
     end
 
@@ -73,22 +78,19 @@ local function init(opts, box_opts)
 
     local advertise = uri.parse(opts.advertise_uri)
     if advertise.service == nil then
-        return nil, e_init('Missing port in advertise_uri %q', opts.advertise_uri)
+        error(('Missing port in advertise_uri %q'):format(opts.advertise_uri))
     else
         advertise.service = tonumber(advertise.service)
     end
 
     log.info('Using advertise_uri "%s:%d"', advertise.host, advertise.service)
-    local ok, err = e_init:pcall(membership.init, advertise.host, advertise.service)
-    if not ok then
-        return nil, err
-    end
+    membership.init(advertise.host, advertise.service)
     membership.set_encryption_key(cluster_cookie.cookie())
     membership.set_payload('alias', opts.alias)
     -- topology.set_password(cluster_cookie.cookie())
     local ok, err = membership.probe_uri(membership.myself().uri)
     if not ok then
-        return nil, e_init:new('Can not ping myself: %s', err)
+        error(('Can not ping myself: %s'):format(err))
     end
 
     -- broadcast several popular ports
@@ -116,7 +118,10 @@ local function init(opts, box_opts)
 
     if #fio.glob(opts.workdir..'/*.snap') > 0 then
         log.info('Snapshot found in ' .. opts.workdir)
-        return bootstrap.from_snapshot(boot_opts, box_opts)
+        local ok, err = bootstrap.from_snapshot(boot_opts, box_opts)
+        if not ok then
+            log.error('%s', err)
+        end
     else
         package.loaded['cluster'].bootstrap = function(roles, uuids)
             checks('?table', {
@@ -138,15 +143,17 @@ local function init(opts, box_opts)
                 end
             end
             package.loaded['cluster'].bootstrap = function()
-                return nil, e_init:new('Already bootstrapped')
+                error('Already bootstrapped')
             end
         end)
         log.info('Ready for bootstrap')
     end
 
-    package.loaded['cluster'].init = function()
-        return nil, e_init:new('Already initialized')
+    local function _raise()
+        error('Cluster is already initialized')
     end
+    package.loaded['cluster'].init = _raise
+    package.loaded['cluster'].register_role = _raise
 
     return true
 end
@@ -157,4 +164,17 @@ return {
     webui = webui,
     bootstrap = nil,
     is_healthy = topology.cluster_is_healthy,
+
+--- Register user-defined role to be used in cluster.
+-- It should be done before calling `cluster.init()`
+--
+-- @function register_role
+-- @tparam string module_name A module to be loaded
+-- @treturn nil
+-- @raise
+--
+-- * All errors that `require` can raise
+-- * `Role "module_name" is already registered`
+-- * `Cluster is already initialized`
+    register_role = confapplier.register_role,
 }
