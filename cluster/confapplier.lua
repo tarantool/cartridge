@@ -1,6 +1,10 @@
 #!/usr/bin/env tarantool
 -- luacheck: globals box
 
+--- Clusterwide configuration.
+--
+-- @submodule cluster
+
 local log = require('log')
 local fio = require('fio')
 local yaml = require('yaml').new()
@@ -83,16 +87,69 @@ local function load_from_file(filename)
     return conf, err
 end
 
-local function get_current(section)
-    checks('?string')
+local mt_readonly = {
+    __newindex = function()
+        error('table is readonly')
+    end
+}
+
+--- Recursively change table readonly property.
+-- This is achieved by setting or removing a metatable.
+-- @function set_readonly
+-- @local
+-- @tparam table tbl A table to be processed
+-- @tparam boolean ro Desired readonliness
+-- @treturn table the same table
+local function set_readonly(tbl, ro)
+    checks("table", "boolean")
+
+    for _, v in pairs(tbl) do
+        if type(v) == 'table' then
+            set_readonly(v, ro)
+        end
+    end
+
+    if ro then
+        setmetatable(tbl, mt_readonly)
+    else
+        setmetatable(tbl, nil)
+    end
+
+    return tbl
+end
+
+--- Get readonly view of a config section
+-- Any attempt to modify the section or its children
+-- will raise the error "table is readonly"
+-- @function get_readonly
+-- @tparam string section_name
+-- @treturn table Read-only view on `cfg[section_name]`
+local function get_readonly(section_name)
+    checks('string')
+    if vars.conf == nil then
+        return nil
+    end
+    return vars.conf[section_name]
+end
+
+--- Get read-write deepcopy of a config section
+-- Changing the section has no effect
+-- unless it is passed to a `patch_clusterwide` call.
+-- @function get_deepcopy
+-- @tparam string section_name A name of a section to get
+-- @treturn table Read-write view on `cfg[section_name]`
+local function get_deepcopy(section_name)
+    checks('string')
     if vars.conf == nil then
         return nil
     end
 
-    if section == nil then
-        return table.deepcopy(vars.conf)
+    local ret = table.deepcopy(vars.conf[section_name])
+
+    if type(ret) == 'table' then
+        return set_readonly(ret, false)
     else
-        return table.deepcopy(vars.conf[section])
+        return ret
     end
 end
 
@@ -112,7 +169,7 @@ local function restore_from_workdir(workdir)
         return nil, err
     end
 
-    vars.conf = conf
+    vars.conf = set_readonly(conf, true)
     topology.set(conf.topology)
 
     return table.deepcopy(conf)
@@ -124,17 +181,22 @@ local function fetch_from_uri(uri)
         return nil, err
     end
 
-    return conn:eval('return package.loaded["cluster.confapplier"].get_current()')
+    return conn:eval([[
+        local vars_lib = package.loaded["cluster.vars"]
+        local vars = vars_lib.new('cluster.confapplier')
+        return vars.conf
+    ]])
 end
 
 local function fetch_from_membership()
-    local conf = get_current()
-    if conf then
-        if conf.topology.servers[box.info.uuid] == nil
-        or conf.topology.servers[box.info.uuid] == 'expelled'
-        or utils.table_count(conf.topology.servers) == 1
+    local topology_cfg = get_readonly('topology')
+
+    if topology_cfg ~= nil then
+        if topology_cfg.servers[box.info.uuid] == nil
+        or topology_cfg.servers[box.info.uuid] == 'expelled'
+        or utils.table_count(topology_cfg.servers) == 1
         then
-            return conf
+            return vars.conf
         end
     end
 
@@ -143,8 +205,8 @@ local function fetch_from_membership()
         if (member.status ~= 'alive') -- ignore non-alive members
         or (member.payload.uuid == nil)  -- ignore non-configured members
         or (member.payload.error ~= nil) -- ignore misconfigured members
-        or (conf and member.payload.uuid == box.info.uuid) -- ignore myself
-        or (conf and conf.topology.servers[member.payload.uuid] == nil) -- ignore aliens
+        or (topology_cfg and member.payload.uuid == box.info.uuid) -- ignore myself
+        or (topology_cfg and topology_cfg.servers[member.payload.uuid] == nil) -- ignore aliens
         then
             -- ignore that member
         else
@@ -240,7 +302,7 @@ local function _apply(channel)
             return
         end
 
-        vars.conf = conf
+        vars.conf = set_readonly(conf, true)
         topology.set(conf.topology)
 
         local replication = topology.get_replication_config(
@@ -337,18 +399,52 @@ local function apply(conf)
     return true
 end
 
-local function _clusterwide(conf_new)
+--- Edit clusterwide configuration.
+-- Top-level keys are merged with currend config.
+-- In order to remove a top-level section use
+-- `patch_clusterwide{key = box.NULL}`
+--
+-- Two-phase commit algorithm is used.
+-- In particular, the following steps are performed:
+--
+-- I. Current config is patched.
+--
+-- II. Patched config is validated on every server in a group.
+-- The group consists of all servers, excluding:
+--
+-- * expelled servers;
+-- * disabled server;
+-- * servers being joined during this call;
+--
+-- III. Patched config is sent to every server is the group.
+--
+-- IV. If any server reports an error during saving config,
+-- all servers are rolled back
+--
+-- @function patch_clusterwide
+-- @tparam table conf A patch to be applied
+-- @treturn true|nil Success indication
+-- @treturn ?error Error description
+local function _clusterwide(conf)
     checks('table')
+
+    local conf_new = set_readonly(table.deepcopy(vars.conf), false)
+    for k, v in pairs(conf) do
+        if v == nil then -- box.NULL
+            conf_new[k] = nil
+        else
+            conf_new[k] = v
+        end
+    end
 
     local ok, err = validate(conf_new)
     if not ok then
         return nil, err
     end
 
-    local conf_old = get_current()
-
+    local conf_old = vars.conf
     local servers_new = conf_new.topology.servers
-    local servers_old = vars.conf.topology.servers
+    local servers_old = conf_old.topology.servers
 
     local configured_uri_list = {}
     local cnt = 0
@@ -444,21 +540,22 @@ local function _clusterwide(conf_new)
     return nil, _apply_error
 end
 
-local function clusterwide(conf_new)
+local function patch_clusterwide(conf)
     if vars.locks['clusterwide'] == true  then
         return nil, e_atomic:new('confapplier.clusterwide is already running')
     end
 
     box.session.su('admin')
     vars.locks['clusterwide'] = true
-    local ok, err = e_config_apply:pcall(_clusterwide, conf_new)
+    local ok, err = e_config_apply:pcall(_clusterwide, conf)
     vars.locks['clusterwide'] = false
 
     return ok, err
 end
 
 return {
-    get_current = get_current,
+    get_readonly = get_readonly,
+    get_deepcopy = get_deepcopy,
     load_from_file = load_from_file,
     restore_from_workdir = restore_from_workdir,
     fetch_from_membership = fetch_from_membership,
@@ -467,5 +564,5 @@ return {
         return e_config_validate:pcall(validate, conf)
     end,
     apply = apply,
-    clusterwide = clusterwide,
+    patch_clusterwide = patch_clusterwide,
 }

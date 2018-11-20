@@ -70,7 +70,7 @@ end
 
 local function get_servers_and_replicasets()
     local members = membership.members()
-    local topology_cfg = confapplier.get_current('topology')
+    local topology_cfg = confapplier.get_readonly('topology')
     if topology_cfg == nil then
         topology_cfg = {
             servers = {},
@@ -174,18 +174,6 @@ local function get_replicasets(uuid)
     return ret
 end
 
-local function apply_topology(topology)
-    local conf = confapplier.get_current()
-    conf.topology = topology
-
-    local ok, err = confapplier.clusterwide(conf)
-    if not ok then
-        return nil, err
-    end
-
-    return true
-end
-
 local function probe_server(uri)
     checks('string')
     local ok, err = membership.probe_uri(uri)
@@ -209,31 +197,19 @@ local function join_server(args)
         roles[role] = true
     end
 
-    local topology_cfg = confapplier.get_current('topology')
-    if topology_cfg == nil then
-        topology_cfg = {
-            servers = {},
-            replicasets = {},
-        }
-    end
-
     if args.instance_uuid == nil then
         args.instance_uuid = uuid_lib.str()
-    elseif topology_cfg.servers[args.instance_uuid] ~= nil then
-        return nil, e_topology_edit:new(
-            'Server %q is already joined',
-            args.instance_uuid
-        )
     end
 
     if args.replicaset_uuid == nil then
         args.replicaset_uuid = uuid_lib.str()
     end
 
-    -- This case should work when we are bootstrapping
-    -- first instance from the web UI
-    if next(topology_cfg.servers) == nil then
-        if args.uri == membership.myself().uri then
+    local topology_cfg = confapplier.get_deepcopy('topology')
+    if topology_cfg == nil then
+        -- Bootstrapping first instance from the web UI
+        local myself = membership.myself()
+        if args.uri == myself.uri then
             return package.loaded['cluster'].bootstrap(
                 roles,
                 {
@@ -243,29 +219,38 @@ local function join_server(args)
             )
         else
             return nil, e_topology_edit:new(
-                'invalid attempt to call join_server()' ..
-                ' on instance which is not bootstrapped yet'
+                'Invalid attempt to call join_server()' ..
+                ' on instance which is not bootstrapped yet.\n' ..
+                'Call join_server with uri=%q to bootstrap', myself.uri
             )
         end
-    else
-        topology_cfg.servers[args.instance_uuid] = {
-            uri = args.uri,
-            replicaset_uuid = args.replicaset_uuid,
-        }
-        if topology_cfg.replicasets[args.replicaset_uuid] == nil then
-            topology_cfg.replicasets[args.replicaset_uuid] = {
-                roles = roles,
-                master = args.instance_uuid,
-            }
-        end
-
-        local ok, err = apply_topology(topology_cfg)
-        if not ok then
-            return nil, err
-        end
-
-        return true
     end
+
+    if topology_cfg.servers[args.instance_uuid] ~= nil then
+        return nil, e_topology_edit:new(
+            'Server %q is already joined',
+            args.instance_uuid
+        )
+    end
+
+    topology_cfg.servers[args.instance_uuid] = {
+        uri = args.uri,
+        replicaset_uuid = args.replicaset_uuid,
+    }
+
+    if topology_cfg.replicasets[args.replicaset_uuid] == nil then
+        topology_cfg.replicasets[args.replicaset_uuid] = {
+            roles = roles,
+            master = args.instance_uuid,
+        }
+    end
+
+    local ok, err = confapplier.patch_clusterwide({topology = topology_cfg})
+    if not ok then
+        return nil, err
+    end
+
+    return true
 end
 
 local function edit_server(args)
@@ -274,7 +259,10 @@ local function edit_server(args)
         uri = 'string',
     })
 
-    local topology_cfg = confapplier.get_current('topology')
+    local topology_cfg = confapplier.get_deepcopy('topology')
+    if topology_cfg == nil then
+        return nil, e_topology_edit:new('Not bootstrapped yet')
+    end
 
     if topology_cfg.servers[args.uuid] == nil then
         return nil, e_topology_edit:new('Server %q not in config', args.uuid)
@@ -284,7 +272,7 @@ local function edit_server(args)
 
     topology_cfg.servers[args.uuid].uri = args.uri
 
-    local ok, err = apply_topology(topology_cfg)
+    local ok, err = confapplier.patch_clusterwide({topology = topology_cfg})
     if not ok then
         return nil, err
     end
@@ -295,7 +283,7 @@ end
 local function expell_server(uuid)
     checks('string')
 
-    local topology_cfg = confapplier.get_current('topology')
+    local topology_cfg = confapplier.get_deepcopy('topology')
 
     if topology_cfg.servers[uuid] == nil then
         return nil, e_topology_edit:new('Server %q not in config', uuid)
@@ -316,7 +304,7 @@ local function expell_server(uuid)
         topology_cfg.replicasets[expell_replicaset] = nil
     end
 
-    local ok, err = apply_topology(topology_cfg)
+    local ok, err = confapplier.patch_clusterwide({topology = topology_cfg})
     if not ok then
         return nil, err
     end
@@ -325,7 +313,12 @@ local function expell_server(uuid)
 end
 
 local function set_servers_disabled_state(uuids, state)
-    local topology_cfg = confapplier.get_current('topology')
+    checks('table', 'boolean')
+    local topology_cfg = confapplier.get_deepcopy('topology')
+    if topology_cfg == nil then
+        return nil, e_topology_edit:new('Not bootstrapped yet')
+    end
+
     for _, uuid in pairs(uuids) do
         if topology_cfg.servers[uuid] == nil then
             return nil, e_topology_edit:new('Server %q not in config', uuid)
@@ -336,7 +329,7 @@ local function set_servers_disabled_state(uuids, state)
         topology_cfg.servers[uuid].disabled = state
     end
 
-    local ok, err = apply_topology(topology_cfg)
+    local ok, err = confapplier.patch_clusterwide({topology = topology_cfg})
     if not ok then
         return nil, err
     end
@@ -362,7 +355,11 @@ local function edit_replicaset(args)
         master = '?string',
     })
 
-    local topology_cfg = confapplier.get_current('topology')
+    local topology_cfg = confapplier.get_deepcopy('topology')
+    if topology_cfg == nil then
+        return nil, e_topology_edit:new('Not bootstrapped yet')
+    end
+
     local replicaset = topology_cfg.replicasets[args.uuid]
 
     if replicaset == nil then
@@ -380,7 +377,7 @@ local function edit_replicaset(args)
         replicaset.master = args.master
     end
 
-    local ok, err = apply_topology(topology_cfg)
+    local ok, err = confapplier.patch_clusterwide({topology = topology_cfg})
     if not ok then
         return nil, err
     end
@@ -389,7 +386,7 @@ local function edit_replicaset(args)
 end
 
 local function get_failover_enabled()
-    local topology_cfg = confapplier.get_current('topology')
+    local topology_cfg = confapplier.get_readonly('topology')
     if topology_cfg == nil then
         return false
     end
@@ -398,13 +395,13 @@ end
 
 local function set_failover_enabled(value)
     checks('boolean')
-    local topology_cfg = confapplier.get_current('topology')
+    local topology_cfg = confapplier.get_deepcopy('topology')
     if topology_cfg == nil then
         return nil, e_topology_edit:new('Not bootstrapped yet')
     end
     topology_cfg.failover = value
 
-    local ok, err = apply_topology(topology_cfg)
+    local ok, err = confapplier.patch_clusterwide({topology = topology_cfg})
     if not ok then
         return nil, err
     end
