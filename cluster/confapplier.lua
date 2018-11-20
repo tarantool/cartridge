@@ -375,18 +375,33 @@ local function apply_config(conf)
     for _, mod in ipairs(vars.known_roles) do
         local role_name = mod.role_name
         if roles_enabled[role_name] then
-            if (service_registry.get(role_name) == nil) and (type(mod.init) == 'function') then
-                mod.init()
-            end
+            do
+                if (service_registry.get(role_name) == nil) and (type(mod.init) == 'function') then
+                    local _, _err = e_config_apply:pcall(mod.init)
+                    if _err then
+                        log.error('%s', _err)
+                        err = err or _err
+                        break
+                    end
+                end
 
-            service_registry.set(role_name, mod)
+                service_registry.set(role_name, mod)
 
-            if type(mod.apply_config) == 'function' then
-                mod.apply_config(conf)
+                if type(mod.apply_config) == 'function' then
+                    local _, _err = e_config_apply:pcall(mod.apply_config, conf)
+                    if _err then
+                        log.error('%s', _err)
+                        err = err or _err
+                    end
+                end
             end
         else
             if (service_registry.get(role_name) ~= nil) and (type(mod.stop) == 'function') then
-                mod.stop()
+                local _, _err = e_config_apply:pcall(mod.stop)
+                if _err then
+                    log.error('%s', err)
+                    err = err or _err
+                end
             end
 
             service_registry.set(role_name, nil)
