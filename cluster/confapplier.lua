@@ -1,14 +1,14 @@
 #!/usr/bin/env tarantool
 -- luacheck: globals box
 
---- Clusterwide configuration.
---
--- @submodule cluster
+--- Clusterwide configuration management primitives.
+-- @module cluster.confapplier
 
 local log = require('log')
 local fio = require('fio')
 local yaml = require('yaml').new()
 local fiber = require('fiber')
+local errno = require('errno')
 local errors = require('errors')
 local checks = require('checks')
 local vshard = require('vshard')
@@ -37,14 +37,29 @@ local e_config_validate = errors.new_class('Invalid config')
 local e_bootstrap_vshard = errors.new_class('Can not bootstrap vshard router now')
 
 vars:new('conf')
+vars:new('workdir')
 vars:new('locks', {})
 vars:new('applier_fiber', nil)
 vars:new('applier_channel', nil)
 vars:new('failover_fiber', nil)
 vars:new('failover_cond', nil)
 
-local function load_from_file(filename)
+local function set_workdir(workdir)
     checks('string')
+    vars.workdir = workdir
+end
+
+--- Load config from filesystem.
+-- Config is a YAML file.
+-- @function load_from_file
+-- @tparam ?string filename Filename to load.
+-- When ommited active config is loaded from `<workdir>/config.yml`.
+-- @treturn table|nil Config loaded
+-- @treturn ?error Error description
+local function load_from_file(filename)
+    checks('?string')
+    filename = filename or fio.pathjoin(vars.workdir, 'config.yml')
+
     if not utils.file_exists(filename) then
         return nil, e_config_load:new('file %q does not exist', filename)
     end
@@ -89,17 +104,19 @@ end
 
 local mt_readonly = {
     __newindex = function()
-        error('table is readonly')
+        error('table is read-only')
     end
 }
 
---- Recursively change table readonly property.
+--- Recursively change table read-only property.
 -- This is achieved by setting or removing a metatable.
+-- An attempt to modify the read-only table or any of its children
+-- would raise an error: "table is read-only".
 -- @function set_readonly
 -- @local
 -- @tparam table tbl A table to be processed
 -- @tparam boolean ro Desired readonliness
--- @treturn table the same table
+-- @treturn table the same table `tbl`
 local function set_readonly(tbl, ro)
     checks("table", "boolean")
 
@@ -118,11 +135,11 @@ local function set_readonly(tbl, ro)
     return tbl
 end
 
---- Get readonly view of a config section
+--- Get read-only view of a config section.
 -- Any attempt to modify the section or its children
--- will raise the error "table is readonly"
+-- will raise the error "table is read-only"
 -- @function get_readonly
--- @tparam string section_name
+-- @tparam string section_name A name of a section
 -- @treturn table Read-only view on `cfg[section_name]`
 local function get_readonly(section_name)
     checks('string')
@@ -132,12 +149,12 @@ local function get_readonly(section_name)
     return vars.conf[section_name]
 end
 
---- Get read-write deepcopy of a config section
+--- Get read-write deepcopy of a config section.
 -- Changing the section has no effect
 -- unless it is passed to a `patch_clusterwide` call.
 -- @function get_deepcopy
--- @tparam string section_name A name of a section to get
--- @treturn table Read-write view on `cfg[section_name]`
+-- @tparam string section_name A name of a section
+-- @treturn table Deep copy of `cfg[section_name]`
 local function get_deepcopy(section_name)
     checks('string')
     if vars.conf == nil then
@@ -153,50 +170,24 @@ local function get_deepcopy(section_name)
     end
 end
 
-local function restore_from_workdir(workdir)
-    checks('string')
-    e_config_restore:assert(
-        vars.conf == nil,
-        'config already loaded'
-    )
-
-    local conf, err = load_from_file(
-        utils.pathjoin(workdir, 'config.yml')
-    )
-
-    if not conf then
-        log.error('%s', err)
-        return nil, err
-    end
-
-    vars.conf = set_readonly(conf, true)
-    topology.set(conf.topology)
-
-    return table.deepcopy(conf)
-end
-
 local function fetch_from_uri(uri)
     local conn, err = pool.connect(uri)
     if conn == nil then
         return nil, err
     end
 
-    return conn:eval([[
-        local vars_lib = package.loaded["cluster.vars"]
-        local vars = vars_lib.new('cluster.confapplier')
-        return vars.conf
-    ]])
+    return conn:eval('return package.loaded["cluster.confapplier"].load_from_file()')
 end
 
-local function fetch_from_membership()
-    local topology_cfg = get_readonly('topology')
-
+local function fetch_from_membership(topology_cfg)
+    checks('?table')
     if topology_cfg ~= nil then
         if topology_cfg.servers[box.info.uuid] == nil
         or topology_cfg.servers[box.info.uuid] == 'expelled'
         or utils.table_count(topology_cfg.servers) == 1
         then
-            return vars.conf
+            log.info('returning vars.conf: %s', vars.conf)
+            return load_from_file()
         end
     end
 
@@ -223,16 +214,12 @@ local function fetch_from_membership()
 end
 
 local function validate(conf_new)
-    e_config_validate:assert(
-        type(conf_new) == 'table',
-        'config must be a table'
-    )
+    if type(conf_new) ~= 'table'  then
+        return nil, e_config_validate:new('config must be a table')
+    end
 
     local conf_old = vars.conf or {}
 
-    e_config_validate:assert(
-        topology.validate(conf_new.topology, conf_old.topology)
-    )
 
     return true
 end
@@ -295,107 +282,156 @@ local function _failover(cond)
     end
 end
 
-local function _apply(channel)
-    while true do
-        local conf = channel:get()
-        if not conf then
-            return
-        end
+--- Apply roles config.
+-- @function apply_config
+-- @local
+-- @tparam table conf Config to be applied
+-- @treturn true|nil Success indication
+-- @treturn ?error Error description
+local function apply_config(conf)
+    checks('table')
+    vars.conf = set_readonly(conf, true)
 
-        vars.conf = set_readonly(conf, true)
-        topology.set(conf.topology)
+    local replication = topology.get_replication_config(
+        conf.topology,
+        box.info.cluster.uuid
+    )
+    log.info('Setting replication to [%s]', table.concat(replication, ', '))
+    local _, err = e_config_apply:pcall(box.cfg, {
+        -- workaround for tarantool gh-3760
+        replication_connect_timeout = 0.000001,
+        replication_connect_quorum = 0,
+        replication = replication,
+    })
+    if err then
+        log.error('Box.cfg failed: %s', err)
+    end
 
-        local replication = topology.get_replication_config(
-            box.info.cluster.uuid
-        )
-        log.info('Setting replication to [%s]', table.concat(replication, ', '))
-        local _, err = e_config_apply:pcall(box.cfg, {
-            -- workaround for tarantool gh-3760
-            replication_connect_timeout = 0.000001,
-            replication_connect_quorum = 0,
-            replication = replication,
+    topology.set(conf.topology)
+    local roles = conf.topology.replicasets[box.info.cluster.uuid].roles
+
+    if roles['vshard-storage'] then
+        vshard.storage.cfg({
+            sharding = topology.get_vshard_sharding_config(),
+            bucket_count = conf.bucket_count,
+            listen = box.cfg.listen,
+        }, box.info.uuid)
+        service_registry.set('vshard-storage', vshard.storage)
+
+        -- local srv = storage.new()
+        -- srv:apply_config(conf)
+    end
+
+    if roles['vshard-router'] then
+        -- local srv = ibcore.server.new()
+        -- srv:apply_config(conf)
+        -- service_registry.set('ib-core', srv)
+        vshard.router.cfg({
+            sharding = topology.get_vshard_sharding_config(),
+            bucket_count = conf.bucket_count,
         })
-        if err then
-            log.error('%s', err)
-        end
+        service_registry.set('vshard-router', vshard.router)
+    end
+    log.info('Config applied')
 
-        local roles = conf.topology.replicasets[box.info.cluster.uuid].roles
+    local failover_enabled = conf.topology.failover and (roles['vshard-storage'] or roles['vshard-router'])
+    local failover_running = vars.failover_fiber and vars.failover_fiber:status() ~= 'dead'
 
-        if roles['vshard-storage'] then
-            vshard.storage.cfg({
-                sharding = topology.get_vshard_sharding_config(),
-                bucket_count = conf.bucket_count,
-                listen = box.cfg.listen,
-            }, box.info.uuid)
-            service_registry.set('vshard-storage', vshard.storage)
+    if failover_enabled and not failover_running then
+        vars.failover_cond = membership.subscribe()
+        vars.failover_fiber = fiber.create(_failover, vars.failover_cond)
+        vars.failover_fiber:name('cluster.failover')
+        log.info('vshard failover enabled')
+    elseif not failover_enabled and failover_running then
+        membership.unsubscribe(vars.failover_cond)
+        vars.failover_fiber:cancel()
+        vars.failover_fiber = nil
+        vars.failover_cond = nil
+        log.info('vshard failover disabled')
+    end
 
-            -- local srv = storage.new()
-            -- srv:apply_config(conf)
-        end
-
-        if roles['vshard-router'] then
-            -- local srv = ibcore.server.new()
-            -- srv:apply_config(conf)
-            -- service_registry.set('ib-core', srv)
-            vshard.router.cfg({
-                sharding = topology.get_vshard_sharding_config(),
-                bucket_count = conf.bucket_count,
-            })
-            service_registry.set('vshard-router', vshard.router)
-        end
-        log.info('Config applied')
-
-        local failover_enabled = conf.topology.failover and (roles['vshard-storage'] or roles['vshard-router'])
-        local failover_running = vars.failover_fiber and vars.failover_fiber:status() ~= 'dead'
-
-        if failover_enabled and not failover_running then
-            vars.failover_cond = membership.subscribe()
-            vars.failover_fiber = fiber.create(_failover, vars.failover_cond)
-            vars.failover_fiber:name('cluster.failover')
-            log.info('vshard failover enabled')
-        elseif not failover_enabled and failover_running then
-            membership.unsubscribe(vars.failover_cond)
-            vars.failover_fiber:cancel()
-            vars.failover_fiber = nil
-            vars.failover_cond = nil
-            log.info('vshard failover disabled')
-        end
+    if err then
+        membership.set_payload('error', 'Config apply failed')
+        return nil, err
+    else
+        membership.set_payload('ready', true)
+        return true
     end
 end
 
-local function apply(conf)
-    -- called by:
-    -- 1. bootstrap.init_roles
-    -- 2. clusterwide
-    checks('table')
-
-    if not vars.applier_channel then
-        vars.applier_channel = fiber.channel(1)
-    end
-
-    if not vars.applier_fiber then
-        vars.applier_fiber = fiber.create(_apply, vars.applier_channel)
-        vars.applier_fiber:name('cluster.confapplier')
-    end
-
-    while not vars.applier_channel:has_readers() do
-        -- TODO should we specify timeout here?
-        if vars.applier_fiber:status() == 'dead' then
-            return nil, e_config_apply:new('impossible due to previous error')
-        end
-        fiber.sleep(0)
-    end
-
-    local ok, err = utils.file_write(
-        utils.pathjoin(box.cfg.memtx_dir, 'config.yml'),
-        yaml.encode(conf)
-    )
+--- Two-phase commit - prepare stage.
+--
+-- Validate config and aquire a lock writing `<workdir>/config.prepate.yml`.
+-- If it fails, the lock is not aquired and does not have to be aborted.
+-- @function prepare_2pc
+-- @local
+-- @tparam table conf A config table to be commited
+-- @treturn true|nit Success indication
+-- @treturn ?error Error description
+local function prepare_2pc(conf)
+    local ok, err = validate(conf)
     if not ok then
         return nil, err
     end
 
-    vars.applier_channel:put(conf)
-    fiber.yield()
+    local path = fio.pathjoin(vars.workdir, 'config.prepare.yml')
+    local ok, err = utils.file_write(
+        path, yaml.encode(conf),
+        {'O_CREAT', 'O_EXCL', 'O_WRONLY'}
+    )
+    if not ok then
+        log.error('Error preparing for config update: %s', err)
+        return nil, err
+    end
+
+    return true
+end
+
+--- Two-phase commit - commit stage.
+--
+-- Backup active config, commit changes on filesystem, release a lock and configure roles.
+-- If any error occurs, config is not rolled back automatically.
+-- Any problem occured during this call has to be solved manually.
+--
+-- @function commit_2pc
+-- @local
+-- @treturn true|nil Success indication
+-- @treturn ?error Error description
+local function commit_2pc()
+    local path_prepare = fio.pathjoin(vars.workdir, 'config.prepare.yml')
+    local path_backup = fio.pathjoin(vars.workdir, 'config.backup.yml')
+    local path_active = fio.pathjoin(vars.workdir, 'config.yml')
+
+    local ok = fio.link(path_active, path_backup)
+    if ok then
+        log.info('Backup of active config created: %q', path_backup)
+    end
+
+    local ok = fio.rename(path_prepare, path_active)
+    if not ok then
+        local err = e_config_apply:new('Can not move %q: %s', path_prepare, errno.strerror())
+        log.error('Error commmitting config update: %s', err)
+        return nil, err
+    end
+
+    local conf, err = load_from_file()
+    if not conf then
+        log.error('Error commmitting config update: %s', err)
+        return nil, err
+    end
+
+    return apply_config(conf)
+end
+
+--- Two-phase commit - abort stage.
+--
+-- Release a lock for further commit attempts.
+-- @function abort_2pc
+-- @local
+-- @treturn true
+local function abort_2pc()
+    local path = fio.pathjoin(vars.workdir, 'config.prepare.yml')
+    fio.unlink(path)
     return true
 end
 
@@ -409,17 +445,19 @@ end
 --
 -- I. Current config is patched.
 --
--- II. Patched config is validated on every server in a group.
--- The group consists of all servers, excluding:
+-- II. Topology is validated on current server.
 --
--- * expelled servers;
--- * disabled server;
--- * servers being joined during this call;
+-- III. Prepare phase (`prepare_2pc`) is executed on every server, excluding
+-- expelled servers,
+-- disabled server,
+-- servers being joined during this call;
 --
--- III. Patched config is sent to every server is the group.
+-- IV. Abort phase (`abort_2pc`) is executed if any server reports an error.
+-- All servers prepared so fare are rolled back and unlocked.
 --
--- IV. If any server reports an error during saving config,
--- all servers are rolled back
+-- V. Commited phase (`commit_2pc`) is performed.
+-- In case it fails automatic rollback is impossible,
+-- cluster should be repaired by hands.
 --
 -- @function patch_clusterwide
 -- @tparam table conf A patch to be applied
@@ -428,24 +466,27 @@ end
 local function _clusterwide(conf)
     checks('table')
 
+    log.info('Updating config clusterwide...')
+
     local conf_new = set_readonly(table.deepcopy(vars.conf), false)
+    local conf_old = vars.conf
     for k, v in pairs(conf) do
-        if v == nil then -- box.NULL
+        if v == box.NULL then
             conf_new[k] = nil
         else
             conf_new[k] = v
         end
     end
 
-    local ok, err = validate(conf_new)
+    local ok, err = topology.validate(conf_new.topology, conf_old.topology)
     if not ok then
         return nil, err
     end
 
-    local conf_old = vars.conf
     local servers_new = conf_new.topology.servers
     local servers_old = conf_old.topology.servers
 
+    -- Prepare a server group to be configured
     local configured_uri_list = {}
     local cnt = 0
     for uuid, _ in pairs(servers_new) do
@@ -456,23 +497,6 @@ local function _clusterwide(conf)
             -- dont call nex.box on them
         else
             local uri = servers_new[uuid].uri
-            local conn, err = pool.connect(uri)
-            if conn == nil then
-                return nil, err
-            end
-            local ok, err = e_config_validate:pcall(
-                conn.eval, conn,
-                'return package.loaded["cluster.confapplier"].validate(...)',
-                {conf_new}
-            )
-            if ok == nil then
-                log.error('Config validation failed at %q', uri)
-                local err_class = _G._error_classes[err.class_name]
-                if err_class ~= nil then
-                    setmetatable(err, err_class.__instance_mt)
-                end
-                return nil, err
-            end
             cnt = cnt + 1
             configured_uri_list[cnt] = uri
             configured_uri_list[uri] = false
@@ -484,60 +508,95 @@ local function _clusterwide(conf)
     -- in real world it does not affect anything
     table.sort(configured_uri_list)
 
-    local _apply_error = nil
+    -- 2PC prepare
+    local _2pc_error = nil
     for _, uri in ipairs(configured_uri_list) do
         local conn, err = pool.connect(uri)
         if conn == nil then
-            return nil, err
-        end
-        log.info('Applying config on %s', uri)
-        local ok, err = e_config_apply:pcall(
-            conn.eval, conn,
-            'return package.loaded["cluster.confapplier"].apply(...)',
-            {conf_new}
-        )
-
-        if ok ~= nil then
-            configured_uri_list[uri] = true
-        else
-            local err_class = _G._error_classes[err.class_name]
-            if err_class ~= nil then
-                setmetatable(err, err_class.__instance_mt)
-            end
-
-            log.error('%s', err)
-            _apply_error = err
+            log.error('Error preparing for config update at %s', uri)
+            _2pc_error = err
             break
-        end
-    end
-
-    if _apply_error == nil then
-        return true
-    end
-
-    for _, uri in ipairs(configured_uri_list) do
-        if configured_uri_list[uri] then
-            log.info('Rollback config on %s', uri)
-            local conn, err = pool.connect(uri)
-            if conn == nil then
-                return nil, err
-            end
-            local ok, err = e_rollback:pcall(
+        else
+            local ok, err = e_config_validate:pcall(
                 conn.eval, conn,
-                'return package.loaded["cluster.confapplier"].apply(...)',
-                {conf_old}
+                'return package.loaded["cluster.confapplier"].prepare_2pc(...)',
+                {conf_new}
             )
-            if ok == nil then
+            if ok == true then
+                log.info('Prepared for config update at %s', uri)
+                configured_uri_list[uri] = true
+            else
                 local err_class = _G._error_classes[err.class_name]
                 if err_class ~= nil then
                     setmetatable(err, err_class.__instance_mt)
                 end
-                log.error('%s', err)
+
+                log.error('Error preparing for config update at %s', uri)
+                _2pc_error = err
+                break
             end
         end
     end
 
-    return nil, _apply_error
+    if _2pc_error == nil then
+        -- 2PC commit
+        for _, uri in ipairs(configured_uri_list) do
+            local conn, err = pool.connect(uri)
+            if conn == nil then
+                log.error('Error commmitting config update at %s: %s', uri, err)
+                _2pc_error = err
+            else
+                local ok, err = e_config_apply:pcall(
+                    conn.eval, conn,
+                    'return package.loaded["cluster.confapplier"].commit_2pc()'
+                )
+                if ok == true then
+                    log.info('Committed config update at %s', uri)
+                else
+                    local err_class = _G._error_classes[err.class_name]
+                    if err_class ~= nil then
+                        setmetatable(err, err_class.__instance_mt)
+                    end
+
+                    log.error('Error commmitting config update at %s: %s', uri, err)
+                    _2pc_error = err
+                end
+            end
+        end
+    else
+        -- 2PC abort
+        for _, uri in ipairs(configured_uri_list) do
+            if not configured_uri_list[uri] then
+                break
+            end
+
+            local conn, err = pool.connect(uri)
+            if conn == nil then
+                log.error('Error aborting config update at %s: %s', uri, err)
+            else
+                local ok, err = e_rollback:pcall(
+                    conn.eval, conn,
+                    'return package.loaded["cluster.confapplier"].abort_2pc()'
+                )
+                if ok == true then
+                    log.info('Aborted config update at %s', uri)
+                else
+                    local err_class = _G._error_classes[err.class_name]
+                    if err_class ~= nil then
+                        setmetatable(err, err_class.__instance_mt)
+                    end
+
+                    log.error('Error aborting config update at %s: %s', uri, err)
+                end
+            end
+        end
+    end
+
+    if _2pc_error == nil then
+        return true
+    else
+        return nil, _2pc_error
+    end
 end
 
 local function patch_clusterwide(conf)
@@ -554,15 +613,18 @@ local function patch_clusterwide(conf)
 end
 
 return {
+    set_workdir = set_workdir,
     get_readonly = get_readonly,
     get_deepcopy = get_deepcopy,
+
     load_from_file = load_from_file,
-    restore_from_workdir = restore_from_workdir,
     fetch_from_membership = fetch_from_membership,
 
-    validate = function(conf)
-        return e_config_validate:pcall(validate, conf)
-    end,
-    apply = apply,
+    prepare_2pc = prepare_2pc,
+    commit_2pc = commit_2pc,
+    abort_2pc = abort_2pc,
+
+    validate = validate,
+    apply_config = apply_config,
     patch_clusterwide = patch_clusterwide,
 }

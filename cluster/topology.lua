@@ -456,12 +456,16 @@ local function get_vshard_sharding_config()
     return sharding
 end
 
-local function get_replication_config(replicaset_uuid)
-    checks('string')
+local function get_replication_config(topology, replicaset_uuid)
+    checks('?table', 'string')
+    if topology == nil or topology.servers == nil then
+        return {}
+    end
+
     local replication = {}
     local advertise_uri = membership.myself().uri
 
-    for _it, instance_uuid, server in fun.filter(not_disabled, vars.topology.servers) do
+    for _it, instance_uuid, server in fun.filter(not_disabled, topology.servers) do
         if server.replicaset_uuid == replicaset_uuid
         and server.uri ~= advertise_uri then
             table.insert(replication, pool.format_uri(server.uri))

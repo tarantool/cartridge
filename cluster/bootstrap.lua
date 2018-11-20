@@ -5,7 +5,6 @@ local fio = require('fio')
 local fun = require('fun')
 local fiber = require('fiber')
 local checks = require('checks')
-local errors = require('errors')
 local vshard = require('vshard')
 local uuid_lib = require('uuid')
 local membership = require('membership')
@@ -15,18 +14,6 @@ local topology = require('cluster.topology')
 local cluster_cookie = require('cluster.cluster-cookie')
 -- local migrations = require('cluster.migrations')
 local confapplier = require('cluster.confapplier')
-
-local e_init_roles = errors.new_class('initialization error')
-local function init_roles(conf)
-    local ok, err = e_init_roles:pcall(confapplier.apply, conf)
-    if not ok then
-        log.error('Config apply failed: %s', err)
-        membership.set_payload('error', 'Config apply failed')
-    else
-        membership.set_payload('ready', true)
-    end
-    return ok, err
-end
 
 local function init_box(box_opts)
     checks('table')
@@ -128,17 +115,17 @@ local function bootstrap_from_scratch(boot_opts, box_opts, roles)
     --     return nil, err
     -- end
 
-    local ok, err = confapplier.validate(conf)
-    if not ok then
-        return nil, err
+    local ok, err = topology.validate(conf.topology, {})
+    if err then
+        membership.set_payload('warning', tostring(err.err or err))
+        return false
     end
 
-    topology.set(conf.topology)
-    -- local myself = conf.servers[instance_uuid]
-    -- if myself == 'expelled' then
-    --     log.error('Instance is expelled. Aborting.')
-    --     os.exit(1)
-    -- end
+    local ok, err = confapplier.prepare_2pc(conf)
+    if err then
+        membership.set_payload('warning', tostring(err.err or err))
+        return false
+    end
 
     local box_opts = table.deepcopy(box_opts or {})
     box_opts.listen = boot_opts.binary_port
@@ -148,17 +135,11 @@ local function bootstrap_from_scratch(boot_opts, box_opts, roles)
     box_opts.replicaset_uuid = boot_opts.replicaset_uuid
     box_opts.replication = {}
     log.info('Bootstrapping box.cfg...')
-    -- box.cfg(box_opts)
 
     init_box(box_opts)
     -- TODO migrations.skip()
 
-    local ok, err = init_roles(conf)
-    if not ok then
-        return nil, err
-    end
-
-    return true
+    return confapplier.commit_2pc()
 end
 
 local function bootstrap_from_membership(boot_opts, box_opts)
@@ -180,7 +161,7 @@ local function bootstrap_from_membership(boot_opts, box_opts)
         return false
     end
 
-    local ok, err = confapplier.validate(conf)
+    local ok, err = topology.validate(conf.topology, {})
     if err then
         membership.set_payload('warning', tostring(err.err or err))
         return false
@@ -192,10 +173,15 @@ local function bootstrap_from_membership(boot_opts, box_opts)
         return false
     end
 
+    local ok, err = confapplier.prepare_2pc(conf)
+    if err then
+        membership.set_payload('warning', tostring(err.err or err))
+        return false
+    end
+
     membership.set_payload('warning', nil)
 
     log.info('Config downloaded from membership')
-    topology.set(conf.topology)
 
     local box_opts = table.deepcopy(box_opts or {})
     box_opts.listen = boot_opts.binary_port
@@ -203,17 +189,13 @@ local function bootstrap_from_membership(boot_opts, box_opts)
     box_opts.memtx_dir = boot_opts.workdir
     box_opts.instance_uuid = instance_uuid
     box_opts.replicaset_uuid = replicaset_uuid
-    box_opts.replication = topology.get_replication_config(replicaset_uuid)
+    box_opts.replication = topology.get_replication_config(conf.topology, replicaset_uuid)
     log.info('Bootstrapping box.cfg...')
 
     init_box(box_opts)
     -- TODO migrations.skip()
 
-    local ok , err = init_roles(conf)
-    if not ok then
-        log.error('%s', err)
-    end
-    return true
+    return confapplier.commit_2pc()
 end
 
 local function bootstrap_from_snapshot(boot_opts, box_opts)
@@ -221,12 +203,6 @@ local function bootstrap_from_snapshot(boot_opts, box_opts)
         workdir = 'string',
         binary_port = 'number',
     }, '?table')
-
-    local conf, err = confapplier.restore_from_workdir(boot_opts.workdir)
-    if conf == nil then
-        return nil, err
-    end
-    -- TODO check if instance was expelled
 
     local instance_uuid
     do
@@ -236,12 +212,20 @@ local function bootstrap_from_snapshot(boot_opts, box_opts)
         -- to know instance_uuid
         -- 2) workaround to check if instance was expelled
         -- before calling box.cfg
-        local snapshots = fio.glob(boot_opts.workdir..'/*.snap')
+        local snapshots = fio.glob(fio.pathjoin(boot_opts.workdir, '*.snap'))
         local file = io.open(snapshots[1], "r")
         repeat
             instance_uuid = file:read('*l'):match('^Instance: (.+)$')
         until instance_uuid ~= nil
         file:close()
+    end
+
+    -- unlock config if it was locked by dangling commits
+    confapplier.abort_2pc()
+
+    local conf, err = confapplier.load_from_file()
+    if conf == nil then
+        return nil, err
     end
 
     local box_opts = table.deepcopy(box_opts or {})
@@ -267,7 +251,7 @@ local function bootstrap_from_snapshot(boot_opts, box_opts)
 
     local remote_conf = nil
     while not remote_conf do
-        remote_conf = confapplier.fetch_from_membership()
+        remote_conf = confapplier.fetch_from_membership(conf.topology)
         if not remote_conf then
             membership.set_payload('warning', 'Configuration is being verified')
             fiber.sleep(1)
@@ -298,7 +282,7 @@ local function bootstrap_from_snapshot(boot_opts, box_opts)
         return true
     end
 
-    return init_roles(conf)
+    return confapplier.apply_config(conf)
 end
 
 return {

@@ -129,11 +129,11 @@ def test_failover(cluster, helpers):
 def test_rollback(cluster, helpers):
     conn = cluster['storage-1'].conn
 
-    # hack confapplier to throw error on apply
+    # hack utils to throw error on file_write
     conn.eval('''\
-        local confapplier = package.loaded["cluster.confapplier"]
-        _G._confapplier_apply = confapplier.apply
-        confapplier.apply = function()
+        local utils = package.loaded["cluster.utils"]
+        _G._utils_file_write = utils.file_write
+        utils.file_write = function()
             error("Hacked from pytest")
         end
     ''')
@@ -146,9 +146,11 @@ def test_rollback(cluster, helpers):
     """)
     assert obj['errors'][0]['message'] == 'eval:4: Hacked from pytest'
 
-    # restore confapplier
+    # restore utils.file_write
     conn.eval('''
-        package.loaded["cluster.confapplier"].apply = _G._confapplier_apply
+        local utils = package.loaded["cluster.utils"]
+        utils.file_write = _G._utils_file_write
+        _G._utils_file_write = nil
     ''')
 
     # try to apply new config - now it should succeed
