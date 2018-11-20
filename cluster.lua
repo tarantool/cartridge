@@ -21,6 +21,7 @@ local vshard = require('vshard')
 local membership = require('membership')
 _G.vshard = vshard
 
+local vars = require('cluster.vars').new('cluster')
 local admin = require('cluster.admin')
 local webui = require('cluster.webui')
 local topology = require('cluster.topology')
@@ -28,7 +29,11 @@ local bootstrap = require('cluster.bootstrap')
 local confapplier = require('cluster.confapplier')
 local cluster_cookie = require('cluster.cluster-cookie')
 
-local e_init = errors.new_class('Cluster initialization failed')
+-- Parameters to be passed at bootstrap
+vars:new('box_opts')
+vars:new('boot_opts')
+vars:new('bootstrapped')
+
 --- Initialize the cluster module.
 -- After the call user can operate the instance via tarantool console.
 -- Notice that this call does not initialize the database - `box.cfg` is not called yet.
@@ -42,6 +47,7 @@ local e_init = errors.new_class('Cluster initialization failed')
 -- * `Socket bind error`
 -- * `Can not ping myself`
 local function init(opts, box_opts)
+    assert(vars.boot_opts == nil , 'Cluster is already initialized')
     checks({
         workdir = 'string',
         advertise_uri = 'string',
@@ -112,58 +118,57 @@ local function init(opts, box_opts)
     -- errors.monkeypatch_netbox_call()
     -- netbox_fiber_storage.monkeypatch_netbox_call()
 
-    local boot_opts = {}
-    boot_opts.workdir = opts.workdir
-    boot_opts.binary_port = advertise.service
+    vars.box_opts = box_opts
+    vars.boot_opts = {
+        workdir = opts.workdir,
+        binary_port = advertise.service,
+        bucket_count = opts.bucket_count,
+    }
 
     if #fio.glob(opts.workdir..'/*.snap') > 0 then
         log.info('Snapshot found in ' .. opts.workdir)
-        local ok, err = bootstrap.from_snapshot(boot_opts, box_opts)
+        local ok, err = bootstrap.from_snapshot(vars.boot_opts, vars.box_opts)
         if not ok then
             log.error('%s', err)
         end
     else
-        package.loaded['cluster'].bootstrap = function(roles, uuids)
-            checks('?table', {
-                instance_uuid = '?uuid_str',
-                replicaset_uuid = '?uuid_str',
-            })
-
-            local _boot_opts = table.copy(boot_opts)
-            _boot_opts.bucket_count = opts.bucket_count
-            _boot_opts.instance_uuid = uuids.instance_uuid
-            _boot_opts.replicaset_uuid = uuids.replicaset_uuid
-            return bootstrap.from_scratch(_boot_opts, box_opts, roles)
-        end
-
         fiber.create(function()
             while type(box.cfg) == 'function' do
-                if not bootstrap.from_membership(boot_opts, box_opts) then
+                if not bootstrap.from_membership(vars.boot_opts, vars.box_opts) then
                     fiber.sleep(1.0)
                 end
             end
-            package.loaded['cluster'].bootstrap = function()
-                error('Already bootstrapped')
-            end
+
+            vars.bootstrapped = true
         end)
         log.info('Ready for bootstrap')
     end
 
-    local function _raise()
-        error('Cluster is already initialized')
-    end
-    package.loaded['cluster'].init = _raise
-    package.loaded['cluster'].register_role = _raise
-
     return true
 end
 
-return {
-    init = init,
-    admin = admin,
-    webui = webui,
-    bootstrap = nil,
-    is_healthy = topology.cluster_is_healthy,
+local function bootstrap_from_scratch(roles, uuids)
+    assert(not vars.bootstrapped, 'Cluster is already bootstrapped')
+    checks('?table', {
+        instance_uuid = '?uuid_str',
+        replicaset_uuid = '?uuid_str',
+    })
+
+    local _boot_opts = table.copy(vars.boot_opts)
+    _boot_opts.instance_uuid = uuids.instance_uuid
+    _boot_opts.replicaset_uuid = uuids.replicaset_uuid
+
+    local function pack(...)
+        return select('#', ...), {...}
+    end
+    local n, ret = pack(
+        bootstrap.from_scratch(_boot_opts, vars.box_opts, roles)
+    )
+
+    vars.bootstrapped = true
+
+    return unpack(ret, 1, n)
+end
 
 --- Register user-defined role to be used in cluster.
 -- It should be done before calling `cluster.init()`
@@ -176,5 +181,17 @@ return {
 -- * All errors that `require` can raise
 -- * `Role "module_name" is already registered`
 -- * `Cluster is already initialized`
-    register_role = confapplier.register_role,
+local function register_role(...)
+    assert(vars.boot_opts == nil , 'Cluster is already initialized')
+    return confapplier.register_role(...)
+end
+
+return {
+    init = init,
+    admin = admin,
+    webui = webui,
+    bootstrap = bootstrap_from_scratch,
+    is_healthy = topology.cluster_is_healthy,
+
+    register_role = register_role,
 }
