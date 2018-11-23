@@ -43,7 +43,7 @@ local yaml = require('yaml')
 local topology = require('cluster.topology')
 local test = tap.test('topology.config')
 
-test:plan(40)
+test:plan(39)
 
 local function check_config(result, raw_new, raw_old)
     local cfg_new = raw_new and yaml.decode(raw_new) or {}
@@ -279,20 +279,6 @@ replicasets:
     master: aaaaaaaa-aaaa-4000-b000-000000000001
     roles: {}
 ...]])
-
-check_config('replicasets[aaaaaaaa-0000-4000-b000-000000000001]'..
-  ' unknown role "unknown"',
-[[---
-servers:
-  aaaaaaaa-aaaa-4000-b000-000000000001:
-    uri: localhost:3301
-    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
-replicasets:
-  aaaaaaaa-0000-4000-b000-000000000001:
-    master: aaaaaaaa-aaaa-4000-b000-000000000001
-    roles: {"unknown": true}
-...]])
-
 
 test:diag('validate_availability()')
 

@@ -9,9 +9,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Uncaught exception in WebUI
 - Indicate when backend is unavailable
 - Sort servers in replicaset, put master first
+- Cluster mutations are now synchronous, except joining new servers
 
 ### Added
 - API for temporarily disabling servers
+- API for implementing user-defined roles
 
 ## [0.3] - 2018-10-30
 ### Changed

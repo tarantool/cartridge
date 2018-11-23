@@ -1,0 +1,6 @@
+projects:
+  cluster:
+    schemaPath: schema.graphql
+    extensions:
+      endpoints:
+        default: 'http://localhost:8081/graphql'

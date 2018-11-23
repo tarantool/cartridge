@@ -146,6 +146,7 @@ local function bootstrap_from_membership(boot_opts, box_opts)
     checks({
         workdir = 'string',
         binary_port = 'number',
+        bucket_count = '?', -- ignored
     }, '?table')
 
     local conf = confapplier.fetch_from_membership()
@@ -202,6 +203,7 @@ local function bootstrap_from_snapshot(boot_opts, box_opts)
     checks({
         workdir = 'string',
         binary_port = 'number',
+        bucket_count = '?', -- ignored
     }, '?table')
 
     local instance_uuid

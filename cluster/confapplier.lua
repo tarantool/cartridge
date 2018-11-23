@@ -39,6 +39,7 @@ local e_bootstrap_vshard = errors.new_class('Can not bootstrap vshard router now
 vars:new('conf')
 vars:new('workdir')
 vars:new('locks', {})
+vars:new('known_roles', {})
 vars:new('applier_fiber', nil)
 vars:new('applier_channel', nil)
 vars:new('failover_fiber', nil)
@@ -47,6 +48,32 @@ vars:new('failover_cond', nil)
 local function set_workdir(workdir)
     checks('string')
     vars.workdir = workdir
+end
+
+local function register_role(module_name)
+    checks('string')
+    local mod = require(module_name)
+
+    mod.role_name = mod.role_name or module_name
+    if utils.table_find(vars.known_roles, mod.role_name) then
+        error(('Role %q is already registered'):format(mod.role_name))
+    end
+
+    table.insert(vars.known_roles, mod)
+    return true
+end
+
+local function get_known_roles()
+    local ret = {
+        'vshard-storage',
+        'vshard-router',
+    }
+
+    for _, mod in ipairs(vars.known_roles) do
+        table.insert(ret, mod.role_name)
+    end
+
+    return ret
 end
 
 --- Load config from filesystem.
@@ -186,7 +213,6 @@ local function fetch_from_membership(topology_cfg)
         or topology_cfg.servers[box.info.uuid] == 'expelled'
         or utils.table_count(topology_cfg.servers) == 1
         then
-            log.info('returning vars.conf: %s', vars.conf)
             return load_from_file()
         end
     end
@@ -220,6 +246,19 @@ local function validate(conf_new)
 
     local conf_old = vars.conf or {}
 
+    for _, mod in ipairs(vars.known_roles) do
+        if type(mod.validate) == 'function' then
+            local ok, err = e_config_validate:pcall(
+                mod.validate, conf_new, conf_old
+            )
+            if not ok then
+                err = err or e_config_validate:new(
+                    'Role %q vaildation failed', mod.role_name
+                )
+                return nil, err
+            end
+        end
+    end
 
     return true
 end
@@ -308,9 +347,9 @@ local function apply_config(conf)
     end
 
     topology.set(conf.topology)
-    local roles = conf.topology.replicasets[box.info.cluster.uuid].roles
+    local roles_enabled = conf.topology.replicasets[box.info.cluster.uuid].roles
 
-    if roles['vshard-storage'] then
+    if roles_enabled['vshard-storage'] then
         vshard.storage.cfg({
             sharding = topology.get_vshard_sharding_config(),
             bucket_count = conf.bucket_count,
@@ -322,7 +361,7 @@ local function apply_config(conf)
         -- srv:apply_config(conf)
     end
 
-    if roles['vshard-router'] then
+    if roles_enabled['vshard-router'] then
         -- local srv = ibcore.server.new()
         -- srv:apply_config(conf)
         -- service_registry.set('ib-core', srv)
@@ -332,9 +371,45 @@ local function apply_config(conf)
         })
         service_registry.set('vshard-router', vshard.router)
     end
+
+    for _, mod in ipairs(vars.known_roles) do
+        local role_name = mod.role_name
+        if roles_enabled[role_name] then
+            do
+                if (service_registry.get(role_name) == nil) and (type(mod.init) == 'function') then
+                    local _, _err = e_config_apply:pcall(mod.init)
+                    if _err then
+                        log.error('%s', _err)
+                        err = err or _err
+                        break
+                    end
+                end
+
+                service_registry.set(role_name, mod)
+
+                if type(mod.apply_config) == 'function' then
+                    local _, _err = e_config_apply:pcall(mod.apply_config, conf)
+                    if _err then
+                        log.error('%s', _err)
+                        err = err or _err
+                    end
+                end
+            end
+        else
+            if (service_registry.get(role_name) ~= nil) and (type(mod.stop) == 'function') then
+                local _, _err = e_config_apply:pcall(mod.stop)
+                if _err then
+                    log.error('%s', err)
+                    err = err or _err
+                end
+            end
+
+            service_registry.set(role_name, nil)
+        end
+    end
     log.info('Config applied')
 
-    local failover_enabled = conf.topology.failover and (roles['vshard-storage'] or roles['vshard-router'])
+    local failover_enabled = conf.topology.failover and (roles_enabled['vshard-storage'] or roles_enabled['vshard-router'])
     local failover_running = vars.failover_fiber and vars.failover_fiber:status() ~= 'dead'
 
     if failover_enabled and not failover_running then
@@ -619,6 +694,9 @@ return {
 
     load_from_file = load_from_file,
     fetch_from_membership = fetch_from_membership,
+
+    register_role = register_role,
+    get_known_roles = get_known_roles,
 
     prepare_2pc = prepare_2pc,
     commit_2pc = commit_2pc,
