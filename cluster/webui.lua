@@ -11,6 +11,7 @@ local membership = require('membership')
 
 local admin = require('cluster.admin')
 local static = require('cluster.webui-static')
+local confapplier = require('cluster.confapplier')
 local graphql = require('cluster.graphql')
 local gql_types = require('cluster.graphql.types')
 
@@ -250,6 +251,15 @@ local function init(httpd)
         callback = 'cluster.webui.get_failover_enabled',
     })
 
+    graphql.add_callback({
+        prefix = 'cluster',
+        name = 'known_roles',
+        doc = 'Get list of registered roles.',
+        args = {},
+        kind = gql_types.list(gql_types.string.nonNull),
+        callback = 'cluster.webui.get_known_roles',
+    })
+
     graphql.add_mutation({
         prefix = 'cluster',
         name = 'failover',
@@ -348,6 +358,7 @@ return {
     expell_server = expell_server,
     disable_servers = disable_servers,
 
+    get_known_roles = confapplier.get_known_roles,
     get_failover_enabled = get_failover_enabled,
     set_failover_enabled = set_failover_enabled,
 

@@ -19,11 +19,14 @@ cluster = [
 
 def test_api(cluster):
     srv = cluster['master']
-    resp = srv.conn.eval("""
-        local confapplier = require('cluster.confapplier')
-        return confapplier.get_known_roles()
+    obj = srv.graphql("""
+        {
+            cluster { known_roles }
+        }
     """)
-    assert resp[0] == ['vshard-storage', 'vshard-router', 'myrole']
+    assert 'errors' not in obj
+    assert obj['data']['cluster']['known_roles'] == \
+        ['vshard-storage', 'vshard-router', 'myrole']
 
 
 def test_myrole(cluster):
