@@ -4,4 +4,4 @@
 .cache
 __pycache__
 dev
-schema.graphql
+doc

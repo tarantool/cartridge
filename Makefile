@@ -1,5 +1,5 @@
 DIR := webui
-.PHONY: all install doc test
+.PHONY: all install doc test schema
 
 all: $(DIR)/node_modules
 	npm run build --prefix=$(DIR)
@@ -14,6 +14,12 @@ install:
 
 doc:
 	ldoc .
+
+schema:
+	WORKDIR=dev/gql-schema pytest/instance.lua & \
+	PID=$$!; \
+	graphql get-schema -o doc/schema.graphql; \
+	kill $$PID; \
 
 test:
 	tarantoolctl rocks install http 1.0.5-1
