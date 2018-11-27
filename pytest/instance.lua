@@ -25,7 +25,7 @@ end
 local ok, err = xpcall(cluster.init, debug.traceback, {
     alias = os.getenv('ALIAS'),
     workdir = os.getenv('WORKDIR'),
-    advertise_uri = os.getenv('ADVERTISE_URI'),
+    advertise_uri = os.getenv('ADVERTISE_URI') or 'localhost:3301',
     cluster_cookie = os.getenv('CLUSTER_COOKIE'),
 })
 
@@ -34,7 +34,7 @@ if not ok then
     os.exit(1)
 end
 
-local http_port = os.getenv('HTTP_PORT')
+local http_port = os.getenv('HTTP_PORT') or '8081'
 local httpd = http.new(
     '0.0.0.0', tonumber(http_port),
     { log_requests = false }
