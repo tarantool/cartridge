@@ -8,6 +8,7 @@ local uuid_lib = require('uuid')
 local membership = require('membership')
 
 local pool = require('cluster.pool')
+local utils = require('cluster.utils')
 local topology = require('cluster.topology')
 local confapplier = require('cluster.confapplier')
 local service_registry = require('cluster.service-registry')
@@ -88,13 +89,24 @@ local function get_servers_and_replicasets()
             roles = {},
             status = 'healthy',
             master = nil,
+            weight = nil,
             servers = {},
         }
 
-        for role, enabled in pairs(replicaset.roles) do
-            if enabled then
+        for _, role in pairs(known_roles) do
+            if replicaset.roles[role] then
                 table.insert(replicasets[replicaset_uuid].roles, role)
             end
+        end
+
+        for role, enabled in pairs(replicaset.roles) do
+            if enabled and not utils.table_find(known_roles, role) then
+                table.insert(replicasets[replicaset_uuid].roles, role)
+            end
+        end
+
+        if replicaset.roles['vshard-storage'] then
+            replicasets[replicaset_uuid].weight = replicaset.weight or 0.0
         end
     end
 
@@ -267,10 +279,17 @@ local function join_server(args)
         replicaset_uuid = args.replicaset_uuid,
     }
 
+    local vshard_cfg = confapplier.get_readonly('vshard')
     if topology_cfg.replicasets[args.replicaset_uuid] == nil then
+        local weight = 0
+        if not vshard_cfg.bootstrapped then
+            weight = 1
+        end
+
         topology_cfg.replicasets[args.replicaset_uuid] = {
             roles = roles,
             master = args.instance_uuid,
+            weight = weight,
         }
     end
 
@@ -382,6 +401,7 @@ local function edit_replicaset(args)
         uuid = 'string',
         roles = '?table',
         master = '?string',
+        weight = '?number',
     })
 
     local topology_cfg = confapplier.get_deepcopy('topology')
@@ -404,6 +424,10 @@ local function edit_replicaset(args)
 
     if args.master ~= nil then
         replicaset.master = args.master
+    end
+
+    if args.weight ~= nil then
+        replicaset.weight = args.weight
     end
 
     local ok, err = confapplier.patch_clusterwide({topology = topology_cfg})
@@ -439,6 +463,11 @@ local function set_failover_enabled(value)
 end
 
 local function bootstrap_vshard()
+    local vshard_cfg = confapplier.get_readonly('vshard')
+    if vshard_cfg.bootstrapped then
+        return nil, e_bootstrap_vshard:new('Already bootstrapped')
+    end
+
     local vshard_router = service_registry.get('vshard-router')
     if vshard_router == nil then
         return nil, e_bootstrap_vshard:new('vshard-router role is disabled')
@@ -463,11 +492,18 @@ local function bootstrap_vshard()
     log.info('Bootstrapping vshard.router...')
 
     local ok, err = vshard_router.bootstrap({timeout=10})
-    if not ok then
+    if not ok and err.code ~= vshard.error.code.NON_EMPTY then
         return nil, e_bootstrap_vshard:new(
             '%s (%s, %s)',
             err.message, err.type, err.name
         )
+    end
+
+    local vshard_cfg = confapplier.get_deepcopy('vshard')
+    vshard_cfg.bootstrapped = true
+    local ok, err = confapplier.patch_clusterwide({vshard = vshard_cfg})
+    if not ok then
+        return nil, err
     end
 
     return true

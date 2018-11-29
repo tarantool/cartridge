@@ -43,6 +43,7 @@ local gql_type_replicaset = gql_types.object {
         uuid = gql_types.string.nonNull,
         roles = gql_types.list(gql_types.string.nonNull),
         status = gql_types.string.nonNull,
+        weight = gql_types.float,
         master = gql_types.nonNull('Server'),
         servers = gql_types.list('Server'),
     }
@@ -228,6 +229,7 @@ local function init(httpd)
             uuid = gql_types.string.nonNull,
             roles = gql_types.list(gql_types.string.nonNull),
             master = gql_types.string,
+            weight = gql_types.float,
         },
         kind = gql_types.boolean,
         callback = 'cluster.webui.edit_replicaset',

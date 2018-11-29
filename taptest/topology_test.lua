@@ -43,7 +43,7 @@ local yaml = require('yaml')
 local topology = require('cluster.topology')
 local test = tap.test('topology.config')
 
-test:plan(41)
+test:plan(45)
 
 local function check_config(result, raw_new, raw_old)
     local cfg_new = raw_new and yaml.decode(raw_new) or {}
@@ -212,6 +212,16 @@ replicasets:
     unknown: true
 ...]])
 
+check_config('topology_new.replicasets[aaaaaaaa-0000-4000-b000-000000000001]'..
+  '.weight must be a number, got string',
+[[---
+replicasets:
+  aaaaaaaa-0000-4000-b000-000000000001:
+    master: aaaaaaaa-aaaa-4000-b000-000000000001
+    roles: {"vshard-router": true}
+    weight: over9000
+...]])
+
 test:diag('validate_consistency()')
 
 check_config('servers[aaaaaaaa-aaaa-4000-b000-000000000001]'..
@@ -280,6 +290,33 @@ replicasets:
     roles: {}
 ...]])
 
+check_config('replicasets[aaaaaaaa-0000-4000-b000-000000000001]'..
+  '.weight must be non-negative, got -1',
+[[---
+servers:
+  aaaaaaaa-aaaa-4000-b000-000000000001:
+    uri: localhost:3301
+    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
+replicasets:
+  aaaaaaaa-0000-4000-b000-000000000001:
+    master: aaaaaaaa-aaaa-4000-b000-000000000001
+    roles: {"vshard-storage": true}
+    weight: -1
+...]])
+
+check_config('At least one vshard-storage must have weight > 0',
+[[---
+servers:
+  aaaaaaaa-aaaa-4000-b000-000000000001:
+    uri: localhost:3301
+    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
+replicasets:
+  aaaaaaaa-0000-4000-b000-000000000001:
+    master: aaaaaaaa-aaaa-4000-b000-000000000001
+    roles: {"vshard-storage": true}
+    weight: 0
+...]])
+
 test:diag('validate_availability()')
 
 check_config('Server "localhost:3311" is not in membership',
@@ -291,7 +328,7 @@ servers:
 replicasets:
   aaaaaaaa-0000-4000-b000-000000000010:
     master: aaaaaaaa-aaaa-4000-b000-000000000010
-    roles: {"vshard-storage": true}
+    roles: {}
 ...]])
 
 check_config('Server "localhost:3302" is unreachable with status "dead"',
@@ -303,7 +340,7 @@ servers:
 replicasets:
   aaaaaaaa-0000-4000-b000-000000000010:
     master: aaaaaaaa-aaaa-4000-b000-000000000010
-    roles: {"vshard-storage": true}
+    roles: {}
 ...]])
 
 check_config('Server "localhost:3303" bootstrapped with different uuid "alien"',
@@ -315,7 +352,7 @@ servers:
 replicasets:
   aaaaaaaa-0000-4000-b000-000000000010:
     master: aaaaaaaa-aaaa-4000-b000-000000000010
-    roles: {"vshard-storage": true}
+    roles: {}
 ...]])
 
 check_config('Server "localhost:3304" has error: err',
@@ -327,7 +364,7 @@ servers:
 replicasets:
   aaaaaaaa-0000-4000-b000-000000000010:
     master: aaaaaaaa-aaaa-4000-b000-000000000010
-    roles: {"vshard-storage": true}
+    roles: {}
 ...]])
 
 check_config('Current instance "localhost:3301" is not listed in config',
@@ -391,7 +428,7 @@ servers:
 replicasets:
   aaaaaaaa-0000-4000-b000-000000000001:
     master: aaaaaaaa-aaaa-4000-b000-000000000001
-    roles: {"vshard-storage": true}
+    roles: {}
 ...]],
 
 [[---
@@ -450,6 +487,7 @@ replicasets:
   bbbbbbbb-0000-4000-b000-000000000001:
     master: bbbbbbbb-bbbb-4000-b000-000000000001
     roles: {"vshard-storage": true}
+    weight: 1
 ...]])
 
 check_config('replicasets[aaaaaaaa-0000-4000-b000-000000000001].roles'..
@@ -475,6 +513,7 @@ replicasets:
   aaaaaaaa-0000-4000-b000-000000000001:
     master: aaaaaaaa-aaaa-4000-b000-000000000001
     roles: {"vshard-storage": true}
+    weight: 1
 ...]])
 
 check_config('replicasets[aaaaaaaa-0000-4000-b000-000000000001]'..
@@ -556,6 +595,19 @@ replicasets:
   aaaaaaaa-0000-4000-b000-000000000001:
     master: aaaaaaaa-aaaa-4000-b000-000000000001
     roles: {"unknown": true}
+...]])
+
+check_config(true,
+[[---
+servers:
+  aaaaaaaa-aaaa-4000-b000-000000000001:
+    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
+    uri: localhost:3301
+replicasets:
+  aaaaaaaa-0000-4000-b000-000000000001:
+    master: aaaaaaaa-aaaa-4000-b000-000000000001
+    roles: {"vshard-storage": true}
+    weight: 2
 ...]])
 
 os.exit(test:check() and 0 or 1)

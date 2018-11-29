@@ -36,6 +36,7 @@ vars:new('topology', {
         --         ['role-2'] = true,
         --     },
         --     master = 'instance-uuid-2',
+        --     weight = 1.0,
         -- }
     },
 })
@@ -143,6 +144,11 @@ local function validate_schema(field, topology)
             '%s.roles must be a table, got %s', field, type(replicaset.roles)
         )
 
+        e_config:assert(
+            (replicaset.weight == nil) or (type(replicaset.weight) == 'number'),
+            '%s.weight must be a number, got %s', field, type(replicaset.weight)
+        )
+
         for k, v in pairs(replicaset.roles) do
             e_config:assert(
                 type(k) == 'string',
@@ -157,6 +163,7 @@ local function validate_schema(field, topology)
         local known_keys = {
             ['roles'] = true,
             ['master'] = true,
+            ['weight'] = true,
         }
         for k, v in pairs(replicaset) do
             e_config:assert(
@@ -195,6 +202,9 @@ local function validate_consistency(topology)
         known_uuids[server.replicaset_uuid] = true
     end
 
+    local num_storages = 0
+    local total_weight = 0
+
     for replicaset_uuid, replicaset in pairs(replicasets) do
         local field = string.format('replicasets[%s]', replicaset_uuid)
 
@@ -216,6 +226,22 @@ local function validate_consistency(topology)
         e_config:assert(
             master.replicaset_uuid == replicaset_uuid,
             '%s.master belongs to another replicaset', field
+        )
+        e_config:assert(
+            (replicaset.weight or 0) >= 0,
+            '%s.weight must be non-negative, got %s', field, replicaset.weight
+        )
+
+        if replicaset.roles['vshard-storage'] then
+            num_storages = num_storages + 1
+            total_weight = total_weight + (replicaset.weight or 0)
+        end
+    end
+
+    if num_storages > 0 then
+        e_config:assert(
+            total_weight > 0,
+            'At least one vshard-storage must have weight > 0'
         )
     end
 end
@@ -422,7 +448,7 @@ local function get_vshard_sharding_config()
             if sharding[replicaset_uuid] == nil then
                 sharding[replicaset_uuid] = {
                     replicas = {},
-                    weight = 1,
+                    weight = replicaset.weight or 0.0,
                 }
             end
 
