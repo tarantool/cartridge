@@ -509,6 +509,28 @@ local function bootstrap_vshard()
     return true
 end
 
+local function can_bootstrap_vshard()
+    local vshard_cfg = confapplier.get_readonly('vshard')
+
+    if vshard_cfg == nil then
+        return false
+    elseif vshard_cfg.bootstrapped then
+        return false
+    end
+
+    local sharding_config = topology.get_vshard_sharding_config()
+    if next(sharding_config) == nil then
+        return false
+    end
+
+    return true
+end
+
+local function vshard_bucket_count()
+    local vshard_cfg = confapplier.get_readonly('vshard')
+    return vshard_cfg and vshard_cfg.bucket_count or 0
+end
+
 return {
     get_stat = get_stat,
     get_self = get_self,
@@ -528,7 +550,8 @@ return {
     set_failover_enabled = set_failover_enabled,
 
     bootstrap_vshard = bootstrap_vshard,
-
+    vshard_bucket_count = vshard_bucket_count,
+    can_bootstrap_vshard = can_bootstrap_vshard,
     -- upload_config = upload_config,
     -- download_config = download_config,
 }

@@ -53,16 +53,20 @@ def test_self(cluster):
                     uuid
                     alias
                 }
+                can_bootstrap_vshard
+                vshard_bucket_count
             }
         }
     """)
+    assert 'errors' not in obj, obj['errors'][0]['message']
 
-    server_self = obj['data']['cluster']['self']
-    assert server_self == {
+    assert obj['data']['cluster']['self'] == {
         'uri': 'localhost:33001',
         'uuid': 'aaaaaaaa-aaaa-4000-b000-000000000001',
         'alias': 'router',
     }
+    assert obj['data']['cluster']['can_bootstrap_vshard'] == False
+    assert obj['data']['cluster']['vshard_bucket_count'] == 10000
 
 def test_custom_http_endpoint(cluster):
     resp = cluster['router'].get('/custom-get')
@@ -270,9 +274,12 @@ def test_uninitialized(module_tmpdir, helpers):
                         uuid
                         alias
                     }
+                    can_bootstrap_vshard
+                    vshard_bucket_count
                 }
             }
         """)
+        assert 'errors' not in obj, obj['errors'][0]['message']
 
         servers = obj['data']['servers']
         assert len(servers) == 1
@@ -281,8 +288,12 @@ def test_uninitialized(module_tmpdir, helpers):
         replicasets = obj['data']['replicasets']
         assert len(replicasets) == 0
 
-        server_self = obj['data']['cluster']['self']
-        assert server_self == {'uri': 'localhost:33101', 'alias': 'dummy'}
+        assert obj['data']['cluster']['self'] == {
+            'uri': 'localhost:33101',
+            'alias': 'dummy'
+        }
+        assert obj['data']['cluster']['can_bootstrap_vshard'] == False
+        assert obj['data']['cluster']['vshard_bucket_count'] == 0
 
         obj = srv.graphql("""
             mutation {
