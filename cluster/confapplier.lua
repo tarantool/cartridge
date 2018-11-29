@@ -34,6 +34,7 @@ local e_config_fetch = errors.new_class('Fetching configuration failed')
 local e_config_apply = errors.new_class('Applying configuration failed')
 local e_config_restore = errors.new_class('Restoring configuration failed')
 local e_config_validate = errors.new_class('Invalid config')
+local e_register_role = errors.new_class('Can not register role')
 local e_bootstrap_vshard = errors.new_class('Can not bootstrap vshard router now')
 
 vars:new('conf')
@@ -52,11 +53,14 @@ end
 
 local function register_role(module_name)
     checks('string')
-    local mod = require(module_name)
+    local mod, err = e_register_role:pcall(require, module_name)
+    if not mod then
+        return nil, err
+    end
 
     mod.role_name = mod.role_name or module_name
     if utils.table_find(vars.known_roles, mod.role_name) then
-        error(('Role %q is already registered'):format(mod.role_name))
+        return nil, e_register_role:new('Role %q is already registered', mod.role_name)
     end
 
     table.insert(vars.known_roles, mod)

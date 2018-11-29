@@ -7,11 +7,12 @@ local cluster = require('cluster')
 
 local test = tap.test('cluster.init')
 
-test:plan(9)
+test:plan(8)
 
 local function check_error(expected_error, fn, ...)
-    local ok, err = pcall(fn, ...)
-    test:like(err, expected_error, expected_error)
+    local ok, err = fn(...)
+    test:diag('%s', err)
+    test:like(err.err, expected_error, expected_error)
 end
 
 check_error('Can not create workdir "/dev/null"',
@@ -47,31 +48,37 @@ check_error('Can not ping myself: ping was not sent',
 )
 
 check_error([[module 'unknown' not found]],
-    cluster.register_role,
-    'unknown'
+    cluster.init, {
+        workdir = '.',
+        advertise_uri = 'localhost:9',
+        roles = {'unknown'},
+    }
 )
 
 package.preload['mymodule'] = function()
     error('My module can not be loaded')
 end
 check_error('My module can not be loaded',
-    cluster.register_role,
-    'mymodule'
+    cluster.init, {
+        workdir = '.',
+        advertise_uri = 'localhost:9',
+        roles = {'mymodule'},
+    }
 )
 
-test:ok(pcall(
+test:ok(
+    cluster.init({
+        workdir = '/tmp',
+        advertise_uri = 'localhost:33001',
+    })
+)
+
+check_error('Cluster is already initialized',
     cluster.init, {
         workdir = '/tmp',
         advertise_uri = 'localhost:33001',
+        roles = {'mymodule'},
     }
-))
-
-check_error('Cluster is already initialized',
-    cluster.init
-)
-
-check_error('Cluster is already initialized',
-    cluster.register_role
 )
 
 os.exit(test:check() and 0 or 1)

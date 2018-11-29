@@ -16,17 +16,14 @@ package.preload['mymodule'] = function()
     }
 end
 
-local ok, err = xpcall(cluster.register_role, debug.traceback, 'mymodule')
-if not ok then
-    log.error('%s', err)
-    os.exit(1)
-end
-
-local ok, err = xpcall(cluster.init, debug.traceback, {
+local ok, err = cluster.init({
     alias = os.getenv('ALIAS'),
     workdir = os.getenv('WORKDIR'),
     advertise_uri = os.getenv('ADVERTISE_URI') or 'localhost:3301',
     cluster_cookie = os.getenv('CLUSTER_COOKIE'),
+    roles = {
+        'mymodule'
+    },
 })
 
 if not ok then

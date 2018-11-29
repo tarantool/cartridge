@@ -52,6 +52,7 @@ local function init(opts, box_opts)
         cluster_cookie = '?string',
         bucket_count = '?number',
         alias = '?string',
+        roles = '?table',
     }, '?table')
 
     if (vars.boot_opts ~= nil) then
@@ -69,11 +70,12 @@ local function init(opts, box_opts)
 
     confapplier.set_workdir(opts.workdir)
 
-    -- Is this necessary?
-    -- local rc = fio.chdir(opts.workdir)
-    -- if not rc then
-    --     return nil, e_init:new('Can not change to working directory %q', opts.workdir)
-    -- end
+    for _, role in ipairs(opts.roles or {}) do
+        local ok, err = confapplier.register_role(role)
+        if not ok then
+            return nil, err
+        end
+    end
 
     cluster_cookie.init(opts.workdir)
     if opts.cluster_cookie ~= nil then
@@ -153,11 +155,14 @@ local function init(opts, box_opts)
 end
 
 local function bootstrap_from_scratch(roles, uuids)
-    assert(not vars.bootstrapped, 'Cluster is already bootstrapped')
     checks('?table', {
         instance_uuid = '?uuid_str',
         replicaset_uuid = '?uuid_str',
     })
+
+    if vars.bootstrapped then
+        return nil, e_init:new('Cluster is already bootstrapped')
+    end
 
     local _boot_opts = table.copy(vars.boot_opts)
     _boot_opts.instance_uuid = uuids.instance_uuid
@@ -175,28 +180,10 @@ local function bootstrap_from_scratch(roles, uuids)
     return unpack(ret, 1, n)
 end
 
---- Register user-defined role to be used in cluster.
--- It should be done before calling `cluster.init()`
---
--- @function register_role
--- @tparam string module_name A module to be loaded
--- @treturn nil
--- @raise
---
--- * All errors that `require` can raise
--- * `Role "module_name" is already registered`
--- * `Cluster is already initialized`
-local function register_role(...)
-    assert(vars.boot_opts == nil , 'Cluster is already initialized')
-    return confapplier.register_role(...)
-end
-
 return {
     init = init,
     admin = admin,
     webui = webui,
     bootstrap = bootstrap_from_scratch,
     is_healthy = topology.cluster_is_healthy,
-
-    register_role = register_role,
 }
