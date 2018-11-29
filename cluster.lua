@@ -19,6 +19,7 @@ local checks = require('checks')
 local errors = require('errors')
 local vshard = require('vshard')
 local membership = require('membership')
+local http = require('http.server')
 _G.vshard = vshard
 
 local vars = require('cluster.vars').new('cluster')
@@ -30,7 +31,9 @@ local confapplier = require('cluster.confapplier')
 local cluster_cookie = require('cluster.cluster-cookie')
 
 local e_init = errors.new_class('Cluster initialization failed')
+local e_http = errors.new_class('Http initialization failed')
 -- Parameters to be passed at bootstrap
+vars:new('httpd')
 vars:new('box_opts')
 vars:new('boot_opts')
 vars:new('bootstrapped')
@@ -51,6 +54,7 @@ local function init(opts, box_opts)
         advertise_uri = 'string',
         cluster_cookie = '?string',
         bucket_count = '?number',
+        http_port = '?string|number',
         alias = '?string',
         roles = '?table',
     }, '?table')
@@ -116,8 +120,26 @@ local function init(opts, box_opts)
         membership.broadcast(p)
     end
 
-    -- http.init(args.http_port)
-    -- graphql.init()
+    if opts.http_port ~= nil then
+        vars.httpd = http.new(
+            '0.0.0.0', opts.http_port,
+            { log_requests = false }
+        )
+
+        local ok, err = e_http:pcall(vars.httpd.start, vars.httpd)
+        if not ok then
+            return nil, err
+        end
+
+        local ok, err = e_http:pcall(webui.init, vars.httpd)
+        if not ok then
+            return nil, err
+        end
+
+        local srv_name = vars.httpd.tcp_server:name()
+        log.info('Listening HTTP on %s:%s', srv_name.host, srv_name.port)
+    end
+
     -- metrics.init()
     -- admin.init()
 
