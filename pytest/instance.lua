@@ -15,7 +15,7 @@ package.preload['mymodule'] = function()
     }
 end
 
-local ok, err = cluster.init({
+local ok, err = cluster.cfg({
     alias = os.getenv('ALIAS'),
     workdir = os.getenv('WORKDIR'),
     advertise_uri = os.getenv('ADVERTISE_URI') or 'localhost:3301',

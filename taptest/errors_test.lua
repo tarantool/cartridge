@@ -5,7 +5,7 @@ local tap = require('tap')
 local socket = require('socket')
 local cluster = require('cluster')
 
-local test = tap.test('cluster.init')
+local test = tap.test('cluster.cfg')
 
 test:plan(8)
 
@@ -16,14 +16,14 @@ local function check_error(expected_error, fn, ...)
 end
 
 check_error('Can not create workdir "/dev/null"',
-    cluster.init, {
+    cluster.cfg, {
         workdir = '/dev/null',
         advertise_uri = 'localhost:3301',
     }
 )
 
 check_error('Missing port in advertise_uri "localhost"',
-    cluster.init, {
+    cluster.cfg, {
         workdir = '.',
         advertise_uri = 'localhost',
     }
@@ -32,7 +32,7 @@ check_error('Missing port in advertise_uri "localhost"',
 local _sock = socket('AF_INET', 'SOCK_DGRAM', 'udp')
 local ok = _sock:bind('0.0.0.0', 3301)
 check_error('Socket bind error',
-    cluster.init, {
+    cluster.cfg, {
         workdir = '.',
         advertise_uri = 'localhost:3301',
     }
@@ -41,14 +41,14 @@ _sock:close()
 _sock = nil
 
 check_error('Can not ping myself: ping was not sent',
-    cluster.init, {
+    cluster.cfg, {
         workdir = '.',
         advertise_uri = 'invalid-host:3301',
     }
 )
 
 check_error([[module 'unknown' not found]],
-    cluster.init, {
+    cluster.cfg, {
         workdir = '.',
         advertise_uri = 'localhost:9',
         roles = {'unknown'},
@@ -59,7 +59,7 @@ package.preload['mymodule'] = function()
     error('My module can not be loaded')
 end
 check_error('My module can not be loaded',
-    cluster.init, {
+    cluster.cfg, {
         workdir = '.',
         advertise_uri = 'localhost:9',
         roles = {'mymodule'},
@@ -67,14 +67,14 @@ check_error('My module can not be loaded',
 )
 
 test:ok(
-    cluster.init({
+    cluster.cfg({
         workdir = '/tmp',
         advertise_uri = 'localhost:33001',
     })
 )
 
 check_error('Cluster is already initialized',
-    cluster.init, {
+    cluster.cfg, {
         workdir = '/tmp',
         advertise_uri = 'localhost:33001',
         roles = {'mymodule'},

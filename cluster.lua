@@ -42,13 +42,13 @@ vars:new('bootstrapped')
 -- After the call user can operate the instance via tarantool console.
 -- Notice that this call does not initialize the database - `box.cfg` is not called yet.
 -- The user must not try to call `box.cfg` himself, the cluster will do it when it's time to.
--- @function init
+-- @function cfg
 -- @tparam table opts
 -- @tparam table box_opts
 -- @return[1] true
 -- @treturn[2] nil
 -- @treturn[2] error Error description
-local function init(opts, box_opts)
+local function cfg(opts, box_opts)
     checks({
         workdir = 'string',
         advertise_uri = 'string',
@@ -203,9 +203,8 @@ local function bootstrap_from_scratch(roles, uuids)
 end
 
 return {
-    init = init,
+    cfg = cfg,
     admin = admin,
-    webui = webui,
     bootstrap = bootstrap_from_scratch,
     is_healthy = topology.cluster_is_healthy,
 }
