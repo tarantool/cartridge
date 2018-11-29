@@ -29,6 +29,7 @@ local bootstrap = require('cluster.bootstrap')
 local confapplier = require('cluster.confapplier')
 local cluster_cookie = require('cluster.cluster-cookie')
 
+local e_init = errors.new_class('Cluster initialization failed')
 -- Parameters to be passed at bootstrap
 vars:new('box_opts')
 vars:new('boot_opts')
@@ -39,15 +40,12 @@ vars:new('bootstrapped')
 -- Notice that this call does not initialize the database - `box.cfg` is not called yet.
 -- The user must not try to call `box.cfg` himself, the cluster will do it when it's time to.
 -- @function init
--- @treturn nil
--- @raise
---
--- * `Can not create workdir`
--- * `Missing port in advertise_uri`
--- * `Socket bind error`
--- * `Can not ping myself`
+-- @tparam table opts
+-- @tparam table box_opts
+-- @return[1] true
+-- @treturn[2] nil
+-- @treturn[2] error Error description
 local function init(opts, box_opts)
-    assert(vars.boot_opts == nil , 'Cluster is already initialized')
     checks({
         workdir = 'string',
         advertise_uri = 'string',
@@ -56,12 +54,16 @@ local function init(opts, box_opts)
         alias = '?string',
     }, '?table')
 
+    if (vars.boot_opts ~= nil) then
+        return nil, e_init:new('Cluster is already initialized')
+    end
+
     opts.workdir = fio.abspath(opts.workdir)
 
     if not fio.path.is_dir(opts.workdir) then
         local rc = os.execute(('mkdir -p \'%s\''):format(opts.workdir))
         if rc ~= 0 then
-            error(('Can not create workdir %q'):format(opts.workdir))
+            return nil, e_init:new('Can not create workdir %q', opts.workdir)
         end
     end
 
@@ -84,19 +86,22 @@ local function init(opts, box_opts)
 
     local advertise = uri.parse(opts.advertise_uri)
     if advertise.service == nil then
-        error(('Missing port in advertise_uri %q'):format(opts.advertise_uri))
+        return nil, e_init:new('Missing port in advertise_uri %q', opts.advertise_uri)
     else
         advertise.service = tonumber(advertise.service)
     end
 
     log.info('Using advertise_uri "%s:%d"', advertise.host, advertise.service)
-    membership.init(advertise.host, advertise.service)
+    local ok, err = e_init:pcall(membership.init, advertise.host, advertise.service)
+    if not ok then
+        return nil, err
+    end
+
     membership.set_encryption_key(cluster_cookie.cookie())
     membership.set_payload('alias', opts.alias)
-    -- topology.set_password(cluster_cookie.cookie())
-    local ok, err = membership.probe_uri(membership.myself().uri)
+    local ok, estr = membership.probe_uri(membership.myself().uri)
     if not ok then
-        error(('Can not ping myself: %s'):format(err))
+        return nil, e_init:new('Can not ping myself: %s', estr)
     end
 
     -- broadcast several popular ports
