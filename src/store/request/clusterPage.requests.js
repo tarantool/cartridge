@@ -30,6 +30,7 @@ export function getPageData() {
         master {
           uuid
         }
+        weight
         servers {
           uuid
           alias
@@ -77,7 +78,7 @@ export function refreshLists(params = {}) {
         master {
           uuid
         }
-        servers
+        weight
         servers {
           uuid
           alias
@@ -210,12 +211,14 @@ export function editReplicaset(params) {
     mutation(
       $uuid: String!,
       $roles: [String!],
-      $master: String!
+      $master: String!,
+      $weight: Float
     ) {
       editReplicasetResponse: edit_replicaset(
         uuid: $uuid
         roles: $roles
         master: $master
+        weight: $weight
       )
     }`;
   return graphql.fetch(graph, params);

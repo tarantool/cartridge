@@ -14,7 +14,9 @@ const parseOptionFormName = optionFormName => {
   }
 };
 
-const prepareFields = (shouldCreateItem, fields, dataSource) => fields
+const normalizeProp = (prop, dataSource) => typeof prop === 'function' ? prop(dataSource) : prop;
+
+const prepareFields = (shouldCreateItem, fields, formData) => fields
   .map(field => {
     const { customProps = {}, ...other } = field;
     return {
@@ -23,27 +25,27 @@ const prepareFields = (shouldCreateItem, fields, dataSource) => fields
     };
   })
   .map(field => {
-    return typeof field.options === 'function'
-      ? { ...field, options: field.options(dataSource) }
-      : field;
+    return {
+      ...field,
+      hidden: normalizeProp(field.hidden, formData),
+      options: normalizeProp(field.options, formData),
+      disabled: normalizeProp(field.disabled, formData),
+      title: normalizeProp(field.title, formData),
+      helpText: normalizeProp(field.helpText, formData),
+    };
   })
-  .filter(field => {
-    return ! (typeof field.hidden === 'function'
-      ? field.hidden(dataSource)
-      : field.hidden
-    );
-  });
+  .filter(field => ! field.hidden);
 
 class CommonItemEditModal extends React.PureComponent {
+  state = {
+    formData: null,
+    controlled: false,
+  };
+
   constructor(props) {
     super(props);
 
-    this.state = {
-      formData: null,
-      controlled: false,
-    };
-
-    this.prepareFields = defaultMemoize(prepareFields);
+    this.shouldCreateItem = props.shouldCreateItem;
   }
 
   static getDerivedStateFromProps(props, state) {
@@ -60,11 +62,11 @@ class CommonItemEditModal extends React.PureComponent {
   }
 
   render() {
-    const { title, isLoading, itemNotFound, shouldCreateItem } = this.props;
+    const { title, isLoading, itemNotFound } = this.props;
 
     const preparedTitle = typeof title === 'string'
       ? title
-      : shouldCreateItem ? title[0] : title[1];
+      : this.shouldCreateItem ? title[0] : title[1];
 
     return (
       <Modal
@@ -93,10 +95,11 @@ class CommonItemEditModal extends React.PureComponent {
   }
 
   renderForm = () => {
-    const { isSaving, shouldCreateItem, submitStatusMessage } = this.props;
+    const { isSaving, submitStatusMessage } = this.props;
 
     const preparedFields = this.getFields();
-    const submitBtnClassName = cn('btn', shouldCreateItem ? 'btn-success' : 'btn-warning');
+    const submitBtnClassName = cn('btn', this.shouldCreateItem ? 'btn-success' : 'btn-warning');
+    const submitDisabled = ! this.isFormReadyToSubmit();
 
     return (
       <div className="CommonItemEditModal-form">
@@ -119,6 +122,7 @@ class CommonItemEditModal extends React.PureComponent {
               <button
                 type="submit"
                 className={submitBtnClassName}
+                disabled={submitDisabled}
                 onClick={this.handleSubmitClick}
               >
                 Submit
@@ -135,6 +139,15 @@ class CommonItemEditModal extends React.PureComponent {
         </form>
       </div>
     );
+  };
+
+  isFormReadyToSubmit = () => {
+    const { isFormReadyToSubmit } = this.props;
+    if (isFormReadyToSubmit) {
+      const { formData } = this.state;
+      return isFormReadyToSubmit(formData);
+    }
+    return true;
   };
 
   renderField = field => {
@@ -154,8 +167,10 @@ class CommonItemEditModal extends React.PureComponent {
     const { formData } = this.state;
     const { hideLabels } = this.props;
     const id = `CommonItemEditModal-${field.key}`;
-    const value = formData[field.key] || '';
+    const value = formData[field.key] == null ? '' : String(formData[field.key]);
     const fieldClassName = hideLabels ? 'col-sm-12' : 'col-sm-9';
+    const invalid = !!field.invalidFeedback && !!field.invalid && field.invalid(formData);
+    const inputClassName = cn('form-control', invalid && 'is-invalid');
 
     return (
       <React.Fragment>
@@ -176,8 +191,16 @@ class CommonItemEditModal extends React.PureComponent {
             name={field.key}
             value={value}
             placeholder={field.placeholder}
+            disabled={field.disabled}
             onChange={this.handleInputFieldChange}
-            className="form-control" />
+            className={inputClassName} />
+          {invalid
+            ? (
+              <div className="invalid-feedback">
+                {field.invalidFeedback}
+              </div>
+            )
+            : null}
           {field.helpText
             ? (
               <small className="form-text text-muted">
@@ -217,6 +240,7 @@ class CommonItemEditModal extends React.PureComponent {
                   type="checkbox"
                   name={optionName}
                   checked={checked}
+                  disabled={field.disabled}
                   onChange={this.handleCheckboxGroupChange}
                   className="form-check-input"/>
                 <label
@@ -261,6 +285,7 @@ class CommonItemEditModal extends React.PureComponent {
                   name={field.key}
                   value={option.key}
                   checked={checked}
+                  disabled={field.disabled}
                   onChange={this.handleOptionGroupChange}
                   className="form-check-input"/>
                 <label
@@ -318,9 +343,12 @@ class CommonItemEditModal extends React.PureComponent {
   };
 
   getFields = () => {
-    const { shouldCreateItem, fields, dataSource } = this.props;
-    return this.prepareFields(shouldCreateItem, fields, dataSource);
+    const { fields } = this.props;
+    const { formData } = this.state;
+    return this.prepareFields(this.shouldCreateItem, fields, formData);
   };
+
+  prepareFields = defaultMemoize(prepareFields);
 }
 
 CommonItemEditModal.propTypes = {
@@ -346,8 +374,20 @@ CommonItemEditModal.propTypes = {
       })),
       PropTypes.func,
     ]),
-    title: PropTypes.string,
-    helpText: PropTypes.string,
+    disabled: PropTypes.oneOfType([
+      PropTypes.bool,
+      PropTypes.func,
+    ]),
+    title: PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.func,
+    ]),
+    invalid: PropTypes.func,
+    invalidFeedback: PropTypes.string,
+    helpText: PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.func,
+    ]),
     customProps: PropTypes.shape({
       create: PropTypes.object,
       edit: PropTypes.object,
@@ -355,6 +395,7 @@ CommonItemEditModal.propTypes = {
   })),
   hideLabels: PropTypes.bool,
   dataSource: PropTypes.object,
+  isFormReadyToSubmit: PropTypes.func,
   submitStatusMessage: PropTypes.string,
   onSubmit: PropTypes.func.isRequired,
   onRequestClose: PropTypes.func.isRequired,

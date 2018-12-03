@@ -12,11 +12,17 @@ const prepareServers = replicaset => {
   return replicaset.servers.map(server =>  ({ ...server, master: server.uuid === masterUuid }));
 };
 
+const prepareRolesText = (roles, weight) => {
+  return roles
+    .map(role => role === 'vshard-storage' && weight != null ? `${role} (weight: ${weight})` : role)
+    .join(', ');
+};
+
 class ReplicasetCard extends React.PureComponent {
   render() {
     const { clusterSelf, replicaset, consoleServer, joinServer, expellServer, createReplicaset } = this.props;
     const shortUuidText = replicaset.uuid.slice(0, 8);
-    const rolesText = replicaset.roles.join(', ');
+    const rolesText = this.getRolesText();
     const indicatorClassName = cn(
       'ReplicasetCard-indicator',
       replicaset.status !== 'healthy' && 'ReplicasetCard-indicator--error',
@@ -70,7 +76,14 @@ class ReplicasetCard extends React.PureComponent {
     return this.prepareServers(replicaset);
   };
 
+  getRolesText = () => {
+    const { replicaset: { roles, weight } } = this.props;
+    return this.prepareRolesText(roles, weight);
+  };
+
   prepareServers = defaultMemoize(prepareServers);
+
+  prepareRolesText = defaultMemoize(prepareRolesText)
 }
 
 ReplicasetCard.propTypes = {

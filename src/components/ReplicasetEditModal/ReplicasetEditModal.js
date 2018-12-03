@@ -6,6 +6,13 @@ import CommonItemEditModal from 'src/components/CommonItemEditModal';
 
 import './ReplicasetEditModal.css';
 
+const isStorageWeightInputDisabled = formData => ! formData.roles.includes('vshard-storage');
+const isStorageWeightInputValueValid = formData => {
+  // return /^[0-9]*(\.[0-9]+)?$/.test(formData.weight.trim());
+  const number = Number(formData.weight);
+  return number >= 0 && number < Infinity;
+};
+
 const prepareFields = roles => {
   const rolesOptions = roles.map(role => ({ key: role, label: role }));
 
@@ -36,12 +43,31 @@ const prepareFields = roles => {
         },
       },
     },
+    {
+      key: 'weight',
+      title: 'Weight',
+      type: 'input',
+      disabled: isStorageWeightInputDisabled,
+      customProps: {
+        create: {
+          hidden: true,
+        },
+      },
+      invalid: dataSource => {
+        return ! isStorageWeightInputDisabled(dataSource)
+          && dataSource.weight != null
+          && dataSource.weight.trim() !== ''
+          && ! isStorageWeightInputValueValid(dataSource);
+      },
+      invalidFeedback: 'Field accepts number, ex: 1.2',
+    },
   ];
 };
 
 const defaultDataSource =  {
   uuid: null,
   roles: [],
+  weight: '',
   master: null,
   servers: [],
 };
@@ -49,6 +75,7 @@ const defaultDataSource =  {
 const prepareDataSource = replicaset => {
   return {
     ...replicaset,
+    weight: replicaset.weight != null ? String(replicaset.weight) : '',
     master: replicaset.master.uuid,
   };
 };
@@ -72,11 +99,19 @@ class ReplicasetEditModal extends React.PureComponent {
         shouldCreateItem={shouldCreateReplicaset}
         fields={fields}
         dataSource={dataSource}
+        isFormReadyToSubmit={this.isFormReadyToSubmit}
         submitStatusMessage={submitStatusMessage}
         onSubmit={onSubmit}
         onRequestClose={onRequestClose} />
     );
   }
+
+  isFormReadyToSubmit = formData => {
+    if ( ! isStorageWeightInputDisabled(formData)) {
+      return isStorageWeightInputValueValid(formData);
+    }
+    return true;
+  };
 
   getFields = () => {
     const { knownRoles } = this.props;
