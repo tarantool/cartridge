@@ -8,6 +8,39 @@ local cluster = require('cluster')
 
 package.preload['mymodule'] = function()
     local state = nil
+    local service_registry = require('cluster.service-registry')
+    local httpd = service_registry.get('httpd')
+
+    if httpd ~= nil then
+        httpd:route(
+            {
+                method = 'GET',
+                path = '/custom-get',
+                public = true,
+            },
+            function(req)
+                return {
+                    status = 200,
+                    body = 'GET OK',
+                }
+            end
+        )
+
+        httpd:route(
+            {
+                method = 'POST',
+                path = '/custom-post',
+                public = true,
+            },
+            function(req)
+                return {
+                    status = 200,
+                    body = 'POST OK',
+                }
+            end
+        )
+    end
+
     return {
         role_name = 'myrole',
         get_state = function() return state end,

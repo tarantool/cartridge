@@ -29,11 +29,12 @@ local topology = require('cluster.topology')
 local bootstrap = require('cluster.bootstrap')
 local confapplier = require('cluster.confapplier')
 local cluster_cookie = require('cluster.cluster-cookie')
+local service_registry = require('cluster.service-registry')
+
 
 local e_init = errors.new_class('Cluster initialization failed')
 local e_http = errors.new_class('Http initialization failed')
 -- Parameters to be passed at bootstrap
-vars:new('httpd')
 vars:new('box_opts')
 vars:new('boot_opts')
 vars:new('bootstrapped')
@@ -73,14 +74,6 @@ local function cfg(opts, box_opts)
     end
 
     confapplier.set_workdir(opts.workdir)
-
-    for _, role in ipairs(opts.roles or {}) do
-        local ok, err = confapplier.register_role(role)
-        if not ok then
-            return nil, err
-        end
-    end
-
     cluster_cookie.init(opts.workdir)
     if opts.cluster_cookie ~= nil then
         cluster_cookie.set_cookie(opts.cluster_cookie)
@@ -121,23 +114,41 @@ local function cfg(opts, box_opts)
     end
 
     if opts.http_port ~= nil then
-        vars.httpd = http.new(
+        local httpd = http.new(
             '0.0.0.0', opts.http_port,
             { log_requests = false }
         )
 
-        local ok, err = e_http:pcall(vars.httpd.start, vars.httpd)
+        local ok, err = e_http:pcall(httpd.start, httpd)
         if not ok then
             return nil, err
         end
 
-        local ok, err = e_http:pcall(webui.init, vars.httpd)
+        httpd:route({
+                method = 'GET',
+                path = '/',
+                public = true,
+            },
+            function(req)
+                return req:redirect_to('/cluster')
+            end
+        )
+
+        local ok, err = e_http:pcall(webui.init, httpd)
         if not ok then
             return nil, err
         end
 
-        local srv_name = vars.httpd.tcp_server:name()
+        local srv_name = httpd.tcp_server:name()
         log.info('Listening HTTP on %s:%s', srv_name.host, srv_name.port)
+        service_registry.set('httpd', httpd)
+    end
+
+    for _, role in ipairs(opts.roles or {}) do
+        local ok, err = confapplier.register_role(role)
+        if not ok then
+            return nil, err
+        end
     end
 
     -- metrics.init()
