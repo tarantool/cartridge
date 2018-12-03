@@ -19,7 +19,7 @@ start:
 	ALIAS=srv-3 WORKDIR=dev/3303 ADVERTISE_URI=localhost:3303 HTTP_PORT=8083 ./pytest/instance.lua & echo $$! >> ./dev/pids
 	ALIAS=srv-4 WORKDIR=dev/3304 ADVERTISE_URI=localhost:3304 HTTP_PORT=8084 ./pytest/instance.lua & echo $$! >> ./dev/pids
 	ALIAS=srv-5 WORKDIR=dev/3305 ADVERTISE_URI=localhost:3305 HTTP_PORT=8085 ./pytest/instance.lua & echo $$! >> ./dev/pids
-	echo "All instances stared!"
+	echo "All instances started!"
 
 stop:
 	cat ./dev/pids | xargs kill -SIGINT || true
