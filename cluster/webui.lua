@@ -1,13 +1,6 @@
 #!/usr/bin/env tarantool
 
 local log = require('log')
-local fun = require('fun')
-local fio = require('fio')
-local json = require('json')
-local yaml = require('yaml').new()
-local errors = require('errors')
-local uuid_lib = require('uuid')
-local membership = require('membership')
 
 local admin = require('cluster.admin')
 local static = require('cluster.webui-static')
@@ -15,9 +8,6 @@ local confapplier = require('cluster.confapplier')
 local graphql = require('cluster.graphql')
 local gql_types = require('cluster.graphql.types')
 
-yaml.cfg({
-    encode_use_tostring = true
-})
 
 local statistics_schema = {
     kind = gql_types.object {
@@ -27,21 +17,22 @@ local statistics_schema = {
             ' memory usage and memory fragmentation.',
         fields={
             items_size = gql_types.long,
-            items_used_ratio = gql_types.string,
-            quota_size = gql_types.long,
-            quota_used_ratio = gql_types.string,
-            arena_used_ratio = gql_types.string,
             items_used = gql_types.long,
+            items_used_ratio = gql_types.string,
+
+            quota_size = gql_types.long,
             quota_used = gql_types.long,
+            quota_used_ratio = gql_types.string,
+
             arena_size = gql_types.long,
             arena_used = gql_types.long,
+            arena_used_ratio = gql_types.string,
         }
     },
     arguments = {},
     description = 'Node statistics',
-    resolve = function(self, args)
-        -- TODO stat.graphql_stat,
-        return {}
+    resolve = function(root, _)
+        return admin.get_stat(root.uri)
     end,
 }
 

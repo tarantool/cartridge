@@ -130,6 +130,36 @@ local function get_servers_and_replicasets()
     return servers, replicasets
 end
 
+local function get_stat(uri)
+    if uri == nil or uri == membership.myself().uri then
+        local info = {}
+        if type(box.cfg) ~= 'function' then
+            info = box.slab.info()
+        end
+
+        return {
+            items_size = info.items_size,
+            items_used = info.items_used,
+            items_used_ratio = info.items_used_ratio,
+
+            quota_size = info.quota_size,
+            quota_used = info.quota_used,
+            quota_used_ratio = info.quota_used_ratio,
+
+            arena_size = info.arena_size,
+            arena_used = info.arena_used,
+            arena_used_ratio = info.arena_used_ratio,
+        }
+    else
+        local conn, err = pool.connect(uri)
+        if not conn then
+            return nil, err
+        end
+
+        return conn:eval('return package.loaded["cluster.admin"].get_stat()')
+    end
+end
+
 local function get_self()
     local myself = membership.myself()
     local result = {
@@ -444,6 +474,7 @@ local function bootstrap_vshard()
 end
 
 return {
+    get_stat = get_stat,
     get_self = get_self,
     get_servers = get_servers,
     get_replicasets = get_replicasets,
