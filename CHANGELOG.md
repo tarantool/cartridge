@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
+- Combine `cluster.init` and `cluster.register_role` api calls in single `cluster.cfg`
+- Eliminate raising exceptions
+- Absorb http server in `cluster.cfg`
 
 ## [0.4.0] - 2018-11-27
 ### Fixed/Improved

@@ -19,6 +19,7 @@ local checks = require('checks')
 local errors = require('errors')
 local vshard = require('vshard')
 local membership = require('membership')
+local http = require('http.server')
 _G.vshard = vshard
 
 local vars = require('cluster.vars').new('cluster')
@@ -29,7 +30,10 @@ local bootstrap = require('cluster.bootstrap')
 local confapplier = require('cluster.confapplier')
 local cluster_cookie = require('cluster.cluster-cookie')
 
+local e_init = errors.new_class('Cluster initialization failed')
+local e_http = errors.new_class('Http initialization failed')
 -- Parameters to be passed at bootstrap
+vars:new('httpd')
 vars:new('box_opts')
 vars:new('boot_opts')
 vars:new('bootstrapped')
@@ -38,40 +42,44 @@ vars:new('bootstrapped')
 -- After the call user can operate the instance via tarantool console.
 -- Notice that this call does not initialize the database - `box.cfg` is not called yet.
 -- The user must not try to call `box.cfg` himself, the cluster will do it when it's time to.
--- @function init
--- @treturn nil
--- @raise
---
--- * `Can not create workdir`
--- * `Missing port in advertise_uri`
--- * `Socket bind error`
--- * `Can not ping myself`
-local function init(opts, box_opts)
-    assert(vars.boot_opts == nil , 'Cluster is already initialized')
+-- @function cfg
+-- @tparam table opts
+-- @tparam table box_opts
+-- @return[1] true
+-- @treturn[2] nil
+-- @treturn[2] error Error description
+local function cfg(opts, box_opts)
     checks({
         workdir = 'string',
         advertise_uri = 'string',
         cluster_cookie = '?string',
         bucket_count = '?number',
+        http_port = '?string|number',
         alias = '?string',
+        roles = '?table',
     }, '?table')
+
+    if (vars.boot_opts ~= nil) then
+        return nil, e_init:new('Cluster is already initialized')
+    end
 
     opts.workdir = fio.abspath(opts.workdir)
 
     if not fio.path.is_dir(opts.workdir) then
         local rc = os.execute(('mkdir -p \'%s\''):format(opts.workdir))
         if rc ~= 0 then
-            error(('Can not create workdir %q'):format(opts.workdir))
+            return nil, e_init:new('Can not create workdir %q', opts.workdir)
         end
     end
 
     confapplier.set_workdir(opts.workdir)
 
-    -- Is this necessary?
-    -- local rc = fio.chdir(opts.workdir)
-    -- if not rc then
-    --     return nil, e_init:new('Can not change to working directory %q', opts.workdir)
-    -- end
+    for _, role in ipairs(opts.roles or {}) do
+        local ok, err = confapplier.register_role(role)
+        if not ok then
+            return nil, err
+        end
+    end
 
     cluster_cookie.init(opts.workdir)
     if opts.cluster_cookie ~= nil then
@@ -84,19 +92,22 @@ local function init(opts, box_opts)
 
     local advertise = uri.parse(opts.advertise_uri)
     if advertise.service == nil then
-        error(('Missing port in advertise_uri %q'):format(opts.advertise_uri))
+        return nil, e_init:new('Missing port in advertise_uri %q', opts.advertise_uri)
     else
         advertise.service = tonumber(advertise.service)
     end
 
     log.info('Using advertise_uri "%s:%d"', advertise.host, advertise.service)
-    membership.init(advertise.host, advertise.service)
+    local ok, err = e_init:pcall(membership.init, advertise.host, advertise.service)
+    if not ok then
+        return nil, err
+    end
+
     membership.set_encryption_key(cluster_cookie.cookie())
     membership.set_payload('alias', opts.alias)
-    -- topology.set_password(cluster_cookie.cookie())
-    local ok, err = membership.probe_uri(membership.myself().uri)
+    local ok, estr = membership.probe_uri(membership.myself().uri)
     if not ok then
-        error(('Can not ping myself: %s'):format(err))
+        return nil, e_init:new('Can not ping myself: %s', estr)
     end
 
     -- broadcast several popular ports
@@ -109,8 +120,26 @@ local function init(opts, box_opts)
         membership.broadcast(p)
     end
 
-    -- http.init(args.http_port)
-    -- graphql.init()
+    if opts.http_port ~= nil then
+        vars.httpd = http.new(
+            '0.0.0.0', opts.http_port,
+            { log_requests = false }
+        )
+
+        local ok, err = e_http:pcall(vars.httpd.start, vars.httpd)
+        if not ok then
+            return nil, err
+        end
+
+        local ok, err = e_http:pcall(webui.init, vars.httpd)
+        if not ok then
+            return nil, err
+        end
+
+        local srv_name = vars.httpd.tcp_server:name()
+        log.info('Listening HTTP on %s:%s', srv_name.host, srv_name.port)
+    end
+
     -- metrics.init()
     -- admin.init()
 
@@ -148,11 +177,14 @@ local function init(opts, box_opts)
 end
 
 local function bootstrap_from_scratch(roles, uuids)
-    assert(not vars.bootstrapped, 'Cluster is already bootstrapped')
     checks('?table', {
         instance_uuid = '?uuid_str',
         replicaset_uuid = '?uuid_str',
     })
+
+    if vars.bootstrapped then
+        return nil, e_init:new('Cluster is already bootstrapped')
+    end
 
     local _boot_opts = table.copy(vars.boot_opts)
     _boot_opts.instance_uuid = uuids.instance_uuid
@@ -170,28 +202,9 @@ local function bootstrap_from_scratch(roles, uuids)
     return unpack(ret, 1, n)
 end
 
---- Register user-defined role to be used in cluster.
--- It should be done before calling `cluster.init()`
---
--- @function register_role
--- @tparam string module_name A module to be loaded
--- @treturn nil
--- @raise
---
--- * All errors that `require` can raise
--- * `Role "module_name" is already registered`
--- * `Cluster is already initialized`
-local function register_role(...)
-    assert(vars.boot_opts == nil , 'Cluster is already initialized')
-    return confapplier.register_role(...)
-end
-
 return {
-    init = init,
+    cfg = cfg,
     admin = admin,
-    webui = webui,
     bootstrap = bootstrap_from_scratch,
     is_healthy = topology.cluster_is_healthy,
-
-    register_role = register_role,
 }
