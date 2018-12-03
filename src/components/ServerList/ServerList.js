@@ -31,25 +31,37 @@ const prepareColumnProps = (linked, clusterSelf, consoleServer, joinServer, crea
       key: 'name',
       title: 'Name',
       renderText: record => {
-        const nameText = [
-          <span className="ServerList-alias">{record.alias || 'No alias'}</span>,
-          <span className="ServerList-uri">{record.uri}</span>,
-        ];
+        const aliasText = record.alias || 'No alias';
+
+        let nameText = (
+          <React.Fragment>
+            <span className="ServerList-alias">{aliasText}</span>
+            <span className="ServerList-uri">{record.uri}</span>
+          </React.Fragment>
+        );
+
         if (record.master) {
-          nameText.push(<span className="ServerList-master">master</span>);
+          nameText = (
+            <React.Fragment>
+              {nameText}
+              <span className="ServerList-master">master</span>
+            </React.Fragment>
+          );
+        }
+
+        if (record.message) {
+          nameText = (
+            <React.Fragment>
+              {nameText}
+              <br />
+              <span className="ServerList-message">{record.message}</span>
+            </React.Fragment>
+          );
         }
 
         return (
           <span className="ServerList-name">
             {nameText}
-            {record.message
-              ? (
-                <React.Fragment>
-                  <br />
-                  <span className="ServerList-message">{record.message}</span>
-                </React.Fragment>
-              )
-              : null}
           </span>
         );
       },
@@ -99,7 +111,6 @@ const prepareColumnProps = (linked, clusterSelf, consoleServer, joinServer, crea
           default:
             className = 'ServerList-statBar ServerList-statBar--error';
         }
-
 
         return (
           <div className="ServerList-stat">

@@ -10,15 +10,18 @@ export async function getClusterSelf() {
           uuid: uuid
         }
         failover
+        knownRoles: known_roles
       }
     }`;
   const response = await graphql.fetch(graph);
-  const { clusterSelf, failover } = response.cluster;
+
+  const { clusterSelf, failover, knownRoles } = response.cluster;
   return {
     clusterSelf: {
       ...clusterSelf,
       uuid: clusterSelf.uuid || null,
       configured: !!clusterSelf.uuid,
+      knownRoles,
     },
     failover,
   };

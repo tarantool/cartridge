@@ -6,43 +6,38 @@ import CommonItemEditModal from 'src/components/CommonItemEditModal';
 
 import './ReplicasetEditModal.css';
 
-const fields = [
-  {
-    key: 'uuid',
-    hidden: true,
-  },
-  {
-    key: 'roles',
-    title: 'Roles',
-    type: 'checkboxGroup',
-    options: [
-      {
-        key: 'vshard-router',
-        label: 'vshard-router',
-      },
-      {
-        key: 'vshard-storage',
-        label: 'vshard-storage',
-      },
-    ],
-  },
-  {
-    key: 'master',
-    title: 'Master',
-    type: 'optionGroup',
-    options: record => {
-      return record.servers.map(server => ({
-        key: server.uuid,
-        label: `${server.alias || 'No alias'} ${server.uri}`,
-      }));
+const prepareFields = roles => {
+  const rolesOptions = roles.map(role => ({ key: role, label: role }));
+
+  return [
+    {
+      key: 'uuid',
+      hidden: true,
     },
-    customProps: {
-      create: {
-        hidden: true,
+    {
+      key: 'roles',
+      title: 'Roles',
+      type: 'checkboxGroup',
+      options: rolesOptions,
+    },
+    {
+      key: 'master',
+      title: 'Master',
+      type: 'optionGroup',
+      options: record => {
+        return record.servers.map(server => ({
+          key: server.uuid,
+          label: `${server.alias || 'No alias'} ${server.uri}`,
+        }));
+      },
+      customProps: {
+        create: {
+          hidden: true,
+        },
       },
     },
-  },
-];
+  ];
+};
 
 const defaultDataSource =  {
   uuid: null,
@@ -60,12 +55,13 @@ const prepareDataSource = replicaset => {
 
 class ReplicasetEditModal extends React.PureComponent {
   render() {
-    const { isLoading, isSaving, replicasetNotFound, shouldCreateReplicaset, replicaset, submitStatusMessage, onSubmit,
+    const { isLoading, isSaving, replicasetNotFound, shouldCreateReplicaset, submitStatusMessage, onSubmit,
       onRequestClose } = this.props;
 
     const dataSource = isLoading || replicasetNotFound
       ? null
-      : shouldCreateReplicaset ? defaultDataSource : this.getDataSource(replicaset);
+      : shouldCreateReplicaset ? defaultDataSource : this.getDataSource();
+    const fields = this.getFields();
 
     return (
       <CommonItemEditModal
@@ -82,10 +78,17 @@ class ReplicasetEditModal extends React.PureComponent {
     );
   }
 
+  getFields = () => {
+    const { knownRoles } = this.props;
+    return this.prepareFields(knownRoles);
+  };
+
   getDataSource = () => {
     const { replicaset } = this.props;
     return this.prepareDataSource(replicaset);
   };
+
+  prepareFields = defaultMemoize(prepareFields);
 
   prepareDataSource = defaultMemoize(prepareDataSource);
 }
@@ -95,6 +98,7 @@ ReplicasetEditModal.propTypes = {
   isSaving: PropTypes.bool,
   replicasetNotFound: PropTypes.bool,
   shouldCreateReplicaset: PropTypes.bool,
+  knownRoles: PropTypes.arrayOf(PropTypes.string).isRequired,
   replicaset: PropTypes.shape({
     uuid: PropTypes.string,
     roles: PropTypes.arrayOf(PropTypes.string).isRequired,
