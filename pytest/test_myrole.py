@@ -48,4 +48,14 @@ def test_myrole(cluster):
         assert(package.loaded['mymodule'].get_state() == 'initialized')
     """)
 
+    obj = srv.graphql("""
+        {
+            replicasets(uuid: "aaaaaaaa-0000-4000-b000-000000000000") {
+                roles
+            }
+        }
+    """)
+    assert 'errors' not in obj
+
+    assert obj['data']['replicasets'][0]['roles'] == ["myrole"]
 

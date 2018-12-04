@@ -207,7 +207,7 @@ def test_edit_replicaset(cluster, expelled):
     assert len(replicasets) == 1
     assert {
         'uuid': 'bbbbbbbb-0000-4000-b000-000000000000',
-        'roles': ['vshard-router', 'vshard-storage'],
+        'roles': ['vshard-storage', 'vshard-router'],
         'status': 'healthy',
         'servers': [{'uri': 'localhost:33002'}]
     } == replicasets[0]

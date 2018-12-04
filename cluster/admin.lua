@@ -80,6 +80,7 @@ local function get_servers_and_replicasets()
 
     local servers = {}
     local replicasets = {}
+    local known_roles = confapplier.get_known_roles()
 
     for replicaset_uuid, replicaset in pairs(topology_cfg.replicasets) do
         replicasets[replicaset_uuid] = {
@@ -90,12 +91,10 @@ local function get_servers_and_replicasets()
             servers = {},
         }
 
-        if replicaset.roles['vshard-router'] then
-            table.insert(replicasets[replicaset_uuid].roles, 'vshard-router')
-        end
-
-        if replicaset.roles['vshard-storage'] then
-            table.insert(replicasets[replicaset_uuid].roles, 'vshard-storage')
+        for _, role in pairs(known_roles) do
+            if replicaset.roles[role] then
+                table.insert(replicasets[replicaset_uuid].roles, role)
+            end
         end
     end
 
