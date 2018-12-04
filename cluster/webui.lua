@@ -291,29 +291,11 @@ local function init(httpd)
         callback = 'cluster.webui.get_self',
     })
 
-    httpd:route({
-            method = 'GET',
-            path = '/',
-            public = true,
-        },
-        function(req)
-            return render_file('/index.html')
-        end
-    )
-    httpd:route({
-            method = 'GET',
-            path = '/index.html',
-            public = true,
-        },
-        function(req)
-            return { status = 404, body = '404 Not Found' }
-        end
-    )
 
     -- Paths w/o dot are treated as app routes
     httpd:route({
             method = 'GET',
-            path = '/[^.]*',
+            path = '/cluster',
             public = true,
         },
         function(req)
@@ -324,7 +306,7 @@ local function init(httpd)
     -- All other paths are treaded as file paths
     httpd:route({
             method = 'GET',
-            path = '/.*',
+            path = '/static/.*',
             public = true,
         },
         function(req)

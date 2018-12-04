@@ -64,6 +64,12 @@ def test_self(cluster):
         'alias': 'router',
     }
 
+def test_custom_http_endpoint(cluster):
+    resp = cluster['router'].get('/custom-get')
+    assert resp == 'GET OK'
+    resp = cluster['router'].post('/custom-post')
+    assert resp == 'POST OK'
+
 def test_servers(cluster, expelled, helpers):
     obj = cluster['router'].graphql("""
         {

@@ -43,14 +43,14 @@ _sock = nil
 check_error('Can not ping myself: ping was not sent',
     cluster.cfg, {
         workdir = '.',
-        advertise_uri = 'invalid-host:3301',
+        advertise_uri = 'invalid-host:33004',
     }
 )
 
 check_error([[module 'unknown' not found]],
     cluster.cfg, {
         workdir = '.',
-        advertise_uri = 'localhost:9',
+        advertise_uri = 'localhost:33003',
         roles = {'unknown'},
     }
 )
@@ -61,7 +61,7 @@ end
 check_error('My module can not be loaded',
     cluster.cfg, {
         workdir = '.',
-        advertise_uri = 'localhost:9',
+        advertise_uri = 'localhost:33002',
         roles = {'mymodule'},
     }
 )
