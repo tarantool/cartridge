@@ -12,7 +12,6 @@ import requests
 from socket import socket, AF_INET, SOCK_DGRAM
 from socket import timeout as SocketTimeout
 from subprocess import Popen, PIPE, STDOUT
-from threading import Thread
 
 logging.basicConfig(format='%(name)s > %(message)s')
 
@@ -84,9 +83,7 @@ class Server(object):
         self.advertise_uri = 'localhost:{}'.format(self.binary_port)
         self.baseurl = 'http://localhost:{}'.format(http_port)
 
-        self.soap_client = None
         self.conn = None
-        self.thread = None
         self.env = None
 
         self.instance_uuid = instance_uuid
@@ -232,7 +229,7 @@ def cluster(request, confdir, module_tmpdir, helpers):
                 timeout=TARANTOOL_CONNECTION_TIMEOUT
             )
 
-        bootserv.graphql(
+        resp = bootserv.graphql(
             query = """
                 mutation(
                     $uri: String!,
@@ -255,6 +252,7 @@ def cluster(request, confdir, module_tmpdir, helpers):
                 "roles": srv.roles,
             }
         )
+        assert "errors" not in resp
 
         # wait when server is bootstrapped
         helpers.wait_for(srv.connect, timeout=TARANTOOL_CONNECTION_TIMEOUT)

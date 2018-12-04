@@ -63,6 +63,7 @@ local function register_role(module_name)
         return nil, e_register_role:new('Role %q is already registered', mod.role_name)
     end
 
+    topology.add_known_role(mod.role_name)
     table.insert(vars.known_roles, mod)
     return true
 end

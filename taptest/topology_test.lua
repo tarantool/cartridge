@@ -43,7 +43,7 @@ local yaml = require('yaml')
 local topology = require('cluster.topology')
 local test = tap.test('topology.config')
 
-test:plan(39)
+test:plan(41)
 
 local function check_config(result, raw_new, raw_old)
     local cfg_new = raw_new and yaml.decode(raw_new) or {}
@@ -477,6 +477,31 @@ replicasets:
     roles: {"vshard-storage": true}
 ...]])
 
+check_config('replicasets[aaaaaaaa-0000-4000-b000-000000000001]'..
+  ' can not enable unknown role "unknown"',
+
+[[---
+servers:
+  aaaaaaaa-aaaa-4000-b000-000000000001:
+    uri: localhost:3301
+    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
+replicasets:
+  aaaaaaaa-0000-4000-b000-000000000001:
+    master: aaaaaaaa-aaaa-4000-b000-000000000001
+    roles: {"unknown": true}
+...]],
+
+[[---
+servers:
+  aaaaaaaa-aaaa-4000-b000-000000000001:
+    uri: localhost:3301
+    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
+replicasets:
+  aaaaaaaa-0000-4000-b000-000000000001:
+    master: aaaaaaaa-aaaa-4000-b000-000000000001
+    roles: {}
+...]])
+
 
 test:diag('valid configs')
 
@@ -507,6 +532,30 @@ replicasets:
   aaaaaaaa-0000-4000-b000-000000000001:
     master: aaaaaaaa-aaaa-4000-b000-000000000001
     roles: {}
+...]])
+
+-- unknown role is alowed if it was enabled in previous version
+check_config(true,
+[[---
+servers:
+  aaaaaaaa-aaaa-4000-b000-000000000001:
+    uri: localhost:3301
+    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
+replicasets:
+  aaaaaaaa-0000-4000-b000-000000000001:
+    master: aaaaaaaa-aaaa-4000-b000-000000000001
+    roles: {"unknown": true}
+...]],
+
+[[---
+servers:
+  aaaaaaaa-aaaa-4000-b000-000000000001:
+    uri: localhost:3301
+    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
+replicasets:
+  aaaaaaaa-0000-4000-b000-000000000001:
+    master: aaaaaaaa-aaaa-4000-b000-000000000001
+    roles: {"unknown": true}
 ...]])
 
 os.exit(test:check() and 0 or 1)

@@ -91,8 +91,8 @@ local function get_servers_and_replicasets()
             servers = {},
         }
 
-        for _, role in pairs(known_roles) do
-            if replicaset.roles[role] then
+        for role, enabled in pairs(replicaset.roles) do
+            if enabled then
                 table.insert(replicasets[replicaset_uuid].roles, role)
             end
         end

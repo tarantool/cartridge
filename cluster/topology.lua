@@ -15,6 +15,10 @@ local pool = require('cluster.pool')
 local utils = require('cluster.utils')
 
 local e_config = errors.new_class('Invalid cluster topology config')
+vars:new('known_roles', {
+    ['vshard-storage'] = true,
+    ['vshard-router'] = true,
+})
 vars:new('topology', {
     servers = {
         -- ['instance-uuid-1'] = 'expelled',
@@ -295,6 +299,20 @@ local function validate_upgrade(topology_new, topology_old)
         end
     end
 
+    for replicaset_uuid, replicaset_new in pairs(replicasets_new) do
+        local replicaset_old = replicasets_old[replicaset_uuid]
+        for role, enabled_new in pairs(replicaset_new.roles) do
+            local enabled_old = replicaset_old and replicaset_old.roles[role]
+            if enabled_new and not enabled_old then
+                e_config:assert(
+                    vars.known_roles[role],
+                    'replicasets[%s] can not enable unknown role %q',
+                    replicaset_uuid, tostring(role)
+                )
+            end
+        end
+    end
+
     for replicaset_uuid, replicaset_old in pairs(replicasets_old) do
         local replicaset_new = replicasets_new[replicaset_uuid]
 
@@ -475,6 +493,9 @@ return {
     end,
     validate = function(...)
         return e_config:pcall(validate, ...)
+    end,
+    add_known_role = function(role_name)
+        vars.known_roles[role_name] = true
     end,
 
     not_expelled = not_expelled,
