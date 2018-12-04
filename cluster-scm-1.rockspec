@@ -21,6 +21,7 @@ build = {
     install = {
         lua = {
             ['cluster'] = 'cluster.lua';
+            ['cluster.rpc'] = 'cluster/rpc.lua';
             ['cluster.vars'] = 'cluster/vars.lua';
             ['cluster.pool'] = 'cluster/pool.lua';
             ['cluster.admin'] = 'cluster/admin.lua';

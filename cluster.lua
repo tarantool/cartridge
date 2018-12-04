@@ -22,6 +22,7 @@ local membership = require('membership')
 local http = require('http.server')
 _G.vshard = vshard
 
+local rpc = require('cluster.rpc')
 local vars = require('cluster.vars').new('cluster')
 local admin = require('cluster.admin')
 local webui = require('cluster.webui')
@@ -213,4 +214,5 @@ return {
         patch_clusterwide = confapplier.patch_clusterwide,
     },
     service_registry = service_registry,
+    rpc_call = rpc.call,
 }

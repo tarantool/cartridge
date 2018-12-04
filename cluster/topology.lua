@@ -544,7 +544,7 @@ return {
         vars.topology = topology
     end,
     get = function()
-        return table.deepcopy(vars.topology)
+        return vars.topology -- read-only
     end,
     validate = function(...)
         return e_config:pcall(validate, ...)
