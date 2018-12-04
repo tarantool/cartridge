@@ -1,5 +1,6 @@
 .~*
 *~
+.tarantool.cookie
 .rocks
 .cache
 __pycache__
