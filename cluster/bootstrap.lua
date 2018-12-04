@@ -118,13 +118,13 @@ local function bootstrap_from_scratch(boot_opts, box_opts, roles)
     local ok, err = topology.validate(conf.topology, {})
     if err then
         membership.set_payload('warning', tostring(err.err or err))
-        return false
+        return nil, err
     end
 
     local ok, err = confapplier.prepare_2pc(conf)
     if err then
         membership.set_payload('warning', tostring(err.err or err))
-        return false
+        return nil, err
     end
 
     local box_opts = table.deepcopy(box_opts or {})

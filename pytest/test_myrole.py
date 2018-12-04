@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 
+import os
 import json
 import time
+import yaml
 import pytest
+import signal
 import logging
 from conftest import Server
 
@@ -58,4 +61,68 @@ def test_myrole(cluster):
     assert 'errors' not in obj
 
     assert obj['data']['replicasets'][0]['roles'] == ["myrole"]
+
+def test_rename(cluster, helpers):
+    """The test simulates a situation when the role is renamed in code,
+    and the server is launced with old name in config.
+    """
+
+    srv = cluster['master']
+    obj = srv.graphql("""
+        mutation {
+            edit_replicaset(
+                uuid: "aaaaaaaa-0000-4000-b000-000000000000"
+                roles: ["myrole"]
+            )
+        }
+    """)
+
+    srv.process.send_signal(signal.SIGINT)
+    with open(os.path.join(srv.env['WORKDIR'], 'config.yml'), "r+") as f:
+        config = yaml.load(f)
+        replicasets = config['topology']['replicasets']
+        replicaset = replicasets['aaaaaaaa-0000-4000-b000-000000000000']
+        replicaset['roles'] = {'myrole-oldname': True}
+
+        f.seek(0)
+        yaml.dump(config, f, default_flow_style=False)
+        f.truncate()
+        logging.warn(('Config hacked: {}').format(f.name))
+
+    srv.start()
+    helpers.wait_for(srv.connect)
+
+    # old role name is still repoted as enabled
+    obj = srv.graphql("""
+        {
+            replicasets(uuid: "aaaaaaaa-0000-4000-b000-000000000000") {
+                roles
+            }
+        }
+    """)
+    assert 'errors' not in obj
+    assert obj['data']['replicasets'][0]['roles'] == ["myrole-oldname"]
+
+    # old role name can be disabled
+    obj = srv.graphql("""
+        mutation {
+            edit_replicaset(
+                uuid: "aaaaaaaa-0000-4000-b000-000000000000"
+                roles: []
+            )
+        }
+    """)
+    assert 'errors' not in obj
+
+    # old role name can not be enabled back
+    obj = srv.graphql("""
+        mutation {
+            edit_replicaset(
+                uuid: "aaaaaaaa-0000-4000-b000-000000000000"
+                roles: ["myrole-oldname"]
+            )
+        }
+    """)
+    assert obj['errors'][0]['message'] == \
+        'replicasets[aaaaaaaa-0000-4000-b000-000000000000] can not enable unknown role "myrole-oldname"'
 
