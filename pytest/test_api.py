@@ -53,16 +53,20 @@ def test_self(cluster):
                     uuid
                     alias
                 }
+                can_bootstrap_vshard
+                vshard_bucket_count
             }
         }
     """)
+    assert 'errors' not in obj, obj['errors'][0]['message']
 
-    server_self = obj['data']['cluster']['self']
-    assert server_self == {
+    assert obj['data']['cluster']['self'] == {
         'uri': 'localhost:33001',
         'uuid': 'aaaaaaaa-aaaa-4000-b000-000000000001',
         'alias': 'router',
     }
+    assert obj['data']['cluster']['can_bootstrap_vshard'] == False
+    assert obj['data']['cluster']['vshard_bucket_count'] == 10000
 
 def test_custom_http_endpoint(cluster):
     resp = cluster['router'].get('/custom-get')
@@ -100,6 +104,7 @@ def test_replicasets(cluster, expelled, helpers):
                 status
                 master { uuid }
                 servers { uri }
+                weight
             }
         }
     """)
@@ -117,6 +122,7 @@ def test_replicasets(cluster, expelled, helpers):
         'roles': ['vshard-storage'],
         'status': 'healthy',
         'master': {'uuid': 'bbbbbbbb-bbbb-4000-b000-000000000001'},
+        'weight': 1,
         'servers': [{'uri': 'localhost:33002'}]
     } == helpers.find(replicasets, 'uuid', 'bbbbbbbb-0000-4000-b000-000000000000')
     assert len(replicasets) == 2
@@ -191,12 +197,32 @@ def test_edit_replicaset(cluster, expelled):
         mutation {
             edit_replicaset(
                 uuid: "bbbbbbbb-0000-4000-b000-000000000000"
+                weight: 2
+            )
+        }
+    """)
+    assert 'errors' not in obj
+
+    obj = cluster['router'].graphql("""
+        mutation {
+            edit_replicaset(
+                uuid: "bbbbbbbb-0000-4000-b000-000000000000"
                 master: "bbbbbbbb-bbbb-4000-b000-000000000002"
             )
         }
     """)
     assert obj['errors'][0]['message'] == \
         'replicasets[bbbbbbbb-0000-4000-b000-000000000000].master does not exist'
+    obj = cluster['router'].graphql("""
+        mutation {
+            edit_replicaset(
+                uuid: "bbbbbbbb-0000-4000-b000-000000000000"
+                weight: -100
+            )
+        }
+    """)
+    assert obj['errors'][0]['message'] == \
+        'replicasets[bbbbbbbb-0000-4000-b000-000000000000].weight must be non-negative, got -100'
 
     obj = cluster['storage'].graphql("""
         {
@@ -205,6 +231,7 @@ def test_edit_replicaset(cluster, expelled):
                 roles
                 status
                 servers { uri }
+                weight
             }
         }
     """)
@@ -215,6 +242,7 @@ def test_edit_replicaset(cluster, expelled):
         'uuid': 'bbbbbbbb-0000-4000-b000-000000000000',
         'roles': ['vshard-storage', 'vshard-router'],
         'status': 'healthy',
+        'weight': 2,
         'servers': [{'uri': 'localhost:33002'}]
     } == replicasets[0]
 
@@ -246,9 +274,12 @@ def test_uninitialized(module_tmpdir, helpers):
                         uuid
                         alias
                     }
+                    can_bootstrap_vshard
+                    vshard_bucket_count
                 }
             }
         """)
+        assert 'errors' not in obj, obj['errors'][0]['message']
 
         servers = obj['data']['servers']
         assert len(servers) == 1
@@ -257,8 +288,12 @@ def test_uninitialized(module_tmpdir, helpers):
         replicasets = obj['data']['replicasets']
         assert len(replicasets) == 0
 
-        server_self = obj['data']['cluster']['self']
-        assert server_self == {'uri': 'localhost:33101', 'alias': 'dummy'}
+        assert obj['data']['cluster']['self'] == {
+            'uri': 'localhost:33101',
+            'alias': 'dummy'
+        }
+        assert obj['data']['cluster']['can_bootstrap_vshard'] == False
+        assert obj['data']['cluster']['vshard_bucket_count'] == 0
 
         obj = srv.graphql("""
             mutation {
@@ -350,7 +385,7 @@ def test_join_server_good(cluster, expelled, module_tmpdir, helpers):
                     uri: "localhost:33003"
                     instance_uuid: "dddddddd-dddd-4000-b000-000000000001"
                     replicaset_uuid: "dddddddd-0000-4000-b000-000000000000"
-                    roles: []
+                    roles: ["vshard-storage"]
                 )
             }
         """)
@@ -366,7 +401,7 @@ def test_join_server_good(cluster, expelled, module_tmpdir, helpers):
                     uri
                     uuid
                     status
-                    replicaset { uuid status roles }
+                    replicaset { uuid status roles weight }
                 }
             }
         """)
@@ -380,8 +415,9 @@ def test_join_server_good(cluster, expelled, module_tmpdir, helpers):
             'status': 'healthy',
             'replicaset': {
                 'uuid': 'dddddddd-0000-4000-b000-000000000000',
-                'roles': [],
+                'roles': ["vshard-storage"],
                 'status': 'healthy',
+                'weight': 0,
             }
         } == helpers.find(servers, 'uuid', 'dddddddd-dddd-4000-b000-000000000001')
 

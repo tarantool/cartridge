@@ -249,6 +249,16 @@ local function validate(conf_new)
         return nil, e_config_validate:new('config must be a table')
     end
 
+    if type(conf_new.vshard) ~= 'table' then
+        return nil, e_config_validate:new('section "vshard" must be a table')
+    elseif type(conf_new.vshard.bucket_count) ~= 'number' then
+        return nil, e_config_validate:new('vshard.bucket_count must be a number')
+    elseif not (conf_new.vshard.bucket_count > 0) then
+        return nil, e_config_validate:new('vshard.bucket_count must be a positive')
+    elseif type(conf_new.vshard.bootstrapped) ~= 'boolean' then
+        return nil, e_config_validate:new('vshard.bootstrapped must be true or false')
+    end
+
     local conf_old = vars.conf or {}
 
     for _, mod in ipairs(vars.known_roles) do
@@ -270,7 +280,7 @@ end
 
 local function _failover(cond)
     local function failover_internal()
-        local bucket_count = vars.conf.bucket_count
+        local bucket_count = vars.conf.vshard.bucket_count
         local cfg_new = topology.get_vshard_sharding_config()
         local cfg_old = nil
 
@@ -357,7 +367,7 @@ local function apply_config(conf)
     if roles_enabled['vshard-storage'] then
         vshard.storage.cfg({
             sharding = topology.get_vshard_sharding_config(),
-            bucket_count = conf.bucket_count,
+            bucket_count = conf.vshard.bucket_count,
             listen = box.cfg.listen,
         }, box.info.uuid)
         service_registry.set('vshard-storage', vshard.storage)
@@ -372,7 +382,7 @@ local function apply_config(conf)
         -- service_registry.set('ib-core', srv)
         vshard.router.cfg({
             sharding = topology.get_vshard_sharding_config(),
-            bucket_count = conf.bucket_count,
+            bucket_count = conf.vshard.bucket_count,
         })
         service_registry.set('vshard-router', vshard.router)
     end

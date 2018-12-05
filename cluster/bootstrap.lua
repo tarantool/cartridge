@@ -93,7 +93,10 @@ local function bootstrap_from_scratch(boot_opts, box_opts, roles)
     log.info('\nTrying to bootstrap from scratch...')
 
     local conf = {
-        bucket_count = boot_opts.bucket_count or 30000,
+        vshard = {
+            bucket_count = boot_opts.bucket_count or 30000,
+            bootstrapped = false,
+        },
         topology = {
             servers = {
                 [boot_opts.instance_uuid] = {
@@ -105,6 +108,7 @@ local function bootstrap_from_scratch(boot_opts, box_opts, roles)
                 [boot_opts.replicaset_uuid] = {
                     roles = roles,
                     master = boot_opts.instance_uuid,
+                    weight = roles['vshard-storage'] and 1,
                 },
             },
         },

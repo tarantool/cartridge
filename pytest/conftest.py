@@ -229,6 +229,7 @@ def cluster(request, confdir, module_tmpdir, helpers):
                 timeout=TARANTOOL_CONNECTION_TIMEOUT
             )
 
+        logging.warn('Join {} ({}) {} '.format(srv.advertise_uri, srv.alias, srv.roles))
         resp = bootserv.graphql(
             query = """
                 mutation(
@@ -272,13 +273,23 @@ def cluster(request, confdir, module_tmpdir, helpers):
     routers = [srv for srv in servers if 'vshard-router' in srv.roles]
     if len(routers) > 0:
         srv = routers[0]
+        resp = srv.graphql(
+            query = """
+                {
+                    cluster { can_bootstrap_vshard }
+                }
+            """
+        )
+        assert 'errors' not in resp, resp['errors'][0]['message']
+        assert resp['data']['cluster']['can_bootstrap_vshard']
+
         logging.warn('Bootstrapping vshard.router on {}'.format(srv.advertise_uri))
         resp = srv.graphql(
             query = """
                 mutation { bootstrap_vshard }
             """
         )
-        assert "errors" not in resp
+        assert 'errors' not in resp, resp['errors'][0]['message']
     else:
         logging.warn('No vshard routers configured, skipping vshard bootstrap')
 

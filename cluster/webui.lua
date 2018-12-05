@@ -43,6 +43,7 @@ local gql_type_replicaset = gql_types.object {
         uuid = gql_types.string.nonNull,
         roles = gql_types.list(gql_types.string.nonNull),
         status = gql_types.string.nonNull,
+        weight = gql_types.float,
         master = gql_types.nonNull('Server'),
         servers = gql_types.list('Server'),
     }
@@ -73,10 +74,6 @@ end
 
 local function probe_server(_, args)
     return admin.probe_server(args.uri)
-end
-
-local function bootstrap_vshard(_, args)
-    return admin.bootstrap_vshard()
 end
 
 local function join_server(_, args)
@@ -228,6 +225,7 @@ local function init(httpd)
             uuid = gql_types.string.nonNull,
             roles = gql_types.list(gql_types.string.nonNull),
             master = gql_types.string,
+            weight = gql_types.float,
         },
         kind = gql_types.boolean,
         callback = 'cluster.webui.edit_replicaset',
@@ -291,6 +289,23 @@ local function init(httpd)
         callback = 'cluster.webui.get_self',
     })
 
+    graphql.add_callback({
+        prefix = 'cluster',
+        name = 'can_bootstrap_vshard',
+        doc = 'Whether it is reasonble to call bootstrap_vshard mutation',
+        args = {},
+        kind = gql_types.boolean.nonNull,
+        callback = 'cluster.webui.can_bootstrap_vshard',
+    })
+
+    graphql.add_callback({
+        prefix = 'cluster',
+        name = 'vshard_bucket_count',
+        doc = 'Virtual buckets count in cluster',
+        args = {},
+        kind = gql_types.int.nonNull,
+        callback = 'cluster.webui.vshard_bucket_count',
+    })
 
     -- Paths w/o dot are treated as app routes
     httpd:route({
@@ -335,5 +350,7 @@ return {
     get_failover_enabled = get_failover_enabled,
     set_failover_enabled = set_failover_enabled,
 
-    bootstrap_vshard = bootstrap_vshard,
+    bootstrap_vshard = admin.bootstrap_vshard,
+    vshard_bucket_count = admin.vshard_bucket_count,
+    can_bootstrap_vshard = admin.can_bootstrap_vshard,
 }
