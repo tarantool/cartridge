@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Eliminate raising exceptions
 - Absorb http server in `cluster.cfg`
 
+### Added
+
+- Support of vshard replicaset weight parameter
+
 ## [0.4.0] - 2018-11-27
 ### Fixed/Improved
 - Uncaught exception in WebUI
@@ -18,8 +22,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Cluster mutations are now synchronous, except joining new servers
 
 ### Added
-- API for temporarily disabling servers
-- API for implementing user-defined roles
+- Lua API for temporarily disabling servers
+- Lua API for implementing user-defined roles
 
 ## [0.3] - 2018-10-30
 ### Changed
