@@ -218,4 +218,9 @@ return {
     admin = admin,
     bootstrap = bootstrap_from_scratch,
     is_healthy = topology.cluster_is_healthy,
+    confapplier = {
+        get_readonly = confapplier.get_readonly,
+        get_deepcopy = confapplier.get_deepcopy,
+        patch_clusterwide = confapplier.patch_clusterwide,
+    },
 }
