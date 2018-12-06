@@ -531,6 +531,7 @@ local function commit_2pc()
     local path_backup = fio.pathjoin(vars.workdir, 'config.backup.yml')
     local path_active = fio.pathjoin(vars.workdir, 'config.yml')
 
+    fio.unlink(path_backup)
     local ok = fio.link(path_active, path_backup)
     if ok then
         log.info('Backup of active config created: %q', path_backup)
