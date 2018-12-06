@@ -2,6 +2,7 @@
 
 local log = require('log')
 local fun = require('fun')
+local fiber = require('fiber')
 local vshard = require('vshard')
 local errors = require('errors')
 local uuid_lib = require('uuid')
@@ -231,6 +232,7 @@ local function join_server(args)
         instance_uuid = '?string',
         replicaset_uuid = '?string',
         roles = '?table',
+        timeout = '?number',
     })
 
     local roles = {}
@@ -298,7 +300,25 @@ local function join_server(args)
         return nil, err
     end
 
-    return true
+    local timeout = args.timeout or 0
+    if not (timeout > 0) then
+        return true
+    end
+
+    local deadline = fiber.time() + timeout
+    local cond = membership.subscribe()
+    local conn = nil
+    while not conn and fiber.time() < deadline do
+        cond:wait(0.2)
+        conn = pool.connect(args.uri)
+    end
+    membership.unsubscribe(cond)
+
+    if conn then
+        return true
+    else
+        return nil, e_topology_edit:new('Timeout connecting %q', args.uri)
+    end
 end
 
 local function edit_server(args)
@@ -464,7 +484,7 @@ end
 
 local function bootstrap_vshard()
     local vshard_cfg = confapplier.get_readonly('vshard')
-    if vshard_cfg.bootstrapped then
+    if vshard_cfg and vshard_cfg.bootstrapped then
         return nil, e_bootstrap_vshard:new('Already bootstrapped')
     end
 
