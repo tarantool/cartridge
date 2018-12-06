@@ -31,7 +31,6 @@ local confapplier = require('cluster.confapplier')
 local cluster_cookie = require('cluster.cluster-cookie')
 local service_registry = require('cluster.service-registry')
 
-
 local e_init = errors.new_class('Cluster initialization failed')
 local e_http = errors.new_class('Http initialization failed')
 -- Parameters to be passed at bootstrap
@@ -223,4 +222,5 @@ return {
         get_deepcopy = confapplier.get_deepcopy,
         patch_clusterwide = confapplier.patch_clusterwide,
     },
+    service_registry = service_registry,
 }
