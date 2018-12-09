@@ -8,6 +8,7 @@ local cluster = require('cluster')
 
 package.preload['mymodule'] = function()
     local state = nil
+    local master = nil
     local service_registry = require('cluster.service-registry')
     local httpd = service_registry.get('httpd')
 
@@ -44,7 +45,17 @@ package.preload['mymodule'] = function()
     return {
         role_name = 'myrole',
         get_state = function() return state end,
-        init = function() state = 'initialized' end,
+        is_master = function() return master end,
+        init = function(opts)
+            state = 'initialized'
+            assert(opts.is_master ~= nil)
+        end,
+        apply_config = function(_, opts)
+            master = opts.is_master
+        end,
+        stop = function()
+            state = 'stopped'
+        end
     }
 end
 

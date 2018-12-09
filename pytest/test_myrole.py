@@ -59,8 +59,26 @@ def test_myrole(cluster):
         }
     """)
     assert 'errors' not in obj
-
     assert obj['data']['replicasets'][0]['roles'] == ["myrole"]
+
+    obj = srv.graphql("""
+        mutation {
+            edit_replicaset(
+                uuid: "aaaaaaaa-0000-4000-b000-000000000000"
+                roles: []
+            )
+        }
+    """)
+    assert 'errors' not in obj
+    srv.conn.eval("""
+        local service_registry = require('cluster.service-registry')
+        assert(service_registry.get('myrole') == nil)
+    """)
+    srv.conn.eval("""
+        assert(package.loaded['mymodule'].get_state() == 'stopped')
+    """)
+
+
 
 def test_rename(cluster, helpers):
     """The test simulates a situation when the role is renamed in code,

@@ -429,17 +429,61 @@ local function cluster_is_healthy()
     return true
 end
 
+local function get_active_masters()
+    if not vars.topology.failover then
+        local ret = {}
+
+        for replicaset_uuid, replicaset in pairs(vars.topology.replicasets) do
+            ret[replicaset_uuid] = replicaset.master
+        end
+        return ret
+    else
+        local alive = {
+            -- [instance_uuid] = true/false,
+        }
+        local min_alive_uuid = {
+            -- [replicaset_uuid] = instance_uuid,
+        }
+        for _it, instance_uuid, server in fun.filter(not_disabled, vars.topology.servers) do
+            local replicaset_uuid = server.replicaset_uuid
+            local replicaset = vars.topology.replicasets[replicaset_uuid]
+
+            local member = membership.get_member(server.uri)
+            if member ~= nil
+            and member.status == 'alive'
+            and member.payload.error == nil
+            and member.payload.uuid == instance_uuid then
+                alive[instance_uuid] = true
+                if min_alive_uuid[replicaset_uuid] == nil
+                or min_alive_uuid[replicaset_uuid] > instance_uuid then
+                    min_alive_uuid[replicaset_uuid] = instance_uuid
+                end
+            else
+                alive[instance_uuid] = false
+            end
+        end
+
+        local ret = {}
+        for replicaset_uuid, replicaset in pairs(vars.topology.replicasets) do
+            local master_uuid = replicaset.master
+
+            if not alive[master_uuid]
+            and min_alive_uuid[replicaset_uuid] then
+                master_uuid = min_alive_uuid[replicaset_uuid]
+            end
+
+            ret[replicaset_uuid] = master_uuid
+        end
+        return ret
+    end
+end
+
 -- returns SHARDING table, which can be passed to
 -- vshard.router.cfg{sharding = SHARDING} and
 -- vshard.storage.cfg{sharding = SHARDING}
 local function get_vshard_sharding_config()
     local sharding = {}
-    local alive = {
-        -- [instance_uuid] = true/false,
-    }
-    local min_alive_uuid = {
-        -- [replicaset_uuid] = instance_uuid,
-    }
+    local active_masters = get_active_masters()
 
     for _it, instance_uuid, server in fun.filter(not_disabled, vars.topology.servers) do
         local replicaset_uuid = server.replicaset_uuid
@@ -456,34 +500,9 @@ local function get_vshard_sharding_config()
             replicas[instance_uuid] = {
                 name = server.uri,
                 uri = pool.format_uri(server.uri),
-                master = false,
+                master = (active_masters[replicaset_uuid] == instance_uuid),
             }
-
-            local member = membership.get_member(server.uri)
-            if member == nil
-            or member.status ~= 'alive'
-            or member.payload.error then
-                alive[instance_uuid] = false
-            else
-                alive[instance_uuid] = true
-                if min_alive_uuid[replicaset_uuid] == nil
-                or instance_uuid < min_alive_uuid[replicaset_uuid] then
-                    min_alive_uuid[replicaset_uuid] = instance_uuid
-                end
-            end
         end
-    end
-
-    for replicaset_uuid, shard in pairs(sharding) do
-        local master_uuid = vars.topology.replicasets[replicaset_uuid].master
-
-        if vars.topology.failover
-        and not alive[master_uuid]
-        and min_alive_uuid[replicaset_uuid] then
-            master_uuid = min_alive_uuid[replicaset_uuid]
-        end
-
-        shard.replicas[master_uuid].master = true
     end
 
     return sharding
@@ -529,6 +548,7 @@ return {
 
     cluster_is_healthy = cluster_is_healthy,
     get_myself_uuids = get_myself_uuids,
+    get_active_masters = get_active_masters,
     get_replication_config = get_replication_config,
     get_vshard_sharding_config = get_vshard_sharding_config,
 }

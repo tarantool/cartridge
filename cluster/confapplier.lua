@@ -280,6 +280,12 @@ end
 
 local function _failover(cond)
     local function failover_internal()
+        local active_masters = topology.get_active_masters()
+        local is_master = false
+        if active_masters[box.info.cluster.uuid] == box.info.uuid then
+            is_master = true
+        end
+
         local bucket_count = vars.conf.vshard.bucket_count
         local cfg_new = topology.get_vshard_sharding_config()
         local cfg_old = nil
@@ -324,6 +330,21 @@ local function _failover(cond)
             log.info('Failover step finished')
         end
 
+        for _, mod in ipairs(vars.known_roles) do
+            -- local role_name = mod.role_name
+            if (service_registry.get(mod.role_name) ~= nil)
+            and (type(mod.apply_config) == 'function')
+            then
+                local _, err = e_config_apply:pcall(
+                    mod.apply_config, vars.conf,
+                    {is_master = is_master}
+                )
+                if err then
+                    log.error('%s', err)
+                end
+            end
+        end
+
         return true
     end
 
@@ -345,6 +366,7 @@ end
 local function apply_config(conf)
     checks('table')
     vars.conf = set_readonly(conf, true)
+    box.session.su('admin')
 
     local replication = topology.get_replication_config(
         conf.topology,
@@ -362,7 +384,13 @@ local function apply_config(conf)
     end
 
     topology.set(conf.topology)
-    local roles_enabled = conf.topology.replicasets[box.info.cluster.uuid].roles
+    local my_replicaset = conf.topology.replicasets[box.info.cluster.uuid]
+    local roles_enabled = my_replicaset.roles
+    local active_masters = topology.get_active_masters()
+    local is_master = false
+    if active_masters[box.info.cluster.uuid] == box.info.uuid then
+        is_master = true
+    end
 
     if roles_enabled['vshard-storage'] then
         vshard.storage.cfg({
@@ -391,8 +419,12 @@ local function apply_config(conf)
         local role_name = mod.role_name
         if roles_enabled[role_name] then
             do
-                if (service_registry.get(role_name) == nil) and (type(mod.init) == 'function') then
-                    local _, _err = e_config_apply:pcall(mod.init)
+                if (service_registry.get(role_name) == nil)
+                and (type(mod.init) == 'function')
+                then
+                    local _, _err = e_config_apply:pcall(mod.init,
+                        {is_master = is_master}
+                    )
                     if _err then
                         log.error('%s', _err)
                         err = err or _err
@@ -403,7 +435,10 @@ local function apply_config(conf)
                 service_registry.set(role_name, mod)
 
                 if type(mod.apply_config) == 'function' then
-                    local _, _err = e_config_apply:pcall(mod.apply_config, conf)
+                    local _, _err = e_config_apply:pcall(
+                        mod.apply_config, conf,
+                        {is_master = is_master}
+                    )
                     if _err then
                         log.error('%s', _err)
                         err = err or _err
@@ -411,8 +446,12 @@ local function apply_config(conf)
                 end
             end
         else
-            if (service_registry.get(role_name) ~= nil) and (type(mod.stop) == 'function') then
-                local _, _err = e_config_apply:pcall(mod.stop)
+            if (service_registry.get(role_name) ~= nil)
+            and (type(mod.stop) == 'function')
+            then
+                local _, _err = e_config_apply:pcall(mod.stop,
+                        {is_master = is_master}
+                )
                 if _err then
                     log.error('%s', err)
                     err = err or _err
