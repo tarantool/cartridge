@@ -195,6 +195,7 @@ local function init(httpd)
             instance_uuid = gql_types.string,
             replicaset_uuid = gql_types.string,
             roles = gql_types.list(gql_types.string.nonNull),
+            timeout = gql_types.float,
         },
         kind = gql_types.boolean,
         callback = 'cluster.webui.join_server',
