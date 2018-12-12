@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.5.1] - 2018-12-12
+
+### Fixed
+
+- WebUI errors
+
 ## [0.5.0] - 2018-12-11
 
 ### Fixed
