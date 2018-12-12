@@ -3,7 +3,8 @@ import rest from 'src/api/rest';
 import { getClusterSelf } from 'src/store/request/app.requests';
 
 const filterServerStat = response => {
-  const serverStat = response.serverStat.filter(stat => stat.uuid && ! (stat.statistics.length === 0));
+  const serverStat
+    = response.serverStat.filter(stat => stat.uuid && stat.statistics && ! Array.isArray(stat.statistics));
   return {
     ...response,
     serverStat
