@@ -25,7 +25,7 @@ COOKIE = 'cluster-cookies-for-the-cluster-monster'
 
 class Helpers:
     @staticmethod
-    def wait_for(fn, args=[], kwargs={}, timeout=1.0):
+    def wait_for(fn, args=[], kwargs={}, timeout=TARANTOOL_CONNECTION_TIMEOUT):
         """Repeatedly call fn(*args, **kwargs)
         until it returns something or timeout occurs"""
         time_start = time.time()
@@ -143,6 +143,9 @@ class Server(object):
         err = resp[1] if len(resp) > 1 else None
         assert (resp[0], err) == (True, None)
 
+    def cluster_is_healthy(self):
+        self.conn.eval("assert(package.loaded['cluster'].is_healthy())")
+
     def kill(self):
         if self.conn != None:
             # logging.warn('Closing connection to {}'.format(self.port))
@@ -185,7 +188,12 @@ class Server(object):
 
         # logging.warn(request)
 
-        r = requests.post(url, json=request, headers=headers, **args)
+        r = requests.post(url,
+            json=request,
+            headers=headers,
+            timeout=TARANTOOL_CONNECTION_TIMEOUT,
+            **args
+        )
 
         r.raise_for_status()
 
@@ -217,16 +225,13 @@ def cluster(request, confdir, module_tmpdir, helpers):
             workdir="{}/localhost-{}".format(module_tmpdir, srv.binary_port),
         )
         request.addfinalizer(srv.kill)
-        helpers.wait_for(srv.ping_udp, timeout=TARANTOOL_CONNECTION_TIMEOUT)
+        helpers.wait_for(srv.ping_udp)
         if len(cluster) == 0:
             bootserv = srv
-            helpers.wait_for(srv.graphql, ["{}"],
-                timeout=TARANTOOL_CONNECTION_TIMEOUT
-            )
+            helpers.wait_for(srv.graphql, ["{}"])
         else:
             helpers.wait_for(bootserv.conn.eval,
-                ["assert(require('membership').probe_uri(...))", srv.advertise_uri],
-                timeout=TARANTOOL_CONNECTION_TIMEOUT
+                ["assert(require('membership').probe_uri(...))", srv.advertise_uri]
             )
 
         logging.warn('Join {} ({}) {} '.format(srv.advertise_uri, srv.alias, srv.roles))
@@ -256,14 +261,11 @@ def cluster(request, confdir, module_tmpdir, helpers):
         assert "errors" not in resp
 
         # wait when server is bootstrapped
-        helpers.wait_for(srv.connect, timeout=TARANTOOL_CONNECTION_TIMEOUT)
+        helpers.wait_for(srv.connect)
 
         if len(cluster) != 0:
             # wait for bootserv to see that the new member is alive
-            helpers.wait_for(bootserv.conn.eval,
-                ["assert(package.loaded['cluster'].is_healthy())"],
-                timeout=TARANTOOL_CONNECTION_TIMEOUT
-            )
+            helpers.wait_for(bootserv.cluster_is_healthy)
 
         # speedup tests by amplifying membership message exchange
         srv.conn.eval('require("membership.options").PROTOCOL_PERIOD_SECONDS = 0.2')

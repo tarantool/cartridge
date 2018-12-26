@@ -163,14 +163,22 @@ local function get_stat(uri)
             arena_used = info.arena_used,
             arena_used_ratio = info.arena_used_ratio,
         }
-    else
-        local conn, err = pool.connect(uri)
-        if not conn then
-            return nil, err
-        end
-
-        return conn:eval('return package.loaded["cluster.admin"].get_stat()')
     end
+
+    local conn, err = pool.connect(uri)
+    if not conn then
+        return nil, err
+    end
+
+    local ok, ret = pcall(conn.call, conn,
+        '_G.__cluster_admin_get_stat', {}, {timeout = 1}
+    )
+
+    if not ok then
+        return nil, ret
+    end
+
+    return ret
 end
 
 local function get_self()
@@ -550,6 +558,8 @@ local function vshard_bucket_count()
     local vshard_cfg = confapplier.get_readonly('vshard')
     return vshard_cfg and vshard_cfg.bucket_count or 0
 end
+
+_G.__cluster_admin_get_stat = get_stat
 
 return {
     get_stat = get_stat,
