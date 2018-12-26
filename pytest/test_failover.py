@@ -2,6 +2,7 @@
 
 import json
 import time
+import signal
 import pytest
 import logging
 from conftest import Server
@@ -113,18 +114,82 @@ def test_switchover(cluster, helpers):
     set_master(cluster, uuid_replicaset, uuid_s2)
     assert helpers.wait_for(callrw, [cluster, 'get_uuid']) == uuid_s2
 
-def test_failover(cluster, helpers):
+def test_sigkill(cluster, helpers):
     set_failover(cluster, True)
 
     set_master(cluster, uuid_replicaset, uuid_s1)
     assert helpers.wait_for(callrw, [cluster, 'get_uuid']) == uuid_s1
 
     cluster['storage-1'].kill()
+    logging.warning('storage-1 KILLED')
     assert helpers.wait_for(callrw, [cluster, 'get_uuid']) == uuid_s2
 
     cluster['storage-1'].start()
-    helpers.wait_for(cluster['storage-1'].connect, timeout=5)
+    helpers.wait_for(cluster['storage-1'].connect)
+    logging.warning('storage-1 STARTED')
+
+    cluster['storage-2'].process.send_signal(signal.SIGSTOP)
     assert helpers.wait_for(callrw, [cluster, 'get_uuid']) == uuid_s1
+    cluster['storage-2'].process.send_signal(signal.SIGCONT)
+    helpers.wait_for(cluster['router'].cluster_is_healthy)
+
+def test_sigstop(cluster, helpers):
+    set_failover(cluster, True)
+
+    set_master(cluster, uuid_replicaset, uuid_s1)
+    assert helpers.wait_for(callrw, [cluster, 'get_uuid']) == uuid_s1
+
+    ### Send SIGSTOP and check
+    cluster['storage-1'].process.send_signal(signal.SIGSTOP)
+    logging.warning('storage-1 STOPPED')
+    assert helpers.wait_for(callrw, [cluster, 'get_uuid']) == uuid_s2
+
+    logging.warning('Requesting statistics...')
+    obj = cluster['router'].graphql("""
+        {
+            servers {
+                uri
+                statistics { }
+            }
+        }
+    """)
+
+    assert 'errors' not in obj, obj['errors'][0]['message']
+    servers = obj['data']['servers']
+    assert {
+        'uri': 'localhost:33011'
+    } == helpers.find(servers, 'uri', 'localhost:33011')
+    assert {
+        'uri': 'localhost:33012',
+        'statistics': []
+    } == helpers.find(servers, 'uri', 'localhost:33012')
+
+    ### Send SIGCONT and check
+    cluster['storage-1'].process.send_signal(signal.SIGCONT)
+    logging.warning('storage-1 CONTINUED')
+    helpers.wait_for(cluster['router'].cluster_is_healthy)
+    assert helpers.wait_for(callrw, [cluster, 'get_uuid']) == uuid_s1
+
+    logging.warning('Requesting statistics...')
+    obj = cluster['router'].graphql("""
+        {
+            servers {
+                uri
+                statistics { }
+            }
+        }
+    """)
+
+    assert 'errors' not in obj, obj['errors'][0]['message']
+    servers = obj['data']['servers']
+    assert {
+        'uri': 'localhost:33011',
+        'statistics': []
+    } == helpers.find(servers, 'uri', 'localhost:33011')
+    assert {
+        'uri': 'localhost:33012',
+        'statistics': []
+    } == helpers.find(servers, 'uri', 'localhost:33012')
 
 def test_rollback(cluster, helpers):
     conn = cluster['storage-1'].conn
