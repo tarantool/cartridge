@@ -221,7 +221,7 @@ local function validate_consistency(topology)
         )
         e_config:assert(
             not_expelled(master_uuid, master),
-            '%s.master is expelled', field
+            '%s.master can not be expelled', field
         )
         e_config:assert(
             master.replicaset_uuid == replicaset_uuid,
