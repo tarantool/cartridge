@@ -103,6 +103,7 @@ def test_replicasets(cluster, expelled, helpers):
                 roles
                 status
                 master { uuid }
+                active_master { uuid }
                 servers { uri }
                 weight
             }
@@ -115,6 +116,7 @@ def test_replicasets(cluster, expelled, helpers):
         'roles': ['vshard-router'],
         'status': 'healthy',
         'master': {'uuid': 'aaaaaaaa-aaaa-4000-b000-000000000001'},
+        'active_master': {'uuid': 'aaaaaaaa-aaaa-4000-b000-000000000001'},
         'servers': [{'uri': 'localhost:33001'}]
     } == helpers.find(replicasets, 'uuid', 'aaaaaaaa-0000-4000-b000-000000000000')
     assert {
@@ -122,6 +124,7 @@ def test_replicasets(cluster, expelled, helpers):
         'roles': ['vshard-storage'],
         'status': 'healthy',
         'master': {'uuid': 'bbbbbbbb-bbbb-4000-b000-000000000001'},
+        'active_master': {'uuid': 'bbbbbbbb-bbbb-4000-b000-000000000001'},
         'weight': 1,
         'servers': [{'uri': 'localhost:33002'}]
     } == helpers.find(replicasets, 'uuid', 'bbbbbbbb-0000-4000-b000-000000000000')

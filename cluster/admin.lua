@@ -111,6 +111,8 @@ local function get_servers_and_replicasets()
         end
     end
 
+    local active_masters = topology.get_active_masters()
+
     for _it, instance_uuid, server in fun.filter(topology.not_expelled, topology_cfg.servers) do
         local srv = get_server_info(members, instance_uuid, server.uri)
 
@@ -119,6 +121,9 @@ local function get_servers_and_replicasets()
 
         if topology_cfg.replicasets[server.replicaset_uuid].master == instance_uuid then
             srv.replicaset.master = srv
+        end
+        if active_masters[server.replicaset_uuid] == instance_uuid then
+            srv.replicaset.active_master = srv
         end
         if srv.status ~= 'healthy' then
             srv.replicaset.status = 'unhealthy'
