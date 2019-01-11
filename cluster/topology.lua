@@ -341,15 +341,25 @@ local function validate_upgrade(topology_new, topology_old)
 
     for replicaset_uuid, replicaset_old in pairs(replicasets_old) do
         local replicaset_new = replicasets_new[replicaset_uuid]
+        local storage_role_old = replicaset_old.roles['vshard-storage']
+        local storage_role_new = replicaset_new and replicaset_new.roles['vshard-storage']
 
-        if replicaset_old.roles['vshard-storage'] then
+        if storage_role_old and not storage_role_new then
             e_config:assert(
-                replicaset_new ~= nil,
-                'replicasets[%s] is a vshard-storage and can not be expelled', replicaset_uuid
+                replicaset_old.weight == 0,
+                'replicasets[%s] is a vshard-storage which can\'t be removed', replicaset_uuid
             )
+
+            local master_uuid = replicaset_old.master
+            local master_uri = servers_old[master_uuid].uri
+            local conn, err = pool.connect(master_uri)
+            if not conn then
+                return error(err)
+            end
+            local buckets_count = conn:call('vshard.storage.buckets_count')
             e_config:assert(
-                replicaset_new.roles['vshard-storage'] == true,
-                'replicasets[%s].roles vshard-storage can not be disabled', replicaset_uuid
+                buckets_count == 0,
+                'replicasets[%s] rebalancing isn\'t finished yet', replicaset_uuid
             )
         end
     end
