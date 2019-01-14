@@ -221,7 +221,7 @@ class Cluster extends React.Component {
                                 onChange={this.handleRolesFilterChange}
                                 value={rolesFilterValue}
                               >
-                                <option value="">Any roles</option>
+                                <option value="">Any role</option>
                                 {clusterSelf.knownRoles.map(role => (
                                   <option value={role}>{role}</option>
                                 ))}
@@ -235,6 +235,13 @@ class Cluster extends React.Component {
                                 className="form-control form-control-sm"
                                 onChange={this.handleNameFilterChange}
                                 value={nameFilterValue} />
+                            </div>
+                            <div className="col-auto form-group align-self-right">
+                              <button type="button" className="btn btn-success btn-sm"
+                                onClick={this.handleResetFilterClick}
+                              >
+                                Reset form
+                              </button>
                             </div>
                           </div>
                         </div>
@@ -654,6 +661,13 @@ class Cluster extends React.Component {
     const { target } = event;
     this.setState({
       nameFilterValue: target.value,
+    });
+  };
+
+  handleResetFilterClick = () => {
+    this.setState({
+      rolesFilterValue: '',
+      nameFilterValue: '',
     });
   };
 
