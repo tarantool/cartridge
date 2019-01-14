@@ -45,6 +45,7 @@ local gql_type_replicaset = gql_types.object {
         status = gql_types.string.nonNull,
         weight = gql_types.float,
         master = gql_types.nonNull('Server'),
+        active_master = gql_types.nonNull('Server'),
         servers = gql_types.list('Server'),
     }
 }

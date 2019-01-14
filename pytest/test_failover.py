@@ -39,20 +39,23 @@ cluster = [
 ]
 
 def get_master(cluster, replicaset_uuid):
-    obj = cluster['router'].graphql("""
+    resp = cluster['router'].graphql("""
         {
             replicasets(uuid: "%s") {
                 master { uuid }
+                active_master { uuid }
             }
         }
     """ % replicaset_uuid)
-    assert 'errors' not in obj
-    replicasets = obj['data']['replicasets']
+    assert 'errors' not in resp, resp['errors'][0]['message']
+
+    replicasets = resp['data']['replicasets']
     assert len(replicasets) == 1
-    return replicasets[0]['master']['uuid']
+    return replicasets[0]['master']['uuid'], \
+        replicasets[0]['active_master']['uuid']
 
 def set_master(cluster, replicaset_uuid, master_uuid):
-    obj = cluster['router'].graphql("""
+    resp = cluster['router'].graphql("""
         mutation {
             edit_replicaset(
                 uuid: "%s"
@@ -60,7 +63,7 @@ def set_master(cluster, replicaset_uuid, master_uuid):
             )
         }
     """ % (replicaset_uuid, master_uuid))
-    assert 'errors' not in obj, obj['errors'][0]['message']
+    assert 'errors' not in resp, resp['errors'][0]['message']
 
 def get_failover(cluster):
     obj = cluster['router'].graphql("""
@@ -81,18 +84,19 @@ def set_failover(cluster, enabled):
     logging.warn('Failover %s' % ('enabled' if enabled else 'disabled'))
     return obj['data']['cluster']['failover']
 
-def callrw(cluster, fn, args=[]):
+def check_active_master(cluster, expected_uuid):
+    """Make sure active master uuid equals to the given uuid"""
     conn = cluster['router'].conn
-    resp = conn.call('vshard.router.callrw', (1, fn, args))
+    resp = conn.call('vshard.router.callrw', (1, 'get_uuid'))
     err = resp[1] if len(resp) > 1 else None
     assert err == None
-    return resp[0]
+    assert resp[0] == expected_uuid
 
 def test_api_master(cluster):
     set_master(cluster, uuid_replicaset, uuid_s2)
-    assert get_master(cluster, uuid_replicaset) == uuid_s2
+    assert get_master(cluster, uuid_replicaset) == (uuid_s2, uuid_s2)
     set_master(cluster, uuid_replicaset, uuid_s1)
-    assert get_master(cluster, uuid_replicaset) == uuid_s1
+    assert get_master(cluster, uuid_replicaset) == (uuid_s1, uuid_s1)
 
     with pytest.raises(AssertionError) as excinfo:
         set_master(cluster, uuid_replicaset, 'bbbbbbbb-bbbb-4000-b000-000000000003')
@@ -108,44 +112,53 @@ def test_api_failover(cluster):
 def test_switchover(cluster, helpers):
     set_failover(cluster, False)
 
+    # Switch to s1
     set_master(cluster, uuid_replicaset, uuid_s1)
-    assert helpers.wait_for(callrw, [cluster, 'get_uuid']) == uuid_s1
+    helpers.wait_for(check_active_master, [cluster, uuid_s1])
+    assert get_master(cluster, uuid_replicaset) == (uuid_s1, uuid_s1)
 
+    # Switch to s2
     set_master(cluster, uuid_replicaset, uuid_s2)
-    assert helpers.wait_for(callrw, [cluster, 'get_uuid']) == uuid_s2
+    helpers.wait_for(check_active_master, [cluster, uuid_s2])
+    assert get_master(cluster, uuid_replicaset) == (uuid_s2, uuid_s2)
 
 def test_sigkill(cluster, helpers):
     set_failover(cluster, True)
 
+    # Switch to s1
     set_master(cluster, uuid_replicaset, uuid_s1)
-    assert helpers.wait_for(callrw, [cluster, 'get_uuid']) == uuid_s1
+    helpers.wait_for(check_active_master, [cluster, uuid_s1])
+    assert get_master(cluster, uuid_replicaset) == (uuid_s1, uuid_s1)
 
+    # Send SIGKILL to s1
     cluster['storage-1'].kill()
     logging.warning('storage-1 KILLED')
-    assert helpers.wait_for(callrw, [cluster, 'get_uuid']) == uuid_s2
+    helpers.wait_for(check_active_master, [cluster, uuid_s2])
+    assert get_master(cluster, uuid_replicaset) == (uuid_s1, uuid_s2)
 
+    # Restart s1
     cluster['storage-1'].start()
     helpers.wait_for(cluster['storage-1'].connect)
     logging.warning('storage-1 STARTED')
-
-    cluster['storage-2'].process.send_signal(signal.SIGSTOP)
-    assert helpers.wait_for(callrw, [cluster, 'get_uuid']) == uuid_s1
-    cluster['storage-2'].process.send_signal(signal.SIGCONT)
-    helpers.wait_for(cluster['router'].cluster_is_healthy)
+    helpers.wait_for(check_active_master, [cluster, uuid_s1])
+    assert get_master(cluster, uuid_replicaset) == (uuid_s1, uuid_s1)
 
 def test_sigstop(cluster, helpers):
     set_failover(cluster, True)
 
+    # Switch to s1
     set_master(cluster, uuid_replicaset, uuid_s1)
-    assert helpers.wait_for(callrw, [cluster, 'get_uuid']) == uuid_s1
+    helpers.wait_for(check_active_master, [cluster, uuid_s1])
+    assert get_master(cluster, uuid_replicaset) == (uuid_s1, uuid_s1)
 
-    ### Send SIGSTOP and check
+    # Send SIGSTOP to s1
     cluster['storage-1'].process.send_signal(signal.SIGSTOP)
     logging.warning('storage-1 STOPPED')
-    assert helpers.wait_for(callrw, [cluster, 'get_uuid']) == uuid_s2
+    helpers.wait_for(check_active_master, [cluster, uuid_s2])
+    assert get_master(cluster, uuid_replicaset) == (uuid_s1, uuid_s2)
 
     logging.warning('Requesting statistics...')
-    obj = cluster['router'].graphql("""
+    resp = cluster['router'].graphql("""
         {
             servers {
                 uri
@@ -154,8 +167,8 @@ def test_sigstop(cluster, helpers):
         }
     """)
 
-    assert 'errors' not in obj, obj['errors'][0]['message']
-    servers = obj['data']['servers']
+    assert 'errors' not in resp, resp['errors'][0]['message']
+    servers = resp['data']['servers']
     assert {
         'uri': 'localhost:33011'
     } == helpers.find(servers, 'uri', 'localhost:33011')
@@ -164,14 +177,15 @@ def test_sigstop(cluster, helpers):
         'statistics': []
     } == helpers.find(servers, 'uri', 'localhost:33012')
 
-    ### Send SIGCONT and check
+    # Send SIGCONT to s1
     cluster['storage-1'].process.send_signal(signal.SIGCONT)
     logging.warning('storage-1 CONTINUED')
     helpers.wait_for(cluster['router'].cluster_is_healthy)
-    assert helpers.wait_for(callrw, [cluster, 'get_uuid']) == uuid_s1
+    helpers.wait_for(check_active_master, [cluster, uuid_s1])
+    assert get_master(cluster, uuid_replicaset) == (uuid_s1, uuid_s1)
 
     logging.warning('Requesting statistics...')
-    obj = cluster['router'].graphql("""
+    resp = cluster['router'].graphql("""
         {
             servers {
                 uri
@@ -180,8 +194,8 @@ def test_sigstop(cluster, helpers):
         }
     """)
 
-    assert 'errors' not in obj, obj['errors'][0]['message']
-    servers = obj['data']['servers']
+    assert 'errors' not in resp, resp['errors'][0]['message']
+    servers = resp['data']['servers']
     assert {
         'uri': 'localhost:33011',
         'statistics': []
@@ -219,9 +233,9 @@ def test_rollback(cluster, helpers):
     ''')
 
     # try to apply new config - now it should succeed
-    obj = cluster['router'].graphql("""
+    resp = cluster['router'].graphql("""
         mutation {
             cluster { failover(enabled: false) }
         }
     """)
-    assert 'errors' not in obj
+    assert 'errors' not in resp, resp['errors'][0]['message']
