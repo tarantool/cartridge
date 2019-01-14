@@ -1,0 +1,29 @@
+$scrollPadding: 1px;
+$scrollWidth: 6px;
+
+.tr-tight-scroll {
+  overflow: auto;
+}
+
+.tr-tight-scroll::-webkit-scrollbar {
+  width: $scrollWidth;
+  height: $scrollWidth;
+}
+
+.tr-tight-scroll::-webkit-scrollbar-track {
+  margin-top: 2px;
+  margin-left: 2px;
+  background-color: #e2e0e8;
+}
+
+.tr-tight-scroll::-webkit-scrollbar-thumb {
+  background-color: #c3c0ce;
+  border-radius: $scrollWidth / 2;
+}
+
+/* CSS Statements that only apply on webkit-based browsers (Chrome, Safari, etc.) */
+@media screen and (-webkit-min-device-pixel-ratio:0) {
+  .tr-tight-scroll {
+    padding: 0 $scrollPadding $scrollPadding 0;
+  }
+}

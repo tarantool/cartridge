@@ -1,0 +1,14 @@
+.UploadButton-outer {
+
+}
+
+.UploadButton-input {
+  opacity: 0;
+  position: absolute;
+  left: -20000px;
+}
+
+.UploadButton-label {
+
+}
+

@@ -1,0 +1,159 @@
+@import 'src/styles/variables';
+
+$row-margin-top: 0.4em;
+$cell-padding: 0.5em;
+$cell-horizontal-padding: 1em;
+$cell-min-height: 2.6em;
+$tight-cell-min-height: $cell-min-height - 1.4em;
+
+.trTable {
+  font-size: 11px;
+}
+
+.trTable-noData,
+.trTable-loading {
+  display: flex;
+  align-items: center;
+  min-height: $cell-min-height;
+  margin-top: $row-margin-top;
+  padding: $cell-padding $cell-horizontal-padding;
+  background-color: $light-bg-secondary;
+}
+
+.trTable-noData {}
+
+.trTable-loading {}
+
+.trTable-cell--leftAlign {
+  justify-content: flex-start;
+}
+
+.trTable-cell--centerAlign {
+  justify-content: center;
+}
+
+.trTable-cell--rightAlign {
+  justify-content: flex-end;
+}
+
+.trTable-cellOuter {
+  display: flex;
+  align-items: center;
+  flex: 100;
+  overflow: hidden;
+  box-sizing: content-box;
+  padding: $cell-padding;
+}
+
+.trTable-cellOuter:first-child {
+  padding-left: $cell-horizontal-padding;
+}
+
+.trTable-cellOuter:last-child {
+  padding-right: $cell-horizontal-padding;
+}
+
+.trTable-cellInner {
+  display: flex;
+  max-width: 100%;
+  min-width: 100%;
+}
+
+.trTable-head,
+.trTable-row {
+  display: flex;
+  align-items: stretch;
+}
+
+.trTable-head {
+  background-color: $table-head-bg;
+  color: $table-head-color;
+  border-radius: 2px;
+}
+
+.trTable-headCellOuter {
+  padding-top: 0.8em;
+  padding-bottom: 0.8em;
+  text-transform: uppercase;
+}
+
+.trTable-headCellInner {
+  font-size: 1.08em;
+}
+
+.trTable-rows {}
+
+.trTable-rowHead {
+  margin-top: 1.4em;
+  padding: 0.2em $cell-horizontal-padding;
+}
+
+.trTable-rowHeadName {
+  margin-right: 1.2em;
+  font-weight: bold;
+}
+
+.trTable-rowHeadLabel {
+  display: inline-block;
+}
+
+.trTable-rowHeadLabel + .trTable-rowHeadLabel {
+  margin-left: 0.8em;
+}
+
+.trTable-rowHeadLabelName,
+.trTable-rowHeadLabelValue {
+  display: inline-block;
+}
+
+.trTable-rowHeadLabelName {
+  margin-right: 0.3em;
+  opacity: 0.6;
+}
+
+.trTable-rowHeadLabelValue {}
+
+.trTable-row {
+  margin-top: $row-margin-top;
+}
+
+.trTable-rowHead + .trTable-row {
+  margin-top: 0.2em;
+}
+
+.trTable-row:nth-child(2n) {
+  background-color: $light-bg-secondary;
+}
+
+.trTable-row:nth-child(2n + 1) {
+  background-color: $light-bg-primary;
+}
+
+.trTable-rowCellOuter {
+  min-height: $cell-min-height;
+}
+
+.trTable-skin--rowHeads .trTable-rowCellOuter {
+  min-height: $tight-cell-min-height;
+}
+
+.trTable-rowCellInner {}
+
+.trTable-cellText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.trTable-skin--regular {}
+
+.trTable-skin--light {}
+
+.trTable-skin--light .trTable-headCellOuter {
+  padding-top: 0.6em;
+  padding-bottom: 0.6em;
+}
+
+.trTable-skin--light .trTable-headCellInner {
+  font-size: 1em;
+}

@@ -1,0 +1,75 @@
+$grid-breakpoint-xs: 0;
+$grid-breakpoint-sm: 576px;
+$grid-breakpoint-md: 768px;
+$grid-breakpoint-lg: 992px;
+$grid-breakpoint-xl: 1200px;
+
+$grid-gutter-width: 20px;
+$grid-gutter-width-sm: 10px;
+$grid-gutter-width-lg: 30px;
+
+$container-max-width-sm: 540px;
+$container-max-width-md: 720px;
+$container-max-width-lg: 960px;
+$container-max-width-xl: 1140px;
+$container-gutter-width: 30px;
+
+$font-family-monospace: monospace;
+
+$font-family-base: Arial, sans-serif;
+$font-size-base: 0.75rem;
+$font-weight-base: 400;
+$line-height-base: 1.5;
+
+// Base color: rgb(51, 0, 255);
+$body-color: rgba(55, 52, 66, 0.87); // Base color variant
+$body-bg-color: rgb(251, 251, 255); // Base color variant
+
+$light-bg-primary: rgba(110, 97, 160, 0.04); // Base color variant
+$light-bg-secondary: rgba(110, 97, 160, 0.1); // Base color variant
+
+$khrushchev-bg: rgb(55, 52, 67); // Base color variant
+$khrushchev-shadow: rgba(55, 52, 67, 0.38); // Base color variant
+$khrushchev-color: rgb(205, 203, 214); // Base color variant
+$khrushchev-mute-text-opacity: 0.4;
+
+$brezhnev-bg: rgb(89, 85, 105); // Base color variant
+$brezhnev-shadow: rgba(89, 85, 105, 0.38); // Base color variant
+$brezhnev-color: rgb(205, 203, 214); // Base color variant
+$brezhnev-mute-text-opacity: 0.5;
+
+$console-bg: rgb(68, 65, 80); // Base color variant
+$console-color: rgb(235, 234, 241); // Base color variant
+$console-success-color: #58bd88;
+$console-error-color: #d05c5c;
+$console-info-color: #34b1e4;
+$console-welcome-block-color: $console-color;
+$console-message-block-color: $console-color;
+$console-prompt-block-color: $console-color;
+$console-argument-color: $console-color;
+$console-command-color: $console-color;
+$console-prompt-color: #ffba4b;
+$console-cursor: rgb(166, 161, 181); // Base color variant
+$console-menu-link: rgb(213, 211, 220); // Base color variant
+
+$table-head-bg: $brezhnev-bg;
+$table-head-color: $brezhnev-color;
+$table-mute-text-opacity: $brezhnev-mute-text-opacity;
+
+$success-label-color: #6bb342;
+$warning-label-color: #d09935;
+$danger-label-color: #d04040;
+
+$server-status-indicator--healthy: $success-label-color;
+$server-status-indicator--error: $danger-label-color;
+
+$cards-bg-color: #fff;
+$cards-border-color: rgba(55, 52, 66, 0.08); // Base color variant
+$cards-border: 1px solid $cards-border-color;
+$cards-border-radius: 2px;
+// $cards-shadow: 0 0 5px 0 rgba(55, 52, 66, 0.04); // Base color variant
+$cards-shadow: 0 0 0 1px rgba(55, 52, 66, 0.01), 0 0 5px 0 rgba(55, 52, 66, 0.04); // Base color variant
+$cards-margin: 4em;
+$cards-padding: 2em;
+$cards-padding-sm: 1em;
+$cards-padding-lg: 3em;

@@ -1,0 +1,84 @@
+@import 'src/styles/variables';
+
+.ServerList {}
+
+.ServerList-indicator {
+  display: inline-block;
+  width: 6px; // magic: SERVER_INDICATOR_WIDTH
+  height: 6px; // magic: SERVER_INDICATOR_WIDTH
+  border-radius: 50%;
+}
+
+.ServerList-row--success .ServerList-indicator {
+  background-color: $server-status-indicator--healthy;
+}
+
+.ServerList-row--error .ServerList-indicator {
+  background-color: $server-status-indicator--error;
+}
+
+.ServerList-name {
+  display: inline-block;
+}
+
+.ServerList-alias,
+.ServerList-uri,
+.ServerList-master,
+.ServerList-message {
+  display: inline-block;
+}
+
+.ServerList-alias,
+.ServerList-uri {
+  margin-right: 0.6em;
+}
+
+.ServerList-alias {
+  font-weight: bold;
+}
+
+.ServerList-uri {}
+
+.ServerList-master {}
+
+.ServerList-message {
+  color: #885050;
+}
+
+.ServerList-stat {
+  display: flex;
+  flex-direction: column;
+}
+
+.ServerList-statName {
+  display: inline-block;
+}
+
+.ServerList-statBar {
+  display: inline-block;
+  height: 4px;
+  background-color: #e04027;
+  border-radius: 2px;
+}
+
+.ServerList-statBar:before {
+  content: "";
+  display: block;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.70);
+}
+
+.ServerList-statBar--success {
+  background-color: $success-label-color;
+}
+
+.ServerList-statBar--warning {
+  background-color: $warning-label-color;
+}
+
+.ServerList-statBar--error {
+  background-color: $danger-label-color;
+}
+
+.ServerList-actionButtons {}

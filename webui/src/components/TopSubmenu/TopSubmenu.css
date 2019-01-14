@@ -1,0 +1,54 @@
+@import 'src/styles/variables';
+
+.TopSubmenu-outer {
+  height: 100%;
+  min-height: 350px;
+  font-size: 11px;
+}
+
+.TopSubmenu-inner {}
+
+.TopSubmenu-linkList {}
+
+.TopSubmenu-menuItem {
+}
+
+.TopSubmenu-menuItem + .TopSubmenu-menuItem {
+  margin-top: 6px;
+}
+
+.TopSubmenu-link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 6px 10px;
+  margin-top: -1px;
+  margin-bottom: -1px;
+  background-color: $cards-bg-color;
+  border-radius: $cards-border-radius;
+  border: 1px solid $cards-border-color;
+  border-top-color: transparent;
+  border-left-width: 2px;
+  border-left-color: #a5c79e;
+  text-transform: uppercase;
+  transition: opacity 0.1s;
+}
+
+.TopSubmenu-link,
+.TopSubmenu-link:hover,
+.TopSubmenu-link:visited,
+.TopSubmenu-link:active,
+.TopSubmenu-link:focus {
+  color: transparentize($body-color, 0.3);
+  text-decoration: none;
+}
+
+.TopSubmenu-link--active,
+.TopSubmenu-link--active:hover,
+.TopSubmenu-link--active:visited,
+.TopSubmenu-link--active:active,
+.TopSubmenu-link--active:focus,
+.TopSubmenu-link--active:hover {
+  color: $body-color;
+  border-left-color: #cc3636;
+}

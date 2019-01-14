@@ -1,0 +1,9 @@
+.ReplicasetList-outer {}
+
+.ReplicasetList-inner {}
+
+.ReplicasetList-replicasetCard {}
+
+.ReplicasetList-replicasetCard + .ReplicasetList-replicasetCard {
+  margin-top: 3em;
+}

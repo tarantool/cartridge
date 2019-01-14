@@ -1,0 +1,35 @@
+@import 'src/styles/variables';
+
+.ServerConsole-console {
+  height: 100%;
+}
+
+.ServerConsole-welcomeBlock {}
+
+.ServerConsole-welcomeMessage {
+  font-style: italic;
+  color: $console-info-color;
+}
+
+.ServerConsole-serverListBlock {}
+
+.ServerConsole-serverListMessage {
+  color: $console-menu-link;
+}
+
+.ServerConsole-serverConsoleLink,
+.ServerConsole-serverConsoleLink:hover,
+.ServerConsole-serverConsoleLink:visited,
+.ServerConsole-serverConsoleLink:active,
+.ServerConsole-serverConsoleLink:focus {
+  color: $console-menu-link;
+}
+
+.ServerConsole-serverConsoleLink--active,
+.ServerConsole-serverConsoleLink--active:hover {
+  text-decoration: underline;
+}
+
+.ServerConsole-blankLine {
+  display: block;
+}
