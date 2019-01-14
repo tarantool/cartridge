@@ -38,12 +38,24 @@ package.loaded['membership'] = {
     end,
 }
 
+package.loaded['cluster.pool'] = {
+    connect = function()
+        return require('net.box').self
+    end,
+}
+
+vshard = {
+    storage = {
+        buckets_count = function() end,
+    }
+}
+
 local tap = require('tap')
 local yaml = require('yaml')
 local topology = require('cluster.topology')
 local test = tap.test('topology.config')
 
-test:plan(45)
+test:plan(49)
 
 local function check_config(result, raw_new, raw_old)
     local cfg_new = raw_new and yaml.decode(raw_new) or {}
@@ -457,10 +469,26 @@ servers:
     replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
 ...]])
 
-check_config('replicasets[bbbbbbbb-0000-4000-b000-000000000001]'..
-  ' is a vshard-storage and can not be expelled',
+local conf_old_with_weight = [[---
+servers:
+  aaaaaaaa-aaaa-4000-b000-000000000001:
+    uri: localhost:3301
+    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
+  bbbbbbbb-bbbb-4000-b000-000000000001:
+    uri: localhost:3331
+    replicaset_uuid: bbbbbbbb-0000-4000-b000-000000000001
+replicasets:
+  aaaaaaaa-0000-4000-b000-000000000001:
+    master: aaaaaaaa-aaaa-4000-b000-000000000001
+    roles: {"vshard-storage": true}
+    weight: 1
+  bbbbbbbb-0000-4000-b000-000000000001:
+    master: bbbbbbbb-bbbb-4000-b000-000000000001
+    roles: {"vshard-storage": true}
+    weight: %d
+...]]
 
-[[---
+local conf_new_expelled = [[---
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000001:
     uri: localhost:3301
@@ -469,52 +497,70 @@ servers:
 replicasets:
   aaaaaaaa-0000-4000-b000-000000000001:
     master: aaaaaaaa-aaaa-4000-b000-000000000001
-    roles: {"vshard-router": true}
-...]],
+    roles: {"vshard-storage": true}
+    weight: 1
+...]]
 
-[[---
+local conf_new_disabled = [[---
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000001:
     uri: localhost:3301
     replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
   bbbbbbbb-bbbb-4000-b000-000000000001:
-    uri: localhost:3302
+    uri: localhost:3331
     replicaset_uuid: bbbbbbbb-0000-4000-b000-000000000001
 replicasets:
   aaaaaaaa-0000-4000-b000-000000000001:
     master: aaaaaaaa-aaaa-4000-b000-000000000001
-    roles: {"vshard-router": true}
+    roles: {"vshard-storage": true}
+    weight: 1
   bbbbbbbb-0000-4000-b000-000000000001:
     master: bbbbbbbb-bbbb-4000-b000-000000000001
-    roles: {"vshard-storage": true}
-    weight: 1
-...]])
-
-check_config('replicasets[aaaaaaaa-0000-4000-b000-000000000001].roles'..
-  ' vshard-storage can not be disabled',
-
-[[---
-servers:
-  aaaaaaaa-aaaa-4000-b000-000000000001:
-    uri: localhost:3301
-    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
-replicasets:
-  aaaaaaaa-0000-4000-b000-000000000001:
-    master: aaaaaaaa-aaaa-4000-b000-000000000001
     roles: {}
-...]],
+...]]
 
-[[---
-servers:
-  aaaaaaaa-aaaa-4000-b000-000000000001:
-    uri: localhost:3301
-    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
-replicasets:
-  aaaaaaaa-0000-4000-b000-000000000001:
-    master: aaaaaaaa-aaaa-4000-b000-000000000001
-    roles: {"vshard-storage": true}
-    weight: 1
-...]])
+
+check_config('replicasets[bbbbbbbb-0000-4000-b000-000000000001]'..
+  ' is a vshard-storage which can\'t be removed',
+  conf_new_expelled,
+  conf_old_with_weight:format(1)
+)
+
+check_config('replicasets[bbbbbbbb-0000-4000-b000-000000000001]'..
+  ' is a vshard-storage which can\'t be removed',
+  conf_new_disabled,
+  conf_old_with_weight:format(1)
+)
+
+function vshard.storage.buckets_count()
+    return 1
+end
+
+check_config('replicasets[bbbbbbbb-0000-4000-b000-000000000001]'..
+  ' rebalancing isn\'t finished yet',
+  conf_new_expelled,
+  conf_old_with_weight:format(0)
+)
+
+check_config('replicasets[bbbbbbbb-0000-4000-b000-000000000001]'..
+  ' rebalancing isn\'t finished yet',
+  conf_new_disabled,
+  conf_old_with_weight:format(0)
+)
+
+function vshard.storage.buckets_count()
+    return 0
+end
+
+check_config(true,
+  conf_new_expelled,
+  conf_old_with_weight:format(0)
+)
+
+check_config(true,
+  conf_new_disabled,
+  conf_old_with_weight:format(0)
+)
 
 check_config('replicasets[aaaaaaaa-0000-4000-b000-000000000001]'..
   ' can not enable unknown role "unknown"',

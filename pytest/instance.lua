@@ -64,7 +64,7 @@ local ok, err = cluster.cfg({
     workdir = os.getenv('WORKDIR'),
     advertise_uri = os.getenv('ADVERTISE_URI') or 'localhost:3301',
     cluster_cookie = os.getenv('CLUSTER_COOKIE'),
-    bucket_count = 10000,
+    bucket_count = 3000,
     http_port = os.getenv('HTTP_PORT') or 8081,
     roles = {
         'mymodule'
