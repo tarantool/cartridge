@@ -51,7 +51,9 @@ const filterReplicasetList = (replicasetList, rolesFilterValue, nameFilterValue)
 
   if (nameFilterValue) {
     filteredReplicasetList = filteredReplicasetList.filter(
-      replicaset => replicaset.uuid.startsWith(nameFilterValue) || replicaset.servers.some(server => server.alias && server.alias.startsWith(nameFilterValue))
+      replicaset => replicaset.uuid.startsWith(nameFilterValue) || replicaset.servers.some(
+        server => server.uri.includes(nameFilterValue) || server.alias && server.alias.startsWith(nameFilterValue)
+      )
     );
   }
 
@@ -227,7 +229,7 @@ class Cluster extends React.Component {
                             </div>
                             <div className="col-auto form-group">
                               <label htmlFor="pages-Cluster-roles-filter">
-                                Filter by uuid or server alias:
+                                Filter by uuid or server uri/alias:
                               </label>
                               <input type="text" id="pages-Cluster-roles-filter"
                                 className="form-control form-control-sm"
@@ -250,7 +252,11 @@ class Cluster extends React.Component {
                           expellServer={this.handleExpellServerRequest}
                           createReplicaset={this.handleCreateReplicasetRequest} />
                       )
-                      : 'adsf'}
+                      : (
+                        <div className="trTable-noData">
+                          No replicaset found
+                        </div>
+                      )}
                   </div>
                 )
                 : null}
