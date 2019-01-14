@@ -1,18 +1,25 @@
 import PropTypes from 'prop-types';
 import React from 'react';
+import { defaultMemoize } from 'reselect';
 
 import ReplicasetCard from 'src/components/ReplicasetCard';
 
 import './ReplicasetList.css';
 
+const prepareReplicasetList = dataSource => [...dataSource].sort((a, b) => b.uuid < a.uuid ? 1 : -1);
+
 class ReplicasetList extends React.PureComponent {
+  prepareReplicasetList = defaultMemoize(prepareReplicasetList);
+
   render() {
-    const { clusterSelf, dataSource, consoleServer, editReplicaset, joinServer, expellServer, createReplicaset } = this.props;
+    const { clusterSelf, consoleServer, editReplicaset, joinServer, expellServer, createReplicaset } = this.props;
+
+    const replicasetList = this.getReplicasetList();
 
     return (
       <div className="ReplicasetList-outer">
         <div className="ReplicasetList-inner">
-          {dataSource.map(replicaset => {
+          {replicasetList.map(replicaset => {
             return (
               <div
                 key={replicaset.uuid}
@@ -33,6 +40,11 @@ class ReplicasetList extends React.PureComponent {
       </div>
     );
   }
+
+  getReplicasetList = () => {
+    const { dataSource } = this.props;
+    return this.prepareReplicasetList(dataSource);
+  };
 }
 
 ReplicasetList.propTypes = {

@@ -1,10 +1,32 @@
-@import 'src/styles/variables';
-
 .pages-Cluster {}
 
 .pages-Cluster-serverList {}
 
 .pages-Cluster-replicasetList {}
+
+.pages-Cluster-replicasetList .tr-pageCard-head {
+  padding-bottom: 0.4em;
+}
+
+.pages-Cluster-filter {
+  margin-bottom: 1.8em;
+  padding: 0.6em 0;
+  font-size: 14px;
+  _background-color: rgba(110, 97, 160, 0.04);
+  border-top: 1px solid rgba(55, 52, 66, 0.08)
+}
+
+.pages-Cluster-filter label {
+  margin-right: 0.4em;
+}
+
+.pages-Cluster-filter select {
+ width: 10em !important;
+}
+
+.pages-Cluster-filter input[type=text] {
+  width: 20em !important;
+}
 
 .pages-Cluster-configurationCard {
   margin-top: 4em;

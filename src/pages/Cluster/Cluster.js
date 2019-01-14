@@ -24,7 +24,7 @@ import './Cluster.css';
   ReplicasetList > [Edit]                => renderEditReplicasetModal      => ReplicasetEditModal (edit: set roles)
  */
 
-const prepareReplicasetList = (replicasetList, serverStat) => {
+const prepareReplicasetList = (replicasetList, serverStat, rolesFilterValue, nameFilterValue) => {
   return replicasetList.map(replicaset => {
     const servers = replicaset.servers.map(server => {
       const stat = serverStat.find(stat => stat.uuid === server.uuid);
@@ -38,6 +38,24 @@ const prepareReplicasetList = (replicasetList, serverStat) => {
       servers,
     };
   });
+};
+
+const filterReplicasetList = (replicasetList, rolesFilterValue, nameFilterValue) => {
+  let filteredReplicasetList = replicasetList;
+
+  if (rolesFilterValue) {
+    filteredReplicasetList = filteredReplicasetList.filter(
+      replicaset => replicaset.roles.includes(rolesFilterValue)
+    )
+  }
+
+  if (nameFilterValue) {
+    filteredReplicasetList = filteredReplicasetList.filter(
+      replicaset => replicaset.uuid.startsWith(nameFilterValue) || replicaset.servers.some(server => server.alias && server.alias.startsWith(nameFilterValue))
+    );
+  }
+
+  return filteredReplicasetList;
 };
 
 class Cluster extends React.Component {
@@ -56,11 +74,14 @@ class Cluster extends React.Component {
       createReplicasetModalDataSource: null,
       expellServerConfirmVisible: false,
       expellServerConfirmDataSource: null,
+      rolesFilterValue: '',
+      nameFilterValue: '',
     };
 
     this.consoleReserveElement = null;
 
     this.prepareReplicasetList = defaultMemoize(prepareReplicasetList);
+    this.filterReplicasetList = defaultMemoize(filterReplicasetList);
   }
 
   componentDidMount() {
@@ -105,14 +126,14 @@ class Cluster extends React.Component {
   }
 
   renderContent = () => {
-    const { clusterSelf, serverList, selectedServerUri, selectedReplicasetUuid } = this.props;
+    const { clusterSelf, serverList, selectedServerUri, replicasetList, selectedReplicasetUuid } = this.props;
     const { serverConsoleVisible, bootstrapVshardConfirmVisible, probeServerModalVisible, createReplicasetModalVisible,
-      expellServerConfirmVisible } = this.state;
+      expellServerConfirmVisible, rolesFilterValue, nameFilterValue } = this.state;
 
     const joinServerModalVisible = !!selectedServerUri;
     const editReplicasetModalVisible = !!selectedReplicasetUuid;
     const unlinkedServers = this.getUnlinkedServers();
-    const replicasetList = this.getReplicasetList();
+    const filteredReplicasetList = this.getFilteredReplicasetList();
     const canTestConfigBeApplied = !!serverList && serverList.length === 1 && serverList[0].status === 'unconfigured';
 
     return (
@@ -145,11 +166,11 @@ class Cluster extends React.Component {
               {unlinkedServers.length
                 ? (
                   <div className="tr-card-margin">
-                    <div className="tr-card-head">
-                      <div className="tr-card-header">
+                    <div className="tr-pageCard-head">
+                      <div className="tr-pageCard-header">
                         Unconfigured instances
                       </div>
-                      <div className="tr-cards-buttons">
+                      <div className="tr-pageCard-buttons">
                         {this.renderProbeServerButtons()}
                       </div>
                     </div>
@@ -167,35 +188,71 @@ class Cluster extends React.Component {
                 )
                 : null}
 
+              {clusterSelf.configured
+                ? this.renderFailoverManagement()
+                : null}
+
               {replicasetList.length
                 ? (
-                  <div className="tr-card-margin">
-                    <div className="tr-card-head">
-                      <div className="tr-card-header">
+                  <div className="tr-card-margin pages-Cluster-replicasetList">
+                    <div className="tr-pageCard-head">
+                      <div className="tr-pageCard-header">
                         Replicaset list
                       </div>
-                      <div className="tr-cards-buttons">
+                      <div className="tr-pageCard-buttons">
                         {unlinkedServers.length
                           ? null
                           : this.renderProbeServerButtons()}
                       </div>
                     </div>
-                    <div className="pages-Cluster-replicasetList">
-                      <ReplicasetList
-                        clusterSelf={clusterSelf}
-                        dataSource={replicasetList}
-                        consoleServer={this.handleServerConsoleRequest}
-                        editReplicaset={this.handleEditReplicasetRequest}
-                        joinServer={this.handleJoinServerRequest}
-                        expellServer={this.handleExpellServerRequest}
-                        createReplicaset={this.handleCreateReplicasetRequest} />
-                    </div>
+
+                    {replicasetList.length > 1
+                      ? (
+                        <div className="pages-Cluster-filter">
+                          <div className="row form-inline">
+                            <div className="col-auto form-group">
+                              <label htmlFor="pages-Cluster-roles-filter">
+                                Filter by role:
+                              </label>
+                              <select id="pages-Cluster-roles-filter"
+                                className="form-control form-control-sm"
+                                onChange={this.handleRolesFilterChange}
+                                value={rolesFilterValue}
+                              >
+                                <option value="">Any roles</option>
+                                {clusterSelf.knownRoles.map(role => (
+                                  <option value={role}>{role}</option>
+                                ))}
+                              </select>
+                            </div>
+                            <div className="col-auto form-group">
+                              <label htmlFor="pages-Cluster-roles-filter">
+                                Filter by uuid or server alias:
+                              </label>
+                              <input type="text" id="pages-Cluster-roles-filter"
+                                className="form-control form-control-sm"
+                                onChange={this.handleNameFilterChange}
+                                value={nameFilterValue} />
+                            </div>
+                          </div>
+                        </div>
+                      )
+                      : null}
+
+                    {filteredReplicasetList.length
+                      ? (
+                        <ReplicasetList
+                          clusterSelf={clusterSelf}
+                          dataSource={filteredReplicasetList}
+                          consoleServer={this.handleServerConsoleRequest}
+                          editReplicaset={this.handleEditReplicasetRequest}
+                          joinServer={this.handleJoinServerRequest}
+                          expellServer={this.handleExpellServerRequest}
+                          createReplicaset={this.handleCreateReplicasetRequest} />
+                      )
+                      : 'adsf'}
                   </div>
                 )
-                : null}
-
-              {clusterSelf.configured
-                ? this.renderFailoverManagement()
                 : null}
 
               {false
@@ -580,6 +637,20 @@ class Cluster extends React.Component {
     });
   };
 
+  handleRolesFilterChange = event => {
+    const { target } = event;
+    this.setState({
+      rolesFilterValue: target.value,
+    });
+  };
+
+  handleNameFilterChange = event => {
+    const { target } = event;
+    this.setState({
+      nameFilterValue: target.value,
+    });
+  };
+
   saveConnectedServerConsoleState = () => {
     const { saveConsoleState } = this.props;
 
@@ -633,8 +704,18 @@ class Cluster extends React.Component {
 
   getReplicasetList = () => {
     const { replicasetList, serverStat } = this.props;
+
     return replicasetList
       ? this.prepareReplicasetList(replicasetList, serverStat)
+      : null;
+  };
+
+  getFilteredReplicasetList = () => {
+    const { rolesFilterValue, nameFilterValue } = this.state;
+    const replicasetList = this.getReplicasetList();
+
+    return replicasetList
+      ? this.filterReplicasetList(replicasetList, rolesFilterValue, nameFilterValue)
       : null;
   };
 }

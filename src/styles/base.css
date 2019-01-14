@@ -33,11 +33,22 @@ p + p {
   margin-top: 4em;
 }
 
+.tr-pageCard-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1em 0;
+  font-size: 1.4em;
+}
+
+.tr-pageCard-header {}
+
+.tr-pageCard-buttons {}
+
 .tr-card {
   border-radius: $cards-border-radius;
   border: $cards-border;
   background-color: $cards-bg-color;
-  *box-shadow: $cards-shadow;
 }
 
 .tr-card-head {
