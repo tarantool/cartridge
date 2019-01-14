@@ -13,12 +13,16 @@ install:
 	cp $(DIR)/build/bundle.lua $(INST_LUADIR)/cluster/front-bundle.lua
 
 doc:
+	echo "# GraphQL schema\n" > dev/GraphQL.md
+	echo '```' >> dev/GraphQL.md
+	cat dev/schema.graphql >> dev/GraphQL.md
+	echo '```' >> dev/GraphQL.md
 	ldoc .
 
 schema:
 	WORKDIR=dev/gql-schema pytest/instance.lua & \
 	PID=$$!; \
-	graphql get-schema -o doc/schema.graphql; \
+	graphql get-schema -o dev/schema.graphql; \
 	kill $$PID; \
 
 test:
