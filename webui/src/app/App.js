@@ -3,7 +3,7 @@ import { Route } from 'react-router-dom';
 
 import 'src/styles/bootstrap.css';
 import 'src/styles/bootstrap/index.css';
-import 'src/styles/base.css';
+import 'src/styles/base.scss';
 import 'src/styles/app.css';
 import 'src/styles/pages.css';
 import 'src/styles/tables.css';

@@ -1,20 +1,30 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
 import { Provider } from 'react-redux';
-import { BrowserRouter } from 'react-router-dom';
+import { Router, Switch, Route } from 'react-router-dom';
 
 import App from './app';
-// import registerServiceWorker from './registerServiceWorker';
 import configureStore from './store/configureStore';
+
+const projectName = 'cluster';
+
+const projectPath = (path) => `/${projectName}/${path}`
 
 const store = configureStore();
 
-ReactDOM.render((
-  <Provider store={store}>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
-  </Provider>
-), document.getElementById('root'));
+class Root extends React.Component{
+  render(){
+    return (
+      <Provider store={store}>
+        <div className="cluster_app">
+          <Router history={window.tarantool_enterprise_core.history}>
+            <Switch>
+              <Route path={projectPath('')} component={App} />
+            </Switch>
+          </Router>
+        </div>
+      </Provider>
+    )
+  }
+}
 
-// registerServiceWorker();
+window.tarantool_enterprise_core.register(projectName, [{label: 'Cluster', path: `/${projectName}`}], Root, 'react')

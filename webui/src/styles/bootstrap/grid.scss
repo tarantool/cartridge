@@ -1,20 +1,22 @@
 // Grid system manually forked from Bootstrap Grid v4.1.1.
 // Bootstrap Grid is licensed MIT. (https://github.com/twbs/bootstrap/blob/master/LICENSE)
+.cluster_app {
 
-@-ms-viewport {
-  width: device-width;
+  @-ms-viewport {
+    width: device-width;
+  }
+
+  html {
+    box-sizing: border-box;
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: inherit;
+  }
+
 }
-
-html {
-  box-sizing: border-box;
-}
-
-*,
-*::before,
-*::after {
-  box-sizing: inherit;
-}
-
 .container {
   width: 100%;
   padding-right: ($grid-gutter-width / 2);

@@ -123,16 +123,6 @@ local function cfg(opts, box_opts)
             return nil, err
         end
 
-        httpd:route({
-                method = 'GET',
-                path = '/',
-                public = true,
-            },
-            function(req)
-                return req:redirect_to('/cluster')
-            end
-        )
-
         local ok, err = e_http:pcall(webui.init, httpd)
         if not ok then
             return nil, err

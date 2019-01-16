@@ -1,16 +1,17 @@
 @import 'src/styles/variables.scss';
+.cluster_app {
+  body {
+    overflow-y: scroll;
+    background-color: $body-bg-color !important; /* ant-design antidote */
+  }
 
-body {
-  overflow-y: scroll;
-  background-color: $body-bg-color !important; /* ant-design antidote */
-}
+  p {
+    margin: 0;
+  }
 
-p {
-  margin: 0;
-}
-
-p + p {
-  margin-top: 1em;
+  p + p {
+    margin-top: 1em;
+  }
 }
 
 .ant-message {
@@ -21,7 +22,7 @@ p + p {
   justify-content: center;
 }
 
-.ant-message .anticon{
+.ant-message .anticon {
   margin-right: 10px;
 }
 
@@ -33,22 +34,11 @@ p + p {
   margin-top: 4em;
 }
 
-.tr-pageCard-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1em 0;
-  font-size: 1.4em;
-}
-
-.tr-pageCard-header {}
-
-.tr-pageCard-buttons {}
-
 .tr-card {
   border-radius: $cards-border-radius;
   border: $cards-border;
   background-color: $cards-bg-color;
+  *box-shadow: $cards-shadow;
 }
 
 .tr-card-head {
@@ -60,13 +50,15 @@ p + p {
   border-bottom: $cards-border;
 }
 
-.tr-card-header {}
+.tr-card-header {
+}
 
 .tr-card-content {
   padding: 2em;
 }
 
-.tr-label {}
+.tr-label {
+}
 
 p.tr-label {
   margin-bottom: 0; // ant-design fix
@@ -93,8 +85,10 @@ span.tr-label + span.tr-label {
   opacity: 0.4;
 }
 
-.tr-label-value {}
+.tr-label-value {
+}
 
 .tr-label-name + .tr-label-value {
   margin-left: 0.4em;
 }
+
