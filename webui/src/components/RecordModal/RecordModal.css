@@ -1,0 +1,44 @@
+.RecordModal-modal {}
+
+.RecordModal-record {
+  font-size: 11px;
+}
+
+.RecordModal-notFound {}
+
+.RecordModal-recordRow {}
+
+.RecordModal-recordRow + .RecordModal-recordRow {
+  margin-top: 16px;
+}
+
+.RecordModal-pill {
+  display: inline-block;
+  margin-right: 10px;
+}
+
+.RecordModal-pill > *:first-child {
+  display: inline-block;
+  margin-right: 4px;
+  color: #949494;
+
+}
+
+.RecordModal-rowHead {
+  margin-bottom: 2px;
+  color: #949494;
+}
+
+.ReacordModal-reason {
+  max-height: 500px;
+  padding: 10px;
+  border: 1px solid #ececec;
+}
+
+.ReacordModal-object {
+  padding: 1px 1px 1px 0;
+  font-size: 12px;
+  border: 1px solid #ececec;
+}
+
+

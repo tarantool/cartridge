@@ -1,0 +1,14 @@
+.HeightTrailer-trailer {
+  position: relative;
+  height: 100%;
+  z-index: 0;
+}
+
+.HeightTrailer-topHandler {
+  position: absolute;
+  top: -4px;
+  height: 10px;
+  width: 100%;
+  cursor: row-resize;
+  z-index: 1;
+}

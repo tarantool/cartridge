@@ -1,0 +1,100 @@
+@import 'src/styles/variables.scss';
+
+body {
+  overflow-y: scroll;
+  background-color: $body-bg-color !important; /* ant-design antidote */
+}
+
+p {
+  margin: 0;
+}
+
+p + p {
+  margin-top: 1em;
+}
+
+.ant-message {
+  position: fixed;
+  bottom: 30px;
+  width: 100vw;
+  display: flex;
+  justify-content: center;
+}
+
+.ant-message .anticon{
+  margin-right: 10px;
+}
+
+.ant-card {
+  box-shadow: $cards-shadow;
+}
+
+.tr-card-margin + .tr-card-margin {
+  margin-top: 4em;
+}
+
+.tr-pageCard-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1em 0;
+  font-size: 1.4em;
+}
+
+.tr-pageCard-header {}
+
+.tr-pageCard-buttons {}
+
+.tr-card {
+  border-radius: $cards-border-radius;
+  border: $cards-border;
+  background-color: $cards-bg-color;
+}
+
+.tr-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1em 2em;
+  font-size: 1.4em;
+  border-bottom: $cards-border;
+}
+
+.tr-card-header {}
+
+.tr-card-content {
+  padding: 2em;
+}
+
+.tr-label {}
+
+p.tr-label {
+  margin-bottom: 0; // ant-design fix
+}
+
+p.tr-label + p.tr-label {
+  margin-top: 0.8em;
+}
+
+span.tr-label {
+  display: inline-block;
+}
+
+span.tr-label + span.tr-label {
+  margin-left: 0.3em;
+}
+
+.tr-label-name,
+.tr-label-value {
+  display: inline-block;
+}
+
+.tr-label-name {
+  opacity: 0.4;
+}
+
+.tr-label-value {}
+
+.tr-label-name + .tr-label-value {
+  margin-left: 0.4em;
+}

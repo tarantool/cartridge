@@ -1,0 +1,60 @@
+@import 'src/styles/variables';
+
+$head-font-size: 14px;
+
+.ReplicasetCard {
+  font-size: 11px;
+}
+
+.ReplicasetCard-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6em 1em;
+  color: $brezhnev-color;
+  background-color: $brezhnev-bg;
+  border-radius: 2px;
+}
+
+.ReplicasetCard-name {
+  display: flex;
+  align-items: center;
+  font-size: $head-font-size;
+}
+
+.ReplicasetCard-indicator {
+  position: relative;
+  left: -1px;
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 8px;
+  background-color: $server-status-indicator--healthy;
+  border-radius: 50%;
+}
+
+.ReplicasetCard-indicator--error {
+  background-color: $server-status-indicator--error;
+}
+
+.ReplicasetCard-namePrimary,
+.ReplicasetCard-nameSecondary {
+  display: inline-block;
+}
+
+.ReplicasetCard-namePrimary {
+  margin-right: 0.8em;
+}
+
+.ReplicasetCard-nameSecondary {
+  margin-right: 0.3em;
+  opacity: $brezhnev-mute-text-opacity;
+}
+
+.ReplicasetCard-actions {
+  font-size: $head-font-size;
+}
+
+.ReplicasetCard-serverList {
+  margin-top: 0.3em;
+}
