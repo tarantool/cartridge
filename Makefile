@@ -5,7 +5,7 @@ all: $(DIR)/node_modules
 	npm run build --prefix=$(DIR)
 
 $(DIR)/node_modules: $(DIR)/package.json
-	npm install --prefix=$(DIR)
+	npm install --production --prefix=$(DIR)
 	@ touch $@
 
 install:
