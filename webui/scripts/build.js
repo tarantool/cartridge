@@ -14,9 +14,13 @@ process.on('unhandledRejection', err => {
 // Ensure environment variables are read.
 require('../config/env');
 
+const moduleConfig = require('../module-config');
+const mime = require('mime-types');
 const path = require('path');
 const chalk = require('chalk');
 const fs = require('fs-extra');
+const mainFs = require('fs');
+const cp = require('child_process');
 const webpack = require('webpack');
 const config = require('../config/webpack.config.prod');
 const paths = require('../config/paths');
@@ -25,6 +29,20 @@ const formatWebpackMessages = require('react-dev-utils/formatWebpackMessages');
 const printHostingInstructions = require('react-dev-utils/printHostingInstructions');
 const FileSizeReporter = require('react-dev-utils/FileSizeReporter');
 const printBuildError = require('react-dev-utils/printBuildError');
+
+const walkSync = function(dir, filelist) {
+  const files = mainFs.readdirSync(dir);
+  filelist = filelist || [];
+  files.forEach(file => {
+    if (mainFs.statSync(dir + file).isDirectory()) {
+      filelist = walkSync(dir + file + '/', filelist);
+    }
+    else {
+      filelist.push(dir + file);
+    }
+  });
+  return filelist;
+};
 
 const measureFileSizesBeforeBuild =
   FileSizeReporter.measureFileSizesBeforeBuild;
@@ -59,13 +77,13 @@ measureFileSizesBeforeBuild(paths.appBuild)
         console.log(warnings.join('\n\n'));
         console.log(
           '\nSearch for the ' +
-            chalk.underline(chalk.yellow('keywords')) +
-            ' to learn more about each warning.'
+          chalk.underline(chalk.yellow('keywords')) +
+          ' to learn more about each warning.'
         );
         console.log(
           'To ignore, add ' +
-            chalk.cyan('// eslint-disable-next-line') +
-            ' to the line before.\n'
+          chalk.cyan('// eslint-disable-next-line') +
+          ' to the line before.\n'
         );
       } else {
         console.log(chalk.green('Compiled successfully.\n'));
@@ -98,6 +116,28 @@ measureFileSizesBeforeBuild(paths.appBuild)
       printBuildError(err);
       process.exit(1);
     }
+  )
+  .then(
+    () => {
+      const buildFoler = path.relative(process.cwd(), paths.appBuild);
+      const namespaceFolder = buildFoler + '/static/' + moduleConfig.namespace + '/';
+      const files = walkSync(namespaceFolder);
+      const filemap = {};
+      const isEntry = /main.+js$/
+      for (const file of files){
+        const fileName = file.slice(namespaceFolder.length);
+        const fileBody = mainFs.readFileSync(file, {encoding: 'utf8'});
+        filemap[fileName] = {
+          is_entry: isEntry.test(fileName),
+          body: fileBody,
+          mime: mime.lookup(fileName),
+        }
+      }
+      mainFs.writeFileSync(buildFoler + '/bundle.json', JSON.stringify(filemap), {encoding: 'utf8'})
+      console.log('compile bundle.json')
+      cp.execSync('tarantool -l pack-front - build/bundle.json build/bundle.lua')
+      console.log('build bundle.lua')
+    }
   );
 
 // Create the production build and print the deployment instructions.
@@ -128,7 +168,7 @@ function build(previousFileSizes) {
         console.log(
           chalk.yellow(
             '\nTreating warnings as errors because process.env.CI = true.\n' +
-              'Most CI servers set it automatically.\n'
+            'Most CI servers set it automatically.\n'
           )
         );
         return reject(new Error(messages.warnings.join('\n\n')));

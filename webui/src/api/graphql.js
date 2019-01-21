@@ -1,4 +1,6 @@
-const graphRequest = window.graphql(process.env.REACT_APP_GRAPHQL_API_ENDPOINT, {
+import * as graphql from 'graphql'
+
+const graphRequest = graphql(process.env.REACT_APP_GRAPHQL_API_ENDPOINT, {
   asJSON: true,
   method: 'post',
 });

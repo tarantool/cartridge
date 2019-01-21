@@ -7,11 +7,12 @@ source  = {
 dependencies = {
     'lua >= 5.1',
     'http == 1.0.5-1',
-    'checks == 2.1.1-1',
+    'checks == 3.0.0-1',
     'lulpeg == 0.1.2-1',
-    'errors == 1.0.0-1',
+    'errors == 2.0.1-1',
     'vshard == 0.1.7-1',
-    'membership == 2.1.0-1',
+    'membership == 2.1.1-1',
+    'front == 3.0.2-1',
 }
 
 build = {
@@ -44,7 +45,7 @@ build = {
     },
     install_variables = {
         -- Installs lua module:
-        -- ['cluster.webui-static']
+        -- ['cluster.front-bundle']
         INST_LUADIR="$(LUADIR)",
     },
 }

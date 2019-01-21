@@ -1,5 +1,15 @@
 import './styles.css';
 
+if (!document.getElementById('PageRequestIndicator-indicator'))
+{
+  const element = document.createElement('div')
+  element.id = 'PageRequestIndicator-indicator'
+  element.className = 'pageRequestIndicator-indicator'
+  const child = document.createElement('div')
+  child.className = 'pageRequestIndicator-progress'
+  element.appendChild(child)
+  document.body.appendChild(element)
+}
 const indicatorEl = document.querySelector('#PageRequestIndicator-indicator');
 const progressEl = document.querySelector('#PageRequestIndicator-indicator > *');
 

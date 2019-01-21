@@ -3,6 +3,13 @@
 require('strict').on()
 _G.is_initialized = function() return false end
 
+if not pcall(require, 'cluster.front-bundle') then
+    -- to be loaded in development environment
+    package.preload['cluster.front-bundle'] = function()
+        return require('webui.build.bundle')
+    end
+end
+
 local log = require('log')
 local cluster = require('cluster')
 

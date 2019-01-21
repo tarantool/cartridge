@@ -5,12 +5,12 @@ all: $(DIR)/node_modules
 	npm run build --prefix=$(DIR)
 
 $(DIR)/node_modules: $(DIR)/package.json
-	npm install --prefix=$(DIR)
+	npm install --production --prefix=$(DIR)
 	@ touch $@
 
 install:
 	mkdir -p $(INST_LUADIR)/cluster
-	tarantool pack.lua $(DIR)/build $(INST_LUADIR)/cluster/webui-static.lua
+	cp $(DIR)/build/bundle.lua $(INST_LUADIR)/cluster/front-bundle.lua
 
 doc:
 	ldoc .
