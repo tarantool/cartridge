@@ -44,10 +44,10 @@ def test_nonzero_weight(cluster):
     assert resp['errors'][0]['message'] == \
         "replicasets[bbbbbbbb-0000-4000-b000-000000000000] is a vshard-storage which can't be removed"
 
-    # It's prohibited to expell storage with non-zero weight
+    # It's prohibited to expel storage with non-zero weight
     resp = cluster['router'].graphql("""
         mutation {
-            expell_server(
+            expel_server(
                 uuid: "bbbbbbbb-bbbb-4000-b000-000000000001"
             )
         }
@@ -80,10 +80,10 @@ def test_rebalancing_unfinished(cluster, storage_zero_weight):
     assert resp['errors'][0]['message'] == \
         "replicasets[bbbbbbbb-0000-4000-b000-000000000000] rebalancing isn't finished yet"
 
-    # It's prohibited to expell storage until rebalancing finishes
+    # It's prohibited to expel storage until rebalancing finishes
     resp = cluster['router'].graphql("""
         mutation {
-            expell_server(
+            expel_server(
                 uuid: "bbbbbbbb-bbbb-4000-b000-000000000001"
             )
         }
@@ -111,10 +111,10 @@ def test_success(cluster, storage_zero_weight):
     """)
     assert 'errors' not in resp, resp['errors'][0]['message']
 
-    # Now it's possible to expell the storage
+    # Now it's possible to expel the storage
     resp = cluster['router'].graphql("""
         mutation {
-            expell_server(
+            expel_server(
                 uuid: "bbbbbbbb-bbbb-4000-b000-000000000001"
             )
         }

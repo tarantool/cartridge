@@ -189,12 +189,12 @@ export function createReplicaset(params) {
  * @param {Object} params
  * @param {string} params.uuid
  */
-export function expellServer(params) {
+export function expelServer(params) {
   const graph = `
     mutation(
       $uuid: String!
     ) {
-      expellServerResponse: expell_server(
+      expelServerResponse: expel_server(
         uuid: $uuid
       )
     }`;

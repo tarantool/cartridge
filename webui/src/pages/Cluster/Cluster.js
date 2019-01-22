@@ -20,7 +20,7 @@ import './Cluster.css';
   [Probe server]                         => renderProbeServerModal         => ServerEditModal (create: set uri, skip replicaset)
   ServerList > [Join]                    => renderJoinServerModal          => ServerEditModal (edit: skip uri, set replicaset)
   ServerList > [Create]                  => renderCreateReplicasetModal    => ReplicasetEditModal (create: set roles)
-  ReplicasetList > ServerList > [Expell] => renderExpellServerConfirmModal => confirmation
+  ReplicasetList > ServerList > [Expel]  => renderExpelServerConfirmModal  => confirmation
   ReplicasetList > [Edit]                => renderEditReplicasetModal      => ReplicasetEditModal (edit: set roles)
  */
 
@@ -74,8 +74,8 @@ class Cluster extends React.Component {
       joinServerModalDataSource: null,
       createReplicasetModalVisible: false,
       createReplicasetModalDataSource: null,
-      expellServerConfirmVisible: false,
-      expellServerConfirmDataSource: null,
+      expelServerConfirmVisible: false,
+      expelServerConfirmDataSource: null,
       rolesFilterValue: '',
       nameFilterValue: '',
     };
@@ -130,7 +130,7 @@ class Cluster extends React.Component {
   renderContent = () => {
     const { clusterSelf, serverList, selectedServerUri, replicasetList, selectedReplicasetUuid } = this.props;
     const { serverConsoleVisible, bootstrapVshardConfirmVisible, probeServerModalVisible, createReplicasetModalVisible,
-      expellServerConfirmVisible, rolesFilterValue, nameFilterValue } = this.state;
+      expelServerConfirmVisible, rolesFilterValue, nameFilterValue } = this.state;
 
     const joinServerModalVisible = !!selectedServerUri;
     const editReplicasetModalVisible = !!selectedReplicasetUuid;
@@ -152,8 +152,8 @@ class Cluster extends React.Component {
         {createReplicasetModalVisible
           ? this.renderCreateReplicasetModal()
           : null}
-        {expellServerConfirmVisible
-          ? this.renderExpellServerConfirmModal()
+        {expelServerConfirmVisible
+          ? this.renderExpelServerConfirmModal()
           : null}
         {editReplicasetModalVisible
           ? this.renderEditReplicasetModal()
@@ -183,7 +183,7 @@ class Cluster extends React.Component {
                         dataSource={unlinkedServers}
                         consoleServer={this.handleServerConsoleRequest}
                         joinServer={this.handleJoinServerRequest}
-                        expellServer={this.handleExpellServerRequest}
+                        expelServer={this.handleExpelServerRequest}
                         createReplicaset={this.handleCreateReplicasetRequest} />
                     </div>
                   </div>
@@ -256,7 +256,7 @@ class Cluster extends React.Component {
                           consoleServer={this.handleServerConsoleRequest}
                           editReplicaset={this.handleEditReplicasetRequest}
                           joinServer={this.handleJoinServerRequest}
-                          expellServer={this.handleExpellServerRequest}
+                          expelServer={this.handleExpelServerRequest}
                           createReplicaset={this.handleCreateReplicasetRequest} />
                       )
                       : (
@@ -401,17 +401,17 @@ class Cluster extends React.Component {
     );
   };
 
-  renderExpellServerConfirmModal = () => {
-    const { expellServerConfirmDataSource } = this.state;
+  renderExpelServerConfirmModal = () => {
+    const { expelServerConfirmDataSource } = this.state;
 
     return (
       <Modal
         visible
         width={540}
-        onOk={this.handleExpellServerSubmitRequest}
-        onCancel={this.handleExpellServerConfirmCloseRequest}
+        onOk={this.handleExpelServerSubmitRequest}
+        onCancel={this.handleExpelServerConfirmCloseRequest}
       >
-        Do you really want to expell server {expellServerConfirmDataSource.uri}?
+        Do you really want to expel the server {expelServerConfirmDataSource.uri}?
       </Modal>
     );
   };
@@ -597,29 +597,29 @@ class Cluster extends React.Component {
     );
   };
 
-  handleExpellServerRequest = server => {
+  handleExpelServerRequest = server => {
     this.setState({
-      expellServerConfirmVisible: true,
-      expellServerConfirmDataSource: server,
+      expelServerConfirmVisible: true,
+      expelServerConfirmDataSource: server,
     });
   };
 
-  handleExpellServerConfirmCloseRequest = () => {
+  handleExpelServerConfirmCloseRequest = () => {
     this.setState({
-      expellServerConfirmVisible: false,
-      expellServerConfirmDataSource: null,
+      expelServerConfirmVisible: false,
+      expelServerConfirmDataSource: null,
     });
   };
 
-  handleExpellServerSubmitRequest = () => {
-    const { expellServer } = this.props;
-    const { expellServerConfirmDataSource } = this.state;
+  handleExpelServerSubmitRequest = () => {
+    const { expelServer } = this.props;
+    const { expelServerConfirmDataSource } = this.state;
     this.setState(
       {
-        expellServerConfirmVisible: false,
-        expellServerConfirmDataSource: null,
+        expelServerConfirmVisible: false,
+        expelServerConfirmDataSource: null,
       },
-      () => expellServer(expellServerConfirmDataSource),
+      () => expelServer(expelServerConfirmDataSource),
     );
   };
 

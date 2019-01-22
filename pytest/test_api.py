@@ -37,7 +37,7 @@ def expelled(cluster):
     cluster['expelled'].kill()
     obj = cluster['router'].graphql("""
         mutation {
-            expell_server(
+            expel_server(
                 uuid: "cccccccc-cccc-4000-b000-000000000001"
             )
         }

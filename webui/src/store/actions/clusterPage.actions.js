@@ -8,7 +8,7 @@ import {
   CLUSTER_PAGE_PROBE_SERVER_REQUEST,
   CLUSTER_PAGE_JOIN_SERVER_REQUEST,
   CLUSTER_PAGE_CREATE_REPLICASET_REQUEST,
-  CLUSTER_PAGE_EXPELL_SERVER_REQUEST,
+  CLUSTER_PAGE_EXPEL_SERVER_REQUEST,
   CLUSTER_PAGE_REPLICASET_EDIT_REQUEST,
   CLUSTER_PAGE_UPLOAD_CONFIG_REQUEST,
   CLUSTER_PAGE_APPLY_TEST_CONFIG_REQUEST,
@@ -66,8 +66,8 @@ export const createReplicaset = getActionCreator(CLUSTER_PAGE_CREATE_REPLICASET_
  * @param {Object} payload
  * @param {string} payload.uuid
  */
-export const expellServer = getActionCreator(CLUSTER_PAGE_EXPELL_SERVER_REQUEST, null, {
-  successMessage: 'Expell is OK. Please wait for list refresh...',
+export const expelServer = getActionCreator(CLUSTER_PAGE_EXPEL_SERVER_REQUEST, null, {
+  successMessage: 'Expel is OK. Please wait for list refresh...',
 });
 
 /**

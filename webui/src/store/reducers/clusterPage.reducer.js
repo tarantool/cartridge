@@ -22,9 +22,9 @@ import {
   CLUSTER_PAGE_CREATE_REPLICASET_REQUEST,
   CLUSTER_PAGE_CREATE_REPLICASET_REQUEST_SUCCESS,
   CLUSTER_PAGE_CREATE_REPLICASET_REQUEST_ERROR,
-  CLUSTER_PAGE_EXPELL_SERVER_REQUEST,
-  CLUSTER_PAGE_EXPELL_SERVER_REQUEST_SUCCESS,
-  CLUSTER_PAGE_EXPELL_SERVER_REQUEST_ERROR,
+  CLUSTER_PAGE_EXPEL_SERVER_REQUEST,
+  CLUSTER_PAGE_EXPEL_SERVER_REQUEST_SUCCESS,
+  CLUSTER_PAGE_EXPEL_SERVER_REQUEST_ERROR,
   CLUSTER_PAGE_REPLICASET_EDIT_REQUEST,
   CLUSTER_PAGE_REPLICASET_EDIT_REQUEST_SUCCESS,
   CLUSTER_PAGE_REPLICASET_EDIT_REQUEST_ERROR,
@@ -59,8 +59,8 @@ export const initialState = {
   joinServerResponse: null,
   createReplicasetRequestStatus: getInitialRequestStatus(),
   createReplicasetResponse: null,
-  expellServerRequestStatus: getInitialRequestStatus(),
-  expellSerrverResponse: null,
+  expelServerRequestStatus: getInitialRequestStatus(),
+  expelSerrverResponse: null,
   editReplicasetRequestStatus: getInitialRequestStatus(),
   editReplicasetResponse: null,
   uploadConfigRequestStatus: getInitialRequestStatus(),
@@ -115,10 +115,10 @@ const createReplicasetRequestReducer = getRequestReducer(
   'createReplicasetRequestStatus',
 );
 
-const expellServerRequestReducer = getRequestReducer(
-  CLUSTER_PAGE_EXPELL_SERVER_REQUEST,
-  CLUSTER_PAGE_EXPELL_SERVER_REQUEST_SUCCESS,
-  CLUSTER_PAGE_EXPELL_SERVER_REQUEST_ERROR,
+const expelServerRequestReducer = getRequestReducer(
+  CLUSTER_PAGE_EXPEL_SERVER_REQUEST,
+  CLUSTER_PAGE_EXPEL_SERVER_REQUEST_SUCCESS,
+  CLUSTER_PAGE_EXPEL_SERVER_REQUEST_ERROR,
   'joinServerRequestStatus',
 );
 
@@ -161,7 +161,7 @@ export const reducer = baseReducer(
   probeServerRequestReducer,
   joinServerRequestReducer,
   createReplicasetRequestReducer,
-  expellServerRequestReducer,
+  expelServerRequestReducer,
   editReplicasetRequestReducer,
   uploadConfigRequestReducer,
   applyTestConfigRequestReducer,
