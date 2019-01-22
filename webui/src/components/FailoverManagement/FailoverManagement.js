@@ -1,8 +1,6 @@
 import PropTypes from 'prop-types';
 import React from 'react';
 
-import './FailoverManagement.css';
-
 class FailoverManagement extends React.PureComponent {
   render() {
     const { failoverEnabled } = this.props;
@@ -10,7 +8,7 @@ class FailoverManagement extends React.PureComponent {
     const failoverStatuText  = failoverEnabled ? 'enabled' : 'disabled';
 
     return (
-      <div className="FailoverManagement-outer tr-card tr-card-margin">
+      <div className="tr-card tr-card-margin">
         <div className="tr-card-head">
           <div className="tr-card-header">
             Failover

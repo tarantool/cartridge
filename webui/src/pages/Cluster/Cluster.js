@@ -286,7 +286,7 @@ class Cluster extends React.Component {
                   </div>
                 )
                 : null}
-              </div>
+            </div>
             <div ref={this.setConsoleReserve} />
           </div>
         </div>
