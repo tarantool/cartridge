@@ -92,7 +92,7 @@ class ReplicasetEditModal extends React.PureComponent {
 
     return (
       <CommonItemEditModal
-        title={['Create replicaset', 'Edit replicaset']}
+        title={['Create replica set', 'Edit replica set']}
         isLoading={isLoading}
         isSaving={isSaving}
         itemNotFound={replicasetNotFound}

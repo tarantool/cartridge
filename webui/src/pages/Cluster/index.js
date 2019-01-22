@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import { evalString, saveConsoleState } from 'src/store/actions/app.actions';
 import { createMessage } from 'src/store/actions/app.actions';
 import { pageDidMount, selectServer, closeServerPopup, selectReplicaset, closeReplicasetPopup, bootstrapVshard,
-  probeServer, joinServer, createReplicaset, expellServer, editReplicaset, uploadConfig, applyTestConfig,
+  probeServer, joinServer, createReplicaset, expelServer, editReplicaset, uploadConfig, applyTestConfig,
   changeFailover, resetPageState } from 'src/store/actions/clusterPage.actions';
 import Cluster from './Cluster';
 
@@ -55,7 +55,7 @@ const mapDispatchToProps = {
   probeServer,
   joinServer,
   createReplicaset,
-  expellServer,
+  expelServer,
   editReplicaset,
   uploadConfig,
   applyTestConfig,

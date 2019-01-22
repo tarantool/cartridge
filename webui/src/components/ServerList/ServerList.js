@@ -20,7 +20,7 @@ const getReadableBytes = size => {
   return Math.max(bytes, 0.1).toFixed(1) + ' ' + byteUnits[i];
 };
 
-const prepareColumnProps = (linked, clusterSelf, consoleServer, joinServer, createReplicaset, expellServer) => {
+const prepareColumnProps = (linked, clusterSelf, consoleServer, joinServer, createReplicaset, expelServer) => {
   const columns = [
     {
       key: 'indicator',
@@ -130,8 +130,8 @@ const prepareColumnProps = (linked, clusterSelf, consoleServer, joinServer, crea
         const handleJoinClick = () => joinServer(record);
         const createButtonVisible = clusterSelf.configured ? !record.uuid : record.uri === clusterSelf.uri;
         const handleCreateClick = () => createReplicaset(record);
-        const expellButtonVisible = !!record.uuid;
-        const handleExpellClick = () => expellServer(record);
+        const expelButtonVisible = !!record.uuid;
+        const handleExpelClick = () => expelServer(record);
 
         return (
           <div className="ServerList-actionButtons">
@@ -168,14 +168,14 @@ const prepareColumnProps = (linked, clusterSelf, consoleServer, joinServer, crea
                 </button>
               )
               : null}
-            {expellButtonVisible
+            {expelButtonVisible
               ? (
                 <button
                   type="button"
                   className="btn btn-link btn-sm"
-                  onClick={handleExpellClick}
+                  onClick={handleExpelClick}
                 >
-                  Expell
+                  Expel
                 </button>
               )
               : null}
@@ -235,8 +235,8 @@ class ServerList extends React.PureComponent {
   }
 
   getColumnProps = () => {
-    const { linked, clusterSelf, consoleServer, joinServer, createReplicaset, expellServer } = this.props;
-    return this.prepareColumnProps(linked, clusterSelf, consoleServer, joinServer, createReplicaset, expellServer);
+    const { linked, clusterSelf, consoleServer, joinServer, createReplicaset, expelServer } = this.props;
+    return this.prepareColumnProps(linked, clusterSelf, consoleServer, joinServer, createReplicaset, expelServer);
   };
 
   getDataSource = () => {
@@ -270,7 +270,7 @@ ServerList.propTypes = {
   })).isRequired,
   consoleServer: PropTypes.func.isRequired,
   joinServer: PropTypes.func.isRequired,
-  expellServer: PropTypes.func.isRequired,
+  expelServer: PropTypes.func.isRequired,
   createReplicaset: PropTypes.func.isRequired,
 };
 

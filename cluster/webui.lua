@@ -85,8 +85,8 @@ local function edit_server(_, args)
     return admin.edit_server(args)
 end
 
-local function expell_server(_, args)
-    return admin.expell_server(args.uuid)
+local function expel_server(_, args)
+    return admin.expel_server(args.uuid)
 end
 
 local function disable_servers(_, args)
@@ -171,12 +171,12 @@ local function init(httpd)
     })
 
     graphql.add_mutation({
-        name = 'expell_server',
+        name = 'expel_server',
         args = {
             uuid = gql_types.string.nonNull,
         },
         kind = gql_types.boolean,
-        callback = 'cluster.webui.expell_server',
+        callback = 'cluster.webui.expel_server',
     })
 
     graphql.add_mutation({
@@ -281,7 +281,7 @@ return {
     join_server = join_server,
     edit_server = edit_server,
     edit_replicaset = edit_replicaset,
-    expell_server = expell_server,
+    expel_server = expel_server,
     disable_servers = disable_servers,
 
     get_known_roles = confapplier.get_known_roles,

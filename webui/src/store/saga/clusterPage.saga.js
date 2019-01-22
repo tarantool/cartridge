@@ -22,9 +22,9 @@ import {
   CLUSTER_PAGE_CREATE_REPLICASET_REQUEST,
   CLUSTER_PAGE_CREATE_REPLICASET_REQUEST_SUCCESS,
   CLUSTER_PAGE_CREATE_REPLICASET_REQUEST_ERROR,
-  CLUSTER_PAGE_EXPELL_SERVER_REQUEST,
-  CLUSTER_PAGE_EXPELL_SERVER_REQUEST_SUCCESS,
-  CLUSTER_PAGE_EXPELL_SERVER_REQUEST_ERROR,
+  CLUSTER_PAGE_EXPEL_SERVER_REQUEST,
+  CLUSTER_PAGE_EXPEL_SERVER_REQUEST_SUCCESS,
+  CLUSTER_PAGE_EXPEL_SERVER_REQUEST_ERROR,
   CLUSTER_PAGE_REPLICASET_EDIT_REQUEST,
   CLUSTER_PAGE_REPLICASET_EDIT_REQUEST_SUCCESS,
   CLUSTER_PAGE_REPLICASET_EDIT_REQUEST_ERROR,
@@ -42,7 +42,7 @@ import {
 import { baseSaga, getRequestSaga, getSignalRequestSaga } from 'src/store/commonRequest';
 import { getClusterSelf } from 'src/store/request/app.requests';
 import { getPageData, refreshLists, getServerStat, bootstrapVshard, probeServer, joinServer, createReplicaset,
-  expellServer, editReplicaset, joinSingleServer, uploadConfig, applyTestConfig, changeFailover }
+  expelServer, editReplicaset, joinSingleServer, uploadConfig, applyTestConfig, changeFailover }
   from 'src/store/request/clusterPage.requests';
 
 const REFRESH_LIST_INTERVAL = 2500;
@@ -158,11 +158,11 @@ function* createReplicasetRequestSaga() {
   });
 }
 
-const expellServerRequestSaga = getRequestSaga(
-  CLUSTER_PAGE_EXPELL_SERVER_REQUEST,
-  CLUSTER_PAGE_EXPELL_SERVER_REQUEST_SUCCESS,
-  CLUSTER_PAGE_EXPELL_SERVER_REQUEST_ERROR,
-  expellServer,
+const expelServerRequestSaga = getRequestSaga(
+  CLUSTER_PAGE_EXPEL_SERVER_REQUEST,
+  CLUSTER_PAGE_EXPEL_SERVER_REQUEST_SUCCESS,
+  CLUSTER_PAGE_EXPEL_SERVER_REQUEST_ERROR,
+  expelServer,
 );
 
 const editReplicasetRequestSaga = getRequestSaga(
@@ -215,7 +215,7 @@ export const saga = baseSaga(
   probeServerRequestSaga,
   joinServerRequestSaga,
   createReplicasetRequestSaga,
-  expellServerRequestSaga,
+  expelServerRequestSaga,
   editReplicasetRequestSaga,
   uploadConfigRequestSaga,
   applyTestConfigRequestSaga,

@@ -361,7 +361,7 @@ local function edit_server(args)
     return true
 end
 
-local function expell_server(uuid)
+local function expel_server(uuid)
     checks('string')
 
     local topology_cfg = confapplier.get_deepcopy('topology')
@@ -372,17 +372,17 @@ local function expell_server(uuid)
         return nil, e_topology_edit:new('Server %q is already expelled', uuid)
     end
 
-    local expell_replicaset = topology_cfg.servers[uuid].replicaset_uuid
+    local expel_replicaset = topology_cfg.servers[uuid].replicaset_uuid
 
     topology_cfg.servers[uuid] = "expelled"
 
     for _it, instance_uuid, server in fun.filter(topology.not_expelled, topology_cfg.servers) do
-        if server.replicaset_uuid == expell_replicaset then
-            expell_replicaset = nil
+        if server.replicaset_uuid == expel_replicaset then
+            expel_replicaset = nil
         end
     end
-    if expell_replicaset ~= nil then
-        topology_cfg.replicasets[expell_replicaset] = nil
+    if expel_replicaset ~= nil then
+        topology_cfg.replicasets[expel_replicaset] = nil
     end
 
     local ok, err = confapplier.patch_clusterwide({topology = topology_cfg})
@@ -575,7 +575,7 @@ return {
     probe_server = probe_server,
     join_server = join_server,
     edit_server = edit_server,
-    expell_server = expell_server,
+    expel_server = expel_server,
     enable_servers = enable_servers,
     disable_servers = disable_servers,
 

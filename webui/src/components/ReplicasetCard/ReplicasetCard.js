@@ -20,7 +20,7 @@ const prepareRolesText = (roles, weight) => {
 
 class ReplicasetCard extends React.PureComponent {
   render() {
-    const { clusterSelf, replicaset, consoleServer, joinServer, expellServer, createReplicaset } = this.props;
+    const { clusterSelf, replicaset, consoleServer, joinServer, expelServer, createReplicaset } = this.props;
     const shortUuidText = replicaset.uuid.slice(0, 8);
     const rolesText = this.getRolesText();
     const indicatorClassName = cn(
@@ -57,7 +57,7 @@ class ReplicasetCard extends React.PureComponent {
                 dataSource={servers}
                 consoleServer={consoleServer}
                 joinServer={joinServer}
-                expellServer={expellServer}
+                expelServer={expelServer}
                 createReplicaset={createReplicaset} />
             </div>
           )
@@ -96,7 +96,7 @@ ReplicasetCard.propTypes = {
   }).isRequired,
   editReplicaset: PropTypes.func.isRequired,
   joinServer: PropTypes.func.isRequired,
-  expellServer: PropTypes.func.isRequired,
+  expelServer: PropTypes.func.isRequired,
   createReplicaset: PropTypes.func.isRequired,
 };
 

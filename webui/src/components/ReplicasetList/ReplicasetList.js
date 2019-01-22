@@ -12,7 +12,7 @@ class ReplicasetList extends React.PureComponent {
   prepareReplicasetList = defaultMemoize(prepareReplicasetList);
 
   render() {
-    const { clusterSelf, consoleServer, editReplicaset, joinServer, expellServer, createReplicaset } = this.props;
+    const { clusterSelf, consoleServer, editReplicaset, joinServer, expelServer, createReplicaset } = this.props;
 
     const replicasetList = this.getReplicasetList();
 
@@ -31,7 +31,7 @@ class ReplicasetList extends React.PureComponent {
                   consoleServer={consoleServer}
                   editReplicaset={editReplicaset}
                   joinServer={joinServer}
-                  expellServer={expellServer}
+                  expelServer={expelServer}
                   createReplicaset={createReplicaset} />
               </div>
             );
@@ -55,7 +55,7 @@ ReplicasetList.propTypes = {
   consoleServer: PropTypes.func.isRequired,
   editReplicaset: PropTypes.func.isRequired,
   joinServer: PropTypes.func.isRequired,
-  expellServer: PropTypes.func.isRequired,
+  expelServer: PropTypes.func.isRequired,
   createReplicaset: PropTypes.func.isRequired,
 };
 
