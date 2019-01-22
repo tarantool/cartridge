@@ -199,7 +199,7 @@ class Cluster extends React.Component {
                   <div className="tr-card-margin pages-Cluster-replicasetList">
                     <div className="tr-pageCard-head">
                       <div className="tr-pageCard-header">
-                        Replicaset list
+                        Replica sets
                       </div>
                       <div className="tr-pageCard-buttons">
                         {unlinkedServers.length
