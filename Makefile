@@ -1,31 +1,34 @@
-DIR := webui
-.PHONY: all install doc test schema
+version := scm-1
 
-all: $(DIR)/node_modules
-	npm run build --prefix=$(DIR)
-
-$(DIR)/node_modules: $(DIR)/package.json
-	npm install --production --prefix=$(DIR)
-	@ touch $@
-
-install:
-	mkdir -p $(INST_LUADIR)/cluster
-	cp $(DIR)/build/bundle.lua $(INST_LUADIR)/cluster/front-bundle.lua
-
-doc:
-	echo "# GraphQL schema\n" > dev/GraphQL.md
-	echo '```' >> dev/GraphQL.md
-	cat dev/schema.graphql >> dev/GraphQL.md
-	echo '```' >> dev/GraphQL.md
-	ldoc .
-
-schema:
-	WORKDIR=dev/gql-schema pytest/instance.lua & \
-	PID=$$!; \
-	graphql get-schema -o dev/schema.graphql; \
-	kill $$PID; \
+.PHONY: all doc test schema install
+all: webui/node_modules
+	npm run build --prefix=webui
+	mkdir -p doc
 
 test:
 	./taptest.lua
 	pytest
 
+install:
+	mkdir -p $(INST_LUADIR)/cluster
+	cp webui/build/bundle.lua $(INST_LUADIR)/cluster/front-bundle.lua
+
+webui/node_modules: webui/package.json
+	npm install --production --prefix=webui
+	@ touch $@
+
+doc: dev/GraphQL.md
+	ldoc -t "cluster-${version}" -p "cluster (${version})" .
+
+dev/GraphQL.md: doc/schema.graphql
+	echo "# GraphQL schema\n" > $@
+	echo '```' >> $@
+	cat $< >> $@
+	echo '```' >> $@
+
+schema: doc/schema.graphql
+doc/schema.graphql: cluster/webui.lua
+	WORKDIR=dev/gql-schema pytest/instance.lua & \
+	PID=$$!; \
+	graphql get-schema -o $@; \
+	kill $$PID;
