@@ -9,7 +9,12 @@ import './ReplicasetCard.css';
 
 const prepareServers = replicaset => {
   const masterUuid = replicaset.master.uuid;
-  return replicaset.servers.map(server =>  ({ ...server, master: server.uuid === masterUuid }));
+  const activeMasterUuid = replicaset.active_master.uuid;
+  return replicaset.servers.map(server => ({
+    ...server,
+    master: server.uuid === masterUuid,
+    activeMaster: server.uuid === activeMasterUuid,
+  }));
 };
 
 const prepareRolesText = (roles, weight) => {

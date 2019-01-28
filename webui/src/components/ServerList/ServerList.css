@@ -41,8 +41,12 @@
 
 .ServerList-master {}
 
+.ServerList-masterDown {
+  color: #ab3030;
+}
+
 .ServerList-message {
-  color: #885050;
+  color: #ab3030;
 }
 
 .ServerList-stat {

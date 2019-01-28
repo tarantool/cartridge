@@ -3,6 +3,7 @@ import React from 'react';
 import { defaultMemoize } from 'reselect';
 
 import CommonItemList from 'src/components/CommonItemList';
+import cn from 'src/misc/cn';
 
 import './ServerList.css';
 
@@ -33,35 +34,31 @@ const prepareColumnProps = (linked, clusterSelf, consoleServer, joinServer, crea
       renderText: record => {
         const aliasText = record.alias || 'No alias';
 
-        let nameText = (
-          <React.Fragment>
-            <span className="ServerList-alias">{aliasText}</span>
-            <span className="ServerList-uri">{record.uri}</span>
-          </React.Fragment>
-        );
-
+        let masterText, masterClassName = 'ServerList-master';
         if (record.master) {
-          nameText = (
-            <React.Fragment>
-              {nameText}
-              <span className="ServerList-master">master</span>
-            </React.Fragment>
-          );
-        }
-
-        if (record.message) {
-          nameText = (
-            <React.Fragment>
-              {nameText}
-              <br />
-              <span className="ServerList-message">{record.message}</span>
-            </React.Fragment>
-          );
+          masterText = 'master';
+          if ( ! record.activeMaster) {
+            masterClassName = cn(masterClassName, 'ServerList-masterDown');
+          }
+        } else if (record.activeMaster) {
+          masterText = 'active master';
         }
 
         return (
           <span className="ServerList-name">
-            {nameText}
+            <span className="ServerList-alias">{aliasText}</span>
+            <span className="ServerList-uri">{record.uri}</span>
+            {masterText
+              ? <span className={masterClassName}>{masterText}</span>
+              : null}
+            {record.message
+              ? (
+                <React.Fragment>
+                  <br />
+                  <span className="ServerList-message">{record.message}</span>
+                </React.Fragment>
+              )
+              : null}
           </span>
         );
       },
@@ -204,12 +201,11 @@ const getRowCalssName = record => {
 };
 
 const prepareDataSource = dataSource => {
+  // return dataSource.sort((a, b) => (b.master - a.master));
   return dataSource.sort((a, b) => {
-    return a.master !== b.master
-      ? !!a.master < !!b.master
-      : a.alias !== b.alias
-        ? (a.alias || '') > (b.alias || '')
-        : (a.uri || '') > (b.uri || '');
+    return a.alias === b.alias
+      ? a.uri > b.uri ? 1 : -1
+      : a.alias > b.alias ? 1 : -1;
   });
 };
 

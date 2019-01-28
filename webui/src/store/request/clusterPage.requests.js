@@ -31,6 +31,9 @@ export function getPageData() {
         master {
           uuid
         }
+        active_master {
+          uuid
+        }
         weight
         servers {
           uuid
@@ -77,6 +80,9 @@ export function refreshLists(params = {}) {
         status
         roles
         master {
+          uuid
+        }
+        active_master {
           uuid
         }
         weight
