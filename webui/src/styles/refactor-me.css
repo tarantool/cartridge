@@ -3,6 +3,12 @@ body {
   font-size: 12px !important;
 }
 
+.ant-modal-close-icon {
+  top: 20px;
+  right: 20px;
+  position: absolute;
+}
+
 /* We are now waiting for bootstrap manual fork */
 label {
   margin-bottom: 0.2em;
