@@ -203,9 +203,11 @@ const getRowCalssName = record => {
 const prepareDataSource = dataSource => {
   // return dataSource.sort((a, b) => (b.master - a.master));
   return dataSource.sort((a, b) => {
-    return a.alias === b.alias
-      ? a.uri > b.uri ? 1 : -1
-      : a.alias > b.alias ? 1 : -1;
+    return b.master !== a.master
+      ? b.master - a.master
+      : a.alias === b.alias
+        ? a.uri > b.uri ? 1 : -1
+        : a.alias > b.alias ? 1 : -1;
   });
 };
 
