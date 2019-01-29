@@ -20,7 +20,7 @@ class AppMessage extends React.Component {
 
     return (
       <div className="AppMessage-outer">
-        <div className="AppMessage-inner container">
+        <div className="AppMessage-inner">
           {messages.map((message, index) => {
             const { content } = message;
             const className = `alert alert-${content.type} alert-dismissible fade show`;
