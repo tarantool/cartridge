@@ -375,15 +375,6 @@ def test_join_server_good(cluster, expelled, module_tmpdir, helpers):
 
         obj = cluster['router'].graphql("""
             mutation {
-                probe_server(uri: "localhost:33003")
-            }
-        """)
-        assert 'errors' not in obj
-        assert obj['data']['probe_server'] == True
-
-
-        obj = cluster['router'].graphql("""
-            mutation {
                 join_server(
                     uri: "localhost:33003"
                     instance_uuid: "dddddddd-dddd-4000-b000-000000000001"
