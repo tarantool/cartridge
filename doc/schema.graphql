@@ -1,0 +1,96 @@
+# source: http://localhost:8081/graphql
+# timestamp: Wed Jan 30 2019 15:41:22 GMT+0300 (MSK)
+
+"""Cluster management"""
+type Apicluster {
+  """Get current server"""
+  self: ServerShortInfo
+
+  """Get current failover state."""
+  failover: Boolean!
+
+  """Whether it is reasonble to call bootstrap_vshard mutation"""
+  can_bootstrap_vshard: Boolean!
+
+  """Get list of registered roles."""
+  known_roles: [String!]
+
+  """Virtual buckets count in cluster"""
+  vshard_bucket_count: Int!
+}
+
+"""
+The `Long` scalar type represents non-fractional signed whole numeric values.
+Long can represent values from -(2^52) to 2^52 - 1, inclusive. 
+"""
+scalar Long
+
+type Mutation {
+  """Cluster management"""
+  cluster: MutationApicluster
+  edit_server(uuid: String!, uri: String!): Boolean
+  probe_server(uri: String!): Boolean
+  edit_replicaset(roles: [String!], weight: Float, master: String, uuid: String!): Boolean
+  join_server(instance_uuid: String, replicaset_uuid: String, timeout: Float, roles: [String!], uri: String!): Boolean
+  bootstrap_vshard: Boolean
+  expel_server(uuid: String!): Boolean
+}
+
+"""Cluster management"""
+type MutationApicluster {
+  """Enable or disable automatic failover. Returns new state."""
+  failover(enabled: Boolean!): Boolean!
+
+  """Disable listed servers by uuid"""
+  disable_servers(uuids: [String!]): [Server]
+}
+
+type Query {
+  """Cluster management"""
+  cluster: Apicluster
+  servers(uuid: String): [Server]
+  replicasets(uuid: String): [Replicaset]
+}
+
+"""Group of servers replicating the same data"""
+type Replicaset {
+  weight: Float
+  master: Server!
+  roles: [String!]
+  status: String!
+  uuid: String!
+  servers: [Server]
+  active_master: Server!
+}
+
+"""A server participating in tarantool cluster"""
+type Server {
+  """Node statistics"""
+  statistics: ServerStat
+  message: String!
+  uri: String!
+  alias: String
+  status: String!
+  disabled: Boolean!
+  uuid: String!
+  replicaset: Replicaset
+}
+
+"""A short server information"""
+type ServerShortInfo {
+  uri: String!
+  uuid: String
+  alias: String
+}
+
+type ServerStat {
+  items_size: Long
+  items_used_ratio: String
+  quota_size: Long
+  quota_used: Long
+  arena_used_ratio: String
+  items_used: Long
+  quota_used_ratio: String
+  arena_size: Long
+  arena_used: Long
+}
