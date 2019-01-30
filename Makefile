@@ -1,27 +1,35 @@
-DIR := webui
-.PHONY: all install doc test schema
+version := scm-1
 
-all: $(DIR)/node_modules
-	npm run build --prefix=$(DIR)
-
-$(DIR)/node_modules: $(DIR)/package.json
-	npm install --production --prefix=$(DIR)
-	@ touch $@
-
-install:
-	mkdir -p $(INST_LUADIR)/cluster
-	cp $(DIR)/build/bundle.lua $(INST_LUADIR)/cluster/front-bundle.lua
-
-doc:
-	ldoc .
-
-schema:
-	WORKDIR=dev/gql-schema pytest/instance.lua & \
-	PID=$$!; \
-	graphql get-schema -o doc/schema.graphql; \
-	kill $$PID; \
+.PHONY: all doc test schema install
+all: webui/node_modules
+	npm run build --prefix=webui
+	mkdir -p doc
 
 test:
 	./taptest.lua
-	pytest
+	pytest -v
 
+install:
+	mkdir -p $(INST_LUADIR)/cluster
+	cp webui/build/bundle.lua $(INST_LUADIR)/cluster/front-bundle.lua
+
+webui/node_modules: webui/package.json
+	npm install --production --prefix=webui
+	@ touch $@
+
+doc: dev/GraphQL.md
+	ldoc -t "cluster-${version}" -p "cluster (${version})" .
+
+dev/GraphQL.md: doc/schema.graphql
+	mkdir -p dev
+	echo "# GraphQL schema\n" > $@
+	echo '```' >> $@
+	cat $< >> $@
+	echo '```' >> $@
+
+schema: doc/schema.graphql
+doc/schema.graphql: cluster/webui.lua
+	WORKDIR=dev/gql-schema pytest/instance.lua & \
+	PID=$$!; \
+	graphql get-schema -o $@; \
+	kill $$PID;

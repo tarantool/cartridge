@@ -1,17 +1,40 @@
-variables:
-  GIT_SUBMODULE_STRATEGY: recursive
+stages:
+  - build
+  - publish
 
-test:
-  stage: test
+build:
+  stage: build
   tags:
     - docker
   image: registry.gitlab.com/tarantool/enterprise/central:latest
 
   before_script:
     - yum -y install https://centos7.iuscommunity.org/ius-release.rpm
-    - yum -y install make cmake gcc g++ git openssl python36u python36u-pip npm
+    - yum -y install make cmake gcc g++ git openssl python36u unzip python36u-pip npm
+    - tarantoolctl rocks install ldoc --server=http://rocks.moonscript.org
+    - export PATH=.rocks/bin:$PATH
     - pip3.6 install -r pytest/requirements.txt
-    - tarantoolctl rocks make
   script:
+    - tarantoolctl rocks make
     - pytest -v
     - ./taptest.lua
+    - ./release.sh
+  artifacts:
+    name: "$CI_COMMIT_REF_NAME"
+    paths:
+      - doc/
+      - release/
+      - release-doc/
+
+publish:
+  stage: publish
+  dependencies:
+    - build
+  tags:
+    - shell
+  when: manual
+  only:
+    - tags
+  script:
+    - aws --endpoint-url "${AWS_S3_ENDPOINT_URL}" s3 cp release/*.all.rock "s3://packages/rocks/"
+    - aws --endpoint-url "${AWS_S3_ENDPOINT_URL}" s3 cp --recursive release-doc/ "s3://packages/rocks-doc/"

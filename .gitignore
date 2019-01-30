@@ -6,4 +6,6 @@
 __pycache__
 dev
 doc
+release
+release-doc
 .idea

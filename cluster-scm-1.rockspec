@@ -16,7 +16,8 @@ dependencies = {
 }
 
 build = {
-    type = 'make';
+    type = 'make',
+    build_target = 'all',
     install = {
         lua = {
             ['cluster'] = 'cluster.lua';
@@ -43,9 +44,13 @@ build = {
             ['cluster.graphql.validate'] = 'cluster/graphql/validate.lua';
         },
     },
+    build_variables = {
+        version = 'scm-1',
+    },
     install_variables = {
         -- Installs lua module:
         -- ['cluster.front-bundle']
         INST_LUADIR="$(LUADIR)",
     },
+    copy_directories = {'doc'},
 }
