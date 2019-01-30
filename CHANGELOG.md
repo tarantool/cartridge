@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.6.0] - 2019-01-30
+
 ### Fixed
 
 - Ability to disable vshard-storage role when zero-weight rebalancing finishes
@@ -16,6 +18,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - New frontend core
 - Dependencies update
+- Call to `join_server` automatically does `probe_server`
 
 ### Added
 
