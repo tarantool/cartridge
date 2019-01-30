@@ -6,6 +6,21 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+
+- Ability to disable vshard-storage role when zero-weight rebalancing finishes
+- Active master indication during failover
+- Other minor improvements
+
+### Changed
+
+- New frontend core
+- Dependencies update
+
+### Added
+
+- Servers filtering by roles, uri, alias in WebUI
+
 ## [0.5.1] - 2018-12-12
 
 ### Fixed
