@@ -7,7 +7,7 @@ all: webui/node_modules
 
 test:
 	./taptest.lua
-	pytest
+	pytest -v
 
 install:
 	mkdir -p $(INST_LUADIR)/cluster
@@ -21,6 +21,7 @@ doc: dev/GraphQL.md
 	ldoc -t "cluster-${version}" -p "cluster (${version})" .
 
 dev/GraphQL.md: doc/schema.graphql
+	mkdir -p dev
 	echo "# GraphQL schema\n" > $@
 	echo '```' >> $@
 	cat $< >> $@

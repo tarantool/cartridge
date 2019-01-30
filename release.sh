@@ -18,4 +18,4 @@ tarantoolctl rocks make release/cluster-$TAG-1.rockspec
 tarantoolctl rocks pack cluster $TAG && mv cluster-$TAG-1.all.rock release/
 
 mkdir -p release-doc
-cp -R doc/ release-doc/cluster-$TAG-1
+cp -RT doc/ release-doc/cluster-$TAG-1
