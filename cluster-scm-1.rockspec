@@ -12,7 +12,7 @@ dependencies = {
     'errors == 2.0.1-1',
     'vshard == 0.1.7-1',
     'membership == 2.1.1-1',
-    'front == 3.0.2-1',
+    'front == 3.0.3-1',
 }
 
 build = {
