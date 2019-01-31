@@ -14,6 +14,7 @@ import {
   CLUSTER_PAGE_APPLY_TEST_CONFIG_REQUEST,
   CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST,
   CLUSTER_PAGE_STATE_RESET,
+  SET_BOOSTRAP_VSHARD_MODAL_VISIBLE,
 } from 'src/store/actionTypes';
 import { getActionCreator, getPageMountActionCreator } from 'src/store/commonRequest';
 
@@ -101,3 +102,10 @@ export const resetPageState = getActionCreator(CLUSTER_PAGE_STATE_RESET);
 export const changeFailover = getActionCreator(CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST, null, {
   successMessage: 'Failover change is OK...',
 });
+
+export const setVisibleBootstrapVshardModal = (visible) => {
+  return {
+    type: SET_BOOSTRAP_VSHARD_MODAL_VISIBLE,
+    payload: visible
+  };
+};

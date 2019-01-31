@@ -11,17 +11,21 @@ export async function getClusterSelf() {
         }
         failover
         knownRoles: known_roles
+        can_bootstrap_vshard
+        vshard_bucket_count
       }
     }`;
   const response = await graphql.fetch(graph);
 
-  const { clusterSelf, failover, knownRoles } = response.cluster;
+  const { clusterSelf, failover, knownRoles, can_bootstrap_vshard, vshard_bucket_count } = response.cluster;
   return {
     clusterSelf: {
       ...clusterSelf,
       uuid: clusterSelf.uuid || null,
       configured: !!clusterSelf.uuid,
       knownRoles,
+      can_bootstrap_vshard,
+      vshard_bucket_count,
     },
     failover,
   };

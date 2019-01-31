@@ -26,6 +26,7 @@ import {
   CLUSTER_PAGE_STATE_RESET,
   APP_CREATE_MESSAGE,
   APP_SET_MESSAGE_DONE,
+  CLUSTER_SELF_UPDATE,
 } from 'src/store/actionTypes';
 import { baseReducer, getInitialRequestStatus, getReducer, getRequestReducer  } from 'src/store/commonRequest';
 
@@ -193,6 +194,7 @@ export const reducer = baseReducer(
           return state;
         }
 
+      case CLUSTER_SELF_UPDATE:
       case CLUSTER_PAGE_CREATE_REPLICASET_REQUEST_SUCCESS:
         return {
           ...state,

@@ -1,5 +1,5 @@
 import { delay } from 'redux-saga';
-import { call, cancel, fork, put, select, take, takeLatest } from 'redux-saga/effects';
+import { call, cancel, fork, put, select, take, takeLatest, takeEvery } from 'redux-saga/effects';
 
 import { pageRequestIndicator } from 'src/misc/pageRequestIndicator';
 import {
@@ -38,6 +38,7 @@ import {
   CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_SUCCESS,
   CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_ERROR,
   CLUSTER_PAGE_STATE_RESET,
+  CLUSTER_SELF_UPDATE,
 } from 'src/store/actionTypes';
 import { baseSaga, getRequestSaga, getSignalRequestSaga } from 'src/store/commonRequest';
 import { getClusterSelf } from 'src/store/request/app.requests';
@@ -208,6 +209,22 @@ const changeFailoverRequestSaga = getRequestSaga(
   changeFailover,
 );
 
+
+
+const updateClusterSelfOnBootstrap = function* () {
+  yield takeEvery(CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST_SUCCESS, function* () {
+    while (true) {
+      try {
+        const clusterSelfResponse = yield call(getClusterSelf);
+        yield put({type: CLUSTER_SELF_UPDATE, payload: clusterSelfResponse});
+        return;
+      } catch (e) {
+        yield delay(2000);
+      }
+    }
+  })
+}
+
 export const saga = baseSaga(
   pageDataRequestSaga,
   refreshListsRequestSaga,
@@ -220,4 +237,5 @@ export const saga = baseSaga(
   uploadConfigRequestSaga,
   applyTestConfigRequestSaga,
   changeFailoverRequestSaga,
+  updateClusterSelfOnBootstrap,
 );

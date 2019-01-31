@@ -285,3 +285,28 @@ export async function changeFailover(params) {
     },
   };
 }
+
+// /**
+//  * @param {Object} params
+//  * @param {boolean} params.enabled
+//  */
+// export async function changeFailover(params) {
+//   const graph = `
+//     mutation (
+//       $enabled: Boolean!,
+//     ) {
+//       cluster {
+//         failover(
+//           enabled: $enabled
+//         )
+//       }
+//     }`;
+//   const changeFailoverResponse = await graphql.fetch(graph, params);
+//   const clusterSelfResponse = await getClusterSelf();
+//   return {
+//     changeFailoverResponse: {
+//       changeFailover: changeFailoverResponse,
+//       clusterSelf: clusterSelfResponse,
+//     },
+//   };
+// }
