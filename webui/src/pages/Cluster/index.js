@@ -4,7 +4,7 @@ import { evalString, saveConsoleState } from 'src/store/actions/app.actions';
 import { createMessage } from 'src/store/actions/app.actions';
 import { pageDidMount, selectServer, closeServerPopup, selectReplicaset, closeReplicasetPopup, bootstrapVshard,
   probeServer, joinServer, createReplicaset, expelServer, editReplicaset, uploadConfig, applyTestConfig,
-  changeFailover, resetPageState } from 'src/store/actions/clusterPage.actions';
+  changeFailover, resetPageState, setVisibleBootstrapVshardModal } from 'src/store/actions/clusterPage.actions';
 import Cluster from './Cluster';
 
 const mapStateToProps = state => {
@@ -25,6 +25,9 @@ const mapStateToProps = state => {
       serverStat,
       canTestConfigBeApplied,
     },
+    ui: {
+      showBootstrapModal,
+    }
   } = state;
 
   return {
@@ -40,6 +43,7 @@ const mapStateToProps = state => {
     replicasetList,
     serverStat,
     canTestConfigBeApplied,
+    showBootstrapModal,
   };
 };
 
@@ -62,6 +66,7 @@ const mapDispatchToProps = {
   createMessage,
   changeFailover,
   resetPageState,
+  setVisibleBootstrapVshardModal
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(Cluster);
