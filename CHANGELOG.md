@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+
+- UI/UX: Replace "bootstrap vshard" button with a noticable panel
+- UI/UX: Replace failover panel with a small button
+
 ## [0.6.0] - 2019-01-30
 
 ### Fixed
