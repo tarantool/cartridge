@@ -1,9 +1,11 @@
 version := scm-1
 
 .PHONY: all doc test schema install
-all: webui/node_modules
-	npm run build --prefix=webui
+all: webui/build/bundle.lua
 	mkdir -p doc
+
+webui/build/bundle.lua: $(shell find webui/src -type f) webui/node_modules
+	npm run build --prefix=webui
 
 test:
 	./taptest.lua
