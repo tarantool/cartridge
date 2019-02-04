@@ -10,10 +10,10 @@ build:
 
   before_script:
     - yum -y install https://centos7.iuscommunity.org/ius-release.rpm
-    - yum -y install make cmake gcc g++ git openssl python36u unzip python36u-pip npm
+    - yum -y install cmake unzip python python-pip npm
     - tarantoolctl rocks install ldoc --server=http://rocks.moonscript.org
     - export PATH=.rocks/bin:$PATH
-    - pip3.6 install -r pytest/requirements.txt
+    - pip install -r pytest/requirements.txt
   script:
     - tarantoolctl rocks make
     - pytest -v
