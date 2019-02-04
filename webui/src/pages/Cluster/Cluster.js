@@ -4,13 +4,13 @@ import { defaultMemoize } from 'reselect';
 import { getServerName } from 'src/app/misc';
 import AppBottomConsole from 'src/components/AppBottomConsole';
 import ClusterConfigManagement from 'src/components/ClusterConfigManagement';
-import FailoverManagement from 'src/components/FailoverManagement';
 import ServerConsole from 'src/components/ServerConsole';
 import Modal from 'src/components/Modal';
 import PageDataErrorMessage from 'src/components/PageDataErrorMessage';
 import ReplicasetEditModal from 'src/components/ReplicasetEditModal';
 import ReplicasetList from 'src/components/ReplicasetList';
 import ServerEditModal from 'src/components/ServerEditModal';
+import FailoverButton from 'src/components/FailoverButton';
 import ServerList from 'src/components/ServerList';
 import { addSearchParams, getSearchParams } from 'src/misc/url';
 
@@ -192,10 +192,6 @@ class Cluster extends React.Component {
                 )
                 : null}
 
-              {clusterSelf.configured
-                ? this.renderFailoverManagement()
-                : null}
-
                 <BootstrapPanel/>
 
               {replicasetList.length
@@ -298,16 +294,6 @@ class Cluster extends React.Component {
     );
   };
 
-  renderFailoverManagement = () => {
-    const { failover, changeFailover } = this.props;
-
-    return (
-      <FailoverManagement
-        failoverEnabled={failover}
-        onFailoverChangeRequest={changeFailover} />
-    );
-  };
-
   renderServerConsole = () => {
     const { clusterSelf, evalResult, serverList } = this.props;
 
@@ -337,6 +323,7 @@ class Cluster extends React.Component {
   renderProbeServerButtons = () => {
     return (
       <div className="tr-cards-buttons">
+        <FailoverButton />
         <button
           type="button"
           className="btn btn-light btn-sm"
