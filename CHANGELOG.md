@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.6.1] - 2019-02-05
+
 ### Fixed
 
 - UI/UX: Replace "bootstrap vshard" button with a noticable panel
