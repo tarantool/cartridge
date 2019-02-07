@@ -187,8 +187,8 @@ local function bootstrap_from_scratch(roles, uuids)
     end
 
     local _boot_opts = table.copy(vars.boot_opts)
-    _boot_opts.instance_uuid = uuids.instance_uuid
-    _boot_opts.replicaset_uuid = uuids.replicaset_uuid
+    _boot_opts.instance_uuid = uuids and uuids.instance_uuid
+    _boot_opts.replicaset_uuid = uuids and uuids.replicaset_uuid
 
     local function pack(...)
         return select('#', ...), {...}

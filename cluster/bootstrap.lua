@@ -108,7 +108,7 @@ local function bootstrap_from_scratch(boot_opts, box_opts, roles)
                 [boot_opts.replicaset_uuid] = {
                     roles = roles,
                     master = boot_opts.instance_uuid,
-                    weight = roles['vshard-storage'] and 1,
+                    weight = roles['vshard-storage'] and 1 or nil,
                 },
             },
         },
