@@ -1,11 +1,28 @@
 import PropTypes from 'prop-types';
 import React from 'react';
 import { defaultMemoize } from 'reselect';
+import {css} from 'react-emotion';
 
 import ServerList from 'src/components/ServerList';
 import cn from 'src/misc/cn';
 
 import './ReplicasetCard.css';
+
+const styles = {
+  editButton: css`
+    display: inline-block;
+    padding: 8px 0px;
+    min-width: 115px;
+    text-align: center;
+    cursor: pointer;
+    border-radius: 6px;
+    background: #fff;
+    font-size: 12px;
+    font-family: Roboto;
+    color: #000;
+    border: none;
+  `
+};
 
 const prepareServers = replicaset => {
   const masterUuid = replicaset.master.uuid;
@@ -45,7 +62,7 @@ class ReplicasetCard extends React.PureComponent {
           <div className="ReplicasetCard-actions">
             <button
               type="button"
-              className="btn btn-light btn-sm"
+              className={styles.editButton}
               onClick={this.handleEditReplicasetClick}
             >
               Edit

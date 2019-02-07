@@ -206,6 +206,28 @@ module.exports = {
             ]
             // Note: this won't work without `new ExtractTextPlugin()` in `plugins`.
           },
+          {
+            test: /\.less$/,
+            use: [
+              {
+                loader: require.resolve('style-loader')
+              },
+              {
+                loader: require.resolve('css-loader'),
+                options: {
+                  importLoaders: 1,
+                  minimize: true,
+                  sourceMap: shouldUseSourceMap,
+                },
+              },
+              {
+                loader: require.resolve('less-loader'),
+                options: {
+                  javascriptEnabled: true,
+                }
+              }
+            ]
+          },
           // "file" loader makes sure assets end up in the `build` folder.
           // When you `import` an asset, you get its filename.
           // This loader doesn't use a "test" so it will catch all modules

@@ -1,13 +1,13 @@
 @import 'src/styles/variables';
 
-$row-margin-top: 0.4em;
+$row-margin-top: 0;
 $cell-padding: 0.5em;
 $cell-horizontal-padding: 1em;
 $cell-min-height: 2.6em;
 $tight-cell-min-height: $cell-min-height - 1.4em;
 
 .trTable {
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .trTable-noData,
@@ -46,7 +46,7 @@ $tight-cell-min-height: $cell-min-height - 1.4em;
 }
 
 .trTable-cellOuter:first-child {
-  padding-left: $cell-horizontal-padding;
+  padding-left: 16px;
 }
 
 .trTable-cellOuter:last-child {
@@ -114,7 +114,9 @@ $tight-cell-min-height: $cell-min-height - 1.4em;
 .trTable-rowHeadLabelValue {}
 
 .trTable-row {
-  margin-top: $row-margin-top;
+  /*margin-top: $row-margin-top;*/
+    min-height: 56px;
+    margin-bottom: 3px;
 }
 
 .trTable-rowHead + .trTable-row {
@@ -122,11 +124,11 @@ $tight-cell-min-height: $cell-min-height - 1.4em;
 }
 
 .trTable-row:nth-child(2n) {
-  background-color: $light-bg-secondary;
+  background-color: #e7e7e7;
 }
 
 .trTable-row:nth-child(2n + 1) {
-  background-color: $light-bg-primary;
+  background-color: #F0F0F0;;
 }
 
 .trTable-rowCellOuter {
@@ -156,4 +158,35 @@ $tight-cell-min-height: $cell-min-height - 1.4em;
 
 .trTable-skin--light .trTable-headCellInner {
   font-size: 1em;
+}
+
+.trTable-skin--enterprise .trTable-head{
+    background: #343434;
+    padding: 11px 16px;
+    color: #ffffff;
+    font-size: 16px;
+    border-radius: 6px;
+    font-family: Roboto;
+}
+
+.trTable-skin--enterprise .trTable-headCellOuter{
+    padding: 0;
+}
+.trTable-skin--enterprise .trTable-headCellOuter{
+    padding: 0;
+}
+.trTable-skin--enterprise .trTable-headCellInner{
+    font-size: 16px;
+}
+.trTable-skin--enterprise .trTable-rowCellOuter{
+    padding-left: 0;
+
+}
+.trTable-skin--enterprise .trTable-rowCellOuter:first-child{
+    padding-left: 16px;
+
+}
+.trTable-skin--enterprise .trTable-rowCellOuter:last-child{
+    padding-right: 16px;
+
 }

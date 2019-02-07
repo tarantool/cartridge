@@ -1,9 +1,49 @@
 import PropTypes from 'prop-types';
 import React from 'react';
 import { defaultMemoize } from 'reselect';
+import {css} from 'react-emotion'
 
 import Modal from 'src/components/Modal';
+import {Button} from 'antd'
 import cn from 'src/misc/cn';
+import Checkbox from '../Checkbox';
+import RadioButton from "../RadioButton";
+
+
+const styles = {
+  row: css``,
+  label: css`
+    &.col-form-label{
+    font-size: 18px;
+    color: #343434;
+    width: 105px;
+    font-family: Roboto;
+    }
+  `,
+  checkboxLabel: css`
+    color: #343434;
+    font-size: 14px;
+    font-family: Roboto;
+  `,
+  checkboxContainer: css`
+    vertical-align: middle;
+    display: inline-block;
+    margin-right: 9px;
+  `,
+  forminput: css`
+    &.form-check{
+      display: inline-block;
+      margin-right: 30px;
+      padding-left: 0;
+    }
+  `,
+  radio: css`
+    margin-right: 9px;
+  `,
+  radioRow: css`
+    margin-bottom: 6px;
+  `
+};
 
 const getOptionFormName = parts => `${parts[0]}[${parts[1]}]`;
 
@@ -70,10 +110,9 @@ class CommonItemEditModal extends React.PureComponent {
 
     return (
       <Modal
-        className="CommonItemEditModal-modal"
         title={preparedTitle}
         visible
-        width={540}
+        width={691}
         onCancel={this.handleCancelClick}
         footer={null}
       >
@@ -98,19 +137,18 @@ class CommonItemEditModal extends React.PureComponent {
     const { isSaving, submitStatusMessage } = this.props;
 
     const preparedFields = this.getFields();
-    const submitBtnClassName = cn('btn', this.shouldCreateItem ? 'btn-success' : 'btn-warning');
     const submitDisabled = ! this.isFormReadyToSubmit();
 
     return (
       <div className="CommonItemEditModal-form">
-        <form>
+        <form onSubmit={this.handleSubmitClick}>
           <fieldset disabled={isSaving}>
             <div className="CommonItemEditModal-fields">
               {preparedFields.map(field => {
                 return (
                   <div
                     key={field.key}
-                    className="form-group row"
+                    className={`form-group row ${styles.row}`}
                   >
                     {this.renderField(field)}
                   </div>
@@ -119,14 +157,13 @@ class CommonItemEditModal extends React.PureComponent {
             </div>
 
             <div className="CommonItemEditModal-buttons">
-              <button
-                type="submit"
-                className={submitBtnClassName}
+              <Button
+                type={'primary'}
                 disabled={submitDisabled}
                 onClick={this.handleSubmitClick}
               >
                 Submit
-              </button>
+              </Button>
               {submitStatusMessage
                 ? (
                   <div className="CommonItemEditModal-submitMessage">
@@ -179,7 +216,7 @@ class CommonItemEditModal extends React.PureComponent {
           : (
             <label
               htmlFor={id}
-              className="col-sm-3 col-form-label"
+              className={`col-form-label ${styles.label}`}
             >
               {field.title}
             </label>
@@ -223,7 +260,7 @@ class CommonItemEditModal extends React.PureComponent {
       <React.Fragment>
         {hideLabels
           ? null
-          : <legend className="col-form-label col-sm-3">{field.title}</legend>}
+          : <legend className={`col-form-label ${styles.label}`}>{field.title}</legend>}
         <div className={fieldClassName}>
           {field.options.map(option => {
             const checked = values.includes(option.key);
@@ -233,19 +270,21 @@ class CommonItemEditModal extends React.PureComponent {
             return (
               <div
                 key={option.key}
-                className="form-check form-check-inline"
+                className={`form-check ${styles.forminput}`}
               >
-                <input
+
+                <Checkbox
                   id={id}
                   type="checkbox"
                   name={optionName}
                   checked={checked}
                   disabled={field.disabled}
                   onChange={this.handleCheckboxGroupChange}
-                  className="form-check-input"/>
+                  className={styles.checkboxContainer}
+                />
                 <label
                   htmlFor={id}
-                  className="form-check-label"
+                  className={`form-check-label ${styles.checkboxLabel}`}
                 >
                   {option.label}
                 </label>
@@ -267,7 +306,7 @@ class CommonItemEditModal extends React.PureComponent {
       <React.Fragment>
         {hideLabels
           ? null
-          : <legend className="col-form-label col-sm-3">{field.title}</legend>}
+          : <legend className={`col-form-label ${styles.label}`}>{field.title}</legend>}
         <div className={fieldClassName}>
           {field.options.map(option => {
             const checked = value === option.key;
@@ -277,9 +316,9 @@ class CommonItemEditModal extends React.PureComponent {
             return (
               <div
                 key={option.key}
-                className="form-check"
+                className={styles.radioRow}
               >
-                <input
+                <RadioButton
                   id={id}
                   type="radio"
                   name={field.key}
@@ -287,7 +326,8 @@ class CommonItemEditModal extends React.PureComponent {
                   checked={checked}
                   disabled={field.disabled}
                   onChange={this.handleOptionGroupChange}
-                  className="form-check-input"/>
+                  className={styles.radio}
+                  />
                 <label
                   htmlFor={id}
                   className="form-check-label"

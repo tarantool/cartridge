@@ -2,6 +2,31 @@ import React from "react";
 import {connect} from 'react-redux';
 import {setVisibleBootstrapVshardModal} from '../../store/actions/clusterPage.actions';
 import Spin from "../Spin";
+import {css} from 'react-emotion'
+
+const styles = {
+  button: css`
+    width: 170px;
+    text-align: center;
+    background-color: #FF272C;
+    height: 40px;
+    line-height: 40px;
+    color: #FFF;
+    border-radius: 6px;
+    box-shadow: none;
+    border: none;
+    margin-top: 24px;
+  `,
+  panel: css`
+    background: #FFF;
+    border: 1px solid #F0F0F0;
+    box-sizing: border-box;
+    border-radius: 6px;
+  `,
+  container: css`
+    padding-top: 24px;
+  `
+};
 
 class BootstrapPanel extends React.Component {
   render() {
@@ -11,8 +36,8 @@ class BootstrapPanel extends React.Component {
       return null;
 
     return (
-
-        <div className="tr-card tr-card-margin">
+      <div className={styles.container}>
+        <div className={`${styles.panel} `}>
           <Spin enable={requesting}>
             <div className="tr-card-head">
               <div className="tr-card-header">
@@ -20,9 +45,9 @@ class BootstrapPanel extends React.Component {
               </div>
             </div>
             <div className="tr-card-content">
-              <p>The application is configured to store <b>{vshard_bucket_count}</b> buckets but they are not in place yet.</p>
-              <p>Bootstrap vshard to render storages operable.</p>
-              <button className="btn btn-primary"
+              <div>The application is configured to store <b>{vshard_bucket_count}</b> buckets but they are not in place yet.</div>
+              <div>Bootstrap vshard to render storages operable.</div>
+              <button className={styles.button}
                       onClick={() => {this.showModal()}}
               >
                 Bootstrap vshard
@@ -30,6 +55,7 @@ class BootstrapPanel extends React.Component {
             </div>
           </Spin>
         </div>
+      </div>
 
     );
   }

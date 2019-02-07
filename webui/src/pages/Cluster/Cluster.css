@@ -6,6 +6,7 @@
 
 .pages-Cluster-replicasetList .tr-pageCard-head {
   padding-bottom: 0.4em;
+padding-top: 0;
 }
 
 .pages-Cluster-filter {

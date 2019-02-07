@@ -10,7 +10,8 @@ build:
 
   before_script:
     - yum -y install https://centos7.iuscommunity.org/ius-release.rpm
-    - yum -y install cmake unzip python python-pip npm
+    - curl -sL https://rpm.nodesource.com/setup_8.x | bash -
+    - yum -y install cmake unzip python python-pip nodejs
     - tarantoolctl rocks install ldoc --server=http://rocks.moonscript.org
     - export PATH=.rocks/bin:$PATH
     - pip install -r pytest/requirements.txt
