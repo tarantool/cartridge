@@ -1,9 +1,28 @@
 import PropTypes from 'prop-types';
 import React from 'react';
 import { defaultMemoize } from 'reselect';
+import {css} from 'react-emotion'
 
 import Modal from 'src/components/Modal';
+import {Button} from 'antd'
 import cn from 'src/misc/cn';
+
+const styles = {
+  row: css``,
+  label: css`
+    &.col-form-label{
+    font-size: 18px;
+    color: #343434;
+    width: 105px;
+    font-family: Roboto;
+    }
+  `,
+  checkboxLabel: css`
+    color: #343434;
+    font-size: 14px;
+    font-family: Roboto;
+  `
+};
 
 const getOptionFormName = parts => `${parts[0]}[${parts[1]}]`;
 
@@ -70,10 +89,9 @@ class CommonItemEditModal extends React.PureComponent {
 
     return (
       <Modal
-        className="CommonItemEditModal-modal"
         title={preparedTitle}
         visible
-        width={540}
+        width={691}
         onCancel={this.handleCancelClick}
         footer={null}
       >
@@ -110,7 +128,7 @@ class CommonItemEditModal extends React.PureComponent {
                 return (
                   <div
                     key={field.key}
-                    className="form-group row"
+                    className={`form-group row ${styles.row}`}
                   >
                     {this.renderField(field)}
                   </div>
@@ -119,14 +137,13 @@ class CommonItemEditModal extends React.PureComponent {
             </div>
 
             <div className="CommonItemEditModal-buttons">
-              <button
-                type="submit"
-                className={submitBtnClassName}
+              <Button
+                type={'primary'}
                 disabled={submitDisabled}
                 onClick={this.handleSubmitClick}
               >
                 Submit
-              </button>
+              </Button>
               {submitStatusMessage
                 ? (
                   <div className="CommonItemEditModal-submitMessage">
@@ -179,7 +196,7 @@ class CommonItemEditModal extends React.PureComponent {
           : (
             <label
               htmlFor={id}
-              className="col-sm-3 col-form-label"
+              className={`col-form-label ${styles.label}`}
             >
               {field.title}
             </label>
@@ -223,7 +240,7 @@ class CommonItemEditModal extends React.PureComponent {
       <React.Fragment>
         {hideLabels
           ? null
-          : <legend className="col-form-label col-sm-3">{field.title}</legend>}
+          : <legend className={`col-form-label ${styles.label}`}>{field.title}</legend>}
         <div className={fieldClassName}>
           {field.options.map(option => {
             const checked = values.includes(option.key);
@@ -245,7 +262,7 @@ class CommonItemEditModal extends React.PureComponent {
                   className="form-check-input"/>
                 <label
                   htmlFor={id}
-                  className="form-check-label"
+                  className={`form-check-label ${styles.checkboxLabel}`}
                 >
                   {option.label}
                 </label>
@@ -267,7 +284,7 @@ class CommonItemEditModal extends React.PureComponent {
       <React.Fragment>
         {hideLabels
           ? null
-          : <legend className="col-form-label col-sm-3">{field.title}</legend>}
+          : <legend className={`col-form-label ${styles.label}`}>{field.title}</legend>}
         <div className={fieldClassName}>
           {field.options.map(option => {
             const checked = value === option.key;

@@ -4,8 +4,8 @@
 
 .ServerList-indicator {
   display: inline-block;
-  width: 6px; // magic: SERVER_INDICATOR_WIDTH
-  height: 6px; // magic: SERVER_INDICATOR_WIDTH
+  width: 8px; // magic: SERVER_INDICATOR_WIDTH
+  height: 8px; // magic: SERVER_INDICATOR_WIDTH
   border-radius: 50%;
 }
 
@@ -18,7 +18,8 @@
 }
 
 .ServerList-name {
-  display: inline-block;
+    display: flex;
+    flex-direction: column;
 }
 
 .ServerList-alias,
@@ -35,18 +36,23 @@
 
 .ServerList-alias {
   font-weight: bold;
+color:  #343434;
 }
 
-.ServerList-uri {}
+.ServerList-uri {
+    color: #838383;
+}
 
 .ServerList-master {}
 
 .ServerList-masterDown {
-  color: #ab3030;
+  color: #FF272C;
 }
 
 .ServerList-message {
-  color: #ab3030;
+    color: #FF272C;
+    font-size: 10px;
+    margin-top: -3px;
 }
 
 .ServerList-stat {
@@ -56,6 +62,7 @@
 
 .ServerList-statName {
   display: inline-block;
+color: #000000;
 }
 
 .ServerList-statBar {

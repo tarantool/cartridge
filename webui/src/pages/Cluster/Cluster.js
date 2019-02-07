@@ -13,9 +13,37 @@ import ServerEditModal from 'src/components/ServerEditModal';
 import FailoverButton from 'src/components/FailoverButton';
 import ServerList from 'src/components/ServerList';
 import { addSearchParams, getSearchParams } from 'src/misc/url';
+import {Title, FilterInput} from '../../components/styled';
 
 import './Cluster.css';
 import BootstrapPanel from "../../components/BootstrapPanel";
+import {Button, Input, Icon} from 'antd'
+import {css} from 'react-emotion';
+
+import * as R from 'ramda';
+
+const styles = {
+  buttons: css`
+    display: flex;
+    margin-right: 16px;
+  `,
+  button: css`
+    display: block;
+    margin-right: 25px;
+    :last-child{
+      margin-right: 0px;
+    }
+  `,
+  clusterFilter: css`
+    margin-bottom: 20px;
+    padding-left: 5px;
+  `,
+  clusterInputContainer: css`
+    width: 400px;
+    max-width: 100%;
+    height: 30px;
+  `
+};
 
 /*
   [Probe server]                         => renderProbeServerModal         => ServerEditModal (create: set uri, skip replicaset)
@@ -41,24 +69,23 @@ const prepareReplicasetList = (replicasetList, serverStat, rolesFilterValue, nam
   });
 };
 
-const filterReplicasetList = (replicasetList, rolesFilterValue, nameFilterValue) => {
-  let filteredReplicasetList = replicasetList;
+const filterReplicasetList = (replicasetList, filter) => {
+  const tokenizedFilter = filter.split(' ').map(x => x.trim()).filter(x => !!x);
 
-  if (rolesFilterValue) {
-    filteredReplicasetList = filteredReplicasetList.filter(
-      replicaset => replicaset.roles.includes(rolesFilterValue)
+  const searchableList = replicasetList.map(r => {
+    return {
+      ...r,
+      searchString: `${r.roles.join(' ')} ${r.servers.map(s => `${s.uri} ${s.alias||''}`).join(' ')}`,
+    }
+  });
+
+  const filterByTokens = R.filter(
+    R.allPass(
+      tokenizedFilter.map(token => r => r.searchString.includes(token) || r.uuid.startsWith(token))
     )
-  }
+  );
 
-  if (nameFilterValue) {
-    filteredReplicasetList = filteredReplicasetList.filter(
-      replicaset => replicaset.uuid.startsWith(nameFilterValue) || replicaset.servers.some(
-        server => server.uri.includes(nameFilterValue) || server.alias && server.alias.startsWith(nameFilterValue)
-      )
-    );
-  }
-
-  return filteredReplicasetList;
+  return filterByTokens(searchableList);
 };
 
 class Cluster extends React.Component {
@@ -79,6 +106,7 @@ class Cluster extends React.Component {
       expelServerConfirmDataSource: null,
       rolesFilterValue: '',
       nameFilterValue: '',
+      filter: '',
     };
 
     this.consoleReserveElement = null;
@@ -166,16 +194,16 @@ class Cluster extends React.Component {
 
         <div className="pages-Cluster page-outer app-content">
           <div className="page-inner">
-            <div className="container">
+            <div className="" >
               {unlinkedServers.length
                 ? (
                   <div className="tr-card-margin">
                     <div className="tr-pageCard-head">
                       <div className="tr-pageCard-header">
-                        Unconfigured instances
+                        <Title>Unconfigured instances</Title>
                       </div>
                       <div className="tr-pageCard-buttons">
-                        {this.renderProbeServerButtons()}
+                        {this.renderServerButtons()}
                       </div>
                     </div>
                     <div className="pages-Cluster-serverList">
@@ -199,51 +227,27 @@ class Cluster extends React.Component {
                   <div className="tr-card-margin pages-Cluster-replicasetList">
                     <div className="tr-pageCard-head">
                       <div className="tr-pageCard-header">
-                        Replica sets
+                        <Title>Replica sets</Title>
                       </div>
                       <div className="tr-pageCard-buttons">
                         {unlinkedServers.length
                           ? null
-                          : this.renderProbeServerButtons()}
+                          : this.renderServerButtons()}
                       </div>
                     </div>
 
                     {replicasetList.length > 1
                       ? (
-                        <div className="pages-Cluster-filter">
-                          <div className="row form-inline">
-                            <div className="col-auto form-group">
-                              <label htmlFor="pages-Cluster-roles-filter">
-                                Filter by role:
-                              </label>
-                              <select id="pages-Cluster-roles-filter"
-                                className="form-control form-control-sm"
-                                onChange={this.handleRolesFilterChange}
-                                value={rolesFilterValue}
-                              >
-                                <option value="">Any role</option>
-                                {clusterSelf.knownRoles.map(role => (
-                                  <option value={role}>{role}</option>
-                                ))}
-                              </select>
+                        <div className={styles.clusterFilter}>
+                            <div className={styles.clusterInputContainer}>
+                              <FilterInput
+                                prefix={<Icon type="search" />}
+                                type={"text"}
+                                placeholder={'Filter by uri, uuid, role or alias'}
+                                value={this.state.filter}
+                                onChange={this.handleFilterChange}
+                              />
                             </div>
-                            <div className="col-auto form-group">
-                              <label htmlFor="pages-Cluster-roles-filter">
-                                Filter by uuid or server uri/alias:
-                              </label>
-                              <input type="text" id="pages-Cluster-roles-filter"
-                                className="form-control form-control-sm"
-                                onChange={this.handleNameFilterChange}
-                                value={nameFilterValue} />
-                            </div>
-                            <div className="col-auto form-group align-self-right">
-                              <button type="button" className="btn btn-success btn-sm"
-                                onClick={this.handleResetFilterClick}
-                              >
-                                Reset form
-                              </button>
-                            </div>
-                          </div>
                         </div>
                       )
                       : null}
@@ -264,25 +268,6 @@ class Cluster extends React.Component {
                           No replicaset found
                         </div>
                       )}
-                  </div>
-                )
-                : null}
-
-              {false
-                ? (
-                  <div className="pages-Cluster-configurationCard tr-card">
-                    <div className="tr-card-head">
-                      <div className="tr-card-header">
-                        Configuration
-                      </div>
-                    </div>
-                    <div className="tr-card-content">
-                      <ClusterConfigManagement
-                        isConfingApplying={false}
-                        canTestConfigBeApplied={canTestConfigBeApplied}
-                        uploadConfig={this.uploadConfig}
-                        applyTestConfig={this.applyTestConfig} />
-                    </div>
                   </div>
                 )
                 : null}
@@ -320,17 +305,19 @@ class Cluster extends React.Component {
     );
   };
 
-  renderProbeServerButtons = () => {
+  renderServerButtons = () => {
     return (
-      <div className="tr-cards-buttons">
-        <FailoverButton />
-        <button
-          type="button"
-          className="btn btn-light btn-sm"
-          onClick={this.handleProbeServerRequest}
-        >
-          Probe server
-        </button>
+      <div className={styles.buttons}>
+        <div className={styles.button}><FailoverButton size={'large'} /></div>
+        <div className={styles.button}>
+          <Button
+
+            size={'large'}
+            onClick={this.handleProbeServerRequest}
+          >
+            Probe server
+          </Button>
+        </div>
       </div>
     );
   };
@@ -339,7 +326,7 @@ class Cluster extends React.Component {
     return (
       <Modal
         visible
-        width={540}
+        width={691}
         onOk={this.handleBootstrapVshardSubmitRequest}
         onCancel={this.handleBootstrapVshardConfirmCloseRequest}
       >
@@ -391,7 +378,7 @@ class Cluster extends React.Component {
     return (
       <Modal
         visible
-        width={540}
+        width={691}
         onOk={this.handleExpelServerSubmitRequest}
         onCancel={this.handleExpelServerConfirmCloseRequest}
       >
@@ -647,6 +634,13 @@ class Cluster extends React.Component {
     });
   };
 
+  handleFilterChange = e => {
+    const value = e.target.value;
+    this.setState(() => ({
+      filter: value
+    }))
+  }
+
   saveConnectedServerConsoleState = () => {
     const { saveConsoleState } = this.props;
 
@@ -707,11 +701,11 @@ class Cluster extends React.Component {
   };
 
   getFilteredReplicasetList = () => {
-    const { rolesFilterValue, nameFilterValue } = this.state;
+    const { filter } = this.state;
     const replicasetList = this.getReplicasetList();
 
     return replicasetList
-      ? this.filterReplicasetList(replicasetList, rolesFilterValue, nameFilterValue)
+      ? this.filterReplicasetList(replicasetList, filter)
       : null;
   };
 }
