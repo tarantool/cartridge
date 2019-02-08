@@ -18,6 +18,7 @@ package.preload['mymodule'] = function()
     local master = nil
     local service_registry = require('cluster.service-registry')
     local httpd = service_registry.get('httpd')
+    local validated = false
 
     if httpd ~= nil then
         httpd:route(
@@ -53,15 +54,27 @@ package.preload['mymodule'] = function()
         role_name = 'myrole',
         get_state = function() return state end,
         is_master = function() return master end,
+        validate_config = function()
+            validated = true
+            return true
+        end,
         init = function(opts)
-            state = 'initialized'
             assert(opts.is_master ~= nil)
+            assert(validated,
+                'Config was not validated prior to init()'
+            )
+            state = 'initialized'
         end,
         apply_config = function(_, opts)
+            assert(validated,
+                'Config was not validated prior to apply_config()'
+            )
             master = opts.is_master
+            validated = false
         end,
         stop = function()
             state = 'stopped'
+            validated = false
         end
     }
 end
