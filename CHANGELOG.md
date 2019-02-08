@@ -6,6 +6,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.6.3] - 2019-02-08
+
+### Fixed
+
+- Cluster used to call 'validate()' role method instead of documented
+  'validate_config()', so it was added. The undocumented 'validate()'
+  still may be used for the sake of compatibility, but issues a warning
+  that it was deprecated.
+
 ## [0.6.2] - 2019-02-07
 
 ### Fixed

@@ -262,7 +262,22 @@ local function validate(conf_new)
     local conf_old = vars.conf or {}
 
     for _, mod in ipairs(vars.known_roles) do
-        if type(mod.validate) == 'function' then
+        if type(mod.validate_config) == 'function' then
+            local ok, err = e_config_validate:pcall(
+                mod.validate_config, conf_new, conf_old
+            )
+            if not ok then
+                err = err or e_config_validate:new(
+                    'Role %q vaildation failed', mod.role_name
+                )
+                return nil, err
+            end
+        elseif type(mod.validate) == 'function' then
+            log.warn(
+                'Role %q method "validate()" is deprecated. ' ..
+                'Use "validate_config()" instead.',
+                mod.role_name
+            )
             local ok, err = e_config_validate:pcall(
                 mod.validate, conf_new, conf_old
             )
@@ -583,7 +598,7 @@ end
 -- servers being joined during this call;
 --
 -- IV. Abort phase (`abort_2pc`) is executed if any server reports an error.
--- All servers prepared so fare are rolled back and unlocked.
+-- All servers prepared so far are rolled back and unlocked.
 --
 -- V. Commited phase (`commit_2pc`) is performed.
 -- In case it fails automatic rollback is impossible,
