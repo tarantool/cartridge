@@ -211,9 +211,10 @@ def test_rollback(cluster, helpers):
     # hack utils to throw error on file_write
     conn.eval('''\
         local utils = package.loaded["cluster.utils"]
+        local e_file_write = require('errors').new_class("Artificial error")
         _G._utils_file_write = utils.file_write
-        utils.file_write = function()
-            error("Hacked from pytest")
+        utils.file_write = function(filename)
+            return nil, e_file_write:new("Hacked from pytest")
         end
     ''')
 
@@ -223,7 +224,7 @@ def test_rollback(cluster, helpers):
             cluster { failover(enabled: false) }
         }
     """)
-    assert obj['errors'][0]['message'] == 'eval:4: Hacked from pytest'
+    assert obj['errors'][0]['message'] == 'Hacked from pytest'
 
     # restore utils.file_write
     conn.eval('''
