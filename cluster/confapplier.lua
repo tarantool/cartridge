@@ -244,10 +244,11 @@ local function fetch_from_membership(topology_cfg)
     return e_config_fetch:pcall(fetch_from_uri, candidates[math.random(#candidates)])
 end
 
-local function validate(conf_new)
+local function validate_config(conf_new, conf_old)
     if type(conf_new) ~= 'table'  then
         return nil, e_config_validate:new('config must be a table')
     end
+    checks('table', 'table')
 
     if type(conf_new.vshard) ~= 'table' then
         return nil, e_config_validate:new('section "vshard" must be a table')
@@ -258,8 +259,6 @@ local function validate(conf_new)
     elseif type(conf_new.vshard.bootstrapped) ~= 'boolean' then
         return nil, e_config_validate:new('vshard.bootstrapped must be true or false')
     end
-
-    local conf_old = vars.conf or {}
 
     for _, mod in ipairs(vars.known_roles) do
         if type(mod.validate_config) == 'function' then
@@ -513,7 +512,7 @@ end
 -- @treturn true|nit Success indication
 -- @treturn ?error Error description
 local function prepare_2pc(conf)
-    local ok, err = validate(conf)
+    local ok, err = validate_config(conf, vars.conf or {})
     if not ok then
         return nil, err
     end
@@ -772,7 +771,7 @@ return {
     commit_2pc = commit_2pc,
     abort_2pc = abort_2pc,
 
-    validate = validate,
     apply_config = apply_config,
+    validate_config = validate_config,
     patch_clusterwide = patch_clusterwide,
 }
