@@ -234,6 +234,11 @@ local function bootstrap_from_snapshot(boot_opts, box_opts)
         return nil, err
     end
 
+    local ok, err = confapplier.validate_config(conf, conf)
+    if not ok then
+        return nil, err
+    end
+
     local box_opts = table.deepcopy(box_opts or {})
     box_opts.listen = boot_opts.binary_port
     box_opts.wal_dir = boot_opts.workdir
