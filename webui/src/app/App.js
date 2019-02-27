@@ -5,6 +5,7 @@ import 'src/styles/bootstrap.css';
 import 'src/styles/bootstrap/index.css';
 import 'src/styles/base.scss';
 import 'src/styles/app.css';
+import 'src/styles/my-antd.less';
 import 'src/styles/pages.css';
 import 'src/styles/tables.css';
 import 'src/styles/tight-scroll.css';

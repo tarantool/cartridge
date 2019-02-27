@@ -1,10 +1,23 @@
 import PropTypes from 'prop-types';
 import React from 'react';
 import { defaultMemoize } from 'reselect';
+import {css} from 'react-emotion';
 
 import CommonItemEditModal from 'src/components/CommonItemEditModal';
 
 import './ReplicasetEditModal.css';
+
+const styles = {
+  uriLabel: css`
+    color: #838383;
+  `,
+  serverLabel: css`
+    font-size: 14px;
+    color: #343434;
+    font-family: Roboto;
+  `
+}
+
 
 const isStorageWeightInputDisabled = formData => ! formData.roles.includes('vshard-storage');
 const isStorageWeightInputValueValid = formData => {
@@ -34,7 +47,10 @@ const prepareFields = roles => {
       options: record => {
         return record.servers.map(server => ({
           key: server.uuid,
-          label: `${server.alias || 'No alias'} ${server.uri}`,
+          label: <span className={styles.serverLabel}>
+            {server.alias || 'No alias'}{' '}
+            <span className={styles.uriLabel}>{server.uri}</span>
+          </span>,
         }));
       },
       customProps: {

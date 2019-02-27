@@ -16,7 +16,7 @@ install:
 	cp webui/build/bundle.lua $(INST_LUADIR)/cluster/front-bundle.lua
 
 webui/node_modules: webui/package.json
-	npm install --production --prefix=webui
+	NODE_ENV=production npm ci --prefix=webui
 	@ touch $@
 
 doc: dev/GraphQL.md

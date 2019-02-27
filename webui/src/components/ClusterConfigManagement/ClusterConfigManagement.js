@@ -69,7 +69,7 @@ class ClusterConfigManagement extends React.PureComponent {
     return (
       <Modal
         visible
-        width={540}
+        width={691}
         onOk={this.confirmApplyTestConfig}
         onCancel={this.cancelApplyTestConfig}
       >

@@ -1,5 +1,8 @@
 @import 'src/styles/variables.scss';
 .cluster_app {
+  min-height: 100%;
+  background: #FAFAFA;
+  padding: 0px 30px 0 30px;
   body {
     overflow-y: scroll;
     background-color: $body-bg-color !important; /* ant-design antidote */
@@ -30,15 +33,15 @@
   box-shadow: $cards-shadow;
 }
 
-.tr-card-margin + .tr-card-margin {
-  margin-top: 4em;
+.tr-card-margin {
+  padding-top: 24px;
 }
 
 .tr-pageCard-head {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1em 0;
+  padding: 1em 0 1em 5px;
   font-size: 1.4em;
 }
 
