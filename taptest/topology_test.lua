@@ -55,7 +55,7 @@ local yaml = require('yaml')
 local topology = require('cluster.topology')
 local test = tap.test('topology.config')
 
-test:plan(49)
+test:plan(50)
 
 local function check_config(result, raw_new, raw_old)
     local cfg_new = raw_new and yaml.decode(raw_new) or {}
@@ -485,7 +485,7 @@ replicasets:
   bbbbbbbb-0000-4000-b000-000000000001:
     master: bbbbbbbb-bbbb-4000-b000-000000000001
     roles: {"vshard-storage": true}
-    weight: %d
+    weight: %s
 ...]]
 
 local conf_new_expelled = [[---
@@ -560,6 +560,11 @@ check_config(true,
 check_config(true,
   conf_new_disabled,
   conf_old_with_weight:format(0)
+)
+
+check_config(true,
+  conf_new_disabled,
+  conf_old_with_weight:format("null")
 )
 
 check_config('replicasets[aaaaaaaa-0000-4000-b000-000000000001]'..
