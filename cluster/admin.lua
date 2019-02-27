@@ -175,15 +175,11 @@ local function get_stat(uri)
         return nil, err
     end
 
-    local ok, ret = pcall(conn.call, conn,
-        '_G.__cluster_admin_get_stat', {}, {timeout = 1}
+    return errors.netbox_call(
+        conn,
+        '_G.__cluster_admin_get_stat',
+        {}, {timeout = 1}
     )
-
-    if not ok then
-        return nil, ret
-    end
-
-    return ret
 end
 
 local function get_self()
@@ -516,7 +512,16 @@ local function bootstrap_vshard()
         local uri = replicaset.master.uri
         local conn, err = pool.connect(uri)
 
-        if conn == nil or conn:eval('return box.space._bucket == nil') then
+        if conn == nil then
+            return nil, e_bootstrap_vshard:new('%q not ready yet', uri)
+        end
+
+        local ready = errors.netbox_eval(
+            conn,
+            'return box.space._bucket ~= nil',
+            {}, {timeout = 1}
+        )
+        if not ready then
             return nil, e_bootstrap_vshard:new('%q not ready yet', uri)
         end
     end

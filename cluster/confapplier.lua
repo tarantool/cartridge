@@ -208,7 +208,10 @@ local function fetch_from_uri(uri)
         return nil, err
     end
 
-    return conn:eval('return package.loaded["cluster.confapplier"].load_from_file()')
+    return errors.netbox_call(
+        conn,
+        '_G.__cluster_confapplier_load_from_file'
+    )
 end
 
 local function fetch_from_membership(topology_cfg)
@@ -523,7 +526,6 @@ local function prepare_2pc(conf)
         {'O_CREAT', 'O_EXCL', 'O_WRONLY'}
     )
     if not ok then
-        log.error('Error preparing for config update: %s', err)
         return nil, err
     end
 
@@ -610,7 +612,7 @@ end
 local function _clusterwide(conf)
     checks('table')
 
-    log.info('Updating config clusterwide...')
+    log.warn('Updating config clusterwide...')
 
     local conf_new = set_readonly(table.deepcopy(vars.conf), false)
     local conf_old = vars.conf
@@ -661,21 +663,16 @@ local function _clusterwide(conf)
             _2pc_error = err
             break
         else
-            local ok, err = e_config_validate:pcall(
-                conn.eval, conn,
-                'return package.loaded["cluster.confapplier"].prepare_2pc(...)',
-                {conf_new}
+            local ok, err = errors.netbox_call(
+                conn,
+                '_G.__cluster_confapplier_prepare_2pc',
+                {conf_new}, {timeout = 5}
             )
             if ok == true then
-                log.info('Prepared for config update at %s', uri)
+                log.warn('Prepared for config update at %s', uri)
                 configured_uri_list[uri] = true
             else
-                local err_class = _G._error_classes[err.class_name]
-                if err_class ~= nil then
-                    setmetatable(err, err_class.__instance_mt)
-                end
-
-                log.error('Error preparing for config update at %s', uri)
+                log.error('Error preparing for config update at %s: %s', uri, err)
                 _2pc_error = err
                 break
             end
@@ -690,18 +687,13 @@ local function _clusterwide(conf)
                 log.error('Error commmitting config update at %s: %s', uri, err)
                 _2pc_error = err
             else
-                local ok, err = e_config_apply:pcall(
-                    conn.eval, conn,
-                    'return package.loaded["cluster.confapplier"].commit_2pc()'
+                local ok, err = errors.netbox_call(
+                    conn,
+                    '_G.__cluster_confapplier_commit_2pc'
                 )
                 if ok == true then
-                    log.info('Committed config update at %s', uri)
+                    log.warn('Committed config update at %s', uri)
                 else
-                    local err_class = _G._error_classes[err.class_name]
-                    if err_class ~= nil then
-                        setmetatable(err, err_class.__instance_mt)
-                    end
-
                     log.error('Error commmitting config update at %s: %s', uri, err)
                     _2pc_error = err
                 end
@@ -718,18 +710,13 @@ local function _clusterwide(conf)
             if conn == nil then
                 log.error('Error aborting config update at %s: %s', uri, err)
             else
-                local ok, err = e_rollback:pcall(
-                    conn.eval, conn,
-                    'return package.loaded["cluster.confapplier"].abort_2pc()'
+                local ok, err = errors.netbox_call(
+                    conn,
+                    '_G.__cluster_confapplier_abort_2pc'
                 )
                 if ok == true then
-                    log.info('Aborted config update at %s', uri)
+                    log.warn('Aborted config update at %s', uri)
                 else
-                    local err_class = _G._error_classes[err.class_name]
-                    if err_class ~= nil then
-                        setmetatable(err, err_class.__instance_mt)
-                    end
-
                     log.error('Error aborting config update at %s: %s', uri, err)
                 end
             end
@@ -737,8 +724,10 @@ local function _clusterwide(conf)
     end
 
     if _2pc_error == nil then
+        log.warn('Clusterwide config updated successfully')
         return true
     else
+        log.error('Clusterwide config update failed')
         return nil, _2pc_error
     end
 end
@@ -755,6 +744,11 @@ local function patch_clusterwide(conf)
 
     return ok, err
 end
+
+_G.__cluster_confapplier_load_from_file = load_from_file
+_G.__cluster_confapplier_prepare_2pc = prepare_2pc
+_G.__cluster_confapplier_commit_2pc = commit_2pc
+_G.__cluster_confapplier_abort_2pc = abort_2pc
 
 return {
     set_workdir = set_workdir,
