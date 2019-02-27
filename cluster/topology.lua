@@ -346,7 +346,7 @@ local function validate_upgrade(topology_new, topology_old)
 
         if storage_role_old and not storage_role_new then
             e_config:assert(
-                replicaset_old.weight == 0,
+                (replicaset_old.weight == nil) or (replicaset_old.weight == 0),
                 'replicasets[%s] is a vshard-storage which can\'t be removed', replicaset_uuid
             )
 
