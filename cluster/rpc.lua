@@ -1,5 +1,11 @@
 #!/usr/bin/env tarantool
 
+--- Remote procedure calls across cluster instances
+-- Tarantool Enterprise cluster module provides you a simple way
+-- to manage operation of tarantool cluster.
+--
+-- @submodule cluster
+
 local fun = require('fun')
 local checks = require('checks')
 local errors = require('errors')
@@ -32,6 +38,18 @@ local function call_local(role_name, fn_name, args)
     end
 end
 
+--- List instances suitable for parforming a remote call.
+--
+-- @function __get_candidates
+-- @local
+--
+-- @tparam string role_name
+-- @tparam[opt] table opts
+-- @tparam boolean opts.leader_only
+--
+-- @treturn[1] table with URIs
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 local function get_candidates(role_name, opts)
     opts = opts or {}
     checks('string', {
@@ -69,6 +87,19 @@ local function get_candidates(role_name, opts)
     return candidates
 end
 
+--- Connect to an instance with enabled role.
+--
+-- @function __get_connection
+-- @local
+--
+-- @tparam string role_name
+-- @tparam[opt] table opts
+-- @tparam boolean opts.remote_only
+-- @tparam boolean opts.leader_only
+--
+-- @return[1] `net.box` connection
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 local function get_connection(role_name, opts)
     opts = opts or {}
     checks('string', {
@@ -107,13 +138,35 @@ local function get_connection(role_name, opts)
     return conn
 end
 
+--- Perform remote procedure call.
+-- Find a suiatble healthy instance with enabled role and
+-- perform a [`net.box` `conn:call`](
+-- https://tarantool.io/en/doc/latest/reference/reference_lua/net_box/#net-box-call)
+-- on it.
+--
+-- @function call
+--
+-- @tparam string role_name
+-- @tparam string fn_name
+-- @tparam[opt] table args
+-- @tparam[opt] table opts
+-- @tparam boolean opts.remote_only always try to call remote host
+-- even if the role is enabled locally
+-- @tparam boolean opts.leader_only perform a call only on instances
+-- which are replica set leaders
+-- @param opts.timeout passed to `net.box` `conn:call` options
+-- @param opts.buffer passed to `net.box` `conn:call` options
+--
+-- @return[1] `conn:call()` result
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 local function call_remote(role_name, fn_name, args, opts)
     opts = opts or {}
     checks('string', 'string', '?table', {
         remote_only = '?boolean',
         leader_only = '?boolean',
-        timeout = '?', -- from net.box
-        buffer = '?', -- from net.box
+        timeout = '?', -- for net.box.call
+        buffer = '?', -- for net.box.call
     })
 
     local conn, err = get_connection(role_name, {
