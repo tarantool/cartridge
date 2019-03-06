@@ -1,6 +1,7 @@
 file = {
     "cluster.lua",
-    "cluster/confapplier.lua"
+    "cluster/rpc.lua",
+    "cluster/confapplier.lua",
 }
 topics = {
 	"CHANGELOG.md",

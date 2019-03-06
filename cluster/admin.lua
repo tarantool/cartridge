@@ -8,6 +8,7 @@ local errors = require('errors')
 local uuid_lib = require('uuid')
 local membership = require('membership')
 
+local rpc = require('cluster.rpc')
 local pool = require('cluster.pool')
 local utils = require('cluster.utils')
 local topology = require('cluster.topology')
@@ -497,6 +498,7 @@ local function set_failover_enabled(value)
 end
 
 local function bootstrap_vshard()
+    -- TODO refactor it with rpc
     local vshard_cfg = confapplier.get_readonly('vshard')
     if vshard_cfg and vshard_cfg.bootstrapped then
         return nil, e_bootstrap_vshard:new('Already bootstrapped')

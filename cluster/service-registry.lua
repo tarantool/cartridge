@@ -1,5 +1,6 @@
 #!/usr/bin/env tarantool
 
+local checks = require('checks')
 local vars = require('cluster.vars').new('cluster.service-registry')
 vars:new('registry', {})
 

@@ -20,7 +20,11 @@ webui/node_modules: webui/package.json
 	@ touch $@
 
 doc: dev/GraphQL.md
+ifeq (${version},scm-1)
+	ldoc -t "cluster-${version}" -p "cluster (${version})" --all .
+else
 	ldoc -t "cluster-${version}" -p "cluster (${version})" .
+endif
 
 dev/GraphQL.md: doc/schema.graphql
 	mkdir -p dev
