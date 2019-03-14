@@ -171,29 +171,39 @@ end
 -- Any attempt to modify the section or its children
 -- will raise the error "table is read-only"
 -- @function get_readonly
--- @tparam string section_name A name of a section
--- @treturn table Read-only view on `cfg[section_name]`
+-- @tparam string ?section_name A name of a section
+-- @treturn table Read-only view on `cfg[section_name]` or entire `cfg`
 local function get_readonly(section_name)
-    checks('string')
+    checks('?string')
     if vars.conf == nil then
         return nil
+    elseif section_name == nil then
+        return vars.conf
+    else
+        return vars.conf[section_name]
     end
-    return vars.conf[section_name]
 end
 
 --- Get read-write deepcopy of a config section.
 -- Changing the section has no effect
 -- unless it is passed to a `patch_clusterwide` call.
 -- @function get_deepcopy
--- @tparam string section_name A name of a section
--- @treturn table Deep copy of `cfg[section_name]`
+-- @tparam string ?section_name A name of a section
+-- @treturn table Deep copy of `cfg[section_name]` or entire `cfg`
 local function get_deepcopy(section_name)
-    checks('string')
+    checks('?string')
+
+    local ret
+
     if vars.conf == nil then
-        return nil
+        ret = vars.conf
+    elseif section_name == nil then
+        ret = vars.conf
+    else
+        ret = vars.conf[section_name]
     end
 
-    local ret = table.deepcopy(vars.conf[section_name])
+    ret = table.deepcopy(ret)
 
     if type(ret) == 'table' then
         return set_readonly(ret, false)
