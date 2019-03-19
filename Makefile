@@ -19,19 +19,12 @@ webui/node_modules: webui/package.json
 	NODE_ENV=production npm ci --prefix=webui
 	@ touch $@
 
-doc: dev/GraphQL.md
+doc:
 ifeq (${version},scm-1)
 	ldoc -t "cluster-${version}" -p "cluster (${version})" --all .
 else
 	ldoc -t "cluster-${version}" -p "cluster (${version})" .
 endif
-
-dev/GraphQL.md: doc/schema.graphql
-	mkdir -p dev
-	echo "# GraphQL schema\n" > $@
-	echo '```' >> $@
-	cat $< >> $@
-	echo '```' >> $@
 
 schema: doc/schema.graphql
 doc/schema.graphql: cluster/webui.lua

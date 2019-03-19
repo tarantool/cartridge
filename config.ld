@@ -5,6 +5,5 @@ file = {
 }
 topics = {
 	"CHANGELOG.md",
-	"dev/GraphQL.md",
 }
 format = 'markdown'
