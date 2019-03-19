@@ -3,6 +3,7 @@
 import json
 import time
 import pytest
+import logging
 from conftest import Server
 
 cluster = [
@@ -73,6 +74,106 @@ def test_custom_http_endpoint(cluster):
     assert resp == 'GET OK'
     resp = cluster['router'].post('/custom-post')
     assert resp == 'POST OK'
+
+def test_server_stat_schema(cluster):
+    obj = cluster['router'].graphql("""
+        {
+            __type(name: "ServerStat") {
+                fields { name }
+            }
+        }
+    """)
+
+    assert 'errors' not in obj, obj['errors'][0]['message']
+
+    field_names = set([ field['name'] for field in obj['data']['__type']['fields'] ])
+    assert field_names == set([
+        'items_size', 'items_used', 'items_used_ratio',
+        'quota_size', 'quota_used', 'quota_used_ratio',
+        'arena_size', 'arena_used', 'arena_used_ratio'
+    ])
+
+    obj = cluster['router'].graphql("""
+        {
+            servers {
+                statistics { %s }
+            }
+        }
+    """ % (
+        ' '.join(field_names),
+    ))
+    assert 'errors' not in obj, obj['errors'][0]['message']
+    logging.info(obj['data']['servers'][0])
+
+
+def test_server_info_schema(cluster):
+    obj = cluster['router'].graphql("""
+        {
+            general_fields: __type(name: "ServerInfoGeneral") {
+                fields { name }
+            }
+            storage_fields: __type(name: "ServerInfoStorage") {
+                fields { name }
+            }
+            network_fields: __type(name: "ServerInfoNetwork") {
+                fields { name }
+            }
+            replication_fields: __type(name: "ServerInfoReplication") {
+                fields { name }
+            }
+        }
+    """)
+
+    assert 'errors' not in obj, obj['errors'][0]['message']
+
+    obj = cluster['router'].graphql("""
+        {
+            servers {
+                boxinfo {
+                    general { %s }
+                    storage { %s }
+                    network { %s }
+                    replication { %s }
+                }
+            }
+        }
+    """ % (
+        ' '.join([ field['name'] for field in obj['data']['general_fields']['fields'] ]),
+        ' '.join([ field['name'] for field in obj['data']['storage_fields']['fields'] ]),
+        ' '.join([ field['name'] for field in obj['data']['network_fields']['fields'] ]),
+        ' '.join([ field['name'] for field in obj['data']['replication_fields']['fields'] ]),
+    ))
+    assert 'errors' not in obj, obj['errors'][0]['message']
+    logging.info(obj['data']['servers'][0])
+
+def test_replication_info_schema(cluster):
+    obj = cluster['router'].graphql("""
+        {
+            __type(name: "ReplicaStatus") {
+                fields { name }
+            }
+        }
+    """)
+    assert 'errors' not in obj, obj['errors'][0]['message']
+    field_names = set([ field['name'] for field in obj['data']['__type']['fields'] ])
+    logging.info(field_names)
+
+    obj = cluster['router'].graphql("""
+        {
+            servers {
+                boxinfo {
+                    replication {
+                        replication_info {
+                            %s
+                        }
+                    }
+                }
+            }
+        }
+    """ % ' '.join(field_names))
+    assert 'errors' not in obj, obj['errors'][0]['message']
+    logging.info(obj['data']['servers'][0]['boxinfo']['replication']['replication_info'])
+
 
 def test_servers(cluster, expelled, helpers):
     obj = cluster['router'].graphql("""

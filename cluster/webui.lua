@@ -20,29 +20,276 @@ local confapplier = require('cluster.confapplier')
 local front_bundle = require('cluster.front-bundle')
 
 local statistics_schema = {
-    kind = gql_types.object {
-        name='ServerStat',
-        desciprtion = 'Slab allocator statistics.' ..
+    kind = gql_types.object({
+        name = 'ServerStat',
+        description = 'Slab allocator statistics.' ..
             ' This can be used to monitor the total' ..
-            ' memory usage and memory fragmentation.',
-        fields={
-            items_size = gql_types.long,
-            items_used = gql_types.long,
-            items_used_ratio = gql_types.string,
+            ' memory usage (in bytes) and memory fragmentation.',
+        fields = {
+            items_size = {
+                kind = gql_types.long.nonNull,
+                description =
+                    'The total amount of memory' ..
+                    ' (including allocated, but currently free slabs)' ..
+                    ' used only for tuples, no indexes',
+            },
+            items_used = {
+                kind = gql_types.long.nonNull,
+                description =
+                    'The efficient amount of memory' ..
+                    ' (omitting allocated, but currently free slabs)' ..
+                    ' used only for tuples, no indexes',
+            },
+            items_used_ratio = {
+                kind = gql_types.string.nonNull,
+                description =
+                    '= items_used / slab_count * slab_size' ..
+                    ' (these are slabs used only for tuples, no indexes)',
+            },
 
-            quota_size = gql_types.long,
-            quota_used = gql_types.long,
-            quota_used_ratio = gql_types.string,
+            quota_size = {
+                kind = gql_types.long.nonNull,
+                description =
+                    'The maximum amount of memory that the slab allocator' ..
+                    ' can use for both tuples and indexes' ..
+                    ' (as configured in the memtx_memory parameter)',
+            },
+            quota_used = {
+                kind = gql_types.long.nonNull,
+                description =
+                    'The amount of memory that is already distributed' ..
+                    ' to the slab allocator',
+            },
+            quota_used_ratio = {
+                kind = gql_types.string.nonNull,
+                description =
+                    '= quota_used / quota_size',
+            },
 
-            arena_size = gql_types.long,
-            arena_used = gql_types.long,
-            arena_used_ratio = gql_types.string,
+            arena_size = {
+                kind = gql_types.long.nonNull,
+                description =
+                    'The total memory used for tuples and indexes together' ..
+                    ' (including allocated, but currently free slabs)',
+            },
+            arena_used = {
+                kind = gql_types.long.nonNull,
+                description =
+                    'The efficient memory used for storing' ..
+                    ' tuples and indexes together' ..
+                    ' (omitting allocated, but currently free slabs)',
+            },
+            arena_used_ratio = {
+                kind = gql_types.string.nonNull,
+                description =
+                    '= arena_used / arena_size',
+            },
         }
-    },
+    }),
     arguments = {},
-    description = 'Node statistics',
     resolve = function(root, _)
         return admin.get_stat(root.uri)
+    end,
+}
+
+local gql_replica_status = gql_types.object({
+    name = 'ReplicaStatus',
+    description = 'Statistics for an instance in the replica set.',
+    fields = {
+        id = gql_types.int,
+        lsn = gql_types.long,
+        uuid = gql_types.string.nonNull,
+        upstream_status = gql_types.string,
+        upstream_message = gql_types.string,
+        upstream_idle = gql_types.float,
+        upstream_peer = gql_types.string,
+        upstream_lag = gql_types.float,
+        downstream_status = gql_types.string,
+        downstream_message = gql_types.string,
+    },
+})
+
+local boxinfo_schema = {
+    kind = gql_types.object({
+        name = 'ServerInfo',
+        description = 'Server information and configuration.',
+        fields = {
+            general = gql_types.object({
+                name = 'ServerInfoGeneral',
+                fields = {
+                    version = {
+                        kind = gql_types.string.nonNull,
+                        description = 'The Tarantool version',
+                    },
+                    pid = {
+                        kind = gql_types.int.nonNull,
+                        description = 'The process ID',
+                    },
+                    uptime = {
+                        kind = gql_types.float.nonNull,
+                        description = 'The number of seconds since the instance started',
+                    },
+                    instance_uuid = {
+                        kind = gql_types.string.nonNull,
+                        description = 'A globally unique identifier of the instance',
+                    },
+                    replicaset_uuid = {
+                        kind = gql_types.string.nonNull,
+                        description = 'The UUID of the replica set',
+                    },
+
+                    work_dir = {
+                        kind = gql_types.string,
+                        description = 'Current working directory of a process',
+                    },
+                    memtx_dir = {
+                        kind = gql_types.string,
+                        description = 'A directory where memtx stores snapshot (.snap) files',
+                    },
+                    vinyl_dir = {
+                        kind = gql_types.string,
+                        description = 'A directory where vinyl files or subdirectories will be stored',
+                    },
+                    wal_dir = {
+                        kind = gql_types.string,
+                        description = 'A directory where write-ahead log (.xlog) files are stored',
+                    },
+                    worker_pool_threads = {
+                        kind = gql_types.int,
+                        description =
+                            'The maximum number of threads to use' ..
+                            ' during execution of certain internal processes' ..
+                            ' (currently socket.getaddrinfo() and coio_call())',
+                    },
+
+
+                    listen = {
+                        kind = gql_types.string,
+                        description = 'The binary protocol URI',
+                    },
+                    ro = {
+                        kind = gql_types.boolean.nonNull,
+                        description = 'Current read-only state',
+                    },
+                }
+            }).nonNull,
+            storage = gql_types.object({
+                name = 'ServerInfoStorage',
+                fields = {
+                    -- wal
+                    too_long_threshold = {
+                        kind = gql_types.float,
+                        description = '',
+                    },
+                    wal_dir_rescan_delay = {
+                        kind = gql_types.float,
+                        description = '',
+                    },
+                    wal_max_size = {
+                        kind = gql_types.long,
+                        description = '',
+                    },
+                    wal_mode = {
+                        kind = gql_types.string,
+                        description = '',
+                    },
+                    rows_per_wal = {
+                        kind = gql_types.long,
+                        description = '',
+                    },
+
+                    -- memtx
+                    memtx_memory = {
+                        kind = gql_types.long,
+                        description = '',
+                    },
+                    memtx_max_tuple_size = {
+                        kind = gql_types.long,
+                        description = '',
+                    },
+                    memtx_min_tuple_size = {
+                        kind = gql_types.long,
+                        description = '',
+                    },
+
+                    -- vinyl
+                    vinyl_bloom_fpr = gql_types.float,
+                    vinyl_cache = gql_types.long,
+                    vinyl_memory = gql_types.long,
+                    vinyl_max_tuple_size = gql_types.long,
+                    vinyl_page_size = gql_types.long,
+                    vinyl_range_size = gql_types.long,
+                    vinyl_run_size_ratio = gql_types.float,
+                    vinyl_run_count_per_level = gql_types.int,
+                    vinyl_timeout = gql_types.float,
+                    vinyl_read_threads = gql_types.int,
+                    vinyl_write_threads = gql_types.int,
+                },
+            }).nonNull,
+            network = gql_types.object({
+                name = 'ServerInfoNetwork',
+                fields = {
+                    net_msg_max = {
+                        kind = gql_types.long,
+                        description = '',
+                    },
+                    readahead = {
+                        kind = gql_types.long,
+                        description = '',
+                    },
+                    io_collect_interval = {
+                        kind = gql_types.float,
+                        description = '',
+                    },
+                },
+            }).nonNull,
+            replication = gql_types.object({
+                name = 'ServerInfoReplication',
+                fields = {
+                    replication_connect_quorum = {
+                        kind = gql_types.int,
+                        description = '',
+                    },
+                    replication_connect_timeout = {
+                        kind = gql_types.float,
+                        description = '',
+                    },
+                    replication_skip_conflict = {
+                        kind = gql_types.boolean,
+                        description = '',
+                    },
+                    replication_sync_lag = {
+                        kind = gql_types.float,
+                        description = '',
+                    },
+                    replication_sync_timeout = {
+                        kind = gql_types.float,
+                        description = '',
+                    },
+                    replication_timeout = {
+                        kind = gql_types.float,
+                        description = '',
+                    },
+                    vclock = {
+                        kind = gql_types.list(gql_types.long),
+                        description =
+                            'The vector clock of' ..
+                            ' replication log sequence numbers',
+                    },
+                    replication_info = {
+                        kind = gql_types.list(gql_replica_status.nonNull),
+                        description =
+                            'Statistics for all instances' ..
+                            ' in the replica set in regard to the' ..
+                            ' current instance',
+                    },
+                }
+            }).nonNull,
+        }
+    }),
+    arguments = {},
+    resolve = function(root, _)
+        return admin.get_info(root.uri)
     end,
 }
 
@@ -70,8 +317,9 @@ local gql_type_server = gql_types.object {
         status = gql_types.string.nonNull,
         message = gql_types.string.nonNull,
         disabled = gql_types.boolean.nonNull,
-        statistics = statistics_schema,
         replicaset = gql_type_replicaset,
+        boxinfo = boxinfo_schema,
+        statistics = statistics_schema,
     }
 }
 
