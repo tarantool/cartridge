@@ -40,7 +40,7 @@ class ClusterConfigManagement extends React.PureComponent {
     const { confirmApplyTestConfigModalVisible } = this.state;
 
     return (
-      <div className="tr-card">
+      <div className="tr-card" style={{ marginTop: '20px' }}>
         <div className="tr-card-head">
           <div className="tr-card-header">
             Config management
