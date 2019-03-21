@@ -18,7 +18,7 @@ yaml.cfg({
 local vars = require('cluster.vars').new('cluster.auth')
 local cluster_cookie = require('cluster.cluster-cookie')
 
-vars:new('callbacks')
+vars:new('callbacks', {})
 vars:new('http_handler')
 local e_callback = errors.new_class('Auth callback failed')
 local COOKIE_LIFE_SEC = 30*24*3600 -- 30 days
@@ -80,9 +80,7 @@ local function create_cookie(uid)
 end
 
 local function verify_cookie(raw)
-    checks('?string')
-
-    if raw == nil then
+    if type(raw) ~= 'string' then
         return nil
     end
 
@@ -91,14 +89,11 @@ local function verify_cookie(raw)
         return nil
     end
 
-    local cookie = msgpack.decode(msg)
-    if cookie == nil or type(cookie) ~= 'table' then
-        return nil
-    end
-
-    if cookie.ts == nil
-    or cookie.uid == nil
-    or cookie.hmac == nil then
+    local cookie = msgpack.decode(msg) -- may raise
+    if type(cookie) ~= 'table'
+    or type(cookie.ts) ~= 'string'
+    or type(cookie.uid) ~= 'string'
+    or type(cookie.hmac) ~= 'string' then
         return nil
     end
 
@@ -117,16 +112,21 @@ local function verify_cookie(raw)
         return nil
     end
 
-    return e_callback:pcall(vars.get_user, cookie.uid)
+    if vars.callbacks.get_user ~= nil then
+        return vars.callbacks.get_user(cookie.uid) -- may raise
+    else
+        return true
+    end
 end
 
 local function check_request(req)
-    if vars.check_password == nil then
+    if vars.callbacks.check_password == nil then
         return true
     end
 
     local lsid = req:cookie('lsid')
-    if verify_cookie(lsid) then
+    local ok, verified = pcall(verify_cookie, lsid)
+    if ok and verified then
         return true
     end
 
@@ -134,7 +134,7 @@ local function check_request(req)
 end
 
 local function login(req)
-    if vars.check_password == nil then
+    if vars.callbacks.check_password == nil then
         return {
             status = 200,
         }
@@ -144,7 +144,11 @@ local function login(req)
     local password = req:param('password')
 
     local ok, err = e_callback:pcall(function()
-        local ok = vars.check_password(username, password)
+        if username == nil or password == nil then
+            return false
+        end
+
+        local ok = vars.callbacks.check_password(username, password)
         e_callback:assert(
             type(ok) == 'boolean',
             'check_password() must return boolean'
@@ -188,7 +192,7 @@ local function cfg(httpd)
     }, login)
     httpd:route({
         path = '/logout',
-        method = 'GET'
+        method = 'POST'
     }, logout)
 
     return true

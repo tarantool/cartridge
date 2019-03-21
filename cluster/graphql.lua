@@ -199,13 +199,13 @@ local function get_schema()
     return vars.graphql_schema
 end
 
-local function http_finalize_json(status, json)
+local function http_finalize_json(status, obj)
     return {
         status = status,
         headers = {
             ['content-type'] = "application/json; charset=utf-8"
         },
-        body = json.encode(json)
+        body = json.encode(obj)
     }
 end
 
