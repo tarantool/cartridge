@@ -248,7 +248,11 @@ export function joinSingleServer(params) {
 }
 
 export async function uploadConfig(params) {
-  return rest.post('/config', params.data);
+  console.log(params);
+
+  return rest.put(process.env.REACT_APP_CONFIG_ENDPOINT, params.data, {
+    headers: { 'Content-Type': 'application/yaml;charset=UTF-8' },
+  });
 }
 
 export function applyTestConfig() {

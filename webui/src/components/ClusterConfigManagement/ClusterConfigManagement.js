@@ -40,22 +40,26 @@ class ClusterConfigManagement extends React.PureComponent {
     const { confirmApplyTestConfigModalVisible } = this.state;
 
     return (
-      <div className="ClusterConfigManagement-outer">
-        <div className="ClusterConfigManagement-inner">
+      <div className="tr-card">
+        <div className="tr-card-head">
+          <div className="tr-card-header">
+            Config management
+          </div>
+        </div>
+        <div className="tr-card-content">
           {confirmApplyTestConfigModalVisible
             ? this.renderApplyTestConfigConfirmModal()
             : null}
-          <p>Current configuration can be downloaded <a href="/config">here</a>.</p>
-          <p>You can upload a ZIP archive with config.yml and all necessary files:</p>
+          <p>Current configuration can be downloaded <a href={process.env.REACT_APP_CONFIG_ENDPOINT}>here</a>.</p>
           <div className="ClusterConfigManagement-uploadBlock">
             <UploadButton
               label="Click to upload config"
               onChange={this.handleUploadConfig} />
             {/*<Upload {...this.uploadProps}>
-              <Button>
-                <Icon type="upload" /> Click to upload config
-              </Button>
-            </Upload>*/}
+             <Button>
+             <Icon type="upload" /> Click to upload config
+             </Button>
+             </Upload>*/}
           </div>
           {canTestConfigBeApplied
             ? this.renderApplyTestConfigSuggest()

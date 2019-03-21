@@ -4,6 +4,9 @@ export default {
   post(...args) {
     return axios.post(...args);
   },
+  put(...args) {
+    return axios.put(...args);
+  },
   get(...args) {
     return axios.get(...args);
   },

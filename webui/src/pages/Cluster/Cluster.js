@@ -13,6 +13,7 @@ import FailoverButton from 'src/components/FailoverButton';
 import ServerList from 'src/components/ServerList';
 import { addSearchParams, getSearchParams } from 'src/misc/url';
 import {Title, FilterInput} from '../../components/styled';
+import ClusterConfigManagement from 'src/components/ClusterConfigManagement';
 
 import './Cluster.css';
 import BootstrapPanel from "../../components/BootstrapPanel";
@@ -269,6 +270,11 @@ class Cluster extends React.Component {
                   </div>
                 )
                 : null}
+
+                <ClusterConfigManagement
+                  uploadConfig={this.uploadConfig}
+                  canTestConfigBeApplied={false}
+                  applyTestConfig={this.applyTestConfig} />
             </div>
             <div ref={this.setConsoleReserve} />
           </div>
