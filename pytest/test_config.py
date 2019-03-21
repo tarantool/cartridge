@@ -30,7 +30,6 @@ def test_upload_good(cluster):
         files={'file': (
             'config.yaml',
             yaml.dump(custom_config),
-            'application/yaml' # Content-Type
         )}
     )
 
@@ -47,15 +46,21 @@ def test_upload_good(cluster):
 def test_upload_fail(cluster):
     srv = cluster['master']
 
-    resp = srv.put_raw('/admin/config',
-        json={'topology': None},
-    )
+    resp = srv.put_raw('/admin/config', json={'topology': None})
     assert resp.status_code == 400
     assert resp.json()['err'] == 'topology_new must be a table, got nil'
 
-    resp = srv.put_raw('/admin/config',
-        headers={'Content-Type': 'text/plain'},
-    )
+    resp = srv.put_raw('/admin/config', files={'file': ','})
     assert resp.status_code == 400
-    assert resp.json()['err'] == 'Unsupported Content-Type: "text/plain"'
+    assert resp.json()['class_name'] == 'Decoding YAML failed'
+    assert resp.json()['err'] == 'unexpected END event'
 
+    resp = srv.put_raw('/admin/config', files={'file': 'Lorem ipsum dolor'})
+    assert resp.status_code == 400
+    assert resp.json()['class_name'] == 'Config upload failed'
+    assert resp.json()['err'] == 'Config must be a table'
+
+    resp = srv.put_raw('/admin/config', files={'file': '{ }'})
+    assert resp.status_code == 400
+    assert resp.json()['class_name'] == 'Config upload failed'
+    assert resp.json()['err'] == 'Config must not be empty'

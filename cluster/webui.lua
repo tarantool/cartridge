@@ -147,20 +147,16 @@ local function download_config_handler(_)
     }
 end
 
-local upload_error = errors.new_class('Config upload failed')
+local e_upload = errors.new_class('Config upload failed')
+local e_decode_yaml = errors.new_class('Decoding YAML failed')
 local function upload_config_handler(req)
     if confapplier.get_readonly() == nil then
-        local err = upload_error:new('Cluster isn\'t bootsrapped yet')
+        local err = e_upload:new('Cluster isn\'t bootsrapped yet')
         return http_finalize_error(409, err)
     end
 
     local req_body = req:read()
-    local content_type = req.headers['content-type']
-    if content_type == nil then
-        local err = upload_error:new('Content-Type must be specified')
-        return http_finalize_error(400, err)
-    end
-
+    local content_type = req.headers['content-type'] or ''
     local multipart, boundary = content_type:match('(multipart/form%-data); boundary=(.+)')
     if multipart == 'multipart/form-data' then
         -- RFC 2046 http://www.ietf.org/rfc/rfc2046.txt
@@ -174,32 +170,30 @@ local function upload_config_handler(req)
         -- that have a special meaning with % to escape them.
         -- A list of special characters is ().+-*?[]^$%
         local boundary_line = string.gsub('--'..boundary, "[%(%)%.%+%-%*%?%[%]%^%$%%]", "%%%1")
-        local formdata_headers
-        formdata_headers, req_body = req_body:match(
+        local _, form_body = req_body:match(
             boundary_line .. '\r\n' ..
             '(.-\r\n)' .. '\r\n' .. -- headers
             '(.-)' .. '\r\n' .. -- body
             boundary_line
         )
-        content_type = formdata_headers:match('Content%-Type: (.-)\r\n')
+        req_body = form_body
     end
 
 
     local conf, err = nil
-    if content_type == 'application/json' then
-        conf, err = upload_error:pcall(json.decode, req_body)
-    elseif content_type == 'application/yaml' then
-        conf, err = upload_error:pcall(yaml.decode, req_body)
-    elseif req_body == nil then
-        err = upload_error:new('Request body must not be empty')
+    if req_body == nil then
+        err = e_upload:new('Request body must not be empty')
     else
-        err = upload_error:new('Unsupported Content-Type: %q', content_type)
+        conf, err = e_decode_yaml:pcall(yaml.decode, req_body)
     end
 
     if err ~= nil then
         return http_finalize_error(400, err)
-    elseif conf == nil then
-        err = upload_error:new('Config must not be empty')
+    elseif type(conf) ~= 'table' then
+        err = e_upload:new('Config must be a table')
+        return http_finalize_error(400, err)
+    elseif next(conf) == nil then
+        err = e_upload:new('Config must not be empty')
         return http_finalize_error(400, err)
     end
 
