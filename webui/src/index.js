@@ -5,14 +5,14 @@ import { Router, Switch, Route } from 'react-router-dom';
 import App from './app';
 import configureStore from './store/configureStore';
 
-const projectName = 'cluster';
+import { PROJECT_NAME } from './constants';
 
-const projectPath = (path) => `/${projectName}/${path}`
+const projectPath = (path) => `/${PROJECT_NAME}/${path}`
 
 const store = configureStore();
 
-class Root extends React.Component{
-  render(){
+class Root extends React.Component {
+  render() {
     return (
       <Provider store={store}>
         <div className="cluster_app">
@@ -27,4 +27,20 @@ class Root extends React.Component{
   }
 }
 
-window.tarantool_enterprise_core.register(projectName, [{label: 'Cluster', path: `/${projectName}`}], Root, 'react')
+window.tarantool_enterprise_core.register(
+  PROJECT_NAME,
+  [
+    {
+      label: 'Cluster',
+      path: `/${PROJECT_NAME}`,
+      items: [
+        {
+          label: 'Cluster config',
+          path: `/${PROJECT_NAME}/conf`
+        }
+      ]
+    },
+  ],
+  Root,
+  'react'
+);

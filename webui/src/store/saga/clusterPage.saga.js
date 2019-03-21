@@ -42,11 +42,12 @@ import {
 } from 'src/store/actionTypes';
 import { baseSaga, getRequestSaga, getSignalRequestSaga } from 'src/store/commonRequest';
 import { getClusterSelf } from 'src/store/request/app.requests';
-import { getPageData, refreshLists, getServerStat, bootstrapVshard, probeServer, joinServer, createReplicaset,
-  expelServer, editReplicaset, joinSingleServer, uploadConfig, applyTestConfig, changeFailover }
-  from 'src/store/request/clusterPage.requests';
+import {
+  getPageData, refreshLists, getServerStat, bootstrapVshard, probeServer, joinServer, createReplicaset,
+  expelServer, editReplicaset, joinSingleServer, uploadConfig, applyTestConfig, changeFailover
+} from 'src/store/request/clusterPage.requests';
+import { REFRESH_LIST_INTERVAL } from 'src/constants';
 
-const REFRESH_LIST_INTERVAL = 2500;
 const STAT_REQUEST_PERIOD = 10;
 
 const pageDataRequestSaga = getSignalRequestSaga(
@@ -76,7 +77,7 @@ function* refreshListsTaskSaga() {
         let serverStatResponse;
         const serverStat = yield select(state => state.clusterPage.serverStat);
         const unknownServerExists = listsResponse.serverList
-          .some(server => server.replicaset && ! serverStat.find(stat => stat.uuid === server.uuid));
+          .some(server => server.replicaset && !serverStat.find(stat => stat.uuid === server.uuid));
         if (unknownServerExists) {
           serverStatResponse = yield call(getServerStat);
         }
@@ -216,7 +217,7 @@ const updateClusterSelfOnBootstrap = function* () {
     while (true) {
       try {
         const clusterSelfResponse = yield call(getClusterSelf);
-        yield put({type: CLUSTER_SELF_UPDATE, payload: clusterSelfResponse});
+        yield put({ type: CLUSTER_SELF_UPDATE, payload: clusterSelfResponse });
         return;
       } catch (e) {
         yield delay(2000);

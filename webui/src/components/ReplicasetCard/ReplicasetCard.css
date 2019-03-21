@@ -24,18 +24,7 @@ border-radius: 6px;
 }
 
 .ReplicasetCard-indicator {
-  position: relative;
-  left: -1px;
-  display: inline-block;
-  width: 13px;
-  height: 13px;
   margin-right: 8px;
-  background-color: $server-status-indicator--healthy;
-  border-radius: 50%;
-}
-
-.ReplicasetCard-indicator--error {
-  background-color: $server-status-indicator--error;
 }
 
 .ReplicasetCard-namePrimary,

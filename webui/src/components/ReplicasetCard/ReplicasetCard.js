@@ -1,10 +1,11 @@
 import PropTypes from 'prop-types';
 import React from 'react';
 import { defaultMemoize } from 'reselect';
-import {css} from 'react-emotion';
+import { css } from 'react-emotion';
 
 import ServerList from 'src/components/ServerList';
-import cn from 'src/misc/cn';
+import cn from 'classnames';
+import HealthIndicator from 'src/components/HealthIndicator';
 
 import './ReplicasetCard.css';
 
@@ -45,17 +46,17 @@ class ReplicasetCard extends React.PureComponent {
     const { clusterSelf, replicaset, consoleServer, joinServer, expelServer, createReplicaset } = this.props;
     const shortUuidText = replicaset.uuid.slice(0, 8);
     const rolesText = this.getRolesText();
-    const indicatorClassName = cn(
-      'ReplicasetCard-indicator',
-      replicaset.status !== 'healthy' && 'ReplicasetCard-indicator--error',
-    );
     const servers = this.getServers();
 
     return (
       <div className="ReplicasetCard">
         <div className="ReplicasetCard-head">
           <div className="ReplicasetCard-name">
-            <span className={indicatorClassName} />
+            <HealthIndicator
+              className="ReplicasetCard-indicator"
+              size="m"
+              state={replicaset.status === 'healthy' ? 'good' : 'bad'}
+            />
             <span className="ReplicasetCard-namePrimary">{shortUuidText}</span>
             <span className="ReplicasetCard-nameSecondary">{rolesText}</span>
           </div>

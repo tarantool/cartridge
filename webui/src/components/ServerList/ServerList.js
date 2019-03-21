@@ -1,44 +1,22 @@
 import PropTypes from 'prop-types';
 import React from 'react';
 import { defaultMemoize } from 'reselect';
-import * as R from 'ramda';
 
 import CommonItemList from 'src/components/CommonItemList';
+import HealthIndicator from 'src/components/HealthIndicator';
 import cn from 'src/misc/cn';
 
 import './ServerList.css';
-import {css} from 'react-emotion';
+import { css } from 'react-emotion';
+import ServerListCellActions from './child/ServerListCellActions';
+import ProgressBar from 'src/components/ProgressBar';
 
 const styles = {
-  button: css`
-    color: #FF272C;
-    display: inline-block;
-    padding: 0;
-    margin: 0 30px 0 0;
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 12px;
-    text-decoration: none;
-    :last-child{
-      margin: 0;
-    }
-    :hover{
-      text-decoration: underline;
-    }
-  `,
-  buttonContainer: css`
-    margin-right: 45px;
-    display: flex;
-  `,
   statusBlock: css`
     display: flex;
   `,
   indicatorBlock: css`
     margin-right: 18px;  
-  `,
-  nameBlock: css`
-  
   `,
 };
 
@@ -67,7 +45,7 @@ const prepareColumnProps = (linked, clusterSelf, consoleServer, joinServer, crea
         let masterText, masterClassName = 'ServerList-master';
         if (record.master) {
           masterText = 'master';
-          if ( ! record.activeMaster) {
+          if (!record.activeMaster) {
             masterClassName = cn(masterClassName, 'ServerList-masterDown');
           }
         } else if (record.activeMaster) {
@@ -76,8 +54,9 @@ const prepareColumnProps = (linked, clusterSelf, consoleServer, joinServer, crea
 
         return (
           <div className={styles.statusBlock}>
-            <div className={styles.indicatorBlock}><span className="ServerList-indicator" /></div>
-
+            <div className={styles.indicatorBlock}>
+              <HealthIndicator state={record.status === 'healthy' ? 'good' : 'bad'} />
+            </div>
             <div className="ServerList-name">
               <div>
                 <span className="ServerList-alias">{aliasText}</span>
@@ -108,7 +87,7 @@ const prepareColumnProps = (linked, clusterSelf, consoleServer, joinServer, crea
       key: 'status',
       title: 'Status',
       render: record => {
-        return <span style={{fontSize: '14px', color: '#5D5D5D'}}>{record.status}</span>
+        return <span style={{ fontSize: '14px', color: '#5D5D5D' }}>{record.status}</span>
       }
     },
     {
@@ -126,96 +105,41 @@ const prepareColumnProps = (linked, clusterSelf, consoleServer, joinServer, crea
       title: 'Stat',
       render: record => {
         const { statistics } = record;
-        if ( ! statistics) {
+        if (!statistics) {
           return <span>No statistics</span>;
         }
 
         const { arenaUsed, quotaSize } = statistics;
 
         const usageText = `Memory usage: ${getReadableBytes(arenaUsed)} / ${getReadableBytes(quotaSize)}`;
-        const percentage = Math.max(1, statistics.arenaUsed / statistics.quotaSize * 100);
-        const style = { width: '100%', paddingLeft: `${percentage}%` };
-
-        const defineStatus = R.cond([
-          [R.lt(66), R.always('error')],
-          [R.lt(33), R.always('warning')],
-          [R.T, R.always('success')]
-        ]);
-
-        const className = `ServerList-statBar ServerList-statBar--${defineStatus(percentage)}`;
+        const percentage = Math.max(1, arenaUsed / quotaSize * 100);
 
         return (
-          <div className="ServerList-stat">
-            <span className="ServerList-statName">{usageText}</span>
-            <span style={style} className={className} />
-          </div>
+          <React.Fragment>
+            <div className="ServerList-stat">
+              <span className="ServerList-statName">{usageText}</span>
+              <ProgressBar percents={percentage} statusColors />
+            </div>
+          </React.Fragment>
         );
       },
     },
     {
       key: 'action',
       title: 'Actions',
-      render: record => {
-        const consoleButtonVisible = false && record.status !== 'unconfigured';
-        const handleConsoleClick = () => consoleServer(record);
-        const joinButtonVisible = clusterSelf.configured && !record.uuid;
-        const handleJoinClick = () => joinServer(record);
-        const createButtonVisible = clusterSelf.configured ? !record.uuid : record.uri === clusterSelf.uri;
-        const handleCreateClick = () => createReplicaset(record);
-        const expelButtonVisible = !!record.uuid;
-        const handleExpelClick = () => expelServer(record);
-
-        const buttonClassName = `${styles.button}`;
-
-        return (
-          <div className={styles.buttonContainer}>
-            {consoleButtonVisible
-              ? (
-                <button
-                  type="button"
-                  className={buttonClassName}
-                  onClick={handleConsoleClick}
-                >
-                  Console
-                </button>
-              )
-              : null}
-            {joinButtonVisible
-              ? (
-                <button
-                  type="button"
-                  className={buttonClassName}
-                  onClick={handleJoinClick}
-                >
-                  Join
-                </button>
-              )
-              : null}
-            {createButtonVisible
-              ? (
-                <button
-                  type="button"
-                  className={buttonClassName}
-                  onClick={handleCreateClick}
-                >
-                  Create
-                </button>
-              )
-              : null}
-            {expelButtonVisible
-              ? (
-                <button
-                  type="button"
-                  className={buttonClassName}
-                  onClick={handleExpelClick}
-                >
-                  Expel
-                </button>
-              )
-              : null}
-          </div>
-        );
-      },
+      render: record => (
+        <ServerListCellActions
+          record={record}
+          consoleButton={false && record.status !== 'unconfigured'}
+          joinButton={clusterSelf.configured && !record.uuid}
+          createButton={clusterSelf.configured ? !record.uuid : record.uri === clusterSelf.uri}
+          instanceMenu={!!record.uuid}
+          onConsole={consoleServer}
+          onJoin={joinServer}
+          onCreate={createReplicaset}
+          onExpel={expelServer}
+        />
+      ),
       align: linked ? 'right' : 'left',
       width: linked ? '200px' : '135px',
     },
@@ -230,11 +154,7 @@ const prepareColumnProps = (linked, clusterSelf, consoleServer, joinServer, crea
     removedColumns.push('status', 'message');
   }
 
-  return columns.filter(column => ! removedColumns.includes(column.key));
-};
-
-const getRowCalssName = record => {
-  return record.status !== 'healthy' ? 'ServerList-row--error' : 'ServerList-row--success';
+  return columns.filter(column => !removedColumns.includes(column.key));
 };
 
 const prepareDataSource = dataSource => {
@@ -252,7 +172,7 @@ class ServerList extends React.PureComponent {
   render() {
     const { linked } = this.props;
     const skin = linked ? 'light' : 'enterprise';
-    const shouldRenderHead = ! linked;
+    const shouldRenderHead = !linked;
     const columns = this.getColumnProps();
     const dataSource = this.getDataSource();
 
@@ -260,11 +180,11 @@ class ServerList extends React.PureComponent {
       <div className="ServerList">
         <CommonItemList
           rowKey="uri"
-          rowClassName={getRowCalssName}
           skin={skin}
           shouldRenderHead={shouldRenderHead}
           columns={columns}
-          dataSource={dataSource} />
+          dataSource={dataSource}
+        />
       </div>
     );
   }
