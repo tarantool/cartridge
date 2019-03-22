@@ -222,6 +222,6 @@ return {
     service_registry = service_registry,
     rpc_call = rpc.call,
 
-    set_auth_params = auth.set_params,
+    set_auth_enabled = auth.set_enabled,
     set_auth_callbacks = auth.set_callbacks,
 }

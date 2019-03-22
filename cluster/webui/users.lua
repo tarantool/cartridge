@@ -61,13 +61,10 @@ local function remove_user(_, args)
 end
 
 local function get_auth_params()
-    local params = auth.get_params()
     local callbacks = auth.get_callbacks()
     return {
-        enabled = params.enabled,
+        enabled = auth.get_enabled(),
         username = auth.get_session_username(),
-        cookie_max_age = params.cookie_max_age,
-        cookie_caching_time = params.cookie_caching_time,
 
         implements_add_user = callbacks.add_user ~= nil,
         implements_edit_user = callbacks.edit_user ~= nil,
@@ -83,10 +80,7 @@ local function set_auth_params(_, args)
         return nil, e_set_params:new('You must log in to enable authentication')
     end
 
-    local ok, err = auth.set_params(args)
-    if not ok then
-        return nil, err
-    end
+    auth.set_enabled(args.enabled)
 
     return get_auth_params()
 end
@@ -107,8 +101,6 @@ local function init()
         doc = '',
         args = {
             enabled = gql_types.boolean,
-            cookie_max_age = gql_types.long,
-            cookie_caching_time = gql_types.long,
         },
         kind = gql_type_userapi.nonNull,
         callback = 'cluster.webui.users.set_auth_params',

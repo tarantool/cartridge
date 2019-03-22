@@ -21,7 +21,7 @@ def enable_auth(cluster):
     cluster['master'].conn.eval("""
         local log = require('log')
         local cluster = require('cluster')
-        assert(cluster.set_auth_params({enabled = true}))
+        cluster.set_auth_enabled(true)
         log.info('Auth enabled')
     """)
 
@@ -30,7 +30,7 @@ def disable_auth(cluster):
     cluster['master'].conn.eval("""
         local log = require('log')
         local cluster = require('cluster')
-        assert(cluster.set_auth_params({enabled = false}))
+        cluster.set_auth_enabled(false)
         log.info('Auth disabled')
     """)
 
@@ -127,8 +127,6 @@ def test_auth_disabled(cluster, disable_auth):
                 auth_params {
                     enabled
                     username
-                    cookie_max_age
-                    cookie_caching_time
                 }
             }
         }
@@ -138,8 +136,6 @@ def test_auth_disabled(cluster, disable_auth):
     assert 'errors' not in obj, obj['errors'][0]['message']
     auth_params = obj['data']['cluster']['auth_params']
     assert auth_params['enabled'] == False
-    assert auth_params['cookie_max_age'] > 0
-    assert auth_params['cookie_caching_time'] > 0
     assert 'username' not in auth_params
 
     lsid = _login(srv, USERNAME, PASSWORD).cookies['lsid']

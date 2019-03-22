@@ -342,14 +342,9 @@ end
 
 local function set_params(opts)
     checks({
-        enabled = '?boolean',
         cookie_max_age = '?number',
         cookie_caching_time = '?number',
     })
-
-    if opts ~= nil and opts.enabled ~= nil then
-        vars.enabled = opts.enabled
-    end
 
     if opts ~= nil and opts.cookie_max_age ~= nil then
         vars.cookie_max_age = opts.cookie_max_age
@@ -364,10 +359,18 @@ end
 
 local function get_params()
     return {
-        enabled = vars.enabled,
         cookie_max_age = vars.cookie_max_age,
         cookie_caching_time = vars.cookie_caching_time,
     }
+end
+
+local function set_enabled(enabled)
+    checks('boolean')
+    vars.enabled = enabled
+end
+
+local function get_enabled()
+    return vars.enabled
 end
 
 return {
@@ -376,6 +379,8 @@ return {
     get_params = get_params,
     set_callbacks = set_callbacks,
     get_callbacks = get_callbacks,
+    set_enabled = set_enabled,
+    get_enabled = get_enabled,
 
     add_user = add_user,
     edit_user = edit_user,
