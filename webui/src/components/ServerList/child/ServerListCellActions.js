@@ -23,7 +23,7 @@ const styles = {
   `,
 };
 
-class ServerListCellActions extends React.PureComponent {
+class ServerListCellActions extends React.Component {
   static propTypes = {
     record: PropTypes.object,
     consoleButton: PropTypes.bool,

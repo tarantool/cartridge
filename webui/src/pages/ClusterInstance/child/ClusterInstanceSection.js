@@ -26,28 +26,33 @@ const styles = {
   `,
 };
 
-const renderString = value => (
-  <span className={cx(styles.rightCol, styles.value)}>
-    {value instanceof Array ? value.join(', ') : value}
-  </span>
-);
+const fieldsDisplayTypes = {
+  replication_info: 'json'
+};
 
-const renderJSON = value => (
-  <span className={cx(styles.rightCol, styles.structuredValue)}>
-    {JSON.stringify(value, null, 2)}
-  </span>
-);
+const renderers = {
+  string: value => (
+    <span className={cx(styles.rightCol, styles.value)}>
+      {value instanceof Array ? `[${value.join(', ')}]` : value}
+    </span>
+  ),
+  json: value => (
+    <span className={cx(styles.rightCol, styles.structuredValue)}>
+      {JSON.stringify(value, null, 2)}
+    </span>
+  )
+};
 
 const ClusterInstanceSection = ({ descriptions = {}, params = [] }) => {
   return (
     <div className={styles.list}>
-      {params.map(({ name, value }) => (
+      {params.map(({ name, value, displayAs = 'string' }) => (
         <div className={styles.listItem}>
           <div className={styles.leftCol}>
             <span className={styles.key}>{name}</span>
             {!!descriptions[name] && <p className={styles.description}>{descriptions[name]}</p>}
           </div>
-          {value instanceof Array ? renderJSON(value) : renderString(value)}
+          {renderers[displayAs](value)}
         </div>
       ))}
     </div>
@@ -68,10 +73,18 @@ const mapStateToProps = (
   return {
     descriptions: descriptions[sectionName],
     params: Object.keys(section)
-      .map(key => ({
-        name: key,
-        value: section[key]
-      })),
+      .map(key => {
+        const param = {
+          name: key,
+          value: section[key]
+        };
+
+        if (fieldsDisplayTypes[key]) {
+          param.displayAs = fieldsDisplayTypes[key];
+        }
+
+        return param;
+      }),
   }
 };
 

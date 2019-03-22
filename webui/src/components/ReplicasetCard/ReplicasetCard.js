@@ -4,7 +4,6 @@ import { defaultMemoize } from 'reselect';
 import { css } from 'react-emotion';
 
 import ServerList from 'src/components/ServerList';
-import cn from 'classnames';
 import HealthIndicator from 'src/components/HealthIndicator';
 
 import './ReplicasetCard.css';
