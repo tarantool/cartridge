@@ -1,4 +1,5 @@
 import axios from 'axios';
+import _ from 'lodash';
 
 export default {
   post(...args) {
@@ -28,3 +29,11 @@ export const getRestErrorMessage
 export const isRestAccessDeniedError
   = error =>
     isRestErrorResponse(error) && error.status === 401;
+
+export const isAxiosError
+  = error =>
+  !!(_.get(error, 'config.adapter', false));
+
+export const getAxiosErrorMessage
+  = error =>
+  _.get(error, 'response.data.class_name') || error.message;
