@@ -116,6 +116,10 @@ def test_auth_disabled(cluster, disable_auth):
     assert 'errors' not in obj, obj['errors'][0]['message']
     assert obj['data']['cluster']['add_user']['username'] == USERNAME2
 
+    obj = srv.graphql(req, variables={'username': USERNAME1, 'password': PASSWORD1})
+    assert obj['errors'][0]['message'] == \
+        'User already exists'
+
     req = """
         query($username: String) {
             cluster {
@@ -136,8 +140,46 @@ def test_auth_disabled(cluster, disable_auth):
     assert len(user_list) == 1
     assert user_list[0]['username'] == USERNAME2
 
+    obj = srv.graphql(req, variables={'username': 'Invalid Username'})
+    assert obj['errors'][0]['message'] == \
+        'User not found'
+
     obj = srv.graphql(req)
     assert len(obj['data']['cluster']['users']) == 2
+
+    req = """
+        mutation($username: String! $email: String) {
+            cluster {
+                edit_user(username:$username email:$email) { username email }
+            }
+        }
+    """
+    EMAIL1 = '{}@tarantool.io'.format(USERNAME1)
+    obj = srv.graphql(req, variables={'username': USERNAME1, 'email': EMAIL1})
+    assert 'errors' not in obj, obj['errors'][0]['message']
+    assert obj['data']['cluster']['edit_user']['email'] == EMAIL1
+    del EMAIL1
+
+    obj = srv.graphql(req, variables={'username': 'Invalid Username'})
+    assert obj['errors'][0]['message'] == \
+        'User not found'
+
+    req = """
+        mutation($username: String!) {
+            cluster {
+                remove_user(username:$username) { username }
+            }
+        }
+    """
+    obj = srv.graphql(req, variables={'username': USERNAME2})
+    assert 'errors' not in obj, obj['errors'][0]['message']
+    assert obj['data']['cluster']['remove_user']['username'] == USERNAME2
+    del USERNAME2
+    del PASSWORD2
+
+    obj = srv.graphql(req, variables={'username': 'Invalid Username'})
+    assert obj['errors'][0]['message'] == \
+        'User not found'
 
     req = """
         {

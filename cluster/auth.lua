@@ -215,9 +215,8 @@ local function add_user(username, password, fullname, email)
 
     return e_add_user:pcall(function()
         local user, err = vars.callbacks.add_user(username, password, fullname, email)
-
         if not user then
-            error(err)
+            return nil, e_add_user:new(err)
         end
 
         user = coerce_user(user)
@@ -240,7 +239,7 @@ local function get_user(username)
         local user, err = vars.callbacks.get_user(username)
 
         if not user then
-            error(err)
+            return nil, e_get_user:new(err)
         end
 
         user = coerce_user(user)
@@ -263,7 +262,7 @@ local function edit_user(username, password, fullname, email)
         local user, err = vars.callbacks.edit_user(username, password, fullname, email)
 
         if not user then
-            error(err)
+            return nil, e_edit_user:new(err)
         end
 
         user = coerce_user(user)
@@ -284,7 +283,7 @@ local function list_users()
     return e_list_users:pcall(function()
         local users, err = vars.callbacks.list_users()
         if not users then
-            error(err)
+            return nil, e_list_user:new(err)
         end
 
         local ret = {}
@@ -317,7 +316,7 @@ local function remove_user(username)
     return e_remove_user:pcall(function()
         local user, err = vars.callbacks.remove_user(username)
         if not user then
-            error(err)
+            return nil, e_remove_user:new(err)
         end
 
         user = coerce_user(user)
