@@ -53,7 +53,7 @@ class ClusterConfigManagement extends React.PureComponent {
           <p>Current configuration can be downloaded <a href={process.env.REACT_APP_CONFIG_ENDPOINT}>here</a>.</p>
           <div className="ClusterConfigManagement-uploadBlock">
             <UploadButton
-              label="Click to upload config"
+              label="Upload config"
               onChange={this.handleUploadConfig} />
             {/*<Upload {...this.uploadProps}>
              <Button>

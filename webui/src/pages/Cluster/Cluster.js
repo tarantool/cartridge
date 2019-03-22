@@ -166,6 +166,7 @@ class Cluster extends React.Component {
     const editReplicasetModalVisible = !!selectedReplicasetUuid;
     const unlinkedServers = this.getUnlinkedServers();
     const filteredReplicasetList = this.getFilteredReplicasetList();
+    const isBootstrap = (clusterSelf && clusterSelf.uuid) || false;
 
     return (
       <React.Fragment>
@@ -193,7 +194,7 @@ class Cluster extends React.Component {
 
         <div className="pages-Cluster page-outer app-content">
           <div className="page-inner">
-            <div className="" >
+            <div>
               {unlinkedServers.length
                 ? (
                   <div className="tr-card-margin">
@@ -217,9 +218,10 @@ class Cluster extends React.Component {
                     </div>
                   </div>
                 )
-                : null}
+                : null
+              }
 
-                  <BootstrapPanel/>
+              <BootstrapPanel/>
 
               {replicasetList.length
                 ? (
@@ -269,12 +271,13 @@ class Cluster extends React.Component {
                       )}
                   </div>
                 )
-                : null}
+                : null
+              }
 
-                <ClusterConfigManagement
-                  uploadConfig={this.uploadConfig}
-                  canTestConfigBeApplied={false}
-                  applyTestConfig={this.applyTestConfig} />
+              {isBootstrap && <ClusterConfigManagement
+                uploadConfig={this.uploadConfig}
+                canTestConfigBeApplied={false}
+                applyTestConfig={this.applyTestConfig} />}
             </div>
             <div ref={this.setConsoleReserve} />
           </div>
