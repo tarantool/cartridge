@@ -1,5 +1,5 @@
 import { isGraphqlErrorResponse, getGraphqlErrorMessage } from 'src/api/graphql';
-import { isRestErrorResponse, getRestErrorMessage } from 'src/api/rest';
+import {isRestErrorResponse, getRestErrorMessage, isAxiosError, getAxiosErrorMessage} from 'src/api/rest';
 
 export const getErrorMessage = error => {
   switch (true) {
@@ -7,8 +7,10 @@ export const getErrorMessage = error => {
       return getGraphqlErrorMessage(error);
     case isRestErrorResponse(error):
       return getRestErrorMessage(error);
+    case isAxiosError(error):
+      return getAxiosErrorMessage(error);
     default:
-        return error.message || error.toString();
+      return error.message || error.toString();
   }
 };
 

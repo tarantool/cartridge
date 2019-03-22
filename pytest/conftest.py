@@ -168,6 +168,19 @@ class Server(object):
 
         return r
 
+    def put(self, path, data=None, json=None, headers=None, **args):
+        url = self.baseurl + '/' + path.lstrip('/')
+        r = requests.put(url, data=data, json=json, headers=headers, **args)
+        r.raise_for_status()
+
+        return r.text
+
+    def put_raw(self, path, data=None, json=None, headers=None, **args):
+        url = self.baseurl + '/' + path.lstrip('/')
+        r = requests.put(url, data=data, json=json, headers=headers, **args)
+
+        return r
+
     def post(self, path, data=None, json=None, headers=None, **args):
         url = self.baseurl + '/' + path.lstrip('/')
         r = requests.post(url, data=data, json=json, headers=headers, **args)

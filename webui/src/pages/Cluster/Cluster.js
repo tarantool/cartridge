@@ -13,6 +13,7 @@ import FailoverButton from 'src/components/FailoverButton';
 import ServerList from 'src/components/ServerList';
 import { addSearchParams, getSearchParams } from 'src/misc/url';
 import {Title, FilterInput} from '../../components/styled';
+import ClusterConfigManagement from 'src/components/ClusterConfigManagement';
 
 import './Cluster.css';
 import BootstrapPanel from "../../components/BootstrapPanel";
@@ -165,6 +166,7 @@ class Cluster extends React.Component {
     const editReplicasetModalVisible = !!selectedReplicasetUuid;
     const unlinkedServers = this.getUnlinkedServers();
     const filteredReplicasetList = this.getFilteredReplicasetList();
+    const isBootstrap = (clusterSelf && clusterSelf.uuid) || false;
 
     return (
       <React.Fragment>
@@ -192,7 +194,7 @@ class Cluster extends React.Component {
 
         <div className="pages-Cluster page-outer app-content">
           <div className="page-inner">
-            <div className="" >
+            <div>
               {unlinkedServers.length
                 ? (
                   <div className="tr-card-margin">
@@ -216,9 +218,10 @@ class Cluster extends React.Component {
                     </div>
                   </div>
                 )
-                : null}
+                : null
+              }
 
-                  <BootstrapPanel/>
+              <BootstrapPanel/>
 
               {replicasetList.length
                 ? (
@@ -268,7 +271,13 @@ class Cluster extends React.Component {
                       )}
                   </div>
                 )
-                : null}
+                : null
+              }
+
+              {isBootstrap && <ClusterConfigManagement
+                uploadConfig={this.uploadConfig}
+                canTestConfigBeApplied={false}
+                applyTestConfig={this.applyTestConfig} />}
             </div>
             <div ref={this.setConsoleReserve} />
           </div>
