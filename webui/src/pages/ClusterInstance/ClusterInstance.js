@@ -72,7 +72,7 @@ class ClusterConfig extends React.Component {
               size="l"
               state={status === 'healthy' ? 'good' : 'bad'}
             />
-            {alias} – {uri} – {masterState}
+            {alias} – {uri}{masterState && ` – ${masterState}`}
           </Title>
           <div className={styles.headerSecondRow}>
             <span title="Roles">{roles}</span>

@@ -32,13 +32,7 @@ window.tarantool_enterprise_core.register(
   [
     {
       label: 'Cluster',
-      path: `/${PROJECT_NAME}`,
-      items: [
-        {
-          label: 'Cluster config',
-          path: `/${PROJECT_NAME}/conf`
-        }
-      ]
+      path: `/${PROJECT_NAME}`
     },
   ],
   Root,
