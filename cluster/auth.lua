@@ -106,32 +106,7 @@ local function get_cookie_uid(raw)
         return nil
     end
 
-    if vars.callbacks.check_username == nil then
-        return cookie.uid
-    elseif vars.callbacks.check_username(cookie.uid) then -- may raise
-        return cookie.uid
-    else
-        return nil
-    end
-end
-
-local function check_request(req)
-    local lsid = req:cookie('lsid')
-    local ok, uid
-    if lsid ~= nil then
-        ok, uid = pcall(get_cookie_uid, lsid)
-    end
-    if ok and uid then
-        local fiber_storage = fiber.self().storage
-        fiber_storage['auth_session_username'] = uid
-        return true
-    end
-
-    if not vars.enabled or vars.callbacks.check_password == nil then
-        return true
-    end
-
-    return false
+    return cookie.uid
 end
 
 local function get_session_username()
@@ -329,6 +304,37 @@ local function remove_user(username)
     end)
 end
 
+local function check_request(req)
+    local lsid = req:cookie('lsid')
+    local username
+
+    if lsid ~= nil then
+        local ok, uid = pcall(get_cookie_uid, lsid)
+        if ok and uid then
+            username = uid
+        end
+    end
+
+    if username and vars.callbacks.get_user ~= nil then
+        local user = get_user(username)
+        if not user then
+            username = nil
+        end
+    end
+
+    if username then
+        local fiber_storage = fiber.self().storage
+        fiber_storage['auth_session_username'] = username
+        return true
+    end
+
+    if not vars.enabled or vars.callbacks.check_password == nil then
+        return true
+    end
+
+    return false
+end
+
 local function cfg(httpd)
     checks('table')
 
@@ -352,7 +358,6 @@ local function set_callbacks(callbacks)
         list_users = '?function',
         remove_user = '?function',
 
-        check_username = '?function',
         check_password = '?function',
     })
 

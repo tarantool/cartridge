@@ -162,10 +162,6 @@ package.preload['auth-mocks'] = function()
         return user
     end
 
-    local function check_username(username)
-        return get_user(username) ~= nil
-    end
-
     local function check_password(username, password)
         checks('string', 'string')
         local user = acl[username]
@@ -181,8 +177,6 @@ package.preload['auth-mocks'] = function()
         edit_user = edit_user,
         list_users = list_users,
         remove_user = remove_user,
-
-        check_username = check_username,
         check_password = check_password,
     }
 end
