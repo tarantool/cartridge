@@ -36,4 +36,6 @@ export const isAxiosError
 
 export const getAxiosErrorMessage
   = error =>
-  _.get(error, 'response.data.class_name') || error.message;
+  (_.get(error, 'response.data.class_name', false) && _.get(error, 'response.data.err', false))
+    ? `${_.get(error, 'response.data.class_name')}: ${_.get(error, 'response.data.err')}`
+    : error.message;
