@@ -27,6 +27,7 @@ build = {
             ['cluster.admin'] = 'cluster/admin.lua';
             ['cluster.utils'] = 'cluster/utils.lua';
             ['cluster.webui'] = 'cluster/webui.lua';
+            ['cluster.webui.users'] = 'cluster/webui/users.lua';
             ['cluster.topology'] = 'cluster/topology.lua';
             ['cluster.bootstrap'] = 'cluster/bootstrap.lua';
             ['cluster.confapplier'] = 'cluster/confapplier.lua';

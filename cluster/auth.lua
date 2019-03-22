@@ -4,6 +4,7 @@ local log = require('log')
 local json = require('json').new()
 local yaml = require('yaml').new()
 local clock = require('clock')
+local fiber = require('fiber')
 local digest = require('digest')
 local checks = require('checks')
 local errors = require('errors')
@@ -18,24 +19,16 @@ yaml.cfg({
 local vars = require('cluster.vars').new('cluster.auth')
 local cluster_cookie = require('cluster.cluster-cookie')
 
+vars:new('enabled', false)
 vars:new('callbacks', {})
-vars:new('http_handler')
+vars:new('cookie_max_age', 30*24*3600) -- in seconds
+vars:new('cookie_caching_time', 60) -- in seconds
 local e_callback = errors.new_class('Auth callback failed')
-local COOKIE_LIFE_SEC = 30*24*3600 -- 30 days
-
-local function set_callbacks(callbacks)
-    checks({
-        add_user = '?function',
-        get_user = '?function',
-        edit_user = '?function',
-        list_users = '?function',
-        remove_user = '?function',
-        check_password = '?function',
-    })
-
-    vars.callbacks = table.copy(callbacks) or {}
-    return true
-end
+local e_add_user = errors.new_class('Auth callback "add_user()" failed')
+local e_edit_user = errors.new_class('Auth callback "edit_user()" failed')
+local e_list_users = errors.new_class('Auth callback "list_users()" failed')
+local e_remove_user = errors.new_class('Auth callback "remove_user()" failed')
+local e_check_password = errors.new_class('Auth callback "check_password()" failed')
 
 local function hmac(hashfun, blocksize, key, message)
     checks('function', 'number', 'string', 'string')
@@ -79,7 +72,7 @@ local function create_cookie(uid)
     return digest.base64_encode(raw, {nopad = true, nowrap = true, urlsafe = true})
 end
 
-local function verify_cookie(raw)
+local function get_cookie_uid(raw)
     if type(raw) ~= 'string' then
         return nil
     end
@@ -108,29 +101,41 @@ local function verify_cookie(raw)
     end
 
     local diff = clock.time() - tonumber(cookie.ts)
-    if diff <= 0 or diff >= COOKIE_LIFE_SEC then
+    if diff <= 0 or diff >= vars.cookie_max_age then
         return nil
     end
 
-    if vars.callbacks.get_user ~= nil then
-        return vars.callbacks.get_user(cookie.uid) -- may raise
+    if vars.callbacks.check_username == nil then
+        return cookie.uid
+    elseif vars.callbacks.check_username(cookie.uid) then -- may raise
+        return cookie.uid
     else
-        return true
+        return nil
     end
 end
 
 local function check_request(req)
-    if vars.callbacks.check_password == nil then
+    local lsid = req:cookie('lsid')
+    local ok, uid
+    if lsid ~= nil then
+        ok, uid = pcall(get_cookie_uid, lsid)
+    end
+    if ok and uid then
+        local fiber_storage = fiber.self().storage
+        fiber_storage['auth_session_username'] = uid
         return true
     end
 
-    local lsid = req:cookie('lsid')
-    local ok, verified = pcall(verify_cookie, lsid)
-    if ok and verified then
+    if not vars.enabled or vars.callbacks.check_password == nil then
         return true
     end
 
     return false
+end
+
+local function get_session_username()
+    local fiber_storage = fiber.self().storage
+    return fiber_storage['auth_session_username']
 end
 
 local function login(req)
@@ -143,16 +148,16 @@ local function login(req)
     local username = req:param('username')
     local password = req:param('password')
 
-    local ok, err = e_callback:pcall(function()
+    local ok, err = e_check_password:pcall(function()
         if username == nil or password == nil then
             return false
         end
 
         local ok = vars.callbacks.check_password(username, password)
-        e_callback:assert(
-            type(ok) == 'boolean',
-            'check_password() must return boolean'
-        )
+        if type(ok) ~= 'boolean' then
+            local err = e_callback:new('check_password() must return boolean')
+            return nil, err
+        end
         return ok
     end)
 
@@ -160,7 +165,9 @@ local function login(req)
         return {
             status = 200,
             headers = {
-                ['set-cookie'] = 'lsid=' .. create_cookie(username) .. '; Expires=+1m'
+                ['set-cookie'] = string.format('lsid=%s; Max-Age=%d',
+                    create_cookie(username), vars.cookie_max_age
+                )
             }
         }
     elseif err ~= nil then
@@ -180,12 +187,128 @@ local function logout(_)
     return {
         status = 200,
         headers = {
-            ['set-cookie'] = 'lsid=""; Expires="Thu, 01 Jan 1970 00:00:00 GMT"'
+            ['set-cookie'] = 'lsid=""; Max-Age=-1'
         }
     }
 end
 
+local function coerce_user(user)
+    if type(user) ~= 'table'
+    or (type(user.username) ~= 'string')
+    or (type(user.fullname) ~= 'string' and user.fullname ~= nil )
+    or (type(user.email) ~= 'string' and user.email ~= nil ) then
+        return nil
+    end
+    return {
+        username = user.username,
+        fullname = user.fullname,
+        email = user.email,
+    }
+end
+
+local function add_user(username, password, fullname, email)
+    checks('string', 'string', '?string', '?string')
+    if vars.callbacks.add_user == nil then
+        return nil, e_callback:new('add_user() callback isn\'t set')
+    end
+
+    return e_add_user:pcall(function()
+        local user, err = vars.callbacks.add_user(username, password, fullname, email)
+
+        if not user then
+            error(err)
+        end
+
+        user = coerce_user(user)
+        if not user then
+            local err = e_callback:new('add_user() must return a user object')
+            return nil, err
+        end
+
+        return user
+    end)
+end
+
+local function edit_user(username, password, fullname, email)
+    checks('string', '?string', '?string', '?string')
+    if vars.callbacks.edit_user == nil then
+        return nil, e_callback:new('edit_user() callback isn\'t set')
+    end
+
+    return e_edit_user:pcall(function()
+        local user, err = vars.callbacks.edit_user(username, password, fullname, email)
+
+        if not user then
+            error(err)
+        end
+
+        user = coerce_user(user)
+        if not user then
+            local err = e_callback:new('edit_user() must return a user object')
+            return nil, err
+        end
+
+        return user
+    end)
+end
+
+local function list_users()
+    if vars.callbacks.list_users == nil then
+        return nil, e_callback:new('list_users() callback isn\'t set')
+    end
+
+    return e_list_users:pcall(function()
+        local users, err = vars.callbacks.list_users()
+        if not users then
+            error(err)
+        end
+
+        local ret = {}
+        local i = 1
+        for _ in pairs(users) do
+            local user = users[i]
+            if not user then
+                local err = e_callback:new('list_users() must return an array')
+                return nil, err
+            end
+            user = coerce_user(user)
+            if not user then
+                local err = e_callback:new('list_users() must return array of user objects')
+                return nil, err
+            end
+            ret[i] = user
+            i = i + 1
+        end
+
+        return ret
+    end)
+end
+
+local function remove_user(username)
+    checks('string')
+    if vars.callbacks.remove_user == nil then
+        return nil, e_callback:new('remove_user() callback isn\'t set')
+    end
+
+    return e_remove_user:pcall(function()
+        local user, err = vars.callbacks.remove_user(username)
+        if not user then
+            error(err)
+        end
+
+        user = coerce_user(user)
+        if not user then
+            local err = e_callback:new('remove_user() must return a user object')
+            return nil, err
+        end
+
+        return user
+    end)
+end
+
 local function cfg(httpd)
+    checks('table')
+
     httpd:route({
         path = '/login',
         method = 'POST'
@@ -198,9 +321,68 @@ local function cfg(httpd)
     return true
 end
 
+local function set_callbacks(callbacks)
+    checks({
+        add_user = '?function',
+        edit_user = '?function',
+        list_users = '?function',
+        remove_user = '?function',
+
+        check_username = '?function',
+        check_password = '?function',
+    })
+
+    vars.callbacks = table.copy(callbacks) or {}
+    return true
+end
+
+local function get_callbacks()
+    return table.copy(vars.callbacks)
+end
+
+local function set_params(opts)
+    checks({
+        enabled = '?boolean',
+        cookie_max_age = '?number',
+        cookie_caching_time = '?number',
+    })
+
+    if opts ~= nil and opts.enabled ~= nil then
+        vars.enabled = opts.enabled
+    end
+
+    if opts ~= nil and opts.cookie_max_age ~= nil then
+        vars.cookie_max_age = opts.cookie_max_age
+    end
+
+    if opts ~= nil and opts.cookie_caching_time ~= nil then
+        vars.cookie_caching_time = opts.cookie_caching_time
+    end
+
+    return true
+end
+
+local function get_params()
+    return {
+        enabled = vars.enabled,
+        cookie_max_age = vars.cookie_max_age,
+        cookie_caching_time = vars.cookie_caching_time,
+    }
+end
+
 return {
     cfg = cfg,
+    set_params = set_params,
+    get_params = get_params,
     set_callbacks = set_callbacks,
+    get_callbacks = get_callbacks,
+
+    add_user = add_user,
+    edit_user = edit_user,
+    list_users = list_users,
+    remove_user = remove_user,
 
     check_request = check_request,
+    -- invalidate_session = invalidate_session,
+    get_session_username = get_session_username,
 }

@@ -220,6 +220,8 @@ return {
         patch_clusterwide = confapplier.patch_clusterwide,
     },
     service_registry = service_registry,
-    set_auth_callbacks = auth.set_callbacks,
     rpc_call = rpc.call,
+
+    set_auth_params = auth.set_params,
+    set_auth_callbacks = auth.set_callbacks,
 }
