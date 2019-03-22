@@ -177,6 +177,7 @@ package.preload['auth-mocks'] = function()
 
     return {
         add_user = add_user,
+        get_user = get_user,
         edit_user = edit_user,
         list_users = list_users,
         remove_user = remove_user,

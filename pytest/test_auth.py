@@ -95,31 +95,49 @@ def test_login(cluster, auth):
 
 def test_auth_disabled(cluster, disable_auth):
     srv = cluster['master']
-    USERNAME = 'Duckling'
-    PASSWORD = 'Red Nickel'
+    USERNAME1 = 'Duckling'
+    PASSWORD1 = 'Red Nickel'
+    USERNAME2 = 'Grouse'
+    PASSWORD2 = 'Silver Copper'
     assert srv.post_raw('/graphql').status_code == 200
 
-    obj = srv.graphql("""
+    req = """
         mutation($username: String! $password: String!) {
             cluster {
                 add_user(username:$username password:$password) { username }
             }
         }
-    """, variables={'username': USERNAME, 'password': PASSWORD})
+    """
+    obj = srv.graphql(req, variables={'username': USERNAME1, 'password': PASSWORD1})
     assert 'errors' not in obj, obj['errors'][0]['message']
-    assert obj['data']['cluster']['add_user']['username'] == USERNAME
+    assert obj['data']['cluster']['add_user']['username'] == USERNAME1
 
-    obj = srv.graphql("""
-        {
+    obj = srv.graphql(req, variables={'username': USERNAME2, 'password': PASSWORD2})
+    assert 'errors' not in obj, obj['errors'][0]['message']
+    assert obj['data']['cluster']['add_user']['username'] == USERNAME2
+
+    req = """
+        query($username: String) {
             cluster {
-                list_users { username }
+                users(username: $username) { username }
             }
         }
-    """)
+    """
+
+    obj = srv.graphql(req, variables={'username': USERNAME1})
     assert 'errors' not in obj, obj['errors'][0]['message']
-    user_list = obj['data']['cluster']['list_users']
+    user_list = obj['data']['cluster']['users']
     assert len(user_list) == 1
-    assert user_list[0]['username'] == USERNAME
+    assert user_list[0]['username'] == USERNAME1
+
+    obj = srv.graphql(req, variables={'username': USERNAME2})
+    assert 'errors' not in obj, obj['errors'][0]['message']
+    user_list = obj['data']['cluster']['users']
+    assert len(user_list) == 1
+    assert user_list[0]['username'] == USERNAME2
+
+    obj = srv.graphql(req)
+    assert len(obj['data']['cluster']['users']) == 2
 
     req = """
         {
@@ -138,12 +156,12 @@ def test_auth_disabled(cluster, disable_auth):
     assert auth_params['enabled'] == False
     assert 'username' not in auth_params
 
-    lsid = _login(srv, USERNAME, PASSWORD).cookies['lsid']
+    lsid = _login(srv, USERNAME1, PASSWORD1).cookies['lsid']
     obj = srv.graphql(req, cookies={'lsid': lsid})
     assert 'errors' not in obj, obj['errors'][0]['message']
     auth_params = obj['data']['cluster']['auth_params']
     assert auth_params['enabled'] == False
-    assert auth_params['username'] == USERNAME
+    assert auth_params['username'] == USERNAME1
 
     req = """
         mutation {

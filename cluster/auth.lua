@@ -25,6 +25,7 @@ vars:new('cookie_max_age', 30*24*3600) -- in seconds
 vars:new('cookie_caching_time', 60) -- in seconds
 local e_callback = errors.new_class('Auth callback failed')
 local e_add_user = errors.new_class('Auth callback "add_user()" failed')
+local e_get_user = errors.new_class('Auth callback "get_user()" failed')
 local e_edit_user = errors.new_class('Auth callback "edit_user()" failed')
 local e_list_users = errors.new_class('Auth callback "list_users()" failed')
 local e_remove_user = errors.new_class('Auth callback "remove_user()" failed')
@@ -229,6 +230,29 @@ local function add_user(username, password, fullname, email)
     end)
 end
 
+local function get_user(username)
+    checks('string')
+    if vars.callbacks.get_user == nil then
+        return nil, e_callback:new('get_user() callback isn\'t set')
+    end
+
+    return e_get_user:pcall(function()
+        local user, err = vars.callbacks.get_user(username)
+
+        if not user then
+            error(err)
+        end
+
+        user = coerce_user(user)
+        if not user then
+            local err = e_callback:new('get_user() must return a user object')
+            return nil, err
+        end
+
+        return user
+    end)
+end
+
 local function edit_user(username, password, fullname, email)
     checks('string', '?string', '?string', '?string')
     if vars.callbacks.edit_user == nil then
@@ -324,6 +348,7 @@ end
 local function set_callbacks(callbacks)
     checks({
         add_user = '?function',
+        get_user = '?function',
         edit_user = '?function',
         list_users = '?function',
         remove_user = '?function',
@@ -383,6 +408,7 @@ return {
     get_enabled = get_enabled,
 
     add_user = add_user,
+    get_user = get_user,
     edit_user = edit_user,
     list_users = list_users,
     remove_user = remove_user,

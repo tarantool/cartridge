@@ -37,6 +37,7 @@ local gql_type_userapi = gql_types.object({
         },
 
         implements_add_user = gql_types.boolean.nonNull,
+        implements_get_user = gql_types.boolean.nonNull,
         implements_edit_user = gql_types.boolean.nonNull,
         implements_list_users = gql_types.boolean.nonNull,
         implements_remove_user = gql_types.boolean.nonNull,
@@ -52,8 +53,18 @@ local function edit_user(_, args)
     return auth.edit_user(args.username, args.password, args.fullname, args.email)
 end
 
-local function list_users()
-    return auth.list_users()
+local function users(_, args)
+    if args.username ~= nil then
+        local user, err = auth.get_user(args.username)
+
+        if user == nil then
+            return nil, err
+        end
+
+        return {user}
+    else
+        return auth.list_users()
+    end
 end
 
 local function remove_user(_, args)
@@ -67,6 +78,7 @@ local function get_auth_params()
         username = auth.get_session_username(),
 
         implements_add_user = callbacks.add_user ~= nil,
+        implements_get_user = callbacks.get_user ~= nil,
         implements_edit_user = callbacks.edit_user ~= nil,
         implements_list_users = callbacks.list_users ~= nil,
         implements_remove_user = callbacks.remove_user ~= nil,
@@ -136,11 +148,13 @@ local function init()
 
     graphql.add_callback({
         prefix = 'cluster',
-        name = 'list_users',
+        name = 'users',
         doc = 'List authorized users',
-        args = {},
+        args = {
+            username = gql_types.string,
+        },
         kind = gql_types.list(gql_type_user.nonNull),
-        callback = 'cluster.webui.users.list_users',
+        callback = 'cluster.webui.users.users',
     })
 
     graphql.add_mutation({
@@ -158,9 +172,9 @@ end
 return {
     init = init,
 
+    users = users, -- get_user + list_users
     add_user = add_user,
     edit_user = edit_user,
-    list_users = list_users,
     remove_user = remove_user,
 
     get_auth_params = get_auth_params,
