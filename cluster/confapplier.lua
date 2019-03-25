@@ -280,7 +280,8 @@ local function validate_config(conf_new, conf_old)
             )
             if not ok then
                 err = err or e_config_validate:new(
-                    'Role %q vaildation failed', mod.role_name
+                    'Role %q method vaildate_config() returned %s',
+                    mod.role_name, ok
                 )
                 return nil, err
             end
@@ -295,7 +296,8 @@ local function validate_config(conf_new, conf_old)
             )
             if not ok then
                 err = err or e_config_validate:new(
-                    'Role %q vaildation failed', mod.role_name
+                    'Role %q method validate() returned %s',
+                    mod.role_name, ok
                 )
                 return nil, err
             end
@@ -305,6 +307,30 @@ local function validate_config(conf_new, conf_old)
     return true
 end
 
+local function _failover_role(mod, opts)
+    if service_registry.get(mod.role_name) == nil then
+        return true
+    end
+
+    if type(mod.apply_config) ~= 'function' then
+        return true
+    end
+
+    if type(mod.validate_config) == 'function' then
+        local ok, err = e_config_validate:pcall(
+            mod.validate_config, vars.conf, vars.conf
+        )
+        if not ok then
+            err = err or e_config_validate:new('validate_config() returned %s', ok)
+            return nil, err
+        end
+    end
+
+    return e_config_apply:pcall(
+        mod.apply_config, vars.conf, opts
+    )
+end
+
 local function _failover(cond)
     local function failover_internal()
         local active_masters = topology.get_active_masters()
@@ -312,6 +338,7 @@ local function _failover(cond)
         if active_masters[box.info.cluster.uuid] == box.info.uuid then
             is_master = true
         end
+        local opts = set_readonly({is_master = is_master}, true)
 
         local bucket_count = vars.conf.vshard.bucket_count
         local cfg_new = topology.get_vshard_sharding_config()
@@ -321,9 +348,9 @@ local function _failover(cond)
         local vshard_storage = service_registry.get('vshard-storage')
 
         if vshard_router and vshard_router.internal.current_cfg then
-            local cfg_old = vshard_router.internal.current_cfg.sharding
+            cfg_old = vshard_router.internal.current_cfg.sharding
         elseif vshard_storage and vshard_storage.internal.current_cfg then
-            local cfg_old = vshard_storage.internal.current_cfg.sharding
+            cfg_old = vshard_storage.internal.current_cfg.sharding
         end
 
         if not utils.deepcmp(cfg_new, cfg_old) then
@@ -358,17 +385,9 @@ local function _failover(cond)
         end
 
         for _, mod in ipairs(vars.known_roles) do
-            -- local role_name = mod.role_name
-            if (service_registry.get(mod.role_name) ~= nil)
-            and (type(mod.apply_config) == 'function')
-            then
-                local _, err = e_config_apply:pcall(
-                    mod.apply_config, vars.conf,
-                    {is_master = is_master}
-                )
-                if err then
-                    log.error('%s', err)
-                end
+            local _, err = _failover_role(mod, opts)
+            if err then
+                log.error('Role %q failover failed: %s', mod.role_name, err)
             end
         end
 
