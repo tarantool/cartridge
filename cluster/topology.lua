@@ -61,9 +61,9 @@ local function get_leaders_order(servers, replicaset_uuid, leaders_order)
     end
 
     local ret_tail = {}
-    for instance_uuid, server in pairs(servers) do
+    for _, instance_uuid, server in fun.filter(not_expelled, servers) do
         if server.replicaset_uuid == replicaset_uuid then
-            if not utils.table_find(ret_tail, instance_uuid) then
+            if not utils.table_find(ret, instance_uuid) then
                 table.insert(ret_tail, instance_uuid)
             end
         end
@@ -168,6 +168,7 @@ local function validate_schema(field, topology)
         if type(replicaset.master) == 'table' then
             local i = 1
             local leaders_order = get_leaders_order(servers, replicaset_uuid, replicaset.master)
+            local leaders_seen = {}
             for k, _ in pairs(leaders_order) do
                 e_config:assert(
                     type(k) == 'number',
@@ -177,6 +178,11 @@ local function validate_schema(field, topology)
                     type(leaders_order[i]) == 'string',
                     '%s.master must be a contiguous array of strings', field
                 )
+                e_config:assert(
+                    not leaders_seen[leaders_order[i]],
+                    '%s.master values mustn\'t repeat', field
+                )
+                leaders_seen[leaders_order[i]] = true
                 i = i + 1
             end
         end
@@ -395,7 +401,12 @@ local function validate_upgrade(topology_new, topology_old)
                 'replicasets[%s] is a vshard-storage which can\'t be removed', replicaset_uuid
             )
 
-            local master_uuid = replicaset_old.master
+            local master_uuid
+            if type(replicaset_old.master) == 'table' then
+                master_uuid = replicaset_old.master[1]
+            else
+                master_uuid = replicaset_old.master
+            end
             local master_uri = servers_old[master_uuid].uri
             local conn, err = pool.connect(master_uri)
             if not conn then
@@ -485,52 +496,36 @@ local function cluster_is_healthy()
 end
 
 local function get_active_masters()
-    if not vars.topology.failover then
-        local ret = {}
+    local ret = {}
 
-        for replicaset_uuid, replicaset in pairs(vars.topology.replicasets) do
-            ret[replicaset_uuid] = replicaset.master
-        end
-        return ret
-    else
-        local alive = {
-            -- [instance_uuid] = true/false,
-        }
-        local min_alive_uuid = {
-            -- [replicaset_uuid] = instance_uuid,
-        }
-        for _it, instance_uuid, server in fun.filter(not_disabled, vars.topology.servers) do
-            local replicaset_uuid = server.replicaset_uuid
-            local replicaset = vars.topology.replicasets[replicaset_uuid]
+    for replicaset_uuid, replicaset in pairs(vars.topology.replicasets) do
+        local leaders_order = get_leaders_order(
+            vars.topology.servers,
+            replicaset_uuid,
+            replicaset.master
+        )
 
-            local member = membership.get_member(server.uri)
-            if member ~= nil
-            and member.status == 'alive'
-            and member.payload.error == nil
-            and member.payload.uuid == instance_uuid then
-                alive[instance_uuid] = true
-                if min_alive_uuid[replicaset_uuid] == nil
-                or min_alive_uuid[replicaset_uuid] > instance_uuid then
-                    min_alive_uuid[replicaset_uuid] = instance_uuid
+        if vars.topology.failover then
+            for _, instance_uuid in ipairs(leaders_order) do
+                local server = vars.topology.servers[instance_uuid]
+                local member = membership.get_member(server.uri)
+
+                if member ~= nil
+                and member.status == 'alive'
+                and member.payload.error == nil
+                and member.payload.uuid == instance_uuid then
+                    ret[replicaset_uuid] = instance_uuid
+                    break
                 end
-            else
-                alive[instance_uuid] = false
             end
         end
 
-        local ret = {}
-        for replicaset_uuid, replicaset in pairs(vars.topology.replicasets) do
-            local master_uuid = replicaset.master
-
-            if not alive[master_uuid]
-            and min_alive_uuid[replicaset_uuid] then
-                master_uuid = min_alive_uuid[replicaset_uuid]
-            end
-
-            ret[replicaset_uuid] = master_uuid
+        if ret[replicaset_uuid] == nil then
+            ret[replicaset_uuid] = leaders_order[1]
         end
-        return ret
     end
+
+    return ret
 end
 
 -- returns SHARDING table, which can be passed to
@@ -603,6 +598,7 @@ return {
 
     cluster_is_healthy = cluster_is_healthy,
     get_myself_uuids = get_myself_uuids,
+    get_leaders_order = get_leaders_order,
     get_active_masters = get_active_masters,
     get_replication_config = get_replication_config,
     get_vshard_sharding_config = get_vshard_sharding_config,

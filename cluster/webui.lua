@@ -301,8 +301,16 @@ local gql_type_replicaset = gql_types.object {
         roles = gql_types.list(gql_types.string.nonNull),
         status = gql_types.string.nonNull,
         weight = gql_types.float,
-        master = gql_types.nonNull('Server'),
-        active_master = gql_types.nonNull('Server'),
+        master = {
+            kind = gql_types.nonNull('Server'),
+            description = 'The leader according to the configuration.',
+        },
+        active_master = {
+            kind = gql_types.nonNull('Server'),
+            description = 'The active leader. It may differ from' ..
+                ' "master" if failover is enabled and configured leader' ..
+                ' isn\'t healthy.'
+        },
         servers = gql_types.list('Server'),
     }
 }
@@ -317,6 +325,10 @@ local gql_type_server = gql_types.object {
         status = gql_types.string.nonNull,
         message = gql_types.string.nonNull,
         disabled = gql_types.boolean.nonNull,
+        priority = {
+            kind = gql_types.int.nonNull,
+            description = 'Failover priority within the replica set',
+        },
         replicaset = gql_type_replicaset,
         boxinfo = boxinfo_schema,
         statistics = statistics_schema,
@@ -543,7 +555,7 @@ local function init(httpd)
         args = {
             uuid = gql_types.string.nonNull,
             roles = gql_types.list(gql_types.string.nonNull),
-            master = gql_types.string,
+            master = gql_types.list(gql_types.string.nonNull),
             weight = gql_types.float,
         },
         kind = gql_types.boolean,

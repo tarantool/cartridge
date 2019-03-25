@@ -40,13 +40,15 @@ cluster = [
 
 def get_master(cluster, replicaset_uuid):
     resp = cluster['router'].graphql("""
-        {
-            replicasets(uuid: "%s") {
+        query(
+            $uuid: String!
+        ){
+            replicasets(uuid: $uuid) {
                 master { uuid }
                 active_master { uuid }
             }
         }
-    """ % replicaset_uuid)
+    """, variables={'uuid': replicaset_uuid})
     assert 'errors' not in resp, resp['errors'][0]['message']
 
     replicasets = resp['data']['replicasets']
@@ -56,13 +58,16 @@ def get_master(cluster, replicaset_uuid):
 
 def set_master(cluster, replicaset_uuid, master_uuid):
     resp = cluster['router'].graphql("""
-        mutation {
+        mutation(
+            $uuid: String!
+            $master_uuid: [String!]!
+        ) {
             edit_replicaset(
-                uuid: "%s"
-                master: "%s"
+                uuid: $uuid
+                master: $master_uuid
             )
         }
-    """ % (replicaset_uuid, master_uuid))
+    """, variables={'uuid': replicaset_uuid, 'master_uuid': [master_uuid]})
     assert 'errors' not in resp, resp['errors'][0]['message']
 
 def get_failover(cluster):
@@ -92,7 +97,7 @@ def check_active_master(cluster, expected_uuid):
     assert err == None
     assert resp[0] == expected_uuid
 
-def test_api_master(cluster):
+def test_api_master(cluster, helpers):
     set_master(cluster, uuid_replicaset, uuid_s2)
     assert get_master(cluster, uuid_replicaset) == (uuid_s2, uuid_s2)
     set_master(cluster, uuid_replicaset, uuid_s1)
@@ -109,6 +114,30 @@ def test_api_master(cluster):
     """ % (uuid_s1))
     assert resp['errors'][0]['message'] == \
         'Server "bbbbbbbb-bbbb-4000-b000-000000033011" is the master and can\'t be expelled'
+
+    obj = cluster['router'].graphql("""
+        {
+            replicasets {
+                uuid
+                servers { uuid priority }
+            }
+        }
+    """)
+    assert 'errors' not in obj, obj['errors'][0]['message']
+    replicasets = obj['data']['replicasets']
+    assert {
+        'uuid': uuid_replicaset,
+        'servers': [
+            {
+                'uuid': uuid_s1,
+                'priority': 1
+            },
+            {
+                'uuid': uuid_s2,
+                'priority': 2
+            },
+        ]
+    } == helpers.find(replicasets, 'uuid', uuid_replicaset)
 
 def test_api_failover(cluster):
     assert set_failover(cluster, False) == False
