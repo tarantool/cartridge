@@ -181,7 +181,7 @@ replicasets:
 ...]])
 
 check_config('topology_new.replicasets[aaaaaaaa-0000-4000-b000-000000000001]'..
-  '.master must be a string, got nil',
+  '.master must be either string or table, got nil',
 [[---
 replicasets:
   aaaaaaaa-0000-4000-b000-000000000001:
@@ -257,7 +257,7 @@ replicasets:
 ...]])
 
 check_config('replicasets[aaaaaaaa-0000-4000-b000-000000000001]'..
-  '.master does not exist',
+  '.master "aaaaaaaa-aaaa-4000-b000-000000000002" doesn\'t exist',
 [[---
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000001:
@@ -270,7 +270,7 @@ replicasets:
 ...]])
 
 check_config('replicasets[aaaaaaaa-0000-4000-b000-000000000001]'..
-  '.master can not be expelled',
+  '.master "aaaaaaaa-aaaa-4000-b000-000000000002" can not be expelled',
 [[---
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000001:
@@ -284,7 +284,7 @@ replicasets:
 ...]])
 
 check_config('replicasets[bbbbbbbb-0000-4000-b000-000000000001]'..
-  '.master belongs to another replicaset',
+  '.master "aaaaaaaa-aaaa-4000-b000-000000000001" belongs to another replicaset',
 [[---
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000001:

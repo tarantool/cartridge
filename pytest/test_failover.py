@@ -100,8 +100,15 @@ def test_api_master(cluster):
 
     with pytest.raises(AssertionError) as excinfo:
         set_master(cluster, uuid_replicaset, 'bbbbbbbb-bbbb-4000-b000-000000000003')
-    assert str(excinfo.value).split('\n', 1)[0] \
-        == 'replicasets[bbbbbbbb-0000-4000-b000-000000000000].master does not exist'
+    assert str(excinfo.value).split('\n', 1)[0] == \
+        'replicasets[bbbbbbbb-0000-4000-b000-000000000000].master ' + \
+        '"bbbbbbbb-bbbb-4000-b000-000000000003" doesn\'t exist'
+
+    resp = cluster['router'].graphql("""
+        mutation { expel_server(uuid: "%s") }
+    """ % (uuid_s1))
+    assert resp['errors'][0]['message'] == \
+        'Server "bbbbbbbb-bbbb-4000-b000-000000033011" is the master and can\'t be expelled'
 
 def test_api_failover(cluster):
     assert set_failover(cluster, False) == False

@@ -29,13 +29,13 @@ vars:new('topology', {
         -- },
     },
     replicasets = {
-        -- ['replicaset-uuid-1'] = 'expelled',
         -- ['replicaset-uuid-2'] = {
         --     roles = {
         --         ['role-1'] = true,
         --         ['role-2'] = true,
         --     },
-        --     master = 'instance-uuid-2',
+        --     master = 'instance-uuid-2' -- old format, still compatible
+        --     master = {'instance-uuid-2', 'instance-uuid-1'} -- new format
         --     weight = 1.0,
         -- }
     },
@@ -48,6 +48,31 @@ end
 
 local function not_disabled(uuid, srv)
     return not_expelled(uuid, srv) and not srv.disabled
+end
+
+local function get_leaders_order(servers, replicaset_uuid, leaders_order)
+    checks('table', 'string', 'string|table')
+
+    local ret
+    if type(leaders_order) == 'string' then
+        ret = {leaders_order}
+    else
+        ret = table.copy(leaders_order)
+    end
+
+    local ret_tail = {}
+    for instance_uuid, server in pairs(servers) do
+        if server.replicaset_uuid == replicaset_uuid then
+            if not utils.table_find(ret_tail, instance_uuid) then
+                table.insert(ret_tail, instance_uuid)
+            end
+        end
+    end
+
+    table.sort(ret_tail)
+    utils.table_append(ret, ret_tail)
+
+    return ret
 end
 
 local function validate_schema(field, topology)
@@ -135,10 +160,27 @@ local function validate_schema(field, topology)
             type(replicaset) == 'table',
             '%s must be a table', field
         )
+
         e_config:assert(
-            type(replicaset.master) == 'string',
-            '%s.master must be a string, got %s', field, type(replicaset.master)
+            type(replicaset.master) == 'string' or type(replicaset.master) == 'table',
+            '%s.master must be either string or table, got %s', field, type(replicaset.master)
         )
+        if type(replicaset.master) == 'table' then
+            local i = 1
+            local leaders_order = get_leaders_order(servers, replicaset_uuid, replicaset.master)
+            for k, _ in pairs(leaders_order) do
+                e_config:assert(
+                    type(k) == 'number',
+                    '%s.master must have integer keys', field
+                )
+                e_config:assert(
+                    type(leaders_order[i]) == 'string',
+                    '%s.master must be a contiguous array of strings', field
+                )
+                i = i + 1
+            end
+        end
+
         e_config:assert(
             type(replicaset.roles) == 'table',
             '%s.roles must be a table, got %s', field, type(replicaset.roles)
@@ -213,20 +255,23 @@ local function validate_consistency(topology)
             '%s has no servers', field
         )
 
-        local master_uuid = replicaset.master
-        local master = servers[master_uuid]
-        e_config:assert(
-            master ~= nil,
-            '%s.master does not exist', field
-        )
-        e_config:assert(
-            not_expelled(master_uuid, master),
-            '%s.master can not be expelled', field
-        )
-        e_config:assert(
-            master.replicaset_uuid == replicaset_uuid,
-            '%s.master belongs to another replicaset', field
-        )
+        local leaders_order = get_leaders_order(servers, replicaset_uuid, replicaset.master)
+        for _, leader_uuid in ipairs(leaders_order) do
+            local leader = servers[leader_uuid]
+            e_config:assert(
+                leader ~= nil,
+                '%s.master %q doesn\'t exist', field, leader_uuid
+            )
+            e_config:assert(
+                not_expelled(leader_uuid, leader),
+                '%s.master %q can not be expelled', field, leader_uuid
+            )
+            e_config:assert(
+                leader.replicaset_uuid == replicaset_uuid,
+                '%s.master %q belongs to another replicaset', field, leader_uuid
+            )
+        end
+
         e_config:assert(
             (replicaset.weight or 0) >= 0,
             '%s.weight must be non-negative, got %s', field, replicaset.weight

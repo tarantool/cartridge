@@ -4,6 +4,7 @@ local log = require('log')
 local fun = require('fun')
 local fiber = require('fiber')
 local vshard = require('vshard')
+local checks = require('checks')
 local errors = require('errors')
 local uuid_lib = require('uuid')
 local membership = require('membership')
@@ -469,18 +470,37 @@ local function expel_server(uuid)
         return nil, e_topology_edit:new('Server %q is already expelled', uuid)
     end
 
-    local expel_replicaset = topology_cfg.servers[uuid].replicaset_uuid
+    local replicaset_uuid = topology_cfg.servers[uuid].replicaset_uuid
+    local replicaset = topology_cfg.replicasets[replicaset_uuid]
 
     topology_cfg.servers[uuid] = "expelled"
 
     for _it, instance_uuid, server in fun.filter(topology.not_expelled, topology_cfg.servers) do
-        if server.replicaset_uuid == expel_replicaset then
-            expel_replicaset = nil
+        if server.replicaset_uuid == replicaset_uuid then
+            replicaset_uuid = nil
         end
     end
-    if expel_replicaset ~= nil then
-        topology_cfg.replicasets[expel_replicaset] = nil
+
+    if replicaset_uuid ~= nil then
+        topology_cfg.replicasets[replicaset_uuid] = nil
+        replicaset = nil
+    else
+        local master_pos
+        if type(replicaset.master) == 'string' and replicaset.master == uuid then
+            master_pos = 1
+        elseif type(replicaset.master) == 'table' then
+            master_pos = utils.table_find(replicaset.master, uuid)
+        end
+
+        if master_pos == 1 then
+            return nil, e_topology_edit:new(
+                'Server %q is the master and can\'t be expelled', uuid
+            )
+        elseif master_pos ~= nil then
+            table.remove(replicaset.master, master_pos)
+        end
     end
+
 
     local ok, err = confapplier.patch_clusterwide({topology = topology_cfg})
     if not ok then
