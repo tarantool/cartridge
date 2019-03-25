@@ -1,5 +1,5 @@
 # source: http://localhost:8081/graphql
-# timestamp: Tue Mar 26 2019 02:25:32 GMT+0300 (MSK)
+# timestamp: Tue Mar 26 2019 02:26:08 GMT+0300 (MSK)
 
 """Cluster management"""
 type Apicluster {
@@ -54,14 +54,27 @@ type Query {
 
 """Group of servers replicating the same data"""
 type Replicaset {
+  """
+  Vshard replica set weight. Null for replica sets with vshard-storage role disabled.
+  """
   weight: Float
 
   """The leader according to the configuration."""
   master: Server!
+
+  """The role set enabled on every instance in the replica set"""
   roles: [String!]
+
+  """
+  The replica set health. It is "healthy" if all instances have status "healthy". Otherwise "unhealthy".
+  """
   status: String!
+
+  """The replica set uuid"""
   uuid: String!
-  servers: [Server]
+
+  """Servers in the replica set."""
+  servers: [Server!]!
 
   """
   The active leader. It may differ from "master" if failover is enabled and configured leader isn't healthy.

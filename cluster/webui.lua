@@ -297,10 +297,26 @@ local gql_type_replicaset = gql_types.object {
     name = 'Replicaset',
     description = 'Group of servers replicating the same data',
     fields = {
-        uuid = gql_types.string.nonNull,
-        roles = gql_types.list(gql_types.string.nonNull),
-        status = gql_types.string.nonNull,
-        weight = gql_types.float,
+        uuid = {
+            kind = gql_types.string.nonNull,
+            description = 'The replica set uuid',
+        },
+        roles = {
+            kind = gql_types.list(gql_types.string.nonNull),
+            description = 'The role set enabled' ..
+                ' on every instance in the replica set',
+        },
+        status = {
+            kind = gql_types.string.nonNull,
+            description = 'The replica set health.' ..
+                ' It is "healthy" if all instances have status "healthy".' ..
+                ' Otherwise "unhealthy".',
+        },
+        weight = {
+            kind = gql_types.float,
+            description = 'Vshard replica set weight.' ..
+                ' Null for replica sets with vshard-storage role disabled.'
+        },
         master = {
             kind = gql_types.nonNull('Server'),
             description = 'The leader according to the configuration.',
@@ -311,7 +327,10 @@ local gql_type_replicaset = gql_types.object {
                 ' "master" if failover is enabled and configured leader' ..
                 ' isn\'t healthy.'
         },
-        servers = gql_types.list('Server'),
+        servers = {
+            kind = gql_types.list(gql_types.nonNull('Server')).nonNull,
+            description = 'Servers in the replica set.'
+        },
     }
 }
 
