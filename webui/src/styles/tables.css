@@ -50,7 +50,7 @@ $tight-cell-min-height: $cell-min-height - 1.4em;
 }
 
 .trTable-cellOuter:last-child {
-  padding-right: $cell-horizontal-padding;
+  padding-right: 16px;
 }
 
 .trTable-cellInner {

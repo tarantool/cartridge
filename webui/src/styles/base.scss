@@ -1,5 +1,6 @@
 @import 'src/styles/variables.scss';
 .cluster_app {
+  height: 100%;
   min-height: 100%;
   background: #FAFAFA;
   padding: 0px 30px 0 30px;
@@ -35,10 +36,16 @@
 
 .tr-card-margin {
   padding-top: 24px;
+  padding-bottom: 24px;
+}
+
+.tr-card-margin + .tr-card-margin {
+  padding-top: 0;
 }
 
 .tr-pageCard-head {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
   padding: 1em 0 1em 5px;

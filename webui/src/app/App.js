@@ -1,5 +1,5 @@
 import React from 'react';
-import { Route } from 'react-router-dom';
+import { Route, Switch } from 'react-router-dom';
 
 import 'src/styles/bootstrap.css';
 import 'src/styles/bootstrap/index.css';
@@ -14,6 +14,8 @@ import 'src/styles/refactor-me.css';
 import AppMessage from 'src/components/AppMessage';
 import LoginForm from 'src/components/LoginForm';
 import ClusterPage from 'src/pages/Cluster';
+import ClusterInstancePage from 'src/pages/ClusterInstance';
+import { PROJECT_NAME } from 'src/constants';
 
 class App extends React.Component {
   componentDidMount() {
@@ -38,10 +40,13 @@ class App extends React.Component {
     const { messages, setMessageDone } = this.props;
 
     return (
-      <div className="app">
-        <Route path="/" component={ClusterPage} />
+      <React.Fragment>
+        <Switch>
+          <Route path={`/${PROJECT_NAME}/instance/:instanceUUID`} component={ClusterInstancePage} />
+          <Route component={ClusterPage} />
+        </Switch>
         <AppMessage messages={messages} setMessageDone={setMessageDone} />
-      </div>
+      </React.Fragment>
     );
   };
 

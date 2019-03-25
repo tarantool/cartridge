@@ -25,7 +25,6 @@ import * as R from 'ramda';
 const styles = {
   buttons: css`
     display: flex;
-    margin-right: 16px;
   `,
   button: css`
     display: block;
@@ -191,86 +190,80 @@ class Cluster extends React.Component {
         {serverConsoleVisible
           ? this.renderServerConsole()
           : null}
-
-        <div className="pages-Cluster page-outer app-content">
+        <div className="pages-Cluster app-content">
           <div className="page-inner">
-            <div>
-              {unlinkedServers.length
-                ? (
-                  <div className="tr-card-margin">
-                    <div className="tr-pageCard-head">
-                      <div className="tr-pageCard-header">
-                        <Title>Unconfigured instances</Title>
-                      </div>
-                      <div className="tr-pageCard-buttons">
-                        {this.renderServerButtons()}
-                      </div>
-                    </div>
-                    <div className="pages-Cluster-serverList">
-                      <ServerList
-                        linked={false}
-                        clusterSelf={clusterSelf}
-                        dataSource={unlinkedServers}
-                        consoleServer={this.handleServerConsoleRequest}
-                        joinServer={this.handleJoinServerRequest}
-                        expelServer={this.handleExpelServerRequest}
-                        createReplicaset={this.handleCreateReplicasetRequest} />
+            {unlinkedServers.length
+              ? (
+                <div className="tr-card-margin">
+                  <div className="tr-pageCard-head">
+                    <Title className="tr-pageCard-header">Unconfigured instances</Title>
+                    <div className="tr-pageCard-buttons">
+                      {this.renderServerButtons()}
                     </div>
                   </div>
-                )
+                  <div className="pages-Cluster-serverList">
+                    <ServerList
+                      linked={false}
+                      clusterSelf={clusterSelf}
+                      dataSource={unlinkedServers}
+                      consoleServer={this.handleServerConsoleRequest}
+                      joinServer={this.handleJoinServerRequest}
+                      expelServer={this.handleExpelServerRequest}
+                      createReplicaset={this.handleCreateReplicasetRequest} />
+                  </div>
+                </div>
+              )
                 : null
               }
 
-              <BootstrapPanel/>
+            <BootstrapPanel/>
 
-              {replicasetList.length
-                ? (
-                  <div className="tr-card-margin pages-Cluster-replicasetList">
-                    <div className="tr-pageCard-head">
-                      <div className="tr-pageCard-header">
-                        <Title>Replica sets</Title>
-                      </div>
-                      <div className="tr-pageCard-buttons">
-                        {unlinkedServers.length
-                          ? null
-                          : this.renderServerButtons()}
-                      </div>
+            {replicasetList.length
+              ? (
+                <div className="tr-card-margin pages-Cluster-replicasetList">
+                  <div className="tr-pageCard-head">
+                    <Title className="tr-pageCard-header">Replica sets</Title>
+                    <div className="tr-pageCard-buttons">
+                      {unlinkedServers.length
+                        ? null
+                        : this.renderServerButtons()}
                     </div>
-
-                    {replicasetList.length > 1
-                      ? (
-                        <div className={styles.clusterFilter}>
-                            <div className={styles.clusterInputContainer}>
-                              <FilterInput
-                                prefix={<Icon type="search" />}
-                                type={"text"}
-                                placeholder={'Filter by uri, uuid, role or alias'}
-                                value={this.state.filter}
-                                onChange={this.handleFilterChange}
-                              />
-                            </div>
-                        </div>
-                      )
-                      : null}
-
-                    {filteredReplicasetList.length
-                      ? (
-                        <ReplicasetList
-                          clusterSelf={clusterSelf}
-                          dataSource={filteredReplicasetList}
-                          consoleServer={this.handleServerConsoleRequest}
-                          editReplicaset={this.handleEditReplicasetRequest}
-                          joinServer={this.handleJoinServerRequest}
-                          expelServer={this.handleExpelServerRequest}
-                          createReplicaset={this.handleCreateReplicasetRequest} />
-                      )
-                      : (
-                        <div className="trTable-noData">
-                          No replicaset found
-                        </div>
-                      )}
                   </div>
-                )
+
+                  {replicasetList.length > 1
+                    ? (
+                      <div className={styles.clusterFilter}>
+                          <div className={styles.clusterInputContainer}>
+                            <FilterInput
+                              prefix={<Icon type="search" />}
+                              type={"text"}
+                              placeholder={'Filter by uri, uuid, role or alias'}
+                              value={this.state.filter}
+                              onChange={this.handleFilterChange}
+                            />
+                          </div>
+                      </div>
+                    )
+                    : null}
+
+                  {filteredReplicasetList.length
+                    ? (
+                      <ReplicasetList
+                        clusterSelf={clusterSelf}
+                        dataSource={filteredReplicasetList}
+                        consoleServer={this.handleServerConsoleRequest}
+                        editReplicaset={this.handleEditReplicasetRequest}
+                        joinServer={this.handleJoinServerRequest}
+                        expelServer={this.handleExpelServerRequest}
+                        createReplicaset={this.handleCreateReplicasetRequest} />
+                    )
+                    : (
+                      <div className="trTable-noData">
+                        No replicaset found
+                      </div>
+                    )}
+                </div>
+              )
                 : null
               }
 
@@ -278,7 +271,6 @@ class Cluster extends React.Component {
                 uploadConfig={this.uploadConfig}
                 canTestConfigBeApplied={false}
                 applyTestConfig={this.applyTestConfig} />}
-            </div>
             <div ref={this.setConsoleReserve} />
           </div>
         </div>

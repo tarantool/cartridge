@@ -13,7 +13,7 @@ from socket import socket, AF_INET, SOCK_DGRAM
 from socket import timeout as SocketTimeout
 from subprocess import Popen, PIPE, STDOUT
 
-logging.basicConfig(format='%(name)s > %(message)s')
+logging.basicConfig(format='%(name)s > %(message)s', level=logging.INFO)
 
 srv_abspath = os.path.realpath(
     os.path.dirname(__file__)

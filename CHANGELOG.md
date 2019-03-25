@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 
 - Instance restart now triggers config validation before roles initialization
+- Display box.cfg params in webui
 
 ## [0.6.3] - 2019-02-08
 
