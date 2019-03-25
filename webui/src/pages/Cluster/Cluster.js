@@ -607,7 +607,7 @@ class Cluster extends React.Component {
     editReplicaset({
       uuid: replicaset.uuid,
       roles: replicaset.roles,
-      master: replicaset.master,
+      master: [ replicaset.master ],
       weight: replicaset.weight == null || replicaset.weight.trim() === '' ? null : Number(replicaset.weight),
     });
   };
