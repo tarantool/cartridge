@@ -12,7 +12,7 @@ import 'src/styles/tight-scroll.css';
 import 'src/styles/refactor-me.css';
 
 import AppMessage from 'src/components/AppMessage';
-import LoginForm from 'src/components/LoginForm';
+import LogInForm from 'src/components/LogInForm';
 import ClusterPage from 'src/pages/Cluster';
 import ClusterInstancePage from 'src/pages/ClusterInstance';
 import { PROJECT_NAME } from 'src/constants';
@@ -24,12 +24,16 @@ class App extends React.Component {
   }
 
   render() {
-    const { appDataRequestStatus, appDataRequestErrorMessage, authenticated } = this.props;
-    const isLoading = ! appDataRequestStatus.loaded;
+    const {
+      appDataRequestStatus,
+      appDataRequestErrorMessage,
+      authorizationRequired
+    } = this.props;
+    const isLoading = !appDataRequestStatus.loaded;
 
     return isLoading
       ? null
-      : authenticated === false
+      : authorizationRequired
         ? this.renderLoginForm()
         : appDataRequestErrorMessage
           ? this.renderError()
@@ -67,11 +71,10 @@ class App extends React.Component {
     const submitMessage = loginResponse && loginResponse.message;
 
     return (
-      <div>
-        <LoginForm
-          login={this.handleLoginClick}
-          submitMessage={submitMessage} />
-      </div>
+      <LogInForm
+        login={this.handleLoginClick}
+        submitMessage={submitMessage}
+      />
     );
   };
 

@@ -8,18 +8,6 @@ import {
   APP_DATA_REQUEST,
   APP_DATA_REQUEST_SUCCESS,
   APP_DATA_REQUEST_ERROR,
-  APP_LOGIN_REQUEST,
-  APP_LOGIN_REQUEST_SUCCESS,
-  APP_LOGIN_REQUEST_ERROR,
-  APP_LOGOUT_REQUEST,
-  APP_LOGOUT_REQUEST_SUCCESS,
-  APP_LOGOUT_REQUEST_ERROR,
-  APP_DENY_ANONYMOUS_REQUEST,
-  APP_DENY_ANONYMOUS_REQUEST_SUCCESS,
-  APP_DENY_ANONYMOUS_REQUEST_ERROR,
-  APP_ALLOW_ANONYMOUS_REQUEST,
-  APP_ALLOW_ANONYMOUS_REQUEST_SUCCESS,
-  APP_ALLOW_ANONYMOUS_REQUEST_ERROR,
   APP_SERVER_CONSOLE_EVAL_STRING_REQUEST,
   APP_SERVER_CONSOLE_EVAL_STRING_REQUEST_SUCCESS,
   APP_SERVER_CONSOLE_EVAL_STRING_REQUEST_ERROR,
@@ -27,8 +15,10 @@ import {
   APP_SET_MESSAGE_DONE,
 } from 'src/store/actionTypes';
 import { baseSaga, getRequestSaga } from 'src/store/commonRequest';
-import { getClusterSelf, login, logout, denyAnonymous, allowAnonymous, evalString }
+import { restoreAuthorization } from 'src/store/actions/auth.actions';
+import { getClusterSelf, evalString }
   from 'src/store/request/app.requests';
+import { AUTH_SET_UNAUTHORIZED } from '../actionTypes';
 
 function* appDataRequestSaga() {
   yield takeLatest(APP_DID_MOUNT, function* load(action) {
@@ -40,11 +30,17 @@ function* appDataRequestSaga() {
     let response;
     try {
       const clusterSelfResponse = yield call(getClusterSelf);
+      const { authParams } = clusterSelfResponse.clusterSelf;
+
+      if (authParams && authParams.implements_check_password) {
+        yield put(restoreAuthorization({
+          enabled: authParams.enabled,
+          username: authParams.username
+        }));
+      }
 
       response = {
         ...clusterSelfResponse,
-        isAnonymousAllowed: true,
-        authenticated: null,
       };
     }
     catch (error) {
@@ -58,39 +54,11 @@ function* appDataRequestSaga() {
   });
 };
 
-const denyAnonymousRequestSaga = getRequestSaga(
-  APP_DENY_ANONYMOUS_REQUEST,
-  APP_DENY_ANONYMOUS_REQUEST_SUCCESS,
-  APP_DENY_ANONYMOUS_REQUEST_ERROR,
-  denyAnonymous,
-);
-
-const allowAnonymousRequestSaga = getRequestSaga(
-  APP_ALLOW_ANONYMOUS_REQUEST,
-  APP_ALLOW_ANONYMOUS_REQUEST_SUCCESS,
-  APP_ALLOW_ANONYMOUS_REQUEST_ERROR,
-  allowAnonymous,
-);
-
 const evalStringRequestSaga = getRequestSaga(
   APP_SERVER_CONSOLE_EVAL_STRING_REQUEST,
   APP_SERVER_CONSOLE_EVAL_STRING_REQUEST_SUCCESS,
   APP_SERVER_CONSOLE_EVAL_STRING_REQUEST_ERROR,
   evalString,
-);
-
-const loginRequestSaga = getRequestSaga(
-  APP_LOGIN_REQUEST,
-  APP_LOGIN_REQUEST_SUCCESS,
-  APP_LOGIN_REQUEST_ERROR,
-  login,
-);
-
-const logoutRequestSaga = getRequestSaga(
-  APP_LOGOUT_REQUEST,
-  APP_LOGOUT_REQUEST_SUCCESS,
-  APP_LOGOUT_REQUEST_ERROR,
-  logout,
 );
 
 function* getActiveDeadServerMessage() {
@@ -106,7 +74,7 @@ function* appMessageSaga() {
 
     if (action.error && isDeadServerError(action.error)) {
       const activeDeadServerMessage = yield call(getActiveDeadServerMessage);
-      if ( ! activeDeadServerMessage) {
+      if (!activeDeadServerMessage) {
         const message = {
           content: { type: 'danger', text: 'It seems like server is not reachable' },
           type: SERVER_NOT_REACHABLE_ERROR_TYPE,
@@ -150,11 +118,7 @@ function* doneMessage() {
 
 export const saga = baseSaga(
   appDataRequestSaga,
-  denyAnonymousRequestSaga,
-  allowAnonymousRequestSaga,
   evalStringRequestSaga,
-  loginRequestSaga,
-  logoutRequestSaga,
   appMessageSaga,
   doneMessage,
 );

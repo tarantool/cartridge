@@ -1,22 +1,10 @@
-import { isGraphqlErrorResponse, isGraphqlAccessDeniedError } from 'src/api/graphql';
-import { isRestErrorResponse, isRestAccessDeniedError } from 'src/api/rest';
+import { isGraphqlErrorResponse } from 'src/api/graphql';
+import { isRestErrorResponse } from 'src/api/rest';
 import {
   APP_DID_MOUNT,
   APP_DATA_REQUEST,
   APP_DATA_REQUEST_SUCCESS,
   APP_DATA_REQUEST_ERROR,
-  APP_LOGIN_REQUEST,
-  APP_LOGIN_REQUEST_SUCCESS,
-  APP_LOGIN_REQUEST_ERROR,
-  APP_LOGOUT_REQUEST,
-  APP_LOGOUT_REQUEST_SUCCESS,
-  APP_LOGOUT_REQUEST_ERROR,
-  APP_DENY_ANONYMOUS_REQUEST,
-  APP_DENY_ANONYMOUS_REQUEST_SUCCESS,
-  APP_DENY_ANONYMOUS_REQUEST_ERROR,
-  APP_ALLOW_ANONYMOUS_REQUEST,
-  APP_ALLOW_ANONYMOUS_REQUEST_SUCCESS,
-  APP_ALLOW_ANONYMOUS_REQUEST_ERROR,
   APP_SERVER_CONSOLE_EVAL_STRING_REQUEST,
   APP_SERVER_CONSOLE_EVAL_STRING_REQUEST_SUCCESS,
   APP_SERVER_CONSOLE_EVAL_STRING_REQUEST_ERROR,
@@ -28,7 +16,7 @@ import {
   APP_SET_MESSAGE_DONE,
   CLUSTER_SELF_UPDATE,
 } from 'src/store/actionTypes';
-import { baseReducer, getInitialRequestStatus, getReducer, getRequestReducer  } from 'src/store/commonRequest';
+import { baseReducer, getInitialRequestStatus, getReducer, getRequestReducer } from 'src/store/commonRequest';
 
 const beautifyJSON = json => JSON.stringify(json, null, '  ');
 
@@ -40,14 +28,6 @@ const initialState = {
   appDataRequestErrorMessage: null,
   clusterSelf: null,
   failover: null,
-  isAnonymousAllowed: null,
-  authenticated: null,
-  loginRequestStatus: getInitialRequestStatus(),
-  loginResponse: null,
-  logoutRequestStatus: getInitialRequestStatus(),
-  logoutResponse: null,
-  denyAnonymousRequestStatus: getInitialRequestStatus(),
-  allowAnonymousRequestStatus: getInitialRequestStatus(),
   evalStringRequestStatus: getInitialRequestStatus(),
   evalStringResponse: null,
   evalResult: null,
@@ -64,34 +44,6 @@ const appDataRequestReducer = getRequestReducer(
   'appDataRequestStatus',
 );
 
-const loginRequestReducer = getRequestReducer(
-  APP_LOGIN_REQUEST,
-  APP_LOGIN_REQUEST_SUCCESS,
-  APP_LOGIN_REQUEST_ERROR,
-  'loginRequestStatus',
-);
-
-const logoutRequestReducer = getRequestReducer(
-  APP_LOGOUT_REQUEST,
-  APP_LOGOUT_REQUEST_SUCCESS,
-  APP_LOGOUT_REQUEST_ERROR,
-  'logoutRequestStatus',
-);
-
-const denyAnonymousRequestReducer = getRequestReducer(
-  APP_DENY_ANONYMOUS_REQUEST,
-  APP_DENY_ANONYMOUS_REQUEST_SUCCESS,
-  APP_DENY_ANONYMOUS_REQUEST_ERROR,
-  'denyAnonymousRequestStatus',
-);
-
-const allowAnonymousRequestReducer = getRequestReducer(
-  APP_ALLOW_ANONYMOUS_REQUEST,
-  APP_ALLOW_ANONYMOUS_REQUEST_SUCCESS,
-  APP_ALLOW_ANONYMOUS_REQUEST_ERROR,
-  'allowAnonymousRequestStatus',
-);
-
 const evalStringRequestReducer = getRequestReducer(
   APP_SERVER_CONSOLE_EVAL_STRING_REQUEST,
   APP_SERVER_CONSOLE_EVAL_STRING_REQUEST_SUCCESS,
@@ -99,28 +51,11 @@ const evalStringRequestReducer = getRequestReducer(
   'evalStringRequestStatus',
 );
 
-const unauthorizedReducer = (state, action) => {
-  if (isRestAccessDeniedError(action.error) || isGraphqlAccessDeniedError(action.error)) {
-    return {
-      ...state,
-      isAnonymousAllowed: false,
-      authenticated: false,
-      loginResponse: null,
-    };
-  }
-  return state;
-};
-
 export const reducer = baseReducer(
   initialState,
   appMountReducer,
   appDataRequestReducer,
-  loginRequestReducer,
-  logoutRequestReducer,
-  denyAnonymousRequestReducer,
-  allowAnonymousRequestReducer,
   evalStringRequestReducer,
-  unauthorizedReducer,
 )(
   (state, action) => {
     switch (action.type) {
@@ -150,12 +85,6 @@ export const reducer = baseReducer(
           appDataRequestErrorMessage: {},
         };
       }
-
-      case APP_DENY_ANONYMOUS_REQUEST_SUCCESS:
-        return {
-          ...state,
-          authenticated: state.authenticated == null ? false : state.authenticated,
-        };
 
       case APP_SERVER_CONSOLE_EVAL_STRING_REQUEST_SUCCESS: {
         const output = action.payload.evalStringResponse;
