@@ -24,6 +24,7 @@ build = {
             ['cluster.rpc'] = 'cluster/rpc.lua';
             ['cluster.vars'] = 'cluster/vars.lua';
             ['cluster.pool'] = 'cluster/pool.lua';
+            ['cluster.auth'] = 'cluster/auth.lua';
             ['cluster.admin'] = 'cluster/admin.lua';
             ['cluster.utils'] = 'cluster/utils.lua';
             ['cluster.webui'] = 'cluster/webui.lua';
