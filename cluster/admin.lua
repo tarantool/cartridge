@@ -366,9 +366,10 @@ local function join_server(args)
             )
         else
             return nil, e_topology_edit:new(
-                'Invalid attempt to call join_server()' ..
-                ' on instance which is not bootstrapped yet.\n' ..
-                'Call join_server with uri=%q to bootstrap', myself.uri
+                'Invalid attempt to call join_server().' ..
+                ' This instance isn\'t bootstrapped yet' ..
+                ' and advertises uri=%q while you are joining uri=%q.',
+                myself.uri, args.uri
             )
         end
     end
