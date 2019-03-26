@@ -401,13 +401,14 @@ def test_uninitialized(module_tmpdir, helpers):
 
         obj = srv.graphql("""
             mutation {
-                join_server(uri: "localhost:33001)")
+                join_server(uri: "127.0.0.1:33101")
             }
         """)
         assert obj['errors'][0]['message'] == \
-            'Invalid attempt to call join_server()' + \
-            ' on instance which is not bootstrapped yet.\n' + \
-            'Call join_server with uri="localhost:33101" to bootstrap'
+            'Invalid attempt to call join_server().' + \
+            ' This instance isn\'t bootstrapped yet' + \
+            ' and advertises uri="localhost:33101"' + \
+            ' while you are joining uri="127.0.0.1:33101".'
 
         obj = srv.graphql("""
             {
