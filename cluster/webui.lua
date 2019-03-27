@@ -20,7 +20,7 @@ local gql_types = require('cluster.graphql.types')
 local confapplier = require('cluster.confapplier')
 local front_bundle = require('cluster.front-bundle')
 
-local webui_users = require('cluster.webui.users')
+local webui_auth = require('cluster.webui.auth')
 
 local statistics_schema = {
     kind = gql_types.object({
@@ -517,7 +517,7 @@ local function init(httpd)
     graphql.add_callback_prefix('cluster', 'Cluster management')
 
     -- User management
-    webui_users.init()
+    webui_auth.init()
 
     graphql.add_callback({
         name = 'servers',
