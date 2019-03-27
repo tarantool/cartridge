@@ -157,16 +157,7 @@ const prepareColumnProps = (linked, clusterSelf, consoleServer, joinServer, crea
   return columns.filter(column => !removedColumns.includes(column.key));
 };
 
-const prepareDataSource = dataSource => {
-  // return dataSource.sort((a, b) => (b.master - a.master));
-  return dataSource.sort((a, b) => {
-    return b.master !== a.master
-      ? b.master - a.master
-      : a.alias === b.alias
-        ? a.uri > b.uri ? 1 : -1
-        : a.alias > b.alias ? 1 : -1;
-  });
-};
+const prepareDataSource = dataSource => [...dataSource];
 
 class ServerList extends React.PureComponent {
   render() {
