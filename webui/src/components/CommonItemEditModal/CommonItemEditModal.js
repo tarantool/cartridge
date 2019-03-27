@@ -195,10 +195,47 @@ class CommonItemEditModal extends React.PureComponent {
       case 'optionGroup':
         return this.renderOptionGroupField(field);
 
+      case 'draggableList':
+        return this.renderDraggableList(field);
+
       default:
         return this.renderInputField(field);
     }
   };
+
+  renderDraggableList = field => {
+    console.log(field);
+
+    return (
+      <React.Fragment>
+        <ul>
+          {field.options.map((option) => {
+            console.log(option);
+            const optionName = getOptionFormName([field.key, option.key]);
+            const id = `CommonItemEditModal-${optionName}`;
+
+            return (
+              <li key={option.key}>
+                <div
+                    className="drag"
+                    draggable
+                    onDragStart={this.onDragStart}
+                >
+                </div>
+                <label
+                    htmlFor={id}
+                    className={`col-form-label ${styles.label}`}
+                >
+                  {option.label}
+                </label>
+              </li>
+            )
+          })}
+        </ul>
+      </React.Fragment>
+    )
+  };
+
 
   renderInputField = field => {
     const { formData } = this.state;
@@ -301,7 +338,7 @@ class CommonItemEditModal extends React.PureComponent {
     const { hideLabels } = this.props;
     const value = formData[field.key];
     const fieldClassName = hideLabels ? 'col-sm-12' : 'col-sm-9';
-
+    console.log(field.options, field, field.options[0].label.toString());
     return (
       <React.Fragment>
         {hideLabels

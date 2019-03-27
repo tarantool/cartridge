@@ -26,8 +26,27 @@ const isStorageWeightInputValueValid = formData => {
   return number >= 0 && number < Infinity;
 };
 
-const prepareFields = roles => {
+const renderSelectOptions = record => record.servers.map(server => ({
+  key: server.uuid,
+  label: <span className={styles.serverLabel}>
+            {server.alias || 'No alias'}{' '}
+    <span className={styles.uriLabel}>{server.uri}</span>
+          </span>,
+}));
+
+const renderDraggableListOptions = record => record.servers.map(server => ({
+  key: server.uuid,
+  label: <span className={styles.serverLabel}>
+            {server.alias || 'No alias'}{' '}
+    <span className={styles.uriLabel}>{server.uri}</span>
+          </span>,
+}));
+
+const prepareFields = (roles, replicaset) => {
   const rolesOptions = roles.map(role => ({ key: role, label: role }));
+
+  const shallRenderDraggableList = replicaset.servers.length > 1;
+
 
   return [
     {
@@ -43,16 +62,8 @@ const prepareFields = roles => {
     {
       key: 'master',
       title: 'Master',
-      type: 'optionGroup',
-      options: record => {
-        return record.servers.map(server => ({
-          key: server.uuid,
-          label: <span className={styles.serverLabel}>
-            {server.alias || 'No alias'}{' '}
-            <span className={styles.uriLabel}>{server.uri}</span>
-          </span>,
-        }));
-      },
+      type: shallRenderDraggableList ? 'draggableList' : 'optionGroup',
+      options: shallRenderDraggableList ? renderDraggableListOptions : renderSelectOptions,
       customProps: {
         create: {
           hidden: true,
@@ -130,8 +141,8 @@ class ReplicasetEditModal extends React.PureComponent {
   };
 
   getFields = () => {
-    const { knownRoles } = this.props;
-    return this.prepareFields(knownRoles);
+    const { knownRoles, replicaset } = this.props;
+    return this.prepareFields(knownRoles, replicaset);
   };
 
   getDataSource = () => {
