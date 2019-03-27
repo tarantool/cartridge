@@ -1,4 +1,3 @@
-import { call, put, takeLatest } from 'redux-saga/effects';
 import {
   AUTH_TURN_REQUEST,
   AUTH_TURN_REQUEST_SUCCESS,

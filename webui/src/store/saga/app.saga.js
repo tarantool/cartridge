@@ -16,9 +16,7 @@ import {
 } from 'src/store/actionTypes';
 import { baseSaga, getRequestSaga } from 'src/store/commonRequest';
 import { restoreAuthorization } from 'src/store/actions/auth.actions';
-import { getClusterSelf, evalString }
-  from 'src/store/request/app.requests';
-import { AUTH_SET_UNAUTHORIZED } from '../actionTypes';
+import { getClusterSelf, evalString } from 'src/store/request/app.requests';
 
 function* appDataRequestSaga() {
   yield takeLatest(APP_DID_MOUNT, function* load(action) {
