@@ -92,7 +92,7 @@ class Server(object):
 
         pass
 
-    def start(self, workdir=None):
+    def start(self, workdir=None, env={}):
         if self.env == None:
             self.env = os.environ.copy()
             self.env['ALIAS'] = str(self.alias)
@@ -108,6 +108,9 @@ class Server(object):
         logging.warn('export HTTP_PORT="{}"'.format(self.env['HTTP_PORT']))
         logging.warn('export ADVERTISE_URI="{}"'.format(self.env['ADVERTISE_URI']))
         logging.warn('export CLUSTER_COOKIE="{}"'.format(self.env['CLUSTER_COOKIE']))
+        for var_name, var_value in env.items():
+            logging.warn('export {}="{}"'.format(var_name, var_value))
+            self.env[var_name] = var_value
         logging.warn(' '.join(command))
 
         self.process = Popen(command, env=self.env)

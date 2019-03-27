@@ -17,6 +17,7 @@ yaml.cfg({
 })
 
 local vars = require('cluster.vars').new('cluster.auth')
+local confapplier = require('cluster.confapplier')
 local cluster_cookie = require('cluster.cluster-cookie')
 
 vars:new('enabled', false)
@@ -30,6 +31,35 @@ local e_edit_user = errors.new_class('Auth callback "edit_user()" failed')
 local e_list_users = errors.new_class('Auth callback "list_users()" failed')
 local e_remove_user = errors.new_class('Auth callback "remove_user()" failed')
 local e_check_password = errors.new_class('Auth callback "check_password()" failed')
+
+local function set_enabled(enabled)
+    checks('boolean')
+    vars.enabled = enabled
+
+    local topology_cfg = confapplier.get_deepcopy('topology')
+    if topology_cfg == nil then
+        return true
+    end
+
+    topology_cfg.auth = enabled
+    local ok, err = confapplier.patch_clusterwide({topology = topology_cfg})
+    if not ok then
+        return nil, err
+    end
+
+    return true
+end
+
+local function get_enabled()
+    local topology_cfg = confapplier.get_readonly('topology')
+    if topology_cfg == nil then
+        return vars.enabled
+    elseif topology_cfg.auth then
+        return true
+    end
+
+    return false
+end
 
 local function hmac(hashfun, blocksize, key, message)
     checks('function', 'number', 'string', 'string')
@@ -305,9 +335,12 @@ local function remove_user(username)
 end
 
 local function check_request(req)
-    local lsid = req:cookie('lsid')
-    local username
+    if vars.callbacks.check_password == nil then
+        return true
+    end
 
+    local username
+    local lsid = req:cookie('lsid')
     if lsid ~= nil then
         local ok, uid = pcall(get_cookie_uid, lsid)
         if ok and uid then
@@ -328,14 +361,14 @@ local function check_request(req)
         return true
     end
 
-    if not vars.enabled or vars.callbacks.check_password == nil then
+    if not get_enabled() then
         return true
     end
 
     return false
 end
 
-local function cfg(httpd)
+local function init(httpd)
     checks('table')
 
     httpd:route({
@@ -393,17 +426,8 @@ local function get_params()
     }
 end
 
-local function set_enabled(enabled)
-    checks('boolean')
-    vars.enabled = enabled
-end
-
-local function get_enabled()
-    return vars.enabled
-end
-
 return {
-    cfg = cfg,
+    init = init,
     set_params = set_params,
     get_params = get_params,
     set_callbacks = set_callbacks,

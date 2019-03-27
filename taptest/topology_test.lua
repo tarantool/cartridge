@@ -55,7 +55,7 @@ local yaml = require('yaml')
 local topology = require('cluster.topology')
 local test = tap.test('topology.config')
 
-test:plan(50)
+test:plan(51)
 
 local function check_config(result, raw_new, raw_old)
     local cfg_new = raw_new and yaml.decode(raw_new) or {}
@@ -69,6 +69,11 @@ end
 test:diag('validate_schema()')
 
 test:diag('   top-level keys')
+
+check_config('topology_new.auth must be boolean, got string',
+[[---
+auth:
+...]])
 
 check_config('topology_new.failover must be boolean, got string',
 [[---
@@ -597,6 +602,8 @@ test:diag('valid configs')
 
 check_config(true,
 [[---
+auth: false
+failover: false
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000001:
     replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
@@ -610,6 +617,7 @@ replicasets:
 
 check_config(true,
 [[---
+auth: true
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000001:
     replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001

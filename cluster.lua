@@ -130,7 +130,7 @@ local function cfg(opts, box_opts)
             return nil, err
         end
 
-        local ok, err = auth.cfg(httpd)
+        local ok, err = e_init:pcall(auth.init, httpd)
         if not ok then
             return nil, err
         end

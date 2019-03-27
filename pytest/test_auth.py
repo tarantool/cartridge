@@ -238,4 +238,73 @@ def test_auth_enabled(cluster, enable_auth):
     assert srv.post_raw('/graphql', cookies={'lsid': None}).status_code == 401
     assert srv.post_raw('/graphql', cookies={'lsid': lsid}).status_code == 200
 
+def test_clusterwide(cluster, enable_auth, module_tmpdir, helpers):
+    USERNAME = 'Cormorant'
+    PASSWORD = 'Navy Iron'
+
+    master = cluster['master']
+    master.conn.eval("""
+        local auth_mocks = require('auth-mocks')
+        assert(auth_mocks.add_user(...))
+    """, (USERNAME, PASSWORD))
+    lsid = _login(master, USERNAME, PASSWORD).cookies['lsid']
+
+    replica = Server(
+        binary_port = 33002,
+        http_port = 8082,
+        alias = 'replica'
+    )
+    replica.start(
+        workdir="{}/localhost-{}".format(module_tmpdir, replica.binary_port),
+    )
+
+    try:
+        helpers.wait_for(replica.ping_udp, timeout=5)
+        obj = master.graphql("""
+            mutation {
+                join_server(
+                    uri: "localhost:33002"
+                    instance_uuid: "dddddddd-dddd-4000-b000-000000000001"
+                    replicaset_uuid: "dddddddd-0000-4000-b000-000000000000"
+                )
+            }
+        """, cookies={'lsid': lsid})
+        assert 'errors' not in obj, obj['errors'][0]['message']
+        assert obj['data']['join_server'] == True
+
+        helpers.wait_for(replica.connect, timeout=5)
+        replica.conn.eval("""
+            local auth_mocks = require('auth-mocks')
+            assert(auth_mocks.add_user(...))
+        """, (USERNAME, PASSWORD))
+        assert replica.post_raw('/graphql', cookies={'lsid': None}).status_code == 401
+        assert replica.post_raw('/graphql', cookies={'lsid': lsid}).status_code == 200
+
+    finally:
+        replica.kill()
+
+def test_uninitialized(module_tmpdir, helpers):
+    srv = Server(
+        binary_port = 33401,
+        http_port = 8401,
+        alias = 'dummy'
+    )
+    srv.start(
+        workdir="{}/localhost-{}".format(module_tmpdir, srv.binary_port),
+        env = {'ADMIN_PASSWORD': 'qwerty'}
+    )
+
+    try:
+        helpers.wait_for(srv.ping_udp, timeout=5)
+
+        resp = _login(srv, 'admin', 'qwerty')
+        assert resp.status_code == 200
+        assert 'lsid' in resp.cookies
+
+        lsid = resp.cookies['lsid']
+        assert srv.post_raw('/graphql', cookies={'lsid': None}).status_code == 401
+        assert srv.post_raw('/graphql', cookies={'lsid': lsid}).status_code == 200
+
+    finally:
+        srv.kill()
 

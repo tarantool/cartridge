@@ -92,7 +92,10 @@ local function set_auth_params(_, args)
         return nil, e_set_params:new('You must log in to enable authentication')
     end
 
-    auth.set_enabled(args.enabled)
+    local ok, err = auth.set_enabled(args.enabled)
+    if not ok then
+        return nil, err
+    end
 
     return get_auth_params()
 end

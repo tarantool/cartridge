@@ -20,6 +20,8 @@ vars:new('known_roles', {
     ['vshard-router'] = true,
 })
 vars:new('topology', {
+    auth = false,
+    failover = false,
     servers = {
         -- ['instance-uuid-1'] = 'expelled',
         -- ['instance-uuid-2'] = {
@@ -79,6 +81,11 @@ local function validate_schema(field, topology)
     checks('string', 'table')
     local servers = topology.servers or {}
     local replicasets = topology.replicasets or {}
+
+    e_config:assert(
+        topology.auth == nil or type(topology.auth) == 'boolean',
+        '%s.auth must be boolean, got %s', field, type(topology.auth)
+    )
 
     e_config:assert(
         topology.failover == nil or type(topology.failover) == 'boolean',
@@ -225,6 +232,7 @@ local function validate_schema(field, topology)
         ['servers'] = true,
         ['replicasets'] = true,
         ['failover'] = true,
+        ['auth'] = true,
     }
     for k, v in pairs(topology) do
         e_config:assert(
