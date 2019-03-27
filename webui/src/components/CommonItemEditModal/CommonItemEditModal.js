@@ -212,7 +212,7 @@ class CommonItemEditModal extends React.PureComponent {
 
     const dragProps = {
       onDragEnd: (fromIndex, toIndex) => {
-        const data = this.props.dataSource.servers;
+        const data = [...this.state.formData.servers];
         const item = data.splice(fromIndex, 1)[0];
         data.splice(toIndex, 0, item);
         this.setState({ formData: {
@@ -341,7 +341,6 @@ class CommonItemEditModal extends React.PureComponent {
     const { hideLabels } = this.props;
     const value = formData[field.key];
     const fieldClassName = hideLabels ? 'col-sm-12' : 'col-sm-9';
-    console.log(field.options, field, field.options[0].label.toString());
     return (
       <React.Fragment>
         {hideLabels

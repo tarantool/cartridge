@@ -72,16 +72,13 @@ const prepareFields = (roles, replicaset) => {
       tableProps: {
         showHeader: false,
         className: styles.tableStyles,
+        rowKey: 'uuid',
       },
       tableColumns: [
         {
           title: 'Operates',
           key: 'operate',
-          render: () => (
-            <a className={styles.dragIcon} href="#">
-              ☰
-            </a>
-          )
+          render: () => <a className={styles.dragIcon}>☰</a>,
         },
 
         {
