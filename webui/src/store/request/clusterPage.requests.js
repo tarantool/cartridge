@@ -211,14 +211,14 @@ export function expelServer(params) {
  * @param {Object} params
  * @param {string} params.uuid
  * @param {string[]} params.roles
- * @param {string} params.master
+ * @param {string[]} params.master
  */
 export function editReplicaset(params) {
   const graph = `
     mutation(
       $uuid: String!,
       $roles: [String!],
-      $master: String!,
+      $master: [String!]!,
       $weight: Float
     ) {
       editReplicasetResponse: edit_replicaset(

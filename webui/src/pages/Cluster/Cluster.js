@@ -604,10 +604,18 @@ class Cluster extends React.Component {
     history.push({
       search: addSearchParams(location.search, { r: null }),
     });
+
+    const getMaster = () => {
+      if (replicaset.servers.length > 2) {
+        return replicaset.servers.map(i => i.uuid);
+      }
+      return replicaset.master;
+    };
+
     editReplicaset({
       uuid: replicaset.uuid,
       roles: replicaset.roles,
-      master: replicaset.master,
+      master: getMaster(),
       weight: replicaset.weight == null || replicaset.weight.trim() === '' ? null : Number(replicaset.weight),
     });
   };

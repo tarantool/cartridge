@@ -83,6 +83,13 @@ local function table_count(table)
     return cnt
 end
 
+local function table_append(to, from)
+    for _, item in pairs(from) do
+        table.insert(to, item)
+    end
+    return to
+end
+
 local function file_exists(name)
     return fio.stat(name) ~= nil
 end
@@ -136,6 +143,7 @@ return {
 	deepcmp = deepcmp,
     table_find = table_find,
     table_count = table_count,
+    table_append = table_append,
 
     file_read = file_read,
     file_write = file_write,

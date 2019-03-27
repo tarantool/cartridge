@@ -2,12 +2,13 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import { defaultMemoize } from 'reselect';
 import {css} from 'react-emotion'
-
+import ReactDragListView from 'react-drag-listview';
 import Modal from 'src/components/Modal';
 import {Button} from 'antd'
 import cn from 'src/misc/cn';
 import Checkbox from '../Checkbox';
 import RadioButton from "../RadioButton";
+import { Table } from "antd";
 
 
 const styles = {
@@ -19,6 +20,9 @@ const styles = {
     width: 105px;
     font-family: Roboto;
     }
+  `,
+  listLabel: css`
+    width: 200px;
   `,
   checkboxLabel: css`
     color: #343434;
@@ -195,10 +199,46 @@ class CommonItemEditModal extends React.PureComponent {
       case 'optionGroup':
         return this.renderOptionGroupField(field);
 
+      case 'draggableList':
+        return this.renderDraggableList(field);
+
       default:
         return this.renderInputField(field);
     }
   };
+
+  renderDraggableList = field => {
+    const { hideLabels } = this.props;
+
+    const dragProps = {
+      onDragEnd: (fromIndex, toIndex) => {
+        const data = [...this.state.formData.servers];
+        const item = data.splice(fromIndex, 1)[0];
+        data.splice(toIndex, 0, item);
+        this.setState({ formData: {
+          ...this.state.formData, servers: data,
+        }});
+      },
+      handleSelector: "a"
+    };
+
+    return (
+      <React.Fragment>
+        {hideLabels
+            ? null
+            : <legend className={`col-form-label ${styles.label}`}>{field.title}</legend>}
+        <ReactDragListView {...dragProps}>
+          <Table
+              columns={field.tableColumns}
+              pagination={false}
+              dataSource={this.state.formData.servers}
+              {...field.tableProps}
+          />
+        </ReactDragListView>
+      </React.Fragment>
+    )
+  };
+
 
   renderInputField = field => {
     const { formData } = this.state;
@@ -301,7 +341,6 @@ class CommonItemEditModal extends React.PureComponent {
     const { hideLabels } = this.props;
     const value = formData[field.key];
     const fieldClassName = hideLabels ? 'col-sm-12' : 'col-sm-9';
-
     return (
       <React.Fragment>
         {hideLabels

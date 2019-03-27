@@ -251,16 +251,18 @@ def cluster(request, confdir, module_tmpdir, helpers):
         resp = bootserv.graphql(
             query = """
                 mutation(
-                    $uri: String!,
-                    $instance_uuid: String,
-                    $replicaset_uuid: String,
+                    $uri: String!
+                    $instance_uuid: String
+                    $replicaset_uuid: String
                     $roles: [String!]
+                    $timeout: Float
                 ) {
                     join_server(
                         uri: $uri,
                         instance_uuid: $instance_uuid,
                         replicaset_uuid: $replicaset_uuid,
                         roles: $roles
+                        timeout: $timeout
                     )
                 }
             """,
@@ -269,9 +271,10 @@ def cluster(request, confdir, module_tmpdir, helpers):
                 "instance_uuid": srv.instance_uuid,
                 "replicaset_uuid": srv.replicaset_uuid,
                 "roles": srv.roles,
+                "timeout": TARANTOOL_CONNECTION_TIMEOUT,
             }
         )
-        assert "errors" not in resp
+        assert "errors" not in resp, resp['errors'][0]['message']
 
         # wait when server is bootstrapped
         helpers.wait_for(srv.connect)

@@ -29,13 +29,13 @@ vars:new('topology', {
         -- },
     },
     replicasets = {
-        -- ['replicaset-uuid-1'] = 'expelled',
         -- ['replicaset-uuid-2'] = {
         --     roles = {
         --         ['role-1'] = true,
         --         ['role-2'] = true,
         --     },
-        --     master = 'instance-uuid-2',
+        --     master = 'instance-uuid-2' -- old format, still compatible
+        --     master = {'instance-uuid-2', 'instance-uuid-1'} -- new format
         --     weight = 1.0,
         -- }
     },
@@ -48,6 +48,31 @@ end
 
 local function not_disabled(uuid, srv)
     return not_expelled(uuid, srv) and not srv.disabled
+end
+
+local function get_leaders_order(servers, replicaset_uuid, leaders_order)
+    checks('table', 'string', 'string|table')
+
+    local ret
+    if type(leaders_order) == 'string' then
+        ret = {leaders_order}
+    else
+        ret = table.copy(leaders_order)
+    end
+
+    local ret_tail = {}
+    for _, instance_uuid, server in fun.filter(not_expelled, servers) do
+        if server.replicaset_uuid == replicaset_uuid then
+            if not utils.table_find(ret, instance_uuid) then
+                table.insert(ret_tail, instance_uuid)
+            end
+        end
+    end
+
+    table.sort(ret_tail)
+    utils.table_append(ret, ret_tail)
+
+    return ret
 end
 
 local function validate_schema(field, topology)
@@ -135,10 +160,33 @@ local function validate_schema(field, topology)
             type(replicaset) == 'table',
             '%s must be a table', field
         )
+
         e_config:assert(
-            type(replicaset.master) == 'string',
-            '%s.master must be a string, got %s', field, type(replicaset.master)
+            type(replicaset.master) == 'string' or type(replicaset.master) == 'table',
+            '%s.master must be either string or table, got %s', field, type(replicaset.master)
         )
+        if type(replicaset.master) == 'table' then
+            local i = 1
+            local leaders_order = get_leaders_order(servers, replicaset_uuid, replicaset.master)
+            local leaders_seen = {}
+            for k, _ in pairs(leaders_order) do
+                e_config:assert(
+                    type(k) == 'number',
+                    '%s.master must have integer keys', field
+                )
+                e_config:assert(
+                    type(leaders_order[i]) == 'string',
+                    '%s.master must be a contiguous array of strings', field
+                )
+                e_config:assert(
+                    not leaders_seen[leaders_order[i]],
+                    '%s.master values mustn\'t repeat', field
+                )
+                leaders_seen[leaders_order[i]] = true
+                i = i + 1
+            end
+        end
+
         e_config:assert(
             type(replicaset.roles) == 'table',
             '%s.roles must be a table, got %s', field, type(replicaset.roles)
@@ -213,20 +261,23 @@ local function validate_consistency(topology)
             '%s has no servers', field
         )
 
-        local master_uuid = replicaset.master
-        local master = servers[master_uuid]
-        e_config:assert(
-            master ~= nil,
-            '%s.master does not exist', field
-        )
-        e_config:assert(
-            not_expelled(master_uuid, master),
-            '%s.master can not be expelled', field
-        )
-        e_config:assert(
-            master.replicaset_uuid == replicaset_uuid,
-            '%s.master belongs to another replicaset', field
-        )
+        local leaders_order = get_leaders_order(servers, replicaset_uuid, replicaset.master)
+        for _, leader_uuid in ipairs(leaders_order) do
+            local leader = servers[leader_uuid]
+            e_config:assert(
+                leader ~= nil,
+                '%s.master %q doesn\'t exist', field, leader_uuid
+            )
+            e_config:assert(
+                not_expelled(leader_uuid, leader),
+                '%s.master %q can not be expelled', field, leader_uuid
+            )
+            e_config:assert(
+                leader.replicaset_uuid == replicaset_uuid,
+                '%s.master %q belongs to another replicaset', field, leader_uuid
+            )
+        end
+
         e_config:assert(
             (replicaset.weight or 0) >= 0,
             '%s.weight must be non-negative, got %s', field, replicaset.weight
@@ -350,7 +401,12 @@ local function validate_upgrade(topology_new, topology_old)
                 'replicasets[%s] is a vshard-storage which can\'t be removed', replicaset_uuid
             )
 
-            local master_uuid = replicaset_old.master
+            local master_uuid
+            if type(replicaset_old.master) == 'table' then
+                master_uuid = replicaset_old.master[1]
+            else
+                master_uuid = replicaset_old.master
+            end
             local master_uri = servers_old[master_uuid].uri
             local conn, err = pool.connect(master_uri)
             if not conn then
@@ -440,52 +496,36 @@ local function cluster_is_healthy()
 end
 
 local function get_active_masters()
-    if not vars.topology.failover then
-        local ret = {}
+    local ret = {}
 
-        for replicaset_uuid, replicaset in pairs(vars.topology.replicasets) do
-            ret[replicaset_uuid] = replicaset.master
-        end
-        return ret
-    else
-        local alive = {
-            -- [instance_uuid] = true/false,
-        }
-        local min_alive_uuid = {
-            -- [replicaset_uuid] = instance_uuid,
-        }
-        for _it, instance_uuid, server in fun.filter(not_disabled, vars.topology.servers) do
-            local replicaset_uuid = server.replicaset_uuid
-            local replicaset = vars.topology.replicasets[replicaset_uuid]
+    for replicaset_uuid, replicaset in pairs(vars.topology.replicasets) do
+        local leaders_order = get_leaders_order(
+            vars.topology.servers,
+            replicaset_uuid,
+            replicaset.master
+        )
 
-            local member = membership.get_member(server.uri)
-            if member ~= nil
-            and member.status == 'alive'
-            and member.payload.error == nil
-            and member.payload.uuid == instance_uuid then
-                alive[instance_uuid] = true
-                if min_alive_uuid[replicaset_uuid] == nil
-                or min_alive_uuid[replicaset_uuid] > instance_uuid then
-                    min_alive_uuid[replicaset_uuid] = instance_uuid
+        if vars.topology.failover then
+            for _, instance_uuid in ipairs(leaders_order) do
+                local server = vars.topology.servers[instance_uuid]
+                local member = membership.get_member(server.uri)
+
+                if member ~= nil
+                and member.status == 'alive'
+                and member.payload.error == nil
+                and member.payload.uuid == instance_uuid then
+                    ret[replicaset_uuid] = instance_uuid
+                    break
                 end
-            else
-                alive[instance_uuid] = false
             end
         end
 
-        local ret = {}
-        for replicaset_uuid, replicaset in pairs(vars.topology.replicasets) do
-            local master_uuid = replicaset.master
-
-            if not alive[master_uuid]
-            and min_alive_uuid[replicaset_uuid] then
-                master_uuid = min_alive_uuid[replicaset_uuid]
-            end
-
-            ret[replicaset_uuid] = master_uuid
+        if ret[replicaset_uuid] == nil then
+            ret[replicaset_uuid] = leaders_order[1]
         end
-        return ret
     end
+
+    return ret
 end
 
 -- returns SHARDING table, which can be passed to
@@ -558,6 +598,7 @@ return {
 
     cluster_is_healthy = cluster_is_healthy,
     get_myself_uuids = get_myself_uuids,
+    get_leaders_order = get_leaders_order,
     get_active_masters = get_active_masters,
     get_replication_config = get_replication_config,
     get_vshard_sharding_config = get_vshard_sharding_config,

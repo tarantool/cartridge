@@ -4,6 +4,7 @@ local log = require('log')
 local fun = require('fun')
 local fiber = require('fiber')
 local vshard = require('vshard')
+local checks = require('checks')
 local errors = require('errors')
 local uuid_lib = require('uuid')
 local membership = require('membership')
@@ -84,6 +85,7 @@ local function get_servers_and_replicasets()
     local servers = {}
     local replicasets = {}
     local known_roles = confapplier.get_known_roles()
+    local leaders_order = {}
 
     for replicaset_uuid, replicaset in pairs(topology_cfg.replicasets) do
         replicasets[replicaset_uuid] = {
@@ -110,6 +112,12 @@ local function get_servers_and_replicasets()
         if replicaset.roles['vshard-storage'] then
             replicasets[replicaset_uuid].weight = replicaset.weight or 0.0
         end
+
+        leaders_order[replicaset_uuid] = topology.get_leaders_order(
+            topology_cfg.servers,
+            replicaset_uuid,
+            replicaset.master
+        )
     end
 
     local active_masters = topology.get_active_masters()
@@ -120,7 +128,7 @@ local function get_servers_and_replicasets()
         srv.disabled = not topology.not_disabled(instance_uuid, server)
         srv.replicaset = replicasets[server.replicaset_uuid]
 
-        if topology_cfg.replicasets[server.replicaset_uuid].master == instance_uuid then
+        if leaders_order[server.replicaset_uuid][1] == instance_uuid then
             srv.replicaset.master = srv
         end
         if active_masters[server.replicaset_uuid] == instance_uuid then
@@ -129,7 +137,12 @@ local function get_servers_and_replicasets()
         if srv.status ~= 'healthy' then
             srv.replicaset.status = 'unhealthy'
         end
-        table.insert(srv.replicaset.servers, srv)
+
+        srv.priority = utils.table_find(
+            leaders_order[server.replicaset_uuid],
+            instance_uuid
+        )
+        srv.replicaset.servers[srv.priority] = srv
 
         servers[instance_uuid] = srv
     end
@@ -313,7 +326,7 @@ local function get_replicasets(uuid)
     if uuid then
         table.insert(ret, replicasets[uuid])
     else
-        for k, v in pairs(replicasets) do
+        for _, v in pairs(replicasets) do
             table.insert(ret, v)
         end
     end
@@ -400,9 +413,17 @@ local function join_server(args)
 
         topology_cfg.replicasets[args.replicaset_uuid] = {
             roles = roles,
-            master = args.instance_uuid,
+            master = {args.instance_uuid},
             weight = weight,
         }
+    else
+        local replicaset = topology_cfg.replicasets[args.replicaset_uuid]
+        replicaset.master = topology.get_leaders_order(
+            confapplier.get_readonly('topology').servers,
+            args.replicaset_uuid,
+            replicaset.master
+        )
+        table.insert(replicaset.master, args.instance_uuid)
     end
 
     local ok, err = confapplier.patch_clusterwide({topology = topology_cfg})
@@ -469,18 +490,37 @@ local function expel_server(uuid)
         return nil, e_topology_edit:new('Server %q is already expelled', uuid)
     end
 
-    local expel_replicaset = topology_cfg.servers[uuid].replicaset_uuid
+    local replicaset_uuid = topology_cfg.servers[uuid].replicaset_uuid
+    local replicaset = topology_cfg.replicasets[replicaset_uuid]
 
     topology_cfg.servers[uuid] = "expelled"
 
     for _it, instance_uuid, server in fun.filter(topology.not_expelled, topology_cfg.servers) do
-        if server.replicaset_uuid == expel_replicaset then
-            expel_replicaset = nil
+        if server.replicaset_uuid == replicaset_uuid then
+            replicaset_uuid = nil
         end
     end
-    if expel_replicaset ~= nil then
-        topology_cfg.replicasets[expel_replicaset] = nil
+
+    if replicaset_uuid ~= nil then
+        topology_cfg.replicasets[replicaset_uuid] = nil
+        replicaset = nil
+    else
+        local master_pos
+        if type(replicaset.master) == 'string' and replicaset.master == uuid then
+            master_pos = 1
+        elseif type(replicaset.master) == 'table' then
+            master_pos = utils.table_find(replicaset.master, uuid)
+        end
+
+        if master_pos == 1 then
+            return nil, e_topology_edit:new(
+                'Server %q is the master and can\'t be expelled', uuid
+            )
+        elseif master_pos ~= nil then
+            table.remove(replicaset.master, master_pos)
+        end
     end
+
 
     local ok, err = confapplier.patch_clusterwide({topology = topology_cfg})
     if not ok then
@@ -530,7 +570,7 @@ local function edit_replicaset(args)
     checks({
         uuid = 'string',
         roles = '?table',
-        master = '?string',
+        master = '?string|table',
         weight = '?number',
     })
 
@@ -553,7 +593,11 @@ local function edit_replicaset(args)
     end
 
     if args.master ~= nil then
-        replicaset.master = args.master
+        replicaset.master = topology.get_leaders_order(
+            confapplier.get_readonly('topology').servers,
+            args.uuid,
+            args.master
+        )
     end
 
     if args.weight ~= nil then

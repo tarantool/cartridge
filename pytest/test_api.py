@@ -43,7 +43,7 @@ def expelled(cluster):
             )
         }
     """)
-    assert 'errors' not in obj
+    assert 'errors' not in obj, obj['errors'][0]['message']
 
 def test_self(cluster):
     obj = cluster['router'].graphql("""
@@ -184,6 +184,7 @@ def test_servers(cluster, expelled, helpers):
             }
         }
     """)
+    assert 'errors' not in obj, obj['errors'][0]['message']
 
     servers = obj['data']['servers']
     assert {
@@ -205,11 +206,12 @@ def test_replicasets(cluster, expelled, helpers):
                 status
                 master { uuid }
                 active_master { uuid }
-                servers { uri }
+                servers { uri priority }
                 weight
             }
         }
     """)
+    assert 'errors' not in obj, obj['errors'][0]['message']
 
     replicasets = obj['data']['replicasets']
     assert {
@@ -218,7 +220,7 @@ def test_replicasets(cluster, expelled, helpers):
         'status': 'healthy',
         'master': {'uuid': 'aaaaaaaa-aaaa-4000-b000-000000000001'},
         'active_master': {'uuid': 'aaaaaaaa-aaaa-4000-b000-000000000001'},
-        'servers': [{'uri': 'localhost:33001'}]
+        'servers': [{'uri': 'localhost:33001', 'priority': 1}]
     } == helpers.find(replicasets, 'uuid', 'aaaaaaaa-0000-4000-b000-000000000000')
     assert {
         'uuid': 'bbbbbbbb-0000-4000-b000-000000000000',
@@ -227,7 +229,7 @@ def test_replicasets(cluster, expelled, helpers):
         'master': {'uuid': 'bbbbbbbb-bbbb-4000-b000-000000000001'},
         'active_master': {'uuid': 'bbbbbbbb-bbbb-4000-b000-000000000001'},
         'weight': 1,
-        'servers': [{'uri': 'localhost:33002'}]
+        'servers': [{'uri': 'localhost:33002', 'priority': 1}]
     } == helpers.find(replicasets, 'uuid', 'bbbbbbbb-0000-4000-b000-000000000000')
     assert len(replicasets) == 2
 
@@ -311,12 +313,14 @@ def test_edit_replicaset(cluster, expelled):
         mutation {
             edit_replicaset(
                 uuid: "bbbbbbbb-0000-4000-b000-000000000000"
-                master: "bbbbbbbb-bbbb-4000-b000-000000000002"
+                master: ["bbbbbbbb-bbbb-4000-b000-000000000002"]
             )
         }
     """)
     assert obj['errors'][0]['message'] == \
-        'replicasets[bbbbbbbb-0000-4000-b000-000000000000].master does not exist'
+        'replicasets[bbbbbbbb-0000-4000-b000-000000000000].master ' + \
+        '"bbbbbbbb-bbbb-4000-b000-000000000002" doesn\'t exist'
+
     obj = cluster['router'].graphql("""
         mutation {
             edit_replicaset(
