@@ -9,11 +9,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 
 - Failover priority configuration using WebUI
+- RPC module to perform remote calls across cluster instances
+- Displaying box.cfg and box.info in WebUI
 
 ### Changed
 
 - Instance restart now triggers config validation before roles initialization
-- Display box.cfg params in webui
+- Update WebUI design
 
 ## [0.6.3] - 2019-02-08
 
