@@ -1,3 +1,4 @@
+import * as R from 'ramda';
 import PropTypes from 'prop-types';
 import React from 'react';
 import { defaultMemoize } from 'reselect';
@@ -15,8 +16,21 @@ const styles = {
     font-size: 14px;
     color: #343434;
     font-family: Roboto;
+  `,
+  dragIcon: css`
+    width: 100%;
+    cursor: move!important;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: lightgrey;
+    font-size: 20px;
+  `,
+  tableStyles: css`
+    margin-left: 0px
   `
-}
+};
 
 
 const isStorageWeightInputDisabled = formData => ! formData.roles.includes('vshard-storage');
@@ -45,8 +59,47 @@ const renderDraggableListOptions = record => record.servers.map(server => ({
 const prepareFields = (roles, replicaset) => {
   const rolesOptions = roles.map(role => ({ key: role, label: role }));
 
-  const shallRenderDraggableList = replicaset.servers.length > 1;
+  const shallRenderDraggableList = replicaset && replicaset.servers.length > 2;
 
+  const draggableListCustomProps = {};
+
+  if (!shallRenderDraggableList) {
+    draggableListCustomProps.create = {
+      hidden: true,
+    };
+  } else {
+    draggableListCustomProps.create = {
+      tableProps: {
+        showHeader: false,
+        className: styles.tableStyles,
+      },
+      tableColumns: [
+        {
+          title: 'Operates',
+          key: 'operate',
+          render: () => (
+            <a className={styles.dragIcon} href="#">
+              ☰
+            </a>
+          )
+        },
+
+        {
+          title: 'Альяс',
+          dataIndex: 'alias',
+        },
+        {
+          title: 'Адрес',
+          dataIndex: 'uri',
+        },
+      ],
+      tableData: R.pipe(
+          R.map(R.pick(['alias', 'uri', 'uuid'])),
+          R.map((data) => ({ ...data, key: data.uuid })),
+      )(replicaset.servers)
+    };
+    draggableListCustomProps.edit = draggableListCustomProps.create;
+  }
 
   return [
     {
@@ -58,17 +111,6 @@ const prepareFields = (roles, replicaset) => {
       title: 'Roles',
       type: 'checkboxGroup',
       options: rolesOptions,
-    },
-    {
-      key: 'master',
-      title: 'Master',
-      type: shallRenderDraggableList ? 'draggableList' : 'optionGroup',
-      options: shallRenderDraggableList ? renderDraggableListOptions : renderSelectOptions,
-      customProps: {
-        create: {
-          hidden: true,
-        },
-      },
     },
     {
       key: 'weight',
@@ -88,6 +130,14 @@ const prepareFields = (roles, replicaset) => {
       },
       invalidFeedback: 'Field accepts number, ex: 1.2',
     },
+    {
+      key: 'master',
+      title: shallRenderDraggableList ? 'Priority' : 'Master',
+      type: shallRenderDraggableList ? 'draggableList' : 'optionGroup',
+      options: shallRenderDraggableList ? renderDraggableListOptions : renderSelectOptions,
+      customProps: draggableListCustomProps,
+    },
+
   ];
 };
 

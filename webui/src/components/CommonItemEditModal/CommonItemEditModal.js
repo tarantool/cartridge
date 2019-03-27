@@ -2,12 +2,13 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import { defaultMemoize } from 'reselect';
 import {css} from 'react-emotion'
-
+import ReactDragListView from 'react-drag-listview';
 import Modal from 'src/components/Modal';
 import {Button} from 'antd'
 import cn from 'src/misc/cn';
 import Checkbox from '../Checkbox';
 import RadioButton from "../RadioButton";
+import { Table } from "antd";
 
 
 const styles = {
@@ -19,6 +20,9 @@ const styles = {
     width: 105px;
     font-family: Roboto;
     }
+  `,
+  listLabel: css`
+    width: 200px;
   `,
   checkboxLabel: css`
     color: #343434;
@@ -204,34 +208,33 @@ class CommonItemEditModal extends React.PureComponent {
   };
 
   renderDraggableList = field => {
-    console.log(field);
+    const { hideLabels } = this.props;
+
+    const dragProps = {
+      onDragEnd: (fromIndex, toIndex) => {
+        const data = this.props.dataSource.servers;
+        const item = data.splice(fromIndex, 1)[0];
+        data.splice(toIndex, 0, item);
+        this.setState({ formData: {
+          ...this.state.formData, servers: data,
+        }});
+      },
+      handleSelector: "a"
+    };
 
     return (
       <React.Fragment>
-        <ul>
-          {field.options.map((option) => {
-            console.log(option);
-            const optionName = getOptionFormName([field.key, option.key]);
-            const id = `CommonItemEditModal-${optionName}`;
-
-            return (
-              <li key={option.key}>
-                <div
-                    className="drag"
-                    draggable
-                    onDragStart={this.onDragStart}
-                >
-                </div>
-                <label
-                    htmlFor={id}
-                    className={`col-form-label ${styles.label}`}
-                >
-                  {option.label}
-                </label>
-              </li>
-            )
-          })}
-        </ul>
+        {hideLabels
+            ? null
+            : <legend className={`col-form-label ${styles.label}`}>{field.title}</legend>}
+        <ReactDragListView {...dragProps}>
+          <Table
+              columns={field.tableColumns}
+              pagination={false}
+              dataSource={this.state.formData.servers}
+              {...field.tableProps}
+          />
+        </ReactDragListView>
       </React.Fragment>
     )
   };
