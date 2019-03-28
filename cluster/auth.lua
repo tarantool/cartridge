@@ -222,7 +222,7 @@ local function logout(_)
     return {
         status = 200,
         headers = {
-            ['set-cookie'] = 'lsid=""; Max-Age=-1'
+            ['set-cookie'] = 'lsid=""; Max-Age=0'
         }
     }
 end
