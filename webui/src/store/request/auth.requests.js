@@ -1,6 +1,25 @@
 import graphql from 'src/api/graphql';
 import rest from 'src/api/rest';
-import { getClusterSelf } from './app.requests';
+
+export async function getAuthState() {
+  const graph = `
+    query {
+      cluster {
+        authParams: auth_params {
+          enabled
+          implements_check_password
+          implements_get_user
+          implements_add_user
+          implements_edit_user
+          username
+        }
+      }
+    }
+  `;
+
+  const { cluster } = await graphql.fetch(graph);
+  return cluster.authParams;
+}
 
 /**
  * @param {Object} params
@@ -34,8 +53,11 @@ export async function logIn(params) {
   }
 
   if (result.authorized) {
-    const clusterSelfResponse = await getClusterSelf();
-    result.clusterSelf = clusterSelfResponse.clusterSelf;
+    const authStateResponse = await getAuthState();
+    result = {
+      ...result,
+      ...authStateResponse
+    }
   }
 
   return result;

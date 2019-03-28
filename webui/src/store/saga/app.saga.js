@@ -13,9 +13,9 @@ import {
   APP_SERVER_CONSOLE_EVAL_STRING_REQUEST_ERROR,
   APP_CREATE_MESSAGE,
   APP_SET_MESSAGE_DONE,
+  AUTH_RESTORE_REQUEST
 } from 'src/store/actionTypes';
 import { baseSaga, getRequestSaga } from 'src/store/commonRequest';
-import { restoreAuthorization } from 'src/store/actions/auth.actions';
 import { getClusterSelf, evalString } from 'src/store/request/app.requests';
 
 function* appDataRequestSaga() {
@@ -28,14 +28,7 @@ function* appDataRequestSaga() {
     let response;
     try {
       const clusterSelfResponse = yield call(getClusterSelf);
-      const { authParams } = clusterSelfResponse.clusterSelf;
-
-      if (authParams && authParams.implements_check_password) {
-        yield put(restoreAuthorization({
-          enabled: authParams.enabled,
-          username: authParams.username
-        }));
-      }
+      yield put({ type: AUTH_RESTORE_REQUEST });
 
       response = {
         ...clusterSelfResponse,

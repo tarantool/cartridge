@@ -1,5 +1,5 @@
-import { isGraphqlErrorResponse } from 'src/api/graphql';
-import { isRestErrorResponse } from 'src/api/rest';
+import { isGraphqlErrorResponse, isGraphqlAccessDeniedError } from 'src/api/graphql';
+import { isRestErrorResponse, isRestAccessDeniedError } from 'src/api/rest';
 import {
   APP_DID_MOUNT,
   APP_DATA_REQUEST,
@@ -59,10 +59,16 @@ export const reducer = baseReducer(
 )(
   (state, action) => {
     switch (action.type) {
+      case APP_DATA_REQUEST:
+        return {
+          ...state,
+          appDataRequestErrorMessage: null
+        };
+
       case APP_DATA_REQUEST_ERROR: {
         const { error } = action;
 
-        if (isRestErrorResponse(error)) {
+        if (isRestErrorResponse(error) && !isRestAccessDeniedError(error)) {
           return {
             ...state,
             appDataRequestErrorMessage: {
@@ -71,7 +77,7 @@ export const reducer = baseReducer(
           };
         }
 
-        if (isGraphqlErrorResponse(error)) {
+        if (isGraphqlErrorResponse(error) && !isGraphqlAccessDeniedError(error)) {
           return {
             ...state,
             appDataRequestErrorMessage: {

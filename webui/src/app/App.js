@@ -12,7 +12,7 @@ import 'src/styles/tight-scroll.css';
 import 'src/styles/refactor-me.css';
 
 import AppMessage from 'src/components/AppMessage';
-import LogInForm from 'src/components/LogInForm';
+import { SplashLogInForm } from 'src/components/LogInForm';
 import ClusterPage from 'src/pages/Cluster';
 import ClusterInstancePage from 'src/pages/ClusterInstance';
 import { PROJECT_NAME } from 'src/constants';
@@ -34,7 +34,7 @@ class App extends React.Component {
     return isLoading
       ? null
       : authorizationRequired
-        ? this.renderLoginForm()
+        ? <SplashLogInForm />
         : appDataRequestErrorMessage
           ? this.renderError()
           : this.renderApp();
@@ -63,29 +63,6 @@ class App extends React.Component {
           : 'Sorry, something went wrong'}
       </pre>
     );
-  };
-
-  renderLoginForm = () => {
-    const { loginResponse } = this.props;
-
-    const submitMessage = loginResponse && loginResponse.message;
-
-    return (
-      <LogInForm
-        login={this.handleLoginClick}
-        submitMessage={submitMessage}
-      />
-    );
-  };
-
-  handleLoginClick = formData => {
-    const { login } = this.props;
-    login(formData);
-  };
-
-  handleLogoutClick = () => {
-    const { logout } = this.props;
-    logout();
   };
 }
 

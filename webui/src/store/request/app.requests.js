@@ -12,14 +12,6 @@ export async function getClusterSelf() {
         knownRoles: known_roles
         can_bootstrap_vshard
         vshard_bucket_count
-        authParams: auth_params {
-          enabled
-          implements_check_password
-          implements_get_user
-          implements_add_user
-          implements_edit_user
-          username
-        }
       }
     }
   `;

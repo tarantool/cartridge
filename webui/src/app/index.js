@@ -2,7 +2,6 @@ import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
 
 import { appDidMount, setMessageDone } from 'src/store/actions/app.actions';
-import { logIn, logOut } from 'src/store/actions/auth.actions';
 import App from './App';
 
 const mapStateToProps = state => {
@@ -12,7 +11,6 @@ const mapStateToProps = state => {
       appDataRequestStatus,
       appDataRequestErrorMessage,
       clusterSelf,
-      loginResponse,
       messages,
     },
     auth: {
@@ -28,15 +26,12 @@ const mapStateToProps = state => {
     appDataRequestErrorMessage,
     clusterSelf,
     authorizationRequired: authorizationFeature && authorizationEnabled && !authorized,
-    loginResponse,
     messages,
   };
 };
 
 const dispatchToProps = {
   appDidMount,
-  logIn,
-  logOut,
   setMessageDone,
 };
 

@@ -71,7 +71,7 @@
     "whatwg-fetch": "2.0.3"
   },
   "devDependencies": {
-    "enterprise-frontend-core": "git+ssh://git@gitlab.com:tarantool/enterprise/front.git#3.0.3"
+    "enterprise-frontend-core": "git+ssh://git@gitlab.com:tarantool/enterprise/front.git#4.0.0"
   },
   "scripts": {
     "start": "node scripts/start.js",
