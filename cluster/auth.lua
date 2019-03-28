@@ -24,6 +24,8 @@ vars:new('enabled', false)
 vars:new('callbacks', {})
 vars:new('cookie_max_age', 30*24*3600) -- in seconds
 vars:new('cookie_caching_time', 60) -- in seconds
+local e_check_cookie = errors.new_class('Checking cookie failed')
+local e_check_header = errors.new_class('Checking auth headers failed')
 local e_callback = errors.new_class('Auth callback failed')
 local e_add_user = errors.new_class('Auth callback "add_user()" failed')
 local e_get_user = errors.new_class('Auth callback "get_user()" failed')
@@ -137,6 +139,33 @@ local function get_cookie_uid(raw)
     end
 
     return cookie.uid
+end
+
+local function get_basic_auth_uid(auth)
+    if type(auth) ~= 'string' then
+        return nil
+    end
+
+    local credentials = auth:match('^Basic (.+)$')
+    if not credentials then
+        return nil
+    end
+
+    local plaintext = digest.base64_decode(credentials)
+    local username, password = unpack(plaintext:split(':', 1))
+    if username == nil or password == nil then
+        return nil
+    end
+
+    local ok = vars.callbacks.check_password(username, password)
+    if type(ok) ~= 'boolean' then
+        local err = e_callback:new('check_password() must return boolean')
+        return nil, err
+    elseif ok then
+        return username
+    else
+        return nil
+    end
 end
 
 local function get_session_username()
@@ -288,7 +317,7 @@ local function list_users()
     return e_list_users:pcall(function()
         local users, err = vars.callbacks.list_users()
         if not users then
-            return nil, e_list_user:new(err)
+            return nil, e_list_users:new(err)
         end
 
         local ret = {}
@@ -340,13 +369,23 @@ local function check_request(req)
     end
 
     local username
-    local lsid = req:cookie('lsid')
-    if lsid ~= nil then
-        local ok, uid = pcall(get_cookie_uid, lsid)
-        if ok and uid then
+    repeat
+        local uid, err = e_check_cookie:pcall(get_cookie_uid, req:cookie('lsid'))
+        if uid ~= nil then
             username = uid
+            break
+        elseif err then
+            log.error('%s', err)
         end
-    end
+
+        local uid, err = e_check_header:pcall(get_basic_auth_uid, req.headers['authorization'])
+        if uid ~= nil then
+            username = uid
+            break
+        elseif err then
+            log.error('%s', err)
+        end
+    until true
 
     if username and vars.callbacks.get_user ~= nil then
         local user = get_user(username)

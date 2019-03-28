@@ -464,7 +464,7 @@ local function apply_config(conf)
     for _, mod in ipairs(vars.known_roles) do
         local role_name = mod.role_name
         if roles_enabled[role_name] then
-            do
+            repeat -- until true
                 if (service_registry.get(role_name) == nil)
                 and (type(mod.init) == 'function')
                 then
@@ -490,7 +490,7 @@ local function apply_config(conf)
                         err = err or _err
                     end
                 end
-            end
+            until true
         else
             if (service_registry.get(role_name) ~= nil)
             and (type(mod.stop) == 'function')

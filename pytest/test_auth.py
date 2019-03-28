@@ -2,6 +2,7 @@
 
 import json
 import pytest
+import base64
 import logging
 from conftest import Server
 
@@ -307,4 +308,37 @@ def test_uninitialized(module_tmpdir, helpers):
 
     finally:
         srv.kill()
+
+def test_basic_auth(cluster, enable_auth):
+    srv = cluster['master']
+
+    srv.conn.eval("""
+        local auth_mocks = require('auth-mocks')
+        assert(auth_mocks.add_user('U', 'P'))
+    """)
+
+    def _b64(s):
+        return base64.b64encode(s.encode('utf-8')).decode('utf-8')
+
+    def _h(*args):
+        return {'Authorization': ' '.join(args)}
+
+    def _post(h):
+        return srv.post_raw('/graphql', headers=h)
+
+    assert _post(_h('Basic', _b64('U'))).status_code == 401
+    assert _post(_h('Basic', _b64('U:'))).status_code == 401
+    assert _post(_h('Basic', _b64(':P'))).status_code == 401
+    assert _post(_h('Basic', _b64(':U:P'))).status_code == 401
+    assert _post(_h('Basic', _b64('U:P:'))).status_code == 401
+    assert _post(_h('Basic', _b64(':U:P:'))).status_code == 401
+    assert _post(_h('Basic', _b64('U:P:C'))).status_code == 401
+    assert _post(_h('Basic', _b64('U'), _b64('P'))).status_code == 401
+
+    assert _post(_h('Basic', _b64('x:x'))).status_code == 401
+    assert _post(_h('Basic', _b64('x:P'))).status_code == 401
+    assert _post(_h('Basic', _b64('U:x'))).status_code == 401
+    assert _post(_h('Weird', _b64('U:P'))).status_code == 401
+
+    assert _post(_h('Basic', _b64('U:P'))).status_code == 200
 
