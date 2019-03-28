@@ -3,7 +3,7 @@
 local log = require('log')
 local json = require('json').new()
 local yaml = require('yaml').new()
-local front = require('front')
+local front = require('frontend-core')
 local errors = require('errors')
 
 json.cfg({
