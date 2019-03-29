@@ -364,6 +364,11 @@ local function remove_user(username)
 end
 
 local function check_request(req)
+    local fiber_storage = fiber.self().storage
+    -- clean fiber storage to behave correctly
+    -- when user logouts within keepalive session
+    fiber_storage['auth_session_username'] = nil
+
     if vars.callbacks.check_password == nil then
         return true
     end
@@ -395,7 +400,6 @@ local function check_request(req)
     end
 
     if username then
-        local fiber_storage = fiber.self().storage
         fiber_storage['auth_session_username'] = username
         return true
     end

@@ -4,6 +4,7 @@ import json
 import pytest
 import base64
 import logging
+import requests
 from conftest import Server
 
 cluster = [
@@ -308,6 +309,40 @@ def test_uninitialized(module_tmpdir, helpers):
 
     finally:
         srv.kill()
+
+def test_keepalive(cluster, disable_auth):
+    USERNAME = 'Crow'
+    PASSWORD = 'Teal Lead'
+
+    srv = cluster['master']
+    srv.conn.eval("""
+        local auth_mocks = require('auth-mocks')
+        assert(auth_mocks.add_user(...))
+    """, (USERNAME, PASSWORD))
+
+    def get_username(session):
+        request = {"query": """
+            {
+                cluster {
+                    auth_params { enabled username }
+                }
+            }
+        """}
+        r = session.post(srv.baseurl + '/graphql', json=request)
+        r.raise_for_status()
+        obj = r.json()
+        assert 'errors' not in obj, obj['errors'][0]['message']
+        return obj['data']['cluster']['auth_params'].get('username', None)
+
+    with requests.Session() as s:
+        assert get_username(s) == None
+        assert s.post(srv.baseurl + '/login',
+            data={'username': USERNAME, 'password': PASSWORD}
+        ).status_code == 200
+        assert get_username(s) == USERNAME
+        assert s.post(srv.baseurl + '/logout').status_code == 200
+        assert get_username(s) == None
+
 
 def test_basic_auth(cluster, enable_auth):
     srv = cluster['master']
