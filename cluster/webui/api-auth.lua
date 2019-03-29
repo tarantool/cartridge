@@ -1,9 +1,10 @@
 #!/usr/bin/env tarantool
 
 local errors = require('errors')
+
 local auth = require('cluster.auth')
-local graphql = require('cluster.graphql')
 local gql_types = require('cluster.graphql.types')
+local module_name = 'cluster.webui.api-auth'
 
 local gql_type_user = gql_types.object({
     name = 'User',
@@ -100,14 +101,14 @@ local function set_auth_params(_, args)
     return get_auth_params()
 end
 
-local function init()
+local function init(graphql)
     graphql.add_callback({
         prefix = 'cluster',
         name = 'auth_params',
         doc = '',
         args = {},
         kind = gql_type_userapi.nonNull,
-        callback = 'cluster.webui.auth.get_auth_params',
+        callback = module_name .. '.get_auth_params',
     })
 
     graphql.add_mutation({
@@ -118,7 +119,7 @@ local function init()
             enabled = gql_types.boolean,
         },
         kind = gql_type_userapi.nonNull,
-        callback = 'cluster.webui.auth.set_auth_params',
+        callback = module_name .. '.set_auth_params',
     })
 
     graphql.add_mutation({
@@ -132,7 +133,7 @@ local function init()
             email = gql_types.string,
         },
         kind = gql_type_user,
-        callback = 'cluster.webui.auth.add_user',
+        callback = module_name .. '.add_user',
     })
 
     graphql.add_mutation({
@@ -146,7 +147,7 @@ local function init()
             email = gql_types.string,
         },
         kind = gql_type_user,
-        callback = 'cluster.webui.auth.edit_user',
+        callback = module_name .. '.edit_user',
     })
 
     graphql.add_callback({
@@ -157,7 +158,7 @@ local function init()
             username = gql_types.string,
         },
         kind = gql_types.list(gql_type_user.nonNull),
-        callback = 'cluster.webui.auth.users',
+        callback = module_name .. '.users',
     })
 
     graphql.add_mutation({
@@ -168,7 +169,7 @@ local function init()
             username = gql_types.string.nonNull,
         },
         kind = gql_type_user,
-        callback = 'cluster.webui.auth.remove_user',
+        callback = module_name .. '.remove_user',
     })
 end
 
