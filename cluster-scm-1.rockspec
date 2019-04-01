@@ -12,7 +12,7 @@ dependencies = {
     'errors == 2.0.1-1',
     'vshard == 0.1.7-1',
     'membership == 2.1.1-1',
-    'front == 3.0.3-1',
+    'frontend-core == 4.0.1-1',
 }
 
 build = {
@@ -24,9 +24,11 @@ build = {
             ['cluster.rpc'] = 'cluster/rpc.lua';
             ['cluster.vars'] = 'cluster/vars.lua';
             ['cluster.pool'] = 'cluster/pool.lua';
+            ['cluster.auth'] = 'cluster/auth.lua';
             ['cluster.admin'] = 'cluster/admin.lua';
             ['cluster.utils'] = 'cluster/utils.lua';
             ['cluster.webui'] = 'cluster/webui.lua';
+            ['cluster.webui.auth'] = 'cluster/webui/auth.lua';
             ['cluster.topology'] = 'cluster/topology.lua';
             ['cluster.bootstrap'] = 'cluster/bootstrap.lua';
             ['cluster.confapplier'] = 'cluster/confapplier.lua';

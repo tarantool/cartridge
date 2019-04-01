@@ -1,6 +1,8 @@
 import React from 'react';
 import { defaultMemoize } from 'reselect';
-
+import * as R from 'ramda';
+import { Button, Icon } from 'antd'
+import { css } from 'react-emotion';
 import { getServerName } from 'src/app/misc';
 import AppBottomConsole from 'src/components/AppBottomConsole';
 import ServerConsole from 'src/components/ServerConsole';
@@ -12,15 +14,11 @@ import ServerEditModal from 'src/components/ServerEditModal';
 import FailoverButton from 'src/components/FailoverButton';
 import ServerList from 'src/components/ServerList';
 import { addSearchParams, getSearchParams } from 'src/misc/url';
-import {Title, FilterInput} from '../../components/styled';
+import { Title, FilterInput } from 'src/components/styled';
 import ClusterConfigManagement from 'src/components/ClusterConfigManagement';
-
 import './Cluster.css';
-import BootstrapPanel from "../../components/BootstrapPanel";
-import {Button, Icon} from 'antd'
-import {css} from 'react-emotion';
-
-import * as R from 'ramda';
+import BootstrapPanel from "src/components/BootstrapPanel";
+import AuthToggleButton from './child/AuthToggleButton';
 
 const styles = {
   buttons: css`
@@ -74,7 +72,7 @@ const filterReplicasetList = (replicasetList, filter) => {
   const searchableList = replicasetList.map(r => {
     return {
       ...r,
-      searchString: `${r.roles.join(' ')} ${r.servers.map(s => `${s.uri} ${s.alias||''}`).join(' ')}`,
+      searchString: `${r.roles.join(' ')} ${r.servers.map(s => `${s.uri} ${s.alias || ''}`).join(' ')}`,
     }
   });
 
@@ -148,10 +146,10 @@ class Cluster extends React.Component {
   render() {
     const { pageDataRequestStatus } = this.props;
 
-    return ! pageDataRequestStatus.loaded
+    return !pageDataRequestStatus.loaded
       ? null
       : pageDataRequestStatus.error
-        ? <PageDataErrorMessage error={pageDataRequestStatus.error}/>
+        ? <PageDataErrorMessage error={pageDataRequestStatus.error} />
         : this.renderContent();
   }
 
@@ -213,10 +211,10 @@ class Cluster extends React.Component {
                   </div>
                 </div>
               )
-                : null
-              }
+              : null
+            }
 
-            <BootstrapPanel/>
+            <BootstrapPanel />
 
             {replicasetList.length
               ? (
@@ -233,15 +231,15 @@ class Cluster extends React.Component {
                   {replicasetList.length > 1
                     ? (
                       <div className={styles.clusterFilter}>
-                          <div className={styles.clusterInputContainer}>
-                            <FilterInput
-                              prefix={<Icon type="search" />}
-                              type={"text"}
-                              placeholder={'Filter by uri, uuid, role or alias'}
-                              value={this.state.filter}
-                              onChange={this.handleFilterChange}
-                            />
-                          </div>
+                        <div className={styles.clusterInputContainer}>
+                          <FilterInput
+                            prefix={<Icon type="search" />}
+                            type={"text"}
+                            placeholder={'Filter by uri, uuid, role or alias'}
+                            value={this.state.filter}
+                            onChange={this.handleFilterChange}
+                          />
+                        </div>
                       </div>
                     )
                     : null}
@@ -264,13 +262,13 @@ class Cluster extends React.Component {
                     )}
                 </div>
               )
-                : null
-              }
+              : null
+            }
 
-              {isBootstrap && <ClusterConfigManagement
-                uploadConfig={this.uploadConfig}
-                canTestConfigBeApplied={false}
-                applyTestConfig={this.applyTestConfig} />}
+            {isBootstrap && <ClusterConfigManagement
+              uploadConfig={this.uploadConfig}
+              canTestConfigBeApplied={false}
+              applyTestConfig={this.applyTestConfig} />}
             <div ref={this.setConsoleReserve} />
           </div>
         </div>
@@ -307,10 +305,10 @@ class Cluster extends React.Component {
   renderServerButtons = () => {
     return (
       <div className={styles.buttons}>
+        <div className={styles.button}><AuthToggleButton size={'large'} /></div>
         <div className={styles.button}><FailoverButton size={'large'} /></div>
         <div className={styles.button}>
           <Button
-
             size={'large'}
             onClick={this.handleProbeServerRequest}
           >
@@ -346,7 +344,7 @@ class Cluster extends React.Component {
   renderJoinServerModal = () => {
     const { pageMount, pageDataRequestStatus } = this.props;
 
-    const pageDataLoading = ! pageMount || ! pageDataRequestStatus.loaded || pageDataRequestStatus.loading;
+    const pageDataLoading = !pageMount || !pageDataRequestStatus.loaded || pageDataRequestStatus.loading;
     const server = this.getSelectedServer();
     const serverNotFound = pageDataLoading ? null : !server;
     const replicasetList = this.getReplicasetList();
@@ -389,7 +387,7 @@ class Cluster extends React.Component {
   renderEditReplicasetModal = () => {
     const { pageMount, pageDataRequestStatus } = this.props;
 
-    const pageDataLoading = ! pageMount || ! pageDataRequestStatus.loaded || pageDataRequestStatus.loading;
+    const pageDataLoading = !pageMount || !pageDataRequestStatus.loaded || pageDataRequestStatus.loading;
     const replicaset = this.getSelectedReplicaset();
     const replicasetNotFound = pageDataLoading ? null : !replicaset;
 
@@ -683,7 +681,7 @@ class Cluster extends React.Component {
 
   getUnlinkedServers = () => {
     const { serverList } = this.props;
-    return serverList ? serverList.filter(server => ! server.replicaset) : null;
+    return serverList ? serverList.filter(server => !server.replicaset) : null;
   };
 
   getSelectedServer = () => {

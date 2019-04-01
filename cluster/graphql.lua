@@ -5,6 +5,7 @@ local json = require('json')
 local checks = require('checks')
 local errors = require('errors')
 
+local auth = require('cluster.auth')
 local vars = require('cluster.vars').new('cluster.graphql')
 local types = require('cluster.graphql.types')
 local parse = require('cluster.graphql.parse')
@@ -19,7 +20,6 @@ vars:new('graphql_schema', {})
 vars:new('model', {})
 vars:new('callbacks', {})
 vars:new('mutations', {})
-vars:new('endpoint_middleware', nil)
 
 local e_graphql_internal = errors.new_class('Graphql internal error')
 local e_graphql_parse = errors.new_class('Graphql parsing failed')
@@ -36,11 +36,6 @@ end
 
 local function funcall_wrap(fun_name)
     return function(...)
-        if vars.endpoint_middleware ~= nil then
-            vars.endpoint_middleware(fun_name, ...)
-        end
-
-
         local res, err = funcall.call(fun_name, ...)
 
         if res == nil then
@@ -181,9 +176,6 @@ local function get_schema()
     for name, entry in pairs(vars.model) do
         local original_resolve = entry.resolve
         entry.resolve = function(...)
-            if vars.endpoint_middleware ~= nil then
-                vars.endpoint_middleware('model', ...)
-            end
             if original_resolve then
                 return original_resolve(...)
             end
@@ -207,44 +199,55 @@ local function get_schema()
     return vars.graphql_schema
 end
 
+local function http_finalize_json(status, obj)
+    return {
+        status = status,
+        headers = {
+            ['content-type'] = "application/json; charset=utf-8"
+        },
+        body = json.encode(obj)
+    }
+end
+
 local function _execute_graphql(req)
+    if not auth.check_request(req) then
+        return http_finalize_json(401, {
+            errors = {{message = "Unauthorized"}},
+        })
+    end
+
     local body = req:read()
 
     if body == nil or body == '' then
-        return {
-            status = 200,
-            body = json.encode({errors={{message="Expected a non-empty request body"}}})
-        }
+        return http_finalize_json(200, {
+            errors = {{message = "Expected a non-empty request body"}},
+        })
     end
 
     local parsed = json.decode(body)
     if parsed == nil then
-        return {
-            status = 200,
-            body = json.encode({errors={{message="Body should be a valid JSON"}}})
-        }
+        return http_finalize_json(200, {
+            errors = {{message = "Body should be a valid JSON"}},
+        })
     end
 
     if parsed.query == nil or type(parsed.query) ~= "string" then
-        return {
-            status = 200,
-            body = json.encode({errors={{message="Body should have 'query' field"}}})
-        }
+        return http_finalize_json(200, {
+            errors = {{message = "Body should have 'query' field"}},
+        })
     end
 
 
     if parsed.operationName ~= nil and type(parsed.operationName) ~= "string" then
-        return {
-            status = 200,
-            body = json.encode({errors={{message="'operationName' should be string"}}})
-        }
+        return http_finalize_json(200, {
+            errors = {{message = "'operationName' should be string"}},
+        })
     end
 
     if parsed.variables ~= nil and type(parsed.variables) ~= "table" then
-        return {
-            status = 200,
-            body = json.encode({errors={{message="'variables' should be a dictionary"}}})
-        }
+        return http_finalize_json(200, {
+            errors = {{message = "'variables' should be a dictionary"}},
+        })
     end
 
     local operationName = nil
@@ -263,10 +266,9 @@ local function _execute_graphql(req)
 
     if not ast then
         log.error('%s', err)
-        return {
-            status = 200,
-            body = json.encode({errors={{message=err.err}}})
-        }
+        return http_finalize_json(200, {
+            errors = {{message = err.err}},
+        })
     end
 
     local schema_obj = get_schema()
@@ -274,10 +276,9 @@ local function _execute_graphql(req)
 
     if err then
         log.error('%s', err)
-        return {
-            status = 200,
-            body = json.encode({errors={{message=err.err}}})
-        }
+        return http_finalize_json(200, {
+            errors = {{message = err.err}},
+        })
     end
 
     local rootValue = {}
@@ -286,25 +287,14 @@ local function _execute_graphql(req)
 
     if res == nil then
         log.error('%s', err or "Unknown error")
-        return {
-            status = 200,
-            body = json.encode({
-                errors = {{
-                    message = err and err.err or "Unknown error",
-                }}
-            })
-        }
+        return http_finalize_json(200, {
+            errors = {{message = err and err.err or "Unknown error"}}
+        })
     end
 
-    local result = {data = res}
-
-    return {
-        status = 200,
-        headers = {
-            ['content-type'] = "application/json; charset=utf-8"
-        },
-        body = json.encode(result)
-    }
+    return http_finalize_json(200, {
+        data = res,
+    })
 
 end
 
@@ -319,14 +309,6 @@ local function execute_graphql(req)
     end
 
     return resp
-end
-
-local function set_middleware(callback)
-    vars.middleware = callback
-end
-
-local function set_endpoint_middleware(callback)
-    vars.endpoint_middleware = callback
 end
 
 local function init(httpd)
@@ -349,6 +331,4 @@ return {
     add_mutation_prefix = add_mutation_prefix,
     add_callback = add_callback,
     add_mutation = add_mutation,
-
-    set_endpoint_middleware = set_endpoint_middleware,
 }

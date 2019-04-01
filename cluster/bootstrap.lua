@@ -2,13 +2,12 @@
 
 local log = require('log')
 local fio = require('fio')
-local fun = require('fun')
 local fiber = require('fiber')
 local checks = require('checks')
-local vshard = require('vshard')
 local uuid_lib = require('uuid')
 local membership = require('membership')
 
+local auth = require('cluster.auth')
 local utils = require('cluster.utils')
 local topology = require('cluster.topology')
 local cluster_cookie = require('cluster.cluster-cookie')
@@ -98,6 +97,8 @@ local function bootstrap_from_scratch(boot_opts, box_opts, roles)
             bootstrapped = false,
         },
         topology = {
+            auth = auth.get_enabled(),
+            failover = false,
             servers = {
                 [boot_opts.instance_uuid] = {
                     uri = membership.myself().uri,

@@ -3,7 +3,7 @@
 local log = require('log')
 local json = require('json').new()
 local yaml = require('yaml').new()
-local front = require('front')
+local front = require('frontend-core')
 local errors = require('errors')
 
 json.cfg({
@@ -13,11 +13,14 @@ yaml.cfg({
     encode_use_tostring = true,
 })
 
+local auth = require('cluster.auth')
 local admin = require('cluster.admin')
 local graphql = require('cluster.graphql')
 local gql_types = require('cluster.graphql.types')
 local confapplier = require('cluster.confapplier')
 local front_bundle = require('cluster.front-bundle')
+
+local webui_auth = require('cluster.webui.auth')
 
 local statistics_schema = {
     kind = gql_types.object({
@@ -405,11 +408,16 @@ local function http_finalize_error(http_code, err)
     }
 end
 
-local download_error = errors.new_class('Config download failed')
-local function download_config_handler(_)
+local e_download_config = errors.new_class('Config download failed')
+local function download_config_handler(req)
+    if not auth.check_request(req) then
+        local err = e_download_config:new('Unauthorized')
+        return http_finalize_error(401, err)
+    end
+
     local conf = confapplier.get_deepcopy()
     if conf == nil then
-        local err = download_error:new('Cluster isn\'t bootsrapped yet')
+        local err = e_download_config:new('Cluster isn\'t bootsrapped yet')
         return http_finalize_error(409, err)
     end
 
@@ -426,11 +434,16 @@ local function download_config_handler(_)
     }
 end
 
-local e_upload = errors.new_class('Config upload failed')
+local e_upload_config = errors.new_class('Config upload failed')
 local e_decode_yaml = errors.new_class('Decoding YAML failed')
 local function upload_config_handler(req)
+    if not auth.check_request(req) then
+        local err = e_upload_config:new('Unauthorized')
+        return http_finalize_error(401, err)
+    end
+
     if confapplier.get_readonly() == nil then
-        local err = e_upload:new('Cluster isn\'t bootsrapped yet')
+        local err = e_upload_config:new('Cluster isn\'t bootsrapped yet')
         return http_finalize_error(409, err)
     end
 
@@ -461,7 +474,7 @@ local function upload_config_handler(req)
 
     local conf, err = nil
     if req_body == nil then
-        err = e_upload:new('Request body must not be empty')
+        err = e_upload_config:new('Request body must not be empty')
     else
         conf, err = e_decode_yaml:pcall(yaml.decode, req_body)
     end
@@ -469,10 +482,10 @@ local function upload_config_handler(req)
     if err ~= nil then
         return http_finalize_error(400, err)
     elseif type(conf) ~= 'table' then
-        err = e_upload:new('Config must be a table')
+        err = e_upload_config:new('Config must be a table')
         return http_finalize_error(400, err)
     elseif next(conf) == nil then
-        err = e_upload:new('Config must not be empty')
+        err = e_upload_config:new('Config must not be empty')
         return http_finalize_error(400, err)
     end
 
@@ -502,6 +515,9 @@ local function init(httpd)
     graphql.init(httpd)
     graphql.add_mutation_prefix('cluster', 'Cluster management')
     graphql.add_callback_prefix('cluster', 'Cluster management')
+
+    -- User management
+    webui_auth.init()
 
     graphql.add_callback({
         name = 'servers',

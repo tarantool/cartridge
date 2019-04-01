@@ -1,22 +1,26 @@
 # source: http://localhost:8081/graphql
-# timestamp: Tue Mar 26 2019 02:26:08 GMT+0300 (MSK)
+# timestamp: Thu Mar 28 2019 00:08:07 GMT+0300 (MSK)
 
 """Cluster management"""
 type Apicluster {
-  """Get current server"""
-  self: ServerShortInfo
-
-  """Get current failover state."""
-  failover: Boolean!
+  """Get list of registered roles."""
+  known_roles: [String!]
 
   """Whether it is reasonble to call bootstrap_vshard mutation"""
   can_bootstrap_vshard: Boolean!
 
-  """Get list of registered roles."""
-  known_roles: [String!]
+  """Get current failover state."""
+  failover: Boolean!
 
   """Virtual buckets count in cluster"""
   vshard_bucket_count: Int!
+
+  """Get current server"""
+  self: ServerShortInfo
+  auth_params: UserManagementAPI!
+
+  """List authorized users"""
+  users(username: String): [User!]
 }
 
 """
@@ -38,8 +42,19 @@ type Mutation {
 
 """Cluster management"""
 type MutationApicluster {
+  auth_params(enabled: Boolean): UserManagementAPI!
+
+  """Remove user"""
+  remove_user(username: String!): User
+
+  """Edit an existing user"""
+  edit_user(password: String, username: String!, fullname: String, email: String): User
+
   """Enable or disable automatic failover. Returns new state."""
   failover(enabled: Boolean!): Boolean!
+
+  """Create a new user"""
+  add_user(password: String!, username: String!, fullname: String, email: String): User
 
   """Disable listed servers by uuid"""
   disable_servers(uuids: [String!]): [Server]
@@ -258,4 +273,33 @@ type ServerStat {
   The efficient memory used for storing tuples and indexes together (omitting allocated, but currently free slabs)
   """
   arena_used: Long!
+}
+
+"""A single user account information"""
+type User {
+  username: String!
+  fullname: String
+  email: String
+}
+
+"""User managent parameters and available operations"""
+type UserManagementAPI {
+  implements_remove_user: Boolean!
+  implements_add_user: Boolean!
+  implements_edit_user: Boolean!
+
+  """Number of seconds until the authentication cookie expires."""
+  cookie_max_age: Long!
+
+  """Number of seconds to keep in cache cookie validation result."""
+  cookie_caching_time: Long!
+  implements_list_users: Boolean!
+  implements_get_user: Boolean!
+
+  """Whether authentication is enabled."""
+  enabled: Boolean!
+
+  """Active session username."""
+  username: String
+  implements_check_password: Boolean!
 }

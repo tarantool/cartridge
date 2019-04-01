@@ -24,6 +24,7 @@ _G.vshard = vshard
 
 local rpc = require('cluster.rpc')
 local vars = require('cluster.vars').new('cluster')
+local auth = require('cluster.auth')
 local admin = require('cluster.admin')
 local webui = require('cluster.webui')
 local topology = require('cluster.topology')
@@ -129,6 +130,11 @@ local function cfg(opts, box_opts)
             return nil, err
         end
 
+        local ok, err = e_init:pcall(auth.init, httpd)
+        if not ok then
+            return nil, err
+        end
+
         local srv_name = httpd.tcp_server:name()
         log.info('Listening HTTP on %s:%s', srv_name.host, srv_name.port)
         service_registry.set('httpd', httpd)
@@ -215,4 +221,7 @@ return {
     },
     service_registry = service_registry,
     rpc_call = rpc.call,
+
+    set_auth_enabled = auth.set_enabled,
+    set_auth_callbacks = auth.set_callbacks,
 }

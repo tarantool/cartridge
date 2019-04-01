@@ -1,8 +1,8 @@
 import React from 'react';
 import { Provider } from 'react-redux';
 import { Router, Switch, Route } from 'react-router-dom';
-
 import App from './app';
+import HeaderAuthControl from 'src/components/HeaderAuthControl';
 import configureStore from './store/configureStore';
 
 import { PROJECT_NAME } from './constants';
@@ -37,4 +37,10 @@ window.tarantool_enterprise_core.register(
   ],
   Root,
   'react'
+);
+
+window.tarantool_enterprise_core.setHeaderComponent(
+  <Provider store={store}>
+    <HeaderAuthControl />
+  </Provider>
 );

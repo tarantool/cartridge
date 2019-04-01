@@ -1,9 +1,5 @@
 import {
   APP_DID_MOUNT,
-  APP_LOGIN_REQUEST,
-  APP_LOGOUT_REQUEST,
-  APP_DENY_ANONYMOUS_REQUEST,
-  APP_ALLOW_ANONYMOUS_REQUEST,
   APP_SERVER_CONSOLE_EVAL_STRING_REQUEST,
   APP_SAVE_CONSOLE_STATE,
   APP_CREATE_MESSAGE,
@@ -12,19 +8,6 @@ import {
 import { getActionCreator, getPageMountActionCreator } from 'src/store/commonRequest';
 
 export const appDidMount = getPageMountActionCreator(APP_DID_MOUNT);
-
-/**
- * @param {Object} payload
- * @param {string} payload.email
- * @param {string} payload.password
- */
-export const login = getActionCreator(APP_LOGIN_REQUEST);
-
-export const logout = getActionCreator(APP_LOGOUT_REQUEST);
-
-export const denyAnonymous = getActionCreator(APP_DENY_ANONYMOUS_REQUEST);
-
-export const allowAnonymous = getActionCreator(APP_ALLOW_ANONYMOUS_REQUEST);
 
 /**
  * @param {Object} payload
