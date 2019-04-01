@@ -2,7 +2,7 @@ import * as React from "react";
 import Modal from 'src/components/Modal';
 import {connect} from 'react-redux';
 import {changeFailover, setVisibleFailoverModal} from "../../store/actions/clusterPage.actions";
-import {Button} from 'antd';
+import ClusterButton from 'src/components/ClusterButton';
 import {Title} from "../styled";
 
 
@@ -20,13 +20,13 @@ class FailoverButton extends React.Component {
     if (!this.props.clusterSelf.configured)
       return null;
     return <React.Fragment>
-      <Button
+      <ClusterButton
           type={this.props.failover ? 'primary' : 'default'}
           onClick={() => this.props.dispatch(setVisibleFailoverModal(true))}
           size={this.props.size}
         >
           Failover:{' '}<span>{this.props.failover ? 'enabled' : 'disabled'}</span>
-        </Button>
+        </ClusterButton>
       <Modal
         title={<Title>Failover control</Title>}
         visible={this.props.showFailoverModal}

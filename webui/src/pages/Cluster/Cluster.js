@@ -1,7 +1,7 @@
 import React from 'react';
 import { defaultMemoize } from 'reselect';
 import * as R from 'ramda';
-import { Button, Icon } from 'antd'
+import { Icon } from 'antd'
 import { css } from 'react-emotion';
 import { getServerName } from 'src/app/misc';
 import AppBottomConsole from 'src/components/AppBottomConsole';
@@ -19,6 +19,7 @@ import ClusterConfigManagement from 'src/components/ClusterConfigManagement';
 import './Cluster.css';
 import BootstrapPanel from "src/components/BootstrapPanel";
 import AuthToggleButton from './child/AuthToggleButton';
+import ClusterButton from 'src/components/ClusterButton';
 
 const styles = {
   buttons: css`
@@ -308,12 +309,12 @@ class Cluster extends React.Component {
         <div className={styles.button}><AuthToggleButton size={'large'} /></div>
         <div className={styles.button}><FailoverButton size={'large'} /></div>
         <div className={styles.button}>
-          <Button
+          <ClusterButton
             size={'large'}
             onClick={this.handleProbeServerRequest}
           >
             Probe server
-          </Button>
+          </ClusterButton>
         </div>
       </div>
     );

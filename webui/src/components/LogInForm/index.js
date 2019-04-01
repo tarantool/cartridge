@@ -1,9 +1,10 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { Form, Icon, Input, Button } from 'antd';
+import { Form, Icon, Input } from 'antd';
 import { css } from 'emotion';
 import { logIn } from 'src/store/actions/auth.actions';
 import Modal from 'src/components/Modal';
+import ClusterButton from 'src/components/ClusterButton';
 
 const styles = {
   formWrap: css`
@@ -80,14 +81,14 @@ class LogInForm extends React.Component {
           )}
         </Form.Item>
         <Form.Item>
-          <Button
+          <ClusterButton
             className={styles.submitBtn}
             type="primary"
             htmlType="submit"
             loading={loading}
           >
             Log in
-          </Button>
+          </ClusterButton>
         </Form.Item>
         <p className={styles.error}>{error}</p>
       </Form>

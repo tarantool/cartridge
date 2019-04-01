@@ -1,5 +1,4 @@
 @import 'src/styles/variables';
-@import url('https://fonts.googleapis.com/css?family=Roboto:100,100i,400,400i,700,700i&subset=cyrillic,cyrillic-ext');
 
 .app {
   position: relative;

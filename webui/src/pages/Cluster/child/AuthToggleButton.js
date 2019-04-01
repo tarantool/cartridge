@@ -1,6 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { Button } from 'antd';
+import ClusterButton from 'src/components/ClusterButton';
 import { turnAuth } from 'src/store/actions/auth.actions';
 
 class AuthToggleButton extends React.Component {
@@ -17,14 +17,14 @@ class AuthToggleButton extends React.Component {
 
     return authorizationFeature ?
       (
-        <Button
+        <ClusterButton
           size='large'
           onClick={this.handleClick}
           disabled={loading}
           type={authorizationEnabled ? 'primary' : 'default'}
         >
           {`Auth: ${authorizationEnabled ? 'enabled' : 'disabled'}`}
-        </Button>
+        </ClusterButton>
       ) :
       null;
   }
