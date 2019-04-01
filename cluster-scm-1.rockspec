@@ -12,7 +12,7 @@ dependencies = {
     'errors == 2.0.1-1',
     'vshard == 0.1.7-1',
     'membership == 2.1.1-1',
-    'frontend-core == 4.0.0-1',
+    'frontend-core == 4.0.1-1',
 }
 
 build = {
