@@ -72,7 +72,7 @@ local function test_candidates(test_name, replicasets, opts, expected)
     apply_mocks(replicasets)
 
     test:is_deeply(
-        values(rpc.__get_candidates(unpack(opts))),
+        values(rpc.get_candidates(unpack(opts))),
         values(expected),
         test_name
     )

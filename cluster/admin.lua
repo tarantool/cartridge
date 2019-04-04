@@ -620,13 +620,13 @@ local function get_failover_enabled()
     return topology_cfg.failover or false
 end
 
-local function set_failover_enabled(value)
+local function set_failover_enabled(enabled)
     checks('boolean')
     local topology_cfg = confapplier.get_deepcopy('topology')
     if topology_cfg == nil then
         return nil, e_topology_edit:new('Not bootstrapped yet')
     end
-    topology_cfg.failover = value
+    topology_cfg.failover = enabled
 
     local ok, err = confapplier.patch_clusterwide({topology = topology_cfg})
     if not ok then

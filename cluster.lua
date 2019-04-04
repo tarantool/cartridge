@@ -214,14 +214,54 @@ return {
     admin = admin,
     bootstrap = bootstrap_from_scratch,
     is_healthy = topology.cluster_is_healthy,
+    config_get_readonly = confapplier.get_readonly,
+    config_get_deepcopy = confapplier.get_deepcopy,
+    config_patch_clusterwide = confapplier.patch_clusterwide,
     confapplier = {
-        get_readonly = confapplier.get_readonly,
-        get_deepcopy = confapplier.get_deepcopy,
-        patch_clusterwide = confapplier.patch_clusterwide,
+        get_readonly = function(...)
+            log.warn(
+                'Function "cluster.confapplier.get_readonly()" is deprecated. ' ..
+                'Use "cluster.config_get_readonly()" instead.'
+            )
+            return confapplier.get_readonly(...)
+        end,
+
+        get_deepcopy = function(...)
+            log.warn(
+                'Function "cluster.confapplier.get_deepcopy()" is deprecated. ' ..
+                'Use "cluster.config_get_deepcopy()" instead.'
+            )
+            return confapplier.get_deepcopy(...)
+        end,
+
+        patch_clusterwide = function(...)
+            log.warn(
+                'Function "cluster.confapplier.patch_clusterwide()" is deprecated. ' ..
+                'Use "cluster.config_patch_clusterwide()" instead.'
+            )
+            return confapplier.patch_clusterwide(...)
+        end,
     },
-    service_registry = service_registry,
+    service_get = service_registry.get,
+    service_set = service_registry.set,
+    service_registry = {
+        get = function(...)
+            log.warn(
+                'Function "cluster.service_registry.get()" is deprecated. ' ..
+                'Use "cluster.service_get()" instead.'
+            )
+            return service_registry.get(...)
+        end,
+        set = function(...)
+            log.warn(
+                'Function "cluster.service_registry.set()" is deprecated. ' ..
+                'Use "cluster.service_set()" instead.'
+            )
+            return service_registry.set(...)
+        end,
+    },
     rpc_call = rpc.call,
 
-    set_auth_enabled = auth.set_enabled,
-    set_auth_callbacks = auth.set_callbacks,
+    auth_set_enabled = auth.set_enabled,
+    auth_set_callbacks = auth.set_callbacks,
 }

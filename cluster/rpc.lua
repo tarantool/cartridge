@@ -38,9 +38,9 @@ local function call_local(role_name, fn_name, args)
     end
 end
 
---- List instances suitable for parforming a remote call.
+--- List instances suitable for performing a remote call.
 --
--- @function __get_candidates
+-- @function get_candidates
 -- @local
 --
 -- @tparam string role_name
@@ -87,9 +87,9 @@ local function get_candidates(role_name, opts)
     return candidates
 end
 
---- Connect to an instance with enabled role.
+--- Connect to an instance with an enabled role.
 --
--- @function __get_connection
+-- @function get_connection
 -- @local
 --
 -- @tparam string role_name
@@ -195,7 +195,7 @@ end
 _G.__cluster_rpc_call_local = call_local
 
 return {
-    __get_candidates = get_candidates,
-    __get_connection = get_connection,
+    get_candidates = get_candidates,
+    get_connection = get_connection,
     call = call_remote,
 }

@@ -2,6 +2,7 @@
 
 local uri_lib = require('uri')
 local fiber = require('fiber')
+local checks = require('checks')
 local errors = require('errors')
 local netbox = require('net.box')
 
