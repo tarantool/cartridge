@@ -40,7 +40,7 @@ local e_check_password = errors.new_class('Auth callback "check_password()" fail
 
 --- Allow or deny unauthenticated access to the administrator's page.
 -- Before the bootstrap, the function affects only the current instance.
--- During the bootstrap, the current authentication state is inherited from the clusterwide configuration.
+-- During the bootstrap, the current authentication state is inherited by the clusterwide configuration.
 -- After the bootstrap, the function triggers `cluster.confapplier.patch_clusterwide`.
 -- @function set_enabled
 -- @tparam boolean enabled

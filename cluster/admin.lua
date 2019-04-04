@@ -24,7 +24,6 @@ local e_bootstrap_vshard = errors.new_class('Bootstrapping vshard failed')
 local e_topology_edit = errors.new_class('Editing cluster topology failed')
 local e_probe_server = errors.new_class('Can not probe server')
 
--- @local
 local function get_server_info(members, uuid, uri)
     local member = members[uri]
     local alias = nil
@@ -32,6 +31,26 @@ local function get_server_info(members, uuid, uri)
         alias = member.payload.alias
     end
 
+    --- Instance general information.
+    -- @tfield
+    --   string alias
+    --   Human-readable instance name.
+    -- @tfield string uri
+    -- @tfield string uuid
+    -- @tfield boolean disabled
+    -- @tfield
+    --   string status
+    --   Instance health.
+    -- @tfield
+    --   string message
+    --   Auxilary health status.
+    -- @tfield
+    --   ReplicasetInfo replicaset
+    --   Circular reference to a replicaset.
+    -- @tfield
+    --   number priority
+    --   Leadership priority for automatic failover.
+    -- @table ServerInfo
     local ret = {
         alias = alias,
         uri = uri,
@@ -77,7 +96,6 @@ local function get_server_info(members, uuid, uri)
     return ret
 end
 
--- @local
 local function get_servers_and_replicasets()
     local members = membership.members()
     local topology_cfg = confapplier.get_readonly('topology')
@@ -93,12 +111,36 @@ local function get_servers_and_replicasets()
     local known_roles = confapplier.get_known_roles()
     local leaders_order = {}
 
+    --- Replicaset general information.
+    -- @tfield
+    --   string uuid
+    --   The replicaset UUID.
+    -- @tfield
+    --   {string,...}  roles
+    --   Roles enabled on the replicaset.
+    -- @tfield
+    --   string status
+    --   Replicaset health.
+    -- @tfield
+    --   ServerInfo master
+    --   Replicaset leader according to configuration.
+    -- @tfield
+    --   ServerInfo active_master
+    --   Active leader.
+    -- @tfield
+    --   number weight
+    --   Vshard replicaset weight. Matters only if vshard-storage role is enabled.
+    -- @tfield
+    --   {ServerInfo,...} servers
+    --   Circular reference to all instances in the replicaset.
+    -- @table ReplicasetInfo
     for replicaset_uuid, replicaset in pairs(topology_cfg.replicasets) do
         replicasets[replicaset_uuid] = {
             uuid = replicaset_uuid,
             roles = {},
             status = 'healthy',
             master = nil,
+            active_master = nil,
             weight = nil,
             servers = {},
         }
@@ -168,7 +210,13 @@ local function get_servers_and_replicasets()
     return servers, replicasets
 end
 
+--- Retrieve `box.slab.info` of a remote server.
+-- @function get_stat
 -- @local
+-- @tparam string uri
+-- @treturn[1] table
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 local function get_stat(uri)
     if uri == nil or uri == membership.myself().uri then
         if type(box.cfg) == 'function' then
@@ -203,7 +251,13 @@ local function get_stat(uri)
     )
 end
 
+--- Retrieve `box.cfg` and `box.info` of a remote server.
+-- @function get_info
 -- @local
+-- @tparam string uri
+-- @treturn[1] table
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 local function get_info(uri)
     if uri == nil or uri == membership.myself().uri then
         if type(box.cfg) == 'function' then
@@ -298,7 +352,10 @@ local function get_info(uri)
     )
 end
 
+--- Get alias, uri and uuid of current instance.
+-- @function get_self
 -- @local
+-- @treturn table
 local function get_self()
     local myself = membership.myself()
     local result = {
@@ -316,6 +373,7 @@ end
 -- Optionally filter out the server with given uuid.
 -- @function get_servers
 -- @tparam[opt] string uuid
+-- @treturn {ServerInfo,...}
 local function get_servers(uuid)
     checks('?string')
 
@@ -335,6 +393,7 @@ end
 -- Optionally filter out the replicaset with given uuid.
 -- @function get_replicasets
 -- @tparam[opt] string uuid
+-- @treturn {ReplicasetInfo,...}
 local function get_replicasets(uuid)
     checks('?string')
 
@@ -350,7 +409,7 @@ local function get_replicasets(uuid)
     return ret
 end
 
---- Discover instance by URI.
+--- Discover an instance.
 -- @function probe_server
 -- @tparam string uri
 local function probe_server(uri)
@@ -363,8 +422,18 @@ local function probe_server(uri)
     return true
 end
 
----
+--- Join an instance to the cluster.
+--
 -- @function join_server
+-- @tparam table args
+-- @tparam string args.uri
+-- @tparam ?string args.instance_uuid
+-- @tparam ?string args.replicaset_uuid
+-- @tparam ?{string,...} args.roles
+-- @tparam ?number args.timeout
+-- @treturn[1] boolean true
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 local function join_server(args)
     checks({
         uri = 'string',
@@ -474,8 +543,16 @@ local function join_server(args)
     end
 end
 
----
+--- Edit an instance.
+--
 -- @function edit_server
+-- @local
+-- @tparam table args
+-- @tparam string args.uuid
+-- @tparam ?string args.uri
+-- @treturn[1] boolean true
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 local function edit_server(args)
     checks({
         uuid = 'string',
@@ -503,8 +580,14 @@ local function edit_server(args)
     return true
 end
 
----
+--- Expel an instance.
+-- Forever.
+--
 -- @function expel_server
+-- @tparam string uuid
+-- @treturn[1] boolean true
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 local function expel_server(uuid)
     checks('string')
 
@@ -581,22 +664,39 @@ local function set_servers_disabled_state(uuids, state)
     return get_servers()
 end
 
----
+--- Enable nodes after they were disabled.
 -- @function enable_servers
+-- @tparam {string,...} uuids
+-- @treturn[1] {ServerInfo,...}
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 local function enable_servers(uuids)
     checks('table')
     return set_servers_disabled_state(uuids, false)
 end
 
----
+--- Temporarily diable nodes.
+--
 -- @function disable_servers
+-- @tparam {string,...} uuids
+-- @treturn[1] {ServerInfo,...}
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 local function disable_servers(uuids)
     checks('table')
     return set_servers_disabled_state(uuids, true)
 end
 
----
+--- Edit replicaset parameters.
 -- @function edit_replicaset
+-- @tparam table args
+-- @tparam string args.uuid
+-- @tparam ?{string,...} args.roles
+-- @tparam ?{string,...} args.master Failover order
+-- @tparam ?number args.weight
+-- @treturn[1] boolean true
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 local function edit_replicaset(args)
     args = args or {}
     checks({
@@ -644,7 +744,7 @@ local function edit_replicaset(args)
     return true
 end
 
---- Get current failover state
+--- Get current failover state.
 -- @function get_failover_enabled
 local function get_failover_enabled()
     local topology_cfg = confapplier.get_readonly('topology')
@@ -654,7 +754,7 @@ local function get_failover_enabled()
     return topology_cfg.failover or false
 end
 
---- Enable or disable automatic failover
+--- Enable or disable automatic failover.
 -- @function set_failover_enabled
 -- @tparam boolean enabled
 -- @treturn[1] boolean New failover state
@@ -739,7 +839,9 @@ local function bootstrap_vshard()
     return true
 end
 
---- Check if vshard needs to be bootstrapped
+--- Check if vshard needs to be bootstrapped.
+--
+-- Used in WebUI to set visiblity of the "bootstrap vshard" button
 -- @function can_bootstrap_vshard
 -- @local
 -- @treturn boolean
@@ -760,7 +862,7 @@ local function can_bootstrap_vshard()
     return true
 end
 
---- Get number of vshatrd buckets configured
+--- Get number of vshatrd buckets configured.
 -- @function vshard_bucket_count
 -- @local
 -- @treturn number bicket_count
