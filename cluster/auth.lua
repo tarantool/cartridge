@@ -23,7 +23,7 @@ local cluster_cookie = require('cluster.cluster-cookie')
 vars:new('enabled', false)
 vars:new('callbacks', {})
 vars:new('cookie_max_age', 30*24*3600) -- in seconds
-vars:new('cookie_caching_time', 60) -- in seconds
+-- TODO: vars:new('cookie_caching_time', 60) -- in seconds
 local e_check_cookie = errors.new_class('Checking cookie failed')
 local e_check_header = errors.new_class('Checking auth headers failed')
 local e_callback = errors.new_class('Auth callback failed')
@@ -448,16 +448,17 @@ end
 local function set_params(opts)
     checks({
         cookie_max_age = '?number',
-        cookie_caching_time = '?number',
+        -- TODO: cookie_caching_time = '?number',
     })
 
     if opts ~= nil and opts.cookie_max_age ~= nil then
         vars.cookie_max_age = opts.cookie_max_age
     end
 
-    if opts ~= nil and opts.cookie_caching_time ~= nil then
-        vars.cookie_caching_time = opts.cookie_caching_time
-    end
+    -- TODO
+    -- if opts ~= nil and opts.cookie_caching_time ~= nil then
+    --     vars.cookie_caching_time = opts.cookie_caching_time
+    -- end
 
     return true
 end
@@ -465,12 +466,13 @@ end
 local function get_params()
     return {
         cookie_max_age = vars.cookie_max_age,
-        cookie_caching_time = vars.cookie_caching_time,
+        -- TODO: cookie_caching_time = vars.cookie_caching_time,
     }
 end
 
 return {
     init = init,
+
     set_params = set_params,
     get_params = get_params,
     set_callbacks = set_callbacks,
@@ -484,6 +486,7 @@ return {
     list_users = list_users,
     remove_user = remove_user,
 
+    -- check_session = check_session,
     check_request = check_request,
     -- invalidate_session = invalidate_session,
     get_session_username = get_session_username,
