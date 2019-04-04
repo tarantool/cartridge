@@ -1,10 +1,8 @@
 #!/usr/bin/env tarantool
 
---- Remote procedure calls across cluster instances
--- Tarantool Enterprise cluster module provides you a simple way
--- to manage operation of tarantool cluster.
+--- Remote procedure calls between cluster instances.
 --
--- @submodule cluster
+-- @module cluster.rpc
 
 local fun = require('fun')
 local checks = require('checks')
@@ -138,8 +136,8 @@ local function get_connection(role_name, opts)
     return conn
 end
 
---- Perform remote procedure call.
--- Find a suiatble healthy instance with enabled role and
+--- Perform a remote procedure call.
+-- Find a suitable healthy instance with an enabled role and
 -- perform a [`net.box` `conn:call`](
 -- https://tarantool.io/en/doc/latest/reference/reference_lua/net_box/#net-box-call)
 -- on it.
@@ -150,12 +148,11 @@ end
 -- @tparam string fn_name
 -- @tparam[opt] table args
 -- @tparam[opt] table opts
--- @tparam boolean opts.remote_only always try to call remote host
--- even if the role is enabled locally
--- @tparam boolean opts.leader_only perform a call only on instances
--- which are replica set leaders
--- @param opts.timeout passed to `net.box` `conn:call` options
--- @param opts.buffer passed to `net.box` `conn:call` options
+-- @tparam boolean opts.remote_only Always try to call a remote host
+-- even if the role is enabled locally.
+-- @tparam boolean opts.leader_only Perform a call only on the replica set leaders.
+-- @param opts.timeout passed to `net.box` `conn:call` options.
+-- @param opts.buffer passed to `net.box` `conn:call` options.
 --
 -- @return[1] `conn:call()` result
 -- @treturn[2] nil

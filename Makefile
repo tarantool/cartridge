@@ -20,11 +20,7 @@ webui/node_modules: webui/package.json
 	@ touch $@
 
 doc:
-ifeq (${version},scm-1)
 	ldoc -t "cluster-${version}" -p "cluster (${version})" --all .
-else
-	ldoc -t "cluster-${version}" -p "cluster (${version})" .
-endif
 
 schema: doc/schema.graphql
 doc/schema.graphql: cluster/webui.lua

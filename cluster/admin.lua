@@ -1,5 +1,9 @@
 #!/usr/bin/env tarantool
 
+--- Administration functions.
+--
+-- @module cluster.admin
+
 local log = require('log')
 local fun = require('fun')
 local fiber = require('fiber')
@@ -20,6 +24,7 @@ local e_bootstrap_vshard = errors.new_class('Bootstrapping vshard failed')
 local e_topology_edit = errors.new_class('Editing cluster topology failed')
 local e_probe_server = errors.new_class('Can not probe server')
 
+-- @local
 local function get_server_info(members, uuid, uri)
     local member = members[uri]
     local alias = nil
@@ -72,6 +77,7 @@ local function get_server_info(members, uuid, uri)
     return ret
 end
 
+-- @local
 local function get_servers_and_replicasets()
     local members = membership.members()
     local topology_cfg = confapplier.get_readonly('topology')
@@ -162,6 +168,7 @@ local function get_servers_and_replicasets()
     return servers, replicasets
 end
 
+-- @local
 local function get_stat(uri)
     if uri == nil or uri == membership.myself().uri then
         if type(box.cfg) == 'function' then
@@ -196,6 +203,7 @@ local function get_stat(uri)
     )
 end
 
+-- @local
 local function get_info(uri)
     if uri == nil or uri == membership.myself().uri then
         if type(box.cfg) == 'function' then
@@ -290,6 +298,7 @@ local function get_info(uri)
     )
 end
 
+-- @local
 local function get_self()
     local myself = membership.myself()
     local result = {
@@ -303,6 +312,10 @@ local function get_self()
     return result
 end
 
+--- Get servers list.
+-- Optionally filter out the server with given uuid.
+-- @function get_servers
+-- @tparam[opt] string uuid
 local function get_servers(uuid)
     checks('?string')
 
@@ -318,6 +331,10 @@ local function get_servers(uuid)
     return ret
 end
 
+--- Get replicasets list.
+-- Optionally filter out the replicaset with given uuid.
+-- @function get_replicasets
+-- @tparam[opt] string uuid
 local function get_replicasets(uuid)
     checks('?string')
 
@@ -333,6 +350,9 @@ local function get_replicasets(uuid)
     return ret
 end
 
+--- Discover instance by URI.
+-- @function probe_server
+-- @tparam string uri
 local function probe_server(uri)
     checks('string')
     local ok, err = membership.probe_uri(uri)
@@ -343,6 +363,8 @@ local function probe_server(uri)
     return true
 end
 
+---
+-- @function join_server
 local function join_server(args)
     checks({
         uri = 'string',
@@ -452,6 +474,8 @@ local function join_server(args)
     end
 end
 
+---
+-- @function edit_server
 local function edit_server(args)
     checks({
         uuid = 'string',
@@ -479,6 +503,8 @@ local function edit_server(args)
     return true
 end
 
+---
+-- @function expel_server
 local function expel_server(uuid)
     checks('string')
 
@@ -555,16 +581,22 @@ local function set_servers_disabled_state(uuids, state)
     return get_servers()
 end
 
+---
+-- @function enable_servers
 local function enable_servers(uuids)
     checks('table')
     return set_servers_disabled_state(uuids, false)
 end
 
+---
+-- @function disable_servers
 local function disable_servers(uuids)
     checks('table')
     return set_servers_disabled_state(uuids, true)
 end
 
+---
+-- @function edit_replicaset
 local function edit_replicaset(args)
     args = args or {}
     checks({
@@ -612,6 +644,8 @@ local function edit_replicaset(args)
     return true
 end
 
+--- Get current failover state
+-- @function get_failover_enabled
 local function get_failover_enabled()
     local topology_cfg = confapplier.get_readonly('topology')
     if topology_cfg == nil then
@@ -620,6 +654,12 @@ local function get_failover_enabled()
     return topology_cfg.failover or false
 end
 
+--- Enable or disable automatic failover
+-- @function set_failover_enabled
+-- @tparam boolean enabled
+-- @treturn[1] boolean New failover state
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 local function set_failover_enabled(enabled)
     checks('boolean')
     local topology_cfg = confapplier.get_deepcopy('topology')
@@ -636,6 +676,12 @@ local function set_failover_enabled(enabled)
     return topology_cfg.failover
 end
 
+--- Call `vshard.router.bootstrap()`.
+-- This function distributes all buckets across the replica sets.
+-- @function bootstrap_vshard
+-- @treturn[1] boolean `true`
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 local function bootstrap_vshard()
     -- TODO refactor it with rpc
     local vshard_cfg = confapplier.get_readonly('vshard')
@@ -693,6 +739,10 @@ local function bootstrap_vshard()
     return true
 end
 
+--- Check if vshard needs to be bootstrapped
+-- @function can_bootstrap_vshard
+-- @local
+-- @treturn boolean
 local function can_bootstrap_vshard()
     local vshard_cfg = confapplier.get_readonly('vshard')
 
@@ -710,6 +760,10 @@ local function can_bootstrap_vshard()
     return true
 end
 
+--- Get number of vshatrd buckets configured
+-- @function vshard_bucket_count
+-- @local
+-- @treturn number bicket_count
 local function vshard_bucket_count()
     local vshard_cfg = confapplier.get_readonly('vshard')
     return vshard_cfg and vshard_cfg.bucket_count or 0
