@@ -437,7 +437,7 @@ local function set_callbacks(callbacks)
         check_password = '?function',
     })
 
-    vars.callbacks = table.copy(callbacks) or {}
+    vars.callbacks = callbacks or {}
     return true
 end
 
