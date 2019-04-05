@@ -1,5 +1,9 @@
 #!/usr/bin/env tarantool
 
+--- Administrators authentication and authorization.
+--
+-- @module cluster.auth
+
 local log = require('log')
 local json = require('json').new()
 local yaml = require('yaml').new()
@@ -23,7 +27,7 @@ local cluster_cookie = require('cluster.cluster-cookie')
 vars:new('enabled', false)
 vars:new('callbacks', {})
 vars:new('cookie_max_age', 30*24*3600) -- in seconds
-vars:new('cookie_caching_time', 60) -- in seconds
+-- TODO: vars:new('cookie_caching_time', 60) -- in seconds
 local e_check_cookie = errors.new_class('Checking cookie failed')
 local e_check_header = errors.new_class('Checking auth headers failed')
 local e_callback = errors.new_class('Auth callback failed')
@@ -34,6 +38,15 @@ local e_list_users = errors.new_class('Auth callback "list_users()" failed')
 local e_remove_user = errors.new_class('Auth callback "remove_user()" failed')
 local e_check_password = errors.new_class('Auth callback "check_password()" failed')
 
+--- Allow or deny unauthenticated access to the administrator's page.
+-- Before the bootstrap, the function affects only the current instance.
+-- During the bootstrap, the current authentication state is inherited by the clusterwide configuration.
+-- After the bootstrap, the function triggers `cluster.confapplier.patch_clusterwide`.
+-- @function set_enabled
+-- @tparam boolean enabled
+-- @treturn[1] boolean `true`
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 local function set_enabled(enabled)
     checks('boolean')
     vars.enabled = enabled
@@ -168,6 +181,10 @@ local function get_basic_auth_uid(auth)
     end
 end
 
+--- Get username for the current HTTP session.
+--
+-- @function get_session_username
+-- @treturn string
 local function get_session_username()
     local fiber_storage = fiber.self().storage
     return fiber_storage['auth_session_username']
@@ -241,6 +258,17 @@ local function coerce_user(user)
     }
 end
 
+--- Trigger registered add_user callback.
+-- The callback is called with the same arguments
+-- and must return a `user_object`.
+-- @function add_user
+-- @tparam string username
+-- @tparam string password
+-- @tparam ?string fullname
+-- @tparam ?string email
+-- @return[1] `user_object`
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 local function add_user(username, password, fullname, email)
     checks('string', 'string', '?string', '?string')
     if vars.callbacks.add_user == nil then
@@ -263,6 +291,14 @@ local function add_user(username, password, fullname, email)
     end)
 end
 
+--- Trigger registered get_user callback.
+-- The callback is called with the same arguments
+-- and must return a `user_object`.
+-- @function get_user
+-- @tparam string username
+-- @return[1] `user_object`
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 local function get_user(username)
     checks('string')
     if vars.callbacks.get_user == nil then
@@ -286,6 +322,17 @@ local function get_user(username)
     end)
 end
 
+--- Trigger registered edit_user callback.
+-- The callback is called with the same arguments
+-- and must return a `user_object`.
+-- @function edit_user
+-- @tparam string username
+-- @tparam ?string password
+-- @tparam ?string fullname
+-- @tparam ?string email
+-- @return[1] `user_object`
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 local function edit_user(username, password, fullname, email)
     checks('string', '?string', '?string', '?string')
     if vars.callbacks.edit_user == nil then
@@ -309,6 +356,12 @@ local function edit_user(username, password, fullname, email)
     end)
 end
 
+--- Trigger registered list_users callback.
+-- The callback must return an array of `user_object`s.
+-- @function list_users
+-- @return[1] array of `user_object`s
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 local function list_users()
     if vars.callbacks.list_users == nil then
         return nil, e_callback:new('list_users() callback isn\'t set')
@@ -341,6 +394,14 @@ local function list_users()
     end)
 end
 
+--- Trigger registered remove_user callback.
+-- The callback is called with the same arguments
+-- and must return the `user_object` removed.
+-- @function remove_user
+-- @tparam string username
+-- @return[1] `user_object`
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 local function remove_user(username)
     checks('string')
     if vars.callbacks.remove_user == nil then
@@ -363,6 +424,12 @@ local function remove_user(username)
     end)
 end
 
+--- Authorize an HTTP request.
+-- Try to get username from cookies or basic HTTP authentication.
+--
+-- @function check_request
+-- @param req An HTTP request
+-- @treturn boolean Access granted
 local function check_request(req)
     local fiber_storage = fiber.self().storage
     -- clean fiber storage to behave correctly
@@ -411,6 +478,10 @@ local function check_request(req)
     return false
 end
 
+--- Initialize the authentication HTTP API.
+--
+-- @function init
+-- @local
 local function init(httpd)
     checks('table')
 
@@ -426,6 +497,17 @@ local function init(httpd)
     return true
 end
 
+--- Set authentication callbacks.
+--
+-- @function set_callbacks
+-- @tparam table callbacks
+-- @tparam function callbacks.add_user
+-- @tparam function callbacks.get_user
+-- @tparam function callbacks.edit_user
+-- @tparam function callbacks.list_users
+-- @tparam function callbacks.remove_user
+-- @tparam function callbacks.check_password
+-- @treturn boolean `true`
 local function set_callbacks(callbacks)
     checks({
         add_user = '?function',
@@ -437,7 +519,7 @@ local function set_callbacks(callbacks)
         check_password = '?function',
     })
 
-    vars.callbacks = table.copy(callbacks) or {}
+    vars.callbacks = callbacks or {}
     return true
 end
 
@@ -448,16 +530,17 @@ end
 local function set_params(opts)
     checks({
         cookie_max_age = '?number',
-        cookie_caching_time = '?number',
+        -- TODO: cookie_caching_time = '?number',
     })
 
     if opts ~= nil and opts.cookie_max_age ~= nil then
         vars.cookie_max_age = opts.cookie_max_age
     end
 
-    if opts ~= nil and opts.cookie_caching_time ~= nil then
-        vars.cookie_caching_time = opts.cookie_caching_time
-    end
+    -- TODO
+    -- if opts ~= nil and opts.cookie_caching_time ~= nil then
+    --     vars.cookie_caching_time = opts.cookie_caching_time
+    -- end
 
     return true
 end
@@ -465,12 +548,13 @@ end
 local function get_params()
     return {
         cookie_max_age = vars.cookie_max_age,
-        cookie_caching_time = vars.cookie_caching_time,
+        -- TODO: cookie_caching_time = vars.cookie_caching_time,
     }
 end
 
 return {
     init = init,
+
     set_params = set_params,
     get_params = get_params,
     set_callbacks = set_callbacks,
@@ -484,6 +568,7 @@ return {
     list_users = list_users,
     remove_user = remove_user,
 
+    -- check_session = check_session,
     check_request = check_request,
     -- invalidate_session = invalidate_session,
     get_session_username = get_session_username,

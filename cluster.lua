@@ -1,14 +1,14 @@
 #!/usr/bin/env tarantool
 
 --- High-level cluster management interface.
--- Tarantool Enterprise cluster module provides you a simple way
--- to manage operation of tarantool cluster.
--- What we call a cluster is a several tarantool instances, connected together.
--- Cluster module does not care about who starts those instances,
--- it only cares about configuration of already running processes.
+-- Tarantool Enterprise cluster module provides you with a simple way
+-- to manage cluster operations.
+-- The cluster consists of several Tarantool instances acting in concert.
+-- Cluster module does not care about how the instances start,
+-- it only cares about the configuration of already running processes.
 --
 -- Cluster module automates vshard and replication configuration,
--- simplifies configuration and administration tasks.
+-- simplifies custom configuration and administrative tasks.
 -- @module cluster
 
 local fio = require('fio')
@@ -41,13 +41,25 @@ vars:new('boot_opts')
 vars:new('bootstrapped')
 
 --- Initialize the cluster module.
--- After the call user can operate the instance via tarantool console.
+-- After this call, you can operate the instance via Tarantool console.
 -- Notice that this call does not initialize the database - `box.cfg` is not called yet.
--- The user must not try to call `box.cfg` himself, the cluster will do it when it's time to.
+-- Do not try to call `box.cfg` yourself, the cluster will do it when it is time.
 -- @function cfg
+--
 -- @tparam table opts
--- @tparam table box_opts
--- @return[1] true
+-- @tparam string opts.workdir The instance's working directory. Also used as `wal_dir` and `memtx_dir`.
+-- @tparam string opts.advertise_uri
+--   The instance's URI advertised to other members.
+--   This address is used to establish connections between cluster instances,
+--   cluster operations, replication, and status monitoring.
+-- @tparam ?string opts.cluster_cookie
+-- @tparam ?number opts.bucket_count
+-- @tparam ?string|number opts.http_port
+-- @tparam ?string opts.alias
+-- @tparam ?table opts.roles
+-- @tparam ?table box_opts passed to `box.cfg` as is.
+--
+-- @treturn[1] boolean `true`
 -- @treturn[2] nil
 -- @treturn[2] table Error description
 local function cfg(opts, box_opts)
@@ -211,17 +223,112 @@ end
 
 return {
     cfg = cfg,
+
+    --- Shorthand for `cluster.admin` module.
+    -- @field cluster.admin
     admin = admin,
+
+    --- Bootstrap a new cluster.
+    -- It is bootstrapped with the only (current) instance.
+    -- Later, you can join other instances using
+    -- `cluster.admin`.
+    -- @function bootstrap
     bootstrap = bootstrap_from_scratch,
+
+    --- Check cluster health.
+    -- It is healthy if all instances are healthy.
+    -- @function is_healthy
+    -- @treturn boolean
     is_healthy = topology.cluster_is_healthy,
+
+
+    --- Clusterwide configuration.
+    -- See `cluster.confapplier` module for details.
+    -- @section confapplier
+
+    --- Shorthand for `cluster.confapplier.get_readonly`.
+    --- @function config_get_readonly
+    config_get_readonly = confapplier.get_readonly,
+
+    --- Shorthand for `cluster.confapplier.get_deepcopy`.
+    --- @function config_get_deepcopy
+    config_get_deepcopy = confapplier.get_deepcopy,
+
+    --- Shorthand for `cluster.confapplier.patch_clusterwide`.
+    --- @function config_patch_clusterwide
+    config_patch_clusterwide = confapplier.patch_clusterwide,
+
     confapplier = {
-        get_readonly = confapplier.get_readonly,
-        get_deepcopy = confapplier.get_deepcopy,
-        patch_clusterwide = confapplier.patch_clusterwide,
+        get_readonly = function(...)
+            log.warn(
+                'Function "cluster.confapplier.get_readonly()" is deprecated. ' ..
+                'Use "cluster.config_get_readonly()" instead.'
+            )
+            return confapplier.get_readonly(...)
+        end,
+
+        get_deepcopy = function(...)
+            log.warn(
+                'Function "cluster.confapplier.get_deepcopy()" is deprecated. ' ..
+                'Use "cluster.config_get_deepcopy()" instead.'
+            )
+            return confapplier.get_deepcopy(...)
+        end,
+
+        patch_clusterwide = function(...)
+            log.warn(
+                'Function "cluster.confapplier.patch_clusterwide()" is deprecated. ' ..
+                'Use "cluster.config_patch_clusterwide()" instead.'
+            )
+            return confapplier.patch_clusterwide(...)
+        end,
     },
-    service_registry = service_registry,
+
+    --- Inter-role interaction.
+    -- See `cluster.service-registry` module for details.
+    -- @section service_registry
+
+    --- Shorthand for `cluster.service-registry.get`.
+    -- @function service_get
+    service_get = service_registry.get,
+
+    --- Shorthand for `cluster.service-registry.set`.
+    -- @function service_set
+    service_set = service_registry.set,
+
+    service_registry = {
+        get = function(...)
+            log.warn(
+                'Function "cluster.service_registry.get()" is deprecated. ' ..
+                'Use "cluster.service_get()" instead.'
+            )
+            return service_registry.get(...)
+        end,
+        set = function(...)
+            log.warn(
+                'Function "cluster.service_registry.set()" is deprecated. ' ..
+                'Use "cluster.service_set()" instead.'
+            )
+            return service_registry.set(...)
+        end,
+    },
+
+    --- Cross-instance calls.
+    -- See `cluster.rpc` module for details.
+    -- @section rpc
+
+    --- Shorthand for `cluster.rpc.call`.
+    -- @function rpc_call
     rpc_call = rpc.call,
 
-    set_auth_enabled = auth.set_enabled,
-    set_auth_callbacks = auth.set_callbacks,
+    --- Users authorization.
+    -- @section auth
+
+    --- Shorthand for `cluster.auth.set_enabled`.
+    -- @function auth_set_enabled
+    auth_set_enabled = auth.set_enabled,
+
+    --- Shorthand for `cluster.auth.set_callbacks`.
+    -- @function auth_set_callbacks
+    auth_set_callbacks = auth.set_callbacks,
 }

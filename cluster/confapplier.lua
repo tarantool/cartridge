@@ -81,13 +81,15 @@ local function get_known_roles()
     return ret
 end
 
---- Load config from filesystem.
--- Config is a YAML file.
+--- Load configuration from the filesystem.
+-- Configuration is a YAML file.
 -- @function load_from_file
+-- @local
 -- @tparam ?string filename Filename to load.
--- When ommited active config is loaded from `<workdir>/config.yml`.
--- @treturn table|nil Config loaded
--- @treturn ?error Error description
+-- When omitted, the active configuration is loaded from `<workdir>/config.yml`.
+-- @treturn[1] table
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 local function load_from_file(filename)
     checks('?string')
     filename = filename or fio.pathjoin(vars.workdir, 'config.yml')
@@ -140,15 +142,15 @@ local mt_readonly = {
     end
 }
 
---- Recursively change table read-only property.
+--- Recursively change the table's read-only property.
 -- This is achieved by setting or removing a metatable.
 -- An attempt to modify the read-only table or any of its children
 -- would raise an error: "table is read-only".
 -- @function set_readonly
 -- @local
--- @tparam table tbl A table to be processed
--- @tparam boolean ro Desired readonliness
--- @treturn table the same table `tbl`
+-- @tparam table tbl A table to be processed.
+-- @tparam boolean ro Desired readonliness.
+-- @treturn table The same table `tbl`.
 local function set_readonly(tbl, ro)
     checks("table", "boolean")
 
@@ -167,12 +169,14 @@ local function set_readonly(tbl, ro)
     return tbl
 end
 
---- Get read-only view of a config section.
+--- Get a read-only view on the configuration.
+-- Either `conf[section_name]` or entire `conf`.
+--
 -- Any attempt to modify the section or its children
--- will raise the error "table is read-only"
+-- will raise an error.
 -- @function get_readonly
--- @tparam string ?section_name A name of a section
--- @treturn table Read-only view on `cfg[section_name]` or entire `cfg`
+-- @tparam[opt] string section_name
+-- @treturn table
 local function get_readonly(section_name)
     checks('?string')
     if vars.conf == nil then
@@ -184,12 +188,14 @@ local function get_readonly(section_name)
     end
 end
 
---- Get read-write deepcopy of a config section.
--- Changing the section has no effect
+--- Get a read-write deep copy of the configuration.
+-- Either `conf[section_name]` or entire `conf`.
+--
+-- Changing it has no effect
 -- unless it is passed to a `patch_clusterwide` call.
 -- @function get_deepcopy
--- @tparam string ?section_name A name of a section
--- @treturn table Deep copy of `cfg[section_name]` or entire `cfg`
+-- @tparam[opt] string section_name
+-- @treturn table
 local function get_deepcopy(section_name)
     checks('?string')
 
@@ -224,6 +230,9 @@ local function fetch_from_uri(uri)
     )
 end
 
+--- Fetch configuration from another instance.
+-- @function fetch_from_membership
+-- @local
 local function fetch_from_membership(topology_cfg)
     checks('?table')
     if topology_cfg ~= nil then
@@ -257,6 +266,14 @@ local function fetch_from_membership(topology_cfg)
     return e_config_fetch:pcall(fetch_from_uri, candidates[math.random(#candidates)])
 end
 
+--- Validate configuration by all roles.
+-- @function validate_config
+-- @local
+-- @tparam table conf_new
+-- @tparam table conf_old
+-- @treturn[1] boolean true
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 local function validate_config(conf_new, conf_old)
     if type(conf_new) ~= 'table'  then
         return nil, e_config_validate:new('config must be a table')
@@ -403,12 +420,13 @@ local function _failover(cond)
     end
 end
 
---- Apply roles config.
+--- Apply the role configuration.
 -- @function apply_config
 -- @local
--- @tparam table conf Config to be applied
--- @treturn true|nil Success indication
--- @treturn ?error Error description
+-- @tparam table conf
+-- @treturn[1] boolean true
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 local function apply_config(conf)
     checks('table')
     vars.conf = set_readonly(conf, true)
@@ -534,15 +552,16 @@ local function apply_config(conf)
     end
 end
 
---- Two-phase commit - prepare stage.
+--- Two-phase commit - preparation stage.
 --
--- Validate config and aquire a lock writing `<workdir>/config.prepate.yml`.
--- If it fails, the lock is not aquired and does not have to be aborted.
+-- Validate the configuration and acquire a lock writing `<workdir>/config.prepate.yml`.
+-- If the validation fails, the lock is not acquired and does not have to be aborted.
 -- @function prepare_2pc
 -- @local
--- @tparam table conf A config table to be commited
--- @treturn true|nit Success indication
--- @treturn ?error Error description
+-- @tparam table conf
+-- @treturn[1] boolean true
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 local function prepare_2pc(conf)
     local ok, err = validate_config(conf, vars.conf or {})
     if not ok then
@@ -563,14 +582,15 @@ end
 
 --- Two-phase commit - commit stage.
 --
--- Backup active config, commit changes on filesystem, release a lock and configure roles.
--- If any error occurs, config is not rolled back automatically.
--- Any problem occured during this call has to be solved manually.
+-- Back up the active configuration, commit changes to filesystem, release the lock, and configure roles.
+-- If any errors occur, configuration is not rolled back automatically.
+-- Any problem encountered during this call has to be solved manually.
 --
 -- @function commit_2pc
 -- @local
--- @treturn true|nil Success indication
--- @treturn ?error Error description
+-- @treturn[1] boolean true
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 local function commit_2pc()
     local path_prepare = fio.pathjoin(vars.workdir, 'config.prepare.yml')
     local path_backup = fio.pathjoin(vars.workdir, 'config.backup.yml')
@@ -600,44 +620,43 @@ end
 
 --- Two-phase commit - abort stage.
 --
--- Release a lock for further commit attempts.
+-- Release the lock for further commit attempts.
 -- @function abort_2pc
 -- @local
--- @treturn true
+-- @treturn boolean true
 local function abort_2pc()
     local path = fio.pathjoin(vars.workdir, 'config.prepare.yml')
     fio.unlink(path)
     return true
 end
 
---- Edit clusterwide configuration.
--- Top-level keys are merged with currend config.
--- In order to remove a top-level section use
--- `patch_clusterwide{key = box.NULL}`
+--- Edit the clusterwide configuration.
+-- Top-level keys are merged with the current configuration.
+-- To remove a top-level section, use
+-- `patch_clusterwide{key = box.NULL}`.
 --
--- Two-phase commit algorithm is used.
--- In particular, the following steps are performed:
+-- The function uses a two-phase commit algorithm with the following steps:
 --
--- I. Current config is patched.
+-- I. Patches the current configuration.
 --
--- II. Topology is validated on current server.
+-- II. Validates topology on the current server.
 --
--- III. Prepare phase (`prepare_2pc`) is executed on every server, excluding
--- expelled servers,
--- disabled server,
--- servers being joined during this call;
+-- III. Executes the preparation phase (`prepare_2pc`) on every server excluding
+-- the following servers: expelled, disabled, and
+-- servers being joined during this call.
 --
--- IV. Abort phase (`abort_2pc`) is executed if any server reports an error.
+-- IV. If any server reports an error, executes the abort phase (`abort_2pc`).
 -- All servers prepared so far are rolled back and unlocked.
 --
--- V. Commited phase (`commit_2pc`) is performed.
--- In case it fails automatic rollback is impossible,
--- cluster should be repaired by hands.
+-- V. Performs the commit phase (`commit_2pc`).
+-- In case the phase fails, an automatic rollback is impossible, the
+-- cluster should be repaired manually.
 --
 -- @function patch_clusterwide
--- @tparam table conf A patch to be applied
--- @treturn true|nil Success indication
--- @treturn ?error Error description
+-- @tparam table conf A patch to be applied.
+-- @treturn[1] boolean true
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 local function _clusterwide(conf)
     checks('table')
 

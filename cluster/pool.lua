@@ -1,7 +1,14 @@
 #!/usr/bin/env tarantool
 
+--- Connection pool.
+--
+-- Reuse tarantool net.box connections with ease.
+--
+-- @module cluster.pool
+
 local uri_lib = require('uri')
 local fiber = require('fiber')
+local checks = require('checks')
 local errors = require('errors')
 local netbox = require('net.box')
 
@@ -12,6 +19,13 @@ vars:new('locks', {})
 vars:new('connections', {})
 local e_connect = errors.new_class('Pool connect failed')
 
+--- Enrich URI with credentials.
+-- Suitable to connect other cluster instances.
+--
+-- @function format_uri
+-- @local
+-- @tparam string uri `host:port`
+-- @treturn string `username:password@host:port`
 local function format_uri(uri)
     local uri = uri_lib.parse(uri)
     return uri_lib.format({
@@ -41,6 +55,14 @@ local function _connect(uri, options)
     return conn
 end
 
+--- Connect a remote or get cached connection.
+-- Connection is established using `net.box.connect()`.
+-- @function connect
+-- @tparam string uri
+-- @tparam[opt] table opts
+-- @return[1] `net.box` connection
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 local function connect(uri, options)
     checks('string', '?table')
     while vars.locks[uri] do
@@ -52,7 +74,6 @@ local function connect(uri, options)
 
     return conn, err
 end
-
 
 return {
     connect = connect,
