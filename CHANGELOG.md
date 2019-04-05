@@ -6,17 +6,24 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.7.0] - 2019-04-05
+
 ### Added
 
 - Failover priority configuration using WebUI
 - Remote calls across cluster instances using `cluster.rpc` module
 - Displaying box.cfg and box.info in WebUI
 - Authorization for HTTP API and WebUI
+- Configuration download/upload via WebUI
+- Lua API documentation, which you can read with `tarantoolctl rocks doc cluster` command.
 
 ### Changed
 
 - Instance restart now triggers config validation before roles initialization
 - Update WebUI design
+- Lua API changed (old functions still work, but issue warnings):
+  - `cluster.confapplier.*` -> `cluster.config_*`
+  - `cluster.service_registry.*` -> `cluster.service_*`
 
 ## [0.6.3] - 2019-02-08
 
