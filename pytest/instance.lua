@@ -182,15 +182,10 @@ package.preload['auth-mocks'] = function()
 end
 
 local auth_mocks = require('auth-mocks')
-local ok, err = cluster.auth_set_callbacks(auth_mocks)
-if not ok then
-    log.error('%s', err)
-    os.exit(1)
-end
-
+local auth_enabled = false
 if os.getenv('ADMIN_PASSWORD') then
     auth_mocks.add_user('admin', os.getenv('ADMIN_PASSWORD'))
-    cluster.auth_set_enabled(true)
+    auth_enabled = true
 end
 
 local ok, err = cluster.cfg({
@@ -203,6 +198,8 @@ local ok, err = cluster.cfg({
     roles = {
         'mymodule'
     },
+    auth_backend_name = 'auth-mocks',
+    auth_enabled = auth_enabled, -- works for bootstrapping from scratch only
 })
 
 if not ok then

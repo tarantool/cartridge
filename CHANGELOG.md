@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Failover priority configuration using WebUI
 - Remote calls across cluster instances using `cluster.rpc` module
 - Displaying box.cfg and box.info in WebUI
+- Authorization for HTTP API and WebUI
 
 ### Changed
 

@@ -57,6 +57,8 @@ vars:new('bootstrapped')
 -- @tparam ?string|number opts.http_port
 -- @tparam ?string opts.alias
 -- @tparam ?table opts.roles
+-- @tparam ?string opts.auth_backend_name
+-- @tparam ?boolean opts.auth_enabled
 -- @tparam ?table box_opts passed to `box.cfg` as is.
 --
 -- @treturn[1] boolean `true`
@@ -71,6 +73,8 @@ local function cfg(opts, box_opts)
         http_port = '?string|number',
         alias = '?string',
         roles = '?table',
+        auth_backend_name = '?string',
+        auth_enabled = '?boolean',
     }, '?table')
 
     if (vars.boot_opts ~= nil) then
@@ -124,6 +128,30 @@ local function cfg(opts, box_opts)
         [advertise.service+1] = true,
     }) do
         membership.broadcast(p)
+    end
+
+    if opts.auth_backend_name ~= nil then
+        local auth_backend, err = e_init:pcall(require, opts.auth_backend_name)
+        if not auth_backend then
+            return nil, err
+        end
+
+        local ok, err = e_init:pcall(function()
+            local ok = auth.set_callbacks(auth_backend)
+            return ok
+        end)
+        if not ok then
+            return nil, err
+        end
+
+        local auth_enabled = opts.auth_enabled
+        if auth_enabled == nil then
+            auth_enabled = false
+        end
+        local ok, err = e_init:pcall(auth.set_enabled, auth_enabled)
+        if not ok then
+            return nil, err
+        end
     end
 
     if opts.http_port ~= nil then
@@ -320,15 +348,4 @@ return {
     --- Shorthand for `cluster.rpc.call`.
     -- @function rpc_call
     rpc_call = rpc.call,
-
-    --- Users authorization.
-    -- @section auth
-
-    --- Shorthand for `cluster.auth.set_enabled`.
-    -- @function auth_set_enabled
-    auth_set_enabled = auth.set_enabled,
-
-    --- Shorthand for `cluster.auth.set_callbacks`.
-    -- @function auth_set_callbacks
-    auth_set_callbacks = auth.set_callbacks,
 }
