@@ -30,7 +30,7 @@ local function call_local(role_name, fn_name, args)
     end
 
     if type(args) == 'table' then
-        return fn(unpack(args))
+        return fn(unpack(args, 1, table.maxn(args)))
     else
         return fn()
     end
