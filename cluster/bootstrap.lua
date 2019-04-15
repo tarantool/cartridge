@@ -136,6 +136,7 @@ local function bootstrap_from_scratch(boot_opts, box_opts, roles)
     box_opts.listen = boot_opts.binary_port
     box_opts.wal_dir = boot_opts.workdir
     box_opts.memtx_dir = boot_opts.workdir
+    box_opts.vinyl_dir = boot_opts.workdir
     box_opts.instance_uuid = boot_opts.instance_uuid
     box_opts.replicaset_uuid = boot_opts.replicaset_uuid
     box_opts.replication = {}
@@ -193,6 +194,7 @@ local function bootstrap_from_membership(boot_opts, box_opts)
     box_opts.listen = boot_opts.binary_port
     box_opts.wal_dir = boot_opts.workdir
     box_opts.memtx_dir = boot_opts.workdir
+    box_opts.vinyl_dir = boot_opts.workdir
     box_opts.instance_uuid = instance_uuid
     box_opts.replicaset_uuid = replicaset_uuid
     box_opts.replication = topology.get_replication_config(conf.topology, replicaset_uuid)
@@ -244,6 +246,7 @@ local function bootstrap_from_snapshot(boot_opts, box_opts)
     box_opts.listen = boot_opts.binary_port
     box_opts.wal_dir = boot_opts.workdir
     box_opts.memtx_dir = boot_opts.workdir
+    box_opts.vinyl_dir = boot_opts.workdir
     log.info('Bootstrapping box.cfg...')
 
     membership.set_payload('warning', 'Recovering from snapshot')
