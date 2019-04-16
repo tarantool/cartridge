@@ -41,29 +41,24 @@ vars:new('boot_opts')
 vars:new('bootstrapped')
 
 --- Initialize the cluster module.
--- After this call, you can operate the instance via Tarantool console.
--- Notice that this call does not initialize the database - `box.cfg` is not called yet.
--- Do not try to call `box.cfg` yourself, the cluster will do it when it is time.
--- @function cfg
---
--- @tparam table opts
--- @tparam string opts.workdir The instance's working directory. Also used as `wal_dir` and `memtx_dir`.
--- @tparam string opts.advertise_uri
---   The instance's URI advertised to other members.
---   This address is used to establish connections between cluster instances,
---   cluster operations, replication, and status monitoring.
--- @tparam ?string opts.cluster_cookie
--- @tparam ?number opts.bucket_count
--- @tparam ?string|number opts.http_port
--- @tparam ?string opts.alias
--- @tparam ?table opts.roles
--- @tparam ?string opts.auth_backend_name
--- @tparam ?boolean opts.auth_enabled
--- @tparam ?table box_opts passed to `box.cfg` as is.
---
--- @treturn[1] boolean `true`
--- @treturn[2] nil
--- @treturn[2] table Error description
+--- After this call, you can operate the instance via Tarantool console.
+--- Notice that this call does not initialize the database - `box.cfg` is not called yet.
+--- Do not try to call `box.cfg` yourself, the cluster will do it when it is time.
+--- @function cfg
+--- @tparam table opts Available options are:
+--- @tparam string opts.workdir a directory where all data will be stored: snapshots, wal logs and cluster config file
+--- @tparam string opts.advertise_uri host:port to be used for broadcasting internal communication between instances. Same port is used for binary connections to the instance
+--- @tparam string opts.cluster_cookie optional, secret used to separate unrelated clusters (pervents them from seeing each other during broadcasts). Also used for encrypting internal communication
+--- @tparam number opts.bucket_count optional, bucket count for vshard cluster. See vshard doc for more details
+--- @tparam string|number opts.http_port optional, port to open administrative UI and API on
+--- @tparam string opts.alias optional, human-readable instance name that will be available in administrative UI
+--- @tparam table opts.roles optional, list of user-defined roles that will be available to enable on the instance_uuid
+--- @tparam ?boolean opts.auth_enabled optional - toggle authentication in administrative UI and API
+--- @tparam string opts.auth_backend_name optional - user-provided set of callbacks related to authentication
+--- @tparam table box_opts optional, tarantool extra box.cfg options (e. g. memtx_memory), that may require additional tuning
+--- @return[1] true
+--- @treturn[2] nil
+--- @treturn[2] table Error description
 local function cfg(opts, box_opts)
     checks({
         workdir = 'string',
