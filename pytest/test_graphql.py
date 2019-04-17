@@ -25,13 +25,13 @@ def test_upload_good(cluster):
     srv.conn.eval("""
     package.loaded['test'] = {}
     package.loaded['test']['test'] = function(root, args)
-      return args[1]
+      return args[1].value
     end
 
     package.loaded['test']['test2'] = function(root, args)
       local result = ''
-      for _, val in ipairs(getmetatable(args).__index) do
-        result = result .. val
+      for _, tuple in ipairs(getmetatable(args).__index) do
+        result = result .. tuple.value
       end
       return result
     end
