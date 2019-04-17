@@ -210,7 +210,7 @@ def test_sigstop(cluster, helpers):
     } == helpers.find(servers, 'uri', 'localhost:33011')
     assert {
         'uri': 'localhost:33012',
-        'statistics': []
+        'statistics': {}
     } == helpers.find(servers, 'uri', 'localhost:33012')
 
     # Send SIGCONT to s1
@@ -234,11 +234,11 @@ def test_sigstop(cluster, helpers):
     servers = resp['data']['servers']
     assert {
         'uri': 'localhost:33011',
-        'statistics': []
+        'statistics': {}
     } == helpers.find(servers, 'uri', 'localhost:33011')
     assert {
         'uri': 'localhost:33012',
-        'statistics': []
+        'statistics': {}
     } == helpers.find(servers, 'uri', 'localhost:33012')
 
 def test_rollback(cluster, helpers):
