@@ -48,9 +48,11 @@ class Helpers:
             if item[key] == value:
                 return item
 
+
 @pytest.fixture(scope='session')
 def helpers():
     return Helpers
+
 
 @pytest.fixture(scope='module')
 def module_tmpdir(request):
@@ -71,6 +73,7 @@ def confdir(request):
     dir = os.path.join(request.fspath.dirname, 'config')
 
     return str(dir)
+
 
 class Server(object):
     def __init__(self, binary_port, http_port,
@@ -218,20 +221,9 @@ class Server(object):
             logging.warning(json['errors'])
         return json
 
-# @pytest.fixture(scope="module")
-# def server(request, confdir, module_tmpdir, helpers):
-#     srv = Server(
-#         binary_port=33001,
-#         http_port = 8080)
-#     srv.start(confdir, module_tmpdir, bootstrap=True)
-#     request.addfinalizer(srv.kill)
-#     helpers.wait_for(srv.connect, timeout=TARANTOOL_CONNECTION_TIMEOUT)
-#     return srv
 
-@pytest.fixture(scope="module")
-def cluster(request, confdir, module_tmpdir, helpers):
+def create_cluster(request, module_tmpdir, helpers, servers):
     cluster = {}
-    servers = getattr(request.module, "cluster")
     bootserv = None
 
     for srv in servers:
@@ -247,29 +239,29 @@ def cluster(request, confdir, module_tmpdir, helpers):
             helpers.wait_for(srv.graphql, ["{}"])
         else:
             helpers.wait_for(bootserv.conn.eval,
-                ["assert(require('membership').probe_uri(...))", srv.advertise_uri]
-            )
+                             ["assert(require('membership').probe_uri(...))", srv.advertise_uri]
+                             )
 
         logging.warn('Join {} ({}) {} '.format(srv.advertise_uri, srv.alias, srv.roles))
         resp = bootserv.graphql(
-            query = """
-                mutation(
-                    $uri: String!
-                    $instance_uuid: String
-                    $replicaset_uuid: String
-                    $roles: [String!]
-                    $timeout: Float
-                ) {
-                    join_server(
-                        uri: $uri,
-                        instance_uuid: $instance_uuid,
-                        replicaset_uuid: $replicaset_uuid,
-                        roles: $roles
-                        timeout: $timeout
-                    )
-                }
-            """,
-            variables = {
+            query="""
+                    mutation(
+                        $uri: String!
+                        $instance_uuid: String
+                        $replicaset_uuid: String
+                        $roles: [String!]
+                        $timeout: Float
+                    ) {
+                        join_server(
+                            uri: $uri,
+                            instance_uuid: $instance_uuid,
+                            replicaset_uuid: $replicaset_uuid,
+                            roles: $roles
+                            timeout: $timeout
+                        )
+                    }
+                """,
+            variables={
                 "uri": srv.advertise_uri,
                 "instance_uuid": srv.instance_uuid,
                 "replicaset_uuid": srv.replicaset_uuid,
@@ -295,23 +287,40 @@ def cluster(request, confdir, module_tmpdir, helpers):
     if len(routers) > 0:
         srv = routers[0]
         resp = srv.graphql(
-            query = """
-                {
-                    cluster { can_bootstrap_vshard }
-                }
-            """
+            query="""
+                    {
+                        cluster { can_bootstrap_vshard }
+                    }
+                """
         )
         assert 'errors' not in resp, resp['errors'][0]['message']
         assert resp['data']['cluster']['can_bootstrap_vshard']
 
         logging.warn('Bootstrapping vshard.router on {}'.format(srv.advertise_uri))
         resp = srv.graphql(
-            query = """
-                mutation { bootstrap_vshard }
-            """
+            query="""
+                    mutation { bootstrap_vshard }
+                """
         )
         assert 'errors' not in resp, resp['errors'][0]['message']
     else:
         logging.warn('No vshard routers configured, skipping vshard bootstrap')
 
     return cluster
+
+
+# @pytest.fixture(scope="module")
+# def server(request, confdir, module_tmpdir, helpers):
+#     srv = Server(
+#         binary_port=33001,
+#         http_port = 8080)
+#     srv.start(confdir, module_tmpdir, bootstrap=True)
+#     request.addfinalizer(srv.kill)
+#     helpers.wait_for(srv.connect, timeout=TARANTOOL_CONNECTION_TIMEOUT)
+#     return srv
+
+@pytest.fixture(scope="module")
+def cluster(request, confdir, module_tmpdir, helpers):
+    servers = getattr(request.module, "cluster")
+    return create_cluster(request, module_tmpdir, helpers, servers)
+

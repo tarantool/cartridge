@@ -527,7 +527,7 @@ local function apply_config(conf)
     end
     log.info('Config applied')
 
-    local failover_enabled = conf.topology.failover and (roles_enabled['vshard-storage'] or roles_enabled['vshard-router'])
+    local failover_enabled = conf.topology.failover
     local failover_running = vars.failover_fiber and vars.failover_fiber:status() ~= 'dead'
 
     if failover_enabled and not failover_running then

@@ -9,3 +9,5 @@ doc
 release
 release-doc
 .idea
+Dockerfile.test
+Makefile.test
