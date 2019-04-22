@@ -73,9 +73,9 @@ def test_login(cluster, auth, alias):
     assert _login(srv, None, None).status_code == 403
 
     if auth:
-        assert srv.post_raw('/graphql').status_code == 401
+        assert srv.post_raw('/admin/api').status_code == 401
     else:
-        assert srv.post_raw('/graphql').status_code == 200
+        assert srv.post_raw('/admin/api').status_code == 200
 
     resp = _login(srv, USERNAME, PASSWORD)
     assert resp.status_code == 200
@@ -115,7 +115,7 @@ def test_auth_disabled(cluster, disable_auth):
     PASSWORD1 = 'Red Nickel'
     USERNAME2 = 'Grouse'
     PASSWORD2 = 'Silver Copper'
-    assert srv.post_raw('/graphql').status_code == 200
+    assert srv.post_raw('/admin/api').status_code == 200
 
     req = """
         mutation($username: String! $password: String!) {
@@ -212,7 +212,7 @@ def test_auth_disabled(cluster, disable_auth):
     assert 'errors' not in obj, obj['errors'][0]['message']
     auth_params = obj['data']['cluster']['auth_params']
     assert auth_params['enabled'] == False
-    assert 'username' not in auth_params
+    assert auth_params['username'] is None
 
     lsid = _login(srv, USERNAME1, PASSWORD1).cookies['lsid']
     obj = srv.graphql(req, cookies={'lsid': lsid})
@@ -249,10 +249,10 @@ def test_auth_enabled(cluster, enable_auth):
     """.format(USERNAME, PASSWORD))
 
     lsid = _login(srv, USERNAME, PASSWORD).cookies['lsid']
-    assert srv.post_raw('/graphql', cookies={'lsid': 'AA=='}).status_code == 401
-    assert srv.post_raw('/graphql', cookies={'lsid': '!!'}).status_code == 401
-    assert srv.post_raw('/graphql', cookies={'lsid': None}).status_code == 401
-    assert srv.post_raw('/graphql', cookies={'lsid': lsid}).status_code == 200
+    assert srv.post_raw('/admin/api', cookies={'lsid': 'AA=='}).status_code == 401
+    assert srv.post_raw('/admin/api', cookies={'lsid': '!!'}).status_code == 401
+    assert srv.post_raw('/admin/api', cookies={'lsid': None}).status_code == 401
+    assert srv.post_raw('/admin/api', cookies={'lsid': lsid}).status_code == 200
 
 def test_uninitialized(module_tmpdir, helpers):
     srv = Server(
@@ -273,8 +273,8 @@ def test_uninitialized(module_tmpdir, helpers):
         assert 'lsid' in resp.cookies
 
         lsid = resp.cookies['lsid']
-        assert srv.post_raw('/graphql', cookies={'lsid': None}).status_code == 401
-        assert srv.post_raw('/graphql', cookies={'lsid': lsid}).status_code == 200
+        assert srv.post_raw('/admin/api', cookies={'lsid': None}).status_code == 401
+        assert srv.post_raw('/admin/api', cookies={'lsid': lsid}).status_code == 200
 
     finally:
         srv.kill()
@@ -297,7 +297,7 @@ def test_keepalive(cluster, disable_auth):
                 }
             }
         """}
-        r = session.post(srv.baseurl + '/graphql', json=request)
+        r = session.post(srv.baseurl + '/admin/api', json=request)
         r.raise_for_status()
         obj = r.json()
         assert 'errors' not in obj, obj['errors'][0]['message']
@@ -327,7 +327,7 @@ def test_basic_auth(cluster, enable_auth):
         return {'Authorization': ' '.join(args)}
 
     def _post(h):
-        return srv.post_raw('/graphql', headers=h)
+        return srv.post_raw('/admin/api', headers=h)
 
     assert _post(_h('Basic', _b64('U'))).status_code == 401
     assert _post(_h('Basic', _b64('U:'))).status_code == 401
@@ -344,4 +344,3 @@ def test_basic_auth(cluster, enable_auth):
     assert _post(_h('Weird', _b64('U:P'))).status_code == 401
 
     assert _post(_h('Basic', _b64('U:P'))).status_code == 200
-

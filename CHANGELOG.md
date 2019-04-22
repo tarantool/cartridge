@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Changed
+
+- Admin http endpoint changed from /graphql to /admin/api
+- Graphql output now contains null values for empty objects.
+
 ## [0.7.0] - 2019-04-05
 
 ### Added

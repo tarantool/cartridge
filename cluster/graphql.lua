@@ -315,7 +315,7 @@ local function init(httpd)
     httpd:route(
         {
             method = 'POST',
-            path = '/graphql',
+            path = '/admin/api',
             public = true,
         },
         execute_graphql

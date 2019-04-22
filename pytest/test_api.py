@@ -220,7 +220,8 @@ def test_replicasets(cluster, expelled, helpers):
         'status': 'healthy',
         'master': {'uuid': 'aaaaaaaa-aaaa-4000-b000-000000000001'},
         'active_master': {'uuid': 'aaaaaaaa-aaaa-4000-b000-000000000001'},
-        'servers': [{'uri': 'localhost:33001', 'priority': 1}]
+        'servers': [{'uri': 'localhost:33001', 'priority': 1}],
+        'weight': None,
     } == helpers.find(replicasets, 'uuid', 'aaaaaaaa-0000-4000-b000-000000000000')
     assert {
         'uuid': 'bbbbbbbb-0000-4000-b000-000000000000',
@@ -391,14 +392,15 @@ def test_uninitialized(module_tmpdir, helpers):
 
         servers = obj['data']['servers']
         assert len(servers) == 1
-        assert servers[0] == {'uri': 'localhost:33101'}
+        assert servers[0] == {'uri': 'localhost:33101', 'replicaset': None}
 
         replicasets = obj['data']['replicasets']
         assert len(replicasets) == 0
 
         assert obj['data']['cluster']['self'] == {
             'uri': 'localhost:33101',
-            'alias': 'dummy'
+            'alias': 'dummy',
+            'uuid': None,
         }
         assert obj['data']['cluster']['can_bootstrap_vshard'] == False
         assert obj['data']['cluster']['vshard_bucket_count'] == 0
