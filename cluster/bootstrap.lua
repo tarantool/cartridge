@@ -43,7 +43,7 @@ local function init_box(box_opts)
         log.info('Granting universe permissions to %q...', username)
         box.schema.user.grant(
             username,
-            'read,write,execute',
+            'read,write,execute,drop',
             'universe',
             nil,
             { if_not_exists = true }

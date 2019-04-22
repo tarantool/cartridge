@@ -289,7 +289,8 @@ def test_sigstop(cluster_wrapper, helpers):
     assert 'errors' not in resp, resp['errors'][0]['message']
     servers = resp['data']['servers']
     assert {
-        'uri': cluster['storage-1'].advertise_uri
+        'uri': cluster['storage-1'].advertise_uri,
+        'statistics': None,
     } == helpers.find(servers, 'uri', cluster['storage-1'].advertise_uri)
     assert {
         'uri': cluster['storage-2'].advertise_uri,
@@ -362,4 +363,3 @@ def test_rollback(cluster_wrapper, helpers):
         }
     """)
     assert 'errors' not in resp, resp['errors'][0]['message']
-

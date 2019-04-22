@@ -201,7 +201,7 @@ class Server(object):
         return r
 
     def graphql(self, query, variables=None, headers=None, **args):
-        url = self.baseurl + '/graphql'
+        url = self.baseurl + '/admin/api'
 
         request = {"query": query, "variables": variables}
 

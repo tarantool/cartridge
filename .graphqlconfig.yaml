@@ -3,4 +3,4 @@ projects:
     schemaPath: schema.graphql
     extensions:
       endpoints:
-        default: 'http://localhost:8081/graphql'
+        default: 'http://localhost:8081/admin/api'
