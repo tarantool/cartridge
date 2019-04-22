@@ -46,16 +46,21 @@ vars:new('bootstrapped')
 --- Do not try to call `box.cfg` yourself, the cluster will do it when it is time.
 --- @function cfg
 --- @tparam table opts Available options are:
---- @tparam string opts.workdir a directory where all data will be stored: snapshots, wal logs and cluster config file
---- @tparam string opts.advertise_uri host:port to be used for broadcasting internal communication between instances. Same port is used for binary connections to the instance
---- @tparam string opts.cluster_cookie optional, secret used to separate unrelated clusters (pervents them from seeing each other during broadcasts). Also used for encrypting internal communication
---- @tparam number opts.bucket_count optional, bucket count for vshard cluster. See vshard doc for more details
---- @tparam string|number opts.http_port optional, port to open administrative UI and API on
---- @tparam string opts.alias optional, human-readable instance name that will be available in administrative UI
---- @tparam table opts.roles optional, list of user-defined roles that will be available to enable on the instance_uuid
---- @tparam ?boolean opts.auth_enabled optional - toggle authentication in administrative UI and API
---- @tparam string opts.auth_backend_name optional - user-provided set of callbacks related to authentication
---- @tparam table box_opts optional, tarantool extra box.cfg options (e. g. memtx_memory), that may require additional tuning
+--- @tparam string opts.workdir
+---  a directory where all data will be stored: snapshots, wal logs and cluster config file
+--- @tparam string opts.advertise_uri
+---  `host:port` to be used for broadcasting internal communication between instances.
+---  Same port is used for binary connections to the instance
+--- @tparam ?string opts.cluster_cookie secret used to separate unrelated clusters
+---  (pervents them from seeing each other during broadcasts).
+---  Also used for encrypting internal communication
+--- @tparam ?number opts.bucket_count bucket count for vshard cluster. See vshard doc for more details
+--- @tparam ?string|number opts.http_port port to open administrative UI and API on
+--- @tparam ?string opts.alias human-readable instance name that will be available in administrative UI
+--- @tparam ?table opts.roles list of user-defined roles that will be available to enable on the instance_uuid
+--- @tparam ?boolean opts.auth_enabled toggle authentication in administrative UI and API
+--- @tparam ?string opts.auth_backend_name user-provided set of callbacks related to authentication
+--- @tparam ?table box_opts tarantool extra box.cfg options (e. g. memtx_memory), that may require additional tuning
 --- @return[1] true
 --- @treturn[2] nil
 --- @treturn[2] table Error description
