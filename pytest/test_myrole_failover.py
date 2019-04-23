@@ -39,6 +39,6 @@ def test_failover(cluster, helpers):
     cluster['master'].kill()
     # helpers.wait_for(cluster['slave'].)
 
-    helpers.wait_for(cluster['slave'].conn.eval, """
+    helpers.wait_for(cluster['slave'].conn.eval, ["""
         assert(package.loaded['mymodule'].is_master() == true)
-    """)
+    """])
