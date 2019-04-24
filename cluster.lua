@@ -17,10 +17,8 @@ local log = require('log')
 local fiber = require('fiber')
 local checks = require('checks')
 local errors = require('errors')
-local vshard = require('vshard')
 local membership = require('membership')
 local http = require('http.server')
-_G.vshard = vshard
 
 local rpc = require('cluster.rpc')
 local vars = require('cluster.vars').new('cluster')
@@ -184,14 +182,14 @@ local function cfg(opts, box_opts)
     local roles = opts.roles or {}
     if not utils.table_find(roles, 'cluster.roles.vshard-storage') then
         log.warn(
-            'WARNING: Implicit vshard roles are depricated,' ..
+            'WARNING: Implicit vshard roles are deprecated,' ..
             ' please specify "cluster.roles.vshard-storage" explicitly'
         )
         table.insert(roles, 1, 'cluster.roles.vshard-storage')
     end
     if not utils.table_find(roles, 'cluster.roles.vshard-router') then
         log.warn(
-            'WARNING: Implicit vshard roles are depricated,' ..
+            'WARNING: Implicit vshard roles are deprecated,' ..
             ' please specify "cluster.roles.vshard-router" explicitly'
         )
         table.insert(roles, 2, 'cluster.roles.vshard-router')
