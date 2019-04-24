@@ -1,4 +1,5 @@
 #!/usr/bin/env tarantool
+-- luacheck: ignore _it
 
 -- this module incorporates information about
 -- conf.servers and membership status
@@ -16,8 +17,7 @@ local utils = require('cluster.utils')
 
 local e_config = errors.new_class('Invalid cluster topology config')
 vars:new('known_roles', {
-    ['vshard-storage'] = true,
-    ['vshard-router'] = true,
+    -- [role_name] = true/false,
 })
 vars:new('topology', {
     auth = false,
@@ -258,9 +258,6 @@ local function validate_consistency(topology)
         known_uuids[server.replicaset_uuid] = true
     end
 
-    local num_storages = 0
-    local total_weight = 0
-
     for replicaset_uuid, replicaset in pairs(replicasets) do
         local field = string.format('replicasets[%s]', replicaset_uuid)
 
@@ -285,23 +282,6 @@ local function validate_consistency(topology)
                 '%s.master %q belongs to another replicaset', field, leader_uuid
             )
         end
-
-        e_config:assert(
-            (replicaset.weight or 0) >= 0,
-            '%s.weight must be non-negative, got %s', field, replicaset.weight
-        )
-
-        if replicaset.roles['vshard-storage'] then
-            num_storages = num_storages + 1
-            total_weight = total_weight + (replicaset.weight or 0)
-        end
-    end
-
-    if num_storages > 0 then
-        e_config:assert(
-            total_weight > 0,
-            'At least one vshard-storage must have weight > 0'
-        )
     end
 end
 
@@ -395,36 +375,6 @@ local function validate_upgrade(topology_new, topology_old)
                     replicaset_uuid, tostring(role)
                 )
             end
-        end
-    end
-
-    for replicaset_uuid, replicaset_old in pairs(replicasets_old) do
-        local replicaset_new = replicasets_new[replicaset_uuid]
-        local storage_role_old = replicaset_old.roles['vshard-storage']
-        local storage_role_new = replicaset_new and replicaset_new.roles['vshard-storage']
-
-        if storage_role_old and not storage_role_new then
-            e_config:assert(
-                (replicaset_old.weight == nil) or (replicaset_old.weight == 0),
-                'replicasets[%s] is a vshard-storage which can\'t be removed', replicaset_uuid
-            )
-
-            local master_uuid
-            if type(replicaset_old.master) == 'table' then
-                master_uuid = replicaset_old.master[1]
-            else
-                master_uuid = replicaset_old.master
-            end
-            local master_uri = servers_old[master_uuid].uri
-            local conn, err = pool.connect(master_uri)
-            if not conn then
-                return error(err)
-            end
-            local buckets_count = conn:call('vshard.storage.buckets_count')
-            e_config:assert(
-                buckets_count == 0,
-                'replicasets[%s] rebalancing isn\'t finished yet', replicaset_uuid
-            )
         end
     end
 end

@@ -53,7 +53,11 @@ check_error([[module 'unknown%-role' not found]],
     cluster.cfg, {
         workdir = './dev',
         advertise_uri = 'localhost:33003',
-        roles = {'unknown-role'},
+        roles = {
+            'cluster.roles.vshard-storage',
+            'cluster.roles.vshard-router',
+            'unknown-role',
+        },
     }
 )
 
@@ -72,7 +76,11 @@ check_error('My role can not be loaded',
     cluster.cfg, {
         workdir = './dev',
         advertise_uri = 'localhost:33002',
-        roles = {'myrole'},
+        roles = {
+            'cluster.roles.vshard-storage',
+            'cluster.roles.vshard-router',
+            'myrole',
+        },
     }
 )
 
@@ -113,19 +121,20 @@ check_error('bad argument callbacks.check_password to set_callbacks',
     }
 )
 
+local opts = {
+    workdir = '/tmp',
+    advertise_uri = 'localhost:33001',
+    roles = {
+        'cluster.roles.vshard-storage',
+        'cluster.roles.vshard-router',
+    },
+}
 test:ok(
-    cluster.cfg({
-        workdir = '/tmp',
-        advertise_uri = 'localhost:33001',
-    })
+    cluster.cfg(opts)
 )
 
 check_error('Cluster is already initialized',
-    cluster.cfg, {
-        workdir = '/tmp',
-        advertise_uri = 'localhost:33001',
-        roles = {'mymodule'},
-    }
+    cluster.cfg, opts
 )
 
 os.exit(test:check() and 0 or 1)

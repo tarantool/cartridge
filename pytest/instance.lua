@@ -196,6 +196,8 @@ local ok, err = cluster.cfg({
     bucket_count = 3000,
     http_port = os.getenv('HTTP_PORT') or 8081,
     roles = {
+        'cluster.roles.vshard-storage',
+        'cluster.roles.vshard-router',
         'mymodule'
     },
     auth_backend_name = 'auth-mocks',

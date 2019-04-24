@@ -53,15 +53,35 @@ vshard = {
 local tap = require('tap')
 local yaml = require('yaml')
 local topology = require('cluster.topology')
+local confapplier = require('cluster.confapplier')
+assert(confapplier.register_role('cluster.roles.vshard-storage'))
+assert(confapplier.register_role('cluster.roles.vshard-router'))
 local test = tap.test('topology.config')
 
 test:plan(51)
 
 local function check_config(result, raw_new, raw_old)
-    local cfg_new = raw_new and yaml.decode(raw_new) or {}
-    local cfg_old = raw_old and yaml.decode(raw_old) or {}
+    local topology_new = raw_new and yaml.decode(raw_new) or {}
+    local topology_old = raw_old and yaml.decode(raw_old) or {}
 
-    local ok, err = topology.validate(cfg_new, cfg_old)
+    local vshard_conf = {
+        bootstrapped = true,
+        bucket_count = 1337,
+    }
+    local cfg_new = {
+        vshard = vshard_conf,
+        topology = topology_new,
+    }
+    local cfg_old = {
+        vshard = vshard_conf,
+        topology = topology_old,
+    }
+
+    local ok, err = topology.validate(topology_new, topology_old)
+    if ok then
+        ok, err = confapplier.validate_config(cfg_new, cfg_old)
+    end
+
     test:is(ok or err.err, result, result)
 end
 

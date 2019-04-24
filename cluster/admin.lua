@@ -783,18 +783,16 @@ end
 -- @treturn[2] nil
 -- @treturn[2] table Error description
 local function bootstrap_vshard()
-    -- TODO refactor it with rpc
     local vshard_cfg = confapplier.get_readonly('vshard')
     if vshard_cfg and vshard_cfg.bootstrapped then
         return nil, e_bootstrap_vshard:new('Already bootstrapped')
     end
 
-    local vshard_router = service_registry.get('vshard-router')
-    if vshard_router == nil then
+    if service_registry.get('vshard-router') == nil then
         return nil, e_bootstrap_vshard:new('vshard-router role is disabled')
     end
 
-    local info = vshard_router.info()
+    local info = vshard.router.info()
     for uid, replicaset in pairs(info.replicasets or {}) do
         local uri = replicaset.master.uri
         local conn, err = pool.connect(uri)
@@ -821,7 +819,7 @@ local function bootstrap_vshard()
 
     log.info('Bootstrapping vshard.router...')
 
-    local ok, err = vshard_router.bootstrap({timeout=10})
+    local ok, err = vshard.router.bootstrap({timeout=10})
     if not ok and err.code ~= vshard.error.code.NON_EMPTY then
         return nil, e_bootstrap_vshard:new(
             '%s (%s, %s)',
