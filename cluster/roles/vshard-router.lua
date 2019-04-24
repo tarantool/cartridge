@@ -8,6 +8,7 @@ local vars = require('cluster.vars').new('cluster.roles.vshard-router')
 local utils = require('cluster.utils')
 local admin = require('cluster.admin')
 local topology = require('cluster.topology')
+local vshard_utils = require('cluster.vshard-utils')
 local vshard_storage = require('cluster.roles.vshard-storage')
 
 vars:new('vshard_cfg')
@@ -16,7 +17,7 @@ local function apply_config(conf)
     checks('table')
 
     local vshard_cfg = {
-        sharding = topology.get_vshard_sharding_config(),
+        sharding = vshard_utils.get_sharding_config(),
         bucket_count = conf.vshard.bucket_count,
     }
 

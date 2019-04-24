@@ -486,36 +486,6 @@ local function get_active_masters()
     return ret
 end
 
--- returns SHARDING table, which can be passed to
--- vshard.router.cfg{sharding = SHARDING} and
--- vshard.storage.cfg{sharding = SHARDING}
-local function get_vshard_sharding_config()
-    local sharding = {}
-    local active_masters = get_active_masters()
-
-    for _it, instance_uuid, server in fun.filter(not_disabled, vars.topology.servers) do
-        local replicaset_uuid = server.replicaset_uuid
-        local replicaset = vars.topology.replicasets[replicaset_uuid]
-        if replicaset.roles['vshard-storage'] then
-            if sharding[replicaset_uuid] == nil then
-                sharding[replicaset_uuid] = {
-                    replicas = {},
-                    weight = replicaset.weight or 0.0,
-                }
-            end
-
-            local replicas = sharding[replicaset_uuid].replicas
-            replicas[instance_uuid] = {
-                name = server.uri,
-                uri = pool.format_uri(server.uri),
-                master = (active_masters[replicaset_uuid] == instance_uuid),
-            }
-        end
-    end
-
-    return sharding
-end
-
 local function get_replication_config(topology, replicaset_uuid)
     checks('?table', 'string')
     if topology == nil or topology.servers == nil then
@@ -559,5 +529,4 @@ return {
     get_leaders_order = get_leaders_order,
     get_active_masters = get_active_masters,
     get_replication_config = get_replication_config,
-    get_vshard_sharding_config = get_vshard_sharding_config,
 }

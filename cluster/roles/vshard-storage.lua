@@ -9,6 +9,7 @@ local pool = require('cluster.pool')
 local vars = require('cluster.vars').new('cluster.roles.vshard-storage')
 local utils = require('cluster.utils')
 local topology = require('cluster.topology')
+local vshard_utils = require('cluster.vshard-utils')
 
 local e_config = errors.new_class('Invalid config')
 
@@ -102,7 +103,7 @@ local function apply_config(conf)
     checks('table')
 
     local vshard_cfg = {
-        sharding = topology.get_vshard_sharding_config(),
+        sharding = vshard_utils.get_sharding_config(),
         bucket_count = conf.vshard.bucket_count,
         listen = box.cfg.listen,
     }

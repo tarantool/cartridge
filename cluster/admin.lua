@@ -18,6 +18,7 @@ local pool = require('cluster.pool')
 local utils = require('cluster.utils')
 local topology = require('cluster.topology')
 local confapplier = require('cluster.confapplier')
+local vshard_utils = require('cluster.vshard-utils')
 local service_registry = require('cluster.service-registry')
 
 local e_bootstrap_vshard = errors.new_class('Bootstrapping vshard failed')
@@ -811,7 +812,7 @@ local function bootstrap_vshard()
         end
     end
 
-    local sharding_config = topology.get_vshard_sharding_config()
+    local sharding_config = vshard_utils.get_sharding_config()
 
     if next(sharding_config) == nil then
         return nil, e_bootstrap_vshard:new('Sharding config is empty')
@@ -852,7 +853,7 @@ local function can_bootstrap_vshard()
         return false
     end
 
-    local sharding_config = topology.get_vshard_sharding_config()
+    local sharding_config = vshard_utils.get_sharding_config()
     if next(sharding_config) == nil then
         return false
     end
