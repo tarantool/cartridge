@@ -10,7 +10,6 @@ local pool = require('cluster.pool')
 local utils = require('cluster.utils')
 local confapplier = require('cluster.confapplier')
 local vshard_utils = require('cluster.vshard-utils')
-local vshard_storage = require('cluster.roles.vshard-storage')
 
 local e_bootstrap_vshard = errors.new_class('Bootstrapping vshard failed')
 
@@ -109,7 +108,7 @@ end
 
 return {
     role_name = 'vshard-router',
-    validate_config = vshard_storage.validate_config,
+    validate_config = vshard_utils.validate_config,
     apply_config = apply_config,
 
     bootstrap = bootstrap,
