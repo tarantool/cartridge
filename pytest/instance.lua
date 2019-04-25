@@ -52,6 +52,7 @@ package.preload['mymodule'] = function()
 
     return {
         role_name = 'myrole',
+        dependencies = {'mymodule-dependency'},
         get_state = function() return state end,
         is_master = function() return master end,
         validate_config = function()
@@ -76,6 +77,12 @@ package.preload['mymodule'] = function()
             state = 'stopped'
             validated = false
         end
+    }
+end
+
+package.preload['mymodule-dependency'] = function()
+    return {
+        role_name = 'myrole-dependency',
     }
 end
 
@@ -198,7 +205,8 @@ local ok, err = cluster.cfg({
     roles = {
         'cluster.roles.vshard-storage',
         'cluster.roles.vshard-router',
-        'mymodule'
+        'mymodule-dependency',
+        'mymodule',
     },
     auth_backend_name = 'auth-mocks',
     auth_enabled = auth_enabled, -- works for bootstrapping from scratch only

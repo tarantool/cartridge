@@ -142,13 +142,15 @@ local function get_servers_and_replicasets()
             servers = {},
         }
 
+        local enabled_roles = confapplier.get_enabled_roles(replicaset.roles)
+
         for _, role in pairs(known_roles) do
-            if replicaset.roles[role] then
+            if enabled_roles[role] then
                 table.insert(replicasets[replicaset_uuid].roles, role)
             end
         end
 
-        for role, enabled in pairs(replicaset.roles) do
+        for role, enabled in pairs(enabled_roles) do
             if enabled and not utils.table_find(known_roles, role) then
                 table.insert(replicasets[replicaset_uuid].roles, role)
             end
@@ -500,7 +502,7 @@ local function join_server(args)
         end
 
         topology_cfg.replicasets[args.replicaset_uuid] = {
-            roles = roles,
+            roles = confapplier.get_enabled_roles(roles),
             master = {args.instance_uuid},
             weight = weight,
         }
@@ -715,10 +717,11 @@ local function edit_replicaset(args)
     end
 
     if args.roles ~= nil then
-        replicaset.roles = {}
+        local roles = {}
         for _, role in pairs(args.roles) do
-            replicaset.roles[role] = true
+            roles[role] = true
         end
+        replicaset.roles = confapplier.get_enabled_roles(roles)
     end
 
     if args.master ~= nil then

@@ -194,7 +194,7 @@ local function init(graphql)
     graphql.add_callback({
         prefix = 'cluster',
         name = 'known_roles',
-        doc = 'Get list of registered roles.',
+        doc = 'Get list of all registered roles including dependencies.',
         args = {},
         kind = gql_types.list(gql_types.string.nonNull),
         callback = module_name .. '.get_known_roles',

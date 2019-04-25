@@ -36,7 +36,16 @@ local e_register_role = errors.new_class('Can not register role')
 vars:new('conf')
 vars:new('workdir')
 vars:new('locks', {})
-vars:new('known_roles', {})
+vars:new('known_roles', {
+    -- [i] = mod,
+    -- [role_name] = mod,
+})
+vars:new('roles_dependencies', {
+    -- [role_name] = {role_name_1, role_name_2}
+})
+vars:new('roles_dependants', {
+    -- [role_name] = {role_name_1, role_name_2}
+})
 vars:new('applier_fiber', nil)
 vars:new('applier_channel', nil)
 vars:new('failover_fiber', nil)
@@ -49,19 +58,82 @@ end
 
 local function register_role(module_name)
     checks('string')
+    local function e(...)
+        vars.known_roles = {}
+        vars.roles_dependencies = {}
+        vars.roles_dependants = {}
+        return e_register_role:new(2, ...)
+    end
+    local mod = package.loaded[module_name]
+    if type(mod) == 'table' and vars.known_roles[mod.role_name] then
+        -- Already loaded
+        return mod
+    end
+
     local mod, err = e_register_role:pcall(require, module_name)
     if not mod then
-        return nil, err
+        return nil, e(err)
+    elseif type(mod) ~= 'table' then
+        return nil, e('Module %q must return a table', module_name)
     end
 
-    mod.role_name = mod.role_name or module_name
-    if utils.table_find(vars.known_roles, mod.role_name) then
-        return nil, e_register_role:new('Role %q is already registered', mod.role_name)
+    if mod.role_name == nil then
+        mod.role_name = module_name
     end
 
+    if type(mod.role_name) ~= 'string' then
+        return nil, e('Module %q role_name must be a string', module_name)
+    end
+
+    if vars.known_roles[mod.role_name] ~= nil then
+        return nil, e('Role %q name clash', mod.role_name)
+    end
+
+    local dependencies = mod.dependencies or {}
+    if type(dependencies) ~= 'table' then
+        return nil, e('Module %q dependencies must be a table', module_name)
+    end
+
+    vars.roles_dependencies[mod.role_name] = {}
+    vars.roles_dependants[mod.role_name] = {}
+    vars.known_roles[mod.role_name] = mod
+
+    local function deps_append(tbl, deps)
+        for _, dep in pairs(deps) do
+            if not utils.table_find(tbl, dep) then
+                table.insert(tbl, dep)
+            end
+        end
+    end
+
+    for _, dep_name in ipairs(dependencies) do
+        local dep_mod, err = register_role(dep_name)
+        if not dep_mod then
+            return nil, err
+        end
+
+        deps_append(
+            vars.roles_dependencies[mod.role_name],
+            {dep_mod.role_name}
+        )
+        deps_append(
+            vars.roles_dependencies[mod.role_name],
+            vars.roles_dependencies[dep_mod.role_name]
+        )
+
+        deps_append(
+            vars.roles_dependants[dep_mod.role_name],
+            {mod.role_name}
+        )
+    end
+
+    if utils.table_find(vars.roles_dependencies[mod.role_name], mod.role_name) then
+        return nil, e('Module %q circular dependency not allowed', module_name)
+    end
     topology.add_known_role(mod.role_name)
-    table.insert(vars.known_roles, mod)
-    return true
+    vars.known_roles[#vars.known_roles+1] = mod
+
+    return mod
 end
 
 local function get_known_roles()
@@ -73,6 +145,21 @@ local function get_known_roles()
 
     return ret
 end
+
+local function get_enabled_roles(roles)
+    checks('table')
+    local ret = {}
+
+    for role, _ in pairs(roles) do
+        ret[role] = true
+        for _, dep in ipairs(vars.roles_dependencies[role] or {}) do
+            ret[dep] = true
+        end
+    end
+
+    return ret
+end
+
 
 --- Load configuration from the filesystem.
 -- Configuration is a YAML file.
@@ -389,16 +476,16 @@ local function apply_config(conf)
 
     topology.set(conf.topology)
     local my_replicaset = conf.topology.replicasets[box.info.cluster.uuid]
-    local roles_enabled = my_replicaset.roles
     local active_masters = topology.get_active_masters()
     local is_master = false
     if active_masters[box.info.cluster.uuid] == box.info.uuid then
         is_master = true
     end
 
+    local enabled_roles = get_enabled_roles(my_replicaset.roles)
     for _, mod in ipairs(vars.known_roles) do
         local role_name = mod.role_name
-        if roles_enabled[role_name] then
+        if enabled_roles[role_name] then
             repeat -- until true
                 if (service_registry.get(role_name) == nil)
                 and (type(mod.init) == 'function')
@@ -725,6 +812,7 @@ return {
 
     register_role = register_role,
     get_known_roles = get_known_roles,
+    get_enabled_roles = get_enabled_roles,
 
     prepare_2pc = prepare_2pc,
     commit_2pc = commit_2pc,

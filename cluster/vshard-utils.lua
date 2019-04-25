@@ -7,6 +7,7 @@ local errors = require('errors')
 
 local pool = require('cluster.pool')
 local topology = require('cluster.topology')
+local confapplier = require('cluster.confapplier')
 
 local e_config = errors.new_class('Invalid config')
 
@@ -21,7 +22,8 @@ local function validate_weights(topology)
             'replicasets[%s].weight must be non-negative, got %s', replicaset_uuid, replicaset.weight
         )
 
-        if replicaset.roles['vshard-storage'] then
+        local enabled_roles = confapplier.get_enabled_roles(replicaset.roles)
+        if enabled_roles['vshard-storage'] then
             num_storages = num_storages + 1
             total_weight = total_weight + (replicaset.weight or 0)
         end
