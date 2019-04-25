@@ -7,7 +7,6 @@
 local log = require('log')
 local fun = require('fun')
 local fiber = require('fiber')
-local vshard = require('vshard')
 local checks = require('checks')
 local errors = require('errors')
 local uuid_lib = require('uuid')
@@ -18,10 +17,7 @@ local pool = require('cluster.pool')
 local utils = require('cluster.utils')
 local topology = require('cluster.topology')
 local confapplier = require('cluster.confapplier')
-local vshard_utils = require('cluster.vshard-utils')
-local service_registry = require('cluster.service-registry')
 
-local e_bootstrap_vshard = errors.new_class('Bootstrapping vshard failed')
 local e_topology_edit = errors.new_class('Editing cluster topology failed')
 local e_probe_server = errors.new_class('Can not probe server')
 
@@ -777,99 +773,6 @@ local function set_failover_enabled(enabled)
     return topology_cfg.failover
 end
 
---- Call `vshard.router.bootstrap()`.
--- This function distributes all buckets across the replica sets.
--- @function bootstrap_vshard
--- @treturn[1] boolean `true`
--- @treturn[2] nil
--- @treturn[2] table Error description
-local function bootstrap_vshard()
-    local vshard_cfg = confapplier.get_readonly('vshard')
-    if vshard_cfg and vshard_cfg.bootstrapped then
-        return nil, e_bootstrap_vshard:new('Already bootstrapped')
-    end
-
-    if service_registry.get('vshard-router') == nil then
-        return nil, e_bootstrap_vshard:new('vshard-router role is disabled')
-    end
-
-    local info = vshard.router.info()
-    for uid, replicaset in pairs(info.replicasets or {}) do
-        local uri = replicaset.master.uri
-        local conn, err = pool.connect(uri)
-
-        if conn == nil then
-            return nil, e_bootstrap_vshard:new('%q not ready yet', uri)
-        end
-
-        local ready = errors.netbox_eval(
-            conn,
-            'return box.space._bucket ~= nil',
-            {}, {timeout = 1}
-        )
-        if not ready then
-            return nil, e_bootstrap_vshard:new('%q not ready yet', uri)
-        end
-    end
-
-    local sharding_config = vshard_utils.get_sharding_config()
-
-    if next(sharding_config) == nil then
-        return nil, e_bootstrap_vshard:new('Sharding config is empty')
-    end
-
-    log.info('Bootstrapping vshard.router...')
-
-    local ok, err = vshard.router.bootstrap({timeout=10})
-    if not ok and err.code ~= vshard.error.code.NON_EMPTY then
-        return nil, e_bootstrap_vshard:new(
-            '%s (%s, %s)',
-            err.message, err.type, err.name
-        )
-    end
-
-    local vshard_cfg = confapplier.get_deepcopy('vshard')
-    vshard_cfg.bootstrapped = true
-    local ok, err = confapplier.patch_clusterwide({vshard = vshard_cfg})
-    if not ok then
-        return nil, err
-    end
-
-    return true
-end
-
---- Check if vshard needs to be bootstrapped.
---
--- Used in WebUI to set visiblity of the "bootstrap vshard" button
--- @function can_bootstrap_vshard
--- @local
--- @treturn boolean
-local function can_bootstrap_vshard()
-    local vshard_cfg = confapplier.get_readonly('vshard')
-
-    if vshard_cfg == nil then
-        return false
-    elseif vshard_cfg.bootstrapped then
-        return false
-    end
-
-    local sharding_config = vshard_utils.get_sharding_config()
-    if next(sharding_config) == nil then
-        return false
-    end
-
-    return true
-end
-
---- Get number of vshatrd buckets configured.
--- @function vshard_bucket_count
--- @local
--- @treturn number bicket_count
-local function vshard_bucket_count()
-    local vshard_cfg = confapplier.get_readonly('vshard')
-    return vshard_cfg and vshard_cfg.bucket_count or 0
-end
-
 _G.__cluster_admin_get_stat = get_stat
 _G.__cluster_admin_get_info = get_info
 
@@ -892,9 +795,13 @@ return {
     get_failover_enabled = get_failover_enabled,
     set_failover_enabled = set_failover_enabled,
 
-    bootstrap_vshard = bootstrap_vshard,
-    vshard_bucket_count = vshard_bucket_count,
-    can_bootstrap_vshard = can_bootstrap_vshard,
-    -- upload_config = upload_config,
-    -- download_config = download_config,
+    --- Call `vshard.router.bootstrap()`.
+    -- This function distributes all buckets across the replica sets.
+    -- @function bootstrap
+    -- @treturn[1] boolean `true`
+    -- @treturn[2] nil
+    -- @treturn[2] table Error description
+    bootstrap_vshard = function()
+        return rpc.call('vshard-router', 'bootstrap')
+    end,
 }
