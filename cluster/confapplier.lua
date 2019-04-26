@@ -11,7 +11,6 @@ local fiber = require('fiber')
 local errno = require('errno')
 local errors = require('errors')
 local checks = require('checks')
-local vshard = require('vshard')
 local membership = require('membership')
 
 local vars = require('cluster.vars').new('cluster.confapplier')
@@ -27,15 +26,12 @@ yaml.cfg({
 
 local e_yaml = errors.new_class('Parsing yaml failed')
 local e_atomic = errors.new_class('Atomic call failed')
-local e_rollback = errors.new_class('Rollback failed')
-local e_failover = errors.new_class('Vshard failover failed')
+local e_failover = errors.new_class('Failover failed')
 local e_config_load = errors.new_class('Loading configuration failed')
 local e_config_fetch = errors.new_class('Fetching configuration failed')
 local e_config_apply = errors.new_class('Applying configuration failed')
-local e_config_restore = errors.new_class('Restoring configuration failed')
 local e_config_validate = errors.new_class('Invalid config')
 local e_register_role = errors.new_class('Can not register role')
-local e_bootstrap_vshard = errors.new_class('Can not bootstrap vshard router now')
 
 vars:new('conf')
 vars:new('workdir')
@@ -69,10 +65,7 @@ local function register_role(module_name)
 end
 
 local function get_known_roles()
-    local ret = {
-        'vshard-storage',
-        'vshard-router',
-    }
+    local ret = {}
 
     for _, mod in ipairs(vars.known_roles) do
         table.insert(ret, mod.role_name)
@@ -280,16 +273,6 @@ local function validate_config(conf_new, conf_old)
     end
     checks('table', 'table')
 
-    if type(conf_new.vshard) ~= 'table' then
-        return nil, e_config_validate:new('section "vshard" must be a table')
-    elseif type(conf_new.vshard.bucket_count) ~= 'number' then
-        return nil, e_config_validate:new('vshard.bucket_count must be a number')
-    elseif not (conf_new.vshard.bucket_count > 0) then
-        return nil, e_config_validate:new('vshard.bucket_count must be a positive')
-    elseif type(conf_new.vshard.bootstrapped) ~= 'boolean' then
-        return nil, e_config_validate:new('vshard.bootstrapped must be true or false')
-    end
-
     for _, mod in ipairs(vars.known_roles) do
         if type(mod.validate_config) == 'function' then
             local ok, err = e_config_validate:pcall(
@@ -357,50 +340,6 @@ local function _failover(cond)
         end
         local opts = set_readonly({is_master = is_master}, true)
 
-        local bucket_count = vars.conf.vshard.bucket_count
-        local cfg_new = topology.get_vshard_sharding_config()
-        local cfg_old = nil
-
-        local vshard_router = service_registry.get('vshard-router')
-        local vshard_storage = service_registry.get('vshard-storage')
-
-        if vshard_router and vshard_router.internal.current_cfg then
-            cfg_old = vshard_router.internal.current_cfg.sharding
-        elseif vshard_storage and vshard_storage.internal.current_cfg then
-            cfg_old = vshard_storage.internal.current_cfg.sharding
-        end
-
-        if not utils.deepcmp(cfg_new, cfg_old) then
-            if vshard_storage then
-                log.info('Reconfiguring vshard.storage...')
-                local cfg = {
-                    sharding = cfg_new,
-                    listen = box.cfg.listen,
-                    bucket_count = bucket_count,
-                    -- replication_connect_quorum = 0,
-                }
-                local _, err = e_failover:pcall(vshard_storage.cfg, cfg, box.info.uuid)
-                if err then
-                    log.error('%s', err)
-                end
-            end
-
-            if vshard_router then
-                log.info('Reconfiguring vshard.router...')
-                local cfg = {
-                    sharding = cfg_new,
-                    bucket_count = bucket_count,
-                    -- replication_connect_quorum = 0,
-                }
-                local _, err = e_failover:pcall(vshard_router.cfg, cfg, box.info.uuid)
-                if err then
-                    log.error('%s', err)
-                end
-            end
-
-            log.info('Failover step finished')
-        end
-
         for _, mod in ipairs(vars.known_roles) do
             local _, err = _failover_role(mod, opts)
             if err then
@@ -408,6 +347,7 @@ local function _failover(cond)
             end
         end
 
+        log.info('Failover step finished')
         return true
     end
 
@@ -454,29 +394,6 @@ local function apply_config(conf)
     local is_master = false
     if active_masters[box.info.cluster.uuid] == box.info.uuid then
         is_master = true
-    end
-
-    if roles_enabled['vshard-storage'] then
-        vshard.storage.cfg({
-            sharding = topology.get_vshard_sharding_config(),
-            bucket_count = conf.vshard.bucket_count,
-            listen = box.cfg.listen,
-        }, box.info.uuid)
-        service_registry.set('vshard-storage', vshard.storage)
-
-        -- local srv = storage.new()
-        -- srv:apply_config(conf)
-    end
-
-    if roles_enabled['vshard-router'] then
-        -- local srv = ibcore.server.new()
-        -- srv:apply_config(conf)
-        -- service_registry.set('ib-core', srv)
-        vshard.router.cfg({
-            sharding = topology.get_vshard_sharding_config(),
-            bucket_count = conf.vshard.bucket_count,
-        })
-        service_registry.set('vshard-router', vshard.router)
     end
 
     for _, mod in ipairs(vars.known_roles) do
@@ -534,13 +451,13 @@ local function apply_config(conf)
         vars.failover_cond = membership.subscribe()
         vars.failover_fiber = fiber.create(_failover, vars.failover_cond)
         vars.failover_fiber:name('cluster.failover')
-        log.info('vshard failover enabled')
+        log.info('Failover enabled')
     elseif not failover_enabled and failover_running then
         membership.unsubscribe(vars.failover_cond)
         vars.failover_fiber:cancel()
         vars.failover_fiber = nil
         vars.failover_cond = nil
-        log.info('vshard failover disabled')
+        log.info('Failover disabled')
     end
 
     if err then

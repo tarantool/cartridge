@@ -92,7 +92,10 @@ def set_failover(cluster, enabled):
 def check_active_master(cluster, expected_uuid):
     """Make sure active master uuid equals to the given uuid"""
     conn = cluster['router'].conn
-    resp = conn.call('vshard.router.callrw', (1, 'get_uuid'))
+    resp = conn.eval("""
+        local vshard = require('vshard')
+        return vshard.router.callrw(...)
+    """, (1, 'get_uuid'))
     err = resp[1] if len(resp) > 1 else None
     assert err == None
     assert resp[0] == expected_uuid

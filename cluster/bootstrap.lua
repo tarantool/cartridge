@@ -77,10 +77,7 @@ local function bootstrap_from_scratch(boot_opts, box_opts, roles)
     }, '?table', '?table')
 
     if roles == nil then
-        roles = {
-            ['vshard-router'] = true,
-            ['vshard-storage'] = false,
-        }
+        roles = {}
     end
     if boot_opts.instance_uuid == nil then
         boot_opts.instance_uuid = uuid_lib.str()

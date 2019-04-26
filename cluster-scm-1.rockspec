@@ -30,6 +30,7 @@ build = {
             ['cluster.webui'] = 'cluster/webui.lua';
             ['cluster.webui.api-auth'] = 'cluster/webui/api-auth.lua';
             ['cluster.webui.api-config'] = 'cluster/webui/api-config.lua';
+            ['cluster.webui.api-vshard'] = 'cluster/webui/api-vshard.lua';
             ['cluster.webui.api-topology'] = 'cluster/webui/api-topology.lua';
             ['cluster.webui.gql-stat'] = 'cluster/webui/gql-stat.lua';
             ['cluster.webui.gql-boxinfo'] = 'cluster/webui/gql-boxinfo.lua';
@@ -38,6 +39,10 @@ build = {
             ['cluster.confapplier'] = 'cluster/confapplier.lua';
             ['cluster.cluster-cookie'] = 'cluster/cluster-cookie.lua';
             ['cluster.service-registry'] = 'cluster/service-registry.lua';
+
+            ['cluster.vshard-utils'] = 'cluster/vshard-utils.lua';
+            ['cluster.roles.vshard-router'] = 'cluster/roles/vshard-router.lua';
+            ['cluster.roles.vshard-storage'] = 'cluster/roles/vshard-storage.lua';
 
             ['cluster.graphql'] = 'cluster/graphql.lua';
             ['cluster.graphql.execute'] = 'cluster/graphql/execute.lua';
