@@ -25,6 +25,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - `cluster.admin.bootstrap_vshard` now can be called on any instance
 
+### Fixed
+
+- Operating vshard-storage roles before vshard was bootstrapped
 
 ## [0.7.0] - 2019-04-05
 

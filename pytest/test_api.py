@@ -571,7 +571,15 @@ def test_storage_weight(module_tmpdir, helpers):
         replicasets = obj['data']['replicasets']
         assert replicasets[0]['weight'] == 1
 
-
+        obj = srv.graphql("""
+            mutation {
+                edit_replicaset(
+                    uuid: "ffffffff-0000-4000-b000-000000000000"
+                    roles: []
+                )
+            }
+        """)
+        assert 'errors' not in obj
     finally:
         srv.kill()
 
