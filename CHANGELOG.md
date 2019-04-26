@@ -9,7 +9,22 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 
 - Admin http endpoint changed from /graphql to /admin/api
-- Graphql output now contains null values for empty objects.
+- Graphql output now contains null values for empty objects
+
+- Deprecate implicity of vshard roles
+  `'cluster.roles.vshard-storage'`, `'cluster.roles.vshard-router'`.
+  Now they should be specified explicitly in `cluster.cfg({roles = ...})`
+
+- `cluster.service_get('vshard-router')` now returns
+  `cluster.roles.vshard-router` module instead of `vshard.router`
+  (incompatible change)
+
+- `cluster.service_get('vshard-storage')` now returns
+  `cluster.roles.vshard-storage` module instead of `vshard.storage`
+  (incompatible change)
+
+- `cluster.admin.bootstrap_vshard` now can be called on any instance
+
 
 ## [0.7.0] - 2019-04-05
 
