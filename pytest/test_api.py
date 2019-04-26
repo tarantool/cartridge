@@ -525,3 +525,53 @@ def test_join_server_good(cluster, expelled, module_tmpdir, helpers):
 
     finally:
         srv.kill()
+
+def test_storage_weight(module_tmpdir, helpers):
+    srv = Server(
+        binary_port = 33004,
+        http_port = 8084,
+    )
+    srv.start(
+        workdir="{}/localhost-{}".format(module_tmpdir, srv.binary_port)
+    )
+
+    try:
+        helpers.wait_for(srv.ping_udp, timeout=5)
+
+        obj = srv.graphql("""
+            mutation {
+                join_server(
+                    uri: "localhost:33004"
+                    instance_uuid: "ffffffff-ffff-4000-b000-000000000001"
+                    replicaset_uuid: "ffffffff-0000-4000-b000-000000000000"
+                )
+            }
+        """)
+        assert 'errors' not in obj
+        assert obj['data']['join_server'] == True
+
+        obj = srv.graphql("""
+            mutation {
+                edit_replicaset(
+                    uuid: "ffffffff-0000-4000-b000-000000000000"
+                    roles: ["vshard-router", "vshard-storage"]
+                )
+            }
+        """)
+        assert 'errors' not in obj
+
+        obj = srv.graphql("""
+            query {
+                replicasets(uuid: "ffffffff-0000-4000-b000-000000000000") {
+                    weight
+                }
+            }
+        """)
+        assert 'errors' not in obj
+        replicasets = obj['data']['replicasets']
+        assert replicasets[0]['weight'] == 1
+
+
+    finally:
+        srv.kill()
+
