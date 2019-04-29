@@ -731,6 +731,13 @@ local function edit_replicaset(args)
 
     if args.weight ~= nil then
         replicaset.weight = args.weight
+    elseif replicaset.weight == nil then
+        local vshard_cfg = confapplier.get_readonly('vshard')
+
+        replicaset.weight = 0
+        if not vshard_cfg.bootstrapped then
+            replicaset.weight = 1
+        end
     end
 
     local ok, err = confapplier.patch_clusterwide({topology = topology_cfg})

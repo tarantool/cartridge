@@ -88,7 +88,9 @@ local function validate_config(conf_new, conf_old)
     local topology_new = conf_new.topology
     local topology_old = conf_old.topology or {}
     validate_weights(topology_new)
-    validate_upgrade(topology_new, topology_old)
+    if conf_new.vshard.bootstrapped then
+        validate_upgrade(topology_new, topology_old)
+    end
 
     return true
 end
