@@ -29,8 +29,7 @@ def test_api(cluster):
     """)
     assert 'errors' not in obj
     assert obj['data']['cluster']['known_roles'] == \
-        ['vshard-storage', 'vshard-router', 'myrole']
-
+        ['vshard-storage', 'vshard-router', 'myrole-dependency', 'myrole']
 
 def test_myrole(cluster):
     srv = cluster['master']
@@ -59,7 +58,8 @@ def test_myrole(cluster):
         }
     """)
     assert 'errors' not in obj
-    assert obj['data']['replicasets'][0]['roles'] == ["myrole"]
+    assert obj['data']['replicasets'][0]['roles'] == \
+        ['myrole-dependency', 'myrole']
 
     obj = srv.graphql("""
         mutation {
@@ -78,7 +78,22 @@ def test_myrole(cluster):
         assert(package.loaded['mymodule'].get_state() == 'stopped')
     """)
 
+def test_dependencies(cluster):
+    srv = cluster['master']
+    obj = srv.graphql("""
+        mutation {
+            edit_replicaset(
+                uuid: "aaaaaaaa-0000-4000-b000-000000000000"
+                roles: ["myrole"]
+            )
+        }
+    """)
+    assert 'errors' not in obj
 
+    srv.conn.eval("""
+        local service_registry = require('cluster.service-registry')
+        assert(service_registry.get('myrole-dependency') ~= nil)
+    """)
 
 def test_rename(cluster, helpers):
     """The test simulates a situation when the role is renamed in code,

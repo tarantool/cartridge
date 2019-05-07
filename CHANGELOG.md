@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- Specifying role dependencies
+
 ### Changed
 
 - Admin http endpoint changed from /graphql to /admin/api

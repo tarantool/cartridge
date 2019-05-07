@@ -79,6 +79,8 @@ local function bootstrap_from_scratch(boot_opts, box_opts, roles)
     if roles == nil then
         roles = {}
     end
+    roles = confapplier.get_enabled_roles(roles)
+
     if boot_opts.instance_uuid == nil then
         boot_opts.instance_uuid = uuid_lib.str()
     end

@@ -7,7 +7,7 @@ local cluster = require('cluster')
 
 local test = tap.test('cluster.cfg')
 
-test:plan(12)
+test:plan(11)
 
 local function check_error(expected_error, fn, ...)
     local ok, err = fn(...)
@@ -69,20 +69,6 @@ check_error([[module 'unknown%-auth' not found]],
     }
 )
 
-package.preload['myrole'] = function()
-    error('My role can not be loaded')
-end
-check_error('My role can not be loaded',
-    cluster.cfg, {
-        workdir = './dev',
-        advertise_uri = 'localhost:33002',
-        roles = {
-            'cluster.roles.vshard-storage',
-            'cluster.roles.vshard-router',
-            'myrole',
-        },
-    }
-)
 
 package.preload['myauth'] = function()
     error('My auth can not be loaded')
@@ -122,8 +108,8 @@ check_error('bad argument callbacks.check_password to set_callbacks',
 )
 
 local opts = {
-    workdir = '/tmp',
-    advertise_uri = 'localhost:33001',
+        workdir = '/tmp',
+        advertise_uri = 'localhost:33001',
     roles = {
         'cluster.roles.vshard-storage',
         'cluster.roles.vshard-router',
