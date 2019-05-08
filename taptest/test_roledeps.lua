@@ -8,7 +8,7 @@ local confapplier = require('cluster.confapplier')
 
 local test = tap.test('cluster.register_role')
 
-test:plan(16)
+test:plan(17)
 
 local function check_error(expected_error, fn, ...)
     local ok, err = fn(...)
@@ -198,5 +198,16 @@ test:diag('known_roles: %s', json.encode(known_roles))
 test:is_deeply(known_roles, {
     'vshard-storage', 'vshard-router', 'storage', 'role-c', 'role-d', 'role-b', 'role-a',
 }, 'known_roles')
+
+local enabled_roles = confapplier.get_enabled_roles({
+    ['vshard-storage'] = false,
+    ['storage'] = true,
+    ['role-a'] = false,
+})
+test:diag('enabled_roles: %s', json.encode(enabled_roles))
+test:is_deeply(enabled_roles, {
+    ['vshard-storage'] = true,
+    ['storage'] = true,
+}, 'enabled_roles')
 
 os.exit(test:check() and 0 or 1)
