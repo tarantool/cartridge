@@ -51,7 +51,7 @@ vars:new('bootstrapped')
 ---  `host:port` to be used for broadcasting internal communication between instances.
 ---  Same port is used for binary connections to the instance
 --- @tparam ?string opts.cluster_cookie secret used to separate unrelated clusters
----  (pervents them from seeing each other during broadcasts).
+---  (prevents them from seeing each other during broadcasts).
 ---  Also used for encrypting internal communication
 --- @tparam ?number opts.bucket_count bucket count for vshard cluster. See vshard doc for more details
 --- @tparam ?string|number opts.http_port port to open administrative UI and API on

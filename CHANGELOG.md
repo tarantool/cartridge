@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 
 - Specifying role dependencies
+- Set read-only option for slave nodes
 
 ### Changed
 
