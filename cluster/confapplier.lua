@@ -150,10 +150,12 @@ local function get_enabled_roles(roles)
     checks('table')
     local ret = {}
 
-    for role, _ in pairs(roles) do
-        ret[role] = true
-        for _, dep in ipairs(vars.roles_dependencies[role] or {}) do
-            ret[dep] = true
+    for role, enabled in pairs(roles) do
+        if enabled then
+            ret[role] = true
+            for _, dep in ipairs(vars.roles_dependencies[role] or {}) do
+                ret[dep] = true
+            end
         end
     end
 
