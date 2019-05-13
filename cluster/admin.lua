@@ -531,7 +531,16 @@ local function join_server(args)
     local conn = nil
     while not conn and fiber.time() < deadline do
         cond:wait(0.2)
-        conn = pool.connect(args.uri)
+
+        local member = membership.get_member(args.uri)
+        if (member ~= nil)
+        and (member.status == 'alive')
+        and (member.payload.uuid == args.instance_uuid)
+        and (member.payload.error == nil)
+        and (member.payload.ready)
+        then
+            conn = pool.connect(args.uri)
+        end
     end
     membership.unsubscribe(cond)
 
