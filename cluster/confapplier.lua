@@ -429,6 +429,13 @@ local function _failover(cond)
         end
         local opts = set_readonly({is_master = is_master}, true)
 
+        local _, err = e_config_apply:pcall(box.cfg, {
+            read_only = not is_master,
+        })
+        if err then
+            log.error('Box.cfg failed: %s', err)
+        end
+
         for _, mod in ipairs(vars.known_roles) do
             local _, err = _failover_role(mod, opts)
             if err then
@@ -466,15 +473,6 @@ local function apply_config(conf)
         box.info.cluster.uuid
     )
     log.info('Setting replication to [%s]', table.concat(replication, ', '))
-    local _, err = e_config_apply:pcall(box.cfg, {
-        -- workaround for tarantool gh-3760
-        replication_connect_timeout = 0.000001,
-        replication_connect_quorum = 0,
-        replication = replication,
-    })
-    if err then
-        log.error('Box.cfg failed: %s', err)
-    end
 
     topology.set(conf.topology)
     local my_replicaset = conf.topology.replicasets[box.info.cluster.uuid]
@@ -482,6 +480,17 @@ local function apply_config(conf)
     local is_master = false
     if active_masters[box.info.cluster.uuid] == box.info.uuid then
         is_master = true
+    end
+
+    local _, err = e_config_apply:pcall(box.cfg, {
+        read_only = not is_master,
+        -- workaround for tarantool gh-3760
+        replication_connect_timeout = 0.000001,
+        replication_connect_quorum = 0,
+        replication = replication,
+    })
+    if err then
+        log.error('Box.cfg failed: %s', err)
     end
 
     local enabled_roles = get_enabled_roles(my_replicaset.roles)

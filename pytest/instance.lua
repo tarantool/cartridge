@@ -64,12 +64,19 @@ package.preload['mymodule'] = function()
             assert(validated,
                 'Config was not validated prior to init()'
             )
+            if opts.is_master then
+                assert(box.info().ro == false)
+            end
             state = 'initialized'
         end,
         apply_config = function(_, opts)
+            assert(opts.is_master ~= nil)
             assert(validated,
                 'Config was not validated prior to apply_config()'
             )
+            if opts.is_master then
+                assert(box.info().ro == false)
+            end
             master = opts.is_master
             validated = false
         end,

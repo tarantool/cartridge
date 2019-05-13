@@ -36,9 +36,21 @@ def test_failover(cluster, helpers):
         assert(package.loaded['mymodule'].is_master() == false)
     """)
 
+    cluster['master'].conn.eval("""
+        assert(box.cfg.read_only == false)
+    """)
+
+    cluster['slave'].conn.eval("""
+        assert(box.cfg.read_only == true)
+    """)
+
     cluster['master'].kill()
     # helpers.wait_for(cluster['slave'].)
 
     helpers.wait_for(cluster['slave'].conn.eval, ["""
         assert(package.loaded['mymodule'].is_master() == true)
     """])
+
+    cluster['slave'].conn.eval("""
+        assert(box.cfg.read_only == false)
+    """)
