@@ -4,7 +4,7 @@ import { defaultMemoize } from 'reselect';
 import {css} from 'react-emotion'
 import ReactDragListView from 'react-drag-listview';
 import Modal from 'src/components/Modal';
-import {Button} from 'antd'
+import ClusterButton from 'src/components/ClusterButton';
 import cn from 'src/misc/cn';
 import Checkbox from '../Checkbox';
 import RadioButton from "../RadioButton";
@@ -161,13 +161,13 @@ class CommonItemEditModal extends React.PureComponent {
             </div>
 
             <div className="CommonItemEditModal-buttons">
-              <Button
+              <ClusterButton
                 type={'primary'}
                 disabled={submitDisabled}
                 onClick={this.handleSubmitClick}
               >
                 Submit
-              </Button>
+              </ClusterButton>
               {submitStatusMessage
                 ? (
                   <div className="CommonItemEditModal-submitMessage">
