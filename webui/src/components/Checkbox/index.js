@@ -15,6 +15,9 @@ const styles = {
   container: css`
     display: inline-block;
   `,
+  label: css`
+    display: inline-block;
+  `,
 }
 
 styles.checkbox = css`
@@ -44,7 +47,7 @@ export default class Checkbox extends React.Component{
       width: `${size}px`,
     }
     return <div className={`${styles.container} ${className}`}>
-      <label>
+      <label className={styles.label}>
         <input
           type="checkbox"
           checked={checked}

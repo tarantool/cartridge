@@ -15,7 +15,7 @@ class Root extends React.Component {
   render() {
     return (
       <Provider store={store}>
-        <div className="cluster_app">
+        <div className="cluster_app cluster_prefix">
           <Router history={window.tarantool_enterprise_core.history}>
             <Switch>
               <Route path={projectPath('')} component={App} />
