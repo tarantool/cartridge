@@ -16,6 +16,7 @@ const styles = {
     box-shadow: none;
     border: none;
     margin-top: 24px;
+    display: inline-block;
   `,
 };
 
