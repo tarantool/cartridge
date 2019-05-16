@@ -238,11 +238,12 @@ local function cfg(opts, box_opts)
     return true
 end
 
-local function bootstrap_from_scratch(roles, uuids)
+local function bootstrap_from_scratch(roles, uuids, labels)
     checks('?table', {
         instance_uuid = '?uuid_str',
         replicaset_uuid = '?uuid_str',
-    })
+        },
+        '?table')
 
     if vars.bootstrapped then
         return nil, e_init:new('Cluster is already bootstrapped')
@@ -256,7 +257,7 @@ local function bootstrap_from_scratch(roles, uuids)
         return select('#', ...), {...}
     end
     local n, ret = pack(
-        bootstrap.from_scratch(_boot_opts, vars.box_opts, roles)
+        bootstrap.from_scratch(_boot_opts, vars.box_opts, roles, labels)
     )
 
     vars.bootstrapped = true

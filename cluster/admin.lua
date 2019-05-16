@@ -189,6 +189,7 @@ local function get_servers_and_replicasets()
             leaders_order[server.replicaset_uuid],
             instance_uuid
         )
+        srv.labels = server.labels
         srv.replicaset.servers[srv.priority] = srv
 
         servers[instance_uuid] = srv
@@ -430,6 +431,7 @@ end
 -- @tparam ?string args.replicaset_uuid
 -- @tparam ?{string,...} args.roles
 -- @tparam ?number args.timeout
+-- @tparam ?{[string]=string,...} args.labels
 -- @treturn[1] boolean true
 -- @treturn[2] nil
 -- @treturn[2] table Error description
@@ -440,6 +442,7 @@ local function join_server(args)
         replicaset_uuid = '?string',
         roles = '?table',
         timeout = '?number',
+        labels = '?table'
     })
 
     local roles = {}
@@ -455,6 +458,8 @@ local function join_server(args)
         args.replicaset_uuid = uuid_lib.str()
     end
 
+    local labels = args.labels
+
     local topology_cfg = confapplier.get_deepcopy('topology')
     if topology_cfg == nil then
         -- Bootstrapping first instance from the web UI
@@ -465,7 +470,8 @@ local function join_server(args)
                 {
                     instance_uuid = args.instance_uuid,
                     replicaset_uuid = args.replicaset_uuid,
-                }
+                },
+                labels
             )
         else
             return nil, e_topology_edit:new(
@@ -492,6 +498,7 @@ local function join_server(args)
     topology_cfg.servers[args.instance_uuid] = {
         uri = args.uri,
         replicaset_uuid = args.replicaset_uuid,
+        labels = labels
     }
 
     local vshard_cfg = confapplier.get_readonly('vshard')
@@ -558,13 +565,15 @@ end
 -- @tparam table args
 -- @tparam string args.uuid
 -- @tparam ?string args.uri
+-- @tparam ?{[string]=string,...} args.labels
 -- @treturn[1] boolean true
 -- @treturn[2] nil
 -- @treturn[2] table Error description
 local function edit_server(args)
     checks({
         uuid = 'string',
-        uri = 'string',
+        uri = '?string',
+        labels = '?table'
     })
 
     local topology_cfg = confapplier.get_deepcopy('topology')
@@ -578,7 +587,12 @@ local function edit_server(args)
         return nil, e_topology_edit:new('Server %q is expelled', args.uuid)
     end
 
-    topology_cfg.servers[args.uuid].uri = args.uri
+    if args.uri ~= nil then
+        topology_cfg.servers[args.uuid].uri = args.uri
+    end
+    if args.labels ~= nil then
+        topology_cfg.servers[args.uuid].labels = args.labels
+    end
 
     local ok, err = confapplier.patch_clusterwide({topology = topology_cfg})
     if not ok then

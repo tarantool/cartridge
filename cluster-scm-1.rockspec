@@ -39,6 +39,7 @@ build = {
             ['cluster.confapplier'] = 'cluster/confapplier.lua';
             ['cluster.cluster-cookie'] = 'cluster/cluster-cookie.lua';
             ['cluster.service-registry'] = 'cluster/service-registry.lua';
+            ['cluster.label-utils'] = 'cluster/label-utils.lua';
 
             ['cluster.vshard-utils'] = 'cluster/vshard-utils.lua';
             ['cluster.roles.vshard-router'] = 'cluster/roles/vshard-router.lua';

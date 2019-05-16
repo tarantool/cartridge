@@ -75,7 +75,8 @@ def confdir(request):
 class Server(object):
     def __init__(self, binary_port, http_port,
                 alias=None, instance_uuid=None,
-                replicaset_uuid=None, roles=None):
+                replicaset_uuid=None, roles=None,
+                labels=None):
 
         self.alias = alias
         self.binary_port = binary_port
@@ -89,6 +90,7 @@ class Server(object):
         self.instance_uuid = instance_uuid
         self.replicaset_uuid = replicaset_uuid
         self.roles = roles
+        self.labels = labels
 
         pass
 
@@ -248,7 +250,8 @@ def cluster(request, confdir, module_tmpdir, helpers):
                     $instance_uuid: String
                     $replicaset_uuid: String
                     $roles: [String!]
-                    $timeout: Float
+                    $timeout: Float,
+                    $labels: [LabelInput]
                 ) {
                     join_server(
                         uri: $uri,
@@ -256,6 +259,7 @@ def cluster(request, confdir, module_tmpdir, helpers):
                         replicaset_uuid: $replicaset_uuid,
                         roles: $roles
                         timeout: $timeout
+                        labels: $labels
                     )
                 }
             """,
@@ -265,6 +269,7 @@ def cluster(request, confdir, module_tmpdir, helpers):
                 "replicaset_uuid": srv.replicaset_uuid,
                 "roles": srv.roles,
                 "timeout": TARANTOOL_CONNECTION_TIMEOUT,
+                "labels": srv.labels
             }
         )
         assert "errors" not in resp, resp['errors'][0]['message']

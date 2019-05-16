@@ -65,11 +65,52 @@ local gql_type_server = gql_types.object {
         replicaset = gql_type_replicaset,
         statistics = gql_stat_schema,
         boxinfo = gql_boxinfo_schema,
+        labels = {
+            kind = gql_types.list('Label')
+        }
     }
 }
 
+local gql_type_label = gql_types.object {
+    name = 'Label',
+    description = 'Cluster server label',
+    fields = {
+        name = gql_types.string.nonNull,
+        value = gql_types.string.nonNull
+    }
+}
+
+local gql_type_label_input = gql_types.inputObject {
+    name = 'LabelInput',
+    description = 'Cluster server label',
+    fields = {
+        name = gql_types.string.nonNull,
+        value = gql_types.string.nonNull
+    }
+}
+
+local function convert_labels_from_graphql_format(gql_labels)
+    local result = {}
+    for _, item in ipairs(gql_labels or {}) do
+        result[item.name] = item.value
+    end
+    return result
+end
+
+local function convert_labels_to_graphql_format(labels)
+    local result = {}
+    for label_name, label_value in pairs(labels or {}) do
+        table.insert(result, {name = label_name, value = label_value})
+    end
+    return result
+end
+
 local function get_servers(_, args)
-    return admin.get_servers(args.uuid)
+    local servers = admin.get_servers(args.uuid)
+    for _, server in ipairs(servers) do
+        server.labels = convert_labels_to_graphql_format(server.labels)
+    end
+    return servers
 end
 
 local function get_replicasets(_, args)
@@ -81,10 +122,16 @@ local function probe_server(_, args)
 end
 
 local function join_server(_, args)
+    if args.labels ~= nil then
+        args.labels = convert_labels_from_graphql_format(args.labels)
+    end
     return admin.join_server(args)
 end
 
 local function edit_server(_, args)
+    if args.labels ~= nil then
+        args.labels = convert_labels_from_graphql_format(args.labels)
+    end
     return admin.edit_server(args)
 end
 
@@ -146,6 +193,7 @@ local function init(graphql)
             replicaset_uuid = gql_types.string,
             roles = gql_types.list(gql_types.string.nonNull),
             timeout = gql_types.float,
+            labels = gql_types.list('LabelInput')
         },
         kind = gql_types.boolean,
         callback = module_name .. '.join_server',
@@ -155,7 +203,8 @@ local function init(graphql)
         name = 'edit_server',
         args = {
             uuid = gql_types.string.nonNull,
-            uri = gql_types.string.nonNull,
+            uri = gql_types.string,
+            labels = gql_types.list('LabelInput')
         },
         kind = gql_types.boolean,
         callback = module_name .. '.edit_server',

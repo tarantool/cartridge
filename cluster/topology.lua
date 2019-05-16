@@ -14,6 +14,7 @@ local membership = require('membership')
 local vars = require('cluster.vars').new('cluster.topology')
 local pool = require('cluster.pool')
 local utils = require('cluster.utils')
+local label_utils = require('cluster.label-utils')
 
 local e_config = errors.new_class('Invalid cluster topology config')
 vars:new('known_roles', {
@@ -137,10 +138,13 @@ local function validate_schema(field, topology)
                 '%s.replicaset_uuid %q is not a valid UUID', field, server.replicaset_uuid
             )
 
+            label_utils.validate_labels(field, server)
+
             local known_keys = {
                 ['uri'] = true,
                 ['disabled'] = true,
                 ['replicaset_uuid'] = true,
+                ['labels'] = true
             }
             for k, v in pairs(server) do
                 e_config:assert(
