@@ -67,14 +67,14 @@ local function init_box(box_opts)
 end
 
 
-local function bootstrap_from_scratch(boot_opts, box_opts, roles)
+local function bootstrap_from_scratch(boot_opts, box_opts, roles, labels)
     checks({
         workdir = 'string',
         binary_port = 'number',
         bucket_count = '?number',
         instance_uuid = '?uuid_str',
         replicaset_uuid = '?uuid_str',
-    }, '?table', '?table')
+    }, '?table', '?table', '?table')
 
     if roles == nil then
         roles = {}
@@ -102,6 +102,7 @@ local function bootstrap_from_scratch(boot_opts, box_opts, roles)
                 [boot_opts.instance_uuid] = {
                     uri = membership.myself().uri,
                     replicaset_uuid = boot_opts.replicaset_uuid,
+                    labels = labels
                 },
             },
             replicasets = {
