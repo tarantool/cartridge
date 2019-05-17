@@ -38,7 +38,7 @@ end
 local function run()
     local failed_tests = {}
 
-    local files = find_tests('./taptest')
+    local files = find_tests('./test/unit')
 
     for _, file in ipairs(files) do
         print("Running tests from: " .. file)
