@@ -1,6 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import ClusterButton from 'src/components/ClusterButton';
+import Button from 'src/components/Button';
 import { css } from 'emotion';
 import { logOut } from 'src/store/actions/auth.actions';
 import { ModalLogInForm } from 'src/components/LogInForm';
@@ -61,7 +61,7 @@ class HeaderAuthControl extends React.Component {
         <span class={styles.userName}>{username}</span>
         {
           authorized
-            ? <ClusterButton
+            ? <Button
               className={styles.button}
               size="small"
               shape="circle"
@@ -69,7 +69,7 @@ class HeaderAuthControl extends React.Component {
               icon="logout"
               title="Log out"
             />
-            : <ClusterButton
+            : <Button
               className={styles.button}
               size="small"
               onClick={this.showAuthModal}
@@ -78,7 +78,7 @@ class HeaderAuthControl extends React.Component {
               text="Log in"
             >
               Log in
-            </ClusterButton>
+            </Button>
         }
         <ModalLogInForm
           visible={this.state.authModalOpened}

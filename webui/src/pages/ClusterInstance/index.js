@@ -4,7 +4,7 @@ import ClusterInstance from './ClusterInstance';
 import isEqual from 'lodash/isEqual';
 import { defaultMemoize, createSelectorCreator } from 'reselect';
 
-const getSectionsNames = state => Object.keys(state.clusterInstancePage.boxinfo);
+const getSectionsNames = state => Object.keys(state.clusterInstancePage.boxinfo || {});
 
 const selectSectionsNames = createSelectorCreator(
   defaultMemoize,

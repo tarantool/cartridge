@@ -4,7 +4,7 @@ import { Form, Icon, Input } from 'antd';
 import { css } from 'emotion';
 import { logIn } from 'src/store/actions/auth.actions';
 import Modal from 'src/components/Modal';
-import ClusterButton from 'src/components/ClusterButton';
+import Button from 'src/components/Button';
 
 const styles = {
   formWrap: css`
@@ -81,14 +81,14 @@ class LogInForm extends React.Component {
           )}
         </Form.Item>
         <Form.Item>
-          <ClusterButton
+          <Button
             className={styles.submitBtn}
             type="primary"
             htmlType="submit"
             loading={loading}
           >
             Log in
-          </ClusterButton>
+          </Button>
         </Form.Item>
         <p className={styles.error}>{error}</p>
       </Form>

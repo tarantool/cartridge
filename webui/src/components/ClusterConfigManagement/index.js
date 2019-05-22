@@ -15,7 +15,7 @@ const getUploadProps = createMessage => {
         });
       } else if (info.file.status === 'error') {
         createMessage({
-          content: { type: 'danger', text: info.file.response.err }
+          content: { type: 'error', text: info.file.response.err }
         });
       }
     },

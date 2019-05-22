@@ -2,7 +2,7 @@ import Modal from 'antd/lib/modal'
 import * as React from 'react'
 import {css} from 'emotion'
 import {Title} from '../styled'
-import ClusterButton from 'src/components/ClusterButton'
+import Button from 'src/components/Button'
 
 const styles = {
   modal: css`
@@ -28,12 +28,12 @@ export default (props) => {
   const {okText, okType, onOk, onCancel, cancelText, confirmLoading} = props;
 
   const footer = [
-    <ClusterButton key="back" onClick={onCancel}>
+    <Button key="back" onClick={onCancel}>
       {cancelText || 'Cancel'}
-    </ClusterButton>,
-    <ClusterButton key="submit" type={okType || 'primary'} loading={confirmLoading} onClick={onOk}>
+    </Button>,
+    <Button key="submit" type={okType || 'primary'} loading={confirmLoading} onClick={onOk}>
       {okText || 'Ok'}
-    </ClusterButton>,
+    </Button>,
   ]
 
   return <Modal footer={footer} {...{...defaultOption, ...props}} title={title} />;

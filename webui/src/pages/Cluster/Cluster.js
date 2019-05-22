@@ -19,7 +19,7 @@ import ClusterConfigManagement from 'src/components/ClusterConfigManagement';
 import './Cluster.css';
 import BootstrapPanel from "src/components/BootstrapPanel";
 import AuthToggleButton from './child/AuthToggleButton';
-import ClusterButton from 'src/components/ClusterButton';
+import Button from 'src/components/Button';
 
 const styles = {
   buttons: css`
@@ -309,12 +309,12 @@ class Cluster extends React.Component {
         <div className={styles.button}><AuthToggleButton size={'large'} /></div>
         <div className={styles.button}><FailoverButton size={'large'} /></div>
         <div className={styles.button}>
-          <ClusterButton
+          <Button
             size={'large'}
             onClick={this.handleProbeServerRequest}
           >
             Probe server
-          </ClusterButton>
+          </Button>
         </div>
       </div>
     );
