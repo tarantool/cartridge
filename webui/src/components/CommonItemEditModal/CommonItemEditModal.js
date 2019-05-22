@@ -1,60 +1,20 @@
 import PropTypes from 'prop-types';
 import React from 'react';
 import { defaultMemoize } from 'reselect';
-import {css} from 'react-emotion'
 import ReactDragListView from 'react-drag-listview';
+import { Col, Form, Row, Table } from "antd";
 import Modal from 'src/components/Modal';
-import ClusterButton from 'src/components/ClusterButton';
-import cn from 'src/misc/cn';
+import Button from 'src/components/Button';
 import Checkbox from '../Checkbox';
-import RadioButton from "../RadioButton";
-import { Table } from "antd";
+import Input from '../Input';
+import Radio from "../Radio";
 
-
-const styles = {
-  row: css``,
-  label: css`
-    &.col-form-label{
-    font-size: 18px;
-    color: #343434;
-    width: 105px;
-    font-family: Roboto;
-    }
-  `,
-  listLabel: css`
-    width: 200px;
-  `,
-  checkboxLabel: css`
-    color: #343434;
-    font-size: 14px;
-    font-family: Roboto;
-  `,
-  checkboxContainer: css`
-    vertical-align: middle;
-    display: inline-block;
-    margin-right: 9px;
-  `,
-  forminput: css`
-    &.form-check{
-      display: inline-block;
-      margin-right: 30px;
-      padding-left: 0;
-    }
-  `,
-  radio: css`
-    margin-right: 9px;
-  `,
-  radioRow: css`
-    margin-bottom: 6px;
-  `
-};
-
-const getOptionFormName = parts => `${parts[0]}[${parts[1]}]`;
-
-const parseOptionFormName = optionFormName => {
-  const match = optionFormName.match(/^([^[]+)\[([^\]]+)]/);
-  if (match) {
-    return [match[1], match[2]];
+const formItemLayout = {
+  labelCol: {
+    span: 5
+  },
+  wrapperCol: {
+    span: 19
   }
 };
 
@@ -122,13 +82,13 @@ class CommonItemEditModal extends React.PureComponent {
       >
         {isLoading
           ? (
-            <div className="CommonItemEditModal-loading">
+            <div>
               Loading...
             </div>
           )
           : itemNotFound
             ? (
-              <div className="CommonItemEditModal-notFound">
+              <div>
                 Item not found
               </div>
             )
@@ -138,47 +98,44 @@ class CommonItemEditModal extends React.PureComponent {
   }
 
   renderForm = () => {
-    const { isSaving, submitStatusMessage } = this.props;
-
+    const { hideLabels, isSaving, submitStatusMessage } = this.props;
     const preparedFields = this.getFields();
     const submitDisabled = ! this.isFormReadyToSubmit();
 
     return (
-      <div className="CommonItemEditModal-form">
-        <form onSubmit={this.handleSubmitClick}>
-          <fieldset disabled={isSaving}>
-            <div className="CommonItemEditModal-fields">
-              {preparedFields.map(field => {
-                return (
-                  <div
-                    key={field.key}
-                    className={`form-group row ${styles.row}`}
-                  >
-                    {this.renderField(field)}
-                  </div>
-                );
-              })}
-            </div>
+      <Form onSubmit={this.handleSubmitClick}>
+        <fieldset disabled={isSaving}>
+          {preparedFields.map(field => (
+            <Form.Item
+              key={field.key}
+              label={!hideLabels && field.title}
+              labelAlign="left"
+              validateStatus={!!field.invalidFeedback && !!field.invalid && field.invalid(this.state.formData) && 'error'}
+              help={field.invalidFeedback || field.helpText}
+              {...!hideLabels && formItemLayout}
+            >
+              {this.renderField(field)}
+            </Form.Item>
+          ))}
 
-            <div className="CommonItemEditModal-buttons">
-              <ClusterButton
-                type={'primary'}
-                disabled={submitDisabled}
-                onClick={this.handleSubmitClick}
-              >
-                Submit
-              </ClusterButton>
-              {submitStatusMessage
-                ? (
-                  <div className="CommonItemEditModal-submitMessage">
-                    {submitStatusMessage}
-                  </div>
-                )
-                : null}
-            </div>
-          </fieldset>
-        </form>
-      </div>
+          <div>
+            <Button
+              type="primary"
+              disabled={submitDisabled}
+              onClick={this.handleSubmitClick}
+            >
+              Submit
+            </Button>
+            {submitStatusMessage
+              ? (
+                <div>
+                  {submitStatusMessage}
+                </div>
+              )
+              : null}
+          </div>
+        </fieldset>
+      </Form>
     );
   };
 
@@ -208,8 +165,6 @@ class CommonItemEditModal extends React.PureComponent {
   };
 
   renderDraggableList = field => {
-    const { hideLabels } = this.props;
-
     const dragProps = {
       onDragEnd: (fromIndex, toIndex) => {
         const data = [...this.state.formData.servers];
@@ -223,162 +178,71 @@ class CommonItemEditModal extends React.PureComponent {
     };
 
     return (
-      <React.Fragment>
-        {hideLabels
-            ? null
-            : <legend className={`col-form-label ${styles.label}`}>{field.title}</legend>}
-        <ReactDragListView {...dragProps}>
-          <Table
-              columns={field.tableColumns}
-              pagination={false}
-              dataSource={this.state.formData.servers}
-              {...field.tableProps}
-          />
-        </ReactDragListView>
-      </React.Fragment>
+      <ReactDragListView {...dragProps}>
+        <Table
+          columns={field.tableColumns}
+          pagination={false}
+          dataSource={this.state.formData.servers}
+          {...field.tableProps}
+        />
+      </ReactDragListView>
     )
   };
 
 
   renderInputField = field => {
     const { formData } = this.state;
-    const { hideLabels } = this.props;
-    const id = `CommonItemEditModal-${field.key}`;
     const value = formData[field.key] == null ? '' : String(formData[field.key]);
-    const fieldClassName = hideLabels ? 'col-sm-12' : 'col-sm-9';
-    const invalid = !!field.invalidFeedback && !!field.invalid && field.invalid(formData);
-    const inputClassName = cn('form-control', invalid && 'is-invalid');
 
     return (
-      <React.Fragment>
-        {hideLabels
-          ? null
-          : (
-            <label
-              htmlFor={id}
-              className={`col-form-label ${styles.label}`}
-            >
-              {field.title}
-            </label>
-          )}
-        <div className={fieldClassName}>
-          <input
-            id={id}
-            type="text"
-            name={field.key}
-            value={value}
-            placeholder={field.placeholder}
-            disabled={field.disabled}
-            onChange={this.handleInputFieldChange}
-            className={inputClassName} />
-          {invalid
-            ? (
-              <div className="invalid-feedback">
-                {field.invalidFeedback}
-              </div>
-            )
-            : null}
-          {field.helpText
-            ? (
-              <small className="form-text text-muted">
-                {field.helpText}
-              </small>
-            )
-            : null}
-        </div>
-      </React.Fragment>
+      <Input
+        name={field.key}
+        value={value}
+        placeholder={field.placeholder}
+        disabled={field.disabled}
+        onChange={this.handleInputFieldChange}
+      />
     );
   };
 
   renderCheckboxGroupField = field => {
-    const { formData } = this.state;
-    const { hideLabels } = this.props;
-    const values = formData[field.key] || [];
-    const fieldClassName = hideLabels ? 'col-sm-12' : 'col-sm-9';
+    const values = this.state.formData[field.key] || [];
 
     return (
-      <React.Fragment>
-        {hideLabels
-          ? null
-          : <legend className={`col-form-label ${styles.label}`}>{field.title}</legend>}
-        <div className={fieldClassName}>
-          {field.options.map(option => {
-            const checked = values.includes(option.key);
-            const optionName = getOptionFormName([field.key, option.key]);
-            const id = `CommonItemEditModal-${optionName}`;
-
-            return (
-              <div
-                key={option.key}
-                className={`form-check ${styles.forminput}`}
-              >
-
-                <Checkbox
-                  id={id}
-                  type="checkbox"
-                  name={optionName}
-                  checked={checked}
-                  disabled={field.disabled}
-                  onChange={this.handleCheckboxGroupChange}
-                  className={styles.checkboxContainer}
-                />
-                <label
-                  htmlFor={id}
-                  className={`form-check-label ${styles.checkboxLabel}`}
-                >
-                  {option.label}
-                </label>
-              </div>
-            );
-          })}
-        </div>
-      </React.Fragment>
+      <Row>
+        {field.options.map(option => (
+          <Col span={12} key={option.key}>
+            <Checkbox
+              name={field.key}
+              value={option.key}
+              checked={values.includes(option.key)}
+              disabled={field.disabled}
+              onChange={this.handleCheckboxGroupChange}
+            >
+              {option.label}
+            </Checkbox>
+          </Col>
+        ))}
+      </Row>
     );
   };
 
   renderOptionGroupField = field => {
-    const { formData } = this.state;
-    const { hideLabels } = this.props;
-    const value = formData[field.key];
-    const fieldClassName = hideLabels ? 'col-sm-12' : 'col-sm-9';
-    return (
-      <React.Fragment>
-        {hideLabels
-          ? null
-          : <legend className={`col-form-label ${styles.label}`}>{field.title}</legend>}
-        <div className={fieldClassName}>
-          {field.options.map(option => {
-            const checked = value === option.key;
-            const optionName = getOptionFormName([field.key, option.key]);
-            const id = `CommonItemEditModal-${optionName}`;
+    const value = this.state.formData[field.key];
 
-            return (
-              <div
-                key={option.key}
-                className={styles.radioRow}
-              >
-                <RadioButton
-                  id={id}
-                  type="radio"
-                  name={field.key}
-                  value={option.key}
-                  checked={checked}
-                  disabled={field.disabled}
-                  onChange={this.handleOptionGroupChange}
-                  className={styles.radio}
-                  />
-                <label
-                  htmlFor={id}
-                  className="form-check-label"
-                >
-                  {option.label}
-                </label>
-              </div>
-            );
-          })}
-        </div>
-      </React.Fragment>
-    );
+    return field.options.map(option => (
+      <Row key={option.key}>
+        <Radio
+          name={field.key}
+          value={option.key}
+          checked={value === option.key}
+          disabled={field.disabled}
+          onChange={this.handleOptionGroupChange}
+        >
+          {option.label}
+        </Radio>
+      </Row>
+    ));
   };
 
   handleInputFieldChange = event => {
@@ -392,13 +256,12 @@ class CommonItemEditModal extends React.PureComponent {
     const { formData } = this.state;
     const { target } = event;
 
-    const [fieldName, optionName] = parseOptionFormName(target.name);
-    const values = formData[fieldName];
+    const values = formData[target.name];
     const newValues = target.checked
-      ? [...values, optionName]
-      : values.filter(option => option !== optionName);
+      ? [...values, target.value]
+      : values.filter(option => option !== target.value);
 
-    this.setState({ formData: { ...formData, [fieldName]: newValues } });
+    this.setState({ formData: { ...formData, [target.name]: newValues } });
   };
 
   handleOptionGroupChange = event => {

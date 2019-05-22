@@ -67,7 +67,7 @@ function* appMessageSaga() {
       const activeDeadServerMessage = yield call(getActiveDeadServerMessage);
       if (!activeDeadServerMessage) {
         const message = {
-          content: { type: 'danger', text: 'It seems like server is not reachable' },
+          content: { type: 'error', text: 'It seems like server is not reachable' },
           type: SERVER_NOT_REACHABLE_ERROR_TYPE,
         };
         yield put({ type: APP_CREATE_MESSAGE, payload: message });
@@ -83,7 +83,7 @@ function* appMessageSaga() {
 
       if (action.error && action.__errorMessage) {
         const message = {
-          content: { type: 'danger', text: getApiErrorMessage(action.error) },
+          content: { type: 'error', text: getApiErrorMessage(action.error) },
         };
         yield put({ type: APP_CREATE_MESSAGE, payload: message });
       }

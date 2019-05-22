@@ -79,6 +79,7 @@ const prepareFields = (roles, replicaset) => {
           title: 'Operates',
           key: 'operate',
           render: () => <a className={styles.dragIcon}>☰</a>,
+          width: 50,
         },
 
         {

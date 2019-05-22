@@ -1,8 +1,33 @@
 import PropTypes from 'prop-types';
 import React from 'react';
 import { defaultMemoize } from 'reselect';
+import { css } from 'emotion'
+import { Icon } from 'antd';
 
-import './AppMessage.css';
+const styles = {
+  closeBtn: css`
+    border: none;
+    background: transparent;
+    cursor: pointer;
+  `,
+  outer: css`
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding-left: 243px;
+  `,
+  inner: css`
+    padding-right: 60px;
+    padding-left: 60px;
+  `
+};
+
+const ICON_TYPES = {
+  success: 'check-circle',
+  error: 'close-circle',
+  warning: 'exclamation-circle'
+};
 
 const prepareUndoneMessages = messages => {
   return messages.filter(message => ! message.done);
@@ -19,22 +44,28 @@ class AppMessage extends React.Component {
     const messages = this.getUndoneMessages();
 
     return (
-      <div className="AppMessage-outer">
-        <div className="AppMessage-inner">
-          {messages.map((message, index) => {
-            const { content } = message;
-            const className = `alert alert-${content.type} alert-dismissible fade show`;
-            return (
-              <div key={index} className={className}>
-                <span>{content.text}</span>
-                <button type="button" className="btn btn-link alert-link btn-lg"
-                  onClick={() => this.handleDoneClick(content)}
-                >
-                  <span>&times;</span>
-                </button>
+      <div className={styles.outer}>
+        <div className={styles.inner}>
+          {messages.map(({ content }, index) => (
+            <div className="ant-notification-notice ant-notification-notice-closable" key={index}>
+              <div className="ant-notification-notice-content">
+                <div className="ant-notification-notice-with-icon">
+                  <Icon
+                    className={`ant-notification-notice-icon ant-notification-notice-icon-${content.type}`}
+                    type={ICON_TYPES[content.type]}
+                  />
+                  <div className="ant-notification-notice-description">{content.text}</div>
+                </div>
               </div>
-            );
-          })}
+              <button
+                type="button"
+                className={`ant-notification-notice-close ${styles.closeBtn}`}
+                onClick={() => this.handleDoneClick(content)}
+              >
+                <Icon className="ant-notification-close-icon" type="close" />
+              </button>
+            </div>
+          ))}
         </div>
       </div>
     );
@@ -54,7 +85,7 @@ class AppMessage extends React.Component {
 AppMessage.propTypes = {
   messages: PropTypes.arrayOf(PropTypes.shape({
     content: PropTypes.shape({
-      type: PropTypes.oneOf(['success', 'warning', 'danger']).isRequired,
+      type: PropTypes.oneOf(['success', 'warning', 'error']).isRequired,
       text: PropTypes.string.isRequired,
     }),
   })).isRequired,
