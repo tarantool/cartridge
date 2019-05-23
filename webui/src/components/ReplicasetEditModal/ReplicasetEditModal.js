@@ -28,7 +28,7 @@ const styles = {
     font-size: 20px;
   `,
   tableStyles: css`
-    margin-left: 0px
+    margin-left: 0px;
   `
 };
 
@@ -56,8 +56,44 @@ const renderDraggableListOptions = record => record.servers.map(server => ({
           </span>,
 }));
 
+const getActiveRolesDependencies = (activeRoles, rolesOptions) => {
+  const result = [];
+  rolesOptions.forEach(({ key, dependencies }) => {
+    if (activeRoles.includes(key)) {
+      result.push(...dependencies);
+    }
+  });
+  return R.uniq(result);
+};
+
 const prepareFields = (roles, replicaset) => {
-  const rolesOptions = roles.map(role => ({ key: role, label: role }));
+  const rolesOptions = roles.map(
+    ({
+      name,
+      dependencies = []
+    }) => {
+      const dependenciesLabel = dependencies.length > 3
+        ? ` (+ ${dependencies.slice(0, 2).join(', ')}, ${dependencies.length - 2} more)`
+        : ` (+ ${dependencies.join(', ')})`;
+
+      const label = (
+        <React.Fragment>
+          {name}
+          {!!dependencies.length && (
+            <span style={{ color: 'gray' }}>
+              {dependenciesLabel}
+            </span>
+          )}
+        </React.Fragment>
+      );
+
+      return {
+        key: name,
+        label,
+        dependencies
+      };
+    }
+  );
 
   const shallRenderDraggableList = replicaset && replicaset.servers.length > 2;
 
@@ -108,7 +144,22 @@ const prepareFields = (roles, replicaset) => {
       key: 'roles',
       title: 'Roles',
       type: 'checkboxGroup',
-      options: rolesOptions,
+      options: ({ roles }) => {
+        const dependencies = getActiveRolesDependencies(roles, rolesOptions);
+        return rolesOptions
+          .reduceRight((acc, option) => (acc.push({
+            ...option,
+            disabled: dependencies.includes(option.key)
+          }) && acc), []);
+      },
+      stateModifier: ({ roles, ...formData }) => {
+        const dependencies = getActiveRolesDependencies(roles, rolesOptions);
+        dependencies.push(...roles);
+        return {
+          ...formData,
+          roles: R.uniq(dependencies)
+        };
+      }
     },
     {
       key: 'weight',
@@ -177,7 +228,8 @@ class ReplicasetEditModal extends React.PureComponent {
         isFormReadyToSubmit={this.isFormReadyToSubmit}
         submitStatusMessage={submitStatusMessage}
         onSubmit={onSubmit}
-        onRequestClose={onRequestClose} />
+        onRequestClose={onRequestClose}
+      />
     );
   }
 
@@ -211,7 +263,10 @@ ReplicasetEditModal.propTypes = {
   knownRoles: PropTypes.arrayOf(PropTypes.string).isRequired,
   replicaset: PropTypes.shape({
     uuid: PropTypes.string,
-    roles: PropTypes.arrayOf(PropTypes.string).isRequired,
+    roles: PropTypes.arrayOf(PropTypes.shape({
+      name: PropTypes.string.isRequired,
+      dependencies: PropTypes.arrayOf(PropTypes.string)
+    })).isRequired,
   }),
   submitStatusMessage: PropTypes.string,
   onSubmit: PropTypes.func.isRequired,
