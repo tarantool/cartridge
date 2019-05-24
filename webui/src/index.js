@@ -4,10 +4,11 @@ import { Router, Switch, Route } from 'react-router-dom';
 import App from './app';
 import HeaderAuthControl from 'src/components/HeaderAuthControl';
 import configureStore from './store/configureStore';
-
+import { logOut } from 'src/store/actions/auth.actions';
 import { PROJECT_NAME } from './constants';
+import { menuReducer } from './menu';
 
-const projectPath = (path) => `/${PROJECT_NAME}/${path}`
+const projectPath = (path) => `/${PROJECT_NAME}/${path}`;
 
 const store = configureStore();
 
@@ -29,15 +30,15 @@ class Root extends React.Component {
 
 window.tarantool_enterprise_core.register(
   PROJECT_NAME,
-  [
-    {
-      label: 'Cluster',
-      path: `/${PROJECT_NAME}`
-    },
-  ],
+  menuReducer,
   Root,
   'react'
 );
+
+window.tarantool_enterprise_core.subscribe('cluster:logout', () => {
+  store.dispatch(logOut());
+});
+
 
 window.tarantool_enterprise_core.setHeaderComponent(
   <Provider store={store}>

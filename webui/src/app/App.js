@@ -12,6 +12,7 @@ import AppMessage from 'src/components/AppMessage';
 import { SplashLogInForm } from 'src/components/LogInForm';
 import ClusterPage from 'src/pages/Cluster';
 import ClusterInstancePage from 'src/pages/ClusterInstance';
+import UsersPage from 'src/pages/Users';
 import { PROJECT_NAME } from 'src/constants';
 
 class App extends React.Component {
@@ -44,6 +45,7 @@ class App extends React.Component {
       <React.Fragment>
         <Switch>
           <Route path={`/${PROJECT_NAME}/instance/:instanceUUID`} component={ClusterInstancePage} />
+          <Route path={`/${PROJECT_NAME}/users`} component={UsersPage} />
           <Route component={ClusterPage} />
         </Switch>
         <AppMessage messages={messages} setMessageDone={setMessageDone} />

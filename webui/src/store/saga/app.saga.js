@@ -12,8 +12,7 @@ import {
   APP_SERVER_CONSOLE_EVAL_STRING_REQUEST_SUCCESS,
   APP_SERVER_CONSOLE_EVAL_STRING_REQUEST_ERROR,
   APP_CREATE_MESSAGE,
-  APP_SET_MESSAGE_DONE,
-  AUTH_RESTORE_REQUEST
+  APP_SET_MESSAGE_DONE
 } from 'src/store/actionTypes';
 import { baseSaga, getRequestSaga } from 'src/store/commonRequest';
 import { getClusterSelf, evalString } from 'src/store/request/app.requests';
@@ -28,7 +27,22 @@ function* appDataRequestSaga() {
     let response;
     try {
       const clusterSelfResponse = yield call(getClusterSelf);
-      yield put({ type: AUTH_RESTORE_REQUEST });
+
+      const {
+        implements_add_user,
+        implements_list_users
+      } = clusterSelfResponse.authParams;
+      if (implements_add_user || implements_list_users) {
+        window.tarantool_enterprise_core.dispatch(
+          'dispatchToken',
+          {
+            type: 'ADD_CLUSTER_USERS_MENU_ITEM',
+            payload: {
+              location: window.tarantool_enterprise_core.history.location
+            },
+          }
+        );
+      }
 
       response = {
         ...clusterSelfResponse,

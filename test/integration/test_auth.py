@@ -49,6 +49,15 @@ def _login(srv, username, password):
         data={'username': username, 'password': password}
     )
 
+def check_401(srv, **kwargs):
+    resp = srv.graphql('{}', **kwargs)
+    assert resp['errors'][0]['message'] == "Unauthorized"
+
+
+def check_200(srv, **kwargs):
+    resp = srv.graphql('{}', **kwargs)
+    assert 'errors' not in resp, resp['errors'][0]['message']
+
 @pytest.mark.parametrize("auth", [True, False])
 @pytest.mark.parametrize("alias", ['master', 'replica'])
 def test_login(cluster, auth, alias):
@@ -73,9 +82,9 @@ def test_login(cluster, auth, alias):
     assert _login(srv, None, None).status_code == 403
 
     if auth:
-        assert srv.post_raw('/admin/api').status_code == 401
+        check_401(srv)
     else:
-        assert srv.post_raw('/admin/api').status_code == 200
+        check_200(srv)
 
     resp = _login(srv, USERNAME, PASSWORD)
     assert resp.status_code == 200
@@ -115,7 +124,7 @@ def test_auth_disabled(cluster, disable_auth):
     PASSWORD1 = 'Red Nickel'
     USERNAME2 = 'Grouse'
     PASSWORD2 = 'Silver Copper'
-    assert srv.post_raw('/admin/api').status_code == 200
+    check_200(srv)
 
     req = """
         mutation($username: String! $password: String!) {
@@ -249,10 +258,10 @@ def test_auth_enabled(cluster, enable_auth):
     """.format(USERNAME, PASSWORD))
 
     lsid = _login(srv, USERNAME, PASSWORD).cookies['lsid']
-    assert srv.post_raw('/admin/api', cookies={'lsid': 'AA=='}).status_code == 401
-    assert srv.post_raw('/admin/api', cookies={'lsid': '!!'}).status_code == 401
-    assert srv.post_raw('/admin/api', cookies={'lsid': None}).status_code == 401
-    assert srv.post_raw('/admin/api', cookies={'lsid': lsid}).status_code == 200
+    check_401(srv, cookies={'lsid': 'AA=='})
+    check_401(srv, cookies={'lsid': '!!'})
+    check_401(srv, cookies={'lsid': None})
+    check_200(srv, cookies={'lsid': lsid})
 
 def test_uninitialized(module_tmpdir, helpers):
     srv = Server(
@@ -273,8 +282,8 @@ def test_uninitialized(module_tmpdir, helpers):
         assert 'lsid' in resp.cookies
 
         lsid = resp.cookies['lsid']
-        assert srv.post_raw('/admin/api', cookies={'lsid': None}).status_code == 401
-        assert srv.post_raw('/admin/api', cookies={'lsid': lsid}).status_code == 200
+        check_401(srv, cookies={'lsid': None})
+        check_200(srv, cookies={'lsid': lsid})
 
     finally:
         srv.kill()
@@ -326,21 +335,18 @@ def test_basic_auth(cluster, enable_auth):
     def _h(*args):
         return {'Authorization': ' '.join(args)}
 
-    def _post(h):
-        return srv.post_raw('/admin/api', headers=h)
+    check_401(srv, headers=_h('Basic', _b64('U')) )
+    check_401(srv, headers=_h('Basic', _b64('U:')) )
+    check_401(srv, headers=_h('Basic', _b64(':P')) )
+    check_401(srv, headers=_h('Basic', _b64(':U:P')) )
+    check_401(srv, headers=_h('Basic', _b64('U:P:')) )
+    check_401(srv, headers=_h('Basic', _b64(':U:P:')) )
+    check_401(srv, headers=_h('Basic', _b64('U:P:C')) )
+    check_401(srv, headers=_h('Basic', _b64('U'), _b64('P')) )
 
-    assert _post(_h('Basic', _b64('U'))).status_code == 401
-    assert _post(_h('Basic', _b64('U:'))).status_code == 401
-    assert _post(_h('Basic', _b64(':P'))).status_code == 401
-    assert _post(_h('Basic', _b64(':U:P'))).status_code == 401
-    assert _post(_h('Basic', _b64('U:P:'))).status_code == 401
-    assert _post(_h('Basic', _b64(':U:P:'))).status_code == 401
-    assert _post(_h('Basic', _b64('U:P:C'))).status_code == 401
-    assert _post(_h('Basic', _b64('U'), _b64('P'))).status_code == 401
+    check_401(srv, headers=_h('Basic', _b64('x:x')) )
+    check_401(srv, headers=_h('Basic', _b64('x:P')) )
+    check_401(srv, headers=_h('Basic', _b64('U:x')) )
+    check_401(srv, headers=_h('Weird', _b64('U:P')) )
 
-    assert _post(_h('Basic', _b64('x:x'))).status_code == 401
-    assert _post(_h('Basic', _b64('x:P'))).status_code == 401
-    assert _post(_h('Basic', _b64('U:x'))).status_code == 401
-    assert _post(_h('Weird', _b64('U:P'))).status_code == 401
-
-    assert _post(_h('Basic', _b64('U:P'))).status_code == 200
+    check_200(srv, headers=_h('Basic', _b64('U:P')) )

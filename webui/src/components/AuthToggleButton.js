@@ -10,17 +10,17 @@ class AuthToggleButton extends React.Component {
 
   render() {
     const {
-      authorizationFeature,
+      implements_check_password,
       authorizationEnabled,
-      loading
+      fetchingAuth
     } = this.props;
 
-    return authorizationFeature ?
+    return implements_check_password ?
       (
         <Button
           size='large'
           onClick={this.handleClick}
-          disabled={loading}
+          disabled={fetchingAuth}
           type={authorizationEnabled ? 'primary' : 'default'}
         >
           {`Auth: ${authorizationEnabled ? 'enabled' : 'disabled'}`}
@@ -31,15 +31,21 @@ class AuthToggleButton extends React.Component {
 }
 
 const mapStateToProps = ({
+  app: {
+    authParams: {
+      implements_check_password
+    }
+  },
   auth: {
-    authorizationFeature,
     authorizationEnabled,
-    loading
+  },
+  ui: {
+    fetchingAuth
   }
 }) => ({
-  authorizationFeature,
+  implements_check_password,
   authorizationEnabled,
-  loading
+  fetchingAuth
 });
 
 export default connect(mapStateToProps, { turnAuth })(AuthToggleButton);

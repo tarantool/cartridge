@@ -211,7 +211,7 @@ end
 
 local function _execute_graphql(req)
     if not auth.check_request(req) then
-        return http_finalize_json(401, {
+        return http_finalize_json(200, {
             errors = {{message = "Unauthorized"}},
         })
     end

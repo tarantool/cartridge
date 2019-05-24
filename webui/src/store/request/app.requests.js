@@ -12,6 +12,15 @@ export async function getClusterSelf() {
         knownRoles: known_roles
         can_bootstrap_vshard
         vshard_bucket_count
+        authParams: auth_params {
+          enabled
+          implements_add_user
+          implements_check_password
+          implements_list_users
+          implements_edit_user
+          implements_remove_user
+          username
+        }
       }
     }
   `;
@@ -34,9 +43,9 @@ export async function getClusterSelf() {
       knownRoles,
       can_bootstrap_vshard,
       vshard_bucket_count,
-      authParams
     },
-    failover,
+    authParams,
+    failover
   };
 }
 

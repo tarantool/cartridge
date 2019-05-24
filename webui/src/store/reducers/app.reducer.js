@@ -9,6 +9,7 @@ import {
   APP_SERVER_CONSOLE_EVAL_STRING_REQUEST_SUCCESS,
   APP_SERVER_CONSOLE_EVAL_STRING_REQUEST_ERROR,
   APP_SAVE_CONSOLE_STATE,
+  AUTH_ACCESS_DENIED,
   CLUSTER_PAGE_CREATE_REPLICASET_REQUEST_SUCCESS,
   CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_SUCCESS,
   CLUSTER_PAGE_STATE_RESET,
@@ -33,6 +34,7 @@ const initialState = {
   evalResult: null,
   savedConsoleState: {},
   messages: [],
+  authParams: {},
 };
 
 const appMountReducer = getReducer(APP_DID_MOUNT, { appMount: true });
@@ -156,6 +158,15 @@ export const reducer = baseReducer(
           messages: state.messages.map(
             message => message.content === action.payload.content ? { ...message, done: true } : message,
           ),
+        };
+
+      case AUTH_ACCESS_DENIED:
+        return {
+          ...state,
+          authParams: {
+            ...state.authParams,
+            implements_check_password: true
+          },
         };
 
       default:

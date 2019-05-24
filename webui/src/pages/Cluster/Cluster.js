@@ -11,27 +11,18 @@ import PageDataErrorMessage from 'src/components/PageDataErrorMessage';
 import ReplicasetEditModal from 'src/components/ReplicasetEditModal';
 import ReplicasetList from 'src/components/ReplicasetList';
 import ServerEditModal from 'src/components/ServerEditModal';
-import FailoverButton from 'src/components/FailoverButton';
 import ServerList from 'src/components/ServerList';
 import { addSearchParams, getSearchParams } from 'src/misc/url';
-import { Title, FilterInput } from 'src/components/styled';
+import { FilterInput } from 'src/components/styled';
 import ClusterConfigManagement from 'src/components/ClusterConfigManagement';
+import PageSectionHead from 'src/components/PageSectionHead';
 import './Cluster.css';
 import BootstrapPanel from "src/components/BootstrapPanel";
-import AuthToggleButton from './child/AuthToggleButton';
 import Button from 'src/components/Button';
+import FailoverButton from './child/FailoverButton';
+import AuthToggleButton from 'src/components/AuthToggleButton';
 
 const styles = {
-  buttons: css`
-    display: flex;
-  `,
-  button: css`
-    display: block;
-    margin-right: 25px;
-    :last-child{
-      margin-right: 0px;
-    }
-  `,
   clusterFilter: css`
     margin-bottom: 20px;
     padding-left: 5px;
@@ -194,12 +185,10 @@ class Cluster extends React.Component {
             {unlinkedServers.length
               ? (
                 <div className="tr-card-margin">
-                  <div className="tr-pageCard-head">
-                    <Title className="tr-pageCard-header">Unconfigured instances</Title>
-                    <div className="tr-pageCard-buttons">
-                      {this.renderServerButtons()}
-                    </div>
-                  </div>
+                  <PageSectionHead
+                    title="Replica sets"
+                    buttons={this.renderServerButtons()}
+                  />
                   <div className="pages-Cluster-serverList">
                     <ServerList
                       linked={false}
@@ -220,14 +209,15 @@ class Cluster extends React.Component {
             {replicasetList.length
               ? (
                 <div className="tr-card-margin pages-Cluster-replicasetList">
-                  <div className="tr-pageCard-head">
-                    <Title className="tr-pageCard-header">Replica sets</Title>
-                    <div className="tr-pageCard-buttons">
-                      {unlinkedServers.length
+                  <PageSectionHead
+                    thin={true}
+                    title="Replica sets"
+                    buttons={
+                      unlinkedServers.length
                         ? null
-                        : this.renderServerButtons()}
-                    </div>
-                  </div>
+                        : this.renderServerButtons()
+                    }
+                  />
 
                   {replicasetList.length > 1
                     ? (
@@ -304,20 +294,17 @@ class Cluster extends React.Component {
   };
 
   renderServerButtons = () => {
-    return (
-      <div className={styles.buttons}>
-        <div className={styles.button}><AuthToggleButton size={'large'} /></div>
-        <div className={styles.button}><FailoverButton size={'large'} /></div>
-        <div className={styles.button}>
-          <Button
-            size={'large'}
-            onClick={this.handleProbeServerRequest}
-          >
-            Probe server
-          </Button>
-        </div>
-      </div>
-    );
+    const { showToggleAuth } = this.props;
+    return ([
+      <FailoverButton />,
+      showToggleAuth && <AuthToggleButton />,
+      <Button
+        size={'large'}
+        onClick={this.handleProbeServerRequest}
+      >
+        Probe server
+      </Button>
+    ]);
   };
 
   renderBootstrapVshardConfirmModal = () => {

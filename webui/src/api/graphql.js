@@ -17,7 +17,7 @@ export const isGraphqlErrorResponse
 
 export const getGraphqlErrorMessage
   = error =>
-    error[0].message || 'GraphQL error with empty message';
+    (Array.isArray(error) && error.length === 1 && error[0].message) || 'GraphQL error with empty message';
 
 export const isGraphqlAccessDeniedError
   = error =>
