@@ -23,8 +23,8 @@ doc:
 	ldoc -t "cluster-${version}" -p "cluster (${version})" --all .
 
 schema: doc/schema.graphql
-doc/schema.graphql: cluster/webui.lua
-	WORKDIR=dev/gql-schema pytest/instance.lua & \
+doc/schema.graphql: cluster/webui.lua $(shell find cluster/webui -type f)
+	WORKDIR=dev/gql-schema test/integration/instance.lua & \
 	PID=$$!; \
 	graphql get-schema -o $@; \
 	kill $$PID;

@@ -24,12 +24,19 @@ def test_api(cluster):
     srv = cluster['master']
     obj = srv.graphql("""
         {
-            cluster { known_roles }
+            cluster {
+                known_roles { name dependencies }
+            }
         }
     """)
     assert 'errors' not in obj
     assert obj['data']['cluster']['known_roles'] == \
-        ['vshard-storage', 'vshard-router', 'myrole-dependency', 'myrole']
+        [
+            {'name': 'vshard-storage', 'dependencies': [] },
+            {'name': 'vshard-router', 'dependencies': [] },
+            {'name': 'myrole-dependency', 'dependencies': [] },
+            {'name': 'myrole', 'dependencies': ['myrole-dependency'] }
+        ]
 
 def test_myrole(cluster):
     srv = cluster['master']

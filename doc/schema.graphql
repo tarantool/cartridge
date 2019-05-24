@@ -1,41 +1,53 @@
 # source: http://localhost:8081/admin/api
-# timestamp: Thu Mar 28 2019 00:08:07 GMT+0300 (MSK)
+# timestamp: Wed May 22 2019 17:45:14 GMT+0300 (MSK)
 
 """Cluster management"""
 type Apicluster {
-  """Get list of registered roles."""
-  known_roles: [String!]
-
-  """Whether it is reasonble to call bootstrap_vshard mutation"""
-  can_bootstrap_vshard: Boolean!
+  """Get current server"""
+  self: ServerShortInfo
+  auth_params: UserManagementAPI!
 
   """Get current failover state."""
   failover: Boolean!
 
+  """Whether it is reasonble to call bootstrap_vshard mutation"""
+  can_bootstrap_vshard: Boolean!
+
   """Virtual buckets count in cluster"""
   vshard_bucket_count: Int!
 
-  """Get current server"""
-  self: ServerShortInfo
-  auth_params: UserManagementAPI!
+  """Get list of all registered roles and their dependencies."""
+  known_roles: [Role!]!
 
   """List authorized users"""
   users(username: String): [User!]
 }
 
+"""Cluster server label"""
+type Label {
+  name: String!
+  value: String!
+}
+
+"""Cluster server label"""
+input LabelInput {
+  name: String!
+  value: String!
+}
+
 """
 The `Long` scalar type represents non-fractional signed whole numeric values.
-Long can represent values from -(2^52) to 2^52 - 1, inclusive.
+Long can represent values from -(2^52) to 2^52 - 1, inclusive. 
 """
 scalar Long
 
 type Mutation {
   """Cluster management"""
   cluster: MutationApicluster
-  edit_server(uuid: String!, uri: String!): Boolean
+  edit_server(uuid: String!, uri: String, labels: [LabelInput]): Boolean
   probe_server(uri: String!): Boolean
   edit_replicaset(roles: [String!], weight: Float, master: [String!], uuid: String!): Boolean
-  join_server(instance_uuid: String, replicaset_uuid: String, timeout: Float, roles: [String!], uri: String!): Boolean
+  join_server(instance_uuid: String, labels: [LabelInput], replicaset_uuid: String, roles: [String!], timeout: Float, uri: String!): Boolean
   bootstrap_vshard: Boolean
   expel_server(uuid: String!): Boolean
 }
@@ -111,20 +123,26 @@ type ReplicaStatus {
   downstream_message: String
 }
 
+type Role {
+  name: String!
+  dependencies: [String!]
+}
+
 """A server participating in tarantool cluster"""
 type Server {
   statistics: ServerStat
   boxinfo: ServerInfo
   status: String!
-  message: String!
+  uuid: String!
   replicaset: Replicaset
   uri: String!
   alias: String
   disabled: Boolean!
+  message: String!
 
   """Failover priority within the replica set"""
   priority: Int!
-  uuid: String!
+  labels: [Label]
 }
 
 """Server information and configuration."""

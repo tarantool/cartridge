@@ -2,7 +2,7 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import { defaultMemoize } from 'reselect';
 import ReactDragListView from 'react-drag-listview';
-import { Col, Form, Row, Table } from "antd";
+import { Form, Row, Table } from "antd";
 import Modal from 'src/components/Modal';
 import Button from 'src/components/Button';
 import Checkbox from '../Checkbox';
@@ -19,6 +19,7 @@ const formItemLayout = {
 };
 
 const normalizeProp = (prop, dataSource) => typeof prop === 'function' ? prop(dataSource) : prop;
+const pickByField = (fields, name) => fields.find(({key}) => key === name);
 
 const prepareFields = (shouldCreateItem, fields, formData) => fields
   .map(field => {
@@ -209,21 +210,19 @@ class CommonItemEditModal extends React.PureComponent {
     const values = this.state.formData[field.key] || [];
 
     return (
-      <Row>
-        {field.options.map(option => (
-          <Col span={12} key={option.key}>
-            <Checkbox
-              name={field.key}
-              value={option.key}
-              checked={values.includes(option.key)}
-              disabled={field.disabled}
-              onChange={this.handleCheckboxGroupChange}
-            >
-              {option.label}
-            </Checkbox>
-          </Col>
-        ))}
-      </Row>
+      field.options.map(option => (
+        <Row key={option.key}>
+          <Checkbox
+            name={field.key}
+            value={option.key}
+            checked={values.includes(option.key)}
+            disabled={field.disabled || option.disabled}
+            onChange={this.handleCheckboxGroupChange}
+          >
+            {option.label}
+          </Checkbox>
+        </Row>
+      ))
     );
   };
 
@@ -261,7 +260,12 @@ class CommonItemEditModal extends React.PureComponent {
       ? [...values, target.value]
       : values.filter(option => option !== target.value);
 
-    this.setState({ formData: { ...formData, [target.name]: newValues } });
+    const currentField = pickByField(this.props.fields, target.name);
+    const handler = currentField.stateModifier ? currentField.stateModifier : a => a;
+
+    this.setState({
+      formData: handler({ ...formData, [target.name]: newValues })
+    });
   };
 
   handleOptionGroupChange = event => {
@@ -330,6 +334,7 @@ CommonItemEditModal.propTypes = {
       PropTypes.string,
       PropTypes.func,
     ]),
+    stateModifier: PropTypes.func,
     customProps: PropTypes.shape({
       create: PropTypes.object,
       edit: PropTypes.object,

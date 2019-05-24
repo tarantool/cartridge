@@ -25,13 +25,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - `cluster.service_get('vshard-router')` now returns
   `cluster.roles.vshard-router` module instead of `vshard.router`
-  (incompatible change)
+  **(incompatible change)**
 
 - `cluster.service_get('vshard-storage')` now returns
   `cluster.roles.vshard-storage` module instead of `vshard.storage`
-  (incompatible change)
+  **(incompatible change)**
 
 - `cluster.admin.bootstrap_vshard` now can be called on any instance
+
+- GraphQL API `known_roles` format now includes roles dependencies
 
 ### Fixed
 
@@ -122,32 +124,42 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - `join_server()` `timeout` parameter to make call synchronous
 
 ## [0.4.0] - 2018-11-27
+
 ### Fixed/Improved
+
 - Uncaught exception in WebUI
 - Indicate when backend is unavailable
 - Sort servers in replicaset, put master first
 - Cluster mutations are now synchronous, except joining new servers
 
 ### Added
+
 - Lua API for temporarily disabling servers
 - Lua API for implementing user-defined roles
 
 ## [0.3] - 2018-10-30
+
 ### Changed
-- Config structure incompatible with v0.2
+
+- Config structure **incompatible** with v0.2
 
 ### Added
+
 - Explicit vshard master configuration
 - Automatic failover (switchable)
 - Unit tests
 
 ## [0.2] - 2018-10-01
+
 ### Changed
+
 - Allow vshard bootstrapping from ui
 - Several stability improvements
 
 ## [0.1] - 2018-09-25
+
 ### Added
+
 - Basic functionality
 - Integration tests
 - Luarock-based packaging

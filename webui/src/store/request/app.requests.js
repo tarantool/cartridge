@@ -9,7 +9,10 @@ export async function getClusterSelf() {
           uuid: uuid
         }
         failover
-        knownRoles: known_roles
+        knownRoles: known_roles {
+          name
+          dependencies
+        }
         can_bootstrap_vshard
         vshard_bucket_count
         authParams: auth_params {

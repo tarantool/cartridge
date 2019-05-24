@@ -136,6 +136,11 @@ local function register_role(module_name)
     return mod
 end
 
+--- List all registered roles names.
+--
+-- @function get_known_roles
+-- @local
+-- @treturn {string,..}
 local function get_known_roles()
     local ret = {}
 
@@ -146,6 +151,12 @@ local function get_known_roles()
     return ret
 end
 
+--- Enrich enabled roles set with their dependencies.
+--
+-- @function get_enabled_roles
+-- @local
+-- @tparam {[string]=boolean,...} roles
+-- @treturn {[string]=boolean,...}
 local function get_enabled_roles(roles)
     checks('table')
     local ret = {}
@@ -160,6 +171,18 @@ local function get_enabled_roles(roles)
     end
 
     return ret
+end
+
+--- List role dependencies.
+-- Including sub-dependencies.
+--
+-- @function get_role_dependencies
+-- @local
+-- @tparam string role_name
+-- @treturn {string,..}
+local function get_role_dependencies(role_name)
+    checks('?string')
+    return table.copy(vars.roles_dependencies[role_name])
 end
 
 
@@ -824,6 +847,7 @@ return {
     register_role = register_role,
     get_known_roles = get_known_roles,
     get_enabled_roles = get_enabled_roles,
+    get_role_dependencies = get_role_dependencies,
 
     prepare_2pc = prepare_2pc,
     commit_2pc = commit_2pc,

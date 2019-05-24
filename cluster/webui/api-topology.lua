@@ -67,8 +67,8 @@ local gql_type_server = gql_types.object {
         boxinfo = gql_boxinfo_schema,
         labels = {
             kind = gql_types.list('Label')
-        }
     }
+}
 }
 
 local gql_type_label = gql_types.object {
@@ -104,6 +104,14 @@ local function convert_labels_to_graphql_format(labels)
     end
     return result
 end
+
+local gql_type_role = gql_types.object {
+    name = 'Role',
+    fields = {
+        name = gql_types.string.nonNull,
+        dependencies = gql_types.list(gql_types.string.nonNull),
+    }
+}
 
 local function get_servers(_, args)
     local servers = admin.get_servers(args.uuid)
@@ -145,6 +153,20 @@ end
 
 local function edit_replicaset(_, args)
     return admin.edit_replicaset(args)
+end
+
+local function get_known_roles(_, _)
+    local ret = {}
+    for _, role_name in ipairs(confapplier.get_known_roles()) do
+        local role = {
+            name = role_name,
+            dependencies = confapplier.get_role_dependencies(role_name),
+        }
+
+        table.insert(ret, role)
+    end
+
+    return ret
 end
 
 local function get_failover_enabled(_, _)
@@ -243,9 +265,9 @@ local function init(graphql)
     graphql.add_callback({
         prefix = 'cluster',
         name = 'known_roles',
-        doc = 'Get list of all registered roles including dependencies.',
+        doc = 'Get list of all registered roles and their dependencies.',
         args = {},
-        kind = gql_types.list(gql_types.string.nonNull),
+        kind = gql_types.list(gql_type_role.nonNull).nonNull,
         callback = module_name .. '.get_known_roles',
     })
 
@@ -306,7 +328,7 @@ return {
     expel_server = expel_server,
     disable_servers = disable_servers,
 
-    get_known_roles = confapplier.get_known_roles,
+    get_known_roles = get_known_roles,
     get_failover_enabled = get_failover_enabled,
     set_failover_enabled = set_failover_enabled,
 }
