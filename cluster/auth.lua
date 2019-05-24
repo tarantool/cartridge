@@ -184,7 +184,7 @@ end
 --- Get username for the current HTTP session.
 --
 -- @function get_session_username
--- @treturn string
+-- @treturn string or nil if no user is logged in
 local function get_session_username()
     local fiber_storage = fiber.self().storage
     return fiber_storage['auth_session_username']
