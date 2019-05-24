@@ -1,6 +1,13 @@
-import { takeLatest, call, put } from 'redux-saga/effects';
+import { takeLatest, takeEvery, call, put } from 'redux-saga/effects';
+import { isGraphqlAccessDeniedError } from 'src/api/graphql';
+import { isRestAccessDeniedError } from 'src/api/rest';
+import { baseSaga, getRequestSaga } from 'src/store/commonRequest';
+import { logIn, logOut, turnAuth } from 'src/store/request/auth.requests';
+import { pageRequestIndicator } from 'src/misc/pageRequestIndicator';
+
 import {
   APP_DID_MOUNT,
+  AUTH_ACCESS_DENIED,
   AUTH_TURN_REQUEST,
   AUTH_TURN_REQUEST_SUCCESS,
   AUTH_TURN_REQUEST_ERROR,
@@ -9,14 +16,8 @@ import {
   AUTH_LOG_IN_REQUEST_ERROR,
   AUTH_LOG_OUT_REQUEST,
   AUTH_LOG_OUT_REQUEST_SUCCESS,
-  AUTH_LOG_OUT_REQUEST_ERROR,
-  AUTH_RESTORE_REQUEST,
-  AUTH_RESTORE_REQUEST_SUCCESS,
-  AUTH_RESTORE_REQUEST_ERROR
+  AUTH_LOG_OUT_REQUEST_ERROR
 } from 'src/store/actionTypes';
-import { baseSaga, getRequestSaga } from 'src/store/commonRequest';
-import { logIn, logOut, turnAuth, getAuthState } from 'src/store/request/auth.requests';
-import { pageRequestIndicator } from 'src/misc/pageRequestIndicator';
 
 function* logInSaga() {
   yield takeLatest(AUTH_LOG_IN_REQUEST, function* ({ payload }) {
@@ -30,6 +31,7 @@ function* logInSaga() {
         type: AUTH_LOG_IN_REQUEST_SUCCESS,
         payload: response
       });
+      window.tarantool_enterprise_core.dispatch('cluster:login:done', response);
 
       if (response.authorized) {
         yield put({ type: APP_DID_MOUNT });
@@ -46,12 +48,32 @@ function* logInSaga() {
   });
 }
 
-const logOutSaga = getRequestSaga(
-  AUTH_LOG_OUT_REQUEST,
-  AUTH_LOG_OUT_REQUEST_SUCCESS,
-  AUTH_LOG_OUT_REQUEST_ERROR,
-  logOut,
-);
+function* denyAccessSaga() {
+  yield takeEvery('*', function* ({ error }) {
+    if (error && (isRestAccessDeniedError(error) || isGraphqlAccessDeniedError(error))) {
+      yield put({ type: AUTH_ACCESS_DENIED });
+    }
+  });
+}
+
+function* logOutSaga() {
+  yield takeLatest(AUTH_LOG_OUT_REQUEST, function* () {
+    const indicator = pageRequestIndicator.run();
+
+    try {
+      const response = yield call(logOut);
+      indicator && indicator.success();
+
+      yield put({ type: AUTH_LOG_OUT_REQUEST_SUCCESS, payload: response });
+      window.tarantool_enterprise_core.dispatch('cluster:logout:done');
+    }
+    catch (error) {
+      yield put({ type: AUTH_LOG_OUT_REQUEST_ERROR, error });
+      indicator && indicator.error();
+      return;
+    }
+  });
+};
 
 const turnAuthSaga = getRequestSaga(
   AUTH_TURN_REQUEST,
@@ -60,16 +82,9 @@ const turnAuthSaga = getRequestSaga(
   turnAuth,
 );
 
-const restoreAuthSaga = getRequestSaga(
-  AUTH_RESTORE_REQUEST,
-  AUTH_RESTORE_REQUEST_SUCCESS,
-  AUTH_RESTORE_REQUEST_ERROR,
-  getAuthState,
-);
-
 export const saga = baseSaga(
   logInSaga,
   logOutSaga,
   turnAuthSaga,
-  restoreAuthSaga,
+  denyAccessSaga
 );

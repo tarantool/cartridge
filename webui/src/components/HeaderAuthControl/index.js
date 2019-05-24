@@ -2,8 +2,8 @@ import React from 'react';
 import { connect } from 'react-redux';
 import Button from 'src/components/Button';
 import { css } from 'emotion';
-import { logOut } from 'src/store/actions/auth.actions';
 import { ModalLogInForm } from 'src/components/LogInForm';
+import { showAuthModal, hideAuthModal } from 'src/store/actions/auth.actions';
 
 const styles = {
   box: css`
@@ -26,31 +26,20 @@ const styles = {
 };
 
 class HeaderAuthControl extends React.Component {
-  state = {
-    authModalOpened: false
-  };
-
-  static getDerivedStateFromProps(props, state) {
-    if (props.authorized && state.authModalOpened) {
-      return { authModalOpened: false };
-    }
-
-    return null;
-  }
-
-  showAuthModal = () => this.setState({ authModalOpened: true });
-  hideAuthModal = () => this.setState({ authModalOpened: false });
+  sendLogOut = () => window.tarantool_enterprise_core.dispatch('cluster:logout');
 
   render() {
     const {
-      authorizationFeature,
+      implements_check_password,
       authorizationEnabled,
       username,
       authorized,
-      logOut
+      authModalVisible,
+      showAuthModal,
+      hideAuthModal
     } = this.props;
 
-    if (!authorizationFeature)
+    if (!implements_check_password)
       return null;
 
     if (authorizationEnabled & !authorized)
@@ -65,14 +54,14 @@ class HeaderAuthControl extends React.Component {
               className={styles.button}
               size="small"
               shape="circle"
-              onClick={logOut}
+              onClick={this.sendLogOut}
               icon="logout"
               title="Log out"
             />
             : <Button
               className={styles.button}
               size="small"
-              onClick={this.showAuthModal}
+              onClick={showAuthModal}
               icon="user"
               title="Log in"
               text="Log in"
@@ -81,8 +70,8 @@ class HeaderAuthControl extends React.Component {
             </Button>
         }
         <ModalLogInForm
-          visible={this.state.authModalOpened}
-          onCancel={this.hideAuthModal}
+          visible={authModalVisible}
+          onCancel={hideAuthModal}
         />
       </div>
     );
@@ -90,17 +79,23 @@ class HeaderAuthControl extends React.Component {
 }
 
 const mapStateToProps = ({
+  app: {
+    authParams: {
+      implements_check_password
+    }
+  },
   auth: {
-    authorizationFeature,
     authorizationEnabled,
     username,
     authorized,
+    authModalVisible
   }
 }) => ({
-  authorizationFeature,
+  implements_check_password,
   authorizationEnabled,
   username,
   authorized,
+  authModalVisible
 });
 
-export default connect(mapStateToProps, { logOut })(HeaderAuthControl);
+export default connect(mapStateToProps, { showAuthModal, hideAuthModal })(HeaderAuthControl);

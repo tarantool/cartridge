@@ -51,7 +51,7 @@ class LogInForm extends React.Component {
     const {
       error,
       form: { getFieldDecorator },
-      loading
+      fetchingAuth
     } = this.props;
 
     return (
@@ -85,7 +85,7 @@ class LogInForm extends React.Component {
             className={styles.submitBtn}
             type="primary"
             htmlType="submit"
-            loading={loading}
+            loading={fetchingAuth}
           >
             Log in
           </Button>
@@ -98,12 +98,14 @@ class LogInForm extends React.Component {
 
 const mapStateToProps = ({
   auth: {
-    error,
-    loading
+    error
+  },
+  ui: {
+    fetchingAuth
   }
 }) => ({
-  loading,
-  error
+  error,
+  fetchingAuth
 });
 
 const ConnectedLogInForm = connect(mapStateToProps, { logIn })(Form.create()(LogInForm));

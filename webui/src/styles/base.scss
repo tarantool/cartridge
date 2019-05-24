@@ -42,19 +42,6 @@
   padding-top: 0;
 }
 
-.tr-pageCard-head {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1em 0 1em 5px;
-  font-size: 1.4em;
-}
-
-.tr-pageCard-header {}
-
-.tr-pageCard-buttons {}
-
 .tr-card {
   border-radius: $cards-border-radius;
   border: $cards-border;

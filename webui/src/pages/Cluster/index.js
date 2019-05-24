@@ -14,6 +14,11 @@ const mapStateToProps = state => {
       failover,
       evalResult,
       savedConsoleState,
+      authParams: {
+        implements_add_user,
+        implements_check_password,
+        implements_list_users
+      }  
     },
     clusterPage: {
       pageMount,
@@ -44,6 +49,7 @@ const mapStateToProps = state => {
     serverStat,
     canTestConfigBeApplied,
     showBootstrapModal,
+    showToggleAuth: !(implements_add_user || implements_list_users) && implements_check_password
   };
 };
 

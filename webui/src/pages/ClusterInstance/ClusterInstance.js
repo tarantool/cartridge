@@ -3,8 +3,8 @@ import { css } from 'emotion';
 import { Route, Switch, Redirect } from 'react-router-dom';
 import HealthIndicator from 'src/components/HealthIndicator'
 import SubNavMenu from 'src/components/SubNavMenu'
-import { Title } from 'src/components/styled';
 import ClusterInstanceSection from './child/ClusterInstanceSection';
+import PageSectionHead from 'src/components/PageSectionHead';
 
 const styles = {
   indicator: css`
@@ -65,20 +65,23 @@ class ClusterConfig extends React.Component {
 
     return (
       <div className={'app-content tr-card-margin'}>
-        <div className="tr-pageCard-head">
-          <Title className="tr-pageCard-header">
-            <HealthIndicator
-              className={styles.indicator}
-              size="l"
-              state={status === 'healthy' ? 'good' : 'bad'}
-            />
-            {alias} – {uri}{masterState && ` – ${masterState}`}
-          </Title>
+        <PageSectionHead
+          title={
+            <React.Fragment>
+              <HealthIndicator
+                className={styles.indicator}
+                size="l"
+                state={status === 'healthy' ? 'good' : 'bad'}
+              />
+              {alias} – {uri}{masterState && ` – ${masterState}`}
+            </React.Fragment>
+          }
+        >
           <div className={styles.headerSecondRow}>
             <span title="Roles">{roles}</span>
             {!!message && <span className={styles.headerError}>{message}</span>}
           </div>
-        </div>
+        </PageSectionHead>
         <div className={styles.layout}>
           <SubNavMenu className={styles.menu}>
             {subsections.map(section => (
