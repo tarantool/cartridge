@@ -252,19 +252,22 @@ class CommonItemEditModal extends React.PureComponent {
   };
 
   handleCheckboxGroupChange = event => {
-    const { formData } = this.state;
     const { target } = event;
 
-    const values = formData[target.name];
-    const newValues = target.checked
-      ? [...values, target.value]
-      : values.filter(option => option !== target.value);
-
     const currentField = pickByField(this.props.fields, target.name);
-    const handler = currentField.stateModifier ? currentField.stateModifier : a => a;
+    const handler = currentField.stateModifier ? currentField.stateModifier : (_, state) => state;
 
-    this.setState({
-      formData: handler({ ...formData, [target.name]: newValues })
+    this.setState(prevState => {
+      const { formData } = prevState;
+
+      const values = formData[target.name];
+      const newValues = target.checked
+        ? [...values, target.value]
+        : values.filter(option => option !== target.value);
+  
+       return {
+        formData: handler(formData, { ...formData, [target.name]: newValues })
+      };
     });
   };
 

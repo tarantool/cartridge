@@ -56,7 +56,7 @@ const renderDraggableListOptions = record => record.servers.map(server => ({
           </span>,
 }));
 
-const getActiveRolesDependencies = (activeRoles, rolesOptions) => {
+const getRolesDependencies = (activeRoles, rolesOptions) => {
   const result = [];
   rolesOptions.forEach(({ key, dependencies }) => {
     if (activeRoles.includes(key)) {
@@ -145,19 +145,21 @@ const prepareFields = (roles, replicaset) => {
       title: 'Roles',
       type: 'checkboxGroup',
       options: ({ roles }) => {
-        const dependencies = getActiveRolesDependencies(roles, rolesOptions);
+        const dependencies = getRolesDependencies(roles, rolesOptions);
         return rolesOptions
           .reduceRight((acc, option) => (acc.push({
             ...option,
             disabled: dependencies.includes(option.key)
           }) && acc), []);
       },
-      stateModifier: ({ roles, ...formData }) => {
-        const dependencies = getActiveRolesDependencies(roles, rolesOptions);
-        dependencies.push(...roles);
+      stateModifier: (prevState, { roles, ...formData }) => {
+        const prevDependencies = getRolesDependencies(prevState.roles, rolesOptions);
+        const rolesWithoutDependencies = roles.filter(role => !prevDependencies.includes(role)) 
+        const dependencies = getRolesDependencies(rolesWithoutDependencies, rolesOptions);
+
         return {
           ...formData,
-          roles: R.uniq(dependencies)
+          roles: R.uniq([...dependencies, ...rolesWithoutDependencies])
         };
       }
     },
