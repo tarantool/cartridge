@@ -181,14 +181,14 @@ local function cfg(opts, box_opts)
 
     local roles = opts.roles or {}
     if not utils.table_find(roles, 'cluster.roles.vshard-storage') then
-        log.warn(
+        errors.deprecate(
             'WARNING: Implicit vshard roles are deprecated,' ..
             ' please specify "cluster.roles.vshard-storage" explicitly'
         )
         table.insert(roles, 1, 'cluster.roles.vshard-storage')
     end
     if not utils.table_find(roles, 'cluster.roles.vshard-router') then
-        log.warn(
+        errors.deprecate(
             'WARNING: Implicit vshard roles are deprecated,' ..
             ' please specify "cluster.roles.vshard-router" explicitly'
         )
@@ -304,7 +304,7 @@ return {
 
     confapplier = {
         get_readonly = function(...)
-            log.warn(
+            errors.deprecate(
                 'Function "cluster.confapplier.get_readonly()" is deprecated. ' ..
                 'Use "cluster.config_get_readonly()" instead.'
             )
@@ -312,7 +312,7 @@ return {
         end,
 
         get_deepcopy = function(...)
-            log.warn(
+            errors.deprecate(
                 'Function "cluster.confapplier.get_deepcopy()" is deprecated. ' ..
                 'Use "cluster.config_get_deepcopy()" instead.'
             )
@@ -320,7 +320,7 @@ return {
         end,
 
         patch_clusterwide = function(...)
-            log.warn(
+            errors.deprecate(
                 'Function "cluster.confapplier.patch_clusterwide()" is deprecated. ' ..
                 'Use "cluster.config_patch_clusterwide()" instead.'
             )
@@ -342,14 +342,14 @@ return {
 
     service_registry = {
         get = function(...)
-            log.warn(
+            errors.deprecate(
                 'Function "cluster.service_registry.get()" is deprecated. ' ..
                 'Use "cluster.service_get()" instead.'
             )
             return service_registry.get(...)
         end,
         set = function(...)
-            log.warn(
+            errors.deprecate(
                 'Function "cluster.service_registry.set()" is deprecated. ' ..
                 'Use "cluster.service_set()" instead.'
             )
