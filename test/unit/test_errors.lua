@@ -1,5 +1,12 @@
 #!/usr/bin/env tarantool
 
+if not pcall(require, 'cluster.front-bundle') then
+    -- to be loaded in development environment
+    package.preload['cluster.front-bundle'] = function()
+        return require('webui.build.bundle')
+    end
+end
+
 local log = require('log')
 local tap = require('tap')
 local socket = require('socket')

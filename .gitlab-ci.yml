@@ -22,11 +22,10 @@ build:
     - export PATH=.rocks/bin:$PATH
     - pip install -r test/integration/requirements.txt
   script:
-    - tarantoolctl rocks make
+    - tarantoolctl rocks make BUILD_DOC=YES
     - pytest -v
     - ./taptest.lua
     - ./release.sh
-    - make doc
   artifacts:
     name: "$CI_COMMIT_REF_NAME"
     paths:
