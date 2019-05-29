@@ -21,10 +21,13 @@ build:
     - tarantoolctl rocks install ldoc --server=http://rocks.moonscript.org
     - export PATH=.rocks/bin:$PATH
     - pip install -r test/integration/requirements.txt
+    - npm install graphql-cli
+    - export PATH=node_modules/.bin:$PATH
   script:
     - tarantoolctl rocks make BUILD_DOC=YES
     - pytest -v
     - ./taptest.lua
+    - ./fetch-schema.sh
     - ./release.sh
   artifacts:
     name: "$CI_COMMIT_REF_NAME"
