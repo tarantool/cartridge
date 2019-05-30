@@ -1,5 +1,5 @@
 # source: http://localhost:8081/admin/api
-# timestamp: Wed May 22 2019 17:45:14 GMT+0300 (MSK)
+# timestamp: Wed May 29 2019 21:39:39 GMT+0300 (MSK)
 
 """Cluster management"""
 type Apicluster {
@@ -37,7 +37,7 @@ input LabelInput {
 
 """
 The `Long` scalar type represents non-fractional signed whole numeric values.
-Long can represent values from -(2^52) to 2^52 - 1, inclusive. 
+Long can represent values from -(2^52) to 2^52 - 1, inclusive.
 """
 scalar Long
 
@@ -266,9 +266,7 @@ type ServerStat {
   """
   quota_size: Long!
 
-  """
-  The amount of memory that is already distributed to the slab allocator
-  """
+  """The amount of memory that is already distributed to the slab allocator"""
   quota_used: Long!
 
   """= arena_used / arena_size"""

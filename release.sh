@@ -9,9 +9,9 @@ fi
 
 echo TAG = \"$TAG\"
 mkdir -p release
-sed -e "s/branch = 'master'/tag = '$TAG'/g" \
-    -e "s/version = 'scm-1'/version = '$TAG-1'/g" \
-    -e "s/build_target = 'all'/build_target = 'all doc'/g" \
+sed -e "s/branch = '.\+'/tag = '$TAG'/g" \
+    -e "s/version = '.\+'/version = '$TAG-1'/g" \
+    -e "s/BUILD_DOC = '.\+'/BUILD_DOC = 'YES'/g" \
     cluster-scm-1.rockspec > release/cluster-$TAG-1.rockspec
 
 tarantoolctl rocks make release/cluster-$TAG-1.rockspec

@@ -11,3 +11,8 @@ release-doc
 .idea
 Dockerfile.test
 Makefile.test
+CMakeFiles
+CMakeCache.txt
+cmake_install.cmake
+CTestTestfile.cmake
+build.luarocks
