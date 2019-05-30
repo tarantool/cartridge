@@ -26,23 +26,29 @@ cluster = [
     )
 ]
 
-@pytest.fixture(scope="function")
-def enable_auth(cluster):
+def enable_auth_internal(cluster):
     cluster['master'].conn.eval("""
-        local log = require('log')
-        local auth = require('cluster.auth')
-        auth.set_enabled(true)
-        log.info('Auth enabled')
-    """)
+            local log = require('log')
+            local auth = require('cluster.auth')
+            auth.set_enabled(true)
+            log.info('Auth enabled')
+        """)
 
 @pytest.fixture(scope="function")
-def disable_auth(cluster):
+def enable_auth(cluster):
+    enable_auth_internal(cluster)
+
+def disable_auth_internal(cluster):
     cluster['master'].conn.eval("""
         local log = require('log')
         local auth = require('cluster.auth')
         auth.set_enabled(false)
         log.info('Auth disabled')
     """)
+
+@pytest.fixture(scope="function")
+def disable_auth(cluster):
+    disable_auth_internal(cluster)
 
 def _login(srv, username, password):
     return srv.post_raw('/login',
@@ -63,10 +69,10 @@ def check_200(srv, **kwargs):
 def test_login(cluster, auth, alias):
     srv = cluster[alias]
     if auth:
-        enable_auth(cluster)
+        enable_auth_internal(cluster)
         USERNAME = 'Ptarmigan'
     else:
-        disable_auth(cluster)
+        disable_auth_internal(cluster)
         USERNAME = 'Sparrow'
     PASSWORD = 'Fuschia Copper'
 
