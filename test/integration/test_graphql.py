@@ -71,3 +71,33 @@ def test_upload_good(cluster):
     """)
 
     assert obj['data']['test2'] == 'TEST22'
+
+
+def test_resolver_error(cluster):
+
+    srv = cluster['all']
+
+    srv.conn.eval("""
+    package.loaded['test'] = {}
+    package.loaded['test']['test'] = function(root, args)
+      return nil, 'Internal error from my test function'
+    end
+
+    local graphql = require('cluster.graphql')
+    local types = require('cluster.graphql.types')
+    graphql.add_callback({
+        name = 'test',
+        doc = '',
+        args = {arg=types.string.nonNull},
+        kind = types.string.nonNull,
+        callback = 'test.test',
+    })
+    """)
+
+    obj = srv.graphql("""
+      {
+        test(arg:"TEST")
+      }
+    """)
+
+    assert 'Internal error from my test function' in obj['errors'][0]['message']

@@ -72,7 +72,7 @@ local statistics_schema = {
     }),
     arguments = {},
     resolve = function(root, _)
-        return admin.get_stat(root.uri)
+        return admin.get_stat(root.uri), nil
     end,
 }
 

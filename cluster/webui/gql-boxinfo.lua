@@ -200,7 +200,7 @@ local boxinfo_schema = {
     }),
     arguments = {},
     resolve = function(root, _)
-        return admin.get_info(root.uri)
+        return admin.get_info(root.uri), nil
     end,
 }
 
