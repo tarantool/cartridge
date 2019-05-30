@@ -43,9 +43,9 @@ end
 --
 -- @tparam string role_name
 -- @tparam[opt] table opts
--- @tparam boolean opts.leader_only
+-- @tparam ?boolean opts.leader_only
 --
--- @treturn[1] table with URIs
+-- @treturn[1] {string,...} URIs
 -- @treturn[2] nil
 -- @treturn[2] table Error description
 local function get_candidates(role_name, opts)
@@ -92,8 +92,8 @@ end
 --
 -- @tparam string role_name
 -- @tparam[opt] table opts
--- @tparam boolean opts.remote_only
--- @tparam boolean opts.leader_only
+-- @tparam ?boolean opts.prefer_local
+-- @tparam ?boolean opts.leader_only
 --
 -- @return[1] `net.box` connection
 -- @treturn[2] nil
@@ -101,7 +101,7 @@ end
 local function get_connection(role_name, opts)
     opts = opts or {}
     checks('string', {
-        remote_only = '?boolean',
+        prefer_local = '?boolean',
         leader_only = '?boolean',
     })
 
@@ -110,8 +110,13 @@ local function get_connection(role_name, opts)
         return nil, err
     end
 
+    local prefer_local = opts.prefer_local
+    if prefer_local == nil then
+        prefer_local = true
+    end
+
     local myself = membership.myself()
-    if not opts.remote_only and candidates[myself.uri] then
+    if prefer_local and candidates[myself.uri] then
         return netbox.self
     end
 
@@ -148,9 +153,13 @@ end
 -- @tparam string fn_name
 -- @tparam[opt] table args
 -- @tparam[opt] table opts
--- @tparam boolean opts.remote_only Always try to call a remote host
--- even if the role is enabled locally.
--- @tparam boolean opts.leader_only Perform a call only on the replica set leaders.
+-- @tparam ?boolean opts.prefer_local
+--   Don't perform a remote call if possible.
+--   (default: **true**)
+-- @tparam ?boolean opts.leader_only
+--   Perform a call only on the replica set leaders.
+--   (default: **false**)
+-- @param opts.remote_only (*deprecated*) Use `prefer_local` instead.
 -- @param opts.timeout passed to `net.box` `conn:call` options.
 -- @param opts.buffer passed to `net.box` `conn:call` options.
 --
@@ -160,15 +169,35 @@ end
 local function call_remote(role_name, fn_name, args, opts)
     opts = opts or {}
     checks('string', 'string', '?table', {
-        remote_only = '?boolean',
+        prefer_local = '?boolean',
         leader_only = '?boolean',
+        remote_only = '?boolean', -- deprecated
         timeout = '?', -- for net.box.call
         buffer = '?', -- for net.box.call
     })
 
+    local prefer_local
+    if opts.remote_only ~= nil then
+        errors.deprecate('Option "remote_only" is deprecated, use "prefer_local" instead')
+        prefer_local = not opts.remote_only
+    end
+
+    if opts.prefer_local ~= nil then
+        prefer_local = opts.prefer_local
+    end
+
+    if prefer_local == nil then
+        prefer_local = true
+    end
+
+    local leader_only = opts.leader_only
+    if leader_only == nil then
+        leader_only = false
+    end
+
     local conn, err = get_connection(role_name, {
-        remote_only = opts.remote_only,
-        leader_only = opts.leader_only,
+        prefer_local = prefer_local,
+        leader_only = leader_only,
     })
     if not conn then
         return nil, err

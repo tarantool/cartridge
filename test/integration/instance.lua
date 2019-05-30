@@ -11,7 +11,12 @@ if not pcall(require, 'cluster.front-bundle') then
 end
 
 local log = require('log')
+local errors = require('errors')
 local cluster = require('cluster')
+errors.set_deprecation_handler(function(err)
+    log.error('%s', err)
+    os.exit(1)
+end)
 
 package.preload['mymodule'] = function()
     local state = nil

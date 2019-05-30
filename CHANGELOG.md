@@ -35,6 +35,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - GraphQL API `known_roles` format now includes roles dependencies
 
+- `cluster.rpc_call` option `remote_only` renamed to `prefer_local`
+  with the opposite meaning
+
 ### Fixed
 
 - Operating vshard-storage roles before vshard was bootstrapped
