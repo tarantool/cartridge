@@ -1,6 +1,19 @@
 import graphql from 'src/api/graphql';
 import rest from 'src/api/rest';
 import { getClusterSelf } from 'src/store/request/app.requests';
+import {
+  bootstrapMutation, changeFailoverMutation,
+  createReplicasetMutation,
+  editReplicasetMutation,
+  expelMutation,
+  joinMutation,
+  joinSingleServerMutation,
+  listQuery,
+  listQueryWithoutStat,
+  pageQuery,
+  probeMutation,
+  serverStatQuery
+} from "./queries.graphql";
 
 const filterServerStat = response => {
   const serverStat
@@ -12,49 +25,7 @@ const filterServerStat = response => {
 };
 
 export function getPageData() {
-  const graph = `
-    query {
-      serverList: servers {
-        uuid
-        alias
-        uri
-        status
-        message
-        replicaset {
-          uuid
-        }
-      }
-      replicasetList: replicasets {
-        uuid
-        status
-        roles
-        master {
-          uuid
-        }
-        active_master {
-          uuid
-        }
-        weight
-        servers {
-          uuid
-          alias
-          uri
-          status
-          message
-          replicaset {
-            uuid
-          }
-        }
-      }
-      serverStat: servers {
-        uuid
-        statistics {
-          quotaSize: quota_size
-          arenaUsed: arena_used
-        }
-      }
-    }`;
-  return graphql.fetch(graph)
+  return graphql.fetch(pageQuery)
     .then(filterServerStat);
 }
 
@@ -63,78 +34,18 @@ export function getPageData() {
  * @param {string} [params.shouldRequestStat]
  */
 export function refreshLists(params = {}) {
-  const graph = `
-    query {
-      serverList: servers {
-        uuid
-        alias
-        uri
-        status
-        message
-        replicaset {
-          uuid
-        }
-      }
-      replicasetList: replicasets {
-        uuid
-        status
-        roles
-        master {
-          uuid
-        }
-        active_master {
-          uuid
-        }
-        weight
-        servers {
-          uuid
-          alias
-          uri
-          status
-          message
-          replicaset {
-            uuid
-          }
-        }
-      }
-      ${params.shouldRequestStat
-        ? `
-          serverStat: servers {
-            uuid
-            uri
-            statistics {
-              quotaSize: quota_size
-              arenaUsed: arena_used
-            }
-          }`
-        : ''}
-    }`;
+  const graph = params.shouldRequestStat ? listQuery : listQueryWithoutStat;
   return graphql.fetch(graph)
     .then(params.shouldRequestStat ? filterServerStat : null);
 }
 
 export function getServerStat() {
-  const graph = `
-    query {
-      serverStat: servers {
-        uuid
-        uri
-        statistics {
-          quotaSize: quota_size
-          arenaUsed: arena_used
-        }
-      }
-    }`;
-  return graphql.fetch(graph)
+  return graphql.fetch(serverStatQuery)
     .then(filterServerStat);
 }
 
 export function bootstrapVshard(params) {
-  const graph = `
-    mutation {
-      bootstrapVshardResponse: bootstrap_vshard
-    }`;
-  return graphql.fetch(graph, params);
+  return graphql.mutate(bootstrapMutation, params);
 }
 
 /**
@@ -142,15 +53,7 @@ export function bootstrapVshard(params) {
  * @param {string} params.uri
  */
 export function probeServer(params) {
-  const graph = `
-    mutation(
-      $uri: String!
-    ) {
-      probeServerResponse: probe_server(
-        uri: $uri
-      )
-    }`;
-  return graphql.fetch(graph, params);
+  return graphql.mutate(probeMutation, params);
 }
 
 /**
@@ -159,17 +62,7 @@ export function probeServer(params) {
  * @param {string} params.uuid
  */
 export function joinServer(params) {
-  const graph = `
-    mutation(
-      $uri: String!,
-      $uuid: String!
-    ) {
-      joinServerResponse: join_server(
-        uri: $uri
-        replicaset_uuid: $uuid
-      )
-    }`;
-  return graphql.fetch(graph, params);
+  return graphql.mutate(joinMutation, params);
 }
 
 /**
@@ -178,17 +71,7 @@ export function joinServer(params) {
  * @param {string[]} params.roles
  */
 export function createReplicaset(params) {
-  const graph = `
-    mutation(
-      $uri: String!,
-      $roles: [String!]
-    ) {
-      createReplicasetResponse: join_server(
-        uri: $uri
-        roles: $roles
-      )
-    }`;
-  return graphql.fetch(graph, params);
+  return graphql.mutate(createReplicasetMutation, params);
 }
 
 /**
@@ -196,15 +79,7 @@ export function createReplicaset(params) {
  * @param {string} params.uuid
  */
 export function expelServer(params) {
-  const graph = `
-    mutation(
-      $uuid: String!
-    ) {
-      expelServerResponse: expel_server(
-        uuid: $uuid
-      )
-    }`;
-  return graphql.fetch(graph, params);
+  return graphql.mutate(expelMutation, params);
 }
 
 /**
@@ -214,37 +89,14 @@ export function expelServer(params) {
  * @param {string[]} params.master
  */
 export function editReplicaset(params) {
-  const graph = `
-    mutation(
-      $uuid: String!,
-      $roles: [String!],
-      $master: [String!]!,
-      $weight: Float
-    ) {
-      editReplicasetResponse: edit_replicaset(
-        uuid: $uuid
-        roles: $roles
-        master: $master
-        weight: $weight
-      )
-    }`;
-  return graphql.fetch(graph, params);
+  return graphql.mutate(editReplicasetMutation, params);
 }
 /**
  * @param {Object} params
  * @param {string} params.uri
  */
 export function joinSingleServer(params) {
-  const graph = `
-    mutation (
-      $uri: String!
-    ) {
-    joinServerResponse: join_server(
-      uri: $uri
-      roles: ["vshard-router", "vshard-storage"]
-    )
-  }`;
-  return graphql.fetch(graph, params);
+  return graphql.mutate(joinSingleServerMutation, params);
 }
 
 export async function uploadConfig(params) {
@@ -255,32 +107,12 @@ export async function uploadConfig(params) {
   });
 }
 
-export function applyTestConfig() {
-  const graph = `
-    mutation {
-      applyTestConfigResponse: cluster {
-        load_config_example
-      }
-    }`;
-  return graphql.fetch(graph);
-}
-
 /**
  * @param {Object} params
  * @param {boolean} params.enabled
  */
 export async function changeFailover(params) {
-  const graph = `
-    mutation (
-      $enabled: Boolean!,
-    ) {
-      cluster {
-        failover(
-          enabled: $enabled
-        )
-      }
-    }`;
-  const changeFailoverResponse = await graphql.fetch(graph, params);
+  const changeFailoverResponse = await graphql.mutate(changeFailoverMutation, params);
   const clusterSelfResponse = await getClusterSelf();
   return {
     changeFailoverResponse: {
