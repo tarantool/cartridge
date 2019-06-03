@@ -5,6 +5,9 @@ file = {
     "cluster/rpc.lua",
     "cluster/pool.lua",
     "cluster/confapplier.lua",
+    "cluster/test_helpers.lua",
+    "cluster/test_helpers/cluster.lua",
+    "cluster/test_helpers/server.lua",
     "cluster/service-registry.lua",
 }
 topics = {

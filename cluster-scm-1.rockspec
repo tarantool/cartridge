@@ -68,6 +68,10 @@ build = {
             ['cluster.graphql.util'] = 'cluster/graphql/util.lua',
             ['cluster.graphql.validate'] = 'cluster/graphql/validate.lua',
             ['cluster.front-bundle'] = 'webui/build/bundle.lua',
+
+            ['cluster.test_helpers'] = 'cluster/test_helpers.lua',
+            ['cluster.test_helpers.cluster'] = 'cluster/test_helpers/cluster.lua',
+            ['cluster.test_helpers.server'] = 'cluster/test_helpers/server.lua',
         },
     },
     copy_directories = {'doc'},
