@@ -34,6 +34,7 @@ def enable_auth_internal(cluster):
             log.info('Auth enabled')
         """)
 
+
 @pytest.fixture(scope="function")
 def enable_auth(cluster):
     enable_auth_internal(cluster)
@@ -64,6 +65,7 @@ def check_200(srv, **kwargs):
     resp = srv.graphql('{}', **kwargs)
     assert 'errors' not in resp, resp['errors'][0]['message']
 
+
 @pytest.mark.parametrize("auth", [True, False])
 @pytest.mark.parametrize("alias", ['master', 'replica'])
 def test_login(cluster, auth, alias):
@@ -77,8 +79,8 @@ def test_login(cluster, auth, alias):
     PASSWORD = 'Fuschia Copper'
 
     srv.conn.eval("""
-        local auth_mocks = require('auth-mocks')
-        assert(auth_mocks.add_user('{}', '{}'))
+        local auth = require('cluster.auth')
+        assert(auth.add_user('{}', '{}'))
     """.format(USERNAME, PASSWORD))
 
     assert _login(srv, USERNAME, 'Invalid Password').status_code == 403
@@ -107,8 +109,8 @@ def test_login(cluster, auth, alias):
     del PASSWORD
 
     srv.conn.eval("""
-        local auth_mocks = require('auth-mocks')
-        assert(auth_mocks.edit_user('{}', '{}'))
+        local auth = require('cluster.auth')
+        assert(auth.edit_user('{}', '{}'))
     """.format(USERNAME, NEW_PASSWORD))
 
     assert _login(srv, USERNAME, OLD_PASSWORD).status_code == 403
@@ -118,11 +120,49 @@ def test_login(cluster, auth, alias):
     assert resp.cookies['lsid'] != ''
 
     srv.conn.eval("""
-        local auth_mocks = require('auth-mocks')
-        assert(auth_mocks.remove_user('{}'))
+        local auth = require('cluster.auth')
+        assert(auth.remove_user('{}'))
     """.format(USERNAME))
     assert _login(srv, USERNAME, OLD_PASSWORD).status_code == 403
     assert _login(srv, USERNAME, NEW_PASSWORD).status_code == 403
+
+    if auth:
+        USERNAME = "SuperPuperUser"
+        PASSWORD = "SuperPuperPassword-@3"
+
+        srv.conn.eval("""
+            local auth = require('cluster.auth')
+            assert(auth.add_user('{}', '{}'))
+        """.format(USERNAME, PASSWORD))
+
+        resp = _login(srv, USERNAME, PASSWORD)
+        assert resp.status_code == 200
+        assert 'lsid' in resp.cookies
+        assert resp.cookies['lsid'] != '' 
+        lsid = resp.cookies['lsid']
+
+        req = """
+            mutation($username: String!) {
+                cluster {
+                    remove_user(username:$username) { username }
+                }
+            }
+        """
+        obj = srv.graphql(req, 
+            variables={ 'username': USERNAME }, 
+            cookies={ 'lsid': lsid }
+        )
+        assert obj['errors'][0]['message'] == "user can not remove himself"
+
+        assert _login(srv, USERNAME, PASSWORD).status_code == 200
+
+        srv.conn.eval("""
+            local auth = require('cluster.auth')
+            assert(auth.remove_user('{}'))
+        """.format(USERNAME))
+        assert _login(srv, USERNAME, PASSWORD).status_code == 403
+
+
 
 def test_auth_disabled(cluster, disable_auth):
     srv = cluster['master']
