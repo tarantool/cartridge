@@ -1,6 +1,7 @@
 #!/bin/bash
 
 ./taptest.lua
+./.rocks/bin/luatest -v
 
 # collect coverage
 .rocks/bin/luacov-console ./cluster

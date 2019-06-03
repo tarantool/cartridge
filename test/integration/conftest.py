@@ -99,19 +99,19 @@ class Server(object):
     def start(self, workdir=None, env={}):
         if self.env == None:
             self.env = os.environ.copy()
-            self.env['ALIAS'] = str(self.alias)
-            self.env['WORKDIR'] = str(workdir)
-            self.env['HTTP_PORT'] = str(self.http_port)
-            self.env['ADVERTISE_URI'] = str(self.advertise_uri)
-            self.env['CLUSTER_COOKIE'] = COOKIE
+            self.env['TARANTOOL_ALIAS'] = str(self.alias)
+            self.env['TARANTOOL_WORKDIR'] = str(workdir)
+            self.env['TARANTOOL_HTTP_PORT'] = str(self.http_port)
+            self.env['TARANTOOL_ADVERTISE_URI'] = str(self.advertise_uri)
+            self.env['TARANTOOL_CLUSTER_COOKIE'] = COOKIE
 
         command = [os.path.join(srv_abspath, 'instance.lua')]
 
-        logging.warn('export ALIAS="{}"'.format(self.env['ALIAS']))
-        logging.warn('export WORKDIR="{}"'.format(self.env['WORKDIR']))
-        logging.warn('export HTTP_PORT="{}"'.format(self.env['HTTP_PORT']))
-        logging.warn('export ADVERTISE_URI="{}"'.format(self.env['ADVERTISE_URI']))
-        logging.warn('export CLUSTER_COOKIE="{}"'.format(self.env['CLUSTER_COOKIE']))
+        logging.warn('export TARANTOOL_ALIAS="{}"'.format(self.env['TARANTOOL_ALIAS']))
+        logging.warn('export TARANTOOL_WORKDIR="{}"'.format(self.env['TARANTOOL_WORKDIR']))
+        logging.warn('export TARANTOOL_HTTP_PORT="{}"'.format(self.env['TARANTOOL_HTTP_PORT']))
+        logging.warn('export TARANTOOL_ADVERTISE_URI="{}"'.format(self.env['TARANTOOL_ADVERTISE_URI']))
+        logging.warn('export TARANTOOL_CLUSTER_COOKIE="{}"'.format(self.env['TARANTOOL_CLUSTER_COOKIE']))
         for var_name, var_value in env.items():
             logging.warn('export {}="{}"'.format(var_name, var_value))
             self.env[var_name] = var_value
@@ -144,7 +144,7 @@ class Server(object):
             self.conn = tarantool.connect(
                 '127.0.0.1', self.binary_port,
                 user='cluster',
-                password=self.env['CLUSTER_COOKIE']
+                password=self.env['TARANTOOL_CLUSTER_COOKIE']
             )
         resp = self.conn.eval('return is_initialized()')
         err = resp[1] if len(resp) > 1 else None

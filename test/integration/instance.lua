@@ -217,13 +217,13 @@ if os.getenv('MULTIPLE_VSHARD_ENABLED') then
 end
 
 local ok, err = cluster.cfg({
-    alias = os.getenv('ALIAS'),
-    workdir = os.getenv('WORKDIR'),
-    advertise_uri = os.getenv('ADVERTISE_URI') or 'localhost:3301',
-    cluster_cookie = os.getenv('CLUSTER_COOKIE'),
+    alias = os.getenv('TARANTOOL_ALIAS'),
+    workdir = os.getenv('TARANTOOL_WORKDIR'),
+    advertise_uri = os.getenv('TARANTOOL_ADVERTISE_URI') or 'localhost:3301',
+    cluster_cookie = os.getenv('TARANTOOL_CLUSTER_COOKIE'),
     bucket_count = 3000,
     vshard_groups = vshard_groups,
-    http_port = os.getenv('HTTP_PORT') or 8081,
+    http_port = os.getenv('TARANTOOL_HTTP_PORT') or 8081,
     roles = {
         'cluster.roles.vshard-storage',
         'cluster.roles.vshard-router',
