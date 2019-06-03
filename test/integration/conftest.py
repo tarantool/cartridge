@@ -72,6 +72,7 @@ def confdir(request):
 
     return str(dir)
 
+
 class Server(object):
     def __init__(self, binary_port, http_port,
                 alias=None, instance_uuid=None,
@@ -199,18 +200,16 @@ class Server(object):
 
         return r
 
-    def graphql(self, query, variables=None, headers=None, **args):
+    def graphql(self, query, variables=None, headers=None, **kwargs):
         url = self.baseurl + '/admin/api'
 
         request = {"query": query, "variables": variables}
-
-        # logging.warn(request)
 
         r = requests.post(url,
             json=request,
             headers=headers,
             timeout=TARANTOOL_CONNECTION_TIMEOUT,
-            **args
+            **kwargs
         )
 
         r.raise_for_status()

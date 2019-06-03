@@ -404,11 +404,17 @@ end
 -- @treturn[2] table Error description
 local function remove_user(username)
     checks('string')
+
+    if username == get_session_username() then
+        return nil, e_remove_user:new('user can not remove himself')
+    end
+
     if vars.callbacks.remove_user == nil then
         return nil, e_callback:new('remove_user() callback isn\'t set')
     end
 
     return e_remove_user:pcall(function()
+
         local user, err = vars.callbacks.remove_user(username)
         if not user then
             return nil, e_remove_user:new(err)
