@@ -1,19 +1,9 @@
 import graphql from 'src/api/graphql';
 import rest from 'src/api/rest';
+import {authQuery, turnAuthMutation} from "./queries.graphql";
 
 export async function getAuthState() {
-  const graph = `
-    query {
-      cluster {
-        authParams: auth_params {
-          enabled
-          username
-        }
-      }
-    }
-  `;
-
-  const { cluster } = await graphql.fetch(graph);
+  const { cluster } = await graphql.fetch(authQuery);
   return cluster.authParams;
 }
 
@@ -68,16 +58,6 @@ export async function logOut() {
 }
 
 export async function turnAuth({ enabled = true }) {
-  const graph = `
-    mutation {
-      cluster {
-        authParams: auth_params(enabled: ${enabled}) {
-          enabled
-        }
-      }
-    }
-  `;
-
-  const { cluster } = await graphql.fetch(graph);
+  const { cluster } = await graphql.mutate(turnAuthMutation, {enabled});
   return cluster.authParams;
 }

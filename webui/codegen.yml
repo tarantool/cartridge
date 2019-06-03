@@ -1,0 +1,14 @@
+overwrite: true
+schema: "../doc/schema.graphql"
+documents: "**/*.graphql.js"
+generates:
+  src/generated/graphql-typing.js:
+    plugins:
+      - "flow"
+      - "flow-operations"
+  ./graphql.schema.json:
+    plugins:
+      - "introspection"
+config:
+  scalars:
+    Long: number

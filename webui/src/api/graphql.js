@@ -1,13 +1,36 @@
-import * as graphql from 'graphql'
+import { ApolloClient } from 'apollo-client'
+import { HttpLink } from 'apollo-link-http'
+import { InMemoryCache } from 'apollo-cache-inmemory'
+// import { withClientState } from 'apollo-link-state'
+// import { ApolloLink } from 'apollo-link'
 
-const graphRequest = graphql(process.env.REACT_APP_GRAPHQL_API_ENDPOINT, {
-  asJSON: true,
-  method: 'post',
+const httpLink = new HttpLink({
+  uri: process.env.REACT_APP_GRAPHQL_API_ENDPOINT,
+  credentials: 'include',
+});
+
+const client = new ApolloClient({
+  link: httpLink,
+  cache: new InMemoryCache(),
+  defaultOptions: {
+    query: {
+      fetchPolicy: 'no-cache',
+    },
+    mutate: {
+      fetchPolicy: 'no-cache',
+    },
+    watchQuery: {
+      fetchPolicy: 'no-cache',
+    }
+  },
 });
 
 export default {
-  fetch(graph, variables) {
-    return graphRequest(graph)(variables);
+  fetch(query, variables = {}) {
+    return client.query({query, variables: variables}).then(r => r.data);
+  },
+  mutate(mutation, variables = {}) {
+    return client.mutate({mutation, variables: variables}).then(r => r.data);
   },
 };
 

@@ -1,0 +1,11 @@
+[ignore]
+.*broken.json.*
+[include]
+
+[libs]
+.*flow-typed.*
+[lints]
+
+[options]
+
+[strict]

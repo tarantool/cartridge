@@ -8,14 +8,11 @@ import {
   APP_DATA_REQUEST,
   APP_DATA_REQUEST_SUCCESS,
   APP_DATA_REQUEST_ERROR,
-  APP_SERVER_CONSOLE_EVAL_STRING_REQUEST,
-  APP_SERVER_CONSOLE_EVAL_STRING_REQUEST_SUCCESS,
-  APP_SERVER_CONSOLE_EVAL_STRING_REQUEST_ERROR,
   APP_CREATE_MESSAGE,
   APP_SET_MESSAGE_DONE
 } from 'src/store/actionTypes';
-import { baseSaga, getRequestSaga } from 'src/store/commonRequest';
-import { getClusterSelf, evalString } from 'src/store/request/app.requests';
+import { baseSaga } from 'src/store/commonRequest';
+import { getClusterSelf } from 'src/store/request/app.requests';
 
 function* appDataRequestSaga() {
   yield takeLatest(APP_DID_MOUNT, function* load(action) {
@@ -58,13 +55,6 @@ function* appDataRequestSaga() {
     indicator.success();
   });
 };
-
-const evalStringRequestSaga = getRequestSaga(
-  APP_SERVER_CONSOLE_EVAL_STRING_REQUEST,
-  APP_SERVER_CONSOLE_EVAL_STRING_REQUEST_SUCCESS,
-  APP_SERVER_CONSOLE_EVAL_STRING_REQUEST_ERROR,
-  evalString,
-);
 
 function* getActiveDeadServerMessage() {
   const messages = yield select(state => state.app.messages);
@@ -123,7 +113,6 @@ function* doneMessage() {
 
 export const saga = baseSaga(
   appDataRequestSaga,
-  evalStringRequestSaga,
   appMessageSaga,
   doneMessage,
 );

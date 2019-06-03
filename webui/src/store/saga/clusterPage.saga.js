@@ -31,9 +31,6 @@ import {
   CLUSTER_PAGE_UPLOAD_CONFIG_REQUEST,
   CLUSTER_PAGE_UPLOAD_CONFIG_REQUEST_SUCCESS,
   CLUSTER_PAGE_UPLOAD_CONFIG_REQUEST_ERROR,
-  CLUSTER_PAGE_APPLY_TEST_CONFIG_REQUEST,
-  CLUSTER_PAGE_APPLY_TEST_CONFIG_REQUEST_SUCCESS,
-  CLUSTER_PAGE_APPLY_TEST_CONFIG_REQUEST_ERROR,
   CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST,
   CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_SUCCESS,
   CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_ERROR,
@@ -44,7 +41,7 @@ import { baseSaga, getRequestSaga, getSignalRequestSaga } from 'src/store/common
 import { getClusterSelf } from 'src/store/request/app.requests';
 import {
   getPageData, refreshLists, getServerStat, bootstrapVshard, probeServer, joinServer, createReplicaset,
-  expelServer, editReplicaset, joinSingleServer, uploadConfig, applyTestConfig, changeFailover
+  expelServer, editReplicaset, uploadConfig, changeFailover
 } from 'src/store/request/clusterPage.requests';
 import { REFRESH_LIST_INTERVAL } from 'src/constants';
 
@@ -181,28 +178,6 @@ const uploadConfigRequestSaga = getRequestSaga(
   uploadConfig,
 );
 
-function* applyTestConfigRequestSaga() {
-  yield takeLatest(CLUSTER_PAGE_APPLY_TEST_CONFIG_REQUEST, function* load(action) {
-    const { payload: requestPayload = {} } = action;
-    const indicator = pageRequestIndicator.run();
-
-    let response;
-    try {
-      yield call(joinSingleServer, requestPayload);
-      indicator.next();
-      response = yield call(applyTestConfig);
-      indicator.success();
-    }
-    catch (error) {
-      yield put({ type: CLUSTER_PAGE_APPLY_TEST_CONFIG_REQUEST_ERROR, error, requestPayload });
-      indicator.error();
-      return;
-    }
-
-    yield put({ type: CLUSTER_PAGE_APPLY_TEST_CONFIG_REQUEST_SUCCESS, payload: response, requestPayload });
-  });
-}
-
 const changeFailoverRequestSaga = getRequestSaga(
   CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST,
   CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_SUCCESS,
@@ -236,7 +211,6 @@ export const saga = baseSaga(
   expelServerRequestSaga,
   editReplicasetRequestSaga,
   uploadConfigRequestSaga,
-  applyTestConfigRequestSaga,
   changeFailoverRequestSaga,
   updateClusterSelfOnBootstrap,
 );
