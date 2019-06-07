@@ -61,3 +61,5 @@ test:throws(
     "testing",
     {labels = {["io.tarantool/vshard"] = "1234"}}
 )
+
+os.exit(test:check() and 0 or 1)
