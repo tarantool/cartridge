@@ -41,14 +41,14 @@ local function validate_schema_labels(field, object)
 
         e_label_config:assert(
             label_name:sub(-1) ~= ".",
-            "%s must not include 2 consequent dots (..)",
+            "%s key must not end with dot (.)",
             label_name_field,
             label_name
         )
 
         e_label_config:assert(
             label_name:find('%.%.') == nil,
-            "%s key must not end with dot (.)",
+            "%s must not include 2 consequent dots (..)",
             label_name_field,
             label_name
         )
