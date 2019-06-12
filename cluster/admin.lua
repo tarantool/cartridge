@@ -445,11 +445,6 @@ local function join_server(args)
         labels = '?table'
     })
 
-    local roles = {}
-    for _, role in pairs(args.roles or {}) do
-        roles[role] = true
-    end
-
     if args.instance_uuid == nil then
         args.instance_uuid = uuid_lib.str()
     end
@@ -466,7 +461,7 @@ local function join_server(args)
         local myself = membership.myself()
         if args.uri == myself.uri then
             return package.loaded['cluster'].bootstrap(
-                roles,
+                confapplier.get_enabled_roles(args.roles),
                 {
                     instance_uuid = args.instance_uuid,
                     replicaset_uuid = args.replicaset_uuid,
@@ -509,7 +504,7 @@ local function join_server(args)
         end
 
         topology_cfg.replicasets[args.replicaset_uuid] = {
-            roles = confapplier.get_enabled_roles(roles),
+            roles = confapplier.get_enabled_roles(args.roles),
             master = {args.instance_uuid},
             weight = weight,
         }
@@ -740,11 +735,7 @@ local function edit_replicaset(args)
     end
 
     if args.roles ~= nil then
-        local roles = {}
-        for _, role in pairs(args.roles) do
-            roles[role] = true
-        end
-        replicaset.roles = confapplier.get_enabled_roles(roles)
+        replicaset.roles = confapplier.get_enabled_roles(args.roles)
     end
 
     if args.master ~= nil then
