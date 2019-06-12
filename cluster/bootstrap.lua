@@ -120,13 +120,13 @@ local function bootstrap_from_scratch(boot_opts, box_opts, roles, labels)
     --     return nil, err
     -- end
 
-    local ok, err = topology.validate(conf.topology, {})
+    local _, err = topology.validate(conf.topology, {})
     if err then
         membership.set_payload('warning', tostring(err.err or err))
         return nil, err
     end
 
-    local ok, err = confapplier.prepare_2pc(conf)
+    local _, err = confapplier.prepare_2pc(conf)
     if err then
         membership.set_payload('warning', tostring(err.err or err))
         return nil, err
@@ -168,7 +168,7 @@ local function bootstrap_from_membership(boot_opts, box_opts)
         return false
     end
 
-    local ok, err = topology.validate(conf.topology, {})
+    local _, err = topology.validate(conf.topology, {})
     if err then
         membership.set_payload('warning', tostring(err.err or err))
         return false
@@ -180,7 +180,7 @@ local function bootstrap_from_membership(boot_opts, box_opts)
         return false
     end
 
-    local ok, err = confapplier.prepare_2pc(conf)
+    local _, err = confapplier.prepare_2pc(conf)
     if err then
         membership.set_payload('warning', tostring(err.err or err))
         return false

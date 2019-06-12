@@ -4,7 +4,6 @@
 -- this module incorporates information about
 -- conf.servers and membership status
 
-local uri = require('uri')
 local fun = require('fun')
 -- local log = require('log')
 local checks = require('checks')
@@ -45,7 +44,7 @@ vars:new('topology', {
 })
 
 -- to be used in fun.filter
-local function not_expelled(uuid, srv)
+local function not_expelled(_, srv)
     return srv ~= 'expelled'
 end
 
@@ -109,7 +108,7 @@ local function validate_schema(field, topology)
             '%s.servers must have string keys', field
         )
         e_config:assert(
-            checkers.uuid_str(instance_uuid),
+            _G.checkers.uuid_str(instance_uuid),
             '%s.servers key %q is not a valid UUID', field, instance_uuid
         )
 
@@ -134,7 +133,7 @@ local function validate_schema(field, topology)
                 '%s.replicaset_uuid must be a string, got %s', field, type(server.replicaset_uuid)
             )
             e_config:assert(
-                checkers.uuid_str(server.replicaset_uuid),
+                _G.checkers.uuid_str(server.replicaset_uuid),
                 '%s.replicaset_uuid %q is not a valid UUID', field, server.replicaset_uuid
             )
 
@@ -146,7 +145,7 @@ local function validate_schema(field, topology)
                 ['replicaset_uuid'] = true,
                 ['labels'] = true
             }
-            for k, v in pairs(server) do
+            for k, _ in pairs(server) do
                 e_config:assert(
                     known_keys[k],
                     '%s has unknown parameter %q', field, k
@@ -161,7 +160,7 @@ local function validate_schema(field, topology)
             '%s.replicasets must have string keys', field
         )
         e_config:assert(
-            checkers.uuid_str(replicaset_uuid),
+            _G.checkers.uuid_str(replicaset_uuid),
             '%s.replicasets key %q is not a valid UUID', field, replicaset_uuid
         )
 
@@ -224,7 +223,7 @@ local function validate_schema(field, topology)
             ['master'] = true,
             ['weight'] = true,
         }
-        for k, v in pairs(replicaset) do
+        for k, _ in pairs(replicaset) do
             e_config:assert(
                 known_keys[k],
                 '%s has unknown parameter %q', field, k
@@ -238,7 +237,7 @@ local function validate_schema(field, topology)
         ['failover'] = true,
         ['auth'] = true,
     }
-    for k, v in pairs(topology) do
+    for k, _ in pairs(topology) do
         e_config:assert(
             known_keys[k],
             '%s has unknown parameter %q', field, k
@@ -344,6 +343,7 @@ local function validate_upgrade(topology_new, topology_old)
     local replicasets_old = topology_old.replicasets or {}
 
     -- validate that nobody was removed from previous config
+    -- luacheck: ignore server_old
     for instance_uuid, server_old in pairs(servers_old) do
         local server_new = servers_new[instance_uuid]
         e_config:assert(
@@ -499,6 +499,7 @@ local function get_replication_config(topology, replicaset_uuid)
     local replication = {}
     local advertise_uri = membership.myself().uri
 
+    -- luacheck: ignore instance_uuid
     for _it, instance_uuid, server in fun.filter(not_disabled, topology.servers) do
         if server.replicaset_uuid == replicaset_uuid
         and server.uri ~= advertise_uri then

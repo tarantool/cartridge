@@ -368,6 +368,7 @@ local function fetch_from_membership(topology_cfg)
         or (member.payload.error ~= nil) -- ignore misconfigured members
         or (topology_cfg and member.payload.uuid == box.info.uuid) -- ignore myself
         or (topology_cfg and topology_cfg.servers[member.payload.uuid] == nil) -- ignore aliens
+        -- luacheck: ignore 542
         then
             -- ignore that member
         else
@@ -734,6 +735,7 @@ local function _clusterwide(conf)
     local configured_uri_list = {}
     local cnt = 0
     for uuid, _ in pairs(servers_new) do
+        -- luacheck: ignore 542
         if not topology.not_disabled(uuid, servers_new[uuid]) then
             -- ignore disabled servers
         elseif servers_old[uuid] == nil then

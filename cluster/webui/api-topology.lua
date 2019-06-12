@@ -48,6 +48,24 @@ local gql_type_replicaset = gql_types.object {
     }
 }
 
+local gql_type_label = gql_types.object {
+    name = 'Label',
+    description = 'Cluster server label',
+    fields = {
+        name = gql_types.string.nonNull,
+        value = gql_types.string.nonNull
+    }
+}
+
+local gql_type_label_input = gql_types.inputObject {
+    name = 'LabelInput',
+    description = 'Cluster server label',
+    fields = {
+        name = gql_types.string.nonNull,
+        value = gql_types.string.nonNull
+    }
+}
+
 local gql_type_server = gql_types.object {
     name = 'Server',
     description = 'A server participating in tarantool cluster',
@@ -66,26 +84,8 @@ local gql_type_server = gql_types.object {
         statistics = gql_stat_schema,
         boxinfo = gql_boxinfo_schema,
         labels = {
-            kind = gql_types.list('Label')
-    }
-}
-}
-
-local gql_type_label = gql_types.object {
-    name = 'Label',
-    description = 'Cluster server label',
-    fields = {
-        name = gql_types.string.nonNull,
-        value = gql_types.string.nonNull
-    }
-}
-
-local gql_type_label_input = gql_types.inputObject {
-    name = 'LabelInput',
-    description = 'Cluster server label',
-    fields = {
-        name = gql_types.string.nonNull,
-        value = gql_types.string.nonNull
+            kind = gql_types.list(gql_type_label)
+        }
     }
 }
 
@@ -215,7 +215,7 @@ local function init(graphql)
             replicaset_uuid = gql_types.string,
             roles = gql_types.list(gql_types.string.nonNull),
             timeout = gql_types.float,
-            labels = gql_types.list('LabelInput')
+            labels = gql_types.list(gql_type_label_input)
         },
         kind = gql_types.boolean,
         callback = module_name .. '.join_server',
@@ -226,7 +226,7 @@ local function init(graphql)
         args = {
             uuid = gql_types.string.nonNull,
             uri = gql_types.string,
-            labels = gql_types.list('LabelInput')
+            labels = gql_types.list(gql_type_label_input)
         },
         kind = gql_types.boolean,
         callback = module_name .. '.edit_server',
