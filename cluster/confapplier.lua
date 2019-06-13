@@ -155,13 +155,25 @@ end
 --
 -- @function get_enabled_roles
 -- @local
--- @tparam {[string]=boolean,...} roles
+-- @tparam {string,...}|{[string]=boolean,...} roles
 -- @treturn {[string]=boolean,...}
 local function get_enabled_roles(roles)
-    checks('table')
+    checks('?table')
+
+    if roles == nil then
+        return {}
+    end
+
     local ret = {}
 
-    for role, enabled in pairs(roles) do
+    for k, v in pairs(roles) do
+        local role, enabled
+        if type(k) == 'number' and type(v) == 'string' then
+            role, enabled = v, true
+        else
+            role, enabled = k, v
+        end
+
         if enabled then
             ret[role] = true
             for _, dep in ipairs(vars.roles_dependencies[role] or {}) do
