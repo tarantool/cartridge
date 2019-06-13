@@ -85,6 +85,12 @@ add_custom_target(schema
 enable_testing()
 
 add_test(
+  NAME lint
+  COMMAND luacheck cluster-scm-1.rockspec
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+add_test(
   NAME test_unit
   COMMAND ${TARANTOOL} ${CMAKE_CURRENT_SOURCE_DIR}/taptest.lua
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}

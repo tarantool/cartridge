@@ -2,7 +2,6 @@
 
 local os = require('os')
 local fio = require('fio')
-local log = require('log')
 local errno = require('errno')
 
 local M = rawget(_G, '__module_cluster_cookie')

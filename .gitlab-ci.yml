@@ -19,12 +19,14 @@ build:
     - curl -sL https://rpm.nodesource.com/setup_8.x | bash -
     - yum -y install git gcc make cmake unzip python python-pip nodejs
     - tarantoolctl rocks install ldoc --server=http://rocks.moonscript.org
+    - tarantoolctl rocks install luacheck
     - export PATH=.rocks/bin:$PATH
     - pip install -r test/integration/requirements.txt
     - npm install graphql-cli
     - export PATH=node_modules/.bin:$PATH
   script:
     - tarantoolctl rocks make BUILD_DOC=YES
+    - luacheck cluster-scm-1.rockspec
     - pytest -v
     - ./taptest.lua
     - ./fetch-schema.sh

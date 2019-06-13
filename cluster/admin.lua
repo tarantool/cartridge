@@ -1,10 +1,10 @@
 #!/usr/bin/env tarantool
+-- luacheck: ignore _it
 
 --- Administration functions.
 --
 -- @module cluster.admin
 
-local log = require('log')
 local fun = require('fun')
 local fiber = require('fiber')
 local checks = require('checks')
@@ -382,7 +382,7 @@ local function get_servers(uuid)
     if uuid then
         table.insert(ret, servers[uuid])
     else
-        for k, v in pairs(servers) do
+        for _, v in pairs(servers) do
             table.insert(ret, v)
         end
     end
@@ -621,7 +621,7 @@ local function expel_server(uuid)
 
     topology_cfg.servers[uuid] = "expelled"
 
-    for _it, instance_uuid, server in fun.filter(topology.not_expelled, topology_cfg.servers) do
+    for _it, _, server in fun.filter(topology.not_expelled, topology_cfg.servers) do
         if server.replicaset_uuid == replicaset_uuid then
             replicaset_uuid = nil
         end
@@ -629,6 +629,7 @@ local function expel_server(uuid)
 
     if replicaset_uuid ~= nil then
         topology_cfg.replicasets[replicaset_uuid] = nil
+        -- luacheck: ignore replicaset
         replicaset = nil
     else
         local master_pos
@@ -646,7 +647,6 @@ local function expel_server(uuid)
             table.remove(replicaset.master, master_pos)
         end
     end
-
 
     local ok, err = confapplier.patch_clusterwide({topology = topology_cfg})
     if not ok then
