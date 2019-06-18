@@ -43,7 +43,7 @@ local function run()
     for _, file in ipairs(files) do
         print("Running tests from: " .. file)
 
-        local res = os.execute('tarantool ' .. file)
+        local res = os.execute('tarantool -e \"require(\'luacov\')\" ' .. file)
         if res ~= 0 then
             table.insert(failed_tests, file)
         end
