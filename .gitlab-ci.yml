@@ -20,6 +20,8 @@ build:
     - yum -y install git gcc make cmake unzip python python-pip nodejs
     - tarantoolctl rocks install ldoc --server=http://rocks.moonscript.org
     - tarantoolctl rocks install luacheck
+    - tarantoolctl rocks install luacov
+    - tarantoolctl rocks install luacov-console 1.1.0
     - export PATH=.rocks/bin:$PATH
     - pip install -r test/integration/requirements.txt
     - npm install graphql-cli
@@ -28,7 +30,7 @@ build:
     - tarantoolctl rocks make BUILD_DOC=YES
     - luacheck cluster-scm-1.rockspec
     - pytest -v
-    - ./taptest.lua
+    - ./run-test.sh
     - ./fetch-schema.sh
     - ./check-flow-graphql.sh
     - ./release.sh
@@ -38,6 +40,7 @@ build:
       - doc/
       - release/
       - release-doc/
+      - luacov.report.out
 
 publish:
   stage: publish
