@@ -728,6 +728,12 @@ local function _clusterwide(conf)
         return nil, err
     end
 
+    local vshard_utils = require('cluster.vshard-utils')
+    local ok, err = vshard_utils.validate_config(conf_new, conf_old)
+    if not ok then
+        return nil, err
+    end
+
     local servers_new = conf_new.topology.servers
     local servers_old = conf_old.topology.servers
 

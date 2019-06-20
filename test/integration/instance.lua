@@ -207,12 +207,22 @@ if os.getenv('ADMIN_PASSWORD') then
     auth_enabled = true
 end
 
+local vshard_groups = nil
+if os.getenv('MULTIPLE_VSHARD_ENABLED') then
+    vshard_groups = {
+        -- both notations are valid
+        ['cold'] = {bucket_count = 2000},
+        'hot',
+    }
+end
+
 local ok, err = cluster.cfg({
     alias = os.getenv('ALIAS'),
     workdir = os.getenv('WORKDIR'),
     advertise_uri = os.getenv('ADVERTISE_URI') or 'localhost:3301',
     cluster_cookie = os.getenv('CLUSTER_COOKIE'),
     bucket_count = 3000,
+    vshard_groups = vshard_groups,
     http_port = os.getenv('HTTP_PORT') or 8081,
     roles = {
         'cluster.roles.vshard-storage',
@@ -231,7 +241,7 @@ end
 
 _G.is_initialized = cluster.is_healthy
 
-function get_uuid()
+function _G.get_uuid()
     -- this function is used in pytest
     -- to check vshard routing
     return box.info().uuid

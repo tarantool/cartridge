@@ -39,6 +39,7 @@ vars:new('topology', {
         --     master = 'instance-uuid-2' -- old format, still compatible
         --     master = {'instance-uuid-2', 'instance-uuid-1'} -- new format
         --     weight = 1.0,
+        --     vshard_group = 'group_name',
         -- }
     },
 })
@@ -207,6 +208,11 @@ local function validate_schema(field, topology)
             '%s.weight must be a number, got %s', field, type(replicaset.weight)
         )
 
+        e_config:assert(
+            (replicaset.vshard_group == nil) or (type(replicaset.vshard_group) == 'string'),
+            '%s.vshard_group must be a string, got %s', field, type(replicaset.vshard_group)
+        )
+
         for k, v in pairs(replicaset.roles) do
             e_config:assert(
                 type(k) == 'string',
@@ -222,6 +228,7 @@ local function validate_schema(field, topology)
             ['roles'] = true,
             ['master'] = true,
             ['weight'] = true,
+            ['vshard_group'] = true,
         }
         for k, _ in pairs(replicaset) do
             e_config:assert(
@@ -319,7 +326,7 @@ local function validate_availability(topology)
     local myself = membership.myself()
     local myself_uuid = myself.payload.uuid
     if myself_uuid ~= nil then
-        local srv = topology.servers[myself_uuid]
+        local srv = topology.servers and topology.servers[myself_uuid]
         e_config:assert(
             srv ~= nil,
             'Current instance %q is not listed in config', myself.uri
@@ -382,7 +389,6 @@ local function validate_upgrade(topology_new, topology_old)
         end
     end
 end
-
 
 local function validate(topology_new, topology_old)
     topology_old = topology_old or {}

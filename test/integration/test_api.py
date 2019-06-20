@@ -56,6 +56,7 @@ def test_self(cluster):
                 }
                 can_bootstrap_vshard
                 vshard_bucket_count
+                vshard_known_groups
             }
         }
     """)
@@ -68,6 +69,7 @@ def test_self(cluster):
     }
     assert obj['data']['cluster']['can_bootstrap_vshard'] == False
     assert obj['data']['cluster']['vshard_bucket_count'] == 3000
+    assert obj['data']['cluster']['vshard_known_groups'] == ['default']
 
 def test_custom_http_endpoint(cluster):
     resp = cluster['router'].get('/custom-get')

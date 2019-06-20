@@ -1,7 +1,5 @@
 #!/usr/bin/env tarantool
 
-local log = require('log')
-
 local members = {
     ['localhost:3301'] = {
         uri = 'localhost:3301',
@@ -33,7 +31,7 @@ package.loaded['membership'] = {
     get_member = function(uri)
         return members[uri]
     end,
-    myself = function(uri)
+    myself = function(_)
         return members['localhost:3301']
     end,
 }
@@ -44,7 +42,7 @@ package.loaded['cluster.pool'] = {
     end,
 }
 
-vshard = {
+_G.vshard = {
     storage = {
         buckets_count = function() end,
     }
@@ -58,24 +56,24 @@ assert(confapplier.register_role('cluster.roles.vshard-storage'))
 assert(confapplier.register_role('cluster.roles.vshard-router'))
 local test = tap.test('topology.config')
 
+local function test_all(test, conf)
 test:plan(51)
+
+local vshard_group
+if conf.vshard then
+    vshard_group = "\n"
+else
+    vshard_group = "\n    vshard_group: first\n"
+end
 
 local function check_config(result, raw_new, raw_old)
     local topology_new = raw_new and yaml.decode(raw_new) or {}
     local topology_old = raw_old and yaml.decode(raw_old) or {}
 
-    local vshard_conf = {
-        bootstrapped = true,
-        bucket_count = 1337,
-    }
-    local cfg_new = {
-        vshard = vshard_conf,
-        topology = topology_new,
-    }
-    local cfg_old = {
-        vshard = vshard_conf,
-        topology = topology_old,
-    }
+    local cfg_new = table.deepcopy(conf)
+    local cfg_old = table.deepcopy(conf)
+    cfg_new.topology = topology_new
+    cfg_old.topology = topology_old
 
     local ok, err = topology.validate(topology_new, topology_old)
     if ok then
@@ -341,7 +339,13 @@ replicasets:
     weight: -1
 ...]])
 
-check_config('At least one vshard-storage must have weight > 0',
+local e
+if conf.vshard then
+    e = 'At least one vshard-storage must have weight > 0'
+else
+    e = 'At least one vshard-storage (first) must have weight > 0'
+end
+check_config(e,
 [[---
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000001:
@@ -351,7 +355,8 @@ replicasets:
   aaaaaaaa-0000-4000-b000-000000000001:
     master: aaaaaaaa-aaaa-4000-b000-000000000001
     roles: {"vshard-storage": true}
-    weight: 0
+    weight: 0 ]] ..
+    vshard_group .. [[
 ...]])
 
 test:diag('validate_availability()')
@@ -506,11 +511,13 @@ replicasets:
   aaaaaaaa-0000-4000-b000-000000000001:
     master: aaaaaaaa-aaaa-4000-b000-000000000001
     roles: {"vshard-storage": true}
-    weight: 1
+    weight: 1 ]] ..
+    vshard_group .. [[
   bbbbbbbb-0000-4000-b000-000000000001:
     master: bbbbbbbb-bbbb-4000-b000-000000000001
     roles: {"vshard-storage": true}
-    weight: %s
+    weight: %s ]] ..
+    vshard_group .. [[
 ...]]
 
 local conf_new_expelled = [[---
@@ -523,7 +530,8 @@ replicasets:
   aaaaaaaa-0000-4000-b000-000000000001:
     master: aaaaaaaa-aaaa-4000-b000-000000000001
     roles: {"vshard-storage": true}
-    weight: 1
+    weight: 1 ]] ..
+    vshard_group .. [[
 ...]]
 
 local conf_new_disabled = [[---
@@ -538,21 +546,23 @@ replicasets:
   aaaaaaaa-0000-4000-b000-000000000001:
     master: aaaaaaaa-aaaa-4000-b000-000000000001
     roles: {"vshard-storage": true}
-    weight: 1
+    weight: 1 ]] ..
+    vshard_group .. [[
   bbbbbbbb-0000-4000-b000-000000000001:
     master: bbbbbbbb-bbbb-4000-b000-000000000001
-    roles: {}
+    roles: {} ]] ..
+    vshard_group .. [[
 ...]]
 
 
 check_config('replicasets[bbbbbbbb-0000-4000-b000-000000000001]'..
-  ' is a vshard-storage which can\'t be removed',
+  " is a vshard-storage which can't be removed",
   conf_new_expelled,
   conf_old_with_weight:format(1)
 )
 
 check_config('replicasets[bbbbbbbb-0000-4000-b000-000000000001]'..
-  ' is a vshard-storage which can\'t be removed',
+  " is a vshard-storage which can't be removed",
   conf_new_disabled,
   conf_old_with_weight:format(1)
 )
@@ -686,7 +696,31 @@ replicasets:
   aaaaaaaa-0000-4000-b000-000000000001:
     master: aaaaaaaa-aaaa-4000-b000-000000000001
     roles: {"vshard-storage": true}
-    weight: 2
+    weight: 2 ]] ..
+    vshard_group .. [[
 ...]])
+end
+
+test:plan(2)
+
+test:test('single group', test_all, {
+    vshard = {
+        bootstrapped = true,
+        bucket_count = 1337,
+    }
+})
+
+test:test('multi-group', test_all, {
+    vshard_groups = {
+        first = {
+            bootstrapped = true,
+            bucket_count = 1337,
+        },
+        second = {
+            bootstrapped = true,
+            bucket_count = 1337,
+        },
+    }
+})
 
 os.exit(test:check() and 0 or 1)

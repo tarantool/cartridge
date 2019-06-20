@@ -139,6 +139,7 @@ local function get_servers_and_replicasets()
             master = nil,
             active_master = nil,
             weight = nil,
+            vshard_group = replicaset.vshard_group,
             servers = {},
         }
 
@@ -432,6 +433,7 @@ end
 -- @tparam ?{string,...} args.roles
 -- @tparam ?number args.timeout
 -- @tparam ?{[string]=string,...} args.labels
+-- @tparam ?string args.vshard_group
 -- @treturn[1] boolean true
 -- @treturn[2] nil
 -- @treturn[2] table Error description
@@ -442,7 +444,8 @@ local function join_server(args)
         replicaset_uuid = '?string',
         roles = '?table',
         timeout = '?number',
-        labels = '?table'
+        labels = '?table',
+        vshard_group = '?string',
     })
 
     if args.instance_uuid == nil then
@@ -466,7 +469,7 @@ local function join_server(args)
                     instance_uuid = args.instance_uuid,
                     replicaset_uuid = args.replicaset_uuid,
                 },
-                labels
+                labels, args.vshard_group
             )
         else
             return nil, e_topology_edit:new(
@@ -496,10 +499,19 @@ local function join_server(args)
         labels = labels
     }
 
-    local vshard_cfg = confapplier.get_readonly('vshard')
+    local bootstrapped
+    if args.vshard_group then
+        local vshard_groups = confapplier.get_readonly('vshard_groups')
+        local params = vshard_groups[args.vshard_group]
+        bootstrapped = params and params.bootstrapped
+    else
+        local params = confapplier.get_readonly('vshard')
+        bootstrapped = params and params.bootstrapped
+    end
+
     if topology_cfg.replicasets[args.replicaset_uuid] == nil then
         local weight = 0
-        if not vshard_cfg.bootstrapped then
+        if not bootstrapped then
             weight = 1
         end
 
@@ -507,6 +519,7 @@ local function join_server(args)
             roles = confapplier.get_enabled_roles(args.roles),
             master = {args.instance_uuid},
             weight = weight,
+            vshard_group = args.vshard_group,
         }
     else
         local replicaset = topology_cfg.replicasets[args.replicaset_uuid]
@@ -711,6 +724,7 @@ end
 -- @tparam ?{string,...} args.roles
 -- @tparam ?{string,...} args.master Failover order
 -- @tparam ?number args.weight
+-- @tparam ?string args.vshard_group
 -- @treturn[1] boolean true
 -- @treturn[2] nil
 -- @treturn[2] table Error description
@@ -721,6 +735,7 @@ local function edit_replicaset(args)
         roles = '?table',
         master = '?string|table',
         weight = '?number',
+        vshard_group = '?string',
     })
 
     local topology_cfg = confapplier.get_deepcopy('topology')
@@ -736,6 +751,10 @@ local function edit_replicaset(args)
 
     if args.roles ~= nil then
         replicaset.roles = confapplier.get_enabled_roles(args.roles)
+    end
+
+    if args.vshard_group ~= nil then
+        replicaset.vshard_group = args.vshard_group
     end
 
     if args.master ~= nil then

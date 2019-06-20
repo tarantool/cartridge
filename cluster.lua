@@ -39,6 +39,53 @@ vars:new('box_opts')
 vars:new('boot_opts')
 vars:new('bootstrapped')
 
+--- Vshard storage group configuration.
+--
+-- Every vshard storage must be assigned to a group.
+-- @tfield
+--   number bucket_count
+--   Bucket count for the storage group.
+-- @table VshardGroup
+local function check_vshard_group(name, params)
+    if type(name) ~= 'string' then
+        return nil, 'bad argument options.vshard_groups' ..
+            ' to cluster.cfg (table must have string keys)'
+    end
+
+    local field = string.format('options.vshard_groups[%s]', name)
+
+    if type(params) ~= 'table' then
+        return nil, string.format(
+            'bad argument %s' ..
+            ' (table expected, got %s)',
+            field, type(params)
+        )
+    end
+
+    local bucket_count = params.bucket_count
+    if bucket_count ~= nil and type(bucket_count) ~= 'number' then
+        return nil, string.format(
+            'bad argument %s.bucket_count' ..
+            ' (?number expected, got %s)',
+            field, type(bucket_count)
+        )
+    end
+
+    local known_keys = {
+        bucket_count = true,
+    }
+    for key, _ in pairs(params) do
+        if not known_keys[key] then
+            return string.format(
+                'unexpected argument %s.%s',
+                field, key
+            )
+        end
+    end
+
+    return true
+end
+
 --- Initialize the cluster module.
 --- After this call, you can operate the instance via Tarantool console.
 --- Notice that this call does not initialize the database - `box.cfg` is not called yet.
@@ -54,6 +101,8 @@ vars:new('bootstrapped')
 ---  (prevents them from seeing each other during broadcasts).
 ---  Also used for encrypting internal communication
 --- @tparam ?number opts.bucket_count bucket count for vshard cluster. See vshard doc for more details
+--- @tparam ?{string=VshardGroupParams,...} opts.vshard_groups
+---  vshard storage groups, table keys used as names
 --- @tparam ?string|number opts.http_port port to open administrative UI and API on
 --- @tparam ?string opts.alias human-readable instance name that will be available in administrative UI
 --- @tparam ?table opts.roles list of user-defined roles that will be available to enable on the instance_uuid
@@ -74,7 +123,27 @@ local function cfg(opts, box_opts)
         roles = '?table',
         auth_backend_name = '?string',
         auth_enabled = '?boolean',
+        vshard_groups = '?table',
     }, '?table')
+
+    local vshard_groups = {}
+    for k, v in pairs(opts.vshard_groups or {}) do
+        local name, params
+        if type(k) == 'number' and type(v) == 'string' then
+            -- {'group-name'}
+            name, params = v, {}
+        else
+            -- {['group-name'] = {bucket_count=1000}}
+            name, params = k, table.copy(v)
+        end
+
+        local ok, err = check_vshard_group(name, params)
+        if not ok then
+            error(err, 2)
+        end
+
+        vshard_groups[name] = params
+    end
 
     if (vars.boot_opts ~= nil) then
         return nil, e_init:new('Cluster is already initialized')
@@ -209,11 +278,22 @@ local function cfg(opts, box_opts)
     -- errors.monkeypatch_netbox_call()
     -- netbox_fiber_storage.monkeypatch_netbox_call()
 
+    if next(vshard_groups) == nil then
+        vshard_groups = nil
+    else
+        for _, params in pairs(vshard_groups) do
+            if params.bucket_count == nil then
+                params.bucket_count = opts.bucket_count
+            end
+        end
+    end
+
     vars.box_opts = box_opts
     vars.boot_opts = {
         workdir = opts.workdir,
         binary_port = advertise.service,
         bucket_count = opts.bucket_count,
+        vshard_groups = vshard_groups,
     }
 
     if #fio.glob(opts.workdir..'/*.snap') > 0 then
@@ -238,12 +318,14 @@ local function cfg(opts, box_opts)
     return true
 end
 
-local function bootstrap_from_scratch(roles, uuids, labels)
+local function bootstrap_from_scratch(roles, uuids, labels, vshard_group)
     checks('?table', {
         instance_uuid = '?uuid_str',
         replicaset_uuid = '?uuid_str',
         },
-        '?table')
+        '?table',
+        '?string'
+    )
 
     if vars.bootstrapped then
         return nil, e_init:new('Cluster is already bootstrapped')
@@ -257,7 +339,7 @@ local function bootstrap_from_scratch(roles, uuids, labels)
         return select('#', ...), {...}
     end
     local n, ret = pack(
-        bootstrap.from_scratch(_boot_opts, vars.box_opts, roles, labels)
+        bootstrap.from_scratch(_boot_opts, vars.box_opts, roles, labels, vshard_group)
     )
 
     vars.bootstrapped = true
