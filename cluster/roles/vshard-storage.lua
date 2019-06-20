@@ -13,11 +13,9 @@ vars:new('vshard_cfg')
 local function apply_config(conf)
     checks('table')
 
-    local vshard_cfg = {
-        sharding = vshard_utils.get_sharding_config(),
-        bucket_count = conf.vshard.bucket_count,
-        listen = box.cfg.listen,
-    }
+    local my_replicaset = conf.topology.replicasets[box.info.cluster.uuid]
+    local vshard_cfg = vshard_utils.get_vshard_config(my_replicaset.vshard_group, conf)
+    vshard_cfg.listen = box.cfg.listen
 
     if utils.deepcmp(vshard_cfg, vars.vshard_cfg) then
         -- No reconfiguration required, skip it
@@ -39,7 +37,6 @@ end
 
 return {
     role_name = 'vshard-storage',
-    validate_config = vshard_utils.validate_config,
     apply_config = apply_config,
     init = init,
     stop = stop,

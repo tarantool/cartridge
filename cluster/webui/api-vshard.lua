@@ -27,6 +27,15 @@ local function init(graphql)
         kind = gql_types.int.nonNull,
         callback = 'cluster.roles.vshard-router' .. '.get_bucket_count',
     })
+
+    graphql.add_callback({
+        prefix = 'cluster',
+        name = 'vshard_known_groups',
+        doc = 'Get list of known vshard storage groups.',
+        args = {},
+        kind = gql_types.list(gql_types.string.nonNull).nonNull,
+        callback = 'cluster.roles.vshard-router' .. '.get_known_groups',
+    })
 end
 
 return {

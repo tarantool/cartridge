@@ -2,17 +2,22 @@
 
 local log = require('log')
 local fio = require('fio')
+local fun = require('fun')
+local json = require('json')
 local fiber = require('fiber')
 local checks = require('checks')
+local errors = require('errors')
 local uuid_lib = require('uuid')
 local membership = require('membership')
 
 local auth = require('cluster.auth')
 local utils = require('cluster.utils')
 local topology = require('cluster.topology')
-local cluster_cookie = require('cluster.cluster-cookie')
--- local migrations = require('cluster.migrations')
 local confapplier = require('cluster.confapplier')
+local vshard_utils = require('cluster.vshard-utils')
+local cluster_cookie = require('cluster.cluster-cookie')
+
+local e_conflicting_groups = errors.new_class('Conflicting vshard_groups option')
 
 local function init_box(box_opts)
     checks('table')
@@ -66,15 +71,71 @@ local function init_box(box_opts)
     return true
 end
 
+local function validate_vshard_groups(conf, boot_opts)
+    checks('table', 'table')
 
-local function bootstrap_from_scratch(boot_opts, box_opts, roles, labels)
+    if (conf.vshard_groups == nil) and (boot_opts.vshard_groups == nil) then
+        if (boot_opts.bucket_count ~= nil)
+        and (boot_opts.bucket_count ~= conf.vshard.bucket_count)
+        then
+            log.warn(
+                "WARNING: clusterwide config defines bucket_count=%d," ..
+                " cluster.cfg value %d is ignored",
+                conf.vshard.bucket_count,
+                boot_opts.bucket_count
+            )
+        end
+    elseif (conf.vshard_groups == nil) and (boot_opts.vshard_groups ~= nil) then
+        return nil, e_conflicting_groups:new(
+            "clusterwide config defines no vshard_groups," ..
+            " which doesn't match cluster.cfg"
+        )
+    elseif (conf.vshard_groups ~= nil) and (boot_opts.vshard_groups == nil) then
+        return nil, e_conflicting_groups:new(
+            "clusterwide config defines vshard_groups=%s," ..
+            " which doesn't match cluster.cfg",
+            json.encode(fun.zip(conf.vshard_groups):totable())
+        )
+    elseif (conf.vshard_groups ~= nil) and (boot_opts.vshard_groups ~= nil) then
+        for name, conf_vsgroup in pairs(conf.vshard_groups) do
+            local boot_vsgroup = boot_opts.vshard_groups[name]
+            if boot_vsgroup == nil then
+                return nil, e_conflicting_groups:new(
+                    "clusterwide config defines vsgroup %q," ..
+                    " missing from cluster.cfg", name
+                )
+            end
+
+            local bucket_count = boot_opts.vshard_groups[name].bucket_count
+            if bucket_count == nil then
+                bucket_count = boot_opts.bucket_count
+            end
+
+            if bucket_count ~= nil
+            and bucket_count ~= conf_vsgroup.bucket_count then
+                log.warn(
+                    "WARNING: clusterwide config sets %s.bucket_count=%d," ..
+                    " cluster.cfg value %d is ignored",
+                    conf_vsgroup.bucket_count,
+                    bucket_count
+                )
+            end
+        end
+    end
+
+    return true
+end
+
+
+local function bootstrap_from_scratch(boot_opts, box_opts, roles, labels, vshard_group)
     checks({
         workdir = 'string',
         binary_port = 'number',
         bucket_count = '?number',
         instance_uuid = '?uuid_str',
         replicaset_uuid = '?uuid_str',
-    }, '?table', '?table', '?table')
+        vshard_groups = '?table',
+    }, '?table', '?table', '?table', '?string')
 
     if roles == nil then
         roles = {}
@@ -91,10 +152,6 @@ local function bootstrap_from_scratch(boot_opts, box_opts, roles, labels)
     log.info('\nTrying to bootstrap from scratch...')
 
     local conf = {
-        vshard = {
-            bucket_count = boot_opts.bucket_count or 30000,
-            bootstrapped = false,
-        },
         topology = {
             auth = auth.get_enabled(),
             failover = false,
@@ -115,6 +172,25 @@ local function bootstrap_from_scratch(boot_opts, box_opts, roles, labels)
         },
     }
 
+    local bucket_count = boot_opts.bucket_count or 30000
+    if boot_opts.vshard_groups == nil then
+        conf.vshard = {
+            bucket_count = bucket_count,
+            bootstrapped = false,
+        }
+    else
+        conf.vshard_groups = {}
+        for name, params in pairs(boot_opts.vshard_groups) do
+            conf.vshard_groups[name] = {
+                bucket_count = params.bucket_count or bucket_count,
+                bootstrapped = false,
+            }
+        end
+
+        local my_replicaset = conf.topology.replicasets[boot_opts.replicaset_uuid]
+        my_replicaset.vshard_group = vshard_group or next(conf.vshard_groups)
+    end
+
     -- conf, err = model_ddl.config_save_ddl({}, conf)
     -- if conf == nil then
     --     return nil, err
@@ -122,6 +198,12 @@ local function bootstrap_from_scratch(boot_opts, box_opts, roles, labels)
 
     local _, err = topology.validate(conf.topology, {})
     if err then
+        membership.set_payload('warning', tostring(err.err or err))
+        return nil, err
+    end
+
+    local ok, err = vshard_utils.validate_config(conf, {})
+    if not ok then
         membership.set_payload('warning', tostring(err.err or err))
         return nil, err
     end
@@ -152,7 +234,8 @@ local function bootstrap_from_membership(boot_opts, box_opts)
     checks({
         workdir = 'string',
         binary_port = 'number',
-        bucket_count = '?', -- ignored
+        bucket_count = '?number',
+        vshard_groups = '?table',
     }, '?table')
 
     local conf = confapplier.fetch_from_membership()
@@ -168,16 +251,28 @@ local function bootstrap_from_membership(boot_opts, box_opts)
         return false
     end
 
+    local instance_uuid, replicaset_uuid = topology.get_myself_uuids(conf.topology)
+    if instance_uuid == nil then
+        membership.set_payload('warning', 'Instance is not in config')
+        return false
+    end
+
     local _, err = topology.validate(conf.topology, {})
     if err then
         membership.set_payload('warning', tostring(err.err or err))
         return false
     end
 
-    local instance_uuid, replicaset_uuid = topology.get_myself_uuids(conf.topology)
-    if instance_uuid == nil then
-        membership.set_payload('warning', 'Instance is not in config')
+    local ok, err = validate_vshard_groups(conf, boot_opts)
+    if not ok then
+        membership.set_payload('warning', tostring(err.err or err))
         return false
+    end
+
+    local ok, err = vshard_utils.validate_config(conf, conf)
+    if not ok then
+        membership.set_payload('warning', tostring(err.err or err))
+        return nil, err
     end
 
     local _, err = confapplier.prepare_2pc(conf)
@@ -210,7 +305,8 @@ local function bootstrap_from_snapshot(boot_opts, box_opts)
     checks({
         workdir = 'string',
         binary_port = 'number',
-        bucket_count = '?', -- ignored
+        bucket_count = '?number',
+        vshard_groups = '?table',
     }, '?table')
 
     local instance_uuid
@@ -229,11 +325,21 @@ local function bootstrap_from_snapshot(boot_opts, box_opts)
         file:close()
     end
 
-    -- unlock config if it was locked by dangling commits
+    -- unlock config if it was locked by dangling commit_2pc()
     confapplier.abort_2pc()
 
     local conf, err = confapplier.load_from_file()
     if conf == nil then
+        return nil, err
+    end
+
+    local ok, err = validate_vshard_groups(conf, boot_opts)
+    if not ok then
+        return nil, err
+    end
+
+    local ok, err = vshard_utils.validate_config(conf, conf)
+    if not ok then
         return nil, err
     end
 

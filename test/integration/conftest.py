@@ -77,7 +77,7 @@ class Server(object):
     def __init__(self, binary_port, http_port,
                 alias=None, instance_uuid=None,
                 replicaset_uuid=None, roles=None,
-                labels=None):
+                labels=None, vshard_group=None):
 
         self.alias = alias
         self.binary_port = binary_port
@@ -92,6 +92,7 @@ class Server(object):
         self.replicaset_uuid = replicaset_uuid
         self.roles = roles
         self.labels = labels
+        self.vshard_group = vshard_group
 
         pass
 
@@ -223,6 +224,7 @@ class Server(object):
 def cluster(request, confdir, module_tmpdir, helpers):
     cluster = {}
     servers = getattr(request.module, "cluster")
+    env = getattr(request.module, "env", {})
     bootserv = None
 
     for srv in servers:
@@ -230,6 +232,7 @@ def cluster(request, confdir, module_tmpdir, helpers):
         assert srv.alias != None
         srv.start(
             workdir="{}/localhost-{}".format(module_tmpdir, srv.binary_port),
+            env=env
         )
         request.addfinalizer(srv.kill)
         helpers.wait_for(srv.ping_udp)
@@ -251,6 +254,7 @@ def cluster(request, confdir, module_tmpdir, helpers):
                     $roles: [String!]
                     $timeout: Float,
                     $labels: [LabelInput]
+                    $vshard_group: String
                 ) {
                     join_server(
                         uri: $uri,
@@ -259,6 +263,7 @@ def cluster(request, confdir, module_tmpdir, helpers):
                         roles: $roles
                         timeout: $timeout
                         labels: $labels
+                        vshard_group: $vshard_group
                     )
                 }
             """,
@@ -268,7 +273,8 @@ def cluster(request, confdir, module_tmpdir, helpers):
                 "replicaset_uuid": srv.replicaset_uuid,
                 "roles": srv.roles,
                 "timeout": TARANTOOL_CONNECTION_TIMEOUT,
-                "labels": srv.labels
+                "labels": srv.labels,
+                "vshard_group": srv.vshard_group
             }
         )
         assert "errors" not in resp, resp['errors'][0]['message']

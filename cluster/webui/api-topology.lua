@@ -31,6 +31,11 @@ local gql_type_replicaset = gql_types.object {
             description = 'Vshard replica set weight.' ..
                 ' Null for replica sets with vshard-storage role disabled.'
         },
+        vshard_group = {
+            kind = gql_types.string,
+            description = 'Vshard storage group name.' ..
+                ' Meaningful only when multiple vshard groups are configured.'
+        },
         master = {
             kind = gql_types.nonNull('Server'),
             description = 'The leader according to the configuration.',
@@ -85,7 +90,7 @@ local gql_type_server = gql_types.object {
         boxinfo = gql_boxinfo_schema,
         labels = {
             kind = gql_types.list(gql_type_label)
-        }
+    }
     }
 }
 
@@ -215,7 +220,8 @@ local function init(graphql)
             replicaset_uuid = gql_types.string,
             roles = gql_types.list(gql_types.string.nonNull),
             timeout = gql_types.float,
-            labels = gql_types.list(gql_type_label_input)
+            labels = gql_types.list(gql_type_label_input),
+            vshard_group = gql_types.string,
         },
         kind = gql_types.boolean,
         callback = module_name .. '.join_server',
@@ -248,6 +254,7 @@ local function init(graphql)
             roles = gql_types.list(gql_types.string.nonNull),
             master = gql_types.list(gql_types.string.nonNull),
             weight = gql_types.float,
+            vshard_group = gql_types.string,
         },
         kind = gql_types.boolean,
         callback = module_name .. '.edit_replicaset',

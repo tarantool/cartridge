@@ -1,0 +1,215 @@
+#!/usr/bin/env tarantool
+
+local log = require('log')
+
+local members = {
+    ['localhost:3301'] = {
+        uri = 'localhost:3301',
+        status = 'alive',
+        payload = {uuid = 'aaaaaaaa-aaaa-4000-b000-000000000001'},
+    },
+    ['localhost:3302'] = {
+        uri = 'localhost:3302',
+        status = 'dead',
+        payload = {},
+    },
+    ['localhost:3303'] = {
+        uri = 'localhost:3303',
+        status = 'alive',
+        payload = { uuid = 'alien' },
+    },
+    ['localhost:3304'] = {
+        uri = 'localhost:3304',
+        status = 'alive',
+        payload = { ['error'] = 'err' },
+    },
+    ['localhost:3331'] = {
+        uri = 'localhost:3331',
+        status = 'alive',
+        payload = {},
+    },
+}
+package.loaded['membership'] = {
+    get_member = function(uri)
+        return members[uri]
+    end,
+    myself = function(uri)
+        return members['localhost:3301']
+    end,
+}
+
+package.loaded['cluster.pool'] = {
+    connect = function()
+        return require('net.box').self
+    end,
+}
+
+vshard = {
+    storage = {
+        buckets_count = function() end,
+    }
+}
+
+local tap = require('tap')
+local yaml = require('yaml')
+local topology = require('cluster.topology')
+local vshard_utils = require('cluster.vshard-utils')
+local test = tap.test('vshard.config')
+
+test:plan(12)
+
+local function check_config(result, raw_new, raw_old)
+    local conf_new = raw_new and yaml.decode(raw_new) or {}
+    local conf_old = raw_old and yaml.decode(raw_old) or {}
+
+    local ok, err = vshard_utils.validate_config(conf_new, conf_old)
+    test:is(ok or err.err, result, result)
+end
+
+-- check_schema
+test:diag('validate_vshard_group()')
+
+test:diag('   top-level keys')
+
+check_config('section vshard_groups must be a table',
+[[---
+vshard_groups:
+...]])
+
+check_config('section vshard_groups must have string keys',
+[[---
+vshard_groups:
+  - default
+...]])
+
+check_config('section vshard_groups["global"] must be a table',
+[[---
+vshard_groups:
+  global: false
+...]])
+
+check_config('vshard_groups["global"].bucket_count must be a number',
+[[---
+vshard_groups:
+  global: {}
+...]])
+
+check_config('vshard_groups["global"].bucket_count must be positive',
+[[---
+vshard_groups:
+  global:
+    bucket_count: 0
+...]])
+
+check_config([[vshard_groups["global"].bucket_count can't be changed]],
+[[---
+topology: {}
+vshard_groups:
+  global:
+    bucket_count: 100
+    bootstrapped: false
+...]],
+[[---
+topology: {}
+vshard_groups:
+  global:
+    bucket_count: 200
+    bootstrapped: false
+...]])
+
+check_config('vshard_groups["global"].bootstrapped must be true or false',
+[[---
+vshard_groups:
+  global:
+    bucket_count: 1
+    bootstrapped: nope
+...]])
+
+check_config('section vshard_groups["global"] has unknown parameter "unknown"',
+[[---
+vshard_groups:
+  global:
+    bucket_count: 1
+    bootstrapped: false
+    unknown:
+...]])
+
+test:diag('   group assignment')
+
+check_config("replicasets[aaaaaaaa-0000-4000-b000-000000000001]" ..
+    " can't be added to a vshard_group, cluster doesn't have any",
+[[---
+topology:
+  replicasets:
+    aaaaaaaa-0000-4000-b000-000000000001:
+      master: aaaaaaaa-aaaa-4000-b000-000000000001
+      vshard_group: some
+      roles: {}
+vshard:
+  bucket_count: 1
+  bootstrapped: false
+...]])
+
+check_config("replicasets[aaaaaaaa-0000-4000-b000-000000000001]" ..
+    " is a vshard-storage and must be assigned to a particular group",
+[[---
+topology:
+  replicasets:
+    aaaaaaaa-0000-4000-b000-000000000001:
+      master: aaaaaaaa-aaaa-4000-b000-000000000001
+      roles: {"vshard-storage": true}
+vshard_groups:
+  global:
+    bucket_count: 1
+    bootstrapped: false
+...]])
+
+check_config("replicasets[aaaaaaaa-0000-4000-b000-000000000001]" ..
+    [[.vshard_group "unknown" doesn't exist]],
+[[---
+topology:
+  replicasets:
+    aaaaaaaa-0000-4000-b000-000000000001:
+      master: aaaaaaaa-aaaa-4000-b000-000000000001
+      vshard_group: unknown
+      roles: {"vshard-storage": true}
+vshard_groups:
+  global:
+    bucket_count: 1
+    bootstrapped: false
+...]])
+
+check_config("replicasets[aaaaaaaa-0000-4000-b000-000000000001]" ..
+    [[.vshard_group can't be modified]],
+[[---
+topology:
+  replicasets:
+    aaaaaaaa-0000-4000-b000-000000000001:
+      master: aaaaaaaa-aaaa-4000-b000-000000000001
+      vshard_group: one
+      roles: {}
+vshard_groups:
+  one:
+    bucket_count: 1
+    bootstrapped: false
+  two:
+    bucket_count: 1
+    bootstrapped: false
+...]],
+[[---
+topology:
+  replicasets:
+    aaaaaaaa-0000-4000-b000-000000000001:
+      master: aaaaaaaa-aaaa-4000-b000-000000000001
+      vshard_group: two
+      roles: {}
+vshard_groups:
+  one:
+    bucket_count: 1
+    bootstrapped: false
+  two:
+    bucket_count: 1
+    bootstrapped: false
+...]])
+
+os.exit(test:check() and 0 or 1)
