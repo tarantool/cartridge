@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- User management page in WebUI
+- Configuring multiple isolated vshard groups in a single cluster
+
+### Changed
+
+- GraphQL API `known_roles` format now includes roles dependencies
+
+- `cluster.rpc_call` option `remote_only` renamed to `prefer_local`
+  with the opposite meaning
+
 ## [0.8.0] - 2019-05-20
 
 ### Added
@@ -33,10 +45,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - `cluster.admin.bootstrap_vshard` now can be called on any instance
 
-- GraphQL API `known_roles` format now includes roles dependencies
-
-- `cluster.rpc_call` option `remote_only` renamed to `prefer_local`
-  with the opposite meaning
 
 ### Fixed
 
