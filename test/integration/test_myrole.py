@@ -132,7 +132,18 @@ def test_rename(cluster, helpers):
     srv.start()
     helpers.wait_for(srv.connect)
 
-    # old role name is still repoted as enabled
+    # Presence of old role in config doesn't affect mutations
+    obj = srv.graphql("""
+        mutation {
+            edit_replicaset(
+                uuid: "aaaaaaaa-0000-4000-b000-000000000000"
+                roles: ["myrole", "myrole-oldname"]
+            )
+        }
+    """)
+    assert 'errors' not in obj
+
+    # Old name isn't displayed it webui
     obj = srv.graphql("""
         {
             replicasets(uuid: "aaaaaaaa-0000-4000-b000-000000000000") {
@@ -141,9 +152,9 @@ def test_rename(cluster, helpers):
         }
     """)
     assert 'errors' not in obj
-    assert obj['data']['replicasets'][0]['roles'] == ["myrole-oldname"]
+    assert obj['data']['replicasets'][0]['roles'] == ['myrole-dependency', 'myrole']
 
-    # old role name can be disabled
+    # Role with old name can be disabled
     obj = srv.graphql("""
         mutation {
             edit_replicaset(

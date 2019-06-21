@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - `cluster.rpc_call` option `remote_only` renamed to `prefer_local`
   with the opposite meaning
 
+### Fixed
+
+- Don't display renamed or removed roles in webui
+
 ## [0.8.0] - 2019-05-20
 
 ### Added
