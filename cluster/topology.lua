@@ -503,12 +503,10 @@ local function get_replication_config(topology, replicaset_uuid)
     end
 
     local replication = {}
-    local advertise_uri = membership.myself().uri
 
     -- luacheck: ignore instance_uuid
     for _it, instance_uuid, server in fun.filter(not_disabled, topology.servers) do
-        if server.replicaset_uuid == replicaset_uuid
-        and server.uri ~= advertise_uri then
+        if server.replicaset_uuid == replicaset_uuid then
             table.insert(replication, pool.format_uri(server.uri))
         end
     end

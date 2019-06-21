@@ -7,6 +7,7 @@ local json = require('json')
 local fiber = require('fiber')
 local checks = require('checks')
 local errors = require('errors')
+local digest = require('digest')
 local uuid_lib = require('uuid')
 local membership = require('membership')
 
@@ -22,11 +23,7 @@ local e_conflicting_groups = errors.new_class('Conflicting vshard_groups option'
 local function init_box(box_opts)
     checks('table')
 
-    -- call first box.cfg without listen param
-    -- to avoid connecting to instance before user permissions are granted
-    local box_opts = table.deepcopy(box_opts)
-    local listen = box_opts.listen
-    box_opts.listen = nil
+    log.warn('Bootstrapping box.cfg...')
     box.cfg(box_opts)
 
     do
@@ -34,16 +31,18 @@ local function init_box(box_opts)
         local password = cluster_cookie.cookie()
 
         log.info('Making sure user %q exists...', username)
+        -- Don't allow connecting to the instance
+        -- before correct rights were granted.
+        -- See: https://github.com/tarantool/tarantool/issues/2763
+        local urandom_bin = digest.urandom(18)
+        local urandom_str = digest.base64_encode(urandom_bin)
         box.schema.user.create(
             username,
             {
-                password = password,
+                password = urandom_str,
                 if_not_exists = true,
             }
         )
-
-        log.info('Setting password for %q...', username)
-        box.schema.user.passwd(username, password)
 
         log.info('Granting universe permissions to %q...', username)
         box.schema.user.grant(
@@ -60,10 +59,10 @@ local function init_box(box_opts)
             'replication',
             nil, nil, {if_not_exists = true}
         )
-    end
 
-    log.info('Start listening on %s...', tostring(listen))
-    box.cfg({listen = listen})
+        log.info('Setting password for user %q ...', username)
+        box.schema.user.passwd(username, password)
+    end
 
     membership.set_payload('uuid', box.info.uuid)
 
@@ -222,7 +221,6 @@ local function bootstrap_from_scratch(boot_opts, box_opts, roles, labels, vshard
     box_opts.instance_uuid = boot_opts.instance_uuid
     box_opts.replicaset_uuid = boot_opts.replicaset_uuid
     box_opts.replication = {}
-    log.info('Bootstrapping box.cfg...')
 
     init_box(box_opts)
     -- TODO migrations.skip()
@@ -293,7 +291,6 @@ local function bootstrap_from_membership(boot_opts, box_opts)
     box_opts.instance_uuid = instance_uuid
     box_opts.replicaset_uuid = replicaset_uuid
     box_opts.replication = topology.get_replication_config(conf.topology, replicaset_uuid)
-    log.info('Bootstrapping box.cfg...')
 
     init_box(box_opts)
     -- TODO migrations.skip()
@@ -353,7 +350,6 @@ local function bootstrap_from_snapshot(boot_opts, box_opts)
     box_opts.wal_dir = boot_opts.workdir
     box_opts.memtx_dir = boot_opts.workdir
     box_opts.vinyl_dir = boot_opts.workdir
-    log.info('Bootstrapping box.cfg...')
 
     membership.set_payload('warning', 'Recovering from snapshot')
     init_box(box_opts)

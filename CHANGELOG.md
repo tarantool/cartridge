@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - User management page in WebUI
 - Configuring multiple isolated vshard groups in a single cluster
+- Support for joining multiple instances in a single clusterwide config update
 
 ### Changed
 
