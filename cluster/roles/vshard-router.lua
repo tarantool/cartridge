@@ -55,33 +55,33 @@ local function apply_config(conf)
         local vshard_cfg = vshard_utils.get_vshard_config(group_name, conf)
         local router_name = router_name(group_name)
 
+        -- luacheck: ignore 542
         if utils.deepcmp(vshard_cfg, vars.vshard_cfg[router_name]) then
-            -- No reconfiguration required, skip it
-            return
-        end
-
-        log.info('Reconfiguring %s ...', router_name)
-
-        local router = vars.routers[router_name]
-
-        if router ~= nil then
-            router:cfg(vshard_cfg)
-        elseif group_name == nil then
-            vshard.router.cfg(vshard_cfg)
-            router = vshard.router.static
+            -- Don't reconfigure router unless config changed
         else
-            local err
-            router, err = vshard.router.new(group_name, vshard_cfg)
-            if router == nil then
-                return nil, e_create_router:new(
-                    '%s (%s, %s)',
-                    err.message, err.type, err.name
-                )
-            end
-        end
+            log.info('Reconfiguring %s ...', router_name)
 
-        vars.routers[router_name] = router
-        vars.vshard_cfg[router_name] = vshard_cfg
+            local router = vars.routers[router_name]
+
+            if router ~= nil then
+                router:cfg(vshard_cfg)
+            elseif group_name == nil then
+                vshard.router.cfg(vshard_cfg)
+                router = vshard.router.static
+            else
+                local err
+                router, err = vshard.router.new(group_name, vshard_cfg)
+                if router == nil then
+                    return nil, e_create_router:new(
+                        '%s (%s, %s)',
+                        err.message, err.type, err.name
+                    )
+                end
+            end
+
+            vars.routers[router_name] = router
+            vars.vshard_cfg[router_name] = vshard_cfg
+        end
     end
 end
 
