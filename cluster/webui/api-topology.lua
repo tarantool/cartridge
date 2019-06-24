@@ -128,14 +128,20 @@ local gql_type_role = gql_types.object {
 
 local function get_servers(_, args)
     local servers = admin.get_servers(args.uuid)
-    for _, server in ipairs(servers) do
+    for _, server in pairs(servers) do
         server.labels = convert_labels_to_graphql(server.labels)
     end
     return servers
 end
 
 local function get_replicasets(_, args)
-    return admin.get_replicasets(args.uuid)
+    local replicasets = admin.get_replicasets(args.uuid)
+    for _, replicaset in pairs(replicasets) do
+        for _, server in pairs(replicaset.servers) do
+            server.labels = convert_labels_to_graphql(server.labels)
+        end
+    end
+    return replicasets
 end
 
 local function probe_server(_, args)
