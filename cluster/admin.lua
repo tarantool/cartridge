@@ -184,7 +184,7 @@ local function get_servers_and_replicasets()
             leaders_order[server.replicaset_uuid],
             instance_uuid
         )
-        srv.labels = server.labels
+        srv.labels = server.labels or {}
         srv.replicaset.servers[srv.priority] = srv
 
         servers[instance_uuid] = srv

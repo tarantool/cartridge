@@ -80,32 +80,40 @@ local gql_type_server = gql_types.object {
         uuid = gql_types.string.nonNull,
         status = gql_types.string.nonNull,
         message = gql_types.string.nonNull,
-        disabled = gql_types.boolean.nonNull,
+        disabled = gql_types.boolean,
         priority = {
-            kind = gql_types.int.nonNull,
+            kind = gql_types.int,
             description = 'Failover priority within the replica set',
         },
         replicaset = gql_type_replicaset,
         statistics = gql_stat_schema,
         boxinfo = gql_boxinfo_schema,
-        labels = {
-            kind = gql_types.list(gql_type_label)
-    }
+        labels = gql_types.list(gql_type_label),
     }
 }
 
-local function convert_labels_from_graphql_format(gql_labels)
+local function convert_labels_to_keyvalue(gql_labels)
+    if gql_labels == nil then
+        return nil
+    end
+
     local result = {}
-    for _, item in ipairs(gql_labels or {}) do
+    for _, item in ipairs(gql_labels) do
         result[item.name] = item.value
     end
     return result
 end
 
-local function convert_labels_to_graphql_format(labels)
+local function convert_labels_to_graphql(kv_labels)
+    if kv_labels == nil then
+        return nil
+    end
+
     local result = {}
-    for label_name, label_value in pairs(labels or {}) do
-        table.insert(result, {name = label_name, value = label_value})
+    for k, v in pairs(kv_labels) do
+        table.insert(result,
+            {name = k, value = v}
+        )
     end
     return result
 end
@@ -121,7 +129,7 @@ local gql_type_role = gql_types.object {
 local function get_servers(_, args)
     local servers = admin.get_servers(args.uuid)
     for _, server in ipairs(servers) do
-        server.labels = convert_labels_to_graphql_format(server.labels)
+        server.labels = convert_labels_to_graphql(server.labels)
     end
     return servers
 end
@@ -135,16 +143,12 @@ local function probe_server(_, args)
 end
 
 local function join_server(_, args)
-    if args.labels ~= nil then
-        args.labels = convert_labels_from_graphql_format(args.labels)
-    end
+    args.labels = convert_labels_to_keyvalue(args.labels)
     return admin.join_server(args)
 end
 
 local function edit_server(_, args)
-    if args.labels ~= nil then
-        args.labels = convert_labels_from_graphql_format(args.labels)
-    end
+    args.labels = convert_labels_to_keyvalue(args.labels)
     return admin.edit_server(args)
 end
 

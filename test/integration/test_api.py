@@ -193,6 +193,11 @@ def test_servers(cluster, expelled, helpers):
         {
             servers {
                 uri
+                uuid
+                alias
+                labels
+                disabled
+                priority
                 replicaset { roles }
             }
         }
@@ -202,13 +207,32 @@ def test_servers(cluster, expelled, helpers):
     servers = obj['data']['servers']
     assert {
         'uri': 'localhost:33001',
+        'uuid': 'aaaaaaaa-aaaa-4000-b000-000000000001',
+        'alias': 'router',
+        'labels': [],
+        'priority': 1,
+        'disabled': False,
         'replicaset': {'roles': ['vshard-router']}
     } == helpers.find(servers, 'uri', 'localhost:33001')
     assert {
         'uri': 'localhost:33002',
+        'uuid': 'bbbbbbbb-bbbb-4000-b000-000000000001',
+        'alias': 'storage',
+        'labels': [],
+        'priority': 1,
+        'disabled': False,
         'replicaset': {'roles': ['vshard-storage']}
     } == helpers.find(servers, 'uri', 'localhost:33002')
-    assert len(servers) == 2
+    assert {
+        'uri': 'localhost:33003',
+        'uuid': '',
+        'alias': 'spare',
+        'labels': None,
+        'priority': None,
+        'disabled': None,
+        'replicaset': None
+    } == helpers.find(servers, 'uri', 'localhost:33003')
+    assert len(servers) == 3
 
 def test_replicasets(cluster, expelled, helpers):
     obj = cluster['router'].graphql("""
