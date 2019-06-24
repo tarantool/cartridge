@@ -33,6 +33,17 @@ cluster = [
     )
 ]
 
+unconfigured = [
+    Server(
+        alias = 'spare',
+        instance_uuid = "dddddddd-dddd-4000-b000-000000000001",
+        replicaset_uuid = "dddddddd-0000-4000-b000-000000000000",
+        roles = [],
+        binary_port = 33003,
+        http_port = 8083,
+    )
+]
+
 @pytest.fixture(scope="module")
 def expelled(cluster):
     cluster['expelled'].kill()
@@ -182,6 +193,11 @@ def test_servers(cluster, expelled, helpers):
         {
             servers {
                 uri
+                uuid
+                alias
+                labels
+                disabled
+                priority
                 replicaset { roles }
             }
         }
@@ -191,13 +207,32 @@ def test_servers(cluster, expelled, helpers):
     servers = obj['data']['servers']
     assert {
         'uri': 'localhost:33001',
+        'uuid': 'aaaaaaaa-aaaa-4000-b000-000000000001',
+        'alias': 'router',
+        'labels': [],
+        'priority': 1,
+        'disabled': False,
         'replicaset': {'roles': ['vshard-router']}
     } == helpers.find(servers, 'uri', 'localhost:33001')
     assert {
         'uri': 'localhost:33002',
+        'uuid': 'bbbbbbbb-bbbb-4000-b000-000000000001',
+        'alias': 'storage',
+        'labels': [],
+        'priority': 1,
+        'disabled': False,
         'replicaset': {'roles': ['vshard-storage']}
     } == helpers.find(servers, 'uri', 'localhost:33002')
-    assert len(servers) == 2
+    assert {
+        'uri': 'localhost:33003',
+        'uuid': '',
+        'alias': 'spare',
+        'labels': None,
+        'priority': None,
+        'disabled': None,
+        'replicaset': None
+    } == helpers.find(servers, 'uri', 'localhost:33003')
+    assert len(servers) == 3
 
 def test_replicasets(cluster, expelled, helpers):
     obj = cluster['router'].graphql("""
@@ -435,153 +470,67 @@ def test_uninitialized(module_tmpdir, helpers):
     finally:
         srv.kill()
 
-def test_join_server_fail(cluster, expelled, module_tmpdir, helpers):
-    srv = Server(
-        binary_port = 33003,
-        http_port = 8083,
-    )
-    srv.start(
-        workdir="{}/localhost-{}".format(module_tmpdir, srv.binary_port),
-    )
+def test_join_server(cluster, expelled, helpers):
 
-    try:
-        helpers.wait_for(srv.ping_udp, timeout=5)
+    obj = cluster['router'].graphql("""
+        mutation {
+            probe_server(
+                uri: "localhost:33003"
+            )
+        }
+    """)
+    assert 'errors' not in obj
+    assert obj['data']['probe_server'] == True
 
-        obj = cluster['router'].graphql("""
-            mutation {
-                probe_server(
-                    uri: "localhost:33003"
-                )
+    obj = cluster['router'].graphql("""
+        mutation {
+            join_server(
+                uri: "localhost:33003"
+                instance_uuid: "cccccccc-cccc-4000-b000-000000000001"
+            )
+        }
+    """)
+    assert obj['errors'][0]['message'] == \
+        'Server "cccccccc-cccc-4000-b000-000000000001" is already joined'
+
+    obj = cluster['router'].graphql("""
+        mutation {
+            join_server(
+                uri: "localhost:33003"
+                instance_uuid: "dddddddd-dddd-4000-b000-000000000001"
+                replicaset_uuid: "dddddddd-0000-4000-b000-000000000000"
+                roles: ["vshard-storage"]
+            )
+        }
+    """)
+    assert 'errors' not in obj
+    assert obj['data']['join_server'] == True
+
+    helpers.wait_for(cluster['spare'].connect, timeout=5)
+    helpers.wait_for(cluster['router'].connect, timeout=5)
+
+    obj = cluster['router'].graphql("""
+        {
+            servers {
+                uri
+                uuid
+                status
+                replicaset { uuid status roles weight }
             }
-        """)
-        assert 'errors' not in obj
-        assert obj['data']['probe_server'] == True
+        }
+    """)
 
-        obj = cluster['router'].graphql("""
-            mutation {
-                join_server(
-                    uri: "localhost:33003"
-                    instance_uuid: "cccccccc-cccc-4000-b000-000000000001"
-                )
-            }
-        """)
-        assert obj['errors'][0]['message'] == \
-            'Server "cccccccc-cccc-4000-b000-000000000001" is already joined'
-
-    finally:
-        srv.kill()
-
-def test_join_server_good(cluster, expelled, module_tmpdir, helpers):
-    srv = Server(
-        binary_port = 33003,
-        http_port = 8083,
-    )
-    srv.start(
-        workdir="{}/localhost-{}".format(module_tmpdir, srv.binary_port)
-    )
-
-    try:
-        helpers.wait_for(srv.ping_udp, timeout=5)
-
-        obj = cluster['router'].graphql("""
-            mutation {
-                join_server(
-                    uri: "localhost:33003"
-                    instance_uuid: "dddddddd-dddd-4000-b000-000000000001"
-                    replicaset_uuid: "dddddddd-0000-4000-b000-000000000000"
-                    roles: ["vshard-storage"]
-                )
-            }
-        """)
-        assert 'errors' not in obj
-        assert obj['data']['join_server'] == True
-
-        helpers.wait_for(srv.connect, timeout=5)
-        helpers.wait_for(cluster['router'].connect, timeout=5)
-
-        obj = cluster['router'].graphql("""
-            {
-                servers {
-                    uri
-                    uuid
-                    status
-                    replicaset { uuid status roles weight }
-                }
-            }
-        """)
-
-        assert 'errors' not in obj
-        servers = obj['data']['servers']
-        assert len(servers) == 3
-        assert {
-            'uri': 'localhost:33003',
-            'uuid': 'dddddddd-dddd-4000-b000-000000000001',
+    assert 'errors' not in obj
+    servers = obj['data']['servers']
+    assert len(servers) == 3
+    assert {
+        'uri': 'localhost:33003',
+        'uuid': 'dddddddd-dddd-4000-b000-000000000001',
+        'status': 'healthy',
+        'replicaset': {
+            'uuid': 'dddddddd-0000-4000-b000-000000000000',
+            'roles': ["vshard-storage"],
             'status': 'healthy',
-            'replicaset': {
-                'uuid': 'dddddddd-0000-4000-b000-000000000000',
-                'roles': ["vshard-storage"],
-                'status': 'healthy',
-                'weight': 0,
-            }
-        } == helpers.find(servers, 'uuid', 'dddddddd-dddd-4000-b000-000000000001')
-
-    finally:
-        srv.kill()
-
-def test_storage_weight(module_tmpdir, helpers):
-    srv = Server(
-        binary_port = 33004,
-        http_port = 8084,
-    )
-    srv.start(
-        workdir="{}/localhost-{}".format(module_tmpdir, srv.binary_port)
-    )
-
-    try:
-        helpers.wait_for(srv.ping_udp, timeout=5)
-
-        obj = srv.graphql("""
-            mutation {
-                join_server(
-                    uri: "localhost:33004"
-                    instance_uuid: "ffffffff-ffff-4000-b000-000000000001"
-                    replicaset_uuid: "ffffffff-0000-4000-b000-000000000000"
-                )
-            }
-        """)
-        assert 'errors' not in obj
-        assert obj['data']['join_server'] == True
-
-        obj = srv.graphql("""
-            mutation {
-                edit_replicaset(
-                    uuid: "ffffffff-0000-4000-b000-000000000000"
-                    roles: ["vshard-router", "vshard-storage"]
-                )
-            }
-        """)
-        assert 'errors' not in obj
-
-        obj = srv.graphql("""
-            query {
-                replicasets(uuid: "ffffffff-0000-4000-b000-000000000000") {
-                    weight
-                }
-            }
-        """)
-        assert 'errors' not in obj
-        replicasets = obj['data']['replicasets']
-        assert replicasets[0]['weight'] == 1
-
-        obj = srv.graphql("""
-            mutation {
-                edit_replicaset(
-                    uuid: "ffffffff-0000-4000-b000-000000000000"
-                    roles: []
-                )
-            }
-        """)
-        assert 'errors' not in obj
-    finally:
-        srv.kill()
-
+            'weight': 0,
+        }
+    } == helpers.find(servers, 'uuid', 'dddddddd-dddd-4000-b000-000000000001')

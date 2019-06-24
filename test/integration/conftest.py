@@ -223,11 +223,10 @@ class Server(object):
 @pytest.fixture(scope="module")
 def cluster(request, confdir, module_tmpdir, helpers):
     cluster = {}
-    servers = getattr(request.module, "cluster")
-    env = getattr(request.module, "env", {})
     bootserv = None
+    env = getattr(request.module, "env", {})
 
-    for srv in servers:
+    for srv in getattr(request.module, "cluster", []):
         assert srv.roles != None
         assert srv.alias != None
         srv.start(
@@ -291,7 +290,7 @@ def cluster(request, confdir, module_tmpdir, helpers):
 
         cluster[srv.alias] = srv
 
-    routers = [srv for srv in servers if 'vshard-router' in srv.roles]
+    routers = [srv for alias, srv in cluster.items() if 'vshard-router' in srv.roles]
     if len(routers) > 0:
         srv = routers[0]
         resp = srv.graphql(
@@ -313,5 +312,18 @@ def cluster(request, confdir, module_tmpdir, helpers):
         assert 'errors' not in resp, resp['errors'][0]['message']
     else:
         logging.warn('No vshard routers configured, skipping vshard bootstrap')
+
+    for srv in getattr(request.module, "unconfigured", []):
+        srv.start(
+            workdir="{}/localhost-{}".format(module_tmpdir, srv.binary_port),
+            env = env,
+        )
+        request.addfinalizer(srv.kill)
+        helpers.wait_for(srv.ping_udp)
+        if bootserv != None:
+            helpers.wait_for(bootserv.conn.eval,
+                ["assert(require('membership').probe_uri(...))", srv.advertise_uri]
+            )
+        cluster[srv.alias] = srv
 
     return cluster
