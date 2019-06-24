@@ -15,7 +15,7 @@ cluster = [
     )
 ]
 
-standalone_servers = [
+unconfigured = [
     Server(
         alias = 'twin-1',
         instance_uuid = "bbbbbbbb-bbbb-4000-b000-000000000001",
@@ -34,19 +34,7 @@ standalone_servers = [
     )
 ]
 
-@pytest.fixture(scope="module")
-def servers(request, module_tmpdir, helpers):
-    servers = {}
-    for srv in standalone_servers:
-        srv.start(
-            workdir="{}/localhost-{}".format(module_tmpdir, srv.binary_port)
-        )
-        request.addfinalizer(srv.kill)
-        helpers.wait_for(srv.ping_udp)
-        servers[srv.alias] = srv
-    return servers
-
-def test_confapplier(cluster, servers, helpers):
+def test_confapplier(cluster, helpers):
     """Test simultaneous bootstrap of two instances
         with master-master replication
     """
@@ -78,9 +66,9 @@ def test_confapplier(cluster, servers, helpers):
         local ok, err = cluster.config_patch_clusterwide({{topology = topology}})
         assert(ok, tostring(err))
     """.format(
-        twin1 = servers['twin-1'],
-        twin2 = servers['twin-2']
+        twin1 = cluster['twin-1'],
+        twin2 = cluster['twin-2']
     ))
 
-    helpers.wait_for(servers['twin-1'].connect)
-    helpers.wait_for(servers['twin-2'].connect)
+    helpers.wait_for(cluster['twin-1'].connect)
+    helpers.wait_for(cluster['twin-2'].connect)
