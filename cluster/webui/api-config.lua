@@ -16,6 +16,12 @@ yaml.cfg({
 local auth = require('cluster.auth')
 local confapplier = require('cluster.confapplier')
 
+local system_sections = {
+    topology = true,
+    vshard = true,
+    vshard_groups = true,
+}
+
 local function http_finalize_error(http_code, err)
     log.error(tostring(err))
     return {
@@ -40,8 +46,10 @@ local function download_config_handler(req)
         return http_finalize_error(409, err)
     end
 
-    conf.topology = nil
-    conf.vshard = nil
+    -- cut system sections
+    for k, _ in pairs(system_sections) do
+        conf[k] = nil
+    end
 
     return {
         status = 200,
@@ -90,27 +98,43 @@ local function upload_config_handler(req)
         req_body = form_body
     end
 
-
-    local conf, err = nil
+    local conf_new, err = nil
     if req_body == nil then
         err = e_upload_config:new('Request body must not be empty')
     else
-        conf, err = e_decode_yaml:pcall(yaml.decode, req_body)
+        conf_new, err = e_decode_yaml:pcall(yaml.decode, req_body)
     end
 
     if err ~= nil then
         return http_finalize_error(400, err)
-    elseif type(conf) ~= 'table' then
+    elseif type(conf_new) ~= 'table' then
         err = e_upload_config:new('Config must be a table')
-        return http_finalize_error(400, err)
-    elseif next(conf) == nil then
-        err = e_upload_config:new('Config must not be empty')
         return http_finalize_error(400, err)
     end
 
     log.warn('Config uploaded')
 
-    local ok, err = confapplier.patch_clusterwide(conf)
+    local patch = {}
+    local conf_old = confapplier.get_readonly()
+    for k, _ in pairs(conf_old) do
+        if system_sections[k] then
+            patch[k] = conf_old[k]
+        else
+            patch[k] = box.NULL
+        end
+    end
+    for k, v in pairs(conf_new) do
+        if system_sections[k] then
+            local err = e_upload_config:new(
+                "uploading system section %q is forbidden", k
+            )
+            return http_finalize_error(400, err)
+        else
+            patch[k] = v
+        end
+    end
+
+    local ok, err = confapplier.patch_clusterwide(patch)
     if ok == nil then
         return http_finalize_error(400, err)
     end

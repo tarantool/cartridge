@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 
 - Don't display renamed or removed roles in webui
+- Uploading config without a section removes it from clusterwide config
 
 ## [0.8.0] - 2019-05-20
 
