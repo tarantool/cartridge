@@ -5,11 +5,11 @@ import { css, cx } from 'emotion';
 const hoverColor = '#999999';
 
 const style = css`
-  &.ant-input:hover {
+  &.ant-input-affix-wrapper:hover .ant-input:not(.ant-input-disabled) {
     border-color: ${hoverColor};
   }
 
-  &.ant-input:focus {
+  & .ant-input:focus {
     border-color: ${hoverColor};
     box-shadow: 0 0 0 2px rgba(144, 144, 144, 0.2);
   }

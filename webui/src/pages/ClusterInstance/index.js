@@ -1,3 +1,4 @@
+// @flow
 import { connect } from 'react-redux';
 import { pageDidMount, resetPageState } from 'src/store/actions/clusterInstancePage.actions';
 import ClusterInstance from './ClusterInstance';
@@ -17,6 +18,7 @@ const selectSectionsNames = createSelectorCreator(
 const mapStateToProps = (state, props) => {
   const {
     alias,
+    labels,
     message,
     masterUUID,
     activeMasterUUID,
@@ -27,6 +29,7 @@ const mapStateToProps = (state, props) => {
 
   return {
     alias,
+    labels,
     message,
     masterUUID,
     activeMasterUUID,

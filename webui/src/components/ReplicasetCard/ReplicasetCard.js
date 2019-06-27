@@ -42,7 +42,15 @@ const prepareRolesText = (roles, weight) => {
 
 class ReplicasetCard extends React.PureComponent {
   render() {
-    const { clusterSelf, replicaset, consoleServer, joinServer, expelServer, createReplicaset } = this.props;
+    const {
+      clusterSelf,
+      replicaset,
+      consoleServer,
+      joinServer,
+      expelServer,
+      createReplicaset,
+      onServerLabelClick
+    } = this.props;
     const shortUuidText = replicaset.uuid.slice(0, 8);
     const rolesText = this.getRolesText();
     const servers = this.getServers();
@@ -80,7 +88,9 @@ class ReplicasetCard extends React.PureComponent {
                 consoleServer={consoleServer}
                 joinServer={joinServer}
                 expelServer={expelServer}
-                createReplicaset={createReplicaset} />
+                createReplicaset={createReplicaset}
+                onServerLabelClick={onServerLabelClick}
+              />
             </div>
           )
           : null}
@@ -120,6 +130,7 @@ ReplicasetCard.propTypes = {
   joinServer: PropTypes.func.isRequired,
   expelServer: PropTypes.func.isRequired,
   createReplicaset: PropTypes.func.isRequired,
+  onServerLabelClick: PropTypes.func
 };
 
 export default ReplicasetCard;

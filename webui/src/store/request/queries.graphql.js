@@ -67,6 +67,10 @@ export const boxInfoQuery = gql`
           uuid
         }
       }
+      labels {
+        name
+        value
+      }
       boxinfo {
         network {
           io_collect_interval
@@ -141,6 +145,10 @@ export const instanceDataQuery = gql`
         master {
           uuid
         }
+      }
+      labels {
+        name
+        value
       }
       boxinfo {
         network {
@@ -258,6 +266,10 @@ query page {
       replicaset {
         uuid
       }
+      labels {
+        name
+        value
+      }
     }
   }
   serverStat: servers {
@@ -301,6 +313,10 @@ query serverList {
       message
       replicaset {
         uuid
+      }
+      labels {
+        name
+        value
       }
     }
   }
@@ -346,6 +362,10 @@ query serverListWithoutStat {
       message
       replicaset {
         uuid
+      }
+      labels {
+        name
+        value
       }
     }
   }
