@@ -1,3 +1,4 @@
+// @flow
 import React from 'react';
 import { css } from 'emotion';
 import { Route, Switch, Redirect } from 'react-router-dom';
@@ -5,6 +6,7 @@ import HealthIndicator from 'src/components/HealthIndicator'
 import SubNavMenu from 'src/components/SubNavMenu'
 import ClusterInstanceSection from './child/ClusterInstanceSection';
 import PageSectionHead from 'src/components/PageSectionHead';
+import ServerLabels from 'src/components/ServerLabels';
 
 const styles = {
   indicator: css`
@@ -34,7 +36,23 @@ const styles = {
   `,
 };
 
-class ClusterConfig extends React.Component {
+export type ClusterConfigProps = {
+  pageDidMount: ({ instanceUUID: string }) => void,
+  resetPageState: () => void,
+  alias: string,
+  instanceUUID: string,
+  labels: { name: string, value: string }[],
+  message?: string,
+  masterUUID: string,
+  activeMasterUUID?: string,
+  roles: string,
+  status: string,
+  uri: string,
+  subsections: string[],
+  match: { url: string }
+}
+
+class ClusterConfig extends React.Component<ClusterConfigProps> {
   componentDidMount() {
     this.props.pageDidMount({
       instanceUUID: this.props.instanceUUID
@@ -49,6 +67,7 @@ class ClusterConfig extends React.Component {
     const {
       alias,
       instanceUUID,
+      labels = [],
       message,
       masterUUID,
       activeMasterUUID,
@@ -81,6 +100,7 @@ class ClusterConfig extends React.Component {
             <span title="Roles">{roles}</span>
             {!!message && <span className={styles.headerError}>{message}</span>}
           </div>
+          <ServerLabels labels={labels} />
         </PageSectionHead>
         <div className={styles.layout}>
           <SubNavMenu className={styles.menu}>

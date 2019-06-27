@@ -15,17 +15,19 @@ export type Scalars = {
 
 /** Cluster management */
 export type Apicluster = {
+  /** Get list of all registered roles and their dependencies. */
+  known_roles: Array<Role>,
   /** Get current server */
   self?: ?ServerShortInfo,
-  auth_params: UserManagementApi,
+  /** Get list of known vshard storage groups. */
+  vshard_known_groups: Array<$ElementType<Scalars, "String">>,
   /** Get current failover state. */
   failover: $ElementType<Scalars, "Boolean">,
   /** Whether it is reasonble to call bootstrap_vshard mutation */
   can_bootstrap_vshard: $ElementType<Scalars, "Boolean">,
   /** Virtual buckets count in cluster */
   vshard_bucket_count: $ElementType<Scalars, "Int">,
-  /** Get list of all registered roles and their dependencies. */
-  known_roles: Array<Role>,
+  auth_params: UserManagementApi,
   /** List authorized users */
   users?: ?Array<User>
 };
@@ -69,19 +71,21 @@ export type MutationProbe_ServerArgs = {
 };
 
 export type MutationEdit_ReplicasetArgs = {
-  roles?: ?Array<$ElementType<Scalars, "String">>,
   weight?: ?$ElementType<Scalars, "Float">,
   master?: ?Array<$ElementType<Scalars, "String">>,
-  uuid: $ElementType<Scalars, "String">
+  roles?: ?Array<$ElementType<Scalars, "String">>,
+  uuid: $ElementType<Scalars, "String">,
+  vshard_group?: ?$ElementType<Scalars, "String">
 };
 
 export type MutationJoin_ServerArgs = {
-  instance_uuid?: ?$ElementType<Scalars, "String">,
-  labels?: ?Array<?LabelInput>,
   replicaset_uuid?: ?$ElementType<Scalars, "String">,
+  uri: $ElementType<Scalars, "String">,
+  labels?: ?Array<?LabelInput>,
   roles?: ?Array<$ElementType<Scalars, "String">>,
+  instance_uuid?: ?$ElementType<Scalars, "String">,
   timeout?: ?$ElementType<Scalars, "Float">,
-  uri: $ElementType<Scalars, "String">
+  vshard_group?: ?$ElementType<Scalars, "String">
 };
 
 export type MutationExpel_ServerArgs = {
@@ -156,20 +160,22 @@ export type QueryReplicasetsArgs = {
 
 /** Group of servers replicating the same data */
 export type Replicaset = {
-  /** Vshard replica set weight. Null for replica sets with vshard-storage role disabled. */
-  weight?: ?$ElementType<Scalars, "Float">,
-  /** The leader according to the configuration. */
-  master: Server,
   /** The role set enabled on every instance in the replica set */
   roles?: ?Array<$ElementType<Scalars, "String">>,
-  /** The replica set health. It is "healthy" if all instances have status "healthy". Otherwise "unhealthy". */
-  status: $ElementType<Scalars, "String">,
+  /** The active leader. It may differ from "master" if failover is enabled and configured leader isn't healthy. */
+  active_master: Server,
+  /** Vshard storage group name. Meaningful only when multiple vshard groups are configured. */
+  vshard_group?: ?$ElementType<Scalars, "String">,
   /** The replica set uuid */
   uuid: $ElementType<Scalars, "String">,
+  /** The replica set health. It is "healthy" if all instances have status "healthy". Otherwise "unhealthy". */
+  status: $ElementType<Scalars, "String">,
+  /** The leader according to the configuration. */
+  master: Server,
   /** Servers in the replica set. */
   servers: Array<Server>,
-  /** The active leader. It may differ from "master" if failover is enabled and configured leader isn't healthy. */
-  active_master: Server
+  /** Vshard replica set weight. Null for replica sets with vshard-storage role disabled. */
+  weight?: ?$ElementType<Scalars, "Float">
 };
 
 /** Statistics for an instance in the replica set. */
@@ -200,10 +206,10 @@ export type Server = {
   replicaset?: ?Replicaset,
   uri: $ElementType<Scalars, "String">,
   alias?: ?$ElementType<Scalars, "String">,
-  disabled: $ElementType<Scalars, "Boolean">,
+  disabled?: ?$ElementType<Scalars, "Boolean">,
   message: $ElementType<Scalars, "String">,
   /** Failover priority within the replica set */
-  priority: $ElementType<Scalars, "Int">,
+  priority?: ?$ElementType<Scalars, "Int">,
   labels?: ?Array<?Label>
 };
 
@@ -414,6 +420,10 @@ export type BoxInfoQuery = { __typename?: "Query" } & {
           active_master: { __typename?: "Server" } & $Pick<Server, { uuid: * }>,
           master: { __typename?: "Server" } & $Pick<Server, { uuid: * }>
         }),
+      labels: ?Array<?({ __typename?: "Label" } & $Pick<
+        Label,
+        { name: *, value: * }
+      >)>,
       boxinfo: ?({ __typename?: "ServerInfo" } & {
         network: { __typename?: "ServerInfoNetwork" } & $Pick<
           ServerInfoNetwork,
@@ -497,6 +507,10 @@ export type InstanceDataQuery = { __typename?: "Query" } & {
           active_master: { __typename?: "Server" } & $Pick<Server, { uuid: * }>,
           master: { __typename?: "Server" } & $Pick<Server, { uuid: * }>
         }),
+      labels: ?Array<?({ __typename?: "Label" } & $Pick<
+        Label,
+        { name: *, value: * }
+      >)>,
       boxinfo: ?({ __typename?: "ServerInfo" } & {
         network: { __typename?: "ServerInfoNetwork" } & $Pick<
           ServerInfoNetwork,
@@ -610,7 +624,11 @@ export type PageQuery = { __typename?: "Query" } & {
             replicaset: ?({ __typename?: "Replicaset" } & $Pick<
               Replicaset,
               { uuid: * }
-            >)
+            >),
+            labels: ?Array<?({ __typename?: "Label" } & $Pick<
+              Label,
+              { name: *, value: * }
+            >)>
           }
       >
     })>,
@@ -651,7 +669,11 @@ export type ServerListQuery = { __typename?: "Query" } & {
             replicaset: ?({ __typename?: "Replicaset" } & $Pick<
               Replicaset,
               { uuid: * }
-            >)
+            >),
+            labels: ?Array<?({ __typename?: "Label" } & $Pick<
+              Label,
+              { name: *, value: * }
+            >)>
           }
       >
     })>,
@@ -692,7 +714,11 @@ export type ServerListWithoutStatQuery = { __typename?: "Query" } & {
             replicaset: ?({ __typename?: "Replicaset" } & $Pick<
               Replicaset,
               { uuid: * }
-            >)
+            >),
+            labels: ?Array<?({ __typename?: "Label" } & $Pick<
+              Label,
+              { name: *, value: * }
+            >)>
           }
       >
     })>

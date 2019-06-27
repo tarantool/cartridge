@@ -4,10 +4,10 @@ import { defaultMemoize } from 'reselect';
 
 import CommonItemList from 'src/components/CommonItemList';
 import HealthIndicator from 'src/components/HealthIndicator';
-import cn from 'src/misc/cn';
+import ServerLabels from 'src/components/ServerLabels';
 
 import './ServerList.css';
-import { css } from 'react-emotion';
+import { css, cx } from 'react-emotion';
 import ServerListCellActions from './child/ServerListCellActions';
 import ProgressBar from 'src/components/ProgressBar';
 
@@ -34,7 +34,15 @@ const getReadableBytes = size => {
   return Math.max(bytes, 0.1).toFixed(1) + ' ' + byteUnits[i];
 };
 
-const prepareColumnProps = (linked, clusterSelf, consoleServer, joinServer, createReplicaset, expelServer) => {
+const prepareColumnProps = ({
+  linked,
+  clusterSelf,
+  consoleServer,
+  joinServer,
+  createReplicaset,
+  expelServer,
+  onServerLabelClick
+}) => {
   const columns = [
     {
       key: 'name',
@@ -46,7 +54,7 @@ const prepareColumnProps = (linked, clusterSelf, consoleServer, joinServer, crea
         if (record.master) {
           masterText = 'master';
           if (!record.activeMaster) {
-            masterClassName = cn(masterClassName, 'ServerList-masterDown');
+            masterClassName = cx(masterClassName, 'ServerList-masterDown');
           }
         } else if (record.activeMaster) {
           masterText = 'active master';
@@ -61,18 +69,10 @@ const prepareColumnProps = (linked, clusterSelf, consoleServer, joinServer, crea
               <div>
                 <span className="ServerList-alias">{aliasText}</span>
                 <span className="ServerList-uri">{record.uri}</span>
-                {masterText
-                  ? <span className={masterClassName}>{masterText}</span>
-                  : null}
+                {masterText && <span className={masterClassName}>{masterText}</span>}
               </div>
-              {record.message
-                ? (
-                  <div className="ServerList-message">
-                    {record.message}
-                  </div>
-                )
-                : null}
-
+              {record.message && <div className="ServerList-message">{record.message}</div>}
+              <ServerLabels labels={record.labels} onLabelClick={onServerLabelClick} />
             </div>
           </div>
         );
@@ -180,10 +180,7 @@ class ServerList extends React.PureComponent {
     );
   }
 
-  getColumnProps = () => {
-    const { linked, clusterSelf, consoleServer, joinServer, createReplicaset, expelServer } = this.props;
-    return this.prepareColumnProps(linked, clusterSelf, consoleServer, joinServer, createReplicaset, expelServer);
-  };
+  getColumnProps = () => this.prepareColumnProps({ ...this.props });
 
   getDataSource = () => {
     const { dataSource } = this.props;
@@ -218,6 +215,7 @@ ServerList.propTypes = {
   joinServer: PropTypes.func.isRequired,
   expelServer: PropTypes.func.isRequired,
   createReplicaset: PropTypes.func.isRequired,
+  onServerLabelClick: PropTypes.func
 };
 
 ServerList.defaultProps = {

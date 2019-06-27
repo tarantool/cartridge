@@ -5,6 +5,7 @@ import { Icon } from 'antd'
 import { css } from 'react-emotion';
 import { getServerName } from 'src/app/misc';
 import AppBottomConsole from 'src/components/AppBottomConsole';
+import Input from 'src/components/Input';
 import ServerConsole from 'src/components/ServerConsole';
 import Modal from 'src/components/Modal';
 import PageDataErrorMessage from 'src/components/PageDataErrorMessage';
@@ -13,7 +14,6 @@ import ReplicasetList from 'src/components/ReplicasetList';
 import ServerEditModal from 'src/components/ServerEditModal';
 import ServerList from 'src/components/ServerList';
 import { addSearchParams, getSearchParams } from 'src/misc/url';
-import { FilterInput } from 'src/components/styled';
 import ClusterConfigManagement from 'src/components/ClusterConfigManagement';
 import PageSectionHead from 'src/components/PageSectionHead';
 import './Cluster.css';
@@ -24,13 +24,9 @@ import AuthToggleButton from 'src/components/AuthToggleButton';
 
 const styles = {
   clusterFilter: css`
+    width: 400px;
     margin-bottom: 20px;
     padding-left: 5px;
-  `,
-  clusterInputContainer: css`
-    width: 400px;
-    max-width: 100%;
-    height: 30px;
   `,
 };
 
@@ -59,12 +55,20 @@ const prepareReplicasetList = (replicasetList, serverStat, rolesFilterValue, nam
 };
 
 const filterReplicasetList = (replicasetList, filter) => {
-  const tokenizedFilter = filter.split(' ').map(x => x.trim()).filter(x => !!x);
+  const tokenizedFilter = filter.toLowerCase().split(' ').map(x => x.trim()).filter(x => !!x);
 
   const searchableList = replicasetList.map(r => {
+    let searchIndex = [...r.roles];
+    r.servers.forEach(s => {
+      searchIndex.push(s.uri, (s.alias || ''));
+      s.labels.forEach(({ name, value }) => searchIndex.push(`${name}:`, value));
+    });
+
+    const searchString = searchIndex.join(' ').toLowerCase();
+
     return {
       ...r,
-      searchString: `${r.roles.join(' ')} ${r.servers.map(s => `${s.uri} ${s.alias || ''}`).join(' ')}`,
+      searchString
     }
   });
 
@@ -146,15 +150,26 @@ class Cluster extends React.Component {
   }
 
   renderContent = () => {
-    const { clusterSelf, selectedServerUri, replicasetList, selectedReplicasetUuid,
-      showBootstrapModal } = this.props;
-    const { serverConsoleVisible, probeServerModalVisible, createReplicasetModalVisible,
-      expelServerConfirmVisible } = this.state;
+    const {
+      clusterSelf,
+      selectedServerUri,
+      replicasetList,
+      selectedReplicasetUuid,
+      showBootstrapModal
+    } = this.props;
+
+    const {
+      serverConsoleVisible,
+      probeServerModalVisible,
+      createReplicasetModalVisible,
+      expelServerConfirmVisible,
+      filter
+    } = this.state;
 
     const joinServerModalVisible = !!selectedServerUri;
     const editReplicasetModalVisible = !!selectedReplicasetUuid;
     const unlinkedServers = this.getUnlinkedServers();
-    const filteredReplicasetList = this.getFilteredReplicasetList();
+    const filteredReplicasetList = this.filterReplicasetList(this.getReplicasetList(), filter);
     const isBootstrap = (clusterSelf && clusterSelf.uuid) || false;
 
     return (
@@ -222,15 +237,13 @@ class Cluster extends React.Component {
                   {replicasetList.length > 1
                     ? (
                       <div className={styles.clusterFilter}>
-                        <div className={styles.clusterInputContainer}>
-                          <FilterInput
-                            prefix={<Icon type="search" />}
-                            type={"text"}
-                            placeholder={'Filter by uri, uuid, role or alias'}
-                            value={this.state.filter}
-                            onChange={this.handleFilterChange}
-                          />
-                        </div>
+                        <Input
+                          prefix={<Icon type="search" />}
+                          type={"text"}
+                          placeholder={'Filter by uri, uuid, role, alias or labels'}
+                          value={this.state.filter}
+                          onChange={this.handleFilterChange}
+                        />
                       </div>
                     )
                     : null}
@@ -244,7 +257,9 @@ class Cluster extends React.Component {
                         editReplicaset={this.handleEditReplicasetRequest}
                         joinServer={this.handleJoinServerRequest}
                         expelServer={this.handleExpelServerRequest}
-                        createReplicaset={this.handleCreateReplicasetRequest} />
+                        createReplicaset={this.handleCreateReplicasetRequest}
+                        onServerLabelClick={this.handleServerLabelClick}
+                      />
                     )
                     : (
                       <div className="trTable-noData">
@@ -454,6 +469,8 @@ class Cluster extends React.Component {
       serverConsoleUuid: server.uuid,
     });
   };
+
+  handleServerLabelClick = ({ name, value }) => this.setState({ filter: `${name}: ${value}` });
 
   handleCloseServerConsoleRequest = () => {
     this.saveConnectedServerConsoleState();
@@ -690,15 +707,6 @@ class Cluster extends React.Component {
 
     return replicasetList
       ? this.prepareReplicasetList(replicasetList, serverStat)
-      : null;
-  };
-
-  getFilteredReplicasetList = () => {
-    const { filter } = this.state;
-    const replicasetList = this.getReplicasetList();
-
-    return replicasetList
-      ? this.filterReplicasetList(replicasetList, filter)
       : null;
   };
 }

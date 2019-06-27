@@ -8,7 +8,7 @@ const descriptionsByName = ({ fields = [] } = {}) => fields.reduce((acc, item) =
 
 export function getInstanceData({ instanceUUID }) {
 
-  return graphql.fetch(instanceDataQuery, {uuid: instanceUUID})
+  return graphql.fetch(instanceDataQuery, { uuid: instanceUUID })
     .then(({
       servers,
       descriptionGeneral,
@@ -19,6 +19,7 @@ export function getInstanceData({ instanceUUID }) {
       const {
         alias,
         boxinfo = {},
+        labels,
         message,
         replicaset: {
           active_master: {
@@ -36,6 +37,7 @@ export function getInstanceData({ instanceUUID }) {
       return {
         alias,
         boxinfo,
+        labels,
         message,
         masterUUID,
         activeMasterUUID,
@@ -56,5 +58,6 @@ export function refreshInstanceData({ instanceUUID }) {
   return graphql.fetch(boxInfoQuery, {uuid: instanceUUID})
     .then(({ servers }) => ({
       boxinfo: servers[0].boxinfo || {},
+      labels: servers[0].labels || []
     }));
 }

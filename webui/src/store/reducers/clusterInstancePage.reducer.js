@@ -20,6 +20,7 @@ export const initialState = {
   masterUUID: null,
   activeMasterUUID: null,
   roles: [],
+  labels: [],
   pageDataRequestStatus: getInitialRequestStatus(),
   refreshRequestStatus: getInitialRequestStatus(),
   boxinfo: {
