@@ -24,9 +24,16 @@ import AuthToggleButton from 'src/components/AuthToggleButton';
 
 const styles = {
   clusterFilter: css`
-    width: 400px;
-    margin-bottom: 20px;
+    width: 100%;
+    padding-bottom: 10px;
     padding-left: 5px;
+    padding-top: 10px;
+    box-shadow: 0px 5px 5px 0px #FAFAFA;
+    background: #FAFAFA;
+    margin-bottom: 10px;
+    position: sticky;
+    top: 0px;
+    z-index: 4;
   `,
 };
 
