@@ -118,7 +118,7 @@ def test_rename(cluster, helpers):
     """)
 
     srv.process.send_signal(signal.SIGINT)
-    with open(os.path.join(srv.env['WORKDIR'], 'config.yml'), "r+") as f:
+    with open(os.path.join(srv.env['TARANTOOL_WORKDIR'], 'config.yml'), "r+") as f:
         config = yaml.load(f)
         replicasets = config['topology']['replicasets']
         replicaset = replicasets['aaaaaaaa-0000-4000-b000-000000000000']

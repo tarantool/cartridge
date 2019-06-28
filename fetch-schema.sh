@@ -1,6 +1,6 @@
 #!/bin/bash
 
-WORKDIR=dev/gql-schema test/integration/instance.lua &
+TARANTOOL_WORKDIR=dev/gql-schema test/integration/instance.lua &
 PID=$!
 
 TMP=$(mktemp --suffix .graphql)
