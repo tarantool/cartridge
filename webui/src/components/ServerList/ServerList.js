@@ -157,7 +157,13 @@ const prepareColumnProps = ({
   return columns.filter(column => !removedColumns.includes(column.key));
 };
 
-const prepareDataSource = dataSource => [...dataSource];
+const prepareDataSource = (dataSource, clusterSelf) => {
+  if (clusterSelf.configure)
+    return [...dataSource];
+  return [...dataSource].sort((a, b) => {
+    return a.uri === clusterSelf.uri ? -1 : (b.uri === clusterSelf.uri ? 1 : 0)
+  });
+}
 
 class ServerList extends React.PureComponent {
   render() {
@@ -184,7 +190,7 @@ class ServerList extends React.PureComponent {
 
   getDataSource = () => {
     const { dataSource } = this.props;
-    return this.prepareDataSource(dataSource);
+    return this.prepareDataSource(dataSource, this.props.clusterSelf);
   };
 
   prepareColumnProps = defaultMemoize(prepareColumnProps);
