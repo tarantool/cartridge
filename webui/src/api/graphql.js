@@ -9,9 +9,13 @@ const httpLink = new HttpLink({
   credentials: 'include',
 });
 
+const cache = new InMemoryCache({
+  addTypename: false
+});
+
 const client = new ApolloClient({
   link: httpLink,
-  cache: new InMemoryCache(),
+  cache,
   defaultOptions: {
     query: {
       fetchPolicy: 'no-cache',
