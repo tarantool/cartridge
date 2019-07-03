@@ -40,7 +40,19 @@ type ReplicasetEditFormData = {
   weight?: string
 };
 
-const isStorageWeightInputDisabled = (formData: ReplicasetEditFormData): boolean => !formData.roles.includes('vshard-storage');
+
+/**
+ * @param {Object} formData
+ * @param {Object} replicaset
+ */
+const isVShardGroupInputDisabled = (
+  { roles }: ReplicasetEditFormData,
+  { vshard_group }: ReplicasetEditFormData = {}
+): boolean => !roles.includes('vshard-storage') || !!vshard_group;
+
+const isStorageWeightInputDisabled = (formData: ReplicasetEditFormData): boolean => (
+  !formData.roles.includes('vshard-storage')
+);
 
 const isStorageWeightInputValueValid = (formData: ReplicasetEditFormData): boolean => {
   // return /^[0-9]*(\.[0-9]+)?$/.test(formData.weight.trim());
@@ -182,7 +194,7 @@ const prepareFields = (roles, replicaset, vshardGroups) => {
         key: 'vshard_group',
         title: 'Group',
         type: 'optionGroup',
-        disabled: isStorageWeightInputDisabled,
+        disabled: formData => isVShardGroupInputDisabled(formData, replicaset),
         options: vshardGroupsOptions,
       }]
       : [],
