@@ -1,6 +1,5 @@
 // @flow
 import * as R from 'ramda';
-import PropTypes from 'prop-types';
 import React from 'react';
 import { defaultMemoize } from 'reselect';
 import {css} from 'react-emotion';
@@ -32,9 +31,18 @@ const styles = {
   `
 };
 
+type ReplicasetEditFormData = {
+  active_master: {uuid: "ee733651-7bb0-49a7-bf10-38605ff40e76"},
+  master: ?string,
+  roles: string[],
+  uuid?: "9f8c6b2a-6b12-418e-a901-8f5256ad568a",
+  vshard_group?: string,
+  weight?: string
+};
 
-const isStorageWeightInputDisabled = formData => ! formData.roles.includes('vshard-storage');
-const isStorageWeightInputValueValid = formData => {
+const isStorageWeightInputDisabled = (formData: ReplicasetEditFormData): boolean => !formData.roles.includes('vshard-storage');
+
+const isStorageWeightInputValueValid = (formData: ReplicasetEditFormData): boolean => {
   // return /^[0-9]*(\.[0-9]+)?$/.test(formData.weight.trim());
   const number = Number(formData.weight);
   return number >= 0 && number < Infinity;
@@ -222,7 +230,33 @@ const prepareDataSource = replicaset => {
   };
 };
 
-class ReplicasetEditModal extends React.PureComponent {
+type ReplicasetEditModalProps = {
+  isLoading?: boolean,
+  isSaving?: boolean,
+  replicasetNotFound?: boolean,
+  shouldCreateReplicaset?: boolean,
+  knownRoles: string[],
+  vshard_known_groups: string[],
+  replicaset: {
+    uuid?: string,
+    roles: {
+      name: string,
+      dependencies: string[]
+    }[]
+  },
+  submitStatusMessage?: string,
+  onSubmit: () => void,
+  onRequestClose: () => void
+};
+
+class ReplicasetEditModal extends React.PureComponent<ReplicasetEditModalProps> {
+  defaultProps = {
+    isLoading: false,
+    isSaving: false,
+    replicasetNotFound: false,
+    shouldCreateReplicaset: false,
+  };
+
   render() {
     const { isLoading, isSaving, replicasetNotFound, shouldCreateReplicaset, submitStatusMessage, onSubmit,
       onRequestClose } = this.props;
@@ -249,7 +283,7 @@ class ReplicasetEditModal extends React.PureComponent {
     );
   }
 
-  isFormReadyToSubmit = formData => {
+  isFormReadyToSubmit = (formData: ReplicasetEditFormData): boolean => {
     if ( ! isStorageWeightInputDisabled(formData)) {
       return isStorageWeightInputValueValid(formData);
     }
@@ -270,30 +304,5 @@ class ReplicasetEditModal extends React.PureComponent {
 
   prepareDataSource = defaultMemoize(prepareDataSource);
 }
-
-ReplicasetEditModal.propTypes = {
-  isLoading: PropTypes.bool,
-  isSaving: PropTypes.bool,
-  replicasetNotFound: PropTypes.bool,
-  shouldCreateReplicaset: PropTypes.bool,
-  knownRoles: PropTypes.arrayOf(PropTypes.string).isRequired,
-  replicaset: PropTypes.shape({
-    uuid: PropTypes.string,
-    roles: PropTypes.arrayOf(PropTypes.shape({
-      name: PropTypes.string.isRequired,
-      dependencies: PropTypes.arrayOf(PropTypes.string)
-    })).isRequired,
-  }),
-  submitStatusMessage: PropTypes.string,
-  onSubmit: PropTypes.func.isRequired,
-  onRequestClose: PropTypes.func.isRequired,
-};
-
-ReplicasetEditModal.defaultProps = {
-  isLoading: false,
-  isSaving: false,
-  replicasetNotFound: false,
-  shouldCreateReplicaset: false,
-};
 
 export default ReplicasetEditModal;

@@ -380,7 +380,12 @@ export type GetClusterQueryVariables = {};
 export type GetClusterQuery = { __typename?: "Query" } & {
   cluster: ?({ __typename?: "Apicluster" } & $Pick<
     Apicluster,
-    { failover: *, can_bootstrap_vshard: *, vshard_bucket_count: * }
+    {
+      failover: *,
+      can_bootstrap_vshard: *,
+      vshard_bucket_count: *,
+      vshard_known_groups: *
+    }
   > & {
       clusterSelf: ?({ __typename?: "ServerShortInfo" } & {
         uri: $ElementType<ServerShortInfo, "uri">,
@@ -612,7 +617,7 @@ export type PageQuery = { __typename?: "Query" } & {
     })>,
   replicasetList: ?Array<?({ __typename?: "Replicaset" } & $Pick<
     Replicaset,
-    { uuid: *, status: *, roles: *, weight: * }
+    { uuid: *, status: *, roles: *, vshard_group: *, weight: * }
   > & {
       master: { __typename?: "Server" } & $Pick<Server, { uuid: * }>,
       active_master: { __typename?: "Server" } & $Pick<Server, { uuid: * }>,
@@ -657,7 +662,7 @@ export type ServerListQuery = { __typename?: "Query" } & {
     })>,
   replicasetList: ?Array<?({ __typename?: "Replicaset" } & $Pick<
     Replicaset,
-    { uuid: *, status: *, roles: *, weight: * }
+    { uuid: *, status: *, roles: *, vshard_group: *, weight: * }
   > & {
       master: { __typename?: "Server" } & $Pick<Server, { uuid: * }>,
       active_master: { __typename?: "Server" } & $Pick<Server, { uuid: * }>,
@@ -702,7 +707,7 @@ export type ServerListWithoutStatQuery = { __typename?: "Query" } & {
     })>,
   replicasetList: ?Array<?({ __typename?: "Replicaset" } & $Pick<
     Replicaset,
-    { uuid: *, status: *, roles: *, weight: * }
+    { uuid: *, status: *, roles: *, vshard_group: *, weight: * }
   > & {
       master: { __typename?: "Server" } & $Pick<Server, { uuid: * }>,
       active_master: { __typename?: "Server" } & $Pick<Server, { uuid: * }>,
@@ -763,7 +768,8 @@ export type JoinMutation = { __typename?: "Mutation" } & {
 
 export type CreateReplicasetMutationVariables = {
   uri: $ElementType<Scalars, "String">,
-  roles?: ?Array<$ElementType<Scalars, "String">>
+  roles?: ?Array<$ElementType<Scalars, "String">>,
+  vshard_group?: ?$ElementType<Scalars, "String">
 };
 
 export type CreateReplicasetMutation = { __typename?: "Mutation" } & {
@@ -781,6 +787,7 @@ export type ExpelMutation = { __typename?: "Mutation" } & {
 export type EditReplicasetMutationVariables = {
   uuid: $ElementType<Scalars, "String">,
   roles?: ?Array<$ElementType<Scalars, "String">>,
+  vshard_group?: ?$ElementType<Scalars, "String">,
   master: Array<$ElementType<Scalars, "String">>,
   weight?: ?$ElementType<Scalars, "Float">
 };
