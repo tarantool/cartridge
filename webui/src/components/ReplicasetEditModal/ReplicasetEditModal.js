@@ -1,11 +1,11 @@
+// @flow
 import * as R from 'ramda';
 import PropTypes from 'prop-types';
 import React from 'react';
 import { defaultMemoize } from 'reselect';
 import {css} from 'react-emotion';
-
+import { DEFAULT_VSHARD_GROUP_NAME } from 'src/constants';
 import CommonItemEditModal from 'src/components/CommonItemEditModal';
-
 import './ReplicasetEditModal.css';
 
 const styles = {
@@ -66,7 +66,7 @@ const getRolesDependencies = (activeRoles, rolesOptions) => {
   return R.uniq(result);
 };
 
-const prepareFields = (roles, replicaset) => {
+const prepareFields = (roles, replicaset, vshardGroups) => {
   const rolesOptions = roles.map(
     ({
       name,
@@ -94,6 +94,12 @@ const prepareFields = (roles, replicaset) => {
       };
     }
   );
+
+  const implementVShardGroups = vshardGroups.length > 1 || vshardGroups[0] !== DEFAULT_VSHARD_GROUP_NAME;
+
+  let vshardGroupsOptions = implementVShardGroups
+    ? vshardGroups.map(group => ({ key: group, label: group, }))
+    : [];
 
   const shallRenderDraggableList = replicaset && replicaset.servers.length > 2;
 
@@ -163,6 +169,15 @@ const prepareFields = (roles, replicaset) => {
         };
       }
     },
+    ...implementVShardGroups
+      ? [{
+        key: 'vshard_group',
+        title: 'Group',
+        type: 'optionGroup',
+        disabled: isStorageWeightInputDisabled,
+        options: vshardGroupsOptions,
+      }]
+      : [],
     {
       key: 'weight',
       title: 'Weight',
@@ -187,8 +202,7 @@ const prepareFields = (roles, replicaset) => {
       type: shallRenderDraggableList ? 'draggableList' : 'optionGroup',
       options: shallRenderDraggableList ? renderDraggableListOptions : renderSelectOptions,
       customProps: draggableListCustomProps,
-    },
-
+    }
   ];
 };
 
@@ -243,8 +257,8 @@ class ReplicasetEditModal extends React.PureComponent {
   };
 
   getFields = () => {
-    const { knownRoles, replicaset } = this.props;
-    return this.prepareFields(knownRoles, replicaset);
+    const { knownRoles, replicaset, vshard_known_groups } = this.props;
+    return this.prepareFields(knownRoles, replicaset, vshard_known_groups);
   };
 
   getDataSource = () => {

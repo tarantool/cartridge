@@ -565,6 +565,7 @@ class Cluster extends React.Component {
       () => createReplicaset({
         ...createReplicasetModalDataSource,
         roles: replicaset.roles,
+        vshard_group: replicaset.vshard_group
       }),
     );
   };
@@ -625,6 +626,7 @@ class Cluster extends React.Component {
     editReplicaset({
       uuid: replicaset.uuid,
       roles: replicaset.roles,
+      vshard_group: replicaset.vshard_group,
       master: getMaster(),
       weight: replicaset.weight == null || replicaset.weight.trim() === '' ? null : Number(replicaset.weight),
     });

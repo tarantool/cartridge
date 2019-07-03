@@ -34,9 +34,20 @@ const prepareServers = replicaset => {
   }));
 };
 
-const prepareRolesText = (roles, weight) => {
+const prepareVshardStoragePropsText = (weight, vshard_group) => {
+  const formatted = [
+    ...(weight !== null ? [`weight: ${weight}`] : []),
+    ...(typeof vshard_group === 'string' ? [`group: ${vshard_group}`] : []),
+  ].join(', ');
+
+  return formatted ? ` (${formatted})` : '';
+};
+
+const prepareRolesText = (roles, weight, vshard_group) => {
   return roles
-    .map(role => role === 'vshard-storage' && weight != null ? `${role} (weight: ${weight})` : role)
+    .map(role => role === 'vshard-storage'
+      ? role + prepareVshardStoragePropsText(weight, vshard_group)
+      : role)
     .join(', ');
 };
 
@@ -109,8 +120,8 @@ class ReplicasetCard extends React.PureComponent {
   };
 
   getRolesText = () => {
-    const { replicaset: { roles, weight } } = this.props;
-    return this.prepareRolesText(roles, weight);
+    const { replicaset: { roles, weight, vshard_group } } = this.props;
+    return this.prepareRolesText(roles, weight, vshard_group);
   };
 
   prepareServers = defaultMemoize(prepareServers);

@@ -38,6 +38,7 @@ export const getClusterQuery = gql`
       }
       can_bootstrap_vshard
       vshard_bucket_count
+      vshard_known_groups
       authParams: auth_params {
         enabled
         implements_add_user
@@ -250,6 +251,7 @@ query page {
     uuid
     status
     roles
+    vshard_group
     master {
       uuid
     }
@@ -298,6 +300,7 @@ query serverList {
     uuid
     status
     roles
+    vshard_group
     master {
       uuid
     }
@@ -347,6 +350,7 @@ query serverListWithoutStat {
     uuid
     status
     roles
+    vshard_group
     master {
       uuid
     }
@@ -414,11 +418,13 @@ mutation join (
 export const createReplicasetMutation = gql`
 mutation createReplicaset (
   $uri: String!,
-  $roles: [String!]
+  $roles: [String!],
+  $vshard_group: String
 ) {
   createReplicasetResponse: join_server(
     uri: $uri
     roles: $roles
+    vshard_group: $vshard_group
   )
 }
 `;
@@ -437,12 +443,14 @@ export const editReplicasetMutation = gql`
 mutation editReplicaset (
   $uuid: String!,
   $roles: [String!],
+  $vshard_group: String,
   $master: [String!]!,
   $weight: Float
 ) {
   editReplicasetResponse: edit_replicaset(
     uuid: $uuid
     roles: $roles
+    vshard_group: $vshard_group
     master: $master
     weight: $weight
   )

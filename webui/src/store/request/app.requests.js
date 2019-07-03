@@ -11,6 +11,7 @@ export async function getClusterSelf() {
     knownRoles,
     can_bootstrap_vshard,
     vshard_bucket_count,
+    vshard_known_groups,
     authParams
   } = response.cluster;
 
@@ -22,6 +23,7 @@ export async function getClusterSelf() {
       knownRoles,
       can_bootstrap_vshard,
       vshard_bucket_count,
+      vshard_known_groups
     },
     authParams,
     failover
