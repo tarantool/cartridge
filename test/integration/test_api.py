@@ -440,7 +440,7 @@ def test_uninitialized(module_tmpdir, helpers):
             'uuid': None,
         }
         assert obj['data']['cluster']['can_bootstrap_vshard'] == False
-        assert obj['data']['cluster']['vshard_bucket_count'] == 0
+        assert obj['data']['cluster']['vshard_bucket_count'] == 3000
 
         obj = srv.graphql("""
             mutation {

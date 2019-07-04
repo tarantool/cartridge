@@ -5,11 +5,19 @@ local fun = require('fun')
 local checks = require('checks')
 local errors = require('errors')
 
+local vars = require('cluster.vars').new('cluster.vshard-utils')
 local pool = require('cluster.pool')
 local topology = require('cluster.topology')
 local confapplier = require('cluster.confapplier')
 
 local e_config = errors.new_class('Invalid config')
+
+vars:new('bucket_count', 30000)
+vars:new('known_groups', nil
+    -- {
+    --     [group_name] = {bucket_count = ?number}
+    -- }
+)
 
 local function validate_group_weights(group_name, topology)
     checks('?string', 'table')
@@ -189,6 +197,54 @@ local function validate_config(conf_new, conf_old)
     return true
 end
 
+local function set_known_groups(vshard_groups)
+    checks('nil|table')
+    vars.known_groups = vshard_groups
+end
+
+local function get_known_groups()
+    if vars.known_groups == nil then
+        return {'default'}
+    else
+        local ret = {}
+        for group_name, _ in pairs(vars.known_groups) do
+            table.insert(ret, group_name)
+        end
+        table.sort(ret)
+        return ret
+    end
+end
+
+local function set_bucket_count(bucket_count)
+    checks('nil|number')
+    vars.bucket_count = bucket_count
+end
+
+-- This function is used in frontend only,
+-- returned value is useless for any other purpose.
+-- It is to be refactored later.
+local function get_bucket_count()
+    local vshard_groups
+    if confapplier.get_readonly('vshard_groups') ~= nil then
+        vshard_groups = confapplier.get_readonly('vshard_groups')
+    elseif confapplier.get_readonly('vshard') ~= nil then
+        vshard_groups = {
+            [box.NULL] = confapplier.get_readonly('vshard')
+        }
+    elseif vars.known_groups ~= nil then
+        vshard_groups = vars.known_groups
+    else
+        return vars.bucket_count
+    end
+
+    local sum = 0
+    for _, vsgroup in pairs(vshard_groups) do
+        sum = sum + (vsgroup.bucket_count or vars.bucket_count)
+    end
+    return sum
+end
+
+
 --- Get vshard configuration for particular group.
 --
 -- It can be passed to `vshard.router.cfg` and `vshard.storage.cfg`
@@ -241,5 +297,12 @@ return {
     validate_config = function(...)
         return e_config:pcall(validate_config, ...)
     end,
+
+    get_known_groups = get_known_groups,
+    set_known_groups = set_known_groups,
+
+    get_bucket_count = get_bucket_count,
+    set_bucket_count = set_bucket_count,
+
     get_vshard_config = get_vshard_config,
 }

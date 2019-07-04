@@ -234,44 +234,6 @@ local function can_bootstrap()
     return false
 end
 
-local function get_bucket_count()
-    local conf = {
-        vshard = confapplier.get_readonly('vshard'),
-        vshard_groups = confapplier.get_readonly('vshard_groups'),
-    }
-
-    if conf.vshard == nil and conf.vshard_groups == nil then
-        return 0
-    end
-
-    if conf.vshard_groups == nil then
-        return conf.vshard.bucket_count
-    else
-        -- This function is used in frontend only,
-        -- returned value is useless for any other purpose.
-        -- It is to be refactored later.
-        local sum = 0
-        for _, vsgroup in pairs(conf.vshard_groups) do
-            sum = sum + vsgroup.bucket_count
-        end
-        return sum
-    end
-end
-
-local function get_known_groups()
-    local vshard_groups = confapplier.get_readonly('vshard_groups')
-    if vshard_groups == nil then
-        return {'default'}
-    else
-        local ret = {}
-        for name, _ in pairs(vshard_groups) do
-            table.insert(ret, name)
-        end
-        table.sort(ret)
-        return ret
-    end
-end
-
 return {
     role_name = 'vshard-router',
     validate_config = vshard_utils.validate_config,
@@ -280,6 +242,4 @@ return {
     get = get,
     bootstrap = bootstrap,
     can_bootstrap = can_bootstrap,
-    get_bucket_count = get_bucket_count,
-    get_known_groups = get_known_groups,
 }
