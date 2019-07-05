@@ -356,7 +356,7 @@ def test_edit_replicaset(cluster, expelled):
         }
     """)
     assert obj['errors'][0]['message'] == \
-        'replicasets[bbbbbbbb-0000-4000-b000-000000000000].master ' + \
+        'replicasets[bbbbbbbb-0000-4000-b000-000000000000] leader ' + \
         '"bbbbbbbb-bbbb-4000-b000-000000000002" doesn\'t exist'
 
     obj = cluster['router'].graphql("""

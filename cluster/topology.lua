@@ -53,27 +53,58 @@ local function not_disabled(uuid, srv)
     return not_expelled(uuid, srv) and not srv.disabled
 end
 
-local function get_leaders_order(servers, replicaset_uuid, leaders_order)
-    checks('table', 'string', 'string|table')
+--- Get full list of replicaset leaders.
+--
+-- Full list is composed of:
+--  1. New order array
+--  2. Initial order from topology_cfg (with no repetitions)
+--  3. All other servers in the replicaset, sorted by uuid, ascending
+--
+-- Neither initial nor new order is modified.
+-- It's validity is ignored too.
+--
+-- @function get_leaders_orded
+-- @local
+-- @treturn {string,...} array of leaders uuids
+local function get_leaders_order(topology_cfg, replicaset_uuid, new_order)
+    checks('table', 'string', 'nil|table')
 
-    local ret
-    if type(leaders_order) == 'string' then
-        ret = {leaders_order}
-    else
-        ret = table.copy(leaders_order)
-    end
+    local servers = topology_cfg.servers
+    local replicasets = topology_cfg.replicasets
+    local ret = table.copy(new_order) or {}
 
-    local ret_tail = {}
-    for _, instance_uuid, server in fun.filter(not_expelled, servers) do
-        if server.replicaset_uuid == replicaset_uuid then
-            if not utils.table_find(ret, instance_uuid) then
-                table.insert(ret_tail, instance_uuid)
+    local replicaset = replicasets and replicasets[replicaset_uuid]
+
+    if replicaset ~= nil then
+        local initial_order
+        if type(replicaset.master) == 'table' then
+            initial_order = replicaset.master
+        else
+            initial_order = {replicaset.master}
+        end
+
+        for _, uuid in ipairs(initial_order) do
+            if not utils.table_find(ret, uuid) then
+                table.insert(ret, uuid)
             end
         end
+    else
+        error('Inconsistent topology and uuid args provided')
     end
 
-    table.sort(ret_tail)
-    utils.table_append(ret, ret_tail)
+    if servers ~= nil then
+        local ret_tail = {}
+        for _, instance_uuid, server in fun.filter(not_expelled, servers) do
+            if server.replicaset_uuid == replicaset_uuid then
+                if not utils.table_find(ret, instance_uuid) then
+                    table.insert(ret_tail, instance_uuid)
+                end
+            end
+        end
+
+        table.sort(ret_tail)
+        utils.table_append(ret, ret_tail)
+    end
 
     return ret
 end
@@ -178,7 +209,7 @@ local function validate_schema(field, topology)
         )
         if type(replicaset.master) == 'table' then
             local i = 1
-            local leaders_order = get_leaders_order(servers, replicaset_uuid, replicaset.master)
+            local leaders_order = replicaset.master
             local leaders_seen = {}
             for k, _ in pairs(leaders_order) do
                 e_config:assert(
@@ -268,7 +299,7 @@ local function validate_consistency(topology)
         known_uuids[server.replicaset_uuid] = true
     end
 
-    for replicaset_uuid, replicaset in pairs(replicasets) do
+    for replicaset_uuid, _ in pairs(replicasets) do
         local field = string.format('replicasets[%s]', replicaset_uuid)
 
         e_config:assert(
@@ -276,20 +307,20 @@ local function validate_consistency(topology)
             '%s has no servers', field
         )
 
-        local leaders_order = get_leaders_order(servers, replicaset_uuid, replicaset.master)
+        local leaders_order = get_leaders_order(topology, replicaset_uuid)
         for _, leader_uuid in ipairs(leaders_order) do
             local leader = servers[leader_uuid]
             e_config:assert(
                 leader ~= nil,
-                '%s.master %q doesn\'t exist', field, leader_uuid
+                "%s leader %q doesn't exist", field, leader_uuid
             )
             e_config:assert(
                 not_expelled(leader_uuid, leader),
-                '%s.master %q can not be expelled', field, leader_uuid
+                "%s leader %q can't be expelled", field, leader_uuid
             )
             e_config:assert(
                 leader.replicaset_uuid == replicaset_uuid,
-                '%s.master %q belongs to another replicaset', field, leader_uuid
+                '%s leader %q belongs to another replicaset', field, leader_uuid
             )
         end
     end
@@ -466,15 +497,11 @@ end
 local function get_active_masters()
     local ret = {}
 
-    for replicaset_uuid, replicaset in pairs(vars.topology.replicasets) do
-        local leaders_order = get_leaders_order(
-            vars.topology.servers,
-            replicaset_uuid,
-            replicaset.master
-        )
+    for replicaset_uuid, _ in pairs(vars.topology.replicasets) do
+        local leaders = get_leaders_order(vars.topology, replicaset_uuid)
 
         if vars.topology.failover then
-            for _, instance_uuid in ipairs(leaders_order) do
+            for _, instance_uuid in ipairs(leaders) do
                 local server = vars.topology.servers[instance_uuid]
                 local member = membership.get_member(server.uri)
 
@@ -489,7 +516,7 @@ local function get_active_masters()
         end
 
         if ret[replicaset_uuid] == nil then
-            ret[replicaset_uuid] = leaders_order[1]
+            ret[replicaset_uuid] = leaders[1]
         end
     end
 

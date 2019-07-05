@@ -157,9 +157,7 @@ local function get_servers_and_replicasets()
         end
 
         leaders_order[replicaset_uuid] = topology.get_leaders_order(
-            topology_cfg.servers,
-            replicaset_uuid,
-            replicaset.master
+            topology_cfg, replicaset_uuid
         )
     end
 
@@ -515,9 +513,8 @@ local function join_server(args)
     else
         local replicaset = topology_cfg.replicasets[args.replicaset_uuid]
         replicaset.master = topology.get_leaders_order(
-            confapplier.get_readonly('topology').servers,
-            args.replicaset_uuid,
-            replicaset.master
+            confapplier.get_readonly('topology'),
+            args.replicaset_uuid
         )
         table.insert(replicaset.master, args.instance_uuid)
     end
@@ -645,7 +642,7 @@ local function expel_server(uuid)
 
         if master_pos == 1 then
             return nil, e_topology_edit:new(
-                'Server %q is the master and can\'t be expelled', uuid
+                'Server %q is the leader and can\'t be expelled', uuid
             )
         elseif master_pos ~= nil then
             table.remove(replicaset.master, master_pos)
@@ -746,7 +743,7 @@ local function edit_replicaset(args)
 
     if args.master ~= nil then
         replicaset.master = topology.get_leaders_order(
-            confapplier.get_readonly('topology').servers,
+            confapplier.get_readonly('topology'),
             args.uuid,
             args.master
         )
