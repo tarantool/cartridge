@@ -249,13 +249,7 @@ type ReplicasetEditModalProps = {
   shouldCreateReplicaset?: boolean,
   knownRoles: string[],
   vshard_known_groups: string[],
-  replicaset: {
-    uuid?: string,
-    roles: {
-      name: string,
-      dependencies: string[]
-    }[]
-  },
+  replicaset: ReplicasetEditFormData,
   submitStatusMessage?: string,
   onSubmit: () => void,
   onRequestClose: () => void
@@ -296,10 +290,9 @@ class ReplicasetEditModal extends React.PureComponent<ReplicasetEditModalProps> 
   }
 
   isFormReadyToSubmit = (formData: ReplicasetEditFormData): boolean => {
-    if ( ! isStorageWeightInputDisabled(formData)) {
-      return isStorageWeightInputValueValid(formData);
-    }
-    return true;
+    const weightValid = isStorageWeightInputDisabled(formData) || isStorageWeightInputValueValid(formData);
+    const groupValid = isVShardGroupInputDisabled(formData, this.props.replicaset) || !!formData.vshard_group;
+    return weightValid && groupValid;
   };
 
   getFields = () => {
