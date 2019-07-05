@@ -25,7 +25,7 @@ vars:new('routers', {
 -- Human readable router name for logging
 -- Isn't exposed in public API
 local function router_name(group_name)
-    checks('?string')
+    checks('string')
     if group_name == nil then
         return 'vshard-router/default'
     else
@@ -35,6 +35,9 @@ end
 
 local function get(group_name)
     checks('?string')
+    if group_name == nil then
+        group_name = 'default'
+    end
     local router_name = router_name(group_name)
     return vars.routers[router_name]
 end
@@ -44,9 +47,7 @@ local function apply_config(conf)
 
     local vshard_groups
     if conf.vshard_groups == nil then
-        vshard_groups = {
-            [box.NULL] = conf.vshard
-        }
+        vshard_groups = {default = conf.vshard}
     else
         vshard_groups = conf.vshard_groups
     end
@@ -65,7 +66,7 @@ local function apply_config(conf)
 
             if router ~= nil then
                 router:cfg(vshard_cfg)
-            elseif group_name == nil then
+            elseif group_name == 'default' then
                 vshard.router.cfg(vshard_cfg)
                 router = vshard.router.static
             else
@@ -86,7 +87,7 @@ local function apply_config(conf)
 end
 
 local function bootstrap_group(group_name, vsgroup)
-    checks('?string', 'table')
+    checks('string', 'table')
 
     if vsgroup.bootstrapped then
         return true
@@ -158,7 +159,7 @@ local function bootstrap()
     local err = nil
 
     if patch.vshard_groups == nil then
-        local ok, _err = bootstrap_group(nil, patch.vshard)
+        local ok, _err = bootstrap_group('default', patch.vshard)
         if ok then
             patch.vshard.bootstrapped = true
         else
@@ -210,24 +211,22 @@ local function can_bootstrap_group(group_name, vsgroup)
 end
 
 local function can_bootstrap()
-    local conf = {
-        vshard = confapplier.get_readonly('vshard'),
-        vshard_groups = confapplier.get_readonly('vshard_groups'),
-    }
+    local vshard_groups
+    if confapplier.get_readonly('vshard_groups') ~= nil then
+        vshard_groups = confapplier.get_readonly('vshard_groups')
+    else
+        vshard_groups = {
+            default = confapplier.get_readonly('vshard'),
+        }
+    end
 
-    if conf.vshard == nil and conf.vshard_groups == nil then
+    if vshard_groups == nil then
         return false
     end
 
-    if conf.vshard_groups == nil then
-        if can_bootstrap_group(nil, conf.vshard) then
+    for name, g in pairs(vshard_groups) do
+        if can_bootstrap_group(name, g) then
             return true
-        end
-    else
-        for name, vsgroup in pairs(conf.vshard_groups) do
-            if can_bootstrap_group(name, vsgroup) then
-                return true
-            end
         end
     end
 

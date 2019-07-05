@@ -16,6 +16,7 @@ local rpc = require('cluster.rpc')
 local pool = require('cluster.pool')
 local utils = require('cluster.utils')
 local topology = require('cluster.topology')
+local vshard_utils = require('cluster.vshard-utils')
 local confapplier = require('cluster.confapplier')
 
 local e_topology_edit = errors.new_class('Editing cluster topology failed')
@@ -493,28 +494,24 @@ local function join_server(args)
         labels = labels
     }
 
-    local bootstrapped
-    if args.vshard_group then
-        local vshard_groups = confapplier.get_readonly('vshard_groups')
-        local params = vshard_groups[args.vshard_group]
-        bootstrapped = params and params.bootstrapped
-    else
-        local params = confapplier.get_readonly('vshard')
-        bootstrapped = params and params.bootstrapped
-    end
-
     if topology_cfg.replicasets[args.replicaset_uuid] == nil then
-        local weight = 0
-        if not bootstrapped then
-            weight = 1
-        end
-
-        topology_cfg.replicasets[args.replicaset_uuid] = {
+        local replicaset = {
             roles = confapplier.get_enabled_roles(args.roles),
             master = {args.instance_uuid},
-            weight = weight,
-            vshard_group = args.vshard_group,
+            weight = 0,
         }
+
+        if replicaset.roles['vshard-storage'] then
+            replicaset.vshard_group = args.vshard_group
+            local vshard_groups = vshard_utils.get_known_groups()
+            local group_params = vshard_groups[args.vshard_group or 'default']
+
+            if group_params and not group_params.bootstrapped then
+                replicaset.weight = 1
+            end
+        end
+
+        topology_cfg.replicasets[args.replicaset_uuid] = replicaset
     else
         local replicaset = topology_cfg.replicasets[args.replicaset_uuid]
         replicaset.master = topology.get_leaders_order(
@@ -747,10 +744,6 @@ local function edit_replicaset(args)
         replicaset.roles = confapplier.get_enabled_roles(args.roles)
     end
 
-    if args.vshard_group ~= nil then
-        replicaset.vshard_group = args.vshard_group
-    end
-
     if args.master ~= nil then
         replicaset.master = topology.get_leaders_order(
             confapplier.get_readonly('topology').servers,
@@ -759,16 +752,40 @@ local function edit_replicaset(args)
         )
     end
 
-    if args.weight ~= nil then
-        replicaset.weight = args.weight
-    elseif replicaset.weight == nil then
-        local vshard_cfg = confapplier.get_readonly('vshard')
+    -- Set proper vshard_group
+    repeat -- until true
+        if not replicaset.roles['vshard-storage'] then
+            -- ignore unless replicaset is a storage
+            break
+        end
 
-        replicaset.weight = 0
-        if not vshard_cfg.bootstrapped then
+        if args.vshard_group ~= nil then
+            replicaset.vshard_group = args.vshard_group
+            break
+        end
+
+        replicaset.vshard_group = 'default'
+    until true
+
+    -- Set proper replicaset weight
+    repeat -- until true
+        if not replicaset.roles['vshard-storage'] then
+            replicaset.weight = 0
+            break
+        end
+
+        if args.weight ~= nil then
+            replicaset.weight = args.weight
+            break
+        end
+
+        local vshard_groups = vshard_utils.get_known_groups()
+        local group_params = vshard_groups[replicaset.vshard_group or 'default']
+
+        if group_params and not group_params.bootstrapped then
             replicaset.weight = 1
         end
-    end
+    until true
 
     local ok, err = confapplier.patch_clusterwide({topology = topology_cfg})
     if not ok then

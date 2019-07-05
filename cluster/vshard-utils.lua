@@ -12,7 +12,7 @@ local confapplier = require('cluster.confapplier')
 
 local e_config = errors.new_class('Invalid config')
 
-vars:new('bucket_count', 30000)
+vars:new('default_bucket_count', 30000)
 vars:new('known_groups', nil
     -- {
     --     [group_name] = {bucket_count = ?number}
@@ -20,7 +20,7 @@ vars:new('known_groups', nil
 )
 
 local function validate_group_weights(group_name, topology)
-    checks('?string', 'table')
+    checks('string', 'table')
     local num_storages = 0
     local total_weight = 0
 
@@ -31,7 +31,7 @@ local function validate_group_weights(group_name, topology)
         )
 
         local enabled_roles = confapplier.get_enabled_roles(replicaset.roles)
-        if replicaset.vshard_group == group_name and enabled_roles['vshard-storage'] then
+        if enabled_roles['vshard-storage'] and (replicaset.vshard_group or 'default') == group_name then
             num_storages = num_storages + 1
             total_weight = total_weight + (replicaset.weight or 0)
         end
@@ -47,7 +47,7 @@ local function validate_group_weights(group_name, topology)
 end
 
 local function validate_group_upgrade(group_name, topology_new, topology_old)
-    checks('?string', 'table', 'table')
+    checks('string', 'table', 'table')
     local replicasets_new = topology_new.replicasets or {}
     local replicasets_old = topology_old.replicasets or {}
     local servers_old = topology_old.servers or {}
@@ -58,7 +58,7 @@ local function validate_group_upgrade(group_name, topology_new, topology_old)
         local storage_role_new = replicaset_new and replicaset_new.roles['vshard-storage']
 
         if (storage_role_old) and (not storage_role_new)
-        and (replicaset_old.vshard_group == group_name)
+        and ((replicaset_old.vshard_group or 'default') == group_name)
         then
             e_config:assert(
                 (replicaset_old.weight == nil) or (replicaset_old.weight == 0),
@@ -129,18 +129,18 @@ local function validate_config(conf_new, conf_old)
 
     if conf_new.vshard_groups == nil then
         validate_vshard_group('vshard', conf_new.vshard, conf_old.vshard)
-        validate_group_weights(nil, topology_new)
+        validate_group_weights('default', topology_new)
 
         for replicaset_uuid, replicaset in pairs(topology_new.replicasets or {}) do
             e_config:assert(
-                replicaset.vshard_group == nil,
-                "replicasets[%s] can't be added to a vshard_group, cluster doesn't have any",
-                replicaset_uuid
+                replicaset.vshard_group == nil or replicaset.vshard_group == 'default',
+                "replicasets[%s] can't be added to vshard_group %q, cluster doesn't have any",
+                replicaset_uuid, replicaset.vshard_group
             )
         end
 
         if conf_new.vshard.bootstrapped then
-            validate_group_upgrade(nil, topology_new, topology_old)
+            validate_group_upgrade('default', topology_new, topology_old)
         end
     else
         e_config:assert(
@@ -197,53 +197,39 @@ local function validate_config(conf_new, conf_old)
     return true
 end
 
-local function set_known_groups(vshard_groups)
-    checks('nil|table')
+local function set_known_groups(vshard_groups, default_bucket_count)
+    checks('nil|table', 'nil|number')
     vars.known_groups = vshard_groups
+    vars.default_bucket_count = default_bucket_count
 end
 
 local function get_known_groups()
-    if vars.known_groups == nil then
-        return {'default'}
-    else
-        local ret = {}
-        for group_name, _ in pairs(vars.known_groups) do
-            table.insert(ret, group_name)
-        end
-        table.sort(ret)
-        return ret
-    end
-end
-
-local function set_bucket_count(bucket_count)
-    checks('nil|number')
-    vars.bucket_count = bucket_count
-end
-
--- This function is used in frontend only,
--- returned value is useless for any other purpose.
--- It is to be refactored later.
-local function get_bucket_count()
     local vshard_groups
     if confapplier.get_readonly('vshard_groups') ~= nil then
-        vshard_groups = confapplier.get_readonly('vshard_groups')
+        vshard_groups = confapplier.get_deepcopy('vshard_groups')
     elseif confapplier.get_readonly('vshard') ~= nil then
         vshard_groups = {
-            [box.NULL] = confapplier.get_readonly('vshard')
+            default = confapplier.get_deepcopy('vshard')
         }
     elseif vars.known_groups ~= nil then
-        vshard_groups = vars.known_groups
+        vshard_groups = {}
+        for name, g in pairs(vars.known_groups) do
+            vshard_groups[name] = {
+                bucket_count = g.bucket_count or vars.default_bucket_count,
+                bootstrapped = false,
+            }
+        end
     else
-        return vars.bucket_count
+        vshard_groups = {
+            default = {
+                bucket_count = vars.default_bucket_count,
+                bootstrapped = false,
+            }
+        }
     end
 
-    local sum = 0
-    for _, vsgroup in pairs(vshard_groups) do
-        sum = sum + (vsgroup.bucket_count or vars.bucket_count)
-    end
-    return sum
+    return vshard_groups
 end
-
 
 --- Get vshard configuration for particular group.
 --
@@ -254,7 +240,7 @@ end
 -- @tparam table group_name name of vshard storage group
 -- @treturn table
 local function get_vshard_config(group_name, conf)
-    checks('?string', 'table')
+    checks('string', 'table')
 
     local sharding = {}
     local topology_cfg = topology.get()
@@ -263,7 +249,7 @@ local function get_vshard_config(group_name, conf)
     for _it, instance_uuid, server in fun.filter(topology.not_disabled, topology_cfg.servers) do
         local replicaset_uuid = server.replicaset_uuid
         local replicaset = topology_cfg.replicasets[replicaset_uuid]
-        if replicaset.vshard_group == group_name and replicaset.roles['vshard-storage'] then
+        if replicaset.roles['vshard-storage'] and (replicaset.vshard_group or 'default') == group_name then
             if sharding[replicaset_uuid] == nil then
                 sharding[replicaset_uuid] = {
                     replicas = {},
@@ -280,15 +266,18 @@ local function get_vshard_config(group_name, conf)
         end
     end
 
-    local bucket_count
-    if group_name == nil then
-        bucket_count = conf.vshard.bucket_count
+    local vshard_groups
+    if conf.vshard_groups == nil then
+        vshard_groups = {default = conf.vshard}
     else
-        bucket_count = conf.vshard_groups[group_name].bucket_count
+        vshard_groups = conf.vshard_groups
     end
 
+    require("log").info("vshard cfg %q", group_name)
+    require("log").info(sharding)
+
     return {
-        bucket_count = bucket_count,
+        bucket_count = vshard_groups[group_name].bucket_count,
         sharding = sharding,
     }
 end
@@ -298,11 +287,8 @@ return {
         return e_config:pcall(validate_config, ...)
     end,
 
-    get_known_groups = get_known_groups,
     set_known_groups = set_known_groups,
-
-    get_bucket_count = get_bucket_count,
-    set_bucket_count = set_bucket_count,
+    get_known_groups = get_known_groups,
 
     get_vshard_config = get_vshard_config,
 }

@@ -54,6 +54,11 @@ def test_api(cluster):
                 can_bootstrap_vshard
                 vshard_bucket_count
                 vshard_known_groups
+                vshard_groups {
+                    name
+                    bucket_count
+                    bootstrapped
+                }
             }
         }
     """
@@ -62,15 +67,76 @@ def test_api(cluster):
     assert 'errors' not in obj, obj['errors'][0]['message']
     assert obj['data']['cluster']['self']['uuid'] == cluster['router'].instance_uuid
     assert obj['data']['cluster']['can_bootstrap_vshard'] == False
-    assert obj['data']['cluster']['vshard_bucket_count'] == 5000
+    assert obj['data']['cluster']['vshard_bucket_count'] == 32000
     assert obj['data']['cluster']['vshard_known_groups'] == ['cold', 'hot']
+    assert obj['data']['cluster']['vshard_groups'] == \
+        [{
+            'name': 'cold',
+            'bucket_count': 2000,
+            'bootstrapped': True,
+        }, {
+            'name': 'hot',
+            'bucket_count': 30000,
+            'bootstrapped': True,
+        }]
 
     obj = cluster['spare'].graphql(req)
     assert 'errors' not in obj, obj['errors'][0]['message']
     assert obj['data']['cluster']['self']['uuid'] == None
     assert obj['data']['cluster']['can_bootstrap_vshard'] == False
-    assert obj['data']['cluster']['vshard_bucket_count'] == 5000
+    assert obj['data']['cluster']['vshard_bucket_count'] == 32000
     assert obj['data']['cluster']['vshard_known_groups'] == ['cold', 'hot']
+    assert obj['data']['cluster']['vshard_groups'] == [
+        {
+            'name': 'cold',
+            'bucket_count': 2000,
+            'bootstrapped': False,
+        }, {
+            'name': 'hot',
+            'bucket_count': 30000,
+            'bootstrapped': False,
+        }
+    ]
+
+def test_mutations(cluster):
+    ruuid_cold = cluster['storage-cold'].replicaset_uuid
+    obj = cluster['router'].graphql("""
+        mutation {{
+            edit_replicaset(
+                uuid: "{uuid_cold}"
+                vshard_group: "hot"
+            )
+        }}
+    """.format(
+        uuid_cold = ruuid_cold
+    ))
+    assert obj['errors'][0]['message'] == \
+        'replicasets[{}].vshard_group can\'t be modified'.format(ruuid_cold)
+
+    req = """
+        mutation($group: String) {{
+            join_server(
+                uri: "{spare.advertise_uri}"
+                instance_uuid: "{spare.instance_uuid}"
+                replicaset_uuid: "{spare.replicaset_uuid}"
+                roles: ["vshard-storage"]
+                vshard_group: $group
+            )
+        }}
+    """.format(spare = cluster['spare'])
+
+    obj = cluster['router'].graphql(req)
+    assert obj['errors'][0]['message'] == \
+        'replicasets[{}]'.format(cluster['spare'].replicaset_uuid) + \
+        ' is a vshard-storage and must be assigned to a particular group'
+
+    obj = cluster['router'].graphql(req,
+        variables = {'group': 'default'}
+    )
+    assert obj['errors'][0]['message'] == \
+        'replicasets[{}]'.format(cluster['spare'].replicaset_uuid) + \
+        '.vshard_group "default" doesn\'t exist'
+
 
 def test_router_role(cluster):
 

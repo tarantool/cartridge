@@ -137,7 +137,7 @@ vshard_groups:
 test:diag('   group assignment')
 
 check_config("replicasets[aaaaaaaa-0000-4000-b000-000000000001]" ..
-    " can't be added to a vshard_group, cluster doesn't have any",
+    [[ can't be added to vshard_group "some", cluster doesn't have any]],
 [[---
 topology:
   replicasets:

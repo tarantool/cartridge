@@ -289,8 +289,7 @@ local function cfg(opts, box_opts)
         end
     end
 
-    vshard_utils.set_bucket_count(opts.bucket_count)
-    vshard_utils.set_known_groups(vshard_groups)
+    vshard_utils.set_known_groups(vshard_groups, opts.bucket_count)
 
     vars.box_opts = box_opts
     vars.boot_opts = {
