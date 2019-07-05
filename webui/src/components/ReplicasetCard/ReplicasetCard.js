@@ -2,7 +2,7 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import { defaultMemoize } from 'reselect';
 import { css } from 'react-emotion';
-
+import { VSHARD_STORAGE_ROLE_NAME } from 'src/constants';
 import ServerList from 'src/components/ServerList';
 import HealthIndicator from 'src/components/HealthIndicator';
 
@@ -45,7 +45,7 @@ const prepareVshardStoragePropsText = (weight, vshard_group) => {
 
 const prepareRolesText = (roles, weight, vshard_group) => {
   return roles
-    .map(role => role === 'vshard-storage'
+    .map(role => role === VSHARD_STORAGE_ROLE_NAME
       ? role + prepareVshardStoragePropsText(weight, vshard_group)
       : role)
     .join(', ');

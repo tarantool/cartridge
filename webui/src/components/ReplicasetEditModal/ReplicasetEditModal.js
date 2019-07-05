@@ -3,8 +3,9 @@ import * as R from 'ramda';
 import React from 'react';
 import { defaultMemoize } from 'reselect';
 import {css} from 'react-emotion';
-import { DEFAULT_VSHARD_GROUP_NAME } from 'src/constants';
+import { DEFAULT_VSHARD_GROUP_NAME, VSHARD_STORAGE_ROLE_NAME } from 'src/constants';
 import CommonItemEditModal from 'src/components/CommonItemEditModal';
+import { type Replicaset } from 'src/generated/graphql-typing';
 import './ReplicasetEditModal.css';
 
 const styles = {
@@ -31,30 +32,20 @@ const styles = {
   `
 };
 
-type ReplicasetEditFormData = {
-  active_master: {uuid: "ee733651-7bb0-49a7-bf10-38605ff40e76"},
-  master: ?string,
-  roles: string[],
-  uuid?: "9f8c6b2a-6b12-418e-a901-8f5256ad568a",
-  vshard_group?: string,
-  weight?: string
-};
-
-
 /**
  * @param {Object} formData
  * @param {Object} replicaset
  */
 const isVShardGroupInputDisabled = (
-  { roles }: ReplicasetEditFormData,
-  { vshard_group }: ReplicasetEditFormData = {}
-): boolean => !roles.includes('vshard-storage') || !!vshard_group;
+  { roles }: Replicaset,
+  { vshard_group }: Replicaset = {}
+): boolean => !(roles || []).includes(VSHARD_STORAGE_ROLE_NAME) || !!vshard_group;
 
-const isStorageWeightInputDisabled = (formData: ReplicasetEditFormData): boolean => (
-  !formData.roles.includes('vshard-storage')
+const isStorageWeightInputDisabled = ({ roles }: Replicaset): boolean => (
+  !(roles || []).includes(VSHARD_STORAGE_ROLE_NAME)
 );
 
-const isStorageWeightInputValueValid = (formData: ReplicasetEditFormData): boolean => {
+const isStorageWeightInputValueValid = (formData: Replicaset): boolean => {
   // return /^[0-9]*(\.[0-9]+)?$/.test(formData.weight.trim());
   const number = Number(formData.weight);
   return number >= 0 && number < Infinity;
@@ -143,7 +134,6 @@ const prepareFields = (roles, replicaset, vshardGroups) => {
           render: () => <a className={styles.dragIcon}>☰</a>,
           width: 50,
         },
-
         {
           title: 'Альяс',
           dataIndex: 'alias',
@@ -249,14 +239,14 @@ type ReplicasetEditModalProps = {
   shouldCreateReplicaset?: boolean,
   knownRoles: string[],
   vshard_known_groups: string[],
-  replicaset: ReplicasetEditFormData,
+  replicaset: Replicaset,
   submitStatusMessage?: string,
   onSubmit: () => void,
   onRequestClose: () => void
 };
 
 class ReplicasetEditModal extends React.PureComponent<ReplicasetEditModalProps> {
-  defaultProps = {
+  static defaultProps = {
     isLoading: false,
     isSaving: false,
     replicasetNotFound: false,
@@ -289,10 +279,10 @@ class ReplicasetEditModal extends React.PureComponent<ReplicasetEditModalProps> 
     );
   }
 
-  isFormReadyToSubmit = (formData: ReplicasetEditFormData): boolean => {
-    const weightValid = isStorageWeightInputDisabled(formData) || isStorageWeightInputValueValid(formData);
-    const groupValid = isVShardGroupInputDisabled(formData, this.props.replicaset) || !!formData.vshard_group;
-    return weightValid && groupValid;
+  isFormReadyToSubmit = (formData: Replicaset): boolean => {
+    const isWeightValid = isStorageWeightInputDisabled(formData) || isStorageWeightInputValueValid(formData);
+    const isGroupValid = isVShardGroupInputDisabled(formData, this.props.replicaset) || !!formData.vshard_group;
+    return isWeightValid && isGroupValid;
   };
 
   getFields = () => {
