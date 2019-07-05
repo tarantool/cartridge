@@ -4,6 +4,7 @@
 
 local checks = require('checks')
 local fio = require('fio')
+local log = require('log')
 
 local luatest = require('luatest')
 local Server = require('cluster.test_helpers.server')
@@ -30,6 +31,7 @@ end
 -- @string object.cookie Cluster cookie.
 -- @int[opt] object.base_http_port Value to calculate server's http_port.
 -- @int[opt] object.base_advertise_port Value to calculate server's advertise_port.
+-- @bool[opt] object.use_vshard bootstrap vshard after server is started.
 -- @tab object.replicasets Replicasets configuration. List of @{replicaset_config}
 -- @return object
 function Cluster:new(object)
@@ -39,6 +41,7 @@ function Cluster:new(object)
         cookie = '?string',
         base_http_port = '?number',
         base_advertise_port = '?number',
+        use_vshard = '?boolean',
         replicasets = 'table',
     })
     --- Replicaset config.
@@ -83,7 +86,7 @@ function Cluster:server(alias)
 end
 
 -- Start servers, configure replicasets and bootstrap vshard if required.
-function Cluster:bootstrap(options)
+function Cluster:bootstrap()
     for _, server in ipairs(self.servers) do
         server:start()
         self:join_server(server)
@@ -91,15 +94,19 @@ function Cluster:bootstrap(options)
     for _, replicaset_config in ipairs(self.replicasets) do
         self.main_server:setup_replicaset(replicaset_config)
     end
-    if options and options.bootstrap_vshard then
-        self.main_server:bootstrap_vshard()
+    if self.use_vshard then
+        self:bootstrap_vshard()
     end
 end
 
+function Cluster:bootstrap_vshard()
+    local server = self.main_server
+    log.debug('Bootstrapping vshard.router on ' .. server.advertise_uri)
+    log.debug({response = server:graphql({query = 'mutation { bootstrap_vshard }'})})
+end
+
 --- Bootstraps cluster if it wasn't bootstrapped before. Otherwise starts servers.
--- @param[opt] options
--- @bool options.bootstrap_vshard bootstrap vshard when servers are up.
-function Cluster:start(options)
+function Cluster:start()
     if self.running then
         return
     end
@@ -110,7 +117,7 @@ function Cluster:start(options)
         end
         self:wait_until_healthy()
     else
-        self:bootstrap(options)
+        self:bootstrap()
         self.bootstrapped = true
     end
     self.running = true

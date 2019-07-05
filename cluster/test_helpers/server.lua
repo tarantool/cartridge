@@ -151,10 +151,4 @@ function Server:setup_replicaset(config)
     })
 end
 
---- Run bootstrap_vshard mutation.
-function Server:bootstrap_vshard()
-    log.debug('Bootstrapping vshard.router on ' .. self.advertise_uri)
-    log.debug(self:graphql({query = 'mutation { bootstrap_vshard }'}))
-end
-
 return Server
