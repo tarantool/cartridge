@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 ./taptest.lua
 ./.rocks/bin/luatest -v
 

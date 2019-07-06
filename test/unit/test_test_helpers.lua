@@ -14,6 +14,7 @@ local helpers = require('cluster.test_helpers')
 
 local cluster = Cluster:new({
     datadir = datadir,
+    use_vshard = true,
     server_command = fio.pathjoin(ROOT, 'test/unit/instance.lua'),
     cookie = 'test-cluster-cookie',
     base_http_port = 8080,
@@ -42,14 +43,15 @@ local cluster = Cluster:new({
 
 test:plan(4 + 1)
 
-local ok, _ = pcall(function()
+local ok, err = pcall(function()
     cluster:start()
-    cluster.main_server:bootstrap_vshard()
     for i, server in ipairs(cluster.servers) do
         test:isnumber(server.process.pid, 'Server ' .. i .. ' started')
     end
 end)
-test:ok(ok, 'Cluster started')
+if not test:ok(ok, 'Cluster started') then
+    test:diag(err)
+end
 cluster:stop()
 
 os.exit(test:check() and 0 or 1)

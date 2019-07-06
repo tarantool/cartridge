@@ -7,6 +7,7 @@ local helpers = require('cluster.test_helpers')
 
 local cluster = helpers.Cluster:new({
     datadir = test_helper.datadir,
+    use_vshard = true,
     server_command = test_helper.server_command,
     replicasets = {
         {
@@ -98,7 +99,7 @@ local function check_active_master(expected_uuid)
     t.assert_equals(response, expected_uuid)
 end
 
-g.before_all = function() cluster:start({bootstrap_vshard = true}) end
+g.before_all = function() cluster:start() end
 g.after_all = function() cluster:stop() end
 
 g.test_api_master = function()
