@@ -1,29 +1,30 @@
 # source: http://localhost:8081/admin/api
-# timestamp: Mon Jun 24 2019 18:45:37 GMT+0300 (MSK)
+# timestamp: Sun Jul 07 2019 23:41:02 GMT+0300 (MSK)
 
 """Cluster management"""
 type Apicluster {
-  """Get list of all registered roles and their dependencies."""
-  known_roles: [Role!]!
-
   """Get current server"""
   self: ServerShortInfo
-
-  """Get list of known vshard storage groups."""
-  vshard_known_groups: [String!]!
 
   """Get current failover state."""
   failover: Boolean!
 
-  """Whether it is reasonble to call bootstrap_vshard mutation"""
-  can_bootstrap_vshard: Boolean!
-
   """Virtual buckets count in cluster"""
   vshard_bucket_count: Int!
-  auth_params: UserManagementAPI!
 
   """List authorized users"""
   users(username: String): [User!]
+
+  """Get list of all registered roles and their dependencies."""
+  known_roles: [Role!]!
+
+  """Get list of known vshard storage groups."""
+  vshard_known_groups: [String!]!
+  vshard_groups: [VshardGroup!]!
+  auth_params: UserManagementAPI!
+
+  """Whether it is reasonble to call bootstrap_vshard mutation"""
+  can_bootstrap_vshard: Boolean!
 }
 
 """Cluster server label"""
@@ -326,4 +327,16 @@ type UserManagementAPI {
   """Active session username."""
   username: String
   implements_check_password: Boolean!
+}
+
+"""Group of replicasets sharding the same dataset"""
+type VshardGroup {
+  """Virtual buckets count in the group"""
+  bucket_count: Int!
+
+  """Group name"""
+  name: String!
+
+  """Whethe the group is ready to operate"""
+  bootstrapped: Boolean!
 }
