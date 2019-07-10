@@ -1,6 +1,5 @@
 #!/usr/bin/env tarantool
 
-local errors = require('errors')
 local gql_types = require('cluster.graphql.types')
 local vshard_utils = require('cluster.vshard-utils')
 local module_name = 'cluster.webui.api-vshard'
