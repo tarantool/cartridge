@@ -7,14 +7,6 @@ from conftest import Server
 env = {'MULTIPLE_VSHARD_ENABLED': 'YES'}
 cluster = [
     Server(
-        alias = 'router',
-        instance_uuid = 'aaaaaaaa-aaaa-4000-b000-000000000001',
-        replicaset_uuid = 'aaaaaaaa-0000-4000-b000-000000000000',
-        roles = ['vshard-router'],
-        binary_port = 33001,
-        http_port = 8081
-    ),
-    Server(
         alias = 'storage-hot',
         instance_uuid = 'bbbbbbbb-bbbb-4000-b000-000000000002',
         replicaset_uuid = 'bbbbbbbb-0000-4000-b000-000000000000',
@@ -31,6 +23,14 @@ cluster = [
         vshard_group = 'cold',
         binary_port = 33004,
         http_port = 8084
+    ),
+    Server(
+        alias = 'router',
+        instance_uuid = 'aaaaaaaa-aaaa-4000-b000-000000000001',
+        replicaset_uuid = 'aaaaaaaa-0000-4000-b000-000000000000',
+        roles = ['vshard-router'],
+        binary_port = 33001,
+        http_port = 8081
     )
 ]
 
@@ -128,14 +128,14 @@ def test_mutations(cluster):
     obj = cluster['router'].graphql(req)
     assert obj['errors'][0]['message'] == \
         'replicasets[{}]'.format(cluster['spare'].replicaset_uuid) + \
-        ' is a vshard-storage and must be assigned to a particular group'
+        '.vshard_group "default" doesn\'t exist'
 
     obj = cluster['router'].graphql(req,
-        variables = {'group': 'default'}
+        variables = {'group': 'unknown'}
     )
     assert obj['errors'][0]['message'] == \
         'replicasets[{}]'.format(cluster['spare'].replicaset_uuid) + \
-        '.vshard_group "default" doesn\'t exist'
+        '.vshard_group "unknown" doesn\'t exist'
 
 
 def test_router_role(cluster):

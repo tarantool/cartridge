@@ -164,12 +164,18 @@ local function bootstrap_from_scratch(boot_opts, box_opts, roles, labels, vshard
             replicasets = {
                 [boot_opts.replicaset_uuid] = {
                     roles = roles,
-                    master = boot_opts.instance_uuid,
-                    weight = roles['vshard-storage'] and 1 or nil,
+                    master = {boot_opts.instance_uuid},
+                    weight = 0,
                 },
             },
         },
     }
+
+    local my_replicaset = conf.topology.replicasets[boot_opts.replicaset_uuid]
+    if roles['vshard-storage'] then
+        my_replicaset.weight = 1
+        my_replicaset.vshard_group = vshard_group or 'default'
+    end
 
     local vshard_groups = vshard_utils.get_known_groups()
     if next(vshard_groups) == 'default'

@@ -502,9 +502,9 @@ local function join_server(args)
         }
 
         if replicaset.roles['vshard-storage'] then
-            replicaset.vshard_group = args.vshard_group
+            replicaset.vshard_group = args.vshard_group or 'default'
             local vshard_groups = vshard_utils.get_known_groups()
-            local group_params = vshard_groups[args.vshard_group or 'default']
+            local group_params = vshard_groups[replicaset.vshard_group]
 
             if group_params and not group_params.bootstrapped then
                 replicaset.weight = 1
