@@ -2,7 +2,7 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import { defaultMemoize } from 'reselect';
 import { css } from 'react-emotion';
-
+import { VSHARD_STORAGE_ROLE_NAME } from 'src/constants';
 import ServerList from 'src/components/ServerList';
 import HealthIndicator from 'src/components/HealthIndicator';
 
@@ -34,9 +34,20 @@ const prepareServers = replicaset => {
   }));
 };
 
-const prepareRolesText = (roles, weight) => {
+const prepareVshardStoragePropsText = (weight, vshard_group) => {
+  const formatted = [
+    ...(weight !== null ? [`weight: ${weight}`] : []),
+    ...(typeof vshard_group === 'string' ? [`group: ${vshard_group}`] : []),
+  ].join(', ');
+
+  return formatted ? ` (${formatted})` : '';
+};
+
+const prepareRolesText = (roles, weight, vshard_group) => {
   return roles
-    .map(role => role === 'vshard-storage' && weight != null ? `${role} (weight: ${weight})` : role)
+    .map(role => role === VSHARD_STORAGE_ROLE_NAME
+      ? role + prepareVshardStoragePropsText(weight, vshard_group)
+      : role)
     .join(', ');
 };
 
@@ -109,8 +120,8 @@ class ReplicasetCard extends React.PureComponent {
   };
 
   getRolesText = () => {
-    const { replicaset: { roles, weight } } = this.props;
-    return this.prepareRolesText(roles, weight);
+    const { replicaset: { roles, weight, vshard_group } } = this.props;
+    return this.prepareRolesText(roles, weight, vshard_group);
   };
 
   prepareServers = defaultMemoize(prepareServers);

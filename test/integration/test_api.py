@@ -440,7 +440,7 @@ def test_uninitialized(module_tmpdir, helpers):
             'uuid': None,
         }
         assert obj['data']['cluster']['can_bootstrap_vshard'] == False
-        assert obj['data']['cluster']['vshard_bucket_count'] == 0
+        assert obj['data']['cluster']['vshard_bucket_count'] == 3000
 
         obj = srv.graphql("""
             mutation {
@@ -492,6 +492,21 @@ def test_join_server(cluster, expelled, helpers):
     """)
     assert obj['errors'][0]['message'] == \
         'Server "cccccccc-cccc-4000-b000-000000000001" is already joined'
+
+    obj = cluster['router'].graphql("""
+        mutation {
+            join_server(
+                uri: "localhost:33003"
+                instance_uuid: "dddddddd-dddd-4000-b000-000000000001"
+                replicaset_uuid: "dddddddd-0000-4000-b000-000000000000"
+                roles: ["vshard-storage"]
+                vshard_group: "unknown"
+            )
+        }
+    """)
+    assert obj['errors'][0]['message'] == \
+        'replicasets[dddddddd-0000-4000-b000-000000000000] can\'t be added' + \
+        ' to vshard_group "unknown", cluster doesn\'t have any'
 
     obj = cluster['router'].graphql("""
         mutation {

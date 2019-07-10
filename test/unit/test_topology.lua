@@ -61,7 +61,7 @@ test:plan(51)
 
 local vshard_group
 if conf.vshard then
-    vshard_group = "\n"
+    vshard_group = "\n    vshard_group: default\n"
 else
     vshard_group = "\n    vshard_group: first\n"
 end
@@ -341,7 +341,7 @@ replicasets:
 
 local e
 if conf.vshard then
-    e = 'At least one vshard-storage must have weight > 0'
+    e = 'At least one vshard-storage (default) must have weight > 0'
 else
     e = 'At least one vshard-storage (first) must have weight > 0'
 end

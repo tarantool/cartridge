@@ -1,11 +1,11 @@
+// @flow
 import * as R from 'ramda';
-import PropTypes from 'prop-types';
 import React from 'react';
 import { defaultMemoize } from 'reselect';
 import {css} from 'react-emotion';
-
+import { DEFAULT_VSHARD_GROUP_NAME, VSHARD_STORAGE_ROLE_NAME } from 'src/constants';
 import CommonItemEditModal from 'src/components/CommonItemEditModal';
-
+import type { Replicaset, Role, VshardGroup } from 'src/generated/graphql-typing';
 import './ReplicasetEditModal.css';
 
 const styles = {
@@ -29,12 +29,26 @@ const styles = {
   `,
   tableStyles: css`
     margin-left: 0px;
+  `,
+  roleDependencies: css`
+    color: gray;
   `
 };
 
+/**
+ * @param {Object} formData
+ * @param {Object} replicaset
+ */
+const isVShardGroupInputDisabled = (
+  { roles }: Replicaset,
+  replicaset: ?Replicaset
+): boolean => !(roles || []).includes(VSHARD_STORAGE_ROLE_NAME) || !!(replicaset && replicaset.vshard_group);
 
-const isStorageWeightInputDisabled = formData => ! formData.roles.includes('vshard-storage');
-const isStorageWeightInputValueValid = formData => {
+const isStorageWeightInputDisabled = ({ roles }: Replicaset): boolean => (
+  !(roles || []).includes(VSHARD_STORAGE_ROLE_NAME)
+);
+
+const isStorageWeightInputValueValid = (formData: Replicaset): boolean => {
   // return /^[0-9]*(\.[0-9]+)?$/.test(formData.weight.trim());
   const number = Number(formData.weight);
   return number >= 0 && number < Infinity;
@@ -59,29 +73,31 @@ const renderDraggableListOptions = record => record.servers.map(server => ({
 const getRolesDependencies = (activeRoles, rolesOptions) => {
   const result = [];
   rolesOptions.forEach(({ key, dependencies }) => {
-    if (activeRoles.includes(key)) {
+    if (activeRoles.includes(key) && dependencies) {
       result.push(...dependencies);
     }
   });
   return R.uniq(result);
 };
 
-const prepareFields = (roles, replicaset) => {
+const getDependenciesString = (dependencies: string[]) => {
+  return dependencies.length > 3
+    ? ` (+ ${dependencies.slice(0, 2).join(', ')}, ${dependencies.length - 2} more)`
+    : ` (+ ${dependencies.join(', ')})`;
+};
+
+const prepareFields = (roles: Role[], replicaset: ?Replicaset, vshardGroups: ?VshardGroup[]) => {
   const rolesOptions = roles.map(
     ({
       name,
-      dependencies = []
+      dependencies
     }) => {
-      const dependenciesLabel = dependencies.length > 3
-        ? ` (+ ${dependencies.slice(0, 2).join(', ')}, ${dependencies.length - 2} more)`
-        : ` (+ ${dependencies.join(', ')})`;
-
       const label = (
         <React.Fragment>
           {name}
-          {!!dependencies.length && (
-            <span style={{ color: 'gray' }}>
-              {dependenciesLabel}
+          {!!(dependencies && dependencies.length) && (
+            <span className={styles.roleDependencies}>
+              {getDependenciesString(dependencies)}
             </span>
           )}
         </React.Fragment>
@@ -94,6 +110,10 @@ const prepareFields = (roles, replicaset) => {
       };
     }
   );
+
+  let vshardGroupsOptions = vshardGroups
+    ? vshardGroups.map(({ name }) => ({ key: name, label: name, }))
+    : [];
 
   const shallRenderDraggableList = replicaset && replicaset.servers.length > 2;
 
@@ -117,7 +137,6 @@ const prepareFields = (roles, replicaset) => {
           render: () => <a className={styles.dragIcon}>☰</a>,
           width: 50,
         },
-
         {
           title: 'Альяс',
           dataIndex: 'alias',
@@ -130,7 +149,7 @@ const prepareFields = (roles, replicaset) => {
       tableData: R.pipe(
           R.map(R.pick(['alias', 'uri', 'uuid'])),
           R.map((data) => ({ ...data, key: data.uuid })),
-      )(replicaset.servers)
+      )(replicaset && replicaset.servers)
     };
     draggableListCustomProps.edit = draggableListCustomProps.create;
   }
@@ -146,11 +165,10 @@ const prepareFields = (roles, replicaset) => {
       type: 'checkboxGroup',
       options: ({ roles }) => {
         const dependencies = getRolesDependencies(roles, rolesOptions);
-        return rolesOptions
-          .reduceRight((acc, option) => (acc.push({
-            ...option,
-            disabled: dependencies.includes(option.key)
-          }) && acc), []);
+        return rolesOptions.reduceRight((acc, option) => {
+          acc.push({ ...option, disabled: dependencies.includes(option.key) });
+          return acc;
+        }, []);
       },
       stateModifier: (prevState, { roles, ...formData }) => {
         const prevDependencies = getRolesDependencies(prevState.roles, rolesOptions);
@@ -163,6 +181,15 @@ const prepareFields = (roles, replicaset) => {
         };
       }
     },
+    ...vshardGroups
+      ? [{
+        key: 'vshard_group',
+        title: 'Group',
+        type: 'optionGroup',
+        disabled: formData => isVShardGroupInputDisabled(formData, replicaset),
+        options: vshardGroupsOptions,
+      }]
+      : [],
     {
       key: 'weight',
       title: 'Weight',
@@ -187,8 +214,7 @@ const prepareFields = (roles, replicaset) => {
       type: shallRenderDraggableList ? 'draggableList' : 'optionGroup',
       options: shallRenderDraggableList ? renderDraggableListOptions : renderSelectOptions,
       customProps: draggableListCustomProps,
-    },
-
+    }
   ];
 };
 
@@ -208,7 +234,27 @@ const prepareDataSource = replicaset => {
   };
 };
 
-class ReplicasetEditModal extends React.PureComponent {
+type ReplicasetEditModalProps = {
+  isLoading?: boolean,
+  isSaving?: boolean,
+  replicasetNotFound?: boolean,
+  shouldCreateReplicaset?: boolean,
+  knownRoles: string[],
+  vshard_groups: ?VshardGroup[],
+  replicaset: Replicaset,
+  submitStatusMessage?: string,
+  onSubmit: () => void,
+  onRequestClose: () => void
+};
+
+class ReplicasetEditModal extends React.PureComponent<ReplicasetEditModalProps> {
+  static defaultProps = {
+    isLoading: false,
+    isSaving: false,
+    replicasetNotFound: false,
+    shouldCreateReplicaset: false,
+  };
+
   render() {
     const { isLoading, isSaving, replicasetNotFound, shouldCreateReplicaset, submitStatusMessage, onSubmit,
       onRequestClose } = this.props;
@@ -235,16 +281,21 @@ class ReplicasetEditModal extends React.PureComponent {
     );
   }
 
-  isFormReadyToSubmit = formData => {
-    if ( ! isStorageWeightInputDisabled(formData)) {
-      return isStorageWeightInputValueValid(formData);
-    }
-    return true;
+  isVShardGroupsImplemented = () => {
+    const { vshard_groups } = this.props;
+    return vshard_groups && (vshard_groups.length > 1 || vshard_groups[0].name !== DEFAULT_VSHARD_GROUP_NAME);
+  }
+
+
+  isFormReadyToSubmit = (formData: Replicaset): boolean => {
+    const isWeightValid = isStorageWeightInputDisabled(formData) || isStorageWeightInputValueValid(formData);
+    const isGroupValid = isVShardGroupInputDisabled(formData, this.props.replicaset) || !!formData.vshard_group;
+    return isWeightValid && (isGroupValid || !this.isVShardGroupsImplemented());
   };
 
   getFields = () => {
-    const { knownRoles, replicaset } = this.props;
-    return this.prepareFields(knownRoles, replicaset);
+    const { knownRoles, replicaset, vshard_groups } = this.props;
+    return this.prepareFields(knownRoles, replicaset, this.isVShardGroupsImplemented() ? vshard_groups : null);
   };
 
   getDataSource = () => {
@@ -256,30 +307,5 @@ class ReplicasetEditModal extends React.PureComponent {
 
   prepareDataSource = defaultMemoize(prepareDataSource);
 }
-
-ReplicasetEditModal.propTypes = {
-  isLoading: PropTypes.bool,
-  isSaving: PropTypes.bool,
-  replicasetNotFound: PropTypes.bool,
-  shouldCreateReplicaset: PropTypes.bool,
-  knownRoles: PropTypes.arrayOf(PropTypes.string).isRequired,
-  replicaset: PropTypes.shape({
-    uuid: PropTypes.string,
-    roles: PropTypes.arrayOf(PropTypes.shape({
-      name: PropTypes.string.isRequired,
-      dependencies: PropTypes.arrayOf(PropTypes.string)
-    })).isRequired,
-  }),
-  submitStatusMessage: PropTypes.string,
-  onSubmit: PropTypes.func.isRequired,
-  onRequestClose: PropTypes.func.isRequired,
-};
-
-ReplicasetEditModal.defaultProps = {
-  isLoading: false,
-  isSaving: false,
-  replicasetNotFound: false,
-  shouldCreateReplicaset: false,
-};
 
 export default ReplicasetEditModal;

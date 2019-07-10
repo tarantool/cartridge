@@ -148,7 +148,7 @@ function* createReplicasetRequestSaga() {
       };
     }
     catch (error) {
-      yield put({ type: CLUSTER_PAGE_CREATE_REPLICASET_REQUEST_ERROR, error, requestPayload });
+      yield put({ type: CLUSTER_PAGE_CREATE_REPLICASET_REQUEST_ERROR, error, requestPayload, __errorMessage: true });
       indicator.error();
       return;
     }

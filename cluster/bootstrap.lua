@@ -164,36 +164,27 @@ local function bootstrap_from_scratch(boot_opts, box_opts, roles, labels, vshard
             replicasets = {
                 [boot_opts.replicaset_uuid] = {
                     roles = roles,
-                    master = boot_opts.instance_uuid,
-                    weight = roles['vshard-storage'] and 1 or nil,
+                    master = {boot_opts.instance_uuid},
+                    weight = 0,
                 },
             },
         },
     }
 
-    local bucket_count = boot_opts.bucket_count or 30000
-    if boot_opts.vshard_groups == nil then
-        conf.vshard = {
-            bucket_count = bucket_count,
-            bootstrapped = false,
-        }
-    else
-        conf.vshard_groups = {}
-        for name, params in pairs(boot_opts.vshard_groups) do
-            conf.vshard_groups[name] = {
-                bucket_count = params.bucket_count or bucket_count,
-                bootstrapped = false,
-            }
-        end
-
-        local my_replicaset = conf.topology.replicasets[boot_opts.replicaset_uuid]
-        my_replicaset.vshard_group = vshard_group or next(conf.vshard_groups)
+    local my_replicaset = conf.topology.replicasets[boot_opts.replicaset_uuid]
+    if roles['vshard-storage'] then
+        my_replicaset.weight = 1
+        my_replicaset.vshard_group = vshard_group or 'default'
     end
 
-    -- conf, err = model_ddl.config_save_ddl({}, conf)
-    -- if conf == nil then
-    --     return nil, err
-    -- end
+    local vshard_groups = vshard_utils.get_known_groups()
+    if next(vshard_groups) == 'default'
+    and next(vshard_groups, 'default') == nil
+    then
+        conf.vshard = vshard_groups['default']
+    else
+        conf.vshard_groups = vshard_groups
+    end
 
     local _, err = topology.validate(conf.topology, {})
     if err then

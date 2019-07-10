@@ -14,7 +14,8 @@ local function apply_config(conf)
     checks('table')
 
     local my_replicaset = conf.topology.replicasets[box.info.cluster.uuid]
-    local vshard_cfg = vshard_utils.get_vshard_config(my_replicaset.vshard_group, conf)
+    local group_name = my_replicaset.vshard_group or 'default'
+    local vshard_cfg = vshard_utils.get_vshard_config(group_name, conf)
     vshard_cfg.listen = box.cfg.listen
 
     if utils.deepcmp(vshard_cfg, vars.vshard_cfg) then

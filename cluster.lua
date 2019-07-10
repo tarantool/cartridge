@@ -29,6 +29,7 @@ local webui = require('cluster.webui')
 local topology = require('cluster.topology')
 local bootstrap = require('cluster.bootstrap')
 local confapplier = require('cluster.confapplier')
+local vshard_utils = require('cluster.vshard-utils')
 local cluster_cookie = require('cluster.cluster-cookie')
 local service_registry = require('cluster.service-registry')
 
@@ -287,6 +288,8 @@ local function cfg(opts, box_opts)
             end
         end
     end
+
+    vshard_utils.set_known_groups(vshard_groups, opts.bucket_count)
 
     vars.box_opts = box_opts
     vars.boot_opts = {
