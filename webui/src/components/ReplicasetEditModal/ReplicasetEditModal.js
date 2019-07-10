@@ -41,8 +41,8 @@ const styles = {
  */
 const isVShardGroupInputDisabled = (
   { roles }: Replicaset,
-  { vshard_group }: Replicaset = {}
-): boolean => !(roles || []).includes(VSHARD_STORAGE_ROLE_NAME) || !!vshard_group;
+  replicaset: ?Replicaset
+): boolean => !(roles || []).includes(VSHARD_STORAGE_ROLE_NAME) || !!(replicaset && replicaset.vshard_group);
 
 const isStorageWeightInputDisabled = ({ roles }: Replicaset): boolean => (
   !(roles || []).includes(VSHARD_STORAGE_ROLE_NAME)
@@ -73,7 +73,7 @@ const renderDraggableListOptions = record => record.servers.map(server => ({
 const getRolesDependencies = (activeRoles, rolesOptions) => {
   const result = [];
   rolesOptions.forEach(({ key, dependencies }) => {
-    if (activeRoles.includes(key)) {
+    if (activeRoles.includes(key) && dependencies) {
       result.push(...dependencies);
     }
   });
@@ -149,7 +149,7 @@ const prepareFields = (roles: Role[], replicaset: ?Replicaset, vshardGroups: ?Vs
       tableData: R.pipe(
           R.map(R.pick(['alias', 'uri', 'uuid'])),
           R.map((data) => ({ ...data, key: data.uuid })),
-      )(replicaset.servers)
+      )(replicaset && replicaset.servers)
     };
     draggableListCustomProps.edit = draggableListCustomProps.create;
   }
@@ -165,11 +165,10 @@ const prepareFields = (roles: Role[], replicaset: ?Replicaset, vshardGroups: ?Vs
       type: 'checkboxGroup',
       options: ({ roles }) => {
         const dependencies = getRolesDependencies(roles, rolesOptions);
-        return rolesOptions
-          .reduceRight((acc, option) => (acc.push({
-            ...option,
-            disabled: dependencies.includes(option.key)
-          }) && acc), []);
+        return rolesOptions.reduceRight((acc, option) => {
+          acc.push({ ...option, disabled: dependencies.includes(option.key) });
+          return acc;
+        }, []);
       },
       stateModifier: (prevState, { roles, ...formData }) => {
         const prevDependencies = getRolesDependencies(prevState.roles, rolesOptions);
