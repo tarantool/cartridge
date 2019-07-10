@@ -15,21 +15,22 @@ export type Scalars = {
 
 /** Cluster management */
 export type Apicluster = {
-  /** Get list of all registered roles and their dependencies. */
-  known_roles: Array<Role>,
   /** Get current server */
   self?: ?ServerShortInfo,
-  /** Get list of known vshard storage groups. */
-  vshard_known_groups: Array<$ElementType<Scalars, "String">>,
   /** Get current failover state. */
   failover: $ElementType<Scalars, "Boolean">,
-  /** Whether it is reasonble to call bootstrap_vshard mutation */
-  can_bootstrap_vshard: $ElementType<Scalars, "Boolean">,
   /** Virtual buckets count in cluster */
   vshard_bucket_count: $ElementType<Scalars, "Int">,
-  auth_params: UserManagementApi,
   /** List authorized users */
-  users?: ?Array<User>
+  users?: ?Array<User>,
+  /** Get list of all registered roles and their dependencies. */
+  known_roles: Array<Role>,
+  /** Get list of known vshard storage groups. */
+  vshard_known_groups: Array<$ElementType<Scalars, "String">>,
+  vshard_groups: Array<VshardGroup>,
+  auth_params: UserManagementApi,
+  /** Whether it is reasonble to call bootstrap_vshard mutation */
+  can_bootstrap_vshard: $ElementType<Scalars, "Boolean">
 };
 
 /** Cluster management */
@@ -346,6 +347,16 @@ export type UserManagementApi = {
   username?: ?$ElementType<Scalars, "String">,
   implements_check_password: $ElementType<Scalars, "Boolean">
 };
+
+/** Group of replicasets sharding the same dataset */
+export type VshardGroup = {
+  /** Virtual buckets count in the group */
+  bucket_count: $ElementType<Scalars, "Int">,
+  /** Group name */
+  name: $ElementType<Scalars, "String">,
+  /** Whethe the group is ready to operate */
+  bootstrapped: $ElementType<Scalars, "Boolean">
+};
 type $Pick<Origin: Object, Keys: Object> = $ObjMapi<
   Keys,
   <Key>(k: Key) => $ElementType<Origin, Key>
@@ -380,12 +391,7 @@ export type GetClusterQueryVariables = {};
 export type GetClusterQuery = { __typename?: "Query" } & {
   cluster: ?({ __typename?: "Apicluster" } & $Pick<
     Apicluster,
-    {
-      failover: *,
-      can_bootstrap_vshard: *,
-      vshard_bucket_count: *,
-      vshard_known_groups: *
-    }
+    { failover: *, can_bootstrap_vshard: *, vshard_bucket_count: * }
   > & {
       clusterSelf: ?({ __typename?: "ServerShortInfo" } & {
         uri: $ElementType<ServerShortInfo, "uri">,
@@ -393,6 +399,12 @@ export type GetClusterQuery = { __typename?: "Query" } & {
       }),
       knownRoles: Array<
         { __typename?: "Role" } & $Pick<Role, { name: *, dependencies: * }>
+      >,
+      vshard_groups: Array<
+        { __typename?: "VshardGroup" } & $Pick<
+          VshardGroup,
+          { name: *, bucket_count: *, bootstrapped: * }
+        >
       >,
       authParams: { __typename?: "UserManagementAPI" } & $Pick<
         UserManagementApi,

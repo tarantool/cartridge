@@ -38,8 +38,12 @@ export const getClusterQuery = gql`
       }
       can_bootstrap_vshard
       vshard_bucket_count
-      vshard_known_groups
-      authParams: auth_params {
+      vshard_groups {
+        name
+        bucket_count
+        bootstrapped
+      }
+        authParams: auth_params {
         enabled
         implements_add_user
         implements_check_password

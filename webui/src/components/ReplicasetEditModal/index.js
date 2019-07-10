@@ -1,5 +1,5 @@
+// @flow
 import { connect } from 'react-redux';
-
 import ReplicasetEditModal from './ReplicasetEditModal';
 
 const mapStateToProps = state => {
@@ -7,14 +7,14 @@ const mapStateToProps = state => {
     app: {
       clusterSelf: {
         knownRoles,
-        vshard_known_groups
+        vshard_groups
       },
     },
   } = state;
 
   return {
     knownRoles,
-    vshard_known_groups
+    vshard_groups
   };
 };
 

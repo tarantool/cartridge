@@ -5,7 +5,7 @@ import { defaultMemoize } from 'reselect';
 import {css} from 'react-emotion';
 import { DEFAULT_VSHARD_GROUP_NAME, VSHARD_STORAGE_ROLE_NAME } from 'src/constants';
 import CommonItemEditModal from 'src/components/CommonItemEditModal';
-import { type Replicaset } from 'src/generated/graphql-typing';
+import type { Replicaset, Role, VshardGroup } from 'src/generated/graphql-typing';
 import './ReplicasetEditModal.css';
 
 const styles = {
@@ -29,6 +29,9 @@ const styles = {
   `,
   tableStyles: css`
     margin-left: 0px;
+  `,
+  roleDependencies: css`
+    color: gray;
   `
 };
 
@@ -77,22 +80,24 @@ const getRolesDependencies = (activeRoles, rolesOptions) => {
   return R.uniq(result);
 };
 
-const prepareFields = (roles, replicaset, vshardGroups) => {
+const getDependenciesString = (dependencies: string[]) => {
+  return dependencies.length > 3
+    ? ` (+ ${dependencies.slice(0, 2).join(', ')}, ${dependencies.length - 2} more)`
+    : ` (+ ${dependencies.join(', ')})`;
+};
+
+const prepareFields = (roles: Role[], replicaset: ?Replicaset, vshardGroups: ?VshardGroup[]) => {
   const rolesOptions = roles.map(
     ({
       name,
-      dependencies = []
+      dependencies
     }) => {
-      const dependenciesLabel = dependencies.length > 3
-        ? ` (+ ${dependencies.slice(0, 2).join(', ')}, ${dependencies.length - 2} more)`
-        : ` (+ ${dependencies.join(', ')})`;
-
       const label = (
         <React.Fragment>
           {name}
-          {!!dependencies.length && (
-            <span style={{ color: 'gray' }}>
-              {dependenciesLabel}
+          {!!(dependencies && dependencies.length) && (
+            <span className={styles.roleDependencies}>
+              {getDependenciesString(dependencies)}
             </span>
           )}
         </React.Fragment>
@@ -106,10 +111,8 @@ const prepareFields = (roles, replicaset, vshardGroups) => {
     }
   );
 
-  const implementVShardGroups = vshardGroups.length > 1 || vshardGroups[0] !== DEFAULT_VSHARD_GROUP_NAME;
-
-  let vshardGroupsOptions = implementVShardGroups
-    ? vshardGroups.map(group => ({ key: group, label: group, }))
+  let vshardGroupsOptions = vshardGroups
+    ? vshardGroups.map(({ name }) => ({ key: name, label: name, }))
     : [];
 
   const shallRenderDraggableList = replicaset && replicaset.servers.length > 2;
@@ -179,7 +182,7 @@ const prepareFields = (roles, replicaset, vshardGroups) => {
         };
       }
     },
-    ...implementVShardGroups
+    ...vshardGroups
       ? [{
         key: 'vshard_group',
         title: 'Group',
@@ -238,7 +241,7 @@ type ReplicasetEditModalProps = {
   replicasetNotFound?: boolean,
   shouldCreateReplicaset?: boolean,
   knownRoles: string[],
-  vshard_known_groups: string[],
+  vshard_groups: ?VshardGroup[],
   replicaset: Replicaset,
   submitStatusMessage?: string,
   onSubmit: () => void,
@@ -279,15 +282,21 @@ class ReplicasetEditModal extends React.PureComponent<ReplicasetEditModalProps> 
     );
   }
 
+  isVShardGroupsImplemented = () => {
+    const { vshard_groups } = this.props;
+    return vshard_groups && (vshard_groups.length > 1 || vshard_groups[0].name !== DEFAULT_VSHARD_GROUP_NAME);
+  }
+
+
   isFormReadyToSubmit = (formData: Replicaset): boolean => {
     const isWeightValid = isStorageWeightInputDisabled(formData) || isStorageWeightInputValueValid(formData);
     const isGroupValid = isVShardGroupInputDisabled(formData, this.props.replicaset) || !!formData.vshard_group;
-    return isWeightValid && isGroupValid;
+    return isWeightValid && (isGroupValid || !this.isVShardGroupsImplemented());
   };
 
   getFields = () => {
-    const { knownRoles, replicaset, vshard_known_groups } = this.props;
-    return this.prepareFields(knownRoles, replicaset, vshard_known_groups);
+    const { knownRoles, replicaset, vshard_groups } = this.props;
+    return this.prepareFields(knownRoles, replicaset, this.isVShardGroupsImplemented() ? vshard_groups : null);
   };
 
   getDataSource = () => {
