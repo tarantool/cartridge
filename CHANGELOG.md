@@ -6,6 +6,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.9.1] - 2019-07-10
+
+### Added
+
+- Support for vshard groups in WebUI
+
+### Fixed
+
+- Uniform handling vshard group 'default' when
+  multiple groups aren't configured
+- Requesting multiple vshard groups info before the cluster
+  was bootstrapped
+
 ## [0.9.0] - 2019-07-02
 
 ### Added
