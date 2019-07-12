@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.9.2] - 2019-07-12
+
+### Fixed
+
+- Update frontend-core dependency which used to litter
+  `package.loaded` with tons of JS code
+
 ## [0.9.1] - 2019-07-10
 
 ### Added
