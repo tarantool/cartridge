@@ -8,7 +8,7 @@ build:
     - docker
   image: centos:7
   variables:
-    BUNDLE_VERSION: "1.10.3-32-g63e5bb2"
+    BUNDLE_VERSION: "1.10.3-68-g618f48d"
   before_script:
     - echo "Using tarantool-enterprise-bundle ${BUNDLE_VERSION}"
     - curl -O -L https://tarantool:${DOWNLOAD_TOKEN}@download.tarantool.io/enterprise/tarantool-enterprise-bundle-${BUNDLE_VERSION}.tar.gz
