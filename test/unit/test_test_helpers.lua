@@ -35,13 +35,12 @@ local cluster = Cluster:new({
             roles = {'vshard-router', 'vshard-storage'},
             servers = {
                 {instance_uuid = helpers.uuid('b', 'b', 1)},
-                {instance_uuid = helpers.uuid('b', 'b', 2)},
             }
         }
     },
 })
 
-test:plan(4 + 1)
+test:plan(3 + 1)
 
 local ok, err = pcall(function()
     cluster:start()
