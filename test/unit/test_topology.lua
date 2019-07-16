@@ -280,7 +280,7 @@ replicasets:
 ...]])
 
 check_config('replicasets[aaaaaaaa-0000-4000-b000-000000000001]'..
-  '.master "aaaaaaaa-aaaa-4000-b000-000000000002" doesn\'t exist',
+  [[ leader "aaaaaaaa-aaaa-4000-b000-000000000002" doesn't exist]],
 [[---
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000001:
@@ -293,7 +293,7 @@ replicasets:
 ...]])
 
 check_config('replicasets[aaaaaaaa-0000-4000-b000-000000000001]'..
-  '.master "aaaaaaaa-aaaa-4000-b000-000000000002" can not be expelled',
+  [[ leader "aaaaaaaa-aaaa-4000-b000-000000000002" can't be expelled]],
 [[---
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000001:
@@ -307,7 +307,7 @@ replicasets:
 ...]])
 
 check_config('replicasets[bbbbbbbb-0000-4000-b000-000000000001]'..
-  '.master "aaaaaaaa-aaaa-4000-b000-000000000001" belongs to another replicaset',
+  [[ leader "aaaaaaaa-aaaa-4000-b000-000000000001" belongs to another replicaset]],
 [[---
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000001:
