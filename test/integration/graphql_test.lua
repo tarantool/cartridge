@@ -1,3 +1,4 @@
+local fio = require('fio')
 local t = require('luatest')
 local g = t.group('graphql')
 
@@ -5,24 +6,30 @@ local test_helper = require('test.helper')
 
 local helpers = require('cluster.test_helpers')
 
-local cluster = helpers.Cluster:new({
-    datadir = test_helper.datadir,
-    use_vshard = true,
-    server_command = test_helper.server_command,
-    replicasets = {
-        {
-            alias = 'router',
-            uuid = helpers.uuid('a'),
-            roles = {'vshard-router', 'vshard-storage'},
-            servers = {
-                {instance_uuid = helpers.uuid('a', 'a', 1)},
+local cluster
+
+g.before_all = function()
+    cluster = helpers.Cluster:new({
+        datadir = fio.tempdir(),
+        use_vshard = true,
+        server_command = test_helper.server_command,
+        replicasets = {
+            {
+                alias = 'router',
+                uuid = helpers.uuid('a'),
+                roles = {'vshard-router', 'vshard-storage'},
+                servers = {
+                    {instance_uuid = helpers.uuid('a', 'a', 1)},
+                },
             },
         },
-    },
-})
-
-g.before_all = function() cluster:start() end
-g.after_all = function() cluster:stop() end
+    })
+    cluster:start()
+end
+g.after_all = function()
+    cluster:stop()
+    fio.rmtree(cluster.datadir)
+end
 
 g.test_upload_good = function()
     local server = cluster.main_server
