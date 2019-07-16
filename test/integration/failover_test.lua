@@ -1,3 +1,4 @@
+local fio = require('fio')
 local t = require('luatest')
 local g = t.group('failover')
 
@@ -5,34 +6,45 @@ local test_helper = require('test.helper')
 
 local helpers = require('cluster.test_helpers')
 
-local cluster = helpers.Cluster:new({
-    datadir = test_helper.datadir,
-    use_vshard = true,
-    server_command = test_helper.server_command,
-    replicasets = {
-        {
-            alias = 'router',
-            uuid = helpers.uuid('a'),
-            roles = {'vshard-router'},
-            servers = {
-                {instance_uuid = helpers.uuid('a', 'a', 1)},
-            },
-        },
-        {
-            alias = 'storage',
-            uuid = helpers.uuid('b'),
-            roles = {'vshard-router', 'vshard-storage'},
-            servers = {
-                {instance_uuid = helpers.uuid('b', 'b', 1)},
-                {instance_uuid = helpers.uuid('b', 'b', 2)},
-            },
-        },
-    },
-})
+local replicaset_uuid = helpers.uuid('b')
+local storage_1_uuid = helpers.uuid('b', 'b', 1)
+local storage_2_uuid = helpers.uuid('b', 'b', 2)
 
-local replicaset_uuid = cluster.replicasets[2].uuid
-local storage_1_uuid = cluster:server('storage-1').instance_uuid
-local storage_2_uuid = cluster:server('storage-2').instance_uuid
+local cluster
+
+g.before_all = function()
+    cluster = helpers.Cluster:new({
+        datadir = fio.tempdir(),
+        use_vshard = true,
+        server_command = test_helper.server_command,
+        replicasets = {
+            {
+                alias = 'router',
+                uuid = helpers.uuid('a'),
+                roles = {'vshard-router'},
+                servers = {
+                    {instance_uuid = helpers.uuid('a', 'a', 1)},
+                },
+            },
+            {
+                alias = 'storage',
+                uuid = replicaset_uuid,
+                roles = {'vshard-router', 'vshard-storage'},
+                servers = {
+                    {instance_uuid = storage_1_uuid},
+                    {instance_uuid = storage_2_uuid},
+                },
+            },
+        },
+    })
+    cluster:start()
+end
+
+g.after_all = function()
+    cluster:stop()
+    fio.rmtree(cluster.datadir)
+end
+
 
 local function get_master(uuid)
     local response = cluster.main_server:graphql({
@@ -98,9 +110,6 @@ local function check_active_master(expected_uuid)
     ]])
     t.assert_equals(response, expected_uuid)
 end
-
-g.before_all = function() cluster:start() end
-g.after_all = function() cluster:stop() end
 
 g.test_api_master = function()
     set_master(replicaset_uuid, storage_2_uuid)
