@@ -17,7 +17,7 @@ class FailoverButton extends React.Component {
           onClick={() => this.props.dispatch(setVisibleFailoverModal(true))}
           size="large"
         >
-          Failover:{' '}<span>{this.props.failover ? 'enabled' : 'disabled'}</span>
+          {`Failover: ${this.props.failover ? 'enabled' : 'disabled'}`}
         </Button>
         <Modal
           title="Failover control"
