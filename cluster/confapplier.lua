@@ -316,11 +316,12 @@ end
 local function get_deepcopy(section_name)
     checks('?string')
 
-    local ret
-
     if vars.conf == nil then
-        ret = vars.conf
-    elseif section_name == nil then
+        return nil
+    end
+
+    local ret
+    if section_name == nil then
         ret = vars.conf
     else
         ret = vars.conf[section_name]

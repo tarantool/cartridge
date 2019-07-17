@@ -16,6 +16,7 @@ local rpc = require('cluster.rpc')
 local pool = require('cluster.pool')
 local utils = require('cluster.utils')
 local topology = require('cluster.topology')
+local bootstrap = require('cluster.bootstrap')
 local vshard_utils = require('cluster.vshard-utils')
 local confapplier = require('cluster.confapplier')
 
@@ -449,29 +450,24 @@ local function join_server(args)
         args.replicaset_uuid = uuid_lib.str()
     end
 
-    local labels = args.labels
-
     local topology_cfg = confapplier.get_deepcopy('topology')
     if topology_cfg == nil then
         -- Bootstrapping first instance from the web UI
         local myself = membership.myself()
-        if args.uri == myself.uri then
-            return package.loaded['cluster'].bootstrap(
-                confapplier.get_enabled_roles(args.roles),
-                {
-                    instance_uuid = args.instance_uuid,
-                    replicaset_uuid = args.replicaset_uuid,
-                },
-                labels, args.vshard_group
-            )
-        else
+        if args.uri ~= myself.uri then
             return nil, e_topology_edit:new(
-                'Invalid attempt to call join_server().' ..
-                ' This instance isn\'t bootstrapped yet' ..
-                ' and advertises uri=%q while you are joining uri=%q.',
+                "Invalid attempt to call join_server()." ..
+                " This instance isn't bootstrapped yet" ..
+                " and advertises uri=%q while you are joining uri=%q.",
                 myself.uri, args.uri
             )
         end
+
+        topology_cfg = {
+            servers = {},
+            replicasets = {},
+            failover = false,
+        }
     end
 
     local ok, err = probe_server(args.uri)
@@ -489,7 +485,7 @@ local function join_server(args)
     topology_cfg.servers[args.instance_uuid] = {
         uri = args.uri,
         replicaset_uuid = args.replicaset_uuid,
-        labels = labels
+        labels = args.labels
     }
 
     if topology_cfg.replicasets[args.replicaset_uuid] == nil then
@@ -519,9 +515,19 @@ local function join_server(args)
         table.insert(replicaset.master, args.instance_uuid)
     end
 
-    local ok, err = confapplier.patch_clusterwide({topology = topology_cfg})
-    if not ok then
-        return nil, err
+    if type(box.cfg) == 'function' then
+        return bootstrap.from_scratch({topology = topology_cfg})
+    else
+        -- TODO:
+        --  There is a race condition:
+        --  The assertion may fail while "Configuration is being verified".
+        --  See `cluster.bootstrap.from_snapshot()`.
+        assert(confapplier.get_readonly() ~= nil)
+
+        local ok, err = confapplier.patch_clusterwide({topology = topology_cfg})
+        if not ok then
+            return nil, err
+        end
     end
 
     local timeout = args.timeout or 0

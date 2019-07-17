@@ -8,9 +8,9 @@ local fiber = require('fiber')
 local checks = require('checks')
 local errors = require('errors')
 local digest = require('digest')
-local uuid_lib = require('uuid')
 local membership = require('membership')
 
+local vars = require('cluster.vars').new('cluster')
 local auth = require('cluster.auth')
 local utils = require('cluster.utils')
 local topology = require('cluster.topology')
@@ -18,7 +18,30 @@ local confapplier = require('cluster.confapplier')
 local vshard_utils = require('cluster.vshard-utils')
 local cluster_cookie = require('cluster.cluster-cookie')
 
+local e_bootstrap = errors.new_class('Bootstrap failed')
 local e_conflicting_groups = errors.new_class('Conflicting vshard_groups option')
+vars:new('box_opts', nil)
+vars:new('boot_opts', nil)
+
+
+local function set_boot_opts(boot_opts)
+    checks({
+        workdir = 'string',
+        binary_port = 'number',
+        bucket_count = '?number',
+        vshard_groups = '?table',
+    })
+    vars.boot_opts = boot_opts
+end
+
+local function get_boot_opts()
+    return vars.boot_opts
+end
+
+local function set_box_opts(box_opts)
+    checks('?table')
+    vars.box_opts = box_opts
+end
 
 local function init_box(box_opts)
     checks('table')
@@ -70,8 +93,9 @@ local function init_box(box_opts)
     return true
 end
 
-local function validate_vshard_groups(conf, boot_opts)
-    checks('table', 'table')
+local function validate_vshard_groups(conf)
+    checks('table')
+    local boot_opts = vars.boot_opts
 
     if (conf.vshard_groups == nil) and (boot_opts.vshard_groups == nil) then
         if (boot_opts.bucket_count ~= nil)
@@ -125,69 +149,54 @@ local function validate_vshard_groups(conf, boot_opts)
     return true
 end
 
+local function bootstrap_from_scratch(conf)
+    checks('table')
 
-local function bootstrap_from_scratch(boot_opts, box_opts, roles, labels, vshard_group)
-    checks({
-        workdir = 'string',
-        binary_port = 'number',
-        bucket_count = '?number',
-        instance_uuid = '?uuid_str',
-        replicaset_uuid = '?uuid_str',
-        vshard_groups = '?table',
-    }, '?table', '?table', '?table', '?string')
-
-    if roles == nil then
-        roles = {}
-    end
-    roles = confapplier.get_enabled_roles(roles)
-
-    if boot_opts.instance_uuid == nil then
-        boot_opts.instance_uuid = uuid_lib.str()
-    end
-    if boot_opts.replicaset_uuid == nil then
-        boot_opts.replicaset_uuid = uuid_lib.str()
+    if vars.boot_opts == nil then
+        return nil, e_bootstrap:new("Cluster isn't initialized")
     end
 
-    log.info('\nTrying to bootstrap from scratch...')
-
-    local conf = {
-        topology = {
-            auth = auth.get_enabled(),
-            failover = false,
-            servers = {
-                [boot_opts.instance_uuid] = {
-                    uri = membership.myself().uri,
-                    replicaset_uuid = boot_opts.replicaset_uuid,
-                    labels = labels
-                },
-            },
-            replicasets = {
-                [boot_opts.replicaset_uuid] = {
-                    roles = roles,
-                    master = {boot_opts.instance_uuid},
-                    weight = 0,
-                },
-            },
-        },
-    }
-
-    local my_replicaset = conf.topology.replicasets[boot_opts.replicaset_uuid]
-    if roles['vshard-storage'] then
-        my_replicaset.weight = 1
-        my_replicaset.vshard_group = vshard_group or 'default'
+    if type(box.cfg) ~= 'function' then
+        return nil, e_bootstrap:new('Cluster is already bootstrapped')
     end
 
-    local vshard_groups = vshard_utils.get_known_groups()
-    if next(vshard_groups) == 'default'
-    and next(vshard_groups, 'default') == nil
-    then
-        conf.vshard = vshard_groups['default']
-    else
-        conf.vshard_groups = vshard_groups
+    if conf.vshard == nil and conf.vshard_groups == nil then
+        local bucket_count = vars.boot_opts.bucket_count or 30000
+        local vshard_groups = vars.boot_opts.vshard_groups
+
+        if vshard_groups == nil then
+            conf.vshard = {
+                bucket_count = bucket_count,
+                bootstrapped = false,
+            }
+        else
+            conf.vshard_groups = {}
+            for name, params in pairs(vshard_groups) do
+                conf.vshard_groups[name] = {
+                    bucket_count = params.bucket_count or bucket_count,
+                    bootstrapped = false,
+                }
+            end
+        end
+    end
+
+    conf.topology.auth = auth.get_enabled()
+
+    local instance_uuid, replicaset_uuid = topology.get_myself_uuids(conf.topology)
+    if instance_uuid == nil then
+        local err = e_bootstrap:new("Instance isn't in config")
+        membership.set_payload('warning', tostring(err.err or err))
+        return nil, err
     end
 
     local _, err = topology.validate(conf.topology, {})
     if err then
+        membership.set_payload('warning', tostring(err.err or err))
+        return nil, err
+    end
+
+    local ok, err = validate_vshard_groups(conf)
+    if not ok then
         membership.set_payload('warning', tostring(err.err or err))
         return nil, err
     end
@@ -204,14 +213,15 @@ local function bootstrap_from_scratch(boot_opts, box_opts, roles, labels, vshard
         return nil, err
     end
 
-    local box_opts = table.deepcopy(box_opts or {})
-    box_opts.listen = boot_opts.binary_port
-    box_opts.wal_dir = boot_opts.workdir
-    box_opts.memtx_dir = boot_opts.workdir
-    box_opts.vinyl_dir = boot_opts.workdir
-    box_opts.instance_uuid = boot_opts.instance_uuid
-    box_opts.replicaset_uuid = boot_opts.replicaset_uuid
-    box_opts.replication = {}
+    log.info('\nTrying to bootstrap from scratch...')
+    local box_opts = table.deepcopy(vars.box_opts or {})
+    box_opts.listen = vars.boot_opts.binary_port
+    box_opts.wal_dir = vars.boot_opts.workdir
+    box_opts.memtx_dir = vars.boot_opts.workdir
+    box_opts.vinyl_dir = vars.boot_opts.workdir
+    box_opts.instance_uuid = instance_uuid
+    box_opts.replicaset_uuid = replicaset_uuid
+    box_opts.replication = topology.get_replication_config(conf.topology, replicaset_uuid)
 
     init_box(box_opts)
     -- TODO migrations.skip()
@@ -219,14 +229,7 @@ local function bootstrap_from_scratch(boot_opts, box_opts, roles, labels, vshard
     return confapplier.commit_2pc()
 end
 
-local function bootstrap_from_membership(boot_opts, box_opts)
-    checks({
-        workdir = 'string',
-        binary_port = 'number',
-        bucket_count = '?number',
-        vshard_groups = '?table',
-    }, '?table')
-
+local function bootstrap_from_membership()
     local conf = confapplier.fetch_from_membership()
 
     if type(box.cfg) ~= 'function' then
@@ -252,7 +255,7 @@ local function bootstrap_from_membership(boot_opts, box_opts)
         return false
     end
 
-    local ok, err = validate_vshard_groups(conf, boot_opts)
+    local ok, err = validate_vshard_groups(conf)
     if not ok then
         membership.set_payload('warning', tostring(err.err or err))
         return false
@@ -274,11 +277,11 @@ local function bootstrap_from_membership(boot_opts, box_opts)
 
     log.info('Config downloaded from membership')
 
-    local box_opts = table.deepcopy(box_opts or {})
-    box_opts.listen = boot_opts.binary_port
-    box_opts.wal_dir = boot_opts.workdir
-    box_opts.memtx_dir = boot_opts.workdir
-    box_opts.vinyl_dir = boot_opts.workdir
+    local box_opts = table.deepcopy(vars.box_opts or {})
+    box_opts.listen = vars.boot_opts.binary_port
+    box_opts.wal_dir = vars.boot_opts.workdir
+    box_opts.memtx_dir = vars.boot_opts.workdir
+    box_opts.vinyl_dir = vars.boot_opts.workdir
     box_opts.instance_uuid = instance_uuid
     box_opts.replicaset_uuid = replicaset_uuid
     box_opts.replication = topology.get_replication_config(conf.topology, replicaset_uuid)
@@ -289,14 +292,7 @@ local function bootstrap_from_membership(boot_opts, box_opts)
     return confapplier.commit_2pc()
 end
 
-local function bootstrap_from_snapshot(boot_opts, box_opts)
-    checks({
-        workdir = 'string',
-        binary_port = 'number',
-        bucket_count = '?number',
-        vshard_groups = '?table',
-    }, '?table')
-
+local function bootstrap_from_snapshot()
     local instance_uuid
     do
         -- 1) workaround for tarantool bug gh-3098
@@ -305,7 +301,7 @@ local function bootstrap_from_snapshot(boot_opts, box_opts)
         -- to know instance_uuid
         -- 2) workaround to check if instance was expelled
         -- before calling box.cfg
-        local snapshots = fio.glob(fio.pathjoin(boot_opts.workdir, '*.snap'))
+        local snapshots = fio.glob(fio.pathjoin(vars.boot_opts.workdir, '*.snap'))
         local file = io.open(snapshots[1], "r")
         repeat
             instance_uuid = file:read('*l'):match('^Instance: (.+)$')
@@ -321,7 +317,7 @@ local function bootstrap_from_snapshot(boot_opts, box_opts)
         return nil, err
     end
 
-    local ok, err = validate_vshard_groups(conf, boot_opts)
+    local ok, err = validate_vshard_groups(conf)
     if not ok then
         return nil, err
     end
@@ -336,11 +332,11 @@ local function bootstrap_from_snapshot(boot_opts, box_opts)
         return nil, err
     end
 
-    local box_opts = table.deepcopy(box_opts or {})
-    box_opts.listen = boot_opts.binary_port
-    box_opts.wal_dir = boot_opts.workdir
-    box_opts.memtx_dir = boot_opts.workdir
-    box_opts.vinyl_dir = boot_opts.workdir
+    local box_opts = table.deepcopy(vars.box_opts or {})
+    box_opts.listen = vars.boot_opts.binary_port
+    box_opts.wal_dir = vars.boot_opts.workdir
+    box_opts.memtx_dir = vars.boot_opts.workdir
+    box_opts.vinyl_dir = vars.boot_opts.workdir
 
     membership.set_payload('warning', 'Recovering from snapshot')
     init_box(box_opts)
@@ -394,6 +390,10 @@ local function bootstrap_from_snapshot(boot_opts, box_opts)
 end
 
 return {
+    set_box_opts = set_box_opts,
+    set_boot_opts = set_boot_opts,
+    get_boot_opts = get_boot_opts,
+
     from_scratch = bootstrap_from_scratch,
     from_snapshot = bootstrap_from_snapshot,
     from_membership = bootstrap_from_membership,
