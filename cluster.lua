@@ -35,10 +35,6 @@ local service_registry = require('cluster.service-registry')
 
 local e_init = errors.new_class('Cluster initialization failed')
 local e_http = errors.new_class('Http initialization failed')
--- Parameters to be passed at bootstrap
-vars:new('box_opts')
-vars:new('boot_opts')
-vars:new('bootstrapped')
 
 --- Vshard storage group configuration.
 --
@@ -291,24 +287,24 @@ local function cfg(opts, box_opts)
 
     vshard_utils.set_known_groups(vshard_groups, opts.bucket_count)
 
-    vars.box_opts = box_opts
-    vars.boot_opts = {
+    bootstrap.set_box_opts(box_opts)
+    bootstrap.set_boot_opts({
         workdir = opts.workdir,
         binary_port = advertise.service,
         bucket_count = opts.bucket_count,
         vshard_groups = vshard_groups,
-    }
+    })
 
     if #fio.glob(opts.workdir..'/*.snap') > 0 then
         log.info('Snapshot found in ' .. opts.workdir)
-        local ok, err = bootstrap.from_snapshot(vars.boot_opts, vars.box_opts)
+        local ok, err = bootstrap.from_snapshot()
         if not ok then
             log.error('%s', err)
         end
     else
         fiber.create(function()
             while type(box.cfg) == 'function' do
-                if not bootstrap.from_membership(vars.boot_opts, vars.box_opts) then
+                if not bootstrap.from_membership() then
                     fiber.sleep(1.0)
                 end
             end
@@ -321,6 +317,24 @@ local function cfg(opts, box_opts)
     return true
 end
 
+--- Bootstrap a new cluster.
+--
+-- It is bootstrapped with the only (current) instance.
+-- Later, you can join other instances using `cluster.admin`.
+--
+-- @function bootstrap
+-- @tparam {string,...} roles
+--   roles to be enabled on the current instance
+-- @tparam table uuids
+-- @tparam ?string uuids.instance_uuid
+--   bootstrap current instance with specified uuid
+-- @tparam ?string uuids.replicaset_uuid
+--   assign replicaset uuid to the current instance
+-- @tparam {[string]=string,...} labels
+--   labels for the current instance
+-- @tparam string vshard_group
+--   which vshard storage group to join to
+--   (for multi-group configuration only)
 local function bootstrap_from_scratch(roles, uuids, labels, vshard_group)
     checks('?table', {
         instance_uuid = '?uuid_str',
@@ -330,39 +344,23 @@ local function bootstrap_from_scratch(roles, uuids, labels, vshard_group)
         '?string'
     )
 
-    if vars.bootstrapped then
-        return nil, e_init:new('Cluster is already bootstrapped')
-    end
-
-    local _boot_opts = table.copy(vars.boot_opts)
-    _boot_opts.instance_uuid = uuids and uuids.instance_uuid
-    _boot_opts.replicaset_uuid = uuids and uuids.replicaset_uuid
-
-    local function pack(...)
-        return select('#', ...), {...}
-    end
-    local n, ret = pack(
-        bootstrap.from_scratch(_boot_opts, vars.box_opts, roles, labels, vshard_group)
-    )
-
-    vars.bootstrapped = true
-
-    return unpack(ret, 1, n)
+    return admin.join_server({
+        uri = membership.myself().uri,
+        instance_uuid = uuids.instance_uuid,
+        replicaset_uuid = uuids.replicaset_uuid,
+        roles = roles,
+        labels = labels,
+        vshard_group = vshard_group,
+    })
 end
 
 return {
     cfg = cfg,
+    bootstrap = bootstrap_from_scratch,
 
     --- Shorthand for `cluster.admin` module.
     -- @field cluster.admin
     admin = admin,
-
-    --- Bootstrap a new cluster.
-    -- It is bootstrapped with the only (current) instance.
-    -- Later, you can join other instances using
-    -- `cluster.admin`.
-    -- @function bootstrap
-    bootstrap = bootstrap_from_scratch,
 
     --- Check cluster health.
     -- It is healthy if all instances are healthy.
