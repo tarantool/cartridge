@@ -1,7 +1,7 @@
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
 
-import { appDidMount, setMessageDone } from 'src/store/actions/app.actions';
+import { setMessageDone } from 'src/store/actions/app.actions';
 import App from './App';
 
 const mapStateToProps = state => {
@@ -32,9 +32,6 @@ const mapStateToProps = state => {
   };
 };
 
-const dispatchToProps = {
-  appDidMount,
-  setMessageDone,
-};
+const dispatchToProps = { setMessageDone };
 
 export default withRouter(connect(mapStateToProps, dispatchToProps)(App));

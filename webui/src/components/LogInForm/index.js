@@ -10,14 +10,15 @@ const styles = {
   formWrap: css`
     position: absolute;
     left: 0;
-    top: 0;
+    top: 50px;
+    bottom: 0;
+    z-index: 1;
     background: #d9d9d9;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     width: 100%;
-    height: auto;
     min-height: 100%;
     padding-top: 20px;
     box-sizing: border-box;
@@ -97,26 +98,46 @@ class LogInForm extends React.Component {
 }
 
 const mapStateToProps = ({
+  app: {
+    appDataRequestStatus: {
+      loaded
+    },
+    authParams: {
+      implements_check_password
+    }
+  },
   auth: {
+    authorizationEnabled,
+    authorized,
     error
   },
   ui: {
     fetchingAuth
   }
 }) => ({
+  authorizationRequired: implements_check_password && authorizationEnabled && !authorized,
+  loaded,
   error,
   fetchingAuth
 });
 
 const ConnectedLogInForm = connect(mapStateToProps, { logIn })(Form.create()(LogInForm));
 
-export const SplashLogInForm = props => (
-  <div className={styles.formWrap}>
-    <h1>Authorization</h1>
-    <p>Please, input your credentials</p>
-    <ConnectedLogInForm {...props} />
-  </div>
-);
+const SplashLogInForm = ({
+  authorizationRequired,
+  loaded,
+  ...props
+}) => {
+  return loaded && authorizationRequired
+    ? (
+      <div className={styles.formWrap}>
+        <h1>Authorization</h1>
+        <p>Please, input your credentials</p>
+        <LogInForm {...props} />
+      </div>
+    )
+    : null;
+};
 
 export const ModalLogInForm = ({ onCancel, visible, ...props }) => (
   <Modal
@@ -131,4 +152,4 @@ export const ModalLogInForm = ({ onCancel, visible, ...props }) => (
   </Modal>
 )
 
-export default ConnectedLogInForm;
+export default connect(mapStateToProps, { logIn })(Form.create()(SplashLogInForm));
