@@ -75,8 +75,8 @@ class ReplicasetCard extends React.PureComponent {
               size="m"
               state={replicaset.status === 'healthy' ? 'good' : 'bad'}
             />
-            <span className="ReplicasetCard-namePrimary">{shortUuidText}</span>
-            <span className="ReplicasetCard-nameSecondary">{rolesText}</span>
+            <span className="ReplicasetCard-namePrimary">{rolesText}</span>
+            <span className="ReplicasetCard-nameSecondary">{shortUuidText}</span>
           </div>
           <div className="ReplicasetCard-actions">
             <button
