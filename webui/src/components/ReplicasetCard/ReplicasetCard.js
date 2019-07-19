@@ -56,7 +56,6 @@ class ReplicasetCard extends React.PureComponent {
     const {
       clusterSelf,
       replicaset,
-      consoleServer,
       joinServer,
       expelServer,
       createReplicaset,
@@ -96,11 +95,11 @@ class ReplicasetCard extends React.PureComponent {
                 linked
                 clusterSelf={clusterSelf}
                 dataSource={servers}
-                consoleServer={consoleServer}
                 joinServer={joinServer}
                 expelServer={expelServer}
                 createReplicaset={createReplicaset}
                 onServerLabelClick={onServerLabelClick}
+                matchingServersCount={replicaset.matchingServersCount}
               />
             </div>
           )

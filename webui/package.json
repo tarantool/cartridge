@@ -39,12 +39,12 @@
     "extract-text-webpack-plugin": "3.0.2",
     "file-loader": "1.1.5",
     "flow": "0.2.3",
-    "flow-bin": "0.98.1",
+    "flow-bin": "0.102.0",
     "fs-extra": "3.0.1",
     "graphql": "14.3.0",
     "graphql-tag": "2.10.1",
     "html-webpack-plugin": "2.29.0",
-    "jest": "20.0.4",
+    "jest": "24.8.0",
     "js-beautify": "^1.7.5",
     "less": "^3.9.0",
     "less-loader": "^4.1.0",
@@ -62,7 +62,6 @@
     "react": "^16.4.0",
     "react-apollo": "^2.5.5",
     "react-codemirror2": "^5.0.4",
-    "react-console-component": "0.6.1",
     "react-dev-utils": "^5.0.1",
     "react-dom": "^16.4.0",
     "react-drag-listview": "^0.1.4",
@@ -89,7 +88,8 @@
   "scripts": {
     "start": "node scripts/start.js",
     "build": "node scripts/build.js",
-    "test": "node scripts/test.js --env=jsdom",
+    "test": "node scripts/test.js test --env=jsdom --watch",
+    "test_once": "node ./scripts/test.js test --env=jsdom",
     "graphqlgen": "graphql-codegen --config codegen.yml --include-introspection-types",
     "flow": "flow"
   },
@@ -115,7 +115,7 @@
       "[/\\\\]node_modules[/\\\\].+\\.(js|jsx|mjs)$"
     ],
     "moduleNameMapper": {
-      "^react-native$": "react-native-web"
+      "^src/(.*)$": "<rootDir>/src/$1"
     },
     "moduleFileExtensions": [
       "web.js",

@@ -1,3 +1,4 @@
+// @flow
 import { isGraphqlErrorResponse, isGraphqlAccessDeniedError } from 'src/api/graphql';
 import { isRestErrorResponse, isRestAccessDeniedError } from 'src/api/rest';
 import {
@@ -5,34 +6,61 @@ import {
   APP_DATA_REQUEST,
   APP_DATA_REQUEST_SUCCESS,
   APP_DATA_REQUEST_ERROR,
-  APP_SERVER_CONSOLE_EVAL_STRING_REQUEST,
-  APP_SERVER_CONSOLE_EVAL_STRING_REQUEST_SUCCESS,
-  APP_SERVER_CONSOLE_EVAL_STRING_REQUEST_ERROR,
-  APP_SAVE_CONSOLE_STATE,
   AUTH_ACCESS_DENIED,
   CLUSTER_PAGE_CREATE_REPLICASET_REQUEST_SUCCESS,
   CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_SUCCESS,
-  CLUSTER_PAGE_STATE_RESET,
   APP_CREATE_MESSAGE,
   APP_SET_MESSAGE_DONE,
   CLUSTER_SELF_UPDATE,
 } from 'src/store/actionTypes';
-import { baseReducer, getInitialRequestStatus, getReducer, getRequestReducer } from 'src/store/commonRequest';
+import {
+  baseReducer,
+  getInitialRequestStatus,
+  getReducer,
+  getRequestReducer,
+} from 'src/store/commonRequest';
+import type { RequestStatusType } from 'src/store/commonTypes';
+import type { Role } from 'src/generated/graphql-typing';
 
-const beautifyJSON = json => JSON.stringify(json, null, '  ');
+type AppMessage = {
+  content: {
+    type: string,
+    text: string
+  },
+  done: boolean
+};
 
-const isEvalError = message => /^---\nerror/.test(message);
+export type AppState = {
+  appMount: boolean,
+  appDataRequestStatus: RequestStatusType,
+  appDataRequestErrorMessage: null,
+  clusterSelf: {
+    uri: ?string,
+    uuid: ?string,
+    configured: ?boolean,
+    knownRoles: ?Role[],
+    can_bootstrap_vshard: ?boolean,
+    vshard_bucket_count: ?number
+  },
+  failover: null,
+  messages: AppMessage[],
+  authParams: {
+    enabled: ?false,
+    implements_add_user: ?false,
+    implements_check_password: ?false,
+    implements_list_users: ?false,
+    implements_edit_user: ?false,
+    implements_remove_user: ?false,
+    username: ?null
+  },
+};
 
-const initialState = {
+const initialState: AppState = {
   appMount: false,
   appDataRequestStatus: getInitialRequestStatus(),
   appDataRequestErrorMessage: null,
-  clusterSelf: null,
+  clusterSelf: {},
   failover: null,
-  evalStringRequestStatus: getInitialRequestStatus(),
-  evalStringResponse: null,
-  evalResult: null,
-  savedConsoleState: {},
   messages: [],
   authParams: {},
 };
@@ -46,18 +74,10 @@ const appDataRequestReducer = getRequestReducer(
   'appDataRequestStatus',
 );
 
-const evalStringRequestReducer = getRequestReducer(
-  APP_SERVER_CONSOLE_EVAL_STRING_REQUEST,
-  APP_SERVER_CONSOLE_EVAL_STRING_REQUEST_SUCCESS,
-  APP_SERVER_CONSOLE_EVAL_STRING_REQUEST_ERROR,
-  'evalStringRequestStatus',
-);
-
 export const reducer = baseReducer(
   initialState,
   appMountReducer,
   appDataRequestReducer,
-  evalStringRequestReducer,
 )(
   (state, action) => {
     switch (action.type) {
@@ -93,43 +113,6 @@ export const reducer = baseReducer(
           appDataRequestErrorMessage: {},
         };
       }
-
-      case APP_SERVER_CONSOLE_EVAL_STRING_REQUEST_SUCCESS: {
-        const output = action.payload.evalStringResponse;
-        return {
-          ...state,
-          evalResult: {
-            output,
-            type: isEvalError(output) ? 'error' : 'success',
-          },
-        };
-      }
-
-      case APP_SERVER_CONSOLE_EVAL_STRING_REQUEST_ERROR:
-        return {
-          ...state,
-          evalResult: {
-            output: beautifyJSON(action.error),
-            type: 'error',
-          },
-        };
-
-      case CLUSTER_PAGE_STATE_RESET:
-      case APP_SAVE_CONSOLE_STATE:
-        if (action.payload.consoleState) {
-          return {
-            ...state,
-            savedConsoleState: {
-              ...state.savedConsoleState,
-              [action.payload.consoleKey]: {
-                state: action.payload.consoleState,
-              },
-            },
-          };
-        }
-        else {
-          return state;
-        }
 
       case CLUSTER_SELF_UPDATE:
       case CLUSTER_PAGE_CREATE_REPLICASET_REQUEST_SUCCESS:

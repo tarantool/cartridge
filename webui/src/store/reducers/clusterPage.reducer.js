@@ -1,4 +1,6 @@
+// @flow
 import {
+  CLUSTER_PAGE_FILTER_SET,
   CLUSTER_PAGE_DID_MOUNT,
   CLUSTER_PAGE_DATA_REQUEST,
   CLUSTER_PAGE_DATA_REQUEST_SUCCESS,
@@ -39,10 +41,54 @@ import {
   CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_ERROR,
   CLUSTER_PAGE_STATE_RESET,
 } from 'src/store/actionTypes';
-import { baseReducer, getInitialRequestStatus, getPageMountReducer, getReducer, getRequestReducer }
-  from 'src/store/commonRequest';
+import {
+  baseReducer,
+  getInitialRequestStatus,
+  getPageMountReducer,
+  getReducer,
+  getRequestReducer
+} from 'src/store/commonRequest';
+import type { RequestStatusType } from 'src/store/commonTypes';
+import type { Replicaset, Server, ServerStat } from 'src/generated/graphql-typing';
 
-export const initialState = {
+export type ServerStatWithUUID = {
+  uuid: string,
+  uri: string,
+  statistics: ServerStat
+};
+
+export type ClusterPageState = {
+  replicasetFilter: string,
+  pageMount: boolean,
+  pageDataRequestStatus: RequestStatusType,
+  refreshListsRequestStatus: RequestStatusType,
+  selectedServerUri: ?string,
+  selectedReplicasetUuid: ?string,
+  serverList: ?Server[],
+  replicasetList: ?Replicaset[],
+  serverStat: ?ServerStatWithUUID[],
+  bootstrapVshardRequestStatus: RequestStatusType,
+  // bootstrapVshardResponse: null,
+  probeServerRequestStatus: RequestStatusType,
+  // probeServerResponse: null,
+  joinServerRequestStatus: RequestStatusType,
+  // joinServerResponse: null,
+  createReplicasetRequestStatus: RequestStatusType,
+  // createReplicasetResponse: null,
+  expelServerRequestStatus: RequestStatusType,
+  // expelSerrverResponse: null,
+  editReplicasetRequestStatus: RequestStatusType,
+  // editReplicasetResponse: null,
+  uploadConfigRequestStatus: RequestStatusType,
+  // uploadConfigResponse: null,
+  applyTestConfigRequestStatus: RequestStatusType,
+  // applyTestConfigResponse: null,
+  changeFailoverRequestStatus: RequestStatusType,
+  // changeFailoverResponse: null,
+};
+
+export const initialState: ClusterPageState = {
+  replicasetFilter: '',
   pageMount: false,
   pageDataRequestStatus: getInitialRequestStatus(),
   refreshListsRequestStatus: getInitialRequestStatus(),
@@ -168,8 +214,14 @@ export const reducer = baseReducer(
   changeFailoverRequestReducer,
   pageStateResetReducer,
 )(
-  (state, action) => {
+  (state: ClusterPageState, action): ClusterPageState => {
     switch (action.type) {
+      case CLUSTER_PAGE_FILTER_SET:
+        return {
+          ...state,
+          replicasetFilter: action.payload
+        };
+
       case CLUSTER_PAGE_DID_MOUNT:
         return {
           ...state,

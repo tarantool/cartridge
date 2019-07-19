@@ -1,5 +1,5 @@
-import PropTypes from 'prop-types';
-import React from 'react';
+// @flow
+import * as React from 'react';
 import { defaultMemoize } from 'reselect';
 
 import CommonItemList from 'src/components/CommonItemList';
@@ -10,6 +10,7 @@ import './ServerList.css';
 import { css, cx } from 'react-emotion';
 import ServerListCellActions from './child/ServerListCellActions';
 import ProgressBar from 'src/components/ProgressBar';
+import type { Server } from 'src/generated/graphql-typing';
 
 const styles = {
   statusBlock: css`
@@ -18,6 +19,9 @@ const styles = {
   indicatorBlock: css`
     margin-right: 18px;  
   `,
+  mismatchedRow: css`
+    opacity: 0.3;
+  `
 };
 
 const byteUnits = ['kB', 'MB', 'GB', 'TB', 'PB'];
@@ -37,11 +41,11 @@ const getReadableBytes = size => {
 const prepareColumnProps = ({
   linked,
   clusterSelf,
-  consoleServer,
   joinServer,
   createReplicaset,
   expelServer,
-  onServerLabelClick
+  onServerLabelClick,
+  filterMatching
 }) => {
   const columns = [
     {
@@ -130,11 +134,9 @@ const prepareColumnProps = ({
       render: record => (
         <ServerListCellActions
           record={record}
-          consoleButton={false && record.status !== 'unconfigured'}
           joinButton={clusterSelf.configured && !record.uuid}
           createButton={clusterSelf.configured ? !record.uuid : record.uri === clusterSelf.uri}
           instanceMenu={!!record.uuid}
-          onConsole={consoleServer}
           onJoin={joinServer}
           onCreate={createReplicaset}
           onExpel={expelServer}
@@ -165,9 +167,26 @@ const prepareDataSource = (dataSource, clusterSelf) => {
   });
 }
 
-class ServerList extends React.PureComponent {
+type ServerListProps = {
+  linked: ?boolean,
+  clusterSelf: ?{
+    uri: ?string,
+  },
+  dataSource: Server[],
+  matchingServersCount: ?number,
+  joinServer: () => void,
+  expelServer: () => void,
+  createReplicaset: () => void,
+  onServerLabelClick: ?() => void
+};
+
+class ServerList extends React.PureComponent<ServerListProps> {
+  static defaultProps = {
+    linked: null,
+  };
+
   render() {
-    const { linked } = this.props;
+    const { linked, matchingServersCount } = this.props;
     const skin = linked ? 'light' : 'enterprise';
     const shouldRenderHead = !linked;
     const columns = this.getColumnProps();
@@ -181,6 +200,10 @@ class ServerList extends React.PureComponent {
           shouldRenderHead={shouldRenderHead}
           columns={columns}
           dataSource={dataSource}
+          rowClassName={({ filterMatching }) =>
+            (matchingServersCount && !filterMatching && typeof filterMatching === 'boolean')
+              ? styles.mismatchedRow : ''
+          }
         />
       </div>
     );
@@ -197,35 +220,5 @@ class ServerList extends React.PureComponent {
 
   prepareDataSource = defaultMemoize(prepareDataSource);
 }
-
-ServerList.propTypes = {
-  linked: PropTypes.bool,
-  clusterSelf: PropTypes.shape({
-    uri: PropTypes.string,
-  }),
-  dataSource: PropTypes.arrayOf(PropTypes.shape({
-    uuid: PropTypes.string,
-    alias: PropTypes.string,
-    uri: PropTypes.string.isRequired,
-    status: PropTypes.string,
-    message: PropTypes.string,
-    replicaset: PropTypes.shape({
-      uuid: PropTypes.string.isRequired,
-    }),
-    statistics: PropTypes.shape({
-      quotaSize: PropTypes.number.isRequired,
-      arenaUsed: PropTypes.number.isRequired,
-    }),
-  })).isRequired,
-  consoleServer: PropTypes.func.isRequired,
-  joinServer: PropTypes.func.isRequired,
-  expelServer: PropTypes.func.isRequired,
-  createReplicaset: PropTypes.func.isRequired,
-  onServerLabelClick: PropTypes.func
-};
-
-ServerList.defaultProps = {
-  linked: null,
-};
 
 export default ServerList;

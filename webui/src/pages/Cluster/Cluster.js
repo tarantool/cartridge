@@ -1,12 +1,9 @@
-import React from 'react';
-import { defaultMemoize } from 'reselect';
-import * as R from 'ramda';
+// @flow
+import * as React from 'react';
 import { Icon } from 'antd'
 import { css } from 'react-emotion';
-import { getServerName } from 'src/app/misc';
-import AppBottomConsole from 'src/components/AppBottomConsole';
+import type { RouterHistory, Location } from 'react-router';
 import Input from 'src/components/Input';
-import ServerConsole from 'src/components/ServerConsole';
 import Modal from 'src/components/Modal';
 import PageDataErrorMessage from 'src/components/PageDataErrorMessage';
 import ReplicasetEditModal from 'src/components/ReplicasetEditModal';
@@ -21,6 +18,26 @@ import BootstrapPanel from "src/components/BootstrapPanel";
 import Button from 'src/components/Button';
 import FailoverButton from './child/FailoverButton';
 import AuthToggleButton from 'src/components/AuthToggleButton';
+import type { AppState } from 'src/store/reducers/ui.reducer';
+import type {
+  CreateReplicasetMutationVariables,
+  Label,
+  Replicaset,
+  Server
+} from 'src/generated/graphql-typing.js';
+import type { RequestStatusType } from 'src/store/commonTypes';
+import type {
+  CreateReplicasetActionCreator,
+  EditReplicasetActionCreator,
+  JoinServerActionCreator,
+  PageDidMountActionCreator,
+  ProbeServerActionCreator,
+  ResetPageStateActionCreator,
+  SelectReplicasetActionCreator,
+  SelectServerActionCreator,
+  SetFilterActionCreator,
+  UploadConfigActionCreator
+} from 'src/store/actions/clusterPage.actions';
 
 const styles = {
   clusterFilter: css`
@@ -45,74 +62,72 @@ const styles = {
   ReplicasetList > [Edit]                => renderEditReplicasetModal      => ReplicasetEditModal (edit: set roles)
  */
 
-const prepareReplicasetList = (replicasetList, serverStat, rolesFilterValue, nameFilterValue) => {
-  return replicasetList.map(replicaset => {
-    const servers = replicaset.servers.map(server => {
-      const stat = serverStat.find(stat => stat.uuid === server.uuid);
-      return {
-        ...server,
-        statistics: stat ? stat.statistics : null,
-      };
-    });
-    return {
-      ...replicaset,
-      servers,
-    };
-  });
+export type ClusterProps = {
+  clusterSelf: $PropertyType<AppState, 'clusterSelf'>,
+  failover: boolean,
+  pageMount: boolean,
+  pageDataRequestStatus: RequestStatusType,
+  selectedServerUri: ?string,
+  selectedReplicasetUuid: ?string,
+  serverList: ?Server[],
+  filter: string,
+  replicasetList: Replicaset[],
+  filteredReplicasetList: Replicaset[],
+  showBootstrapModal: boolean,
+  showToggleAuth: boolean,
+  history: RouterHistory,
+  location: Location,
+
+  pageDidMount: PageDidMountActionCreator,
+  selectServer: SelectServerActionCreator,
+  closeServerPopup: () => void,
+  selectReplicaset: SelectReplicasetActionCreator,
+  closeReplicasetPopup: () => void,
+  bootstrapVshard: () => void,
+  probeServer: ProbeServerActionCreator,
+  joinServer: JoinServerActionCreator,
+  createReplicaset: CreateReplicasetActionCreator,
+  expelServer: (s: Server) => void,
+  editReplicaset: EditReplicasetActionCreator,
+  uploadConfig: UploadConfigActionCreator,
+  applyTestConfig: (p: {
+    uri: ?string
+  }) => void,
+  createMessage: () => void,
+  changeFailover: () => void,
+  resetPageState: ResetPageStateActionCreator,
+  setVisibleBootstrapVshardModal: (v: boolean) => void,
+  setFilter: SetFilterActionCreator,
 };
 
-const filterReplicasetList = (replicasetList, filter) => {
-  const tokenizedFilter = filter.toLowerCase().split(' ').map(x => x.trim()).filter(x => !!x);
-
-  const searchableList = replicasetList.map(r => {
-    let searchIndex = [...r.roles];
-    r.servers.forEach(s => {
-      searchIndex.push(s.uri, (s.alias || ''));
-      s.labels.forEach(({ name, value }) => searchIndex.push(`${name}:`, value));
-    });
-
-    const searchString = searchIndex.join(' ').toLowerCase();
-
-    return {
-      ...r,
-      searchString
-    }
-  });
-
-  const filterByTokens = R.filter(
-    R.allPass(
-      tokenizedFilter.map(token => r => r.searchString.includes(token) || r.uuid.startsWith(token))
-    )
-  );
-
-  return filterByTokens(searchableList);
+export type ClusterState = {
+  bootstrapVshardConfirmVisible: boolean,
+  probeServerModalVisible: boolean,
+  joinServerModalVisible: boolean,
+  createReplicasetModalVisible: boolean,
+  createReplicasetModalDataSource: ?Server,
+  expelServerConfirmVisible: boolean,
+  expelServerConfirmDataSource: ?Server,
 };
 
-class Cluster extends React.Component {
-  constructor(props) {
+type ReplicasetFormData = {
+  ...$Exact<Replicaset>,
+  weight: string
+};
+
+class Cluster extends React.Component<ClusterProps, ClusterState> {
+  constructor(props: ClusterProps) {
     super(props);
 
     this.state = {
-      serverConsoleVisible: false,
-      serverConsoleUuid: null,
       bootstrapVshardConfirmVisible: false,
-      bootstrapVshardConfirmDataSource: null,
       probeServerModalVisible: false,
       joinServerModalVisible: false,
-      joinServerModalDataSource: null,
       createReplicasetModalVisible: false,
       createReplicasetModalDataSource: null,
       expelServerConfirmVisible: false,
       expelServerConfirmDataSource: null,
-      rolesFilterValue: '',
-      nameFilterValue: '',
-      filter: '',
     };
-
-    this.consoleReserveElement = null;
-
-    this.prepareReplicasetList = defaultMemoize(prepareReplicasetList);
-    this.filterReplicasetList = defaultMemoize(filterReplicasetList);
   }
 
   componentDidMount() {
@@ -124,11 +139,7 @@ class Cluster extends React.Component {
     const selectedServerUri = getSearchParams(location.search).s || null;
     const selectedReplicasetUuid = getSearchParams(location.search).r || null;
 
-    pageDidMount({
-      selectedServerUri,
-      selectedReplicasetUuid,
-      checkTestConfigApplyingAbility: true,
-    });
+    pageDidMount(selectedServerUri, selectedReplicasetUuid);
   }
 
   componentDidUpdate() {
@@ -137,13 +148,7 @@ class Cluster extends React.Component {
   }
 
   componentWillUnmount() {
-    const { resetPageState } = this.props;
-
-    const connectedServer = this.getConnectedServer();
-    resetPageState({
-      consoleKey: connectedServer ? connectedServer.uuid : null,
-      consoleState: connectedServer ? this.console.getConsoleState() : null,
-    });
+    this.props.resetPageState();
   }
 
   render() {
@@ -159,6 +164,8 @@ class Cluster extends React.Component {
   renderContent = () => {
     const {
       clusterSelf,
+      filter,
+      filteredReplicasetList,
       selectedServerUri,
       replicasetList,
       selectedReplicasetUuid,
@@ -166,17 +173,14 @@ class Cluster extends React.Component {
     } = this.props;
 
     const {
-      serverConsoleVisible,
       probeServerModalVisible,
       createReplicasetModalVisible,
       expelServerConfirmVisible,
-      filter
     } = this.state;
 
     const joinServerModalVisible = !!selectedServerUri;
     const editReplicasetModalVisible = !!selectedReplicasetUuid;
     const unlinkedServers = this.getUnlinkedServers();
-    const filteredReplicasetList = this.filterReplicasetList(this.getReplicasetList(), filter);
     const isBootstrap = (clusterSelf && clusterSelf.uuid) || false;
 
     return (
@@ -199,12 +203,9 @@ class Cluster extends React.Component {
         {editReplicasetModalVisible
           ? this.renderEditReplicasetModal()
           : null}
-        {serverConsoleVisible
-          ? this.renderServerConsole()
-          : null}
         <div className="pages-Cluster app-content">
           <div className="page-inner">
-            {unlinkedServers.length
+            {unlinkedServers && unlinkedServers.length
               ? (
                 <div className="tr-card-margin">
                   <PageSectionHead
@@ -216,7 +217,6 @@ class Cluster extends React.Component {
                       linked={false}
                       clusterSelf={clusterSelf}
                       dataSource={unlinkedServers}
-                      consoleServer={this.handleServerConsoleRequest}
                       joinServer={this.handleJoinServerRequest}
                       expelServer={this.handleExpelServerRequest}
                       createReplicaset={this.handleCreateReplicasetRequest} />
@@ -235,7 +235,7 @@ class Cluster extends React.Component {
                     thin={true}
                     title="Replica sets"
                     buttons={
-                      unlinkedServers.length
+                      unlinkedServers && unlinkedServers.length
                         ? null
                         : this.renderServerButtons()
                     }
@@ -248,7 +248,7 @@ class Cluster extends React.Component {
                           prefix={<Icon type="search" />}
                           type={"text"}
                           placeholder={'Filter by uri, uuid, role, alias or labels'}
-                          value={this.state.filter}
+                          value={filter}
                           onChange={this.handleFilterChange}
                         />
                       </div>
@@ -260,7 +260,6 @@ class Cluster extends React.Component {
                       <ReplicasetList
                         clusterSelf={clusterSelf}
                         dataSource={filteredReplicasetList}
-                        consoleServer={this.handleServerConsoleRequest}
                         editReplicaset={this.handleEditReplicasetRequest}
                         joinServer={this.handleJoinServerRequest}
                         expelServer={this.handleExpelServerRequest}
@@ -282,36 +281,9 @@ class Cluster extends React.Component {
               uploadConfig={this.uploadConfig}
               canTestConfigBeApplied={false}
               applyTestConfig={this.applyTestConfig} />}
-            <div ref={this.setConsoleReserve} />
           </div>
         </div>
       </React.Fragment>
-    );
-  };
-
-  renderServerConsole = () => {
-    const { clusterSelf, evalResult, serverList } = this.props;
-
-    const connectedServerSavedConsoleState = this.getConnectedServerSavedConsoleState();
-    const connectedServer = this.getConnectedServer();
-    const serverName = getServerName(clusterSelf, connectedServer);
-
-    return (
-      <AppBottomConsole
-        title={serverName}
-        onClose={this.handleCloseServerConsoleRequest}
-        onSizeChange={this.updateConsoleReserveHeight}
-      >
-        <ServerConsole
-          ref={this.setConsole}
-          autofocus
-          initialState={connectedServerSavedConsoleState}
-          clusterSelf={clusterSelf}
-          server={connectedServer}
-          serverList={serverList}
-          handler={this.evalString}
-          result={evalResult} />
-      </AppBottomConsole>
     );
   };
 
@@ -352,12 +324,11 @@ class Cluster extends React.Component {
   };
 
   renderJoinServerModal = () => {
-    const { pageMount, pageDataRequestStatus } = this.props;
+    const { pageMount, pageDataRequestStatus, replicasetList } = this.props;
 
     const pageDataLoading = !pageMount || !pageDataRequestStatus.loaded || pageDataRequestStatus.loading;
     const server = this.getSelectedServer();
     const serverNotFound = pageDataLoading ? null : !server;
-    const replicasetList = this.getReplicasetList();
 
     return (
       <ServerEditModal
@@ -389,7 +360,7 @@ class Cluster extends React.Component {
         onOk={this.handleExpelServerSubmitRequest}
         onCancel={this.handleExpelServerConfirmCloseRequest}
       >
-        Do you really want to expel the server {expelServerConfirmDataSource.uri}?
+        Do you really want to expel the server {expelServerConfirmDataSource && expelServerConfirmDataSource.uri}?
       </Modal>
     );
   };
@@ -411,18 +382,6 @@ class Cluster extends React.Component {
     );
   };
 
-  setConsole = ref => {
-    this.console = ref;
-  };
-
-  setConsoleReserve = ref => {
-    this.consoleReserveElement = ref;
-  };
-
-  updateConsoleReserveHeight = size => {
-    this.consoleReserveElement.style.height = `${size.height}px`;
-  };
-
   checkOnServerPopupStateChange = () => {
     const { location, selectedServerUri } = this.props;
 
@@ -431,7 +390,7 @@ class Cluster extends React.Component {
     if (locationSelectedServerUri !== selectedServerUri) {
       if (locationSelectedServerUri) {
         const { selectServer } = this.props;
-        selectServer({ uri: locationSelectedServerUri });
+        selectServer(locationSelectedServerUri);
       } else {
         const { closeServerPopup } = this.props;
         closeServerPopup();
@@ -447,7 +406,7 @@ class Cluster extends React.Component {
     if (locationSelectedReplicasetUuid !== selectedReplicasetUuid) {
       if (locationSelectedReplicasetUuid) {
         const { selectReplicaset } = this.props;
-        selectReplicaset({ uuid: locationSelectedReplicasetUuid });
+        selectReplicaset(locationSelectedReplicasetUuid);
       } else {
         const { closeReplicasetPopup } = this.props;
         closeReplicasetPopup();
@@ -455,38 +414,7 @@ class Cluster extends React.Component {
     }
   };
 
-  evalString = consoleAction => {
-    const { evalString } = this.props;
-    const connectedServer = this.getConnectedServer();
-    evalString({
-      uri: connectedServer.uri,
-      text: consoleAction.command,
-    });
-  };
-
-  handleServerConsoleRequest = server => {
-    const { serverConsoleVisible, serverConsoleUuid } = this.state;
-
-    if (serverConsoleVisible && serverConsoleUuid !== server.uuid) {
-      this.saveConnectedServerConsoleState();
-    }
-
-    this.setState({
-      serverConsoleVisible: true,
-      serverConsoleUuid: server.uuid,
-    });
-  };
-
-  handleServerLabelClick = ({ name, value }) => this.setState({ filter: `${name}: ${value}` });
-
-  handleCloseServerConsoleRequest = () => {
-    this.saveConnectedServerConsoleState();
-    this.setState({
-      serverConsoleVisible: false,
-      serverConsoleUuid: null,
-    });
-    this.updateConsoleReserveHeight({ height: 0 });
-  };
+  handleServerLabelClick = ({ name, value }: Label) => this.props.setFilter(`${name}: ${value}`);
 
   handleBootstrapVshardConfirmCloseRequest = () => {
     this.props.setVisibleBootstrapVshardModal(false);
@@ -505,17 +433,17 @@ class Cluster extends React.Component {
     this.setState({ probeServerModalVisible: false });
   };
 
-  handleProbeServerSubmitRequest = server => {
+  handleProbeServerSubmitRequest = (server: Server) => {
     const { probeServer } = this.props;
     this.setState(
       {
         probeServerModalVisible: false,
       },
-      () => probeServer({ uri: server.uri }),
+      () => probeServer(server.uri),
     );
   };
 
-  handleJoinServerRequest = server => {
+  handleJoinServerRequest = (server: Server) => {
     const { history, location } = this.props;
     history.push({
       search: addSearchParams(location.search, { s: server.uri }),
@@ -529,18 +457,15 @@ class Cluster extends React.Component {
     });
   };
 
-  handleJoinServerSubmitRequest = server => {
+  handleJoinServerSubmitRequest = (data: { uri: string, replicasetUuid: string}) => {
     const { joinServer, history, location } = this.props;
     history.push({
       search: addSearchParams(location.search, { s: null }),
     });
-    joinServer({
-      ...server,
-      uuid: server.replicasetUuid,
-    });
+    joinServer(data.uri, data.replicasetUuid);
   };
 
-  handleCreateReplicasetRequest = server => {
+  handleCreateReplicasetRequest = (server: Server) => {
     this.setState({
       createReplicasetModalVisible: true,
       createReplicasetModalDataSource: server,
@@ -554,7 +479,7 @@ class Cluster extends React.Component {
     });
   };
 
-  handleCreateReplicasetSubmitRequest = replicaset => {
+  handleCreateReplicasetSubmitRequest = (replicaset: CreateReplicasetMutationVariables) => {
     const { createReplicaset } = this.props;
     const { createReplicasetModalDataSource } = this.state;
     this.setState(
@@ -570,7 +495,7 @@ class Cluster extends React.Component {
     );
   };
 
-  handleExpelServerRequest = server => {
+  handleExpelServerRequest = (server: Server) => {
     this.setState({
       expelServerConfirmVisible: true,
       expelServerConfirmDataSource: server,
@@ -592,11 +517,15 @@ class Cluster extends React.Component {
         expelServerConfirmVisible: false,
         expelServerConfirmDataSource: null,
       },
-      () => expelServer(expelServerConfirmDataSource),
+      () => {
+        if (expelServerConfirmDataSource) {
+          expelServer(expelServerConfirmDataSource);
+        }
+      },
     );
   };
 
-  handleEditReplicasetRequest = replicaset => {
+  handleEditReplicasetRequest = (replicaset: Replicaset) => {
     const { history, location } = this.props;
     history.push({
       search: addSearchParams(location.search, { r: replicaset.uuid }),
@@ -610,90 +539,40 @@ class Cluster extends React.Component {
     });
   };
 
-  handleEditReplicasetSubmitRequest = replicaset => {
+  handleEditReplicasetSubmitRequest = (replicaset: ReplicasetFormData) => {
     const { editReplicaset, history, location } = this.props;
     history.push({
       search: addSearchParams(location.search, { r: null }),
     });
 
-    const getMaster = () => {
-      if (replicaset.servers.length > 2) {
-        return replicaset.servers.map(i => i.uuid);
-      }
-      return replicaset.master;
-    };
+    const master = replicaset.servers.length > 2
+      ? replicaset.servers.map(i => i.uuid)
+      : [replicaset.master.uuid];
 
     editReplicaset({
       uuid: replicaset.uuid,
       roles: replicaset.roles,
       vshard_group: replicaset.vshard_group,
-      master: getMaster(),
+      master,
       weight: replicaset.weight == null || replicaset.weight.trim() === '' ? null : Number(replicaset.weight),
     });
   };
 
-  handleRolesFilterChange = event => {
-    const { target } = event;
-    this.setState({
-      rolesFilterValue: target.value,
-    });
-  };
+  handleFilterChange = (e: SyntheticInputEvent<HTMLInputElement>) => this.props.setFilter(e.target.value);
 
-  handleNameFilterChange = event => {
-    const { target } = event;
-    this.setState({
-      nameFilterValue: target.value,
-    });
-  };
-
-  handleResetFilterClick = () => {
-    this.setState({
-      rolesFilterValue: '',
-      nameFilterValue: '',
-    });
-  };
-
-  handleFilterChange = e => {
-    const value = e.target.value;
-    this.setState(() => ({
-      filter: value
-    }))
-  }
-
-  saveConnectedServerConsoleState = () => {
-    const { saveConsoleState } = this.props;
-
-    const connectedServer = this.getConnectedServer();
-    saveConsoleState({
-      consoleKey: connectedServer.uuid,
-      consoleState: this.console.getConsoleState(),
-    });
-  };
-
-  uploadConfig = data => {
+  uploadConfig = (data: { data: FormData }) => {
     const { uploadConfig } = this.props;
     uploadConfig(data);
   };
 
   applyTestConfig = () => {
     const { serverList, applyTestConfig } = this.props;
-    applyTestConfig({ uri: serverList[0].uri });
+    if (serverList) {
+      applyTestConfig({ uri: serverList[0].uri });
+    }
   };
 
-  getConnectedServer = () => {
-    const { serverList } = this.props;
-    const { serverConsoleUuid } = this.state;
-    return serverList ? serverList.find(server => server.uuid === serverConsoleUuid) : null;
-  };
-
-  getConnectedServerSavedConsoleState = () => {
-    const { savedConsoleState } = this.props;
-    const connectedServer = this.getConnectedServer();
-    const savedConsoleInstanceState = savedConsoleState[connectedServer.uuid];
-    return savedConsoleInstanceState && savedConsoleInstanceState.state;
-  };
-
-  getUnlinkedServers = () => {
+  getUnlinkedServers = (): ?Server[] => {
     const { serverList } = this.props;
     return serverList ? serverList.filter(server => !server.replicaset) : null;
   };
@@ -704,18 +583,10 @@ class Cluster extends React.Component {
   };
 
   getSelectedReplicaset = () => {
-    const { selectedReplicasetUuid } = this.props;
-    const replicasetList = this.getReplicasetList();
+    const { replicasetList, selectedReplicasetUuid } = this.props;
+
     return replicasetList
       ? replicasetList.find(replicaset => replicaset.uuid === selectedReplicasetUuid)
-      : null;
-  };
-
-  getReplicasetList = () => {
-    const { replicasetList, serverStat } = this.props;
-
-    return replicasetList
-      ? this.prepareReplicasetList(replicasetList, serverStat)
       : null;
   };
 }

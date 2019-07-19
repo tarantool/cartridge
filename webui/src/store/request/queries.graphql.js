@@ -43,7 +43,7 @@ export const getClusterQuery = gql`
         bucket_count
         bootstrapped
       }
-        authParams: auth_params {
+      authParams: auth_params {
         enabled
         implements_add_user
         implements_check_password
