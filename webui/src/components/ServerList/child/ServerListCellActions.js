@@ -26,17 +26,13 @@ const styles = {
 class ServerListCellActions extends React.Component {
   static propTypes = {
     record: PropTypes.object,
-    consoleButton: PropTypes.bool,
     joinButton: PropTypes.bool,
     createButton: PropTypes.bool,
     instanceMenu: PropTypes.bool,
-    onConsole: PropTypes.func,
     onJoin: PropTypes.func,
     onCreate: PropTypes.func,
     onExpel: PropTypes.func
   };
-
-  handleConsoleClick = () => this.props.onConsole(this.props.record);
 
   handleJoinClick = () => this.props.onJoin(this.props.record);
 
@@ -47,7 +43,6 @@ class ServerListCellActions extends React.Component {
   render() {
     const {
       record,
-      consoleButton,
       joinButton,
       createButton,
       instanceMenu
@@ -57,17 +52,6 @@ class ServerListCellActions extends React.Component {
 
     return (
       <React.Fragment>
-        {consoleButton
-          ? (
-            <button
-              type="button"
-              className={buttonClassName}
-              onClick={this.handleConsoleClick}
-            >
-              Console
-            </button>
-          )
-          : null}
         {joinButton
           ? (
             <button

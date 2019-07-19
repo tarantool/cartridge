@@ -14,7 +14,6 @@ class ReplicasetList extends React.PureComponent {
   render() {
     const {
       clusterSelf,
-      consoleServer,
       editReplicaset,
       joinServer,
       expelServer,
@@ -36,7 +35,6 @@ class ReplicasetList extends React.PureComponent {
                 <ReplicasetCard
                   clusterSelf={clusterSelf}
                   replicaset={replicaset}
-                  consoleServer={consoleServer}
                   editReplicaset={editReplicaset}
                   joinServer={joinServer}
                   expelServer={expelServer}
@@ -62,7 +60,6 @@ ReplicasetList.propTypes = {
   dataSource: PropTypes.arrayOf(PropTypes.shape({
     uuid: PropTypes.string,
   })).isRequired,
-  consoleServer: PropTypes.func.isRequired,
   editReplicaset: PropTypes.func.isRequired,
   joinServer: PropTypes.func.isRequired,
   expelServer: PropTypes.func.isRequired,

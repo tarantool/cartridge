@@ -14,6 +14,7 @@ import {
   probeMutation,
   serverStatQuery
 } from "./queries.graphql";
+import type { EditReplicasetMutationVariables } from 'src/generated/graphql-typing';
 
 const filterServerStat = response => {
   const serverStat
@@ -88,7 +89,7 @@ export function expelServer(params) {
  * @param {string[]} params.roles
  * @param {string[]} params.master
  */
-export function editReplicaset(params) {
+export function editReplicaset(params: EditReplicasetMutationVariables) {
   return graphql.mutate(editReplicasetMutation, params);
 }
 /**
@@ -100,8 +101,6 @@ export function joinSingleServer(params) {
 }
 
 export async function uploadConfig(params) {
-  console.log(params);
-
   return rest.put(process.env.REACT_APP_CONFIG_ENDPOINT, params.data, {
     headers: { 'Content-Type': 'application/yaml;charset=UTF-8' },
   });
