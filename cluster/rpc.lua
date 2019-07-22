@@ -21,7 +21,7 @@ local function call_local(role_name, fn_name, args)
     local role = service_registry.get(role_name)
 
     if role == nil then
-        return rpc_error:new('Role %q unavailable', role_name)
+        return nil, rpc_error:new('Role %q unavailable', role_name)
     end
 
     local fn = role[fn_name]

@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+
+- `cluster.call_rpc` used to return 'Role unavailable' error as a first argument
+  instead of `nil, err`. It can appear when role is specified in clusterwide config,
+  but wasn't initialized properly. There are two reasons for that: race condition,
+  or prior error in either role `init` or `apply_config` methods.
+
 ## [0.9.2] - 2019-07-12
 
 ### Fixed
