@@ -97,7 +97,7 @@ end
 ---  (prevents them from seeing each other during broadcasts).
 ---  Also used for encrypting internal communication
 --- @tparam ?number opts.bucket_count bucket count for vshard cluster. See vshard doc for more details
---- @tparam ?{string=VshardGroupParams,...} opts.vshard_groups
+--- @tparam ?{[string]=VshardGroupParams,...} opts.vshard_groups
 ---  vshard storage groups, table keys used as names
 --- @tparam ?string|number opts.http_port port to open administrative UI and API on
 --- @tparam ?string opts.alias human-readable instance name that will be available in administrative UI

@@ -12,6 +12,7 @@ local membership = require('membership')
 
 local pool = require('cluster.pool')
 local topology = require('cluster.topology')
+local confapplier = require('cluster.confapplier')
 local service_registry = require('cluster.service-registry')
 
 local rpc_error = errors.new_class('Remote call failed')
@@ -67,7 +68,7 @@ local function get_candidates(role_name, opts)
         local replicaset = replicasets[replicaset_uuid]
         local member = membership.get_member(server.uri)
 
-        if replicaset.roles[role_name]
+        if confapplier.get_enabled_roles(replicaset.roles)[role_name]
         and (member ~= nil)
         and (member.status == 'alive')
         and (member.payload.uuid == instance_uuid)

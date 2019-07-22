@@ -138,6 +138,8 @@ end
 
 --- List all registered roles names.
 --
+-- Hidden roles are not listed as well as permanent ones.
+--
 -- @function get_known_roles
 -- @local
 -- @treturn {string,..}
@@ -145,13 +147,18 @@ local function get_known_roles()
     local ret = {}
 
     for _, mod in ipairs(vars.known_roles) do
-        table.insert(ret, mod.role_name)
+        if not (mod.permanent or mod.hidden) then
+            table.insert(ret, mod.role_name)
+        end
     end
 
     return ret
 end
 
---- Enrich enabled roles set with their dependencies.
+--- Roles to be enabled on the server.
+-- This function returns all roles that will be enabled
+-- including their dependencies (bot hidden and not)
+-- and permanent roles.
 --
 -- @function get_enabled_roles
 -- @local
@@ -166,20 +173,36 @@ local function get_enabled_roles(roles)
 
     local ret = {}
 
+    for _, mod in ipairs(vars.known_roles) do
+        if mod.permanent then
+            ret[mod.role_name] = true
+        end
+    end
+
     for k, v in pairs(roles) do
-        local role, enabled
+        local role_name, enabled
         if type(k) == 'number' and type(v) == 'string' then
-            role, enabled = v, true
+            role_name, enabled = v, true
         else
-            role, enabled = k, v
+            role_name, enabled = k, v
         end
 
-        if enabled then
-            ret[role] = true
-            for _, dep in ipairs(vars.roles_dependencies[role] or {}) do
-                ret[dep] = true
+        repeat -- until true
+            if not enabled then
+                break
             end
-        end
+
+            ret[role_name] = true
+
+            local deps = vars.roles_dependencies[role_name]
+            if deps == nil then
+                break
+            end
+
+            for _, dep_name in ipairs(deps) do
+                ret[dep_name] = true
+            end
+        until true
     end
 
     return ret
@@ -194,7 +217,16 @@ end
 -- @treturn {string,..}
 local function get_role_dependencies(role_name)
     checks('?string')
-    return table.copy(vars.roles_dependencies[role_name])
+    local ret = {}
+
+    for _, dep_name in ipairs(vars.roles_dependencies[role_name]) do
+        local mod = vars.known_roles[dep_name]
+        if not (mod.permanent or mod.hidden) then
+            table.insert(ret, mod.role_name)
+        end
+    end
+
+    return ret
 end
 
 
