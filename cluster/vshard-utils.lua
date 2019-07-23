@@ -7,6 +7,7 @@ local errors = require('errors')
 
 local vars = require('cluster.vars').new('cluster.vshard-utils')
 local pool = require('cluster.pool')
+local utils = require('cluster.utils')
 local topology = require('cluster.topology')
 local confapplier = require('cluster.confapplier')
 
@@ -203,7 +204,25 @@ local function set_known_groups(vshard_groups, default_bucket_count)
     vars.default_bucket_count = default_bucket_count
 end
 
+--- Get list of known vshard groups.
+--
+-- When cluster is bootstrapped obtains information from clusterwide config.
+-- Before that - from `cluster.cfg({vshard_groups})` params.
+--
+-- For every known group it returns a table with keys `bootstrapped` and `bucket_count`.
+-- In single-group mode it returns the only group 'default'.
+-- If vshard is completely disabled (vshard-router role wasn't registered bu cluster.cfg)
+-- returns empty table.
+--
+-- @function get_known_groups
+-- @local
+-- @treturn {[string]=table,...}
 local function get_known_groups()
+    local known_roles = confapplier.get_known_roles()
+    if utils.table_find(known_roles, 'vshard-router') == nil then
+        return {}
+    end
+
     local vshard_groups
     if confapplier.get_readonly('vshard_groups') ~= nil then
         vshard_groups = confapplier.get_deepcopy('vshard_groups')
@@ -273,9 +292,6 @@ local function get_vshard_config(group_name, conf)
         vshard_groups = conf.vshard_groups
     end
 
-    require("log").info("vshard cfg %q", group_name)
-    require("log").info(sharding)
-
     return {
         bucket_count = vshard_groups[group_name].bucket_count,
         sharding = sharding,
@@ -297,12 +313,17 @@ local function can_bootstrap_group(group_name, vsgroup)
 end
 
 local function can_bootstrap()
+    local known_roles = confapplier.get_known_roles()
+    if utils.table_find(known_roles, 'vshard-router') == nil then
+        return false
+    end
+
     local vshard_groups
     if confapplier.get_readonly('vshard_groups') ~= nil then
         vshard_groups = confapplier.get_readonly('vshard_groups')
-    else
+    elseif confapplier.get_readonly('vshard') ~= nil then
         vshard_groups = {
-            default = confapplier.get_readonly('vshard'),
+            default = confapplier.get_readonly('vshard')
         }
     end
 
@@ -328,6 +349,5 @@ return {
     get_known_groups = get_known_groups,
 
     get_vshard_config = get_vshard_config,
-
     can_bootstrap = can_bootstrap,
 }
