@@ -282,6 +282,43 @@ local function get_vshard_config(group_name, conf)
     }
 end
 
+local function can_bootstrap_group(group_name, vsgroup)
+    if vsgroup.bootstrapped then
+        return false
+    end
+
+    local conf = confapplier.get_readonly()
+    local vshard_cfg = get_vshard_config(group_name, conf)
+    if next(vshard_cfg.sharding) == nil then
+        return false
+    end
+
+    return true
+end
+
+local function can_bootstrap()
+    local vshard_groups
+    if confapplier.get_readonly('vshard_groups') ~= nil then
+        vshard_groups = confapplier.get_readonly('vshard_groups')
+    else
+        vshard_groups = {
+            default = confapplier.get_readonly('vshard'),
+        }
+    end
+
+    if vshard_groups == nil then
+        return false
+    end
+
+    for name, g in pairs(vshard_groups) do
+        if can_bootstrap_group(name, g) then
+            return true
+        end
+    end
+
+    return false
+end
+
 return {
     validate_config = function(...)
         return e_config:pcall(validate_config, ...)
@@ -291,4 +328,6 @@ return {
     get_known_groups = get_known_groups,
 
     get_vshard_config = get_vshard_config,
+
+    can_bootstrap = can_bootstrap,
 }
