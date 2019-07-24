@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- Cluster can now operate without vshard roles (if you don't need sharding).
+  Deprecation warning about impicit vshard roles isn't issued any more,
+  they aren't registered unless explicitly specified either in `cluster.cfg({roles=...})`
+  or in `dependencies` to one of user-defined roles.
+
 ### Fixed
 
 - `cluster.call_rpc` used to return 'Role unavailable' error as a first argument
