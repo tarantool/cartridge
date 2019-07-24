@@ -7,6 +7,8 @@ import logging
 import requests
 from conftest import Server
 
+init_script = 'srv_withauth.lua'
+
 cluster = [
     Server(
         alias = 'master',
@@ -138,7 +140,7 @@ def test_login(cluster, auth, alias):
         resp = _login(srv, USERNAME, PASSWORD)
         assert resp.status_code == 200
         assert 'lsid' in resp.cookies
-        assert resp.cookies['lsid'] != '' 
+        assert resp.cookies['lsid'] != ''
         lsid = resp.cookies['lsid']
 
         req = """
@@ -148,8 +150,8 @@ def test_login(cluster, auth, alias):
                 }
             }
         """
-        obj = srv.graphql(req, 
-            variables={ 'username': USERNAME }, 
+        obj = srv.graphql(req,
+            variables={ 'username': USERNAME },
             cookies={ 'lsid': lsid }
         )
         assert obj['errors'][0]['message'] == "user can not remove himself"
@@ -316,6 +318,7 @@ def test_uninitialized(module_tmpdir, helpers):
         alias = 'dummy'
     )
     srv.start(
+        script=init_script,
         workdir="{}/localhost-{}".format(module_tmpdir, srv.binary_port),
         env = {'ADMIN_PASSWORD': 'qwerty'}
     )

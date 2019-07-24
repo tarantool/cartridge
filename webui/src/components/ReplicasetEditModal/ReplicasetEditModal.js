@@ -283,7 +283,8 @@ class ReplicasetEditModal extends React.PureComponent<ReplicasetEditModalProps> 
 
   isVShardGroupsImplemented = () => {
     const { vshard_groups } = this.props;
-    return vshard_groups && (vshard_groups.length > 1 || vshard_groups[0].name !== DEFAULT_VSHARD_GROUP_NAME);
+    return vshard_groups && vshard_groups.length &&
+      (vshard_groups.length > 1 || vshard_groups[0].name !== DEFAULT_VSHARD_GROUP_NAME);
   }
 
 

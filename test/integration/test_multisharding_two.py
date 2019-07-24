@@ -4,7 +4,8 @@ import pytest
 import logging
 from conftest import Server
 
-env = {'MULTIPLE_VSHARD_ENABLED': 'YES'}
+init_script = 'srv_multisharding.lua'
+
 cluster = [
     Server(
         alias = 'storage-hot',

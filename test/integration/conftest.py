@@ -79,6 +79,8 @@ class Server(object):
                 replicaset_uuid=None, roles=None,
                 labels=None, vshard_group=None):
 
+        self.script = "srv_basic.lua"
+
         self.alias = alias
         self.binary_port = binary_port
         self.http_port = http_port
@@ -96,7 +98,7 @@ class Server(object):
 
         pass
 
-    def start(self, workdir=None, env={}):
+    def start(self, script=None, workdir=None, env={}):
         if self.env == None:
             self.env = os.environ.copy()
             self.env['TARANTOOL_ALIAS'] = str(self.alias)
@@ -105,7 +107,9 @@ class Server(object):
             self.env['TARANTOOL_ADVERTISE_URI'] = str(self.advertise_uri)
             self.env['TARANTOOL_CLUSTER_COOKIE'] = COOKIE
 
-        command = [os.path.join(srv_abspath, 'instance.lua')]
+        if script != None:
+            self.script = script
+        command = [os.path.join(srv_abspath, self.script)]
 
         logging.warn('export TARANTOOL_ALIAS="{}"'.format(self.env['TARANTOOL_ALIAS']))
         logging.warn('export TARANTOOL_WORKDIR="{}"'.format(self.env['TARANTOOL_WORKDIR']))
@@ -225,11 +229,13 @@ def cluster(request, confdir, module_tmpdir, helpers):
     cluster = {}
     bootserv = None
     env = getattr(request.module, "env", {})
+    init_script = getattr(request.module, "init_script", None)
 
     for srv in getattr(request.module, "cluster", []):
         assert srv.roles != None
         assert srv.alias != None
         srv.start(
+            script=init_script,
             workdir="{}/localhost-{}".format(module_tmpdir, srv.binary_port),
             env=env
         )
@@ -315,6 +321,7 @@ def cluster(request, confdir, module_tmpdir, helpers):
 
     for srv in getattr(request.module, "unconfigured", []):
         srv.start(
+            script=init_script,
             workdir="{}/localhost-{}".format(module_tmpdir, srv.binary_port),
             env = env,
         )

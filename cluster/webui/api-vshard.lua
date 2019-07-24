@@ -80,7 +80,7 @@ local function init(graphql)
         doc = 'Whether it is reasonble to call bootstrap_vshard mutation',
         args = {},
         kind = gql_types.boolean.nonNull,
-        callback = 'cluster.roles.vshard-router' .. '.can_bootstrap',
+        callback = 'cluster.vshard-utils' .. '.can_bootstrap',
     })
 
     -- deprecated

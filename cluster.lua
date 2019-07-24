@@ -23,7 +23,6 @@ local http = require('http.server')
 local rpc = require('cluster.rpc')
 local vars = require('cluster.vars').new('cluster')
 local auth = require('cluster.auth')
-local utils = require('cluster.utils')
 local admin = require('cluster.admin')
 local webui = require('cluster.webui')
 local topology = require('cluster.topology')
@@ -245,23 +244,7 @@ local function cfg(opts, box_opts)
         service_registry.set('httpd', httpd)
     end
 
-    local roles = opts.roles or {}
-    if not utils.table_find(roles, 'cluster.roles.vshard-storage') then
-        errors.deprecate(
-            'WARNING: Implicit vshard roles are deprecated,' ..
-            ' please specify "cluster.roles.vshard-storage" explicitly'
-        )
-        table.insert(roles, 1, 'cluster.roles.vshard-storage')
-    end
-    if not utils.table_find(roles, 'cluster.roles.vshard-router') then
-        errors.deprecate(
-            'WARNING: Implicit vshard roles are deprecated,' ..
-            ' please specify "cluster.roles.vshard-router" explicitly'
-        )
-        table.insert(roles, 2, 'cluster.roles.vshard-router')
-    end
-
-    for _, role in ipairs(roles) do
+    for _, role in ipairs(opts.roles or {}) do
         local ok, err = confapplier.register_role(role)
         if not ok then
             return nil, err
