@@ -20,7 +20,12 @@ import {
   setVisibleBootstrapVshardModal,
   setFilter
 } from 'src/store/actions/clusterPage.actions';
-import { filterReplicasetList, selectReplicasetListWithStat } from 'src/store/selectors/clusterPage';
+import {
+  getReplicasetCounts,
+  getServerCounts,
+  filterReplicasetList,
+  selectReplicasetListWithStat
+} from 'src/store/selectors/clusterPage';
 import Cluster from './Cluster';
 import type { State } from 'src/store/rootReducer';
 
@@ -53,16 +58,18 @@ const mapStateToProps = (state: State) => {
   return {
     clusterSelf,
     failover,
-    pageMount,
-    pageDataRequestStatus,
-    selectedServerUri,
-    selectedReplicasetUuid,
-    serverList,
     filter: replicasetFilter,
-    replicasetList,
     filteredReplicasetList: replicasetFilter
       ? filterReplicasetList(state)
       : replicasetList,
+    pageMount,
+    pageDataRequestStatus,
+    replicasetCounts: getReplicasetCounts(state),
+    replicasetList,
+    selectedServerUri,
+    selectedReplicasetUuid,
+    serverList,
+    serverCounts: getServerCounts(state),
     showBootstrapModal,
     showToggleAuth: !(implements_add_user || implements_list_users) && implements_check_password
   };

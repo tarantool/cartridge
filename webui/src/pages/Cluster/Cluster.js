@@ -38,6 +38,7 @@ import type {
   SetFilterActionCreator,
   UploadConfigActionCreator
 } from 'src/store/actions/clusterPage.actions';
+import type { ReplicasetCounts, ServerCounts } from 'src/store/selectors/clusterPage';
 
 const styles = {
   clusterFilter: css`
@@ -67,9 +68,11 @@ export type ClusterProps = {
   failover: boolean,
   pageMount: boolean,
   pageDataRequestStatus: RequestStatusType,
+  replicasetCounts: ReplicasetCounts,
   selectedServerUri: ?string,
   selectedReplicasetUuid: ?string,
   serverList: ?Server[],
+  serverCounts: ServerCounts,
   filter: string,
   replicasetList: Replicaset[],
   filteredReplicasetList: Replicaset[],
@@ -169,6 +172,7 @@ class Cluster extends React.Component<ClusterProps, ClusterState> {
       selectedServerUri,
       replicasetList,
       selectedReplicasetUuid,
+      serverCounts,
       showBootstrapModal
     } = this.props;
 
@@ -209,7 +213,7 @@ class Cluster extends React.Component<ClusterProps, ClusterState> {
               ? (
                 <div className="tr-card-margin">
                   <PageSectionHead
-                    title="Replica sets"
+                    title={`Unconfigured servers (${serverCounts.unconfigured})`}
                     buttons={this.renderServerButtons()}
                   />
                   <div className="pages-Cluster-serverList">
@@ -233,7 +237,7 @@ class Cluster extends React.Component<ClusterProps, ClusterState> {
                 <div className="tr-card-margin pages-Cluster-replicasetList">
                   <PageSectionHead
                     thin={true}
-                    title="Replica sets"
+                    title={`Replica sets ${this.getReplicasetsTitleCounters()}`}
                     buttons={
                       unlinkedServers && unlinkedServers.length
                         ? null
@@ -589,6 +593,14 @@ class Cluster extends React.Component<ClusterProps, ClusterState> {
       ? replicasetList.find(replicaset => replicaset.uuid === selectedReplicasetUuid)
       : null;
   };
+
+  getReplicasetsTitleCounters = () => {
+    const { configured } = this.props.serverCounts;
+    const { total, unhealthy } = this.props.replicasetCounts;
+    const replicasets = `(${total} total, ${unhealthy} unhealthy) `;
+    const servers= `(${configured} server${configured === 1 ? '' : 's'})`;
+    return replicasets + servers;
+  }
 }
 
 export default Cluster;
