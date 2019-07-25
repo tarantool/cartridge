@@ -184,6 +184,18 @@ function Cluster:wait_until_healthy()
     end)
 end
 
+--- Upload application config, shortcut for `cluster.main_server:upload_config(config)`.
+--  @see cluster.test_helpers.server:upload_config
+function Cluster:upload_config(config)
+    return self.main_server:upload_config(config)
+end
+
+--- Download application config, shortcut for `cluster.main_server:download_config()`.
+-- @see cluster.test_helpers.server:download_config
+function Cluster:download_config()
+    return self.main_server:download_config()
+end
+
 --- Keeps calling fn until it returns without error.
 -- Throws last error if config.timeout is elapsed.
 -- @tab config Options for `luatest.helpers.retrying`.
