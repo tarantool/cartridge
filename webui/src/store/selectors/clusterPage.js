@@ -28,6 +28,8 @@ const selectServerStat = (state: State): ?ServerStatWithUUID[] => state.clusterP
 
 const selectReplicasetList = (state: State): ?Replicaset[] => state.clusterPage.replicasetList;
 
+const selectServerList = (state: State): ?Server[] => state.clusterPage.serverList;
+
 export const selectReplicasetListWithStat: (s: State) => Replicaset[] = createSelector(
   [selectReplicasetList, selectServerStat],
   (replicasetList: ?Replicaset[], serverStat: ?ServerStatWithUUID[]): Replicaset[] => (
@@ -122,3 +124,40 @@ export const filterReplicasetList = (state: State): Replicaset[] => {
     }
   });
 };
+
+export type ServerCounts = {
+  total: number,
+  configured: number,
+  unconfigured: number,
+};
+
+export const getServerCounts: (s: State) => ServerCounts = createSelector(
+  selectServerList,
+  (serverList: ?Server[]): ServerCounts => (serverList || []).reduce(
+    (acc, server) => {
+      acc.total++;
+      server.replicaset ? acc.configured++ : acc.unconfigured++;
+      return acc;
+    },
+    { configured: 0, total: 0, unconfigured: 0 }
+  )
+);
+
+export type ReplicasetCounts = {
+  total: number,
+  unhealthy: number,
+};
+
+export const getReplicasetCounts: (s: State) => ReplicasetCounts = createSelector(
+  selectReplicasetList,
+  (replicasetList: ?Replicaset[]): ReplicasetCounts => {
+    return (replicasetList || []).reduce(
+      (acc, replicaset) => {
+        acc.total++;
+        replicaset.status !== 'healthy' && acc.unhealthy++;
+        return acc;
+      },
+      { total: 0, unhealthy: 0 }
+    )
+  }
+);
