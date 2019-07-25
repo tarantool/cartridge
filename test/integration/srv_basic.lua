@@ -57,7 +57,10 @@ package.preload['mymodule'] = function()
 
     return {
         role_name = 'myrole',
-        dependencies = {'mymodule-dependency'},
+        dependencies = {
+            'mymodule-dependency',
+            'mymodule-hidden',
+        },
         get_state = function() return state end,
         is_master = function() return master end,
         validate_config = function()
@@ -88,13 +91,45 @@ package.preload['mymodule'] = function()
         stop = function()
             state = 'stopped'
             validated = false
-        end
+        end,
+
+        -- rpc functions
+        dog_goes = function() return "woof" end,
     }
 end
 
 package.preload['mymodule-dependency'] = function()
     return {
         role_name = 'myrole-dependency',
+
+        -- rpc functions
+        cat_goes = function() return "meow" end,
+    }
+end
+
+package.preload['mymodule-permanent'] = function()
+    return {
+        role_name = 'myrole-permanent',
+        permanent = true,
+        get_role_name = function()
+            return 'myrole-permanent'
+        end,
+
+        -- rpc functions
+        cow_goes = function() return "moo" end,
+    }
+end
+
+package.preload['mymodule-hidden'] = function()
+    return {
+        role_name = 'myrole-hidden',
+        hidden = true,
+        get_role_name = function()
+            return 'myrole-hidden'
+        end,
+
+        -- rpc functions
+        what_does_the_fox_say = function() return box.info.uuid end,
     }
 end
 
@@ -109,6 +144,8 @@ local ok, err = cluster.cfg({
         'cluster.roles.vshard-storage',
         'cluster.roles.vshard-router',
         'mymodule-dependency',
+        'mymodule-permanent',
+        'mymodule-hidden',
         'mymodule',
     },
 })

@@ -13,6 +13,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   they aren't registered unless explicitly specified either in `cluster.cfg({roles=...})`
   or in `dependencies` to one of user-defined roles.
 
+- New role flag `hidden = true`. Hidden roles aren't listed in
+  `cluster.admin.get_replicasets().roles` and therefore in WebUI.
+  Hidden roled are supposed to be a dependency for another role, yet they still can be enabled with `edit_replicaset` function (both Lua and GraphQL).
+
+- New role flag: `permanent = true`.
+  Permanent roles are always enabled. Also they are hidden implicitly.
+
 ### Fixed
 
 - `cluster.call_rpc` used to return 'Role unavailable' error as a first argument
