@@ -1,10 +1,6 @@
-@import 'src/styles/variables';
-
-.ServerList {}
-
 .ServerList-name {
-    display: flex;
-    flex-direction: column;
+  display: flex;
+  flex-direction: column;
 }
 
 .ServerList-alias,
@@ -21,23 +17,21 @@
 
 .ServerList-alias {
   font-weight: bold;
-color:  #343434;
+  color:  #343434;
 }
 
 .ServerList-uri {
-    color: #838383;
+  color: #838383;
 }
-
-.ServerList-master {}
 
 .ServerList-masterDown {
   color: #FF272C;
 }
 
 .ServerList-message {
-    color: #FF272C;
-    font-size: 10px;
-    margin-top: -3px;
+  color: #FF272C;
+  font-size: 10px;
+  margin-top: -3px;
 }
 
 .ServerList-stat {
@@ -47,7 +41,5 @@ color:  #343434;
 
 .ServerList-statName {
   display: inline-block;
-color: #000000;
+  color: #000000;
 }
-
-.ServerList-actionButtons {}

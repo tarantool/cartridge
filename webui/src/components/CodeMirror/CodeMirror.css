@@ -1,15 +1,10 @@
-$codeMirrorHeight: 540px;
-$codeMirrorTopPadding: 1px;
-$codeMirrorScrollPadding: 1px;
-$codeMirrorScrollWidth: 6px;
-
 .CodeMirror2-card .ant-card-body {
-  padding: $codeMirrorTopPadding 0 0;
-  height: $codeMirrorHeight;
+  padding: 1px 0 0;
+  height: 540px;
 }
 
 .CodeMirror {
-  height: $codeMirrorHeight - $codeMirrorTopPadding;
+  height: 539px;
   background-color: transparent;
 }
 
@@ -29,8 +24,8 @@ $codeMirrorScrollWidth: 6px;
 
 .CodeMirror-vscrollbar::-webkit-scrollbar,
 .CodeMirror-hscrollbar::-webkit-scrollbar {
-  width: $codeMirrorScrollWidth;
-  height: $codeMirrorScrollWidth;
+  width: 6px;
+  height: 6px;
 }
 
 .CodeMirror-vscrollbar::-webkit-scrollbar-track,
@@ -44,30 +39,30 @@ $codeMirrorScrollWidth: 6px;
 .CodeMirror-vscrollbar::-webkit-scrollbar-thumb,
 .CodeMirror-hscrollbar::-webkit-scrollbar-thumb {
   background-color: #ddd;
-  border-radius: $codeMirrorScrollWidth / 2;
+  border-radius: 6px / 2;
 }
 
 /* CSS Statements that only apply on webkit-based browsers (Chrome, Safari, etc.) */
 @media screen and (-webkit-min-device-pixel-ratio:0) {
   .CodeMirror2-card .ant-card-body {
-    padding: $codeMirrorTopPadding $codeMirrorScrollPadding $codeMirrorScrollPadding 0;
+    padding: 1px 1px 1px 0;
   }
 
   .CodeMirror {
-    height: $codeMirrorHeight - $codeMirrorTopPadding - $codeMirrorScrollPadding;
+    height: 538px;
   }
 
   .CodeMirror-scrollbar-filler {
-    width: $codeMirrorScrollWidth !important;
-    height: $codeMirrorScrollWidth !important;
+    width: 6px !important;
+    height: 6px !important;
     background-color: #f9f9f9;
   }
 
   .CodeMirror-vscrollbar {
-    bottom: $codeMirrorScrollWidth !important;
+    bottom: 6px !important;
   }
 
   .CodeMirror-hscrollbar {
-    right: $codeMirrorScrollWidth !important;
+    right: 6px !important;
   }
 }

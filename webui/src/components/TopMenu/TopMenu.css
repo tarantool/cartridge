@@ -1,11 +1,9 @@
-@import 'src/styles/variables';
-
 .TopMenu-outer {
   padding-top: 10px;
   padding-bottom: 10px;
-  color: $khrushchev-color;
-  background-color: $khrushchev-bg;
-  box-shadow: 0 1px 2px $khrushchev-shadow;
+  color: rgb(205, 203, 214);
+  background-color: rgb(55, 52, 67);
+  box-shadow: 0 1px 2px rgba(55, 52, 67, 0.38);
 }
 
 .TopMenu-inner {
@@ -31,7 +29,7 @@
   text-decoration: none;
   letter-spacing: 0.6px;
   transition: opacity 0.18s;
-  opacity: $khrushchev-mute-text-opacity;
+  opacity: 0.5;
 }
 
 .TopMenu-link,
@@ -39,7 +37,7 @@
 .TopMenu-link:visited,
 .TopMenu-link:active,
 .TopMenu-link:focus {
-  color: $khrushchev-color;
+  color: rgb(205, 203, 214);
   text-decoration: none;
 }
 

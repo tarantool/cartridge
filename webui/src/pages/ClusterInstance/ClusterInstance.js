@@ -1,6 +1,6 @@
 // @flow
 import React from 'react';
-import { css } from 'emotion';
+import { css, cx } from 'emotion';
 import { Route, Switch, Redirect } from 'react-router-dom';
 import HealthIndicator from 'src/components/HealthIndicator'
 import SubNavMenu from 'src/components/SubNavMenu'
@@ -9,6 +9,10 @@ import PageSectionHead from 'src/components/PageSectionHead';
 import ServerLabels from 'src/components/ServerLabels';
 
 const styles = {
+  cardMargin: css`
+    padding-top: 24px;
+    padding-bottom: 24px;
+  `,
   indicator: css`
     margin-right: 8px;
   `,
@@ -83,7 +87,7 @@ class ClusterConfig extends React.Component<ClusterConfigProps> {
     const masterState = isActiveMaster ? 'active master' : isMaster ? 'master' : null;
 
     return (
-      <div className={'app-content tr-card-margin'}>
+      <div className={cx(styles.cardMargin, 'app-content')}>
         <PageSectionHead
           title={
             <React.Fragment>
