@@ -1,9 +1,10 @@
 #!/usr/bin/env tarantool
 
 local fio = require('fio')
+local yaml = require('yaml')
 
-local tap = require('tap')
-local test = tap.test('cluster.test_helpers')
+local t = require('luatest')
+local g = t.group('test_helpers')
 
 local ROOT = fio.dirname(fio.abspath(package.search('cluster')))
 local datadir = fio.pathjoin(ROOT, 'dev', 'db_test')
@@ -40,17 +41,17 @@ local cluster = Cluster:new({
     },
 })
 
-test:plan(3 + 1)
 
-local ok, err = pcall(function()
+g.test_cluster_helper = function()
     cluster:start()
     for i, server in ipairs(cluster.servers) do
-        test:isnumber(server.process.pid, 'Server ' .. i .. ' started')
+        t.assert_equals(type(server.process.pid), 'number', 'Server ' .. i .. ' not started')
     end
-end)
-if not test:ok(ok, 'Cluster started') then
-    test:diag(err)
-end
-cluster:stop()
 
-os.exit(test:check() and 0 or 1)
+    cluster:upload_config({some_section = 'some_value'})
+    t.assert_equals(cluster:download_config(), {some_section = 'some_value'})
+
+    cluster:upload_config(yaml.encode({another_section = 'some_value2'}))
+    t.assert_equals(cluster:download_config(), {another_section = 'some_value2'})
+    cluster:stop()
+end

@@ -4,6 +4,8 @@
 
 local log = require('log')
 local luatest = require('luatest')
+local yaml = require('yaml')
+local checks = require('checks')
 
 --- Build server object.
 -- @function new
@@ -149,6 +151,21 @@ function Server:setup_replicaset(config)
             weight = config.weight,
         }
     })
+end
+
+--- Upload application config.
+-- @tparam string|table config - table will be encoded as yaml and posted to /admin/config.
+function Server:upload_config(config)
+    checks('table', 'string|table')
+    if type(config) == 'table' then
+        config = yaml.encode(config)
+    end
+    return self:http_request('put', '/admin/config', {body = config})
+end
+
+--- Download application config.
+function Server:download_config()
+    return yaml.decode(self:http_request('get', '/admin/config').body)
 end
 
 return Server
