@@ -1,5 +1,3 @@
-@import 'src/styles/variables';
-
 .app {
   position: relative;
   z-index: 0;
@@ -22,8 +20,6 @@
   z-index: 2;
 }
 
-.app-settingsPageOuter {}
-
 .app-settingsPageInner {
   display: flex;
   align-items: stretch;
@@ -44,7 +40,12 @@
 .app-settingsContentInner {
   height: 100%;
   padding: 20px 30px 80px;
-  border-radius: $cards-border-radius;
-  background-color: $cards-bg-color;
-  box-shadow: $cards-shadow;
+  border-radius: 2px;
+  background-color: #ffffff;
+  box-shadow: 0 0 0 1px rgba(55, 52, 66, 0.01), 0 0 5px 0 rgba(55, 52, 66, 0.04);
+}
+
+/* AntDesign antidot */
+body {
+  font-size: 12px !important;
 }

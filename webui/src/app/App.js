@@ -1,18 +1,32 @@
 import React from 'react';
 import { Route, Switch } from 'react-router-dom';
+import { css } from 'emotion';
 
-import 'src/styles/base.scss';
 import 'src/styles/app.css';
-import 'src/styles/pages.css';
 import 'src/styles/tables.css';
 import 'src/styles/tight-scroll.css';
-import 'src/styles/refactor-me.css';
 
 import AppMessage from 'src/components/AppMessage';
 import ClusterPage from 'src/pages/Cluster';
 import ClusterInstancePage from 'src/pages/ClusterInstance';
 import UsersPage from 'src/pages/Users';
 import { PROJECT_NAME } from 'src/constants';
+
+const styles = {
+  app: css`
+    min-height: 100%;
+    background: #FAFAFA;
+    padding: 0px 30px 0 30px;
+
+    p {
+      margin-top: 0;
+    }
+
+    p + p {
+      margin-top: 1em;
+    }
+  `
+};
 
 class App extends React.Component {
   render() {
@@ -34,14 +48,14 @@ class App extends React.Component {
     const { messages, setMessageDone } = this.props;
 
     return (
-      <React.Fragment>
+      <div className={styles.app}>
         <Switch>
           <Route path={`/${PROJECT_NAME}/instance/:instanceUUID`} component={ClusterInstancePage} />
           <Route path={`/${PROJECT_NAME}/users`} component={UsersPage} />
           <Route component={ClusterPage} />
         </Switch>
         <AppMessage messages={messages} setMessageDone={setMessageDone} />
-      </React.Fragment>
+      </div>
     );
   };
 

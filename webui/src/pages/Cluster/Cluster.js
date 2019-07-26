@@ -53,6 +53,14 @@ const styles = {
     top: 0px;
     z-index: 4;
   `,
+  cardMargin: css`
+    padding-top: 24px;
+    padding-bottom: 24px;
+
+    & + & {
+      padding-top: 0;
+    }
+  `
 };
 
 /*
@@ -211,7 +219,7 @@ class Cluster extends React.Component<ClusterProps, ClusterState> {
           <div className="page-inner">
             {unlinkedServers && unlinkedServers.length
               ? (
-                <div className="tr-card-margin">
+                <div className={styles.cardMargin}>
                   <PageSectionHead
                     title={`Unconfigured servers (${serverCounts.unconfigured})`}
                     buttons={this.renderServerButtons()}
@@ -234,7 +242,7 @@ class Cluster extends React.Component<ClusterProps, ClusterState> {
 
             {replicasetList.length
               ? (
-                <div className="tr-card-margin pages-Cluster-replicasetList">
+                <div className={styles.cardMargin}>
                   <PageSectionHead
                     thin={true}
                     title={`Replica sets ${this.getReplicasetsTitleCounters()}`}

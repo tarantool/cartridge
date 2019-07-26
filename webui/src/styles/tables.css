@@ -1,11 +1,3 @@
-@import 'src/styles/variables';
-
-$row-margin-top: 0;
-$cell-padding: 0.5em;
-$cell-horizontal-padding: 1em;
-$cell-min-height: 2.6em;
-$tight-cell-min-height: $cell-min-height - 1.4em;
-
 .trTable {
   font-size: 12px;
 }
@@ -14,15 +6,11 @@ $tight-cell-min-height: $cell-min-height - 1.4em;
 .trTable-loading {
   display: flex;
   align-items: center;
-  min-height: $cell-min-height;
-  margin-top: $row-margin-top;
-  padding: $cell-padding $cell-horizontal-padding;
-  background-color: $light-bg-secondary;
+  min-height: 2.6em;
+  margin-top: 0;
+  padding: 0.5em 1em;
+  background-color: rgba(110, 97, 160, 0.1);
 }
-
-.trTable-noData {}
-
-.trTable-loading {}
 
 .trTable-cell--leftAlign {
   justify-content: flex-start;
@@ -42,7 +30,7 @@ $tight-cell-min-height: $cell-min-height - 1.4em;
   flex: 100;
   overflow: hidden;
   box-sizing: content-box;
-  padding: $cell-padding;
+  padding: 0.5em;
 }
 
 .trTable-cellOuter:first-child {
@@ -66,8 +54,8 @@ $tight-cell-min-height: $cell-min-height - 1.4em;
 }
 
 .trTable-head {
-  background-color: $table-head-bg;
-  color: $table-head-color;
+  background-color: rgb(89, 85, 105);
+  color: rgb(205, 203, 214);
   border-radius: 2px;
 }
 
@@ -81,11 +69,9 @@ $tight-cell-min-height: $cell-min-height - 1.4em;
   font-size: 1.08em;
 }
 
-.trTable-rows {}
-
 .trTable-rowHead {
   margin-top: 1.4em;
-  padding: 0.2em $cell-horizontal-padding;
+  padding: 0.2em 1em;
 }
 
 .trTable-rowHeadName {
@@ -111,12 +97,10 @@ $tight-cell-min-height: $cell-min-height - 1.4em;
   opacity: 0.6;
 }
 
-.trTable-rowHeadLabelValue {}
-
 .trTable-row {
   /*margin-top: $row-margin-top;*/
-    min-height: 56px;
-    margin-bottom: 3px;
+  min-height: 56px;
+  margin-bottom: 3px;
 }
 
 .trTable-rowHead + .trTable-row {
@@ -132,24 +116,18 @@ $tight-cell-min-height: $cell-min-height - 1.4em;
 }
 
 .trTable-rowCellOuter {
-  min-height: $cell-min-height;
+  min-height: 2.6em;
 }
 
 .trTable-skin--rowHeads .trTable-rowCellOuter {
-  min-height: $tight-cell-min-height;
+  min-height: 1.2em;
 }
-
-.trTable-rowCellInner {}
 
 .trTable-cellText {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-
-.trTable-skin--regular {}
-
-.trTable-skin--light {}
 
 .trTable-skin--light .trTable-headCellOuter {
   padding-top: 0.6em;

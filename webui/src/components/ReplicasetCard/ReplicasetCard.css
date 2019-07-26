@@ -1,7 +1,3 @@
-@import 'src/styles/variables';
-
-$head-font-size: 14px;
-
 .ReplicasetCard {
   font-size: 11px;
 }
@@ -13,14 +9,14 @@ $head-font-size: 14px;
   padding: 8px 16px;
   color: #FFFFFF;
   background-color:  #343434;
-border-radius: 6px;
-    font-size: 16px;
+  border-radius: 6px;
+  font-size: 16px;
 }
 
 .ReplicasetCard-name {
   display: flex;
   align-items: center;
-  font-size: $head-font-size;
+  font-size: 14px;
 }
 
 .ReplicasetCard-indicator {
@@ -38,13 +34,9 @@ border-radius: 6px;
 
 .ReplicasetCard-nameSecondary {
   margin-right: 0.3em;
-  opacity: $brezhnev-mute-text-opacity;
+  opacity: 0.5;
 }
 
 .ReplicasetCard-actions {
-  font-size: $head-font-size;
-}
-
-.ReplicasetCard-serverList {
-  /*margin-top: 0.3em;*/
+  font-size: 14px;
 }

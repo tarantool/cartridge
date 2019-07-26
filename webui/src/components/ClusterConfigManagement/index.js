@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
 import React from 'react';
-
+import Card from 'src/components/Card';
 import Modal from 'src/components/Modal';
 import UploadButton from 'src/components/UploadButton';
 
@@ -23,7 +23,6 @@ const getUploadProps = createMessage => {
 };
 
 class ClusterConfigManagement extends React.PureComponent {
-
   static propTypes = {
     isConfingApplying: PropTypes.bool,
     canTestConfigBeApplied: PropTypes.bool.isRequired,
@@ -42,36 +41,19 @@ class ClusterConfigManagement extends React.PureComponent {
   }
 
   render() {
-    const { canTestConfigBeApplied } = this.props;
-    const { confirmApplyTestConfigModalVisible } = this.state;
-
     return (
-      <div className="tr-card" style={{ marginTop: '20px' }}>
-        <div className="tr-card-head">
-          <div className="tr-card-header">
-            Config management
-          </div>
+      <Card title="Config management">
+        {this.state.confirmApplyTestConfigModalVisible
+          ? this.renderApplyTestConfigConfirmModal()
+          : null}
+        <p>Current configuration can be downloaded <a href={process.env.REACT_APP_CONFIG_ENDPOINT}>here</a>.</p>
+        <div>
+          <UploadButton label="Upload config" onChange={this.handleUploadConfig} />
         </div>
-        <div className="tr-card-content">
-          {confirmApplyTestConfigModalVisible
-            ? this.renderApplyTestConfigConfirmModal()
-            : null}
-          <p>Current configuration can be downloaded <a href={process.env.REACT_APP_CONFIG_ENDPOINT}>here</a>.</p>
-          <div className="ClusterConfigManagement-uploadBlock">
-            <UploadButton
-              label="Upload config"
-              onChange={this.handleUploadConfig} />
-            {/*<Upload {...this.uploadProps}>
-             <Button>
-             <Icon type="upload" /> Click to upload config
-             </Button>
-             </Upload>*/}
-          </div>
-          {canTestConfigBeApplied
-            ? this.renderApplyTestConfigSuggest()
-            : null}
-        </div>
-      </div>
+        {this.props.canTestConfigBeApplied
+          ? this.renderApplyTestConfigSuggest()
+          : null}
+      </Card>
     );
   }
 
