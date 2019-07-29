@@ -239,55 +239,6 @@ export const instanceDataQuery = gql`
   }
 `;
 
-export const pageQuery = gql`
-query page {
-  serverList: servers {
-    uuid
-    alias
-    uri
-    status
-    message
-    replicaset {
-      uuid
-    }
-  }
-  replicasetList: replicasets {
-    uuid
-    status
-    roles
-    vshard_group
-    master {
-      uuid
-    }
-    active_master {
-      uuid
-    }
-    weight
-    servers {
-      uuid
-      alias
-      uri
-      status
-      message
-      replicaset {
-        uuid
-      }
-      labels {
-        name
-        value
-      }
-    }
-  }
-  serverStat: servers {
-    uuid
-    statistics {
-      quotaSize: quota_size
-      arenaUsed: arena_used
-    }
-  }
-}
-`;
-
 export const listQuery = gql`
 query serverList {
   serverList: servers {
@@ -316,6 +267,7 @@ query serverList {
       uuid
       alias
       uri
+      priority
       status
       message
       replicaset {
@@ -366,6 +318,7 @@ query serverListWithoutStat {
       uuid
       alias
       uri
+      priority
       status
       message
       replicaset {

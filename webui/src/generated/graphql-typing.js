@@ -615,51 +615,6 @@ export type InstanceDataQuery = { __typename?: "Query" } & {
   })
 };
 
-export type PageQueryVariables = {};
-
-export type PageQuery = { __typename?: "Query" } & {
-  serverList: ?Array<?({ __typename?: "Server" } & $Pick<
-    Server,
-    { uuid: *, alias: *, uri: *, status: *, message: * }
-  > & {
-      replicaset: ?({ __typename?: "Replicaset" } & $Pick<
-        Replicaset,
-        { uuid: * }
-      >)
-    })>,
-  replicasetList: ?Array<?({ __typename?: "Replicaset" } & $Pick<
-    Replicaset,
-    { uuid: *, status: *, roles: *, vshard_group: *, weight: * }
-  > & {
-      master: { __typename?: "Server" } & $Pick<Server, { uuid: * }>,
-      active_master: { __typename?: "Server" } & $Pick<Server, { uuid: * }>,
-      servers: Array<
-        { __typename?: "Server" } & $Pick<
-          Server,
-          { uuid: *, alias: *, uri: *, status: *, message: * }
-        > & {
-            replicaset: ?({ __typename?: "Replicaset" } & $Pick<
-              Replicaset,
-              { uuid: * }
-            >),
-            labels: ?Array<?({ __typename?: "Label" } & $Pick<
-              Label,
-              { name: *, value: * }
-            >)>
-          }
-      >
-    })>,
-  serverStat: ?Array<?({ __typename?: "Server" } & $Pick<
-    Server,
-    { uuid: * }
-  > & {
-      statistics: ?({ __typename?: "ServerStat" } & {
-        quotaSize: $ElementType<ServerStat, "quota_size">,
-        arenaUsed: $ElementType<ServerStat, "arena_used">
-      })
-    })>
-};
-
 export type ServerListQueryVariables = {};
 
 export type ServerListQuery = { __typename?: "Query" } & {
@@ -681,7 +636,7 @@ export type ServerListQuery = { __typename?: "Query" } & {
       servers: Array<
         { __typename?: "Server" } & $Pick<
           Server,
-          { uuid: *, alias: *, uri: *, status: *, message: * }
+          { uuid: *, alias: *, uri: *, priority: *, status: *, message: * }
         > & {
             replicaset: ?({ __typename?: "Replicaset" } & $Pick<
               Replicaset,
@@ -726,7 +681,7 @@ export type ServerListWithoutStatQuery = { __typename?: "Query" } & {
       servers: Array<
         { __typename?: "Server" } & $Pick<
           Server,
-          { uuid: *, alias: *, uri: *, status: *, message: * }
+          { uuid: *, alias: *, uri: *, priority: *, status: *, message: * }
         > & {
             replicaset: ?({ __typename?: "Replicaset" } & $Pick<
               Replicaset,
