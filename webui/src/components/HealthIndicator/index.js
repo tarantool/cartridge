@@ -11,7 +11,7 @@ const styles = {
   state: {
     bad: css`background-color: #FF272C;`,
     good: css`background-color: #60B442;`,
-    middle: css`background-color: #d09935;`,
+    middle: css`background-color: #d09935;`
   },
   size: {
     s: css`

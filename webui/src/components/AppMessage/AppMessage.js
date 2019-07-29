@@ -86,10 +86,10 @@ AppMessage.propTypes = {
   messages: PropTypes.arrayOf(PropTypes.shape({
     content: PropTypes.shape({
       type: PropTypes.oneOf(['success', 'warning', 'error']).isRequired,
-      text: PropTypes.string.isRequired,
-    }),
+      text: PropTypes.string.isRequired
+    })
   })).isRequired,
-  setMessageDone: PropTypes.func.isRequired,
+  setMessageDone: PropTypes.func.isRequired
 };
 
 export default AppMessage;

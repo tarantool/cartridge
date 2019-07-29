@@ -24,7 +24,7 @@ const mapStateToProps = (state, props) => {
     activeMasterUUID,
     roles = [],
     status,
-    uri,
+    uri
   } = state.clusterInstancePage;
 
   return {
@@ -37,13 +37,13 @@ const mapStateToProps = (state, props) => {
     status,
     uri,
     subsections: selectSectionsNames(state),
-    instanceUUID: props.match.params.instanceUUID,
+    instanceUUID: props.match.params.instanceUUID
   };
 };
 
 const mapDispatchToProps = {
   pageDidMount,
-  resetPageState,
+  resetPageState
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(ClusterInstance);

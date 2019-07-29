@@ -33,9 +33,9 @@ const SubNavMenuItem = ({
   className,
   ...props
 }) => (
-    <li className={cx(className, styles.item)}>
-      <NavLink className={styles.link} activeClassName={styles.linkActive} {...props} />
-    </li>
-  );
+  <li className={cx(className, styles.item)}>
+    <NavLink className={styles.link} activeClassName={styles.linkActive} {...props} />
+  </li>
+);
 
 export default SubNavMenuItem;

@@ -1,8 +1,12 @@
-import * as React from "react";
+import * as React from 'react';
 import Modal from 'src/components/Modal';
 import { connect } from 'react-redux';
-import { changeFailover, setVisibleFailoverModal } from "src/store/actions/clusterPage.actions";
+import { changeFailover, setVisibleFailoverModal } from 'src/store/actions/clusterPage.actions';
 import Button from 'src/components/Button';
+
+const description = 'When enabled, every storage starts monitoring instance statuses. \
+If a user-specified master goes down, a replica with the lowest UUID takes its place. \
+When the user-specified master comes back online, both roles are restored.'
 
 class FailoverButton extends React.Component {
 
@@ -29,7 +33,7 @@ class FailoverButton extends React.Component {
           cancelText={'Close'}
         >
           <p>Current status:{' '}<b>{this.props.failover ? 'enabled' : 'disabled'}</b>.</p>
-          <p>When enabled, every storage starts monitoring instance statuses. If a user-specified master goes down, a replica with the lowest UUID takes its place. When the user-specified master comes back online, both roles are restored.</p>
+          <p>{description}</p>
         </Modal>
       </React.Fragment>
     );
@@ -40,6 +44,6 @@ export default connect(({ app, ui }) => {
   return {
     clusterSelf: app.clusterSelf,
     failover: app.failover,
-    showFailoverModal: ui.showFailoverModal,
+    showFailoverModal: ui.showFailoverModal
   }
 })(FailoverButton);

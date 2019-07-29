@@ -2,7 +2,7 @@
 import * as R from 'ramda';
 import React from 'react';
 import { defaultMemoize } from 'reselect';
-import {css} from 'react-emotion';
+import { css } from 'react-emotion';
 import { DEFAULT_VSHARD_GROUP_NAME, VSHARD_STORAGE_ROLE_NAME } from 'src/constants';
 import CommonItemEditModal from 'src/components/CommonItemEditModal';
 import type { Replicaset, Role, VshardGroup } from 'src/generated/graphql-typing';
@@ -57,17 +57,17 @@ const isStorageWeightInputValueValid = (formData: Replicaset): boolean => {
 const renderSelectOptions = record => record.servers.map(server => ({
   key: server.uuid,
   label: <span className={styles.serverLabel}>
-            {server.alias || 'No alias'}{' '}
+    {server.alias || 'No alias'}{' '}
     <span className={styles.uriLabel}>{server.uri}</span>
-          </span>,
+  </span>
 }));
 
 const renderDraggableListOptions = record => record.servers.map(server => ({
   key: server.uuid,
   label: <span className={styles.serverLabel}>
-            {server.alias || 'No alias'}{' '}
+    {server.alias || 'No alias'}{' '}
     <span className={styles.uriLabel}>{server.uri}</span>
-          </span>,
+  </span>
 }));
 
 const getRolesDependencies = (activeRoles, rolesOptions) => {
@@ -112,7 +112,7 @@ const prepareFields = (roles: Role[], replicaset: ?Replicaset, vshardGroups: ?Vs
   );
 
   let vshardGroupsOptions = vshardGroups
-    ? vshardGroups.map(({ name }) => ({ key: name, label: name, }))
+    ? vshardGroups.map(({ name }) => ({ key: name, label: name }))
     : [];
 
   const shallRenderDraggableList = replicaset && replicaset.servers.length > 2;
@@ -121,34 +121,34 @@ const prepareFields = (roles: Role[], replicaset: ?Replicaset, vshardGroups: ?Vs
 
   if (!shallRenderDraggableList) {
     draggableListCustomProps.create = {
-      hidden: true,
+      hidden: true
     };
   } else {
     draggableListCustomProps.create = {
       tableProps: {
         showHeader: false,
         className: styles.tableStyles,
-        rowKey: 'uuid',
+        rowKey: 'uuid'
       },
       tableColumns: [
         {
           title: 'Operates',
           key: 'operate',
           render: () => <a className={styles.dragIcon}>☰</a>,
-          width: 50,
+          width: 50
         },
         {
           title: 'Альяс',
-          dataIndex: 'alias',
+          dataIndex: 'alias'
         },
         {
           title: 'Адрес',
-          dataIndex: 'uri',
-        },
+          dataIndex: 'uri'
+        }
       ],
       tableData: R.pipe(
-          R.map(R.pick(['alias', 'uri', 'uuid'])),
-          R.map((data) => ({ ...data, key: data.uuid })),
+        R.map(R.pick(['alias', 'uri', 'uuid'])),
+        R.map(data => ({ ...data, key: data.uuid })),
       )(replicaset && replicaset.servers)
     };
     draggableListCustomProps.edit = draggableListCustomProps.create;
@@ -157,7 +157,7 @@ const prepareFields = (roles: Role[], replicaset: ?Replicaset, vshardGroups: ?Vs
   return [
     {
       key: 'uuid',
-      hidden: true,
+      hidden: true
     },
     {
       key: 'roles',
@@ -172,7 +172,7 @@ const prepareFields = (roles: Role[], replicaset: ?Replicaset, vshardGroups: ?Vs
       },
       stateModifier: (prevState, { roles, ...formData }) => {
         const prevDependencies = getRolesDependencies(prevState.roles, rolesOptions);
-        const rolesWithoutDependencies = roles.filter(role => !prevDependencies.includes(role)) 
+        const rolesWithoutDependencies = roles.filter(role => !prevDependencies.includes(role))
         const dependencies = getRolesDependencies(rolesWithoutDependencies, rolesOptions);
 
         return {
@@ -187,7 +187,7 @@ const prepareFields = (roles: Role[], replicaset: ?Replicaset, vshardGroups: ?Vs
         title: 'Group',
         type: 'optionGroup',
         disabled: formData => isVShardGroupInputDisabled(formData, replicaset),
-        options: vshardGroupsOptions,
+        options: vshardGroupsOptions
       }]
       : [],
     {
@@ -197,8 +197,8 @@ const prepareFields = (roles: Role[], replicaset: ?Replicaset, vshardGroups: ?Vs
       disabled: isStorageWeightInputDisabled,
       customProps: {
         create: {
-          hidden: true,
-        },
+          hidden: true
+        }
       },
       invalid: dataSource => {
         return ! isStorageWeightInputDisabled(dataSource)
@@ -206,14 +206,14 @@ const prepareFields = (roles: Role[], replicaset: ?Replicaset, vshardGroups: ?Vs
           && dataSource.weight.trim() !== ''
           && ! isStorageWeightInputValueValid(dataSource);
       },
-      invalidFeedback: 'Field accepts number, ex: 1.2',
+      invalidFeedback: 'Field accepts number, ex: 1.2'
     },
     {
       key: 'master',
       title: shallRenderDraggableList ? 'Priority' : 'Master',
       type: shallRenderDraggableList ? 'draggableList' : 'optionGroup',
       options: shallRenderDraggableList ? renderDraggableListOptions : renderSelectOptions,
-      customProps: draggableListCustomProps,
+      customProps: draggableListCustomProps
     }
   ];
 };
@@ -223,14 +223,14 @@ const defaultDataSource =  {
   roles: [],
   weight: '',
   master: null,
-  servers: [],
+  servers: []
 };
 
 const prepareDataSource = replicaset => {
   return {
     ...replicaset,
     weight: replicaset.weight != null ? String(replicaset.weight) : '',
-    master: replicaset.master.uuid,
+    master: replicaset.master.uuid
   };
 };
 
@@ -252,12 +252,14 @@ class ReplicasetEditModal extends React.PureComponent<ReplicasetEditModalProps> 
     isLoading: false,
     isSaving: false,
     replicasetNotFound: false,
-    shouldCreateReplicaset: false,
+    shouldCreateReplicaset: false
   };
 
   render() {
-    const { isLoading, isSaving, replicasetNotFound, shouldCreateReplicaset, submitStatusMessage, onSubmit,
-      onRequestClose } = this.props;
+    const {
+      isLoading, isSaving, replicasetNotFound, shouldCreateReplicaset, submitStatusMessage, onSubmit,
+      onRequestClose
+    } = this.props;
 
     const dataSource = isLoading || replicasetNotFound
       ? null

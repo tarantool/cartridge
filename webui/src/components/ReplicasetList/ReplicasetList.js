@@ -58,7 +58,7 @@ class ReplicasetList extends React.PureComponent {
 ReplicasetList.propTypes = {
   clusterSelf: PropTypes.any,
   dataSource: PropTypes.arrayOf(PropTypes.shape({
-    uuid: PropTypes.string,
+    uuid: PropTypes.string
   })).isRequired,
   editReplicaset: PropTypes.func.isRequired,
   joinServer: PropTypes.func.isRequired,

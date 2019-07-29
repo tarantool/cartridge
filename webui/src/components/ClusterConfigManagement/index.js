@@ -18,7 +18,7 @@ const getUploadProps = createMessage => {
           content: { type: 'error', text: info.file.response.err }
         });
       }
-    },
+    }
   };
 };
 
@@ -27,14 +27,14 @@ class ClusterConfigManagement extends React.PureComponent {
     isConfingApplying: PropTypes.bool,
     canTestConfigBeApplied: PropTypes.bool.isRequired,
     applyTestConfig: PropTypes.func,
-    uploadConfig: PropTypes.func.isRequired,
+    uploadConfig: PropTypes.func.isRequired
   };
 
   constructor(props) {
     super(props);
 
     this.state = {
-      confirmApplyTestConfigModalVisible: false,
+      confirmApplyTestConfigModalVisible: false
     };
 
     this.uploadProps = getUploadProps(props.createMessage);
@@ -76,9 +76,10 @@ class ClusterConfigManagement extends React.PureComponent {
     return (
       <React.Fragment>
         <p>You can also apply predefined test config:</p>
-        <button className="btn btn-primary"
-                onClick={this.handleApplyTestConfigClick}
-                disabled={isConfingApplying}
+        <button
+          className="btn btn-primary"
+          onClick={this.handleApplyTestConfigClick}
+          disabled={isConfingApplying}
         >
           Click to apply config
         </button>
@@ -114,11 +115,11 @@ ClusterConfigManagement.propTypes = {
   isConfingApplying: PropTypes.bool,
   canTestConfigBeApplied: PropTypes.bool.isRequired,
   applyTestConfig: PropTypes.func,
-  uploadConfig: PropTypes.func.isRequired,
+  uploadConfig: PropTypes.func.isRequired
 };
 
 ClusterConfigManagement.defaultProps = {
-  isConfingApplying: false,
+  isConfingApplying: false
 };
 
 export default ClusterConfigManagement;

@@ -9,7 +9,7 @@ import {
   CLUSTER_INSTANCE_DATA_REQUEST_ERROR,
   CLUSTER_INSTANCE_REFRESH_REQUEST,
   CLUSTER_INSTANCE_REFRESH_REQUEST_SUCCESS,
-  CLUSTER_INSTANCE_REFRESH_REQUEST_ERROR,
+  CLUSTER_INSTANCE_REFRESH_REQUEST_ERROR
 } from 'src/store/actionTypes';
 import { baseSaga, getSignalRequestSaga } from 'src/store/commonRequest';
 import {
@@ -34,15 +34,14 @@ function* refreshInstanceStatsSaga() {
     try {
       const instanceUUID = yield select(state => state.clusterInstancePage.instanceUUID);
       response = yield call(refreshInstanceData, { instanceUUID });
-    }
-    catch (error) {
+    } catch (error) {
       yield put({ type: CLUSTER_INSTANCE_REFRESH_REQUEST_ERROR, error, requestPayload: {} });
     }
     if (response) {
       if (response.serverStat) {
         response = {
           ...response,
-          serverStat: response.serverStat.filter(stat => stat.uuid),
+          serverStat: response.serverStat.filter(stat => stat.uuid)
         };
       }
       yield put({ type: CLUSTER_INSTANCE_REFRESH_REQUEST_SUCCESS, payload: response, requestPayload: {} });

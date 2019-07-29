@@ -23,7 +23,7 @@ const styles = {
   `,
   value: css`
     font-size: 20px;
-  `,
+  `
 };
 
 const fieldsDisplayTypes = {
@@ -84,7 +84,7 @@ const mapStateToProps = (
         }
 
         return param;
-      }),
+      })
   }
 };
 

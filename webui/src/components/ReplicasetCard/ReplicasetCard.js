@@ -30,14 +30,14 @@ const prepareServers = replicaset => {
   return replicaset.servers.map(server => ({
     ...server,
     master: server.uuid === masterUuid,
-    activeMaster: server.uuid === activeMasterUuid,
+    activeMaster: server.uuid === activeMasterUuid
   }));
 };
 
 const prepareVshardStoragePropsText = (weight, vshard_group) => {
   const formatted = [
     ...(weight !== null ? [`weight: ${weight}`] : []),
-    ...(typeof vshard_group === 'string' ? [`group: ${vshard_group}`] : []),
+    ...(typeof vshard_group === 'string' ? [`group: ${vshard_group}`] : [])
   ].join(', ');
 
   return formatted ? ` (${formatted})` : '';
@@ -134,7 +134,7 @@ ReplicasetCard.propTypes = {
     uuid: PropTypes.string.isRequired,
     roles: PropTypes.arrayOf(PropTypes.string).isRequired,
     status: PropTypes.string,
-    servers: PropTypes.array.isRequired,
+    servers: PropTypes.array.isRequired
   }).isRequired,
   editReplicaset: PropTypes.func.isRequired,
   joinServer: PropTypes.func.isRequired,

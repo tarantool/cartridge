@@ -13,7 +13,7 @@ import {
   pageQuery,
   probeMutation,
   serverStatQuery
-} from "./queries.graphql";
+} from './queries.graphql';
 import type { EditReplicasetMutationVariables } from 'src/generated/graphql-typing';
 
 const filterServerStat = response => {
@@ -102,7 +102,7 @@ export function joinSingleServer(params) {
 
 export async function uploadConfig(params) {
   return rest.put(process.env.REACT_APP_CONFIG_ENDPOINT, params.data, {
-    headers: { 'Content-Type': 'application/yaml;charset=UTF-8' },
+    headers: { 'Content-Type': 'application/yaml;charset=UTF-8' }
   });
 }
 
@@ -116,8 +116,8 @@ export async function changeFailover(params) {
   return {
     changeFailoverResponse: {
       changeFailover: changeFailoverResponse,
-      clusterSelf: clusterSelfResponse,
-    },
+      clusterSelf: clusterSelfResponse
+    }
   };
 }
 

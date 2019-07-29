@@ -43,6 +43,6 @@ const styles = {
   `
 }
 
-export default (props) => {
+export default props => {
   return <Button {...props} className={styles.button}/>
 }

@@ -11,13 +11,13 @@ import {
   CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_SUCCESS,
   APP_CREATE_MESSAGE,
   APP_SET_MESSAGE_DONE,
-  CLUSTER_SELF_UPDATE,
+  CLUSTER_SELF_UPDATE
 } from 'src/store/actionTypes';
 import {
   baseReducer,
   getInitialRequestStatus,
   getReducer,
-  getRequestReducer,
+  getRequestReducer
 } from 'src/store/commonRequest';
 import type { RequestStatusType } from 'src/store/commonTypes';
 import type { Role } from 'src/generated/graphql-typing';
@@ -62,7 +62,7 @@ const initialState: AppState = {
   clusterSelf: {},
   failover: null,
   messages: [],
-  authParams: {},
+  authParams: {}
 };
 
 const appMountReducer = getReducer(APP_DID_MOUNT, { appMount: true });
@@ -94,8 +94,8 @@ export const reducer = baseReducer(
           return {
             ...state,
             appDataRequestErrorMessage: {
-              text: error.responseText,
-            },
+              text: error.responseText
+            }
           };
         }
 
@@ -103,14 +103,14 @@ export const reducer = baseReducer(
           return {
             ...state,
             appDataRequestErrorMessage: {
-              text: error,
-            },
+              text: error
+            }
           };
         }
 
         return {
           ...state,
-          appDataRequestErrorMessage: {},
+          appDataRequestErrorMessage: {}
         };
       }
 
@@ -119,20 +119,20 @@ export const reducer = baseReducer(
         return {
           ...state,
           clusterSelf: action.payload.clusterSelf,
-          failover: action.payload.failover,
+          failover: action.payload.failover
         };
 
       case CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_SUCCESS:
         return {
           ...state,
           clusterSelf: action.payload.changeFailoverResponse.clusterSelf.clusterSelf,
-          failover: action.payload.changeFailoverResponse.clusterSelf.failover,
+          failover: action.payload.changeFailoverResponse.clusterSelf.failover
         };
 
       case APP_CREATE_MESSAGE:
         return {
           ...state,
-          messages: [...state.messages, { ...action.payload, done: false }],
+          messages: [...state.messages, { ...action.payload, done: false }]
         };
 
       case APP_SET_MESSAGE_DONE:
@@ -140,7 +140,7 @@ export const reducer = baseReducer(
           ...state,
           messages: state.messages.map(
             message => message.content === action.payload.content ? { ...message, done: true } : message,
-          ),
+          )
         };
 
       case AUTH_ACCESS_DENIED:
@@ -149,7 +149,7 @@ export const reducer = baseReducer(
           authParams: {
             ...state.authParams,
             implements_check_password: true
-          },
+          }
         };
 
       default:

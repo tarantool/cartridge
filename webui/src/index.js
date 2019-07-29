@@ -10,7 +10,7 @@ import { logOut } from 'src/store/actions/auth.actions';
 import { PROJECT_NAME } from './constants';
 import { menuReducer } from './menu';
 
-const projectPath = (path) => `/${PROJECT_NAME}/${path}`;
+const projectPath = path => `/${PROJECT_NAME}/${path}`;
 
 const store = configureStore();
 

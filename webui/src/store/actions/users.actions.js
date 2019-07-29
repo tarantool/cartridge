@@ -24,7 +24,7 @@ export const hideAddUserModal = () => ({
   payload: { visible: false }
 });
 
-export const showEditUserModal = (username) => ({
+export const showEditUserModal = username => ({
   type: SET_EDIT_USER_MODAL_VISIBLE,
   payload: { username, visible: true }
 });
@@ -34,7 +34,7 @@ export const hideEditUserModal = () => ({
   payload: { visible: false }
 });
 
-export const showRemoveUserModal = (username) => ({
+export const showRemoveUserModal = username => ({
   type: SET_REMOVE_USER_MODAL_VISIBLE,
   payload: { username, visible: true }
 });

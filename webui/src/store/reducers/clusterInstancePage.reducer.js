@@ -63,7 +63,7 @@ export const reducer = baseReducer(
       case CLUSTER_INSTANCE_DID_MOUNT:
         return {
           ...state,
-          instanceUUID: action.payload.instanceUUID || null,
+          instanceUUID: action.payload.instanceUUID || null
         };
 
       default:

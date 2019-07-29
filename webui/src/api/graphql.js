@@ -6,7 +6,7 @@ import { InMemoryCache } from 'apollo-cache-inmemory'
 
 const httpLink = new HttpLink({
   uri: process.env.REACT_APP_GRAPHQL_API_ENDPOINT,
-  credentials: 'include',
+  credentials: 'include'
 });
 
 const cache = new InMemoryCache({
@@ -18,24 +18,24 @@ const client = new ApolloClient({
   cache,
   defaultOptions: {
     query: {
-      fetchPolicy: 'no-cache',
+      fetchPolicy: 'no-cache'
     },
     mutate: {
-      fetchPolicy: 'no-cache',
+      fetchPolicy: 'no-cache'
     },
     watchQuery: {
-      fetchPolicy: 'no-cache',
+      fetchPolicy: 'no-cache'
     }
-  },
+  }
 });
 
 export default {
   fetch(query, variables = {}) {
-    return client.query({query, variables: variables}).then(r => r.data);
+    return client.query({ query, variables: variables }).then(r => r.data);
   },
   mutate(mutation, variables = {}) {
-    return client.mutate({mutation, variables: variables}).then(r => r.data);
-  },
+    return client.mutate({ mutation, variables: variables }).then(r => r.data);
+  }
 };
 
 export const isGraphqlErrorResponse

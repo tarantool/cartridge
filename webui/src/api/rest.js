@@ -13,9 +13,9 @@ export default {
   },
   soap(object) {
     return axios.post(process.env.REACT_APP_SOAP_API_ENDPOINT, object, {
-      headers: { 'Content-Type': 'application/json;charset=UTF-8' },
+      headers: { 'Content-Type': 'application/json;charset=UTF-8' }
     });
-  },
+  }
 };
 
 export const isRestErrorResponse
@@ -32,10 +32,10 @@ export const isRestAccessDeniedError
 
 export const isAxiosError
   = error =>
-  !!(_.get(error, 'config.adapter', false));
+    !!(_.get(error, 'config.adapter', false));
 
 export const getAxiosErrorMessage
   = error =>
-  (_.get(error, 'response.data.class_name', false) && _.get(error, 'response.data.err', false))
-    ? `${_.get(error, 'response.data.class_name')}: ${_.get(error, 'response.data.err')}`
-    : error.message;
+    (_.get(error, 'response.data.class_name', false) && _.get(error, 'response.data.err', false))
+      ? `${_.get(error, 'response.data.class_name')}: ${_.get(error, 'response.data.err')}`
+      : error.message;

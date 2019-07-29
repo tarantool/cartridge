@@ -34,8 +34,11 @@ const ProgressBar = ({ className, percents = 0, intention = defineStatus(percent
   const colors = css`
     background-color: rgb(${ACCENT_COLORS[intention]});
     box-shadow: rgba(${BG_COLORS[intention]}, 0.5) 0px 1px 3px 1px;
-    background-image:
-      linear-gradient(to right, rgb(${ACCENT_COLORS[intention]}) ${percents}%, rgb(${BG_COLORS[intention]}) ${percents}%);
+    background-image: linear-gradient(
+      to right,
+      rgb(${ACCENT_COLORS[intention]}) ${percents}%,
+      rgb(${BG_COLORS[intention]}) ${percents}%
+    );
   `;
 
   return <span className={cx(className, style, colors)} />;

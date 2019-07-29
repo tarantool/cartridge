@@ -17,7 +17,7 @@ const styles = {
     border: none;
     margin-top: 24px;
     display: inline-block;
-  `,
+  `
 };
 
 class UploadButton extends React.Component {
@@ -32,9 +32,16 @@ class UploadButton extends React.Component {
 
     return (
       <div className="UploadButton-outer">
-        <input ref={this.setRef} type="file" name="file" id="UploadButton-input" className="UploadButton-input"
-          onChange={this.handleChange} />
-        <label className={styles.button}
+        <input
+          ref={this.setRef}
+          type="file"
+          name="file"
+          id="UploadButton-input"
+          className="UploadButton-input"
+          onChange={this.handleChange}
+        />
+        <label
+          className={styles.button}
           htmlFor="UploadButton-input"
         >
           {label}
@@ -51,14 +58,14 @@ class UploadButton extends React.Component {
     const { onChange } = this.props;
     onChange({
       files: this.ref.files,
-      event,
+      event
     });
   }
 }
 
 UploadButton.propTypes = {
   label: P.string.isRequired,
-  onChange: P.func.isRequired,
+  onChange: P.func.isRequired
 };
 
 export default UploadButton;

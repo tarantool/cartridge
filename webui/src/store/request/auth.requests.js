@@ -1,6 +1,6 @@
 import graphql from 'src/api/graphql';
 import rest from 'src/api/rest';
-import {authQuery, turnAuthMutation} from "./queries.graphql";
+import { authQuery, turnAuthMutation } from './queries.graphql';
 
 export async function getAuthState() {
   const { cluster } = await graphql.fetch(authQuery);
@@ -32,7 +32,7 @@ export async function logIn(params) {
     if (error.response.status === 403) {
       return {
         authorized: false,
-        error: 'Authentication failed',
+        error: 'Authentication failed'
       };
     }
     throw error;
@@ -53,11 +53,11 @@ export async function logOut() {
   await rest.post('/logout');
   return {
     authorized: false,
-    error: null,
+    error: null
   };
 }
 
 export async function turnAuth({ enabled = true }) {
-  const { cluster } = await graphql.mutate(turnAuthMutation, {enabled});
+  const { cluster } = await graphql.mutate(turnAuthMutation, { enabled });
   return cluster.authParams;
 }

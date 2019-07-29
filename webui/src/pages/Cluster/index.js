@@ -38,7 +38,7 @@ const mapStateToProps = (state: State) => {
         implements_add_user,
         implements_check_password,
         implements_list_users
-      }  
+      }
     },
     clusterPage: {
       pageMount,
@@ -46,10 +46,10 @@ const mapStateToProps = (state: State) => {
       replicasetFilter,
       selectedServerUri,
       selectedReplicasetUuid,
-      serverList,
+      serverList
     },
     ui: {
-      showBootstrapModal,
+      showBootstrapModal
     }
   } = state;
 
@@ -93,7 +93,7 @@ const mapDispatchToProps = {
   changeFailover,
   resetPageState,
   setVisibleBootstrapVshardModal,
-  setFilter,
+  setFilter
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(Cluster);

@@ -28,7 +28,7 @@ const mapStateToProps = state => {
     appDataRequestErrorMessage,
     clusterSelf,
     authorizationRequired: implements_check_password && authorizationEnabled && !authorized,
-    messages,
+    messages
   };
 };
 

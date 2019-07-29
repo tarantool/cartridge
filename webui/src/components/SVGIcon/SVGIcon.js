@@ -11,7 +11,8 @@ export default function SVGIcon(props) {
     // eslint-disable-next-line jsx-a11y/alt-text
     <img
       {...props}
-      className={cn(className, 'SVGIcon')} />
+      className={cn(className, 'SVGIcon')}
+    />
   );
 }
 
@@ -22,7 +23,8 @@ export function createSVGIcon(defaultProps) {
       <SVGIcon
         {...defaultProps}
         {...props}
-        className={cn(className, defaultProps.className)} />
+        className={cn(className, defaultProps.className)}
+      />
     );
   }
   Icon.displayName = `SVGIcon-${defaultProps.displayName || defaultProps.alt}`;

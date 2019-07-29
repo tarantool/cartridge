@@ -80,12 +80,12 @@ const prepareColumnProps = ({
             </div>
           </div>
         );
-      },
+      }
     },
     {
       key: 'uuid',
       title: 'UUID',
-      width: '210px',
+      width: '210px'
     },
     {
       key: 'status',
@@ -98,11 +98,11 @@ const prepareColumnProps = ({
       key: 'replicaset.uuid',
       title: 'Replicaset UUID',
       renderText: record => record.replicaset ? record.replicaset.uuid : null,
-      width: '210px',
+      width: '210px'
     },
     {
       key: 'message',
-      title: 'Message',
+      title: 'Message'
     },
     {
       key: 'stat',
@@ -126,7 +126,7 @@ const prepareColumnProps = ({
             </div>
           </React.Fragment>
         );
-      },
+      }
     },
     {
       key: 'action',
@@ -143,16 +143,15 @@ const prepareColumnProps = ({
         />
       ),
       align: linked ? 'right' : 'left',
-      width: linked ? '200px' : '135px',
-    },
+      width: linked ? '200px' : '135px'
+    }
   ];
 
   const removedColumns = ['uuid', 'replicaset.uuid', 'message'];
 
   if (linked === false) {
     removedColumns.push('stat');
-  }
-  else if (linked === true) {
+  } else if (linked === true) {
     removedColumns.push('status', 'message');
   }
 
@@ -182,7 +181,7 @@ type ServerListProps = {
 
 class ServerList extends React.PureComponent<ServerListProps> {
   static defaultProps = {
-    linked: null,
+    linked: null
   };
 
   render() {

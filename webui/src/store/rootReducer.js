@@ -22,7 +22,7 @@ const rootReducer = combineReducers({
   clusterPage: clusterPageReducer,
   clusterInstancePage: clusterInstancePageReducer,
   users: usersReducer,
-  ui,
+  ui
 });
 
 export default rootReducer;

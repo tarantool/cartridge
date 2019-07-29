@@ -39,7 +39,7 @@ import {
   CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST,
   CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_SUCCESS,
   CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_ERROR,
-  CLUSTER_PAGE_STATE_RESET,
+  CLUSTER_PAGE_STATE_RESET
 } from 'src/store/actionTypes';
 import {
   baseReducer,
@@ -114,7 +114,7 @@ export const initialState: ClusterPageState = {
   applyTestConfigRequestStatus: getInitialRequestStatus(),
   applyTestConfigResponse: null,
   changeFailoverRequestStatus: getInitialRequestStatus(),
-  changeFailoverResponse: null,
+  changeFailoverResponse: null
 };
 
 const pageMountReducer = getPageMountReducer(CLUSTER_PAGE_DID_MOUNT);
@@ -226,31 +226,31 @@ export const reducer = baseReducer(
         return {
           ...state,
           selectedServerUri: action.payload.selectedServerUri || null,
-          selectedReplicasetUuid: action.payload.selectedReplicasetUuid || null,
+          selectedReplicasetUuid: action.payload.selectedReplicasetUuid || null
         };
 
       case CLUSTER_PAGE_SERVER_LIST_ROW_SELECT:
         return {
           ...state,
-          selectedServerUri: action.payload.uri,
+          selectedServerUri: action.payload.uri
         };
 
       case CLUSTER_PAGE_SERVER_POPUP_CLOSE:
         return {
           ...state,
-          selectedServerUri: null,
+          selectedServerUri: null
         };
 
       case CLUSTER_PAGE_REPLICASET_LIST_ROW_SELECT:
         return {
           ...state,
-          selectedReplicasetUuid: action.payload.uuid,
+          selectedReplicasetUuid: action.payload.uuid
         };
 
       case CLUSTER_PAGE_REPLICASET_POPUP_CLOSE:
         return {
           ...state,
-          selectedReplicasetUuid: null,
+          selectedReplicasetUuid: null
         };
 
       default:

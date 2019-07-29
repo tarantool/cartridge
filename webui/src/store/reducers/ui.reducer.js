@@ -33,7 +33,7 @@ import {
   USER_LIST_REQUEST,
   USER_ADD_REQUEST,
   USER_REMOVE_REQUEST,
-  USER_EDIT_REQUEST,
+  USER_EDIT_REQUEST
 } from '../actionTypes';
 
 export type UIState = {
@@ -63,7 +63,7 @@ const initialState: UIState = {
   requestinFailover: false,
   fetchingAuth: false,
   fetchingUserList: false,
-  fetchingUserMutation: false,
+  fetchingUserMutation: false
 };
 
 export const reducer = (state: UIState = initialState, { type, payload }: FSA): UIState => {
@@ -71,21 +71,21 @@ export const reducer = (state: UIState = initialState, { type, payload }: FSA): 
     case SET_BOOSTRAP_VSHARD_MODAL_VISIBLE: {
       return {
         ...state,
-        showBootstrapModal: payload,
+        showBootstrapModal: payload
       }
     }
 
     case SET_FAILOVER_MODAL_VISIBLE: {
       return {
         ...state,
-        showFailoverModal: payload,
+        showFailoverModal: payload
       }
     }
 
     case CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST: {
       return {
         ...state,
-        showFailoverModal: false,
+        showFailoverModal: false
       }
     }
 
@@ -93,21 +93,21 @@ export const reducer = (state: UIState = initialState, { type, payload }: FSA): 
       return {
         ...state,
         showBootstrapModal: false,
-        requestingBootstrapVshard: true,
+        requestingBootstrapVshard: true
       }
     }
 
     case CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST_ERROR: {
       return {
         ...state,
-        requestingBootstrapVshard: false,
+        requestingBootstrapVshard: false
       }
     }
 
     case CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST_SUCCESS: {
       return {
         ...state,
-        requestingBootstrapVshard: false,
+        requestingBootstrapVshard: false
       }
     }
 
