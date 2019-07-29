@@ -20,15 +20,12 @@ import FailoverButton from './child/FailoverButton';
 import AuthToggleButton from 'src/components/AuthToggleButton';
 import type { AppState } from 'src/store/reducers/ui.reducer';
 import type {
-  CreateReplicasetMutationVariables,
   Label,
   Replicaset,
   Server
 } from 'src/generated/graphql-typing.js';
 import type { RequestStatusType } from 'src/store/commonTypes';
 import type {
-  CreateReplicasetActionCreator,
-  EditReplicasetActionCreator,
   JoinServerActionCreator,
   PageDidMountActionCreator,
   ProbeServerActionCreator,
@@ -89,9 +86,7 @@ export type ClusterProps = {
   bootstrapVshard: () => void,
   probeServer: ProbeServerActionCreator,
   joinServer: JoinServerActionCreator,
-  createReplicaset: CreateReplicasetActionCreator,
   expelServer: (s: Server) => void,
-  editReplicaset: EditReplicasetActionCreator,
   uploadConfig: UploadConfigActionCreator,
   applyTestConfig: (p: {
     uri: ?string
@@ -111,11 +106,6 @@ export type ClusterState = {
   createReplicasetModalDataSource: ?Server,
   expelServerConfirmVisible: boolean,
   expelServerConfirmDataSource: ?Server,
-};
-
-type ReplicasetFormData = {
-  ...$Exact<Replicaset>,
-  weight: string
 };
 
 class Cluster extends React.Component<ClusterProps, ClusterState> {
@@ -355,8 +345,8 @@ class Cluster extends React.Component<ClusterProps, ClusterState> {
     return (
       <ReplicasetEditModal
         shouldCreateReplicaset
-        onSubmit={this.handleCreateReplicasetSubmitRequest}
         onRequestClose={this.handleCreateReplicasetModalCloseRequest}
+        createReplicasetModalDataSource={this.state.createReplicasetModalDataSource}
       />
     );
   };
@@ -388,7 +378,6 @@ class Cluster extends React.Component<ClusterProps, ClusterState> {
         isLoading={pageDataLoading}
         replicasetNotFound={replicasetNotFound}
         replicaset={replicaset}
-        onSubmit={this.handleEditReplicasetSubmitRequest}
         onRequestClose={this.handleEditReplicasetModalCloseRequest}
       />
     );
@@ -491,22 +480,6 @@ class Cluster extends React.Component<ClusterProps, ClusterState> {
     });
   };
 
-  handleCreateReplicasetSubmitRequest = (replicaset: CreateReplicasetMutationVariables) => {
-    const { createReplicaset } = this.props;
-    const { createReplicasetModalDataSource } = this.state;
-    this.setState(
-      {
-        createReplicasetModalVisible: false,
-        createReplicasetModalDataSource: null
-      },
-      () => createReplicaset({
-        ...createReplicasetModalDataSource,
-        roles: replicaset.roles,
-        vshard_group: replicaset.vshard_group
-      }),
-    );
-  };
-
   handleExpelServerRequest = (server: Server) => {
     this.setState({
       expelServerConfirmVisible: true,
@@ -548,25 +521,6 @@ class Cluster extends React.Component<ClusterProps, ClusterState> {
     const { history, location } = this.props;
     history.push({
       search: addSearchParams(location.search, { r: null })
-    });
-  };
-
-  handleEditReplicasetSubmitRequest = (replicaset: ReplicasetFormData) => {
-    const { editReplicaset, history, location } = this.props;
-    history.push({
-      search: addSearchParams(location.search, { r: null })
-    });
-
-    const master = replicaset.servers.length > 2
-      ? replicaset.servers.map(i => i.uuid)
-      : [replicaset.master.uuid];
-
-    editReplicaset({
-      uuid: replicaset.uuid,
-      roles: replicaset.roles,
-      vshard_group: replicaset.vshard_group,
-      master,
-      weight: replicaset.weight == null || replicaset.weight.trim() === '' ? null : Number(replicaset.weight)
     });
   };
 

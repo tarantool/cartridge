@@ -10,7 +10,6 @@ import {
   joinSingleServerMutation,
   listQuery,
   listQueryWithoutStat,
-  pageQuery,
   probeMutation,
   serverStatQuery
 } from './queries.graphql';
@@ -26,7 +25,7 @@ const filterServerStat = response => {
 };
 
 export function getPageData() {
-  return graphql.fetch(pageQuery)
+  return graphql.fetch(listQuery)
     .then(filterServerStat);
 }
 

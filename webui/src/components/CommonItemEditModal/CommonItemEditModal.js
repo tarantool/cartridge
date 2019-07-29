@@ -277,10 +277,18 @@ class CommonItemEditModal extends React.PureComponent {
   };
 
   handleOptionGroupChange = event => {
-    const { formData } = this.state;
     const { target } = event;
 
-    this.setState({ formData: { ...formData, [target.name]: target.value } });
+    const currentField = pickByField(this.props.fields, target.name);
+    const handler = currentField.stateModifier ? currentField.stateModifier : (_, state) => state;
+
+    this.setState(prevState => {
+      const { formData } = this.state;
+
+      return {
+        formData: handler(formData, { ...formData, [target.name]: target.value })
+      };
+    });
   };
 
   handleSubmitClick = event => {

@@ -5,8 +5,18 @@ import { defaultMemoize } from 'reselect';
 import { css } from 'react-emotion';
 import { DEFAULT_VSHARD_GROUP_NAME, VSHARD_STORAGE_ROLE_NAME } from 'src/constants';
 import CommonItemEditModal from 'src/components/CommonItemEditModal';
-import type { Replicaset, Role, VshardGroup } from 'src/generated/graphql-typing';
-import './ReplicasetEditModal.css';
+import type {
+  CreateReplicasetMutationVariables,
+  MutationEdit_ReplicasetArgs,
+  Replicaset,
+  Role,
+  Server,
+  VshardGroup
+} from 'src/generated/graphql-typing';
+import type {
+  CreateReplicasetActionCreator,
+  EditReplicasetActionCreator
+} from 'src/store/actions/clusterPage.actions';
 
 const styles = {
   uriLabel: css`
@@ -35,6 +45,13 @@ const styles = {
   `
 };
 
+type ReplicasetEditFormData = {
+  ...$Exact<MutationEdit_ReplicasetArgs>,
+  master: string,
+  servers: Server[],
+  weight: ?string
+};
+
 /**
  * @param {Object} formData
  * @param {Object} replicaset
@@ -54,20 +71,14 @@ const isStorageWeightInputValueValid = (formData: Replicaset): boolean => {
   return number >= 0 && number < Infinity;
 };
 
-const renderSelectOptions = record => record.servers.map(server => ({
+const renderOptions = (record: ReplicasetEditFormData) => record.servers.map(server => ({
   key: server.uuid,
-  label: <span className={styles.serverLabel}>
-    {server.alias || 'No alias'}{' '}
-    <span className={styles.uriLabel}>{server.uri}</span>
-  </span>
-}));
-
-const renderDraggableListOptions = record => record.servers.map(server => ({
-  key: server.uuid,
-  label: <span className={styles.serverLabel}>
-    {server.alias || 'No alias'}{' '}
-    <span className={styles.uriLabel}>{server.uri}</span>
-  </span>
+  label: (
+    <span className={styles.serverLabel}>
+      {server.alias || 'No alias'}{' '}
+      <span className={styles.uriLabel}>{server.uri}</span>
+    </span>
+  )
 }));
 
 const getRolesDependencies = (activeRoles, rolesOptions) => {
@@ -212,13 +223,13 @@ const prepareFields = (roles: Role[], replicaset: ?Replicaset, vshardGroups: ?Vs
       key: 'master',
       title: shallRenderDraggableList ? 'Priority' : 'Master',
       type: shallRenderDraggableList ? 'draggableList' : 'optionGroup',
-      options: shallRenderDraggableList ? renderDraggableListOptions : renderSelectOptions,
+      options: renderOptions,
       customProps: draggableListCustomProps
     }
   ];
 };
 
-const defaultDataSource =  {
+const defaultDataSource = {
   uuid: null,
   roles: [],
   weight: '',
@@ -235,6 +246,7 @@ const prepareDataSource = replicaset => {
 };
 
 type ReplicasetEditModalProps = {
+  createReplicasetModalDataSource: ?Server,
   isLoading?: boolean,
   isSaving?: boolean,
   replicasetNotFound?: boolean,
@@ -243,8 +255,9 @@ type ReplicasetEditModalProps = {
   vshard_groups: ?VshardGroup[],
   replicaset: Replicaset,
   submitStatusMessage?: string,
-  onSubmit: () => void,
-  onRequestClose: () => void
+  onRequestClose: () => void,
+  createReplicaset: CreateReplicasetActionCreator,
+  editReplicaset: EditReplicasetActionCreator
 };
 
 class ReplicasetEditModal extends React.PureComponent<ReplicasetEditModalProps> {
@@ -257,7 +270,11 @@ class ReplicasetEditModal extends React.PureComponent<ReplicasetEditModalProps> 
 
   render() {
     const {
-      isLoading, isSaving, replicasetNotFound, shouldCreateReplicaset, submitStatusMessage, onSubmit,
+      isLoading,
+      isSaving,
+      replicasetNotFound,
+      shouldCreateReplicaset,
+      submitStatusMessage,
       onRequestClose
     } = this.props;
 
@@ -277,18 +294,66 @@ class ReplicasetEditModal extends React.PureComponent<ReplicasetEditModalProps> 
         dataSource={dataSource}
         isFormReadyToSubmit={this.isFormReadyToSubmit}
         submitStatusMessage={submitStatusMessage}
-        onSubmit={onSubmit}
+        onSubmit={shouldCreateReplicaset ? this.handleCreateReplicasetSubmit : this.handleEditReplicasetSubmit}
         onRequestClose={onRequestClose}
       />
     );
   }
+
+  handleCreateReplicasetSubmit = (replicaset: CreateReplicasetMutationVariables) => {
+    const {
+      createReplicaset,
+      createReplicasetModalDataSource,
+      onRequestClose
+    } = this.props;
+
+    createReplicaset({
+      ...createReplicasetModalDataSource,
+      roles: replicaset.roles,
+      vshard_group: replicaset.vshard_group
+    });
+
+    onRequestClose();
+  };
+
+  handleEditReplicasetSubmit = ({
+    uuid,
+    roles,
+    vshard_group,
+    servers,
+    weight,
+    master,
+    ...formData
+  }:
+ReplicasetEditFormData) => { // TODO: fix eslint issue https://github.com/babel/babel-eslint/issues/513
+    const { editReplicaset, onRequestClose } = this.props;
+    let mastersPriorityList: ?string[];
+
+    if (servers.length === 2) {
+      const secondaryMaster = servers
+        .map(({ uuid }) => uuid)
+        .find(uuid => uuid !== master);
+      mastersPriorityList = [master, ...(secondaryMaster ? [secondaryMaster] : [])]
+    } else {
+      mastersPriorityList = servers.map(({ uuid }) => uuid);
+    }
+
+    onRequestClose();
+
+    editReplicaset({
+      uuid,
+      roles,
+      vshard_group,
+      master: mastersPriorityList,
+      weight: weight == null || weight.trim() === '' ? null : Number(weight)
+    });
+  };
 
   isVShardGroupsImplemented = () => {
     const { vshard_groups } = this.props;
     return vshard_groups && vshard_groups.length &&
       (vshard_groups.length > 1 || vshard_groups[0].name !== DEFAULT_VSHARD_GROUP_NAME);
   }
-
 
   isFormReadyToSubmit = (formData: Replicaset): boolean => {
     const isWeightValid = isStorageWeightInputDisabled(formData) || isStorageWeightInputValueValid(formData);
