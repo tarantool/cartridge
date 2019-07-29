@@ -16,7 +16,7 @@ class ServerListInstanceDetailsBtn extends React.PureComponent {
   static propTypes = {
     instanceUUID: PropTypes.string,
     onExpel: PropTypes.func,
-    className: PropTypes.string,
+    className: PropTypes.string
   };
 
   render() {

@@ -14,7 +14,7 @@ import { addSearchParams, getSearchParams } from 'src/misc/url';
 import ClusterConfigManagement from 'src/components/ClusterConfigManagement';
 import PageSectionHead from 'src/components/PageSectionHead';
 import './Cluster.css';
-import BootstrapPanel from "src/components/BootstrapPanel";
+import BootstrapPanel from 'src/components/BootstrapPanel';
 import Button from 'src/components/Button';
 import FailoverButton from './child/FailoverButton';
 import AuthToggleButton from 'src/components/AuthToggleButton';
@@ -62,14 +62,6 @@ const styles = {
     }
   `
 };
-
-/*
-  [Probe server]                         => renderProbeServerModal         => ServerEditModal (create: set uri, skip replicaset)
-  ServerList > [Join]                    => renderJoinServerModal          => ServerEditModal (edit: skip uri, set replicaset)
-  ServerList > [Create]                  => renderCreateReplicasetModal    => ReplicasetEditModal (create: set roles)
-  ReplicasetList > ServerList > [Expel]  => renderExpelServerConfirmModal  => confirmation
-  ReplicasetList > [Edit]                => renderEditReplicasetModal      => ReplicasetEditModal (edit: set roles)
- */
 
 export type ClusterProps = {
   clusterSelf: $PropertyType<AppState, 'clusterSelf'>,
@@ -137,14 +129,14 @@ class Cluster extends React.Component<ClusterProps, ClusterState> {
       createReplicasetModalVisible: false,
       createReplicasetModalDataSource: null,
       expelServerConfirmVisible: false,
-      expelServerConfirmDataSource: null,
+      expelServerConfirmDataSource: null
     };
   }
 
   componentDidMount() {
     const {
       pageDidMount,
-      location,
+      location
     } = this.props;
 
     const selectedServerUri = getSearchParams(location.search).s || null;
@@ -187,7 +179,7 @@ class Cluster extends React.Component<ClusterProps, ClusterState> {
     const {
       probeServerModalVisible,
       createReplicasetModalVisible,
-      expelServerConfirmVisible,
+      expelServerConfirmVisible
     } = this.state;
 
     const joinServerModalVisible = !!selectedServerUri;
@@ -231,7 +223,8 @@ class Cluster extends React.Component<ClusterProps, ClusterState> {
                       dataSource={unlinkedServers}
                       joinServer={this.handleJoinServerRequest}
                       expelServer={this.handleExpelServerRequest}
-                      createReplicaset={this.handleCreateReplicasetRequest} />
+                      createReplicaset={this.handleCreateReplicasetRequest}
+                    />
                   </div>
                 </div>
               )
@@ -258,7 +251,7 @@ class Cluster extends React.Component<ClusterProps, ClusterState> {
                       <div className={styles.clusterFilter}>
                         <Input
                           prefix={<Icon type="search" />}
-                          type={"text"}
+                          type={'text'}
                           placeholder={'Filter by uri, uuid, role, alias or labels'}
                           value={filter}
                           onChange={this.handleFilterChange}
@@ -289,10 +282,13 @@ class Cluster extends React.Component<ClusterProps, ClusterState> {
               : null
             }
 
-            {isBootstrap && <ClusterConfigManagement
-              uploadConfig={this.uploadConfig}
-              canTestConfigBeApplied={false}
-              applyTestConfig={this.applyTestConfig} />}
+            {isBootstrap && (
+              <ClusterConfigManagement
+                uploadConfig={this.uploadConfig}
+                canTestConfigBeApplied={false}
+                applyTestConfig={this.applyTestConfig}
+              />
+            )}
           </div>
         </div>
       </React.Fragment>
@@ -331,7 +327,8 @@ class Cluster extends React.Component<ClusterProps, ClusterState> {
       <ServerEditModal
         shouldCreateServer
         onSubmit={this.handleProbeServerSubmitRequest}
-        onRequestClose={this.handleProbeServerModalCloseRequest} />
+        onRequestClose={this.handleProbeServerModalCloseRequest}
+      />
     );
   };
 
@@ -349,7 +346,8 @@ class Cluster extends React.Component<ClusterProps, ClusterState> {
         server={server}
         replicasetList={replicasetList}
         onSubmit={this.handleJoinServerSubmitRequest}
-        onRequestClose={this.handleJoinServerModalCloseRequest} />
+        onRequestClose={this.handleJoinServerModalCloseRequest}
+      />
     );
   };
 
@@ -358,7 +356,8 @@ class Cluster extends React.Component<ClusterProps, ClusterState> {
       <ReplicasetEditModal
         shouldCreateReplicaset
         onSubmit={this.handleCreateReplicasetSubmitRequest}
-        onRequestClose={this.handleCreateReplicasetModalCloseRequest} />
+        onRequestClose={this.handleCreateReplicasetModalCloseRequest}
+      />
     );
   };
 
@@ -390,7 +389,8 @@ class Cluster extends React.Component<ClusterProps, ClusterState> {
         replicasetNotFound={replicasetNotFound}
         replicaset={replicaset}
         onSubmit={this.handleEditReplicasetSubmitRequest}
-        onRequestClose={this.handleEditReplicasetModalCloseRequest} />
+        onRequestClose={this.handleEditReplicasetModalCloseRequest}
+      />
     );
   };
 
@@ -449,7 +449,7 @@ class Cluster extends React.Component<ClusterProps, ClusterState> {
     const { probeServer } = this.props;
     this.setState(
       {
-        probeServerModalVisible: false,
+        probeServerModalVisible: false
       },
       () => probeServer(server.uri),
     );
@@ -458,21 +458,21 @@ class Cluster extends React.Component<ClusterProps, ClusterState> {
   handleJoinServerRequest = (server: Server) => {
     const { history, location } = this.props;
     history.push({
-      search: addSearchParams(location.search, { s: server.uri }),
+      search: addSearchParams(location.search, { s: server.uri })
     });
   };
 
   handleJoinServerModalCloseRequest = () => {
     const { history, location } = this.props;
     history.push({
-      search: addSearchParams(location.search, { s: null }),
+      search: addSearchParams(location.search, { s: null })
     });
   };
 
   handleJoinServerSubmitRequest = (data: { uri: string, replicasetUuid: string}) => {
     const { joinServer, history, location } = this.props;
     history.push({
-      search: addSearchParams(location.search, { s: null }),
+      search: addSearchParams(location.search, { s: null })
     });
     joinServer(data.uri, data.replicasetUuid);
   };
@@ -480,14 +480,14 @@ class Cluster extends React.Component<ClusterProps, ClusterState> {
   handleCreateReplicasetRequest = (server: Server) => {
     this.setState({
       createReplicasetModalVisible: true,
-      createReplicasetModalDataSource: server,
+      createReplicasetModalDataSource: server
     });
   };
 
   handleCreateReplicasetModalCloseRequest = () => {
     this.setState({
       createReplicasetModalVisible: false,
-      createReplicasetModalDataSource: null,
+      createReplicasetModalDataSource: null
     });
   };
 
@@ -497,7 +497,7 @@ class Cluster extends React.Component<ClusterProps, ClusterState> {
     this.setState(
       {
         createReplicasetModalVisible: false,
-        createReplicasetModalDataSource: null,
+        createReplicasetModalDataSource: null
       },
       () => createReplicaset({
         ...createReplicasetModalDataSource,
@@ -510,14 +510,14 @@ class Cluster extends React.Component<ClusterProps, ClusterState> {
   handleExpelServerRequest = (server: Server) => {
     this.setState({
       expelServerConfirmVisible: true,
-      expelServerConfirmDataSource: server,
+      expelServerConfirmDataSource: server
     });
   };
 
   handleExpelServerConfirmCloseRequest = () => {
     this.setState({
       expelServerConfirmVisible: false,
-      expelServerConfirmDataSource: null,
+      expelServerConfirmDataSource: null
     });
   };
 
@@ -527,7 +527,7 @@ class Cluster extends React.Component<ClusterProps, ClusterState> {
     this.setState(
       {
         expelServerConfirmVisible: false,
-        expelServerConfirmDataSource: null,
+        expelServerConfirmDataSource: null
       },
       () => {
         if (expelServerConfirmDataSource) {
@@ -540,21 +540,21 @@ class Cluster extends React.Component<ClusterProps, ClusterState> {
   handleEditReplicasetRequest = (replicaset: Replicaset) => {
     const { history, location } = this.props;
     history.push({
-      search: addSearchParams(location.search, { r: replicaset.uuid }),
+      search: addSearchParams(location.search, { r: replicaset.uuid })
     });
   };
 
   handleEditReplicasetModalCloseRequest = () => {
     const { history, location } = this.props;
     history.push({
-      search: addSearchParams(location.search, { r: null }),
+      search: addSearchParams(location.search, { r: null })
     });
   };
 
   handleEditReplicasetSubmitRequest = (replicaset: ReplicasetFormData) => {
     const { editReplicaset, history, location } = this.props;
     history.push({
-      search: addSearchParams(location.search, { r: null }),
+      search: addSearchParams(location.search, { r: null })
     });
 
     const master = replicaset.servers.length > 2
@@ -566,7 +566,7 @@ class Cluster extends React.Component<ClusterProps, ClusterState> {
       roles: replicaset.roles,
       vshard_group: replicaset.vshard_group,
       master,
-      weight: replicaset.weight == null || replicaset.weight.trim() === '' ? null : Number(replicaset.weight),
+      weight: replicaset.weight == null || replicaset.weight.trim() === '' ? null : Number(replicaset.weight)
     });
   };
 

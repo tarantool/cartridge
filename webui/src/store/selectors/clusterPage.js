@@ -14,13 +14,13 @@ const prepareReplicasetList = (
 
     return {
       ...server,
-      statistics: stat ? stat.statistics : null,
+      statistics: stat ? stat.statistics : null
     };
   });
 
   return {
     ...replicaset,
-    servers,
+    servers
   };
 });
 
@@ -55,35 +55,35 @@ type SearchableReplicaset = {
 export const selectSearchableReplicasetList: (s: State) => SearchableReplicaset[] = createSelector(
   selectReplicasetListWithStat,
   (replicasetList: Replicaset[]): SearchableReplicaset[] => {
-  return replicasetList.map(({ servers, ...replicaSet }) => {
-    let replicaSetSearchIndex = [...(replicaSet.roles || [])];
+    return replicasetList.map(({ servers, ...replicaSet }) => {
+      let replicaSetSearchIndex = [...(replicaSet.roles || [])];
 
-    const searchableServers: SearchableServer[] = servers.map (server  => {
-      const serverSearchIndex = [server.uri, (server.alias || '')];
+      const searchableServers: SearchableServer[] = servers.map (server  => {
+        const serverSearchIndex = [server.uri, (server.alias || '')];
 
-      (server.labels || []).forEach(label => {
-        if (label) {
-          serverSearchIndex.push(`${label.name}:`, label.value);
-        }
+        (server.labels || []).forEach(label => {
+          if (label) {
+            serverSearchIndex.push(`${label.name}:`, label.value);
+          }
+        });
+
+        replicaSetSearchIndex.push(...serverSearchIndex);
+
+        const searchableServer: SearchableServer = {
+          ...server,
+          searchString: serverSearchIndex.join(' ').toLowerCase()
+        };
+
+        return searchableServer;
       });
 
-      replicaSetSearchIndex.push(...serverSearchIndex);
-
-      const searchableServer: SearchableServer = {
-        ...server,
-        searchString: serverSearchIndex.join(' ').toLowerCase()
+      return {
+        ...replicaSet,
+        searchString: replicaSetSearchIndex.join(' ').toLowerCase(),
+        servers: searchableServers
       };
-
-      return searchableServer;
     });
-
-    return {
-      ...replicaSet,
-      searchString: replicaSetSearchIndex.join(' ').toLowerCase(),
-      servers: searchableServers
-    };
   });
-});
 
 export const filterReplicasetList = (state: State): Replicaset[] => {
   const filterQuery = state.clusterPage.replicasetFilter;

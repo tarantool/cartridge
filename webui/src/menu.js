@@ -17,7 +17,7 @@ const menuItems = {
       selected: false,
       expanded: false,
       loading: false,
-      items: [],
+      items: []
     }
   },
   cluster(showUsers = false) {

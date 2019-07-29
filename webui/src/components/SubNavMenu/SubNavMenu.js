@@ -7,7 +7,7 @@ const styles = {
     padding: 0;
     margin: 0;
     list-style: none;
-  `,
+  `
 };
 
 const SubNavMenu = ({ className, children }) => (

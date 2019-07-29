@@ -6,7 +6,7 @@ export function getInitialRequestStatus() {
   return {
     loading: false,
     loaded: false,
-    error: null,
+    error: null
   };
 }
 
@@ -14,7 +14,7 @@ export function getLoadedRequestStatus() {
   return {
     loading: false,
     loaded: true,
-    error: null,
+    error: null
   };
 }
 
@@ -24,12 +24,12 @@ export function getActionCreator(ACTION, payloadInject, __payloadInject) {
       type: ACTION,
       payload: {
         ...(payloadInject || {}),
-        ...(payload || {}),
+        ...(payload || {})
       },
       __payload: {
         ...(__payloadInject || {}),
-        ...(_payload || {}),
-      },
+        ...(_payload || {})
+      }
     };
   };
 }
@@ -46,7 +46,7 @@ export function getReducer(ACTION, stateReducer) {
           ? stateReducer(state, action)
           : {
             ...state,
-            ...stateReducer,
+            ...stateReducer
           };
 
       default:
@@ -60,9 +60,9 @@ export function getPageMountReducer(PAGE_MOUNT) {
     switch (action.type) {
       case PAGE_MOUNT:
         return {
-            ...state,
-            pageMount: true,
-          };
+          ...state,
+          pageMount: true
+        };
 
       default:
         return state;
@@ -79,8 +79,8 @@ export function getRequestReducer(REQUEST, REQUEST_SUCCESS, REQUEST_ERROR, statu
           [statusKey]: {
             ...state[statusKey],
             loading: true,
-            error: null,
-          },
+            error: null
+          }
         };
 
       case REQUEST_SUCCESS:
@@ -90,8 +90,8 @@ export function getRequestReducer(REQUEST, REQUEST_SUCCESS, REQUEST_ERROR, statu
           [statusKey]: {
             ...state[statusKey],
             loading: false,
-            loaded: true,
-          },
+            loaded: true
+          }
         };
 
       case REQUEST_ERROR:
@@ -101,8 +101,8 @@ export function getRequestReducer(REQUEST, REQUEST_SUCCESS, REQUEST_ERROR, statu
             ...state[statusKey],
             loading: false,
             loaded: true,
-            error: action.error,
-          },
+            error: action.error
+          }
         };
 
       default:
@@ -129,8 +129,8 @@ const createSaga = (effect, SIGNAL, REQUEST, REQUEST_SUCCESS, REQUEST_ERROR, req
         __payload: {
           noIndicator,
           noErrorMessage,
-          successMessage,
-        } = {},
+          successMessage
+        } = {}
       } = action;
       const indicator = noIndicator ? null : pageRequestIndicator.run();
 
@@ -142,14 +142,20 @@ const createSaga = (effect, SIGNAL, REQUEST, REQUEST_SUCCESS, REQUEST_ERROR, req
       try {
         response = yield call(request, requestPayload);
         indicator && indicator.success();
-      }
-      catch (error) {
-        yield put({ type: REQUEST_ERROR, error, requestPayload, __errorMessage: ! noErrorMessage });
+      } catch (error) {
+        yield put({
+          type: REQUEST_ERROR,
+          error,
+          requestPayload,
+          __errorMessage: ! noErrorMessage
+        });
         indicator && indicator.error();
         return;
       }
 
-      yield put({ type: REQUEST_SUCCESS, payload: response, requestPayload, __successMessage: successMessage });
+      yield put({
+        type: REQUEST_SUCCESS, payload: response, requestPayload, __successMessage: successMessage
+      });
     });
   };
 };

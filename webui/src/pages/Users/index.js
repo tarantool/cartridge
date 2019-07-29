@@ -44,7 +44,7 @@ const mapStateToProps = ({
       implements_check_password,
       implements_list_users
     }
-  },
+  }
 }) => ({
   implements_add_user,
   implements_check_password,

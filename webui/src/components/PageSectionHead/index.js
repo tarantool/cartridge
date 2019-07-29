@@ -25,7 +25,7 @@ const styles = {
     :last-child{
       margin-right: 0px;
     }
-  `,
+  `
 };
 
 export const HeadButton = props => <Button {...props} size="large" />;
@@ -36,17 +36,17 @@ const PageSectionHead = ({
   thin,
   title
 }) => (
-    <div className={cx(styles.head, { [styles.headThin]: thin })}>
-      {!!title && <Title>{title}</Title>}
-      {!!buttons && (
-        <div className={styles.buttons}>
-          {buttons instanceof Array
-            ? buttons.map(button => button ? <div className={styles.button}>{button}</div> : null)
-            : <div className={styles.button}>{buttons}</div>}
-        </div>
-      )}
-      {children}
-    </div>
-  );
+  <div className={cx(styles.head, { [styles.headThin]: thin })}>
+    {!!title && <Title>{title}</Title>}
+    {!!buttons && (
+      <div className={styles.buttons}>
+        {buttons instanceof Array
+          ? buttons.map(button => button ? <div className={styles.button}>{button}</div> : null)
+          : <div className={styles.button}>{buttons}</div>}
+      </div>
+    )}
+    {children}
+  </div>
+);
 
 export default PageSectionHead;

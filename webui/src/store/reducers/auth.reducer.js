@@ -43,7 +43,7 @@ export function reducer(state = initialState, { type, payload, error }) {
       return {
         ...state,
         loading: true,
-        error: null,
+        error: null
       }
 
     case AUTH_LOG_IN_REQUEST_ERROR:

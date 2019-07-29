@@ -13,7 +13,7 @@ import {
 const styles = {
   clickableRow: css`
     cursor: pointer;
-  `,
+  `
 };
 
 class UsersTable extends React.Component {
@@ -71,7 +71,7 @@ class UsersTable extends React.Component {
       fetchingUserList,
       items,
       implements_edit_user,
-      implements_remove_user,
+      implements_remove_user
     } = this.props;
 
     return (
@@ -92,7 +92,7 @@ const mapStateToProps = ({
   app: {
     authParams: {
       implements_remove_user,
-      implements_edit_user,
+      implements_edit_user
     }
   },
   users: {
@@ -105,7 +105,7 @@ const mapStateToProps = ({
   fetchingUserList,
   items,
   implements_remove_user,
-  implements_edit_user,
+  implements_edit_user
 });
 
 const mapDispatchToProps = {

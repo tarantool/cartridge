@@ -50,24 +50,28 @@ class HeaderAuthControl extends React.Component {
         <span class={styles.userName}>{username}</span>
         {
           authorized
-            ? <Button
-              className={styles.button}
-              size="small"
-              shape="circle"
-              onClick={this.sendLogOut}
-              icon="logout"
-              title="Log out"
-            />
-            : <Button
-              className={styles.button}
-              size="small"
-              onClick={showAuthModal}
-              icon="user"
-              title="Log in"
-              text="Log in"
-            >
-              Log in
-            </Button>
+            ? (
+              <Button
+                className={styles.button}
+                size="small"
+                shape="circle"
+                onClick={this.sendLogOut}
+                icon="logout"
+                title="Log out"
+              />
+            )
+            : (
+              <Button
+                className={styles.button}
+                size="small"
+                onClick={showAuthModal}
+                icon="user"
+                title="Log in"
+                text="Log in"
+              >
+                Log in
+              </Button>
+            )
         }
         <ModalLogInForm
           visible={authModalVisible}

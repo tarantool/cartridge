@@ -11,7 +11,7 @@ class UserAddModal extends React.Component {
       addUserModalVisible,
       error,
       loading,
-      hideAddUserModal,
+      hideAddUserModal
     } = this.props;
 
     return (

@@ -11,10 +11,9 @@ const getRowStyle = column => {
     if (typeof column.width === 'string') {
       return {
         minWidth: column.width,
-        maxWidth: column.width,
+        maxWidth: column.width
       };
-    }
-    else {
+    } else {
       return {
         flex: column.width
       };
@@ -114,7 +113,7 @@ class CommonItemList extends React.PureComponent {
             ? record => {
               return [
                 this.renderRowHead(record),
-                this.renderRow(record, columns),
+                this.renderRow(record, columns)
               ];
             }
             : record => this.renderRow(record, columns)
@@ -186,16 +185,14 @@ class CommonItemList extends React.PureComponent {
     if (column.render) {
       const { dataSource } = this.props;
       content = column.render(record, dataSource);
-    }
-    else if (column.renderText) {
+    } else if (column.renderText) {
       const { dataSource } = this.props;
       content = (
         <div className="trTable-cellText">
           {column.renderText(record, dataSource)}
         </div>
       );
-    }
-    else {
+    } else {
       const value = record[column.key];
       content = (
         <div className="trTable-cellText">
@@ -240,8 +237,8 @@ CommonItemList.propTypes = {
     name: PropTypes.func,
     labels: PropTypes.arrayOf(PropTypes.shape({
       key: PropTypes.string.isRequired,
-      name: PropTypes.string.isRequired,
-    })),
+      name: PropTypes.string.isRequired
+    }))
   }),
   columns: PropTypes.arrayOf(PropTypes.shape({
     key: PropTypes.string.isRequired,
@@ -251,17 +248,17 @@ CommonItemList.propTypes = {
     width: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     defaultValue: PropTypes.string,
     renderText: PropTypes.func,
-    render: PropTypes.func,
+    render: PropTypes.func
   })),
   isLoading: PropTypes.bool,
   dataSource: PropTypes.arrayOf(PropTypes.object),
-  dispatch: PropTypes.func,
+  dispatch: PropTypes.func
 };
 
 CommonItemList.defaultProps = {
   shouldRenderHead: true,
   shouldRenderRowHeads: false,
-  isLoading: false,
+  isLoading: false
 };
 
 export default CommonItemList;

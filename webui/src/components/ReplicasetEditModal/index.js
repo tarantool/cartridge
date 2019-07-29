@@ -8,8 +8,8 @@ const mapStateToProps = state => {
       clusterSelf: {
         knownRoles,
         vshard_groups
-      },
-    },
+      }
+    }
   } = state;
 
   return {

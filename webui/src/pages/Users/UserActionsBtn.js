@@ -15,7 +15,7 @@ class UserActionsBtn extends React.PureComponent {
     className: PropTypes.string,
     allowEditing: PropTypes.bool,
     allowRemoving: PropTypes.bool,
-    username: PropTypes.string,
+    username: PropTypes.string
   };
 
   handleEditUser = e => {
@@ -37,12 +37,22 @@ class UserActionsBtn extends React.PureComponent {
       <Menu>
         {allowEditing && <Menu.Item onClick={this.handleEditUser}>Edit</Menu.Item>}
         {allowEditing && allowRemoving && <Menu.Divider />}
-        {allowRemoving && <Menu.Item onClick={this.handleRemoveUser} className={styles.menuItemDanger}>Remove</Menu.Item>}
+        {allowRemoving && (
+          <Menu.Item
+            onClick={this.handleRemoveUser}
+            className={styles.menuItemDanger}
+          >Remove</Menu.Item>
+        )}
       </Menu>
     );
 
     return (
-      <Dropdown overlay={menu} trigger='click' placement="bottomRight" onClick={this.stopPropagation}>
+      <Dropdown
+        overlay={menu}
+        trigger='click'
+        placement="bottomRight"
+        onClick={this.stopPropagation}
+      >
         <Button
           className={className}
           icon="ellipsis"

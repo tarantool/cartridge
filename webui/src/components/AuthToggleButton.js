@@ -37,7 +37,7 @@ const mapStateToProps = ({
     }
   },
   auth: {
-    authorizationEnabled,
+    authorizationEnabled
   },
   ui: {
     fetchingAuth

@@ -1,5 +1,5 @@
-import React from "react";
-import PropTypes from "prop-types";
+import React from 'react';
+import PropTypes from 'prop-types';
 import { css, cx } from 'emotion';
 
 const styles = {
@@ -83,11 +83,11 @@ const styles = {
 
 export default class Spin extends React.Component {
   static propTypes = {
-    enable: PropTypes.bool,
+    enable: PropTypes.bool
   };
 
   static defaultProps = {
-    enable: false,
+    enable: false
   };
 
   render() {

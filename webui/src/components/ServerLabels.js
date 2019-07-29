@@ -30,7 +30,7 @@ export type ServerLabelsProps = {
 
 const ServerLabels = ({ className, labels, onLabelClick }: ServerLabelsProps) => (
   <div className={styles.wrapper}>
-    {(labels || []).map(({ name, value}) => (
+    {(labels || []).map(({ name, value }) => (
       <Tag
         color="darkgray"
         className={styles.tag}

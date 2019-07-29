@@ -11,7 +11,12 @@ const sagaMiddleware = createSagaMiddleware();
 const loggerMiddleware = createLoggerMiddleware({ collapsed: true });
 
 export default function configureStore(initialState) {
-  const store = createStore(rootReducer, initialState, composeEnhancers(applyMiddleware(sagaMiddleware, loggerMiddleware)));
+  const store = createStore(
+    rootReducer,
+    initialState,
+    composeEnhancers(applyMiddleware(sagaMiddleware, loggerMiddleware))
+  );
+
   sagaMiddleware.run(rootSaga);
   return store;
 }

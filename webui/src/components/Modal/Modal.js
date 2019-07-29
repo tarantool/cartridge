@@ -1,7 +1,7 @@
 import Modal from 'antd/lib/modal'
 import * as React from 'react'
-import {css} from 'emotion'
-import {Title} from '../styled'
+import { css } from 'emotion'
+import { Title } from '../styled'
 import Button from 'src/components/Button'
 
 const styles = {
@@ -13,19 +13,21 @@ const styles = {
       background: #ECECEC;
     }
     
-  `,
+  `
 };
 
 const defaultOption = {
-  wrapClassName: styles.modal,
+  wrapClassName: styles.modal
 };
 
-export default (props) => {
+export default props => {
   let title = props.title;
   if (typeof title === 'string')
     title = <Title>{title}</Title>;
 
-  const {okText, okType, onOk, onCancel, cancelText, confirmLoading} = props;
+  const {
+    okText, okType, onOk, onCancel, cancelText, confirmLoading
+  } = props;
 
   const footer = [
     <Button key="back" onClick={onCancel}>
@@ -33,8 +35,8 @@ export default (props) => {
     </Button>,
     <Button key="submit" type={okType || 'primary'} loading={confirmLoading} onClick={onOk}>
       {okText || 'Ok'}
-    </Button>,
+    </Button>
   ]
 
-  return <Modal footer={footer} {...{...defaultOption, ...props}} title={title} />;
+  return <Modal footer={footer} {...{ ...defaultOption, ...props }} title={title} />;
 };

@@ -2,7 +2,7 @@ import {
   AUTH_TURN_REQUEST,
   AUTH_LOG_IN_REQUEST,
   AUTH_LOG_OUT_REQUEST,
-  SET_AUTH_MODAL_VISIBLE,
+  SET_AUTH_MODAL_VISIBLE
 } from 'src/store/actionTypes';
 import { getActionCreator } from 'src/store/commonRequest';
 

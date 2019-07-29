@@ -20,7 +20,7 @@ class CodeMirror extends React.Component {
         options={{
           mode,
           theme: 'neo',
-          readOnly,
+          readOnly
         }}
         onChange={onChange}
       />
@@ -32,13 +32,13 @@ CodeMirror.propTypes = {
   value: PropTypes.string,
   mode: PropTypes.string,
   readOnly: PropTypes.bool,
-  onChange: PropTypes.func,
+  onChange: PropTypes.func
 };
 
 CodeMirror.defaultProps = {
   value: '',
   mode: 'xml',
-  readOnly: false,
+  readOnly: false
 };
 
 export default CodeMirror;

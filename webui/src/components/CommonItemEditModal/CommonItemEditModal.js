@@ -2,12 +2,12 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import { defaultMemoize } from 'reselect';
 import ReactDragListView from 'react-drag-listview';
-import { Form, Row, Table } from "antd";
+import { Form, Row, Table } from 'antd';
 import Modal from 'src/components/Modal';
 import Button from 'src/components/Button';
 import Checkbox from '../Checkbox';
 import Input from '../Input';
-import Radio from "../Radio";
+import Radio from '../Radio';
 
 const formItemLayout = {
   labelCol: {
@@ -19,14 +19,14 @@ const formItemLayout = {
 };
 
 const normalizeProp = (prop, dataSource) => typeof prop === 'function' ? prop(dataSource) : prop;
-const pickByField = (fields, name) => fields.find(({key}) => key === name);
+const pickByField = (fields, name) => fields.find(({ key }) => key === name);
 
 const prepareFields = (shouldCreateItem, fields, formData) => fields
   .map(field => {
     const { customProps = {}, ...other } = field;
     return {
       ...other,
-      ...(shouldCreateItem ? customProps.create : customProps.edit),
+      ...(shouldCreateItem ? customProps.create : customProps.edit)
     };
   })
   .map(field => {
@@ -36,7 +36,7 @@ const prepareFields = (shouldCreateItem, fields, formData) => fields
       options: normalizeProp(field.options, formData),
       disabled: normalizeProp(field.disabled, formData),
       title: normalizeProp(field.title, formData),
-      helpText: normalizeProp(field.helpText, formData),
+      helpText: normalizeProp(field.helpText, formData)
     };
   })
   .filter(field => ! field.hidden);
@@ -44,7 +44,7 @@ const prepareFields = (shouldCreateItem, fields, formData) => fields
 class CommonItemEditModal extends React.PureComponent {
   state = {
     formData: null,
-    controlled: false,
+    controlled: false
   };
 
   constructor(props) {
@@ -111,7 +111,12 @@ class CommonItemEditModal extends React.PureComponent {
               key={field.key}
               label={!hideLabels && field.title}
               labelAlign="left"
-              validateStatus={!!field.invalidFeedback && !!field.invalid && field.invalid(this.state.formData) && 'error'}
+              validateStatus={
+                !!field.invalidFeedback
+                  && !!field.invalid
+                  && field.invalid(this.state.formData)
+                  && 'error'
+              }
               help={field.invalidFeedback || field.helpText}
               {...!hideLabels && formItemLayout}
             >
@@ -171,11 +176,11 @@ class CommonItemEditModal extends React.PureComponent {
         const data = [...this.state.formData.servers];
         const item = data.splice(fromIndex, 1)[0];
         data.splice(toIndex, 0, item);
-        this.setState({ formData: {
-          ...this.state.formData, servers: data,
-        }});
+        this.setState({
+          formData: { ...this.state.formData, servers: data }
+        });
       },
-      handleSelector: "a"
+      handleSelector: 'a'
     };
 
     return (
@@ -264,8 +269,8 @@ class CommonItemEditModal extends React.PureComponent {
       const newValues = target.checked
         ? [...values, target.value]
         : values.filter(option => option !== target.value);
-  
-       return {
+
+      return {
         formData: handler(formData, { ...formData, [target.name]: newValues })
       };
     });
@@ -303,7 +308,7 @@ class CommonItemEditModal extends React.PureComponent {
 CommonItemEditModal.propTypes = {
   title: PropTypes.oneOfType([
     PropTypes.string,
-    PropTypes.arrayOf(PropTypes.string),
+    PropTypes.arrayOf(PropTypes.string)
   ]),
   isLoading: PropTypes.bool,
   isSaving: PropTypes.bool,
@@ -313,35 +318,35 @@ CommonItemEditModal.propTypes = {
     key: PropTypes.string.isRequired,
     hidden: PropTypes.oneOfType([
       PropTypes.bool,
-      PropTypes.func,
+      PropTypes.func
     ]),
     type: PropTypes.oneOf(['input', 'checkboxGroup', 'optionGroup']),
     options: PropTypes.oneOfType([
       PropTypes.arrayOf(PropTypes.shape({
         key: PropTypes.string.isRequired,
-        label: PropTypes.node,
+        label: PropTypes.node
       })),
-      PropTypes.func,
+      PropTypes.func
     ]),
     disabled: PropTypes.oneOfType([
       PropTypes.bool,
-      PropTypes.func,
+      PropTypes.func
     ]),
     title: PropTypes.oneOfType([
       PropTypes.string,
-      PropTypes.func,
+      PropTypes.func
     ]),
     invalid: PropTypes.func,
     invalidFeedback: PropTypes.string,
     helpText: PropTypes.oneOfType([
       PropTypes.string,
-      PropTypes.func,
+      PropTypes.func
     ]),
     stateModifier: PropTypes.func,
     customProps: PropTypes.shape({
       create: PropTypes.object,
-      edit: PropTypes.object,
-    }),
+      edit: PropTypes.object
+    })
   })),
   hideLabels: PropTypes.bool,
   dataSource: PropTypes.object,
@@ -349,7 +354,7 @@ CommonItemEditModal.propTypes = {
   submitStatusMessage: PropTypes.string,
   onSubmit: PropTypes.func.isRequired,
   onRequestClose: PropTypes.func.isRequired,
-  dispatch: PropTypes.func,
+  dispatch: PropTypes.func
 };
 
 CommonItemEditModal.defaultProps = {
@@ -358,7 +363,7 @@ CommonItemEditModal.defaultProps = {
   isSaving: false,
   itemNotFound: false,
   shouldCreateItem: false,
-  hideLabels: false,
+  hideLabels: false
 };
 
 export default CommonItemEditModal;

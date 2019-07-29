@@ -36,8 +36,7 @@ function* logInSaga() {
       if (response.authorized) {
         yield put({ type: APP_DID_MOUNT });
       }
-    }
-    catch (error) {
+    } catch (error) {
       yield put({
         type: AUTH_LOG_IN_REQUEST_ERROR,
         error
@@ -66,8 +65,7 @@ function* logOutSaga() {
 
       yield put({ type: AUTH_LOG_OUT_REQUEST_SUCCESS, payload: response });
       window.tarantool_enterprise_core.dispatch('cluster:logout:done');
-    }
-    catch (error) {
+    } catch (error) {
       yield put({ type: AUTH_LOG_OUT_REQUEST_ERROR, error });
       indicator && indicator.error();
       return;

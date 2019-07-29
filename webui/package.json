@@ -32,10 +32,10 @@
     "eslint": "4.10.0",
     "eslint-config-react-app": "^2.1.0",
     "eslint-loader": "1.9.0",
-    "eslint-plugin-flowtype": "2.39.1",
+    "eslint-plugin-flowtype": "3.12.1",
     "eslint-plugin-import": "2.8.0",
     "eslint-plugin-jsx-a11y": "5.1.1",
-    "eslint-plugin-react": "7.4.0",
+    "eslint-plugin-react": "7.14.2",
     "extract-text-webpack-plugin": "3.0.2",
     "file-loader": "1.1.5",
     "flow": "0.2.3",
@@ -89,7 +89,8 @@
     "test": "node scripts/test.js test --env=jsdom --watch",
     "test_once": "node ./scripts/test.js test --env=jsdom",
     "graphqlgen": "graphql-codegen --config codegen.yml --include-introspection-types",
-    "flow": "flow"
+    "flow": "flow",
+    "lint": "node ./node_modules/eslint/bin/eslint.js ."
   },
   "jest": {
     "collectCoverageFrom": [
@@ -132,12 +133,5 @@
     "plugins": [
       "emotion"
     ]
-  },
-  "eslintConfig": {
-    "extends": "react-app",
-    "rules": {
-      "no-sequences": 0,
-      "no-mixed-operators": 0
-    }
   }
 }

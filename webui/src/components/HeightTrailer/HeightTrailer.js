@@ -20,7 +20,7 @@ class HeightTrailer extends React.PureComponent {
     const { children } = this.props;
 
     const trailerStyle = {
-      height: `${this.trailerHeight}px`,
+      height: `${this.trailerHeight}px`
     };
 
     return (
@@ -91,12 +91,12 @@ HeightTrailer.propTypes = {
   minHeight: PropTypes.number,
   initialHeight: PropTypes.number.isRequired,
   minTopDistance: PropTypes.number,
-  onSizeChange: PropTypes.func,
+  onSizeChange: PropTypes.func
 };
 
 HeightTrailer.defaultProps = {
   minTopDistance: 0,
-  minHeight: 0,
+  minHeight: 0
 };
 
 export default HeightTrailer;

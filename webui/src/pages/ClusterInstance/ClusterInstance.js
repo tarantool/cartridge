@@ -37,7 +37,7 @@ const styles = {
     margin-left: 18px;
     border-radius: 4px;
     background-color: white;
-  `,
+  `
 };
 
 export type ClusterConfigProps = {
@@ -79,7 +79,7 @@ class ClusterConfig extends React.Component<ClusterConfigProps> {
       status,
       uri,
       subsections = [],
-      match: { url },
+      match: { url }
     } = this.props;
 
     const isMaster = instanceUUID === masterUUID;

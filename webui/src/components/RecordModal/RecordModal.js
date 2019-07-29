@@ -44,7 +44,8 @@ class RecordModal extends React.PureComponent {
                   <div className="ReacordModal-object">
                     <CodeMirror
                       value={beautifyObject(record.object)}
-                      mode="javascript" />
+                      mode="javascript"
+                    />
                   </div>
                 </div>
               </div>

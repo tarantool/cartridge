@@ -1,8 +1,8 @@
-import React from "react";
-import {connect} from 'react-redux';
-import {setVisibleBootstrapVshardModal} from '../../store/actions/clusterPage.actions';
+import React from 'react';
+import { connect } from 'react-redux';
+import { setVisibleBootstrapVshardModal } from '../../store/actions/clusterPage.actions';
 import Card from 'src/components/Card';
-import {css} from 'react-emotion'
+import { css } from 'react-emotion'
 
 const styles = {
   button: css`
@@ -16,7 +16,7 @@ const styles = {
     box-shadow: none;
     border: none;
     margin-top: 24px;
-  `,
+  `
 };
 
 class BootstrapPanel extends React.Component {
@@ -28,7 +28,9 @@ class BootstrapPanel extends React.Component {
 
     return (
       <Card title="Tarantool vshard" loading={requesting}>
-        <div>The application is configured to store <b>{vshard_bucket_count}</b> buckets but they are not in place yet.</div>
+        <div>
+          The application is configured to store <b>{vshard_bucket_count}</b> buckets but they are not in place yet.
+        </div>
         <div>Bootstrap vshard to render storages operable.</div>
         <button className={styles.button} onClick={() => {this.showModal()}}>
           Bootstrap vshard
@@ -47,7 +49,7 @@ export default connect(({ app, ui }) => {
   return {
     can_bootstrap_vshard: (app.clusterSelf && app.clusterSelf.can_bootstrap_vshard) || false,
     vshard_bucket_count: (app.clusterSelf && app.clusterSelf.vshard_bucket_count) || 0,
-    requesting: ui.requestingBootstrapVshard,
+    requesting: ui.requestingBootstrapVshard
   }
 })(
   BootstrapPanel

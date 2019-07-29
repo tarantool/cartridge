@@ -20,7 +20,7 @@ const styles = {
     :hover{
       text-decoration: underline;
     }
-  `,
+  `
 };
 
 class ServerListCellActions extends React.Component {

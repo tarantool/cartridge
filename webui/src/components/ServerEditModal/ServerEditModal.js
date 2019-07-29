@@ -10,7 +10,7 @@ const prepareFields = (replicasetList = []) => {
   return [
     {
       key: 'uuid',
-      hidden: true,
+      hidden: true
     },
     {
       key: 'uri',
@@ -18,10 +18,10 @@ const prepareFields = (replicasetList = []) => {
       title: 'URI',
       customProps: {
         edit: {
-          hidden: true,
-        },
+          hidden: true
+        }
       },
-      placeholder: 'Server URI, e.g. localhost:3301',
+      placeholder: 'Server URI, e.g. localhost:3301'
     },
     {
       key: 'replicasetUuid',
@@ -29,8 +29,8 @@ const prepareFields = (replicasetList = []) => {
       type: 'optionGroup',
       customProps: {
         create: {
-          hidden: true,
-        },
+          hidden: true
+        }
       },
       options: replicasetList.map(replicaset => {
         const aliasText = replicaset.servers.map(server => server.alias || server.uuid.slice(0, 8)).join(', ');
@@ -39,10 +39,10 @@ const prepareFields = (replicasetList = []) => {
 
         return {
           key: replicaset.uuid,
-          label,
+          label
         };
-      }),
-    },
+      })
+    }
   ];
 };
 
@@ -50,7 +50,7 @@ const getServerDefaultDataSource = () => {
   return {
     uuid: null,
     uri: '',
-    replicasetUuid: null,
+    replicasetUuid: null
   };
 };
 
@@ -59,7 +59,7 @@ const getServerDataSource = server => {
     ...server,
     replicasetUuid: server.replicaset
       ? server.replicaset.uuid
-      : null,
+      : null
   };
 };
 
@@ -71,8 +71,16 @@ class ServerEditModal extends React.PureComponent {
   }
 
   render() {
-    const { isLoading, isSaving, serverNotFound, shouldCreateServer, server, submitStatusMessage, onSubmit,
-      onRequestClose } = this.props;
+    const {
+      isLoading,
+      isSaving,
+      serverNotFound,
+      shouldCreateServer,
+      server,
+      submitStatusMessage,
+      onSubmit,
+      onRequestClose
+    } = this.props;
 
     const fields = isLoading ? null : this.getFields();
     const dataSource = isLoading || serverNotFound
@@ -91,7 +99,8 @@ class ServerEditModal extends React.PureComponent {
         dataSource={dataSource}
         submitStatusMessage={submitStatusMessage}
         onSubmit={onSubmit}
-        onRequestClose={onRequestClose} />
+        onRequestClose={onRequestClose}
+      />
     );
   }
 
@@ -109,22 +118,22 @@ ServerEditModal.propTypes = {
   server: PropTypes.shape({
     uuid: PropTypes.string.isRequired,
     uri: PropTypes.string.isRequired,
-    replicasetUuid: PropTypes.arrayOf(PropTypes.string),
+    replicasetUuid: PropTypes.arrayOf(PropTypes.string)
   }),
   replicasetList: PropTypes.arrayOf(PropTypes.shape({
     uuid: PropTypes.string.isRequired,
-    roles: PropTypes.arrayOf(PropTypes.string).isRequired,
+    roles: PropTypes.arrayOf(PropTypes.string).isRequired
   })),
   submitStatusMessage: PropTypes.string,
   onSubmit: PropTypes.func.isRequired,
-  onRequestClose: PropTypes.func.isRequired,
+  onRequestClose: PropTypes.func.isRequired
 };
 
 ServerEditModal.defaultProps = {
   isLoading: false,
   isSaving: false,
   serverNotFound: false,
-  shouldCreateServer: false,
+  shouldCreateServer: false
 };
 
 export default ServerEditModal;

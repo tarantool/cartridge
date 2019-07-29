@@ -1,7 +1,7 @@
 import {
   APP_DID_MOUNT,
   APP_CREATE_MESSAGE,
-  APP_SET_MESSAGE_DONE,
+  APP_SET_MESSAGE_DONE
 } from 'src/store/actionTypes';
 import {
   getActionCreator,

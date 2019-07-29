@@ -21,7 +21,7 @@ const formItemLayout = {
   },
   wrapperCol: {
     span: 18
-  },
+  }
 };
 
 class UserEditForm extends React.Component {

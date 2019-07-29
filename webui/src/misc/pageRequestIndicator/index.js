@@ -1,7 +1,6 @@
 import './styles.css';
 
-if (!document.getElementById('PageRequestIndicator-indicator'))
-{
+if (!document.getElementById('PageRequestIndicator-indicator')) {
   const element = document.createElement('div')
   element.id = 'PageRequestIndicator-indicator'
   element.className = 'pageRequestIndicator-indicator'
@@ -31,7 +30,7 @@ function initPageRequestIndicator(props = {}) {
     pendingStepTransition = 200,
     pendingStepFrequency = 500,
     successStepTransition = 400,
-    successStepTimeout = 500,
+    successStepTimeout = 500
   } = props;
 
   const setTransitions = (stepTransition = pendingStepTransition) => progressEl.style.transition
@@ -135,8 +134,7 @@ function initPageRequestIndicator(props = {}) {
         this.queue.push(step);
         if (this.queue.length === 1) {
           step.action();
-        }
-        else if (this.queue.length === 2 && this.queue[0].interval) {
+        } else if (this.queue.length === 2 && this.queue[0].interval) {
           this.dropCurrentStep();
           step.action();
         }
@@ -148,8 +146,7 @@ function initPageRequestIndicator(props = {}) {
         if (step) {
           if (step.interval && this.queue.length > 1 && this.queue[1].interval) {
             this.nextStep();
-          }
-          else {
+          } else {
             step.action();
           }
         }
@@ -195,7 +192,7 @@ function initPageRequestIndicator(props = {}) {
         activeAnimation.stop();
       }
       return activeAnimation = createAnimation().run();
-    },
+    }
   };
 }
 

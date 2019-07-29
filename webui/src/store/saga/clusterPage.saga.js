@@ -35,7 +35,7 @@ import {
   CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_SUCCESS,
   CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_ERROR,
   CLUSTER_PAGE_STATE_RESET,
-  CLUSTER_SELF_UPDATE,
+  CLUSTER_SELF_UPDATE
 } from 'src/store/actionTypes';
 import { baseSaga, getRequestSaga, getSignalRequestSaga } from 'src/store/commonRequest';
 import { getClusterSelf } from 'src/store/request/app.requests';
@@ -67,8 +67,7 @@ function* refreshListsTaskSaga() {
       const shouldRequestStat = ++requestNum % STAT_REQUEST_PERIOD === 0;
       if (shouldRequestStat) {
         response = yield call(refreshLists, { shouldRequestStat: true });
-      }
-      else {
+      } else {
         const listsResponse = yield call(refreshLists);
 
         let serverStatResponse;
@@ -81,18 +80,17 @@ function* refreshListsTaskSaga() {
 
         response = {
           ...listsResponse,
-          ...serverStatResponse,
+          ...serverStatResponse
         };
       }
-    }
-    catch (error) {
+    } catch (error) {
       yield put({ type: CLUSTER_PAGE_REFRESH_LISTS_REQUEST_ERROR, error, requestPayload: {} });
     }
     if (response) {
       if (response.serverStat) {
         response = {
           ...response,
-          serverStat: response.serverStat.filter(stat => stat.uuid),
+          serverStat: response.serverStat.filter(stat => stat.uuid)
         };
       }
       yield put({ type: CLUSTER_PAGE_REFRESH_LISTS_REQUEST_SUCCESS, payload: response, requestPayload: {} });
@@ -144,11 +142,15 @@ function* createReplicasetRequestSaga() {
 
       response = {
         ...createReplicasetResponse,
-        ...clusterSelfResponse,
+        ...clusterSelfResponse
       };
-    }
-    catch (error) {
-      yield put({ type: CLUSTER_PAGE_CREATE_REPLICASET_REQUEST_ERROR, error, requestPayload, __errorMessage: true });
+    } catch (error) {
+      yield put({
+        type: CLUSTER_PAGE_CREATE_REPLICASET_REQUEST_ERROR,
+        error,
+        requestPayload,
+        __errorMessage: true
+      });
       indicator.error();
       return;
     }
@@ -184,7 +186,6 @@ const changeFailoverRequestSaga = getRequestSaga(
   CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_ERROR,
   changeFailover,
 );
-
 
 
 const updateClusterSelfOnBootstrap = function* () {

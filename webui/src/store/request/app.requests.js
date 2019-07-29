@@ -1,6 +1,6 @@
 // @flow
 import graphql from 'src/api/graphql';
-import { getClusterQuery } from "./queries.graphql";
+import { getClusterQuery } from './queries.graphql';
 
 
 export async function getClusterSelf() {

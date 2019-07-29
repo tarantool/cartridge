@@ -17,7 +17,7 @@ import {
   CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST,
   CLUSTER_PAGE_STATE_RESET,
   SET_BOOSTRAP_VSHARD_MODAL_VISIBLE,
-  SET_FAILOVER_MODAL_VISIBLE,
+  SET_FAILOVER_MODAL_VISIBLE
 } from 'src/store/actionTypes';
 import { getActionCreator } from 'src/store/commonRequest';
 import type {
@@ -75,7 +75,7 @@ export const closeReplicasetPopup = getActionCreator(CLUSTER_PAGE_REPLICASET_POP
 
 
 export const bootstrapVshard = getActionCreator(CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST, null, {
-  successMessage: 'VShard bootstrap is OK. Please wait for list refresh...',
+  successMessage: 'VShard bootstrap is OK. Please wait for list refresh...'
 });
 
 
@@ -87,7 +87,7 @@ export const probeServer = (uri: string) => ({
   type: CLUSTER_PAGE_PROBE_SERVER_REQUEST,
   payload: { uri },
   __payload: {
-    successMessage: 'Probe is OK. Please wait for list refresh...',
+    successMessage: 'Probe is OK. Please wait for list refresh...'
   }
 });
 
@@ -107,7 +107,7 @@ export const joinServer = (uri: string, uuid: string) => ({
     uuid
   },
   __payload: {
-    successMessage: 'Join is OK. Please wait for list refresh...',
+    successMessage: 'Join is OK. Please wait for list refresh...'
   }
 });
 
@@ -127,16 +127,18 @@ export type CreateReplicasetActionCreator = (p: CreateReplicasetMutationVariable
  * @param {[string]} payload.roles
  * @param {string} payload.vshard_group
  */
-export const createReplicaset: CreateReplicasetActionCreator = getActionCreator(CLUSTER_PAGE_CREATE_REPLICASET_REQUEST, null, {
-  successMessage: 'Create is OK. Please wait for list refresh...',
-});
+export const createReplicaset: CreateReplicasetActionCreator = getActionCreator(
+  CLUSTER_PAGE_CREATE_REPLICASET_REQUEST,
+  null,
+  { successMessage: 'Create is OK. Please wait for list refresh...' }
+);
 
 /**
  * @param {Object} payload
  * @param {string} payload.uuid
  */
 export const expelServer = getActionCreator(CLUSTER_PAGE_EXPEL_SERVER_REQUEST, null, {
-  successMessage: 'Expel is OK. Please wait for list refresh...',
+  successMessage: 'Expel is OK. Please wait for list refresh...'
 });
 
 /**
@@ -166,11 +168,11 @@ export type UploadConfigAction = {
 export type UploadConfigActionCreator = (data: { data: FormData }) => UploadConfigAction;
 
 export const uploadConfig: UploadConfigActionCreator = getActionCreator(CLUSTER_PAGE_UPLOAD_CONFIG_REQUEST, null, {
-  successMessage: 'Configuration uploaded successfully. Please wait for list refresh...',
+  successMessage: 'Configuration uploaded successfully. Please wait for list refresh...'
 });
 
 export const applyTestConfig = getActionCreator(CLUSTER_PAGE_APPLY_TEST_CONFIG_REQUEST, null, {
-  successMessage: 'Configuration applied successfully. Please wait for list refresh...',
+  successMessage: 'Configuration applied successfully. Please wait for list refresh...'
 });
 
 export type ResetPageStateAction = { type: 'CLUSTER_PAGE_STATE_RESET' };
@@ -182,7 +184,7 @@ export const resetPageState = getActionCreator(CLUSTER_PAGE_STATE_RESET);
  * @param {boolean} payload.enabled
  */
 export const changeFailover = getActionCreator(CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST, null, {
-  successMessage: 'Failover change is OK...',
+  successMessage: 'Failover change is OK...'
 });
 
 export const setVisibleBootstrapVshardModal = (visible: boolean) => {

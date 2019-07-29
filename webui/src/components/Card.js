@@ -1,6 +1,6 @@
-import React from "react";
+import React from 'react';
 import { css, cx } from 'react-emotion'
-import Spin from "src/components/Spin";
+import Spin from 'src/components/Spin';
 
 const styles = {
   panel: css`
@@ -29,7 +29,7 @@ const Card = ({
   className,
   children,
   loading = false,
-  title = '',
+  title = ''
 }) => (
   <div className={cx(styles.container, className)}>
     <div className={styles.panel}>

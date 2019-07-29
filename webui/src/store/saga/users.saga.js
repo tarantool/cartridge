@@ -76,7 +76,7 @@ function* removeUserSaga({ payload: { username } }) {
       type: APP_CREATE_MESSAGE,
       payload: {
         content: { type: 'danger', text: errorText },
-        type: USER_REMOVE_REQUEST_ERROR,
+        type: USER_REMOVE_REQUEST_ERROR
       }
     });
   }

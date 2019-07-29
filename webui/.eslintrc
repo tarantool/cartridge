@@ -1,0 +1,72 @@
+{
+  "extends": "react-app",
+  "settings": {
+    "react": {
+      "version": "16.4.0",
+      "flowVersion": "0.102"
+    }
+  },
+  "rules": {
+    "no-trailing-spaces": ["warn"],
+    "no-multi-str": ["off"],
+    "no-sequences": ["off"],
+    "curly": ["off"],
+    "no-bitwise": ["off"],
+    "no-debugger": ["warn"],
+    "no-console": ["warn"],
+    "no-plusplus": ["off"],
+    "one-var-declaration-per-line": ["off"],
+    "arrow-body-style": ["off"],
+    "object-property-newline": ["error", { "allowMultiplePropertiesPerLine": true }],
+    "object-curly-newline": [
+      "error",
+      {
+        "consistent": true,
+        "multiline": true,
+        "minProperties": 5
+      }
+    ],
+    "arrow-parens": ["error", "as-needed"],
+    "one-var": ["off"],
+    "comma-dangle": ["warn", "never"],
+    "brace-style": ["error", "1tbs", { "allowSingleLine": true }],
+    "indent": ["error", 2, { "SwitchCase": 1 }],
+    "key-spacing": ["error", {"afterColon" : true, "mode" : "strict"}],
+    "max-len": ["error", 120, 2],
+    "no-multiple-empty-lines": ["error", { "max": 2, "maxEOF": 1 }],
+    "no-unused-expressions": [
+      "error",
+      {
+        "allowTernary": true,
+        "allowShortCircuit": true
+      }
+    ],
+    "object-curly-spacing": ["error", "always"],
+    "quotes": ["error", "single", { "allowTemplateLiterals": true }],
+    "class-methods-use-this": ["off"],
+    "consistent-return": ["off"],
+    "default-case": ["off"],
+    "import/extensions": ["off"],
+    "import/no-extraneous-dependencies": ["off"],
+    "import/no-unresolved": ["off"],
+    "linebreak-style": ["off"],
+    "no-param-reassign": ["off"],
+    "no-underscore-dangle": ["off"],
+    "function-paren-newline": ["off"],
+    "no-mixed-operators": [
+      "warn",
+      {
+        "groups": [
+          ["&", "|", "^", "~", "<<", ">>", ">>>"],
+          ["==", "!=", "===", "!==", ">", ">=", "<", "<="],
+          ["&&", "||"],
+          ["in", "instanceof"]
+        ],
+        "allowSamePrecedence": true
+      }
+    ],
+    "react/jsx-first-prop-new-line": ["error", "multiline"],
+    "react/jsx-max-props-per-line": ["error", { "when": "multiline" }],
+    "react/jsx-closing-bracket-location": ["error", "tag-aligned"]
+  }
+}

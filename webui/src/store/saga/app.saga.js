@@ -36,16 +36,15 @@ function* appDataRequestSaga() {
             type: 'ADD_CLUSTER_USERS_MENU_ITEM',
             payload: {
               location: window.tarantool_enterprise_core.history.location
-            },
+            }
           }
         );
       }
 
       response = {
-        ...clusterSelfResponse,
+        ...clusterSelfResponse
       };
-    }
-    catch (error) {
+    } catch (error) {
       yield put({ type: APP_DATA_REQUEST_ERROR, error, requestPayload, __errorMessage: false });
       indicator.error();
       return undefined;
@@ -72,12 +71,11 @@ function* appMessageSaga() {
       if (!activeDeadServerMessage) {
         const message = {
           content: { type: 'error', text: 'It seems like server is not reachable' },
-          type: SERVER_NOT_REACHABLE_ERROR_TYPE,
+          type: SERVER_NOT_REACHABLE_ERROR_TYPE
         };
         yield put({ type: APP_CREATE_MESSAGE, payload: message });
       }
-    }
-    else {
+    } else {
       if (action.requestPayload) {
         const activeDeadServerMessage = yield call(getActiveDeadServerMessage);
         if (activeDeadServerMessage) {
@@ -87,7 +85,7 @@ function* appMessageSaga() {
 
       if (action.error && action.__errorMessage) {
         const message = {
-          content: { type: 'error', text: getApiErrorMessage(action.error) },
+          content: { type: 'error', text: getApiErrorMessage(action.error) }
         };
         yield put({ type: APP_CREATE_MESSAGE, payload: message });
       }
@@ -95,7 +93,7 @@ function* appMessageSaga() {
 
     if (action.__successMessage) {
       const message = {
-        content: { type: 'success', text: action.__successMessage },
+        content: { type: 'success', text: action.__successMessage }
       };
       yield put({ type: APP_CREATE_MESSAGE, payload: message });
     }
