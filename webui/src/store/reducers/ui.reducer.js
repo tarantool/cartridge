@@ -39,7 +39,14 @@ import {
   SHOW_EXPEL_MODAL,
   HIDE_EXPEL_MODAL,
   CLUSTER_PAGE_EXPEL_SERVER_REQUEST_SUCCESS,
-  CLUSTER_PAGE_EXPEL_SERVER_REQUEST, CLUSTER_PAGE_EXPEL_SERVER_REQUEST_ERROR
+  CLUSTER_PAGE_EXPEL_SERVER_REQUEST,
+  CLUSTER_PAGE_EXPEL_SERVER_REQUEST_ERROR,
+  FETCH_CONFIG_FILES,
+  FETCH_CONFIG_FILES_DONE,
+  FETCH_CONFIG_FILES_FAIL,
+  PUT_CONFIG_FILE_CONTENT,
+  PUT_CONFIG_FILE_CONTENT_DONE,
+  PUT_CONFIG_FILE_CONTENT_FAIL,
 } from '../actionTypes';
 
 export type UIState = {
@@ -56,6 +63,8 @@ export type UIState = {
   fetchingAuth: boolean,
   fetchingUserList: boolean,
   fetchingUserMutation: boolean,
+  fetchingConfigFiles: boolean,
+  puttingConfigFiles: boolean,
   expelModal: ?string,
   expelError: ?string,
 };
@@ -74,6 +83,8 @@ const initialState: UIState = {
   fetchingAuth: false,
   fetchingUserList: false,
   fetchingUserMutation: false,
+  fetchingConfigFiles: false,
+  puttingConfigFiles: false,
   expelModal: null,
   expelError: null
 };
@@ -238,6 +249,32 @@ export const reducer = (state: UIState = initialState, { type, payload, error }:
         ...state,
         fetchingUserMutation: true
       };
+
+    case FETCH_CONFIG_FILES:
+      return {
+        ...state,
+        fetchingConfigFiles: true
+      };
+
+    case FETCH_CONFIG_FILES_DONE:
+    case FETCH_CONFIG_FILES_FAIL:
+      return {
+        ...state,
+        fetchConfigFiles: false
+      };
+
+    case PUT_CONFIG_FILE_CONTENT:
+      return {
+        ...state,
+        puttingConfigFiles: true
+      }
+
+    case PUT_CONFIG_FILE_CONTENT_DONE:
+    case PUT_CONFIG_FILE_CONTENT_FAIL:
+      return {
+        ...state,
+        puttingConfigFiles: false
+      }
 
     case SHOW_EXPEL_MODAL: {
       return {

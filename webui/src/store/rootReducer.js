@@ -7,6 +7,7 @@ import { reducer as authReducer } from 'src/store/reducers/auth.reducer';
 import { reducer as clusterPageReducer, type ClusterPageState } from 'src/store/reducers/clusterPage.reducer';
 import { reducer as clusterInstancePageReducer } from 'src/store/reducers/clusterInstancePage.reducer';
 import { reducer as schemaReducer, type SchemaState } from 'src/store/reducers/schema.reducer';
+import files from 'src/store/reducers/files.reducer';
 import { reducer as usersReducer } from 'src/store/reducers/users.reducer';
 import { reducer as ui, type UIState } from 'src/store/reducers/ui.reducer';
 
@@ -26,7 +27,8 @@ const rootReducer = combineReducers({
   clusterInstancePage: clusterInstancePageReducer,
   schema: schemaReducer,
   users: usersReducer,
-  ui
+  ui,
+  files
 });
 
 export default rootReducer;
