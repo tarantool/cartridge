@@ -17,7 +17,8 @@ import {
   CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST,
   CLUSTER_PAGE_STATE_RESET,
   SET_BOOSTRAP_VSHARD_MODAL_VISIBLE,
-  SET_FAILOVER_MODAL_VISIBLE
+  SET_FAILOVER_MODAL_VISIBLE,
+  SET_PROBE_SERVER_MODAL_VISIBLE
 } from 'src/store/actionTypes';
 import { getActionCreator } from 'src/store/commonRequest';
 import type {
@@ -216,3 +217,11 @@ export const setFilter = (query: string) => ({
 
 export type SetFilterActionCreator = typeof setFilter;
 export type SetFilterAction = $Call<SetFilterActionCreator, string>;
+
+export const setProbeServerModalVisible = (visible: boolean) => ({
+  type: SET_PROBE_SERVER_MODAL_VISIBLE,
+  payload: visible
+});
+
+export type SetProbeServerModalVisibleActionCreator = typeof setProbeServerModalVisible;
+export type SetProbeServerModalVisibleAction = $Call<SetProbeServerModalVisibleActionCreator, boolean>;

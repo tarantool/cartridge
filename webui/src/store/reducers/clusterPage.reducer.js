@@ -39,7 +39,8 @@ import {
   CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST,
   CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_SUCCESS,
   CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_ERROR,
-  CLUSTER_PAGE_STATE_RESET
+  CLUSTER_PAGE_STATE_RESET,
+  SET_PROBE_SERVER_MODAL_VISIBLE
 } from 'src/store/actionTypes';
 import {
   baseReducer,
@@ -50,6 +51,7 @@ import {
 } from 'src/store/commonRequest';
 import type { RequestStatusType } from 'src/store/commonTypes';
 import type { Replicaset, Server, ServerStat } from 'src/generated/graphql-typing';
+import { getErrorMessage } from 'src/api';
 
 export type ServerStatWithUUID = {
   uuid: string,
@@ -69,6 +71,7 @@ export type ClusterPageState = {
   serverStat: ?ServerStatWithUUID[],
   bootstrapVshardRequestStatus: RequestStatusType,
   // bootstrapVshardResponse: null,
+  probeServerError: ?Error,
   probeServerRequestStatus: RequestStatusType,
   // probeServerResponse: null,
   joinServerRequestStatus: RequestStatusType,
@@ -99,6 +102,7 @@ export const initialState: ClusterPageState = {
   serverStat: null,
   bootstrapVshardRequestStatus: getInitialRequestStatus(),
   bootstrapVshardResponse: null,
+  probeServerError: null,
   probeServerRequestStatus: getInitialRequestStatus(),
   probeServerResponse: null,
   joinServerRequestStatus: getInitialRequestStatus(),
@@ -138,13 +142,6 @@ const bootstrapVshardRequestReducer = getRequestReducer(
   CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST_SUCCESS,
   CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST_ERROR,
   'bootstrapVshardRequestStatus',
-);
-
-const probeServerRequestReducer = getRequestReducer(
-  CLUSTER_PAGE_PROBE_SERVER_REQUEST,
-  CLUSTER_PAGE_PROBE_SERVER_REQUEST_SUCCESS,
-  CLUSTER_PAGE_PROBE_SERVER_REQUEST_ERROR,
-  'probeServerRequestStatus',
 );
 
 const joinServerRequestReducer = getRequestReducer(
@@ -204,7 +201,6 @@ export const reducer = baseReducer(
   pageDataRequestReducer,
   refreshListsRequestReducer,
   bootstrapVshardRequestReducer,
-  probeServerRequestReducer,
   joinServerRequestReducer,
   createReplicasetRequestReducer,
   expelServerRequestReducer,
@@ -228,6 +224,20 @@ export const reducer = baseReducer(
           selectedServerUri: action.payload.selectedServerUri || null,
           selectedReplicasetUuid: action.payload.selectedReplicasetUuid || null
         };
+
+      case CLUSTER_PAGE_PROBE_SERVER_REQUEST_ERROR:
+        return {
+          ...state,
+          probeServerError: getErrorMessage(action.payload)
+        };
+
+      case CLUSTER_PAGE_PROBE_SERVER_REQUEST:
+      case CLUSTER_PAGE_PROBE_SERVER_REQUEST_SUCCESS:
+      case SET_PROBE_SERVER_MODAL_VISIBLE:
+        return {
+          ...state,
+          probeServerError: null
+        }
 
       case CLUSTER_PAGE_SERVER_LIST_ROW_SELECT:
         return {

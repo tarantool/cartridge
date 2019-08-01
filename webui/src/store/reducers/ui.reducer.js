@@ -5,6 +5,7 @@ import {
   CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST,
   CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST_ERROR,
   CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST_SUCCESS,
+  CLUSTER_PAGE_PROBE_SERVER_REQUEST_SUCCESS,
   AUTH_ACCESS_DENIED,
   APP_DATA_REQUEST_SUCCESS,
   AUTH_LOG_IN_REQUEST_SUCCESS,
@@ -21,6 +22,7 @@ import {
   SET_ADD_USER_MODAL_VISIBLE,
   SET_REMOVE_USER_MODAL_VISIBLE,
   SET_EDIT_USER_MODAL_VISIBLE,
+  SET_PROBE_SERVER_MODAL_VISIBLE,
   USER_STATE_RESET,
   USER_LIST_REQUEST_SUCCESS,
   USER_LIST_REQUEST_ERROR,
@@ -41,6 +43,7 @@ export type UIState = {
   addUserModalVisible: boolean,
   editUserModalVisible: boolean,
   editUserId: ?string,
+  probeServerModalVisible: boolean,
   removeUserModalVisible: boolean,
   removeUserId: ?string,
   requestingBootstrapVshard: boolean,
@@ -56,6 +59,7 @@ const initialState: UIState = {
   addUserModalVisible: false,
   editUserModalVisible: false,
   editUserId: null,
+  probeServerModalVisible: false,
   removeUserModalVisible: false,
   removeUserId: null,
   requestingBootstrapVshard: false,
@@ -81,6 +85,18 @@ export const reducer = (state: UIState = initialState, { type, payload }: FSA): 
         showFailoverModal: payload
       }
     }
+
+    case SET_PROBE_SERVER_MODAL_VISIBLE:
+      return {
+        ...state,
+        probeServerModalVisible: payload
+      }
+
+    case CLUSTER_PAGE_PROBE_SERVER_REQUEST_SUCCESS:
+      return {
+        ...state,
+        probeServerModalVisible: false
+      };
 
     case CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST: {
       return {

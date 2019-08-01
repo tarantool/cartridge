@@ -114,12 +114,34 @@ const bootstrapVshardRequestSaga = getRequestSaga(
   bootstrapVshard,
 );
 
-const probeServerRequestSaga = getRequestSaga(
-  CLUSTER_PAGE_PROBE_SERVER_REQUEST,
-  CLUSTER_PAGE_PROBE_SERVER_REQUEST_SUCCESS,
-  CLUSTER_PAGE_PROBE_SERVER_REQUEST_ERROR,
-  probeServer,
-);
+const probeServerRequestSaga = function* () {
+  yield takeLatest(CLUSTER_PAGE_PROBE_SERVER_REQUEST, function* load(action) {
+    const {
+      payload: requestPayload = {},
+      __payload: { successMessage } = {}
+    } = action;
+    const indicator = pageRequestIndicator.run();
+
+    try {
+      const response = yield call(probeServer, requestPayload);
+      indicator.success();
+
+      yield put({
+        type: CLUSTER_PAGE_PROBE_SERVER_REQUEST_SUCCESS,
+        payload: response,
+        __successMessage: successMessage
+      });
+    } catch (error) {
+      yield put({
+        type: CLUSTER_PAGE_PROBE_SERVER_REQUEST_ERROR,
+        payload: error,
+        error: true
+      });
+      indicator.error();
+      return;
+    }
+  });
+};
 
 const joinServerRequestSaga = getRequestSaga(
   CLUSTER_PAGE_JOIN_SERVER_REQUEST,

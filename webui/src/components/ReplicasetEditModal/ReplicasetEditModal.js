@@ -224,7 +224,18 @@ const prepareFields = (roles: Role[], replicaset: ?Replicaset, vshardGroups: ?Vs
       title: shallRenderDraggableList ? 'Priority' : 'Master',
       type: shallRenderDraggableList ? 'draggableList' : 'optionGroup',
       options: renderOptions,
-      customProps: draggableListCustomProps
+      customProps: draggableListCustomProps,
+      dataSource: 'servers',
+      stateModifier: (prevState, nextState, fromIndex, toIndex) => {
+        const servers = [...prevState.servers];
+        const item = servers.splice(fromIndex, 1)[0];
+        servers.splice(toIndex, 0, item);
+
+        return {
+          ...nextState,
+          servers
+        }
+      }
     }
   ];
 };

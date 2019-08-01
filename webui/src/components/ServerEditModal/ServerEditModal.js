@@ -1,12 +1,13 @@
-import PropTypes from 'prop-types';
+// @flow
 import React from 'react';
 import { defaultMemoize } from 'reselect';
+import type {
+  Replicaset,
+  Server
+} from 'src/generated/graphql-typing';
+import CommonItemEditModal, { type CommonItemEditModalField } from 'src/components/CommonItemEditModal';
 
-import CommonItemEditModal from 'src/components/CommonItemEditModal';
-
-import './ServerEditModal.css';
-
-const prepareFields = (replicasetList = []) => {
+const prepareFields = (replicasetList: Replicaset[] = []): CommonItemEditModalField[] => {
   return [
     {
       key: 'uuid',
@@ -46,15 +47,7 @@ const prepareFields = (replicasetList = []) => {
   ];
 };
 
-const getServerDefaultDataSource = () => {
-  return {
-    uuid: null,
-    uri: '',
-    replicasetUuid: null
-  };
-};
-
-const getServerDataSource = server => {
+const getServerDataSource = (server: Server) => {
   return {
     ...server,
     replicasetUuid: server.replicaset
@@ -63,19 +56,31 @@ const getServerDataSource = server => {
   };
 };
 
-class ServerEditModal extends React.PureComponent {
-  constructor(props) {
-    super(props);
+type ServerEditModalProps = {
+  isLoading?: boolean,
+  isSaving?: boolean,
+  serverNotFound?: boolean,
+  server?: Server,
+  replicasetList: Replicaset[],
+  submitStatusMessage?: string,
+  onSubmit: () => void,
+  onRequestClose: () => void
+};
 
-    this.prepareFields = defaultMemoize(prepareFields);
-  }
+class ServerEditModal extends React.PureComponent<ServerEditModalProps> {
+  prepareFields = defaultMemoize(prepareFields);
+
+  static defaultProps = {
+    isLoading: false,
+    isSaving: false,
+    serverNotFound: false
+  };
 
   render() {
     const {
       isLoading,
       isSaving,
       serverNotFound,
-      shouldCreateServer,
       server,
       submitStatusMessage,
       onSubmit,
@@ -83,17 +88,14 @@ class ServerEditModal extends React.PureComponent {
     } = this.props;
 
     const fields = isLoading ? null : this.getFields();
-    const dataSource = isLoading || serverNotFound
-      ? null
-      : shouldCreateServer ? getServerDefaultDataSource() : getServerDataSource(server);
+    const dataSource = isLoading || serverNotFound || !server ? null : getServerDataSource(server);
 
     return (
       <CommonItemEditModal
-        title={['Probe server', 'Join server']}
+        title='Join server'
         isLoading={isLoading}
         isSaving={isSaving}
         itemNotFound={serverNotFound}
-        shouldCreateItem={shouldCreateServer}
         fields={fields}
         hideLabels
         dataSource={dataSource}
@@ -109,31 +111,5 @@ class ServerEditModal extends React.PureComponent {
     return this.prepareFields(replicasetList);
   };
 }
-
-ServerEditModal.propTypes = {
-  isLoading: PropTypes.bool,
-  isSaving: PropTypes.bool,
-  serverNotFound: PropTypes.bool,
-  shouldCreateServer: PropTypes.bool,
-  server: PropTypes.shape({
-    uuid: PropTypes.string.isRequired,
-    uri: PropTypes.string.isRequired,
-    replicasetUuid: PropTypes.arrayOf(PropTypes.string)
-  }),
-  replicasetList: PropTypes.arrayOf(PropTypes.shape({
-    uuid: PropTypes.string.isRequired,
-    roles: PropTypes.arrayOf(PropTypes.string).isRequired
-  })),
-  submitStatusMessage: PropTypes.string,
-  onSubmit: PropTypes.func.isRequired,
-  onRequestClose: PropTypes.func.isRequired
-};
-
-ServerEditModal.defaultProps = {
-  isLoading: false,
-  isSaving: false,
-  serverNotFound: false,
-  shouldCreateServer: false
-};
 
 export default ServerEditModal;

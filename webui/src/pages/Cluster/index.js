@@ -8,12 +8,12 @@ import {
   selectReplicaset,
   closeReplicasetPopup,
   bootstrapVshard,
-  probeServer,
   joinServer,
   expelServer,
   uploadConfig,
   applyTestConfig,
   changeFailover,
+  setProbeServerModalVisible,
   resetPageState,
   setVisibleBootstrapVshardModal,
   setFilter
@@ -47,6 +47,7 @@ const mapStateToProps = (state: State) => {
       serverList
     },
     ui: {
+      probeServerModalVisible,
       showBootstrapModal
     }
   } = state;
@@ -62,6 +63,7 @@ const mapStateToProps = (state: State) => {
       : replicasetList,
     pageMount,
     pageDataRequestStatus,
+    probeServerModalVisible,
     replicasetCounts: getReplicasetCounts(state),
     replicasetList,
     selectedServerUri,
@@ -80,7 +82,6 @@ const mapDispatchToProps = {
   selectReplicaset,
   closeReplicasetPopup,
   bootstrapVshard,
-  probeServer,
   joinServer,
   expelServer,
   uploadConfig,
@@ -89,6 +90,7 @@ const mapDispatchToProps = {
   changeFailover,
   resetPageState,
   setVisibleBootstrapVshardModal,
+  setProbeServerModalVisible,
   setFilter
 };
 

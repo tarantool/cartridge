@@ -1,13 +1,75 @@
-import PropTypes from 'prop-types';
-import React from 'react';
+// @flow
+import * as React from 'react';
 import { defaultMemoize } from 'reselect';
 import ReactDragListView from 'react-drag-listview';
-import { Form, Row, Table } from 'antd';
+import { Form, Row, Table, Typography } from 'antd';
+import { css } from 'emotion';
 import Modal from 'src/components/Modal';
 import Button from 'src/components/Button';
 import Checkbox from '../Checkbox';
 import Input from '../Input';
 import Radio from '../Radio';
+
+type FormData = { [key: string]: string | string[] };
+
+type CommonItemEditModalFieldOptions = Array<{
+  key: string,
+  label: string | React.Component<any>,
+  disabled?: boolean
+}>;
+
+export type CommonItemEditModalField = {
+  key: string,
+  hidden?: boolean | (d: FormData) => boolean,
+  type?: 'input' | 'checkboxGroup' | 'optionGroup' | 'draggableList',
+  options?: CommonItemEditModalFieldOptions | (d: FormData) => CommonItemEditModalFieldOptions,
+  dataSource?: string,
+  disabled?: boolean | (d: FormData) => boolean,
+  tableColumns?: {
+    dataIndex?: string,
+    title?: string,
+    key?: string,
+    render?: () => React$Element<>,
+    width?: number | string
+  },
+  tableProps?: {
+    showHeader?: boolean,
+    className?: string,
+    rowKey?: string
+  },
+  title?: string | (d: FormData) => string,
+  invalid?: () => boolean,
+  invalidFeedback?: string,
+  helpText?: string | (d: FormData) => string,
+  placeholder?: string,
+  stateModifier: (prevState: FormData, nextState: FormData, fromIndex?: number, toIndex?: number) => FormData,
+  customProps: {
+    create: Object,
+    edit: Object
+  }
+};
+
+type NormalizedField = {
+  ...$Exact<CommonItemEditModalField>,
+  disabled: ?boolean,
+  helpText: ?string,
+  hidden: ?boolean,
+  options: ?CommonItemEditModalFieldOptions,
+  title: ?string
+};
+
+const { Text } = Typography;
+
+const styles = {
+  footer: css`
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+  `,
+  message: css`
+    margin-left: 24px;
+  `
+};
 
 const formItemLayout = {
   labelCol: {
@@ -18,8 +80,12 @@ const formItemLayout = {
   }
 };
 
-const normalizeProp = (prop, dataSource) => typeof prop === 'function' ? prop(dataSource) : prop;
-const pickByField = (fields, name) => fields.find(({ key }) => key === name);
+const normalizeProp = (prop, dataSource: FormData) => typeof prop === 'function' ? prop(dataSource) : prop;
+
+const pickByField = (
+  fields: CommonItemEditModalField[],
+  name: string
+): ?CommonItemEditModalField => fields.find(({ key }) => key === name);
 
 const prepareFields = (shouldCreateItem, fields, formData) => fields
   .map(field => {
@@ -41,19 +107,50 @@ const prepareFields = (shouldCreateItem, fields, formData) => fields
   })
   .filter(field => ! field.hidden);
 
-class CommonItemEditModal extends React.PureComponent {
+type CommonItemEditModalProps = {
+  errorMessage: ?string,
+  title: ?(string | string[]),
+  isLoading: ?boolean,
+  isSaving: ?boolean,
+  itemNotFound: ?boolean,
+  shouldCreateItem: ?boolean,
+  fields: CommonItemEditModalField[],
+  hideLabels: ?boolean,
+  dataSource: ?FormData,
+  isFormReadyToSubmit: ?(d: ?FormData) => boolean,
+  submitStatusMessage: ?string,
+  onSubmit: (d: FormData) => void,
+  onRequestClose: (d: FormData) => void
+};
+
+type CommonItemEditModalState = {
+  formData: ?FormData,
+  controlled: boolean
+}
+class CommonItemEditModal extends React.PureComponent<CommonItemEditModalProps, CommonItemEditModalState> {
+  shouldCreateItem: boolean;
+
+  static defaultProps = {
+    title: ['Create', 'Edit'],
+    isLoading: false,
+    isSaving: false,
+    itemNotFound: false,
+    shouldCreateItem: false,
+    hideLabels: false
+  };
+
   state = {
     formData: null,
     controlled: false
   };
 
-  constructor(props) {
+  constructor(props: CommonItemEditModalProps) {
     super(props);
 
-    this.shouldCreateItem = props.shouldCreateItem;
+    this.shouldCreateItem = !!props.shouldCreateItem;
   }
 
-  static getDerivedStateFromProps(props, state) {
+  static getDerivedStateFromProps(props: CommonItemEditModalProps, state: CommonItemEditModalState) {
     const derivedState = {};
 
     if ( ! state.controlled) {
@@ -69,9 +166,9 @@ class CommonItemEditModal extends React.PureComponent {
   render() {
     const { title, isLoading, itemNotFound } = this.props;
 
-    const preparedTitle = typeof title === 'string'
-      ? title
-      : this.shouldCreateItem ? title[0] : title[1];
+    const preparedTitle = title instanceof Array
+      ? this.shouldCreateItem ? title[0] : title[1]
+      : title;
 
     return (
       <Modal
@@ -99,7 +196,12 @@ class CommonItemEditModal extends React.PureComponent {
   }
 
   renderForm = () => {
-    const { hideLabels, isSaving, submitStatusMessage } = this.props;
+    const {
+      errorMessage,
+      hideLabels,
+      isSaving,
+      submitStatusMessage
+    } = this.props;
     const preparedFields = this.getFields();
     const submitDisabled = ! this.isFormReadyToSubmit();
 
@@ -118,13 +220,13 @@ class CommonItemEditModal extends React.PureComponent {
                   && 'error'
               }
               help={field.invalidFeedback || field.helpText}
-              {...!hideLabels && formItemLayout}
+              {...(hideLabels ? {} : formItemLayout)}
             >
               {this.renderField(field)}
             </Form.Item>
           ))}
 
-          <div>
+          <div className={styles.footer}>
             <Button
               type="primary"
               disabled={submitDisabled}
@@ -132,13 +234,9 @@ class CommonItemEditModal extends React.PureComponent {
             >
               Submit
             </Button>
-            {submitStatusMessage
-              ? (
-                <div>
-                  {submitStatusMessage}
-                </div>
-              )
-              : null}
+            <div className={styles.message}>
+              <Text type={errorMessage ? 'danger' : ''}>{errorMessage || submitStatusMessage}</Text>
+            </div>
           </div>
         </fieldset>
       </Form>
@@ -148,13 +246,12 @@ class CommonItemEditModal extends React.PureComponent {
   isFormReadyToSubmit = () => {
     const { isFormReadyToSubmit } = this.props;
     if (isFormReadyToSubmit) {
-      const { formData } = this.state;
-      return isFormReadyToSubmit(formData);
+      return isFormReadyToSubmit(this.state.formData);
     }
     return true;
   };
 
-  renderField = field => {
+  renderField = (field: NormalizedField) => {
     switch (field.type) {
       case 'checkboxGroup':
         return this.renderCheckboxGroupField(field);
@@ -170,14 +267,26 @@ class CommonItemEditModal extends React.PureComponent {
     }
   };
 
-  renderDraggableList = field => {
+  renderDraggableList = (field: NormalizedField) => {
+    const { formData } = this.state;
+    if (!(field && field.dataSource) || !formData) return null;
+
     const dragProps = {
       onDragEnd: (fromIndex, toIndex) => {
-        const data = [...this.state.formData.servers];
-        const item = data.splice(fromIndex, 1)[0];
-        data.splice(toIndex, 0, item);
-        this.setState({
-          formData: { ...this.state.formData, servers: data }
+        const handler = field.stateModifier ? field.stateModifier : (_, state, fromIndex, toIndex) => state;
+
+        this.setState(prevState => {
+          const { formData } = prevState;
+          if (!formData) return null;
+
+          const value = formData[field.key];
+          const data = value instanceof Array ? [...value] : [value];
+          const item = data.splice(fromIndex, 1)[0];
+          data.splice(toIndex, 0, item);
+
+          return {
+            formData: handler(formData, { ...formData, [field.key]: data }, fromIndex, toIndex)
+          }
         });
       },
       handleSelector: 'a'
@@ -188,7 +297,7 @@ class CommonItemEditModal extends React.PureComponent {
         <Table
           columns={field.tableColumns}
           pagination={false}
-          dataSource={this.state.formData.servers}
+          dataSource={formData[field.dataSource]}
           {...field.tableProps}
         />
       </ReactDragListView>
@@ -196,8 +305,9 @@ class CommonItemEditModal extends React.PureComponent {
   };
 
 
-  renderInputField = field => {
+  renderInputField = (field: NormalizedField) => {
     const { formData } = this.state;
+    if (!formData) return null;
     const value = formData[field.key] == null ? '' : String(formData[field.key]);
 
     return (
@@ -211,28 +321,32 @@ class CommonItemEditModal extends React.PureComponent {
     );
   };
 
-  renderCheckboxGroupField = field => {
-    const values = this.state.formData[field.key] || [];
+  renderCheckboxGroupField = (field: NormalizedField): React$Element<Row>[] => {
+    const { formData } = this.state;
+    if (!formData || !field.options) return [];
 
-    return (
-      field.options.map(option => (
-        <Row key={option.key}>
-          <Checkbox
-            name={field.key}
-            value={option.key}
-            checked={values.includes(option.key)}
-            disabled={field.disabled || option.disabled}
-            onChange={this.handleCheckboxGroupChange}
-          >
-            {option.label}
-          </Checkbox>
-        </Row>
-      ))
-    );
+    const values = formData[field.key] || [];
+
+    return (field.options || []).map(option => (
+      <Row key={option.key}>
+        <Checkbox
+          name={field.key}
+          value={option.key}
+          checked={values.includes(option.key)}
+          disabled={field.disabled || option.disabled}
+          onChange={this.handleCheckboxGroupChange}
+        >
+          {option.label}
+        </Checkbox>
+      </Row>
+    ));
   };
 
-  renderOptionGroupField = field => {
-    const value = this.state.formData[field.key];
+  renderOptionGroupField = (field: NormalizedField): React$Element<Row>[] => {
+    const { formData } = this.state;
+    if (!formData || !field.options) return [];
+
+    const value = formData[field.key];
 
     return field.options.map(option => (
       <Row key={option.key}>
@@ -249,23 +363,28 @@ class CommonItemEditModal extends React.PureComponent {
     ));
   };
 
-  handleInputFieldChange = event => {
+  handleInputFieldChange = (event: SyntheticInputEvent<HTMLInputElement>) => {
     const { formData } = this.state;
     const { target } = event;
 
     this.setState({ formData: { ...formData, [target.name]: target.value } });
   };
 
-  handleCheckboxGroupChange = event => {
+  handleCheckboxGroupChange = (event: SyntheticInputEvent<HTMLInputElement>) => {
     const { target } = event;
 
     const currentField = pickByField(this.props.fields, target.name);
+    if (!currentField) return;
+
     const handler = currentField.stateModifier ? currentField.stateModifier : (_, state) => state;
 
     this.setState(prevState => {
       const { formData } = prevState;
+      if (!formData) return null;
 
       const values = formData[target.name];
+      if (!(values instanceof Array)) return null;
+
       const newValues = target.checked
         ? [...values, target.value]
         : values.filter(option => option !== target.value);
@@ -276,14 +395,17 @@ class CommonItemEditModal extends React.PureComponent {
     });
   };
 
-  handleOptionGroupChange = event => {
+  handleOptionGroupChange = (event: SyntheticInputEvent<HTMLSelectElement>) => {
     const { target } = event;
 
     const currentField = pickByField(this.props.fields, target.name);
+    if (!currentField) return;
+
     const handler = currentField.stateModifier ? currentField.stateModifier : (_, state) => state;
 
     this.setState(prevState => {
       const { formData } = this.state;
+      if (!formData) return null;
 
       return {
         formData: handler(formData, { ...formData, [target.name]: target.value })
@@ -291,17 +413,17 @@ class CommonItemEditModal extends React.PureComponent {
     });
   };
 
-  handleSubmitClick = event => {
+  handleSubmitClick = (event: MouseEvent) => {
     event.preventDefault();
     const { onSubmit } = this.props;
     const { formData } = this.state;
-    onSubmit(formData);
+    if (formData) onSubmit(formData);
   };
 
   handleCancelClick = () => {
     const { onRequestClose } = this.props;
     const { formData } = this.state;
-    onRequestClose(formData);
+    if (formData) onRequestClose(formData);
   };
 
   getFields = () => {
@@ -312,66 +434,5 @@ class CommonItemEditModal extends React.PureComponent {
 
   prepareFields = defaultMemoize(prepareFields);
 }
-
-CommonItemEditModal.propTypes = {
-  title: PropTypes.oneOfType([
-    PropTypes.string,
-    PropTypes.arrayOf(PropTypes.string)
-  ]),
-  isLoading: PropTypes.bool,
-  isSaving: PropTypes.bool,
-  itemNotFound: PropTypes.bool,
-  shouldCreateItem: PropTypes.bool,
-  fields: PropTypes.arrayOf(PropTypes.shape({
-    key: PropTypes.string.isRequired,
-    hidden: PropTypes.oneOfType([
-      PropTypes.bool,
-      PropTypes.func
-    ]),
-    type: PropTypes.oneOf(['input', 'checkboxGroup', 'optionGroup']),
-    options: PropTypes.oneOfType([
-      PropTypes.arrayOf(PropTypes.shape({
-        key: PropTypes.string.isRequired,
-        label: PropTypes.node
-      })),
-      PropTypes.func
-    ]),
-    disabled: PropTypes.oneOfType([
-      PropTypes.bool,
-      PropTypes.func
-    ]),
-    title: PropTypes.oneOfType([
-      PropTypes.string,
-      PropTypes.func
-    ]),
-    invalid: PropTypes.func,
-    invalidFeedback: PropTypes.string,
-    helpText: PropTypes.oneOfType([
-      PropTypes.string,
-      PropTypes.func
-    ]),
-    stateModifier: PropTypes.func,
-    customProps: PropTypes.shape({
-      create: PropTypes.object,
-      edit: PropTypes.object
-    })
-  })),
-  hideLabels: PropTypes.bool,
-  dataSource: PropTypes.object,
-  isFormReadyToSubmit: PropTypes.func,
-  submitStatusMessage: PropTypes.string,
-  onSubmit: PropTypes.func.isRequired,
-  onRequestClose: PropTypes.func.isRequired,
-  dispatch: PropTypes.func
-};
-
-CommonItemEditModal.defaultProps = {
-  title: ['Create', 'Edit'],
-  isLoading: false,
-  isSaving: false,
-  itemNotFound: false,
-  shouldCreateItem: false,
-  hideLabels: false
-};
 
 export default CommonItemEditModal;
