@@ -9,6 +9,7 @@ import PageDataErrorMessage from 'src/components/PageDataErrorMessage';
 import ReplicasetEditModal from 'src/components/ReplicasetEditModal';
 import ReplicasetList from 'src/components/ReplicasetList';
 import ServerEditModal from 'src/components/ServerEditModal';
+import ProbeServerModal from 'src/components/ProbeServerModal';
 import ServerList from 'src/components/ServerList';
 import { addSearchParams, getSearchParams } from 'src/misc/url';
 import ClusterConfigManagement from 'src/components/ClusterConfigManagement';
@@ -28,11 +29,11 @@ import type { RequestStatusType } from 'src/store/commonTypes';
 import type {
   JoinServerActionCreator,
   PageDidMountActionCreator,
-  ProbeServerActionCreator,
   ResetPageStateActionCreator,
   SelectReplicasetActionCreator,
   SelectServerActionCreator,
   SetFilterActionCreator,
+  SetProbeServerModalVisibleActionCreator,
   UploadConfigActionCreator
 } from 'src/store/actions/clusterPage.actions';
 import type { ReplicasetCounts, ServerCounts } from 'src/store/selectors/clusterPage';
@@ -65,6 +66,7 @@ export type ClusterProps = {
   failover: boolean,
   pageMount: boolean,
   pageDataRequestStatus: RequestStatusType,
+  probeServerModalVisible: Boolean,
   replicasetCounts: ReplicasetCounts,
   selectedServerUri: ?string,
   selectedReplicasetUuid: ?string,
@@ -84,7 +86,6 @@ export type ClusterProps = {
   selectReplicaset: SelectReplicasetActionCreator,
   closeReplicasetPopup: () => void,
   bootstrapVshard: () => void,
-  probeServer: ProbeServerActionCreator,
   joinServer: JoinServerActionCreator,
   expelServer: (s: Server) => void,
   uploadConfig: UploadConfigActionCreator,
@@ -96,11 +97,11 @@ export type ClusterProps = {
   resetPageState: ResetPageStateActionCreator,
   setVisibleBootstrapVshardModal: (v: boolean) => void,
   setFilter: SetFilterActionCreator,
+  setProbeServerModalVisible: SetProbeServerModalVisibleActionCreator
 };
 
 export type ClusterState = {
   bootstrapVshardConfirmVisible: boolean,
-  probeServerModalVisible: boolean,
   joinServerModalVisible: boolean,
   createReplicasetModalVisible: boolean,
   createReplicasetModalDataSource: ?Server,
@@ -114,7 +115,6 @@ class Cluster extends React.Component<ClusterProps, ClusterState> {
 
     this.state = {
       bootstrapVshardConfirmVisible: false,
-      probeServerModalVisible: false,
       joinServerModalVisible: false,
       createReplicasetModalVisible: false,
       createReplicasetModalDataSource: null,
@@ -160,6 +160,7 @@ class Cluster extends React.Component<ClusterProps, ClusterState> {
       filter,
       filteredReplicasetList,
       selectedServerUri,
+      probeServerModalVisible,
       replicasetList,
       selectedReplicasetUuid,
       serverCounts,
@@ -167,7 +168,6 @@ class Cluster extends React.Component<ClusterProps, ClusterState> {
     } = this.props;
 
     const {
-      probeServerModalVisible,
       createReplicasetModalVisible,
       expelServerConfirmVisible
     } = this.state;
@@ -314,11 +314,7 @@ class Cluster extends React.Component<ClusterProps, ClusterState> {
 
   renderProbeServerModal = () => {
     return (
-      <ServerEditModal
-        shouldCreateServer
-        onSubmit={this.handleProbeServerSubmitRequest}
-        onRequestClose={this.handleProbeServerModalCloseRequest}
-      />
+      <ProbeServerModal onRequestClose={this.handleProbeServerModalCloseRequest} />
     );
   };
 
@@ -427,21 +423,11 @@ class Cluster extends React.Component<ClusterProps, ClusterState> {
   };
 
   handleProbeServerRequest = () => {
-    this.setState({ probeServerModalVisible: true });
+    this.props.setProbeServerModalVisible(true);
   };
 
   handleProbeServerModalCloseRequest = () => {
-    this.setState({ probeServerModalVisible: false });
-  };
-
-  handleProbeServerSubmitRequest = (server: Server) => {
-    const { probeServer } = this.props;
-    this.setState(
-      {
-        probeServerModalVisible: false
-      },
-      () => probeServer(server.uri),
-    );
+    this.props.setProbeServerModalVisible(false);
   };
 
   handleJoinServerRequest = (server: Server) => {
