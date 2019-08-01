@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.10.0] - 2019-08-01
+
 ### Added
 
 - Cluster can now operate without vshard roles (if you don't need sharding).
@@ -19,8 +21,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - New role flag: `permanent = true`.
   Permanent roles are always enabled. Also they are hidden implicitly.
-  
-- New functions in cluster test_helpers - `Cluster:upload_config(config)` and `Cluster:download_config()`  
+
+- New functions in cluster test_helpers - `Cluster:upload_config(config)` and `Cluster:download_config()`
 
 ### Fixed
 
