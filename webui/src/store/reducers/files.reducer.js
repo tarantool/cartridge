@@ -75,4 +75,5 @@ export default (state: Array<FileItem> = initialState, { type, payload }: FSA) =
       return updateAllFiles(state, {saved: true})
     }
   }
+  return state
 }
