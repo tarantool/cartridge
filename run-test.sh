@@ -3,7 +3,10 @@
 set -e
 
 ./taptest.lua
-./.rocks/bin/luatest -v
+.rocks/bin/luatest -v
+
+# lint
+.rocks/bin/luacheck cluster-scm-1.rockspec
 
 # collect coverage
 .rocks/bin/luacov-console ./cluster

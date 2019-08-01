@@ -12,6 +12,7 @@ file = {
     "cluster/user-defined-role.lua",
 }
 topics = {
-	"CHANGELOG.md",
+    "README.md",
+    "CHANGELOG.md",
 }
 format = 'markdown'
