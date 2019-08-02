@@ -551,8 +551,10 @@ local function apply_config(conf)
         is_master = true
     end
 
+    local is_rw = is_master or my_replicaset.all_rw
+
     local _, err = e_config_apply:pcall(box.cfg, {
-        read_only = not is_master,
+        read_only = not is_rw,
         -- workaround for tarantool gh-3760
         replication_connect_timeout = 0.000001,
         replication_connect_quorum = 0,

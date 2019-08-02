@@ -24,13 +24,21 @@ cluster = [
         http_port = 8082,
     ),
     Server(
+        alias = 'storage-2',
+        instance_uuid = 'bbbbbbbb-bbbb-4000-b000-000000000002',
+        replicaset_uuid = 'bbbbbbbb-0000-4000-b000-000000000000',
+        roles = ['vshard-storage'],
+        binary_port = 33004,
+        http_port = 8084,
+    ),
+    Server(
         alias = 'expelled',
         instance_uuid = 'cccccccc-cccc-4000-b000-000000000001',
         replicaset_uuid = 'cccccccc-0000-4000-b000-000000000000',
         roles = [],
         binary_port = 33009,
         http_port = 8089,
-    )
+    ),
 ]
 
 unconfigured = [
@@ -185,7 +193,6 @@ def test_replication_info_schema(cluster):
         }
     """ % ' '.join(field_names))
     assert 'errors' not in obj, obj['errors'][0]['message']
-    logging.info(obj['data']['servers'][0]['boxinfo']['replication']['replication_info'])
 
 
 def test_servers(cluster, expelled, helpers):
@@ -232,7 +239,7 @@ def test_servers(cluster, expelled, helpers):
         'disabled': None,
         'replicaset': None
     } == helpers.find(servers, 'uri', 'localhost:33003')
-    assert len(servers) == 3
+    assert len(servers) == 4
 
 def test_replicasets(cluster, expelled, helpers):
     obj = cluster['router'].graphql("""
@@ -244,6 +251,7 @@ def test_replicasets(cluster, expelled, helpers):
                 master { uuid }
                 active_master { uuid }
                 servers { uri priority }
+                all_rw
                 weight
             }
         }
@@ -258,6 +266,7 @@ def test_replicasets(cluster, expelled, helpers):
         'master': {'uuid': 'aaaaaaaa-aaaa-4000-b000-000000000001'},
         'active_master': {'uuid': 'aaaaaaaa-aaaa-4000-b000-000000000001'},
         'servers': [{'uri': 'localhost:33001', 'priority': 1}],
+        'all_rw': False,
         'weight': None,
     } == helpers.find(replicasets, 'uuid', 'aaaaaaaa-0000-4000-b000-000000000000')
     assert {
@@ -267,7 +276,11 @@ def test_replicasets(cluster, expelled, helpers):
         'master': {'uuid': 'bbbbbbbb-bbbb-4000-b000-000000000001'},
         'active_master': {'uuid': 'bbbbbbbb-bbbb-4000-b000-000000000001'},
         'weight': 1,
-        'servers': [{'uri': 'localhost:33002', 'priority': 1}]
+        'all_rw': False,
+        'servers': [
+            {'uri': 'localhost:33002', 'priority': 1},
+            {'uri': 'localhost:33004', 'priority': 2},
+        ]
     } == helpers.find(replicasets, 'uuid', 'bbbbbbbb-0000-4000-b000-000000000000')
     assert len(replicasets) == 2
 
@@ -351,13 +364,13 @@ def test_edit_replicaset(cluster, expelled):
         mutation {
             edit_replicaset(
                 uuid: "bbbbbbbb-0000-4000-b000-000000000000"
-                master: ["bbbbbbbb-bbbb-4000-b000-000000000002"]
+                master: ["bbbbbbbb-bbbb-4000-b000-000000000003"]
             )
         }
     """)
     assert obj['errors'][0]['message'] == \
         'replicasets[bbbbbbbb-0000-4000-b000-000000000000] leader ' + \
-        '"bbbbbbbb-bbbb-4000-b000-000000000002" doesn\'t exist'
+        '"bbbbbbbb-bbbb-4000-b000-000000000003" doesn\'t exist'
 
     obj = cluster['router'].graphql("""
         mutation {
@@ -378,6 +391,7 @@ def test_edit_replicaset(cluster, expelled):
                 status
                 servers { uri }
                 weight
+                all_rw
             }
         }
     """)
@@ -389,8 +403,84 @@ def test_edit_replicaset(cluster, expelled):
         'roles': ['vshard-storage', 'vshard-router'],
         'status': 'healthy',
         'weight': 2,
-        'servers': [{'uri': 'localhost:33002'}]
+        'all_rw': False,
+        'servers': [{'uri': 'localhost:33002'}, {'uri': 'localhost:33004'}]
     } == replicasets[0]
+
+    obj = cluster['router'].graphql("""
+        mutation {
+            edit_replicaset(
+                uuid: "bbbbbbbb-0000-4000-b000-000000000000"
+                all_rw: true
+            )
+        }
+    """)
+    assert 'errors' not in obj
+
+    obj = cluster['storage'].graphql("""
+        {
+            replicasets(uuid: "bbbbbbbb-0000-4000-b000-000000000000") {
+                uuid
+                roles
+                status
+                servers { uri }
+                weight
+                all_rw
+            }
+        }
+    """)
+    replicasets = obj['data']['replicasets']
+    assert len(replicasets) == 1
+    assert {
+        'uuid': 'bbbbbbbb-0000-4000-b000-000000000000',
+        'roles': ['vshard-storage', 'vshard-router'],
+        'status': 'healthy',
+        'weight': 2,
+        'all_rw': True,
+        'servers': [{'uri': 'localhost:33002'}, {'uri': 'localhost:33004'}]
+    } == replicasets[0]
+
+
+@pytest.mark.parametrize("all_rw", [True, False])
+def test_all_rw(cluster, all_rw, helpers):
+    obj = cluster['router'].graphql("""
+        mutation($all_rw: Boolean!) {
+            edit_replicaset(
+                uuid: "bbbbbbbb-0000-4000-b000-000000000000"
+                all_rw: $all_rw
+            )
+        }
+    """, variables={'all_rw': all_rw})
+    assert 'errors' not in obj
+
+    obj = cluster['router'].graphql("""
+        {
+            replicasets(uuid: "bbbbbbbb-0000-4000-b000-000000000000") {
+                all_rw
+                servers {
+                    uuid
+                    boxinfo {
+                        general { ro }
+                    }
+                }
+                master {
+                    uuid
+                }
+            }
+        }
+    """)
+
+    assert len(obj['data']['replicasets']) == 1
+    replicaset = obj['data']['replicasets'][0]
+
+    assert replicaset['all_rw'] == all_rw
+
+    for srv in replicaset['servers']:
+        if srv['uuid'] == replicaset['master']['uuid']:
+            assert srv['boxinfo']['general']['ro'] == False
+        else:
+            assert srv['boxinfo']['general']['ro'] == (not all_rw)
+
 
 def test_uninitialized(module_tmpdir, helpers):
     srv = Server(
@@ -537,7 +627,7 @@ def test_join_server(cluster, expelled, helpers):
 
     assert 'errors' not in obj
     servers = obj['data']['servers']
-    assert len(servers) == 3
+    assert len(servers) == 4
     assert {
         'uri': 'localhost:33003',
         'uuid': 'dddddddd-dddd-4000-b000-000000000001',

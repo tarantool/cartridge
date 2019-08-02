@@ -143,6 +143,7 @@ local function get_servers_and_replicasets()
             weight = nil,
             vshard_group = replicaset.vshard_group,
             servers = {},
+            all_rw = replicaset.all_rw or false,
         }
 
         local enabled_roles = confapplier.get_enabled_roles(replicaset.roles)
@@ -719,6 +720,7 @@ end
 -- @tparam ?{string,...} args.master Failover order
 -- @tparam ?number args.weight
 -- @tparam ?string args.vshard_group
+-- @tparam ?boolean args.all_rw
 -- @treturn[1] boolean true
 -- @treturn[2] nil
 -- @treturn[2] table Error description
@@ -730,6 +732,7 @@ local function edit_replicaset(args)
         master = '?string|table',
         weight = '?number',
         vshard_group = '?string',
+        all_rw = '?boolean',
     })
 
     local topology_cfg = confapplier.get_deepcopy('topology')
@@ -753,6 +756,10 @@ local function edit_replicaset(args)
             args.uuid,
             args.master
         )
+    end
+
+    if args.all_rw ~= nil then
+        replicaset.all_rw = args.all_rw
     end
 
     -- Set proper vshard_group

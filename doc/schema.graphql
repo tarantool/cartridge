@@ -1,5 +1,5 @@
 # source: http://localhost:8081/admin/api
-# timestamp: Sun Jul 07 2019 23:41:02 GMT+0300 (MSK)
+# timestamp: Fri Aug 02 2019 10:40:53 GMT+0300 (Москва, стандартное время)
 
 """Cluster management"""
 type Apicluster {
@@ -50,7 +50,7 @@ type Mutation {
   cluster: MutationApicluster
   edit_server(uuid: String!, uri: String, labels: [LabelInput]): Boolean
   probe_server(uri: String!): Boolean
-  edit_replicaset(weight: Float, master: [String!], roles: [String!], uuid: String!, vshard_group: String): Boolean
+  edit_replicaset(weight: Float, vshard_group: String, roles: [String!], uuid: String!, all_rw: Boolean, master: [String!]): Boolean
   join_server(replicaset_uuid: String, uri: String!, labels: [LabelInput], roles: [String!], instance_uuid: String, timeout: Float, vshard_group: String): Boolean
   bootstrap_vshard: Boolean
   expel_server(uuid: String!): Boolean
@@ -85,37 +85,40 @@ type Query {
 
 """Group of servers replicating the same data"""
 type Replicaset {
-  """The role set enabled on every instance in the replica set"""
-  roles: [String!]
+  """
+  Vshard replica set weight. Null for replica sets with vshard-storage role disabled.
+  """
+  weight: Float
 
-  """
-  The active leader. It may differ from "master" if failover is enabled and configured leader isn't healthy.
-  """
-  active_master: Server!
-
-  """
-  Vshard storage group name. Meaningful only when multiple vshard groups are configured.
-  """
-  vshard_group: String
-
-  """The replica set uuid"""
-  uuid: String!
+  """The leader according to the configuration."""
+  master: Server!
 
   """
   The replica set health. It is "healthy" if all instances have status "healthy". Otherwise "unhealthy".
   """
   status: String!
 
-  """The leader according to the configuration."""
-  master: Server!
+  """All instances in replica set are rw"""
+  all_rw: Boolean!
+
+  """
+  Vshard storage group name. Meaningful only when multiple vshard groups are configured.
+  """
+  vshard_group: String
+
+  """
+  The active leader. It may differ from "master" if failover is enabled and configured leader isn't healthy.
+  """
+  active_master: Server!
+
+  """The replica set uuid"""
+  uuid: String!
 
   """Servers in the replica set."""
   servers: [Server!]!
 
-  """
-  Vshard replica set weight. Null for replica sets with vshard-storage role disabled.
-  """
-  weight: Float
+  """The role set enabled on every instance in the replica set"""
+  roles: [String!]
 }
 
 """Statistics for an instance in the replica set."""

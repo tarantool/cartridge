@@ -50,6 +50,10 @@ local gql_type_replicaset = gql_types.object {
             kind = gql_types.list(gql_types.nonNull('Server')).nonNull,
             description = 'Servers in the replica set.'
         },
+        all_rw = {
+            kind = gql_types.boolean.nonNull,
+            description = 'All instances in replica set are rw',
+        }
     }
 }
 
@@ -265,6 +269,7 @@ local function init(graphql)
             master = gql_types.list(gql_types.string.nonNull),
             weight = gql_types.float,
             vshard_group = gql_types.string,
+            all_rw = gql_types.boolean,
         },
         kind = gql_types.boolean,
         callback = module_name .. '.edit_replicaset',

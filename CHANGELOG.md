@@ -24,6 +24,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - New functions in cluster test_helpers - `Cluster:upload_config(config)` and `Cluster:download_config()`
 
+- Added `topology.replicasets[].all_rw` flag to clusterwide config to configure all instances
+  in replicaset as `read_only = false`. 
+  Added `all_rw` field to Graphql API `replicaset` type and `edit_replicaset` mutation args.
+
 ### Fixed
 
 - `cluster.call_rpc` used to return 'Role unavailable' error as a first argument
