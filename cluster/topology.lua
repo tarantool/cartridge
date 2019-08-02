@@ -255,11 +255,17 @@ local function validate_schema(field, topology)
             )
         end
 
+        e_config:assert(
+            (replicaset.all_rw == nil) or (type(replicaset.all_rw) == 'boolean'),
+            '%s.all_rw must be a boolean, got %s', field, type(replicaset.all_rw)
+        )
+
         local known_keys = {
             ['roles'] = true,
             ['master'] = true,
             ['weight'] = true,
             ['vshard_group'] = true,
+            ['all_rw'] = true,
         }
         for k, _ in pairs(replicaset) do
             e_config:assert(

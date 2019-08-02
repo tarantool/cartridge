@@ -292,9 +292,14 @@ local function get_vshard_config(group_name, conf)
         vshard_groups = conf.vshard_groups
     end
 
+    local is_master = active_masters[box.info.cluster.uuid] == box.info.uuid
+    local my_replicaset = topology_cfg.replicasets[box.info.cluster.uuid]
+    local is_rw = is_master or my_replicaset.all_rw
+
     return {
         bucket_count = vshard_groups[group_name].bucket_count,
         sharding = sharding,
+        read_only = not is_rw
     }
 end
 
