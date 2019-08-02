@@ -49,6 +49,7 @@ build = {
             ['cluster.topology'] = 'cluster/topology.lua',
             ['cluster.bootstrap'] = 'cluster/bootstrap.lua',
             ['cluster.confapplier'] = 'cluster/confapplier.lua',
+            ['cluster.remote-control'] = 'cluster/remote-control.lua',
             ['cluster.cluster-cookie'] = 'cluster/cluster-cookie.lua',
             ['cluster.service-registry'] = 'cluster/service-registry.lua',
             ['cluster.label-utils'] = 'cluster/label-utils.lua',

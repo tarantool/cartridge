@@ -6,6 +6,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- New parameter `topology.replicasets[].all_rw` in clusterwide config for configuring
+  all instances in the replicaset as `read_only = false`.
+  It can be managed with both GraphQL and Lua API `edit_replicaset`.
+
+- Remote Control server - a partial replacement for the `box.cfg({listen})`, independent on `box.cfg`.
+  The server is only to be used internally for bootstrapping new instances.
+
 ## [0.10.0] - 2019-08-01
 
 ### Added
@@ -17,16 +26,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - New role flag `hidden = true`. Hidden roles aren't listed in
   `cluster.admin.get_replicasets().roles` and therefore in WebUI.
-  Hidden roled are supposed to be a dependency for another role, yet they still can be enabled with `edit_replicaset` function (both Lua and GraphQL).
+  Hidden roled are supposed to be a dependency for another role, yet they still can be
+  enabled with `edit_replicaset` function (both Lua and GraphQL).
 
 - New role flag: `permanent = true`.
   Permanent roles are always enabled. Also they are hidden implicitly.
 
 - New functions in cluster test_helpers - `Cluster:upload_config(config)` and `Cluster:download_config()`
-
-- Added `topology.replicasets[].all_rw` flag to clusterwide config to configure all instances
-  in replicaset as `read_only = false`. 
-  Added `all_rw` field to Graphql API `replicaset` type and `edit_replicaset` mutation args.
 
 ### Fixed
 

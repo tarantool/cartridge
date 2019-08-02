@@ -6,6 +6,13 @@ exclude_files = {
 }
 new_read_globals = {
     'box',
+    '_TARANTOOL',
+    'tonumber64',
+    string = {
+        fields = {
+            'split',
+        },
+    },
     table = {
         fields = {
             'maxn',
@@ -22,5 +29,5 @@ new_read_globals = {
             'concat',
             'insert',
         },
-    }
+    },
 }
