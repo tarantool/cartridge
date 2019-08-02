@@ -8,6 +8,7 @@ file = {
     "cluster/test_helpers.lua",
     "cluster/test_helpers/cluster.lua",
     "cluster/test_helpers/server.lua",
+    "cluster/remote-control.lua",
     "cluster/service-registry.lua",
     "cluster/user-defined-role.lua",
 }
