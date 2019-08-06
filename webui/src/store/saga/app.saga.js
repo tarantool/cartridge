@@ -1,6 +1,12 @@
 import { delay } from 'redux-saga';
-import { call, put, select, take, takeEvery, takeLatest } from 'redux-saga/effects';
-
+import {
+  call,
+  put,
+  select,
+  take,
+  takeEvery,
+  takeLatest
+} from 'redux-saga/effects';
 import { getErrorMessage as getApiErrorMessage, isDeadServerError, SERVER_NOT_REACHABLE_ERROR_TYPE } from 'src/api';
 import { pageRequestIndicator } from 'src/misc/pageRequestIndicator';
 import {

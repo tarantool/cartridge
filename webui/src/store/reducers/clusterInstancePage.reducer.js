@@ -8,8 +8,13 @@ import {
   CLUSTER_INSTANCE_REFRESH_REQUEST_ERROR,
   CLUSTER_INSTANCE_STATE_RESET
 } from 'src/store/actionTypes';
-import { baseReducer, getInitialRequestStatus, getPageMountReducer, getReducer, getRequestReducer }
-  from 'src/store/commonRequest';
+import {
+  baseReducer,
+  getInitialRequestStatus,
+  getPageMountReducer,
+  getReducer,
+  getRequestReducer
+} from 'src/store/commonRequest';
 
 export const initialState = {
   alias: null,

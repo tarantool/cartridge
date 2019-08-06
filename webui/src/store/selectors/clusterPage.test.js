@@ -9,7 +9,7 @@ const emptyState = {
   clusterPage: {
     replicasetList: [],
     serverList: []
-  },
+  }
 }
 
 const unconfiguredState = {
@@ -56,8 +56,8 @@ const unconfiguredState = {
         uuid: 'd97e299e-19d2-4dfc-ac21-0985a1ba2668',
         message: ''
       }
-    ],
-  },
+    ]
+  }
 }
 
 const unhealthyState = {
@@ -128,8 +128,8 @@ const unhealthyState = {
         uuid: 'd97e299e-19d2-4dfc-ac21-0985a1ba2668',
         message: ''
       }
-    ],
-  },
+    ]
+  }
 }
 
 const state = {
@@ -200,8 +200,8 @@ const state = {
         uuid: 'd97e299e-19d2-4dfc-ac21-0985a1ba2668',
         message: ''
       }
-    ],
-  },
+    ]
+  }
 }
 
 describe('getServerCounts', () => {

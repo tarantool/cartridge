@@ -1,6 +1,12 @@
 import { delay } from 'redux-saga';
-import { call, cancel, fork, put, select, take } from 'redux-saga/effects';
-
+import {
+  call,
+  cancel,
+  fork,
+  put,
+  select,
+  take
+} from 'redux-saga/effects';
 import {
   CLUSTER_INSTANCE_DID_MOUNT,
   CLUSTER_INSTANCE_STATE_RESET,
@@ -12,9 +18,7 @@ import {
   CLUSTER_INSTANCE_REFRESH_REQUEST_ERROR
 } from 'src/store/actionTypes';
 import { baseSaga, getSignalRequestSaga } from 'src/store/commonRequest';
-import {
-  getInstanceData, refreshInstanceData
-} from 'src/store/request/clusterInstancePage.requests';
+import { getInstanceData, refreshInstanceData } from 'src/store/request/clusterInstancePage.requests';
 import { REFRESH_LIST_INTERVAL } from 'src/constants';
 
 const pageDataRequestSaga = getSignalRequestSaga(
