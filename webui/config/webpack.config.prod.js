@@ -1,12 +1,10 @@
-'use strict';
-
 const autoprefixer = require('autoprefixer');
 const path = require('path');
 const webpack = require('webpack');
 const ManifestPlugin = require('webpack-manifest-plugin');
-const InterpolateHtmlPlugin = require('react-dev-utils/InterpolateHtmlPlugin');
 const eslintFormatter = require('react-dev-utils/eslintFormatter');
 const ModuleScopePlugin = require('react-dev-utils/ModuleScopePlugin');
+const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 const paths = require('./paths');
 const getClientEnvironment = require('./env');
 const moduleConfig = require('../module-config');
@@ -39,6 +37,7 @@ const cssFilename = 'static/css/[name].[contenthash:8].css';
 // It compiles slowly and is focused on producing a fast and minimal bundle.
 // The development configuration is different and lives in a separate file.
 module.exports = {
+  mode: 'production',
   // Don't attempt to continue if there are any errors.
   bail: true,
   // We generate sourcemaps in production. This is slow but gives good results.
@@ -60,7 +59,7 @@ module.exports = {
     devtoolModuleFilenameTemplate: info =>
       path
         .relative(paths.appSrc, info.absoluteResourcePath)
-        .replace(/\\/g, '/'),
+        .replace(/\\/g, '/')
   },
   resolve: {
     // This allows you to set a fallback for where Webpack should look for modules.
@@ -85,7 +84,7 @@ module.exports = {
 
       // Support React Native Web
       // https://www.smashingmagazine.com/2016/08/a-glimpse-into-the-future-with-react-native-for-web/
-      'react-native': 'react-native-web',
+      'react-native': 'react-native-web'
     },
     plugins: [
       // Prevents users from importing files from outside of src/ (or node_modules/).
@@ -93,8 +92,8 @@ module.exports = {
       // To fix this, we prevent you from importing files out of src/ -- if you'd like to,
       // please link the files into your node_modules/ and let module-resolution kick in.
       // Make sure your source files are compiled, as they will not be processed in any way.
-      new ModuleScopePlugin(paths.appSrc, [paths.appPackageJson]),
-    ],
+      new ModuleScopePlugin(paths.appSrc, [paths.appPackageJson])
+    ]
   },
   externals: {
     react: 'react',
@@ -116,13 +115,12 @@ module.exports = {
           {
             options: {
               formatter: eslintFormatter,
-              eslintPath: require.resolve('eslint'),
-
+              eslintPath: require.resolve('eslint')
             },
-            loader: require.resolve('eslint-loader'),
-          },
+            loader: require.resolve('eslint-loader')
+          }
         ],
-        include: paths.appSrc,
+        include: paths.appSrc
       },
       {
         // "oneOf" will traverse all following loaders until one will
@@ -136,8 +134,8 @@ module.exports = {
             loader: require.resolve('url-loader'),
             options: {
               limit: 1000000,
-              name: `static/${moduleConfig.namespace}/media/[name].[hash:8].[ext]`,
-            },
+              name: `static/${moduleConfig.namespace}/media/[name].[hash:8].[ext]`
+            }
           },
           // Process JS with Babel.
           {
@@ -145,9 +143,33 @@ module.exports = {
             include: paths.appSrc,
             loader: require.resolve('babel-loader'),
             options: {
-
-              compact: true,
-            },
+              compact: true
+            }
+          },
+          // Process any JS outside of the app with Babel.
+          // Unlike the application JS, we only compile the standard ES features.
+          {
+            test: /\.(js|mjs)$/,
+            exclude: /@babel(?:\/|\\{1,2})runtime/,
+            loader: require.resolve('babel-loader'),
+            options: {
+              babelrc: false,
+              configFile: false,
+              compact: false,
+              presets: [
+                [
+                  require.resolve('babel-preset-react-app/dependencies'),
+                  { helpers: true }
+                ]
+              ],
+              cacheDirectory: true,
+              cacheCompression: true,
+              // If an error happens in a package, it's possible to be
+              // because it was compiled. Thus, we don't want the browser
+              // debugger to show the original code. Instead, the code
+              // being evaluated would be much more helpful.
+              sourceMaps: false
+            }
           },
           // The notation here is somewhat confusing.
           // "postcss" loader applies autoprefixer to our CSS.
@@ -171,9 +193,8 @@ module.exports = {
                 loader: require.resolve('css-loader'),
                 options: {
                   importLoaders: 1,
-                  minimize: true,
-                  sourceMap: shouldUseSourceMap,
-                },
+                  sourceMap: shouldUseSourceMap
+                }
               },
               {
                 loader: require.resolve('postcss-loader'),
@@ -189,14 +210,14 @@ module.exports = {
                         'last 4 versions',
                         'Firefox ESR',
                         // EDIT -->
-                        'not ie < 11',
+                        'not ie < 11'
                         // <-- EDIT
                       ],
-                      flexbox: 'no-2009',
-                    }),
-                  ],
-                },
-              },
+                      flexbox: 'no-2009'
+                    })
+                  ]
+                }
+              }
             ]
             // Note: this won't work without `new ExtractTextPlugin()` in `plugins`.
           },
@@ -210,14 +231,13 @@ module.exports = {
                 loader: require.resolve('css-loader'),
                 options: {
                   importLoaders: 1,
-                  minimize: true,
-                  sourceMap: shouldUseSourceMap,
-                },
+                  sourceMap: shouldUseSourceMap
+                }
               },
               {
                 loader: require.resolve('less-loader'),
                 options: {
-                  javascriptEnabled: true,
+                  javascriptEnabled: true
                 }
               }
             ]
@@ -234,54 +254,42 @@ module.exports = {
             // by webpacks internal loaders.
             exclude: [/\.(js|jsx|mjs)$/, /\.html$/, /\.json$/],
             options: {
-              name: `static/${moduleConfig.namespace}/media/[name].[hash:8].[ext]`,
-            },
-          },
+              name: `static/${moduleConfig.namespace}/media/[name].[hash:8].[ext]`
+            }
+          }
           // ** STOP ** Are you adding a new loader?
           // Make sure to add the new loader(s) before the "file" loader.
-        ],
-      },
-    ],
+        ]
+      }
+    ]
+  },
+  optimization: {
+    minimizer: [
+      // Minify the code.
+      new UglifyJsPlugin({
+        uglifyOptions: {
+          output: {
+            comments: false
+          },
+          warnings: false
+        },
+        // parallel: false,
+        sourceMap: shouldUseSourceMap
+      })
+    ]
   },
   plugins: [
-    // Makes some environment variables available in index.html.
-    // The public URL is available as %PUBLIC_URL% in index.html, e.g.:
-    // <link rel="shortcut icon" href="%PUBLIC_URL%/favicon.ico">
-    // In production, it will be an empty string unless you specify "homepage"
-    // in `package.json`, in which case it will be the pathname of that URL.
-    new InterpolateHtmlPlugin(env.raw),
     // Generates an `index.html` file with the <script> injected.
     // Makes some environment variables available to the JS code, for example:
     // if (process.env.NODE_ENV === 'production') { ... }. See `./env.js`.
     // It is absolutely essential that NODE_ENV was set to production here.
     // Otherwise React will be compiled in the very slow development mode.
     new webpack.DefinePlugin(env.stringified),
-    // Minify the code.
-    new webpack.optimize.UglifyJsPlugin({
-      compress: {
-        warnings: false,
-        // Disabled because of an issue with Uglify breaking seemingly valid code:
-        // https://github.com/facebookincubator/create-react-app/issues/2376
-        // Pending further investigation:
-        // https://github.com/mishoo/UglifyJS2/issues/2011
-        comparisons: false,
-      },
-      mangle: {
-        safari10: true,
-      },
-      output: {
-        comments: false,
-        // Turned on because emoji and regex is not minified properly using default
-        // https://github.com/facebookincubator/create-react-app/issues/2488
-        ascii_only: true,
-      },
-      sourceMap: shouldUseSourceMap,
-    }),
     // Generate a manifest file which contains a mapping of all asset filenames
     // to their corresponding output file so that tools can pick it up without
     // having to parse `index.html`.
     new ManifestPlugin({
-      fileName: 'asset-manifest.json',
+      fileName: 'asset-manifest.json'
     }),
     // Generate a service worker script that will precache, and keep up to date,
     // the HTML & assets that are part of the Webpack build.
@@ -290,7 +298,7 @@ module.exports = {
     // solution that requires the user to opt into importing specific locales.
     // https://github.com/jmblog/how-to-optimize-momentjs-with-webpack
     // You can remove this if you don't use Moment.js:
-    new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
+    new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/)
   ],
   // Some libraries import Node modules but don't use them in the browser.
   // Tell Webpack to provide empty mocks for them so importing them works.
@@ -299,6 +307,10 @@ module.exports = {
     fs: 'empty',
     net: 'empty',
     tls: 'empty',
-    child_process: 'empty',
+    child_process: 'empty'
   },
+  performance: {
+    maxEntrypointSize: 2000000,
+    maxAssetSize: 2000000
+  }
 };

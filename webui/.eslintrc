@@ -1,11 +1,13 @@
 {
   "extends": "react-app",
+  "overrides": [],
   "settings": {
     "react": {
       "version": "16.4.0",
       "flowVersion": "0.102"
     }
   },
+  "parser": "babel-eslint",
   "rules": {
     "no-trailing-spaces": ["warn"],
     "no-multi-str": ["off"],
@@ -67,6 +69,7 @@
     ],
     "react/jsx-first-prop-new-line": ["error", "multiline"],
     "react/jsx-max-props-per-line": ["error", { "when": "multiline" }],
-    "react/jsx-closing-bracket-location": ["error", "tag-aligned"]
+    "react/jsx-closing-bracket-location": ["error", "tag-aligned"],
+    "jsx-a11y/href-no-hash": [0]
   }
 }

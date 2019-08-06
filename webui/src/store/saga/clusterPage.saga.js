@@ -1,6 +1,14 @@
 import { delay } from 'redux-saga';
-import { call, cancel, fork, put, select, take, takeLatest, takeEvery } from 'redux-saga/effects';
-
+import {
+  call,
+  cancel,
+  fork,
+  put,
+  select,
+  take,
+  takeLatest,
+  takeEvery
+} from 'redux-saga/effects';
 import { pageRequestIndicator } from 'src/misc/pageRequestIndicator';
 import {
   CLUSTER_PAGE_DID_MOUNT,
@@ -40,8 +48,17 @@ import {
 import { baseSaga, getRequestSaga, getSignalRequestSaga } from 'src/store/commonRequest';
 import { getClusterSelf } from 'src/store/request/app.requests';
 import {
-  getPageData, refreshLists, getServerStat, bootstrapVshard, probeServer, joinServer, createReplicaset,
-  expelServer, editReplicaset, uploadConfig, changeFailover
+  getPageData,
+  refreshLists,
+  getServerStat,
+  bootstrapVshard,
+  probeServer,
+  joinServer,
+  createReplicaset,
+  expelServer,
+  editReplicaset,
+  uploadConfig,
+  changeFailover
 } from 'src/store/request/clusterPage.requests';
 import { REFRESH_LIST_INTERVAL } from 'src/constants';
 

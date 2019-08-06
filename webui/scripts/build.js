@@ -1,5 +1,3 @@
-'use strict';
-
 // Do this as the first thing so that any code reading it knows the right env.
 process.env.BABEL_ENV = 'production';
 process.env.NODE_ENV = 'production';
@@ -36,8 +34,7 @@ const walkSync = function(dir, filelist) {
   files.forEach(file => {
     if (mainFs.statSync(dir + file).isDirectory()) {
       filelist = walkSync(dir + file + '/', filelist);
-    }
-    else {
+    } else {
       filelist.push(dir + file);
     }
   });
@@ -126,14 +123,14 @@ measureFileSizesBeforeBuild(paths.appBuild)
       const isEntry = /main.+js$/
       for (const file of files){
         const fileName = file.slice(namespaceFolder.length);
-        const fileBody = mainFs.readFileSync(file, {encoding: 'utf8'});
+        const fileBody = mainFs.readFileSync(file, { encoding: 'utf8' });
         filemap[fileName] = {
           is_entry: isEntry.test(fileName),
           body: fileBody,
-          mime: mime.lookup(fileName),
+          mime: mime.lookup(fileName)
         }
       }
-      mainFs.writeFileSync(buildFoler + '/bundle.json', JSON.stringify(filemap), {encoding: 'utf8'})
+      mainFs.writeFileSync(buildFoler + '/bundle.json', JSON.stringify(filemap), { encoding: 'utf8' })
       console.log('compile bundle.json')
       cp.execSync('tarantool -l pack-front - build/bundle.json build/bundle.lua')
       console.log('build bundle.lua')
@@ -176,7 +173,7 @@ function build(previousFileSizes) {
       return resolve({
         stats,
         previousFileSizes,
-        warnings: messages.warnings,
+        warnings: messages.warnings
       });
     });
   });
@@ -185,6 +182,6 @@ function build(previousFileSizes) {
 function copyPublicFolder() {
   fs.copySync(paths.appPublic, paths.appBuild, {
     dereference: true,
-    filter: file => file !== paths.appHtml,
+    filter: file => file !== paths.appHtml
   });
 }
