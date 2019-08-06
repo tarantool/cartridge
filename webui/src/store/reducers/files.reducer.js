@@ -4,11 +4,13 @@ import {
   FETCH_CONFIG_FILE_CONTENT,
   FETCH_CONFIG_FILE_CONTENT_DONE,
   FETCH_CONFIG_FILE_CONTENT_FAIL,
-  FETCH_CONFIG_FILES_DONE, PUT_CONFIG_FILE_CONTENT, PUT_CONFIG_FILE_CONTENT_DONE
-} from "../actionTypes";
+  FETCH_CONFIG_FILES_DONE,
+  PUT_CONFIG_FILE_CONTENT,
+  PUT_CONFIG_FILE_CONTENT_DONE, UPDATE_CONTENT
+} from '../actionTypes';
 
-type FileItem = {
-  parentId: string,
+export type FileItem = {
+  parentId?: string,
   fileId: string,
   path: string,
   fileName: string,
@@ -16,6 +18,7 @@ type FileItem = {
   initialContent?: string,
   loading: boolean,
   saved: boolean,
+  type: 'file' | 'folder',
 }
 
 type UpdateObj = {
@@ -28,51 +31,110 @@ const toFileItem = (item): FileItem => {
   return {
     ...item,
     loading: false,
-    saved: false,
+    saved: false
   }
 }
 
-const initialState: Array<FileItem> = []
+const initialState: Array<FileItem> = [
+  {
+    fileId: '1',
+    path: 'config.yml',
+    fileName: 'config.yml',
+    content: `--- []
+...
+`,
+    initialContent: `--- []
+...
+`,
+    loading: false,
+    saved: true,
+    type: 'file'
+  },
+  {
+    fileId: '2',
+    path: 'app.lua',
+    fileName: 'app.lua',
+    content: ``,
+    initialContent: ``,
+    loading: false,
+    saved: true,
+    type: 'file'
+  },
+  {
+    fileId: '3',
+    path: 'lib',
+    fileName: 'lib',
+    content: ``,
+    initialContent: ``,
+    loading: false,
+    saved: true,
+    type: 'folder'
+  },
+  {
+    parentId: '3',
+    fileId: '4',
+    path: 'lib/utils.lua',
+    fileName: 'utils.lua',
+    content: ``,
+    initialContent: ``,
+    loading: false,
+    saved: true,
+    type: 'file'
+  }
+]
 
 const updateFile = (fileList: Array<FileItem>, fileId: string, updateObj: UpdateObj): Array<FileItem> => {
-  const updatedItems : Array<FileItem> = fileList.map(x => {
-    return x.fileId === fileId ? {...x, ...updateObj} : x
+  const updatedItems: Array<FileItem> = fileList.map(x => {
+    return x.fileId === fileId ? { ...x, ...updateObj } : x
   });
   return updatedItems
 }
 
 const updateAllFiles = (fileList: Array<FileItem>, updateObj: UpdateObj): Array<FileItem> => {
-  const updatedItems : Array<FileItem> = fileList.map(x => {
-    return {...x, ...updateObj}
+  const updatedItems: Array<FileItem> = fileList.map(x => {
+    return { ...x, ...updateObj }
   });
   return updatedItems
 }
 
 export default (state: Array<FileItem> = initialState, { type, payload }: FSA) => {
-  switch(type) {
+  switch (type) {
     case FETCH_CONFIG_FILES_DONE: {
       if (Array.isArray(payload))
         return payload.map(toFileItem)
       return state
     }
     case FETCH_CONFIG_FILE_CONTENT: {
-      if (payload && typeof(payload.fileId) === 'string')
+      if (payload && typeof (payload.fileId) === 'string')
         return updateFile(state, payload.fileId, { loading: true })
       return state
     }
     case FETCH_CONFIG_FILE_CONTENT_DONE: {
-      if (payload && typeof(payload.fileId) === 'string' && typeof(payload.content)) {
-        return updateFile(state, payload.fileId, { loading: false, content: payload.content, initialContent: payload.content })
+      if (payload && typeof (payload.fileId) === 'string' && typeof (payload.content)) {
+        return updateFile(
+          state,
+          payload.fileId,
+          {
+            loading: false,
+            content: payload.content,
+            initialContent: payload.content
+          }
+        )
       }
       return state
     }
     case FETCH_CONFIG_FILE_CONTENT_FAIL: {
-      if (payload && typeof(payload.fileId) === 'string')
+      if (payload && typeof (payload.fileId) === 'string')
         return updateFile(state, payload.fileId, { loading: false })
       return state
     }
     case PUT_CONFIG_FILE_CONTENT_DONE: {
-      return updateAllFiles(state, {saved: true})
+      return updateAllFiles(state, { saved: true })
+    }
+    case UPDATE_CONTENT: {
+      if (payload && typeof (payload.fileId) === 'string' && typeof (payload.content) === 'string') {
+        return updateFile(state, payload.fileId, { content: payload.content })
+      }
     }
   }
   return state
