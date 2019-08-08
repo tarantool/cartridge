@@ -329,8 +329,8 @@ local function bootstrap_from_scratch(roles, uuids, labels, vshard_group)
 
     return admin.join_server({
         uri = membership.myself().uri,
-        instance_uuid = uuids.instance_uuid,
-        replicaset_uuid = uuids.replicaset_uuid,
+        instance_uuid = uuids and uuids.instance_uuid,
+        replicaset_uuid = uuids and uuids.replicaset_uuid,
         roles = roles,
         labels = labels,
         vshard_group = vshard_group,
