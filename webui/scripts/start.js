@@ -25,6 +25,8 @@ const {
   prepareUrls
 } = require('react-dev-utils/WebpackDevServerUtils');
 const openBrowser = require('react-dev-utils/openBrowser');
+const { exec } = require('child_process');
+
 const paths = require('../config/paths');
 const config = require('../config/webpack.config.dev');
 const createDevServerConfig = require('../config/webpackDevServer.config');
@@ -99,6 +101,11 @@ choosePort(HOST, DEFAULT_PORT)
       }
       console.log(chalk.cyan('Starting the development server...\n'));
       openBrowser(urls.localUrlForBrowser);
+
+      // Start Cypress UI
+      if (process.env.START_CY) {
+        exec(`CYPRESS_baseUrl=http://localhost:${port} cypress open`);
+      }
     });
 
     ['SIGINT', 'SIGTERM'].forEach(function(sig) {
