@@ -39,6 +39,7 @@ const DropdownListItem = styled.li`
 type MenuItemProps = {
   text?: string,
   color?: string,
+  className?: string,
   onClick?: (MouseEvent) => void
 }
 
@@ -79,8 +80,17 @@ class Dropdown extends React.Component<DropdownProps> {
 
   renderDropdownList = (items: MenuItemProps) => (
     <DropdownList>
-      {items.map(({ text, color = defaultListItemColor, onClick }, index) => (
+      {items.map((
+        {
+          text,
+          className,
+          color = defaultListItemColor,
+          onClick
+        },
+        index
+      ) => (
         <DropdownListItem
+          className={className}
           key={index}
           onClick={() => onClick(items[index])}
           color={color}
@@ -105,14 +115,14 @@ class Dropdown extends React.Component<DropdownProps> {
         {isOpen && this.renderDropdownList(items)}
         {
           children
-            ?
-            children
-            :
-            <Button
-              icon={IconMore}
-              intent='iconic'
-              size={size}
-            />
+            ? children
+            : (
+              <Button
+                icon={IconMore}
+                intent='iconic'
+                size={size}
+              />
+            )
         }
       </div>
     )

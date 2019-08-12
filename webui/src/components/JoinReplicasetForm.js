@@ -251,6 +251,7 @@ class JoinReplicasetForm extends React.Component<JoinReplicasetFormProps> {
                 controls={([
                   <Button type='button' onClick={onCancel}>Cancel</Button>,
                   <Button
+                    className='meta-test__JoinReplicaSetBtn'
                     disabled={Object.keys(errors).length > 0 || !values.replicasetUuid}
                     intent='primary'
                     type='submit'

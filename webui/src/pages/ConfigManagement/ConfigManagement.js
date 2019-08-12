@@ -68,6 +68,7 @@ class ConfigManagement extends React.Component {
           <form action={process.env.REACT_APP_CONFIG_ENDPOINT} method={'get'}>
             <p className={styles.downloadNotice}>Current configuration can be downloaded here.</p>
             <Button
+              className='meta-test__DownloadBtn'
               icon={IconDownload}
               intent={'secondary'}
               text={'Download'}

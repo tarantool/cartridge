@@ -20,7 +20,7 @@ import {
 } from 'src/store/selectors/clusterPage';
 import type { State } from 'src/store/rootReducer';
 import * as React from 'react';
-import { css } from 'react-emotion';
+import { css, cx } from 'react-emotion';
 import type { RouterHistory, Location } from 'react-router';
 import PageDataErrorMessage from 'src/components/PageDataErrorMessage';
 import ReplicasetList from 'src/components/ReplicasetList';
@@ -189,7 +189,7 @@ class Cluster extends React.Component<ClusterProps> {
               replicasetList.length > 1
                 ? [
                   <Input
-                    className={styles.clusterFilter}
+                    className={cx(styles.clusterFilter, 'meta-test__Filter')}
                     placeholder={'Filter by uri, uuid, role, alias or labels'}
                     value={filter}
                     onChange={this.handleFilterChange}

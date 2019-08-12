@@ -46,6 +46,7 @@ const Users = ({
         {implements_check_password && <AuthToggleButton className={styles.buttonMargin} />}
         {implements_add_user && (
           <Button
+            className='meta-test__addUserBtn'
             text={'Add user'}
             intent={'primary'}
             onClick={showAddUserModal}

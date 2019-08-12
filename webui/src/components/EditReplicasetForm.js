@@ -261,6 +261,7 @@ EditReplicasetFormProps) => {
               controls={([
                 <Button type='button' onClick={onCancel}>Cancel</Button>,
                 <Button
+                  className='meta-test__EditReplicasetSaveBtn'
                   intent='primary'
                   type='submit'
                   disabled={!!Object.keys(errors).length}

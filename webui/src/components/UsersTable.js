@@ -110,12 +110,13 @@ class UsersTable extends React.Component {
 
     return items.length ? (
       <TiledList
+        className='meta-test__UsersTable'
         itemRender={item =>
           <div
             className={styles.row}
           >
             {columns.map(({ dataIndex, className }) =>
-              <div className={cx(styles.field, className)} title={item[dataIndex]}>{item[dataIndex]}</div>
+              <div className={cx(styles.field, className,)} title={item[dataIndex]}>{item[dataIndex]}</div>
             )}
             {
               actionButton(item, styles.actions)
