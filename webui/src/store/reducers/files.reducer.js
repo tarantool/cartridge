@@ -24,7 +24,7 @@ export type FileItem = {
 type UpdateObj = {
   loading?: boolean,
   content?: string,
-  saved?: boolean,
+  saved?: boolean | (FileItem, Object) => boolean,
 }
 
 const toFileItem = (item): FileItem => {
@@ -83,16 +83,41 @@ const initialState: Array<FileItem> = [
   }
 ]
 
-const updateFile = (fileList: Array<FileItem>, fileId: string, updateObj: UpdateObj): Array<FileItem> => {
+const updateFile = (
+  fileList: Array<FileItem>,
+  fileId: string,
+  updateObj: UpdateObj,
+  payload: Object = {},
+): Array<FileItem> => {
   const updatedItems: Array<FileItem> = fileList.map(x => {
-    return x.fileId === fileId ? { ...x, ...updateObj } : x
+    const obj = {}
+    for (const p in updateObj) {
+      if (typeof updateObj[p] === 'function') {
+        obj[p] = updateObj[p](x, payload)
+      } else {
+        obj[p] = updateObj[p]
+      }
+    }
+    return x.fileId === fileId ? { ...x, ...obj } : x
   });
   return updatedItems
 }
 
-const updateAllFiles = (fileList: Array<FileItem>, updateObj: UpdateObj): Array<FileItem> => {
+const updateAllFiles = (
+  fileList: Array<FileItem>,
+  updateObj: UpdateObj,
+  payload: Object = {}
+): Array<FileItem> => {
   const updatedItems: Array<FileItem> = fileList.map(x => {
-    return { ...x, ...updateObj }
+    const obj = {}
+    for (const p in updateObj) {
+      if (typeof updateObj[p] === 'function') {
+        obj[p] = updateObj[p](x, payload)
+      } else {
+        obj[p] = updateObj[p]
+      }
+    }
+    return { ...x, ...obj }
   });
   return updatedItems
 }
@@ -133,7 +158,15 @@ export default (state: Array<FileItem> = initialState, { type, payload }: FSA) =
     }
     case UPDATE_CONTENT: {
       if (payload && typeof (payload.fileId) === 'string' && typeof (payload.content) === 'string') {
-        return updateFile(state, payload.fileId, { content: payload.content })
+        return updateFile(
+          state,
+          payload.fileId,
+          {
+            content: payload.content,
+            saved: (item, payload) => item.initialContent === payload.content,
+          },
+          payload,
+        )
       }
     }
   }
