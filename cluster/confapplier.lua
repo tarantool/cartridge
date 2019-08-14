@@ -541,7 +541,6 @@ local function apply_config(conf)
         conf.topology,
         box.info.cluster.uuid
     )
-    log.info('Setting replication to [%s]', table.concat(replication, ', '))
 
     topology.set(conf.topology)
     local my_replicaset = conf.topology.replicasets[box.info.cluster.uuid]
