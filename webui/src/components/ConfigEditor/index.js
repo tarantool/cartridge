@@ -1,6 +1,6 @@
 // @flow
 
-import MonacoEditor from 'react-monaco-editor';
+import MonacoEditor from '../MonacoEditor';
 import * as React from 'react';
 import { Spin, Tree } from 'antd';
 import { connect } from 'react-redux';
@@ -22,11 +22,17 @@ const styles = {
     flex-grow: 1;
     max-width: 800px;
     height: 800px;
+    position: relative;s
   `,
   treeContainer: css`
     display: block;
     width: 300px;
     height: 800px;
+  `,
+  editor: css`
+    height: 100%;
+    width: 100%;
+    display: block;
   `
 }
 
@@ -39,32 +45,8 @@ const renderTree = (treeNode: Object, prop: string, render: Function) => {
   return render(treeNode, children)
 }
 
-const getExtension = fileName => {
-  const f = fileName.split('.')
-  if (f.length > 1) {
-    return f[f.length-1]
-  }
-  return null
-}
-
-const extMap = {
-  'lua': 'lua',
-  'yml': 'yaml',
-  'json': 'json',
-  'js': 'js'
-};
-
-const getLanguageByFileName = fileName => {
-  const ext = getExtension(fileName)
-  if (ext) {
-    return extMap[ext]
-  }
-  return null
-}
-
 class ConfigEditor extends React.Component{
   state = {
-    code: '',
     loading: true
   }
 
@@ -78,14 +60,13 @@ class ConfigEditor extends React.Component{
     }))
   }
 
-  componentDidUpdate(prevProps: Readonly<P>, prevState: Readonly<S>, snapshot: SS): void {
-
-  }
-
   render(){
-    const { code } = this.state
     const {
-      fileTree, fetchingConfigFiles, puttingConfigFiles, selectedFile, dispatch
+      fileTree,
+      fetchingConfigFiles,
+      puttingConfigFiles,
+      selectedFile,
+      dispatch
     } = this.props
     console.log(fileTree)
     return (<div className={styles.configContainer}>
@@ -105,7 +86,7 @@ class ConfigEditor extends React.Component{
               (item, children) =>
                 <TreeNode
                   isLeaf={item.items.length === 0}
-                  title={item.fileName}
+                  title={`${item.fileName}${!item.saved ? '   *' : ''}`}
                   key={item.fileId}
                   selectable={item.type === 'file'}
                 >
@@ -115,15 +96,13 @@ class ConfigEditor extends React.Component{
         </DirectoryTree>
       </div>
       <div className={styles.editorContainer}>
-        <Spin spinning={fetchingConfigFiles}>
-          <MonacoEditor
-            height={'800'}
-            language={selectedFile && getLanguageByFileName(selectedFile.fileName) || null}
-            options={{ ...options, readOnly: !selectedFile }}
-            value={selectedFile ? selectedFile.content : 'Select file' }
-            onChange={v => dispatch(updateFileContent(selectedFile.fileId, v))}
-          />
-        </Spin>
+        <MonacoEditor
+          className={styles.editor}
+          language={selectedFile && getLanguageByFileName(selectedFile.fileName) || null}
+          options={{ ...options, readOnly: !selectedFile }}
+          value={selectedFile ? selectedFile.content : 'Select file' }
+          onChange={v => dispatch(updateFileContent(selectedFile.fileId, v))}
+        />
       </div>
     </div>)
   }
