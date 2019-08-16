@@ -32,7 +32,7 @@ def enable_auth_internal(cluster):
     cluster['master'].conn.eval("""
             local log = require('log')
             local auth = require('cluster.auth')
-            auth.set_enabled(true)
+            assert(auth.set_params({enabled = true}))
             log.info('Auth enabled')
         """)
 
@@ -45,7 +45,7 @@ def disable_auth_internal(cluster):
     cluster['master'].conn.eval("""
         local log = require('log')
         local auth = require('cluster.auth')
-        auth.set_enabled(false)
+        assert(auth.set_params({enabled = false}))
         log.info('Auth disabled')
     """)
 

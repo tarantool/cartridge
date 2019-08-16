@@ -25,7 +25,9 @@ local cluster_cookie = require('cluster.cluster-cookie')
 
 vars:new('enabled', false)
 vars:new('callbacks', {})
-vars:new('cookie_max_age', 30*24*3600) -- in seconds
+
+local DEFAULT_COOKIE_MAX_AGE = 3600*24*30 -- in seconds
+
 local e_check_cookie = errors.new_class('Checking cookie failed')
 local e_check_header = errors.new_class('Checking auth headers failed')
 local e_callback = errors.new_class('Auth callback failed')
@@ -37,41 +39,97 @@ local e_remove_user = errors.new_class('Auth callback "remove_user()" failed')
 local e_check_password = errors.new_class('Auth callback "check_password()" failed')
 
 --- Allow or deny unauthenticated access to the administrator's page.
--- Before the bootstrap, the function affects only the current instance.
--- During the bootstrap, the current authentication state is inherited by the clusterwide configuration.
--- After the bootstrap, the function triggers `cluster.confapplier.patch_clusterwide`.
+-- (*Changed* in v0.11)
+--
+-- This function affects only the current instance.
+-- It can't be used after the cluster was bootstrapped.
+-- To modify clusterwide config use `set_params` instead.
+--
 -- @function set_enabled
+-- @local
 -- @tparam boolean enabled
 -- @treturn[1] boolean `true`
 -- @treturn[2] nil
 -- @treturn[2] table Error description
 local function set_enabled(enabled)
     checks('boolean')
+    if confapplier.get_readonly() ~= nil then
+        return nil, errors.new('AuthSetEnabledError',
+            'Cluster is already bootstrapped. Use cluster.auth_set_params' ..
+            ' to modify clusterwide config'
+        )
+    end
+
     vars.enabled = enabled
-
-    local topology_cfg = confapplier.get_deepcopy('topology')
-    if topology_cfg == nil then
-        return true
-    end
-
-    topology_cfg.auth = enabled
-    local ok, err = confapplier.patch_clusterwide({topology = topology_cfg})
-    if not ok then
-        return nil, err
-    end
 
     return true
 end
 
 local function get_enabled()
-    local topology_cfg = confapplier.get_readonly('topology')
-    if topology_cfg == nil then
+    if confapplier.get_readonly() == nil then
         return vars.enabled
-    elseif topology_cfg.auth then
+    end
+
+    local auth_cfg = confapplier.get_readonly('auth')
+    if auth_cfg == nil then
+        -- backward compatibility with clusterwide config v0.10
+        return confapplier.get_readonly('topology').auth or false
+    else
+        return auth_cfg.enabled
+    end
+end
+
+local function set_params(opts)
+    checks({
+        enabled = '?boolean',
+        cookie_max_age = '?number',
+    })
+
+    if confapplier.get_readonly() == nil then
+        return nil, errors.new('AuthSetParamsError',
+            "Cluster isn't bootstrapped yet"
+        )
+    end
+
+    if opts == nil then
         return true
     end
 
-    return false
+    local auth_cfg = confapplier.get_deepcopy('auth')
+    if auth_cfg == nil then
+        -- backward compatibility with clusterwide config v0.10
+        auth_cfg = {
+            enabled = confapplier.get_readonly('topology').auth or false,
+            cookie_max_age = DEFAULT_COOKIE_MAX_AGE,
+        }
+    end
+
+    if opts.enabled ~= nil then
+        auth_cfg.enabled = opts.enabled
+    end
+
+    if opts.cookie_max_age ~= nil then
+        auth_cfg.cookie_max_age = opts.cookie_max_age
+    end
+
+    local patch = {
+        auth = auth_cfg
+    }
+
+    if confapplier.get_readonly('topology').auth ~= nil then
+        patch.topology = confapplier.get_deepcopy('topology')
+        patch.topology.auth = nil
+    end
+
+    return confapplier.patch_clusterwide(patch)
+end
+
+local function get_params()
+    local auth_cfg = confapplier.get_readonly('auth')
+    return {
+        enabled = get_enabled(),
+        cookie_max_age = auth_cfg and auth_cfg.cookie_max_age or DEFAULT_COOKIE_MAX_AGE,
+    }
 end
 
 local function hmac(hashfun, blocksize, key, message)
@@ -145,7 +203,7 @@ local function get_cookie_uid(raw)
     end
 
     local diff = fiber.time() - tonumber(cookie.ts)
-    if diff <= 0 or diff >= vars.cookie_max_age then
+    if diff <= 0 or diff >= get_params().cookie_max_age then
         return nil
     end
 
@@ -216,7 +274,8 @@ local function login(req)
             status = 200,
             headers = {
                 ['set-cookie'] = string.format('lsid=%s; Max-Age=%d',
-                    create_cookie(username), vars.cookie_max_age
+                    create_cookie(username),
+                    get_params().cookie_max_age
                 )
             }
         }
@@ -529,31 +588,6 @@ end
 
 local function get_callbacks()
     return table.copy(vars.callbacks)
-end
-
-local function set_params(opts)
-    checks({
-        cookie_max_age = '?number',
-        -- TODO: cookie_caching_time = '?number',
-    })
-
-    if opts ~= nil and opts.cookie_max_age ~= nil then
-        vars.cookie_max_age = opts.cookie_max_age
-    end
-
-    -- TODO
-    -- if opts ~= nil and opts.cookie_caching_time ~= nil then
-    --     vars.cookie_caching_time = opts.cookie_caching_time
-    -- end
-
-    return true
-end
-
-local function get_params()
-    return {
-        cookie_max_age = vars.cookie_max_age,
-        -- TODO: cookie_caching_time = vars.cookie_caching_time,
-    }
 end
 
 return {
