@@ -7,7 +7,6 @@
 local log = require('log')
 local json = require('json').new()
 local yaml = require('yaml').new()
-local clock = require('clock')
 local fiber = require('fiber')
 local digest = require('digest')
 local checks = require('checks')
@@ -27,7 +26,6 @@ local cluster_cookie = require('cluster.cluster-cookie')
 vars:new('enabled', false)
 vars:new('callbacks', {})
 vars:new('cookie_max_age', 30*24*3600) -- in seconds
--- TODO: vars:new('cookie_caching_time', 60) -- in seconds
 local e_check_cookie = errors.new_class('Checking cookie failed')
 local e_check_header = errors.new_class('Checking auth headers failed')
 local e_callback = errors.new_class('Auth callback failed')
@@ -102,7 +100,7 @@ end
 
 local function create_cookie(uid)
     checks('string')
-    local ts = tostring(clock.time())
+    local ts = tostring(fiber.time())
     local key = cluster_cookie.cookie()
 
     local cookie = {
@@ -146,7 +144,7 @@ local function get_cookie_uid(raw)
         return nil
     end
 
-    local diff = clock.time() - tonumber(cookie.ts)
+    local diff = fiber.time() - tonumber(cookie.ts)
     if diff <= 0 or diff >= vars.cookie_max_age then
         return nil
     end
