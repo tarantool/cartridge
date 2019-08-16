@@ -139,6 +139,40 @@ local function file_write(path, data, opts, perm)
     return data
 end
 
+
+local mt_readonly = {
+    __newindex = function()
+        error('table is read-only')
+    end
+}
+
+--- Recursively change the table's read-only property.
+-- This is achieved by setting or removing a metatable.
+-- An attempt to modify the read-only table or any of its children
+-- would raise an error: "table is read-only".
+-- @function set_readonly
+-- @local
+-- @tparam table tbl A table to be processed.
+-- @tparam boolean ro Desired readonliness.
+-- @treturn table The same table `tbl`.
+local function set_readonly(tbl, ro)
+    checks("table", "boolean")
+
+    for _, v in pairs(tbl) do
+        if type(v) == 'table' then
+            set_readonly(v, ro)
+        end
+    end
+
+    if ro then
+        setmetatable(tbl, mt_readonly)
+    else
+        setmetatable(tbl, nil)
+    end
+
+    return tbl
+end
+
 return {
 	deepcmp = deepcmp,
     table_find = table_find,
@@ -148,4 +182,11 @@ return {
     file_read = file_read,
     file_write = file_write,
     file_exists = file_exists,
+
+    table_setro = function(tbl)
+        return set_readonly(tbl, true)
+    end,
+    table_setrw = function(tbl)
+        return set_readonly(tbl, false)
+    end,
 }
