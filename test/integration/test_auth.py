@@ -1,10 +1,16 @@
 #!/usr/bin/env python3
 
+import sys
 import json
 import pytest
 import base64
 import logging
 import requests
+if sys.version_info >= (3, 0):
+    from http.cookies import SimpleCookie
+else:
+    from Cookie import SimpleCookie
+
 from conftest import Server
 
 init_script = 'srv_withauth.lua'
@@ -28,30 +34,27 @@ cluster = [
     )
 ]
 
-def enable_auth_internal(cluster):
+def set_auth_enabled_internal(cluster, enabled):
     cluster['master'].conn.eval("""
-            local log = require('log')
-            local auth = require('cluster.auth')
-            assert(auth.set_params({enabled = true}))
+        local log = require('log')
+        local auth = require('cluster.auth')
+        local enabled = ...
+        auth.set_params({enabled = enabled})
+        if enabled then
             log.info('Auth enabled')
-        """)
+        else
+            log.info('Auth disabled')
+        end
+    """, (enabled))
 
 
 @pytest.fixture(scope="function")
 def enable_auth(cluster):
-    enable_auth_internal(cluster)
-
-def disable_auth_internal(cluster):
-    cluster['master'].conn.eval("""
-        local log = require('log')
-        local auth = require('cluster.auth')
-        assert(auth.set_params({enabled = false}))
-        log.info('Auth disabled')
-    """)
+    set_auth_enabled_internal(cluster, True)
 
 @pytest.fixture(scope="function")
 def disable_auth(cluster):
-    disable_auth_internal(cluster)
+    set_auth_enabled_internal(cluster, False)
 
 def _login(srv, username, password):
     return srv.post_raw('/login',
@@ -72,13 +75,9 @@ def check_200(srv, **kwargs):
 @pytest.mark.parametrize("alias", ['master', 'replica'])
 def test_login(cluster, auth, alias):
     srv = cluster[alias]
-    if auth:
-        enable_auth_internal(cluster)
-        USERNAME = 'Ptarmigan'
-    else:
-        disable_auth_internal(cluster)
-        USERNAME = 'Sparrow'
-    PASSWORD = 'Fuschia Copper'
+    set_auth_enabled_internal(cluster, auth)
+    USERNAME = 'Ptarmigan' if auth else 'Sparrow'
+    PASSWORD = 'Fuschia Copper' if auth else 'Green Zinc'
 
     srv.conn.eval("""
         local auth = require('cluster.auth')
@@ -399,3 +398,126 @@ def test_basic_auth(cluster, enable_auth):
     check_401(srv, headers=_h('Weird', _b64('U:P')) )
 
     check_200(srv, headers=_h('Basic', _b64('U:P')) )
+
+def get_lsid(resp):
+    cookie = SimpleCookie()
+    cookie.load(resp.headers['set-cookie'])
+    return cookie['lsid']
+
+def get_lsid_max_age(resp):
+    return int(get_lsid(resp)['max-age'])
+
+def test_set_params_graphql(cluster, disable_auth):
+    USERNAME = 'Heron'
+    PASSWORD = 'Silver Titanium'
+    for _, srv in cluster.items():
+        srv.conn.eval("""
+            local auth_mocks = require('auth-mocks')
+            assert(auth_mocks.add_user('{}', '{}'))
+        """.format(USERNAME, PASSWORD))
+
+    lsid = get_lsid(_login(srv, USERNAME, PASSWORD))
+
+    def get_auth_params(srv):
+        req = """
+            query {
+                cluster {
+                    auth_params {
+                        enabled
+                        cookie_max_age
+                    }
+                }
+            }
+        """
+        obj = srv.graphql(req, cookies={'lsid': lsid.value})
+        assert 'errors' not in obj, obj['errors'][0]['message']
+
+        return obj['data']['cluster']['auth_params']
+
+    def set_auth_params(enabled=None, cookie_max_age=None, **kwargs):
+        req = """
+            mutation(
+                $enabled: Boolean
+                $cookie_max_age: Long
+            ) {
+                cluster {
+                    auth_params(
+                        enabled: $enabled
+                        cookie_max_age: $cookie_max_age
+                    ){
+                        enabled
+                        cookie_max_age
+                    }
+                }
+            }
+        """
+        obj = cluster['master'].graphql(req,
+            variables={
+                'enabled': enabled,
+                'cookie_max_age': cookie_max_age,
+            },
+            cookies={
+                'lsid': lsid.value
+            }
+        )
+        assert 'errors' not in obj, obj['errors'][0]['message']
+
+        return obj['data']['cluster']['auth_params']
+
+    assert get_auth_params(cluster['master'])['cookie_max_age'] == \
+        int(lsid['max-age'])
+
+    assert set_auth_params(enabled=False)['enabled'] == False
+    assert set_auth_params(enabled=None)['enabled'] == False
+    assert get_auth_params(cluster['replica'])['enabled'] == False
+    assert set_auth_params(enabled=True)['enabled'] == True
+    assert set_auth_params(enabled=None)['enabled'] == True
+    assert get_auth_params(cluster['replica'])['enabled'] == True
+
+    assert set_auth_params(cookie_max_age=69)['cookie_max_age'] == 69
+    assert set_auth_params(cookie_max_age=None)['cookie_max_age'] == 69
+    assert get_auth_params(cluster['replica'])['cookie_max_age'] == 69
+
+    def login(alias):
+        return _login(cluster[alias], USERNAME, PASSWORD)
+    assert get_lsid_max_age(login('master')) == 69
+    assert get_lsid_max_age(login('replica')) == 69
+
+def test_cookie_expiry(cluster, disable_auth):
+    srv = cluster['master']
+    USERNAME = 'Hen'
+    PASSWORD = 'White Platinum'
+    srv.conn.eval("""
+        local auth_mocks = require('auth-mocks')
+        assert(auth_mocks.add_user('{}', '{}'))
+    """.format(USERNAME, PASSWORD))
+
+    lsid = _login(srv, USERNAME, PASSWORD).cookies['lsid']
+
+    def set_max_age(max_age):
+        obj = srv.graphql("""
+            mutation($max_age: Long) {
+                cluster {
+                    auth_params(cookie_max_age: $max_age) { }
+                }
+            }
+        """, variables={'max_age': max_age})
+        assert 'errors' not in obj, obj['errors'][0]['message']
+
+    def get_username():
+        obj = srv.graphql("""
+            {
+                cluster {
+                    auth_params {
+                        username
+                    }
+                }
+            }
+        """, cookies={'lsid': lsid})
+        return obj['data']['cluster']['auth_params']['username']
+
+    set_max_age(0)
+    assert get_username() == None
+
+    set_max_age(3600)
+    assert get_username() == USERNAME
