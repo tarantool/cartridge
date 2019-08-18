@@ -199,19 +199,19 @@ local function get_schema()
     return vars.graphql_schema
 end
 
-local function http_finalize_json(status, obj)
-    return {
-        status = status,
-        headers = {
-            ['content-type'] = "application/json; charset=utf-8"
-        },
-        body = json.encode(obj)
-    }
+local function http_finalize(resp, obj)
+    checks('table', 'table')
+    return resp:finalize({
+        status = 200,
+        headers = {['content-type'] = "application/json; charset=utf-8"},
+        body = json.encode(obj),
+    })
 end
 
 local function _execute_graphql(req)
-    if not auth.check_request(req) then
-        return http_finalize_json(200, {
+    local ok, resp = auth.check_request(req)
+    if not ok then
+        return http_finalize(resp, {
             errors = {{message = "Unauthorized"}},
         })
     end
@@ -219,33 +219,33 @@ local function _execute_graphql(req)
     local body = req:read()
 
     if body == nil or body == '' then
-        return http_finalize_json(200, {
+        return http_finalize(resp, {
             errors = {{message = "Expected a non-empty request body"}},
         })
     end
 
     local parsed = json.decode(body)
     if parsed == nil then
-        return http_finalize_json(200, {
+        return http_finalize(resp, {
             errors = {{message = "Body should be a valid JSON"}},
         })
     end
 
     if parsed.query == nil or type(parsed.query) ~= "string" then
-        return http_finalize_json(200, {
+        return http_finalize(resp, {
             errors = {{message = "Body should have 'query' field"}},
         })
     end
 
 
     if parsed.operationName ~= nil and type(parsed.operationName) ~= "string" then
-        return http_finalize_json(200, {
+        return http_finalize(resp, {
             errors = {{message = "'operationName' should be string"}},
         })
     end
 
     if parsed.variables ~= nil and type(parsed.variables) ~= "table" then
-        return http_finalize_json(200, {
+        return http_finalize(resp, {
             errors = {{message = "'variables' should be a dictionary"}},
         })
     end
@@ -266,7 +266,7 @@ local function _execute_graphql(req)
 
     if not ast then
         log.error('%s', err)
-        return http_finalize_json(200, {
+        return http_finalize(resp, {
             errors = {{message = err.err}},
         })
     end
@@ -276,7 +276,7 @@ local function _execute_graphql(req)
 
     if err then
         log.error('%s', err)
-        return http_finalize_json(200, {
+        return http_finalize(resp, {
             errors = {{message = err.err}},
         })
     end
@@ -287,12 +287,12 @@ local function _execute_graphql(req)
 
     if res == nil then
         log.error('%s', err or "Unknown error")
-        return http_finalize_json(200, {
+        return http_finalize(resp, {
             errors = {{message = err and err.err or "Unknown error"}}
         })
     end
 
-    return http_finalize_json(200, {
+    return http_finalize(resp, {
         data = res,
     })
 

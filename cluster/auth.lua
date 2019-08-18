@@ -27,6 +27,7 @@ vars:new('enabled', false)
 vars:new('callbacks', {})
 
 local DEFAULT_COOKIE_MAX_AGE = 3600*24*30 -- in seconds
+local DEFAULT_COOKIE_RENEW_AGE = 3600*24 -- in seconds
 
 local e_check_cookie = errors.new_class('Checking cookie failed')
 local e_check_header = errors.new_class('Checking auth headers failed')
@@ -83,6 +84,7 @@ local function set_params(opts)
     checks({
         enabled = '?boolean',
         cookie_max_age = '?number',
+        cookie_renew_age = '?number',
     })
 
     if confapplier.get_readonly() == nil then
@@ -112,6 +114,10 @@ local function set_params(opts)
         auth_cfg.cookie_max_age = opts.cookie_max_age
     end
 
+    if opts.cookie_renew_age ~= nil then
+        auth_cfg.cookie_renew_age = opts.cookie_renew_age
+    end
+
     local patch = {
         auth = auth_cfg
     }
@@ -129,6 +135,7 @@ local function get_params()
     return {
         enabled = get_enabled(),
         cookie_max_age = auth_cfg and auth_cfg.cookie_max_age or DEFAULT_COOKIE_MAX_AGE,
+        cookie_renew_age = auth_cfg and auth_cfg.cookie_renew_age or DEFAULT_COOKIE_RENEW_AGE,
     }
 end
 
@@ -192,6 +199,16 @@ local function get_cookie_uid(raw)
         return nil
     end
 
+    cookie.ts = tonumber(cookie.ts)
+    if cookie.ts == nil then
+        return nil
+    end
+
+    local diff = fiber.time() - cookie.ts
+    if diff <= 0 or diff >= get_params().cookie_max_age then
+        return nil
+    end
+
     local key = cluster_cookie.cookie()
     local calc = digest.base64_encode(
         hmac(digest.sha512, 128, key, cookie.uid .. cookie.ts),
@@ -202,12 +219,7 @@ local function get_cookie_uid(raw)
         return nil
     end
 
-    local diff = fiber.time() - tonumber(cookie.ts)
-    if diff <= 0 or diff >= get_params().cookie_max_age then
-        return nil
-    end
-
-    return cookie.uid
+    return cookie
 end
 
 local function get_basic_auth_uid(auth)
@@ -308,6 +320,7 @@ local function coerce_user(user)
     or (type(user.email) ~= 'string' and user.email ~= nil ) then
         return nil
     end
+
     return {
         username = user.username,
         fullname = user.fullname,
@@ -487,27 +500,55 @@ local function remove_user(username)
     end)
 end
 
+local _response_mt = {
+    __index = {
+        finalize = function(self, resp)
+            for k, v in pairs(resp) do
+                if type(self[k]) == 'table'
+                and type(v) == 'table'
+                then
+                    -- merge tables
+                    for tk, tv in pairs(v) do
+                        self[k][tk] = tv
+                    end
+                else
+                    self[k] = v
+                end
+            end
+
+            return self
+        end
+    },
+}
 --- Authorize an HTTP request.
+--
 -- Try to get username from cookies or basic HTTP authentication.
 --
 -- @function check_request
 -- @param req An HTTP request
 -- @treturn boolean Access granted
+-- @treturn table HTTP response template
 local function check_request(req)
     local fiber_storage = fiber.self().storage
     -- clean fiber storage to behave correctly
     -- when user logouts within keepalive session
     fiber_storage['auth_session_username'] = nil
 
+    local resp = setmetatable({}, _response_mt)
+
     if vars.callbacks.check_password == nil then
-        return true
+        return true, resp
     end
 
-    local username
+    local auth_cfg = get_params()
+    local cookie_raw = req:cookie('lsid')
+    local cookie_ts = 0
+    local username = nil
     repeat
-        local uid, err = e_check_cookie:pcall(get_cookie_uid, req:cookie('lsid'))
-        if uid ~= nil then
-            username = uid
+        local cookie, err = e_check_cookie:pcall(get_cookie_uid, cookie_raw)
+        if cookie ~= nil and cookie.uid ~= nil then
+            username = cookie.uid
+            cookie_ts = cookie.ts
             break
         elseif err then
             log.error('%s', err)
@@ -531,14 +572,32 @@ local function check_request(req)
 
     if username then
         fiber_storage['auth_session_username'] = username
-        return true
+
+        if cookie_ts > 0
+        and auth_cfg.cookie_renew_age >= 0
+        and fiber.time() - cookie_ts > auth_cfg.cookie_renew_age
+        then
+            resp['headers'] = {
+                ['set-cookie'] = string.format(
+                    'lsid=%s; Max-Age=%d',
+                    create_cookie(username),
+                    auth_cfg.cookie_max_age
+                )
+            }
+        end
+
+        return true, resp
+    elseif cookie_raw then
+        resp['headers'] = {
+            ['set-cookie'] = 'lsid=""; Max-Age=0'
+        }
     end
 
-    if not get_enabled() then
-        return true
+    if not auth_cfg.enabled then
+        return true, resp
+    else
+        return false, resp
     end
-
-    return false
 end
 
 --- Initialize the authentication HTTP API.
