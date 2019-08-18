@@ -66,6 +66,12 @@ local function set_enabled(enabled)
     return true
 end
 
+--- Check if unauthenticated access is forbidden.
+-- (*Added* in v0.7)
+--
+-- @function get_enabled
+-- @local
+-- @treturn boolean enabled
 local function get_enabled()
     if confapplier.get_readonly() == nil then
         return vars.enabled
@@ -80,6 +86,22 @@ local function get_enabled()
     end
 end
 
+--- Modify authentication params.
+-- (*Changed* in v0.11)
+--
+-- Can't be used before the bootstrap.
+-- Affects all cluster instances.
+-- Triggers `cluster.config_patch_clusterwide`.
+--
+-- @function set_params
+-- @within Configuration
+-- @tparam table opts
+-- @tparam ?boolean opts.enabled (*Added* in v0.11)
+-- @tparam ?number opts.cookie_max_age
+-- @tparam ?number opts.cookie_renew_age (*Added* in v0.11)
+-- @treturn[1] boolean `true`
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 local function set_params(opts)
     checks({
         enabled = '?boolean',
@@ -130,8 +152,20 @@ local function set_params(opts)
     return confapplier.patch_clusterwide(patch)
 end
 
+--- Retrieve authentication params.
+--
+-- @function get_params
+-- @within Configuration
+-- @treturn AuthParams
 local function get_params()
     local auth_cfg = confapplier.get_readonly('auth')
+
+    --- Authentication params.
+    -- @table AuthParams
+    -- @within Configuration
+    -- @tfield boolean enabled Wether unauthenticated access is forbidden
+    -- @tfield number cookie_max_age Number of seconds until the authentication cookie expires
+    -- @tfield number cookie_renew_age Update provided cookie if it's older then this age (in seconds)
     return {
         enabled = get_enabled(),
         cookie_max_age = auth_cfg and auth_cfg.cookie_max_age or DEFAULT_COOKIE_MAX_AGE,
@@ -252,6 +286,7 @@ end
 --- Get username for the current HTTP session.
 --
 -- @function get_session_username
+-- @within Authorizarion
 -- @treturn string or nil if no user is logged in
 local function get_session_username()
     local fiber_storage = fiber.self().storage
@@ -321,6 +356,12 @@ local function coerce_user(user)
         return nil
     end
 
+    --- User information.
+    -- @table UserInfo
+    -- @within User management
+    -- @tfield string username
+    -- @tfield ?string fullname
+    -- @tfield ?string email
     return {
         username = user.username,
         fullname = user.fullname,
@@ -329,14 +370,17 @@ local function coerce_user(user)
 end
 
 --- Trigger registered add_user callback.
--- The callback is called with the same arguments
--- and must return a `user_object`.
+--
+-- The callback is triggered with the same arguments and must return
+-- a table with fields conforming to `UserInfo`. Unknown fields are ignored.
+--
 -- @function add_user
+-- @within User management
 -- @tparam string username
 -- @tparam string password
 -- @tparam ?string fullname
 -- @tparam ?string email
--- @return[1] `user_object`
+-- @treturn[1] UserInfo
 -- @treturn[2] nil
 -- @treturn[2] table Error description
 local function add_user(username, password, fullname, email)
@@ -362,11 +406,14 @@ local function add_user(username, password, fullname, email)
 end
 
 --- Trigger registered get_user callback.
--- The callback is called with the same arguments
--- and must return a `user_object`.
+--
+-- The callback is triggered with the same arguments and must return
+-- a table with fields conforming to `UserInfo`. Unknown fields are ignored.
+--
 -- @function get_user
+-- @within User management
 -- @tparam string username
--- @return[1] `user_object`
+-- @treturn[1] UserInfo
 -- @treturn[2] nil
 -- @treturn[2] table Error description
 local function get_user(username)
@@ -393,14 +440,17 @@ local function get_user(username)
 end
 
 --- Trigger registered edit_user callback.
--- The callback is called with the same arguments
--- and must return a `user_object`.
+--
+-- The callback is triggered with the same arguments and must return
+-- a table with fields conforming to `UserInfo`. Unknown fields are ignored.
+--
 -- @function edit_user
+-- @within User management
 -- @tparam string username
 -- @tparam ?string password
 -- @tparam ?string fullname
 -- @tparam ?string email
--- @return[1] `user_object`
+-- @treturn[1] UserInfo
 -- @treturn[2] nil
 -- @treturn[2] table Error description
 local function edit_user(username, password, fullname, email)
@@ -427,9 +477,13 @@ local function edit_user(username, password, fullname, email)
 end
 
 --- Trigger registered list_users callback.
--- The callback must return an array of `user_object`s.
+--
+-- The callback is triggered without any arguments. It must return
+-- an array of `UserInfo` objects.
+--
 -- @function list_users
--- @return[1] array of `user_object`s
+-- @within User management
+-- @treturn[1] {UserInfo,...}
 -- @treturn[2] nil
 -- @treturn[2] table Error description
 local function list_users()
@@ -465,11 +519,15 @@ local function list_users()
 end
 
 --- Trigger registered remove_user callback.
--- The callback is called with the same arguments
--- and must return the `user_object` removed.
+--
+-- The callback is triggered with the same arguments and must return
+-- a table with fields conforming to `UserInfo`, which was removed.
+-- Unknown fields are ignored.
+--
 -- @function remove_user
+-- @within User management
 -- @tparam string username
--- @return[1] `user_object`
+-- @treturn[1] UserInfo
 -- @treturn[2] nil
 -- @treturn[2] table Error description
 local function remove_user(username)
@@ -525,6 +583,7 @@ local _response_mt = {
 -- Try to get username from cookies or basic HTTP authentication.
 --
 -- @function check_request
+-- @within Authorizarion
 -- @param req An HTTP request
 -- @treturn boolean Access granted
 -- @treturn table HTTP response template
@@ -602,6 +661,7 @@ end
 
 --- Initialize the authentication HTTP API.
 --
+-- Set up `login` and `logout` HTTP endpoints.
 -- @function init
 -- @local
 local function init(httpd)
@@ -622,6 +682,7 @@ end
 --- Set authentication callbacks.
 --
 -- @function set_callbacks
+-- @local
 -- @tparam table callbacks
 -- @tparam function callbacks.add_user
 -- @tparam function callbacks.get_user
@@ -645,6 +706,11 @@ local function set_callbacks(callbacks)
     return true
 end
 
+--- Get authentication callbacks.
+--
+-- @function get_callbacks
+-- @local
+-- @treturn table callbacks
 local function get_callbacks()
     return table.copy(vars.callbacks)
 end
