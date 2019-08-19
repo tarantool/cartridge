@@ -650,7 +650,7 @@ local function expel_server(uuid)
 
         if master_pos == 1 then
             return nil, e_topology_edit:new(
-                'Server %q is the leader and can\'t be expelled', uuid
+                "Server %q is the leader and can't be expelled", uuid
             )
         elseif master_pos ~= nil then
             table.remove(replicaset.master, master_pos)

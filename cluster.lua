@@ -217,7 +217,7 @@ local function cfg(opts, box_opts)
     opts.workdir = fio.abspath(opts.workdir)
 
     if not fio.path.is_dir(opts.workdir) then
-        local rc = os.execute(('mkdir -p \'%s\''):format(opts.workdir))
+        local rc = os.execute(("mkdir -p '%s'"):format(opts.workdir))
         if rc ~= 0 then
             return nil, e_init:new('Can not create workdir %q', opts.workdir)
         end

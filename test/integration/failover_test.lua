@@ -119,12 +119,12 @@ g.test_api_master = function()
 
     local invalid_uuid = helpers.uuid('b', 'b', 3)
     t.assert_error_msg_contains(
-        'replicasets[' .. replicaset_uuid .. '] leader "' .. invalid_uuid .. '" doesn\'t exist',
+        string.format("replicasets[%s] leader %q doesn't exist", replicaset_uuid, invalid_uuid),
         function() set_master(replicaset_uuid, invalid_uuid) end
     )
 
     t.assert_error_msg_contains(
-        'Server "' .. storage_1_uuid .. '" is the leader and can\'t be expelled',
+        string.format("Server %q is the leader and can't be expelled", storage_1_uuid),
         function()
             cluster.main_server:graphql({
                 query = 'mutation($uuid: String!) { expel_server(uuid: $uuid) }',

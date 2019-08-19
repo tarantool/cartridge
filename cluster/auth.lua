@@ -386,7 +386,7 @@ end
 local function add_user(username, password, fullname, email)
     checks('string', 'string', '?string', '?string')
     if vars.callbacks.add_user == nil then
-        return nil, e_callback:new('add_user() callback isn\'t set')
+        return nil, e_callback:new("add_user() callback isn't set")
     end
 
     return e_add_user:pcall(function()
@@ -419,7 +419,7 @@ end
 local function get_user(username)
     checks('string')
     if vars.callbacks.get_user == nil then
-        return nil, e_callback:new('get_user() callback isn\'t set')
+        return nil, e_callback:new("get_user() callback isn't set")
     end
 
     return e_get_user:pcall(function()
@@ -456,7 +456,7 @@ end
 local function edit_user(username, password, fullname, email)
     checks('string', '?string', '?string', '?string')
     if vars.callbacks.edit_user == nil then
-        return nil, e_callback:new('edit_user() callback isn\'t set')
+        return nil, e_callback:new("edit_user() callback isn't set")
     end
 
     return e_edit_user:pcall(function()
@@ -488,7 +488,7 @@ end
 -- @treturn[2] table Error description
 local function list_users()
     if vars.callbacks.list_users == nil then
-        return nil, e_callback:new('list_users() callback isn\'t set')
+        return nil, e_callback:new("list_users() callback isn't set")
     end
 
     return e_list_users:pcall(function()
@@ -538,7 +538,7 @@ local function remove_user(username)
     end
 
     if vars.callbacks.remove_user == nil then
-        return nil, e_callback:new('remove_user() callback isn\'t set')
+        return nil, e_callback:new("remove_user() callback isn't set")
     end
 
     return e_remove_user:pcall(function()

@@ -582,13 +582,13 @@ function vshard.storage.buckets_count()
 end
 
 check_config('replicasets[bbbbbbbb-0000-4000-b000-000000000001]'..
-  ' rebalancing isn\'t finished yet',
+  " rebalancing isn't finished yet",
   conf_new_expelled,
   conf_old_with_weight:format(0)
 )
 
 check_config('replicasets[bbbbbbbb-0000-4000-b000-000000000001]'..
-  ' rebalancing isn\'t finished yet',
+  " rebalancing isn't finished yet",
   conf_new_disabled,
   conf_old_with_weight:format(0)
 )
