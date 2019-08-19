@@ -134,11 +134,8 @@ package.preload['mymodule-hidden'] = function()
 end
 
 local ok, err = cluster.cfg({
-    alias = os.getenv('TARANTOOL_ALIAS'),
-    workdir = os.getenv('TARANTOOL_WORKDIR'),
-    advertise_uri = os.getenv('TARANTOOL_ADVERTISE_URI') or 'localhost:3301',
-    cluster_cookie = os.getenv('TARANTOOL_CLUSTER_COOKIE'),
-    http_port = os.getenv('TARANTOOL_HTTP_PORT') or 8081,
+    advertise_uri = 'localhost:3301',
+    http_port = 8081,
     bucket_count = 3000,
     roles = {
         'cluster.roles.vshard-storage',
@@ -147,9 +144,8 @@ local ok, err = cluster.cfg({
         'mymodule-permanent',
         'mymodule-hidden',
         'mymodule',
-    },
+    }
 })
-
 if not ok then
     log.error('%s', err)
     os.exit(1)

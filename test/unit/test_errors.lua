@@ -37,6 +37,7 @@ check_error('Can not create workdir "/dev/null"',
     cluster.cfg, {
         workdir = '/dev/null',
         advertise_uri = 'localhost:33001',
+        roles = {},
     }
 )
 
@@ -48,6 +49,7 @@ check_error('Missing port in advertise_uri "localhost"',
     cluster.cfg, {
         workdir = './dev',
         advertise_uri = 'localhost',
+        roles = {},
     }
 )
 
@@ -57,6 +59,7 @@ check_error('Socket bind error: Address already in use',
     cluster.cfg, {
         workdir = './dev',
         advertise_uri = 'localhost:33001',
+        roles = {},
     }
 )
 _sock:close()
@@ -66,6 +69,7 @@ check_error('Can not ping myself: ping was not sent',
     cluster.cfg, {
         workdir = './dev',
         advertise_uri = 'invalid-host:33001',
+        roles = {},
     }
 )
 membership.leave()
@@ -111,6 +115,7 @@ check_error([[module 'unknown%-auth' not found]],
         workdir = './dev',
         advertise_uri = 'unused:0',
         auth_backend_name = 'unknown-auth',
+        roles = {},
     }
 )
 
@@ -123,6 +128,7 @@ check_error('My auth can not be loaded',
         workdir = './dev',
         advertise_uri = 'unused:0',
         auth_backend_name = 'myauth',
+        roles = {},
     }
 )
 
@@ -136,6 +142,7 @@ check_error('unexpected argument callbacks.unknown_method to set_callbacks',
         workdir = './dev',
         advertise_uri = 'unused:0',
         auth_backend_name = 'auth-unknown-method',
+        roles = {},
     }
 )
 
@@ -149,6 +156,7 @@ check_error('bad argument callbacks.check_password to set_callbacks',
         workdir = './dev',
         advertise_uri = 'unused:0',
         auth_backend_name = 'auth-invalid-method',
+        roles = {},
     }
 )
 

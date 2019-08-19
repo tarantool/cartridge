@@ -15,9 +15,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Remote Control server - a partial replacement for the `box.cfg({listen})`, independent on `box.cfg`.
   The server is only to be used internally for bootstrapping new instances.
 
+- New module `argparse` for gathering configuration options from
+  command-line arguments, environment variables, and configuration files.
+  It is used internally and overrides `cluster.cfg` and `box.cfg` options.
+
+
 - Auth parameter `cookie_max_age` is now configurable with GraphQL API.
   Also now it's stored in clusterwide config, so changing it on a single server will affect
   all others in cluster.
+
+### Changed
 
 - Modifying auth params with GraphQL before the cluster was bootstrapped is now
   forbidden and returns an error.
@@ -28,6 +35,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   so the user will be logged out after `cookie_max_age` seconds of inactivity.
   Otherwise, if he's active, the cookie will be updated every `cookie_renew_age` seconds
   and the session will not be interrupted.
+
+- Changed configuration options for `cluster.cfg()`:
+- - `roles` now is a mandatory table
+- - `workdir` is optional now (defaults to ".")
+- - `advertise_uri` is optional now (defaults to "localhost:3301")
 
 ## [0.10.0] - 2019-08-01
 
