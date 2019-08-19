@@ -45,7 +45,6 @@
 --
 -- @module cluster.argparse
 
-local log = require('log')
 local fio = require('fio')
 local yaml = require('yaml')
 local checks = require('checks')
@@ -311,11 +310,7 @@ local function _parse()
         local rockspecs = fio.glob(fio.pathjoin(app_dir, '*-scm-1.rockspec'))
 
         if #rockspecs == 1 then
-            args.app_name = string.match(rockspecs[1], '^(%g+)%-scm%-1%.rockspec$')
-        end
-
-        if args.app_name ~= nil then
-            log.info('Application name %q detected by argparse', args.app_name)
+            args.app_name = string.match(fio.basename(rockspecs[1]), '^(%g+)%-scm%-1%.rockspec$')
         end
     end
 
