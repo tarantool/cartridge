@@ -285,39 +285,6 @@ local function load_from_file(filename)
     return conf, err
 end
 
-local mt_readonly = {
-    __newindex = function()
-        error('table is read-only')
-    end
-}
-
---- Recursively change the table's read-only property.
--- This is achieved by setting or removing a metatable.
--- An attempt to modify the read-only table or any of its children
--- would raise an error: "table is read-only".
--- @function set_readonly
--- @local
--- @tparam table tbl A table to be processed.
--- @tparam boolean ro Desired readonliness.
--- @treturn table The same table `tbl`.
-local function set_readonly(tbl, ro)
-    checks("table", "boolean")
-
-    for _, v in pairs(tbl) do
-        if type(v) == 'table' then
-            set_readonly(v, ro)
-        end
-    end
-
-    if ro then
-        setmetatable(tbl, mt_readonly)
-    else
-        setmetatable(tbl, nil)
-    end
-
-    return tbl
-end
-
 --- Get a read-only view on the configuration.
 -- Either `conf[section_name]` or entire `conf`.
 --
@@ -362,7 +329,7 @@ local function get_deepcopy(section_name)
     ret = table.deepcopy(ret)
 
     if type(ret) == 'table' then
-        return set_readonly(ret, false)
+        return utils.table_setrw(ret)
     else
         return ret
     end
@@ -496,7 +463,7 @@ local function _failover(cond)
         if active_masters[box.info.cluster.uuid] == box.info.uuid then
             is_master = true
         end
-        local opts = set_readonly({is_master = is_master}, true)
+        local opts = utils.table_setro({is_master = is_master})
 
         local _, err = e_config_apply:pcall(box.cfg, {
             read_only = not is_master,
@@ -534,7 +501,7 @@ end
 -- @treturn[2] table Error description
 local function apply_config(conf)
     checks('table')
-    vars.conf = set_readonly(conf, true)
+    vars.conf = utils.table_setro(conf)
     box.session.su('admin')
 
     local replication = topology.get_replication_config(
@@ -738,18 +705,18 @@ end
 -- cluster should be repaired manually.
 --
 -- @function patch_clusterwide
--- @tparam table conf A patch to be applied.
+-- @tparam table patch A patch to be applied.
 -- @treturn[1] boolean true
 -- @treturn[2] nil
 -- @treturn[2] table Error description
-local function _clusterwide(conf)
+local function _clusterwide(patch)
     checks('table')
 
     log.warn('Updating config clusterwide...')
 
-    local conf_new = set_readonly(table.deepcopy(vars.conf), false)
+    local conf_new = utils.table_setrw(table.deepcopy(vars.conf))
     local conf_old = vars.conf
-    for k, v in pairs(conf) do
+    for k, v in pairs(patch) do
         if v == box.NULL then
             conf_new[k] = nil
         else
@@ -872,14 +839,14 @@ local function _clusterwide(conf)
     end
 end
 
-local function patch_clusterwide(conf)
+local function patch_clusterwide(patch)
     if vars.locks['clusterwide'] == true  then
         return nil, e_atomic:new('confapplier.clusterwide is already running')
     end
 
     box.session.su('admin')
     vars.locks['clusterwide'] = true
-    local ok, err = e_config_apply:pcall(_clusterwide, conf)
+    local ok, err = e_config_apply:pcall(_clusterwide, patch)
     vars.locks['clusterwide'] = false
 
     return ok, err
