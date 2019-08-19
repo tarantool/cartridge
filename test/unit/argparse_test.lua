@@ -210,6 +210,35 @@ function g:test_overrides()
     check('', {"TARANTOOL_A1=O1", "TARANTOOL_A1=O2"}, {a1 = 'O2', b2 = 2.2})
 end
 
+function g:test_appname()
+    utils.file_write(
+        fio.pathjoin(self.tempdir, 'cfg.yml'),
+        yaml.encode({
+            ['myapp'] = {
+                x = '@myapp',
+            },
+            ['otherapp'] = {
+                y = '@otherapp',
+            },
+        })
+    )
+
+    utils.file_write(
+        fio.pathjoin(self.tempdir, 'myapp-scm-1.rockspec'),
+        ''
+    )
+
+    local function check(cmd_args, expected)
+        local ret = self:run(cmd_args, {'TARANTOOL_CFG=./cfg.yml'})
+        t.assertEquals(ret.args['cfg'], './cfg.yml')
+        ret.args['cfg'] = nil
+        t.assertEquals(ret.args, expected)
+    end
+
+    check('',                    {app_name = 'myapp', x = '@myapp'})
+    check('--app-name otherapp', {app_name = 'otherapp', y = '@otherapp'})
+end
+
 function g:test_confdir()
     local confd = fio.pathjoin(self.tempdir, 'conf.d')
     fio.mkdir(confd)

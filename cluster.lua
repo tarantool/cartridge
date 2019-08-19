@@ -167,14 +167,27 @@ local function cfg(opts, box_opts)
         vshard_groups = '?table',
     }, '?table')
 
-    for k, v in pairs(argparse.get_cluster_opts()) do
+    local args, err = argparse.parse()
+    if args == nil then
+        return nil, err
+    end
+    local _cluster_opts, err = argparse.get_cluster_opts()
+    if _cluster_opts == nil then
+        return nil, err
+    end
+    local _box_opts, err = argparse.get_box_opts()
+    if _box_opts == nil then
+        return nil, err
+    end
+
+    for k, v in pairs(_cluster_opts) do
         opts[k] = v
     end
 
     if box_opts == nil then
         box_opts = {}
     end
-    for k, v in pairs(argparse.get_box_opts()) do
+    for k, v in pairs(_box_opts) do
         box_opts[k] = v
     end
 
