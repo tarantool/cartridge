@@ -1,7 +1,15 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import Modal from 'src/components/Modal';
+import { ConfirmModal } from 'src/components/Modal';
 import { hideRemoveUserModal, removeUser } from 'src/store/actions/users.actions';
+import styled from 'react-emotion'
+
+const Container = styled.div`
+  padding: 0 16px;
+  font-size: 14px;
+  font-family: Open Sans;
+  line-height: 22px;
+`
 
 class UserRemoveModal extends React.Component {
   handleOk = () => this.props.removeUser(this.props.username);
@@ -14,17 +22,15 @@ class UserRemoveModal extends React.Component {
     } = this.props;
 
     return (
-      <Modal
+      <ConfirmModal
         title="Please confirm"
         visible={removeUserModalVisible}
-        width={350}
         onCancel={hideRemoveUserModal}
-        onOk={this.handleOk}
-        okText="Remove"
-        destroyOnClose={true}
+        onConfirm={this.handleOk}
+        confirmText="Remove"
       >
-        {`Removing user ${username}`}
-      </Modal>
+        <Container>Removing user {username}</Container>
+      </ConfirmModal>
     );
   }
 }

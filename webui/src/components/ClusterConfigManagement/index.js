@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
 import React from 'react';
-import Card from 'src/components/Card';
+import PageCard from 'src/components/PageCard';
 import Modal from 'src/components/Modal';
 import UploadButton from 'src/components/UploadButton';
 
@@ -42,7 +42,7 @@ class ClusterConfigManagement extends React.PureComponent {
 
   render() {
     return (
-      <Card title="Config management">
+      <PageCard title="Config management">
         {this.state.confirmApplyTestConfigModalVisible
           ? this.renderApplyTestConfigConfirmModal()
           : null}
@@ -53,7 +53,7 @@ class ClusterConfigManagement extends React.PureComponent {
         {this.props.canTestConfigBeApplied
           ? this.renderApplyTestConfigSuggest()
           : null}
-      </Card>
+      </PageCard>
     );
   }
 

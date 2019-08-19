@@ -1,6 +1,7 @@
 // @flow
 import {
   CLUSTER_PAGE_FILTER_SET,
+  CLUSTER_PAGE_MODAL_FILTER_SET,
   CLUSTER_PAGE_DID_MOUNT,
   CLUSTER_PAGE_SERVER_LIST_ROW_SELECT,
   CLUSTER_PAGE_SERVER_POPUP_CLOSE,
@@ -16,7 +17,7 @@ import {
   CLUSTER_PAGE_APPLY_TEST_CONFIG_REQUEST,
   CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST,
   CLUSTER_PAGE_STATE_RESET,
-  SET_BOOSTRAP_VSHARD_MODAL_VISIBLE,
+  SET_BOOSTRAP_VSHARD_PANEL_VISIBLE,
   SET_FAILOVER_MODAL_VISIBLE,
   SET_PROBE_SERVER_MODAL_VISIBLE
 } from 'src/store/actionTypes';
@@ -25,6 +26,7 @@ import type {
   CreateReplicasetMutationVariables,
   EditReplicasetMutationVariables
 } from 'src/generated/graphql-typing';
+import { HIDE_EXPEL_MODAL, SHOW_EXPEL_MODAL } from '../actionTypes';
 
 
 /**
@@ -169,7 +171,7 @@ export type UploadConfigAction = {
 export type UploadConfigActionCreator = (data: { data: FormData }) => UploadConfigAction;
 
 export const uploadConfig: UploadConfigActionCreator = getActionCreator(CLUSTER_PAGE_UPLOAD_CONFIG_REQUEST, null, {
-  successMessage: 'Configuration uploaded successfully. Please wait for list refresh...'
+  noErrorMessage: true
 });
 
 export const applyTestConfig = getActionCreator(CLUSTER_PAGE_APPLY_TEST_CONFIG_REQUEST, null, {
@@ -188,15 +190,15 @@ export const changeFailover = getActionCreator(CLUSTER_PAGE_FAILOVER_CHANGE_REQU
   successMessage: 'Failover change is OK...'
 });
 
-export const setVisibleBootstrapVshardModal = (visible: boolean) => {
+export const setVisibleBootstrapVshardPanel = (visible: boolean) => {
   return {
-    type: SET_BOOSTRAP_VSHARD_MODAL_VISIBLE,
+    type: SET_BOOSTRAP_VSHARD_PANEL_VISIBLE,
     payload: visible
   };
 };
 
-export type SetVisibleBootstrapVshardModalActionCreator = typeof setVisibleBootstrapVshardModal;
-export type SetVisibleBootstrapVshardModalAction = $Call<SetVisibleBootstrapVshardModalActionCreator, boolean>;
+export type setVisibleBootstrapVshardPanelActionCreator = typeof setVisibleBootstrapVshardPanel;
+export type setVisibleBootstrapVshardPanelAction = $Call<setVisibleBootstrapVshardPanelActionCreator, boolean>;
 
 
 export const setVisibleFailoverModal = (visible: boolean) => {
@@ -204,6 +206,19 @@ export const setVisibleFailoverModal = (visible: boolean) => {
     type: SET_FAILOVER_MODAL_VISIBLE,
     payload: visible
   };
+}
+
+export const showExpelModal = (server: string) => {
+  return {
+    type: SHOW_EXPEL_MODAL,
+    payload: server
+  }
+}
+
+export const hideExpelModal = () => {
+  return {
+    type: HIDE_EXPEL_MODAL
+  }
 }
 
 export type SetVisibleFailoverModalActionCreator = typeof setVisibleFailoverModal;
@@ -217,6 +232,16 @@ export const setFilter = (query: string) => ({
 
 export type SetFilterActionCreator = typeof setFilter;
 export type SetFilterAction = $Call<SetFilterActionCreator, string>;
+
+
+export const setModalFilter = (query: string) => ({
+  type: CLUSTER_PAGE_MODAL_FILTER_SET,
+  payload: query
+});
+
+export type SetModalFilterActionCreator = typeof setFilter;
+export type SetModalFilterAction = $Call<SetFilterActionCreator, string>;
+
 
 export const setProbeServerModalVisible = (visible: boolean) => ({
   type: SET_PROBE_SERVER_MODAL_VISIBLE,

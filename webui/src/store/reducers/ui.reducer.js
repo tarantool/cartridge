@@ -1,5 +1,5 @@
 import {
-  SET_BOOSTRAP_VSHARD_MODAL_VISIBLE,
+  SET_BOOSTRAP_VSHARD_PANEL_VISIBLE,
   SET_FAILOVER_MODAL_VISIBLE,
   CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST,
   CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST,
@@ -35,11 +35,11 @@ import {
   USER_LIST_REQUEST,
   USER_ADD_REQUEST,
   USER_REMOVE_REQUEST,
-  USER_EDIT_REQUEST
+  USER_EDIT_REQUEST, SHOW_EXPEL_MODAL, HIDE_EXPEL_MODAL, CLUSTER_PAGE_EXPEL_SERVER_REQUEST_SUCCESS
 } from '../actionTypes';
 
 export type UIState = {
-  showBootstrapModal: boolean,
+  bootstrapPanelVisible: boolean,
   addUserModalVisible: boolean,
   editUserModalVisible: boolean,
   editUserId: ?string,
@@ -52,10 +52,11 @@ export type UIState = {
   fetchingAuth: boolean,
   fetchingUserList: boolean,
   fetchingUserMutation: boolean,
+  expelModal: ?string,
 };
 
 const initialState: UIState = {
-  showBootstrapModal: false,
+  bootstrapPanelVisible: false,
   addUserModalVisible: false,
   editUserModalVisible: false,
   editUserId: null,
@@ -67,15 +68,16 @@ const initialState: UIState = {
   requestinFailover: false,
   fetchingAuth: false,
   fetchingUserList: false,
-  fetchingUserMutation: false
+  fetchingUserMutation: false,
+  expelModal: null
 };
 
 export const reducer = (state: UIState = initialState, { type, payload }: FSA): UIState => {
   switch (type) {
-    case SET_BOOSTRAP_VSHARD_MODAL_VISIBLE: {
+    case SET_BOOSTRAP_VSHARD_PANEL_VISIBLE: {
       return {
         ...state,
-        showBootstrapModal: payload
+        bootstrapPanelVisible: payload
       }
     }
 
@@ -108,7 +110,7 @@ export const reducer = (state: UIState = initialState, { type, payload }: FSA): 
     case CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST: {
       return {
         ...state,
-        showBootstrapModal: false,
+        bootstrapPanelVisible: false,
         requestingBootstrapVshard: true
       }
     }
@@ -116,6 +118,7 @@ export const reducer = (state: UIState = initialState, { type, payload }: FSA): 
     case CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST_ERROR: {
       return {
         ...state,
+        bootstrapPanelVisible: true,
         requestingBootstrapVshard: false
       }
     }
@@ -123,6 +126,7 @@ export const reducer = (state: UIState = initialState, { type, payload }: FSA): 
     case CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST_SUCCESS: {
       return {
         ...state,
+        bootstrapPanelVisible: true,
         requestingBootstrapVshard: false
       }
     }
@@ -228,6 +232,21 @@ export const reducer = (state: UIState = initialState, { type, payload }: FSA): 
         ...state,
         fetchingUserMutation: true
       };
+
+    case SHOW_EXPEL_MODAL: {
+      return {
+        ...state,
+        expelModal: payload
+      }
+    }
+
+    case HIDE_EXPEL_MODAL:
+    case CLUSTER_PAGE_EXPEL_SERVER_REQUEST_SUCCESS: {
+      return {
+        ...state,
+        expelModal: null
+      }
+    }
 
     default: {
       return state;

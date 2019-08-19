@@ -95,6 +95,7 @@ export function reducer(state = initialState, { type, payload, error }) {
     case SET_AUTH_MODAL_VISIBLE:
       return {
         ...state,
+        error: null,
         authModalVisible: payload.visible
       };
 

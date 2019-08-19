@@ -1,6 +1,7 @@
 // @flow
 import {
   CLUSTER_PAGE_FILTER_SET,
+  CLUSTER_PAGE_MODAL_FILTER_SET,
   CLUSTER_PAGE_DID_MOUNT,
   CLUSTER_PAGE_DATA_REQUEST,
   CLUSTER_PAGE_DATA_REQUEST_SUCCESS,
@@ -61,6 +62,7 @@ export type ServerStatWithUUID = {
 
 export type ClusterPageState = {
   replicasetFilter: string,
+  modalReplicasetFilter: string,
   pageMount: boolean,
   pageDataRequestStatus: RequestStatusType,
   refreshListsRequestStatus: RequestStatusType,
@@ -83,7 +85,6 @@ export type ClusterPageState = {
   editReplicasetRequestStatus: RequestStatusType,
   // editReplicasetResponse: null,
   uploadConfigRequestStatus: RequestStatusType,
-  // uploadConfigResponse: null,
   applyTestConfigRequestStatus: RequestStatusType,
   // applyTestConfigResponse: null,
   changeFailoverRequestStatus: RequestStatusType,
@@ -92,6 +93,7 @@ export type ClusterPageState = {
 
 export const initialState: ClusterPageState = {
   replicasetFilter: '',
+  modalReplicasetFilter: '',
   pageMount: false,
   pageDataRequestStatus: getInitialRequestStatus(),
   refreshListsRequestStatus: getInitialRequestStatus(),
@@ -114,7 +116,6 @@ export const initialState: ClusterPageState = {
   editReplicasetRequestStatus: getInitialRequestStatus(),
   editReplicasetResponse: null,
   uploadConfigRequestStatus: getInitialRequestStatus(),
-  uploadConfigResponse: null,
   applyTestConfigRequestStatus: getInitialRequestStatus(),
   applyTestConfigResponse: null,
   changeFailoverRequestStatus: getInitialRequestStatus(),
@@ -176,7 +177,7 @@ const uploadConfigRequestReducer = getRequestReducer(
   CLUSTER_PAGE_UPLOAD_CONFIG_REQUEST,
   CLUSTER_PAGE_UPLOAD_CONFIG_REQUEST_SUCCESS,
   CLUSTER_PAGE_UPLOAD_CONFIG_REQUEST_ERROR,
-  'uploadConfigResponse',
+  'uploadConfigRequestStatus',
 );
 
 const applyTestConfigRequestReducer = getRequestReducer(
@@ -216,6 +217,12 @@ export const reducer = baseReducer(
         return {
           ...state,
           replicasetFilter: action.payload
+        };
+
+      case CLUSTER_PAGE_MODAL_FILTER_SET:
+        return {
+          ...state,
+          modalReplicasetFilter: action.payload
         };
 
       case CLUSTER_PAGE_DID_MOUNT:

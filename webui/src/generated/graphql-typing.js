@@ -23,12 +23,14 @@ export type Apicluster = {
   vshard_bucket_count: $ElementType<Scalars, "Int">,
   /** List authorized users */
   users?: ?Array<User>,
-  /** Get list of all registered roles and their dependencies. */
-  known_roles: Array<Role>,
+  auth_params: UserManagementApi,
   /** Get list of known vshard storage groups. */
   vshard_known_groups: Array<$ElementType<Scalars, "String">>,
   vshard_groups: Array<VshardGroup>,
-  auth_params: UserManagementApi,
+  /** Get list of all registered roles and their dependencies. */
+  known_roles: Array<Role>,
+  /** Whether it is reasonble to call bootstrap_vshard mutation */
+  is_vshard_bootstrapped: $ElementType<Scalars, "Boolean">,
   /** Whether it is reasonble to call bootstrap_vshard mutation */
   can_bootstrap_vshard: $ElementType<Scalars, "Boolean">
 };
@@ -74,8 +76,10 @@ export type MutationProbe_ServerArgs = {
 export type MutationEdit_ReplicasetArgs = {
   weight?: ?$ElementType<Scalars, "Float">,
   master?: ?Array<$ElementType<Scalars, "String">>,
+  alias?: ?$ElementType<Scalars, "String">,
   roles?: ?Array<$ElementType<Scalars, "String">>,
   uuid: $ElementType<Scalars, "String">,
+  all_rw?: ?$ElementType<Scalars, "Boolean">,
   vshard_group?: ?$ElementType<Scalars, "String">
 };
 
@@ -110,7 +114,9 @@ export type MutationApicluster = {
 
 /** Cluster management */
 export type MutationApiclusterAuth_ParamsArgs = {
-  enabled?: ?$ElementType<Scalars, "Boolean">
+  cookie_max_age?: ?$ElementType<Scalars, "Long">,
+  enabled?: ?$ElementType<Scalars, "Boolean">,
+  cookie_renew_age?: ?$ElementType<Scalars, "Long">
 };
 
 /** Cluster management */
@@ -161,22 +167,26 @@ export type QueryReplicasetsArgs = {
 
 /** Group of servers replicating the same data */
 export type Replicaset = {
-  /** The role set enabled on every instance in the replica set */
-  roles?: ?Array<$ElementType<Scalars, "String">>,
   /** The active leader. It may differ from "master" if failover is enabled and configured leader isn't healthy. */
   active_master: Server,
-  /** Vshard storage group name. Meaningful only when multiple vshard groups are configured. */
-  vshard_group?: ?$ElementType<Scalars, "String">,
-  /** The replica set uuid */
-  uuid: $ElementType<Scalars, "String">,
-  /** The replica set health. It is "healthy" if all instances have status "healthy". Otherwise "unhealthy". */
-  status: $ElementType<Scalars, "String">,
   /** The leader according to the configuration. */
   master: Server,
+  /** The replica set health. It is "healthy" if all instances have status "healthy". Otherwise "unhealthy". */
+  status: $ElementType<Scalars, "String">,
+  /** All instances in replica set are rw */
+  all_rw: $ElementType<Scalars, "Boolean">,
+  /** Vshard storage group name. Meaningful only when multiple vshard groups are configured. */
+  vshard_group?: ?$ElementType<Scalars, "String">,
+  /** The replica set alias */
+  alias: $ElementType<Scalars, "String">,
+  /** Vshard replica set weight. Null for replica sets with vshard-storage role disabled. */
+  weight?: ?$ElementType<Scalars, "Float">,
+  /** The role set enabled on every instance in the replica set */
+  roles?: ?Array<$ElementType<Scalars, "String">>,
   /** Servers in the replica set. */
   servers: Array<Server>,
-  /** Vshard replica set weight. Null for replica sets with vshard-storage role disabled. */
-  weight?: ?$ElementType<Scalars, "Float">
+  /** The replica set uuid */
+  uuid: $ElementType<Scalars, "String">
 };
 
 /** Statistics for an instance in the replica set. */
@@ -303,12 +313,14 @@ export type ServerShortInfo = {
 export type ServerStat = {
   /** The total amount of memory (including allocated, but currently free slabs) used only for tuples, no indexes */
   items_size: $ElementType<Scalars, "Long">,
-  /** = items_used / slab_count * slab_size (these are slabs used only for tuples, no indexes) */
-  items_used_ratio: $ElementType<Scalars, "String">,
+  /** vshard buckets count */
+  vshard_buckets_count: $ElementType<Scalars, "Int">,
   /** The maximum amount of memory that the slab allocator can use for both tuples
    * and indexes (as configured in the memtx_memory parameter)
    */
   quota_size: $ElementType<Scalars, "Long">,
+  /** = items_used / slab_count * slab_size (these are slabs used only for tuples, no indexes) */
+  items_used_ratio: $ElementType<Scalars, "String">,
   /** The amount of memory that is already distributed to the slab allocator */
   quota_used: $ElementType<Scalars, "Long">,
   /** = arena_used / arena_size */
@@ -337,14 +349,14 @@ export type UserManagementApi = {
   implements_edit_user: $ElementType<Scalars, "Boolean">,
   /** Number of seconds until the authentication cookie expires. */
   cookie_max_age: $ElementType<Scalars, "Long">,
-  /** Number of seconds to keep in cache cookie validation result. */
-  cookie_caching_time: $ElementType<Scalars, "Long">,
+  /** Update provided cookie if it's older then this age. */
+  cookie_renew_age: $ElementType<Scalars, "Long">,
   implements_list_users: $ElementType<Scalars, "Boolean">,
-  implements_get_user: $ElementType<Scalars, "Boolean">,
   /** Whether authentication is enabled. */
   enabled: $ElementType<Scalars, "Boolean">,
   /** Active session username. */
   username?: ?$ElementType<Scalars, "String">,
+  implements_get_user: $ElementType<Scalars, "Boolean">,
   implements_check_password: $ElementType<Scalars, "Boolean">
 };
 
@@ -391,7 +403,12 @@ export type GetClusterQueryVariables = {};
 export type GetClusterQuery = { __typename?: "Query" } & {
   cluster: ?({ __typename?: "Apicluster" } & $Pick<
     Apicluster,
-    { failover: *, can_bootstrap_vshard: *, vshard_bucket_count: * }
+    {
+      failover: *,
+      can_bootstrap_vshard: *,
+      isBootstrapped: *,
+      vshard_bucket_count: *
+    }
   > & {
       clusterSelf: ?({ __typename?: "ServerShortInfo" } & {
         uri: $ElementType<ServerShortInfo, "uri">,
@@ -629,7 +646,7 @@ export type ServerListQuery = { __typename?: "Query" } & {
     })>,
   replicasetList: ?Array<?({ __typename?: "Replicaset" } & $Pick<
     Replicaset,
-    { uuid: *, status: *, roles: *, vshard_group: *, weight: * }
+    { alias: *, uuid: *, status: *, roles: *, vshard_group: *, weight: * }
   > & {
       master: { __typename?: "Server" } & $Pick<Server, { uuid: * }>,
       active_master: { __typename?: "Server" } & $Pick<Server, { uuid: * }>,
@@ -655,7 +672,8 @@ export type ServerListQuery = { __typename?: "Query" } & {
   > & {
       statistics: ?({ __typename?: "ServerStat" } & {
         quotaSize: $ElementType<ServerStat, "quota_size">,
-        arenaUsed: $ElementType<ServerStat, "arena_used">
+        arenaUsed: $ElementType<ServerStat, "arena_used">,
+        bucketsCount: $ElementType<ServerStat, "vshard_buckets_count">
       })
     })>
 };
@@ -674,7 +692,7 @@ export type ServerListWithoutStatQuery = { __typename?: "Query" } & {
     })>,
   replicasetList: ?Array<?({ __typename?: "Replicaset" } & $Pick<
     Replicaset,
-    { uuid: *, status: *, roles: *, vshard_group: *, weight: * }
+    { alias: *, uuid: *, status: *, roles: *, vshard_group: *, weight: * }
   > & {
       master: { __typename?: "Server" } & $Pick<Server, { uuid: * }>,
       active_master: { __typename?: "Server" } & $Pick<Server, { uuid: * }>,
@@ -705,7 +723,8 @@ export type ServerStatQuery = { __typename?: "Query" } & {
   > & {
       statistics: ?({ __typename?: "ServerStat" } & {
         quotaSize: $ElementType<ServerStat, "quota_size">,
-        arenaUsed: $ElementType<ServerStat, "arena_used">
+        arenaUsed: $ElementType<ServerStat, "arena_used">,
+        bucketsCount: $ElementType<ServerStat, "vshard_buckets_count">
       })
     })>
 };

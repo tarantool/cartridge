@@ -1,19 +1,32 @@
+// @flow
+// TODO: move to uikit
 import React from 'react';
-import PropTypes from 'prop-types';
 import { css, cx } from 'emotion';
 import * as R from 'ramda';
 
-const ACCENT_COLORS = {
-  success: '96, 180, 66',
-  warning: '207, 153, 52',
-  danger: '255, 39, 44'
+const COLORS = {
+  success: '#52C41A',
+  warning: '#FAAD14',
+  danger: '#F5222D'
 };
 
-const BG_COLORS = {
-  success: '203, 235, 197',
-  warning: '243, 225, 194',
-  danger: '255, 235, 237'
-};
+const style = css`
+  position: relative;
+  height: 4px;
+  width: 100%;
+  border-radius: 3px;
+  background-color: #e1e1e1;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 4px;
+    min-width: 4px;
+    border-radius: 3px;
+  }
+`;
 
 const defineStatus = R.cond([
   [R.lt(66), R.always('danger')],
@@ -21,33 +34,26 @@ const defineStatus = R.cond([
   [R.T, R.always('success')]
 ]);
 
-const style = css`
-  display: inline-block;
-  height: 6px;
-  width: 100%;
-  border-radius: 3px;
-  background-repeat: no-repeat;
-`;
-
-const ProgressBar = ({ className, percents = 0, intention = defineStatus(percents) }) => {
-
-  const colors = css`
-    background-color: rgb(${ACCENT_COLORS[intention]});
-    box-shadow: rgba(${BG_COLORS[intention]}, 0.5) 0px 1px 3px 1px;
-    background-image: linear-gradient(
-      to right,
-      rgb(${ACCENT_COLORS[intention]}) ${percents}%,
-      rgb(${BG_COLORS[intention]}) ${percents}%
-    );
-  `;
-
-  return <span className={cx(className, style, colors)} />;
+type ProgressBarProps = {
+  className?: string,
+  percents: number,
+  intention?: 'danger' | 'warning' | 'success'
 };
 
-ProgressBar.propTypes = {
-  className: PropTypes.string,
-  percents: PropTypes.number,
-  intention: PropTypes.oneOf(['danger', 'warning', 'success'])
+const ProgressBar = ({
+  className,
+  percents,
+  intention = defineStatus(percents)
+}:
+ProgressBarProps) => {
+  const bar = css`
+    &::before {
+      width: ${percents}%;
+      background-color: ${COLORS[intention]}
+    }
+  `;
+
+  return <div className={cx(style, bar, className)} />;
 };
 
 export default ProgressBar;

@@ -4,7 +4,7 @@ import React from 'react';
 import { defaultMemoize } from 'reselect';
 import { css } from 'react-emotion';
 import { DEFAULT_VSHARD_GROUP_NAME, VSHARD_STORAGE_ROLE_NAME } from 'src/constants';
-import CommonItemEditModal from 'src/components/CommonItemEditModal';
+import CommonItemEditForm from 'src/components/CommonItemEditForm';
 import type {
   CreateReplicasetMutationVariables,
   MutationEdit_ReplicasetArgs,
@@ -295,7 +295,7 @@ class ReplicasetEditModal extends React.PureComponent<ReplicasetEditModalProps> 
     const fields = this.getFields();
 
     return (
-      <CommonItemEditModal
+      <CommonItemEditForm
         title={['Create replica set', 'Edit replica set']}
         isLoading={isLoading}
         isSaving={isSaving}

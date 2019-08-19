@@ -75,11 +75,21 @@ function* appMessageSaga() {
     if (action.error && isDeadServerError(action.error)) {
       const activeDeadServerMessage = yield call(getActiveDeadServerMessage);
       if (!activeDeadServerMessage) {
-        const message = {
-          content: { type: 'error', text: 'It seems like server is not reachable' },
+        const messageText = 'It seems like server is not reachable';
+        const messageType = 'error';
+
+        const messagePayload = {
+          content: { type: messageType, text: messageText },
           type: SERVER_NOT_REACHABLE_ERROR_TYPE
         };
-        yield put({ type: APP_CREATE_MESSAGE, payload: message });
+        yield put({ type: APP_CREATE_MESSAGE, payload: messagePayload });
+
+        window.tarantool_enterprise_core.notify({
+          title: 'An error has occurred',
+          message: messageText,
+          type: messageType,
+          timeout: 0,
+        });
       }
     } else {
       if (action.requestPayload) {
@@ -90,18 +100,38 @@ function* appMessageSaga() {
       }
 
       if (action.error && action.__errorMessage) {
-        const message = {
-          content: { type: 'error', text: getApiErrorMessage(action.error) }
+        const messageText = getApiErrorMessage(action.error);
+        const messageType = 'error';
+
+        const messagePayload = {
+          content: { type: messageType, text: messageText }
         };
-        yield put({ type: APP_CREATE_MESSAGE, payload: message });
+        yield put({ type: APP_CREATE_MESSAGE, payload: messagePayload });
+
+        window.tarantool_enterprise_core.notify({
+          title: 'An error has occurred',
+          message: messageText,
+          type: messageType,
+          timeout: 0,
+        });
       }
     }
 
     if (action.__successMessage) {
-      const message = {
-        content: { type: 'success', text: action.__successMessage }
+      const messageText = action.__successMessage;
+      const messageType = 'success';
+
+      const messagePayload = {
+        content: { type: messageType, text: messageText }
       };
-      yield put({ type: APP_CREATE_MESSAGE, payload: message });
+      yield put({ type: APP_CREATE_MESSAGE, payload: messagePayload });
+
+      window.tarantool_enterprise_core.notify({
+        title: 'Successful!',
+        message: messageText,
+        type: messageType,
+        timeout: 5000,
+      });
     }
   }
 }
