@@ -15,6 +15,10 @@ local gql_type_replicaset = gql_types.object {
             kind = gql_types.string.nonNull,
             description = 'The replica set uuid',
         },
+        alias = {
+            kind = gql_types.string,
+            description = 'The replica set alias',
+        },
         roles = {
             kind = gql_types.list(gql_types.string.nonNull),
             description = 'The role set enabled' ..
@@ -270,6 +274,7 @@ local function init(graphql)
             weight = gql_types.float,
             vshard_group = gql_types.string,
             all_rw = gql_types.boolean,
+            alias = gql_types.string,
         },
         kind = gql_types.boolean,
         callback = module_name .. '.edit_replicaset',

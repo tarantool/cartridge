@@ -57,7 +57,7 @@ assert(confapplier.register_role('cluster.roles.vshard-router'))
 local test = tap.test('topology.config')
 
 local function test_all(test, conf)
-test:plan(51)
+test:plan(52)
 
 local vshard_group
 if conf.vshard then
@@ -643,6 +643,22 @@ replicasets:
   aaaaaaaa-0000-4000-b000-000000000001:
     master: aaaaaaaa-aaaa-4000-b000-000000000001
     roles: {}
+...]])
+
+check_config(true,
+    [[---
+auth: false
+failover: false
+servers:
+  aaaaaaaa-aaaa-4000-b000-000000000001:
+    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
+    disabled: false
+    uri: localhost:3301
+replicasets:
+  aaaaaaaa-0000-4000-b000-000000000001:
+    master: aaaaaaaa-aaaa-4000-b000-000000000001
+    roles: {}
+    alias: aliasmaster
 ...]])
 
 check_config(true,

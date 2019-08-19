@@ -144,6 +144,7 @@ local function get_servers_and_replicasets()
             vshard_group = replicaset.vshard_group,
             servers = {},
             all_rw = replicaset.all_rw or false,
+            alias = replicaset.alias or replicaset_uuid,
         }
 
         local enabled_roles = confapplier.get_enabled_roles(replicaset.roles)
@@ -733,6 +734,7 @@ local function edit_replicaset(args)
         weight = '?number',
         vshard_group = '?string',
         all_rw = '?boolean',
+        alias = '?string',
     })
 
     local topology_cfg = confapplier.get_deepcopy('topology')
@@ -756,6 +758,10 @@ local function edit_replicaset(args)
             args.uuid,
             args.master
         )
+    end
+
+    if args.alias ~= nil then
+        replicaset.alias = args.alias
     end
 
     if args.all_rw ~= nil then

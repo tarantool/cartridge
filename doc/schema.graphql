@@ -1,5 +1,5 @@
 # source: http://localhost:8081/admin/api
-# timestamp: Mon Aug 19 2019 02:00:46 GMT+0300 (MSK)
+# timestamp: Mon Aug 19 2019 17:43:12 GMT+0300 (GMT+03:00)
 
 """Cluster management"""
 type Apicluster {
@@ -50,7 +50,7 @@ type Mutation {
   cluster: MutationApicluster
   edit_server(uuid: String!, uri: String, labels: [LabelInput]): Boolean
   probe_server(uri: String!): Boolean
-  edit_replicaset(weight: Float, vshard_group: String, roles: [String!], uuid: String!, all_rw: Boolean, master: [String!]): Boolean
+  edit_replicaset(weight: Float, master: [String!], alias: String, roles: [String!], uuid: String!, all_rw: Boolean, vshard_group: String): Boolean
   join_server(replicaset_uuid: String, uri: String!, labels: [LabelInput], roles: [String!], instance_uuid: String, timeout: Float, vshard_group: String): Boolean
   bootstrap_vshard: Boolean
   expel_server(uuid: String!): Boolean
@@ -86,9 +86,9 @@ type Query {
 """Group of servers replicating the same data"""
 type Replicaset {
   """
-  Vshard replica set weight. Null for replica sets with vshard-storage role disabled.
+  The active leader. It may differ from "master" if failover is enabled and configured leader isn't healthy.
   """
-  weight: Float
+  active_master: Server!
 
   """The leader according to the configuration."""
   master: Server!
@@ -106,19 +106,22 @@ type Replicaset {
   """
   vshard_group: String
 
-  """
-  The active leader. It may differ from "master" if failover is enabled and configured leader isn't healthy.
-  """
-  active_master: Server!
+  """The replica set alias"""
+  alias: String
 
-  """The replica set uuid"""
-  uuid: String!
+  """
+  Vshard replica set weight. Null for replica sets with vshard-storage role disabled.
+  """
+  weight: Float
+
+  """The role set enabled on every instance in the replica set"""
+  roles: [String!]
 
   """Servers in the replica set."""
   servers: [Server!]!
 
-  """The role set enabled on every instance in the replica set"""
-  roles: [String!]
+  """The replica set uuid"""
+  uuid: String!
 }
 
 """Statistics for an instance in the replica set."""

@@ -266,6 +266,7 @@ local function validate_schema(field, topology)
             ['weight'] = true,
             ['vshard_group'] = true,
             ['all_rw'] = true,
+            ['alias'] = true,
         }
         for k, _ in pairs(replicaset) do
             e_config:assert(
