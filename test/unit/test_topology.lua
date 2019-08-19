@@ -57,7 +57,7 @@ assert(confapplier.register_role('cluster.roles.vshard-router'))
 local test = tap.test('topology.config')
 
 local function test_all(test, conf)
-test:plan(52)
+test:plan(53)
 
 local vshard_group
 if conf.vshard then
@@ -255,6 +255,16 @@ replicasets:
     master: aaaaaaaa-aaaa-4000-b000-000000000001
     roles: {"vshard-router": true}
     weight: over9000
+...]])
+
+check_config('topology_new.replicasets[aaaaaaaa-0000-4000-b000-000000000001]'..
+  '.alias must be a string, got boolean',
+[[---
+replicasets:
+  aaaaaaaa-0000-4000-b000-000000000001:
+    master: aaaaaaaa-aaaa-4000-b000-000000000001
+    roles: {}
+    alias: false
 ...]])
 
 test:diag('validate_consistency()')

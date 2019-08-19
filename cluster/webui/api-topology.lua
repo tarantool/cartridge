@@ -16,7 +16,7 @@ local gql_type_replicaset = gql_types.object {
             description = 'The replica set uuid',
         },
         alias = {
-            kind = gql_types.string,
+            kind = gql_types.string.nonNull,
             description = 'The replica set alias',
         },
         roles = {

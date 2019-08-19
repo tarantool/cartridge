@@ -1,6 +1,6 @@
 local fio = require('fio')
 local t = require('luatest')
-local g = t.group('replicaset-alias')
+local g = t.group('replicaset_alias')
 
 local test_helper = require('test.helper')
 
@@ -8,18 +8,16 @@ local helpers = require('cluster.test_helpers')
 
 local cluster
 
-local replicaset_uuid = helpers.uuid('a')
-
 g.before_all = function()
     cluster = helpers.Cluster:new({
         datadir = fio.tempdir(),
-        use_vshard = true,
+        use_vshard = false,
         server_command = test_helper.server_command,
         replicasets = {
             {
-                alias = 'router',
-                uuid = replicaset_uuid,
-                roles = {'vshard-router', 'vshard-storage'},
+                alias = 'initial-alias',
+                uuid = helpers.uuid('a'),
+                roles = {},
                 servers = {
                     {instance_uuid = helpers.uuid('a', 'a', 1)},
                 },
@@ -36,8 +34,20 @@ end
 g.test_rename_replicaset = function()
     local server = cluster.main_server
 
-    local alias = 'check_my_alias'
+    local function query()
+        return server:graphql({
+            query = ([[{
+                replicasets(uuid: %q) { uuid, alias } }
+            ]]):format(server.replicaset_uuid)
+        }).data.replicasets[1]
+    end
 
+    t.assert_equals(query(), {
+        uuid = server.replicaset_uuid,
+        alias = 'initial-alias',
+    })
+
+    local alias = 'another-alias'
     server:graphql({
         query = [[
             mutation(
@@ -51,20 +61,13 @@ g.test_rename_replicaset = function()
             }
         ]],
         variables = {
-            uuid = replicaset_uuid,
+            uuid = server.replicaset_uuid,
             alias = alias
         }
     })
 
-    local res = server:graphql({
-        query = [[
-query { replicasets { uuid, alias } }
-        ]]
-    }).data.replicasets
-
-    for _, replicaset in pairs(res) do
-        if replicaset.uuid == replicaset_uuid then
-            t.assert_equals(replicaset.alias, alias)
-        end
-    end
+    t.assert_equals(query(), {
+        uuid = server.replicaset_uuid,
+        alias = 'another-alias',
+    })
 end

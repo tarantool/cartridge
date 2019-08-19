@@ -1,5 +1,5 @@
 # source: http://localhost:8081/admin/api
-# timestamp: Mon Aug 19 2019 17:43:12 GMT+0300 (GMT+03:00)
+# timestamp: Mon Aug 19 2019 19:05:04 GMT+0300 (MSK)
 
 """Cluster management"""
 type Apicluster {
@@ -107,7 +107,7 @@ type Replicaset {
   vshard_group: String
 
   """The replica set alias"""
-  alias: String
+  alias: String!
 
   """
   Vshard replica set weight. Null for replica sets with vshard-storage role disabled.
