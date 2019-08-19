@@ -32,6 +32,10 @@ local gql_type_userapi = gql_types.object({
             kind = gql_types.long.nonNull,
             description = 'Number of seconds until the authentication cookie expires.',
         },
+        cookie_renew_age = {
+            kind = gql_types.long.nonNull,
+            description = "Update provided cookie if it's older then this age.",
+        },
 
         implements_add_user = gql_types.boolean.nonNull,
         implements_get_user = gql_types.boolean.nonNull,
@@ -76,6 +80,7 @@ local function get_auth_params()
 
         enabled = params.enabled,
         cookie_max_age = params.cookie_max_age,
+        cookie_renew_age = params.cookie_renew_age,
 
         implements_add_user = callbacks.add_user ~= nil,
         implements_get_user = callbacks.get_user ~= nil,
@@ -117,6 +122,7 @@ local function init(graphql)
         args = {
             enabled = gql_types.boolean,
             cookie_max_age = gql_types.long,
+            cookie_renew_age = gql_types.long,
         },
         kind = gql_type_userapi.nonNull,
         callback = module_name .. '.set_auth_params',

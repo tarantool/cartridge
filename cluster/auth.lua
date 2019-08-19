@@ -27,6 +27,7 @@ vars:new('enabled', false)
 vars:new('callbacks', {})
 
 local DEFAULT_COOKIE_MAX_AGE = 3600*24*30 -- in seconds
+local DEFAULT_COOKIE_RENEW_AGE = 3600*24 -- in seconds
 
 local e_check_cookie = errors.new_class('Checking cookie failed')
 local e_check_header = errors.new_class('Checking auth headers failed')
@@ -65,6 +66,12 @@ local function set_enabled(enabled)
     return true
 end
 
+--- Check if unauthenticated access is forbidden.
+-- (*Added* in v0.7)
+--
+-- @function get_enabled
+-- @local
+-- @treturn boolean enabled
 local function get_enabled()
     if confapplier.get_readonly() == nil then
         return vars.enabled
@@ -79,10 +86,27 @@ local function get_enabled()
     end
 end
 
+--- Modify authentication params.
+-- (*Changed* in v0.11)
+--
+-- Can't be used before the bootstrap.
+-- Affects all cluster instances.
+-- Triggers `cluster.config_patch_clusterwide`.
+--
+-- @function set_params
+-- @within Configuration
+-- @tparam table opts
+-- @tparam ?boolean opts.enabled (*Added* in v0.11)
+-- @tparam ?number opts.cookie_max_age
+-- @tparam ?number opts.cookie_renew_age (*Added* in v0.11)
+-- @treturn[1] boolean `true`
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 local function set_params(opts)
     checks({
         enabled = '?boolean',
         cookie_max_age = '?number',
+        cookie_renew_age = '?number',
     })
 
     if confapplier.get_readonly() == nil then
@@ -112,6 +136,10 @@ local function set_params(opts)
         auth_cfg.cookie_max_age = opts.cookie_max_age
     end
 
+    if opts.cookie_renew_age ~= nil then
+        auth_cfg.cookie_renew_age = opts.cookie_renew_age
+    end
+
     local patch = {
         auth = auth_cfg
     }
@@ -124,11 +152,24 @@ local function set_params(opts)
     return confapplier.patch_clusterwide(patch)
 end
 
+--- Retrieve authentication params.
+--
+-- @function get_params
+-- @within Configuration
+-- @treturn AuthParams
 local function get_params()
     local auth_cfg = confapplier.get_readonly('auth')
+
+    --- Authentication params.
+    -- @table AuthParams
+    -- @within Configuration
+    -- @tfield boolean enabled Wether unauthenticated access is forbidden
+    -- @tfield number cookie_max_age Number of seconds until the authentication cookie expires
+    -- @tfield number cookie_renew_age Update provided cookie if it's older then this age (in seconds)
     return {
         enabled = get_enabled(),
         cookie_max_age = auth_cfg and auth_cfg.cookie_max_age or DEFAULT_COOKIE_MAX_AGE,
+        cookie_renew_age = auth_cfg and auth_cfg.cookie_renew_age or DEFAULT_COOKIE_RENEW_AGE,
     }
 end
 
@@ -192,6 +233,16 @@ local function get_cookie_uid(raw)
         return nil
     end
 
+    cookie.ts = tonumber(cookie.ts)
+    if cookie.ts == nil then
+        return nil
+    end
+
+    local diff = fiber.time() - cookie.ts
+    if diff <= 0 or diff >= get_params().cookie_max_age then
+        return nil
+    end
+
     local key = cluster_cookie.cookie()
     local calc = digest.base64_encode(
         hmac(digest.sha512, 128, key, cookie.uid .. cookie.ts),
@@ -202,12 +253,7 @@ local function get_cookie_uid(raw)
         return nil
     end
 
-    local diff = fiber.time() - tonumber(cookie.ts)
-    if diff <= 0 or diff >= get_params().cookie_max_age then
-        return nil
-    end
-
-    return cookie.uid
+    return cookie
 end
 
 local function get_basic_auth_uid(auth)
@@ -240,6 +286,7 @@ end
 --- Get username for the current HTTP session.
 --
 -- @function get_session_username
+-- @within Authorizarion
 -- @treturn string or nil if no user is logged in
 local function get_session_username()
     local fiber_storage = fiber.self().storage
@@ -308,6 +355,13 @@ local function coerce_user(user)
     or (type(user.email) ~= 'string' and user.email ~= nil ) then
         return nil
     end
+
+    --- User information.
+    -- @table UserInfo
+    -- @within User management
+    -- @tfield string username
+    -- @tfield ?string fullname
+    -- @tfield ?string email
     return {
         username = user.username,
         fullname = user.fullname,
@@ -316,14 +370,17 @@ local function coerce_user(user)
 end
 
 --- Trigger registered add_user callback.
--- The callback is called with the same arguments
--- and must return a `user_object`.
+--
+-- The callback is triggered with the same arguments and must return
+-- a table with fields conforming to `UserInfo`. Unknown fields are ignored.
+--
 -- @function add_user
+-- @within User management
 -- @tparam string username
 -- @tparam string password
 -- @tparam ?string fullname
 -- @tparam ?string email
--- @return[1] `user_object`
+-- @treturn[1] UserInfo
 -- @treturn[2] nil
 -- @treturn[2] table Error description
 local function add_user(username, password, fullname, email)
@@ -349,11 +406,14 @@ local function add_user(username, password, fullname, email)
 end
 
 --- Trigger registered get_user callback.
--- The callback is called with the same arguments
--- and must return a `user_object`.
+--
+-- The callback is triggered with the same arguments and must return
+-- a table with fields conforming to `UserInfo`. Unknown fields are ignored.
+--
 -- @function get_user
+-- @within User management
 -- @tparam string username
--- @return[1] `user_object`
+-- @treturn[1] UserInfo
 -- @treturn[2] nil
 -- @treturn[2] table Error description
 local function get_user(username)
@@ -380,14 +440,17 @@ local function get_user(username)
 end
 
 --- Trigger registered edit_user callback.
--- The callback is called with the same arguments
--- and must return a `user_object`.
+--
+-- The callback is triggered with the same arguments and must return
+-- a table with fields conforming to `UserInfo`. Unknown fields are ignored.
+--
 -- @function edit_user
+-- @within User management
 -- @tparam string username
 -- @tparam ?string password
 -- @tparam ?string fullname
 -- @tparam ?string email
--- @return[1] `user_object`
+-- @treturn[1] UserInfo
 -- @treturn[2] nil
 -- @treturn[2] table Error description
 local function edit_user(username, password, fullname, email)
@@ -414,9 +477,13 @@ local function edit_user(username, password, fullname, email)
 end
 
 --- Trigger registered list_users callback.
--- The callback must return an array of `user_object`s.
+--
+-- The callback is triggered without any arguments. It must return
+-- an array of `UserInfo` objects.
+--
 -- @function list_users
--- @return[1] array of `user_object`s
+-- @within User management
+-- @treturn[1] {UserInfo,...}
 -- @treturn[2] nil
 -- @treturn[2] table Error description
 local function list_users()
@@ -452,11 +519,15 @@ local function list_users()
 end
 
 --- Trigger registered remove_user callback.
--- The callback is called with the same arguments
--- and must return the `user_object` removed.
+--
+-- The callback is triggered with the same arguments and must return
+-- a table with fields conforming to `UserInfo`, which was removed.
+-- Unknown fields are ignored.
+--
 -- @function remove_user
+-- @within User management
 -- @tparam string username
--- @return[1] `user_object`
+-- @treturn[1] UserInfo
 -- @treturn[2] nil
 -- @treturn[2] table Error description
 local function remove_user(username)
@@ -487,27 +558,56 @@ local function remove_user(username)
     end)
 end
 
+local _response_mt = {
+    __index = {
+        finalize = function(self, resp)
+            for k, v in pairs(resp) do
+                if type(self[k]) == 'table'
+                and type(v) == 'table'
+                then
+                    -- merge tables
+                    for tk, tv in pairs(v) do
+                        self[k][tk] = tv
+                    end
+                else
+                    self[k] = v
+                end
+            end
+
+            return self
+        end
+    },
+}
 --- Authorize an HTTP request.
+--
 -- Try to get username from cookies or basic HTTP authentication.
 --
 -- @function check_request
+-- @within Authorizarion
 -- @param req An HTTP request
 -- @treturn boolean Access granted
+-- @treturn table HTTP response template
 local function check_request(req)
     local fiber_storage = fiber.self().storage
     -- clean fiber storage to behave correctly
     -- when user logouts within keepalive session
     fiber_storage['auth_session_username'] = nil
 
+    local resp = setmetatable({}, _response_mt)
+
     if vars.callbacks.check_password == nil then
-        return true
+        return true, resp
     end
 
-    local username
+    local auth_cfg = get_params()
+    local cookie_raw = req:cookie('lsid')
+    local cookie_ts = 0
+    local username = nil
     repeat
-        local uid, err = e_check_cookie:pcall(get_cookie_uid, req:cookie('lsid'))
-        if uid ~= nil then
-            username = uid
+        local cookie, err = e_check_cookie:pcall(get_cookie_uid, cookie_raw)
+        if cookie ~= nil and cookie.uid ~= nil then
+            username = cookie.uid
+            cookie_ts = cookie.ts
             break
         elseif err then
             log.error('%s', err)
@@ -531,18 +631,37 @@ local function check_request(req)
 
     if username then
         fiber_storage['auth_session_username'] = username
-        return true
+
+        if cookie_ts > 0
+        and auth_cfg.cookie_renew_age >= 0
+        and fiber.time() - cookie_ts > auth_cfg.cookie_renew_age
+        then
+            resp['headers'] = {
+                ['set-cookie'] = string.format(
+                    'lsid=%s; Max-Age=%d',
+                    create_cookie(username),
+                    auth_cfg.cookie_max_age
+                )
+            }
+        end
+
+        return true, resp
+    elseif cookie_raw then
+        resp['headers'] = {
+            ['set-cookie'] = 'lsid=""; Max-Age=0'
+        }
     end
 
-    if not get_enabled() then
-        return true
+    if not auth_cfg.enabled then
+        return true, resp
+    else
+        return false, resp
     end
-
-    return false
 end
 
 --- Initialize the authentication HTTP API.
 --
+-- Set up `login` and `logout` HTTP endpoints.
 -- @function init
 -- @local
 local function init(httpd)
@@ -563,6 +682,7 @@ end
 --- Set authentication callbacks.
 --
 -- @function set_callbacks
+-- @local
 -- @tparam table callbacks
 -- @tparam function callbacks.add_user
 -- @tparam function callbacks.get_user
@@ -586,6 +706,11 @@ local function set_callbacks(callbacks)
     return true
 end
 
+--- Get authentication callbacks.
+--
+-- @function get_callbacks
+-- @local
+-- @treturn table callbacks
 local function get_callbacks()
     return table.copy(vars.callbacks)
 end

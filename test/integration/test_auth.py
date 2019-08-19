@@ -483,6 +483,32 @@ def test_set_params_graphql(cluster, disable_auth):
     assert get_lsid_max_age(login('master')) == 69
     assert get_lsid_max_age(login('replica')) == 69
 
+def test_cookie_renew(cluster):
+    USERNAME = 'Eagle'
+    PASSWORD = 'Yellow Zinc'
+    for _, srv in cluster.items():
+        srv.conn.eval("""
+            local auth_mocks = require('auth-mocks')
+            assert(auth_mocks.add_user('{}', '{}'))
+        """.format(USERNAME, PASSWORD))
+
+    lsid = _login(srv, USERNAME, PASSWORD).cookies['lsid']
+
+    obj = cluster['master'].graphql("""
+        mutation {
+            cluster {
+                auth_params(cookie_renew_age: 0) { }
+            }
+        }
+    """, cookies={'lsid': lsid})
+    assert 'errors' not in obj, obj['errors'][0]['message']
+
+    resp = srv.get_raw('/admin/config', cookies={'lsid': lsid})
+    assert resp.status_code == 200
+    assert 'lsid' in resp.cookies
+    assert resp.cookies['lsid'] != ''
+    assert resp.cookies['lsid'] != lsid
+
 def test_cookie_expiry(cluster, disable_auth):
     srv = cluster['master']
     USERNAME = 'Hen'
@@ -518,6 +544,9 @@ def test_cookie_expiry(cluster, disable_auth):
 
     set_max_age(0)
     assert get_username() == None
+
+    resp = srv.get_raw('/admin/config', cookies={'lsid': lsid})
+    assert get_lsid_max_age(resp) == 0
 
     set_max_age(3600)
     assert get_username() == USERNAME

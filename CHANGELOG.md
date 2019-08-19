@@ -22,6 +22,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Modifying auth params with GraphQL before the cluster was bootstrapped is now
   forbidden and returns an error.
 
+- Introducing a new auth parameter `cookie_renew_age`. When cluster handles an HTTP request
+  with the cookie, whose age in older then specified, it refreshes the cookie.
+  It may be useful to set `cookie_max_age` to a small value (for example 10 minutes),
+  so the user will be logged out after `cookie_max_age` seconds of inactivity.
+  Otherwise, if he's active, the cookie will be updated every `cookie_renew_age` seconds
+  and the session will not be interrupted.
+
 ## [0.10.0] - 2019-08-01
 
 ### Added
