@@ -15,18 +15,25 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Remote Control server - a partial replacement for the `box.cfg({listen})`, independent on `box.cfg`.
   The server is only to be used internally for bootstrapping new instances.
 
+- Auth parameter `cookie_max_age` is now configurable with GraphQL API.
+  Also now it's stored in clusterwide config, so changing it on a single server will affect
+  all others in cluster.
+
+- Modifying auth params with GraphQL before the cluster was bootstrapped is now
+  forbidden and returns an error.
+
 ## [0.10.0] - 2019-08-01
 
 ### Added
 
 - Cluster can now operate without vshard roles (if you don't need sharding).
-  Deprecation warning about impicit vshard roles isn't issued any more,
+  Deprecation warning about implicit vshard roles isn't issued any more,
   they aren't registered unless explicitly specified either in `cluster.cfg({roles=...})`
   or in `dependencies` to one of user-defined roles.
 
 - New role flag `hidden = true`. Hidden roles aren't listed in
   `cluster.admin.get_replicasets().roles` and therefore in WebUI.
-  Hidden roled are supposed to be a dependency for another role, yet they still can be
+  Hidden roles are supposed to be a dependency for another role, yet they still can be
   enabled with `edit_replicaset` function (both Lua and GraphQL).
 
 - New role flag: `permanent = true`.

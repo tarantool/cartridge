@@ -180,7 +180,7 @@ local function bootstrap_from_scratch(conf)
         end
     end
 
-    conf.topology.auth = auth.get_enabled()
+    conf.auth = auth.get_params()
 
     local instance_uuid, replicaset_uuid = topology.get_myself_uuids(conf.topology)
     if instance_uuid == nil then

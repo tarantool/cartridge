@@ -32,10 +32,6 @@ local gql_type_userapi = gql_types.object({
             kind = gql_types.long.nonNull,
             description = 'Number of seconds until the authentication cookie expires.',
         },
-        cookie_caching_time = {
-            kind = gql_types.long.nonNull,
-            description = 'Number of seconds to keep in cache cookie validation result.',
-        },
 
         implements_add_user = gql_types.boolean.nonNull,
         implements_get_user = gql_types.boolean.nonNull,
@@ -74,9 +70,12 @@ end
 
 local function get_auth_params()
     local callbacks = auth.get_callbacks()
+    local params = auth.get_params()
     return {
-        enabled = auth.get_enabled(),
         username = auth.get_session_username(),
+
+        enabled = params.enabled,
+        cookie_max_age = params.cookie_max_age,
 
         implements_add_user = callbacks.add_user ~= nil,
         implements_get_user = callbacks.get_user ~= nil,
@@ -93,7 +92,7 @@ local function set_auth_params(_, args)
         return nil, e_set_params:new('You must log in to enable authentication')
     end
 
-    local ok, err = auth.set_enabled(args.enabled)
+    local ok, err = auth.set_params(args)
     if not ok then
         return nil, err
     end
@@ -117,6 +116,7 @@ local function init(graphql)
         doc = '',
         args = {
             enabled = gql_types.boolean,
+            cookie_max_age = gql_types.long,
         },
         kind = gql_type_userapi.nonNull,
         callback = module_name .. '.set_auth_params',

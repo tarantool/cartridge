@@ -1,5 +1,5 @@
 # source: http://localhost:8081/admin/api
-# timestamp: Fri Aug 02 2019 10:40:53 GMT+0300 (Москва, стандартное время)
+# timestamp: Fri Aug 16 2019 21:33:33 GMT+0300 (MSK)
 
 """Cluster management"""
 type Apicluster {
@@ -58,7 +58,7 @@ type Mutation {
 
 """Cluster management"""
 type MutationApicluster {
-  auth_params(enabled: Boolean): UserManagementAPI!
+  auth_params(cookie_max_age: Long, enabled: Boolean): UserManagementAPI!
 
   """Remove user"""
   remove_user(username: String!): User
@@ -318,17 +318,14 @@ type UserManagementAPI {
 
   """Number of seconds until the authentication cookie expires."""
   cookie_max_age: Long!
-
-  """Number of seconds to keep in cache cookie validation result."""
-  cookie_caching_time: Long!
   implements_list_users: Boolean!
   implements_get_user: Boolean!
 
-  """Whether authentication is enabled."""
-  enabled: Boolean!
-
   """Active session username."""
   username: String
+
+  """Whether authentication is enabled."""
+  enabled: Boolean!
   implements_check_password: Boolean!
 }
 
