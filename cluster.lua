@@ -25,6 +25,7 @@ local vars = require('cluster.vars').new('cluster')
 local auth = require('cluster.auth')
 local admin = require('cluster.admin')
 local webui = require('cluster.webui')
+local argparse = require('cluster.argparse')
 local topology = require('cluster.topology')
 local bootstrap = require('cluster.bootstrap')
 local confapplier = require('cluster.confapplier')
@@ -34,6 +35,8 @@ local service_registry = require('cluster.service-registry')
 
 local e_init = errors.new_class('Cluster initialization failed')
 local e_http = errors.new_class('Http initialization failed')
+
+local DEFAULT_CLUSTER_COOKIE = 'secret-cluster-cookie'
 
 --- Vshard storage group configuration.
 --
@@ -83,44 +86,97 @@ local function check_vshard_group(name, params)
 end
 
 --- Initialize the cluster module.
---- After this call, you can operate the instance via Tarantool console.
---- Notice that this call does not initialize the database - `box.cfg` is not called yet.
---- Do not try to call `box.cfg` yourself, the cluster will do it when it is time.
---- @function cfg
---- @tparam table opts Available options are:
---- @tparam string opts.workdir
----  a directory where all data will be stored: snapshots, wal logs and cluster config file
---- @tparam string opts.advertise_uri
----  `host:port` to be used for broadcasting internal communication between instances.
----  Same port is used for binary connections to the instance
---- @tparam ?string opts.cluster_cookie secret used to separate unrelated clusters
----  (prevents them from seeing each other during broadcasts).
----  Also used for encrypting internal communication
---- @tparam ?number opts.bucket_count bucket count for vshard cluster. See vshard doc for more details
---- @tparam ?{[string]=VshardGroupParams,...} opts.vshard_groups
----  vshard storage groups, table keys used as names
---- @tparam ?string|number opts.http_port port to open administrative UI and API on
---- @tparam ?string opts.alias human-readable instance name that will be available in administrative UI
---- @tparam ?table opts.roles list of user-defined roles that will be available to enable on the instance_uuid
---- @tparam ?boolean opts.auth_enabled toggle authentication in administrative UI and API
---- @tparam ?string opts.auth_backend_name user-provided set of callbacks related to authentication
---- @tparam ?table box_opts tarantool extra box.cfg options (e. g. memtx_memory), that may require additional tuning
---- @return[1] true
---- @treturn[2] nil
---- @treturn[2] table Error description
+--
+-- After this call, you can operate the instance via Tarantool console.
+-- Notice that this call does not initialize the database - `box.cfg` is not called yet.
+-- Do not try to call `box.cfg` yourself, the cluster will do it when it is time.
+--
+-- Both cluster.cfg and box.cfg options can be configured with
+-- command-line arguments or environment variables.
+--
+-- @function cfg
+-- @tparam table opts Available options are:
+--
+-- @tparam string opts.workdir
+--  a directory where all data will be stored: snapshots, wal logs and cluster config file.
+--  (default: ".", overriden by
+--  env `TARANTOOL_WORKDIR`,
+--  args `--workdir`)
+--
+-- @tparam string opts.advertise_uri
+--  `host:port` to be used for broadcasting internal communication between instances.
+--  Same port is used for binary connections to the instance
+--  (default: "localhost:3301", overriden by
+--  env `TARANTOOL_ADVERTISE_URI`,
+--  args `--advertise-uri`)
+--
+-- @tparam ?string opts.cluster_cookie
+--  secret used to separate unrelated clusters, which
+--  prevents them from seeing each other during broadcasts.
+--  Also used for encrypting internal communication.
+--  (default: "secret-cluster-cookie", overriden by
+--  env `TARANTOOL_CLUSTER_COOKIE`,
+--  args `--cluster-cookie`)
+--
+-- @tparam ?number opts.bucket_count
+--  bucket count for vshard cluster. See vshard doc for more details.
+--  (default: 30000)
+--
+-- @tparam ?{[string]=VshardGroupParams,...} opts.vshard_groups
+--  vshard storage groups, table keys used as names
+--
+-- @tparam ?string|number opts.http_port
+--  port to open administrative UI and API on
+--  (default: nil, overriden by
+--  env `TARANTOOL_HTTP_PORT`,
+--  args `--http-port`)
+--
+-- @tparam ?string opts.alias
+-- human-readable instance name that will be available in administrative UI
+--  (default: nil, overriden by
+--  env `TARANTOOL_ALIAS`,
+--  args `--alias`)
+--
+-- @tparam table opts.roles
+-- list of user-defined roles that will be available to enable on the instance_uuid
+--
+-- @tparam ?boolean opts.auth_enabled
+-- toggle authentication in administrative UI and API
+--  (default: false)
+--
+-- @tparam ?string opts.auth_backend_name
+-- user-provided set of callbacks related to authentication
+--
+-- @tparam ?table box_opts
+-- tarantool extra box.cfg options (e. g. memtx_memory), that may require additional tuning
+--
+-- @return[1] true
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 local function cfg(opts, box_opts)
     checks({
-        workdir = 'string',
-        advertise_uri = 'string',
+        workdir = '?string',
+        advertise_uri = '?string',
         cluster_cookie = '?string',
         bucket_count = '?number',
         http_port = '?string|number',
         alias = '?string',
-        roles = '?table',
+        roles = 'table',
         auth_backend_name = '?string',
         auth_enabled = '?boolean',
         vshard_groups = '?table',
     }, '?table')
+
+    for k, v in pairs(argparse.get_cluster_opts()) do
+        opts[k] = v
+    end
+
+    if box_opts == nil then
+        box_opts = {}
+    end
+    for k, v in pairs(argparse.get_box_opts()) do
+        box_opts[k] = v
+    end
 
     local vshard_groups = {}
     for k, v in pairs(opts.vshard_groups or {}) do
@@ -160,7 +216,7 @@ local function cfg(opts, box_opts)
         cluster_cookie.set_cookie(opts.cluster_cookie)
     end
     if cluster_cookie.cookie() == nil then
-        cluster_cookie.set_cookie('secret-cluster-cookie')
+        cluster_cookie.set_cookie(DEFAULT_CLUSTER_COOKIE)
     end
 
 

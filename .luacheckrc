@@ -8,6 +8,11 @@ new_read_globals = {
     'box',
     '_TARANTOOL',
     'tonumber64',
+    os = {
+        fields = {
+            'environ',
+        }
+    },
     string = {
         fields = {
             'split',

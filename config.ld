@@ -2,6 +2,7 @@ file = {
     "cluster.lua",
     "cluster/auth.lua",
     "cluster/admin.lua",
+    "cluster/argparse.lua",
     "cluster/rpc.lua",
     "cluster/pool.lua",
     "cluster/confapplier.lua",
