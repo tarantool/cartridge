@@ -235,6 +235,11 @@ local function validate_schema(field, topology)
         )
 
         e_config:assert(
+            (replicaset.alias == nil) or (type(replicaset.alias) == 'string'),
+            '%s.alias must be a string, got %s', field, type(replicaset.alias)
+        )
+
+        e_config:assert(
             (replicaset.weight == nil) or (type(replicaset.weight) == 'number'),
             '%s.weight must be a number, got %s', field, type(replicaset.weight)
         )
@@ -266,6 +271,7 @@ local function validate_schema(field, topology)
             ['weight'] = true,
             ['vshard_group'] = true,
             ['all_rw'] = true,
+            ['alias'] = true,
         }
         for k, _ in pairs(replicaset) do
             e_config:assert(

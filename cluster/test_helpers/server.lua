@@ -132,12 +132,14 @@ function Server:setup_replicaset(config)
         query = [[
             mutation(
                 $uuid: String!,
+                $alias: String,
                 $roles: [String!],
                 $master: [String!],
                 $weight: Float
             ) {
                 edit_replicaset(
                     uuid: $uuid,
+                    alias: $alias,
                     roles: $roles,
                     master: $master,
                     weight: $weight
@@ -146,6 +148,7 @@ function Server:setup_replicaset(config)
         ]],
         variables = {
             uuid = config.uuid,
+            alias = config.alias,
             roles = config.roles,
             master = config.master,
             weight = config.weight,

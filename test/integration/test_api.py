@@ -246,6 +246,7 @@ def test_replicasets(cluster, expelled, helpers):
         {
             replicasets {
                 uuid
+                alias
                 roles
                 status
                 master { uuid }
@@ -261,6 +262,7 @@ def test_replicasets(cluster, expelled, helpers):
     replicasets = obj['data']['replicasets']
     assert {
         'uuid': 'aaaaaaaa-0000-4000-b000-000000000000',
+        'alias': 'unnamed',
         'roles': ['vshard-router'],
         'status': 'healthy',
         'master': {'uuid': 'aaaaaaaa-aaaa-4000-b000-000000000001'},
@@ -271,6 +273,7 @@ def test_replicasets(cluster, expelled, helpers):
     } == helpers.find(replicasets, 'uuid', 'aaaaaaaa-0000-4000-b000-000000000000')
     assert {
         'uuid': 'bbbbbbbb-0000-4000-b000-000000000000',
+        'alias': 'unnamed',
         'roles': ['vshard-storage'],
         'status': 'healthy',
         'master': {'uuid': 'bbbbbbbb-bbbb-4000-b000-000000000001'},
