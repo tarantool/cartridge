@@ -83,7 +83,7 @@ local function filename()
 end
 
 local function username()
-    return 'cluster'
+    return 'admin'
 end
 
 local function set_cookie(value)

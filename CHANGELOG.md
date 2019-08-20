@@ -41,6 +41,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - - `workdir` is optional now (defaults to ".")
 - - `advertise_uri` is optional now (defaults to "localhost:3301")
 
+- Removed user `cluster`, which was used internally for orchestration over netbox.
+  Taratool built-in user `admin` is used instead now.
+
 ## [0.10.0] - 2019-08-01
 
 ### Added
