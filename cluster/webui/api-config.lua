@@ -44,7 +44,7 @@ local function download_config_handler(req)
 
     local conf = confapplier.get_deepcopy()
     if conf == nil then
-        local err = e_download_config:new('Cluster isn\'t bootsrapped yet')
+        local err = e_download_config:new("Cluster isn't bootsrapped yet")
         return http_finalize_error(resp, 409, err)
     end
 

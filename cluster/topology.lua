@@ -222,7 +222,7 @@ local function validate_schema(field, topology)
                 )
                 e_config:assert(
                     not leaders_seen[leaders_order[i]],
-                    '%s.master values mustn\'t repeat', field
+                    "%s.master values mustn't repeat", field
                 )
                 leaders_seen[leaders_order[i]] = true
                 i = i + 1
