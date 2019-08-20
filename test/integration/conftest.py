@@ -147,7 +147,7 @@ class Server(object):
         if self.conn == None:
             self.conn = tarantool.connect(
                 '127.0.0.1', self.binary_port,
-                user='cluster',
+                user='admin',
                 password=self.env['TARANTOOL_CLUSTER_COOKIE']
             )
         resp = self.conn.eval('return is_initialized()')

@@ -7,7 +7,6 @@ local json = require('json')
 local fiber = require('fiber')
 local checks = require('checks')
 local errors = require('errors')
-local digest = require('digest')
 local membership = require('membership')
 
 local vars = require('cluster.vars').new('cluster')
@@ -54,27 +53,9 @@ local function init_box(box_opts)
         local password = cluster_cookie.cookie()
 
         log.info('Making sure user %q exists...', username)
-        -- Don't allow connecting to the instance
-        -- before correct rights were granted.
-        -- See: https://github.com/tarantool/tarantool/issues/2763
-        local urandom_bin = digest.urandom(18)
-        local urandom_str = digest.base64_encode(urandom_bin)
-        box.schema.user.create(
-            username,
-            {
-                password = urandom_str,
-                if_not_exists = true,
-            }
-        )
-
-        log.info('Granting universe permissions to %q...', username)
-        box.schema.user.grant(
-            username,
-            'create,read,write,execute,drop',
-            'universe',
-            nil,
-            { if_not_exists = true }
-        )
+        if not box.schema.user.exists(username) then
+            error(('User %q does not exists'):format(username))
+        end
 
         log.info('Granting replication permissions to %q...', username)
         box.schema.user.grant(

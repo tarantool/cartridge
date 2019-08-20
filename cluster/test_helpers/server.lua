@@ -51,7 +51,7 @@ function Server:initialize()
     self.net_box_uri = 'localhost:' .. self.net_box_port
     self.advertise_uri = self.net_box_uri
     self.net_box_credentials = self.net_box_credentials or {
-        user = 'cluster',
+        user = 'admin',
         password = self.cluster_cookie,
     }
     getmetatable(getmetatable(self)).initialize(self)
