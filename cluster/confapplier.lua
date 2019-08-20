@@ -724,6 +724,10 @@ local function _clusterwide(patch)
         end
     end
 
+    if utils.deepcmp(conf_new, conf_old) then
+        return true
+    end
+
     local ok, err = topology.validate(conf_new.topology, conf_old.topology)
     if not ok then
         return nil, err
