@@ -15,7 +15,7 @@ local membership = require('membership')
 
 local test = tap.test('cluster.cfg')
 
-test:plan(11)
+test:plan(12)
 
 local function check_error(expected_error, fn, ...)
     local ok, err = fn(...)
@@ -45,10 +45,18 @@ check_error('Error creating directory "/dev/null": File exists',
 -------------------------------------------------------------------------------
 test:diag('Test malformed opts.advertise_uri')
 
-check_error('Missing port in advertise_uri "localhost"',
+check_error('Invalid port in advertise_uri "localhost:invalid"',
     cluster.cfg, {
         workdir = './dev',
-        advertise_uri = 'localhost',
+        advertise_uri = 'localhost:invalid',
+        roles = {},
+    }
+)
+
+check_error('Invalid advertise_uri ":1111"',
+    cluster.cfg, {
+        workdir = './dev',
+        advertise_uri = ':1111',
         roles = {},
     }
 )
