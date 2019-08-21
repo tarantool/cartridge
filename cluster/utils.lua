@@ -94,6 +94,29 @@ local function file_exists(name)
     return fio.stat(name) ~= nil
 end
 
+local function mktree(path)
+    checks('string')
+    path = fio.abspath(path)
+
+    local path = string.gsub(path, '^/', '')
+    local dirs = string.split(path, "/")
+
+    local current_dir = "/"
+    for _, dir in ipairs(dirs) do
+        current_dir = fio.pathjoin(current_dir, dir)
+        if not fio.path.is_dir(current_dir) then
+            local ok = fio.mkdir(current_dir)
+            if not ok then
+                return nil, errors.new('MktreeError',
+                    'Error creating directory %q: %s',
+                    current_dir, errno.strerror()
+                )
+            end
+        end
+    end
+    return true
+end
+
 local function file_read(path)
     local file = fio.open(path)
     if file == nil then
@@ -179,6 +202,7 @@ return {
     table_count = table_count,
     table_append = table_append,
 
+    mktree = mktree,
     file_read = file_read,
     file_write = file_write,
     file_exists = file_exists,

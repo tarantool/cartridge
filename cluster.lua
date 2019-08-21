@@ -23,6 +23,7 @@ local http = require('http.server')
 local rpc = require('cluster.rpc')
 local vars = require('cluster.vars').new('cluster')
 local auth = require('cluster.auth')
+local utils = require('cluster.utils')
 local admin = require('cluster.admin')
 local webui = require('cluster.webui')
 local argparse = require('cluster.argparse')
@@ -214,13 +215,14 @@ local function cfg(opts, box_opts)
         return nil, e_init:new('Cluster is already initialized')
     end
 
+    if opts.workdir == nil then
+        opts.workdir = '.'
+    end
     opts.workdir = fio.abspath(opts.workdir)
 
-    if not fio.path.is_dir(opts.workdir) then
-        local rc = os.execute(("mkdir -p '%s'"):format(opts.workdir))
-        if rc ~= 0 then
-            return nil, e_init:new('Can not create workdir %q', opts.workdir)
-        end
+    local ok, err = utils.mktree(opts.workdir)
+    if not ok then
+        return nil, err
     end
 
     confapplier.set_workdir(opts.workdir)

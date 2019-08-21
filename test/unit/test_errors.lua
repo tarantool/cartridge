@@ -33,7 +33,7 @@ end
 -- workdir --------------------------------------------------------------------
 -------------------------------------------------------------------------------
 test:diag('Test malformed opts.workdir')
-check_error('Can not create workdir "/dev/null"',
+check_error('Error creating directory "/dev/null": File exists',
     cluster.cfg, {
         workdir = '/dev/null',
         advertise_uri = 'localhost:33001',
