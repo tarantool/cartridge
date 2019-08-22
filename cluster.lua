@@ -148,6 +148,12 @@ end
 -- @tparam ?string opts.auth_backend_name
 -- user-provided set of callbacks related to authentication
 --
+-- @tparam ?string opts.console_sock
+-- Socket to start console listening on.
+--  (default: nil, overriden by
+--  env `TARANTOOL_CONSOLE_SOCK`,
+--  args `--console-sock`)
+--
 -- @tparam ?table box_opts
 -- tarantool extra box.cfg options (e. g. memtx_memory), that may require additional tuning
 --
@@ -166,6 +172,7 @@ local function cfg(opts, box_opts)
         auth_backend_name = '?string',
         auth_enabled = '?boolean',
         vshard_groups = '?table',
+        console_sock = '?string',
     }, '?table')
 
     local args, err = argparse.parse()
@@ -366,6 +373,14 @@ local function cfg(opts, box_opts)
             vars.bootstrapped = true
         end)
         log.info('Ready for bootstrap')
+    end
+
+    if opts.console_sock ~= nil then
+        local console = require('console')
+        local ok, err = e_init:pcall( console.listen, 'unix/:' .. opts.console_sock)
+        if not ok then
+            return nil, err
+        end
     end
 
     return true

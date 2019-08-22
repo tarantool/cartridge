@@ -83,6 +83,7 @@ local cluster_opts = {
     http_port = 'string', -- **string**
     advertise_uri = 'string', -- **string**
     cluster_cookie = 'string', -- **string**
+    console_sock = 'string', -- **string**
 }
 
 --- Common [box.cfg](https://www.tarantool.io/en/doc/latest/reference/configuration/) tuning options.
