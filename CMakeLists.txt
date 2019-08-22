@@ -39,7 +39,7 @@ add_custom_command(
   COMMENT "Building web archive"
 )
 
-add_custom_target(fornt-bundle ALL
+add_custom_target(front-bundle ALL
   DEPENDS ${WEB_ROOT}/build/bundle.lua
 )
 
