@@ -101,16 +101,16 @@ end
 --
 -- @tparam ?string opts.workdir
 --  a directory where all data will be stored: snapshots, wal logs and cluster config file.
---  (default: ".", overriden by
+--  (default: ".", overridden by
 --  env `TARANTOOL_WORKDIR`,
 --  args `--workdir`)
 --
 -- @tparam ?string opts.advertise_uri
 --  either `"<HOST>:<PORT>"` or `"<HOST>:"` or `"<PORT>"`.
---  Used by other instances to connect the current one.
+--  Used by other instances to connect to the current one.
 --
---  When `<HOST>` isn't specified, it's detected as the only one non-local IP address.
---  If there is more than one IP adresses available - defaults to "localhost".
+--  When `<HOST>` isn't specified, it's detected as the only non-local IP address.
+--  If there is more than one IP address available - defaults to "localhost".
 --
 --  When `<PORT>` isn't specified, it's derived as follows:
 --  If the `TARANTOOL_INSTANCE_NAME` has numeric suffix `_<N>`, then `<PORT> = 3300+<N>`.
@@ -120,7 +120,7 @@ end
 --  secret used to separate unrelated clusters, which
 --  prevents them from seeing each other during broadcasts.
 --  Also used for encrypting internal communication.
---  (default: "secret-cluster-cookie", overriden by
+--  (default: "secret-cluster-cookie", overridden by
 --  env `TARANTOOL_CLUSTER_COOKIE`,
 --  args `--cluster-cookie`)
 --
@@ -133,13 +133,13 @@ end
 --
 -- @tparam ?string|number opts.http_port
 --  port to open administrative UI and API on
---  (default: nil, overriden by
+--  (default: nil, overridden by
 --  env `TARANTOOL_HTTP_PORT`,
 --  args `--http-port`)
 --
 -- @tparam ?string opts.alias
 -- human-readable instance name that will be available in administrative UI
---  (default: nil, overriden by
+--  (default: nil, overridden by
 --  env `TARANTOOL_ALIAS`,
 --  args `--alias`)
 --
@@ -155,7 +155,7 @@ end
 --
 -- @tparam ?string opts.console_sock
 -- Socket to start console listening on.
---  (default: nil, overriden by
+--  (default: nil, overridden by
 --  env `TARANTOOL_CONSOLE_SOCK`,
 --  args `--console-sock`)
 --

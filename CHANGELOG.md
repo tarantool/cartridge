@@ -38,17 +38,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Changed configuration options for `cluster.cfg()`:
   `roles` now is a mandatory table, `workdir` is optional now (defaults to ".")
 
-- Parameter `advertise_uri` is optional now, dafult value is derived as follows.
-  `advertise_uri` is a compount of `<HOST>` and `<PORT>`.
-  When `<HOST>` isn't specified, it's detected as the only one non-local IP address.
-  If it can't be determined or there is more than one IP adresses available it
+- Parameter `advertise_uri` is optional now, default value is derived as follows.
+  `advertise_uri` is a compound of `<HOST>` and `<PORT>`.
+  When `<HOST>` isn't specified, it's detected as the only non-local IP address.
+  If it can't be determined or there is more than one IP address available it
   defaults to `"localhost"`.
   When `<PORT>` isn't specified, it's derived from numeric suffix `_<N>` of
   `TARANTOOL_INSTANCE_NAME`: `<PORT> = 3300+<N>`.
   Otherwise default `<PORT> = 3301` is used.
 
 - Removed user `cluster`, which was used internally for orchestration over netbox.
-  Taratool built-in user `admin` is used instead now.
+  Tarantool built-in user `admin` is used instead now.
 
 ## [0.10.0] - 2019-08-01
 
