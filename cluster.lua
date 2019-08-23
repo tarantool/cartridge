@@ -18,6 +18,7 @@ local fiber = require('fiber')
 local checks = require('checks')
 local errors = require('errors')
 local membership = require('membership')
+local membership_network = require('membership.network')
 local http = require('http.server')
 
 local rpc = require('cluster.rpc')
@@ -98,18 +99,22 @@ end
 -- @function cfg
 -- @tparam table opts Available options are:
 --
--- @tparam string opts.workdir
+-- @tparam ?string opts.workdir
 --  a directory where all data will be stored: snapshots, wal logs and cluster config file.
 --  (default: ".", overriden by
 --  env `TARANTOOL_WORKDIR`,
 --  args `--workdir`)
 --
--- @tparam string opts.advertise_uri
---  `host:port` to be used for broadcasting internal communication between instances.
---  Same port is used for binary connections to the instance
---  (default: "localhost:3301", overriden by
---  env `TARANTOOL_ADVERTISE_URI`,
---  args `--advertise-uri`)
+-- @tparam ?string opts.advertise_uri
+--  either `"<HOST>:<PORT>"` or `"<HOST>:"` or `"<PORT>"`.
+--  Used by other instances to connect the current one.
+--
+--  When `<HOST>` isn't specified, it's detected as the only one non-local IP address.
+--  If there is more than one IP adresses available - defaults to "localhost".
+--
+--  When `<PORT>` isn't specified, it's derived as follows:
+--  If the `TARANTOOL_INSTANCE_NAME` has numeric suffix `_<N>`, then `<PORT> = 3300+<N>`.
+--  Otherwise default `<PORT> = 3301` is used.
 --
 -- @tparam ?string opts.cluster_cookie
 --  secret used to separate unrelated clusters, which
@@ -241,12 +246,60 @@ local function cfg(opts, box_opts)
         cluster_cookie.set_cookie(DEFAULT_CLUSTER_COOKIE)
     end
 
+    local advertise
+    if opts.advertise_uri ~= nil then
+        advertise = uri.parse(opts.advertise_uri)
+    else
+        advertise = {}
+    end
+    if advertise == nil then
+        return nil, e_init:new('Invalid advertise_uri %q', opts.advertise_uri)
+    end
 
-    local advertise = uri.parse(opts.advertise_uri)
     if advertise.service == nil then
-        return nil, e_init:new('Missing port in advertise_uri %q', opts.advertise_uri)
+        local offset
+        if args.instance_name ~= nil then
+            offset = args.instance_name:match('_(%d+)$')
+            offset = tonumber(offset)
+        end
+
+        if offset ~= nil then
+            args.http_port = 8080 + offset
+            log.info('Derived http_port to be %d', args.http_port)
+            advertise.service = 3300 + offset
+            log.info('Derived binary_port to be %d', advertise.service)
+        else
+            advertise.service = 3301
+        end
     else
         advertise.service = tonumber(advertise.service)
+    end
+
+    if advertise.service == nil then
+        return nil, e_init:new('Invalid port in advertise_uri %q', opts.advertise_uri)
+    end
+
+    if advertise.host == nil then
+        local ips = membership_network.getifaddrs()
+        local ip_count = utils.table_count(ips or {})
+
+        if ip_count > 1 then
+            log.info('This node has more than one non-local IP address:')
+            for iface, ipstruct in pairs(ips) do
+                log.info('  %s: %s', iface, ipstruct.inet4)
+            end
+            log.info('Auto-detection of IP address disabled. '
+                .. 'Use --advertise-uri argument'
+                .. ' or ADVERTISE_URI environment variable'
+            )
+            advertise.host = 'localhost'
+        elseif ip_count == 1 then
+            local _, ipstruct = next(ips)
+            advertise.host = ipstruct.inet4
+            log.info('Auto-detected IP to be %q', advertise.host)
+        else
+            advertise.host = 'localhost'
+        end
     end
 
     log.info('Using advertise_uri "%s:%d"', advertise.host, advertise.service)

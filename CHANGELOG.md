@@ -19,7 +19,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   command-line arguments, environment variables, and configuration files.
   It is used internally and overrides `cluster.cfg` and `box.cfg` options.
 
-
 - Auth parameter `cookie_max_age` is now configurable with GraphQL API.
   Also now it's stored in clusterwide config, so changing it on a single server will affect
   all others in cluster.
@@ -37,9 +36,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   and the session will not be interrupted.
 
 - Changed configuration options for `cluster.cfg()`:
-- - `roles` now is a mandatory table
-- - `workdir` is optional now (defaults to ".")
-- - `advertise_uri` is optional now (defaults to "localhost:3301")
+  `roles` now is a mandatory table, `workdir` is optional now (defaults to ".")
+
+- Parameter `advertise_uri` is optional now, dafult value is derived as follows.
+  `advertise_uri` is a compount of `<HOST>` and `<PORT>`.
+  When `<HOST>` isn't specified, it's detected as the only one non-local IP address.
+  If it can't be determined or there is more than one IP adresses available it
+  defaults to `"localhost"`.
+  When `<PORT>` isn't specified, it's derived from numeric suffix `_<N>` of
+  `TARANTOOL_INSTANCE_NAME`: `<PORT> = 3300+<N>`.
+  Otherwise default `<PORT> = 3301` is used.
 
 - Removed user `cluster`, which was used internally for orchestration over netbox.
   Taratool built-in user `admin` is used instead now.
