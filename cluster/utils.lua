@@ -10,6 +10,12 @@ local e_fopen = errors.new_class('Can not open file')
 local e_fread = errors.new_class('Can not read from file')
 local e_fwrite = errors.new_class('Can not write to file')
 
+
+ffi.cdef[[
+int getppid(void);
+]]
+
+
 local function deepcmp(got, expected, extra)
     if extra == nil then
         extra = {}
@@ -196,8 +202,21 @@ local function set_readonly(tbl, ro)
     return tbl
 end
 
+--- Return true if we run under systemd
+-- systemd detection based on http://unix.stackexchange.com/a/164092
+local function under_systemd()
+    local rv = os.execute("systemctl 2>/dev/null | grep '\\-\\.mount' " ..
+                              "1>/dev/null 2>/dev/null")
+    if rv == 0 and ffi.C.getppid() == 1 then
+        return true
+    end
+
+    return false
+end
+
+
 return {
-	deepcmp = deepcmp,
+    deepcmp = deepcmp,
     table_find = table_find,
     table_count = table_count,
     table_append = table_append,
@@ -206,6 +225,8 @@ return {
     file_read = file_read,
     file_write = file_write,
     file_exists = file_exists,
+
+    under_systemd = under_systemd,
 
     table_setro = function(tbl)
         return set_readonly(tbl, true)
