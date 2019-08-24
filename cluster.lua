@@ -263,17 +263,43 @@ local function cfg(opts, box_opts)
         return nil, e_init:new('Invalid advertise_uri %q', opts.advertise_uri)
     end
 
-    if advertise.service == nil then
-        local offset
-        if args.instance_name ~= nil then
-            offset = args.instance_name:match('_(%d+)$')
-            offset = tonumber(offset)
+    local port_offset
+    if args.instance_name ~= nil then
+        port_offset = tonumber(args.instance_name:match('_(%d+)$'))
+    end
+
+    if advertise.host == nil then
+        local ip4_map = {}
+        for _, ifaddr in pairs(membership_network.getifaddrs() or {}) do
+            if ifaddr.name ~= 'lo' and ifaddr.inet4 ~= nil then
+                ip4_map[ifaddr.name or #ip4_map+1] = ifaddr.inet4
+            end
         end
 
-        if offset ~= nil then
-            args.http_port = 8080 + offset
-            log.info('Derived http_port to be %d', args.http_port)
-            advertise.service = 3300 + offset
+        local ip_count = utils.table_count(ip4_map or {})
+
+        if ip_count > 1 then
+            log.info('This server has more than one non-local IP address:')
+            for name, inet4 in pairs(ip4_map) do
+                log.info('  %s: %s', name, inet4)
+            end
+            log.info('Auto-detection of IP address disabled. '
+                .. 'Use --advertise-uri argument'
+                .. ' or ADVERTISE_URI environment variable'
+            )
+            advertise.host = 'localhost'
+        elseif ip_count == 1 then
+            local _, inet4 = next(ip4_map)
+            advertise.host = inet4
+            log.info('Auto-detected IP to be %q', advertise.host)
+        else
+            advertise.host = 'localhost'
+        end
+    end
+
+    if advertise.service == nil then
+        if port_offset ~= nil then
+            advertise.service = 3300 + port_offset
             log.info('Derived binary_port to be %d', advertise.service)
         else
             advertise.service = 3301
@@ -284,29 +310,6 @@ local function cfg(opts, box_opts)
 
     if advertise.service == nil then
         return nil, e_init:new('Invalid port in advertise_uri %q', opts.advertise_uri)
-    end
-
-    if advertise.host == nil then
-        local ips = membership_network.getifaddrs()
-        local ip_count = utils.table_count(ips or {})
-
-        if ip_count > 1 then
-            log.info('This node has more than one non-local IP address:')
-            for iface, ipstruct in pairs(ips) do
-                log.info('  %s: %s', iface, ipstruct.inet4)
-            end
-            log.info('Auto-detection of IP address disabled. '
-                .. 'Use --advertise-uri argument'
-                .. ' or ADVERTISE_URI environment variable'
-            )
-            advertise.host = 'localhost'
-        elseif ip_count == 1 then
-            local _, ipstruct = next(ips)
-            advertise.host = ipstruct.inet4
-            log.info('Auto-detected IP to be %q', advertise.host)
-        else
-            advertise.host = 'localhost'
-        end
     end
 
     log.info('Using advertise_uri "%s:%d"', advertise.host, advertise.service)
@@ -353,6 +356,13 @@ local function cfg(opts, box_opts)
         local ok, err = e_init:pcall(auth.set_enabled, auth_enabled)
         if not ok then
             return nil, err
+        end
+    end
+
+    if opts.http_port == nil then
+        if port_offset ~= nil then
+            opts.http_port = 8080 + port_offset
+            log.info('Derived http_port to be %d', opts.http_port)
         end
     end
 
