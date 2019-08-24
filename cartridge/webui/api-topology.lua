@@ -240,6 +240,8 @@ local function init(graphql)
             timeout = gql_types.float,
             labels = gql_types.list(gql_type_label_input),
             vshard_group = gql_types.string,
+            replicaset_alias = gql_types.string,
+            replicaset_weight = gql_types.float,
         },
         kind = gql_types.boolean,
         callback = module_name .. '.join_server',

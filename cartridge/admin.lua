@@ -128,7 +128,17 @@ local function get_servers_and_replicasets()
     --   Active leader.
     -- @tfield
     --   number weight
-    --   Vshard replicaset weight. Matters only if vshard-storage role is enabled.
+    --   Vshard replicaset weight.
+    --   Matters only if vshard-storage role is enabled.
+    -- @tfield
+    --   string vshard_group
+    --   Name of vshard group the replicaset belongs to.
+    -- @tfield
+    --   boolean all_rw
+    --   A flag indicating that all servers in the replicaset should be read-write.
+    -- @tfield
+    --   string alias
+    --   Human-readable replicaset name.
     -- @tfield
     --   {ServerInfo,...} servers
     --   Circular reference to all instances in the replicaset.
@@ -430,6 +440,8 @@ end
 -- @tparam ?number args.timeout
 -- @tparam ?{[string]=string,...} args.labels
 -- @tparam ?string args.vshard_group
+-- @tparam ?string args.replicaset_alias
+-- @tparam ?number args.replicaset_weight
 -- @treturn[1] boolean true
 -- @treturn[2] nil
 -- @treturn[2] table Error description
@@ -442,6 +454,8 @@ local function join_server(args)
         timeout = '?number',
         labels = '?table',
         vshard_group = '?string',
+        replicaset_alias = '?string',
+        replicaset_weight = '?number',
     })
 
     if args.instance_uuid == nil then
@@ -493,6 +507,7 @@ local function join_server(args)
     if topology_cfg.replicasets[args.replicaset_uuid] == nil then
         local replicaset = {
             roles = confapplier.get_enabled_roles(args.roles),
+            alias = args.replicaset_alias or 'unnamed',
             master = {args.instance_uuid},
             weight = 0,
         }
@@ -504,6 +519,10 @@ local function join_server(args)
 
             if group_params and not group_params.bootstrapped then
                 replicaset.weight = 1
+            end
+
+            if args.replicaset_weight ~= nil then
+                replicaset.weight = args.replicaset_weight
             end
         end
 
