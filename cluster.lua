@@ -204,6 +204,13 @@ local function cfg(opts, box_opts)
         box_opts[k] = v
     end
 
+    -- Using syslog driver when running under systemd
+    -- makes it possible to filter by severity with
+    -- systemctl
+    if utils.under_systemd() and box_opts.log == nil then
+       box_opts.log = 'syslog:identity=tarantool'
+    end
+
     local vshard_groups = {}
     for k, v in pairs(opts.vshard_groups or {}) do
         local name, params

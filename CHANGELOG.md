@@ -23,6 +23,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   Also now it's stored in clusterwide config, so changing it on a single server will affect
   all others in cluster.
 
+- Detect that we run under systemd and switch to syslog logging from
+  stderr. This allows to filter log messages by severity with
+  `journalctl`
+
 ### Changed
 
 - Modifying auth params with GraphQL before the cluster was bootstrapped is now
