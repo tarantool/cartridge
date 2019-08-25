@@ -1,12 +1,12 @@
-# Clustered applications framework for Tarantool
+# Tarantool framework for distributed applications development
 
 ### Building from source
 
-To build and run cluster you'll need development enviroment:
+To build and run cartridge you'll need development enviroment:
 
-- Tarantool Enterprise bundle
+- Tarantool itself
 - npm, nodejs
-- python, pip
+- python, pip (testing only)
 
 To build frontend, say:
 

@@ -77,8 +77,8 @@ def test_router_role(cluster):
 
     resp = cluster['router'].conn.eval("""
         local vshard = require('vshard')
-        local cluster = require('cluster')
-        local router_role = assert(cluster.service_get('vshard-router'))
+        local cartridge = require('cartridge')
+        local router_role = assert(cartridge.service_get('vshard-router'))
 
         assert(router_role.get() == vshard.router.static, "Default router is initialized")
         return {

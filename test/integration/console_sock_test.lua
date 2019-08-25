@@ -5,7 +5,7 @@ local t = require('luatest')
 local g = t.group('console_sock')
 
 local test_helper = require('test.helper')
-local helpers = require('cluster.test_helpers')
+local helpers = require('cartridge.test-helpers')
 
 local server
 local tmpdir
@@ -35,5 +35,7 @@ end
 g.test_console_sock = function()
     local s = socket.tcp_connect('unix/', fio.pathjoin(tmpdir, 'foo.sock'))
     t.assertTrue(s ~= nil)
-    t.assertTrue(s:read('\n'):match('Tarantool.*%(Lua console%)') ~= nil)
+    local greeting = s:read('\n')
+    t.assertNotNil(greeting)
+    t.assertStrMatches(greeting:strip(), 'Tarantool.*%(Lua console%)')
 end

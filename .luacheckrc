@@ -1,7 +1,7 @@
 redefined = false
 exclude_files = {
-    'cluster/graphql.lua',
-    'cluster/graphql/*.lua',
+    'cartridge/graphql.lua',
+    'cartridge/graphql/*.lua',
     'webui/build/bundle.lua',
 }
 new_read_globals = {

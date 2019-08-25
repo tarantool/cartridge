@@ -33,7 +33,7 @@ def test_upload_good(cluster):
     upload(custom_config)
 
     srv.conn.eval("""
-        local confapplier = package.loaded['cluster.confapplier']
+        local confapplier = package.loaded['cartridge.confapplier']
         local custom_config = confapplier.get_readonly('custom_config')
         local _, answer = next(custom_config)
         assert(answer == 42, 'Answer ~= 42')

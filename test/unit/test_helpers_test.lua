@@ -6,12 +6,12 @@ local yaml = require('yaml')
 local t = require('luatest')
 local g = t.group('test_helpers')
 
-local ROOT = fio.dirname(fio.abspath(package.search('cluster')))
+local ROOT = fio.dirname(fio.abspath(package.search('cartridge')))
 local datadir = fio.pathjoin(ROOT, 'dev', 'db_test')
 fio.rmtree(datadir)
 
-local Cluster = require('cluster.test_helpers.cluster')
-local helpers = require('cluster.test_helpers')
+local Cluster = require('cartridge.test-helpers.cluster')
+local helpers = require('cartridge.test-helpers')
 
 local cluster = Cluster:new({
     datadir = datadir,

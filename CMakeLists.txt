@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
 
-project(cluster C)
+project(cartridge C)
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 set(CMAKE_SKIP_INSTALL_ALL_DEPENDENCY TRUE)
@@ -18,7 +18,8 @@ file(GLOB_RECURSE FRONTEND_FILES
 )
 
 file(GLOB_RECURSE LUA_FILES
-  "${CMAKE_CURRENT_SOURCE_DIR}/cluster.lua"
+  "${CMAKE_CURRENT_SOURCE_DIR}/cartridge.lua"
+  "${CMAKE_CURRENT_SOURCE_DIR}/cartridge/*.lua"
   "${CMAKE_CURRENT_SOURCE_DIR}/cluster/*.lua"
 )
 
@@ -38,7 +39,7 @@ if (NOT GIT_DESCRIBE)
 endif()
 
 configure_file (
-  "${PROJECT_SOURCE_DIR}/cluster/VERSION.lua.in"
+  "${PROJECT_SOURCE_DIR}/cartridge/VERSION.lua.in"
   "${CMAKE_CURRENT_BINARY_DIR}/VERSION.lua"
 )
 
@@ -106,7 +107,7 @@ enable_testing()
 
 add_test(
   NAME lint
-  COMMAND luacheck cluster-scm-1.rockspec
+  COMMAND luacheck cartridge-scm-1.rockspec
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 

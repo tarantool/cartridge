@@ -3,16 +3,16 @@
 require('strict').on()
 _G.is_initialized = function() return false end
 
-if not pcall(require, 'cluster.front-bundle') then
+if not pcall(require, 'cartridge.front-bundle') then
     -- to be loaded in development environment
-    package.preload['cluster.front-bundle'] = function()
+    package.preload['cartridge.front-bundle'] = function()
         return require('webui.build.bundle')
     end
 end
 
 local log = require('log')
 local errors = require('errors')
-local cluster = require('cluster')
+local cartridge = require('cartridge')
 errors.set_deprecation_handler(function(err)
     log.error('%s', err)
     os.exit(1)
@@ -21,7 +21,7 @@ end)
 package.preload['mymodule'] = function()
     local state = nil
     local master = nil
-    local service_registry = require('cluster.service-registry')
+    local service_registry = require('cartridge.service-registry')
     local httpd = service_registry.get('httpd')
     local validated = false
 
@@ -133,13 +133,13 @@ package.preload['mymodule-hidden'] = function()
     }
 end
 
-local ok, err = cluster.cfg({
+local ok, err = cartridge.cfg({
     advertise_uri = 'localhost:3301',
     http_port = 8081,
     bucket_count = 3000,
     roles = {
-        'cluster.roles.vshard-storage',
-        'cluster.roles.vshard-router',
+        'cartridge.roles.vshard-storage',
+        'cartridge.roles.vshard-router',
         'mymodule-dependency',
         'mymodule-permanent',
         'mymodule-hidden',
@@ -151,7 +151,7 @@ if not ok then
     os.exit(1)
 end
 
-_G.is_initialized = cluster.is_healthy
+_G.is_initialized = cartridge.is_healthy
 
 function _G.get_uuid()
     -- this function is used in pytest

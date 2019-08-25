@@ -41,13 +41,13 @@ def test_confapplier(cluster, helpers):
 
     cluster['firstling'].conn.eval("""
         local errors = require('errors')
-        local cluster = require('cluster')
+        local cartridge = require('cartridge')
         local membership = require('membership')
 
         errors.assert('ProbeError', membership.probe_uri("{twin1.advertise_uri}"))
         errors.assert('ProbeError', membership.probe_uri("{twin2.advertise_uri}"))
 
-        local topology = cluster.config_get_deepcopy('topology')
+        local topology = cartridge.config_get_deepcopy('topology')
         topology.servers["{twin1.instance_uuid}"] = {{
             replicaset_uuid = "{twin1.replicaset_uuid}",
             uri = "{twin1.advertise_uri}",
@@ -63,7 +63,7 @@ def test_confapplier(cluster, helpers):
                 "{twin2.instance_uuid}",
             }}
         }}
-        local ok, err = cluster.config_patch_clusterwide({{topology = topology}})
+        local ok, err = cartridge.config_patch_clusterwide({{topology = topology}})
         assert(ok, tostring(err))
     """.format(
         twin1 = cluster['twin-1'],

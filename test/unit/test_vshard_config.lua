@@ -38,7 +38,7 @@ package.loaded['membership'] = {
     end,
 }
 
-package.loaded['cluster.pool'] = {
+package.loaded['cartridge.pool'] = {
     connect = function()
         return require('net.box').self
     end,
@@ -52,8 +52,8 @@ vshard = {
 
 local tap = require('tap')
 local yaml = require('yaml')
-local topology = require('cluster.topology')
-local vshard_utils = require('cluster.vshard-utils')
+local topology = require('cartridge.topology')
+local vshard_utils = require('cartridge.vshard-utils')
 local test = tap.test('vshard.config')
 
 test:plan(12)

@@ -4,7 +4,7 @@ local g = t.group('roles_test')
 
 local test_helper = require('test.helper')
 
-local helpers = require('cluster.test_helpers')
+local helpers = require('cartridge.test-helpers')
 
 g.before_all = function()
     g.datadir = fio.tempdir()
@@ -53,8 +53,8 @@ end
 local function get_config_roles()
     return g.cluster.main_server.net_box:eval([[
         local uuid = ...
-        local cluster = require('cluster')
-        local topology = cluster.config_get_readonly('topology')
+        local cartridge = require('cartridge')
+        local topology = cartridge.config_get_readonly('topology')
         return topology.replicasets[uuid].roles
     ]], {g.cluster.main_server.replicaset_uuid})
 end
@@ -65,10 +65,10 @@ local function set_config_roles(roles)
     -- so it doesn't affect GraphQL and RPC
     local ok, err = g.cluster.main_server.net_box:eval([[
         local uuid, roles = ...
-        local cluster = require('cluster')
-        local topology = cluster.config_get_deepcopy('topology')
+        local cartridge = require('cartridge')
+        local topology = cartridge.config_get_deepcopy('topology')
         topology.replicasets[uuid].roles = roles
-        return cluster.config_patch_clusterwide({topology = topology})
+        return cartridge.config_patch_clusterwide({topology = topology})
     ]], {g.cluster.main_server.replicaset_uuid, roles})
     t.assert_equals(err, box.NULL)
     t.assert_equals(ok, true)
@@ -119,8 +119,8 @@ function g.test_rpc()
 
     local function soundcheck(role_name, fn_name, expected)
         local ret, err = g.cluster.main_server.net_box:eval([[
-            local cluster = require('cluster')
-            return cluster.rpc_call(...)
+            local cartridge = require('cartridge')
+            return cartridge.rpc_call(...)
         ]], {role_name, fn_name, nil})
         t.assert_equals(err, nil)
         t.assert_equals(ret, expected)

@@ -1,8 +1,8 @@
 #!/usr/bin/env tarantool
 
-if not pcall(require, 'cluster.front-bundle') then
+if not pcall(require, 'cartridge.front-bundle') then
     -- to be loaded in development environment
-    package.preload['cluster.front-bundle'] = function()
+    package.preload['cartridge.front-bundle'] = function()
         return require('webui.build.bundle')
     end
 end
@@ -10,10 +10,10 @@ end
 local log = require('log')
 local tap = require('tap')
 local socket = require('socket')
-local cluster = require('cluster')
+local cartridge = require('cartridge')
 local membership = require('membership')
 
-local test = tap.test('cluster.cfg')
+local test = tap.test('cartridge.cfg')
 
 test:plan(12)
 
@@ -34,7 +34,7 @@ end
 -------------------------------------------------------------------------------
 test:diag('Test malformed opts.workdir')
 check_error('Error creating directory "/dev/null": File exists',
-    cluster.cfg, {
+    cartridge.cfg, {
         workdir = '/dev/null',
         advertise_uri = 'localhost:33001',
         roles = {},
@@ -46,7 +46,7 @@ check_error('Error creating directory "/dev/null": File exists',
 test:diag('Test malformed opts.advertise_uri')
 
 check_error('Invalid port in advertise_uri "localhost:invalid"',
-    cluster.cfg, {
+    cartridge.cfg, {
         workdir = './dev',
         advertise_uri = 'localhost:invalid',
         roles = {},
@@ -54,7 +54,7 @@ check_error('Invalid port in advertise_uri "localhost:invalid"',
 )
 
 check_error('Invalid advertise_uri ":1111"',
-    cluster.cfg, {
+    cartridge.cfg, {
         workdir = './dev',
         advertise_uri = ':1111',
         roles = {},
@@ -64,7 +64,7 @@ check_error('Invalid advertise_uri ":1111"',
 local _sock = socket('AF_INET', 'SOCK_DGRAM', 'udp')
 local ok = _sock:bind('0.0.0.0', 33001)
 check_error('Socket bind error: Address already in use',
-    cluster.cfg, {
+    cartridge.cfg, {
         workdir = './dev',
         advertise_uri = 'localhost:33001',
         roles = {},
@@ -74,7 +74,7 @@ _sock:close()
 _sock = nil
 
 check_error('Can not ping myself: ping was not sent',
-    cluster.cfg, {
+    cartridge.cfg, {
         workdir = './dev',
         advertise_uri = 'invalid-host:33001',
         roles = {},
@@ -103,12 +103,12 @@ end
 test:diag('Test malformed opts.roles')
 
 check_error([[module 'unknown%-role' not found]],
-    cluster.cfg, {
+    cartridge.cfg, {
         workdir = './dev',
         advertise_uri = 'unused:0',
         roles = {
-            'cluster.roles.vshard-storage',
-            'cluster.roles.vshard-router',
+            'cartridge.roles.vshard-storage',
+            'cartridge.roles.vshard-router',
             'unknown-role',
         },
     }
@@ -119,7 +119,7 @@ check_error([[module 'unknown%-role' not found]],
 test:diag('Test malformed opts.auth_backend_name')
 
 check_error([[module 'unknown%-auth' not found]],
-    cluster.cfg, {
+    cartridge.cfg, {
         workdir = './dev',
         advertise_uri = 'unused:0',
         auth_backend_name = 'unknown-auth',
@@ -132,7 +132,7 @@ package.preload['myauth'] = function()
     error('My auth can not be loaded')
 end
 check_error('My auth can not be loaded',
-    cluster.cfg, {
+    cartridge.cfg, {
         workdir = './dev',
         advertise_uri = 'unused:0',
         auth_backend_name = 'myauth',
@@ -146,7 +146,7 @@ package.preload['auth-unknown-method'] = function()
     }
 end
 check_error('unexpected argument callbacks.unknown_method to set_callbacks',
-    cluster.cfg, {
+    cartridge.cfg, {
         workdir = './dev',
         advertise_uri = 'unused:0',
         auth_backend_name = 'auth-unknown-method',
@@ -160,7 +160,7 @@ package.preload['auth-invalid-method'] = function()
     }
 end
 check_error('bad argument callbacks.check_password to set_callbacks',
-    cluster.cfg, {
+    cartridge.cfg, {
         workdir = './dev',
         advertise_uri = 'unused:0',
         auth_backend_name = 'auth-invalid-method',
@@ -170,22 +170,22 @@ check_error('bad argument callbacks.check_password to set_callbacks',
 
 -- ok -------------------------------------------------------------------------
 -------------------------------------------------------------------------------
-test:diag('Test successful cluster.cfg')
+test:diag('Test successful cartridge.cfg')
 
 local opts = {
         workdir = '/tmp',
         advertise_uri = 'unused:0',
     roles = {
-        'cluster.roles.vshard-storage',
-        'cluster.roles.vshard-router',
+        'cartridge.roles.vshard-storage',
+        'cartridge.roles.vshard-router',
     },
 }
 test:ok(
-    cluster.cfg(opts)
+    cartridge.cfg(opts)
 )
 
 check_error('Cluster is already initialized',
-    cluster.cfg, opts
+    cartridge.cfg, opts
 )
 
 os.exit(test:check() and 0 or 1)

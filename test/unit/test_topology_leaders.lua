@@ -3,7 +3,7 @@
 local tap = require('tap')
 local json = require('json')
 local checks = require('checks')
-local topology = require('cluster.topology')
+local topology = require('cartridge.topology')
 
 local test = tap.test('cluster.topology.get_leaders_order')
 test:plan(17)

@@ -22,7 +22,7 @@ build:
     - tarantoolctl rocks install luacheck
     - tarantoolctl rocks install luacov
     - tarantoolctl rocks install luacov-console 1.1.0
-    - export PATH=.rocks/bin:$PATH
+    - export PATH=$PWD/.rocks/bin:$PATH
     - pip install -r test/integration/requirements.txt
     - tarantoolctl rocks install luatest
     - npm install graphql-cli

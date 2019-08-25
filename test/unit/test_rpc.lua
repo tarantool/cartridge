@@ -1,9 +1,9 @@
 #!/usr/bin/env tarantool
 
 local tap = require('tap')
-local rpc = require('cluster.rpc')
+local rpc = require('cartridge.rpc')
 local checks = require('checks')
-local topology = require('cluster.topology')
+local topology = require('cartridge.topology')
 
 local test = tap.test('cluster.rpc_candidates')
 test:plan(13)

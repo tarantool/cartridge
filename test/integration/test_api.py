@@ -295,7 +295,7 @@ def test_probe_server(cluster, expelled, module_tmpdir, helpers):
         variables={'uri': 'localhost:9'}
     )
     assert obj['errors'][0]['message'] == \
-        'Probe "localhost:9" failed: no responce'
+        'Probe "localhost:9" failed: no response'
 
     obj = srv.graphql(req,
         variables={'uri': 'bad-host'}

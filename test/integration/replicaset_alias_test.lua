@@ -4,7 +4,7 @@ local g = t.group('replicaset_alias')
 
 local test_helper = require('test.helper')
 
-local helpers = require('cluster.test_helpers')
+local helpers = require('cartridge.test-helpers')
 
 local cluster
 
