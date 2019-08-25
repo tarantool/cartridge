@@ -473,6 +473,7 @@ end
 -- Later, you can join other instances using `cartridge.admin`.
 --
 -- @function bootstrap
+-- @local
 -- @tparam {string,...} roles
 --   roles to be enabled on the current instance
 -- @tparam table uuids
@@ -520,21 +521,23 @@ return {
     -- @treturn boolean
     is_healthy = topology.cluster_is_healthy,
 
-
     --- Clusterwide configuration.
-    -- See `cartridge.confapplier` module for details.
+    -- @refer cartridge.confapplier
     -- @section confapplier
 
-    --- Shorthand for `cartridge.confapplier.get_readonly`.
-    --- @function config_get_readonly
+    --- .
+    -- @refer cartridge.confapplier.get_readonly
+    -- @function config_get_readonly
     config_get_readonly = confapplier.get_readonly,
 
-    --- Shorthand for `cartridge.confapplier.get_deepcopy`.
-    --- @function config_get_deepcopy
+    --- .
+    -- @refer cartridge.confapplier.get_deepcopy
+    -- @function config_get_deepcopy
     config_get_deepcopy = confapplier.get_deepcopy,
 
-    --- Shorthand for `cartridge.confapplier.patch_clusterwide`.
-    --- @function config_patch_clusterwide
+    --- .
+    -- @refer cartridge.confapplier.patch_clusterwide
+    -- @function config_patch_clusterwide
     config_patch_clusterwide = confapplier.patch_clusterwide,
 
     confapplier = {
@@ -564,14 +567,16 @@ return {
     },
 
     --- Inter-role interaction.
-    -- See `cartridge.service-registry` module for details.
+    -- @refer cartridge.service-registry
     -- @section service_registry
 
-    --- Shorthand for `cartridge.service-registry.get`.
+    --- .
+    -- @refer cartridge.service-registry.get
     -- @function service_get
     service_get = service_registry.get,
 
-    --- Shorthand for `cartridge.service-registry.set`.
+    --- .
+    -- @refer cartridge.service-registry.set
     -- @function service_set
     service_set = service_registry.set,
 
@@ -593,10 +598,11 @@ return {
     },
 
     --- Cross-instance calls.
-    -- See `cartridge.rpc` module for details.
+    -- @refer cartridge.rpc
     -- @section rpc
 
-    --- Shorthand for `cartridge.rpc.call`.
+    --- .
+    -- @refer cartridge.rpc.call
     -- @function rpc_call
     rpc_call = rpc.call,
 }

@@ -565,7 +565,6 @@ end
 --- Edit an instance.
 --
 -- @function edit_server
--- @local
 -- @tparam table args
 -- @tparam string args.uuid
 -- @tparam ?string args.uri

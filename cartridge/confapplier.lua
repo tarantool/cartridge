@@ -1,5 +1,4 @@
 #!/usr/bin/env tarantool
--- luacheck: globals box
 
 --- Clusterwide configuration management primitives.
 -- @module cartridge.confapplier
@@ -285,9 +284,9 @@ local function load_from_file(filename)
     return conf, err
 end
 
---- Get a read-only view on the configuration.
--- Either `conf[section_name]` or entire `conf`.
+--- Get a read-only view on the clusterwide configuration.
 --
+-- Returns either `conf[section_name]` or entire `conf`.
 -- Any attempt to modify the section or its children
 -- will raise an error.
 -- @function get_readonly
@@ -304,11 +303,11 @@ local function get_readonly(section_name)
     end
 end
 
---- Get a read-write deep copy of the configuration.
--- Either `conf[section_name]` or entire `conf`.
+--- Get a read-write deep copy of the clusterwide configuration.
 --
+-- Returns either `conf[section_name]` or entire `conf`.
 -- Changing it has no effect
--- unless it is passed to a `patch_clusterwide` call.
+-- unless it's used to patch clusterwide configuration.
 -- @function get_deepcopy
 -- @tparam[opt] string section_name
 -- @treturn table
