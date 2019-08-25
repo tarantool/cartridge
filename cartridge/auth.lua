@@ -29,6 +29,11 @@ vars:new('callbacks', {})
 local DEFAULT_COOKIE_MAX_AGE = 3600*24*30 -- in seconds
 local DEFAULT_COOKIE_RENEW_AGE = 3600*24 -- in seconds
 
+local ADMIN_USER = {
+    username = cluster_cookie.username(),
+    fullname = 'Cartridge Administrator'
+}
+
 local e_check_cookie = errors.new_class('Checking cookie failed')
 local e_check_header = errors.new_class('Checking auth headers failed')
 local e_callback = errors.new_class('Auth callback failed')
@@ -272,6 +277,10 @@ local function get_basic_auth_uid(auth)
         return nil
     end
 
+    if username == ADMIN_USER.username then
+        return password == cluster_cookie.cookie()
+    end
+
     local ok = vars.callbacks.check_password(username, password)
     if type(ok) ~= 'boolean' then
         local err = e_callback:new('check_password() must return boolean')
@@ -294,14 +303,33 @@ local function get_session_username()
 end
 
 local function login(req)
+    local username = req:param('username')
+    local password = req:param('password')
+
+    -- First check for built-in admin user
+    if username == ADMIN_USER.username then
+        if password == cluster_cookie.cookie() then
+            return {
+                status = 200,
+                headers = {
+                    ['set-cookie'] = string.format('lsid=%s; Max-Age=%d',
+                                                   create_cookie(username),
+                                                   get_params().cookie_max_age
+                    )
+                }
+            }
+        else
+            return {
+                status = 403,
+            }
+        end
+    end
+
     if vars.callbacks.check_password == nil then
         return {
             status = 200,
         }
     end
-
-    local username = req:param('username')
-    local password = req:param('password')
 
     local ok, err = e_check_password:pcall(function()
         if username == nil or password == nil then
@@ -389,6 +417,12 @@ local function add_user(username, password, fullname, email)
         return nil, e_callback:new("add_user() callback isn't set")
     end
 
+    if username == cluster_cookie.username() then
+        return nil, e_callback:new(
+            "add_user() can't override integrated superuser '%s'",
+            username)
+    end
+
     return e_add_user:pcall(function()
         local user, err = vars.callbacks.add_user(username, password, fullname, email)
         if not user then
@@ -418,6 +452,11 @@ end
 -- @treturn[2] table Error description
 local function get_user(username)
     checks('string')
+
+    if username == ADMIN_USER.username then
+        return coerce_user(ADMIN_USER)
+    end
+
     if vars.callbacks.get_user == nil then
         return nil, e_callback:new("get_user() callback isn't set")
     end
@@ -459,6 +498,12 @@ local function edit_user(username, password, fullname, email)
         return nil, e_callback:new("edit_user() callback isn't set")
     end
 
+    if username == ADMIN_USER.username then
+        return nil, e_callback:new(
+            "edit_user() can't change integrated superuser '%s'",
+            username)
+    end
+
     return e_edit_user:pcall(function()
         local user, err = vars.callbacks.edit_user(username, password, fullname, email)
 
@@ -488,7 +533,7 @@ end
 -- @treturn[2] table Error description
 local function list_users()
     if vars.callbacks.list_users == nil then
-        return nil, e_callback:new("list_users() callback isn't set")
+        return {coerce_user(ADMIN_USER)}
     end
 
     return e_list_users:pcall(function()
@@ -497,7 +542,7 @@ local function list_users()
             return nil, e_list_users:new(err)
         end
 
-        local ret = {}
+        local ret = {coerce_user(ADMIN_USER)}
         local i = 1
         for _ in pairs(users) do
             local user = users[i]
@@ -510,7 +555,7 @@ local function list_users()
                 local err = e_callback:new('list_users() must return array of user objects')
                 return nil, err
             end
-            ret[i] = user
+            ret[i+1] = user
             i = i + 1
         end
 
@@ -535,6 +580,12 @@ local function remove_user(username)
 
     if username == get_session_username() then
         return nil, e_remove_user:new('user can not remove himself')
+    end
+
+    if username == ADMIN_USER.username then
+        return nil, e_callback:new(
+            "remove_user() can't delete integrated superuser '%s'",
+            username)
     end
 
     if vars.callbacks.remove_user == nil then
@@ -594,10 +645,6 @@ local function check_request(req)
     fiber_storage['auth_session_username'] = nil
 
     local resp = setmetatable({}, _response_mt)
-
-    if vars.callbacks.check_password == nil then
-        return true, resp
-    end
 
     local auth_cfg = get_params()
     local cookie_raw = req:cookie('lsid')
