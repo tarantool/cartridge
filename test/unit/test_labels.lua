@@ -1,6 +1,6 @@
 local tap = require("tap")
 local test = tap.test("topology.config")
-local label_utils = require("cluster.label-utils")
+local label_utils = require("cartridge.label-utils")
 local errors = require("errors")
 local e_label_config = errors.new_class("Label configuration error")
 

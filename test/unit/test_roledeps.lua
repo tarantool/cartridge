@@ -4,7 +4,7 @@ local log = require('log')
 local tap = require('tap')
 local json = require('json')
 local socket = require('socket')
-local confapplier = require('cluster.confapplier')
+local confapplier = require('cartridge.confapplier')
 
 local test = tap.test('cluster.register_role')
 
@@ -142,11 +142,11 @@ package.preload['mod-d'] = function()
     return { role_name = 'role-d' }
 end
 package.preload['storage'] = function()
-    return { dependencies = {'cluster.roles.vshard-storage'} }
+    return { dependencies = {'cartridge.roles.vshard-storage'} }
 end
 local ok, err = register_roles(
-    'cluster.roles.vshard-storage',
-    'cluster.roles.vshard-router',
+    'cartridge.roles.vshard-storage',
+    'cartridge.roles.vshard-router',
     'storage',
     'mod-a'
 )
@@ -155,7 +155,7 @@ if not ok then
 end
 test:is(ok, true, 'register_roles')
 
-local vars = require('cluster.vars').new('cluster.confapplier')
+local vars = require('cartridge.vars').new('cartridge.confapplier')
 local roles_order = {}
 for i, mod in ipairs(vars.known_roles) do
     roles_order[i] = mod.role_name

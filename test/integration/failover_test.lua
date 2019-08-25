@@ -4,7 +4,7 @@ local g = t.group('failover')
 
 local test_helper = require('test.helper')
 
-local helpers = require('cluster.test_helpers')
+local helpers = require('cartridge.test-helpers')
 
 local replicaset_uuid = helpers.uuid('b')
 local storage_1_uuid = helpers.uuid('b', 'b', 1)
@@ -253,7 +253,7 @@ g.test_rollback = function()
 
     -- hack utils to throw error on file_write
     server.net_box:eval([[
-        local utils = package.loaded["cluster.utils"]
+        local utils = package.loaded["cartridge.utils"]
         local e_file_write = require('errors').new_class("Artificial error")
         _G._utils_file_write = utils.file_write
         utils.file_write = function(filename)
@@ -272,7 +272,7 @@ g.test_rollback = function()
 
     -- restore utils.file_write
     server.net_box:eval([[
-        local utils = package.loaded["cluster.utils"]
+        local utils = package.loaded["cartridge.utils"]
         utils.file_write = _G._utils_file_write
         _G._utils_file_write = nil
     ]])

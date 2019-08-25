@@ -4,7 +4,7 @@ local g = t.group('remote_control')
 local fio = require('fio')
 local digest = require('digest')
 local netbox = require('net.box')
-local remote_control = require('cluster.remote-control')
+local remote_control = require('cartridge.remote-control')
 
 local username = 'superuser'
 local password = '3.141592'
@@ -475,7 +475,7 @@ function g.test_switch_rc_to_box()
 
     -- swap remote control with real iproto
     t.assertEquals(conn_rc:eval([[
-        local remote_control = require('cluster.remote-control')
+        local remote_control = require('cartridge.remote-control')
         remote_control.stop()
         box.cfg({listen = 13301})
         return box.info.uuid

@@ -19,7 +19,7 @@ cluster = [
 
 def rpc_call(srv, role_name, fn_name, args=None, **kwargs):
     resp = srv.conn.eval("""
-        local rpc = require('cluster.rpc')
+        local rpc = require('cartridge.rpc')
         return rpc.call(...)
     """, (role_name, fn_name, args, kwargs))
     err = resp[1]['err'] if len(resp) > 1 else None

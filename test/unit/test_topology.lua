@@ -36,7 +36,7 @@ package.loaded['membership'] = {
     end,
 }
 
-package.loaded['cluster.pool'] = {
+package.loaded['cartridge.pool'] = {
     connect = function()
         return require('net.box').self
     end,
@@ -50,10 +50,10 @@ _G.vshard = {
 
 local tap = require('tap')
 local yaml = require('yaml')
-local topology = require('cluster.topology')
-local confapplier = require('cluster.confapplier')
-assert(confapplier.register_role('cluster.roles.vshard-storage'))
-assert(confapplier.register_role('cluster.roles.vshard-router'))
+local topology = require('cartridge.topology')
+local confapplier = require('cartridge.confapplier')
+assert(confapplier.register_role('cartridge.roles.vshard-storage'))
+assert(confapplier.register_role('cartridge.roles.vshard-router'))
 local test = tap.test('topology.config')
 
 local function test_all(test, conf)

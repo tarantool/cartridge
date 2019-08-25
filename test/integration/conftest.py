@@ -155,7 +155,7 @@ class Server(object):
         assert (resp[0], err) == (True, None)
 
     def cluster_is_healthy(self):
-        self.conn.eval("assert(package.loaded['cluster'].is_healthy())")
+        self.conn.eval("assert(package.loaded['cartridge'].is_healthy())")
 
     def kill(self):
         if self.conn != None:

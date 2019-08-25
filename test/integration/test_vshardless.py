@@ -46,23 +46,23 @@ def test_edit_replicaset(cluster):
 
 def test_package_loaded(cluster):
     cluster['main'].conn.eval("""
-        assert( package.loaded['cluster.roles.vshard-router'] == nil )
-        assert( package.loaded['cluster.roles.vshard-storage'] == nil )
+        assert( package.loaded['cartridge.roles.vshard-router'] == nil )
+        assert( package.loaded['cartridge.roles.vshard-storage'] == nil )
     """)
 
 def test_config(cluster):
     # TODO Eliminate vshard section initialization during bootstrap
     assert cluster['main'].conn.eval("""
-        local cluster = require('cluster')
-        return cluster.config_get_readonly('vshard')
+        local cartridge = require('cartridge')
+        return cartridge.config_get_readonly('vshard')
     """)[0] == {
         'bootstrapped': False,
         'bucket_count': 30000,
     }
 
     assert cluster['main'].conn.eval("""
-        local cluster = require('cluster')
-        return cluster.config_get_readonly('vshard_groups')
+        local cartridge = require('cartridge')
+        return cartridge.config_get_readonly('vshard_groups')
     """)[0] == None
 
 def test_api(cluster):

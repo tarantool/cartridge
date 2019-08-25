@@ -37,7 +37,7 @@ cluster = [
 def set_auth_enabled_internal(cluster, enabled):
     cluster['master'].conn.eval("""
         local log = require('log')
-        local auth = require('cluster.auth')
+        local auth = require('cartridge.auth')
         local enabled = ...
         auth.set_params({enabled = enabled})
         if enabled then
@@ -80,7 +80,7 @@ def test_login(cluster, auth, alias):
     PASSWORD = 'Fuschia Copper' if auth else 'Green Zinc'
 
     srv.conn.eval("""
-        local auth = require('cluster.auth')
+        local auth = require('cartridge.auth')
         assert(auth.add_user('{}', '{}'))
     """.format(USERNAME, PASSWORD))
 
@@ -110,7 +110,7 @@ def test_login(cluster, auth, alias):
     del PASSWORD
 
     srv.conn.eval("""
-        local auth = require('cluster.auth')
+        local auth = require('cartridge.auth')
         assert(auth.edit_user('{}', '{}'))
     """.format(USERNAME, NEW_PASSWORD))
 
@@ -121,7 +121,7 @@ def test_login(cluster, auth, alias):
     assert resp.cookies['lsid'] != ''
 
     srv.conn.eval("""
-        local auth = require('cluster.auth')
+        local auth = require('cartridge.auth')
         assert(auth.remove_user('{}'))
     """.format(USERNAME))
     assert _login(srv, USERNAME, OLD_PASSWORD).status_code == 403
@@ -132,7 +132,7 @@ def test_login(cluster, auth, alias):
         PASSWORD = "SuperPuperPassword-@3"
 
         srv.conn.eval("""
-            local auth = require('cluster.auth')
+            local auth = require('cartridge.auth')
             assert(auth.add_user('{}', '{}'))
         """.format(USERNAME, PASSWORD))
 
@@ -158,7 +158,7 @@ def test_login(cluster, auth, alias):
         assert _login(srv, USERNAME, PASSWORD).status_code == 200
 
         srv.conn.eval("""
-            local auth = require('cluster.auth')
+            local auth = require('cartridge.auth')
             assert(auth.remove_user('{}'))
         """.format(USERNAME))
         assert _login(srv, USERNAME, PASSWORD).status_code == 403

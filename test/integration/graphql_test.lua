@@ -4,7 +4,7 @@ local g = t.group('graphql')
 
 local test_helper = require('test.helper')
 
-local helpers = require('cluster.test_helpers')
+local helpers = require('cartridge.test-helpers')
 
 local cluster
 
@@ -48,8 +48,8 @@ g.test_upload_good = function()
           return result
         end
 
-        local graphql = require('cluster.graphql')
-        local types = require('cluster.graphql.types')
+        local graphql = require('cartridge.graphql')
+        local types = require('cartridge.graphql.types')
         graphql.add_callback({
             name = 'test',
             doc = '',
@@ -81,8 +81,8 @@ g.test_resolver_error = function()
           return nil, 'Internal error from my test function'
         end
 
-        local graphql = require('cluster.graphql')
-        local types = require('cluster.graphql.types')
+        local graphql = require('cartridge.graphql')
+        local types = require('cartridge.graphql.types')
         graphql.add_callback({
             name = 'test',
             doc = '',

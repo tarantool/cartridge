@@ -3,16 +3,16 @@
 require('strict').on()
 _G.is_initialized = function() return false end
 
-if not pcall(require, 'cluster.front-bundle') then
+if not pcall(require, 'cartridge.front-bundle') then
     -- to be loaded in development environment
-    package.preload['cluster.front-bundle'] = function()
+    package.preload['cartridge.front-bundle'] = function()
         return require('webui.build.bundle')
     end
 end
 
 local log = require('log')
 local errors = require('errors')
-local cluster = require('cluster')
+local cartridge = require('cartridge')
 errors.set_deprecation_handler(function(err)
     log.error('%s', err)
     os.exit(1)
@@ -127,11 +127,11 @@ if os.getenv('ADMIN_PASSWORD') then
     auth_enabled = true
 end
 
-local ok, err = cluster.cfg({
+local ok, err = cartridge.cfg({
     bucket_count = 3000,
     roles = {
-        'cluster.roles.vshard-storage',
-        'cluster.roles.vshard-router',
+        'cartridge.roles.vshard-storage',
+        'cartridge.roles.vshard-router',
     },
     auth_backend_name = 'auth-mocks',
     auth_enabled = auth_enabled, -- works for bootstrapping from scratch only
@@ -142,4 +142,4 @@ if not ok then
     os.exit(1)
 end
 
-_G.is_initialized = cluster.is_healthy
+_G.is_initialized = cartridge.is_healthy

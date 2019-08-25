@@ -1,6 +1,6 @@
 #!/usr/bin/env tarantool
 
-local cluster = require('cluster')
+local cartridge = require('cartridge')
 
 package.preload['mymodule'] = function()
     return {
@@ -8,7 +8,7 @@ package.preload['mymodule'] = function()
     }
 end
 
-local ok, err = cluster.cfg({
+local ok, err = cartridge.cfg({
     alias = os.getenv('TARANTOOL_ALIAS'),
     workdir = os.getenv('TARANTOOL_WORKDIR'),
     advertise_uri = os.getenv('TARANTOOL_ADVERTISE_URI'),
@@ -16,8 +16,8 @@ local ok, err = cluster.cfg({
     bucket_count = 3000,
     http_port = os.getenv('TARANTOOL_HTTP_PORT'),
     roles = {
-        'cluster.roles.vshard-storage',
-        'cluster.roles.vshard-router',
+        'cartridge.roles.vshard-storage',
+        'cartridge.roles.vshard-router',
         'mymodule',
     },
 })

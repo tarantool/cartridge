@@ -29,6 +29,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 
+- All the project renamed to `cartrifge`
+  **(incompatible change)**
+
 - Modifying auth params with GraphQL before the cluster was bootstrapped is now
   forbidden and returns an error.
 

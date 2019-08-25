@@ -50,7 +50,7 @@ def test_myrole(cluster):
     """)
     assert 'errors' not in obj
     srv.conn.eval("""
-        local service_registry = require('cluster.service-registry')
+        local service_registry = require('cartridge.service-registry')
         assert(service_registry.get('myrole') ~= nil)
     """)
     srv.conn.eval("""
@@ -78,7 +78,7 @@ def test_myrole(cluster):
     """)
     assert 'errors' not in obj
     srv.conn.eval("""
-        local service_registry = require('cluster.service-registry')
+        local service_registry = require('cartridge.service-registry')
         assert(service_registry.get('myrole') == nil)
     """)
     srv.conn.eval("""
@@ -98,7 +98,7 @@ def test_dependencies(cluster):
     assert 'errors' not in obj
 
     srv.conn.eval("""
-        local service_registry = require('cluster.service-registry')
+        local service_registry = require('cartridge.service-registry')
         assert(service_registry.get('myrole-dependency') ~= nil)
     """)
 
