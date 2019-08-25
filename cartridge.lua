@@ -511,19 +511,15 @@ return {
     cfg = cfg,
     bootstrap = bootstrap_from_scratch,
 
-    --- Shorthand for `cartridge.admin` module.
-    -- @field cartridge.admin
-    admin = admin,
-
     --- Check cluster health.
     -- It is healthy if all instances are healthy.
     -- @function is_healthy
     -- @treturn boolean
     is_healthy = topology.cluster_is_healthy,
 
-    --- Cluster administration.
-    -- @refer cartridge.admin
-    -- @section admin
+--- Cluster administration.
+-- @refer cartridge.admin
+-- @section admin
 
     --- .
     -- @field .
@@ -597,9 +593,9 @@ return {
         return admin.set_failover_enabled(false)
     end,
 
-    --- Clusterwide configuration.
-    -- @refer cartridge.confapplier
-    -- @section confapplier
+--- Clusterwide configuration.
+-- @refer cartridge.confapplier
+-- @section confapplier
 
     --- .
     -- @refer cartridge.confapplier.get_readonly
@@ -616,35 +612,9 @@ return {
     -- @function config_patch_clusterwide
     config_patch_clusterwide = confapplier.patch_clusterwide,
 
-    confapplier = {
-        get_readonly = function(...)
-            errors.deprecate(
-                'Function "cluster.confapplier.get_readonly()" is deprecated. ' ..
-                'Use "cluster.config_get_readonly()" instead.'
-            )
-            return confapplier.get_readonly(...)
-        end,
-
-        get_deepcopy = function(...)
-            errors.deprecate(
-                'Function "cluster.confapplier.get_deepcopy()" is deprecated. ' ..
-                'Use "cluster.config_get_deepcopy()" instead.'
-            )
-            return confapplier.get_deepcopy(...)
-        end,
-
-        patch_clusterwide = function(...)
-            errors.deprecate(
-                'Function "cluster.confapplier.patch_clusterwide()" is deprecated. ' ..
-                'Use "cluster.config_patch_clusterwide()" instead.'
-            )
-            return confapplier.patch_clusterwide(...)
-        end,
-    },
-
-    --- Inter-role interaction.
-    -- @refer cartridge.service-registry
-    -- @section service_registry
+--- Inter-role interaction.
+-- @refer cartridge.service-registry
+-- @section service_registry
 
     --- .
     -- @refer cartridge.service-registry.get
@@ -656,26 +626,9 @@ return {
     -- @function service_set
     service_set = service_registry.set,
 
-    service_registry = {
-        get = function(...)
-            errors.deprecate(
-                'Function "cluster.service_registry.get()" is deprecated. ' ..
-                'Use "cluster.service_get()" instead.'
-            )
-            return service_registry.get(...)
-        end,
-        set = function(...)
-            errors.deprecate(
-                'Function "cluster.service_registry.set()" is deprecated. ' ..
-                'Use "cluster.service_set()" instead.'
-            )
-            return service_registry.set(...)
-        end,
-    },
-
-    --- Cross-instance calls.
-    -- @refer cartridge.rpc
-    -- @section rpc
+--- Cross-instance calls.
+-- @refer cartridge.rpc
+-- @section rpc
 
     --- .
     -- @refer cartridge.rpc.call
