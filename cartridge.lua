@@ -521,6 +521,82 @@ return {
     -- @treturn boolean
     is_healthy = topology.cluster_is_healthy,
 
+    --- Cluster administration.
+    -- @refer cartridge.admin
+    -- @section admin
+
+    --- .
+    -- @field .
+    -- @refer cartridge.admin.ServerInfo
+    -- @table ServerInfo
+
+    --- .
+    -- @field .
+    -- @refer cartridge.admin.ReplicasetInfo
+    -- @table ReplicasetInfo
+
+    --- .
+    -- @refer cartridge.admin.get_servers
+    -- @function admin_get_servers
+    admin_get_servers = admin.get_servers,
+
+    --- .
+    -- @refer cartridge.admin.get_replicasets
+    -- @function admin_get_replicasets
+    admin_get_replicasets = admin.get_replicasets,
+
+    --- .
+    -- @refer cartridge.admin.probe_server
+    -- @function admin_probe_server
+    admin_probe_server = admin.probe_server,
+
+    --- .
+    -- @refer cartridge.admin.join_server
+    -- @function admin_join_server
+    admin_join_server = admin.join_server,
+
+    --- .
+    -- @refer cartridge.admin.edit_server
+    -- @function admin_edit_server
+    admin_edit_server = admin.edit_server,
+
+    --- .
+    -- @refer cartridge.admin.expel_server
+    -- @function admin_expel_server
+    admin_expel_server = admin.expel_server,
+
+    --- .
+    -- @refer cartridge.admin.enable_servers
+    -- @function admin_enable_servers
+    admin_enable_servers = admin.enable_servers,
+
+    --- .
+    -- @refer cartridge.admin.disable_servers
+    -- @function admin_disable_servers
+    admin_disable_servers = admin.disable_servers,
+
+    --- .
+    -- @refer cartridge.admin.edit_replicaset
+    -- @function admin_edit_replicaset
+    admin_edit_replicaset = admin.edit_replicaset,
+
+    --- .
+    -- @refer cartridge.admin.get_failover_enabled
+    -- @function admin_get_failover
+    admin_get_failover = admin.get_failover_enabled,
+
+    --- Enable failover.
+    -- @function admin_enable_failover
+    admin_enable_failover = function()
+        return admin.set_failover_enabled(true)
+    end,
+
+    --- Disable failover.
+    -- @function admin_disable_failover
+    admin_disable_failover = function()
+        return admin.set_failover_enabled(false)
+    end,
+
     --- Clusterwide configuration.
     -- @refer cartridge.confapplier
     -- @section confapplier
