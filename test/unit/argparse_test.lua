@@ -43,7 +43,7 @@ function g:run(cmd_args, env_vars, opts)
         ignore_errors = '?boolean',
     })
     local cmd =
-        ('env --ignore-environment %s'):format(table.concat(env_vars or {}, ' ')) ..
+        ('env -i %s'):format(table.concat(env_vars or {}, ' ')) ..
         (' %s %q '):format(arg[-1], fio.pathjoin(self.tempdir, 'getargs.lua')) ..
         (cmd_args or '')
     local raw = io.popen(cmd):read('*all')

@@ -342,28 +342,30 @@ local function cfg(opts, box_opts)
         membership.broadcast(p)
     end
 
-    if opts.auth_backend_name ~= nil then
-        local auth_backend, err = e_init:pcall(require, opts.auth_backend_name)
-        if not auth_backend then
-            return nil, err
-        end
+    if opts.auth_backend_name == nil then
+        opts.auth_backend_name = 'cartridge.auth-backend'
+    end
 
-        local ok, err = e_init:pcall(function()
+    local auth_backend, err = e_init:pcall(require, opts.auth_backend_name)
+    if not auth_backend then
+        return nil, err
+    end
+
+    local ok, err = e_init:pcall(function()
             local ok = auth.set_callbacks(auth_backend)
             return ok
-        end)
-        if not ok then
-            return nil, err
-        end
+    end)
+    if not ok then
+        return nil, err
+    end
 
-        local auth_enabled = opts.auth_enabled
-        if auth_enabled == nil then
-            auth_enabled = false
-        end
-        local ok, err = e_init:pcall(auth.set_enabled, auth_enabled)
-        if not ok then
-            return nil, err
-        end
+    local auth_enabled = opts.auth_enabled
+    if auth_enabled == nil then
+        auth_enabled = false
+    end
+    local ok, err = e_init:pcall(auth.set_enabled, auth_enabled)
+    if not ok then
+        return nil, err
     end
 
     if opts.http_port == nil then

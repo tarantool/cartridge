@@ -84,6 +84,7 @@ local cluster_opts = {
     advertise_uri = 'string', -- **string**
     cluster_cookie = 'string', -- **string**
     console_sock = 'string', -- **string**
+    auth_enabled = 'boolean', -- **boolean**
 }
 
 --- Common [box.cfg](https://www.tarantool.io/en/doc/latest/reference/configuration/) tuning options.

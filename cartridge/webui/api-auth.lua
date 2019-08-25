@@ -83,11 +83,11 @@ local function get_auth_params()
         cookie_renew_age = params.cookie_renew_age,
 
         implements_add_user = callbacks.add_user ~= nil,
-        implements_get_user = callbacks.get_user ~= nil,
+        implements_get_user = true,
         implements_edit_user = callbacks.edit_user ~= nil,
-        implements_list_users = callbacks.list_users ~= nil,
+        implements_list_users = true,
         implements_remove_user = callbacks.remove_user ~= nil,
-        implements_check_password = callbacks.check_password ~= nil,
+        implements_check_password = true,
     }
 end
 

@@ -13,8 +13,6 @@ else:
 
 from conftest import Server
 
-init_script = 'srv_withauth.lua'
-
 cluster = [
     Server(
         alias = 'master',
@@ -81,7 +79,8 @@ def test_login(cluster, auth, alias):
 
     srv.conn.eval("""
         local auth = require('cartridge.auth')
-        assert(auth.add_user('{}', '{}'))
+        local res, err = auth.add_user('{}', '{}')
+        assert(res, tostring(err))
     """.format(USERNAME, PASSWORD))
 
     assert _login(srv, USERNAME, 'Invalid Password').status_code == 403
@@ -96,7 +95,7 @@ def test_login(cluster, auth, alias):
         check_200(srv)
 
     resp = _login(srv, USERNAME, PASSWORD)
-    assert resp.status_code == 200
+    assert resp.status_code == 200, str(resp)
     assert 'lsid' in resp.cookies
     assert resp.cookies['lsid'] != ''
     lsid = resp.cookies['lsid']
@@ -111,7 +110,8 @@ def test_login(cluster, auth, alias):
 
     srv.conn.eval("""
         local auth = require('cartridge.auth')
-        assert(auth.edit_user('{}', '{}'))
+        local res, err = auth.edit_user('{}', '{}')
+        assert(res, tostring(err))
     """.format(USERNAME, NEW_PASSWORD))
 
     assert _login(srv, USERNAME, OLD_PASSWORD).status_code == 403
@@ -122,7 +122,8 @@ def test_login(cluster, auth, alias):
 
     srv.conn.eval("""
         local auth = require('cartridge.auth')
-        assert(auth.remove_user('{}'))
+        local res, err = auth.remove_user('{}')
+        assert(res, tostring(err))
     """.format(USERNAME))
     assert _login(srv, USERNAME, OLD_PASSWORD).status_code == 403
     assert _login(srv, USERNAME, NEW_PASSWORD).status_code == 403
@@ -133,7 +134,8 @@ def test_login(cluster, auth, alias):
 
         srv.conn.eval("""
             local auth = require('cartridge.auth')
-            assert(auth.add_user('{}', '{}'))
+            local res, err = auth.add_user('{}', '{}')
+            assert(res, tostring(err))
         """.format(USERNAME, PASSWORD))
 
         resp = _login(srv, USERNAME, PASSWORD)
@@ -159,10 +161,10 @@ def test_login(cluster, auth, alias):
 
         srv.conn.eval("""
             local auth = require('cartridge.auth')
-            assert(auth.remove_user('{}'))
+            local res, err = auth.remove_user('{}')
+            assert(res, tostring(err))
         """.format(USERNAME))
         assert _login(srv, USERNAME, PASSWORD).status_code == 403
-
 
 
 def test_auth_disabled(cluster, disable_auth):
@@ -190,7 +192,7 @@ def test_auth_disabled(cluster, disable_auth):
 
     obj = srv.graphql(req, variables={'username': USERNAME1, 'password': PASSWORD1})
     assert obj['errors'][0]['message'] == \
-        'User already exists'
+        "User already exists: '%s'" % USERNAME1
 
     req = """
         query($username: String) {
@@ -214,10 +216,10 @@ def test_auth_disabled(cluster, disable_auth):
 
     obj = srv.graphql(req, variables={'username': 'Invalid Username'})
     assert obj['errors'][0]['message'] == \
-        'User not found'
+        "User not found: 'Invalid Username'"
 
     obj = srv.graphql(req)
-    assert len(obj['data']['cluster']['users']) == 2
+    assert len(obj['data']['cluster']['users']) == 3
 
     req = """
         mutation($username: String! $email: String) {
@@ -226,7 +228,7 @@ def test_auth_disabled(cluster, disable_auth):
             }
         }
     """
-    EMAIL1 = '{}@tarantool.io'.format(USERNAME1)
+    EMAIL1 = '{}@tarantool.io'.format(USERNAME1).lower()
     obj = srv.graphql(req, variables={'username': USERNAME1, 'email': EMAIL1})
     assert 'errors' not in obj, obj['errors'][0]['message']
     assert obj['data']['cluster']['edit_user']['email'] == EMAIL1
@@ -234,7 +236,7 @@ def test_auth_disabled(cluster, disable_auth):
 
     obj = srv.graphql(req, variables={'username': 'Invalid Username'})
     assert obj['errors'][0]['message'] == \
-        'User not found'
+        "User not found: 'Invalid Username'"
 
     req = """
         mutation($username: String!) {
@@ -251,7 +253,7 @@ def test_auth_disabled(cluster, disable_auth):
 
     obj = srv.graphql(req, variables={'username': 'Invalid Username'})
     assert obj['errors'][0]['message'] == \
-        'User not found'
+        "User not found: 'Invalid Username'"
 
     req = """
         {
@@ -300,8 +302,9 @@ def test_auth_enabled(cluster, enable_auth):
     PASSWORD = 'Black Lead'
 
     srv.conn.eval("""
-        local auth_mocks = require('auth-mocks')
-        assert(auth_mocks.add_user('{}', '{}'))
+        local auth = require('cartridge.auth')
+        local res, err = auth.add_user('{}', '{}')
+        assert(res, tostring(err))
     """.format(USERNAME, PASSWORD))
 
     lsid = _login(srv, USERNAME, PASSWORD).cookies['lsid']
@@ -317,16 +320,18 @@ def test_uninitialized(module_tmpdir, helpers):
         alias = 'dummy'
     )
     srv.start(
-        script=init_script,
         workdir="{}/localhost-{}".format(module_tmpdir, srv.binary_port),
-        env = {'ADMIN_PASSWORD': 'qwerty'}
+        env = {
+            'TARANTOOL_AUTH_ENABLED': 'true'
+        }
     )
 
     try:
         helpers.wait_for(srv.ping_udp, timeout=5)
 
-        resp = _login(srv, 'admin', 'qwerty')
-        assert resp.status_code == 200
+        resp = _login(srv, 'admin', 'cluster-cookies-for-the-cluster-monster')
+        print('login successful')
+        assert resp.status_code == 200, resp.content
         assert 'lsid' in resp.cookies
 
         lsid = resp.cookies['lsid']
@@ -342,8 +347,9 @@ def test_keepalive(cluster, disable_auth):
 
     srv = cluster['master']
     srv.conn.eval("""
-        local auth_mocks = require('auth-mocks')
-        assert(auth_mocks.add_user(...))
+        local auth = require('cartridge.auth')
+        local res, err = auth.add_user(...)
+        assert(res, tostring(err))
     """, (USERNAME, PASSWORD))
 
     def get_username(session):
@@ -373,8 +379,9 @@ def test_basic_auth(cluster, enable_auth):
     srv = cluster['master']
 
     srv.conn.eval("""
-        local auth_mocks = require('auth-mocks')
-        assert(auth_mocks.add_user('U', 'P'))
+        local auth = require('cartridge.auth')
+        local res, err = auth.add_user('U', 'P')
+        assert(res, tostring(err))
     """)
 
     def _b64(s):
@@ -410,11 +417,13 @@ def get_lsid_max_age(resp):
 def test_set_params_graphql(cluster, disable_auth):
     USERNAME = 'Heron'
     PASSWORD = 'Silver Titanium'
-    for _, srv in cluster.items():
-        srv.conn.eval("""
-            local auth_mocks = require('auth-mocks')
-            assert(auth_mocks.add_user('{}', '{}'))
-        """.format(USERNAME, PASSWORD))
+
+    srv = cluster['master']
+    srv.conn.eval("""
+        local auth = require('cartridge.auth')
+        local res, err = auth.add_user('{}', '{}')
+        assert(res, tostring(err))
+    """.format(USERNAME, PASSWORD))
 
     lsid = get_lsid(_login(srv, USERNAME, PASSWORD))
 
@@ -486,11 +495,13 @@ def test_set_params_graphql(cluster, disable_auth):
 def test_cookie_renew(cluster):
     USERNAME = 'Eagle'
     PASSWORD = 'Yellow Zinc'
-    for _, srv in cluster.items():
-        srv.conn.eval("""
-            local auth_mocks = require('auth-mocks')
-            assert(auth_mocks.add_user('{}', '{}'))
-        """.format(USERNAME, PASSWORD))
+
+    srv = cluster['master']
+    srv.conn.eval("""
+        local auth = require('cartridge.auth')
+        local res, err = auth.add_user('{}', '{}')
+        assert(res, tostring(err))
+    """.format(USERNAME, PASSWORD))
 
     lsid = _login(srv, USERNAME, PASSWORD).cookies['lsid']
 
@@ -514,8 +525,9 @@ def test_cookie_expiry(cluster, disable_auth):
     USERNAME = 'Hen'
     PASSWORD = 'White Platinum'
     srv.conn.eval("""
-        local auth_mocks = require('auth-mocks')
-        assert(auth_mocks.add_user('{}', '{}'))
+        local auth = require('cartridge.auth')
+        local res, err = auth.add_user('{}', '{}')
+        assert(res, tostring(err))
     """.format(USERNAME, PASSWORD))
 
     lsid = _login(srv, USERNAME, PASSWORD).cookies['lsid']
