@@ -46,6 +46,7 @@ build = {
             ['cluster.webui.api-topology'] = 'cluster/webui/api-topology.lua',
             ['cluster.webui.gql-stat'] = 'cluster/webui/gql-stat.lua',
             ['cluster.webui.gql-boxinfo'] = 'cluster/webui/gql-boxinfo.lua',
+            ['cluster.feedback'] = 'cluster/feedback.lua',
             ['cluster.argparse'] = 'cluster/argparse.lua',
             ['cluster.topology'] = 'cluster/topology.lua',
             ['cluster.bootstrap'] = 'cluster/bootstrap.lua',

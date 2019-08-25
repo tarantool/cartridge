@@ -22,6 +22,26 @@ file(GLOB_RECURSE LUA_FILES
   "${CMAKE_CURRENT_SOURCE_DIR}/cluster/*.lua"
 )
 
+## VERSION ####################################################################
+###############################################################################
+
+execute_process(
+  COMMAND git describe --tags --always
+  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+  OUTPUT_VARIABLE GIT_DESCRIBE
+  ERROR_QUIET
+)
+
+if (NOT GIT_DESCRIBE)
+  set(GIT_DESCRIBE "unknown")
+endif()
+
+configure_file (
+  "${PROJECT_SOURCE_DIR}/cluster/VERSION.lua.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/VERSION.lua"
+)
+
 ## Webui ######################################################################
 ###############################################################################
 
@@ -105,4 +125,7 @@ add_test(
 ## Install ####################################################################
 ###############################################################################
 
-install(CODE "")
+install(
+  FILES ${CMAKE_CURRENT_BINARY_DIR}/VERSION.lua
+  DESTINATION ${TARANTOOL_INSTALL_LUADIR}/${PROJECT_NAME}/
+)

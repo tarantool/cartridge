@@ -40,6 +40,12 @@ local e_http = errors.new_class('Http initialization failed')
 
 local DEFAULT_CLUSTER_COOKIE = 'secret-cluster-cookie'
 
+local _ = require('cluster.feedback')
+local ok, VERSION = pcall(require, 'cluster.VERSION')
+if not ok then
+    VERSION = 'unknown'
+end
+
 --- Vshard storage group configuration.
 --
 -- Every vshard storage must be assigned to a group.
@@ -494,6 +500,8 @@ local function bootstrap_from_scratch(roles, uuids, labels, vshard_group)
 end
 
 return {
+    VERSION = VERSION,
+
     cfg = cfg,
     bootstrap = bootstrap_from_scratch,
 
