@@ -2,7 +2,7 @@ package = 'cartridge'
 version = 'scm-1'
 source  = {
     url = 'git+https://github.com/rosik/cartridge.git',
-    branch = 'pre-release',
+    branch = 'master',
 }
 dependencies = {
     'lua >= 5.1',
