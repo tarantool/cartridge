@@ -484,7 +484,7 @@ local function cluster_is_healthy()
             )
         elseif (member.payload.uuid ~= instance_uuid) then
             return nil, string.format(
-                '%s uuid mismath: expected %s, have %s',
+                '%s uuid mismatch: expected %s, have %s',
                 server.uri, instance_uuid, member.payload.uuid
             )
         elseif (member.payload.error ~= nil) then
