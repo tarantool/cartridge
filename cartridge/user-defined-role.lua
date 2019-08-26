@@ -8,7 +8,7 @@
 -- @tfield string role_name
 
 --- Hidden role flag. aren't listed in
--- `cluster.admin.get_replicasets().roles` and therefore in WebUI.
+-- `cartridge.admin.get_replicasets().roles` and therefore in WebUI.
 -- Hidden roled are supposed to be a dependency for another role.
 -- @tfield boolean hidden
 

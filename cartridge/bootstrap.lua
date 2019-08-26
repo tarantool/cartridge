@@ -84,7 +84,7 @@ local function validate_vshard_groups(conf)
         then
             log.warn(
                 "WARNING: clusterwide config defines bucket_count=%d," ..
-                " cluster.cfg value %d is ignored",
+                " cartridge.cfg value %d is ignored",
                 conf.vshard.bucket_count,
                 boot_opts.bucket_count
             )
@@ -92,12 +92,12 @@ local function validate_vshard_groups(conf)
     elseif (conf.vshard_groups == nil) and (boot_opts.vshard_groups ~= nil) then
         return nil, e_conflicting_groups:new(
             "clusterwide config defines no vshard_groups," ..
-            " which doesn't match cluster.cfg"
+            " which doesn't match cartridge.cfg"
         )
     elseif (conf.vshard_groups ~= nil) and (boot_opts.vshard_groups == nil) then
         return nil, e_conflicting_groups:new(
             "clusterwide config defines vshard_groups=%s," ..
-            " which doesn't match cluster.cfg",
+            " which doesn't match cartridge.cfg",
             json.encode(fun.zip(conf.vshard_groups):totable())
         )
     elseif (conf.vshard_groups ~= nil) and (boot_opts.vshard_groups ~= nil) then
@@ -106,7 +106,7 @@ local function validate_vshard_groups(conf)
             if boot_vsgroup == nil then
                 return nil, e_conflicting_groups:new(
                     "clusterwide config defines vsgroup %q," ..
-                    " missing from cluster.cfg", name
+                    " missing from cartridge.cfg", name
                 )
             end
 
@@ -119,7 +119,7 @@ local function validate_vshard_groups(conf)
             and bucket_count ~= conf_vsgroup.bucket_count then
                 log.warn(
                     "WARNING: clusterwide config sets %s.bucket_count=%d," ..
-                    " cluster.cfg value %d is ignored",
+                    " cartridge.cfg value %d is ignored",
                     conf_vsgroup.bucket_count,
                     bucket_count
                 )
