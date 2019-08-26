@@ -202,7 +202,7 @@ local function hmac(hashfun, blocksize, key, message)
     return hashfun(opad .. hashfun(ipad .. message))
 end
 
-local function create_cookie(uid)
+local function create_cookie_headers(uid)
     checks('string')
     local ts = tostring(fiber.time())
     local key = cluster_cookie.cookie()
@@ -217,7 +217,16 @@ local function create_cookie(uid)
     }
 
     local raw = msgpack.encode(cookie)
-    return digest.base64_encode(raw, {nopad = true, nowrap = true, urlsafe = true})
+    local lsid = digest.base64_encode(raw,
+        {nopad = true, nowrap = true, urlsafe = true}
+    )
+
+    return {
+        ['set-cookie'] = string.format(
+            'lsid=%s; Max-Age=%d', lsid,
+            get_params().cookie_max_age
+        )
+    }
 end
 
 local function get_cookie_uid(raw)
@@ -278,7 +287,12 @@ local function get_basic_auth_uid(auth)
     end
 
     if username == ADMIN_USER.username then
-        return password == cluster_cookie.cookie()
+        local ok = password == cluster_cookie.cookie()
+        if ok then
+            return username
+        else
+            return nil
+        end
     end
 
     local ok = vars.callbacks.check_password(username, password)
@@ -311,12 +325,7 @@ local function login(req)
         if password == cluster_cookie.cookie() then
             return {
                 status = 200,
-                headers = {
-                    ['set-cookie'] = string.format('lsid=%s; Max-Age=%d',
-                                                   create_cookie(username),
-                                                   get_params().cookie_max_age
-                    )
-                }
+                headers = create_cookie_headers(username),
             }
         else
             return {
@@ -327,7 +336,7 @@ local function login(req)
 
     if vars.callbacks.check_password == nil then
         return {
-            status = 200,
+            status = 403,
         }
     end
 
@@ -347,12 +356,7 @@ local function login(req)
     if ok then
         return {
             status = 200,
-            headers = {
-                ['set-cookie'] = string.format('lsid=%s; Max-Age=%d',
-                    create_cookie(username),
-                    get_params().cookie_max_age
-                )
-            }
+            headers = create_cookie_headers(username),
         }
     elseif err ~= nil then
         log.error('%s', err)
@@ -413,14 +417,15 @@ end
 -- @treturn[2] table Error description
 local function add_user(username, password, fullname, email)
     checks('string', 'string', '?string', '?string')
-    if vars.callbacks.add_user == nil then
-        return nil, e_callback:new("add_user() callback isn't set")
-    end
-
-    if username == cluster_cookie.username() then
+    if username == ADMIN_USER.username then
         return nil, e_callback:new(
             "add_user() can't override integrated superuser '%s'",
-            username)
+            username
+        )
+    end
+
+    if vars.callbacks.add_user == nil then
+        return nil, e_callback:new("add_user() callback isn't set")
     end
 
     return e_add_user:pcall(function()
@@ -494,14 +499,15 @@ end
 -- @treturn[2] table Error description
 local function edit_user(username, password, fullname, email)
     checks('string', '?string', '?string', '?string')
-    if vars.callbacks.edit_user == nil then
-        return nil, e_callback:new("edit_user() callback isn't set")
-    end
-
     if username == ADMIN_USER.username then
         return nil, e_callback:new(
             "edit_user() can't change integrated superuser '%s'",
-            username)
+            username
+        )
+    end
+
+    if vars.callbacks.edit_user == nil then
+        return nil, e_callback:new("edit_user() callback isn't set")
     end
 
     return e_edit_user:pcall(function()
@@ -683,13 +689,7 @@ local function check_request(req)
         and auth_cfg.cookie_renew_age >= 0
         and fiber.time() - cookie_ts > auth_cfg.cookie_renew_age
         then
-            resp['headers'] = {
-                ['set-cookie'] = string.format(
-                    'lsid=%s; Max-Age=%d',
-                    create_cookie(username),
-                    auth_cfg.cookie_max_age
-                )
-            }
+            resp['headers'] = create_cookie_headers(username)
         end
 
         return true, resp
