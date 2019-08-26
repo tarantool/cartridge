@@ -133,7 +133,9 @@ end
 --
 -- @tparam ?number opts.bucket_count
 --  bucket count for vshard cluster. See vshard doc for more details.
---  (default: 30000)
+--  (default: 30000, overridden by
+--  env `TARANTOOL_BUCKET_COUNT`,
+--  args `--bucket-count`)
 --
 -- @tparam ?{[string]=VshardGroupParams,...} opts.vshard_groups
 --  vshard storage groups, table keys used as names

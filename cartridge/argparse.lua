@@ -85,6 +85,7 @@ local cluster_opts = {
     cluster_cookie = 'string', -- **string**
     console_sock = 'string', -- **string**
     auth_enabled = 'boolean', -- **boolean**
+    bucket_count = 'number', -- **number**
 }
 
 --- Common [box.cfg](https://www.tarantool.io/en/doc/latest/reference/configuration/) tuning options.
