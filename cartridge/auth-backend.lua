@@ -6,10 +6,7 @@ local checks = require('checks')
 local errors = require('errors')
 local uuid = require('uuid')
 local digest = require('digest')
-local crypto = require('crypto')
 local utils = require('cartridge.utils')
-
-local vars = require('cartridge.vars').new('cartridge.auth-backend')
 
 local SALT_LENGTH = 16
 
@@ -39,7 +36,7 @@ local function create_password(password)
     }
 end
 
-local function should_password_update(password_data)
+local function should_password_update(_)
     return true
 end
 
