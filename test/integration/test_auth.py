@@ -151,11 +151,17 @@ def test_login(cluster, auth, alias):
                 }
             }
         """
-        obj = srv.graphql(req,
+
+        assert srv.graphql(req,
             variables={ 'username': USERNAME },
             cookies={ 'lsid': lsid }
-        )
-        assert obj['errors'][0]['message'] == "user can not remove himself"
+        )['errors'][0]['message'] == "user can not remove himself"
+
+        assert srv.graphql(req,
+            variables={ 'username': 'admin' },
+            cookies={ 'lsid': lsid }
+        )['errors'][0]['message'] == \
+            "remove_user() can't delete integrated superuser 'admin'"
 
         assert _login(srv, USERNAME, PASSWORD).status_code == 200
 
