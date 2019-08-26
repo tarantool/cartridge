@@ -37,6 +37,7 @@ build = {
             ['cartridge.vars'] = 'cartridge/vars.lua',
             ['cartridge.pool'] = 'cartridge/pool.lua',
             ['cartridge.auth'] = 'cartridge/auth.lua',
+            ['cartridge.auth-backend'] = 'cartridge/auth-backend.lua',
             ['cartridge.admin'] = 'cartridge/admin.lua',
             ['cartridge.utils'] = 'cartridge/utils.lua',
             ['cartridge.webui'] = 'cartridge/webui.lua',
