@@ -523,7 +523,7 @@ local function join_server(args)
         -- TODO:
         --  There is a race condition:
         --  The assertion may fail while "Configuration is being verified".
-        --  See `cluster.bootstrap.from_snapshot()`.
+        --  See `cartridge.bootstrap.from_snapshot()`.
         assert(confapplier.get_readonly() ~= nil)
 
         local ok, err = confapplier.patch_clusterwide({topology = topology_cfg})
@@ -565,7 +565,6 @@ end
 --- Edit an instance.
 --
 -- @function edit_server
--- @local
 -- @tparam table args
 -- @tparam string args.uuid
 -- @tparam ?string args.uri

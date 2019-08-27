@@ -29,7 +29,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 
-- All the project renamed to `cartrifge`
+- The project renamed to **cartridge**.
+  Use `require('cartridge')` instead of `require('cluster')`.
+  All submodules are renamed too.
+  **(incompatible change)**
+
+- Submodule `cluster.test_helpers` renamed to `cartridge.test-helpers` for consistency.
   **(incompatible change)**
 
 - Modifying auth params with GraphQL before the cluster was bootstrapped is now
@@ -55,7 +60,35 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   Otherwise default `<PORT> = 3301` is used.
 
 - Removed user `cluster`, which was used internally for orchestration over netbox.
-  Tarantool built-in user `admin` is used instead now.
+  Tarantool built-in user `admin` is used instead now. It can also be used for HTTP
+  authentication to access WebUI. Cluster cookie is used as a password in both cases.
+
+### Removed
+
+Two-layer table structure in API, which was deprecated earlier, is now removed completely:
+
+- `cartridge.service_registry.*`
+- `cartridge.confapplier.*`
+- `cartridge.admin.*`
+
+Instead you can use top-level functions:
+
+- `cartridge.config_get_readonly`
+- `cartridge.config_get_deepcopy`
+- `cartridge.config_patch_clusterwide`
+- `cartridge.service_get`
+- `cartridge.admin_get_servers`
+- `cartridge.admin_get_replicasets`
+- `cartridge.admin_probe_server`
+- `cartridge.admin_join_server`
+- `cartridge.admin_edit_server`
+- `cartridge.admin_expel_server`
+- `cartridge.admin_enable_servers`
+- `cartridge.admin_disable_servers`
+- `cartridge.admin_edit_replicaset`
+- `cartridge.admin_get_failover`
+- `cartridge.admin_enable_failover`
+- `cartridge.admin_disable_failover`
 
 ## [0.10.0] - 2019-08-01
 

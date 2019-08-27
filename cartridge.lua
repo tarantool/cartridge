@@ -473,6 +473,7 @@ end
 -- Later, you can join other instances using `cartridge.admin`.
 --
 -- @function bootstrap
+-- @local
 -- @tparam {string,...} roles
 --   roles to be enabled on the current instance
 -- @tparam table uuids
@@ -510,93 +511,127 @@ return {
     cfg = cfg,
     bootstrap = bootstrap_from_scratch,
 
-    --- Shorthand for `cartridge.admin` module.
-    -- @field cartridge.admin
-    admin = admin,
-
     --- Check cluster health.
     -- It is healthy if all instances are healthy.
     -- @function is_healthy
     -- @treturn boolean
     is_healthy = topology.cluster_is_healthy,
 
+--- Cluster administration.
+-- @refer cartridge.admin
+-- @section admin
 
-    --- Clusterwide configuration.
-    -- See `cartridge.confapplier` module for details.
-    -- @section confapplier
+    --- .
+    -- @field .
+    -- @refer cartridge.admin.ServerInfo
+    -- @table ServerInfo
 
-    --- Shorthand for `cartridge.confapplier.get_readonly`.
-    --- @function config_get_readonly
+    --- .
+    -- @field .
+    -- @refer cartridge.admin.ReplicasetInfo
+    -- @table ReplicasetInfo
+
+    --- .
+    -- @refer cartridge.admin.get_servers
+    -- @function admin_get_servers
+    admin_get_servers = admin.get_servers,
+
+    --- .
+    -- @refer cartridge.admin.get_replicasets
+    -- @function admin_get_replicasets
+    admin_get_replicasets = admin.get_replicasets,
+
+    --- .
+    -- @refer cartridge.admin.probe_server
+    -- @function admin_probe_server
+    admin_probe_server = admin.probe_server,
+
+    --- .
+    -- @refer cartridge.admin.join_server
+    -- @function admin_join_server
+    admin_join_server = admin.join_server,
+
+    --- .
+    -- @refer cartridge.admin.edit_server
+    -- @function admin_edit_server
+    admin_edit_server = admin.edit_server,
+
+    --- .
+    -- @refer cartridge.admin.expel_server
+    -- @function admin_expel_server
+    admin_expel_server = admin.expel_server,
+
+    --- .
+    -- @refer cartridge.admin.enable_servers
+    -- @function admin_enable_servers
+    admin_enable_servers = admin.enable_servers,
+
+    --- .
+    -- @refer cartridge.admin.disable_servers
+    -- @function admin_disable_servers
+    admin_disable_servers = admin.disable_servers,
+
+    --- .
+    -- @refer cartridge.admin.edit_replicaset
+    -- @function admin_edit_replicaset
+    admin_edit_replicaset = admin.edit_replicaset,
+
+    --- .
+    -- @refer cartridge.admin.get_failover_enabled
+    -- @function admin_get_failover
+    admin_get_failover = admin.get_failover_enabled,
+
+    --- Enable failover.
+    -- @function admin_enable_failover
+    admin_enable_failover = function()
+        return admin.set_failover_enabled(true)
+    end,
+
+    --- Disable failover.
+    -- @function admin_disable_failover
+    admin_disable_failover = function()
+        return admin.set_failover_enabled(false)
+    end,
+
+--- Clusterwide configuration.
+-- @refer cartridge.confapplier
+-- @section confapplier
+
+    --- .
+    -- @refer cartridge.confapplier.get_readonly
+    -- @function config_get_readonly
     config_get_readonly = confapplier.get_readonly,
 
-    --- Shorthand for `cartridge.confapplier.get_deepcopy`.
-    --- @function config_get_deepcopy
+    --- .
+    -- @refer cartridge.confapplier.get_deepcopy
+    -- @function config_get_deepcopy
     config_get_deepcopy = confapplier.get_deepcopy,
 
-    --- Shorthand for `cartridge.confapplier.patch_clusterwide`.
-    --- @function config_patch_clusterwide
+    --- .
+    -- @refer cartridge.confapplier.patch_clusterwide
+    -- @function config_patch_clusterwide
     config_patch_clusterwide = confapplier.patch_clusterwide,
 
-    confapplier = {
-        get_readonly = function(...)
-            errors.deprecate(
-                'Function "cluster.confapplier.get_readonly()" is deprecated. ' ..
-                'Use "cluster.config_get_readonly()" instead.'
-            )
-            return confapplier.get_readonly(...)
-        end,
+--- Inter-role interaction.
+-- @refer cartridge.service-registry
+-- @section service_registry
 
-        get_deepcopy = function(...)
-            errors.deprecate(
-                'Function "cluster.confapplier.get_deepcopy()" is deprecated. ' ..
-                'Use "cluster.config_get_deepcopy()" instead.'
-            )
-            return confapplier.get_deepcopy(...)
-        end,
-
-        patch_clusterwide = function(...)
-            errors.deprecate(
-                'Function "cluster.confapplier.patch_clusterwide()" is deprecated. ' ..
-                'Use "cluster.config_patch_clusterwide()" instead.'
-            )
-            return confapplier.patch_clusterwide(...)
-        end,
-    },
-
-    --- Inter-role interaction.
-    -- See `cartridge.service-registry` module for details.
-    -- @section service_registry
-
-    --- Shorthand for `cartridge.service-registry.get`.
+    --- .
+    -- @refer cartridge.service-registry.get
     -- @function service_get
     service_get = service_registry.get,
 
-    --- Shorthand for `cartridge.service-registry.set`.
+    --- .
+    -- @refer cartridge.service-registry.set
     -- @function service_set
     service_set = service_registry.set,
 
-    service_registry = {
-        get = function(...)
-            errors.deprecate(
-                'Function "cluster.service_registry.get()" is deprecated. ' ..
-                'Use "cluster.service_get()" instead.'
-            )
-            return service_registry.get(...)
-        end,
-        set = function(...)
-            errors.deprecate(
-                'Function "cluster.service_registry.set()" is deprecated. ' ..
-                'Use "cluster.service_set()" instead.'
-            )
-            return service_registry.set(...)
-        end,
-    },
+--- Cross-instance calls.
+-- @refer cartridge.rpc
+-- @section rpc
 
-    --- Cross-instance calls.
-    -- See `cartridge.rpc` module for details.
-    -- @section rpc
-
-    --- Shorthand for `cartridge.rpc.call`.
+    --- .
+    -- @refer cartridge.rpc.call
     -- @function rpc_call
     rpc_call = rpc.call,
 }
