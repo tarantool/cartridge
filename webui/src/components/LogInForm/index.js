@@ -9,6 +9,7 @@ import Button from 'src/components/Button';
 import { BaseModal } from '../Modal';
 import { FieldConstructor, FormContainer } from '../FieldGroup';
 import InputText from '../InputText';
+import Alert from '../Alert';
 import Text from '../Text';
 import { ModalInfoContainer } from '../styled'
 
@@ -41,9 +42,7 @@ const styles = {
     width: 100%;
   `,
   error: css`
-    min-height: 24px;
-    margin: 0;
-    color: #f5222d;
+    margin-bottom: 30px;
   `,
   actionButtons: css`
     display: flex;
@@ -130,7 +129,11 @@ class LogInForm extends React.Component {
                 error={touched[field] && errors[field]}
               />
             )}
-            <p className={styles.error}>{error || errors.common}</p>
+            {error || errors.common ? (
+              <Alert type="error" className={styles.error}>
+                <Text variant="basic">{error || errors.common}</Text>
+              </Alert>
+            ) : null}
             <div className={styles.actionButtons}>
               {onClose && <Button intent="base" onClick={onClose} className={styles.cancelButton}>Cancel</Button>}
               <Button intent="primary" type='submit'>Login</Button>

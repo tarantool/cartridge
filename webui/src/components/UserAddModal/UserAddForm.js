@@ -2,6 +2,8 @@ import React from 'react';
 import { connect } from 'react-redux';
 import Button from 'src/components/Button';
 import Input from 'src/components/Input';
+import Alert from 'src/components/Alert';
+import Text from 'src/components/Text';
 import { css } from 'emotion';
 import { addUser } from 'src/store/actions/users.actions';
 import { Formik, Form } from 'formik';
@@ -18,9 +20,7 @@ const schema = Yup.object().shape({
 
 const styles = {
   error: css`
-    min-height: 24px;
-    margin: 0 0 24px;
-    color: #f5222d;
+    margin-bottom: 30px;
   `,
   actionButtons: css`
     display: flex;
@@ -97,7 +97,11 @@ class UserAddForm extends React.Component {
                 error={touched[field] && errors[field]}
               />
             )}
-            <p className={styles.error}>{error || errors.common}</p>
+            {error || errors.common ? (
+              <Alert type="error" className={styles.error}>
+                <Text variant="basic">{error || errors.common}</Text>
+              </Alert>
+            ) : null}
             <div className={styles.actionButtons}>
               {onClose && <Button intent="base" onClick={onClose} className={styles.cancelButton}>Cancel</Button>}
               <Button intent="primary" type='submit'>Add</Button>
