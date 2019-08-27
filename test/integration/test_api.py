@@ -593,13 +593,13 @@ def test_join_server(cluster, expelled, helpers):
                 instance_uuid: "dddddddd-dddd-4000-b000-000000000001"
                 replicaset_uuid: "dddddddd-0000-4000-b000-000000000000"
                 roles: ["vshard-storage"]
-                vshard_group: "unknown"
+                replicaset_weight: -0.3
             )
         }
     """)
     assert obj['errors'][0]['message'] == \
-        'replicasets[dddddddd-0000-4000-b000-000000000000] can\'t be added' + \
-        ' to vshard_group "unknown", cluster doesn\'t have any'
+        '''replicasets[dddddddd-0000-4000-b000-000000000000].weight''' + \
+        ''' must be non-negative, got -0.3'''
 
     obj = cluster['router'].graphql("""
         mutation {
@@ -607,6 +607,22 @@ def test_join_server(cluster, expelled, helpers):
                 uri: "localhost:33003"
                 instance_uuid: "dddddddd-dddd-4000-b000-000000000001"
                 replicaset_uuid: "dddddddd-0000-4000-b000-000000000000"
+                roles: ["vshard-storage"]
+                vshard_group: "unknown"
+            )
+        }
+    """)
+    assert obj['errors'][0]['message'] == \
+        '''replicasets[dddddddd-0000-4000-b000-000000000000] can't be added''' + \
+        ''' to vshard_group "unknown", cluster doesn't have any'''
+
+    obj = cluster['router'].graphql("""
+        mutation {
+            join_server(
+                uri: "localhost:33003"
+                instance_uuid: "dddddddd-dddd-4000-b000-000000000001"
+                replicaset_uuid: "dddddddd-0000-4000-b000-000000000000"
+                replicaset_alias: "spare-set"
                 roles: ["vshard-storage"]
             )
         }
@@ -623,7 +639,7 @@ def test_join_server(cluster, expelled, helpers):
                 uri
                 uuid
                 status
-                replicaset { uuid status roles weight }
+                replicaset { alias uuid status roles weight }
             }
         }
     """)
@@ -636,6 +652,7 @@ def test_join_server(cluster, expelled, helpers):
         'uuid': 'dddddddd-dddd-4000-b000-000000000001',
         'status': 'healthy',
         'replicaset': {
+            'alias': 'spare-set',
             'uuid': 'dddddddd-0000-4000-b000-000000000000',
             'roles': ["vshard-storage"],
             'status': 'healthy',
