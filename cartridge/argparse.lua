@@ -161,7 +161,7 @@ local function load_file(filename)
     end
 
     local file_sections, err
-    if filename:endswith('yml') then
+    if filename:endswith('.yml') or filename:endswith('.yaml') then
         local ok, ret = pcall(yaml.decode, data)
         if ok then
             file_sections = ret
@@ -184,7 +184,10 @@ local function load_file(filename)
 end
 
 local function load_dir(dirname)
-    local files = fio.glob(fio.pathjoin(dirname, '*.yml'))
+    local files = {}
+    utils.table_append(files, fio.glob(fio.pathjoin(dirname, '*.yml')))
+    utils.table_append(files, fio.glob(fio.pathjoin(dirname, '*.yaml')))
+    table.sort(files)
 
     local ret = {}
     local origin = {}
