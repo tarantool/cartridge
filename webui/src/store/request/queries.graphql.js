@@ -385,11 +385,11 @@ mutation createReplicaset (
   $weight: Float
 ) {
   createReplicasetResponse: join_server(
-    alias: $alias
+    replicaset_alias: $alias
     uri: $uri
     roles: $roles
     vshard_group: $vshard_group
-    weight: $weight
+    replicaset_weight: $weight
   )
 }
 `;

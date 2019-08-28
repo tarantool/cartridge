@@ -4,7 +4,9 @@ import { connect } from 'react-redux';
 import { css } from 'emotion';
 import { Formik } from 'formik';
 import InputText from 'src/components/InputText';
+import Alert from 'src/components/Alert';
 import Button from 'src/components/Button';
+import Text from 'src/components/Text';
 import PopupFooter from 'src/components/PopupFooter';
 import { probeServer } from 'src/store/actions/clusterPage.actions';
 import type { ProbeServerActionCreator } from 'src/store/actions/clusterPage.actions';
@@ -12,7 +14,15 @@ import Modal from 'src/components/Modal';
 
 const styles = {
   formInner: css`
-    padding: 16px;
+    padding: 0 16px 16px;
+  `,
+  error: css`
+    margin-bottom: 16px;
+  `,
+  text: css`
+    display: block;
+    margin-bottom: 16px;
+    color: rgba(0, 0, 0, 0.65);
   `
 };
 
@@ -47,8 +57,11 @@ class ProbeServerModal extends React.PureComponent<ProbeServerModalProps> {
             handleSubmit
           }) => (
             <form onSubmit={handleSubmit}>
-              {error}
               <div className={styles.formInner}>
+                {error && <Alert className={styles.error} type='error'><Text tag='span'>{error}</Text></Alert>}
+                <Text className={styles.text}>
+                  Probe a server if it wasn't discovered automatically by UDP broadcast.
+                </Text>
                 <InputText
                   name='uri'
                   value={values.uri}

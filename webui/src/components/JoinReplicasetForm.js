@@ -3,8 +3,10 @@ import React from 'react';
 import { css, cx } from 'react-emotion';
 import { Formik } from 'formik';
 
+import LeaderFlagSmall from 'src/components/LeaderFlagSmall';
 import SelectedServersList from 'src/components/SelectedServersList';
 import Text from 'src/components/Text';
+import Tooltip from 'src/components/Tooltip';
 import Scrollbar from 'src/components/Scrollbar';
 import RadioButton from 'src/components/RadioButton';
 import Button from 'src/components/Button';
@@ -13,7 +15,7 @@ import PopupFooter from 'src/components/PopupFooter';
 import ReplicasetRoles from 'src/components/ReplicasetRoles';
 import FormField from 'src/components/FormField';
 import InputText from 'src/components/InputText';
-import { IconSearch } from 'src/components/Icon';
+import { IconInfo, IconSearch } from 'src/components/Icon';
 import type {
   Server,
   Replicaset
@@ -73,12 +75,31 @@ const styles = {
     max-width: calc(100% - 24px - 150px);
   `,
   replicasetServersCount: css`
-    flex-basis: 150px;
+    flex-basis: 120px;
     text-align: right;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
   `,
   roles: css`
     flex-basis: 100%;
     margin-top: 8px;
+  `,
+  replicasetServersTooltip: css`
+    padding: 0;
+    margin: 8px 0;
+    list-style: none;
+  `,
+  tooltipListItem: css`
+    color: #ffffff;
+    margin-bottom: 8px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  `,
+  tooltipLeaderFlag: css`
+    margin-left: 28px;
   `
 }
 
@@ -113,6 +134,19 @@ class JoinReplicasetForm extends React.Component<JoinReplicasetFormProps> {
   componentWillUnmount () {
     this.props.setFilter('');
   };
+
+  renderServersTooltipContent = (servers?: Server[], masterUuid: string) => (
+    <ul className={styles.replicasetServersTooltip}>
+      {(servers || []).map(({ alias, uuid }) => (
+        <Text className={styles.tooltipListItem} variant='p' tag='li'>
+          {alias}
+          {masterUuid === uuid && (
+            <LeaderFlagSmall className={styles.tooltipLeaderFlag} />
+          )}
+        </Text>
+      ))}
+    </ul>
+  );
 
   render() {
     const {
@@ -174,7 +208,13 @@ class JoinReplicasetForm extends React.Component<JoinReplicasetFormProps> {
                       />
                     )}
                   >
-                    {filteredReplicasetList && filteredReplicasetList.map(({ alias, servers, uuid, roles }) => (
+                    {filteredReplicasetList && filteredReplicasetList.map(({
+                      alias,
+                      servers,
+                      uuid,
+                      roles,
+                      master
+                    }) => (
                       <React.Fragment>
                         <RadioButton
                           onChange={handleChange}
@@ -186,10 +226,16 @@ class JoinReplicasetForm extends React.Component<JoinReplicasetFormProps> {
                         >
                           {alias || uuid}
                         </RadioButton>
-                        <Text className={styles.replicasetServersCount} variant='h5' upperCase tag='span'>
-                          <b>{servers.length}</b>
-                          {` active server${servers.length > 1 ? 's' : ''}`}
-                        </Text>
+                        <Tooltip
+                          className={styles.replicasetServersCount}
+                          content={this.renderServersTooltipContent(servers, master.uuid)}
+                        >
+                          <IconInfo />
+                          <Text className={styles.too} variant='h5' upperCase tag='span'>
+                            <b>{servers.length}</b>
+                            {` total server${servers.length > 1 ? 's' : ''}`}
+                          </Text>
+                        </Tooltip>
                         <ReplicasetRoles className={styles.roles} roles={roles} />
                       </React.Fragment>
                     ))}
@@ -197,11 +243,15 @@ class JoinReplicasetForm extends React.Component<JoinReplicasetFormProps> {
                 </Scrollbar>
               </PopupBody>
               <PopupFooter
+                className={styles.splash}
                 controls={([
                   <Button type='button' onClick={onCancel}>Cancel</Button>,
-                  <Button intent='primary' type='submit' disabled={Object.keys(errors).length}>
-                    Join replica set
-                  </Button>
+                  <Button
+                    disabled={Object.keys(errors).length || !values.replicasetUuid}
+                    intent='primary'
+                    type='submit'
+                    text='Join replica set'
+                  />
                 ])}
               />
             </form>

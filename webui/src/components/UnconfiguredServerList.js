@@ -5,7 +5,7 @@ import { css, cx } from 'react-emotion';
 import { defaultMemoize } from 'reselect';
 import Button from 'src/components/Button';
 import Checkbox from 'src/components/Checkbox';
-import DotIndicator from 'src/components/DotIndicator';
+import HealthStatus from 'src/components/HealthStatus';
 import TiledList from 'src/components/TiledList';
 import Text from 'src/components/Text';
 import UriLabel from 'src/components/UriLabel';
@@ -14,6 +14,7 @@ import type { Server } from 'src/generated/graphql-typing';
 
 const styles = {
   row: css`
+    position: relative;
     display: flex;
     align-items: baseline;
   `,
@@ -76,10 +77,7 @@ class UnconfiguredServerList extends React.PureComponent<UnconfiguredServerListP
               <Text variant='h4' tag='span'>{item.alias}</Text>
               <UriLabel uri={item.uri} />
             </div>
-            <Text className={styles.status} variant='h5' tag='span'>
-              <DotIndicator state={item.status === 'healthy' ? 'good' : 'bad'} />
-              {item.message}
-            </Text>
+            <HealthStatus className={styles.status} status={item.status} message={item.message} />
             <Button
               className={styles.configureBtn}
               icon={IconGear}
