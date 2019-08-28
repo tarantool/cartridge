@@ -4,9 +4,10 @@ import * as React from 'react';
 import { css } from 'react-emotion';
 import Tooltip from 'src/components/Tooltip';
 import Dropdown from 'src/components/Dropdown';
-import { IconBucket, IconChip, IconLink } from 'src/components/Icon';
+import { IconBucket, IconChip } from 'src/components/Icon';
 import ServerLabels, { type Label } from 'src/components/ServerLabels';
 import LeaderFlag from 'src/components/LeaderFlag';
+import UriLabel from 'src/components/UriLabel';
 import ProgressBar from 'src/components/ProgressBar';
 import Text from 'src/components/Text';
 import store from 'src/store/instance'
@@ -33,12 +34,14 @@ const styles = {
   iconMargin: css`
     margin-right: 8px;
   `,
-  uriWrap: css`
-    display: flex;
-    align-items: center;
+  iconMarginSmall: css`
+    margin-right: 4px;
   `,
   uriIcon: css`
     margin-right: 4px;
+  `,
+  uri: css`
+    color: rgba(0, 0, 0, 0.65);
   `,
   memProgress: css`
     width: 183px;
@@ -159,23 +162,18 @@ class ReplicasetServerListItem extends React.PureComponent<
           )}
           <div className={styles.heading}>
             <Text variant='h4'>{alias}</Text>
-            <div className={styles.uriWrap}>
-              <IconLink className={styles.uriIcon} />
-              <Text variant='h5' tag='span'>{uri}</Text>
-            </div>
+            <UriLabel uri={uri} />
           </div>
           <HealthStatus status={status} message={message} />
           <div className={styles.stats}>
-            <div>
-              <IconBucket className={styles.iconMargin} />
-              <Tooltip content={<span>total bucket: <b>{(statistics && statistics.bucketsCount) || 0}</b></span>}>
-                <span>Bucket:<b>{(statistics && statistics.bucketsCount) || 0}</b></span>
-              </Tooltip>
-            </div>
+            <Tooltip content={<span>total bucket: <b>{(statistics && statistics.bucketsCount) || 0}</b></span>}>
+              <IconBucket className={styles.iconMarginSmall} />
+              <Text variant='h5' tag='span'>Bucket: <b>{(statistics && statistics.bucketsCount) || 0}</b></Text>
+            </Tooltip>
             <div>
               <div>
                 <IconChip className={styles.iconMargin} />
-                <span>{usageText}</span>
+                <Text variant='h5' tag='span'>{usageText}</Text>
               </div>
               <ProgressBar
                 className={styles.memProgress}

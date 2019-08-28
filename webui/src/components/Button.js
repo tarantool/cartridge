@@ -33,7 +33,7 @@ const styles = {
 
   base: css`
     border-color: #d9d9d9;
-    background-color: transparent;
+    background-color: white;
     color: rgba(0, 0, 0, 0.65);
 
     &:focus,
@@ -76,7 +76,7 @@ const styles = {
 
   secondary: css`
     border-color: rgba(245, 34, 45, 0.25);
-    background-color: transparent;
+    background-color: white;
     color: rgba(245, 34, 45, 0.65);
 
     &:focus,

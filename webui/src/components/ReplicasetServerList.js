@@ -32,13 +32,6 @@ const styles = {
   iconMargin: css`
     margin-right: 4px;
   `,
-  uriWrap: css`
-    display: flex;
-    align-items: center;
-  `,
-  uriIcon: css`
-    margin-right: 4px;
-  `,
   memProgress: css`
     width: 183px;
     margin-left: 24px;

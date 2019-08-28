@@ -18,6 +18,7 @@ const styles = {
   `,
   softCorners: css `
     border-radius: 4px;
+    margin-bottom: 16px;
   `
 };
 

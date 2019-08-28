@@ -43,7 +43,7 @@ const ServerLabels = ({
 TagsListProps) => (
   <div className={styles.wrapper}>
     {heading && (
-      <Text className={styles.heading} variant='h5' tag='span'>{`${heading}:`}</Text>
+      <Text className={styles.heading} variant='h5' tag='span'><b>{`${heading}:`}</b></Text>
     )}
     <div>
       {(values || []).map(value => (

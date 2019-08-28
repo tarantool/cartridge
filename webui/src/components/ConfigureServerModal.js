@@ -23,7 +23,7 @@ import { filterModalReplicasetListSelector } from 'src/store/selectors/clusterPa
 
 const styles = {
   tabContent: css`
-    padding: 16px 0 0;
+    padding: 24px 0 0;
   `
 }
 

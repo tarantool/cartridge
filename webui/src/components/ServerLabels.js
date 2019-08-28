@@ -15,15 +15,20 @@ export type ServerLabelsProps = {
   highlightingOnHover?: string
 };
 
-const ServerLabels = ({ className, highlightingOnHover, labels, onLabelClick }: ServerLabelsProps) => (
-  <TagsList
-    className={className}
-    heading='Tags'
-    highlightingOnHover={highlightingOnHover}
-    values={labels}
-    renderItem={({ name, value }) => `${name}: ${value}`}
-    onTagClick={onLabelClick}
-  />
-);
+const ServerLabels = ({ className, highlightingOnHover, labels, onLabelClick }: ServerLabelsProps) => {
+  if (!labels || !labels.length)
+    return null;
+
+  return (
+    <TagsList
+      className={className}
+      heading='Tags'
+      highlightingOnHover={highlightingOnHover}
+      values={labels}
+      renderItem={({ name, value }) => `${name}: ${value}`}
+      onTagClick={onLabelClick}
+    />
+  );
+}
 
 export default ServerLabels;

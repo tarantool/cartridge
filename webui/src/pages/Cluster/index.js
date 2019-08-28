@@ -333,11 +333,11 @@ class Cluster extends React.Component<ClusterProps, ClusterState> {
   getReplicasetsTitleCounters = () => {
     const { configured } = this.props.serverCounts;
     const { total, unhealthy } = this.props.replicasetCounts;
-    return [
-      `${total} total`,
-      `${unhealthy} unhealthy `,
-      `${configured} server${configured === 1 ? '' : 's'}`
-    ].join(' | ');
+    return <React.Fragment>
+      <b>{total}</b>{` total | `}
+      <b>{unhealthy}</b>{` unhealthy | `}
+      <b>{configured}</b>{` server${configured === 1 ? '' : 's'}`}
+    </React.Fragment>;
   }
 }
 

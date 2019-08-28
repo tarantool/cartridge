@@ -2,14 +2,18 @@
 import React from 'react';
 import { css, cx } from 'react-emotion';
 import { Formik } from 'formik';
-
+import * as R from 'ramda';
 import SelectedReplicaset from 'src/components/SelectedReplicaset';
 import Text from 'src/components/Text';
+import LeaderFlagSmall from 'src/components/LeaderFlagSmall';
+import { IconLink } from 'src/components/Icon';
 import InputText from 'src/components/InputText';
 import LabeledInput from 'src/components/LabeledInput';
-import { CheckboxField } from 'src/components/Checkbox';
+import Checkbox from 'src/components/Checkbox';
 import RadioButton from 'src/components/RadioButton';
+import Scrollbar from 'src/components/Scrollbar';
 import Button from 'src/components/Button';
+import PopupBody from 'src/components/PopupBody';
 import PopupFooter from 'src/components/PopupFooter';
 import FormField from 'src/components/FormField';
 import type {
@@ -17,20 +21,36 @@ import type {
   Replicaset,
   VshardGroup
 } from 'src/generated/graphql-typing';
+import {
+  getDependenciesString,
+  getRolesDependencies,
+  isVShardGroupInputDisabled,
+  validateForm
+} from 'src/misc/replicasetFormFunctions';
 import { VSHARD_STORAGE_ROLE_NAME } from 'src/constants';
 
 const styles = {
+  popupBody: css`
+    min-height: 100px;
+    height: 80vh;
+    max-height: 480px;
+  `,
   form: css`
+    /* margin-left: -16px;
+    margin-right: -16px; */
+  `,
+  wrap: css`
     display: flex;
     flex-wrap: wrap;
-    margin-left: -16px;
-    margin-right: -16px;
   `,
   input: css`
     margin-bottom: 4px;
   `,
   aliasInput: css`
     width: 50%;
+  `,
+  uriIcon: css`
+    margin-right: 4px;
   `,
   weightInput: css`
     width: 97px;
@@ -39,6 +59,40 @@ const styles = {
     display: block;
     height: 20px;
     color: #F5222D;
+  `,
+  radioWrap: css`
+    display: flex;
+    justify-content: space-between;
+    padding-bottom: 8px;
+    border-bottom: solid 1px lightgray;
+    margin-bottom: 8px;
+
+    &:last-child {
+      padding-bottom: 0;
+      border-bottom: 0;
+    }
+  `,
+  radio: css`
+    flex-basis: 50%;
+    max-width: 50%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  `,
+  serverUriWrap: css`
+    flex-basis: calc(50% - 24px);
+    text-align: right;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  `,
+  leaderFlag: css`
+    flex-shrink: 0;
+    align-self: center;
+  `,
+  splash: css`
+    flex-basis: 100%;
+    max-width: 100%;
   `,
   wideField: css`
     flex-basis: calc(100% - 32px);
@@ -61,28 +115,6 @@ const styles = {
 }
 
 const info = <span>Group disabled not yet included the role of "<b>vshard-storage</b>"</span>
-
-const validateForm = ({
-  alias,
-  roles,
-  vshard_group,
-  weight
-}) => {
-  const errors = {};
-  const numericWeight = Number(weight);
-
-  if (isNaN(numericWeight) || numericWeight < 0 || numericWeight % 1) {
-    errors.weight = 'Field accepts number, ex: 0, 1, 2...'
-  }
-
-  if (alias.length > 63) {
-    errors.alias = 'Alias must not exceed 63 character';
-  } else if (alias.length && !(/^[a-zA-Z0-9-_\.]+$/).test(alias)) {
-    errors.alias = 'Alias must contain only alphanumerics [a-zA-Z], dots (.), underscores (_) or dashes (-)';
-  }
-
-  return errors;
-};
 
 type EditReplicasetFormData = {
   alias: string,
@@ -119,6 +151,7 @@ EditReplicasetFormProps) => {
         alias: replicaset.alias,
         roles: replicaset.roles,
         vshard_group: replicaset.vshard_group,
+        master: replicaset.servers.map(({ uuid }) => uuid),
         weight: replicaset.weight
       }}
       validate={validateForm}
@@ -138,63 +171,123 @@ EditReplicasetFormProps) => {
         handleChange,
         handleBlur,
         handleSubmit,
-        isSubmitting
+        isSubmitting,
+        setFieldValue
       }) => {
         const vshardStorageRoleChecked = values.roles.includes(VSHARD_STORAGE_ROLE_NAME);
+        const activeDependencies = getRolesDependencies(values.roles, knownRoles)
+        const VShardGroupInputDisabled = isVShardGroupInputDisabled(values.roles, replicaset);
 
         return (
           <form className={styles.form} onSubmit={handleSubmit}>
-            <SelectedReplicaset className={styles.wideField} replicaset={replicaset} />
-            <LabeledInput className={styles.wideField} label='Enter name of replica set'>
-              <InputText
-                name='alias'
-                className={cx(
-                  styles.input,
-                  styles.aliasInput
-                )}
-                onChange={handleChange}
-                value={values.alias}
-                error={errors.alias}
-              />
-              <Text variant='p' className={styles.errorMessage}>{errors.alias}</Text>
-            </LabeledInput>
-            <FormField className={styles.wideField} label='Roles' columns={3}>
-              {knownRoles && knownRoles.map(({ name }) => (
-                <CheckboxField
-                  onChange={handleChange}
-                  name='roles'
-                  value={name}
-                >
-                  {name}
-                </CheckboxField>
-              ))}
-            </FormField>
-            <FormField className={styles.vshardGroupField} label='Group' info={info}>
-              {vshard_groups && vshard_groups.map(({ name }) => (
-                <RadioButton
-                  onChange={handleChange}
-                  name='vshard_group'
-                  value={name}
-                  checked={name === values.vshard_group}
-                  disabled={!vshardStorageRoleChecked}
-                >
-                  {name}
-                </RadioButton>
-              ))}
-            </FormField>
-            <LabeledInput className={styles.weightField} label='Weight'>
-              <InputText
-                className={styles.weightInput}
-                name='weight'
-                error={errors.weight}
-                value={values.weight}
-                onChange={handleChange}
-                disabled={!vshardStorageRoleChecked}
-              />
-              <Text variant='p' className={styles.errorMessage}>{errors.weight}</Text>
-            </LabeledInput>
+            <PopupBody className={styles.popupBody}>
+              <Scrollbar>
+                <div className={styles.wrap}>
+                  <SelectedReplicaset className={styles.splash} replicaset={replicaset} />
+                  <LabeledInput className={styles.wideField} label='Enter name of replica set'>
+                    <InputText
+                      name='alias'
+                      className={cx(
+                        styles.input,
+                        styles.aliasInput
+                      )}
+                      onChange={handleChange}
+                      value={values.alias}
+                      error={errors.alias}
+                    />
+                    <Text variant='p' className={styles.errorMessage}>{errors.alias}</Text>
+                  </LabeledInput>
+                  <FormField className={styles.wideField} label='Roles' columns={3}>
+                    {knownRoles && knownRoles.map(({ name, dependencies }) => {
+                      return (
+                        <Checkbox
+                          onChange={() => {
+                            const activeRoles = values.roles.includes(name)
+                              ? values.roles.filter(x => x !== name)
+                              : values.roles.concat([name])
+
+                            const prevDependencies = getRolesDependencies(values.roles, knownRoles);
+                            const rolesWithoutDependencies = activeRoles.filter(
+                              role => !prevDependencies.includes(role)
+                            );
+                            const newDependencies = getRolesDependencies(rolesWithoutDependencies, knownRoles);
+
+                            setFieldValue(
+                              'roles',
+                              R.uniq([...newDependencies, ...rolesWithoutDependencies])
+                            )
+                          }}
+                          name='roles'
+                          value={name}
+                          checked={values.roles.includes(name)}
+                          disabled={activeDependencies.includes(name)}
+                        >
+                          {`${name}${getDependenciesString(dependencies)}`}
+                        </Checkbox>
+                      )
+                    })}
+                  </FormField>
+                  <FormField className={styles.vshardGroupField} label='Group' info={info}>
+                    {vshard_groups && vshard_groups.map(({ name }) => (
+                      <RadioButton
+                        onChange={handleChange}
+                        name='vshard_group'
+                        value={name}
+                        checked={name === values.vshard_group}
+                        disabled={VShardGroupInputDisabled}
+                      >
+                        {name}
+                      </RadioButton>
+                    ))}
+                  </FormField>
+                  <LabeledInput className={styles.weightField} label='Weight'>
+                    <InputText
+                      className={styles.weightInput}
+                      name='weight'
+                      error={errors.weight}
+                      value={values.weight}
+                      onChange={handleChange}
+                      disabled={!vshardStorageRoleChecked}
+                    />
+                    <Text variant='p' className={styles.errorMessage}>{errors.weight}</Text>
+                  </LabeledInput>
+                  <FormField
+                    className={styles.wideField}
+                    itemClassName={styles.radioWrap}
+                    label='Include servers'
+                  >
+                    {replicaset.servers && replicaset.servers.map(({ alias, uri, uuid }) => (
+                      <React.Fragment>
+                        <RadioButton
+                          onChange={() => setFieldValue(
+                            'master',
+                            [
+                              uuid,
+                              ...values.master.filter(v => v !== uuid)
+                            ]
+                          )}
+                          className={styles.radio}
+                          name='replicasetUuid'
+                          value={uuid}
+                          key={uuid}
+                          checked={values.master[0] === uuid}
+                        >
+                          {alias || uuid}
+                        </RadioButton>
+                        {replicaset.master && (replicaset.master.uuid === uuid) && (
+                          <LeaderFlagSmall className={styles.leaderFlag} />
+                        )}
+                        <div className={styles.serverUriWrap}>
+                          <IconLink className={styles.uriIcon} />
+                          <Text variant='h5' tag='span'>{uri}</Text>
+                        </div>
+                      </React.Fragment>
+                    ))}
+                  </FormField>
+                </div>
+              </Scrollbar>
+            </PopupBody>
             <PopupFooter
-              className={styles.wideField}
               controls={([
                 <Button type='button' onClick={onCancel}>Cancel</Button>,
                 <Button

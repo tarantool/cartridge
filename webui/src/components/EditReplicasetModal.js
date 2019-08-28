@@ -5,12 +5,12 @@ import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
 import Modal from 'src/components/Modal';
 import EditReplicasetForm from 'src/components/EditReplicasetForm';
-import ReplicasetEditModal from 'src/components/ReplicasetEditModal';
 import { addSearchParams } from 'src/misc/url';
 import type {
   Role,
   Replicaset,
-  VshardGroup
+  VshardGroup,
+  EditReplicasetMutationVariables
 } from 'src/generated/graphql-typing';
 import { editReplicaset } from 'src/store/actions/clusterPage.actions';
 
@@ -18,7 +18,6 @@ const styles = {
   tabContent: css`
     padding: 16px 0 0;
   `
-
 }
 
 type EditReplicasetModalProps = {
@@ -58,16 +57,11 @@ class EditReplicasetModal extends React.Component<EditReplicasetModalProps> {
           onCancel={this.handleClose}
           loading={loading}
         />
-        <ReplicasetEditModal
-          isLoading={loading}
-          replicasetNotFound={loading ? null : !selectedReplicaset}
-          replicaset={selectedReplicaset}
-        />
       </Modal>
     );
   }
 
-  handleEditReplicasetSubmit = (formData: CreateReplicasetMutationVariables) => {
+  handleEditReplicasetSubmit = (formData: EditReplicasetMutationVariables) => {
     this.props.editReplicaset(formData);
     this.handleClose();
   };

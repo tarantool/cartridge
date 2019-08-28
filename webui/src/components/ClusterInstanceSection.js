@@ -9,7 +9,7 @@ const styles = {
     min-height: 100px;
     height: 70vh;
     max-height: 400px;
-    margin-top: 20px;
+    margin-top: 24px;
     margin-bottom: 40px;
   `,
   listInner: css``,
@@ -79,7 +79,7 @@ const styles = {
       cursor: pointer;
       color: #f5222d;
     }
-  `,
+  `
 };
 
 const fieldsDisplayTypes = {

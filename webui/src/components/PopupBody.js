@@ -10,10 +10,10 @@ const styles = {
   `
 };
 
-const PopupFooter = ({ children, className }) => (
+const PopupBody = ({ children, className }) => (
   <div className={cx(styles.wrap, className)}>
     {children}
   </div>
 );
 
-export default PopupFooter;
+export default PopupBody;

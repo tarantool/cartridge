@@ -23,8 +23,6 @@ const styles = {
   form: css`
     display: flex;
     flex-wrap: wrap;
-    margin-left: -16px;
-    margin-right: -16px;
   `,
   input: css`
     margin-bottom: 4px;
@@ -40,10 +38,17 @@ const styles = {
     height: 20px;
     color: #F5222D;
   `,
+  filter: css`
+    width: 305px;
+  `,
   popupBody: css`
     min-height: 100px;
     height: 80vh;
     max-height: 480px;
+  `,
+  splash: css`
+    flex-basis: 100%;
+    max-width: 100%;
   `,
   wideField: css`
     flex-basis: 100%;
@@ -100,11 +105,11 @@ type JoinReplicasetFormProps = {
   onCancel: () => void,
   onSubmit: (d: JoinReplicasetFormData) => void,
   replicasetList?: Replicaset[],
-  setFilter: (s: srting) => void,
+  setFilter: (s: string) => void,
   selectedServers?: Server[]
 };
 
-class JoinReplicasetForm extends React.Component<JoinReplicasetFormProps, JoinReplicasetFormState> {
+class JoinReplicasetForm extends React.Component<JoinReplicasetFormProps> {
   componentWillUnmount () {
     this.props.setFilter('');
   };
@@ -145,7 +150,7 @@ class JoinReplicasetForm extends React.Component<JoinReplicasetFormProps, JoinRe
             <form className={styles.form} onSubmit={handleSubmit}>
               <PopupBody className={styles.popupBody}>
                 <Scrollbar>
-                  <SelectedServersList className={styles.wideField} serverList={selectedServers} />
+                  <SelectedServersList className={styles.splash} serverList={selectedServers} />
                   <FormField
                     className={styles.wideField}
                     itemClassName={styles.radioWrap}
@@ -160,6 +165,7 @@ class JoinReplicasetForm extends React.Component<JoinReplicasetFormProps, JoinRe
                     )}
                     topRightControls={(
                       <InputText
+                        className={styles.filter}
                         placeholder='Filter by uri, uuid, role, alias or labels'
                         value={filter}
                         onChange={this.handleFilterChange}
@@ -191,7 +197,6 @@ class JoinReplicasetForm extends React.Component<JoinReplicasetFormProps, JoinRe
                 </Scrollbar>
               </PopupBody>
               <PopupFooter
-                className={styles.wideField}
                 controls={([
                   <Button type='button' onClick={onCancel}>Cancel</Button>,
                   <Button intent='primary' type='submit' disabled={Object.keys(errors).length}>

@@ -40,9 +40,25 @@ const styles = {
     margin-right: 12px;
   `,
   vshard: css`
+    position: relative;
     flex-basis: 306px;
     margin-left: 12px;
     margin-right: 12px;
+
+    & > *:first-child {
+      position: relative;
+      margin-right: 17px;
+    }
+
+    & > *:first-child::before {
+      content: '';
+      position: absolute;
+      top: 0px;
+      right: -8px;
+      width: 1px;
+      height: 18px;
+      background-color: #e8e8e8;
+    }
   `,
   editBtn: css`
     margin-left: 12px;
@@ -86,8 +102,11 @@ class ReplicasetList extends React.PureComponent<> {
                 <DotIndicator state={replicaset.status === 'healthy' ? 'good' : 'bad'} />
                 {replicaset.message || replicaset.status}
               </Text>
-              <Text className={styles.vshard} variant='p' tag='span'>
-                {(replicaset.vshard_group || replicaset.weight) && `${replicaset.vshard_group} | ${replicaset.weight}`}
+              <Text className={styles.vshard} variant='p' tag='span' upperCase>
+                {(replicaset.vshard_group || replicaset.weight) && [
+                  <b>{replicaset.vshard_group}</b>,
+                  <b>{replicaset.weight}</b>
+                ]}
               </Text>
               <Button
                 className={styles.editBtn}

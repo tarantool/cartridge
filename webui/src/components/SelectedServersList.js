@@ -2,7 +2,7 @@
 // TODO: split and move to uikit
 import React from 'react';
 import { css, cx } from 'react-emotion';
-import { IconLink } from 'src/components/Icon';
+import UriLabel from 'src/components/UriLabel';
 import Text from 'src/components/Text';
 import type { Server } from 'src/generated/graphql-typing';
 
@@ -36,9 +36,6 @@ const styles = {
   serverListItemUri: css`
     display: flex;
     align-items: center;
-  `,
-  iconMargin: css`
-    margin-right: 8px;
   `
 }
 
@@ -53,7 +50,7 @@ const SelectedServersList = ({ className, serverList }: SelectedServersListProps
     {serverList.map(server => (
       <li className={styles.serversListItem}>
         <Text className={styles.serverListItemAlias} variant='h5' tag='span'>{server.alias}</Text>
-        <Text variant='p' tag='span'><IconLink className={styles.iconMargin} />{server.uri}</Text>
+        <UriLabel uri={server.uri} />
       </li>
     ))}
   </ul>

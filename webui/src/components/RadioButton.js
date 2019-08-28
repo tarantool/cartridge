@@ -41,6 +41,7 @@ const styles = {
   label: css`
     display: flex;
     align-items: center;
+    cursor: pointer;
   `
 };
 

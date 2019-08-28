@@ -8,7 +8,8 @@ import Checkbox from 'src/components/Checkbox';
 import DotIndicator from 'src/components/DotIndicator';
 import TiledList from 'src/components/TiledList';
 import Text from 'src/components/Text';
-import { IconGear, IconLink } from 'src/components/Icon';
+import UriLabel from 'src/components/UriLabel';
+import { IconGear } from 'src/components/Icon';
 import type { Server } from 'src/generated/graphql-typing';
 
 const styles = {
@@ -35,13 +36,6 @@ const styles = {
   `,
   configureBtn: css`
     margin-left: 12px;
-  `,
-  uriWrap: css`
-    display: flex;
-    align-items: center;
-  `,
-  uriIcon: css`
-    margin-right: 4px;
   `
 };
 
@@ -80,10 +74,7 @@ class UnconfiguredServerList extends React.PureComponent<UnconfiguredServerListP
             />
             <div className={styles.heading}>
               <Text variant='h4' tag='span'>{item.alias}</Text>
-              <div className={styles.uriWrap}>
-                <IconLink className={styles.uriIcon} />
-                <Text variant='h5' tag='span'>{item.uri}</Text>
-              </div>
+              <UriLabel uri={item.uri} />
             </div>
             <Text className={styles.status} variant='h5' tag='span'>
               <DotIndicator state={item.status === 'healthy' ? 'good' : 'bad'} />

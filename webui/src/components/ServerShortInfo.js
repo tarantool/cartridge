@@ -5,6 +5,7 @@ import { css } from 'react-emotion';
 import { IconLink } from 'src/components/Icon';
 import LeaderFlag from 'src/components/LeaderFlag';
 import Text from 'src/components/Text';
+import UriLabel from 'src/components/UriLabel';
 import HealthStatus from 'src/components/HealthStatus';
 import { withRouter } from 'react-router-dom'
 
@@ -33,14 +34,7 @@ const styles = {
     position: absolute;
     top: 0;
     left: 3px;
-  `,
-  uriWrap: css`
-    display: flex;
-    align-items: center;
-  `,
-  uriIcon: css`
-    margin-right: 4px;
-  `,
+  `
 };
 
 class ServerInfoMmodal extends React.PureComponent {
@@ -50,7 +44,7 @@ class ServerInfoMmodal extends React.PureComponent {
       uri,
       alias,
       message,
-      master,
+      master
     } = this.props;
 
     return (
@@ -61,10 +55,7 @@ class ServerInfoMmodal extends React.PureComponent {
           )}
           <div className={styles.heading}>
             <Text variant='h4'>{alias}</Text>
-            <div className={styles.uriWrap}>
-              <IconLink className={styles.uriIcon} />
-              <Text variant='h5' tag='span'>{uri}</Text>
-            </div>
+            <UriLabel uri={uri} />
           </div>
           <HealthStatus status={status} message={message} />
         </div>

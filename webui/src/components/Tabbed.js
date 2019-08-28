@@ -9,10 +9,12 @@ const styles = {
     padding: 16px;
     border: none;
     border-bottom: solid 2px transparent;
+    font-family: 'Open Sans', sans-serif;
     font-size: 16px;
     line-height: 16px;
     font-weight: 600;
     color: rgba(0, 0, 0, 0.65);
+    background-color: transparent;
     outline: none;
 
     &:focus {

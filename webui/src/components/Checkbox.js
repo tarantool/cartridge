@@ -42,6 +42,7 @@ const styles = {
   label: css`
     display: flex;
     align-items: center;
+    cursor: pointer;
   `
 };
 
@@ -111,7 +112,7 @@ export const CheckboxField = props => (
           }
         }}
       >
-        {props.value}
+        {props.children || props.value}
       </Checkbox>
     )}
   </Field>
