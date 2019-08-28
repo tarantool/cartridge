@@ -120,7 +120,7 @@ end
 --  If there is more than one IP address available - defaults to "localhost".
 --
 --  When `<PORT>` isn't specified, it's derived as follows:
---  If the `TARANTOOL_INSTANCE_NAME` has numeric suffix `_<N>`, then `<PORT> = 3300+<N>`.
+--  If the `TARANTOOL_INSTANCE_NAME` has numeric prefix `<N>_`, then `<PORT> = 3300+<N>`.
 --  Otherwise default `<PORT> = 3301` is used.
 --
 -- @tparam ?string opts.cluster_cookie
@@ -274,7 +274,7 @@ local function cfg(opts, box_opts)
 
     local port_offset
     if args.instance_name ~= nil then
-        port_offset = tonumber(args.instance_name:match('_(%d+)$'))
+        port_offset = tonumber(args.instance_name:match('(%d+)_$'))
     end
 
     if advertise.host == nil then

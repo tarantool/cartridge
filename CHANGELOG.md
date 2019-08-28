@@ -55,7 +55,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   When `<HOST>` isn't specified, it's detected as the only non-local IP address.
   If it can't be determined or there is more than one IP address available it
   defaults to `"localhost"`.
-  When `<PORT>` isn't specified, it's derived from numeric suffix `_<N>` of
+  When `<PORT>` isn't specified, it's derived from numeric prefix `<N>_` of
   `TARANTOOL_INSTANCE_NAME`: `<PORT> = 3300+<N>`.
   Otherwise default `<PORT> = 3301` is used.
 
