@@ -309,10 +309,8 @@ function g:test_box_opts()
                 slab_alloc_factor = '1.3', -- string -> number
                 log_nonblock = 'false',    -- string -> bool
                 memtx_memory = 100,        -- number -> number
+                listen = 13301,            -- number -> string
                 read_only = true,          -- bool -> bool
-            },
-            number_to_string = {
-                feedback_host = 0,
             },
             boolean_to_string = {
                 feedback_host = false,
@@ -336,6 +334,7 @@ function g:test_box_opts()
         slab_alloc_factor = 1.3,
         log_nonblock = false,
         memtx_memory = 100,
+        listen = '13301',
         read_only = true,
     })
 
@@ -359,10 +358,6 @@ function g:test_box_opts()
 
     check_err('--read-only 1',
         [[TypeCastError: can't typecast read_only="1" to boolean]]
-    )
-
-    check_err('--cfg ./cfg.yml --instance-name number_to_string',
-        [[TypeCastError: invalid configuration parameter feedback_host (string expected, got number)]]
     )
 
     check_err('--cfg ./cfg.yml --instance-name boolean_to_string',
