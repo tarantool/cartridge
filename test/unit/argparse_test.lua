@@ -247,7 +247,7 @@ function g:test_confdir()
         yaml.encode({['default'] = {x = '@default'}})
     )
     utils.file_write(
-        fio.pathjoin(confd, '1-custom.yml'),
+        fio.pathjoin(confd, '1-custom.yaml'),
         yaml.encode({['custom'] = {x = '@custom'}})
     )
 
@@ -267,13 +267,13 @@ function g:test_confdir()
         yaml.encode({['other'] = {x = '@default'}})
     )
     utils.file_write(
-        fio.pathjoin(confd, '1-custom.yml'),
+        fio.pathjoin(confd, '1-custom.yaml'),
         yaml.encode({['other'] = {y = '@custom'}})
     )
 
     local ret = self:run('--cfg ./conflict.d', {}, {ignore_errors = true})
     t.assertStrContains(ret.err, 'ConfDirError: collision of section "other"' ..
-        ' in ./conflict.d/ between 0-default.yml and 1-custom.yml'
+        ' in ./conflict.d/ between 0-default.yml and 1-custom.yaml'
     )
 end
 
