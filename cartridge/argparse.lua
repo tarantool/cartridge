@@ -80,7 +80,7 @@ end
 local cluster_opts = {
     alias = 'string', -- **string**
     workdir = 'string', -- **string**
-    http_port = 'string', -- **string**
+    http_port = 'number', -- **number**
     advertise_uri = 'string', -- **string**
     cluster_cookie = 'string', -- **string**
     console_sock = 'string', -- **string**
@@ -379,6 +379,8 @@ local function get_opts(opts)
             -- ignore
         elseif type(value) == opttype then
             ret[optname] = value
+        elseif type(value) == 'number' and opttype == 'string' then
+            ret[optname] = tostring(value)
         elseif type(value) == 'string' then
             local _value
             if opttype == 'number' then
