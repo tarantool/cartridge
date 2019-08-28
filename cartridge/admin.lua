@@ -19,6 +19,7 @@ local topology = require('cartridge.topology')
 local bootstrap = require('cartridge.bootstrap')
 local vshard_utils = require('cartridge.vshard-utils')
 local confapplier = require('cartridge.confapplier')
+local service_registry = require('cartridge.service-registry')
 
 local e_topology_edit = errors.new_class('Editing cluster topology failed')
 local e_probe_server = errors.new_class('Can not probe server')
@@ -230,6 +231,12 @@ local function get_stat(uri)
             return nil
         end
 
+        local vshard_buckets_count
+        if service_registry.get('vshard-storage') then
+            vshard_buckets_count = _G.vshard.storage.buckets_count()
+        end
+
+
         local slab_info = box.slab.info()
         return {
             items_size = slab_info.items_size,
@@ -243,6 +250,8 @@ local function get_stat(uri)
             arena_size = slab_info.arena_size,
             arena_used = slab_info.arena_used,
             arena_used_ratio = slab_info.arena_used_ratio,
+
+            vshard_buckets_count = vshard_buckets_count,
         }
     end
 
@@ -273,6 +282,7 @@ local function get_info(uri)
 
         local box_cfg = box.cfg
         local box_info = box.info()
+
         local ret = {
             general = {
                 version = box_info.version,

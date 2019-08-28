@@ -68,6 +68,11 @@ local statistics_schema = {
                 description =
                     '= arena_used / arena_size',
             },
+            vshard_buckets_count = {
+                kind = gql_types.int,
+                description =
+                    'Number of buckets active on the storage',
+            },
         }
     }),
     arguments = {},

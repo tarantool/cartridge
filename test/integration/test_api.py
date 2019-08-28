@@ -111,7 +111,8 @@ def test_server_stat_schema(cluster):
     assert field_names == set([
         'items_size', 'items_used', 'items_used_ratio',
         'quota_size', 'quota_used', 'quota_used_ratio',
-        'arena_size', 'arena_used', 'arena_used_ratio'
+        'arena_size', 'arena_used', 'arena_used_ratio',
+        'vshard_buckets_count'
     ])
 
     obj = cluster['router'].graphql("""
@@ -206,6 +207,7 @@ def test_servers(cluster, expelled, helpers):
                 disabled
                 priority
                 replicaset { roles }
+                statistics { vshard_buckets_count }
             }
         }
     """)
@@ -219,6 +221,7 @@ def test_servers(cluster, expelled, helpers):
         'labels': [],
         'priority': 1,
         'disabled': False,
+        'statistics': {'vshard_buckets_count': None},
         'replicaset': {'roles': ['vshard-router']}
     } == helpers.find(servers, 'uri', 'localhost:33001')
     assert {
@@ -228,6 +231,7 @@ def test_servers(cluster, expelled, helpers):
         'labels': [],
         'priority': 1,
         'disabled': False,
+        'statistics': {'vshard_buckets_count': 3000},
         'replicaset': {'roles': ['vshard-storage']}
     } == helpers.find(servers, 'uri', 'localhost:33002')
     assert {
@@ -237,6 +241,7 @@ def test_servers(cluster, expelled, helpers):
         'labels': None,
         'priority': None,
         'disabled': None,
+        'statistics': None,
         'replicaset': None
     } == helpers.find(servers, 'uri', 'localhost:33003')
     assert len(servers) == 4

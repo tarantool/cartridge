@@ -1,5 +1,5 @@
 # source: http://localhost:8081/admin/api
-# timestamp: Tue Aug 27 2019 21:16:49 GMT+0300 (MSK)
+# timestamp: Wed Aug 28 2019 13:29:36 GMT+0300 (Moscow Standard Time)
 
 """Cluster management"""
 type Apicluster {
@@ -270,16 +270,19 @@ type ServerStat {
   """
   items_size: Long!
 
-  """
-  = items_used / slab_count * slab_size (these are slabs used only for tuples, no indexes)
-  """
-  items_used_ratio: String!
+  """Number of buckets active on the storage"""
+  vshard_buckets_count: Int
 
   """
   The maximum amount of memory that the slab allocator can use for both tuples
   and indexes (as configured in the memtx_memory parameter)
   """
   quota_size: Long!
+
+  """
+  = items_used / slab_count * slab_size (these are slabs used only for tuples, no indexes)
+  """
+  items_used_ratio: String!
 
   """The amount of memory that is already distributed to the slab allocator"""
   quota_used: Long!
