@@ -119,9 +119,7 @@ end
 --  When `<HOST>` isn't specified, it's detected as the only non-local IP address.
 --  If there is more than one IP address available - defaults to "localhost".
 --
---  When `<PORT>` isn't specified, it's derived as follows:
---  If the `TARANTOOL_INSTANCE_NAME` has numeric suffix `_<N>`, then `<PORT> = 3300+<N>`.
---  Otherwise default `<PORT> = 3301` is used.
+--  When `<PORT>` isn't specified, default `<PORT> = 3301` is used.
 --
 -- @tparam ?string opts.cluster_cookie
 --  secret used to separate unrelated applications, which
@@ -272,11 +270,6 @@ local function cfg(opts, box_opts)
         return nil, e_init:new('Invalid advertise_uri %q', opts.advertise_uri)
     end
 
-    local port_offset
-    if args.instance_name ~= nil then
-        port_offset = tonumber(args.instance_name:match('_(%d+)$'))
-    end
-
     if advertise.host == nil then
         local ip4_map = {}
         for _, ifaddr in pairs(membership_network.getifaddrs() or {}) do
@@ -307,12 +300,7 @@ local function cfg(opts, box_opts)
     end
 
     if advertise.service == nil then
-        if port_offset ~= nil then
-            advertise.service = 3300 + port_offset
-            log.info('Derived binary_port to be %d', advertise.service)
-        else
-            advertise.service = 3301
-        end
+        advertise.service = 3301
     else
         advertise.service = tonumber(advertise.service)
     end
@@ -368,13 +356,6 @@ local function cfg(opts, box_opts)
     local ok, err = e_init:pcall(auth.set_enabled, auth_enabled)
     if not ok then
         return nil, err
-    end
-
-    if opts.http_port == nil then
-        if port_offset ~= nil then
-            opts.http_port = 8080 + port_offset
-            log.info('Derived http_port to be %d', opts.http_port)
-        end
     end
 
     if opts.http_port ~= nil then
