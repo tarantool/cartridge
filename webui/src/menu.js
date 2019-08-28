@@ -21,7 +21,7 @@ const menuItems = {
         label: 'Cluster',
         path: `/${PROJECT_NAME}/dashboard`,
         selected: false,
-        expanded: true,
+        expanded: false,
         loading: false,
         icon: <IconCluster />
       },
@@ -31,14 +31,13 @@ const menuItems = {
         selected: false,
         expanded: false,
         loading: false,
-        items: [],
         icon: <IconGear className={css`width: 14px; height: 14px; fill: #fff;`} />
       },
       {
         label: 'Configuration files',
         path: `/${PROJECT_NAME}/configuration`,
         selected: false,
-        expanded: true,
+        expanded: false,
         loading: false,
         icon: <IconUsers />
       }

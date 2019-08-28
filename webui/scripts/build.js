@@ -114,28 +114,6 @@ measureFileSizesBeforeBuild(paths.appBuild)
       process.exit(1);
     }
   )
-  .then(
-    () => {
-      const buildFoler = path.relative(process.cwd(), paths.appBuild);
-      const namespaceFolder = buildFoler + '/static/' + moduleConfig.namespace + '/';
-      const files = walkSync(namespaceFolder);
-      const filemap = {};
-      const isEntry = /main.+js$/
-      for (const file of files){
-        const fileName = file.slice(namespaceFolder.length);
-        const fileBody = mainFs.readFileSync(file, { encoding: 'utf8' });
-        filemap[fileName] = {
-          is_entry: isEntry.test(fileName),
-          body: fileBody,
-          mime: mime.lookup(fileName)
-        }
-      }
-      mainFs.writeFileSync(buildFoler + '/bundle.json', JSON.stringify(filemap), { encoding: 'utf8' })
-      console.log('compile bundle.json')
-      cp.execSync('tarantool -l pack-front - build/bundle.json build/bundle.lua')
-      console.log('build bundle.lua')
-    }
-  );
 
 // Create the production build and print the deployment instructions.
 function build(previousFileSizes) {
