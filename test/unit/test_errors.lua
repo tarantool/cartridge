@@ -175,6 +175,7 @@ test:diag('Test successful cartridge.cfg')
 local opts = {
         workdir = '/tmp',
         advertise_uri = 'unused:0',
+        http_enabled = false,
     roles = {
         'cartridge.roles.vshard-storage',
         'cartridge.roles.vshard-router',

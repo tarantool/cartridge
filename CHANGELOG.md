@@ -59,6 +59,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   `TARANTOOL_INSTANCE_NAME`: `<PORT> = 3300+<N>`.
   Otherwise default `<PORT> = 3301` is used.
 
+- Parameter `http_port` is derived from instance name too. If it can't be derived
+  it defaults to 8081. New parameter `http_enabled = false` is used to disable it
+  (by default it's enabled).
+
 - Removed user `cluster`, which was used internally for orchestration over netbox.
   Tarantool built-in user `admin` is used instead now. It can also be used for HTTP
   authentication to access WebUI. Cluster cookie is used as a password in both cases.
