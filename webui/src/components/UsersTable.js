@@ -11,6 +11,7 @@ import {
 } from 'src/store/actions/users.actions';
 import TiledList from './TiledList';
 import Dropdown from './Dropdown';
+import NoData from './NoData';
 
 const styles = {
   clickableRow: css`
@@ -110,7 +111,7 @@ class UsersTable extends React.Component {
 
     const actionButton = actionButtons(implements_edit_user, implements_remove_user)
 
-    return (
+    return items.length ? (
       <TiledList
         itemRender={item =>
           <div
@@ -129,6 +130,8 @@ class UsersTable extends React.Component {
         itemKey='username'
         outer={false}
       />
+    ) : (
+      <NoData />
     );
   }
 }

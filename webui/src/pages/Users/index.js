@@ -5,7 +5,6 @@ import UsersTable from '../../components/UsersTable';
 import SpinnerLoader from '../../components/SpinnerLoader';
 import PageSectionHead, { HeadButton } from 'src/components/PageSectionHead';
 import PageSection from 'src/components/PageSection';
-import { IconAttach } from 'src/components/Icon';
 import UserAddModal from 'src/components/UserAddModal';
 import UserEditModal from 'src/components/UserEditModal';
 import UserRemoveModal from 'src/components/UserRemoveModal';
@@ -28,26 +27,24 @@ const styles = {
   `,
   buttonMargin: css`
     margin-right: 24px;
-    &:last-child{
+    &:last-child {
       margin-right: 0;
     }
   `
 }
-
 
 const Users = ({
   fetchingUserList,
   implements_check_password,
   implements_add_user,
   implements_list_users,
-  showAddUserModal
+  showAddUserModal,
 }) => (
   <SpinnerLoader loading={fetchingUserList}>
     <div className={cx(styles.cardMargin, 'app-content')}>
       <div className={styles.buttons}>
         {implements_check_password && <AuthToggleButton className={styles.buttonMargin} />}
-        {
-          implements_add_user &&
+        {implements_add_user && (
           <Button
             text={'Add user'}
             intent={'primary'}
@@ -55,7 +52,7 @@ const Users = ({
           >
             Add user
           </Button>
-        }
+        )}
       </div>
       <Text variant={'h2'} className={styles.title}>User List</Text>
       {implements_list_users && <UsersTable />}
@@ -81,7 +78,7 @@ const mapStateToProps = ({
   implements_add_user,
   implements_check_password,
   implements_list_users,
-  fetchingUserList
+  fetchingUserList,
 });
 
 export default connect(mapStateToProps, { showAddUserModal })(Users);
