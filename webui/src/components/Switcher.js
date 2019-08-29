@@ -20,7 +20,7 @@ const styles = {
       right: -3px;
       bottom: -3px;
       border: solid 1px rgba(245, 34, 45, 0.55);
-      border-radius: 3px;
+      border-radius: 15px;
     }
   `,
   switcher: css`

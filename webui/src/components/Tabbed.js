@@ -23,7 +23,14 @@ const styles = {
     }
 
     &:focus::before {
-      /* TODO: focus state */
+      content: '';
+      position: absolute;
+      top: -1px;
+      left: -2px;
+      right: -2px;
+      bottom: -4px;
+      border: solid 1px rgba(245, 34, 45, 0.55);
+      border-radius: 3px;
     }
   `,
   activeTab: css`
