@@ -14,6 +14,9 @@ const styles = {
     margin-right: 4px;
   `,
   uri: css`
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     color: rgba(0, 0, 0, 0.65);
   `
 };

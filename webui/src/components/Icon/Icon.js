@@ -7,6 +7,7 @@ const iconSize = '14px';
 
 const styles = {
   icon: css`
+    flex-shrink: 0;
     vertical-align: middle;
     width: ${iconSize};
     height: ${iconSize};

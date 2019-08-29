@@ -2,6 +2,7 @@
 import Icon from './Icon';
 export * from './icons/IconAttach';
 export * from './icons/IconBucket';
+export * from './icons/IconBurger';
 export * from './icons/IconCheckbox';
 export * from './icons/IconChip';
 export * from './icons/IconChevron';

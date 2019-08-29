@@ -60,6 +60,7 @@ const styles = {
   `,
   wideField: css`
     flex-basis: 100%;
+    max-width: 100%;
     margin-left: 16px;
     margin-right: 16px;
   `,

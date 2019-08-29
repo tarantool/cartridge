@@ -5,8 +5,6 @@ import { Formik } from 'formik';
 import * as R from 'ramda';
 import SelectedReplicaset from 'src/components/SelectedReplicaset';
 import Text from 'src/components/Text';
-import LeaderFlagSmall from 'src/components/LeaderFlagSmall';
-import { IconLink } from 'src/components/Icon';
 import InputText from 'src/components/InputText';
 import LabeledInput from 'src/components/LabeledInput';
 import Checkbox from 'src/components/Checkbox';
@@ -50,9 +48,6 @@ const styles = {
   aliasInput: css`
     width: 50%;
   `,
-  uriIcon: css`
-    margin-right: 4px;
-  `,
   weightInput: css`
     width: 97px;
   `,
@@ -73,31 +68,12 @@ const styles = {
       border-bottom: 0;
     }
   `,
-  radio: css`
-    flex-basis: 50%;
-    max-width: 50%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  `,
-  serverUriWrap: css`
-    flex-basis: calc(50% - 24px);
-    text-align: right;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  `,
-  leaderFlag: css`
-    flex-shrink: 0;
-    align-self: center;
-  `,
   splash: css`
     flex-basis: 100%;
     max-width: 100%;
   `,
   wideField: css`
-    flex-basis: calc(100% - 32px);
-    max-width: calc(100% - 32px);
+    flex-basis: 100%;
     margin-left: 16px;
     margin-right: 16px;
   `,
@@ -252,8 +228,8 @@ EditReplicasetFormProps) => {
                     />
                     <Text variant='p' className={styles.errorMessage}>{errors.weight}</Text>
                   </LabeledInput>
-                  <FormField
-                    className={styles.wideField}
+                  <LabeledInput
+                    className={cx('ser', styles.wideField)}
                     itemClassName={styles.radioWrap}
                     label='Include servers'
                   >
@@ -263,7 +239,7 @@ EditReplicasetFormProps) => {
                       onChange={v => setFieldValue('master', v)}
                       serverMap={R.compose(R.map(([val]) => val), R.groupBy(R.prop('uuid')))(replicaset.servers || [])}
                     />
-                  </FormField>
+                  </LabeledInput>
                 </div>
               </Scrollbar>
             </PopupBody>
