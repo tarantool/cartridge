@@ -31,7 +31,7 @@ const menuItems = {
         selected: false,
         expanded: false,
         loading: false,
-        icon: <IconGear className={css`width: 14px; height: 14px; fill: #fff;`} />
+        icon: <IconUsers />
       },
       {
         label: 'Configuration files',
@@ -39,7 +39,7 @@ const menuItems = {
         selected: false,
         expanded: false,
         loading: false,
-        icon: <IconUsers />
+        icon: <IconGear className={css`width: 14px; height: 14px; fill: #fff;`} />
       }
     ]
   }

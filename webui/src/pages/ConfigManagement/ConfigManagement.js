@@ -10,6 +10,8 @@ import { IconDownload } from '../../components/Icon/icons/IconDownload';
 import UploadZone from '../../components/UploadZone';
 import { uploadConfig } from '../../store/actions/clusterPage.actions';
 
+const { AppTitle } = window.tarantool_enterprise_core.components;
+
 const styles = {
   downloadNotice: css`
     margin-bottom: 24px;
@@ -59,6 +61,7 @@ class ConfigManagement extends React.Component {
 
 
     return <div className={styles.container}>
+      <AppTitle title={'Configuration files'}/>
       <Text variant='h2' className={styles.title}>Configuration Management</Text>
 
       <TitledPanel

@@ -7,6 +7,7 @@ import { FieldConstructor, FormContainer } from '../FieldGroup';
 import InputText from '../InputText';
 import { Formik, Form } from 'formik';
 import * as Yup from 'yup';
+import * as R from 'ramda';
 
 
 const schema = Yup.object().shape({
@@ -44,7 +45,7 @@ class UserEditForm extends React.Component {
   submit = async (values, actions) => {
     const { editUser, username } = this.props;
     try {
-      await editUser({ ...values, username });
+      await editUser({ ...R.filter(R.identity, values), username });
     } catch(e) {
       actions.setFieldError('common', e.message)
     } finally{

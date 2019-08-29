@@ -13,6 +13,8 @@ import { showAddUserModal } from 'src/store/actions/users.actions';
 import Text from '../../components/Text';
 import Button from '../../components/Button';
 
+const { AppTitle } = window.tarantool_enterprise_core.components;
+
 const styles = {
   cardMargin: css`
     padding: 24px 16px;
@@ -42,6 +44,7 @@ const Users = ({
 }) => (
   <SpinnerLoader loading={fetchingUserList}>
     <div className={cx(styles.cardMargin, 'app-content')}>
+      <AppTitle title={'Users'}/>
       <div className={styles.buttons}>
         {implements_check_password && <AuthToggleButton className={styles.buttonMargin} />}
         {implements_add_user && (

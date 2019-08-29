@@ -9,6 +9,8 @@ import ClusterPage from 'src/pages/Cluster';
 import PageLayout from 'src/components/PageLayout';
 import { PROJECT_NAME } from 'src/constants';
 
+const { AppTitle } = window.tarantool_enterprise_core.components;
+
 class App extends React.Component {
   render() {
     const {
@@ -30,6 +32,7 @@ class App extends React.Component {
 
     return (
       <PageLayout>
+        <AppTitle title={'Cluster'}/>
         <Switch>
           <Route path={`/cluster/dashboard/instance/:instanceUUID`} component={ClusterPage} />
           <Route component={ClusterPage} />
