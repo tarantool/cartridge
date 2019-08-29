@@ -1,6 +1,7 @@
 // @flow
 import * as React from 'react';
 import { connect } from 'react-redux';
+import { isBootstrapped as checkIsBootstrapped } from 'src/store/selectors/clusterPage';
 import { bootstrapVshard, setVisibleBootstrapVshardPanel } from 'src/store/actions/clusterPage.actions';
 import Button from 'src/components/Button';
 import type { State } from 'src/store/rootReducer';
@@ -8,11 +9,11 @@ import type { State } from 'src/store/rootReducer';
 const BootstrapButton = ({
   bootstrapVshard,
   can_bootstrap_vshard,
-  is_vshard_bootstrapped,
+  isBootstrapped,
   requesting,
   setVisibleBootstrapVshardPanel
 }) => {
-  if (is_vshard_bootstrapped)
+  if (isBootstrapped)
     return null;
 
   return (
@@ -30,7 +31,7 @@ const mapStateToProps = (state: State) => {
 
   return {
     can_bootstrap_vshard: (app.clusterSelf && app.clusterSelf.can_bootstrap_vshard) || false,
-    isBootstrapped: (app.clusterSelf && app.clusterSelf.isBootstrapped) || false,
+    isBootstrapped: checkIsBootstrapped(state),
     requesting: ui.requestingBootstrapVshard
   }
 };

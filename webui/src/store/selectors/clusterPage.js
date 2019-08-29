@@ -199,4 +199,6 @@ export const getReplicasetCounts: (s: State) => ReplicasetCounts = createSelecto
 
 export const getSectionsNames = (state: State) => Object.keys(state.clusterInstancePage.boxinfo || {});
 
-export const isBootstrapped = (state: State) => get(state, 'app.cluster.vshard_groups.0.boootstrapped', false)
+export const isBootstrapped = (state: State) => (
+  R.path(['app', 'clusterSelf', 'vshard_groups', '0', 'bootstrapped'], state) || false
+)
