@@ -273,6 +273,35 @@ local function bootstrap_from_membership()
     return confapplier.commit_2pc()
 end
 
+local function apply_remote_conf(conf, remote_conf)
+    membership.set_payload('warning', nil)
+
+    if remote_conf.topology.servers[box.info.uuid] == 'expelled' then
+        log.error('Instance was expelled')
+        membership.set_payload('error', 'Instance was expelled')
+        return true
+    elseif not utils.deepcmp(conf, remote_conf) then
+        log.error('Configuration mismatch')
+        membership.set_payload('error', 'Configuration mismatch')
+        return true
+    end
+
+    local myself_uri = membership.myself().uri
+    if myself_uri ~= conf.topology.servers[box.info.uuid].uri then
+        log.error('Mismatching advertise_uri.' ..
+            ' Configured as %q, but running as %q',
+            conf.topology.servers[box.info.uuid].uri,
+            myself_uri
+        )
+        membership.set_payload('warning',
+            string.format('Mismatching advertise_uri=%q', myself_uri)
+        )
+        return true
+    end
+
+    return confapplier.apply_config(conf)
+end
+
 local function bootstrap_from_snapshot()
     local instance_uuid
     do
@@ -334,40 +363,19 @@ local function bootstrap_from_snapshot()
         end
     end
 
-    local remote_conf = nil
-    while not remote_conf do
-        remote_conf = confapplier.fetch_from_membership(conf.topology)
-        if not remote_conf then
+    local remote_conf = confapplier.fetch_from_membership(conf.topology)
+    if remote_conf ~= nil then
+        return apply_remote_conf(conf, remote_conf)
+    end
+    fiber.create(function()
+        while remote_conf == nil do
             membership.set_payload('warning', 'Configuration is being verified')
             fiber.sleep(1)
+            remote_conf = confapplier.fetch_from_membership(conf.topology)
         end
-    end
-    membership.set_payload('warning', nil)
-
-    if remote_conf.topology.servers[box.info.uuid] == 'expelled' then
-        log.error('Instance was expelled')
-        membership.set_payload('error', 'Instance was expelled')
-        return true
-    elseif not utils.deepcmp(conf, remote_conf) then
-        log.error('Configuration mismatch')
-        membership.set_payload('error', 'Configuration mismatch')
-        return true
-    end
-
-    local myself_uri = membership.myself().uri
-    if myself_uri ~= conf.topology.servers[box.info.uuid].uri then
-        log.error('Mismatching advertise_uri.' ..
-            ' Configured as %q, but running as %q',
-            conf.topology.servers[box.info.uuid].uri,
-            myself_uri
-        )
-        membership.set_payload('warning',
-            string.format('Mismatching advertise_uri=%q', myself_uri)
-        )
-        return true
-    end
-
-    return confapplier.apply_config(conf)
+        apply_remote_conf(conf, remote_conf)
+    end)
+    return true
 end
 
 return {
