@@ -140,9 +140,17 @@ end
 -- @tparam ?{[string]=VshardGroupParams,...} opts.vshard_groups
 --  vshard storage groups, table keys used as names
 --
+-- @tparam ?boolean opts.http_enabled
+--  whether http server should be started
+--  (default: true, overridden by
+--  env `TARANTOOL_HTTP_ENABLED`,
+--  args `--http-enabled`)
+--
 -- @tparam ?string|number opts.http_port
 --  port to open administrative UI and API on
---  (default: nil, overridden by
+--  (default: 8081, derived from
+--  `TARANTOOL_INSTANCE_NAME`,
+--  overridden by
 --  env `TARANTOOL_HTTP_PORT`,
 --  args `--http-port`)
 --
@@ -181,6 +189,7 @@ local function cfg(opts, box_opts)
         cluster_cookie = '?string',
         bucket_count = '?number',
         http_port = '?string|number',
+        http_enabled = '?boolean',
         alias = '?string',
         roles = 'table',
         auth_backend_name = '?string',
@@ -386,10 +395,15 @@ local function cfg(opts, box_opts)
         if port_offset ~= nil then
             opts.http_port = 8080 + port_offset
             log.info('Derived http_port to be %d', opts.http_port)
+        else
+            opts.http_port = 8081
         end
     end
 
-    if opts.http_port ~= nil then
+    if opts.http_enabled == nil then
+        opts.http_enabled = true
+    end
+    if opts.http_enabled then
         local httpd = http.new(
             '0.0.0.0', opts.http_port,
             { log_requests = false }
