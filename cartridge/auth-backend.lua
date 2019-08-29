@@ -174,7 +174,7 @@ local function list_users()
     local result = {}
 
     local users_acl = cartridge.config_get_readonly('users_acl')
-    for _, user in pairs(users_acl) do
+    for _, user in pairs(users_acl or {}) do
         table.insert(result, user)
     end
 

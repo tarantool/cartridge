@@ -45,6 +45,14 @@ def set_auth_enabled_internal(cluster, enabled):
         end
     """, (enabled))
 
+@pytest.fixture(scope="function")
+def cleanup(cluster):
+    cluster['master'].conn.eval("""
+        local cartridge = require('cartridge')
+        local ok, err = cartridge.config_patch_clusterwide({users_acl = box.NULL})
+        assert(ok, err)
+    """)
+
 
 @pytest.fixture(scope="function")
 def enable_auth(cluster):
@@ -71,7 +79,7 @@ def check_200(srv, **kwargs):
 
 @pytest.mark.parametrize("auth", [True, False])
 @pytest.mark.parametrize("alias", ['master', 'replica'])
-def test_login(cluster, auth, alias):
+def test_login(cluster, cleanup, auth, alias):
     srv = cluster[alias]
     set_auth_enabled_internal(cluster, auth)
     USERNAME = 'Ptarmigan' if auth else 'Sparrow'
@@ -172,8 +180,18 @@ def test_login(cluster, auth, alias):
         """.format(USERNAME))
         assert _login(srv, USERNAME, PASSWORD).status_code == 403
 
+def test_empty_list(cluster, cleanup):
+    obj = cluster['master'].graphql("""
+        query {
+            cluster {
+                users { username }
+            }
+        }
+    """)
+    assert 'errors' not in obj, obj['errors'][0]['message']
+    assert obj['data']['cluster']['users'] == [{"username": "admin"}]
 
-def test_auth_disabled(cluster, disable_auth):
+def test_auth_disabled(cluster, cleanup, disable_auth):
     srv = cluster['master']
     USERNAME1 = 'Duckling'
     PASSWORD1 = 'Red Nickel'
@@ -302,7 +320,7 @@ def test_auth_disabled(cluster, disable_auth):
     auth_params = obj['data']['cluster']['auth_params']
     assert auth_params['enabled'] == True
 
-def test_auth_enabled(cluster, enable_auth):
+def test_auth_enabled(cluster, cleanup, enable_auth):
     srv = cluster['master']
     USERNAME = 'Gander'
     PASSWORD = 'Black Lead'
@@ -347,7 +365,7 @@ def test_uninitialized(module_tmpdir, helpers):
     finally:
         srv.kill()
 
-def test_keepalive(cluster, disable_auth):
+def test_keepalive(cluster, cleanup, disable_auth):
     USERNAME = 'Crow'
     PASSWORD = 'Teal Lead'
 
@@ -381,7 +399,7 @@ def test_keepalive(cluster, disable_auth):
         assert s.post(srv.baseurl + '/logout').status_code == 200
         assert get_username(s) == None
 
-def test_basic_auth(cluster, enable_auth):
+def test_basic_auth(cluster, cleanup, enable_auth):
     srv = cluster['master']
 
     srv.conn.eval("""
@@ -420,7 +438,7 @@ def get_lsid(resp):
 def get_lsid_max_age(resp):
     return int(get_lsid(resp)['max-age'])
 
-def test_set_params_graphql(cluster, disable_auth):
+def test_set_params_graphql(cluster, cleanup, disable_auth):
     USERNAME = 'Heron'
     PASSWORD = 'Silver Titanium'
 
@@ -498,7 +516,7 @@ def test_set_params_graphql(cluster, disable_auth):
     assert get_lsid_max_age(login('master')) == 69
     assert get_lsid_max_age(login('replica')) == 69
 
-def test_cookie_renew(cluster):
+def test_cookie_renew(cluster, cleanup):
     USERNAME = 'Eagle'
     PASSWORD = 'Yellow Zinc'
 
@@ -526,7 +544,7 @@ def test_cookie_renew(cluster):
     assert resp.cookies['lsid'] != ''
     assert resp.cookies['lsid'] != lsid
 
-def test_cookie_expiry(cluster, disable_auth):
+def test_cookie_expiry(cluster, cleanup, disable_auth):
     srv = cluster['master']
     USERNAME = 'Hen'
     PASSWORD = 'White Platinum'
