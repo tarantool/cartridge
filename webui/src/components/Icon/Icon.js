@@ -47,12 +47,12 @@ const styles = {
     &:focus::before {
       content: '';
       position: absolute;
-      top: -5px;
-      left: -5px;
-      right: -5px;
-      bottom: -5px;
-      border: solid 3px rgba(245, 34, 45, 0.55);
-      border-radius: 6px;
+      top: -2px;
+      left: -2px;
+      right: -2px;
+      bottom: -2px;
+      border: solid 1px rgba(245, 34, 45, 0.55);
+      border-radius: 3px;
     }
   `
 };
@@ -102,12 +102,12 @@ IconProps) => {
       onMouseEnter={onMouseEnter}
       className={cx(
         styles.icon,
-        className,
         {
           [styles.stroke]: stroke,
           [styles.clickable]: !!onClick,
           [styles.active]: active
-        }
+        },
+        className
       )}
     >
       <use xlinkHref={`#${glyph.id}`}/>

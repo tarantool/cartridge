@@ -15,12 +15,12 @@ const styles = {
     &:focus + div::before {
       content: '';
       position: absolute;
-      top: -5px;
-      left: -5px;
-      right: -5px;
-      bottom: -5px;
-      border: solid 3px rgba(245, 34, 45, 0.55);
-      border-radius: 6px;
+      top: -3px;
+      left: -3px;
+      right: -3px;
+      bottom: -3px;
+      border: solid 1px rgba(245, 34, 45, 0.55);
+      border-radius: 3px;
     }
   `,
   switcher: css`

@@ -5,6 +5,9 @@ import Icon, { type GenericIconProps } from '../../Icon';
 import image from './chevron-up.svg';
 
 const styles = {
+  icon: css`
+    fill: #ffffff;
+  `,
   down: css`
     transform: rotate(180deg);
   `
@@ -12,17 +15,19 @@ const styles = {
 
 type IconChevronProps = {
   ...$Exact<GenericIconProps>,
-  direction: 'top' | 'bottom';
+  direction: 'up' | 'down';
 }
 
 export const IconChevron = (props: IconChevronProps) => {
-  const { direction, ...otherProps } = props;
+  const { direction, className, ...otherProps } = props;
 
   return (
     <Icon
-      className={cx({
-        [styles.down]: direction === 'bottom'
-      })}
+      className={cx(
+        styles.icon,
+        { [styles.down]: direction === 'down' },
+        className
+      )}
       glyph={image}
       hasState={true}
       {...otherProps}

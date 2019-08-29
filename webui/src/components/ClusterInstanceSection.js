@@ -2,6 +2,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 import Scrollbar from 'src/components/Scrollbar';
 import Text from 'src/components/Text';
+import CollapsibleJSONRenderer from 'src/components/CollapsibleJSONRenderer';
 import { css, cx } from 'emotion';
 
 const styles = {
@@ -45,40 +46,6 @@ const styles = {
   `,
   value: css`
     line-height: 18px;
-  `,
-  collapse: css`
-    position: relative;
-    margin-top: 6px;
-    margin-bottom: 6px;
-    
-    input {
-      display: none;
-    }
-    
-    input:checked + * {
-      padding-right: 0;
-      white-space: pre;
-      text-overflow: initial;
-    }
-  `,
-  structuredValue: css`
-    overflow: hidden;
-    display: inline-block;
-    width: 100%;
-    padding-right: 70px;
-    line-height: 18px;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-  `,
-  collapseLabel: css`
-    position: absolute;
-    right: 0;
-    line-height: 18px;
-    
-    & > label {
-      cursor: pointer;
-      color: #f5222d;
-    }
   `
 };
 
@@ -92,21 +59,7 @@ const renderers = {
       {value instanceof Array ? `[${value.join(', ')}]` : value}
     </Text>
   ),
-  json: (value, index) => {
-    const id = `cluster-instance-sectino-${index}`;
-
-    return (
-      <div className={styles.collapse}>
-        <Text variant="basic" className={styles.collapseLabel}>
-          <label htmlFor={id}>collapse</label>
-        </Text>
-        <input id={id} type="checkbox" />
-        <Text variant="basic" className={styles.structuredValue}>
-          {JSON.stringify(value, null, 2)}
-        </Text>
-      </div>
-    );
-  }
+  json: value => <CollapsibleJSONRenderer value={value} />
 };
 
 const ClusterInstanceSection = ({ descriptions = {}, params = [] }) => {
