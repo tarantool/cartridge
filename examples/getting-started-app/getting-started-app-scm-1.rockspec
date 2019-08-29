@@ -1,4 +1,4 @@
-package = 'cartridge-kv'
+package = 'getting-started-app'
 version = 'scm-1'
 source  = {
     url = '/dev/null',

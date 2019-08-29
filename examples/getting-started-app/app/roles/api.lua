@@ -3,6 +3,7 @@ local cartridge = require('cartridge')
 local errors = require('errors')
 
 local err_vshard_router = errors.new_class("Vshard routing error")
+local err_httpd = errors.new_class("httpd error")
 
 local function http_customer_add(req)
     local customer = req:json()
@@ -108,7 +109,7 @@ local function init(opts)
     local httpd = cartridge.service_get('httpd')
 
     if not httpd then
-        return false
+        return nil, err_httpd:new("not found")
     end
 
     httpd:route(
