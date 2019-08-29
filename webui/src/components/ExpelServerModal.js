@@ -15,7 +15,7 @@ class ExpelServerModal extends React.Component<{expelModal: ?string, dispatch: F
     const {
       expelModal,
       serverInfo,
-      error,
+      error
     } = this.props
     return (
       <ConfirmModal

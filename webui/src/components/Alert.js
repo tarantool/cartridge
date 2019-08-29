@@ -16,7 +16,7 @@ const styles = {
   error: css`
     border-color: #fea39e;
     background-color: #fff1f0;
-  `,
+  `
 };
 
 type AlertProps = {
@@ -28,7 +28,7 @@ type AlertProps = {
 export default ({
   className,
   children,
-  type,
+  type
 }: AlertProps) => {
   return (
     <div className={cx(styles.alert, styles[type], className)}>

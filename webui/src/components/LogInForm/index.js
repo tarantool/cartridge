@@ -165,7 +165,7 @@ const mapStateToProps = ({
   auth: {
     authorizationEnabled,
     authorized,
-    error,
+    error
   },
   ui: {
     fetchingAuth

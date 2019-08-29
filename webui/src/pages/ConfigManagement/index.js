@@ -4,12 +4,12 @@ import ConfigManagement from './ConfigManagement';
 const mapStateToProps = state => {
   const {
     clusterPage: {
-      uploadConfigRequestStatus,
+      uploadConfigRequestStatus
     }
   } = state;
 
   return {
-    uploadConfigRequestStatus,
+    uploadConfigRequestStatus
   };
 };
 

@@ -30,7 +30,7 @@ const styles = {
   `,
   uploadError: css`
     margin-bottom: 20px;
-  `,
+  `
 }
 
 class ConfigManagement extends React.Component {

@@ -75,7 +75,7 @@ const initialState: UIState = {
   fetchingUserList: false,
   fetchingUserMutation: false,
   expelModal: null,
-  expelError: null,
+  expelError: null
 };
 
 export const reducer = (state: UIState = initialState, { type, payload, error }: FSA): UIState => {
@@ -243,20 +243,20 @@ export const reducer = (state: UIState = initialState, { type, payload, error }:
       return {
         ...state,
         expelModal: payload,
-        expelError: null,
+        expelError: null
       }
     }
     case CLUSTER_PAGE_EXPEL_SERVER_REQUEST: {
       return {
         ...state,
-        expelError: null,
+        expelError: null
       }
     }
 
     case CLUSTER_PAGE_EXPEL_SERVER_REQUEST_ERROR: {
       return {
         ...state,
-        expelError: error.message,
+        expelError: error.message
       }
     }
 
@@ -264,7 +264,7 @@ export const reducer = (state: UIState = initialState, { type, payload, error }:
     case CLUSTER_PAGE_EXPEL_SERVER_REQUEST_SUCCESS: {
       return {
         ...state,
-        expelModal: null,
+        expelModal: null
       }
     }
 

@@ -40,7 +40,7 @@ const Users = ({
   implements_check_password,
   implements_add_user,
   implements_list_users,
-  showAddUserModal,
+  showAddUserModal
 }) => (
   <SpinnerLoader loading={fetchingUserList}>
     <div className={cx(styles.cardMargin, 'app-content')}>
@@ -81,7 +81,7 @@ const mapStateToProps = ({
   implements_add_user,
   implements_check_password,
   implements_list_users,
-  fetchingUserList,
+  fetchingUserList
 });
 
 export default connect(mapStateToProps, { showAddUserModal })(Users);

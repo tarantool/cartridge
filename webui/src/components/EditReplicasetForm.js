@@ -28,6 +28,7 @@ import {
   validateForm
 } from 'src/misc/replicasetFormFunctions';
 import { VSHARD_STORAGE_ROLE_NAME } from 'src/constants';
+import { ServerSortableList } from './ServerSortableList';
 
 const styles = {
   popupBody: css`
@@ -256,33 +257,12 @@ EditReplicasetFormProps) => {
                     itemClassName={styles.radioWrap}
                     label='Include servers'
                   >
-                    {replicaset.servers && replicaset.servers.map(({ alias, uri, uuid }) => (
-                      <React.Fragment>
-                        <RadioButton
-                          onChange={() => setFieldValue(
-                            'master',
-                            [
-                              uuid,
-                              ...values.master.filter(v => v !== uuid)
-                            ]
-                          )}
-                          className={styles.radio}
-                          name='replicasetUuid'
-                          value={uuid}
-                          key={uuid}
-                          checked={values.master[0] === uuid}
-                        >
-                          {alias || uuid}
-                        </RadioButton>
-                        {replicaset.master && (replicaset.master.uuid === uuid) && (
-                          <LeaderFlagSmall className={styles.leaderFlag} />
-                        )}
-                        <div className={styles.serverUriWrap}>
-                          <IconLink className={styles.uriIcon} />
-                          <Text variant='h5' tag='span'>{uri}</Text>
-                        </div>
-                      </React.Fragment>
-                    ))}
+                    <ServerSortableList
+                      value={values.master}
+                      key={'uuid'}
+                      onChange={v => setFieldValue('master', v)}
+                      serverMap={R.compose(R.map(([val]) => val), R.groupBy(R.prop('uuid')))(replicaset.servers || [])}
+                    />
                   </FormField>
                 </div>
               </Scrollbar>
