@@ -8,6 +8,7 @@ const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 const paths = require('./paths');
 const getClientEnvironment = require('./env');
 const moduleConfig = require('../module-config');
+const LuaBundlerPlugin = require('@tarantool.io/lua-bundler-webpack-plugin')
 
 // Webpack uses `publicPath` to determine where the app is being served from.
 // It requires a trailing slash, or the file assets will get an incorrect path.
@@ -115,7 +116,8 @@ module.exports = {
           {
             options: {
               formatter: eslintFormatter,
-              eslintPath: require.resolve('eslint')
+              eslintPath: require.resolve('eslint'),
+              quiet: true
             },
             loader: require.resolve('eslint-loader')
           }
@@ -127,6 +129,29 @@ module.exports = {
         // match the requirements. When no loader matches it will fall
         // back to the "file" loader at the end of the loader list.
         oneOf: [
+          {
+            test: /\.svg$/,
+            include: path.resolve(__dirname, '../src/'),
+            use: [
+              {
+                loader: 'svg-sprite-loader',
+                options: {
+                  name: '[name].[hash]',
+                  prefixize: true
+                }
+              },
+              {
+                loader: 'svgo-loader',
+                options: {
+                  plugins: [
+                    { removeTitle: true },
+                    { convertPathData: false },
+                    { removeUselessStrokeAndFill: true }
+                  ]
+                }
+              }
+            ]
+          },
           // "url" loader works just like "file" loader but it also embeds
           // assets smaller than specified size as data URLs to avoid requests.
           {
@@ -298,7 +323,8 @@ module.exports = {
     // solution that requires the user to opt into importing specific locales.
     // https://github.com/jmblog/how-to-optimize-momentjs-with-webpack
     // You can remove this if you don't use Moment.js:
-    new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/)
+    new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
+    new LuaBundlerPlugin(),
   ],
   // Some libraries import Node modules but don't use them in the browser.
   // Tell Webpack to provide empty mocks for them so importing them works.

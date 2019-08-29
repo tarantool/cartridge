@@ -1,75 +1,83 @@
 // @flow
 import React from 'react';
 import { connect } from 'react-redux';
+import { css } from 'emotion';
+import { Formik } from 'formik';
+import InputText from 'src/components/InputText';
+import Alert from 'src/components/Alert';
+import Button from 'src/components/Button';
+import Text from 'src/components/Text';
+import PopupFooter from 'src/components/PopupFooter';
 import { probeServer } from 'src/store/actions/clusterPage.actions';
 import type { ProbeServerActionCreator } from 'src/store/actions/clusterPage.actions';
-import CommonItemEditModal, { type CommonItemEditModalField } from 'src/components/CommonItemEditModal';
+import Modal from 'src/components/Modal';
 
-const prepareFields = (): CommonItemEditModalField[] => {
-  return [
-    {
-      key: 'uri',
-      type: 'input',
-      title: 'URI',
-      customProps: {
-        edit: {
-          hidden: true
-        }
-      },
-      placeholder: 'Server URI, e.g. localhost:3301'
-    }
-  ];
-};
-
-const getServerDefaultDataSource = () => {
-  return {
-    uuid: null,
-    uri: '',
-    replicasetUuid: null
-  };
+const styles = {
+  formInner: css`
+    padding: 0 16px 16px;
+  `,
+  error: css`
+    margin-bottom: 16px;
+  `,
+  text: css`
+    display: block;
+    margin-bottom: 16px;
+    color: rgba(0, 0, 0, 0.65);
+  `
 };
 
 type ProbeServerModalProps = {
   error?: string,
-  isLoading?: boolean,
-  isSaving?: boolean,
-  submitStatusMessage?: string,
   probeServer: ProbeServerActionCreator,
   onRequestClose: () => void
 };
 
 class ProbeServerModal extends React.PureComponent<ProbeServerModalProps> {
-  static defaultProps = {
-    isLoading: false,
-    isSaving: false
-  };
-
   render() {
     const {
       error,
-      isLoading,
-      isSaving,
-      submitStatusMessage,
       onRequestClose
     } = this.props;
 
-    const fields = isLoading ? null : prepareFields();
-    const dataSource = isLoading ? null : getServerDefaultDataSource();
-
     return (
-      <CommonItemEditModal
+      <Modal
+        visible={true}
         title='Probe server'
-        isLoading={isLoading}
-        isSaving={isSaving}
-        shouldCreateItem
-        fields={fields}
-        hideLabels
-        dataSource={dataSource}
-        errorMessage={error}
-        submitStatusMessage={submitStatusMessage}
-        onSubmit={this.handleSubmit}
-        onRequestClose={onRequestClose}
-      />
+        onClose={onRequestClose}
+      >
+        <Formik
+          initialValues={{
+            uri: ''
+          }}
+          onSubmit={this.handleSubmit}
+        >
+          {({
+            values,
+            handleChange,
+            handleSubmit
+          }) => (
+            <form onSubmit={handleSubmit}>
+              <div className={styles.formInner}>
+                {error && <Alert className={styles.error} type='error'><Text tag='span'>{error}</Text></Alert>}
+                <Text className={styles.text}>
+                  Probe a server if it wasn't discovered automatically by UDP broadcast.
+                </Text>
+                <InputText
+                  name='uri'
+                  value={values.uri}
+                  onChange={handleChange}
+                  placeholder='Server URI, e.g. localhost:3301'
+                />
+              </div>
+              <PopupFooter
+                controls={(
+                  <Button type='submit' intent='primary' text='Submit' />
+                )}
+              />
+            </form>
+          )}
+        </Formik>
+      </Modal>
     );
   }
 

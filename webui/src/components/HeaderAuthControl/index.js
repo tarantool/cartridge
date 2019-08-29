@@ -1,17 +1,19 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import Button from 'src/components/Button';
-import { css } from 'emotion';
+import { css, cx } from 'emotion';
 import { ModalLogInForm } from 'src/components/LogInForm';
 import { showAuthModal, hideAuthModal } from 'src/store/actions/auth.actions';
+import Text from '../Text';
+import { IconUser } from '../Icon/icons/IconUser';
+import Dropdown from '../Dropdown';
 
 const styles = {
   box: css`
     display: flex;
     justify-content: flex-end;
     align-items: center;
-    width: 200px;
-    margin: 13px 30px 0 auto;
+    margin: 0 0 0 24px;
   `,
   userName: css`
     margin-right: 8px;
@@ -19,14 +21,26 @@ const styles = {
     text-overflow: ellipsis;
     white-space: nowrap;
     color: white;
+    width: 
   `,
   button: css`
     flex-shrink: 0;
+  `,
+  authIcon: css`
+    margin-right: 8px;
+    cursor: pointer;
   `
 };
 
 class HeaderAuthControl extends React.Component {
   sendLogOut = () => window.tarantool_enterprise_core.dispatch('cluster:logout');
+  showDropdown = () => this.setState({ showDropdown: true })
+  hideDropdown = () => this.setState({ showDropdown: false })
+
+  state = {
+    showDropdown: false
+  }
+
 
   render() {
     const {
@@ -39,40 +53,33 @@ class HeaderAuthControl extends React.Component {
       hideAuthModal
     } = this.props;
 
+    const {
+      showDropdown
+    } = this.state
+
     if (!implements_check_password)
       return null;
 
-    if (authorizationEnabled & !authorized)
-      return null;
+    if (username) {
+      return (
+        <Dropdown
+          className={cx(styles.box, css`cursor: pointer`)}
+          items={[{ text: 'Log out', onClick: this.sendLogOut }]}
+        >
+          <div
+            className={styles.authIcon}
+
+          >
+            <IconUser/>
+          </div>
+          <span className={styles.userName}><Text variant={'basic'}>{username}</Text></span>
+        </Dropdown>
+      )
+    }
 
     return (
       <div className={styles.box}>
-        <span class={styles.userName}>{username}</span>
-        {
-          authorized
-            ? (
-              <Button
-                className={styles.button}
-                size="small"
-                shape="circle"
-                onClick={this.sendLogOut}
-                icon="logout"
-                title="Log out"
-              />
-            )
-            : (
-              <Button
-                className={styles.button}
-                size="small"
-                onClick={showAuthModal}
-                icon="user"
-                title="Log in"
-                text="Log in"
-              >
-                Log in
-              </Button>
-            )
-        }
+        {!authorized && <Button text={'Log in'} intent={'base'} onClick={() => showAuthModal()} />}
         <ModalLogInForm
           visible={authModalVisible}
           onCancel={hideAuthModal}

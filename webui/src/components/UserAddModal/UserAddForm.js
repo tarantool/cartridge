@@ -1,99 +1,124 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { Form } from 'antd';
 import Button from 'src/components/Button';
 import Input from 'src/components/Input';
+import Alert from 'src/components/Alert';
+import Text from 'src/components/Text';
 import { css } from 'emotion';
 import { addUser } from 'src/store/actions/users.actions';
+import { Formik, Form } from 'formik';
+import { FormContainer, FieldConstructor } from '../FieldGroup'
+import * as Yup from 'yup';
+import InputText from '../InputText';
+
+const schema = Yup.object().shape({
+  username: Yup.string().required(),
+  fullname: Yup.string(),
+  email: Yup.string().email(),
+  password: Yup.string().required()
+})
 
 const styles = {
   error: css`
-    min-height: 24px;
-    margin: 0 0 24px;
-    color: #f5222d;
+    margin-bottom: 30px;
+  `,
+  actionButtons: css`
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+  `,
+  cancelButton: css`
+    margin-right: 16px;
   `
 };
 
-const formItemLayout = {
-  labelAlign: 'left',
-  labelCol: {
-    span: 6
-  },
-  wrapperCol: {
-    span: 18
-  }
-};
+
+const formProps = [
+  'username',
+  'password',
+  'email',
+  'fullname'
+]
+
+const requiredFields = [
+  'username',
+  'password'
+]
 
 class UserAddForm extends React.Component {
-  submit = evt => {
-    const { addUser, form } = this.props;
+  submit = async (values, actions) => {
+    const { addUser } = this.props;
+    try {
+      await addUser(values);
 
-    evt.preventDefault();
-
-    form.validateFields((
-      err,
-      {
-        username = '',
-        fullname = '',
-        email = '',
-        password = ''
-      }
-    ) => {
-      if (!err) {
-        addUser({
-          username,
-          fullname,
-          email,
-          password
-        });
-      }
-    });
+    } catch(e) {
+      actions.setFieldError('common', e.message)
+    } finally{
+      actions.setSubmitting(false)
+    }
   };
 
   render() {
     const {
       error,
       loading,
-      form: {
-        getFieldDecorator
-      }
+      onClose
     } = this.props;
 
+
     return (
-      <Form onSubmit={this.submit}>
-        <Form.Item label="User name" {...formItemLayout}>
-          {getFieldDecorator('username', {
-            rules: [{ required: true, message: 'Fill user name field' }]
-          })(
-            <Input autoFocus />
-          )}
-        </Form.Item>
-        <Form.Item label="Password" {...formItemLayout}>
-          {getFieldDecorator('password', {
-            rules: [
-              { required: true, message: 'Fill password field' }
-            ]
-          })(
-            <Input type="password" />
-          )}
-        </Form.Item>
-        <Form.Item label="Full name" {...formItemLayout}>
-          {getFieldDecorator('fullname')(
-            <Input />
-          )}
-        </Form.Item>
-        <Form.Item label="E-mail" {...formItemLayout}>
-          {getFieldDecorator('email', {
-            rules: [
-              { type: 'email', message: 'Please input a valid E-mail' }
-            ]
-          })(
-            <Input />
-          )}
-        </Form.Item>
-        <p className={styles.error}>{error}</p>
-        <Button type="primary" htmlType="submit" loading={loading}>Add</Button>
-      </Form>
+      <Formik
+        initialValues={{
+          username: '',
+          fullname: '',
+          email: '',
+          password: ''
+        }}
+        validationSchema={schema}
+        onSubmit={this.submit}
+      >
+        {({
+          values,
+          errors,
+          handleChange,
+          handleBlur,
+          touched,
+          handleSubmit,
+          isSubmitting
+        }) => (<Form>
+          <FormContainer>
+
+            {formProps.map(field =>
+              <FieldConstructor
+                key={field}
+                label={field}
+                required={requiredFields.includes(field)}
+                input={
+                  <InputText
+                    value={values[field]}
+                    onBlur={handleBlur}
+                    onChange={handleChange}
+                    name={field}
+                    type={field === 'password' ? 'password' : 'text'}
+                  />
+                }
+                error={touched[field] && errors[field]}
+              />
+            )}
+            {error || errors.common ? (
+              <Alert type="error" className={styles.error}>
+                <Text variant="basic">{error || errors.common}</Text>
+              </Alert>
+            ) : null}
+            <div className={styles.actionButtons}>
+              {onClose && <Button intent="base" onClick={onClose} className={styles.cancelButton}>Cancel</Button>}
+              <Button intent="primary" type='submit'>Add</Button>
+            </div>
+          </FormContainer>
+        </Form>
+        )}
+      </Formik>
+
     );
   }
 }
@@ -113,6 +138,6 @@ const mapStateToProps = ({
 const connectedForm = connect(
   mapStateToProps,
   { addUser }
-)(Form.create()(UserAddForm));
+)(UserAddForm);
 
 export default connectedForm;

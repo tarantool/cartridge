@@ -252,6 +252,7 @@ query serverList {
     }
   }
   replicasetList: replicasets {
+    alias
     uuid
     status
     roles
@@ -285,6 +286,7 @@ query serverList {
     statistics {
       quotaSize: quota_size
       arenaUsed: arena_used
+      bucketsCount: vshard_buckets_count
     }
   }
 }
@@ -303,6 +305,7 @@ query serverListWithoutStat {
     }
   }
   replicasetList: replicasets {
+    alias
     uuid
     status
     roles
@@ -342,6 +345,7 @@ query serverStat {
     statistics {
       quotaSize: quota_size
       arenaUsed: arena_used
+      bucketsCount: vshard_buckets_count
     }
   }
 }`;
@@ -374,14 +378,18 @@ mutation join (
 
 export const createReplicasetMutation = gql`
 mutation createReplicaset (
+  $alias: String,
   $uri: String!,
   $roles: [String!],
-  $vshard_group: String
+  $vshard_group: String,
+  $weight: Float
 ) {
   createReplicasetResponse: join_server(
+    replicaset_alias: $alias
     uri: $uri
     roles: $roles
     vshard_group: $vshard_group
+    replicaset_weight: $weight
   )
 }
 `;
@@ -398,6 +406,7 @@ mutation expel (
 
 export const editReplicasetMutation = gql`
 mutation editReplicaset (
+  $alias: String,
   $uuid: String!,
   $roles: [String!],
   $vshard_group: String,
@@ -405,6 +414,7 @@ mutation editReplicaset (
   $weight: Float
 ) {
   editReplicasetResponse: edit_replicaset(
+    alias: $alias
     uuid: $uuid
     roles: $roles
     vshard_group: $vshard_group

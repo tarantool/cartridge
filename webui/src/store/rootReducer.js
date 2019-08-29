@@ -12,7 +12,8 @@ import { reducer as ui, type UIState } from 'src/store/reducers/ui.reducer';
 export type State = {
   app: AppState,
   clusterPage: ClusterPageState,
-  ui: UIState
+  ui: UIState,
+  clusterInstancePage: Object,
 }
 
 // object keys A-Z sorted

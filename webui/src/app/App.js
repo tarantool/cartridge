@@ -1,32 +1,14 @@
 import React from 'react';
 import { Route, Switch } from 'react-router-dom';
-import { css } from 'emotion';
 
 import 'src/styles/app.css';
 import 'src/styles/tables.css';
 import 'src/styles/tight-scroll.css';
 
-import AppMessage from 'src/components/AppMessage';
 import ClusterPage from 'src/pages/Cluster';
-import ClusterInstancePage from 'src/pages/ClusterInstance';
-import UsersPage from 'src/pages/Users';
-import { PROJECT_NAME } from 'src/constants';
+import PageLayout from 'src/components/PageLayout';
 
-const styles = {
-  app: css`
-    min-height: 100%;
-    background: #FAFAFA;
-    padding: 0px 30px 0 30px;
-
-    p {
-      margin-top: 0;
-    }
-
-    p + p {
-      margin-top: 1em;
-    }
-  `
-};
+const { AppTitle } = window.tarantool_enterprise_core.components;
 
 class App extends React.Component {
   render() {
@@ -45,17 +27,14 @@ class App extends React.Component {
   }
 
   renderApp = () => {
-    const { messages, setMessageDone } = this.props;
-
     return (
-      <div className={styles.app}>
+      <PageLayout>
+        <AppTitle title={'Cluster'}/>
         <Switch>
-          <Route path={`/${PROJECT_NAME}/instance/:instanceUUID`} component={ClusterInstancePage} />
-          <Route path={`/${PROJECT_NAME}/users`} component={UsersPage} />
+          <Route path={`/cluster/dashboard/instance/:instanceUUID`} component={ClusterPage} />
           <Route component={ClusterPage} />
         </Switch>
-        <AppMessage messages={messages} setMessageDone={setMessageDone} />
-      </div>
+      </PageLayout>
     );
   };
 

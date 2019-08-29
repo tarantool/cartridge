@@ -1,2 +1,2 @@
-import core from 'enterprise-frontend-core'
+import core from '@tarantool.io/frontend-core'
 import index from './index'

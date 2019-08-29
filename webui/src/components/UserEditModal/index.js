@@ -20,14 +20,12 @@ class UserEditModal extends React.Component {
         title={`Edit ${username}`}
         visible={editUserModalVisible}
         width={550}
-        onCancel={hideEditUserModal}
-        destroyOnClose={true}
-        footer={null}
+        onClose={hideEditUserModal}
       >
         <UserEditForm
-          addUser={editUser}
           error={error}
           loading={loading}
+          onClose={hideEditUserModal}
         />
       </Modal>
     );

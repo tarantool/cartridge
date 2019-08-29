@@ -44,8 +44,8 @@ export function getServerStat() {
     .then(filterServerStat);
 }
 
-export function bootstrapVshard(params) {
-  return graphql.mutate(bootstrapMutation, params);
+export function bootstrapVshard() {
+  return graphql.mutate(bootstrapMutation);
 }
 
 /**

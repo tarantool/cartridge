@@ -7,10 +7,7 @@ import UserAddForm from './UserAddForm';
 class UserAddModal extends React.Component {
   render() {
     const {
-      addUser,
       addUserModalVisible,
-      error,
-      loading,
       hideAddUserModal
     } = this.props;
 
@@ -18,16 +15,12 @@ class UserAddModal extends React.Component {
       <Modal
         title="Add a new user"
         visible={addUserModalVisible}
-        width={550}
         onCancel={hideAddUserModal}
         destroyOnClose={true}
         footer={null}
+        onClose={hideAddUserModal}
       >
-        <UserAddForm
-          addUser={addUser}
-          error={error}
-          loading={loading}
-        />
+        <UserAddForm onClose={hideAddUserModal} />
       </Modal>
     );
   }

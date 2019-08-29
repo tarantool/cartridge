@@ -1,26 +1,36 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { Form, Icon, Input } from 'antd';
 import { css } from 'emotion';
 import { logIn } from 'src/store/actions/auth.actions';
+import { Formik, Form } from 'formik'
+import * as yup from 'yup'
 import Modal from 'src/components/Modal';
 import Button from 'src/components/Button';
+import { BaseModal } from '../Modal';
+import { FieldConstructor, FormContainer } from '../FieldGroup';
+import InputText from '../InputText';
+import Alert from '../Alert';
+import Text from '../Text';
+import { ModalInfoContainer } from '../styled'
+
+const schema = yup.object().shape({
+  username: yup.string().required(),
+  password: yup.string().required()
+})
 
 const styles = {
   formWrap: css`
     position: absolute;
     left: 0;
-    top: 50px;
+    top: 0;
     bottom: 0;
+    right: 0;
     z-index: 1;
-    background: #d9d9d9;
+    background: #f0f2f5;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    width: 100%;
-    min-height: 100%;
-    padding-top: 20px;
     box-sizing: border-box;
     overflow: auto;
   `,
@@ -32,67 +42,113 @@ const styles = {
     width: 100%;
   `,
   error: css`
-    min-height: 24px;
-    margin: 0;
-    color: #f5222d;
+    margin-bottom: 30px;
+  `,
+  actionButtons: css`
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+  `,
+  cancelButton: css`
+    margin-right: 16px;
+  `,
+  splashContainer: css`
+    display: flex;
+    flex-direction: row;
+  `,
+  logoContainer: css`
+    width: 68px;
+    flex-grow: 0;
+    flex-shrink: 0;
+    background: #000;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+  `,
+  logo: css`
+    width: 210px;
+    position: absolute;
+    transform: translate3d(-50%, -50%, 0) rotate(-90deg);
+    left: 50%;
+    top: 50%;
+  `,
+  formContainer: css`
+    flex-grow: 1;
+    padding: 24px 32px;
   `
 };
 
+
+const formProps = [
+  { label: 'Username', field: 'username' },
+  { label: 'Password', field: 'password', type: 'password' }
+]
+
 class LogInForm extends React.Component {
-  handleSubmit = e => {
-    e.preventDefault();
-    this.props.form.validateFields((err, { username, password }) => {
-      if (!err) {
-        this.props.logIn({ username, password });
-      }
-    });
+  handleSubmit = async (values, actions) => {
+    try {
+      await this.props.logIn(values);
+    } catch(e) {
+      actions.setFieldError('common', e.message)
+    } finally{
+      actions.setSubmitting(false)
+    }
   };
 
   render() {
     const {
       error,
-      form: { getFieldDecorator },
-      fetchingAuth
+      onClose
     } = this.props;
 
     return (
-      <Form onSubmit={this.handleSubmit} className={styles.form}>
-        <Form.Item>
-          {getFieldDecorator('username', {
-            rules: [{ required: true, message: 'Fill user name field' }]
-          })(
-            <Input
-              prefix={<Icon type="user" />}
-              placeholder="User name"
-              autoFocus
-            />
-          )}
-        </Form.Item>
-        <Form.Item>
-          {getFieldDecorator('password', {
-            rules: [
-              { required: true, message: 'Fill password field' }
-            ]
-          })(
-            <Input
-              prefix={<Icon type="lock" />}
-              type="password"
-              placeholder="Password"
-            />
-          )}
-        </Form.Item>
-        <Form.Item>
-          <Button
-            className={styles.submitBtn}
-            type="primary"
-            htmlType="submit"
-            loading={fetchingAuth}
-          >
-            Log in
-          </Button>
-        </Form.Item>
-        <p className={styles.error}>{error}</p>
-      </Form>
+      <Formik
+        validationSchema={schema}
+        onSubmit={this.handleSubmit}
+        initialValues={{
+          username: '',
+          password: ''
+        }}
+      >
+        {({
+          values,
+          errors,
+          touched,
+          handleChange,
+          handleBlur
+        }) =>
+          <Form>
+
+            {formProps.map(({ label, field, type }) =>
+              <FieldConstructor
+                key={field}
+                label={label}
+                required={true}
+                input={
+                  <InputText
+                    value={values[field]}
+                    onBlur={handleBlur}
+                    onChange={handleChange}
+                    name={field}
+                    type={type || 'text'}
+                  />
+                }
+                error={touched[field] && errors[field]}
+              />
+            )}
+            {error || errors.common ? (
+              <Alert type="error" className={styles.error}>
+                <Text variant="basic">{error || errors.common}</Text>
+              </Alert>
+            ) : null}
+            <div className={styles.actionButtons}>
+              {onClose && <Button intent="base" onClick={onClose} className={styles.cancelButton}>Cancel</Button>}
+              <Button intent="primary" type='submit'>Login</Button>
+            </div>
+          </Form>
+        }
+      </Formik>
     );
   }
 }
@@ -121,7 +177,7 @@ const mapStateToProps = ({
   fetchingAuth
 });
 
-const ConnectedLogInForm = connect(mapStateToProps, { logIn })(Form.create()(LogInForm));
+const ConnectedLogInForm = connect(mapStateToProps, { logIn })(LogInForm);
 
 const SplashLogInForm = ({
   authorizationRequired,
@@ -130,26 +186,36 @@ const SplashLogInForm = ({
 }) => {
   return loaded && authorizationRequired
     ? (
-      <div className={styles.formWrap}>
-        <h1>Authorization</h1>
-        <p>Please, input your credentials</p>
-        <LogInForm {...props} />
-      </div>
+      <BaseModal bgColor={'#f0f2f5'}>
+        <div className={styles.splashContainer}>
+          <div className={styles.logoContainer}>
+            <img src={window.tarantool_enterprise_core.logo} className={styles.logo} />
+          </div>
+          <div className={styles.formContainer}>
+            <Text variant={'h1'}>Authorization</Text>
+            <div className={css`margin: 16px 0 48px 0`}>
+              <Text variant={'basic'} className={css`color: rgba(0, 0, 0, 0.65)`}>Please, input your credentials</Text>
+            </div>
+            <LogInForm {...props} />
+          </div>
+        </div>
+      </BaseModal>
     )
     : null;
 };
 
 export const ModalLogInForm = ({ onCancel, visible, ...props }) => (
   <Modal
-    title="Authorization"
+    title={'Authorization'}
     visible={visible}
-    width={350}
     footer={null}
-    onCancel={onCancel}
+    onClose={onCancel}
     destroyOnClose={true}
   >
-    <ConnectedLogInForm {...props} />
+    <ModalInfoContainer>
+      <ConnectedLogInForm {...props} onClose={onCancel}/>
+    </ModalInfoContainer>
   </Modal>
 )
 
-export default connect(mapStateToProps, { logIn })(Form.create()(SplashLogInForm));
+export default connect(mapStateToProps, { logIn })(SplashLogInForm);

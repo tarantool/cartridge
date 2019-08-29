@@ -5,6 +5,7 @@ import type { State } from 'src/store/rootReducer';
 import type { ServerStatWithUUID } from 'src/store/reducers/clusterPage.reducer';
 import type { Replicaset, Server } from 'src/generated/graphql-typing';
 
+
 const prepareReplicasetList = (
   replicasetList: Replicaset[],
   serverStat: ?ServerStatWithUUID[]
@@ -30,11 +31,35 @@ const selectReplicasetList = (state: State): ?Replicaset[] => state.clusterPage.
 
 const selectServerList = (state: State): ?Server[] => state.clusterPage.serverList;
 
+export const selectServerByUri = (state: State, uri: string): ?Server => {
+  if (Array.isArray(state.clusterPage.serverList))
+    return state.clusterPage.serverList.find(x => x.uri === uri)
+  return null
+}
+
 export const selectReplicasetListWithStat: (s: State) => Replicaset[] = createSelector(
   [selectReplicasetList, selectServerStat],
   (replicasetList: ?Replicaset[], serverStat: ?ServerStatWithUUID[]): Replicaset[] => (
     replicasetList ? prepareReplicasetList(replicasetList, serverStat) : []
   )
+);
+
+type IsRolePresentSelector = (s: State) => boolean;
+
+export const isRolePresentSelectorCreator = (roleName: string): IsRolePresentSelector => createSelector(
+  selectReplicasetList,
+  (replicasetList: ?Replicaset[]): boolean => {
+    if (replicasetList) {
+      for (let i = 0; i < replicasetList.length; i++) {
+        const { roles } = replicasetList[i];
+        if (roles && roles.includes(roleName)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
 );
 
 type SearchableServer = {
@@ -56,7 +81,7 @@ export const selectSearchableReplicasetList: (s: State) => SearchableReplicaset[
   selectReplicasetListWithStat,
   (replicasetList: Replicaset[]): SearchableReplicaset[] => {
     return replicasetList.map(({ servers, ...replicaSet }) => {
-      let replicaSetSearchIndex = [...(replicaSet.roles || [])];
+      let replicaSetSearchIndex = [replicaSet.alias, ...(replicaSet.roles || [])];
 
       const searchableServers: SearchableServer[] = servers.map (server  => {
         const serverSearchIndex = [server.uri, (server.alias || '')];
@@ -85,8 +110,7 @@ export const selectSearchableReplicasetList: (s: State) => SearchableReplicaset[
     });
   });
 
-export const filterReplicasetList = (state: State): Replicaset[] => {
-  const filterQuery = state.clusterPage.replicasetFilter;
+export const filterReplicasetList = (state: State, filterQuery: string): Replicaset[] => {
   const tokenizedQuery = filterQuery.toLowerCase().split(' ').map(x => x.trim()).filter(x => !!x);
 
   const filterByTokens = R.filter(
@@ -125,6 +149,16 @@ export const filterReplicasetList = (state: State): Replicaset[] => {
   });
 };
 
+export const filterReplicasetListSelector = (state: State): Replicaset[] => {
+  const filterQuery = state.clusterPage.replicasetFilter;
+  return filterReplicasetList(state, filterQuery);
+};
+
+export const filterModalReplicasetListSelector = (state: State): Replicaset[] => {
+  const filterQuery = state.clusterPage.modalReplicasetFilter;
+  return filterReplicasetList(state, filterQuery);
+};
+
 export type ServerCounts = {
   total: number,
   configured: number,
@@ -161,3 +195,9 @@ export const getReplicasetCounts: (s: State) => ReplicasetCounts = createSelecto
     )
   }
 );
+
+export const getSectionsNames = (state: State): Array<string> => Object.keys(state.clusterInstancePage.boxinfo || {});
+
+export const isBootstrapped = (state: State) => (
+  R.path(['app', 'clusterSelf', 'vshard_groups', '0', 'bootstrapped'], state) || false
+)
