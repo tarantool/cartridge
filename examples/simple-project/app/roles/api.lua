@@ -1,14 +1,16 @@
 local vshard = require('vshard')
 local cartridge = require('cartridge')
+local errors = require('errors')
+
+local err_vshard_router = errors.new_class("Vshard routing error")
 
 local function http_customer_add(req)
     local customer = req:json()
 
-    -- Будем вычислять ID bucket'a по ID пользователя
     local bucket_id = vshard.router.bucket_id(customer.customer_id)
     customer.bucket_id = bucket_id
 
-    local success, _ = pcall(function()
+    local _, error = err_vshard_router:pcall(function()
         vshard.router.call(bucket_id,
             'write',
             'customer_add',
@@ -16,8 +18,8 @@ local function http_customer_add(req)
         )
     end)
 
-    if not success then
-        local resp = req:render({json = { info = "Internal error" }})
+    if error then
+        local resp = req:render({json = { info = "Internal error", error = error }})
         resp.status = 500
         return resp
     end
@@ -32,11 +34,19 @@ local function http_customer_get(req)
 
     local bucket_id = vshard.router.bucket_id(customer_id)
 
-    local customer, error = vshard.router.call(bucket_id,
+    local customer, error = err_vshard_router:pcall(
+        vshard.router.call,
+        bucket_id,
         'read',
         'customer_lookup',
         {customer_id}
     )
+
+    if error then
+        local resp = req:render({json = { info = "Internal error" }})
+        resp.status = 500
+        return resp
+    end
 
     if customer == nil then
         local resp = req:render({json = { info = "Customer not found", error = error }})
@@ -58,14 +68,22 @@ local function http_customer_update_balance(req)
 
     local bucket_id = vshard.router.bucket_id(customer_id)
 
-    local balance, error = vshard.router.call(bucket_id,
+    local balance, error = err_vshard_router:pcall(
+        vshard.router.call,
+        bucket_id,
         'read',
         'customer_update_balance',
         {customer_id, account_id, amount}
     )
 
+    if error then
+        local resp = req:render({json = { info = "Internal error", error = error }})
+        resp.status = 500
+        return resp
+    end
+
     if balance == nil then
-        local resp = req:render({json = { info = "Account not found", error = error }})
+        local resp = req:render({json = { info = "Account not found" }})
         resp.status = 404
         return resp
     end
