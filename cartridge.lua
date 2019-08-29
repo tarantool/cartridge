@@ -148,7 +148,7 @@ end
 --
 -- @tparam ?string opts.alias
 -- human-readable instance name that will be available in administrative UI
---  (default: nil, overridden by
+--  (default: argparse instance name, overridden by
 --  env `TARANTOOL_ALIAS`,
 --  args `--alias`)
 --
@@ -217,7 +217,15 @@ local function cfg(opts, box_opts)
     -- makes it possible to filter by severity with
     -- systemctl
     if utils.under_systemd() and box_opts.log == nil then
-       box_opts.log = 'syslog:identity=tarantool'
+        box_opts.log = 'syslog:identity=tarantool'
+    end
+
+    if box_opts.custom_proc_title == nil and args.instance_name ~= nil then
+        if args.app_name == nil then
+            box_opts.custom_proc_title = args.instance_name
+        else
+            box_opts.custom_proc_title = args.app_name .. '@' .. args.instance_name
+        end
     end
 
     local vshard_groups = {}
@@ -325,6 +333,10 @@ local function cfg(opts, box_opts)
     local ok, err = e_init:pcall(membership.init, advertise.host, advertise.service)
     if not ok then
         return nil, err
+    end
+
+    if opts.alias == nil then
+        opts.alias = args.instance_name
     end
 
     membership.set_encryption_key(cluster_cookie.cookie())
