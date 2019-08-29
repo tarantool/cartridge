@@ -74,6 +74,7 @@ class ConfigManagement extends React.Component {
               icon={IconDownload}
               intent={'secondary'}
               text={'Download'}
+              type={'submit'}
             />
           </form>
         }
