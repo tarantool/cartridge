@@ -169,9 +169,9 @@ class ReplicasetServerListItem extends React.PureComponent<
           </div>
           <HealthStatus className={styles.status} status={status} message={message} />
           <div className={styles.stats}>
-            <Tooltip content={<span>total bucket: <b>{(statistics && statistics.bucketsCount) || 0}</b></span>}>
+            <Tooltip content={<span>total bucket: <b>{(statistics && statistics.bucketsCount) || '-'}</b></span>}>
               <IconBucket className={styles.iconMarginSmall} />
-              <Text variant='h5' tag='span'>Bucket: <b>{(statistics && statistics.bucketsCount) || 0}</b></Text>
+              <Text variant='h5' tag='span'>Bucket: <b>{(statistics && statistics.bucketsCount) || '-'}</b></Text>
             </Tooltip>
             <div>
               <div>

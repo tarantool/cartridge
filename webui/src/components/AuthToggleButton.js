@@ -1,11 +1,9 @@
 // @flow
 import * as React from 'react';
 import { connect } from 'react-redux';
-import Button from 'src/components/Button';
 import { turnAuth } from 'src/store/actions/auth.actions';
 import Switcher from './Switcher';
 import { ConfirmModal } from './Modal';
-import styled from 'react-emotion';
 import { IconOk } from './Icon/icons/IconOk';
 import { IconCancel } from './Icon/icons/IconCancel';
 import Text from './Text';
@@ -37,7 +35,6 @@ class AuthToggleButton extends React.Component<AuthToggleButtonProps, {visible: 
     const {
       implements_check_password,
       authorizationEnabled,
-      fetchingAuth,
       className
     } = this.props;
 

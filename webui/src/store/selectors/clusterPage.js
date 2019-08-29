@@ -1,7 +1,6 @@
 // @flow
 import * as R from 'ramda';
 import { createSelector } from 'reselect';
-import { get } from 'lodash'
 import type { State } from 'src/store/rootReducer';
 import type { ServerStatWithUUID } from 'src/store/reducers/clusterPage.reducer';
 import type { Replicaset, Server } from 'src/generated/graphql-typing';

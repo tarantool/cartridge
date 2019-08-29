@@ -7,7 +7,6 @@ import 'src/styles/tight-scroll.css';
 
 import ClusterPage from 'src/pages/Cluster';
 import PageLayout from 'src/components/PageLayout';
-import { PROJECT_NAME } from 'src/constants';
 
 const { AppTitle } = window.tarantool_enterprise_core.components;
 
@@ -28,8 +27,6 @@ class App extends React.Component {
   }
 
   renderApp = () => {
-    const { messages, setMessageDone } = this.props;
-
     return (
       <PageLayout>
         <AppTitle title={'Cluster'}/>

@@ -1,6 +1,6 @@
 // @flow
 import React from 'react';
-import { css, cx } from 'react-emotion';
+import { css } from 'react-emotion';
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
 import Modal from 'src/components/Modal';

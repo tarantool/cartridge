@@ -167,7 +167,7 @@ class JoinReplicasetForm extends React.Component<JoinReplicasetFormProps> {
         onSubmit={(values, { setSubmitting }) => {
           onSubmit({
             ...values,
-            uri: selectedServers && selectedServers[0].uri || '',
+            uri: selectedServers && selectedServers[0].uri || ''
           });
         }}
       >

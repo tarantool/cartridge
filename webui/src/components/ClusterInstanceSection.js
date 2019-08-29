@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import Scrollbar from 'src/components/Scrollbar';
 import Text from 'src/components/Text';
 import CollapsibleJSONRenderer from 'src/components/CollapsibleJSONRenderer';
-import { css, cx } from 'emotion';
+import { css } from 'emotion';
 
 const styles = {
   listOuter: css`

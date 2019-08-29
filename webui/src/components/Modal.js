@@ -64,7 +64,7 @@ const styles = {
     right: 16px;
   `,
   content: css`
-  `,
+  `
 };
 
 const isNodeOutsideElement = (node: HTMLElement, element: HTMLElement) => !(element.contains(node) || element === node);

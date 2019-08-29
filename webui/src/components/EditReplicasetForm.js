@@ -18,7 +18,7 @@ import type {
   Role,
   Replicaset,
   VshardGroup,
-  EditReplicasetMutationVariables,
+  EditReplicasetMutationVariables
 } from 'src/generated/graphql-typing';
 import {
   getDependenciesString,

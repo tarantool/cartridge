@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { css } from 'emotion';
 import styled from 'react-emotion';
 import { IconBoxNoData } from 'src/components/Icon/icons/IconBoxNoData';
 
@@ -27,7 +26,7 @@ type NoDataProps = {
     className?: string,
 };
 
-function NoData({ text = 'No Data', className }: NoDataProps) {
+function NoData({ text = 'No Data' }: NoDataProps) {
   return (
     <Container>
       <IconBoxNoData />

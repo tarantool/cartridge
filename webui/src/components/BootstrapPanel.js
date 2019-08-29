@@ -56,9 +56,6 @@ class BootstrapPanel extends React.Component {
 
 const mapStateToProps = (state: State) => {
   const {
-    app: {
-      clusterSelf
-    },
     ui: {
       requestingBootstrapVshard,
       bootstrapPanelVisible

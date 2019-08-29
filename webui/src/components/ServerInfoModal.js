@@ -16,6 +16,7 @@ import Tabbed from 'src/components/Tabbed';
 import ServerShortInfo from 'src/components/ServerShortInfo';
 import ClusterInstanceSection from './ClusterInstanceSection'
 import Button from './Button';
+import * as R from 'ramda';
 
 type ServerInfoModalProps = {
   pageDidMount: ({ instanceUUID: string }) => void,
@@ -84,14 +85,20 @@ class ServerInfoModal extends React.Component<ServerInfoModalProps, ServerInfoMo
             status={status}
             uri={uri}
           />
-          <Tabbed
-            tabs={
-              subsections.map(section => ({
-                label: section[0].toUpperCase() + section.substring(1),
-                content: (<ClusterInstanceSection sectionName={section} />)
-              }))
-            }
-          />
+          {
+            subsections
+            &&
+            R.filter(R.identity, subsections).length > 0
+            &&
+            <Tabbed
+              tabs={
+                R.filter(R.identity, subsections).map(section => ({ 
+                  label: section[0].toUpperCase() + section.substring(1),
+                  content: (<ClusterInstanceSection sectionName={section}/>)
+                }))
+              }
+            />
+          }
           <div className={css`display: flex; justify-content: flex-end;`}>
             <Button intent={'base'} text={'Close'} onClick={this.close} />
           </div>
