@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [1.0.0] - 2019-08-29
+
 ### Added
 
 - New parameter `topology.replicasets[].all_rw` in clusterwide config for configuring
@@ -26,6 +28,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Detect that we run under systemd and switch to syslog logging from
   stderr. This allows to filter log messages by severity with
   `journalctl`
+
+- Redesign WebUI
 
 ### Changed
 
