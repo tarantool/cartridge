@@ -12,7 +12,8 @@ import type {
   Server,
   Role,
   Replicaset,
-  VshardGroup
+  VshardGroup,
+  CreateReplicasetMutationVariables
 } from 'src/generated/graphql-typing';
 import {
   createReplicaset,
@@ -36,7 +37,12 @@ type ConfigureServerModalProps = {
   vshard_groups?: VshardGroup[],
   replicasetList?: Replicaset[],
   serverList?: Server[],
-  selectedServerUri?: string
+  selectedServerUri?: string,
+  history: History,
+  location: Location,
+  setModalFilter: Function,
+  joinServer: Function,
+  createReplicaset: Function,
 }
 
 class ConfigureServerModal extends React.Component<ConfigureServerModalProps> {
@@ -53,11 +59,13 @@ class ConfigureServerModal extends React.Component<ConfigureServerModalProps> {
       setModalFilter
     } = this.props;
 
-    const selectedServers = serverList.filter(server => {
-      return (selectedServerUri instanceof Array)
-        ? selectedServerUri.includes(server.uri)
-        : selectedServerUri === server.uri;
-    });
+    const selectedServers = (
+      serverList && serverList.filter(server => {
+        return (selectedServerUri instanceof Array)
+          ? selectedServerUri.includes(server.uri)
+          : selectedServerUri === server.uri;
+      })
+    ) || [];
 
     const tabs = [
       {
@@ -82,7 +90,7 @@ class ConfigureServerModal extends React.Component<ConfigureServerModalProps> {
         content: (
           <div className={styles.tabContent}>
             <JoinReplicasetForm
-              filter={filter}
+              filter={filter || ''}
               onCancel={this.handleClose}
               onSubmit={this.handleJoinServerSubmit}
               replicasetList={replicasetList}

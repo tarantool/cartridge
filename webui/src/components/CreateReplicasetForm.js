@@ -18,7 +18,8 @@ import type {
   Server,
   Role,
   Replicaset,
-  VshardGroup
+  VshardGroup,
+  CreateReplicasetMutationVariables
 } from 'src/generated/graphql-typing';
 import {
   getDependenciesString,
@@ -80,17 +81,10 @@ const styles = {
 
 const info = <span>Group disabled not yet included the role of "<b>vshard-storage</b>"</span>
 
-type CreateReplicasetFormData = {
-  alias: string,
-  roles?: string[],
-  vshard_group?: string,
-  weight?: string
-};
-
 type CreateReplicasetFormProps = {
   knownRoles?: Role[],
   onCancel: () => void,
-  onSubmit: (d: CreateReplicasetFormData) => void,
+  onSubmit: (d: CreateReplicasetMutationVariables) => void,
   replicasetList?: Replicaset[],
   selectedServers?: Server[],
   vshard_groups?: VshardGroup[]
@@ -117,7 +111,7 @@ CreateReplicasetFormProps) => (
       onSubmit({
         ...values,
         alias: values.alias || null,
-        uri: selectedServers[0].uri,
+        uri: (selectedServers && selectedServers[0].uri) || '',
         weight: parseInt(values.weight, 10)
       });
     }}
@@ -215,7 +209,7 @@ CreateReplicasetFormProps) => (
           <PopupFooter
             controls={([
               <Button type='button' onClick={onCancel}>Cancel</Button>,
-              <Button intent='primary' type='submit' disabled={Object.keys(errors).length}>
+              <Button intent='primary' type='submit' disabled={Object.keys(errors).length > 0}>
                 Create replica set
               </Button>
             ])}

@@ -17,7 +17,8 @@ import FormField from 'src/components/FormField';
 import type {
   Role,
   Replicaset,
-  VshardGroup
+  VshardGroup,
+  EditReplicasetMutationVariables,
 } from 'src/generated/graphql-typing';
 import {
   getDependenciesString,
@@ -93,20 +94,11 @@ const styles = {
 
 const info = <span>Group disabled not yet included the role of "<b>vshard-storage</b>"</span>
 
-type EditReplicasetFormData = {
-  alias: string,
-  roles?: string[],
-  vshard_group?: string,
-  weight?: string,
-  master: string[],
-  uuid: string,
-};
-
 type EditReplicasetFormProps = {
   knownRoles?: Role[],
   loading?: boolean,
   onCancel: () => void,
-  onSubmit: (d: EditReplicasetFormData) => void,
+  onSubmit: (d: EditReplicasetMutationVariables) => void,
   replicaset?: Replicaset,
   vshard_groups?: VshardGroup[]
 };
@@ -128,7 +120,7 @@ EditReplicasetFormProps) => {
     <Formik
       initialValues={{
         alias: replicaset.alias,
-        roles: replicaset.roles,
+        roles: replicaset.roles || [],
         vshard_group: replicaset.vshard_group,
         master: replicaset.servers.map(({ uuid }) => uuid),
         weight: replicaset.weight

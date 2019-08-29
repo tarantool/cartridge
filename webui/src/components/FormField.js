@@ -37,7 +37,7 @@ type FormFieldProps = {
   children?: React.Node,
   className?: string,
   columns?: 1 | 2 | 3,
-  info?: string,
+  info?: string | React.Node,
   itemClassName?: string,
   label?: string,
   subTitle?: string | React.Node,
