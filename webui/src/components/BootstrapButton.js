@@ -15,7 +15,7 @@ const BootstrapButton = ({
 }) => {
   if (isBootstrapped)
     return null;
-
+  // TODO: call getClusterSelf on ModalEditReplicaSet submit action
   return (
     <Button
       disabled={requesting}
