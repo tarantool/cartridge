@@ -7,7 +7,6 @@ const styles = {
   page: css`
     display: flex;
     flex-direction: column;
-    min-height: 100%;
     background: #f0f2f5; /* this color should be set in core */
     padding: 24px 32px;
   `

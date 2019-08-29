@@ -3,6 +3,8 @@ import { connect } from 'react-redux';
 import Button from 'src/components/Button';
 import { css } from 'emotion';
 import { editUser } from 'src/store/actions/users.actions';
+import Alert from 'src/components/Alert';
+import Text from 'src/components/Text';
 import { FieldConstructor, FormContainer } from '../FieldGroup';
 import InputText from '../InputText';
 import { Formik, Form } from 'formik';
@@ -35,7 +37,7 @@ const styles = {
 
 
 const formProps = [
-  { label: 'New password', field: 'password' },
+  { label: 'New password', field: 'password', type: 'password' },
   { label: 'email', field: 'email' },
   { label: 'fullname', field: 'fullname' }
 ]
@@ -44,8 +46,12 @@ const formProps = [
 class UserEditForm extends React.Component {
   submit = async (values, actions) => {
     const { editUser, username } = this.props;
+    const obj = R.pickAll(['email', 'fullname'], values)
+    if (values.password) {
+      obj.password = values.password
+    }
     try {
-      await editUser({ ...R.filter(R.identity, values), username });
+      await editUser({ ...obj, username });
     } catch(e) {
       actions.setFieldError('common', e.message)
     } finally{
@@ -83,15 +89,27 @@ class UserEditForm extends React.Component {
         }) => (<Form>
           <FormContainer>
 
-            {formProps.map(({ label, field }) =>
+            {formProps.map(({ label, field, type }) =>
               <FieldConstructor
                 key={field}
                 label={label}
-                input={<InputText value={values[field]} onBlur={handleBlur} onChange={handleChange} name={field}/>}
+                input={
+                  <InputText
+                    value={values[field]}
+                    onBlur={handleBlur}
+                    onChange={handleChange}
+                    name={field}
+                    type={type || 'text'}
+                  />
+                }
                 error={touched[field] && errors[field]}
               />
             )}
-            <p className={styles.error}>{error || errors.common}</p>
+            {error || errors.common ? (
+              <Alert type="error" className={styles.error}>
+                <Text variant="basic">{error || errors.common}</Text>
+              </Alert>
+            ) : null}
             <div className={styles.actionButtons}>
               {onClose && <Button intent="base" onClick={onClose} className={styles.cancelButton}>Cancel</Button>}
               <Button intent="primary" type='submit'>Save</Button>

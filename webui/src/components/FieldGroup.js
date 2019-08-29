@@ -24,8 +24,6 @@ export const FieldRequired = styled.span`
 `
 
 export const FieldError = styled.div`
-  position: absolute;
-  bottom: 4px;
   font-size: 12px;
   color: #f5222d;
 `

@@ -93,7 +93,15 @@ class UserAddForm extends React.Component {
                 key={field}
                 label={field}
                 required={requiredFields.includes(field)}
-                input={<InputText value={values[field]} onBlur={handleBlur} onChange={handleChange} name={field}/>}
+                input={
+                  <InputText
+                    value={values[field]}
+                    onBlur={handleBlur}
+                    onChange={handleChange}
+                    name={field}
+                    type={field === 'password' ? 'password' : 'text'}
+                  />
+                }
                 error={touched[field] && errors[field]}
               />
             )}

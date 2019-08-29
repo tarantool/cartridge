@@ -35,7 +35,11 @@ import {
   USER_LIST_REQUEST,
   USER_ADD_REQUEST,
   USER_REMOVE_REQUEST,
-  USER_EDIT_REQUEST, SHOW_EXPEL_MODAL, HIDE_EXPEL_MODAL, CLUSTER_PAGE_EXPEL_SERVER_REQUEST_SUCCESS
+  USER_EDIT_REQUEST,
+  SHOW_EXPEL_MODAL,
+  HIDE_EXPEL_MODAL,
+  CLUSTER_PAGE_EXPEL_SERVER_REQUEST_SUCCESS,
+  CLUSTER_PAGE_EXPEL_SERVER_REQUEST, CLUSTER_PAGE_EXPEL_SERVER_REQUEST_ERROR
 } from '../actionTypes';
 
 export type UIState = {
@@ -53,6 +57,7 @@ export type UIState = {
   fetchingUserList: boolean,
   fetchingUserMutation: boolean,
   expelModal: ?string,
+  expelError: ?string,
 };
 
 const initialState: UIState = {
@@ -69,10 +74,11 @@ const initialState: UIState = {
   fetchingAuth: false,
   fetchingUserList: false,
   fetchingUserMutation: false,
-  expelModal: null
+  expelModal: null,
+  expelError: null,
 };
 
-export const reducer = (state: UIState = initialState, { type, payload }: FSA): UIState => {
+export const reducer = (state: UIState = initialState, { type, payload, error }: FSA): UIState => {
   switch (type) {
     case SET_BOOSTRAP_VSHARD_PANEL_VISIBLE: {
       return {
@@ -236,7 +242,21 @@ export const reducer = (state: UIState = initialState, { type, payload }: FSA): 
     case SHOW_EXPEL_MODAL: {
       return {
         ...state,
-        expelModal: payload
+        expelModal: payload,
+        expelError: null,
+      }
+    }
+    case CLUSTER_PAGE_EXPEL_SERVER_REQUEST: {
+      return {
+        ...state,
+        expelError: null,
+      }
+    }
+
+    case CLUSTER_PAGE_EXPEL_SERVER_REQUEST_ERROR: {
+      return {
+        ...state,
+        expelError: error.message,
       }
     }
 
@@ -244,7 +264,7 @@ export const reducer = (state: UIState = initialState, { type, payload }: FSA): 
     case CLUSTER_PAGE_EXPEL_SERVER_REQUEST_SUCCESS: {
       return {
         ...state,
-        expelModal: null
+        expelModal: null,
       }
     }
 

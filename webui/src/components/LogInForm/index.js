@@ -82,7 +82,7 @@ const styles = {
 
 const formProps = [
   { label: 'Username', field: 'username' },
-  { label: 'Password', field: 'password' }
+  { label: 'Password', field: 'password', type: 'password' }
 ]
 
 class LogInForm extends React.Component {
@@ -120,12 +120,20 @@ class LogInForm extends React.Component {
         }) =>
           <Form>
 
-            {formProps.map(({ label, field }) =>
+            {formProps.map(({ label, field, type }) =>
               <FieldConstructor
                 key={field}
                 label={label}
                 required={true}
-                input={<InputText value={values[field]} onBlur={handleBlur} onChange={handleChange} name={field}/>}
+                input={
+                  <InputText
+                    value={values[field]}
+                    onBlur={handleBlur}
+                    onChange={handleChange}
+                    name={field}
+                    type={type || 'text'}
+                  />
+                }
                 error={touched[field] && errors[field]}
               />
             )}

@@ -7,9 +7,7 @@ import Text from 'src/components/Text';
 
 const styles = {
   section: css`
-    min-height: 100%;
     margin: 0 0 48px;
-    background: #f0f2f5; /* this color should be set in core */
   `,
   headingPane: css`
     display: flex;
