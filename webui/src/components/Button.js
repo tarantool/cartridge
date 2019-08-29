@@ -1,6 +1,7 @@
 // @flow
 // TODO: move to uikit
 import * as React from 'react'
+import type { ComponentType } from 'react'
 import { css, cx } from 'react-emotion'
 
 const styles = {
@@ -134,7 +135,7 @@ type ButtonProps = {
   className?: string,
   children?: React.Node,
   disabled?: boolean,
-  icon?: React.Component<any>,
+  icon?: ComponentType<any>,
   intent?: 'primary' | 'secondary' | 'base',
   onClick?: (MouseEvent) => void,
   size?: 's' | 'm',
@@ -156,6 +157,24 @@ export default ({
 ButtonProps) => {
   const isOnlyIcon = Icon && !children && !text;
 
+  const content = []
+
+  if (Icon) {
+    content.push(
+      <Icon
+        className={cx(
+          styles.icon,
+          {
+            [styles.iconMargin]: !isOnlyIcon
+          }
+        )}
+      />
+    )
+  }
+
+  content.push(children || text)
+
+
   return (
     <button
       className={cx(
@@ -173,17 +192,7 @@ ButtonProps) => {
       onClick={onClick}
       type={type}
     >
-      {Icon && (
-        <Icon
-          className={cx(
-            styles.icon,
-            {
-              [styles.iconMargin]: !isOnlyIcon
-            }
-          )}
-        />
-      )}
-      {children || text}
+      {content}
     </button>
   );
 }

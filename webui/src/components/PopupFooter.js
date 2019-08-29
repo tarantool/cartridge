@@ -1,5 +1,3 @@
-// @flow
-// TODO: move to uikit
 import * as React from 'react';
 import { css, cx } from 'emotion';
 import ControlsPanel from 'src/components/ControlsPanel';

@@ -94,7 +94,7 @@ CheckboxProps) => (
 
 export default Checkbox;
 
-export const CheckboxField = props => (
+export const CheckboxField = (props: {value: string, name: string, children?: React.Node}) => (
   <Field name={props.name}>
     {({ field, form }) => (
       <Checkbox

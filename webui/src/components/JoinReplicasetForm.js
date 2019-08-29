@@ -167,7 +167,7 @@ class JoinReplicasetForm extends React.Component<JoinReplicasetFormProps> {
         onSubmit={(values, { setSubmitting }) => {
           onSubmit({
             ...values,
-            uri: selectedServers[0].uri
+            uri: selectedServers && selectedServers[0].uri || '',
           });
         }}
       >
@@ -191,10 +191,18 @@ class JoinReplicasetForm extends React.Component<JoinReplicasetFormProps> {
                     label='Choose replica set'
                     subTitle={(
                       <Text variant='h5' upperCase tag='span'>
-                        <b>{replicasetList.length}</b> total
-                        {filteredReplicasetList.length !== replicasetList.length && (
-                          <>, <b>{filteredReplicasetList.length}</b> filtered</>
-                        )}
+                        <b>{replicasetList && replicasetList.length || 0}</b> total
+                        {
+                          filteredReplicasetList
+                          &&
+                          replicasetList
+                          &&
+                          filteredReplicasetList.length !== replicasetList.length
+                          &&
+                          (
+                            <>, <b>{filteredReplicasetList.length}</b> filtered</>
+                          )
+                        }
                       </Text>
                     )}
                     topRightControls={(
@@ -231,12 +239,12 @@ class JoinReplicasetForm extends React.Component<JoinReplicasetFormProps> {
                           content={this.renderServersTooltipContent(servers, master.uuid)}
                         >
                           <IconInfo />
-                          <Text className={styles.too} variant='h5' upperCase tag='span'>
+                          <Text variant='h5' upperCase tag='span'>
                             <b>{servers.length}</b>
                             {` total server${servers.length > 1 ? 's' : ''}`}
                           </Text>
                         </Tooltip>
-                        <ReplicasetRoles className={styles.roles} roles={roles} />
+                        <ReplicasetRoles className={styles.roles} roles={roles || []} />
                       </React.Fragment>
                     ))}
                   </FormField>
@@ -247,7 +255,7 @@ class JoinReplicasetForm extends React.Component<JoinReplicasetFormProps> {
                 controls={([
                   <Button type='button' onClick={onCancel}>Cancel</Button>,
                   <Button
-                    disabled={Object.keys(errors).length || !values.replicasetUuid}
+                    disabled={Object.keys(errors).length > 0 || !values.replicasetUuid}
                     intent='primary'
                     type='submit'
                     text='Join replica set'
@@ -261,7 +269,7 @@ class JoinReplicasetForm extends React.Component<JoinReplicasetFormProps> {
     );
   }
 
-  handleFilterChange = (e: InputEvent) => {
+  handleFilterChange = (e: SyntheticInputEvent<HTMLInputElement>) => {
     this.props.setFilter(e.target.value);
   };
 

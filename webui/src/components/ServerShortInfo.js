@@ -1,4 +1,3 @@
-// @flow
 // TODO: move to uikit
 import * as React from 'react';
 import { css } from 'react-emotion';

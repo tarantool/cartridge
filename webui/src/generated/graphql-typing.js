@@ -23,14 +23,12 @@ export type Apicluster = {
   vshard_bucket_count: $ElementType<Scalars, "Int">,
   /** List authorized users */
   users?: ?Array<User>,
-  auth_params: UserManagementApi,
+  /** Get list of all registered roles and their dependencies. */
+  known_roles: Array<Role>,
   /** Get list of known vshard storage groups. */
   vshard_known_groups: Array<$ElementType<Scalars, "String">>,
   vshard_groups: Array<VshardGroup>,
-  /** Get list of all registered roles and their dependencies. */
-  known_roles: Array<Role>,
-  /** Whether it is reasonble to call bootstrap_vshard mutation */
-  is_vshard_bootstrapped: $ElementType<Scalars, "Boolean">,
+  auth_params: UserManagementApi,
   /** Whether it is reasonble to call bootstrap_vshard mutation */
   can_bootstrap_vshard: $ElementType<Scalars, "Boolean">
 };
@@ -84,13 +82,15 @@ export type MutationEdit_ReplicasetArgs = {
 };
 
 export type MutationJoin_ServerArgs = {
-  replicaset_uuid?: ?$ElementType<Scalars, "String">,
-  uri: $ElementType<Scalars, "String">,
-  labels?: ?Array<?LabelInput>,
-  roles?: ?Array<$ElementType<Scalars, "String">>,
   instance_uuid?: ?$ElementType<Scalars, "String">,
   timeout?: ?$ElementType<Scalars, "Float">,
-  vshard_group?: ?$ElementType<Scalars, "String">
+  uri: $ElementType<Scalars, "String">,
+  vshard_group?: ?$ElementType<Scalars, "String">,
+  labels?: ?Array<?LabelInput>,
+  replicaset_alias?: ?$ElementType<Scalars, "String">,
+  replicaset_weight?: ?$ElementType<Scalars, "Float">,
+  roles?: ?Array<$ElementType<Scalars, "String">>,
+  replicaset_uuid?: ?$ElementType<Scalars, "String">
 };
 
 export type MutationExpel_ServerArgs = {
@@ -313,8 +313,8 @@ export type ServerShortInfo = {
 export type ServerStat = {
   /** The total amount of memory (including allocated, but currently free slabs) used only for tuples, no indexes */
   items_size: $ElementType<Scalars, "Long">,
-  /** vshard buckets count */
-  vshard_buckets_count: $ElementType<Scalars, "Int">,
+  /** Number of buckets active on the storage */
+  vshard_buckets_count?: ?$ElementType<Scalars, "Int">,
   /** The maximum amount of memory that the slab allocator can use for both tuples
    * and indexes (as configured in the memtx_memory parameter)
    */
@@ -403,12 +403,7 @@ export type GetClusterQueryVariables = {};
 export type GetClusterQuery = { __typename?: "Query" } & {
   cluster: ?({ __typename?: "Apicluster" } & $Pick<
     Apicluster,
-    {
-      failover: *,
-      can_bootstrap_vshard: *,
-      isBootstrapped: *,
-      vshard_bucket_count: *
-    }
+    { failover: *, can_bootstrap_vshard: *, vshard_bucket_count: * }
   > & {
       clusterSelf: ?({ __typename?: "ServerShortInfo" } & {
         uri: $ElementType<ServerShortInfo, "uri">,
@@ -753,9 +748,11 @@ export type JoinMutation = { __typename?: "Mutation" } & {
 };
 
 export type CreateReplicasetMutationVariables = {
+  alias?: ?$ElementType<Scalars, "String">,
   uri: $ElementType<Scalars, "String">,
   roles?: ?Array<$ElementType<Scalars, "String">>,
-  vshard_group?: ?$ElementType<Scalars, "String">
+  vshard_group?: ?$ElementType<Scalars, "String">,
+  weight?: ?$ElementType<Scalars, "Float">
 };
 
 export type CreateReplicasetMutation = { __typename?: "Mutation" } & {
@@ -771,6 +768,7 @@ export type ExpelMutation = { __typename?: "Mutation" } & {
 };
 
 export type EditReplicasetMutationVariables = {
+  alias?: ?$ElementType<Scalars, "String">,
   uuid: $ElementType<Scalars, "String">,
   roles?: ?Array<$ElementType<Scalars, "String">>,
   vshard_group?: ?$ElementType<Scalars, "String">,

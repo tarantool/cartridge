@@ -47,7 +47,7 @@ type SelectedServersListProps = {
 const SelectedServersList = ({ className, serverList }: SelectedServersListProps) => (
   <ul className={cx(styles.serversList, className)}>
     <Text variant='h3'>Selected servers:</Text>
-    {serverList.map(server => (
+    {serverList && serverList.map(server => (
       <li className={styles.serversListItem}>
         <Text className={styles.serverListItemAlias} variant='h5' tag='span'>{server.alias}</Text>
         <UriLabel uri={server.uri} />

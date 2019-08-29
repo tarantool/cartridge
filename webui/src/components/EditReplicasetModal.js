@@ -21,12 +21,14 @@ const styles = {
 }
 
 type EditReplicasetModalProps = {
-  editReplicaset: () => void,
+  editReplicaset: Function,
   knownRoles?: Role[],
   loading?:? boolean,
   vshard_groups?: VshardGroup[],
   selectedReplicasetUuid?: string,
   replicasetList?: Replicaset[],
+  history: History,
+  location: Location,
 }
 
 class EditReplicasetModal extends React.Component<EditReplicasetModalProps> {
@@ -39,7 +41,9 @@ class EditReplicasetModal extends React.Component<EditReplicasetModalProps> {
       selectedReplicasetUuid
     } = this.props;
 
-    const selectedReplicaset = replicasetList.find(({ uuid }) => selectedReplicasetUuid === uuid);
+    const selectedReplicaset = (
+      replicasetList && replicasetList.find(({ uuid }) => selectedReplicasetUuid === uuid)
+    ) || null;
 
     return (
       <Modal
@@ -49,14 +53,18 @@ class EditReplicasetModal extends React.Component<EditReplicasetModalProps> {
         onClose={this.handleClose}
         wide
       >
-        <EditReplicasetForm
-          replicaset={selectedReplicaset}
-          vshard_groups={vshard_groups}
-          knownRoles={knownRoles}
-          onSubmit={this.handleEditReplicasetSubmit}
-          onCancel={this.handleClose}
-          loading={loading}
-        />
+        {
+          selectedReplicaset
+          &&
+          <EditReplicasetForm
+            replicaset={selectedReplicaset}
+            vshard_groups={vshard_groups}
+            knownRoles={knownRoles}
+            onSubmit={this.handleEditReplicasetSubmit}
+            onCancel={this.handleClose}
+            loading={!!loading}
+          />
+        }
       </Modal>
     );
   }

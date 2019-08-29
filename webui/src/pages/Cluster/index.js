@@ -98,10 +98,11 @@ export type ClusterProps = {
   changeFailover: () => void,
   resetPageState: ResetPageStateActionCreator,
   setFilter: SetFilterActionCreator,
-  setProbeServerModalVisible: SetProbeServerModalVisibleActionCreator
+  setProbeServerModalVisible: SetProbeServerModalVisibleActionCreator,
+  routerParams: null | { instanceUUID: string },
 };
 
-class Cluster extends React.Component<ClusterProps, ClusterState> {
+class Cluster extends React.Component<ClusterProps> {
   componentDidMount() {
     const {
       pageDidMount,
@@ -286,7 +287,7 @@ class Cluster extends React.Component<ClusterProps, ClusterState> {
 
   handleServerLabelClick = ({ name, value }: Label) => this.props.setFilter(`${name}: ${value}`);
 
-  handleFilterClear = () => this.props.setFilter('');
+  handleFilterClear = () => void this.props.setFilter('');
 
   handleProbeServerRequest = () => {
     this.props.setProbeServerModalVisible(true);
@@ -303,7 +304,7 @@ class Cluster extends React.Component<ClusterProps, ClusterState> {
     });
   };
 
-  handleFilterChange = (e: SyntheticInputEvent<HTMLInputElement>) => this.props.setFilter(e.target.value);
+  handleFilterChange = (e: SyntheticInputEvent<HTMLInputElement>) => void this.props.setFilter(e.target.value);
 
   uploadConfig = (data: { data: FormData }) => {
     const { uploadConfig } = this.props;

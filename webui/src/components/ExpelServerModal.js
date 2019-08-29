@@ -10,7 +10,14 @@ import { formatServerName } from '../misc/server';
 import { css } from 'react-emotion'
 import Text from './Text';
 
-class ExpelServerModal extends React.Component<{expelModal: ?string, dispatch: Function, serverInfo: ?Object}>{
+type ExpelServerModalProps = {
+  expelModal: ?string,
+  dispatch: Function,
+  serverInfo: ?Object,
+  error: ?string,
+}
+
+class ExpelServerModal extends React.Component<ExpelServerModalProps>{
   render() {
     const {
       expelModal,

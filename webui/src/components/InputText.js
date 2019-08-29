@@ -5,6 +5,7 @@ import * as React from 'react';
 import { createRef } from 'react';
 import { css, cx } from 'react-emotion';
 import { IconCancel } from 'src/components/Icon';
+import * as R from 'ramda'
 
 const styles = {
   outer: css`
@@ -57,13 +58,13 @@ type InputProps = {
   autoComplete?: 'on' | 'off',
   autoFocus?: boolean,
   className?: string,
-  onClearClick?: (e: MouseEvent) => void,
+  onClearClick?: (e?: MouseEvent) => any,
   disabled?: boolean,
   error?: boolean,
   name?: string,
-  onBlur?: (e: MouseEvent) => void,
-  onChange?: (e: InputEvent) => void,
-  onFocus?: (e: MouseEvent) => void,
+  onBlur?: (e: MouseEvent) => any,
+  onChange?: (e: SyntheticInputEvent<HTMLInputElement>) => any,
+  onFocus?: (e: MouseEvent) => any,
   readOnly?: boolean,
   rightIcon?: React.Node,
   type?: 'text' | 'password' | 'email',
@@ -75,8 +76,10 @@ type InputState = {
   focused: boolean;
 };
 
+const noop = () => {}
+
 export default class InputText extends React.Component<InputProps, InputState> {
-  inputRef = createRef();
+  inputRef = createRef<HTMLInputElement>();
 
   state = {
     focused: false
@@ -133,7 +136,7 @@ export default class InputText extends React.Component<InputProps, InputState> {
         {(onClearClick || rightIcon) && (
           <div className={styles.iconWrap}>
             {onClearClick && (!rightIcon || value)
-              ? <IconCancel onClick={!(disabled || readOnly) && this.handleClearClick} />
+              ? <IconCancel onClick={(!(disabled || readOnly) && this.handleClearClick) || noop} />
               : rightIcon}
           </div>
         )}
@@ -149,7 +152,7 @@ export default class InputText extends React.Component<InputProps, InputState> {
   };
 
   handleClearClick = () => {
-    this.inputRef.current.focus();
-    this.props.onClearClick();
+    if (this.inputRef && this.inputRef.current) this.inputRef.current.focus();
+    this.props.onClearClick && this.props.onClearClick();
   }
 }

@@ -1,5 +1,5 @@
 # source: http://localhost:8081/admin/api
-# timestamp: Wed Aug 28 2019 13:29:36 GMT+0300 (Moscow Standard Time)
+# timestamp: Thu Aug 29 2019 19:37:46 GMT+0300 (GMT+03:00)
 
 """Cluster management"""
 type Apicluster {

@@ -113,14 +113,16 @@ type Server = {
   // disabled?: boolean,
   message: string,
   // priority?: number,
-  labels?: ?Array<?Label>,
+  labels?: ?Array<Label>,
   master?: boolean,
-  serverActions?: ServerAction[]
+  serverActions?: ServerAction[],
+  history: History,
+  uuid: string,
 };
 
 type ReplicasetServerListItemProps = {
   ...$Exact<Server>,
-  onServerLabelClick?: (MouseEvent) => void,
+  onServerLabelClick?: (label: Label) => void,
   tagsHighlightingClassName?: string
 };
 
@@ -204,7 +206,7 @@ class ReplicasetServerListItem extends React.PureComponent<
           />
         </div>
         <ServerLabels
-          labels={labels}
+          labels={(labels || [])}
           onLabelClick={onServerLabelClick}
           highlightingOnHover={tagsHighlightingClassName}
         />

@@ -31,7 +31,9 @@ export type TagsListProps<T> = {
   renderItem: (value: T) => string
 };
 
-const ServerLabels = ({
+const toString = (v: any): string => v + ''
+
+const ServerLabels = <T>({
   className,
   heading,
   highlightingOnHover,
@@ -40,22 +42,22 @@ const ServerLabels = ({
   tagClassName,
   values
 }:
-TagsListProps) => (
-  <div className={styles.wrapper}>
-    {heading && (
-      <Text className={styles.heading} variant='h5' tag='span'><b>{`${heading}:`}</b></Text>
-    )}
-    <div>
-      {(values || []).map(value => (
-        <Tag
-          className={cx(styles.tag, tagClassName)}
-          onClick={() => onTagClick && onTagClick(value)}
-          text={renderItem ? renderItem(value) : value}
-          highlightingOnHover={highlightingOnHover}
-        />
-      ))}
+TagsListProps<T>) => (
+    <div className={styles.wrapper}>
+      {heading && (
+        <Text className={styles.heading} variant='h5' tag='span'><b>{`${heading}:`}</b></Text>
+      )}
+      <div>
+        {(values || []).map(value => (
+          <Tag
+            className={cx(styles.tag, tagClassName)}
+            onClick={() => onTagClick && onTagClick(value)}
+            text={renderItem ? renderItem(value) : toString(value)}
+            highlightingOnHover={highlightingOnHover}
+          />
+        ))}
+      </div>
     </div>
-  </div>
-);
+  );
 
 export default ServerLabels;

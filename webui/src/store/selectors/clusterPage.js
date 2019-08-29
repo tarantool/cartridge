@@ -32,7 +32,7 @@ const selectReplicasetList = (state: State): ?Replicaset[] => state.clusterPage.
 
 const selectServerList = (state: State): ?Server[] => state.clusterPage.serverList;
 
-export const selectServerByUri = (state: State, uri): ?Server => {
+export const selectServerByUri = (state: State, uri: string): ?Server => {
   if (Array.isArray(state.clusterPage.serverList))
     return state.clusterPage.serverList.find(x => x.uri === uri)
   return null
@@ -197,7 +197,7 @@ export const getReplicasetCounts: (s: State) => ReplicasetCounts = createSelecto
   }
 );
 
-export const getSectionsNames = (state: State) => Object.keys(state.clusterInstancePage.boxinfo || {});
+export const getSectionsNames = (state: State): Array<string> => Object.keys(state.clusterInstancePage.boxinfo || {});
 
 export const isBootstrapped = (state: State) => (
   R.path(['app', 'clusterSelf', 'vshard_groups', '0', 'bootstrapped'], state) || false

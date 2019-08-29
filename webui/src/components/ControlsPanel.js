@@ -1,6 +1,7 @@
 // @flow
 // TODO: move to uikit
 import * as React from 'react';
+import type { ComponentType } from 'react';
 import { css, cx } from 'emotion';
 
 const styles = {
@@ -23,7 +24,7 @@ const styles = {
 
 type ControlsPanelProps = {
   className?: string,
-  children?: React.Element<any> | React.Element<any>[],
+  children?: React.Node,
   thin?: boolean // use thin in modals
 };
 

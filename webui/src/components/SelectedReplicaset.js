@@ -42,7 +42,6 @@ type SelectedReplicasetProps = {
 const SelectedReplicaset = ({ className, replicaset }: SelectedReplicasetProps) => {
   const {
     alias,
-    message,
     status,
     uuid
   } = replicaset || {};
@@ -51,7 +50,7 @@ const SelectedReplicaset = ({ className, replicaset }: SelectedReplicasetProps) 
     <div className={cx(styles.replicaset, className)}>
       <div className={styles.headingWrap}>
         <Text className={styles.alias} variant='h3'>{alias || uuid}</Text>
-        <HealthStatus className={styles.status} status={status} message={message} />
+        <HealthStatus className={styles.status} status={status}  />
       </div>
       <Text className={styles.uuid} variant='p' tag='span'>{`uuid: ${uuid}`}</Text>
     </div>

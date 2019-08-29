@@ -58,13 +58,6 @@ const styles = {
   `
 };
 
-type Glyph = {
-  content: string,
-  id: string,
-  node: any,
-  viewBox: string,
-};
-
 type IconProps = {
   active?: boolean; // Выбраное состояние
   className?: string;

@@ -36,8 +36,8 @@ const styles = {
   activeTab: css`
     color: #CF1322;
     border-bottom-color: #CF1322;
-  `
-
+  `,
+  tabs: css``
 };
 
 type Tab = {
@@ -50,7 +50,11 @@ type TabbedProps = {
   className?: string,
 };
 
-class Tabbed extends React.Component<TabbedProps> {
+type TabbedState = {
+  activeTab: number,
+}
+
+class Tabbed extends React.Component<TabbedProps, TabbedState> {
   state = {
     activeTab: 0
   };
@@ -79,7 +83,7 @@ class Tabbed extends React.Component<TabbedProps> {
     );
   }
 
-  handleTabChange(i) {
+  handleTabChange(i: number) {
     this.setState({ activeTab: i })
   }
 }

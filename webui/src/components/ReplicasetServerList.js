@@ -1,5 +1,3 @@
-// @flow
-// TODO: move to uikit
 import PropTypes from 'prop-types';
 import React from 'react';
 import { defaultMemoize } from 'reselect';

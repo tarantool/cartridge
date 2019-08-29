@@ -1,5 +1,5 @@
 {
-  "name": "tarantool-cluster",
+  "name": "@tarantool.io/cartridge",
   "version": "0.1.0",
   "private": true,
   "dependencies": {

@@ -62,8 +62,9 @@ const styles = {
     position: absolute;
     top: 16px;
     right: 16px;
-  `
-
+  `,
+  content: css`
+  `,
 };
 
 const isNodeOutsideElement = (node: HTMLElement, element: HTMLElement) => !(element.contains(node) || element === node);
@@ -73,7 +74,7 @@ interface BaseModalProps {
   children?: React.Node,
   className?: string,
   wide?: boolean,
-  onClose?: (MouseEvent) => void,
+  onClose?: (?MouseEvent) => void,
   bgColor?: string,
 }
 
@@ -113,7 +114,7 @@ export const ConfirmModal = (
 
 
 export class BaseModal<T: BaseModalProps = BaseModalProps> extends React.Component<T> {
-  modalRef = createRef();
+  modalRef = createRef<HTMLElement>();
 
   render() {
     const { visible } = this.props;
@@ -121,7 +122,13 @@ export class BaseModal<T: BaseModalProps = BaseModalProps> extends React.Compone
     if (typeof visible === 'boolean' && !visible)
       return null;
 
-    return ReactDOM.createPortal(this.renderModal(), document.body);
+    const root = document.body;
+
+    if (root) {
+      return ReactDOM.createPortal(this.renderModal(), root);
+    }
+
+    return null
   }
 
   renderModal() {
@@ -148,10 +155,10 @@ export class BaseModal<T: BaseModalProps = BaseModalProps> extends React.Compone
     );
   }
 
-  handleOutsideClick = (event: MouseEvent<HTMLDivElement>) => {
+  handleOutsideClick = (event: MouseEvent) => {
     const modal = this.modalRef.current;
 
-    if (!!modal && isNodeOutsideElement(event.target, modal)) {
+    if (!!modal && event.target instanceof HTMLElement && isNodeOutsideElement(event.target, modal)) {
       this.props.onClose && this.props.onClose(event);
     }
   };

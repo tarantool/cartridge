@@ -88,7 +88,7 @@ function* appMessageSaga() {
           title: 'An error has occurred',
           message: messageText,
           type: messageType,
-          timeout: 0,
+          timeout: 0
         });
       }
     } else {
@@ -112,7 +112,7 @@ function* appMessageSaga() {
           title: 'An error has occurred',
           message: messageText,
           type: messageType,
-          timeout: 0,
+          timeout: 0
         });
       }
     }
@@ -130,7 +130,7 @@ function* appMessageSaga() {
         title: 'Successful!',
         message: messageText,
         type: messageType,
-        timeout: 5000,
+        timeout: 5000
       });
     }
   }

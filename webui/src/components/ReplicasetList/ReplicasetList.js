@@ -1,4 +1,3 @@
-// @flow
 import PropTypes from 'prop-types';
 import React from 'react';
 import { defaultMemoize } from 'reselect';
@@ -14,7 +13,6 @@ import Text from 'src/components/Text';
 import ReplicasetRoles from 'src/components/ReplicasetRoles';
 import ReplicasetServerList from 'src/components/ReplicasetServerList';
 import { addSearchParams } from 'src/misc/url';
-import type { Replicaset } from 'src/generated/graphql-typing';
 
 const styles = {
   header: css`
@@ -75,7 +73,7 @@ const styles = {
 
 const prepareReplicasetList = dataSource => [...dataSource].sort((a, b) => b.uuid < a.uuid ? 1 : -1);
 
-class ReplicasetList extends React.PureComponent<> {
+class ReplicasetList extends React.PureComponent {
   prepareReplicasetList = defaultMemoize(prepareReplicasetList);
 
   render() {

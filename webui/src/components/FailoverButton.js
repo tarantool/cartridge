@@ -1,4 +1,3 @@
-// @flow
 import * as React from 'react';
 import Modal from 'src/components/Modal';
 import { connect } from 'react-redux';

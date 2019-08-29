@@ -97,7 +97,9 @@ type EditReplicasetFormData = {
   alias: string,
   roles?: string[],
   vshard_group?: string,
-  weight?: string
+  weight?: string,
+  master: string[],
+  uuid: string,
 };
 
 type EditReplicasetFormProps = {
