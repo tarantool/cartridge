@@ -100,11 +100,13 @@ local function add_user(username, password, fullname, email)
         return nil, errors.new('AddUserError', "E-mail already in use: '%s'", email)
     end
 
-    if email then
+    if email ~= nil and email:strip() ~= '' then
         local valid, err = utils.is_email_valid(email)
         if not valid then
             return nil, err
         end
+    else
+        email = nil
     end
 
     local users_acl = cartridge.config_get_deepcopy('users_acl') or {}
@@ -141,7 +143,11 @@ local function edit_user(username, password, fullname, email)
     local users_acl = cartridge.config_get_deepcopy('users_acl')
     user = users_acl[uid]
 
-    if email ~= nil then
+    if email == nil then -- luacheck: ignore 542
+        -- don't edit
+    elseif email:strip() == '' then
+        user.email = nil
+    else
         local valid, err = utils.is_email_valid(email)
         if not valid then
             return nil, err

@@ -216,12 +216,14 @@ end
 
 
 local function is_email_valid(str)
-    if str == nil then return nil end
-    if (type(str) ~= 'string') then
-        error("Expected string")
-        return nil
+    if type(str) ~= 'string' then
+        return nil, "Expected string"
     end
+
     local lastAt = str:find("[^%@]+$")
+    if lastAt == nil then
+        return nil, "Symbol @ not found"
+    end
     local localPart = str:sub(1, (lastAt - 2)) -- Returns the substring before '@' symbol
     local domainPart = str:sub(lastAt, #str) -- Returns the substring after '@' symbol
     -- we werent able to split the email properly
