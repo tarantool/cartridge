@@ -169,14 +169,14 @@ class Cluster extends React.Component<ClusterProps, ClusterState> {
           ? (
             <PageSection
               title='Unconfigured servers'
-              topRightControls={(
-                <Button
-                  disabled
-                  icon={IconGear}
-                  size='s'
-                  text='Configure selected'
-                />
-              )}
+              // topRightControls={(
+              //   <Button
+              //     disabled
+              //     icon={IconGear}
+              //     size='s'
+              //     text='Configure selected'
+              //   />
+              // )}
               subTitle={
                 <React.Fragment>
                   <b>{serverCounts.unconfigured}</b>

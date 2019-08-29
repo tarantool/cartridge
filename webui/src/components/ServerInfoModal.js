@@ -41,7 +41,7 @@ type ServerInfoModalState = {
 
 class ServerInfoModal extends React.Component<ServerInfoModalProps, ServerInfoModalState>{
   state = {
-    selectedTab: null,
+    selectedTab: null
   }
 
   componentDidMount() {
@@ -67,7 +67,7 @@ class ServerInfoModal extends React.Component<ServerInfoModalProps, ServerInfoMo
       activeMasterUUID,
       message,
       status,
-      uri,
+      uri
     } = this.props
     return (
       <Modal
@@ -87,7 +87,7 @@ class ServerInfoModal extends React.Component<ServerInfoModalProps, ServerInfoMo
           <Tabbed
             tabs={
               subsections.map(section => ({
-                label: section,
+                label: section[0].toUpperCase() + section.substring(1),
                 content: (<ClusterInstanceSection sectionName={section} />)
               }))
             }

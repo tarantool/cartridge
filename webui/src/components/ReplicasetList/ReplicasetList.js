@@ -21,13 +21,13 @@ const styles = {
     display: flex;
     align-items: baseline;
   `,
-  tooltip: css`
-    flex: auto;
-  `,
-  alias: css`
+  aliasTooltip: css`
     flex-basis: 512px;
     flex-grow: 1;
     margin-right: 12px;
+    overflow: hidden;
+  `,
+  alias: css`
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -39,18 +39,22 @@ const styles = {
     margin-left: 12px;
     margin-right: 12px;
   `,
-  vshard: css`
+  vshardTooltip: css`
     position: relative;
+    display: inline;
+  `,
+  vshard: css`
     flex-basis: 306px;
     margin-left: 12px;
     margin-right: 12px;
+    color: rgba(0, 0, 0, 0.65);
 
-    & > *:first-child {
+    & b:first-child {
       position: relative;
       margin-right: 17px;
     }
 
-    & > *:first-child::before {
+    & b:first-child::before {
       content: '';
       position: absolute;
       top: 0px;
@@ -61,6 +65,7 @@ const styles = {
     }
   `,
   editBtn: css`
+    flex-shrink: 0;
     margin-left: 12px;
   `,
   divider: css`
@@ -95,18 +100,20 @@ class ReplicasetList extends React.PureComponent<> {
         itemRender={replicaset => (
           <React.Fragment>
             <div className={styles.header}>
-              <Tooltip className={styles.tooltip} content={replicaset.alias}>
+              <Tooltip className={styles.aliasTooltip} content={replicaset.alias}>
                 <Text className={styles.alias} variant='h3'>{replicaset.alias}</Text>
               </Tooltip>
               <Text className={styles.status} variant='p' tag='span'>
                 <DotIndicator state={replicaset.status === 'healthy' ? 'good' : 'bad'} />
                 {replicaset.message || replicaset.status}
               </Text>
-              <Text className={styles.vshard} variant='p' tag='span' upperCase>
-                {(replicaset.vshard_group || replicaset.weight) && [
-                  <b>{replicaset.vshard_group}</b>,
-                  <b>{replicaset.weight}</b>
-                ]}
+              <Text className={styles.vshard} variant='p' tag='div' upperCase>
+                <Tooltip className={styles.vshardTooltip} content='Storage group'>
+                  {(replicaset.vshard_group || replicaset.weight) && [
+                    <b>{replicaset.vshard_group}</b>,
+                    <b>{replicaset.weight}</b>
+                  ]}
+                </Tooltip>
               </Text>
               <Button
                 className={styles.editBtn}

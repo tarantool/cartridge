@@ -36,6 +36,7 @@ const styles = {
     margin-left: 12px;
   `,
   configureBtn: css`
+    flex-shrink: 0;
     margin-left: 12px;
   `
 };
@@ -68,11 +69,11 @@ class UnconfiguredServerList extends React.PureComponent<UnconfiguredServerListP
         items={dataSource}
         itemRender={item => (
           <React.Fragment>
-            <Checkbox
+            {/* <Checkbox
               className={styles.checkBox}
               checked={false}
               disabled
-            />
+            /> */}
             <div className={styles.heading}>
               <Text variant='h4' tag='span'>{item.alias}</Text>
               <UriLabel uri={item.uri} />

@@ -16,6 +16,7 @@ const styles = {
     color: rgba(0, 0, 0, 0.65);
     background-color: transparent;
     outline: none;
+    cursor: pointer;
 
     &:focus {
       z-index: 1;

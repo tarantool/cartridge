@@ -59,6 +59,7 @@ const styles = {
     position: relative;
     display: flex;
     flex-basis: 351px;
+    flex-shrink: 0;
     align-items: flex-start;
     margin-right: 12px;
     margin-left: 12px;
@@ -164,7 +165,7 @@ class ReplicasetServerListItem extends React.PureComponent<
             <Text variant='h4'>{alias}</Text>
             <UriLabel uri={uri} />
           </div>
-          <HealthStatus status={status} message={message} />
+          <HealthStatus className={styles.status} status={status} message={message} />
           <div className={styles.stats}>
             <Tooltip content={<span>total bucket: <b>{(statistics && statistics.bucketsCount) || 0}</b></span>}>
               <IconBucket className={styles.iconMarginSmall} />
