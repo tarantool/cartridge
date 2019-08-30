@@ -1,3 +1,5 @@
+[![pipeline status](https://gitlab.com/tarantool/cartridge/badges/master/pipeline.svg)](https://gitlab.com/tarantool/cartridge/commits/master)
+
 # Tarantool framework for distributed applications development
 
 ### Building from source
