@@ -37,6 +37,9 @@ const styles = {
   configureBtn: css`
     flex-shrink: 0;
     margin-left: 12px;
+  `,
+  hiddenButton: css`
+    visibility: hidden;
   `
 };
 
@@ -52,6 +55,7 @@ type UnconfiguredServerListProps = {
   className?: string,
   clusterSelf: ?{
     uri: ?string,
+    uuid: ?string,
   },
   dataSource: Server[],
   onServerConfigure: (Server) => void
@@ -59,6 +63,7 @@ type UnconfiguredServerListProps = {
 
 class UnconfiguredServerList extends React.PureComponent<UnconfiguredServerListProps> {
   render() {
+    const { uri, uuid } = (this.props.clusterSelf || {});
     const dataSource = this.getDataSource();
 
     return (
@@ -79,7 +84,7 @@ class UnconfiguredServerList extends React.PureComponent<UnconfiguredServerListP
             </div>
             <HealthStatus className={styles.status} status={item.status} message={item.message} />
             <Button
-              className={styles.configureBtn}
+              className={cx(styles.configureBtn, { [styles.hiddenButton]: !(uuid || (uri === item.uri)) } )}
               icon={IconGear}
               intent='secondary'
               onClick={() => this.props.onServerConfigure(item)}
