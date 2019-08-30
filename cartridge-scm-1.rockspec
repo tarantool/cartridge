@@ -1,7 +1,7 @@
 package = 'cartridge'
 version = 'scm-1'
 source  = {
-    url = 'git+https://github.com/cartridge/cartridge.git',
+    url = 'git+https://github.com/tarantool/cartridge.git',
     branch = 'master',
 }
 dependencies = {
