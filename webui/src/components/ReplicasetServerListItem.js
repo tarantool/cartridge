@@ -1,7 +1,7 @@
 // @flow
 // TODO: move to uikit
 import * as React from 'react';
-import { css } from 'react-emotion';
+import { css, cx } from 'react-emotion';
 import Tooltip from 'src/components/Tooltip';
 import Dropdown from 'src/components/Dropdown';
 import { IconBucket, IconChip } from 'src/components/Icon';
@@ -63,13 +63,14 @@ const styles = {
     align-items: flex-start;
     margin-right: 12px;
     margin-left: 12px;
-
-    & > *:first-child {
-      position: relative;
-      margin-right: 17px;
-    }
-
-    & > *:first-child::before {
+  `,
+  bucketsCount: css`
+    position: relative;
+    width: 95px;
+    margin-right: 17px;
+  `,
+  bucketsCountWithDivider: css`
+    &::before {
       content: '';
       position: absolute;
       top: 0px;
@@ -78,7 +79,7 @@ const styles = {
       height: 18px;
       background-color: #e8e8e8;
     }
-  `
+  `,
 };
 
 const byteUnits = ['kB', 'MB', 'GB', 'TB', 'PB'];
@@ -122,6 +123,7 @@ type Server = {
 
 type ReplicasetServerListItemProps = {
   ...$Exact<Server>,
+  activeMaster?: boolean,
   onServerLabelClick?: (label: Label) => void,
   tagsHighlightingClassName?: string
 };
@@ -136,6 +138,7 @@ class ReplicasetServerListItem extends React.PureComponent<
 > {
   render() {
     const {
+      activeMaster,
       statistics,
       status,
       uri,
@@ -159,30 +162,49 @@ class ReplicasetServerListItem extends React.PureComponent<
     return (
       <React.Fragment>
         <div className={styles.row}>
-          {master && (
-            <LeaderFlag className={styles.leaderFlag} />
-          )}
+          {(master || activeMaster) && <LeaderFlag className={styles.leaderFlag} fail={status !== 'healthy'} />}
           <div className={styles.heading}>
             <Text variant='h4'>{alias}</Text>
             <UriLabel uri={uri} />
           </div>
-          <HealthStatus className={styles.status} status={status} message={message} />
+          <HealthStatus
+            className={styles.status}
+            status={status}
+            message={message}
+          />
           <div className={styles.stats}>
-            <Tooltip content={<span>total bucket: <b>{(statistics && statistics.bucketsCount) || '-'}</b></span>}>
-              <IconBucket className={styles.iconMarginSmall} />
-              <Text variant='h5' tag='span'>Bucket: <b>{(statistics && statistics.bucketsCount) || '-'}</b></Text>
-            </Tooltip>
-            <div>
-              <div>
-                <IconChip className={styles.iconMargin} />
-                <Text variant='h5' tag='span'>{usageText}</Text>
-              </div>
-              <ProgressBar
-                className={styles.memProgress}
-                percents={percentage}
-                statusColors
-              />
-            </div>
+            {statistics && (
+              <React.Fragment>
+                {typeof statistics.bucketsCount === 'number'
+                  ? (
+                    <Tooltip
+                      className={cx(
+                        styles.bucketsCount,
+                        styles.bucketsCountWithDivider
+                      )}
+                      content={<span>total bucket: <b>{(statistics && statistics.bucketsCount) || '-'}</b></span>}
+                    >
+                      <IconBucket className={styles.iconMarginSmall} />
+                      <Text variant='h5' tag='span'>
+                        Bucket: <b>{(statistics && statistics.bucketsCount) || '-'}</b>
+                      </Text>
+                    </Tooltip>
+                  )
+                  : <div className={styles.bucketsCount} />
+                }
+                <div>
+                  <div>
+                    <IconChip className={styles.iconMargin} />
+                    <Text variant='h5' tag='span'>{usageText}</Text>
+                  </div>
+                  <ProgressBar
+                    className={styles.memProgress}
+                    percents={percentage}
+                    statusColors
+                  />
+                </div>
+              </React.Fragment>
+            )}
           </div>
           <Dropdown
             items={[
@@ -194,7 +216,7 @@ class ReplicasetServerListItem extends React.PureComponent<
               },
               {
                 text: 'Expel server',
-                onClick: () =>{
+                onClick: () => {
                   store.dispatch(showExpelModal(uri))
                 },
                 color: 'rgba(245, 34, 45, 0.65)'
