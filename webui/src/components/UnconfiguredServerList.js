@@ -4,7 +4,6 @@ import * as React from 'react';
 import { css, cx } from 'react-emotion';
 import { defaultMemoize } from 'reselect';
 import Button from 'src/components/Button';
-import Checkbox from 'src/components/Checkbox';
 import HealthStatus from 'src/components/HealthStatus';
 import TiledList from 'src/components/TiledList';
 import Text from 'src/components/Text';

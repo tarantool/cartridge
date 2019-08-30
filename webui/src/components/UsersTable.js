@@ -1,5 +1,4 @@
 import React from 'react';
-import { Table } from 'antd';
 import { connect } from 'react-redux';
 import { css, cx } from 'emotion';
 import * as R from 'ramda';
@@ -87,7 +86,6 @@ class UsersTable extends React.Component {
 
   render() {
     const {
-      fetchingUserList,
       items,
       implements_edit_user,
       implements_remove_user,
@@ -105,7 +103,6 @@ class UsersTable extends React.Component {
         R.map(([key, exists]) => exists ? buttons[key] : null),
         R.toPairs,
       )({ edit, remove })
-      console.log(filtered, { edit, remove })
       return filtered.length > 0 ? <Dropdown className={className} items={filtered} size={'s'}/> : null
     }
 

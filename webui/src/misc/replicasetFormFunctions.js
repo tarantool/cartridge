@@ -40,7 +40,7 @@ export const validateForm = ({
 
   if (alias.length > 63) {
     errors.alias = 'Alias must not exceed 63 character';
-  } else if (alias.length && !(/^[a-zA-Z0-9-_\.]+$/).test(alias)) {
+  } else if (alias.length && !(/^[a-zA-Z0-9-_.]+$/).test(alias)) {
     errors.alias = 'Alias must contain only alphanumerics [a-zA-Z], dots (.), underscores (_) or dashes (-)';
   }
 

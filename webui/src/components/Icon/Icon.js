@@ -86,7 +86,6 @@ const Icon = ({
   stroke
 }:
 IconProps) => {
-  const isInteractive = onClick || onMouseEnter || onMouseLeave;
 
   return (
     <svg

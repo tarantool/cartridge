@@ -3,8 +3,6 @@ import { connect } from 'react-redux';
 import { css, cx } from 'emotion';
 import UsersTable from '../../components/UsersTable';
 import SpinnerLoader from '../../components/SpinnerLoader';
-import PageSectionHead, { HeadButton } from 'src/components/PageSectionHead';
-import PageSection from 'src/components/PageSection';
 import UserAddModal from 'src/components/UserAddModal';
 import UserEditModal from 'src/components/UserEditModal';
 import UserRemoveModal from 'src/components/UserRemoveModal';

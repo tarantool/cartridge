@@ -3,8 +3,6 @@ import { Popover } from 'antd';
 import { css } from 'emotion';
 import styled from 'react-emotion';
 
-const defaultListItemColor = 'rgba(0, 0, 0, 0.65)';
-
 const Wrapper = styled.div`
   &:hover {
     cursor: pointer;
@@ -34,7 +32,7 @@ type TooltipProps = {
   content?: React.Node
 };
 
-function Tooltip({ children, className, placement = 'top', content }) {
+function Tooltip({ children, className, placement = 'top', content }: TooltipProps) {
   return (
     <Popover overlayClassName={popoverStyle} placement={placement} content={content} trigger="hover">
       <Wrapper css={className}>

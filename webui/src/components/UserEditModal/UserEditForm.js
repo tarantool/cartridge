@@ -62,7 +62,6 @@ class UserEditForm extends React.Component {
   render() {
     const {
       error,
-      username,
       fullname,
       email,
       onClose

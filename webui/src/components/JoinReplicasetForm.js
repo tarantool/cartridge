@@ -1,6 +1,6 @@
 // @flow
 import React from 'react';
-import { css, cx } from 'react-emotion';
+import { css } from 'react-emotion';
 import { Formik } from 'formik';
 
 import LeaderFlagSmall from 'src/components/LeaderFlagSmall';
@@ -167,7 +167,7 @@ class JoinReplicasetForm extends React.Component<JoinReplicasetFormProps> {
         onSubmit={(values, { setSubmitting }) => {
           onSubmit({
             ...values,
-            uri: selectedServers && selectedServers[0].uri || ''
+            uri: (selectedServers && selectedServers[0].uri) || ''
           });
         }}
       >
@@ -191,7 +191,7 @@ class JoinReplicasetForm extends React.Component<JoinReplicasetFormProps> {
                     label='Choose replica set'
                     subTitle={(
                       <Text variant='h5' upperCase tag='span'>
-                        <b>{replicasetList && replicasetList.length || 0}</b> total
+                        <b>{(replicasetList && replicasetList.length) || 0}</b> total
                         {
                           filteredReplicasetList
                           &&

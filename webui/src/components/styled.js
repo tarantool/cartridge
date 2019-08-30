@@ -1,4 +1,3 @@
-import * as React from 'react';
 import styled from 'react-emotion';
 
 export const Title = styled.div(`
@@ -18,7 +17,6 @@ export const SwitcherIconContainer = styled.span`
 export const SwitcherInfoLine = styled.p`
   margin: 0 0 24px 0;
 `
-
 
 export const ModalInfoContainer = styled.div`
   padding: 0 16px;

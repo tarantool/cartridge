@@ -143,7 +143,6 @@ class ReplicasetServerListItem extends React.PureComponent<
       message,
       labels,
       master,
-      serverActions,
       onServerLabelClick,
       tagsHighlightingClassName,
       history,

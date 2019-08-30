@@ -1,7 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import Button from 'src/components/Button';
-import Input from 'src/components/Input';
 import Alert from 'src/components/Alert';
 import Text from 'src/components/Text';
 import { css } from 'emotion';
@@ -61,7 +60,6 @@ class UserAddForm extends React.Component {
   render() {
     const {
       error,
-      loading,
       onClose
     } = this.props;
 
