@@ -3,11 +3,7 @@
 import * as React from 'react'
 import Modal from './Modal'
 import { connect } from 'react-redux'
-import { expelServer, hideExpelModal } from '../store/actions/clusterPage.actions';
-import { selectServerByUri } from '../store/selectors/clusterPage';
-import { formatServerName } from '../misc/server';
 import { css } from 'react-emotion'
-import Text from './Text';
 import { pageDidMount, resetPageState } from 'src/store/actions/clusterInstancePage.actions';
 import isEqual from 'lodash/isEqual';
 import { defaultMemoize, createSelectorCreator } from 'reselect';
@@ -32,7 +28,7 @@ type ServerInfoModalProps = {
   uri: string,
   subsections: string[],
   match: { url: string },
-  history: Object,
+  history: History,
 }
 
 type ServerInfoModalState = {
@@ -62,7 +58,6 @@ class ServerInfoModal extends React.Component<ServerInfoModalProps, ServerInfoMo
   render() {
     const {
       subsections,
-      history,
       alias,
       instanceUUID,
       activeMasterUUID,
@@ -92,7 +87,7 @@ class ServerInfoModal extends React.Component<ServerInfoModalProps, ServerInfoMo
             &&
             <Tabbed
               tabs={
-                R.filter(R.identity, subsections).map(section => ({ 
+                R.filter(R.identity, subsections).map(section => ({
                   label: section[0].toUpperCase() + section.substring(1),
                   content: (<ClusterInstanceSection sectionName={section}/>)
                 }))

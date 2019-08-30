@@ -5,7 +5,6 @@ import * as React from 'react';
 import { createRef } from 'react';
 import { css, cx } from 'react-emotion';
 import { IconCancel } from 'src/components/Icon';
-import * as R from 'ramda'
 
 const styles = {
   outer: css`
@@ -94,9 +93,7 @@ export default class InputText extends React.Component<InputProps, InputState> {
       disabled,
       error,
       name,
-      onBlur,
       onChange,
-      onFocus,
       readOnly,
       rightIcon,
       type,

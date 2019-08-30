@@ -34,18 +34,10 @@ const styles = {
 
 class HeaderAuthControl extends React.Component {
   sendLogOut = () => window.tarantool_enterprise_core.dispatch('cluster:logout');
-  showDropdown = () => this.setState({ showDropdown: true })
-  hideDropdown = () => this.setState({ showDropdown: false })
-
-  state = {
-    showDropdown: false
-  }
-
 
   render() {
     const {
       implements_check_password,
-      authorizationEnabled,
       username,
       authorized,
       authModalVisible,
@@ -53,9 +45,6 @@ class HeaderAuthControl extends React.Component {
       hideAuthModal
     } = this.props;
 
-    const {
-      showDropdown
-    } = this.state
 
     if (!implements_check_password)
       return null;

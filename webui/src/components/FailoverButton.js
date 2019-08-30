@@ -4,7 +4,6 @@ import { connect } from 'react-redux';
 import { changeFailover, setVisibleFailoverModal } from 'src/store/actions/clusterPage.actions';
 import Button from 'src/components/Button';
 import Switcher from 'src/components/Switcher';
-import { css } from 'react-emotion';
 import { SwitcherIconContainer, ModalInfoContainer, SwitcherInfoLine } from './styled'
 import Text from './Text';
 import { IconOk } from './Icon/icons/IconOk';

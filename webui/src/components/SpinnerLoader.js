@@ -73,12 +73,12 @@ const styles = {
 }
 
 type LoadingProps = {
-    loading: boolean,
-    children?: React.Node,
-    text?: string,
+  loading: boolean,
+  children?: React.Node,
+  text?: string,
 };
 
-function SpinnerLoader({ loading = false, children, text = 'LOADING' }) {
+function SpinnerLoader({ loading = false, children, text = 'LOADING' }: LoadingProps) {
   return (
     <Wrapper>
       {loading && (

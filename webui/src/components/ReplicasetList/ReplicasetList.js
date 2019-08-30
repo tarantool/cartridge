@@ -82,7 +82,6 @@ class ReplicasetList extends React.PureComponent {
       clusterSelf,
       editReplicaset,
       joinServer,
-      expelServer,
       createReplicaset,
       onServerLabelClick
     } = this.props;

@@ -7,7 +7,7 @@ import * as yup from 'yup'
 import Modal from 'src/components/Modal';
 import Button from 'src/components/Button';
 import { BaseModal } from '../Modal';
-import { FieldConstructor, FormContainer } from '../FieldGroup';
+import { FieldConstructor } from '../FieldGroup';
 import InputText from '../InputText';
 import Alert from '../Alert';
 import Text from '../Text';
@@ -189,7 +189,7 @@ const SplashLogInForm = ({
       <BaseModal bgColor={'#f0f2f5'}>
         <div className={styles.splashContainer}>
           <div className={styles.logoContainer}>
-            <img src={window.tarantool_enterprise_core.logo} className={styles.logo} />
+            <img src={window.tarantool_enterprise_core.logo} className={styles.logo} alt={'Tarantool logo'} />
           </div>
           <div className={styles.formContainer}>
             <Text variant={'h1'}>Authorization</Text>

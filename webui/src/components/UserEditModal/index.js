@@ -7,7 +7,6 @@ import UserEditForm from './UserEditForm';
 class UserEditModal extends React.Component {
   render() {
     const {
-      editUser,
       editUserModalVisible,
       error,
       loading,

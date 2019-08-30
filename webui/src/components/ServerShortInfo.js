@@ -1,12 +1,10 @@
 // TODO: move to uikit
 import * as React from 'react';
 import { css } from 'react-emotion';
-import { IconLink } from 'src/components/Icon';
 import LeaderFlag from 'src/components/LeaderFlag';
 import Text from 'src/components/Text';
 import UriLabel from 'src/components/UriLabel';
 import HealthStatus from 'src/components/HealthStatus';
-import { withRouter } from 'react-router-dom'
 
 const styles = {
   item: css`
@@ -36,7 +34,7 @@ const styles = {
   `
 };
 
-class ServerInfoMmodal extends React.PureComponent {
+export default class ServerInfoPanel extends React.PureComponent {
   render() {
     const {
       status,
@@ -62,5 +60,3 @@ class ServerInfoMmodal extends React.PureComponent {
     )
   }
 }
-
-export default withRouter(ServerInfoMmodal);

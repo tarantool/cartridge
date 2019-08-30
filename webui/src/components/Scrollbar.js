@@ -1,6 +1,5 @@
 import * as React from 'react';
 import ReactScroll from 'react-scrollbars-custom';
-import { css } from 'emotion';
 import styled from 'react-emotion';
 
 const ScrollWrapper = styled.div`

@@ -25,7 +25,7 @@ import { Icon } from 'antd'
 import { css } from 'react-emotion';
 import type { RouterHistory, Location } from 'react-router';
 import InputText from 'src/components/InputText';
-import { IconGear, IconSearch } from 'src/components/Icon';
+import { IconSearch } from 'src/components/Icon';
 import PageDataErrorMessage from 'src/components/PageDataErrorMessage';
 import ReplicasetList from 'src/components/ReplicasetList';
 import ProbeServerModal from 'src/components/ProbeServerModal';
@@ -139,8 +139,6 @@ class Cluster extends React.Component<ClusterProps> {
       clusterSelf,
       filter,
       filteredReplicasetList,
-      pageMount,
-      pageDataRequestStatus,
       probeServerModalVisible,
       replicasetList,
       serverCounts,
@@ -235,17 +233,13 @@ class Cluster extends React.Component<ClusterProps> {
     );
   };
 
-  renderServerButtons = () => {
-    const { showToggleAuth } = this.props;
-
-    return ([
-      <Button onClick={this.handleProbeServerRequest}>
-        Probe server
-      </Button>,
-      <FailoverButton />,
-      <BootstrapButton />
-    ]);
-  };
+  renderServerButtons = () => ([
+    <Button onClick={this.handleProbeServerRequest}>
+      Probe server
+    </Button>,
+    <FailoverButton />,
+    <BootstrapButton />
+  ]);
 
   renderProbeServerModal = () => {
     return (
@@ -347,12 +341,7 @@ const mapStateToProps = (state: State, { match: { params } }) => {
   const {
     app: {
       clusterSelf,
-      failover,
-      authParams: {
-        implements_add_user,
-        implements_check_password,
-        implements_list_users
-      }
+      failover
     },
     clusterPage: {
       pageMount,

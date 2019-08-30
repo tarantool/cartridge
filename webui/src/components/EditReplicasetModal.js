@@ -1,6 +1,5 @@
 // @flow
 import React from 'react';
-import { css, cx } from 'react-emotion';
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
 import Modal from 'src/components/Modal';
@@ -13,12 +12,6 @@ import type {
   EditReplicasetMutationVariables
 } from 'src/generated/graphql-typing';
 import { editReplicaset } from 'src/store/actions/clusterPage.actions';
-
-const styles = {
-  tabContent: css`
-    padding: 16px 0 0;
-  `
-}
 
 type EditReplicasetModalProps = {
   editReplicaset: Function,

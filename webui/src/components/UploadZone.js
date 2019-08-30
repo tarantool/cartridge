@@ -1,9 +1,8 @@
 // @flow
 import React, { useState } from 'react'
-import styled, { css } from 'react-emotion'
+import styled from 'react-emotion'
 import { useDropzone } from 'react-dropzone';
 import { IconBox } from './Icon/icons/IconBox';
-import Text from './Text'
 import { IconAttach } from './Icon/icons/IconAttach';
 
 const UploadTitle = styled.p`
@@ -100,7 +99,6 @@ export default function UploadZone(
     accept,
     multiple,
     onDrop: (files, ...args) => {
-      console.log(files)
       handler && handler(files, ...args)
       setSelectedFiles(files)
     }
