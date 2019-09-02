@@ -15,19 +15,21 @@ const styles = {
 
 type HealthStatusProps = {
   className?: string,
+  defaultMessage?: string,
   status?: string,
   message?: string
 };
 
 const HealthStatus = ({
   className,
+  defaultMessage,
   status,
   message
 }:
 HealthStatusProps) => (
   <Text className={cx(styles.status, className)} variant='p'>
     <DotIndicator state={status === 'healthy' ? 'good' : 'bad'} />
-    {message || status}
+    {message || defaultMessage || status}
   </Text>
 );
 

@@ -2,7 +2,8 @@
 // TODO: move to uikit
 import * as React from 'react';
 import { css, cx } from 'emotion';
-import glyph from './flag.svg';
+import greenFlag from './flag.svg';
+import redFlag from './flag-red.svg';
 
 const styles = {
   wrap: css`
@@ -27,17 +28,21 @@ const styles = {
 
 type LeaderFlagProps = {
   className?: string,
+  fail?: boolean
 };
 
-const LeaderFlag = ({ className }: LeaderFlagProps) => (
-  <div className={cx(styles.wrap, className)}>
-    <svg
-      viewBox={glyph.viewBox}
-      className={styles.flag}
-    >
-      <use xlinkHref={`#${glyph.id}`}/>
-    </svg>
-  </div>
-);
+const LeaderFlag = ({ className, fail }: LeaderFlagProps) => {
+  const glyph = fail ? redFlag : greenFlag;
+  return (
+    <div className={cx(styles.wrap, className)}>
+      <svg
+        viewBox={glyph.viewBox}
+        className={styles.flag}
+      >
+        <use xlinkHref={`#${glyph.id}`}/>
+      </svg>
+    </div>
+  )
+};
 
 export default LeaderFlag;
