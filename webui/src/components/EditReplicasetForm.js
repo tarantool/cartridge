@@ -148,6 +148,7 @@ EditReplicasetFormProps) => {
         const vshardStorageRoleChecked = values.roles.includes(VSHARD_STORAGE_ROLE_NAME);
         const activeDependencies = getRolesDependencies(values.roles, knownRoles)
         const VShardGroupInputDisabled = isVShardGroupInputDisabled(values.roles, replicaset);
+        const rolesColumns = (knownRoles && knownRoles.length > 6) ? 3 : 2;
 
         return (
           <form className={styles.form} onSubmit={handleSubmit}>
@@ -168,7 +169,7 @@ EditReplicasetFormProps) => {
                     />
                     <Text variant='p' className={styles.errorMessage}>{errors.alias}</Text>
                   </LabeledInput>
-                  <FormField className={styles.wideField} label='Roles' columns={3}>
+                  <FormField className={styles.wideField} label='Roles' columns={rolesColumns} verticalSort>
                     {knownRoles && knownRoles.map(({ name, dependencies }) => {
                       return (
                         <Checkbox
