@@ -148,6 +148,7 @@ EditReplicasetFormProps) => {
         const vshardStorageRoleChecked = values.roles.includes(VSHARD_STORAGE_ROLE_NAME);
         const activeDependencies = getRolesDependencies(values.roles, knownRoles)
         const VShardGroupInputDisabled = isVShardGroupInputDisabled(values.roles, replicaset);
+        const rolesColumns = (knownRoles && knownRoles.length > 6) ? 3 : 2;
 
         return (
           <form className={styles.form} onSubmit={handleSubmit}>
@@ -168,35 +169,39 @@ EditReplicasetFormProps) => {
                     />
                     <Text variant='p' className={styles.errorMessage}>{errors.alias}</Text>
                   </LabeledInput>
-                  <FormField className={styles.wideField} label='Roles' columns={3}>
-                    {knownRoles && knownRoles.map(({ name, dependencies }) => {
-                      return (
-                        <Checkbox
-                          onChange={() => {
-                            const activeRoles = values.roles.includes(name)
-                              ? values.roles.filter(x => x !== name)
-                              : values.roles.concat([name])
+                  <FormField className={styles.wideField} label='Roles' columns={rolesColumns} verticalSort>
+                    {knownRoles && knownRoles.reduceRight(
+                      (acc, { name, dependencies }) => {
+                        acc.push(
+                          <Checkbox
+                            onChange={() => {
+                              const activeRoles = values.roles.includes(name)
+                                ? values.roles.filter(x => x !== name)
+                                : values.roles.concat([name])
 
-                            const prevDependencies = getRolesDependencies(values.roles, knownRoles);
-                            const rolesWithoutDependencies = activeRoles.filter(
-                              role => !prevDependencies.includes(role)
-                            );
-                            const newDependencies = getRolesDependencies(rolesWithoutDependencies, knownRoles);
+                              const prevDependencies = getRolesDependencies(values.roles, knownRoles);
+                              const rolesWithoutDependencies = activeRoles.filter(
+                                role => !prevDependencies.includes(role)
+                              );
+                              const newDependencies = getRolesDependencies(rolesWithoutDependencies, knownRoles);
 
-                            setFieldValue(
-                              'roles',
-                              R.uniq([...newDependencies, ...rolesWithoutDependencies])
-                            )
-                          }}
-                          name='roles'
-                          value={name}
-                          checked={values.roles.includes(name)}
-                          disabled={activeDependencies.includes(name)}
-                        >
-                          {`${name}${getDependenciesString(dependencies)}`}
-                        </Checkbox>
-                      )
-                    })}
+                              setFieldValue(
+                                'roles',
+                                R.uniq([...newDependencies, ...rolesWithoutDependencies])
+                              )
+                            }}
+                            name='roles'
+                            value={name}
+                            checked={values.roles.includes(name)}
+                            disabled={activeDependencies.includes(name)}
+                          >
+                            {`${name}${getDependenciesString(dependencies)}`}
+                          </Checkbox>
+                        );
+                        return acc;
+                      },
+                      []
+                    )}
                   </FormField>
                   <FormField className={styles.vshardGroupField} label='Group' info={info}>
                     {vshard_groups && vshard_groups.map(({ name }) => (

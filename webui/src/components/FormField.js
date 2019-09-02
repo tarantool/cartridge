@@ -41,7 +41,8 @@ type FormFieldProps = {
   itemClassName?: string,
   label?: string,
   subTitle?: string | React.Node,
-  topRightControls?: React.Node
+  topRightControls?: React.Node,
+  verticalSort?: boolean
 };
 
 const FormField = ({
@@ -52,7 +53,8 @@ const FormField = ({
   subTitle,
   columns,
   info,
-  label
+  label,
+  verticalSort
 }:
 FormFieldProps) => (
   <div className={cx(styles.wrap, className)}>
@@ -69,7 +71,7 @@ FormFieldProps) => (
       {subTitle && <Text className={styles.subTitle} variant='h5' tag='span' upperCase>{subTitle}</Text>}
       {topRightControls && <ControlsPanel className={styles.topRightControls}>{topRightControls}</ControlsPanel>}
     </div>
-    <InputGroup columns={columns} itemClassName={itemClassName}>{children}</InputGroup>
+    <InputGroup columns={columns} itemClassName={itemClassName} verticalSort={verticalSort}>{children}</InputGroup>
   </div>
 );
 
