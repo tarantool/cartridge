@@ -96,7 +96,7 @@ local function get_server_info(members, uuid, uri)
     return ret
 end
 
-local function get_servers_and_replicasets()
+local function get_topology()
     local members = membership.members()
     local topology_cfg = confapplier.get_readonly('topology')
     if topology_cfg == nil then
@@ -215,7 +215,10 @@ local function get_servers_and_replicasets()
         end
     end
 
-    return servers, replicasets
+    return {
+        servers = servers,
+        replicasets = replicasets,
+    }
 end
 
 --- Retrieve `box.slab.info` of a remote server.
@@ -395,11 +398,11 @@ local function get_servers(uuid)
     checks('?string')
 
     local ret = {}
-    local servers, _ = get_servers_and_replicasets()
+    local topology = get_topology()
     if uuid then
-        table.insert(ret, servers[uuid])
+        table.insert(ret, topology.servers[uuid])
     else
-        for _, v in pairs(servers) do
+        for _, v in pairs(topology.servers) do
             table.insert(ret, v)
         end
     end
@@ -415,11 +418,11 @@ local function get_replicasets(uuid)
     checks('?string')
 
     local ret = {}
-    local _, replicasets = get_servers_and_replicasets()
+    local topology = get_topology()
     if uuid then
-        table.insert(ret, replicasets[uuid])
+        table.insert(ret, topology.replicasets[uuid])
     else
-        for _, v in pairs(replicasets) do
+        for _, v in pairs(topology.replicasets) do
             table.insert(ret, v)
         end
     end
