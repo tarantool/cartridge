@@ -12,6 +12,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   servers, which aren't added to membership yet (earlier it influenced join_server mutation only).
   This is a prerequisite for multijoin api implementation.
 
+### Fixed
+
+- Protect `users_acl` and `auth` sections when downloading clusterwide config.
+  Also forbid uploading them.
+
 ## [1.0.0] - 2019-08-29
 
 ### Added
