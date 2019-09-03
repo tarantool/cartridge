@@ -36,6 +36,10 @@ unconfigured = [
 ]
 
 def test_servers_labels(cluster, helpers):
+    helpers.wait_for(cluster['master'].conn.eval,
+        ["assert(require('membership').probe_uri('localhost:33003'))"]
+    )
+
     req = """
         {
             servers {

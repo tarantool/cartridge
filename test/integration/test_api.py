@@ -197,6 +197,10 @@ def test_replication_info_schema(cluster):
 
 
 def test_servers(cluster, expelled, helpers):
+    helpers.wait_for(cluster['router'].conn.eval,
+        ["assert(require('membership').probe_uri('localhost:33003'))"]
+    )
+
     obj = cluster['router'].graphql("""
         {
             servers {

@@ -499,11 +499,6 @@ local function join_server(args)
         }
     end
 
-    local ok, err = probe_server(args.uri)
-    if not ok then
-        return nil, err
-    end
-
     if topology_cfg.servers[args.instance_uuid] ~= nil then
         return nil, e_topology_edit:new(
             'Server %q is already joined',

@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Changed
+
+- Both bootstrapping from scratch and patching topology in clusterwide config automatically probe
+  servers, which aren't added to membership yet (earlier it influenced join_server mutation only).
+  This is a prerequisite for multijoin api implementation.
+
 ## [1.0.0] - 2019-08-29
 
 ### Added

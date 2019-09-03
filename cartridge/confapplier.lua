@@ -723,6 +723,8 @@ local function _clusterwide(patch)
         end
     end
 
+    topology.probe_missing_members(conf_new.topology.servers)
+
     if utils.deepcmp(conf_new, conf_old) then
         return true
     end
