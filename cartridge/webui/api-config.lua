@@ -20,6 +20,8 @@ local system_sections = {
     topology = true,
     vshard = true,
     vshard_groups = true,
+    auth = true,
+    users_acl = true,
 }
 
 local function http_finalize_error(resp, http_code, err)
