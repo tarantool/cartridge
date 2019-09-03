@@ -44,9 +44,6 @@ def test_confapplier(cluster, helpers):
         local cartridge = require('cartridge')
         local membership = require('membership')
 
-        errors.assert('ProbeError', membership.probe_uri("{twin1.advertise_uri}"))
-        errors.assert('ProbeError', membership.probe_uri("{twin2.advertise_uri}"))
-
         local topology = cartridge.config_get_deepcopy('topology')
         topology.servers["{twin1.instance_uuid}"] = {{
             replicaset_uuid = "{twin1.replicaset_uuid}",

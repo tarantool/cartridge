@@ -327,10 +327,6 @@ def cluster(request, confdir, module_tmpdir, helpers):
         )
         request.addfinalizer(srv.kill)
         helpers.wait_for(srv.ping_udp)
-        if bootserv != None:
-            helpers.wait_for(bootserv.conn.eval,
-                ["assert(require('membership').probe_uri(...))", srv.advertise_uri]
-            )
         cluster[srv.alias] = srv
 
     return cluster

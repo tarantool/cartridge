@@ -170,6 +170,7 @@ local function bootstrap_from_scratch(conf)
         return nil, err
     end
 
+    topology.probe_missing_members(conf.topology.servers)
     local _, err = topology.validate(conf.topology, {})
     if err then
         membership.set_payload('warning', tostring(err.err or err))

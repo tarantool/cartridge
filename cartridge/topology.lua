@@ -506,6 +506,34 @@ local function cluster_is_healthy()
     return true
 end
 
+--- Send UDP ping to servers missing from membership table.
+-- @function probe_missing_members
+-- @local
+-- @tparam table servers
+-- @treturn[1] boolean true
+-- @treturn[2] nil
+-- @treturn[2] table Error description
+local function probe_missing_members(servers)
+    local err = nil
+    for _, _, srv in fun.filter(not_disabled, servers) do
+        if membership.get_member(srv.uri) == nil then
+            local _, _err = membership.probe_uri(srv.uri)
+            if _err ~= nil then
+                err = errors.new(
+                    'ProbeError',
+                    'Probe %q failed: %s', srv.uri, _err
+                )
+            end
+        end
+    end
+
+    if err ~= nil then
+        return nil, err
+    end
+
+    return true
+end
+
 local function get_active_masters()
     local ret = {}
 
@@ -573,6 +601,7 @@ return {
     not_disabled = not_disabled,
 
     cluster_is_healthy = cluster_is_healthy,
+    probe_missing_members = probe_missing_members,
     get_myself_uuids = get_myself_uuids,
     get_leaders_order = get_leaders_order,
     get_active_masters = get_active_masters,
