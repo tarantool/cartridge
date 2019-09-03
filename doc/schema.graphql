@@ -1,5 +1,5 @@
 # source: http://localhost:8081/admin/api
-# timestamp: Thu Aug 29 2019 19:37:46 GMT+0300 (GMT+03:00)
+# timestamp: Tue Sep 03 2019 20:34:04 GMT+0300 (Moscow Standard Time)
 
 """Cluster management"""
 type Apicluster {
@@ -25,6 +25,38 @@ type Apicluster {
 
   """Whether it is reasonble to call bootstrap_vshard mutation"""
   can_bootstrap_vshard: Boolean!
+}
+
+"""Parameters for editing a replicaset"""
+input EditReplicasetInput {
+  join_servers: [JoinServerInput]
+  weight: Float
+  vshard_group: String
+  alias: String!
+  roles: [String!]
+  uuid: String!
+  all_rw: Boolean
+  leaders: [String!]
+}
+
+"""Parameters for editing existing server"""
+input EditServerInput {
+  uuid: String!
+  uri: String
+  labels: [LabelInput]
+}
+
+type EditTopologyResult {
+  replicasets: [Replicaset]!
+  servers_joined: [Server]!
+  servers_edited: [Server]!
+}
+
+"""Parameters for joining a new server"""
+input JoinServerInput {
+  uuid: String
+  uri: String!
+  labels: [LabelInput]
 }
 
 """Cluster server label"""
@@ -60,17 +92,20 @@ type Mutation {
 type MutationApicluster {
   auth_params(cookie_max_age: Long, enabled: Boolean, cookie_renew_age: Long): UserManagementAPI!
 
-  """Remove user"""
-  remove_user(username: String!): User
+  """Edit cluster topology"""
+  topology(servers: [EditServerInput], replicasets: [EditReplicasetInput]): EditTopologyResult
 
   """Edit an existing user"""
   edit_user(password: String, username: String!, fullname: String, email: String): User
 
-  """Enable or disable automatic failover. Returns new state."""
-  failover(enabled: Boolean!): Boolean!
+  """Remove user"""
+  remove_user(username: String!): User
 
   """Create a new user"""
   add_user(password: String!, username: String!, fullname: String, email: String): User
+
+  """Enable or disable automatic failover. Returns new state."""
+  failover(enabled: Boolean!): Boolean!
 
   """Disable listed servers by uuid"""
   disable_servers(uuids: [String!]): [Server]
