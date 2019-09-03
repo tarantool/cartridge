@@ -189,6 +189,15 @@ local function bootstrap_from_scratch(conf)
         return nil, err
     end
 
+    local replication = topology.get_replication_config(conf.topology, replicaset_uuid)
+    if #replication > 1 then
+        return nil, e_bootstrap:new(
+            'Bootstrapping from scratch should be performed' ..
+            ' on a single-server replicaset. Other scenarios' ..
+            ' are not supported yet.'
+        )
+    end
+
     local _, err = confapplier.prepare_2pc(conf)
     if err then
         membership.set_payload('warning', tostring(err.err or err))
@@ -203,7 +212,7 @@ local function bootstrap_from_scratch(conf)
     box_opts.vinyl_dir = vars.boot_opts.workdir
     box_opts.instance_uuid = instance_uuid
     box_opts.replicaset_uuid = replicaset_uuid
-    box_opts.replication = topology.get_replication_config(conf.topology, replicaset_uuid)
+    box_opts.replication = replication
 
     init_box(box_opts)
     -- TODO migrations.skip()

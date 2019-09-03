@@ -100,6 +100,41 @@ local gql_type_server = gql_types.object {
     }
 }
 
+local gql_type_join_server_input = gql_types.inputObject {
+    name = 'JoinServerInput',
+    description = 'Parameters for joining a new server',
+    fields = {
+        uuid = gql_types.string,
+        uri = gql_types.string.nonNull,
+        labels = gql_types.list(gql_type_label_input)
+    }
+}
+
+local gql_type_edit_server_input = gql_types.inputObject {
+    name = 'EditServerInput',
+    description = 'Parameters for editing existing server',
+    fields = {
+        uuid = gql_types.string.nonNull,
+        uri = gql_types.string,
+        labels = gql_types.list(gql_type_label_input)
+    }
+}
+
+local gql_type_edit_replicaset_input = gql_types.inputObject {
+    name = 'EditReplicasetInput',
+    description = 'Parameters for editing a replicaset',
+    fields = {
+        uuid = gql_types.string.nonNull,
+        alias = gql_types.string.nonNull,
+        roles = gql_types.list(gql_types.string.nonNull),
+        leaders = gql_types.list(gql_types.string.nonNull),
+        join_servers = gql_types.list(gql_type_join_server_input),
+        vshard_group = gql_types.string,
+        weight = gql_types.float,
+        all_rw = gql_types.boolean,
+    }
+}
+
 local function convert_labels_to_keyvalue(gql_labels)
     if gql_labels == nil then
         return nil
@@ -198,6 +233,33 @@ end
 
 local function set_failover_enabled(_, args)
     return admin.set_failover_enabled(args.enabled)
+end
+
+local function patch_topology(_, args)
+    for _, srv in pairs(args.servers or {}) do
+        srv.labels = convert_labels_to_keyvalue(srv.labels)
+    end
+
+    for _, rpl in pairs(args.replicasets or {}) do
+        for _, srv in pairs(rpl.join_servers or {}) do
+            srv.labels = convert_labels_to_keyvalue(srv.labels)
+        end
+    end
+
+    local topology, err = admin.patch_topology(args)
+    if topology == nil then
+        return nil, err
+    end
+
+    for _, srv in pairs(topology.servers_joined) do
+        srv.labels = convert_labels_to_graphql(srv.labels)
+    end
+
+    for _, srv in pairs(topology.servers_edited) do
+        srv.labels = convert_labels_to_graphql(srv.labels)
+    end
+
+    return topology
 end
 
 
@@ -339,6 +401,25 @@ local function init(graphql)
         }),
         callback = module_name .. '.get_self',
     })
+
+    graphql.add_mutation({
+        prefix = 'cluster',
+        name = 'topology',
+        doc = 'Edit cluster topology',
+        args = {
+            servers = gql_types.list(gql_type_edit_server_input),
+            replicasets = gql_types.list(gql_type_edit_replicaset_input),
+        },
+        kind = gql_types.object({
+            name = 'EditTopologyResult',
+            fields = {
+                replicasets = gql_types.list('Replicaset').nonNull,
+                servers_joined = gql_types.list('Server').nonNull,
+                servers_edited = gql_types.list('Server').nonNull,
+            }
+        }),
+        callback = module_name .. '.patch_topology',
+    })
 end
 
 return {
@@ -356,6 +437,8 @@ return {
     edit_replicaset = edit_replicaset,
     expel_server = expel_server,
     disable_servers = disable_servers,
+
+    patch_topology = patch_topology,
 
     get_known_roles = get_known_roles,
     get_failover_enabled = get_failover_enabled,

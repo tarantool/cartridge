@@ -623,6 +623,11 @@ return {
     -- @function admin_get_failover
     admin_get_failover = admin.get_failover_enabled,
 
+    --- .
+    -- @refer cartridge.admin.patch_topology
+    -- @function admin_patch_topology
+    admin_patch_topology = admin.patch_topology,
+
     --- Enable failover.
     -- @function admin_enable_failover
     admin_enable_failover = function()

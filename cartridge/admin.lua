@@ -442,6 +442,342 @@ local function probe_server(uri)
     return true
 end
 
+local topology_cfg_checker = {
+    auth = '?',
+    failover = '?',
+    servers = 'table',
+    replicasets = 'table',
+}
+
+local function __join_server(topology_cfg, params)
+    checks(topology_cfg_checker, {
+        uri = 'string',
+        uuid = 'string',
+        labels = '?table',
+        replicaset_uuid = 'string',
+    })
+
+    if topology_cfg.servers[params.uuid] ~= nil then
+        return nil, e_topology_edit:new(
+            "Server %q is already joined",
+            params.uuid
+        )
+    end
+
+    local replicaset = topology_cfg.replicasets[params.replicaset_uuid]
+
+    replicaset.master = topology.get_leaders_order(
+        topology_cfg, params.replicaset_uuid
+    )
+    table.insert(replicaset.master, params.uuid)
+
+    local server = {
+        uri = params.uri,
+        labels = params.labels,
+        disabled = false,
+        replicaset_uuid = params.replicaset_uuid,
+    }
+
+    topology_cfg.servers[params.uuid] = server
+    return true
+end
+
+local function __edit_server(topology_cfg, params)
+    checks(topology_cfg_checker, {
+        uuid = 'string',
+        uri = '?string',
+        labels = '?table',
+        disabled = '?boolean',
+        expelled = '?boolean',
+    })
+
+    local server = topology_cfg.servers[params.uuid]
+    if server == nil then
+        return nil, e_topology_edit:new('Server %q not in config', params.uuid)
+    elseif server == "expelled" then
+        return nil, e_topology_edit:new('Server %q is expelled', params.uuid)
+    end
+
+    if params.uri ~= nil then
+        server.uri = params.uri
+    end
+
+    if params.labels ~= nil then
+        server.labels = params.labels
+    end
+
+    if params.disabled ~= nil then
+        server.disabled = params.disabled
+    end
+
+    if params.expelled == true then
+        topology_cfg.servers[params.uuid] = 'expelled'
+    end
+
+    return true
+end
+
+local function __edit_replicaset(topology_cfg, params)
+    checks(topology_cfg_checker, {
+        uuid = 'string',
+        alias = '?string',
+        all_rw = '?boolean',
+        roles = '?table',
+        weight = '?number',
+        leaders = '?table',
+        vshard_group = '?string',
+        join_servers = '?table',
+    })
+
+    local replicaset = topology_cfg.replicasets[params.uuid]
+
+    if replicaset == nil then
+        if params.join_servers == nil
+        or next(params.join_servers) == nil
+        then
+            return nil, e_topology_edit:new(
+                'Replicaset %q not in config',
+                params.uuid
+            )
+        end
+
+        replicaset = {
+            roles = {},
+            alias = 'unnamed',
+            master = {},
+            weight = 0,
+        }
+        topology_cfg.replicasets[params.uuid] = replicaset
+    end
+
+    if params.join_servers ~= nil then
+        for _, srv in pairs(params.join_servers) do
+            if srv.uuid == nil then
+                srv.uuid = uuid_lib.str()
+            end
+
+            srv.replicaset_uuid = params.uuid
+
+            local ok, err = __join_server(topology_cfg, srv)
+            if ok == nil then
+                return nil, err
+            end
+        end
+    end
+
+    local old_roles = replicaset.roles
+    if params.roles ~= nil then
+        replicaset.roles = confapplier.get_enabled_roles(params.roles)
+    end
+
+    if params.leaders ~= nil then
+        replicaset.master = topology.get_leaders_order(
+            topology_cfg, params.uuid,
+            params.leaders
+        )
+    end
+
+    if params.alias ~= nil then
+        replicaset.alias = params.alias
+    end
+
+    if params.all_rw ~= nil then
+        replicaset.all_rw = params.all_rw
+    end
+
+    -- Set proper vshard group
+    repeat -- until true
+        if not replicaset.roles['vshard-storage'] then
+            -- ignore unless replicaset is a storage
+            break
+        end
+
+        if params.vshard_group ~= nil then
+            replicaset.vshard_group = params.vshard_group
+            break
+        end
+
+        replicaset.vshard_group = 'default'
+    until true
+
+
+    -- Set proper replicaset weight
+    repeat -- until true
+        if not replicaset.roles['vshard-storage'] then
+            replicaset.weight = 0
+            break
+        end
+
+        if params.weight ~= nil then
+            replicaset.weight = params.weight
+            break
+        end
+
+        if old_roles['vshard-storage'] then
+            -- don't adjust weight if storage role
+            -- has already been enabled
+            break
+        end
+
+        local vshard_groups = vshard_utils.get_known_groups()
+        local group_params = vshard_groups[replicaset.vshard_group]
+
+        if group_params and not group_params.bootstrapped then
+            replicaset.weight = 1
+        else
+            replicaset.weight = 0
+        end
+    until true
+
+    return true
+end
+
+--- Edit cluster topology.
+-- This function can be used for:
+--
+-- - bootstrapping cluster from scratch
+-- - joining a server to an existing replicaset
+-- - creating new replicaset with one or more servers
+-- - editing uri/labels of servers
+-- - disabling and expelling servers
+--
+-- @function patch_topology
+-- @tparam table args
+-- @tparam ?{EditServerParams,..} args.edit_servers
+-- @tparam ?{EditReplicasetParams,..} args.replicasets
+-- @tparam ?boolean args.async
+--   don't wait for joined servers to become ready
+--   (default: **false**)
+-- @tparam ?number args.timeout
+--   timeout for joined servers to become ready
+--   (default: **inf**)
+
+local function patch_topology(args)
+    checks({
+        edit_servers = '?table',
+        replicasets = '?table',
+        async = '?boolean',
+        timeout = '?number',
+    })
+
+    require('log').info('%s', require('yaml').encode(args))
+    local args = table.deepcopy(args)
+    local topology_cfg = confapplier.get_deepcopy('topology')
+    if topology_cfg == nil then
+        topology_cfg = {
+            servers = {},
+            replicasets = {},
+            failover = false,
+        }
+    end
+
+    local i = 0
+    for _, srv in pairs(args.edit_servers or {}) do
+        i = i + 1
+        if args.edit_servers[i] == nil then
+            error(2, 'bad argument args.edit_servers' ..
+                ' to patch_topology (it must be a contiguous array)'
+            )
+        end
+
+        if srv.uuid == nil then
+            srv.uuid = uuid_lib.str()
+        end
+
+        local ok, err = __edit_server(topology_cfg, srv)
+        if ok == nil then
+            return nil, err
+        end
+    end
+
+    local i = 0
+    for _, rpl in pairs(args.replicasets or {}) do
+        i = i + 1
+        if args.replicasets[i] == nil then
+            error(2, 'bad argument args.replicasets' ..
+                ' to patch_topology (it must be a contiguous array)'
+            )
+        end
+
+        if rpl.uuid == nil then
+            rpl.uuid = uuid_lib.str()
+        end
+
+        local ok, err = __edit_replicaset(topology_cfg, rpl)
+        if ok == nil then
+            return nil, err
+        end
+    end
+
+    for replicaset_uuid, _ in pairs(topology_cfg.replicasets) do
+        local replicaset_empty = true
+        for _it, _, server in fun.filter(topology.not_expelled, topology_cfg.servers) do
+            if server.replicaset_uuid == replicaset_uuid then
+                replicaset_empty = false
+            end
+        end
+
+        if replicaset_empty then
+            topology_cfg.replicasets[replicaset_uuid] = nil
+        else
+            local replicaset = topology_cfg.replicasets[replicaset_uuid]
+            local leaders = topology.get_leaders_order(topology_cfg, replicaset_uuid)
+
+            if topology_cfg.servers[leaders[1]] == 'expelled' then
+                return nil, e_topology_edit:new(
+                    "Server %q is the leader and can't be expelled", leaders[1]
+                )
+            end
+
+            -- filter out all expelled instances
+            replicaset.master = {}
+            for _, leader_uuid in pairs(leaders) do
+                if topology.not_expelled(leader_uuid, topology_cfg.servers[leader_uuid]) then
+                    table.insert(replicaset.master, leader_uuid)
+                end
+            end
+        end
+    end
+
+    local ok, err
+    if type(box.cfg) == 'function' then
+        ok, err = bootstrap.from_scratch({topology = topology_cfg})
+    else
+        -- TODO:
+        --  There is a race condition:
+        --  The assertion may fail while "Configuration is being verified".
+        --  See `cluster.bootstrap.from_snapshot()`.
+        assert(confapplier.get_readonly() ~= nil)
+
+        ok, err = confapplier.patch_clusterwide({topology = topology_cfg})
+    end
+
+    if not ok then
+        return nil, err
+    end
+
+    local ret = {
+        servers_edited = {},
+        servers_joined = {},
+        replicasets = {}
+    }
+
+    local topology = get_topology()
+
+    for _, srv in pairs(args.edit_servers or {}) do
+        table.insert(ret.servers_edited, topology.servers[srv.uuid])
+    end
+
+    for _, rpl in pairs(args.replicasets or {}) do
+        for _, srv in pairs(rpl.join_servers or {}) do
+            table.insert(ret.servers_joined, topology.servers[srv.uuid])
+        end
+        table.insert(ret.replicasets, topology.replicasets[rpl.uuid])
+    end
+
+    return ret
+end
+
 --- Join an instance to the cluster.
 --
 -- @function join_server
@@ -471,15 +807,7 @@ local function join_server(args)
         replicaset_weight = '?number',
     })
 
-    if args.instance_uuid == nil then
-        args.instance_uuid = uuid_lib.str()
-    end
-
-    if args.replicaset_uuid == nil then
-        args.replicaset_uuid = uuid_lib.str()
-    end
-
-    local topology_cfg = confapplier.get_deepcopy('topology')
+    local topology_cfg = confapplier.get_readonly('topology')
     if topology_cfg == nil then
         -- Bootstrapping first instance from the web UI
         local myself = membership.myself()
@@ -491,72 +819,39 @@ local function join_server(args)
                 myself.uri, args.uri
             )
         end
-
-        topology_cfg = {
-            servers = {},
-            replicasets = {},
-            failover = false,
-        }
     end
 
-    if topology_cfg.servers[args.instance_uuid] ~= nil then
-        return nil, e_topology_edit:new(
-            'Server %q is already joined',
-            args.instance_uuid
-        )
+    if topology_cfg ~= nil
+    and topology_cfg.replicasets[args.replicaset_uuid] ~= nil
+    then
+        -- Keep old behavior:
+        -- Prevent simultaneous join_server and edit_replicaset
+        -- Ignore roles if replicaset already exists
+        args.roles = nil
+        args.vshard_group = nil
+        args.replicaset_alias = nil
+        args.replicaset_weight = nil
     end
 
-    topology_cfg.servers[args.instance_uuid] = {
-        uri = args.uri,
-        replicaset_uuid = args.replicaset_uuid,
-        labels = args.labels
-    }
 
-    if topology_cfg.replicasets[args.replicaset_uuid] == nil then
-        local replicaset = {
-            roles = confapplier.get_enabled_roles(args.roles),
-            alias = args.replicaset_alias or 'unnamed',
-            master = {args.instance_uuid},
-            weight = 0,
-        }
+    local topology, err = patch_topology({
+        -- async = false,
+        replicasets = {{
+            uuid = args.replicaset_uuid,
+            roles = args.roles,
+            alias = args.replicaset_alias,
+            weight = args.replicaset_weight,
+            vshard_group = args.vshard_group,
+            join_servers = {{
+                uri = args.uri,
+                uuid = args.instance_uuid,
+                labels = args.labels,
+            }}
+        }}
+    })
 
-        if replicaset.roles['vshard-storage'] then
-            replicaset.vshard_group = args.vshard_group or 'default'
-            local vshard_groups = vshard_utils.get_known_groups()
-            local group_params = vshard_groups[replicaset.vshard_group]
-
-            if group_params and not group_params.bootstrapped then
-                replicaset.weight = 1
-            end
-
-            if args.replicaset_weight ~= nil then
-                replicaset.weight = args.replicaset_weight
-            end
-        end
-
-        topology_cfg.replicasets[args.replicaset_uuid] = replicaset
-    else
-        local replicaset = topology_cfg.replicasets[args.replicaset_uuid]
-        replicaset.master = topology.get_leaders_order(
-            confapplier.get_readonly('topology'),
-            args.replicaset_uuid
-        )
-        table.insert(replicaset.master, args.instance_uuid)
-    end
-
-    if type(box.cfg) == 'function' then
-        return bootstrap.from_scratch({topology = topology_cfg})
-    else
-        -- TODO:
-        --  There is a race condition:
-        --  The assertion may fail while "Configuration is being verified".
-        --  See `cartridge.bootstrap.from_snapshot()`.
-        assert(confapplier.get_readonly() ~= nil)
-
-        local ok, err = confapplier.patch_clusterwide({topology = topology_cfg})
-        if not ok then
-            return nil, err
-        end
+    if topology == nil then
+        return nil, err
     end
 
     local timeout = args.timeout or 0
@@ -606,26 +901,15 @@ local function edit_server(args)
         labels = '?table'
     })
 
-    local topology_cfg = confapplier.get_deepcopy('topology')
-    if topology_cfg == nil then
-        return nil, e_topology_edit:new('Not bootstrapped yet')
-    end
+    local topology, err = patch_topology({
+        edit_servers = {{
+            uri = args.uri,
+            uuid = args.uuid,
+            labels = args.labels,
+        }}
+    })
 
-    if topology_cfg.servers[args.uuid] == nil then
-        return nil, e_topology_edit:new('Server %q not in config', args.uuid)
-    elseif topology_cfg.servers[args.uuid] == "expelled" then
-        return nil, e_topology_edit:new('Server %q is expelled', args.uuid)
-    end
-
-    if args.uri ~= nil then
-        topology_cfg.servers[args.uuid].uri = args.uri
-    end
-    if args.labels ~= nil then
-        topology_cfg.servers[args.uuid].labels = args.labels
-    end
-
-    local ok, err = confapplier.patch_clusterwide({topology = topology_cfg})
-    if not ok then
+    if topology == nil then
         return nil, err
     end
 
@@ -643,48 +927,14 @@ end
 local function expel_server(uuid)
     checks('string')
 
-    local topology_cfg = confapplier.get_deepcopy('topology')
+    local topology, err = patch_topology({
+        edit_servers = {{
+            uuid = uuid,
+            expelled = true,
+        }}
+    })
 
-    if topology_cfg.servers[uuid] == nil then
-        return nil, e_topology_edit:new('Server %q not in config', uuid)
-    elseif topology_cfg.servers[uuid] == "expelled" then
-        return nil, e_topology_edit:new('Server %q is already expelled', uuid)
-    end
-
-    local replicaset_uuid = topology_cfg.servers[uuid].replicaset_uuid
-    local replicaset = topology_cfg.replicasets[replicaset_uuid]
-
-    topology_cfg.servers[uuid] = "expelled"
-
-    for _it, _, server in fun.filter(topology.not_expelled, topology_cfg.servers) do
-        if server.replicaset_uuid == replicaset_uuid then
-            replicaset_uuid = nil
-        end
-    end
-
-    if replicaset_uuid ~= nil then
-        topology_cfg.replicasets[replicaset_uuid] = nil
-        -- luacheck: ignore replicaset
-        replicaset = nil
-    else
-        local master_pos
-        if type(replicaset.master) == 'string' and replicaset.master == uuid then
-            master_pos = 1
-        elseif type(replicaset.master) == 'table' then
-            master_pos = utils.table_find(replicaset.master, uuid)
-        end
-
-        if master_pos == 1 then
-            return nil, e_topology_edit:new(
-                "Server %q is the leader and can't be expelled", uuid
-            )
-        elseif master_pos ~= nil then
-            table.remove(replicaset.master, master_pos)
-        end
-    end
-
-    local ok, err = confapplier.patch_clusterwide({topology = topology_cfg})
-    if not ok then
+    if topology == nil then
         return nil, err
     end
 
@@ -693,27 +943,21 @@ end
 
 local function set_servers_disabled_state(uuids, state)
     checks('table', 'boolean')
-    local topology_cfg = confapplier.get_deepcopy('topology')
-    if topology_cfg == nil then
-        return nil, e_topology_edit:new('Not bootstrapped yet')
-    end
+    local patch = {edit_servers = {}}
 
     for _, uuid in pairs(uuids) do
-        if topology_cfg.servers[uuid] == nil then
-            return nil, e_topology_edit:new('Server %q not in config', uuid)
-        elseif topology_cfg.servers[uuid] == "expelled" then
-            return nil, e_topology_edit:new('Server %q is already expelled', uuid)
-        end
-
-        topology_cfg.servers[uuid].disabled = state
+        table.insert(patch.edit_servers, {
+            uuid = uuid,
+            disabled = state,
+        })
     end
 
-    local ok, err = confapplier.patch_clusterwide({topology = topology_cfg})
-    if not ok then
+    local topology, err = patch_topology(patch)
+    if topology == nil then
         return nil, err
     end
 
-    return get_servers()
+    return topology.servers_edited
 end
 
 --- Enable nodes after they were disabled.
@@ -753,85 +997,29 @@ end
 -- @treturn[2] nil
 -- @treturn[2] table Error description
 local function edit_replicaset(args)
-    args = args or {}
     checks({
         uuid = 'string',
         alias = '?string',
         roles = '?table',
-        master = '?string|table',
+        master = '?table',
         weight = '?number',
         vshard_group = '?string',
         all_rw = '?boolean',
     })
 
-    local topology_cfg = confapplier.get_deepcopy('topology')
-    if topology_cfg == nil then
-        return nil, e_topology_edit:new('Not bootstrapped yet')
-    end
+    local topology, err = patch_topology({
+        replicasets = {{
+            uuid = args.uuid,
+            alias = args.alias,
+            all_rw = args.all_rw,
+            roles = args.roles,
+            weight = args.weight,
+            leaders = args.master,
+            vshard_group = args.vshard_group,
+        }}
+    })
 
-    local replicaset = topology_cfg.replicasets[args.uuid]
-
-    if replicaset == nil then
-        return nil, e_topology_edit:new('Replicaset %q not in config', args.uuid)
-    end
-
-    if args.roles ~= nil then
-        replicaset.roles = confapplier.get_enabled_roles(args.roles)
-    end
-
-    if args.master ~= nil then
-        replicaset.master = topology.get_leaders_order(
-            confapplier.get_readonly('topology'),
-            args.uuid,
-            args.master
-        )
-    end
-
-    if args.alias ~= nil then
-        replicaset.alias = args.alias
-    end
-
-    if args.all_rw ~= nil then
-        replicaset.all_rw = args.all_rw
-    end
-
-    -- Set proper vshard_group
-    repeat -- until true
-        if not replicaset.roles['vshard-storage'] then
-            -- ignore unless replicaset is a storage
-            break
-        end
-
-        if args.vshard_group ~= nil then
-            replicaset.vshard_group = args.vshard_group
-            break
-        end
-
-        replicaset.vshard_group = 'default'
-    until true
-
-    -- Set proper replicaset weight
-    repeat -- until true
-        if not replicaset.roles['vshard-storage'] then
-            replicaset.weight = 0
-            break
-        end
-
-        if args.weight ~= nil then
-            replicaset.weight = args.weight
-            break
-        end
-
-        local vshard_groups = vshard_utils.get_known_groups()
-        local group_params = vshard_groups[replicaset.vshard_group or 'default']
-
-        if group_params and not group_params.bootstrapped then
-            replicaset.weight = 1
-        end
-    until true
-
-    local ok, err = confapplier.patch_clusterwide({topology = topology_cfg})
-    if not ok then
+    if topology == nil then
         return nil, err
     end
 
@@ -888,6 +1076,8 @@ return {
     disable_servers = disable_servers,
 
     edit_replicaset = edit_replicaset,
+
+    patch_topology = patch_topology,
 
     get_failover_enabled = get_failover_enabled,
     set_failover_enabled = set_failover_enabled,
