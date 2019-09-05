@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Protect `users_acl` and `auth` sections when downloading clusterwide config.
   Also forbid uploading them.
 
+- Respect user-defined `vinyl_dir` setting.
+
 ## [1.0.0] - 2019-08-29
 
 ### Added

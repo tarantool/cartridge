@@ -200,7 +200,9 @@ local function bootstrap_from_scratch(conf)
     box_opts.listen = vars.boot_opts.binary_port
     box_opts.wal_dir = vars.boot_opts.workdir
     box_opts.memtx_dir = vars.boot_opts.workdir
-    box_opts.vinyl_dir = vars.boot_opts.workdir
+    if box_opts.vinyl_dir == nil then
+        box_opts.vinyl_dir = vars.boot_opts.workdir
+    end
     box_opts.instance_uuid = instance_uuid
     box_opts.replicaset_uuid = replicaset_uuid
     box_opts.replication = topology.get_replication_config(conf.topology, replicaset_uuid)
@@ -263,7 +265,9 @@ local function bootstrap_from_membership()
     box_opts.listen = vars.boot_opts.binary_port
     box_opts.wal_dir = vars.boot_opts.workdir
     box_opts.memtx_dir = vars.boot_opts.workdir
-    box_opts.vinyl_dir = vars.boot_opts.workdir
+    if box_opts.vinyl_dir == nil then
+        box_opts.vinyl_dir = vars.boot_opts.workdir
+    end
     box_opts.instance_uuid = instance_uuid
     box_opts.replicaset_uuid = replicaset_uuid
     box_opts.replication = topology.get_replication_config(conf.topology, replicaset_uuid)
@@ -347,7 +351,9 @@ local function bootstrap_from_snapshot()
     box_opts.listen = vars.boot_opts.binary_port
     box_opts.wal_dir = vars.boot_opts.workdir
     box_opts.memtx_dir = vars.boot_opts.workdir
-    box_opts.vinyl_dir = vars.boot_opts.workdir
+    if box_opts.vinyl_dir == nil then
+        box_opts.vinyl_dir = vars.boot_opts.workdir
+    end
 
     membership.set_payload('warning', 'Recovering from snapshot')
     init_box(box_opts)
