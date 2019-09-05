@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   servers, which aren't added to membership yet (earlier it influenced join_server mutation only).
   This is a prerequisite for multijoin api implementation.
 
+- WebUI users page is hidden if auth_backend doesn't provide list_users callback.
+
 ### Fixed
 
 - Protect `users_acl` and `auth` sections when downloading clusterwide config.
