@@ -1,19 +1,22 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import Scrollbar from 'src/components/Scrollbar';
+import PopupBody from 'src/components/PopupBody';
 import Text from 'src/components/Text';
 import CollapsibleJSONRenderer from 'src/components/CollapsibleJSONRenderer';
 import { css } from 'emotion';
 
 const styles = {
-  listOuter: css`
+  popupBody: css`
     min-height: 100px;
     height: 70vh;
     max-height: 400px;
     margin-top: 24px;
     margin-bottom: 40px;
   `,
-  listInner: css``,
+  listInner: css`
+    margin-left: 16px;
+    margin-right: 16px;
+  `,
   listItem: css`
     display: flex;
     align-items: center;
@@ -64,31 +67,27 @@ const renderers = {
 
 const ClusterInstanceSection = ({ descriptions = {}, params = [] }) => {
   return (
-    <div className={styles.listOuter}>
-      <Scrollbar>
-        <div className={styles.listInner}>
-          {params.map(({ name, value, displayAs = 'string' }, index) => (
-            <div className={styles.listItem}>
-              <div className={styles.leftCol}>
-                <Text variant="basic" className={styles.key}>
-                  {name}
+    <PopupBody className={styles.popupBody} innerClassName={styles.listInner} scrollable>
+      {params.map(({ name, value, displayAs = 'string' }, index) => (
+        <div className={styles.listItem}>
+          <div className={styles.leftCol}>
+            <Text variant="basic" className={styles.key}>
+              {name}
+            </Text>
+            {descriptions[name]
+              ? (
+                <Text variant="basic" className={styles.description}>
+                  {descriptions[name]}
                 </Text>
-                {descriptions[name]
-                  ? (
-                    <Text variant="basic" className={styles.description}>
-                      {descriptions[name]}
-                    </Text>
-                  )
-                  : null}
-              </div>
-              <div className={styles.rightCol}>
-                {renderers[displayAs](value, index)}
-              </div>
-            </div>
-          ))}
+              )
+              : null}
+          </div>
+          <div className={styles.rightCol}>
+            {renderers[displayAs](value, index)}
+          </div>
         </div>
-      </Scrollbar>
-    </div>
+      ))}
+    </PopupBody>
   );
 };
 

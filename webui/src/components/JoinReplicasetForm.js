@@ -7,7 +7,6 @@ import LeaderFlagSmall from 'src/components/LeaderFlagSmall';
 import SelectedServersList from 'src/components/SelectedServersList';
 import Text from 'src/components/Text';
 import Tooltip from 'src/components/Tooltip';
-import Scrollbar from 'src/components/Scrollbar';
 import RadioButton from 'src/components/RadioButton';
 import Button from 'src/components/Button';
 import PopupBody from 'src/components/PopupBody';
@@ -22,10 +21,6 @@ import type {
 } from 'src/generated/graphql-typing';
 
 const styles = {
-  form: css`
-    display: flex;
-    flex-wrap: wrap;
-  `,
   input: css`
     margin-bottom: 4px;
   `,
@@ -181,74 +176,72 @@ class JoinReplicasetForm extends React.Component<JoinReplicasetFormProps> {
           isSubmitting
         }) => {
           return (
-            <form className={styles.form} onSubmit={handleSubmit}>
-              <PopupBody className={styles.popupBody}>
-                <Scrollbar>
-                  <SelectedServersList className={styles.splash} serverList={selectedServers} />
-                  <FormField
-                    className={styles.wideField}
-                    itemClassName={styles.radioWrap}
-                    label='Choose replica set'
-                    subTitle={(
-                      <Text variant='h5' upperCase tag='span'>
-                        <b>{(replicasetList && replicasetList.length) || 0}</b> total
-                        {
-                          filteredReplicasetList
-                          &&
-                          replicasetList
-                          &&
-                          filteredReplicasetList.length !== replicasetList.length
-                          &&
-                          (
-                            <>, <b>{filteredReplicasetList.length}</b> filtered</>
-                          )
-                        }
-                      </Text>
-                    )}
-                    topRightControls={(
-                      <InputText
-                        className={styles.filter}
-                        placeholder='Filter by uri, uuid, role, alias or labels'
-                        value={filter}
-                        onChange={this.handleFilterChange}
-                        onClearClick={this.handleFilterClear}
-                        rightIcon={<IconSearch />}
-                      />
-                    )}
-                  >
-                    {filteredReplicasetList && filteredReplicasetList.map(({
-                      alias,
-                      servers,
-                      uuid,
-                      roles,
-                      master
-                    }) => (
-                      <React.Fragment>
-                        <RadioButton
-                          onChange={handleChange}
-                          className={styles.radio}
-                          name='replicasetUuid'
-                          value={uuid}
-                          key={uuid}
-                          checked={uuid === values.replicasetUuid}
-                        >
-                          {alias || uuid}
-                        </RadioButton>
-                        <Tooltip
-                          className={styles.replicasetServersCount}
-                          content={this.renderServersTooltipContent(servers, master.uuid)}
-                        >
-                          <IconInfo />
-                          <Text variant='h5' upperCase tag='span'>
-                            <b>{servers.length}</b>
-                            {` total server${servers.length > 1 ? 's' : ''}`}
-                          </Text>
-                        </Tooltip>
-                        <ReplicasetRoles className={styles.roles} roles={roles || []} />
-                      </React.Fragment>
-                    ))}
-                  </FormField>
-                </Scrollbar>
+            <form onSubmit={handleSubmit}>
+              <PopupBody className={styles.popupBody} scrollable>
+                <SelectedServersList className={styles.splash} serverList={selectedServers} />
+                <FormField
+                  className={styles.wideField}
+                  itemClassName={styles.radioWrap}
+                  label='Choose replica set'
+                  subTitle={(
+                    <Text variant='h5' upperCase tag='span'>
+                      <b>{(replicasetList && replicasetList.length) || 0}</b> total
+                      {
+                        filteredReplicasetList
+                        &&
+                        replicasetList
+                        &&
+                        filteredReplicasetList.length !== replicasetList.length
+                        &&
+                        (
+                          <>, <b>{filteredReplicasetList.length}</b> filtered</>
+                        )
+                      }
+                    </Text>
+                  )}
+                  topRightControls={(
+                    <InputText
+                      className={styles.filter}
+                      placeholder='Filter by uri, uuid, role, alias or labels'
+                      value={filter}
+                      onChange={this.handleFilterChange}
+                      onClearClick={this.handleFilterClear}
+                      rightIcon={<IconSearch />}
+                    />
+                  )}
+                >
+                  {filteredReplicasetList && filteredReplicasetList.map(({
+                    alias,
+                    servers,
+                    uuid,
+                    roles,
+                    master
+                  }) => (
+                    <React.Fragment>
+                      <RadioButton
+                        onChange={handleChange}
+                        className={styles.radio}
+                        name='replicasetUuid'
+                        value={uuid}
+                        key={uuid}
+                        checked={uuid === values.replicasetUuid}
+                      >
+                        {alias || uuid}
+                      </RadioButton>
+                      <Tooltip
+                        className={styles.replicasetServersCount}
+                        content={this.renderServersTooltipContent(servers, master.uuid)}
+                      >
+                        <IconInfo />
+                        <Text variant='h5' upperCase tag='span'>
+                          <b>{servers.length}</b>
+                          {` total server${servers.length > 1 ? 's' : ''}`}
+                        </Text>
+                      </Tooltip>
+                      <ReplicasetRoles className={styles.roles} roles={roles || []} />
+                    </React.Fragment>
+                  ))}
+                </FormField>
               </PopupBody>
               <PopupFooter
                 className={styles.splash}
