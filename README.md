@@ -70,9 +70,14 @@ in the ``cartridge-cli`` repository.
 
 Prerequisites:
 
-- Tarantool itself;
-- ``npm``, ``nodejs``;
-- ``python``, ``pip`` (for testing only).
+* ``tarantool``, ``tarantool-dev`` ([instructions](https://www.tarantool.io/en/download/?v=1.10));
+* ``git``, ``gcc``, ``cmake``.
+
+To build and test ``cartridge`` locally, you'll also need:
+
+* ``nodejs`` >= 8 ([instructions](https://github.com/nodesource/distributions));
+* ``npm`` >= 6;
+* ``python``, ``pip``.
 
 To build the front end, say:
 
@@ -84,7 +89,7 @@ To build the API documentation, say:
 
 ```sh
 tarantoolctl rocks install ldoc --server=http://rocks.moonscript.org
-export PATH=.rocks/bin:$PATH
+export PATH=$PWD/.rocks/bin:$PATH
 tarantoolctl rocks make BUILD_DOC=YES
 ```
 
