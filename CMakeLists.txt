@@ -72,16 +72,21 @@ add_custom_target(front-bundle ALL
 
 set(DOC_OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/doc/index.html)
 
+if(BUILD_DOC)
+  set(LDOC_FIND_REQUIRED ON)
+endif()
+find_package(Ldoc)
+
 add_custom_command(
   OUTPUT DOC_OUTPUT
-  COMMAND ldoc -t "${PROJECT_NAME}-${version}" -p "${PROJECT_NAME} (${version})" --all .
+  COMMAND ${LDOC} -t "${PROJECT_NAME}-${version}" -p "${PROJECT_NAME} (${version})" --all .
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
   DEPENDS ${LUA_FILES}
   COMMENT "Building API documentation"
   VERBATIM
 )
 
-if(BUILD_DOC)
+if(LDOC_FOUND)
   add_custom_target(doc ALL
     DEPENDS DOC_OUTPUT)
 else()

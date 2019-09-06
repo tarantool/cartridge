@@ -89,7 +89,6 @@ To build the API documentation, say:
 
 ```sh
 tarantoolctl rocks install ldoc --server=http://rocks.moonscript.org
-export PATH=$PWD/.rocks/bin:$PATH
 tarantoolctl rocks make BUILD_DOC=YES
 ```
 
