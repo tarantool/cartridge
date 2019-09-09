@@ -77,41 +77,46 @@ function* refreshListsTaskSaga() {
 
   while (true) {
     yield delay(REFRESH_LIST_INTERVAL);
-    yield put({ type: CLUSTER_PAGE_REFRESH_LISTS_REQUEST });
+    requestNum++;
+    yield refreshListsSaga(requestNum);
+  }
+};
 
-    let response;
-    try {
-      const shouldRequestStat = ++requestNum % STAT_REQUEST_PERIOD === 0;
-      if (shouldRequestStat) {
-        response = yield call(refreshLists, { shouldRequestStat: true });
-      } else {
-        const listsResponse = yield call(refreshLists);
+function* refreshListsSaga(requestNum = 0) {
+  yield put({ type: CLUSTER_PAGE_REFRESH_LISTS_REQUEST });
 
-        let serverStatResponse;
-        const serverStat = yield select(state => state.clusterPage.serverStat);
-        const unknownServerExists = listsResponse.serverList
-          .some(server => server.replicaset && !serverStat.find(stat => stat.uuid === server.uuid));
-        if (unknownServerExists) {
-          serverStatResponse = yield call(getServerStat);
-        }
+  let response;
+  try {
+    const shouldRequestStat = requestNum % STAT_REQUEST_PERIOD === 0;
+    if (shouldRequestStat) {
+      response = yield call(refreshLists, { shouldRequestStat: true });
+    } else {
+      const listsResponse = yield call(refreshLists);
 
-        response = {
-          ...listsResponse,
-          ...serverStatResponse
-        };
+      let serverStatResponse;
+      const serverStat = yield select(state => state.clusterPage.serverStat);
+      const unknownServerExists = listsResponse.serverList
+        .some(server => server.replicaset && !serverStat.find(stat => stat.uuid === server.uuid));
+      if (unknownServerExists) {
+        serverStatResponse = yield call(getServerStat);
       }
-    } catch (error) {
-      yield put({ type: CLUSTER_PAGE_REFRESH_LISTS_REQUEST_ERROR, error, requestPayload: {} });
+
+      response = {
+        ...listsResponse,
+        ...serverStatResponse
+      };
     }
-    if (response) {
-      if (response.serverStat) {
-        response = {
-          ...response,
-          serverStat: response.serverStat.filter(stat => stat.uuid)
-        };
-      }
-      yield put({ type: CLUSTER_PAGE_REFRESH_LISTS_REQUEST_SUCCESS, payload: response, requestPayload: {} });
+  } catch (error) {
+    yield put({ type: CLUSTER_PAGE_REFRESH_LISTS_REQUEST_ERROR, error, requestPayload: {} });
+  }
+  if (response) {
+    if (response.serverStat) {
+      response = {
+        ...response,
+        serverStat: response.serverStat.filter(stat => stat.uuid)
+      };
     }
+    yield put({ type: CLUSTER_PAGE_REFRESH_LISTS_REQUEST_SUCCESS, payload: response, requestPayload: {} });
   }
 }
 
@@ -124,12 +129,43 @@ function* refreshListsRequestSaga() {
   }
 }
 
-const bootstrapVshardRequestSaga = getRequestSaga(
-  CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST,
-  CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST_SUCCESS,
-  CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST_ERROR,
-  bootstrapVshard,
-);
+function* bootstrapVshardRequestSaga() {
+  yield takeLatest(CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST, function* load(action) {
+    const {
+      payload: requestPayload = {},
+      __payload: {
+        noIndicator,
+        noErrorMessage,
+        successMessage
+      } = {}
+    } = action;
+    const indicator = noIndicator ? null : pageRequestIndicator.run();
+
+    let response;
+    try {
+      response = yield call(bootstrapVshard, requestPayload);
+      indicator && indicator.success();
+
+      yield put({
+        type: CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST_SUCCESS,
+        payload: response,
+        requestPayload,
+        __successMessage: successMessage
+      });
+
+      yield refreshListsSaga();
+    } catch (error) {
+      yield put({
+        type: CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST_ERROR,
+        error,
+        requestPayload,
+        __errorMessage: !noErrorMessage
+      });
+      indicator && indicator.error();
+      return;
+    }
+  });
+};
 
 const probeServerRequestSaga = function* () {
   yield takeLatest(CLUSTER_PAGE_PROBE_SERVER_REQUEST, function* load(action) {
@@ -148,6 +184,8 @@ const probeServerRequestSaga = function* () {
         payload: response,
         __successMessage: successMessage
       });
+
+      yield refreshListsSaga();
     } catch (error) {
       yield put({
         type: CLUSTER_PAGE_PROBE_SERVER_REQUEST_ERROR,
@@ -160,12 +198,43 @@ const probeServerRequestSaga = function* () {
   });
 };
 
-const joinServerRequestSaga = getRequestSaga(
-  CLUSTER_PAGE_JOIN_SERVER_REQUEST,
-  CLUSTER_PAGE_JOIN_SERVER_REQUEST_SUCCESS,
-  CLUSTER_PAGE_JOIN_SERVER_REQUEST_ERROR,
-  joinServer,
-);
+function* joinServerRequestSaga() {
+  yield takeLatest(CLUSTER_PAGE_JOIN_SERVER_REQUEST, function* load(action) {
+    const {
+      payload: requestPayload = {},
+      __payload: {
+        noIndicator,
+        noErrorMessage,
+        successMessage
+      } = {}
+    } = action;
+    const indicator = noIndicator ? null : pageRequestIndicator.run();
+
+    let response;
+    try {
+      response = yield call(joinServer, requestPayload);
+      indicator && indicator.success();
+
+      yield put({
+        type: CLUSTER_PAGE_JOIN_SERVER_REQUEST_SUCCESS,
+        payload: response,
+        requestPayload,
+        __successMessage: successMessage
+      });
+
+      yield refreshListsSaga();
+    } catch (error) {
+      yield put({
+        type: CLUSTER_PAGE_JOIN_SERVER_REQUEST_ERROR,
+        error,
+        requestPayload,
+        __errorMessage: !noErrorMessage
+      });
+      indicator && indicator.error();
+      return;
+    }
+  });
+};
 
 function* createReplicasetRequestSaga() {
   yield takeLatest(CLUSTER_PAGE_CREATE_REPLICASET_REQUEST, function* load(action) {
@@ -183,6 +252,10 @@ function* createReplicasetRequestSaga() {
         ...createReplicasetResponse,
         ...clusterSelfResponse
       };
+
+      yield put({ type: CLUSTER_PAGE_CREATE_REPLICASET_REQUEST_SUCCESS, payload: response, requestPayload });
+
+      yield refreshListsSaga();
     } catch (error) {
       yield put({
         type: CLUSTER_PAGE_CREATE_REPLICASET_REQUEST_ERROR,
@@ -193,24 +266,84 @@ function* createReplicasetRequestSaga() {
       indicator.error();
       return;
     }
-
-    yield put({ type: CLUSTER_PAGE_CREATE_REPLICASET_REQUEST_SUCCESS, payload: response, requestPayload });
   });
-}
+};
 
-const expelServerRequestSaga = getRequestSaga(
-  CLUSTER_PAGE_EXPEL_SERVER_REQUEST,
-  CLUSTER_PAGE_EXPEL_SERVER_REQUEST_SUCCESS,
-  CLUSTER_PAGE_EXPEL_SERVER_REQUEST_ERROR,
-  expelServer,
-);
+function* expelServerRequestSaga() {
+  yield takeLatest(CLUSTER_PAGE_EXPEL_SERVER_REQUEST, function* load(action) {
+    const {
+      payload: requestPayload = {},
+      __payload: {
+        noIndicator,
+        noErrorMessage,
+        successMessage
+      } = {}
+    } = action;
+    const indicator = noIndicator ? null : pageRequestIndicator.run();
 
-const editReplicasetRequestSaga = getRequestSaga(
-  CLUSTER_PAGE_REPLICASET_EDIT_REQUEST,
-  CLUSTER_PAGE_REPLICASET_EDIT_REQUEST_SUCCESS,
-  CLUSTER_PAGE_REPLICASET_EDIT_REQUEST_ERROR,
-  editReplicaset,
-);
+    let response;
+    try {
+      response = yield call(expelServer, requestPayload);
+      indicator && indicator.success();
+
+      yield put({
+        type: CLUSTER_PAGE_EXPEL_SERVER_REQUEST_SUCCESS,
+        payload: response,
+        requestPayload,
+        __successMessage: successMessage
+      });
+
+      yield refreshListsSaga();
+    } catch (error) {
+      yield put({
+        type: CLUSTER_PAGE_EXPEL_SERVER_REQUEST_ERROR,
+        error,
+        requestPayload,
+        __errorMessage: !noErrorMessage
+      });
+      indicator && indicator.error();
+      return;
+    }
+  });
+};
+
+function* editReplicasetRequestSaga() {
+  yield takeLatest(CLUSTER_PAGE_REPLICASET_EDIT_REQUEST, function* load(action) {
+    const {
+      payload: requestPayload = {},
+      __payload: {
+        noIndicator,
+        noErrorMessage,
+        successMessage
+      } = {}
+    } = action;
+    const indicator = noIndicator ? null : pageRequestIndicator.run();
+
+    let response;
+    try {
+      response = yield call(editReplicaset, requestPayload);
+      indicator && indicator.success();
+
+      yield put({
+        type: CLUSTER_PAGE_REPLICASET_EDIT_REQUEST_SUCCESS,
+        payload: response,
+        requestPayload,
+        __successMessage: successMessage
+      });
+
+      yield refreshListsSaga();
+    } catch (error) {
+      yield put({
+        type: CLUSTER_PAGE_REPLICASET_EDIT_REQUEST_ERROR,
+        error,
+        requestPayload,
+        __errorMessage: !noErrorMessage
+      });
+      indicator && indicator.error();
+      return;
+    }
+  });
+};
 
 const uploadConfigRequestSaga = getRequestSaga(
   CLUSTER_PAGE_UPLOAD_CONFIG_REQUEST,
@@ -225,7 +358,6 @@ const changeFailoverRequestSaga = getRequestSaga(
   CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_ERROR,
   changeFailover,
 );
-
 
 const updateClusterSelfOnBootstrap = function* () {
   yield takeEvery(CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST_SUCCESS, function* () {

@@ -30,7 +30,7 @@ const ICON_TYPES = {
 };
 
 const prepareUndoneMessages = messages => {
-  return messages.filter(message => ! message.done);
+  return messages.filter(message => !message.done);
 };
 
 class AppMessage extends React.Component {

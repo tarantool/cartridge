@@ -153,7 +153,7 @@ const createSaga = (effect, SIGNAL, REQUEST, REQUEST_SUCCESS, REQUEST_ERROR, req
           type: REQUEST_ERROR,
           error,
           requestPayload,
-          __errorMessage: ! noErrorMessage
+          __errorMessage: !noErrorMessage
         });
         indicator && indicator.error();
         return;
