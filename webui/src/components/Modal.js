@@ -52,6 +52,13 @@ const styles = {
     text-overflow: ellipsis;
     white-space: nowrap;
   `,
+  focusClosureControl: css`
+    position: absolute;
+    clip: rect(0 0 0 0);
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+  `,
   closeIcon: css`
     position: absolute;
     top: 16px;
@@ -63,29 +70,27 @@ const styles = {
 
 const isNodeOutsideElement = (node: HTMLElement, element: HTMLElement) => !(element.contains(node) || element === node);
 
-type BaseModalProps = {
+interface BaseModalProps {
   visible?: boolean,
   children?: React.Node,
   className?: string,
   wide?: boolean,
   onClose?: (?MouseEvent) => void,
   bgColor?: string,
-};
+}
 
-type ModalProps = {
-  ...$Exact<BaseModalProps>,
+interface ModalProps extends BaseModalProps {
   footerContent?: React.Node,
   footerControls?: React.Node,
   title: string,
   loading?:? boolean,
 };
 
-type ConfirmModalProps = {
-  ...$Exact<ModalProps>,
+interface ConfirmModalProps extends ModalProps {
   onConfirm: Function,
   onCancel: Function,
   confirmText?: string,
-};
+}
 
 export const ConfirmModal = (
   {
@@ -112,23 +117,13 @@ export class BaseModal<T: BaseModalProps = BaseModalProps> extends React.Compone
 
   componentDidMount() {
     if (this.isModalVisible()) {
-      this.addEventHandlers();
+      this.focusFirstInteractiveElement();
     }
   }
 
   componentDidUpdate(prevProps: BaseModalProps) {
     if (prevProps.visible === false && this.isModalVisible()) {
-      this.addEventHandlers();
-    }
-
-    if (prevProps.visible !== false && !this.isModalVisible()) {
-      this.removeEventHandlers();
-    }
-  }
-
-  componentWillUnmount() {
-    if (this.isModalVisible()) {
-      this.removeEventHandlers();
+      this.focusFirstInteractiveElement();
     }
   }
 
@@ -163,8 +158,14 @@ export class BaseModal<T: BaseModalProps = BaseModalProps> extends React.Compone
           )}
           ref={this.modalRef}
           tabIndex={0}
+          onKeyDown={this.handleEscapePress}
         >
           {children}
+          <div
+            className={styles.focusClosureControl}
+            onFocus={this.focusFirstInteractiveElement}
+            tabIndex='0'
+          />
         </div>
       </div>
     );
@@ -186,23 +187,6 @@ export class BaseModal<T: BaseModalProps = BaseModalProps> extends React.Compone
     return visible !== false;
   }
 
-  addEventHandlers = () => {
-    const modal = this.modalRef.current;
-    window.addEventListener('focus', this.handleFocusChange, true);
-    if (modal) {
-      modal.addEventListener('keydown', this.handleEscapePress);
-    }
-    this.focusFirstInteractiveElement();
-  };
-
-  removeEventHandlers = () => {
-    const modal = this.modalRef.current;
-    window.removeEventListener('focus', this.handleFocusChange, true);
-    if (modal) {
-      modal.removeEventListener('keydown', this.handleEscapePress);
-    }
-  };
-
   handleOutsideClick = (event: MouseEvent) => {
     const modal = this.modalRef.current;
 
@@ -210,14 +194,6 @@ export class BaseModal<T: BaseModalProps = BaseModalProps> extends React.Compone
       this.props.onClose && this.props.onClose(event);
     }
   };
-
-  handleFocusChange = (e: FocusEvent) => {
-    const modal = this.modalRef.current;
-
-    if (modal && e.target instanceof HTMLElement && isNodeOutsideElement(e.target, modal)) {
-      this.focusFirstInteractiveElement();
-    }
-  }
 
   handleEscapePress = (e: KeyboardEvent) => {
     if (this.props.onClose && e.keyCode === 27) {
@@ -250,6 +226,7 @@ export default class Modal extends BaseModal<ModalProps> {
           )}
           ref={this.modalRef}
           tabIndex={0}
+          onKeyDown={this.handleEscapePress}
         >
           <Text className={styles.title} variant='h2'>{title}</Text>
           {onClose && <IconClose className={styles.closeIcon} onClick={onClose} />}
@@ -259,6 +236,11 @@ export default class Modal extends BaseModal<ModalProps> {
           {(footerContent || footerControls) && (
             <PopupFooter controls={footerControls}>{footerContent}</PopupFooter>
           )}
+          <div
+            className={styles.focusClosureControl}
+            onFocus={this.focusFirstInteractiveElement}
+            tabIndex='0'
+          />
         </div>
       </div>
     );
