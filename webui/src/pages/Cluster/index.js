@@ -186,7 +186,7 @@ class Cluster extends React.Component<ClusterProps> {
             title='Replica sets'
             topRightControls={
               replicasetList.length > 1
-                ? (
+                ? [
                   <InputText
                     className={styles.clusterFilter}
                     prefix={<Icon type="search" />}
@@ -197,8 +197,8 @@ class Cluster extends React.Component<ClusterProps> {
                     onClearClick={this.handleFilterClear}
                     rightIcon={<IconSearch />}
                   />
-                )
-                : null
+                ]
+                : undefined
             }
           >
             {filteredReplicasetList.length

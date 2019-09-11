@@ -40,7 +40,7 @@ type LabeledInputProps = {
   itemClassName?: string,
   label: string,
   subTitle?: string | React.Node,
-  topRightControls?: React.Node
+  topRightControls?: React.Node[]
 };
 
 const LabeledInput = ({
@@ -63,7 +63,7 @@ LabeledInputProps) => (
         )}
       </Text>
       {subTitle && <Text className={styles.subTitle} variant='h5' tag='span' upperCase>{subTitle}</Text>}
-      {topRightControls && <ControlsPanel className={styles.topRightControls}>{topRightControls}</ControlsPanel>}
+      {topRightControls && <ControlsPanel className={styles.topRightControls} controls={topRightControls} />}
     </div>
     {children}
   </label>

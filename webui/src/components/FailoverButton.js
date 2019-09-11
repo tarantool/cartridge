@@ -16,47 +16,54 @@ When the user-specified master comes back online, both roles are restored.`
 const FailoverButton = ({
   dispatch,
   failover,
-  showFailoverModal
-}) => (
-  <React.Fragment>
-    <Switcher
-      onChange={() => dispatch(setVisibleFailoverModal(true))}
-      checked={failover}
-    >
-      Failover
-    </Switcher>
-    <Modal
-      title="Failover control"
-      visible={showFailoverModal}
-      onClose={() => dispatch(setVisibleFailoverModal(false))}
-      footerControls={[
-        <Button onClick={() => dispatch(setVisibleFailoverModal(false))}>Close</Button>,
-        <Button
-          intent='primary'
-          onClick={() => dispatch(changeFailover({ enabled: !failover }))}
-        >
-          {failover ? 'Disable' : 'Enable'}
-        </Button>
-      ]}
-    >
-      <ModalInfoContainer>
-        <SwitcherInfoLine>
-          <Text variant={'basic'}>
-            <SwitcherIconContainer>{failover ? <IconOk/> : <IconCancel/>}</SwitcherIconContainer>
-            Failover <b>{failover ? 'enabled' : 'disabled'}</b>
-          </Text>
-        </SwitcherInfoLine>
-        <SwitcherInfoLine>
-          <Text variant={'basic'}>{description}</Text>
-        </SwitcherInfoLine>
-      </ModalInfoContainer>
-    </Modal>
-  </React.Fragment>
-);
+  showFailoverModal,
+  visible
+}) => {
+  if (!visible)
+    return null;
+
+  return (
+    <React.Fragment>
+      <Switcher
+        onChange={() => dispatch(setVisibleFailoverModal(true))}
+        checked={failover}
+      >
+        Failover
+      </Switcher>
+      <Modal
+        title="Failover control"
+        visible={showFailoverModal}
+        onClose={() => dispatch(setVisibleFailoverModal(false))}
+        footerControls={[
+          <Button onClick={() => dispatch(setVisibleFailoverModal(false))}>Close</Button>,
+          <Button
+            intent='primary'
+            onClick={() => dispatch(changeFailover({ enabled: !failover }))}
+          >
+            {failover ? 'Disable' : 'Enable'}
+          </Button>
+        ]}
+      >
+        <ModalInfoContainer>
+          <SwitcherInfoLine>
+            <Text variant={'basic'}>
+              <SwitcherIconContainer>{failover ? <IconOk/> : <IconCancel/>}</SwitcherIconContainer>
+              Failover <b>{failover ? 'enabled' : 'disabled'}</b>
+            </Text>
+          </SwitcherInfoLine>
+          <SwitcherInfoLine>
+            <Text variant={'basic'}>{description}</Text>
+          </SwitcherInfoLine>
+        </ModalInfoContainer>
+      </Modal>
+    </React.Fragment>
+  );
+};
 
 export default connect(({ app, ui }) => {
   return {
     failover: app.failover,
-    showFailoverModal: ui.showFailoverModal
+    showFailoverModal: ui.showFailoverModal,
+    visible: !!(app.clusterSelf && app.clusterSelf.configured)
   }
 })(FailoverButton);

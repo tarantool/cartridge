@@ -199,7 +199,7 @@ class JoinReplicasetForm extends React.Component<JoinReplicasetFormProps> {
                       }
                     </Text>
                   )}
-                  topRightControls={(
+                  topRightControls={[
                     <InputText
                       className={styles.filter}
                       placeholder='Filter by uri, uuid, role, alias or labels'
@@ -208,7 +208,7 @@ class JoinReplicasetForm extends React.Component<JoinReplicasetFormProps> {
                       onClearClick={this.handleFilterClear}
                       rightIcon={<IconSearch />}
                     />
-                  )}
+                  ]}
                 >
                   {filteredReplicasetList && filteredReplicasetList.map(({
                     alias,

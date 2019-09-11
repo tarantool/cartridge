@@ -77,9 +77,9 @@ class ProbeServerModal extends React.PureComponent<ProbeServerModalProps> {
                   />
                 </div>
                 <PopupFooter
-                  controls={(
+                  controls={[
                     <Button type='submit' intent='primary' text='Submit' />
-                  )}
+                  ]}
                 />
               </form>
             )}
