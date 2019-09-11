@@ -3,7 +3,7 @@
 set -e
 
 ./taptest.lua
-.rocks/bin/luatest -v
+.rocks/bin/luatest -v -c
 
 # lint
 .rocks/bin/luacheck cartridge-scm-1.rockspec
