@@ -3,7 +3,6 @@ import React from 'react';
 import { css, cx } from 'react-emotion';
 import { Formik } from 'formik';
 import * as R from 'ramda';
-import Scrollbar from 'src/components/Scrollbar';
 import SelectedServersList from 'src/components/SelectedServersList';
 import Text from 'src/components/Text';
 import InputText from 'src/components/InputText';
@@ -133,83 +132,79 @@ CreateReplicasetFormProps) => (
 
       return (
         <form className={styles.form} onSubmit={handleSubmit}>
-          <PopupBody className={styles.popupBody}>
-            <Scrollbar>
-              <div className={styles.wrap}>
-                <SelectedServersList className={styles.splash} serverList={selectedServers} />
-                <LabeledInput className={styles.wideField} label='Enter name of replica set'>
-                  <InputText
-                    name='alias'
-                    className={cx(
-                      styles.input,
-                      styles.aliasInput
-                    )}
-                    onChange={handleChange}
-                    value={values.alias}
-                    error={errors.alias}
-                  />
-                  <Text variant='p' className={styles.errorMessage}>{errors.alias}</Text>
-                </LabeledInput>
-                <FormField className={styles.wideField} label='Roles' columns={rolesColumns} verticalSort>
-                  {knownRoles && knownRoles.reduceRight(
-                    (acc, { name, dependencies }) => {
-                      acc.push(
-                        <Checkbox
-                          onChange={() => {
-                            const activeRoles = values.roles.includes(name)
-                              ? values.roles.filter(x => x !== name)
-                              : values.roles.concat([name])
+          <PopupBody className={styles.popupBody} innerClassName={styles.wrap} scrollable>
+            <SelectedServersList className={styles.splash} serverList={selectedServers} />
+            <LabeledInput className={styles.wideField} label='Enter name of replica set'>
+              <InputText
+                name='alias'
+                className={cx(
+                  styles.input,
+                  styles.aliasInput
+                )}
+                onChange={handleChange}
+                value={values.alias}
+                error={errors.alias}
+              />
+              <Text variant='p' className={styles.errorMessage}>{errors.alias}</Text>
+            </LabeledInput>
+            <FormField className={styles.wideField} label='Roles' columns={rolesColumns} verticalSort>
+              {knownRoles && knownRoles.reduceRight(
+                (acc, { name, dependencies }) => {
+                  acc.push(
+                    <Checkbox
+                      onChange={() => {
+                        const activeRoles = values.roles.includes(name)
+                          ? values.roles.filter(x => x !== name)
+                          : values.roles.concat([name])
 
-                            const prevDependencies = getRolesDependencies(values.roles, knownRoles);
-                            const rolesWithoutDependencies = activeRoles.filter(
-                              role => !prevDependencies.includes(role)
-                            );
-                            const newDependencies = getRolesDependencies(rolesWithoutDependencies, knownRoles);
+                        const prevDependencies = getRolesDependencies(values.roles, knownRoles);
+                        const rolesWithoutDependencies = activeRoles.filter(
+                          role => !prevDependencies.includes(role)
+                        );
+                        const newDependencies = getRolesDependencies(rolesWithoutDependencies, knownRoles);
 
-                            setFieldValue(
-                              'roles',
-                              R.uniq([...newDependencies, ...rolesWithoutDependencies])
-                            )
-                          }}
-                          name='roles'
-                          value={name}
-                          checked={values.roles.includes(name)}
-                          disabled={activeDependencies.includes(name)}
-                        >
-                          {`${name}${getDependenciesString(dependencies)}`}
-                        </Checkbox>
-                      );
-                      return acc;
-                    },
-                    []
-                  )}
-                </FormField>
-                <FormField className={styles.vshardGroupField} label='Group' info={info}>
-                  {vshard_groups && vshard_groups.map(({ name }) => (
-                    <RadioButton
-                      onChange={handleChange}
-                      name='vshard_group'
+                        setFieldValue(
+                          'roles',
+                          R.uniq([...newDependencies, ...rolesWithoutDependencies])
+                        )
+                      }}
+                      name='roles'
                       value={name}
-                      checked={name === values.vshard_group}
-                      disabled={VShardGroupInputDisabled}
+                      checked={values.roles.includes(name)}
+                      disabled={activeDependencies.includes(name)}
                     >
-                      {name}
-                    </RadioButton>
-                  ))}
-                </FormField>
-                <LabeledInput className={styles.weightField} label='Weight'>
-                  <InputText
-                    className={styles.weightInput}
-                    name='weight'
-                    error={errors.weight}
-                    value={values.weight}
-                    onChange={handleChange}
-                    disabled={!vshardStorageRoleChecked}
-                  />
-                  <Text variant='p' className={styles.errorMessage}>{errors.weight}</Text>
-                </LabeledInput>
-              </div>
-            </Scrollbar>
+                      {`${name}${getDependenciesString(dependencies)}`}
+                    </Checkbox>
+                  );
+                  return acc;
+                },
+                []
+              )}
+            </FormField>
+            <FormField className={styles.vshardGroupField} label='Group' info={info}>
+              {vshard_groups && vshard_groups.map(({ name }) => (
+                <RadioButton
+                  onChange={handleChange}
+                  name='vshard_group'
+                  value={name}
+                  checked={name === values.vshard_group}
+                  disabled={VShardGroupInputDisabled}
+                >
+                  {name}
+                </RadioButton>
+              ))}
+            </FormField>
+            <LabeledInput className={styles.weightField} label='Weight'>
+              <InputText
+                className={styles.weightInput}
+                name='weight'
+                error={errors.weight}
+                value={values.weight}
+                onChange={handleChange}
+                disabled={!vshardStorageRoleChecked}
+              />
+              <Text variant='p' className={styles.errorMessage}>{errors.weight}</Text>
+            </LabeledInput>
           </PopupBody>
           <PopupFooter
             controls={([

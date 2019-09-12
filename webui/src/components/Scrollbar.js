@@ -3,7 +3,6 @@ import ReactScroll from 'react-scrollbars-custom';
 import styled from 'react-emotion';
 
 const ScrollWrapper = styled.div`
-  width: 100%;
   height: 100%;
 `
 
@@ -33,18 +32,37 @@ const thumbYProps = {
   }
 }
 
+const wrapperProps = {
+  renderer: props => {
+    const { elementRef, style, ...rest } = props;
+
+    return <div {...rest} style={{ ...style, right: 0 }} ref={elementRef} />;
+  }
+}
+
+const scrollerProps = {
+  renderer: props => {
+    const { elementRef, style, ...rest } = props;
+
+    return <div {...rest} style={{ ...style, marginRight: -20, paddingRight: 20 }} ref={elementRef} />;
+  }
+}
+
 type ScrollbarProps = {
   children?: React.Node,
+  className?: string,
   track?: string,
   thumb?: string
 }
 
-function Scrollbar({ children, track, thumb }: ScrollbarProps) {
+function Scrollbar({ children, className, track, thumb }: ScrollbarProps) {
   return (
-    <ScrollWrapper>
+    <ScrollWrapper className={className}>
       <ReactScroll
         track={track}
         thumb={thumb}
+        wrapperProps={wrapperProps}
+        scrollerProps={scrollerProps}
         trackYProps={{ ...trackYProps, track }}
         thumbYProps={{ ...thumbYProps, thumb }}
         style={{ width: '100%', height: '100%' }}

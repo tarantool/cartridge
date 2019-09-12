@@ -1,12 +1,5 @@
 // @flow
 // TODO: move to uikit
-
-/*
-TODO:
-- close on ESC,
-- fix closing on background click
-*/
-
 import * as React from 'react';
 import { createRef } from 'react';
 import * as ReactDOM from 'react-dom';
@@ -40,6 +33,7 @@ const styles = {
     box-sizing: border-box;
     background-color: #ffffff;
     box-shadow: 0px 5px 20px rgba(0, 0, 0, 0.09);
+    outline: none;
   `,
   modal: css`
     padding: 16px;
@@ -57,6 +51,13 @@ const styles = {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  `,
+  focusClosureControl: css`
+    position: absolute;
+    clip: rect(0 0 0 0);
+    width: 1px;
+    height: 1px;
+    margin: -1px;
   `,
   closeIcon: css`
     position: absolute;
@@ -82,12 +83,10 @@ interface ModalProps extends BaseModalProps {
   footerContent?: React.Node,
   footerControls?: React.Node,
   title: string,
-  // onAfterOpen?: () => void;
   loading?:? boolean,
-  // footer?: React.Node
 };
 
-interface ConfirmProps extends ModalProps {
+interface ConfirmModalProps extends ModalProps {
   onConfirm: Function,
   onCancel: Function,
   confirmText?: string,
@@ -99,7 +98,7 @@ export const ConfirmModal = (
     onCancel,
     confirmText = 'Ok',
     ...props
-  }: ConfirmProps
+  }: ConfirmModalProps
 ) =>
   <Modal
     onClose={onCancel}
@@ -116,10 +115,20 @@ export const ConfirmModal = (
 export class BaseModal<T: BaseModalProps = BaseModalProps> extends React.Component<T> {
   modalRef = createRef<HTMLElement>();
 
-  render() {
-    const { visible } = this.props;
+  componentDidMount() {
+    if (this.isModalVisible()) {
+      this.focusFirstInteractiveElement();
+    }
+  }
 
-    if (typeof visible === 'boolean' && !visible)
+  componentDidUpdate(prevProps: BaseModalProps) {
+    if (prevProps.visible === false && this.isModalVisible()) {
+      this.focusFirstInteractiveElement();
+    }
+  }
+
+  render() {
+    if (!this.isModalVisible())
       return null;
 
     const root = document.body;
@@ -140,7 +149,7 @@ export class BaseModal<T: BaseModalProps = BaseModalProps> extends React.Compone
     } = this.props;
 
     return (
-      <div className={styles.shim({ bg: bgColor })} onClick={this.handleOutsideClick}>
+      <div className={styles.shim({ bg: bgColor })} onMouseDown={this.handleOutsideClick}>
         <div
           className={cx(
             styles.baseModal,
@@ -148,24 +157,52 @@ export class BaseModal<T: BaseModalProps = BaseModalProps> extends React.Compone
             className
           )}
           ref={this.modalRef}
+          tabIndex={0}
+          onKeyDown={this.handleEscapePress}
         >
           {children}
+          <div
+            className={styles.focusClosureControl}
+            onFocus={this.focusFirstInteractiveElement}
+            tabIndex='0'
+          />
         </div>
       </div>
     );
   }
 
+  focusFirstInteractiveElement = () => {
+    const modal = this.modalRef.current;
+    const firstInteractiveElement = modal && modal.querySelector('a, button, input, select, textarea');
+
+    if (firstInteractiveElement) {
+      firstInteractiveElement.focus();
+    } else if (modal) {
+      modal.focus();
+    }
+  }
+
+  isModalVisible = (): boolean => {
+    const { visible } = this.props;
+    return visible !== false;
+  }
+
   handleOutsideClick = (event: MouseEvent) => {
     const modal = this.modalRef.current;
 
-    if (!!modal && event.target instanceof HTMLElement && isNodeOutsideElement(event.target, modal)) {
+    if (modal && event.target instanceof HTMLElement && isNodeOutsideElement(event.target, modal)) {
       this.props.onClose && this.props.onClose(event);
     }
   };
+
+  handleEscapePress = (e: KeyboardEvent) => {
+    if (this.props.onClose && e.keyCode === 27) {
+      this.props.onClose();
+    }
+  }
 }
 
 export default class Modal extends BaseModal<ModalProps> {
-
   renderModal() {
     const {
       children,
@@ -179,7 +216,7 @@ export default class Modal extends BaseModal<ModalProps> {
     } = this.props;
 
     return (
-      <div className={styles.shim({})} onClick={this.handleOutsideClick}>
+      <div className={styles.shim({})} onMouseDown={this.handleOutsideClick}>
         <div
           className={cx(
             styles.baseModal,
@@ -188,6 +225,8 @@ export default class Modal extends BaseModal<ModalProps> {
             className
           )}
           ref={this.modalRef}
+          tabIndex={0}
+          onKeyDown={this.handleEscapePress}
         >
           <Text className={styles.title} variant='h2'>{title}</Text>
           {onClose && <IconClose className={styles.closeIcon} onClick={onClose} />}
@@ -197,6 +236,11 @@ export default class Modal extends BaseModal<ModalProps> {
           {(footerContent || footerControls) && (
             <PopupFooter controls={footerControls}>{footerContent}</PopupFooter>
           )}
+          <div
+            className={styles.focusClosureControl}
+            onFocus={this.focusFirstInteractiveElement}
+            tabIndex='0'
+          />
         </div>
       </div>
     );
