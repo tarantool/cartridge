@@ -198,7 +198,7 @@ class Cluster extends React.Component<ClusterProps> {
                     rightIcon={<IconSearch />}
                   />
                 ]
-                : undefined
+                : []
             }
           >
             {filteredReplicasetList.length
