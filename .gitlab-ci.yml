@@ -32,7 +32,7 @@ build:
     - tarantoolctl rocks install luacov-console 1.1.0
     - export PATH=$PWD/.rocks/bin:$PATH
     - pip install -r test/integration/requirements.txt
-    - tarantoolctl rocks install luatest
+    - tarantoolctl rocks install luatest 0.2.0
     - npm install graphql-cli
     - export PATH=node_modules/.bin:$PATH
   script:
