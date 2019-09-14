@@ -18,13 +18,23 @@ import { withRouter } from 'react-router-dom'
 const styles = {
   row: css`
     display: flex;
+    flex-wrap: wrap;
     align-items: baseline;
-    margin-bottom: 4px;
+    padding-right: 40px;
+    margin-bottom: -8px;
   `,
   heading: css`
-    flex-basis: 480px;
+    flex-basis: 430px;
     flex-grow: 1;
-    margin-right: 12px;
+    flex-shrink: 0;
+    margin-right: 24px;
+    margin-bottom: 8px;
+    overflow: hidden;
+  `,
+  alias: css`
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   `,
   leaderFlag: css`
     position: absolute;
@@ -43,46 +53,50 @@ const styles = {
   uri: css`
     color: rgba(0, 0, 0, 0.65);
   `,
+  statusGroup: css`
+    display: flex;
+    flex-basis: 576px;
+    flex-shrink: 0;
+    align-items: flex-start;
+    margin-bottom: 8px;
+  `,
+  memStats: css`
+    width: 229px;
+  `,
   memProgress: css`
-    width: 183px;
+    width: auto;
     margin-left: 24px;
   `,
   configureBtn: css`
-    margin-left: 8px;
+    position: absolute;
+    top: 12px;
+    right: 16px;
   `,
   status: css`
-    flex-basis: 153px;
-    margin-right: 12px;
-    margin-left: 12px;
+    flex-basis: 193px;
+    flex-shrink: 0;
+    margin-top: 1px;
+    margin-right: 24px;
+    margin-left: -8px;
   `,
   stats: css`
     position: relative;
     display: flex;
     flex-basis: 351px;
     flex-shrink: 0;
-    align-items: flex-start;
-    margin-right: 12px;
-    margin-left: 12px;
+    align-items: stretch;
   `,
   bucketsCount: css`
-    position: relative;
-    width: 95px;
-    margin-right: 17px;
+    flex-shrink: 0;
+    width: 120px;
+    margin-right: 16px;
   `,
-  bucketsCountWithDivider: css`
-    &::before {
-      content: '';
-      position: absolute;
-      top: 0px;
-      right: -8px;
-      width: 1px;
-      height: 18px;
-      background-color: #e8e8e8;
-    }
+  tags: css`
+    margin-top: 8px;
   `
 };
 
-const byteUnits = ['kB', 'MB', 'GB', 'TB', 'PB'];
+const byteUnits = ['Kb', 'Mb', 'Gb', 'Tb', 'Pb'];
 
 const getReadableBytes = size => {
   let bytes = size;
@@ -164,69 +178,65 @@ class ReplicasetServerListItem extends React.PureComponent<
         <div className={styles.row}>
           {(master || activeMaster) && <LeaderFlag className={styles.leaderFlag} fail={status !== 'healthy'} />}
           <div className={styles.heading}>
-            <Text variant='h4'>{alias}</Text>
+            <Text variant='h4' className={styles.alias}>{alias}</Text>
             <UriLabel uri={uri} />
           </div>
-          <HealthStatus
-            className={styles.status}
-            status={status}
-            message={message}
-          />
-          <div className={styles.stats}>
-            {statistics && (
-              <React.Fragment>
-                {typeof statistics.bucketsCount === 'number'
-                  ? (
-                    <Tooltip
-                      className={cx(
-                        styles.bucketsCount,
-                        styles.bucketsCountWithDivider
-                      )}
-                      content={<span>total bucket: <b>{(statistics && statistics.bucketsCount) || '-'}</b></span>}
-                    >
-                      <IconBucket className={styles.iconMarginSmall} />
-                      <Text variant='h5' tag='span'>
-                        Bucket: <b>{(statistics && statistics.bucketsCount) || '-'}</b>
-                      </Text>
-                    </Tooltip>
-                  )
-                  : <div className={styles.bucketsCount} />
-                }
-                <div>
-                  <div>
-                    <IconChip className={styles.iconMargin} />
-                    <Text variant='h5' tag='span'>{usageText}</Text>
+          <div className={styles.statusGroup}>
+            <HealthStatus className={styles.status} status={status} message={message} />
+            <div className={styles.stats}>
+              {statistics && (
+                <React.Fragment>
+                  {typeof statistics.bucketsCount === 'number'
+                    ? (
+                      <Tooltip
+                        className={styles.bucketsCount}
+                        content={<span>total bucket: <b>{(statistics && statistics.bucketsCount) || '-'}</b></span>}
+                      >
+                        <IconBucket className={styles.iconMarginSmall} />
+                        <Text variant='h5' tag='span'>
+                          Bucket: <b>{(statistics && statistics.bucketsCount) || '-'}</b>
+                        </Text>
+                      </Tooltip>
+                    )
+                    : <div className={styles.bucketsCount} />
+                  }
+                  <div className={styles.memStats}>
+                    <div>
+                      <IconChip className={styles.iconMargin} />
+                      <Text variant='h5' tag='span'>{usageText}</Text>
+                    </div>
+                    <ProgressBar
+                      className={styles.memProgress}
+                      percents={percentage}
+                      statusColors
+                    />
                   </div>
-                  <ProgressBar
-                    className={styles.memProgress}
-                    percents={percentage}
-                    statusColors
-                  />
-                </div>
-              </React.Fragment>
-            )}
+                </React.Fragment>
+              )}
+            </div>
           </div>
-          <Dropdown
-            items={[
-              {
-                text: 'Detail server',
-                onClick: () => {
-                  history.push(`/cluster/dashboard/instance/${uuid}`)
-                }
-              },
-              {
-                text: 'Expel server',
-                onClick: () => {
-                  store.dispatch(showExpelModal(uri))
-                },
-                color: 'rgba(245, 34, 45, 0.65)'
-              }
-            ]}
-            className={styles.configureBtn}
-            size={'s'}
-          />
         </div>
+        <Dropdown
+          items={[
+            {
+              text: 'Detail server',
+              onClick: () => {
+                history.push(`/cluster/dashboard/instance/${uuid}`)
+              }
+            },
+            {
+              text: 'Expel server',
+              onClick: () => {
+                store.dispatch(showExpelModal(uri))
+              },
+              color: 'rgba(245, 34, 45, 0.65)'
+            }
+          ]}
+          className={styles.configureBtn}
+          size={'s'}
+        />
         <ServerLabels
+          className={styles.tags}
           labels={(labels || [])}
           onLabelClick={onServerLabelClick}
           highlightingOnHover={tagsHighlightingClassName}

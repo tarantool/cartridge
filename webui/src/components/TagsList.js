@@ -43,7 +43,7 @@ const ServerLabels = <T>({
   values
 }:
 TagsListProps<T>) => (
-    <div className={styles.wrapper}>
+    <div className={cx(styles.wrapper, className)}>
       {heading && (
         <Text className={styles.heading} variant='h5' tag='span'><b>{`${heading}:`}</b></Text>
       )}

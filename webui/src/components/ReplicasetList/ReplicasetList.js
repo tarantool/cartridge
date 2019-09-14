@@ -6,8 +6,8 @@ import { withRouter } from 'react-router-dom';
 import Button from 'src/components/Button';
 import Tooltip from 'src/components/Tooltip';
 import Divider from 'src/components/Divider';
-import DotIndicator from 'src/components/DotIndicator';
 import { IconGear } from 'src/components/Icon';
+import HealthStatus from 'src/components/HealthStatus';
 import TiledList from 'src/components/TiledList';
 import Text from 'src/components/Text';
 import ReplicasetRoles from 'src/components/ReplicasetRoles';
@@ -16,13 +16,18 @@ import { addSearchParams } from 'src/misc/url';
 
 const styles = {
   header: css`
+    position: relative;
     display: flex;
+    flex-wrap: wrap;
     align-items: baseline;
+    padding-right: 103px;
   `,
   aliasTooltip: css`
-    flex-basis: 512px;
+    flex-basis: 463px;
     flex-grow: 1;
-    margin-right: 12px;
+    flex-shrink: 0;
+    margin-right: 24px;
+    margin-bottom: 8px;
     overflow: hidden;
   `,
   alias: css`
@@ -30,11 +35,18 @@ const styles = {
     text-overflow: ellipsis;
     white-space: nowrap;
   `,
+  statusGroup: css`
+    display: flex;
+    flex-basis: 530px;
+    flex-shrink: 0;
+    margin-bottom: 12px;
+  `,
   status: css`
     display: flex;
-    flex-basis: 153px;
+    flex-shrink: 0;
+    flex-basis: 193px;
     align-items: center;
-    margin-left: 12px;
+    margin-left: -8px;
     margin-right: 12px;
   `,
   vshardTooltip: css`
@@ -63,8 +75,14 @@ const styles = {
     }
   `,
   editBtn: css`
+    position: absolute;
+    top: 1px;
+    right: 0;
     flex-shrink: 0;
-    margin-left: 12px;
+  `,
+  roles: css`
+    margin-top: 0;
+    margin-bottom: 12px;
   `,
   divider: css`
     margin-top: 16px;
@@ -100,18 +118,17 @@ class ReplicasetList extends React.PureComponent {
               <Tooltip className={styles.aliasTooltip} content={replicaset.alias}>
                 <Text className={styles.alias} variant='h3'>{replicaset.alias}</Text>
               </Tooltip>
-              <Text className={styles.status} variant='p' tag='span'>
-                <DotIndicator state={replicaset.status === 'healthy' ? 'good' : 'bad'} />
-                {replicaset.message || replicaset.status}
-              </Text>
-              <Text className={styles.vshard} variant='p' tag='div' upperCase>
-                <Tooltip className={styles.vshardTooltip} content='Storage group'>
-                  {(replicaset.vshard_group || replicaset.weight) && [
-                    <b>{replicaset.vshard_group}</b>,
-                    <b>{replicaset.weight}</b>
-                  ]}
-                </Tooltip>
-              </Text>
+              <div className={styles.statusGroup}>
+                <HealthStatus className={styles.status} message={replicaset.message} status={replicaset.status} />
+                <Text className={styles.vshard} variant='p' tag='div' upperCase>
+                  <Tooltip className={styles.vshardTooltip} content='Storage group'>
+                    {(replicaset.vshard_group || replicaset.weight) && [
+                      <b>{replicaset.vshard_group}</b>,
+                      <b>{replicaset.weight}</b>
+                    ]}
+                  </Tooltip>
+                </Text>
+              </div>
               <Button
                 className={styles.editBtn}
                 icon={IconGear}
@@ -121,7 +138,7 @@ class ReplicasetList extends React.PureComponent {
                 text='Edit'
               />
             </div>
-            <ReplicasetRoles roles={replicaset.roles}/>
+            <ReplicasetRoles className={styles.roles} roles={replicaset.roles}/>
             <Divider className={styles.divider} />
             <ReplicasetServerList
               clusterSelf={clusterSelf}
