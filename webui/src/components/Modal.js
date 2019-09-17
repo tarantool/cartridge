@@ -81,7 +81,7 @@ interface BaseModalProps {
 
 interface ModalProps extends BaseModalProps {
   footerContent?: React.Node,
-  footerControls?: React.Node,
+  footerControls?: React.Node[],
   title: string,
   loading?:? boolean,
 };
@@ -102,12 +102,10 @@ export const ConfirmModal = (
 ) =>
   <Modal
     onClose={onCancel}
-    footerControls={
-      <React.Fragment>
-        <Button intent={'base'} onClick={onCancel} className={css`margin-right: 16px;`}>Cancel</Button>
-        <Button intent={'primary'} onClick={onConfirm}>{confirmText}</Button>
-      </React.Fragment>
-    }
+    footerControls={[
+      <Button intent={'base'} onClick={onCancel} className={css`margin-right: 16px;`}>Cancel</Button>,
+      <Button intent={'primary'} onClick={onConfirm}>{confirmText}</Button>
+    ]}
     {...props}
   />
 

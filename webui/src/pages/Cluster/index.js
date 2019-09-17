@@ -9,7 +9,6 @@ import {
   uploadConfig,
   applyTestConfig,
   changeFailover,
-  setProbeServerModalVisible,
   resetPageState,
   setFilter
 } from 'src/store/actions/clusterPage.actions';
@@ -28,16 +27,13 @@ import InputText from 'src/components/InputText';
 import { IconSearch } from 'src/components/Icon';
 import PageDataErrorMessage from 'src/components/PageDataErrorMessage';
 import ReplicasetList from 'src/components/ReplicasetList';
-import ProbeServerModal from 'src/components/ProbeServerModal';
 import UnconfiguredServerList from 'src/components/UnconfiguredServerList';
 import { addSearchParams, getSearchParams } from 'src/misc/url';
 import EditReplicasetModal from 'src/components/EditReplicasetModal';
 import ConfigureServerModal from 'src/components/ConfigureServerModal';
+import ClusterButtonsPanel from 'src/components/ClusterButtonsPanel';
 import PageSection from 'src/components/PageSection';
 import BootstrapPanel from 'src/components/BootstrapPanel';
-import Button from 'src/components/Button';
-import FailoverButton from '../../components/FailoverButton';
-import BootstrapButton from '../../components/BootstrapButton';
 import type { AppState } from 'src/store/reducers/ui.reducer';
 import type {
   Label,
@@ -51,7 +47,6 @@ import type {
   SelectReplicasetActionCreator,
   SelectServerActionCreator,
   SetFilterActionCreator,
-  SetProbeServerModalVisibleActionCreator,
   UploadConfigActionCreator
 } from 'src/store/actions/clusterPage.actions';
 import type { ReplicasetCounts, ServerCounts } from 'src/store/selectors/clusterPage';
@@ -70,7 +65,6 @@ export type ClusterProps = {
   failover: boolean,
   pageMount: boolean,
   pageDataRequestStatus: RequestStatusType,
-  probeServerModalVisible: Boolean,
   replicasetCounts: ReplicasetCounts,
   selectedServerUri: ?string,
   selectedReplicasetUuid: ?string,
@@ -79,7 +73,6 @@ export type ClusterProps = {
   filter: string,
   replicasetList: Replicaset[],
   filteredReplicasetList: Replicaset[],
-  bootstrapPanelVisible: boolean,
   showToggleAuth: boolean,
   history: RouterHistory,
   location: Location,
@@ -98,7 +91,6 @@ export type ClusterProps = {
   changeFailover: () => void,
   resetPageState: ResetPageStateActionCreator,
   setFilter: SetFilterActionCreator,
-  setProbeServerModalVisible: SetProbeServerModalVisibleActionCreator,
   routerParams: null | { instanceUUID: string },
 };
 
@@ -139,7 +131,6 @@ class Cluster extends React.Component<ClusterProps> {
       clusterSelf,
       filter,
       filteredReplicasetList,
-      probeServerModalVisible,
       replicasetList,
       serverCounts,
       routerParams
@@ -156,13 +147,10 @@ class Cluster extends React.Component<ClusterProps> {
             :
             null
         }
-        {probeServerModalVisible
-          ? this.renderProbeServerModal()
-          : null}
         <ExpelServerModal />
         <EditReplicasetModal />
         <ConfigureServerModal />
-        <PageSection topRightControls={this.renderServerButtons()} />
+        <ClusterButtonsPanel />
         <BootstrapPanel />
         {unlinkedServers && unlinkedServers.length
           ? (
@@ -198,7 +186,7 @@ class Cluster extends React.Component<ClusterProps> {
             title='Replica sets'
             topRightControls={
               replicasetList.length > 1
-                ? (
+                ? [
                   <InputText
                     className={styles.clusterFilter}
                     prefix={<Icon type="search" />}
@@ -209,8 +197,8 @@ class Cluster extends React.Component<ClusterProps> {
                     onClearClick={this.handleFilterClear}
                     rightIcon={<IconSearch />}
                   />
-                )
-                : null
+                ]
+                : []
             }
           >
             {filteredReplicasetList.length
@@ -230,20 +218,6 @@ class Cluster extends React.Component<ClusterProps> {
           </PageSection>
         )}
       </React.Fragment>
-    );
-  };
-
-  renderServerButtons = () => ([
-    <Button onClick={this.handleProbeServerRequest}>
-      Probe server
-    </Button>,
-    <FailoverButton />,
-    <BootstrapButton />
-  ]);
-
-  renderProbeServerModal = () => {
-    return (
-      <ProbeServerModal onRequestClose={this.handleProbeServerModalCloseRequest} />
     );
   };
 
@@ -282,14 +256,6 @@ class Cluster extends React.Component<ClusterProps> {
   handleServerLabelClick = ({ name, value }: Label) => this.props.setFilter(`${name}: ${value}`);
 
   handleFilterClear = () => void this.props.setFilter('');
-
-  handleProbeServerRequest = () => {
-    this.props.setProbeServerModalVisible(true);
-  };
-
-  handleProbeServerModalCloseRequest = () => {
-    this.props.setProbeServerModalVisible(false);
-  };
 
   handleJoinServerRequest = (server: Server) => {
     const { history, location } = this.props;
@@ -350,10 +316,6 @@ const mapStateToProps = (state: State, { match: { params } }) => {
       selectedServerUri,
       selectedReplicasetUuid,
       serverList
-    },
-    ui: {
-      probeServerModalVisible,
-      bootstrapPanelVisible
     }
   } = state;
 
@@ -368,14 +330,12 @@ const mapStateToProps = (state: State, { match: { params } }) => {
       : replicasetList,
     pageMount,
     pageDataRequestStatus,
-    probeServerModalVisible,
     replicasetCounts: getReplicasetCounts(state),
     replicasetList,
     selectedServerUri,
     selectedReplicasetUuid,
     serverList,
     serverCounts: getServerCounts(state),
-    bootstrapPanelVisible,
     routerParams: params
   };
 };
@@ -390,7 +350,6 @@ const mapDispatchToProps = {
   applyTestConfig,
   changeFailover,
   resetPageState,
-  setProbeServerModalVisible,
   setFilter
 };
 

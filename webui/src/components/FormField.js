@@ -41,7 +41,7 @@ type FormFieldProps = {
   itemClassName?: string,
   label?: string,
   subTitle?: string | React.Node,
-  topRightControls?: React.Node,
+  topRightControls?: React.Node[],
   verticalSort?: boolean
 };
 
@@ -69,7 +69,7 @@ FormFieldProps) => (
         </Text>
       )}
       {subTitle && <Text className={styles.subTitle} variant='h5' tag='span' upperCase>{subTitle}</Text>}
-      {topRightControls && <ControlsPanel className={styles.topRightControls}>{topRightControls}</ControlsPanel>}
+      {topRightControls && <ControlsPanel className={styles.topRightControls} controls={topRightControls} />}
     </div>
     <InputGroup columns={columns} itemClassName={itemClassName} verticalSort={verticalSort}>{children}</InputGroup>
   </div>

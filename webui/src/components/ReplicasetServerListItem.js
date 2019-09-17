@@ -79,7 +79,7 @@ const styles = {
       height: 18px;
       background-color: #e8e8e8;
     }
-  `,
+  `
 };
 
 const byteUnits = ['kB', 'MB', 'GB', 'TB', 'PB'];

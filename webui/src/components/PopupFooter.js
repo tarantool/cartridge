@@ -1,3 +1,5 @@
+// @flow
+// TODO: move to uikit
 import * as React from 'react';
 import { css, cx } from 'emotion';
 import ControlsPanel from 'src/components/ControlsPanel';
@@ -13,13 +15,17 @@ const styles = {
   `
 };
 
-const PopupFooter = ({ children, className, controls }) => (
+type PopupFooterProps = {
+  children?: React.Node,
+  className?: string,
+  controls?: React.Node[]
+};
+
+const PopupFooter = ({ children, className, controls }: PopupFooterProps) => (
   <div className={cx(styles.wrap, className)}>
     {children}
     {controls && (
-      <ControlsPanel className={cx(styles.controls)} thin>
-        {controls}
-      </ControlsPanel>
+      <ControlsPanel className={cx(styles.controls)} thin controls={controls} />
     )}
   </div>
 );

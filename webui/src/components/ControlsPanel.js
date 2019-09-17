@@ -8,7 +8,7 @@ const styles = {
     display: flex;
     align-items: center;
   `,
-  button: css`
+  control: css`
     display: block;
     margin-right: 24px;
 
@@ -23,22 +23,20 @@ const styles = {
 
 type ControlsPanelProps = {
   className?: string,
-  children?: React.Node,
+  controls?: React.Node[],
   thin?: boolean // use thin in modals
 };
 
 const ControlsPanel = ({
   className,
-  children,
+  controls = [],
   thin
 }:
 ControlsPanelProps) => (
   <div className={cx(styles.outer, className)}>
-    {children instanceof Array
-      ? children.map(button => button
-        ? <div className={cx(styles.button, { [styles.thin]: thin })}>{button}</div>
-        : null)
-      : <div className={cx(styles.button, { [styles.thin]: thin })}>{children}</div>}
+    {controls && controls.map(control => control
+      ? <div className={cx(styles.control, { [styles.thin]: thin })}>{control}</div>
+      : null)}
   </div>
 );
 
