@@ -12,7 +12,6 @@ g.before_all = function()
         use_vshard = false,
         replicasets = {
             {
-                alias = 'replica',
                 uuid = helpers.uuid('a'),
                 roles = {},
                 servers = {
