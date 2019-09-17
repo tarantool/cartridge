@@ -6,6 +6,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- New Lua API `admin_edit_topology` has been added to unite multiple others:
+  `admin_edit_replicaset`, `admin_edit_server`, `admin_join_server`,
+  `admin_expel_server`. It's suitable for editing multiple servers/replicasets
+  at once. It can be used for bootstrapping cluster from scratch, joining a
+  server to an existing replicaset, creating new replicaset with one or more
+  servers, editing uri/labels of servers, disabling or expelling servers.
+
+- Similar API is implemented in a GraphQL mutation `cluster{edit_topology()}`.
+
 ### Changed
 
 - Both bootstrapping from scratch and patching topology in clusterwide config automatically probe
@@ -13,6 +24,22 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   This is a prerequisite for multijoin api implementation.
 
 - WebUI users page is hidden if auth_backend doesn't provide list_users callback.
+
+### Deprecated
+
+Lua API:
+
+- `cartridge.admin_edit_replicaset()`
+- `cartridge.admin_edit_server()`
+- `cartridge.admin_join_server()`
+- `cartridge.admin_expel_server()`
+
+GraphQL API:
+
+- `mutation{ edit_replicaset() }`
+- `mutation{ edit_server() }`
+- `mutation{ join_server() }`
+- `mutation{ expel_server() }`
 
 ### Fixed
 

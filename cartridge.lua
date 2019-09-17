@@ -589,21 +589,6 @@ return {
     admin_probe_server = admin.probe_server,
 
     --- .
-    -- @refer cartridge.admin.join_server
-    -- @function admin_join_server
-    admin_join_server = admin.join_server,
-
-    --- .
-    -- @refer cartridge.admin.edit_server
-    -- @function admin_edit_server
-    admin_edit_server = admin.edit_server,
-
-    --- .
-    -- @refer cartridge.admin.expel_server
-    -- @function admin_expel_server
-    admin_expel_server = admin.expel_server,
-
-    --- .
     -- @refer cartridge.admin.enable_servers
     -- @function admin_enable_servers
     admin_enable_servers = admin.enable_servers,
@@ -612,11 +597,6 @@ return {
     -- @refer cartridge.admin.disable_servers
     -- @function admin_disable_servers
     admin_disable_servers = admin.disable_servers,
-
-    --- .
-    -- @refer cartridge.admin.edit_replicaset
-    -- @function admin_edit_replicaset
-    admin_edit_replicaset = admin.edit_replicaset,
 
     --- .
     -- @refer cartridge.admin.get_failover_enabled
@@ -634,6 +614,29 @@ return {
     admin_disable_failover = function()
         return admin.set_failover_enabled(false)
     end,
+
+--- Managing cluster topology.
+-- @section topology
+
+    --- .
+    -- @refer cartridge.admin.edit_topology
+    -- @function admin_edit_topology
+    admin_edit_topology = admin.edit_topology,
+
+    --- .
+    -- @field .
+    -- @refer cartridge.admin.EditReplicasetParams
+    -- @table EditReplicasetParams
+
+    --- .
+    -- @field .
+    -- @refer cartridge.admin.EditServerParams
+    -- @table EditServerParams
+
+    --- .
+    -- @field .
+    -- @refer cartridge.admin.JoinServerParams
+    -- @table JoinServerParams
 
 --- Clusterwide configuration.
 -- @refer cartridge.confapplier
@@ -676,4 +679,27 @@ return {
     -- @refer cartridge.rpc.call
     -- @function rpc_call
     rpc_call = rpc.call,
+
+--- Deprecated functions.
+-- @section deprecated
+
+    --- .
+    -- @refer cartridge.admin.edit_replicaset
+    -- @function admin_edit_replicaset
+    admin_edit_replicaset = admin.edit_replicaset,
+
+    --- .
+    -- @refer cartridge.admin.edit_server
+    -- @function admin_edit_server
+    admin_edit_server = admin.edit_server,
+
+    --- .
+    -- @refer cartridge.admin.join_server
+    -- @function admin_join_server
+    admin_join_server = admin.join_server,
+
+    --- .
+    -- @refer cartridge.admin.expel_server
+    -- @function admin_expel_server
+    admin_expel_server = admin.expel_server,
 }
