@@ -25,6 +25,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - WebUI users page is hidden if auth_backend doesn't provide list_users callback.
 
+- Update vshard dependency to 0.1.11
+
 ### Deprecated
 
 Lua API:
