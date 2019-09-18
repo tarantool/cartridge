@@ -12,7 +12,7 @@ g.before_all = function()
         command = test_helper.server_command,
         http_port = 8181,
         cluster_cookie = 'test-cluster-cookie',
-        advertise_port = 33101
+        advertise_port = 13301,
     })
 
     g.server:start()
@@ -52,19 +52,17 @@ function g.test_uninitialized()
     })
 
     local servers = resp['data']['servers']
-
-    t.assert_equals(table.getn(servers), 1)
-
+    t.assert_equals(#servers, 1)
     t.assert_equals(servers[1], {
-        uri = 'localhost:33101',
+        uri = 'localhost:13301',
         replicaset = box.NULL
     })
 
     local replicasets = resp['data']['replicasets']
-    t.assert_equals(table.getn(replicasets), 0)
+    t.assert_equals(#replicasets, 0)
 
     t.assert_equals(resp['data']['cluster']['self'], {
-        uri = 'localhost:33101',
+        uri = 'localhost:13301',
         alias = 'dummy',
         uuid = box.NULL
     })
@@ -72,25 +70,23 @@ function g.test_uninitialized()
     t.assert_false(resp['data']['cluster']['can_bootstrap_vshard'])
     t.assert_equals(resp['data']['cluster']['vshard_bucket_count'], 3000)
 
-    local join_server_req = function()
-        g.server:graphql({
-            query = [[
-                mutation {
-                    join_server(uri: "127.0.0.1:33101")
-                }
-            ]]
-        })
-    end
-
     t.assert_error_msg_contains(
-        'Invalid attempt to call join_server().' ..
-        ' This instance isn\'t bootstrapped yet' ..
-        ' and advertises uri="localhost:33101"' ..
-        ' while you are joining uri="127.0.0.1:33101".',
-         join_server_req
+        [[Invalid attempt to call join_server().]] ..
+        [[ This instance isn't bootstrapped yet]] ..
+        [[ and advertises uri="localhost:13301"]] ..
+        [[ while you are joining uri="127.0.0.1:13301".]],
+        function()
+            g.server:graphql({
+                query = [[
+                    mutation {
+                        join_server(uri: "127.0.0.1:13301")
+                    }
+                ]]
+            })
+        end
     )
 
-    local resp =  g.server:graphql({
+    local resp = g.server:graphql({
         query = [[{
             cluster { failover }
         }]]
@@ -98,17 +94,16 @@ function g.test_uninitialized()
 
     t.assert_false(resp['data']['cluster']['failover'])
 
-    local failover_disable_req = function()
-        return g.server:graphql({
-            query = [[
-                mutation {
-                    cluster { failover(enabled: false) }
-                }
-            ]]
-        })
-    end
-
-    t.assert_error_msg_contains('Not bootstrapped yet',
-        failover_disable_req
+    t.assert_error_msg_contains(
+        'Not bootstrapped yet',
+        function()
+            return g.server:graphql({
+                query = [[
+                    mutation {
+                        cluster { failover(enabled: false) }
+                    }
+                ]]
+            })
+        end
     )
 end
