@@ -1,5 +1,5 @@
 # source: http://localhost:8081/admin/api
-# timestamp: Tue Sep 17 2019 17:25:19 GMT+0300 (Moscow Standard Time)
+# timestamp: Fri Sep 20 2019 19:44:06 GMT+0300 (Moscow Standard Time)
 
 """Cluster management"""
 type Apicluster {
@@ -99,6 +99,7 @@ type Mutation {
 
 """Cluster management"""
 type MutationApicluster {
+  edit_vshard_options(rebalancer_max_receiving: Int, collect_bucket_garbage_interval: Float, collect_lua_garbage: Boolean, sync_timeout: Float, name: String!, rebalancer_disbalance_threshold: Float): VshardGroup!
   auth_params(cookie_max_age: Long, enabled: Boolean, cookie_renew_age: Long): UserManagementAPI!
 
   """Remove user"""
@@ -110,11 +111,11 @@ type MutationApicluster {
   """Edit cluster topology"""
   edit_topology(replicasets: [EditReplicasetInput], servers: [EditServerInput]): EditTopologyResult
 
-  """Enable or disable automatic failover. Returns new state."""
-  failover(enabled: Boolean!): Boolean!
-
   """Create a new user"""
   add_user(password: String!, username: String!, fullname: String, email: String): User
+
+  """Enable or disable automatic failover. Returns new state."""
+  failover(enabled: Boolean!): Boolean!
 
   """Disable listed servers by uuid"""
   disable_servers(uuids: [String!]): [Server]
@@ -384,12 +385,33 @@ type UserManagementAPI {
 
 """Group of replicasets sharding the same dataset"""
 type VshardGroup {
+  """
+  The maximum number of buckets that can be received in parallel by a single replica set in the storage group
+  """
+  rebalancer_max_receiving: Int!
+
   """Virtual buckets count in the group"""
   bucket_count: Int!
+
+  """The interval between garbage collector actions, in seconds"""
+  collect_bucket_garbage_interval: Float!
+
+  """Whethe the group is ready to operate"""
+  bootstrapped: Boolean!
+
+  """
+  If set to true, the Lua collectgarbage() function is called periodically
+  """
+  collect_lua_garbage: Boolean!
+
+  """A maximum bucket disbalance threshold, in percent"""
+  rebalancer_disbalance_threshold: Float!
 
   """Group name"""
   name: String!
 
-  """Whethe the group is ready to operate"""
-  bootstrapped: Boolean!
+  """
+  Timeout to wait for synchronization of the old master with replicas before demotion
+  """
+  sync_timeout: Float!
 }

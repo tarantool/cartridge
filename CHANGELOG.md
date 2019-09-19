@@ -17,6 +17,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Similar API is implemented in a GraphQL mutation `cluster{edit_topology()}`.
 
+- New GraphQL mutation `cluster { edit_vshard_options }` is suitable for
+  fine-tuning vshard options: `rebalancer_max_receiving`, `collect_lua_garbage`,
+  `sync_timeout`, `collect_bucket_garbage_interval`,
+  `rebalancer_disbalance_threshold`.
+
 ### Changed
 
 - Both bootstrapping from scratch and patching topology in clusterwide config automatically probe

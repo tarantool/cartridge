@@ -56,7 +56,7 @@ local topology = require('cartridge.topology')
 local vshard_utils = require('cartridge.vshard-utils')
 local test = tap.test('vshard.config')
 
-test:plan(12)
+test:plan(21)
 
 local function check_config(result, raw_new, raw_old)
     local conf_new = raw_new and yaml.decode(raw_new) or {}
@@ -115,6 +115,87 @@ vshard_groups:
   global:
     bucket_count: 200
     bootstrapped: false
+...]])
+
+check_config('vshard_groups["global"].rebalancer_max_receiving must be a number',
+[[---
+vshard_groups:
+  global:
+    bucket_count: 200
+    bootstrapped: false
+    rebalancer_max_receiving: value
+...]])
+
+check_config('vshard_groups["global"].rebalancer_max_receiving must be positive',
+[[---
+vshard_groups:
+  global:
+    bucket_count: 200
+    bootstrapped: false
+    rebalancer_max_receiving: 0
+...]])
+
+check_config('vshard_groups["global"].collect_lua_garbage must be a boolean',
+[[---
+vshard_groups:
+  global:
+    bucket_count: 200
+    bootstrapped: false
+    collect_lua_garbage: value
+...]])
+
+check_config('vshard_groups["global"].sync_timeout must be a number',
+[[---
+vshard_groups:
+  global:
+    bucket_count: 200
+    bootstrapped: false
+    sync_timeout: value
+...]])
+
+check_config('vshard_groups["global"].sync_timeout must be non-negative',
+[[---
+vshard_groups:
+  global:
+    bucket_count: 200
+    bootstrapped: false
+    sync_timeout: -1
+...]])
+
+check_config('vshard_groups["global"].collect_bucket_garbage_interval must be a number',
+[[---
+vshard_groups:
+  global:
+    bucket_count: 200
+    bootstrapped: false
+    collect_bucket_garbage_interval: value
+...]])
+
+check_config('vshard_groups["global"].collect_bucket_garbage_interval must be positive',
+[[---
+vshard_groups:
+  global:
+    bucket_count: 200
+    bootstrapped: false
+    collect_bucket_garbage_interval: 0
+...]])
+
+check_config('vshard_groups["global"].rebalancer_disbalance_threshold must be a number',
+[[---
+vshard_groups:
+  global:
+    bucket_count: 200
+    bootstrapped: false
+    rebalancer_disbalance_threshold: value
+...]])
+
+check_config('vshard_groups["global"].rebalancer_disbalance_threshold must be non-negative',
+[[---
+vshard_groups:
+  global:
+    bucket_count: 200
+    bootstrapped: false
+    rebalancer_disbalance_threshold: -1
 ...]])
 
 check_config('vshard_groups["global"].bootstrapped must be true or false',

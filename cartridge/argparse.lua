@@ -73,7 +73,7 @@ end
 
 --- Common `cartridge.cfg` options.
 --
--- Options, which are not listed here (like `roles` and `bucket_count`)
+-- Options, which are not listed here (like `roles`)
 -- can't be modified with argparse and should be configured in code.
 --
 -- @table cluster_opts
