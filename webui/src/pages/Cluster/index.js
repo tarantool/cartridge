@@ -20,11 +20,8 @@ import {
 } from 'src/store/selectors/clusterPage';
 import type { State } from 'src/store/rootReducer';
 import * as React from 'react';
-import { Icon } from 'antd'
 import { css } from 'react-emotion';
 import type { RouterHistory, Location } from 'react-router';
-import InputText from 'src/components/InputText';
-import { IconSearch } from 'src/components/Icon';
 import PageDataErrorMessage from 'src/components/PageDataErrorMessage';
 import ReplicasetList from 'src/components/ReplicasetList';
 import UnconfiguredServerList from 'src/components/UnconfiguredServerList';
@@ -32,8 +29,12 @@ import { addSearchParams, getSearchParams } from 'src/misc/url';
 import EditReplicasetModal from 'src/components/EditReplicasetModal';
 import ConfigureServerModal from 'src/components/ConfigureServerModal';
 import ClusterButtonsPanel from 'src/components/ClusterButtonsPanel';
-import PageSection from 'src/components/PageSection';
 import BootstrapPanel from 'src/components/BootstrapPanel';
+import {
+  IconSearch,
+  Input,
+  PageSection
+} from '@tarantool.io/ui-kit';
 import type { AppState } from 'src/store/reducers/ui.reducer';
 import type {
   Label,
@@ -156,14 +157,14 @@ class Cluster extends React.Component<ClusterProps> {
           ? (
             <PageSection
               title='Unconfigured servers'
-              // topRightControls={(
+              // topRightControls={[
               //   <Button
               //     disabled
               //     icon={IconGear}
               //     size='s'
               //     text='Configure selected'
               //   />
-              // )}
+              // ]}
               subTitle={
                 <React.Fragment>
                   <b>{serverCounts.unconfigured}</b>
@@ -187,10 +188,8 @@ class Cluster extends React.Component<ClusterProps> {
             topRightControls={
               replicasetList.length > 1
                 ? [
-                  <InputText
+                  <Input
                     className={styles.clusterFilter}
-                    prefix={<Icon type="search" />}
-                    type={'text'}
                     placeholder={'Filter by uri, uuid, role, alias or labels'}
                     value={filter}
                     onChange={this.handleFilterChange}

@@ -3,9 +3,7 @@ import { connect } from 'react-redux';
 import { css } from 'emotion'
 import { setVisibleBootstrapVshardPanel } from '../store/actions/clusterPage.actions';
 import { isBootstrapped, isRolePresentSelectorCreator } from '../store/selectors/clusterPage';
-import PageCard from 'src/components/PageCard';
-import { IconCancel, IconOk } from 'src/components/Icon';
-import Text from 'src/components/Text';
+import { IconCancel, IconOk, PageCard, Text } from '@tarantool.io/ui-kit';
 import { VSHARD_STORAGE_ROLE_NAME, VSHARD_ROUTER_ROLE_NAME } from 'src/constants';
 import type { State } from 'src/store/rootReducer';
 

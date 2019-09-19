@@ -2,7 +2,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
-import Modal from 'src/components/Modal';
+import { Modal } from '@tarantool.io/ui-kit';
 import EditReplicasetForm from 'src/components/EditReplicasetForm';
 import { addSearchParams } from 'src/misc/url';
 import type {

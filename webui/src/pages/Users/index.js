@@ -8,8 +8,7 @@ import UserEditModal from 'src/components/UserEditModal';
 import UserRemoveModal from 'src/components/UserRemoveModal';
 import AuthToggleButton from 'src/components/AuthToggleButton';
 import { showAddUserModal } from 'src/store/actions/users.actions';
-import Text from '../../components/Text';
-import Button from '../../components/Button';
+import { Button, Text } from '@tarantool.io/ui-kit';
 
 const { AppTitle } = window.tarantool_enterprise_core.components;
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import { hideEditUserModal } from 'src/store/actions/users.actions';
-import Modal from 'src/components/Modal';
+import { Modal } from '@tarantool.io/ui-kit';
 import UserEditForm from './UserEditForm';
 
 class UserEditModal extends React.Component {

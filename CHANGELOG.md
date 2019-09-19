@@ -20,6 +20,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - New Lua API `cartridge.http_get_username()` to check authorization of
   active HTTP session.
 
+### Changed
+
+- Get UI components from Tarantool UI-Kit
+
 ### Fixed
 
 - Editing topology with `failover_priority` argument.

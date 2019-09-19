@@ -1,7 +1,7 @@
 // @flow
 // TODO: move to uikit
 import React from 'react';
-import Text from 'src/components/Text';
+import { Text } from '@tarantool.io/ui-kit';
 import { css, cx } from 'emotion';
 
 const styles = {

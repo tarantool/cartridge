@@ -2,10 +2,8 @@
 // TODO: move to uikit
 import * as React from 'react';
 import { css, cx } from 'emotion';
-import Text from 'src/components/Text';
 import Tooltip from 'src/components/Tooltip';
-import { IconInfo } from 'src/components/Icon';
-import ControlsPanel from 'src/components/ControlsPanel';
+import { ControlsPanel, IconInfo, Text } from '@tarantool.io/ui-kit';
 
 const styles = {
   wrap: css`

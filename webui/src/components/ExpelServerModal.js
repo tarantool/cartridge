@@ -1,14 +1,12 @@
 // @flow
 
 import * as React from 'react'
-import { ConfirmModal } from './Modal'
 import { connect } from 'react-redux'
-import Alert from 'src/components/Alert';
+import { Alert, ConfirmModal, Text } from '@tarantool.io/ui-kit';
 import { expelServer, hideExpelModal } from '../store/actions/clusterPage.actions';
 import { selectServerByUri } from '../store/selectors/clusterPage';
 import { formatServerName } from '../misc/server';
 import { css } from 'react-emotion'
-import Text from './Text';
 
 type ExpelServerModalProps = {
   expelModal: ?string,

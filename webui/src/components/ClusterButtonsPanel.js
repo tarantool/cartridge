@@ -5,7 +5,7 @@ import { isBootstrapped } from 'src/store/selectors/clusterPage';
 import FailoverButton from 'src/components/FailoverButton';
 import BootstrapButton from 'src/components/BootstrapButton';
 import ProbeServerModal from 'src/components/ProbeServerModal';
-import PageSection from 'src/components/PageSection';
+import { PageSection } from '@tarantool.io/ui-kit';
 import type { State } from 'src/store/rootReducer';
 
 type ClusterButtonsPanelProps = {

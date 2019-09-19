@@ -1,7 +1,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import { hideAddUserModal } from 'src/store/actions/users.actions';
-import Modal from 'src/components/Modal';
+import { Modal } from '@tarantool.io/ui-kit';
 import UserAddForm from './UserAddForm';
 
 class UserAddModal extends React.Component {

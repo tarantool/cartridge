@@ -1,10 +1,7 @@
 // TODO: move to uikit
 import * as React from 'react';
 import { css } from 'react-emotion';
-import LeaderFlag from 'src/components/LeaderFlag';
-import Text from 'src/components/Text';
-import UriLabel from 'src/components/UriLabel';
-import HealthStatus from 'src/components/HealthStatus';
+import { HealthStatus, LeaderFlag, Text, UriLabel } from '@tarantool.io/ui-kit';
 
 const styles = {
   item: css`

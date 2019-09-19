@@ -1,17 +1,19 @@
 // @flow
 
 import * as React from 'react'
-import Modal from './Modal'
 import { connect } from 'react-redux'
 import { css } from 'react-emotion'
+import {
+  Button,
+  Modal,
+  Tabbed
+} from '@tarantool.io/ui-kit';
 import { pageDidMount, resetPageState } from 'src/store/actions/clusterInstancePage.actions';
 import isEqual from 'lodash/isEqual';
 import { defaultMemoize, createSelectorCreator } from 'reselect';
 import { withRouter } from 'react-router-dom'
-import Tabbed from 'src/components/Tabbed';
 import ServerShortInfo from 'src/components/ServerShortInfo';
 import ClusterInstanceSection from './ClusterInstanceSection'
-import Button from './Button';
 import * as R from 'ramda';
 
 type ServerInfoModalProps = {

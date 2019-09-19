@@ -4,14 +4,16 @@ import { css, cx } from 'react-emotion';
 import { Formik } from 'formik';
 import * as R from 'ramda';
 import SelectedReplicaset from 'src/components/SelectedReplicaset';
-import Text from 'src/components/Text';
-import InputText from 'src/components/InputText';
 import LabeledInput from 'src/components/LabeledInput';
-import Checkbox from 'src/components/Checkbox';
-import RadioButton from 'src/components/RadioButton';
-import Button from 'src/components/Button';
-import PopupBody from 'src/components/PopupBody';
-import PopupFooter from 'src/components/PopupFooter';
+import {
+  Button,
+  Checkbox,
+  Input,
+  PopupBody,
+  PopupFooter,
+  RadioButton,
+  Text
+} from '@tarantool.io/ui-kit';
 import FormField from 'src/components/FormField';
 import type {
   Role,
@@ -150,7 +152,7 @@ EditReplicasetFormProps) => {
             <PopupBody className={styles.scrollableWrap} innerClassName={styles.popupBody} scrollable>
               <SelectedReplicaset className={styles.splash} replicaset={replicaset} />
               <LabeledInput className={styles.wideField} label='Enter name of replica set'>
-                <InputText
+                <Input
                   name='alias'
                   className={cx(
                     styles.input,
@@ -210,7 +212,7 @@ EditReplicasetFormProps) => {
                 ))}
               </FormField>
               <LabeledInput className={styles.weightField} label='Weight'>
-                <InputText
+                <Input
                   className={styles.weightInput}
                   name='weight'
                   error={errors.weight}

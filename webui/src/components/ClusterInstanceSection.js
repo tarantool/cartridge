@@ -1,7 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import PopupBody from 'src/components/PopupBody';
-import Text from 'src/components/Text';
+import { PopupBody, Text } from '@tarantool.io/ui-kit';
 import CollapsibleJSONRenderer from 'src/components/CollapsibleJSONRenderer';
 import { css } from 'emotion';
 

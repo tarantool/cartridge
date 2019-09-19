@@ -1,12 +1,9 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import Button from 'src/components/Button';
 import { css } from 'emotion';
 import { editUser } from 'src/store/actions/users.actions';
-import Alert from 'src/components/Alert';
-import Text from 'src/components/Text';
+import { Alert, Button, Input, Text } from '@tarantool.io/ui-kit';
 import { FieldConstructor, FormContainer } from '../FieldGroup';
-import InputText from '../InputText';
 import { Formik, Form } from 'formik';
 import * as Yup from 'yup';
 import * as R from 'ramda';
@@ -93,7 +90,7 @@ class UserEditForm extends React.Component {
                 key={field}
                 label={label}
                 input={
-                  <InputText
+                  <Input
                     value={values[field]}
                     onBlur={handleBlur}
                     onChange={handleChange}

@@ -2,8 +2,7 @@
 import React, { useState } from 'react'
 import styled from 'react-emotion'
 import { useDropzone } from 'react-dropzone';
-import { IconBox } from './Icon/icons/IconBox';
-import { IconAttach } from './Icon/icons/IconAttach';
+import { IconAttach, IconBox } from '@tarantool.io/ui-kit';
 
 const UploadTitle = styled.p`
   font-size: 16px;

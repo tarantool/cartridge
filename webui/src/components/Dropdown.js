@@ -1,6 +1,5 @@
 import * as React from 'react';
-import Button from 'src/components/Button';
-import { IconMore } from 'src/components/Icon';
+import { Button, IconMore } from '@tarantool.io/ui-kit';
 import { css } from 'emotion';
 import styled from 'react-emotion';
 

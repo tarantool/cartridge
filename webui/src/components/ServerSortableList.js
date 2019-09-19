@@ -2,10 +2,7 @@ import React from 'react'
 import { sortableContainer, sortableElement } from 'react-sortable-hoc';
 import { css, cx } from 'react-emotion';
 import arrayMove from 'array-move'
-import LeaderFlagSmall from 'src/components/LeaderFlagSmall';
-import { IconBurger } from 'src/components/Icon';
-import Text from 'src/components/Text';
-import UriLabel from 'src/components/UriLabel';
+import { IconBurger, LeaderFlagSmall, Text, UriLabel } from '@tarantool.io/ui-kit';
 
 const styles = {
   uriIcon: css`

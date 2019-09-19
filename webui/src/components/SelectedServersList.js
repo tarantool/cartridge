@@ -2,8 +2,7 @@
 // TODO: split and move to uikit
 import React from 'react';
 import { css, cx } from 'react-emotion';
-import UriLabel from 'src/components/UriLabel';
-import Text from 'src/components/Text';
+import { Text, UriLabel } from '@tarantool.io/ui-kit';
 import type { Server } from 'src/generated/graphql-typing';
 
 const styles = {

@@ -8,7 +8,7 @@ import {
   showEditUserModal,
   showRemoveUserModal
 } from 'src/store/actions/users.actions';
-import TiledList from './TiledList';
+import { TiledList } from '@tarantool.io/ui-kit';
 import Dropdown from './Dropdown';
 import NoData from './NoData';
 

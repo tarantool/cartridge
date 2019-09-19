@@ -2,9 +2,8 @@
 // TODO: split and move to uikit
 import React from 'react';
 import { css, cx } from 'react-emotion';
-import Text from 'src/components/Text';
 import type { Replicaset } from 'src/generated/graphql-typing';
-import HealthStatus from 'src/components/HealthStatus';
+import { HealthStatus, Text } from '@tarantool.io/ui-kit';
 
 const styles = {
   replicaset: css`

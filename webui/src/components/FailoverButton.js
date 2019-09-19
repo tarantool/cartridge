@@ -1,13 +1,15 @@
 import * as React from 'react';
-import Modal from 'src/components/Modal';
 import { connect } from 'react-redux';
 import { changeFailover, setVisibleFailoverModal } from 'src/store/actions/clusterPage.actions';
-import Button from 'src/components/Button';
-import Switcher from 'src/components/Switcher';
+import {
+  Button,
+  IconOk,
+  IconCancel,
+  Modal,
+  Switcher,
+  Text
+} from '@tarantool.io/ui-kit';
 import { SwitcherIconContainer, ModalInfoContainer, SwitcherInfoLine } from './styled'
-import Text from './Text';
-import { IconOk } from './Icon/icons/IconOk';
-import { IconCancel } from './Icon/icons/IconCancel';
 
 const description = `When enabled, every storage starts monitoring instance statuses.  
 If a user-specified master goes down, a replica with the lowest UUID takes its place.

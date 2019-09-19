@@ -3,12 +3,14 @@
 import * as React from 'react';
 import { css, cx } from 'react-emotion';
 import { defaultMemoize } from 'reselect';
-import Button from 'src/components/Button';
-import HealthStatus from 'src/components/HealthStatus';
-import TiledList from 'src/components/TiledList';
-import Text from 'src/components/Text';
-import UriLabel from 'src/components/UriLabel';
-import { IconGear } from 'src/components/Icon';
+import {
+  Button,
+  HealthStatus,
+  IconGear,
+  Text,
+  TiledList,
+  UriLabel
+} from '@tarantool.io/ui-kit';
 import type { Server } from 'src/generated/graphql-typing';
 
 const styles = {

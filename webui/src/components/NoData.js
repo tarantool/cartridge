@@ -1,6 +1,6 @@
 import * as React from 'react';
 import styled from 'react-emotion';
-import { IconBoxNoData } from 'src/components/Icon/icons/IconBoxNoData';
+import { IconBoxNoData } from '@tarantool.io/ui-kit';
 
 const Container = styled.div`
   display: flex;

@@ -2,7 +2,7 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import { defaultMemoize } from 'reselect';
 import { css } from 'react-emotion';
-import FlatList from 'src/components/FlatList';
+import { FlatList } from '@tarantool.io/ui-kit';
 import ReplicasetServerListItem from 'src/components/ReplicasetServerListItem';
 
 const SERVER_LABELS_HIGHLIGHTING_CLASS = 'ServerLabelsHighlightingArea'

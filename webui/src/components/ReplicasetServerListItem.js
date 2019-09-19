@@ -4,14 +4,17 @@ import * as React from 'react';
 import { css, cx } from 'react-emotion';
 import Tooltip from 'src/components/Tooltip';
 import Dropdown from 'src/components/Dropdown';
-import { IconBucket, IconChip } from 'src/components/Icon';
 import ServerLabels, { type Label } from 'src/components/ServerLabels';
-import LeaderFlag from 'src/components/LeaderFlag';
-import UriLabel from 'src/components/UriLabel';
-import ProgressBar from 'src/components/ProgressBar';
-import Text from 'src/components/Text';
 import store from 'src/store/instance'
-import HealthStatus from 'src/components/HealthStatus';
+import {
+  HealthStatus,
+  IconBucket,
+  IconChip,
+  LeaderFlag,
+  ProgressBar,
+  Text,
+  UriLabel
+} from '@tarantool.io/ui-kit';
 import { showExpelModal } from '../store/actions/clusterPage.actions';
 import { withRouter } from 'react-router-dom'
 
