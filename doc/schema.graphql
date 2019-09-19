@@ -1,5 +1,5 @@
 # source: http://localhost:8081/admin/api
-# timestamp: Thu Aug 29 2019 19:37:46 GMT+0300 (GMT+03:00)
+# timestamp: Tue Sep 17 2019 17:25:19 GMT+0300 (Moscow Standard Time)
 
 """Cluster management"""
 type Apicluster {
@@ -27,6 +27,39 @@ type Apicluster {
   can_bootstrap_vshard: Boolean!
 }
 
+"""Parameters for editing a replicaset"""
+input EditReplicasetInput {
+  uuid: String!
+  weight: Float
+  vshard_group: String
+  join_servers: [JoinServerInput]
+  roles: [String!]
+  alias: String!
+  all_rw: Boolean
+  failover_priority: [String!]
+}
+
+"""Parameters for editing existing server"""
+input EditServerInput {
+  uri: String
+  labels: [LabelInput]
+  disabled: Boolean
+  uuid: String!
+  expelled: Boolean
+}
+
+type EditTopologyResult {
+  replicasets: [Replicaset]!
+  servers: [Server]!
+}
+
+"""Parameters for joining a new server"""
+input JoinServerInput {
+  uri: String!
+  uuid: String
+  labels: [LabelInput]
+}
+
 """Cluster server label"""
 type Label {
   name: String!
@@ -48,11 +81,19 @@ scalar Long
 type Mutation {
   """Cluster management"""
   cluster: MutationApicluster
+
+  """Deprecated. Use `cluster{edit_topology()}` instead."""
   edit_server(uuid: String!, uri: String, labels: [LabelInput]): Boolean
   probe_server(uri: String!): Boolean
+
+  """Deprecated. Use `cluster{edit_topology()}` instead."""
   edit_replicaset(weight: Float, master: [String!], alias: String, roles: [String!], uuid: String!, all_rw: Boolean, vshard_group: String): Boolean
+
+  """Deprecated. Use `cluster{edit_topology()}` instead."""
   join_server(instance_uuid: String, timeout: Float, uri: String!, vshard_group: String, labels: [LabelInput], replicaset_alias: String, replicaset_weight: Float, roles: [String!], replicaset_uuid: String): Boolean
   bootstrap_vshard: Boolean
+
+  """Deprecated. Use `cluster{edit_topology()}` instead."""
   expel_server(uuid: String!): Boolean
 }
 
@@ -65,6 +106,9 @@ type MutationApicluster {
 
   """Edit an existing user"""
   edit_user(password: String, username: String!, fullname: String, email: String): User
+
+  """Edit cluster topology"""
+  edit_topology(replicasets: [EditReplicasetInput], servers: [EditServerInput]): EditTopologyResult
 
   """Enable or disable automatic failover. Returns new state."""
   failover(enabled: Boolean!): Boolean!

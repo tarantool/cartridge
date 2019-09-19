@@ -100,6 +100,43 @@ local gql_type_server = gql_types.object {
     }
 }
 
+local gql_type_edit_server_input = gql_types.inputObject {
+    name = 'EditServerInput',
+    description = 'Parameters for editing existing server',
+    fields = {
+        uri = gql_types.string,
+        uuid = gql_types.string.nonNull,
+        labels = gql_types.list(gql_type_label_input),
+        disabled = gql_types.boolean,
+        expelled = gql_types.boolean,
+    }
+}
+
+local gql_type_edit_replicaset_input = gql_types.inputObject {
+    name = 'EditReplicasetInput',
+    description = 'Parameters for editing a replicaset',
+    fields = {
+        uuid = gql_types.string.nonNull,
+        alias = gql_types.string.nonNull,
+        roles = gql_types.list(gql_types.string.nonNull),
+        join_servers = gql_types.list(
+            gql_types.inputObject({
+                name = 'JoinServerInput',
+                description = 'Parameters for joining a new server',
+                fields = {
+                    uri = gql_types.string.nonNull,
+                    uuid = gql_types.string,
+                    labels = gql_types.list(gql_type_label_input),
+                }
+            })
+        ),
+        failover_priority = gql_types.list(gql_types.string.nonNull),
+        all_rw = gql_types.boolean,
+        weight = gql_types.float,
+        vshard_group = gql_types.string,
+    }
+}
+
 local function convert_labels_to_keyvalue(gql_labels)
     if gql_labels == nil then
         return nil
@@ -150,6 +187,29 @@ local function get_replicasets(_, args)
         end
     end
     return replicasets
+end
+
+local function edit_topology(_, args)
+    for _, srv in pairs(args.servers or {}) do
+        srv.labels = convert_labels_to_keyvalue(srv.labels)
+    end
+
+    for _, rpl in pairs(args.replicasets or {}) do
+        for _, srv in pairs(rpl.join_servers or {}) do
+            srv.labels = convert_labels_to_keyvalue(srv.labels)
+        end
+    end
+
+    local topology, err = admin.edit_topology(args)
+    if topology == nil then
+        return nil, err
+    end
+
+    for _, srv in pairs(topology.servers) do
+        srv.labels = convert_labels_to_graphql(srv.labels)
+    end
+
+    return topology
 end
 
 local function probe_server(_, args)
@@ -208,7 +268,7 @@ local function init(graphql)
         args = {
             uuid = gql_types.string
         },
-        kind = gql_types.list('Server'),
+        kind = gql_types.list(gql_type_server),
         callback = module_name .. '.get_servers',
     })
 
@@ -232,6 +292,7 @@ local function init(graphql)
 
     graphql.add_mutation({
         name = 'join_server',
+        doc = 'Deprecated. Use `cluster{edit_topology()}` instead.',
         args = {
             uri = gql_types.string.nonNull,
             instance_uuid = gql_types.string,
@@ -249,6 +310,7 @@ local function init(graphql)
 
     graphql.add_mutation({
         name = 'edit_server',
+        doc = 'Deprecated. Use `cluster{edit_topology()}` instead.',
         args = {
             uuid = gql_types.string.nonNull,
             uri = gql_types.string,
@@ -260,6 +322,7 @@ local function init(graphql)
 
     graphql.add_mutation({
         name = 'expel_server',
+        doc = 'Deprecated. Use `cluster{edit_topology()}` instead.',
         args = {
             uuid = gql_types.string.nonNull,
         },
@@ -269,6 +332,7 @@ local function init(graphql)
 
     graphql.add_mutation({
         name = 'edit_replicaset',
+        doc = 'Deprecated. Use `cluster{edit_topology()}` instead.',
         args = {
             uuid = gql_types.string.nonNull,
             roles = gql_types.list(gql_types.string.nonNull),
@@ -339,6 +403,24 @@ local function init(graphql)
         }),
         callback = module_name .. '.get_self',
     })
+
+    graphql.add_mutation({
+        prefix = 'cluster',
+        name = 'edit_topology',
+        doc = 'Edit cluster topology',
+        args = {
+            replicasets = gql_types.list(gql_type_edit_replicaset_input),
+            servers = gql_types.list(gql_type_edit_server_input),
+        },
+        kind = gql_types.object({
+            name = 'EditTopologyResult',
+            fields = {
+                replicasets = gql_types.list('Replicaset').nonNull,
+                servers = gql_types.list('Server').nonNull,
+            }
+        }),
+        callback = module_name .. '.edit_topology',
+    })
 end
 
 return {
@@ -351,11 +433,13 @@ return {
     get_replicasets = get_replicasets,
 
     probe_server = probe_server,
-    join_server = join_server,
-    edit_server = edit_server,
-    edit_replicaset = edit_replicaset,
-    expel_server = expel_server,
+    join_server = join_server, -- deprecated
+    edit_server = edit_server, -- deprecated
+    edit_replicaset = edit_replicaset, -- deprecated
+    expel_server = expel_server, -- deprecated
     disable_servers = disable_servers,
+
+    edit_topology = edit_topology,
 
     get_known_roles = get_known_roles,
     get_failover_enabled = get_failover_enabled,
