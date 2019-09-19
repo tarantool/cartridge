@@ -1,5 +1,6 @@
 local t = require('luatest')
 local g = t.group('remote_control')
+local log = require('log')
 
 local fio = require('fio')
 local digest = require('digest')
@@ -87,7 +88,7 @@ function g.test_start()
     t.assertEquals(err.err, "Already running")
 
     remote_control.stop()
-    box.cfg({listen = 13301})
+    box.cfg({listen = '127.0.0.1:13301'})
     local ok, err = remote_control.start('127.0.0.1', 13301, cred)
     t.assertNil(ok)
     t.assertEquals(err.class_name, "RemoteControlError")
@@ -99,7 +100,13 @@ function g.test_start()
     local ok, err = remote_control.start('0.0.0.0', -1, cred)
     t.assertNil(ok)
     t.assertEquals(err.class_name, "RemoteControlError")
-    t.assertEquals(err.err, "Can't start server: Input/output error")
+    -- WARNING macOs and linux returns different messages
+    local possible_errors = {
+        ["Can't start server: Input/output error"] = true,
+        ["Can't start server: Address family not supported by protocol family"] = true
+    }
+    log.info(err.err)
+    t.assertNotNil(possible_errors[err.err])
 
     local ok, err = remote_control.start('255.255.255.255', 13301, cred)
     t.assertNil(ok)
@@ -109,12 +116,24 @@ function g.test_start()
     local ok, err = remote_control.start('google.com', 13301, cred)
     t.assertNil(ok)
     t.assertEquals(err.class_name, "RemoteControlError")
-    t.assertEquals(err.err, "Can't start server: Cannot assign requested address")
+    -- WARNING: macOS and linux returns different messages
+    local possible_errors = {
+       ["Can't start server: Can't assign requested address"] = true,
+       ["Can't start server: Cannot assign requested address"] = true
+    }
+    log.info(err.err)
+    t.assertNotNil(possible_errors[err.err])
 
     local ok, err = remote_control.start('8.8.8.8', 13301, cred)
     t.assertNil(ok)
     t.assertEquals(err.class_name, "RemoteControlError")
-    t.assertEquals(err.err, "Can't start server: Cannot assign requested address")
+    -- WARNING: macOS and linux returns different messages
+    local possible_errors = {
+        ["Can't start server: Can't assign requested address"] = true,
+        ["Can't start server: Cannot assign requested address"] = true
+    }
+    log.info(err.err)
+    t.assertNotNil(possible_errors[err.err])
 
     local ok, err = remote_control.start('localhost', 13301, cred)
     t.assertTrue(ok)
