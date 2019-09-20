@@ -6,22 +6,22 @@ describe('Probe server', () => {
   });
 
   it('shows probing error', () => {
-    cy.get('.ant-modal .ant-input')
+    cy.get('.ProbeServerModal input[name="uri"]')
       .type('unreachable')
       .should('have.value', 'unreachable');
 
-    cy.get('.ant-modal button.ant-btn[type=button]').click();
+    cy.get('.ProbeServerModal button[type=submit]').click();
 
-    cy.get('.ant-modal').contains('Probe "unreachable" failed: ping was not sent');
+    cy.get('.ProbeServerModal_error').contains('Probe "unreachable" failed: ping was not sent');
   });
 
   it('shows probings success message', () => {
-    cy.get('.ant-modal .ant-input')
+    cy.get('.ProbeServerModal input[name="uri"]')
       .clear()
-      .type('localhost:3304')
-      .should('have.value', 'localhost:3304');
+      .type('localhost:33002')
+      .should('have.value', 'localhost:33002');
 
-    cy.get('.ant-modal button.ant-btn[type=button]').click();
+    cy.get('.ProbeServerModal button[type=submit]').click();
 
     cy.get('.ant-notification-notice').contains('Probe is OK. Please wait for list refresh...');
   })
