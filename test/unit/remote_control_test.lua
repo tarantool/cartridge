@@ -5,6 +5,7 @@ local fio = require('fio')
 local digest = require('digest')
 local netbox = require('net.box')
 local remote_control = require('cartridge.remote-control')
+local errno = require('errno')
 
 local username = 'superuser'
 local password = '3.141592'
@@ -73,6 +74,21 @@ end
 
 -------------------------------------------------------------------------------
 
+local function assertStrOneOf(str, possible_values)
+    for _, v in pairs(possible_values) do
+        if str == v then
+            return
+        end
+    end
+
+    error(
+        string.format(
+            "expected one of: \n%s\nactual: %s",
+            table.concat(possible_values, "\n"), str
+        ), 2
+    )
+end
+
 function g.test_start()
     local cred = {
         username = username,
@@ -87,11 +103,13 @@ function g.test_start()
     t.assertEquals(err.err, "Already running")
 
     remote_control.stop()
-    box.cfg({listen = 13301})
+    box.cfg({listen = '127.0.0.1:13301'})
     local ok, err = remote_control.start('127.0.0.1', 13301, cred)
     t.assertNil(ok)
     t.assertEquals(err.class_name, "RemoteControlError")
-    t.assertEquals(err.err, "Can't start server: Address already in use")
+    t.assertEquals(err.err,
+        "Can't start server: " .. errno.strerror(errno.EADDRINUSE)
+    )
 
     remote_control.stop()
     box.cfg({listen = box.NULL})
@@ -99,22 +117,32 @@ function g.test_start()
     local ok, err = remote_control.start('0.0.0.0', -1, cred)
     t.assertNil(ok)
     t.assertEquals(err.class_name, "RemoteControlError")
-    t.assertEquals(err.err, "Can't start server: Input/output error")
+    -- MacOS and Linux returns different errno
+    assertStrOneOf(err.err, {
+        "Can't start server: " .. errno.strerror(errno.EIO),
+        "Can't start server: " .. errno.strerror(errno.EAFNOSUPPORT),
+    })
 
     local ok, err = remote_control.start('255.255.255.255', 13301, cred)
     t.assertNil(ok)
     t.assertEquals(err.class_name, "RemoteControlError")
-    t.assertEquals(err.err, "Can't start server: Invalid argument")
+    t.assertEquals(err.err,
+        "Can't start server: " .. errno.strerror(errno.EINVAL)
+    )
 
     local ok, err = remote_control.start('google.com', 13301, cred)
     t.assertNil(ok)
     t.assertEquals(err.class_name, "RemoteControlError")
-    t.assertEquals(err.err, "Can't start server: Cannot assign requested address")
+    t.assertEquals(err.err,
+        "Can't start server: " .. errno.strerror(errno.EADDRNOTAVAIL)
+    )
 
     local ok, err = remote_control.start('8.8.8.8', 13301, cred)
     t.assertNil(ok)
     t.assertEquals(err.class_name, "RemoteControlError")
-    t.assertEquals(err.err, "Can't start server: Cannot assign requested address")
+    t.assertEquals(err.err,
+        "Can't start server: " .. errno.strerror(errno.EADDRNOTAVAIL)
+    )
 
     local ok, err = remote_control.start('localhost', 13301, cred)
     t.assertTrue(ok)
@@ -168,7 +196,7 @@ function g.test_bad_username()
     conn_rc:close()
 
     remote_control.stop()
-    box.cfg({listen = 13302})
+    box.cfg({listen = '127.0.0.1:13302'})
     local conn_box = assert(netbox.connect('bad-user@localhost:13302'))
     check_conn(conn_box)
     conn_box:close()
@@ -187,7 +215,7 @@ function g.test_bad_password()
     conn_rc:close()
 
     remote_control.stop()
-    box.cfg({listen = 13302})
+    box.cfg({listen = '127.0.0.1:13302'})
     local conn_box = assert(netbox.connect('superuser:bad-password@localhost:13302'))
     check_conn(conn_box)
     conn_box:close()
@@ -235,7 +263,7 @@ function g.test_guest()
     conn_rc:close()
 
     remote_control.stop()
-    box.cfg({listen = 13302})
+    box.cfg({listen = '127.0.0.1:13302'})
     local conn_box = assert(netbox.connect('localhost:13302'))
     check_conn(conn_box)
     conn_box:close()
@@ -338,7 +366,7 @@ function g.test_call()
     conn_rc:close()
 
     remote_control.stop()
-    box.cfg({listen = 13302})
+    box.cfg({listen = '127.0.0.1:13302'})
     local conn_box = assert(netbox.connect('superuser:3.141592@localhost:13302'))
     check_conn(conn_box)
     conn_box:close()
@@ -383,7 +411,7 @@ function g.test_eval()
     conn_rc:close()
 
     remote_control.stop()
-    box.cfg({listen = 13302})
+    box.cfg({listen = '127.0.0.1:13302'})
     local conn_box = assert(netbox.connect('superuser:3.141592@localhost:13302'))
     check_conn(conn_box)
     conn_box:close()
@@ -425,7 +453,7 @@ function g.test_timeout()
     conn_rc:close()
 
     remote_control.stop()
-    box.cfg({listen = 13302})
+    box.cfg({listen = '127.0.0.1:13302'})
     local conn_box = assert(netbox.connect('superuser:3.141592@localhost:13302'))
     check_conn(conn_box)
     conn_box:close()
@@ -434,7 +462,7 @@ end
 function g.test_switch_box_to_rc()
     local uri = 'superuser:3.141592@localhost:13301'
 
-    box.cfg({listen = 13301})
+    box.cfg({listen = '127.0.0.1:13301'})
     local conn_1 = assert(netbox.connect(uri))
     t.assertNil(conn_1.error)
     t.assertEquals(conn_1.state, "active")
@@ -477,7 +505,7 @@ function g.test_switch_rc_to_box()
     t.assertEquals(conn_rc:eval([[
         local remote_control = require('cartridge.remote-control')
         remote_control.stop()
-        box.cfg({listen = 13301})
+        box.cfg({listen = '127.0.0.1:13301'})
         return box.info.uuid
     ]]), box.info.uuid)
 

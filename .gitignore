@@ -17,3 +17,6 @@ cmake_install.cmake
 CTestTestfile.cmake
 build.luarocks
 coverage_result.txt
+.DS_Store
+.vscode
+luacov.stats.out
