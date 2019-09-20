@@ -1,6 +1,6 @@
 describe('Probe server', () => {
   it('opens probe dialog', () => {
-    cy.visit(Cypress.env('CYPRESS_BASE_URL') || 'http://localhost:8081');
+    cy.visit(Cypress.config('baseUrl'));
 
     cy.contains('Probe server').click();
   });
