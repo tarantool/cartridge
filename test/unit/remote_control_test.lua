@@ -83,8 +83,8 @@ local function assertStrOneOf(str, possible_values)
 
     error(
         string.format(
-            "expected one of: %s actual: %s",
-            table.concat(possible_values, "; "), str
+            "expected one of: \n%s\nactual: %s",
+            table.concat(possible_values, "\n"), str
         ), 2
     )
 end
@@ -107,7 +107,9 @@ function g.test_start()
     local ok, err = remote_control.start('127.0.0.1', 13301, cred)
     t.assertNil(ok)
     t.assertEquals(err.class_name, "RemoteControlError")
-    t.assertEquals(err.err, "Can't start server: Address already in use")
+    t.assertEquals(err.err,
+        "Can't start server: " .. errno.strerror(errno.EADDRINUSE)
+    )
 
     remote_control.stop()
     box.cfg({listen = box.NULL})
@@ -115,21 +117,22 @@ function g.test_start()
     local ok, err = remote_control.start('0.0.0.0', -1, cred)
     t.assertNil(ok)
     t.assertEquals(err.class_name, "RemoteControlError")
-    -- WARNING macOs and linux returns different messages
+    -- MacOS and Linux returns different errno
     assertStrOneOf(err.err, {
-        "Can't start server: Input/output error",
-        "Can't start server: Address family not supported by protocol family",
+        "Can't start server: " .. errno.strerror(errno.EIO),
+        "Can't start server: " .. errno.strerror(errno.EAFNOSUPPORT),
     })
 
     local ok, err = remote_control.start('255.255.255.255', 13301, cred)
     t.assertNil(ok)
     t.assertEquals(err.class_name, "RemoteControlError")
-    t.assertEquals(err.err, "Can't start server: Invalid argument")
+    t.assertEquals(err.err,
+        "Can't start server: " .. errno.strerror(errno.EINVAL)
+    )
 
     local ok, err = remote_control.start('google.com', 13301, cred)
     t.assertNil(ok)
     t.assertEquals(err.class_name, "RemoteControlError")
-    -- WARNING: macOS and linux returns different messages
     t.assertEquals(err.err,
         "Can't start server: " .. errno.strerror(errno.EADDRNOTAVAIL)
     )
@@ -137,7 +140,6 @@ function g.test_start()
     local ok, err = remote_control.start('8.8.8.8', 13301, cred)
     t.assertNil(ok)
     t.assertEquals(err.class_name, "RemoteControlError")
-    -- WARNING: macOS and linux returns different messages
     t.assertEquals(err.err,
         "Can't start server: " .. errno.strerror(errno.EADDRNOTAVAIL)
     )
