@@ -1,12 +1,8 @@
 const { exec } = require('child_process');
 
 describe('Replicaset configuration', () => {
-  it('starts tarantool', () => {
-    cy.task('refreshTarantool');
-  });
-
   it('creates replicaset with vshard-router and myrole roles', () => {
-    cy.visit(Cypress.env('CYPRESS_BASE_URL'));
+    cy.visit(Cypress.env('CYPRESS_BASE_URL') || 'http://localhost:8081');
 
     cy.get('.page-inner').contains('Create').eq(0).click();
     cy.get('.ant-modal .ant-form-item-children .ant-row label').eq(2).contains('vshard-router').click();
@@ -53,8 +49,4 @@ describe('Replicaset configuration', () => {
   });
 
   // cy.get('body').trigger('keydown', { keycode: 27, which: 27 });
-
-  it('stops and cleans tarantool', () => {
-    cy.task('wipeTarantool');
-  });
 });

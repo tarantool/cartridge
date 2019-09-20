@@ -1,10 +1,6 @@
 describe('Probe server', () => {
-  it('starts tarantool', () => {
-    cy.task('refreshTarantool');
-  });
-
   it('opens probe dialog', () => {
-    cy.visit(Cypress.env('CYPRESS_BASE_URL'));
+    cy.visit(Cypress.env('CYPRESS_BASE_URL') || 'http://localhost:8081');
 
     cy.contains('Probe server').click();
   });
@@ -29,8 +25,4 @@ describe('Probe server', () => {
 
     cy.get('.ant-notification-notice').contains('Probe is OK. Please wait for list refresh...');
   })
-
-  it('stops and cleans tarantool', () => {
-    cy.task('wipeTarantool');
-  });
 });
