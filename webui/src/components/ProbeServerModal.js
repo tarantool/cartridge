@@ -1,7 +1,7 @@
 // @flow
 import React from 'react';
 import { connect } from 'react-redux';
-import { css } from 'emotion';
+import { css, cx } from 'emotion';
 import { Formik } from 'formik';
 import {
   Alert,
@@ -50,6 +50,7 @@ class ProbeServerModal extends React.PureComponent<ProbeServerModalProps> {
       <React.Fragment>
         <Button onClick={() => setProbeServerModalVisible(true)} text='Probe server' />
         <Modal
+          className='ProbeServerModal'
           visible={probeServerModalVisible}
           title='Probe server'
           onClose={() => setProbeServerModalVisible(false)}
@@ -67,7 +68,11 @@ class ProbeServerModal extends React.PureComponent<ProbeServerModalProps> {
             }) => (
               <form onSubmit={handleSubmit}>
                 <div className={styles.formInner}>
-                  {error && <Alert className={styles.error} type='error'><Text tag='span'>{error}</Text></Alert>}
+                  {error && (
+                    <Alert className={cx(styles.error, 'ProbeServerModal_error')} type='error'>
+                      <Text tag='span'>{error}</Text>
+                    </Alert>
+                  )}
                   <Text className={styles.text}>
                     Probe a server if it wasn't discovered automatically by UDP broadcast.
                   </Text>
