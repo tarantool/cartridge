@@ -10,14 +10,22 @@ local pool = require('cartridge.pool')
 local utils = require('cartridge.utils')
 local topology = require('cartridge.topology')
 local confapplier = require('cartridge.confapplier')
+local vshard_consts = require('vshard.consts')
 
 local e_config = errors.new_class('Invalid config')
 
 vars:new('default_bucket_count', 30000)
 vars:new('known_groups', nil
-    -- {
-    --     [group_name] = {bucket_count = ?number}
-    -- }
+    --{
+    --    [group_name] = {
+    --        bucket_count = number,
+    --        rebalancer_max_receiving = number,
+    --        collect_lua_garbage = boolean,
+    --        collect_bucket_garbage_interval = number,
+    --        sync_timeout = number,
+    --        rebalancer_disbalance_threshold = number,
+    --    }
+    --}
 )
 
 local function validate_group_weights(group_name, topology)
@@ -100,6 +108,52 @@ local function validate_vshard_group(field, vsgroup_new, vsgroup_old)
         vsgroup_new.bucket_count > 0,
         '%s.bucket_count must be positive', field
     )
+    if vsgroup_new.rebalancer_max_receiving ~= nil then
+        e_config:assert(
+                type(vsgroup_new.rebalancer_max_receiving) == 'number',
+                '%s.rebalancer_max_receiving must be a number', field
+        )
+        e_config:assert(
+                vsgroup_new.rebalancer_max_receiving > 0,
+                '%s.rebalancer_max_receiving must be positive', field
+        )
+    end
+    if vsgroup_new.collect_lua_garbage ~= nil then
+        e_config:assert(
+                type(vsgroup_new.collect_lua_garbage) == 'boolean',
+                '%s.collect_lua_garbage must be a boolean', field
+        )
+    end
+    if vsgroup_new.sync_timeout ~= nil then
+        e_config:assert(
+                type(vsgroup_new.sync_timeout) == 'number',
+                '%s.sync_timeout must be a number', field
+        )
+        e_config:assert(
+                vsgroup_new.sync_timeout >= 0,
+                '%s.sync_timeout must be non-negative', field
+        )
+    end
+    if vsgroup_new.collect_bucket_garbage_interval ~= nil then
+        e_config:assert(
+                type(vsgroup_new.collect_bucket_garbage_interval) == 'number',
+                '%s.collect_bucket_garbage_interval must be a number', field
+        )
+        e_config:assert(
+                vsgroup_new.collect_bucket_garbage_interval > 0,
+                '%s.collect_bucket_garbage_interval must be positive', field
+        )
+    end
+    if vsgroup_new.rebalancer_disbalance_threshold ~= nil then
+        e_config:assert(
+                type(vsgroup_new.rebalancer_disbalance_threshold) == 'number',
+                '%s.rebalancer_disbalance_threshold must be a number', field
+        )
+        e_config:assert(
+                vsgroup_new.rebalancer_disbalance_threshold >= 0,
+                '%s.rebalancer_disbalance_threshold must be non-negative', field
+        )
+    end
     if vsgroup_old ~= nil then
         e_config:assert(
             vsgroup_new.bucket_count == vsgroup_old.bucket_count,
@@ -113,6 +167,11 @@ local function validate_vshard_group(field, vsgroup_new, vsgroup_old)
     local known_keys = {
         ['bucket_count'] = true,
         ['bootstrapped'] = true,
+        ['rebalancer_max_receiving'] = true,
+        ['collect_lua_garbage'] = true,
+        ['sync_timeout'] = true,
+        ['collect_bucket_garbage_interval'] = true,
+        ['rebalancer_disbalance_threshold'] = true,
     }
     for k, _ in pairs(vsgroup_new) do
         e_config:assert(
@@ -247,6 +306,28 @@ local function get_known_groups()
         }
     end
 
+    for _, g in pairs(vshard_groups) do
+        if g.rebalancer_max_receiving == nil then
+            g.rebalancer_max_receiving = vshard_consts.DEFAULT_REBALANCER_MAX_RECEIVING
+        end
+
+        if g.collect_lua_garbage == nil then
+            g.collect_lua_garbage = false
+        end
+
+        if g.sync_timeout == nil then
+            g.sync_timeout = vshard_consts.DEFAULT_SYNC_TIMEOUT
+        end
+
+        if g.collect_bucket_garbage_interval == nil then
+            g.collect_bucket_garbage_interval = vshard_consts.DEFAULT_COLLECT_BUCKET_GARBAGE_INTERVAL
+        end
+
+        if g.rebalancer_disbalance_threshold == nil then
+            g.rebalancer_disbalance_threshold = vshard_consts.DEFAULT_REBALANCER_DISBALANCE_THRESHOLD
+        end
+    end
+
     return vshard_groups
 end
 
@@ -298,6 +379,11 @@ local function get_vshard_config(group_name, conf)
 
     return {
         bucket_count = vshard_groups[group_name].bucket_count,
+        rebalancer_max_receiving = vshard_groups[group_name].rebalancer_max_receiving,
+        collect_lua_garbage = vshard_groups[group_name].collect_lua_garbage,
+        sync_timeout = vshard_groups[group_name].sync_timeout,
+        collect_bucket_garbage_interval = vshard_groups[group_name].collect_bucket_garbage_interval,
+        rebalancer_disbalance_threshold = vshard_groups[group_name].rebalancer_disbalance_threshold,
         sharding = sharding,
         read_only = not is_rw
     }
@@ -345,6 +431,41 @@ local function can_bootstrap()
     return false
 end
 
+local function edit_vshard_options(group_name, vshard_options)
+    checks(
+        'string',
+        {
+            rebalancer_max_receiving = '?number',
+            collect_lua_garbage = '?boolean',
+            sync_timeout = '?number',
+            collect_bucket_garbage_interval = '?number',
+            rebalancer_disbalance_threshold = '?number'
+        }
+    )
+
+    local patch = {
+        vshard_groups = confapplier.get_deepcopy('vshard_groups'),
+        vshard = confapplier.get_deepcopy('vshard')
+    }
+
+    local group
+    if patch.vshard_groups ~= nil then
+        group = patch.vshard_groups[group_name]
+    elseif group_name == 'default' then
+        group = patch.vshard
+    end
+
+    if group == nil then
+        return nil, e_config:new("vshard-group %q doesn't exist", group_name)
+    end
+
+    for k, v in pairs(vshard_options) do
+        group[k] = v
+    end
+
+    return confapplier.patch_clusterwide(patch)
+end
+
 return {
     validate_config = function(...)
         return e_config:pcall(validate_config, ...)
@@ -355,4 +476,5 @@ return {
 
     get_vshard_config = get_vshard_config,
     can_bootstrap = can_bootstrap,
+    edit_vshard_options = edit_vshard_options,
 }

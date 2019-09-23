@@ -82,7 +82,10 @@ function g.test_config()
         return cartridge.config_get_readonly('vshard')
     ]])
 
-    t.assert_equals(resp, {bucket_count = 30000, bootstrapped = false})
+    t.assert_equals(resp, {
+        bootstrapped=false,
+        bucket_count=30000
+    })
 
     local resp = server_conn:eval([[
         local cartridge = require('cartridge')

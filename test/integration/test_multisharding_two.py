@@ -3,6 +3,7 @@
 import pytest
 import logging
 from conftest import Server
+from test_multisharding_one import edit_vshard_group, get_vshard_groups
 
 init_script = 'srv_multisharding.lua'
 
@@ -47,6 +48,7 @@ unconfigured = [
     )
 ]
 
+
 def test_api(cluster):
     req = """
         {
@@ -59,6 +61,11 @@ def test_api(cluster):
                     name
                     bucket_count
                     bootstrapped
+                    rebalancer_max_receiving
+                    collect_lua_garbage
+                    sync_timeout
+                    collect_bucket_garbage_interval
+                    rebalancer_disbalance_threshold
                 }
             }
         }
@@ -72,10 +79,20 @@ def test_api(cluster):
     assert obj['data']['cluster']['vshard_known_groups'] == ['cold', 'hot']
     assert obj['data']['cluster']['vshard_groups'] == \
         [{
+            'collect_bucket_garbage_interval': 0.5,
+            'collect_lua_garbage': False,
+            'rebalancer_disbalance_threshold': 1,
+            'rebalancer_max_receiving': 100,
+            'sync_timeout': 1,
             'name': 'cold',
             'bucket_count': 2000,
             'bootstrapped': True,
         }, {
+            'collect_bucket_garbage_interval': 0.5,
+            'collect_lua_garbage': False,
+            'rebalancer_disbalance_threshold': 1,
+            'rebalancer_max_receiving': 100,
+            'sync_timeout': 1,
             'name': 'hot',
             'bucket_count': 30000,
             'bootstrapped': True,
@@ -89,15 +106,26 @@ def test_api(cluster):
     assert obj['data']['cluster']['vshard_known_groups'] == ['cold', 'hot']
     assert obj['data']['cluster']['vshard_groups'] == [
         {
+            'collect_bucket_garbage_interval': 0.5,
+            'collect_lua_garbage': False,
+            'rebalancer_disbalance_threshold': 1,
+            'rebalancer_max_receiving': 100,
+            'sync_timeout': 1,
             'name': 'cold',
             'bucket_count': 2000,
             'bootstrapped': False,
         }, {
+            'collect_bucket_garbage_interval': 0.5,
+            'collect_lua_garbage': False,
+            'rebalancer_disbalance_threshold': 1,
+            'rebalancer_max_receiving': 100,
+            'sync_timeout': 1,
             'name': 'hot',
             'bucket_count': 30000,
             'bootstrapped': False,
         }
     ]
+
 
 def test_mutations(cluster):
     ruuid_cold = cluster['storage-cold'].replicaset_uuid
@@ -140,7 +168,6 @@ def test_mutations(cluster):
 
 
 def test_router_role(cluster):
-
     resp = cluster['router'].conn.eval("""
         local cartridge = require('cartridge')
         local router_role = assert(cartridge.service_get('vshard-router'))
@@ -157,3 +184,55 @@ def test_router_role(cluster):
         'hot': 'bbbbbbbb-bbbb-4000-b000-000000000002',
         'cold': 'cccccccc-cccc-4000-b000-000000000002'
     }
+
+
+def test_set_vshard_options_positive(cluster):
+    assert edit_vshard_group(cluster, group = 'cold',
+                             rebalancer_max_receiving = 42)['data']['cluster']['edit_vshard_options'] == \
+       {
+           'collect_bucket_garbage_interval': 0.5,
+           'collect_lua_garbage': False,
+           'rebalancer_disbalance_threshold': 1,
+           'rebalancer_max_receiving': 42,
+           'sync_timeout': 1,
+           'name': 'cold',
+           'bucket_count': 2000,
+           'bootstrapped': True,
+       }
+
+    assert edit_vshard_group(cluster, group = 'hot',
+                             rebalancer_max_receiving = 44)['data']['cluster']['edit_vshard_options'] == \
+           {
+               'collect_bucket_garbage_interval': 0.5,
+               'collect_lua_garbage': False,
+               'rebalancer_disbalance_threshold': 1,
+               'rebalancer_max_receiving': 44,
+               'sync_timeout': 1,
+               'name': 'hot',
+               'bucket_count': 30000,
+               'bootstrapped': True,
+           }
+
+    assert get_vshard_groups(cluster) == \
+        [
+            {
+                'collect_bucket_garbage_interval': 0.5,
+                'collect_lua_garbage': False,
+                'rebalancer_disbalance_threshold': 1,
+                'rebalancer_max_receiving': 42,
+                'sync_timeout': 1,
+                'name': 'cold',
+                'bucket_count': 2000,
+                'bootstrapped': True,
+            },
+            {
+                'collect_bucket_garbage_interval': 0.5,
+                'collect_lua_garbage': False,
+                'rebalancer_disbalance_threshold': 1,
+                'rebalancer_max_receiving': 44,
+                'sync_timeout': 1,
+                'name': 'hot',
+                'bucket_count': 30000,
+                'bootstrapped': True,
+            }
+        ]
