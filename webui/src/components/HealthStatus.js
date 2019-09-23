@@ -10,6 +10,7 @@ const styles = {
     display: flex;
     align-items: baseline;
     flex-basis: 153px;
+    color: rgba(0, 0, 0, 0.65);
   `
 };
 
@@ -27,7 +28,7 @@ const HealthStatus = ({
   message
 }:
 HealthStatusProps) => (
-  <Text className={cx(styles.status, className)} variant='p'>
+  <Text className={cx(styles.status, className)} variant='p' tag='div'>
     <DotIndicator state={status === 'healthy' ? 'good' : 'bad'} />
     {message || defaultMessage || status}
   </Text>

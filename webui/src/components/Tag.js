@@ -29,6 +29,8 @@ const styles = {
   `,
   interactive: (className?: string) => className
     ? css`
+      color: rgba(0, 0, 0, 0.2);
+
       .${className}:hover & {
         color: #ffffff;
         background-color: rgba(0, 0, 0, 0.65);
@@ -50,10 +52,13 @@ const styles = {
       background-color: #000000;
       color: #ffffff;
     }
+  `,
+  pointer: css`
+    cursor: pointer;
   `
 };
 
-export type ServerLabelsProps = {
+export type TagProps = {
   className?: string,
   hoverParentClassName?: string,
   highlightingOnHover?: string,
@@ -61,7 +66,7 @@ export type ServerLabelsProps = {
   text: string,
 };
 
-const ServerLabels = ({ highlightingOnHover, className, onClick, text }: ServerLabelsProps) => {
+const Tag = ({ highlightingOnHover, className, onClick, text }: TagProps) => {
   const Element = onClick ? 'button' : 'span';
 
   return (
@@ -69,7 +74,8 @@ const ServerLabels = ({ highlightingOnHover, className, onClick, text }: ServerL
       className={cx(
         {
           [styles.interactive(highlightingOnHover)]: highlightingOnHover,
-          [styles.static]: !highlightingOnHover
+          [styles.static]: !highlightingOnHover,
+          [styles.pointer]: onClick
         },
         styles.tag,
         className
@@ -81,4 +87,4 @@ const ServerLabels = ({ highlightingOnHover, className, onClick, text }: ServerL
   );
 }
 
-export default ServerLabels;
+export default Tag;

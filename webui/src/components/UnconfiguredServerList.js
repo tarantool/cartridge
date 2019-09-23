@@ -15,7 +15,10 @@ const styles = {
   row: css`
     position: relative;
     display: flex;
+    flex-wrap: wrap;
     align-items: baseline;
+    padding-right: 159px;
+    padding-bottom: 4px;
   `,
   checkBox: css`
     flex-shrink: 0;
@@ -23,20 +26,25 @@ const styles = {
     margin-right: 16px;
   `,
   heading: css`
-    flex-basis: 480px;
+    flex-basis: 463px;
     flex-grow: 1;
-    margin-right: 12px;
+    flex-shrink: 0;
+    margin-right: 24px;
+    margin-bottom: 8px;
+    overflow: hidden;
   `,
   status: css`
     display: flex;
-    flex-basis: 441px;
+    flex-basis: 498px;
+    flex-shrink: 0;
     align-items: center;
-    margin-right: 12px;
-    margin-left: 12px;
+    margin-bottom: 8px;
+    margin-left: -8px;
   `,
   configureBtn: css`
-    flex-shrink: 0;
-    margin-left: 12px;
+    position: absolute;
+    top: 12px;
+    right: 16px;
   `,
   hiddenButton: css`
     visibility: hidden;
