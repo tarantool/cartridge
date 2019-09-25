@@ -3,8 +3,6 @@ import React from 'react';
 import { css, cx } from 'react-emotion';
 import { Formik } from 'formik';
 import * as R from 'ramda';
-import SelectedServersList from 'src/components/SelectedServersList';
-import LabeledInput from 'src/components/LabeledInput';
 import {
   Button,
   Checkbox,
@@ -14,6 +12,8 @@ import {
   RadioButton,
   Text
 } from '@tarantool.io/ui-kit';
+import SelectedServersList from 'src/components/SelectedServersList';
+import LabeledInput from 'src/components/LabeledInput';
 import FormField from 'src/components/FormField';
 import type {
   Server,
@@ -149,7 +149,25 @@ CreateReplicasetFormProps) => (
               />
               <Text variant='p' className={styles.errorMessage}>{errors.alias}</Text>
             </LabeledInput>
-            <FormField className={styles.wideField} label='Roles' columns={rolesColumns} verticalSort>
+            <FormField
+              className={styles.wideField}
+              columns={rolesColumns}
+              label='Roles'
+              subTitle={(
+                <Button
+                  intent='plain'
+                  onClick={() => setFieldValue(
+                    'roles',
+                    !knownRoles || (values.roles.length === knownRoles.length)
+                      ? []
+                      : knownRoles.map(({ name }) => name)
+                  )}
+                  size='xs'
+                  text={values.roles.length === (knownRoles && knownRoles.length) ? 'Deselect all' : 'Select all'}
+                />
+              )}
+              verticalSort
+            >
               {knownRoles && knownRoles.reduceRight(
                 (acc, { name, dependencies }) => {
                   acc.push(
