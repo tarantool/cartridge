@@ -24,6 +24,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   `sync_timeout`, `collect_bucket_garbage_interval`,
   `rebalancer_disbalance_threshold`.
 
+- Refresh replicaset list in UI after topology edit actions: bootstrap, join, expel,
+  probe, replicaset edit.
+
 ### Changed
 
 - Both bootstrapping from scratch and patching topology in clusterwide config automatically probe
