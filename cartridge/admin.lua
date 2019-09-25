@@ -524,7 +524,7 @@ local function __edit_replicaset(topology_cfg, params)
         all_rw = '?boolean',
         roles = '?table',
         weight = '?number',
-        leaders = '?table',
+        failover_priority = '?table',
         vshard_group = '?string',
         join_servers = '?table',
     })
@@ -570,10 +570,10 @@ local function __edit_replicaset(topology_cfg, params)
         replicaset.roles = confapplier.get_enabled_roles(params.roles)
     end
 
-    if params.leaders ~= nil then
+    if params.failover_priority ~= nil then
         replicaset.master = topology.get_leaders_order(
             topology_cfg, params.uuid,
-            params.leaders
+            params.failover_priority
         )
     end
 
@@ -654,7 +654,7 @@ end
 -- @tfield ?{string,...} roles
 -- @tfield ?boolean all_rw
 -- @tfield ?number weight
--- @tfield ?{string,...} leaders
+-- @tfield ?{string,...} failover_priority
 --   array of uuids specifying servers failover priority
 -- @tfield ?string vshard_group
 -- @tfield ?{JoinServerParams,...} join_servers
@@ -1043,7 +1043,7 @@ local function edit_replicaset(args)
             all_rw = args.all_rw,
             roles = args.roles,
             weight = args.weight,
-            leaders = args.master,
+            failover_priority = args.master,
             vshard_group = args.vshard_group,
         }}
     })
