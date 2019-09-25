@@ -23,7 +23,7 @@ const getRowStyle = column => {
 };
 
 const prepareColumns = columns => {
-  return columns.filter(column => ! column.hidden);
+  return columns.filter(column => !column.hidden);
 };
 
 class CommonItemList extends React.PureComponent {

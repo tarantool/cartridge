@@ -67,6 +67,7 @@
         "allowSamePrecedence": true
       }
     ],
+    "space-unary-ops": ["error", {"words": true, "nonwords": false}],
     "react/jsx-first-prop-new-line": ["error", "multiline"],
     "react/jsx-max-props-per-line": ["error", { "when": "multiline" }],
     "react/jsx-closing-bracket-location": ["error", "tag-aligned"],

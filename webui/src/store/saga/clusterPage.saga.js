@@ -77,41 +77,46 @@ function* refreshListsTaskSaga() {
 
   while (true) {
     yield delay(REFRESH_LIST_INTERVAL);
-    yield put({ type: CLUSTER_PAGE_REFRESH_LISTS_REQUEST });
+    requestNum++;
+    yield refreshListsSaga(requestNum);
+  }
+};
 
-    let response;
-    try {
-      const shouldRequestStat = ++requestNum % STAT_REQUEST_PERIOD === 0;
-      if (shouldRequestStat) {
-        response = yield call(refreshLists, { shouldRequestStat: true });
-      } else {
-        const listsResponse = yield call(refreshLists);
+function* refreshListsSaga(requestNum = 0) {
+  yield put({ type: CLUSTER_PAGE_REFRESH_LISTS_REQUEST });
 
-        let serverStatResponse;
-        const serverStat = yield select(state => state.clusterPage.serverStat);
-        const unknownServerExists = listsResponse.serverList
-          .some(server => server.replicaset && !serverStat.find(stat => stat.uuid === server.uuid));
-        if (unknownServerExists) {
-          serverStatResponse = yield call(getServerStat);
-        }
+  let response;
+  try {
+    const shouldRequestStat = requestNum % STAT_REQUEST_PERIOD === 0;
+    if (shouldRequestStat) {
+      response = yield call(refreshLists, { shouldRequestStat: true });
+    } else {
+      const listsResponse = yield call(refreshLists);
 
-        response = {
-          ...listsResponse,
-          ...serverStatResponse
-        };
+      let serverStatResponse;
+      const serverStat = yield select(state => state.clusterPage.serverStat);
+      const unknownServerExists = listsResponse.serverList
+        .some(server => server.replicaset && !serverStat.find(stat => stat.uuid === server.uuid));
+      if (unknownServerExists) {
+        serverStatResponse = yield call(getServerStat);
       }
-    } catch (error) {
-      yield put({ type: CLUSTER_PAGE_REFRESH_LISTS_REQUEST_ERROR, error, requestPayload: {} });
+
+      response = {
+        ...listsResponse,
+        ...serverStatResponse
+      };
     }
-    if (response) {
-      if (response.serverStat) {
-        response = {
-          ...response,
-          serverStat: response.serverStat.filter(stat => stat.uuid)
-        };
-      }
-      yield put({ type: CLUSTER_PAGE_REFRESH_LISTS_REQUEST_SUCCESS, payload: response, requestPayload: {} });
+  } catch (error) {
+    yield put({ type: CLUSTER_PAGE_REFRESH_LISTS_REQUEST_ERROR, error, requestPayload: {} });
+  }
+  if (response) {
+    if (response.serverStat) {
+      response = {
+        ...response,
+        serverStat: response.serverStat.filter(stat => stat.uuid)
+      };
     }
+    yield put({ type: CLUSTER_PAGE_REFRESH_LISTS_REQUEST_SUCCESS, payload: response, requestPayload: {} });
   }
 }
 
@@ -183,6 +188,8 @@ function* createReplicasetRequestSaga() {
         ...createReplicasetResponse,
         ...clusterSelfResponse
       };
+
+      yield put({ type: CLUSTER_PAGE_CREATE_REPLICASET_REQUEST_SUCCESS, payload: response, requestPayload });
     } catch (error) {
       yield put({
         type: CLUSTER_PAGE_CREATE_REPLICASET_REQUEST_ERROR,
@@ -193,10 +200,8 @@ function* createReplicasetRequestSaga() {
       indicator.error();
       return;
     }
-
-    yield put({ type: CLUSTER_PAGE_CREATE_REPLICASET_REQUEST_SUCCESS, payload: response, requestPayload });
   });
-}
+};
 
 const expelServerRequestSaga = getRequestSaga(
   CLUSTER_PAGE_EXPEL_SERVER_REQUEST,
@@ -226,7 +231,6 @@ const changeFailoverRequestSaga = getRequestSaga(
   changeFailover,
 );
 
-
 const updateClusterSelfOnBootstrap = function* () {
   yield takeEvery(CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST_SUCCESS, function* () {
     while (true) {
@@ -238,7 +242,21 @@ const updateClusterSelfOnBootstrap = function* () {
         yield delay(2000);
       }
     }
-  })
+  });
+};
+
+const updateListsOnTopologyEdit = function* () {
+  const topologyEditTokens = [
+    CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST_SUCCESS,
+    CLUSTER_PAGE_JOIN_SERVER_REQUEST_SUCCESS,
+    CLUSTER_PAGE_EXPEL_SERVER_REQUEST_SUCCESS,
+    CLUSTER_PAGE_REPLICASET_EDIT_REQUEST_SUCCESS,
+    CLUSTER_PAGE_PROBE_SERVER_REQUEST_SUCCESS
+  ];
+
+  yield takeLatest(topologyEditTokens, function* () {
+    yield refreshListsSaga();
+  });
 }
 
 export const saga = baseSaga(
@@ -253,4 +271,5 @@ export const saga = baseSaga(
   uploadConfigRequestSaga,
   changeFailoverRequestSaga,
   updateClusterSelfOnBootstrap,
+  updateListsOnTopologyEdit
 );

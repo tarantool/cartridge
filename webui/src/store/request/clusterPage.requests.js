@@ -17,7 +17,7 @@ import type { EditReplicasetMutationVariables } from 'src/generated/graphql-typi
 
 const filterServerStat = response => {
   const serverStat
-    = response.serverStat.filter(stat => stat.uuid && stat.statistics && ! Array.isArray(stat.statistics));
+    = response.serverStat.filter(stat => stat.uuid && stat.statistics && !Array.isArray(stat.statistics));
   return {
     ...response,
     serverStat
