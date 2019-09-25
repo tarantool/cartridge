@@ -90,6 +90,7 @@ function g:test_bootstrap()
                         uuid = a1.instance_uuid,
                         labels = {{name = 'addr', value = a1.advertise_uri}},
                     }},
+                    failover_priority = {a1.instance_uuid},
                     roles = {"myrole", "vshard-router"},
                 }, {
                     uuid = b2.replicaset_uuid,

@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Refresh replicaset list in UI after topology edit actions: bootstrap, join, expel,
   probe, replicaset edit.
 
+### Fixed
+
+- Editing topology with `failover_priority` argument.
+
 ## [1.1.0] - 2019-09-24
 
 ### Added
