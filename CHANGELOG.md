@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- Refresh replicaset list in UI after topology edit actions: bootstrap, join, expel,
+  probe, replicaset edit.
+
 ## [1.1.0] - 2019-09-24
 
 ### Added
@@ -23,9 +28,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   fine-tuning vshard options: `rebalancer_max_receiving`, `collect_lua_garbage`,
   `sync_timeout`, `collect_bucket_garbage_interval`,
   `rebalancer_disbalance_threshold`.
-
-- Refresh replicaset list in UI after topology edit actions: bootstrap, join, expel,
-  probe, replicaset edit.
 
 ### Changed
 
