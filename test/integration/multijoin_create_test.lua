@@ -1,6 +1,6 @@
 local fio = require('fio')
 local t = require('luatest')
-local g = t.group('multijoin')
+local g = t.group('multijoin_create')
 
 local test_helper = require('test.helper')
 

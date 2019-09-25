@@ -17,6 +17,7 @@ local confapplier = require('cartridge.confapplier')
 local vshard_utils = require('cartridge.vshard-utils')
 local cluster_cookie = require('cartridge.cluster-cookie')
 
+errors.new_class('BoxError', {log_on_creation = true})
 local e_bootstrap = errors.new_class('Bootstrap failed')
 local e_conflicting_groups = errors.new_class('Conflicting vshard_groups option')
 vars:new('box_opts', nil)
@@ -58,14 +59,20 @@ local function init_box(box_opts)
         end
 
         log.info('Granting replication permissions to %q...', username)
-        box.schema.user.grant(
+
+        errors.pcall('BoxError',
+            box.schema.user.grant,
             username,
             'replication',
             nil, nil, {if_not_exists = true}
         )
 
+
         log.info('Setting password for user %q ...', username)
-        box.schema.user.passwd(username, password)
+        errors.pcall('BoxError',
+            box.schema.user.passwd,
+            username, password
+        )
     end
 
     membership.set_payload('uuid', box.info.uuid)
