@@ -78,6 +78,7 @@ class UnconfiguredServerList extends React.PureComponent<UnconfiguredServerListP
 
     return (
       <TiledList
+        className='UnconfiguredServerList'
         itemClassName={cx(styles.row, this.props.className)}
         itemKey="uri"
         items={dataSource}

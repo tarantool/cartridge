@@ -18,6 +18,7 @@ const BootstrapButton = ({
   // TODO: call getClusterSelf on ModalEditReplicaSet submit action
   return (
     <Button
+      className='BootstrapButton'
       disabled={requesting}
       intent='primary'
       text='Bootstrap vshard'

@@ -33,6 +33,7 @@ const FailoverButton = ({
         Failover
       </Switcher>
       <Modal
+        className='FailoverControl'
         title="Failover control"
         visible={showFailoverModal}
         onClose={() => dispatch(setVisibleFailoverModal(false))}

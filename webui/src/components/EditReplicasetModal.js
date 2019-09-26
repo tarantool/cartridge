@@ -40,6 +40,7 @@ class EditReplicasetModal extends React.Component<EditReplicasetModalProps> {
 
     return (
       <Modal
+        className='EditReplicasetModal'
         title='Edit replica set'
         visible={!!selectedReplicasetUuid}
         loading={loading}
