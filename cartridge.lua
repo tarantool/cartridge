@@ -680,6 +680,24 @@ return {
     -- @function rpc_call
     rpc_call = rpc.call,
 
+--- Authentication and authorization.
+-- @section auth
+
+    --- .
+    -- @refer cartridge.auth.authorize_request
+    -- @function http_authorize_request
+    http_authorize_request = auth.authorize_request,
+
+    --- .
+    -- @refer cartridge.auth.render_response
+    -- @function http_render_response
+    http_render_response = auth.render_response,
+
+    --- .
+    -- @refer cartridge.auth.get_session_username
+    -- @function http_get_username
+    http_get_username = auth.get_session_username,
+
 --- Deprecated functions.
 -- @section deprecated
 
