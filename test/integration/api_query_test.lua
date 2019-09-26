@@ -61,7 +61,14 @@ g.before_all = function()
     g.cluster:server('router'):graphql({
         query = [[
             mutation($uuid: String!) {
-                expel_server(uuid: $uuid)
+                expelServerResponse: cluster{edit_topology(
+                    servers: [{
+                        uuid: $uuid
+                        expelled: true
+                    }]
+                ) {
+                    servers{status}
+                }}
             }
         ]],
         variables = {
