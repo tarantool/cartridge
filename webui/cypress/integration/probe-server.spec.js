@@ -1,3 +1,9 @@
+//Steps:
+//1.Probe server
+//      Open probe dialog
+//      Enter the unreachable value -> Error
+//      Enter the correct value ->Success
+
 describe('Probe server', () => {
   it('opens probe dialog', () => {
     cy.visit(Cypress.config('baseUrl'));
@@ -18,11 +24,11 @@ describe('Probe server', () => {
   it('shows probings success message', () => {
     cy.get('.ProbeServerModal input[name="uri"]')
       .clear()
-      .type('localhost:33002')
-      .should('have.value', 'localhost:33002');
+      .type('localhost:3302')
+      .should('have.value', 'localhost:3302');
 
     cy.get('.ProbeServerModal button[type=submit]').click();
 
-    cy.get('.ant-notification-notice').contains('Probe is OK. Please wait for list refresh...');
+    cy.get('#root').contains('Probe is OK. Please wait for list refresh...');
   })
 });
