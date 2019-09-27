@@ -3,7 +3,7 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { isBootstrapped as checkIsBootstrapped } from 'src/store/selectors/clusterPage';
 import { bootstrapVshard, setVisibleBootstrapVshardPanel } from 'src/store/actions/clusterPage.actions';
-import Button from 'src/components/Button';
+import { Button } from '@tarantool.io/ui-kit';
 import type { State } from 'src/store/rootReducer';
 
 const BootstrapButton = ({

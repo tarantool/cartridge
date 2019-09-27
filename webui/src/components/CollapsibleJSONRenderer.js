@@ -1,6 +1,5 @@
 import React from 'react';
-import { IconChevron } from 'src/components/Icon';
-import Text from 'src/components/Text';
+import { IconChevron, Text } from '@tarantool.io/ui-kit';
 import { css, cx } from 'emotion';
 
 const styles = {

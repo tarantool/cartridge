@@ -1,11 +1,9 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import Button from 'src/components/Button';
+import { Button, IconUser, Text } from '@tarantool.io/ui-kit';
 import { css, cx } from 'emotion';
 import { ModalLogInForm } from 'src/components/LogInForm';
 import { showAuthModal, hideAuthModal } from 'src/store/actions/auth.actions';
-import Text from '../Text';
-import { IconUser } from '../Icon/icons/IconUser';
 import Dropdown from '../Dropdown';
 
 const styles = {

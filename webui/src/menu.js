@@ -1,9 +1,7 @@
 import { PROJECT_NAME } from './constants';
 import * as React from 'react'
 import { css } from 'react-emotion'
-import { IconUsers } from './components/Icon/icons/IconUsers';
-import { IconGear } from './components/Icon/icons/IconGear';
-import { IconCluster } from './components/Icon/icons/IconCluster';
+import { IconCluster, IconGear, IconUsers } from '@tarantool.io/ui-kit';
 
 const matchPath = (path, link) => {
   if (path.length === 0)

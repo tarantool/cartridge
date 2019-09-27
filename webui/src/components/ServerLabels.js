@@ -1,7 +1,6 @@
 // @flow
-// TODO: move to uikit
 import React from 'react';
-import TagsList from 'src/components/TagsList';
+import { TagsList } from '@tarantool.io/ui-kit';
 
 export type Label = {
   name: string,

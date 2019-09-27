@@ -6,7 +6,7 @@ import 'src/styles/tables.css';
 import 'src/styles/tight-scroll.css';
 
 import ClusterPage from 'src/pages/Cluster';
-import PageLayout from 'src/components/PageLayout';
+import { PageLayout } from '@tarantool.io/ui-kit';
 
 const { AppTitle } = window.tarantool_enterprise_core.components;
 

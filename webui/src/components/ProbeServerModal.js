@@ -3,17 +3,19 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { css } from 'emotion';
 import { Formik } from 'formik';
-import InputText from 'src/components/InputText';
-import Alert from 'src/components/Alert';
-import Button from 'src/components/Button';
-import Text from 'src/components/Text';
-import PopupFooter from 'src/components/PopupFooter';
+import {
+  Alert,
+  Button,
+  Input,
+  Modal,
+  PopupFooter,
+  Text
+} from '@tarantool.io/ui-kit';
 import { probeServer } from 'src/store/actions/clusterPage.actions';
 import {
   type ProbeServerActionCreator,
   setProbeServerModalVisible
 } from 'src/store/actions/clusterPage.actions';
-import Modal from 'src/components/Modal';
 
 const styles = {
   formInner: css`
@@ -69,7 +71,7 @@ class ProbeServerModal extends React.PureComponent<ProbeServerModalProps> {
                   <Text className={styles.text}>
                     Probe a server if it wasn't discovered automatically by UDP broadcast.
                   </Text>
-                  <InputText
+                  <Input
                     name='uri'
                     value={values.uri}
                     onChange={handleChange}

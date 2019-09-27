@@ -2,11 +2,13 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { turnAuth } from 'src/store/actions/auth.actions';
-import Switcher from './Switcher';
-import { ConfirmModal } from './Modal';
-import { IconOk } from './Icon/icons/IconOk';
-import { IconCancel } from './Icon/icons/IconCancel';
-import Text from './Text';
+import {
+  ConfirmModal,
+  IconCancel,
+  IconOk,
+  Switcher,
+  Text
+} from '@tarantool.io/ui-kit';
 import { SwitcherIconContainer, ModalInfoContainer, SwitcherInfoLine } from './styled'
 
 

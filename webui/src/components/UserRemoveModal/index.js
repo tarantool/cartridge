@@ -1,6 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { ConfirmModal } from 'src/components/Modal';
+import { ConfirmModal } from '@tarantool.io/ui-kit';
 import { hideRemoveUserModal, removeUser } from 'src/store/actions/users.actions';
 import styled from 'react-emotion'
 

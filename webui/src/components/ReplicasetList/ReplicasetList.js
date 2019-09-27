@@ -3,13 +3,15 @@ import React from 'react';
 import { defaultMemoize } from 'reselect';
 import { css } from 'emotion';
 import { withRouter } from 'react-router-dom';
-import Button from 'src/components/Button';
+import {
+  Button,
+  Divider,
+  HealthStatus,
+  IconGear,
+  Text,
+  TiledList
+} from '@tarantool.io/ui-kit';
 import Tooltip from 'src/components/Tooltip';
-import Divider from 'src/components/Divider';
-import { IconGear } from 'src/components/Icon';
-import HealthStatus from 'src/components/HealthStatus';
-import TiledList from 'src/components/TiledList';
-import Text from 'src/components/Text';
 import ReplicasetRoles from 'src/components/ReplicasetRoles';
 import ReplicasetServerList from 'src/components/ReplicasetServerList';
 import { addSearchParams } from 'src/misc/url';

@@ -3,18 +3,21 @@ import React from 'react';
 import { css } from 'react-emotion';
 import { Formik } from 'formik';
 
-import LeaderFlagSmall from 'src/components/LeaderFlagSmall';
 import SelectedServersList from 'src/components/SelectedServersList';
-import Text from 'src/components/Text';
 import Tooltip from 'src/components/Tooltip';
-import RadioButton from 'src/components/RadioButton';
-import Button from 'src/components/Button';
-import PopupBody from 'src/components/PopupBody';
-import PopupFooter from 'src/components/PopupFooter';
+import {
+  Button,
+  IconInfo,
+  IconSearch,
+  Input,
+  LeaderFlagSmall,
+  PopupBody,
+  PopupFooter,
+  RadioButton,
+  Text
+} from '@tarantool.io/ui-kit';
 import ReplicasetRoles from 'src/components/ReplicasetRoles';
 import FormField from 'src/components/FormField';
-import InputText from 'src/components/InputText';
-import { IconInfo, IconSearch } from 'src/components/Icon';
 import type {
   Server,
   Replicaset
@@ -200,7 +203,7 @@ class JoinReplicasetForm extends React.Component<JoinReplicasetFormProps> {
                     </Text>
                   )}
                   topRightControls={[
-                    <InputText
+                    <Input
                       className={styles.filter}
                       placeholder='Filter by uri, uuid, role, alias or labels'
                       value={filter}

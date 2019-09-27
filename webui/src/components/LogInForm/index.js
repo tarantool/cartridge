@@ -4,13 +4,15 @@ import { css } from 'emotion';
 import { logIn } from 'src/store/actions/auth.actions';
 import { Formik, Form } from 'formik'
 import * as yup from 'yup'
-import Modal from 'src/components/Modal';
-import Button from 'src/components/Button';
-import { BaseModal } from '../Modal';
 import { FieldConstructor } from '../FieldGroup';
-import InputText from '../InputText';
-import Alert from '../Alert';
-import Text from '../Text';
+import {
+  Alert,
+  Button,
+  BaseModal,
+  Input,
+  Modal,
+  Text
+} from '@tarantool.io/ui-kit';
 import { ModalInfoContainer } from '../styled'
 
 const schema = yup.object().shape({
@@ -126,7 +128,7 @@ class LogInForm extends React.Component {
                 label={label}
                 required={true}
                 input={
-                  <InputText
+                  <Input
                     value={values[field]}
                     onBlur={handleBlur}
                     onChange={handleChange}

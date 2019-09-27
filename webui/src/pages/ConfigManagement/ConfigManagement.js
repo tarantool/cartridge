@@ -2,11 +2,8 @@ import * as React from 'react'
 import { css } from 'react-emotion'
 import { connect } from 'react-redux'
 import { getErrorMessage } from '../../api';
-import Alert from '../../components/Alert';
-import Text from '../../components/Text'
 import { TitledPanel } from '../../components/Panel'
-import Button from '../../components/Button'
-import { IconDownload } from '../../components/Icon/icons/IconDownload';
+import { Alert, Button, IconDownload, Text } from '@tarantool.io/ui-kit';
 import UploadZone from '../../components/UploadZone';
 import { uploadConfig } from '../../store/actions/clusterPage.actions';
 
