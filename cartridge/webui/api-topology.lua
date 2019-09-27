@@ -116,8 +116,8 @@ local gql_type_edit_replicaset_input = gql_types.inputObject {
     name = 'EditReplicasetInput',
     description = 'Parameters for editing a replicaset',
     fields = {
-        uuid = gql_types.string.nonNull,
-        alias = gql_types.string.nonNull,
+        uuid = gql_types.string,
+        alias = gql_types.string,
         roles = gql_types.list(gql_types.string.nonNull),
         join_servers = gql_types.list(
             gql_types.inputObject({

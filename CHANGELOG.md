@@ -6,13 +6,21 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-## [1.2.0] - 2019-10-21
-
 ### Added
 
 - Automatically choose default vshard group in create and edit replicaset modals
 
-- 'Auto' placeholder to weight input in Replicaset add and edit forms.
+### Changed
+
+- WebUI now uses `edit_topology` mutation instead of deprecated ones.
+
+- Update `vshard` dependency to 0.1.13.
+
+## [1.2.0] - 2019-10-21
+
+### Added
+
+- 'Auto' placeholder to weight input in the Replicaset forms.
 
 - 'Select all' and 'Deselect all' buttons to roles field in Replicaset add and edit forms.
 

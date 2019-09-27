@@ -18,9 +18,9 @@ import FormField from 'src/components/FormField';
 import type {
   Role,
   Replicaset,
-  VshardGroup,
-  EditReplicasetMutationVariables
+  VshardGroup
 } from 'src/generated/graphql-typing';
+import type { EditReplicasetArgs } from 'src/store/request/clusterPage.requests';
 import {
   getDependenciesString,
   getRolesDependencies,
@@ -95,7 +95,7 @@ type EditReplicasetFormProps = {
   knownRoles?: Role[],
   loading?: boolean,
   onCancel: () => void,
-  onSubmit: (d: EditReplicasetMutationVariables) => void,
+  onSubmit: (d: EditReplicasetArgs) => void,
   replicaset?: Replicaset,
   vshard_groups?: VshardGroup[]
 };

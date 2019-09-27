@@ -8,10 +8,10 @@ import { addSearchParams } from 'src/misc/url';
 import type {
   Role,
   Replicaset,
-  VshardGroup,
-  EditReplicasetMutationVariables
+  VshardGroup
 } from 'src/generated/graphql-typing';
 import { editReplicaset } from 'src/store/actions/clusterPage.actions';
+import type { EditReplicasetArgs } from 'src/store/request/clusterPage.requests';
 
 type EditReplicasetModalProps = {
   editReplicaset: Function,
@@ -63,7 +63,7 @@ class EditReplicasetModal extends React.Component<EditReplicasetModalProps> {
     );
   }
 
-  handleEditReplicasetSubmit = (formData: EditReplicasetMutationVariables) => {
+  handleEditReplicasetSubmit = (formData: EditReplicasetArgs) => {
     this.props.editReplicaset(formData);
     this.handleClose();
   };
