@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
 import React from 'react';
 import { defaultMemoize } from 'reselect';
-import { css } from 'emotion';
+import { css, cx } from 'emotion';
 import { withRouter } from 'react-router-dom';
 import {
   Button,
@@ -52,21 +52,14 @@ const styles = {
     margin-right: 12px;
   `,
   vshardTooltip: css`
-    position: relative;
     display: inline;
+    font-weight: bold;
   `,
-  vshard: css`
-    flex-basis: 306px;
-    margin-left: 12px;
-    margin-right: 12px;
-    color: rgba(0, 0, 0, 0.65);
+  vshardGroupTooltip: css`
+    position: relative;
+    margin-right: 17px;
 
-    & b:first-child {
-      position: relative;
-      margin-right: 17px;
-    }
-
-    & b:first-child::before {
+    &::before {
       content: '';
       position: absolute;
       top: 0px;
@@ -75,6 +68,12 @@ const styles = {
       height: 18px;
       background-color: #e8e8e8;
     }
+  `,
+  vshard: css`
+    flex-basis: 306px;
+    margin-left: 12px;
+    margin-right: 12px;
+    color: rgba(0, 0, 0, 0.65);
   `,
   editBtn: css`
     position: absolute;
@@ -123,12 +122,14 @@ class ReplicasetList extends React.PureComponent {
               <div className={styles.statusGroup}>
                 <HealthStatus className={styles.status} message={replicaset.message} status={replicaset.status} />
                 <Text className={styles.vshard} variant='p' tag='div' upperCase>
-                  <Tooltip className={styles.vshardTooltip} content='Storage group'>
-                    {(replicaset.vshard_group || replicaset.weight) && [
-                      <b>{replicaset.vshard_group}</b>,
-                      <b>{replicaset.weight}</b>
-                    ]}
-                  </Tooltip>
+                  {(replicaset.vshard_group || replicaset.weight) && [
+                    <Tooltip className={cx(styles.vshardTooltip, styles.vshardGroupTooltip)} content='Storage group'>
+                      {replicaset.vshard_group}
+                    </Tooltip>,
+                    <Tooltip className={cx(styles.vshardTooltip)} content='Replica set weight'>
+                      {replicaset.weight}
+                    </Tooltip>,
+                  ]}
                 </Text>
               </div>
               <Button

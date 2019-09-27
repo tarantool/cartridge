@@ -1,7 +1,7 @@
 // @flow
 // TODO: move to uikit
 import * as React from 'react';
-import { css, cx } from 'react-emotion';
+import { css } from 'react-emotion';
 import Tooltip from 'src/components/Tooltip';
 import Dropdown from 'src/components/Dropdown';
 import ServerLabels, { type Label } from 'src/components/ServerLabels';

@@ -28,6 +28,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Editing topology with `failover_priority` argument.
 
+- Replicaset weight tooltip in replicasets list
+
 ## [1.1.0] - 2019-09-24
 
 ### Added
