@@ -312,8 +312,7 @@ end
 -- @within Authorizarion
 -- @treturn string|nil
 local function get_session_username()
-    local http_session = fiber.self().storage['http_session']
-    return http_session and http_session.username
+    return fiber.self().storage['http_session_username']
 end
 
 local function login(req)
@@ -376,8 +375,6 @@ local function login(req)
 end
 
 local function logout(_)
-    fiber.self().storage['http_session'] = nil
-
     return {
         status = 200,
         headers = {
@@ -632,8 +629,7 @@ end
 -- @treturn boolean Access granted
 local function authorize_request(req)
     checks('table')
-    local http_session = {}
-    fiber.self().storage['http_session'] = http_session
+    local fiber_storage = fiber.self().storage
 
     local auth_cfg = get_params()
     local cookie_raw = req:cookie('lsid')
@@ -669,18 +665,18 @@ local function authorize_request(req)
     end
 
     if username then
-        http_session.username = username
+        fiber_storage['http_session_username'] = username
 
         if cookie_ts > 0
         and auth_cfg.cookie_renew_age >= 0
         and fiber.time() - cookie_ts > auth_cfg.cookie_renew_age
         then
-            http_session.set_cookie = create_cookie(username)
+            fiber_storage['http_session_set_cookie'] = create_cookie(username)
         end
 
         return true
     elseif cookie_raw then
-        http_session.set_cookie = 'lsid="";Max-Age=0'
+        fiber_storage['http_session_set_cookie'] = 'lsid="";Max-Age=0'
     end
 
     if not auth_cfg.enabled then
@@ -702,24 +698,18 @@ end
 -- @treturn table The same response with cookies injected
 local function render_response(resp)
     checks('table')
-    local http_session = fiber.self().storage['http_session']
-    if http_session == nil then
-        local err = errors.new('RenderHTTPError', 2,
-            "Can't render response because request wasn't authorized"
-        )
-        return nil, err
-    end
+    local set_cookie = fiber.self().storage['http_session_set_cookie']
 
-    if http_session.set_cookie ~= nil then
+    if set_cookie then
         if resp.headers == nil then
             resp.headers = {}
         end
 
         if resp.headers['set-cookie'] == nil then
-            resp.headers['set-cookie'] = http_session.set_cookie
+            resp.headers['set-cookie'] = set_cookie
         else
             resp.headers['set-cookie'] = resp.headers['set-cookie'] ..
-                ',' .. http_session.set_cookie
+                ',' .. set_cookie
         end
     end
 
@@ -733,6 +723,22 @@ end
 -- @local
 local function init(httpd)
     checks('table')
+
+    local function wipe_fiber_storage()
+        local fiber_storage = fiber.self().storage
+        fiber_storage['http_session_username'] = nil
+        fiber_storage['http_session_set_cookie'] = nil
+    end
+
+    if httpd.hooks.before_dispatch == nil then
+        httpd.hooks.before_dispatch = wipe_fiber_storage
+    else
+        local before_dispatch_original = httpd.hooks.before_dispatch
+        httpd.hooks.before_dispatch = function(...)
+            wipe_fiber_storage()
+            return before_dispatch_original(...)
+        end
+    end
 
     httpd:route({
         path = '/login',
