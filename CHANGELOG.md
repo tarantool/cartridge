@@ -11,6 +11,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Refresh replicaset list in UI after topology edit actions: bootstrap, join, expel,
   probe, replicaset edit.
 
+- New Lua API `cartridge.http_authorize_request()` suitable for checking
+  HTTP request headers.
+
+- New Lua API `cartridge.http_render_response()` for generating HTTP
+  response with proper `Set-Cookie` headers.
+
+- New Lua API `cartridge.http_get_username()` to check authorization of
+  active HTTP session.
+
 ### Fixed
 
 - Editing topology with `failover_priority` argument.

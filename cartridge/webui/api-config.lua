@@ -24,10 +24,10 @@ local system_sections = {
     users_acl = true,
 }
 
-local function http_finalize_error(resp, http_code, err)
-    log.error(tostring(err))
+local function http_finalize_error(http_code, err)
+    log.error('%s', err)
 
-    return resp:finalize({
+    return auth.render_response({
         status = http_code,
         headers = {
             ['content-type'] = "application/json; charset=utf-8"
@@ -38,16 +38,15 @@ end
 
 local e_download_config = errors.new_class('Config download failed')
 local function download_config_handler(req)
-    local ok, resp = auth.check_request(req)
-    if not ok then
+    if not auth.authorize_request(req) then
         local err = e_download_config:new('Unauthorized')
-        return http_finalize_error(resp, 401, err)
+        return http_finalize_error(401, err)
     end
 
     local conf = confapplier.get_deepcopy()
     if conf == nil then
         local err = e_download_config:new("Cluster isn't bootsrapped yet")
-        return http_finalize_error(resp, 409, err)
+        return http_finalize_error(409, err)
     end
 
     -- cut system sections
@@ -55,7 +54,7 @@ local function download_config_handler(req)
         conf[k] = nil
     end
 
-    return resp:finalize({
+    return auth.render_response({
         status = 200,
         headers = {
             ['content-type'] = "application/yaml",
@@ -68,15 +67,14 @@ end
 local e_upload_config = errors.new_class('Config upload failed')
 local e_decode_yaml = errors.new_class('Decoding YAML failed')
 local function upload_config_handler(req)
-    local ok, resp = auth.check_request(req)
-    if not ok then
+    if not auth.authorize_request(req) then
         local err = e_upload_config:new('Unauthorized')
-        return http_finalize_error(resp, 401, err)
+        return http_finalize_error(401, err)
     end
 
     if confapplier.get_readonly() == nil then
         local err = e_upload_config:new("Cluster isn't bootsrapped yet")
-        return http_finalize_error(resp, 409, err)
+        return http_finalize_error(409, err)
     end
 
     local req_body = req:read()
@@ -111,10 +109,10 @@ local function upload_config_handler(req)
     end
 
     if err ~= nil then
-        return http_finalize_error(resp, 400, err)
+        return http_finalize_error(400, err)
     elseif type(conf_new) ~= 'table' then
         err = e_upload_config:new('Config must be a table')
-        return http_finalize_error(resp, 400, err)
+        return http_finalize_error(400, err)
     end
 
     log.warn('Config uploaded')
@@ -133,7 +131,7 @@ local function upload_config_handler(req)
             local err = e_upload_config:new(
                 "uploading system section %q is forbidden", k
             )
-            return http_finalize_error(resp, 400, err)
+            return http_finalize_error(400, err)
         else
             patch[k] = v
         end
@@ -141,10 +139,10 @@ local function upload_config_handler(req)
 
     local ok, err = confapplier.patch_clusterwide(patch)
     if ok == nil then
-        return http_finalize_error(resp, 400, err)
+        return http_finalize_error(400, err)
     end
 
-    return resp:finalize({status = 200})
+    return auth.render_response({status = 200})
 end
 
 local function init(httpd)

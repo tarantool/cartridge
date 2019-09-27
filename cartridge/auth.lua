@@ -34,6 +34,7 @@ local ADMIN_USER = {
     fullname = 'Cartridge Administrator'
 }
 
+errors.new_class('RenderHTTPError', {log_on_creation = true})
 local e_check_cookie = errors.new_class('Checking cookie failed')
 local e_check_header = errors.new_class('Checking auth headers failed')
 local e_callback = errors.new_class('Auth callback failed')
@@ -202,7 +203,7 @@ local function hmac(hashfun, blocksize, key, message)
     return hashfun(opad .. hashfun(ipad .. message))
 end
 
-local function create_cookie_headers(uid)
+local function create_cookie(uid)
     checks('string')
     local ts = tostring(fiber.time())
     local key = cluster_cookie.cookie()
@@ -221,12 +222,10 @@ local function create_cookie_headers(uid)
         {nopad = true, nowrap = true, urlsafe = true}
     )
 
-    return {
-        ['set-cookie'] = string.format(
-            'lsid=%s; Max-Age=%d', lsid,
-            get_params().cookie_max_age
-        )
-    }
+    return string.format(
+        'lsid=%s;Max-Age=%d', lsid,
+        get_params().cookie_max_age
+    )
 end
 
 local function get_cookie_uid(raw)
@@ -308,12 +307,12 @@ end
 
 --- Get username for the current HTTP session.
 --
+-- (**Added** in v1.1.0-4)
 -- @function get_session_username
 -- @within Authorizarion
--- @treturn string or nil if no user is logged in
+-- @treturn string|nil
 local function get_session_username()
-    local fiber_storage = fiber.self().storage
-    return fiber_storage['auth_session_username']
+    return fiber.self().storage['http_session_username']
 end
 
 local function login(req)
@@ -325,7 +324,9 @@ local function login(req)
         if password == cluster_cookie.cookie() then
             return {
                 status = 200,
-                headers = create_cookie_headers(username),
+                headers = {
+                    ['set-cookie'] = create_cookie(username),
+                }
             }
         else
             return {
@@ -356,7 +357,9 @@ local function login(req)
     if ok then
         return {
             status = 200,
-            headers = create_cookie_headers(username),
+            headers = {
+                ['set-cookie'] = create_cookie(username),
+            },
         }
     elseif err ~= nil then
         log.error('%s', err)
@@ -615,42 +618,18 @@ local function remove_user(username)
     end)
 end
 
-local _response_mt = {
-    __index = {
-        finalize = function(self, resp)
-            for k, v in pairs(resp) do
-                if type(self[k]) == 'table'
-                and type(v) == 'table'
-                then
-                    -- merge tables
-                    for tk, tv in pairs(v) do
-                        self[k][tk] = tv
-                    end
-                else
-                    self[k] = v
-                end
-            end
-
-            return self
-        end
-    },
-}
 --- Authorize an HTTP request.
 --
--- Try to get username from cookies or basic HTTP authentication.
+-- Get username from cookies or basic HTTP authentication.
 --
--- @function check_request
+-- (**Added** in v1.1.0-4)
+-- @function authorize_request
 -- @within Authorizarion
--- @param req An HTTP request
+-- @tparam table request
 -- @treturn boolean Access granted
--- @treturn table HTTP response template
-local function check_request(req)
+local function authorize_request(req)
+    checks('table')
     local fiber_storage = fiber.self().storage
-    -- clean fiber storage to behave correctly
-    -- when user logouts within keepalive session
-    fiber_storage['auth_session_username'] = nil
-
-    local resp = setmetatable({}, _response_mt)
 
     local auth_cfg = get_params()
     local cookie_raw = req:cookie('lsid')
@@ -666,7 +645,10 @@ local function check_request(req)
             log.error('%s', err)
         end
 
-        local uid, err = e_check_header:pcall(get_basic_auth_uid, req.headers['authorization'])
+        local uid, err = e_check_header:pcall(
+            get_basic_auth_uid,
+            req.headers['authorization']
+        )
         if uid ~= nil then
             username = uid
             break
@@ -683,27 +665,55 @@ local function check_request(req)
     end
 
     if username then
-        fiber_storage['auth_session_username'] = username
+        fiber_storage['http_session_username'] = username
 
         if cookie_ts > 0
         and auth_cfg.cookie_renew_age >= 0
         and fiber.time() - cookie_ts > auth_cfg.cookie_renew_age
         then
-            resp['headers'] = create_cookie_headers(username)
+            fiber_storage['http_session_set_cookie'] = create_cookie(username)
         end
 
-        return true, resp
+        return true
     elseif cookie_raw then
-        resp['headers'] = {
-            ['set-cookie'] = 'lsid=""; Max-Age=0'
-        }
+        fiber_storage['http_session_set_cookie'] = 'lsid="";Max-Age=0'
     end
 
     if not auth_cfg.enabled then
-        return true, resp
+        return true
     else
-        return false, resp
+        return false
     end
+end
+
+--- Render HTTP response.
+--
+-- Inject set-cookie headers into response in order to renew or reset
+-- the cookie.
+--
+-- (**Added** in v1.1.0-4)
+-- @function render_response
+-- @within Authorizarion
+-- @tparam table response
+-- @treturn table The same response with cookies injected
+local function render_response(resp)
+    checks('table')
+    local set_cookie = fiber.self().storage['http_session_set_cookie']
+
+    if set_cookie then
+        if resp.headers == nil then
+            resp.headers = {}
+        end
+
+        if resp.headers['set-cookie'] == nil then
+            resp.headers['set-cookie'] = set_cookie
+        else
+            resp.headers['set-cookie'] = resp.headers['set-cookie'] ..
+                ',' .. set_cookie
+        end
+    end
+
+    return resp
 end
 
 --- Initialize the authentication HTTP API.
@@ -713,6 +723,22 @@ end
 -- @local
 local function init(httpd)
     checks('table')
+
+    local function wipe_fiber_storage()
+        local fiber_storage = fiber.self().storage
+        fiber_storage['http_session_username'] = nil
+        fiber_storage['http_session_set_cookie'] = nil
+    end
+
+    if httpd.hooks.before_dispatch == nil then
+        httpd.hooks.before_dispatch = wipe_fiber_storage
+    else
+        local before_dispatch_original = httpd.hooks.before_dispatch
+        httpd.hooks.before_dispatch = function(...)
+            wipe_fiber_storage()
+            return before_dispatch_original(...)
+        end
+    end
 
     httpd:route({
         path = '/login',
@@ -778,8 +804,7 @@ return {
     list_users = list_users,
     remove_user = remove_user,
 
-    -- check_session = check_session,
-    check_request = check_request,
-    -- invalidate_session = invalidate_session,
+    authorize_request = authorize_request,
+    render_response = render_response,
     get_session_username = get_session_username,
 }
