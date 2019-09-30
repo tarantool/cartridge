@@ -6,6 +6,7 @@ import { TitledPanel } from '../../components/Panel'
 import { Alert, Button, IconDownload, Text } from '@tarantool.io/ui-kit';
 import UploadZone from '../../components/UploadZone';
 import { uploadConfig } from '../../store/actions/clusterPage.actions';
+import ConfigEditor from '../../components/ConfigEditor';
 
 const { AppTitle } = window.tarantool_enterprise_core.components;
 
@@ -103,6 +104,13 @@ class ConfigManagement extends React.Component {
               onClick={this.handleUpload}
             />
           </React.Fragment>
+        }
+      />
+
+      <TitledPanel
+        title={<Text variant={'h3'}>Config editor</Text>}
+        content={
+          <ConfigEditor />
         }
       />
     </div>

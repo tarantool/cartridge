@@ -5,18 +5,19 @@ import { createSelector } from 'reselect';
 
 import type { FileItem } from '../reducers/files.reducer.js';
 
-type TreeFileItem = FileItem & {
+export type TreeFileItem = FileItem & {
   items: Array<TreeFileItem>
 }
 
 const toTreeItem = (file: FileItem): TreeFileItem => ({ ...file, items: [] })
 
 export const selectFileTree = (files: Array<FileItem>): Array<TreeFileItem> => {
-  const fileMap:  {[string]: TreeFileItem} = files.reduce((r: {[string]: TreeFileItem}, x: FileItem) => {
-    r[x.fileId] = toTreeItem(x);
-    return r;
-  },
-  {}
+  const fileMap:  {[string]: TreeFileItem} = files.reduce(
+    (r: {[string]: TreeFileItem}, x: FileItem) => {
+      r[x.fileId] = toTreeItem(x);
+      return r;
+    },
+    {}
   )
   const rootFiles = []
   for (const fileId in fileMap) {

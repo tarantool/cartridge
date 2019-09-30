@@ -3,12 +3,19 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import { noop, throttle } from 'lodash';
 import { subscribeOnTargetEvent } from '../../misc/eventHandler';
+import { getModelByFile, setModelByFile } from '../../misc/monacoModelStorage';
+import 'monaco-editor/esm/vs/basic-languages/javascript/javascript.contribution';
+import 'monaco-editor/esm/vs/basic-languages/yaml/yaml.contribution';
+import 'monaco-editor/esm/vs/basic-languages/lua/lua.contribution';
+import 'monaco-editor/esm/vs/basic-languages/html/html.contribution';
+// import { MonacoServices } from 'monaco-languageclient'
 
 const DEF_CURSOR = {}
 
 export default class MonacoEditor extends React.Component {
   static propTypes = {
     value: PropTypes.string,
+    fileId: PropTypes.string,
     defaultValue: PropTypes.string,
     language: PropTypes.string,
     theme: PropTypes.string,
@@ -45,6 +52,7 @@ export default class MonacoEditor extends React.Component {
   containerElement = null;
   editor = null;
   _subscription = null;
+  _prevent_trigger_change_event = false;
 
   componentDidMount() {
     this.initMonaco();
@@ -70,30 +78,41 @@ export default class MonacoEditor extends React.Component {
 
   componentDidUpdate(prevProps) {
     const {
-      value, language, theme, cursor, options
+      value, language, fileId, theme, cursor, options
     } = this.props;
 
-    const { editor } = this;
-    const model = editor.getModel();
+    console.log(this.editor)
 
-    if (this.props.value !== model.getValue()) {
-      this.__prevent_trigger_change_event = true;
-      this.editor.pushUndoStop();
-      model.pushEditOperations(
-        [],
-        [
-          {
-            range: model.getFullModelRange(),
-            text: value
-          }
-        ]
-      );
-      this.editor.pushUndoStop();
-      this.__prevent_trigger_change_event = false;
+    const { editor } = this;
+    let model = editor.getModel(fileId)
+    if (prevProps.fileId !== fileId) {
+      const existedModel = getModelByFile(fileId)
+      if (!existedModel) {
+        model = setModelByFile(fileId, language, value)
+      } else {
+        model = existedModel
+      }
+      editor.setModel(model)
+      editor.focus()
+    } else {
+      if (this.props.value !== model.getValue()) {
+        this._prevent_trigger_change_event = true;
+        this.editor.pushUndoStop();
+        model.pushEditOperations(
+          [],
+          [
+            {
+              range: model.getFullModelRange(),
+              text: value
+            }
+          ]
+        );
+        this.editor.pushUndoStop();
+        this._prevent_trigger_change_event = false;
+      }
     }
-    if (prevProps.language !== language) {
-      monaco.editor.setModelLanguage(model, language);
-    }
+
+
     if (prevProps.theme !== theme) {
       monaco.editor.setTheme(theme);
     }
@@ -132,16 +151,18 @@ export default class MonacoEditor extends React.Component {
     if (this.containerElement) {
       // Before initializing monaco editor
       Object.assign(options, this.editorWillMount());
+
       this.editor = monaco.editor.create(
         this.containerElement,
         {
           value,
-          language,
+          language: 'javascript',
           ...options,
           ...(theme ? { theme } : {})
         },
         overrideServices
       );
+      // MonacoServices.install(this.editor)
       // After initializing monaco editor
       this.editorDidMount(this.editor);
     }
@@ -164,7 +185,7 @@ export default class MonacoEditor extends React.Component {
     }
 
     this._subscription = editor.onDidChangeModelContent(() => {
-      if (!this.__prevent_trigger_change_event) {
+      if (!this._prevent_trigger_change_event) {
         this.props.onChange(editor.getValue());
       }
     });

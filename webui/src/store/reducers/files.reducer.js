@@ -19,6 +19,9 @@ export type FileItem = {
   loading: boolean,
   saved: boolean,
   type: 'file' | 'folder',
+  column: 0,
+  line: 0,
+  scrollPosition: 0,
 }
 
 type UpdateObj = {
@@ -48,7 +51,113 @@ const initialState: Array<FileItem> = [
 `,
     loading: false,
     saved: true,
-    type: 'file'
+    type: 'file',
+    column: 0,
+    line: 0,
+    scrollPosition: 0
+  },
+  {
+    fileId: '5',
+    path: 'test.js',
+    fileName: 'test.js',
+    content: `
+import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
+
+const storage = {}
+
+const getExtension = fileName => {
+  const f = fileName.split('.')
+  if (f.length > 1) {
+    return f[f.length-1]
+  }
+  return null
+}
+
+const extMap = {
+  'lua': 'lua',
+  'yml': 'yaml',
+  'json': 'json',
+  'js': 'js'
+};
+
+export const getLanguageByFileName = fileName => {
+  const ext = getExtension(fileName)
+  if (ext) {
+    return extMap[ext]
+  }
+  return null
+}
+
+export const setModelContent = (file, content) => {
+  if (storage[file]) {
+    storage[file].setValue(content)
+  } else {
+    const model = monaco.editor.createModel(content, getLanguageByFileName(file))
+    storage[file] = model
+  }
+}
+
+export const dropModels = () => {
+  for (const file in storage) {
+    if (storage[file]) {
+      storage[file].dispose()
+    }
+  }
+}
+
+`,
+    initialContent: `
+import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
+
+const storage = {}
+
+const getExtension = fileName => {
+  const f = fileName.split('.')
+  if (f.length > 1) {
+    return f[f.length-1]
+  }
+  return null
+}
+
+const extMap = {
+  'lua': 'lua',
+  'yml': 'yaml',
+  'json': 'json',
+  'js': 'js'
+};
+
+export const getLanguageByFileName = fileName => {
+  const ext = getExtension(fileName)
+  if (ext) {
+    return extMap[ext]
+  }
+  return null
+}
+
+export const setModelContent = (file, content) => {
+  if (storage[file]) {
+    storage[file].setValue(content)
+  } else {
+    const model = monaco.editor.createModel(content, getLanguageByFileName(file))
+    storage[file] = model
+  }
+}
+
+export const dropModels = () => {
+  for (const file in storage) {
+    if (storage[file]) {
+      storage[file].dispose()
+    }
+  }
+}
+
+`,
+    loading: false,
+    saved: true,
+    type: 'file',
+    column: 0,
+    line: 0,
+    scrollPosition: 0
   },
   {
     fileId: '2',
@@ -58,7 +167,10 @@ const initialState: Array<FileItem> = [
     initialContent: ``,
     loading: false,
     saved: true,
-    type: 'file'
+    type: 'file',
+    column: 0,
+    line: 0,
+    scrollPosition: 0
   },
   {
     fileId: '3',
@@ -68,7 +180,10 @@ const initialState: Array<FileItem> = [
     initialContent: ``,
     loading: false,
     saved: true,
-    type: 'folder'
+    type: 'folder',
+    column: 0,
+    line: 0,
+    scrollPosition: 0
   },
   {
     parentId: '3',
@@ -79,7 +194,10 @@ const initialState: Array<FileItem> = [
     initialContent: ``,
     loading: false,
     saved: true,
-    type: 'file'
+    type: 'file',
+    column: 0,
+    line: 0,
+    scrollPosition: 0
   }
 ]
 
