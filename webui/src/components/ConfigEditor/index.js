@@ -9,6 +9,9 @@ import rest from 'src/api/rest';
 import { selectFileTree, selectSelectedFile } from '../../store/selectors/filesSelectors';
 import { selectFile } from '../../store/actions/editor.actions';
 import { updateFileContent } from '../../store/actions/files.actions';
+import { getLanguageByFileName } from '../../misc/monacoModelStorage'
+import type { TreeFileItem } from '../../store/selectors/filesSelectors';
+import type { FileItem } from '../../store/reducers/files.reducer';
 
 const { TreeNode, DirectoryTree } = Tree;
 
@@ -45,14 +48,28 @@ const renderTree = (treeNode: Object, prop: string, render: Function) => {
   return render(treeNode, children)
 }
 
-class ConfigEditor extends React.Component{
+type ConfigEditorState = {
+  loading: boolean,
+  code: ?string,
+}
+
+type ConfigEditorProps = {
+  fileTree: Array<TreeFileItem>,
+  fetchingConfigFiles: boolean,
+  puttingConfigFiles: boolean,
+  selectedFile: FileItem | null,
+  dispatch: Function,
+}
+
+class ConfigEditor extends React.Component<ConfigEditorProps, ConfigEditorState> {
   state = {
-    loading: true
+    loading: true,
+    code: null,
   }
 
-  async componentDidMount(){
+  async componentDidMount() {
     const res = await rest.get(
-      '/admin/config',
+      '/admin/config'
     );
     this.setState(() => ({
       code: res.data,
@@ -60,11 +77,9 @@ class ConfigEditor extends React.Component{
     }))
   }
 
-  render(){
+  render() {
     const {
       fileTree,
-      fetchingConfigFiles,
-      puttingConfigFiles,
       selectedFile,
       dispatch
     } = this.props
@@ -99,13 +114,19 @@ class ConfigEditor extends React.Component{
         <MonacoEditor
           className={styles.editor}
           language={selectedFile && getLanguageByFileName(selectedFile.fileName) || null}
-          options={{ ...options, readOnly: !selectedFile }}
-          value={selectedFile ? selectedFile.content : 'Select file' }
-          onChange={v => dispatch(updateFileContent(selectedFile.fileId, v))}
+          options={{
+            ...options,
+            readOnly: !selectedFile
+          }}
+          fileId={selectedFile ? selectedFile.fileId : null}
+          value={selectedFile ? selectedFile.content : 'Select file'}
+          onChange={v => selectedFile && dispatch(updateFileContent(selectedFile.fileId, v))}
         />
       </div>
     </div>)
   }
+
+  f
 }
 
 export default connect((state, props) => {
