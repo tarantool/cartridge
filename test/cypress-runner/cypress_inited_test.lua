@@ -1,6 +1,6 @@
 local fio = require('fio')
 local t = require('luatest')
-local g = t.group('api_edit')
+local g = t.group('cypress_basic')
 
 local test_helper = require('test.helper')
 local helpers = require('cartridge.test-helpers')
@@ -54,5 +54,6 @@ end
 
 
 function g.test_cypress_run()
-    os.execute("cd webui && npx cypress run --spec cypress/integration/probe-server.spec.js")
+    local code = os.execute("cd webui && npx cypress run --spec cypress/integration/probe-server.spec.js")
+    t.assert_equal(code, 0)
 end
