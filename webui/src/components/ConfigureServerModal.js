@@ -104,7 +104,7 @@ class ConfigureServerModal extends React.Component<ConfigureServerModalProps> {
 
     return (
       <Modal
-        className='ConfigureServerModal'
+        className='meta-test__ConfigureServerModal'
         title='Configure server'
         visible={!!selectedServerUri}
         loading={loading}
