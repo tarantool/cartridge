@@ -128,23 +128,7 @@ function Cluster:bootstrap()
         query = [[
             mutation boot($replicasets: [EditReplicasetInput]) {
                 cluster {
-                    edit_topology(replicasets: $replicasets) {
-                        replicasets {
-                            status
-                            uuid
-                            roles
-                            active_master {uri}
-                            master {uri}
-                            weight
-                        }
-                        servers {
-                            status
-                            uuid
-                            uri
-                            labels {name value}
-                            boxinfo { general {pid} }
-                        }
-                    }
+                    edit_topology(replicasets: $replicasets) {}
                 }
             }
         ]],
