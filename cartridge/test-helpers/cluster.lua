@@ -155,9 +155,12 @@ function Cluster:bootstrap()
 
     for _, srv in ipairs(self.servers) do
         self:retrying({}, function() srv:connect_net_box() end)
+        self:wait_until_healthy(srv)
     end
 
-    self:wait_until_healthy()
+    for _, srv in ipairs(self.servers) do
+        srv.net_box:eval('require("membership.options").PROTOCOL_PERIOD_SECONDS = 0.2')
+    end
 
     if self.use_vshard then
         self:bootstrap_vshard()
@@ -240,9 +243,9 @@ function Cluster:join_server(server)
 end
 
 --- Blocks fiber until `cartridge.is_healthy()` returns true on main_server.
-function Cluster:wait_until_healthy()
+function Cluster:wait_until_healthy(srv)
     self:retrying({}, function ()
-        self.main_server.net_box:eval([[
+        (srv or self.main_server).net_box:eval([[
             local cartridge = package.loaded['cartridge']
             return assert(cartridge) and assert(cartridge.is_healthy())
         ]])
