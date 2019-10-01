@@ -1,11 +1,14 @@
-import PropTypes from 'prop-types';
-import React from 'react';
+// @flow
+import * as React from 'react';
 import { defaultMemoize } from 'reselect';
 import { css } from 'react-emotion';
 import { FlatList } from '@tarantool.io/ui-kit';
 import ReplicasetServerListItem from 'src/components/ReplicasetServerListItem';
+import type {
+  Replicaset
+} from 'src/generated/graphql-typing';
 
-const SERVER_LABELS_HIGHLIGHTING_CLASS = 'ServerLabelsHighlightingArea'
+const SERVER_LABELS_HIGHLIGHTING_CLASS = 'ServerLabelsHighlightingArea';
 
 const styles = {
   server: css`
@@ -69,7 +72,7 @@ const styles = {
   `
 };
 
-const prepareServers = replicaset => {
+const prepareServers = (replicaset: Replicaset) => {
   const masterUuid = replicaset.master.uuid;
   const activeMasterUuid = replicaset.active_master.uuid;
   return replicaset.servers.map(server => ({
@@ -79,9 +82,16 @@ const prepareServers = replicaset => {
   }));
 };
 
-class ReplicasetServerList extends React.PureComponent {
+type ReplicasetServerListProps = {
+  clusterSelf: any,
+  replicaset: Replicaset,
+  editReplicaset: (r: Replicaset) => void,
+  onServerLabelClick: () => void
+};
+
+class ReplicasetServerList extends React.PureComponent<ReplicasetServerListProps> {
   render() {
-    const { onServerLabelClick } = this.props;
+    const { clusterSelf, onServerLabelClick } = this.props;
     const servers = this.getServers();
 
     return (
@@ -95,6 +105,7 @@ class ReplicasetServerList extends React.PureComponent {
                 <ReplicasetServerListItem
                   onServerLabelClick={onServerLabelClick}
                   tagsHighlightingClassName={SERVER_LABELS_HIGHLIGHTING_CLASS}
+                  totalBucketsCount={clusterSelf && clusterSelf.vshard_bucket_count}
                   {...server}
                 />
               )}
@@ -117,19 +128,5 @@ class ReplicasetServerList extends React.PureComponent {
 
   prepareServers = defaultMemoize(prepareServers);
 }
-
-ReplicasetServerList.propTypes = {
-  clusterSelf: PropTypes.any,
-  replicaset: PropTypes.shape({
-    uuid: PropTypes.string.isRequired,
-    roles: PropTypes.arrayOf(PropTypes.string).isRequired,
-    status: PropTypes.string,
-    servers: PropTypes.array.isRequired
-  }).isRequired,
-  editReplicaset: PropTypes.func.isRequired,
-  expelServer: PropTypes.func.isRequired,
-  createReplicaset: PropTypes.func.isRequired,
-  onServerLabelClick: PropTypes.func
-};
 
 export default ReplicasetServerList;

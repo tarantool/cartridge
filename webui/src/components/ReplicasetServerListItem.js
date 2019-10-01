@@ -142,7 +142,8 @@ type ReplicasetServerListItemProps = {
   ...$Exact<Server>,
   activeMaster?: boolean,
   onServerLabelClick?: (label: Label) => void,
-  tagsHighlightingClassName?: string
+  tagsHighlightingClassName?: string,
+  totalBucketsCount?: number
 };
 
 type ReplicasetServerListItemState = {
@@ -165,6 +166,7 @@ class ReplicasetServerListItem extends React.PureComponent<
       master,
       onServerLabelClick,
       tagsHighlightingClassName,
+      totalBucketsCount,
       history,
       uuid
     } = this.props;
@@ -193,11 +195,16 @@ class ReplicasetServerListItem extends React.PureComponent<
                     ? (
                       <Tooltip
                         className={styles.bucketsCount}
-                        content={<span>total bucket: <b>{(statistics && statistics.bucketsCount) || '-'}</b></span>}
+                        content={(
+                          <React.Fragment>
+                            {'Total buckets: '}
+                            <b>{typeof totalBucketsCount === 'number' ? totalBucketsCount : '-'}</b>
+                          </React.Fragment>
+                        )}
                       >
                         <IconBucket className={styles.iconMarginSmall} />
                         <Text variant='h5' tag='span'>
-                          Bucket: <b>{(statistics && statistics.bucketsCount) || '-'}</b>
+                          Buckets: <b>{(statistics && statistics.bucketsCount) || '-'}</b>
                         </Text>
                       </Tooltip>
                     )

@@ -30,6 +30,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Replicaset weight tooltip in replicasets list
 
+- Total buckets count in buckets tooltip
+
 ## [1.1.0] - 2019-09-24
 
 ### Added
