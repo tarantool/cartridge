@@ -40,14 +40,14 @@ class BootstrapPanel extends React.Component {
         <Text className={styles.row} variant='h4'>When you finish edition topology. To render storages operable.</Text>
         <Text className={styles.row}>
           {routerPresent
-            ? <IconOk className={cx(styles.iconMargin, 'BootStrapPanel__vshard-router_enabled')} />
-            : <IconCancel className={cx(styles.iconMargin, 'BootStrapPanel__vshard-router_disabled')} />}
+            ? <IconOk className={cx(styles.iconMargin, 'meta-test__BootStrapPanel__vshard-router_enabled')} />
+            : <IconCancel className={cx(styles.iconMargin, 'meta-test__BootStrapPanel__vshard-router_disabled')} />}
           One role vshard-router enabled
         </Text>
         <Text className={styles.row}>
           {storagePresent
-            ? <IconOk className={cx(styles.iconMargin, 'BootStrapPanel__vshard-storage_enabled')} />
-            : <IconCancel className={cx(styles.iconMargin, 'BootStrapPanel__vshard-storage_disabled')} />}
+            ? <IconOk className={cx(styles.iconMargin, 'meta-test__BootStrapPanel__vshard-storage_enabled')} />
+            : <IconCancel className={cx(styles.iconMargin, 'meta-test__BootStrapPanel__vshard-storage_disabled')} />}
           One role vshard-storage enabled
         </Text>
         <Text className={styles.row}>Afterwards, any change in topology will trigger data rebalancing</Text>
