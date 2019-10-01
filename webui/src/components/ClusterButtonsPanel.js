@@ -18,8 +18,7 @@ const ClusterButtonsPanel = (
   {
     showBootstrap,
     showFailover
-  }: ClusterButtonsPanelProps
-) => {
+  }: ClusterButtonsPanelProps) => {
   return (
     <PageSection
       topRightControls={[

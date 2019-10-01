@@ -24,6 +24,7 @@ class ExpelServerModal extends React.Component<ExpelServerModalProps>{
     } = this.props
     return (
       <ConfirmModal
+        className='ExpelServerModal'
         title={'Expel server'}
         visible={!!expelModal}
         confirmText={'Expel'}
