@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+- 'Auto' placeholder to weight input in Replicaset add and edit forms.
+
+- 'Select all' and 'Deselect all' buttons to roles field in Replicaset add and edit forms.
+
 - Refresh replicaset list in UI after topology edit actions: bootstrap, join, expel,
   probe, replicaset edit.
 
