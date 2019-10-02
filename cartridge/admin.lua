@@ -16,9 +16,9 @@ local rpc = require('cartridge.rpc')
 local pool = require('cartridge.pool')
 local utils = require('cartridge.utils')
 local roles = require('cartridge.roles')
+local failover = require('cartridge.failover')
 local topology = require('cartridge.topology')
 local twophase = require('cartridge.twophase')
-local bootstrap = require('cartridge.bootstrap')
 local vshard_utils = require('cartridge.vshard-utils')
 local confapplier = require('cartridge.confapplier')
 local service_registry = require('cartridge.service-registry')
@@ -99,6 +99,13 @@ local function get_server_info(members, uuid, uri)
 end
 
 local function get_topology()
+    local state, err = confapplier.get_state()
+    if state == 'InitError'
+    or state == 'BootError'
+    then
+        return nil, err
+    end
+
     local members = membership.members()
     local topology_cfg = confapplier.get_readonly('topology')
     if topology_cfg == nil then
@@ -177,7 +184,7 @@ local function get_topology()
         )
     end
 
-    local active_masters = topology.get_active_masters()
+    local active_leaders = failover.get_active_leaders()
 
     for _it, instance_uuid, server in fun.filter(topology.not_expelled, topology_cfg.servers) do
         local srv = get_server_info(members, instance_uuid, server.uri)
@@ -188,7 +195,7 @@ local function get_topology()
         if leaders_order[server.replicaset_uuid][1] == instance_uuid then
             srv.replicaset.master = srv
         end
-        if active_masters[server.replicaset_uuid] == instance_uuid then
+        if active_leaders[server.replicaset_uuid] == instance_uuid then
             srv.replicaset.active_master = srv
         end
         if srv.status ~= 'healthy' then
@@ -380,14 +387,14 @@ end
 -- @treturn table
 local function get_self()
     local myself = membership.myself()
+    local state, err = confapplier.get_state()
     local result = {
-        alias = myself.payload.alias,
         uri = myself.uri,
-        uuid = nil,
+        uuid = confapplier.get_instance_uuid(),
+        alias = myself.payload.alias,
+        state = state,
+        error = err and err.err or nil,
     }
-    if type(box.cfg) ~= 'function' then
-        result.uuid = box.info.uuid
-    end
     return result
 end
 
@@ -400,7 +407,11 @@ local function get_servers(uuid)
     checks('?string')
 
     local ret = {}
-    local topology = get_topology()
+    local topology, err = get_topology()
+    if topology == nil then
+        return nil, err
+    end
+
     if uuid then
         table.insert(ret, topology.servers[uuid])
     else
@@ -420,7 +431,11 @@ local function get_replicasets(uuid)
     checks('?string')
 
     local ret = {}
-    local topology = get_topology()
+    local topology, err = get_topology()
+    if topology == nil then
+        return nil, err
+    end
+
     if uuid then
         table.insert(ret, topology.replicasets[uuid])
     else
@@ -764,19 +779,7 @@ local function edit_topology(args)
         end
     end
 
-    local ok, err
-    if type(box.cfg) == 'function' then
-        ok, err = bootstrap.from_scratch({topology = topology_cfg})
-    else
-        -- TODO:
-        --  There is a race condition:
-        --  The assertion may fail while "Configuration is being verified".
-        --  See `cluster.bootstrap.from_snapshot()`.
-        assert(confapplier.get_readonly() ~= nil)
-
-        ok, err = twophase.patch_clusterwide({topology = topology_cfg})
-    end
-
+    local ok, err = twophase.patch_clusterwide({topology = topology_cfg})
     if not ok then
         return nil, err
     end
@@ -786,7 +789,10 @@ local function edit_topology(args)
         servers = {},
     }
 
-    local topology = get_topology()
+    local topology, err = get_topology()
+    if topology == nil then
+        return nil, err
+    end
 
     for _, srv in pairs(args.servers or {}) do
         table.insert(ret.servers, topology.servers[srv.uuid])
@@ -897,7 +903,6 @@ local function join_server(args)
         and (member.status == 'alive')
         and (member.payload.uuid == args.instance_uuid)
         and (member.payload.error == nil)
-        and (member.payload.ready)
         then
             conn = pool.connect(args.uri)
         end

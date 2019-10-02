@@ -3,6 +3,7 @@
 local admin = require('cartridge.admin')
 local roles = require('cartridge.roles')
 local gql_types = require('cartridge.graphql.types')
+local roles = require('cartridge.roles')
 local gql_boxinfo_schema = require('cartridge.webui.gql-boxinfo').schema
 local gql_stat_schema = require('cartridge.webui.gql-stat').schema
 local module_name = 'cartridge.webui.api-topology'
@@ -399,6 +400,8 @@ local function init(graphql)
                 uri = gql_types.string.nonNull,
                 uuid = gql_types.string,
                 alias = gql_types.string,
+                state = gql_types.string,
+                error = gql_types.string,
             },
         }),
         callback = module_name .. '.get_self',

@@ -320,9 +320,11 @@ type ServerInfoStorage {
 
 """A short server information"""
 type ServerShortInfo {
+  error: String
   uri: String!
-  uuid: String
   alias: String
+  state: String
+  uuid: String
 }
 
 """

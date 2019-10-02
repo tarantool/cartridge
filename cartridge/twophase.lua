@@ -8,6 +8,7 @@
 
 local log = require('log')
 local fio = require('fio')
+local fun = require('fun')
 local yaml = require('yaml').new()
 local errno = require('errno')
 local errors = require('errors')
@@ -18,10 +19,11 @@ local pool = require('cartridge.pool')
 local utils = require('cartridge.utils')
 local topology = require('cartridge.topology')
 local confapplier = require('cartridge.confapplier')
+local ClusterwideConfig = require('cartridge.clusterwide-config')
 
 local AtomicCallError = errors.new_class('AtomicCallError')
 local PatchClusterwideError = errors.new_class('PatchClusterwideError')
--- local Prepare2pcError = errors.new_class('Prepare2pcError')
+local Prepare2pcError = errors.new_class('Prepare2pcError')
 local Commit2pcError = errors.new_class('Commit2pcError')
 local GetSchemaError = errors.new_class('GetSchemaError')
 
@@ -31,33 +33,55 @@ yaml.cfg({
 })
 
 vars:new('locks', {})
+vars:new('prepared_config', nil)
 
 --- Two-phase commit - preparation stage.
 --
--- Validate the configuration and acquire a lock writing `<workdir>/config.prepate.yml`.
--- If the validation fails, the lock is not acquired and does not have to be aborted.
+-- Validate the configuration and acquire a lock setting local variable
+-- and writing "config.prepare.yml" file. If the validation fails, the
+-- lock isn't acquired and doesn't have to be aborted.
+--
 -- @function prepare_2pc
 -- @local
--- @tparam table conf
+-- @tparam table data clusterwide config content
 -- @treturn[1] boolean true
 -- @treturn[2] nil
 -- @treturn[2] table Error description
-local function prepare_2pc(conf)
-    local ok, err = confapplier.validate_config(conf, confapplier.get_readonly() or {})
+local function prepare_2pc(data)
+    local cwcfg = ClusterwideConfig.new(data):lock()
+
+    local ok, err = confapplier.validate_config(cwcfg)
     if not ok then
         return nil, err
     end
 
     local workdir = confapplier.get_workdir()
-    local path = fio.pathjoin(workdir, 'config.prepare.yml')
-    local ok, err = utils.file_write(
-        path, yaml.encode(conf),
-        {'O_CREAT', 'O_EXCL', 'O_WRONLY'}
-    )
+    local path_prepare = fio.pathjoin(workdir, 'config.prepare.yml')
+
+    if vars.prepared_config ~= nil then
+        local err = Prepare2pcError:new('Two-phase commit is locked')
+        return nil, err
+    end
+
+    local state = confapplier.get_state()
+    local valid_states = {
+        ['Unconfigured'] = true,
+        ['RolesConfigured'] = true,
+    }
+    if not valid_states[state] then
+        local err = Prepare2pcError:new(
+            "Instance state is %s, can't apply config in this state",
+            state
+        )
+        return nil, err
+    end
+
+    local ok, err = cwcfg:write_to_file(path_prepare)
     if not ok then
         return nil, err
     end
 
+    vars.prepared_config = cwcfg
     return true
 end
 
@@ -74,16 +98,32 @@ end
 -- @treturn[2] nil
 -- @treturn[2] table Error description
 local function commit_2pc()
+    Commit2pcError:assert(
+        vars.prepared_config ~= nil,
+        "commit isn't prepared"
+    )
+
     local workdir = confapplier.get_workdir()
     local path_prepare = fio.pathjoin(workdir, 'config.prepare.yml')
     local path_backup = fio.pathjoin(workdir, 'config.backup.yml')
     local path_active = fio.pathjoin(workdir, 'config.yml')
 
     fio.unlink(path_backup)
-    local ok = fio.link(path_active, path_backup)
-    if ok then
-        log.info('Backup of active config created: %q', path_backup)
+
+    if fio.path.exists(path_active) then
+        local ok = fio.link(path_active, path_backup)
+        if ok then
+            log.info('Backup of active config created: %q', path_backup)
+        else
+            log.warn(
+                'Creation of config backup failed: %s', errno.strerror()
+            )
+        end
     end
+
+    -- Release the lock
+    local prepared_config = vars.prepared_config
+    vars.prepared_config = nil
 
     local ok = fio.rename(path_prepare, path_active)
     if not ok then
@@ -94,13 +134,12 @@ local function commit_2pc()
         return nil, err
     end
 
-    local conf, err = confapplier.load_from_file()
-    if not conf then
-        log.error('Error commmitting config update: %s', err)
-        return nil, err
-    end
 
-    return confapplier.apply_config(conf)
+    if type(box.cfg) == 'function' then
+        return confapplier.boot_instance(prepared_config)
+    else
+        return confapplier.apply_config(prepared_config)
+    end
 end
 
 --- Two-phase commit - abort stage.
@@ -113,6 +152,7 @@ local function abort_2pc()
     local workdir = confapplier.get_workdir()
     local path_prepare = fio.pathjoin(workdir, 'config.prepare.yml')
     fio.unlink(path_prepare)
+    vars.prepared_config = nil
     return true
 end
 
@@ -127,9 +167,8 @@ end
 --
 -- II. Validates topology on the current server.
 --
--- III. Executes the preparation phase (`prepare_2pc`) on every server excluding
--- the following servers: expelled, disabled, and
--- servers being joined during this call.
+-- III. Executes the preparation phase (`prepare_2pc`) on every server
+-- excluding expelled and disabled servers.
 --
 -- IV. If any server reports an error, executes the abort phase (`abort_2pc`).
 -- All servers prepared so far are rolled back and unlocked.
@@ -139,7 +178,7 @@ end
 -- cluster should be repaired manually.
 --
 -- @function patch_clusterwide
--- @tparam table patch A patch to be applied.
+-- @tparam table patch
 -- @treturn[1] boolean true
 -- @treturn[2] nil
 -- @treturn[2] table Error description
@@ -148,128 +187,140 @@ local function _clusterwide(patch)
 
     log.warn('Updating config clusterwide...')
 
-    local conf_new = confapplier.get_deepcopy()
-    local conf_old = confapplier.get_readonly()
-    for k, v in pairs(patch) do
-        if v == box.NULL then
-            conf_new[k] = nil
-        else
-            conf_new[k] = v
-        end
+    local cwcfg_old = confapplier.get_active_config()
+    local vshard_utils = require('cartridge.vshard-utils')
+    if cwcfg_old == nil then
+        local auth = require('cartridge.auth')
+        cwcfg_old = ClusterwideConfig.new({
+            auth = auth.get_params(),
+            vshard_groups = vshard_utils.get_known_groups(),
+        }):lock()
     end
 
-    topology.probe_missing_members(conf_new.topology.servers)
+    local cwcfg_new = cwcfg_old:copy()
+    for k, v in pairs(patch) do
+        cwcfg_new:set_content(k, v)
+    end
+    cwcfg_new:lock()
+    -- log.info('%s', yaml.encode(cwcfg_new:get_readonly()))
 
-    if utils.deepcmp(conf_new, conf_old) then
+    local topology_old = cwcfg_old:get_readonly('topology')
+    local topology_new = cwcfg_new:get_readonly('topology')
+
+    topology.probe_missing_members(topology_new.servers)
+
+    if utils.deepcmp(cwcfg_new, cwcfg_old) then
+        log.warn("Clusterwide config didn't change, skipping")
         return true
     end
 
-    local ok, err = topology.validate(conf_new.topology, conf_old.topology)
+    local ok, err = topology.validate(topology_new, topology_old)
     if not ok then
         return nil, err
     end
 
-    local vshard_utils = require('cartridge.vshard-utils')
-    local ok, err = vshard_utils.validate_config(conf_new, conf_old)
+    local ok, err = vshard_utils.validate_config(
+        cwcfg_new:get_readonly(),
+        cwcfg_old:get_readonly()
+    )
     if not ok then
         return nil, err
     end
 
-    local servers_new = conf_new.topology.servers
-    local servers_old = conf_old.topology.servers
+    local _2pc_error
 
     -- Prepare a server group to be configured
-    local configured_uri_list = {}
-    local cnt = 0
-    for uuid, _ in pairs(servers_new) do
-        -- luacheck: ignore 542
-        if not topology.not_disabled(uuid, servers_new[uuid]) then
-            -- ignore disabled servers
-        elseif servers_old[uuid] == nil then
-            -- new servers bootstrap themselves through membership
-            -- dont call nex.box on them
-        else
-            local uri = servers_new[uuid].uri
-            cnt = cnt + 1
-            configured_uri_list[cnt] = uri
-            configured_uri_list[uri] = false
-        end
+    local uri_list = {}
+    local abortion_list = {}
+    for _, _, srv in fun.filter(topology.not_disabled, topology_new.servers) do
+        table.insert(uri_list, srv.uri)
     end
 
     -- this is mostly for testing purposes
     -- it allows to determine apply order
     -- in real world it does not affect anything
-    table.sort(configured_uri_list)
+    table.sort(uri_list)
 
-    -- 2PC prepare
-    local _2pc_error = nil
-    for _, uri in ipairs(configured_uri_list) do
-        local conn, err = pool.connect(uri)
-        if conn == nil then
-            log.error('Error preparing for config update at %s', uri)
-            _2pc_error = err
-            break
-        else
-            local ok, err = errors.netbox_call(
-                conn,
-                '_G.__cluster_confapplier_prepare_2pc',
-                {conf_new}, {timeout = 5}
-            )
-            if ok == true then
+    goto prepare
+
+::prepare::
+    do
+        log.warn('(2PC) Preparation stage...')
+
+        local retmap, errmap = pool.map_call(
+            '_G.__cartridge_cwcfg_prepare_2pc', {cwcfg_new:get_readonly()},
+            {uri_list = uri_list, timeout = 5}
+        )
+
+        for _, uri in ipairs(uri_list) do
+            if retmap[uri] then
                 log.warn('Prepared for config update at %s', uri)
-                configured_uri_list[uri] = true
-            else
+                table.insert(abortion_list, uri)
+            end
+        end
+        for _, uri in ipairs(uri_list) do
+            if retmap[uri] == nil then
+                local err = errmap and errmap[uri]
                 log.error('Error preparing for config update at %s: %s', uri, err)
                 _2pc_error = err
-                break
             end
+        end
+
+        if errmap ~= nil then
+            goto abort
+        else
+            goto apply
         end
     end
 
-    if _2pc_error == nil then
-        -- 2PC commit
-        for _, uri in ipairs(configured_uri_list) do
-            local conn, err = pool.connect(uri)
-            if conn == nil then
-                log.error('Error commmitting config update at %s: %s', uri, err)
+
+::apply::
+    do
+        log.warn('(2PC) Commit stage...')
+
+        local retmap, errmap = pool.map_call(
+            '_G.__cartridge_cwcfg_commit_2pc', nil,
+            {uri_list = uri_list, timeout = 5}
+        )
+
+        for _, uri in ipairs(uri_list) do
+            if retmap[uri] then
+                log.warn('Committed config at %s', uri)
+            end
+        end
+        for _, uri in ipairs(uri_list) do
+            if retmap[uri] == nil then
+                local err = errmap and errmap[uri]
+                log.error('Error committing config at %s: %s', uri, err)
                 _2pc_error = err
-            else
-                local ok, err = errors.netbox_call(
-                    conn,
-                    '_G.__cluster_confapplier_commit_2pc'
-                )
-                if ok == true then
-                    log.warn('Committed config update at %s', uri)
-                else
-                    log.error('Error commmitting config update at %s: %s', uri, err)
-                    _2pc_error = err
-                end
             end
         end
-    else
-        -- 2PC abort
-        for _, uri in ipairs(configured_uri_list) do
-            if not configured_uri_list[uri] then
-                break
-            end
 
-            local conn, err = pool.connect(uri)
-            if conn == nil then
-                log.error('Error aborting config update at %s: %s', uri, err)
-            else
-                local ok, err = errors.netbox_call(
-                    conn,
-                    '_G.__cluster_confapplier_abort_2pc'
-                )
-                if ok == true then
-                    log.warn('Aborted config update at %s', uri)
-                else
-                    log.error('Error aborting config update at %s: %s', uri, err)
-                end
-            end
-        end
+        goto finish
     end
 
+::abort::
+    do
+        log.warn('(2PC) Abort stage...')
+
+        local retmap, errmap = pool.map_call(
+            '_G.__cartridge_cwcfg_abort_2pc', nil,
+            {uri_list = abortion_list, timeout = 5}
+        )
+
+        for _, uri in ipairs(abortion_list) do
+            if retmap[uri] then
+                log.warn('Aborted config update at %s', uri)
+            else
+                local err = errmap and errmap[uri]
+                log.error('Error aborting config update at %s: %s', uri, err)
+            end
+        end
+
+        goto finish
+    end
+
+::finish::
     if _2pc_error == nil then
         log.warn('Clusterwide config updated successfully')
         return true
@@ -286,12 +337,15 @@ local function patch_clusterwide(patch)
         )
     end
 
-    box.session.su('admin')
     vars.locks['clusterwide'] = true
     local ok, err = PatchClusterwideError:pcall(_clusterwide, patch)
     vars.locks['clusterwide'] = false
 
-    return ok, err
+    if not ok then
+        return nil, err
+    end
+
+    return true
 end
 
 
@@ -337,15 +391,11 @@ local function set_schema(schema_yml)
     return get_schema()
 end
 
-_G.__cluster_confapplier_prepare_2pc = prepare_2pc
-_G.__cluster_confapplier_commit_2pc = commit_2pc
-_G.__cluster_confapplier_abort_2pc = abort_2pc
+_G.__cartridge_cwcfg_prepare_2pc = function(...) return errors.pcall('E', prepare_2pc, ...) end
+_G.__cartridge_cwcfg_commit_2pc = function(...) return errors.pcall('E', commit_2pc, ...) end
+_G.__cartridge_cwcfg_abort_2pc = function(...) return errors.pcall('E', abort_2pc, ...) end
 
 return {
-    prepare_2pc = prepare_2pc,
-    commit_2pc = commit_2pc,
-    abort_2pc = abort_2pc,
-
     get_schema = get_schema,
     set_schema = set_schema,
     patch_clusterwide = patch_clusterwide,

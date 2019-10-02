@@ -53,12 +53,13 @@ local yaml = require('yaml')
 local roles = require('cartridge.roles')
 local topology = require('cartridge.topology')
 local confapplier = require('cartridge.confapplier')
+local ClusterwideConfig = require('cartridge.clusterwide-config')
 assert(roles.register_role('cartridge.roles.vshard-storage'))
 assert(roles.register_role('cartridge.roles.vshard-router'))
 local test = tap.test('topology.config')
 
 local function test_all(test, conf)
-test:plan(53)
+test:plan(54)
 
 local vshard_group
 if conf.vshard then
@@ -78,7 +79,11 @@ local function check_config(result, raw_new, raw_old)
 
     local ok, err = topology.validate(topology_new, topology_old)
     if ok then
-        ok, err = confapplier.validate_config(cfg_new, cfg_old)
+        local vars = require('cartridge.vars').new('cartridge.confapplier')
+        vars.cwcfg = ClusterwideConfig.new(cfg_old):lock()
+        ok, err = confapplier.validate_config(
+            ClusterwideConfig.new(cfg_new):lock()
+        )
     end
 
     test:is(ok or err.err, result, result)
@@ -277,6 +282,22 @@ servers:
   aaaaaaaa-aaaa-4000-b000-000000000001:
     uri: localhost:3301
     replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
+...]])
+
+check_config('servers[aaaaaaaa-aaaa-4000-b000-000000000001]'..
+  '.uri "localhost:3301" collision with another server',
+[[---
+servers:
+  aaaaaaaa-aaaa-4000-b000-000000000001:
+    uri: localhost:3301
+    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
+  aaaaaaaa-aaaa-4000-b000-000000000002:
+    uri: localhost:3301
+    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
+replicasets:
+  aaaaaaaa-0000-4000-b000-000000000001:
+    master: aaaaaaaa-aaaa-4000-b000-000000000001
+    roles: {}
 ...]])
 
 check_config('replicasets[aaaaaaaa-0000-4000-b000-000000000001]'..

@@ -97,8 +97,8 @@ function g.test_join_server()
     )
 
     t.assert_error_msg_contains(
-        [[replicasets[bbbbbbbb-0000-0000-0000-000000000000] can't be added]] ..
-        [[ to vshard_group "unknown", cluster doesn't have any]],
+        [[replicasets[bbbbbbbb-0000-0000-0000-000000000000].vshard_group]] ..
+        [[ "unknown" doesn't exist]],
         function()
             return main:graphql({
                 query = [[mutation {

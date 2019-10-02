@@ -19,6 +19,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - DDL schema editor page in webui.
 
+- Instances now have internal state machine which helps to manage
+  cluster operation and protect from invalid state transitions.
+
 ### Changed
 
 - WebUI now uses `edit_topology` mutation instead of deprecated ones.
@@ -36,6 +39,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Base advertise port in luatest helpers changed from 33000 to 13300,
   which is outside `ip_local_port_range`. Using port from local range
   usually caused tests failing with an error "address already in use".
+  **(incompatible change)**
+
+- Whole new way to bootstrap instances. Instead of polling membership
+  for getting clusterwide config the instance now start Remote Control
+  Server (with limited iproto protocol functionality) on the same port.
+  Two-phase commit is then executed over net.box connection.
+  **(incompatible change)**
+
+- Failover isn't triggered on `suspect` instance state anymore
   **(incompatible change)**
 
 ### Removed
