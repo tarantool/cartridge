@@ -222,8 +222,8 @@ draft[1][1].disabled = true
 test:diag('a1 disabled')
 
 test_candidates('-leader -healthy',
-    draft, {'target-role'},
-    {'a2', 'b2'}
+    draft, {'target-role', {healthy_only = false}},
+    {'a2', 'b2', 'b1'}
 )
 
 test_candidates('-leader +healthy',
@@ -232,8 +232,8 @@ test_candidates('-leader +healthy',
 )
 
 test_candidates('+leader -healthy',
-    draft, {'target-role', {leader_only = true}},
-    nil
+    draft, {'target-role', {leader_only = true, healthy_only = false}},
+    {'b1'}
 )
 
 test_candidates('+leader +healthy',

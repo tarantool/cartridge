@@ -133,8 +133,7 @@ local function get_connection(role_name, opts)
     end
 
     local myself = membership.myself()
-    local uri_exists = utils.table_find(candidates, myself.uri)
-    if prefer_local and uri_exists then
+    if prefer_local and utils.table_find(candidates, myself.uri) then
         return netbox.self
     end
 

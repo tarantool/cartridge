@@ -20,6 +20,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - New Lua API `cartridge.http_get_username()` to check authorization of
   active HTTP session.
 
+- New Lua API `cartridge.rpc_get_candidates()` to get list
+  of instances suitable for performing a remote call.
+
 ### Changed
 
 - Get UI components from Tarantool UI-Kit
@@ -27,6 +30,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 
 - Editing topology with `failover_priority` argument.
+- Now `cartridge.rpc.get_candidates()` returns value as specified in doc.
+  Also it accepts new option `healthy_only` to filter instances which
+  have membership status healthy.
 
 ## [1.1.0] - 2019-09-24
 
