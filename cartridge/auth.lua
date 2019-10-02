@@ -12,6 +12,7 @@ local digest = require('digest')
 local checks = require('checks')
 local errors = require('errors')
 local msgpack = require('msgpack')
+local crypto = require('crypto')
 json.cfg({
     encode_use_tostring = true,
 })
@@ -179,30 +180,6 @@ local function get_params()
     }
 end
 
-local function hmac(hashfun, blocksize, key, message)
-    checks('function', 'number', 'string', 'string')
-    local pkey = {key:byte(1, #key)}
-
-    for i = #key + 1, blocksize do
-        pkey[i] = 0x00
-    end
-
-    local ipad = table.copy(pkey)
-    for i = 1, #ipad do
-        ipad[i] = bit.bxor(0x36, ipad[i])
-    end
-
-    local opad = table.copy(pkey)
-    for i = 1, #opad do
-        opad[i] = bit.bxor(0x5c, opad[i])
-    end
-
-    ipad = string.char(unpack(ipad))
-    opad = string.char(unpack(opad))
-
-    return hashfun(opad .. hashfun(ipad .. message))
-end
-
 local function create_cookie(uid)
     checks('string')
     local ts = tostring(fiber.time())
@@ -212,7 +189,7 @@ local function create_cookie(uid)
         ts = ts,
         uid = uid,
         hmac = digest.base64_encode(
-            hmac(digest.sha512, 128, key, uid .. ts),
+            crypto.hmac.sha512(key, uid .. ts),
             {nopad = true, nowrap = true, urlsafe = true}
         )
     }
@@ -258,7 +235,7 @@ local function get_cookie_uid(raw)
 
     local key = cluster_cookie.cookie()
     local calc = digest.base64_encode(
-        hmac(digest.sha512, 128, key, cookie.uid .. cookie.ts),
+        crypto.hmac.sha512(key, cookie.uid .. cookie.ts),
         {nopad = true, nowrap = true, urlsafe = true}
     )
 
