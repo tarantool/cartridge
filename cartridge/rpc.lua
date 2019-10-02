@@ -52,7 +52,6 @@ end
 --- List instances suitable for performing a remote call.
 --
 -- @function get_candidates
--- @local
 --
 -- @tparam string role_name
 -- @tparam[opt] table opts
