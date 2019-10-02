@@ -680,6 +680,11 @@ return {
     -- @function rpc_call
     rpc_call = rpc.call,
 
+    --- .
+    -- @refer cartridge.rpc.get_candidates
+    -- @function rpc_get_candidates
+    rpc_get_candidates = rpc.get_candidates,
+
 --- Authentication and authorization.
 -- @section auth
 

@@ -6,7 +6,7 @@ local checks = require('checks')
 local topology = require('cartridge.topology')
 
 local test = tap.test('cluster.rpc_candidates')
-test:plan(13)
+test:plan(21)
 
 -------------------------------------------------------------------------------
 
@@ -61,7 +61,7 @@ local function values(array)
     end
 
     local ret = {}
-    for _, v in ipairs(array) do
+    for _, v in pairs(array) do
         ret[v] = true
     end
     return ret
@@ -131,11 +131,22 @@ test_candidates('+leader',
 draft[1][1].status = 'dead'
 test:diag('a1 leader died')
 
-test_candidates('-leader',
+test_candidates('-leader -healthy',
+    draft, {'target-role', {healthy_only = false}},
+    {'a1', 'a2'}
+)
+
+test_candidates('-leader +healthy',
     draft, {'target-role'},
     {'a2'}
 )
-test_candidates('+leader',
+
+test_candidates('+leader -healthy',
+    draft, {'target-role', {leader_only = true, healthy_only = false}},
+    {'a1'}
+)
+
+test_candidates('+leader +healthy',
     draft, {'target-role', {leader_only = true}},
     nil
 )
@@ -144,12 +155,22 @@ test_candidates('+leader',
 draft.failover = true
 test:diag('failover enabled')
 
-test_candidates('-leader',
+test_candidates('-leader -healthy',
+    draft, {'target-role', {healthy_only = false}},
+    {'a1', 'a2'}
+)
+
+test_candidates('-leader +healthy',
     draft, {'target-role'},
     {'a2'}
 )
 
-test_candidates('+leader',
+test_candidates('+leader -healthy',
+    draft, {'target-role', {leader_only = true, healthy_only = false}},
+    {'a2'}
+)
+
+test_candidates('+leader +healthy',
     draft, {'target-role', {leader_only = true}},
     {'a2'}
 )
@@ -158,7 +179,7 @@ test_candidates('+leader',
 draft.failover = false
 test:diag('failover disabled')
 draft[1][1].status = 'alive'
-test:diag('a1 leader died')
+test:diag('a1 leader restored')
 draft[2].role = 'target-role'
 test:diag('B target-role enabled')
 
@@ -176,12 +197,22 @@ test_candidates('+leader',
 draft[2][1].error = 'e'
 test:diag('b1 has an error')
 
-test_candidates('-leader',
+test_candidates('-leader -healthy',
+    draft, {'target-role', {healthy_only = false}},
+    {'a1', 'a2', 'b2', 'b1'}
+)
+
+test_candidates('-leader +healthy',
     draft, {'target-role'},
     {'a1', 'a2', 'b2'}
 )
 
-test_candidates('+leader',
+test_candidates('+leader -healthy',
+    draft, {'target-role', {leader_only = true, healthy_only = false}},
+    {'a1', 'b1'}
+)
+
+test_candidates('+leader +healthy',
     draft, {'target-role', {leader_only = true}},
     {'a1'}
 )
@@ -190,12 +221,22 @@ test_candidates('+leader',
 draft[1][1].disabled = true
 test:diag('a1 disabled')
 
-test_candidates('-leader',
+test_candidates('-leader -healthy',
+    draft, {'target-role', {healthy_only = false}},
+    {'a2', 'b2', 'b1'}
+)
+
+test_candidates('-leader +healthy',
     draft, {'target-role'},
     {'a2', 'b2'}
 )
 
-test_candidates('+leader',
+test_candidates('+leader -healthy',
+    draft, {'target-role', {leader_only = true, healthy_only = false}},
+    {'b1'}
+)
+
+test_candidates('+leader +healthy',
     draft, {'target-role', {leader_only = true}},
     nil
 )
