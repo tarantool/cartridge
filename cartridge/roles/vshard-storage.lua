@@ -13,7 +13,7 @@ vars:new('vshard_cfg')
 local function apply_config(conf, _)
     checks('table', {is_master = 'boolean'})
 
-    local my_replicaset = conf.topology.replicasets[box.info.cluster.uuid]
+    local my_replicaset = conf['topology.yml'].replicasets[box.info.cluster.uuid]
     local group_name = my_replicaset.vshard_group or 'default'
     local vshard_cfg = vshard_utils.get_vshard_config(group_name, conf)
     vshard_cfg.listen = box.cfg.listen

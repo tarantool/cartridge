@@ -18,11 +18,11 @@ local twophase = require('cartridge.twophase')
 local confapplier = require('cartridge.confapplier')
 
 local system_sections = {
-    topology = true,
-    vshard = true,
-    vshard_groups = true,
-    auth = true,
-    users_acl = true,
+    ['topology.yml'] = true,
+    ['vshard.yml'] = true,
+    ['vshard_groups.yml'] = true,
+    ['auth.yml'] = true,
+    ['users_acl.yml'] = true,
 }
 
 local function http_finalize_error(http_code, err)

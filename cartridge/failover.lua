@@ -83,7 +83,7 @@ local function _get_active_leaders(topology_cfg, mode)
 end
 
 local function refresh_cache()
-    local topology_cfg = vars.clusterwide_config:get_readonly('topology')
+    local topology_cfg = vars.clusterwide_config:get_readonly('topology.yml')
     local active_leaders = _get_active_leaders(
         topology_cfg, vars.mode
     )
@@ -172,7 +172,7 @@ end
 -- @local
 local function cfg(clusterwide_config)
     checks('ClusterwideConfig')
-    local topology_cfg = clusterwide_config:get_readonly('topology')
+    local topology_cfg = clusterwide_config:get_readonly('topology.yml')
     assert(topology_cfg ~= nil)
 
     local new_mode = topology_cfg.failover and 'eventual' or 'disabled'
@@ -211,7 +211,7 @@ local function get_active_leaders()
     end
 
     local confapplier = require('cartridge.confapplier')
-    local topology_cfg = confapplier.get_readonly('topology')
+    local topology_cfg = confapplier.get_readonly('topology.yml')
     if topology_cfg == nil then
         return {}
     end

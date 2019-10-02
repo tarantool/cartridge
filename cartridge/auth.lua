@@ -85,10 +85,10 @@ local function get_enabled()
         return vars.enabled
     end
 
-    local auth_cfg = confapplier.get_readonly('auth')
+    local auth_cfg = confapplier.get_readonly('auth.yml')
     if auth_cfg == nil then
         -- backward compatibility with clusterwide config v0.10
-        return confapplier.get_readonly('topology').auth or false
+        return confapplier.get_readonly('topology.yml').auth or false
     else
         return auth_cfg.enabled
     end
@@ -127,11 +127,11 @@ local function set_params(opts)
         return true
     end
 
-    local auth_cfg = confapplier.get_deepcopy('auth')
+    local auth_cfg = confapplier.get_deepcopy('auth.yml')
     if auth_cfg == nil then
         -- backward compatibility with clusterwide config v0.10
         auth_cfg = {
-            enabled = confapplier.get_readonly('topology').auth or false,
+            enabled = confapplier.get_readonly('topology.yml').auth or false,
             cookie_max_age = DEFAULT_COOKIE_MAX_AGE,
         }
     end
@@ -149,12 +149,12 @@ local function set_params(opts)
     end
 
     local patch = {
-        auth = auth_cfg
+        ['auth.yml'] = auth_cfg
     }
 
-    if confapplier.get_readonly('topology').auth ~= nil then
-        patch.topology = confapplier.get_deepcopy('topology')
-        patch.topology.auth = nil
+    if confapplier.get_readonly('topology.yml').auth ~= nil then
+        patch['topology.yml'] = confapplier.get_deepcopy('topology.yml')
+        patch['topology.yml'].auth = nil
     end
 
     return twophase.patch_clusterwide(patch)
@@ -166,7 +166,7 @@ end
 -- @within Configuration
 -- @treturn AuthParams
 local function get_params()
-    local auth_cfg = confapplier.get_readonly('auth')
+    local auth_cfg = confapplier.get_readonly('auth.yml')
 
     --- Authentication params.
     -- @table AuthParams

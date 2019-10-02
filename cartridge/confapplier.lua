@@ -181,7 +181,7 @@ local function apply_config(clusterwide_config)
     })
     local _, err = BoxError:pcall(box.cfg, {
         replication = topology.get_fullmesh_replication(
-            clusterwide_config:get_readonly('topology'), vars.replicaset_uuid
+            clusterwide_config:get_readonly('topology.yml'), vars.replicaset_uuid
         ),
     })
     if err ~= nil then
@@ -221,7 +221,7 @@ local function boot_instance(clusterwide_config)
         'Unexpected state ' .. vars.state
     )
 
-    local topology_cfg = clusterwide_config:get_readonly('topology') or {}
+    local topology_cfg = clusterwide_config:get_readonly('topology.yml') or {}
     local box_opts = table.deepcopy(vars.box_opts)
     -- TODO: https://github.com/tarantool/cartridge/issues/189
     box_opts.wal_dir = vars.workdir
@@ -413,7 +413,10 @@ local function init(opts)
         log.info('Remote control listening on 0.0.0.0:%d', vars.binary_port)
     end
 
-    local config_filename = fio.pathjoin(vars.workdir, 'config.yml')
+    local config_filename = fio.pathjoin(vars.workdir, 'config')
+    if not utils.file_exists(config_filename) then
+        config_filename = config_filename .. '.yml'
+    end
     if not utils.file_exists(config_filename) then
         local snapshots = fio.glob(fio.pathjoin(vars.workdir, '*.snap'))
         if next(snapshots) ~= nil then

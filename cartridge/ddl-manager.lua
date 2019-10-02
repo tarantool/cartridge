@@ -2,42 +2,14 @@
 
 local log = require('log')
 local ddl = require('ddl')
-local yaml = require('yaml')
 local checks = require('checks')
 local errors = require('errors')
 
 local failover = require('cartridge.failover')
 
 local CheckSchemaError = errors.new_class('CheckSchemaError')
-local DecodeYamlError = errors.new_class('DecodeYamlError')
 
 local _section_name = 'schema.yml'
-
-local function _from_yaml(schema_yml)
-    if schema_yml == nil then
-        return {}
-    elseif type(schema_yml) ~= 'string' then
-        local err = CheckSchemaError:new(
-            'Section %q must be a string, got %s',
-            _section_name, type(schema_yml)
-        )
-        return nil, err
-    end
-
-    local schema_tbl, err = DecodeYamlError:pcall(yaml.decode, schema_yml)
-    if schema_tbl == nil then
-        return nil, err
-    end
-
-    if type(schema_tbl) ~= 'table' then
-        local err = CheckSchemaError:new(
-            'Schema must be a table, got %s',
-            type(schema_tbl)
-        )
-        return nil, err
-    end
-    return schema_tbl
-end
 
 local function apply_config(conf, opts)
     checks('table', {is_master = 'boolean'})
@@ -46,13 +18,9 @@ local function apply_config(conf, opts)
         return true
     end
 
-    if conf[_section_name] == nil then
-        return true
-    end
-
-    local schema, err = _from_yaml(conf[_section_name])
+    local schema = conf[_section_name]
     if schema == nil then
-        return nil, err
+        return true
     end
 
     local ok, err = ddl.set_schema(schema)
@@ -66,16 +34,15 @@ end
 local function validate_config(conf_new, conf_old)
     checks('table', 'table')
 
-    local schema_new, err = _from_yaml(conf_new[_section_name])
-    if schema_new == nil then
-        return nil, err
-    end
-    local schema_old, err = _from_yaml(conf_old[_section_name])
-    if schema_old == nil then
-        return nil, CheckSchemaError:new(
-            'Error parsing old schema: %s',
-            err.err
+    local schema_new = conf_new[_section_name] or {}
+    local schema_old = conf_old[_section_name] or {}
+
+    if type(schema_new) ~= 'table' then
+        local err = CheckSchemaError:new(
+            'Schema must be a table, got %s',
+            type(schema_new)
         )
+        return nil, err
     end
 
     if next(schema_new) ~= nil then

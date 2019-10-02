@@ -58,7 +58,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Enhance WebUI modals scrolling.
 
-- Scroll behavior in Modals
+- Clusterwide configuration is now represented as a file tree.
+  All sections that were tables are saved to separate `.yml` files.
+  Sections containing string values are saved as is. Accessing
+  clusterwide config is now possible in two ways: with
+  get_readonly/deepcopy as before and with new get_plaintext function.
+
+- Update `ddl` dependency to 1.0.0.
+
+- HTTP API `/admin/config` (GET/PUT) is deprecated.
 
 ### Removed
 

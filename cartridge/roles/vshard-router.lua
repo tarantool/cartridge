@@ -47,10 +47,10 @@ local function apply_config(conf)
     checks('table')
 
     local vshard_groups
-    if conf.vshard_groups == nil then
-        vshard_groups = {default = conf.vshard}
+    if conf['vshard_groups.yml'] == nil then
+        vshard_groups = {default = conf['vshard.yml']}
     else
-        vshard_groups = conf.vshard_groups
+        vshard_groups = conf['vshard_groups.yml']
     end
 
     for group_name, _ in pairs(vshard_groups) do
@@ -148,26 +148,26 @@ end
 
 local function bootstrap()
     local conf = {
-        vshard = confapplier.get_deepcopy('vshard'),
-        vshard_groups = confapplier.get_deepcopy('vshard_groups'),
+        ['vshard.yml']        = confapplier.get_deepcopy('vshard.yml'),
+        ['vshard_groups.yml'] = confapplier.get_deepcopy('vshard_groups.yml'),
     }
     local patch = table.deepcopy(conf)
 
-    if patch.vshard_groups == nil and patch.vshard == nil then
+    if patch['vshard_groups.yml'] == nil and patch['vshard.yml'] == nil then
         return nil, e_bootstrap_vshard:new("vshard isn't configured")
     end
 
     local err = nil
 
-    if patch.vshard_groups == nil then
-        local ok, _err = bootstrap_group('default', patch.vshard)
+    if patch['vshard_groups.yml'] == nil then
+        local ok, _err = bootstrap_group('default', patch['vshard.yml'])
         if ok then
-            patch.vshard.bootstrapped = true
+            patch['vshard.yml'].bootstrapped = true
         else
             err = _err
         end
     else
-        for name, vsgroup in pairs(patch.vshard_groups) do
+        for name, vsgroup in pairs(patch['vshard_groups.yml']) do
             local ok, _err = bootstrap_group(name, vsgroup)
             if ok then
                 vsgroup.bootstrapped = true

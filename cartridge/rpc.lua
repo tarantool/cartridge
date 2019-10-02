@@ -76,7 +76,7 @@ local function get_candidates(role_name, opts)
         healthy_only = '?boolean'
     })
 
-    local topology_cfg = confapplier.get_readonly('topology')
+    local topology_cfg = confapplier.get_readonly('topology.yml')
     local servers = topology_cfg.servers
     local replicasets = topology_cfg.replicasets
     local active_leaders

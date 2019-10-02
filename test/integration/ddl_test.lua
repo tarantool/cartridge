@@ -203,11 +203,11 @@ function g.test_graphql_errors()
     end
 
     _test('][', 'unexpected END event')
-    _test(1000, 'Section "schema.yml" must be a string, got number')
+    _test(1000, 'Schema must be a table, got number')
     _test('42', 'Schema must be a table, got number')
     _test('spaces: false',
         'Bad argument #1 to ddl.check_schema' ..
-        ' invalid schema.spaces (table expected, got boolean)'
+        ' invalid schema.spaces (?table expected, got boolean)'
     )
     _test('spaces: {}',
         'Missing space "test_space" in schema,' ..

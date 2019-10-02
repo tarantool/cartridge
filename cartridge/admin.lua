@@ -106,7 +106,7 @@ local function get_topology()
     end
 
     local members = membership.members()
-    local topology_cfg = confapplier.get_readonly('topology')
+    local topology_cfg = confapplier.get_readonly('topology.yml')
     if topology_cfg == nil then
         topology_cfg = {
             servers = {},
@@ -709,7 +709,7 @@ local function edit_topology(args)
     })
 
     local args = table.deepcopy(args)
-    local topology_cfg = confapplier.get_deepcopy('topology')
+    local topology_cfg = confapplier.get_deepcopy('topology.yml')
     if topology_cfg == nil then
         topology_cfg = {
             replicasets = {},
@@ -782,7 +782,7 @@ local function edit_topology(args)
         end
     end
 
-    local ok, err = twophase.patch_clusterwide({topology = topology_cfg})
+    local ok, err = twophase.patch_clusterwide({['topology.yml'] = topology_cfg})
     if not ok then
         return nil, err
     end
@@ -843,7 +843,7 @@ local function join_server(args)
         replicaset_weight = '?number',
     })
 
-    local topology_cfg = confapplier.get_readonly('topology')
+    local topology_cfg = confapplier.get_readonly('topology.yml')
     if topology_cfg == nil then
         -- Bootstrapping first instance from the web UI
         local myself = membership.myself()
@@ -1069,7 +1069,7 @@ end
 --- Get current failover state.
 -- @function get_failover_enabled
 local function get_failover_enabled()
-    local topology_cfg = confapplier.get_readonly('topology')
+    local topology_cfg = confapplier.get_readonly('topology.yml')
     if topology_cfg == nil then
         return false
     end
@@ -1084,13 +1084,13 @@ end
 -- @treturn[2] table Error description
 local function set_failover_enabled(enabled)
     checks('boolean')
-    local topology_cfg = confapplier.get_deepcopy('topology')
+    local topology_cfg = confapplier.get_deepcopy('topology.yml')
     if topology_cfg == nil then
         return nil, EditTopologyError:new('Not bootstrapped yet')
     end
     topology_cfg.failover = enabled
 
-    local ok, err = twophase.patch_clusterwide({topology = topology_cfg})
+    local ok, err = twophase.patch_clusterwide({['topology.yml'] = topology_cfg})
     if not ok then
         return nil, err
     end

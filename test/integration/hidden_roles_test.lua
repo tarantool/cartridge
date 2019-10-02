@@ -54,7 +54,7 @@ local function get_config_roles()
     return g.cluster.main_server.net_box:eval([[
         local uuid = ...
         local cartridge = require('cartridge')
-        local topology = cartridge.config_get_readonly('topology')
+        local topology = cartridge.config_get_readonly('topology.yml')
         return topology.replicasets[uuid].roles
     ]], {g.cluster.main_server.replicaset_uuid})
 end
@@ -66,9 +66,9 @@ local function set_config_roles(roles)
     local ok, err = g.cluster.main_server.net_box:eval([[
         local uuid, roles = ...
         local cartridge = require('cartridge')
-        local topology = cartridge.config_get_deepcopy('topology')
+        local topology = cartridge.config_get_deepcopy('topology.yml')
         topology.replicasets[uuid].roles = roles
-        return cartridge.config_patch_clusterwide({topology = topology})
+        return cartridge.config_patch_clusterwide({['topology.yml'] = topology})
     ]], {g.cluster.main_server.replicaset_uuid, roles})
     t.assert_equals(err, nil)
     t.assert_equals(ok, true)

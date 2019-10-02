@@ -14,6 +14,7 @@ local module_name = 'cartridge.webui.api-ddl'
 
 local GetSchemaError = errors.new_class('GetSchemaError')
 local CheckSchemaError = errors.new_class('CheckSchemaError')
+local DecodeYamlError = errors.new_class('DecodeYamlError')
 local _section_name = ddl_manager._section_name
 
 local gql_type_schema = gql_types.object({
@@ -42,7 +43,7 @@ local function graphql_get_schema()
             "Cluster isn't bootstaraped yet"
         )
     end
-    local schema_yml = confapplier.get_readonly(_section_name)
+    local schema_yml = confapplier.get_active_config():get_plaintext(_section_name)
     if schema_yml == nil then
         schema_yml = yaml.encode({spaces = {}})
     end
@@ -63,14 +64,21 @@ local function graphql_set_schema(_, args)
 end
 
 local function graphql_check_schema(_, args)
-    local topology_cfg = confapplier.get_readonly('topology')
+    local topology_cfg = confapplier.get_readonly('topology.yml')
     if topology_cfg == nil then
         return nil, CheckSchemaError:new(
             "Cluster isn't bootstrapped yet"
         )
     end
 
-    local conf_new = {[_section_name] = args.as_yaml}
+    local schema_new, err = DecodeYamlError:pcall(yaml.decode, args.as_yaml)
+    if not schema_new then
+        return {
+            error = err.err
+        }
+    end
+
+    local conf_new = {[_section_name] = schema_new}
     local conf_old = {[_section_name] = confapplier.get_readonly(_section_name)}
 
     local active_leaders = failover.get_active_leaders()

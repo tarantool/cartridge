@@ -56,7 +56,7 @@ local function prepare_2pc(data)
     end
 
     local workdir = confapplier.get_workdir()
-    local path_prepare = fio.pathjoin(workdir, 'config.prepare.yml')
+    local path_prepare = fio.pathjoin(workdir, 'config.prepare')
 
     if vars.prepared_config ~= nil then
         local err = Prepare2pcError:new('Two-phase commit is locked')
@@ -104,14 +104,19 @@ local function commit_2pc()
     )
 
     local workdir = confapplier.get_workdir()
-    local path_prepare = fio.pathjoin(workdir, 'config.prepare.yml')
-    local path_backup = fio.pathjoin(workdir, 'config.backup.yml')
-    local path_active = fio.pathjoin(workdir, 'config.yml')
+    local path_prepare = fio.pathjoin(workdir, 'config.prepare')
+    local path_backup = fio.pathjoin(workdir, 'config.backup')
+    local path_active = fio.pathjoin(workdir, 'config')
 
-    fio.unlink(path_backup)
+    -- TODO move to another dir and then delete
+    fio.rmtree(path_backup)
+
 
     if fio.path.exists(path_active) then
-        local ok = fio.link(path_active, path_backup)
+        -- local ok = fio.link(path_active, path_backup)
+        -- Improve make copy then mo
+        -- local ok, err = fio.copytree(path_active, path_backup)
+        local ok = fio.rename(path_active, path_backup)
         if ok then
             log.info('Backup of active config created: %q', path_backup)
         else
@@ -150,8 +155,9 @@ end
 -- @treturn boolean true
 local function abort_2pc()
     local workdir = confapplier.get_workdir()
-    local path_prepare = fio.pathjoin(workdir, 'config.prepare.yml')
-    fio.unlink(path_prepare)
+    local path_prepare = fio.pathjoin(workdir, 'config.prepare')
+    -- fio.unlink(path_prepare)
+    fio.rmtree(path_prepare)
     vars.prepared_config = nil
     return true
 end
@@ -194,23 +200,34 @@ local function _clusterwide(patch)
 
     local clusterwide_config_old = confapplier.get_active_config()
     local vshard_utils = require('cartridge.vshard-utils')
+
     if clusterwide_config_old == nil then
         local auth = require('cartridge.auth')
         clusterwide_config_old = ClusterwideConfig.new({
-            auth = auth.get_params(),
-            vshard_groups = vshard_utils.get_known_groups(),
+            ['auth.yml'] = yaml.encode(auth.get_params()),
+            ['vshard_groups.yml'] = yaml.encode(vshard_utils.get_known_groups()),
         }):lock()
     end
 
     local clusterwide_config_new = clusterwide_config_old:copy()
     for k, v in pairs(patch) do
-        clusterwide_config_new:set_content(k, v)
+        if type(v) ~= 'string' then
+            if v ~= box.NULL then
+                v = yaml.encode(v)
+            end
+        end
+        clusterwide_config_new:set_plaintext(k, v)
+    end
+
+    local _, err = clusterwide_config_new:update_luatables()
+    if err ~= nil then
+        return nil, err
     end
     clusterwide_config_new:lock()
     -- log.info('%s', yaml.encode(clusterwide_config_new:get_readonly()))
 
-    local topology_old = clusterwide_config_old:get_readonly('topology')
-    local topology_new = clusterwide_config_new:get_readonly('topology')
+    local topology_old = clusterwide_config_old:get_readonly('topology.yml')
+    local topology_new = clusterwide_config_new:get_readonly('topology.yml')
 
     topology.probe_missing_members(topology_new.servers)
 
@@ -253,7 +270,7 @@ local function _clusterwide(patch)
         log.warn('(2PC) Preparation stage...')
 
         local retmap, errmap = pool.map_call(
-            '_G.__cartridge_clusterwide_config_prepare_2pc', {clusterwide_config_new:get_readonly()},
+            '_G.__cartridge_clusterwide_config_prepare_2pc', {clusterwide_config_new:get_plaintext()},
             {uri_list = uri_list, timeout = 5}
         )
 
@@ -370,7 +387,7 @@ local function get_schema()
             "Cluster isn't bootstaraped yet"
         )
     end
-    local schema_yml = confapplier.get_readonly('schema.yml')
+    local schema_yml = confapplier.get_active_config():get_plaintext('schema.yml')
 
     if schema_yml == nil then
         return '---\nspaces: {}\n...\n'

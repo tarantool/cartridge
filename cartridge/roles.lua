@@ -288,7 +288,7 @@ local function apply_config(conf)
         error(err, 2)
     end
 
-    local my_replicaset = conf.topology.replicasets[box.info.cluster.uuid]
+    local my_replicaset = conf['topology.yml'].replicasets[box.info.cluster.uuid]
 
     local err
     local enabled_roles = get_enabled_roles(my_replicaset.roles)

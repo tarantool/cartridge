@@ -198,11 +198,11 @@ local function validate_config(conf_new, conf_old)
         error(err, 2)
     end
 
-    local topology_new = conf_new.topology
-    local topology_old = conf_old.topology or {}
+    local topology_new = conf_new['topology.yml']
+    local topology_old = conf_old['topology.yml'] or {}
 
-    if conf_new.vshard_groups == nil then
-        validate_vshard_group('vshard', conf_new.vshard, conf_old.vshard)
+    if conf_new['vshard_groups.yml'] == nil then
+        validate_vshard_group('vshard', conf_new['vshard.yml'], conf_old['vshard.yml'])
         validate_group_weights('default', topology_new)
 
         for replicaset_uuid, replicaset in pairs(topology_new.replicasets or {}) do
@@ -214,22 +214,22 @@ local function validate_config(conf_new, conf_old)
             )
         end
 
-        if conf_new.vshard.bootstrapped then
+        if conf_new['vshard.yml'].bootstrapped then
             validate_group_upgrade('default', topology_new, topology_old)
         end
     else
         ValidateConfigError:assert(
-            type(conf_new.vshard_groups) == 'table',
+            type(conf_new['vshard_groups.yml']) == 'table',
             'section vshard_groups must be a table'
         )
 
-        for name, vsgroup in pairs(conf_new.vshard_groups) do
+        for name, vsgroup in pairs(conf_new['vshard_groups.yml']) do
             ValidateConfigError:assert(
                 type(name) == 'string',
                 'section vshard_groups must have string keys'
             )
 
-            local groups_old = conf_old.vshard_groups or {}
+            local groups_old = conf_old['vshard_groups.yml'] or {}
             validate_vshard_group(('vshard_groups[%q]'):format(name), vsgroup, groups_old[name])
             validate_group_weights(name, topology_new)
         end
@@ -255,14 +255,14 @@ local function validate_config(conf_new, conf_old)
                     replicaset_uuid
                 )
                 ValidateConfigError:assert(
-                    conf_new.vshard_groups[replicaset_new.vshard_group] ~= nil,
+                    conf_new['vshard_groups.yml'][replicaset_new.vshard_group] ~= nil,
                     "replicasets[%s].vshard_group %q doesn't exist",
                     replicaset_uuid, replicaset_new.vshard_group
                 )
             end
         end
 
-        for name, vsgroup in pairs(conf_new.vshard_groups) do
+        for name, vsgroup in pairs(conf_new['vshard_groups.yml']) do
             if vsgroup.bootstrapped then
                 validate_group_upgrade(name, topology_new, topology_old)
             end
@@ -297,11 +297,11 @@ local function get_known_groups()
     end
 
     local vshard_groups
-    if confapplier.get_readonly('vshard_groups') ~= nil then
-        vshard_groups = confapplier.get_deepcopy('vshard_groups')
-    elseif confapplier.get_readonly('vshard') ~= nil then
+    if confapplier.get_readonly('vshard_groups.yml') ~= nil then
+        vshard_groups = confapplier.get_deepcopy('vshard_groups.yml')
+    elseif confapplier.get_readonly('vshard.yml') ~= nil then
         vshard_groups = {
-            default = confapplier.get_deepcopy('vshard')
+            default = confapplier.get_deepcopy('vshard.yml')
         }
     elseif vars.known_groups ~= nil then
         vshard_groups = {}
@@ -357,7 +357,7 @@ local function get_vshard_config(group_name, conf)
     checks('string', 'table')
 
     local sharding = {}
-    local topology_cfg = confapplier.get_readonly('topology')
+    local topology_cfg = confapplier.get_readonly('topology.yml')
     assert(topology_cfg ~= nil)
     local active_leaders = failover.get_active_leaders()
 
@@ -382,10 +382,10 @@ local function get_vshard_config(group_name, conf)
     end
 
     local vshard_groups
-    if conf.vshard_groups == nil then
-        vshard_groups = {default = conf.vshard}
+    if conf['vshard_groups.yml'] == nil then
+        vshard_groups = {default = conf['vshard.yml']}
     else
-        vshard_groups = conf.vshard_groups
+        vshard_groups = conf['vshard_groups.yml']
     end
 
     return {
@@ -420,11 +420,11 @@ local function can_bootstrap()
     end
 
     local vshard_groups
-    if confapplier.get_readonly('vshard_groups') ~= nil then
-        vshard_groups = confapplier.get_readonly('vshard_groups')
-    elseif confapplier.get_readonly('vshard') ~= nil then
+    if confapplier.get_readonly('vshard_groups.yml') ~= nil then
+        vshard_groups = confapplier.get_readonly('vshard_groups.yml')
+    elseif confapplier.get_readonly('vshard.yml') ~= nil then
         vshard_groups = {
-            default = confapplier.get_readonly('vshard')
+            default = confapplier.get_readonly('vshard.yml')
         }
     end
 
@@ -454,15 +454,15 @@ local function edit_vshard_options(group_name, vshard_options)
     )
 
     local patch = {
-        vshard_groups = confapplier.get_deepcopy('vshard_groups'),
-        vshard = confapplier.get_deepcopy('vshard')
+        ['vshard_groups.yml'] = confapplier.get_deepcopy('vshard_groups.yml'),
+        ['vshard'] = confapplier.get_deepcopy('vshard.yml')
     }
 
     local group
-    if patch.vshard_groups ~= nil then
-        group = patch.vshard_groups[group_name]
+    if patch['vshard_groups.yml'] ~= nil then
+        group = patch['vshard_groups.yml'][group_name]
     elseif group_name == 'default' then
-        group = patch.vshard
+        group = patch['vshard.yml']
     end
 
     if group == nil then

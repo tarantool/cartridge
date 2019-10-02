@@ -50,7 +50,7 @@ end
 local function find_user_by_username(username)
     checks('string')
 
-    local users_acl = cartridge.config_get_readonly('users_acl')
+    local users_acl = cartridge.config_get_readonly('users_acl.yml')
     if users_acl == nil then
         return nil
     end
@@ -68,7 +68,7 @@ local function find_user_by_email(email)
         return nil
     end
 
-    local users_acl = cartridge.config_get_readonly('users_acl')
+    local users_acl = cartridge.config_get_readonly('users_acl.yml')
     if users_acl == nil then
         return nil
     end
@@ -109,7 +109,7 @@ local function add_user(username, password, fullname, email)
         email = nil
     end
 
-    local users_acl = cartridge.config_get_deepcopy('users_acl') or {}
+    local users_acl = cartridge.config_get_deepcopy('users_acl.yml') or {}
 
     local uid
     repeat
@@ -124,7 +124,7 @@ local function add_user(username, password, fullname, email)
         password_data = create_password(password)
     }
 
-    local ok, err = cartridge.config_patch_clusterwide({users_acl = users_acl})
+    local ok, err = cartridge.config_patch_clusterwide({['users_acl.yml'] = users_acl})
     if not ok then
         return nil, err
     end
@@ -140,7 +140,7 @@ local function edit_user(username, password, fullname, email)
         return nil, errors.new('EditUserError', "User not found: '%s'", username)
     end
 
-    local users_acl = cartridge.config_get_deepcopy('users_acl')
+    local users_acl = cartridge.config_get_deepcopy('users_acl.yml')
     user = users_acl[uid]
 
     if email == nil then -- luacheck: ignore 542
@@ -168,7 +168,7 @@ local function edit_user(username, password, fullname, email)
         return user
     end
 
-    local ok, err = cartridge.config_patch_clusterwide({users_acl = users_acl})
+    local ok, err = cartridge.config_patch_clusterwide({['users_acl.yml'] = users_acl})
     if not ok then
         return nil, err
     end
@@ -179,7 +179,7 @@ end
 local function list_users()
     local result = {}
 
-    local users_acl = cartridge.config_get_readonly('users_acl')
+    local users_acl = cartridge.config_get_readonly('users_acl.yml')
     for _, user in pairs(users_acl or {}) do
         table.insert(result, user)
     end
@@ -197,10 +197,10 @@ local function remove_user(username)
         return nil, errors.new('RemoveUserError', "Can't remove user '%s'", username)
     end
 
-    local users_acl = cartridge.config_get_deepcopy('users_acl')
+    local users_acl = cartridge.config_get_deepcopy('users_acl.yml')
     users_acl[uid] = nil
 
-    local ok, err = cartridge.config_patch_clusterwide({users_acl = users_acl})
+    local ok, err = cartridge.config_patch_clusterwide({['users_acl.yml'] = users_acl})
     if not ok then
         return nil, err
     end

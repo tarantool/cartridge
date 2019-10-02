@@ -36,6 +36,10 @@ end
 function g.test_oldstyle_config()
     g.cluster:stop()
 
+    fio.rmtree(
+        fio.pathjoin(g.cluster.main_server.workdir, 'config')
+    )
+
     utils.file_write(
         fio.pathjoin(g.cluster.main_server.workdir, 'config.yml'),
         [[
@@ -72,7 +76,6 @@ function g.test_oldstyle_config()
         local vshard = require('vshard')
         local cartridge = require('cartridge')
         local router_role = assert(cartridge.service_get('vshard-router'))
-
         assert(router_role.get() == vshard.router.static, "Default router is initialized")
     ]])
 end
@@ -81,8 +84,8 @@ function g.test_absent_config()
     g.cluster:stop()
     log.warn('Cluster stopped')
 
-    fio.unlink(
-        fio.pathjoin(g.cluster.main_server.workdir, 'config.yml')
+    fio.rmtree(
+        fio.pathjoin(g.cluster.main_server.workdir, 'config')
     )
     log.warn('Config removed')
 
@@ -139,16 +142,11 @@ function g.test_invalid_config()
     g.cluster:stop()
     log.warn('Cluster stopped')
 
-
     utils.file_write(
-        fio.pathjoin(g.cluster.main_server.workdir, 'config.yml'),
+        fio.pathjoin(g.cluster.main_server.workdir, 'config/topology.yml'),
         [[
-        topology:
             replicasets: {}
             servers: {}
-        vshard:
-            bootstrapped: false
-            bucket_count: 3000
         ]]
     )
 

@@ -518,7 +518,7 @@ local function cluster_is_healthy()
         return nil, confapplier.get_state()
     end
 
-    local topology_cfg = confapplier.get_readonly('topology')
+    local topology_cfg = confapplier.get_readonly('topology.yml')
 
     for _it, instance_uuid, server in fun.filter(not_disabled, topology_cfg.servers) do
         local member = membership.get_member(server.uri) or {}

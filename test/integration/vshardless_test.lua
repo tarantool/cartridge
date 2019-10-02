@@ -81,14 +81,14 @@ function g.test_config()
     local server_conn = g.cluster:server('main').net_box
     local resp = server_conn:eval([[
         local cartridge = require('cartridge')
-        return cartridge.config_get_readonly('vshard_groups')
+        return cartridge.config_get_readonly('vshard_groups.yml')
     ]])
 
     t.assert_equals(resp, {})
 
     local resp = server_conn:eval([[
         local cartridge = require('cartridge')
-        return cartridge.config_get_readonly('vshard_groups')
+        return cartridge.config_get_readonly('vshard_groups.yml')
     ]])
     t.assert_equals(resp, {})
 end

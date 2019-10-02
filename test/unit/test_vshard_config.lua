@@ -70,45 +70,45 @@ test:diag('   top-level keys')
 
 check_config('section vshard_groups must be a table',
 [[---
-vshard_groups:
+vshard_groups.yml:
 ...]])
 
 check_config('section vshard_groups must have string keys',
 [[---
-vshard_groups:
+vshard_groups.yml:
   - default
 ...]])
 
 check_config('section vshard_groups["global"] must be a table',
 [[---
-vshard_groups:
+vshard_groups.yml:
   global: false
 ...]])
 
 check_config('vshard_groups["global"].bucket_count must be a number',
 [[---
-vshard_groups:
+vshard_groups.yml:
   global: {}
 ...]])
 
 check_config('vshard_groups["global"].bucket_count must be positive',
 [[---
-vshard_groups:
+vshard_groups.yml:
   global:
     bucket_count: 0
 ...]])
 
 check_config([[vshard_groups["global"].bucket_count can't be changed]],
 [[---
-topology: {}
-vshard_groups:
+topology.yml: {}
+vshard_groups.yml:
   global:
     bucket_count: 100
     bootstrapped: false
 ...]],
 [[---
-topology: {}
-vshard_groups:
+topology.yml: {}
+vshard_groups.yml:
   global:
     bucket_count: 200
     bootstrapped: false
@@ -116,7 +116,7 @@ vshard_groups:
 
 check_config('vshard_groups["global"].rebalancer_max_receiving must be a number',
 [[---
-vshard_groups:
+vshard_groups.yml:
   global:
     bucket_count: 200
     bootstrapped: false
@@ -125,7 +125,7 @@ vshard_groups:
 
 check_config('vshard_groups["global"].rebalancer_max_receiving must be positive',
 [[---
-vshard_groups:
+vshard_groups.yml:
   global:
     bucket_count: 200
     bootstrapped: false
@@ -134,7 +134,7 @@ vshard_groups:
 
 check_config('vshard_groups["global"].collect_lua_garbage must be a boolean',
 [[---
-vshard_groups:
+vshard_groups.yml:
   global:
     bucket_count: 200
     bootstrapped: false
@@ -143,7 +143,7 @@ vshard_groups:
 
 check_config('vshard_groups["global"].sync_timeout must be a number',
 [[---
-vshard_groups:
+vshard_groups.yml:
   global:
     bucket_count: 200
     bootstrapped: false
@@ -152,7 +152,7 @@ vshard_groups:
 
 check_config('vshard_groups["global"].sync_timeout must be non-negative',
 [[---
-vshard_groups:
+vshard_groups.yml:
   global:
     bucket_count: 200
     bootstrapped: false
@@ -161,7 +161,7 @@ vshard_groups:
 
 check_config('vshard_groups["global"].collect_bucket_garbage_interval must be a number',
 [[---
-vshard_groups:
+vshard_groups.yml:
   global:
     bucket_count: 200
     bootstrapped: false
@@ -170,7 +170,7 @@ vshard_groups:
 
 check_config('vshard_groups["global"].collect_bucket_garbage_interval must be positive',
 [[---
-vshard_groups:
+vshard_groups.yml:
   global:
     bucket_count: 200
     bootstrapped: false
@@ -179,7 +179,7 @@ vshard_groups:
 
 check_config('vshard_groups["global"].rebalancer_disbalance_threshold must be a number',
 [[---
-vshard_groups:
+vshard_groups.yml:
   global:
     bucket_count: 200
     bootstrapped: false
@@ -188,7 +188,7 @@ vshard_groups:
 
 check_config('vshard_groups["global"].rebalancer_disbalance_threshold must be non-negative',
 [[---
-vshard_groups:
+vshard_groups.yml:
   global:
     bucket_count: 200
     bootstrapped: false
@@ -197,7 +197,7 @@ vshard_groups:
 
 check_config('vshard_groups["global"].bootstrapped must be true or false',
 [[---
-vshard_groups:
+vshard_groups.yml:
   global:
     bucket_count: 1
     bootstrapped: nope
@@ -205,7 +205,7 @@ vshard_groups:
 
 check_config('section vshard_groups["global"] has unknown parameter "unknown"',
 [[---
-vshard_groups:
+vshard_groups.yml:
   global:
     bucket_count: 1
     bootstrapped: false
@@ -217,13 +217,13 @@ test:diag('   group assignment')
 check_config("replicasets[aaaaaaaa-0000-4000-b000-000000000001]" ..
     [[ can't be added to vshard_group "some", cluster doesn't have any]],
 [[---
-topology:
+topology.yml:
   replicasets:
     aaaaaaaa-0000-4000-b000-000000000001:
       master: aaaaaaaa-aaaa-4000-b000-000000000001
       vshard_group: some
       roles: {}
-vshard:
+vshard.yml:
   bucket_count: 1
   bootstrapped: false
 ...]])
@@ -231,12 +231,12 @@ vshard:
 check_config("replicasets[aaaaaaaa-0000-4000-b000-000000000001]" ..
     " is a vshard-storage and must be assigned to a particular group",
 [[---
-topology:
+topology.yml:
   replicasets:
     aaaaaaaa-0000-4000-b000-000000000001:
       master: aaaaaaaa-aaaa-4000-b000-000000000001
       roles: {"vshard-storage": true}
-vshard_groups:
+vshard_groups.yml:
   global:
     bucket_count: 1
     bootstrapped: false
@@ -245,13 +245,13 @@ vshard_groups:
 check_config("replicasets[aaaaaaaa-0000-4000-b000-000000000001]" ..
     [[.vshard_group "unknown" doesn't exist]],
 [[---
-topology:
+topology.yml:
   replicasets:
     aaaaaaaa-0000-4000-b000-000000000001:
       master: aaaaaaaa-aaaa-4000-b000-000000000001
       vshard_group: unknown
       roles: {"vshard-storage": true}
-vshard_groups:
+vshard_groups.yml:
   global:
     bucket_count: 1
     bootstrapped: false
@@ -260,13 +260,13 @@ vshard_groups:
 check_config("replicasets[aaaaaaaa-0000-4000-b000-000000000001]" ..
     [[.vshard_group can't be modified]],
 [[---
-topology:
+topology.yml:
   replicasets:
     aaaaaaaa-0000-4000-b000-000000000001:
       master: aaaaaaaa-aaaa-4000-b000-000000000001
       vshard_group: one
       roles: {}
-vshard_groups:
+vshard_groups.yml:
   one:
     bucket_count: 1
     bootstrapped: false
@@ -275,13 +275,13 @@ vshard_groups:
     bootstrapped: false
 ...]],
 [[---
-topology:
+topology.yml:
   replicasets:
     aaaaaaaa-0000-4000-b000-000000000001:
       master: aaaaaaaa-aaaa-4000-b000-000000000001
       vshard_group: two
       roles: {}
-vshard_groups:
+vshard_groups.yml:
   one:
     bucket_count: 1
     bootstrapped: false
