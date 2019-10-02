@@ -11,6 +11,7 @@ local netbox = require('net.box')
 local membership = require('membership')
 
 local pool = require('cartridge.pool')
+local utils = require('cartridge.utils')
 local topology = require('cartridge.topology')
 local confapplier = require('cartridge.confapplier')
 local service_registry = require('cartridge.service-registry')
@@ -37,6 +38,17 @@ local function call_local(role_name, fn_name, args)
     end
 end
 
+local function member_is_healthy(uri, instance_uuid)
+    local member = membership.get_member(uri)
+    return (
+        (member ~= nil)
+        and (member.status == 'alive')
+        and (member.payload.uuid == instance_uuid)
+        and (member.payload.error == nil)
+    )
+end
+
+
 --- List instances suitable for performing a remote call.
 --
 -- @function get_candidates
@@ -44,15 +56,21 @@ end
 --
 -- @tparam string role_name
 -- @tparam[opt] table opts
--- @tparam ?boolean opts.leader_only
+-- @tparam ?boolean opts.leader_only default false
+-- @tparam ?boolean opts.healthy_only default true
 --
 -- @treturn[1] {string,...} URIs
 -- @treturn[2] nil
 -- @treturn[2] table Error description
 local function get_candidates(role_name, opts)
     opts = opts or {}
+    if opts.healthy_only == nil then
+        opts.healthy_only = true
+    end
+
     checks('string', {
         leader_only = '?boolean',
+        healthy_only = '?boolean'
     })
 
     local servers = topology.get().servers
@@ -66,17 +84,12 @@ local function get_candidates(role_name, opts)
     for _, instance_uuid, server in fun.filter(topology.not_disabled, servers) do
         local replicaset_uuid = server.replicaset_uuid
         local replicaset = replicasets[replicaset_uuid]
-        local member = membership.get_member(server.uri)
 
         if confapplier.get_enabled_roles(replicaset.roles)[role_name]
-        and (member ~= nil)
-        and (member.status == 'alive')
-        and (member.payload.uuid == instance_uuid)
-        and (member.payload.error == nil)
+        and (not opts.healthy_only or member_is_healthy(server.uri, instance_uuid))
         and (not opts.leader_only or active_leaders[replicaset_uuid] == instance_uuid)
         then
             table.insert(candidates, server.uri)
-            candidates[server.uri] = true
         end
     end
 
@@ -117,7 +130,8 @@ local function get_connection(role_name, opts)
     end
 
     local myself = membership.myself()
-    if prefer_local and candidates[myself.uri] then
+    local uri_exists = utils.table_find(candidates, myself.uri)
+    if prefer_local and uri_exists then
         return netbox.self
     end
 
