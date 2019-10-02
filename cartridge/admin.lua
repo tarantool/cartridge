@@ -701,8 +701,8 @@ local function edit_topology(args)
     for _, srv in pairs(args.servers or {}) do
         i = i + 1
         if args.servers[i] == nil then
-            error(2, 'bad argument args.servers' ..
-                ' to edit_topology (it must be a contiguous array)'
+            error('bad argument args.servers' ..
+                ' to edit_topology (it must be a contiguous array)', 2
             )
         end
 
@@ -716,8 +716,8 @@ local function edit_topology(args)
     for _, rpl in pairs(args.replicasets or {}) do
         i = i + 1
         if args.replicasets[i] == nil then
-            error(2, 'bad argument args.replicasets' ..
-                ' to edit_topology (it must be a contiguous array)'
+            error('bad argument args.replicasets' ..
+                ' to edit_topology (it must be a contiguous array)', 2
             )
         end
 
