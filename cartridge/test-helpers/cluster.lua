@@ -85,15 +85,67 @@ function Cluster:server(alias)
     error('Server ' .. alias .. ' not found')
 end
 
+function Cluster:fill_edit_topology_data()
+    local replicasets = table.deepcopy(self.replicasets)
+    local map_uuid_replicaset = {}
+    for _, v in pairs(replicasets) do
+        map_uuid_replicaset[v.uuid] = v
+        v.join_servers = {}
+        v.servers = nil
+    end
+
+    for _, v in pairs(self.servers) do
+        local srv = {
+            uri = v.advertise_uri,
+            uuid = v.instance_uuid,
+            labels = v.labels,
+        }
+        table.insert(map_uuid_replicaset[v.replicaset_uuid].join_servers, srv)
+    end
+
+    local new_data = {}
+    for _, v in pairs(map_uuid_replicaset) do
+        table.insert(new_data, v)
+    end
+
+    log.debug(new_data)
+    return new_data
+end
+
 -- Start servers, configure replicasets and bootstrap vshard if required.
 function Cluster:bootstrap()
-    for _, server in ipairs(self.servers) do
-        server:start()
-        self:join_server(server)
+    self.main_server = self.servers[1]
+
+    for _, srv in ipairs(self.servers) do
+        srv:start()
     end
-    for _, replicaset_config in ipairs(self.replicasets) do
-        self.main_server:setup_replicaset(replicaset_config)
+
+    for _, srv in ipairs(self.servers) do
+        luatest.helpers.retrying({}, function() srv:graphql({query = '{}'}) end)
     end
+
+    self.main_server:graphql({
+        query = [[
+            mutation boot($replicasets: [EditReplicasetInput]) {
+                cluster {
+                    edit_topology(replicasets: $replicasets) {}
+                }
+            }
+        ]],
+        variables = {
+            replicasets = self:fill_edit_topology_data()
+        }
+    })
+
+    for _, srv in ipairs(self.servers) do
+        self:retrying({}, function() srv:connect_net_box() end)
+        self:wait_until_healthy(srv)
+    end
+
+    for _, srv in ipairs(self.servers) do
+        srv.net_box:eval('require("membership.options").PROTOCOL_PERIOD_SECONDS = 0.2')
+    end
+
     if self.use_vshard then
         self:bootstrap_vshard()
     end
@@ -175,9 +227,9 @@ function Cluster:join_server(server)
 end
 
 --- Blocks fiber until `cartridge.is_healthy()` returns true on main_server.
-function Cluster:wait_until_healthy()
+function Cluster:wait_until_healthy(srv)
     self:retrying({}, function ()
-        self.main_server.net_box:eval([[
+        (srv or self.main_server).net_box:eval([[
             local cartridge = package.loaded['cartridge']
             return assert(cartridge) and assert(cartridge.is_healthy())
         ]])
