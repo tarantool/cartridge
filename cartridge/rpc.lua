@@ -55,7 +55,9 @@ end
 --
 -- @tparam string role_name
 -- @tparam[opt] table opts
--- @tparam ?boolean opts.leader_only default false
+-- @tparam ?boolean opts.leader_only
+--   Filter instances which are leaders now.
+--   (default: **false**)
 -- @tparam ?boolean opts.healthy_only
 --   Filter instances which have membership status healthy.
 --   (added in v1.1.0-11, default: **true**)
