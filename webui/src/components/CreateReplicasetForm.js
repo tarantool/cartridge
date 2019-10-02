@@ -222,6 +222,7 @@ CreateReplicasetFormProps) => (
                 value={values.weight}
                 onChange={handleChange}
                 disabled={!vshardStorageRoleChecked}
+                placeholder='Auto'
               />
               <Text variant='p' className={styles.errorMessage}>{errors.weight}</Text>
             </LabeledInput>
