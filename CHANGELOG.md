@@ -38,6 +38,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Total buckets count in buckets tooltip
 
+- Validation error in user edit form
+
 ## [1.1.0] - 2019-09-24
 
 ### Added
