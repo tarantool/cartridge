@@ -44,6 +44,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Validation error in user edit form
 
+- Leader flag in server details modal
+
 ## [1.1.0] - 2019-09-24
 
 ### Added
