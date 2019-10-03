@@ -1,3 +1,4 @@
+// @flow
 // TODO: move to uikit
 import * as React from 'react';
 import { css } from 'react-emotion';
@@ -31,9 +32,18 @@ const styles = {
   `
 };
 
-export default class ServerInfoPanel extends React.PureComponent {
+type ServerShortInfoProps = {
+  activeMaster?: boolean,
+  status?: string,
+  uri: string,
+  alias: string,
+  message?: string,
+  master?: boolean
+};
+export default class ServerShortInfo extends React.PureComponent<ServerShortInfoProps> {
   render() {
     const {
+      activeMaster,
       status,
       uri,
       alias,
@@ -44,8 +54,8 @@ export default class ServerInfoPanel extends React.PureComponent {
     return (
       <div className={styles.item}>
         <div className={styles.row}>
-          {master && (
-            <LeaderFlag className={styles.leaderFlag} />
+          {(master || activeMaster) && (
+            <LeaderFlag className={styles.leaderFlag} fail={status !== 'healthy'} />
           )}
           <div className={styles.heading}>
             <Text variant='h4'>{alias}</Text>

@@ -229,7 +229,7 @@ class ReplicasetServerListItem extends React.PureComponent<
         <Dropdown
           items={[
             {
-              text: 'Detail server',
+              text: 'Server details',
               onClick: () => {
                 history.push(`/cluster/dashboard/instance/${uuid}`)
               }

@@ -63,13 +63,14 @@ class ServerInfoModal extends React.Component<ServerInfoModalProps, ServerInfoMo
       alias,
       instanceUUID,
       activeMasterUUID,
+      masterUUID,
       message,
       status,
       uri
     } = this.props
     return (
       <Modal
-        title={'Detail server'}
+        title='Server details'
         visible={true}
         onClose={this.close}
         wide
@@ -77,7 +78,8 @@ class ServerInfoModal extends React.Component<ServerInfoModalProps, ServerInfoMo
         <React.Fragment>
           <ServerShortInfo
             alias={alias}
-            master={instanceUUID === activeMasterUUID}
+            activeMaster={instanceUUID === activeMasterUUID}
+            master={instanceUUID === masterUUID}
             message={message}
             status={status}
             uri={uri}
