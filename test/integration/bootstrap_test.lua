@@ -17,16 +17,9 @@ g.before_all = function()
                     {
                         alias = 'master',
                         instance_uuid = helpers.uuid('a', 'a', 1)
-                    }
-                },
-            },
-            {
-                uuid = helpers.uuid('b'),
-                roles = {'myrole'},
-                servers = {
-                    {
+                    }, {
                         alias = 'replica',
-                        instance_uuid = helpers.uuid('b', 'b', 1)
+                        instance_uuid = helpers.uuid('a', 'a', 2)
                     }
                 },
             },

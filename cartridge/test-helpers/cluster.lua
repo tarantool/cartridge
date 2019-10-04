@@ -85,7 +85,7 @@ function Cluster:server(alias)
     error('Server ' .. alias .. ' not found')
 end
 
-function Cluster:fill_edit_topology_data()
+function Cluster:fill_edit_topology_data(servers)
     local replicasets = table.deepcopy(self.replicasets)
     local map_uuid_replicaset = {}
     for _, v in pairs(replicasets) do
@@ -94,7 +94,7 @@ function Cluster:fill_edit_topology_data()
         v.servers = nil
     end
 
-    for _, v in pairs(self.servers) do
+    for _, v in pairs(servers) do
         local srv = {
             uri = v.advertise_uri,
             uuid = v.instance_uuid,
@@ -112,9 +112,29 @@ function Cluster:fill_edit_topology_data()
     return new_data
 end
 
--- Start servers, configure replicasets and bootstrap vshard if required.
+function Cluster:find_cluster_leader()
+    local replicaset_uuid = nil
+    for _, replicaset_config in ipairs(self.replicasets) do
+        if #replicaset_config.servers == 1 then
+            replicaset_uuid = replicaset_config.uuid
+        end
+    end
+
+    if replicaset_uuid == nil then
+        return nil
+    end
+
+    for _, server in pairs(self.servers) do
+        if server.replicaset_uuid == replicaset_uuid then
+            return server
+        end
+    end
+    return nil
+end
+
 function Cluster:bootstrap()
-    self.main_server = self.servers[1]
+    self.main_server = self:find_cluster_leader()
+    local servers = table.deepcopy(self.servers)
 
     for _, srv in ipairs(self.servers) do
         srv:start()
@@ -122,6 +142,11 @@ function Cluster:bootstrap()
 
     for _, srv in ipairs(self.servers) do
         luatest.helpers.retrying({}, function() srv:graphql({query = '{}'}) end)
+    end
+
+    if self.main_server == nil then
+        self:join_server(self.servers[1])
+        servers[1] = nil
     end
 
     self.main_server:graphql({
@@ -133,7 +158,7 @@ function Cluster:bootstrap()
             }
         ]],
         variables = {
-            replicasets = self:fill_edit_topology_data()
+            replicasets = self:fill_edit_topology_data(servers)
         }
     })
 
