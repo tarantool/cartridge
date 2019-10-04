@@ -118,7 +118,8 @@ EditReplicasetFormProps) => {
       initialValues={{
         alias: replicaset.alias,
         roles: replicaset.roles || [],
-        vshard_group: replicaset.vshard_group,
+        vshard_group: replicaset.vshard_group
+          || ((vshard_groups && vshard_groups.length === 1) ? vshard_groups[0].name : null),
         master: replicaset.servers.map(({ uuid }) => uuid),
         weight: replicaset.weight
       }}

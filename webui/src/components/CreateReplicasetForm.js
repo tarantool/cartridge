@@ -104,7 +104,7 @@ CreateReplicasetFormProps) => (
     initialValues={{
       alias: '',
       roles: [],
-      vshard_group: null,
+      vshard_group: (vshard_groups && vshard_groups.length === 1) ? vshard_groups[0].name : null,
       weight: null
     }}
     validate={validateForm}
