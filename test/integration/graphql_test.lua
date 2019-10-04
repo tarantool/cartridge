@@ -96,3 +96,13 @@ g.test_resolver_error = function()
         server:graphql({query = '{ test(arg:"TEST") }'})
     end)
 end
+
+function g.test_fail_validate()
+    t.assert_error_msg_contains('Field "x" is not defined on type "String"', function()
+        cluster.main_server:graphql({
+            query = [[
+                { cluster { self { uri { x } } } }
+            ]]
+        })
+    end)
+end
