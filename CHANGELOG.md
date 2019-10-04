@@ -46,6 +46,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Leader flag in server details modal
 
+- Graphql `validate.getParentField()` doesn't fail and returns nil, if there 
+  are no fields in parent object
+
 ## [1.1.0] - 2019-09-24
 
 ### Added
