@@ -243,7 +243,7 @@ class ReplicasetServerListItem extends React.PureComponent<
               color: 'rgba(245, 34, 45, 0.65)'
             }
           ]}
-          className={cx(styles.configureBtn, 'ReplicasetServerListItem__dropdownBtn')}
+          className={cx(styles.configureBtn, 'meta-test__ReplicasetServerListItem__dropdownBtn')}
           size={'s'}
         />
         <ServerLabels

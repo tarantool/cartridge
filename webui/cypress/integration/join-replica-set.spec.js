@@ -8,10 +8,10 @@
 describe('Join Replica Set', () => {
   it('Join Replica Set', () => {
     cy.visit(Cypress.config('baseUrl'));
-    cy.get('.UnconfiguredServerList button[type="button"]').contains('Configure').click();
-    cy.get('.ConfigureServerModal').contains('Join Replica Set').click();
-    cy.get('.ConfigureServerModal input[type="radio"]').eq(0).check({ force: true });
-    cy.get('.ConfigureServerModal button[type="submit"]').contains('Join replica set').click();
-    cy.get('#root').contains('Join is OK. Please wait for list refresh...');
+    cy.get('.meta-test__configureBtn').first().click();//component: UnconfiguredServerList
+    cy.get('.meta-test__ConfigureServerModal').contains('Join Replica Set').click();
+    cy.get('.meta-test__ConfigureServerModal input[name="replicasetUuid"]').eq(1).check({ force: true });
+    cy.get('.meta-test__JoinReplicaSetBtn').click();
+    cy.get('#root').contains('Join is OK. Please wait for list refresh...');//add to frontend-core classname for notification
   })
 });
