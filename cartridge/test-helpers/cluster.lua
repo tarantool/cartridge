@@ -95,12 +95,12 @@ function Cluster:fill_edit_topology_data()
     end
 
     for _, v in pairs(self.servers) do
-        local srv = {
+        local server = {
             uri = v.advertise_uri,
             uuid = v.instance_uuid,
             labels = v.labels,
         }
-        table.insert(map_uuid_replicaset[v.replicaset_uuid].join_servers, srv)
+        table.insert(map_uuid_replicaset[v.replicaset_uuid].join_servers, server)
     end
 
     local new_data = {}
@@ -112,16 +112,58 @@ function Cluster:fill_edit_topology_data()
     return new_data
 end
 
--- Start servers, configure replicasets and bootstrap vshard if required.
-function Cluster:bootstrap()
-    self.main_server = self.servers[1]
-
-    for _, srv in ipairs(self.servers) do
-        srv:start()
+function Cluster:find_cluster_leader()
+    local replicaset_uuid = nil
+    for _, replicaset_config in ipairs(self.replicasets) do
+        if #replicaset_config.servers == 1 then
+            replicaset_uuid = replicaset_config.uuid
+        end
     end
 
-    for _, srv in ipairs(self.servers) do
-        luatest.helpers.retrying({}, function() srv:graphql({query = '{}'}) end)
+    if replicaset_uuid == nil then
+        return nil
+    end
+
+    for _, server in pairs(self.servers) do
+        if server.replicaset_uuid == replicaset_uuid then
+            return server
+        end
+    end
+    return nil
+end
+
+-- Start servers, configure replicasets and bootstrap vshard if required.
+function Cluster:bootstrap()
+    self.main_server = self:find_cluster_leader()
+    if self.main_server == nil then
+        self:bootstrap_consistently()
+    else
+        self:bootstrap_edit_topology()
+    end
+
+    if self.use_vshard then
+        self:bootstrap_vshard()
+    end
+end
+
+function Cluster:bootstrap_consistently()
+    for _, server in ipairs(self.servers) do
+        server:start()
+        self:join_server(server)
+    end
+
+    for _, replicaset_config in ipairs(self.replicasets) do
+        self.main_server:setup_replicaset(replicaset_config)
+    end
+end
+
+function Cluster:bootstrap_edit_topology()
+    for _, server in ipairs(self.servers) do
+        server:start()
+    end
+
+    for _, server in ipairs(self.servers) do
+        luatest.helpers.retrying({}, function() server:graphql({query = '{}'}) end)
     end
 
     self.main_server:graphql({
@@ -137,17 +179,13 @@ function Cluster:bootstrap()
         }
     })
 
-    for _, srv in ipairs(self.servers) do
-        self:retrying({}, function() srv:connect_net_box() end)
-        self:wait_until_healthy(srv)
+    for _, server in ipairs(self.servers) do
+        self:retrying({}, function() server:connect_net_box() end)
+        self:wait_until_healthy(server)
     end
 
-    for _, srv in ipairs(self.servers) do
-        srv.net_box:eval('require("membership.options").PROTOCOL_PERIOD_SECONDS = 0.2')
-    end
-
-    if self.use_vshard then
-        self:bootstrap_vshard()
+    for _, server in ipairs(self.servers) do
+        server.net_box:eval('require("membership.options").PROTOCOL_PERIOD_SECONDS = 0.2')
     end
 end
 
@@ -227,9 +265,9 @@ function Cluster:join_server(server)
 end
 
 --- Blocks fiber until `cartridge.is_healthy()` returns true on main_server.
-function Cluster:wait_until_healthy(srv)
+function Cluster:wait_until_healthy(server)
     self:retrying({}, function ()
-        (srv or self.main_server).net_box:eval([[
+        (server or self.main_server).net_box:eval([[
             local cartridge = package.loaded['cartridge']
             return assert(cartridge) and assert(cartridge.is_healthy())
         ]])
