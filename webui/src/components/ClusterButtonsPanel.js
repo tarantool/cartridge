@@ -21,6 +21,7 @@ const ClusterButtonsPanel = (
   }: ClusterButtonsPanelProps) => {
   return (
     <PageSection
+      className='meta-test__FailoverSwitcherBtn'
       topRightControls={[
         <ProbeServerModal />,
         showFailover && <FailoverButton />,

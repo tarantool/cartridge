@@ -70,6 +70,7 @@ class ServerInfoModal extends React.Component<ServerInfoModalProps, ServerInfoMo
     } = this.props
     return (
       <Modal
+        className='meta-test__ServerInfoModal'
         title='Server details'
         visible={true}
         onClose={this.close}

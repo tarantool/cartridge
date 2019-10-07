@@ -36,8 +36,7 @@ class AuthToggleButton extends React.Component<AuthToggleButtonProps, {visible: 
   render() {
     const {
       implements_check_password,
-      authorizationEnabled,
-      className
+      authorizationEnabled
     } = this.props;
 
     const { visible } = this.state
@@ -48,7 +47,6 @@ class AuthToggleButton extends React.Component<AuthToggleButtonProps, {visible: 
           <Switcher
             onChange={this.showModal}
             checked={authorizationEnabled}
-            className={className}
           >
             Auth
           </Switcher>

@@ -8,7 +8,7 @@ describe('Probe server', () => {
   it('opens probe dialog', () => {
     cy.visit(Cypress.config('baseUrl'));
 
-    cy.contains('Probe server').click();
+    cy.get('.meta-test__ProbeServerBtn').click(); //component:ProbeServerModal
   });
 
   it('shows probing error', () => {
@@ -16,7 +16,7 @@ describe('Probe server', () => {
       .type('unreachable')
       .should('have.value', 'unreachable');
 
-    cy.get('.ProbeServerModal button[type=submit]').click();
+    cy.get('.meta-test__ProbeServerSubmitBtn').click();//component:ProbeServerModal
 
     cy.get('.ProbeServerModal_error').contains('Probe "unreachable" failed: ping was not sent');
   });
@@ -27,8 +27,8 @@ describe('Probe server', () => {
       .type('localhost:3302')
       .should('have.value', 'localhost:3302');
 
-    cy.get('.ProbeServerModal button[type=submit]').click();
+    cy.get('.meta-test__ProbeServerSubmitBtn').click();
 
-    cy.get('#root').contains('Probe is OK. Please wait for list refresh...');
+    cy.get('#root').contains('Probe is OK. Please wait for list refresh...');//add to frontend-core classname for notification
   })
 });

@@ -48,7 +48,11 @@ class ProbeServerModal extends React.PureComponent<ProbeServerModalProps> {
 
     return (
       <React.Fragment>
-        <Button onClick={() => setProbeServerModalVisible(true)} text='Probe server' />
+        <Button
+          className='meta-test__ProbeServerBtn'
+          onClick={() => setProbeServerModalVisible(true)}
+          text='Probe server'
+        />
         <Modal
           className='ProbeServerModal'
           visible={probeServerModalVisible}
@@ -85,7 +89,12 @@ class ProbeServerModal extends React.PureComponent<ProbeServerModalProps> {
                 </div>
                 <PopupFooter
                   controls={[
-                    <Button type='submit' intent='primary' text='Submit' />
+                    <Button
+                      className='meta-test__ProbeServerSubmitBtn'
+                      type='submit'
+                      intent='primary'
+                      text='Submit'
+                    />
                   ]}
                 />
               </form>
