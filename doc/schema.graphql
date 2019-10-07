@@ -1,5 +1,5 @@
 # source: http://localhost:8081/admin/api
-# timestamp: Fri Sep 20 2019 19:44:06 GMT+0300 (Moscow Standard Time)
+# timestamp: Mon Oct 07 2019 19:29:45 GMT+0300 (Moscow Standard Time)
 
 """Cluster management"""
 type Apicluster {
@@ -29,12 +29,12 @@ type Apicluster {
 
 """Parameters for editing a replicaset"""
 input EditReplicasetInput {
-  uuid: String!
+  uuid: String
   weight: Float
   vshard_group: String
   join_servers: [JoinServerInput]
   roles: [String!]
-  alias: String!
+  alias: String
   all_rw: Boolean
   failover_priority: [String!]
 }
