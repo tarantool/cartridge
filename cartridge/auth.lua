@@ -200,7 +200,7 @@ local function create_cookie(uid)
     )
 
     return string.format(
-        'lsid=%s;Max-Age=%d', lsid,
+        'lsid=%q; Path=/; Max-Age=%d', lsid,
         get_params().cookie_max_age
     )
 end
@@ -355,7 +355,7 @@ local function logout(_)
     return {
         status = 200,
         headers = {
-            ['set-cookie'] = 'lsid=""; Max-Age=0'
+            ['set-cookie'] = 'lsid=""; Path=/; Max-Age=0'
         }
     }
 end
@@ -653,7 +653,7 @@ local function authorize_request(req)
 
         return true
     elseif cookie_raw then
-        fiber_storage['http_session_set_cookie'] = 'lsid="";Max-Age=0'
+        fiber_storage['http_session_set_cookie'] = 'lsid=""; Path=/; Max-Age=0'
     end
 
     if not auth_cfg.enabled then
