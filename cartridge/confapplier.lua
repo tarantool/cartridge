@@ -404,7 +404,7 @@ local function validate_config(conf_new, conf_old)
             )
             if not ok then
                 err = err or e_config_validate:new(
-                    'Role %q method vaildate_config() returned %s',
+                    'Role %q method validate_config() returned %s',
                     mod.role_name, ok
                 )
                 return nil, err
