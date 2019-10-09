@@ -686,7 +686,6 @@ local function edit_topology(args)
         servers = '?table',
     })
 
-    require('log').info('%s', require('yaml').encode(args))
     local args = table.deepcopy(args)
     local topology_cfg = confapplier.get_deepcopy('topology')
     if topology_cfg == nil then
