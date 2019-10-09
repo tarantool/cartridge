@@ -1,8 +1,8 @@
 // @flow
 import React from 'react';
 import { css, cx } from 'react-emotion';
-import { Formik } from 'formik';
 import * as R from 'ramda';
+import { Form, Field, FormSpy } from 'react-final-form';
 import {
   Button,
   Checkbox,
@@ -114,7 +114,7 @@ EditReplicasetFormProps) => {
   }
 
   return (
-    <Formik
+    <Form
       initialValues={{
         alias: replicaset.alias,
         roles: replicaset.roles || [],
@@ -123,8 +123,9 @@ EditReplicasetFormProps) => {
         master: replicaset.servers.map(({ uuid }) => uuid),
         weight: replicaset.weight
       }}
+      keepDirtyOnReinitialize
       validate={validateForm}
-      onSubmit={(values, { setSubmitting }) => {
+      onSubmit={values => {
         onSubmit({
           ...values,
           alias: values.alias || null,
@@ -134,14 +135,10 @@ EditReplicasetFormProps) => {
       }}
     >
       {({
-        values,
-        errors,
-        touched,
-        handleChange,
-        handleBlur,
+        errors = {},
+        form,
         handleSubmit,
-        isSubmitting,
-        setFieldValue
+        values = {}
       }) => {
         const vshardStorageRoleChecked = values.roles.includes(VSHARD_STORAGE_ROLE_NAME);
         const activeDependencies = getRolesDependencies(values.roles, knownRoles)
@@ -152,111 +149,149 @@ EditReplicasetFormProps) => {
           <form onSubmit={handleSubmit}>
             <PopupBody className={styles.popupBody} innerClassName={styles.wrap} scrollable>
               <SelectedReplicaset className={styles.splash} replicaset={replicaset} />
-              <LabeledInput className={styles.wideField} label='Enter name of replica set'>
-                <Input
-                  name='alias'
-                  className={cx(
-                    styles.input,
-                    styles.aliasInput
-                  )}
-                  onChange={handleChange}
-                  value={values.alias}
-                  error={errors.alias}
-                />
-                <Text variant='p' className={styles.errorMessage}>{errors.alias}</Text>
-              </LabeledInput>
-              <FormField
-                className={styles.wideField}
-                columns={rolesColumns}
-                label='Roles'
-                subTitle={(
-                  <Button
-                    intent='plain'
-                    onClick={() => setFieldValue(
-                      'roles',
-                      !knownRoles || (values.roles.length === knownRoles.length)
-                        ? []
-                        : knownRoles.map(({ name }) => name)
-                    )}
-                    size='xs'
-                    text={values.roles.length === (knownRoles && knownRoles.length) ? 'Deselect all' : 'Select all'}
-                  />
-                )}
-                verticalSort
-              >
-                {knownRoles && knownRoles.reduceRight(
-                  (acc, { name, dependencies }) => {
-                    acc.push(
-                      <Checkbox
-                        onChange={() => {
-                          const activeRoles = values.roles.includes(name)
-                            ? values.roles.filter(x => x !== name)
-                            : values.roles.concat([name])
+              {vshard_groups && vshard_groups.length === 1 && (
+                <FormSpy
+                  subscription={{ values: true }}
+                  onChange={({ values }) => {
+                    if (!values) return;
 
-                          const prevDependencies = getRolesDependencies(values.roles, knownRoles);
-                          const rolesWithoutDependencies = activeRoles.filter(
-                            role => !prevDependencies.includes(role)
+                    if (values.roles.includes(VSHARD_STORAGE_ROLE_NAME) && !values.vshard_group) {
+                      form.change('vshard_group', vshard_groups[0].name);
+                    }
+
+                    if (!values.roles.includes(VSHARD_STORAGE_ROLE_NAME) && values.vshard_group) {
+                      form.change('vshard_group', null);
+                    }
+                  }}
+                />
+              )}
+              <Field name='alias'>
+                {({ input: { name, value, onChange }, meta: { error } }) => (
+                  <LabeledInput className={styles.wideField} label='Enter name of replica set'>
+                    <Input
+                      name={name}
+                      className={cx(
+                        styles.input,
+                        styles.aliasInput
+                      )}
+                      onChange={onChange}
+                      value={value}
+                      error={error}
+                    />
+                    <Text variant='p' className={styles.errorMessage}>{error}</Text>
+                  </LabeledInput>
+                )}
+              </Field>
+              <Field name='roles'>
+                {({ input: { name: fieldName, value, onChange } }) => (
+                  <FormField
+                    className={styles.wideField}
+                    columns={rolesColumns}
+                    label='Roles'
+                    subTitle={(
+                      <Button
+                        intent='plain'
+                        onClick={() => {
+                          form.change(
+                            fieldName,
+                            !knownRoles || (value.length === knownRoles.length)
+                              ? []
+                              : knownRoles.map(({ name }) => name)
                           );
-                          const newDependencies = getRolesDependencies(rolesWithoutDependencies, knownRoles);
-
-                          setFieldValue(
-                            'roles',
-                            R.uniq([...newDependencies, ...rolesWithoutDependencies])
-                          )
                         }}
-                        name='roles'
-                        value={name}
-                        checked={values.roles.includes(name)}
-                        disabled={activeDependencies.includes(name)}
-                      >
-                        {`${name}${getDependenciesString(dependencies)}`}
-                      </Checkbox>
-                    );
-                    return acc;
-                  },
-                  []
-                )}
-              </FormField>
-              <FormField className={styles.vshardGroupField} label='Group' info={info}>
-                {vshard_groups && vshard_groups.map(({ name }) => (
-                  <RadioButton
-                    onChange={handleChange}
-                    name='vshard_group'
-                    value={name}
-                    checked={name === values.vshard_group}
-                    disabled={VShardGroupInputDisabled}
+                        size='xs'
+                        text={value.length === (knownRoles && knownRoles.length) ? 'Deselect all' : 'Select all'}
+                      />
+                    )}
+                    verticalSort
                   >
-                    {name}
-                  </RadioButton>
-                ))}
-              </FormField>
-              <LabeledInput className={styles.weightField} label='Weight'>
-                <Input
-                  className={styles.weightInput}
-                  name='weight'
-                  error={errors.weight}
-                  value={values.weight}
-                  onChange={handleChange}
-                  disabled={!vshardStorageRoleChecked}
-                  placeholder='Auto'
-                />
-                <Text variant='p' className={styles.errorMessage}>{errors.weight}</Text>
-              </LabeledInput>
-              <LabeledInput
-                className={cx('ser', styles.wideField)}
-                itemClassName={styles.radioWrap}
-                label='Failover priority'
-              >
-                <ServerSortableList
-                  value={values.master}
-                  key={'uuid'}
-                  onChange={v => setFieldValue('master', v)}
-                  serverMap={R.compose(
-                    R.map(([val]) => val),
-                    R.groupBy(R.prop('uuid'))
-                  )(replicaset.servers || [])}
-                />
-              </LabeledInput>
+                    {knownRoles && knownRoles.reduceRight(
+                      (acc, { name, dependencies }) => {
+                        acc.push(
+                          <Checkbox
+                            onChange={() => {
+                              const activeRoles = value.includes(name)
+                                ? value.filter(x => x !== name)
+                                : value.concat([name])
+
+                              const prevDependencies = getRolesDependencies(value, knownRoles);
+                              const rolesWithoutDependencies = activeRoles.filter(
+                                role => !prevDependencies.includes(role)
+                              );
+                              const newDependencies = getRolesDependencies(rolesWithoutDependencies, knownRoles);
+
+                              form.change(
+                                fieldName,
+                                R.uniq([...newDependencies, ...rolesWithoutDependencies])
+                              )
+                            }}
+                            name={fieldName}
+                            value={name}
+                            checked={value.includes(name)}
+                            disabled={activeDependencies.includes(name)}
+                          >
+                            {`${name}${getDependenciesString(dependencies)}`}
+                          </Checkbox>
+                        );
+                        return acc;
+                      },
+                      []
+                    )}
+                  </FormField>
+                )}
+              </Field>
+              <Field name='vshard_group'>
+                {({ input: { name: fieldName, value, onChange } }) => (
+                  <FormField className={styles.vshardGroupField} label='Group' info={info}>
+                    {vshard_groups && vshard_groups.map(({ name }) => (
+                      <RadioButton
+                        onChange={onChange}
+                        name={fieldName}
+                        value={name}
+                        checked={name === value}
+                        disabled={VShardGroupInputDisabled}
+                      >
+                        {name}
+                      </RadioButton>
+                    ))}
+                  </FormField>
+                )}
+              </Field>
+              <Field name='weight'>
+                {({ input: { name, value, onChange }, meta: { error } }) => (
+                  <LabeledInput className={styles.weightField} label='Weight'>
+                    <Input
+                      className={styles.weightInput}
+                      name={name}
+                      error={error}
+                      value={value}
+                      onChange={onChange}
+                      disabled={!vshardStorageRoleChecked}
+                      placeholder='Auto'
+                    />
+                    <Text variant='p' className={styles.errorMessage}>{errors.weight}</Text>
+                  </LabeledInput>
+                )}
+              </Field>
+              <Field name='master'>
+                {({ input: { name, value, onChange }, meta: { error } }) => (
+                  <LabeledInput
+                    className={cx('ser', styles.wideField)}
+                    itemClassName={styles.radioWrap}
+                    label='Failover priority'
+                  >
+                    <ServerSortableList
+                      value={value}
+                      key={'uuid'}
+                      onChange={v => form.change(name, v)}
+                      serverMap={R.compose(
+                        R.map(([val]) => val),
+                        R.groupBy(R.prop('uuid'))
+                      )(replicaset.servers || [])}
+                    />
+                  </LabeledInput>
+                )}
+              </Field>
             </PopupBody>
             <PopupFooter
               controls={([
@@ -273,7 +308,7 @@ EditReplicasetFormProps) => {
           </form>
         )
       }}
-    </Formik>
+    </Form>
   );
 }
 
