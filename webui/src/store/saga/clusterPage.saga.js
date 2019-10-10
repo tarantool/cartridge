@@ -245,6 +245,21 @@ const updateClusterSelfOnBootstrap = function* () {
   });
 };
 
+const connectionStatusSaga = function* () {
+  while (true) {
+    const { error } = yield take(CLUSTER_PAGE_REFRESH_LISTS_REQUEST_ERROR);
+    if (error && error.message.indexOf('Network error') === 0) {
+      window.tarantool_enterprise_core.notify({
+        title: 'Connection lost',
+        message: 'Network connection problem or server disconnected',
+        type: 'error',
+        timeout: 0
+      });
+      yield take(CLUSTER_PAGE_REFRESH_LISTS_REQUEST_SUCCESS);
+    }
+  }
+};
+
 const updateListsOnTopologyEdit = function* () {
   const topologyEditTokens = [
     CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST_SUCCESS,
@@ -271,5 +286,6 @@ export const saga = baseSaga(
   uploadConfigRequestSaga,
   changeFailoverRequestSaga,
   updateClusterSelfOnBootstrap,
-  updateListsOnTopologyEdit
+  updateListsOnTopologyEdit,
+  connectionStatusSaga
 );

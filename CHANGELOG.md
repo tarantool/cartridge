@@ -27,6 +27,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - New Lua API `cartridge.rpc_get_candidates()` to get list
   of instances suitable for performing a remote call.
 
+- Network error notification in UI.
+
 ### Changed
 
 - Get UI components from Tarantool UI-Kit
