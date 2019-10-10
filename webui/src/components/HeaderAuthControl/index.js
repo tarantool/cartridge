@@ -50,7 +50,7 @@ class HeaderAuthControl extends React.Component {
     if (username) {
       return (
         <Dropdown
-          className={cx(styles.box, css`cursor: pointer`)}
+          className={cx(styles.box, css`cursor: pointer`, 'meta-test__LogoutBtn')}
           items={[{ text: 'Log out', onClick: this.sendLogOut }]}
         >
           <div
@@ -66,7 +66,14 @@ class HeaderAuthControl extends React.Component {
 
     return (
       <div className={styles.box}>
-        {!authorized && <Button text={'Log in'} intent={'base'} onClick={() => showAuthModal()} />}
+        {!authorized &&
+        <Button
+          className='meta-test__LoginBtn'
+          text={'Log in'}
+          intent={'base'}
+          onClick={() => showAuthModal()}
+        />
+        }
         <ModalLogInForm
           visible={authModalVisible}
           onCancel={hideAuthModal}
