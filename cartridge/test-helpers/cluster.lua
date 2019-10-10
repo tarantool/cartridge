@@ -108,37 +108,15 @@ function Cluster:fill_edit_topology_data()
         table.insert(new_data, v)
     end
 
-    log.debug(new_data)
     return new_data
-end
-
-function Cluster:find_cluster_leader()
-    local replicaset_uuid = nil
-    for _, replicaset_config in ipairs(self.replicasets) do
-        if #replicaset_config.servers == 1 then
-            replicaset_uuid = replicaset_config.uuid
-        end
-    end
-
-    if replicaset_uuid == nil then
-        return nil
-    end
-
-    for _, server in pairs(self.servers) do
-        if server.replicaset_uuid == replicaset_uuid then
-            return server
-        end
-    end
-    return nil
 end
 
 -- Start servers, configure replicasets and bootstrap vshard if required.
 function Cluster:bootstrap()
-    self.main_server = self:find_cluster_leader()
-    if self.main_server == nil then
-        self:bootstrap_consistently()
-    else
+    if #self.replicasets[1].servers == 1 then
         self:bootstrap_edit_topology()
+    else
+        self:bootstrap_consistently()
     end
 
     if self.use_vshard then
@@ -158,6 +136,7 @@ function Cluster:bootstrap_consistently()
 end
 
 function Cluster:bootstrap_edit_topology()
+    self.main_server = self.servers[1]
     for _, server in ipairs(self.servers) do
         server:start()
     end
@@ -181,11 +160,8 @@ function Cluster:bootstrap_edit_topology()
 
     for _, server in ipairs(self.servers) do
         self:retrying({}, function() server:connect_net_box() end)
-        self:wait_until_healthy(server)
-    end
-
-    for _, server in ipairs(self.servers) do
         server.net_box:eval('require("membership.options").PROTOCOL_PERIOD_SECONDS = 0.2')
+        self:wait_until_healthy(server)
     end
 end
 
