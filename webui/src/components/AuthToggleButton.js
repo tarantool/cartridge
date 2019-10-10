@@ -45,12 +45,14 @@ class AuthToggleButton extends React.Component<AuthToggleButtonProps, {visible: 
       (
         <React.Fragment>
           <Switcher
+            className='meta-test__AuthToggle'
             onChange={this.showModal}
             checked={authorizationEnabled}
           >
             Auth
           </Switcher>
           <ConfirmModal
+            className='meta-test__ConfirmModal'
             visible={visible}
             confirmText={authorizationEnabled ? 'Disable' : 'Enable'}
             onConfirm={this.handleClick}
@@ -94,6 +96,7 @@ const mapStateToProps = ({
   authorizationEnabled,
   fetchingAuth,
   className
+
 });
 
 export default connect(mapStateToProps, { turnAuth })(AuthToggleButton);

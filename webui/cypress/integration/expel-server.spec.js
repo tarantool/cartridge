@@ -24,7 +24,6 @@ describe('Expel server', () => {
     cy.get('.meta-test__ReplicasetServerListItem__dropdownBtn').contains('Expel server').click();//need to change conteins later
     cy.get('.meta-test__ExpelServerModal button[type="button"]').contains('Expel').click();
     cy.get('.meta-test__ExpelServerModal button[type="button"]').contains('Cancel').click();
-    cy.get('#root').contains('is a vshard-storage which can\'t be removed');
-    
+    cy.get('#root').contains('An error has occurred');
   })
 });
