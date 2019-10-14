@@ -248,7 +248,7 @@ const updateClusterSelfOnBootstrap = function* () {
 const connectionStatusSaga = function* () {
   while (true) {
     const { error } = yield take(CLUSTER_PAGE_REFRESH_LISTS_REQUEST_ERROR);
-    if (error && error.message.indexOf('Network error') === 0) {
+    if (error && error.message && error.message.indexOf('Network error') === 0) {
       window.tarantool_enterprise_core.notify({
         title: 'Connection lost',
         message: 'Network connection problem or server disconnected',
