@@ -135,14 +135,16 @@ function Server:setup_replicaset(config)
                 $alias: String,
                 $roles: [String!],
                 $master: [String!],
-                $weight: Float
+                $weight: Float,
+                $vshard_group: String
             ) {
                 edit_replicaset(
                     uuid: $uuid,
                     alias: $alias,
                     roles: $roles,
                     master: $master,
-                    weight: $weight
+                    weight: $weight,
+                    vshard_group: $vshard_group
                 )
             }
         ]],
@@ -152,6 +154,7 @@ function Server:setup_replicaset(config)
             roles = config.roles,
             master = config.master,
             weight = config.weight,
+            vshard_group = config.vshard_group,
         }
     })
 end

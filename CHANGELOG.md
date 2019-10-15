@@ -29,6 +29,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Network error notification in UI.
 
+- Allow specifying vshard storage group in test helpers.
+
 ### Changed
 
 - Get UI components from Tarantool UI-Kit
