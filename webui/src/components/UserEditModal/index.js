@@ -16,6 +16,7 @@ class UserEditModal extends React.Component {
 
     return (
       <Modal
+        className='meta-test__UserEditModal'
         title={`Edit ${username}`}
         visible={editUserModalVisible}
         width={550}
