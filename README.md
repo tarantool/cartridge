@@ -3,8 +3,6 @@
 align="right">
 </a>
 
-[![pipeline status](https://gitlab.com/tarantool/cartridge/badges/master/pipeline.svg)](https://gitlab.com/tarantool/cartridge/commits/master)
-
 # Tarantool Cartridge &mdash; a framework for distributed applications development
 
 ## Table of contents
