@@ -59,13 +59,11 @@ g.after_all = function()
     fio.rmtree(g.cluster.datadir)
 end
 
-local function assert_ret_equals(map, uri, expected)
+local function assert_err_equals(map, uri, expected)
     local ok, err = pcall(function()
         t.assert_not_nil(map[uri])
-        t.assert_is_nil(map[uri][1])
-        t.assert_is_table(map[uri][2])
         t.assert_equals(
-            map[uri][2].class_name .. ': ' .. map[uri][2].err,
+            map[uri].class_name .. ': ' .. map[uri].err,
             expected)
     end)
 
@@ -75,12 +73,13 @@ local function assert_ret_equals(map, uri, expected)
 end
 
 function g.test_timeout()
-    local map = pool.map_call('package.loaded.fiber.sleep', {1}, {
+    local retmap, errmap = pool.map_call('package.loaded.fiber.sleep', {1}, {
         uri_list = {'localhost:13301'},
         timeout = 0,
     })
 
-    assert_ret_equals(map, 'localhost:13301',
+    t.assert_equals(retmap, {})
+    assert_err_equals(errmap, 'localhost:13301',
         'Net.box call failed: Timeout exceeded'
     )
 end
@@ -116,8 +115,8 @@ function g.test_parallel()
     })
 
     t.assert_equals(map, {
-        ['localhost:13301'] = {true},
-        ['localhost:13302'] = {true},
+        ['localhost:13301'] = true,
+        ['localhost:13302'] = true,
     })
 end
 
@@ -155,7 +154,7 @@ function g.test_negative()
         end
     ]])
 
-    local map = pool.map_call('_G.raise_error', nil, {
+    local retmap, errmap = pool.map_call('_G.raise_error', nil, {
         uri_list = {
             '!@#$%^&*()',      -- invalid uri
             'localhost:13301', -- box.listen
@@ -166,23 +165,25 @@ function g.test_negative()
         timeout = 1,
     })
 
-    assert_ret_equals(map, '!@#$%^&*()',      'FormatURIError: Invalid URI "!@#$%^&*()"')
-    assert_ret_equals(map, 'localhost:13301', 'Net.box call failed: eval:2: Too long WAL write')
-    assert_ret_equals(map, 'localhost:13302', 'Net.box call failed: eval:2: Too long WAL write')
-    assert_ret_equals(map, 'localhost:13309', 'NetboxConnectError: "localhost:13309": Invalid greeting')
-    assert_ret_equals(map, 'localhost:9',     'NetboxConnectError: "localhost:9": Connection refused')
+    t.assert_equals(retmap, {})
+    assert_err_equals(errmap, '!@#$%^&*()',      'FormatURIError: Invalid URI "!@#$%^&*()"')
+    assert_err_equals(errmap, 'localhost:13301', 'Net.box call failed: eval:2: Too long WAL write')
+    assert_err_equals(errmap, 'localhost:13302', 'Net.box call failed: eval:2: Too long WAL write')
+    assert_err_equals(errmap, 'localhost:13309', 'NetboxConnectError: "localhost:13309": Invalid greeting')
+    assert_err_equals(errmap, 'localhost:9',     'NetboxConnectError: "localhost:9": Connection refused')
 end
 
 function g.test_positive()
-    local map = pool.map_call('math.pow', {2, 4}, {
+    local retmap, errmap = pool.map_call('math.pow', {2, 4}, {
         uri_list = {
             'localhost:13301',
             'localhost:13302',
         }
     })
 
-    t.assert_equals(map, {
-        ['localhost:13301'] = {16},
-        ['localhost:13302'] = {16},
+    t.assert_equals(retmap, {
+        ['localhost:13301'] = 16,
+        ['localhost:13302'] = 16,
     })
+    t.assert_is_nil(errmap)
 end

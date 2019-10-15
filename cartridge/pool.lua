@@ -89,20 +89,33 @@ local function connect(uri, options)
     return conn, err
 end
 
-local function _gather_netbox_call(ret_map, uri, fn_name, args, opts)
+local function _pack_values(maps, uri, ...)
+    for i = 1, select('#', ...) do
+        local v = select(i, ...)
+        maps[i] = maps[i] or {}
+        maps[i][uri] = v
+    end
+end
+
+local function _gather_netbox_call(maps, uri, fn_name, args, opts)
     local conn, err = connect(uri)
+
     if conn == nil then
-        ret_map[uri] = {nil, err}
+        _pack_values(maps, uri,
+            nil, err
+        )
         return
     end
 
-    ret_map[uri] = {errors.netbox_call(conn, fn_name, args, opts)}
+    _pack_values(maps, uri,
+        errors.netbox_call(conn, fn_name, args, opts)
+    )
     return
 end
 
 --- Perform a remote call to multiple URIs and map results.
 --
--- (**Added** in v1.1.0-12)
+-- (**Added** in v1.1.0-29)
 -- @function map_call
 -- @local
 --
@@ -114,9 +127,10 @@ end
 -- @tparam ?number opts.timeout
 --   passed to `net.box` `conn:call` options
 --
--- @treturn {URI=table,...}
+-- @treturn {URI=value,...}
 --   Call results mapping for every URI.
---   Any errors are mapped as `[URI] = {nil, err}`
+-- @treturn nil|{URI=error,...}
+--   Errors mapping for every URI.
 local function map_call(fn_name, args, opts)
     checks('string', '?table', {
         uri_list = 'table',
@@ -134,12 +148,12 @@ local function map_call(fn_name, args, opts)
         end
     end
 
-    local ret_map = {}
+    local maps = {}
     local fibers = {}
     for _, uri in pairs(opts.uri_list) do
         local fiber = fiber.new(
             _gather_netbox_call,
-            ret_map, uri, fn_name, args,
+            maps, uri, fn_name, args,
             {timeout = opts.timeout}
         )
         fiber:name('netbox_call_map')
@@ -150,11 +164,13 @@ local function map_call(fn_name, args, opts)
     for _, uri in pairs(opts.uri_list) do
         local ok, err = fibers[uri]:join()
         if not ok then
-            ret_map[uri] = {nil, errors.new('NetboxMapCallError', err)}
+            _pack_values(maps, uri,
+                nil, errors.new('NetboxMapCallError', err)
+            )
         end
     end
 
-    return ret_map
+    return unpack(maps)
 end
 
 return {
