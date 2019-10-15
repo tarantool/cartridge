@@ -597,7 +597,9 @@ local function __edit_replicaset(topology_cfg, params)
             break
         end
 
-        replicaset.vshard_group = 'default'
+        if replicaset.vshard_group == nil then
+            replicaset.vshard_group = 'default'
+        end
     until true
 
 
