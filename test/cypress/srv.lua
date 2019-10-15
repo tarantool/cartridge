@@ -41,4 +41,17 @@ local cluster = helpers.Cluster:new({
     }
 })
 
+local another_server = helpers.Server:new({
+    workdir = fio.tempdir(),
+    alias = 'spare',
+    command = test_helper.server_command,
+    replicaset_uuid = helpers.uuid('с'),
+    instance_uuid = helpers.uuid('b', 'b', 3),
+    http_port = 8085,
+    cluster_cookie = cluster.cookie,
+    advertise_port = 33010,
+})
+
 cluster:start()
+
+another_server:start()
