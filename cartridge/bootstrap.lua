@@ -364,6 +364,9 @@ local function bootstrap_from_snapshot()
     box_opts.wal_dir = vars.boot_opts.workdir
     box_opts.memtx_dir = vars.boot_opts.workdir
     box_opts.vinyl_dir = vars.boot_opts.workdir
+    if box_opts.read_only == nil then
+        box_opts.read_only = true
+    end
 
     membership.set_payload('warning', 'Recovering from snapshot')
     init_box(box_opts)
