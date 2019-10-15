@@ -49,12 +49,14 @@ function Cluster:new(object)
     -- @string[opt] alias Prefix to generate server alias automatically.
     -- @string uuid Replicaset uuid.
     -- @tparam {string} roles List of roles for servers in the replicaset.
+    -- @tparam ?string vshard_group Name of vshard group.
     -- @tab servers List of objects to build `Server`s with.
     for _, replicaset in pairs(object.replicasets) do
         (function(_) checks({
             alias = '?string',
             uuid = 'string',
             roles = 'table',
+            vshard_group = '?string',
             servers = 'table',
         }) end)(replicaset)
     end

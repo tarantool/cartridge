@@ -1,5 +1,5 @@
 # source: http://localhost:8081/admin/api
-# timestamp: Fri Sep 20 2019 19:44:06 GMT+0300 (Moscow Standard Time)
+# timestamp: Tue Oct 15 2019 17:35:02 GMT+0300 (Moscow Standard Time)
 
 """Cluster management"""
 type Apicluster {
@@ -396,7 +396,7 @@ type VshardGroup {
   """The interval between garbage collector actions, in seconds"""
   collect_bucket_garbage_interval: Float!
 
-  """Whethe the group is ready to operate"""
+  """Whether the group is ready to operate"""
   bootstrapped: Boolean!
 
   """

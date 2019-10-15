@@ -18,7 +18,7 @@ local gql_type_vsgroup = gql_types.object({
         },
         bootstrapped = {
             kind = gql_types.boolean.nonNull,
-            description = 'Whethe the group is ready to operate',
+            description = 'Whether the group is ready to operate',
         },
         rebalancer_max_receiving = {
             kind = gql_types.int.nonNull,
