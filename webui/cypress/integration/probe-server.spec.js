@@ -24,11 +24,10 @@ describe('Probe server', () => {
   it('shows probings success message', () => {
     cy.get('.ProbeServerModal input[name="uri"]')
       .clear()
-      .type('localhost:3302')
-      .should('have.value', 'localhost:3302');
-
+      .type('localhost:33002')
+      .should('have.value', 'localhost:33002');
     cy.get('.meta-test__ProbeServerSubmitBtn').click();
-
+    //cy.wait(20000);
     cy.get('#root').contains('Probe is OK. Please wait for list refresh...');//add to frontend-core classname for notification
   })
 });
