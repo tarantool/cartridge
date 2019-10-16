@@ -8,6 +8,9 @@
     }
   },
   "parser": "babel-eslint",
+  "plugins": [
+    "flowtype"
+  ],
   "rules": {
     "no-trailing-spaces": ["warn"],
     "no-multi-str": ["off"],
