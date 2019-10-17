@@ -37,7 +37,9 @@ class BootstrapPanel extends React.Component {
 
     return (
       <PageCard title="Bootstrap vshard" onClose={() => setVisibleBootstrapVshardPanel(false)} showCorner>
-        <Text className={styles.row} variant='h4'>When you finish edition topology. To render storages operable.</Text>
+        <Text className={styles.row} variant='h4'>
+          After you complete editing the topology, you need to bootstrap vshard to render storages operable.
+        </Text>
         <Text className={styles.row}>
           {routerPresent ? <IconOk className={styles.iconMargin} /> : <IconCancel className={styles.iconMargin} />}
           One role vshard-router enabled
