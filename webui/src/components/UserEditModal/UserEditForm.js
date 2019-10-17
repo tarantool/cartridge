@@ -67,8 +67,8 @@ class UserEditForm extends React.Component {
     return (
       <Formik
         initialValues={{
-          fullname: '',
-          email: '',
+          fullname: fullname || '',
+          email: email || '',
           password: ''
         }}
         validationSchema={schema}
