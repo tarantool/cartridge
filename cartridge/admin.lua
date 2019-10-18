@@ -16,7 +16,7 @@ local rpc = require('cartridge.rpc')
 local pool = require('cartridge.pool')
 local utils = require('cartridge.utils')
 local topology = require('cartridge.topology')
-local bootstrap = require('cartridge.bootstrap')
+local twophase = require('cartridge.twophase')
 local vshard_utils = require('cartridge.vshard-utils')
 local confapplier = require('cartridge.confapplier')
 local service_registry = require('cartridge.service-registry')
@@ -762,19 +762,7 @@ local function edit_topology(args)
         end
     end
 
-    local ok, err
-    if type(box.cfg) == 'function' then
-        ok, err = bootstrap.from_scratch({topology = topology_cfg})
-    else
-        -- TODO:
-        --  There is a race condition:
-        --  The assertion may fail while "Configuration is being verified".
-        --  See `cluster.bootstrap.from_snapshot()`.
-        assert(confapplier.get_readonly() ~= nil)
-
-        ok, err = confapplier.patch_clusterwide({topology = topology_cfg})
-    end
-
+    local ok, err = twophase.patch_clusterwide({topology = topology_cfg})
     if not ok then
         return nil, err
     end
@@ -1080,7 +1068,7 @@ local function set_failover_enabled(enabled)
     end
     topology_cfg.failover = enabled
 
-    local ok, err = confapplier.patch_clusterwide({topology = topology_cfg})
+    local ok, err = twophase.patch_clusterwide({topology = topology_cfg})
     if not ok then
         return nil, err
     end

@@ -17,8 +17,8 @@ local cluster_cookie = require('cartridge.cluster-cookie')
 
 vars:new('locks', {})
 vars:new('connections', {})
-errors.new_class('NetboxConnectError')
-errors.new_class('NetboxMapCallError')
+local NetboxConnectError = errors.new_class('NetboxConnectError')
+local NetboxMapCallError = errors.new_class('NetboxMapCallError')
 
 --- Enrich URI with credentials.
 -- Suitable to connect other cluster instances.
@@ -61,7 +61,7 @@ local function _connect(uri, options)
 
     vars.connections[uri] = conn
     if not conn:is_connected() then
-        err = errors.new('NetboxConnectError',
+        err = NetboxConnectError:new(
             '%q: %s', uri, conn.error
         )
         return nil, err
@@ -83,7 +83,7 @@ local function connect(uri, options)
         fiber.sleep(0)
     end
     vars.locks[uri] = true
-    local conn, err = errors.pcall('NetboxConnectError', _connect, uri, options)
+    local conn, err = NetboxConnectError:pcall(_connect, uri, options)
     vars.locks[uri] = false
 
     return conn, err
@@ -165,7 +165,7 @@ local function map_call(fn_name, args, opts)
         local ok, err = fibers[uri]:join()
         if not ok then
             _pack_values(maps, uri,
-                nil, errors.new('NetboxMapCallError', err)
+                nil, NetboxConnectError:new(err)
             )
         end
     end

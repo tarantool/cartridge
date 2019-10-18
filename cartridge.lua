@@ -15,7 +15,6 @@
 local fio = require('fio')
 local uri = require('uri')
 local log = require('log')
-local fiber = require('fiber')
 local checks = require('checks')
 local errors = require('errors')
 local membership = require('membership')
@@ -33,6 +32,7 @@ local topology = require('cartridge.topology')
 local bootstrap = require('cartridge.bootstrap')
 local confapplier = require('cartridge.confapplier')
 local vshard_utils = require('cartridge.vshard-utils')
+local remote_control = require('cartridge.remote-control')
 local cluster_cookie = require('cartridge.cluster-cookie')
 local service_registry = require('cartridge.service-registry')
 
@@ -455,31 +455,13 @@ local function cfg(opts, box_opts)
 
     vshard_utils.set_known_groups(vshard_groups, opts.bucket_count)
 
-    bootstrap.set_box_opts(box_opts)
-    bootstrap.set_boot_opts({
+    local ok, err = confapplier.boot_instance({
         workdir = opts.workdir,
         binary_port = advertise.service,
-        bucket_count = opts.bucket_count,
-        vshard_groups = vshard_groups,
+        box_opts = box_opts,
     })
-
-    if #fio.glob(opts.workdir..'/*.snap') > 0 then
-        log.info('Snapshot found in ' .. opts.workdir)
-        local ok, err = bootstrap.from_snapshot()
-        if not ok then
-            log.error('%s', err)
-        end
-    else
-        fiber.create(function()
-            while type(box.cfg) == 'function' do
-                if not bootstrap.from_membership() then
-                    fiber.sleep(1.0)
-                end
-            end
-
-            vars.bootstrapped = true
-        end)
-        log.info('Ready for bootstrap')
+    if ok == nil then
+        return nil, err
     end
 
     if opts.console_sock ~= nil then

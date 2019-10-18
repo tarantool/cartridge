@@ -46,6 +46,31 @@ end
 local function init_box(box_opts)
     checks('table')
 
+    if type(box.cfg) ~= 'function' then
+        return true
+    end
+
+    local box_opts = table.deepcopy(vars.box_opts or {})
+    if box_opts.work_dir == nil then
+        box_opts.work_dir = vars.boot_opts.workdir
+    end
+    box_opts.listen = box.NULL
+    box_opts.instance_uuid = instance_uuid
+    box_opts.replicaset_uuid = replicaset_uuid
+    local leader_uri = nil -- TODO
+    if leader_uri == membership.myself().uri then
+        -- I'm the leader
+        box_opts.replication = nil
+        if box_opts.read_only == nil then
+            box_opts.read_only = false
+        end
+    else
+        box_opts.replication = {leader_uri}
+        if box_opts.read_only == nil then
+            box_opts.read_only = true
+        end
+    end
+
     log.warn('Bootstrapping box.cfg...')
     box.cfg(box_opts)
 
@@ -57,26 +82,29 @@ local function init_box(box_opts)
         error(('User %q does not exists'):format(username))
     end
 
-    if not box.cfg.read_only then
-        log.info('Granting replication permissions to %q...', username)
-        errors.pcall('BoxError',
-            box.schema.user.grant,
-            username,
-            'replication',
-            nil, nil, {if_not_exists = true}
-        )
+    log.info('Granting replication permissions to %q...', username)
+
+    errors.pcall('BoxError',
+        box.schema.user.grant,
+        username,
+        'replication',
+        nil, nil, {if_not_exists = true}
+    )
 
 
-        log.info('Setting password for user %q ...', username)
-        errors.pcall('BoxError',
-            box.schema.user.passwd,
-            username, password
-        )
-    end
+    log.info('Setting password for user %q ...', username)
+    errors.pcall('BoxError',
+        box.schema.user.passwd,
+        username, password
+    )
 
     membership.set_payload('uuid', box.info.uuid)
+    local _, err = errors.pcall('BoxError',
+        box.cfg, {listen = vars.boot_opts.binary_port}
+    )
 
-    log.info("Box initialized successfully")
+    if err == nil then
+        log.info("Box initialized successfully")
     return true
 end
 
@@ -226,69 +254,6 @@ local function bootstrap_from_scratch(conf)
     return confapplier.commit_2pc()
 end
 
-local function bootstrap_from_membership()
-    local conf = confapplier.fetch_from_membership()
-
-    if type(box.cfg) ~= 'function' then
-        -- maybe the instance was bootstrapped
-        -- from scratch in another fiber
-        -- while we were sleeping or fetching
-        return true
-    end
-
-    if not conf then
-        return false
-    end
-
-    local instance_uuid, replicaset_uuid = topology.get_myself_uuids(conf.topology)
-    if instance_uuid == nil then
-        membership.set_payload('warning', 'Instance is not in config')
-        return false
-    end
-
-    local _, err = topology.validate(conf.topology, {})
-    if err then
-        membership.set_payload('warning', tostring(err.err or err))
-        return false
-    end
-
-    local ok, err = validate_vshard_groups(conf)
-    if not ok then
-        membership.set_payload('warning', tostring(err.err or err))
-        return false
-    end
-
-    local ok, err = vshard_utils.validate_config(conf, conf)
-    if not ok then
-        membership.set_payload('warning', tostring(err.err or err))
-        return nil, err
-    end
-
-    local _, err = confapplier.prepare_2pc(conf)
-    if err then
-        membership.set_payload('warning', tostring(err.err or err))
-        return false
-    end
-
-    membership.set_payload('warning', nil)
-
-    log.info('Config downloaded from membership')
-
-    local box_opts = table.deepcopy(vars.box_opts or {})
-    box_opts.listen = vars.boot_opts.binary_port
-    box_opts.wal_dir = vars.boot_opts.workdir
-    box_opts.memtx_dir = vars.boot_opts.workdir
-    box_opts.vinyl_dir = vars.boot_opts.workdir
-    box_opts.instance_uuid = instance_uuid
-    box_opts.replicaset_uuid = replicaset_uuid
-    box_opts.replication = topology.get_replication_config(conf.topology, replicaset_uuid)
-
-    init_box(box_opts)
-    -- TODO migrations.skip()
-
-    return confapplier.commit_2pc()
-end
-
 local function apply_remote_conf(conf, remote_conf)
     membership.set_payload('warning', nil)
 
@@ -319,22 +284,6 @@ local function apply_remote_conf(conf, remote_conf)
 end
 
 local function bootstrap_from_snapshot()
-    local instance_uuid
-    do
-        -- 1) workaround for tarantool bug gh-3098
-        -- we need to call first box.cfg with replication parameters
-        -- in order to generate replication parameter we need
-        -- to know instance_uuid
-        -- 2) workaround to check if instance was expelled
-        -- before calling box.cfg
-        local snapshots = fio.glob(fio.pathjoin(vars.boot_opts.workdir, '*.snap'))
-        local file = io.open(snapshots[1], "r")
-        repeat
-            instance_uuid = file:read('*l'):match('^Instance: (.+)$')
-        until instance_uuid ~= nil
-        file:close()
-    end
-
     -- unlock config if it was locked by dangling commit_2pc()
     confapplier.abort_2pc()
 
@@ -397,6 +346,23 @@ local function bootstrap_from_snapshot()
     return true
 end
 
+local function go()
+    if fio.path.exists('config.yml') then
+        if not snapshots then
+            -- can't find snapshots but it should be there - it's an error.
+        else
+            -- bootstrap_from_snapshot
+            -- what if i'm expelled or disabled?
+        end
+    else
+        if snapshots then
+            -- config missing - it's an error
+        else
+            -- wait for bootstrap_from_scratch
+        end
+    else
+end
+
 return {
     set_box_opts = set_box_opts,
     set_boot_opts = set_boot_opts,
@@ -404,5 +370,4 @@ return {
 
     from_scratch = bootstrap_from_scratch,
     from_snapshot = bootstrap_from_snapshot,
-    from_membership = bootstrap_from_membership,
 }
