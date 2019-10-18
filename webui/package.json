@@ -32,6 +32,7 @@
     "chalk": "2.4.2",
     "codemirror": "^5.38.0",
     "css-loader": "3.1.0",
+    "cypress": "3.4.1",
     "dotenv": "4.0.0",
     "dotenv-expand": "4.2.0",
     "emotion": "^9.2.6",
@@ -102,7 +103,8 @@
     "graphqlgen": "graphql-codegen --config codegen.yml --include-introspection-types",
     "flow": "flow",
     "lint": "eslint ./src",
-    "lint-fix": "eslint --fix ./src"
+    "lint-fix": "eslint --fix ./src",
+    "cy:dev": "CYPRESS_baseUrl=http://localhost:3000 cypress open"
   },
   "jest": {
     "collectCoverageFrom": [
@@ -140,6 +142,7 @@
   },
   "babel": {
     "presets": [
+      "@babel/preset-flow",
       "react-app"
     ],
     "plugins": [

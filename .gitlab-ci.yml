@@ -24,6 +24,7 @@ build:
       fi
     - export PATH=$PWD/tarantool-enterprise:$PATH
     - yum -y install https://centos7.iuscommunity.org/ius-release.rpm
+    - yum -y install gtk3 xorg-x11-server-Xvfb libXScrnSaver GConf2 alsa-lib # cypress deps
     - curl -sL https://rpm.nodesource.com/setup_8.x | bash -
     - yum -y install git gcc make cmake unzip python python-pip nodejs
     - tarantoolctl rocks install ldoc --server=http://rocks.moonscript.org
