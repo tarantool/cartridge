@@ -111,18 +111,18 @@ class Server(object):
             self.script = script
         command = [os.path.join(srv_abspath, self.script)]
 
-        logging.warn('export TARANTOOL_ALIAS="{}"'.format(self.env['TARANTOOL_ALIAS']))
-        logging.warn('export TARANTOOL_WORKDIR="{}"'.format(self.env['TARANTOOL_WORKDIR']))
-        logging.warn('export TARANTOOL_HTTP_PORT="{}"'.format(self.env['TARANTOOL_HTTP_PORT']))
-        logging.warn('export TARANTOOL_ADVERTISE_URI="{}"'.format(self.env['TARANTOOL_ADVERTISE_URI']))
-        logging.warn('export TARANTOOL_CLUSTER_COOKIE="{}"'.format(self.env['TARANTOOL_CLUSTER_COOKIE']))
+        logging.warning('export TARANTOOL_ALIAS="{}"'.format(self.env['TARANTOOL_ALIAS']))
+        logging.warning('export TARANTOOL_WORKDIR="{}"'.format(self.env['TARANTOOL_WORKDIR']))
+        logging.warning('export TARANTOOL_HTTP_PORT="{}"'.format(self.env['TARANTOOL_HTTP_PORT']))
+        logging.warning('export TARANTOOL_ADVERTISE_URI="{}"'.format(self.env['TARANTOOL_ADVERTISE_URI']))
+        logging.warning('export TARANTOOL_CLUSTER_COOKIE="{}"'.format(self.env['TARANTOOL_CLUSTER_COOKIE']))
         for var_name, var_value in env.items():
-            logging.warn('export {}="{}"'.format(var_name, var_value))
+            logging.warning('export {}="{}"'.format(var_name, var_value))
             self.env[var_name] = var_value
-        logging.warn(' '.join(command))
+        logging.warning(' '.join(command))
 
         self.process = Popen(command, env=self.env)
-        logging.warn('PID %d', self.process.pid)
+        logging.warning('PID %d', self.process.pid)
 
     def ping_udp(self):
         s = socket(AF_INET, SOCK_DGRAM)
@@ -159,11 +159,11 @@ class Server(object):
 
     def kill(self):
         if self.conn != None:
-            # logging.warn('Closing connection to {}'.format(self.port))
+            # logging.warning('Closing connection to {}'.format(self.port))
             self.conn.close()
             self.conn = None
         self.process.kill()
-        logging.warn('localhost:'+str(self.binary_port)+' killed')
+        logging.warning('localhost:'+str(self.binary_port)+' killed')
 
     def get(self, path, data=None, json=None, headers=None, **args):
         url = self.baseurl + '/' + path.lstrip('/')
@@ -249,7 +249,7 @@ def cluster(request, confdir, module_tmpdir, helpers):
                 ["assert(require('membership').probe_uri(...))", srv.advertise_uri]
             )
 
-        logging.warn('Join {} ({}) {} '.format(srv.advertise_uri, srv.alias, srv.roles))
+        logging.warning('Join {} ({}) {} '.format(srv.advertise_uri, srv.alias, srv.roles))
         resp = bootserv.graphql(
             query = """
                 mutation(
@@ -309,7 +309,7 @@ def cluster(request, confdir, module_tmpdir, helpers):
         assert 'errors' not in resp, resp['errors'][0]['message']
         assert resp['data']['cluster']['can_bootstrap_vshard']
 
-        logging.warn('Bootstrapping vshard.router on {}'.format(srv.advertise_uri))
+        logging.warning('Bootstrapping vshard.router on {}'.format(srv.advertise_uri))
         resp = srv.graphql(
             query = """
                 mutation { bootstrap_vshard }
@@ -317,7 +317,7 @@ def cluster(request, confdir, module_tmpdir, helpers):
         )
         assert 'errors' not in resp, resp['errors'][0]['message']
     else:
-        logging.warn('No vshard routers configured, skipping vshard bootstrap')
+        logging.warning('No vshard routers configured, skipping vshard bootstrap')
 
     for srv in getattr(request.module, "unconfigured", []):
         srv.start(
