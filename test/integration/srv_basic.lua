@@ -95,6 +95,7 @@ package.preload['mymodule'] = function()
 
         -- rpc functions
         dog_goes = function() return "woof" end,
+        throw = function(msg) error(msg, 2) end,
     }
 end
 

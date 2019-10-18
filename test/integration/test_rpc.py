@@ -43,7 +43,7 @@ def rpc_call(srv, role_name, fn_name, args=None, **kwargs):
     err = resp[1] if len(resp) > 1 else None
     return resp[0], err
 
-def test_rpc_api(cluster):
+def test_api(cluster):
     srv = cluster['A1']
 
     assert rpc_call(cluster['A1'], 'myrole', 'get_state') == \
@@ -56,6 +56,26 @@ def test_rpc_api(cluster):
     ret, err = rpc_call(cluster['A1'], 'unknown-role', 'fn_undefined')
     assert ret == None
     assert err['err'] == 'No remotes with role "unknown-role" available'
+
+def test_errors(cluster):
+    ret, err = rpc_call(cluster['A1'], 'myrole', 'throw',
+        args=['Boo'], leader_only=True)
+
+    assert ret == None
+    logging.info(err['str'])
+    assert err['err'] == 'Boo'
+    assert err['class_name'] == 'RemoteCallError'
+    assert 'during net.box call to localhost:33002' in err['str']
+
+    ret, err = rpc_call(cluster['B1'], 'myrole', 'throw',
+        args=['Moo'], leader_only=True)
+
+    assert ret == None
+    logging.info(err['str'])
+    assert err['err'] == 'Moo'
+    assert err['class_name'] == 'RemoteCallError'
+    assert 'during net.box call' not in err['str']
+
 
 def test_routing(cluster):
     assert rpc_call(cluster['B2'], 'myrole', 'is_master', leader_only=True) == \

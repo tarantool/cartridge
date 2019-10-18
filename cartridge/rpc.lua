@@ -16,25 +16,25 @@ local topology = require('cartridge.topology')
 local confapplier = require('cartridge.confapplier')
 local service_registry = require('cartridge.service-registry')
 
-local rpc_error = errors.new_class('Remote call failed')
+local RemoteCallError = errors.new_class('RemoteCallError')
 
 local function call_local(role_name, fn_name, args)
     checks('string', 'string', '?table')
     local role = service_registry.get(role_name)
 
     if role == nil then
-        return nil, rpc_error:new('Role %q unavailable', role_name)
+        return nil, RemoteCallError:new('Role %q unavailable', role_name)
     end
 
     local fn = role[fn_name]
     if fn == nil then
-        return nil, rpc_error:new('Role %q has no method %q', role_name, fn_name)
+        return nil, RemoteCallError:new('Role %q has no method %q', role_name, fn_name)
     end
 
     if type(args) == 'table' then
-        return fn(unpack(args, 1, table.maxn(args)))
+        return RemoteCallError:pcall(fn, unpack(args, 1, table.maxn(args)))
     else
-        return fn()
+        return RemoteCallError:pcall(fn)
     end
 end
 
@@ -97,7 +97,7 @@ local function get_candidates(role_name, opts)
     end
 
     if next(candidates) == nil then
-        return nil, rpc_error:new('No remotes with role %q available', role_name)
+        return nil, RemoteCallError:new('No remotes with role %q available', role_name)
     end
     return candidates
 end
