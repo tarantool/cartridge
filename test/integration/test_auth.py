@@ -200,23 +200,52 @@ def test_auth_disabled(cluster, cleanup, disable_auth):
     check_200(srv)
 
     req = """
-        mutation($username: String! $password: String!) {
+        mutation(
+            $username: String!
+            $password: String!
+            $fullname: String
+            $email: String
+        ) {
             cluster {
-                add_user(username:$username password:$password) { username }
+                add_user(
+                    username:$username
+                    password:$password
+                    fullname:$fullname
+                    email:$email
+                ) { username }
             }
         }
     """
-    obj = srv.graphql(req, variables={'username': USERNAME1, 'password': PASSWORD1})
+    obj = srv.graphql(req, variables={
+        'username': USERNAME1,
+        'password': PASSWORD1
+    })
     assert 'errors' not in obj, obj['errors'][0]['message']
     assert obj['data']['cluster']['add_user']['username'] == USERNAME1
 
-    obj = srv.graphql(req, variables={'username': USERNAME2, 'password': PASSWORD2})
+    obj = srv.graphql(req, variables={
+        'username': USERNAME2,
+        'password': PASSWORD2,
+        'fullname': USERNAME2,
+        'email': 'tester@tarantool.org'
+    })
     assert 'errors' not in obj, obj['errors'][0]['message']
     assert obj['data']['cluster']['add_user']['username'] == USERNAME2
 
-    obj = srv.graphql(req, variables={'username': USERNAME1, 'password': PASSWORD1})
+    obj = srv.graphql(req, variables={
+        'username': USERNAME1,
+        'password': PASSWORD1
+    })
     assert obj['errors'][0]['message'] == \
         "User already exists: '%s'" % USERNAME1
+
+    obj = srv.graphql(req, variables={
+        'username': USERNAME1 + ' clone',
+        'password': PASSWORD1,
+        'email': 'TeStEr@tarantool.org'
+    })
+    assert obj['errors'][0]['message'] == \
+        "E-mail already in use: 'TeStEr@tarantool.org'"
 
     req = """
         query($username: String) {

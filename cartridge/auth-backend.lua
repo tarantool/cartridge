@@ -74,7 +74,7 @@ local function find_user_by_email(email)
     end
 
     for uid, user in pairs(users_acl) do
-        if user.email:lower() == email:lower() then
+        if user.email ~= nil and user.email:lower() == email:lower() then
             return user, uid
         end
     end
