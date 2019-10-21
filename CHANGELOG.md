@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [1.2.0] - 2019-10-21
+
 ### Added
 
 - 'Auto' placeholder to weight input in Replicaset add and edit forms.
@@ -35,6 +37,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Get UI components from Tarantool UI-Kit
 
+- When recovering from snapshot, instances are started read-only.
+  It is still possible to override it by argparse (command line
+  arguments or environment variables)
+
 ### Fixed
 
 - Editing topology with `failover_priority` argument.
@@ -52,6 +58,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Human-readable error for invalid GrqphQL queries:
   `Field "x" is not defined on type "String"`
+
+- User management error "attempt to index nil value" when one of users
+  has empty e-mail value
+
+- Catch `rpc_call` errors when they are performed locally
 
 ## [1.1.0] - 2019-09-24
 
