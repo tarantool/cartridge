@@ -29,10 +29,8 @@ local admin = require('cartridge.admin')
 local webui = require('cartridge.webui')
 local argparse = require('cartridge.argparse')
 local topology = require('cartridge.topology')
-local bootstrap = require('cartridge.bootstrap')
 local confapplier = require('cartridge.confapplier')
 local vshard_utils = require('cartridge.vshard-utils')
-local remote_control = require('cartridge.remote-control')
 local cluster_cookie = require('cartridge.cluster-cookie')
 local service_registry = require('cartridge.service-registry')
 
@@ -270,7 +268,6 @@ local function cfg(opts, box_opts)
         return nil, err
     end
 
-    confapplier.set_workdir(opts.workdir)
     cluster_cookie.init(opts.workdir)
     if opts.cluster_cookie ~= nil then
         cluster_cookie.set_cookie(opts.cluster_cookie)
@@ -455,9 +452,9 @@ local function cfg(opts, box_opts)
 
     vshard_utils.set_known_groups(vshard_groups, opts.bucket_count)
 
+    box_opts.listen = advertise.service
     local ok, err = confapplier.boot_instance({
         workdir = opts.workdir,
-        binary_port = advertise.service,
         box_opts = box_opts,
     })
     if ok == nil then

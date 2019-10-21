@@ -15,9 +15,11 @@ local checks = require('checks')
 local membership = require('membership')
 
 local vars = require('cartridge.vars').new('cartridge.confapplier')
-local pool = require('cartridge.pool')
+local auth = require('cartridge.auth')
 local utils = require('cartridge.utils')
 local topology = require('cartridge.topology')
+local vshard_utils = require('cartridge.vshard-utils')
+local cluster_cookie = require('cartridge.cluster-cookie')
 local service_registry = require('cartridge.service-registry')
 local ClusterwideConfig = require('cartridge.clusterwide-config')
 
@@ -37,6 +39,12 @@ local e_register_role = errors.new_class('Can not register role')
 local BoxError = errors.new_class('BoxError', {log_on_creation = true})
 
 vars:new('state')
+-- Unconfigured:
+-- BoxRecovering:
+-- BoxConfigured:
+-- RolesConfigured:
+-- Error:
+
 vars:new('workdir')
 vars:new('cwcfg_active')
 
@@ -46,27 +54,95 @@ vars:new('failover_cond', nil)
 vars:new('box_opts', nil)
 vars:new('boot_opts', nil)
 
-local function boot_instance(opts)
-    checks({
-        workdir = 'string',
-    })
+local function init_box(box_opts)
+    checks('table')
+    assert(type(box.cfg) == 'function', 'box.cfg is already initialized')
 
+    log.warn('Bootstrapping box.cfg...')
+    local listen = box_opts.listen
+    box_opts.listen = box.NULL
+    box.cfg(box_opts)
+
+    local username = cluster_cookie.username()
+    local password = cluster_cookie.cookie()
+
+    log.info('Making sure user %q exists...', username)
+    if not box.schema.user.exists(username) then
+        error(('User %q does not exists'):format(username))
+    end
+
+    log.info('Granting replication permissions to %q...', username)
+
+    BoxError:pcall(
+        box.schema.user.grant,
+        username, 'replication',
+        nil, nil, {if_not_exists = true}
+    )
+
+
+    log.info('Setting password for user %q ...', username)
+    BoxError:pcall(
+        box.schema.user.passwd,
+        username, password
+    )
+
+    membership.set_payload('uuid', box.info.uuid)
+    local _, err = BoxError:pcall(
+        box.cfg, {listen = listen}
+    )
+
+    if err ~= nil then
+        log.error('Box initialization failed: %s', err)
+        return nil, err
+    end
+
+    log.info("Box initialized successfully")
+    return true
+end
+
+local function boot_instance(workdir, box_opts)
+    checks('string', 'table')
+
+    vars.state = 'Unconfigured'
     vars.workdir = workdir
+    vars.box_opts = box_opts
+
     local config_filename = fio.pathjoin(workdir, 'config.yml')
-    if utils.file_exists(filename) then
+    if not utils.file_exists(config_filename) then
         return true
     end
+
+    local conf, err = ClusterwideConfig.load_from_file(config_filename)
+    if conf == nil then
+        vars.state = 'Error'
+        return nil, err
+    end
+    vars.conf = conf
+
 
     -- 1. if snapshot is there - init box
     -- 2. if clusterwide config is there - apply_config
 
-    local ok, err = bootstrap.just_boot({
-        workdir = opts.workdir,
-        binary_port = advertise.service,
-        bucket_count = opts.bucket_count,
-        vshard_groups = vshard_groups,
-        box_opts = box_opts,
-    })
+
+    box_opts.wal_dir = workdir
+    box_opts.memtx_dir = workdir
+    box_opts.vinyl_dir = workdir
+    box_opts.instance_uuid = instance_uuid
+    box_opts.replicaset_uuid = replicaset_uuid
+
+    local leader_uri = nil -- TODO
+    if leader_uri == membership.myself().uri then
+        -- I'm the leader
+        box_opts.replication = nil
+        if box_opts.read_only == nil then
+            box_opts.read_only = false
+        end
+    else
+        box_opts.replication = {leader_uri}
+        if box_opts.read_only == nil then
+            box_opts.read_only = true
+        end
+    end
 
 
     local conf, err = ClusterwideConfig.load_from_file(filename)
@@ -262,13 +338,22 @@ local function apply_config(conf)
     end
 end
 
+local function get_bare_config()
+    return ClusterwideConfig.new({
+        auth = auth.get_params(),
+        vshard_groups = vshard_utils.get_known_groups(),
+    })
+end
+
 return {
-    init = init,
-    set_workdir = set_workdir,
+    boot_instance = boot_instance,
     get_readonly = get_readonly,
     get_deepcopy = get_deepcopy,
 
-    load_from_file = load_from_file,
+    get_state = get_state,
+    get_bare_config = get_bare_config,
+    get_active_config = get_active_config,
+    -- load_from_file = load_from_file,
 
     apply_config = apply_config,
     validate_config = validate_config,

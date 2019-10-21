@@ -12,10 +12,13 @@ local errors = require('errors')
 local checks = require('checks')
 
 local vars = require('cartridge.vars').new('cartridge.clusterwide')
+local auth = require('cartridge.auth')
 local pool = require('cartridge.pool')
 local utils = require('cartridge.utils')
 local topology = require('cartridge.topology')
 local confapplier = require('cartridge.confapplier')
+local vshard_utils = require('cartridge.vshard-utils')
+local ClusterwideConfig = require('cartridge.clusterwide-config')
 
 yaml.cfg({
     encode_load_metatables = false,
@@ -140,14 +143,17 @@ local function _clusterwide(patch)
 
     log.warn('Updating config clusterwide...')
 
-    local conf_old = confapplier.get_readonly()
-    local conf_new = confapplier.get_deepcopy()
+    local conf_old = confapplier.get_active_config()
+    if conf_old == nil then
+        conf_old = ClusterwideConfig.new({
+            auth = auth.get_params(),
+            vshard_groups = vshard_utils.get_known_groups(),
+        })
+    end
+
+    local conf_new = conf_old:copy()
     for k, v in pairs(patch) do
-        if v == box.NULL then
-            conf_new[k] = nil
-        else
-            conf_new[k] = v
-        end
+        conf_new:set_content(k, v)
     end
 
     topology.probe_missing_members(conf_new.topology.servers)

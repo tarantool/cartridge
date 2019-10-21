@@ -44,9 +44,10 @@ _cwcfg_mt = {
                 error("ClusterwideConfig is locked", 2)
             end
 
-            content = table.deepcopy(content)
-
-            if type(content) == 'table' then
+            if content == box.NULL then
+                content = nil
+            elseif type(content) == 'table' then
+                content = table.deepcopy(content)
                 content = utils.table_setro(content)
             end
 
