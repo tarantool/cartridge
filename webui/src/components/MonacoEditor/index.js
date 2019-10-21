@@ -2,13 +2,66 @@ import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
 import PropTypes from 'prop-types';
 import React from 'react';
 import { noop, throttle } from 'lodash';
+import ReconnectingWebSocket from 'reconnecting-websocket';
 import { subscribeOnTargetEvent } from '../../misc/eventHandler';
 import { getModelByFile, setModelByFile } from '../../misc/monacoModelStorage';
+import { getLanguageService, TextDocument } from 'vscode-json-languageservice';
+import { MonacoToProtocolConverter, ProtocolToMonacoConverter } from 'monaco-languageclient/lib/monaco-converter';
 import 'monaco-editor/esm/vs/basic-languages/javascript/javascript.contribution';
 import 'monaco-editor/esm/vs/basic-languages/yaml/yaml.contribution';
 import 'monaco-editor/esm/vs/basic-languages/lua/lua.contribution';
+
 import 'monaco-editor/esm/vs/basic-languages/html/html.contribution';
-// import { MonacoServices } from 'monaco-languageclient'
+import {
+  MonacoServices, MonacoLanguageClient,
+  CloseAction, ErrorAction, createConnection
+} from 'monaco-languageclient'
+import { listen } from 'vscode-ws-jsonrpc';
+
+
+function createWebSocket(url: string): WebSocket {
+  const socketOptions = {
+    maxReconnectionDelay: 10000,
+    minReconnectionDelay: 1000,
+    reconnectionDelayGrowFactor: 1.3,
+    connectionTimeout: 10000,
+    maxRetries: Infinity,
+    debug: false
+  };
+  return new ReconnectingWebSocket(url, [], socketOptions);
+}
+const socket = createWebSocket('http://localhost:2089/')
+
+function createLanguageClient(connection) {
+  return new MonacoLanguageClient({
+    name: 'Sample Language Client',
+    clientOptions: {
+      // use a language id as a document selector
+      documentSelector: ['js'],
+      // disable the default error handler
+      errorHandler: {
+        error: () => ErrorAction.Continue,
+        closed: () => CloseAction.DoNotRestart
+      }
+    },
+    // create a language client connection from the JSON RPC connection on demand
+    connectionProvider: {
+      get: (errorHandler, closeHandler) => {
+        return Promise.resolve(createConnection(connection, errorHandler, closeHandler))
+      }
+    }
+  });
+}
+
+listen({
+  webSocket: socket,
+  onConnection: connection => {
+    // create and start the language client
+    const languageClient = createLanguageClient(connection);
+    const disposable = languageClient.start();
+    connection.onClose(() => disposable.dispose());
+  }
+})
 
 const DEF_CURSOR = {}
 
@@ -162,7 +215,7 @@ export default class MonacoEditor extends React.Component {
         },
         overrideServices
       );
-      // MonacoServices.install(this.editor)
+      MonacoServices.install(this.editor)
       // After initializing monaco editor
       this.editorDidMount(this.editor);
     }
