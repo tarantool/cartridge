@@ -49,17 +49,16 @@ local function init_box(box_opts)
     log.warn('Bootstrapping box.cfg...')
     box.cfg(box_opts)
 
-    do
-        local username = cluster_cookie.username()
-        local password = cluster_cookie.cookie()
+    local username = cluster_cookie.username()
+    local password = cluster_cookie.cookie()
 
-        log.info('Making sure user %q exists...', username)
-        if not box.schema.user.exists(username) then
-            error(('User %q does not exists'):format(username))
-        end
+    log.info('Making sure user %q exists...', username)
+    if not box.schema.user.exists(username) then
+        error(('User %q does not exists'):format(username))
+    end
 
+    if not box.cfg.read_only then
         log.info('Granting replication permissions to %q...', username)
-
         errors.pcall('BoxError',
             box.schema.user.grant,
             username,
