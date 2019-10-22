@@ -124,6 +124,7 @@ CreateReplicasetFormProps) => (
       errors = {},
       form,
       handleSubmit,
+      initialValues,
       values = {}
     }) => {
       const vshardStorageRoleChecked = values.roles.includes(VSHARD_STORAGE_ROLE_NAME);
@@ -135,12 +136,16 @@ CreateReplicasetFormProps) => (
         <form className={styles.form} onSubmit={handleSubmit}>
           <PopupBody className={styles.popupBody} innerClassName={styles.wrap} scrollable>
             <SelectedServersList className={styles.splash} serverList={selectedServers} />
-            {vshard_groups && vshard_groups.length === 1 && (
-              <FormSpy
-                subscription={{ values: true }}
-                onChange={({ values }) => {
-                  if (!values) return;
+            <FormSpy
+              subscription={{ values: true }}
+              onChange={({ values }) => {
+                if (!values) return;
 
+                if (!values.roles.includes(VSHARD_STORAGE_ROLE_NAME) && typeof values.weight === 'string') {
+                  form.change('weight', initialValues && initialValues.weight);
+                }
+
+                if (vshard_groups && vshard_groups.length === 1) {
                   if (values.roles.includes(VSHARD_STORAGE_ROLE_NAME) && !values.vshard_group) {
                     form.change('vshard_group', vshard_groups[0].name);
                   }
@@ -148,9 +153,9 @@ CreateReplicasetFormProps) => (
                   if (!values.roles.includes(VSHARD_STORAGE_ROLE_NAME) && values.vshard_group) {
                     form.change('vshard_group', null);
                   }
-                }}
-              />
-            )}
+                }
+              }}
+            />
             <Field name='alias'>
               {({ input: { name, value, onChange }, meta: { error } }) => (
                 <LabeledInput className={styles.wideField} label='Enter name of replica set'>

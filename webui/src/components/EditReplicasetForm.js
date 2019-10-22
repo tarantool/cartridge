@@ -118,8 +118,7 @@ EditReplicasetFormProps) => {
       initialValues={{
         alias: replicaset.alias,
         roles: replicaset.roles || [],
-        vshard_group: replicaset.vshard_group
-          || ((vshard_groups && vshard_groups.length === 1) ? vshard_groups[0].name : null),
+        vshard_group: replicaset.vshard_group,
         master: replicaset.servers.map(({ uuid }) => uuid),
         weight: replicaset.weight
       }}
@@ -138,7 +137,9 @@ EditReplicasetFormProps) => {
         errors = {},
         form,
         handleSubmit,
-        values = {}
+        initialValues,
+        values = {},
+        ...rest
       }) => {
         const vshardStorageRoleChecked = values.roles.includes(VSHARD_STORAGE_ROLE_NAME);
         const activeDependencies = getRolesDependencies(values.roles, knownRoles)
@@ -149,22 +150,30 @@ EditReplicasetFormProps) => {
           <form onSubmit={handleSubmit}>
             <PopupBody className={styles.popupBody} innerClassName={styles.wrap} scrollable>
               <SelectedReplicaset className={styles.splash} replicaset={replicaset} />
-              {vshard_groups && vshard_groups.length === 1 && (
-                <FormSpy
-                  subscription={{ values: true }}
-                  onChange={({ values }) => {
-                    if (!values) return;
+              <FormSpy
+                subscription={{ values: true }}
+                onChange={({ values }) => {
+                  if (!values) return;
 
+                  if (!values.roles.includes(VSHARD_STORAGE_ROLE_NAME) && typeof values.weight === 'string') {
+                    form.change('weight', initialValues && initialValues.weight);
+                  }
+
+                  if (vshard_groups && vshard_groups.length === 1) {
                     if (values.roles.includes(VSHARD_STORAGE_ROLE_NAME) && !values.vshard_group) {
                       form.change('vshard_group', vshard_groups[0].name);
                     }
 
-                    if (!values.roles.includes(VSHARD_STORAGE_ROLE_NAME) && values.vshard_group) {
+                    if (
+                      !values.roles.includes(VSHARD_STORAGE_ROLE_NAME)
+                      && !(initialValues && initialValues.vshard_group)
+                      && values.vshard_group
+                    ) {
                       form.change('vshard_group', null);
                     }
-                  }}
-                />
-              )}
+                  }
+                }}
+              />
               <Field name='alias'>
                 {({ input: { name, value, onChange }, meta: { error } }) => (
                   <LabeledInput className={styles.wideField} label='Enter name of replica set'>
