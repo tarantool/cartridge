@@ -6,20 +6,17 @@
 
 local log = require('log')
 local fio = require('fio')
-local fun = require('fun')
 local yaml = require('yaml').new()
 local fiber = require('fiber')
-local errno = require('errno')
 local errors = require('errors')
 local checks = require('checks')
 local membership = require('membership')
 
 local vars = require('cartridge.vars').new('cartridge.confapplier')
-local auth = require('cartridge.auth')
+local pool = require('cartridge.pool')
 local utils = require('cartridge.utils')
 local roles = require('cartridge.roles')
 local topology = require('cartridge.topology')
-local vshard_utils = require('cartridge.vshard-utils')
 local remote_control = require('cartridge.remote-control')
 local cluster_cookie = require('cartridge.cluster-cookie')
 local service_registry = require('cartridge.service-registry')
@@ -39,6 +36,7 @@ local e_config_apply = errors.new_class('Applying configuration failed')
 local e_config_validate = errors.new_class('Invalid config')
 local e_register_role = errors.new_class('Can not register role')
 local BoxError = errors.new_class('BoxError', {log_on_creation = true})
+local BootError = errors.new_class('BootError', {log_on_creation = true})
 local StateError = errors.new_class('StateError', {log_on_creation = true})
 
 vars:new('state', '')
@@ -46,6 +44,8 @@ vars:new('error')
 vars:new('cwcfg') -- clusterwide config
 
 vars:new('workdir')
+vars:new('instance_uuid')
+vars:new('replicaset_uuid')
 
 vars:new('failover_fiber', nil)
 vars:new('failover_cond', nil)
@@ -54,31 +54,38 @@ vars:new('box_opts', nil)
 vars:new('boot_opts', nil)
 
 local _transitions = {
-    ['']
-        -- Initial state.
-        -- Function `confapplier.init()` wasn't called yet.
-        = {'Unconfigured', 'ConfigFound', 'Error'},
+    -- Initial state.
+    -- Function `confapplier.init()` wasn't called yet.
+    [''] = {'Unconfigured', 'ConfigFound', 'Error'},
 
 -- init()
-    ['Unconfigured']
-        -- Remote control is running.
-        -- Clusterwide config doesn't exist.
-        = {'RecoveringSnapshot', 'Error'},
+    -- Remote control is running.
+    -- Clusterwide config doesn't exist.
+    ['Unconfigured'] = {'BootstrappingBox', 'Error'},
 
-    ['ConfigFound']
-        -- Remote control is running.
-        -- Clusterwide config is found
-        = {'ConfigLoaded', 'Error'},
-    ['ConfigLoaded']
-        -- Remote control is running.
-        -- Loading clusterwide config succeeded.
-        -- Validation succeeded too.
-        = {'RecoveringSnapshot', 'Error'},
+    -- Remote control is running.
+    -- Clusterwide config is found
+    ['ConfigFound'] = {'ConfigLoaded', 'Error'},
+    -- Remote control is running.
+    -- Loading clusterwide config succeeded.
+    -- Validation succeeded too.
+    ['ConfigLoaded'] = {'RecoveringSnapshot', 'Error'},
 
 -- boot_instance
-    ['RecoveringSnapshot']
-        = {'SnapshotRecovered', 'Error'},
-    ['SnapshotRecovered'] = {'RolesConfigured', 'Error'},
+    -- Remote control is running.
+    -- Clusterwide config is loaded.
+    -- Remote control initiated `boot_instance()`
+    ['BootstrappingBox'] = {'BoxConfigured', 'Error'},
+
+    -- Remote control is running.
+    -- Clusterwide config is loaded.
+    -- Function `confapplier.init()` initiated `boot_instance()`
+    ['RecoveringSnapshot'] = {'BoxConfigured', 'Error'},
+
+    -- Remote control is stopped.
+    -- Recovering snapshot finished.
+    -- Box is listening binary port.
+    ['BoxConfigured'] = {'RolesConfigured', 'Error'},
 
 -- normal operation
     ['RolesConfigured'] = {'RolesConfigured', 'Error'},
@@ -93,11 +100,21 @@ local function set_state(new_state, err)
         'invalid transition %s -> %s', vars.state, new_state
     )
 
-    vars.state = new_state
     if new_state == 'Error' then
-        log.error('Instance entering failure state: %s', err)
+        log.error('Instance entering failure state:\n\t%s', err)
         vars.error = err
+    elseif new_state ~= vars.state then
+        log.warn('Instance state changed: %s -> %s',
+            vars.state, new_state
+        )
     end
+    vars.state = new_state
+end
+local function assert_transition(new_state)
+    StateError:assert(
+        utils.table_find(_transitions[vars.state], new_state),
+        'invalid state %s -> %s', vars.state, new_state
+    )
 end
 
 --- Validate configuration by all roles.
@@ -111,7 +128,10 @@ local function validate_config(cwcfg)
     checks('ClusterwideConfig')
     assert(cwcfg.locked)
 
-    return roles.validate_config(cwcfg, vars.cwcfg)
+    return roles.validate_config(
+        cwcfg:get_readonly(),
+        vars.cwcfg and vars.cwcfg:get_readonly() or {}
+    )
 end
 
 
@@ -126,8 +146,9 @@ local function apply_config(cwcfg)
     checks('ClusterwideConfig')
     assert(cwcfg.locked)
     assert(
-        vars.state == 'SnapshotRecovered'
-        or vars.state == 'RolesConfigured'
+        vars.state == 'BoxConfigured'
+        or vars.state == 'RolesConfigured',
+        'Unexpected state ' .. vars.state
     )
 
     vars.cwcfg = cwcfg
@@ -135,16 +156,15 @@ local function apply_config(cwcfg)
 
     local _, err = BoxError:pcall(box.cfg, {
         replication = topology.get_replication_config(
-            cwcfg, box.info.cluster.uuid
+            cwcfg, vars.replicaset_uuid
         ),
     })
     if err then
-        log.error('Box.cfg failed: %s', err)
         set_state('Error', err)
         return nil, err
     end
 
-    local ok, err = roles.apply_config(cwcfg)
+    local ok, err = roles.apply_config(cwcfg:get_readonly())
     if not ok then
         set_state('Error', err)
         return nil, err
@@ -160,32 +180,77 @@ local function boot_instance(cwcfg)
     assert(cwcfg.locked)
     assert(
         vars.state == 'Unconfigured' -- bootstraping from scratch
-        or vars.state == 'ConfigLoaded' -- bootstraping from snapshot
+        or vars.state == 'ConfigLoaded', -- bootstraping from snapshot
+        'Unexpected state ' .. vars.state
     )
 
-    set_state('RecoveringSnapshot', err)
-    log.warn('Bootstrapping box.cfg...')
-
-    if next(fio.glob(fio.pathjoin(vars.workdir, '*.snap'))) == nil then
-        local err = errors.new('InitError',
-            "Snapshot not found in %q, can't recover." ..
-            " Did previous bootstrap attempt fail?",
-            vars.workdir
-        )
-        set_state('Error', err)
-        return nil, err
-    end
-
-    local instance_uuid =
-
     local box_opts = table.deepcopy(vars.box_opts)
-    box_opts.wal_dir = workdir
-    box_opts.memtx_dir = workdir
-    box_opts.vinyl_dir = workdir
-    box_opts.instance_uuid = instance_uuid
-    box_opts.replicaset_uuid = replicaset_uuid
+    box_opts.wal_dir = vars.workdir
+    box_opts.memtx_dir = vars.workdir
+    box_opts.vinyl_dir = vars.workdir
     box_opts.listen = box.NULL
 
+    if vars.state == 'Unconfigured' then
+        set_state('BootstrappingBox')
+
+        local advertise_uri = membership.myself().uri
+        local instance_uuid, server =
+            topology.find_server_by_uri(cwcfg, advertise_uri)
+
+        if instance_uuid == nil then
+            local err = BootError:new(
+                "Couldn't find %s in clusterwide config," ..
+                " bootstrap impossible",
+                advertise_uri
+            )
+            set_state('Error', err)
+            return nil, err
+        end
+
+        box_opts.instance_uuid = instance_uuid
+        box_opts.replicaset_uuid = server.replicaset_uuid
+
+        local topology_cfg = cwcfg:get_readonly('topology')
+        local leaders_order = topology.get_leaders_order(
+            topology_cfg,
+            box_opts.replicaset_uuid
+        )
+        local leader_uuid = leaders_order[1]
+        local leader = topology_cfg.servers[leader_uuid]
+
+        local ro
+        if box_opts.instance_uuid ~= leader_uuid then
+            box_opts.replication = {pool.format_uri(leader.uri)}
+            ro = true
+        else
+            box_opts.replication = nil
+            ro = false
+        end
+
+        if box_opts.read_only == nil then
+            box_opts.read_only = ro
+        end
+
+    elseif vars.state == 'ConfigLoaded' then
+        set_state('RecoveringSnapshot')
+
+        local snapshots = fio.glob(fio.pathjoin(vars.workdir, '*.snap'))
+        if next(snapshots) == nil then
+            local err = BootError:new(
+                "Snapshot not found in %q, can't recover." ..
+                " Did previous bootstrap attempt fail?",
+                vars.workdir
+            )
+            set_state('Error', err)
+            return nil, err
+        end
+
+        if box_opts.read_only == nil then
+            box_opts.read_only = true
+        end
+    end
+
+    log.warn('Calling box.cfg()...')
     box.cfg(box_opts)
 
     local username = cluster_cookie.username()
@@ -196,61 +261,38 @@ local function boot_instance(cwcfg)
         error(('User %q does not exists'):format(username))
     end
 
-    log.info('Granting replication permissions to %q...', username)
+    if not box.cfg.read_only then
+        log.info('Granting replication permissions to %q...', username)
 
-    BoxError:pcall(
-        box.schema.user.grant,
-        username, 'replication',
-        nil, nil, {if_not_exists = true}
-    )
+        BoxError:pcall(
+            box.schema.user.grant,
+            username, 'replication',
+            nil, nil, {if_not_exists = true}
+        )
 
 
-    log.info('Setting password for user %q ...', username)
-    BoxError:pcall(
-        box.schema.user.passwd,
-        username, password
-    )
+        log.info('Setting password for user %q ...', username)
+        BoxError:pcall(
+            box.schema.user.passwd,
+            username, password
+        )
+    end
 
+    vars.instance_uuid = box.info.uuid
+    vars.replicaset_uuid = box.info.cluster.uuid
     membership.set_payload('uuid', box.info.uuid)
+
+    remote_control.stop()
     local _, err = BoxError:pcall(
-        box.cfg, {listen = listen}
+        box.cfg, {listen = vars.binary_port}
     )
 
     if err ~= nil then
-        log.error('Box initialization failed: %s', err)
-        return nil, err
-    end
-
-    log.info("Box initialized successfully")
-    return true
-
-
-    local ok, err = init_box()
-    if not ok then
         set_state('Error', err)
         return nil, err
     end
 
-    -- 1. if snapshot is there - init box
-    -- 2. if clusterwide config is there - apply_config
-
-
-
-
-    local leader_uri = nil -- TODO
-    if leader_uri == membership.myself().uri then
-        -- I'm the leader
-        box_opts.replication = nil
-        if box_opts.read_only == nil then
-            box_opts.read_only = false
-        end
-    else
-        box_opts.replication = {leader_uri}
-        if box_opts.read_only == nil then
-            box_opts.read_only = true
-        end
-    end
-
+    set_state('BoxConfigured')
     return apply_config(cwcfg)
 end
 
@@ -261,7 +303,7 @@ local function init(opts)
         binary_port = 'number',
     })
 
-    assert(vars.state == '')
+    assert(vars.state == '', 'Unexpected state ' .. vars.state)
     vars.workdir = opts.workdir
     vars.box_opts = opts.box_opts
     vars.binary_port = opts.binary_port
@@ -286,7 +328,7 @@ local function init(opts)
             return nil, err
         end
 
-        vars.cwcfg = cwcfg
+        vars.cwcfg = cwcfg:lock()
         local ok, err = validate_config(cwcfg)
         if not ok then
             set_state('Error', err)
@@ -300,28 +342,52 @@ local function init(opts)
     return true
 end
 
-local function _failover_role(mod, opts)
-    if service_registry.get(mod.role_name) == nil then
-        return true
-    end
+-- local function _failover_role(mod, opts)
+--     if service_registry.get(mod.role_name) == nil then
+--         return true
+--     end
 
-    if type(mod.apply_config) ~= 'function' then
-        return true
-    end
+--     if type(mod.apply_config) ~= 'function' then
+--         return true
+--     end
 
-    if type(mod.validate_config) == 'function' then
-        local ok, err = e_config_validate:pcall(
-            mod.validate_config, vars.conf, vars.conf
-        )
-        if not ok then
-            err = err or e_config_validate:new('validate_config() returned %s', ok)
-            return nil, err
-        end
-    end
+--     if type(mod.validate_config) == 'function' then
+--         local ok, err = e_config_validate:pcall(
+--             mod.validate_config, vars.conf, vars.conf
+--         )
+--         if not ok then
+--             err = err or e_config_validate:new('validate_config() returned %s', ok)
+--             return nil, err
+--         end
+--     end
 
-    return e_config_apply:pcall(
-        mod.apply_config, vars.conf, opts
-    )
+--     return e_config_apply:pcall(
+--         mod.apply_config, vars.conf, opts
+--     )
+-- end
+
+local function get_active_config()
+    return vars.cwcfg
+end
+
+local function get_readonly(section)
+    checks('?string')
+    if vars.cwcfg == nil then
+        return nil
+    end
+    return vars.cwcfg:get_readonly(section)
+end
+
+local function get_deepcopy(section)
+    checks('?string')
+    if vars.cwcfg == nil then
+        return nil
+    end
+    return vars.cwcfg:get_deepcopy(section)
+end
+
+local function get_state()
+    return vars.state, vars.error
 end
 
 -- local function _failover(cond)
@@ -363,14 +429,13 @@ end
 return {
     init = init,
     boot_instance = boot_instance,
+
+    get_active_config = get_active_config,
     get_readonly = get_readonly,
     get_deepcopy = get_deepcopy,
 
     get_state = get_state,
-    get_bare_config = get_bare_config,
-    get_active_config = get_active_config,
-    -- load_from_file = load_from_file,
-
+    get_workdir = function() return vars.workdir end,
     apply_config = apply_config,
     validate_config = validate_config,
 }

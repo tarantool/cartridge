@@ -24,6 +24,7 @@ local http = require('http.server')
 local rpc = require('cartridge.rpc')
 local vars = require('cartridge.vars').new('cartridge')
 local auth = require('cartridge.auth')
+local roles = require('cartridge.roles')
 local utils = require('cartridge.utils')
 local admin = require('cartridge.admin')
 local webui = require('cartridge.webui')
@@ -429,7 +430,7 @@ local function cfg(opts, box_opts)
     end
 
     for _, role in ipairs(opts.roles or {}) do
-        local ok, err = confapplier.register_role(role)
+        local ok, err = roles.register_role(role)
         if not ok then
             return nil, err
         end

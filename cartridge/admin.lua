@@ -15,6 +15,7 @@ local membership = require('membership')
 local rpc = require('cartridge.rpc')
 local pool = require('cartridge.pool')
 local utils = require('cartridge.utils')
+local roles = require('cartridge.roles')
 local topology = require('cartridge.topology')
 local twophase = require('cartridge.twophase')
 local vshard_utils = require('cartridge.vshard-utils')
@@ -108,7 +109,7 @@ local function get_topology()
 
     local servers = {}
     local replicasets = {}
-    local known_roles = confapplier.get_known_roles()
+    local known_roles = roles.get_known_roles()
     local leaders_order = {}
 
     --- Replicaset general information.
@@ -158,7 +159,7 @@ local function get_topology()
             alias = replicaset.alias or 'unnamed',
         }
 
-        local enabled_roles = confapplier.get_enabled_roles(replicaset.roles)
+        local enabled_roles = roles.get_enabled_roles(replicaset.roles)
 
         for _, role in pairs(known_roles) do
             if enabled_roles[role] then
@@ -567,7 +568,7 @@ local function __edit_replicaset(topology_cfg, params)
 
     local old_roles = replicaset.roles
     if params.roles ~= nil then
-        replicaset.roles = confapplier.get_enabled_roles(params.roles)
+        replicaset.roles = roles.get_enabled_roles(params.roles)
     end
 
     if params.failover_priority ~= nil then

@@ -12,6 +12,7 @@ local membership = require('membership')
 
 local pool = require('cartridge.pool')
 local utils = require('cartridge.utils')
+local roles = require('cartridge.roles')
 local topology = require('cartridge.topology')
 local confapplier = require('cartridge.confapplier')
 local service_registry = require('cartridge.service-registry')
@@ -76,8 +77,9 @@ local function get_candidates(role_name, opts)
         healthy_only = '?boolean'
     })
 
-    local servers = topology.get().servers
-    local replicasets = topology.get().replicasets
+    local topology_cfg = confapplier.get_readonly('topology')
+    local servers = topology_cfg.servers
+    local replicasets = topology_cfg.replicasets
     local active_leaders
     if opts.leader_only then
         active_leaders = topology.get_active_masters()
@@ -88,7 +90,7 @@ local function get_candidates(role_name, opts)
         local replicaset_uuid = server.replicaset_uuid
         local replicaset = replicasets[replicaset_uuid]
 
-        if confapplier.get_enabled_roles(replicaset.roles)[role_name]
+        if roles.get_enabled_roles(replicaset.roles)[role_name]
         and (not opts.healthy_only or member_is_healthy(server.uri, instance_uuid))
         and (not opts.leader_only or active_leaders[replicaset_uuid] == instance_uuid)
         then

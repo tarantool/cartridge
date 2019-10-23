@@ -17,7 +17,6 @@ local pool = require('cartridge.pool')
 local utils = require('cartridge.utils')
 local topology = require('cartridge.topology')
 local confapplier = require('cartridge.confapplier')
-local vshard_utils = require('cartridge.vshard-utils')
 local ClusterwideConfig = require('cartridge.clusterwide-config')
 
 local Commit2pcError = errors.new_class('Commit2pcError')
@@ -28,7 +27,6 @@ yaml.cfg({
 })
 
 vars:new('locks', {})
-vars:new('workdir', {})
 vars:new('prepared_config', nil)
 
 --- Two-phase commit - preparation stage.
@@ -51,11 +49,14 @@ local function prepare_2pc(data)
         return nil, err
     end
 
+    local workdir = confapplier.get_workdir()
+    local path_prepare = fio.pathjoin(workdir, 'config.prepare.yml')
+
     if vars.prepared_config == nil then
-        fio.unlink('config.prepare.yml')
+        fio.unlink(path_prepare)
     end
 
-    local ok, err = cwcfg:write_to_file('config.prepare.yml')
+    local ok, err = cwcfg:write_to_file(path_prepare)
     if not ok then
         return nil, err
     end
@@ -82,9 +83,10 @@ local function commit_2pc()
         "commit isn't prepared"
     )
 
-    local path_prepare = 'config.prepare.yml'
-    local path_backup = 'config.backup.yml'
-    local path_active = 'config.yml'
+    local workdir = confapplier.get_workdir()
+    local path_prepare = fio.pathjoin(workdir, 'config.prepare.yml')
+    local path_backup = fio.pathjoin(workdir, 'config.backup.yml')
+    local path_active = fio.pathjoin(workdir, 'config.yml')
 
     fio.unlink(path_backup)
 
@@ -122,7 +124,9 @@ end
 -- @local
 -- @treturn boolean true
 local function abort_2pc()
-    fio.unlink('config.prepare.yml')
+    local workdir = confapplier.get_workdir()
+    local path_prepare = fio.pathjoin(workdir, 'config.prepare.yml')
+    fio.unlink(path_prepare)
     vars.prepared_config = nil
     return true
 end
@@ -160,6 +164,7 @@ local function _clusterwide(patch)
     log.warn('Updating config clusterwide...')
 
     local cwcfg_old = confapplier.get_active_config()
+    local vshard_utils = require('cartridge.vshard-utils')
     if cwcfg_old == nil then
         cwcfg_old = ClusterwideConfig.new({
             auth = auth.get_params(),
@@ -172,6 +177,7 @@ local function _clusterwide(patch)
         cwcfg_new:set_content(k, v)
     end
     cwcfg_new:lock()
+    log.info('%s', yaml.encode(cwcfg_new:get_readonly()))
 
     local topology_old = cwcfg_old:get_readonly('topology')
     local topology_new = cwcfg_new:get_readonly('topology')
@@ -188,8 +194,10 @@ local function _clusterwide(patch)
         return nil, err
     end
 
-    local vshard_utils = require('cartridge.vshard-utils')
-    local ok, err = vshard_utils.validate_config(cwcfg_new, cwcfg_old)
+    local ok, err = vshard_utils.validate_config(
+        cwcfg_new:get_readonly(),
+        cwcfg_old:get_readonly()
+    )
     if not ok then
         return nil, err
     end
@@ -311,9 +319,9 @@ local function patch_clusterwide(patch)
     return true
 end
 
-_G.__cartridge_prepare_2pc = prepare_2pc
-_G.__cartridge_commit_2pc = commit_2pc
-_G.__cartridge_abort_2pc = abort_2pc
+_G.__cartridge_cwcfg_prepare_2pc = function(...) return errors.pcall('E', prepare_2pc, ...) end
+_G.__cartridge_cwcfg_commit_2pc = function(...) return errors.pcall('E', commit_2pc, ...) end
+_G.__cartridge_cwcfg_abort_2pc = function(...) return errors.pcall('E', abort_2pc, ...) end
 
 return {
     patch_clusterwide = patch_clusterwide,

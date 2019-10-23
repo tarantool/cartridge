@@ -224,6 +224,8 @@ end
 -- @treturn[2] table Error description
 local function validate_config(conf_new, conf_old)
     checks('table', 'table')
+    assert(conf_new.__type ~= 'ClusterwideConfig')
+    assert(conf_old.__type ~= 'ClusterwideConfig')
 
     for _, mod in ipairs(vars.known_roles) do
         if type(mod.validate_config) == 'function' then
@@ -253,6 +255,7 @@ end
 -- @treturn[2] table Error description
 local function apply_config(conf)
     checks('table')
+    assert(conf.__type ~= 'ClusterwideConfig')
 
     local my_replicaset = conf.topology.replicasets[box.info.cluster.uuid]
     local active_masters = topology.get_active_masters()

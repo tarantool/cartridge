@@ -8,7 +8,9 @@ local errors = require('errors')
 local vars = require('cartridge.vars').new('cartridge.vshard-utils')
 local pool = require('cartridge.pool')
 local utils = require('cartridge.utils')
+local roles = require('cartridge.roles')
 local topology = require('cartridge.topology')
+local twophase = require('cartridge.twophase')
 local confapplier = require('cartridge.confapplier')
 local vshard_consts = require('vshard.consts')
 
@@ -39,7 +41,7 @@ local function validate_group_weights(group_name, topology)
             'replicasets[%s].weight must be non-negative, got %s', replicaset_uuid, replicaset.weight
         )
 
-        local enabled_roles = confapplier.get_enabled_roles(replicaset.roles)
+        local enabled_roles = roles.get_enabled_roles(replicaset.roles)
         if enabled_roles['vshard-storage'] and (replicaset.vshard_group or 'default') == group_name then
             num_storages = num_storages + 1
             total_weight = total_weight + (replicaset.weight or 0)
@@ -183,6 +185,8 @@ end
 
 local function validate_config(conf_new, conf_old)
     checks('table', 'table')
+    assert(conf_new.__type ~= 'ClusterwideConfig')
+    assert(conf_old.__type ~= 'ClusterwideConfig')
 
     local topology_new = conf_new.topology
     local topology_old = conf_old.topology or {}
@@ -277,7 +281,7 @@ end
 -- @local
 -- @treturn {[string]=table,...}
 local function get_known_groups()
-    local known_roles = confapplier.get_known_roles()
+    local known_roles = roles.get_known_roles()
     if utils.table_find(known_roles, 'vshard-router') == nil then
         return {}
     end
@@ -343,7 +347,8 @@ local function get_vshard_config(group_name, conf)
     checks('string', 'table')
 
     local sharding = {}
-    local topology_cfg = topology.get()
+    local topology_cfg = confapplier.get_readonly('topology')
+    assert(topology_cfg ~= nil)
     local active_masters = topology.get_active_masters()
 
     for _it, instance_uuid, server in fun.filter(topology.not_disabled, topology_cfg.servers) do
@@ -404,7 +409,7 @@ local function can_bootstrap_group(group_name, vsgroup)
 end
 
 local function can_bootstrap()
-    local known_roles = confapplier.get_known_roles()
+    local known_roles = roles.get_known_roles()
     if utils.table_find(known_roles, 'vshard-router') == nil then
         return false
     end
@@ -463,7 +468,7 @@ local function edit_vshard_options(group_name, vshard_options)
         group[k] = v
     end
 
-    return confapplier.patch_clusterwide(patch)
+    return twophase.patch_clusterwide(patch)
 end
 
 return {

@@ -19,30 +19,30 @@ local e_config = errors.new_class('Invalid cluster topology config')
 vars:new('known_roles', {
     -- [role_name] = true/false,
 })
-vars:new('topology', {
-    auth = false,
-    failover = false,
-    servers = {
-        -- ['instance-uuid-1'] = 'expelled',
-        -- ['instance-uuid-2'] = {
-        --     uri = 'localhost:3301',
-        --     disabled = false,
-        --     replicaset_uuid = 'replicaset-uuid-2',
-        -- },
-    },
-    replicasets = {
-        -- ['replicaset-uuid-2'] = {
-        --     roles = {
-        --         ['role-1'] = true,
-        --         ['role-2'] = true,
-        --     },
-        --     master = 'instance-uuid-2' -- old format, still compatible
-        --     master = {'instance-uuid-2', 'instance-uuid-1'} -- new format
-        --     weight = 1.0,
-        --     vshard_group = 'group_name',
-        -- }
-    },
-})
+-- vars:new('topology', {
+--     auth = false,
+--     failover = false,
+--     servers = {
+--         -- ['instance-uuid-1'] = 'expelled',
+--         -- ['instance-uuid-2'] = {
+--         --     uri = 'localhost:3301',
+--         --     disabled = false,
+--         --     replicaset_uuid = 'replicaset-uuid-2',
+--         -- },
+--     },
+--     replicasets = {
+--         -- ['replicaset-uuid-2'] = {
+--         --     roles = {
+--         --         ['role-1'] = true,
+--         --         ['role-2'] = true,
+--         --     },
+--         --     master = 'instance-uuid-2' -- old format, still compatible
+--         --     master = {'instance-uuid-2', 'instance-uuid-1'} -- new format
+--         --     weight = 1.0,
+--         --     vshard_group = 'group_name',
+--         -- }
+--     },
+-- })
 
 -- to be used in fun.filter
 local function not_expelled(_, srv)
@@ -453,28 +453,33 @@ local function validate(topology_new, topology_old)
     return true
 end
 
-local function get_myself_uuids(topology)
-    checks('?table')
-    if topology == nil or topology.servers == nil then
-        return nil, nil
+local function find_server_by_uri(cwcfg, uri)
+    checks('ClusterwideConfig', 'string')
+
+    local topology_cfg = cwcfg:get_readonly('topology')
+
+    if topology_cfg == nil or topology_cfg.servers == nil then
+        return nil
     end
 
-    local advertise_uri = membership.myself().uri
-    for _it, instance_uuid, server in fun.filter(not_expelled, topology.servers) do
-        if server.uri == advertise_uri then
-            return instance_uuid, server.replicaset_uuid
+    for _it, instance_uuid, server in fun.filter(not_expelled, topology_cfg.servers) do
+        if server.uri == uri then
+            return instance_uuid, server
         end
     end
 
-    return nil, nil
+    return nil
 end
 
 local function cluster_is_healthy()
-    if next(vars.topology.servers) == nil then
-        return nil, 'not bootstrapped yet'
+    local confapplier = require('cartridge.confapplier')
+    if confapplier.get_state() ~= 'RolesConfigured' then
+        return nil, confapplier.get_state()
     end
 
-    for _it, instance_uuid, server in fun.filter(not_disabled, vars.topology.servers) do
+    local topology_cfg = confapplier:get_readonly('topology')
+
+    for _it, instance_uuid, server in fun.filter(not_disabled, topology_cfg.servers) do
         local member = membership.get_member(server.uri) or {}
 
         if (member.status ~= 'alive') then
@@ -537,12 +542,20 @@ end
 local function get_active_masters()
     local ret = {}
 
-    for replicaset_uuid, _ in pairs(vars.topology.replicasets) do
-        local leaders = get_leaders_order(vars.topology, replicaset_uuid)
+    local confapplier = require('cartridge.confapplier')
+    local topology_cfg = confapplier.get_readonly('topology')
 
-        if vars.topology.failover then
+    if topology_cfg == nil
+    or topology_cfg.replicasets == nil then
+        return {}
+    end
+
+    for replicaset_uuid, _ in pairs(topology_cfg.replicasets) do
+        local leaders = get_leaders_order(topology_cfg, replicaset_uuid)
+
+        if topology_cfg.failover then
             for _, instance_uuid in ipairs(leaders) do
-                local server = vars.topology.servers[instance_uuid]
+                local server = topology_cfg.servers[instance_uuid]
                 local member = membership.get_member(server.uri)
 
                 if member ~= nil
@@ -583,13 +596,6 @@ local function get_replication_config(topology, replicaset_uuid)
 end
 
 return {
-    set = function(topology)
-        checks('table')
-        vars.topology = topology
-    end,
-    get = function()
-        return vars.topology -- read-only
-    end,
     validate = function(...)
         return e_config:pcall(validate, ...)
     end,
@@ -602,8 +608,9 @@ return {
 
     cluster_is_healthy = cluster_is_healthy,
     probe_missing_members = probe_missing_members,
-    get_myself_uuids = get_myself_uuids,
     get_leaders_order = get_leaders_order,
     get_active_masters = get_active_masters,
     get_replication_config = get_replication_config,
+
+    find_server_by_uri = find_server_by_uri,
 }

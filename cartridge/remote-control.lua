@@ -159,7 +159,8 @@ local function communicate(s)
     local sync = header[0x01]
 
     if iproto_code[code] == nil then
-        reply_err(s, sync, box.error.UNKNOWN,
+        -- log.error("Unknown iproto code 0x%02x", code)
+        reply_err(s, sync or 0, box.error.UNKNOWN,
             "Unknown iproto code 0x%02x", code
         )
         return true
