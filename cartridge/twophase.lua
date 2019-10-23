@@ -10,7 +10,6 @@ local yaml = require('yaml').new()
 local errno = require('errno')
 local errors = require('errors')
 local checks = require('checks')
-local digest = require('digest')
 
 local vars = require('cartridge.vars').new('cartridge.clusterwide')
 local auth = require('cartridge.auth')
@@ -34,11 +33,13 @@ vars:new('prepared_config', nil)
 
 --- Two-phase commit - preparation stage.
 --
--- Validate the configuration and acquire a lock writing `<workdir>/config.prepate.yml`.
--- If the validation fails, the lock is not acquired and does not have to be aborted.
+-- Validate the configuration and acquire a lock setting local variable.
+-- If the validation fails, the lock is not acquired and doesn't have
+-- to be aborted.
+--
 -- @function prepare_2pc
 -- @local
--- @tparam table data
+-- @tparam table data clusterwide config content
 -- @treturn[1] boolean true
 -- @treturn[2] nil
 -- @treturn[2] table Error description
@@ -65,7 +66,8 @@ end
 
 --- Two-phase commit - commit stage.
 --
--- Back up the active configuration, commit changes to filesystem, release the lock, and configure roles.
+-- Back up the active configuration, commit changes to filesystem,
+-- release the lock, and configure roles.
 -- If any errors occur, configuration is not rolled back automatically.
 -- Any problem encountered during this call has to be solved manually.
 --
@@ -75,9 +77,11 @@ end
 -- @treturn[2] nil
 -- @treturn[2] table Error description
 local function commit_2pc()
-    Commit2pcError:assert(vars.prepared_config ~= nil,
+    Commit2pcError:assert(
+        vars.prepared_config ~= nil,
         "commit isn't prepared"
     )
+
     local path_prepare = 'config.prepare.yml'
     local path_backup = 'config.backup.yml'
     local path_active = 'config.yml'
@@ -88,28 +92,27 @@ local function commit_2pc()
         local ok = fio.link(path_active, path_backup)
         if ok then
             log.info('Backup of active config created: %q', path_backup)
+        else
+            log.warning(
+                'Creation of config backup failed: %s', errno.strerror()
+            )
         end
-        -- TODO error handling
     end
 
     local ok = fio.rename(path_prepare, path_active)
     if not ok then
-        local err = errors.new('Commit2pcError',
-            'Can not move %q: %s', path_prepare, errno.strerror()
+        local err = Commit2pcError:new(
+            "Can't move %q: %s", path_prepare, errno.strerror()
         )
         log.error('Error commmitting config update: %s', err)
         return nil, err
     end
 
-    local conf, err = ClusterwideConfig.load_from_file(path_active)
-
-    local conf, err = confapplier.load_from_file()
-    if not conf then
-        log.error('Error commmitting config update: %s', err)
-        return nil, err
+    if type(box.cfg) == 'function' then
+        return confapplier.boot_instance(vars.prepared_config)
+    else
+        return confapplier.apply_config(vars.prepared_config)
     end
-
-    return confapplier.apply_config(conf)
 end
 
 --- Two-phase commit - abort stage.

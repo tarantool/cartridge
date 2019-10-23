@@ -159,23 +159,25 @@ end
 --  args `--alias`)
 --
 -- @tparam table opts.roles
--- list of user-defined roles that will be available to enable on the instance_uuid
+--   list of user-defined roles that will be available
+--   to enable on the instance_uuid
 --
 -- @tparam ?boolean opts.auth_enabled
--- toggle authentication in administrative UI and API
---  (default: false)
+--   toggle authentication in administrative UI and API
+--   (default: false)
 --
 -- @tparam ?string opts.auth_backend_name
--- user-provided set of callbacks related to authentication
+--   user-provided set of callbacks related to authentication
 --
 -- @tparam ?string opts.console_sock
--- Socket to start console listening on.
---  (default: nil, overridden by
---  env `TARANTOOL_CONSOLE_SOCK`,
---  args `--console-sock`)
+--   Socket to start console listening on.
+--   (default: nil, overridden by
+--   env `TARANTOOL_CONSOLE_SOCK`,
+--   args `--console-sock`)
 --
 -- @tparam ?table box_opts
--- tarantool extra box.cfg options (e. g. memtx_memory), that may require additional tuning
+--   tarantool extra box.cfg options (e.g. memtx_memory),
+--   that may require additional tuning
 --
 -- @return[1] true
 -- @treturn[2] nil
