@@ -14,6 +14,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Use for frontend part single point of configuration HTTP handlers.
   As example: you can add your own client HTTP middleware for auth.
 
+- Built-in DDL schema management. Schema is a part of clusterwide
+  configuration. It's applied to every instance in cluster.
+
 ### Changed
 
 - WebUI now uses `edit_topology` mutation instead of deprecated ones.

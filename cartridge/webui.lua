@@ -10,6 +10,7 @@ local api_auth = require('cartridge.webui.api-auth')
 local api_config = require('cartridge.webui.api-config')
 local api_vshard = require('cartridge.webui.api-vshard')
 local api_topology = require('cartridge.webui.api-topology')
+local api_ddl = require('cartridge.webui.api-ddl')
 
 local function init(httpd)
     front.init(httpd)
@@ -24,6 +25,8 @@ local function init(httpd)
 
     -- Config upload/download
     api_config.init(httpd)
+
+    api_ddl.init(graphql)
 
     -- Vshard operations
     api_vshard.init(graphql)

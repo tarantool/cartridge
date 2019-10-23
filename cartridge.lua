@@ -523,6 +523,27 @@ return {
     -- @function is_healthy
     is_healthy = topology.cluster_is_healthy,
 
+--- Global functions.
+-- @section globals
+
+    --- Get clusterwide DDL schema.
+    --
+    -- (**Added** in v1.2.0-27)
+    -- @function _G.cartridge_get_schema
+    -- @treturn[1] boolean true
+    -- @treturn[2] nil
+    -- @treturn[2] table Error description
+
+    --- Apply clusterwide DDL schema.
+    --
+    -- (**Added** in v1.2.0-27)
+    -- @function _G.cartridge_set_schema
+    -- @param table schema
+    -- @treturn[1] boolean true
+    -- @treturn[2] nil
+    -- @treturn[2] table Error description
+
+
 --- Cluster administration.
 -- @refer cartridge.admin
 -- @section admin

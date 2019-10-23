@@ -23,6 +23,7 @@ local AtomicCallError = errors.new_class('AtomicCallError')
 local PatchClusterwideError = errors.new_class('PatchClusterwideError')
 -- local Prepare2pcError = errors.new_class('Prepare2pcError')
 local Commit2pcError = errors.new_class('Commit2pcError')
+local GetSchemaError = errors.new_class('GetSchemaError')
 
 yaml.cfg({
     encode_load_metatables = false,
@@ -291,6 +292,33 @@ local function patch_clusterwide(patch)
     vars.locks['clusterwide'] = false
 
     return ok, err
+end
+
+function _G.cartridge_get_schema()
+    if confapplier.get_readonly() == nil then
+        return nil, GetSchemaError:new(
+            "Cluster isn't bootstaraped yet"
+        )
+    end
+    local schema_yml = confapplier.get_readonly('schema.yml')
+
+    if schema_yml == nil then
+        return {spaces = {}}
+    else
+        return yaml.decode(schema_yml)
+    end
+end
+
+function _G.cartridge_set_schema(schema)
+    checks('table')
+
+    local patch = {['schema.yml'] = yaml.encode(schema)}
+    local ok, err = patch_clusterwide(patch)
+    if not ok then
+        return nil, err.err
+    end
+
+    return true
 end
 
 _G.__cluster_confapplier_prepare_2pc = prepare_2pc

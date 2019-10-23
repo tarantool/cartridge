@@ -6,6 +6,7 @@ source  = {
 }
 dependencies = {
     'lua >= 5.1',
+    'ddl == 0.0.2-1',
     'http == 1.0.5-1',
     'checks == 3.0.1-1',
     'lulpeg == 0.1.2-1',
@@ -42,6 +43,7 @@ build = {
             ['cartridge.utils'] = 'cartridge/utils.lua',
             ['cartridge.roles'] = 'cartridge/roles.lua',
             ['cartridge.webui'] = 'cartridge/webui.lua',
+            ['cartridge.webui.api-ddl'] = 'cartridge/webui/api-ddl.lua',
             ['cartridge.webui.api-auth'] = 'cartridge/webui/api-auth.lua',
             ['cartridge.webui.api-config'] = 'cartridge/webui/api-config.lua',
             ['cartridge.webui.api-vshard'] = 'cartridge/webui/api-vshard.lua',
@@ -58,6 +60,7 @@ build = {
             ['cartridge.cluster-cookie'] = 'cartridge/cluster-cookie.lua',
             ['cartridge.service-registry'] = 'cartridge/service-registry.lua',
             ['cartridge.label-utils'] = 'cartridge/label-utils.lua',
+            ['cartridge.ddl-manager'] = 'cartridge/ddl-manager.lua',
 
             ['cartridge.vshard-utils'] = 'cartridge/vshard-utils.lua',
             ['cartridge.roles.vshard-router'] = 'cartridge/roles/vshard-router.lua',

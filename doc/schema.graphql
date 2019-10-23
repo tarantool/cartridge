@@ -1,16 +1,19 @@
 # source: http://localhost:8081/admin/api
-# timestamp: Tue Oct 15 2019 17:35:02 GMT+0300 (Moscow Standard Time)
+# timestamp: Wed Nov 20 2019 00:48:15 GMT+0300 (Moscow Standard Time)
 
 """Cluster management"""
 type Apicluster {
   """Get current server"""
   self: ServerShortInfo
 
+  """Clusterwide DDL schema"""
+  schema: DDLSchema!
+
   """Get current failover state."""
   failover: Boolean!
 
-  """Virtual buckets count in cluster"""
-  vshard_bucket_count: Int!
+  """Whether it is reasonble to call bootstrap_vshard mutation"""
+  can_bootstrap_vshard: Boolean!
 
   """List authorized users"""
   users(username: String): [User!]
@@ -23,8 +26,19 @@ type Apicluster {
   vshard_groups: [VshardGroup!]!
   auth_params: UserManagementAPI!
 
-  """Whether it is reasonble to call bootstrap_vshard mutation"""
-  can_bootstrap_vshard: Boolean!
+  """Virtual buckets count in cluster"""
+  vshard_bucket_count: Int!
+}
+
+"""Result of schema validation"""
+type DDLCheckResult {
+  """Null if validation passed, error message otherwise"""
+  error: String
+}
+
+"""The schema"""
+type DDLSchema {
+  as_yaml: String!
 }
 
 """Parameters for editing a replicaset"""
@@ -99,7 +113,14 @@ type Mutation {
 
 """Cluster management"""
 type MutationApicluster {
-  edit_vshard_options(rebalancer_max_receiving: Int, collect_bucket_garbage_interval: Float, collect_lua_garbage: Boolean, sync_timeout: Float, name: String!, rebalancer_disbalance_threshold: Float): VshardGroup!
+  """Applies DDL schema on cluster"""
+  schema(as_yaml: String!): DDLSchema!
+
+  """Enable or disable automatic failover. Returns new state."""
+  failover(enabled: Boolean!): Boolean!
+
+  """Checks that schema can be applied on cluster"""
+  check_schema(as_yaml: String!): DDLCheckResult!
   auth_params(cookie_max_age: Long, enabled: Boolean, cookie_renew_age: Long): UserManagementAPI!
 
   """Remove user"""
@@ -113,9 +134,7 @@ type MutationApicluster {
 
   """Create a new user"""
   add_user(password: String!, username: String!, fullname: String, email: String): User
-
-  """Enable or disable automatic failover. Returns new state."""
-  failover(enabled: Boolean!): Boolean!
+  edit_vshard_options(rebalancer_max_receiving: Int, collect_bucket_garbage_interval: Float, collect_lua_garbage: Boolean, sync_timeout: Float, name: String!, rebalancer_disbalance_threshold: Float): VshardGroup!
 
   """Disable listed servers by uuid"""
   disable_servers(uuids: [String!]): [Server]
