@@ -19,6 +19,7 @@ local auth = require('cartridge.auth')
 local utils = require('cartridge.utils')
 local topology = require('cartridge.topology')
 local vshard_utils = require('cartridge.vshard-utils')
+local remote_control = require('cartridge.remote-control')
 local cluster_cookie = require('cartridge.cluster-cookie')
 local service_registry = require('cartridge.service-registry')
 local ClusterwideConfig = require('cartridge.clusterwide-config')
@@ -37,13 +38,15 @@ local e_config_apply = errors.new_class('Applying configuration failed')
 local e_config_validate = errors.new_class('Invalid config')
 local e_register_role = errors.new_class('Can not register role')
 local BoxError = errors.new_class('BoxError', {log_on_creation = true})
+local StateError = errors.new_class('StateError', {log_on_creation = true})
 
-vars:new('state')
+vars:new('state', '')
 -- Unconfigured:
 -- BoxRecovering:
 -- BoxConfigured:
 -- RolesConfigured:
 -- Error:
+vars:new('error')
 
 vars:new('workdir')
 vars:new('cwcfg_active')
@@ -54,13 +57,37 @@ vars:new('failover_cond', nil)
 vars:new('box_opts', nil)
 vars:new('boot_opts', nil)
 
-local function init_box(box_opts)
+local _transitions = {
+    [''] = {'Unconfigured'},
+    ['Unconfigured'] = {'ConfigLoaded', 'Error'},
+    ['ConfigLoaded'] = {'BoxRecovering', 'Error'},
+    ['BoxRecovering'] = {'BoxConfigured', 'Error'},
+    ['BoxConfigured'] = {'RolesConfigured', 'Error'},
+    ['RolesConfigured'] = {'RolesConfigured', 'Error'},
+    ['Error'] = {},
+    -- Disabled
+    -- Expelled
+}
+local function set_state(new_state, err)
+    checks('string', '?')
+    StateError:assert(
+        utils.table_find(_transitions[vars.state], new_state),
+        'invalid transition %s -> %s', vars.state, new_state
+    )
+
+    vars.state = new_state
+    if new_state == 'Error' then
+        log.error('Instance entering failure state: %s', err)
+        vars.error = err
+    end
+end
+
+local function init_box()
     checks('table')
     assert(type(box.cfg) == 'function', 'box.cfg is already initialized')
 
+    vars.box_opts.listen = box.NULL
     log.warn('Bootstrapping box.cfg...')
-    local listen = box_opts.listen
-    box_opts.listen = box.NULL
     box.cfg(box_opts)
 
     local username = cluster_cookie.username()
@@ -100,25 +127,60 @@ local function init_box(box_opts)
     return true
 end
 
-local function boot_instance(workdir, box_opts)
-    checks('string', 'table')
+local function init(opts)
+    checks({
+        workdir = 'string',
+        box_opts = 'table',
+        binary_port = 'number',
+    })
 
-    vars.state = 'Unconfigured'
-    vars.workdir = workdir
-    vars.box_opts = box_opts
+    set_state('Unconfigured')
+    vars.workdir = opts.workdir
+    vars.box_opts = opts.box_opts
+    vars.binary_port = opts.binary_port
 
-    local config_filename = fio.pathjoin(workdir, 'config.yml')
+    local ok, err = remote_control.start('0.0.0.0', vars.binary_port, {
+        username = cluster_cookie.username(),
+        password = cluster_cookie.cookie(),
+    })
+    if not ok then
+        set_state('Error', err)
+        return nil, err
+    end
+
+    local config_filename = fio.pathjoin(vars.workdir, 'config.yml')
     if not utils.file_exists(config_filename) then
         return true
     end
+    set_state('ConfigFound')
+
+    -- boot_instance
 
     local conf, err = ClusterwideConfig.load_from_file(config_filename)
     if conf == nil then
-        vars.state = 'Error'
+        set_state('Error', err)
         return nil, err
     end
     vars.conf = conf
+    set_state('ConfigLoaded')
 
+    if next(fio.glob(fio.pathjoin(vars.workdir, '*.snap'))) == nil then
+        local err = errors.new('InitError',
+            "Snapshot not found in %q, can't recover." ..
+            " Did previous bootstrap attempt fail?",
+            vars.workdir
+        )
+        set_state('Error', err)
+        return nil, err
+    end
+
+
+    set_state('BoxRecovering', err)
+    local ok, err = init_box()
+    if not ok then
+        set_state('Error', err)
+        return nil, err
+    end
 
     -- 1. if snapshot is there - init box
     -- 2. if clusterwide config is there - apply_config
@@ -338,14 +400,12 @@ local function apply_config(conf)
     end
 end
 
-local function get_bare_config()
-    return ClusterwideConfig.new({
-        auth = auth.get_params(),
-        vshard_groups = vshard_utils.get_known_groups(),
-    })
+local function boot_instance()
+
 end
 
 return {
+    init = init,
     boot_instance = boot_instance,
     get_readonly = get_readonly,
     get_deepcopy = get_deepcopy,
