@@ -30,6 +30,7 @@ local admin = require('cartridge.admin')
 local webui = require('cartridge.webui')
 local argparse = require('cartridge.argparse')
 local topology = require('cartridge.topology')
+local twophase = require('cartridge.twophase')
 local confapplier = require('cartridge.confapplier')
 local vshard_utils = require('cartridge.vshard-utils')
 local cluster_cookie = require('cartridge.cluster-cookie')
@@ -598,7 +599,7 @@ return {
     --- .
     -- @refer cartridge.confapplier.patch_clusterwide
     -- @function config_patch_clusterwide
-    config_patch_clusterwide = confapplier.patch_clusterwide,
+    config_patch_clusterwide = twophase.patch_clusterwide,
 
 --- Inter-role interaction.
 -- @refer cartridge.service-registry

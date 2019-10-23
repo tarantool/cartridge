@@ -156,7 +156,8 @@ local function set_params(opts)
         patch.topology.auth = nil
     end
 
-    return confapplier.patch_clusterwide(patch)
+    local twophase = require('cartridge.twophase')
+    return twophase.patch_clusterwide(patch)
 end
 
 --- Retrieve authentication params.

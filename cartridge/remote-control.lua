@@ -159,11 +159,11 @@ local function communicate(s)
     local sync = header[0x01]
 
     if iproto_code[code] == nil then
-        -- log.error("Unknown iproto code 0x%02x", code)
-        reply_err(s, sync or 0, box.error.UNKNOWN,
-            "Unknown iproto code 0x%02x", code
-        )
-        return true
+        log.error("Unknown iproto code 0x%02x", code)
+        -- reply_err(s, sync or 0, box.error.UNKNOWN,
+        --     "Unknown iproto code 0x%02x", code
+        -- )
+        return false
 
     elseif iproto_code[code] == 'iproto_select' then
         reply_ok(s, sync, {})
@@ -259,10 +259,10 @@ local function communicate(s)
         return true
 
     else
-        reply_err(s, sync, box.error.UNSUPPORTED,
-            "Remote Control doesn't support %s", iproto_code[code]
-        )
-        return true
+        -- reply_err(s, sync, box.error.UNSUPPORTED,
+        --     "Remote Control doesn't support %s", iproto_code[code]
+        -- )
+        return false
     end
 end
 

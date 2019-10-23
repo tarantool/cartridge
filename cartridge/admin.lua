@@ -884,7 +884,6 @@ local function join_server(args)
         and (member.status == 'alive')
         and (member.payload.uuid == args.instance_uuid)
         and (member.payload.error == nil)
-        and (member.payload.ready)
         then
             conn = pool.connect(args.uri)
         end

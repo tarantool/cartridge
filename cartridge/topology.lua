@@ -477,7 +477,7 @@ local function cluster_is_healthy()
         return nil, confapplier.get_state()
     end
 
-    local topology_cfg = confapplier:get_readonly('topology')
+    local topology_cfg = confapplier.get_readonly('topology')
 
     for _it, instance_uuid, server in fun.filter(not_disabled, topology_cfg.servers) do
         local member = membership.get_member(server.uri) or {}
@@ -497,14 +497,6 @@ local function cluster_is_healthy()
                 '%s: %s',
                 server.uri, member.payload.error
             )
-        elseif (not member.payload.ready) then
-            local err
-            if member.payload.warning then
-                err = string.format('%s not ready: %s', server.uri, member.payload.warning)
-            else
-                err = string.format('%s not ready yet', server.uri)
-            end
-            return nil, err
         end
     end
 
