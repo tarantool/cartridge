@@ -33,7 +33,7 @@ _cwcfg_mt = {
             checks('ClusterwideConfig')
             local data = table.deepcopy(self.data)
             return setmetatable({
-                data = utils.table_setrw(data),
+                data = utils.table_setro(data),
                 locked = false,
             }, _cwcfg_mt)
         end,

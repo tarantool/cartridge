@@ -101,6 +101,10 @@ local function commit_2pc()
         end
     end
 
+    -- Release the lock
+    local prepared_config = vars.prepared_config
+    vars.prepared_config = nil
+
     local ok = fio.rename(path_prepare, path_active)
     if not ok then
         local err = Commit2pcError:new(
@@ -110,10 +114,11 @@ local function commit_2pc()
         return nil, err
     end
 
+
     if type(box.cfg) == 'function' then
-        return confapplier.boot_instance(vars.prepared_config)
+        return confapplier.boot_instance(prepared_config)
     else
-        return confapplier.apply_config(vars.prepared_config)
+        return confapplier.apply_config(prepared_config)
     end
 end
 
@@ -169,7 +174,7 @@ local function _clusterwide(patch)
         cwcfg_old = ClusterwideConfig.new({
             auth = auth.get_params(),
             vshard_groups = vshard_utils.get_known_groups(),
-        })
+        }):lock()
     end
 
     local cwcfg_new = cwcfg_old:copy()

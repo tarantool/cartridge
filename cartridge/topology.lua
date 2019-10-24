@@ -453,12 +453,11 @@ local function validate(topology_new, topology_old)
     return true
 end
 
-local function find_server_by_uri(cwcfg, uri)
-    checks('ClusterwideConfig', 'string')
+local function find_server_by_uri(topology_cfg, uri)
+    checks('table', 'string')
+    assert(topology_cfg.__type ~= 'ClusterwideConfig')
 
-    local topology_cfg = cwcfg:get_readonly('topology')
-
-    if topology_cfg == nil or topology_cfg.servers == nil then
+    if topology_cfg.servers == nil then
         return nil
     end
 

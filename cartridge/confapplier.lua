@@ -154,10 +154,18 @@ local function apply_config(cwcfg)
     vars.cwcfg = cwcfg
     -- box.session.su('admin')
 
+    local read_only
+    if nil then
+        -- my_replicaset.all_rw
+        -- is_leader
+        -- failover.is_leader()
+    end
+
     local _, err = BoxError:pcall(box.cfg, {
         replication = topology.get_replication_config(
             cwcfg, vars.replicaset_uuid
         ),
+        read_only = read_only,
     })
     if err then
         set_state('Error', err)
@@ -251,6 +259,9 @@ local function boot_instance(cwcfg)
     end
 
     log.warn('Calling box.cfg()...')
+    -- This operation may be long
+    -- It recovers snapshot
+    -- Or bootstraps replication
     box.cfg(box_opts)
 
     local username = cluster_cookie.username()
@@ -258,6 +269,7 @@ local function boot_instance(cwcfg)
 
     log.info('Making sure user %q exists...', username)
     if not box.schema.user.exists(username) then
+        -- Quite impossible assert just in case
         error(('User %q does not exists'):format(username))
     end
 
@@ -278,10 +290,6 @@ local function boot_instance(cwcfg)
         )
     end
 
-    vars.instance_uuid = box.info.uuid
-    vars.replicaset_uuid = box.info.cluster.uuid
-    membership.set_payload('uuid', box.info.uuid)
-
     remote_control.stop()
     local _, err = BoxError:pcall(
         box.cfg, {listen = vars.binary_port}
@@ -291,6 +299,10 @@ local function boot_instance(cwcfg)
         set_state('Error', err)
         return nil, err
     end
+
+    vars.instance_uuid = box.info.uuid
+    vars.replicaset_uuid = box.info.cluster.uuid
+    membership.set_payload('uuid', box.info.uuid)
 
     set_state('BoxConfigured')
     return apply_config(cwcfg)
@@ -320,6 +332,7 @@ local function init(opts)
     local config_filename = fio.pathjoin(vars.workdir, 'config.yml')
     if not utils.file_exists(config_filename) then
         set_state('Unconfigured')
+        -- boot_instance() will be called later over remote control
     else
         set_state('ConfigFound')
         local cwcfg, err = ClusterwideConfig.load_from_file(config_filename)

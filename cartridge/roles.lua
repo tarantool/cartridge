@@ -1,20 +1,5 @@
 #!/usr/bin/env tarantool
 
--- -- roles.lua
-
--- register_role
--- get_known_roles
--- get_enabled_roles
--- get_role_dependencies
--- validate_config
--- apply_config
-
--- -- roles/failover.lua
--- permanent role
-
--- -- box-atomic.lua
--- cfg
-
 local log = require('log')
 local checks = require('checks')
 local errors = require('errors')
