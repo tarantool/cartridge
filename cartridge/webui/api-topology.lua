@@ -79,6 +79,15 @@ local gql_type_label_input = gql_types.inputObject {
     }
 }
 
+local gql_type_clocks = gql_types.object {
+    name = 'Clocks',
+    description = 'Clock delta between cluster members',
+    fields = {
+        min_delta = gql_types.float.nonNull,
+        max_delta = gql_types.float.nonNull,
+    }
+}
+
 local gql_type_server = gql_types.object {
     name = 'Server',
     description = 'A server participating in tarantool cluster',
@@ -97,6 +106,7 @@ local gql_type_server = gql_types.object {
         statistics = gql_stat_schema,
         boxinfo = gql_boxinfo_schema,
         labels = gql_types.list(gql_type_label),
+        clocks = gql_type_clocks,
     }
 }
 

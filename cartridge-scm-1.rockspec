@@ -11,7 +11,7 @@ dependencies = {
     'lulpeg == 0.1.2-1',
     'errors == 2.1.1-1',
     'vshard == 0.1.9-1',
-    'membership == 2.1.4-1',
+    'membership == 2.2.0-1',
     'frontend-core == 6.1.1-1',
 }
 

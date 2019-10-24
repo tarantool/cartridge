@@ -24,6 +24,21 @@ local service_registry = require('cartridge.service-registry')
 local e_topology_edit = errors.new_class('Editing cluster topology failed')
 local e_probe_server = errors.new_class('Can not probe server')
 
+local function get_clocks_info(members)
+    checks('table')
+
+    local min_delta = 0
+    local max_delta = 0
+    for _, member in pairs(members) do
+        local member_delta = member.clock_delta or 0
+
+        min_delta = min_delta < member_delta and min_delta or member_delta
+        max_delta = max_delta > member_delta and max_delta or member_delta
+    end
+
+    return { min_delta = min_delta, max_delta = max_delta }
+end
+
 local function get_server_info(members, uuid, uri)
     local member = members[uri]
     local alias = nil
@@ -37,6 +52,9 @@ local function get_server_info(members, uuid, uri)
     --   Human-readable instance name.
     -- @tfield string uri
     -- @tfield string uuid
+    -- @tfield
+    --   table clocks
+    --   Information about time difference (millseconds) between servers clocks in the cluster
     -- @tfield boolean disabled
     -- @tfield
     --   string status
@@ -55,6 +73,7 @@ local function get_server_info(members, uuid, uri)
         alias = alias,
         uri = uri,
         uuid = uuid,
+        clocks = get_clocks_info(members)
     }
 
     -- find the most fresh information

@@ -400,3 +400,36 @@ function g.test_probe_server()
     local resp = probe_req({uri = router.advertise_uri})
     t.assert_true(resp['data']['probe_server'])
 end
+
+function g.test_clocks_delta()
+    local router = g.cluster:server('router')
+    t.helpers.retrying({timeout = 5}, function()
+        router.net_box:eval(
+            "assert(require('membership').probe_uri('localhost:13303'))"
+        )
+    end)
+
+    local resp = router:graphql({
+        query = [[
+            {
+                servers {
+                    uri
+                    uuid
+                    status
+                    clocks { min_delta, max_delta }
+                }
+            }
+        ]]
+    })
+
+    local servers = resp['data']['servers']
+
+    t.assert_equals(#servers, 4)
+
+    for _, server in pairs(servers) do
+        if server['status'] == 'healthy' then
+            t.assert_true(server['clocks']['min_delta'] ~= nil)
+            t.assert_true(server['clocks']['max_delta'] ~= nil)
+        end
+    end
+end
