@@ -70,7 +70,7 @@ local function set_config_roles(roles)
         topology.replicasets[uuid].roles = roles
         return cartridge.config_patch_clusterwide({topology = topology})
     ]], {g.cluster.main_server.replicaset_uuid, roles})
-    t.assert_equals(err, box.NULL)
+    t.assert_equals(err, nil)
     t.assert_equals(ok, true)
 end
 

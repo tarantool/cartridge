@@ -137,8 +137,7 @@ function g:test_bootstrap()
     end
     t.assert_items_equals(pids, {
         [a1.advertise_uri] = a1.process.pid,
-        -- TODO
-        -- [b2.advertise_uri] = b2.pid,
-        -- [b3.advertise_uri] = b3.pid,
+        [b2.advertise_uri] = b2.process.pid,
+        [b3.advertise_uri] = b3.process.pid,
     })
 end

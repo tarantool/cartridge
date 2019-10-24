@@ -10,6 +10,7 @@ local pool = require('cartridge.pool')
 local utils = require('cartridge.utils')
 local roles = require('cartridge.roles')
 local topology = require('cartridge.topology')
+local failover = require('cartridge.failover')
 local twophase = require('cartridge.twophase')
 local confapplier = require('cartridge.confapplier')
 local vshard_consts = require('vshard.consts')
@@ -261,6 +262,62 @@ local function validate_config(conf_new, conf_old)
     return true
 end
 
+-- local function validate_boot_groups(conf)
+--     checks('table')
+--     local boot_opts = vars.boot_opts
+
+--     if (conf.vshard_groups == nil) and (boot_opts.vshard_groups == nil) then
+--         if (boot_opts.bucket_count ~= nil)
+--         and (boot_opts.bucket_count ~= conf.vshard.bucket_count)
+--         then
+--             log.warn(
+--                 "WARNING: clusterwide config defines bucket_count=%d," ..
+--                 " cartridge.cfg value %d is ignored",
+--                 conf.vshard.bucket_count,
+--                 boot_opts.bucket_count
+--             )
+--         end
+--     elseif (conf.vshard_groups == nil) and (boot_opts.vshard_groups ~= nil) then
+--         return nil, e_conflicting_groups:new(
+--             "clusterwide config defines no vshard_groups," ..
+--             " which doesn't match cartridge.cfg"
+--         )
+--     elseif (conf.vshard_groups ~= nil) and (boot_opts.vshard_groups == nil) then
+--         return nil, e_conflicting_groups:new(
+--             "clusterwide config defines vshard_groups=%s," ..
+--             " which doesn't match cartridge.cfg",
+--             json.encode(fun.zip(conf.vshard_groups):totable())
+--         )
+--     elseif (conf.vshard_groups ~= nil) and (boot_opts.vshard_groups ~= nil) then
+--         for name, conf_vsgroup in pairs(conf.vshard_groups) do
+--             local boot_vsgroup = boot_opts.vshard_groups[name]
+--             if boot_vsgroup == nil then
+--                 return nil, e_conflicting_groups:new(
+--                     "clusterwide config defines vsgroup %q," ..
+--                     " missing from cartridge.cfg", name
+--                 )
+--             end
+
+--             local bucket_count = boot_opts.vshard_groups[name].bucket_count
+--             if bucket_count == nil then
+--                 bucket_count = boot_opts.bucket_count
+--             end
+
+--             if bucket_count ~= nil
+--             and bucket_count ~= conf_vsgroup.bucket_count then
+--                 log.warn(
+--                     "WARNING: clusterwide config sets %s.bucket_count=%d," ..
+--                     " cartridge.cfg value %d is ignored",
+--                     conf_vsgroup.bucket_count,
+--                     bucket_count
+--                 )
+--             end
+--         end
+--     end
+
+--     return true
+-- end
+
 local function set_known_groups(vshard_groups, default_bucket_count)
     checks('nil|table', 'nil|number')
     vars.known_groups = vshard_groups
@@ -281,8 +338,7 @@ end
 -- @local
 -- @treturn {[string]=table,...}
 local function get_known_groups()
-    local known_roles = roles.get_known_roles()
-    if utils.table_find(known_roles, 'vshard-router') == nil then
+    if roles.get_role('vshard-router') == nil then
         return {}
     end
 
@@ -349,7 +405,7 @@ local function get_vshard_config(group_name, conf)
     local sharding = {}
     local topology_cfg = confapplier.get_readonly('topology')
     assert(topology_cfg ~= nil)
-    local active_masters = topology.get_active_masters()
+    local active_masters = failover.get_active_leaders()
 
     for _it, instance_uuid, server in fun.filter(topology.not_disabled, topology_cfg.servers) do
         local replicaset_uuid = server.replicaset_uuid
@@ -409,8 +465,7 @@ local function can_bootstrap_group(group_name, vsgroup)
 end
 
 local function can_bootstrap()
-    local known_roles = roles.get_known_roles()
-    if utils.table_find(known_roles, 'vshard-router') == nil then
+    if roles.get_role('vshard-router') == nil then
         return false
     end
 

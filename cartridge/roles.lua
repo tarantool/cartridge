@@ -7,6 +7,7 @@ local errors = require('errors')
 local vars = require('cartridge.vars').new('cartridge.roles')
 local utils = require('cartridge.utils')
 local topology = require('cartridge.topology')
+local failover = require('cartridge.failover')
 local service_registry = require('cartridge.service-registry')
 
 local RegisterRoleError = errors.new_class('RegisterRoleError')
@@ -105,7 +106,29 @@ local function register_role(module_name)
     return mod
 end
 
---- List all registered roles names.
+local function get_role(role_name)
+    checks('string')
+    return vars.known_roles[role_name]
+end
+
+--- List all registered roles.
+--
+-- Hidden and permanent roles are listed too.
+--
+-- @function get_all_roles
+-- @local
+-- @treturn {string,..}
+local function get_all_roles()
+    local ret = {}
+
+    for _, mod in ipairs(vars.known_roles) do
+        table.insert(ret, mod.role_name)
+    end
+
+    return ret
+end
+
+--- List registered roles names.
 --
 -- Hidden roles are not listed as well as permanent ones.
 --
@@ -243,11 +266,6 @@ local function apply_config(conf)
     assert(conf.__type ~= 'ClusterwideConfig')
 
     local my_replicaset = conf.topology.replicasets[box.info.cluster.uuid]
-    local active_masters = topology.get_active_masters()
-    local is_leader = false
-    if active_masters[box.info.cluster.uuid] == box.info.uuid then
-        is_leader = true
-    end
 
     local err
     local enabled_roles = get_enabled_roles(my_replicaset.roles)
@@ -259,7 +277,7 @@ local function apply_config(conf)
             then
                 local _, _err = ApplyConfigError:pcall(
                     mod.init,
-                    {is_master = is_leader}
+                    {is_master = failover.is_leader()}
                 )
                 if _err then
                     log.error('%s', _err)
@@ -273,7 +291,7 @@ local function apply_config(conf)
             if type(mod.apply_config) == 'function' then
                 local _, _err = ApplyConfigError:pcall(
                     mod.apply_config, conf,
-                    {is_master = is_leader}
+                    {is_master = failover.is_leader()}
                 )
                 if _err then
                     log.error('%s', _err)
@@ -286,7 +304,7 @@ local function apply_config(conf)
             then
                 local _, _err = ApplyConfigError:pcall(
                     mod.stop,
-                    {is_master = is_leader}
+                    {is_master = failover.is_leader()}
                 )
                 if _err then
                     log.error('%s', err)
@@ -310,6 +328,8 @@ end
 
 return {
     register_role = register_role,
+    get_role = get_role,
+    get_all_roles = get_all_roles,
     get_known_roles = get_known_roles,
     get_enabled_roles = get_enabled_roles,
     get_role_dependencies = get_role_dependencies,

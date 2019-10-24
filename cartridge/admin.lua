@@ -16,6 +16,7 @@ local rpc = require('cartridge.rpc')
 local pool = require('cartridge.pool')
 local utils = require('cartridge.utils')
 local roles = require('cartridge.roles')
+local failover = require('cartridge.failover')
 local topology = require('cartridge.topology')
 local twophase = require('cartridge.twophase')
 local vshard_utils = require('cartridge.vshard-utils')
@@ -176,7 +177,7 @@ local function get_topology()
         )
     end
 
-    local active_masters = topology.get_active_masters()
+    local active_leaders = failover.get_active_leaders()
 
     for _it, instance_uuid, server in fun.filter(topology.not_expelled, topology_cfg.servers) do
         local srv = get_server_info(members, instance_uuid, server.uri)
@@ -187,7 +188,7 @@ local function get_topology()
         if leaders_order[server.replicaset_uuid][1] == instance_uuid then
             srv.replicaset.master = srv
         end
-        if active_masters[server.replicaset_uuid] == instance_uuid then
+        if active_leaders[server.replicaset_uuid] == instance_uuid then
             srv.replicaset.active_master = srv
         end
         if srv.status ~= 'healthy' then

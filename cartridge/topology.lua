@@ -530,53 +530,14 @@ local function probe_missing_members(servers)
     return true
 end
 
-local function get_active_masters()
-    local ret = {}
-
-    local confapplier = require('cartridge.confapplier')
-    local topology_cfg = confapplier.get_readonly('topology')
-
-    if topology_cfg == nil
-    or topology_cfg.replicasets == nil then
-        return {}
-    end
-
-    for replicaset_uuid, _ in pairs(topology_cfg.replicasets) do
-        local leaders = get_leaders_order(topology_cfg, replicaset_uuid)
-
-        if topology_cfg.failover then
-            for _, instance_uuid in ipairs(leaders) do
-                local server = topology_cfg.servers[instance_uuid]
-                local member = membership.get_member(server.uri)
-
-                if member ~= nil
-                and member.status == 'alive'
-                and member.payload.error == nil
-                and member.payload.uuid == instance_uuid then
-                    ret[replicaset_uuid] = instance_uuid
-                    break
-                end
-            end
-        end
-
-        if ret[replicaset_uuid] == nil then
-            ret[replicaset_uuid] = leaders[1]
-        end
-    end
-
-    return ret
-end
-
-local function get_replication_config(topology, replicaset_uuid)
-    checks('?table', 'string')
-    if topology == nil or topology.servers == nil then
-        return {}
-    end
+local function get_fullmesh_replication(topology_cfg, replicaset_uuid)
+    checks('table', 'string')
+    assert(topology_cfg.__type ~= 'ClusterwideConfig')
+    assert(topology_cfg.servers ~= nil)
 
     local replication = {}
 
-    -- luacheck: ignore instance_uuid
-    for _it, instance_uuid, server in fun.filter(not_disabled, topology.servers) do
+    for _it, _, server in fun.filter(not_disabled, topology_cfg.servers) do
         if server.replicaset_uuid == replicaset_uuid then
             table.insert(replication, pool.format_uri(server.uri))
         end
@@ -597,11 +558,10 @@ return {
     not_expelled = not_expelled,
     not_disabled = not_disabled,
 
+    get_leaders_order = get_leaders_order,
     cluster_is_healthy = cluster_is_healthy,
     probe_missing_members = probe_missing_members,
-    get_leaders_order = get_leaders_order,
-    get_active_masters = get_active_masters,
-    get_replication_config = get_replication_config,
 
     find_server_by_uri = find_server_by_uri,
+    get_fullmesh_replication = get_fullmesh_replication,
 }

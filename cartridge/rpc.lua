@@ -14,6 +14,7 @@ local pool = require('cartridge.pool')
 local utils = require('cartridge.utils')
 local roles = require('cartridge.roles')
 local topology = require('cartridge.topology')
+local failover = require('cartridge.failover')
 local confapplier = require('cartridge.confapplier')
 local service_registry = require('cartridge.service-registry')
 
@@ -82,7 +83,7 @@ local function get_candidates(role_name, opts)
     local replicasets = topology_cfg.replicasets
     local active_leaders
     if opts.leader_only then
-        active_leaders = topology.get_active_masters()
+        active_leaders = failover.get_active_leaders()
     end
 
     local candidates = {}

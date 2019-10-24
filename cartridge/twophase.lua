@@ -182,7 +182,7 @@ local function _clusterwide(patch)
         cwcfg_new:set_content(k, v)
     end
     cwcfg_new:lock()
-    log.info('%s', yaml.encode(cwcfg_new:get_readonly()))
+    -- log.info('%s', yaml.encode(cwcfg_new:get_readonly()))
 
     local topology_old = cwcfg_old:get_readonly('topology')
     local topology_new = cwcfg_new:get_readonly('topology')
