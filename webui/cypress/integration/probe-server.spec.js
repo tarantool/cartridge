@@ -24,8 +24,8 @@ describe('Probe server', () => {
   it('shows probings success message', () => {
     cy.get('.ProbeServerModal input[name="uri"]')
       .clear()
-      .type('localhost:33010')
-      .should('have.value', 'localhost:33010');
+      .type('localhost:33002')
+      .should('have.value', 'localhost:33002');
 
     cy.get('.meta-test__ProbeServerSubmitBtn').click();
 
