@@ -13,6 +13,7 @@ class UserAddModal extends React.Component {
 
     return (
       <Modal
+        className='meta-test__UserAddForm'
         title="Add a new user"
         visible={addUserModalVisible}
         onCancel={hideAddUserModal}

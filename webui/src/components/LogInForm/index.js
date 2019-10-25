@@ -146,7 +146,7 @@ class LogInForm extends React.Component {
             ) : null}
             <div className={styles.actionButtons}>
               {onClose && <Button intent="base" onClick={onClose} className={styles.cancelButton}>Cancel</Button>}
-              <Button intent="primary" type='submit'>Login</Button>
+              <Button className='meta-test__LoginFormBtn' intent="primary" type='submit'>Login</Button>
             </div>
           </Form>
         }
@@ -208,6 +208,7 @@ const SplashLogInForm = ({
 
 export const ModalLogInForm = ({ onCancel, visible, ...props }) => (
   <Modal
+    className='meta-test__LoginForm'
     title={'Authorization'}
     visible={visible}
     footer={null}

@@ -23,6 +23,7 @@ class UserRemoveModal extends React.Component {
 
     return (
       <ConfirmModal
+        className='meta-test__UserRemoveModal'
         title="Please confirm"
         visible={removeUserModalVisible}
         onCancel={hideRemoveUserModal}

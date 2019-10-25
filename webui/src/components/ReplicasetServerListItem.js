@@ -1,7 +1,7 @@
 // @flow
 // TODO: move to uikit
 import * as React from 'react';
-import { css } from 'react-emotion';
+import { css, cx } from 'react-emotion';
 import Tooltip from 'src/components/Tooltip';
 import Dropdown from 'src/components/Dropdown';
 import ServerLabels, { type Label } from 'src/components/ServerLabels';
@@ -236,13 +236,14 @@ class ReplicasetServerListItem extends React.PureComponent<
             },
             {
               text: 'Expel server',
+              className: 'meta-test_EXPELLLLLLLL',
               onClick: () => {
                 store.dispatch(showExpelModal(uri))
               },
               color: 'rgba(245, 34, 45, 0.65)'
             }
           ]}
-          className={styles.configureBtn}
+          className={cx(styles.configureBtn, 'meta-test__ReplicasetServerListItem__dropdownBtn')}
           size={'s'}
         />
         <ServerLabels

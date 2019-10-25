@@ -33,12 +33,14 @@ const FailoverButton = ({
         Failover
       </Switcher>
       <Modal
+        className='meta-test__FailoverControl'
         title="Failover control"
         visible={showFailoverModal}
         onClose={() => dispatch(setVisibleFailoverModal(false))}
         footerControls={[
           <Button onClick={() => dispatch(setVisibleFailoverModal(false))}>Close</Button>,
           <Button
+            className='meta-test__FailoverControlBtn'
             intent='primary'
             onClick={() => dispatch(changeFailover({ enabled: !failover }))}
           >

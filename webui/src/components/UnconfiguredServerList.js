@@ -78,6 +78,7 @@ class UnconfiguredServerList extends React.PureComponent<UnconfiguredServerListP
 
     return (
       <TiledList
+        className='meta-test__UnconfiguredServerList'
         itemClassName={cx(styles.row, this.props.className)}
         itemKey="uri"
         items={dataSource}
@@ -94,7 +95,8 @@ class UnconfiguredServerList extends React.PureComponent<UnconfiguredServerListP
             </div>
             <HealthStatus className={styles.status} status={item.status} message={item.message} />
             <Button
-              className={cx(styles.configureBtn, { [styles.hiddenButton]: !(uuid || (uri === item.uri)) } )}
+              className={cx(styles.configureBtn,'meta-test__configureBtn',
+                { [styles.hiddenButton]: !(uuid || (uri === item.uri)) } )}
               icon={IconGear}
               intent='secondary'
               onClick={() => this.props.onServerConfigure(item)}

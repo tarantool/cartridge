@@ -99,6 +99,7 @@ class ReplicasetServerList extends React.PureComponent<ReplicasetServerListProps
         ? (
           <React.Fragment>
             <FlatList
+              className='ReplicasetServerList'
               itemClassName={`${styles.server} ${SERVER_LABELS_HIGHLIGHTING_CLASS}`}
               items={servers}
               itemRender={server => (
