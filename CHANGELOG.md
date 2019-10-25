@@ -177,6 +177,7 @@ GraphQL API:
 - Removed user `cluster`, which was used internally for orchestration over netbox.
   Tarantool built-in user `admin` is used instead now. It can also be used for HTTP
   authentication to access WebUI. Cluster cookie is used as a password in both cases.
+  **(incompatible change)**
 
 ### Removed
 
