@@ -457,6 +457,7 @@ end
 
 local function _failover(cond)
     local function failover_internal()
+        local my_replicaset = vars.conf.topology.replicasets[box.info.cluster.uuid]
         local active_masters = topology.get_active_masters()
         local is_master = false
         if active_masters[box.info.cluster.uuid] == box.info.uuid then
@@ -464,8 +465,9 @@ local function _failover(cond)
         end
         local opts = utils.table_setro({is_master = is_master})
 
+        local is_rw = is_master or my_replicaset.all_rw
         local _, err = e_config_apply:pcall(box.cfg, {
-            read_only = not is_master,
+            read_only = not is_rw,
         })
         if err then
             log.error('Box.cfg failed: %s', err)

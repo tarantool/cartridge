@@ -9,6 +9,7 @@ local helpers = require('cartridge.test-helpers')
 local replicaset_uuid = helpers.uuid('b')
 local storage_1_uuid = helpers.uuid('b', 'b', 1)
 local storage_2_uuid = helpers.uuid('b', 'b', 2)
+local storage_3_uuid = helpers.uuid('b', 'b', 3)
 
 local cluster
 
@@ -33,6 +34,7 @@ g.before_all = function()
                 servers = {
                     {instance_uuid = storage_1_uuid},
                     {instance_uuid = storage_2_uuid},
+                    {instance_uuid = storage_3_uuid},
                 },
             },
         },
@@ -83,6 +85,32 @@ local function set_master(uuid, master_uuid)
     })
 end
 
+local function set_all_rw(uuid, all_rw)
+    cluster.main_server:graphql({
+        query = [[
+            mutation(
+                $uuid: String!
+                $all_rw: Boolean!
+            ) {
+                edit_replicaset(
+                    uuid: $uuid
+                    all_rw: $all_rw
+                )
+            }
+        ]],
+        variables = {uuid = uuid, all_rw = all_rw}
+    })
+end
+
+local function check_all_box_rw()
+    for _, server in pairs(cluster.servers) do
+        if server.net_box ~= nil then
+            t.assert_equals(server.net_box:eval('return box.cfg.read_only'), false)
+        end
+    end
+end
+
+
 local function get_failover()
     return cluster.main_server:graphql({query = [[
         {
@@ -117,7 +145,7 @@ g.test_api_master = function()
     set_master(replicaset_uuid, storage_1_uuid)
     t.assert_equals(get_master(replicaset_uuid), {storage_1_uuid, storage_1_uuid})
 
-    local invalid_uuid = helpers.uuid('b', 'b', 3)
+    local invalid_uuid = helpers.uuid('b', 'b', 4)
     t.assert_error_msg_contains(
         string.format("replicasets[%s] leader %q doesn't exist", replicaset_uuid, invalid_uuid),
         function() set_master(replicaset_uuid, invalid_uuid) end
@@ -151,6 +179,7 @@ g.test_api_master = function()
             servers = {
                 {uuid = storage_1_uuid, priority = 1},
                 {uuid = storage_2_uuid, priority = 2},
+                {uuid = storage_3_uuid, priority = 3},
             }
         },
     })
@@ -198,6 +227,33 @@ g.test_sigkill = function()
     t.assert_equals(get_master(replicaset_uuid), {storage_1_uuid, storage_1_uuid})
 end
 
+g.test_all_rw_failover = function()
+    set_failover(true)
+    set_all_rw(replicaset_uuid, true)
+
+    check_all_box_rw()
+
+    -- Switch to server1
+    set_master(replicaset_uuid, storage_1_uuid)
+    cluster:retrying({}, check_active_master, storage_1_uuid)
+    t.assert_equals(get_master(replicaset_uuid), {storage_1_uuid, storage_1_uuid})
+
+    local server = cluster:server('storage-1')
+    -- Send SIGKILL to server1
+    server:stop()
+    cluster:retrying({}, check_active_master, storage_2_uuid)
+    t.assert_equals(get_master(replicaset_uuid), {storage_1_uuid, storage_2_uuid})
+
+    check_all_box_rw()
+
+    -- Restart server1
+    server:start()
+    cluster:retrying({}, function() server:connect_net_box() end)
+    cluster:retrying({}, check_active_master, storage_1_uuid)
+
+    set_all_rw(replicaset_uuid, false)
+end
+
 g.test_sigstop = function()
     set_failover(true)
 
@@ -223,6 +279,7 @@ g.test_sigstop = function()
     t.assert_items_equals(response.data.servers, {
         {uri = cluster:server('storage-1').advertise_uri, statistics = box.NULL},
         {uri = cluster:server('storage-2').advertise_uri, statistics = {}},
+        {uri = cluster:server('storage-3').advertise_uri, statistics = {}},
         {uri = cluster:server('router-1').advertise_uri, statistics={}}
     })
 
@@ -244,6 +301,7 @@ g.test_sigstop = function()
     t.assert_items_equals(response.data.servers, {
         {uri = cluster:server('storage-1').advertise_uri, statistics = {}},
         {uri = cluster:server('storage-2').advertise_uri, statistics = {}},
+        {uri = cluster:server('storage-3').advertise_uri, statistics = {}},
         {uri = cluster:server('router-1').advertise_uri, statistics={}}
     })
 end
