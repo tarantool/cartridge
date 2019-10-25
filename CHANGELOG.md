@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+- Automatically choose default vshard group in create and edit replicaset modals
+
 - 'Auto' placeholder to weight input in Replicaset add and edit forms.
 
 - 'Select all' and 'Deselect all' buttons to roles field in Replicaset add and edit forms.
