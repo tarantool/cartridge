@@ -14,29 +14,31 @@ g.setup = function()
 
         replicasets = {
             {
+                alias = 'router1-do-not-use-me',
                 uuid = helpers.uuid('a'),
                 roles = {'vshard-router'},
                 servers = {
                     {
                         alias = 'router',
                         instance_uuid = helpers.uuid('a', 'a', 1),
-                        advertise_port = 33001,
+                        advertise_port = 13301,
                         http_port = 8081
                     }
                 }
             }, {
+                alias = 'storage1-do-not-use-me',
                 uuid = helpers.uuid('b'),
                 roles = {'vshard-storage'},
                 servers = {
                     {
                         alias = 'storage',
                         instance_uuid = helpers.uuid('b', 'b', 1),
-                        advertise_port = 33002,
+                        advertise_port = 13302,
                         http_port = 8082
                     }, {
                         alias = 'storage-2',
                         instance_uuid = helpers.uuid('b', 'b', 2),
-                        advertise_port = 33004,
+                        advertise_port = 13304,
                         http_port = 8084
                     }
                 }
@@ -52,7 +54,7 @@ g.setup = function()
         instance_uuid = helpers.uuid('b', 'b', 3),
         http_port = 8085,
         cluster_cookie = g.cluster.cookie,
-        advertise_port = 33010,
+        advertise_port = 13310,
     })
 
     g.cluster:start()
@@ -70,7 +72,35 @@ g.teardown = function()
     fio.rmtree(g.server.workdir)
 end
 
-function g.test_cypress_run()
-    local code = os.execute("cd webui && npx cypress run --spec cypress/integration/probe-server.spec.js")
+local function cypress_run(spec)
+    local code = os.execute(
+        "cd webui && npx cypress run --spec " ..
+        fio.pathjoin('cypress/integration', spec)
+    )
+    if code ~= 0 then
+        error('Cypress spec "' .. spec .. '" failed', 2)
+    end
     t.assert_equals(code, 0)
 end
+
+function g.test_probe_server()
+    cypress_run('probe-server.spec.js')
+end
+
+function g.test_failover()
+    cypress_run('failover.spec.js')
+end
+
+function g.test_users()
+    local code = os.execute(
+        "cd webui && npx cypress run --spec" ..
+        ' cypress/integration/auth.spec.js' ..
+        ',cypress/integration/add-user.spec.js' ..
+        ',cypress/integration/edit-user.spec.js' ..
+        ',cypress/integration/remove-user.spec.js' ..
+        ',cypress/integration/server-details.spec.js' ..
+        ',cypress/integration/login-and-logout.spec.js'
+    )
+    t.assert_equals(code, 0)
+end
+

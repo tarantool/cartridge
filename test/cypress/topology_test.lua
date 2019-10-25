@@ -1,6 +1,6 @@
 local fio = require('fio')
 local t = require('luatest')
-local g = t.group('cypress_basic')
+local g = t.group('cypress_topology')
 
 local test_helper = require('test.helper')
 local helpers = require('cartridge.test-helpers')
@@ -21,7 +21,7 @@ g.before_all = function()
                     {
                         alias = 'router',
                         instance_uuid = helpers.uuid('a', 'a', 1),
-                        advertise_port = 33001,
+                        advertise_port = 13301,
                         http_port = 8081
                     }
                 }
@@ -33,56 +33,76 @@ g.before_all = function()
                     {
                         alias = 'storage-1',
                         instance_uuid = helpers.uuid('d', 'd', 1),
-                        advertise_port = 33002,
-                        http_port = 8082
-                    }, { 
+                        advertise_port = 13311,
+                        http_port = 8091
+                    }, {
                         alias = 'storage-2',
                         instance_uuid = helpers.uuid('d', 'd', 2),
-                        advertise_port = 33003,
-                        http_port = 8083
+                        advertise_port = 13312,
+                        http_port = 8092
                     }
                 }
             }
         }
     })
 
+    g.server3 = helpers.Server:new({
+        workdir = fio.tempdir(),
+        alias = 'server3',
+        command = test_helper.server_command,
+        replicaset_uuid = helpers.uuid('a'),
+        instance_uuid = helpers.uuid('a', 'a', 2),
+        http_port = 8082,
+        cluster_cookie = 'super-cluster-cookie',
+        advertise_port = 13302,
+    })
     g.server4 = helpers.Server:new({
         workdir = fio.tempdir(),
         alias = 'server4',
         command = test_helper.server_command,
-        replicaset_uuid = helpers.uuid('с'),
-        instance_uuid = helpers.uuid('b', 'b', 3),
-        http_port = 8084,
+        replicaset_uuid = helpers.uuid('d'),
+        instance_uuid = helpers.uuid('d', 'd', 3),
+        http_port = 8093,
         cluster_cookie = 'super-cluster-cookie',
-        advertise_port = 33004,
+        advertise_port = 13313,
     })
-    g.server5 = helpers.Server:new({
-        workdir = fio.tempdir(),
-        alias = 'server5',
-        command = test_helper.server_command,
-        replicaset_uuid = helpers.uuid('с'),
-        instance_uuid = helpers.uuid('b', 'b', 3),
-        http_port = 8085,
-        cluster_cookie = 'super-cluster-cookie',
-        advertise_port = 33005,
-    })
+    -- g.server5 = helpers.Server:new({
+    --     workdir = fio.tempdir(),
+    --     alias = 'server5',
+    --     command = test_helper.server_command,
+    --     replicaset_uuid = helpers.uuid('с'),
+    --     instance_uuid = helpers.uuid('b', 'b', 3),
+    --     http_port = 8085,
+    --     cluster_cookie = 'super-cluster-cookie',
+    --     advertise_port = 33005,
+    -- })
     g.cluster:start()
+    g.server3:start()
     g.server4:start()
-    g.server5:start()
+    -- g.server5:start()
 
 end
 
 g.after_all = function()
     g.cluster:stop()
+    g.server3:stop()
     g.server4:stop()
-    g.server5:stop()
+    -- g.server5:stop()
     fio.rmtree(g.cluster.datadir)
+    fio.rmtree(g.server3.workdir)
     fio.rmtree(g.server4.workdir)
-    fio.rmtree(g.server5.workdir)
+    -- fio.rmtree(g.server5.workdir)
 
 end
 
-function g.test_cypress_run()
-    local code = os.execute("cd webui && npx cypress run --spec cypress/integration/search.spec.js")
-    t.assert_equal(code, 0)
+function g.test_edit_join_expel()
+    local code = os.execute(
+        "cd webui && npx cypress run --spec" ..
+        " cypress/integration/join-replicaset.spec.js" ..
+        ",cypress/integration/edit-replicaset.spec.js" ..
+        ",cypress/integration/expel-server.spec.js" ..
+        ",cypress/integration/search.spec.js"
+    )
+    t.assert_equals(code, 0)
 end
+
