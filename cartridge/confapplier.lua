@@ -360,7 +360,7 @@ local function init(opts)
         set_state('ConfigFound')
         local cwcfg, err = ClusterwideConfig.load_from_file(config_filename)
         if cwcfg == nil then
-            set_state('Error', err)
+            set_state('InitError', err)
             return nil, err
         end
 
