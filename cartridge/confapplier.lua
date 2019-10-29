@@ -112,7 +112,7 @@ local function set_state(new_state, err)
     or new_state == 'BootError'
     or new_state == 'OperationError'
     then
-        log.error('Instance entering failed state: %s -> %s:\n\t%s',
+        log.error('Instance entering failed state: %s -> %s\n%s',
             vars.state, new_state, err
         )
     else
@@ -339,6 +339,8 @@ local function init(opts)
     if not ok then
         set_state('InitError', err)
         return nil, err
+    else
+        log.info('Remote control listening on 0.0.0.0:%d', vars.binary_port)
     end
 
     local config_filename = fio.pathjoin(vars.workdir, 'config.yml')
@@ -350,7 +352,7 @@ local function init(opts)
                 " Where did it go?",
                 vars.workdir, 'config.yml'
             )
-            set_state('BootError', err)
+            set_state('InitError', err)
             return nil, err
         end
 
