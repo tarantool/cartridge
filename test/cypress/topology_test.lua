@@ -98,9 +98,9 @@ end
 function g.test_edit_join_expel()
     local code = os.execute(
         "cd webui && npx cypress run --spec" ..
-        " cypress/integration/join-replicaset.spec.js" ..
-        ",cypress/integration/edit-replicaset.spec.js" ..
+        " cypress/integration/edit-replicaset.spec.js" ..
         ",cypress/integration/expel-server.spec.js" ..
+        ",cypress/integration/join-replicaset.spec.js" ..
         ",cypress/integration/search.spec.js"
     )
     t.assert_equals(code, 0)
