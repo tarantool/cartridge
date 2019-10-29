@@ -174,7 +174,7 @@ local function map_call(fn_name, args, opts)
         local ok, err = fibers[uri]:join()
         if not ok then
             _pack_values(maps, uri,
-                nil, NetboxConnectError:new(err)
+                nil, NetboxMapCallError:new(err)
             )
         end
     end

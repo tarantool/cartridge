@@ -20,7 +20,6 @@ local topology = require('cartridge.topology')
 local failover = require('cartridge.failover')
 local remote_control = require('cartridge.remote-control')
 local cluster_cookie = require('cartridge.cluster-cookie')
-local service_registry = require('cartridge.service-registry')
 local ClusterwideConfig = require('cartridge.clusterwide-config')
 
 yaml.cfg({
@@ -28,14 +27,6 @@ yaml.cfg({
     decode_save_metatables = false,
 })
 
-local e_yaml = errors.new_class('Parsing yaml failed')
-local e_atomic = errors.new_class('Atomic call failed')
-local e_failover = errors.new_class('Failover failed')
-local e_config_load = errors.new_class('Loading configuration failed')
-local e_config_fetch = errors.new_class('Fetching configuration failed')
-local e_config_apply = errors.new_class('Applying configuration failed')
-local e_config_validate = errors.new_class('Invalid config')
-local e_register_role = errors.new_class('Can not register role')
 local BoxError = errors.new_class('BoxError')
 local InitError = errors.new_class('InitError')
 local BootError = errors.new_class('BootError')
@@ -164,7 +155,7 @@ local function apply_config(cwcfg)
     set_state('ConnectingFullmesh')
     box.cfg({
         replication_connect_quorum = 0,
-        -- replication_connect_timeout = 0.01,
+        replication_connect_timeout = 0.001,
     })
     local _, err = BoxError:pcall(box.cfg, {
         replication = topology.get_fullmesh_replication(
@@ -221,6 +212,12 @@ local function boot_instance(cwcfg)
             )
             set_state('BootError', err)
             return nil, err
+        end
+
+        for _, server in pairs(topology_cfg.servers or {}) do
+            if server ~= 'expelled' then
+                membership.add_member(server.uri)
+            end
         end
 
     elseif vars.state == 'Unconfigured' then

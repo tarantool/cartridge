@@ -115,25 +115,10 @@ end
 
 -- Start servers, configure replicasets and bootstrap vshard if required.
 function Cluster:bootstrap()
-    if #self.replicasets[1].servers == 1 then
-        self:bootstrap_edit_topology()
-    else
-        self:bootstrap_consistently()
-    end
+    self:bootstrap_edit_topology()
 
     if self.use_vshard then
         self:bootstrap_vshard()
-    end
-end
-
-function Cluster:bootstrap_consistently()
-    for _, server in ipairs(self.servers) do
-        server:start()
-        self:join_server(server)
-    end
-
-    for _, replicaset_config in ipairs(self.replicasets) do
-        self.main_server:setup_replicaset(replicaset_config)
     end
 end
 
@@ -144,7 +129,8 @@ function Cluster:bootstrap_edit_topology()
     end
 
     for _, server in ipairs(self.servers) do
-        luatest.helpers.retrying({}, function() server:graphql({query = '{}'}) end)
+        self:retrying({}, function() server:connect_net_box() end)
+        server.net_box:eval('require("membership.options").PROTOCOL_PERIOD_SECONDS = 0.2')
     end
 
     self.main_server:graphql({
@@ -161,8 +147,6 @@ function Cluster:bootstrap_edit_topology()
     })
 
     for _, server in ipairs(self.servers) do
-        self:retrying({}, function() server:connect_net_box() end)
-        server.net_box:eval('require("membership.options").PROTOCOL_PERIOD_SECONDS = 0.2')
         self:wait_until_healthy(server)
     end
 end

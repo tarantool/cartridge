@@ -240,7 +240,10 @@ local function _clusterwide(patch)
             if retmap[uri] then
                 log.warn('Prepared for config update at %s', uri)
                 table.insert(abortion_list, uri)
-            else
+            end
+        end
+        for _, uri in ipairs(uri_list) do
+            if retmap[uri] == nil then
                 local err = errmap and errmap[uri]
                 log.error('Error preparing for config update at %s: %s', uri, err)
                 _2pc_error = err
@@ -267,7 +270,10 @@ local function _clusterwide(patch)
         for _, uri in ipairs(uri_list) do
             if retmap[uri] then
                 log.warn('Committed config at %s', uri)
-            else
+            end
+        end
+        for _, uri in ipairs(uri_list) do
+            if retmap[uri] == nil then
                 local err = errmap and errmap[uri]
                 log.error('Error committing config at %s: %s', uri, err)
                 _2pc_error = err
