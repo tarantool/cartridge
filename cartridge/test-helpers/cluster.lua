@@ -84,7 +84,7 @@ function Cluster:server(alias)
             return server
         end
     end
-    error('Server ' .. alias .. ' not found')
+    error('Server ' .. alias .. ' not found', 2)
 end
 
 function Cluster:fill_edit_topology_data()

@@ -278,6 +278,18 @@ servers:
     replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
 ...]])
 
+check_config('servers[aaaaaaaa-aaaa-4000-b000-000000000002]'..
+  '.uri "localhost:3301" collision with another server',
+[[---
+servers:
+  aaaaaaaa-aaaa-4000-b000-000000000001:
+    uri: localhost:3301
+    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
+  aaaaaaaa-aaaa-4000-b000-000000000002:
+    uri: localhost:3301
+    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
+...]])
+
 check_config('replicasets[aaaaaaaa-0000-4000-b000-000000000001]'..
   ' has no servers',
 [[---

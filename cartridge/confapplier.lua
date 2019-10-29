@@ -199,6 +199,7 @@ local function boot_instance(cwcfg)
         'Unexpected state ' .. vars.state
     )
 
+    local topology_cfg = cwcfg:get_readonly('topology') or {}
     local box_opts = table.deepcopy(vars.box_opts)
     box_opts.wal_dir = vars.workdir
     box_opts.memtx_dir = vars.workdir
@@ -214,7 +215,7 @@ local function boot_instance(cwcfg)
         local snapshots = fio.glob(fio.pathjoin(vars.workdir, '*.snap'))
         if next(snapshots) == nil then
             local err = BootError:new(
-                "Snapshot not found in %q, can't recover." ..
+                "Snapshot not found in %s, can't recover." ..
                 " Did previous bootstrap attempt fail?",
                 vars.workdir
             )
@@ -225,8 +226,6 @@ local function boot_instance(cwcfg)
     elseif vars.state == 'Unconfigured' then
         set_state('BootstrappingBox')
 
-        local topology_cfg = cwcfg:get_readonly('topology')
-
         local advertise_uri = membership.myself().uri
         local instance_uuid, server = topology.find_server_by_uri(
             topology_cfg, advertise_uri
@@ -235,7 +234,7 @@ local function boot_instance(cwcfg)
 
         if instance_uuid == nil then
             local err = BootError:new(
-                "Couldn't find %s in clusterwide config," ..
+                "Couldn't find server %s in clusterwide config," ..
                 " bootstrap impossible",
                 advertise_uri
             )
@@ -316,6 +315,30 @@ local function boot_instance(cwcfg)
     vars.replicaset_uuid = box.info.cluster.uuid
     membership.set_payload('uuid', box.info.uuid)
 
+    if topology_cfg.servers == nil
+    or topology_cfg.servers[vars.instance_uuid] == nil
+    then
+        local err = BootError:new(
+            "Server %s not in clusterwide config," ..
+            " no idea what to do now",
+            vars.instance_uuid
+        )
+        set_state('BootError', err)
+        return nil, err
+    end
+
+    if topology_cfg.replicasets == nil
+    or topology_cfg.replicasets[vars.replicaset_uuid] == nil
+    then
+        local err = BootError:new(
+            "Replicaset %s not in clusterwide config," ..
+            " no idea what to do now",
+            vars.replicaset_uuid
+        )
+        set_state('BootError', err)
+        return nil, err
+    end
+
     set_state('BoxConfigured')
     return apply_config(cwcfg)
 end
@@ -348,12 +371,12 @@ local function init(opts)
         local snapshots = fio.glob(fio.pathjoin(vars.workdir, '*.snap'))
         if next(snapshots) ~= nil then
             local err = InitError:new(
-                "Snapshot was found in %q, but %q wasn't." ..
+                "Snapshot was found in %s, but config.yml wasn't." ..
                 " Where did it go?",
-                vars.workdir, 'config.yml'
+                vars.workdir
             )
             set_state('InitError', err)
-            return nil, err
+            return true
         end
 
         set_state('Unconfigured')
@@ -363,7 +386,7 @@ local function init(opts)
         local cwcfg, err = ClusterwideConfig.load_from_file(config_filename)
         if cwcfg == nil then
             set_state('InitError', err)
-            return nil, err
+            return true
         end
 
         -- TODO validate vshard groups
@@ -372,7 +395,7 @@ local function init(opts)
         local ok, err = validate_config(cwcfg)
         if not ok then
             set_state('InitError', err)
-            return nil, err
+            return true
         end
 
         set_state('ConfigLoaded')

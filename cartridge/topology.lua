@@ -300,6 +300,7 @@ local function validate_consistency(topology)
     local servers = topology.servers or {}
     local replicasets = topology.replicasets or {}
     local known_uuids = {}
+    local known_uris = {}
 
     for _it, instance_uuid, server in fun.filter(not_expelled, servers) do
         local field = string.format('servers[%s]', instance_uuid)
@@ -308,7 +309,13 @@ local function validate_consistency(topology)
             '%s.replicaset_uuid is not configured in replicasets table',
             field
         )
+        e_config:assert(
+            known_uris[server.uri] == nil,
+            '%s.uri %q collision with another server',
+            field, server.uri
+        )
         known_uuids[server.replicaset_uuid] = true
+        known_uris[server.uri] = true
     end
 
     for replicaset_uuid, _ in pairs(replicasets) do

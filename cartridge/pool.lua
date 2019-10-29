@@ -138,14 +138,23 @@ local function map_call(fn_name, args, opts)
     })
 
     local i = 0
+    local uri_map = {}
     for _, _ in pairs(opts.uri_list) do
         i = i + 1
-        if type(opts.uri_list[i]) ~= 'string' then
+        local uri = opts.uri_list[i]
+        if type(uri) ~= 'string' then
             error('bad argument opts.uri_list' ..
                 ' to ' .. (debug.getinfo(1, 'nl').name or 'map_call') ..
                 ' (contiguous array of strings expected)', 2
             )
         end
+        if uri_map[uri] then
+            error('bad argument opts.uri_list' ..
+                ' to ' .. (debug.getinfo(1, 'nl').name or 'map_call') ..
+                ' (repetitions are prohibited)', 2
+            )
+        end
+        uri_map[uri] = true
     end
 
     local maps = {}

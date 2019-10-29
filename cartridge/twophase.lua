@@ -19,6 +19,7 @@ local topology = require('cartridge.topology')
 local confapplier = require('cartridge.confapplier')
 local ClusterwideConfig = require('cartridge.clusterwide-config')
 
+local Prepare2pcError = errors.new_class('Prepare2pcError')
 local Commit2pcError = errors.new_class('Commit2pcError')
 
 yaml.cfg({
@@ -54,6 +55,9 @@ local function prepare_2pc(data)
 
     if vars.prepared_config == nil then
         fio.unlink(path_prepare)
+    else
+        local err = Prepare2pcError:new('Two-phase commit is locked')
+        return nil, err
     end
 
     local ok, err = cwcfg:write_to_file(path_prepare)

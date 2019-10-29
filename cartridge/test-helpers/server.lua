@@ -85,7 +85,7 @@ function Server:graphql(request, options)
     local response = self:http_request('post', '/admin/api', options)
     local errors = response.json and response.json.errors
     if errors then
-        error(errors[1].message)
+        error(errors[1].message, 2)
     end
     return response.json
 end

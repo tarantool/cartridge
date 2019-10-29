@@ -144,6 +144,12 @@ function g.test_errors()
         '(contiguous array of strings expected)',
         pool.map_call, 'math.floor', nil, {uri_list = {'a', nil, 'b'}}
     )
+
+    t.assert_error_msg_contains(
+        'bad argument opts.uri_list to map_call ' ..
+        '(repetitions are prohibited)',
+        pool.map_call, 'math.floor', nil, {uri_list = {'x', 'x'}}
+    )
 end
 
 function g.test_negative()
