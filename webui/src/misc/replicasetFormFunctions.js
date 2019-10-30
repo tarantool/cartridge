@@ -1,5 +1,7 @@
+// @flow
 import * as R from 'ramda';
 import { VSHARD_STORAGE_ROLE_NAME } from 'src/constants';
+import type { Replicaset, Role } from 'src/generated/graphql-typing';
 
 export const getDependenciesString = (dependencies: ?string[]) => {
   if (!dependencies || !dependencies.length)
@@ -10,9 +12,9 @@ export const getDependenciesString = (dependencies: ?string[]) => {
     : ` (+ ${dependencies.join(', ')})`;
 };
 
-export const getRolesDependencies = (activeRoles, rolesOptions = []) => {
+export const getRolesDependencies = (activeRoles: string[], rolesOptions?: ?Role[]) => {
   const result = [];
-  rolesOptions.forEach(({ name, dependencies }) => {
+  rolesOptions && rolesOptions.forEach(({ name, dependencies }) => {
     if (activeRoles.includes(name) && dependencies) {
       result.push(...dependencies);
     }
@@ -25,12 +27,19 @@ export const isVShardGroupInputDisabled = (
   replicaset: ?Replicaset
 ): boolean => !(roles || []).includes(VSHARD_STORAGE_ROLE_NAME) || !!(replicaset && replicaset.vshard_group);
 
+type ValidateFormArgs = {
+  alias?: string,
+  roles: string[],
+  vshard_group?: string,
+  weight?: string
+};
+
 export const validateForm = ({
   alias,
   roles,
   vshard_group,
   weight
-}) => {
+}: ValidateFormArgs) => {
   const errors = {};
 
   if (typeof weight === 'string') {
@@ -41,9 +50,9 @@ export const validateForm = ({
     }
   }
 
-  if (alias.length > 63) {
+  if (alias && alias.length > 63) {
     errors.alias = 'Alias must not exceed 63 character';
-  } else if (alias.length && !(/^[a-zA-Z0-9-_.]+$/).test(alias)) {
+  } else if (alias && alias.length && !(/^[a-zA-Z0-9-_.]+$/).test(alias)) {
     errors.alias = 'Alias must contain only alphanumerics [a-zA-Z], dots (.), underscores (_) or dashes (-)';
   }
 
