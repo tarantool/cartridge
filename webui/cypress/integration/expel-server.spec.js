@@ -10,8 +10,23 @@
 //      Show expel error
 
 describe('Expel server', () => {
-  it('Expel server', () => {
+
+  it('press Escape for close dialog', () => {
     cy.visit(Cypress.config('baseUrl'));
+    cy.get('li').contains('storage1-do-not-use-me').closest('li').find('.meta-test__ReplicasetServerListItem__dropdownBtn').eq(1).click();
+    cy.get('.meta-test__ReplicasetServerListItem__dropdownBtn').contains('Expel server').click(); //need to change conteins later
+    cy.get('.meta-test__ExpelServerModal').type('{esc}');
+    cy.get('.meta-test__ExpelServerModal').should('not.exist');
+  })
+
+  it('press Enter in dialog', () => {
+    cy.get('li').contains('storage1-do-not-use-me').closest('li').find('.meta-test__ReplicasetServerListItem__dropdownBtn').eq(1).click();
+    cy.get('.meta-test__ReplicasetServerListItem__dropdownBtn').contains('Expel server').click(); //need to change conteins later
+    cy.get('.meta-test__ExpelServerModal').type('{enter}');
+    cy.get('.meta-test__ExpelServerModal').type('{esc}');
+  })
+
+  it('Expel server', () => {
     cy.get('li').contains('storage1-do-not-use-me').closest('li').find('.meta-test__ReplicasetServerListItem__dropdownBtn').eq(1).click();
     cy.get('.meta-test__ReplicasetServerListItem__dropdownBtn').contains('Expel server').click(); //need to change conteins later
     cy.get('.meta-test__ExpelServerModal button[type="button"]').contains('Expel').click();
@@ -25,5 +40,6 @@ describe('Expel server', () => {
     cy.get('.meta-test__ExpelServerModal button[type="button"]').contains('Expel').click();
     cy.get('.meta-test__ExpelServerModal button[type="button"]').contains('Cancel').click();
     cy.get('#root').contains('An error has occurred');
+
   })
 });

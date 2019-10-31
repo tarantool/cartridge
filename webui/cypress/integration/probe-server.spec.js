@@ -3,6 +3,8 @@
 //      Open probe dialog
 //      Enter the unreachable value -> Error
 //      Enter the correct value ->Success
+//      Press escape for close dialog
+//      press Enter in Probe dialog
 
 describe('Probe server', () => {
   it('opens probe dialog', () => {
@@ -31,4 +33,17 @@ describe('Probe server', () => {
 
     cy.get('#root').contains('Probe is OK. Please wait for list refresh...');//add to frontend-core classname for notification
   })
+
+  it('press Escape for close dialog', () => {
+    cy.get('.meta-test__ProbeServerBtn').click(); //component:ProbeServerModal
+    cy.get('.ProbeServerModal').type('{esc}');
+    cy.get('.ProbeServerModal').should('not.exist');
+  })
+
+  it('press Enter in Probe dialog', () => {
+    cy.get('.meta-test__ProbeServerBtn').click(); //component:ProbeServerModal
+    cy.get('.ProbeServerModal input[name="uri"]').type('{enter}');
+    cy.get('.ProbeServerModal_error').contains('Probe "" failed: parse error');
+  })
+
 });

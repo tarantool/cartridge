@@ -46,7 +46,7 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
   })
 
   it('3. Edit replicaset dialog',() => {
-    cy.get('li').contains('for-validate-tests').closest('li').find('button').contains('Edit').click();
+    cy.get('li').contains('for-validate-tests').closest('li').find('button').contains('Edit').click({ force: true });
     cy.get('.meta-test__EditReplicasetModal input[name="alias"]')
       .type(' ');
     cy.get('.meta-test__EditReplicasetModal').contains('Alias must contain only alphanumerics');

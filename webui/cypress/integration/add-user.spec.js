@@ -2,6 +2,8 @@
 //1. Add user
 //      Open add user dialog
 //      Add user
+//      press Escape for close dialog
+//      press Enter in Add user dialog
 
 describe('Add user', () => {
   it('Add user', () => {
@@ -15,6 +17,17 @@ describe('Add user', () => {
       .type('123');
     cy.get('.meta-test__UserAddForm button[type="submit"]').contains('Add').click();
     cy.get('.meta-test__UsersTable').contains('user_do_not_touch');
+  })
 
+  it('press Escape for close dialog', () => {
+    cy.get('.meta-test__addUserBtn').click({ force: true }); //webui/src/pages/Users/index.js
+    cy.get('.meta-test__UserAddForm').type('{esc}');
+    cy.get('.meta-test__UserAddForm').should('not.exist');
+  })
+
+  it('press Enter in Add user dialog', () => {
+    cy.get('.meta-test__addUserBtn').click({ force: true }); //webui/src/pages/Users/index.js
+    cy.get('.meta-test__UserAddForm').type('{enter}');
+    cy.get('.meta-test__UserAddForm');
   })
 });

@@ -94,7 +94,7 @@ function g.test_default_group()
     cypress_run('default-group-test.spec.js')
 end
 
-function g.test_validate()
+function g.test_text_inputs()
     g.cluster.main_server:graphql({
         query = [[mutation {
             probe_server(
@@ -102,9 +102,8 @@ function g.test_validate()
             )
         }]]
     })
-    cypress_run('validate-tests.spec.js')
+    cypress_run('text-inputs-tests.spec.js')
 end
-
 
 function g.test_probe_server()
     cypress_run('probe-server.spec.js')
