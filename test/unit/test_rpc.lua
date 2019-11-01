@@ -49,7 +49,18 @@ local function apply_mocks(topology_draft)
         end
     end
 
-    topology.set(topology_cfg)
+    local vars = require('cartridge.vars').new('cartridge.confapplier')
+    local ClusterwideConfig = require('cartridge.clusterwide-config')
+    vars.cwcfg = ClusterwideConfig.new({topology = topology_cfg}):lock()
+    local failover = require('cartridge.failover')
+    _G.box = {
+        cfg = function() end,
+        info = {
+            cluster = {uuid = 'A'},
+            uuid = 'a1',
+        },
+    }
+    failover.cfg(vars.cwcfg)
     package.loaded['membership'].get_member = function(uri)
         return members[uri]
     end

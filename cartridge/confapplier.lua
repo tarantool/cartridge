@@ -123,8 +123,8 @@ end
 -- @treturn[1] boolean true
 -- @treturn[2] nil
 -- @treturn[2] table Error description
-local function validate_config(cwcfg)
-    checks('ClusterwideConfig')
+local function validate_config(cwcfg, _)
+    checks('ClusterwideConfig', 'nil')
     assert(cwcfg.locked)
 
     return roles.validate_config(
