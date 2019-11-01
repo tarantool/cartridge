@@ -3,8 +3,7 @@
 local log = require('log')
 local tap = require('tap')
 local json = require('json')
-local socket = require('socket')
-local confapplier = require('cartridge.confapplier')
+local roles = require('cartridge.roles')
 
 local test = tap.test('cluster.register_role')
 
@@ -20,7 +19,7 @@ end
 
 local function register_roles(...)
     for _, role in ipairs({...}) do
-        local ok, err = confapplier.register_role(role)
+        local ok, err = roles.register_role(role)
         if not ok then
             return nil, err
         end
@@ -155,7 +154,7 @@ if not ok then
 end
 test:is(ok, true, 'register_roles')
 
-local vars = require('cartridge.vars').new('cartridge.confapplier')
+local vars = require('cartridge.vars').new('cartridge.roles')
 local roles_order = {}
 for i, mod in ipairs(vars.known_roles) do
     roles_order[i] = mod.role_name
@@ -193,13 +192,13 @@ test:is_deeply(vars.roles_dependants, {
     ['role-d'] = {'role-b', 'role-a'},
 }, 'roles_dependants')
 
-local known_roles = confapplier.get_known_roles()
+local known_roles = roles.get_known_roles()
 test:diag('known_roles: %s', json.encode(known_roles))
 test:is_deeply(known_roles, {
     'vshard-storage', 'vshard-router', 'storage', 'role-c', 'role-d', 'role-b', 'role-a',
 }, 'known_roles')
 
-local enabled_roles = confapplier.get_enabled_roles({
+local enabled_roles = roles.get_enabled_roles({
     ['vshard-storage'] = false,
     ['storage'] = true,
     ['role-a'] = false,
