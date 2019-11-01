@@ -22,7 +22,6 @@ local membership_network = require('membership.network')
 local http = require('http.server')
 
 local rpc = require('cartridge.rpc')
-local vars = require('cartridge.vars').new('cartridge')
 local auth = require('cartridge.auth')
 local roles = require('cartridge.roles')
 local utils = require('cartridge.utils')
@@ -36,8 +35,8 @@ local vshard_utils = require('cartridge.vshard-utils')
 local cluster_cookie = require('cartridge.cluster-cookie')
 local service_registry = require('cartridge.service-registry')
 
-local e_init = errors.new_class('Cartridge initialization failed')
-local e_http = errors.new_class('Http initialization failed')
+local CartridgeCfgError = errors.new_class('CartridgeCfgError')
+local HttpInitError = errors.new_class('HttpInitError')
 
 local DEFAULT_CLUSTER_COOKIE = 'secret-cluster-cookie'
 
@@ -258,8 +257,8 @@ local function cfg(opts, box_opts)
         vshard_groups[name] = params
     end
 
-    if (vars.boot_opts ~= nil) then
-        return nil, e_init:new('Cluster is already initialized')
+    if (confapplier.get_state() ~= '') then
+        return nil, CartridgeCfgError:new('Cluster is already initialized')
     end
 
     if opts.workdir == nil then
@@ -287,7 +286,7 @@ local function cfg(opts, box_opts)
         advertise = {}
     end
     if advertise == nil then
-        return nil, e_init:new('Invalid advertise_uri %q', opts.advertise_uri)
+        return nil, CartridgeCfgError:new('Invalid advertise_uri %q', opts.advertise_uri)
     end
 
     local port_offset
@@ -336,11 +335,11 @@ local function cfg(opts, box_opts)
     end
 
     if advertise.service == nil then
-        return nil, e_init:new('Invalid port in advertise_uri %q', opts.advertise_uri)
+        return nil, CartridgeCfgError:new('Invalid port in advertise_uri %q', opts.advertise_uri)
     end
 
     log.info('Using advertise_uri "%s:%d"', advertise.host, advertise.service)
-    local ok, err = e_init:pcall(membership.init, advertise.host, advertise.service)
+    local ok, err = CartridgeCfgError:pcall(membership.init, advertise.host, advertise.service)
     if not ok then
         return nil, err
     end
@@ -353,7 +352,7 @@ local function cfg(opts, box_opts)
     membership.set_payload('alias', opts.alias)
     local ok, estr = membership.probe_uri(membership.myself().uri)
     if not ok then
-        return nil, e_init:new('Can not ping myself: %s', estr)
+        return nil, CartridgeCfgError:new('Can not ping myself: %s', estr)
     end
 
     -- broadcast several popular ports
@@ -370,12 +369,12 @@ local function cfg(opts, box_opts)
         opts.auth_backend_name = 'cartridge.auth-backend'
     end
 
-    local auth_backend, err = e_init:pcall(require, opts.auth_backend_name)
+    local auth_backend, err = CartridgeCfgError:pcall(require, opts.auth_backend_name)
     if not auth_backend then
         return nil, err
     end
 
-    local ok, err = e_init:pcall(function()
+    local ok, err = CartridgeCfgError:pcall(function()
             local ok = auth.set_callbacks(auth_backend)
             return ok
     end)
@@ -387,7 +386,7 @@ local function cfg(opts, box_opts)
     if auth_enabled == nil then
         auth_enabled = false
     end
-    local ok, err = e_init:pcall(auth.set_enabled, auth_enabled)
+    local ok, err = CartridgeCfgError:pcall(auth.set_enabled, auth_enabled)
     if not ok then
         return nil, err
     end
@@ -410,17 +409,17 @@ local function cfg(opts, box_opts)
             { log_requests = false }
         )
 
-        local ok, err = e_http:pcall(httpd.start, httpd)
+        local ok, err = HttpInitError:pcall(httpd.start, httpd)
         if not ok then
             return nil, err
         end
 
-        local ok, err = e_http:pcall(webui.init, httpd)
+        local ok, err = HttpInitError:pcall(webui.init, httpd)
         if not ok then
             return nil, err
         end
 
-        local ok, err = e_init:pcall(auth.init, httpd)
+        local ok, err = CartridgeCfgError:pcall(auth.init, httpd)
         if not ok then
             return nil, err
         end
@@ -467,7 +466,7 @@ local function cfg(opts, box_opts)
 
     if opts.console_sock ~= nil then
         local console = require('console')
-        local ok, err = e_init:pcall( console.listen, 'unix/:' .. opts.console_sock)
+        local ok, err = CartridgeCfgError:pcall( console.listen, 'unix/:' .. opts.console_sock)
         if not ok then
             return nil, err
         end

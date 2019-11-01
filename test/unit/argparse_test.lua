@@ -2,7 +2,6 @@
 
 local t = require('luatest')
 local g = t.group('argparse')
-local log = require('log')
 local fio = require('fio')
 local yaml = require('yaml')
 local checks = require('checks')
