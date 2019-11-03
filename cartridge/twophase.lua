@@ -60,6 +60,19 @@ local function prepare_2pc(data)
         return nil, err
     end
 
+    local state = confapplier.get_state()
+    local valid_states = {
+        ['Unconfigured'] = true,
+        ['RolesConfigured'] = true,
+    }
+    if not valid_states[state] then
+        local err = Prepare2pcError:new(
+            "Instance state is %s, can't apply config in this state",
+            state
+        )
+        return nil, err
+    end
+
     local ok, err = cwcfg:write_to_file(path_prepare)
     if not ok then
         return nil, err

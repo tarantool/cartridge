@@ -10,7 +10,7 @@ local vshard_utils = require('cartridge.vshard-utils')
 
 vars:new('vshard_cfg')
 
-local function apply_config(conf, opts)
+local function apply_config(conf, _)
     checks('table', {is_master = 'boolean'})
 
     local my_replicaset = conf.topology.replicasets[box.info.cluster.uuid]

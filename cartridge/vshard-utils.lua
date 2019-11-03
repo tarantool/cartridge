@@ -7,7 +7,6 @@ local errors = require('errors')
 
 local vars = require('cartridge.vars').new('cartridge.vshard-utils')
 local pool = require('cartridge.pool')
-local utils = require('cartridge.utils')
 local roles = require('cartridge.roles')
 local topology = require('cartridge.topology')
 local failover = require('cartridge.failover')

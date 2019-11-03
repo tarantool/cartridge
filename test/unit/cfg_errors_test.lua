@@ -164,6 +164,7 @@ g.test_roles = function()
         cartridge.cfg, {
             workdir = g.tempdir,
             advertise_uri = 'unused:0',
+            http_enabled = false,
             roles = {
                 'cartridge.roles.vshard-storage',
                 'cartridge.roles.vshard-router',
