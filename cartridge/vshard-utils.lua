@@ -404,7 +404,7 @@ local function get_vshard_config(group_name, conf)
     local sharding = {}
     local topology_cfg = confapplier.get_readonly('topology')
     assert(topology_cfg ~= nil)
-    local active_masters = failover.get_active_leaders()
+    local active_leaders = failover.get_active_leaders()
 
     for _it, instance_uuid, server in fun.filter(topology.not_disabled, topology_cfg.servers) do
         local replicaset_uuid = server.replicaset_uuid
@@ -421,7 +421,7 @@ local function get_vshard_config(group_name, conf)
             replicas[instance_uuid] = {
                 name = server.uri,
                 uri = pool.format_uri(server.uri),
-                master = (active_masters[replicaset_uuid] == instance_uuid),
+                master = (active_leaders[replicaset_uuid] == instance_uuid),
             }
         end
     end
@@ -433,10 +433,6 @@ local function get_vshard_config(group_name, conf)
         vshard_groups = conf.vshard_groups
     end
 
-    local is_master = active_masters[box.info.cluster.uuid] == box.info.uuid
-    local my_replicaset = topology_cfg.replicasets[box.info.cluster.uuid]
-    local is_rw = is_master or my_replicaset.all_rw
-
     return {
         bucket_count = vshard_groups[group_name].bucket_count,
         rebalancer_max_receiving = vshard_groups[group_name].rebalancer_max_receiving,
@@ -445,7 +441,7 @@ local function get_vshard_config(group_name, conf)
         collect_bucket_garbage_interval = vshard_groups[group_name].collect_bucket_garbage_interval,
         rebalancer_disbalance_threshold = vshard_groups[group_name].rebalancer_disbalance_threshold,
         sharding = sharding,
-        read_only = not is_rw
+        read_only = not failover.is_rw(),
     }
 end
 

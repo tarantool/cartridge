@@ -18,7 +18,7 @@ vars:new('mode', 'disabled') -- disabled | eventual
 vars:new('conf')
 vars:new('failover_fiber')
 vars:new('cache', {
-    active_leaders = {},
+    active_leaders = nil,
     is_leader = false,
     is_rw = false,
 })
@@ -175,7 +175,15 @@ end
 return {
     cfg = cfg,
 
-    get_active_leaders = function() return vars.cache.active_leaders end,
+    get_active_leaders = function()
+        if vars.cache.active_leaders ~= nil then
+            return vars.cache.active_leaders
+        end
+
+        local confapplier = require('cartridge.confapplier')
+        local topology_cfg = confapplier.get_readonly().topology
+        return _get_active_leaders(topology_cfg, 'disabled')
+    end,
     is_leader = function() return vars.cache.is_leader end,
     is_rw = function() return vars.cache.is_rw end,
 }

@@ -422,10 +422,6 @@ local function get_deepcopy(section)
     return vars.cwcfg:get_deepcopy(section)
 end
 
-local function get_state()
-    return vars.state, vars.error
-end
-
 return {
     init = init,
     boot_instance = boot_instance,
@@ -436,6 +432,8 @@ return {
     get_readonly = get_readonly,
     get_deepcopy = get_deepcopy,
 
-    get_state = get_state,
+    get_state = function() return vars.state, vars.error end,
     get_workdir = function() return vars.workdir end,
+    get_instance_uuid = function() return vars.instance_uuid end,
+    get_replicaset_uuid = function() return vars.replicaset_uuid end,
 }

@@ -6,9 +6,22 @@ local g = t.group('bootstrap')
 local test_helper = require('test.helper')
 local helpers = require('cartridge.test-helpers')
 
-g.setup = function()
+g.teardown = function()
+    if g.cluster then
+        g.cluster:stop()
+        g.cluster = nil
+    end
+
+    if g.tempdir then
+        fio.rmtree(g.tempdir)
+        g.tempdir = nil
+    end
+end
+
+function g.test_cookie_change()
+    g.tempdir = fio.tempdir()
     g.cluster = helpers.Cluster:new({
-        datadir = fio.tempdir(),
+        datadir = g.tempdir,
         server_command = test_helper.server_command,
         replicasets = {
             {
@@ -26,15 +39,9 @@ g.setup = function()
             },
         },
     })
+
     g.cluster:start()
-end
 
-g.teardown = function()
-    g.cluster:stop()
-    fio.rmtree(g.cluster.datadir)
-end
-
-function g.test_cookie_change()
     local master = g.cluster:server('master')
     local replica = g.cluster:server('replica')
 
@@ -85,4 +92,80 @@ function g.test_cookie_change()
         uuid=replica.instance_uuid
     }})
 
+end
+
+function g.test_workdir_collision()
+    t.skip("No idea how to test it")
+    g.tempdir = fio.tempdir()
+    g.cluster = helpers.Cluster:new({
+        datadir = g.tempdir,
+        server_command = test_helper.server_command,
+        replicasets = {
+            {
+                uuid = helpers.uuid('a'),
+                roles = {'myrole'},
+                servers = {
+                    {
+                        workdir = g.tempdir,
+                        alias = 'master',
+                        instance_uuid = helpers.uuid('a', 'a', 1)
+                    }, {
+                        workdir = g.tempdir,
+                        alias = 'replica',
+                        instance_uuid = helpers.uuid('a', 'a', 2)
+                    }
+                },
+            },
+        },
+    })
+
+    pcall(helpers.Cluster.start, g.cluster)
+    require('fiber').sleep(100)
+end
+
+function g.test_boot_error()
+    g.tempdir = fio.tempdir()
+    g.cluster = helpers.Cluster:new({
+        datadir = g.tempdir,
+        server_command = test_helper.server_command,
+        replicasets = {
+            {
+                uuid = helpers.uuid('a'),
+                roles = {'myrole'},
+                servers = {
+                    {
+                        workdir = g.tempdir,
+                        alias = 'master',
+                        instance_uuid = helpers.uuid('a', 'a', 1),
+                        advertise_port = 13301,
+                        env = {TARANTOOL_MEMTX_MEMORY = '1'},
+                    }
+                },
+            },
+        },
+    })
+    pcall(helpers.Cluster.start, g.cluster)
+
+    local srv = g.cluster.main_server
+    t.assert_equals(srv.net_box:ping(), false)
+    t.assert_equals(srv.net_box.state, 'error')
+    t.assert_equals(srv.net_box.error, 'Peer closed')
+
+    srv.env['TARANTOOL_MEMTX_MEMORY'] = nil
+    srv.net_box = nil
+    srv:start()
+    g.cluster:retrying({}, function() srv:connect_net_box() end)
+
+    local state, err = srv.net_box:eval([[
+        local confapplier = require('cartridge.confapplier')
+        return confapplier.get_state()
+    ]])
+
+    t.assert_equals(state, 'BootError')
+
+    t.assert_equals(err.class_name, 'BootError')
+    t.assert_equals(err.err,
+        "Snapshot not found in " .. srv.workdir ..
+        ", can't recover. Did previous bootstrap attempt fail?"
+    )
 end

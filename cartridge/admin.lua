@@ -99,6 +99,13 @@ local function get_server_info(members, uuid, uri)
 end
 
 local function get_topology()
+    local state, err = confapplier.get_state()
+    if state == 'InitError'
+    or state == 'BootError'
+    then
+        return nil, err
+    end
+
     local members = membership.members()
     local topology_cfg = confapplier.get_readonly('topology')
     if topology_cfg == nil then
@@ -380,14 +387,14 @@ end
 -- @treturn table
 local function get_self()
     local myself = membership.myself()
+    local state, err = confapplier.get_state()
     local result = {
-        alias = myself.payload.alias,
         uri = myself.uri,
-        uuid = nil,
+        uuid = confapplier.get_instance_uuid(),
+        alias = myself.payload.alias,
+        state = state,
+        error = err and err.err or nil,
     }
-    if type(box.cfg) ~= 'function' then
-        result.uuid = box.info.uuid
-    end
     return result
 end
 
@@ -400,7 +407,11 @@ local function get_servers(uuid)
     checks('?string')
 
     local ret = {}
-    local topology = get_topology()
+    local topology, err = get_topology()
+    if topology == nil then
+        return nil, err
+    end
+
     if uuid then
         table.insert(ret, topology.servers[uuid])
     else
@@ -420,7 +431,11 @@ local function get_replicasets(uuid)
     checks('?string')
 
     local ret = {}
-    local topology = get_topology()
+    local topology, err = get_topology()
+    if topology == nil then
+        return nil, err
+    end
+
     if uuid then
         table.insert(ret, topology.replicasets[uuid])
     else
@@ -774,7 +789,10 @@ local function edit_topology(args)
         servers = {},
     }
 
-    local topology = get_topology()
+    local topology, err = get_topology()
+    if topology == nil then
+        return nil, err
+    end
 
     for _, srv in pairs(args.servers or {}) do
         table.insert(ret.servers, topology.servers[srv.uuid])
