@@ -236,22 +236,22 @@ function g.test_set_vshard_options_negative()
     )
 
     t.assert_error_msg_contains(
-        [[vshard.rebalancer_max_receiving must be positive]],
+        [[vshard_groups["default"].rebalancer_max_receiving must be positive]],
         edit_vshard_group, g.cluster, {group = "default", rebalancer_max_receiving = -42}
     )
 
     t.assert_error_msg_contains(
-        [[vshard.sync_timeout must be non-negative]],
+        [[vshard_groups["default"].sync_timeout must be non-negative]],
         edit_vshard_group, g.cluster, {group = "default", sync_timeout = -24}
     )
 
     t.assert_error_msg_contains(
-        [[vshard.collect_bucket_garbage_interval must be positive]],
+        [[vshard_groups["default"].collect_bucket_garbage_interval must be positive]],
         edit_vshard_group, g.cluster, {group = "default", collect_bucket_garbage_interval = -42.24}
     )
 
     t.assert_error_msg_contains(
-        [[vshard.rebalancer_disbalance_threshold must be non-negative]],
+        [[vshard_groups["default"].rebalancer_disbalance_threshold must be non-negative]],
         edit_vshard_group, g.cluster, {group = "default", rebalancer_disbalance_threshold = -14}
     )
 end
