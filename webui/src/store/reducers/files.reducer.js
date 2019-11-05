@@ -6,7 +6,13 @@ import {
   FETCH_CONFIG_FILE_CONTENT_FAIL,
   FETCH_CONFIG_FILES_DONE,
   PUT_CONFIG_FILE_CONTENT,
-  PUT_CONFIG_FILE_CONTENT_DONE, UPDATE_CONTENT
+  PUT_CONFIG_FILE_CONTENT_DONE,
+  UPDATE_CONTENT,
+  createFile,
+  createFolder,
+  deleteFile,
+  deleteFolder,
+  renameFile,
 } from '../actionTypes';
 
 export type FileItem = {

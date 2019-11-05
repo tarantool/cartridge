@@ -1,8 +1,8 @@
 import {
   FETCH_CONFIG_FILE_CONTENT,
   FETCH_CONFIG_FILES,
-  UPDATE_CONTENT
-
+  UPDATE_CONTENT,
+  createFile,
 } from '../actionTypes'
 
 export const fetchConfigFiles = ({
@@ -20,4 +20,27 @@ export const updateFileContent = (fileId, content) => ({
     fileId,
     content
   }
+})
+
+export const createFileStart = ({ folderId }) => ({
+  type: createFile.try,
+  payload: {
+    folderId,
+  },
+})
+
+
+export const createFileDone = ({ folderId, name }) => ({
+  type: createFile.done,
+  payload: {
+    folderId,
+    name,
+  },
+})
+
+export const createFileCancel = ({ folderId }) => ({
+  type: createFile.fail,
+  payload: {
+    folderId,
+  },
 })
