@@ -34,8 +34,8 @@ describe('Edit user', () => {
   it('press Enter in Add user dialog', () => {
     cy.get('.meta-test__UsersTable').find('button').eq(1).click();
     cy.get('li').contains('Edit user').click();
-    cy.get('.meta-test__UserEditModal').type('{enter}');
-    cy.get('.meta-test__UserEditModal');
+    cy.get('.meta-test__UserEditModal input[name="password"]').type('{enter}');
+    cy.get('.meta-test__UserEditModal').should('not.exist');
   })
 
 });

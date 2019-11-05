@@ -19,11 +19,11 @@ describe('Join Replica Set', () => {
     cy.get('li').contains('localhost:13302').closest('li').find('button').contains('Configure').click();
     cy.get('.meta-test__ConfigureServerModal').contains('Join Replica Set').click();
     cy.get('.meta-test__ConfigureServerModal').type('{enter}');
-    cy.get('.meta-test__ConfigureServerModal').type('{esc}');
+    cy.get('.meta-test__ConfigureServerModal');
   })
 
-  it('Join Replica Set 1', () => {
-    cy.get('li').contains('localhost:13302').closest('li').find('button').contains('Configure').click();
+  it('Join Replica Set', () => {
+    cy.get('li').contains('localhost:13302').closest('li').find('button').contains('Configure').click({ force: true });
     cy.get('.meta-test__ConfigureServerModal').contains('Join Replica Set').click();
     cy.get('.meta-test__ConfigureServerModal input[name="replicasetUuid"]').eq(0).check({ force: true });
     cy.get('.meta-test__JoinReplicaSetBtn').click();

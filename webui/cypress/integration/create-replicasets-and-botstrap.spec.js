@@ -20,7 +20,6 @@
 //      Press Escape for close dialog
 //      Press Enter in dialog
 
-
 describe('Replicaset configuration & Bootstrap Vshard', () => {
   it('Click Bootstrap Vshard: without vshard-router, without vshard-storage', () => {
     cy.visit(Cypress.config('baseUrl'));
@@ -90,8 +89,8 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
 
   it('press Enter in dialog', () => {
     cy.get('.meta-test__configureBtn').first().click();//component: UnconfiguredServerList
-    cy.get('.meta-test__ConfigureServerModal').type('{enter}');
-    cy.get('.meta-test__ConfigureServerModal');
+    cy.get('.meta-test__ConfigureServerModal input[name="alias"]').type('{enter}');
+    cy.get('#root').contains('unnamed');
   })
 
 });

@@ -28,6 +28,6 @@ describe('Add user', () => {
   it('press Enter in Add user dialog', () => {
     cy.get('.meta-test__addUserBtn').click({ force: true }); //webui/src/pages/Users/index.js
     cy.get('.meta-test__UserAddForm').type('{enter}');
-    cy.get('.meta-test__UserAddForm');
+    cy.get('.meta-test__UserAddForm').contains('username is a required field');
   })
 });

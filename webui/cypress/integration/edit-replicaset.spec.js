@@ -33,7 +33,7 @@ describe('Edit Replica Set', () => {
 
   it('press Enter in dialog', () => {
     cy.get('li').contains('editedRouter').closest('li').find('button').contains('Edit').click();
-    cy.get('.meta-test__EditReplicasetModal').type('{enter}');
-    cy.get('.meta-test__EditReplicasetModal');
+    cy.get('.meta-test__EditReplicasetModal input[name="alias"]').type('{enter}');
+    cy.get('#root').contains('Edit is OK. Please wait for list refresh...'); //add to frontend-core classname for notification
   })
 });
