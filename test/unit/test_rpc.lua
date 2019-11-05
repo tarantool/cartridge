@@ -114,7 +114,7 @@ test:diag('all alive')
 
 test_candidates('invalid-role',
     draft, {'invalid-role'},
-    nil
+    {}
 )
 
 test_candidates('-leader',
@@ -148,7 +148,7 @@ test_candidates('+leader -healthy',
 
 test_candidates('+leader +healthy',
     draft, {'target-role', {leader_only = true}},
-    nil
+    {}
 )
 
 -------------------------------------------------------------------------------
@@ -238,7 +238,7 @@ test_candidates('+leader -healthy',
 
 test_candidates('+leader +healthy',
     draft, {'target-role', {leader_only = true}},
-    nil
+    {}
 )
 
 os.exit(test:check() and 0 or 1)

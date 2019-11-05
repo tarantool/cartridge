@@ -96,9 +96,6 @@ local function get_candidates(role_name, opts)
         end
     end
 
-    if next(candidates) == nil then
-        return nil, RemoteCallError:new('No remotes with role %q available', role_name)
-    end
     return candidates
 end
 
@@ -122,9 +119,9 @@ local function get_connection(role_name, opts)
         leader_only = '?boolean',
     })
 
-    local candidates, err = get_candidates(role_name, {leader_only = opts.leader_only})
-    if not candidates then
-        return nil, err
+    local candidates = get_candidates(role_name, {leader_only = opts.leader_only})
+    if next(candidates) == nil then
+        return nil, RemoteCallError:new('No remotes with role %q available', role_name)
     end
 
     local prefer_local = opts.prefer_local
