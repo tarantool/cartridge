@@ -1,19 +1,17 @@
+// @flow
 import graphql from 'src/api/graphql';
 import rest from 'src/api/rest';
 import { getClusterSelf } from 'src/store/request/app.requests';
 import {
-  bootstrapMutation, changeFailoverMutation,
-  createReplicasetMutation,
-  editReplicasetMutation,
-  expelMutation,
-  joinMutation,
-  joinSingleServerMutation,
+  bootstrapMutation,
+  changeFailoverMutation,
+  editTopologyMutation,
   listQuery,
   listQueryWithoutStat,
   probeMutation,
   serverStatQuery
 } from './queries.graphql';
-import type { EditReplicasetMutationVariables } from 'src/generated/graphql-typing';
+import type { EditTopologyMutationVariables } from 'src/generated/graphql-typing'
 
 const filterServerStat = response => {
   const serverStat
@@ -29,11 +27,11 @@ export function getPageData() {
     .then(filterServerStat);
 }
 
-/**
- * @param {Object} [params]
- * @param {string} [params.shouldRequestStat]
- */
-export function refreshLists(params = {}) {
+type RefreshListsArgs = {
+  shouldRequestStat?: boolean
+};
+
+export function refreshLists(params: RefreshListsArgs = {}) {
   const graph = params.shouldRequestStat ? listQuery : listQueryWithoutStat;
   return graphql.fetch(graph)
     .then(params.shouldRequestStat ? filterServerStat : null);
@@ -48,68 +46,121 @@ export function bootstrapVshard() {
   return graphql.mutate(bootstrapMutation);
 }
 
-/**
- * @param {Object} params
- * @param {string} params.uri
- */
-export function probeServer(params) {
+type ProbeServerArgs = {
+  uri: string
+};
+
+export function probeServer(params: ProbeServerArgs) {
   return graphql.mutate(probeMutation, params);
 }
 
-/**
- * @param {Object} params
- * @param {string} params.uri
- * @param {string} params.uuid
- */
-export function joinServer(params) {
-  return graphql.mutate(joinMutation, params);
+type JoinServerArgs = {
+  uri: string,
+  uuid: string
+};
+
+export function joinServer({ uri, uuid }: JoinServerArgs) {
+  const mutationVariables: EditTopologyMutationVariables = {
+    replicasets: [
+      { uuid, join_servers: [{ uri }] }
+    ]
+  };
+
+  return graphql.mutate(editTopologyMutation, mutationVariables);
 }
 
-/**
- * @param {Object} params
- * @param {string} params.uri
- * @param {string[]} params.roles
- */
-export function createReplicaset(params) {
-  return graphql.mutate(createReplicasetMutation, params);
+export type CreateReplicasetArgs = {
+  alias: string,
+  roles: string[],
+  uri: string,
+  vshard_group: string,
+  weight: number
+};
+
+export function createReplicaset(
+  {
+    alias,
+    roles,
+    uri,
+    vshard_group,
+    weight
+  }: CreateReplicasetArgs
+) {
+  const mutationVariables: EditTopologyMutationVariables = {
+    replicasets: [
+      {
+        alias,
+        roles,
+        vshard_group,
+        weight,
+        join_servers: [{ uri }]
+      }
+    ]
+  };
+
+  return graphql.mutate(editTopologyMutation, mutationVariables);
 }
 
-/**
- * @param {Object} params
- * @param {string} params.uuid
- */
-export function expelServer(params) {
-  return graphql.mutate(expelMutation, params);
+type ExpelServerArgs = {
+  uuid: string
+};
+
+export function expelServer({ uuid }: ExpelServerArgs) {
+  const mutationVariables: EditTopologyMutationVariables = {
+    servers: [
+      { uuid, expelled: true }
+    ]
+  };
+
+  return graphql.mutate(editTopologyMutation, mutationVariables);
 }
 
-/**
- * @param {Object} params
- * @param {string} params.uuid
- * @param {string[]} params.roles
- * @param {string[]} params.master
- */
-export function editReplicaset(params: EditReplicasetMutationVariables) {
-  return graphql.mutate(editReplicasetMutation, params);
-}
-/**
- * @param {Object} params
- * @param {string} params.uri
- */
-export function joinSingleServer(params) {
-  return graphql.mutate(joinSingleServerMutation, params);
+export type EditReplicasetArgs = {
+  alias: string,
+  master: string[],
+  roles: string[],
+  uuid: string,
+  vshard_group: string,
+  weight: number
+};
+
+export function editReplicaset(
+  {
+    alias,
+    master,
+    roles,
+    uuid,
+    vshard_group,
+    weight
+  }: EditReplicasetArgs
+) {
+  const mutationVariables: EditTopologyMutationVariables = {
+    replicasets: [
+      {
+        alias,
+        failover_priority: master,
+        roles,
+        uuid,
+        vshard_group,
+        weight
+      }
+    ]
+  };
+
+  return graphql.mutate(editTopologyMutation, mutationVariables);
 }
 
-export async function uploadConfig(params) {
+type UploadConfigParams = { data: FormData };
+
+export async function uploadConfig(params: UploadConfigParams) {
   return rest.put(process.env.REACT_APP_CONFIG_ENDPOINT, params.data, {
     headers: { 'Content-Type': 'application/yaml;charset=UTF-8' }
   });
 }
 
-/**
- * @param {Object} params
- * @param {boolean} params.enabled
- */
-export async function changeFailover(params) {
+type ChangeFailoverArgs = { enabled: boolean };
+
+export async function changeFailover(params: ChangeFailoverArgs) {
   const changeFailoverResponse = await graphql.mutate(changeFailoverMutation, params);
   const clusterSelfResponse = await getClusterSelf();
   return {

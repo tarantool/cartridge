@@ -364,74 +364,19 @@ mutation probe (
   )
 }`;
 
-export const joinMutation = gql`
-mutation join (
-  $uri: String!,
-  $uuid: String!
+export const editTopologyMutation = gql`
+mutation editTopology (
+  $replicasets: [EditReplicasetInput!]
+  $servers: [EditServerInput!]
 ) {
-  joinServerResponse: join_server(
-    uri: $uri
-    replicaset_uuid: $uuid
-  )
-}
-`;
-
-export const createReplicasetMutation = gql`
-mutation createReplicaset (
-  $alias: String,
-  $uri: String!,
-  $roles: [String!],
-  $vshard_group: String,
-  $weight: Float
-) {
-  createReplicasetResponse: join_server(
-    replicaset_alias: $alias
-    uri: $uri
-    roles: $roles
-    vshard_group: $vshard_group
-    replicaset_weight: $weight
-  )
-}
-`;
-
-export const expelMutation = gql`
-mutation expel (
-  $uuid: String!
-) {
-  expelServerResponse: expel_server(
-    uuid: $uuid
-  )
-}
-`;
-
-export const editReplicasetMutation = gql`
-mutation editReplicaset (
-  $alias: String,
-  $uuid: String!,
-  $roles: [String!],
-  $vshard_group: String,
-  $master: [String!]!,
-  $weight: Float
-) {
-  editReplicasetResponse: edit_replicaset(
-    alias: $alias
-    uuid: $uuid
-    roles: $roles
-    vshard_group: $vshard_group
-    master: $master
-    weight: $weight
-  )
-}
-`;
-
-export const joinSingleServerMutation = gql`
-mutation joinSingleServer (
-  $uri: String!
-) {
-  joinServerResponse: join_server(
-    uri: $uri
-    roles: ["vshard-router", "vshard-storage"]
-  )
+  cluster{edit_topology(
+    replicasets: $replicasets
+    servers: $servers
+  ) {
+    servers {
+      uuid
+    }
+  }}
 }
 `;
 

@@ -29,12 +29,12 @@ type Apicluster {
 
 """Parameters for editing a replicaset"""
 input EditReplicasetInput {
-  uuid: String!
+  uuid: String
   weight: Float
   vshard_group: String
   join_servers: [JoinServerInput]
   roles: [String!]
-  alias: String!
+  alias: String
   all_rw: Boolean
   failover_priority: [String!]
 }

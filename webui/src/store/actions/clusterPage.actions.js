@@ -22,12 +22,11 @@ import {
   SET_PROBE_SERVER_MODAL_VISIBLE
 } from 'src/store/actionTypes';
 import { getActionCreator } from 'src/store/commonRequest';
-import type {
-  CreateReplicasetMutationVariables,
-  EditReplicasetMutationVariables
-} from 'src/generated/graphql-typing';
 import { HIDE_EXPEL_MODAL, SHOW_EXPEL_MODAL } from '../actionTypes';
-
+import type {
+  CreateReplicasetArgs,
+  EditReplicasetArgs
+} from '../request/clusterPage.requests';
 
 /**
  * @param {Object} payload
@@ -120,16 +119,10 @@ export type JoinServerAction = $Call<JoinServerActionCreator, string, string>;
 
 export type CreateReplicasetAction = {
   type: 'CLUSTER_PAGE_CREATE_REPLICASET_REQUEST',
-  payload: CreateReplicasetMutationVariables
+  payload: CreateReplicasetArgs
 };
 
-export type CreateReplicasetActionCreator = (p: CreateReplicasetMutationVariables) => CreateReplicasetAction;
-/**
- * @param {Object} payload
- * @param {string} payload.uri
- * @param {[string]} payload.roles
- * @param {string} payload.vshard_group
- */
+export type CreateReplicasetActionCreator = (p: CreateReplicasetArgs) => CreateReplicasetAction;
 export const createReplicaset: CreateReplicasetActionCreator = getActionCreator(
   CLUSTER_PAGE_CREATE_REPLICASET_REQUEST,
   null,
@@ -144,12 +137,7 @@ export const expelServer = getActionCreator(CLUSTER_PAGE_EXPEL_SERVER_REQUEST, n
   successMessage: 'Expel is OK. Please wait for list refresh...'
 });
 
-/**
- * @param {Object} payload
- * @param {string} payload.uuid
- * @param {string[]} payload.roles
- */
-export const editReplicaset = (params: EditReplicasetMutationVariables) => ({
+export const editReplicaset = (params: EditReplicasetArgs) => ({
   type: CLUSTER_PAGE_REPLICASET_EDIT_REQUEST,
   payload: params,
   __payload: {
@@ -158,7 +146,7 @@ export const editReplicaset = (params: EditReplicasetMutationVariables) => ({
 });
 
 export type EditReplicasetActionCreator = typeof editReplicaset;
-export type EditReplicasetAction = $Call<EditReplicasetActionCreator, EditReplicasetMutationVariables>;
+export type EditReplicasetAction = $Call<EditReplicasetActionCreator, EditReplicasetArgs>;
 
 
 export type UploadConfigAction = {

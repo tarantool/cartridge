@@ -38,6 +38,39 @@ export type ApiclusterUsersArgs = {
   username?: ?$ElementType<Scalars, "String">
 };
 
+/** Parameters for editing a replicaset */
+export type EditReplicasetInput = {
+  uuid?: ?$ElementType<Scalars, "String">,
+  weight?: ?$ElementType<Scalars, "Float">,
+  vshard_group?: ?$ElementType<Scalars, "String">,
+  join_servers?: ?Array<?JoinServerInput>,
+  roles?: ?Array<$ElementType<Scalars, "String">>,
+  alias?: ?$ElementType<Scalars, "String">,
+  all_rw?: ?$ElementType<Scalars, "Boolean">,
+  failover_priority?: ?Array<$ElementType<Scalars, "String">>
+};
+
+/** Parameters for editing existing server */
+export type EditServerInput = {
+  uri?: ?$ElementType<Scalars, "String">,
+  labels?: ?Array<?LabelInput>,
+  disabled?: ?$ElementType<Scalars, "Boolean">,
+  uuid: $ElementType<Scalars, "String">,
+  expelled?: ?$ElementType<Scalars, "Boolean">
+};
+
+export type EditTopologyResult = {
+  replicasets: Array<?Replicaset>,
+  servers: Array<?Server>
+};
+
+/** Parameters for joining a new server */
+export type JoinServerInput = {
+  uri: $ElementType<Scalars, "String">,
+  uuid?: ?$ElementType<Scalars, "String">,
+  labels?: ?Array<?LabelInput>
+};
+
 /** Cluster server label */
 export type Label = {
   name: $ElementType<Scalars, "String">,
@@ -53,11 +86,15 @@ export type LabelInput = {
 export type Mutation = {
   /** Cluster management */
   cluster?: ?MutationApicluster,
+  /** Deprecated. Use `cluster{edit_topology()}` instead. */
   edit_server?: ?$ElementType<Scalars, "Boolean">,
   probe_server?: ?$ElementType<Scalars, "Boolean">,
+  /** Deprecated. Use `cluster{edit_topology()}` instead. */
   edit_replicaset?: ?$ElementType<Scalars, "Boolean">,
+  /** Deprecated. Use `cluster{edit_topology()}` instead. */
   join_server?: ?$ElementType<Scalars, "Boolean">,
   bootstrap_vshard?: ?$ElementType<Scalars, "Boolean">,
+  /** Deprecated. Use `cluster{edit_topology()}` instead. */
   expel_server?: ?$ElementType<Scalars, "Boolean">
 };
 
@@ -99,17 +136,30 @@ export type MutationExpel_ServerArgs = {
 
 /** Cluster management */
 export type MutationApicluster = {
+  edit_vshard_options: VshardGroup,
   auth_params: UserManagementApi,
   /** Remove user */
   remove_user?: ?User,
   /** Edit an existing user */
   edit_user?: ?User,
-  /** Enable or disable automatic failover. Returns new state. */
-  failover: $ElementType<Scalars, "Boolean">,
+  /** Edit cluster topology */
+  edit_topology?: ?EditTopologyResult,
   /** Create a new user */
   add_user?: ?User,
+  /** Enable or disable automatic failover. Returns new state. */
+  failover: $ElementType<Scalars, "Boolean">,
   /** Disable listed servers by uuid */
   disable_servers?: ?Array<?Server>
+};
+
+/** Cluster management */
+export type MutationApiclusterEdit_Vshard_OptionsArgs = {
+  rebalancer_max_receiving?: ?$ElementType<Scalars, "Int">,
+  collect_bucket_garbage_interval?: ?$ElementType<Scalars, "Float">,
+  collect_lua_garbage?: ?$ElementType<Scalars, "Boolean">,
+  sync_timeout?: ?$ElementType<Scalars, "Float">,
+  name: $ElementType<Scalars, "String">,
+  rebalancer_disbalance_threshold?: ?$ElementType<Scalars, "Float">
 };
 
 /** Cluster management */
@@ -133,8 +183,9 @@ export type MutationApiclusterEdit_UserArgs = {
 };
 
 /** Cluster management */
-export type MutationApiclusterFailoverArgs = {
-  enabled: $ElementType<Scalars, "Boolean">
+export type MutationApiclusterEdit_TopologyArgs = {
+  replicasets?: ?Array<?EditReplicasetInput>,
+  servers?: ?Array<?EditServerInput>
 };
 
 /** Cluster management */
@@ -143,6 +194,11 @@ export type MutationApiclusterAdd_UserArgs = {
   username: $ElementType<Scalars, "String">,
   fullname?: ?$ElementType<Scalars, "String">,
   email?: ?$ElementType<Scalars, "String">
+};
+
+/** Cluster management */
+export type MutationApiclusterFailoverArgs = {
+  enabled: $ElementType<Scalars, "Boolean">
 };
 
 /** Cluster management */
@@ -362,12 +418,22 @@ export type UserManagementApi = {
 
 /** Group of replicasets sharding the same dataset */
 export type VshardGroup = {
+  /** The maximum number of buckets that can be received in parallel by a single replica set in the storage group */
+  rebalancer_max_receiving: $ElementType<Scalars, "Int">,
   /** Virtual buckets count in the group */
   bucket_count: $ElementType<Scalars, "Int">,
+  /** The interval between garbage collector actions, in seconds */
+  collect_bucket_garbage_interval: $ElementType<Scalars, "Float">,
+  /** Whethe the group is ready to operate */
+  bootstrapped: $ElementType<Scalars, "Boolean">,
+  /** If set to true, the Lua collectgarbage() function is called periodically */
+  collect_lua_garbage: $ElementType<Scalars, "Boolean">,
+  /** A maximum bucket disbalance threshold, in percent */
+  rebalancer_disbalance_threshold: $ElementType<Scalars, "Float">,
   /** Group name */
   name: $ElementType<Scalars, "String">,
-  /** Whethe the group is ready to operate */
-  bootstrapped: $ElementType<Scalars, "Boolean">
+  /** Timeout to wait for synchronization of the old master with replicas before demotion */
+  sync_timeout: $ElementType<Scalars, "Float">
 };
 type $Pick<Origin: Object, Keys: Object> = $ObjMapi<
   Keys,
@@ -738,54 +804,17 @@ export type ProbeMutation = { __typename?: "Mutation" } & {
   probeServerResponse: $ElementType<Mutation, "probe_server">
 };
 
-export type JoinMutationVariables = {
-  uri: $ElementType<Scalars, "String">,
-  uuid: $ElementType<Scalars, "String">
+export type EditTopologyMutationVariables = {
+  replicasets?: ?Array<EditReplicasetInput>,
+  servers?: ?Array<EditServerInput>
 };
 
-export type JoinMutation = { __typename?: "Mutation" } & {
-  joinServerResponse: $ElementType<Mutation, "join_server">
-};
-
-export type CreateReplicasetMutationVariables = {
-  alias?: ?$ElementType<Scalars, "String">,
-  uri: $ElementType<Scalars, "String">,
-  roles?: ?Array<$ElementType<Scalars, "String">>,
-  vshard_group?: ?$ElementType<Scalars, "String">,
-  weight?: ?$ElementType<Scalars, "Float">
-};
-
-export type CreateReplicasetMutation = { __typename?: "Mutation" } & {
-  createReplicasetResponse: $ElementType<Mutation, "join_server">
-};
-
-export type ExpelMutationVariables = {
-  uuid: $ElementType<Scalars, "String">
-};
-
-export type ExpelMutation = { __typename?: "Mutation" } & {
-  expelServerResponse: $ElementType<Mutation, "expel_server">
-};
-
-export type EditReplicasetMutationVariables = {
-  alias?: ?$ElementType<Scalars, "String">,
-  uuid: $ElementType<Scalars, "String">,
-  roles?: ?Array<$ElementType<Scalars, "String">>,
-  vshard_group?: ?$ElementType<Scalars, "String">,
-  master: Array<$ElementType<Scalars, "String">>,
-  weight?: ?$ElementType<Scalars, "Float">
-};
-
-export type EditReplicasetMutation = { __typename?: "Mutation" } & {
-  editReplicasetResponse: $ElementType<Mutation, "edit_replicaset">
-};
-
-export type JoinSingleServerMutationVariables = {
-  uri: $ElementType<Scalars, "String">
-};
-
-export type JoinSingleServerMutation = { __typename?: "Mutation" } & {
-  joinServerResponse: $ElementType<Mutation, "join_server">
+export type EditTopologyMutation = { __typename?: "Mutation" } & {
+  cluster: ?({ __typename?: "MutationApicluster" } & {
+    edit_topology: ?({ __typename?: "EditTopologyResult" } & {
+      servers: Array<?({ __typename?: "Server" } & $Pick<Server, { uuid: * }>)>
+    })
+  })
 };
 
 export type ChangeFailoverMutationVariables = {
