@@ -10,59 +10,89 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     cy.visit(Cypress.config('baseUrl'));
 
     cy.get('.meta-test__configureBtn').first().click();//component: UnconfiguredServerList
+
+    // I. Invalid alias
     cy.get('.meta-test__ConfigureServerModal input[name="alias"]')
       .type(' ');
     cy.get('.meta-test__ConfigureServerModal').contains('Alias must contain only alphanumerics');
+    cy.get('.meta-test__CreateReplicaSetBtn').should('be.disabled');
 
+    // II. Fix alias
     cy.get('.meta-test__ConfigureServerModal input[name="alias"]')
       .type('{selectall}{backspace}');
     cy.get('.meta-test__ConfigureServerModal').contains('Alias must contain only alphanumerics').should('not.exist');
-    
+    cy.get('.meta-test__CreateReplicaSetBtn').should('be.enabled');
+
+    // III. Select all roles
     cy.get('.meta-test__ConfigureServerModal input[name="alias"]')
-      .type('for-validate-tests');
+      .type('test-replicaset');
     cy.get('.meta-test__ConfigureServerModal button[type="button"]').contains('Select all').click();
 
+    // IV. Invalid weight
     cy.get('.meta-test__ConfigureServerModal input[name="weight"]')
       .type('q');
     cy.get('.meta-test__ConfigureServerModal').contains('Field accepts number');
+    cy.get('.meta-test__CreateReplicaSetBtn').should('be.disabled');
 
+    // V. Fix weight
     cy.get('.meta-test__ConfigureServerModal input[name="weight"]')
       .type('{selectall}{backspace}');
     cy.get('.meta-test__ConfigureServerModal').contains('Field accepts number').should('not.exist');
+    cy.get('.meta-test__CreateReplicaSetBtn').should('be.enabled');
 
-    cy.get('.meta-test__CreateReplicaSetBtn').click();
+    cy.get('.meta-test__ConfigureServerModal input[name="weight"]').type('{enter}');
+    cy.get('.meta-test__ConfigureServerModal').should('not.exist');
+
   })
 
   it('2. Probe server dialog',() => {
+    cy.visit(Cypress.config('baseUrl'));
     cy.get('.meta-test__ProbeServerBtn').click();
+
+    // I. Invalid uri
     cy.get('.ProbeServerModal input[name="uri"]')
       .type(' ');
-    cy.get('.meta-test__ProbeServerSubmitBtn').click();//component:ProbeServerModal
+    cy.get('.meta-test__ProbeServerSubmitBtn').click();
     cy.get('.ProbeServerModal').contains('Probe " " failed: parse error');
+
+    // II. Fix uri
     cy.get('.ProbeServerModal input[name="uri"]')
-      .type('local');
-    cy.get('.meta-test__ProbeServerSubmitBtn').click();//component:ProbeServerModal
+      .type('{selectall}localhost:13301{enter}');
     cy.get('.ProbeServerModal').contains('Probe " " failed: parse error').should('not.exist');
+
+    cy.get('.ProbeServerModal').should('not.exist');
   })
 
   it('3. Edit replicaset dialog',() => {
-    cy.get('li').contains('for-validate-tests').closest('li').find('button').contains('Edit').click({ force: true });
+    cy.visit(Cypress.config('baseUrl'));
+    cy.get('li').contains('test-replicaset').closest('li').find('button').contains('Edit').click({ force: true });
+
+    // I.
     cy.get('.meta-test__EditReplicasetModal input[name="alias"]')
       .type(' ');
     cy.get('.meta-test__EditReplicasetModal').contains('Alias must contain only alphanumerics');
+    cy.get('.meta-test__EditReplicasetSaveBtn').should('be.disabled');
 
+    // II.
     cy.get('.meta-test__EditReplicasetModal input[name="alias"]')
       .type('{selectall}{backspace}');
     cy.get('.meta-test__EditReplicasetModal').contains('Alias must contain only alphanumerics').should('not.exist');
-    
+    cy.get('.meta-test__EditReplicasetSaveBtn').should('be.enabled');
+
+    // III.
     cy.get('.meta-test__EditReplicasetModal input[name="weight"]')
       .type('q');
     cy.get('.meta-test__EditReplicasetModal').contains('Field accepts number');
+    cy.get('.meta-test__EditReplicasetSaveBtn').should('be.disabled');
 
+    // IV.
     cy.get('.meta-test__EditReplicasetModal input[name="weight"]')
       .type('{selectall}{backspace}');
     cy.get('.meta-test__EditReplicasetModal').contains('Field accepts number').should('not.exist');
-    cy.get('.meta-test__EditReplicasetSaveBtn').click();//component:EditReplicasetForm
+    cy.get('.meta-test__EditReplicasetSaveBtn').should('be.enabled');
+
+    cy.get('.meta-test__EditReplicasetSaveBtn').click();
+    cy.get('.meta-test__EditReplicasetModal').should('not.exist');
   })
 
 it('4. Add user dialog',() => {
@@ -75,8 +105,14 @@ it('4. Add user dialog',() => {
 
     cy.get('.meta-test__UserAddForm input[name="email"]')
       .type('qq@qq.qq');
-    cy.get('.meta-test__UserAddForm input[name="username"]').focus();
+    cy.get('.meta-test__UserAddForm input[name="password"]').focus();
     cy.get('.meta-test__UserAddForm').contains('email must be a valid email').should('not.exist');
+
+    cy.get('.meta-test__UserAddForm input[name="username"]')
+      .type('username');
+    cy.get('.meta-test__UserAddForm input[name="password"]')
+      .type('qwerty{enter}');
+    cy.get('.meta-test__UserAddForm').should('not.exist');
   })
-  
+
 });
