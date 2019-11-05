@@ -80,17 +80,4 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     cy.get('#root').contains('VShard bootstrap is OK. Please wait for list refresh...');//add to frontend-core classname for notification
     cy.get('.meta-test__BootstrapButton').should('not.exist');
   })
-
-  it('press Escape for close dialog', () => {
-    cy.get('.meta-test__configureBtn').first().click();//component: UnconfiguredServerList
-    cy.get('.meta-test__ConfigureServerModal').type('{esc}');
-    cy.get('.meta-test__ConfigureServerModal').should('not.exist');
-  })
-
-  it('press Enter in dialog', () => {
-    cy.get('.meta-test__configureBtn').first().click();//component: UnconfiguredServerList
-    cy.get('.meta-test__ConfigureServerModal input[name="alias"]').type('{enter}');
-    cy.get('#root').contains('unnamed');
-  })
-
 });

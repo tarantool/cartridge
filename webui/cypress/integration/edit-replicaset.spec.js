@@ -4,8 +4,6 @@
 //      Clear old value in the field 'name of replica set' and fill a new value
 //      Uncheck role: myrole
 //      Press the button Save
-//      press Escape for close dialog
-//      press Enter in dialog
 
 describe('Edit Replica Set', () => {
   it('Edit Replica Set', () => {
@@ -25,15 +23,4 @@ describe('Edit Replica Set', () => {
     cy.get('#root').contains('Edit is OK. Please wait for list refresh...'); //add to frontend-core classname for notification
   })
 
-  it('press Escape for close dialog', () => {
-    cy.get('li').contains('editedRouter').closest('li').find('button').contains('Edit').click();
-    cy.get('.meta-test__EditReplicasetModal').type('{esc}');
-    cy.get('.meta-test__EditReplicasetModal').should('not.exist');
-  })
-
-  it('press Enter in dialog', () => {
-    cy.get('li').contains('editedRouter').closest('li').find('button').contains('Edit').click();
-    cy.get('.meta-test__EditReplicasetModal input[name="alias"]').type('{enter}');
-    cy.get('#root').contains('Edit is OK. Please wait for list refresh...'); //add to frontend-core classname for notification
-  })
 });
