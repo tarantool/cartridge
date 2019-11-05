@@ -98,6 +98,7 @@
     "uglifyjs-webpack-plugin": "2.2.0",
     "url-loader": "2.1.0",
     "vscode": "1.1.36",
+    "vscode-json-languageservice": "3.4.1",
     "vscode-ws-jsonrpc": "0.1.1",
     "webpack": "4.38.0",
     "webpack-dev-server": "3.7.2",

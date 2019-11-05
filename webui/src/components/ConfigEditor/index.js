@@ -118,7 +118,7 @@ class ConfigEditor extends React.Component<ConfigEditorProps, ConfigEditorState>
             ...options,
             readOnly: !selectedFile
           }}
-          fileId={selectedFile ? selectedFile.fileId : null}
+          fileId={selectedFile ? `inmemory://${selectedFile.fileId}` : null}
           value={selectedFile ? selectedFile.content : 'Select file'}
           onChange={v => selectedFile && dispatch(updateFileContent(selectedFile.fileId, v))}
         />

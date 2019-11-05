@@ -5,8 +5,6 @@ import { noop, throttle } from 'lodash';
 import ReconnectingWebSocket from 'reconnecting-websocket';
 import { subscribeOnTargetEvent } from '../../misc/eventHandler';
 import { getModelByFile, setModelByFile } from '../../misc/monacoModelStorage';
-import { getLanguageService, TextDocument } from 'vscode-json-languageservice';
-import { MonacoToProtocolConverter, ProtocolToMonacoConverter } from 'monaco-languageclient/lib/monaco-converter';
 import 'monaco-editor/esm/vs/basic-languages/javascript/javascript.contribution';
 import 'monaco-editor/esm/vs/basic-languages/yaml/yaml.contribution';
 import 'monaco-editor/esm/vs/basic-languages/lua/lua.contribution';
@@ -17,6 +15,18 @@ import {
   CloseAction, ErrorAction, createConnection
 } from 'monaco-languageclient'
 import { listen } from 'vscode-ws-jsonrpc';
+import { getLanguageService, TextDocument } from 'vscode-json-languageservice';
+import { MonacoToProtocolConverter, ProtocolToMonacoConverter } from 'monaco-languageclient/lib/monaco-converter';
+
+const MODEL_URI = 'inmemory://model.json'
+const MONACO_URI = monaco.Uri.parse(MODEL_URI);
+
+function createDocument(model) {
+  return TextDocument.create(MODEL_URI, model.getModeId(), model.getVersionId(), model.getValue());
+}
+
+const m2p = new MonacoToProtocolConverter();
+const p2m = new ProtocolToMonacoConverter();
 
 
 function createWebSocket(url: string): WebSocket {
@@ -28,16 +38,16 @@ function createWebSocket(url: string): WebSocket {
     maxRetries: Infinity,
     debug: false
   };
-  return new ReconnectingWebSocket(url, [], socketOptions);
+  return new WebSocket(url, [], socketOptions);
 }
-const socket = createWebSocket('http://localhost:2089/')
+const socket = createWebSocket('ws://localhost:1337/lua')
 
 function createLanguageClient(connection) {
   return new MonacoLanguageClient({
     name: 'Sample Language Client',
     clientOptions: {
       // use a language id as a document selector
-      documentSelector: ['js'],
+      documentSelector: ['lua'],
       // disable the default error handler
       errorHandler: {
         error: () => ErrorAction.Continue,
@@ -53,15 +63,6 @@ function createLanguageClient(connection) {
   });
 }
 
-listen({
-  webSocket: socket,
-  onConnection: connection => {
-    // create and start the language client
-    const languageClient = createLanguageClient(connection);
-    const disposable = languageClient.start();
-    connection.onClose(() => disposable.dispose());
-  }
-})
 
 const DEF_CURSOR = {}
 
@@ -216,6 +217,37 @@ export default class MonacoEditor extends React.Component {
         overrideServices
       );
       MonacoServices.install(this.editor)
+
+      monaco.languages.registerCompletionItemProvider('lua', {
+        provideCompletionItems(model, position, context, token) {
+          const document = createDocument(model);
+          const wordUntil = model.getWordUntilPosition(position);
+          const defaultRange = new monaco.Range(
+            position.lineNumber, wordUntil.startColumn, position.lineNumber, wordUntil.endColumn
+          );
+          const jsonDocument = jsonService.parseJSONDocument(document);
+          return jsonService.doComplete(document, m2p.asPosition(
+            position.lineNumber, position.column), jsonDocument
+          ).then((list) => {
+            return p2m.asCompletionResult(list, defaultRange);
+          });
+        },
+
+        resolveCompletionItem(model, position, item, token): monaco.languages.CompletionItem | monaco.Thenable<monaco.languages.CompletionItem> {
+          return jsonService.doResolve(m2p.asCompletionItem(item)).then(result => p2m.asCompletionItem(result, item.range));
+        }
+      });
+
+      listen({
+        webSocket: socket,
+        onConnection: connection => {
+          // create and start the language client
+          const languageClient = createLanguageClient(connection);
+          const disposable = languageClient.start();
+          console.log('language client', languageClient)
+          connection.onClose(() => disposable.dispose());
+        }
+      })
       // After initializing monaco editor
       this.editorDidMount(this.editor);
     }

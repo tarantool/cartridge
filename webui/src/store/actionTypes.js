@@ -1,4 +1,11 @@
 // @flow
+
+const types = (type: string) => ({
+  try: `${type}_try`,
+  done: `${type}_done`,
+  fail: `${type}_fail`,
+})
+
 /* APP */
 export const APP_DID_MOUNT = 'APP_DID_MOUNT';
 
@@ -161,3 +168,15 @@ export const PUT_CONFIG_FILE_CONTENT_FAIL = 'PUT_CONFIG_FILE_CONTENT_FAIL'
 export const SELECT_FILE = 'SELECT_FILE'
 export const UPDATE_CONTENT = 'UPDATE_CONTENT'
 export const SAVE_META_FILE = 'SAVE_META_FILE'
+
+export const CREATE_FILE: 'CREATE_FILE' = 'CREATE_FILE'
+export const CREATE_FOLDER: 'CREATE_FOLDER' = 'CREATE_FOLDER'
+export const DELETE_FILE: 'DELETE_FILE' = 'DELETE_FILE'
+export const DELETE_FOLDER: 'DELETE_FOLDER' = 'DELETE_FOLDER'
+export const RENAME_FILE: 'RENAME_FILE' = 'RENAME_FILE'
+
+export const createFile = types(CREATE_FILE)
+export const createFolder = types(CREATE_FOLDER)
+export const deleteFile = types(DELETE_FILE)
+export const deleteFolder = types(DELETE_FOLDER)
+export const renameFile = types(RENAME_FILE)
