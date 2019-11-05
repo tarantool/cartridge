@@ -15,6 +15,5 @@ describe('Add user', () => {
       .type('123');
     cy.get('.meta-test__UserAddForm button[type="submit"]').contains('Add').click();
     cy.get('.meta-test__UsersTable').contains('user_do_not_touch');
-
   })
 });

@@ -22,4 +22,5 @@ describe('Edit Replica Set', () => {
     cy.get('#root').contains('editedRouter');
     cy.get('#root').contains('Edit is OK. Please wait for list refresh...'); //add to frontend-core classname for notification
   })
+
 });

@@ -94,6 +94,17 @@ function g.test_default_group()
     cypress_run('default-group-test.spec.js')
 end
 
+function g.test_text_inputs()
+    g.cluster.main_server:graphql({
+        query = [[mutation {
+            probe_server(
+                uri: "localhost:13310"
+            )
+        }]]
+    })
+    cypress_run('text-inputs-tests.spec.js')
+end
+
 function g.test_probe_server()
     cypress_run('probe-server.spec.js')
 end

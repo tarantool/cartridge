@@ -17,6 +17,8 @@
 //      Press the button 'Create replica set'
 //5. Success Bootstrap Vshard
 //      Press the button Bootstrap Vshard
+//      Press Escape for close dialog
+//      Press Enter in dialog
 
 describe('Replicaset configuration & Bootstrap Vshard', () => {
   it('Click Bootstrap Vshard: without vshard-router, without vshard-storage', () => {
@@ -61,7 +63,7 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
       .type('1')
       .should('have.value', '1');
 
-    cy.get('.meta-test__ConfigureServerModal input[name="roles"][value="myrole"]').should('not.be.checked');
+    cy.get('cc input[name="roles"][value="myrole"]').should('not.be.checked');
     cy.get('.meta-test__ConfigureServerModal input[name="roles"][value="myrole-dependency"]').should('not.be.checked');
     cy.get('.meta-test__ConfigureServerModal input[name="roles"][value="vshard-router"]').should('not.be.checked');
     cy.get('.meta-test__ConfigureServerModal input[name="roles"][value="vshard-storage"]').should('be.checked');

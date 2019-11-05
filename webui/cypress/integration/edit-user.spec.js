@@ -3,6 +3,7 @@
 //      Open edit user dialog
 //      Edit user
 
+
 describe('Edit user', () => {
   it('Edit user', () => {
     cy.visit(Cypress.config('baseUrl'));
