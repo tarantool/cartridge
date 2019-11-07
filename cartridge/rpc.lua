@@ -63,8 +63,6 @@ end
 --   (added in v1.1.0-11, default: **true**)
 --
 -- @treturn[1] {string,...} URIs
--- @treturn[2] nil
--- @treturn[2] table Error description
 local function get_candidates(role_name, opts)
     opts = opts or {}
     if opts.healthy_only == nil then
