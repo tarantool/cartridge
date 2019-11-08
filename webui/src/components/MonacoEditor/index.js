@@ -1,8 +1,7 @@
-import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
+import * as monaco from 'monaco-editor/esm/vs/editor/edcore.main.js';
 import PropTypes from 'prop-types';
 import React from 'react';
 import { noop, throttle } from 'lodash';
-import ReconnectingWebSocket from 'reconnecting-websocket';
 import { subscribeOnTargetEvent } from '../../misc/eventHandler';
 import { getModelByFile, setModelByFile } from '../../misc/monacoModelStorage';
 import 'monaco-editor/esm/vs/basic-languages/javascript/javascript.contribution';
@@ -27,6 +26,49 @@ function createDocument(model) {
 
 const m2p = new MonacoToProtocolConverter();
 const p2m = new ProtocolToMonacoConverter();
+
+function createDependencyProposals() {
+  // returning a static list of proposals, not even looking at the prefix (filtering is done by the Monaco editor),
+  // here you could do a server side lookup
+  return [
+    {
+      label: '"lodash"',
+      kind: monaco.languages.CompletionItemKind.Function,
+      documentation: 'The Lodash library exported as Node.js modules.',
+      insertText: '"lodash": "*"'
+    },
+    {
+      label: '"express"',
+      kind: monaco.languages.CompletionItemKind.Function,
+      documentation: 'Fast, unopinionated, minimalist web framework',
+      insertText: '"express": "*"'
+    },
+    {
+      label: '"mkdirp"',
+      kind: monaco.languages.CompletionItemKind.Function,
+      documentation: 'Recursively mkdir, like <code>mkdir -p</code>',
+      insertText: '"mkdirp": "*"'
+    }
+  ];
+}
+
+
+monaco.languages.registerCompletionItemProvider('lua', {
+  provideCompletionItems: function(model, position) {
+    // find out if we are completing a property in the 'dependencies' object.
+    var textUntilPosition = model.getValueInRange({
+      startLineNumber: 1,
+      startColumn: 1,
+      endLineNumber: position.lineNumber,
+      endColumn: position.column,
+    });
+    var match = textUntilPosition.match(/"dependencies"\s*:\s*\{\s*("[^"]*"\s*:\s*"[^"]*"\s*,\s*)*([^"]*)?$/);
+    var suggestions = match ? createDependencyProposals() : [];
+    return {
+      suggestions: suggestions
+    };
+  }
+});
 
 
 function createWebSocket(url: string): WebSocket {
@@ -218,25 +260,27 @@ export default class MonacoEditor extends React.Component {
       );
       MonacoServices.install(this.editor)
 
-      monaco.languages.registerCompletionItemProvider('lua', {
-        provideCompletionItems(model, position, context, token) {
-          const document = createDocument(model);
-          const wordUntil = model.getWordUntilPosition(position);
-          const defaultRange = new monaco.Range(
-            position.lineNumber, wordUntil.startColumn, position.lineNumber, wordUntil.endColumn
-          );
-          const jsonDocument = jsonService.parseJSONDocument(document);
-          return jsonService.doComplete(document, m2p.asPosition(
-            position.lineNumber, position.column), jsonDocument
-          ).then((list) => {
-            return p2m.asCompletionResult(list, defaultRange);
-          });
-        },
-
-        resolveCompletionItem(model, position, item, token): monaco.languages.CompletionItem | monaco.Thenable<monaco.languages.CompletionItem> {
-          return jsonService.doResolve(m2p.asCompletionItem(item)).then(result => p2m.asCompletionItem(result, item.range));
-        }
-      });
+      // monaco.languages.registerCompletionItemProvider('lua', {
+      //   provideCompletionItems(model, position, context, token) {
+      //     const document = createDocument(model);
+      //     const wordUntil = model.getWordUntilPosition(position);
+      //     const defaultRange = new monaco.Range(
+      //       position.lineNumber, wordUntil.startColumn, position.lineNumber, wordUntil.endColumn
+      //     );
+      //     const jsonDocument = jsonService.parseJSONDocument(document);
+      //     return jsonService.doComplete(document, m2p.asPosition(
+      //       position.lineNumber, position.column), jsonDocument
+      //     ).then((list) => {
+      //       return p2m.asCompletionResult(list, defaultRange);
+      //     });
+      //   },
+      //
+      //   resolveCompletionItem(model, position, item, token): monaco.languages
+      //   .CompletionItem | monaco.Thenable<monaco.languages.CompletionItem> {
+      //     return jsonService.doResolve(m2p.asCompletionItem(item))
+      //     .then(result => p2m.asCompletionItem(result, item.range));
+      //   }
+      // });
 
       listen({
         webSocket: socket,
