@@ -32,34 +32,63 @@ g.after_all = function()
     fio.rmtree(g.cluster.datadir)
 end
 
-function g.test_storage_weight()
+local function get_replicaset()
+    local res = g.cluster.main_server:graphql({
+        query = [[{
+            replicasets(uuid: "aaaaaaaa-0000-0000-0000-000000000000") {
+                weight
+                vshard_group
+            }
+        }]]
+    })
+    return res['data']['replicasets'][1]
+end
+
+local function set_replicaset_roles(roles)
+    g.cluster.main_server:graphql({
+        query = [[
+            mutation ($roles: [String!]){
+                edit_replicaset(
+                    uuid: "aaaaaaaa-0000-0000-0000-000000000000"
+                    roles: $roles
+                )
+            }
+        ]],
+        variables = {
+            roles = roles,
+        }
+    })
+end
+
+function g.test()
     -- Test that vshard storages can be disabled without any limitations
     -- unless it has already been bootstrapped
 
-    g.cluster.main_server:graphql({query = [[
-        mutation {
-            edit_replicaset(
-                uuid: "aaaaaaaa-0000-0000-0000-000000000000"
-                roles: ["vshard-router", "vshard-storage"]
-            )
+    t.assert_equals(
+        get_replicaset(),
+        {
+            weight = box.NULL,
+            vshard_group = box.NULL,
         }
-    ]]})
+    )
 
-    local res = g.cluster.main_server:graphql({query = [[{
-            replicasets(uuid: "aaaaaaaa-0000-0000-0000-000000000000") {
-                weight
-            }
-        }
-    ]]})
-    local replicasets = res['data']['replicasets']
-    t.assert_equals(replicasets[1]['weight'], 1)
+    set_replicaset_roles({'vshard-router', 'vshard-storage'})
 
-    g.cluster.main_server:graphql({query = [[
-        mutation {
-            edit_replicaset(
-                uuid: "aaaaaaaa-0000-0000-0000-000000000000"
-                roles: []
-            )
+    t.assert_equals(
+        get_replicaset(),
+        {
+            weight = 1,
+            vshard_group = "default",
         }
-    ]]})
+    )
+
+    set_replicaset_roles({})
+
+    t.assert_equals(
+        get_replicaset(),
+        {
+            weight = box.NULL,
+            vshard_group = "default",
+        }
+    )
 end
