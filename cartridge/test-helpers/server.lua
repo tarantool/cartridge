@@ -44,6 +44,7 @@ Server.constructor_checks = {
 
     instance_uuid = '?string',
     replicaset_uuid = '?string',
+    labels = '?table'
 }
 
 function Server:initialize()
@@ -103,12 +104,14 @@ function Server:join_cluster(main_server, options)
                 $instance_uuid: String,
                 $replicaset_uuid: String,
                 $timeout: Float
+                $labels: [LabelInput]
             ) {
                 join_server(
                     uri: $uri,
                     instance_uuid: $instance_uuid,
                     replicaset_uuid: $replicaset_uuid,
                     timeout: $timeout
+                    labels: $labels
                 )
             }
         ]],
@@ -117,6 +120,7 @@ function Server:join_cluster(main_server, options)
             instance_uuid = self.instance_uuid,
             replicaset_uuid = self.replicaset_uuid,
             timeout = options and options.timeout,
+            labels = self.labels,
         }
     })
 end
