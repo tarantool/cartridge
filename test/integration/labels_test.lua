@@ -45,7 +45,9 @@ g.before_all = function()
 
     g.server:start()
     t.helpers.retrying({timeout = 5}, function()
-        g.server:graphql({query = '{}'})
+        g.server:graphql({query = [[
+            mutation{ probe_server(uri:"localhost:13301") }
+        ]]})
     end)
 end
 
@@ -56,14 +58,6 @@ g.after_all = function()
 end
 
 function g.test_servers_labels()
-    t.helpers.retrying({},
-        function()
-            g.cluster.main_server.net_box:eval([[
-                assert(require('membership').probe_uri('localhost:13303'))
-            ]])
-        end
-    )
-
     local request = [[{
         servers {
             uri
