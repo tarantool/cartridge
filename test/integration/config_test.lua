@@ -2,9 +2,7 @@ local fio = require('fio')
 local t = require('luatest')
 local g = t.group('config')
 
-local yaml = require('yaml')
 local json = require('json')
-
 local test_helper = require('test.helper')
 local helpers = require('cartridge.test-helpers')
 
@@ -28,6 +26,14 @@ g.before_all = function()
         },
     })
     g.cluster:start()
+
+    -- Make sure auth section exists in clusterwide config.
+    -- It shouldn't be available for downloading via HTTP API
+    g.cluster.main_server.net_box:eval([[
+        local auth = require('cartridge.auth')
+        local res, err = auth.add_user(...)
+        assert(res, tostring(err))
+    ]], {'guest', 'guest'})
 end
 
 g.after_all = function()
@@ -36,24 +42,12 @@ g.after_all = function()
 end
 
 function g.test_upload_good()
-    g.cluster.main_server.net_box:eval([[
-        local auth = require('cartridge.auth')
-        local res, err = auth.add_user(...)
-        assert(res, tostring(err))
-    ]], {'guest', 'guest'})
-
-    local upload_config = function(config)
-        g.cluster.main_server:http_request('put', '/admin/config', {
-            body = yaml.encode(config)
-        })
-    end
-
     local custom_config = {
         ['custom_config'] = {
             ['Ultimate Question of Life, the Universe, and Everything'] = 42
         }
     }
-    upload_config(custom_config)
+    g.cluster:upload_config(custom_config)
 
     g.cluster.main_server.net_box:eval([[
         local confapplier = package.loaded['cartridge.confapplier']
@@ -72,8 +66,7 @@ function g.test_upload_good()
         assert(userdata.username == 'guest')
     ]])
 
-    local resp = g.cluster.main_server:http_request('get', '/admin/config')
-    local config = yaml.decode(resp.body)
+    local config = g.cluster:download_config()
     t.assert_equals(config, custom_config)
 
     local other_config = {
@@ -81,10 +74,8 @@ function g.test_upload_good()
             ['How many engineers does it take to change a light bulb'] = 1
         }
     }
-    upload_config(other_config)
-
-    local resp = g.cluster.main_server:http_request('get', '/admin/config')
-    local config = yaml.decode(resp.body)
+    g.cluster:upload_config(other_config)
+    local config = g.cluster:download_config()
     t.assert_nil(config.custom_config)
     t.assert_equals(config, other_config)
 end
