@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Update `vshard` dependency to 0.1.13.
 
+- `cartridge.rpc_get_candidates()` doesn't return error "No remotes with
+  role available" anymore, empty table is returned instead.
+  **(incompatible change)**
+
 ## [1.2.0] - 2019-10-21
 
 ### Added

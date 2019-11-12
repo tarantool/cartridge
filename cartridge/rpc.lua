@@ -63,8 +63,6 @@ end
 --   (added in v1.1.0-11, default: **true**)
 --
 -- @treturn[1] {string,...} URIs
--- @treturn[2] nil
--- @treturn[2] table Error description
 local function get_candidates(role_name, opts)
     opts = opts or {}
     if opts.healthy_only == nil then
@@ -96,9 +94,6 @@ local function get_candidates(role_name, opts)
         end
     end
 
-    if next(candidates) == nil then
-        return nil, RemoteCallError:new('No remotes with role %q available', role_name)
-    end
     return candidates
 end
 
@@ -122,9 +117,9 @@ local function get_connection(role_name, opts)
         leader_only = '?boolean',
     })
 
-    local candidates, err = get_candidates(role_name, {leader_only = opts.leader_only})
-    if not candidates then
-        return nil, err
+    local candidates = get_candidates(role_name, {leader_only = opts.leader_only})
+    if next(candidates) == nil then
+        return nil, RemoteCallError:new('No remotes with role %q available', role_name)
     end
 
     local prefer_local = opts.prefer_local
