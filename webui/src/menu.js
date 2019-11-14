@@ -1,7 +1,13 @@
+// @flow
 import { PROJECT_NAME } from './constants';
 import * as React from 'react'
 import { css } from 'react-emotion'
-import { IconCluster, IconGear, IconUsers } from '@tarantool.io/ui-kit';
+import {
+  IconCluster,
+  IconGear,
+  IconUsers,
+  type MenuItemType
+} from '@tarantool.io/ui-kit';
 
 const matchPath = (path, link) => {
   if (path.length === 0)
@@ -13,7 +19,7 @@ const matchPath = (path, link) => {
 const updateLink = path => menuItem => ({ ...menuItem, selected: matchPath(path, menuItem.path) })
 
 const menuItems = {
-  cluster() {
+  cluster(enableUsersItem: ?boolean) {
     return [
       {
         label: 'Cluster',
@@ -23,14 +29,16 @@ const menuItems = {
         loading: false,
         icon: <IconCluster />
       },
-      {
-        label: 'Users',
-        path: `/${PROJECT_NAME}/users`,
-        selected: false,
-        expanded: false,
-        loading: false,
-        icon: <IconUsers />
-      },
+      ...enableUsersItem
+        ? [{
+          label: 'Users',
+          path: `/${PROJECT_NAME}/users`,
+          selected: false,
+          expanded: false,
+          loading: false,
+          icon: <IconUsers />
+        }]
+        : [],
       {
         label: 'Configuration files',
         path: `/${PROJECT_NAME}/configuration`,
@@ -43,18 +51,30 @@ const menuItems = {
   }
 };
 
-const menuInitialState = menuItems.cluster(true);
+const menuInitialState = menuItems.cluster();
 
-export const menuReducer = (state = menuInitialState, { type, payload }) => {
+export const menuReducer = (state: MenuItemType[] = menuInitialState, { type, payload }: FSA): MenuItemType[] => {
   switch (type) {
     case 'ADD_CLUSTER_USERS_MENU_ITEM':
-      return menuItems.cluster(true).map(updateLink(payload.location.pathname));
+      if (payload && payload.location && payload.location.pathname) {
+        return menuItems.cluster(true).map(updateLink(payload.location.pathname));
+      } else {
+        return state;
+      }
 
     case '@@router/LOCATION_CHANGE':
-      return state.map(updateLink(payload.location.pathname))
+      if (payload && payload.location && payload.location.pathname) {
+        return state.map(updateLink(payload.location.pathname))
+      } else {
+        return state;
+      }
 
     case 'RESET':
-      return menuInitialState.map(updateLink(payload.path))
+      if (payload) {
+        return menuInitialState.map(updateLink(payload.path))
+      } else {
+        return state;
+      }
 
     default:
       return state;

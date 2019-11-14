@@ -128,7 +128,7 @@ class ReplicasetList extends React.PureComponent {
                     </Tooltip>,
                     <Tooltip className={cx(styles.vshardTooltip)} content='Replica set weight'>
                       {replicaset.weight}
-                    </Tooltip>,
+                    </Tooltip>
                   ]}
                 </Text>
               </div>

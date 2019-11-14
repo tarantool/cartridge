@@ -74,7 +74,6 @@ export type ClusterProps = {
   filter: string,
   replicasetList: Replicaset[],
   filteredReplicasetList: Replicaset[],
-  showToggleAuth: boolean,
   history: RouterHistory,
   location: Location,
 
@@ -133,8 +132,8 @@ class Cluster extends React.Component<ClusterProps> {
       filter,
       filteredReplicasetList,
       replicasetList,
-      serverCounts,
-      routerParams
+      routerParams,
+      serverCounts
     } = this.props;
 
     const unlinkedServers = this.getUnlinkedServers();

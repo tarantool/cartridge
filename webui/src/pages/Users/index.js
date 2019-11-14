@@ -1,6 +1,6 @@
+// @flow
 import React from 'react';
 import { connect } from 'react-redux';
-import { css, cx } from 'emotion';
 import UsersTable from '../../components/UsersTable';
 import SpinnerLoader from '../../components/SpinnerLoader';
 import UserAddModal from 'src/components/UserAddModal';
@@ -8,60 +8,51 @@ import UserEditModal from 'src/components/UserEditModal';
 import UserRemoveModal from 'src/components/UserRemoveModal';
 import AuthToggleButton from 'src/components/AuthToggleButton';
 import { showAddUserModal } from 'src/store/actions/users.actions';
-import { Button, Text } from '@tarantool.io/ui-kit';
+import { Button, PageLayout, PageSection } from '@tarantool.io/ui-kit';
 
 const { AppTitle } = window.tarantool_enterprise_core.components;
 
-const styles = {
-  cardMargin: css`
-    padding: 24px 16px;
-    min-width: 1000px;
-  `,
-  title: css`
-    margin-left: 16px;
-  `,
-  buttons: css`
-    display: flex;
-    justify-content: flex-end;
-  `,
-  buttonMargin: css`
-    margin-right: 24px;
-    &:last-child {
-      margin-right: 0;
-    }
-  `
-}
+type UsersProps = {
+  fetchingUserList: boolean,
+  implements_add_user: boolean,
+  implements_list_users: boolean,
+  showAddUserModal: boolean,
+  showToggleAuth: boolean
+};
 
 const Users = ({
   fetchingUserList,
-  implements_check_password,
   implements_add_user,
   implements_list_users,
-  showAddUserModal
-}) => (
-  <SpinnerLoader loading={fetchingUserList}>
-    <div className={cx(styles.cardMargin, 'app-content')}>
-      <AppTitle title={'Users'}/>
-      <div className={styles.buttons}>
-        {implements_check_password && <AuthToggleButton className={styles.buttonMargin} />}
-        {implements_add_user && (
-          <Button
-            className='meta-test__addUserBtn'
-            text={'Add user'}
-            intent={'primary'}
-            onClick={showAddUserModal}
-          >
-            Add user
-          </Button>
-        )}
-      </div>
-      <Text variant={'h2'} className={styles.title}>User List</Text>
-      {implements_list_users && <UsersTable />}
+  showAddUserModal,
+  showToggleAuth
+}: UsersProps) => (
+  <PageLayout>
+    <AppTitle title={'Users'} />
+    <SpinnerLoader loading={fetchingUserList}>
+      <PageSection
+        title='Users list'
+        topRightControls={[
+          showToggleAuth && <AuthToggleButton />,
+          implements_add_user && (
+            <Button
+              className='meta-test__addUserBtn'
+              text={'Add user'}
+              intent={'primary'}
+              onClick={showAddUserModal}
+            >
+              Add user
+            </Button>
+          )
+        ]}
+      >
+        {implements_list_users && <UsersTable />}
+      </PageSection>
       <UserRemoveModal />
       {implements_add_user && <UserAddModal />}
       <UserEditModal />
-    </div>
-  </SpinnerLoader>
+    </SpinnerLoader>
+  </PageLayout>
 );
 
 const mapStateToProps = ({
@@ -77,7 +68,7 @@ const mapStateToProps = ({
   }
 }) => ({
   implements_add_user,
-  implements_check_password,
+  showToggleAuth: implements_check_password && (implements_add_user || implements_list_users),
   implements_list_users,
   fetchingUserList
 });
