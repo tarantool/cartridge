@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   role available" anymore, empty table is returned instead.
   **(incompatible change)**
 
+- Don't show Users page and move auth switcher to cluster page when only `implements_check_password = true`
+
 ## [1.2.0] - 2019-10-21
 
 ### Added
