@@ -13,6 +13,7 @@ local vars = require('cartridge.vars').new('cartridge')
 local auth = require('cartridge.auth')
 local utils = require('cartridge.utils')
 local topology = require('cartridge.topology')
+local twophase = require('cartridge.twophase')
 local confapplier = require('cartridge.confapplier')
 local vshard_utils = require('cartridge.vshard-utils')
 local cluster_cookie = require('cartridge.cluster-cookie')
@@ -204,7 +205,7 @@ local function bootstrap_from_scratch(conf)
         )
     end
 
-    local _, err = confapplier.prepare_2pc(conf)
+    local _, err = twophase.prepare_2pc(conf)
     if err then
         membership.set_payload('warning', tostring(err.err or err))
         return nil, err
@@ -223,7 +224,7 @@ local function bootstrap_from_scratch(conf)
     init_box(box_opts)
     -- TODO migrations.skip()
 
-    return confapplier.commit_2pc()
+    return twophase.commit_2pc()
 end
 
 local function bootstrap_from_membership()
@@ -264,7 +265,7 @@ local function bootstrap_from_membership()
         return nil, err
     end
 
-    local _, err = confapplier.prepare_2pc(conf)
+    local _, err = twophase.prepare_2pc(conf)
     if err then
         membership.set_payload('warning', tostring(err.err or err))
         return false
@@ -286,7 +287,7 @@ local function bootstrap_from_membership()
     init_box(box_opts)
     -- TODO migrations.skip()
 
-    return confapplier.commit_2pc()
+    return twophase.commit_2pc()
 end
 
 local function apply_remote_conf(conf, remote_conf)
@@ -336,7 +337,7 @@ local function bootstrap_from_snapshot()
     end
 
     -- unlock config if it was locked by dangling commit_2pc()
-    confapplier.abort_2pc()
+    twophase.abort_2pc()
 
     local conf, err = confapplier.load_from_file()
     if conf == nil then

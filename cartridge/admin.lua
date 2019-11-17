@@ -16,6 +16,7 @@ local rpc = require('cartridge.rpc')
 local pool = require('cartridge.pool')
 local utils = require('cartridge.utils')
 local topology = require('cartridge.topology')
+local twophase = require('cartridge.twophase')
 local bootstrap = require('cartridge.bootstrap')
 local vshard_utils = require('cartridge.vshard-utils')
 local confapplier = require('cartridge.confapplier')
@@ -772,7 +773,7 @@ local function edit_topology(args)
         --  See `cluster.bootstrap.from_snapshot()`.
         assert(confapplier.get_readonly() ~= nil)
 
-        ok, err = confapplier.patch_clusterwide({topology = topology_cfg})
+        ok, err = twophase.patch_clusterwide({topology = topology_cfg})
     end
 
     if not ok then
@@ -1080,7 +1081,7 @@ local function set_failover_enabled(enabled)
     end
     topology_cfg.failover = enabled
 
-    local ok, err = confapplier.patch_clusterwide({topology = topology_cfg})
+    local ok, err = twophase.patch_clusterwide({topology = topology_cfg})
     if not ok then
         return nil, err
     end

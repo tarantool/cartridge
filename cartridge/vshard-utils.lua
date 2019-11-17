@@ -9,6 +9,7 @@ local vars = require('cartridge.vars').new('cartridge.vshard-utils')
 local pool = require('cartridge.pool')
 local utils = require('cartridge.utils')
 local topology = require('cartridge.topology')
+local twophase = require('cartridge.twophase')
 local confapplier = require('cartridge.confapplier')
 local vshard_consts = require('vshard.consts')
 
@@ -463,7 +464,7 @@ local function edit_vshard_options(group_name, vshard_options)
         group[k] = v
     end
 
-    return confapplier.patch_clusterwide(patch)
+    return twophase.patch_clusterwide(patch)
 end
 
 return {

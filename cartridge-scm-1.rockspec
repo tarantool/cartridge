@@ -50,6 +50,7 @@ build = {
             ['cartridge.feedback'] = 'cartridge/feedback.lua',
             ['cartridge.argparse'] = 'cartridge/argparse.lua',
             ['cartridge.topology'] = 'cartridge/topology.lua',
+            ['cartridge.twophase'] = 'cartridge/twophase.lua',
             ['cartridge.bootstrap'] = 'cartridge/bootstrap.lua',
             ['cartridge.confapplier'] = 'cartridge/confapplier.lua',
             ['cartridge.remote-control'] = 'cartridge/remote-control.lua',

@@ -4,6 +4,7 @@ file = {
     "cartridge/auth.lua",
     "cartridge/admin.lua",
     "cartridge/argparse.lua",
+    "cartridge/twophase.lua",
     "cartridge/rpc.lua",
     "cartridge/pool.lua",
     "cartridge/confapplier.lua",

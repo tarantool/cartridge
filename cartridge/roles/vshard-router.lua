@@ -8,6 +8,7 @@ local errors = require('errors')
 local vars = require('cartridge.vars').new('cartridge.roles.vshard-router')
 local pool = require('cartridge.pool')
 local utils = require('cartridge.utils')
+local twophase = require('cartridge.twophase')
 local confapplier = require('cartridge.confapplier')
 local vshard_utils = require('cartridge.vshard-utils')
 
@@ -188,7 +189,7 @@ local function bootstrap()
         return nil, e_bootstrap_vshard:new("already bootstrapped")
     end
 
-    local ok, err = confapplier.patch_clusterwide(patch)
+    local ok, err = twophase.patch_clusterwide(patch)
     if not ok then
         return nil, err
     end
