@@ -14,6 +14,7 @@ local membership = require('membership')
 local vars = require('cartridge.vars').new('cartridge.confapplier')
 local pool = require('cartridge.pool')
 local utils = require('cartridge.utils')
+local roles = require('cartridge.roles')
 local topology = require('cartridge.topology')
 local service_registry = require('cartridge.service-registry')
 
@@ -28,21 +29,10 @@ local e_config_load = errors.new_class('Loading configuration failed')
 local e_config_fetch = errors.new_class('Fetching configuration failed')
 local e_config_apply = errors.new_class('Applying configuration failed')
 local e_config_validate = errors.new_class('Invalid config')
-local e_register_role = errors.new_class('Can not register role')
 
 vars:new('conf')
 vars:new('workdir')
 vars:new('locks', {})
-vars:new('known_roles', {
-    -- [i] = mod,
-    -- [role_name] = mod,
-})
-vars:new('roles_dependencies', {
-    -- [role_name] = {role_name_1, role_name_2}
-})
-vars:new('roles_dependants', {
-    -- [role_name] = {role_name_1, role_name_2}
-})
 vars:new('applier_fiber', nil)
 vars:new('applier_channel', nil)
 vars:new('failover_fiber', nil)
@@ -51,179 +41,6 @@ vars:new('failover_cond', nil)
 local function set_workdir(workdir)
     checks('string')
     vars.workdir = workdir
-end
-
-local function register_role(module_name)
-    checks('string')
-    local function e(...)
-        vars.known_roles = {}
-        vars.roles_dependencies = {}
-        vars.roles_dependants = {}
-        return e_register_role:new(2, ...)
-    end
-    local mod = package.loaded[module_name]
-    if type(mod) == 'table' and vars.known_roles[mod.role_name] then
-        -- Already loaded
-        return mod
-    end
-
-    local mod, err = e_register_role:pcall(require, module_name)
-    if not mod then
-        return nil, e(err)
-    elseif type(mod) ~= 'table' then
-        return nil, e('Module %q must return a table', module_name)
-    end
-
-    if mod.role_name == nil then
-        mod.role_name = module_name
-    end
-
-    if type(mod.role_name) ~= 'string' then
-        return nil, e('Module %q role_name must be a string', module_name)
-    end
-
-    if vars.known_roles[mod.role_name] ~= nil then
-        return nil, e('Role %q name clash', mod.role_name)
-    end
-
-    local dependencies = mod.dependencies or {}
-    if type(dependencies) ~= 'table' then
-        return nil, e('Module %q dependencies must be a table', module_name)
-    end
-
-    vars.roles_dependencies[mod.role_name] = {}
-    vars.roles_dependants[mod.role_name] = {}
-    vars.known_roles[mod.role_name] = mod
-
-    local function deps_append(tbl, deps)
-        for _, dep in pairs(deps) do
-            if not utils.table_find(tbl, dep) then
-                table.insert(tbl, dep)
-            end
-        end
-    end
-
-    for _, dep_name in ipairs(dependencies) do
-        local dep_mod, err = register_role(dep_name)
-        if not dep_mod then
-            return nil, err
-        end
-
-        deps_append(
-            vars.roles_dependencies[mod.role_name],
-            {dep_mod.role_name}
-        )
-        deps_append(
-            vars.roles_dependencies[mod.role_name],
-            vars.roles_dependencies[dep_mod.role_name]
-        )
-
-        deps_append(
-            vars.roles_dependants[dep_mod.role_name],
-            {mod.role_name}
-        )
-    end
-
-    if utils.table_find(vars.roles_dependencies[mod.role_name], mod.role_name) then
-        return nil, e('Module %q circular dependency not allowed', module_name)
-    end
-    topology.add_known_role(mod.role_name)
-    vars.known_roles[#vars.known_roles+1] = mod
-
-    return mod
-end
-
---- List all registered roles names.
---
--- Hidden roles are not listed as well as permanent ones.
---
--- @function get_known_roles
--- @local
--- @treturn {string,..}
-local function get_known_roles()
-    local ret = {}
-
-    for _, mod in ipairs(vars.known_roles) do
-        if not (mod.permanent or mod.hidden) then
-            table.insert(ret, mod.role_name)
-        end
-    end
-
-    return ret
-end
-
---- Roles to be enabled on the server.
--- This function returns all roles that will be enabled
--- including their dependencies (bot hidden and not)
--- and permanent roles.
---
--- @function get_enabled_roles
--- @local
--- @tparam {string,...}|{[string]=boolean,...} roles
--- @treturn {[string]=boolean,...}
-local function get_enabled_roles(roles)
-    checks('?table')
-
-    if roles == nil then
-        return {}
-    end
-
-    local ret = {}
-
-    for _, mod in ipairs(vars.known_roles) do
-        if mod.permanent then
-            ret[mod.role_name] = true
-        end
-    end
-
-    for k, v in pairs(roles) do
-        local role_name, enabled
-        if type(k) == 'number' and type(v) == 'string' then
-            role_name, enabled = v, true
-        else
-            role_name, enabled = k, v
-        end
-
-        repeat -- until true
-            if not enabled then
-                break
-            end
-
-            ret[role_name] = true
-
-            local deps = vars.roles_dependencies[role_name]
-            if deps == nil then
-                break
-            end
-
-            for _, dep_name in ipairs(deps) do
-                ret[dep_name] = true
-            end
-        until true
-    end
-
-    return ret
-end
-
---- List role dependencies.
--- Including sub-dependencies.
---
--- @function get_role_dependencies
--- @local
--- @tparam string role_name
--- @treturn {string,..}
-local function get_role_dependencies(role_name)
-    checks('?string')
-    local ret = {}
-
-    for _, dep_name in ipairs(vars.roles_dependencies[role_name]) do
-        local mod = vars.known_roles[dep_name]
-        if not (mod.permanent or mod.hidden) then
-            table.insert(ret, mod.role_name)
-        end
-    end
-
-    return ret
 end
 
 
@@ -395,41 +212,12 @@ local function validate_config(conf_new, conf_old)
     end
     checks('table', 'table')
 
-    for _, mod in ipairs(vars.known_roles) do
-        if type(mod.validate_config) == 'function' then
-            local ok, err = e_config_validate:pcall(
-                mod.validate_config, conf_new, conf_old
-            )
-            if not ok then
-                err = err or e_config_validate:new(
-                    'Role %q method validate_config() returned %s',
-                    mod.role_name, ok
-                )
-                return nil, err
-            end
-        elseif type(mod.validate) == 'function' then
-            log.warn(
-                'Role %q method "validate()" is deprecated. ' ..
-                'Use "validate_config()" instead.',
-                mod.role_name
-            )
-            local ok, err = e_config_validate:pcall(
-                mod.validate, conf_new, conf_old
-            )
-            if not ok then
-                err = err or e_config_validate:new(
-                    'Role %q method validate() returned %s',
-                    mod.role_name, ok
-                )
-                return nil, err
-            end
-        end
-    end
-
-    return true
+    return roles.validate_config(conf_new, conf_old)
 end
 
 local function _failover_role(mod, opts)
+    checks('table', {is_master = 'boolean'})
+
     if service_registry.get(mod.role_name) == nil then
         return true
     end
@@ -455,6 +243,7 @@ end
 
 local function _failover(cond)
     local function failover_internal()
+        local all_roles = roles.get_all_roles()
         local my_replicaset = vars.conf.topology.replicasets[box.info.cluster.uuid]
         local active_masters = topology.get_active_masters()
         local is_master = false
@@ -471,7 +260,8 @@ local function _failover(cond)
             log.error('Box.cfg failed: %s', err)
         end
 
-        for _, mod in ipairs(vars.known_roles) do
+        for _, role_name in ipairs(all_roles) do
+            local mod = roles.get_role(role_name)
             local _, err = _failover_role(mod, opts)
             if err then
                 log.error('Role %q failover failed: %s', mod.role_name, err)
@@ -529,54 +319,10 @@ local function apply_config(conf)
         log.error('Box.cfg failed: %s', err)
     end
 
-    local enabled_roles = get_enabled_roles(my_replicaset.roles)
-    for _, mod in ipairs(vars.known_roles) do
-        local role_name = mod.role_name
-        if enabled_roles[role_name] then
-            repeat -- until true
-                if (service_registry.get(role_name) == nil)
-                and (type(mod.init) == 'function')
-                then
-                    local _, _err = e_config_apply:pcall(mod.init,
-                        {is_master = is_master}
-                    )
-                    if _err then
-                        log.error('%s', _err)
-                        err = err or _err
-                        break
-                    end
-                end
-
-                service_registry.set(role_name, mod)
-
-                if type(mod.apply_config) == 'function' then
-                    local _, _err = e_config_apply:pcall(
-                        mod.apply_config, conf,
-                        {is_master = is_master}
-                    )
-                    if _err then
-                        log.error('%s', _err)
-                        err = err or _err
-                    end
-                end
-            until true
-        else
-            if (service_registry.get(role_name) ~= nil)
-            and (type(mod.stop) == 'function')
-            then
-                local _, _err = e_config_apply:pcall(mod.stop,
-                        {is_master = is_master}
-                )
-                if _err then
-                    log.error('%s', err)
-                    err = err or _err
-                end
-            end
-
-            service_registry.set(role_name, nil)
-        end
+    local _, _err = roles.apply_config(conf, {is_master = is_master})
+    if _err then
+        err = err or _err
     end
-    log.info('Config applied')
 
     local failover_enabled = conf.topology.failover
     local failover_running = vars.failover_fiber and vars.failover_fiber:status() ~= 'dead'
@@ -613,11 +359,6 @@ return {
 
     load_from_file = load_from_file,
     fetch_from_membership = fetch_from_membership,
-
-    register_role = register_role,
-    get_known_roles = get_known_roles,
-    get_enabled_roles = get_enabled_roles,
-    get_role_dependencies = get_role_dependencies,
 
     apply_config = apply_config,
     validate_config = validate_config,

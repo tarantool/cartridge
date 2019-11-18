@@ -12,8 +12,8 @@ local membership = require('membership')
 
 local pool = require('cartridge.pool')
 local utils = require('cartridge.utils')
+local roles = require('cartridge.roles')
 local topology = require('cartridge.topology')
-local confapplier = require('cartridge.confapplier')
 local service_registry = require('cartridge.service-registry')
 
 local RemoteCallError = errors.new_class('RemoteCallError')
@@ -86,7 +86,7 @@ local function get_candidates(role_name, opts)
         local replicaset_uuid = server.replicaset_uuid
         local replicaset = replicasets[replicaset_uuid]
 
-        if confapplier.get_enabled_roles(replicaset.roles)[role_name]
+        if roles.get_enabled_roles(replicaset.roles)[role_name]
         and (not opts.healthy_only or member_is_healthy(server.uri, instance_uuid))
         and (not opts.leader_only or active_leaders[replicaset_uuid] == instance_uuid)
         then
