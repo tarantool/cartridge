@@ -30,6 +30,7 @@ local admin = require('cartridge.admin')
 local webui = require('cartridge.webui')
 local argparse = require('cartridge.argparse')
 local topology = require('cartridge.topology')
+local twophase = require('cartridge.twophase')
 local bootstrap = require('cartridge.bootstrap')
 local confapplier = require('cartridge.confapplier')
 local vshard_utils = require('cartridge.vshard-utils')
@@ -653,9 +654,9 @@ return {
     config_get_deepcopy = confapplier.get_deepcopy,
 
     --- .
-    -- @refer cartridge.confapplier.patch_clusterwide
+    -- @refer cartridge.twophase.patch_clusterwide
     -- @function config_patch_clusterwide
-    config_patch_clusterwide = confapplier.patch_clusterwide,
+    config_patch_clusterwide = twophase.patch_clusterwide,
 
 --- Inter-role interaction.
 -- @refer cartridge.service-registry

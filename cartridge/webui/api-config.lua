@@ -14,6 +14,7 @@ yaml.cfg({
 
 
 local auth = require('cartridge.auth')
+local twophase = require('cartridge.twophase')
 local confapplier = require('cartridge.confapplier')
 
 local system_sections = {
@@ -137,7 +138,7 @@ local function upload_config_handler(req)
         end
     end
 
-    local ok, err = confapplier.patch_clusterwide(patch)
+    local ok, err = twophase.patch_clusterwide(patch)
     if ok == nil then
         return http_finalize_error(400, err)
     end

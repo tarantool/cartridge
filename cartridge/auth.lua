@@ -21,6 +21,7 @@ yaml.cfg({
 })
 
 local vars = require('cartridge.vars').new('cartridge.auth')
+local twophase = require('cartridge.twophase')
 local confapplier = require('cartridge.confapplier')
 local cluster_cookie = require('cartridge.cluster-cookie')
 
@@ -156,7 +157,7 @@ local function set_params(opts)
         patch.topology.auth = nil
     end
 
-    return confapplier.patch_clusterwide(patch)
+    return twophase.patch_clusterwide(patch)
 end
 
 --- Retrieve authentication params.
