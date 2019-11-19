@@ -50,10 +50,11 @@ _G.vshard = {
 
 local tap = require('tap')
 local yaml = require('yaml')
+local roles = require('cartridge.roles')
 local topology = require('cartridge.topology')
 local confapplier = require('cartridge.confapplier')
-assert(confapplier.register_role('cartridge.roles.vshard-storage'))
-assert(confapplier.register_role('cartridge.roles.vshard-router'))
+assert(roles.register_role('cartridge.roles.vshard-storage'))
+assert(roles.register_role('cartridge.roles.vshard-router'))
 local test = tap.test('topology.config')
 
 local function test_all(test, conf)

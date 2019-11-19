@@ -1,8 +1,8 @@
 #!/usr/bin/env tarantool
 
 local admin = require('cartridge.admin')
+local roles = require('cartridge.roles')
 local gql_types = require('cartridge.graphql.types')
-local confapplier = require('cartridge.confapplier')
 local gql_boxinfo_schema = require('cartridge.webui.gql-boxinfo').schema
 local gql_stat_schema = require('cartridge.webui.gql-stat').schema
 local module_name = 'cartridge.webui.api-topology'
@@ -240,10 +240,10 @@ end
 
 local function get_known_roles(_, _)
     local ret = {}
-    for _, role_name in ipairs(confapplier.get_known_roles()) do
+    for _, role_name in ipairs(roles.get_known_roles()) do
         local role = {
             name = role_name,
-            dependencies = confapplier.get_role_dependencies(role_name),
+            dependencies = roles.get_role_dependencies(role_name),
         }
 
         table.insert(ret, role)

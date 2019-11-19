@@ -40,6 +40,7 @@ build = {
             ['cartridge.auth-backend'] = 'cartridge/auth-backend.lua',
             ['cartridge.admin'] = 'cartridge/admin.lua',
             ['cartridge.utils'] = 'cartridge/utils.lua',
+            ['cartridge.roles'] = 'cartridge/roles.lua',
             ['cartridge.webui'] = 'cartridge/webui.lua',
             ['cartridge.webui.api-auth'] = 'cartridge/webui/api-auth.lua',
             ['cartridge.webui.api-config'] = 'cartridge/webui/api-config.lua',
