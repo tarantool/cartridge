@@ -5,6 +5,8 @@ align="right">
 
 # Tarantool Cartridge &mdash; a framework for distributed applications development
 
+[![pipeline status](https://gitlab.com/tarantool/cartridge/badges/master/pipeline.svg)](https://gitlab.com/tarantool/cartridge/commits/master)
+
 ## Table of contents
 
 * [About Tarantool Cartridge](#about-tarantool-cartridge)
