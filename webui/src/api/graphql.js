@@ -1,5 +1,6 @@
 import { ApolloClient } from 'apollo-client'
 import { HttpLink } from 'apollo-link-http'
+import { from } from 'apollo-link'
 import { InMemoryCache } from 'apollo-cache-inmemory'
 // import { withClientState } from 'apollo-link-state'
 // import { ApolloLink } from 'apollo-link'
@@ -14,7 +15,11 @@ const cache = new InMemoryCache({
 });
 
 const client = new ApolloClient({
-  link: httpLink,
+  link: from([
+    window.tarantool_enterprise_core.apiMethods.apolloLinkAfterware,
+    window.tarantool_enterprise_core.apiMethods.apolloLinkMiddleware,
+    httpLink
+  ]),
   cache,
   defaultOptions: {
     query: {

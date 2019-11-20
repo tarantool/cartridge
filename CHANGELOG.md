@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Automatically choose default vshard group in create and edit replicaset modals
 
+- Use for frontend part single point of configuration HTTP handlers. As example: you can add your own client HTTP middleware for auth.
+
 ### Changed
 
 - WebUI now uses `edit_topology` mutation instead of deprecated ones.
@@ -21,6 +23,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   **(incompatible change)**
 
 - Don't show Users page and move auth switcher to cluster page when only `implements_check_password = true`
+
+### Fixed
+
+- Add deduplication for frontend notifications. No more a lot of same messages.
 
 ## [1.2.0] - 2019-10-21
 
