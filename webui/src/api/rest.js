@@ -1,18 +1,22 @@
 import axios from 'axios';
 import _ from 'lodash';
 
+const axiosInstance = axios.create()
+
+window.tarantool_enterprise_core.apiMethods.axiosWizard(axiosInstance)
+
 export default {
   post(...args) {
-    return axios.post(...args);
+    return axiosInstance.post(...args);
   },
   put(...args) {
-    return axios.put(...args);
+    return axiosInstance.put(...args);
   },
   get(...args) {
-    return axios.get(...args);
+    return axiosInstance.get(...args);
   },
   soap(object) {
-    return axios.post(process.env.REACT_APP_SOAP_API_ENDPOINT, object, {
+    return axiosInstance.post(process.env.REACT_APP_SOAP_API_ENDPOINT, object, {
       headers: { 'Content-Type': 'application/json;charset=UTF-8' }
     });
   }
