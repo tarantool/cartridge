@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - WebUI now uses `edit_topology` mutation instead of deprecated ones.
 
-- Update `vshard` dependency to 0.1.13.
+- Update `vshard` dependency to 0.1.14.
 
 - `cartridge.rpc_get_candidates()` doesn't return error "No remotes with
   role available" anymore, empty table is returned instead.
