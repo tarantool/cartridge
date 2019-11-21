@@ -1,8 +1,9 @@
 #!/usr/bin/env tarantool
 -- luacheck: ignore _it
 
--- this module incorporates information about
--- conf.servers and membership status
+--- Topology validation and filtering.
+--
+-- @module cartridge.topology
 
 local fun = require('fun')
 -- local log = require('log')
@@ -56,15 +57,19 @@ end
 --- Get full list of replicaset leaders.
 --
 -- Full list is composed of:
+--
 --  1. New order array
 --  2. Initial order from topology_cfg (with no repetitions)
 --  3. All other servers in the replicaset, sorted by uuid, ascending
 --
--- Neither initial nor new order is modified.
--- It's validity is ignored too.
+-- Neither `topology_cfg` nor `new_order` tables are modified.
+-- New order validity is ignored too.
 --
 -- @function get_leaders_orded
 -- @local
+-- @tparam table topology_cfg
+-- @tparam string replicaset_uuid
+-- @tparam ?table new_order
 -- @treturn {string,...} array of leaders uuids
 local function get_leaders_order(topology_cfg, replicaset_uuid, new_order)
     checks('table', 'string', 'nil|table')
@@ -433,6 +438,16 @@ local function validate_upgrade(topology_new, topology_old)
     end
 end
 
+
+--- Validate topology configuration.
+--
+-- @function validate
+-- @local
+-- @tparam table topology_new
+-- @tparam table topology_old
+-- @treturn[1] boolean true
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 local function validate(topology_new, topology_old)
     topology_old = topology_old or {}
     e_config:assert(
@@ -469,6 +484,13 @@ local function get_myself_uuids(topology)
     return nil, nil
 end
 
+--- Check the cluster health.
+-- It is healthy if all instances are healthy.
+--
+-- The function is designed mostly for testing purposes.
+--
+-- @function cluster_is_healthy
+-- @treturn boolean true / false
 local function cluster_is_healthy()
     if next(vars.topology.servers) == nil then
         return nil, 'not bootstrapped yet'
@@ -507,6 +529,7 @@ local function cluster_is_healthy()
 end
 
 --- Send UDP ping to servers missing from membership table.
+--
 -- @function probe_missing_members
 -- @local
 -- @tparam table servers

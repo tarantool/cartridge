@@ -8,7 +8,10 @@
 --
 -- Other `net.box` features aren't supported and will never be.
 --
+-- (**Added** in v0.10.0-2)
+--
 -- @module cartridge.remote-control
+-- @local
 
 local log = require('log')
 local errno = require('errno')

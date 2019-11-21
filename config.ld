@@ -6,6 +6,7 @@ file = {
     "cartridge/roles.lua",
     "cartridge/argparse.lua",
     "cartridge/twophase.lua",
+    "cartridge/topology.lua",
     "cartridge/rpc.lua",
     "cartridge/pool.lua",
     "cartridge/confapplier.lua",
@@ -31,6 +32,7 @@ custom_tags = {
     {'refer', hidden = true},
 }
 
+-- luacheck: ignore printall
 local function printall(k, v, lvl)
     print(k, v)
     if lvl > 2 then
