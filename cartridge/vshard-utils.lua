@@ -14,7 +14,7 @@ local twophase = require('cartridge.twophase')
 local confapplier = require('cartridge.confapplier')
 local vshard_consts = require('vshard.consts')
 
-local e_config = errors.new_class('Invalid config')
+local ValidateConfigError = errors.new_class('ValidateConfigError')
 
 vars:new('default_bucket_count', 30000)
 vars:new('known_groups', nil
@@ -36,7 +36,7 @@ local function validate_group_weights(group_name, topology)
     local total_weight = 0
 
     for replicaset_uuid, replicaset in pairs(topology.replicasets or {}) do
-        e_config:assert(
+        ValidateConfigError:assert(
             (replicaset.weight or 0) >= 0,
             'replicasets[%s].weight must be non-negative, got %s', replicaset_uuid, replicaset.weight
         )
@@ -49,7 +49,7 @@ local function validate_group_weights(group_name, topology)
     end
 
     if num_storages > 0 then
-        e_config:assert(
+        ValidateConfigError:assert(
             total_weight > 0,
             'At least one %s must have weight > 0',
             group_name and string.format('vshard-storage (%s)', group_name) or 'vshard-storage'
@@ -71,9 +71,10 @@ local function validate_group_upgrade(group_name, topology_new, topology_old)
         if (storage_role_old) and (not storage_role_new)
         and ((replicaset_old.vshard_group or 'default') == group_name)
         then
-            e_config:assert(
+            ValidateConfigError:assert(
                 (replicaset_old.weight == nil) or (replicaset_old.weight == 0),
-                "replicasets[%s] is a vshard-storage which can't be removed", replicaset_uuid
+                "replicasets[%s] is a vshard-storage which can't be removed",
+                replicaset_uuid
             )
 
             local master_uuid
@@ -88,9 +89,10 @@ local function validate_group_upgrade(group_name, topology_new, topology_old)
                 error(err)
             end
             local buckets_count = conn:call('vshard.storage.buckets_count')
-            e_config:assert(
+            ValidateConfigError:assert(
                 buckets_count == 0,
-                "replicasets[%s] rebalancing isn't finished yet", replicaset_uuid
+                "replicasets[%s] rebalancing isn't finished yet",
+                replicaset_uuid
             )
         end
 
@@ -98,71 +100,71 @@ local function validate_group_upgrade(group_name, topology_new, topology_old)
 end
 
 local function validate_vshard_group(field, vsgroup_new, vsgroup_old)
-    e_config:assert(
+    ValidateConfigError:assert(
         type(vsgroup_new) == 'table',
         'section %s must be a table', field
     )
-    e_config:assert(
+    ValidateConfigError:assert(
         type(vsgroup_new.bucket_count) == 'number',
         '%s.bucket_count must be a number', field
     )
-    e_config:assert(
+    ValidateConfigError:assert(
         vsgroup_new.bucket_count > 0,
         '%s.bucket_count must be positive', field
     )
     if vsgroup_new.rebalancer_max_receiving ~= nil then
-        e_config:assert(
-                type(vsgroup_new.rebalancer_max_receiving) == 'number',
-                '%s.rebalancer_max_receiving must be a number', field
+        ValidateConfigError:assert(
+            type(vsgroup_new.rebalancer_max_receiving) == 'number',
+            '%s.rebalancer_max_receiving must be a number', field
         )
-        e_config:assert(
-                vsgroup_new.rebalancer_max_receiving > 0,
-                '%s.rebalancer_max_receiving must be positive', field
+        ValidateConfigError:assert(
+            vsgroup_new.rebalancer_max_receiving > 0,
+            '%s.rebalancer_max_receiving must be positive', field
         )
     end
     if vsgroup_new.collect_lua_garbage ~= nil then
-        e_config:assert(
-                type(vsgroup_new.collect_lua_garbage) == 'boolean',
-                '%s.collect_lua_garbage must be a boolean', field
+        ValidateConfigError:assert(
+            type(vsgroup_new.collect_lua_garbage) == 'boolean',
+            '%s.collect_lua_garbage must be a boolean', field
         )
     end
     if vsgroup_new.sync_timeout ~= nil then
-        e_config:assert(
-                type(vsgroup_new.sync_timeout) == 'number',
-                '%s.sync_timeout must be a number', field
+        ValidateConfigError:assert(
+            type(vsgroup_new.sync_timeout) == 'number',
+            '%s.sync_timeout must be a number', field
         )
-        e_config:assert(
-                vsgroup_new.sync_timeout >= 0,
-                '%s.sync_timeout must be non-negative', field
+        ValidateConfigError:assert(
+            vsgroup_new.sync_timeout >= 0,
+            '%s.sync_timeout must be non-negative', field
         )
     end
     if vsgroup_new.collect_bucket_garbage_interval ~= nil then
-        e_config:assert(
-                type(vsgroup_new.collect_bucket_garbage_interval) == 'number',
-                '%s.collect_bucket_garbage_interval must be a number', field
+        ValidateConfigError:assert(
+            type(vsgroup_new.collect_bucket_garbage_interval) == 'number',
+            '%s.collect_bucket_garbage_interval must be a number', field
         )
-        e_config:assert(
-                vsgroup_new.collect_bucket_garbage_interval > 0,
-                '%s.collect_bucket_garbage_interval must be positive', field
+        ValidateConfigError:assert(
+            vsgroup_new.collect_bucket_garbage_interval > 0,
+            '%s.collect_bucket_garbage_interval must be positive', field
         )
     end
     if vsgroup_new.rebalancer_disbalance_threshold ~= nil then
-        e_config:assert(
-                type(vsgroup_new.rebalancer_disbalance_threshold) == 'number',
-                '%s.rebalancer_disbalance_threshold must be a number', field
+        ValidateConfigError:assert(
+            type(vsgroup_new.rebalancer_disbalance_threshold) == 'number',
+            '%s.rebalancer_disbalance_threshold must be a number', field
         )
-        e_config:assert(
-                vsgroup_new.rebalancer_disbalance_threshold >= 0,
-                '%s.rebalancer_disbalance_threshold must be non-negative', field
+        ValidateConfigError:assert(
+            vsgroup_new.rebalancer_disbalance_threshold >= 0,
+            '%s.rebalancer_disbalance_threshold must be non-negative', field
         )
     end
     if vsgroup_old ~= nil then
-        e_config:assert(
+        ValidateConfigError:assert(
             vsgroup_new.bucket_count == vsgroup_old.bucket_count,
             "%s.bucket_count can't be changed", field
         )
     end
-    e_config:assert(
+    ValidateConfigError:assert(
         type(vsgroup_new.bootstrapped) == 'boolean',
         '%s.bootstrapped must be true or false', field
     )
@@ -176,7 +178,7 @@ local function validate_vshard_group(field, vsgroup_new, vsgroup_old)
         ['rebalancer_disbalance_threshold'] = true,
     }
     for k, _ in pairs(vsgroup_new) do
-        e_config:assert(
+        ValidateConfigError:assert(
             known_keys[k],
             'section %s has unknown parameter %q', field, k
         )
@@ -194,9 +196,10 @@ local function validate_config(conf_new, conf_old)
         validate_group_weights('default', topology_new)
 
         for replicaset_uuid, replicaset in pairs(topology_new.replicasets or {}) do
-            e_config:assert(
+            ValidateConfigError:assert(
                 replicaset.vshard_group == nil or replicaset.vshard_group == 'default',
-                "replicasets[%s] can't be added to vshard_group %q, cluster doesn't have any",
+                "replicasets[%s] can't be added to vshard_group %q," ..
+                " cluster doesn't have any",
                 replicaset_uuid, replicaset.vshard_group
             )
         end
@@ -205,13 +208,13 @@ local function validate_config(conf_new, conf_old)
             validate_group_upgrade('default', topology_new, topology_old)
         end
     else
-        e_config:assert(
+        ValidateConfigError:assert(
             type(conf_new.vshard_groups) == 'table',
             'section vshard_groups must be a table'
         )
 
         for name, vsgroup in pairs(conf_new.vshard_groups) do
-            e_config:assert(
+            ValidateConfigError:assert(
                 type(name) == 'string',
                 'section vshard_groups must have string keys'
             )
@@ -228,7 +231,7 @@ local function validate_config(conf_new, conf_old)
             end
 
             if replicaset_old ~= nil and replicaset_old.vshard_group ~= nil then
-                e_config:assert(
+                ValidateConfigError:assert(
                     replicaset_new.vshard_group == replicaset_old.vshard_group,
                     "replicasets[%s].vshard_group can't be modified",
                     replicaset_uuid
@@ -236,12 +239,12 @@ local function validate_config(conf_new, conf_old)
             end
 
             if replicaset_new.roles['vshard-storage'] then
-                e_config:assert(
+                ValidateConfigError:assert(
                     replicaset_new.vshard_group ~= nil,
                     "replicasets[%s] is a vshard-storage and must be assigned to a particular group",
                     replicaset_uuid
                 )
-                e_config:assert(
+                ValidateConfigError:assert(
                     conf_new.vshard_groups[replicaset_new.vshard_group] ~= nil,
                     "replicasets[%s].vshard_group %q doesn't exist",
                     replicaset_uuid, replicaset_new.vshard_group
@@ -458,7 +461,10 @@ local function edit_vshard_options(group_name, vshard_options)
     end
 
     if group == nil then
-        return nil, e_config:new("vshard-group %q doesn't exist", group_name)
+        local err = ValidateConfigError:new(
+            "vshard-group %q doesn't exist", group_name
+        )
+        return nil, err
     end
 
     for k, v in pairs(vshard_options) do
@@ -470,7 +476,7 @@ end
 
 return {
     validate_config = function(...)
-        return e_config:pcall(validate_config, ...)
+        return ValidateConfigError:pcall(validate_config, ...)
     end,
 
     set_known_groups = set_known_groups,

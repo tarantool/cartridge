@@ -22,9 +22,9 @@ local utils = require('cartridge.utils')
 local topology = require('cartridge.topology')
 local service_registry = require('cartridge.service-registry')
 
-local e_register_role = errors.new_class('Can not register role')
-local e_config_apply = errors.new_class('Applying configuration failed')
-local e_config_validate = errors.new_class('Invalid config')
+local RegisterRoleError = errors.new_class('RegisterRoleError')
+local ValidateConfigError = errors.new_class('ValidateConfigError')
+local ApplyConfigError = errors.new_class('ApplyConfigError')
 
 vars:new('known_roles', {
     -- [i] = mod,
@@ -44,7 +44,7 @@ local function register_role(module_name)
         vars.known_roles = {}
         vars.roles_dependencies = {}
         vars.roles_dependants = {}
-        return e_register_role:new(2, ...)
+        return RegisterRoleError:new(2, ...)
     end
     local mod = package.loaded[module_name]
     if type(mod) == 'table' and vars.known_roles[mod.role_name] then
@@ -52,7 +52,7 @@ local function register_role(module_name)
         return mod
     end
 
-    local mod, err = e_register_role:pcall(require, module_name)
+    local mod, err = RegisterRoleError:pcall(require, module_name)
     if not mod then
         return nil, e(err)
     elseif type(mod) ~= 'table' then
@@ -243,17 +243,17 @@ end
 -- @treturn[2] table Error description
 local function validate_config(conf_new, conf_old)
     if type(conf_new) ~= 'table'  then
-        return nil, e_config_validate:new('config must be a table')
+        return nil, ValidateConfigError:new('config must be a table')
     end
     checks('table', 'table')
 
     for _, mod in ipairs(vars.known_roles) do
         if type(mod.validate_config) == 'function' then
-            local ok, err = e_config_validate:pcall(
+            local ok, err = ValidateConfigError:pcall(
                 mod.validate_config, conf_new, conf_old
             )
             if not ok then
-                err = err or e_config_validate:new(
+                err = err or ValidateConfigError:new(
                     'Role %q method validate_config() returned %s',
                     mod.role_name, ok
                 )
@@ -265,11 +265,11 @@ local function validate_config(conf_new, conf_old)
                 'Use "validate_config()" instead.',
                 mod.role_name
             )
-            local ok, err = e_config_validate:pcall(
+            local ok, err = ValidateConfigError:pcall(
                 mod.validate, conf_new, conf_old
             )
             if not ok then
-                err = err or e_config_validate:new(
+                err = err or ValidateConfigError:new(
                     'Role %q method validate() returned %s',
                     mod.role_name, ok
                 )
@@ -301,7 +301,7 @@ local function apply_config(conf, opts)
             if (service_registry.get(role_name) == nil)
             and (type(mod.init) == 'function')
             then
-                local _, _err = e_config_apply:pcall(
+                local _, _err = ApplyConfigError:pcall(
                     mod.init,
                     {is_master = opts.is_master}
                 )
@@ -315,7 +315,7 @@ local function apply_config(conf, opts)
             service_registry.set(role_name, mod)
 
             if type(mod.apply_config) == 'function' then
-                local _, _err = e_config_apply:pcall(
+                local _, _err = ApplyConfigError:pcall(
                     mod.apply_config, conf,
                     {is_master = opts.is_master}
                 )
@@ -328,7 +328,7 @@ local function apply_config(conf, opts)
             if (service_registry.get(role_name) ~= nil)
             and (type(mod.stop) == 'function')
             then
-                local _, _err = e_config_apply:pcall(
+                local _, _err = ApplyConfigError:pcall(
                     mod.stop,
                         {is_master = opts.is_master}
                 )
