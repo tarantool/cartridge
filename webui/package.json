@@ -63,6 +63,7 @@
     "monaco-editor": "0.18.1",
     "monaco-editor-webpack-plugin": "1.7.0",
     "monaco-languageclient": "0.10.2",
+    "monaco-themes": "0.3.3",
     "normalize-url": "4.4.1",
     "object-assign": "4.1.1",
     "postcss-flexbugs-fixes": "3.2.0",

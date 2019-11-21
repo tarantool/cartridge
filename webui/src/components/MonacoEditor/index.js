@@ -16,6 +16,7 @@ import {
 import { listen } from 'vscode-ws-jsonrpc';
 import { getLanguageService, TextDocument } from 'vscode-json-languageservice';
 import { MonacoToProtocolConverter, ProtocolToMonacoConverter } from 'monaco-languageclient/lib/monaco-converter';
+import './setDefaultTheme';
 
 const MODEL_URI = 'inmemory://model.json'
 const MONACO_URI = monaco.Uri.parse(MODEL_URI);
