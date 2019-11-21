@@ -20,7 +20,7 @@ g.before_all = function()
                     {
                         alias = 'router',
                         instance_uuid = helpers.uuid('a', 'a', 1),
-                        advertise_port = 33001,
+                        advertise_port = 13301,
                         http_port = 8081
                     }
                 }
@@ -29,14 +29,14 @@ g.before_all = function()
                 roles = {'vshard-storage'},
                 servers = {
                     {
-                        alias = 'storage',
+                        alias = 'storage-1',
                         instance_uuid = helpers.uuid('b', 'b', 1),
-                        advertise_port = 33002,
+                        advertise_port = 13302,
                         http_port = 8082
                     }, {
                         alias = 'storage-2',
                         instance_uuid = helpers.uuid('b', 'b', 2),
-                        advertise_port = 33004,
+                        advertise_port = 13304,
                         http_port = 8084
                     }
                 }
@@ -47,7 +47,7 @@ g.before_all = function()
                     {
                         alias = 'expelled',
                         instance_uuid = helpers.uuid('c', 'c', 1),
-                        advertise_port = 33009,
+                        advertise_port = 13309,
                         http_port = 8089
                     }
                 }
@@ -142,7 +142,7 @@ end
 
 function g.test_edit_replicaset()
     local router = g.cluster:server('router')
-    local storage = g.cluster:server('storage')
+    local storage = g.cluster:server('storage-1')
 
     router:graphql({
         query = [[
@@ -219,7 +219,7 @@ function g.test_edit_replicaset()
         status = 'healthy',
         weight = 2,
         all_rw = false,
-        servers = {{uri = 'localhost:33002'}, {uri = 'localhost:33004'}}
+        servers = {{uri = 'localhost:13302'}, {uri = 'localhost:13304'}}
     })
 
     router:graphql({
@@ -241,7 +241,7 @@ function g.test_edit_replicaset()
         status = 'healthy',
         weight = 2,
         all_rw = true,
-        servers = {{uri = 'localhost:33002'}, {uri = 'localhost:33004'}}
+        servers = {{uri = 'localhost:13302'}, {uri = 'localhost:13304'}}
     })
 end
 

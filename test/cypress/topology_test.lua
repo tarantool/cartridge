@@ -66,33 +66,20 @@ g.before_all = function()
         cluster_cookie = 'super-cluster-cookie',
         advertise_port = 13313,
     })
-    -- g.server5 = helpers.Server:new({
-    --     workdir = fio.tempdir(),
-    --     alias = 'server5',
-    --     command = test_helper.server_command,
-    --     replicaset_uuid = helpers.uuid('с'),
-    --     instance_uuid = helpers.uuid('b', 'b', 3),
-    --     http_port = 8085,
-    --     cluster_cookie = 'super-cluster-cookie',
-    --     advertise_port = 33005,
-    -- })
+
     g.cluster:start()
     g.server3:start()
     g.server4:start()
-    -- g.server5:start()
-
 end
 
 g.after_all = function()
     g.cluster:stop()
     g.server3:stop()
     g.server4:stop()
-    -- g.server5:stop()
+
     fio.rmtree(g.cluster.datadir)
     fio.rmtree(g.server3.workdir)
     fio.rmtree(g.server4.workdir)
-    -- fio.rmtree(g.server5.workdir)
-
 end
 
 function g.test_edit_join_expel()

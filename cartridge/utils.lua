@@ -171,7 +171,7 @@ end
 
 local mt_readonly = {
     __newindex = function()
-        error('table is read-only')
+        error('table is read-only', 2)
     end
 }
 
@@ -185,8 +185,6 @@ local mt_readonly = {
 -- @tparam boolean ro Desired readonliness.
 -- @treturn table The same table `tbl`.
 local function set_readonly(tbl, ro)
-    checks("table", "boolean")
-
     for _, v in pairs(tbl) do
         if type(v) == 'table' then
             set_readonly(v, ro)
@@ -289,9 +287,11 @@ return {
     is_email_valid = is_email_valid,
 
     table_setro = function(tbl)
+        checks("table")
         return set_readonly(tbl, true)
     end,
     table_setrw = function(tbl)
+        checks("table")
         return set_readonly(tbl, false)
     end,
 }

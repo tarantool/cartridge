@@ -4,7 +4,6 @@ local g = t.group('admin')
 
 local test_helper = require('test.helper')
 local helpers = require('cartridge.test-helpers')
-local json = require('json')
 local digest = require('digest')
 
 local ADMIN_USERNAME = 'admin'
@@ -21,7 +20,7 @@ g.before_all = function()
         alias = 'master',
         workdir = fio.tempdir(),
         command = fio.pathjoin(test_helper.root, 'test', 'integration', 'srv_woauth.lua'),
-        advertise_port = 33001,
+        advertise_port = 13301,
         http_port = 8081,
         cluster_cookie = 'super-cluster-cookie',
         instance_uuid = helpers.uuid('a', 'a', 1),
@@ -112,7 +111,7 @@ function g.test_api()
 
     t.assert_error_msg_contains(
         "edit_user() callback isn't set",
-        edit_user, 'guest', qwerty
+        edit_user, 'guest', 'qwerty'
     )
 
     local list_users = function(username)
