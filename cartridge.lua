@@ -513,49 +513,10 @@ local function cfg(opts, box_opts)
     return true
 end
 
---- Bootstrap a new cluster.
---
--- It is bootstrapped with the only (current) instance.
--- Later, you can join other instances using `cartridge.admin`.
---
--- @function bootstrap
--- @local
--- @tparam {string,...} roles
---   roles to be enabled on the current instance
--- @tparam table uuids
--- @tparam ?string uuids.instance_uuid
---   bootstrap current instance with specified uuid
--- @tparam ?string uuids.replicaset_uuid
---   assign replicaset uuid to the current instance
--- @tparam {[string]=string,...} labels
---   labels for the current instance
--- @tparam string vshard_group
---   which vshard storage group to join to
---   (for multi-group configuration only)
-local function bootstrap_from_scratch(roles, uuids, labels, vshard_group)
-    checks('?table', {
-        instance_uuid = '?uuid_str',
-        replicaset_uuid = '?uuid_str',
-        },
-        '?table',
-        '?string'
-    )
-
-    return admin.join_server({
-        uri = membership.myself().uri,
-        instance_uuid = uuids and uuids.instance_uuid,
-        replicaset_uuid = uuids and uuids.replicaset_uuid,
-        roles = roles,
-        labels = labels,
-        vshard_group = vshard_group,
-    })
-end
-
 return {
     VERSION = VERSION,
 
     cfg = cfg,
-    bootstrap = bootstrap_from_scratch,
 
     --- .
     -- @refer cartridge.topology.cluster_is_healthy
