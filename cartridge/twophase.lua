@@ -19,8 +19,10 @@ local utils = require('cartridge.utils')
 local topology = require('cartridge.topology')
 local confapplier = require('cartridge.confapplier')
 
-local e_atomic = errors.new_class('Atomic call failed')
-local e_config_apply = errors.new_class('Applying configuration failed')
+local AtomicCallError = errors.new_class('AtomicCallError')
+local PatchClusterwideError = errors.new_class('PatchClusterwideError')
+-- local Prepare2pcError = errors.new_class('Prepare2pcError')
+local Commit2pcError = errors.new_class('Commit2pcError')
 
 yaml.cfg({
     encode_load_metatables = false,
@@ -84,7 +86,9 @@ local function commit_2pc()
 
     local ok = fio.rename(path_prepare, path_active)
     if not ok then
-        local err = e_config_apply:new('Can not move %q: %s', path_prepare, errno.strerror())
+        local err = Commit2pcError:new(
+            "Can't move %q: %s", path_prepare, errno.strerror()
+        )
         log.error('Error commmitting config update: %s', err)
         return nil, err
     end
@@ -276,14 +280,14 @@ end
 
 local function patch_clusterwide(patch)
     if vars.locks['clusterwide'] == true  then
-        return nil, e_atomic:new(
+        return nil, AtomicCallError:new(
             'cartridge.patch_clusterwide is already running'
         )
     end
 
     box.session.su('admin')
     vars.locks['clusterwide'] = true
-    local ok, err = e_config_apply:pcall(_clusterwide, patch)
+    local ok, err = PatchClusterwideError:pcall(_clusterwide, patch)
     vars.locks['clusterwide'] = false
 
     return ok, err

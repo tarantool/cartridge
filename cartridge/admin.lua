@@ -23,8 +23,8 @@ local vshard_utils = require('cartridge.vshard-utils')
 local confapplier = require('cartridge.confapplier')
 local service_registry = require('cartridge.service-registry')
 
-local e_topology_edit = errors.new_class('Editing cluster topology failed')
-local e_probe_server = errors.new_class('Can not probe server')
+local EditTopologyError = errors.new_class('Editing cluster topology failed')
+local ProbeServerError = errors.new_class('ProbeServerError')
 
 local function get_server_info(members, uuid, uri)
     local member = members[uri]
@@ -438,7 +438,7 @@ local function probe_server(uri)
     checks('string')
     local ok, err = membership.probe_uri(uri)
     if not ok then
-        return nil, e_probe_server:new('Probe %q failed: %s', uri, err)
+        return nil, ProbeServerError:new('Probe %q failed: %s', uri, err)
     end
 
     return true
@@ -460,7 +460,7 @@ local function __join_server(topology_cfg, params)
     })
 
     if topology_cfg.servers[params.uuid] ~= nil then
-        return nil, e_topology_edit:new(
+        return nil, EditTopologyError:new(
             "Server %q is already joined",
             params.uuid
         )
@@ -495,9 +495,9 @@ local function __edit_server(topology_cfg, params)
 
     local server = topology_cfg.servers[params.uuid]
     if server == nil then
-        return nil, e_topology_edit:new('Server %q not in config', params.uuid)
+        return nil, EditTopologyError:new('Server %q not in config', params.uuid)
     elseif server == "expelled" then
-        return nil, e_topology_edit:new('Server %q is expelled', params.uuid)
+        return nil, EditTopologyError:new('Server %q is expelled', params.uuid)
     end
 
     if params.uri ~= nil then
@@ -537,7 +537,7 @@ local function __edit_replicaset(topology_cfg, params)
         if params.join_servers == nil
         or next(params.join_servers) == nil
         then
-            return nil, e_topology_edit:new(
+            return nil, EditTopologyError:new(
                 'Replicaset %q not in config',
                 params.uuid
             )
@@ -749,7 +749,7 @@ local function edit_topology(args)
             local leaders = topology.get_leaders_order(topology_cfg, replicaset_uuid)
 
             if topology_cfg.servers[leaders[1]] == 'expelled' then
-                return nil, e_topology_edit:new(
+                return nil, EditTopologyError:new(
                     "Server %q is the leader and can't be expelled", leaders[1]
                 )
             end
@@ -839,7 +839,7 @@ local function join_server(args)
         -- Bootstrapping first instance from the web UI
         local myself = membership.myself()
         if args.uri ~= myself.uri then
-            return nil, e_topology_edit:new(
+            return nil, EditTopologyError:new(
                 "Invalid attempt to call join_server()." ..
                 " This instance isn't bootstrapped yet" ..
                 " and advertises uri=%q while you are joining uri=%q.",
@@ -907,7 +907,7 @@ local function join_server(args)
     if conn then
         return true
     else
-        return nil, e_topology_edit:new('Timeout connecting %q', args.uri)
+        return nil, EditTopologyError:new('Timeout connecting %q', args.uri)
     end
 end
 
@@ -1078,7 +1078,7 @@ local function set_failover_enabled(enabled)
     checks('boolean')
     local topology_cfg = confapplier.get_deepcopy('topology')
     if topology_cfg == nil then
-        return nil, e_topology_edit:new('Not bootstrapped yet')
+        return nil, EditTopologyError:new('Not bootstrapped yet')
     end
     topology_cfg.failover = enabled
 

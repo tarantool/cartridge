@@ -6,9 +6,9 @@ local errno = require('errno')
 local checks = require('checks')
 local errors = require('errors')
 
-local e_fopen = errors.new_class('Can not open file')
-local e_fread = errors.new_class('Can not read from file')
-local e_fwrite = errors.new_class('Can not write to file')
+local OpenFileError = errors.new_class('OpenFileError')
+local ReadFileError = errors.new_class('ReadFileError')
+local WriteFileError = errors.new_class('WriteFileError')
 
 
 ffi.cdef[[
@@ -126,13 +126,13 @@ end
 local function file_read(path)
     local file = fio.open(path)
     if file == nil then
-        return nil, e_fopen:new('%q %s', path, errno.strerror())
+        return nil, OpenFileError:new('%s: %s', path, errno.strerror())
     end
     local buf = {}
     while true do
         local val = file:read(1024)
         if val == nil then
-            return nil, e_fread:new('%q %s', path, errno.strerror())
+            return nil, ReadFileError:new('%s: %s', path, errno.strerror())
         elseif val == '' then
             break
         end
@@ -148,19 +148,19 @@ local function file_write(path, data, opts, perm)
     perm = perm or tonumber(644, 8)
     local file = fio.open(path, opts, perm)
     if file == nil then
-        return nil, e_fopen:new('%q %s', path, errno.strerror())
+        return nil, OpenFileError:new('%s: %s', path, errno.strerror())
     end
 
     local res = file:write(data)
     if not res then
-        local err = e_fwrite:new('%q %s', path, errno.strerror())
+        local err = WriteFileError:new('%s: %s', path, errno.strerror())
         fio.unlink(path)
         return nil, err
     end
 
     local res = file:close()
     if not res then
-        local err = e_fwrite:new('%q %s', path, errno.strerror())
+        local err = WriteFileError:new('%s: %s', path, errno.strerror())
         fio.unlink(path)
         return nil, err
     end

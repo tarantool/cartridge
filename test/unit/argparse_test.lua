@@ -271,7 +271,7 @@ function g:test_confdir()
     )
 
     local ret = self:run('--cfg ./conflict.d', {}, {ignore_errors = true})
-    t.assertStrContains(ret.err, 'ConfDirError: collision of section "other"' ..
+    t.assertStrContains(ret.err, 'ParseConfigError: collision of section "other"' ..
         ' in ./conflict.d/ between 0-default.yml and 1-custom.yaml'
     )
 end
@@ -283,13 +283,13 @@ function g:test_badfile()
     )
 
     local ret = self:run('--cfg ./cfg.txt', {}, {ignore_errors = true})
-    t.assertStrContains(ret.err, 'ConfFileError: ./cfg.txt: unsupported file type')
+    t.assertStrContains(ret.err, 'ParseConfigError: ./cfg.txt: Unsupported file type')
 
     local ret = self:run('--cfg /dev/null', {}, {ignore_errors = true})
-    t.assertStrContains(ret.err, 'ConfFileError: /dev/null: unsupported file type')
+    t.assertStrContains(ret.err, 'ParseConfigError: /dev/null: Unsupported file type')
 
     local ret = self:run('--cfg /no/such/file.yml', {}, {ignore_errors = true})
-    t.assertStrContains(ret.err, 'Can not open file: "/no/such/file.yml" No such file or directory')
+    t.assertStrContains(ret.err, 'OpenFileError: /no/such/file.yml: No such file or directory')
 
     utils.file_write(
         fio.pathjoin(self.tempdir, 'tarantool.yml'),

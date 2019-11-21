@@ -55,6 +55,10 @@ local vars = require('cartridge.vars').new('cartridge.argparse')
 local utils = require('cartridge.utils')
 vars:new('args', nil)
 
+local ParseConfigError = errors.new_class('ParseConfigError')
+local DecodeYamlError = errors.new_class('DecodeYamlError')
+local TypeCastError = errors.new_class('TypeCastError')
+
 local function toboolean(val)
     if type(val) == 'boolean' then
         return val
@@ -167,14 +171,10 @@ local function load_file(filename)
         if ok then
             file_sections = ret
         else
-            err = errors.new('DecodeYamlError',
-                '%s: %s', filename, ret
-            )
+            err = DecodeYamlError:new('%s: %s', filename, ret)
         end
     else
-        err = errors.new('ConfFileError',
-            '%s: unsupported file type', filename
-        )
+        err = ParseConfigError:new('%s: Unsupported file type', filename)
     end
 
     if file_sections == nil then
@@ -204,7 +204,7 @@ local function load_dir(dirname)
                 ret[section_name] = {}
                 origin[section_name] = fio.basename(f)
             else
-                return nil, errors.new('ConfDirError',
+                return nil, ParseConfigError:new(
                     'collision of section %q in %s between %s and %s',
                     section_name, dirname, origin[section_name], fio.basename(f)
                 )
@@ -392,14 +392,14 @@ local function get_opts(opts)
             elseif opttype == 'boolean' then
                 _value = toboolean(value)
             else
-                return nil, errors.new('TypeCastError',
+                return nil, TypeCastError:new(
                     "can't typecast %s to %s (unsupported type)",
                     optname, opttype
                 )
             end
 
             if _value == nil then
-                return nil, errors.new('TypeCastError',
+                return nil, TypeCastError:new(
                     "can't typecast %s=%q to %s",
                     optname, value, opttype
                 )
@@ -407,7 +407,7 @@ local function get_opts(opts)
 
             ret[optname] = _value
         else
-            return nil, errors.new('TypeCastError',
+            return nil, TypeCastError:new(
                 "invalid configuration parameter %s (%s expected, got %s)",
                 optname, opttype, type(value)
             )
