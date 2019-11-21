@@ -58,10 +58,10 @@ local function prepare_2pc(conf)
     return true
 end
 
-
 --- Two-phase commit - commit stage.
 --
--- Back up the active configuration, commit changes to filesystem, release the lock, and configure roles.
+-- Back up the active configuration, commit changes to filesystem by
+-- renaming prepared file, release the lock, and configure roles.
 -- If any errors occur, configuration is not rolled back automatically.
 -- Any problem encountered during this call has to be solved manually.
 --
