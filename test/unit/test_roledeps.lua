@@ -3,7 +3,6 @@
 local log = require('log')
 local tap = require('tap')
 local json = require('json')
-local socket = require('socket')
 local roles = require('cartridge.roles')
 
 local test = tap.test('cluster.register_role')
