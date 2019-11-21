@@ -8,9 +8,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
-- Automatically choose default vshard group in create and edit replicaset modals
+- Automatically choose default vshard group in create and edit
+  replicaset modals.
 
-- Use for frontend part single point of configuration HTTP handlers. As example: you can add your own client HTTP middleware for auth.
+- Use for frontend part single point of configuration HTTP handlers.
+  As example: you can add your own client HTTP middleware for auth.
 
 ### Changed
 
@@ -22,7 +24,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   role available" anymore, empty table is returned instead.
   **(incompatible change)**
 
-- Don't show Users page and move auth switcher to cluster page when only `implements_check_password = true`
+- Hide users page in WebUI when auth backend implements no user management
+  functions. Enable auth switcher is displayed on main cluster page in
+  this case.
+
+### Removed
+
+- Function `cartridge.bootstrap`. Use `admin_edit_topology` interad.
+  **(incompatible change)**
 
 ### Fixed
 
@@ -141,8 +150,10 @@ GraphQL API:
   all instances in the replicaset as `read_only = false`.
   It can be managed with both GraphQL and Lua API `edit_replicaset`.
 
-- Remote Control server - a partial replacement for the `box.cfg({listen})`, independent on `box.cfg`.
-  The server is only to be used internally for bootstrapping new instances.
+- Remote Control server - a replacement for the `box.cfg({listen})`,
+  with limited functionality, independent on `box.cfg`.
+  The server is only to be used internally for bootstrapping new
+  instances.
 
 - New module `argparse` for gathering configuration options from
   command-line arguments, environment variables, and configuration files.
