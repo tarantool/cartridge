@@ -3,7 +3,10 @@ local g = t.group('remote_control')
 
 local fio = require('fio')
 local digest = require('digest')
+local socket = require('socket')
+local pickle = require('pickle')
 local netbox = require('net.box')
+local msgpack = require('msgpack')
 local remote_control = require('cartridge.remote-control')
 local errno = require('errno')
 
@@ -167,6 +170,121 @@ function g.test_ping()
     rc_start(13301)
     local conn = assert(netbox.connect('localhost:13301'))
     t.assertTrue(conn:ping())
+end
+
+function g.test_bytestream()
+    -- Check ability to handle fragmented stream properly
+
+    local function check_conn(conn)
+        assert(conn, errno.strerror())
+        conn:read(128) -- greeting
+
+        local header = msgpack.encode({
+            [0x00] = 0x40, -- code = ping
+            [0x01] = 1337, -- sync = 1337
+        })
+        local message = '\xCE' .. pickle.pack('N', #header) .. header
+        for i = 1, #message do
+            conn:write(message:sub(i, i))
+        end
+
+        assert(conn:readable(1), "Recv timeout")
+        local resp = assert(conn:recv(1024))
+        local _, pos = msgpack.decode(resp)
+        local body = msgpack.decode(resp, pos)
+
+        t.assert_equals(body[0x00], 0x00) -- iproto_ok
+        t.assert_equals(body[0x01], 1337) -- iproto_sync
+    end
+
+    rc_start(13301)
+    box.cfg({listen = box.NULL})
+    local conn_rc = socket.tcp_connect('127.0.0.1', 13301)
+    check_conn(conn_rc)
+    conn_rc:close()
+
+    remote_control.stop()
+    box.cfg({listen = '127.0.0.1:13302'})
+    local conn_box = socket.tcp_connect('127.0.0.1', 13302)
+    check_conn(conn_box)
+    conn_box:close()
+end
+
+function g.test_invalid_serialization()
+    -- Tarantool iproto protocol describes unified packet structure
+    -- as follows:
+    --
+    -- 0        5
+    -- +--------+ +============+ +===================================+
+    -- | BODY + | |            | |                                   |
+    -- | HEADER | |   HEADER   | |               BODY                |
+    -- |  SIZE  | |            | |                                   |
+    -- +--------+ +============+ +===================================+
+    --   MP_INT       MP_MAP                     MP_MAP
+    --
+    -- It starts from 5-byte uint32 (0xCE)
+    -- But python connector disregards it and uses mp_encode,
+    -- which sometimes results in smaller types uint16/uint8
+    -- or even FIXNUM
+    --
+    -- Remote control should still be able to handle this stream.
+
+    local function check_conn(conn)
+        assert(conn, errno.strerror())
+        conn:read(128) -- greeting
+
+        local header = msgpack.encode({
+            [0x00] = 0x40, -- code = ping
+            [0x01] = 0x77, -- sync = 0x77
+        })
+        local message = pickle.pack('B', #header) .. header
+        conn:write(message)
+
+        assert(conn:readable(1), "Recv timeout")
+        local resp = conn:recv(100)
+        local _, pos = msgpack.decode(resp)
+        local body = msgpack.decode(resp, pos)
+
+        t.assert_equals(body[0x00], 0x00) -- iproto_ok
+        t.assert_equals(body[0x01], 0x77) -- iproto_sync
+    end
+
+    rc_start(13301)
+    box.cfg({listen = box.NULL})
+    local conn_rc = socket.tcp_connect('127.0.0.1', 13301)
+    check_conn(conn_rc)
+    conn_rc:close()
+
+    remote_control.stop()
+    box.cfg({listen = '127.0.0.1:13302'})
+    local conn_box = socket.tcp_connect('127.0.0.1', 13302)
+    check_conn(conn_box)
+    conn_box:close()
+end
+
+function g.test_large_payload()
+    local _20MiB = {}
+    for _ = 1, 20*1024 do
+        local chunk = digest.urandom(512):hex()
+        assert(#chunk == 1024)
+        table.insert(_20MiB, chunk)
+    end
+
+    local function check_conn(conn)
+        t.assertEquals(conn:eval('return #(...)', {_20MiB}), 20*1024)
+    end
+
+    remote_control.stop()
+    box.cfg({listen = '127.0.0.1:13302'})
+    local conn_box = assert(netbox.connect('superuser:3.141592@localhost:13302'))
+    check_conn(conn_box)
+    conn_box:close()
+
+    rc_start(13301)
+    box.cfg({listen = box.NULL})
+    local conn_rc = assert(netbox.connect('superuser:3.141592@localhost:13301'))
+    check_conn(conn_rc)
+    conn_rc:close()
 end
 
 function g.test_async()

@@ -116,13 +116,10 @@ local function reply_ok(s, sync, data)
     })
 
     if data == nil then
-        s:write(msgpack.encode(#header))
-        s:write(header)
+        s:write(msgpack.encode(#header) .. header)
     else
         local payload = data and msgpack.encode({[0x30] = data})
-        s:write(msgpack.encode(#header + #payload))
-        s:write(header)
-        s:write(payload)
+        s:write(msgpack.encode(#header + #payload) .. header .. payload)
     end
 end
 
@@ -138,24 +135,29 @@ local function reply_err(s, sync, ecode, efmt, ...)
         [0x31] = efmt:format(...)
     })
 
-    s:write(msgpack.encode(#header + #payload))
-    s:write(header)
-    s:write(payload)
+    s:write(msgpack.encode(#header + #payload) .. header .. payload)
 end
 
 local function communicate(s)
-    local size_raw = s:read(5)
-    if size_raw == '' then
+    local buf = s:read(5)
+    if not buf or buf == '' then
         log.info('Peer closed')
         return false
     end
 
-    local size = msgpack.decode(size_raw)
-    local payload = s:read(size)
-    local header, pos = msgpack.decode(payload)
+    local size, pos = msgpack.decode(buf)
+    local _tail = s:read(pos-1 + size - #buf)
+    if _tail == nil or _tail == '' then
+        log.info('Peer closed')
+        return false
+    else
+        buf = buf .. _tail
+    end
+
+    local header, pos = msgpack.decode(buf, pos)
     local body = nil
-    if pos < size then
-        body = msgpack.decode(payload, pos)
+    if pos < #buf then
+        body = msgpack.decode(buf, pos)
     end
 
     local code = header[0x00]
