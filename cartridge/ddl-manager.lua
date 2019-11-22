@@ -9,6 +9,7 @@ local errors = require('errors')
 local topology = require('cartridge.topology')
 
 local CheckSchemaError = errors.new_class('CheckSchemaError')
+local DecodeYamlError = errors.new_class('DecodeYamlError')
 
 local _section_name = 'schema.yml'
 
@@ -23,12 +24,8 @@ local function _from_yaml(schema_yml)
         return nil, err
     end
 
-    local ok, schema_tbl = pcall(yaml.decode, schema_yml)
-    if not ok then
-        local err = CheckSchemaError:new(
-            'Invalid YAML: %s',
-            schema_tbl
-        )
+    local schema_tbl, err = DecodeYamlError:pcall(yaml.decode, schema_yml)
+    if schema_tbl == nil then
         return nil, err
     end
 

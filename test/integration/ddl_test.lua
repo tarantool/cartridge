@@ -206,7 +206,7 @@ function g.test_graphql_errors()
         )
     end
 
-    _test('][', 'Invalid YAML: unexpected END event')
+    _test('][', 'unexpected END event')
     _test(1000, 'Section "schema.yml" must be a string, got number')
     _test('42', 'Schema must be a table, got number')
     _test('spaces: false',
