@@ -294,7 +294,15 @@ local function patch_clusterwide(patch)
     return ok, err
 end
 
-function _G.cartridge_get_schema()
+
+--- Get clusterwide DDL schema.
+--
+-- (**Added** in v1.2.0-28)
+-- @function get_schema
+-- @treturn[1] string Schema in YAML format
+-- @treturn[2] nil
+-- @treturn[2] table Error description
+local function get_schema()
     if confapplier.get_readonly() == nil then
         return nil, GetSchemaError:new(
             "Cluster isn't bootstaraped yet"
@@ -303,22 +311,30 @@ function _G.cartridge_get_schema()
     local schema_yml = confapplier.get_readonly('schema.yml')
 
     if schema_yml == nil then
-        return {spaces = {}}
+        return '---\nspaces: {}\n...\n'
     else
-        return yaml.decode(schema_yml)
+        return schema_yml
     end
 end
 
-function _G.cartridge_set_schema(schema)
-    checks('table')
+--- Apply clusterwide DDL schema.
+--
+-- (**Added** in v1.2.0-28)
+-- @function set_schema
+-- @tparam string schema in YAML format
+-- @treturn[1] string The same new schema
+-- @treturn[2] nil
+-- @treturn[2] table Error description
+local function set_schema(schema_yml)
+    checks('string')
 
-    local patch = {['schema.yml'] = yaml.encode(schema)}
+    local patch = {['schema.yml'] = schema_yml}
     local ok, err = patch_clusterwide(patch)
     if not ok then
         return nil, err.err
     end
 
-    return true
+    return get_schema()
 end
 
 _G.__cluster_confapplier_prepare_2pc = prepare_2pc
@@ -330,5 +346,7 @@ return {
     commit_2pc = commit_2pc,
     abort_2pc = abort_2pc,
 
+    get_schema = get_schema,
+    set_schema = set_schema,
     patch_clusterwide = patch_clusterwide,
 }

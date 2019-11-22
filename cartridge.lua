@@ -513,6 +513,9 @@ local function cfg(opts, box_opts)
     return true
 end
 
+_G.cartridge_get_schema = twophase.get_schema
+_G.cartridge_set_schema = twophase.set_schema
+
 return {
     VERSION = VERSION,
 
@@ -526,23 +529,13 @@ return {
 --- Global functions.
 -- @section globals
 
-    --- Get clusterwide DDL schema.
-    --
-    -- (**Added** in v1.2.0-27)
+    --- .
+    -- @refer cartridge.twophase.get_schema
     -- @function _G.cartridge_get_schema
-    -- @treturn[1] boolean true
-    -- @treturn[2] nil
-    -- @treturn[2] table Error description
 
-    --- Apply clusterwide DDL schema.
-    --
-    -- (**Added** in v1.2.0-27)
+    --- .
+    -- @refer cartridge.twophase.set_schema
     -- @function _G.cartridge_set_schema
-    -- @param table schema
-    -- @treturn[1] boolean true
-    -- @treturn[2] nil
-    -- @treturn[2] table Error description
-
 
 --- Cluster administration.
 -- @refer cartridge.admin

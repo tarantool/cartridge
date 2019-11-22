@@ -123,22 +123,23 @@ function g.test_luaapi()
     end
 
     log.info('Applying valid schema...')
+    local schema = _schema .. "# P.S. It's fun\n"
 
     t.assert_equals(
-        call('cartridge_set_schema', {yaml.decode(_schema)}),
-        true
+        call('cartridge_set_schema', {schema}),
+        schema
     )
 
     log.info('Reapplying valid schema...')
 
     t.assert_equals(
-        call('cartridge_set_schema', {yaml.decode(_schema)}),
-        true
+        call('cartridge_set_schema', {schema}),
+        schema
     )
 
     t.assert_equals(
         call('cartridge_get_schema'),
-        yaml.decode(_schema)
+        schema
     )
 
     for _, srv in pairs(g.cluster.servers) do
@@ -153,14 +154,14 @@ function g.test_luaapi()
     log.info('Patching with invalid schema...')
 
     t.assert_equals(
-        {call('cartridge_set_schema', {{spaces = {}}})},
+        {call('cartridge_set_schema', {'{"spaces":{}}'})},
         {box.NULL, 'Missing space "test_space" in schema,' ..
         ' removing spaces is forbidden'}
     )
 
     t.assert_equals(
-        yaml.decode(_get_schema(g.cluster.main_server).as_yaml),
-        yaml.decode(_schema)
+        _get_schema(g.cluster.main_server).as_yaml,
+        schema
     )
 end
 
