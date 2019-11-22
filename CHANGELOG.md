@@ -30,8 +30,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Removed
 
-- Function `cartridge.bootstrap`. Use `admin_edit_topology` interad.
-  **(incompatible change)**
+- Function `cartridge.bootstrap` is removed. Use `admin_edit_topology`
+  interad. **(incompatible change)**
+
+- Misspelled role callback `validate` is now removed completely.
+  Keep using `validate_config`.
 
 ### Fixed
 
