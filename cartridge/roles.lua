@@ -259,22 +259,6 @@ local function validate_config(conf_new, conf_old)
                 )
                 return nil, err
             end
-        elseif type(mod.validate) == 'function' then
-            log.warn(
-                'Role %q method "validate()" is deprecated. ' ..
-                'Use "validate_config()" instead.',
-                mod.role_name
-            )
-            local ok, err = ValidateConfigError:pcall(
-                mod.validate, conf_new, conf_old
-            )
-            if not ok then
-                err = err or ValidateConfigError:new(
-                    'Role %q method validate() returned %s',
-                    mod.role_name, ok
-                )
-                return nil, err
-            end
         end
     end
 
