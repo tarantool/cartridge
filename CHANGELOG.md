@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Built-in DDL schema management. Schema is a part of clusterwide
   configuration. It's applied to every instance in cluster.
 
+- DDL schema editor page in webui.
+
 ### Changed
 
 - WebUI now uses `edit_topology` mutation instead of deprecated ones.

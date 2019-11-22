@@ -17,10 +17,12 @@ export type Scalars = {
 export type Apicluster = {
   /** Get current server */
   self?: ?ServerShortInfo,
+  /** Clusterwide DDL schema */
+  schema: DdlSchema,
   /** Get current failover state. */
   failover: $ElementType<Scalars, "Boolean">,
-  /** Virtual buckets count in cluster */
-  vshard_bucket_count: $ElementType<Scalars, "Int">,
+  /** Whether it is reasonble to call bootstrap_vshard mutation */
+  can_bootstrap_vshard: $ElementType<Scalars, "Boolean">,
   /** List authorized users */
   users?: ?Array<User>,
   /** Get list of all registered roles and their dependencies. */
@@ -29,13 +31,24 @@ export type Apicluster = {
   vshard_known_groups: Array<$ElementType<Scalars, "String">>,
   vshard_groups: Array<VshardGroup>,
   auth_params: UserManagementApi,
-  /** Whether it is reasonble to call bootstrap_vshard mutation */
-  can_bootstrap_vshard: $ElementType<Scalars, "Boolean">
+  /** Virtual buckets count in cluster */
+  vshard_bucket_count: $ElementType<Scalars, "Int">
 };
 
 /** Cluster management */
 export type ApiclusterUsersArgs = {
   username?: ?$ElementType<Scalars, "String">
+};
+
+/** Result of schema validation */
+export type DdlCheckResult = {
+  /** Null if validation passed, error message otherwise */
+  error?: ?$ElementType<Scalars, "String">
+};
+
+/** The schema */
+export type DdlSchema = {
+  as_yaml: $ElementType<Scalars, "String">
 };
 
 /** Parameters for editing a replicaset */
@@ -136,7 +149,12 @@ export type MutationExpel_ServerArgs = {
 
 /** Cluster management */
 export type MutationApicluster = {
-  edit_vshard_options: VshardGroup,
+  /** Applies DDL schema on cluster */
+  schema: DdlSchema,
+  /** Enable or disable automatic failover. Returns new state. */
+  failover: $ElementType<Scalars, "Boolean">,
+  /** Checks that schema can be applied on cluster */
+  check_schema: DdlCheckResult,
   auth_params: UserManagementApi,
   /** Remove user */
   remove_user?: ?User,
@@ -146,20 +164,24 @@ export type MutationApicluster = {
   edit_topology?: ?EditTopologyResult,
   /** Create a new user */
   add_user?: ?User,
-  /** Enable or disable automatic failover. Returns new state. */
-  failover: $ElementType<Scalars, "Boolean">,
+  edit_vshard_options: VshardGroup,
   /** Disable listed servers by uuid */
   disable_servers?: ?Array<?Server>
 };
 
 /** Cluster management */
-export type MutationApiclusterEdit_Vshard_OptionsArgs = {
-  rebalancer_max_receiving?: ?$ElementType<Scalars, "Int">,
-  collect_bucket_garbage_interval?: ?$ElementType<Scalars, "Float">,
-  collect_lua_garbage?: ?$ElementType<Scalars, "Boolean">,
-  sync_timeout?: ?$ElementType<Scalars, "Float">,
-  name: $ElementType<Scalars, "String">,
-  rebalancer_disbalance_threshold?: ?$ElementType<Scalars, "Float">
+export type MutationApiclusterSchemaArgs = {
+  as_yaml: $ElementType<Scalars, "String">
+};
+
+/** Cluster management */
+export type MutationApiclusterFailoverArgs = {
+  enabled: $ElementType<Scalars, "Boolean">
+};
+
+/** Cluster management */
+export type MutationApiclusterCheck_SchemaArgs = {
+  as_yaml: $ElementType<Scalars, "String">
 };
 
 /** Cluster management */
@@ -197,8 +219,13 @@ export type MutationApiclusterAdd_UserArgs = {
 };
 
 /** Cluster management */
-export type MutationApiclusterFailoverArgs = {
-  enabled: $ElementType<Scalars, "Boolean">
+export type MutationApiclusterEdit_Vshard_OptionsArgs = {
+  rebalancer_max_receiving?: ?$ElementType<Scalars, "Int">,
+  collect_bucket_garbage_interval?: ?$ElementType<Scalars, "Float">,
+  collect_lua_garbage?: ?$ElementType<Scalars, "Boolean">,
+  sync_timeout?: ?$ElementType<Scalars, "Float">,
+  name: $ElementType<Scalars, "String">,
+  rebalancer_disbalance_threshold?: ?$ElementType<Scalars, "Float">
 };
 
 /** Cluster management */
@@ -424,7 +451,7 @@ export type VshardGroup = {
   bucket_count: $ElementType<Scalars, "Int">,
   /** The interval between garbage collector actions, in seconds */
   collect_bucket_garbage_interval: $ElementType<Scalars, "Float">,
-  /** Whethe the group is ready to operate */
+  /** Whether the group is ready to operate */
   bootstrapped: $ElementType<Scalars, "Boolean">,
   /** If set to true, the Lua collectgarbage() function is called periodically */
   collect_lua_garbage: $ElementType<Scalars, "Boolean">,
@@ -883,5 +910,36 @@ export type RemoveUserMutation = { __typename?: "Mutation" } & {
       User,
       { username: *, email: *, fullname: * }
     >)
+  })
+};
+
+export type Get_SchemaQueryVariables = {};
+
+export type Get_SchemaQuery = { __typename?: "Query" } & {
+  cluster: ?({ __typename?: "Apicluster" } & {
+    schema: { __typename?: "DDLSchema" } & $Pick<DdlSchema, { as_yaml: * }>
+  })
+};
+
+export type Set_SchemaMutationVariables = {
+  yaml: $ElementType<Scalars, "String">
+};
+
+export type Set_SchemaMutation = { __typename?: "Mutation" } & {
+  cluster: ?({ __typename?: "MutationApicluster" } & {
+    schema: { __typename?: "DDLSchema" } & $Pick<DdlSchema, { as_yaml: * }>
+  })
+};
+
+export type Check_SchemaMutationVariables = {
+  yaml: $ElementType<Scalars, "String">
+};
+
+export type Check_SchemaMutation = { __typename?: "Mutation" } & {
+  cluster: ?({ __typename?: "MutationApicluster" } & {
+    check_schema: { __typename?: "DDLCheckResult" } & $Pick<
+      DdlCheckResult,
+      { error: * }
+    >
   })
 };

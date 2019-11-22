@@ -46,6 +46,14 @@ const menuItems = {
         expanded: false,
         loading: false,
         icon: <IconGear className={css`width: 14px; height: 14px; fill: #fff;`} />
+      },
+      {
+        label: 'Schema',
+        path: `/${PROJECT_NAME}/schema`,
+        selected: false,
+        expanded: false,
+        loading: false,
+        icon: <IconGear className={css`width: 14px; height: 14px; fill: #fff;`} />
       }
     ]
   }

@@ -455,3 +455,34 @@ export const removeUserMutation = gql`
       }
     }
 `;
+
+export const getSchemaQuery = gql`
+  query get_schema {
+    cluster {
+      schema {
+        as_yaml
+      }
+    }
+  }
+`;
+
+export const setSchemaMutation = gql`
+  mutation set_schema($yaml: String!) {
+    cluster {
+      schema(as_yaml: $yaml) {
+        as_yaml
+      }
+    }
+  }
+`;
+
+
+export const checkSchemaMutation = gql`
+  mutation check_schema($yaml: String!) {
+    cluster {
+      check_schema(as_yaml: $yaml) {
+        error
+      }
+    }
+  }
+`;
