@@ -62,7 +62,7 @@ publish-scm-1:
   only:
     - master
   script:
-    - curl -X PUT -F "rockspec=@${ROCK_NAME}-scm-1.rockspec"
+    - curl --fail -X PUT -F "rockspec=@${ROCK_NAME}-scm-1.rockspec"
       https://${ROCKS_USERNAME}:${ROCKS_PASSWORD}@rocks.tarantool.org
 
 
@@ -75,7 +75,7 @@ publish-release:
     - tags
   script:
     - cd release/
-    - curl -X PUT -F "rockspec=@${ROCK_NAME}-${CI_COMMIT_TAG}-1.rockspec"
+    - curl --fail -X PUT -F "rockspec=@${ROCK_NAME}-${CI_COMMIT_TAG}-1.rockspec"
       https://${ROCKS_USERNAME}:${ROCKS_PASSWORD}@rocks.tarantool.org
-    - curl -X PUT -F "rockspec=@${ROCK_NAME}-${CI_COMMIT_TAG}-1.all.rock"
+    - curl --fail -X PUT -F "rockspec=@${ROCK_NAME}-${CI_COMMIT_TAG}-1.all.rock"
       https://${ROCKS_USERNAME}:${ROCKS_PASSWORD}@rocks.tarantool.org
