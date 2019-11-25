@@ -6,12 +6,12 @@ if [ -n "$CI_COMMIT_TAG" ]
 then
     TAG="$CI_COMMIT_TAG"
 else
-    TAG=$(git describe --exact-match HEAD 2>/dev/null)
+    TAG=$(git describe --exact-match HEAD 2>/dev/null || true)
 fi
 
 if [ -z "$TAG" ]
 then
-    echo "Skipping release: no git tag found."
+    echo "No git tag found. Skipping release."
     exit 0
 fi
 
