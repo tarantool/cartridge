@@ -23,6 +23,7 @@ local AtomicCallError = errors.new_class('AtomicCallError')
 local PatchClusterwideError = errors.new_class('PatchClusterwideError')
 -- local Prepare2pcError = errors.new_class('Prepare2pcError')
 local Commit2pcError = errors.new_class('Commit2pcError')
+local GetSchemaError = errors.new_class('GetSchemaError')
 
 yaml.cfg({
     encode_load_metatables = false,
@@ -293,6 +294,49 @@ local function patch_clusterwide(patch)
     return ok, err
 end
 
+
+--- Get clusterwide DDL schema.
+--
+-- (**Added** in v1.2.0-28)
+-- @function get_schema
+-- @treturn[1] string Schema in YAML format
+-- @treturn[2] nil
+-- @treturn[2] table Error description
+local function get_schema()
+    if confapplier.get_readonly() == nil then
+        return nil, GetSchemaError:new(
+            "Cluster isn't bootstaraped yet"
+        )
+    end
+    local schema_yml = confapplier.get_readonly('schema.yml')
+
+    if schema_yml == nil then
+        return '---\nspaces: {}\n...\n'
+    else
+        return schema_yml
+    end
+end
+
+--- Apply clusterwide DDL schema.
+--
+-- (**Added** in v1.2.0-28)
+-- @function set_schema
+-- @tparam string schema in YAML format
+-- @treturn[1] string The same new schema
+-- @treturn[2] nil
+-- @treturn[2] table Error description
+local function set_schema(schema_yml)
+    checks('string')
+
+    local patch = {['schema.yml'] = schema_yml}
+    local ok, err = patch_clusterwide(patch)
+    if not ok then
+        return nil, err.err
+    end
+
+    return get_schema()
+end
+
 _G.__cluster_confapplier_prepare_2pc = prepare_2pc
 _G.__cluster_confapplier_commit_2pc = commit_2pc
 _G.__cluster_confapplier_abort_2pc = abort_2pc
@@ -302,5 +346,7 @@ return {
     commit_2pc = commit_2pc,
     abort_2pc = abort_2pc,
 
+    get_schema = get_schema,
+    set_schema = set_schema,
     patch_clusterwide = patch_clusterwide,
 }

@@ -16,6 +16,7 @@ local pool = require('cartridge.pool')
 local utils = require('cartridge.utils')
 local roles = require('cartridge.roles')
 local topology = require('cartridge.topology')
+local ddl_manager = require('cartridge.ddl-manager')
 local service_registry = require('cartridge.service-registry')
 
 yaml.cfg({
@@ -212,6 +213,11 @@ local function validate_config(conf_new, conf_old)
     end
     checks('table', 'table')
 
+    local ok, err = ddl_manager.validate_config(conf_new, conf_old)
+    if not ok then
+        return nil, err
+    end
+
     return roles.validate_config(conf_new, conf_old)
 end
 
@@ -317,6 +323,12 @@ local function apply_config(conf)
     })
     if err then
         log.error('Box.cfg failed: %s', err)
+    end
+
+    local _, _err = ddl_manager.apply_config(conf, {is_master = is_master})
+    if _err then
+        log.error('%s', _err)
+        err = err or _err
     end
 
     local _, _err = roles.apply_config(conf, {is_master = is_master})

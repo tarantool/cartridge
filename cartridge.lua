@@ -513,6 +513,9 @@ local function cfg(opts, box_opts)
     return true
 end
 
+_G.cartridge_get_schema = twophase.get_schema
+_G.cartridge_set_schema = twophase.set_schema
+
 return {
     VERSION = VERSION,
 
@@ -522,6 +525,17 @@ return {
     -- @refer cartridge.topology.cluster_is_healthy
     -- @function is_healthy
     is_healthy = topology.cluster_is_healthy,
+
+--- Global functions.
+-- @section globals
+
+    --- .
+    -- @refer cartridge.twophase.get_schema
+    -- @function _G.cartridge_get_schema
+
+    --- .
+    -- @refer cartridge.twophase.set_schema
+    -- @function _G.cartridge_set_schema
 
 --- Cluster administration.
 -- @refer cartridge.admin
