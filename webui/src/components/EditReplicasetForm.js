@@ -43,9 +43,6 @@ const styles = {
   input: css`
     margin-bottom: 4px;
   `,
-  aliasInput: css`
-    width: 50%;
-  `,
   weightInput: css`
     width: 97px;
   `,
@@ -70,18 +67,18 @@ const styles = {
     flex-basis: 100%;
     max-width: 100%;
   `,
-  wideField: css`
-    flex-basis: 100%;
-    margin-left: 16px;
-    margin-right: 16px;
-  `,
-  vshardGroupField: css`
+  field: css`
     flex-basis: calc(33% - 32px);
     flex-grow: 1;
     margin-left: 16px;
     margin-right: 16px;
   `,
-  weightField: css`
+  wideField: css`
+    flex-basis: 100%;
+    margin-left: 16px;
+    margin-right: 16px;
+  `,
+  doubleField: css`
     flex-basis: calc(66% - 32px);
     flex-grow: 1;
     margin-left: 16px;
@@ -176,19 +173,49 @@ EditReplicasetFormProps) => {
               />
               <Field name='alias'>
                 {({ input: { name, value, onChange }, meta: { error } }) => (
-                  <LabeledInput className={styles.wideField} label='Enter name of replica set'>
+                  <LabeledInput className={styles.field} label='Replica Set name'>
                     <Input
                       name={name}
-                      className={cx(
-                        styles.input,
-                        styles.aliasInput
-                      )}
+                      className={styles.input}
                       onChange={onChange}
                       value={value}
                       error={error}
                     />
                     <Text variant='p' className={styles.errorMessage}>{error}</Text>
                   </LabeledInput>
+                )}
+              </Field>
+              <Field name='weight'>
+                {({ input: { name, value, onChange }, meta: { error } }) => (
+                  <LabeledInput className={styles.field} label='Replica Set weight'>
+                    <Input
+                      className={styles.weightInput}
+                      name={name}
+                      error={error}
+                      value={value}
+                      onChange={onChange}
+                      disabled={!vshardStorageRoleChecked}
+                      placeholder='Auto'
+                    />
+                    <Text variant='p' className={styles.errorMessage}>{errors.weight}</Text>
+                  </LabeledInput>
+                )}
+              </Field>
+              <Field name='vshard_group'>
+                {({ input: { name: fieldName, value, onChange } }) => (
+                  <FormField className={styles.field} label='Vshard Group' info={info}>
+                    {vshard_groups && vshard_groups.map(({ name }) => (
+                      <RadioButton
+                        onChange={onChange}
+                        name={fieldName}
+                        value={name}
+                        checked={name === value}
+                        disabled={VShardGroupInputDisabled}
+                      >
+                        {name}
+                      </RadioButton>
+                    ))}
+                  </FormField>
                 )}
               </Field>
               <Field name='roles'>
@@ -247,39 +274,6 @@ EditReplicasetFormProps) => {
                       []
                     )}
                   </FormField>
-                )}
-              </Field>
-              <Field name='vshard_group'>
-                {({ input: { name: fieldName, value, onChange } }) => (
-                  <FormField className={styles.vshardGroupField} label='Group' info={info}>
-                    {vshard_groups && vshard_groups.map(({ name }) => (
-                      <RadioButton
-                        onChange={onChange}
-                        name={fieldName}
-                        value={name}
-                        checked={name === value}
-                        disabled={VShardGroupInputDisabled}
-                      >
-                        {name}
-                      </RadioButton>
-                    ))}
-                  </FormField>
-                )}
-              </Field>
-              <Field name='weight'>
-                {({ input: { name, value, onChange }, meta: { error } }) => (
-                  <LabeledInput className={styles.weightField} label='Weight'>
-                    <Input
-                      className={styles.weightInput}
-                      name={name}
-                      error={error}
-                      value={value}
-                      onChange={onChange}
-                      disabled={!vshardStorageRoleChecked}
-                      placeholder='Auto'
-                    />
-                    <Text variant='p' className={styles.errorMessage}>{errors.weight}</Text>
-                  </LabeledInput>
                 )}
               </Field>
               <Field name='master'>
