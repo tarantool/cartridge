@@ -1,51 +1,55 @@
 variables:
   ROCK_NAME: cartridge
+  BUNDLE_VERSION: "1.10.4-8-g3f2b35b"
+  BASE_BUILD_IMAGE: registry.gitlab.com/tarantool/cartridge
 
 stages:
   - build
+  - test
   - publish
 
 build:
   stage: build
   tags:
-    - docker
-  image: centos:7
-  variables:
-    BUNDLE_VERSION: "1.10.4-8-g3f2b35b"
-  cache:
-    key: $BUNDLE_VERSION
-    paths:
-      - tarantool-enterprise/
+    - shell
+  only:
+    changes:
+      - Dockerfile
+      - .gitlab-ci.yml
+      - test/integration/requirements.txt
   before_script:
-    - echo "Using tarantool-enterprise-bundle ${BUNDLE_VERSION}"
-    - |
-      if [ ! -e tarantool-enterprise ]
-      then
-        curl -O -L https://tarantool:${DOWNLOAD_TOKEN}@download.tarantool.io/enterprise/tarantool-enterprise-bundle-${BUNDLE_VERSION}.tar.gz
-        tar -xzf tarantool-enterprise-bundle-${BUNDLE_VERSION}.tar.gz
-        rm -rf tarantool-enterprise-bundle-${BUNDLE_VERSION}.tar.gz
-      fi
-    - export PATH=$PWD/tarantool-enterprise:$PATH
-    - yum -y install https://centos7.iuscommunity.org/ius-release.rpm
-    - yum -y install gtk3 xorg-x11-server-Xvfb libXScrnSaver GConf2 alsa-lib # cypress deps
-    - curl -sL https://rpm.nodesource.com/setup_8.x | bash -
-    - yum -y install git gcc make cmake unzip python python-pip nodejs
-    - tarantoolctl rocks install ldoc --server=http://rocks.moonscript.org
-    - tarantoolctl rocks install luacheck
-    - tarantoolctl rocks install luacov
-    - tarantoolctl rocks install luacov-console 1.1.0
-    - pip install -r test/integration/requirements.txt
-    - tarantoolctl rocks install luatest 0.2.2
-    - npm install graphql-cli@3.0.14
-    - export PATH=node_modules/.bin:$PATH
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN registry.gitlab.com
   script:
+    - >
+      docker build
+      --label GIT_DESCRIBE=$(git describe --tags)
+      --label GIT_COMMIT=$CI_COMMIT_SHA
+      --build-arg BUNDLE_VERSION=${BUNDLE_VERSION}
+      --build-arg DOWNLOAD_TOKEN=${DOWNLOAD_TOKEN}
+      --target build
+      -t ${BASE_BUILD_IMAGE}:${BUNDLE_VERSION}
+      -f Dockerfile
+      .
+    - docker push ${BASE_BUILD_IMAGE}:${BUNDLE_VERSION}
+  after_script:
+    - docker logout registry.gitlab.com
+
+test_enterprise_1.10.4:
+  image: ${BASE_BUILD_IMAGE}:${BUNDLE_VERSION}
+  stage: test
+  dependencies: []
+  tags:
+    - docker
+  before_script:
     - tarantoolctl rocks make
+  script:
     - pytest -v
-    - ./run-test.sh
+    - ./taptest.lua
+    - luatest -v
+    - luacheck cartridge-scm-1.rockspec
     - ./fetch-schema.sh
     - ./check-flow-graphql.sh
     - ./release.sh
-
   artifacts:
     name: "$CI_COMMIT_REF_NAME"
     paths:
