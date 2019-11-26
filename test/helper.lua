@@ -1,5 +1,4 @@
 local fio = require('fio')
-local t = require('luatest')
 
 local helper = {}
 

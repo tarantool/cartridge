@@ -1,7 +1,5 @@
 #!/usr/bin/env tarantool
 
-local log = require('log')
-
 local members = {
     ['localhost:3301'] = {
         uri = 'localhost:3301',
@@ -33,7 +31,7 @@ package.loaded['membership'] = {
     get_member = function(uri)
         return members[uri]
     end,
-    myself = function(uri)
+    myself = function()
         return members['localhost:3301']
     end,
 }
@@ -44,7 +42,7 @@ package.loaded['cartridge.pool'] = {
     end,
 }
 
-vshard = {
+_G.vshard = {
     storage = {
         buckets_count = function() end,
     }
@@ -52,7 +50,6 @@ vshard = {
 
 local tap = require('tap')
 local yaml = require('yaml')
-local topology = require('cartridge.topology')
 local vshard_utils = require('cartridge.vshard-utils')
 local test = tap.test('vshard.config')
 

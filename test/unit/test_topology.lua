@@ -578,7 +578,7 @@ check_config('replicasets[bbbbbbbb-0000-4000-b000-000000000001]'..
   conf_old_with_weight:format(1)
 )
 
-function vshard.storage.buckets_count()
+function _G.vshard.storage.buckets_count()
     return 1
 end
 
@@ -594,7 +594,7 @@ check_config('replicasets[bbbbbbbb-0000-4000-b000-000000000001]'..
   conf_old_with_weight:format(0)
 )
 
-function vshard.storage.buckets_count()
+function _G.vshard.storage.buckets_count()
     return 0
 end
 

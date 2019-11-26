@@ -2,11 +2,12 @@
 
 set -e
 
+# lint
+.rocks/bin/luacheck .
+
+# run tests
 ./taptest.lua
 .rocks/bin/luatest -v
-
-# lint
-.rocks/bin/luacheck cartridge-scm-1.rockspec
 
 # collect coverage
 # .rocks/bin/luacov-console ./cluster
