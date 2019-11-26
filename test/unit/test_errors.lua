@@ -7,7 +7,6 @@ if not pcall(require, 'cartridge.front-bundle') then
     end
 end
 
-local log = require('log')
 local tap = require('tap')
 local socket = require('socket')
 local cartridge = require('cartridge')
@@ -18,7 +17,7 @@ local test = tap.test('cartridge.cfg')
 test:plan(12)
 
 local function check_error(expected_error, fn, ...)
-    local ok, err = fn(...)
+    local _, err = fn(...)
     if err == nil then
         test:fail(expected_error)
         return
@@ -62,7 +61,7 @@ check_error('Invalid advertise_uri ":1111"',
 )
 
 local _sock = socket('AF_INET', 'SOCK_DGRAM', 'udp')
-local ok = _sock:bind('0.0.0.0', 33001)
+assert(_sock:bind('0.0.0.0', 33001), nil)
 check_error('Socket bind error: Address already in use',
     cartridge.cfg, {
         workdir = './dev',
@@ -71,7 +70,7 @@ check_error('Socket bind error: Address already in use',
     }
 )
 _sock:close()
-_sock = nil
+_sock = nil -- luacheck: no unused
 
 check_error('Can not ping myself: ping was not sent',
     cartridge.cfg, {

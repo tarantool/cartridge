@@ -496,7 +496,7 @@ local function cfg(opts, box_opts)
 
     -- Emulate support for NOTIFY_SOCKET in old tarantool.
     -- NOTIFY_SOCKET is fully supported in >= 2.2.2
-    local tnt_version = _TARANTOOL:split('.')
+    local tnt_version = string.split(_TARANTOOL, '.')
     local tnt_major = tonumber(tnt_version[1])
     local tnt_minor = tonumber(tnt_version[2])
     local tnt_patch = tonumber(tnt_version[3]:split('-')[1])

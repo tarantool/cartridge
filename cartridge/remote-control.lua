@@ -271,7 +271,7 @@ local function communicate(s)
 end
 
 local function rc_handle(s)
-    local version = _TARANTOOL:match("^([%d%.]+)") or '???'
+    local version = string.match(_TARANTOOL, "^([%d%.]+)") or '???'
     local salt = digest.urandom(32)
 
     local greeting = string.format(

@@ -1,5 +1,4 @@
 local fio = require('fio')
-local log = require('log')
 local t = require('luatest')
 local g = t.group('multiboot')
 

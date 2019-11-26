@@ -7,7 +7,7 @@ local e_label_config = errors.new_class("Label configuration error")
 test:plan(16)
 
 test.throws = function(self, expected_err, f, ...)
-    local ok, err = f(...)
+    local _, err = f(...)
     self:is(err.class_name, expected_err.name)
 end
 

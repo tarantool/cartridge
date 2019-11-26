@@ -10,7 +10,7 @@ local test = tap.test('cluster.register_role')
 test:plan(17)
 
 local function check_error(expected_error, fn, ...)
-    local ok, err = fn(...)
+    local _, err = fn(...)
     for _, l in pairs(string.split(tostring(err), '\n')) do
         test:diag('%s', l)
     end
