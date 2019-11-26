@@ -253,6 +253,7 @@ query serverList {
   }
   replicasetList: replicasets {
     alias
+    all_rw
     uuid
     status
     roles
@@ -306,6 +307,7 @@ query serverListWithoutStat {
   }
   replicasetList: replicasets {
     alias
+    all_rw
     uuid
     status
     roles

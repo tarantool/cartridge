@@ -22,6 +22,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Instances now have internal state machine which helps to manage
   cluster operation and protect from invalid state transitions.
 
+- WebUI checkbox to specify `all_rw` replicaset property.
+
 ### Changed
 
 - WebUI now uses `edit_topology` mutation instead of deprecated ones.
@@ -53,6 +55,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Functions `admin.get_servers`, `get_replicasets` and similar GraphQL
   queries now return an error if the instance handling the request is in
   state `InitError` or `BootError`.
+
+- Enhance WebUI modals scrolling.
 
 ### Removed
 

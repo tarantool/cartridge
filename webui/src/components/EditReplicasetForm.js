@@ -68,8 +68,7 @@ const styles = {
     max-width: 100%;
   `,
   field: css`
-    flex-basis: calc(33% - 32px);
-    flex-grow: 1;
+    flex-basis: calc(33.33% - 32px);
     margin-left: 16px;
     margin-right: 16px;
   `,
@@ -86,7 +85,8 @@ const styles = {
   `
 }
 
-const info = <span>Group disabled not yet included the role of "<b>vshard-storage</b>"</span>
+const vshardTooltipInfo = <span>Group disabled not yet included the role of "<b>vshard-storage</b>"</span>;
+const allRwTooltipInfo = 'Otherwise only leader in the replicaset is writeable';
 
 type EditReplicasetFormProps = {
   knownRoles?: Role[],
@@ -114,6 +114,7 @@ EditReplicasetFormProps) => {
     <Form
       initialValues={{
         alias: replicaset.alias,
+        all_rw: replicaset.all_rw,
         roles: replicaset.roles || [],
         vshard_group: replicaset.vshard_group,
         master: replicaset.servers.map(({ uuid }) => uuid),
@@ -185,39 +186,6 @@ EditReplicasetFormProps) => {
                   </LabeledInput>
                 )}
               </Field>
-              <Field name='weight'>
-                {({ input: { name, value, onChange }, meta: { error } }) => (
-                  <LabeledInput className={styles.field} label='Replica Set weight'>
-                    <Input
-                      className={styles.weightInput}
-                      name={name}
-                      error={error}
-                      value={value}
-                      onChange={onChange}
-                      disabled={!vshardStorageRoleChecked}
-                      placeholder='Auto'
-                    />
-                    <Text variant='p' className={styles.errorMessage}>{errors.weight}</Text>
-                  </LabeledInput>
-                )}
-              </Field>
-              <Field name='vshard_group'>
-                {({ input: { name: fieldName, value, onChange } }) => (
-                  <FormField className={styles.field} label='Vshard Group' info={info}>
-                    {vshard_groups && vshard_groups.map(({ name }) => (
-                      <RadioButton
-                        onChange={onChange}
-                        name={fieldName}
-                        value={name}
-                        checked={name === value}
-                        disabled={VShardGroupInputDisabled}
-                      >
-                        {name}
-                      </RadioButton>
-                    ))}
-                  </FormField>
-                )}
-              </Field>
               <Field name='roles'>
                 {({ input: { name: fieldName, value, onChange } }) => (
                   <FormField
@@ -273,6 +241,52 @@ EditReplicasetFormProps) => {
                       },
                       []
                     )}
+                  </FormField>
+                )}
+              </Field>
+              <Field name='weight'>
+                {({ input: { name, value, onChange }, meta: { error } }) => (
+                  <LabeledInput className={styles.field} label='Replica Set weight'>
+                    <Input
+                      className={styles.weightInput}
+                      name={name}
+                      error={error}
+                      value={value}
+                      onChange={onChange}
+                      disabled={!vshardStorageRoleChecked}
+                      placeholder='Auto'
+                    />
+                    <Text variant='p' className={styles.errorMessage}>{errors.weight}</Text>
+                  </LabeledInput>
+                )}
+              </Field>
+              <Field name='vshard_group'>
+                {({ input: { name: fieldName, value, onChange } }) => (
+                  <FormField className={styles.field} label='Vshard Group' info={vshardTooltipInfo}>
+                    {vshard_groups && vshard_groups.map(({ name }) => (
+                      <RadioButton
+                        onChange={onChange}
+                        name={fieldName}
+                        value={name}
+                        checked={name === value}
+                        disabled={VShardGroupInputDisabled}
+                      >
+                        {name}
+                      </RadioButton>
+                    ))}
+                  </FormField>
+                )}
+              </Field>
+              <Field name='all_rw'>
+                {({ input: { name: fieldName, value, onChange } }) => (
+                  <FormField className={styles.field} label='All writable' info={allRwTooltipInfo}>
+                    <Checkbox
+                      onChange={onChange}
+                      name={fieldName}
+                      checked={value}
+                    >
+                      Make all instances writeable
+                    </Checkbox>
                   </FormField>
                 )}
               </Field>
