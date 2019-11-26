@@ -5,7 +5,7 @@ local errors = require('errors')
 local netbox = require('net.box')
 
 local pool = require('cartridge.pool')
-local topology = require('cartridge.topology')
+local failover = require('cartridge.failover')
 local twophase = require('cartridge.twophase')
 local confapplier = require('cartridge.confapplier')
 local ddl_manager = require('cartridge.ddl-manager')
@@ -73,7 +73,7 @@ local function graphql_check_schema(_, args)
     local conf_new = {[_section_name] = args.as_yaml}
     local conf_old = {[_section_name] = confapplier.get_readonly(_section_name)}
 
-    local active_leaders = topology.get_active_masters()
+    local active_leaders = failover.get_active_leaders()
     local conn, err
     if active_leaders[box.info.cluster.uuid] == box.info.uuid then
         conn = netbox.self

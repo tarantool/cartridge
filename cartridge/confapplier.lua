@@ -131,15 +131,15 @@ local function validate_config(cwcfg, _)
     checks('ClusterwideConfig', 'nil')
     assert(cwcfg.locked)
 
+    local conf_new = cwcfg:get_readonly()
+    local conf_old = vars.cwcfg and vars.cwcfg:get_readonly() or {}
+
     local ok, err = ddl_manager.validate_config(conf_new, conf_old)
     if not ok then
         return nil, err
     end
 
-    return roles.validate_config(
-        cwcfg:get_readonly(),
-        vars.cwcfg and vars.cwcfg:get_readonly() or {}
-    )
+    return roles.validate_config(conf_new, conf_old)
 end
 
 
@@ -178,10 +178,13 @@ local function apply_config(cwcfg)
 
     failover.cfg(cwcfg)
 
-    local _, _err = ddl_manager.apply_config(conf, {is_master = is_master})
-    if _err then
-        log.error('%s', _err)
-        err = err or _err
+    local ok, err = ddl_manager.apply_config(
+        cwcfg:get_readonly(),
+        {is_master = failover.is_leader()}
+    )
+    if not ok then
+        set_state('OperationError', err)
+        return nil, err
     end
 
     set_state('ConfiguringRoles')

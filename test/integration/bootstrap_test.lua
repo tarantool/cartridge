@@ -136,7 +136,7 @@ function g.test_workdir_collision()
     g.cluster:start()
 
     t.assert_error_msg_contains(
-        string.format('%q %s',
+        string.format('%s: %s',
             fio.pathjoin(g.tempdir, 'config.prepare.yml'),
             errno.strerror(errno.EEXIST)
         ),
