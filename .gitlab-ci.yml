@@ -2,6 +2,7 @@ variables:
   ROCK_NAME: cartridge
   BUNDLE_VERSION: "1.10.4-8-g3f2b35b"
   BASE_BUILD_IMAGE: registry.gitlab.com/tarantool/cartridge
+  # Enable caching frontend stuff
   npm_config_cache: "$CI_PROJECT_DIR/.npm"
   CYPRESS_CACHE_FOLDER: "$CI_PROJECT_DIR/.cache/Cypress"
 
@@ -50,15 +51,15 @@ docker-build-base:
   tags:
     - docker
   before_script:
+    - ls -al # to see if caching works
     - tarantoolctl rocks make
   after_script:
+    # avoid caching cartridge rock
     - tarantoolctl rocks remove cartridge
   cache:
-    key:
-      files:
-        - webui/package-lock.json
-        - cartridge-scm-1.rockspec
+    key: common-cache-key
     paths:
+      - build.luarocks/
       - webui/node_modules
       - webui/build/bundle.lua
       - .npm
@@ -73,6 +74,7 @@ integration:
 
 cypress:
   <<: *enterprise-test
+  when: manual
   script:
     - luatest -v -p cypress_*
   artifacts:
@@ -82,7 +84,6 @@ cypress:
     paths:
       - webui/cypress/screenshots/
       - webui/cypress/videos/
-
 
 misc:
   <<: *enterprise-test
