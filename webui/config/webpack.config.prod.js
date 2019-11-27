@@ -336,7 +336,7 @@ module.exports = {
     child_process: 'empty'
   },
   performance: {
-    maxEntrypointSize: 2000000,
-    maxAssetSize: 2000000
+    maxEntrypointSize: 4000000,
+    maxAssetSize: 4000000
   }
 };

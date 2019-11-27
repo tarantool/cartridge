@@ -3,6 +3,7 @@ import { Provider } from 'react-redux';
 import { Router, Switch, Route } from 'react-router-dom';
 import App from './app';
 import Users from './pages/Users';
+import Schema from 'src/pages/Schema';
 import HeaderAuthControl from 'src/components/HeaderAuthControl';
 import LogInForm from 'src/components/LogInForm';
 import store from 'src/store/instance'
@@ -23,6 +24,7 @@ class Root extends React.Component {
             <Route path={projectPath('dashboard')} component={App} />
             <Route path={projectPath('configuration')} component={ConfigManagement} />
             <Route path={projectPath('users')} component={Users} />
+            <Route path={projectPath('schema')} component={Schema} />
           </Switch>
         </Router>
       </Provider>
