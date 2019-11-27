@@ -1,59 +1,112 @@
 variables:
   ROCK_NAME: cartridge
+  BUNDLE_VERSION: "1.10.4-8-g3f2b35b"
+  BASE_BUILD_IMAGE: registry.gitlab.com/tarantool/cartridge
+  # Enable caching frontend stuff
+  npm_config_cache: "$CI_PROJECT_DIR/.npm"
+  CYPRESS_CACHE_FOLDER: "$CI_PROJECT_DIR/.cache/Cypress"
 
 stages:
-  - build
+  - prebuild
+  - test
   - publish
 
-build:
-  stage: build
+###
+### Prebuilt base docker image
+### only if Dockerfile or test requirements changed
+###
+docker-build-base:
+  stage: prebuild
+  tags:
+    - shell
+  only:
+    changes:
+      - Dockerfile
+      - .gitlab-ci.yml
+      - test/integration/requirements.txt
+  before_script:
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN registry.gitlab.com
+  script:
+    - docker pull ${BASE_BUILD_IMAGE}:${BUNDLE_VERSION} || true
+    - >
+      docker build
+      --label GIT_DESCRIBE=$(git describe --tags)
+      --label GIT_COMMIT=$CI_COMMIT_SHA
+      --build-arg BUNDLE_VERSION=${BUNDLE_VERSION}
+      --build-arg DOWNLOAD_TOKEN=${DOWNLOAD_TOKEN}
+      --target build
+      -t ${BASE_BUILD_IMAGE}:${BUNDLE_VERSION}
+      -f Dockerfile
+      .
+    - docker push ${BASE_BUILD_IMAGE}:${BUNDLE_VERSION}
+  after_script:
+    - docker logout registry.gitlab.com
+
+###
+### Test
+###
+.enterprise-test: &enterprise-test
+  image: ${BASE_BUILD_IMAGE}:${BUNDLE_VERSION}
+  stage: test
   tags:
     - docker
-  image: centos:7
-  variables:
-    BUNDLE_VERSION: "1.10.4-8-g3f2b35b"
-  cache:
-    key: $BUNDLE_VERSION
-    paths:
-      - tarantool-enterprise/
   before_script:
-    - echo "Using tarantool-enterprise-bundle ${BUNDLE_VERSION}"
-    - |
-      if [ ! -e tarantool-enterprise ]
-      then
-        curl -O -L https://tarantool:${DOWNLOAD_TOKEN}@download.tarantool.io/enterprise/tarantool-enterprise-bundle-${BUNDLE_VERSION}.tar.gz
-        tar -xzf tarantool-enterprise-bundle-${BUNDLE_VERSION}.tar.gz
-        rm -rf tarantool-enterprise-bundle-${BUNDLE_VERSION}.tar.gz
-      fi
-    - export PATH=$PWD/tarantool-enterprise:$PATH
-    - yum -y install https://centos7.iuscommunity.org/ius-release.rpm
-    - yum -y install gtk3 xorg-x11-server-Xvfb libXScrnSaver GConf2 alsa-lib # cypress deps
-    - curl -sL https://rpm.nodesource.com/setup_8.x | bash -
-    - yum -y install git gcc make cmake unzip python python-pip nodejs
-    - tarantoolctl rocks install ldoc --server=http://rocks.moonscript.org
-    - tarantoolctl rocks install luacheck
-    - tarantoolctl rocks install luacov
-    - tarantoolctl rocks install luacov-console 1.1.0
-    - pip install -r test/integration/requirements.txt
-    - tarantoolctl rocks install luatest 0.2.2
-    - npm install graphql-cli@3.0.14
-    - export PATH=node_modules/.bin:$PATH
-  script:
+    - ls -al # to see if caching works
     - tarantoolctl rocks make
+  after_script:
+    # avoid caching cartridge rock
+    - tarantoolctl rocks remove cartridge
+  cache:
+    key: common-cache-key
+    paths:
+      - build.luarocks/
+      - webui/node_modules
+      - webui/build/bundle.lua
+      - .npm
+      - .cache/Cypress
+      - .rocks/
+
+integration:
+  <<: *enterprise-test
+  script:
     - pytest -v
-    - ./run-test.sh
+    - luatest -v -x cypress_*
+
+cypress:
+  <<: *enterprise-test
+  when: manual
+  script:
+    - luatest -v -p cypress_*
+  artifacts:
+    name: "${CI_COMMIT_REF_NAME}.cypress"
+    when: always
+    expire_in: 1 week
+    paths:
+      - webui/cypress/screenshots/
+      - webui/cypress/videos/
+
+misc:
+  <<: *enterprise-test
+  script:
+    - luacheck .
+    - ./taptest.lua
     - ./fetch-schema.sh
     - ./check-flow-graphql.sh
     - ./release.sh
-
   artifacts:
-    name: "$CI_COMMIT_REF_NAME"
+    name: "${CI_COMMIT_REF_NAME}.misc"
+    when: on_success
+    expire_in: 1 week
     paths:
       - doc/
       - release/
       - release-doc/
       - luacov.report.out
 
+
+###
+### Publish rocks
+###
 publish-scm-1:
   stage: publish
   tags:
@@ -64,7 +117,7 @@ publish-scm-1:
   script:
     - curl --fail -X PUT -F "rockspec=@${ROCK_NAME}-scm-1.rockspec"
       https://${ROCKS_USERNAME}:${ROCKS_PASSWORD}@rocks.tarantool.org
-
+  dependencies: []
 
 publish-release:
   stage: publish
@@ -79,3 +132,4 @@ publish-release:
       https://${ROCKS_USERNAME}:${ROCKS_PASSWORD}@rocks.tarantool.org
     - curl --fail -X PUT -F "rockspec=@${ROCK_NAME}-${CI_COMMIT_TAG}-1.all.rock"
       https://${ROCKS_USERNAME}:${ROCKS_PASSWORD}@rocks.tarantool.org
+  dependencies: ["misc"]
