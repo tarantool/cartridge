@@ -1,8 +1,9 @@
 import React from 'react';
 import { Provider } from 'react-redux';
 import { Router, Switch, Route } from 'react-router-dom';
-import App from './app';
-import Users from './pages/Users';
+import App from 'src/app';
+import Users from 'src/pages/Users';
+import Code from 'src/pages/Code';
 import Schema from 'src/pages/Schema';
 import HeaderAuthControl from 'src/components/HeaderAuthControl';
 import LogInForm from 'src/components/LogInForm';
@@ -11,7 +12,7 @@ import { appDidMount } from 'src/store/actions/app.actions';
 import { logOut } from 'src/store/actions/auth.actions';
 import { PROJECT_NAME } from './constants';
 import { menuReducer } from './menu';
-import ConfigManagement from './pages/ConfigManagement';
+import ConfigManagement from 'src/pages/ConfigManagement';
 
 const projectPath = path => `/${PROJECT_NAME}/${path}`;
 
@@ -24,6 +25,7 @@ class Root extends React.Component {
             <Route path={projectPath('dashboard')} component={App} />
             <Route path={projectPath('configuration')} component={ConfigManagement} />
             <Route path={projectPath('users')} component={Users} />
+            <Route path={projectPath('code')} component={Code} />
             <Route path={projectPath('schema')} component={Schema} />
           </Switch>
         </Router>
