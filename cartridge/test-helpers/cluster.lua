@@ -16,7 +16,7 @@ local Cluster = {
 
     cookie = 'test-cluster-cookie',
     base_http_port = 8080,
-    base_advertise_port = 33000,
+    base_advertise_port = 13300,
 }
 
 function Cluster:inherit(object)

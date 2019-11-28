@@ -33,6 +33,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   functions. Enable auth switcher is displayed on main cluster page in
   this case.
 
+- Base advertise port in luatest helpers changed from 33000 to 13300,
+  which is outside `ip_local_port_range`. Using port from local range
+  usually caused tests failing with an error "address already in use".
+  **(incompatible change)**
+
 ### Removed
 
 - Function `cartridge.bootstrap` is removed. Use `admin_edit_topology`
