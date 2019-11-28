@@ -184,6 +184,11 @@ end
 -- @treturn[2] table Error description
 local function _clusterwide(patch)
     checks('table')
+    if patch.__type == 'ClusterwideConfig' then
+        local err = "Bad argument #1 to patch_clusterwide" ..
+            " (table expected, got ClusterwideConfig)"
+        error(err, 2)
+    end
 
     log.warn('Updating config clusterwide...')
 
