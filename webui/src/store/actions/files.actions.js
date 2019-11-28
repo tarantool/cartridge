@@ -2,7 +2,12 @@ import {
   FETCH_CONFIG_FILE_CONTENT,
   FETCH_CONFIG_FILES,
   UPDATE_CONTENT,
-  createFile,
+  CREATE_FILE,
+  CREATE_FOLDER,
+  RENAME_FILE,
+  RENAME_FOLDER,
+  DELETE_FILE,
+  DELETE_FOLDER,
 } from '../actionTypes'
 
 export const fetchConfigFiles = ({
@@ -22,25 +27,40 @@ export const updateFileContent = (fileId, content) => ({
   }
 })
 
-export const createFileStart = ({ folderId }) => ({
-  type: createFile.try,
-  payload: {
-    folderId,
-  },
+export const createFile = ({ parentId, name }) => ({
+  type: CREATE_FILE,
+  payload: { parentId, name },
+});
+export const createFolder = ({ parentId, name }) => ({
+  type: CREATE_FOLDER,
+  payload: { parentId, name },
+})
+
+export const renameFile = ({ id, name }) => ({
+  type: RENAME_FILE,
+  payload: { id, name },
+})
+export const renameFolder = ({ id, name }) => ({
+  type: RENAME_FOLDER,
+  payload: { id, name },
+})
+
+export const deleteFile = ({ id }) => ({
+  type: DELETE_FILE,
+  payload: { id },
+})
+export const deleteFolder = ({ id }) => ({
+  type: DELETE_FOLDER,
+  payload: { id },
 })
 
 
-export const createFileDone = ({ folderId, name }) => ({
-  type: createFile.done,
-  payload: {
-    folderId,
-    name,
-  },
-})
+// export const createFileDone = ({ parentId, name }) => ({
+//   type: createFile.done,
+//   payload: { parentId, name },
+// })
 
-export const createFileCancel = ({ folderId }) => ({
-  type: createFile.fail,
-  payload: {
-    folderId,
-  },
-})
+// export const createFileCancel = ({ parentId }) => ({
+//   type: createFile.fail,
+//   payload: { parentId },
+// })
