@@ -161,8 +161,8 @@ export const dropModels = () => {
   },
   {
     'fileId': '7',
-    'path': 'Folder',
-    'fileName': 'Folder',
+    'path': 'liberia',
+    'fileName': 'liberia',
     'content': '',
     'initialContent': '',
     'loading': false,

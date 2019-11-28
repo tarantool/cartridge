@@ -108,7 +108,7 @@ const getFile = (list: Array<FileItem>, id): FileItem | void => (
 );
 
 const isDescendant = (ownPath: string, parentPath: string) => {
-  return ownPath.substring(0, parentPath.length) === parentPath;
+  return ownPath.substring(0, parentPath.length + 1) === `${parentPath}/`;
 };
 
 const prepareNameForPath = name => {
