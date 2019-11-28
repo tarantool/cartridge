@@ -1,8 +1,8 @@
 #!/usr/bin/env tarantool
 
 local admin = require('cartridge.admin')
-local gql_types = require('cartridge.graphql.types')
 local roles = require('cartridge.roles')
+local gql_types = require('cartridge.graphql.types')
 local gql_boxinfo_schema = require('cartridge.webui.gql-boxinfo').schema
 local gql_stat_schema = require('cartridge.webui.gql-stat').schema
 local module_name = 'cartridge.webui.api-topology'

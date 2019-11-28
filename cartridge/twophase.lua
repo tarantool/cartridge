@@ -261,12 +261,15 @@ local function _clusterwide(patch)
         for _, uri in ipairs(uri_list) do
             if retmap[uri] == nil then
                 local err = errmap and errmap[uri]
+                if err == nil then
+                    err = Prepare2pcError:new('Unknown error at %s', uri)
+                end
                 log.error('Error preparing for config update at %s: %s', uri, err)
                 _2pc_error = err
             end
         end
 
-        if errmap ~= nil then
+        if _2pc_error ~= nil then
             goto abort
         else
             goto apply

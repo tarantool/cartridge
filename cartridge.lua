@@ -460,7 +460,7 @@ local function cfg(opts, box_opts)
         binary_port = advertise.service,
         box_opts = box_opts,
     })
-    if ok == nil then
+    if not ok then
         return nil, err
     end
 

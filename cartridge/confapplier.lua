@@ -132,7 +132,10 @@ local function validate_config(cwcfg, _)
     assert(cwcfg.locked)
 
     local conf_new = cwcfg:get_readonly()
-    local conf_old = vars.cwcfg and vars.cwcfg:get_readonly() or {}
+    local conf_old = vars.cwcfg and vars.cwcfg:get_readonly()
+    if conf_old == nil then
+        conf_old = {}
+    end
 
     local ok, err = ddl_manager.validate_config(conf_new, conf_old)
     if not ok then
@@ -274,7 +277,6 @@ local function boot_instance(cwcfg)
             box_opts.read_only = false
         else
             box_opts.replication = {pool.format_uri(leader.uri)}
-            -- box_opts.read_only = true
         end
     end
 

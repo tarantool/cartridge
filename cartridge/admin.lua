@@ -100,9 +100,7 @@ end
 
 local function get_topology()
     local state, err = confapplier.get_state()
-    if state == 'InitError'
-    or state == 'BootError'
-    then
+    if state == 'InitError' or state == 'BootError' then
         return nil, err
     end
 
