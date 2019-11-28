@@ -275,7 +275,7 @@ local function test_all_rw(all_rw)
 
     for _, srv in pairs(replicaset['servers']) do
         if srv['uuid'] == replicaset['master']['uuid'] then
-            t.assert_not(srv['boxinfo']['general']['ro'])
+            t.assert_equals(srv['boxinfo']['general']['ro'], false)
         else
             t.assert_equals(srv['boxinfo']['general']['ro'], not all_rw)
         end

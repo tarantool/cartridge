@@ -61,7 +61,7 @@ function g.test_api()
         })
 
     local auth_params = resp['data']['cluster']['auth_params']
-    t.assert(auth_params['enabled'])
+    t.assert_equals(auth_params['enabled'], true)
     t.assert_equals(auth_params['username'], ADMIN_USERNAME)
 
     local add_user = function(username, password)

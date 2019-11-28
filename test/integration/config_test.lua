@@ -106,7 +106,7 @@ function g.test_upload_good()
     }
     g.cluster:upload_config(other_config)
     local config = g.cluster:download_config()
-    t.assert_not(config.custom_config)
+    t.assert_equals(config.custom_config, nil)
     t.assert_equals(config, other_config)
 
     local function _list(sections)
