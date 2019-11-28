@@ -207,13 +207,18 @@ function Cluster:build_server(config, replicaset_config, sn)
         alias = replicaset_config.alias and (replicaset_config.alias .. '-' .. sn),
         replicaset_uuid = replicaset_config.uuid,
         command = self.server_command,
-        workdir = fio.pathjoin(self.datadir, 'localhost-' .. advertise_port),
+        workdir = nil,
         cluster_cookie = self.cookie,
         http_port = self.base_http_port and (self.base_http_port + server_id),
         advertise_port = advertise_port,
     }
     for key, value in pairs(config) do
         server_config[key] = value
+    end
+    if server_config.workdir == nil then
+        server_config.workdir = fio.pathjoin(
+            self.datadir, 'localhost-' .. server_config.advertise_port
+        )
     end
     return Server:new(server_config)
 end
