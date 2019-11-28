@@ -55,7 +55,6 @@ g.before_all = function()
         server_command = test_helper.server_command,
         use_vshard = true,
         cookie = 'test-cluster-cookie',
-
         replicasets = {
             {
                 uuid = helpers.uuid('a'),
@@ -64,8 +63,6 @@ g.before_all = function()
                     {
                         alias = 'router',
                         instance_uuid = helpers.uuid('a', 'a', 1),
-                        advertise_port = 33001,
-                        http_port = 8081
                     }
                 }
             }, {
@@ -75,13 +72,9 @@ g.before_all = function()
                     {
                         alias = 'storage-1',
                         instance_uuid = helpers.uuid('b', 'b', 1),
-                        advertise_port = 33002,
-                        http_port = 8082
                     }, {
                         alias = 'storage-2',
                         instance_uuid = helpers.uuid('b', 'b', 2),
-                        advertise_port = 33004,
-                        http_port = 8084
                     }
                 }
             }

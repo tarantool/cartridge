@@ -15,7 +15,7 @@ g.before_all = function()
         server_command = fio.pathjoin(test_helper.root, 'test/unit/instance.lua'),
         cookie = 'test-cluster-cookie',
         base_http_port = 8080,
-        base_advertise_port = 33000,
+        base_advertise_port = 13300,
         replicasets = {
             {
                 alias = 'vshard',
