@@ -3,7 +3,6 @@
 local tap = require('tap')
 local rpc = require('cartridge.rpc')
 local checks = require('checks')
-local topology = require('cartridge.topology')
 
 local test = tap.test('cluster.rpc_candidates')
 test:plan(21)
