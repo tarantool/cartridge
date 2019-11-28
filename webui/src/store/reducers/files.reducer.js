@@ -184,6 +184,19 @@ const renameFile = (list: Array<FileItem>, id, newName): Array<FileItem> => {
   });
 };
 
+const deleteFile = (list: Array<FileItem>, id): Array<FileItem> => {
+  const targetFile = list.find(file => file.fileId === id);
+  if (!targetFile) {
+    return list;
+  }
+
+  return list.filter(file => (
+    file.fileId !== id
+    &&
+    !isDescendant(file.path, targetFile.path)
+  ));
+};
+
 
 export default (state: Array<FileItem> = initialState, { type, payload }: FSA) => {
   switch (type) {
@@ -258,9 +271,13 @@ export default (state: Array<FileItem> = initialState, { type, payload }: FSA) =
       }
 
     case DELETE_FILE:
-
     case DELETE_FOLDER:
-
+      if (payload && payload.id) {
+        return deleteFile(
+          state,
+          payload.id,
+        )
+      }
   }
   return state
 }
