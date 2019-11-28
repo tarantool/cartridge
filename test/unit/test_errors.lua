@@ -35,7 +35,7 @@ test:diag('Test malformed opts.workdir')
 check_error('Error creating directory "/dev/null": File exists',
     cartridge.cfg, {
         workdir = '/dev/null',
-        advertise_uri = 'localhost:33001',
+        advertise_uri = 'localhost:13301',
         roles = {},
     }
 )
@@ -61,11 +61,11 @@ check_error('Invalid advertise_uri ":1111"',
 )
 
 local _sock = socket('AF_INET', 'SOCK_DGRAM', 'udp')
-assert(_sock:bind('0.0.0.0', 33001), nil)
+assert(_sock:bind('0.0.0.0', 13301), nil)
 check_error('Socket bind error: Address already in use',
     cartridge.cfg, {
         workdir = './dev',
-        advertise_uri = 'localhost:33001',
+        advertise_uri = 'localhost:13301',
         roles = {},
     }
 )
@@ -75,7 +75,7 @@ _sock = nil -- luacheck: no unused
 check_error('Can not ping myself: ping was not sent',
     cartridge.cfg, {
         workdir = './dev',
-        advertise_uri = 'invalid-host:33001',
+        advertise_uri = 'invalid-host:13301',
         roles = {},
     }
 )
