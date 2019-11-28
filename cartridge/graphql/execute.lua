@@ -79,7 +79,7 @@ local function mergeSelectionSets(fields)
   return selections
 end
 
-local function defaultResolver(object, arguments, info)
+local function defaultResolver(object, _, info)
   return object[info.fieldASTs[1].name.value]
 end
 
@@ -152,7 +152,7 @@ local function collectFields(objectType, selections, visitedFragments, result, c
   return result
 end
 
-local evaluateSelection
+local evaluateSelections
 local serializemap = {__serialize='map'}
 
 local function completeValue(fieldType, result, subSelections, context, opts)
@@ -215,7 +215,6 @@ end
 local function getFieldEntry(objectType, object, fields, context)
   local firstField = fields[1]
   local fieldName = firstField.name.value
-  local responseKey = getFieldResponseKey(firstField)
   local fieldType = introspection.fieldMap[fieldName] or objectType.fields[fieldName]
 
   if fieldType == nil then
@@ -241,7 +240,7 @@ local function getFieldEntry(objectType, object, fields, context)
   end)
 
   --[[
-      Make arguments ordered map using metatble.
+      Make arguments ordered map using metatable.
       This way callback can use positions to access argument values.
       For example buisness logic depends on argument positions to choose
       appropriate storage iteration.

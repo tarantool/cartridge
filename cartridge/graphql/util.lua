@@ -7,7 +7,6 @@ function util.map(t, fn)
 end
 
 function util.find(t, fn)
-  local res = {}
   for k, v in pairs(t) do
     if fn(v, k) then return v end
   end
@@ -15,7 +14,7 @@ end
 
 function util.filter(t, fn)
   local res = {}
-  for k,v in pairs(t) do
+  for _, v in pairs(t) do
     if fn(v) then
       table.insert(res, v)
     end

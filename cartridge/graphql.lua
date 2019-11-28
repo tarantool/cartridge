@@ -57,7 +57,7 @@ local function add_callback_prefix(prefix, doc)
     local obj = {
         kind = kind,
         arguments = {},
-        resolve = function(self, args)
+        resolve = function()
             return {}
         end,
         description = doc,
@@ -79,7 +79,7 @@ local function add_mutation_prefix(prefix, doc)
     local obj = {
         kind = kind,
         arguments = {},
-        resolve = function(self, args)
+        resolve = function()
             return {}
         end,
         description = doc,

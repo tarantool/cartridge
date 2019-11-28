@@ -16,6 +16,26 @@ local function get_env()
     return vars.registered_types
 end
 
+local function initFields(kind, fields)
+  assert(type(fields) == 'table', 'fields table must be provided')
+
+  local result = {}
+
+  for fieldName, field in pairs(fields) do
+    field = field.__type and { kind = field } or field
+    result[fieldName] = {
+      name = fieldName,
+      kind = field.kind,
+      description = field.description,
+      deprecationReason = field.deprecationReason,
+      arguments = field.arguments or {},
+      resolve = kind == 'Object' and field.resolve or nil
+    }
+  end
+
+  return result
+end
+
 function types.nonNull(kind)
   assert(kind, 'Must provide a type')
 
@@ -120,26 +140,6 @@ function types.interface(config)
   return instance
 end
 
-function initFields(kind, fields)
-  assert(type(fields) == 'table', 'fields table must be provided')
-
-  local result = {}
-
-  for fieldName, field in pairs(fields) do
-    field = field.__type and { kind = field } or field
-    result[fieldName] = {
-      name = fieldName,
-      kind = field.kind,
-      description = field.description,
-      deprecationReason = field.deprecationReason,
-      arguments = field.arguments or {},
-      resolve = kind == 'Object' and field.resolve or nil
-    }
-  end
-
-  return result
-end
-
 function types.enum(config)
   assert(type(config.name) == 'string', 'type name must be provided as a string')
   assert(type(config.values) == 'table', 'values table must be provided')
@@ -242,7 +242,8 @@ end
 
 types.int = types.scalar({
   name = 'Int',
-  description = "The `Int` scalar type represents non-fractional signed whole numeric values. Int can represent values from -(2^31) to 2^31 - 1, inclusive.",
+  description = "The `Int` scalar type represents non-fractional signed whole numeric values. " ..
+                "Int can represent values from -(2^31) to 2^31 - 1, inclusive.",
   serialize = coerceInt,
   parseValue = coerceInt,
   parseLiteral = function(node)
@@ -254,7 +255,8 @@ types.int = types.scalar({
 
 types.long = types.scalar({
   name = 'Long',
-  description = "The `Long` scalar type represents non-fractional signed whole numeric values. Long can represent values from -(2^52) to 2^52 - 1, inclusive.",
+  description = "The `Long` scalar type represents non-fractional signed whole numeric values. " ..
+                "Long can represent values from -(2^52) to 2^52 - 1, inclusive.",
   serialize = coerceLong,
   parseValue = coerceLong,
   parseLiteral = function(node)
@@ -277,7 +279,8 @@ types.float = types.scalar({
 
 types.string = types.scalar({
   name = 'String',
-  description = "The `String` scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text.",
+  description = "The `String` scalar type represents textual data, represented as UTF-8 character sequences. " ..
+                "The String type is most often used by GraphQL to represent free-form human-readable text.",
   serialize = tostring,
   parseValue = tostring,
   parseLiteral = function(node)
