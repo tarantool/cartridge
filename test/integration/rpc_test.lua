@@ -98,3 +98,37 @@ function g.test_routing()
     t.assert_nil(err)
     t.assert_equals(res, true)
 end
+
+function g.test_push()
+    local function rpc_call(server, role_name, fn_name, args, kv_args)
+        local res, err = server.net_box:eval([[
+            local role_name, fn_name, args, kv_args = ...
+            local rpc = require('cartridge.rpc')
+
+            local result = {}
+            local function on_push(ctx, data)
+                result.ctx = ctx
+                result.data = data
+            end
+
+            kv_args.on_push = on_push
+            kv_args.on_push_ctx = 'context'
+
+            local ok, err = rpc.call(role_name, fn_name, args, kv_args)
+            if not ok then
+                return nil, err
+            end
+            return result
+        ]], {role_name, fn_name, args, kv_args})
+        return res, err
+    end
+
+    local res, err = rpc_call(
+        g.cluster:server('B2'), 'myrole', 'push', {1}, {leader_only=true}
+    )
+
+    t.assert_nil(err)
+    t.assert_equals(type(res), 'table')
+    t.assert_equals(res.ctx, 'context')
+    t.assert_equals(res.data, 2)
+end

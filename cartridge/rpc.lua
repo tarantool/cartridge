@@ -174,6 +174,8 @@ end
 -- @param opts.remote_only (*deprecated*) Use `prefer_local` instead.
 -- @param opts.timeout passed to `net.box` `conn:call` options.
 -- @param opts.buffer passed to `net.box` `conn:call` options.
+-- @param opts.on_push passed to `net.box` `conn:call` options.
+-- @param opts.on_push_ctx passed to `net.box` `conn:call` options.
 --
 -- @return[1] `conn:call()` result
 -- @treturn[2] nil
@@ -186,6 +188,8 @@ local function call_remote(role_name, fn_name, args, opts)
         remote_only = '?boolean', -- deprecated
         timeout = '?', -- for net.box.call
         buffer = '?', -- for net.box.call
+        on_push = '?function', -- for net.box.call
+        on_push_ctx = '?', -- for net.box.call
     })
 
     local prefer_local
@@ -225,6 +229,8 @@ local function call_remote(role_name, fn_name, args, opts)
             {
                 timeout = opts.timeout,
                 buffer = opts.buffer,
+                on_push = opts.on_push,
+                on_push_ctx = opts.on_push_ctx,
             }
         )
     end

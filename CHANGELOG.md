@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - DDL schema editor page in webui.
 
+- rpc_call supports on_push and on_push_ctx net.box options.
+
 ### Changed
 
 - WebUI now uses `edit_topology` mutation instead of deprecated ones.
