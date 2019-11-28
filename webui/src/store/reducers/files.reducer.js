@@ -143,14 +143,12 @@ const makeFile = (list: Array<FileItem>, parentId: string, name: string, isFolde
 };
 
 const renameFile = (list: Array<FileItem>, id, newName): Array<FileItem> => {
-  const index = list.findIndex(file => file.fileId === id);
-  if (index === -1) {
+  const targetFile = list.find(file => file.fileId === id);
+  if (!targetFile) {
     return list;
   }
 
-  const targetFile = list[index];
   const oldName = targetFile.fileName;
-
   // TODO: prevent names (and paths) collisions (or remove such prevention in createFile())
   if (oldName === newName) {
     return list;
