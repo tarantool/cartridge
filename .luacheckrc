@@ -8,8 +8,6 @@ include_files = {
 }
 exclude_files = {
     '.rocks',
-    'cartridge/graphql.lua',
-    'cartridge/graphql/*.lua',
 }
 new_read_globals = {
     box = { fields = {
