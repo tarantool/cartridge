@@ -2,19 +2,37 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import { css, cx } from 'emotion';
-import { Button, ControlsPanel, Text, IconRefresh } from '@tarantool.io/ui-kit';
-import { Tree } from 'antd';
+import {
+  Button,
+  ConfirmModal,
+  ControlsPanel,
+  IconRefresh,
+  Input,
+  Modal,
+  PopupBody,
+  PopupFooter,
+  Text,
+  Scrollbar
+} from '@tarantool.io/ui-kit';
 import rest from 'src/api/rest';
+import { InputModal } from 'src/components/InputModal';
 import MonacoEditor from 'src/components/MonacoEditor';
+import { FileTree } from 'src/components/FileTree';
 import { selectFileTree, selectSelectedFile } from 'src/store/selectors/filesSelectors';
 import { selectFile } from 'src/store/actions/editor.actions';
-import { updateFileContent } from 'src/store/actions/files.actions';
+import {
+  createFile,
+  createFolder,
+  deleteFile,
+  deleteFolder,
+  renameFolder,
+  renameFile,
+  updateFileContent
+} from 'src/store/actions/files.actions';
 import { getLanguageByFileName } from 'src/misc/monacoModelStorage'
 import type { TreeFileItem } from 'src/store/selectors/filesSelectors';
 import type { FileItem } from 'src/store/reducers/files.reducer';
 import { type State } from 'src/store/rootReducer';
-
-const { TreeNode, DirectoryTree } = Tree;
 
 const options = {
   fixedOverflowWidgets: true,
@@ -38,6 +56,9 @@ const styles = {
     background-color: #ffffff;
   `,
   sidePanel: css`
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
     width: 255px;
     background-color: #fafafa;
   `,
@@ -49,16 +70,23 @@ const styles = {
   sidePanelTitle: css`
     
   `,
+  treeScrollWrap: css`
+    flex-grow: 1;
+  `,
   mainContent: css`
     flex-grow: 1;
     display: flex;
     flex-direction: column;
     padding: 16px;
     box-sizing: border-box;
+    overflow: hidden;
   `,
   cardMargin: css`
     padding: 24px 16px;
     min-width: 1000px;
+  `,
+  popupFileName: css`
+    font-weight: 600;
   `,
   title: css`
     margin-left: 16px;
@@ -79,6 +107,8 @@ const styles = {
 type CodeState = {
   loading: boolean,
   code: ?string,
+  fileOperationType: 'createFile' | 'createFolder' | 'rename' | 'delete' | null,
+  fileOperationObject: ?string
 }
 
 type CodeProps = {
@@ -94,6 +124,8 @@ class Code extends React.Component<CodeProps, CodeState> {
   state = {
     loading: true,
     code: null,
+    fileOperationType: null,
+    fileOperationObject: null
   }
 
   async componentDidMount() {
@@ -106,6 +138,121 @@ class Code extends React.Component<CodeProps, CodeState> {
     }))
   }
 
+  getFileById = (id: ?string) => this.props.fileTree.find(({ fileId }) => fileId === id);
+
+  handleFileDeleteClick = (id: string) => this.setState({
+    fileOperationType: 'delete',
+    fileOperationObject: id
+  });
+
+  handleFileDeleteConfirm = () => {
+    const { dispatch } = this.props;
+    const { fileOperationObject } = this.state;
+
+    if (fileOperationObject) {
+      const file = this.getFileById(fileOperationObject);
+
+      dispatch(
+        file && file.type === 'folder'
+          ? deleteFolder({ id: fileOperationObject })
+          : deleteFile({ id: fileOperationObject })
+      );
+
+      this.setState({
+        fileOperationType: null,
+        fileOperationObject: null
+      });
+    }
+  }
+
+  handleFileDeleteConfirm = () => {
+    const { dispatch } = this.props;
+    const { fileOperationObject } = this.state;
+
+    if (fileOperationObject) {
+      const file = this.getFileById(fileOperationObject);
+
+      dispatch(
+        file && file.type === 'folder'
+          ? deleteFolder({ id: fileOperationObject })
+          : deleteFile({ id: fileOperationObject })
+      );
+
+      this.setState({
+        fileOperationType: null,
+        fileOperationObject: null
+      });
+    }
+  }
+
+  handleFileRenameClick = (id: string) => this.setState({
+    fileOperationType: 'rename',
+    fileOperationObject: id
+  });
+
+  handleFileRenameConfirm = (name: string) => {
+    const { dispatch } = this.props;
+    const { fileOperationObject } = this.state;
+
+    if (fileOperationObject) {
+      const file = this.getFileById(fileOperationObject);
+
+      dispatch(
+        file && file.type === 'folder'
+          ? renameFolder({ id: fileOperationObject, name })
+          : renameFile({ id: fileOperationObject, name })
+      );
+
+      this.setState({
+        fileOperationType: null,
+        fileOperationObject: null
+      });
+    }
+  }
+
+  handleFileCreateClick = (id: string) => this.setState({
+    fileOperationType: 'createFile',
+    fileOperationObject: id
+  });
+
+  handleFileCreateConfirm = (name: string) => {
+    const { dispatch } = this.props;
+    const { fileOperationObject } = this.state;
+
+    if (fileOperationObject) {
+      dispatch(createFile({ parentId: fileOperationObject, name }));
+
+      this.setState({
+        fileOperationType: null,
+        fileOperationObject: null
+      });
+    }
+  }
+
+  handleFolderCreateClick = (id: string) => this.setState({
+    fileOperationType: 'createFolder',
+    fileOperationObject: id
+  });
+
+  handleFolderCreateConfirm = (name: string) => {
+    const { dispatch } = this.props;
+    const { fileOperationObject } = this.state;
+
+    if (fileOperationObject) {
+      dispatch(createFolder({ parentId: fileOperationObject, name }));
+
+      this.setState({
+        fileOperationType: null,
+        fileOperationObject: null
+      });
+    }
+  }
+
+  handleFileOperationCancel = () => this.setState({
+    fileOperationType: null,
+    fileOperationObject: null
+  });
+
   render() {
     const {
       className,
@@ -113,7 +260,13 @@ class Code extends React.Component<CodeProps, CodeState> {
       selectedFile,
       dispatch
     } = this.props;
-    console.log('Code', selectedFile)
+
+    const {
+      fileOperationType,
+      fileOperationObject
+    } = this.state;
+
+    const operableFile = this.getFileById(fileOperationObject);
 
     return (
       <div className={cx(styles.area, className)}>
@@ -121,30 +274,17 @@ class Code extends React.Component<CodeProps, CodeState> {
           <div className={styles.sidePanelHeading}>
             <Text variant='h4' className={styles.sidePanelTitle}>Files</Text>
           </div>
-          <DirectoryTree
-            onSelect={(selectedKeys, info) => {
-              const selected = selectedKeys.length > 0 ? selectedKeys[0] : null
-              if (selected) {
-                dispatch(selectFile(selected))
-              }
-            }}
-          >
-            {fileTree.map(
-              x => renderTree(
-                x,
-                'items',
-                (item, children) =>
-                  <TreeNode
-                    isLeaf={item.items.length === 0}
-                    title={`${item.fileName}${!item.saved ? '   *' : ''}`}
-                    key={item.fileId}
-                    selectable={item.type === 'file'}
-                  >
-                    {children}
-                  </TreeNode>
-              )
-            )}
-          </DirectoryTree>
+          <Scrollbar className={styles.treeScrollWrap}>
+            <FileTree
+              tree={fileTree}
+              selectedFile={selectedFile}
+              onFileOpen={id => dispatch(selectFile(id))}
+              onFileCreate={this.handleFileCreateClick}
+              onFolderCreate={this.handleFolderCreateClick}
+              onDelete={this.handleFileDeleteClick}
+              onRename={this.handleFileRenameClick}
+            />
+          </Scrollbar>
         </div>
         <div className={styles.mainContent}>
           <div className={styles.panel}>
@@ -181,6 +321,51 @@ class Code extends React.Component<CodeProps, CodeState> {
             onChange={v => selectedFile && dispatch(updateFileContent(selectedFile.fileId, v))}
           />
         </div>
+        <ConfirmModal
+          title='Delete file'
+          visible={fileOperationType === 'delete'}
+          onCancel={this.handleFileOperationCancel}
+          onConfirm={this.handleFileDeleteConfirm}
+        >
+          <PopupBody>
+            <Text>
+              {'Are you sure you want to delete the '}
+              <Text className={styles.popupFileName}>{operableFile && operableFile.fileName}</Text>
+              {` ${operableFile && operableFile.type}`}
+            </Text>
+          </PopupBody>
+        </ConfirmModal>
+        <InputModal
+          title='Rename file'
+          text={(
+            <React.Fragment>
+              {`Enter the new name of the ${operableFile && operableFile.type}: `}
+              <Text className={styles.popupFileName}>{operableFile && operableFile.fileName}</Text>
+            </React.Fragment>
+          )}
+          confirmText='Rename'
+          initialValue={operableFile && operableFile.fileName}
+          onConfirm={this.handleFileRenameConfirm}
+          onClose={this.handleFileOperationCancel}
+          visible={fileOperationType === 'rename'}
+        />
+        <InputModal
+          title='Create file'
+          text='Enter the name of the new file and its extension:'
+          confirmText='Create'
+          initialValue={'.lua'}
+          onConfirm={this.handleFileCreateConfirm}
+          onClose={this.handleFileOperationCancel}
+          visible={fileOperationType === 'createFile'}
+        />
+        <InputModal
+          title='Create folder'
+          text='Enter the name of the new folder:'
+          confirmText='Create'
+          onConfirm={this.handleFolderCreateConfirm}
+          onClose={this.handleFileOperationCancel}
+          visible={fileOperationType === 'createFolder'}
+        />
       </div>
     );
   }

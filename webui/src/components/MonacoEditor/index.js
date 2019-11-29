@@ -178,8 +178,6 @@ export default class MonacoEditor extends React.Component {
       value, language, fileId, theme, cursor, options
     } = this.props;
 
-    console.log(this.editor)
-
     const { editor } = this;
     let model = editor.getModel(fileId)
     if (prevProps.fileId !== fileId) {
