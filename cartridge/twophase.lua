@@ -48,9 +48,9 @@ vars:new('prepared_config', nil)
 -- @treturn[2] nil
 -- @treturn[2] table Error description
 local function prepare_2pc(data)
-    local cwcfg = ClusterwideConfig.new(data):lock()
+    local clusterwide_config = ClusterwideConfig.new(data):lock()
 
-    local ok, err = confapplier.validate_config(cwcfg)
+    local ok, err = confapplier.validate_config(clusterwide_config)
     if not ok then
         return nil, err
     end
@@ -76,12 +76,12 @@ local function prepare_2pc(data)
         return nil, err
     end
 
-    local ok, err = cwcfg:write_to_file(path_prepare)
+    local ok, err = clusterwide_config:write_to_file(path_prepare)
     if not ok then
         return nil, err
     end
 
-    vars.prepared_config = cwcfg
+    vars.prepared_config = clusterwide_config
     return true
 end
 
@@ -192,29 +192,29 @@ local function _clusterwide(patch)
 
     log.warn('Updating config clusterwide...')
 
-    local cwcfg_old = confapplier.get_active_config()
+    local clusterwide_config_old = confapplier.get_active_config()
     local vshard_utils = require('cartridge.vshard-utils')
-    if cwcfg_old == nil then
+    if clusterwide_config_old == nil then
         local auth = require('cartridge.auth')
-        cwcfg_old = ClusterwideConfig.new({
+        clusterwide_config_old = ClusterwideConfig.new({
             auth = auth.get_params(),
             vshard_groups = vshard_utils.get_known_groups(),
         }):lock()
     end
 
-    local cwcfg_new = cwcfg_old:copy()
+    local clusterwide_config_new = clusterwide_config_old:copy()
     for k, v in pairs(patch) do
-        cwcfg_new:set_content(k, v)
+        clusterwide_config_new:set_content(k, v)
     end
-    cwcfg_new:lock()
-    -- log.info('%s', yaml.encode(cwcfg_new:get_readonly()))
+    clusterwide_config_new:lock()
+    -- log.info('%s', yaml.encode(clusterwide_config_new:get_readonly()))
 
-    local topology_old = cwcfg_old:get_readonly('topology')
-    local topology_new = cwcfg_new:get_readonly('topology')
+    local topology_old = clusterwide_config_old:get_readonly('topology')
+    local topology_new = clusterwide_config_new:get_readonly('topology')
 
     topology.probe_missing_members(topology_new.servers)
 
-    if utils.deepcmp(cwcfg_new, cwcfg_old) then
+    if utils.deepcmp(clusterwide_config_new, clusterwide_config_old) then
         log.warn("Clusterwide config didn't change, skipping")
         return true
     end
@@ -225,8 +225,8 @@ local function _clusterwide(patch)
     end
 
     local ok, err = vshard_utils.validate_config(
-        cwcfg_new:get_readonly(),
-        cwcfg_old:get_readonly()
+        clusterwide_config_new:get_readonly(),
+        clusterwide_config_old:get_readonly()
     )
     if not ok then
         return nil, err
@@ -253,7 +253,7 @@ local function _clusterwide(patch)
         log.warn('(2PC) Preparation stage...')
 
         local retmap, errmap = pool.map_call(
-            '_G.__cartridge_cwcfg_prepare_2pc', {cwcfg_new:get_readonly()},
+            '_G.__cartridge_clusterwide_config_prepare_2pc', {clusterwide_config_new:get_readonly()},
             {uri_list = uri_list, timeout = 5}
         )
 
@@ -287,7 +287,7 @@ local function _clusterwide(patch)
         log.warn('(2PC) Commit stage...')
 
         local retmap, errmap = pool.map_call(
-            '_G.__cartridge_cwcfg_commit_2pc', nil,
+            '_G.__cartridge_clusterwide_config_commit_2pc', nil,
             {uri_list = uri_list, timeout = 5}
         )
 
@@ -312,7 +312,7 @@ local function _clusterwide(patch)
         log.warn('(2PC) Abort stage...')
 
         local retmap, errmap = pool.map_call(
-            '_G.__cartridge_cwcfg_abort_2pc', nil,
+            '_G.__cartridge_clusterwide_config_abort_2pc', nil,
             {uri_list = abortion_list, timeout = 5}
         )
 
@@ -399,9 +399,9 @@ local function set_schema(schema_yml)
     return get_schema()
 end
 
-_G.__cartridge_cwcfg_prepare_2pc = function(...) return errors.pcall('E', prepare_2pc, ...) end
-_G.__cartridge_cwcfg_commit_2pc = function(...) return errors.pcall('E', commit_2pc, ...) end
-_G.__cartridge_cwcfg_abort_2pc = function(...) return errors.pcall('E', abort_2pc, ...) end
+_G.__cartridge_clusterwide_config_prepare_2pc = function(...) return errors.pcall('E', prepare_2pc, ...) end
+_G.__cartridge_clusterwide_config_commit_2pc = function(...) return errors.pcall('E', commit_2pc, ...) end
+_G.__cartridge_clusterwide_config_abort_2pc = function(...) return errors.pcall('E', abort_2pc, ...) end
 
 return {
     get_schema = get_schema,

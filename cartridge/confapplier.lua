@@ -38,7 +38,7 @@ local StateError = errors.new_class('StateError')
 
 vars:new('state', '')
 vars:new('error')
-vars:new('cwcfg') -- clusterwide config
+vars:new('clusterwide_config')
 
 vars:new('workdir')
 vars:new('instance_uuid')
@@ -123,16 +123,19 @@ end
 --- Validate configuration by all roles.
 -- @function validate_config
 -- @local
--- @tparam table cwcfg_new
+-- @tparam table clusterwide_config_new
 -- @treturn[1] boolean true
 -- @treturn[2] nil
 -- @treturn[2] table Error description
-local function validate_config(cwcfg, _)
+local function validate_config(clusterwide_config, _)
     checks('ClusterwideConfig', 'nil')
-    assert(cwcfg.locked)
+    assert(clusterwide_config.locked)
 
-    local conf_new = cwcfg:get_readonly()
-    local conf_old = vars.cwcfg and vars.cwcfg:get_readonly()
+    local conf_new = clusterwide_config:get_readonly()
+    local conf_old
+    if vars.clusterwide_config then
+        conf_old = vars.clusterwide_config:get_readonly()
+    end
     if conf_old == nil then
         conf_old = {}
     end
@@ -153,16 +156,16 @@ end
 -- @treturn[1] boolean true
 -- @treturn[2] nil
 -- @treturn[2] table Error description
-local function apply_config(cwcfg)
+local function apply_config(clusterwide_config)
     checks('ClusterwideConfig')
-    assert(cwcfg.locked)
+    assert(clusterwide_config.locked)
     assert(
         vars.state == 'BoxConfigured'
         or vars.state == 'RolesConfigured',
         'Unexpected state ' .. vars.state
     )
 
-    vars.cwcfg = cwcfg
+    vars.clusterwide_config = clusterwide_config
 
     set_state('ConnectingFullmesh')
     box.cfg({
@@ -171,7 +174,7 @@ local function apply_config(cwcfg)
     })
     local _, err = BoxError:pcall(box.cfg, {
         replication = topology.get_fullmesh_replication(
-            cwcfg:get_readonly('topology'), vars.replicaset_uuid
+            clusterwide_config:get_readonly('topology'), vars.replicaset_uuid
         ),
     })
     if err then
@@ -179,10 +182,10 @@ local function apply_config(cwcfg)
         return nil, err
     end
 
-    failover.cfg(cwcfg)
+    failover.cfg(clusterwide_config)
 
     local ok, err = ddl_manager.apply_config(
-        cwcfg:get_readonly(),
+        clusterwide_config:get_readonly(),
         {is_master = failover.is_leader()}
     )
     if not ok then
@@ -191,7 +194,7 @@ local function apply_config(cwcfg)
     end
 
     set_state('ConfiguringRoles')
-    local ok, err = roles.apply_config(cwcfg:get_readonly())
+    local ok, err = roles.apply_config(clusterwide_config:get_readonly())
     if not ok then
         set_state('OperationError', err)
         return nil, err
@@ -202,16 +205,16 @@ local function apply_config(cwcfg)
 end
 
 
-local function boot_instance(cwcfg)
+local function boot_instance(clusterwide_config)
     checks('ClusterwideConfig')
-    assert(cwcfg.locked)
+    assert(clusterwide_config.locked)
     assert(
         vars.state == 'Unconfigured' -- bootstraping from scratch
         or vars.state == 'ConfigLoaded', -- bootstraping from snapshot
         'Unexpected state ' .. vars.state
     )
 
-    local topology_cfg = cwcfg:get_readonly('topology') or {}
+    local topology_cfg = clusterwide_config:get_readonly('topology') or {}
     local box_opts = table.deepcopy(vars.box_opts)
     box_opts.wal_dir = vars.workdir
     box_opts.memtx_dir = vars.workdir
@@ -358,7 +361,7 @@ local function boot_instance(cwcfg)
     end
 
     set_state('BoxConfigured')
-    return apply_config(cwcfg)
+    return apply_config(clusterwide_config)
 end
 
 local function init(opts)
@@ -401,30 +404,30 @@ local function init(opts)
         -- boot_instance() will be called over net.box later
     else
         set_state('ConfigFound')
-        local cwcfg, err = ClusterwideConfig.load_from_file(config_filename)
-        if cwcfg == nil then
+        local clusterwide_config, err = ClusterwideConfig.load_from_file(config_filename)
+        if clusterwide_config == nil then
             set_state('InitError', err)
             return true
         end
 
         -- TODO validate vshard groups
 
-        vars.cwcfg = cwcfg:lock()
-        local ok, err = validate_config(cwcfg)
+        vars.clusterwide_config = clusterwide_config:lock()
+        local ok, err = validate_config(clusterwide_config)
         if not ok then
             set_state('InitError', err)
             return true
         end
 
         set_state('ConfigLoaded')
-        fiber.new(boot_instance, cwcfg)
+        fiber.new(boot_instance, clusterwide_config)
     end
 
     return true
 end
 
 local function get_active_config()
-    return vars.cwcfg
+    return vars.clusterwide_config
 end
 
 --- Get a read-only view on the clusterwide configuration.
@@ -437,10 +440,10 @@ end
 -- @treturn table
 local function get_readonly(section)
     checks('?string')
-    if vars.cwcfg == nil then
+    if vars.clusterwide_config == nil then
         return nil
     end
-    return vars.cwcfg:get_readonly(section)
+    return vars.clusterwide_config:get_readonly(section)
 end
 
 --- Get a read-write deep copy of the clusterwide configuration.
@@ -453,10 +456,10 @@ end
 -- @treturn table
 local function get_deepcopy(section)
     checks('?string')
-    if vars.cwcfg == nil then
+    if vars.clusterwide_config == nil then
         return nil
     end
-    return vars.cwcfg:get_deepcopy(section)
+    return vars.clusterwide_config:get_deepcopy(section)
 end
 
 return {

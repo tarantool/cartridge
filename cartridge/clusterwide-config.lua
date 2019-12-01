@@ -22,8 +22,8 @@ yaml.cfg({
 local LoadConfigError = errors.new_class('LoadConfigError')
 local DecodeYamlError = errors.new_class('DecodeYamlError')
 
-local _cwcfg_mt
-_cwcfg_mt = {
+local clusterwide_config_mt
+clusterwide_config_mt = {
     __type = 'ClusterwideConfig',
     __newindex = function()
         error("ClusterwideConfig object is immutable", 2)
@@ -42,7 +42,7 @@ _cwcfg_mt = {
             return setmetatable({
                 data = utils.table_setro(data),
                 locked = false,
-            }, _cwcfg_mt)
+            }, clusterwide_config_mt)
         end,
 
         set_content = function(self, section_name, content)
@@ -121,7 +121,7 @@ local function new(data)
     return setmetatable({
         data = utils.table_setro(data),
         locked = false,
-    }, _cwcfg_mt)
+    }, clusterwide_config_mt)
 end
 
 --- Load object from filesystem.

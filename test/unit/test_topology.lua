@@ -80,7 +80,7 @@ local function check_config(result, raw_new, raw_old)
     local ok, err = topology.validate(topology_new, topology_old)
     if ok then
         local vars = require('cartridge.vars').new('cartridge.confapplier')
-        vars.cwcfg = ClusterwideConfig.new(cfg_old):lock()
+        vars.clusterwide_config = ClusterwideConfig.new(cfg_old):lock()
         ok, err = confapplier.validate_config(
             ClusterwideConfig.new(cfg_new):lock()
         )

@@ -40,7 +40,7 @@ local ApplyConfigError = errors.new_class('ApplyConfigError')
 local ValidateConfigError = errors.new_class('ValidateConfigError')
 
 vars:new('mode', 'disabled') -- disabled | eventual
-vars:new('conf')
+vars:new('clusterwide_config')
 vars:new('failover_fiber')
 vars:new('cache', {
     active_leaders = nil,
@@ -83,12 +83,13 @@ local function _get_active_leaders(topology_cfg, mode)
 end
 
 local function refresh_cache()
+    local topology_cfg = vars.clusterwide_config:get_readonly('topology')
     local active_leaders = _get_active_leaders(
-        vars.conf.topology, vars.mode
+        topology_cfg, vars.mode
     )
 
     local leader_uuid = active_leaders[box.info.cluster.uuid]
-    local replicasets = vars.conf.topology.replicasets
+    local replicasets = topology_cfg.replicasets
     local all_rw = replicasets[box.info.cluster.uuid].all_rw
 
     vars.cache.active_leaders = active_leaders
@@ -106,9 +107,10 @@ local function _failover_role(mod)
         return true
     end
 
+    local conf = vars.clusterwide_config:get_readonly()
     if type(mod.validate_config) == 'function' then
         local ok, err = ValidateConfigError:pcall(
-            mod.validate_config, vars.conf, vars.conf
+            mod.validate_config, conf, conf
         )
         if not ok then
             err = err or ValidateConfigError:new(
@@ -119,7 +121,7 @@ local function _failover_role(mod)
     end
 
     return ApplyConfigError:pcall(
-        mod.apply_config, vars.conf, {is_master = vars.cache.is_leader}
+        mod.apply_config, conf, {is_master = vars.cache.is_leader}
     )
 end
 
@@ -168,18 +170,17 @@ end
 --- Initialize the failover module.
 -- @function cfg
 -- @local
-local function cfg(cwcfg)
+local function cfg(clusterwide_config)
     checks('ClusterwideConfig')
-    local conf = cwcfg:get_readonly()
-    assert(conf ~= nil)
-    assert(conf.topology ~= nil)
+    local topology_cfg = clusterwide_config:get_readonly('topology')
+    assert(topology_cfg ~= nil)
 
-    local new_mode = conf.topology.failover and 'eventual' or 'disabled'
+    local new_mode = topology_cfg.failover and 'eventual' or 'disabled'
     if vars.mode ~= new_mode then
         log.info('Failover mode set to %q', vars.mode)
     end
 
-    vars.conf = conf
+    vars.clusterwide_config = clusterwide_config
     vars.mode = new_mode
 
     if vars.failover_cond == nil then
