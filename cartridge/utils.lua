@@ -121,7 +121,7 @@ local function mktree(path)
                     return nil, errors.new('MktreeError',
                         'Error creating directory %q: %s',
                         current_dir, errno.strerror()
-                    ):tostring()
+                    )
                 end
             end
         elseif not stat:is_dir() then
