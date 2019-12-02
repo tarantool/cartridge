@@ -110,15 +110,27 @@ local function mktree(path)
     local current_dir = "/"
     for _, dir in ipairs(dirs) do
         current_dir = fio.pathjoin(current_dir, dir)
-        if not fio.path.is_dir(current_dir) then
-            local ok = fio.mkdir(current_dir)
-            if not ok then
-                return nil, errors.new('MktreeError',
-                    'Error creating directory %q: %s',
-                    current_dir, errno.strerror()
-                )
+        local stat = fio.stat(current_dir)
+        if stat == nil then
+            local _, err = fio.mkdir(current_dir)
+            local _errno = errno()
+            if err ~= nil  then
+                if _errno == errno.EEXIST and fio.path.is_dir(current_dir) then
+                    goto continue
+                else
+                    return nil, errors.new('MktreeError',
+                        'Error creating directory %q: %s',
+                        current_dir, errno.strerror()
+                    ):tostring()
+                end
             end
+        elseif not stat:is_dir() then
+            return nil, errors.new('MktreeError',
+                'Error creating directory %q: %s',
+                current_dir, errno.strerror(errno.EEXIST)
+            )
         end
+        ::continue::
     end
     return true
 end
