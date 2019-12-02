@@ -114,15 +114,11 @@ local function mktree(path)
         if stat == nil then
             local _, err = fio.mkdir(current_dir)
             local _errno = errno()
-            if err ~= nil  then
-                if _errno == errno.EEXIST and fio.path.is_dir(current_dir) then
-                    goto continue
-                else
-                    return nil, errors.new('MktreeError',
-                        'Error creating directory %q: %s',
-                        current_dir, errno.strerror()
-                    )
-                end
+            if err ~= nil and not fio.path.is_dir(current_dir) then
+                return nil, errors.new('MktreeError',
+                    'Error creating directory %q: %s',
+                    current_dir, errno.strerror(_errno)
+                )
             end
         elseif not stat:is_dir() then
             return nil, errors.new('MktreeError',
@@ -130,7 +126,6 @@ local function mktree(path)
                 current_dir, errno.strerror(errno.EEXIST)
             )
         end
-        ::continue::
     end
     return true
 end
