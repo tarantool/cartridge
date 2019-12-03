@@ -201,25 +201,26 @@ local function cfg(clusterwide_config)
     return true
 end
 
+--- Get map of replicaset leaders.
+-- @function get_active_leaders
+-- @local
+-- @return {[replicaset_uuid] = instance_uuid,...}
+local function get_active_leaders()
+    if vars.cache.active_leaders ~= nil then
+        return vars.cache.active_leaders
+    end
+
+    local confapplier = require('cartridge.confapplier')
+    local topology_cfg = confapplier.get_readonly('topology')
+    if topology_cfg == nil then
+        return {}
+    end
+    return _get_active_leaders(topology_cfg, 'disabled')
+end
+
 return {
     cfg = cfg,
-
-    --- Get map of replicaset leaders.
-    -- @function get_active_leaders
-    -- @local
-    -- @return {[replicaset_uuid] = instance_uuid,...}
-    get_active_leaders = function()
-        if vars.cache.active_leaders ~= nil then
-            return vars.cache.active_leaders
-        end
-
-        local confapplier = require('cartridge.confapplier')
-        local topology_cfg = confapplier.get_readonly('topology')
-        if topology_cfg == nil then
-            return {}
-        end
-        return _get_active_leaders(topology_cfg, 'disabled')
-    end,
+    get_active_leaders = get_active_leaders,
 
     --- Check current instance leadership.
     -- @function is_leader
