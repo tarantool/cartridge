@@ -23,7 +23,6 @@ file(GLOB_RECURSE FRONTEND_FILES
 file(GLOB_RECURSE LUA_FILES
   "${CMAKE_CURRENT_SOURCE_DIR}/cartridge.lua"
   "${CMAKE_CURRENT_SOURCE_DIR}/cartridge/*.lua"
-  "${CMAKE_CURRENT_SOURCE_DIR}/cluster/*.lua"
 )
 
 ## VERSION ####################################################################
@@ -135,6 +134,22 @@ add_test(
 ###############################################################################
 
 install(
+  DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}
+  DESTINATION ${TARANTOOL_INSTALL_LUADIR}
+)
+
+install(
+  FILES ${CMAKE_CURRENT_SOURCE_DIR}/cartridge.lua
+  DESTINATION ${TARANTOOL_INSTALL_LUADIR}
+)
+
+install(
   FILES ${CMAKE_CURRENT_BINARY_DIR}/VERSION.lua
   DESTINATION ${TARANTOOL_INSTALL_LUADIR}/${PROJECT_NAME}/
+)
+
+install(
+  FILES ${WEB_ROOT}/build/bundle.lua
+  DESTINATION ${TARANTOOL_INSTALL_LUADIR}/${PROJECT_NAME}
+  RENAME front-bundle.lua
 )

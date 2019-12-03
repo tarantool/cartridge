@@ -3,13 +3,6 @@
 require('strict').on()
 _G.is_initialized = function() return false end
 
-if not pcall(require, 'cartridge.front-bundle') then
-    -- to be loaded in development environment
-    package.preload['cartridge.front-bundle'] = function()
-        return require('webui.build.bundle')
-    end
-end
-
 local log = require('log')
 local errors = require('errors')
 local cartridge = require('cartridge')
