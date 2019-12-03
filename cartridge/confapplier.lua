@@ -174,6 +174,9 @@ local function apply_config(clusterwide_config)
     set_state('ConnectingFullmesh')
     box.cfg({
         replication_connect_quorum = 0,
+        -- Workaround for #3760: Reconfiguring tarantool with
+        -- `replication_connect_quorum = 0` hangs
+        -- https://github.com/tarantool/tarantool/issues/3760
         replication_connect_timeout = 0.001,
     })
     local _, err = BoxError:pcall(box.cfg, {
@@ -220,14 +223,22 @@ local function boot_instance(clusterwide_config)
 
     local topology_cfg = clusterwide_config:get_readonly('topology') or {}
     local box_opts = table.deepcopy(vars.box_opts)
+    -- TODO: https://github.com/tarantool/cartridge/issues/189
     box_opts.wal_dir = vars.workdir
     box_opts.memtx_dir = vars.workdir
     box_opts.vinyl_dir = vars.workdir
+    -- Don't start listening until bootstrap/recovery finishes
+    -- and prevent overriding box_opts.listen
     box_opts.listen = box.NULL
+    -- By default all instances start in read-only mode
     if box_opts.read_only == nil then
         box_opts.read_only = true
     end
 
+    -- There could be two options:
+    -- either instance is being recovered after restart
+    -- or the instance is bootstrapped (neither snapshot nor config
+    -- don't exist yet)
     if vars.state == 'ConfigLoaded' then
         set_state('RecoveringSnapshot')
 
@@ -248,6 +259,10 @@ local function boot_instance(clusterwide_config)
             end
         end
 
+        box_opts.instance_uuid = nil
+        box_opts.replicaset_uuid = nil
+        box_opts.replication = nil
+
     elseif vars.state == 'Unconfigured' then
         set_state('BootstrappingBox')
 
@@ -267,19 +282,18 @@ local function boot_instance(clusterwide_config)
         end
 
         local server = topology_cfg.servers[instance_uuid]
-        local replicaset_uuid = server.replicaset_uuid
-        assert(replicaset_uuid ~= nil)
-
-        box_opts.instance_uuid = instance_uuid
-        box_opts.replicaset_uuid = replicaset_uuid
-
+        local replicaset_uuid = assert(server.replicaset_uuid)
         local leaders_order = topology.get_leaders_order(
             topology_cfg, replicaset_uuid
         )
         local leader_uuid = leaders_order[1]
         local leader = topology_cfg.servers[leader_uuid]
 
-        if box_opts.instance_uuid == leader_uuid then
+        box_opts.instance_uuid = instance_uuid
+        box_opts.replicaset_uuid = replicaset_uuid
+
+        -- Set up 'star' replication for the bootstrap
+        if instance_uuid == leader_uuid then
             box_opts.replication = nil
             box_opts.read_only = false
         else
@@ -305,15 +319,22 @@ local function boot_instance(clusterwide_config)
     if vars.state == 'BootstrappingBox' then
         log.info('Granting replication permissions to %q...', username)
 
-        BoxError:pcall(
+        local _, err = BoxError:pcall(
             box.schema.user.grant,
             username, 'replication',
             nil, nil, {if_not_exists = true}
         )
+        if err ~= nil then
+            log.error('%s', err)
+        end
     end
 
     do
         log.info('Setting password for user %q ...', username)
+        -- To be sure netbox is operable, password should always be
+        -- equal to the cluster_cookie.
+        -- Function `passwd` is safe to be called on multiple replicas,
+        -- it never cause replication conflict
 
         local read_only = box.cfg.read_only
         box.cfg({read_only = false})
@@ -326,6 +347,7 @@ local function boot_instance(clusterwide_config)
         box.cfg({read_only = read_only})
     end
 
+    -- Box is ready, start listening full-featured iproto protocol
     remote_control.stop()
     local _, err = BoxError:pcall(
         box.cfg, {listen = vars.binary_port}
