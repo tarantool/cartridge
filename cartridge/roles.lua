@@ -244,8 +244,16 @@ end
 -- @treturn[2] table Error description
 local function validate_config(conf_new, conf_old)
     checks('table', 'table')
-    assert(conf_new.__type ~= 'ClusterwideConfig')
-    assert(conf_old.__type ~= 'ClusterwideConfig')
+    if conf_new.__type == 'ClusterwideConfig' then
+        local err = "Bad argument #1 to validate_config" ..
+            " (table expected, got ClusterwideConfig)"
+        error(err, 2)
+    end
+    if conf_old.__type == 'ClusterwideConfig' then
+        local err = "Bad argument #2 to validate_config" ..
+            " (table expected, got ClusterwideConfig)"
+        error(err, 2)
+    end
 
     for _, mod in ipairs(vars.known_roles) do
         if type(mod.validate_config) == 'function' then
@@ -274,7 +282,11 @@ end
 -- @treturn[2] table Error description
 local function apply_config(conf)
     checks('table')
-    assert(conf.__type ~= 'ClusterwideConfig')
+    if conf.__type == 'ClusterwideConfig' then
+        local err = "Bad argument #1 to apply_config" ..
+            " (table expected, got ClusterwideConfig)"
+        error(err, 2)
+    end
 
     local my_replicaset = conf.topology.replicasets[box.info.cluster.uuid]
 

@@ -187,8 +187,16 @@ end
 
 local function validate_config(conf_new, conf_old)
     checks('table', 'table')
-    assert(conf_new.__type ~= 'ClusterwideConfig')
-    assert(conf_old.__type ~= 'ClusterwideConfig')
+    if conf_new.__type == 'ClusterwideConfig' then
+        local err = "Bad argument #1 to validate_config" ..
+            " (table expected, got ClusterwideConfig)"
+        error(err, 2)
+    end
+    if conf_old.__type == 'ClusterwideConfig' then
+        local err = "Bad argument #2 to validate_config" ..
+            " (table expected, got ClusterwideConfig)"
+        error(err, 2)
+    end
 
     local topology_new = conf_new.topology
     local topology_old = conf_old.topology or {}

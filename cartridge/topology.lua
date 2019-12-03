@@ -486,7 +486,11 @@ end
 -- @treturn nil|string `instance_uuid` found
 local function find_server_by_uri(topology_cfg, uri)
     checks('table', 'string')
-    assert(topology_cfg.__type ~= 'ClusterwideConfig')
+    if topology_cfg.__type == 'ClusterwideConfig' then
+        local err = "Bad argument #1 to find_server_by_uri" ..
+            " (table expected, got ClusterwideConfig)"
+        error(err, 2)
+    end
 
     if topology_cfg.servers == nil then
         return nil
@@ -580,7 +584,11 @@ end
 -- @treturn table
 local function get_fullmesh_replication(topology_cfg, replicaset_uuid)
     checks('table', 'string')
-    assert(topology_cfg.__type ~= 'ClusterwideConfig')
+    if topology_cfg.__type == 'ClusterwideConfig' then
+        local err = "Bad argument #1 to get_fullmesh_replication" ..
+            " (table expected, got ClusterwideConfig)"
+        error(err, 2)
+    end
     assert(topology_cfg.servers ~= nil)
 
     local replication = {}
