@@ -50,7 +50,7 @@ vars:new('failover_cond', nil)
 vars:new('box_opts', nil)
 vars:new('boot_opts', nil)
 
-local _transitions = {
+local state_transitions = {
 -- init()
     -- Initial state.
     -- Function `confapplier.init()` wasn't called yet.
@@ -99,7 +99,7 @@ local _transitions = {
 local function set_state(new_state, err)
     checks('string', '?')
     StateError:assert(
-        utils.table_find(_transitions[vars.state], new_state),
+        utils.table_find(state_transitions[vars.state], new_state),
         'invalid transition %s -> %s', vars.state, new_state
     )
 
