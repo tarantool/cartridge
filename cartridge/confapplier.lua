@@ -408,7 +408,7 @@ local function init(opts)
         -- boot_instance() will be called over net.box later
     else
         set_state('ConfigFound')
-        local clusterwide_config, err = ClusterwideConfig.load_from_file(config_filename)
+        local clusterwide_config, err = ClusterwideConfig.load(config_filename)
         if clusterwide_config == nil then
             set_state('InitError', err)
             return true

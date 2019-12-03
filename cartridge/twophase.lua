@@ -76,7 +76,7 @@ local function prepare_2pc(data)
         return nil, err
     end
 
-    local ok, err = clusterwide_config:write_to_file(path_prepare)
+    local ok, err = ClusterwideConfig.save(clusterwide_config, path_prepare)
     if not ok then
         return nil, err
     end

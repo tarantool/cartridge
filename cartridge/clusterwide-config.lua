@@ -92,19 +92,6 @@ clusterwide_config_mt = {
                 return ret
             end
         end,
-
-        write_to_file = function(self, path)
-            checks('ClusterwideConfig', 'string')
-            local ok, err = utils.file_write(
-                path, yaml.encode(self.data),
-                {'O_CREAT', 'O_EXCL', 'O_WRONLY'}
-            )
-            if not ok then
-                return nil, err
-            end
-
-            return true
-        end,
     }
 }
 
@@ -126,14 +113,14 @@ end
 
 --- Load object from filesystem.
 -- Configuration is a YAML file.
--- @function load_from_file
+-- @function load
 -- @local
 -- @tparam string filename
 --   Filename to load.
 -- @treturn[1] ClusterwideConfig
 -- @treturn[2] nil
 -- @treturn[2] table Error description
-local function load_from_file(filename)
+local function load(filename)
     checks('string')
 
     if not utils.file_exists(filename) then
@@ -181,7 +168,31 @@ local function load_from_file(filename)
     return new(data)
 end
 
+--- Write object to filesystem.
+-- @function save
+-- @local
+-- @tparam ClusterwideConfig clusterwide_config
+--   Filename to load.
+-- @tparam string filename
+--   Destination path.
+-- @treturn[1] boolean true
+-- @treturn[2] nil
+-- @treturn[2] table Error description
+local function save(clusterwide_config, path)
+    checks('ClusterwideConfig', 'string')
+    local ok, err = utils.file_write(
+        path, yaml.encode(clusterwide_config.data),
+        {'O_CREAT', 'O_EXCL', 'O_WRONLY'}
+    )
+    if not ok then
+        return nil, err
+    end
+
+    return true
+end
+
 return {
     new = new,
-    load_from_file = load_from_file,
+    load = load,
+    save = save,
 }
