@@ -107,6 +107,10 @@ local function set_state(new_state, err)
     or new_state == 'BootError'
     or new_state == 'OperationError'
     then
+        if err == nil then
+            err = errors.new(new_state, 'Unknown error')
+        end
+
         log.error('Instance entering failed state: %s -> %s\n%s',
             vars.state, new_state, err
         )

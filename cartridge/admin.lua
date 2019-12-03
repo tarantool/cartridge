@@ -99,8 +99,8 @@ local function get_server_info(members, uuid, uri)
 end
 
 local function get_topology()
-    local state, err = confapplier.get_state()
-    if state == 'InitError' or state == 'BootError' then
+    local _, err = confapplier.get_state()
+    if err ~= nil then
         return nil, err
     end
 
