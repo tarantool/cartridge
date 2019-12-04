@@ -5,7 +5,7 @@ import { css, cx } from 'react-emotion';
 import Tooltip from 'src/components/Tooltip';
 import Dropdown from 'src/components/Dropdown';
 import ServerLabels, { type Label } from 'src/components/ServerLabels';
-import store from 'src/store/instance'
+import store from 'src/store/instance';
 import {
   HealthStatus,
   IconBucket,
@@ -16,7 +16,7 @@ import {
   UriLabel
 } from '@tarantool.io/ui-kit';
 import { showExpelModal } from '../store/actions/clusterPage.actions';
-import { withRouter } from 'react-router-dom'
+import { withRouter } from 'react-router-dom';
 
 const styles = {
   row: css`
@@ -236,7 +236,6 @@ class ReplicasetServerListItem extends React.PureComponent<
             },
             {
               text: 'Expel server',
-              className: 'meta-test_EXPELLLLLLLL',
               onClick: () => {
                 store.dispatch(showExpelModal(uri))
               },
