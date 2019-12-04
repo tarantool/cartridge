@@ -6,7 +6,7 @@ local yaml = require('yaml')
 local checks = require('checks')
 local errors = require('errors')
 
-local topology = require('cartridge.topology')
+local failover = require('cartridge.failover')
 
 local CheckSchemaError = errors.new_class('CheckSchemaError')
 local DecodeYamlError = errors.new_class('DecodeYamlError')
@@ -43,11 +43,11 @@ local function apply_config(conf, opts)
     checks('table', {is_master = 'boolean'})
 
     if not opts.is_master then
-        return
+        return true
     end
 
     if conf[_section_name] == nil then
-        return
+        return true
     end
 
     local schema, err = _from_yaml(conf[_section_name])
@@ -88,24 +88,22 @@ local function validate_config(conf_new, conf_old)
                 " instance isn't bootstrapped yet." ..
                 " Set it at your own risk"
             )
-            goto skip
+            return true
         end
 
-        local active_masters = topology.get_active_masters()
+        local active_masters = failover.get_active_leaders()
         if active_masters[box.info.cluster.uuid] ~= box.info.uuid then
             log.info(
                 "Schema validation skipped because" ..
                 " instance isn't a leader"
             )
-            goto skip
+            return true
         end
 
         local ok, err = ddl.check_schema(schema_new)
         if not ok then
             return nil, CheckSchemaError:new(err)
         end
-
-        ::skip::
     end
 
     for space_name, _ in pairs(schema_old.spaces or {}) do

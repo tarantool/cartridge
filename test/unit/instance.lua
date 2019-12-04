@@ -1,5 +1,12 @@
 #!/usr/bin/env tarantool
 
+if not pcall(require, 'cartridge.front-bundle') then
+    -- to be loaded in development environment
+    package.preload['cartridge.front-bundle'] = function()
+        return require('webui.build.bundle')
+    end
+end
+
 local cartridge = require('cartridge')
 
 package.preload['mymodule'] = function()

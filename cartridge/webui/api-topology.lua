@@ -399,6 +399,8 @@ local function init(graphql)
                 uri = gql_types.string.nonNull,
                 uuid = gql_types.string,
                 alias = gql_types.string,
+                state = gql_types.string,
+                error = gql_types.string,
             },
         }),
         callback = module_name .. '.get_self',

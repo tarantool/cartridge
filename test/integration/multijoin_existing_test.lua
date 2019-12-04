@@ -64,7 +64,7 @@ g.after_all = function()
 end
 
 g.test_patch_topology = function()
-    t.skip("Fails due to https://github.com/tarantool/tarantool/issues/4527")
+    -- t.skip("Fails due to https://github.com/tarantool/tarantool/issues/4527")
 
     cluster.main_server:graphql({
         query = [[mutation(

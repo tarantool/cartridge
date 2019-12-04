@@ -20,7 +20,7 @@ local e_config = errors.new_class('Invalid cluster topology config')
 vars:new('known_roles', {
     -- [role_name] = true/false,
 })
-vars:new('topology', {
+--[[ topology_cfg: {
     auth = false,
     failover = false,
     servers = {
@@ -43,7 +43,7 @@ vars:new('topology', {
         --     vshard_group = 'group_name',
         -- }
     },
-})
+}]]
 
 -- to be used in fun.filter
 local function not_expelled(_, srv)
@@ -305,6 +305,7 @@ local function validate_consistency(topology)
     local servers = topology.servers or {}
     local replicasets = topology.replicasets or {}
     local known_uuids = {}
+    local known_uris = {}
 
     for _it, instance_uuid, server in fun.filter(not_expelled, servers) do
         local field = string.format('servers[%s]', instance_uuid)
@@ -313,7 +314,13 @@ local function validate_consistency(topology)
             '%s.replicaset_uuid is not configured in replicasets table',
             field
         )
+        e_config:assert(
+            known_uris[server.uri] == nil,
+            '%s.uri %q collision with another server',
+            field, server.uri
+        )
         known_uuids[server.replicaset_uuid] = true
+        known_uris[server.uri] = true
     end
 
     for replicaset_uuid, _ in pairs(replicasets) do
@@ -468,20 +475,34 @@ local function validate(topology_new, topology_old)
     return true
 end
 
-local function get_myself_uuids(topology)
-    checks('?table')
-    if topology == nil or topology.servers == nil then
-        return nil, nil
+--- Find the server in topology config.
+--
+-- (**Added** in v1.2.0-17)
+--
+-- @function find_server_by_uri
+-- @local
+-- @tparam table topology_cfg
+-- @tparam string uri
+-- @treturn nil|string `instance_uuid` found
+local function find_server_by_uri(topology_cfg, uri)
+    checks('table', 'string')
+    if topology_cfg.__type == 'ClusterwideConfig' then
+        local err = "Bad argument #1 to find_server_by_uri" ..
+            " (table expected, got ClusterwideConfig)"
+        error(err, 2)
     end
 
-    local advertise_uri = membership.myself().uri
-    for _it, instance_uuid, server in fun.filter(not_expelled, topology.servers) do
-        if server.uri == advertise_uri then
-            return instance_uuid, server.replicaset_uuid
+    if topology_cfg.servers == nil then
+        return nil
+    end
+
+    for _it, instance_uuid, server in fun.filter(not_expelled, topology_cfg.servers) do
+        if server.uri == uri then
+            return instance_uuid
         end
     end
 
-    return nil, nil
+    return nil
 end
 
 --- Check the cluster health.
@@ -492,11 +513,14 @@ end
 -- @function cluster_is_healthy
 -- @treturn boolean true / false
 local function cluster_is_healthy()
-    if next(vars.topology.servers) == nil then
-        return nil, 'not bootstrapped yet'
+    local confapplier = require('cartridge.confapplier')
+    if confapplier.get_state() ~= 'RolesConfigured' then
+        return nil, confapplier.get_state()
     end
 
-    for _it, instance_uuid, server in fun.filter(not_disabled, vars.topology.servers) do
+    local topology_cfg = confapplier.get_readonly('topology')
+
+    for _it, instance_uuid, server in fun.filter(not_disabled, topology_cfg.servers) do
         local member = membership.get_member(server.uri) or {}
 
         if (member.status ~= 'alive') then
@@ -514,14 +538,6 @@ local function cluster_is_healthy()
                 '%s: %s',
                 server.uri, member.payload.error
             )
-        elseif (not member.payload.ready) then
-            local err
-            if member.payload.warning then
-                err = string.format('%s not ready: %s', server.uri, member.payload.warning)
-            else
-                err = string.format('%s not ready yet', server.uri)
-            end
-            return nil, err
         end
     end
 
@@ -557,45 +573,27 @@ local function probe_missing_members(servers)
     return true
 end
 
-local function get_active_masters()
-    local ret = {}
-
-    for replicaset_uuid, _ in pairs(vars.topology.replicasets) do
-        local leaders = get_leaders_order(vars.topology, replicaset_uuid)
-
-        if vars.topology.failover then
-            for _, instance_uuid in ipairs(leaders) do
-                local server = vars.topology.servers[instance_uuid]
-                local member = membership.get_member(server.uri)
-
-                if member ~= nil
-                and member.status == 'alive'
-                and member.payload.error == nil
-                and member.payload.uuid == instance_uuid then
-                    ret[replicaset_uuid] = instance_uuid
-                    break
-                end
-            end
-        end
-
-        if ret[replicaset_uuid] == nil then
-            ret[replicaset_uuid] = leaders[1]
-        end
+--- Get replication config to set up full mesh.
+--
+-- (**Added** in v1.2.0-17)
+--
+-- @function get_fullmesh_replication
+-- @local
+-- @tparam table topology_cfg
+-- @tparam string replicaset_uuid
+-- @treturn table
+local function get_fullmesh_replication(topology_cfg, replicaset_uuid)
+    checks('table', 'string')
+    if topology_cfg.__type == 'ClusterwideConfig' then
+        local err = "Bad argument #1 to get_fullmesh_replication" ..
+            " (table expected, got ClusterwideConfig)"
+        error(err, 2)
     end
-
-    return ret
-end
-
-local function get_replication_config(topology, replicaset_uuid)
-    checks('?table', 'string')
-    if topology == nil or topology.servers == nil then
-        return {}
-    end
+    assert(topology_cfg.servers ~= nil)
 
     local replication = {}
 
-    -- luacheck: ignore instance_uuid
-    for _it, instance_uuid, server in fun.filter(not_disabled, topology.servers) do
+    for _it, _, server in fun.filter(not_disabled, topology_cfg.servers) do
         if server.replicaset_uuid == replicaset_uuid then
             table.insert(replication, pool.format_uri(server.uri))
         end
@@ -606,13 +604,6 @@ local function get_replication_config(topology, replicaset_uuid)
 end
 
 return {
-    set = function(topology)
-        checks('table')
-        vars.topology = topology
-    end,
-    get = function()
-        return vars.topology -- read-only
-    end,
     validate = function(...)
         return e_config:pcall(validate, ...)
     end,
@@ -623,10 +614,10 @@ return {
     not_expelled = not_expelled,
     not_disabled = not_disabled,
 
+    get_leaders_order = get_leaders_order,
     cluster_is_healthy = cluster_is_healthy,
     probe_missing_members = probe_missing_members,
-    get_myself_uuids = get_myself_uuids,
-    get_leaders_order = get_leaders_order,
-    get_active_masters = get_active_masters,
-    get_replication_config = get_replication_config,
+
+    find_server_by_uri = find_server_by_uri,
+    get_fullmesh_replication = get_fullmesh_replication,
 }

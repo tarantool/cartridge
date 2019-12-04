@@ -20,6 +20,7 @@ local errors = require('errors')
 local vars = require('cartridge.vars').new('cartridge.roles')
 local utils = require('cartridge.utils')
 local topology = require('cartridge.topology')
+local failover = require('cartridge.failover')
 local service_registry = require('cartridge.service-registry')
 
 local RegisterRoleError = errors.new_class('RegisterRoleError')
@@ -242,10 +243,17 @@ end
 -- @treturn[2] nil
 -- @treturn[2] table Error description
 local function validate_config(conf_new, conf_old)
-    if type(conf_new) ~= 'table'  then
-        return nil, ValidateConfigError:new('config must be a table')
-    end
     checks('table', 'table')
+    if conf_new.__type == 'ClusterwideConfig' then
+        local err = "Bad argument #1 to validate_config" ..
+            " (table expected, got ClusterwideConfig)"
+        error(err, 2)
+    end
+    if conf_old.__type == 'ClusterwideConfig' then
+        local err = "Bad argument #2 to validate_config" ..
+            " (table expected, got ClusterwideConfig)"
+        error(err, 2)
+    end
 
     for _, mod in ipairs(vars.known_roles) do
         if type(mod.validate_config) == 'function' then
@@ -272,8 +280,13 @@ end
 -- @treturn[1] boolean true
 -- @treturn[2] nil
 -- @treturn[2] table Error description
-local function apply_config(conf, opts)
-    checks('table', {is_master = 'boolean'})
+local function apply_config(conf)
+    checks('table')
+    if conf.__type == 'ClusterwideConfig' then
+        local err = "Bad argument #1 to apply_config" ..
+            " (table expected, got ClusterwideConfig)"
+        error(err, 2)
+    end
 
     local my_replicaset = conf.topology.replicasets[box.info.cluster.uuid]
 
@@ -287,7 +300,7 @@ local function apply_config(conf, opts)
             then
                 local _, _err = ApplyConfigError:pcall(
                     mod.init,
-                    {is_master = opts.is_master}
+                    {is_master = failover.is_leader()}
                 )
                 if _err then
                     log.error('%s', _err)
@@ -301,7 +314,7 @@ local function apply_config(conf, opts)
             if type(mod.apply_config) == 'function' then
                 local _, _err = ApplyConfigError:pcall(
                     mod.apply_config, conf,
-                    {is_master = opts.is_master}
+                    {is_master = failover.is_leader()}
                 )
                 if _err then
                     log.error('%s', _err)
@@ -314,7 +327,7 @@ local function apply_config(conf, opts)
             then
                 local _, _err = ApplyConfigError:pcall(
                     mod.stop,
-                        {is_master = opts.is_master}
+                    {is_master = failover.is_leader()}
                 )
                 if _err then
                     log.error('%s', err)

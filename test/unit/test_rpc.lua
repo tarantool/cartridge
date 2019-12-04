@@ -3,7 +3,6 @@
 local tap = require('tap')
 local rpc = require('cartridge.rpc')
 local checks = require('checks')
-local topology = require('cartridge.topology')
 
 local test = tap.test('cluster.rpc_candidates')
 test:plan(21)
@@ -49,7 +48,18 @@ local function apply_mocks(topology_draft)
         end
     end
 
-    topology.set(topology_cfg)
+    local vars = require('cartridge.vars').new('cartridge.confapplier')
+    local ClusterwideConfig = require('cartridge.clusterwide-config')
+    vars.clusterwide_config = ClusterwideConfig.new({topology = topology_cfg}):lock()
+    local failover = require('cartridge.failover')
+    _G.box = {
+        cfg = function() end,
+        info = {
+            cluster = {uuid = 'A'},
+            uuid = 'a1',
+        },
+    }
+    failover.cfg(vars.clusterwide_config)
     package.loaded['membership'].get_member = function(uri)
         return members[uri]
     end

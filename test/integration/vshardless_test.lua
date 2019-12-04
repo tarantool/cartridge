@@ -8,7 +8,9 @@ local helpers = require('cartridge.test-helpers')
 g.before_all = function()
     g.cluster = helpers.Cluster:new({
         datadir = fio.tempdir(),
-        server_command = fio.pathjoin(test_helper.root, 'test', 'integration', 'srv_vshardless.lua'),
+        server_command = fio.pathjoin(test_helper.root,
+            'test', 'integration', 'srv_vshardless.lua'
+        ),
         use_vshard = false,
         replicasets = {
             {
@@ -79,19 +81,16 @@ function g.test_config()
     local server_conn = g.cluster:server('main').net_box
     local resp = server_conn:eval([[
         local cartridge = require('cartridge')
-        return cartridge.config_get_readonly('vshard')
+        return cartridge.config_get_readonly('vshard_groups')
     ]])
 
-    t.assert_equals(resp, {
-        bootstrapped=false,
-        bucket_count=30000
-    })
+    t.assert_equals(resp, {})
 
     local resp = server_conn:eval([[
         local cartridge = require('cartridge')
         return cartridge.config_get_readonly('vshard_groups')
     ]])
-    t.assert_nil(resp)
+    t.assert_equals(resp, {})
 end
 
 function g.test_api()

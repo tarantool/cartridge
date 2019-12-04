@@ -14,6 +14,8 @@ local pool = require('cartridge.pool')
 local utils = require('cartridge.utils')
 local roles = require('cartridge.roles')
 local topology = require('cartridge.topology')
+local failover = require('cartridge.failover')
+local confapplier = require('cartridge.confapplier')
 local service_registry = require('cartridge.service-registry')
 
 local RemoteCallError = errors.new_class('RemoteCallError')
@@ -74,11 +76,12 @@ local function get_candidates(role_name, opts)
         healthy_only = '?boolean'
     })
 
-    local servers = topology.get().servers
-    local replicasets = topology.get().replicasets
+    local topology_cfg = confapplier.get_readonly('topology')
+    local servers = topology_cfg.servers
+    local replicasets = topology_cfg.replicasets
     local active_leaders
     if opts.leader_only then
-        active_leaders = topology.get_active_masters()
+        active_leaders = failover.get_active_leaders()
     end
 
     local candidates = {}
