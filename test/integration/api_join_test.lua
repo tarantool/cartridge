@@ -64,6 +64,22 @@ function g.test_join_server()
     })
     t.assert_true(resp['data']['probe_server'])
 
+    local function get_peer_uuid(uri)
+        return main.net_box:eval([[
+            local errors = require('errors')
+            local pool = require('cartridge.pool')
+            local conn, err = errors.assert('E', pool.connect(...))
+            return conn.peer_uuid
+        ]], {uri})
+    end
+
+    t.assert_equals(
+        -- g.server isn't bootstrapped yet
+        -- remote-control connection can be established
+        get_peer_uuid(g.server.advertise_uri),
+        "00000000-0000-0000-0000-000000000000"
+    )
+
     t.assert_error_msg_contains(
         'Server "aaaaaaaa-aaaa-0000-0000-000000000001" is already joined',
         function()
@@ -136,6 +152,13 @@ function g.test_join_server()
             return assert(cartridge) and assert(cartridge.is_healthy())
         ]])
     end)
+
+    t.assert_equals(
+        -- g.server is already bootstrapped
+        -- pool.connect should reconnectwith full-featured iproto
+        get_peer_uuid(g.server.advertise_uri),
+        g.server.instance_uuid
+    )
 
     local resp = main:graphql({
         query = [[{
