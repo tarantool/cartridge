@@ -46,7 +46,10 @@ end
 local function _connect(uri, options)
     local conn, err = vars.connections[uri]
 
-    if conn == nil or not conn:is_connected() then
+    if conn == nil
+    or not conn:is_connected()
+    or conn.peer_uuid == "00000000-0000-0000-0000-000000000000"
+    then
         local _uri, _err = format_uri(uri)
         if _uri == nil then
             return nil, _err
