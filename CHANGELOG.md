@@ -50,6 +50,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Failover isn't triggered on `suspect` instance state anymore
   **(incompatible change)**
 
+- Functions `admin.get_servers`, `get_replicasets` and similar GraphQL
+  queries now return an error if the instance handling the request is in
+  state `InitError` or `BootError`.
+
 ### Removed
 
 - Function `cartridge.bootstrap` is removed. Use `admin_edit_topology`
