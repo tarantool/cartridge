@@ -46,7 +46,7 @@ export const selectFileTree = (files: Array<FileItem>): Array<TreeFileItem> => {
 }
 
 
-const makeFile = (name, path, isFolder = false, content = '', presentValues) => {
+const makeFile = (name, path, isFolder = false, content = '', prevFileProps = {}) => {
   const newPath = `${path}${path ? '/' : ''}${name}`;
   return {
     // different fields for folders and files
@@ -54,6 +54,7 @@ const makeFile = (name, path, isFolder = false, content = '', presentValues) => 
       isFolder ?
         {
           items: [],
+          saved: true,
         } :
         {
           content: content,
@@ -63,7 +64,7 @@ const makeFile = (name, path, isFolder = false, content = '', presentValues) => 
           column: 0,
           line: 0,
           scrollPosition: 0,
-          ...presentValues,
+          ...prevFileProps,
         }
     ),
 
