@@ -45,6 +45,10 @@ const styles = {
   active: css`
     background-color: #ffffff;
   `,
+  deleted: css`
+    text-decoration: line-through;
+    color: #aaa;
+  `,
   fileName: css`
     overflow: hidden;
     text-overflow: ellipsis;
@@ -132,7 +136,12 @@ export const FileTreeElement = (
           direction={expanded ? 'down' : 'right' }
         />
         <Icon className={styles.fileIcon} opened={expanded} />
-        <Text className={styles.fileName}>{file.fileName}</Text>
+        <Text
+          className={cx(
+            styles.fileName,
+            { [styles.deleted]: file.deleted }
+          )}
+        >{file.fileName}</Text>
         {!file.saved && <DotIndicator state='bad' />}
         <div className={cx(styles.buttonsPanel, 'FileTreeElement__btns')}>
           {file.type === 'folder' && (
