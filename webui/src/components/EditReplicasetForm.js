@@ -31,11 +31,6 @@ import { VSHARD_STORAGE_ROLE_NAME } from 'src/constants';
 import { ServerSortableList } from './ServerSortableList';
 
 const styles = {
-  popupBody: css`
-    min-height: 100px;
-    height: 80vh;
-    max-height: 480px;
-  `,
   wrap: css`
     display: flex;
     flex-wrap: wrap;
@@ -146,7 +141,7 @@ EditReplicasetFormProps) => {
 
         return (
           <form onSubmit={handleSubmit}>
-            <PopupBody className={styles.popupBody} innerClassName={styles.wrap} scrollable>
+            <PopupBody className={styles.wrap}>
               <SelectedReplicaset className={styles.splash} replicaset={replicaset} />
               <FormSpy
                 subscription={{ values: true }}

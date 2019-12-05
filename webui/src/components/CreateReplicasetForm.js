@@ -48,11 +48,6 @@ const styles = {
     height: 20px;
     color: #F5222D;
   `,
-  popupBody: css`
-    min-height: 100px;
-    height: 80vh;
-    max-height: 480px;
-  `,
   splash: css`
     flex-basis: 100%;
     max-width: 100%;
@@ -132,7 +127,7 @@ CreateReplicasetFormProps) => (
 
       return (
         <form className={styles.form} onSubmit={handleSubmit}>
-          <PopupBody className={styles.popupBody} innerClassName={styles.wrap} scrollable>
+          <PopupBody className={styles.wrap}>
             <SelectedServersList className={styles.splash} serverList={selectedServers} />
             <FormSpy
               subscription={{ values: true }}

@@ -2,11 +2,11 @@
 
 import * as React from 'react'
 import { connect } from 'react-redux'
-import { css } from 'react-emotion'
 import {
   Button,
   Modal,
-  Tabbed
+  Tabbed,
+  PopupFooter
 } from '@tarantool.io/ui-kit';
 import { pageDidMount, resetPageState } from 'src/store/actions/clusterInstancePage.actions';
 import isEqual from 'lodash/isEqual';
@@ -99,9 +99,11 @@ class ServerInfoModal extends React.Component<ServerInfoModalProps, ServerInfoMo
               }
             />
           }
-          <div className={css`display: flex; justify-content: flex-end;`}>
-            <Button intent={'base'} text={'Close'} onClick={this.close} />
-          </div>
+          <PopupFooter
+            controls={[
+              <Button intent={'base'} text={'Close'} onClick={this.close} />
+            ]}
+          />
         </React.Fragment>
       </Modal>
     )
