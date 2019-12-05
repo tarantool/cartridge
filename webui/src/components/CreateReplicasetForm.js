@@ -151,7 +151,7 @@ CreateReplicasetFormProps) => (
             />
             <Field name='alias'>
               {({ input: { name, value, onChange }, meta: { error } }) => (
-                <LabeledInput className={styles.field} label='Replica Set name'>
+                <LabeledInput className={styles.field} label='Replica set name'>
                   <Input
                     name={name}
                     className={styles.input}
@@ -223,7 +223,7 @@ CreateReplicasetFormProps) => (
             </Field>
             <Field name='weight'>
               {({ input: { name, value, onChange }, meta: { error } }) => (
-                <LabeledInput className={styles.field} label='Replica Set weight'>
+                <LabeledInput className={styles.field} label='Replica set weight'>
                   <Input
                     className={styles.weightInput}
                     name={name}
@@ -239,7 +239,7 @@ CreateReplicasetFormProps) => (
             </Field>
             <Field name='vshard_group'>
               {({ input: { name: fieldName, value, onChange } }) => (
-                <FormField className={styles.field} label='Vshard Group' info={vshardTooltipInfo}>
+                <FormField className={styles.field} label='Vshard group' info={vshardTooltipInfo}>
                   {vshard_groups && vshard_groups.map(({ name }) => (
                     <RadioButton
                       onChange={onChange}

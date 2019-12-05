@@ -144,7 +144,7 @@ class ReplicasetList extends React.PureComponent {
                       className={cx(styles.vshardTooltip, 'meta-test__ReplicasetList_allRw_enabled')}
                       content='All instances in the replicaset writeable'
                     >
-                      ALL RW
+                      all rw
                     </Tooltip>
                   )}
                 </Text>

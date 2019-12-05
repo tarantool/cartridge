@@ -58,6 +58,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Enhance WebUI modals scrolling.
 
+- Scroll behavior in Modals
+
 ### Removed
 
 - Function `cartridge.bootstrap` is removed. Use `admin_edit_topology`
