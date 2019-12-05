@@ -68,26 +68,6 @@ const updateFile = (
   return updatedItems
 }
 
-const updateAllFiles = (
-  fileList: Array<FileItem>,
-  updateObj: UpdateObj,
-  payload: Object = {}
-): Array<FileItem> => {
-  const updatedItems: Array<FileItem> = fileList.map(x => {
-    const obj = {}
-    for (const p in updateObj) {
-      if (typeof updateObj[p] === 'function') {
-        obj[p] = updateObj[p](x, payload)
-      } else {
-        obj[p] = updateObj[p]
-      }
-    }
-    return { ...x, ...obj }
-  });
-  return updatedItems
-}
-
-
 const pickUnusedFileName = (list: Array<FileItem>, parentPath, name) => {
   const siblings = list.filter(file => isDescendant(file.path, parentPath));
   let possibleName = `${name}`;
@@ -178,10 +158,27 @@ const deleteFile = (list: Array<FileItem>, path): Array<FileItem> => (
   list.map(file => file.path === path ? { ...file, deleted: true, } : file)
 );
 
-
 const deleteFolder = (list: Array<FileItem>, path): Array<FileItem> => (
   list.map(file => isDescendant(file.path, path) ? { ...file, deleted: true, } : file)
 );
+
+const commitFilesChanges = (list: Array<FileItem>): Array<FileItem> => {
+  const newList = [];
+  list.forEach(file => {
+    //remove deleted files
+    if (file.deleted) {
+      return;
+    }
+    //"commit" edits/renames in all files
+    newList.push({
+      ...file,
+      saved: true,
+      initialContent: file.content,
+      initialPath: file.path,
+    });
+  });
+  return newList;
+};
 
 
 export default (state: Array<FileItem> = initialState, { type, payload }: FSA) => {
@@ -215,9 +212,11 @@ export default (state: Array<FileItem> = initialState, { type, payload }: FSA) =
         return updateFile(state, payload.fileId, { loading: false })
       return state
     }
+
     case PUT_CONFIG_FILE_CONTENT_DONE: {
-      return updateAllFiles(state, { saved: true })
+      return commitFilesChanges(state);
     }
+
     case UPDATE_CONTENT: {
       if (payload && typeof (payload.fileId) === 'string' && typeof (payload.content) === 'string') {
         return updateFile(
