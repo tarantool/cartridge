@@ -77,11 +77,11 @@ export class FileTree extends React.Component<FileTreeProps, FileTreeState> {
             'items',
             (item, children, level) => (
               <FileTreeElement
-                key={item.fileId}
+                key={item.path}
                 file={item}
-                active={selectedFile && (selectedFile.fileId === item.fileId)}
+                active={selectedFile && (selectedFile.path === item.path)}
                 level={level}
-                expanded={expandedEntries.includes(item.fileId)}
+                expanded={expandedEntries.includes(item.path)}
                 onDelete={onDelete}
                 onExpand={this.expandEntry}
                 onFileCreate={onFileCreate}

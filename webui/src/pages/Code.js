@@ -21,6 +21,7 @@ import { FileTree } from 'src/components/FileTree';
 import { selectFileTree, selectSelectedFile } from 'src/store/selectors/filesSelectors';
 import { selectFile } from 'src/store/actions/editor.actions';
 import {
+  applyFiles,
   createFile,
   createFolder,
   deleteFile,
@@ -190,6 +191,10 @@ class Code extends React.Component<CodeProps, CodeState> {
     fileOperationObject: id
   });
 
+  handleApplyClick = () => {
+    this.props.dispatch(applyFiles());
+  }
+
   handleFileRenameConfirm = (name: string) => {
     const { dispatch } = this.props;
     const { fileOperationObject } = this.state;
@@ -300,7 +305,7 @@ class Code extends React.Component<CodeProps, CodeState> {
                   intent='secondary'
                 />,
                 <Button
-                  onClick={() => null}
+                  onClick={this.handleApplyClick}
                   text='Apply'
                   intent='primary'
                   size='s'

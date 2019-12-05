@@ -2,6 +2,7 @@ import {
   FETCH_CONFIG_FILE_CONTENT,
   FETCH_CONFIG_FILES,
   UPDATE_CONTENT,
+  PUT_CONFIG_FILE_CONTENT,
   CREATE_FILE,
   CREATE_FOLDER,
   RENAME_FILE,
@@ -26,6 +27,10 @@ export const updateFileContent = (fileId, content) => ({
     content
   }
 })
+
+export const applyFiles = () => ({
+  type: PUT_CONFIG_FILE_CONTENT,
+});
 
 export const createFile = ({ parentId, name }) => ({
   type: CREATE_FILE,

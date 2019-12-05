@@ -488,3 +488,13 @@ export const checkSchemaMutation = gql`
     }
   }
 `;
+
+
+export const setFilesMutation = gql`
+  mutation set_files($updatedFiles: Array, $deletedFiles: Array) {
+    cluster {
+      updatedFiles(list: $updatedFiles)
+      deletedFiles(list: $deletedFiles)
+    }
+  }
+`;
