@@ -123,8 +123,8 @@ export const FileTreeElement = (
         )}
         onClick={e => {
           file.type === 'folder'
-            ? onExpand(file.fileId)
-            : onFileOpen(file.fileId)
+            ? onExpand(file.path)
+            : onFileOpen(file.path)
         }}
         style={{
           paddingLeft: (level || 0) * 20
@@ -151,14 +151,14 @@ export const FileTreeElement = (
                 intent='plain'
                 size='xs'
                 icon={IconCreateFolder}
-                onClick={e => { e.stopPropagation(); onFolderCreate(file.fileId); }}
+                onClick={e => { e.stopPropagation(); onFolderCreate(file.path); }}
               />
               <Button
                 className={cx(styles.fileActionBtn, styles.fileActionBtnMargin)}
                 intent='plain'
                 size='xs'
                 icon={IconCreateFile}
-                onClick={e => { e.stopPropagation(); onFileCreate(file.fileId); }}
+                onClick={e => { e.stopPropagation(); onFileCreate(file.path); }}
               />
             </React.Fragment>
           )}
@@ -167,14 +167,14 @@ export const FileTreeElement = (
             intent='plain'
             size='xs'
             icon={IconEdit}
-            onClick={e => { e.stopPropagation(); onRename(file.fileId); }}
+            onClick={e => { e.stopPropagation(); onRename(file.path); }}
           />
           <Button
             className={styles.fileActionBtn}
             intent='plain'
             size='xs'
             icon={IconDelete}
-            onClick={e => { e.stopPropagation(); onDelete(file.fileId); }}
+            onClick={e => { e.stopPropagation(); onDelete(file.path); }}
           />
         </div>
       </li>

@@ -5,6 +5,7 @@ import { saga as authSaga } from 'src/store/saga/auth.saga';
 import { saga as clusterPageSaga } from 'src/store/saga/clusterPage.saga';
 import { saga as clusterInstancePageSaga } from 'src/store/saga/clusterInstancePage.saga';
 import { saga as schemaSaga } from 'src/store/saga/schema.saga';
+import { saga as filesSaga } from 'src/store/saga/files.saga';
 import { saga as usersSaga } from 'src/store/saga/users.saga';
 
 export default function* rootSaga() {
@@ -14,6 +15,7 @@ export default function* rootSaga() {
     clusterPageSaga,
     clusterInstancePageSaga,
     schemaSaga,
+    filesSaga,
     usersSaga
   ].map(saga => saga()));
 }
