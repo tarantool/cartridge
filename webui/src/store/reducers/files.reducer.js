@@ -28,6 +28,7 @@ export type FileItem = {
   column: 0,
   line: 0,
   scrollPosition: 0,
+  deleted?: boolean,
 }
 
 type UpdateObj = {
@@ -169,12 +170,12 @@ const renameFolder = (list, oldFolderPath, newName) => {
 };
 
 const deleteFile = (list: Array<FileItem>, path): Array<FileItem> => (
-  list.filter(file => file.path !== path)
+  list.map(file => file.path === path ? { ...file, deleted: true, } : file)
 );
 
 
 const deleteFolder = (list: Array<FileItem>, path): Array<FileItem> => (
-  list.filter(file => !isDescendant(file.path, path))
+  list.map(file => isDescendant(file.path, path) ? { ...file, deleted: true, } : file)
 );
 
 

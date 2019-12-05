@@ -14,6 +14,7 @@ describe('Deleting files', () => {
     { path: 'file.ext' },
     { path: 'folder/file.ext' },
     { path: 'folder/file2.ext' },
+    { path: 'folder/subfolder/file.ext' },
     { path: 'folder2/file.ext' },
   ];
 
@@ -22,16 +23,21 @@ describe('Deleting files', () => {
       reducer(state, deleteFile({ id: 'folder/file.ext' }))
     ).toEqual([
       { path: 'file.ext' },
+      { path: 'folder/file.ext', deleted: true },
       { path: 'folder/file2.ext' },
+      { path: 'folder/subfolder/file.ext' },
       { path: 'folder2/file.ext' },
     ]);
   });
 
-  it('deletes folder', () => {
+  it('deletes folder (all its files and subfolders)', () => {
     expect(
       reducer(state, deleteFolder({ id: 'folder' }))
     ).toEqual([
       { path: 'file.ext' },
+      { path: 'folder/file.ext', deleted: true },
+      { path: 'folder/file2.ext', deleted: true },
+      { path: 'folder/subfolder/file.ext', deleted: true },
       { path: 'folder2/file.ext' },
     ]);
   });
