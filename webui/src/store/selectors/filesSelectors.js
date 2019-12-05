@@ -8,12 +8,25 @@ import type { FileItem } from '../reducers/files.reducer.js';
 export type TreeFileItem = FileItem & {
   items: Array<TreeFileItem>
 }
+// export type TreeFileItem = {
+//   fileId: string,
+//   path: string,
+//   fileName: string,
+//   content?: string,
+//   initialContent?: string,
+//   type: 'file' | 'folder',
+//   items: Array<TreeFileItem>
+// }
 
 const toTreeItem = (file: FileItem): TreeFileItem => ({ ...file, items: [] })
 
 export const selectFileTree = (files: Array<FileItem>): Array<TreeFileItem> => {
-  const fileMap:  {[string]: TreeFileItem} = files.reduce(
-    (r: {[string]: TreeFileItem}, x: FileItem) => {
+  const newApproach = true;
+  if (newApproach) {
+    return v2_selectFileTree(files);
+  }
+  const fileMap: { [string]: TreeFileItem } = files.reduce(
+    (r: { [string]: TreeFileItem }, x: FileItem) => {
       r[x.fileId] = toTreeItem(x);
       return r;
     },
@@ -29,7 +42,62 @@ export const selectFileTree = (files: Array<FileItem>): Array<TreeFileItem> => {
     }
   }
   return rootFiles
+
 }
+
+
+const makeFile = (name, path, isFolder = false, content = '', presentValues) => {
+  const newPath = `${path}${path ? '/' : ''}${name}`;
+  return {
+    // different fields for folders and files
+    ...(
+      isFolder ?
+        {
+          items: [],
+        } :
+        {
+          content: content,
+          initialContent: content,
+          loading: false,
+          saved: true,
+          column: 0,
+          line: 0,
+          scrollPosition: 0,
+          ...presentValues,
+        }
+    ),
+
+    path: newPath,
+    fileName: name,
+    type: isFolder ? 'folder' : 'file',
+    fileId: newPath,//@deprecated  
+  }
+};
+
+
+export const v2_selectFileTree = (files: Array<FileItem>): Array<TreeFileItem> => {
+  return files.reduce((tree, file) => {
+    const chain = file.path.split('/');
+
+    let currentTreeItems = tree;
+    let currentPathPart = '';
+    chain.forEach((folderName, i) => {
+      const isFolder = i !== chain.length - 1;
+
+      let curFolder = currentTreeItems.find(item => item.fileName === folderName);
+      if (!curFolder) {
+        // the last item in chain is file, others are folders
+        curFolder = makeFile(folderName, currentPathPart, isFolder, file.content, file);
+        currentTreeItems.push(curFolder);
+      }
+
+      // change variable ref
+      currentTreeItems = curFolder.items;
+      currentPathPart = curFolder.path;
+    });
+    return tree;
+  }, []);
+};
 
 
 export const selectSelectedFile = createSelector(
@@ -41,8 +109,8 @@ export const selectSelectedFile = createSelector(
     if (!selectedFile)
       return null
     for (const f of files) {
-      if (f.fileId === selectedFile) {
-        return f
+      if (f.path === selectedFile) {
+        return makeFile(f.path, '', false, f.content, f)
       }
     }
     return null

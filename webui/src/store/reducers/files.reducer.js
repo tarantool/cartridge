@@ -17,7 +17,6 @@ import {
 } from '../actionTypes';
 
 export type FileItem = {
-  parentId?: string,
   fileId: string,
   path: string,
   fileName: string,
@@ -45,11 +44,12 @@ const toFileItem = (item): FileItem => {
   }
 }
 
-const initialState: Array<FileItem> = require('./files.initialState').default;
+const newApproach = true;
+const initialState: Array<FileItem> = require(`./files.initialState${newApproach ? '2' : ''}`).default;
 
 const updateFile = (
   fileList: Array<FileItem>,
-  fileId: string,
+  path: string,
   updateObj: UpdateObj,
   payload: Object = {},
 ): Array<FileItem> => {
@@ -62,7 +62,7 @@ const updateFile = (
         obj[p] = updateObj[p]
       }
     }
-    return x.fileId === fileId ? { ...x, ...obj } : x
+    return x.path === path ? { ...x, ...obj } : x
   });
   return updatedItems
 }
@@ -87,115 +87,95 @@ const updateAllFiles = (
 }
 
 
-const pickUnusedFileName = (list: Array<FileItem>, parentId, name) => {
-  const siblings = list.filter(file => file.parentId === parentId);
+const pickUnusedFileName = (list: Array<FileItem>, parentPath, name) => {
+  const siblings = list.filter(file => isDescendant(file.path, parentPath));
   let possibleName = `${name}`;
 
   // TODO: if path is converted from name, we should check path uniquity separately
-  while (siblings.filter(file => file.fileName === possibleName).length > 0) {
+  while (siblings.some(file => file.fileName === possibleName)) {
     possibleName = `${possibleName} NEW`;
   }
   return possibleName;
 };
 
-const pickFileId = (list: Array<FileItem>): string => {
-  const maxId = list.reduce((maxId, file) => Math.max(file.fileId || 0, maxId), 0);
-  return `${maxId + 1}`;
-};
-
-const getFile = (list: Array<FileItem>, id): FileItem | void => (
-  list.find(file => file.fileId === id)
-);
-
 const isDescendant = (ownPath: string, parentPath: string) => {
   return ownPath.substring(0, parentPath.length + 1) === `${parentPath}/`;
 };
 
-const prepareNameForPath = name => {
-  // TODO: implement. Or remove and let path be anything
-  return name;
-};
-
-const makePath = (parentPath, name) => `${parentPath}${prepareNameForPath(name)}`;
+const makePath = (parentPath, name) => `${parentPath}${name}`;
 
 
-const makeFile = (list: Array<FileItem>, parentId: string, name: string, isFolder = false): FileItem => {
-  const unusedName = pickUnusedFileName(list, parentId, name);
-  const parent = parentId ? getFile(list, parentId) : null;
-  const parentPath = parent ? `${parent.path}/` : '';
+const makeFile = (list: Array<FileItem>, parentPath: string, name: string, isFolder = false): FileItem => {
+  const unusedName = pickUnusedFileName(list, parentPath, name);
   const newFile: FileItem = {
-    fileId: pickFileId(list),
-    path: makePath(parentPath, unusedName),
+    path: makePath(parentPath ? `${parentPath}/` : '', unusedName),
     fileName: unusedName,
     content: '',
     initialContent: '',
     loading: false,
-    saved: true,
+    saved: false,
     type: isFolder ? 'folder' : 'file',
     column: 0,
     line: 0,
     scrollPosition: 0,
   };
-  if (parentId) {
-    newFile.parentId = parentId;
-  }
   return newFile;
 };
 
-const renameFile = (list: Array<FileItem>, id, newName): Array<FileItem> => {
-  const targetFile = list.find(file => file.fileId === id);
-  if (!targetFile) {
-    return list;
-  }
+const getFileNameFromPath = path => path.split('/').pop();
 
-  const oldName = targetFile.fileName;
-  // TODO: prevent names (and paths) collisions (or remove such prevention in createFile())
+const getRenamedPath = (oldPath, newName) => {
+  const oldName = getFileNameFromPath(oldPath);
   if (oldName === newName) {
-    return list;
+    return oldPath;
   }
-
-  const oldPath = targetFile.path;
-  const newPath = makePath(
-    oldPath.substring(0, oldPath.length - oldName.length),
+  return makePath(
+    oldPath.slice(0, -oldName.length),
     newName
   );
+};
+
+const renameFile = (list: Array<FileItem>, oldPath, newName): Array<FileItem> => {
+  const newPath = getRenamedPath(oldPath, newName);
+  if (newPath === oldPath) {
+    return list;
+  }
 
   return list.map(file => {
-    // Change name and path of this file
-    if (file.fileId === id) {
-      return {
-        ...file,
-        // TODO: prevent names (and paths) collisions (or remove such prevention in createFile())
-        fileName: `${newName}`,
-        path: newPath,
-      };
-    }
-    // Update paths of all descendants
-    if (targetFile.type === 'folder') {
-      if (isDescendant(file.path, oldPath)) {
-        const pathTail = file.path.substring(oldPath.length);
-        return {
-          ...file,
-          path: `${newPath}${pathTail}`,
-        }
-      }
+    if (file.path === oldPath) {
+      return { ...file, path: newPath };
     }
     return file;
   });
 };
 
-const deleteFile = (list: Array<FileItem>, id): Array<FileItem> => {
-  const targetFile = list.find(file => file.fileId === id);
-  if (!targetFile) {
+const renameFolder = (list, oldFolderPath, newName) => {
+  const newFolderPath = getRenamedPath(oldFolderPath, newName);
+  if (newFolderPath === oldFolderPath) {
     return list;
   }
 
-  return list.filter(file => (
-    file.fileId !== id
-    &&
-    !isDescendant(file.path, targetFile.path)
-  ));
+  return list.map(file => {
+    if (isDescendant(file.path, oldFolderPath)) {
+      const pathTail = file.path.slice(oldFolderPath.length);
+      return {
+        ...file,
+        path: `${newFolderPath}${pathTail}`,
+      }
+    }
+
+    return file;
+  });
 };
+
+const deleteFile = (list: Array<FileItem>, path): Array<FileItem> => (
+  list.filter(file => file.path !== path)
+);
+
+
+const deleteFolder = (list: Array<FileItem>, path): Array<FileItem> => (
+  list.filter(file => !isDescendant(file.path, path))
+);
 
 
 export default (state: Array<FileItem> = initialState, { type, payload }: FSA) => {
@@ -259,9 +239,9 @@ export default (state: Array<FileItem> = initialState, { type, payload }: FSA) =
           )
         ];
       }
+      break;
 
     case RENAME_FILE:
-    case RENAME_FOLDER:
       if (payload && payload.name && payload.id) {
         return renameFile(
           state,
@@ -269,15 +249,34 @@ export default (state: Array<FileItem> = initialState, { type, payload }: FSA) =
           payload.name,
         )
       }
+      break;
+
+    case RENAME_FOLDER:
+      if (payload && payload.name && payload.id) {
+        return renameFolder(
+          state,
+          payload.id,
+          payload.name,
+        )
+      }
+      break;
 
     case DELETE_FILE:
-    case DELETE_FOLDER:
       if (payload && payload.id) {
         return deleteFile(
           state,
           payload.id,
         )
       }
+      break;
+    case DELETE_FOLDER:
+      if (payload && payload.id) {
+        return deleteFolder(
+          state,
+          payload.id,
+        )
+      }
+      break;
   }
   return state
 }
