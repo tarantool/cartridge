@@ -144,7 +144,11 @@ const renameFile = (list: Array<FileItem>, oldPath, newName): Array<FileItem> =>
 
   return list.map(file => {
     if (file.path === oldPath) {
-      return { ...file, path: newPath };
+      return {
+        initialPath: file.path,
+        ...file,
+        path: newPath
+      };
     }
     return file;
   });
@@ -160,6 +164,7 @@ const renameFolder = (list, oldFolderPath, newName) => {
     if (isDescendant(file.path, oldFolderPath)) {
       const pathTail = file.path.slice(oldFolderPath.length);
       return {
+        initialPath: file.path,
         ...file,
         path: `${newFolderPath}${pathTail}`,
       }
