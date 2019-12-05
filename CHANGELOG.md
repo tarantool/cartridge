@@ -67,6 +67,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Don't cache remote-control connection so that `pool.connect` switches
   to the full-featured iproto as soon as it's up.
 
+- Displaying boolean values in server details.
+
 ## [1.2.0] - 2019-10-21
 
 ### Added

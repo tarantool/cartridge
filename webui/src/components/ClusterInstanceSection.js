@@ -52,10 +52,13 @@ const styles = {
 };
 
 const fieldsDisplayTypes = {
-  replication_info: 'json'
+  replication_info: 'json',
+  ro: 'boolean',
+  replication_skip_conflict: 'boolean'
 };
 
 const renderers = {
+  boolean: value => <Text variant="basic" className={styles.value}>{value.toString()}</Text>,
   string: value => (
     <Text variant="basic" className={styles.value}>
       {value instanceof Array ? `[${value.join(', ')}]` : value}
