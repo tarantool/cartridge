@@ -5,7 +5,7 @@ local g = t.group('withoutUsersPage')
 local test_helper = require('test.helper')
 local helpers = require('cartridge.test-helpers')
 
-g.before_all = function()
+g.setup = function()
 	g.cluster = helpers.Cluster:new({
         datadir = fio.tempdir(),
         server_command = fio.pathjoin(test_helper.root, 'test', 'integration', 'srv_woauth.lua'),
