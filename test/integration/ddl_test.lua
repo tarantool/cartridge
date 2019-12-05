@@ -135,7 +135,10 @@ function g.test_luaapi()
         schema
     )
 
-    for _, srv in pairs(g.cluster.servers) do
+    -- Applying schema on a replica may take a while, so we don't check it
+    -- See: https://github.com/tarantool/tarantool/issues/4668
+    for _, alias in pairs({'router', 'storage-1'}) do
+        local srv = g.cluster:server(alias)
         t.assert_equals(
             {[srv.alias] = srv.net_box:eval([[
                 return require('ddl').get_schema().spaces.test_space

@@ -184,7 +184,7 @@ local function apply_config(clusterwide_config)
             clusterwide_config:get_readonly('topology'), vars.replicaset_uuid
         ),
     })
-    if err then
+    if err ~= nil then
         set_state('OperationError', err)
         return nil, err
     end
