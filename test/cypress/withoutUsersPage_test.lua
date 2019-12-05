@@ -1,11 +1,11 @@
 local fio = require('fio')
 local t = require('luatest')
-local g = t.group('cypress_basic')
+local g = t.group('withoutUsersPage')
 
 local test_helper = require('test.helper')
 local helpers = require('cartridge.test-helpers')
 
-g.setup = function()
+g.before_all = function()
 	g.cluster = helpers.Cluster:new({
         datadir = fio.tempdir(),
         server_command = fio.pathjoin(test_helper.root, 'test', 'integration', 'srv_woauth.lua'),
