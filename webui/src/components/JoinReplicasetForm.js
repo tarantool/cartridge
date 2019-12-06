@@ -41,11 +41,6 @@ const styles = {
   filter: css`
     width: 305px;
   `,
-  popupBody: css`
-    min-height: 100px;
-    height: 80vh;
-    max-height: 480px;
-  `,
   splash: css`
     flex-basis: 100%;
     max-width: 100%;
@@ -180,7 +175,7 @@ class JoinReplicasetForm extends React.Component<JoinReplicasetFormProps> {
         }) => {
           return (
             <form onSubmit={handleSubmit}>
-              <PopupBody className={styles.popupBody} scrollable>
+              <PopupBody>
                 <SelectedServersList className={styles.splash} serverList={selectedServers} />
                 <FormField
                   className={styles.wideField}

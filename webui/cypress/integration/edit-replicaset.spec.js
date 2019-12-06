@@ -14,12 +14,17 @@ describe('Edit Replica Set', () => {
       .should('have.value', 'editedRouter');
     cy.get('.meta-test__EditReplicasetModal input[name="roles"][value="myrole"]').uncheck({ force: true });
 
-    cy.get('.meta-test__EditReplicasetModal input[name="roles"][value="myrole"]').should('not.be.checked');
-    cy.get('.meta-test__EditReplicasetModal input[name="roles"][value="myrole-dependency"]').should('not.be.checked');
+    cy.get('.meta-test__EditReplicasetModal input[name="roles"][value="myrole"]')
+      .should('not.be.checked')
+      .should('not.be.checked');
+
+    cy.get('.meta-test__EditReplicasetModal input[name="all_rw"]')
+      .uncheck({ force: true })
+      .should('not.be.checked');
 
     cy.get('.meta-test__EditReplicasetSaveBtn').click();//component:EditReplicasetForm
 
-    cy.get('#root').contains('editedRouter');
+    cy.get('#root').contains('editedRouter').closest('li').find('.meta-test__ReplicasetList_allRw_enabled').should('not.exist');
     cy.get('#root').contains('Edit is OK. Please wait for list refresh...'); //add to frontend-core classname for notification
   })
 

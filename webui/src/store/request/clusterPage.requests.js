@@ -71,6 +71,7 @@ export function joinServer({ uri, uuid }: JoinServerArgs) {
 
 export type CreateReplicasetArgs = {
   alias: string,
+  all_rw: boolean,
   roles: string[],
   uri: string,
   vshard_group: string,
@@ -80,6 +81,7 @@ export type CreateReplicasetArgs = {
 export function createReplicaset(
   {
     alias,
+    all_rw,
     roles,
     uri,
     vshard_group,
@@ -90,6 +92,7 @@ export function createReplicaset(
     replicasets: [
       {
         alias,
+        all_rw,
         roles,
         vshard_group,
         weight,
@@ -117,6 +120,7 @@ export function expelServer({ uuid }: ExpelServerArgs) {
 
 export type EditReplicasetArgs = {
   alias: string,
+  all_rw: boolean,
   master: string[],
   roles: string[],
   uuid: string,
@@ -127,6 +131,7 @@ export type EditReplicasetArgs = {
 export function editReplicaset(
   {
     alias,
+    all_rw,
     master,
     roles,
     uuid,
@@ -138,6 +143,7 @@ export function editReplicaset(
     replicasets: [
       {
         alias,
+        all_rw,
         failover_priority: master,
         roles,
         uuid,

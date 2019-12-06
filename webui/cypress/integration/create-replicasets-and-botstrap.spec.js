@@ -41,6 +41,9 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     cy.get('.meta-test__ConfigureServerModal input[name="roles"][value="vshard-router"]').should('be.checked');
     cy.get('.meta-test__ConfigureServerModal input[name="roles"][value="vshard-storage"]').should('not.be.checked');
 
+    cy.get('.meta-test__ConfigureServerModal input[name="all_rw"]').check({ force: true });
+    cy.get('.meta-test__ConfigureServerModal input[name="all_rw"]').should('be.checked');
+
     cy.get('.meta-test__CreateReplicaSetBtn').click();//component: CreateReplicasetForm
 
     cy.get('#root').contains('router1-do-not-use-me');
@@ -68,9 +71,13 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     cy.get('.meta-test__ConfigureServerModal input[name="roles"][value="vshard-router"]').should('not.be.checked');
     cy.get('.meta-test__ConfigureServerModal input[name="roles"][value="vshard-storage"]').should('be.checked');
 
+    cy.get('.meta-test__ConfigureServerModal input[name="all_rw"]').check({ force: true });
+    cy.get('.meta-test__ConfigureServerModal input[name="all_rw"]').should('be.checked');
+
     cy.get('.meta-test__CreateReplicaSetBtn').click();
 
     cy.get('#root').contains('storage1-do-not-use-me');
+    cy.get('.meta-test__ReplicasetList_allRw_enabled').should('have.length', 2);
   })
 
   it('Success Bootstrap Vshard', () => {

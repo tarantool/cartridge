@@ -734,7 +734,15 @@ export type ServerListQuery = { __typename?: "Query" } & {
     })>,
   replicasetList: ?Array<?({ __typename?: "Replicaset" } & $Pick<
     Replicaset,
-    { alias: *, uuid: *, status: *, roles: *, vshard_group: *, weight: * }
+    {
+      alias: *,
+      all_rw: *,
+      uuid: *,
+      status: *,
+      roles: *,
+      vshard_group: *,
+      weight: *
+    }
   > & {
       master: { __typename?: "Server" } & $Pick<Server, { uuid: * }>,
       active_master: { __typename?: "Server" } & $Pick<Server, { uuid: * }>,
@@ -780,7 +788,15 @@ export type ServerListWithoutStatQuery = { __typename?: "Query" } & {
     })>,
   replicasetList: ?Array<?({ __typename?: "Replicaset" } & $Pick<
     Replicaset,
-    { alias: *, uuid: *, status: *, roles: *, vshard_group: *, weight: * }
+    {
+      alias: *,
+      all_rw: *,
+      uuid: *,
+      status: *,
+      roles: *,
+      vshard_group: *,
+      weight: *
+    }
   > & {
       master: { __typename?: "Server" } & $Pick<Server, { uuid: * }>,
       active_master: { __typename?: "Server" } & $Pick<Server, { uuid: * }>,

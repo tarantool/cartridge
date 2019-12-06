@@ -1,6 +1,6 @@
 // @flow
 import React from 'react';
-import { css, cx } from 'react-emotion';
+import { css } from 'react-emotion';
 import * as R from 'ramda';
 import { Form, Field, FormSpy } from 'react-final-form';
 import {
@@ -40,9 +40,6 @@ const styles = {
   input: css`
     margin-bottom: 4px;
   `,
-  aliasInput: css`
-    width: 50%;
-  `,
   weightInput: css`
     width: 97px;
   `,
@@ -50,11 +47,6 @@ const styles = {
     display: block;
     height: 20px;
     color: #F5222D;
-  `,
-  popupBody: css`
-    min-height: 100px;
-    height: 80vh;
-    max-height: 480px;
   `,
   splash: css`
     flex-basis: 100%;
@@ -66,13 +58,12 @@ const styles = {
     margin-left: 16px;
     margin-right: 16px;
   `,
-  vshardGroupField: css`
-    flex-basis: calc(33% - 32px);
-    flex-grow: 1;
+  field: css`
+    flex-basis: calc(33.33% - 32px);
     margin-left: 16px;
     margin-right: 16px;
   `,
-  weightField: css`
+  doubleField: css`
     flex-basis: calc(66% - 32px);
     flex-grow: 1;
     margin-left: 16px;
@@ -80,10 +71,12 @@ const styles = {
   `
 }
 
-const info = <span>Group disabled not yet included the role of "<b>vshard-storage</b>"</span>
+const vshardTooltipInfo = <span>Group disabled not yet included the role of "<b>vshard-storage</b>"</span>;
+const allRwTooltipInfo = 'Otherwise only leader in the replicaset is writeable';
 
 const initialValues = {
   alias: '',
+  all_rw: false,
   roles: [],
   vshard_group: null,
   weight: null
@@ -134,7 +127,7 @@ CreateReplicasetFormProps) => (
 
       return (
         <form className={styles.form} onSubmit={handleSubmit}>
-          <PopupBody className={styles.popupBody} innerClassName={styles.wrap} scrollable>
+          <PopupBody className={styles.wrap}>
             <SelectedServersList className={styles.splash} serverList={selectedServers} />
             <FormSpy
               subscription={{ values: true }}
@@ -158,13 +151,10 @@ CreateReplicasetFormProps) => (
             />
             <Field name='alias'>
               {({ input: { name, value, onChange }, meta: { error } }) => (
-                <LabeledInput className={styles.wideField} label='Enter name of replica set'>
+                <LabeledInput className={styles.field} label='Replica set name'>
                   <Input
                     name={name}
-                    className={cx(
-                      styles.input,
-                      styles.aliasInput
-                    )}
+                    className={styles.input}
                     onChange={onChange}
                     value={value}
                     error={error}
@@ -231,9 +221,25 @@ CreateReplicasetFormProps) => (
                 </FormField>
               )}
             </Field>
+            <Field name='weight'>
+              {({ input: { name, value, onChange }, meta: { error } }) => (
+                <LabeledInput className={styles.field} label='Replica set weight'>
+                  <Input
+                    className={styles.weightInput}
+                    name={name}
+                    error={error}
+                    value={value}
+                    onChange={onChange}
+                    disabled={!vshardStorageRoleChecked}
+                    placeholder='Auto'
+                  />
+                  <Text variant='p' className={styles.errorMessage}>{error}</Text>
+                </LabeledInput>
+              )}
+            </Field>
             <Field name='vshard_group'>
               {({ input: { name: fieldName, value, onChange } }) => (
-                <FormField className={styles.vshardGroupField} label='Group' info={info}>
+                <FormField className={styles.field} label='Vshard group' info={vshardTooltipInfo}>
                   {vshard_groups && vshard_groups.map(({ name }) => (
                     <RadioButton
                       onChange={onChange}
@@ -248,20 +254,17 @@ CreateReplicasetFormProps) => (
                 </FormField>
               )}
             </Field>
-            <Field name='weight'>
-              {({ input: { name, value, onChange }, meta: { error } }) => (
-                <LabeledInput className={styles.weightField} label='Weight'>
-                  <Input
-                    className={styles.weightInput}
-                    name={name}
-                    error={error}
-                    value={value}
+            <Field name='all_rw'>
+              {({ input: { name: fieldName, value, onChange } }) => (
+                <FormField className={styles.field} label='All writable' info={allRwTooltipInfo}>
+                  <Checkbox
                     onChange={onChange}
-                    disabled={!vshardStorageRoleChecked}
-                    placeholder='Auto'
-                  />
-                  <Text variant='p' className={styles.errorMessage}>{error}</Text>
-                </LabeledInput>
+                    name={fieldName}
+                    checked={value}
+                  >
+                    Make all instances writeable
+                  </Checkbox>
+                </FormField>
               )}
             </Field>
           </PopupBody>

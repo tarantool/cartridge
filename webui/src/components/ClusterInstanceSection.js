@@ -5,16 +5,8 @@ import CollapsibleJSONRenderer from 'src/components/CollapsibleJSONRenderer';
 import { css } from 'emotion';
 
 const styles = {
-  popupBody: css`
-    min-height: 100px;
-    height: 70vh;
-    max-height: 400px;
-    margin-top: 24px;
-    margin-bottom: 40px;
-  `,
   listInner: css`
-    margin-left: 16px;
-    margin-right: 16px;
+    padding: 24px 16px;
   `,
   listItem: css`
     display: flex;
@@ -69,7 +61,7 @@ const renderers = {
 
 const ClusterInstanceSection = ({ descriptions = {}, params = [] }) => {
   return (
-    <PopupBody className={styles.popupBody} innerClassName={styles.listInner} scrollable>
+    <PopupBody className={styles.listInner}>
       {params.map(({ name, value, displayAs = 'string' }, index) => (
         <div className={styles.listItem}>
           <div className={styles.leftCol}>

@@ -31,20 +31,12 @@ import { VSHARD_STORAGE_ROLE_NAME } from 'src/constants';
 import { ServerSortableList } from './ServerSortableList';
 
 const styles = {
-  popupBody: css`
-    min-height: 100px;
-    height: 80vh;
-    max-height: 480px;
-  `,
   wrap: css`
     display: flex;
     flex-wrap: wrap;
   `,
   input: css`
     margin-bottom: 4px;
-  `,
-  aliasInput: css`
-    width: 50%;
   `,
   weightInput: css`
     width: 97px;
@@ -70,18 +62,17 @@ const styles = {
     flex-basis: 100%;
     max-width: 100%;
   `,
+  field: css`
+    flex-basis: calc(33.33% - 32px);
+    margin-left: 16px;
+    margin-right: 16px;
+  `,
   wideField: css`
     flex-basis: 100%;
     margin-left: 16px;
     margin-right: 16px;
   `,
-  vshardGroupField: css`
-    flex-basis: calc(33% - 32px);
-    flex-grow: 1;
-    margin-left: 16px;
-    margin-right: 16px;
-  `,
-  weightField: css`
+  doubleField: css`
     flex-basis: calc(66% - 32px);
     flex-grow: 1;
     margin-left: 16px;
@@ -89,7 +80,8 @@ const styles = {
   `
 }
 
-const info = <span>Group disabled not yet included the role of "<b>vshard-storage</b>"</span>
+const vshardTooltipInfo = <span>Group disabled not yet included the role of "<b>vshard-storage</b>"</span>;
+const allRwTooltipInfo = 'Otherwise only leader in the replicaset is writeable';
 
 type EditReplicasetFormProps = {
   knownRoles?: Role[],
@@ -117,6 +109,7 @@ EditReplicasetFormProps) => {
     <Form
       initialValues={{
         alias: replicaset.alias,
+        all_rw: replicaset.all_rw,
         roles: replicaset.roles || [],
         vshard_group: replicaset.vshard_group,
         master: replicaset.servers.map(({ uuid }) => uuid),
@@ -148,7 +141,7 @@ EditReplicasetFormProps) => {
 
         return (
           <form onSubmit={handleSubmit}>
-            <PopupBody className={styles.popupBody} innerClassName={styles.wrap} scrollable>
+            <PopupBody className={styles.wrap}>
               <SelectedReplicaset className={styles.splash} replicaset={replicaset} />
               <FormSpy
                 subscription={{ values: true }}
@@ -176,13 +169,10 @@ EditReplicasetFormProps) => {
               />
               <Field name='alias'>
                 {({ input: { name, value, onChange }, meta: { error } }) => (
-                  <LabeledInput className={styles.wideField} label='Enter name of replica set'>
+                  <LabeledInput className={styles.field} label='Replica set name'>
                     <Input
                       name={name}
-                      className={cx(
-                        styles.input,
-                        styles.aliasInput
-                      )}
+                      className={styles.input}
                       onChange={onChange}
                       value={value}
                       error={error}
@@ -249,9 +239,25 @@ EditReplicasetFormProps) => {
                   </FormField>
                 )}
               </Field>
+              <Field name='weight'>
+                {({ input: { name, value, onChange }, meta: { error } }) => (
+                  <LabeledInput className={styles.field} label='Replica set weight'>
+                    <Input
+                      className={styles.weightInput}
+                      name={name}
+                      error={error}
+                      value={value}
+                      onChange={onChange}
+                      disabled={!vshardStorageRoleChecked}
+                      placeholder='Auto'
+                    />
+                    <Text variant='p' className={styles.errorMessage}>{errors.weight}</Text>
+                  </LabeledInput>
+                )}
+              </Field>
               <Field name='vshard_group'>
                 {({ input: { name: fieldName, value, onChange } }) => (
-                  <FormField className={styles.vshardGroupField} label='Group' info={info}>
+                  <FormField className={styles.field} label='Vshard group' info={vshardTooltipInfo}>
                     {vshard_groups && vshard_groups.map(({ name }) => (
                       <RadioButton
                         onChange={onChange}
@@ -266,20 +272,17 @@ EditReplicasetFormProps) => {
                   </FormField>
                 )}
               </Field>
-              <Field name='weight'>
-                {({ input: { name, value, onChange }, meta: { error } }) => (
-                  <LabeledInput className={styles.weightField} label='Weight'>
-                    <Input
-                      className={styles.weightInput}
-                      name={name}
-                      error={error}
-                      value={value}
+              <Field name='all_rw'>
+                {({ input: { name: fieldName, value, onChange } }) => (
+                  <FormField className={styles.field} label='All writable' info={allRwTooltipInfo}>
+                    <Checkbox
                       onChange={onChange}
-                      disabled={!vshardStorageRoleChecked}
-                      placeholder='Auto'
-                    />
-                    <Text variant='p' className={styles.errorMessage}>{errors.weight}</Text>
-                  </LabeledInput>
+                      name={fieldName}
+                      checked={value}
+                    >
+                      Make all instances writeable
+                    </Checkbox>
+                  </FormField>
                 )}
               </Field>
               <Field name='master'>

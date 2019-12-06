@@ -55,25 +55,34 @@ const styles = {
     display: inline;
     font-weight: bold;
   `,
-  vshardGroupTooltip: css`
-    position: relative;
-    margin-right: 17px;
-
-    &::before {
-      content: '';
-      position: absolute;
-      top: 0px;
-      right: -8px;
-      width: 1px;
-      height: 18px;
-      background-color: #e8e8e8;
-    }
-  `,
   vshard: css`
     flex-basis: 306px;
     margin-left: 12px;
     margin-right: 12px;
     color: rgba(0, 0, 0, 0.65);
+
+    & > * {
+      position: relative;
+      margin-right: 17px;
+
+      &::before {
+        content: '';
+        position: absolute;
+        top: 0px;
+        right: -8px;
+        width: 1px;
+        height: 18px;
+        background-color: #e8e8e8;
+      }
+    }
+
+    & > *:last-child {
+      margin-right: 0;
+
+      &::before {
+        content: none;
+      }
+    }
   `,
   editBtn: css`
     position: absolute;
@@ -123,13 +132,21 @@ class ReplicasetList extends React.PureComponent {
                 <HealthStatus className={styles.status} message={replicaset.message} status={replicaset.status} />
                 <Text className={styles.vshard} variant='p' tag='div' upperCase>
                   {(replicaset.vshard_group || replicaset.weight) && [
-                    <Tooltip className={cx(styles.vshardTooltip, styles.vshardGroupTooltip)} content='Storage group'>
+                    <Tooltip className={styles.vshardTooltip} content='Storage group'>
                       {replicaset.vshard_group}
                     </Tooltip>,
-                    <Tooltip className={cx(styles.vshardTooltip)} content='Replica set weight'>
+                    <Tooltip className={styles.vshardTooltip} content='Replica set weight'>
                       {replicaset.weight}
                     </Tooltip>
                   ]}
+                  {replicaset.all_rw && (
+                    <Tooltip
+                      className={cx(styles.vshardTooltip, 'meta-test__ReplicasetList_allRw_enabled')}
+                      content='All instances in the replicaset writeable'
+                    >
+                      all rw
+                    </Tooltip>
+                  )}
                 </Text>
               </div>
               <Button
