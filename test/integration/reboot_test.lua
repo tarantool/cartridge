@@ -156,7 +156,13 @@ function g.test_invalid_config()
 
     g.cluster.main_server:start()
     g.cluster:retrying({}, function()
-        g.cluster.main_server:connect_net_box()
+        -- wait when BootstrappingBox finishes
+        local srv = g.cluster.main_server
+        t.assert_equals(
+            srv:graphql({query = [[{cluster{self{uuid}}}]]}).data.cluster,
+            {self = {uuid = srv.instance_uuid}}
+        )
+        srv:connect_net_box()
     end)
 
     local state, err = g.cluster.main_server.net_box:eval([[
