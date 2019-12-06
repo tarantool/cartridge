@@ -187,9 +187,30 @@ function g.test_boot_error()
 
     t.assert_equals(state, 'BootError')
 
-    t.assert_equals(err.class_name, 'BootError')
-    t.assert_equals(err.err,
+    local expected_err =
         "Snapshot not found in " .. srv.workdir ..
         ", can't recover. Did previous bootstrap attempt fail?"
+    t.assert_equals(err.class_name, 'BootError')
+    t.assert_equals(err.err, expected_err)
+
+    local resp = g.cluster.main_server:graphql({
+        query = [[{ cluster{ self { state error uuid } } }]]
+    })
+    t.assert_equals(resp.data.cluster.self, {
+        error = expected_err,
+        state = 'BootError',
+        uuid = box.NULL,
+    })
+    t.assert_error_msg_equals(
+        expected_err,
+        helpers.Server.graphql, g.cluster.main_server, ({
+            query = [[{ servers {} }]]
+        })
+    )
+    t.assert_error_msg_equals(
+        expected_err,
+        helpers.Server.graphql, g.cluster.main_server, ({
+            query = [[{ replicasets {} }]]
+        })
     )
 end

@@ -99,8 +99,9 @@ local function get_server_info(members, uuid, uri)
 end
 
 local function get_topology()
-    local _, err = confapplier.get_state()
-    if err ~= nil then
+    local state, err = confapplier.get_state()
+    -- OperationError doesn't influence observing topology
+    if state == 'InitError' or state == 'BootError' then
         return nil, err
     end
 
@@ -397,10 +398,12 @@ local function get_self()
 end
 
 --- Get servers list.
--- Optionally filter out the server with given uuid.
+-- Optionally filter out the server with the given uuid.
 -- @function get_servers
 -- @tparam[opt] string uuid
--- @treturn {ServerInfo,...}
+-- @treturn[1] {ServerInfo,...}
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 local function get_servers(uuid)
     checks('?string')
 
@@ -424,7 +427,9 @@ end
 -- Optionally filter out the replicaset with given uuid.
 -- @function get_replicasets
 -- @tparam[opt] string uuid
--- @treturn {ReplicasetInfo,...}
+-- @treturn[1] {ReplicasetInfo,...}
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 local function get_replicasets(uuid)
     checks('?string')
 

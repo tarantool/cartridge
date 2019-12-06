@@ -172,7 +172,10 @@ local gql_type_role = gql_types.object {
 }
 
 local function get_servers(_, args)
-    local servers = admin.get_servers(args.uuid)
+    local servers, err = admin.get_servers(args.uuid)
+    if servers == nil then
+        return nil, err
+    end
     for _, server in pairs(servers) do
         server.labels = convert_labels_to_graphql(server.labels)
     end
@@ -180,7 +183,10 @@ local function get_servers(_, args)
 end
 
 local function get_replicasets(_, args)
-    local replicasets = admin.get_replicasets(args.uuid)
+    local replicasets, err = admin.get_replicasets(args.uuid)
+    if replicasets == nil then
+        return nil, err
+    end
     for _, replicaset in pairs(replicasets) do
         for _, server in pairs(replicaset.servers) do
             server.labels = convert_labels_to_graphql(server.labels)
