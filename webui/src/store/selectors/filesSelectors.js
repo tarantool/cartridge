@@ -83,7 +83,14 @@ export const v2_selectFileTree = (files: Array<FileItem>): Array<TreeFileItem> =
     let currentTreeItems = tree;
     let currentPathPart = '';
     chain.forEach((folderName, i) => {
-      const isFolder = i !== chain.length - 1;
+
+      //@TODO: it's dirty. Let's enrich data with type='file' when fetching from API
+      let isFolder;
+      if (file.type){
+        isFolder = file.type === 'folder';
+      } else {
+        isFolder = i !== chain.length - 1;
+      }
 
       let curFolder = currentTreeItems.find(item => item.fileName === folderName);
       if (!curFolder) {
