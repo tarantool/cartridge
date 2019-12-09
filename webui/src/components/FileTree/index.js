@@ -6,6 +6,7 @@ import { Button, ControlsPanel, Text, IconRefresh } from '@tarantool.io/ui-kit';
 import type { TreeFileItem } from 'src/store/selectors/filesSelectors';
 import type { FileItem } from 'src/store/reducers/files.reducer';
 import { FileTreeElement } from './FileTreeElement';
+import { NewTreeElement } from './NewTreeElement';
 
 const renderTree = (treeNode: Object, prop: string, render: Function, level: number) => {
   const children = (treeNode[prop] || []).map(x => renderTree(x, prop, render, level + 1))
@@ -22,6 +23,8 @@ const styles = {
 
 type FileTreeProps = {
   className?: string,
+  fileOperation?: 'rename' | 'createFile' | 'createFolder',
+  operationObject?: FileItem,
   tree: Array<TreeFileItem>,
   selectedFile: FileItem | null,
   onFileCreate: (parentId: string) => void,
@@ -29,6 +32,8 @@ type FileTreeProps = {
   onFileOpen: (id: string) => void,
   onFolderCreate: (parentId: string) => void,
   onRename: (id: string) => void,
+  onOperationConfirm: (value: string) => void,
+  onOperationCancel: () => void
 };
 
 type FileTreeState = {
@@ -58,13 +63,17 @@ export class FileTree extends React.Component<FileTreeProps, FileTreeState> {
   render() {
     const {
       className,
+      fileOperation,
+      operationObject,
       tree = [],
       selectedFile,
       onDelete,
       onFileCreate,
       onFileOpen,
       onFolderCreate,
-      onRename
+      onRename,
+      onOperationConfirm,
+      onOperationCancel
     } = this.props;
 
     const { expandedEntries } = this.state;
@@ -75,23 +84,56 @@ export class FileTree extends React.Component<FileTreeProps, FileTreeState> {
           x => renderTree(
             x,
             'items',
-            (item, children, level) => (
-              <FileTreeElement
-                key={item.path}
-                file={item}
-                active={selectedFile && (selectedFile.path === item.path)}
-                level={level}
-                expanded={expandedEntries.includes(item.path)}
-                onDelete={onDelete}
-                onExpand={this.expandEntry}
-                onFileCreate={onFileCreate}
-                onFileOpen={onFileOpen}
-                onFolderCreate={onFolderCreate}
-                onRename={onRename}
-              >
-                {children}
-              </FileTreeElement>
-            ),
+            (item, children, level) => fileOperation === 'rename' && operationObject === item.path
+              ? (
+                <NewTreeElement
+                  key={item.path}
+                  file={item}
+                  active={selectedFile && (selectedFile.path === item.path)}
+                  level={level}
+                  expanded={expandedEntries.includes(item.path)}
+                  onCancel={onOperationCancel}
+                  onConfirm={onOperationConfirm}
+                  onExpand={this.expandEntry}
+                />
+              )
+              : (
+                <React.Fragment>
+                  {operationObject === '' && ['createFile', 'createFolder'].includes(fileOperation) && (
+                    <NewTreeElement
+                      file={{ type: fileOperation === 'createFolder' ? 'folder' : 'file' }}
+                      level={0}
+                      onCancel={onOperationCancel}
+                      onConfirm={onOperationConfirm}
+                    />
+                  )}
+                  <FileTreeElement
+                    key={item.path}
+                    file={item}
+                    active={selectedFile && (selectedFile.path === item.path)}
+                    level={level}
+                    expanded={expandedEntries.includes(item.path)}
+                    onDelete={onDelete}
+                    onExpand={this.expandEntry}
+                    onFileCreate={onFileCreate}
+                    onFileOpen={onFileOpen}
+                    onFolderCreate={onFolderCreate}
+                    onRename={onRename}
+                  >
+                    {operationObject === item.path && ['createFile', 'createFolder'].includes(fileOperation) && (
+                      <NewTreeElement
+                        file={{ type: fileOperation === 'createFolder' ? 'folder' : 'file' }}
+                        active={selectedFile && (selectedFile.path === item.path)}
+                        level={level + 1}
+                        onCancel={onOperationCancel}
+                        onConfirm={onOperationConfirm}
+                        onExpand={this.expandEntry}
+                      />
+                    )}
+                    {children}
+                  </FileTreeElement>
+                </React.Fragment>
+              ),
             0
           )
         )}
