@@ -86,7 +86,7 @@ function createWebSocket(url: string): WebSocket {
 const { protocol, hostname, port } = window.location;
 
 const socket = createWebSocket(
-  `${protocol === 'https' ? 'wss' : 'ws' }://${hostname}:${port}/admin/lsp`
+  `${protocol === 'https' ? 'wss' : 'ws' }://${hostname}:${8081}/admin/lsp`
 )
 
 function createLanguageClient(connection) {
