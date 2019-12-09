@@ -83,7 +83,7 @@ function createWebSocket(url: string): WebSocket {
   };
   return new WebSocket(url, [], socketOptions);
 }
-const socket = createWebSocket('ws://localhost:1337/lua')
+const socket = createWebSocket('/admin/lsp')
 
 function createLanguageClient(connection) {
   return new MonacoLanguageClient({
