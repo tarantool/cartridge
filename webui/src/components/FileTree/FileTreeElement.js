@@ -52,6 +52,7 @@ const styles = {
   fileName: css`
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
   `,
   iconChevron: css`
     margin: 4px;

@@ -6,6 +6,8 @@ import {
   Button,
   ConfirmModal,
   ControlsPanel,
+  IconCreateFolder,
+  IconCreateFile,
   IconRefresh,
   Input,
   Modal,
@@ -64,12 +66,23 @@ const styles = {
     background-color: #fafafa;
   `,
   sidePanelHeading: css`
+    display: flex;
     min-height: 56px;
     padding: 16px;
     box-sizing: border-box;
   `,
   sidePanelTitle: css`
     
+  `,
+  buttonsPanel: css`
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    padding-left: 6px;
+  `,
+  fileActionBtn: css`
+    line-height: 16px;
+    padding: 0 2px;
   `,
   treeScrollWrap: css`
     flex-grow: 1;
@@ -258,6 +271,21 @@ class Code extends React.Component<CodeProps, CodeState> {
     fileOperationObject: null
   });
 
+  handleFileOperationConfirm = (name: string) => {
+    const { fileOperationType } = this.state;
+
+    switch (fileOperationType) {
+      case 'rename':
+        return this.handleFileRenameConfirm(name);
+
+      case 'createFile':
+        return this.handleFileCreateConfirm(name);
+
+      case 'createFolder':
+        return this.handleFolderCreateConfirm(name);
+    }
+  }
+
   render() {
     const {
       className,
@@ -278,11 +306,31 @@ class Code extends React.Component<CodeProps, CodeState> {
         <div className={styles.sidePanel}>
           <div className={styles.sidePanelHeading}>
             <Text variant='h4' className={styles.sidePanelTitle}>Files</Text>
+            <div className={styles.buttonsPanel}>
+              <Button
+                className={styles.fileActionBtn}
+                intent='plain'
+                size='xs'
+                icon={IconCreateFolder}
+                onClick={() => this.handleFolderCreateClick('')}
+              />
+              <Button
+                className={cx(styles.fileActionBtn)}
+                intent='plain'
+                size='xs'
+                icon={IconCreateFile}
+                onClick={() => this.handleFileCreateClick('')}
+              />
+            </div>
           </div>
           <Scrollbar className={styles.treeScrollWrap}>
             <FileTree
               tree={fileTree}
               selectedFile={selectedFile}
+              fileOperation={fileOperationType}
+              operationObject={fileOperationObject}
+              onOperationConfirm={this.handleFileOperationConfirm}
+              onOperationCancel={this.handleFileOperationCancel}
               onFileOpen={id => dispatch(selectFile(id))}
               onFileCreate={this.handleFileCreateClick}
               onFolderCreate={this.handleFolderCreateClick}
@@ -340,37 +388,6 @@ class Code extends React.Component<CodeProps, CodeState> {
             </Text>
           </PopupBody>
         </ConfirmModal>
-        <InputModal
-          title='Rename file'
-          text={(
-            <React.Fragment>
-              {`Enter the new name of the ${operableFile && operableFile.type}: `}
-              <Text className={styles.popupFileName}>{operableFile && operableFile.fileName}</Text>
-            </React.Fragment>
-          )}
-          confirmText='Rename'
-          initialValue={operableFile && operableFile.fileName}
-          onConfirm={this.handleFileRenameConfirm}
-          onClose={this.handleFileOperationCancel}
-          visible={fileOperationType === 'rename'}
-        />
-        <InputModal
-          title='Create file'
-          text='Enter the name of the new file and its extension:'
-          confirmText='Create'
-          initialValue={'.lua'}
-          onConfirm={this.handleFileCreateConfirm}
-          onClose={this.handleFileOperationCancel}
-          visible={fileOperationType === 'createFile'}
-        />
-        <InputModal
-          title='Create folder'
-          text='Enter the name of the new folder:'
-          confirmText='Create'
-          onConfirm={this.handleFolderCreateConfirm}
-          onClose={this.handleFileOperationCancel}
-          visible={fileOperationType === 'createFolder'}
-        />
       </div>
     );
   }
