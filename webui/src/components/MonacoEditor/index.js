@@ -83,7 +83,11 @@ function createWebSocket(url: string): WebSocket {
   };
   return new WebSocket(url, [], socketOptions);
 }
-const socket = createWebSocket('/admin/lsp')
+const { protocol, hostname, port } = window.location;
+
+const socket = createWebSocket(
+  `${protocol === 'https' ? 'wss' : 'ws' }://${hostname}:${port}/admin/lsp`
+)
 
 function createLanguageClient(connection) {
   return new MonacoLanguageClient({
