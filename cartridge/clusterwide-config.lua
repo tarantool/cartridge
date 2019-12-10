@@ -261,8 +261,6 @@ end
 -- @treturn[2] table Error description
 local function save(clusterwide_config, path)
     checks('ClusterwideConfig', 'string')
-    local files_to_remove = {}
-    local dirs_to_remove = {}
 
     if fio.path.lexists(path) then
         return nil, ConflictConfigError:new(
@@ -286,7 +284,6 @@ local function save(clusterwide_config, path)
             _err = err
             goto write_exit
         end
-        dirs_to_remove[dirname] = true
 
         -- here we work only with strings that stored in our _plaintext
         local ok, err = utils.file_write(
@@ -297,20 +294,11 @@ local function save(clusterwide_config, path)
             _err = err
             goto write_exit
         end
-        files_to_remove[full_path] = true
     end
 
 ::write_exit::
     if _err ~= nil then
-        dirs_to_remove[path] = nil
-        for file_path, _ in pairs(files_to_remove) do
-            fio.unlink(file_path)
-        end
-
-        for dir_path, _ in pairs(dirs_to_remove) do
-            utils.rmtree(dir_path)
-        end
-
+        fio.rmtree(path)
         return nil, _err
     end
 
