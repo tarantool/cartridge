@@ -237,14 +237,12 @@ class Code extends React.Component<CodeProps, CodeState> {
     const { dispatch } = this.props;
     const { fileOperationObject } = this.state;
 
-    if (fileOperationObject) {
-      dispatch(createFile({ parentId: fileOperationObject, name }));
+    dispatch(createFile({ parentId: fileOperationObject, name }));
 
-      this.setState({
-        fileOperationType: null,
-        fileOperationObject: null
-      });
-    }
+    this.setState({
+      fileOperationType: null,
+      fileOperationObject: null
+    });
   }
 
   handleFolderCreateClick = (id: string) => this.setState({
@@ -256,14 +254,12 @@ class Code extends React.Component<CodeProps, CodeState> {
     const { dispatch } = this.props;
     const { fileOperationObject } = this.state;
 
-    if (fileOperationObject) {
-      dispatch(createFolder({ parentId: fileOperationObject, name }));
+    dispatch(createFolder({ parentId: fileOperationObject, name }));
 
-      this.setState({
-        fileOperationType: null,
-        fileOperationObject: null
-      });
-    }
+    this.setState({
+      fileOperationType: null,
+      fileOperationObject: null
+    });
   }
 
   handleFileOperationCancel = () => this.setState({
@@ -341,7 +337,7 @@ class Code extends React.Component<CodeProps, CodeState> {
         </div>
         <div className={styles.mainContent}>
           <div className={styles.panel}>
-            <Text className={styles.filePath}>{selectedFile && selectedFile.path}</Text>
+            <Text>{selectedFile && selectedFile.path}</Text>
             <ControlsPanel
               thin
               controls={[
@@ -374,6 +370,7 @@ class Code extends React.Component<CodeProps, CodeState> {
             onChange={v => selectedFile && dispatch(updateFileContent(selectedFile.fileId, v))}
           />
         </div>
+        {operableFile && typeof operableFile.type === 'string' && (
         <ConfirmModal
           title='Delete file'
           visible={fileOperationType === 'delete'}
@@ -384,10 +381,11 @@ class Code extends React.Component<CodeProps, CodeState> {
             <Text>
               {'Are you sure you want to delete the '}
               <Text className={styles.popupFileName}>{operableFile && operableFile.fileName}</Text>
-              {` ${operableFile && operableFile.type}`}
+                {` ${operableFile.type}`}
             </Text>
           </PopupBody>
         </ConfirmModal>
+        )}
       </div>
     );
   }

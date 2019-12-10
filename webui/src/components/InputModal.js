@@ -51,7 +51,9 @@ export class InputModal extends React.PureComponent<InputModalProps, InputModalS
   }
 
   updateValue = (e: InputEvent) => {
-    this.setState({ value: e.target.value });
+    if (e.target instanceof HTMLInputElement) {
+      this.setState({ value: e.target.value });
+    }
   }
 
   render() {

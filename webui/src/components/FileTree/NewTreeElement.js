@@ -11,8 +11,6 @@ import {
   Input,
   Text
 } from '@tarantool.io/ui-kit';
-import type { TreeFileItem } from 'src/store/selectors/filesSelectors';
-import type { FileItem } from 'src/store/reducers/files.reducer';
 
 const styles = {
   element: css`
@@ -58,8 +56,9 @@ type NewTreeElementProps = {
   children?: React.Node,
   className?: string,
   expanded?: boolean,
-  file: FileItem,
+  initialValue?: string,
   level?: number,
+  type: 'file' | 'folder',
   onCancel: () => void,
   onConfirm: (id: string) => void
 }
@@ -69,15 +68,15 @@ type NewTreeElementState = {
 }
 
 export class NewTreeElement extends React.Component<NewTreeElementProps, NewTreeElementState> {
-  constructor(props) {
+  constructor(props: NewTreeElementProps) {
     super(props);
 
     this.state = {
-      value: (props.file && props.file.fileName) || ''
+      value: (props.initialValue) || ''
     }
   }
 
-  inputRef = React.createRef();
+  inputRef = React.createRef<Input>()
 
   componentDidMount() {
     if (this.inputRef.current) {
@@ -88,10 +87,12 @@ export class NewTreeElement extends React.Component<NewTreeElementProps, NewTree
   enabledSymbolsRegEx = /^([A-Za-z0-9-._]){0,32}$/;
 
   handleChange = (event: InputEvent) => {
-    const { value } = event.target;
+    if (event.target instanceof HTMLInputElement) {
+      const { value } = event.target;
 
-    if (this.enabledSymbolsRegEx.test(value)) {
-      this.setState({ value });
+      if (this.enabledSymbolsRegEx.test(value)) {
+        this.setState({ value });
+      }
     }
   }
 
@@ -109,15 +110,16 @@ export class NewTreeElement extends React.Component<NewTreeElementProps, NewTree
       className,
       children,
       expanded,
-      file,
+      initialValue,
       level,
+      type,
       onCancel,
       onConfirm
     } = this.props;
 
     const { value } = this.state;
 
-    const Icon = file.type === 'folder' ? IconFolder : IconFile;
+    const Icon = type === 'folder' ? IconFolder : IconFile;
 
     return (
       <React.Fragment>
@@ -130,10 +132,10 @@ export class NewTreeElement extends React.Component<NewTreeElementProps, NewTree
           style={{
             paddingLeft: (level || 0) * 20
           }}
-          title={file.fileName}
+          title={initialValue}
         >
           <IconChevron
-            className={cx(styles.iconChevron, { [styles.iconChevronFile]: file.type !== 'folder' })}
+            className={cx(styles.iconChevron, { [styles.iconChevronFile]: type !== 'folder' })}
             direction={expanded ? 'down' : 'right' }
           />
           <Icon className={styles.fileIcon} opened={expanded} />
