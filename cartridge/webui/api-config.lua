@@ -18,11 +18,16 @@ local twophase = require('cartridge.twophase')
 local confapplier = require('cartridge.confapplier')
 
 local system_sections = {
-    topology = true,
-    vshard = true,
-    vshard_groups = true,
-    auth = true,
-    users_acl = true,
+    ['auth'] = true,
+    ['auth.yml'] = true,
+    ['topology'] = true,
+    ['topology.yml'] = true,
+    ['users_acl'] = true,
+    ['users_acl.yml'] = true,
+    ['vshard'] = true,
+    ['vshard.yml'] = true,
+    ['vshard_groups'] = true,
+    ['vshard_groups.yml'] = true,
 }
 
 local function http_finalize_error(http_code, err)
@@ -44,15 +49,26 @@ local function download_config_handler(req)
         return http_finalize_error(401, err)
     end
 
-    local conf = confapplier.get_deepcopy()
-    if conf == nil then
+    local clusterwide_config = confapplier.get_active_config()
+    if clusterwide_config == nil then
         local err = e_download_config:new("Cluster isn't bootsrapped yet")
         return http_finalize_error(409, err)
     end
 
     -- cut system sections
-    for k, _ in pairs(system_sections) do
-        conf[k] = nil
+    local blacklist = table.copy(system_sections)
+    for section, _ in pairs(clusterwide_config:get_readonly()) do
+        -- don't download yaml representation of a section
+        if clusterwide_config:get_plaintext(section .. '.yml') then
+            blacklist[section .. '.yml'] = true
+        end
+    end
+
+    local ret = {}
+    for section, data in pairs(clusterwide_config:get_readonly()) do
+        if not blacklist[section] then
+            ret[section] = data
+        end
     end
 
     return auth.render_response({
@@ -61,7 +77,7 @@ local function download_config_handler(req)
             ['content-type'] = "application/yaml",
             ['content-disposition'] = 'attachment; filename="config.yml"',
         },
-        body = yaml.encode(conf)
+        body = yaml.encode(ret)
     })
 end
 
@@ -119,22 +135,29 @@ local function upload_config_handler(req)
     log.warn('Config uploaded')
 
     local patch = {}
-    local conf_old = confapplier.get_readonly()
-    for k, _ in pairs(conf_old) do
-        if system_sections[k] then
-            patch[k] = conf_old[k]
-        else
+
+    local clusterwide_config_old = confapplier.get_active_config()
+    for k, _ in pairs(clusterwide_config_old:get_plaintext()) do
+        if not system_sections[k] then
             patch[k] = box.NULL
         end
     end
+
     for k, v in pairs(conf_new) do
         if system_sections[k] then
             local err = e_upload_config:new(
                 "uploading system section %q is forbidden", k
             )
             return http_finalize_error(400, err)
-        else
+        elseif type(conf_new[k .. '.yml']) ~= 'nil' then
+            local err = e_upload_config:new(
+                "ambiguous sections %q and %q", k, k .. '.yml'
+            )
+            return http_finalize_error(400, err)
+        elseif v == nil or type(v) == 'string' then
             patch[k] = v
+        else
+            patch[k .. '.yml'] = yaml.encode(v)
         end
     end
 

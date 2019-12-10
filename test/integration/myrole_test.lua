@@ -133,15 +133,17 @@ function g.test_rename()
 
     g.cluster:stop()
 
-    local cfg_path = fio.pathjoin(g.cluster.main_server.workdir, 'config.yml')
-    local data = utils.file_read(cfg_path)
-    local config = yaml.decode(data)
-    local replicasets = config['topology']['replicasets']
+    local topology_cfg_path = fio.pathjoin(
+        g.cluster.main_server.workdir, 'config/topology.yml'
+    )
+    local data = utils.file_read(topology_cfg_path)
+    local topology_cfg = yaml.decode(data)
+    local replicasets = topology_cfg['replicasets']
     local replicaset = replicasets[helpers.uuid('a')]
     replicaset['roles'] = {['myrole-oldname'] = true}
-    local data = yaml.encode(config)
-    utils.file_write(cfg_path, data)
-    log.info('Config hacked: ' .. cfg_path)
+    local data = yaml.encode(topology_cfg)
+    utils.file_write(topology_cfg_path, data)
+    log.info('Config hacked: ' .. topology_cfg_path)
 
     g.cluster:start()
 

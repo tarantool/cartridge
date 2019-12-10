@@ -62,7 +62,7 @@ local function test_all(test, conf)
 test:plan(54)
 
 local vshard_group
-if conf.vshard then
+if conf['vshard.yml'] then
     vshard_group = "\n    vshard_group: default\n"
 else
     vshard_group = "\n    vshard_group: first\n"
@@ -74,8 +74,8 @@ local function check_config(result, raw_new, raw_old)
 
     local cfg_new = table.deepcopy(conf)
     local cfg_old = table.deepcopy(conf)
-    cfg_new.topology = topology_new
-    cfg_old.topology = topology_old
+    cfg_new['topology.yml'] = yaml.encode(topology_new)
+    cfg_old['topology.yml'] = yaml.encode(topology_old)
 
     local ok, err = topology.validate(topology_new, topology_old)
     if ok then
@@ -372,7 +372,7 @@ replicasets:
 ...]])
 
 local e
-if conf.vshard then
+if conf['vshard.yml'] then
     e = 'At least one vshard-storage (default) must have weight > 0'
 else
     e = 'At least one vshard-storage (first) must have weight > 0'
@@ -752,14 +752,14 @@ end
 test:plan(2)
 
 test:test('single group', test_all, {
-    vshard = {
+    ['vshard.yml'] = yaml.encode({
         bootstrapped = true,
         bucket_count = 1337,
-    }
+    })
 })
 
 test:test('multi-group', test_all, {
-    vshard_groups = {
+    ['vshard_groups.yml'] = yaml.encode({
         first = {
             bootstrapped = true,
             bucket_count = 1337,
@@ -768,7 +768,7 @@ test:test('multi-group', test_all, {
             bootstrapped = true,
             bucket_count = 1337,
         },
-    }
+    })
 })
 
 os.exit(test:check() and 0 or 1)
