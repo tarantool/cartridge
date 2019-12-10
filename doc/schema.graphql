@@ -1,5 +1,5 @@
 # source: http://localhost:8081/admin/api
-# timestamp: Wed Nov 20 2019 00:48:15 GMT+0300 (Moscow Standard Time)
+# timestamp: Fri Dec 13 2019 15:47:25 GMT+0300 (Moscow Standard Time)
 
 """Cluster management"""
 type Apicluster {
@@ -28,6 +28,21 @@ type Apicluster {
 
   """Virtual buckets count in cluster"""
   vshard_bucket_count: Int!
+
+  """Get cluster config sections"""
+  config(sections: [String!]): [ConfigSection]!
+}
+
+"""A section of clusterwide configuration"""
+type ConfigSection {
+  filename: String!
+  content: String!
+}
+
+"""A section of clusterwide configuration"""
+input ConfigSectionInput {
+  filename: String!
+  content: String
 }
 
 """Result of schema validation"""
@@ -121,6 +136,9 @@ type MutationApicluster {
 
   """Checks that schema can be applied on cluster"""
   check_schema(as_yaml: String!): DDLCheckResult!
+
+  """Disable listed servers by uuid"""
+  disable_servers(uuids: [String!]): [Server]
   auth_params(cookie_max_age: Long, enabled: Boolean, cookie_renew_age: Long): UserManagementAPI!
 
   """Remove user"""
@@ -128,16 +146,16 @@ type MutationApicluster {
 
   """Edit an existing user"""
   edit_user(password: String, username: String!, fullname: String, email: String): User
+  edit_vshard_options(rebalancer_max_receiving: Int, collect_bucket_garbage_interval: Float, collect_lua_garbage: Boolean, sync_timeout: Float, name: String!, rebalancer_disbalance_threshold: Float): VshardGroup!
+
+  """Create a new user"""
+  add_user(password: String!, username: String!, fullname: String, email: String): User
 
   """Edit cluster topology"""
   edit_topology(replicasets: [EditReplicasetInput], servers: [EditServerInput]): EditTopologyResult
 
-  """Create a new user"""
-  add_user(password: String!, username: String!, fullname: String, email: String): User
-  edit_vshard_options(rebalancer_max_receiving: Int, collect_bucket_garbage_interval: Float, collect_lua_garbage: Boolean, sync_timeout: Float, name: String!, rebalancer_disbalance_threshold: Float): VshardGroup!
-
-  """Disable listed servers by uuid"""
-  disable_servers(uuids: [String!]): [Server]
+  """Applies updated config on cluster"""
+  config(sections: [ConfigSectionInput]): [ConfigSection]!
 }
 
 type Query {

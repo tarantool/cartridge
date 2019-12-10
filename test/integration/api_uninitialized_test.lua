@@ -106,4 +106,49 @@ function g.test_uninitialized()
             })
         end
     )
+
+    t.assert_error_msg_contains(
+        "Cluster isn't bootstrapped yet",
+        function()
+            return g.server:graphql({
+                query = [[
+                    mutation { cluster { config(sections: []) {} } }
+                ]]
+            })
+        end
+    )
+    t.assert_error_msg_contains(
+        "Cluster isn't bootstrapped yet",
+        function()
+            return g.server:graphql({
+                query = [[
+                    query { cluster { config {} } }
+                ]]
+            })
+        end
+    )
+
+
+    t.assert_error_msg_contains(
+        "Cluster isn't bootstrapped yet",
+        function()
+            return g.server:graphql({
+                query = [[
+                    mutation { cluster { schema(as_yaml: "") {} } }
+                ]]
+            })
+        end
+    )
+    t.assert_error_msg_contains(
+        "Cluster isn't bootstrapped yet",
+        function()
+            return g.server:graphql({
+                query = [[
+                    query { cluster { schema {as_yaml} } }
+                ]]
+            })
+        end
+    )
+
+
 end

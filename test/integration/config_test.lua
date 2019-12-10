@@ -41,6 +41,34 @@ g.after_all = function()
     fio.rmtree(g.cluster.datadir)
 end
 
+local function set_sections(sections)
+    return g.cluster.main_server:graphql({query = [[
+        mutation($sections: [ConfigSectionInput!]) {
+            cluster {
+                config(sections: $sections) {
+                    filename
+                    content
+                }
+            }
+        }]],
+        variables = {sections = sections}
+    }).data.cluster.config
+end
+
+local function get_sections(sections)
+    return g.cluster.main_server:graphql({query = [[
+        query($sections: [String!]) {
+            cluster {
+                config(sections: $sections) {
+                    filename
+                    content
+                }
+            }
+        }]],
+        variables = {sections = sections}
+    }).data.cluster.config
+end
+
 function g.test_upload_good()
     local custom_config = {
         ['custom_config'] = {
@@ -80,6 +108,40 @@ function g.test_upload_good()
     local config = g.cluster:download_config()
     t.assert_nil(config.custom_config)
     t.assert_equals(config, other_config)
+
+    local function _list(sections)
+        local ret = {}
+        for _, v in ipairs(sections) do
+            table.insert(ret, v.filename)
+        end
+        return ret
+    end
+
+    t.assert_items_equals(
+        _list(get_sections()),
+        {'other_config.yml'}
+    )
+
+    t.assert_equals(
+        set_sections({{filename = 'mod.txt', content = '%)'}}),
+        {{filename = 'mod.txt', content = '%)'}}
+    )
+
+    t.assert_items_equals(_list(get_sections()), {'mod.txt', 'other_config.yml'})
+    t.assert_items_equals(_list(get_sections({})), {})
+    t.assert_items_equals(_list(get_sections({'mod.txt'})), {'mod.txt'})
+    t.assert_items_equals(_list(get_sections({'other_config.yml'})), {'other_config.yml'})
+    t.assert_equals(get_sections({'other_config'}), {})
+    t.assert_equals(get_sections({'unknown.yml'}), {})
+
+    t.assert_equals(
+        set_sections({{filename = 'other_config.yml', content = box.NULL}}),
+        {}
+    )
+    t.assert_equals(
+        get_sections(),
+        {{filename = 'mod.txt', content = '%)'}}
+    )
 end
 
 function g.test_upload_fail()
@@ -107,11 +169,16 @@ function g.test_upload_fail()
         t.assert_equals(resp.json['err'],
             string.format('uploading system section "%s" is forbidden', section)
         )
+
+        t.assert_error_msg_contains(
+            string.format('uploading system section %q is forbidden', section),
+            set_sections, {{filename = section, content = 'test'}}
+        )
     end
 
     local resp = server:http_request('put', '/admin/config', {body = ',', raw = true})
     t.assert_equals(resp.status, 400)
-    t.assert_equals(resp.json['class_name'], 'Decoding YAML failed')
+    t.assert_equals(resp.json['class_name'], 'DecodeYamlError')
     t.assert_equals(resp.json['err'], 'unexpected END event')
 
     local resp = server:http_request('put', '/admin/config',
@@ -246,5 +313,7 @@ test_remotely('test_patch_clusterwide', function()
     t.assert_equals(err.class_name, 'PatchClusterwideError')
     t.assert_equals(err.err, 'Ambiguous sections "conflict" and "conflict.yml"')
 end)
+
+
 
 return M

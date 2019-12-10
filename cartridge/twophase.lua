@@ -394,7 +394,7 @@ end
 local function get_schema()
     if confapplier.get_readonly() == nil then
         return nil, GetSchemaError:new(
-            "Cluster isn't bootstaraped yet"
+            "Cluster isn't bootstrapped yet"
         )
     end
     local schema_yml = confapplier.get_readonly('schema.yml')

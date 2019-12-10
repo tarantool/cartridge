@@ -24,7 +24,7 @@ local function init(httpd)
     api_auth.init(graphql)
 
     -- Config upload/download
-    api_config.init(httpd)
+    api_config.init(graphql, httpd)
 
     api_ddl.init(graphql)
 
