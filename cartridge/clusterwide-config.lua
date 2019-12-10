@@ -10,6 +10,7 @@
 local fio = require('fio')
 local yaml = require('yaml').new()
 local checks = require('checks')
+local errno = require('errno')
 local errors = require('errors')
 
 local utils = require('cartridge.utils')
@@ -20,9 +21,7 @@ yaml.cfg({
 })
 
 local LoadConfigError = errors.new_class('LoadConfigError')
-local DecodeYamlError = errors.new_class('DecodeYamlError')
 local ConflictConfigError = errors.new_class('ConflictConfigError')
-local SectionNotFoundError = errors.new_class('SectionNotFoundError')
 
 local clusterwide_config_mt
 clusterwide_config_mt = {
@@ -68,21 +67,22 @@ clusterwide_config_mt = {
             checks('ClusterwideConfig')
 
             local root = {}
-            for section_name, section_value in pairs(self._plaintext) do
-                local data = section_value
+            for section_name, content in pairs(self._plaintext) do
                 if section_name:match("[^.]+$") == 'yml'
                 or section_name:match("[^.]+$") == 'yaml'
                 then
-                    local ok, _data = pcall(yaml.decode, section_value)
+                    local ok, data = pcall(yaml.decode, content)
                     if not ok then
-                        return nil, DecodeYamlError:new(
-                            'Parsing %s raised error: %s',
-                            section_name, _data
+                        local err = LoadConfigError:new(
+                            'Error parsing section %q: %s',
+                            section_name, data
                         )
+                        return nil, err
                     end
-                    data = _data
+                    root[section_name] = data
+                else
+                    root[section_name] = content
                 end
-                root[section_name] = data
             end
 
             local function _load(tbl)
@@ -92,9 +92,9 @@ clusterwide_config_mt = {
                         if v['__file'] then
                             tbl[k] = self._plaintext[v['__file']]
                             if not tbl[k] then
-                                return nil, SectionNotFoundError:new(
-                                    'Error while parsing data, in section %q' ..
-                                    ' directive %q not found, please check that file exists',
+                                return nil, LoadConfigError:new(
+                                    'Error loading section %q:' ..
+                                    ' inclusion %q not found',
                                     k, v['__file']
                                 )
                             end
@@ -196,13 +196,17 @@ local function _load_from_file(filename)
 
     local confdir = fio.dirname(filename)
 
-    local encoded, err = DecodeYamlError:pcall(yaml.decode, raw)
-    if not encoded then
-        if not err then
-            return nil, LoadConfigError:new('file %q is empty', filename)
-        end
-
+    local ok, data = pcall(yaml.decode, raw)
+    if not ok then
+        local err = LoadConfigError:new(
+            'Error parsing %q: %s',
+            filename, data
+        )
         return nil, err
+    elseif data == nil then
+        return nil, LoadConfigError:new(
+            'Error loading %q: File is empty', filename
+        )
     end
 
     local _plaintext = {}
@@ -211,7 +215,7 @@ local function _load_from_file(filename)
     local to_visit = {}
 
     -- read all config root data and store it to _plaintext
-    for k, v in pairs(encoded) do
+    for k, v in pairs(data) do
         if type(v) == 'table' then
             table.insert(to_visit, v)
         end
@@ -389,7 +393,11 @@ local function load(path)
     checks('string')
 
     if not fio.path.lexists(path) then
-        return nil, LoadConfigError:new('entry %q does not exist', path)
+        local err = LoadConfigError:new(
+            'Error loading %q: %s',
+            path, errno.strerror(errno.ENOENT)
+        )
+        return nil, err
     end
 
     if not fio.path.is_dir(path) then

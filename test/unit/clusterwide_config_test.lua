@@ -4,6 +4,8 @@ local t = require('luatest')
 local g = t.group('clusterwide_config')
 local fio = require('fio')
 local yaml = require('yaml')
+local checks = require('checks')
+local errno = require('errno')
 local utils = require('cartridge.utils')
 local clusterwide_config = require('cartridge.clusterwide-config')
 
@@ -15,35 +17,23 @@ g.teardown = function()
     fio.rmtree(g.tempdir)
 end
 
+local function write_tree(tree)
+    checks('table')
+    for path, content in pairs(tree) do
+        local abspath = fio.pathjoin(g.tempdir, path)
+        utils.mktree(fio.dirname(abspath))
+        utils.file_write(abspath, content)
+    end
+end
 
-function g.test_new_config_nested()
-    utils.mktree(
-        fio.pathjoin(g.tempdir, 'a/b/c')
-    )
-    utils.file_write(
-        fio.pathjoin(g.tempdir, 'a/b/c/first.txt'),
-        'first'
-    )
-
-    utils.file_write(
-        fio.pathjoin(g.tempdir, 'a/b/c/second.yml'),
-        'key: value'
-    )
-
-    utils.file_write(
-        fio.pathjoin(g.tempdir, 'directive.yml'),
-        '__file: a/b/c/first.txt'
-    )
-
-    utils.file_write(
-        fio.pathjoin(g.tempdir, 'table.txt'),
-        '{a: {b: {c: 4}}}'
-    )
-
-    utils.file_write(
-        fio.pathjoin(g.tempdir, 'table.yml'),
-        '{a: {b: {c: 4}}}'
-    )
+function g.test_newstyle_ok()
+    write_tree({
+        ['a/b/c/first.txt'] = 'first',
+        ['a/b/c/second.yml'] = 'key: value',
+        ['table.yml'] = '{a: {b: {c: 4}}}',
+        ['table.txt'] = '{a: {b: {c: 5}}}',
+        ['include.yml'] = '__file: a/b/c/first.txt',
+    })
 
     local cfg, err = clusterwide_config.load(g.tempdir)
     t.assert_equals(err, nil)
@@ -52,9 +42,9 @@ function g.test_new_config_nested()
         {
             ['a/b/c/first.txt'] = 'first',
             ['a/b/c/second.yml'] = {key = 'value'},
-            ['directive.yml'] = 'first',
-            ['table.txt'] = '{a: {b: {c: 4}}}',
-            ['table.yml'] = {a = {b = {c = 4}}}
+            ['table.txt'] = '{a: {b: {c: 5}}}',
+            ['table.yml'] = {a = {b = {c = 4}}},
+            ['include.yml'] = 'first',
         }
     )
 
@@ -63,81 +53,63 @@ function g.test_new_config_nested()
         {
             ['a/b/c/first.txt'] = 'first',
             ['a/b/c/second.yml'] = 'key: value',
-            ['directive.yml'] = '__file: a/b/c/first.txt',
-            ['table.txt'] = '{a: {b: {c: 4}}}',
+            ['include.yml'] = '__file: a/b/c/first.txt',
+            ['table.txt'] = '{a: {b: {c: 5}}}',
             ['table.yml'] = '{a: {b: {c: 4}}}'
         }
     )
 end
 
-
-function g.test_laod_newstyle_err()
+function g.test_newstyle_err()
     local cfg, err = clusterwide_config.load(
         fio.pathjoin(g.tempdir, 'not_existing')
     )
     t.assert_equals(cfg, nil)
-    t.assert_str_icontains(
-        err.err, string.format(
-            "entry %q does not exist",
-            fio.pathjoin(g.tempdir, 'not_existing')
+    t.assert_equals(err.class_name, 'LoadConfigError')
+    t.assert_equals(err.err,
+        string.format(
+            "Error loading %q: %s",
+            fio.pathjoin(g.tempdir, 'not_existing'),
+            errno.strerror(errno.ENOENT)
         )
     )
 
-
-    local cfg_path = fio.pathjoin(g.tempdir, 'cfg1')
-    utils.mktree(cfg_path)
-    utils.file_write(
-        fio.pathjoin(cfg_path, 'text.txt'),
-        'text'
-    )
-    utils.file_write(
-        fio.pathjoin(cfg_path, 'bad.yml'),
-        ','
-    )
-
-    local cfg, err = clusterwide_config.load(cfg_path)
+    write_tree({
+        ['cfg1/bad.yml'] = ',',
+    })
+    local cfg, err = clusterwide_config.load(g.tempdir .. '/cfg1')
     t.assert_equals(cfg, nil)
-    t.assert_str_icontains(
-        err.str,
-        'DecodeYamlError: Parsing bad.yml raised error: unexpected END event'
+    t.assert_equals(err.class_name, 'LoadConfigError')
+    t.assert_equals(err.err,
+        'Error parsing section "bad.yml": unexpected END event'
     )
 
-    local cfg_path = fio.pathjoin(g.tempdir, 'cfg2')
-    utils.mktree(cfg_path)
-    utils.file_write(
-        fio.pathjoin(cfg_path, 'some.yml'),
-        '{__file: not_existing.txt}'
-    )
-
-    local cfg, err = clusterwide_config.load(cfg_path)
+    write_tree({
+        ['cfg2/bad.yml'] = '{__file: not_existing.txt}',
+    })
+    local cfg, err = clusterwide_config.load(g.tempdir .. '/cfg2')
     t.assert_equals(cfg, nil)
-    t.assert_str_icontains(
-        err.str,
-        'SectionNotFoundError: Error while parsing data, in section "some.yml"' ..
-        ' directive "not_existing.txt" not found, please check that file exists'
+    t.assert_equals(err.class_name, 'LoadConfigError')
+    t.assert_equals(err.err,
+        'Error loading section "bad.yml":' ..
+        ' inclusion "not_existing.txt" not found'
     )
 end
 
-
-function g.test_load_oldstyle_ok()
-    utils.file_write(
-        fio.pathjoin(g.tempdir, 'main.yml'), [[
+function g.test_oldstyle_ok()
+    write_tree({
+        ['main.yml'] = [[
             string: "foobar"
             table: {a: {b: {c: 4}}}
             number: 42
             boolean: false
-            side: {__file: 'side.txt'}
             colors.yml: "---\n{red: '0xff0000'}\n..."
-        ]]
-    )
-    utils.file_write(
-        fio.pathjoin(g.tempdir, 'side.txt'),
-        'hi its me'
-    )
-
-    local cfg = clusterwide_config.load(
-        fio.pathjoin(g.tempdir, 'main.yml')
-    )
+            side_config: {__file: 'inclusion.txt'}
+        ]],
+        ['inclusion.txt'] = "Hi it's me",
+        ['redundant.txt'] = "This is just a junk file",
+    })
+    local cfg = clusterwide_config.load(g.tempdir .. '/main.yml')
 
     cfg:update_luatables()
     t.assert_equals(cfg._luatables, {
@@ -145,11 +117,12 @@ function g.test_load_oldstyle_ok()
         ['table.yml'] = {a = {b = {c = 4}}},
         ['number.yml'] = 42,
         ['boolean.yml'] = false,
-        ['side.yml'] = 'hi its me',
-        ['side.txt'] = 'hi its me',
+        ['side_config.yml'] = "Hi it's me",
+        ['inclusion.txt'] = "Hi it's me",
         ['colors.yml'] = {red = '0xff0000'}
     })
     t.assert_equals(cfg._luatables, cfg:get_readonly())
+    t.assert_equals(cfg._luatables, cfg:get_deepcopy())
 
 
     t.assert_equals(cfg._plaintext, {
@@ -157,70 +130,49 @@ function g.test_load_oldstyle_ok()
         ['table.yml'] = yaml.encode({a = {b = {c = 4}}}),
         ['number.yml'] = yaml.encode(42),
         ['boolean.yml'] = yaml.encode(false),
-        ['side.yml'] = yaml.encode({__file = 'side.txt'}),
-        ['side.txt'] = 'hi its me',
+        ['side_config.yml'] = yaml.encode({__file = 'inclusion.txt'}),
+        ['inclusion.txt'] = "Hi it's me",
         ['colors.yml'] = "---\n{red: '0xff0000'}\n...",
     })
     t.assert_equals(cfg._plaintext, cfg:get_plaintext())
 end
 
-function g.test_load_oldstyle_err()
+function g.test_oldstyle_err()
     local cfg, err = clusterwide_config.load(
         fio.pathjoin(g.tempdir, 'not_existing.yml')
     )
     t.assert_equals(cfg, nil)
-    t.assert_str_icontains(
-        err.str, string.format(
-            'LoadConfigError: entry %q does not exist',
-            fio.pathjoin(g.tempdir, 'not_existing.yml')
-        )
-    )
-
-    utils.file_write(
-        fio.pathjoin(g.tempdir, 'main.yml'), ','
-    )
-    local cfg, err = clusterwide_config.load(
-        fio.pathjoin(g.tempdir, 'main.yml')
-    )
-    t.assert_equals(cfg, nil)
-    t.assert_str_icontains(
-        err.str, string.format(
-            'DecodeYamlError: unexpected END event',
-            fio.pathjoin(g.tempdir, 'not_existing.yml')
-        )
-    )
-
-    utils.file_write(
-        fio.pathjoin(g.tempdir, 'main.yml'), [[
-            string: "foobar"
-            number: 42
-            boolean: false
-            side: {__file: 'not_exisiting.txt'}
-        ]]
-    )
-    local cfg, err = clusterwide_config.load(
-        fio.pathjoin(g.tempdir, 'main.yml')
-    )
-    t.assert_equals(cfg, nil)
-    t.assert_str_icontains(
-        err.str,
-        'SectionNotFoundError: Error while parsing data, in section "side.yml" ' ..
-        'directive "not_exisiting.txt" not found, please check that file exists'
-    )
-end
-
-
-function g.test_invalid_yaml()
-    utils.file_write(
-        fio.pathjoin(g.tempdir, 'bad.yml'),
-        ","
-    )
-
-    local ok, err = clusterwide_config.load(g.tempdir)
-    t.assert_equals(ok, nil)
-    t.assert_equals(err.class_name, 'DecodeYamlError')
+    t.assert_equals(err.class_name, 'LoadConfigError')
     t.assert_equals(err.err,
-        'Parsing bad.yml raised error: unexpected END event'
+        string.format(
+            "Error loading %q: %s",
+            fio.pathjoin(g.tempdir, 'not_existing.yml'),
+            errno.strerror(errno.ENOENT)
+        )
+    )
+
+    write_tree({['bad1/main.yml'] = ','})
+    local cfg, err = clusterwide_config.load(g.tempdir .. '/bad1/main.yml')
+    t.assert_equals(cfg, nil)
+    t.assert_equals(err.class_name, 'LoadConfigError')
+    t.assert_equals(err.err,
+        string.format(
+            "Error parsing %q: unexpected END event",
+            fio.pathjoin(g.tempdir, 'bad1/main.yml'),
+            errno.strerror(errno.ENOENT)
+        )
+    )
+
+    write_tree({['bad2/main.yml'] = [[
+        side_config: {__file: 'not_existing.txt'}
+    ]]})
+    local cfg, err = clusterwide_config.load(g.tempdir .. '/bad2/main.yml')
+    t.assert_equals(cfg, nil)
+    t.assert_equals(err.class_name, 'LoadConfigError')
+    t.assert_equals(err.err,
+        -- TODO: it shouldn't append .yml extension here
+        'Error loading section "side_config.yml":' ..
+        ' inclusion "not_existing.txt" not found'
     )
 end
 
@@ -282,24 +234,26 @@ function g.test_get_readonly_err()
     local cfg = clusterwide_config.new():set_plaintext('bad.yml', ',')
     cfg:set_plaintext('bad.yml', ',')
     t.assert_error_msg_contains(
-        'DecodeYamlError: Parsing bad.yml raised error: unexpected END event',
+        'LoadConfigError: Error parsing section "bad.yml":' ..
+        ' unexpected END event',
         cfg.get_readonly, cfg
     )
 
-    local cfg = clusterwide_config.new():set_plaintext('file.yml', '---\n{__file: some.txt}\n...')
+    local cfg = clusterwide_config.new()
+    cfg:set_plaintext('file.yml', '---\n{__file: some.txt}\n...')
     local _, err = cfg:update_luatables()
     t.assert_str_icontains(
         err.str,
-        'SectionNotFoundError: Error while parsing data, in section "file.yml"' ..
-        ' directive "some.txt" not found, please check that file exists'
+        'LoadConfigError: Error loading section "file.yml":' ..
+        ' inclusion "some.txt" not found'
     )
 end
 
-function g.test_get_readonly_modify()
-    local cfg = clusterwide_config.new()
+function g.test_immutability()
     t.assert_error_msg_contains(
         'table is read-only',
         function()
+            local cfg = clusterwide_config.new()
             cfg:get_readonly()['data'] = 'new_data'
         end
     )
@@ -340,36 +294,32 @@ function g.test_save_empty_config()
 end
 
 
-function g.test_save_config_error()
-    local cfg = clusterwide_config.new({
-        ['a'] = 'a',
-        ['data'] = 'data',
-        ['b'] = 'b',
-    })
+function g.test_save_config_err()
+    local cfg_a = clusterwide_config.new({['a'] = 'a'})
+    local ok, err = clusterwide_config.save(cfg_a, g.tempdir .. '/config')
+    t.assert_equals(ok, true)
+    t.assert_equals(err, nil)
 
-    local cfg_path = fio.pathjoin(g.tempdir, 'config')
-    utils.mktree(cfg_path)
-    local ok, err = clusterwide_config.save(cfg, cfg_path)
+    local cfg_b = clusterwide_config.new({['b'] = 'b'})
+    local ok, err = clusterwide_config.save(cfg_b, g.tempdir .. '/config')
     t.assert_equals(ok, nil)
     t.assert_str_icontains(
         err.str,
         string.format(
             "ConflictConfigError: Config can't be saved, directory %q already exists",
-            cfg_path
+            g.tempdir .. '/config'
         )
     )
 
     t.assert_equals(
-        fio.listdir(cfg_path),
-        {}
+        fio.listdir(g.tempdir .. '/config'),
+        {'a'}
     )
 end
 
 function g.test_save_config_ok()
     local cfg = clusterwide_config.new()
-    local ok, err = clusterwide_config.save(
-        cfg, fio.pathjoin(g.tempdir, 'cfg1')
-    )
+    local ok, err = clusterwide_config.save(cfg, g.tempdir .. '/cfg1')
     t.assert_equals(err, nil)
     t.assert_equals(ok, true)
     t.assert_equals(
@@ -389,7 +339,7 @@ function g.test_save_config_ok()
     )
     t.assert_equals(err, nil)
     t.assert_equals(ok, true)
-    t.assert_equals(
+    t.assert_items_equals(
         fio.listdir(fio.pathjoin(g.tempdir, 'cfg2')),
         {'a', 'some.txt', 'another.yml', 'key.yml'}
     )
