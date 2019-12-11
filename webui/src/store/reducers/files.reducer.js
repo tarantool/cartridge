@@ -195,7 +195,6 @@ const renameFolder = (list: FileList, oldFolderPath: string, newName: string): F
         ...file,
         path: replacePrefix(file.path, oldFolderPath, newFolderPath),
         parentPath: replacePrefix(file.parentPath, oldFolderPath, newFolderPath),
-        fileName: newName,
       }
     }
 
