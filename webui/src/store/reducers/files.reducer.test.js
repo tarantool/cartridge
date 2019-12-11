@@ -74,34 +74,40 @@ describe('Renaming files', () => {
 
 
   const initialState = [
-    { path: 'file.ext' },
-    { path: 'folder/file.ext' },
-    { path: 'folder/folder/file.ext' },
+    { path: 'file.ext', parentPath: '' },
+    { path: 'dir', parentPath: '', type: 'folder' },
+    { path: 'dir/file.ext', parentPath: 'dir' },
+    { path: 'dir/dir', parentPath: 'dir', type: 'folder' },
+    { path: 'dir/dir/file.ext', parentPath: 'dir/dir' },
   ];
 
   it('renames folder in root', () => {
     expect(
-      reducer(initialState, renameFolder({ id: 'folder', name: 'renamedFolder' }))
+      reducer(initialState, renameFolder({ id: 'dir', name: 'renamedDir' }))
     ).toMatchObject([
       { path: 'file.ext' },
-      { path: 'renamedFolder/file.ext' },
-      { path: 'renamedFolder/folder/file.ext' },
+      { path: 'renamedDir', parentPath: '' },
+      { path: 'renamedDir/file.ext', parentPath: 'renamedDir' },
+      { path: 'renamedDir/dir', parentPath: 'renamedDir' },
+      { path: 'renamedDir/dir/file.ext', parentPath: 'renamedDir/dir' },
     ]);
   });
 
   it('renames subfolder in folder', () => {
     expect(
-      reducer(initialState, renameFolder({ id: 'folder/folder', name: 'renamedFolder' }))
+      reducer(initialState, renameFolder({ id: 'dir/dir', name: 'renamedDir' }))
     ).toMatchObject([
       { path: 'file.ext' },
-      { path: 'folder/file.ext' },
-      { path: 'folder/renamedFolder/file.ext' },
+      { path: 'dir' },
+      { path: 'dir/file.ext' },
+      { path: 'dir/renamedDir' },
+      { path: 'dir/renamedDir/file.ext' },
     ]);
   });
 
   it('returns previous state when folder not found', () => {
     expect(
-      reducer(initialState, renameFolder({ id: 'folder/nonExistingFolder', name: 'renamedFolder' }))
+      reducer(initialState, renameFolder({ id: 'dir/nonExistingDir', name: 'renamedDir' }))
     ).toEqual(initialState);
   });
 });
@@ -114,7 +120,9 @@ describe('Creating', () => {
       reducer(emptyState, createFile({ name: 'file.ext' }))
     ).toEqual([
       {
+        fileId: 'file.ext',
         path: 'file.ext', fileName: 'file.ext',
+        parentPath: '',
         type: 'file',
         content: '', initialContent: '',
         loading: false, saved: false,
@@ -128,12 +136,15 @@ describe('Creating', () => {
       { path: 'folder/folder/file.ext' },
     ];
 
+    const parentId = 'folder/folder';
     expect(
-      reducer(initialState, createFile({ parentId: 'folder/folder', name: 'newFile.ext' }))
+      reducer(initialState, createFile({ parentId, name: 'newFile.ext' }))
     ).toEqual([
       { path: 'folder/folder/file.ext' },
       {
+        fileId: "folder/folder/newFile.ext",
         path: 'folder/folder/newFile.ext', fileName: 'newFile.ext',
+        parentPath: parentId,
         type: 'file',
         content: '', initialContent: '',
         loading: false, saved: false,
@@ -152,12 +163,15 @@ describe('Creating', () => {
     };
     const initialState = [presentFile];
 
+    const parentId = '';
     expect(
-      reducer(initialState, createFile({ parentId: '', name: 'newFile.ext' }))
+      reducer(initialState, createFile({ parentId, name: 'newFile.ext' }))
     ).toEqual([
       presentFile,
       {
+        fileId: 'newFile.ext',
         path: 'newFile.ext', fileName: 'newFile.ext',
+        parentPath: parentId,
         type: 'file',
         content: '', initialContent: '',
         loading: false, saved: false,

@@ -5,24 +5,20 @@ import {
 describe('selectFileTree (v2)', () => {
   it('correctly forms tree (files at root, folder, subfolders)', () => {
     const state = [
-      { path: 'rootFile.ext' },
-      { path: 'rootFile2.ext' },
-      { path: 'rootFolder/file.ext' },
-      { path: 'rootFolder2/file1.ext' },
-      { path: 'rootFolder2/file2.ext' },
-      { path: 'rootFolder2/subFolder/file.ext' },
-      { path: 'rootFolder2/subFolder2/file.ext' },
+      { path: 'rootFile.ext',           parentPath: '',             type: 'file' },
+      { path: 'rootFile2.ext',          parentPath: '',             type: 'file' },
+      { path: 'rootFolder',             parentPath: '',             type: 'folder' },
+      { path: 'rootFolder/file.ext',    parentPath: 'rootFolder',   type: 'file' },
+      { path: 'rootFolder2',            parentPath: '',             type: 'folder' },
+      { path: 'rootFolder2/file1.ext',  parentPath: 'rootFolder2',  type: 'file' },
+      { path: 'rootFolder2/file2.ext',  parentPath: 'rootFolder2',  type: 'file' },
+      { path: 'rootFolder2/subFolder',  parentPath: 'rootFolder2',  type: 'folder' },
+      { path: 'rootFolder2/subFolder/file.ext', parentPath: 'rootFolder2', type: 'file' },
+      { path: 'rootFolder2/subFolder2', parentPath: 'rootFolder2',  type: 'folder' },
+      { path: 'rootFolder2/subFolder2/file.ext', parentPath: 'rootFolder2/subFolder2', type: 'file' },
     ];
 
     expect(v2_selectFileTree(state)).toMatchObject([
-      {
-        fileId: 'rootFile.ext', path: 'rootFile.ext',
-        fileName: 'rootFile.ext', type: 'file',
-      },
-      {
-        fileId: 'rootFile2.ext', path: 'rootFile2.ext',
-        fileName: 'rootFile2.ext', type: 'file',
-      },
       {
         fileId: 'rootFolder', path: 'rootFolder',
         fileName: 'rootFolder', type: 'folder',
@@ -37,14 +33,6 @@ describe('selectFileTree (v2)', () => {
         fileId: 'rootFolder2', path: 'rootFolder2',
         fileName: 'rootFolder2', type: 'folder',
         items: [
-          {
-            fileId: 'rootFolder2/file1.ext', path: 'rootFolder2/file1.ext',
-            fileName: 'file1.ext', type: 'file',
-          },
-          {
-            fileId: 'rootFolder2/file2.ext', path: 'rootFolder2/file2.ext',
-            fileName: 'file2.ext', type: 'file',
-          },
           {
             fileId: 'rootFolder2/subFolder', path: 'rootFolder2/subFolder',
             fileName: 'subFolder', type: 'folder',
@@ -65,7 +53,23 @@ describe('selectFileTree (v2)', () => {
               },
             ]
           },
+          {
+            fileId: 'rootFolder2/file1.ext', path: 'rootFolder2/file1.ext',
+            fileName: 'file1.ext', type: 'file',
+          },
+          {
+            fileId: 'rootFolder2/file2.ext', path: 'rootFolder2/file2.ext',
+            fileName: 'file2.ext', type: 'file',
+          },
         ]
+      },
+      {
+        fileId: 'rootFile.ext', path: 'rootFile.ext',
+        fileName: 'rootFile.ext', type: 'file',
+      },
+      {
+        fileId: 'rootFile2.ext', path: 'rootFile2.ext',
+        fileName: 'rootFile2.ext', type: 'file',
       },
     ]);
   });

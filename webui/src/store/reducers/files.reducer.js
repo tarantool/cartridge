@@ -19,6 +19,7 @@ import {
 export type FileItem = {
   fileId: string,
   path: string,
+  parentPath: string,
   fileName: string,
   content?: string,
   initialContent?: string,
@@ -30,6 +31,8 @@ export type FileItem = {
   scrollPosition: 0,
   deleted?: boolean,
 }
+
+export type FileList = Array<FileItem>;
 
 type UpdateObj = {
   loading?: boolean,
@@ -45,8 +48,27 @@ const toFileItem = (item): FileItem => {
   }
 }
 
-const newApproach = true;
-const initialState: Array<FileItem> = require(`./files.initialState${newApproach ? '2' : ''}`).default;
+const enrichFileList = (files: Array<any>) => {
+  const pathToFileMap = {};
+  files.forEach(file => {
+    const parts = file.path.split('/');
+
+    let currentItemPath = '';
+    parts.forEach((itemName, index) => {
+      const isFolder = index !== parts.length - 1;
+
+      const parentPath = currentItemPath;
+      currentItemPath = `${parentPath}${parentPath ? '/' : ''}${itemName}`;
+
+      let item = pathToFileMap[currentItemPath];
+      if (!item) {
+        item = makeFile(parentPath, itemName, isFolder, file.content, { saved: true });
+        pathToFileMap[currentItemPath] = item;
+      }
+    });
+  });
+  return Object.values(pathToFileMap);
+};
 
 const updateFile = (
   fileList: Array<FileItem>,
@@ -86,21 +108,33 @@ const isDescendant = (ownPath: string, parentPath: string) => {
 const makePath = (parentPath, name) => `${parentPath}${name}`;
 
 
-const makeFile = (list: Array<FileItem>, parentPath: string, name: string, isFolder = false): FileItem => {
-  const unusedName = pickUnusedFileName(list, parentPath, name);
-  const newFile: FileItem = {
-    path: makePath(parentPath ? `${parentPath}/` : '', unusedName),
-    fileName: unusedName,
-    content: '',
-    initialContent: '',
-    loading: false,
-    saved: false,
+const makeFile = (parentPath: string, name: string, isFolder = false, content = '', prevFileProps = {}): FileItem => {
+  const selfPath = `${parentPath}${parentPath ? '/' : ''}${name}`;
+  return {
+    // different fields for folders and files
+    ...(
+      isFolder ?
+        {
+          saved: false,
+          items: [],
+        } :
+        {
+          saved: false,
+          content: content,
+          initialContent: content,
+          loading: false,
+          column: 0,
+          line: 0,
+          scrollPosition: 0,
+        }
+    ),
+    ...prevFileProps,
+    parentPath: parentPath,
+    path: selfPath,
+    fileName: name,
     type: isFolder ? 'folder' : 'file',
-    column: 0,
-    line: 0,
-    scrollPosition: 0,
-  };
-  return newFile;
+    fileId: selfPath,//@deprecated
+  }
 };
 
 const getFileNameFromPath = path => path.split('/').pop();
@@ -127,26 +161,41 @@ const renameFile = (list: Array<FileItem>, oldPath, newName): Array<FileItem> =>
       return {
         initialPath: file.path,
         ...file,
-        path: newPath
+        path: newPath,
+        fileName: newName
       };
     }
     return file;
   });
 };
 
-const renameFolder = (list, oldFolderPath, newName) => {
+const replacePrefix = (str: string, oldPrefix: string, newPrefix: string) => {
+  const tail = str.slice(oldPrefix.length);
+  return `${newPrefix}${tail}`;
+};
+
+const renameFolder = (list: FileList, oldFolderPath: string, newName: string): FileList => {
   const newFolderPath = getRenamedPath(oldFolderPath, newName);
   if (newFolderPath === oldFolderPath) {
     return list;
   }
 
   return list.map(file => {
-    if (isDescendant(file.path, oldFolderPath)) {
+    if (file.path === oldFolderPath) {
+      return {
+        initialPath: file.path,
+        ...file,
+        path: newFolderPath,
+        fileName: newName,
+      }
+    } else if (isDescendant(file.path, oldFolderPath)) {
       const pathTail = file.path.slice(oldFolderPath.length);
       return {
         initialPath: file.path,
         ...file,
-        path: `${newFolderPath}${pathTail}`,
+        path: replacePrefix(file.path, oldFolderPath, newFolderPath),
+        parentPath: replacePrefix(file.parentPath, oldFolderPath, newFolderPath),
+        fileName: newName,
       }
     }
 
@@ -179,6 +228,11 @@ const commitFilesChanges = (list: Array<FileItem>): Array<FileItem> => {
   });
   return newList;
 };
+
+
+const newApproach = true;
+const fileListLikeFetchedFromAPI: FileList = require(`./files.initialState${newApproach ? '2' : ''}`).default;
+const initialState: FileList = enrichFileList(fileListLikeFetchedFromAPI);
 
 
 export default (state: Array<FileItem> = initialState, { type, payload }: FSA) => {
@@ -237,8 +291,7 @@ export default (state: Array<FileItem> = initialState, { type, payload }: FSA) =
         return [
           ...state,
           makeFile(
-            state,
-            payload.parentId,
+            payload.parentId || '',
             payload.name,
             type === CREATE_FOLDER
           )
