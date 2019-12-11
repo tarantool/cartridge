@@ -12,6 +12,8 @@ local yaml = require('yaml').new()
 local checks = require('checks')
 local errno = require('errno')
 local errors = require('errors')
+local uuid = require('uuid')
+local log = require('log')
 
 local utils = require('cartridge.utils')
 
@@ -21,7 +23,8 @@ yaml.cfg({
 })
 
 local LoadConfigError = errors.new_class('LoadConfigError')
-local ConflictConfigError = errors.new_class('ConflictConfigError')
+local SaveConfigError = errors.new_class('SaveConfigError')
+local RemoveConfigError = errors.new_class('RemoveConfigError')
 
 local clusterwide_config_mt
 clusterwide_config_mt = {
@@ -249,6 +252,42 @@ local function _load_from_file(filename)
     return new(_plaintext)
 end
 
+
+--- Atomic remove config folder.
+-- @function remove
+-- @local
+-- @tparam path string
+--  Directory path to remove.
+-- @treturn[1] boolean true
+-- @treturn[2] nil
+-- @treturn[2] table Error description
+local function remove(path)
+    local base_name = fio.basename(path)
+    local base_path = fio.dirname(path)
+    local temp_path = fio.pathjoin(base_path, base_name .. '_' .. uuid.str())
+
+    local ok, err = fio.rename(path, temp_path)
+    if not ok then
+        return nil, RemoveConfigError:new(
+            'Move config to temporary folder failed: %s',
+            err
+        )
+    end
+
+    local _, err = fio.rmtree(temp_path)
+    if err ~= nil then
+        log.warn(
+            "Temporary config folder %q wasn't " ..
+            "removed, please make it manually.\n" ..
+            "Following error occoured %s",
+            temp_path, err
+        )
+    end
+
+    return true
+end
+
+
 --- Write object to filesystem.
 -- @function save
 -- @local
@@ -263,43 +302,75 @@ local function save(clusterwide_config, path)
     checks('ClusterwideConfig', 'string')
 
     if fio.path.lexists(path) then
-        return nil, ConflictConfigError:new(
+        return nil, SaveConfigError:new(
             "Config can't be saved, directory %q already exists",
             path
         )
     end
 
-    local ok, err = utils.mktree(path)
+    local base_path = fio.dirname(path)
+    local base_name = fio.basename(path)
+    local temp_path = fio.pathjoin(base_path, base_name .. '_' .. uuid.str())
+
+    local err
+    local ok, _err = utils.mktree(temp_path)
     if not ok then
-        return nil, err
+        return nil, SaveConfigError:new(
+            "Create temporary config dir %q raised error: %s",
+            temp_path, _err.str
+        )
     end
 
-    local _err
     for section_name, section_value in pairs(clusterwide_config._plaintext) do
-        local full_path = fio.pathjoin(path, section_name)
+        local full_path = fio.pathjoin(temp_path, section_name)
         local dirname = fio.dirname(full_path)
 
-        local ok, err = utils.mktree(dirname)
+        local ok, _err = utils.mktree(dirname)
         if not ok then
-            _err = err
+            err = SaveConfigError:new(
+                "Create config subdirectory %q raised error: %s",
+                dirname, _err.str
+            )
             goto write_exit
         end
 
         -- here we work only with strings that stored in our _plaintext
-        local ok, err = utils.file_write(
+        local ok, _err = utils.file_write(
             full_path, section_value,
             {'O_CREAT', 'O_EXCL', 'O_WRONLY'}
         )
         if not ok then
-            _err = err
+            err = SaveConfigError:new(
+                "Save config section file %q raised error: %s",
+                full_path, _err.str
+            )
             goto write_exit
         end
     end
 
 ::write_exit::
-    if _err ~= nil then
-        fio.rmtree(path)
-        return nil, _err
+    if err == nil then
+        local ok, _err = fio.rename(temp_path, path)
+        if not ok then
+            err = SaveConfigError:new(
+                "Rename config folder %q to %q raised error: %s",
+                temp_path, path, _err
+            )
+        end
+    end
+
+    local _ok, _err = fio.rmtree(temp_path)
+    if not _ok then
+        log.warn(
+            "Temporary config folder %q wasn't " ..
+            "removed, please make it manually.\n" ..
+            "Following error occoured %s",
+            temp_path, _err
+        )
+    end
+
+    if err ~= nil then
+        return nil, err
     end
 
     return true
@@ -399,4 +470,5 @@ return {
     new = new,
     load = load,
     save = save,
+    remove = remove,
 }

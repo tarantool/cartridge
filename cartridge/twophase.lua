@@ -108,14 +108,9 @@ local function commit_2pc()
     local path_backup = fio.pathjoin(workdir, 'config.backup')
     local path_active = fio.pathjoin(workdir, 'config')
 
-    -- TODO move to another dir and then delete
-    fio.rmtree(path_backup)
-
+    ClusterwideConfig.remove(path_backup)
 
     if fio.path.exists(path_active) then
-        -- local ok = fio.link(path_active, path_backup)
-        -- Improve make copy then mo
-        -- local ok, err = fio.copytree(path_active, path_backup)
         local ok = fio.rename(path_active, path_backup)
         if ok then
             log.info('Backup of active config created: %q', path_backup)
@@ -156,8 +151,7 @@ end
 local function abort_2pc()
     local workdir = confapplier.get_workdir()
     local path_prepare = fio.pathjoin(workdir, 'config.prepare')
-    -- fio.unlink(path_prepare)
-    fio.rmtree(path_prepare)
+    ClusterwideConfig.remove(path_prepare)
     vars.prepared_config = nil
     return true
 end

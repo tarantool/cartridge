@@ -306,7 +306,7 @@ function g.test_save_config_err()
     t.assert_str_icontains(
         err.str,
         string.format(
-            "ConflictConfigError: Config can't be saved, directory %q already exists",
+            "SaveConfigError: Config can't be saved, directory %q already exists",
             g.tempdir .. '/config'
         )
     )
