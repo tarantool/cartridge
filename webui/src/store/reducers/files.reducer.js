@@ -71,21 +71,21 @@ const enrichFileList = (files: Array<any>) => {
 };
 
 const updateFile = (
-  fileList: Array<FileItem>,
-  path: string,
+  fileList: FileList,
+  fileId: string,
   updateObj: UpdateObj,
   payload: Object = {},
-): Array<FileItem> => {
-  const updatedItems: Array<FileItem> = fileList.map(x => {
+): FileList => {
+  const updatedItems: FileList = fileList.map(file => {
     const obj = {}
     for (const p in updateObj) {
       if (typeof updateObj[p] === 'function') {
-        obj[p] = updateObj[p](x, payload)
+        obj[p] = updateObj[p](file, payload)
       } else {
         obj[p] = updateObj[p]
       }
     }
-    return x.path === path ? { ...x, ...obj } : x
+    return file.fileId === fileId ? { ...file, ...obj } : file
   });
   return updatedItems
 }
@@ -107,6 +107,10 @@ const isDescendant = (ownPath: string, parentPath: string) => {
 
 const makePath = (parentPath, name) => `${parentPath}${name}`;
 
+const getUniqueId = (() => {
+  let i = 1;
+  return () => i++;
+})();
 
 const makeFile = (parentPath: string, name: string, isFolder = false, content = '', prevFileProps = {}): FileItem => {
   const selfPath = `${parentPath}${parentPath ? '/' : ''}${name}`;
@@ -131,6 +135,7 @@ const makeFile = (parentPath: string, name: string, isFolder = false, content = 
     ...prevFileProps,
     parentPath: parentPath,
     path: selfPath,
+    fileId: getUniqueId(),
     fileName: name,
     type: isFolder ? 'folder' : 'file',
     fileId: selfPath,//@deprecated

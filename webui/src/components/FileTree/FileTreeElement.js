@@ -125,7 +125,7 @@ export const FileTreeElement = (
         onClick={e => {
           file.type === 'folder'
             ? onExpand(file.path)
-            : onFileOpen(file.path)
+            : onFileOpen(file.fileId)
         }}
         style={{
           paddingLeft: (level || 0) * 20

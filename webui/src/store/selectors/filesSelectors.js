@@ -172,8 +172,8 @@ export const selectSelectedFile = createSelector(
     if (!selectedFile)
       return null
     for (const f of files) {
-      if (f.path === selectedFile) {
-        return makeFile(f.path, '', false, f.content, f)
+      if (f.fileId === selectedFile) {
+        return f;
       }
     }
     return null
