@@ -371,20 +371,20 @@ class Code extends React.Component<CodeProps, CodeState> {
           />
         </div>
         {operableFile && typeof operableFile.type === 'string' && (
-        <ConfirmModal
-          title='Delete file'
-          visible={fileOperationType === 'delete'}
-          onCancel={this.handleFileOperationCancel}
-          onConfirm={this.handleFileDeleteConfirm}
-        >
-          <PopupBody>
-            <Text>
-              {'Are you sure you want to delete the '}
-              <Text className={styles.popupFileName}>{operableFile && operableFile.fileName}</Text>
+          <ConfirmModal
+            title='Delete file'
+            visible={fileOperationType === 'delete'}
+            onCancel={this.handleFileOperationCancel}
+            onConfirm={this.handleFileDeleteConfirm}
+          >
+            <PopupBody>
+              <Text>
+                {'Are you sure you want to delete the '}
+                <Text className={styles.popupFileName}>{operableFile && operableFile.fileName}</Text>
                 {` ${operableFile.type}`}
-            </Text>
-          </PopupBody>
-        </ConfirmModal>
+              </Text>
+            </PopupBody>
+          </ConfirmModal>
         )}
       </div>
     );
