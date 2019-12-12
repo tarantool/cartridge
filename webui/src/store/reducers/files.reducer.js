@@ -294,7 +294,7 @@ export default (state: Array<FileItem> = initialState, { type, payload }: FSA) =
         return [
           ...state,
           makeFile(
-            payload.parentId || '',
+            payload.parentPath || '',
             payload.name,
             type === CREATE_FOLDER
           )
