@@ -117,10 +117,10 @@ describe('Creating', () => {
     const emptyState = [];
 
     expect(
-      reducer(emptyState, createFile({ name: 'file.ext' }))
+      reducer(emptyState, createFile({ name: 'file.ext', parentPath: '' }))
     ).toEqual([
       {
-        fileId: 'file.ext',
+        fileId: '1',
         path: 'file.ext', fileName: 'file.ext',
         parentPath: '',
         type: 'file',
@@ -136,15 +136,15 @@ describe('Creating', () => {
       { path: 'folder/folder/file.ext' },
     ];
 
-    const parentId = 'folder/folder';
+    const parentPath = 'folder/folder';
     expect(
-      reducer(initialState, createFile({ parentId, name: 'newFile.ext' }))
+      reducer(initialState, createFile({ parentPath, name: 'newFile.ext' }))
     ).toEqual([
       { path: 'folder/folder/file.ext' },
       {
-        fileId: "folder/folder/newFile.ext",
+        fileId: '1',
         path: 'folder/folder/newFile.ext', fileName: 'newFile.ext',
-        parentPath: parentId,
+        parentPath: parentPath,
         type: 'file',
         content: '', initialContent: '',
         loading: false, saved: false,
@@ -163,15 +163,15 @@ describe('Creating', () => {
     };
     const initialState = [presentFile];
 
-    const parentId = '';
+    const parentPath = '';
     expect(
-      reducer(initialState, createFile({ parentId, name: 'newFile.ext' }))
+      reducer(initialState, createFile({ parentPath, name: 'newFile.ext' }))
     ).toEqual([
       presentFile,
       {
-        fileId: 'newFile.ext',
+        fileId: '3',
         path: 'newFile.ext', fileName: 'newFile.ext',
-        parentPath: parentId,
+        parentPath: parentPath,
         type: 'file',
         content: '', initialContent: '',
         loading: false, saved: false,

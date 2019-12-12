@@ -237,7 +237,7 @@ class Code extends React.Component<CodeProps, CodeState> {
     const { dispatch } = this.props;
     const { fileOperationObject } = this.state;
 
-    dispatch(createFile({ parentId: fileOperationObject, name }));
+    dispatch(createFile({ parentPath: fileOperationObject, name }));
 
     this.setState({
       fileOperationType: null,
@@ -254,7 +254,7 @@ class Code extends React.Component<CodeProps, CodeState> {
     const { dispatch } = this.props;
     const { fileOperationObject } = this.state;
 
-    dispatch(createFolder({ parentId: fileOperationObject, name }));
+    dispatch(createFolder({ parentPath: fileOperationObject, name }));
 
     this.setState({
       fileOperationType: null,

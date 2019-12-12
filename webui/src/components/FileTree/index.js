@@ -27,10 +27,10 @@ type FileTreeProps = {
   operationObject?: ?string,
   tree: Array<TreeFileItem>,
   selectedFile: FileItem | null,
-  onFileCreate: (parentId: string) => void,
+  onFileCreate: (parentPath: string) => void,
   onDelete: (id: string) => void,
   onFileOpen: (id: string) => void,
-  onFolderCreate: (parentId: string) => void,
+  onFolderCreate: (parentPath: string) => void,
   onRename: (id: string) => void,
   onOperationConfirm: (value: string) => void,
   onOperationCancel: () => void

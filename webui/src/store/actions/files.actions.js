@@ -32,13 +32,13 @@ export const applyFiles = () => ({
   type: PUT_CONFIG_FILE_CONTENT,
 });
 
-export const createFile = ({ parentId, name }) => ({
+export const createFile = ({ parentPath, name }) => ({
   type: CREATE_FILE,
-  payload: { parentId, name },
+  payload: { parentPath, name },
 });
-export const createFolder = ({ parentId, name }) => ({
+export const createFolder = ({ parentPath, name }) => ({
   type: CREATE_FOLDER,
-  payload: { parentId, name },
+  payload: { parentPath, name },
 })
 
 export const renameFile = ({ id, name }) => ({
@@ -58,14 +58,3 @@ export const deleteFolder = ({ id }) => ({
   type: DELETE_FOLDER,
   payload: { id },
 })
-
-
-// export const createFileDone = ({ parentId, name }) => ({
-//   type: createFile.done,
-//   payload: { parentId, name },
-// })
-
-// export const createFileCancel = ({ parentId }) => ({
-//   type: createFile.fail,
-//   payload: { parentId },
-// })

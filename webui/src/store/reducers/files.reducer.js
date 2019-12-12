@@ -109,7 +109,7 @@ const makePath = (parentPath, name) => `${parentPath}${name}`;
 
 const getUniqueId = (() => {
   let i = 1;
-  return () => i++;
+  return (): string => `${i++}`;
 })();
 
 const makeFile = (parentPath: string, name: string, isFolder = false, content = '', prevFileProps = {}): FileItem => {
@@ -138,7 +138,6 @@ const makeFile = (parentPath: string, name: string, isFolder = false, content = 
     fileId: getUniqueId(),
     fileName: name,
     type: isFolder ? 'folder' : 'file',
-    fileId: selfPath,//@deprecated
   }
 };
 

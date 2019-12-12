@@ -90,9 +90,9 @@ type FileTreeElementProps = {
   level?: number,
   onDelete: (id: string) => void,
   onExpand: (id: string) => void,
-  onFileCreate: (parentId: string) => void,
+  onFileCreate: (parentPath: string) => void,
   onFileOpen: (id: string) => void,
-  onFolderCreate: (parentId: string) => void,
+  onFolderCreate: (parentPath: string) => void,
   onRename: (id: string) => void
 }
 
