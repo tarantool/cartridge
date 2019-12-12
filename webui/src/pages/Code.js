@@ -128,6 +128,7 @@ type CodeState = {
 type CodeProps = {
   className?: string,
   fileTree: Array<TreeFileItem>,
+  files: Array<FileItem>,
   fetchingConfigFiles: boolean,
   puttingConfigFiles: boolean,
   selectedFile: FileItem | null,
@@ -152,7 +153,7 @@ class Code extends React.Component<CodeProps, CodeState> {
     }))
   }
 
-  getFileById = (id: ?string) => this.props.fileTree.find(({ fileId }) => fileId === id);
+  getFileById = (id: ?string) => this.props.files.find(file => file.path === id);
 
   handleFileDeleteClick = (id: string) => this.setState({
     fileOperationType: 'delete',
@@ -394,6 +395,7 @@ class Code extends React.Component<CodeProps, CodeState> {
 const mapStateToProps = (state: State) => {
   return {
     fileTree: selectFileTree(state.files),
+    files: state.files,
     fetchingConfigFiles: state.ui.fetchingConfigFiles,
     puttingConfigFiles: state.ui.puttingConfigFiles,
     selectedFile: selectSelectedFile(state)
