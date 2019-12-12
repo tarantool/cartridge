@@ -32,6 +32,7 @@ local errors = require('errors')
 local membership = require('membership')
 
 local vars = require('cartridge.vars').new('cartridge.failover')
+local utils = require('cartridge.utils')
 local topology = require('cartridge.topology')
 local service_registry = require('cartridge.service-registry')
 
@@ -48,34 +49,41 @@ vars:new('cache', {
     is_rw = false,
 })
 
-local function _get_active_leaders(topology_cfg, mode)
+local function _get_health_map(topology_cfg, mode)
     checks('table', 'string')
     assert(topology_cfg.replicasets ~= nil)
 
-    local ret = {}
+    local ret = {
+        active_leaders = {--[[ [replicaset_uuid] = leader_uuid ]]},
+        server_status = {--[[ [instance_uuid] = "good"|"bad" ]]},
+    }
 
     for replicaset_uuid, _ in pairs(topology_cfg.replicasets) do
         local leaders = topology.get_leaders_order(
             topology_cfg, replicaset_uuid
         )
 
-        if mode == 'eventual' then
-            for _, instance_uuid in ipairs(leaders) do
-                local server = topology_cfg.servers[instance_uuid]
-                local member = membership.get_member(server.uri)
+        for _, instance_uuid in ipairs(leaders) do
+            local server = topology_cfg.servers[instance_uuid]
+            local member = membership.get_member(server.uri)
 
-                if member ~= nil
-                and (member.status == 'alive' or member.status == 'suspect')
-                and member.payload.error == nil
-                and member.payload.uuid == instance_uuid then
-                    ret[replicaset_uuid] = instance_uuid
-                    break
+            if member ~= nil
+            and (member.status == 'alive' or member.status == 'suspect')
+            and member.payload.error == nil
+            and member.payload.uuid == instance_uuid then
+                if ret.active_leaders[replicaset_uuid] == nil
+                and mode == 'eventual'
+                then
+                    ret.active_leaders[replicaset_uuid] = instance_uuid
                 end
+                ret.server_status[instance_uuid] = "good"
+            else
+                ret.server_status[instance_uuid] = "bad"
             end
         end
 
-        if ret[replicaset_uuid] == nil then
-            ret[replicaset_uuid] = leaders[1]
+        if ret.active_leaders[replicaset_uuid] == nil then
+            ret.active_leaders[replicaset_uuid] = leaders[1]
         end
     end
 
@@ -84,17 +92,22 @@ end
 
 local function refresh_cache()
     local topology_cfg = vars.clusterwide_config:get_readonly('topology')
-    local active_leaders = _get_active_leaders(
-        topology_cfg, vars.mode
-    )
+    local health_map = _get_health_map(topology_cfg, vars.mode)
 
-    local leader_uuid = active_leaders[box.info.cluster.uuid]
+    local leader_uuid = health_map.active_leaders[box.info.cluster.uuid]
     local replicasets = topology_cfg.replicasets
     local all_rw = replicasets[box.info.cluster.uuid].all_rw
 
-    vars.cache.active_leaders = active_leaders
+    vars.cache.active_leaders = health_map.active_leaders
     vars.cache.is_leader = box.info.uuid == leader_uuid
     vars.cache.is_rw = vars.cache.is_leader or all_rw
+
+    if utils.deepcmp(health_map, vars.cache.health_map) then
+        return false
+    end
+    vars.cache.health_map = health_map
+
+    return true
 end
 
 
@@ -130,11 +143,11 @@ local function _failover(cond)
     local all_roles = require('cartridge.roles').get_all_roles()
 
     local function failover_internal()
-        refresh_cache()
         box.cfg({
             read_only = not vars.cache.is_rw,
         })
 
+        confapplier.set_state('ConfiguringRoles')
         for _, role_name in ipairs(all_roles) do
             local mod = service_registry.get(role_name)
             local _, err = _failover_role(mod)
@@ -143,13 +156,18 @@ local function _failover(cond)
             end
         end
 
+        confapplier.set_state('RolesConfigured')
         log.info('Failover step finished')
         return true
     end
 
     while true do
-        cond:wait()
-        if vars.mode == 'disabled' then
+        -- If failover_internal yields we may miss cond:broadcast
+        -- so we force refresh_cache() and check if something changed
+        if refresh_cache() then
+            log.info('Failover triggered')
+        else
+            cond:wait()
             goto continue
         end
 
@@ -215,7 +233,8 @@ local function get_active_leaders()
     if topology_cfg == nil then
         return {}
     end
-    return _get_active_leaders(topology_cfg, 'disabled')
+    local health_map = _get_health_map(topology_cfg, 'disabled')
+    return health_map.active_leaders
 end
 
 return {

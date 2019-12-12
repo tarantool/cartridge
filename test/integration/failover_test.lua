@@ -105,7 +105,10 @@ end
 local function check_all_box_rw()
     for _, server in pairs(cluster.servers) do
         if server.net_box ~= nil then
-            t.assert_equals(server.net_box:eval('return box.cfg.read_only'), false)
+            t.assert_equals(
+                {[server.alias] = server.net_box:eval('return box.cfg.read_only')},
+                {[server.alias] = false}
+            )
         end
     end
 end
