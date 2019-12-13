@@ -127,7 +127,7 @@ function g.test_self()
         alias = router_server.alias,
     })
 
-    t.assert_false(resp['data']['cluster']['can_bootstrap_vshard'])
+    t.assert_not(resp['data']['cluster']['can_bootstrap_vshard'])
     t.assert_equals(resp['data']['cluster']['vshard_bucket_count'], 3000)
     t.assert_equals(resp['data']['cluster']['vshard_known_groups'], {'default'})
 end
@@ -398,5 +398,5 @@ function g.test_probe_server()
     )
 
     local resp = probe_req({uri = router.advertise_uri})
-    t.assert_true(resp['data']['probe_server'])
+    t.assert(resp['data']['probe_server'])
 end

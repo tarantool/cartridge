@@ -67,7 +67,7 @@ function g.test_uninitialized()
         uuid = box.NULL
     })
 
-    t.assert_false(resp['data']['cluster']['can_bootstrap_vshard'])
+    t.assert_not(resp['data']['cluster']['can_bootstrap_vshard'])
     t.assert_equals(resp['data']['cluster']['vshard_bucket_count'], 3000)
 
     t.assert_error_msg_contains(
@@ -92,7 +92,7 @@ function g.test_uninitialized()
         }]]
     })
 
-    t.assert_false(resp['data']['cluster']['failover'])
+    t.assert_not(resp['data']['cluster']['failover'])
 
     t.assert_error_msg_contains(
         'Not bootstrapped yet',
