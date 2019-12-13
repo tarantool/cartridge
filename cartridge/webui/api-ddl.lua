@@ -39,7 +39,7 @@ local gql_type_check_result = gql_types.object({
 local function graphql_get_schema()
     if confapplier.get_readonly() == nil then
         return nil, GetSchemaError:new(
-            "Cluster isn't bootstaraped yet"
+            "Cluster isn't bootstrapped yet"
         )
     end
     local schema_yml = confapplier.get_readonly(_section_name)
@@ -53,6 +53,11 @@ local function graphql_get_schema()
 end
 
 local function graphql_set_schema(_, args)
+    if confapplier.get_readonly() == nil then
+        return nil, GetSchemaError:new(
+            "Cluster isn't bootstrapped yet"
+        )
+    end
     local patch = {[_section_name] = args.as_yaml}
     local ok, err = twophase.patch_clusterwide(patch)
     if not ok then

@@ -24,6 +24,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - WebUI checkbox to specify `all_rw` replicaset property.
 
+- GraphQL API for clusterwide configuration management.
+
 ### Changed
 
 - WebUI now uses `edit_topology` mutation instead of deprecated ones.
