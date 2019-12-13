@@ -87,6 +87,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Displaying boolean values in server details.
 
+- Arrange proper failover triggering: don't miss events, don't trigger
+  if nothing changed.
+
 ## [1.2.0] - 2019-10-21
 
 ### Added

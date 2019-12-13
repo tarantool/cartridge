@@ -87,7 +87,7 @@ local state_transitions = {
 -- normal operation
     ['ConnectingFullmesh'] = {'ConfiguringRoles', 'OperationError'},
     ['ConfiguringRoles'] = {'RolesConfigured', 'OperationError'},
-    ['RolesConfigured'] = {'ConnectingFullmesh'},
+    ['RolesConfigured'] = {'ConnectingFullmesh', 'ConfiguringRoles'},
 
 -- errors
     ['InitError'] = {},
@@ -501,6 +501,7 @@ return {
     get_readonly = get_readonly,
     get_deepcopy = get_deepcopy,
 
+    set_state = set_state,
     get_state = function() return vars.state, vars.error end,
     get_workdir = function() return vars.workdir end,
     get_instance_uuid = function() return vars.instance_uuid end,
