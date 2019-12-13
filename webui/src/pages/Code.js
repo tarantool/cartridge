@@ -2,6 +2,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import { css, cx } from 'emotion';
+import { throttle } from 'lodash';
 import {
   Button,
   ConfirmModal,
@@ -283,6 +284,33 @@ class Code extends React.Component<CodeProps, CodeState> {
     }
   }
 
+  _throttledContentUpdatersByFileId = {};
+
+  handleContentChange = (content: string) => {
+    const {
+      selectedFile,
+      dispatch
+    } = this.props;
+
+    if (!selectedFile) {
+      return;
+    }
+
+    const fileId = selectedFile.fileId;
+
+    // each file should have its own (separate) updater
+    let throttledUpdater = this._throttledContentUpdatersByFileId[fileId];
+    if (!throttledUpdater) {
+      throttledUpdater = throttle(
+        v => dispatch(updateFileContent(fileId, v)),
+        2000,
+        { leading: false }
+      )
+      this._throttledContentUpdatersByFileId[fileId] = throttledUpdater;
+    }
+    throttledUpdater(content);
+  }
+
   render() {
     const {
       className,
@@ -368,7 +396,7 @@ class Code extends React.Component<CodeProps, CodeState> {
             }}
             fileId={selectedFile ? `inmemory://${selectedFile.fileId}.lua` : null}
             value={selectedFile ? selectedFile.content : 'Select file'}
-            onChange={v => selectedFile && dispatch(updateFileContent(selectedFile.fileId, v))}
+            onChange={this.handleContentChange}
           />
         </div>
         {operableFile && typeof operableFile.type === 'string' && (
