@@ -176,11 +176,20 @@ test_remotely('test_patch_clusterwide', function()
 
     --------------------------------------------------------------------
     local ok, err = _patch({
-        ['data.yml'] = '{tomorow: saturday}',
+        -- test that .yml extension isn't added twice
+        ['data.yml'] = {tomorow = 'saturday'},
     })
     t.assert_equals(err, nil)
     t.assert_equals(ok, true)
     t.assert_equals(_get_ro('data'), {tomorow = 'saturday'})
+
+    local ok, err = _patch({
+        ['data.yml'] = '{tomorow: saturday} # so excited',
+    })
+    t.assert_equals(err, nil)
+    t.assert_equals(ok, true)
+    t.assert_equals(_get_ro('data'), {tomorow = 'saturday'})
+    t.assert_equals(_get_ro('data.yml'), '{tomorow: saturday} # so excited')
 
     --------------------------------------------------------------------
     local ok, err = _patch({

@@ -218,7 +218,11 @@ local function _clusterwide(patch)
         elseif type(v) == 'string' then
             clusterwide_config_new:set_plaintext(k, v)
         else
-            clusterwide_config_new:set_plaintext(k .. '.yml', yaml.encode(v))
+            if not string.endswith(k, '.yml') then
+                k = k .. '.yml'
+            end
+
+            clusterwide_config_new:set_plaintext(k, yaml.encode(v))
         end
     end
 
