@@ -141,6 +141,26 @@ const makeFile = (parentPath: string, name: string, isFolder = false, content = 
   }
 };
 
+const validatePathName = (list: Array<FileItem>, path: string) => {
+  if (list.some(file => file.path === path)) {
+    return false;
+  }
+  return true;
+};
+
+const addFileOrFolder = (list: Array<FileItem>, { parentPath, name }: { parentPath: string, name: string }, type) => {
+  const newPath = makePath(`${parentPath}${parentPath ? '/' : ''}`, name);
+
+  if (!validatePathName(list, newPath)) {
+    return list;
+  }
+
+  return [
+    ...list,
+    makeFile(parentPath || '', name, type === CREATE_FOLDER)
+  ];
+}
+
 const getFileNameFromPath = path => path.split('/').pop();
 
 const getRenamedPath = (oldPath, newName) => {
@@ -157,6 +177,10 @@ const getRenamedPath = (oldPath, newName) => {
 const renameFile = (list: Array<FileItem>, oldPath, newName): Array<FileItem> => {
   const newPath = getRenamedPath(oldPath, newName);
   if (newPath === oldPath) {
+    return list;
+  }
+
+  if (!validatePathName(list, newPath)) {
     return list;
   }
 
@@ -181,6 +205,10 @@ const replacePrefix = (str: string, oldPrefix: string, newPrefix: string) => {
 const renameFolder = (list: FileList, oldFolderPath: string, newName: string): FileList => {
   const newFolderPath = getRenamedPath(oldFolderPath, newName);
   if (newFolderPath === oldFolderPath) {
+    return list;
+  }
+
+  if (!validatePathName(list, newFolderPath)) {
     return list;
   }
 
@@ -291,14 +319,7 @@ export default (state: Array<FileItem> = initialState, { type, payload }: FSA) =
     case CREATE_FILE:
     case CREATE_FOLDER:
       if (payload) {
-        return [
-          ...state,
-          makeFile(
-            payload.parentPath || '',
-            payload.name,
-            type === CREATE_FOLDER
-          )
-        ];
+        return addFileOrFolder(state, payload, type);
       }
       break;
 
