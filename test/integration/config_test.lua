@@ -48,6 +48,8 @@ function g.test_upload_good()
         }
     }
     g.cluster:upload_config(custom_config)
+    g.cluster:upload_config({['custom_config.yml'] = '{spoiled: true}'})
+    g.cluster:upload_config(custom_config)
 
     g.cluster.main_server.net_box:eval([[
         local confapplier = package.loaded['cartridge.confapplier']
@@ -82,9 +84,16 @@ end
 
 function g.test_upload_fail()
     local system_sections = {
+        'auth',
+        'auth.yml',
         'topology',
-        'vshard', 'vshard_groups',
-        'auth', 'users_acl'
+        'topology.yml',
+        'users_acl',
+        'users_acl.yml',
+        'vshard',
+        'vshard.yml',
+        'vshard_groups',
+        'vshard_groups.yml',
     }
 
     local server = g.cluster.main_server
@@ -105,8 +114,137 @@ function g.test_upload_fail()
     t.assert_equals(resp.json['class_name'], 'Decoding YAML failed')
     t.assert_equals(resp.json['err'], 'unexpected END event')
 
-    local resp = server:http_request('put', '/admin/config', {body = 'Lorem ipsum dolor', raw = true})
+    local resp = server:http_request('put', '/admin/config',
+        {body = 'Lorem ipsum dolor', raw = true}
+    )
     t.assert_equals(resp.status, 400)
     t.assert_equals(resp.json['class_name'], 'Config upload failed')
     t.assert_equals(resp.json['err'], 'Config must be a table')
+
+    local function check_err(body)
+        local resp = server:http_request('put', '/admin/config',
+            {body = body, raw = true}
+        )
+        t.assert_equals(resp.status, 400)
+        t.assert_equals(resp.json['class_name'], 'Config upload failed')
+        t.assert_equals(resp.json['err'],
+            'ambiguous sections "conflict" and "conflict.yml"'
+        )
+    end
+
+    check_err([[
+        conflict: "one"
+        conflict.yml: "two"
+    ]])
+    check_err([[
+        conflict: "one"
+        conflict.yml: null
+    ]])
+    check_err([[
+        conflict: null
+        conflict.yml: null
+    ]])
 end
+
+local M = {}
+local function test_remotely(fn_name, fn)
+    M[fn_name] = fn
+    g[fn_name] = function()
+        g.cluster.main_server.net_box:eval([[
+            local test = require('test.integration.config_test')
+            test[...]()
+        ]], {fn_name})
+    end
+end
+test_remotely('test_patch_clusterwide', function()
+    local cartridge = package.loaded['cartridge']
+    local twophase = package.loaded['cartridge.twophase']
+    local confapplier = package.loaded['cartridge.confapplier']
+    t.assert_is(cartridge.config_get_readonly, confapplier.get_readonly)
+    t.assert_is(cartridge.config_get_deepcopy, confapplier.get_deepcopy)
+    t.assert_is(cartridge.config_patch_clusterwide, twophase.patch_clusterwide)
+    local _patch = cartridge.config_patch_clusterwide
+    local _get_ro = cartridge.config_get_readonly
+
+    --------------------------------------------------------------------
+    local ok, err = _patch({
+        ['data'] = {today = "friday"},
+    })
+    t.assert_equals(err, nil)
+    t.assert_equals(ok, true)
+    t.assert_equals(_get_ro('data'), {today = 'friday'})
+
+    --------------------------------------------------------------------
+    local ok, err = _patch({
+        -- test that .yml extension isn't added twice
+        ['data.yml'] = {tomorow = 'saturday'},
+    })
+    t.assert_equals(err, nil)
+    t.assert_equals(ok, true)
+    t.assert_equals(_get_ro('data'), {tomorow = 'saturday'})
+
+    local ok, err = _patch({
+        ['data.yml'] = '{tomorow: saturday} # so excited',
+    })
+    t.assert_equals(err, nil)
+    t.assert_equals(ok, true)
+    t.assert_equals(_get_ro('data'), {tomorow = 'saturday'})
+    t.assert_equals(_get_ro('data.yml'), '{tomorow: saturday} # so excited')
+
+    --------------------------------------------------------------------
+    local ok, err = _patch({
+        ['data'] = box.NULL,
+    })
+    t.assert_equals(err, nil)
+    t.assert_equals(ok, true)
+    t.assert_equals(_get_ro('data'), nil)
+    t.assert_equals(_get_ro('data.yml'), nil)
+
+    --------------------------------------------------------------------
+    local ok, err = _patch({
+        ['data.yml'] = '{afterwards: sunday}',
+    })
+    t.assert_equals(err, nil)
+    t.assert_equals(ok, true)
+    t.assert_equals(_get_ro('data'), {afterwards = 'sunday'})
+    t.assert_equals(_get_ro('data.yml'), '{afterwards: sunday}')
+
+    --------------------------------------------------------------------
+    local ok, err = _patch({['data'] = "Fun, fun, fun, fun",})
+    t.assert_equals(ok, nil)
+    t.assert_equals(err.class_name, 'LoadConfigError')
+    t.assert_equals(err.err, 'Ambiguous sections "data" and "data.yml"')
+    local ok, err = _patch({
+        ['data'] = "Fun, fun, fun, fun",
+        ['data.yml'] = box.NULL,
+    })
+    t.assert_equals(err, nil)
+    t.assert_equals(ok, true)
+    t.assert_equals(_get_ro('data'), "Fun, fun, fun, fun")
+    t.assert_equals(_get_ro('data.yml'), nil)
+
+    --------------------------------------------------------------------
+    local ok, err = _patch({['data.yml'] = "---\nWeekend\n...",})
+    t.assert_equals(ok, nil)
+    t.assert_equals(err.class_name, 'LoadConfigError')
+    t.assert_equals(err.err, 'Ambiguous sections "data" and "data.yml"')
+    local ok, err = _patch({
+        ['data'] = box.NULL,
+        ['data.yml'] = "---\nWeekend\n...",
+    })
+    t.assert_equals(err, nil)
+    t.assert_equals(ok, true)
+    t.assert_equals(_get_ro('data'), "Weekend")
+    t.assert_equals(_get_ro('data.yml'), "---\nWeekend\n...")
+
+    --------------------------------------------------------------------
+    local ok, err = _patch({
+        ['conflict'] = {},
+        ['conflict.yml'] = "xxx",
+    })
+    t.assert_equals(ok, nil)
+    t.assert_equals(err.class_name, 'PatchClusterwideError')
+    t.assert_equals(err.err, 'Ambiguous sections "conflict" and "conflict.yml"')
+end)
+
+return M

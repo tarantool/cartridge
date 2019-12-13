@@ -58,7 +58,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Enhance WebUI modals scrolling.
 
-- Scroll behavior in Modals
+- Clusterwide configuration is now represented with a file tree.
+  All sections that were tables are saved to separate `.yml` files.
+  Compatibility with the old-style configuration is preserved.
+  Accessing unmarshalled sections with `get_readonly/deepcopy` methods
+  is provided without `.yml` extension as earlier.
+
+- Update `ddl` dependency to 1.0.0.
 
 ### Removed
 

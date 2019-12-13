@@ -136,10 +136,7 @@ function g.test_workdir_collision()
     g.cluster:start()
 
     t.assert_error_msg_contains(
-        string.format('%s: %s',
-            fio.pathjoin(g.tempdir, 'config.prepare.yml'),
-            errno.strerror(errno.EEXIST)
-        ),
+        g.tempdir .. '/config.prepare: ',
         helpers.Cluster.join_server, g.cluster, g.server
     )
     g.cluster:wait_until_healthy()

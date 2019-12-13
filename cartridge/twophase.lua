@@ -56,7 +56,7 @@ local function prepare_2pc(data)
     end
 
     local workdir = confapplier.get_workdir()
-    local path_prepare = fio.pathjoin(workdir, 'config.prepare.yml')
+    local path_prepare = fio.pathjoin(workdir, 'config.prepare')
 
     if vars.prepared_config ~= nil then
         local err = Prepare2pcError:new('Two-phase commit is locked')
@@ -104,14 +104,14 @@ local function commit_2pc()
     )
 
     local workdir = confapplier.get_workdir()
-    local path_prepare = fio.pathjoin(workdir, 'config.prepare.yml')
-    local path_backup = fio.pathjoin(workdir, 'config.backup.yml')
-    local path_active = fio.pathjoin(workdir, 'config.yml')
+    local path_prepare = fio.pathjoin(workdir, 'config.prepare')
+    local path_backup = fio.pathjoin(workdir, 'config.backup')
+    local path_active = fio.pathjoin(workdir, 'config')
 
-    fio.unlink(path_backup)
+    ClusterwideConfig.remove(path_backup)
 
     if fio.path.exists(path_active) then
-        local ok = fio.link(path_active, path_backup)
+        local ok = fio.rename(path_active, path_backup)
         if ok then
             log.info('Backup of active config created: %q', path_backup)
         else
@@ -150,8 +150,8 @@ end
 -- @treturn boolean true
 local function abort_2pc()
     local workdir = confapplier.get_workdir()
-    local path_prepare = fio.pathjoin(workdir, 'config.prepare.yml')
-    fio.unlink(path_prepare)
+    local path_prepare = fio.pathjoin(workdir, 'config.prepare')
+    ClusterwideConfig.remove(path_prepare)
     vars.prepared_config = nil
     return true
 end
@@ -185,7 +185,7 @@ end
 local function _clusterwide(patch)
     checks('table')
     if patch.__type == 'ClusterwideConfig' then
-        local err = "Bad argument #1 to patch_clusterwide" ..
+        local err = "bad argument #1 to patch_clusterwide" ..
             " (table expected, got ClusterwideConfig)"
         error(err, 2)
     end
@@ -194,17 +194,41 @@ local function _clusterwide(patch)
 
     local clusterwide_config_old = confapplier.get_active_config()
     local vshard_utils = require('cartridge.vshard-utils')
+
     if clusterwide_config_old == nil then
         local auth = require('cartridge.auth')
         clusterwide_config_old = ClusterwideConfig.new({
-            auth = auth.get_params(),
-            vshard_groups = vshard_utils.get_known_groups(),
+            ['auth.yml'] = yaml.encode(auth.get_params()),
+            ['vshard_groups.yml'] = yaml.encode(vshard_utils.get_known_groups()),
         }):lock()
     end
 
     local clusterwide_config_new = clusterwide_config_old:copy()
     for k, v in pairs(patch) do
-        clusterwide_config_new:set_content(k, v)
+        if patch[k] ~= nil and patch[k .. '.yml'] ~= nil then
+            local err = PatchClusterwideError:new(
+                'Ambiguous sections %q and %q',
+                k, k .. '.yml'
+            )
+            return nil, err
+        end
+        if v == nil then
+            clusterwide_config_new:set_plaintext(k, v)
+            clusterwide_config_new:set_plaintext(k .. '.yml', patch[k .. '.yml'])
+        elseif type(v) == 'string' then
+            clusterwide_config_new:set_plaintext(k, v)
+        else
+            if not string.endswith(k, '.yml') then
+                k = k .. '.yml'
+            end
+
+            clusterwide_config_new:set_plaintext(k, yaml.encode(v))
+        end
+    end
+
+    local _, err = clusterwide_config_new:update_luatables()
+    if err ~= nil then
+        return nil, err
     end
     clusterwide_config_new:lock()
     -- log.info('%s', yaml.encode(clusterwide_config_new:get_readonly()))
@@ -214,7 +238,10 @@ local function _clusterwide(patch)
 
     topology.probe_missing_members(topology_new.servers)
 
-    if utils.deepcmp(clusterwide_config_new, clusterwide_config_old) then
+    if utils.deepcmp(
+        clusterwide_config_new:get_plaintext(),
+        clusterwide_config_old:get_plaintext()
+    ) then
         log.warn("Clusterwide config didn't change, skipping")
         return true
     end
@@ -253,7 +280,7 @@ local function _clusterwide(patch)
         log.warn('(2PC) Preparation stage...')
 
         local retmap, errmap = pool.map_call(
-            '_G.__cartridge_clusterwide_config_prepare_2pc', {clusterwide_config_new:get_readonly()},
+            '_G.__cartridge_clusterwide_config_prepare_2pc', {clusterwide_config_new:get_plaintext()},
             {uri_list = uri_list, timeout = 5}
         )
 

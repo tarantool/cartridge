@@ -3,6 +3,7 @@
 local tap = require('tap')
 local rpc = require('cartridge.rpc')
 local checks = require('checks')
+local yaml = require("yaml")
 
 local test = tap.test('cluster.rpc_candidates')
 test:plan(21)
@@ -50,7 +51,9 @@ local function apply_mocks(topology_draft)
 
     local vars = require('cartridge.vars').new('cartridge.confapplier')
     local ClusterwideConfig = require('cartridge.clusterwide-config')
-    vars.clusterwide_config = ClusterwideConfig.new({topology = topology_cfg}):lock()
+    vars.clusterwide_config = ClusterwideConfig.new({
+        ['topology.yml'] = yaml.encode(topology_cfg)
+    }):lock()
     local failover = require('cartridge.failover')
     _G.box = {
         cfg = function() end,
@@ -60,6 +63,7 @@ local function apply_mocks(topology_draft)
         },
     }
     failover.cfg(vars.clusterwide_config)
+
     package.loaded['membership'].get_member = function(uri)
         return members[uri]
     end
