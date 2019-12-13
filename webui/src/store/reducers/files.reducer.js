@@ -5,8 +5,9 @@ import {
   FETCH_CONFIG_FILE_CONTENT_DONE,
   FETCH_CONFIG_FILE_CONTENT_FAIL,
   FETCH_CONFIG_FILES_DONE,
-  PUT_CONFIG_FILE_CONTENT,
-  PUT_CONFIG_FILE_CONTENT_DONE,
+  PUT_CONFIG_FILES_CONTENT,
+  PUT_CONFIG_FILES_CONTENT_DONE,
+  PUT_CONFIG_FILES_CONTENT_FAIL,
   UPDATE_CONTENT,
   CREATE_FILE,
   CREATE_FOLDER,
@@ -142,7 +143,7 @@ const makeFile = (parentPath: string, name: string, isFolder = false, content = 
 };
 
 const validatePathName = (list: Array<FileItem>, path: string) => {
-  if (list.some(file => file.path === path)) {
+  if (list.some(file => file.path === path && !file.deleted)) {
     return false;
   }
   return true;
@@ -260,17 +261,11 @@ const commitFilesChanges = (list: Array<FileItem>): Array<FileItem> => {
   return newList;
 };
 
-
-const newApproach = true;
-const fileListLikeFetchedFromAPI: FileList = require(`./files.initialState${newApproach ? '2' : ''}`).default;
-const initialState: FileList = enrichFileList(fileListLikeFetchedFromAPI);
-
-
-export default (state: Array<FileItem> = initialState, { type, payload }: FSA) => {
+export default (state: Array<FileItem> = [], { type, payload }: FSA) => {
   switch (type) {
     case FETCH_CONFIG_FILES_DONE: {
       if (Array.isArray(payload))
-        return payload.map(toFileItem)
+        return enrichFileList(payload)
       return state
     }
     case FETCH_CONFIG_FILE_CONTENT: {
@@ -298,7 +293,7 @@ export default (state: Array<FileItem> = initialState, { type, payload }: FSA) =
       return state
     }
 
-    case PUT_CONFIG_FILE_CONTENT_DONE: {
+    case PUT_CONFIG_FILES_CONTENT_DONE: {
       return commitFilesChanges(state);
     }
 

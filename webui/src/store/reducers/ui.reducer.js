@@ -44,9 +44,9 @@ import {
   FETCH_CONFIG_FILES,
   FETCH_CONFIG_FILES_DONE,
   FETCH_CONFIG_FILES_FAIL,
-  PUT_CONFIG_FILE_CONTENT,
-  PUT_CONFIG_FILE_CONTENT_DONE,
-  PUT_CONFIG_FILE_CONTENT_FAIL,
+  PUT_CONFIG_FILES_CONTENT,
+  PUT_CONFIG_FILES_CONTENT_DONE,
+  PUT_CONFIG_FILES_CONTENT_FAIL,
 } from '../actionTypes';
 
 export type UIState = {
@@ -263,14 +263,14 @@ export const reducer = (state: UIState = initialState, { type, payload, error }:
         fetchConfigFiles: false
       };
 
-    case PUT_CONFIG_FILE_CONTENT:
+    case PUT_CONFIG_FILES_CONTENT:
       return {
         ...state,
         puttingConfigFiles: true
       }
 
-    case PUT_CONFIG_FILE_CONTENT_DONE:
-    case PUT_CONFIG_FILE_CONTENT_FAIL:
+    case PUT_CONFIG_FILES_CONTENT_DONE:
+    case PUT_CONFIG_FILES_CONTENT_FAIL:
       return {
         ...state,
         puttingConfigFiles: false

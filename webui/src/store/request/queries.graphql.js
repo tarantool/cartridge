@@ -491,10 +491,23 @@ export const checkSchemaMutation = gql`
 
 
 export const setFilesMutation = gql`
-  mutation set_files($updatedFiles: Array, $deletedFiles: Array) {
+  mutation set_files($files: [ConfigSectionInput!]) {
     cluster {
-      updatedFiles(list: $updatedFiles)
-      deletedFiles(list: $deletedFiles)
+      config(sections: $files) {
+        filename
+        content
+      }
+    }  
+  }
+`;
+
+export const getFilesQuery = gql`
+  query configFiles {
+    cluster {
+      config {
+        path: filename
+        content
+      }
     }
   }
 `;

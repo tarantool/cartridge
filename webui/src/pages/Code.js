@@ -29,6 +29,7 @@ import {
   createFolder,
   deleteFile,
   deleteFolder,
+  fetchConfigFiles,
   renameFolder,
   renameFile,
   updateFileContent
@@ -121,7 +122,6 @@ const styles = {
 
 type CodeState = {
   loading: boolean,
-  code: ?string,
   fileOperationType: 'createFile' | 'createFolder' | 'rename' | 'delete' | null,
   fileOperationObject: ?string
 }
@@ -139,17 +139,13 @@ type CodeProps = {
 class Code extends React.Component<CodeProps, CodeState> {
   state = {
     loading: true,
-    code: null,
     fileOperationType: null,
     fileOperationObject: null
   }
 
   async componentDidMount() {
-    const res = await rest.get(
-      '/admin/config'
-    );
+    this.props.dispatch(fetchConfigFiles());
     this.setState(() => ({
-      code: res.data,
       loading: false
     }))
   }
@@ -371,9 +367,9 @@ class Code extends React.Component<CodeProps, CodeState> {
               thin
               controls={[
                 <Button
-                  text='Revert'
+                  text='Reload'
                   size='s'
-                  onClick={() => null}
+                  onClick={() => this.props.dispatch(fetchConfigFiles())}
                   icon={IconRefresh}
                   intent='secondary'
                 />,

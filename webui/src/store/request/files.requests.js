@@ -2,15 +2,10 @@
 import graphql from 'src/api/graphql';
 import {
   setFilesMutation,
+  getFilesQuery
 } from './queries.graphql';
 import type { FileItem } from '../reducers/files.reducer.js';
 
+export const applyFiles = (files: Array<FileItem>) => graphql.mutate(setFilesMutation, { files });
 
-export function applyFiles(updatedFiles: Array<FileItem>, deletedFiles) {
-  //@TODO we are waiting for API
-  return new Promise((resolve, reject) => {
-    console.info('Applied!', { updatedFiles, deletedFiles });
-    setTimeout(() => resolve('Applied!'), 500);
-  });
-  // return graphql.mutate(setFilesMutation, { updatedFiles, deletedFiles });
-}
+export const getFiles = () => graphql.fetch(getFilesQuery).then(({ cluster: { config } }) => config);

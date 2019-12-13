@@ -2,7 +2,7 @@ import {
   FETCH_CONFIG_FILE_CONTENT,
   FETCH_CONFIG_FILES,
   UPDATE_CONTENT,
-  PUT_CONFIG_FILE_CONTENT,
+  PUT_CONFIG_FILES_CONTENT,
   CREATE_FILE,
   CREATE_FOLDER,
   RENAME_FILE,
@@ -11,9 +11,7 @@ import {
   DELETE_FOLDER,
 } from '../actionTypes'
 
-export const fetchConfigFiles = ({
-  type: FETCH_CONFIG_FILES
-});
+export const fetchConfigFiles = () => ({ type: FETCH_CONFIG_FILES });
 
 export const fetchConfigFileContent = file => ({
   type: FETCH_CONFIG_FILE_CONTENT,
@@ -28,9 +26,7 @@ export const updateFileContent = (fileId, content) => ({
   }
 })
 
-export const applyFiles = () => ({
-  type: PUT_CONFIG_FILE_CONTENT,
-});
+export const applyFiles = () => ({ type: PUT_CONFIG_FILES_CONTENT });
 
 export const createFile = ({ parentPath, name }) => ({
   type: CREATE_FILE,
