@@ -8,7 +8,7 @@ import type { FileItem } from 'src/store/reducers/files.reducer';
 import { FileTreeElement } from './FileTreeElement';
 import { NewTreeElement } from './NewTreeElement';
 
-const renderTree = (treeNode: Object, prop: string, render: Function, level: number) => {
+const renderTree = (treeNode: Object, prop: string, render: Function, level: number = 0) => {
   const children = (treeNode[prop] || []).map(x => renderTree(x, prop, render, level + 1))
   return render(treeNode, children, level)
 }
@@ -102,50 +102,53 @@ export class FileTree extends React.Component<FileTreeProps, FileTreeState> {
           x => renderTree(
             x,
             'items',
-            (item, children, level) => fileOperation === 'rename' && operationObject === item.path
-              ? (
-                <NewTreeElement
-                  key={item.path}
-                  initialValue={item.fileName}
-                  active={selectedFile ? (selectedFile.path === item.path): false}
-                  type={item.type}
-                  level={level}
-                  expanded={expandedEntries.includes(item.path)}
-                  onCancel={onOperationCancel}
-                  onConfirm={onOperationConfirm}
-                  onExpand={this.expandEntry}
-                >
-                  {children}
-                </NewTreeElement>
-              )
-              : (
-                <FileTreeElement
-                  key={item.path}
-                  file={item}
-                  active={selectedFile ? (selectedFile.path === item.path) : false}
-                  level={level}
-                  expanded={expandedEntries.includes(item.path)}
-                  onDelete={onDelete}
-                  onExpand={this.expandEntry}
-                  onFileCreate={this.handleFileCreate}
-                  onFileOpen={onFileOpen}
-                  onFolderCreate={this.handleFolderCreate}
-                  onRename={onRename}
-                >
-                  {operationObject === item.path && ['createFile', 'createFolder'].includes(fileOperation) && (
-                    <NewTreeElement
-                      type={fileOperation === 'createFolder' ? 'folder' : 'file'}
-                      active={selectedFile ? (selectedFile.path === item.path) : false}
-                      level={level + 1}
-                      onCancel={onOperationCancel}
-                      onConfirm={onOperationConfirm}
-                      onExpand={this.expandEntry}
-                    />
-                  )}
-                  {children}
-                </FileTreeElement>
-              ),
-            0
+            (item, children, level) => {
+              if (item.deleted) return null;
+
+              return fileOperation === 'rename' && operationObject === item.path
+                ? (
+                  <NewTreeElement
+                    key={item.path}
+                    initialValue={item.fileName}
+                    active={selectedFile ? (selectedFile.path === item.path): false}
+                    type={item.type}
+                    level={level}
+                    expanded={expandedEntries.includes(item.path)}
+                    onCancel={onOperationCancel}
+                    onConfirm={onOperationConfirm}
+                    onExpand={this.expandEntry}
+                  >
+                    {children}
+                  </NewTreeElement>
+                )
+                : (
+                  <FileTreeElement
+                    key={item.path}
+                    file={item}
+                    active={selectedFile ? (selectedFile.path === item.path) : false}
+                    level={level}
+                    expanded={expandedEntries.includes(item.path)}
+                    onDelete={onDelete}
+                    onExpand={this.expandEntry}
+                    onFileCreate={this.handleFileCreate}
+                    onFileOpen={onFileOpen}
+                    onFolderCreate={this.handleFolderCreate}
+                    onRename={onRename}
+                  >
+                    {operationObject === item.path && ['createFile', 'createFolder'].includes(fileOperation) && (
+                      <NewTreeElement
+                        type={fileOperation === 'createFolder' ? 'folder' : 'file'}
+                        active={selectedFile ? (selectedFile.path === item.path) : false}
+                        level={level + 1}
+                        onCancel={onOperationCancel}
+                        onConfirm={onOperationConfirm}
+                        onExpand={this.expandEntry}
+                      />
+                    )}
+                    {children}
+                  </FileTreeElement>
+                )
+            }
           )
         )}
       </ul>
