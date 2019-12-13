@@ -143,7 +143,9 @@ export const FileTreeElement = (
             { [styles.deleted]: file.deleted }
           )}
         >{file.fileName}</Text>
-        {!file.saved && <DotIndicator state='bad' />}
+        {(!file.saved || (!!file.initialPath && file.initialPath !== file.path)) && (
+          <DotIndicator state='bad' />
+        )}
         <div className={cx(styles.buttonsPanel, 'FileTreeElement__btns')}>
           {file.type === 'folder' && (
             <React.Fragment>
