@@ -20,11 +20,18 @@ g.before_all = function()
         http_port = 8080,
         cluster_cookie = 'super-cluster-cookie',
         env = {
-            TARANTOOL_CONSOLE_SOCK = fio.pathjoin(tmpdir, '/foo.sock')
+            TARANTOOL_CONSOLE_SOCK = fio.pathjoin(tmpdir, '/foo.sock'),
+            NOTIFY_SOCKET = fio.pathjoin(tmpdir, '/notify.sock')
         },
     })
+    local notify_socket = socket('AF_UNIX', 'SOCK_DGRAM', 0)
+    t.assert(notify_socket, 'Can not create socket')
+    t.assert(notify_socket:bind('unix/', server.env.NOTIFY_SOCKET), notify_socket:error())
     server:start()
-    t.helpers.retrying({}, function() server:graphql({query = '{}'}) end)
+    t.helpers.retrying({}, function()
+        t.assert(notify_socket:readable(1), "Socket isn't readable")
+        t.assert_str_matches(notify_socket:recv(), 'READY=1')
+    end)
 end
 
 g.after_all = function()
