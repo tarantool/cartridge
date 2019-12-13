@@ -207,11 +207,11 @@ const renameFolder = (list: FileList, oldFolderPath: string, newName: string): F
 };
 
 const deleteFile = (list: Array<FileItem>, path): Array<FileItem> => (
-  list.map(file => file.path === path ? { ...file, deleted: true, } : file)
+  list.map(file => file.path === path ? { ...file, deleted: true } : file)
 );
 
 const deleteFolder = (list: Array<FileItem>, path): Array<FileItem> => (
-  list.map(file => isDescendant(file.path, path) ? { ...file, deleted: true, } : file)
+  list.map(file => file.path === path || isDescendant(file.path, path) ? { ...file, deleted: true } : file)
 );
 
 const commitFilesChanges = (list: Array<FileItem>): Array<FileItem> => {
