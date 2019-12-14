@@ -15,16 +15,20 @@ local notify_socket
 
 local function build_notify_socket()
     notify_socket = assert(socket('AF_UNIX', 'SOCK_DGRAM', 0), 'Can not create socket')
-    assert(notify_socket:bind('unix/', server.env.TARANTOOL_NOTIFY_SOCK), notify_socket:error())
-    fio.chmod(server.env.TARANTOOL_NOTIFY_SOCK, tonumber('0666', 8))
+    if fio.stat(server.env.NOTIFY_SOCKET) then
+        assert(fio.unlink(server.env.NOTIFY_SOCKET))
+    end
+    assert(notify_socket:bind('unix/', server.env.NOTIFY_SOCKET), notify_socket:error())
+    fio.chmod(server.env.NOTIFY_SOCKET, tonumber('0666', 8))
 end
 
 local function wait_notify()
     while true do
         if notify_socket:readable(1) then
             local msg = notify_socket:recv()
+            log.info(msg)
             if msg:match('READY=1') then
-                fio.unlink(server.env.TARANTOOL_NOTIFY_SOCK)
+                fio.unlink(server.env.NOTIFY_SOCKET)
                 return
             end
         end
@@ -32,7 +36,6 @@ local function wait_notify()
 end
 
 g.before_all = function()
-    log.level(7)
     tmpdir = fio.tempdir()
     server = helpers.Server:new({
         alias = 'server',
@@ -43,13 +46,12 @@ g.before_all = function()
         cluster_cookie = 'super-cluster-cookie',
         env = {
             TARANTOOL_CONSOLE_SOCK = fio.pathjoin(tmpdir, '/foo.sock'),
-            TARANTOOL_NOTIFY_SOCK = fio.pathjoin(tmpdir, '/notify.sock')
+            NOTIFY_SOCKET = fio.pathjoin(tmpdir, '/notify.sock')
         },
     })
     build_notify_socket()
     server:start()
     wait_notify()
-    --t.helpers.retrying({}, function() server:graphql({query = '{}'}) end)
 end
 
 g.after_all = function()
