@@ -31,7 +31,7 @@ g.before_all = function()
         while not notify_socket:readable(1) do
             msg = notify_socket:recv()
             if msg:match('READY=1') then
-                    return
+                return
             end
         end 
     end)
