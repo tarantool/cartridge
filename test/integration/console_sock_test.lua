@@ -27,13 +27,13 @@ g.before_all = function()
     local notify_socket = assert(socket('AF_UNIX', 'SOCK_DGRAM', 0), 'Can not create socket')
     assert(notify_socket:bind('unix/', server.env.NOTIFY_SOCKET), notify_socket:error())
     server:start()
-    t.helpers.retrying({}, function() 
+    t.helpers.retrying({}, function()
         while not notify_socket:readable(1) do
-            msg = notify_socket:recv()
+            local msg = notify_socket:recv()
             if msg:match('READY=1') then
                 return
             end
-        end 
+        end
     end)
 end
 
