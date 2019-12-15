@@ -14,6 +14,7 @@ dependencies = {
     'vshard == 0.1.15-1',
     'membership == 2.2.0-1',
     'frontend-core == 6.3.0-1',
+    'tarantool-lsp == 0.0.2',
 }
 
 external_dependencies = {

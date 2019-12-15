@@ -1,4 +1,4 @@
-import * as monaco from 'monaco-editor/esm/vs/editor/edcore.main.js';
+import * as monaco from 'monaco-editor/esm/vs/editor/edcore.main';
 import themeData from 'monaco-themes/themes/Slush and Poppies.json';
 import 'monaco-editor/esm/vs/basic-languages/javascript/javascript.contribution';
 import 'monaco-editor/esm/vs/basic-languages/yaml/yaml.contribution';

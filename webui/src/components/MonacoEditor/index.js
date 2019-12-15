@@ -5,11 +5,12 @@ import monaco from '../../misc/initMonacoEditor';
 import { subscribeOnTargetEvent } from '../../misc/eventHandler';
 import { getModelByFile, setModelByFile } from '../../misc/monacoModelStorage';
 import { getYAMLError } from '../../misc/yamlValidation';
+import LSPHoC from '../LSPHoC';
 
 
 const DEF_CURSOR = {}
 
-export default class MonacoEditor extends React.Component {
+class MonacoEditor extends React.Component {
   static propTypes = {
     fileId: PropTypes.string,
     initialValue: PropTypes.string,
@@ -29,7 +30,7 @@ export default class MonacoEditor extends React.Component {
 
   static defaultProps = {
     initialValue: '',
-    language: 'javascript',
+    language: 'lua',
     theme: null,
     options: {},
     overrideServices: {},
@@ -172,7 +173,7 @@ export default class MonacoEditor extends React.Component {
           ...(theme ? { theme } : {})
         },
         overrideServices
-      );
+      )
 
 
       // After initializing monaco editor
@@ -232,3 +233,5 @@ export default class MonacoEditor extends React.Component {
     );
   }
 }
+
+export default LSPHoC(MonacoEditor)

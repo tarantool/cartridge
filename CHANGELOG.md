@@ -49,6 +49,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - New GraphQL API fields in `cluster{ self }`: `app_name`, `instance_name`.
 
+- Add LSP (language server protocol) support, which provides Lua
+  autocompletion in WebUI code editor. It's enabled with
+  `cartridge.cfg({lsp_enabled = false})`.
+
 ### Changed
 
 - Network error shows with fixed splash panel instead of notification.

@@ -1,5 +1,8 @@
-import { put, select, takeLatest } from 'redux-saga/effects';
-import { FETCH_CONFIG_FILES_DONE, SELECT_FILE } from 'src/store/actionTypes';
+import { put, select, takeLatest, call } from 'redux-saga/effects';
+import {
+  FETCH_CONFIG_FILES_DONE,
+  SELECT_FILE,
+} from 'src/store/actionTypes';
 import { LS_CODE_EDITOR_OPENED_FILE } from 'src/constants';
 
 let initiallyOpened = false;
@@ -25,7 +28,7 @@ function* openFirstFileSaga() {
 
     if (storedPath !== null) {
       file = files.find(({ type, path }) => type === 'file' && path === storedPath);
-      if (!file) 
+      if (!file)
         file = getFileToOpen(files)
     } else {
       file = getFileToOpen(files)
@@ -34,7 +37,7 @@ function* openFirstFileSaga() {
     yield put({ type: SELECT_FILE, payload: file.fileId });
     initiallyOpened = true;
   }
-};
+}
 
 function* storeOpenedFileSaga() {
   const { codeEditor: { files, editor: { selectedFile } } } = yield select();

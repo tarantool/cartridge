@@ -22,7 +22,7 @@ describe('When the selected file gets deleted', () => {
 
   const state: CodeEditorState = {
     editor: {
-      selectedFile: '1'
+      selectedFile: '1',
     },
     files: [
       { ..._fileBlank, fileId: '1', path: 'folder/file.txt' },

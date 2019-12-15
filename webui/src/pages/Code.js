@@ -419,6 +419,7 @@ class Code extends React.Component<CodeProps, CodeState> {
                   initialValue={selectedFile ? selectedFile.initialContent : 'Select or add a file'}
                   isContentChanged={selectedFile ? !selectedFile.saved : null}
                   setIsContentChanged={this.handleSetIsContentChanged}
+                  lspEndpoints={[{ endpoint: '/admin/lsp', language: 'lua' }]}
                 />
               </>
               :

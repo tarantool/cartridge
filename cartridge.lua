@@ -187,6 +187,13 @@ end
 --   List of pages to be hidden in WebUI.
 --   (**Added** in v2.0.1-54, default: `{}`)
 --
+-- @tparam ?boolean opts.lsp_enabled
+--   whether LSP support should be enabled. LSP (language server
+--   protocol) provides Lua autocompletion in WebUI code editor.
+--   (**Added** in v2.0.1-72, default: `false`, overridden by
+--   env `TARANTOOL_LSP_ENABLED`,
+--   args `--lsp_enabled`)
+--
 -- @tparam ?table box_opts
 --   tarantool extra box.cfg options (e.g. memtx_memory),
 --   that may require additional tuning
@@ -209,6 +216,7 @@ local function cfg(opts, box_opts)
         vshard_groups = '?table',
         console_sock = '?string',
         webui_blacklist = '?table',
+        lsp_enabled = '?boolean',
     }, '?table')
 
     if opts.webui_blacklist ~= nil then
@@ -462,10 +470,13 @@ local function cfg(opts, box_opts)
             return nil, err
         end
 
-        local ok, err = HttpInitError:pcall(webui.init, httpd)
+        local ok, err = HttpInitError:pcall(webui.init, httpd, {
+            lsp_enabled = opts.lsp_enabled
+        })
         if not ok then
             return nil, err
         end
+
 
         local ok, err = CartridgeCfgError:pcall(auth.init, httpd)
         if not ok then

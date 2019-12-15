@@ -21,7 +21,8 @@ g.setup = function()
                         alias = 'router',
                         instance_uuid = helpers.uuid('a', 'a', 1),
                         advertise_port = 13301,
-                        http_port = 8081
+                        http_port = 8081,
+                        env = {TARANTOOL_LSP_ENABLED = "true"},
                     }
                 }
             }, {
@@ -144,7 +145,8 @@ function g.test_code()
         "cd webui && npx cypress run --spec" ..
         ' cypress/integration/code-empty-page.spec.js' ..
         ',cypress/integration/code-file-in-tree.spec.js' ..
-        ',cypress/integration/code-folder-in-tree.spec.js'
+        ',cypress/integration/code-folder-in-tree.spec.js' ..
+        ',cypress/integration/code-lsp.spec.js'
     )
     t.assert_equals(code, 0)
 end
@@ -163,3 +165,4 @@ end
 function g.test_offline_splash()
     cypress_run('network-error-splash.spec.js')
 end
+
