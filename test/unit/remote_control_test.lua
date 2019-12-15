@@ -148,8 +148,8 @@ function g.test_start()
     )
 
     local ok, err = remote_control.start('localhost', 13301, cred)
-    t.assert_equals(ok, true)
     t.assert_not(err)
+    t.assert_equals(ok, true)
     remote_control.stop()
 end
 
@@ -169,7 +169,7 @@ end
 function g.test_ping()
     rc_start(13301)
     local conn = assert(netbox.connect('localhost:13301'))
-    t.assert(conn:ping())
+    t.assert_equals(conn:ping(), true)
 end
 
 function g.test_bytestream()
