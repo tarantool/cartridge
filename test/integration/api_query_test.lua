@@ -398,5 +398,5 @@ function g.test_probe_server()
     )
 
     local resp = probe_req({uri = router.advertise_uri})
-    t.assert_true(resp['data']['probe_server'])
+    t.assert_equals(resp['data']['probe_server'], true)
 end

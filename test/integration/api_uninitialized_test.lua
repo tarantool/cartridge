@@ -92,7 +92,7 @@ function g.test_uninitialized()
         }]]
     })
 
-    t.assert_false(resp['data']['cluster']['failover'])
+    t.assert_equals(resp['data']['cluster']['failover'], false)
 
     t.assert_error_msg_contains(
         'Not bootstrapped yet',
