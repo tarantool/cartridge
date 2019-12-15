@@ -28,12 +28,10 @@ g.before_all = function()
     assert(notify_socket:bind('unix/', server.env.NOTIFY_SOCKET), notify_socket:error())
     server:start()
     t.helpers.retrying({}, function()
-        while true do
-            if notify_socket:readable(1) then
-                local msg = notify_socket:recv()
-                if msg:match('READY=1') then
-                    return
-                end
+        if notify_socket:readable(1) then
+            local msg = notify_socket:recv()
+            if msg:match('READY=1') then
+                return
             end
         end
     end)
