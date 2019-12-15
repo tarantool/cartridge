@@ -49,9 +49,12 @@ const toFileItem = (item): FileItem => {
   }
 }
 
+const ignoreFiles = ['schema.yml']
+
 const enrichFileList = (files: Array<any>) => {
   const pathToFileMap = {};
   files.forEach(file => {
+    if (ignoreFiles.includes(file.path)) return;
     const parts = file.path.split('/');
 
     let currentItemPath = '';

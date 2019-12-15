@@ -10,12 +10,14 @@ import {
 } from 'src/store/actionTypes';
 import { applyFiles, getFiles } from 'src/store/request/files.requests';
 import { baseSaga } from 'src/store/commonRequest';
+import * as R from 'ramda';
 
 
 function* applyFilesSaga() {
   try {
     const { files } = yield select();
     const updatedFiles = [];
+    const initialMap = {};
     const filesMap = {};
 
     for (let i = 0; i < files.length; i++) {
@@ -31,31 +33,42 @@ function* applyFilesSaga() {
 
       if (type === 'file') {
         if (initialContent !== '' || saved) { // Filter new files
-          if (!filesMap[initialPath || path]) filesMap[initialPath || path] = [];
-          filesMap[initialPath || path][0] = initialContent;
+          initialMap[initialPath || path] = initialContent
         }
 
         if (!deleted) {
-          if (!filesMap[path]) filesMap[path] = [];
-          filesMap[path][1] = content;
+          filesMap[path] = content;
         }
       }
     }
 
+    const initialPaths = Object.keys(initialMap);
+    const filesPaths = Object.keys(filesMap);
+
+    const toDelete = R.difference(initialPaths, filesPaths);
+
+    updatedFiles.push(...toDelete.map(filename => ({ filename, content: null })))
+
     for (const path in filesMap) {
-      if (filesMap.hasOwnProperty(path)) {
-        if (typeof filesMap[path][1] !== 'string') {
-          updatedFiles.push({ filename: path, content: null });
-        } else if (filesMap[path][0] !== filesMap[path][1]) {
-          updatedFiles.push({ filename: path, content: filesMap[path][1] });
-        }
+      if (!initialPaths[path] || initialPaths[path] !== filesMap[path]) {
+        updatedFiles.push({
+          filename: path,
+          content: filesMap[path]
+        });
       }
     }
 
     if (updatedFiles.length) {
       const r = yield call(applyFiles, updatedFiles);
     }
+
     yield put({ type: PUT_CONFIG_FILES_CONTENT_DONE });
+    window.tarantool_enterprise_core.notify({
+      title: 'Success',
+      message: 'Files successfuly applied',
+      type: 'success',
+      timeout: 5000
+    });
   } catch (error) {
     yield put({
       type: PUT_CONFIG_FILES_CONTENT_FAIL,
