@@ -59,9 +59,9 @@ end
 
 function g.test_feedback()
     local msg = ch:get(2)
-    t.assertIsTable(msg, 'No feedback received')
+    t.assert_type(msg, 'table', 'No feedback received')
     log.info('Feedback: %s', json.encode(msg))
-    t.assertEquals(msg.server_id, helpers.uuid('a', 'a', 1))
-    t.assertEquals(msg.cluster_id, helpers.uuid('a'))
-    t.assertIsString(msg.rocks.cartridge)
+    t.assert_equals(msg.server_id, helpers.uuid('a', 'a', 1))
+    t.assert_equals(msg.cluster_id, helpers.uuid('a'))
+    t.assert_type(msg.rocks.cartridge, 'string')
 end

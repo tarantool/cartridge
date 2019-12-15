@@ -62,7 +62,7 @@ function g.test_join_server()
             )
         }]]
     })
-    t.assert_true(resp['data']['probe_server'])
+    t.assert_equals(resp['data']['probe_server'], true)
 
     local function get_peer_uuid(uri)
         return main.net_box:eval([[

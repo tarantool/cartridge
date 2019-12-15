@@ -53,6 +53,7 @@ docker-build-base:
   before_script:
     - ls -al # to see if caching works
     - tarantoolctl rocks make
+    - tarantoolctl rocks list
   after_script:
     # avoid caching cartridge rock
     - tarantoolctl rocks remove cartridge

@@ -61,15 +61,15 @@ function g.test_api()
     local server = g.cluster:server('A1')
 
     local res, err = rpc_call(server, 'myrole', 'get_state')
-    t.assert_nil(err)
+    t.assert_not(err)
     t.assert_equals(res, 'initialized')
 
     local res, err = rpc_call(server, 'myrole', 'fn_undefined')
-    t.assert_nil(res)
+    t.assert_not(res)
     t.assert_equals(err.err, 'Role "myrole" has no method "fn_undefined"')
 
     local res, err = rpc_call(server, 'unknown-role', 'fn_undefined')
-    t.assert_nil(res)
+    t.assert_not(res)
     t.assert_equals(err.err, 'No remotes with role "unknown-role" available')
 end
 
@@ -77,7 +77,7 @@ function g.test_errors()
     local res, err = rpc_call(
         g.cluster:server('A1'), 'myrole', 'throw', {'Boo'}, {leader_only = true}
     )
-    t.assert_nil(res)
+    t.assert_not(res)
     t.assert_equals(err.err, 'Boo')
     t.assert_equals(err.class_name, 'RemoteCallError')
     t.assert_str_icontains(err.str, 'during net.box call to localhost:13302')
@@ -85,7 +85,7 @@ function g.test_errors()
     local res, err = rpc_call(
         g.cluster:server('B1'), 'myrole', 'throw', {'Moo'}, {leader_only=true}
     )
-    t.assert_nil(res)
+    t.assert_not(res)
     t.assert_equals(err.err, 'Moo')
     t.assert_equals(err.class_name, 'RemoteCallError')
     t.assert_not_str_icontains(err.str, 'during net.box call')
@@ -95,6 +95,6 @@ function g.test_routing()
     local res, err = rpc_call(
         g.cluster:server('B2'), 'myrole', 'is_master', nil, {leader_only=true}
     )
-    t.assert_nil(err)
+    t.assert_not(err)
     t.assert_equals(res, true)
 end

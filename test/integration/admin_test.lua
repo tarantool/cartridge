@@ -61,7 +61,7 @@ function g.test_api()
         })
 
     local auth_params = resp['data']['cluster']['auth_params']
-    t.assert_true(auth_params['enabled'])
+    t.assert_equals(auth_params['enabled'], true)
     t.assert_equals(auth_params['username'], ADMIN_USERNAME)
 
     local add_user = function(username, password)
@@ -144,7 +144,7 @@ end
 function g.test_login()
     local login = function(username, password)
         local auth_data = string.format("username=%s&password=%s", username, password)
-        local res = g.server:http_request('post', '/login', {body = auth_data, raw = true})
+        local res = g.server:http_request('post', '/login', {body = auth_data, raise = false})
         return res
     end
 
@@ -177,7 +177,7 @@ function g.test_login()
 
     local resp = login(ADMIN_USERNAME, ADMIN_PASSWORD)
     t.assert_equals(resp['status'], 200)
-    t.assert_not_nil(resp['cookies']['lsid'][1])
+    t.assert(resp['cookies']['lsid'][1])
     t.assert_not_equals(resp['cookies']['lsid'][1], '')
     local lsid = resp['cookies']['lsid'][1]
 

@@ -106,7 +106,7 @@ function g.test_upload_good()
     }
     g.cluster:upload_config(other_config)
     local config = g.cluster:download_config()
-    t.assert_nil(config.custom_config)
+    t.assert_equals(config.custom_config, nil)
     t.assert_equals(config, other_config)
 
     local function _list(sections)
@@ -162,7 +162,7 @@ function g.test_upload_fail()
     for _, section in ipairs(system_sections) do
         local resp = server:http_request('put', '/admin/config', {
             body = json.encode({[section] = {}}),
-            raw = true
+            raise = false
         })
         t.assert_equals(resp.status, 400)
         t.assert_equals(resp.json['class_name'], 'Config upload failed')
@@ -176,13 +176,13 @@ function g.test_upload_fail()
         )
     end
 
-    local resp = server:http_request('put', '/admin/config', {body = ',', raw = true})
+    local resp = server:http_request('put', '/admin/config', {body = ',', raise = false})
     t.assert_equals(resp.status, 400)
     t.assert_equals(resp.json['class_name'], 'DecodeYamlError')
     t.assert_equals(resp.json['err'], 'unexpected END event')
 
     local resp = server:http_request('put', '/admin/config',
-        {body = 'Lorem ipsum dolor', raw = true}
+        {body = 'Lorem ipsum dolor', raise = false}
     )
     t.assert_equals(resp.status, 400)
     t.assert_equals(resp.json['class_name'], 'Config upload failed')
@@ -190,7 +190,7 @@ function g.test_upload_fail()
 
     local function check_err(body)
         local resp = server:http_request('put', '/admin/config',
-            {body = body, raw = true}
+            {body = body, raise = false}
         )
         t.assert_equals(resp.status, 400)
         t.assert_equals(resp.json['class_name'], 'Config upload failed')

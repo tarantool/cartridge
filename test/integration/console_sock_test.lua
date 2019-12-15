@@ -34,8 +34,8 @@ end
 
 g.test_console_sock = function()
     local s = socket.tcp_connect('unix/', fio.pathjoin(tmpdir, 'foo.sock'))
-    t.assertTrue(s ~= nil)
+    t.assert(s)
     local greeting = s:read('\n')
-    t.assertNotNil(greeting)
-    t.assertStrMatches(greeting:strip(), 'Tarantool.*%(Lua console%)')
+    t.assert(greeting)
+    t.assert_str_matches(greeting:strip(), 'Tarantool.*%(Lua console%)')
 end

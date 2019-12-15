@@ -205,5 +205,5 @@ function g.test_positive()
         ['localhost:13301'] = 16,
         ['localhost:13302'] = 16,
     })
-    t.assert_is_nil(errmap)
+    t.assert_equals(errmap, nil)
 end

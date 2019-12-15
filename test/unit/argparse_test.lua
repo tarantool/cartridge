@@ -82,9 +82,9 @@ function g:test_sections()
 
     local function check(cmd_args, expected)
         local ret = self:run(cmd_args, {'TARANTOOL_CFG=./tarantool.yml'})
-        t.assertEquals(ret.args['cfg'], './tarantool.yml')
+        t.assert_equals(ret.args['cfg'], './tarantool.yml')
         ret.args['cfg'] = nil
-        t.assertEquals(ret.args, expected)
+        t.assert_equals(ret.args, expected)
     end
 
     check('', {
@@ -160,7 +160,7 @@ function g:test_priority()
 
     local function check(cmd_args, env_vars, expected)
         local args = self:run(cmd_args, env_vars).args
-        t.assertEquals(args.x, expected)
+        t.assert_equals(args.x, expected)
     end
 
     check('',                {'TARANTOOL_CFG=./x.yml'}, '@default')
@@ -195,9 +195,9 @@ function g:test_overrides()
     local function check(cmd_args, env_vars, expected)
         table.insert(env_vars, 'TARANTOOL_CFG=./tarantool.yml')
         local ret = self:run(cmd_args, env_vars)
-        t.assertEquals(ret.args['cfg'], './tarantool.yml')
+        t.assert_equals(ret.args['cfg'], './tarantool.yml')
         ret.args['cfg'] = nil
-        t.assertEquals(ret.args, expected)
+        t.assert_equals(ret.args, expected)
     end
 
     check('', {}, {a1 = 1.1, b2 = 2.2})
@@ -229,9 +229,9 @@ function g:test_appname()
 
     local function check(cmd_args, expected)
         local ret = self:run(cmd_args, {'TARANTOOL_CFG=./cfg.yml'})
-        t.assertEquals(ret.args['cfg'], './cfg.yml')
+        t.assert_equals(ret.args['cfg'], './cfg.yml')
         ret.args['cfg'] = nil
-        t.assertEquals(ret.args, expected)
+        t.assert_equals(ret.args, expected)
     end
 
     check('',                    {app_name = 'myapp', x = '@myapp'})
@@ -252,8 +252,8 @@ function g:test_confdir()
 
     local function check(cmd_args, expected)
         local args = self:run(cmd_args, {'TARANTOOL_CFG=./conf.d'}).args
-        t.assertEquals(args.cfg, './conf.d/')
-        t.assertEquals(args.x, expected)
+        t.assert_equals(args.cfg, './conf.d/')
+        t.assert_equals(args.x, expected)
     end
 
     check('--instance-name default', '@default')
@@ -271,7 +271,7 @@ function g:test_confdir()
     )
 
     local ret = self:run('--cfg ./conflict.d', {}, {ignore_errors = true})
-    t.assertStrContains(ret.err, 'ParseConfigError: collision of section "other"' ..
+    t.assert_str_contains(ret.err, 'ParseConfigError: collision of section "other"' ..
         ' in ./conflict.d/ between 0-default.yml and 1-custom.yaml'
     )
 end
@@ -283,20 +283,20 @@ function g:test_badfile()
     )
 
     local ret = self:run('--cfg ./cfg.txt', {}, {ignore_errors = true})
-    t.assertStrContains(ret.err, 'ParseConfigError: ./cfg.txt: Unsupported file type')
+    t.assert_str_contains(ret.err, 'ParseConfigError: ./cfg.txt: Unsupported file type')
 
     local ret = self:run('--cfg /dev/null', {}, {ignore_errors = true})
-    t.assertStrContains(ret.err, 'ParseConfigError: /dev/null: Unsupported file type')
+    t.assert_str_contains(ret.err, 'ParseConfigError: /dev/null: Unsupported file type')
 
     local ret = self:run('--cfg /no/such/file.yml', {}, {ignore_errors = true})
-    t.assertStrContains(ret.err, 'OpenFileError: /no/such/file.yml: No such file or directory')
+    t.assert_str_contains(ret.err, 'OpenFileError: /no/such/file.yml: No such file or directory')
 
     utils.file_write(
         fio.pathjoin(self.tempdir, 'tarantool.yml'),
         '}'
     )
     local ret = self:run('--cfg tarantool.yml', {}, {ignore_errors = true})
-    t.assertStrContains(ret.err, 'DecodeYamlError: tarantool.yml: unexpected END event')
+    t.assert_str_contains(ret.err, 'DecodeYamlError: tarantool.yml: unexpected END event')
 end
 
 function g:test_box_opts()
@@ -327,8 +327,8 @@ function g:test_box_opts()
     )
 
     local box_opts, err = unpack(self:run('--cfg ./cfg.yml').box_opts)
-    t.assertNil(err)
-    t.assertEquals(box_opts, {
+    t.assert_not(err)
+    t.assert_equals(box_opts, {
         username = 'alice',
         slab_alloc_factor = 1.3,
         log_nonblock = false,
@@ -339,8 +339,8 @@ function g:test_box_opts()
 
     local function check_err(cmd_args, expected)
         local ok, err = unpack(self:run(cmd_args).box_opts)
-        t.assertNil(ok)
-        t.assertStrContains(err, expected)
+        t.assert_not(ok)
+        t.assert_str_contains(err, expected)
     end
 
     check_err('--memtx-memory false',
