@@ -1,6 +1,5 @@
 local fio = require('fio')
 local socket = require('socket')
-local log = require('log')
 
 local t = require('luatest')
 local g = t.group('console_sock')
@@ -25,25 +24,17 @@ g.before_all = function()
             NOTIFY_SOCKET = fio.pathjoin(tmpdir, '/notify.sock')
         },
     })
-    -- build notify socket
     local notify_socket = assert(socket('AF_UNIX', 'SOCK_DGRAM', 0), 'Can not create socket')
-    if fio.stat(server.env.NOTIFY_SOCKET) then
-        assert(fio.unlink(server.env.NOTIFY_SOCKET))
-    end
     assert(notify_socket:bind('unix/', server.env.NOTIFY_SOCKET), notify_socket:error())
-    fio.chmod(server.env.NOTIFY_SOCKET, tonumber('0666', 8))
     server:start()
-    -- wait notify
-    while true do
-        if notify_socket:readable(1) then
-            local msg = notify_socket:recv()
-            log.info(msg)
+    t.helpers.retrying({}, function() 
+        while not notify_socket:readable(1) do
+            msg = notify_socket:recv()
             if msg:match('READY=1') then
-                fio.unlink(server.env.NOTIFY_SOCKET)
-                return
+                    return
             end
-        end
-    end
+        end 
+    end)
 end
 
 g.after_all = function()
