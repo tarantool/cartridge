@@ -34,6 +34,7 @@ g.before_all = function()
                 return
             end
         end
+        error('No notify')
     end)
 end
 
