@@ -11,30 +11,6 @@ local helpers = require('cartridge.test-helpers')
 local server
 local tmpdir
 
-local notify_socket 
-
-local function build_notify_socket()
-    notify_socket = assert(socket('AF_UNIX', 'SOCK_DGRAM', 0), 'Can not create socket')
-    if fio.stat(server.env.NOTIFY_SOCKET) then
-        assert(fio.unlink(server.env.NOTIFY_SOCKET))
-    end
-    assert(notify_socket:bind('unix/', server.env.NOTIFY_SOCKET), notify_socket:error())
-    fio.chmod(server.env.NOTIFY_SOCKET, tonumber('0666', 8))
-end
-
-local function wait_notify()
-    while true do
-        if notify_socket:readable(1) then
-            local msg = notify_socket:recv()
-            log.info(msg)
-            if msg:match('READY=1') then
-                fio.unlink(server.env.NOTIFY_SOCKET)
-                return
-            end
-        end
-    end
-end
-
 g.before_all = function()
     tmpdir = fio.tempdir()
     server = helpers.Server:new({
@@ -49,9 +25,25 @@ g.before_all = function()
             NOTIFY_SOCKET = fio.pathjoin(tmpdir, '/notify.sock')
         },
     })
-    build_notify_socket()
+    -- build notify socket
+    local notify_socket = assert(socket('AF_UNIX', 'SOCK_DGRAM', 0), 'Can not create socket')
+    if fio.stat(server.env.NOTIFY_SOCKET) then
+        assert(fio.unlink(server.env.NOTIFY_SOCKET))
+    end
+    assert(notify_socket:bind('unix/', server.env.NOTIFY_SOCKET), notify_socket:error())
+    fio.chmod(server.env.NOTIFY_SOCKET, tonumber('0666', 8))
     server:start()
-    wait_notify()
+    -- wait notify
+    while true do
+        if notify_socket:readable(1) then
+            local msg = notify_socket:recv()
+            log.info(msg)
+            if msg:match('READY=1') then
+                fio.unlink(server.env.NOTIFY_SOCKET)
+                return
+            end
+        end
+    end
 end
 
 g.after_all = function()
