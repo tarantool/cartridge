@@ -1,6 +1,6 @@
 local fio = require('fio')
 local t = require('luatest')
-local g = t.group('withoutUsersPage')
+local g = t.group('cypress_woauth')
 
 local test_helper = require('test.helper')
 local helpers = require('cartridge.test-helpers')
