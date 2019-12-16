@@ -110,7 +110,7 @@ end
 
 local function _login(server, username, password)
     local auth_data = string.format("username=%s&password=%s", username, password)
-    local res = server:http_request('post', '/login', {body = auth_data, raw = true})
+    local res = server:http_request('post', '/login', {body = auth_data, raise = false})
     return res
 end
 
@@ -183,7 +183,7 @@ local function _test_login(alias, auth)
     t.assert_equals(_login(server, USERNAME, OLD_PASSWORD).status, 403)
     local resp = _login(server, USERNAME, NEW_PASSWORD)
     t.assert_equals(resp.status, 200)
-    t.assert_not_equals(resp.cookies['lsid'], resp.cookies)
+    t.assert_not_equals(resp.cookies['lsid'], nil)
     t.assert_not_equals(resp.cookies['lsid'][1], '')
 
     _remove_user(server, USERNAME)
@@ -274,169 +274,139 @@ function g.test_auth_disabled()
     local PASSWORD2 = 'Silver Copper'
     check_200(server)
 
-    local request = [[
-        mutation(
-            $username: String!
-            $password: String!
-            $fullname: String
-            $email: String
-        ) {
-            cluster {
-                add_user(
-                    username:$username
-                    password:$password
-                    fullname:$fullname
-                    email:$email
-                ) { username }
-            }
-        }
-    ]]
+    local function add_user(vars)
+        return server:graphql({query = [[
+            mutation(
+                $username: String!
+                $password: String!
+                $fullname: String
+                $email: String
+            ) {
+                cluster {
+                    add_user(
+                        username:$username
+                        password:$password
+                        fullname:$fullname
+                        email:$email
+                    ) { username }
+                }
+            }]],
+            variables = vars
+        })['data']['cluster']['add_user']['username']
+    end
 
-    local res = server:graphql({
-        query = request,
-        variables = {
+    t.assert_equals(
+        add_user({
             username = USERNAME1,
             password = PASSWORD1
-        }
-    })
-    t.assert_equals(res['data']['cluster']['add_user']['username'], USERNAME1)
+        }),
+        USERNAME1
+    )
 
-    local res = server:graphql({
-        query = request,
-        variables = {
+    t.assert_equals(
+        add_user({
             username = USERNAME2,
             password = PASSWORD2,
             fullname = USERNAME2,
             email = 'tester@tarantool.org'
-        }
-    })
-    t.assert_equals(res['data']['cluster']['add_user']['username'], USERNAME2)
+        }),
+        USERNAME2
+    )
 
-    local function create_conflict_username()
-        server:graphql({
-            query = request,
-            variables={
-                username = USERNAME1,
-                password = PASSWORD1
-            }
-        })
-    end
     t.assert_error_msg_contains(
         string.format("User already exists: '%s'",  USERNAME1),
-        create_conflict_username
+        add_user, {username = USERNAME1, password = PASSWORD1}
     )
 
-    local function create_conflict_email()
-        server:graphql({
-            query = request,
-            variables={
-                username = USERNAME1 .. ' clone',
-                password = PASSWORD1,
-                email = 'TeStEr@tarantool.org'
-            }
-        })
-    end
     t.assert_error_msg_contains(
         "E-mail already in use: 'TeStEr@tarantool.org'",
-        create_conflict_email
+        add_user,
+        {
+            username = USERNAME1 .. ' clone',
+            password = PASSWORD1,
+            email = 'TeStEr@tarantool.org'
+        }
     )
 
-    local request = [[
-        query($username: String) {
-            cluster {
-                users(username: $username) { username }
-            }
-        }
-    ]]
+    local function get_users(vars)
+        return server:graphql({query = [[
+            query($username: String) {
+                cluster {
+                    users(username: $username) { username }
+                }
+            }]],
+            variables = vars
+        })['data']['cluster']['users']
+    end
 
-    local res = server:graphql({
-        query = request,
-        variables = {username = USERNAME1}
-    })
-    local user_list = res['data']['cluster']['users']
+    local user_list = get_users({username = USERNAME1})
     t.assert_equals(#user_list, 1)
     t.assert_equals(user_list[1]['username'], USERNAME1)
 
-    local res = server:graphql({
-        query = request,
-        variables = {username = USERNAME2}
-    })
-    local user_list = res['data']['cluster']['users']
+    local user_list = get_users({username = USERNAME2})
     t.assert_equals(#user_list, 1)
     t.assert_equals(user_list[1]['username'], USERNAME2)
 
-    local function get_not_found_user()
-        server:graphql({
-            query = request,
-            variables = {username = 'Invalid Username'}
-        })
-    end
-
     t.assert_error_msg_contains(
         "User not found: 'Invalid Username'",
-        get_not_found_user
+        get_users, {username = 'Invalid Username'}
     )
 
-    local res = server:graphql({query = request})
-    t.assert_equals(#res['data']['cluster']['users'], 3)
+    t.assert_equals(#get_users(), 3)
 
-    local request = [[
-        mutation($username: String! $email: String) {
-            cluster {
-                edit_user(username:$username email:$email) { username email }
-            }
-        }
-    ]]
+    local function edit_user(vars)
+        return server:graphql({query = [[
+            mutation($username: String! $email: String) {
+                cluster {
+                    edit_user(username:$username email:$email) { username email }
+                }
+            }]],
+            variables = vars
+        })['data']['cluster']['edit_user']['email']
+    end
 
     local EMAIL1 = string.format('%s@tarantool.io', USERNAME1:lower())
-    local res = server:graphql({
-        query = request,
-        variables = {username = USERNAME1, email = EMAIL1}
-    })
-    t.assert_equals(res['data']['cluster']['edit_user']['email'], EMAIL1)
-
-    local function update_not_found_user()
-        server:graphql({
-            query = request,
-            variables={username = 'Invalid Username'}
-        })
-    end
-    t.assert_error_msg_contains(
-        "User not found: 'Invalid Username'",
-        update_not_found_user
+    t.assert_equals(
+        edit_user({
+            username = USERNAME1,
+            email = EMAIL1
+        }), EMAIL1
     )
 
-    local request = [[
-        mutation($username: String!) {
-            cluster {
-                remove_user(username:$username) { username }
-            }
-        }
-    ]]
-    local res = server:graphql({query = request, variables = {username = USERNAME2}})
-    t.assert_equals(res['data']['cluster']['remove_user']['username'], USERNAME2)
-
-    local function drop_not_found_user()
-        server:graphql({
-            query = request,
-            variables={username = 'Invalid Username'}
-        })
-    end
     t.assert_error_msg_contains(
         "User not found: 'Invalid Username'",
-        drop_not_found_user
+        edit_user, {username = 'Invalid Username'}
     )
 
-    local request = [[
-        {
-            cluster {
-                auth_params {
-                    enabled
-                    username
+    local function remove_user(vars)
+        return server:graphql({query = [[
+            mutation($username: String!) {
+                cluster {
+                    remove_user(username:$username) { username }
                 }
+            }]],
+            variables = vars
+        })['data']['cluster']['remove_user']['username']
+    end
+
+    t.assert_equals(
+        remove_user({username = USERNAME2}),
+        USERNAME2
+    )
+
+    t.assert_error_msg_contains(
+        "User not found: 'Invalid Username'",
+        remove_user, {username = 'Invalid Username'}
+    )
+
+    local request = [[{
+        cluster {
+            auth_params {
+                enabled
+                username
             }
         }
-    ]]
+    }]]
 
     local res  = server:graphql({query = request})
     local auth_params = res['data']['cluster']['auth_params']
@@ -449,6 +419,7 @@ function g.test_auth_disabled()
         {query = request},
         {http = {headers = {cookie = cookie_lsid}}}
     )
+
     local auth_params = res['data']['cluster']['auth_params']
     t.assert_equals(auth_params['enabled'], false)
     t.assert_equals(auth_params['username'], USERNAME1)
