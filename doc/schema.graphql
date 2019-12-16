@@ -1,5 +1,5 @@
 # source: http://localhost:8081/admin/api
-# timestamp: Fri Dec 13 2019 15:47:25 GMT+0300 (Moscow Standard Time)
+# timestamp: Mon Dec 16 2019 03:05:54 GMT+0300 (Moscow Standard Time)
 
 """Cluster management"""
 type Apicluster {
@@ -232,14 +232,21 @@ type Server {
   status: String!
   uuid: String!
   replicaset: Replicaset
-  uri: String!
   alias: String
-  disabled: Boolean
+  uri: String!
+  labels: [Label]
   message: String!
+  disabled: Boolean
 
   """Failover priority within the replica set"""
   priority: Int
-  labels: [Label]
+
+  """
+  Difference between remote clock and the current one. Obtained from the
+  membership module (SWIM protocol). Positive values mean remote clock are ahead
+  of local, and vice versa. In seconds.
+  """
+  clock_delta: Float
 }
 
 """Server information and configuration."""

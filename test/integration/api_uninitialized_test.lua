@@ -57,6 +57,12 @@ function g.test_uninitialized()
         uri = 'localhost:13301',
         replicaset = box.NULL
     })
+    t.assert_almost_equals(
+        g.server:graphql({
+            query = [[{ servers { uri clock_delta } }]]
+        }).data.servers[1].clock_delta,
+        0, 1e-2
+    )
 
     local replicasets = resp['data']['replicasets']
     t.assert_equals(#replicasets, 0)

@@ -83,6 +83,10 @@ g.before_all = function()
     g.server:start()
     t.helpers.retrying({timeout = 5}, function()
         g.server:graphql({query = '{}'})
+        g.cluster.main_server:graphql({
+            query = 'mutation($uri: String!) { probe_server(uri:$uri) }',
+            variables = {uri = g.server.advertise_uri},
+        })
     end)
 end
 
@@ -251,11 +255,6 @@ end
 
 function g.test_servers()
     local router = g.cluster:server('router')
-    t.helpers.retrying({timeout = 5}, function()
-        router.net_box:eval(
-            "assert(require('membership').probe_uri('localhost:13303'))"
-        )
-    end)
 
     local resp = router:graphql({
         query = [[
@@ -399,4 +398,19 @@ function g.test_probe_server()
 
     local resp = probe_req({uri = router.advertise_uri})
     t.assert_equals(resp['data']['probe_server'], true)
+end
+
+function g.test_clock_delta()
+    local router = g.cluster:server('router')
+
+    local resp = router:graphql({
+        query = [[{ servers { uri clock_delta } }]]
+    })
+
+    local servers = resp['data']['servers']
+
+    t.assert_equals(#servers, 4)
+    for _, server in pairs(servers) do
+        t.assert_almost_equals(server.clock_delta, 0, 1e-2)
+    end
 end

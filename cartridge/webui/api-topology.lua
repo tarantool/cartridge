@@ -93,6 +93,13 @@ local gql_type_server = gql_types.object {
             kind = gql_types.int,
             description = 'Failover priority within the replica set',
         },
+        clock_delta = {
+            kind = gql_types.float,
+            description = 'Difference between remote clock and the' ..
+                ' current one. Obtained from the membership module' ..
+                ' (SWIM protocol). Positive values mean remote clock' ..
+                ' are ahead of local, and vice versa. In seconds.',
+        },
         replicaset = gql_type_replicaset,
         statistics = gql_stat_schema,
         boxinfo = gql_boxinfo_schema,
@@ -265,7 +272,6 @@ end
 local function set_failover_enabled(_, args)
     return admin.set_failover_enabled(args.enabled)
 end
-
 
 local function init(graphql)
 
