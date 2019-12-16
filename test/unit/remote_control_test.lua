@@ -191,6 +191,7 @@ function g.test_bytestream()
         assert(conn:readable(1), "Recv timeout")
         local resp = assert(conn:recv(1024))
         local _, pos = msgpack.decode(resp)
+        t.assert_equals(pos, 6)
         local body = msgpack.decode(resp, pos)
 
         t.assert_equals(body[0x00], 0x00) -- iproto_ok
@@ -243,6 +244,7 @@ function g.test_invalid_serialization()
         assert(conn:readable(1), "Recv timeout")
         local resp = conn:recv(100)
         local _, pos = msgpack.decode(resp)
+        t.assert_equals(pos, 6)
         local body = msgpack.decode(resp, pos)
 
         t.assert_equals(body[0x00], 0x00) -- iproto_ok

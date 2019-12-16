@@ -19,6 +19,7 @@ local checks = require('checks')
 local errors = require('errors')
 local socket = require('socket')
 local digest = require('digest')
+local pickle = require('pickle')
 local uuid_lib = require('uuid')
 local msgpack = require('msgpack')
 local vars = require('cartridge.vars').new('cartridge.remote-control')
@@ -106,6 +107,10 @@ local iproto_code = {
     [0x43] = "iproto_request_vote",
 }
 
+local function mpenc_uint32(n)
+    return pickle.pack('bN', 0xCE, n)
+end
+
 local function reply_ok(s, sync, data)
     checks('?', 'number', '?table')
 
@@ -116,10 +121,10 @@ local function reply_ok(s, sync, data)
     })
 
     if data == nil then
-        s:write(msgpack.encode(#header) .. header)
+        s:write(mpenc_uint32(#header) .. header)
     else
-        local payload = data and msgpack.encode({[0x30] = data})
-        s:write(msgpack.encode(#header + #payload) .. header .. payload)
+        local payload = msgpack.encode({[0x30] = data})
+        s:write(mpenc_uint32(#header + #payload) .. header .. payload)
     end
 end
 
@@ -135,7 +140,7 @@ local function reply_err(s, sync, ecode, efmt, ...)
         [0x31] = efmt:format(...)
     })
 
-    s:write(msgpack.encode(#header + #payload) .. header .. payload)
+    s:write(mpenc_uint32(#header + #payload) .. header .. payload)
 end
 
 local function communicate(s)
