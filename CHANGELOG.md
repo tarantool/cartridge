@@ -26,6 +26,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - GraphQL API for clusterwide configuration management.
 
+- Measure clock difference across instances and provide `clock_delta`
+  in GraphQL `servers` query and in `admin.get_servers()` Lua API.
+
 ### Changed
 
 - WebUI now uses `edit_topology` mutation instead of deprecated ones.

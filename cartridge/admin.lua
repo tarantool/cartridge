@@ -52,11 +52,18 @@ local function get_server_info(members, uuid, uri)
     -- @tfield
     --   number priority
     --   Leadership priority for automatic failover.
+    -- @tfield
+    --   number clock_delta
+    --   Difference between remote clock and the current one (in
+    --   seconds), obtained from the membership module (SWIM protocol).
+    --   Positive values mean remote clock are ahead of local, and vice
+    --   versa.
     -- @table ServerInfo
     local ret = {
         alias = alias,
         uri = uri,
         uuid = uuid,
+        clock_delta = nil,
     }
 
     -- find the most fresh information
@@ -89,6 +96,10 @@ local function get_server_info(members, uuid, uri)
     else
         ret.status = 'healthy'
         ret.message = ''
+    end
+
+    if member and member.status == 'alive' and member.clock_delta ~= nil then
+        ret.clock_delta = member.clock_delta * 1e-6
     end
 
     if member and member.uri ~= nil then
@@ -218,7 +229,8 @@ local function get_topology()
                 uuid = '',
                 status = 'unconfigured',
                 message = m.payload.error or m.payload.warning or '',
-                alias = m.payload.alias
+                clock_delta = m.clock_delta and (m.clock_delta * 1e-6),
+                alias = m.payload.alias,
             })
         end
     end
