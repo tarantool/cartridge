@@ -24,6 +24,7 @@ local UploadConfigError = errors.new_class('Config upload failed')
 local auth = require('cartridge.auth')
 local twophase = require('cartridge.twophase')
 local confapplier = require('cartridge.confapplier')
+local ClusterwideConfig = require('cartridge.clusterwide-config')
 
 local system_sections = {
     ['auth'] = true,
@@ -106,6 +107,30 @@ local function download_config_handler(req)
     })
 end
 
+local function upload_config(clusterwide_config)
+    checks('ClusterwideConfig')
+    local patch = {}
+
+    for k, _ in pairs(confapplier.get_active_config():get_plaintext()) do
+        if not system_sections[k] then
+            patch[k] = box.NULL
+        end
+    end
+
+    for k, v in pairs(clusterwide_config:get_plaintext()) do
+        if system_sections[k] then
+            local err = UploadConfigError:new(
+                "uploading system section %q is forbidden", k
+            )
+            return nil, err
+        else
+            patch[k] = v
+        end
+    end
+
+    return twophase.patch_clusterwide(patch)
+end
+
 local function upload_config_handler(req)
     if not auth.authorize_request(req) then
         local err = UploadConfigError:new('Unauthorized')
@@ -157,14 +182,7 @@ local function upload_config_handler(req)
 
     log.warn('Config uploaded')
 
-    local patch = {}
-
-    local clusterwide_config_old = confapplier.get_active_config()
-    for k, _ in pairs(clusterwide_config_old:get_plaintext()) do
-        if not system_sections[k] then
-            patch[k] = box.NULL
-        end
-    end
+    local clusterwide_config = ClusterwideConfig.new()
 
     for k, v in pairs(conf_new) do
         if system_sections[k] then
@@ -178,13 +196,13 @@ local function upload_config_handler(req)
             )
             return http_finalize_error(400, err)
         elseif v == nil or type(v) == 'string' then
-            patch[k] = v
+            clusterwide_config:set_plaintext(k, v)
         else
-            patch[k .. '.yml'] = yaml.encode(v)
+            clusterwide_config:set_plaintext(k .. '.yml', yaml.encode(v))
         end
     end
 
-    local ok, err = twophase.patch_clusterwide(patch)
+    local ok, err = upload_config(clusterwide_config)
     if ok == nil then
         return http_finalize_error(400, err)
     end
@@ -288,4 +306,6 @@ return {
     init = init,
     get_sections = get_sections,
     set_sections = set_sections,
+
+    upload_config = upload_config,
 }
