@@ -51,6 +51,7 @@ docker-build-enterprice-base:
 ### Prebuilt base docker image (opensorce tarantool 1.10)
 ### only if Dockerfile or test requirements changed
 ###
+
 docker-build-opensource1_10-base:
   stage: prebuild
   tags:
@@ -172,7 +173,6 @@ misc:
 ###
 ### Test (opensource tarantool 1.10)
 ###
-
 .integration_opensource1_10:
   image: ${BASE_BUILD_IMAGE}:${BUNDLE_VERSION_1_10}
   stage: test
@@ -251,4 +251,4 @@ publish-release:
       https://${ROCKS_USERNAME}:${ROCKS_PASSWORD}@rocks.tarantool.org
     - curl --fail -X PUT -F "rockspec=@${ROCK_NAME}-${CI_COMMIT_TAG}-1.all.rock"
       https://${ROCKS_USERNAME}:${ROCKS_PASSWORD}@rocks.tarantool.org
-  dependencies: ["misc_enterprice1_10", "misc_opensource1_10", "misc_opensource2_2"]
+  dependencies: ["misc"]
