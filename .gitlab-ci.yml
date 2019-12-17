@@ -161,7 +161,7 @@ misc_enterprice1_10:
     - ./check-flow-graphql.sh
     - ./release.sh
   artifacts:
-    name: "${CI_COMMIT_REF_NAME}.misc"
+    name: "${CI_COMMIT_REF_NAME}.misc_enterprice1_10"
     when: on_success
     expire_in: 1 week
     paths:
@@ -224,7 +224,7 @@ misc_opensource1_10:
     - ./check-flow-graphql.sh
     - ./release.sh
   artifacts:
-    name: "${CI_COMMIT_REF_NAME}.misc"
+    name: "${CI_COMMIT_REF_NAME}.misc_opensource1_10"
     when: on_success
     expire_in: 1 week
     paths:
@@ -286,7 +286,7 @@ misc_opensource2_2:
     - ./check-flow-graphql.sh
     - ./release.sh
   artifacts:
-    name: "${CI_COMMIT_REF_NAME}.misc"
+    name: "${CI_COMMIT_REF_NAME}.misc_opensource2_2"
     when: on_success
     expire_in: 1 week
     paths:
@@ -294,11 +294,6 @@ misc_opensource2_2:
       - release/
       - release-doc/
       - luacov.report.out
-
-###
-###
-###
-
 
 ###
 ### Publish rocks
@@ -328,4 +323,4 @@ publish-release:
       https://${ROCKS_USERNAME}:${ROCKS_PASSWORD}@rocks.tarantool.org
     - curl --fail -X PUT -F "rockspec=@${ROCK_NAME}-${CI_COMMIT_TAG}-1.all.rock"
       https://${ROCKS_USERNAME}:${ROCKS_PASSWORD}@rocks.tarantool.org
-  dependencies: ["misc"]
+  dependencies: ["misc_enterprice1_10", "misc_opensource1_10", "misc_opensource2_2"]
