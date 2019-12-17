@@ -48,6 +48,36 @@ docker-build-enterprice-base:
     - docker logout registry.gitlab.com
 
 ###
+### Prebuilt base docker image (opensorce tarantool 1.10)
+### only if Dockerfile or test requirements changed
+###
+docker-build-opensource1_10-base:
+  stage: prebuild
+  tags:
+    - shell
+  only:
+    changes:
+      - DockerfileOpenSource
+      - .gitlab-ci.yml
+      - test/integration/requirements.txt
+  before_script:
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN registry.gitlab.com
+  script:
+    - docker pull ${BASE_BUILD_IMAGE}:${BUNDLE_VERSION_1_10} || true
+    - >
+      docker build
+      --label GIT_DESCRIBE=$(git describe --tags)
+      --label GIT_COMMIT=$CI_COMMIT_SHA
+      --build-arg TARAчNTOOL_VERSION=${TARANTOOL_VERSION_1_10}
+      --target build
+      -t ${BASE_BUILD_IMAGE}:${BUNDLE_VERSION_1_10}
+      -f DockerfileOpenSource
+      .
+    - docker push ${BASE_BUILD_IMAGE}:${BUNDLE_VERSION_1_10}
+  after_script:
+    - docker logout registry.gitlab.com
+
+###
 ### Prebuilt base docker image (opensorce tarantool 2.2)
 ### only if Dockerfile or test requirements changed
 ###
@@ -78,44 +108,13 @@ docker-build-opensource2_2-base:
     - docker logout registry.gitlab.com
 
 ###
-### Prebuilt base docker image (opensorce tarantool 1.10)
-### only if Dockerfile or test requirements changed
-###
-docker-build-opensource1_10-base:
-  stage: prebuild
-  tags:
-    - shell
-  only:
-    changes:
-      - DockerfileOpenSource
-      - .gitlab-ci.yml
-      - test/integration/requirements.txt
-  before_script:
-    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN registry.gitlab.com
-  script:
-    - docker pull ${BASE_BUILD_IMAGE}:${BUNDLE_VERSION_1_10} || true
-    - >
-      docker build
-      --label GIT_DESCRIBE=$(git describe --tags)
-      --label GIT_COMMIT=$CI_COMMIT_SHA
-      --build-arg TARAчNTOOL_VERSION=${TARANTOOL_VERSION_1_10}
-      --target build
-      -t ${BASE_BUILD_IMAGE}:${BUNDLE_VERSION_1_10}
-      -f DockerfileOpenSource
-      .
-    - docker push ${BASE_BUILD_IMAGE}:${BUNDLE_VERSION_1_10}
-  after_script:
-    - docker logout registry.gitlab.com
-
-
-###
 ### Test (enterprise tarantool)
 ###
 .enterprise-test: &enterprise-test
   image: ${BASE_BUILD_IMAGE}:${BUNDLE_VERSION}
   stage: test
   tags:
-    - docker
+    - docker_enterprice1_10
   before_script:
     - ls -al # to see if caching works
     - tarantoolctl rocks make
@@ -178,7 +177,7 @@ misc_enterprice1_10:
   image: ${BASE_BUILD_IMAGE}:${BUNDLE_VERSION_1_10}
   stage: test
   tags:
-    - docker
+    - docker_opensource1_10
   before_script:
     - ls -al # to see if caching works
     - tarantoolctl rocks make
@@ -240,7 +239,7 @@ misc_opensource1_10:
   image: ${BASE_BUILD_IMAGE}:${BUNDLE_VERSION_2_2}
   stage: test
   tags:
-    - docker
+    - docker_opensource1_10
   before_script:
     - ls -al # to see if caching works
     - tarantoolctl rocks make
