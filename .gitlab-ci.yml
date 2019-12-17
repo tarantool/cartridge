@@ -196,7 +196,7 @@ misc:
       - .rocks/
 
 integration_enterprice1_10:
-  <<: *test_opensource1_10-test
+  <<: *test_opensource1_10
   script:
     - pytest -v
     - luatest -v -x cypress_*
@@ -204,7 +204,7 @@ integration_enterprice1_10:
 ###
 ### Test (opensource tarantool 2.2)
 ###
-.test_opensource2_2: test_opensource1_10
+.test_opensource2_2: &test_opensource2_2
   image: ${BASE_BUILD_IMAGE}:${BUNDLE_VERSION_2_2}
   stage: test
   tags:
@@ -230,7 +230,7 @@ integration_enterprice1_10:
       - .rocks/
 
 integration_enterprice2_2:
-  <<: *test_opensource1_10-test
+  <<: *test_opensource2_2
   script:
     - pytest -v
     - luatest -v -x cypress_*
