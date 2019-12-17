@@ -69,7 +69,7 @@ docker-build-opensource1_10-base:
       docker build
       --label GIT_DESCRIBE=$(git describe --tags)
       --label GIT_COMMIT=$CI_COMMIT_SHA
-      --build-arg TARAчNTOOL_VERSION=${TARANTOOL_VERSION_1_10}
+      --build-arg TARANTOOL_VERSION=${TARANTOOL_VERSION_1_10}
       --target build
       -t ${BASE_BUILD_IMAGE}:${BUNDLE_VERSION_1_10}
       -f DockerfileOpenSource
