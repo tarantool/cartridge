@@ -173,7 +173,7 @@ misc:
 ###
 ### Test (opensource tarantool 1.10)
 ###
-.integration_opensource1_10:
+.test_opensource1_10: &test_opensource1_10
   image: ${BASE_BUILD_IMAGE}:${BUNDLE_VERSION_1_10}
   stage: test
   tags:
@@ -195,10 +195,16 @@ misc:
       - .cache/Cypress
       - .rocks/
 
+integration_enterprice1_10:
+  <<: *test_opensource1_10-test
+  script:
+    - pytest -v
+    - luatest -v -x cypress_*
+
 ###
 ### Test (opensource tarantool 2.2)
 ###
-.integration_opensource2_2:
+.test_opensource2_2: test_opensource1_10
   image: ${BASE_BUILD_IMAGE}:${BUNDLE_VERSION_2_2}
   stage: test
   tags:
@@ -222,6 +228,12 @@ misc:
       - .npm
       - .cache/Cypress
       - .rocks/
+
+integration_enterprice2_2:
+  <<: *test_opensource1_10-test
+  script:
+    - pytest -v
+    - luatest -v -x cypress_*
 
 ###
 ### Publish rocks
