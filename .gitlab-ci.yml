@@ -172,6 +172,7 @@ misc:
 ###
 ### Test (opensource tarantool 1.10)
 ###
+
 .opensource-test: &opensource1_10-test
   image: ${BASE_BUILD_IMAGE}:${BUNDLE_VERSION_1_10}
   stage: test
@@ -185,7 +186,7 @@ misc:
     # avoid caching cartridge rock
     - tarantoolctl rocks remove cartridge
   cache:
-    key: common-cache-key
+    key: ${TARANTOOL_VERSION_1_10}
     paths:
       - build.luarocks/
       - webui/node_modules
@@ -247,7 +248,7 @@ misc:
     # avoid caching cartridge rock
     - tarantoolctl rocks remove cartridge
   cache:
-    key: common-cache-key
+    key: ${TARANTOOL_VERSION_2_2}
     paths:
       - build.luarocks/
       - webui/node_modules
