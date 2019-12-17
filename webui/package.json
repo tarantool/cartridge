@@ -102,6 +102,7 @@
     "vscode-json-languageservice": "3.4.1",
     "vscode-ws-jsonrpc": "0.1.1",
     "webpack": "4.38.0",
+    "webpack-bundle-analyzer": "3.6.0",
     "webpack-dev-server": "3.7.2",
     "webpack-manifest-plugin": "2.0.4",
     "whatwg-fetch": "2.0.3",

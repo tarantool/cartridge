@@ -4,6 +4,7 @@ const webpack = require('webpack');
 const ManifestPlugin = require('webpack-manifest-plugin');
 const eslintFormatter = require('react-dev-utils/eslintFormatter');
 const ModuleScopePlugin = require('react-dev-utils/ModuleScopePlugin');
+const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 const paths = require('./paths');
 const getClientEnvironment = require('./env');
@@ -335,6 +336,11 @@ module.exports = {
     // https://github.com/jmblog/how-to-optimize-momentjs-with-webpack
     // You can remove this if you don't use Moment.js:
     new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
+    new BundleAnalyzerPlugin({
+      analyzerMode: 'static',
+      reportFilename: 'bundle-analyzer-report.html',
+      openAnalyzer: false
+    }),
     new LuaBundlerPlugin({ namespace: moduleConfig.namespace }),
   ],
   // Some libraries import Node modules but don't use them in the browser.
