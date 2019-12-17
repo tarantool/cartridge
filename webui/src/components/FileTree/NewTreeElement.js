@@ -11,6 +11,7 @@ import {
   Input,
   Text
 } from '@tarantool.io/ui-kit';
+import { validateFileNameExtention } from 'src/misc/files.utils';
 
 const styles = {
   element: css`
@@ -97,8 +98,17 @@ export class NewTreeElement extends React.Component<NewTreeElementProps, NewTree
   }
 
   handleKeyPress = (event: KeyboardEvent) => {
+    const { value } = this.state;
+    const { type } = this.props;
+
     if (event.keyCode === 13) {
-      this.props.onConfirm(this.state.value);
+      if (type === 'file') {
+        if (validateFileNameExtention(value)) {
+          this.props.onConfirm(value);
+        }
+      } else {
+        this.props.onConfirm(value);
+      }
     } else if (event.keyCode === 27) {
       this.props.onCancel();
     }
@@ -136,7 +146,7 @@ export class NewTreeElement extends React.Component<NewTreeElementProps, NewTree
         >
           <IconChevron
             className={cx(styles.iconChevron, { [styles.iconChevronFile]: type !== 'folder' })}
-            direction={expanded ? 'down' : 'right' }
+            direction={expanded ? 'down' : 'right'}
           />
           <Icon className={styles.fileIcon} opened={expanded} />
           <Input
