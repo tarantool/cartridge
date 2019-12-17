@@ -115,7 +115,7 @@ docker-build-opensource2_2-base:
   image: ${BASE_BUILD_IMAGE}:${BUNDLE_VERSION}
   stage: test
   tags:
-    - docker_enterprice1_10
+    - docker
   before_script:
     - ls -al # to see if caching works
     - tarantoolctl rocks make
@@ -177,7 +177,7 @@ misc:
   image: ${BASE_BUILD_IMAGE}:${BUNDLE_VERSION_1_10}
   stage: test
   tags:
-    - docker_opensource1_10
+    - docker
   before_script:
     - ls -al # to see if caching works
     - tarantoolctl rocks make
@@ -208,7 +208,7 @@ integration_opensource1_10:
   image: ${BASE_BUILD_IMAGE}:${BUNDLE_VERSION_2_2}
   stage: test
   tags:
-    - docker_opensource2_2
+    - docker
   before_script:
     - ls -al # to see if caching works
     - tarantoolctl rocks make
