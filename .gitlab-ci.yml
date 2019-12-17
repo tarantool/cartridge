@@ -213,9 +213,6 @@ integration_opensource1_10:
     - ls -al # to see if caching works
     - tarantoolctl rocks make
     - tarantoolctl rocks list
-  script:
-    - pytest -v
-    - luatest -v -x cypress_*
   after_script:
     # avoid caching cartridge rock
     - tarantoolctl rocks remove cartridge
