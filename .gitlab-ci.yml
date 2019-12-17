@@ -202,7 +202,7 @@ misc:
   image: ${BASE_BUILD_IMAGE}:${BUNDLE_VERSION_2_2}
   stage: test
   tags:
-    - docker_opensource1_10
+    - docker_opensource2_2
   before_script:
     - ls -al # to see if caching works
     - tarantoolctl rocks make
