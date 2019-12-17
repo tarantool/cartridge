@@ -138,7 +138,7 @@ integration_enterprice1_10:
     - pytest -v
     - luatest -v -x cypress_*
 
-cypress_enterprice1_10:
+cypress:
   <<: *enterprise-test
   when: manual
   script:
@@ -151,7 +151,7 @@ cypress_enterprice1_10:
       - webui/cypress/screenshots/
       - webui/cypress/videos/
 
-misc_enterprice1_10:
+misc:
   <<: *enterprise-test
   script:
     - luacheck .
@@ -160,7 +160,7 @@ misc_enterprice1_10:
     - ./check-flow-graphql.sh
     - ./release.sh
   artifacts:
-    name: "${CI_COMMIT_REF_NAME}.misc_enterprice1_10"
+    name: "${CI_COMMIT_REF_NAME}.misc"
     when: on_success
     expire_in: 1 week
     paths:
@@ -173,7 +173,7 @@ misc_enterprice1_10:
 ### Test (opensource tarantool 1.10)
 ###
 
-.opensource1_10-test: &opensource1_10-test
+.integration_opensource1_10:
   image: ${BASE_BUILD_IMAGE}:${BUNDLE_VERSION_1_10}
   stage: test
   tags:
@@ -195,47 +195,10 @@ misc_enterprice1_10:
       - .cache/Cypress
       - .rocks/
 
-integration_opensource1_10:
-  <<: *opensource1_10-test
-  script:
-    - pytest -v
-    - luatest -v -x cypress_*
-
-cypress_opensource1_10:
-  <<: *opensource1_10-test
-  when: manual
-  script:
-    - luatest -v -p cypress_*
-  artifacts:
-    name: "${CI_COMMIT_REF_NAME}.cypress"
-    when: always
-    expire_in: 1 week
-    paths:
-      - webui/cypress/screenshots/
-      - webui/cypress/videos/
-
-misc_opensource1_10:
-  <<: *opensource1_10-test
-  script:
-    - luacheck .
-    - ./taptest.lua
-    - ./fetch-schema.sh
-    - ./check-flow-graphql.sh
-    - ./release.sh
-  artifacts:
-    name: "${CI_COMMIT_REF_NAME}.misc_opensource1_10"
-    when: on_success
-    expire_in: 1 week
-    paths:
-      - doc/
-      - release/
-      - release-doc/
-      - luacov.report.out
-
 ###
 ### Test (opensource tarantool 2.2)
 ###
-.opensource2_2-test: &opensource2_2-test
+.integration_opensource2_2:
   image: ${BASE_BUILD_IMAGE}:${BUNDLE_VERSION_2_2}
   stage: test
   tags:
@@ -244,6 +207,9 @@ misc_opensource1_10:
     - ls -al # to see if caching works
     - tarantoolctl rocks make
     - tarantoolctl rocks list
+  script:
+    - pytest -v
+    - luatest -v -x cypress_*
   after_script:
     # avoid caching cartridge rock
     - tarantoolctl rocks remove cartridge
@@ -256,43 +222,6 @@ misc_opensource1_10:
       - .npm
       - .cache/Cypress
       - .rocks/
-
-integration_opensource2_2:
-  <<: *opensource2_2-test
-  script:
-    - pytest -v
-    - luatest -v -x cypress_*
-
-cypress_opensource2_2:
-  <<: *opensource2_2-test
-  when: manual
-  script:
-    - luatest -v -p cypress_*
-  artifacts:
-    name: "${CI_COMMIT_REF_NAME}.cypress"
-    when: always
-    expire_in: 1 week
-    paths:
-      - webui/cypress/screenshots/
-      - webui/cypress/videos/
-
-misc_opensource2_2:
-  <<: *opensource2_2-test
-  script:
-    - luacheck .
-    - ./taptest.lua
-    - ./fetch-schema.sh
-    - ./check-flow-graphql.sh
-    - ./release.sh
-  artifacts:
-    name: "${CI_COMMIT_REF_NAME}.misc_opensource2_2"
-    when: on_success
-    expire_in: 1 week
-    paths:
-      - doc/
-      - release/
-      - release-doc/
-      - luacov.report.out
 
 ###
 ### Publish rocks
