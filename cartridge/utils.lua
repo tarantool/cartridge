@@ -279,6 +279,34 @@ local function is_email_valid(str)
     return true
 end
 
+local function http_read_body(req)
+    local req_body = req:read()
+    local content_type = req.headers['content-type'] or ''
+    local multipart, boundary = content_type:match('(multipart/form%-data); boundary=(.+)')
+    if multipart ~= 'multipart/form-data' then
+        return req_body
+    end
+
+    -- RFC 2046 http://www.ietf.org/rfc/rfc2046.txt
+    -- 5.1.1.  Common Syntax
+    -- The boundary delimiter line is then defined as a line
+    -- consisting entirely of two hyphen characters ("-", decimal value 45)
+    -- followed by the boundary parameter value from the Content-Type header
+    -- field, optional linear whitespace, and a terminating CRLF.
+    --
+    -- string.match takes a pattern, thus we have to prefix any characters
+    -- that have a special meaning with % to escape them.
+    -- A list of special characters is ().+-*?[]^$%
+    local boundary_line = string.gsub('--'..boundary, "[%(%)%.%+%-%*%?%[%]%^%$%%]", "%%%1")
+    local _, form_body = req_body:match(
+        boundary_line .. '\r\n' ..
+        '(.-\r\n)' .. '\r\n' .. -- headers
+        '(.-)' .. '\r\n' .. -- body
+        boundary_line
+    )
+    return form_body
+end
+
 return {
     deepcmp = deepcmp,
     table_find = table_find,
@@ -301,4 +329,6 @@ return {
         checks("table")
         return set_readonly(tbl, false)
     end,
+
+    http_read_body = http_read_body,
 }

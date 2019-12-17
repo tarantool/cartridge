@@ -117,30 +117,7 @@ local function upload_config_handler(req)
         return http_finalize_error(409, err)
     end
 
-    local req_body = req:read()
-    local content_type = req.headers['content-type'] or ''
-    local multipart, boundary = content_type:match('(multipart/form%-data); boundary=(.+)')
-    if multipart == 'multipart/form-data' then
-        -- RFC 2046 http://www.ietf.org/rfc/rfc2046.txt
-        -- 5.1.1.  Common Syntax
-        -- The boundary delimiter line is then defined as a line
-        -- consisting entirely of two hyphen characters ("-", decimal value 45)
-        -- followed by the boundary parameter value from the Content-Type header
-        -- field, optional linear whitespace, and a terminating CRLF.
-        --
-        -- string.match takes a pattern, thus we have to prefix any characters
-        -- that have a special meaning with % to escape them.
-        -- A list of special characters is ().+-*?[]^$%
-        local boundary_line = string.gsub('--'..boundary, "[%(%)%.%+%-%*%?%[%]%^%$%%]", "%%%1")
-        local _, form_body = req_body:match(
-            boundary_line .. '\r\n' ..
-            '(.-\r\n)' .. '\r\n' .. -- headers
-            '(.-)' .. '\r\n' .. -- body
-            boundary_line
-        )
-        req_body = form_body
-    end
-
+    local req_body = utils.http_read_body(req)
     local conf_new, err
     if req_body == nil then
         conf_new, err = nil, UploadConfigError:new('Request body must not be empty')
