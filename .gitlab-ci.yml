@@ -195,7 +195,7 @@ misc:
       - .cache/Cypress
       - .rocks/
 
-integration_enterprice1_10:
+integration_opensource1_10:
   <<: *test_opensource1_10
   script:
     - pytest -v
@@ -229,7 +229,7 @@ integration_enterprice1_10:
       - .cache/Cypress
       - .rocks/
 
-integration_enterprice2_2:
+integration_opensource2_2:
   <<: *test_opensource2_2
   script:
     - pytest -v
