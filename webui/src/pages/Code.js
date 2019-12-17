@@ -391,7 +391,7 @@ class Code extends React.Component<CodeProps, CodeState> {
               readOnly: !selectedFile
             }}
             fileId={selectedFile ? `inmemory://${selectedFile.fileId}.lua` : null}
-            value={selectedFile ? selectedFile.content : 'Select file'}
+            value={selectedFile ? selectedFile.content : 'Select or add a file'}
             onChange={this.handleContentChange}
           />
         </div>
