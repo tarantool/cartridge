@@ -1,6 +1,10 @@
 variables:
   ROCK_NAME: cartridge
   BUNDLE_VERSION: "1.10.4-8-g3f2b35b"
+  BUNDLE_VERSION_2_2: "2.2.1.142.gfd7532535-1"
+  BUNDLE_VERSION_1_10: "1.10.4.67.g09a4fff1c-1"
+  TARANTOOL_VERSION_1_10: "1_10"
+  TARANTOOL_VERSION_2_2: "2_2"
   BASE_BUILD_IMAGE: registry.gitlab.com/tarantool/cartridge
   # Enable caching frontend stuff
   npm_config_cache: "$CI_PROJECT_DIR/.npm"
@@ -11,11 +15,12 @@ stages:
   - test
   - publish
 
+
 ###
-### Prebuilt base docker image
+### Prebuilt base docker image (enterprise tarantool)
 ### only if Dockerfile or test requirements changed
 ###
-docker-build-base:
+docker-build-enterprice-base:
   stage: prebuild
   tags:
     - shell
@@ -43,7 +48,67 @@ docker-build-base:
     - docker logout registry.gitlab.com
 
 ###
-### Test
+### Prebuilt base docker image (opensorce tarantool 1.10)
+### only if Dockerfile or test requirements changed
+###
+docker-build-opensource1_10-base:
+  stage: prebuild
+  tags:
+    - shell
+  only:
+    changes:
+      - DockerfileOpenSource
+      - .gitlab-ci.yml
+      - test/integration/requirements.txt
+  before_script:
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN registry.gitlab.com
+  script:
+    - docker pull ${BASE_BUILD_IMAGE}:${BUNDLE_VERSION_1_10} || true
+    - >
+      docker build
+      --label GIT_DESCRIBE=$(git describe --tags)
+      --label GIT_COMMIT=$CI_COMMIT_SHA
+      --build-arg TARANTOOL_VERSION=${TARANTOOL_VERSION_1_10}
+      --target build
+      -t ${BASE_BUILD_IMAGE}:${BUNDLE_VERSION_1_10}
+      -f DockerfileOpenSource
+      .
+    - docker push ${BASE_BUILD_IMAGE}:${BUNDLE_VERSION_1_10}
+  after_script:
+    - docker logout registry.gitlab.com
+
+###
+### Prebuilt base docker image (opensorce tarantool 2.2)
+### only if Dockerfile or test requirements changed
+###
+docker-build-opensource2_2-base:
+  stage: prebuild
+  tags:
+    - shell
+  only:
+    changes:
+      - DockerfileOpenSource
+      - .gitlab-ci.yml
+      - test/integration/requirements.txt
+  before_script:
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN registry.gitlab.com
+  script:
+    - docker pull ${BASE_BUILD_IMAGE}:${BUNDLE_VERSION_2_2} || true
+    - >
+      docker build
+      --label GIT_DESCRIBE=$(git describe --tags)
+      --label GIT_COMMIT=$CI_COMMIT_SHA
+      --build-arg TARANTOOL_VERSION=${TARANTOOL_VERSION_2_2}
+      --target build
+      -t ${BASE_BUILD_IMAGE}:${BUNDLE_VERSION_2_2}
+      -f DockerfileOpenSource
+      .
+    - docker push ${BASE_BUILD_IMAGE}:${BUNDLE_VERSION_2_2}
+  after_script:
+    - docker logout registry.gitlab.com
+
+###
+### Test (enterprise tarantool)
 ###
 .enterprise-test: &enterprise-test
   image: ${BASE_BUILD_IMAGE}:${BUNDLE_VERSION}
@@ -104,6 +169,129 @@ misc:
       - release-doc/
       - luacov.report.out
 
+###
+### Test (opensource tarantool 1.10)
+###
+.opensource-test: &opensource1_10-test
+  image: ${BASE_BUILD_IMAGE}:${BUNDLE_VERSION_1_10}
+  stage: test
+  tags:
+    - docker
+  before_script:
+    - ls -al # to see if caching works
+    - tarantoolctl rocks make
+    - tarantoolctl rocks list
+  after_script:
+    # avoid caching cartridge rock
+    - tarantoolctl rocks remove cartridge
+  cache:
+    key: common-cache-key
+    paths:
+      - build.luarocks/
+      - webui/node_modules
+      - webui/build/bundle.lua
+      - .npm
+      - .cache/Cypress
+      - .rocks/
+
+integration:
+  <<: *opensource1_10-test
+  script:
+    - pytest -v
+    - luatest -v -x cypress_*
+
+cypress:
+  <<: *opensource1_10-test
+  when: manual
+  script:
+    - luatest -v -p cypress_*
+  artifacts:
+    name: "${CI_COMMIT_REF_NAME}.cypress"
+    when: always
+    expire_in: 1 week
+    paths:
+      - webui/cypress/screenshots/
+      - webui/cypress/videos/
+
+misc:
+  <<: *opensource1_10-test
+  script:
+    - luacheck .
+    - ./taptest.lua
+    - ./fetch-schema.sh
+    - ./check-flow-graphql.sh
+    - ./release.sh
+  artifacts:
+    name: "${CI_COMMIT_REF_NAME}.misc"
+    when: on_success
+    expire_in: 1 week
+    paths:
+      - doc/
+      - release/
+      - release-doc/
+      - luacov.report.out
+
+###
+### Test (opensource tarantool 2.2)
+###
+.opensource-test: &opensource2_2-test
+  image: ${BASE_BUILD_IMAGE}:${BUNDLE_VERSION_2_2}
+  stage: test
+  tags:
+    - docker
+  before_script:
+    - ls -al # to see if caching works
+    - tarantoolctl rocks make
+    - tarantoolctl rocks list
+  after_script:
+    # avoid caching cartridge rock
+    - tarantoolctl rocks remove cartridge
+  cache:
+    key: common-cache-key
+    paths:
+      - build.luarocks/
+      - webui/node_modules
+      - webui/build/bundle.lua
+      - .npm
+      - .cache/Cypress
+      - .rocks/
+
+integration:
+  <<: *opensource2_2-test
+  script:
+    - pytest -v
+    - luatest -v -x cypress_*
+
+cypress:
+  <<: *opensource2_2-test
+  when: manual
+  script:
+    - luatest -v -p cypress_*
+  artifacts:
+    name: "${CI_COMMIT_REF_NAME}.cypress"
+    when: always
+    expire_in: 1 week
+    paths:
+      - webui/cypress/screenshots/
+      - webui/cypress/videos/
+
+misc:
+  <<: *opensource2_2-test
+  script:
+    - luacheck .
+    - ./taptest.lua
+    - ./fetch-schema.sh
+    - ./check-flow-graphql.sh
+    - ./release.sh
+  artifacts:
+    name: "${CI_COMMIT_REF_NAME}.misc"
+    when: on_success
+    expire_in: 1 week
+    paths:
+      - doc/
+      - release/
+      - release-doc/
+      - luacov.report.out
 
 ###
 ### Publish rocks
