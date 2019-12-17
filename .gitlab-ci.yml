@@ -173,7 +173,7 @@ misc:
 ### Test (opensource tarantool 1.10)
 ###
 
-.opensource-test: &opensource1_10-test
+.opensource1_10-test: &opensource1_10-test
   image: ${BASE_BUILD_IMAGE}:${BUNDLE_VERSION_1_10}
   stage: test
   tags:
@@ -235,7 +235,7 @@ misc:
 ###
 ### Test (opensource tarantool 2.2)
 ###
-.opensource-test: &opensource2_2-test
+.opensource2_2-test: &opensource2_2-test
   image: ${BASE_BUILD_IMAGE}:${BUNDLE_VERSION_2_2}
   stage: test
   tags:
@@ -293,6 +293,11 @@ misc:
       - release/
       - release-doc/
       - luacov.report.out
+
+###
+###
+###
+
 
 ###
 ### Publish rocks
