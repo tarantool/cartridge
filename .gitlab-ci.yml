@@ -133,13 +133,13 @@ docker-build-opensource1_10-base:
       - .cache/Cypress
       - .rocks/
 
-integration:
+integration_enterprice1_10:
   <<: *enterprise-test
   script:
     - pytest -v
     - luatest -v -x cypress_*
 
-cypress:
+cypress_enterprice1_10:
   <<: *enterprise-test
   when: manual
   script:
@@ -152,7 +152,7 @@ cypress:
       - webui/cypress/screenshots/
       - webui/cypress/videos/
 
-misc:
+misc_enterprice1_10:
   <<: *enterprise-test
   script:
     - luacheck .
@@ -196,13 +196,13 @@ misc:
       - .cache/Cypress
       - .rocks/
 
-integration:
+integration_opensource1_10:
   <<: *opensource1_10-test
   script:
     - pytest -v
     - luatest -v -x cypress_*
 
-cypress:
+cypress_opensource1_10:
   <<: *opensource1_10-test
   when: manual
   script:
@@ -215,7 +215,7 @@ cypress:
       - webui/cypress/screenshots/
       - webui/cypress/videos/
 
-misc:
+misc_opensource1_10:
   <<: *opensource1_10-test
   script:
     - luacheck .
@@ -258,13 +258,13 @@ misc:
       - .cache/Cypress
       - .rocks/
 
-integration:
+integration_opensource2_2:
   <<: *opensource2_2-test
   script:
     - pytest -v
     - luatest -v -x cypress_*
 
-cypress:
+cypress_opensource2_2:
   <<: *opensource2_2-test
   when: manual
   script:
@@ -277,7 +277,7 @@ cypress:
       - webui/cypress/screenshots/
       - webui/cypress/videos/
 
-misc:
+misc_opensource2_2:
   <<: *opensource2_2-test
   script:
     - luacheck .
