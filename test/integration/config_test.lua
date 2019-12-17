@@ -235,6 +235,14 @@ test_remotely('test_patch_clusterwide', function()
 
     --------------------------------------------------------------------
     local ok, err = _patch({
+        ['data'] = "friday",
+    })
+    t.assert_equals(err, nil)
+    t.assert_equals(ok, true)
+    t.assert_equals(_get_ro('data'), 'friday')
+
+    --------------------------------------------------------------------
+    local ok, err = _patch({
         ['data'] = {today = "friday"},
     })
     t.assert_equals(err, nil)

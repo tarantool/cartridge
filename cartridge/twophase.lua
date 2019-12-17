@@ -219,6 +219,7 @@ local function _clusterwide(patch)
             clusterwide_config_new:set_plaintext(k, v)
         else
             if not string.endswith(k, '.yml') then
+                clusterwide_config_new:set_plaintext(k, box.NULL)
                 k = k .. '.yml'
             end
 
