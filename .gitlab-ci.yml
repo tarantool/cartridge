@@ -162,7 +162,7 @@ misc:
       - .rocks/
 
 integration_opensource1_10:
-  <<: *opensource1_10-tst
+  <<: *opensource1_10-test
   script:
     - pytest -v
     - luatest -v -x cypress_*
