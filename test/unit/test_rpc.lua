@@ -42,7 +42,7 @@ local function apply_mocks(topology_draft)
                     status = srv.status,
                     payload = {
                         uuid = srv.uuid,
-                        error = srv.error,
+                        state = srv.state,
                     }
                 }
             end
@@ -102,10 +102,12 @@ local draft = {
         [1] = {
             uuid = 'a1',
             status = 'alive',
+            state = 'RolesConfigured',
         },
         [2] = {
             uuid = 'a2',
             status = 'alive',
+            state = 'RolesConfigured',
         },
     },
     [2] = {
@@ -115,10 +117,12 @@ local draft = {
         [1] = {
             uuid = 'b1',
             status = 'alive',
+            state = 'RolesConfigured',
         },
         [2] = {
             uuid = 'b2',
             status = 'alive',
+            state = 'RolesConfigured',
         },
     }
 }
@@ -208,7 +212,7 @@ test_candidates('+leader',
 )
 
 -------------------------------------------------------------------------------
-draft[2][1].error = 'e'
+draft[2][1].state = 'BootError'
 test:diag('b1 has an error')
 
 test_candidates('-leader -healthy',

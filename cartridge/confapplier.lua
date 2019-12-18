@@ -38,6 +38,8 @@ local StateError = errors.new_class('StateError')
 
 vars:new('state', '')
 vars:new('error')
+vars:new('state_notification', fiber.cond())
+vars:new('state_notification_timeout', 5)
 vars:new('clusterwide_config')
 
 vars:new('workdir')
@@ -83,7 +85,7 @@ local state_transitions = {
 -- normal operation
     ['ConnectingFullmesh'] = {'ConfiguringRoles', 'OperationError'},
     ['ConfiguringRoles'] = {'RolesConfigured', 'OperationError'},
-    ['RolesConfigured'] = {'ConnectingFullmesh', 'ConfiguringRoles'},
+    ['RolesConfigured'] = {'ConfiguringRoles'},
 
 -- errors
     ['InitError'] = {},
@@ -92,6 +94,14 @@ local state_transitions = {
     -- Disabled
     -- Expelled
 }
+
+--- Perform state transition.
+-- @function set_state
+-- @local
+-- @tparam string state
+--   New state
+-- @param[opt] err
+-- @treturn nil
 local function set_state(new_state, err)
     checks('string', '?')
     StateError:assert(
@@ -116,8 +126,41 @@ local function set_state(new_state, err)
         )
     end
 
+    membership.set_payload('state', new_state)
     vars.state = new_state
     vars.error = err
+    vars.state_notification:signal()
+end
+
+--- Make a wish for meeting desired state.
+-- @function wish_state
+-- @local
+-- @tparam string state
+--   Desired state.
+-- @tparam[opt] number timeout
+-- @treturn string
+--   Final state, may differ from desired.
+local function wish_state(state, timeout)
+    checks('string', '?number')
+    if timeout == nil then
+        timeout = vars.state_notification_timeout
+    end
+
+    local deadline = fiber.time() + timeout
+    while fiber.time() < deadline do
+        if vars.state == state then
+            -- Wish granted
+            break
+        elseif not utils.table_find(state_transitions[vars.state], state) then
+            -- Wish couldn't be granted
+            break
+        else
+            -- Wish could be granted soon, just wait a little bit
+            vars.state_notification:wait(deadline - fiber.time())
+        end
+    end
+
+    return vars.state
 end
 
 --- Validate configuration by all roles.
@@ -167,14 +210,12 @@ local function apply_config(clusterwide_config)
 
     vars.clusterwide_config = clusterwide_config
 
-    set_state('ConnectingFullmesh')
-    box.cfg({
-        replication_connect_quorum = 0,
-        -- Workaround for #3760: Reconfiguring tarantool with
-        -- `replication_connect_quorum = 0` hangs
-        -- https://github.com/tarantool/tarantool/issues/3760
-        replication_connect_timeout = 0.001,
-    })
+    if vars.state == 'BoxConfigured' then
+        set_state('ConnectingFullmesh')
+    else
+        box.cfg({replication_connect_quorum = 0})
+    end
+
     local _, err = BoxError:pcall(box.cfg, {
         replication = topology.get_fullmesh_replication(
             clusterwide_config:get_readonly('topology'), vars.replicaset_uuid
@@ -185,6 +226,7 @@ local function apply_config(clusterwide_config)
         return nil, err
     end
 
+    set_state('ConfiguringRoles')
     failover.cfg(clusterwide_config)
 
     local ok, err = ddl_manager.apply_config(
@@ -196,7 +238,6 @@ local function apply_config(clusterwide_config)
         return nil, err
     end
 
-    set_state('ConfiguringRoles')
     local ok, err = roles.apply_config(clusterwide_config:get_readonly())
     if not ok then
         set_state('OperationError', err)
@@ -292,6 +333,7 @@ local function boot_instance(clusterwide_config)
         if instance_uuid == leader_uuid then
             box_opts.replication = nil
             box_opts.read_only = false
+            box_opts.replication_connect_quorum = 0
         else
             box_opts.replication = {pool.format_uri(leader.uri)}
         end
@@ -498,6 +540,7 @@ return {
     get_deepcopy = get_deepcopy,
 
     set_state = set_state,
+    wish_state = wish_state,
     get_state = function() return vars.state, vars.error end,
     get_workdir = function() return vars.workdir end,
     get_instance_uuid = function() return vars.instance_uuid end,
