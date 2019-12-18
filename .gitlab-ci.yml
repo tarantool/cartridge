@@ -154,7 +154,7 @@ misc-enterprice1_10:
   <<: *misc-template
   variables:
     BUILD_BUNDLE_VERSION: ${BUNDLE_VERSION_ENTERPRICE_1_10}
-    MISC_EXT: "misk"
+    MISC_EXT: "misc"
 
 integration-opensource1_10:
   <<: *integration-template
