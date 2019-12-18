@@ -1,10 +1,12 @@
 variables:
   ROCK_NAME: cartridge
   BUNDLE_VERSION_ENTERPRICE_1_10: "1.10.4-8-g3f2b35b"
-  BUNDLE_VERSION_OPENSOURCE_1_10: "1.10.4.67.g09a4fff1c-1"
-  BUNDLE_VERSION_OPENSOURCE_2_2: "2.2.1.142.gfd7532535-1"
+  IMAGE_TAG_OPENSOURCE_1_10: "opensource1_10"
+  IMAGE_TAG_OPENSOURCE_2_2: "opensource2_2"
   TARANTOOL_VERSION_1_10: "1_10"
   TARANTOOL_VERSION_2_2: "2_2"
+  DOCKER_FILE_ENTERPRICE: "Dockerfile"
+  DOCKER_FILE_OPENSOURCE: "DockerfileOpenSource"
   BASE_BUILD_IMAGE: registry.gitlab.com/tarantool/cartridge
   # Enable caching frontend stuff
   npm_config_cache: "$CI_PROJECT_DIR/.npm"
@@ -26,7 +28,7 @@ stages:
   before_script:
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN registry.gitlab.com
   script:
-    - docker pull ${BASE_BUILD_IMAGE}:${BUILD_BUNDLE_VERSION} || true
+    - docker pull ${BASE_BUILD_IMAGE}:${IMAGE_TAG} || true
     - >
       docker build
       --label GIT_DESCRIBE=$(git describe --tags)
@@ -34,10 +36,10 @@ stages:
       --build-arg VERSION=${BUILD_VERSION}
       --build-arg DOWNLOAD_TOKEN=${DOWNLOAD_TOKEN}
       --target build
-      -t ${BASE_BUILD_IMAGE}:${BUILD_BUNDLE_VERSION}
+      -t ${BASE_BUILD_IMAGE}:${IMAGE_TAG}
       -f ${DOCKER_FILE}
       .
-    - docker push ${BASE_BUILD_IMAGE}:${BUILD_BUNDLE_VERSION}
+    - docker push ${BASE_BUILD_IMAGE}:${IMAGE_TAG}
   after_script:
     - docker logout registry.gitlab.com
 
@@ -50,8 +52,8 @@ docker-build-enterprice1_10:
         - test/integration/requirements.txt
   variables:
     BUILD_VERSION: ${BUNDLE_VERSION_ENTERPRICE_1_10}
-    BUILD_BUNDLE_VERSION: ${BUNDLE_VERSION_ENTERPRICE_1_10}
-    DOCKER_FILE: "Dockerfile"
+    IMAGE_TAG: ${BUNDLE_VERSION_ENTERPRICE_1_10}
+    DOCKER_FILE: ${DOCKER_FILE_ENTERPRICE}
 
 docker-build-opensource1_10:
   <<: *docker-build-template
@@ -62,8 +64,8 @@ docker-build-opensource1_10:
         - test/integration/requirements.txt
   variables:
     BUILD_VERSION: ${TARANTOOL_VERSION_1_10}
-    BUILD_BUNDLE_VERSION: ${BUNDLE_VERSION_OPENSOURCE_1_10}
-    DOCKER_FILE: "DockerfileOpenSource"
+    IMAGE_TAG: ${IMAGE_TAG_OPENSOURCE_1_10}
+    DOCKER_FILE: ${DOCKER_FILE_OPENSOURCE}
 
 docker-build-opensource2_2:
   <<: *docker-build-template
@@ -74,14 +76,14 @@ docker-build-opensource2_2:
         - test/integration/requirements.txt
   variables:
     BUILD_VERSION: ${TARANTOOL_VERSION_2_2}
-    BUILD_BUNDLE_VERSION: ${BUNDLE_VERSION_OPENSOURCE_2_2}
-    DOCKER_FILE: "DockerfileOpenSource"
+    IMAGE_TAG: ${IMAGE_TAG_OPENSOURCE_2_2}
+    DOCKER_FILE: ${DOCKER_FILE_OPENSOURCE}
 
 ###
 ### Test
 ###
 .test-template: &test-template
-  image: ${BASE_BUILD_IMAGE}:${BUILD_BUNDLE_VERSION}
+  image: ${BASE_BUILD_IMAGE}:${IMAGE_TAG}
   stage: test
   tags:
     - docker
@@ -93,7 +95,7 @@ docker-build-opensource2_2:
     # avoid caching cartridge rock
     - tarantoolctl rocks remove cartridge
   cache:
-    key: ${BUILD_BUNDLE_VERSION}
+    key: ${IMAGE_TAG}
     paths:
       - build.luarocks/
       - webui/node_modules
@@ -142,29 +144,29 @@ docker-build-opensource2_2:
 integration-enterprice1_10:
   <<: *integration-template
   variables:
-    BUILD_BUNDLE_VERSION: ${BUNDLE_VERSION_ENTERPRICE_1_10}
+    IMAGE_TAG: ${BUNDLE_VERSION_ENTERPRICE_1_10}
 
 cypress-enterprice1_10:
   <<: *cypress-template
   variables:
-    BUILD_BUNDLE_VERSION: ${BUNDLE_VERSION_ENTERPRICE_1_10}
+    IMAGE_TAG: ${BUNDLE_VERSION_ENTERPRICE_1_10}
     CYPRESS_EXT: "cypress"
 
 misc-enterprice1_10:
   <<: *misc-template
   variables:
-    BUILD_BUNDLE_VERSION: ${BUNDLE_VERSION_ENTERPRICE_1_10}
+    IMAGE_TAG: ${BUNDLE_VERSION_ENTERPRICE_1_10}
     MISC_EXT: "misc"
 
 integration-opensource1_10:
   <<: *integration-template
   variables:
-    BUILD_BUNDLE_VERSION: ${BUNDLE_VERSION_OPENSOURCE_1_10}
+    IMAGE_TAG: ${IMAGE_TAG_OPENSOURCE_1_10}
 
 integration-opensource2_2:
   <<: *integration-template
   variables:
-    BUILD_BUNDLE_VERSION: ${BUNDLE_VERSION_OPENSOURCE_2_2}
+    IMAGE_TAG: ${IMAGE_TAG_OPENSOURCE_2_2}
 
 ###
 ### Publish rocks
