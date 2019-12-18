@@ -80,8 +80,8 @@ docker-build-opensource2_2:
 ###
 ### Test (enterprise tarantool)
 ###
-.enterprise1_10-test: &enterprise1_10-test
-  image: ${BASE_BUILD_IMAGE}:${BUNDLE_VERSION}
+.test-template: &test-template
+  image: ${BASE_BUILD_IMAGE}:${BUILD_BUNDLE_VERSION}
   stage: test
   tags:
     - docker
@@ -93,7 +93,7 @@ docker-build-opensource2_2:
     # avoid caching cartridge rock
     - tarantoolctl rocks remove cartridge
   cache:
-    key: ${BUNDLE_VERSION_ENTERPRICE_1_10}
+    key: ${BUILD_BUNDLE_VERSION}
     paths:
       - build.luarocks/
       - webui/node_modules
@@ -102,27 +102,27 @@ docker-build-opensource2_2:
       - .cache/Cypress
       - .rocks/
 
-integration_enterprice1_10:
-  <<: *enterprise1_10-test
+.integration-template: &integration-template
+  <<: *test-template
   script:
     - pytest -v
     - luatest -v -x cypress_*
 
-cypress:
-  <<: *enterprise1_10-test
+.cypress-template: &cypress-template
+  <<: *test-template
   when: manual
   script:
     - luatest -v -p cypress_*
   artifacts:
-    name: "${CI_COMMIT_REF_NAME}.cypress"
+    name: "${CI_COMMIT_REF_NAME}.${CYPRESS_EXT}"
     when: always
     expire_in: 1 week
     paths:
       - webui/cypress/screenshots/
       - webui/cypress/videos/
 
-misc:
-  <<: *enterprise1_10-test
+.misc: &misc-template
+  <<: *test-template
   script:
     - luacheck .
     - ./taptest.lua
@@ -130,7 +130,7 @@ misc:
     - ./check-flow-graphql.sh
     - ./release.sh
   artifacts:
-    name: "${CI_COMMIT_REF_NAME}.misc"
+    name: "${CI_COMMIT_REF_NAME}.${MISC_EXT}"
     when: on_success
     expire_in: 1 week
     paths:
@@ -139,67 +139,32 @@ misc:
       - release-doc/
       - luacov.report.out
 
-###
-### Test (opensource tarantool 1.10)
-###
-.opensource1_10-test: &opensource1_10-test
-  image: ${BASE_BUILD_IMAGE}:${BUNDLE_VERSION_1_10}
-  stage: test
-  tags:
-    - docker
-  before_script:
-    - ls -al # to see if caching works
-    - tarantoolctl rocks make
-    - tarantoolctl rocks list
-  after_script:
-    # avoid caching cartridge rock
-    - tarantoolctl rocks remove cartridge
-  cache:
-    key: ${BUNDLE_VERSION_OPENSOURCE_1_10}
-    paths:
-      - build.luarocks/
-      - webui/node_modules
-      - webui/build/bundle.lua
-      - .npm
-      - .cache/Cypress
-      - .rocks/
+integration-enterprice1_10:
+  <<: *integration-template
+  variables:
+    BUILD_BUNDLE_VERSION: ${BUNDLE_VERSION_ENTERPRICE_1_10}
 
-integration_opensource1_10:
-  <<: *opensource1_10-test
-  script:
-    - pytest -v
-    - luatest -v -x cypress_*
+cypress-enterprice1_10:
+  <<: *cypress-template
+  variables:
+    BUILD_BUNDLE_VERSION: ${BUNDLE_VERSION_ENTERPRICE_1_10}
+    CYPRESS_EXT: "cypress"
 
-###
-### Test (opensource tarantool 2.2)
-###
-.opensource2_2-test: &opensource2_2-test
-  image: ${BASE_BUILD_IMAGE}:${BUNDLE_VERSION_2_2}
-  stage: test
-  tags:
-    - docker
-  before_script:
-    - ls -al # to see if caching works
-    - tarantoolctl rocks make
-    - tarantoolctl rocks list
-  after_script:
-    # avoid caching cartridge rock
-    - tarantoolctl rocks remove cartridge
-  cache:
-    key: ${BUNDLE_VERSION_OPENSOURCE_2_2}
-    paths:
-      - build.luarocks/
-      - webui/node_modules
-      - webui/build/bundle.lua
-      - .npm
-      - .cache/Cypress
-      - .rocks/
+misc-enterprice1_10:
+  <<: *misc-template
+  variables:
+    BUILD_BUNDLE_VERSION: ${BUNDLE_VERSION_ENTERPRICE_1_10}
+    MISC_EXT: "misk"
 
-integration_opensource2_2:
-  <<: *opensource2_2-test
-  script:
-    - pytest -v
-    - luatest -v -x cypress_*
+integration-opensource1_10:
+  <<: *integration-template
+  variables:
+    BUILD_BUNDLE_VERSION: ${BUNDLE_VERSION_OPENSOURCE_1_10}
+
+integration-opensource2_2:
+  <<: *integration-template
+  variables:
+    BUILD_BUNDLE_VERSION: ${BUNDLE_VERSION_OPENSOURCE_2_2}
 
 ###
 ### Publish rocks
