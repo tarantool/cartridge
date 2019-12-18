@@ -114,7 +114,7 @@ docker-build-opensource2_2:
   script:
     - luatest -v -p cypress_*
   artifacts:
-    name: "${CI_COMMIT_REF_NAME}."${CYPRESS_EXT}
+    name: "${CI_COMMIT_REF_NAME}.${CYPRESS_EXT}"
     when: always
     expire_in: 1 week
     paths:
@@ -130,7 +130,7 @@ docker-build-opensource2_2:
     - ./check-flow-graphql.sh
     - ./release.sh
   artifacts:
-    name: "${CI_COMMIT_REF_NAME}."${MISC_EXT}
+    name: "${CI_COMMIT_REF_NAME}.${MISC_EXT}"
     when: on_success
     expire_in: 1 week
     paths:
