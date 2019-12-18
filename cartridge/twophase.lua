@@ -52,6 +52,7 @@ local function prepare_2pc(data)
 
     local ok, err = confapplier.validate_config(clusterwide_config)
     if not ok then
+        log.warn('%s', err)
         return nil, err
     end
 
@@ -60,24 +61,23 @@ local function prepare_2pc(data)
 
     if vars.prepared_config ~= nil then
         local err = Prepare2pcError:new('Two-phase commit is locked')
+        log.warn('%s', err)
         return nil, err
     end
 
-    local state = confapplier.get_state()
-    local valid_states = {
-        ['Unconfigured'] = true,
-        ['RolesConfigured'] = true,
-    }
-    if not valid_states[state] then
+    local state = confapplier.wish_state('RolesConfigured')
+    if state ~= 'Unconfigured' and state ~= 'RolesConfigured' then
         local err = Prepare2pcError:new(
             "Instance state is %s, can't apply config in this state",
             state
         )
+        log.warn('%s', err)
         return nil, err
     end
 
     local ok, err = ClusterwideConfig.save(clusterwide_config, path_prepare)
     if not ok then
+        log.warn('%s', err)
         return nil, err
     end
 
@@ -115,9 +115,7 @@ local function commit_2pc()
         if ok then
             log.info('Backup of active config created: %q', path_backup)
         else
-            log.warn(
-                'Creation of config backup failed: %s', errno.strerror()
-            )
+            log.warn('Creation of config backup failed: %s', errno.strerror())
         end
     end
 
@@ -130,15 +128,24 @@ local function commit_2pc()
         local err = Commit2pcError:new(
             "Can't move %q: %s", path_prepare, errno.strerror()
         )
-        log.error('Error commmitting config update: %s', err)
+        log.error('%s', err)
         return nil, err
     end
 
 
-    if type(box.cfg) == 'function' then
+    local state = confapplier.wish_state('RolesConfigured')
+
+    if state == 'Unconfigured' then
         return confapplier.boot_instance(prepared_config)
-    else
+    elseif state == 'RolesConfigured' then
         return confapplier.apply_config(prepared_config)
+    else
+        local err = Commit2pcError:new(
+            "Instance state is %s, can't apply config in this state",
+            state
+        )
+        log.error('%s', err)
+        return nil, err
     end
 end
 
@@ -297,7 +304,7 @@ local function _clusterwide(patch)
                 if err == nil then
                     err = Prepare2pcError:new('Unknown error at %s', uri)
                 end
-                log.error('Error preparing for config update at %s: %s', uri, err)
+                log.error('Error preparing for config update at %s:\n%s', uri, err)
                 _2pc_error = err
             end
         end
@@ -327,7 +334,7 @@ local function _clusterwide(patch)
         for _, uri in ipairs(uri_list) do
             if retmap[uri] == nil then
                 local err = errmap and errmap[uri]
-                log.error('Error committing config at %s: %s', uri, err)
+                log.error('Error committing config at %s:\n%s', uri, err)
                 _2pc_error = err
             end
         end
@@ -349,7 +356,7 @@ local function _clusterwide(patch)
                 log.warn('Aborted config update at %s', uri)
             else
                 local err = errmap and errmap[uri]
-                log.error('Error aborting config update at %s: %s', uri, err)
+                log.error('Error aborting config update at %s:\n%s', uri, err)
             end
         end
 

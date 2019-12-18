@@ -38,17 +38,15 @@ local StateError = errors.new_class('StateError')
 
 vars:new('state', '')
 vars:new('error')
+vars:new('state_notification', fiber.cond())
+vars:new('state_notification_timeout', 5)
 vars:new('clusterwide_config')
 
 vars:new('workdir')
 vars:new('instance_uuid')
 vars:new('replicaset_uuid')
 
-vars:new('failover_fiber', nil)
-vars:new('failover_cond', nil)
-
 vars:new('box_opts', nil)
-vars:new('boot_opts', nil)
 
 local state_transitions = {
 -- init()
@@ -96,6 +94,14 @@ local state_transitions = {
     -- Disabled
     -- Expelled
 }
+
+--- Perform state transition.
+-- @function set_state
+-- @local
+-- @tparam string state
+--   New state
+-- @param[opt] err
+-- @treturn nil
 local function set_state(new_state, err)
     checks('string', '?')
     StateError:assert(
@@ -122,6 +128,38 @@ local function set_state(new_state, err)
 
     vars.state = new_state
     vars.error = err
+    vars.state_notification:signal()
+end
+
+--- Make a wish for meeting desired state.
+-- @function wish_state
+-- @local
+-- @tparam string state
+--   Desired state.
+-- @tparam[opt] number timeout
+-- @tretrun string
+--   Final state, may differ from desired.
+local function wish_state(state, timeout)
+    checks('string', '?number')
+    if timeout == nil then
+        timeout = vars.state_notification_timeout
+    end
+
+    local deadline = fiber.time() + timeout
+    while fiber.time() < deadline do
+        if vars.state == state then
+            -- Wish granted
+            break
+        elseif not utils.table_find(state_transitions[vars.state], state) then
+            -- Wish couldn't be granted
+            break
+        else
+            -- Wish could be granted soon, just wait a little bit
+            vars.state_notification:wait(deadline - fiber.time())
+        end
+    end
+
+    return vars.state
 end
 
 --- Validate configuration by all roles.
@@ -502,6 +540,7 @@ return {
     get_deepcopy = get_deepcopy,
 
     set_state = set_state,
+    wish_state = wish_state,
     get_state = function() return vars.state, vars.error end,
     get_workdir = function() return vars.workdir end,
     get_instance_uuid = function() return vars.instance_uuid end,

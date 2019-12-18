@@ -85,6 +85,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Race condition when creating working directory.
 
+- Race calling `apply_config` between failover and two-phase commit.
+
 - Don't cache remote-control connection so that `pool.connect` switches
   to the full-featured iproto as soon as it's up.
 
