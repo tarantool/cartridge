@@ -1,8 +1,8 @@
 variables:
   ROCK_NAME: cartridge
-  BUNDLE_VERSION: "1.10.4-8-g3f2b35b"
-  BUNDLE_VERSION_2_2: "2.2.1.142.gfd7532535-1"
-  BUNDLE_VERSION_1_10: "1.10.4.67.g09a4fff1c-1"
+  BUNDLE_VERSION_ENTERPRICE_1_10: "1.10.4-8-g3f2b35b"
+  BUNDLE_VERSION_OPENSOURCE_1_10: "1.10.4.67.g09a4fff1c-1"
+  BUNDLE_VERSION_OPENSOURCE_2_2: "2.2.1.142.gfd7532535-1"
   TARANTOOL_VERSION_1_10: "1_10"
   TARANTOOL_VERSION_2_2: "2_2"
   BASE_BUILD_IMAGE: registry.gitlab.com/tarantool/cartridge
@@ -15,103 +15,69 @@ stages:
   - test
   - publish
 
-
 ###
-### Prebuilt base docker image (enterprise tarantool)
+### Prebuilt base docker image
 ### only if Dockerfile or test requirements changed
 ###
-docker-build-enterprice-base:
+docker-build-template: &docker-build-template
   stage: prebuild
   tags:
     - shell
-  only:
-    changes:
+  before_script:
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN registry.gitlab.com
+  script:
+    - docker pull ${BASE_BUILD_IMAGE}:${BUILD_BUNDLE_VERSION} || true
+    - >
+      docker build
+      --label GIT_DESCRIBE=$(git describe --tags)
+      --label GIT_COMMIT=$CI_COMMIT_SHA
+      --build-arg VERSION=${BUILD_VERSION}
+      --build-arg DOWNLOAD_TOKEN=${DOWNLOAD_TOKEN}
+      --target build
+      -t ${BASE_BUILD_IMAGE}:${BUILD_BUNDLE_VERSION}
+      -f ${DOCKER_FILE}
+      .
+    - docker push ${BASE_BUILD_IMAGE}:${BUILD_BUNDLE_VERSION}
+  after_script:
+    - docker logout registry.gitlab.com
+
+docker-build-enterprice1_10:
+  <<: *docker-build-template
+  changes:
       - Dockerfile
       - .gitlab-ci.yml
       - test/integration/requirements.txt
-  before_script:
-    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN registry.gitlab.com
-  script:
-    - docker pull ${BASE_BUILD_IMAGE}:${BUNDLE_VERSION} || true
-    - >
-      docker build
-      --label GIT_DESCRIBE=$(git describe --tags)
-      --label GIT_COMMIT=$CI_COMMIT_SHA
-      --build-arg BUNDLE_VERSION=${BUNDLE_VERSION}
-      --build-arg DOWNLOAD_TOKEN=${DOWNLOAD_TOKEN}
-      --target build
-      -t ${BASE_BUILD_IMAGE}:${BUNDLE_VERSION}
-      -f Dockerfile
-      .
-    - docker push ${BASE_BUILD_IMAGE}:${BUNDLE_VERSION}
-  after_script:
-    - docker logout registry.gitlab.com
+  variables:
+    BUILD_VERSION: ${BUNDLE_VERSION_ENTERPRICE_1_10}
+    BUILD_BUNDLE_VERSION: ${BUNDLE_VERSION_ENTERPRICE_1_10}
+    DOCKER_FILE: "Dockerfile"
 
-###
-### Prebuilt base docker image (opensorce tarantool 1.10)
-### only if Dockerfile or test requirements changed
-###
-
-docker-build-opensource1_10-base:
-  stage: prebuild
-  tags:
-    - shell
-  only:
-    changes:
+docker-build-opensource1_10:
+  <<: *docker-build-template
+  changes:
       - DockerfileOpenSource
       - .gitlab-ci.yml
       - test/integration/requirements.txt
-  before_script:
-    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN registry.gitlab.com
-  script:
-    - docker pull ${BASE_BUILD_IMAGE}:${BUNDLE_VERSION_1_10} || true
-    - >
-      docker build
-      --label GIT_DESCRIBE=$(git describe --tags)
-      --label GIT_COMMIT=$CI_COMMIT_SHA
-      --build-arg TARANTOOL_VERSION=${TARANTOOL_VERSION_1_10}
-      --target build
-      -t ${BASE_BUILD_IMAGE}:${BUNDLE_VERSION_1_10}
-      -f DockerfileOpenSource
-      .
-    - docker push ${BASE_BUILD_IMAGE}:${BUNDLE_VERSION_1_10}
-  after_script:
-    - docker logout registry.gitlab.com
+  variables:
+    BUILD_VERSION: ${TARANTOOL_VERSION_1_10}
+    BUILD_BUNDLE_VERSION: ${BUNDLE_VERSION_OPENSOURCE_1_10}
+    DOCKER_FILE: "DockerfileOpenSource"
 
-###
-### Prebuilt base docker image (opensorce tarantool 2.2)
-### only if Dockerfile or test requirements changed
-###
-docker-build-opensource2_2-base:
-  stage: prebuild
-  tags:
-    - shell
-  only:
-    changes:
+docker-build-opensource2_2:
+  <<: *docker-build-template
+  changes:
       - DockerfileOpenSource
       - .gitlab-ci.yml
       - test/integration/requirements.txt
-  before_script:
-    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN registry.gitlab.com
-  script:
-    - docker pull ${BASE_BUILD_IMAGE}:${BUNDLE_VERSION_2_2} || true
-    - >
-      docker build
-      --label GIT_DESCRIBE=$(git describe --tags)
-      --label GIT_COMMIT=$CI_COMMIT_SHA
-      --build-arg TARANTOOL_VERSION=${TARANTOOL_VERSION_2_2}
-      --target build
-      -t ${BASE_BUILD_IMAGE}:${BUNDLE_VERSION_2_2}
-      -f DockerfileOpenSource
-      .
-    - docker push ${BASE_BUILD_IMAGE}:${BUNDLE_VERSION_2_2}
-  after_script:
-    - docker logout registry.gitlab.com
+  variables:
+    BUILD_VERSION: ${TARANTOOL_VERSION_2_2}
+    BUILD_BUNDLE_VERSION: ${BUNDLE_VERSION_OPENSOURCE_2_2}
+    DOCKER_FILE: "DockerfileOpenSource"
 
 ###
 ### Test (enterprise tarantool)
 ###
-.enterprise-test: &enterprise-test
+.enterprise1_10-test: &enterprise1_10-test
   image: ${BASE_BUILD_IMAGE}:${BUNDLE_VERSION}
   stage: test
   tags:
@@ -134,13 +100,13 @@ docker-build-opensource2_2-base:
       - .rocks/
 
 integration_enterprice1_10:
-  <<: *enterprise-test
+  <<: *enterprise1_10-test
   script:
     - pytest -v
     - luatest -v -x cypress_*
 
 cypress:
-  <<: *enterprise-test
+  <<: *enterprise1_10-test
   when: manual
   script:
     - luatest -v -p cypress_*
@@ -153,7 +119,7 @@ cypress:
       - webui/cypress/videos/
 
 misc:
-  <<: *enterprise-test
+  <<: *enterprise1_10-test
   script:
     - luacheck .
     - ./taptest.lua
@@ -173,7 +139,7 @@ misc:
 ###
 ### Test (opensource tarantool 1.10)
 ###
-.test_opensource1_10: &test_opensource1_10
+.opensource1_10-test: &opensource1_10-test
   image: ${BASE_BUILD_IMAGE}:${BUNDLE_VERSION_1_10}
   stage: test
   tags:
@@ -196,7 +162,7 @@ misc:
       - .rocks/
 
 integration_opensource1_10:
-  <<: *test_opensource1_10
+  <<: *opensource1_10-tst
   script:
     - pytest -v
     - luatest -v -x cypress_*
@@ -204,7 +170,7 @@ integration_opensource1_10:
 ###
 ### Test (opensource tarantool 2.2)
 ###
-.test_opensource2_2: &test_opensource2_2
+.opensource2_2-test: &opensource2_2-test
   image: ${BASE_BUILD_IMAGE}:${BUNDLE_VERSION_2_2}
   stage: test
   tags:
@@ -227,7 +193,7 @@ integration_opensource1_10:
       - .rocks/
 
 integration_opensource2_2:
-  <<: *test_opensource2_2
+  <<: *opensource2_2-test
   script:
     - pytest -v
     - luatest -v -x cypress_*

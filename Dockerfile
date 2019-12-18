@@ -1,6 +1,6 @@
 FROM centos:7 as build
 
-ARG BUNDLE_VERSION
+ARG VERSION
 ARG DOWNLOAD_TOKEN
 
 RUN set -x &&\
@@ -14,10 +14,10 @@ RUN npm install graphql-cli@3.0.14
 ENV PATH="${PWD}/node_modules/.bin:${PATH}"
 
 RUN set -x &&\
-    echo "Using tarantool-enterprise-bundle ${BUNDLE_VERSION}" &&\
-    curl -O -L https://tarantool:${DOWNLOAD_TOKEN}@download.tarantool.io/enterprise/tarantool-enterprise-bundle-${BUNDLE_VERSION}.tar.gz &&\
-    tar -xzf tarantool-enterprise-bundle-${BUNDLE_VERSION}.tar.gz &&\
-    rm -rf tarantool-enterprise-bundle-${BUNDLE_VERSION}.tar.gz
+    echo "Using tarantool-enterprise-bundle ${VERSION}" &&\
+    curl -O -L https://tarantool:${DOWNLOAD_TOKEN}@download.tarantool.io/enterprise/tarantool-enterprise-bundle-${VERSION}.tar.gz &&\
+    tar -xzf tarantool-enterprise-bundle-${VERSION}.tar.gz &&\
+    rm -rf tarantool-enterprise-bundle-${VERSION}.tar.gz
 
 ENV PATH="${PWD}/tarantool-enterprise:${PATH}"
 
