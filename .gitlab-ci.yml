@@ -78,7 +78,7 @@ docker-build-opensource2_2:
     DOCKER_FILE: "DockerfileOpenSource"
 
 ###
-### Test (enterprise tarantool)
+### Test
 ###
 .test-template: &test-template
   image: ${BASE_BUILD_IMAGE}:${BUILD_BUNDLE_VERSION}
