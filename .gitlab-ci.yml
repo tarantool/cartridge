@@ -19,7 +19,7 @@ stages:
 ### Prebuilt base docker image
 ### only if Dockerfile or test requirements changed
 ###
-docker-build-template: &docker-build-template
+.docker-build-template: &docker-build-template
   stage: prebuild
   tags:
     - shell
