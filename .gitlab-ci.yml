@@ -90,7 +90,7 @@ docker-build-opensource2_2:
     # avoid caching cartridge rock
     - tarantoolctl rocks remove cartridge
   cache:
-    key: common-cache-key
+    key: ${BUNDLE_VERSION_ENTERPRICE_1_10}
     paths:
       - build.luarocks/
       - webui/node_modules
@@ -152,7 +152,7 @@ misc:
     # avoid caching cartridge rock
     - tarantoolctl rocks remove cartridge
   cache:
-    key: ${TARANTOOL_VERSION_1_10}
+    key: ${BUNDLE_VERSION_OPENSOURCE_1_10}
     paths:
       - build.luarocks/
       - webui/node_modules
@@ -183,7 +183,7 @@ integration_opensource1_10:
     # avoid caching cartridge rock
     - tarantoolctl rocks remove cartridge
   cache:
-    key: ${TARANTOOL_VERSION_2_2}
+    key: ${BUNDLE_VERSION_OPENSOURCE_2_2}
     paths:
       - build.luarocks/
       - webui/node_modules
