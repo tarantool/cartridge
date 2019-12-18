@@ -43,10 +43,11 @@ docker-build-template: &docker-build-template
 
 docker-build-enterprice1_10:
   <<: *docker-build-template
-  changes:
-      - Dockerfile
-      - .gitlab-ci.yml
-      - test/integration/requirements.txt
+  only:
+    changes:
+        - Dockerfile
+        - .gitlab-ci.yml
+        - test/integration/requirements.txt
   variables:
     BUILD_VERSION: ${BUNDLE_VERSION_ENTERPRICE_1_10}
     BUILD_BUNDLE_VERSION: ${BUNDLE_VERSION_ENTERPRICE_1_10}
@@ -54,10 +55,11 @@ docker-build-enterprice1_10:
 
 docker-build-opensource1_10:
   <<: *docker-build-template
-  changes:
-      - DockerfileOpenSource
-      - .gitlab-ci.yml
-      - test/integration/requirements.txt
+  only:
+    changes:
+        - DockerfileOpenSource
+        - .gitlab-ci.yml
+        - test/integration/requirements.txt
   variables:
     BUILD_VERSION: ${TARANTOOL_VERSION_1_10}
     BUILD_BUNDLE_VERSION: ${BUNDLE_VERSION_OPENSOURCE_1_10}
@@ -65,10 +67,11 @@ docker-build-opensource1_10:
 
 docker-build-opensource2_2:
   <<: *docker-build-template
-  changes:
-      - DockerfileOpenSource
-      - .gitlab-ci.yml
-      - test/integration/requirements.txt
+  only:
+    changes:
+        - DockerfileOpenSource
+        - .gitlab-ci.yml
+        - test/integration/requirements.txt
   variables:
     BUILD_VERSION: ${TARANTOOL_VERSION_2_2}
     BUILD_BUNDLE_VERSION: ${BUNDLE_VERSION_OPENSOURCE_2_2}
