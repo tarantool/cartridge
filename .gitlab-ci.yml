@@ -47,7 +47,7 @@ docker-build-enterprice1_10:
   <<: *docker-build-template
   only:
     changes:
-        - Dockerfile
+        - ${DOCKER_FILE_ENTERPRICE}
         - .gitlab-ci.yml
         - test/integration/requirements.txt
   variables:
@@ -59,7 +59,7 @@ docker-build-opensource1_10:
   <<: *docker-build-template
   only:
     changes:
-        - DockerfileOpenSource
+        - ${DOCKER_FILE_ENTERPRICE}
         - .gitlab-ci.yml
         - test/integration/requirements.txt
   variables:
@@ -71,7 +71,7 @@ docker-build-opensource2_2:
   <<: *docker-build-template
   only:
     changes:
-        - DockerfileOpenSource
+        - ${DOCKER_FILE_ENTERPRICE}
         - .gitlab-ci.yml
         - test/integration/requirements.txt
   variables:
