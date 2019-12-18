@@ -20,6 +20,7 @@ import {
 export type FileItem = {
   fileId: string,
   path: string,
+  initialPath?: string,
   parentPath: string,
   fileName: string,
   content?: string,
@@ -52,7 +53,7 @@ const toFileItem = (item): FileItem => {
 const ignoreFiles = ['schema.yml']
 
 const enrichFileList = (files: Array<any>) => {
-  const pathToFileMap = {};
+  const pathFileMap = {};
   files.forEach(file => {
     if (ignoreFiles.includes(file.path)) return;
     const parts = file.path.split('/');
@@ -64,14 +65,14 @@ const enrichFileList = (files: Array<any>) => {
       const parentPath = currentItemPath;
       currentItemPath = `${parentPath}${parentPath ? '/' : ''}${itemName}`;
 
-      let item = pathToFileMap[currentItemPath];
+      let item = pathFileMap[currentItemPath];
       if (!item) {
         item = makeFile(parentPath, itemName, isFolder, file.content, { saved: true });
-        pathToFileMap[currentItemPath] = item;
+        pathFileMap[currentItemPath] = item;
       }
     });
   });
-  return Object.values(pathToFileMap);
+  return Object.values(pathFileMap);
 };
 
 const updateFile = (

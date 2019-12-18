@@ -42,9 +42,6 @@ describe('Deleting files', () => {
     ]);
   });
 
-  // it('handles empty state', () => {
-  //   expect(v2_selectFileTree([])).toEqual([]);
-  // });
 });
 
 describe('Renaming files', () => {

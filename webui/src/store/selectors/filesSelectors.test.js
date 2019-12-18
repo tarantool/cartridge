@@ -1,8 +1,8 @@
 import {
-  v2_selectFileTree,
+  selectFileTree,
 } from './filesSelectors';
 
-describe('selectFileTree (v2)', () => {
+describe('selectFileTree', () => {
   it('correctly forms tree (files at root, folder, subfolders)', () => {
     const state = [
       { path: 'rootFile.ext',           parentPath: '',             type: 'file' },
@@ -18,7 +18,7 @@ describe('selectFileTree (v2)', () => {
       { path: 'rootFolder2/subFolder2/file.ext', parentPath: 'rootFolder2/subFolder2', type: 'file' },
     ];
 
-    expect(v2_selectFileTree(state)).toMatchObject([
+    expect(selectFileTree(state)).toMatchObject([
       {
         fileId: 'rootFolder', path: 'rootFolder',
         fileName: 'rootFolder', type: 'folder',
@@ -81,7 +81,7 @@ describe('selectFileTree (v2)', () => {
       { path: 'duplicate/files.ext' },
     ];
 
-    expect(v2_selectFileTree(stateWithDuplicateFiles)).toMatchObject([
+    expect(selectFileTree(stateWithDuplicateFiles)).toMatchObject([
       {
         fileId: 'duplicate', path: 'duplicate',
         fileName: 'duplicate', type: 'folder',
@@ -108,7 +108,7 @@ describe('selectFileTree (v2)', () => {
       { path: 'folder/file2.ext' },
     ];
 
-    expect(v2_selectFileTree(state)).toMatchObject([
+    expect(selectFileTree(state)).toMatchObject([
       {
         fileId: 'rootFile.ext', path: 'rootFile.ext',
         fileName: 'rootFile.ext', type: 'file',
@@ -129,6 +129,6 @@ describe('selectFileTree (v2)', () => {
 
 
   it('handles empty state', () => {
-    expect(v2_selectFileTree([])).toEqual([]);
+    expect(selectFileTree([])).toEqual([]);
   });
 });
