@@ -91,7 +91,8 @@ class Schema extends React.Component<SchemaProps> {
                 text='Apply'
                 intent='primary'
                 size='s'
-                disabled={loading || uploading || !valueChanged}
+                loading={uploading}
+                disabled={loading}
               />
             ]}
           />

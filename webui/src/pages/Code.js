@@ -311,6 +311,7 @@ class Code extends React.Component<CodeProps, CodeState> {
     const {
       className,
       fileTree = [],
+      puttingConfigFiles,
       selectedFile,
       dispatch
     } = this.props;
@@ -377,6 +378,7 @@ class Code extends React.Component<CodeProps, CodeState> {
                   onClick={this.handleApplyClick}
                   text='Apply'
                   intent='primary'
+                  loading={puttingConfigFiles}
                   size='s'
                   disabled={false}
                 />
