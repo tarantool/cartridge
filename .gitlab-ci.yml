@@ -3,6 +3,7 @@ variables:
   ROCK_NAME: cartridge
   BUNDLE_VERSION: "1.10.4-8-g3f2b35b"
   IMAGE_TAG: latest
+  BASE_BUILD_IMAGE: registry.gitlab.com/tarantool/cartridge/ci-base-ee
   # Enable caching frontend stuff
   npm_config_cache: "$CI_PROJECT_DIR/.npm"
   CYPRESS_CACHE_FOLDER: "$CI_PROJECT_DIR/.cache/Cypress"
