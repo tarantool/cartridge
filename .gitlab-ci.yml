@@ -1,7 +1,8 @@
 variables:
+  GIT_STRATEGY: clone
   ROCK_NAME: cartridge
   BUNDLE_VERSION: "1.10.4-8-g3f2b35b"
-  BASE_BUILD_IMAGE: registry.gitlab.com/tarantool/cartridge
+  IMAGE_TAG: latest
   # Enable caching frontend stuff
   npm_config_cache: "$CI_PROJECT_DIR/.npm"
   CYPRESS_CACHE_FOLDER: "$CI_PROJECT_DIR/.cache/Cypress"
@@ -15,38 +16,63 @@ stages:
 ### Prebuilt base docker image
 ### only if Dockerfile or test requirements changed
 ###
-docker-build-base:
+.docker-build-base: &docker-build-template
   stage: prebuild
   tags:
     - shell
   only:
     changes:
-      - Dockerfile
+      - Dockerfile.base-ee
+      - Dockerfile.base-ce
       - .gitlab-ci.yml
       - test/integration/requirements.txt
   before_script:
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN registry.gitlab.com
   script:
-    - docker pull ${BASE_BUILD_IMAGE}:${BUNDLE_VERSION} || true
+    - docker pull ${CI_REGISTRY_IMAGE}/${IMAGE_NAME}:${IMAGE_TAG} || true
     - >
       docker build
       --label GIT_DESCRIBE=$(git describe --tags)
       --label GIT_COMMIT=$CI_COMMIT_SHA
-      --build-arg BUNDLE_VERSION=${BUNDLE_VERSION}
-      --build-arg DOWNLOAD_TOKEN=${DOWNLOAD_TOKEN}
-      --target build
-      -t ${BASE_BUILD_IMAGE}:${BUNDLE_VERSION}
-      -f Dockerfile
+      --cache-from ${CI_REGISTRY_IMAGE}/${IMAGE_NAME}:${IMAGE_TAG}
+      ${BUILD_ARGS}
+      -t ${CI_REGISTRY_IMAGE}/${IMAGE_NAME}:${IMAGE_TAG}
+      -f ${DOCKER_FILE}
       .
-    - docker push ${BASE_BUILD_IMAGE}:${BUNDLE_VERSION}
+    - docker push ${CI_REGISTRY_IMAGE}/${IMAGE_NAME}:${IMAGE_TAG}
   after_script:
     - docker logout registry.gitlab.com
+
+docker-build-ee:
+  <<: *docker-build-template
+  variables:
+    IMAGE_NAME: &IMAGE_NAME_EE base-ee
+    BUILD_ARGS: >
+      --build-arg DOWNLOAD_TOKEN=${DOWNLOAD_TOKEN}
+      --build-arg BUNDLE_VERSION=${BUNDLE_VERSION}
+    DOCKER_FILE: Dockerfile.base-ee
+
+docker-build-ce-1.10:
+  <<: *docker-build-template
+  variables:
+    IMAGE_NAME: &IMAGE_NAME_CE_1_10 base-ce-1.10
+    BUILD_ARGS: >
+      --build-arg TARANTOOL_BRANCH=1_10
+    DOCKER_FILE: Dockerfile.base-ce
+
+docker-build-ce-2.2:
+  <<: *docker-build-template
+  variables:
+    IMAGE_NAME: &IMAGE_NAME_CE_2_2 base-ce-2.2
+    BUILD_ARGS: >
+      --build-arg TARANTOOL_BRANCH=2_2
+    DOCKER_FILE: Dockerfile.base-ce
 
 ###
 ### Test
 ###
-.enterprise-test: &enterprise-test
-  image: ${BASE_BUILD_IMAGE}:${BUNDLE_VERSION}
+.test-template: &test-template
+  image: ${CI_REGISTRY_IMAGE}/${IMAGE_NAME}:${IMAGE_TAG}
   stage: test
   tags:
     - docker
@@ -58,7 +84,7 @@ docker-build-base:
     # avoid caching cartridge rock
     - tarantoolctl rocks remove cartridge
   cache:
-    key: common-cache-key
+    key: ${IMAGE_NAME}
     paths:
       - build.luarocks/
       - webui/node_modules
@@ -67,14 +93,30 @@ docker-build-base:
       - .cache/Cypress
       - .rocks/
 
-integration:
-  <<: *enterprise-test
-  script:
+integration-ee:
+  <<: *test-template
+  script: &integration-script
     - pytest -v
     - luatest -v -x cypress_*
+  variables:
+    IMAGE_NAME: *IMAGE_NAME_EE
+
+integration-ce-1.10:
+  <<: *test-template
+  script: *integration-script
+  variables:
+    IMAGE_NAME: *IMAGE_NAME_CE_1_10
+  when: manual
+
+integration-ce-2.2:
+  <<: *test-template
+  script: *integration-script
+  variables:
+    IMAGE_NAME: *IMAGE_NAME_CE_2_2
+  when: manual
 
 cypress:
-  <<: *enterprise-test
+  <<: *test-template
   when: manual
   script:
     - luatest -v -p cypress_*
@@ -85,9 +127,11 @@ cypress:
     paths:
       - webui/cypress/screenshots/
       - webui/cypress/videos/
+  variables:
+    IMAGE_NAME: *IMAGE_NAME_EE
 
 misc:
-  <<: *enterprise-test
+  <<: *test-template
   script:
     - luacheck .
     - ./taptest.lua
@@ -103,7 +147,8 @@ misc:
       - release/
       - release-doc/
       - luacov.report.out
-
+  variables:
+    IMAGE_NAME: *IMAGE_NAME_EE
 
 ###
 ### Publish rocks
