@@ -1,7 +1,6 @@
 variables:
   ROCK_NAME: cartridge
   BUNDLE_VERSION: "1.10.4-8-g3f2b35b"
-  IMAGE_BASENAME: registry.gitlab.com/tarantool/cartridge
   IMAGE_TAG: latest
   # Enable caching frontend stuff
   npm_config_cache: "$CI_PROJECT_DIR/.npm"
@@ -40,16 +39,17 @@ stages:
   before_script:
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN registry.gitlab.com
   script:
-    - docker pull ${IMAGE_BASENAME}/${IMAGE_NAME}:${IMAGE_TAG} || true
+    - docker pull ${CI_REGISTRY_IMAGE}/${IMAGE_NAME}:${IMAGE_TAG} || true
     - >
       docker build
       --label GIT_DESCRIBE=$(git describe --tags)
       --label GIT_COMMIT=$CI_COMMIT_SHA
+      --cache-from ${CI_REGISTRY_IMAGE}/${IMAGE_NAME}:${IMAGE_TAG}
       ${BUILD_ARGS}
-      -t ${IMAGE_BASENAME}/${IMAGE_NAME}:${IMAGE_TAG}
+      -t ${CI_REGISTRY_IMAGE}/${IMAGE_NAME}:${IMAGE_TAG}
       -f ${DOCKER_FILE}
       .
-    - docker push ${IMAGE_BASENAME}/${IMAGE_NAME}:${IMAGE_TAG}
+    - docker push ${CI_REGISTRY_IMAGE}/${IMAGE_NAME}:${IMAGE_TAG}
   after_script:
     - docker logout registry.gitlab.com
 
@@ -82,7 +82,7 @@ docker-build-ce-2.2:
 ### Test
 ###
 .test-template: &test-template
-  image: ${IMAGE_BASENAME}/${IMAGE_NAME}:${IMAGE_TAG}
+  image: ${CI_REGISTRY_IMAGE}/${IMAGE_NAME}:${IMAGE_TAG}
   stage: test
   tags:
     - docker
