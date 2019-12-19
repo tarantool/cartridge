@@ -15,21 +15,10 @@ stages:
 ### Prebuilt base docker image
 ### only if Dockerfile or test requirements changed
 ###
-.dind:
-  tags:
-    - molecule-dind
-  services:
-    - name: docker:dind
-      alias: localhost
-  image: docker
-  variables:
-    DOCKER_DRIVER: overlay2
-    DOCKER_TLS_CERTDIR: ''
-    DOCKER_HOST: tcp://docker:2375/
-
 .docker-build-base: &docker-build-template
-  extends: .dind
   stage: prebuild
+  tags:
+    - shell
   only:
     changes:
       - Dockerfile.base-ee
@@ -116,12 +105,14 @@ integration-ce-1.10:
   script: *integration-script
   variables:
     IMAGE_NAME: *IMAGE_NAME_CE_1_10
+  when: manual
 
 integration-ce-2.2:
   <<: *test-template
   script: *integration-script
   variables:
     IMAGE_NAME: *IMAGE_NAME_CE_2_2
+  when: manual
 
 cypress:
   <<: *test-template
