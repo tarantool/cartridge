@@ -139,7 +139,6 @@ local ok, err = errors.pcall('CartridgeCfgError', cartridge.cfg, {
         'mymodule-hidden',
         'mymodule',
     },
-    lsp_enabled = true,
 })
 if not ok then
     log.error('%s', err)

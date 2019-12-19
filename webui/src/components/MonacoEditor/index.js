@@ -7,108 +7,8 @@ import { getModelByFile, setModelByFile } from '../../misc/monacoModelStorage';
 import 'monaco-editor/esm/vs/basic-languages/javascript/javascript.contribution';
 import 'monaco-editor/esm/vs/basic-languages/yaml/yaml.contribution';
 import 'monaco-editor/esm/vs/basic-languages/lua/lua.contribution';
-
 import 'monaco-editor/esm/vs/basic-languages/html/html.contribution';
-import {
-  MonacoServices, MonacoLanguageClient,
-  CloseAction, ErrorAction, createConnection
-} from 'monaco-languageclient'
-import { listen } from 'vscode-ws-jsonrpc';
-import { getLanguageService, TextDocument } from 'vscode-json-languageservice';
-import { MonacoToProtocolConverter, ProtocolToMonacoConverter } from 'monaco-languageclient/lib/monaco-converter';
 import './setDefaultTheme';
-
-const MODEL_URI = 'inmemory://model.json'
-const MONACO_URI = monaco.Uri.parse(MODEL_URI);
-
-function createDocument(model) {
-  return TextDocument.create(MODEL_URI, model.getModeId(), model.getVersionId(), model.getValue());
-}
-
-const m2p = new MonacoToProtocolConverter();
-const p2m = new ProtocolToMonacoConverter();
-
-function createDependencyProposals() {
-  // returning a static list of proposals, not even looking at the prefix (filtering is done by the Monaco editor),
-  // here you could do a server side lookup
-  return [
-    {
-      label: '"lodash"',
-      kind: monaco.languages.CompletionItemKind.Function,
-      documentation: 'The Lodash library exported as Node.js modules.',
-      insertText: '"lodash": "*"'
-    },
-    {
-      label: '"express"',
-      kind: monaco.languages.CompletionItemKind.Function,
-      documentation: 'Fast, unopinionated, minimalist web framework',
-      insertText: '"express": "*"'
-    },
-    {
-      label: '"mkdirp"',
-      kind: monaco.languages.CompletionItemKind.Function,
-      documentation: 'Recursively mkdir, like <code>mkdir -p</code>',
-      insertText: '"mkdirp": "*"'
-    }
-  ];
-}
-
-
-monaco.languages.registerCompletionItemProvider('lua', {
-  provideCompletionItems: function(model, position) {
-    // find out if we are completing a property in the 'dependencies' object.
-    var textUntilPosition = model.getValueInRange({
-      startLineNumber: 1,
-      startColumn: 1,
-      endLineNumber: position.lineNumber,
-      endColumn: position.column,
-    });
-    var match = textUntilPosition.match(/"dependencies"\s*:\s*\{\s*("[^"]*"\s*:\s*"[^"]*"\s*,\s*)*([^"]*)?$/);
-    var suggestions = match ? createDependencyProposals() : [];
-    return {
-      suggestions: suggestions
-    };
-  }
-});
-
-
-function createWebSocket(url: string): WebSocket {
-  const socketOptions = {
-    maxReconnectionDelay: 10000,
-    minReconnectionDelay: 1000,
-    reconnectionDelayGrowFactor: 1.3,
-    connectionTimeout: 10000,
-    maxRetries: Infinity,
-    debug: false
-  };
-  return new WebSocket(url, [], socketOptions);
-}
-const { protocol, hostname, port } = window.location;
-
-const socket = createWebSocket(
-  `${protocol === 'https' ? 'wss' : 'ws' }://${hostname}:${8081}/admin/lsp`
-)
-
-function createLanguageClient(connection) {
-  return new MonacoLanguageClient({
-    name: 'Sample Language Client',
-    clientOptions: {
-      // use a language id as a document selector
-      documentSelector: ['lua'],
-      // disable the default error handler
-      errorHandler: {
-        error: () => ErrorAction.Continue,
-        closed: () => CloseAction.DoNotRestart
-      }
-    },
-    // create a language client connection from the JSON RPC connection on demand
-    connectionProvider: {
-      get: (errorHandler, closeHandler) => {
-        return Promise.resolve(createConnection(connection, errorHandler, closeHandler))
-      }
-    }
-  });
-}
 
 
 const DEF_CURSOR = {}
@@ -269,40 +169,8 @@ export default class MonacoEditor extends React.Component {
         },
         overrideServices
       );
-      MonacoServices.install(this.editor)
 
-      // monaco.languages.registerCompletionItemProvider('lua', {
-      //   provideCompletionItems(model, position, context, token) {
-      //     const document = createDocument(model);
-      //     const wordUntil = model.getWordUntilPosition(position);
-      //     const defaultRange = new monaco.Range(
-      //       position.lineNumber, wordUntil.startColumn, position.lineNumber, wordUntil.endColumn
-      //     );
-      //     const jsonDocument = jsonService.parseJSONDocument(document);
-      //     return jsonService.doComplete(document, m2p.asPosition(
-      //       position.lineNumber, position.column), jsonDocument
-      //     ).then((list) => {
-      //       return p2m.asCompletionResult(list, defaultRange);
-      //     });
-      //   },
-      //
-      //   resolveCompletionItem(model, position, item, token): monaco.languages
-      //   .CompletionItem | monaco.Thenable<monaco.languages.CompletionItem> {
-      //     return jsonService.doResolve(m2p.asCompletionItem(item))
-      //     .then(result => p2m.asCompletionItem(result, item.range));
-      //   }
-      // });
 
-      listen({
-        webSocket: socket,
-        onConnection: connection => {
-          // create and start the language client
-          const languageClient = createLanguageClient(connection);
-          const disposable = languageClient.start();
-          console.log('language client', languageClient)
-          connection.onClose(() => disposable.dispose());
-        }
-      })
       // After initializing monaco editor
       this.editorDidMount(this.editor);
     }
