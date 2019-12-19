@@ -25,11 +25,36 @@ export const getLanguageByFileName = fileName => {
   return null
 }
 
-export const setModelByFile = (file, language, content) => {
-  const model = monaco.editor.createModel(content, language, file)
-  storageMap.set(file, model)
+export const setModelByFile = (fileId: string, language: string, content: string) => {
+  const model = monaco.editor.createModel(content, language, fileId)
+  storageMap.set(fileId, model)
   return model
 }
 
-export const getModelByFile = file => storageMap.get(file)
+//TODO: do we really need this publicly? Can we pass simple fileId to <MonacoEditor>?
+export const getFileIdForMonaco = fileId => `inmemory://${fileId}.lua`;
 
+export const getModelByFile = fileId => storageMap.get(fileId)
+
+export const getModelValueByFile = fileId => {
+  const model = getModelByFile(fileId);
+  if (model) {
+    return model.getValue()
+  }
+  return null;
+}
+
+export const setModelValueByFile = (fileId, value) => {
+  const model = getModelByFile(fileId);
+  if (model) {
+    model.pushEditOperations(
+      [],
+      [
+        {
+          range: model.getFullModelRange(),
+          text: value
+        }
+      ]
+    );
+  }
+}

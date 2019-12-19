@@ -11,6 +11,7 @@ import {
 import { applyFiles, getFiles } from 'src/store/request/files.requests';
 import { baseSaga } from 'src/store/commonRequest';
 import * as R from 'ramda';
+import { getModelValueByFile, getFileIdForMonaco, setModelValueByFile } from 'src/misc/monacoModelStorage';
 
 
 function* applyFilesSaga() {
@@ -22,7 +23,7 @@ function* applyFilesSaga() {
 
     for (let i = 0; i < files.length; i++) {
       const {
-        content,
+        fileId,
         deleted,
         initialContent,
         initialPath,
@@ -30,6 +31,10 @@ function* applyFilesSaga() {
         saved,
         type
       } = files[i];
+
+      // We don't keep all content in Redux store anymore. Get it from Monaco models:
+      const contentIfEdited = getModelValueByFile(getFileIdForMonaco(fileId));
+      const content = contentIfEdited !== null ? contentIfEdited : initialContent;
 
       if (type === 'file') {
         if (initialContent !== '' || saved) { // Filter new files
@@ -59,7 +64,8 @@ function* applyFilesSaga() {
     }
 
     if (updatedFiles.length) {
-      const r = yield call(applyFiles, updatedFiles);
+      yield call(applyFiles, updatedFiles);
+      yield call(fetchFilesSaga);
     }
 
     yield put({ type: PUT_CONFIG_FILES_CONTENT_DONE });
@@ -81,6 +87,15 @@ function* applyFilesSaga() {
 function* fetchFilesSaga() {
   try {
     const response = yield call(getFiles);
+
+    // We don't keep all content in Redux store anymore. Put it to Monaco models:
+    const { files: localFiles } = yield select();
+    localFiles.forEach(localFile => {
+      const responseFile = response.find(f => f.path === localFile.path);
+      if (responseFile) {
+        setModelValueByFile(getFileIdForMonaco(localFile.fileId), responseFile.content);
+      }
+    });
 
     yield put({
       type: FETCH_CONFIG_FILES_DONE,

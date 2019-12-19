@@ -1,6 +1,7 @@
 import {
   FETCH_CONFIG_FILES,
   PUT_CONFIG_FILES_CONTENT,
+  SET_IS_CONTENT_CHANGED,
   CREATE_FILE,
   CREATE_FOLDER,
   RENAME_FILE,
@@ -10,6 +11,11 @@ import {
 } from '../actionTypes'
 
 export const fetchConfigFiles = () => ({ type: FETCH_CONFIG_FILES });
+
+export const setIsContentChanged = (fileId: string, isChanged: boolean) => ({
+  type: SET_IS_CONTENT_CHANGED,
+  payload: { fileId, isChanged }
+})
 
 export const applyFiles = () => ({ type: PUT_CONFIG_FILES_CONTENT });
 

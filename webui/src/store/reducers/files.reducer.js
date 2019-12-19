@@ -5,6 +5,7 @@ import {
   PUT_CONFIG_FILES_CONTENT,
   PUT_CONFIG_FILES_CONTENT_DONE,
   PUT_CONFIG_FILES_CONTENT_FAIL,
+  SET_IS_CONTENT_CHANGED,
   CREATE_FILE,
   CREATE_FOLDER,
   DELETE_FILE,
@@ -13,13 +14,17 @@ import {
   RENAME_FOLDER,
 } from '../actionTypes';
 
+export type ApiFileItem = {
+  path: string,
+  content: string,
+}
+
 export type FileItem = {
   fileId: string,
   path: string,
   initialPath?: string,
   parentPath: string,
   fileName: string,
-  content?: string,
   initialContent?: string,
   loading: boolean,
   saved: boolean,
@@ -48,7 +53,7 @@ const toFileItem = (item): FileItem => {
 
 const ignoreFiles = ['schema.yml']
 
-const enrichFileList = (files: Array<any>) => {
+const enrichFileList = (files: Array<ApiFileItem>, prevState: Array<FileItem> = []) => {
   const pathFileMap = {};
   files.forEach(file => {
     if (ignoreFiles.includes(file.path)) return;
@@ -63,7 +68,15 @@ const enrichFileList = (files: Array<any>) => {
 
       let item = pathFileMap[currentItemPath];
       if (!item) {
-        item = makeFile(parentPath, itemName, isFolder, file.content, { saved: true });
+        const localFile = prevState.find(localFile => localFile.path === currentItemPath);
+
+        const propsToCopy = {};
+        propsToCopy.saved = true;
+        if (localFile) {
+          propsToCopy.fileId = localFile.fileId;
+        }
+
+        item = makeFile(parentPath, itemName, isFolder, file.content, propsToCopy);
         pathFileMap[currentItemPath] = item;
       }
     });
@@ -102,7 +115,9 @@ const getUniqueId = (() => {
   return (): string => `${i++}`;
 })();
 
-const makeFile = (parentPath: string, name: string, isFolder = false, content = '', prevFileProps = {}): FileItem => {
+const makeFile = (
+  parentPath: string, name: string, isFolder = false, initialContent = '', prevFileProps = {}
+): FileItem => {
   const selfPath = `${parentPath}${parentPath ? '/' : ''}${name}`;
   return {
     // different fields for folders and files
@@ -114,18 +129,17 @@ const makeFile = (parentPath: string, name: string, isFolder = false, content = 
         } :
         {
           saved: false,
-          content: content,
-          initialContent: content,
+          initialContent: initialContent,
           loading: false,
           column: 0,
           line: 0,
           scrollPosition: 0,
         }
     ),
+    fileId: getUniqueId(),
     ...prevFileProps,
     parentPath: parentPath,
     path: selfPath,
-    fileId: getUniqueId(),
     fileName: name,
     type: isFolder ? 'folder' : 'file',
   }
@@ -232,35 +246,56 @@ const deleteFolder = (list: Array<FileItem>, path): Array<FileItem> => (
   list.map(file => file.path === path || isDescendant(file.path, path) ? { ...file, deleted: true } : file)
 );
 
-const commitFilesChanges = (list: Array<FileItem>): Array<FileItem> => {
-  const newList = [];
-  list.forEach(file => {
-    //remove deleted files
-    if (file.deleted) {
-      return;
-    }
-    //"commit" edits/renames in all files
-    newList.push({
-      ...file,
-      saved: true,
-      initialContent: file.content,
-      initialPath: file.path,
-    });
-  });
-  return newList;
-};
+// const commitFilesChanges = (list: Array<FileItem>, filesForApi: Array<ApiFileItem> = []): Array<FileItem> => {
+//   const newList = [];
+//   list.forEach(file => {
+//     //remove deleted files
+//     if (file.deleted) {
+//       return;
+//     }
+//
+//     const fileForApi = filesForApi.find(fileForApi => fileForApi.path === file.path);
+//     const initialContent = fileForApi ? fileForApi.content : file.initialContent;
+//     //"commit" edits/renames in all files
+//     newList.push({
+//       ...file,
+//       saved: true,
+//       initialContent,
+//       initialPath: file.path,
+//     });
+//   });
+//   return newList;
+// };
+
+const testState = require('./files.initialState2').default;
 
 export default (state: Array<FileItem> = [], { type, payload }: FSA) => {
   switch (type) {
     case FETCH_CONFIG_FILES_DONE: {
       if (Array.isArray(payload))
-        return enrichFileList(payload)
+        return enrichFileList(payload, state)
       return state
     }
 
-    case PUT_CONFIG_FILES_CONTENT_DONE: {
-      return commitFilesChanges(state);
-    }
+    // case PUT_CONFIG_FILES_CONTENT_DONE: {
+    // //TODO: Should we modify the state
+    // // in case Apply succeeds (PUT_CONFIG_FILES_CONTENT_DONE),
+    // // but consequent Fetch fails (FETCH_CONFIG_FILES_FAIL)?
+    //   return commitFilesChanges(state, payload);
+    // }
+
+    case SET_IS_CONTENT_CHANGED:
+      if (payload) {
+        return updateFile(
+          state,
+          payload.fileId,
+          {
+            saved: !payload.isChanged,
+          },
+          payload,
+        )
+      }
+      break;
 
     case CREATE_FILE:
     case CREATE_FOLDER:

@@ -125,6 +125,8 @@ export default class MonacoEditor extends React.Component {
     editorDidMount: PropTypes.func,
     editorWillMount: PropTypes.func,
     onChange: PropTypes.func,
+    isContentChanged: PropTypes.bool,
+    setIsContentChanged: PropTypes.func,
     styles: PropTypes.object,
     className: PropTypes.string,
     cursor: PropTypes.object
@@ -140,6 +142,8 @@ export default class MonacoEditor extends React.Component {
     editorDidMount: noop,
     editorWillMount: noop,
     onChange: noop,
+    isContentChanged: false,
+    setIsContentChanged: noop,
     styles: {},
     className: '',
     cursor: DEF_CURSOR
@@ -179,36 +183,40 @@ export default class MonacoEditor extends React.Component {
 
   componentDidUpdate(prevProps) {
     const {
-      value, language, fileId, theme, cursor, options
+      initialValue, language, fileId, theme, cursor, options
     } = this.props;
 
     const { editor } = this;
     let model = editor.getModel(fileId)
+
+    //TODO: potential bugs here: when go to other page, then return to this (editor) page,
+    // focus last file content (editor area), and wrong model will be used
+    // (write something, then select other file, then return to this file — and it has old content.)
     if (prevProps.fileId !== fileId) {
       const existedModel = getModelByFile(fileId)
       if (!existedModel) {
-        model = setModelByFile(fileId, language, value)
+        model = setModelByFile(fileId, language, initialValue)
       } else {
         model = existedModel
       }
       editor.setModel(model)
       editor.focus()
     } else {
-      if (this.props.value !== model.getValue()) {
-        this._prevent_trigger_change_event = true;
-        this.editor.pushUndoStop();
-        model.pushEditOperations(
-          [],
-          [
-            {
-              range: model.getFullModelRange(),
-              text: value
-            }
-          ]
-        );
-        this.editor.pushUndoStop();
-        this._prevent_trigger_change_event = false;
-      }
+      // if (this.props.value !== model.getValue()) {
+      //   this._prevent_trigger_change_event = true;
+      //   this.editor.pushUndoStop();
+      //   model.pushEditOperations(
+      //     [],
+      //     [
+      //       {
+      //         range: model.getFullModelRange(),
+      //         text: value
+      //       }
+      //     ]
+      //   );
+      //   this.editor.pushUndoStop();
+      //   this._prevent_trigger_change_event = false;
+      // }
     }
 
 
@@ -318,7 +326,22 @@ export default class MonacoEditor extends React.Component {
 
     this._subscription = editor.onDidChangeModelContent(() => {
       if (!this._prevent_trigger_change_event) {
-        this.props.onChange(editor.getValue());
+        const currentValue = editor.getValue();
+
+        const {
+          initialValue,
+          isContentChanged: wasChanged,
+          setIsContentChanged,
+        } = this.props;
+
+        const isChangedNow = currentValue !== initialValue;
+
+        // signal when content was changed and returns to initial value, or vise versa
+        if (!wasChanged && isChangedNow) {
+          setIsContentChanged(true);
+        } else if (wasChanged && !isChangedNow) {
+          setIsContentChanged(false);
+        }
       }
     });
   }

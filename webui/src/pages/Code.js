@@ -32,9 +32,9 @@ import {
   fetchConfigFiles,
   renameFolder,
   renameFile,
-  updateFileContent
+  setIsContentChanged,
 } from 'src/store/actions/files.actions';
-import { getLanguageByFileName } from 'src/misc/monacoModelStorage'
+import { getLanguageByFileName, getFileIdForMonaco } from 'src/misc/monacoModelStorage'
 import type { TreeFileItem } from 'src/store/selectors/filesSelectors';
 import type { FileItem } from 'src/store/reducers/files.reducer';
 import { type State } from 'src/store/rootReducer';
@@ -280,9 +280,7 @@ class Code extends React.Component<CodeProps, CodeState> {
     }
   }
 
-  _throttledContentUpdatersByFileId = {};
-
-  handleContentChange = (content: string) => {
+  handleSetIsContentChanged = (isChanged: boolean) => {
     const {
       selectedFile,
       dispatch
@@ -291,20 +289,9 @@ class Code extends React.Component<CodeProps, CodeState> {
     if (!selectedFile) {
       return;
     }
-
     const fileId = selectedFile.fileId;
 
-    // each file should have its own (separate) updater
-    let throttledUpdater = this._throttledContentUpdatersByFileId[fileId];
-    if (!throttledUpdater) {
-      throttledUpdater = throttle(
-        v => dispatch(updateFileContent(fileId, v)),
-        2000,
-        { leading: false }
-      )
-      this._throttledContentUpdatersByFileId[fileId] = throttledUpdater;
-    }
-    throttledUpdater(content);
+    dispatch(setIsContentChanged(fileId, isChanged));
   }
 
   render() {
@@ -392,9 +379,10 @@ class Code extends React.Component<CodeProps, CodeState> {
               ...options,
               readOnly: !selectedFile
             }}
-            fileId={selectedFile ? `inmemory://${selectedFile.fileId}.lua` : null}
-            value={selectedFile ? selectedFile.content : 'Select or add a file'}
-            onChange={this.handleContentChange}
+            fileId={selectedFile ? getFileIdForMonaco(selectedFile.fileId) : null}
+            initialValue={selectedFile ? selectedFile.initialContent : 'Select or add a file'}
+            isContentChanged={selectedFile ? !selectedFile.saved : null}
+            setIsContentChanged={this.handleSetIsContentChanged}
           />
         </div>
         {operableFile && typeof operableFile.type === 'string' && (

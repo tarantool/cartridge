@@ -121,7 +121,7 @@ describe('Creating', () => {
         path: 'file.ext', fileName: 'file.ext',
         parentPath: '',
         type: 'file',
-        content: '', initialContent: '',
+        initialContent: '',
         loading: false, saved: false,
         line: 0, column: 0, scrollPosition: 0,
       },
@@ -143,7 +143,7 @@ describe('Creating', () => {
         path: 'folder/folder/newFile.ext', fileName: 'newFile.ext',
         parentPath: parentPath,
         type: 'file',
-        content: '', initialContent: '',
+        initialContent: '',
         loading: false, saved: false,
         line: 0, column: 0, scrollPosition: 0,
       }
@@ -154,7 +154,7 @@ describe('Creating', () => {
     const presentFile = {
       path: 'folder/file.ext', fileName: 'file.ext',
       type: 'file',
-      content: 'Some changed content', initialContent: 'Some initial content',
+      initialContent: 'Some initial content',
       loading: false, saved: false,
       line: 10, column: 20, scrollPosition: 30,
     };
@@ -170,7 +170,7 @@ describe('Creating', () => {
         path: 'newFile.ext', fileName: 'newFile.ext',
         parentPath: parentPath,
         type: 'file',
-        content: '', initialContent: '',
+        initialContent: '',
         loading: false, saved: false,
         line: 0, column: 0, scrollPosition: 0,
       }
