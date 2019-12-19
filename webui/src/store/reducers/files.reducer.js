@@ -1,14 +1,10 @@
 // @flow
 
 import {
-  FETCH_CONFIG_FILE_CONTENT,
-  FETCH_CONFIG_FILE_CONTENT_DONE,
-  FETCH_CONFIG_FILE_CONTENT_FAIL,
   FETCH_CONFIG_FILES_DONE,
   PUT_CONFIG_FILES_CONTENT,
   PUT_CONFIG_FILES_CONTENT_DONE,
   PUT_CONFIG_FILES_CONTENT_FAIL,
-  UPDATE_CONTENT,
   CREATE_FILE,
   CREATE_FOLDER,
   DELETE_FILE,
@@ -94,17 +90,6 @@ const updateFile = (
   });
   return updatedItems
 }
-
-const pickUnusedFileName = (list: Array<FileItem>, parentPath, name) => {
-  const siblings = list.filter(file => isDescendant(file.path, parentPath));
-  let possibleName = `${name}`;
-
-  // TODO: if path is converted from name, we should check path uniquity separately
-  while (siblings.some(file => file.fileName === possibleName)) {
-    possibleName = `${possibleName} NEW`;
-  }
-  return possibleName;
-};
 
 const isDescendant = (ownPath: string, parentPath: string) => {
   return ownPath.substring(0, parentPath.length + 1) === `${parentPath}/`;
@@ -272,47 +257,9 @@ export default (state: Array<FileItem> = [], { type, payload }: FSA) => {
         return enrichFileList(payload)
       return state
     }
-    case FETCH_CONFIG_FILE_CONTENT: {
-      if (payload && typeof (payload.fileId) === 'string')
-        return updateFile(state, payload.fileId, { loading: true })
-      return state
-    }
-    case FETCH_CONFIG_FILE_CONTENT_DONE: {
-      if (payload && typeof (payload.fileId) === 'string' && typeof (payload.content)) {
-        return updateFile(
-          state,
-          payload.fileId,
-          {
-            loading: false,
-            content: payload.content,
-            initialContent: payload.content
-          }
-        )
-      }
-      return state
-    }
-    case FETCH_CONFIG_FILE_CONTENT_FAIL: {
-      if (payload && typeof (payload.fileId) === 'string')
-        return updateFile(state, payload.fileId, { loading: false })
-      return state
-    }
 
     case PUT_CONFIG_FILES_CONTENT_DONE: {
       return commitFilesChanges(state);
-    }
-
-    case UPDATE_CONTENT: {
-      if (payload && typeof (payload.fileId) === 'string' && typeof (payload.content) === 'string') {
-        return updateFile(
-          state,
-          payload.fileId,
-          {
-            content: payload.content,
-            saved: (item, payload) => item.initialContent === payload.content,
-          },
-          payload,
-        )
-      }
     }
 
     case CREATE_FILE:
