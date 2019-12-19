@@ -90,6 +90,29 @@ tarantoolctl rocks install ldoc --server=http://rocks.moonscript.org
 tarantoolctl rocks make BUILD_DOC=YES
 ```
 
+### Runnig demo
+
+At first, you need to install `cartridge-cli`
+
+```sh
+tarantoolctl rocks install cartridge-cli
+```
+
+Then you need to start application:
+
+```sh
+.rocks/bin/cartridge start
+```
+
+If you want to run application with another settings, you can specify `script` option:
+
+```sh
+.rocks/bin/cartridge start --script path_to_script
+```
+
+For more detailed information about `cartridge-cli` read [a link](https://github.com/tarantool/cartridge-cli#readme)
+
+
 ### Running tests
 
 First, install testing dependencies:
