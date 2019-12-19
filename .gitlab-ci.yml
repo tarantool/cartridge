@@ -1,4 +1,5 @@
 variables:
+  GIT_STRATEGY: clone
   ROCK_NAME: cartridge
   BUNDLE_VERSION: "1.10.4-8-g3f2b35b"
   IMAGE_TAG: latest
