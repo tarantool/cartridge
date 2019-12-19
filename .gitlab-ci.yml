@@ -1,13 +1,8 @@
 variables:
+  GIT_STRATEGY: clone
   ROCK_NAME: cartridge
-  BUNDLE_VERSION_ENTERPRICE_1_10: "1.10.4-8-g3f2b35b"
-  IMAGE_TAG_OPENSOURCE_1_10: "opensource1_10"
-  IMAGE_TAG_OPENSOURCE_2_2: "opensource2_2"
-  TARANTOOL_VERSION_1_10: "1_10"
-  TARANTOOL_VERSION_2_2: "2_2"
-  DOCKER_FILE_ENTERPRICE: "Dockerfile"
-  DOCKER_FILE_OPENSOURCE: "DockerfileOpenSource"
-  BASE_BUILD_IMAGE: registry.gitlab.com/tarantool/cartridge
+  BUNDLE_VERSION: "1.10.4-8-g3f2b35b"
+  IMAGE_TAG: latest
   # Enable caching frontend stuff
   npm_config_cache: "$CI_PROJECT_DIR/.npm"
   CYPRESS_CACHE_FOLDER: "$CI_PROJECT_DIR/.cache/Cypress"
@@ -21,69 +16,63 @@ stages:
 ### Prebuilt base docker image
 ### only if Dockerfile or test requirements changed
 ###
-.docker-build-template: &docker-build-template
+.docker-build-base: &docker-build-template
   stage: prebuild
   tags:
     - shell
+  only:
+    changes:
+      - Dockerfile.base-ee
+      - Dockerfile.base-ce
+      - .gitlab-ci.yml
+      - test/integration/requirements.txt
   before_script:
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN registry.gitlab.com
   script:
-    - docker pull ${BASE_BUILD_IMAGE}:${IMAGE_TAG} || true
+    - docker pull ${CI_REGISTRY_IMAGE}/${IMAGE_NAME}:${IMAGE_TAG} || true
     - >
       docker build
       --label GIT_DESCRIBE=$(git describe --tags)
       --label GIT_COMMIT=$CI_COMMIT_SHA
-      --build-arg VERSION=${BUILD_VERSION}
-      --build-arg DOWNLOAD_TOKEN=${DOWNLOAD_TOKEN}
-      --target build
-      -t ${BASE_BUILD_IMAGE}:${IMAGE_TAG}
+      --cache-from ${CI_REGISTRY_IMAGE}/${IMAGE_NAME}:${IMAGE_TAG}
+      ${BUILD_ARGS}
+      -t ${CI_REGISTRY_IMAGE}/${IMAGE_NAME}:${IMAGE_TAG}
       -f ${DOCKER_FILE}
       .
-    - docker push ${BASE_BUILD_IMAGE}:${IMAGE_TAG}
+    - docker push ${CI_REGISTRY_IMAGE}/${IMAGE_NAME}:${IMAGE_TAG}
   after_script:
     - docker logout registry.gitlab.com
 
-docker-build-enterprice1_10:
+docker-build-ee:
   <<: *docker-build-template
-  only:
-    changes:
-        - ${DOCKER_FILE_ENTERPRICE}
-        - .gitlab-ci.yml
-        - test/integration/requirements.txt
   variables:
-    BUILD_VERSION: ${BUNDLE_VERSION_ENTERPRICE_1_10}
-    IMAGE_TAG: ${BUNDLE_VERSION_ENTERPRICE_1_10}
-    DOCKER_FILE: ${DOCKER_FILE_ENTERPRICE}
+    IMAGE_NAME: &IMAGE_NAME_EE base-ee
+    BUILD_ARGS: >
+      --build-arg DOWNLOAD_TOKEN=${DOWNLOAD_TOKEN}
+      --build-arg BUNDLE_VERSION=${BUNDLE_VERSION}
+    DOCKER_FILE: Dockerfile.base-ee
 
-docker-build-opensource1_10:
+docker-build-ce-1.10:
   <<: *docker-build-template
-  only:
-    changes:
-        - ${DOCKER_FILE_ENTERPRICE}
-        - .gitlab-ci.yml
-        - test/integration/requirements.txt
   variables:
-    BUILD_VERSION: ${TARANTOOL_VERSION_1_10}
-    IMAGE_TAG: ${IMAGE_TAG_OPENSOURCE_1_10}
-    DOCKER_FILE: ${DOCKER_FILE_OPENSOURCE}
+    IMAGE_NAME: &IMAGE_NAME_CE_1_10 base-ce-1.10
+    BUILD_ARGS: >
+      --build-arg TARANTOOL_BRANCH=1_10
+    DOCKER_FILE: Dockerfile.base-ce
 
-docker-build-opensource2_2:
+docker-build-ce-2.2:
   <<: *docker-build-template
-  only:
-    changes:
-        - ${DOCKER_FILE_ENTERPRICE}
-        - .gitlab-ci.yml
-        - test/integration/requirements.txt
   variables:
-    BUILD_VERSION: ${TARANTOOL_VERSION_2_2}
-    IMAGE_TAG: ${IMAGE_TAG_OPENSOURCE_2_2}
-    DOCKER_FILE: ${DOCKER_FILE_OPENSOURCE}
+    IMAGE_NAME: &IMAGE_NAME_CE_2_2 base-ce-2.2
+    BUILD_ARGS: >
+      --build-arg TARANTOOL_BRANCH=2_2
+    DOCKER_FILE: Dockerfile.base-ce
 
 ###
 ### Test
 ###
 .test-template: &test-template
-  image: ${BASE_BUILD_IMAGE}:${IMAGE_TAG}
+  image: ${CI_REGISTRY_IMAGE}/${IMAGE_NAME}:${IMAGE_TAG}
   stage: test
   tags:
     - docker
@@ -95,7 +84,7 @@ docker-build-opensource2_2:
     # avoid caching cartridge rock
     - tarantoolctl rocks remove cartridge
   cache:
-    key: ${IMAGE_TAG}
+    key: ${IMAGE_NAME}
     paths:
       - build.luarocks/
       - webui/node_modules
@@ -104,26 +93,44 @@ docker-build-opensource2_2:
       - .cache/Cypress
       - .rocks/
 
-.integration-template: &integration-template
+integration-ee:
   <<: *test-template
-  script:
+  script: &integration-script
     - pytest -v
     - luatest -v -x cypress_*
+  variables:
+    IMAGE_NAME: *IMAGE_NAME_EE
 
-.cypress-template: &cypress-template
+integration-ce-1.10:
+  <<: *test-template
+  script: *integration-script
+  variables:
+    IMAGE_NAME: *IMAGE_NAME_CE_1_10
+  when: manual
+
+integration-ce-2.2:
+  <<: *test-template
+  script: *integration-script
+  variables:
+    IMAGE_NAME: *IMAGE_NAME_CE_2_2
+  when: manual
+
+cypress:
   <<: *test-template
   when: manual
   script:
     - luatest -v -p cypress_*
   artifacts:
-    name: "${CI_COMMIT_REF_NAME}.${CYPRESS_EXT}"
+    name: "${CI_COMMIT_REF_NAME}.cypress"
     when: always
     expire_in: 1 week
     paths:
       - webui/cypress/screenshots/
       - webui/cypress/videos/
+  variables:
+    IMAGE_NAME: *IMAGE_NAME_EE
 
-.misc: &misc-template
+misc:
   <<: *test-template
   script:
     - luacheck .
@@ -132,7 +139,7 @@ docker-build-opensource2_2:
     - ./check-flow-graphql.sh
     - ./release.sh
   artifacts:
-    name: "${CI_COMMIT_REF_NAME}.${MISC_EXT}"
+    name: "${CI_COMMIT_REF_NAME}.misc"
     when: on_success
     expire_in: 1 week
     paths:
@@ -140,33 +147,8 @@ docker-build-opensource2_2:
       - release/
       - release-doc/
       - luacov.report.out
-
-integration-enterprice1_10:
-  <<: *integration-template
   variables:
-    IMAGE_TAG: ${BUNDLE_VERSION_ENTERPRICE_1_10}
-
-cypress-enterprice1_10:
-  <<: *cypress-template
-  variables:
-    IMAGE_TAG: ${BUNDLE_VERSION_ENTERPRICE_1_10}
-    CYPRESS_EXT: "cypress"
-
-misc-enterprice1_10:
-  <<: *misc-template
-  variables:
-    IMAGE_TAG: ${BUNDLE_VERSION_ENTERPRICE_1_10}
-    MISC_EXT: "misc"
-
-integration-opensource1_10:
-  <<: *integration-template
-  variables:
-    IMAGE_TAG: ${IMAGE_TAG_OPENSOURCE_1_10}
-
-integration-opensource2_2:
-  <<: *integration-template
-  variables:
-    IMAGE_TAG: ${IMAGE_TAG_OPENSOURCE_2_2}
+    IMAGE_NAME: *IMAGE_NAME_EE
 
 ###
 ### Publish rocks
@@ -196,4 +178,4 @@ publish-release:
       https://${ROCKS_USERNAME}:${ROCKS_PASSWORD}@rocks.tarantool.org
     - curl --fail -X PUT -F "rockspec=@${ROCK_NAME}-${CI_COMMIT_TAG}-1.all.rock"
       https://${ROCKS_USERNAME}:${ROCKS_PASSWORD}@rocks.tarantool.org
-  dependencies: ["misc-enterprice1_10"]
+  dependencies: ["misc"]

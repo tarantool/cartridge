@@ -1,7 +1,6 @@
-FROM centos:7 as build
+FROM centos:7
 
-ARG VERSION
-ARG DOWNLOAD_TOKEN
+ARG TARANTOOL_BRANCH
 
 RUN set -x &&\
     yum -y install https://centos7.iuscommunity.org/ius-release.rpm &&\
@@ -14,12 +13,8 @@ RUN npm install graphql-cli@3.0.14
 ENV PATH="${PWD}/node_modules/.bin:${PATH}"
 
 RUN set -x &&\
-    echo "Using tarantool-enterprise-bundle ${VERSION}" &&\
-    curl -O -L https://tarantool:${DOWNLOAD_TOKEN}@download.tarantool.io/enterprise/tarantool-enterprise-bundle-${VERSION}.tar.gz &&\
-    tar -xzf tarantool-enterprise-bundle-${VERSION}.tar.gz &&\
-    rm -rf tarantool-enterprise-bundle-${VERSION}.tar.gz
-
-ENV PATH="${PWD}/tarantool-enterprise:${PATH}"
+    curl -s https://packagecloud.io/install/repositories/tarantool/${TARANTOOL_BRANCH}/script.rpm.sh | bash &&\
+    yum -y install tarantool tarantool-devel
 
 RUN yum clean all &&\
     rm -rf /var/cache &&\
