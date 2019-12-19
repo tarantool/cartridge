@@ -7,67 +7,94 @@ local log = require('log')
 local test_helper = require('test.helper')
 local helpers = require('cartridge.test-helpers')
 
-g.before_all = function()
+g.setup = function()
     g.cluster = helpers.Cluster:new({
         datadir = fio.tempdir(),
         server_command = test_helper.server_command,
-        replicasets = {
-            {
-                uuid = helpers.uuid('a'),
-                roles = {'myrole'},
-                servers = {
-                    {
-                        alias = 'master',
-                        http_port = 8081,
-                        advertise_port = 13301,
-                        instance_uuid = helpers.uuid('a', 'a', 1)
-                    },
-                    {
-                        alias = 'slave',
-                        http_port = 8082,
-                        advertise_port = 13302,
-                        instance_uuid = helpers.uuid('a', 'a', 2)
-                    }
-                },
+        replicasets = {{
+            uuid = helpers.uuid('a'),
+            roles = {'myrole'},
+            servers = {{
+                alias = 'master',
+                instance_uuid = helpers.uuid('a', 'a', 1)
             },
-        },
+            {
+                alias = 'slave',
+                instance_uuid = helpers.uuid('a', 'a', 2)
+            }},
+        }},
     })
     g.cluster:start()
-end
 
-g.after_all = function()
-    g.cluster:stop()
-    fio.rmtree(g.cluster.datadir)
-end
-
-function g.test_failover()
-    g.cluster:server('master'):graphql({query = [[
+    g.cluster.main_server:graphql({query = [[
         mutation {
             cluster { failover(enabled: true) }
         }
     ]]})
     log.warn('Failover enabled')
 
-    g.cluster:server('slave').net_box:eval([[
+    g.master = g.cluster:server('master')
+    g.slave = g.cluster:server('slave')
+end
+
+g.teardown = function()
+    g.cluster:stop()
+    fio.rmtree(g.cluster.datadir)
+end
+
+function g.test_failover()
+    local function _ro_map()
+        local resp = g.cluster:server('slave'):graphql({query = [[{
+            servers { alias boxinfo { general {ro} } }
+        }]]})
+
+        local ret = {}
+        for _, srv in pairs(resp.data.servers) do
+            if srv.boxinfo == nil then
+                ret[srv.alias] = box.NULL
+            else
+                ret[srv.alias] = srv.boxinfo.general.ro
+            end
+        end
+
+        return ret
+    end
+
+    --------------------------------------------------------------------
+    g.slave.net_box:eval([[
         assert(package.loaded['mymodule'].is_master() == false)
     ]])
+    t.assert_equals(_ro_map(), {
+        master = false,
+        slave = true,
+    })
 
-    g.cluster:server('master').net_box:eval([[
-        assert(box.cfg.read_only == false)
-    ]])
+    --------------------------------------------------------------------
+    g.master:stop()
+    log.warn('Master killed')
 
-    g.cluster:server('slave').net_box:eval([[
-        assert(box.cfg.read_only == true)
-    ]])
-
-    g.cluster:server('master'):stop()
     t.helpers.retrying({}, function()
-        g.cluster:server('slave').net_box:eval([[
+        g.slave.net_box:eval([[
             assert(package.loaded['mymodule'].is_master() == true)
         ]])
     end)
+    t.assert_equals(_ro_map(), {
+        master = box.NULL,
+        slave = false,
+    })
 
-    g.cluster:server('slave').net_box:eval([[
-        assert(box.cfg.read_only == false)
-    ]])
+    --------------------------------------------------------------------
+    log.warn('Restarting master')
+    g.master:start()
+    g.cluster:retrying({}, function() g.master:connect_net_box() end)
+
+    t.helpers.retrying({}, function()
+        g.slave.net_box:eval([[
+            assert(package.loaded['mymodule'].is_master() == false)
+        ]])
+    end)
+    t.assert_equals(_ro_map(), {
+        master = false,
+        slave = true,
+    })
 end

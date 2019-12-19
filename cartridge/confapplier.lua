@@ -44,11 +44,7 @@ vars:new('workdir')
 vars:new('instance_uuid')
 vars:new('replicaset_uuid')
 
-vars:new('failover_fiber', nil)
-vars:new('failover_cond', nil)
-
 vars:new('box_opts', nil)
-vars:new('boot_opts', nil)
 
 local state_transitions = {
 -- init()
