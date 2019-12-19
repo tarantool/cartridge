@@ -118,7 +118,6 @@ integration-ce-2.2:
 cypress:
   <<: *test-template
   when: manual
-  allow_failure: false
   script:
     - luatest -v -p cypress_*
   artifacts:
