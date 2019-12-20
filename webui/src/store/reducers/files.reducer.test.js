@@ -1,4 +1,5 @@
 import reducer from "./files.reducer";
+import type { FileItem } from './files.reducer'
 import {
   createFile,
   createFolder,
@@ -8,6 +9,11 @@ import {
   deleteFolder,
 } from "src/store/actions/files.actions";
 
+const checkFileId = (file: FileItem) => {
+  if (file.type === 'file' && !file.fileId) {
+    throw new Error('no file id for file')
+  }
+}
 
 describe('Deleting files', () => {
   const state = [
@@ -112,12 +118,11 @@ describe('Renaming files', () => {
 describe('Creating', () => {
   it('creates the first file in root', () => {
     const emptyState = [];
-
+    const state = reducer(emptyState, createFile({ name: 'file.ext', parentPath: '' }))
     expect(
-      reducer(emptyState, createFile({ name: 'file.ext', parentPath: '' }))
-    ).toEqual([
+      state
+    ).toMatchObject([
       {
-        fileId: '1',
         path: 'file.ext', fileName: 'file.ext',
         parentPath: '',
         type: 'file',
@@ -126,6 +131,7 @@ describe('Creating', () => {
         line: 0, column: 0, scrollPosition: 0,
       },
     ]);
+    state.forEach(checkFileId)
   });
 
   it('creates a file in a folder', () => {
@@ -134,12 +140,12 @@ describe('Creating', () => {
     ];
 
     const parentPath = 'folder/folder';
+    const state = reducer(initialState, createFile({ parentPath, name: 'newFile.ext' }))
     expect(
-      reducer(initialState, createFile({ parentPath, name: 'newFile.ext' }))
-    ).toEqual([
+      state
+    ).toMatchObject([
       { path: 'folder/folder/file.ext' },
       {
-        fileId: '1',
         path: 'folder/folder/newFile.ext', fileName: 'newFile.ext',
         parentPath: parentPath,
         type: 'file',
@@ -148,6 +154,7 @@ describe('Creating', () => {
         line: 0, column: 0, scrollPosition: 0,
       }
     ]);
+    state.forEach(checkFileId)
   });
 
   it('when creating a new file, keeps other files\' properties', () => {

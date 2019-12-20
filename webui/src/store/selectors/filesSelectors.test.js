@@ -4,19 +4,73 @@ import {
 
 describe('selectFileTree', () => {
   it('correctly forms tree (files at root, folder, subfolders)', () => {
-    const state = [
-      { path: 'rootFile.ext',           parentPath: '',             type: 'file' },
-      { path: 'rootFile2.ext',          parentPath: '',             type: 'file' },
-      { path: 'rootFolder',             parentPath: '',             type: 'folder' },
-      { path: 'rootFolder/file.ext',    parentPath: 'rootFolder',   type: 'file' },
-      { path: 'rootFolder2',            parentPath: '',             type: 'folder' },
-      { path: 'rootFolder2/file1.ext',  parentPath: 'rootFolder2',  type: 'file' },
-      { path: 'rootFolder2/file2.ext',  parentPath: 'rootFolder2',  type: 'file' },
-      { path: 'rootFolder2/subFolder',  parentPath: 'rootFolder2',  type: 'folder' },
-      { path: 'rootFolder2/subFolder/file.ext', parentPath: 'rootFolder2', type: 'file' },
-      { path: 'rootFolder2/subFolder2', parentPath: 'rootFolder2',  type: 'folder' },
-      { path: 'rootFolder2/subFolder2/file.ext', parentPath: 'rootFolder2/subFolder2', type: 'file' },
-    ];
+    const state = [{
+      'path': 'rootFile.ext',
+      'parentPath': '',
+      'type': 'file',
+      'fileId': 'rootFile.ext',
+      'fileName': 'rootFile.ext'
+    }, {
+      'path': 'rootFile2.ext',
+      'parentPath': '',
+      'type': 'file',
+      'fileId': 'rootFile2.ext',
+      'fileName': 'rootFile2.ext'
+    }, {
+      'path': 'rootFolder',
+      'parentPath': '',
+      'type': 'folder',
+      'fileId': 'rootFolder',
+      'fileName': 'rootFolder'
+    }, {
+      'path': 'rootFolder/file.ext',
+      'parentPath': 'rootFolder',
+      'type': 'file',
+      'fileId': 'rootFolder/file.ext',
+      'fileName': 'rootFolder/file.ext'
+    }, {
+      'path': 'rootFolder2',
+      'parentPath': '',
+      'type': 'folder',
+      'fileId': 'rootFolder2',
+      'fileName': 'rootFolder2'
+    }, {
+      'path': 'rootFolder2/file1.ext',
+      'parentPath': 'rootFolder2',
+      'type': 'file',
+      'fileId': 'rootFolder2/file1.ext',
+      'fileName': 'rootFolder2/file1.ext'
+    }, {
+      'path': 'rootFolder2/file2.ext',
+      'parentPath': 'rootFolder2',
+      'type': 'file',
+      'fileId': 'rootFolder2/file2.ext',
+      'fileName': 'rootFolder2/file2.ext'
+    }, {
+      'path': 'rootFolder2/subFolder',
+      'parentPath': 'rootFolder2',
+      'type': 'folder',
+      'fileId': 'rootFolder2/subFolder',
+      'fileName': 'rootFolder2/subFolder'
+    }, {
+      'path': 'rootFolder2/subFolder/file.ext',
+      'parentPath': 'rootFolder2',
+      'type': 'file',
+      'fileId': 'rootFolder2/subFolder/file.ext',
+      'fileName': 'rootFolder2/subFolder/file.ext'
+    }, {
+      'path': 'rootFolder2/subFolder2',
+      'parentPath': 'rootFolder2',
+      'type': 'folder',
+      'fileId': 'rootFolder2/subFolder2',
+      'fileName': 'rootFolder2/subFolder2'
+    }, {
+      'path': 'rootFolder2/subFolder2/file.ext',
+      'parentPath': 'rootFolder2/subFolder2',
+      'type': 'file',
+      'fileId': 'rootFolder2/subFolder2/file.ext',
+      'fileName': 'rootFolder2/subFolder2/file.ext'
+    }];
 
     expect(selectFileTree(state)).toMatchObject([
       {
@@ -77,18 +131,19 @@ describe('selectFileTree', () => {
 
   it('duplicate files are not repeated', () => {
     const stateWithDuplicateFiles = [
-      { path: 'duplicate/files.ext' },
-      { path: 'duplicate/files.ext' },
+      { type: 'folder', path: 'duplicate', parentPath: '', deleted: false},
+      { type: 'file', path: 'duplicate/files.ext', deleted: false, parentPath: 'duplicate' },
+      { type: 'file', path: 'duplicate/files.ext', deleted: false, parentPath: 'duplicate' },
     ];
 
     expect(selectFileTree(stateWithDuplicateFiles)).toMatchObject([
       {
-        fileId: 'duplicate', path: 'duplicate',
-        fileName: 'duplicate', type: 'folder',
+        path: 'duplicate',
+        type: 'folder',
         items: [
           {
-            fileId: 'duplicate/files.ext', path: 'duplicate/files.ext',
-            fileName: 'files.ext', type: 'file',
+            path: 'duplicate/files.ext',
+            type: 'file',
           }
         ]
       },
@@ -97,32 +152,52 @@ describe('selectFileTree', () => {
 
   it('keeps files\' properties', () => {
     const state = [
-      { path: 'rootFile.ext' },
       {
-        path: 'folder/file.ext', fileName: 'file.ext',
+        path: 'rootFile.ext',
+        initialPath: 'rootFile.ext',
         type: 'file',
-        content: 'Some changed content', initialContent: 'Some initial content',
-        loading: false, saved: false,
+        deleted: false,
+        saved: true,
+        parentPath: '',
+      },
+      {
+        path: 'folder/file.ext',
+        parentPath: 'folder',
+        fileName: 'file.ext',
+        type: 'file',
+        content: 'Some changed content',
+        initialContent: 'Some initial content',
+        loading: false,
+        saved: false,
+        deleted: false,
         line: 10, column: 20, scrollPosition: 30,
       },
-      { path: 'folder/file2.ext' },
+      { path: 'folder/file2.ext', parentPath: 'folder', deleted: false, type: 'file' },
+      {
+        path: 'folder',
+        type: 'folder'
+      },
     ];
 
     expect(selectFileTree(state)).toMatchObject([
       {
-        fileId: 'rootFile.ext', path: 'rootFile.ext',
-        fileName: 'rootFile.ext', type: 'file',
-      },
-      {
-        fileId: 'folder', path: 'folder',
-        fileName: 'folder', type: 'folder',
+        path: 'folder',
+        type: 'folder',
         items: [
-          state[1],
+          {...state[1], items: []},
           {
-            fileId: 'folder/file2.ext', path: 'folder/file2.ext',
-            fileName: 'file2.ext', type: 'file',
+            parentPath: 'folder',
+            path: 'folder/file2.ext',
+            deleted: false,
+            type: 'file',
+            items: [],
           }
         ]
+      },
+      {
+        path: 'rootFile.ext',
+        type: 'file',
+        items: [],
       },
     ]);
   });
