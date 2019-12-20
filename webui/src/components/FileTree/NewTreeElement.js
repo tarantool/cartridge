@@ -143,7 +143,14 @@ export class NewTreeElement extends React.Component<NewTreeElementProps, NewTree
           title={initialValue}
         >
           <IconChevron
-            className={cx(styles.iconChevron, { [styles.iconChevronFile]: type !== 'folder' || !children })}
+            className={cx(
+              styles.iconChevron,
+              {
+                [styles.iconChevronFile]: type !== 'folder'
+                  || !children
+                  || (children instanceof Array && !children.length)
+              }
+            )}
             direction={expanded ? 'down' : 'right'}
           />
           <Icon className={styles.fileIcon} opened={expanded} />
