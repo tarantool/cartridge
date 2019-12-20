@@ -1,34 +1,34 @@
 import {
-  validateFileNameExtention,
+  validateFileNameExtension,
 } from './files.utils';
 
-describe('validateFileNameExtention', () => {
+describe('validateFileNameExtension', () => {
   const itAllowsExtention = (ext) => it(`allows .${ext}`, () => {
-    expect(validateFileNameExtention(`a.${ext}`)).toEqual(true);
-    expect(validateFileNameExtention(`1.${ext}`)).toEqual(true);
-    expect(validateFileNameExtention(`..${ext}`)).toEqual(true);
-    expect(validateFileNameExtention(`-.${ext}`)).toEqual(true);
-    expect(validateFileNameExtention(` .${ext}`)).toEqual(true);
-    expect(validateFileNameExtention(`long_file-name.${ext}`)).toEqual(true);
+    expect(validateFileNameExtension(`a.${ext}`)).toEqual(true);
+    expect(validateFileNameExtension(`1.${ext}`)).toEqual(true);
+    expect(validateFileNameExtension(`..${ext}`)).toEqual(true);
+    expect(validateFileNameExtension(`-.${ext}`)).toEqual(true);
+    expect(validateFileNameExtension(` .${ext}`)).toEqual(true);
+    expect(validateFileNameExtension(`long_file-name.${ext}`)).toEqual(true);
   });
   itAllowsExtention('lua');
   itAllowsExtention('yml');
 
   it('allows empty names (with extention)', () => {
-    expect(validateFileNameExtention('.lua')).toEqual(true);
-    expect(validateFileNameExtention('.yml')).toEqual(true);
+    expect(validateFileNameExtension('.lua')).toEqual(true);
+    expect(validateFileNameExtension('.yml')).toEqual(true);
   });
 
   it('tests only last extention', () => {
-    expect(validateFileNameExtention('name.yml.sh')).toEqual(false);
-    expect(validateFileNameExtention('name.sh.yml')).toEqual(true);
-    expect(validateFileNameExtention('.sh.lua.lua.sh')).toEqual(false);
-    expect(validateFileNameExtention('.yml.yml')).toEqual(true);
+    expect(validateFileNameExtension('name.yml.sh')).toEqual(false);
+    expect(validateFileNameExtension('name.sh.yml')).toEqual(true);
+    expect(validateFileNameExtension('.sh.lua.lua.sh')).toEqual(false);
+    expect(validateFileNameExtension('.yml.yml')).toEqual(true);
   });
 
   it('forbid names without extentions', () => {
-    expect(validateFileNameExtention('name')).toEqual(false);
-    expect(validateFileNameExtention('README')).toEqual(false);
+    expect(validateFileNameExtension('name')).toEqual(false);
+    expect(validateFileNameExtension('README')).toEqual(false);
   });
 
   it('forbid other extentions', () => {
@@ -48,7 +48,7 @@ describe('validateFileNameExtention', () => {
       'svg',
       'some-other-ext'
     ].forEach(
-      ext => expect([ext, '=>', validateFileNameExtention(`name.${ext}`)]).toEqual([ext, '=>', false])
+      ext => expect([ext, '=>', validateFileNameExtension(`name.${ext}`)]).toEqual([ext, '=>', false])
     );
   });
 });

@@ -1,6 +1,6 @@
 
 const allowedFileExtentionsRegEx = /\.((lua)|(yml))$/;
 
-export const validateFileNameExtention = (filename: string) => {
+export const validateFileNameExtension = (filename: string) => {
   return allowedFileExtentionsRegEx.test(filename);
 }

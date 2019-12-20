@@ -11,7 +11,6 @@ import {
   Input,
   Text
 } from '@tarantool.io/ui-kit';
-import { validateFileNameExtention } from 'src/misc/files.utils';
 
 const styles = {
   element: css`
@@ -103,9 +102,8 @@ export class NewTreeElement extends React.Component<NewTreeElementProps, NewTree
 
     if (event.keyCode === 13) {
       if (type === 'file') {
-        if (validateFileNameExtention(value)) {
-          this.props.onConfirm(value);
-        }
+        // if (validateFileNameExtension(value))
+        this.props.onConfirm(value);
       } else {
         this.props.onConfirm(value);
       }
