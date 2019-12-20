@@ -1,6 +1,5 @@
 local fio = require('fio')
 local log = require('log')
-local errno = require('errno')
 local t = require('luatest')
 local g = t.group()
 
@@ -140,74 +139,4 @@ function g.test_workdir_collision()
         helpers.Cluster.join_server, g.cluster, g.server
     )
     g.cluster:wait_until_healthy()
-end
-
-function g.test_boot_error()
-    g.tempdir = fio.tempdir()
-    g.cluster = helpers.Cluster:new({
-        datadir = g.tempdir,
-        server_command = test_helper.server_command,
-        replicasets = {
-            {
-                uuid = helpers.uuid('a'),
-                roles = {'myrole'},
-                servers = {
-                    {
-                        workdir = g.tempdir,
-                        alias = 'master',
-                        instance_uuid = helpers.uuid('a', 'a', 1),
-                        advertise_port = 13301,
-                        env = {TARANTOOL_MEMTX_MEMORY = '1'},
-                    }
-                },
-            },
-        },
-    })
-    pcall(helpers.Cluster.start, g.cluster)
-
-    local srv = g.cluster.main_server
-    t.assert_equals(srv.net_box:ping(), false)
-    t.assert_equals(srv.net_box.state, 'error')
-    if srv.net_box.error ~= 'Peer closed' then
-        t.assert_equals(srv.net_box.error, errno.strerror(errno.ECONNRESET))
-    end
-
-    srv.env['TARANTOOL_MEMTX_MEMORY'] = nil
-    srv.net_box = nil
-    srv:start()
-    g.cluster:retrying({}, function() srv:connect_net_box() end)
-
-    local state, err = srv.net_box:eval([[
-        local confapplier = require('cartridge.confapplier')
-        return confapplier.get_state()
-    ]])
-
-    t.assert_equals(state, 'BootError')
-
-    local expected_err =
-        "Snapshot not found in " .. srv.workdir ..
-        ", can't recover. Did previous bootstrap attempt fail?"
-    t.assert_equals(err.class_name, 'BootError')
-    t.assert_equals(err.err, expected_err)
-
-    local resp = g.cluster.main_server:graphql({
-        query = [[{ cluster{ self { state error uuid } } }]]
-    })
-    t.assert_equals(resp.data.cluster.self, {
-        error = expected_err,
-        state = 'BootError',
-        uuid = box.NULL,
-    })
-    t.assert_error_msg_equals(
-        expected_err,
-        helpers.Server.graphql, g.cluster.main_server, ({
-            query = [[{ servers {} }]]
-        })
-    )
-    t.assert_error_msg_equals(
-        expected_err,
-        helpers.Server.graphql, g.cluster.main_server, ({
-            query = [[{ replicasets {} }]]
-        })
-    )
 end
