@@ -139,18 +139,27 @@ local function get_connection(role_name, opts)
 
     local conn, err
     local num_candidates = #candidates
-    while conn == nil and num_candidates > 0 do
-        local n = math.random(num_candidates)
-        local uri = opts.uri or table.remove(candidates, n)
-        num_candidates = num_candidates - 1
 
+    local opts.uri ~= nil then
         if uri == myself.uri then
             conn, err = netbox.self, nil
         else
             conn, err = pool.connect(uri)
         end
-    end
+    else 
+        while conn == nil and num_candidates > 0 do
+            local n = math.random(num_candidates)
+            local uri = table.remove(candidates, n)
+            num_candidates = num_candidates - 1
 
+            if uri == myself.uri then
+                conn, err = netbox.self, nil
+            else
+                conn, err = pool.connect(uri)
+            end
+        end
+    end
+    
     if conn == nil then
         return nil, err
     end
