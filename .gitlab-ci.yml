@@ -137,6 +137,7 @@ misc:
     - ./taptest.lua
     - ./fetch-schema.sh
     - ./check-flow-graphql.sh
+    - ./frontend-test.sh
     - ./release.sh
   artifacts:
     name: "${CI_COMMIT_REF_NAME}.misc"

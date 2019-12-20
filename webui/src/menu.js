@@ -4,7 +4,9 @@ import * as React from 'react'
 import { css } from 'react-emotion'
 import {
   IconCluster,
+  IconCode,
   IconGear,
+  IconSchema,
   IconUsers,
   type MenuItemType
 } from '@tarantool.io/ui-kit';
@@ -48,12 +50,20 @@ const menuItems = {
         icon: <IconGear className={css`width: 14px; height: 14px; fill: #fff;`} />
       },
       {
+        label: 'Code',
+        path: `/${PROJECT_NAME}/code`,
+        selected: false,
+        expanded: false,
+        loading: false,
+        icon: <IconCode className={css`width: 14px; height: 14px; fill: #fff;`} />
+      },
+      {
         label: 'Schema',
         path: `/${PROJECT_NAME}/schema`,
         selected: false,
         expanded: false,
         loading: false,
-        icon: <IconGear className={css`width: 14px; height: 14px; fill: #fff;`} />
+        icon: <IconSchema className={css`width: 14px; height: 14px; fill: #fff;`} />
       }
     ]
   }

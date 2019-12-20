@@ -1,9 +1,8 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { Provider } from 'react-redux';
 import { Router, Switch, Route } from 'react-router-dom';
-import App from './app';
-import Users from './pages/Users';
-import Schema from 'src/pages/Schema';
+import App from 'src/app';
+import Users from 'src/pages/Users';
 import HeaderAuthControl from 'src/components/HeaderAuthControl';
 import LogInForm from 'src/components/LogInForm';
 import store from 'src/store/instance'
@@ -11,7 +10,10 @@ import { appDidMount } from 'src/store/actions/app.actions';
 import { logOut } from 'src/store/actions/auth.actions';
 import { PROJECT_NAME } from './constants';
 import { menuReducer } from './menu';
-import ConfigManagement from './pages/ConfigManagement';
+import ConfigManagement from 'src/pages/ConfigManagement';
+
+const Code = lazy(() => import('src/pages/Code'));
+const Schema = lazy(() => import('src/pages/Schema'));
 
 const projectPath = path => `/${PROJECT_NAME}/${path}`;
 
@@ -20,12 +22,15 @@ class Root extends React.Component {
     return (
       <Provider store={store}>
         <Router history={window.tarantool_enterprise_core.history}>
-          <Switch>
-            <Route path={projectPath('dashboard')} component={App} />
-            <Route path={projectPath('configuration')} component={ConfigManagement} />
-            <Route path={projectPath('users')} component={Users} />
-            <Route path={projectPath('schema')} component={Schema} />
-          </Switch>
+          <Suspense fallback={'Loading...'}>
+            <Switch>
+              <Route path={projectPath('dashboard')} component={App} />
+              <Route path={projectPath('configuration')} component={ConfigManagement} />
+              <Route path={projectPath('users')} component={Users} />
+              <Route path={projectPath('code')} component={Code} />
+              <Route path={projectPath('schema')} component={Schema} />
+            </Switch>
+          </Suspense>
         </Router>
       </Provider>
     )

@@ -4,6 +4,7 @@ const webpack = require('webpack');
 const ManifestPlugin = require('webpack-manifest-plugin');
 const eslintFormatter = require('react-dev-utils/eslintFormatter');
 const ModuleScopePlugin = require('react-dev-utils/ModuleScopePlugin');
+const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 const paths = require('./paths');
 const getClientEnvironment = require('./env');
@@ -49,13 +50,13 @@ module.exports = {
   output: {
     // The build folder.
     path: paths.appBuild,
+    publicPath: `/`,
     // Generated JS file names (with nested folders).
     // There will be one main bundle, and one file per asynchronous chunk.
     // We don't currently advertise code splitting but Webpack supports it.
-    filename: `static/${moduleConfig.namespace}/js/[name].[chunkhash:8].js`,
-    chunkFilename: `static/${moduleConfig.namespace}/js/[name].[chunkhash:8].chunk.js`,
+    filename: `static/${moduleConfig.namespace}/[name].[chunkhash:8].js`,
+    chunkFilename: `static/${moduleConfig.namespace}/[name].[chunkhash:8].chunk.js`,
     // We inferred the "public path" (such as / or /my-project) from homepage.
-    publicPath: publicPath,
     // Point sourcemap entries to original disk location (format as URL on Windows)
     devtoolModuleFilenameTemplate: info =>
       path
@@ -85,7 +86,8 @@ module.exports = {
 
       // Support React Native Web
       // https://www.smashingmagazine.com/2016/08/a-glimpse-into-the-future-with-react-native-for-web/
-      'react-native': 'react-native-web'
+      'react-native': 'react-native-web',
+      'vscode': require.resolve('monaco-languageclient/lib/vscode-compatibility')
     },
     plugins: [
       // Prevents users from importing files from outside of src/ (or node_modules/).
@@ -195,6 +197,16 @@ module.exports = {
               // being evaluated would be much more helpful.
               sourceMaps: false
             }
+          },
+          // Process JS with Babel.
+          {
+            test: /\.(js|jsx|mjs)$/,
+            include: [],
+            loader: require.resolve('babel-loader'),
+            options: {
+
+              compact: true,
+            },
           },
           // The notation here is somewhat confusing.
           // "postcss" loader applies autoprefixer to our CSS.
@@ -324,7 +336,12 @@ module.exports = {
     // https://github.com/jmblog/how-to-optimize-momentjs-with-webpack
     // You can remove this if you don't use Moment.js:
     new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
-    new LuaBundlerPlugin(),
+    new BundleAnalyzerPlugin({
+      analyzerMode: 'static',
+      reportFilename: 'bundle-analyzer-report.html',
+      openAnalyzer: false
+    }),
+    new LuaBundlerPlugin({ namespace: moduleConfig.namespace }),
   ],
   // Some libraries import Node modules but don't use them in the browser.
   // Tell Webpack to provide empty mocks for them so importing them works.

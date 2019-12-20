@@ -488,3 +488,26 @@ export const checkSchemaMutation = gql`
     }
   }
 `;
+
+
+export const setFilesMutation = gql`
+  mutation set_files($files: [ConfigSectionInput!]) {
+    cluster {
+      config(sections: $files) {
+        filename
+        content
+      }
+    }  
+  }
+`;
+
+export const getFilesQuery = gql`
+  query configFiles {
+    cluster {
+      config {
+        path: filename
+        content
+      }
+    }
+  }
+`;
