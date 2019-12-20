@@ -138,7 +138,7 @@ local ok, err = errors.pcall('CartridgeCfgError', cartridge.cfg, {
         'mymodule-permanent',
         'mymodule-hidden',
         'mymodule',
-    },
+    }
 })
 if not ok then
     log.error('%s', err)
