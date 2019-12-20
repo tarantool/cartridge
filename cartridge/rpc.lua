@@ -146,7 +146,7 @@ local function get_connection(role_name, opts)
         else
             conn, err = pool.connect(uri)
         end
-    else 
+    else
         while conn == nil and num_candidates > 0 do
             local n = math.random(num_candidates)
             local uri = table.remove(candidates, n)
@@ -159,7 +159,7 @@ local function get_connection(role_name, opts)
             end
         end
     end
-    
+
     if conn == nil then
         return nil, err
     end
