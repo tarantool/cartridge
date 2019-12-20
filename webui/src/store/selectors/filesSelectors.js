@@ -59,7 +59,7 @@ export const selectFileTree = createSelector(
   (files: Array<FileItem>): Array<TreeFileItem> => {
     const fileMap: { [string]: TreeFileItem } = files.reduce(
       (tree, file) => {
-        tree[file.path] = toTreeItem(file);
+        if (!file.deleted) tree[file.path] = toTreeItem(file);
         return tree;
       },
       {}

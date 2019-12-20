@@ -113,6 +113,7 @@ export class FileTree extends React.Component<FileTreeProps, FileTreeState> {
                     active={selectedFile ? (selectedFile.path === item.path): false}
                     type={item.type}
                     level={level}
+                    childsCount={item.items && item.items.length}
                     expanded={expandedEntries.includes(item.path)}
                     onCancel={onOperationCancel}
                     onConfirm={onOperationConfirm}

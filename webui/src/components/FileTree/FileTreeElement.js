@@ -16,7 +16,6 @@ import {
   Text
 } from '@tarantool.io/ui-kit';
 import type { TreeFileItem } from 'src/store/selectors/filesSelectors';
-import type { FileItem } from 'src/store/reducers/files.reducer';
 
 const styles = {
   element: css`
@@ -58,7 +57,7 @@ const styles = {
     margin: 4px;
     fill: rgba(0, 0, 0, 0.65);
   `,
-  iconChevronFile: css`
+  iconChevronHidden: css`
     visibility: hidden;
   `,
   fileIcon: css`
@@ -86,7 +85,7 @@ type FileTreeElementProps = {
   children?: React.Node,
   className?: string,
   expanded?: boolean,
-  file: FileItem,
+  file: TreeFileItem,
   level?: number,
   onDelete: (id: string) => void,
   onExpand: (id: string) => void,
@@ -133,7 +132,10 @@ export const FileTreeElement = (
         title={file.fileName}
       >
         <IconChevron
-          className={cx(styles.iconChevron, { [styles.iconChevronFile]: file.type !== 'folder' })}
+          className={cx(
+            styles.iconChevron,
+            { [styles.iconChevronHidden]: !file.items || !file.items.length }
+          )}
           direction={expanded ? 'down' : 'right' }
         />
         <Icon className={styles.fileIcon} opened={expanded} />

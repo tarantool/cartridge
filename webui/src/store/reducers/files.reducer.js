@@ -267,8 +267,6 @@ const deleteFolder = (list: Array<FileItem>, path): Array<FileItem> => (
 //   return newList;
 // };
 
-const testState = require('./files.initialState2').default;
-
 export default (state: Array<FileItem> = [], { type, payload }: FSA) => {
   switch (type) {
     case FETCH_CONFIG_FILES_DONE: {
