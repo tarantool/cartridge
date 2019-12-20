@@ -109,6 +109,7 @@ end
 -- @tparam[opt] table opts
 -- @tparam ?boolean opts.prefer_local
 -- @tparam ?boolean opts.leader_only
+-- @tparam ?string opts.uri
 --
 -- @return[1] `net.box` connection
 -- @treturn[2] nil
@@ -118,6 +119,7 @@ local function get_connection(role_name, opts)
     checks('string', {
         prefer_local = '?boolean',
         leader_only = '?boolean',
+        uri = '?string',
     })
 
     local candidates = get_candidates(role_name, {leader_only = opts.leader_only})
@@ -139,7 +141,7 @@ local function get_connection(role_name, opts)
     local num_candidates = #candidates
     while conn == nil and num_candidates > 0 do
         local n = math.random(num_candidates)
-        local uri = table.remove(candidates, n)
+        local uri = opts.uri or table.remove(candidates, n)
         num_candidates = num_candidates - 1
 
         if uri == myself.uri then
@@ -174,9 +176,12 @@ end
 -- @tparam ?boolean opts.leader_only
 --   Perform a call only on the replica set leaders.
 --   (default: **false**)
+-- @tparam ?string opts.uri
+--   (default: **nil**)
 -- @param opts.remote_only (*deprecated*) Use `prefer_local` instead.
 -- @param opts.timeout passed to `net.box` `conn:call` options.
 -- @param opts.buffer passed to `net.box` `conn:call` options.
+-- @param opts.uri dfdf
 --
 -- @return[1] `conn:call()` result
 -- @treturn[2] nil
@@ -187,6 +192,7 @@ local function call_remote(role_name, fn_name, args, opts)
         prefer_local = '?boolean',
         leader_only = '?boolean',
         remote_only = '?boolean', -- deprecated
+        uri = '?string',
         timeout = '?', -- for net.box.call
         buffer = '?', -- for net.box.call
     })
@@ -213,6 +219,7 @@ local function call_remote(role_name, fn_name, args, opts)
     local conn, err = get_connection(role_name, {
         prefer_local = prefer_local,
         leader_only = leader_only,
+        uri = opts.uri,
     })
     if not conn then
         return nil, err
