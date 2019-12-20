@@ -68,7 +68,7 @@ const enrichFileList = (files: Array<ApiFileItem>, prevState: Array<FileItem> = 
 
       let item = pathFileMap[currentItemPath];
       if (!item) {
-        const localFile = prevState.find(localFile => localFile.path === currentItemPath);
+        const localFile = prevState.find(localFile => !localFile.deleted && localFile.path === currentItemPath);
 
         const propsToCopy = {};
         propsToCopy.saved = true;
