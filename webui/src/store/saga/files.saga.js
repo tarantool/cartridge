@@ -93,7 +93,13 @@ function* fetchFilesSaga() {
     localFiles.forEach(localFile => {
       const responseFile = response.find(f => f.path === localFile.path);
       if (responseFile) {
-        setModelValueByFile(getFileIdForMonaco(localFile.fileId), responseFile.content);
+        const fileIdForMonaco = getFileIdForMonaco(localFile.fileId);
+        const localContent = getModelValueByFile(fileIdForMonaco);
+
+        // Don't set same content - so we'll keep "redo" history
+        if (localContent !== responseFile.content) {
+          setModelValueByFile(fileIdForMonaco, responseFile.content);
+        }
       }
     });
 
