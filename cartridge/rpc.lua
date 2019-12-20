@@ -190,7 +190,7 @@ end
 -- @param opts.remote_only (*deprecated*) Use `prefer_local` instead.
 -- @param opts.timeout passed to `net.box` `conn:call` options.
 -- @param opts.buffer passed to `net.box` `conn:call` options.
--- @param opts.uri dfdf
+-- @param opts.uri 
 --
 -- @return[1] `conn:call()` result
 -- @treturn[2] nil
