@@ -186,7 +186,7 @@ end
 --   Perform a call only on the replica set leaders.
 --   (default: **false**)
 -- @tparam ?string opts.uri
---   Perform a call only on the replica set uri 
+--   Perform a call only on the replica set uri
 --   (default: **nil**)
 -- @param opts.remote_only (*deprecated*) Use `prefer_local` instead.
 -- @param opts.timeout passed to `net.box` `conn:call` options.
