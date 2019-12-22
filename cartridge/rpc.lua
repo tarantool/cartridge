@@ -121,32 +121,32 @@ local function get_connection(role_name, opts)
         leader_only = '?boolean',
         uri = '?string',
     })
-
-    local candidates = get_candidates(role_name, {leader_only = opts.leader_only})
-    if next(candidates) == nil then
-        return nil, RemoteCallError:new('No remotes with role %q available', role_name)
-    end
-
-    local prefer_local = opts.prefer_local
-    if prefer_local == nil then
-        prefer_local = true
-    end
-
     local myself = membership.myself()
-    if prefer_local and utils.table_find(candidates, myself.uri) then
-        return netbox.self
-    end
-
     local conn, err
-    local num_candidates = #candidates
-
-    local opts.uri ~= nil then
-        if uri == myself.uri then
+    local uri_opt = opts.uri
+    if uri_opt ~= nil then
+        if uri_opt == myself.uri then
             conn, err = netbox.self, nil
         else
-            conn, err = pool.connect(uri)
+            conn, err = pool.connect(uri_opt)
         end
     else
+        local candidates = get_candidates(role_name, {leader_only = opts.leader_only})
+        if next(candidates) == nil then
+            return nil, RemoteCallError:new('No remotes with role %q available', role_name)
+        end
+
+        local prefer_local = opts.prefer_local
+        if prefer_local == nil then
+            prefer_local = true
+        end
+
+        if prefer_local and utils.table_find(candidates, myself.uri) then
+            return netbox.self
+        end
+
+        local num_candidates = #candidates
+
         while conn == nil and num_candidates > 0 do
             local n = math.random(num_candidates)
             local uri = table.remove(candidates, n)
@@ -190,7 +190,7 @@ end
 -- @param opts.remote_only (*deprecated*) Use `prefer_local` instead.
 -- @param opts.timeout passed to `net.box` `conn:call` options.
 -- @param opts.buffer passed to `net.box` `conn:call` options.
--- @param opts.uri 
+-- @param opts.uri passed to `net.box` `conn:call` options.
 --
 -- @return[1] `conn:call()` result
 -- @treturn[2] nil
