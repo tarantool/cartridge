@@ -29,6 +29,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Measure clock difference across instances and provide `clock_delta`
   in GraphQL `servers` query and in `admin.get_servers()` Lua API.
 
+- New option in `rpc_call(..., {uri=...})` to perform a call 
+  on a particular uri. 
+
 ### Changed
 
 - WebUI now uses `edit_topology` mutation instead of deprecated ones.
@@ -92,16 +95,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Arrange proper failover triggering: don't miss events, don't trigger
   if nothing changed.
-
-## [1.2.0] - 2019-10-21
-
-### Added
-
-- Uri option in `rpc_call` function.
-
-- Test for new `rpc_call` option (uri) in function `rpc_test.test_routing`.
-
-- Function which return server uuid.
 
 ## [1.2.0] - 2019-12-23
 
