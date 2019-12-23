@@ -176,7 +176,7 @@ end
 --   (default: **false**)
 -- @tparam ?string opts.uri
 --   Perform a call only on the replica set uri
---   (default: **nil**)
+--   (added in v1.2.0-62)
 -- @param opts.remote_only (*deprecated*) Use `prefer_local` instead.
 -- @param opts.timeout passed to `net.box` `conn:call` options.
 -- @param opts.buffer passed to `net.box` `conn:call` options.
@@ -216,14 +216,9 @@ local function call_remote(role_name, fn_name, args, opts)
     end
 
     local conn, err
-    local myself = membership.myself()
     local uri = opts.uri
     if uri ~= nil then
-        if uri == myself.uri then
-            conn, err = netbox.self, nil
-        else
-            conn, err = pool.connect(uri)
-        end
+        conn, err = pool.connect(uri)
     else
         conn, err = get_connection(role_name, {
             prefer_local = prefer_local,

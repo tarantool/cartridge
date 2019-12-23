@@ -97,6 +97,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+- Uri option in `rpc_call` function.
+
+- Test for new `rpc_call` option (uri) in function `rpc_test.test_routing`.
+
+- Function which return server uuid.
+
+## [1.2.0] - 2019-12-23
+
+### Changed
+
 - 'Auto' placeholder to weight input in the Replicaset forms.
 
 - 'Select all' and 'Deselect all' buttons to roles field in Replicaset add and edit forms.
