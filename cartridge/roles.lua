@@ -295,6 +295,7 @@ local function apply_config(conf)
     for _, mod in ipairs(vars.known_roles) do
         local role_name = mod.role_name
         if enabled_roles[role_name] then
+            -- Start the role
             if (service_registry.get(role_name) == nil)
             and (type(mod.init) == 'function')
             then
@@ -303,8 +304,11 @@ local function apply_config(conf)
                     {is_master = failover.is_leader()}
                 )
                 if _err then
-                    log.error('%s', _err)
-                    err = err or _err
+                    if err == nil then
+                        err = _err
+                    else
+                        log.error('%s', _err)
+                    end
                     goto continue
                 end
             end
@@ -317,11 +321,16 @@ local function apply_config(conf)
                     {is_master = failover.is_leader()}
                 )
                 if _err then
-                    log.error('%s', _err)
+                    if err == nil then
+                        err = _err
+                    else
+                        log.error('%s', _err)
+                    end
                     err = err or _err
                 end
             end
         else
+            -- Stop the role
             if (service_registry.get(role_name) ~= nil)
             and (type(mod.stop) == 'function')
             then
@@ -330,7 +339,11 @@ local function apply_config(conf)
                     {is_master = failover.is_leader()}
                 )
                 if _err then
-                    log.error('%s', err)
+                    if err == nil then
+                        err = _err
+                    else
+                        log.error('%s', _err)
+                    end
                     err = err or _err
                 end
             end
