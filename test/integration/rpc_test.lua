@@ -109,4 +109,16 @@ function g.test_routing()
     )
     t.assert_not(err)
     t.assert_equals(res, g.cluster:server('B2').instance_uuid)
+
+    res, err = rpc_call(
+        g.cluster:server('B2'), 'myrole', 'get_uuid', nil, {uri='is_not_uri'}
+    )
+    t.assert(err)
+    t.assert_not(res)
+
+    res, err = rpc_call(
+        g.cluster:server('B2'), 'myrole', 'get_uuid', nil, {uri='is_not_uri'}
+    )
+    t.assert(err)
+    t.assert_not(res)
 end
