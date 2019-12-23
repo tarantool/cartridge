@@ -113,12 +113,12 @@ function g.test_routing()
     res, err = rpc_call(
         g.cluster:server('B2'), 'myrole', 'get_uuid', nil, {uri='is_not_uri'}
     )
-    t.assert(err)
+    t.assert_equals(err.class_name, 'NetboxConnectError')
     t.assert_not(res)
 
     res, err = rpc_call(
         g.cluster:server('B2'), 'myrole', 'get_uuid', nil, {uri='is_not_uri'}
     )
-    t.assert(err)
+    t.assert_equals(err.class_name, 'NetboxConnectError')
     t.assert_not(res)
 end
