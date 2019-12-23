@@ -175,13 +175,13 @@ end
 --   Perform a call only on the replica set leaders.
 --   (default: **false**)
 -- @tparam ?string opts.uri
---   Perform a call on this particular uri. Other options are ignored 
+--   Perform a call on this particular uri. Other options are ignored
 --   (leader_only, prefer_local) as well as member status.
 --   (added in v1.2.0-62)
 -- @param opts.remote_only (*deprecated*) Use `prefer_local` instead.
 -- @param opts.timeout passed to `net.box` `conn:call` options.
 -- @param opts.buffer passed to `net.box` `conn:call` options.
--- @param opts.uri 
+-- @param opts.uri passed to `pool.connect`
 --
 -- @return[1] `conn:call()` result
 -- @treturn[2] nil
