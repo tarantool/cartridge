@@ -109,7 +109,6 @@ end
 -- @tparam[opt] table opts
 -- @tparam ?boolean opts.prefer_local
 -- @tparam ?boolean opts.leader_only
--- @tparam ?string opts.uri
 --
 -- @return[1] `net.box` connection
 -- @treturn[2] nil
@@ -119,44 +118,34 @@ local function get_connection(role_name, opts)
     checks('string', {
         prefer_local = '?boolean',
         leader_only = '?boolean',
-        uri = '?string',
     })
+
+    local candidates = get_candidates(role_name, {leader_only = opts.leader_only})
+    if next(candidates) == nil then
+        return nil, RemoteCallError:new('No remotes with role %q available', role_name)
+    end
+
+    local prefer_local = opts.prefer_local
+    if prefer_local == nil then
+        prefer_local = true
+    end
+
     local myself = membership.myself()
+    if prefer_local and utils.table_find(candidates, myself.uri) then
+        return netbox.self
+    end
+
     local conn, err
-    local uri_opt = opts.uri
-    if uri_opt ~= nil then
-        if uri_opt == myself.uri then
+    local num_candidates = #candidates
+    while conn == nil and num_candidates > 0 do
+        local n = math.random(num_candidates)
+        local uri = table.remove(candidates, n)
+        num_candidates = num_candidates - 1
+
+        if uri == myself.uri then
             conn, err = netbox.self, nil
         else
-            conn, err = pool.connect(uri_opt)
-        end
-    else
-        local candidates = get_candidates(role_name, {leader_only = opts.leader_only})
-        if next(candidates) == nil then
-            return nil, RemoteCallError:new('No remotes with role %q available', role_name)
-        end
-
-        local prefer_local = opts.prefer_local
-        if prefer_local == nil then
-            prefer_local = true
-        end
-
-        if prefer_local and utils.table_find(candidates, myself.uri) then
-            return netbox.self
-        end
-
-        local num_candidates = #candidates
-
-        while conn == nil and num_candidates > 0 do
-            local n = math.random(num_candidates)
-            local uri = table.remove(candidates, n)
-            num_candidates = num_candidates - 1
-
-            if uri == myself.uri then
-                conn, err = netbox.self, nil
-            else
-                conn, err = pool.connect(uri)
-            end
+            conn, err = pool.connect(uri)
         end
     end
 
@@ -226,11 +215,22 @@ local function call_remote(role_name, fn_name, args, opts)
         leader_only = false
     end
 
-    local conn, err = get_connection(role_name, {
-        prefer_local = prefer_local,
-        leader_only = leader_only,
-        uri = opts.uri,
-    })
+    local conn, err
+    local myself = membership.myself()
+    local uri = opts.uri
+    if uri ~= nil then
+        if uri == myself.uri then
+            conn, err = netbox.self, nil
+        else
+            conn, err = pool.connect(uri)
+        end
+    else
+        conn, err = get_connection(role_name, {
+            prefer_local = prefer_local,
+            leader_only = leader_only,
+        })
+    end
+
     if not conn then
         return nil, err
     end
