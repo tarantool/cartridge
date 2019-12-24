@@ -28,6 +28,9 @@ end
 _G.varargs = function(...)
     return ...
 end
+_G.eval = function(code)
+    return loadstring(code)()
+end
 _G.object = {}
 function _G.object:method()
     assert(self == _G.object, "Use object:method instead")
@@ -476,6 +479,33 @@ function g.test_call()
             conn.call, conn, 'varargs', {xxxx = 'mp_map'}
         )
 
+        local ok, err = pcall(conn.call, conn, 'eval',
+            {'error("ScriptError", 0)'}
+        )
+        t.assert_not(ok)
+        t.assert_equals(type(err), 'cdata')
+        t.assert_equals(err.code, box.error.PROC_LUA)
+        t.assert_equals(err.message, 'ScriptError')
+
+        local ok, err = pcall(conn.call, conn, 'eval', {[1] = [[
+            local err = setmetatable({}, {
+                __tostring = function() return "TableError" end,
+            })
+            error(err)
+        ]]})
+        t.assert_not(ok)
+        t.assert_equals(type(err), 'cdata')
+        t.assert_equals(err.code, box.error.PROC_LUA)
+        t.assert_equals(err.message, 'TableError')
+
+        local ok, err = pcall(conn.call, conn, 'eval',
+            {'box.error(box.error.PROTOCOL, "BoxError")'}
+        )
+        t.assert_not(ok)
+        t.assert_equals(type(err), 'cdata')
+        t.assert_equals(err.code, box.error.PROTOCOL)
+        t.assert_equals(err.message, 'BoxError')
+
         t.assert_not(conn.error)
     end
 
@@ -515,14 +545,35 @@ function g.test_eval()
             conn.eval, conn, 'do'
         )
 
-        t.assert_error_msg_contains(
-            "ScriptError",
-            conn.eval, conn, 'error("ScriptError")'
+        local ok, err = pcall(conn.eval, conn,
+            'error("ScriptError", 0)'
         )
+        t.assert_not(ok)
+        t.assert_equals(type(err), 'cdata')
+        t.assert_equals(err.code, box.error.PROC_LUA)
+        t.assert_equals(err.message, 'ScriptError')
+
+        local ok, err = pcall(conn.eval, conn, [[
+            local err = setmetatable({}, {
+                __tostring = function() return "TableError" end,
+            })
+            error(err)
+        ]])
+        t.assert_not(ok)
+        t.assert_equals(type(err), 'cdata')
+        t.assert_equals(err.code, box.error.PROC_LUA)
+        t.assert_equals(err.message, 'TableError')
+
+        local ok, err = pcall(conn.eval, conn,
+            'box.error(box.error.PROTOCOL, "BoxError")'
+        )
+        t.assert_not(ok)
+        t.assert_equals(type(err), 'cdata')
+        t.assert_equals(err.code, box.error.PROTOCOL)
+        t.assert_equals(err.message, 'BoxError')
 
         t.assert_not(conn.error)
     end
-
 
     rc_start(13301)
     box.cfg({listen = box.NULL})
