@@ -96,9 +96,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Arrange proper failover triggering: don't miss events, don't trigger
   if nothing changed.
 
-## [1.2.0] - 2019-12-23
+## [1.2.0] - 2019-10-21
 
-### Changed
+### Added
 
 - 'Auto' placeholder to weight input in the Replicaset forms.
 
