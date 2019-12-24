@@ -93,8 +93,10 @@ export default class MonacoEditor extends React.Component {
       model = setModelByFile(fileId, language, initialValue)
     }
 
-    //TODO is it ok to always set the same model, or should we check current model?
-    editor.setModel(model)
+    if (editor.getModel() !== model) {
+      editor.setModel(model);
+    }
+
     editor.focus()
 
     if (prevProps.theme !== theme) {
