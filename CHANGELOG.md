@@ -29,8 +29,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Measure clock difference across instances and provide `clock_delta`
   in GraphQL `servers` query and in `admin.get_servers()` Lua API.
 
-- New option in `rpc_call(..., {uri=...})` to perform a call 
-  on a particular uri. 
+- New option in `rpc_call(..., {uri=...})` to perform a call
+  on a particular uri.
 
 ### Changed
 
