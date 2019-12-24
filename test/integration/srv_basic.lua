@@ -87,7 +87,6 @@ package.preload['mymodule'] = function()
         end,
 
         -- rpc functions
-        get_uuid = function() return box.info().uuid end,
         dog_goes = function() return "woof" end,
         throw = function(msg) error(msg, 2) end,
     }

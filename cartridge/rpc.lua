@@ -19,7 +19,6 @@ local confapplier = require('cartridge.confapplier')
 local service_registry = require('cartridge.service-registry')
 
 local RemoteCallError = errors.new_class('RemoteCallError')
-local UriWhithLeaderError = errors.new_class('UriWhithLeaderError')
 
 local function call_local(role_name, fn_name, args)
     checks('string', 'string', '?table')
@@ -172,13 +171,13 @@ end
 --   Perform a call only on the replica set leaders.
 --   (default: **false**)
 -- @tparam ?string opts.uri
---   Perform a call on this particular uri. Other options are ignored
---   (leader_only, prefer_local) as well as member status.
---   (added in v1.2.0-62)
+--   Force a call to be performed on this particular uri.
+--   Disregards member status and `opts.prefer_local`.
+--   Conflicts with `opts.leader_only = true`.
+--   (added in v1.2.0-63)
 -- @param opts.remote_only (*deprecated*) Use `prefer_local` instead.
 -- @param opts.timeout passed to `net.box` `conn:call` options.
 -- @param opts.buffer passed to `net.box` `conn:call` options.
--- @param opts.uri passed to `pool.connect`
 --
 -- @return[1] `conn:call()` result
 -- @treturn[2] nil
@@ -193,6 +192,12 @@ local function call_remote(role_name, fn_name, args, opts)
         timeout = '?', -- for net.box.call
         buffer = '?', -- for net.box.call
     })
+
+    if opts.uri ~= nil and opts.leader_only then
+        local err = "bad argument opts.uri to rpc_call" ..
+            " (conflicts with opts.leader_only=true)"
+        error(err, 2)
+    end
 
     local prefer_local
     if opts.remote_only ~= nil then
@@ -215,11 +220,7 @@ local function call_remote(role_name, fn_name, args, opts)
 
     local conn, err
     if opts.uri ~= nil then
-        if leader_only then
-            conn, err = nil, UriWhithLeaderError:new('Usage only uri or only leader_only')
-        else
-            conn, err = pool.connect(opts.uri)
-        end
+        conn, err = pool.connect(opts.uri)
     else
         conn, err = get_connection(role_name, {
             prefer_local = prefer_local,
