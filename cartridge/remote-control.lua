@@ -14,6 +14,7 @@
 -- @local
 
 local log = require('log')
+local ffi = require('ffi')
 local errno = require('errno')
 local checks = require('checks')
 local errors = require('errors')
@@ -27,6 +28,8 @@ local vars = require('cartridge.vars').new('cartridge.remote-control')
 vars:new('server')
 vars:new('username')
 vars:new('password')
+
+local error_t = ffi.typeof('struct error')
 
 local function _pack(...)
     local ret = {...}
@@ -232,8 +235,11 @@ local function communicate(s)
         if ok then
             reply_ok(s, sync, ret)
             return true
+        elseif ffi.istype(error_t, ret) then
+            reply_err(s, sync, ret.code, ret.message)
+            return true
         else
-            reply_err(s, sync, box.error.UNKNOWN, ret)
+            reply_err(s, sync, box.error.PROC_LUA, tostring(ret))
             return true
         end
 
@@ -253,8 +259,11 @@ local function communicate(s)
         if ok then
             reply_ok(s, sync, ret)
             return true
+        elseif ffi.istype(error_t, ret) then
+            reply_err(s, sync, ret.code, ret.message)
+            return true
         else
-            reply_err(s, sync, box.error.UNKNOWN, ret)
+            reply_err(s, sync, box.error.PROC_LUA, tostring(ret))
             return true
         end
 
