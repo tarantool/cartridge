@@ -105,20 +105,9 @@ function g.test_routing()
     t.assert_equals(res, g.cluster:server('B1').instance_uuid)
 
     res, err = rpc_call(
-        g.cluster:server('B2'), 'myrole', 'get_uuid', nil, {uri=g.cluster:server('B2').advertise_uri}
-    )
-    t.assert_not(err)
-    t.assert_equals(res, g.cluster:server('B2').instance_uuid)
-
-    res, err = rpc_call(
         g.cluster:server('B2'), 'myrole', 'get_uuid', nil, {uri='is_not_uri'}
     )
-    t.assert_equals(err.class_name, 'NetboxConnectError')
-    t.assert_not(res)
-
-    res, err = rpc_call(
-        g.cluster:server('B2'), 'myrole', 'get_uuid', nil, {uri='is_not_uri'}
-    )
+    t.assert_equals(err.err, 'usage: connect(uri[, opts] | host, port[, opts])')
     t.assert_equals(err.class_name, 'NetboxConnectError')
     t.assert_not(res)
 end
