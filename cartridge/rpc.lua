@@ -257,4 +257,3 @@ return {
     get_connection = get_connection,
     call = call_remote,
 }
-
