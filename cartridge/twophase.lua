@@ -65,12 +65,8 @@ local function prepare_2pc(data)
         return nil, err
     end
 
-    local state = confapplier.get_state()
-    local valid_states = {
-        ['Unconfigured'] = true,
-        ['RolesConfigured'] = true,
-    }
-    if not valid_states[state] then
+    local state = confapplier.wish_state('RolesConfigured')
+    if state ~= 'Unconfigured' and state ~= 'RolesConfigured' then
         local err = Prepare2pcError:new(
             "Instance state is %s, can't apply config in this state",
             state
@@ -137,10 +133,19 @@ local function commit_2pc()
     end
 
 
-    if type(box.cfg) == 'function' then
+    local state = confapplier.wish_state('RolesConfigured')
+
+    if state == 'Unconfigured' then
         return confapplier.boot_instance(prepared_config)
-    else
+    elseif state == 'RolesConfigured' then
         return confapplier.apply_config(prepared_config)
+    else
+        local err = Commit2pcError:new(
+            "Instance state is %s, can't apply config in this state",
+            state
+        )
+        log.error('%s', err)
+        return nil, err
     end
 end
 

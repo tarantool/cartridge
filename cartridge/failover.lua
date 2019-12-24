@@ -41,6 +41,7 @@ local ApplyConfigError = errors.new_class('ApplyConfigError')
 local ValidateConfigError = errors.new_class('ValidateConfigError')
 
 vars:new('mode', 'disabled') -- disabled | eventual
+vars:new('notification', membership.subscribe())
 vars:new('clusterwide_config')
 vars:new('failover_fiber')
 vars:new('cache', {
@@ -55,7 +56,7 @@ local function _get_health_map(topology_cfg, mode)
 
     local ret = {
         active_leaders = {--[[ [replicaset_uuid] = leader_uuid ]]},
-        server_status = {--[[ [instance_uuid] = "good"|"bad" ]]},
+        potential_leaders = {--[[ [instance_uuid] = true|false ]]},
     }
 
     for replicaset_uuid, _ in pairs(topology_cfg.replicasets) do
@@ -69,16 +70,19 @@ local function _get_health_map(topology_cfg, mode)
 
             if member ~= nil
             and (member.status == 'alive' or member.status == 'suspect')
-            and member.payload.error == nil
-            and member.payload.uuid == instance_uuid then
+            and member.payload.uuid == instance_uuid
+            and (
+                member.payload.state == 'ConfiguringRoles' or
+                member.payload.state == 'RolesConfigured'
+            ) then
                 if ret.active_leaders[replicaset_uuid] == nil
                 and mode == 'eventual'
                 then
                     ret.active_leaders[replicaset_uuid] = instance_uuid
                 end
-                ret.server_status[instance_uuid] = "good"
+                ret.potential_leaders[instance_uuid] = true
             else
-                ret.server_status[instance_uuid] = "bad"
+                ret.potential_leaders[instance_uuid] = false
             end
         end
 
@@ -110,8 +114,7 @@ local function refresh_cache()
     return true
 end
 
-
-local function _failover_role(mod)
+local function apply_config(mod)
     if mod == nil then
         return true
     end
@@ -138,50 +141,59 @@ local function _failover_role(mod)
     )
 end
 
-local function _failover(cond)
+local function failover_loop(notification)
     local confapplier = require('cartridge.confapplier')
     local all_roles = require('cartridge.roles').get_all_roles()
 
-    local function failover_internal()
-        box.cfg({
-            read_only = not vars.cache.is_rw,
-        })
+    ::start_over::
 
-        confapplier.set_state('ConfiguringRoles')
-        for _, role_name in ipairs(all_roles) do
-            local mod = service_registry.get(role_name)
-            local _, err = _failover_role(mod)
-            if err then
-                log.error('Role %q failover failed: %s', mod.role_name, err)
-            end
+    if vars.mode == 'disabled' then
+        refresh_cache()
+        notification:wait()
+        goto start_over
+    elseif vars.mode == 'eventual' then
+        if not refresh_cache() then
+            -- Nothing changed.
+            -- Wait for the next event.
+            notification:wait()
+            goto start_over
         end
 
-        confapplier.set_state('RolesConfigured')
-        log.info('Failover step finished')
-        return true
-    end
-
-    while true do
-        -- If failover_internal yields we may miss cond:broadcast
-        -- so we force refresh_cache() and check if something changed
-        if refresh_cache() then
-            log.info('Failover triggered')
-        else
-            cond:wait()
-            goto continue
-        end
-
-        local state = confapplier.get_state()
+        -- The event may arrive during two-pahse commit is in progress.
+        -- We should wait for the appropriate state.
+        local state = confapplier.wish_state('RolesConfigured', math.huge)
         if state ~= 'RolesConfigured' then
             log.info('Skipping failover step - state is %s', state)
-            goto continue
+            goto start_over
         end
 
-        local ok, err = FailoverError:pcall(failover_internal)
-        if not ok then
-            log.warn('%s', err)
+        confapplier.set_state('ConfiguringRoles')
+        local ok, err = FailoverError:pcall(function()
+            log.info('Failover triggered')
+
+            box.cfg({
+                read_only = not vars.cache.is_rw,
+            })
+
+            for _, role_name in ipairs(all_roles) do
+                local mod = service_registry.get(role_name)
+                local _, err = apply_config(mod)
+                if err then
+                    log.error('Role %q failover failed', mod.role_name)
+                    log.error('%s', err)
+                end
+            end
+
+            return true
+        end)
+        if ok then
+            log.info('Failover step finished')
+        else
+            log.warn('Failover step failed: %s', err)
         end
-        ::continue::
+        confapplier.set_state('RolesConfigured')
+
+        goto start_over
     end
 end
 
@@ -195,20 +207,18 @@ local function cfg(clusterwide_config)
 
     local new_mode = topology_cfg.failover and 'eventual' or 'disabled'
     if vars.mode ~= new_mode then
-        log.info('Failover mode set to %q', vars.mode)
+        vars.notification:signal()
+        log.info('Failover mode set to %q', new_mode)
     end
 
     vars.clusterwide_config = clusterwide_config
     vars.mode = new_mode
 
-    if vars.failover_cond == nil then
-        vars.failover_cond = membership.subscribe()
-    end
 
     if vars.failover_fiber == nil
     or vars.failover_fiber:status() == 'dead'
     then
-        vars.failover_fiber = fiber.new(_failover, vars.failover_cond)
+        vars.failover_fiber = fiber.new(failover_loop, vars.notification)
         vars.failover_fiber:name('cartridge.failover')
     end
 

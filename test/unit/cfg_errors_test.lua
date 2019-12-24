@@ -48,6 +48,8 @@ function g.mock_membership()
     require('membership.members').myself = function()
         return {
             uri = 'unused:0',
+            status = require('membership.options').ALIVE,
+            incarnation = 1,
             payload = {},
         }
     end

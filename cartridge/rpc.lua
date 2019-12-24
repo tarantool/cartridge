@@ -46,7 +46,10 @@ local function member_is_healthy(uri, instance_uuid)
         (member ~= nil)
         and (member.status == 'alive')
         and (member.payload.uuid == instance_uuid)
-        and (member.payload.error == nil)
+        and (
+            member.payload.state == 'ConfiguringRoles' or
+            member.payload.state == 'RolesConfigured'
+        )
     )
 end
 

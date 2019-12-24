@@ -62,7 +62,6 @@ function g:test_bootstrap()
                 cluster {
                     edit_topology(replicasets: $replicasets) {
                         replicasets {
-                            status
                             uuid
                             roles
                             active_master {uri}
@@ -112,7 +111,6 @@ function g:test_bootstrap()
             active_master = {uri = a1.advertise_uri},
             master = {uri = a1.advertise_uri},
             roles = {"vshard-router", "myrole-dependency", "myrole"},
-            status = "healthy",
             uuid = a1.replicaset_uuid,
             weight = box.NULL,
         },
@@ -120,11 +118,9 @@ function g:test_bootstrap()
             active_master = {uri = b2.advertise_uri},
             master = {uri = b2.advertise_uri},
             roles = {"vshard-storage"},
-            status = "unhealthy",
             uuid = b2.replicaset_uuid,
             weight = 1
         }
-
     })
     t.assert_equals(topology.servers[1].uuid, a1.instance_uuid)
 

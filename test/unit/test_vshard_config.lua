@@ -34,6 +34,9 @@ package.loaded['membership'] = {
     myself = function()
         return members['localhost:3301']
     end,
+    subscribe = function()
+        return require('fiber').cond()
+    end,
 }
 
 package.loaded['cartridge.pool'] = {
