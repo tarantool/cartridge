@@ -145,11 +145,7 @@ local function get_connection(role_name, opts)
         local uri = table.remove(candidates, n)
         num_candidates = num_candidates - 1
 
-        if uri == myself.uri then
-            conn, err = netbox.self, nil
-        else
-            conn, err = pool.connect(uri)
-        end
+        conn, err = pool.connect(uri)
     end
 
     if conn == nil then
