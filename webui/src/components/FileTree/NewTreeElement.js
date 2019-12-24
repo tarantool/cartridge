@@ -25,7 +25,7 @@ const styles = {
     cursor: pointer;
 
     &:hover {
-      background-color: #ffffff;
+      background-color: #f6ebec;
     }
 
     .NewTreeElement__btns {
@@ -37,7 +37,7 @@ const styles = {
     }
   `,
   active: css`
-    background-color: #ffffff;
+    background-color: #f6ebec;
   `,
   iconChevron: css`
     margin: 4px;
