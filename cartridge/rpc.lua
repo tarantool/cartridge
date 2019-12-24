@@ -19,6 +19,7 @@ local confapplier = require('cartridge.confapplier')
 local service_registry = require('cartridge.service-registry')
 
 local RemoteCallError = errors.new_class('RemoteCallError')
+local UriWhithLeaderError = errors.new_class('UriWhithLeaderError')
 
 local function call_local(role_name, fn_name, args)
     checks('string', 'string', '?table')
@@ -217,9 +218,12 @@ local function call_remote(role_name, fn_name, args, opts)
     end
 
     local conn, err
-    local uri = opts.uri
-    if uri ~= nil then
-        conn, err = pool.connect(uri)
+    if opts.uri ~= nil then
+        if leader_only then
+            conn, err = nil, UriWhithLeaderError:new('Usage only uri or only leader_only')
+        else
+            conn, err = pool.connect(opts.uri)
+        end
     else
         conn, err = get_connection(role_name, {
             prefer_local = prefer_local,
