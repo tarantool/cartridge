@@ -87,38 +87,15 @@ export default class MonacoEditor extends React.Component {
     } = this.props;
 
     const { editor } = this;
-    let model = editor.getModel(fileId)
 
-    //TODO: potential bugs here: when go to other page, then return to this (editor) page,
-    // focus last file content (editor area), and wrong model will be used
-    // (write something, then select other file, then return to this file — and it has old content.)
-    if (prevProps.fileId !== fileId) {
-      const existedModel = getModelByFile(fileId)
-      if (!existedModel) {
-        model = setModelByFile(fileId, language, initialValue)
-      } else {
-        model = existedModel
-      }
-      editor.setModel(model)
-      editor.focus()
-    } else {
-      // if (this.props.value !== model.getValue()) {
-      //   this._prevent_trigger_change_event = true;
-      //   this.editor.pushUndoStop();
-      //   model.pushEditOperations(
-      //     [],
-      //     [
-      //       {
-      //         range: model.getFullModelRange(),
-      //         text: value
-      //       }
-      //     ]
-      //   );
-      //   this.editor.pushUndoStop();
-      //   this._prevent_trigger_change_event = false;
-      // }
+    let model = getModelByFile(fileId);
+    if (!model) {
+      model = setModelByFile(fileId, language, initialValue)
     }
 
+    //TODO is it ok to always set the same model, or should we check current model?
+    editor.setModel(model)
+    editor.focus()
 
     if (prevProps.theme !== theme) {
       monaco.editor.setTheme(theme);
