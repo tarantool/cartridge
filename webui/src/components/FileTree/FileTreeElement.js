@@ -30,7 +30,7 @@ const styles = {
     cursor: pointer;
 
     &:hover {
-      background-color: #ffffff;
+      background-color: #f6ebec;
     }
 
     .FileTreeElement__btns {
@@ -42,7 +42,7 @@ const styles = {
     }
   `,
   active: css`
-    background-color: #ffffff;
+    background-color: #f6ebec;
   `,
   deleted: css`
     text-decoration: line-through;
@@ -69,7 +69,7 @@ const styles = {
     right: 8px;
     display: flex;
     flex-wrap: nowrap;
-    background-color: #ffffff;
+    background-color: #f6ebec;
   `,
   fileActionBtn: css`
     line-height: 16px;
