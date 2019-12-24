@@ -4,6 +4,7 @@ local g = t.group('rpc')
 
 local test_helper = require('test.helper')
 local helpers = require('cartridge.test-helpers')
+local errno = require('errno')
 
 g.before_all = function()
     g.cluster = helpers.Cluster:new({
@@ -92,9 +93,75 @@ function g.test_errors()
 end
 
 function g.test_routing()
-    local res, err = rpc_call(
-        g.cluster:server('B2'), 'myrole', 'is_master', nil, {leader_only=true}
+    local B1 = g.cluster:server('B1')
+    local B2 = g.cluster:server('B2')
+    for _, srv in pairs({B1, B2}) do
+        -- inject new role method `get_session`
+        srv.net_box:eval([[
+            local myrole = require('mymodule')
+            function myrole.get_session()
+                return {
+                    uuid = box.info.uuid,
+                    peer = box.session.peer() or box.NULL,
+                    master = myrole.is_master(),
+                }
+            end
+        ]])
+    end
+
+    -- Test opts.prefer_local
+    --------------------------------------------------------------------
+    local res, err = rpc_call(B2,
+        'myrole', 'get_session', nil,
+        {--[[ implies prefer_local = true ]]}
     )
     t.assert_not(err)
-    t.assert_equals(res, true)
+    t.assert_equals(res.uuid, B2.instance_uuid)
+    t.assert_equals(res.peer, B2.net_box:call('box.session.peer'))
+
+    -- Test opts.leader_only
+    --------------------------------------------------------------------
+    local res, err = rpc_call(B2,
+        'myrole', 'get_session', nil,
+        {leader_only = true}
+    )
+    t.assert_not(err)
+    t.assert_equals(res.master, true)
+    t.assert_equals(res.uuid, B1.instance_uuid)
+
+    -- Test opts.uri
+    --------------------------------------------------------------------
+    local res, err = rpc_call(B2,
+        'myrole', 'get_session', nil,
+        {uri = B1.advertise_uri}
+    )
+    t.assert_not(err)
+    t.assert_equals(res.uuid, B1.instance_uuid)
+
+    local res, err = rpc_call(B2,
+        'myrole', 'get_session', nil,
+        {uri = B2.advertise_uri, --[[ implies prefer_local = false ]]}
+    )
+    t.assert_not(err)
+    t.assert_equals(res.uuid, B2.instance_uuid)
+    t.assert_not_equals(res.peer, B2.net_box:call('box.session.peer'))
+
+    local res, err = rpc_call(B2,
+        'myrole', 'void', nil,
+        {uri = 'localhost:0'}
+    )
+    t.assert_covers({
+        ['"localhost:0": ' .. errno.strerror(errno.ECONNREFUSED)] = true,
+        ['"localhost:0": ' .. errno.strerror(errno.ENETUNREACH)] = true,
+    }, {[err.err] = true})
+    t.assert_equals(err.class_name, 'NetboxConnectError')
+    t.assert_not(res)
+
+    t.assert_error_msg_contains(
+        'bad argument opts.uri to rpc_call' ..
+        ' (conflicts with opts.leader_only=true)',
+        rpc_call, B2,
+        'myrole', 'void', nil,
+        {uri = B2.advertise_uri, leader_only = true}
+    )
 end

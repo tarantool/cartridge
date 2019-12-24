@@ -177,6 +177,11 @@ end
 -- @tparam ?boolean opts.leader_only
 --   Perform a call only on the replica set leaders.
 --   (default: **false**)
+-- @tparam ?string opts.uri
+--   Force a call to be performed on this particular uri.
+--   Disregards member status and `opts.prefer_local`.
+--   Conflicts with `opts.leader_only = true`.
+--   (added in v1.2.0-63)
 -- @param opts.remote_only (*deprecated*) Use `prefer_local` instead.
 -- @param opts.timeout passed to `net.box` `conn:call` options.
 -- @param opts.buffer passed to `net.box` `conn:call` options.
@@ -190,9 +195,16 @@ local function call_remote(role_name, fn_name, args, opts)
         prefer_local = '?boolean',
         leader_only = '?boolean',
         remote_only = '?boolean', -- deprecated
+        uri = '?string',
         timeout = '?', -- for net.box.call
         buffer = '?', -- for net.box.call
     })
+
+    if opts.uri ~= nil and opts.leader_only then
+        local err = "bad argument opts.uri to rpc_call" ..
+            " (conflicts with opts.leader_only=true)"
+        error(err, 2)
+    end
 
     local prefer_local
     if opts.remote_only ~= nil then
@@ -213,10 +225,16 @@ local function call_remote(role_name, fn_name, args, opts)
         leader_only = false
     end
 
-    local conn, err = get_connection(role_name, {
-        prefer_local = prefer_local,
-        leader_only = leader_only,
-    })
+    local conn, err
+    if opts.uri ~= nil then
+        conn, err = pool.connect(opts.uri)
+    else
+        conn, err = get_connection(role_name, {
+            prefer_local = prefer_local,
+            leader_only = leader_only,
+        })
+    end
+
     if not conn then
         return nil, err
     end
