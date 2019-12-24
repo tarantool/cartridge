@@ -144,6 +144,10 @@ class Code extends React.Component<CodeProps, CodeState> {
   }
 
   async componentDidMount() {
+    if (this.props.files.length > 0) {
+      return;
+    }
+
     this.props.dispatch(fetchConfigFiles());
     this.setState(() => ({
       loading: false
