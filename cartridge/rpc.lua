@@ -139,9 +139,10 @@ local function get_connection(role_name, opts)
     local conn, err
     local num_candidates = #candidates
     while conn == nil and num_candidates > 0 do
+        local n
         local uri = myself.uri
         while uri == myself.uri and num_candidates > 0 do
-            local n = math.random(num_candidates)
+            n = math.random(num_candidates)
             uri = table.remove(candidates, n)
             num_candidates = num_candidates - 1
         end
