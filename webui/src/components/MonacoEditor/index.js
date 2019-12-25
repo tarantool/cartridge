@@ -15,9 +15,8 @@ const DEF_CURSOR = {}
 
 export default class MonacoEditor extends React.Component {
   static propTypes = {
-    value: PropTypes.string,
     fileId: PropTypes.string,
-    defaultValue: PropTypes.string,
+    initialValue: PropTypes.string,
     language: PropTypes.string,
     theme: PropTypes.string,
     options: PropTypes.object,
@@ -33,8 +32,7 @@ export default class MonacoEditor extends React.Component {
   };
 
   static defaultProps = {
-    value: null,
-    defaultValue: '',
+    initialValue: '',
     language: 'javascript',
     theme: null,
     options: {},
@@ -131,9 +129,9 @@ export default class MonacoEditor extends React.Component {
   }
 
   initMonaco() {
-    const value =
-      this.props.value !== null ? this.props.value : this.props.defaultValue;
-    const { language, theme, options, overrideServices } = this.props;
+    const {
+      initialValue, language, theme, options, overrideServices
+    } = this.props;
     if (this.containerElement) {
       // Before initializing monaco editor
       Object.assign(options, this.editorWillMount());
@@ -141,7 +139,7 @@ export default class MonacoEditor extends React.Component {
       this.editor = monaco.editor.create(
         this.containerElement,
         {
-          value,
+          value: initialValue,
           language: 'javascript',
           ...options,
           ...(theme ? { theme } : {})
