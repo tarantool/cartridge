@@ -92,7 +92,7 @@ local function get_candidates(role_name, opts)
         local replicaset_uuid = server.replicaset_uuid
         local replicaset = replicasets[replicaset_uuid]
 
-        if roles.get_enabled_roles(replicaset.roles)[role_name]
+        if roles.get_enabled_roles(replicaset.roles)    [role_name]
         and (not opts.healthy_only or member_is_healthy(server.uri, instance_uuid))
         and (not opts.leader_only or active_leaders[replicaset_uuid] == instance_uuid)
         then
@@ -168,7 +168,8 @@ end
 -- @tparam[opt] table args
 -- @tparam[opt] table opts
 -- @tparam ?boolean opts.prefer_local
---   Don't perform a remote call if possible.
+--   Don't perform a remote call if possible. If this option
+--   is equal false then a call perform in network connection.
 --   (default: **true**)
 -- @tparam ?boolean opts.leader_only
 --   Perform a call only on the replica set leaders.
