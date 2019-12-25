@@ -86,16 +86,17 @@ export default class MonacoEditor extends React.Component {
 
     const { editor } = this;
 
-    let model = getModelByFile(fileId);
-    if (!model) {
-      model = setModelByFile(fileId, language, initialValue)
-    }
+    if (fileId) {
+      let model = getModelByFile(fileId);
+      if (!model) {
+        model = setModelByFile(fileId, language, initialValue)
+      }
 
-    if (editor.getModel() !== model) {
-      editor.setModel(model);
+      if (editor.getModel() !== model) {
+        editor.setModel(model);
+        editor.focus()
+      }
     }
-
-    editor.focus()
 
     if (prevProps.theme !== theme) {
       monaco.editor.setTheme(theme);
