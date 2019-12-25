@@ -126,7 +126,7 @@ describe('Creating', () => {
         path: 'file.ext', fileName: 'file.ext',
         parentPath: '',
         type: 'file',
-        initialContent: '',
+        initialContent: null,
         loading: false, saved: false,
         line: 0, column: 0, scrollPosition: 0,
       },
@@ -149,7 +149,7 @@ describe('Creating', () => {
         path: 'folder/folder/newFile.ext', fileName: 'newFile.ext',
         parentPath: parentPath,
         type: 'file',
-        initialContent: '',
+        initialContent: null,
         loading: false, saved: false,
         line: 0, column: 0, scrollPosition: 0,
       }
@@ -177,7 +177,7 @@ describe('Creating', () => {
         path: 'newFile.ext', fileName: 'newFile.ext',
         parentPath: parentPath,
         type: 'file',
-        initialContent: '',
+        initialContent: null,
         loading: false, saved: false,
         line: 0, column: 0, scrollPosition: 0,
       }

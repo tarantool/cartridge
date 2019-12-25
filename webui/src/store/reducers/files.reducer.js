@@ -25,7 +25,7 @@ export type FileItem = {
   initialPath?: string,
   parentPath: string,
   fileName: string,
-  initialContent?: string,
+  initialContent?: string | null,
   loading: boolean,
   saved: boolean,
   type: 'file' | 'folder',
@@ -154,7 +154,7 @@ const addFileOrFolder = (list: Array<FileItem>, { parentPath, name }: { parentPa
 
   return [
     ...list,
-    makeFile(parentPath || '', name, type === CREATE_FOLDER)
+    makeFile(parentPath || '', name, type === CREATE_FOLDER, null)
   ];
 }
 
