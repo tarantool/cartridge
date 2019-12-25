@@ -122,7 +122,7 @@ function g.test_routing()
     -- Test opts.leader_only and opts.prefer_local
     --------------------------------------------------------------------
 
-    local res, err = rpc_call(B2,
+    local res, err = rpc_call(B1,
         'myrole', 'get_session', nil,
         {prefer_local = false, leader_only = true}
     )
