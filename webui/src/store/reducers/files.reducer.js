@@ -43,13 +43,6 @@ type UpdateObj = {
   saved?: boolean | (FileItem, Object) => boolean,
 }
 
-const toFileItem = (item): FileItem => {
-  return {
-    ...item,
-    loading: false,
-    saved: false
-  }
-}
 
 const ignoreFiles = ['schema.yml']
 
