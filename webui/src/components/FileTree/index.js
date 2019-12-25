@@ -89,7 +89,7 @@ export class FileTree extends React.Component<FileTreeProps, FileTreeState> {
     const { expandedEntries } = this.state;
 
     return (
-      <ul className={cx(styles.tree, className)}>
+      <ul className={cx(styles.tree, className, 'meta-test__enterName')}>
         {operationObject === '' && ['createFile', 'createFolder'].includes(fileOperation) && (
           <NewTreeElement
             type={fileOperation === 'createFolder' ? 'folder' : 'file' }

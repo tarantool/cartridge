@@ -152,14 +152,14 @@ export const FileTreeElement = (
           {file.type === 'folder' && (
             <React.Fragment>
               <Button
-                className={styles.fileActionBtn}
+                className={cx(styles.fileActionBtn, 'meta-test__createFolderInTreeBtn')}
                 intent='plain'
                 size='xs'
                 icon={IconCreateFolder}
                 onClick={e => { e.stopPropagation(); onFolderCreate(file.path); }}
               />
               <Button
-                className={cx(styles.fileActionBtn, styles.fileActionBtnMargin)}
+                className={cx(styles.fileActionBtn, styles.fileActionBtnMargin, 'meta-test__createFileInTreeBtn')}
                 intent='plain'
                 size='xs'
                 icon={IconCreateFile}
@@ -168,14 +168,14 @@ export const FileTreeElement = (
             </React.Fragment>
           )}
           <Button
-            className={styles.fileActionBtn}
+            className={cx(styles.fileActionBtn, 'meta-test__editFolderInTreeBtn')}
             intent='plain'
             size='xs'
             icon={IconEdit}
             onClick={e => { e.stopPropagation(); onRename(file.path); }}
           />
           <Button
-            className={styles.fileActionBtn}
+            className={cx(styles.fileActionBtn, 'meta-test__deleteFolderInTreeBtn')}
             intent='plain'
             size='xs'
             icon={IconDelete}
