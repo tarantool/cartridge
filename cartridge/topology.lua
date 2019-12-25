@@ -533,10 +533,11 @@ local function cluster_is_healthy()
                 '%s uuid mismatch: expected %s, have %s',
                 server.uri, instance_uuid, member.payload.uuid
             )
-        elseif (member.payload.error ~= nil) then
+        elseif member.payload.state ~= 'ConfiguringRoles'
+        and member.payload.state ~= 'RolesConfigured' then
             return nil, string.format(
-                '%s: %s',
-                server.uri, member.payload.error
+                '%s state %s',
+                server.uri, member.payload.state
             )
         end
     end

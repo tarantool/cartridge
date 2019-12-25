@@ -212,8 +212,6 @@ local function apply_config(clusterwide_config)
 
     if vars.state == 'BoxConfigured' then
         set_state('ConnectingFullmesh')
-    else
-        box.cfg({replication_connect_quorum = 0})
     end
 
     local _, err = BoxError:pcall(box.cfg, {
@@ -224,6 +222,14 @@ local function apply_config(clusterwide_config)
     if err ~= nil then
         set_state('OperationError', err)
         return nil, err
+    elseif box.info.status == 'orphan' then
+        local err = BoxError:new(
+            'Replication setup failed, instance in orphan mode'
+        )
+        set_state('OperationError', err)
+        return nil, err
+    else
+        box.cfg({replication_connect_quorum = 0})
     end
 
     set_state('ConfiguringRoles')
@@ -333,6 +339,11 @@ local function boot_instance(clusterwide_config)
         if instance_uuid == leader_uuid then
             box_opts.replication = nil
             box_opts.read_only = false
+            -- leader should be bootstrapped with quorum = 0, otherwise
+            -- there'll be a race during parallel bootstrap. Leader will
+            -- enter orphan mode (temporarily, until it connects to the
+            -- replica) and replica would fail to join because leader is
+            -- readonly.
             box_opts.replication_connect_quorum = 0
         else
             box_opts.replication = {pool.format_uri(leader.uri)}
