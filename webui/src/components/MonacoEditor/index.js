@@ -145,7 +145,7 @@ export default class MonacoEditor extends React.Component {
         this.containerElement,
         {
           value: initialValue,
-          language: 'javascript',
+          language: language || 'javascript',
           ...options,
           ...(theme ? { theme } : {})
         },
