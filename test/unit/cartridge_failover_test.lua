@@ -1,5 +1,5 @@
 local t = require('luatest')
-local g = t.group('cartridge_failover')
+local g = t.group()
 
 local helpers = require('cartridge.test-helpers')
 local fio = require('fio')

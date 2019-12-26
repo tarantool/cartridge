@@ -1,6 +1,6 @@
 local fio = require('fio')
 local t = require('luatest')
-local g = t.group('multisharding_api')
+local g = t.group()
 
 local test_helper = require('test.helper')
 

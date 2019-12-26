@@ -1,6 +1,6 @@
 local fio = require('fio')
 local t = require('luatest')
-local g = t.group('config')
+local g = t.group()
 
 local json = require('json')
 local test_helper = require('test.helper')

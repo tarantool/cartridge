@@ -2,7 +2,7 @@ local fio = require('fio')
 local log = require('log')
 local errno = require('errno')
 local t = require('luatest')
-local g = t.group('bootstrap')
+local g = t.group()
 
 local test_helper = require('test.helper')
 local helpers = require('cartridge.test-helpers')

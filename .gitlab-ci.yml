@@ -97,7 +97,7 @@ integration-ee:
   <<: *test-template
   script: &integration-script
     - pytest -v
-    - luatest -v -x cypress_*
+    - luatest -v -x cypress.*
   variables:
     IMAGE_NAME: *IMAGE_NAME_EE
 
@@ -119,7 +119,7 @@ cypress:
   <<: *test-template
   when: manual
   script:
-    - luatest -v -p cypress_*
+    - luatest -v -p cypress.*
   artifacts:
     name: "${CI_COMMIT_REF_NAME}.cypress"
     when: always

@@ -1,5 +1,5 @@
 local t = require('luatest')
-local g = t.group('remote_control')
+local g = t.group()
 
 local fio = require('fio')
 local digest = require('digest')

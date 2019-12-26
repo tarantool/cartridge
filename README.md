@@ -122,7 +122,7 @@ pip install -r test/integration/requirements.txt
 tarantoolctl rocks install luacheck
 tarantoolctl rocks install luacov
 tarantoolctl rocks install luacov-console
-tarantoolctl rocks install luatest 0.3.0
+tarantoolctl rocks install luatest 0.4.0
 ```
 
 Then run tests:

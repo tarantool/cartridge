@@ -1,6 +1,6 @@
 local fio = require('fio')
 local t = require('luatest')
-local g = t.group('feedback')
+local g = t.group()
 
 local log = require('log')
 local json = require('json')

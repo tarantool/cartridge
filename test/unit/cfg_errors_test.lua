@@ -1,7 +1,7 @@
 #!/usr/bin/env tarantool
 
 local t = require('luatest')
-local g = t.group('cfg_errors')
+local g = t.group()
 
 if not pcall(require, 'cartridge.front-bundle') then
     -- to be loaded in development environment
