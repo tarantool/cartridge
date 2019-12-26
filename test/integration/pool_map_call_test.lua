@@ -3,6 +3,7 @@
 local log = require('log')
 local fio = require('fio')
 local errno = require('errno')
+local utils = require('cartridge.utils')
 local t = require('luatest')
 local g = t.group()
 
@@ -192,6 +193,28 @@ function g.test_negative()
         'NetboxConnectError: "localhost:9": ' .. errno.strerror(errno.ECONNREFUSED),
         'NetboxConnectError: "localhost:9": ' .. errno.strerror(errno.ENETUNREACH)
     )
+
+    t.assert_equals(errmap.class_name, 'MultipleErrors')
+
+    local errmap_err = errmap.err:split('\n')
+    t.assert_equals(#errmap_err, 3)
+    t.assert_not_equals(
+        utils.table_find(errmap_err,  'Invalid URI "!@#$%^&*()"'),
+        nil
+    )
+    t.assert_not_equals(
+        utils.table_find(errmap_err,  'Too long WAL write'),
+        nil
+    )
+
+    local _, count_strings = errmap.str:gsub('FormatURIError', '')
+    t.assert_equals(count_strings, 1)
+
+    local _, count_strings = errmap.str:gsub('Net.box call failed', '')
+    t.assert_equals(count_strings, 1)
+
+    local _, count_strings = errmap.str:gsub('NetboxConnectError', '')
+    t.assert_equals(count_strings, 1)
 end
 
 function g.test_positive()

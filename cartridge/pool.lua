@@ -19,6 +19,7 @@ vars:new('locks', {})
 vars:new('connections', {})
 local NetboxConnectError = errors.new_class('NetboxConnectError')
 local NetboxMapCallError = errors.new_class('NetboxMapCallError')
+local MultipleErrors = errors.new_class('MultipleErrors')
 
 --- Enrich URI with credentials.
 -- Suitable to connect other cluster instances.
@@ -183,7 +184,42 @@ local function map_call(fn_name, args, opts)
         end
     end
 
-    return unpack(maps)
+    local ret_map, err_map = unpack(maps)
+    if err_map == nil then
+        return ret_map
+    end
+
+    local err = MultipleErrors:new('PoolMapCall error occoured')
+    local index = table.copy(err_map)
+    index.tostring = MultipleErrors.tostring
+
+    local err_class_group = {}
+    for _, v in pairs(err_map) do
+        if v.class_name then
+            err_class_group[v.class_name] = v
+        end
+    end
+
+    local group_err_res = {}
+    local group_err_str_res = {}
+    for _, v in pairs(err_class_group) do
+        table.insert(group_err_res, v.err)
+        table.insert(group_err_str_res, tostring(v))
+    end
+
+    err.err = table.concat(group_err_res, '\n')
+    err.str = table.concat(group_err_str_res, '\n')
+    err.suberrors = err_map
+    err.stack = nil
+
+    local instance_mt = {
+        class_name = MultipleErrors.class_name,
+        __tostring = MultipleErrors.tostring,
+        __index = index
+    }
+    setmetatable(err, instance_mt)
+
+    return ret_map, err
 end
 
 return {
