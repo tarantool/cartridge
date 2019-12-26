@@ -197,26 +197,6 @@ class Code extends React.Component<CodeProps, CodeState> {
     }
   }
 
-  handleFileDeleteConfirm = () => {
-    const { dispatch } = this.props;
-    const { fileOperationObject } = this.state;
-
-    if (fileOperationObject) {
-      const file = this.getFileById(fileOperationObject);
-
-      dispatch(
-        file && file.type === 'folder'
-          ? deleteFolder({ id: fileOperationObject })
-          : deleteFile({ id: fileOperationObject })
-      );
-
-      this.setState({
-        fileOperationType: null,
-        fileOperationObject: null
-      });
-    }
-  }
-
   handleFileRenameClick = (id: string) => this.setState({
     fileOperationType: 'rename',
     fileOperationObject: id
