@@ -507,6 +507,16 @@ function g.test_call()
         t.assert_equals(err.message, 'BoxError')
 
         t.assert_not(conn.error)
+
+        local ok, err = pcall(conn.call, conn,
+            'box.ctl.wait_ro', {0.001}
+        )
+        t.assert_not(ok)
+        t.assert_equals(type(err), 'cdata')
+        t.assert_equals(err.code, box.error.SYSTEM)
+        t.assert_equals(err.message, 'timed out')
+
+        t.assert_not(conn.error)
     end
 
     rc_start(13301)
@@ -571,6 +581,14 @@ function g.test_eval()
         t.assert_equals(type(err), 'cdata')
         t.assert_equals(err.code, box.error.PROTOCOL)
         t.assert_equals(err.message, 'BoxError')
+
+        local ok, err = pcall(conn.eval, conn,
+            'box.ctl.wait_ro(0.001)'
+        )
+        t.assert_not(ok)
+        t.assert_equals(type(err), 'cdata')
+        t.assert_equals(err.code, box.error.SYSTEM)
+        t.assert_equals(err.message, 'timed out')
 
         t.assert_not(conn.error)
     end

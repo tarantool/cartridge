@@ -236,7 +236,11 @@ local function communicate(s)
             reply_ok(s, sync, ret)
             return true
         elseif ffi.istype(error_t, ret) then
-            reply_err(s, sync, ret.code, ret.message)
+            local code = ret.code
+            if code == nil and ret.errno ~= nil then
+                code = box.error.SYSTEM
+            end
+            reply_err(s, sync, code, ret.message)
             return true
         else
             reply_err(s, sync, box.error.PROC_LUA, tostring(ret))
@@ -260,7 +264,11 @@ local function communicate(s)
             reply_ok(s, sync, ret)
             return true
         elseif ffi.istype(error_t, ret) then
-            reply_err(s, sync, ret.code, ret.message)
+            local code = ret.code
+            if code == nil and ret.errno ~= nil then
+                code = box.error.SYSTEM
+            end
+            reply_err(s, sync, code, ret.message)
             return true
         else
             reply_err(s, sync, box.error.PROC_LUA, tostring(ret))
