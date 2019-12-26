@@ -2,7 +2,7 @@ local fio = require('fio')
 local socket = require('socket')
 
 local t = require('luatest')
-local g = t.group('console_sock')
+local g = t.group()
 
 local test_helper = require('test.helper')
 local helpers = require('cartridge.test-helpers')

@@ -1,7 +1,7 @@
 #!/usr/bin/env tarantool
 
 local t = require('luatest')
-local g = t.group('argparse')
+local g = t.group()
 local fio = require('fio')
 local yaml = require('yaml')
 local checks = require('checks')

@@ -1,6 +1,6 @@
 local fio = require('fio')
 local t = require('luatest')
-local g = t.group('auth')
+local g = t.group()
 
 local digest = require('digest')
 local log = require('log')

@@ -24,7 +24,7 @@ RUN tarantoolctl rocks install ldoc --server=http://rocks.moonscript.org &&\
     tarantoolctl rocks install luacheck &&\
     tarantoolctl rocks install luacov &&\
     tarantoolctl rocks install luacov-console 1.1.0 &&\
-    tarantoolctl rocks install luatest 0.3.0
+    tarantoolctl rocks install luatest 0.4.0
 
 ENV PATH="${PWD}/.rocks/bin:${PATH}"
 COPY test/integration/requirements.txt /tmp/requirements.txt

@@ -4,7 +4,7 @@ local log = require('log')
 local fio = require('fio')
 local errno = require('errno')
 local t = require('luatest')
-local g = t.group('pool_map_call')
+local g = t.group()
 
 local test_helper = require('test.helper')
 local helpers = require('cartridge.test-helpers')

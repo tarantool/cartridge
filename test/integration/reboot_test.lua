@@ -1,7 +1,7 @@
 local fio = require('fio')
 local log = require('log')
 local t = require('luatest')
-local g = t.group('reboot')
+local g = t.group()
 
 local test_helper = require('test.helper')
 local helpers = require('cartridge.test-helpers')
