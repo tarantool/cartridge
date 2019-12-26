@@ -38,6 +38,7 @@ import { getLanguageByFileName, getFileIdForMonaco } from 'src/misc/monacoModelS
 import type { TreeFileItem } from 'src/store/selectors/filesSelectors';
 import type { FileItem } from 'src/store/reducers/files.reducer';
 import { type State } from 'src/store/rootReducer';
+import { IconFileWithCode } from 'src/components/Icon/icons/IconFileWithCode';
 
 const options = {
   fixedOverflowWidgets: true,
@@ -117,6 +118,21 @@ const styles = {
   `,
   editor: css`
     flex-grow: 1;
+  `,
+  splash: css`
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: rgba(0, 0, 0, 0.25);
+    font-size: 14px;
+  `,
+  splashIcon: css`
+    width: 35px;
+    height: 35px;
+    margin-bottom: 16px;
   `
 };
 
@@ -355,41 +371,50 @@ class Code extends React.Component<CodeProps, CodeState> {
           </Scrollbar>
         </div>
         <div className={styles.mainContent}>
-          <div className={styles.panel}>
-            <Text>{selectedFile && selectedFile.path}</Text>
-            <ControlsPanel
-              thin
-              controls={[
-                <Button
-                  text='Reload'
-                  size='s'
-                  onClick={() => this.props.dispatch(fetchConfigFiles())}
-                  icon={IconRefresh}
-                  intent='secondary'
-                />,
-                <Button
-                  onClick={this.handleApplyClick}
-                  text='Apply'
-                  intent='primary'
-                  loading={puttingConfigFiles}
-                  size='s'
-                  disabled={false}
+          {selectedFile ?
+            <>
+              <div className={styles.panel}>
+                <Text>{selectedFile && selectedFile.path}</Text>
+                <ControlsPanel
+                  thin
+                  controls={[
+                    <Button
+                      text='Reload'
+                      size='s'
+                      onClick={() => this.props.dispatch(fetchConfigFiles())}
+                      icon={IconRefresh}
+                      intent='secondary'
+                    />,
+                    <Button
+                      onClick={this.handleApplyClick}
+                      text='Apply'
+                      intent='primary'
+                      loading={puttingConfigFiles}
+                      size='s'
+                      disabled={false}
+                    />
+                  ]}
                 />
-              ]}
-            />
-          </div>
-          <MonacoEditor
-            className={styles.editor}
-            language={selectedFile && getLanguageByFileName(selectedFile.fileName) || null}
-            options={{
-              ...options,
-              readOnly: !selectedFile
-            }}
-            fileId={selectedFile ? getFileIdForMonaco(selectedFile.fileId) : null}
-            initialValue={selectedFile ? selectedFile.initialContent : 'Select or add a file'}
-            isContentChanged={selectedFile ? !selectedFile.saved : null}
-            setIsContentChanged={this.handleSetIsContentChanged}
-          />
+              </div>
+              <MonacoEditor
+                className={styles.editor}
+                language={selectedFile && getLanguageByFileName(selectedFile.fileName) || null}
+                options={{
+                  ...options,
+                  readOnly: !selectedFile
+                }}
+                fileId={selectedFile ? getFileIdForMonaco(selectedFile.fileId) : null}
+                initialValue={selectedFile ? selectedFile.initialContent : 'Select or add a file'}
+                isContentChanged={selectedFile ? !selectedFile.saved : null}
+                setIsContentChanged={this.handleSetIsContentChanged}
+              />
+            </>
+            :
+            <div className={styles.splash}>
+              <IconFileWithCode className={styles.splashIcon} />
+              Please select a file
+            </div>
+          }
         </div>
         {operableFile && typeof operableFile.type === 'string' && (
           <ConfirmModal
