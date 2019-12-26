@@ -317,14 +317,14 @@ class Code extends React.Component<CodeProps, CodeState> {
             <Text variant='h4' className={styles.sidePanelTitle}>Files</Text>
             <div className={styles.buttonsPanel}>
               <Button
-                className={styles.fileActionBtn}
+                className={cx(styles.fileActionBtn, 'meta-test__addFolderBtn')}
                 intent='plain'
                 size='xs'
                 icon={IconCreateFolder}
                 onClick={() => this.handleFolderCreateClick('')}
               />
               <Button
-                className={cx(styles.fileActionBtn)}
+                className={cx(styles.fileActionBtn, 'meta-test__addFileBtn')}
                 intent='plain'
                 size='xs'
                 icon={IconCreateFile}
@@ -388,6 +388,7 @@ class Code extends React.Component<CodeProps, CodeState> {
         {operableFile && typeof operableFile.type === 'string' && (
           <ConfirmModal
             title='Delete file'
+            className='meta-test__deleteModal'
             visible={fileOperationType === 'delete'}
             onCancel={this.handleFileOperationCancel}
             onConfirm={this.handleFileDeleteConfirm}
