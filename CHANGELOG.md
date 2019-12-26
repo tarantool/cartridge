@@ -74,7 +74,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Update `ddl` dependency to 1.0.0.
 
-- Option `{prefer_local=false}` in `rpc_call` avoids netbox.self
+- Option `{prefer_local = false}` in `rpc_call` makes it always use
+  netbox connection, even to connect self. It never tries to perform
+  call locally.
 
 ### Removed
 
