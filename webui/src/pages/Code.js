@@ -322,6 +322,7 @@ class Code extends React.Component<CodeProps, CodeState> {
                 size='xs'
                 icon={IconCreateFolder}
                 onClick={() => this.handleFolderCreateClick('')}
+                title='Create folder'
               />
               <Button
                 className={cx(styles.fileActionBtn, 'meta-test__addFileBtn')}
@@ -329,6 +330,7 @@ class Code extends React.Component<CodeProps, CodeState> {
                 size='xs'
                 icon={IconCreateFile}
                 onClick={() => this.handleFileCreateClick('')}
+                title='Create file'
               />
             </div>
           </div>

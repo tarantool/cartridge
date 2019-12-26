@@ -157,6 +157,7 @@ export const FileTreeElement = (
                 size='xs'
                 icon={IconCreateFolder}
                 onClick={e => { e.stopPropagation(); onFolderCreate(file.path); }}
+                title='Create folder'
               />
               <Button
                 className={cx(styles.fileActionBtn, styles.fileActionBtnMargin, 'meta-test__createFileInTreeBtn')}
@@ -164,6 +165,7 @@ export const FileTreeElement = (
                 size='xs'
                 icon={IconCreateFile}
                 onClick={e => { e.stopPropagation(); onFileCreate(file.path); }}
+                title='Create file'
               />
             </React.Fragment>
           )}
@@ -173,6 +175,7 @@ export const FileTreeElement = (
             size='xs'
             icon={IconEdit}
             onClick={e => { e.stopPropagation(); onRename(file.path); }}
+            title='Rename'
           />
           <Button
             className={cx(styles.fileActionBtn, 'meta-test__deleteFolderInTreeBtn')}
@@ -180,6 +183,7 @@ export const FileTreeElement = (
             size='xs'
             icon={IconDelete}
             onClick={e => { e.stopPropagation(); onDelete(file.path); }}
+            title='Delete'
           />
         </div>
       </li>
