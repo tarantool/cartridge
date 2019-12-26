@@ -119,6 +119,17 @@ function g.test_routing()
     t.assert_equals(res.uuid, B2.instance_uuid)
     t.assert_equals(res.peer, B2.net_box:call('box.session.peer'))
 
+    -- Test opts.leader_only and opts.prefer_local
+    --------------------------------------------------------------------
+
+    local res, err = rpc_call(B1,
+        'myrole', 'get_session', nil,
+        {prefer_local = false, leader_only = true}
+    )
+    t.assert_not(err)
+    t.assert_equals(res.uuid, B1.instance_uuid)
+    t.assert_not_equals(res.peer, B1.net_box:call('box.session.peer'))
+
     -- Test opts.leader_only
     --------------------------------------------------------------------
     local res, err = rpc_call(B2,

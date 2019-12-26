@@ -145,11 +145,7 @@ local function get_connection(role_name, opts)
         local uri = table.remove(candidates, n)
         num_candidates = num_candidates - 1
 
-        if uri == myself.uri then
-            conn, err = netbox.self, nil
-        else
-            conn, err = pool.connect(uri)
-        end
+        conn, err = pool.connect(uri)
     end
 
     if conn == nil then
@@ -172,7 +168,11 @@ end
 -- @tparam[opt] table args
 -- @tparam[opt] table opts
 -- @tparam ?boolean opts.prefer_local
---   Don't perform a remote call if possible.
+--   Don't perform a remote call if possible. When the role is enabled
+--   locally and current instance is healthy the remote netbox call is
+--   substituted with a local Lua function call. When the option is
+--   disabled it never tries to perform call locally and always uses
+--   netbox connection, even to connect self.
 --   (default: **true**)
 -- @tparam ?boolean opts.leader_only
 --   Perform a call only on the replica set leaders.
