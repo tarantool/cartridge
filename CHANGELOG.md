@@ -6,10 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-### Added
+## [2.0.0] - 2019-12-27
 
-- Automatically choose default vshard group in create and edit
-  replicaset modals.
+### Added
 
 - Use for frontend part single point of configuration HTTP handlers.
   As example: you can add your own client HTTP middleware for auth.
@@ -34,55 +33,46 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 
-- WebUI now uses `edit_topology` mutation instead of deprecated ones.
-
-- Update `vshard` dependency to 0.1.14.
-
 - `cartridge.rpc_get_candidates()` doesn't return error "No remotes with
   role available" anymore, empty table is returned instead.
   **(incompatible change)**
 
-- Hide users page in WebUI when auth backend implements no user management
-  functions. Enable auth switcher is displayed on main cluster page in
-  this case.
-
 - Base advertise port in luatest helpers changed from 33000 to 13300,
   which is outside `ip_local_port_range`. Using port from local range
   usually caused tests failing with an error "address already in use".
-  **(incompatible change)**
+  (*incompatible change*, but affects tests only)
 
 - Whole new way to bootstrap instances. Instead of polling membership
   for getting clusterwide config the instance now start Remote Control
   Server (with limited iproto protocol functionality) on the same port.
   Two-phase commit is then executed over net.box connection.
-  **(incompatible change)**
+  (**major change**, but still compatible)
 
 - Failover isn't triggered on `suspect` instance state anymore
-  **(incompatible change)**
 
 - Functions `admin.get_servers`, `get_replicasets` and similar GraphQL
   queries now return an error if the instance handling the request is in
   state `InitError` or `BootError`.
-
-- Enhance WebUI modals scrolling.
 
 - Clusterwide configuration is now represented with a file tree.
   All sections that were tables are saved to separate `.yml` files.
   Compatibility with the old-style configuration is preserved.
   Accessing unmarshalled sections with `get_readonly/deepcopy` methods
   is provided without `.yml` extension as earlier.
-
-- Update `ddl` dependency to 1.0.0.
-
-- Option `{prefer_local = false}` in `rpc_call` makes it always use
-  netbox connection, even to connect self. It never tries to perform
-  call locally.
+  (**major change**, but still compatible)
 
 - After an old leader restarts it'll try to sync with an active one
   before taking the leadership again so that failover doesn't switch too
   early before leader finishes recovery. If replication setup fails the
   instance enters the `OperationError` state, which can be avoided by
   explicitly specifying `replication_connect_quorum = 1` (or 0).
+  **(major change)**
+
+- Option `{prefer_local = false}` in `rpc_call` makes it always use
+  netbox connection, even to connect self. It never tries to perform
+  call locally.
+
+- Update `vshard` dependency to 0.1.14.
 
 ### Removed
 
@@ -94,21 +84,24 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 
-- Add deduplication for WebUI notifications: no more spam.
+- Arrange proper failover triggering: don't miss events, don't trigger
+  if nothing changed. Fix races in calling `apply_config` between
+  failover and two-phase commit.
 
 - Race condition when creating working directory.
 
-- Race calling `apply_config` between failover and two-phase commit.
-
-- Don't cache remote-control connection so that `pool.connect` switches
-  to the full-featured iproto as soon as it's up.
+- Hide users page in WebUI when auth backend implements no user
+  management functions. Enable auth switcher is displayed on main
+  cluster page in this case.
 
 - Displaying boolean values in server details.
 
-- Arrange proper failover triggering: don't miss events, don't trigger
-  if nothing changed.
+- Add deduplication for WebUI notifications: no more spam.
 
-- Box errors handling in remote-control.
+- Automatically choose default vshard group in create and edit
+  replicaset modals.
+
+- Enhance WebUI modals scrolling.
 
 ## [1.2.0] - 2019-10-21
 
