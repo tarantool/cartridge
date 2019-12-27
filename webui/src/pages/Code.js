@@ -139,7 +139,8 @@ const styles = {
 type CodeState = {
   loading: boolean,
   fileOperationType: 'createFile' | 'createFolder' | 'rename' | 'delete' | null,
-  fileOperationObject: ?string
+  fileOperationObject: ?string,
+  isReloadConfirmOpened: boolean,
 }
 
 type CodeProps = {
@@ -156,7 +157,8 @@ class Code extends React.Component<CodeProps, CodeState> {
   state = {
     loading: true,
     fileOperationType: null,
-    fileOperationObject: null
+    fileOperationObject: null,
+    isReloadConfirmOpened: false,
   }
 
   async componentDidMount() {
@@ -201,6 +203,10 @@ class Code extends React.Component<CodeProps, CodeState> {
     fileOperationType: 'rename',
     fileOperationObject: id
   });
+
+  handleReloadClick = () => this.setState({
+    isReloadConfirmOpened: true
+  })
 
   handleApplyClick = () => {
     this.props.dispatch(applyFiles());
@@ -305,7 +311,8 @@ class Code extends React.Component<CodeProps, CodeState> {
 
     const {
       fileOperationType,
-      fileOperationObject
+      fileOperationObject,
+      isReloadConfirmOpened,
     } = this.state;
 
     const operableFile = this.getFileById(fileOperationObject);
@@ -361,7 +368,7 @@ class Code extends React.Component<CodeProps, CodeState> {
                     <Button
                       text='Reload'
                       size='s'
-                      onClick={() => this.props.dispatch(fetchConfigFiles())}
+                      onClick={this.handleReloadClick}
                       icon={IconRefresh}
                       intent='secondary'
                     />,
@@ -409,6 +416,24 @@ class Code extends React.Component<CodeProps, CodeState> {
                 {'Are you sure you want to delete the '}
                 <Text className={styles.popupFileName}>{operableFile && operableFile.fileName}</Text>
                 {` ${operableFile.type}`}
+              </Text>
+            </PopupBody>
+          </ConfirmModal>
+        )}
+        {isReloadConfirmOpened && (
+          <ConfirmModal
+            title='Reload files'
+            onCancel={() => this.setState({ isReloadConfirmOpened: false })}
+            onConfirm={() => {
+              this.props.dispatch(fetchConfigFiles());
+              this.setState({ isReloadConfirmOpened: false });
+            }}
+          >
+            <PopupBody>
+              <Text>
+                Are you sure you want to reload all the files?
+                <br />
+                You will lose your local edits.
               </Text>
             </PopupBody>
           </ConfirmModal>
