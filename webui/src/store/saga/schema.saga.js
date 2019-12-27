@@ -31,10 +31,18 @@ function* applySchemaSaga() {
     const { schema: { value } } = yield select();
     yield call(applySchema, value);
     yield put({ type: CLUSTER_PAGE_SCHEMA_APPLY_REQUEST_SUCCESS });
+
+    window.tarantool_enterprise_core.notify({
+      title: 'Success',
+      message: 'Schema successfully applied',
+      type: 'success',
+      timeout: 10000
+    });
   } catch (error) {
+    const errorText = getErrorMessage(error);
     yield put({
       type: CLUSTER_PAGE_SCHEMA_APPLY_REQUEST_ERROR,
-      payload: error,
+      payload: errorText,
       error: true
     });
   }
@@ -43,27 +51,23 @@ function* applySchemaSaga() {
 function* validateSchemaSaga() {
   try {
     const { schema: { value } } = yield select();
-    yield put({ type: CLUSTER_PAGE_SCHEMA_VALIDATE_REQUEST_SUCCESS });
     const { cluster: { check_schema: { error } } } = yield call(checkSchema, value);
+    yield put({ type: CLUSTER_PAGE_SCHEMA_VALIDATE_REQUEST_SUCCESS, payload: error });
 
-    window.tarantool_enterprise_core.notify({
-      title: 'Schema validation',
-      message: error || 'Schema is valid',
-      type: error ? 'error' : 'success',
-      timeout: error ? 30000 : 10000
-    });
+    if (!error) {
+      window.tarantool_enterprise_core.notify({
+        title: 'Schema validation',
+        message: 'Schema is valid',
+        type: 'success',
+        timeout: 10000
+      });
+    }
   } catch (error) {
     const errorText = getErrorMessage(error);
     yield put({
       type: CLUSTER_PAGE_SCHEMA_VALIDATE_REQUEST_ERROR,
       payload: errorText,
       error: true
-    });
-    window.tarantool_enterprise_core.notify({
-      title: 'Unexpected error',
-      message: errorText,
-      type: 'error',
-      timeout: 30000
     });
   }
 };

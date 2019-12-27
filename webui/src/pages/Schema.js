@@ -9,10 +9,9 @@ import {
   getSchema,
   applySchema,
   setSchema,
-  resetSchema,
   validateSchema
 } from 'src/store/actions/schema.actions';
-import { Button, ControlsPanel } from '@tarantool.io/ui-kit';
+import { Alert, IconRefresh, Button, ControlsPanel } from '@tarantool.io/ui-kit';
 
 const styles = {
   area: css`
@@ -41,6 +40,9 @@ const styles = {
   `,
   editor: css`
     flex-grow: 1;
+  `,
+  errorPanel: css`
+    margin-bottom: 0;
   `
 };
 
@@ -68,13 +70,13 @@ class Schema extends React.Component<SchemaProps> {
   render() {
     const {
       className,
+      error,
       value,
-      valueChanged,
       loading,
       uploading,
       applySchema,
+      getSchema,
       setSchema,
-      resetSchema,
       validateSchema
     } = this.props;
 
@@ -84,7 +86,13 @@ class Schema extends React.Component<SchemaProps> {
           <ControlsPanel
             thin
             controls={[
-              <Button text='Revert' size='s' onClick={resetSchema} />,
+              <Button
+                text='Reload'
+                intent='secondary'
+                size='s'
+                onClick={getSchema}
+                icon={IconRefresh}
+              />,
               <Button text='Validate' size='s' onClick={validateSchema} />,
               <Button
                 onClick={applySchema}
@@ -103,6 +111,9 @@ class Schema extends React.Component<SchemaProps> {
           value={value}
           onChange={setSchema}
         />
+        {error && (
+          <Alert className={styles.errorPanel} type='error'>{error}</Alert>
+        )}
       </div>
     );
   }
@@ -131,7 +142,6 @@ const mapDispatchToProps = {
   getSchema,
   applySchema,
   setSchema,
-  resetSchema,
   validateSchema
 };
 
