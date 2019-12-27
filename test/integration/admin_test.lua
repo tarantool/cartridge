@@ -22,21 +22,20 @@ g.before_all = function()
         command = fio.pathjoin(test_helper.root, 'test', 'integration', 'srv_woauth.lua'),
         advertise_port = 13301,
         http_port = 8081,
-        cluster_cookie = 'super-cluster-cookie',
+        cluster_cookie = ADMIN_PASSWORD,
         instance_uuid = helpers.uuid('a', 'a', 1),
         replicaset_uuid = helpers.uuid('a'),
         env = {
             TARANTOOL_AUTH_ENABLED   = 'true',
-            TARANTOOL_CLUSTER_COOKIE =  ADMIN_PASSWORD
         }
     })
     g.server:start()
     t.helpers.retrying({}, function()
         g.server:graphql({
-                query = '{}'
-            }, {
-                http = {headers = bauth(ADMIN_USERNAME, ADMIN_PASSWORD)}
-            })
+            query = '{}'
+        }, {
+            http = {headers = bauth(ADMIN_USERNAME, ADMIN_PASSWORD)}
+        })
     end)
 end
 

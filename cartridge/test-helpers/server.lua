@@ -71,6 +71,30 @@ function Server:build_env()
     }
 end
 
+--- Start the server.
+function Server:start()
+    getmetatable(getmetatable(self)).start(self)
+    luatest.helpers.retrying({}, function()
+        self:connect_net_box()
+    end)
+end
+
+--- Stop server process.
+function Server:stop()
+    local process = self.process
+    if process == nil then
+        return
+    end
+    getmetatable(getmetatable(self)).stop(self)
+    luatest.helpers.retrying({}, function()
+        luatest.assert_not(
+            process:is_alive(),
+            string.format('%s is still running', self.alias)
+        )
+    end)
+    log.warn('%s killed', self.alias)
+end
+
 --- Perform GraphQL request on cluster.
 -- @param request object to be serialized into JSON body.
 -- @param[opt] options additional options for :http_request.
