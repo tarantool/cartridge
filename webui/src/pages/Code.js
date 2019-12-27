@@ -433,7 +433,7 @@ class Code extends React.Component<CodeProps, CodeState> {
               <Text>
                 Are you sure you want to reload all the files?
                 <br />
-                You will lose your local edits.
+                All unsaved changes will be reset
               </Text>
             </PopupBody>
           </ConfirmModal>
