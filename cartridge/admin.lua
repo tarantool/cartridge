@@ -920,8 +920,10 @@ local function join_server(args)
         if (member ~= nil)
         and (member.status == 'alive')
         and (member.payload.uuid == args.instance_uuid)
-        and (member.payload.error == nil)
-        then
+        and (
+            member.payload.state == 'ConfiguringRoles' or
+            member.payload.state == 'RolesConfigured'
+        ) then
             conn = pool.connect(args.uri)
         end
     end

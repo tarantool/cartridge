@@ -42,6 +42,67 @@ g.teardown = function()
     fio.rmtree(g.cluster.datadir)
 end
 
+local function is_master(srv)
+    return srv.net_box:eval([[
+        return package.loaded['mymodule'].is_master()
+    ]])
+end
+
+local function get_leader(srv)
+    return srv.net_box:eval([[
+        local failover = require('cartridge.failover')
+        return failover.get_active_leaders()[box.info.cluster.uuid]
+    ]])
+end
+
+local function rpc_get_candidate(srv)
+    return srv.net_box:eval([[
+        local get_candidates = require('cartridge').rpc_get_candidates
+        local candidates = get_candidates('myrole', {leader_only = true})
+        if #candidates == 0 then
+            error('No rpc candidates available', 0)
+        end
+        return candidates[1]
+    ]])
+end
+
+local function get_upstream_info(srv)
+    local info = srv:graphql({
+        query = [[query($uuid: String!) {
+            servers(uuid: $uuid) {
+                uuid
+                boxinfo {replication {replication_info {
+                    uuid
+                    upstream_status
+                    upstream_message
+                }}}
+            }
+        }]],
+        variables = {uuid = srv.instance_uuid},
+    }).data.servers[1].boxinfo.replication.replication_info
+
+    for _, v in pairs(info) do
+        if v.uuid ~= srv.instance_uuid then
+            return v
+        end
+    end
+end
+
+local function wish_state(srv, desired_state)
+    g.cluster:retrying({}, function()
+        srv.net_box:eval([[
+            local confapplier = require('cartridge.confapplier')
+            local desired_state = ...
+            local state = confapplier.wish_state(desired_state)
+            assert(
+                state == desired_state,
+                string.format('Inappropriate state %q ~= desired %q',
+                state, desired_state)
+            )
+        ]], {desired_state})
+    end)
+end
+
 function g.test_failover()
     local function _ro_map()
         local resp = g.cluster:server('slave'):graphql({query = [[{
@@ -61,9 +122,7 @@ function g.test_failover()
     end
 
     --------------------------------------------------------------------
-    g.slave.net_box:eval([[
-        assert(package.loaded['mymodule'].is_master() == false)
-    ]])
+    t.assert_equals(is_master(g.slave), false)
     t.assert_equals(_ro_map(), {
         master = false,
         slave = true,
@@ -71,12 +130,9 @@ function g.test_failover()
 
     --------------------------------------------------------------------
     g.master:stop()
-    log.warn('Master killed')
 
     t.helpers.retrying({}, function()
-        g.slave.net_box:eval([[
-            assert(package.loaded['mymodule'].is_master() == true)
-        ]])
+        t.assert_equals(is_master(g.slave), true)
     end)
     t.assert_equals(_ro_map(), {
         master = box.NULL,
@@ -86,13 +142,11 @@ function g.test_failover()
     --------------------------------------------------------------------
     log.warn('Restarting master')
     g.master:start()
-    g.cluster:retrying({}, function() g.master:connect_net_box() end)
 
     t.helpers.retrying({}, function()
-        g.slave.net_box:eval([[
-            assert(package.loaded['mymodule'].is_master() == false)
-        ]])
+        t.assert_equals(is_master(g.slave), false)
     end)
+    t.assert_equals(is_master(g.master), true)
     t.assert_equals(_ro_map(), {
         master = false,
         slave = true,
@@ -206,12 +260,182 @@ function g.test_leader_death()
         end
     )
 
-    t.helpers.retrying({},
-        function()
-            local is_master = g.slave.net_box:eval(
-                "return require('mymodule').is_master()"
-            )
-            t.assert_equals(is_master, true)
-        end
+    t.helpers.retrying({}, function()
+        t.assert_equals(is_master(g.slave), true)
+    end)
+end
+
+function g.test_leader_recovery()
+    -- Old leader shouldn't take its role until recovery is finished
+    -- Simulate long recovery by temporarily disabling iproto on a slave
+    g.master:stop()
+    g.slave.net_box:eval("box.cfg({listen = box.NULL})")
+
+    log.info('--------------------------------------------------------')
+    g.master:start()
+    wish_state(g.master, 'ConnectingFullmesh')
+    g.master.net_box:eval([[
+        _G.protection_fiber = require('fiber').create(function()
+            require('log').warn('Master protected from becoming rw')
+            if pcall(box.ctl.wait_rw) then
+                require('log').error('DANGER! Master is rw!')
+                os.exit(-1)
+            end
+        end)
+    ]])
+
+    t.assert_equals(
+        get_upstream_info(g.master),
+        {
+            uuid = g.slave.instance_uuid,
+            upstream_status = box.NULL,
+            upstream_message = box.NULL,
+        }
     )
+    t.assert_covers(
+        get_upstream_info(g.slave),
+        {
+            uuid = g.master.instance_uuid,
+            upstream_status = "disconnected",
+            -- upstream_message - not checked
+        }
+    )
+    t.assert_error_msg_equals(
+        "No rpc candidates available",
+        rpc_get_candidate, g.master
+    )
+    t.assert_equals(rpc_get_candidate(g.slave), g.slave.advertise_uri)
+    t.assert_equals(get_leader(g.slave), g.slave.instance_uuid)
+    t.assert_equals(is_master(g.slave), true)
+    t.assert_equals(is_master(g.master), box.NULL)
+
+    g.master.net_box:eval([[
+        _G.protection_fiber:cancel()
+    ]])
+    -- Simulate the end of recovery (successfull)
+    g.slave.net_box:eval("box.cfg({listen = ...})", {g.slave.net_box_port})
+    g.cluster:wait_until_healthy(g.slave)
+
+    t.assert_equals(
+        get_upstream_info(g.master),
+        {
+            uuid = g.slave.instance_uuid,
+            upstream_status = "follow",
+            upstream_message = box.NULL,
+        }
+    )
+    t.assert_equals(
+        get_upstream_info(g.slave),
+        {
+            uuid = g.master.instance_uuid,
+            upstream_status = "follow",
+            upstream_message = box.NULL,
+        }
+    )
+    t.assert_equals(rpc_get_candidate(g.slave), g.master.advertise_uri)
+    t.assert_equals(get_leader(g.slave), g.master.instance_uuid)
+    t.assert_equals(get_leader(g.master), g.master.instance_uuid)
+    t.assert_equals(is_master(g.slave), false)
+    t.assert_equals(is_master(g.master), true)
+end
+
+function g.test_orphan_connect_timeout()
+    -- If the master can't connect to the slave in
+    -- <TARANTOOL_REPLICATION_CONNECT_TIMEOUT> seconds
+    -- it becomes an orphan and transits to OperationError state.
+
+    g.master:stop()
+    g.slave:stop()
+
+    log.info('--------------------------------------------------------')
+    g.master.env['TARANTOOL_REPLICATION_CONNECT_TIMEOUT'] = 0.1
+    g.master:start()
+    wish_state(g.master, 'OperationError')
+
+    g.slave:start()
+    wish_state(g.slave, 'RolesConfigured')
+    t.assert_equals(
+        get_upstream_info(g.slave),
+        {
+            uuid = g.master.instance_uuid,
+            upstream_status = "follow",
+            upstream_message = box.NULL,
+        }
+    )
+
+    t.assert_equals(rpc_get_candidate(g.slave), g.slave.advertise_uri)
+    t.assert_equals(get_leader(g.slave), g.slave.instance_uuid)
+    t.assert_equals(is_master(g.slave), true)
+end
+
+function g.test_orphan_sync_timeout()
+    -- Another way to get orphan status is to fail syncing.
+    -- This case is similar to test_orphan_connect_timeout.
+    g.master:stop()
+
+    log.info('--------------------------------------------------------')
+    g.master.env['TARANTOOL_REPLICATION_CONNECT_TIMEOUT'] = 0.1
+    g.master.env['TARANTOOL_REPLICATION_SYNC_LAG'] = 1e-308
+    g.master.env['TARANTOOL_REPLICATION_SYNC_TIMEOUT'] = 0.1
+    g.master:start()
+    wish_state(g.master, 'OperationError')
+
+    t.assert_equals(
+        -- master <- slave replication is established instantly
+        get_upstream_info(g.master),
+        {
+            uuid = g.slave.instance_uuid,
+            -- it never finish syncing due to the low lag setting
+            upstream_status = "sync",
+            upstream_message = box.NULL,
+        }
+    )
+end
+
+function g.test_quorum_one()
+    -- It's possible to avoid orphan status by explicitly specifying
+    -- TARANTOOL_REPLICATION_CONNECT_QUORUM = 1 (or 0)
+
+    g.master:stop()
+    g.slave:stop()
+
+    log.info('--------------------------------------------------------')
+    g.master.env['TARANTOOL_REPLICATION_CONNECT_QUORUM'] = 1
+    g.master:start()
+    wish_state(g.master, 'RolesConfigured')
+
+    t.assert_equals(rpc_get_candidate(g.master), g.master.advertise_uri)
+    t.assert_equals(get_leader(g.master), g.master.instance_uuid)
+    t.assert_equals(is_master(g.master), true)
+
+    g.slave:start()
+    g.cluster:wait_until_healthy(g.slave)
+
+    t.assert_equals(
+        -- slave <- master replication is established instantly
+        get_upstream_info(g.slave),
+        {
+            uuid = g.master.instance_uuid,
+            upstream_status = "follow",
+            upstream_message = box.NULL,
+        }
+    )
+
+    g.cluster:retrying({}, function()
+        -- it make take some time to reconnect
+        -- master <- slave replication
+        -- (since the master retries every 1.0s)
+        t.assert_equals(
+            get_upstream_info(g.master),
+            {
+                uuid = g.slave.instance_uuid,
+                upstream_status = "follow",
+                upstream_message = box.NULL,
+            }
+        )
+    end)
+
+    t.assert_equals(rpc_get_candidate(g.slave), g.master.advertise_uri)
+    t.assert_equals(get_leader(g.slave), g.master.instance_uuid)
+    t.assert_equals(is_master(g.slave), false)
 end

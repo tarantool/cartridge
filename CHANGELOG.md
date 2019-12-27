@@ -78,6 +78,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   netbox connection, even to connect self. It never tries to perform
   call locally.
 
+- After an old leader restarts it'll try to sync with an active one
+  before taking the leadership again so that failover doesn't switch too
+  early before leader finishes recovery. If replication setup fails the
+  instance enters the `OperationError` state, which can be avoided by
+  explicitly specifying `replication_connect_quorum = 1` (or 0).
+
 ### Removed
 
 - Function `cartridge.bootstrap` is removed. Use `admin_edit_topology`
