@@ -64,7 +64,7 @@ local state_transitions = {
     -- Remote control is running.
     -- Loading clusterwide config succeeded.
     -- Validation succeeded too.
-    ['ConfigLoaded'] = {'RecoveringSnapshot'},
+    ['ConfigLoaded'] = {'RecoveringSnapshot', 'BootstrappingBox'},
 
 -- boot_instance
     -- Remote control is running.
@@ -265,6 +265,12 @@ local function boot_instance(clusterwide_config)
     )
 
     local topology_cfg = clusterwide_config:get_readonly('topology') or {}
+    for _, server in pairs(topology_cfg.servers or {}) do
+        if server ~= 'expelled' then
+            membership.add_member(server.uri)
+        end
+    end
+
     local box_opts = table.deepcopy(vars.box_opts)
     -- TODO: https://github.com/tarantool/cartridge/issues/189
     box_opts.wal_dir = vars.workdir
@@ -278,41 +284,15 @@ local function boot_instance(clusterwide_config)
         box_opts.read_only = true
     end
 
-    -- There could be two options:
-    -- either instance is being recovered after restart
-    -- or the instance is bootstrapped (neither snapshot nor config
-    -- don't exist yet)
-    if vars.state == 'ConfigLoaded' then
-        set_state('RecoveringSnapshot')
-
-        local snapshots = fio.glob(fio.pathjoin(vars.workdir, '*.snap'))
-        if next(snapshots) == nil then
-            local err = BootError:new(
-                "Snapshot not found in %s, can't recover." ..
-                " Did previous bootstrap attempt fail?",
-                vars.workdir
-            )
-            set_state('BootError', err)
-            return nil, err
-        end
-
-        for _, server in pairs(topology_cfg.servers or {}) do
-            if server ~= 'expelled' then
-                membership.add_member(server.uri)
-            end
-        end
-
-        box_opts.instance_uuid = nil
-        box_opts.replicaset_uuid = nil
-        box_opts.replication = nil
-
-    elseif vars.state == 'Unconfigured' then
-        set_state('BootstrappingBox')
-
-        local advertise_uri = membership.myself().uri
-        local instance_uuid = topology.find_server_by_uri(
-            topology_cfg, advertise_uri
-        )
+    -- The instance should know his uuids.
+    local snapshots = fio.glob(fio.pathjoin(vars.workdir, '*.snap'))
+    local advertise_uri = membership.myself().uri
+    local instance_uuid
+    local replicaset_uuid
+    if next(snapshots) == nil then
+        -- When snapshots are absent the only way to do it
+        -- is to find myself by uri.
+        instance_uuid = topology.find_server_by_uri(topology_cfg, advertise_uri)
 
         if instance_uuid == nil then
             local err = BootError:new(
@@ -320,20 +300,66 @@ local function boot_instance(clusterwide_config)
                 " bootstrap impossible",
                 advertise_uri
             )
-            set_state('BootError', err)
+            set_state('InitError', err)
             return nil, err
         end
 
         local server = topology_cfg.servers[instance_uuid]
-        local replicaset_uuid = assert(server.replicaset_uuid)
+        replicaset_uuid = server.replicaset_uuid
+    end
+
+    -- There could be three options:
+    if vars.state == 'ConfigLoaded' and next(snapshots) ~= nil then
+        -- Instance is being recovered after restart
+        set_state('RecoveringSnapshot')
+        box_opts.instance_uuid = nil
+        box_opts.replicaset_uuid = nil
+        box_opts.replication = nil
+
+    elseif vars.state == 'ConfigLoaded' and next(snapshots) == nil then
+        -- Instance is being recovered after snapshot removal (rejoin)
+        log.warn(
+            "Snapshot not found in %s, can't recover." ..
+            " Did previous bootstrap attempt fail?",
+            vars.workdir
+        )
+        log.warn("Will try to rebootsrap, but it may fail again.")
+
+        set_state('BootstrappingBox')
+        box_opts.instance_uuid = assert(instance_uuid)
+        box_opts.replicaset_uuid = assert(replicaset_uuid)
+        box_opts.replication_connect_quorum = 1
+        box_opts.replication = topology.get_fullmesh_replication(
+            topology_cfg, box_opts.replicaset_uuid
+        )
+        -- Workaround for https://github.com/tarantool/tarantool/issues/3760
+        -- which wasn't cherry-picked to tarantool 1.10 yet.
+        -- Due to the bug box_opts.replication_connect_quorum was ignored
+        -- and box.cfg used to hang
+        table.remove(
+            box_opts.replication,
+            utils.table_find(
+                box_opts.replication,
+                pool.format_uri(advertise_uri)
+            )
+        )
+        if #box_opts.replication == 0 then
+            box_opts.read_only = false
+        end
+
+    elseif vars.state == 'Unconfigured' then
+        -- Instance is being bootstrapped (neither snapshot nor config
+        -- don't exist yet)
+        set_state('BootstrappingBox')
+
+        box_opts.instance_uuid = instance_uuid
+        box_opts.replicaset_uuid = replicaset_uuid
+
         local leaders_order = topology.get_leaders_order(
             topology_cfg, replicaset_uuid
         )
         local leader_uuid = leaders_order[1]
         local leader = topology_cfg.servers[leader_uuid]
-
-        box_opts.instance_uuid = instance_uuid
-        box_opts.replicaset_uuid = replicaset_uuid
 
         -- Set up 'star' replication for the bootstrap
         if instance_uuid == leader_uuid then

@@ -90,22 +90,47 @@ function g.test_absent_config()
     )
     log.warn('Config removed')
 
-    g.cluster.main_server:start()
-    g.cluster:retrying({}, function()
-        g.cluster.main_server:connect_net_box()
-    end)
+    local srv = g.cluster.main_server
+    srv:start()
 
-    local state, err = g.cluster.main_server.net_box:eval([[
-        local confapplier = require('cartridge.confapplier')
-        return confapplier.get_state()
-    ]])
-
-    t.assert_equals(state, 'InitError')
-
-    t.assert_equals(err.class_name, 'InitError')
-    t.assert_equals(err.err,
+    local expected_err =
         "Snapshot was found in " .. g.cluster.main_server.workdir ..
         ", but config.yml wasn't. Where did it go?"
+
+    g.cluster:retrying({}, function()
+        srv:connect_net_box()
+        local state, err = srv.net_box:eval([[
+            local confapplier = require('cartridge.confapplier')
+            return confapplier.get_state()
+        ]])
+
+        t.assert_equals(state, 'InitError')
+        t.assert_equals(err.class_name, 'InitError')
+        t.assert_equals(err.err,
+            "Snapshot was found in " .. g.cluster.main_server.workdir ..
+            ", but config.yml wasn't. Where did it go?"
+        )
+    end)
+
+    local resp = srv:graphql({
+        query = [[{ cluster{ self { state error uuid } } }]]
+    })
+    t.assert_equals(resp.data.cluster.self, {
+        error = expected_err,
+        state = 'InitError',
+        uuid = box.NULL,
+    })
+    t.assert_error_msg_equals(
+        expected_err,
+        helpers.Server.graphql, g.cluster.main_server, ({
+            query = [[{ servers {} }]]
+        })
+    )
+    t.assert_error_msg_equals(
+        expected_err,
+        helpers.Server.graphql, g.cluster.main_server, ({
+            query = [[{ replicasets {} }]]
+        })
     )
 end
 
@@ -123,19 +148,15 @@ function g.test_absent_snapshot()
     g.cluster:retrying({}, function()
         g.cluster.main_server:connect_net_box()
     end)
+    g.cluster:wait_until_healthy()
 
     local state, err = g.cluster.main_server.net_box:eval([[
         local confapplier = require('cartridge.confapplier')
         return confapplier.get_state()
     ]])
 
-    t.assert_equals(state, 'BootError')
-
-    t.assert_equals(err.class_name, 'BootError')
-    t.assert_equals(err.err,
-        "Snapshot not found in " .. g.cluster.main_server.workdir ..
-        ", can't recover. Did previous bootstrap attempt fail?"
-    )
+    t.assert_equals(state, 'RolesConfigured')
+    t.assert_equals(err, box.NULL)
 end
 
 
