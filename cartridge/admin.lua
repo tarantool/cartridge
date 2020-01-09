@@ -669,6 +669,28 @@ local function __edit_replicaset(topology_cfg, params)
     return true
 end
 
+local function try_notify_servers(uri)
+    local conn, err = pool.connect(uri)
+    if not conn then
+        require('log').info("no connection appear")
+        return nil, err
+    end
+
+    require('log').info("disable servers goes on")
+    local _, err = errors.netbox_call(
+        conn,
+        '_G.__cartridge_disable_server',
+        {}, {timeout = 2}
+    )
+
+    -- here we get timeout error
+    if err ~= nil then
+        return nil, err
+    end
+    require('log').info("disable servers finished")
+    return true
+end
+
 --- Edit cluster topology.
 -- This function can be used for:
 --
@@ -814,6 +836,10 @@ local function edit_topology(args)
 
     for _, srv in pairs(args.servers or {}) do
         table.insert(ret.servers, topology.servers[srv.uuid])
+
+        if srv.disabled then
+            try_notify_servers(topology.servers[srv.uuid].uri)
+        end
     end
 
     for _, rpl in pairs(args.replicasets or {}) do

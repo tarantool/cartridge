@@ -197,6 +197,12 @@ local function _clusterwide(patch)
         error(err, 2)
     end
 
+    log.info('server enabled %s', vars.server_enabled)
+    if confapplier.get_state() == 'Disabled' then
+        log.info("clusterwide stopped")
+        return nil, PatchClusterwideError:new("Disabled server cannot apply config")
+    end
+
     log.warn('Updating config clusterwide...')
 
     local clusterwide_config_old = confapplier.get_active_config()
@@ -434,9 +440,16 @@ local function set_schema(schema_yml)
     return get_schema()
 end
 
+local function set_server_disabled()
+    log.info("disable server variable set")
+    confapplier.set_state('Disabled')
+end
+
 _G.__cartridge_clusterwide_config_prepare_2pc = function(...) return errors.pcall('E', prepare_2pc, ...) end
 _G.__cartridge_clusterwide_config_commit_2pc = function(...) return errors.pcall('E', commit_2pc, ...) end
 _G.__cartridge_clusterwide_config_abort_2pc = function(...) return errors.pcall('E', abort_2pc, ...) end
+
+_G.__cartridge_disable_server = set_server_disabled
 
 return {
     get_schema = get_schema,

@@ -64,7 +64,7 @@ local state_transitions = {
     -- Remote control is running.
     -- Loading clusterwide config succeeded.
     -- Validation succeeded too.
-    ['ConfigLoaded'] = {'RecoveringSnapshot', 'BootstrappingBox'},
+    ['ConfigLoaded'] = {'RecoveringSnapshot', 'BootstrappingBox', 'Disabled', 'Expelled'},
 
 -- boot_instance
     -- Remote control is running.
@@ -85,14 +85,14 @@ local state_transitions = {
 -- normal operation
     ['ConnectingFullmesh'] = {'ConfiguringRoles', 'OperationError'},
     ['ConfiguringRoles'] = {'RolesConfigured', 'OperationError'},
-    ['RolesConfigured'] = {'ConfiguringRoles'},
+    ['RolesConfigured'] = {'ConfiguringRoles', 'Disabled', 'Expelled'},
 
 -- errors
     ['InitError'] = {},
     ['BootError'] = {},
     ['OperationError'] = {}, -- {'BoxConfigured'}
-    -- Disabled
-    -- Expelled
+    ['Disabled'] = {'Expelled'},
+    ['Expelled'] = {}
 }
 
 --- Perform state transition.
