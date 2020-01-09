@@ -78,9 +78,6 @@ g.before_all = function()
         http_port = 8083,
         cluster_cookie = g.cluster.cookie,
         advertise_port = 13303,
-        env = {
-            TARANTOOL_DEMO_URI = "It's env variable"
-        }
     })
 
     g.server:start()
@@ -106,56 +103,6 @@ local function fields_from_map(map, field_key)
         table.insert(data_arr, v[field_key])
     end
     return data_arr
-end
-
-function g.test_demo_uri()
-    local router_server = g.cluster:server('router')
-
-    local resp = router_server:graphql({
-        query = [[
-            {
-                cluster {
-                    self {
-                        demo_uri
-                    }
-                }
-            }
-        ]]
-    })
-
-    t.assert_equals(resp['data']['cluster']['self'], {
-        demo_uri = g.server.env.TARANTOOL_DEMO_URI
-    })
-
-    local test_demo_uri_val = 'test_demo_uri_val'
-    router_server:graphql({
-        query = [[
-            mutation($demo_uri: String) {
-                cluster {
-                    self(demo_uri: $demo_uri)
-                }
-            }
-        ]],
-        variables = {
-            demo_uri = test_demo_uri_val,
-        }
-    })
-
-    local resp = router_server:graphql({
-        query = [[
-            {
-                cluster {
-                    self {
-                        demo_uri
-                    }
-                }
-            }
-        ]]
-    })
-
-    t.assert_equals(resp['data']['cluster']['self'], {
-        demo_uri = test_demo_uri_val
-    })
 end
 
 function g.test_self()
@@ -187,6 +134,21 @@ function g.test_self()
     t.assert_equals(resp['data']['cluster']['can_bootstrap_vshard'], false)
     t.assert_equals(resp['data']['cluster']['vshard_bucket_count'], 3000)
     t.assert_equals(resp['data']['cluster']['vshard_known_groups'], {'default'})
+
+    local function _get_demo_uri()
+        return router_server:graphql({query = [[{
+            cluster { self { demo_uri } } }
+        ]]}).data.cluster.self.demo_uri
+    end
+
+    t.assert_equals(_get_demo_uri(), box.NULL)
+
+    local demo_uri = 'http://try-cartridge.tarantool.io'
+    router_server.net_box:eval([[
+        os.setenv('TARANTOOL_DEMO_URI', ...)
+    ]], {demo_uri})
+
+    t.assert_equals(_get_demo_uri(g.server), demo_uri)
 end
 
 

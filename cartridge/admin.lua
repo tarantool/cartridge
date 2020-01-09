@@ -395,20 +395,6 @@ local function get_info(uri)
     )
 end
 
-local demo_uri
-
---- Set uri of the demo screen Code.
--- @tparam[opt] string uri
--- @function set_demo_uri
--- @local
--- @treturn string
-local function set_demo_uri(uri)
-    checks('?string')
-
-    demo_uri = uri
-    return demo_uri
-end
-
 --- Get alias, uri and uuid of current instance.
 -- @function get_self
 -- @local
@@ -416,14 +402,10 @@ end
 local function get_self()
     local myself = membership.myself()
     local state, err = confapplier.get_state()
-    local res_demo_uri = demo_uri
-    if demo_uri == nil then
-        res_demo_uri = os.getenv('TARANTOOL_DEMO_URI')
-    end
     local result = {
         uri = myself.uri,
         uuid = confapplier.get_instance_uuid(),
-        demo_uri = res_demo_uri,
+        demo_uri = os.getenv('TARANTOOL_DEMO_URI'),
         alias = myself.payload.alias,
         state = state,
         error = err and err.err or nil,
@@ -1166,6 +1148,4 @@ return {
     edit_server = edit_server, -- deprecated
     join_server = join_server, -- deprecated
     expel_server = expel_server, -- deprecated
-
-    set_demo_uri = set_demo_uri,
 }

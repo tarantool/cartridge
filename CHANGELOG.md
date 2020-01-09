@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- Expose `TARANTOOL_DEMO_URI` environment variable in GraphQL query
+  `cluster{ self{demo_uri} }` for demo purposes.
+
 ### Fixed
 
 - Notifications in schema editor WebUI.
@@ -34,9 +39,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - New option in `rpc_call(..., {uri=...})` to perform a call
   on a particular uri.
-
-- New API of graphql, there are query `cluster { self { demo_uri } }` and
-  mutation `cluster { self(demo_uri: String) }`.
 
 ### Changed
 
