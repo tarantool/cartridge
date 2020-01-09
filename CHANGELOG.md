@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+
+- Notifications in schema editor WebUI.
+
 ## [2.0.0] - 2019-12-27
 
 ### Added
@@ -102,8 +106,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   replicaset modals.
 
 - Enhance WebUI modals scrolling.
-
-- Success & error notifications in Schema editor.
 
 ## [1.2.0] - 2019-10-21
 
