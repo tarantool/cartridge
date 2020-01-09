@@ -25,5 +25,4 @@ export type validateSchemaAction = $Call<validateSchemaActionCreator>;
 export type schemaActions =
   | applySchemaAction
   | getSchemaAction
-  | setSchemaAction
-  | resetSchemaAction;
+  | setSchemaAction;
