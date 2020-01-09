@@ -127,3 +127,6 @@ function g.test_users()
     t.assert_equals(code, 0)
 end
 
+function g.test_schema_editor()
+    cypress_run('schema-editor.spec.js')
+end
