@@ -78,6 +78,9 @@ g.before_all = function()
         http_port = 8083,
         cluster_cookie = g.cluster.cookie,
         advertise_port = 13303,
+        env = {
+            TARANTOOL_DEMO_URI = "It's env variable"
+        }
     })
 
     g.server:start()
@@ -103,6 +106,56 @@ local function fields_from_map(map, field_key)
         table.insert(data_arr, v[field_key])
     end
     return data_arr
+end
+
+function g.test_demo_uri()
+    local router_server = g.cluster:server('router')
+
+    local resp = router_server:graphql({
+        query = [[
+            {
+                cluster {
+                    self {
+                        demo_uri
+                    }
+                }
+            }
+        ]]
+    })
+
+    t.assert_equals(resp['data']['cluster']['self'], {
+        demo_uri = g.server.env.TARANTOOL_DEMO_URI
+    })
+
+    local test_demo_uri_val = 'test_demo_uri_val'
+    router_server:graphql({
+        query = [[
+            mutation($demo_uri: String) {
+                cluster {
+                    self(demo_uri: $demo_uri)
+                }
+            }
+        ]],
+        variables = {
+            demo_uri = test_demo_uri_val,
+        }
+    })
+
+    local resp = router_server:graphql({
+        query = [[
+            {
+                cluster {
+                    self {
+                        demo_uri
+                    }
+                }
+            }
+        ]]
+    })
+
+    t.assert_equals(resp['data']['cluster']['self'], {
+        demo_uri = test_demo_uri_val
+    })
 end
 
 function g.test_self()

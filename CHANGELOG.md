@@ -35,6 +35,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - New option in `rpc_call(..., {uri=...})` to perform a call
   on a particular uri.
 
+- New API of graphql, there are query `cluster { self { demo_uri } }` and
+  mutation `cluster { self(demo_uri: String) }`.
+
 ### Changed
 
 - `cartridge.rpc_get_candidates()` doesn't return error "No remotes with

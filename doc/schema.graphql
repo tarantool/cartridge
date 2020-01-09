@@ -1,5 +1,5 @@
 # source: http://localhost:8081/admin/api
-# timestamp: Mon Dec 16 2019 03:05:54 GMT+0300 (Moscow Standard Time)
+# timestamp: Thu Jan 09 2020 16:10:15 GMT+0300 (Moscow Standard Time)
 
 """Cluster management"""
 type Apicluster {
@@ -128,6 +128,9 @@ type Mutation {
 
 """Cluster management"""
 type MutationApicluster {
+  """Set demo uri variable"""
+  self(demo_uri: String): String
+
   """Applies DDL schema on cluster"""
   schema(as_yaml: String!): DDLSchema!
 
@@ -137,12 +140,12 @@ type MutationApicluster {
   """Checks that schema can be applied on cluster"""
   check_schema(as_yaml: String!): DDLCheckResult!
 
-  """Disable listed servers by uuid"""
-  disable_servers(uuids: [String!]): [Server]
+  """Applies updated config on cluster"""
+  config(sections: [ConfigSectionInput]): [ConfigSection]!
   auth_params(cookie_max_age: Long, enabled: Boolean, cookie_renew_age: Long): UserManagementAPI!
 
-  """Remove user"""
-  remove_user(username: String!): User
+  """Edit cluster topology"""
+  edit_topology(replicasets: [EditReplicasetInput], servers: [EditServerInput]): EditTopologyResult
 
   """Edit an existing user"""
   edit_user(password: String, username: String!, fullname: String, email: String): User
@@ -151,11 +154,11 @@ type MutationApicluster {
   """Create a new user"""
   add_user(password: String!, username: String!, fullname: String, email: String): User
 
-  """Edit cluster topology"""
-  edit_topology(replicasets: [EditReplicasetInput], servers: [EditServerInput]): EditTopologyResult
+  """Remove user"""
+  remove_user(username: String!): User
 
-  """Applies updated config on cluster"""
-  config(sections: [ConfigSectionInput]): [ConfigSection]!
+  """Disable listed servers by uuid"""
+  disable_servers(uuids: [String!]): [Server]
 }
 
 type Query {
@@ -350,6 +353,7 @@ type ServerShortInfo {
   alias: String
   state: String
   uuid: String
+  demo_uri: String
 }
 
 """

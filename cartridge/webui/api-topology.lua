@@ -273,6 +273,10 @@ local function set_failover_enabled(_, args)
     return admin.set_failover_enabled(args.enabled)
 end
 
+local function set_demo_uri(_, args)
+    return admin.set_demo_uri(args.demo_uri)
+end
+
 local function init(graphql)
 
     graphql.add_callback({
@@ -410,6 +414,7 @@ local function init(graphql)
             fields = {
                 uri = gql_types.string.nonNull,
                 uuid = gql_types.string,
+                demo_uri = gql_types.string,
                 alias = gql_types.string,
                 state = gql_types.string,
                 error = gql_types.string,
@@ -435,6 +440,17 @@ local function init(graphql)
         }),
         callback = module_name .. '.edit_topology',
     })
+
+    graphql.add_mutation({
+        prefix = 'cluster',
+        name = 'self',
+        doc = 'Set demo uri variable',
+        args = {
+            demo_uri = gql_types.string,
+        },
+        kind = gql_types.string,
+        callback = module_name .. '.set_demo_uri',
+    })
 end
 
 return {
@@ -458,4 +474,6 @@ return {
     get_known_roles = get_known_roles,
     get_failover_enabled = get_failover_enabled,
     set_failover_enabled = set_failover_enabled,
+
+    set_demo_uri = set_demo_uri,
 }
