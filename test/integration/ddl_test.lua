@@ -81,6 +81,8 @@ g.before_all = function()
         }
     })
     g.cluster:start()
+
+    _set_schema(g.cluster.main_server, '---\nspaces: null\n...')
 end
 
 g.after_all = function()
@@ -205,8 +207,11 @@ function g.test_graphql_errors()
     _test('][', 'unexpected END event')
     _test('42', 'Schema must be a table, got number')
     _test('spaces: false',
-        'Bad argument #1 to ddl.check_schema' ..
-        ' invalid schema.spaces (?table expected, got boolean)'
+        'Schema.spaces must be a ?table, got boolean'
+    )
+    _test('---\nspaces: null\n...',
+        'Missing space "test_space" in schema,' ..
+        ' removing spaces is forbidden'
     )
     _test('spaces: {}',
         'Missing space "test_space" in schema,' ..
@@ -217,4 +222,3 @@ function g.test_graphql_errors()
         ' //engine (expected memtx, got vinyl)'
     )
 end
-
