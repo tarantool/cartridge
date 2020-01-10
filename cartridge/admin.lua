@@ -669,26 +669,36 @@ local function __edit_replicaset(topology_cfg, params)
     return true
 end
 
-local function try_notify_servers(uri)
-    local conn, err = pool.connect(uri)
-    if not conn then
-        require('log').info("no connection appear")
-        return nil, err
-    end
 
-    require('log').info("disable servers goes on")
-    local _, err = errors.netbox_call(
-        conn,
-        '_G.__cartridge_disable_server',
-        {}, {timeout = 2}
-    )
+local function try_notify_servers(uri_table)
+    local cond = membership.subscribe()
 
-    -- here we get timeout error
-    if err ~= nil then
-        return nil, err
+    while true do
+        local i = 1
+        while i <= #uri_table do
+            -- here also we can check that membership status
+            -- if not alive thant dont send request to him
+            local conn = pool.connect(uri_table[i])
+            if conn then
+                local _, err = errors.netbox_call(
+                    conn,
+                    '_G.__cartridge_disable_server',
+                    {}, {timeout = 2}
+                )
+
+                if not err then
+                    table.remove(uri_table, i)
+                end
+            end
+            i = i + 1
+        end
+        if #uri_table == 0 then
+            membership:unsubscribe(cond)
+            require("log").info("exited fiber")
+            return true
+        end
+        cond:wait()
     end
-    require('log').info("disable servers finished")
-    return true
 end
 
 --- Edit cluster topology.
@@ -834,13 +844,16 @@ local function edit_topology(args)
         return nil, err
     end
 
+    local disabled_servers_uris = {}
     for _, srv in pairs(args.servers or {}) do
         table.insert(ret.servers, topology.servers[srv.uuid])
 
         if srv.disabled then
-            try_notify_servers(topology.servers[srv.uuid].uri)
+            table.insert(disabled_servers_uris, topology.servers[srv.uuid].uri)
         end
     end
+
+    fiber.create(try_notify_servers, disabled_servers_uris)
 
     for _, rpl in pairs(args.replicasets or {}) do
         for _, srv in pairs(rpl.join_servers or {}) do

@@ -41,6 +41,31 @@ g.after_all = function()
     fio.rmtree(g.cluster.datadir)
 end
 
+local function wish_state(srv, desired_state)
+    g.cluster:retrying({}, function()
+        srv.net_box:eval([[
+            local confapplier = require('cartridge.confapplier')
+            local desired_state = ...
+            local state = confapplier.wish_state(desired_state)
+            assert(
+                state == desired_state,
+                string.format('Inappropriate state %q ~= desired %q',
+                state, desired_state)
+            )
+        ]], {desired_state})
+    end)
+end
+
+function g.test_disable_alive()
+    g.cluster.main_server:graphql({query = [[
+        mutation {
+            cluster { disable_servers(uuids: ["bbbbbbbb-bbbb-0000-0000-000000000001"]) }
+        }
+    ]]})
+
+    wish_state(g.cluster:server('victim'), 'Disabled')
+end
+
 function g.test_api_disable()
     g.cluster:server('victim'):stop()
 
