@@ -134,6 +134,21 @@ function g.test_self()
     t.assert_equals(resp['data']['cluster']['can_bootstrap_vshard'], false)
     t.assert_equals(resp['data']['cluster']['vshard_bucket_count'], 3000)
     t.assert_equals(resp['data']['cluster']['vshard_known_groups'], {'default'})
+
+    local function _get_demo_uri()
+        return router_server:graphql({query = [[{
+            cluster { self { demo_uri } } }
+        ]]}).data.cluster.self.demo_uri
+    end
+
+    t.assert_equals(_get_demo_uri(), box.NULL)
+
+    local demo_uri = 'http://try-cartridge.tarantool.io'
+    router_server.net_box:eval([[
+        os.setenv('TARANTOOL_DEMO_URI', ...)
+    ]], {demo_uri})
+
+    t.assert_equals(_get_demo_uri(g.server), demo_uri)
 end
 
 

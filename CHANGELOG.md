@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- Expose `TARANTOOL_DEMO_URI` environment variable in GraphQL query
+  `cluster{ self{demo_uri} }` for demo purposes.
+
 ### Fixed
 
 - Notifications in schema editor WebUI.

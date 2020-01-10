@@ -405,6 +405,7 @@ local function get_self()
     local result = {
         uri = myself.uri,
         uuid = confapplier.get_instance_uuid(),
+        demo_uri = os.getenv('TARANTOOL_DEMO_URI'),
         alias = myself.payload.alias,
         state = state,
         error = err and err.err or nil,

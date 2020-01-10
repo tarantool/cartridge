@@ -402,7 +402,7 @@ local function init(graphql)
     graphql.add_callback({
         prefix = 'cluster',
         name = 'self',
-        doc = 'Get current server',
+        doc = 'Some information about current server',
         args = {},
         kind = gql_types.object({
             name = 'ServerShortInfo',
@@ -410,6 +410,7 @@ local function init(graphql)
             fields = {
                 uri = gql_types.string.nonNull,
                 uuid = gql_types.string,
+                demo_uri = gql_types.string,
                 alias = gql_types.string,
                 state = gql_types.string,
                 error = gql_types.string,
