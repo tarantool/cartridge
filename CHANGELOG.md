@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Notifications in schema editor WebUI.
 
+- Fix GraphQL `servers` query compatibility with old cartridge versions.
+
 ## [2.0.0] - 2019-12-27
 
 ### Added

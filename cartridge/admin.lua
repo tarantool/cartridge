@@ -86,7 +86,7 @@ local function get_server_info(members, uuid, uri)
         ret.message = string.format('Server status is %q', member.status)
     elseif member.payload.uuid == nil then
         ret.status = 'unconfigured'
-        ret.message = member.payload.state
+        ret.message = member.payload.state or ''
     elseif member.payload.state == 'ConfiguringRoles'
     or member.payload.state == 'RolesConfigured' then
         ret.status = 'healthy'
@@ -98,7 +98,7 @@ local function get_server_info(members, uuid, uri)
         ret.message = member.payload.state
     else
         ret.status = 'warning'
-        ret.message = member.payload.state
+        ret.message = member.payload.state or 'UnknownState'
     end
 
     if member and member.status == 'alive' and member.clock_delta ~= nil then
