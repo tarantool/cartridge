@@ -3,7 +3,6 @@ import {
   CLUSTER_PAGE_SCHEMA_APPLY_REQUEST,
   CLUSTER_PAGE_SCHEMA_GET_REQUEST,
   CLUSTER_PAGE_SCHEMA_SET,
-  CLUSTER_PAGE_SCHEMA_RESET,
   CLUSTER_PAGE_SCHEMA_VALIDATE_REQUEST
 } from 'src/store/actionTypes';
 
@@ -19,10 +18,6 @@ export const setSchema = (schema: string) => ({ type: CLUSTER_PAGE_SCHEMA_SET, p
 export type setSchemaActionCreator = typeof setSchema;
 export type setSchemaAction = $Call<setSchemaActionCreator, string>;
 
-export const resetSchema = () => ({ type: CLUSTER_PAGE_SCHEMA_RESET });
-export type resetSchemaActionCreator = typeof resetSchema;
-export type resetSchemaAction = $Call<resetSchemaActionCreator>;
-
 export const validateSchema = () => ({ type: CLUSTER_PAGE_SCHEMA_VALIDATE_REQUEST });
 export type validateSchemaActionCreator = typeof validateSchema;
 export type validateSchemaAction = $Call<validateSchemaActionCreator>;
@@ -30,5 +25,4 @@ export type validateSchemaAction = $Call<validateSchemaActionCreator>;
 export type schemaActions =
   | applySchemaAction
   | getSchemaAction
-  | setSchemaAction
-  | resetSchemaAction;
+  | setSchemaAction;

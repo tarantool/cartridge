@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+
+- Notifications in schema editor WebUI.
+
 ## [2.0.0] - 2019-12-27
 
 ### Added

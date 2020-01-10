@@ -6,8 +6,10 @@ import {
   CLUSTER_PAGE_SCHEMA_GET_REQUEST,
   CLUSTER_PAGE_SCHEMA_GET_REQUEST_SUCCESS,
   CLUSTER_PAGE_SCHEMA_GET_REQUEST_ERROR,
-  CLUSTER_PAGE_SCHEMA_SET,
-  CLUSTER_PAGE_SCHEMA_RESET
+  CLUSTER_PAGE_SCHEMA_VALIDATE_REQUEST,
+  CLUSTER_PAGE_SCHEMA_VALIDATE_REQUEST_ERROR,
+  CLUSTER_PAGE_SCHEMA_VALIDATE_REQUEST_SUCCESS,
+  CLUSTER_PAGE_SCHEMA_SET
 } from 'src/store/actionTypes';
 import { type schemaActions } from 'src/store/actions/schema.actions';
 
@@ -79,10 +81,22 @@ export const reducer = (state: SchemaState = initialState, action: schemaActions
         value: action.payload
       };
 
-    case CLUSTER_PAGE_SCHEMA_RESET:
+    case CLUSTER_PAGE_SCHEMA_VALIDATE_REQUEST:
       return {
         ...state,
-        value: state.savedValue
+        error: null
+      };
+
+    case CLUSTER_PAGE_SCHEMA_VALIDATE_REQUEST_SUCCESS:
+      return {
+        ...state,
+        error: action.payload
+      };
+
+    case CLUSTER_PAGE_SCHEMA_VALIDATE_REQUEST_ERROR:
+      return {
+        ...state,
+        error: action.payload
       };
 
     default:
