@@ -122,7 +122,8 @@ function g.test_users()
         ',cypress/integration/remove-user.spec.js' ..
         ',cypress/integration/server-details.spec.js' ..
         ',cypress/integration/login-and-logout.spec.js'..
-        ',cypress/integration/auth-switcher-not-moved.spec.js'
+        ',cypress/integration/auth-switcher-not-moved.spec.js'..
+        ',cypress/integration/schema-with-bootstrap.js'
     )
     t.assert_equals(code, 0)
 end
