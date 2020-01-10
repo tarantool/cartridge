@@ -15,9 +15,8 @@ const DEF_CURSOR = {}
 
 export default class MonacoEditor extends React.Component {
   static propTypes = {
-    value: PropTypes.string,
     fileId: PropTypes.string,
-    defaultValue: PropTypes.string,
+    initialValue: PropTypes.string,
     language: PropTypes.string,
     theme: PropTypes.string,
     options: PropTypes.object,
@@ -33,8 +32,7 @@ export default class MonacoEditor extends React.Component {
   };
 
   static defaultProps = {
-    value: null,
-    defaultValue: '',
+    initialValue: '',
     language: 'javascript',
     theme: null,
     options: {},
@@ -87,38 +85,18 @@ export default class MonacoEditor extends React.Component {
     } = this.props;
 
     const { editor } = this;
-    let model = editor.getModel(fileId)
 
-    //TODO: potential bugs here: when go to other page, then return to this (editor) page,
-    // focus last file content (editor area), and wrong model will be used
-    // (write something, then select other file, then return to this file — and it has old content.)
-    if (prevProps.fileId !== fileId) {
-      const existedModel = getModelByFile(fileId)
-      if (!existedModel) {
+    if (fileId) {
+      let model = getModelByFile(fileId);
+      if (!model) {
         model = setModelByFile(fileId, language, initialValue)
-      } else {
-        model = existedModel
       }
-      editor.setModel(model)
-      editor.focus()
-    } else {
-      // if (this.props.value !== model.getValue()) {
-      //   this._prevent_trigger_change_event = true;
-      //   this.editor.pushUndoStop();
-      //   model.pushEditOperations(
-      //     [],
-      //     [
-      //       {
-      //         range: model.getFullModelRange(),
-      //         text: value
-      //       }
-      //     ]
-      //   );
-      //   this.editor.pushUndoStop();
-      //   this._prevent_trigger_change_event = false;
-      // }
-    }
 
+      if (editor.getModel() !== model) {
+        editor.setModel(model);
+        editor.focus()
+      }
+    }
 
     if (prevProps.theme !== theme) {
       monaco.editor.setTheme(theme);
@@ -152,9 +130,9 @@ export default class MonacoEditor extends React.Component {
   }
 
   initMonaco() {
-    const value =
-      this.props.value !== null ? this.props.value : this.props.defaultValue;
-    const { language, theme, options, overrideServices } = this.props;
+    const {
+      initialValue, language, theme, options, overrideServices
+    } = this.props;
     if (this.containerElement) {
       // Before initializing monaco editor
       Object.assign(options, this.editorWillMount());
@@ -162,7 +140,7 @@ export default class MonacoEditor extends React.Component {
       this.editor = monaco.editor.create(
         this.containerElement,
         {
-          value,
+          value: initialValue,
           language: 'javascript',
           ...options,
           ...(theme ? { theme } : {})
