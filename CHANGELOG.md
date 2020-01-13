@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+- Code editor page in WebUI.
+
 - Expose `TARANTOOL_DEMO_URI` environment variable in GraphQL query
   `cluster{ self{demo_uri} }` for demo purposes.
 
