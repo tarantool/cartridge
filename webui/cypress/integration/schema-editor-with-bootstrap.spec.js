@@ -4,7 +4,6 @@ describe('Schema section', () => {
     const defaultText = '---\nspaces: []\n...\n';
 
     cy.visit(Cypress.config('baseUrl')+"/admin/cluster/schema");
-    cy.wait(1600);
     cy.get('.monaco-editor textarea').should('have.value', defaultText);
 
     //Apply and Reload buttons

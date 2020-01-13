@@ -20,3 +20,4 @@ coverage_result.txt
 .DS_Store
 .vscode
 luacov.stats.out
+cartridgeWorkspace.code-workspace
