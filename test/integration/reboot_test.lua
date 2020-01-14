@@ -92,6 +92,7 @@ function g.test_absent_config()
 
     local srv = g.cluster.main_server
     srv:start()
+    -- srv.net_box = nil
 
     local expected_err =
         "Snapshot was found in " .. g.cluster.main_server.workdir ..
@@ -145,6 +146,7 @@ function g.test_absent_snapshot()
     log.warn('Snapshots removed')
 
     g.cluster.main_server:start()
+    -- g.cluster.main_server.net_box = nil
     g.cluster:retrying({}, function()
         g.cluster.main_server:connect_net_box()
     end)

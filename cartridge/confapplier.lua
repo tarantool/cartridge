@@ -431,6 +431,8 @@ local function boot_instance(clusterwide_config)
     if err ~= nil then
         set_state('BootError', err)
         return nil, err
+    else
+        remote_control.drop_connections()
     end
 
     vars.instance_uuid = box.info.uuid

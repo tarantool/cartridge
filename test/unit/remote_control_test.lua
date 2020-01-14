@@ -162,6 +162,23 @@ function g.test_peer_uuid()
     t.assert_equals(conn.peer_uuid, "00000000-0000-0000-0000-000000000000")
 end
 
+
+function g.test_close_old_connection()
+    rc_start(13301)
+    local conn = assert(netbox.connect('superuser:3.141592@localhost:13301'))
+    t.assert_equals(conn.state, "active")
+    local res = conn:eval([[
+        require('cartridge.remote-control').drop_connections()
+        return true
+    ]])
+
+    t.assert_equals(res, true)
+    -- t.assert_equals(conn.state, "error")
+    t.helpers.retrying({}, function()
+        assert(conn.state, "error")
+    end)
+end
+
 function g.test_auth()
     rc_start(13301)
     local conn = assert(netbox.connect('superuser:3.141592@localhost:13301'))

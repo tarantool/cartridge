@@ -29,6 +29,8 @@ vars:new('server')
 vars:new('username')
 vars:new('password')
 
+local connections_to_drop = {}
+
 local error_t = ffi.typeof('struct error')
 
 local function _pack(...)
@@ -296,6 +298,7 @@ local function rc_handle(s)
     local version = string.match(_TARANTOOL, "^([%d%.]+)") or '???'
     local salt = digest.urandom(32)
 
+
     local greeting = string.format(
         '%-63s\n%-63s\n',
         'Tarantool ' .. version .. ' (Binary) ' .. uuid_lib.NULL:str(),
@@ -313,7 +316,11 @@ local function rc_handle(s)
             log.error('%s', err)
         end
 
-        if not ok then
+        if not ok or connections_to_drop[s] then
+            log.info('\n\nconnection closed')
+            log.info(require("cartridge.utils").table_count(connections_to_drop))
+            log.info(s)
+            connections_to_drop[s] = nil
             break
         end
     end
@@ -377,7 +384,14 @@ local function stop()
     vars.server = nil
 end
 
+local function drop_connections()
+    for conn, _ in pairs(connections_to_drop) do
+        connections_to_drop[conn] = true
+    end
+end
+
 return {
     start = start,
     stop = stop,
+    drop_connections = drop_connections,
 }

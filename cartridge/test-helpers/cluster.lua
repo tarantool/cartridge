@@ -147,6 +147,11 @@ function Cluster:bootstrap_edit_topology()
     })
 
     for _, server in ipairs(self.servers) do
+        server.net_box = nil
+        self:retrying({}, function() server:connect_net_box() end)
+    end
+
+    for _, server in ipairs(self.servers) do
         self:wait_until_healthy(server)
     end
 end
@@ -165,6 +170,7 @@ function Cluster:start()
     if self.bootstrapped then
         for _, server in ipairs(self.servers) do
             server:start()
+            self.net_box = nil
             self:retrying({}, function() server:connect_net_box() end)
         end
         self:wait_until_healthy()
@@ -223,6 +229,7 @@ function Cluster:join_server(server)
     end
 
     server:join_cluster(self.main_server, {timeout = self.CONNECTION_TIMEOUT})
+    self.net_box = nil
     self:retrying({}, function() server:connect_net_box() end)
     -- wait for bootserv to see that the new member is alive
     self:wait_until_healthy()

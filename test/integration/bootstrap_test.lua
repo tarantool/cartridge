@@ -63,7 +63,9 @@ function g.test_cookie_change()
 
 
     master:start()
+    -- master.net_box = nil
     replica:start()
+    -- replica.net_box = nil
     g.cluster:retrying({}, function()
         master:connect_net_box()
         replica:connect_net_box()
