@@ -1,0 +1,25 @@
+---
+service: banking
+
+provider:
+  name: cartridge
+
+functions:
+  customer_add:
+    module: banking
+    handler: customer_add
+    events:
+    - binary: true
+
+  account_add:
+    module: banking
+    handler: account_add
+    events:
+    - binary: true
+
+  transfer_money:
+    module: banking
+    handler: transfer_money
+    events:
+    - binary: true
+...

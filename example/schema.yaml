@@ -1,0 +1,40 @@
+---
+spaces:
+
+  customer:
+    engine: memtx
+    is_local: false
+    temporary: false
+    format:
+    - {name: customer_id, type: unsigned, is_nullable: false}
+    - {name: fullname,    type: string,   is_nullable: false}
+    indexes:
+    - name: customer_id
+      unique: true
+      parts: [{path: customer_id, type: unsigned, is_nullable: false}]
+      type: TREE
+    - name: fullname
+      unique: true
+      parts: [{path: fullname, type: string, is_nullable: false}]
+      type: TREE
+
+  account:
+    engine: memtx
+    is_local: false
+    temporary: false
+    format:
+    - {name: account_id,  type: unsigned, is_nullable: false}
+    - {name: customer_id, type: unsigned, is_nullable: false}
+    - {name: name,        type: string,   is_nullable: false}
+    - {name: balance,     type: number,   is_nullable: false} # TODO decimal
+    indexes:
+    - name: account_id
+      unique: true
+      parts: [{path: account_id, type: unsigned, is_nullable: false}]
+      type: TREE
+    - name: customer_id
+      unique: false
+      parts: [{path: customer_id, type: unsigned, is_nullable: false}]
+      type: TREE
+...
+
