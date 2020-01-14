@@ -438,6 +438,23 @@ _G.__cartridge_clusterwide_config_prepare_2pc = function(...) return errors.pcal
 _G.__cartridge_clusterwide_config_commit_2pc = function(...) return errors.pcall('E', commit_2pc, ...) end
 _G.__cartridge_clusterwide_config_abort_2pc = function(...) return errors.pcall('E', abort_2pc, ...) end
 
+-- Keep backward compatibility with the good old cartridge 1.2.0.
+_G.__cluster_confapplier_prepare_2pc = function(conf)
+    local tempdir = fio.tempdir()
+    local path = fio.pathjoin(tempdir, 'config.yml')
+    local ok, err = utils.file_write(path, yaml.encode(conf))
+    if not ok then
+        return nil, err
+    end
+
+    local clusterwide_config = ClusterwideConfig.load(path)
+    fio.rmtree(tempdir)
+
+    return errors.pcall('E', prepare_2pc, clusterwide_config:get_plaintext())
+end
+_G.__cluster_confapplier_commit_2pc = function(...) return errors.pcall('E', commit_2pc, ...) end
+_G.__cluster_confapplier_abort_2pc = function(...) return errors.pcall('E', abort_2pc, ...) end
+
 return {
     get_schema = get_schema,
     set_schema = set_schema,
