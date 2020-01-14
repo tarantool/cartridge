@@ -123,13 +123,9 @@ function g.test_users()
         ',cypress/integration/server-details.spec.js' ..
         ',cypress/integration/login-and-logout.spec.js'..
         ',cypress/integration/auth-switcher-not-moved.spec.js'..
-        ',cypress/integration/schema-editor-with-bootstrap.spec.js'
+        ',cypress/integration/schema-editor.spec.js'
     )
     t.assert_equals(code, 0)
-end
-
-function g.test_schema_editor()
-    cypress_run('schema-editor.spec.js')
 end
 
 function g.test_uninitialized()
