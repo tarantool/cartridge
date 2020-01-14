@@ -122,16 +122,20 @@ function g.test_users()
         ',cypress/integration/remove-user.spec.js' ..
         ',cypress/integration/server-details.spec.js' ..
         ',cypress/integration/login-and-logout.spec.js'..
-        ',cypress/integration/auth-switcher-not-moved.spec.js'..
-        ',cypress/integration/schema-editor.spec.js'
+        ',cypress/integration/auth-switcher-not-moved.spec.js'
     )
     t.assert_equals(code, 0)
 end
 
+function g.test_schema_editor()
+    cypress_run('schema-editor.spec.js')
+end
+
 function g.test_uninitialized()
     local code = os.execute(
-        "cd webui && npx cypress run --config baseUrl='http://localhost:8085' --spec" ..
-        ' cypress/integration/uninitialized.spec.js'
+        'cd webui && npx cypress run' ..
+        ' --config baseUrl="http://localhost:8085"' ..
+        ' --spec cypress/integration/uninitialized.spec.js'
     )
     t.assert_equals(code, 0)
 end

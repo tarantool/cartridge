@@ -1,5 +1,5 @@
 describe('Schema section', () => {
-  it('Empty', () => {
+  it('Schema with bootstrap', () => {
     const selectAllKeys = Cypress.platform == 'darwin' ? '{cmd}a' : '{ctrl}a';
     const defaultText = '---\nspaces: []\n...\n';
 
