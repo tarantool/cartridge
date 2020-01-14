@@ -119,14 +119,13 @@ compatibility:
   <<: *test-template
   variables:
     IMAGE_NAME: *IMAGE_NAME_EE
-    CARTRIDGE_ELDER_PATH: /tmp/cartridge-1.2.0
+    CARTRIDGE_OLDER_PATH: /tmp/cartridge-1.2.0
   before_script:
     - tarantoolctl rocks make
-    - mkdir -p $CARTRIDGE_ELDER_PATH
-    - cd $CARTRIDGE_ELDER_PATH
-    - tarantoolctl rocks install cartridge 1.2.0-1
+    - mkdir -p $CARTRIDGE_OLDER_PATH
+    - (cd $CARTRIDGE_OLDER_PATH; tarantoolctl rocks install cartridge 1.2.0-1)
   script:
-    - luatest -v -c -p compatibility.upgrade
+    - luatest -v -p compatibility.upgrade
 
 cypress:
   <<: *test-template

@@ -1,6 +1,5 @@
 local fio = require('fio')
 local log = require('log')
-local yaml = require('yaml')
 local fiber = require('fiber')
 local errors = require('errors')
 local t = require('luatest')
@@ -42,7 +41,7 @@ local function upstream_info(srv)
     end
 end
 
-local function wish_state(srv, desired_state)
+local function await_state(srv, desired_state)
     g.cluster:retrying({}, function()
         srv.net_box:eval([[
             local confapplier = require('cartridge.confapplier')
@@ -59,11 +58,14 @@ end
 
 --- Test upgrading form old version to the current one
 function g.test_upgrade()
-    local cartridge_elder_path = os.getenv('CARTRIDGE_ELDER_PATH')
+    local cartridge_older_path = os.getenv('CARTRIDGE_OLDER_PATH')
     t.skip_if(
-        cartridge_elder_path == nil,
-        'No elder version provided. Skipping'
+        cartridge_older_path == nil,
+        'No older version provided. Skipping'
     )
+
+    ----------------------------------------------------------------------------
+    -- Assemble cluster with old version
 
     g.cluster = helpers.Cluster:new({
         datadir = g.tempdir,
@@ -80,13 +82,13 @@ function g.test_upgrade()
                 instance_uuid = helpers.uuid('a', 'a', 1),
                 advertise_port = 13301,
                 http_port = 8081,
-                chdir = cartridge_elder_path,
+                chdir = cartridge_older_path,
             }, {
                 alias = 'replica',
                 instance_uuid = helpers.uuid('a', 'a', 2),
                 advertise_port = 13302,
                 http_port = 8082,
-                chdir = cartridge_elder_path,
+                chdir = cartridge_older_path,
             }},
         }}
     })
@@ -107,6 +109,7 @@ function g.test_upgrade()
     t.assert_not_equals(version(leader), 'scm-1')
     t.assert_not_equals(version(replica), 'scm-1')
 
+    ----------------------------------------------------------------------------
     -- Setup data model
     leader.net_box:eval([[
         box.schema.space.create('test', {
@@ -128,64 +131,119 @@ function g.test_upgrade()
     ]])
 
     -- Start streaming
-    local reference = {}
+    local insertions_passed = {}
+    local insertions_failed = {}
     local function _insert(cnt)
         local ret, err = g.cluster.main_server.net_box:eval([[
-            return package.loaded.vshard.router.callrw(
+            local ret, err = package.loaded.vshard.router.callrw(
                 1, 'box.space.test:insert', {{1, ...}}
             )
+            if ret == nil then
+                return nil, tostring(err)
+            end
+
+            return ret
         ]], {cnt, g.cluster.main_server.alias})
 
         if ret == nil then
-            log.error('CNT %d: %s', cnt, yaml.encode(err))
+            log.error('CNT %d: %s', cnt, err)
+            table.insert(insertions_failed, {cnt = cnt, err = err})
         else
-            table.insert(reference, ret)
+            table.insert(insertions_passed, ret)
         end
         return true
     end
     local highload_cnt = 0
 
-
     local highload_fiber = fiber.new(function()
-        log.warn('Highload started >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
+        log.warn('Highload started ----------')
         while true do
             highload_cnt = highload_cnt + 1
             local ok, err = errors.pcall('E', _insert, highload_cnt)
             if ok == nil then
                 log.error('CNT %d: %s', highload_cnt, err)
             end
-            fiber.sleep(0.01)
+            fiber.sleep(0.001)
         end
     end)
     highload_fiber:name('test.highload')
-    fiber.sleep(0.2)
 
+    g.cluster:retrying({}, function()
+        t.assert_equals(
+            insertions_passed[#insertions_passed][3],
+            'leader', 'No workload on leader'
+        )
+    end)
+
+    --------------------------------------------------------------------
     -- Upgrade replica
     replica:stop()
     replica.chdir = nil
     replica:start()
     g.cluster:retrying({}, function() replica:connect_net_box() end)
-    wish_state(replica, 'RolesConfigured')
+    await_state(replica, 'RolesConfigured')
 
     t.assert_not_equals(version(leader), 'scm-1')
     t.assert_equals(version(replica), 'scm-1')
     t.assert_equals(upstream_info(replica), {status = 'follow'})
 
+    g.cluster:retrying({}, function()
+        t.assert_items_equals(
+            leader:graphql({query = [[{
+                servers { alias status message }
+            }]]}).data.servers,
+            {{
+                alias = leader.alias,
+                status = 'healthy',
+                message = '',
+            }, {
+                alias = replica.alias,
+                status = 'healthy',
+                message = '',
+            }}
+        )
+    end)
+
+    --------------------------------------------------------------------
     -- Switch the leadership
-    leader.net_box:eval([[
-        local errors = require('errors')
-        local cartridge = require('cartridge')
-        errors.assert('E', cartridge.admin_edit_topology(...))
-    ]], {{
+    local resp = leader:graphql({
+        query = [[
+            mutation($replicasets: [EditReplicasetInput]) {
+                cluster {
+                    edit_topology(replicasets: $replicasets) {
+                        replicasets {
+                            uuid
+                            active_master {uri}
+                            master {uri}
+                        }
+                    }
+                }
+            }
+        ]],
+        variables = {
+            replicasets = {{
+                uuid = leader.replicaset_uuid,
+                failover_priority = {replica.instance_uuid},
+            }}
+        }
+    })
+    t.assert_equals(resp.data.cluster.edit_topology, {
         replicasets = {{
-            uuid = leader.replicaset_uuid,
-            failover_priority = {replica.instance_uuid},
+            active_master = {uri = replica.advertise_uri},
+            master = {uri = replica.advertise_uri},
+            uuid = replica.replicaset_uuid,
         }}
-    }})
+    })
     g.cluster.main_server = replica
 
-    fiber.sleep(0.2)
+    g.cluster:retrying({}, function()
+        t.assert_equals(
+            insertions_passed[#insertions_passed][3],
+            'replica', 'No workload on replica'
+        )
+    end)
 
+    --------------------------------------------------------------------
     -- Upgrade leader
     leader:stop()
     leader.chdir = nil
@@ -204,6 +262,14 @@ function g.test_upgrade()
                 1, 'box.space.test:select'
             }
         ),
-        reference
+        insertions_passed
     )
+
+    log.warn(
+        'Total insertions: %d (%d good, %d failed)',
+        highload_cnt, #insertions_passed, #insertions_failed
+    )
+    for _, e in ipairs(insertions_failed) do
+        log.error('#%d: %s', e.cnt, e.err)
+    end
 end
