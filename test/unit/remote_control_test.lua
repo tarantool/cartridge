@@ -163,20 +163,26 @@ function g.test_peer_uuid()
 end
 
 
-function g.test_close_old_connection()
+function g.test_drop_connections()
     rc_start(13301)
-    local conn = assert(netbox.connect('superuser:3.141592@localhost:13301'))
-    t.assert_equals(conn.state, "active")
-    local res = conn:eval([[
-        require('cartridge.remote-control').drop_connections()
-        return true
-    ]])
+    local conn_1 = assert(netbox.connect('superuser:3.141592@localhost:13301'))
+    local conn_2 = assert(netbox.connect('superuser:3.141592@localhost:13301'))
+    local conn_3 = assert(netbox.connect('superuser:3.141592@localhost:13301'))
+    conn_3:close()
+    remote_control.stop()
 
-    t.assert_equals(res, true)
-    -- t.assert_equals(conn.state, "error")
-    t.helpers.retrying({}, function()
-        assert(conn.state, "error")
-    end)
+    t.assert_equals({conn_1.state, conn_1.error}, {"active"})
+    t.assert_equals({conn_2.state, conn_2.error}, {"active"})
+
+    t.assert_equals(conn_1:eval([[
+        local remote_control = require('cartridge.remote-control')
+        remote_control.stop()
+        remote_control.drop_connections()
+        return get_local_secret()
+    ]]), secret)
+
+    t.assert_equals({conn_1.state, conn_1.error}, {"error", "Peer closed"})
+    t.assert_equals({conn_2.state, conn_2.error}, {"error", "Peer closed"})
 end
 
 function g.test_auth()

@@ -16,6 +16,7 @@
 local log = require('log')
 local ffi = require('ffi')
 local errno = require('errno')
+local fiber = require('fiber')
 local checks = require('checks')
 local errors = require('errors')
 local socket = require('socket')
@@ -28,8 +29,7 @@ local vars = require('cartridge.vars').new('cartridge.remote-control')
 vars:new('server')
 vars:new('username')
 vars:new('password')
-
-local connections_to_drop = {}
+vars:new('handlers', {})
 
 local error_t = ffi.typeof('struct error')
 
@@ -149,15 +149,15 @@ local function reply_err(s, sync, ecode, efmt, ...)
 end
 
 local function communicate(s)
-    local buf = s:read(5)
-    if not buf or buf == '' then
-        log.info('Peer closed')
+    local ok, buf = pcall(s.read, s, 5)
+    if not ok or buf == nil or buf == '' then
+        log.debug('Peer closed')
         return false
     end
 
     local size, pos = msgpack.decode(buf)
-    local _tail = s:read(pos-1 + size - #buf)
-    if _tail == nil or _tail == '' then
+    local ok, _tail = pcall(s.read, s, pos-1 + size - #buf)
+    if not ok or _tail == nil or _tail == '' then
         log.info('Peer closed')
         return false
     else
@@ -298,7 +298,6 @@ local function rc_handle(s)
     local version = string.match(_TARANTOOL, "^([%d%.]+)") or '???'
     local salt = digest.urandom(32)
 
-
     local greeting = string.format(
         '%-63s\n%-63s\n',
         'Tarantool ' .. version .. ' (Binary) ' .. uuid_lib.NULL:str(),
@@ -306,24 +305,23 @@ local function rc_handle(s)
         digest.base64_encode(salt)
     )
 
+    vars.handlers[s] = fiber.self()
     s._client_user = 'guest'
     s._client_salt = salt
     s:write(greeting)
 
-    while true do
+    while vars.handlers[s] do
         local ok, err = errors.pcall('RemoteControlError', communicate, s)
         if err ~= nil then
             log.error('%s', err)
         end
 
-        if not ok or connections_to_drop[s] then
-            log.info('\n\nconnection closed')
-            log.info(require("cartridge.utils").table_count(connections_to_drop))
-            log.info(s)
-            connections_to_drop[s] = nil
+        if not ok then
             break
         end
     end
+
+    vars.handlers[s] = nil
 end
 
 --- Start remote control server.
@@ -385,8 +383,14 @@ local function stop()
 end
 
 local function drop_connections()
-    for conn, _ in pairs(connections_to_drop) do
-        connections_to_drop[conn] = true
+    local handlers = table.copy(vars.handlers)
+    table.clear(vars.handlers)
+
+    for s, handler in pairs(handlers) do
+        if handler ~= fiber.self() then
+            pcall(fiber.cancel, handler)
+            pcall(socket.close, s)
+        end
     end
 end
 

@@ -275,10 +275,10 @@ function g.test_leader_recovery()
     g.master:start()
     wish_state(g.master, 'ConnectingFullmesh')
 
-    g.master.net_box = nil
-    t.helpers.retrying({}, function()
-        g.master:connect_net_box()
-    end)
+    -- g.master.net_box = nil
+    -- t.helpers.retrying({}, function()
+    --     g.master:connect_net_box()
+    -- end)
     g.master.net_box:eval([[
         _G.protection_fiber = require('fiber').create(function()
             require('log').warn('Master protected from becoming rw')
