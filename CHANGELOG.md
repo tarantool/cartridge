@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Fix GraphQL `servers` query compatibility with old cartridge versions.
 
+- Two-phase commit backward compatibility with v1.2.0.
+
 ## [2.0.0] - 2019-12-27
 
 ### Added
