@@ -50,6 +50,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - New option in `rpc_call(..., {uri=...})` to perform a call
   on a particular uri.
 
+- New check for content of `cluster_cookie`. Correct symbols for
+  content are latin letters, digits and \.\_-~
 ### Changed
 
 - `cartridge.rpc_get_candidates()` doesn't return error "No remotes with

@@ -96,6 +96,10 @@ local function set_cookie(value)
     if #value > 256 then
         error('Could not set cluster cookie with length more than 256')
     end
+    local bad_symbols = string.match(value, '[^%w%-%.~_]+')
+    if bad_symbols ~= nil then
+        error('Invalid symbol "' .. bad_symbols .. '" in cluster cookie')
+    end
 
     write_file(fio.pathjoin(M.workdir, COOKIEFILE), value)
 
