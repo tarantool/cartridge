@@ -17,7 +17,6 @@ import {
   Text,
   Scrollbar
 } from '@tarantool.io/ui-kit';
-import rest from 'src/api/rest';
 import { InputModal } from 'src/components/InputModal';
 import MonacoEditor from 'src/components/MonacoEditor';
 import { FileTree } from 'src/components/FileTree';
