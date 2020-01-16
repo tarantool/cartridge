@@ -6,6 +6,7 @@ import {
   APP_DATA_REQUEST,
   APP_DATA_REQUEST_SUCCESS,
   APP_DATA_REQUEST_ERROR,
+  APP_CONNECTION_STATE_CHANGE,
   AUTH_ACCESS_DENIED,
   CLUSTER_PAGE_CREATE_REPLICASET_REQUEST_SUCCESS,
   CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_SUCCESS,
@@ -42,6 +43,7 @@ export type AppState = {
     can_bootstrap_vshard: ?boolean,
     vshard_bucket_count: ?number
   },
+  connectionAlive: boolean,
   failover: null,
   messages: AppMessage[],
   authParams: {
@@ -60,9 +62,10 @@ const initialState: AppState = {
   appDataRequestStatus: getInitialRequestStatus(),
   appDataRequestErrorMessage: null,
   clusterSelf: {},
+  connectionAlive: true,
   failover: null,
   messages: [],
-  authParams: {}
+  authParams: {},
 };
 
 const appMountReducer = getReducer(APP_DID_MOUNT, { appMount: true });
@@ -150,6 +153,12 @@ export const reducer = baseReducer(
             ...state.authParams,
             implements_check_password: true
           }
+        };
+
+      case APP_CONNECTION_STATE_CHANGE:
+        return {
+          ...state,
+          connectionAlive: action.payload
         };
 
       default:

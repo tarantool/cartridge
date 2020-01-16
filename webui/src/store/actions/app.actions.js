@@ -1,7 +1,8 @@
 import {
   APP_DID_MOUNT,
   APP_CREATE_MESSAGE,
-  APP_SET_MESSAGE_DONE
+  APP_SET_MESSAGE_DONE,
+  APP_CONNECTION_STATE_CHANGE
 } from 'src/store/actionTypes';
 import {
   getActionCreator,
@@ -23,3 +24,5 @@ export const createMessage = getActionCreator(APP_CREATE_MESSAGE);
  * @param {number} payload.index
  */
 export const setMessageDone = getActionCreator(APP_SET_MESSAGE_DONE);
+
+export const setConnectionState = (alive: bool) => ({ type: APP_CONNECTION_STATE_CHANGE, payload: alive });
