@@ -274,11 +274,6 @@ function g.test_leader_recovery()
     log.info('--------------------------------------------------------')
     g.master:start()
     wish_state(g.master, 'ConnectingFullmesh')
-
-    -- g.master.net_box = nil
-    -- t.helpers.retrying({}, function()
-    --     g.master:connect_net_box()
-    -- end)
     g.master.net_box:eval([[
         _G.protection_fiber = require('fiber').create(function()
             require('log').warn('Master protected from becoming rw')
@@ -359,10 +354,6 @@ function g.test_orphan_connect_timeout()
 
     g.slave:start()
     wish_state(g.slave, 'RolesConfigured')
-    g.slave.net_box = nil
-    t.helpers.retrying({}, function()
-        g.slave:connect_net_box()
-    end)
 
     t.assert_equals(
         get_upstream_info(g.slave),
@@ -413,20 +404,12 @@ function g.test_quorum_one()
     g.master.env['TARANTOOL_REPLICATION_CONNECT_QUORUM'] = 1
     g.master:start()
     wish_state(g.master, 'RolesConfigured')
-    g.master.net_box = nil
-    t.helpers.retrying({}, function()
-        g.master:connect_net_box()
-    end)
 
     t.assert_equals(rpc_get_candidate(g.master), g.master.advertise_uri)
     t.assert_equals(get_leader(g.master), g.master.instance_uuid)
     t.assert_equals(is_master(g.master), true)
 
     g.slave:start()
-    g.slave.net_box = nil
-    t.helpers.retrying({}, function()
-        g.slave:connect_net_box()
-    end)
     g.cluster:wait_until_healthy(g.slave)
 
     t.assert_equals(

@@ -95,10 +95,6 @@ local function test_rejoin(srv)
 
     log.info('--------------------------------------------------------')
     srv:start()
-    srv.net_box = nil
-    t.helpers.retrying({}, function()
-        srv:connect_net_box()
-    end)
     g.cluster:wait_until_healthy()
 
     t.assert_equals(

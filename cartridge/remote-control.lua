@@ -324,6 +324,38 @@ local function rc_handle(s)
     vars.handlers[s] = nil
 end
 
+
+--- Init remote control server.
+-- This function binds net_box socket to hold an address,
+-- until server can bootstrap
+--
+-- @function init
+-- @tparam string host
+-- @tparam number port
+-- @treturn[1] boolean true
+-- @treturn[2] nil
+-- @treturn[2] table Error description
+local function init(host, port)
+    checks('string', 'number')
+    if vars.socket ~= nil then
+        return nil, errors.new('RemoteControlError',
+            'Already running'
+        )
+    end
+
+    vars.socket = socket('AF_INET', 'SOCK_STREAM', 'tcp')
+    vars.socket:setsockopt('SOL_SOCKET', 'SO_REUSEADDR', true)
+
+    local binded = vars.socket:bind(host, port)
+    if not binded then
+        return nil, errors.new('RemoteControlError',
+            vars.socket:error()
+        )
+    end
+
+    return true
+end
+
 --- Start remote control server.
 -- To connect the server use regular `net.box` connection.
 --
@@ -343,6 +375,11 @@ local function start(host, port, opts)
         username = 'string',
         password = 'string',
     })
+
+    if vars.socket ~= nil then
+        vars.socket:close()
+        vars.socket = nil
+    end
 
     if vars.server ~= nil then
         return nil, errors.new('RemoteControlError',
@@ -374,6 +411,11 @@ end
 -- @function stop
 -- @local
 local function stop()
+    if vars.socket ~= nil then
+        vars.socket:close()
+        return
+    end
+
     if vars.server == nil then
         return
     end
@@ -395,6 +437,7 @@ local function drop_connections()
 end
 
 return {
+    init = init,
     start = start,
     stop = stop,
     drop_connections = drop_connections,
