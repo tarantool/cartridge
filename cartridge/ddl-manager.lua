@@ -36,6 +36,17 @@ local function _from_yaml(schema_yml)
         )
         return nil, err
     end
+
+    if schema_tbl.spaces == nil then
+        schema_tbl.spaces = {}
+    end
+
+    if type(schema_tbl.spaces) ~= 'table' then
+        return nil, CheckSchemaError:new(
+            'Schema.spaces must be a ?table, got %s',
+            type(schema_tbl.spaces)
+        )
+    end
     return schema_tbl
 end
 
