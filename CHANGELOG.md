@@ -14,6 +14,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   characters so it doesn't break the authotization.
   Allowed symbols are `[a-zA-Z0-9_.~-]`.
 
+- Drop remote-control connections after full-featured `box.cfg` becomes
+  available to prevent clients from using limited functionality for too
+  long. During instance recovery remote-controll won't accept any
+  connections: clients wait for box.cfg to finish recvovery.
+
 ## [2.0.1] - 2020-01-15
 
 ### Added
