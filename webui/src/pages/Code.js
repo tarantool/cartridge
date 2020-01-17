@@ -38,6 +38,7 @@ import { getLanguageByFileName, getFileIdForMonaco } from 'src/misc/monacoModelS
 import type { TreeFileItem } from 'src/store/selectors/filesSelectors';
 import type { FileItem } from 'src/store/reducers/files.reducer';
 import { type State } from 'src/store/rootReducer';
+import { IconFileWithCode } from 'src/components/Icon/icons/IconFileWithCode';
 
 const options = {
   fixedOverflowWidgets: true,
@@ -117,13 +118,29 @@ const styles = {
   `,
   editor: css`
     flex-grow: 1;
+  `,
+  splash: css`
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: rgba(0, 0, 0, 0.25);
+    font-size: 14px;
+  `,
+  splashIcon: css`
+    width: 35px;
+    height: 35px;
+    margin-bottom: 16px;
   `
 };
 
 type CodeState = {
   loading: boolean,
   fileOperationType: 'createFile' | 'createFolder' | 'rename' | 'delete' | null,
-  fileOperationObject: ?string
+  fileOperationObject: ?string,
+  isReloadConfirmOpened: boolean,
 }
 
 type CodeProps = {
@@ -140,7 +157,8 @@ class Code extends React.Component<CodeProps, CodeState> {
   state = {
     loading: true,
     fileOperationType: null,
-    fileOperationObject: null
+    fileOperationObject: null,
+    isReloadConfirmOpened: false,
   }
 
   async componentDidMount() {
@@ -181,30 +199,14 @@ class Code extends React.Component<CodeProps, CodeState> {
     }
   }
 
-  handleFileDeleteConfirm = () => {
-    const { dispatch } = this.props;
-    const { fileOperationObject } = this.state;
-
-    if (fileOperationObject) {
-      const file = this.getFileById(fileOperationObject);
-
-      dispatch(
-        file && file.type === 'folder'
-          ? deleteFolder({ id: fileOperationObject })
-          : deleteFile({ id: fileOperationObject })
-      );
-
-      this.setState({
-        fileOperationType: null,
-        fileOperationObject: null
-      });
-    }
-  }
-
   handleFileRenameClick = (id: string) => this.setState({
     fileOperationType: 'rename',
     fileOperationObject: id
   });
+
+  handleReloadClick = () => this.setState({
+    isReloadConfirmOpened: true
+  })
 
   handleApplyClick = () => {
     this.props.dispatch(applyFiles());
@@ -309,7 +311,8 @@ class Code extends React.Component<CodeProps, CodeState> {
 
     const {
       fileOperationType,
-      fileOperationObject
+      fileOperationObject,
+      isReloadConfirmOpened,
     } = this.state;
 
     const operableFile = this.getFileById(fileOperationObject);
@@ -355,41 +358,50 @@ class Code extends React.Component<CodeProps, CodeState> {
           </Scrollbar>
         </div>
         <div className={styles.mainContent}>
-          <div className={styles.panel}>
-            <Text>{selectedFile && selectedFile.path}</Text>
-            <ControlsPanel
-              thin
-              controls={[
-                <Button
-                  text='Reload'
-                  size='s'
-                  onClick={() => this.props.dispatch(fetchConfigFiles())}
-                  icon={IconRefresh}
-                  intent='secondary'
-                />,
-                <Button
-                  onClick={this.handleApplyClick}
-                  text='Apply'
-                  intent='primary'
-                  loading={puttingConfigFiles}
-                  size='s'
-                  disabled={false}
+          {selectedFile ?
+            <>
+              <div className={styles.panel}>
+                <Text>{selectedFile && selectedFile.path}</Text>
+                <ControlsPanel
+                  thin
+                  controls={[
+                    <Button
+                      text='Reload'
+                      size='s'
+                      onClick={this.handleReloadClick}
+                      icon={IconRefresh}
+                      intent='secondary'
+                    />,
+                    <Button
+                      onClick={this.handleApplyClick}
+                      text='Apply'
+                      intent='primary'
+                      loading={puttingConfigFiles}
+                      size='s'
+                      disabled={false}
+                    />
+                  ]}
                 />
-              ]}
-            />
-          </div>
-          <MonacoEditor
-            className={styles.editor}
-            language={selectedFile && getLanguageByFileName(selectedFile.fileName) || null}
-            options={{
-              ...options,
-              readOnly: !selectedFile
-            }}
-            fileId={selectedFile ? getFileIdForMonaco(selectedFile.fileId) : null}
-            initialValue={selectedFile ? selectedFile.initialContent : 'Select or add a file'}
-            isContentChanged={selectedFile ? !selectedFile.saved : null}
-            setIsContentChanged={this.handleSetIsContentChanged}
-          />
+              </div>
+              <MonacoEditor
+                className={styles.editor}
+                language={selectedFile && getLanguageByFileName(selectedFile.fileName) || null}
+                options={{
+                  ...options,
+                  readOnly: !selectedFile
+                }}
+                fileId={selectedFile ? getFileIdForMonaco(selectedFile.fileId) : null}
+                initialValue={selectedFile ? selectedFile.initialContent : 'Select or add a file'}
+                isContentChanged={selectedFile ? !selectedFile.saved : null}
+                setIsContentChanged={this.handleSetIsContentChanged}
+              />
+            </>
+            :
+            <div className={styles.splash}>
+              <IconFileWithCode className={styles.splashIcon} />
+              Please select a file
+            </div>
+          }
         </div>
         {operableFile && typeof operableFile.type === 'string' && (
           <ConfirmModal
@@ -404,6 +416,24 @@ class Code extends React.Component<CodeProps, CodeState> {
                 {'Are you sure you want to delete the '}
                 <Text className={styles.popupFileName}>{operableFile && operableFile.fileName}</Text>
                 {` ${operableFile.type}`}
+              </Text>
+            </PopupBody>
+          </ConfirmModal>
+        )}
+        {isReloadConfirmOpened && (
+          <ConfirmModal
+            title='Reload files'
+            onCancel={() => this.setState({ isReloadConfirmOpened: false })}
+            onConfirm={() => {
+              this.props.dispatch(fetchConfigFiles());
+              this.setState({ isReloadConfirmOpened: false });
+            }}
+          >
+            <PopupBody>
+              <Text>
+                Are you sure you want to reload all the files?
+                <br />
+                All unsaved changes will be reset
               </Text>
             </PopupBody>
           </ConfirmModal>

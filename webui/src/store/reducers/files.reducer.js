@@ -25,13 +25,13 @@ export type FileItem = {
   initialPath?: string,
   parentPath: string,
   fileName: string,
-  initialContent?: string,
-  loading: boolean,
+  initialContent: string | null,
   saved: boolean,
   type: 'file' | 'folder',
-  column: 0,
-  line: 0,
-  scrollPosition: 0,
+  loading?: boolean,
+  column?: 0,
+  line?: 0,
+  scrollPosition?: 0,
   deleted?: boolean,
 }
 
@@ -43,13 +43,6 @@ type UpdateObj = {
   saved?: boolean | (FileItem, Object) => boolean,
 }
 
-const toFileItem = (item): FileItem => {
-  return {
-    ...item,
-    loading: false,
-    saved: false
-  }
-}
 
 const ignoreFiles = ['schema.yml']
 
@@ -119,29 +112,32 @@ const makeFile = (
   parentPath: string, name: string, isFolder = false, initialContent = '', prevFileProps = {}
 ): FileItem => {
   const selfPath = `${parentPath}${parentPath ? '/' : ''}${name}`;
-  return {
-    // different fields for folders and files
-    ...(
-      isFolder ?
-        {
-          saved: false,
-          items: [],
-        } :
-        {
-          saved: false,
-          initialContent: initialContent,
-          loading: false,
-          column: 0,
-          line: 0,
-          scrollPosition: 0,
-        }
-    ),
+
+  const commonProps = {
     fileId: getUniqueId(),
+    saved: false,
     ...prevFileProps,
     parentPath: parentPath,
     path: selfPath,
     fileName: name,
     type: isFolder ? 'folder' : 'file',
+  };
+
+  if (isFolder) {
+    return {
+      initialContent: null,
+      items: [],
+      ...commonProps
+    };
+  } else {
+    return {
+      initialContent: initialContent,
+      loading: false,
+      column: 0,
+      line: 0,
+      scrollPosition: 0,
+      ...commonProps
+    };
   }
 };
 
@@ -161,7 +157,7 @@ const addFileOrFolder = (list: Array<FileItem>, { parentPath, name }: { parentPa
 
   return [
     ...list,
-    makeFile(parentPath || '', name, type === CREATE_FOLDER)
+    makeFile(parentPath || '', name, type === CREATE_FOLDER, null)
   ];
 }
 

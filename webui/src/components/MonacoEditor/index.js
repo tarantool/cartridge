@@ -96,6 +96,10 @@ export default class MonacoEditor extends React.Component {
         editor.setModel(model);
         editor.focus()
       }
+
+      if (prevProps.language !== language) {
+        monaco.editor.setModelLanguage(model, language);
+      }
     }
 
     if (prevProps.theme !== theme) {
@@ -141,7 +145,7 @@ export default class MonacoEditor extends React.Component {
         this.containerElement,
         {
           value: initialValue,
-          language: 'javascript',
+          language: language || 'javascript',
           ...options,
           ...(theme ? { theme } : {})
         },
