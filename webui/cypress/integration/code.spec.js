@@ -30,6 +30,9 @@ it('File in tree', () => {
     cy.get('.ScrollbarsCustom-Content').contains('file-in-tree2').click();
     cy.get('.monaco-editor textarea').type(selectAllKeys + '{backspace}');
     cy.get('.monaco-editor textarea').type('some test code');
+        //check for page change
+    cy.get('a[href="/admin/cluster/dashboard"]').click();
+    cy.get('a[href="/admin/cluster/code"]').click();
     cy.get('.monaco-editor textarea').should('have.value', 'some test code');
 
     cy.get('button[type="button"]').contains('Reload').click();
