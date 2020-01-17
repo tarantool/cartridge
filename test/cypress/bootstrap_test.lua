@@ -49,8 +49,7 @@ end
 function g.test_bootstrap()
     local code = os.execute(
         "cd webui && npx cypress run --spec" ..
-        ' cypress/integration/create-replicasets-and-botstrap.spec.js'..
-        ',cypress/integration/code-page-files.spec.js'
+        ' cypress/integration/create-replicasets-and-botstrap.spec.js'
     )
     t.assert_equals(code, 0)
 end
