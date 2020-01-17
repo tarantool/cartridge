@@ -196,7 +196,7 @@ function g.test_late_accept()
     local conn_1 = netbox.connect(url, {wait_connected = false})
     t.assert_equals({conn_1.state, conn_1.error}, {"initial", nil})
 
-    local conn_2 = netbox.connect(url, {connect_timeout = 0.01})
+    local conn_2 = netbox.connect(url, {connect_timeout = 0.2})
     t.assert_equals({conn_2.state, conn_2.error}, {"error", "Connection timed out"})
 
     remote_control.drop_connections()
@@ -207,11 +207,11 @@ function g.test_late_accept()
     t.assert_equals({conn_3.state, conn_3.error}, {"error", "Peer closed"})
 
     --------------------------------------------------------------------
-    local conn_4 = netbox.connect(url, {wait_connected = 0.01})
+    local conn_4 = netbox.connect(url, {wait_connected = false})
     t.assert_equals({conn_4.state, conn_4.error}, {"initial", nil})
 
     remote_control.accept({username = username, password = password})
-    t.assert_equals(conn_4:wait_connected(0.01), true)
+    t.assert_equals(conn_4:wait_connected(1), true)
     t.assert_equals({conn_4.state, conn_4.error}, {"active", nil})
 end
 
