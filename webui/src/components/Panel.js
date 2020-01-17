@@ -19,7 +19,7 @@ const styles = {
   `
 };
 
-const Panel = styled.div`
+export const Panel = styled.div`
   padding: 12px 16px;
   margin-bottom: 8px;
   border-radius: 2px;

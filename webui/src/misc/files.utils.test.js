@@ -1,7 +1,7 @@
 // @flow
 import {
   validateFileNameExtension,
-  isDescendant,
+  isDescendant
 } from './files.utils';
 
 describe('isDescendant', () => {

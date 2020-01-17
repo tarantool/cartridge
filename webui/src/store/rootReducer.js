@@ -29,7 +29,7 @@ const rootReducer = combineReducers({
   schema: schemaReducer,
   users: usersReducer,
   ui,
-  codeEditor: codeEditorReducer,
+  codeEditor: codeEditorReducer
 });
 
 export default rootReducer;

@@ -48,7 +48,7 @@ const styles = {
   `,
   fileIcon: css`
     margin: 4px;
-  `,
+  `
 };
 
 type NewTreeElementProps = {

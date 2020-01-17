@@ -53,7 +53,7 @@ const sortTree = tree => {
 
 export const selectFileTree = createSelector(
   [
-    (files: Array<FileItem>) => files,
+    (files: Array<FileItem>) => files
   ],
   (files: Array<FileItem>): Array<TreeFileItem> => {
     const fileMap: { [string]: TreeFileItem } = files.reduce(

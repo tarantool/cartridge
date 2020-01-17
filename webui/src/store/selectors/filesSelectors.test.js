@@ -1,5 +1,5 @@
 import {
-  selectFileTree,
+  selectFileTree
 } from './filesSelectors';
 
 describe('selectFileTree', () => {
@@ -80,9 +80,11 @@ describe('selectFileTree', () => {
         type: 'folder',
         items: [
           {
-            fileId: '4', path: 'rootFolder/file.ext',
-            fileName: 'file.ext', type: 'file',
-          },
+            fileId: '4',
+            path: 'rootFolder/file.ext',
+            fileName: 'file.ext',
+            type: 'file'
+          }
         ]
       },
       {
@@ -104,15 +106,16 @@ describe('selectFileTree', () => {
                 parentPath: 'rootFolder2/subFolder',
                 fileName: 'file.ext',
                 type: 'file',
-                items: [],
-              },
+                items: []
+              }
             ]
           },
           {
             fileId: '10',
             path: 'rootFolder2/subFolder2',
             parentPath: 'rootFolder2',
-            fileName: 'subFolder2', type: 'folder',
+            fileName: 'subFolder2',
+            type: 'folder',
             items: [
               {
                 fileId: '11',
@@ -120,8 +123,8 @@ describe('selectFileTree', () => {
                 parentPath: 'rootFolder2/subFolder2',
                 fileName: 'file.ext',
                 type: 'file',
-                items: [],
-              },
+                items: []
+              }
             ]
           },
           {
@@ -130,7 +133,7 @@ describe('selectFileTree', () => {
             parentPath: 'rootFolder2',
             fileName: 'file1.ext',
             type: 'file',
-            items: [],
+            items: []
           },
           {
             fileId: '7',
@@ -138,7 +141,7 @@ describe('selectFileTree', () => {
             parentPath: 'rootFolder2',
             fileName: 'file2.ext',
             type: 'file',
-            items: [],
+            items: []
           }
         ]
       },
@@ -146,14 +149,14 @@ describe('selectFileTree', () => {
         fileId: '1',
         path: 'rootFile.ext',
         fileName: 'rootFile.ext',
-        type: 'file',
+        type: 'file'
       },
       {
         fileId: '2',
         path: 'rootFile2.ext',
         fileName: 'rootFile2.ext',
-        type: 'file',
-      },
+        type: 'file'
+      }
     ]);
   });
 
@@ -162,7 +165,7 @@ describe('selectFileTree', () => {
     const stateWithDuplicateFiles = [
       { type: 'folder', path: 'duplicate', parentPath: '', deleted: false },
       { type: 'file', path: 'duplicate/files.ext', deleted: false, parentPath: 'duplicate' },
-      { type: 'file', path: 'duplicate/files.ext', deleted: false, parentPath: 'duplicate' },
+      { type: 'file', path: 'duplicate/files.ext', deleted: false, parentPath: 'duplicate' }
     ];
 
     expect(selectFileTree(stateWithDuplicateFiles)).toMatchObject([
@@ -172,10 +175,10 @@ describe('selectFileTree', () => {
         items: [
           {
             path: 'duplicate/files.ext',
-            type: 'file',
+            type: 'file'
           }
         ]
-      },
+      }
     ]);
   });
 
@@ -187,7 +190,7 @@ describe('selectFileTree', () => {
         type: 'file',
         deleted: false,
         saved: true,
-        parentPath: '',
+        parentPath: ''
       },
       {
         path: 'folder/file.ext',
@@ -199,13 +202,15 @@ describe('selectFileTree', () => {
         loading: false,
         saved: false,
         deleted: false,
-        line: 10, column: 20, scrollPosition: 30,
+        line: 10,
+        column: 20,
+        scrollPosition: 30
       },
       { path: 'folder/file2.ext', parentPath: 'folder', deleted: false, type: 'file' },
       {
         path: 'folder',
         type: 'folder'
-      },
+      }
     ];
 
     expect(selectFileTree(state)).toMatchObject([
@@ -219,15 +224,15 @@ describe('selectFileTree', () => {
             path: 'folder/file2.ext',
             deleted: false,
             type: 'file',
-            items: [],
+            items: []
           }
         ]
       },
       {
         path: 'rootFile.ext',
         type: 'file',
-        items: [],
-      },
+        items: []
+      }
     ]);
   });
 

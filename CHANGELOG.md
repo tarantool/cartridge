@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- Show demo uri on Code page for demo purposes
+- Add reset button to Code page for demo purposes
+
 ### Fixed
 
 - DDL failure if spaces is `null` in input schema.

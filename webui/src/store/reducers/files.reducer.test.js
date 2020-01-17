@@ -6,7 +6,7 @@ import {
   renameFile,
   renameFolder,
   deleteFile,
-  deleteFolder,
+  deleteFolder
 } from 'src/store/actions/files.actions';
 
 const checkFileId = (file: FileItem) => {
@@ -21,7 +21,7 @@ describe('Deleting files', () => {
     { path: 'folder/file.ext' },
     { path: 'folder/file2.ext' },
     { path: 'folder/subfolder/file.ext' },
-    { path: 'folder2/file.ext' },
+    { path: 'folder2/file.ext' }
   ];
 
   it('deletes one file', () => {
@@ -32,7 +32,7 @@ describe('Deleting files', () => {
       { path: 'folder/file.ext', deleted: true },
       { path: 'folder/file2.ext' },
       { path: 'folder/subfolder/file.ext' },
-      { path: 'folder2/file.ext' },
+      { path: 'folder2/file.ext' }
     ]);
   });
 
@@ -44,7 +44,7 @@ describe('Deleting files', () => {
       { path: 'folder/file.ext', deleted: true },
       { path: 'folder/file2.ext', deleted: true },
       { path: 'folder/subfolder/file.ext', deleted: true },
-      { path: 'folder2/file.ext' },
+      { path: 'folder2/file.ext' }
     ]);
   });
 
@@ -55,11 +55,11 @@ describe('Renaming files', () => {
     expect(
       reducer([
         { path: 'file.ext' },
-        { path: 'folder/file.ext' },
+        { path: 'folder/file.ext' }
       ], renameFile({ id: 'file.ext', name: 'renamed.txt' }))
     ).toMatchObject([
       { path: 'renamed.txt' },
-      { path: 'folder/file.ext' },
+      { path: 'folder/file.ext' }
     ]);
   });
 
@@ -67,11 +67,11 @@ describe('Renaming files', () => {
     expect(
       reducer([
         { path: 'file.ext' },
-        { path: 'folder/file.ext' },
+        { path: 'folder/file.ext' }
       ], renameFile({ id: 'folder/file.ext', name: 'renamed.txt' }))
     ).toMatchObject([
       { path: 'file.ext' },
-      { path: 'folder/renamed.txt' },
+      { path: 'folder/renamed.txt' }
     ]);
   });
 
@@ -81,7 +81,7 @@ describe('Renaming files', () => {
     { path: 'dir', parentPath: '', type: 'folder' },
     { path: 'dir/file.ext', parentPath: 'dir' },
     { path: 'dir/dir', parentPath: 'dir', type: 'folder' },
-    { path: 'dir/dir/file.ext', parentPath: 'dir/dir' },
+    { path: 'dir/dir/file.ext', parentPath: 'dir/dir' }
   ];
 
   it('renames folder in root', () => {
@@ -92,7 +92,7 @@ describe('Renaming files', () => {
       { path: 'renamedDir', parentPath: '' },
       { path: 'renamedDir/file.ext', parentPath: 'renamedDir' },
       { path: 'renamedDir/dir', parentPath: 'renamedDir' },
-      { path: 'renamedDir/dir/file.ext', parentPath: 'renamedDir/dir' },
+      { path: 'renamedDir/dir/file.ext', parentPath: 'renamedDir/dir' }
     ]);
   });
 
@@ -104,7 +104,7 @@ describe('Renaming files', () => {
       { path: 'dir' },
       { path: 'dir/file.ext' },
       { path: 'dir/renamedDir' },
-      { path: 'dir/renamedDir/file.ext' },
+      { path: 'dir/renamedDir/file.ext' }
     ]);
   });
 
@@ -123,20 +123,24 @@ describe('Creating', () => {
       state
     ).toMatchObject([
       {
-        path: 'file.ext', fileName: 'file.ext',
+        path: 'file.ext',
+        fileName: 'file.ext',
         parentPath: '',
         type: 'file',
         initialContent: null,
-        loading: false, saved: false,
-        line: 0, column: 0, scrollPosition: 0,
-      },
+        loading: false,
+        saved: false,
+        line: 0,
+        column: 0,
+        scrollPosition: 0
+      }
     ]);
     state.forEach(checkFileId)
   });
 
   it('creates a file in a folder', () => {
     const initialState = [
-      { path: 'folder/folder/file.ext' },
+      { path: 'folder/folder/file.ext' }
     ];
 
     const parentPath = 'folder/folder';
@@ -146,12 +150,16 @@ describe('Creating', () => {
     ).toMatchObject([
       { path: 'folder/folder/file.ext' },
       {
-        path: 'folder/folder/newFile.ext', fileName: 'newFile.ext',
+        path: 'folder/folder/newFile.ext',
+        fileName: 'newFile.ext',
         parentPath: parentPath,
         type: 'file',
         initialContent: null,
-        loading: false, saved: false,
-        line: 0, column: 0, scrollPosition: 0,
+        loading: false,
+        saved: false,
+        line: 0,
+        column: 0,
+        scrollPosition: 0
       }
     ]);
     state.forEach(checkFileId)
@@ -159,11 +167,15 @@ describe('Creating', () => {
 
   it('when creating a new file, keeps other files\' properties', () => {
     const presentFile = {
-      path: 'folder/file.ext', fileName: 'file.ext',
+      path: 'folder/file.ext',
+      fileName: 'file.ext',
       type: 'file',
       initialContent: 'Some initial content',
-      loading: false, saved: false,
-      line: 10, column: 20, scrollPosition: 30,
+      loading: false,
+      saved: false,
+      line: 10,
+      column: 20,
+      scrollPosition: 30
     };
     const initialState = [presentFile];
 
@@ -174,12 +186,16 @@ describe('Creating', () => {
       presentFile,
       {
         fileId: '3',
-        path: 'newFile.ext', fileName: 'newFile.ext',
+        path: 'newFile.ext',
+        fileName: 'newFile.ext',
         parentPath: parentPath,
         type: 'file',
         initialContent: null,
-        loading: false, saved: false,
-        line: 0, column: 0, scrollPosition: 0,
+        loading: false,
+        saved: false,
+        line: 0,
+        column: 0,
+        scrollPosition: 0
       }
     ]);
   });
