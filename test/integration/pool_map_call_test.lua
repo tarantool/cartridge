@@ -37,8 +37,8 @@ g.before_all = function()
     g.cluster.main_server.net_box:eval([[
         local remote_control = require('cartridge.remote-control')
         local cluster_cookie = require('cartridge.cluster-cookie')
-        remote_control.init('0.0.0.0', 13302)
-        remote_control.start('0.0.0.0', 13302, {
+        remote_control.bind('0.0.0.0', 13302)
+        remote_control.accept({
             username = cluster_cookie.username(),
             password = cluster_cookie.cookie(),
         })

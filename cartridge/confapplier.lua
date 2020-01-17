@@ -479,12 +479,12 @@ local function init(opts)
     vars.box_opts = opts.box_opts
     vars.binary_port = opts.binary_port
 
-    local ok, err = remote_control.init('0.0.0.0', vars.binary_port)
+    local ok, err = remote_control.bind('0.0.0.0', vars.binary_port)
     if not ok then
         set_state('InitError', err)
         return nil, err
     else
-        log.info('Remote control binded on 0.0.0.0:%d', vars.binary_port)
+        log.info('Remote control bound to 0.0.0.0:%d', vars.binary_port)
     end
 
 
@@ -493,16 +493,11 @@ local function init(opts)
         config_filename = config_filename .. '.yml'
     end
     if not utils.file_exists(config_filename) then
-        local ok, err = remote_control.start('0.0.0.0', vars.binary_port, {
+        remote_control.accept({
             username = cluster_cookie.username(),
             password = cluster_cookie.cookie(),
         })
-        if not ok then
-            set_state('InitError', err)
-            return nil, err
-        else
-            log.info('Remote control listening on 0.0.0.0:%d', vars.binary_port)
-        end
+        log.info('Remote control ready to accept connections')
 
         local snapshots = fio.glob(fio.pathjoin(vars.workdir, '*.snap'))
         if next(snapshots) ~= nil then

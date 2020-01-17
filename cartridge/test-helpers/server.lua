@@ -71,26 +71,48 @@ function Server:build_env()
     }
 end
 
-
-function Server:connect_net_box()
-    log.info('connecting_net_box %s', self.alias)
-    getmetatable(getmetatable(self)).connect_net_box(self)
-    local function reconnect()
-        log.info('\n\non_disconnect')
-        log.info(self.alias)
-        log.info(yaml.encode(self.net_box))
-
-        local connection = require('net.box').connect(
-            self.net_box_uri, self.net_box_credentials
+local function reconnect(connection_old)
+    local server = connection_old._server
+    log.debug(
+        'Netbox %s (%s): connection lost',
+        server.alias, server.advertise_uri
+    )
+    local fiber = require('fiber')
+    fiber.new(function()
+        fiber.name(string.format('reconnect/%s', server.net_box_uri))
+        local connection_new = require('net.box').connect(
+            server.net_box_uri, server.net_box_credentials
         )
 
-        if connection.error then
-            error(connection.error)
+        if server.net_box ~= connection_old then
+            -- Someone has already assigned `self.net_box`
+            -- while this fiber was trying to establish a new one.
+            -- Don't interfere in this case.
+            return
         end
 
-        self.net_box = connection
-    end
+        if connection_new.error then
+            log.debug(
+                'Netbox %s (%s) reconnect failed: %s',
+                server.alias, server.advertise_uri, connection_new.error
+            )
+            return
+        else
+            log.debug(
+                'Netbox %s (%s) reconnected',
+                server.alias, server.advertise_uri
+            )
+        end
 
+        connection_new:on_disconnect(reconnect)
+        server.net_box = connection_new
+        server.net_box._server = server
+    end)
+end
+
+function Server:connect_net_box()
+    getmetatable(getmetatable(self)).connect_net_box(self)
+    self.net_box._server = self
     self.net_box:on_disconnect(reconnect)
     return self.net_box
 end
@@ -109,14 +131,18 @@ function Server:stop()
     if process == nil then
         return
     end
+    if self.net_box then
+        -- Don't try to reconnect anymore
+        self.net_box:on_disconnect(nil, reconnect)
+    end
     getmetatable(getmetatable(self)).stop(self)
     luatest.helpers.retrying({}, function()
         luatest.assert_not(
             process:is_alive(),
-            string.format('%s is still running', self.alias)
+            string.format('Process %s is still running', self.alias)
         )
     end)
-    log.warn('%s killed', self.alias)
+    log.warn('Process %s killed', self.alias)
 end
 
 --- Perform GraphQL request on cluster.

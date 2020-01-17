@@ -63,20 +63,15 @@ function g.after_all()
 end
 
 local function rc_start(port)
-    local ok, err = remote_control.start('127.0.0.1', port, {
+    local ok, err = remote_control.bind('127.0.0.1', port)
+
+    t.assert_equals(err, nil)
+    t.assert_equals(ok, true)
+
+    remote_control.accept({
         username = username,
         password = password,
     })
-
-    t.assert_equals(err, nil)
-    t.assert_equals(ok, true)
-end
-
-local function rc_bind(port)
-    local ok, err = remote_control.init('127.0.0.1', port)
-
-    t.assert_equals(err, nil)
-    t.assert_equals(ok, true)
 end
 
 function g.teardown()
@@ -103,21 +98,16 @@ local function assertStrOneOf(str, possible_values)
 end
 
 function g.test_start()
-    local cred = {
-        username = username,
-        password = password,
-    }
-
     rc_start(13301)
     box.cfg({listen = box.NULL})
-    local ok, err = remote_control.start('127.0.0.1', 13301, cred)
+    local ok, err = remote_control.bind('127.0.0.1', 13301)
     t.assert_not(ok)
     t.assert_equals(err.class_name, "RemoteControlError")
     t.assert_equals(err.err, "Already running")
 
     remote_control.stop()
     box.cfg({listen = '127.0.0.1:13301'})
-    local ok, err = remote_control.start('127.0.0.1', 13301, cred)
+    local ok, err = remote_control.bind('127.0.0.1', 13301)
     t.assert_not(ok)
     t.assert_equals(err.class_name, "RemoteControlError")
     t.assert_equals(err.err,
@@ -127,7 +117,7 @@ function g.test_start()
     remote_control.stop()
     box.cfg({listen = box.NULL})
 
-    local ok, err = remote_control.start('0.0.0.0', -1, cred)
+    local ok, err = remote_control.bind('0.0.0.0', -1)
     t.assert_not(ok)
     t.assert_equals(err.class_name, "RemoteControlError")
     -- MacOS and Linux returns different errno
@@ -136,28 +126,28 @@ function g.test_start()
         "Can't start server: " .. errno.strerror(errno.EAFNOSUPPORT),
     })
 
-    local ok, err = remote_control.start('255.255.255.255', 13301, cred)
+    local ok, err = remote_control.bind('255.255.255.255', 13301)
     t.assert_not(ok)
     t.assert_equals(err.class_name, "RemoteControlError")
     t.assert_equals(err.err,
         "Can't start server: " .. errno.strerror(errno.EINVAL)
     )
 
-    local ok, err = remote_control.start('google.com', 13301, cred)
+    local ok, err = remote_control.bind('google.com', 13301)
     t.assert_not(ok)
     t.assert_equals(err.class_name, "RemoteControlError")
     t.assert_equals(err.err,
         "Can't start server: " .. errno.strerror(errno.EADDRNOTAVAIL)
     )
 
-    local ok, err = remote_control.start('8.8.8.8', 13301, cred)
+    local ok, err = remote_control.bind('8.8.8.8', 13301)
     t.assert_not(ok)
     t.assert_equals(err.class_name, "RemoteControlError")
     t.assert_equals(err.err,
         "Can't start server: " .. errno.strerror(errno.EADDRNOTAVAIL)
     )
 
-    local ok, err = remote_control.start('localhost', 13301, cred)
+    local ok, err = remote_control.bind('localhost', 13301)
     t.assert_not(err)
     t.assert_equals(ok, true)
     remote_control.stop()
@@ -192,14 +182,37 @@ function g.test_drop_connections()
     t.assert_equals({conn_2.state, conn_2.error}, {"error", "Peer closed"})
 end
 
-function g.test_init_rc()
-    rc_bind(13301)
-    local conn = netbox.connect('superuser:3.141592@localhost:13301', {connect_timeout = 0.5})
-    t.assert_equals({conn.state, conn.error}, {"error", "Unsupported protocol: Rejected"})
+function g.test_late_accept()
+    local ok, err = remote_control.bind('127.0.0.1', 13301)
+    t.assert_equals(err, nil)
+    t.assert_equals(ok, true)
+    local url = 'superuser:3.141592@localhost:13301'
 
-    rc_start(13301)
-    local conn_1 = assert(netbox.connect('superuser:3.141592@localhost:13301'))
-    t.assert_equals({conn_1.state, conn_1.error}, {"active"})
+    local fiber = require('fiber')
+    local f = fiber.new(netbox.connect, url)
+    f:name('netbox_connect')
+    f:set_joinable(true)
+
+    local conn_1 = netbox.connect(url, {wait_connected = false})
+    t.assert_equals({conn_1.state, conn_1.error}, {"initial", nil})
+
+    local conn_2 = netbox.connect(url, {connect_timeout = 0.01})
+    t.assert_equals({conn_2.state, conn_2.error}, {"error", "Connection timed out"})
+
+    remote_control.drop_connections()
+
+    local ok, conn_3 = f:join()
+    t.assert_equals(ok, true)
+    t.assert_equals({conn_1.state, conn_1.error}, {"error", "Peer closed"})
+    t.assert_equals({conn_3.state, conn_3.error}, {"error", "Peer closed"})
+
+    --------------------------------------------------------------------
+    local conn_4 = netbox.connect(url, {wait_connected = 0.01})
+    t.assert_equals({conn_4.state, conn_4.error}, {"initial", nil})
+
+    remote_control.accept({username = username, password = password})
+    t.assert_equals(conn_4:wait_connected(0.01), true)
+    t.assert_equals({conn_4.state, conn_4.error}, {"active", nil})
 end
 
 function g.test_auth()

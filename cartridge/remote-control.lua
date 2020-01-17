@@ -30,7 +30,8 @@ vars:new('server')
 vars:new('username')
 vars:new('password')
 vars:new('handlers', {})
-vars:new('only_bind', true)
+vars:new('accept', false)
+vars:new('accept_cond', fiber.cond())
 
 local error_t = ffi.typeof('struct error')
 
@@ -301,23 +302,18 @@ local function rc_handle(s)
 
     local greeting = string.format(
         '%-63s\n%-63s\n',
-        string.format(
-            'Tarantool %s (%s) %s', version,
-            vars.only_bind and 'Reject' or 'Binary', uuid_lib.NULL:str()
-        ),
+        'Tarantool ' .. version .. ' (Binary) ' .. uuid_lib.NULL:str(),
         -- 'Tarantool 1.10.3 (Binary) f1f1ab41-eae1-475b-b4bd-3fa8dd067f4d',
         digest.base64_encode(salt)
     )
 
-    s:write(greeting)
-    if vars.only_bind then
-        pcall(s.close, s)
-        return
-    end
-
     vars.handlers[s] = fiber.self()
     s._client_user = 'guest'
     s._client_salt = salt
+    if not vars.accept then
+        vars.accept_cond:wait()
+    end
+    s:write(greeting)
 
     while vars.handlers[s] do
         local ok, err = errors.pcall('RemoteControlError', communicate, s)
@@ -329,22 +325,21 @@ local function rc_handle(s)
             break
         end
     end
-
-    vars.handlers[s] = nil
 end
 
 --- Init remote control server.
--- This function binds net_box socket to hold an address,
--- until server can bootstrap
 --
--- @function init
+-- Bind the port but don't start serving connections yet.
+--
+-- @function bind
+-- @local
 -- @tparam string host
--- @tparam number port
+-- @tparam string|number port
 -- @treturn[1] boolean true
 -- @treturn[2] nil
 -- @treturn[2] table Error description
-local function init(host, port)
-    checks('string', 'number')
+local function bind(host, port)
+    checks('string', 'string|number')
 
     if vars.server ~= nil then
         return nil, errors.new('RemoteControlError',
@@ -374,31 +369,28 @@ end
 -- Access is restricted to the user with specified credentials,
 -- which can be passed as `net_box.connect('username:password@host:port')`.
 --
--- @function start
+-- @function accept
 -- @local
--- @tparam string host
--- @tparam string|number port
 -- @tparam table credentials
 -- @tparam string credentials.username
 -- @tparam string credentials.password
--- @treturn boolean true
-local function start(host, port, opts)
-    checks('string', 'string|number', {
+local function accept(opts)
+    checks({
         username = 'string',
         password = 'string',
     })
 
-    vars.only_bind = false
     vars.username = opts.username
     vars.password = opts.password
-    return true
+    vars.accept = true
+    vars.accept_cond:broadcast()
 end
 
 --- Stop the server.
 --
 -- It doesn't interrupt any existing connections.
 --
--- @function stop
+-- @function unbind
 -- @local
 local function stop()
     if vars.server == nil then
@@ -407,8 +399,14 @@ local function stop()
 
     vars.server:close()
     vars.server = nil
+    vars.accept = nil
+    vars.accept_cond = nil
 end
 
+--- Explicitly drop all established connections.
+--
+-- @function drop_connections
+-- @local
 local function drop_connections()
     local handlers = table.copy(vars.handlers)
     table.clear(vars.handlers)
@@ -422,8 +420,8 @@ local function drop_connections()
 end
 
 return {
-    init = init,
-    start = start,
+    bind = bind,
+    accept = accept,
     stop = stop,
     drop_connections = drop_connections,
 }
