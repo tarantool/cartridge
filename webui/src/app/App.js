@@ -1,10 +1,6 @@
 import React from 'react';
 import { Route, Switch } from 'react-router-dom';
 
-import 'src/styles/app.css';
-import 'src/styles/tables.css';
-import 'src/styles/tight-scroll.css';
-
 import ClusterPage from 'src/pages/Cluster';
 import { PageLayout } from '@tarantool.io/ui-kit';
 
