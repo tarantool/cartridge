@@ -10,8 +10,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
-- Code editor page in WebUI.
-
 - Expose `TARANTOOL_DEMO_URI` environment variable in GraphQL query
   `cluster{ self{demo_uri} }` for demo purposes.
 
@@ -33,7 +31,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Built-in DDL schema management. Schema is a part of clusterwide
   configuration. It's applied to every instance in cluster.
 
-- DDL schema editor page in webui.
+- DDL schema editor and code editor pages in WebUI.
 
 - Instances now have internal state machine which helps to manage
   cluster operation and protect from invalid state transitions.
