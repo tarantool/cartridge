@@ -72,6 +72,13 @@ local function rc_start(port)
     t.assert_equals(ok, true)
 end
 
+local function rc_bind(port)
+    local ok, err = remote_control.init('127.0.0.1', port)
+
+    t.assert_equals(err, nil)
+    t.assert_equals(ok, true)
+end
+
 function g.teardown()
     box.cfg({listen = box.NULL})
     remote_control.stop()
@@ -183,6 +190,16 @@ function g.test_drop_connections()
 
     t.assert_equals({conn_1.state, conn_1.error}, {"error", "Peer closed"})
     t.assert_equals({conn_2.state, conn_2.error}, {"error", "Peer closed"})
+end
+
+function g.test_init_rc()
+    rc_bind(13301)
+    local conn = netbox.connect('superuser:3.141592@localhost:13301', {connect_timeout = 0.5})
+    t.assert_equals({conn.state, conn.error}, {"error", "Unsupported protocol: Rejected"})
+
+    rc_start(13301)
+    local conn_1 = assert(netbox.connect('superuser:3.141592@localhost:13301'))
+    t.assert_equals({conn_1.state, conn_1.error}, {"active"})
 end
 
 function g.test_auth()

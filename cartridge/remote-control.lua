@@ -30,6 +30,7 @@ vars:new('server')
 vars:new('username')
 vars:new('password')
 vars:new('handlers', {})
+vars:new('only_bind', true)
 
 local error_t = ffi.typeof('struct error')
 
@@ -300,15 +301,23 @@ local function rc_handle(s)
 
     local greeting = string.format(
         '%-63s\n%-63s\n',
-        'Tarantool ' .. version .. ' (Binary) ' .. uuid_lib.NULL:str(),
+        string.format(
+            'Tarantool %s (%s) %s', version,
+            vars.only_bind and 'Reject' or 'Binary', uuid_lib.NULL:str()
+        ),
         -- 'Tarantool 1.10.3 (Binary) f1f1ab41-eae1-475b-b4bd-3fa8dd067f4d',
         digest.base64_encode(salt)
     )
 
+    s:write(greeting)
+    if vars.only_bind then
+        pcall(s.close, s)
+        return
+    end
+
     vars.handlers[s] = fiber.self()
     s._client_user = 'guest'
     s._client_salt = salt
-    s:write(greeting)
 
     while vars.handlers[s] do
         local ok, err = errors.pcall('RemoteControlError', communicate, s)
@@ -324,7 +333,6 @@ local function rc_handle(s)
     vars.handlers[s] = nil
 end
 
-
 --- Init remote control server.
 -- This function binds net_box socket to hold an address,
 -- until server can bootstrap
@@ -337,22 +345,26 @@ end
 -- @treturn[2] table Error description
 local function init(host, port)
     checks('string', 'number')
-    if vars.socket ~= nil then
+
+    if vars.server ~= nil then
         return nil, errors.new('RemoteControlError',
             'Already running'
         )
     end
 
-    vars.socket = socket('AF_INET', 'SOCK_STREAM', 'tcp')
-    vars.socket:setsockopt('SOL_SOCKET', 'SO_REUSEADDR', true)
+    local server = socket.tcp_server(host, port, {
+        name = 'remote_control',
+        handler = rc_handle,
+    })
 
-    local binded = vars.socket:bind(host, port)
-    if not binded then
-        return nil, errors.new('RemoteControlError',
-            vars.socket:error()
+    if not server then
+        local err = errors.new('RemoteControlError',
+            "Can't start server: %s", errno.strerror()
         )
+        return nil, err
     end
 
+    vars.server = server
     return true
 end
 
@@ -376,29 +388,7 @@ local function start(host, port, opts)
         password = 'string',
     })
 
-    if vars.socket ~= nil then
-        vars.socket:close()
-        vars.socket = nil
-    end
-
-    if vars.server ~= nil then
-        return nil, errors.new('RemoteControlError',
-            'Already running'
-        )
-    end
-
-    vars.server = socket.tcp_server(host, port, {
-        name = 'remote_control',
-        handler = rc_handle,
-    })
-
-    if vars.server == nil then
-        local err = errors.new('RemoteControlError',
-            "Can't start server: %s", errno.strerror()
-        )
-        return nil, err
-    end
-
+    vars.only_bind = false
     vars.username = opts.username
     vars.password = opts.password
     return true
@@ -411,11 +401,6 @@ end
 -- @function stop
 -- @local
 local function stop()
-    if vars.socket ~= nil then
-        vars.socket:close()
-        return
-    end
-
     if vars.server == nil then
         return
     end

@@ -71,6 +71,30 @@ function Server:build_env()
     }
 end
 
+
+function Server:connect_net_box()
+    log.info('connecting_net_box %s', self.alias)
+    getmetatable(getmetatable(self)).connect_net_box(self)
+    local function reconnect()
+        log.info('\n\non_disconnect')
+        log.info(self.alias)
+        log.info(yaml.encode(self.net_box))
+
+        local connection = require('net.box').connect(
+            self.net_box_uri, self.net_box_credentials
+        )
+
+        if connection.error then
+            error(connection.error)
+        end
+
+        self.net_box = connection
+    end
+
+    self.net_box:on_disconnect(reconnect)
+    return self.net_box
+end
+
 --- Start the server.
 function Server:start()
     getmetatable(getmetatable(self)).start(self)
