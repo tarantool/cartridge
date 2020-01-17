@@ -439,3 +439,31 @@ function g.test_quorum_one()
     t.assert_equals(get_leader(g.slave), g.master.instance_uuid)
     t.assert_equals(is_master(g.slave), false)
 end
+
+function g.test_restart_both()
+    g.cluster:stop()
+    g.cluster:start()
+    wish_state(g.master, 'RolesConfigured')
+    wish_state(g.slave, 'RolesConfigured')
+
+    t.assert_equals(
+        get_upstream_info(g.master),
+        {
+            uuid = g.slave.instance_uuid,
+            upstream_status = "follow",
+            upstream_message = box.NULL,
+        }
+    )
+
+    t.assert_equals(
+        get_upstream_info(g.slave),
+        {
+            uuid = g.master.instance_uuid,
+            upstream_status = "follow",
+            upstream_message = box.NULL,
+        }
+    )
+
+    g.cluster:wait_until_healthy()
+end
+
