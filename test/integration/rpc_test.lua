@@ -81,7 +81,7 @@ function g.test_errors()
     t.assert_not(res)
     t.assert_equals(err.err, 'Boo')
     t.assert_equals(err.class_name, 'RemoteCallError')
-    t.assert_str_icontains(err.str, 'during net.box call to localhost:13302')
+    t.assert_str_contains(err.stack, 'during net.box call to localhost:13302')
 
     local res, err = rpc_call(
         g.cluster:server('B1'), 'myrole', 'throw', {'Moo'}, {leader_only=true}
@@ -89,7 +89,7 @@ function g.test_errors()
     t.assert_not(res)
     t.assert_equals(err.err, 'Moo')
     t.assert_equals(err.class_name, 'RemoteCallError')
-    t.assert_not_str_icontains(err.str, 'during net.box call')
+    t.assert_not_str_contains(err.stack, 'during net.box call')
 end
 
 function g.test_routing()
