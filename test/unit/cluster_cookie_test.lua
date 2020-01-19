@@ -16,17 +16,23 @@ function g.after_all()
 end
 
 function g.test_set_cookie()
-	cluster_cookie.init(g.tempdir)
+    cluster_cookie.init(g.tempdir)
 
-	cluster_cookie.set_cookie('abcd')
-	cluster_cookie.set_cookie('ABCD')
-	cluster_cookie.set_cookie('1234')
-	cluster_cookie.set_cookie('-_.~')
-	cluster_cookie.set_cookie('abcdABCD1234-_.~')
+    cluster_cookie.set_cookie('abcdABCD1234_.~-')
 
-	local err_msg = 'Invalid symbol "%s" in cluster cookie'
-	t.assert_error_msg_contains(string.format(err_msg, 'Ы'), cluster_cookie.set_cookie, 'Ы')
-	t.assert_error_msg_contains(string.format(err_msg, '@'), cluster_cookie.set_cookie, '@')
-	t.assert_error_msg_contains(string.format(err_msg, ':'), cluster_cookie.set_cookie, ':a')
-	t.assert_error_msg_contains(string.format(err_msg, '$'), cluster_cookie.set_cookie, 'a$')
+    local _assert = t.assert_error_msg_equals
+    local _set = cluster_cookie.set_cookie
+    _assert([[Invalid symbol "\13" in cluster cookie]], _set, '\r')
+    _assert([[Invalid symbol "\"" in cluster cookie]], _set, '"')
+    _assert([[Invalid symbol "'" in cluster cookie]], _set, "'")
+    _assert([[Invalid symbol "😎!" in cluster cookie]], _set, '😎!')
+    _assert([[Invalid symbol "Ы" in cluster cookie]], _set, 'Ы')
+    _assert([[Invalid symbol "@" in cluster cookie]], _set, '@')
+    _assert([[Invalid symbol ":" in cluster cookie]], _set, ':a')
+    _assert([[Invalid symbol "%%" in cluster cookie]], _set, '0%%1')
+    _assert([[Invalid symbol "$" in cluster cookie]], _set, 'a$')
+    _assert([[Could not set nil cluster cookie]], _set, nil)
+    _assert([[Could not set cluster cookie with length more than 256]],
+        _set, string.rep('x', 257)
+    )
 end
