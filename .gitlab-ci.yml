@@ -97,7 +97,9 @@ integration-ee:
   <<: *test-template
   script: &integration-script
     - pytest -v
-    - luatest -v -x cypress.*
+    - luatest -v --coverage -x cypress.*
+    - .rocks/bin/luacov-console `pwd`
+    - .rocks/bin/luacov-console -s
   variables:
     IMAGE_NAME: *IMAGE_NAME_EE
 
