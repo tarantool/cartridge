@@ -444,11 +444,11 @@ class Code extends React.Component<CodeProps, CodeState> {
 
 const mapStateToProps = (state: State) => {
   return {
-    fileTree: selectFileTree(state.files),
-    files: state.files,
+    fileTree: selectFileTree(state.codeEditor.files),
+    files: state.codeEditor.files,
     fetchingConfigFiles: state.ui.fetchingConfigFiles,
     puttingConfigFiles: state.ui.puttingConfigFiles,
-    selectedFile: selectSelectedFile(state)
+    selectedFile: selectSelectedFile(state.codeEditor)
   }
 };
 

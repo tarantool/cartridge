@@ -16,7 +16,7 @@ import { getModelValueByFile, getFileIdForMonaco, setModelValueByFile } from 'sr
 
 function* applyFilesSaga() {
   try {
-    const { files } = yield select();
+    const { codeEditor: { files } } = yield select();
     const updatedFiles = [];
     const initialMap = {};
     const filesMap = {};
@@ -89,7 +89,7 @@ function* fetchFilesSaga() {
     const response = yield call(getFiles);
 
     // We don't keep all content in Redux store anymore. Put it to Monaco models:
-    const { files: localFiles } = yield select();
+    const { codeEditor: { files: localFiles } } = yield select();
     localFiles.forEach(localFile => {
       const responseFile = response.find(f => f.path === localFile.path);
       if (responseFile) {
