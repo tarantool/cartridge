@@ -16,6 +16,7 @@
 local log = require('log')
 local ffi = require('ffi')
 local errno = require('errno')
+local fiber = require('fiber')
 local checks = require('checks')
 local errors = require('errors')
 local socket = require('socket')
@@ -28,6 +29,9 @@ local vars = require('cartridge.vars').new('cartridge.remote-control')
 vars:new('server')
 vars:new('username')
 vars:new('password')
+vars:new('handlers', {})
+vars:new('accept', false)
+vars:new('accept_cond', fiber.cond())
 
 local error_t = ffi.typeof('struct error')
 
@@ -147,15 +151,15 @@ local function reply_err(s, sync, ecode, efmt, ...)
 end
 
 local function communicate(s)
-    local buf = s:read(5)
-    if not buf or buf == '' then
-        log.info('Peer closed')
+    local ok, buf = pcall(s.read, s, 5)
+    if not ok or buf == nil or buf == '' then
+        log.debug('Peer closed')
         return false
     end
 
     local size, pos = msgpack.decode(buf)
-    local _tail = s:read(pos-1 + size - #buf)
-    if _tail == nil or _tail == '' then
+    local ok, _tail = pcall(s.read, s, pos-1 + size - #buf)
+    if not ok or _tail == nil or _tail == '' then
         log.info('Peer closed')
         return false
     else
@@ -303,11 +307,15 @@ local function rc_handle(s)
         digest.base64_encode(salt)
     )
 
+    vars.handlers[s] = fiber.self()
     s._client_user = 'guest'
     s._client_salt = salt
+    if not vars.accept then
+        vars.accept_cond:wait()
+    end
     s:write(greeting)
 
-    while true do
+    while vars.handlers[s] do
         local ok, err = errors.pcall('RemoteControlError', communicate, s)
         if err ~= nil then
             log.error('%s', err)
@@ -319,25 +327,19 @@ local function rc_handle(s)
     end
 end
 
---- Start remote control server.
--- To connect the server use regular `net.box` connection.
+--- Init remote control server.
 --
--- Access is restricted to the user with specified credentials,
--- which can be passed as `net_box.connect('username:password@host:port')`.
+-- Bind the port but don't start serving connections yet.
 --
--- @function start
+-- @function bind
 -- @local
 -- @tparam string host
 -- @tparam string|number port
--- @tparam table credentials
--- @tparam string credentials.username
--- @tparam string credentials.password
--- @treturn boolean true
-local function start(host, port, opts)
-    checks('string', 'string|number', {
-        username = 'string',
-        password = 'string',
-    })
+-- @treturn[1] boolean true
+-- @treturn[2] nil
+-- @treturn[2] table Error description
+local function bind(host, port)
+    checks('string', 'string|number')
 
     if vars.server ~= nil then
         return nil, errors.new('RemoteControlError',
@@ -345,28 +347,50 @@ local function start(host, port, opts)
         )
     end
 
-    vars.server = socket.tcp_server(host, port, {
+    local server = socket.tcp_server(host, port, {
         name = 'remote_control',
         handler = rc_handle,
     })
 
-    if vars.server == nil then
+    if not server then
         local err = errors.new('RemoteControlError',
             "Can't start server: %s", errno.strerror()
         )
         return nil, err
     end
 
+    vars.server = server
+    return true
+end
+
+--- Start remote control server.
+-- To connect the server use regular `net.box` connection.
+--
+-- Access is restricted to the user with specified credentials,
+-- which can be passed as `net_box.connect('username:password@host:port')`.
+--
+-- @function accept
+-- @local
+-- @tparam table credentials
+-- @tparam string credentials.username
+-- @tparam string credentials.password
+local function accept(opts)
+    checks({
+        username = 'string',
+        password = 'string',
+    })
+
     vars.username = opts.username
     vars.password = opts.password
-    return true
+    vars.accept = true
+    vars.accept_cond:broadcast()
 end
 
 --- Stop the server.
 --
 -- It doesn't interrupt any existing connections.
 --
--- @function stop
+-- @function unbind
 -- @local
 local function stop()
     if vars.server == nil then
@@ -375,9 +399,29 @@ local function stop()
 
     vars.server:close()
     vars.server = nil
+    vars.accept = nil
+    vars.accept_cond = nil
+end
+
+--- Explicitly drop all established connections.
+--
+-- @function drop_connections
+-- @local
+local function drop_connections()
+    local handlers = table.copy(vars.handlers)
+    table.clear(vars.handlers)
+
+    for s, handler in pairs(handlers) do
+        if handler ~= fiber.self() then
+            pcall(fiber.cancel, handler)
+            pcall(socket.close, s)
+        end
+    end
 end
 
 return {
-    start = start,
+    bind = bind,
+    accept = accept,
     stop = stop,
+    drop_connections = drop_connections,
 }

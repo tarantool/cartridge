@@ -354,6 +354,7 @@ function g.test_orphan_connect_timeout()
 
     g.slave:start()
     wish_state(g.slave, 'RolesConfigured')
+
     t.assert_equals(
         get_upstream_info(g.slave),
         {
