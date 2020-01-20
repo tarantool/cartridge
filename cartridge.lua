@@ -125,7 +125,9 @@ end
 -- @tparam ?string opts.cluster_cookie
 --  secret used to separate unrelated applications, which
 --  prevents them from seeing each other during broadcasts.
---  Also used for encrypting internal communication.
+--  Also used as admin password in HTTP and binary connections and for
+--  encrypting internal communications.
+--  Allowed symbols are `[a-zA-Z0-9_.~-]`.
 --  (default: "secret-cluster-cookie", overridden by
 --  env `TARANTOOL_CLUSTER_COOKIE`,
 --  args `--cluster-cookie`)

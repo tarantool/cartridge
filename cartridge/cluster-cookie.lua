@@ -88,13 +88,20 @@ end
 
 local function set_cookie(value)
     if M.workdir == nil then
-        error('Cluster cookie not initialized')
+        error('Cluster cookie not initialized', 2)
     end
     if value == nil then
-        error('Could not set nil cluster cookie')
+        error('Could not set nil cluster cookie', 2)
     end
     if #value > 256 then
-        error('Could not set cluster cookie with length more than 256')
+        error('Could not set cluster cookie with length more than 256', 2)
+    end
+
+    local bad_symbols = string.match(value, '[^%w%-%.~_]+')
+    if bad_symbols ~= nil then
+        error(string.format(
+            'Invalid symbol %q in cluster cookie', bad_symbols
+        ), 2)
     end
 
     write_file(fio.pathjoin(M.workdir, COOKIEFILE), value)

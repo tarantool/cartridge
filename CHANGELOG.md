@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - DDL failure if spaces is `null` in input schema.
 
+- Content of `cluster_cookie` is checked for absence of special
+  characters so it doesn't break the authotization.
+  Allowed symbols are `[a-zA-Z0-9_.~-]`.
+
 ## [2.0.1] - 2020-01-15
 
 ### Added
