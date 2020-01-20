@@ -131,6 +131,10 @@ function g.test_schema_editor()
     cypress_run('schema-editor.spec.js')
 end
 
+function g.test_code()
+    cypress_run('code.spec.js')
+end
+
 function g.test_uninitialized()
     local code = os.execute(
         'cd webui && npx cypress run' ..
