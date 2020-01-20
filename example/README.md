@@ -5,6 +5,7 @@ role - `extensions`.
 
 All `extensions/*.lua` files will be loaded as Lua modules.
 They'll be accessible through
+
 ```lua
 local extensions = require('cartridge').service_get('extensions')
 local banking = extensions.get('banking') -- TODO ban cycle deps
