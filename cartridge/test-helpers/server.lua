@@ -2,6 +2,7 @@
 --
 -- @classmod cartridge.test-helpers.server
 
+local fun = require('fun')
 local log = require('log')
 local luatest = require('luatest')
 local yaml = require('yaml')
@@ -26,17 +27,7 @@ local checks = require('checks')
 -- @return input object
 local Server = luatest.Server:inherit({})
 
-Server.constructor_checks = {
-    command = 'string',
-    workdir = 'string',
-    chdir = '?string',
-    env = '?table',
-    args = '?table',
-
-    http_port = '?number',
-    net_box_port = '?number',
-    net_box_credentials = '?table',
-
+Server.constructor_checks = fun.chain(Server.constructor_checks, {
     alias = 'string',
     cluster_cookie = 'string',
 
@@ -45,7 +36,7 @@ Server.constructor_checks = {
     instance_uuid = '?string',
     replicaset_uuid = '?string',
     labels = '?table'
-}
+}):tomap()
 
 function Server:initialize()
     self.net_box_port = self.net_box_port or self.advertise_port
