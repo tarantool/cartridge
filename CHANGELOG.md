@@ -19,6 +19,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   long. During instance recovery remote-controll won't accept any
   connections: clients wait for box.cfg to finish recvovery.
 
+- Update errors rock dependency to 2.1.2: eliminate duplicate stack
+  trace from `error.str` field.
+
 ## [2.0.1] - 2020-01-15
 
 ### Added
