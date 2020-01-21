@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Show demo uri on Code page for demo purposes
 - Add reset button to Code page for demo purposes
 
+- Make use of GraphQL errors extensions with additional information 
+  about `class_name` and `stack` of original error.
+
 ### Fixed
 
 - DDL failure if spaces is `null` in input schema.

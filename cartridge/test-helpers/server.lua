@@ -137,20 +137,36 @@ function Server:stop()
 end
 
 --- Perform GraphQL request on cluster.
--- @param request object to be serialized into JSON body.
--- @param[opt] options additional options for :http_request.
+-- @tparam table params
+-- @tparam string   params.query - grapqhl query
+-- @tparam ?table   params.variables - variables for graphql query
+-- @tparam ?boolean params.raise - flag to raise an error
+--                  if response contains error section
+-- @tparam[opt] ?table http_options - additional options for :http_request.
 -- @return parsed response JSON.
--- @raise HTTPRequest error when request fails or first error from `errors` field if any.
-function Server:graphql(request, options)
-    log.debug('GraphQL request to :' .. self.http_port .. '. Query: ' .. request.query)
-    if request.variables then
-        log.debug(request.variables)
+-- @raise HTTPRequest error when request fails or first error
+-- from `errors` field and `params.raise` flag not false.
+function Server:graphql(params, http_options)
+    checks('table', {
+        query = 'string',
+        variables = '?table',
+        raise = '?boolean'
+    }, '?table')
+
+    log.debug('GraphQL request to : %d. Query: %s', self.http_port, params.query)
+    if params.variables then
+        log.debug(params.variables)
     end
-    options = options or {}
-    options.json = request
-    local response = self:http_request('post', '/admin/api', options)
+
+    http_options = http_options or {}
+    http_options.json = {
+        query = params.query,
+        variables = params.variables
+    }
+    local response = self:http_request('post', '/admin/api', http_options)
+
     local errors = response.json and response.json.errors
-    if errors then
+    if errors and (params.raise == nil or params.raise) then
         error(errors[1].message, 2)
     end
     return response.json

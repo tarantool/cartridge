@@ -286,8 +286,17 @@ local function _execute_graphql(req)
 
     if res == nil then
         log.error('%s', err or "Unknown error")
+
+        local ret_err = {message = err and err.err or "Unknown error"}
+        if err ~= nil then
+            ret_err.extensions = {
+                ['io.tarantool.errors.stack'] = err.stack,
+                ['io.tarantool.errors.class_name']  = err.class_name,
+            }
+        end
+
         return http_finalize({
-            errors = {{message = err and err.err or "Unknown error"}}
+            errors = {ret_err}
         })
     end
 
