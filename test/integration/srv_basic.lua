@@ -134,6 +134,7 @@ local ok, err = errors.pcall('CartridgeCfgError', cartridge.cfg, {
     roles = {
         'cartridge.roles.vshard-storage',
         'cartridge.roles.vshard-router',
+        'cartridge.roles.extensions',
         'mymodule-dependency',
         'mymodule-permanent',
         'mymodule-hidden',

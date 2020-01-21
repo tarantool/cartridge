@@ -1,5 +1,5 @@
 local checks = require('checks')
-local extensions = require('cartridge').service_get('extensions')
+-- local extensions = require('cartridge').service_get('extensions')
 
 local function customer_add(customer_id, fullname)
     checks('number', 'string')
@@ -11,7 +11,7 @@ end
 local function account_add(customer_id, account_id, name)
     checks('number', 'number', 'string')
     return box.space.account:insert(
-        {customer_id, account_id, name, '0.00'}
+        {customer_id, account_id, name, 0}
     )
 end
 

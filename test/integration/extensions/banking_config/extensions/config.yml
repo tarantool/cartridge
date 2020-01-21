@@ -5,21 +5,25 @@ provider:
   name: cartridge
 
 functions:
+
   customer_add:
     module: banking
     handler: customer_add
     events:
-    - binary: true
+    - binary:
+        path: customer_add
 
   account_add:
     module: banking
     handler: account_add
     events:
-    - binary: true
+    - binary:
+        path: account_add
 
   transfer_money:
     module: banking
     handler: transfer_money
     events:
-    - binary: true
+    - binary:
+        path: transfer_money
 ...

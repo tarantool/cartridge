@@ -239,7 +239,6 @@ local function _clusterwide(patch)
         return nil, err
     end
     clusterwide_config_new:lock()
-    -- log.info('%s', yaml.encode(clusterwide_config_new:get_readonly()))
 
     local topology_old = clusterwide_config_old:get_readonly('topology')
     local topology_new = clusterwide_config_new:get_readonly('topology')

@@ -1,19 +1,15 @@
 #!/usr/bin/env tarantool
 
 local log = require('log')
-local vshard = require('vshard')
 local checks = require('checks')
 local errors = require('errors')
 
 local vars = require('cartridge.vars').new('cartridge.roles.extensions')
-local pool = require('cartridge.pool')
-local utils = require('cartridge.utils')
-local twophase = require('cartridge.twophase')
-local confapplier = require('cartridge.confapplier')
-local vshard_utils = require('cartridge.vshard-utils')
+
+local EvalError = errors.new_class('EvalError')
 
 vars:new('loaded', {
-    -- [module_name] = require(module_name),
+    -- [module_name] = loadstring(module_name),
 })
 
 local function get(module_name)
@@ -22,10 +18,9 @@ local function get(module_name)
 end
 
 local function validate_config()
-	return true
+    -- TODO
+    return true
 end
-
-local function load()
 
 local function apply_config(conf)
     checks('table')
@@ -33,23 +28,40 @@ local function apply_config(conf)
     vars.loaded = {}
 
     for section, content in pairs(conf) do
-    	local filename = section:match('^extensions/(.+)%.lua$')
-    	if not filename then
-    		goto continue
-    	end
+        local mod_name = section:match('^extensions/(.+)%.lua$')
+        if not mod_name then
+            goto continue
+        end
 
-    	local mod = loadstring()
+        local mod_fn, err = loadstring(content, section)
+        if mod_fn == nil then
+            return nil, EvalError:new('%s: %s', section, err)
+        end
 
-    	::continue::
+        local mod, err = EvalError:pcall(mod_fn)
+        if mod == nil then
+            return nil, err
+        end
+
+        vars.loaded[mod_name] = mod
+
+        ::continue::
     end
 
-    local functions = conf['extensions/config'].functions
+    local extensions_cfg = conf['extensions/config'] or {}
+    local functions = extensions_cfg.functions
     if functions == nil then
-    	functions = {}
+        functions = {}
     end
 
-    for fname, fconf in pairs(functions) do
-    	local z = 1
+    for _, fconf in pairs(functions) do
+        local handler = vars.loaded[fconf.module][fconf.handler]
+
+        for _, event in ipairs(fconf.events) do
+            if event.binary then
+                rawset(_G, event.binary.path, handler)
+            end
+        end
     end
 end
 
