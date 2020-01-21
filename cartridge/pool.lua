@@ -19,7 +19,6 @@ vars:new('locks', {})
 vars:new('connections', {})
 local NetboxConnectError = errors.new_class('NetboxConnectError')
 local NetboxMapCallError = errors.new_class('NetboxMapCallError')
-local MultipleErrors = errors.new_class('MultipleErrors')
 
 --- Enrich URI with credentials.
 -- Suitable to connect other cluster instances.
@@ -134,8 +133,8 @@ end
 --
 -- @treturn {URI=value,...}
 --   Call results mapping for every URI.
--- @treturn nil|{URI=error,...}
---   Errors mapping for every URI.
+-- @treturn[opt] table
+--   United error object, gathering errors for every URI that failed.
 local function map_call(fn_name, args, opts)
     checks('string', '?table', {
         uri_list = 'table',
@@ -156,7 +155,7 @@ local function map_call(fn_name, args, opts)
         if uri_map[uri] then
             error('bad argument opts.uri_list' ..
                 ' to ' .. (debug.getinfo(1, 'nl').name or 'map_call') ..
-                ' (repetitions are prohibited)', 2
+                ' (duplicates are prohibited)', 2
             )
         end
         uri_map[uri] = true
@@ -184,42 +183,45 @@ local function map_call(fn_name, args, opts)
         end
     end
 
-    local ret_map, err_map = unpack(maps)
-    if err_map == nil then
-        return ret_map
+    local retmap, errmap = unpack(maps)
+    if errmap == nil then
+        return retmap
     end
 
-    local err = MultipleErrors:new('PoolMapCall error occoured')
-    local index = table.copy(err_map)
-    index.tostring = MultipleErrors.tostring
-
-    local err_class_group = {}
-    for _, v in pairs(err_map) do
+    local err_classes = {}
+    for _, v in pairs(errmap) do
         if v.class_name then
-            err_class_group[v.class_name] = v
+            err_classes[v.class_name] = v
         end
     end
 
-    local group_err_res = {}
-    local group_err_str_res = {}
-    for _, v in pairs(err_class_group) do
-        table.insert(group_err_res, v.err)
-        table.insert(group_err_str_res, tostring(v))
+    local united_error = NetboxMapCallError:new('')
+    local united_error_err = {}
+    local united_error_str = {}
+    for _, v in pairs(err_classes) do
+        table.insert(united_error_err, v.err)
+        table.insert(united_error_str, string.format('* %s', v))
     end
 
-    err.err = table.concat(group_err_res, '\n')
-    err.str = table.concat(group_err_str_res, '\n')
-    err.suberrors = err_map
-    err.stack = nil
+    united_error.err = table.concat(united_error_err, '\n')
+    united_error.str = string.format("%s: %s:\n%s",
+        united_error.class_name,
+        'multiple errors occured',
+        table.concat(united_error_str, '\n')
+    )
+    united_error.stack = nil
+    united_error.suberrors = errmap
 
+    local __index = table.copy(errmap)
+    __index.tostring = NetboxMapCallError.tostring
     local instance_mt = {
-        class_name = MultipleErrors.class_name,
-        __tostring = MultipleErrors.tostring,
-        __index = index
+        class_name = NetboxMapCallError.class_name,
+        __tostring = NetboxMapCallError.tostring,
+        __index = __index,
     }
-    setmetatable(err, instance_mt)
+    setmetatable(united_error, instance_mt)
 
-    return ret_map, err
+    return retmap, united_error
 end
 
 return {

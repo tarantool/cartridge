@@ -3,7 +3,6 @@
 local log = require('log')
 local fio = require('fio')
 local errno = require('errno')
-local utils = require('cartridge.utils')
 local t = require('luatest')
 local g = t.group()
 
@@ -160,7 +159,7 @@ function g.test_errors()
 
     t.assert_error_msg_contains(
         'bad argument opts.uri_list to map_call ' ..
-        '(repetitions are prohibited)',
+        '(duplicates are prohibited)',
         pool.map_call, 'math.floor', nil, {uri_list = {'x', 'x'}}
     )
 end
@@ -193,28 +192,39 @@ function g.test_negative()
         'NetboxConnectError: "localhost:9": ' .. errno.strerror(errno.ECONNREFUSED),
         'NetboxConnectError: "localhost:9": ' .. errno.strerror(errno.ENETUNREACH)
     )
+end
 
-    t.assert_equals(errmap.class_name, 'MultipleErrors')
+function g.test_errors_united()
+    local srv = g.cluster.main_server
+    srv.net_box:eval([[
+        local errors = require('errors')
+        function _G.return_error()
+            return nil, errors.new('E', 'Segmentation fault')
+        end
+    ]])
 
-    local errmap_err = errmap.err:split('\n')
-    t.assert_equals(#errmap_err, 3)
-    t.assert_not_equals(
-        utils.table_find(errmap_err,  'Invalid URI "!@#$%^&*()"'),
-        nil
+    local _, err = pool.map_call('_G.return_error', nil, {
+        uri_list = {
+            ')(*&^%$#@!',      -- invalid uri
+            'localhost:13301', -- box.listen
+            'localhost:13302', -- remote-control
+            'localhost:13309', -- discard protocol
+        },
+        timeout = 1,
+    })
+
+    log.info('%s', err)
+
+    t.assert_equals(err.class_name, 'NetboxMapCallError')
+    t.assert_equals(#err.err:split('\n'), 3)
+    t.assert_items_equals(
+        err.err:split('\n'),
+        {
+            'Invalid URI ")(*&^%$#@!"',
+            'Segmentation fault',
+            '"localhost:13309": Invalid greeting',
+        }
     )
-    t.assert_not_equals(
-        utils.table_find(errmap_err,  'Too long WAL write'),
-        nil
-    )
-
-    local _, count_strings = errmap.str:gsub('FormatURIError', '')
-    t.assert_equals(count_strings, 1)
-
-    local _, count_strings = errmap.str:gsub('Net.box call failed', '')
-    t.assert_equals(count_strings, 1)
-
-    local _, count_strings = errmap.str:gsub('NetboxConnectError', '')
-    t.assert_equals(count_strings, 1)
 end
 
 function g.test_positive()
