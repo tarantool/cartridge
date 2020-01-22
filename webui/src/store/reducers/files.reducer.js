@@ -13,6 +13,7 @@ import {
   RENAME_FILE,
   RENAME_FOLDER,
 } from '../actionTypes';
+import { isDescendant } from 'src/misc/files.utils';
 
 export type ApiFileItem = {
   path: string,
@@ -96,10 +97,6 @@ const updateFile = (
   });
   return updatedItems
 }
-
-const isDescendant = (ownPath: string, parentPath: string) => {
-  return ownPath.substring(0, parentPath.length + 1) === `${parentPath}/`;
-};
 
 const makePath = (parentPath, name) => `${parentPath}${name}`;
 
@@ -221,7 +218,6 @@ const renameFolder = (list: FileList, oldFolderPath: string, newName: string): F
         fileName: newName,
       }
     } else if (isDescendant(file.path, oldFolderPath)) {
-      const pathTail = file.path.slice(oldFolderPath.length);
       return {
         initialPath: file.path,
         ...file,

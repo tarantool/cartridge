@@ -1,8 +1,7 @@
 // @flow
-
-import * as R from 'ramda';
 import { createSelector } from 'reselect';
 
+import type { CodeEditorState } from 'src/store/reducers/codeEditor.reducer';
 import type { FileItem } from '../reducers/files.reducer.js';
 
 export type TreeFileItem = FileItem & {
@@ -54,7 +53,7 @@ const sortTree = tree => {
 
 export const selectFileTree = createSelector(
   [
-    state => state,
+    (files: Array<FileItem>) => files,
   ],
   (files: Array<FileItem>): Array<TreeFileItem> => {
     const fileMap: { [string]: TreeFileItem } = files.reduce(
@@ -80,8 +79,8 @@ export const selectFileTree = createSelector(
 
 export const selectSelectedFile = createSelector(
   [
-    state => state.files,
-    state => state.editor.selectedFile
+    (codeEditorState: CodeEditorState) => codeEditorState.files,
+    (codeEditorState: CodeEditorState) => codeEditorState.editor.selectedFile
   ],
   (files, selectedFile) => {
     if (!selectedFile)

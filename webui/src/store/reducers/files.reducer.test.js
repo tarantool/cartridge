@@ -1,4 +1,4 @@
-import reducer from "./files.reducer";
+import reducer from './files.reducer';
 import type { FileItem } from './files.reducer'
 import {
   createFile,
@@ -7,7 +7,7 @@ import {
   renameFolder,
   deleteFile,
   deleteFolder,
-} from "src/store/actions/files.actions";
+} from 'src/store/actions/files.actions';
 
 const checkFileId = (file: FileItem) => {
   if (file.type === 'file' && !file.fileId) {
