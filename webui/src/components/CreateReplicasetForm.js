@@ -109,7 +109,7 @@ CreateReplicasetFormProps) => (
         ...values,
         alias: values.alias || null,
         uri: (selectedServers && selectedServers[0].uri) || '',
-        weight: parseInt(values.weight, 10)
+        weight: parseFloat(values.weight)
       });
     }}
   >

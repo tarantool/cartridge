@@ -122,7 +122,7 @@ EditReplicasetFormProps) => {
           ...values,
           alias: values.alias || null,
           uuid: replicaset.uuid,
-          weight: parseInt(values.weight, 10)
+          weight: parseFloat(values.weight)
         });
       }}
     >
