@@ -45,8 +45,8 @@ export const validateForm = ({
   if (typeof weight === 'string') {
     const numericWeight = Number(weight);
 
-    if (isNaN(numericWeight) || numericWeight < 0 || numericWeight % 1) {
-      errors.weight = 'Field accepts number, ex: 0, 1, 2...'
+    if (isNaN(numericWeight) || numericWeight < 0) {
+      errors.weight = 'Field accepts number, ex: 0, 1, 2.43...'
     }
   }
 

@@ -36,7 +36,7 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
 
     // V. Fix weight
     cy.get('.meta-test__ConfigureServerModal input[name="weight"]')
-      .type('{selectall}{backspace}');
+      .type('{selectall}{backspace}').type('1.0');
     cy.get('.meta-test__ConfigureServerModal').contains('Field accepts number').should('not.exist');
     cy.get('.meta-test__CreateReplicaSetBtn').should('be.enabled');
 

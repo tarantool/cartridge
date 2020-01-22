@@ -27,6 +27,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Update errors rock dependency to 2.1.2: eliminate duplicate stack
   trace from `error.str` field.
 
+- Replicaset weight input accepts float values
+
 ## [2.0.1] - 2020-01-15
 
 ### Added

@@ -63,8 +63,8 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     cy.get('.meta-test__ConfigureServerModal input[name="roles"][value="vshard-storage"]').check({ force: true });
     cy.get('.meta-test__ConfigureServerModal input[name="vshard_group"][value="default"]').check({ force: true });
     cy.get('.meta-test__ConfigureServerModal input[name="weight"]')
-      .type('1')
-      .should('have.value', '1');
+      .type('1.35')
+      .should('have.value', '1.35');
 
     cy.get('cc input[name="roles"][value="myrole"]').should('not.be.checked');
     cy.get('.meta-test__ConfigureServerModal input[name="roles"][value="myrole-dependency"]').should('not.be.checked');
