@@ -282,26 +282,38 @@ local function _execute_graphql(req)
 
     local rootValue = {}
 
-    local res, err = e_graphql_execute:pcall(execute.execute, schema_obj, ast, rootValue, variables, operationName)
+    local data, err = e_graphql_execute:pcall(execute.execute,
+        schema_obj, ast, rootValue, variables, operationName
+    )
 
-    if res == nil then
-        log.error('%s', err or "Unknown error")
-
-        local ret_err = {message = err and err.err or "Unknown error"}
-        if err ~= nil then
-            ret_err.extensions = {
-                ['io.tarantool.errors.stack'] = err.stack,
-                ['io.tarantool.errors.class_name']  = err.class_name,
-            }
+    if data == nil then
+        -- TODO replace with errors.is_error_object as we upgrade errors
+        if not (type(err) == 'table'
+            and err.err ~= nil
+            and err.str ~= nil
+            and err.line ~= nil
+            and err.file ~= nil
+            and err.class_name ~= nil
+        ) then
+            err = e_graphql_execute:new('%s', err or "Unknown error")
         end
 
+        log.error('%s', err)
+
+        -- Specification: https://spec.graphql.org/June2018/#sec-Errors
         return http_finalize({
-            errors = {ret_err}
+            errors = {{
+                message = tostring(err.err),
+                extensions = {
+                    ['io.tarantool.errors.class_name']  = err.class_name,
+                    ['io.tarantool.errors.stack'] = err.stack,
+                }
+            }}
         })
     end
 
     return http_finalize({
-        data = res,
+        data = data,
     })
 
 end

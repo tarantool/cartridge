@@ -8,10 +8,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
-- Show demo uri on Code page for demo purposes
-- Add reset button to Code page for demo purposes
+- Show how-to-connect-demo instructions in WebUI.
 
-- Make use of GraphQL errors extensions with additional information 
+- Make use of GraphQL error extensions: provide additional information
   about `class_name` and `stack` of original error.
 
 ### Fixed
@@ -30,7 +29,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Update errors rock dependency to 2.1.2: eliminate duplicate stack
   trace from `error.str` field.
 
-- Replicaset weight input accepts float values
+- Replicaset weight input in WebUI accepts float values.
 
 ## [2.0.1] - 2020-01-15
 

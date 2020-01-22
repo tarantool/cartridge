@@ -136,37 +136,47 @@ function Server:stop()
     log.warn('Process %s killed', self.alias)
 end
 
---- Perform GraphQL request on cluster.
--- @tparam table params
--- @tparam string   params.query - grapqhl query
--- @tparam ?table   params.variables - variables for graphql query
--- @tparam ?boolean params.raise - flag to raise an error
---                  if response contains error section
--- @tparam[opt] ?table http_options - additional options for :http_request.
--- @return parsed response JSON.
--- @raise HTTPRequest error when request fails or first error
--- from `errors` field and `params.raise` flag not false.
-function Server:graphql(params, http_options)
+--- Perform GraphQL request.
+-- @tparam table request
+-- @tparam string request.query
+--   grapqhl query
+-- @tparam ?table request.variables
+--   variables for graphql query
+-- @tparam ?boolean request.raise
+--   raise if response contains an error
+--   (default: **true**)
+-- @tparam[opt] table http_options
+--   passed to `http_request` options.
+-- @treturn table parsed response JSON.
+-- @raise
+--   * HTTPRequest error
+--   * GraphQL error
+function Server:graphql(request, http_options)
     checks('table', {
         query = 'string',
         variables = '?table',
         raise = '?boolean'
     }, '?table')
 
-    log.debug('GraphQL request to : %d. Query: %s', self.http_port, params.query)
-    if params.variables then
-        log.debug(params.variables)
+    log.debug('GraphQL request to %s (%s)', self.alias, self.advertise_uri)
+    log.debug('Query: %s', request.query)
+    if request.variables ~= nil then
+        log.debug('Variables:\n%s', yaml.encode(request.variables))
     end
 
-    http_options = http_options or {}
+    if request.raise == nil then
+        request.raise = true
+    end
+
+    http_options = table.copy(http_options) or {}
     http_options.json = {
-        query = params.query,
-        variables = params.variables
+        query = request.query,
+        variables = request.variables,
     }
     local response = self:http_request('post', '/admin/api', http_options)
 
     local errors = response.json and response.json.errors
-    if errors and (params.raise == nil or params.raise) then
+    if errors and request.raise then
         error(errors[1].message, 2)
     end
     return response.json
