@@ -2,7 +2,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import { css, cx } from 'emotion';
-import { throttle } from 'lodash';
 import {
   Button,
   ConfirmModal,
@@ -10,14 +9,10 @@ import {
   IconCreateFolder,
   IconCreateFile,
   IconRefresh,
-  Input,
-  Modal,
   PopupBody,
-  PopupFooter,
   Text,
   Scrollbar
 } from '@tarantool.io/ui-kit';
-import { InputModal } from 'src/components/InputModal';
 import MonacoEditor from 'src/components/MonacoEditor';
 import { FileTree } from 'src/components/FileTree';
 import { selectFileTree, selectSelectedFile } from 'src/store/selectors/filesSelectors';
@@ -44,11 +39,6 @@ const options = {
   automaticLayout: true,
   selectOnLineNumbers: true
 };
-
-const renderTree = (treeNode: Object, prop: string, render: Function) => {
-  const children = (treeNode[prop] || []).map(x => renderTree(x, prop, render))
-  return render(treeNode, children)
-}
 
 const styles = {
   area: css`
@@ -357,31 +347,31 @@ class Code extends React.Component<CodeProps, CodeState> {
           </Scrollbar>
         </div>
         <div className={styles.mainContent}>
+          <div className={styles.panel}>
+            <Text>{selectedFile && selectedFile.path}</Text>
+            <ControlsPanel
+              thin
+              controls={[
+                <Button
+                  text='Reload'
+                  size='s'
+                  onClick={this.handleReloadClick}
+                  icon={IconRefresh}
+                  intent='secondary'
+                />,
+                <Button
+                  onClick={this.handleApplyClick}
+                  text='Apply'
+                  intent='primary'
+                  loading={puttingConfigFiles}
+                  size='s'
+                  disabled={false}
+                />
+              ]}
+            />
+          </div>
           {selectedFile ?
             <>
-              <div className={styles.panel}>
-                <Text>{selectedFile && selectedFile.path}</Text>
-                <ControlsPanel
-                  thin
-                  controls={[
-                    <Button
-                      text='Reload'
-                      size='s'
-                      onClick={this.handleReloadClick}
-                      icon={IconRefresh}
-                      intent='secondary'
-                    />,
-                    <Button
-                      onClick={this.handleApplyClick}
-                      text='Apply'
-                      intent='primary'
-                      loading={puttingConfigFiles}
-                      size='s'
-                      disabled={false}
-                    />
-                  ]}
-                />
-              </div>
               <MonacoEditor
                 className={styles.editor}
                 language={selectedFile && getLanguageByFileName(selectedFile.fileName) || null}
