@@ -26,6 +26,7 @@ local auth = require('cartridge.auth')
 local utils = require('cartridge.utils')
 local roles = require('cartridge.roles')
 local admin = require('cartridge.admin')
+local lsp = require('cartridge.lsp')
 local webui = require('cartridge.webui')
 local argparse = require('cartridge.argparse')
 local topology = require('cartridge.topology')
@@ -199,6 +200,7 @@ local function cfg(opts, box_opts)
         auth_enabled = '?boolean',
         vshard_groups = '?table',
         console_sock = '?string',
+        lsp_enabled = '?boolean',
     }, '?table')
 
     local args, err = argparse.parse()
@@ -419,6 +421,13 @@ local function cfg(opts, box_opts)
         local ok, err = HttpInitError:pcall(webui.init, httpd)
         if not ok then
             return nil, err
+        end
+
+        if opts.lsp_enabled then
+            local ok, err = HttpInitError:pcall(lsp.init, httpd)
+            if not ok then
+                return nil, err
+            end
         end
 
         local ok, err = CartridgeCfgError:pcall(auth.init, httpd)
