@@ -9,6 +9,63 @@ import 'monaco-editor/esm/vs/basic-languages/yaml/yaml.contribution';
 import 'monaco-editor/esm/vs/basic-languages/lua/lua.contribution';
 import 'monaco-editor/esm/vs/basic-languages/html/html.contribution';
 import './setDefaultTheme';
+import {
+  MonacoServices, MonacoLanguageClient,
+  CloseAction, ErrorAction, createConnection
+} from 'monaco-languageclient'
+import { listen } from 'vscode-ws-jsonrpc';
+import { getLanguageService, TextDocument } from 'vscode-json-languageservice';
+import { MonacoToProtocolConverter, ProtocolToMonacoConverter } from 'monaco-languageclient/lib/monaco-converter';
+
+const MODEL_URI = 'inmemory://model.json'
+const MONACO_URI = monaco.Uri.parse(MODEL_URI);
+
+function createDocument(model) {
+  return TextDocument.create(MODEL_URI, model.getModeId(), model.getVersionId(), model.getValue());
+}
+
+const m2p = new MonacoToProtocolConverter();
+const p2m = new ProtocolToMonacoConverter();
+
+
+function createWebSocket(url: string): WebSocket {
+  const socketOptions = {
+    maxReconnectionDelay: 10000,
+    minReconnectionDelay: 1000,
+    reconnectionDelayGrowFactor: 1.3,
+    connectionTimeout: 10000,
+    maxRetries: Infinity,
+    debug: false
+  };
+  return new WebSocket(url, [], socketOptions);
+}
+const { protocol, hostname, port } = window.location;
+
+const socket = createWebSocket(
+  `${protocol === 'https' ? 'wss' : 'ws' }://${hostname}:${8081}/admin/lsp`
+)
+
+
+function createLanguageClient(connection) {
+  return new MonacoLanguageClient({
+    name: 'Sample Language Client',
+    clientOptions: {
+      // use a language id as a document selector
+      documentSelector: ['lua'],
+      // disable the default error handler
+      errorHandler: {
+        error: () => ErrorAction.Continue,
+        closed: () => CloseAction.DoNotRestart
+      }
+    },
+    // create a language client connection from the JSON RPC connection on demand
+    connectionProvider: {
+      get: (errorHandler, closeHandler) => {
+        return Promise.resolve(createConnection(connection, errorHandler, closeHandler))
+      }
+    }
+  });
+}
 
 
 const DEF_CURSOR = {}
@@ -33,7 +90,7 @@ export default class MonacoEditor extends React.Component {
 
   static defaultProps = {
     initialValue: '',
-    language: 'javascript',
+    language: 'lua',
     theme: null,
     options: {},
     overrideServices: {},
@@ -151,6 +208,19 @@ export default class MonacoEditor extends React.Component {
         },
         overrideServices
       );
+
+      MonacoServices.install(this.editor)
+
+      listen({
+        webSocket: socket,
+        onConnection: connection => {
+          // create and start the language client
+          const languageClient = createLanguageClient(connection);
+          const disposable = languageClient.start();
+          console.log('language client', languageClient)
+          connection.onClose(() => disposable.dispose());
+        }
+      })
 
 
       // After initializing monaco editor

@@ -131,6 +131,7 @@ local ok, err = errors.pcall('CartridgeCfgError', cartridge.cfg, {
     advertise_uri = 'localhost:3301',
     http_port = 8081,
     bucket_count = 3000,
+    lsp_enabled = true,
     roles = {
         'cartridge.roles.vshard-storage',
         'cartridge.roles.vshard-router',
