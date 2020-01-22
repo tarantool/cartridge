@@ -10,10 +10,11 @@ import {
 } from 'src/store/actions/files.actions';
 
 const checkFileId = (file: FileItem) => {
-  if (file.type === 'file' && !file.fileId) {
-    throw new Error('no file id for file')
+  if (!file.fileId) {
+    throw new Error(`No fileId in file:\n${JSON.stringify(file, null, 2)}`);
   }
 }
+
 
 describe('Deleting files', () => {
   const state = [
@@ -50,29 +51,37 @@ describe('Deleting files', () => {
 
 });
 
-describe('Renaming files', () => {
-  it('renames file in root', () => {
-    expect(
-      reducer([
-        { path: 'file.ext' },
-        { path: 'folder/file.ext' }
-      ], renameFile({ id: 'file.ext', name: 'renamed.txt' }))
-    ).toMatchObject([
-      { path: 'renamed.txt' },
-      { path: 'folder/file.ext' }
-    ]);
-  });
 
-  it('renames file in folder', () => {
-    expect(
-      reducer([
-        { path: 'file.ext' },
-        { path: 'folder/file.ext' }
-      ], renameFile({ id: 'folder/file.ext', name: 'renamed.txt' }))
-    ).toMatchObject([
+describe('Renaming', () => {
+  describe('Renaming files', () => {
+    const initialState = [
       { path: 'file.ext' },
-      { path: 'folder/renamed.txt' }
-    ]);
+      { path: 'folder/file.ext' }
+    ];
+
+    it('renames file in root', () => {
+      expect(
+        reducer(initialState, renameFile({ id: 'file.ext', name: 'renamed.txt' }))
+      ).toMatchObject([
+        { path: 'renamed.txt' },
+        { path: 'folder/file.ext' }
+      ]);
+    });
+
+    it('renames file in folder', () => {
+      expect(
+        reducer(initialState, renameFile({ id: 'folder/file.ext', name: 'renamed.txt' }))
+      ).toMatchObject([
+        { path: 'file.ext' },
+        { path: 'folder/renamed.txt' }
+      ]);
+    });
+
+    it('can NOT rename a file to an empty name', () => {
+      expect(
+        reducer(initialState, renameFile({ id: 'dir', name: '' }))
+      ).toMatchObject(initialState);
+    });
   });
 
 
@@ -96,6 +105,12 @@ describe('Renaming files', () => {
     ]);
   });
 
+  it('can NOT rename a folder to an empty name', () => {
+    expect(
+      reducer(initialState, renameFolder({ id: 'dir', name: '' }))
+    ).toMatchObject(initialState);
+  });
+
   it('renames subfolder in folder', () => {
     expect(
       reducer(initialState, renameFolder({ id: 'dir/dir', name: 'renamedDir' }))
@@ -110,93 +125,137 @@ describe('Renaming files', () => {
 
   it('returns previous state when folder not found', () => {
     expect(
-      reducer(initialState, renameFolder({ id: 'dir/nonExistingDir', name: 'renamedDir' }))
+      reducer(initialState, renameFolder({ id: 'non/existing/dir', name: 'renamedDir' }))
     ).toEqual(initialState);
   });
 });
 
+
 describe('Creating', () => {
-  it('creates the first file in root', () => {
-    const emptyState = [];
-    const state = reducer(emptyState, createFile({ name: 'file.ext', parentPath: '' }))
-    expect(
-      state
-    ).toMatchObject([
-      {
-        path: 'file.ext',
-        fileName: 'file.ext',
-        parentPath: '',
-        type: 'file',
-        initialContent: null,
-        loading: false,
-        saved: false,
-        line: 0,
-        column: 0,
-        scrollPosition: 0
-      }
-    ]);
-    state.forEach(checkFileId)
+  describe('Creating files', () => {
+
+    it('creates the first file in root', () => {
+      const emptyState = [];
+      const state = reducer(emptyState, createFile({ name: 'file.ext', parentPath: '' }))
+      expect(
+        state
+      ).toMatchObject([
+        {
+          path: 'file.ext',
+          fileName: 'file.ext',
+          parentPath: '',
+          type: 'file',
+          initialContent: null,
+          loading: false,
+          saved: false,
+          line: 0,
+          column: 0,
+          scrollPosition: 0
+        }
+      ]);
+      state.forEach(checkFileId)
+    });
+
+    describe('create a file in a folder', () => {
+      const existingFolder = 'folder/folder';
+      const initialState = [
+        {
+          fileId: '12345',
+          path: `${existingFolder}/file.ext`
+        }
+      ];
+
+      it('can create a file', () => {
+        const newState = reducer(initialState, createFile({ parentPath: existingFolder, name: 'newFile.ext' }))
+        expect(
+          newState
+        ).toMatchObject([
+          ...initialState,
+          {
+            path: 'folder/folder/newFile.ext',
+            fileName: 'newFile.ext',
+            parentPath: existingFolder,
+            type: 'file',
+            initialContent: null,
+            loading: false,
+            saved: false,
+            line: 0,
+            column: 0,
+            scrollPosition: 0
+          }
+        ]);
+        newState.forEach(checkFileId)
+      });
+
+      it('can NOT create a file with an empty name', () => {
+        expect(
+          reducer(initialState, createFile({ name: '', parentPath: 'dir' }))
+        ).toEqual(initialState);
+      });
+
+    })
+
+    it('when creating a new file, keeps other files\' properties', () => {
+      const initialState = [
+        {
+          path: 'folder/file.ext',
+          fileName: 'file.ext',
+          type: 'file',
+          initialContent: 'Some initial content',
+          loading: false,
+          saved: false,
+          line: 10,
+          column: 20,
+          scrollPosition: 30
+        }
+      ];
+      const newState = reducer(initialState, createFile({ parentPath: '', name: 'newFile.ext' }));
+      expect(
+        newState[0]
+      ).toEqual(
+        initialState[0]
+      );
+    });
   });
 
-  it('creates a file in a folder', () => {
+  describe('Creating folders', () => {
+    const existingFolder = 'folder/folder';
     const initialState = [
-      { path: 'folder/folder/file.ext' }
+      {
+        fileId: '12345',
+        path: `${existingFolder}/file.ext`
+      }
     ];
 
-    const parentPath = 'folder/folder';
-    const state = reducer(initialState, createFile({ parentPath, name: 'newFile.ext' }))
-    expect(
-      state
-    ).toMatchObject([
-      { path: 'folder/folder/file.ext' },
-      {
-        path: 'folder/folder/newFile.ext',
-        fileName: 'newFile.ext',
-        parentPath: parentPath,
-        type: 'file',
-        initialContent: null,
-        loading: false,
-        saved: false,
-        line: 0,
-        column: 0,
-        scrollPosition: 0
-      }
-    ]);
-    state.forEach(checkFileId)
-  });
+    it('can create a folder', () => {
+      const newName = 'my-new-folder';
+      const newState = reducer(
+        initialState,
+        createFolder({ name: newName, parentPath: existingFolder })
+      );
 
-  it('when creating a new file, keeps other files\' properties', () => {
-    const presentFile = {
-      path: 'folder/file.ext',
-      fileName: 'file.ext',
-      type: 'file',
-      initialContent: 'Some initial content',
-      loading: false,
-      saved: false,
-      line: 10,
-      column: 20,
-      scrollPosition: 30
-    };
-    const initialState = [presentFile];
+      expect(
+        newState
+      ).toMatchObject([
+        ...initialState,
+        {
+          path: `${existingFolder}/${newName}`,
+          fileName: newName,
+          parentPath: existingFolder,
+          type: 'folder',
+          initialContent: null,
+          items: [],
+          saved: false
+        }
+      ]);
+      newState.forEach(checkFileId);
+    });
 
-    const parentPath = '';
-    expect(
-      reducer(initialState, createFile({ parentPath, name: 'newFile.ext' }))
-    ).toEqual([
-      presentFile,
-      {
-        fileId: '3',
-        path: 'newFile.ext',
-        fileName: 'newFile.ext',
-        parentPath: parentPath,
-        type: 'file',
-        initialContent: null,
-        loading: false,
-        saved: false,
-        line: 0,
-        column: 0,
-        scrollPosition: 0
-      }
-    ]);
+    it('can NOT create a folder with an empty name', () => {
+      expect(
+        reducer(initialState, createFolder({ name: '', parentPath: 'dir' }))
+      ).toEqual(initialState);
+    });
+
   });
 });
