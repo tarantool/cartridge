@@ -13,6 +13,8 @@ import {
   Text,
   Scrollbar
 } from '@tarantool.io/ui-kit';
+import DemoInfo from 'src/components/DemoInfo';
+import { InputModal } from 'src/components/InputModal';
 import MonacoEditor from 'src/components/MonacoEditor';
 import { FileTree } from 'src/components/FileTree';
 import { selectFileTree, selectSelectedFile } from 'src/store/selectors/filesSelectors';
@@ -26,7 +28,7 @@ import {
   fetchConfigFiles,
   renameFolder,
   renameFile,
-  setIsContentChanged,
+  setIsContentChanged
 } from 'src/store/actions/files.actions';
 import { getLanguageByFileName, getFileIdForMonaco } from 'src/misc/monacoModelStorage'
 import type { TreeFileItem } from 'src/store/selectors/filesSelectors';
@@ -147,7 +149,7 @@ class Code extends React.Component<CodeProps, CodeState> {
     loading: true,
     fileOperationType: null,
     fileOperationObject: null,
-    isReloadConfirmOpened: false,
+    isReloadConfirmOpened: false
   }
 
   async componentDidMount() {
@@ -301,133 +303,137 @@ class Code extends React.Component<CodeProps, CodeState> {
     const {
       fileOperationType,
       fileOperationObject,
-      isReloadConfirmOpened,
+      isReloadConfirmOpened
     } = this.state;
 
     const operableFile = this.getFileById(fileOperationObject);
 
     return (
-      <div className={cx(styles.area, className)}>
-        <div className={styles.sidePanel}>
-          <div className={styles.sidePanelHeading}>
-            <Text variant='h4' className={styles.sidePanelTitle}>Files</Text>
-            <div className={styles.buttonsPanel}>
-              <Button
-                className={cx(styles.fileActionBtn, 'meta-test__addFolderBtn')}
-                intent='plain'
-                size='xs'
-                icon={IconCreateFolder}
-                onClick={() => this.handleFolderCreateClick('')}
-                title='Create folder'
-              />
-              <Button
-                className={cx(styles.fileActionBtn, 'meta-test__addFileBtn')}
-                intent='plain'
-                size='xs'
-                icon={IconCreateFile}
-                onClick={() => this.handleFileCreateClick('')}
-                title='Create file'
-              />
-            </div>
-          </div>
-          <Scrollbar className={styles.treeScrollWrap}>
-            <FileTree
-              tree={fileTree}
-              selectedFile={selectedFile}
-              fileOperation={fileOperationType}
-              operationObject={fileOperationObject}
-              onOperationConfirm={this.handleFileOperationConfirm}
-              onOperationCancel={this.handleFileOperationCancel}
-              onFileOpen={id => dispatch(selectFile(id))}
-              onFileCreate={this.handleFileCreateClick}
-              onFolderCreate={this.handleFolderCreateClick}
-              onDelete={this.handleFileDeleteClick}
-              onRename={this.handleFileRenameClick}
-            />
-          </Scrollbar>
-        </div>
-        <div className={styles.mainContent}>
-          <div className={styles.panel}>
-            <Text>{selectedFile && selectedFile.path}</Text>
-            <ControlsPanel
-              thin
-              controls={[
+      <React.Fragment>
+        <DemoInfo/>
+        <div className={cx(styles.area, className)}>
+          <div className={styles.sidePanel}>
+            <div className={styles.sidePanelHeading}>
+              <Text variant='h4' className={styles.sidePanelTitle}>Files</Text>
+              <div className={styles.buttonsPanel}>
                 <Button
-                  text='Reload'
-                  size='s'
-                  onClick={this.handleReloadClick}
-                  icon={IconRefresh}
-                  intent='secondary'
-                />,
-                <Button
-                  onClick={this.handleApplyClick}
-                  text='Apply'
-                  intent='primary'
-                  loading={puttingConfigFiles}
-                  size='s'
-                  disabled={false}
+                  className={cx(styles.fileActionBtn, 'meta-test__addFolderBtn')}
+                  intent='plain'
+                  size='xs'
+                  icon={IconCreateFolder}
+                  onClick={() => this.handleFolderCreateClick('')}
+                  title='Create folder'
                 />
-              ]}
-            />
-          </div>
-          {selectedFile ?
-            <>
-              <MonacoEditor
-                className={styles.editor}
-                language={selectedFile && getLanguageByFileName(selectedFile.fileName) || null}
-                options={{
-                  ...options,
-                  readOnly: !selectedFile
-                }}
-                fileId={selectedFile ? getFileIdForMonaco(selectedFile.fileId) : null}
-                initialValue={selectedFile ? selectedFile.initialContent : 'Select or add a file'}
-                isContentChanged={selectedFile ? !selectedFile.saved : null}
-                setIsContentChanged={this.handleSetIsContentChanged}
-              />
-            </>
-            :
-            <div className={styles.splash}>
-              <IconFileWithCode className={styles.splashIcon} />
-              Please select a file
+                <Button
+                  className={cx(styles.fileActionBtn, 'meta-test__addFileBtn')}
+                  intent='plain'
+                  size='xs'
+                  icon={IconCreateFile}
+                  onClick={() => this.handleFileCreateClick('')}
+                  title='Create file'
+                />
+              </div>
             </div>
-          }
+            <Scrollbar className={styles.treeScrollWrap}>
+              <FileTree
+                tree={fileTree}
+                selectedFile={selectedFile}
+                fileOperation={fileOperationType}
+                operationObject={fileOperationObject}
+                onOperationConfirm={this.handleFileOperationConfirm}
+                onOperationCancel={this.handleFileOperationCancel}
+                onFileOpen={id => dispatch(selectFile(id))}
+                onFileCreate={this.handleFileCreateClick}
+                onFolderCreate={this.handleFolderCreateClick}
+                onDelete={this.handleFileDeleteClick}
+                onRename={this.handleFileRenameClick}
+              />
+            </Scrollbar>
+          </div>
+          <div className={styles.mainContent}>
+
+            <div className={styles.panel}>
+              <Text>{selectedFile && selectedFile.path}</Text>
+              <ControlsPanel
+                thin
+                controls={[
+                  <Button
+                    text='Reload'
+                    size='s'
+                    onClick={this.handleReloadClick}
+                    icon={IconRefresh}
+                    intent='secondary'
+                  />,
+                  <Button
+                    onClick={this.handleApplyClick}
+                    text='Apply'
+                    intent='primary'
+                    loading={puttingConfigFiles}
+                    size='s'
+                    disabled={false}
+                  />
+                ]}
+              />
+            </div>
+            {selectedFile ?
+              <>
+                <MonacoEditor
+                  className={styles.editor}
+                  language={selectedFile && getLanguageByFileName(selectedFile.fileName) || null}
+                  options={{
+                    ...options,
+                    readOnly: !selectedFile
+                  }}
+                  fileId={selectedFile ? getFileIdForMonaco(selectedFile.fileId) : null}
+                  initialValue={selectedFile ? selectedFile.initialContent : 'Select or add a file'}
+                  isContentChanged={selectedFile ? !selectedFile.saved : null}
+                  setIsContentChanged={this.handleSetIsContentChanged}
+                />
+              </>
+              :
+              <div className={styles.splash}>
+                <IconFileWithCode className={styles.splashIcon} />
+                Please select a file
+              </div>
+            }
+          </div>
+          {operableFile && typeof operableFile.type === 'string' && (
+            <ConfirmModal
+              title='Delete file'
+              className='meta-test__deleteModal'
+              visible={fileOperationType === 'delete'}
+              onCancel={this.handleFileOperationCancel}
+              onConfirm={this.handleFileDeleteConfirm}
+            >
+              <PopupBody>
+                <Text>
+                  {'Are you sure you want to delete the '}
+                  <Text className={styles.popupFileName}>{operableFile && operableFile.fileName}</Text>
+                  {` ${operableFile.type}`}
+                </Text>
+              </PopupBody>
+            </ConfirmModal>
+          )}
+          {isReloadConfirmOpened && (
+            <ConfirmModal
+              title='Reload files'
+              onCancel={() => this.setState({ isReloadConfirmOpened: false })}
+              onConfirm={() => {
+                this.props.dispatch(fetchConfigFiles());
+                this.setState({ isReloadConfirmOpened: false });
+              }}
+            >
+              <PopupBody>
+                <Text>
+                  Are you sure you want to reload all the files?
+                  <br />
+                  All unsaved changes will be reset
+                </Text>
+              </PopupBody>
+            </ConfirmModal>
+          )}
         </div>
-        {operableFile && typeof operableFile.type === 'string' && (
-          <ConfirmModal
-            title='Delete file'
-            className='meta-test__deleteModal'
-            visible={fileOperationType === 'delete'}
-            onCancel={this.handleFileOperationCancel}
-            onConfirm={this.handleFileDeleteConfirm}
-          >
-            <PopupBody>
-              <Text>
-                {'Are you sure you want to delete the '}
-                <Text className={styles.popupFileName}>{operableFile && operableFile.fileName}</Text>
-                {` ${operableFile.type}`}
-              </Text>
-            </PopupBody>
-          </ConfirmModal>
-        )}
-        {isReloadConfirmOpened && (
-          <ConfirmModal
-            title='Reload files'
-            onCancel={() => this.setState({ isReloadConfirmOpened: false })}
-            onConfirm={() => {
-              this.props.dispatch(fetchConfigFiles());
-              this.setState({ isReloadConfirmOpened: false });
-            }}
-          >
-            <PopupBody>
-              <Text>
-                Are you sure you want to reload all the files?
-                <br />
-                All unsaved changes will be reset
-              </Text>
-            </PopupBody>
-          </ConfirmModal>
-        )}
-      </div>
+      </React.Fragment>
     );
   }
 }

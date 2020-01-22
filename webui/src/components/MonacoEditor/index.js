@@ -181,7 +181,7 @@ export default class MonacoEditor extends React.Component {
         const {
           initialValue,
           isContentChanged: wasChanged,
-          setIsContentChanged,
+          setIsContentChanged
         } = this.props;
 
         const isChangedNow = currentValue !== initialValue;

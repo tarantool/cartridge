@@ -17,7 +17,7 @@ export type CodeEditorState = {
 
 const branchesReducer = combineReducers({
   files,
-  editor,
+  editor
 });
 
 const currentLevelReducer = (state: CodeEditorState, { type, payload }: FSA) => {
@@ -41,7 +41,7 @@ const currentLevelReducer = (state: CodeEditorState, { type, payload }: FSA) => 
             ...state,
             editor: {
               ...state.editor,
-              selectedFile: null,
+              selectedFile: null
             }
           }
         }

@@ -11,7 +11,7 @@ import {
   DELETE_FILE,
   DELETE_FOLDER,
   RENAME_FILE,
-  RENAME_FOLDER,
+  RENAME_FOLDER
 } from '../actionTypes';
 import { isDescendant } from 'src/misc/files.utils';
 
@@ -117,7 +117,7 @@ const makeFile = (
     parentPath: parentPath,
     path: selfPath,
     fileName: name,
-    type: isFolder ? 'folder' : 'file',
+    type: isFolder ? 'folder' : 'file'
   };
 
   if (isFolder) {
@@ -215,14 +215,14 @@ const renameFolder = (list: FileList, oldFolderPath: string, newName: string): F
         initialPath: file.path,
         ...file,
         path: newFolderPath,
-        fileName: newName,
+        fileName: newName
       }
     } else if (isDescendant(file.path, oldFolderPath)) {
       return {
         initialPath: file.path,
         ...file,
         path: replacePrefix(file.path, oldFolderPath, newFolderPath),
-        parentPath: replacePrefix(file.parentPath, oldFolderPath, newFolderPath),
+        parentPath: replacePrefix(file.parentPath, oldFolderPath, newFolderPath)
       }
     }
 
@@ -280,7 +280,7 @@ export default (state: Array<FileItem> = [], { type, payload }: FSA) => {
           state,
           payload.fileId,
           {
-            saved: !payload.isChanged,
+            saved: !payload.isChanged
           },
           payload,
         )

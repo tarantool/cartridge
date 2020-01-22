@@ -2,7 +2,7 @@
 import reducer, { type CodeEditorState } from './codeEditor.reducer';
 import {
   deleteFile,
-  deleteFolder,
+  deleteFolder
 } from 'src/store/actions/files.actions';
 
 describe('When the selected file gets deleted', () => {
@@ -17,17 +17,17 @@ describe('When the selected file gets deleted', () => {
     column: 0,
     line: 0,
     scrollPosition: 0,
-    deleted: false,
+    deleted: false
   };
 
   const state: CodeEditorState = {
     editor: {
-      selectedFile: '1',
+      selectedFile: '1'
     },
     files: [
       { ..._fileBlank, fileId: '1', path: 'folder/file.txt' },
-      { ..._fileBlank, fileId: '2', path: 'folder' },
-    ],
+      { ..._fileBlank, fileId: '2', path: 'folder' }
+    ]
   };
 
 
@@ -36,12 +36,12 @@ describe('When the selected file gets deleted', () => {
       reducer(state, deleteFile({ id: 'folder/file.txt' }))
     ).toEqual({
       editor: {
-        selectedFile: null,
+        selectedFile: null
       },
       files: [
         { ..._fileBlank, fileId: '1', path: 'folder/file.txt', deleted: true },
-        { ..._fileBlank, fileId: '2', path: 'folder' },
-      ],
+        { ..._fileBlank, fileId: '2', path: 'folder' }
+      ]
     });
   });
 
@@ -51,12 +51,12 @@ describe('When the selected file gets deleted', () => {
       reducer(state, deleteFolder({ id: 'folder' }))
     ).toEqual({
       editor: {
-        selectedFile: null,
+        selectedFile: null
       },
       files: [
         { ..._fileBlank, fileId: '1', path: 'folder/file.txt', deleted: true },
-        { ..._fileBlank, fileId: '2', path: 'folder', deleted: true },
-      ],
+        { ..._fileBlank, fileId: '2', path: 'folder', deleted: true }
+      ]
     });
   });
 

@@ -15,7 +15,7 @@ export type Scalars = {
 
 /** Cluster management */
 export type Apicluster = {
-  /** Get current server */
+  /** Some information about current server */
   self?: ?ServerShortInfo,
   /** Clusterwide DDL schema */
   schema: DdlSchema,
@@ -32,12 +32,31 @@ export type Apicluster = {
   vshard_groups: Array<VshardGroup>,
   auth_params: UserManagementApi,
   /** Virtual buckets count in cluster */
-  vshard_bucket_count: $ElementType<Scalars, "Int">
+  vshard_bucket_count: $ElementType<Scalars, "Int">,
+  /** Get cluster config sections */
+  config: Array<?ConfigSection>
 };
 
 /** Cluster management */
 export type ApiclusterUsersArgs = {
   username?: ?$ElementType<Scalars, "String">
+};
+
+/** Cluster management */
+export type ApiclusterConfigArgs = {
+  sections?: ?Array<$ElementType<Scalars, "String">>
+};
+
+/** A section of clusterwide configuration */
+export type ConfigSection = {
+  filename: $ElementType<Scalars, "String">,
+  content: $ElementType<Scalars, "String">
+};
+
+/** A section of clusterwide configuration */
+export type ConfigSectionInput = {
+  filename: $ElementType<Scalars, "String">,
+  content?: ?$ElementType<Scalars, "String">
 };
 
 /** Result of schema validation */
@@ -155,18 +174,20 @@ export type MutationApicluster = {
   failover: $ElementType<Scalars, "Boolean">,
   /** Checks that schema can be applied on cluster */
   check_schema: DdlCheckResult,
+  /** Disable listed servers by uuid */
+  disable_servers?: ?Array<?Server>,
   auth_params: UserManagementApi,
   /** Remove user */
   remove_user?: ?User,
   /** Edit an existing user */
   edit_user?: ?User,
-  /** Edit cluster topology */
-  edit_topology?: ?EditTopologyResult,
+  edit_vshard_options: VshardGroup,
   /** Create a new user */
   add_user?: ?User,
-  edit_vshard_options: VshardGroup,
-  /** Disable listed servers by uuid */
-  disable_servers?: ?Array<?Server>
+  /** Edit cluster topology */
+  edit_topology?: ?EditTopologyResult,
+  /** Applies updated config on cluster */
+  config: Array<?ConfigSection>
 };
 
 /** Cluster management */
@@ -182,6 +203,11 @@ export type MutationApiclusterFailoverArgs = {
 /** Cluster management */
 export type MutationApiclusterCheck_SchemaArgs = {
   as_yaml: $ElementType<Scalars, "String">
+};
+
+/** Cluster management */
+export type MutationApiclusterDisable_ServersArgs = {
+  uuids?: ?Array<$ElementType<Scalars, "String">>
 };
 
 /** Cluster management */
@@ -205,9 +231,13 @@ export type MutationApiclusterEdit_UserArgs = {
 };
 
 /** Cluster management */
-export type MutationApiclusterEdit_TopologyArgs = {
-  replicasets?: ?Array<?EditReplicasetInput>,
-  servers?: ?Array<?EditServerInput>
+export type MutationApiclusterEdit_Vshard_OptionsArgs = {
+  rebalancer_max_receiving?: ?$ElementType<Scalars, "Int">,
+  collect_bucket_garbage_interval?: ?$ElementType<Scalars, "Float">,
+  collect_lua_garbage?: ?$ElementType<Scalars, "Boolean">,
+  sync_timeout?: ?$ElementType<Scalars, "Float">,
+  name: $ElementType<Scalars, "String">,
+  rebalancer_disbalance_threshold?: ?$ElementType<Scalars, "Float">
 };
 
 /** Cluster management */
@@ -219,18 +249,14 @@ export type MutationApiclusterAdd_UserArgs = {
 };
 
 /** Cluster management */
-export type MutationApiclusterEdit_Vshard_OptionsArgs = {
-  rebalancer_max_receiving?: ?$ElementType<Scalars, "Int">,
-  collect_bucket_garbage_interval?: ?$ElementType<Scalars, "Float">,
-  collect_lua_garbage?: ?$ElementType<Scalars, "Boolean">,
-  sync_timeout?: ?$ElementType<Scalars, "Float">,
-  name: $ElementType<Scalars, "String">,
-  rebalancer_disbalance_threshold?: ?$ElementType<Scalars, "Float">
+export type MutationApiclusterEdit_TopologyArgs = {
+  replicasets?: ?Array<?EditReplicasetInput>,
+  servers?: ?Array<?EditServerInput>
 };
 
 /** Cluster management */
-export type MutationApiclusterDisable_ServersArgs = {
-  uuids?: ?Array<$ElementType<Scalars, "String">>
+export type MutationApiclusterConfigArgs = {
+  sections?: ?Array<?ConfigSectionInput>
 };
 
 export type Query = {
@@ -298,13 +324,18 @@ export type Server = {
   status: $ElementType<Scalars, "String">,
   uuid: $ElementType<Scalars, "String">,
   replicaset?: ?Replicaset,
-  uri: $ElementType<Scalars, "String">,
   alias?: ?$ElementType<Scalars, "String">,
-  disabled?: ?$ElementType<Scalars, "Boolean">,
+  uri: $ElementType<Scalars, "String">,
+  labels?: ?Array<?Label>,
   message: $ElementType<Scalars, "String">,
+  disabled?: ?$ElementType<Scalars, "Boolean">,
   /** Failover priority within the replica set */
   priority?: ?$ElementType<Scalars, "Int">,
-  labels?: ?Array<?Label>
+  /** Difference between remote clock and the current one. Obtained from the
+   * membership module (SWIM protocol). Positive values mean remote clock are ahead
+   * of local, and vice versa. In seconds.
+   */
+  clock_delta?: ?$ElementType<Scalars, "Float">
 };
 
 /** Server information and configuration. */
@@ -387,9 +418,12 @@ export type ServerInfoStorage = {
 
 /** A short server information */
 export type ServerShortInfo = {
+  error?: ?$ElementType<Scalars, "String">,
   uri: $ElementType<Scalars, "String">,
+  alias?: ?$ElementType<Scalars, "String">,
+  state?: ?$ElementType<Scalars, "String">,
   uuid?: ?$ElementType<Scalars, "String">,
-  alias?: ?$ElementType<Scalars, "String">
+  demo_uri?: ?$ElementType<Scalars, "String">
 };
 
 /** Slab allocator statistics. This can be used to monitor the total memory usage (in bytes) and memory fragmentation. */
@@ -498,10 +532,13 @@ export type GetClusterQuery = { __typename?: "Query" } & {
     Apicluster,
     { failover: *, can_bootstrap_vshard: *, vshard_bucket_count: * }
   > & {
-      clusterSelf: ?({ __typename?: "ServerShortInfo" } & {
-        uri: $ElementType<ServerShortInfo, "uri">,
-        uuid: $ElementType<ServerShortInfo, "uuid">
-      }),
+      clusterSelf: ?({ __typename?: "ServerShortInfo" } & $Pick<
+        ServerShortInfo,
+        { demo_uri: * }
+      > & {
+          uri: $ElementType<ServerShortInfo, "uri">,
+          uuid: $ElementType<ServerShortInfo, "uuid">
+        }),
       knownRoles: Array<
         { __typename?: "Role" } & $Pick<Role, { name: *, dependencies: * }>
       >,
@@ -957,5 +994,29 @@ export type Check_SchemaMutation = { __typename?: "Mutation" } & {
       DdlCheckResult,
       { error: * }
     >
+  })
+};
+
+export type Set_FilesMutationVariables = {
+  files?: ?Array<ConfigSectionInput>
+};
+
+export type Set_FilesMutation = { __typename?: "Mutation" } & {
+  cluster: ?({ __typename?: "MutationApicluster" } & {
+    config: Array<?({ __typename?: "ConfigSection" } & $Pick<
+      ConfigSection,
+      { filename: *, content: * }
+    >)>
+  })
+};
+
+export type ConfigFilesQueryVariables = {};
+
+export type ConfigFilesQuery = { __typename?: "Query" } & {
+  cluster: ?({ __typename?: "Apicluster" } & {
+    config: Array<?({ __typename?: "ConfigSection" } & $Pick<
+      ConfigSection,
+      { content: * }
+    > & { path: $ElementType<ConfigSection, "filename"> })>
   })
 };

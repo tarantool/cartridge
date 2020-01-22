@@ -7,7 +7,7 @@ import {
   RENAME_FILE,
   RENAME_FOLDER,
   DELETE_FILE,
-  DELETE_FOLDER,
+  DELETE_FOLDER
 } from '../actionTypes'
 
 export const fetchConfigFiles = () => ({ type: FETCH_CONFIG_FILES });
@@ -21,27 +21,27 @@ export const applyFiles = () => ({ type: PUT_CONFIG_FILES_CONTENT });
 
 export const createFile = ({ parentPath, name }) => ({
   type: CREATE_FILE,
-  payload: { parentPath, name },
+  payload: { parentPath, name }
 });
 export const createFolder = ({ parentPath, name }) => ({
   type: CREATE_FOLDER,
-  payload: { parentPath, name },
+  payload: { parentPath, name }
 })
 
 export const renameFile = ({ id, name }) => ({
   type: RENAME_FILE,
-  payload: { id, name },
+  payload: { id, name }
 })
 export const renameFolder = ({ id, name }) => ({
   type: RENAME_FOLDER,
-  payload: { id, name },
+  payload: { id, name }
 })
 
 export const deleteFile = ({ id }) => ({
   type: DELETE_FILE,
-  payload: { id },
+  payload: { id }
 })
 export const deleteFolder = ({ id }) => ({
   type: DELETE_FOLDER,
-  payload: { id },
+  payload: { id }
 })

@@ -30,6 +30,7 @@ export const getClusterQuery = gql`
       clusterSelf: self {
         uri: uri
         uuid: uuid
+        demo_uri
       }
       failover
       knownRoles: known_roles {

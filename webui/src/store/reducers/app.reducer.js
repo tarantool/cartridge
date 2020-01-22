@@ -40,7 +40,8 @@ export type AppState = {
     configured: ?boolean,
     knownRoles: ?Role[],
     can_bootstrap_vshard: ?boolean,
-    vshard_bucket_count: ?number
+    vshard_bucket_count: ?number,
+    demo_uri: ?string,
   },
   failover: null,
   messages: AppMessage[],
