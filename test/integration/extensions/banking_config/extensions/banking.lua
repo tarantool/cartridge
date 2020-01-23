@@ -17,8 +17,8 @@ end
 
 local function transfer_money(account_from, account_to, amount)
     box.begin()
-        box.space.account:update({account_to}, {{'+', 4, amount}})
-        box.space.account:update({account_from}, {{'-', 4, amount}})
+    box.space.account:update({account_to}, {{'+', 'balance', amount}})
+    box.space.account:update({account_from}, {{'-', 'balance', amount}})
     box.commit()
     return true
 end

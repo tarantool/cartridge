@@ -1,9 +1,4 @@
 ---
-service: banking
-
-provider:
-  name: cartridge
-
 functions:
 
   customer_add:
