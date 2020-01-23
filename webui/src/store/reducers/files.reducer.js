@@ -145,7 +145,7 @@ const validatePathName = (list: Array<FileItem>, path: string) => {
   return true;
 };
 
-const addFileOrFolder = (list: Array<FileItem>, { parentPath, name }: { parentPath: string, name: string }, type) => {
+const addFileOrFolder = (list: Array<FileItem>, parentPath: string, name: string, type) => {
   const newPath = makePath(`${parentPath}${parentPath ? '/' : ''}`, name);
 
   if (!validatePathName(list, newPath)) {
@@ -289,8 +289,8 @@ export default (state: Array<FileItem> = [], { type, payload }: FSA) => {
 
     case CREATE_FILE:
     case CREATE_FOLDER:
-      if (payload) {
-        return addFileOrFolder(state, payload, type);
+      if (payload && payload.name) {
+        return addFileOrFolder(state, payload.parentPath, payload.name, type);
       }
       break;
 
