@@ -106,3 +106,32 @@ function g.test_fail_validate()
         })
     end)
 end
+
+function g.test_error_extensions()
+    local request = {
+        query = [[mutation($uuids: [String!]) {
+            cluster {
+                disable_servers(uuids: $uuids) {}
+            }
+        }]],
+        variables = {uuids = {cluster.main_server.instance_uuid}},
+        raise = box.NULL,
+    }
+
+    t.assert_error_msg_equals(
+        'Current instance "localhost:13301" can not be disabled',
+        helpers.Server.graphql, cluster.main_server, request
+    )
+
+    request.raise = false
+    local response = cluster.main_server:graphql(request)
+    local extensions = response.errors[1].extensions
+    t.assert_str_matches(
+        extensions['io.tarantool.errors.stack'],
+        '^stack traceback:\n.+'
+    )
+    t.assert_equals(
+        extensions['io.tarantool.errors.class_name'],
+        'Invalid cluster topology config'
+    )
+end

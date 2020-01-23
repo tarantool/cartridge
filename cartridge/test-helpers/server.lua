@@ -136,21 +136,47 @@ function Server:stop()
     log.warn('Process %s killed', self.alias)
 end
 
---- Perform GraphQL request on cluster.
--- @param request object to be serialized into JSON body.
--- @param[opt] options additional options for :http_request.
--- @return parsed response JSON.
--- @raise HTTPRequest error when request fails or first error from `errors` field if any.
-function Server:graphql(request, options)
-    log.debug('GraphQL request to :' .. self.http_port .. '. Query: ' .. request.query)
-    if request.variables then
-        log.debug(request.variables)
+--- Perform GraphQL request.
+-- @tparam table request
+-- @tparam string request.query
+--   grapqhl query
+-- @tparam ?table request.variables
+--   variables for graphql query
+-- @tparam ?boolean request.raise
+--   raise if response contains an error
+--   (default: **true**)
+-- @tparam[opt] table http_options
+--   passed to `http_request` options.
+-- @treturn table parsed response JSON.
+-- @raise
+--   * HTTPRequest error
+--   * GraphQL error
+function Server:graphql(request, http_options)
+    checks('table', {
+        query = 'string',
+        variables = '?table',
+        raise = '?boolean'
+    }, '?table')
+
+    log.debug('GraphQL request to %s (%s)', self.alias, self.advertise_uri)
+    log.debug('Query: %s', request.query)
+    if request.variables ~= nil then
+        log.debug('Variables:\n%s', yaml.encode(request.variables))
     end
-    options = options or {}
-    options.json = request
-    local response = self:http_request('post', '/admin/api', options)
+
+    if request.raise == nil then
+        request.raise = true
+    end
+
+    http_options = table.copy(http_options) or {}
+    http_options.json = {
+        query = request.query,
+        variables = request.variables,
+    }
+    local response = self:http_request('post', '/admin/api', http_options)
+
     local errors = response.json and response.json.errors
-    if errors then
+    if errors and request.raise then
         error(errors[1].message, 2)
     end
     return response.json
