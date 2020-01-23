@@ -31,7 +31,7 @@ g.after_all = function()
     fio.rmtree(cluster.datadir)
 end
 
-g.test_upload_good = function()
+g.test_upload = function()
     local server = cluster.main_server
 
     server.net_box:eval([[
@@ -40,61 +40,89 @@ g.test_upload_good = function()
           return args[1].value
         end
 
-        package.loaded['test']['test2'] = function(root, args)
-          local result = ''
-          for _, tuple in ipairs(getmetatable(args).__index) do
-            result = result .. tuple.value
-          end
-          return result
-        end
-
         local graphql = require('cartridge.graphql')
         local types = require('cartridge.graphql.types')
         graphql.add_callback({
             name = 'test',
             doc = '',
-            args = {arg=types.string.nonNull},
-            kind = types.string.nonNull,
-            callback = 'test.test',
-        })
-        graphql.add_callback({
-            name = 'test2',
-            doc = '',
-            args = {arg=types.string.nonNull,
-                    arg2=types.string.nonNull,
+            args = {
+                arg=types.string.nonNull,
+                arg2=types.string,
             },
             kind = types.string.nonNull,
-            callback = 'test.test2',
-        })
-    ]])
-
-    t.assert_equals(server:graphql({query = '{ test(arg:"TEST") }'}).data.test, 'TEST')
-    t.assert_equals(server:graphql({query = '{ test2(arg:"TEST", arg2:"22") }'}).data.test2, 'TEST22')
-end
-
-g.test_resolver_error = function()
-    local server = cluster.main_server
-
-    server.net_box:eval([[
-        package.loaded['test'] = {}
-        package.loaded['test']['test'] = function(root, args)
-          return nil, 'Internal error from my test function'
-        end
-
-        local graphql = require('cartridge.graphql')
-        local types = require('cartridge.graphql.types')
-        graphql.add_callback({
-            name = 'test',
-            doc = '',
-            args = {arg=types.string.nonNull},
-            kind = types.string.nonNull,
             callback = 'test.test',
         })
     ]])
+    t.assert_equals(
+        server:graphql(
+            {query = '{ test(arg: "TEST") }'}
+        ).data.test, 'TEST'
+    )
 
-    t.assert_error_msg_contains('Internal error from my test function', function()
-        server:graphql({query = '{ test(arg:"TEST") }'})
-    end)
+    server.net_box:eval([[
+        package.loaded['test']['test'] = function(root, args)
+            local result = ''
+            for _, tuple in ipairs(getmetatable(args).__index) do
+                result = result .. tuple.value
+            end
+            return result
+        end
+    ]])
+    t.assert_equals(
+        server:graphql(
+            {query = '{ test(arg: "TEST", arg2: "22") }'}
+        ).data.test, 'TEST22'
+    )
+
+    server.net_box:eval([[
+        package.loaded['test']['test'] = function(root, args)
+            error('Error occured', 0)
+        end
+    ]])
+    t.assert_error_msg_equals('Error occured',
+        helpers.Server.graphql, server,
+        {query = '{ test(arg: "TEST") }'}
+    )
+
+    server.net_box:eval([[
+        package.loaded['test']['test'] = function(root, args)
+            error({'error occured'})
+        end
+    ]])
+    t.assert_error_msg_matches('table: 0[xX][0-9a-fA-F]+',
+        helpers.Server.graphql, server,
+        {query = '{ test(arg: "TEST") }'}
+    )
+
+    server.net_box:eval([[
+        package.loaded['test']['test'] = function(root, args)
+            return nil, 'Internal error from my test function'
+        end
+    ]])
+    t.assert_error_msg_contains('Internal error from my test function',
+        helpers.Server.graphql, server,
+        {query = '{ test(arg: "TEST") }'}
+    )
+
+    server.net_box:eval([[
+        package.loaded['test']['test'] = function(root, args)
+            return nil, require('errors').new('CustomError', 'Error occured')
+        end
+    ]])
+    t.assert_error_msg_equals('Error occured',
+        helpers.Server.graphql, server,
+        {query = '{ test(arg: "TEST") }'}
+    )
+
+    server.net_box:eval([[
+        package.loaded['test']['test'] = function(root, args)
+            return nil, {data = "Error"}
+        end
+    ]])
+    t.assert_error_msg_matches('table: 0[xX][0-9a-fA-F]+',
+        helpers.Server.graphql, server,
+        {query = '{ test(arg: "TEST") }'}
+    )
 end
 
 function g.test_fail_validate()
