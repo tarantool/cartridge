@@ -55,8 +55,8 @@ g.test_upload = function()
     ]])
     t.assert_equals(
         server:graphql(
-            {query = '{ test(arg: "TEST") }'}
-        ).data.test, 'TEST'
+            {query = '{ test(arg: "A") }'}
+        ).data.test, 'A'
     )
 
     server.net_box:eval([[
@@ -68,58 +68,74 @@ g.test_upload = function()
             return result
         end
     ]])
+    -- Order matters
     t.assert_equals(
         server:graphql(
-            {query = '{ test(arg: "TEST", arg2: "22") }'}
-        ).data.test, 'TEST22'
+            {query = '{ test(arg: "B", arg2: "22") }'}
+        ).data.test, 'B22'
+    )
+    t.assert_equals(
+        server:graphql(
+            {query = '{ test(arg2: "22", arg: "B") }'}
+        ).data.test, '22B'
     )
 
     server.net_box:eval([[
         package.loaded['test']['test'] = function(root, args)
-            error('Error occured', 0)
+            error('Error C', 0)
         end
     ]])
-    t.assert_error_msg_equals('Error occured',
+    t.assert_error_msg_equals('Error C',
         helpers.Server.graphql, server,
         {query = '{ test(arg: "TEST") }'}
     )
 
     server.net_box:eval([[
         package.loaded['test']['test'] = function(root, args)
-            error({'error occured'})
+            error({Error = 'D'})
         end
     ]])
-    t.assert_error_msg_matches('table: 0[xX][0-9a-fA-F]+',
+    t.assert_error_msg_matches('{"Error":"D"}',
         helpers.Server.graphql, server,
         {query = '{ test(arg: "TEST") }'}
     )
 
     server.net_box:eval([[
         package.loaded['test']['test'] = function(root, args)
-            return nil, 'Internal error from my test function'
+            return nil, 'Error E'
         end
     ]])
-    t.assert_error_msg_contains('Internal error from my test function',
+    t.assert_error_msg_contains('Error E',
         helpers.Server.graphql, server,
         {query = '{ test(arg: "TEST") }'}
     )
 
     server.net_box:eval([[
         package.loaded['test']['test'] = function(root, args)
-            return nil, require('errors').new('CustomError', 'Error occured')
+            return nil, require('errors').new('CustomError', 'Error F')
         end
     ]])
-    t.assert_error_msg_equals('Error occured',
+    t.assert_error_msg_equals('Error F',
         helpers.Server.graphql, server,
         {query = '{ test(arg: "TEST") }'}
     )
 
     server.net_box:eval([[
         package.loaded['test']['test'] = function(root, args)
-            return nil, {data = "Error"}
+            return nil, {Error = "G"}
         end
     ]])
-    t.assert_error_msg_matches('table: 0[xX][0-9a-fA-F]+',
+    t.assert_error_msg_matches('{"Error":"G"}',
+        helpers.Server.graphql, server,
+        {query = '{ test(arg: "TEST") }'}
+    )
+
+    server.net_box:eval([[
+        package.loaded['test']['test'] = function(root, args)
+            return nil, require('errors').new('CustomError', {Error = "H"})
+        end
+    ]])
+    t.assert_error_msg_matches('{"Error":"H"}',
         helpers.Server.graphql, server,
         {query = '{ test(arg: "TEST") }'}
     )
