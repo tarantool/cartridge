@@ -13,6 +13,8 @@ local api_vshard = require('cartridge.webui.api-vshard')
 local api_topology = require('cartridge.webui.api-topology')
 local api_ddl = require('cartridge.webui.api-ddl')
 local gql_types = require('cartridge.graphql.types')
+local api_warnings = require('cartridge.webui.api-warnings')
+
 local module_name = 'cartridge.webui'
 
 vars:new('blacklist', {})
@@ -46,6 +48,9 @@ local function init(httpd)
 
     -- Basic topology operations
     api_topology.init(graphql)
+
+    -- Replication warnings
+    api_warnings.init(graphql)
 
     graphql.add_callback({
         prefix = 'cluster',

@@ -142,6 +142,18 @@ local function check_active_master(expected_uuid)
     t.assert_equals(response, expected_uuid)
 end
 
+local function list_warnings(server)
+    return server:graphql({query = [[{
+        cluster {
+            warnings {
+                message
+                replicaset_uuid
+                instance_uuid
+            }
+        }
+    }]]}).data.cluster.warnings
+end
+
 g.test_api_master = function()
     set_master(replicaset_uuid, storage_2_uuid)
     t.assert_equals(get_master(replicaset_uuid), {storage_2_uuid, storage_2_uuid})
@@ -258,6 +270,12 @@ g.test_all_rw_failover = function()
 end
 
 g.test_sigstop = function()
+    -- Here we use retrying due to this tarantool bug
+    -- See: https://github.com/tarantool/tarantool/issues/4668
+    t.helpers.retrying({}, function()
+        t.assert_equals(list_warnings(cluster.main_server), {})
+    end)
+
     set_failover(true)
 
     -- Switch to server1
@@ -286,6 +304,16 @@ g.test_sigstop = function()
         {uri = cluster:server('router-1').advertise_uri, statistics={}}
     })
 
+    t.assert_items_equals(list_warnings(cluster.main_server), {{
+            replicaset_uuid = replicaset_uuid,
+            instance_uuid = storage_2_uuid,
+            message = "Replication from localhost:13302 to localhost:13303 isn't running",
+        }, {
+            replicaset_uuid = replicaset_uuid,
+            instance_uuid = storage_3_uuid,
+            message = "Replication from localhost:13302 to localhost:13304 isn't running",
+    }})
+
     -- Send SIGCONT to server1
     cluster:server('storage-1').process:kill('CONT') -- SIGCONT
     cluster:wait_until_healthy()
@@ -307,6 +335,10 @@ g.test_sigstop = function()
         {uri = cluster:server('storage-3').advertise_uri, statistics = {}},
         {uri = cluster:server('router-1').advertise_uri, statistics={}}
     })
+
+    t.helpers.retrying({}, function()
+        t.assert_equals(list_warnings(cluster.main_server), {})
+    end)
 end
 
 g.test_rollback = function()

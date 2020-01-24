@@ -103,6 +103,18 @@ local function wish_state(srv, desired_state)
     end)
 end
 
+local function list_warnings(server)
+    return server:graphql({query = [[{
+        cluster {
+            warnings {
+                message
+                replicaset_uuid
+                instance_uuid
+            }
+        }
+    }]]}).data.cluster.warnings
+end
+
 function g.test_failover()
     local function _ro_map()
         local resp = g.cluster:server('slave'):graphql({query = [[{
@@ -128,6 +140,10 @@ function g.test_failover()
         slave = true,
     })
 
+    t.helpers.retrying({}, function()
+        t.assert_equals(list_warnings(g.master), {})
+    end)
+
     --------------------------------------------------------------------
     g.master:stop()
 
@@ -138,6 +154,15 @@ function g.test_failover()
         master = box.NULL,
         slave = false,
     })
+    t.helpers.retrying({}, function()
+        local warnings = list_warnings(g.slave)
+        t.assert_equals(#warnings, 1)
+        t.assert_equals(warnings[1].replicaset_uuid, helpers.uuid('a'))
+        t.assert_str_matches(
+            warnings[1].message,
+            'Replication from localhost:13301 to localhost:13302:.*%(%"disconnected%"%)'
+        )
+    end)
 
     --------------------------------------------------------------------
     log.warn('Restarting master')
@@ -151,6 +176,10 @@ function g.test_failover()
         master = false,
         slave = true,
     })
+
+    t.helpers.retrying({}, function()
+        t.assert_equals(list_warnings(g.master), {})
+    end)
 end
 
 function g.test_confapplier_race()
@@ -365,6 +394,14 @@ function g.test_orphan_connect_timeout()
     )
     wish_state(g.master, 'OperationError')
 
+    t.helpers.retrying({}, function()
+        t.assert_equals(list_warnings(g.master), {{
+            replicaset_uuid = helpers.uuid('a'),
+            instance_uuid = helpers.uuid('a', 'a', 1),
+            message = "Replication from localhost:13302 to localhost:13301 isn't running"
+        }})
+    end)
+
     log.info('--------------------------------------------------------')
     g.slave:start()
     wish_state(g.slave, 'RolesConfigured')
@@ -381,6 +418,9 @@ function g.test_orphan_connect_timeout()
     t.assert_equals(rpc_get_candidate(g.slave), g.slave.advertise_uri)
     t.assert_equals(get_leader(g.slave), g.slave.instance_uuid)
     t.assert_equals(is_master(g.slave), true)
+    t.helpers.retrying({}, function()
+        t.assert_equals(list_warnings(g.slave), {})
+    end)
 end
 
 function g.test_orphan_sync_timeout()
@@ -405,6 +445,17 @@ function g.test_orphan_sync_timeout()
             upstream_message = box.NULL,
         }
     )
+
+    t.helpers.retrying({}, function()
+        local warnings = list_warnings(g.master)
+        t.assert_equals(#warnings, 1)
+        t.assert_equals(warnings[1].replicaset_uuid, helpers.uuid('a'))
+        t.assert_equals(warnings[1].instance_uuid, helpers.uuid('a', 'a', 1))
+        t.assert_str_matches(
+            warnings[1].message,
+            'Replication from localhost:13302 to localhost:13301: high lag.*%(.*> 1e%-308.*%)'
+        )
+    end)
 end
 
 function g.test_quorum_one()
@@ -480,5 +531,8 @@ function g.test_restart_both()
     )
 
     g.cluster:wait_until_healthy()
+    t.helpers.retrying({}, function()
+        t.assert_equals(list_warnings(g.master), {})
+    end)
 end
 

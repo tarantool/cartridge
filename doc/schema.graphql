@@ -1,5 +1,5 @@
 # source: http://localhost:8081/admin/api
-# timestamp: Sun Feb 16 2020 22:45:22 GMT+0300 (Moscow Standard Time)
+# timestamp: Mon Feb 17 2020 15:39:05 GMT+0300 (GMT+03:00)
 
 """Cluster management"""
 type Apicluster {
@@ -18,14 +18,17 @@ type Apicluster {
   """List authorized users"""
   users(username: String): [User!]
 
+  """Get list of known vshard storage groups."""
+  vshard_known_groups: [String!]!
+
   """Get list of all registered roles and their dependencies."""
   known_roles: [Role!]!
 
+  """Get list of replication warngings"""
+  warnings: [Warning]
+
   """List of pages to be hidden in WebUI"""
   webui_blacklist: [String!]
-
-  """Get list of known vshard storage groups."""
-  vshard_known_groups: [String!]!
   vshard_groups: [VshardGroup!]!
 
   """Virtual buckets count in cluster"""
@@ -482,4 +485,11 @@ type VshardGroup {
   Timeout to wait for synchronization of the old master with replicas before demotion
   """
   sync_timeout: Float!
+}
+
+"""Warning occured on cluser"""
+type Warning {
+  message: String
+  instance_uuid: String
+  replicaset_uuid: String
 }
