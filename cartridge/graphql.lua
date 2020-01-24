@@ -295,7 +295,11 @@ local function _execute_graphql(req)
             and err.file ~= nil
             and err.class_name ~= nil
         ) then
-            err = e_graphql_execute:new('%s', err or "Unknown error")
+            err = e_graphql_execute:new(err or "Unknown error")
+        end
+
+        if type(err.err) ~= 'string' then
+            err.err = json.encode(err.err)
         end
 
         log.error('%s', err)
@@ -303,7 +307,7 @@ local function _execute_graphql(req)
         -- Specification: https://spec.graphql.org/June2018/#sec-Errors
         return http_finalize({
             errors = {{
-                message = tostring(err.err),
+                message = err.err,
                 extensions = {
                     ['io.tarantool.errors.class_name']  = err.class_name,
                     ['io.tarantool.errors.stack'] = err.stack,
