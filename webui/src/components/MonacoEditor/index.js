@@ -14,18 +14,6 @@ import {
   CloseAction, ErrorAction, createConnection
 } from 'monaco-languageclient'
 import { listen } from 'vscode-ws-jsonrpc';
-import { getLanguageService, TextDocument } from 'vscode-json-languageservice';
-import { MonacoToProtocolConverter, ProtocolToMonacoConverter } from 'monaco-languageclient/lib/monaco-converter';
-
-const MODEL_URI = 'inmemory://model.json'
-const MONACO_URI = monaco.Uri.parse(MODEL_URI);
-
-function createDocument(model) {
-  return TextDocument.create(MODEL_URI, model.getModeId(), model.getVersionId(), model.getValue());
-}
-
-const m2p = new MonacoToProtocolConverter();
-const p2m = new ProtocolToMonacoConverter();
 
 
 function createWebSocket(url: string): WebSocket {
@@ -66,7 +54,17 @@ function createLanguageClient(connection) {
     }
   });
 }
-
+MonacoServices.install(monaco.editor)
+listen({
+  webSocket: socket,
+  onConnection: connection => {
+    // create and start the language client
+    const languageClient = createLanguageClient(connection);
+    const disposable = languageClient.start();
+    console.log('language client', languageClient)
+    connection.onClose(() => disposable.dispose());
+  }
+})
 
 const DEF_CURSOR = {}
 
@@ -207,20 +205,7 @@ export default class MonacoEditor extends React.Component {
           ...(theme ? { theme } : {})
         },
         overrideServices
-      );
-
-      MonacoServices.install(this.editor)
-
-      listen({
-        webSocket: socket,
-        onConnection: connection => {
-          // create and start the language client
-          const languageClient = createLanguageClient(connection);
-          const disposable = languageClient.start();
-          console.log('language client', languageClient)
-          connection.onClose(() => disposable.dispose());
-        }
-      })
+      )
 
 
       // After initializing monaco editor
