@@ -20,8 +20,10 @@ local checks = require('checks')
 local errors = require('errors')
 local membership = require('membership')
 local membership_network = require('membership.network')
-local http = require('http.server')
+local http_server = require('http.server')
+local http_router = require('http.router')
 
+local http_adapter = require('cartridge.http-adapter')
 local rpc = require('cartridge.rpc')
 local auth = require('cartridge.auth')
 local utils = require('cartridge.utils')
@@ -449,10 +451,10 @@ local function cfg(opts, box_opts)
         opts.http_enabled = true
     end
     if opts.http_enabled then
-        local httpd = http.new(
-            '0.0.0.0', opts.http_port,
-            { log_requests = false }
-        )
+        local server = http_server.new('0.0.0.0', opts.http_port, { log_requests = false })
+        local router = http_router.new()
+        server:set_router(router)
+        local httpd = http_adapter.new(server, router)
 
         local ok, err = HttpInitError:pcall(httpd.start, httpd)
         if not ok then
@@ -471,6 +473,7 @@ local function cfg(opts, box_opts)
 
         local srv_name = httpd.tcp_server:name()
         log.info('Listening HTTP on %s:%s', srv_name.host, srv_name.port)
+        service_registry.set('http-server', server)
         service_registry.set('httpd', httpd)
     end
 

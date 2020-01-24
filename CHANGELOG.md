@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+- Add http-adapter, which provides http-v1 api to interact with http-v2
+
 - Show how-to-connect-demo instructions on every page in WebUI.
 
 - Make use of GraphQL error extensions: provide additional information
@@ -30,6 +32,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - File tree expanded by default.
 
 ### Changed
+
+- Update HTTP server to v2.0
 
 - Network error shows with fixed splash panel instead of notification.
 

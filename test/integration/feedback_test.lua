@@ -4,7 +4,8 @@ local g = t.group()
 
 local log = require('log')
 local json = require('json')
-local http = require('http.server')
+local http_server = require('http.server')
+local http_router = require('http.router')
 local fiber = require('fiber')
 local test_helper = require('test.helper')
 local helpers = require('cartridge.test-helpers')
@@ -17,14 +18,16 @@ end
 g.before_all = function()
     g.tempdir = fio.tempdir()
 
-    g.httpd = http.new('127.0.0.1', nil, {log_requests = false})
-    g.httpd:start()
+    g.httpd = http_server.new('127.0.0.1', nil, {log_requests = false})
+    local router = http_router.new({})
+    g.httpd:set_router(router)
 
-    g.httpd:route({
+    router:route({
         path = '/',
         method = 'POST'
     }, handle_feedback)
 
+    g.httpd:start()
 
     local feedback_host = string.format('http://127.0.0.1:%d',
         g.httpd.tcp_server:name().port
