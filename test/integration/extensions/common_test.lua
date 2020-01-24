@@ -35,6 +35,7 @@ local function get_state()
     ]])
 end
 
+local error_prefix = "Invalid extensions config: "
 local function set_sections(sections)
     return g.cluster.main_server:graphql({
         query = [[
@@ -117,10 +118,8 @@ function g.test_require_errors()
 end
 
 function g.test_functions_errors()
-    local prefix = "Invalid extensions config: "
-
     t.assert_error_msg_equals(
-        prefix .. 'bad field functions (table expected, got cdata)',
+        error_prefix .. 'bad field functions (table expected, got cdata)',
         set_sections, {{
             filename = 'extensions/config.yml',
             content = yaml.encode({
@@ -130,7 +129,7 @@ function g.test_functions_errors()
     )
 
     t.assert_error_msg_equals(
-        prefix .. 'bad field functions (table keys must be strings, got number)',
+        error_prefix .. 'bad field functions (table keys must be strings, got number)',
         set_sections, {{
             filename = 'extensions/config.yml',
             content = yaml.encode({
@@ -140,7 +139,7 @@ function g.test_functions_errors()
     )
 
     t.assert_error_msg_equals(
-        prefix .. 'bad field functions["x"] (table expected, got cdata)',
+        error_prefix .. 'bad field functions["x"] (table expected, got cdata)',
         set_sections, {{
             filename = 'extensions/config.yml',
             content = yaml.encode({
@@ -150,7 +149,7 @@ function g.test_functions_errors()
     )
 
     t.assert_error_msg_equals(
-        prefix .. 'bad field functions["x"].module (string expected, got cdata)',
+        error_prefix .. 'bad field functions["x"].module (string expected, got cdata)',
         set_sections, {{
             filename = 'extensions/config.yml',
             content = yaml.encode({
@@ -162,7 +161,7 @@ function g.test_functions_errors()
     )
 
     t.assert_error_msg_equals(
-        prefix .. 'bad field functions["x"].handler (string expected, got number)',
+        error_prefix .. 'bad field functions["x"].handler (string expected, got number)',
         set_sections, {{
             filename = 'extensions/config.yml',
             content = yaml.encode({
@@ -175,7 +174,7 @@ function g.test_functions_errors()
     )
 
     t.assert_error_msg_equals(
-        prefix .. 'bad field functions["x"].events (table expected, got boolean)',
+        error_prefix .. 'bad field functions["x"].events (table expected, got boolean)',
         set_sections, {{
             filename = 'extensions/config.yml',
             content = yaml.encode({
@@ -189,13 +188,27 @@ function g.test_functions_errors()
     )
 
     t.assert_error_msg_equals(
-        prefix .. "module 'math' not found in extensions to handle function 'x'",
+        error_prefix .. "no module 'unknown' to handle function 'x'",
         set_sections, {{
             filename = 'extensions/config.yml',
             content = yaml.encode({
                 functions = {x = {
-                    module = 'math',
-                    handler = 'atan2',
+                    module = 'unknown',
+                    handler = 'f',
+                    events = {},
+                }},
+            }),
+        }}
+    )
+
+    t.assert_error_msg_equals(
+        error_prefix .. "no function 'cat' in module 'box' to handle 'x'",
+        set_sections, {{
+            filename = 'extensions/config.yml',
+            content = yaml.encode({
+                functions = {x = {
+                    module = 'box',
+                    handler = 'cat',
                     events = {},
                 }},
             }),
@@ -204,8 +217,6 @@ function g.test_functions_errors()
 end
 
 function g.test_export_errors()
-    local prefix = "Invalid extensions config: "
-
     local extensions_cfg = yaml.encode({
         functions = {F = {
             module = 'extensions.main',
@@ -217,8 +228,8 @@ function g.test_export_errors()
     })
 
     t.assert_error_msg_equals(
-        prefix .. "module 'extensions.main' not found" ..
-        " in extensions to handle function 'F'",
+        error_prefix .. "no module 'extensions.main'" ..
+        " to handle function 'F'",
         set_sections, {{
             filename = 'extensions/config.yml',
             content = extensions_cfg,
@@ -226,7 +237,7 @@ function g.test_export_errors()
     )
 
     t.assert_error_msg_equals(
-        prefix .. "no function 'operate' in module 'extensions.main'" ..
+        error_prefix .. "no function 'operate' in module 'extensions.main'" ..
         " to handle 'F'",
         set_sections, {{
             filename = 'extensions/config.yml',
@@ -238,7 +249,7 @@ function g.test_export_errors()
     )
 
     t.assert_error_msg_equals(
-        prefix .. "no function 'operate' in module 'extensions.main'" ..
+        error_prefix .. "no function 'operate' in module 'extensions.main'" ..
         " to handle 'F'",
         set_sections, {{
             filename = 'extensions/config.yml',
@@ -250,7 +261,7 @@ function g.test_export_errors()
     )
 
     t.assert_error_msg_equals(
-        prefix .. "collision of binary event 'operate'" ..
+        error_prefix .. "collision of binary event 'operate'" ..
         " to handle function 'F'",
         set_sections, {{
             filename = 'extensions/main.lua',
@@ -271,7 +282,7 @@ function g.test_export_errors()
     )
 
     t.assert_error_msg_equals(
-        prefix .. "can't override global 'box'" ..
+        error_prefix .. "can't override global 'box'" ..
         " to handle function 'F'",
         set_sections, {{
             filename = 'extensions/main.lua',
@@ -295,13 +306,22 @@ end
 
 function g.test_runtime()
     local extensions_cfg = yaml.encode({
-        functions = {F = {
-            module = 'extensions.main',
-            handler = 'operate',
-            events = {{
-                binary = {path = 'operate'}
-            }}
-        }}
+        functions = {
+            operate = {
+                module = 'extensions.main',
+                handler = 'operate',
+                events = {{
+                    binary = {path = 'operate'}
+                }}
+            },
+            math_abs = {
+                module = 'math',
+                handler = 'abs',
+                events = {{
+                    binary = {path = 'math_abs'}
+                }}
+            }
+        }
     })
 
     set_sections({{
@@ -326,13 +346,37 @@ function g.test_runtime()
         ]],
     }})
 
+    t.assert_equals(g.cluster.main_server.net_box:call('math_abs', {-3}), 3)
+    t.assert_equals(g.cluster.main_server.net_box:call('operate'), 1)
     g.cluster.main_server.net_box:eval([[
+        assert(package.loaded['extensions.main'], 'Extension not loaded')
         local M = require('extensions.main')
         assert(M == M.M(), 'Extension was reloaded twice')
         assert(require ~= M.require, 'Upvalue "require" is broken')
     ]])
 
-    t.assert_equals(g.cluster.main_server.net_box:call('operate'), 1)
+    t.assert_error_msg_equals(
+        error_prefix .. "no function 'operate'" ..
+        " in module 'extensions.main' to handle 'operate'",
+        set_sections, {{
+            filename = 'extensions/main.lua',
+            content = 'return {}',
+        }, {
+            filename = 'extensions/config.yml',
+            content = extensions_cfg,
+        }}
+    )
+    t.assert_error_msg_equals(
+        error_prefix .. "no module 'extensions.main'" ..
+        " to handle function 'operate'",
+        set_sections, {{
+            filename = 'extensions/main.lua',
+            content = box.NULL,
+        }, {
+            filename = 'extensions/config.yml',
+            content = extensions_cfg,
+        }}
+    )
 
     set_sections({{
         filename = 'extensions/config.yml',

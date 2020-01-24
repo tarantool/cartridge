@@ -129,10 +129,13 @@ local function process_config(conf)
         end
 
         local mod = ret.loaded[fconf.module]
+        if mod == nil and vars.loaded[fconf.module] == nil then
+            mod = package.loaded[fconf.module]
+        end
         if mod == nil then
             return nil, ExtensionConfigError:new(
                 "Invalid extensions config: " ..
-                "module '%s' not found in extensions" ..
+                "no module '%s'" ..
                 " to handle function '%s'",
                 fconf.module, fname
             )
