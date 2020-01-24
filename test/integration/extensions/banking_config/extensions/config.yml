@@ -2,23 +2,20 @@
 functions:
 
   customer_add:
-    module: banking
+    module: extensions.banking
     handler: customer_add
     events:
-    - binary:
-        path: customer_add
+    - binary: {path: customer_add}
 
   account_add:
-    module: banking
+    module: extensions.banking
     handler: account_add
     events:
-    - binary:
-        path: account_add
+    - binary: {path: account_add}
 
   transfer_money:
-    module: banking
+    module: extensions.banking
     handler: transfer_money
     events:
-    - binary:
-        path: transfer_money
+    - binary: {path: transfer_money}
 ...

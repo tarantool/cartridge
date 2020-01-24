@@ -1,4 +1,7 @@
 redefined = false
+ignore = {
+	"542", -- empty if branch
+}
 include_files = {
     '*.lua',
     'test/**/*.lua',
