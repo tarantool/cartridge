@@ -133,8 +133,8 @@ end
 --
 -- @treturn {URI=value,...}
 --   Call results mapping for every URI.
--- @treturn nil|{URI=error,...}
---   Errors mapping for every URI.
+-- @treturn[opt] table
+--   United error object, gathering errors for every URI that failed.
 local function map_call(fn_name, args, opts)
     checks('string', '?table', {
         uri_list = 'table',
@@ -155,7 +155,7 @@ local function map_call(fn_name, args, opts)
         if uri_map[uri] then
             error('bad argument opts.uri_list' ..
                 ' to ' .. (debug.getinfo(1, 'nl').name or 'map_call') ..
-                ' (repetitions are prohibited)', 2
+                ' (duplicates are prohibited)', 2
             )
         end
         uri_map[uri] = true
@@ -183,7 +183,45 @@ local function map_call(fn_name, args, opts)
         end
     end
 
-    return unpack(maps)
+    local retmap, errmap = unpack(maps)
+    if errmap == nil then
+        return retmap
+    end
+
+    local err_classes = {}
+    for _, v in pairs(errmap) do
+        if v.class_name then
+            err_classes[v.class_name] = v
+        end
+    end
+
+    local united_error = NetboxMapCallError:new('')
+    local united_error_err = {}
+    local united_error_str = {}
+    for _, v in pairs(err_classes) do
+        table.insert(united_error_err, v.err)
+        table.insert(united_error_str, string.format('* %s', v))
+    end
+
+    united_error.err = table.concat(united_error_err, '\n')
+    united_error.str = string.format("%s: %s:\n%s",
+        united_error.class_name,
+        'multiple errors occured',
+        table.concat(united_error_str, '\n')
+    )
+    united_error.stack = nil
+    united_error.suberrors = errmap
+
+    local __index = table.copy(errmap)
+    __index.tostring = NetboxMapCallError.tostring
+    local instance_mt = {
+        class_name = NetboxMapCallError.class_name,
+        __tostring = NetboxMapCallError.tostring,
+        __index = __index,
+    }
+    setmetatable(united_error, instance_mt)
+
+    return retmap, united_error
 end
 
 return {

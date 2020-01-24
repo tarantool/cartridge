@@ -159,7 +159,7 @@ function g.test_errors()
 
     t.assert_error_msg_contains(
         'bad argument opts.uri_list to map_call ' ..
-        '(repetitions are prohibited)',
+        '(duplicates are prohibited)',
         pool.map_call, 'math.floor', nil, {uri_list = {'x', 'x'}}
     )
 end
@@ -191,6 +191,39 @@ function g.test_negative()
     assert_err_equals(errmap, 'localhost:9',
         'NetboxConnectError: "localhost:9": ' .. errno.strerror(errno.ECONNREFUSED),
         'NetboxConnectError: "localhost:9": ' .. errno.strerror(errno.ENETUNREACH)
+    )
+end
+
+function g.test_errors_united()
+    local srv = g.cluster.main_server
+    srv.net_box:eval([[
+        local errors = require('errors')
+        function _G.return_error()
+            return nil, errors.new('E', 'Segmentation fault')
+        end
+    ]])
+
+    local _, err = pool.map_call('_G.return_error', nil, {
+        uri_list = {
+            ')(*&^%$#@!',      -- invalid uri
+            'localhost:13301', -- box.listen
+            'localhost:13302', -- remote-control
+            'localhost:13309', -- discard protocol
+        },
+        timeout = 1,
+    })
+
+    log.info('%s', err)
+
+    t.assert_equals(err.class_name, 'NetboxMapCallError')
+    t.assert_equals(#err.err:split('\n'), 3)
+    t.assert_items_equals(
+        err.err:split('\n'),
+        {
+            'Invalid URI ")(*&^%$#@!"',
+            'Segmentation fault',
+            '"localhost:13309": Invalid greeting',
+        }
     )
 end
 
