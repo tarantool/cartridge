@@ -78,10 +78,10 @@ use Tarantool\\Client\\Schema\\Criteria;
 
 require __DIR__ . '/vendor/autoload.php';
 
-$client = Client::fromDsn(':demo_uri:');
+$client = Client::fromDsn('tcp://:demo_uri:');
 $space = $client->getSpace('customer');
 $space->insert([222, 'Michael Bryan']);
-$result = $space->select(Criteria::index(0));
+$result = $space->select(Criteria::key([222]));
 
 print_r($result);
 \`\`\`
