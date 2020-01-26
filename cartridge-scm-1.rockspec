@@ -13,7 +13,7 @@ dependencies = {
     'errors == 2.1.2-1',
     'vshard == 0.1.14-1',
     'membership == 2.2.0-1',
-    'frontend-core == 6.2.0-1',
+    'frontend-core == 6.3.0-1',
 }
 
 external_dependencies = {

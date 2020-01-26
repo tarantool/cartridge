@@ -16,6 +16,7 @@ const cache = new InMemoryCache({
 
 const client = new ApolloClient({
   link: from([
+    window.tarantool_enterprise_core.apiMethods.apolloLinkOnError,
     window.tarantool_enterprise_core.apiMethods.apolloLinkAfterware,
     window.tarantool_enterprise_core.apiMethods.apolloLinkMiddleware,
     httpLink
