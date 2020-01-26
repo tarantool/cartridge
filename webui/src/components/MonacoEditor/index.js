@@ -1,14 +1,10 @@
-import * as monaco from 'monaco-editor/esm/vs/editor/edcore.main.js';
 import PropTypes from 'prop-types';
 import React from 'react';
 import { noop, throttle } from 'lodash';
+import monaco from '../../misc/initMonacoEditor';
 import { subscribeOnTargetEvent } from '../../misc/eventHandler';
 import { getModelByFile, setModelByFile } from '../../misc/monacoModelStorage';
-import 'monaco-editor/esm/vs/basic-languages/javascript/javascript.contribution';
-import 'monaco-editor/esm/vs/basic-languages/yaml/yaml.contribution';
-import 'monaco-editor/esm/vs/basic-languages/lua/lua.contribution';
-import 'monaco-editor/esm/vs/basic-languages/html/html.contribution';
-import './setDefaultTheme';
+import { getYAMLError } from '../../misc/yamlValidation';
 
 
 const DEF_CURSOR = {}
@@ -78,6 +74,32 @@ export default class MonacoEditor extends React.Component {
   }
 
   throttledAdjustEditorSize = throttle(this.adjustEditorSize, 1000, { leading: false })
+
+  setValidationError = () => {
+    const {
+      language,
+      fileId
+    } = this.props;
+
+    if (language !== 'yaml') return;
+
+    const { editor } = this;
+    let model = editor.getModel(fileId);
+
+    const yamlError = getYAMLError(editor.getValue());
+
+    monaco.editor.setModelMarkers(
+      model,
+      'jsyaml',
+      [
+        ...(yamlError ? [getYAMLError(editor.getValue())] : [])
+      ]
+    );
+
+    this.validationError = yamlError;
+  }
+
+  throttledSetValidationError = throttle(this.setValidationError, 1000, { leading: false })
 
   componentDidUpdate(prevProps) {
     const {
@@ -193,6 +215,8 @@ export default class MonacoEditor extends React.Component {
           setIsContentChanged(false);
         }
       }
+
+      this.throttledSetValidationError();
     });
   }
 

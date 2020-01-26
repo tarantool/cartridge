@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Make use of GraphQL error extensions: provide additional information
   about `class_name` and `stack` of original error.
 
+- Validate YAML in code editor WebUI.
+
 ### Changed
 
 - Network error shows with fixed splash panel instead of notification.
