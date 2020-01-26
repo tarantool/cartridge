@@ -1,7 +1,7 @@
 // @flow
 import * as React from 'react';
 import { defaultMemoize } from 'reselect';
-import { css } from 'react-emotion';
+import { css, cx } from 'react-emotion';
 import { FlatList } from '@tarantool.io/ui-kit';
 import ReplicasetServerListItem from 'src/components/ReplicasetServerListItem';
 import type {
@@ -14,6 +14,9 @@ const styles = {
   server: css`
     position: relative;
     padding-left: 32px;
+  `,
+  list: css`
+    padding-top: 4px;
   `,
   row: css`
     display: flex;
@@ -99,7 +102,7 @@ class ReplicasetServerList extends React.PureComponent<ReplicasetServerListProps
         ? (
           <React.Fragment>
             <FlatList
-              className='ReplicasetServerList'
+              className={cx(styles.list, 'ReplicasetServerList')}
               itemClassName={`${styles.server} ${SERVER_LABELS_HIGHLIGHTING_CLASS}`}
               items={servers}
               itemRender={server => (
