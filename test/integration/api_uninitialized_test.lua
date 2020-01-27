@@ -1,3 +1,5 @@
+local title = require('title')
+
 local fio = require('fio')
 local t = require('luatest')
 local g = t.group()
@@ -13,6 +15,9 @@ g.before_all = function()
         http_port = 8181,
         cluster_cookie = 'test-cluster-cookie',
         advertise_port = 13301,
+        env = {
+            TARANTOOL_CUSTOM_PROC_TITLE = 'test-title',
+        },
     })
 
     g.server:start()
@@ -156,5 +161,9 @@ function g.test_uninitialized()
         end
     )
 
-
+    t.assert_str_contains(
+        g.server.net_box:eval([[return require('title').get()]]),
+        'test-title',
+        nil,
+        "Instance's title wasn't set")
 end
