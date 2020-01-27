@@ -377,8 +377,6 @@ local function boot_instance(clusterwide_config)
         end
     end
 
-    title.update(box_opts.custom_proc_title)
-
     log.warn('Calling box.cfg()...')
     -- This operation may be long
     -- It recovers snapshot
@@ -490,6 +488,10 @@ local function init(opts)
         log.info('Remote control bound to 0.0.0.0:%d', vars.binary_port)
     end
 
+    if vars.box_opts.custom_proc_title ~= nil then
+        log.info(vars.box_opts)
+        title.update(vars.box_opts.custom_proc_title)
+    end
 
     local config_filename = fio.pathjoin(vars.workdir, 'config')
     if not utils.file_exists(config_filename) then
