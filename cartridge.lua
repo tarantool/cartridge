@@ -12,6 +12,7 @@
 -- simplifies custom configuration and administrative tasks.
 -- @module cartridge
 
+local title = require('title')
 local fio = require('fio')
 local uri = require('uri')
 local log = require('log')
@@ -238,6 +239,10 @@ local function cfg(opts, box_opts)
         else
             box_opts.custom_proc_title = args.app_name .. '@' .. args.instance_name
         end
+    end
+
+    if box_opts.custom_proc_title ~= nil then
+        title.update(box_opts.custom_proc_title)
     end
 
     local vshard_groups = {}
