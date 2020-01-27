@@ -1,11 +1,10 @@
-import * as monaco from 'monaco-editor/esm/vs/editor/edcore.main.js';
 import { css, cx } from 'emotion';
 import PropTypes from 'prop-types';
 import React from 'react';
 import { noop, throttle } from 'lodash';
+import monaco from '../../misc/initMonacoEditor';
 import { subscribeOnTargetEvent } from '../../misc/eventHandler';
-import { getYAMLError } from './yamlValidation';
-import 'monaco-editor/esm/vs/basic-languages/yaml/yaml.contribution';
+import { getYAMLError } from '../../misc/yamlValidation';
 
 const containerStyles = css`
   overflow: hidden;
@@ -55,27 +54,6 @@ export default class SchemaEditor extends React.Component {
   _prevent_trigger_change_event = false;
 
   componentDidMount() {
-    monaco.languages.registerHoverProvider(SCHEMA_LANG, {
-      provideHover: function (model, position) {
-        if (!this.validationError) {
-          return null;
-        }
-
-        const {
-          endColumn,
-          endLineNumber,
-          message,
-          startColumn,
-          startLineNumber
-        } = this.validationError;
-
-        return {
-          range: new monaco.Range(startLineNumber, startColumn, endLineNumber, endColumn),
-          contents: [{ value: message }]
-        }
-      }
-    });
-
     this.initMonaco();
     this.unsubcribeResize = subscribeOnTargetEvent(window, 'resize', this.throttledAdjustEditorSize)
   }
@@ -140,7 +118,7 @@ export default class SchemaEditor extends React.Component {
       editor.revealLine(this.props.cursor.startLineNumber)
     }
 
-    this.setValidationError();
+    this.throttledSetValidationError();
   }
 
   componentWillUnmount() {
@@ -184,18 +162,20 @@ export default class SchemaEditor extends React.Component {
   setValidationError = () => {
     const { editor } = this;
     let model = editor.getModel(this.props.fileId);
-    const yamlError = getYAMLError(this.editor.getValue());
+    const yamlError = getYAMLError(editor.getValue());
 
     monaco.editor.setModelMarkers(
       model,
       'jsyaml',
       [
-        ...(yamlError ? [getYAMLError(this.editor.getValue())] : [])
+        ...(yamlError ? [getYAMLError(editor.getValue())] : [])
       ]
     );
 
     this.validationError = yamlError;
   }
+
+  throttledSetValidationError = throttle(this.setValidationError, 1000, { leading: false })
 
   editorWillMount() {
     const { editorWillMount } = this.props;
