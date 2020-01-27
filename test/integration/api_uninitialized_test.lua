@@ -159,9 +159,8 @@ function g.test_uninitialized()
         end
     )
 
-    t.assert_str_contains(
+    t.assert_equals(
         g.server.net_box:eval([[return require('title').get()]]),
-        'test-title',
-        nil,
+        'tarantool srv_basic.lua: test-title',
         "Instance's title wasn't set")
 end

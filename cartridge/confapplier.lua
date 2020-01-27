@@ -7,7 +7,6 @@
 --
 -- @module cartridge.confapplier
 
-local title = require('title')
 local log = require('log')
 local fio = require('fio')
 local yaml = require('yaml').new()
@@ -486,11 +485,6 @@ local function init(opts)
         return nil, err
     else
         log.info('Remote control bound to 0.0.0.0:%d', vars.binary_port)
-    end
-
-    if vars.box_opts.custom_proc_title ~= nil then
-        log.info(vars.box_opts)
-        title.update(vars.box_opts.custom_proc_title)
     end
 
     local config_filename = fio.pathjoin(vars.workdir, 'config')

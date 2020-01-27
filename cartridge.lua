@@ -12,6 +12,7 @@
 -- simplifies custom configuration and administrative tasks.
 -- @module cartridge
 
+local title = require('title')
 local fio = require('fio')
 local uri = require('uri')
 local log = require('log')
@@ -229,7 +230,7 @@ local function cfg(opts, box_opts)
     -- makes it possible to filter by severity with
     -- systemctl
     if utils.under_systemd() and box_opts.log == nil then
-        box_opts.log = 'syslog:identity=tarantool'
+        box_opts.log = 'syslog:identity=Tarantool'
     end
 
     if box_opts.custom_proc_title == nil and args.instance_name ~= nil then
@@ -239,6 +240,8 @@ local function cfg(opts, box_opts)
             box_opts.custom_proc_title = args.app_name .. '@' .. args.instance_name
         end
     end
+
+    title.update(box_opts.custom_proc_title)
 
     local vshard_groups = {}
     for k, v in pairs(opts.vshard_groups or {}) do

@@ -31,9 +31,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Replicaset weight input in WebUI accepts float values.
 
-### Changed
-
-- Set process title when instance don't configurate yet.
+- Apply `custom_proc_title` setting without waiting for `box.cfg`.
 
 ## [2.0.1] - 2020-01-15
 
