@@ -205,9 +205,6 @@ function Cluster:join_server(server)
     server:join_cluster(self.main_server, {timeout = self.CONNECTION_TIMEOUT})
     -- wait for bootserv to see that the new member is alive
     self:wait_until_healthy()
-
-    -- speedup tests by amplifying membership message exchange
-    server.net_box:eval('require("membership.options").PROTOCOL_PERIOD_SECONDS = 0.2')
 end
 
 --- Blocks fiber until `cartridge.is_healthy()` returns true on main_server.
