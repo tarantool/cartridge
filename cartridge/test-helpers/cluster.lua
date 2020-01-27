@@ -87,49 +87,23 @@ function Cluster:server(alias)
     error('Server ' .. alias .. ' not found', 2)
 end
 
-function Cluster:fill_edit_topology_data()
+--- Execute `edit_topology` GraphQL request to setup replicasets, apply roles
+-- join servers to replicasets.
+function Cluster:apply_topology()
     local replicasets = table.deepcopy(self.replicasets)
-    local map_uuid_replicaset = {}
-    for _, v in pairs(replicasets) do
-        map_uuid_replicaset[v.uuid] = v
-        v.join_servers = {}
-        v.servers = nil
+    local replicaset_by_uuid = {}
+    for _, replicaset in pairs(replicasets) do
+        replicaset_by_uuid[replicaset.uuid] = replicaset
+        replicaset.join_servers = {}
+        replicaset.servers = nil
     end
 
-    for _, v in pairs(self.servers) do
-        local server = {
-            uri = v.advertise_uri,
-            uuid = v.instance_uuid,
-            labels = v.labels,
-        }
-        table.insert(map_uuid_replicaset[v.replicaset_uuid].join_servers, server)
-    end
-
-    local new_data = {}
-    for _, v in pairs(map_uuid_replicaset) do
-        table.insert(new_data, v)
-    end
-
-    return new_data
-end
-
--- Start servers, configure replicasets and bootstrap vshard if required.
-function Cluster:bootstrap()
-    self:bootstrap_edit_topology()
-
-    if self.use_vshard then
-        self:bootstrap_vshard()
-    end
-end
-
-function Cluster:bootstrap_edit_topology()
-    self.main_server = self.servers[1]
-    for _, server in ipairs(self.servers) do
-        server:start()
-    end
-
-    for _, server in ipairs(self.servers) do
-        server.net_box:eval('require("membership.options").PROTOCOL_PERIOD_SECONDS = 0.2')
+    for _, server in pairs(self.servers) do
+        table.insert(replicaset_by_uuid[server.replicaset_uuid].join_servers, {
+            uri = server.advertise_uri,
+            uuid = server.instance_uuid,
+            labels = server.labels,
+        })
     end
 
     self.main_server:graphql({
@@ -140,13 +114,21 @@ function Cluster:bootstrap_edit_topology()
                 }
             }
         ]],
-        variables = {
-            replicasets = self:fill_edit_topology_data()
-        }
+        variables = {replicasets = replicasets}
     })
+end
+
+-- Configure replicasets and bootstrap vshard if required.
+function Cluster:bootstrap()
+    self.main_server = self.servers[1]
+    self:apply_topology()
 
     for _, server in ipairs(self.servers) do
         self:wait_until_healthy(server)
+    end
+
+    if self.use_vshard then
+        self:bootstrap_vshard()
     end
 end
 
@@ -161,11 +143,10 @@ function Cluster:start()
     if self.running then
         return
     end
+    for _, server in ipairs(self.servers) do
+        server:start()
+    end
     if self.bootstrapped then
-        for _, server in ipairs(self.servers) do
-            server:start()
-            self:retrying({}, function() server:connect_net_box() end)
-        end
         self:wait_until_healthy()
     else
         self:bootstrap()
@@ -224,9 +205,6 @@ function Cluster:join_server(server)
     server:join_cluster(self.main_server, {timeout = self.CONNECTION_TIMEOUT})
     -- wait for bootserv to see that the new member is alive
     self:wait_until_healthy()
-
-    -- speedup tests by amplifying membership message exchange
-    server.net_box:eval('require("membership.options").PROTOCOL_PERIOD_SECONDS = 0.2')
 end
 
 --- Blocks fiber until `cartridge.is_healthy()` returns true on main_server.
