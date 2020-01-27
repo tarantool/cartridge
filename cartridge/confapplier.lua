@@ -7,6 +7,7 @@
 --
 -- @module cartridge.confapplier
 
+local title = require('title')
 local log = require('log')
 local fio = require('fio')
 local yaml = require('yaml').new()
@@ -375,6 +376,8 @@ local function boot_instance(clusterwide_config)
             box_opts.replication = {pool.format_uri(leader.uri)}
         end
     end
+
+    title.update(box_opts.custom_proc_title)
 
     log.warn('Calling box.cfg()...')
     -- This operation may be long
