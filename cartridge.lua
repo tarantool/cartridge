@@ -230,7 +230,7 @@ local function cfg(opts, box_opts)
     -- makes it possible to filter by severity with
     -- systemctl
     if utils.under_systemd() and box_opts.log == nil then
-        box_opts.log = 'syslog:identity=Tarantool'
+        box_opts.log = 'syslog:identity=tarantool'
     end
 
     if box_opts.custom_proc_title == nil and args.instance_name ~= nil then
@@ -241,7 +241,9 @@ local function cfg(opts, box_opts)
         end
     end
 
-    title.update(box_opts.custom_proc_title)
+    if box_opts.custom_proc_title ~= nil then
+        title.update(box_opts.custom_proc_title)
+    end
 
     local vshard_groups = {}
     for k, v in pairs(opts.vshard_groups or {}) do
