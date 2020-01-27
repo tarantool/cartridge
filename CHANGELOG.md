@@ -33,7 +33,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 
-- Set process title before call `box.cfg`.
+- Set process title when instance don't configurate yet.
 
 ## [2.0.1] - 2020-01-15
 
