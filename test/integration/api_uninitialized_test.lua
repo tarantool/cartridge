@@ -1,5 +1,3 @@
-local title = require('title')
-
 local fio = require('fio')
 local t = require('luatest')
 local g = t.group()
