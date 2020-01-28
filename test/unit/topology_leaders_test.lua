@@ -1,5 +1,4 @@
 local fio = require('fio')
-local json = require('json')
 local checks = require('checks')
 local topology = require('cartridge.topology')
 
