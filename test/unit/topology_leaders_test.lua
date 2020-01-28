@@ -124,5 +124,5 @@ function g.test_leader_order()
     test_order('A',
         {'A3', 'A2'},
         {'A3', 'A2', 'A1', 'A4'}
-)
+    )
 end
