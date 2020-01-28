@@ -147,7 +147,9 @@ function Cluster:start()
         server:start()
     end
     if self.bootstrapped then
-        self:wait_until_healthy()
+        for _, server in ipairs(self.servers) do
+            self:wait_until_healthy(server)
+        end
     else
         self:bootstrap()
         self.bootstrapped = true
