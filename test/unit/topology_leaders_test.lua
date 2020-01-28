@@ -38,10 +38,7 @@ local function test_order(uuid, new_order, expected_order)
     t.assert_equals(
         leaders_order,
         expected_order,
-        string.format(
-            "Leaders order (%s) doesn't equals expected order (%s)",
-            json.encode(leaders_order),
-            json.encode(expected_order)))
+        "Unexpected leaders order")
 end
 
 
