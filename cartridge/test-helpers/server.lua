@@ -59,6 +59,8 @@ function Server:build_env()
         TARANTOOL_HTTP_PORT = self.http_port,
         TARANTOOL_ADVERTISE_URI = self.advertise_uri,
         TARANTOOL_CLUSTER_COOKIE = self.cluster_cookie,
+        -- speedup tests by amplifying membership message exchange
+        TARANTOOL_SWIM_PROTOCOL_PERIOD_SECONDS = 0.2,
     }
 end
 
@@ -114,8 +116,6 @@ function Server:start()
     luatest.helpers.retrying({}, function()
         self:connect_net_box()
     end)
-    -- speedup tests by amplifying membership message exchange
-    self.net_box:eval('require("membership.options").PROTOCOL_PERIOD_SECONDS = 0.2')
 end
 
 --- Stop server process.

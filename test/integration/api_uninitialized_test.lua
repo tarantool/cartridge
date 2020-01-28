@@ -15,6 +15,7 @@ g.before_all = function()
         advertise_port = 13301,
         env = {
             TARANTOOL_CUSTOM_PROC_TITLE = 'test-title',
+            TARANTOOL_SWIM_SUSPECT_TIMEOUT_SECONDS = 100,
         },
     })
 
@@ -163,4 +164,16 @@ function g.test_uninitialized()
         g.server.net_box:eval([[return require('title').get()]]),
         'tarantool srv_basic.lua: test-title',
         "Instance's title wasn't set")
+end
+
+function g.test_membership_options()
+    t.assert_equals(
+        g.server.net_box:eval([[return require('membership.options').PROTOCOL_PERIOD_SECONDS]]),
+        0.2
+    )
+
+    t.assert_equals(
+        g.server.net_box:eval([[return require('membership.options').SUSPECT_TIMEOUT_SECONDS]]),
+        100
+    )
 end
