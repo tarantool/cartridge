@@ -25,6 +25,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Network error shows with fixed splash panel instead of notification.
 
+- Test `topology_leader` is rewritten for luatest.
+
 ### Fixed
 
 - DDL failure if spaces is `null` in input schema.
