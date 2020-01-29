@@ -1,5 +1,19 @@
 #!/usr/bin/env tarantool
 
+local fio = require('fio')
+local yaml = require('yaml')
+local roles = require('cartridge.roles')
+local topology = require('cartridge.topology')
+local confapplier = require('cartridge.confapplier')
+local ClusterwideConfig = require('cartridge.clusterwide-config')
+local membership = require('membership')
+local pool = require('cartridge.pool')
+assert(roles.register_role('cartridge.roles.vshard-storage'))
+assert(roles.register_role('cartridge.roles.vshard-router'))
+
+local t = require('luatest')
+local g = t.group()
+
 local members = {
     ['localhost:3301'] = {
         uri = 'localhost:3301',
@@ -28,38 +42,8 @@ local members = {
     },
 }
 
-package.loaded['membership'] = {
-    get_member = function(uri)
-        require('log').info('0################################################')
-        return members[uri]
-    end,
-    myself = function(_)
-        require('log').info('1################################################')
-        return members['localhost:3301']
-    end,
-    subscribe = function()
-        return require('fiber').cond()
-    end,
-}
-
-package.loaded['cartridge.pool'] = {
-    connect = function()
-        return require('net.box').self
-    end,
-}
-
-local fio = require('fio')
-local yaml = require('yaml')
-local roles = require('cartridge.roles')
-local topology = require('cartridge.topology')
-local confapplier = require('cartridge.confapplier')
-local ClusterwideConfig = require('cartridge.clusterwide-config')
-
-local t = require('luatest')
-local g = t.group()
-
-local vshard_group
 local conf
+local vshard_group
 
 local function check_config(result, raw_new, raw_old)
     local topology_new = raw_new and yaml.decode(raw_new) or {}
@@ -82,15 +66,47 @@ local function check_config(result, raw_new, raw_old)
     t.assert_equals(ok or err.err, result, 'Unexpected result')
 end
 
-function g.before_all()
-    assert(roles.register_role('cartridge.roles.vshard-storage'))
-    assert(roles.register_role('cartridge.roles.vshard-router'))
+function g.teardown()
+    membership.get_member = g.membership_backup.get_member
+    membership.subscribe = g.membership_backup.subscribe
+    membership.myself = g.membership_backup.myself
 
+    pool.connect = g.pool_backup.connect
+end
+
+function g.mock_package()
+    g.membership_backup.get_member = membership.get_member
+    g.membership_backup.subscribe = membership.subscribe
+    g.membership_backup.myself = membership.myself
+
+    g.pool_backup.connect = pool.connect
+
+    package.loaded['membership'].get_member = function(uri)
+        return members[uri]
+    end
+
+    package.loaded['membership'].myself = function(_)
+        return members['localhost:3301']
+    end
+
+    package.loaded['membership'].subscribe = function()
+        return require('fiber').cond()
+    end
+
+    package.loaded['cartridge.pool'].connect = function()
+        return require('net.box').self
+    end
+end
+
+function g.before_all()
     _G.vshard = {
         storage = {
             buckets_count = function() end,
         }
     }
+
+    g.membership_backup = {}
+    g.pool_backup = {}
 
     g.tempdir = fio.tempdir()
 end
@@ -122,6 +138,7 @@ failover:
 unknown:
 ...]])
 
+    -- servers keys
     check_config('topology_new.servers must be a table, got string',
 [[---
 servers:
@@ -746,6 +763,7 @@ replicasets:
 end
 
 function g.test_single_group()
+    g.mock_package()
     conf = {
         ['vshard.yml'] = yaml.encode({
             bootstrapped = true,
@@ -756,6 +774,7 @@ function g.test_single_group()
 end
 
 function g.test_multi_group()
+    g.mock_package()
     conf = {
         ['vshard_groups.yml'] = yaml.encode({
             first = {
