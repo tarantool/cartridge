@@ -12,7 +12,7 @@ describe('Schema section', () => {
     cy.get('.monaco-editor textarea').should('have.value', 'spaces: incorrect-1');
 
     cy.get('button[type="button"]').contains('Validate').click();
-    cy.get('#root').contains('Bad argument #1 to ddl.check_schema');
+    cy.get('#root').contains('Schema.spaces must be a ?table, got string');
 
     cy.get('button[type="button"]').contains('Reload').click();
     cy.get('.monaco-editor textarea').should('have.value', defaultText);
@@ -33,7 +33,7 @@ describe('Schema section', () => {
     cy.get('.monaco-editor textarea').should('have.value', 'spaces: incorrect-2');
 
     cy.get('button[type="button"]').contains('Apply').click();
-    cy.get('#root').contains('Bad argument #1 to ddl.check_schema');
+    cy.get('#root').contains('Schema.spaces must be a ?table, got string');
 
     cy.get('button[type="button"]').contains('Reload').click();
     cy.get('.monaco-editor textarea').should('have.value', 'spaces: [] # Essentially the same');

@@ -83,6 +83,10 @@ local function cypress_run(spec)
     t.assert_equals(code, 0)
 end
 
+function g.test_code()
+    cypress_run('code.spec.js')
+end
+
 function g.test_default_group()
     g.cluster.main_server:graphql({
         query = [[mutation {
@@ -129,10 +133,6 @@ end
 
 function g.test_schema_editor()
     cypress_run('schema-editor.spec.js')
-end
-
-function g.test_code()
-    cypress_run('code.spec.js')
 end
 
 function g.test_uninitialized()
