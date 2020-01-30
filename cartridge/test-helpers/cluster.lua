@@ -50,6 +50,7 @@ function Cluster:new(object)
     -- @string uuid Replicaset uuid.
     -- @tparam {string} roles List of roles for servers in the replicaset.
     -- @tparam ?string vshard_group Name of vshard group.
+    -- @tparam ?boolan all_rw Make all replicas writable.
     -- @tab servers List of objects to build `Server`s with.
     for _, replicaset in pairs(object.replicasets) do
         (function(_) checks({
@@ -58,6 +59,7 @@ function Cluster:new(object)
             roles = 'table',
             vshard_group = '?string',
             servers = 'table',
+            all_rw = '?boolean',
         }) end)(replicaset)
     end
 
