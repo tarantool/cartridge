@@ -24,6 +24,9 @@ const styles = {
     box-sizing: border-box;
     background-color: #ffffff;
   `,
+  areaWithPane: css`
+    height: calc(100% - 69px - 112px - 16px);
+  `,
   cardMargin: css`
     padding: 24px 16px;
     min-width: 1000px;
@@ -48,6 +51,7 @@ const styles = {
 
 type SchemaProps = {
   className?: string,
+  isDemoPanelPresent: boolean,
   value: string,
   valueChanged: boolean,
   error: ?string,
@@ -71,6 +75,7 @@ class Schema extends React.Component<SchemaProps> {
     const {
       className,
       error,
+      isDemoPanelPresent,
       value,
       loading,
       uploading,
@@ -81,7 +86,13 @@ class Schema extends React.Component<SchemaProps> {
     } = this.props;
 
     return (
-      <div className={cx(styles.area, className)}>
+      <div
+        className={cx(
+          styles.area,
+          { [styles.areaWithPane]: isDemoPanelPresent },
+          className
+        )}
+      >
         <div className={styles.panel}>
           <ControlsPanel
             thin
@@ -121,6 +132,7 @@ class Schema extends React.Component<SchemaProps> {
 
 const mapStateToProps = (state: State) => {
   const {
+    app: { clusterSelf },
     schema: {
       value,
       error,
@@ -130,6 +142,7 @@ const mapStateToProps = (state: State) => {
   } = state;
 
   return {
+    isDemoPanelPresent: !!clusterSelf && clusterSelf.demo_uri,
     value,
     valueChanged: isValueChanged(state),
     error,

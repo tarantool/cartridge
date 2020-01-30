@@ -16,6 +16,7 @@ import { logOut } from 'src/store/actions/auth.actions';
 import { PROJECT_NAME } from './constants';
 import { menuReducer } from './menu';
 import ConfigManagement from 'src/pages/ConfigManagement';
+import DemoInfo from 'src/components/DemoInfo';
 
 const Code = lazy(() => import('src/pages/Code'));
 const Schema = lazy(() => import('src/pages/Schema'));
@@ -30,6 +31,7 @@ class Root extends React.Component {
       <Provider store={store}>
         <Router history={tarantool_enterprise_core.history}>
           <Suspense fallback={'Loading...'}>
+            <DemoInfo/>
             <Switch>
               <Route path={projectPath('dashboard')} component={App} />
               <Route path={projectPath('configuration')} component={ConfigManagement} />

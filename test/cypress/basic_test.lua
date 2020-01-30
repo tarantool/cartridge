@@ -106,7 +106,12 @@ function g.test_text_inputs()
 end
 
 function g.test_probe_server()
-    cypress_run('probe-server.spec.js')
+    local code = os.execute(
+        "cd webui && npx cypress run --spec" ..
+        ' cypress/integration/probe-server.spec.js' ..
+        ',cypress/integration/demo-panel-not-present.spec.js'
+    )
+    t.assert_equals(code, 0)
 end
 
 function g.test_failover()
@@ -135,8 +140,8 @@ function g.test_code()
     local code = os.execute(
         "cd webui && npx cypress run --spec" ..
         ' cypress/integration/code-empty-page.spec.js' ..
-        ' cypress/integration/code-file-in-tree.spec.js' ..
-        ' cypress/integration/code-folder-in-tree.spec.js'
+        ',cypress/integration/code-file-in-tree.spec.js' ..
+        ',cypress/integration/code-folder-in-tree.spec.js'
     )
     t.assert_equals(code, 0)
 end

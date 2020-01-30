@@ -13,7 +13,6 @@ import {
   Text,
   Scrollbar
 } from '@tarantool.io/ui-kit';
-import DemoInfo from 'src/components/DemoInfo';
 import { InputModal } from 'src/components/InputModal';
 import MonacoEditor from 'src/components/MonacoEditor';
 import { FileTree } from 'src/components/FileTree';
@@ -51,6 +50,9 @@ const styles = {
     border-radius: 4px;
     overflow: hidden;
     background-color: #ffffff;
+  `,
+  areaWithPane: css`
+    height: calc(100% - 69px - 112px - 16px);
   `,
   sidePanel: css`
     flex-shrink: 0;
@@ -138,6 +140,7 @@ type CodeProps = {
   className?: string,
   fileTree: Array<TreeFileItem>,
   files: Array<FileItem>,
+  isDemoPanelPresent: boolean,
   fetchingConfigFiles: boolean,
   puttingConfigFiles: boolean,
   selectedFile: FileItem | null,
@@ -295,6 +298,7 @@ class Code extends React.Component<CodeProps, CodeState> {
     const {
       className,
       fileTree = [],
+      isDemoPanelPresent,
       puttingConfigFiles,
       selectedFile,
       dispatch
@@ -310,8 +314,13 @@ class Code extends React.Component<CodeProps, CodeState> {
 
     return (
       <React.Fragment>
-        <DemoInfo/>
-        <div className={cx(styles.area, className)}>
+        <div
+          className={cx(
+            styles.area,
+            { [styles.areaWithPane]: isDemoPanelPresent },
+            className
+          )}
+        >
           <div className={styles.sidePanel}>
             <div className={styles.sidePanelHeading}>
               <Text variant='h4' className={styles.sidePanelTitle}>Files</Text>
@@ -439,12 +448,15 @@ class Code extends React.Component<CodeProps, CodeState> {
 }
 
 const mapStateToProps = (state: State) => {
+  const { app: { clusterSelf } } = state;
+
   return {
     fileTree: selectFileTree(state.codeEditor.files),
     files: state.codeEditor.files,
     fetchingConfigFiles: state.ui.fetchingConfigFiles,
     puttingConfigFiles: state.ui.puttingConfigFiles,
-    selectedFile: selectSelectedFile(state.codeEditor)
+    selectedFile: selectSelectedFile(state.codeEditor),
+    isDemoPanelPresent: !!clusterSelf && clusterSelf.demo_uri
   }
 };
 
