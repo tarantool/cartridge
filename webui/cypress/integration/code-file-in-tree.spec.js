@@ -77,6 +77,7 @@ describe('Code page', () => {
        //file contents
       cy.get('.ScrollbarsCustom-Content').contains('edited-file-name2').click();
       cy.get('.monaco-editor textarea').type(selectAllKeys + '{backspace}');
+      cy.get('.monaco-editor textarea').type('a{backspace}'); //без этого не работает
       cy.get('.monaco-editor textarea').should('have.value', '');
    
       cy.get('button[type="button"]').contains('Reload').click();
