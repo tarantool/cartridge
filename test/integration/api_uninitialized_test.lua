@@ -65,7 +65,7 @@ function g.test_uninitialized()
         g.server:graphql({
             query = [[{ servers { uri clock_delta } }]]
         }).data.servers[1].clock_delta,
-        0, 1e-2
+        0, 0.1
     )
 
     local replicasets = resp['data']['replicasets']
