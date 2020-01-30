@@ -15,7 +15,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Validate YAML in code editor WebUI.
 
-- Exposing membership options with argparse
+- Expose membership options with argparse.
+
+- Allow specifying `all_rw` replicaset flag in luatest helpers.
 
 ### Changed
 

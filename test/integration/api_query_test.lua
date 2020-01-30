@@ -28,6 +28,7 @@ g.before_all = function()
             }, {
                 uuid = helpers.uuid('b'),
                 roles = {'vshard-storage'},
+                all_rw = true,
                 servers = {
                     {
                         alias = 'storage',
@@ -383,7 +384,7 @@ function g.test_replicasets()
             master = {uuid = helpers.uuid('b', 'b', 1)},
             active_master = {uuid = helpers.uuid('b', 'b', 1)},
             weight = 1,
-            all_rw = false,
+            all_rw = true,
             servers = {
                 {uri = 'localhost:13302', priority = 1},
                 {uri = 'localhost:13304', priority = 2},
