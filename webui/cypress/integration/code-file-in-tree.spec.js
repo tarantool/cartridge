@@ -98,6 +98,7 @@ describe('Code page', () => {
       cy.get('.ScrollbarsCustom-Content').contains('edited-file-name2');
       //apply
       cy.get('.meta-test__deleteFolderInTreeBtn').eq(0).click({ force: true });
+      cy.get('.meta-test__deleteModal').should('be.visible');
       cy.get('.meta-test__deleteModal button[type="button"]').contains('Ok').click();
       cy.get('button[type="button"]').contains('Apply').click();
       cy.get('button[type="button"]').contains('Reload').click();
