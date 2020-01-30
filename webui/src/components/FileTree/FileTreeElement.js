@@ -89,9 +89,9 @@ type FileTreeElementProps = {
   level?: number,
   onDelete: (id: string) => void,
   onExpand: (id: string) => void,
-  onFileCreate: (parentPath: string) => void,
+  onFileCreate: (file: TreeFileItem) => void,
   onFileOpen: (id: string) => void,
-  onFolderCreate: (parentPath: string) => void,
+  onFolderCreate: (file: TreeFileItem) => void,
   onRename: (id: string) => void
 }
 
@@ -123,7 +123,7 @@ export const FileTreeElement = (
         )}
         onClick={e => {
           file.type === 'folder'
-            ? onExpand(file.path)
+            ? onExpand(file.fileId)
             : onFileOpen(file.fileId)
         }}
         style={{
@@ -156,7 +156,7 @@ export const FileTreeElement = (
                 intent='plain'
                 size='xs'
                 icon={IconCreateFolder}
-                onClick={e => { e.stopPropagation(); onFolderCreate(file.path); }}
+                onClick={e => { e.stopPropagation(); onFolderCreate(file); }}
                 title='Create folder'
               />
               <Button
@@ -164,7 +164,7 @@ export const FileTreeElement = (
                 intent='plain'
                 size='xs'
                 icon={IconCreateFile}
-                onClick={e => { e.stopPropagation(); onFileCreate(file.path); }}
+                onClick={e => { e.stopPropagation(); onFileCreate(file); }}
                 title='Create file'
               />
             </React.Fragment>
