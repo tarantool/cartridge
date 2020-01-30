@@ -16,7 +16,7 @@ local members = {
     ['localhost:3301'] = {
         uri = 'localhost:3301',
         status = 'alive',
-        payload = {uuid = 'aaaaaaaa-aaaa-4000-b000-000000000001'},
+        payload = { uuid = 'aaaaaaaa-aaaa-4000-b000-000000000001' },
     },
     ['localhost:3302'] = {
         uri = 'localhost:3302',
