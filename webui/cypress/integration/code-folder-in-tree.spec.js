@@ -33,6 +33,7 @@ describe('Code page', () => {
   
   //delete folder
       cy.get('.meta-test__deleteFolderInTreeBtn').eq(0).click({ force: true });
+      cy.get('.meta-test__deleteModal').should('be.visible');
       cy.get('.meta-test__deleteModal button[type="button"]').contains('Ok').click();
       cy.get('button[type="button"]').contains('Apply').click();
       cy.get('.ScrollbarsCustom-Content').contains('edited-folder-name').should('not.exist');
