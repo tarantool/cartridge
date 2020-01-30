@@ -2,6 +2,7 @@ import React, { lazy, Suspense } from 'react';
 import { Provider } from 'react-redux';
 import { Router, Switch, Route } from 'react-router-dom';
 import App from 'src/app';
+import { isNetworkError } from 'src/misc/isNetworkError';
 import Users from 'src/pages/Users';
 import HeaderAuthControl from 'src/components/HeaderAuthControl';
 import NetworkErrorSplash from 'src/components/NetworkErrorSplash';
@@ -83,7 +84,7 @@ tarantool_enterprise_core.apiMethods.registerApolloHandler('onError', graphQLCon
 function axiosConnectionErrorHandler(response, next) {
   const { app: { connectionAlive } } = store.getState();
 
-  if (response instanceof Error && response.message.toLowerCase().indexOf('network error') === 0) {
+  if (isNetworkError(response)) {
     if (connectionAlive) {
       store.dispatch(setConnectionState(false));
     }

@@ -15,13 +15,13 @@ describe('Code page', () => {
       cy.get('.ScrollbarsCustom-Content').contains('file-in-tree').should('not.exist');
       //apply
       cy.get('.meta-test__addFileBtn').click();
-      cy.get('.meta-test__enterName').focused().type('file-in-tree2{enter}');
-      cy.get('.ScrollbarsCustom-Content').contains('file-in-tree2');
+      cy.get('.meta-test__enterName').focused().type('file-in-tree2.yml{enter}');
+      cy.get('.ScrollbarsCustom-Content').contains('file-in-tree2.yml');
       cy.get('button[type="button"]').contains('Apply').click();
       cy.get('button[type="button"]').contains('Reload').click();
       cy.get('button[type="button"]').contains('Ok').click();
       //file contents
-      cy.get('.ScrollbarsCustom-Content').contains('file-in-tree2').click();
+      cy.get('.ScrollbarsCustom-Content').contains('file-in-tree2.yml').click();
       cy.get('.monaco-editor textarea').type(selectAllKeys + '{backspace}');
       cy.get('.monaco-editor textarea').type('some test code');
           //check for page change
@@ -33,9 +33,17 @@ describe('Code page', () => {
       cy.get('button[type="button"]').contains('Ok').click();
       cy.get('.monaco-editor textarea').should('have.value', '');
   
-      cy.get('.ScrollbarsCustom-Content').contains('file-in-tree2').click();
+      cy.get('.ScrollbarsCustom-Content').contains('file-in-tree2.yml').click();
       cy.get('.monaco-editor textarea').type('some test code2');
       cy.get('button[type="button"]').contains('Apply').click();
+      cy.get('button[type="button"]').contains('Reload').click();
+      cy.get('button[type="button"]').contains('Ok').click();
+      cy.get('.monaco-editor textarea').should('have.value', 'some test code2');
+      // wrong yaml error
+      cy.get('.monaco-editor textarea').type(selectAllKeys + '{backspace}');
+      cy.get('.monaco-editor textarea').type('some: [] test code2');
+      cy.get('button[type="button"]').contains('Apply').click();
+      cy.get('#root').contains('GraphQL error: Error parsing section "file-in-tree2.yml": did not find expected key at document');
       cy.get('button[type="button"]').contains('Reload').click();
       cy.get('button[type="button"]').contains('Ok').click();
       cy.get('.monaco-editor textarea').should('have.value', 'some test code2');
