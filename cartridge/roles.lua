@@ -303,7 +303,7 @@ local function apply_config(conf)
                     mod.init,
                     {is_master = failover.is_leader()}
                 )
-                if _err then
+                if _err ~= nil then
                     if err == nil then
                         err = _err
                     else
@@ -320,13 +320,12 @@ local function apply_config(conf)
                     mod.apply_config, conf,
                     {is_master = failover.is_leader()}
                 )
-                if _err then
+                if _err ~= nil then
                     if err == nil then
                         err = _err
                     else
                         log.error('%s', _err)
                     end
-                    err = err or _err
                 end
             end
         else
@@ -338,13 +337,12 @@ local function apply_config(conf)
                     mod.stop,
                     {is_master = failover.is_leader()}
                 )
-                if _err then
+                if _err ~= nil then
                     if err == nil then
                         err = _err
                     else
                         log.error('%s', _err)
                     end
-                    err = err or _err
                 end
             end
 
