@@ -426,6 +426,6 @@ function g.test_clock_delta()
 
     t.assert_equals(#servers, 4)
     for _, server in pairs(servers) do
-        t.assert_almost_equals(server.clock_delta, 0, 1e-2)
+        t.assert_almost_equals(server.clock_delta, 0, 0.1)
     end
 end
