@@ -1,0 +1,470 @@
+# source: http://localhost:8081/admin/api
+# timestamp: Fri Jan 31 2020 15:34:13 GMT+0300 (Moscow Standard Time)
+
+"""Cluster management"""
+type Apicluster {
+  """Some information about current server"""
+  self: ServerShortInfo
+
+  """Clusterwide DDL schema"""
+  schema: DDLSchema!
+
+  """Get current failover state."""
+  failover: Boolean!
+
+  """Whether it is reasonble to call bootstrap_vshard mutation"""
+  can_bootstrap_vshard: Boolean!
+
+  """List authorized users"""
+  users(username: String): [User!]
+
+  """Get list of all registered roles and their dependencies."""
+  known_roles: [Role!]!
+
+  """Get list of known vshard storage groups."""
+  vshard_known_groups: [String!]!
+  vshard_groups: [VshardGroup!]!
+  auth_params: UserManagementAPI!
+
+  """Virtual buckets count in cluster"""
+  vshard_bucket_count: Int!
+
+  """Get cluster config sections"""
+  config(sections: [String!]): [ConfigSection]!
+}
+
+"""A section of clusterwide configuration"""
+type ConfigSection {
+  filename: String!
+  content: String!
+}
+
+"""A section of clusterwide configuration"""
+input ConfigSectionInput {
+  filename: String!
+  content: String
+}
+
+"""Result of schema validation"""
+type DDLCheckResult {
+  """Null if validation passed, error message otherwise"""
+  error: String
+}
+
+"""The schema"""
+type DDLSchema {
+  as_yaml: String!
+}
+
+"""Parameters for editing a replicaset"""
+input EditReplicasetInput {
+  uuid: String
+  weight: Float
+  vshard_group: String
+  join_servers: [JoinServerInput]
+  roles: [String!]
+  alias: String
+  all_rw: Boolean
+  failover_priority: [String!]
+}
+
+"""Parameters for editing existing server"""
+input EditServerInput {
+  uri: String
+  labels: [LabelInput]
+  disabled: Boolean
+  uuid: String!
+  expelled: Boolean
+}
+
+type EditTopologyResult {
+  replicasets: [Replicaset]!
+  servers: [Server]!
+}
+
+"""Parameters for joining a new server"""
+input JoinServerInput {
+  uri: String!
+  uuid: String
+  labels: [LabelInput]
+}
+
+"""Cluster server label"""
+type Label {
+  name: String!
+  value: String!
+}
+
+"""Cluster server label"""
+input LabelInput {
+  name: String!
+  value: String!
+}
+
+"""
+The `Long` scalar type represents non-fractional signed whole numeric values.
+Long can represent values from -(2^52) to 2^52 - 1, inclusive.
+"""
+scalar Long
+
+type Mutation {
+  """Cluster management"""
+  cluster: MutationApicluster
+
+  """Deprecated. Use `cluster{edit_topology()}` instead."""
+  edit_server(uuid: String!, uri: String, labels: [LabelInput]): Boolean
+  probe_server(uri: String!): Boolean
+
+  """Deprecated. Use `cluster{edit_topology()}` instead."""
+  edit_replicaset(weight: Float, master: [String!], alias: String, roles: [String!], uuid: String!, all_rw: Boolean, vshard_group: String): Boolean
+
+  """Deprecated. Use `cluster{edit_topology()}` instead."""
+  join_server(instance_uuid: String, timeout: Float, uri: String!, vshard_group: String, labels: [LabelInput], replicaset_alias: String, replicaset_weight: Float, roles: [String!], replicaset_uuid: String): Boolean
+  bootstrap_vshard: Boolean
+
+  """Deprecated. Use `cluster{edit_topology()}` instead."""
+  expel_server(uuid: String!): Boolean
+}
+
+"""Cluster management"""
+type MutationApicluster {
+  """Applies DDL schema on cluster"""
+  schema(as_yaml: String!): DDLSchema!
+
+  """Enable or disable automatic failover. Returns new state."""
+  failover(enabled: Boolean!): Boolean!
+
+  """Checks that schema can be applied on cluster"""
+  check_schema(as_yaml: String!): DDLCheckResult!
+
+  """Disable listed servers by uuid"""
+  disable_servers(uuids: [String!]): [Server]
+  auth_params(cookie_max_age: Long, enabled: Boolean, cookie_renew_age: Long): UserManagementAPI!
+
+  """Remove user"""
+  remove_user(username: String!): User
+
+  """Edit an existing user"""
+  edit_user(password: String, username: String!, fullname: String, email: String): User
+  edit_vshard_options(rebalancer_max_receiving: Int, collect_bucket_garbage_interval: Float, collect_lua_garbage: Boolean, sync_timeout: Float, name: String!, rebalancer_disbalance_threshold: Float): VshardGroup!
+
+  """Create a new user"""
+  add_user(password: String!, username: String!, fullname: String, email: String): User
+
+  """Edit cluster topology"""
+  edit_topology(replicasets: [EditReplicasetInput], servers: [EditServerInput]): EditTopologyResult
+
+  """Applies updated config on cluster"""
+  config(sections: [ConfigSectionInput]): [ConfigSection]!
+}
+
+type Query {
+  """Cluster management"""
+  cluster: Apicluster
+  servers(uuid: String): [Server]
+  replicasets(uuid: String): [Replicaset]
+}
+
+"""Group of servers replicating the same data"""
+type Replicaset {
+  """
+  The active leader. It may differ from "master" if failover is enabled and configured leader isn't healthy.
+  """
+  active_master: Server!
+
+  """The leader according to the configuration."""
+  master: Server!
+
+  """
+  The replica set health. It is "healthy" if all instances have status "healthy". Otherwise "unhealthy".
+  """
+  status: String!
+
+  """All instances in replica set are rw"""
+  all_rw: Boolean!
+
+  """
+  Vshard storage group name. Meaningful only when multiple vshard groups are configured.
+  """
+  vshard_group: String
+
+  """The replica set alias"""
+  alias: String!
+
+  """
+  Vshard replica set weight. Null for replica sets with vshard-storage role disabled.
+  """
+  weight: Float
+
+  """The role set enabled on every instance in the replica set"""
+  roles: [String!]
+
+  """Servers in the replica set."""
+  servers: [Server!]!
+
+  """The replica set uuid"""
+  uuid: String!
+}
+
+"""Statistics for an instance in the replica set."""
+type ReplicaStatus {
+  downstream_status: String
+  id: Int
+  upstream_peer: String
+  upstream_idle: Float
+  upstream_message: String
+  lsn: Long
+  upstream_lag: Float
+  upstream_status: String
+  uuid: String!
+  downstream_message: String
+}
+
+type Role {
+  name: String!
+  dependencies: [String!]
+}
+
+"""A server participating in tarantool cluster"""
+type Server {
+  statistics: ServerStat
+  boxinfo: ServerInfo
+  status: String!
+  uuid: String!
+  replicaset: Replicaset
+  alias: String
+  uri: String!
+  labels: [Label]
+  message: String!
+  disabled: Boolean
+
+  """Failover priority within the replica set"""
+  priority: Int
+
+  """
+  Difference between remote clock and the current one. Obtained from the
+  membership module (SWIM protocol). Positive values mean remote clock are ahead
+  of local, and vice versa. In seconds.
+  """
+  clock_delta: Float
+}
+
+"""Server information and configuration."""
+type ServerInfo {
+  cartridge: ServerInfoCartridge!
+  storage: ServerInfoStorage!
+  network: ServerInfoNetwork!
+  general: ServerInfoGeneral!
+  replication: ServerInfoReplication!
+}
+
+type ServerInfoCartridge {
+  """Cartridge version"""
+  version: String!
+}
+
+type ServerInfoGeneral {
+  """A globally unique identifier of the instance"""
+  instance_uuid: String!
+
+  """Current read-only state"""
+  ro: Boolean!
+
+  """A directory where vinyl files or subdirectories will be stored"""
+  vinyl_dir: String
+
+  """
+  The maximum number of threads to use during execution of certain internal
+  processes (currently socket.getaddrinfo() and coio_call())
+  """
+  worker_pool_threads: Int
+
+  """Current working directory of a process"""
+  work_dir: String
+
+  """The number of seconds since the instance started"""
+  uptime: Float!
+
+  """A directory where write-ahead log (.xlog) files are stored"""
+  wal_dir: String
+
+  """The Tarantool version"""
+  version: String!
+
+  """The binary protocol URI"""
+  listen: String
+
+  """The process ID"""
+  pid: Int!
+
+  """The UUID of the replica set"""
+  replicaset_uuid: String!
+
+  """A directory where memtx stores snapshot (.snap) files"""
+  memtx_dir: String
+}
+
+type ServerInfoNetwork {
+  io_collect_interval: Float
+  readahead: Long
+  net_msg_max: Long
+}
+
+type ServerInfoReplication {
+  replication_connect_quorum: Int
+  replication_connect_timeout: Float
+  replication_sync_timeout: Float
+  replication_skip_conflict: Boolean
+  replication_sync_lag: Float
+
+  """
+  Statistics for all instances in the replica set in regard to the current instance
+  """
+  replication_info: [ReplicaStatus!]
+
+  """The vector clock of replication log sequence numbers"""
+  vclock: [Long]
+  replication_timeout: Float
+}
+
+type ServerInfoStorage {
+  wal_max_size: Long
+  vinyl_run_count_per_level: Int
+  rows_per_wal: Long
+  vinyl_cache: Long
+  vinyl_range_size: Long
+  vinyl_timeout: Float
+  memtx_min_tuple_size: Long
+  vinyl_bloom_fpr: Float
+  vinyl_page_size: Long
+  memtx_max_tuple_size: Long
+  vinyl_run_size_ratio: Float
+  wal_mode: String
+  memtx_memory: Long
+  vinyl_memory: Long
+  too_long_threshold: Float
+  vinyl_max_tuple_size: Long
+  vinyl_write_threads: Int
+  vinyl_read_threads: Int
+  wal_dir_rescan_delay: Float
+}
+
+"""A short server information"""
+type ServerShortInfo {
+  error: String
+  uri: String!
+  alias: String
+  state: String
+  uuid: String
+  demo_uri: String
+}
+
+"""
+Slab allocator statistics. This can be used to monitor the total memory usage (in bytes) and memory fragmentation.
+"""
+type ServerStat {
+  """
+  The total amount of memory (including allocated, but currently free slabs) used only for tuples, no indexes
+  """
+  items_size: Long!
+
+  """Number of buckets active on the storage"""
+  vshard_buckets_count: Int
+
+  """
+  The maximum amount of memory that the slab allocator can use for both tuples
+  and indexes (as configured in the memtx_memory parameter)
+  """
+  quota_size: Long!
+
+  """
+  = items_used / slab_count * slab_size (these are slabs used only for tuples, no indexes)
+  """
+  items_used_ratio: String!
+
+  """The amount of memory that is already distributed to the slab allocator"""
+  quota_used: Long!
+
+  """= arena_used / arena_size"""
+  arena_used_ratio: String!
+
+  """
+  The efficient amount of memory (omitting allocated, but currently free slabs) used only for tuples, no indexes
+  """
+  items_used: Long!
+
+  """= quota_used / quota_size"""
+  quota_used_ratio: String!
+
+  """
+  The total memory used for tuples and indexes together (including allocated, but currently free slabs)
+  """
+  arena_size: Long!
+
+  """
+  The efficient memory used for storing tuples and indexes together (omitting allocated, but currently free slabs)
+  """
+  arena_used: Long!
+}
+
+"""A single user account information"""
+type User {
+  username: String!
+  fullname: String
+  email: String
+}
+
+"""User managent parameters and available operations"""
+type UserManagementAPI {
+  implements_remove_user: Boolean!
+  implements_add_user: Boolean!
+  implements_edit_user: Boolean!
+
+  """Number of seconds until the authentication cookie expires."""
+  cookie_max_age: Long!
+
+  """Update provided cookie if it's older then this age."""
+  cookie_renew_age: Long!
+  implements_list_users: Boolean!
+
+  """Whether authentication is enabled."""
+  enabled: Boolean!
+
+  """Active session username."""
+  username: String
+  implements_get_user: Boolean!
+  implements_check_password: Boolean!
+}
+
+"""Group of replicasets sharding the same dataset"""
+type VshardGroup {
+  """
+  The maximum number of buckets that can be received in parallel by a single replica set in the storage group
+  """
+  rebalancer_max_receiving: Int!
+
+  """Virtual buckets count in the group"""
+  bucket_count: Int!
+
+  """The interval between garbage collector actions, in seconds"""
+  collect_bucket_garbage_interval: Float!
+
+  """Whether the group is ready to operate"""
+  bootstrapped: Boolean!
+
+  """
+  If set to true, the Lua collectgarbage() function is called periodically
+  """
+  collect_lua_garbage: Boolean!
+
+  """A maximum bucket disbalance threshold, in percent"""
+  rebalancer_disbalance_threshold: Float!
+
+  """Group name"""
+  name: String!
+
+  """
+  Timeout to wait for synchronization of the old master with replicas before demotion
+  """
+  sync_timeout: Float!
+}
