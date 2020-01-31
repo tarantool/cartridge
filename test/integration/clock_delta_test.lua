@@ -83,7 +83,7 @@ function g.test_clock_delta()
             end
             t.assert_almost_equals(
                 clock_delta,
-                peer.env.CLOCK_DELTA - observer.env.CLOCK_DELTA, 1e-2,
+                peer.env.CLOCK_DELTA - observer.env.CLOCK_DELTA, 0.1,
                 string.format("Observer %s, peer %s", observer.alias, peer.alias)
             )
         end

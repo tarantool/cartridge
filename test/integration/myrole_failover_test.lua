@@ -348,10 +348,24 @@ function g.test_orphan_connect_timeout()
     g.slave:stop()
 
     log.info('--------------------------------------------------------')
-    g.master.env['TARANTOOL_REPLICATION_CONNECT_TIMEOUT'] = 0.1
+    g.master.env['TARANTOOL_REPLICATION_CONNECT_TIMEOUT'] = 1
     g.master:start()
+    wish_state(g.master, 'ConnectingFullmesh')
+    t.assert_equals(
+        g.master:graphql({
+            query = [[ { servers {uuid message} } ]]
+        }).data.servers,
+        {{
+            uuid = g.master.instance_uuid,
+            message = "ConnectingFullmesh",
+        }, {
+            uuid = g.slave.instance_uuid,
+            message = "",
+        }}
+    )
     wish_state(g.master, 'OperationError')
 
+    log.info('--------------------------------------------------------')
     g.slave:start()
     wish_state(g.slave, 'RolesConfigured')
 

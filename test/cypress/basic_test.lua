@@ -132,7 +132,13 @@ function g.test_schema_editor()
 end
 
 function g.test_code()
-    cypress_run('code.spec.js')
+    local code = os.execute(
+        "cd webui && npx cypress run --spec" ..
+        ' cypress/integration/code-empty-page.spec.js' ..
+        ' cypress/integration/code-file-in-tree.spec.js' ..
+        ' cypress/integration/code-folder-in-tree.spec.js'
+    )
+    t.assert_equals(code, 0)
 end
 
 function g.test_uninitialized()

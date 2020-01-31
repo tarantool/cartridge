@@ -487,7 +487,6 @@ local function init(opts)
         log.info('Remote control bound to 0.0.0.0:%d', vars.binary_port)
     end
 
-
     local config_filename = fio.pathjoin(vars.workdir, 'config')
     if not utils.file_exists(config_filename) then
         config_filename = config_filename .. '.yml'

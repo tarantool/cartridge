@@ -12,6 +12,7 @@
 -- simplifies custom configuration and administrative tasks.
 -- @module cartridge
 
+local title = require('title')
 local fio = require('fio')
 local uri = require('uri')
 local log = require('log')
@@ -240,6 +241,10 @@ local function cfg(opts, box_opts)
         end
     end
 
+    if box_opts.custom_proc_title ~= nil then
+        title.update(box_opts.custom_proc_title)
+    end
+
     local vshard_groups = {}
     for k, v in pairs(opts.vshard_groups or {}) do
         local name, params
@@ -338,6 +343,44 @@ local function cfg(opts, box_opts)
 
     if advertise.service == nil then
         return nil, CartridgeCfgError:new('Invalid port in advertise_uri %q', opts.advertise_uri)
+    end
+
+    local membership_options = require("membership.options")
+    local membership_new_opts, err = argparse.get_opts({
+        swim_protocol_period_seconds = 'number',
+        swim_anti_entropy_period_seconds = 'number',
+        swim_max_packet_size = 'number',
+        swim_ack_timeout_seconds = 'number',
+        swim_suspect_timeout_seconds = 'number',
+        swim_num_failure_detection_subgroups = 'number',
+    })
+    if err ~= nil then
+        return nil, err
+    end
+
+
+    if membership_new_opts.swim_protocol_period_seconds ~= nil then
+        membership_options.PROTOCOL_PERIOD_SECONDS = membership_new_opts.swim_protocol_period_seconds
+    end
+
+    if membership_new_opts.swim_anti_entropy_period_seconds ~= nil then
+        membership_options.ANTI_ENTROPY_PERIOD_SECONDS = membership_new_opts.swim_anti_entropy_period_seconds
+    end
+
+    if membership_new_opts.swim_max_packet_size ~= nil then
+        membership_options.MAX_PACKET_SIZE = membership_new_opts.swim_max_packet_size
+    end
+
+    if membership_new_opts.swim_ack_timeout_seconds ~= nil then
+        membership_options.ACK_TIMEOUT_SECONDS = membership_new_opts.swim_ack_timeout_seconds
+    end
+
+    if membership_new_opts.swim_suspect_timeout_seconds ~= nil then
+        membership_options.SUSPECT_TIMEOUT_SECONDS = membership_new_opts.swim_suspect_timeout_seconds
+    end
+
+    if membership_new_opts.swim_num_failure_detection_subgroups ~= nil then
+        membership_options.NUM_FAILURE_DETECTION_SUBGROUPS = membership_new_opts.swim_num_failure_detection_subgroups
     end
 
     log.info('Using advertise_uri "%s:%d"', advertise.host, advertise.service)

@@ -28,6 +28,7 @@ g.before_all = function()
             }, {
                 uuid = helpers.uuid('b'),
                 roles = {'vshard-storage'},
+                all_rw = true,
                 servers = {
                     {
                         alias = 'storage',
@@ -383,7 +384,7 @@ function g.test_replicasets()
             master = {uuid = helpers.uuid('b', 'b', 1)},
             active_master = {uuid = helpers.uuid('b', 'b', 1)},
             weight = 1,
-            all_rw = false,
+            all_rw = true,
             servers = {
                 {uri = 'localhost:13302', priority = 1},
                 {uri = 'localhost:13304', priority = 2},
@@ -426,6 +427,6 @@ function g.test_clock_delta()
 
     t.assert_equals(#servers, 4)
     for _, server in pairs(servers) do
-        t.assert_almost_equals(server.clock_delta, 0, 1e-2)
+        t.assert_almost_equals(server.clock_delta, 0, 0.1)
     end
 end

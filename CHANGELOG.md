@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Validate YAML in code editor WebUI.
 
+- Expose membership options with argparse.
+
+- Allow specifying `all_rw` replicaset flag in luatest helpers.
+
 ### Changed
 
 - Network error shows with fixed splash panel instead of notification.
@@ -36,6 +40,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   trace from `error.str` field.
 
 - Replicaset weight input in WebUI accepts float values.
+
+- Apply `custom_proc_title` setting without waiting for `box.cfg`.
 
 ## [2.0.1] - 2020-01-15
 
