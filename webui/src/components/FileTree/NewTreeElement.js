@@ -96,6 +96,12 @@ export class NewTreeElement extends React.Component<NewTreeElementProps, NewTree
     }
   }
 
+  handleBlur = (event: FocusEvent) => {
+    const { value } = this.state;
+
+    this.props.onConfirm(value);
+  }
+
   handleKeyPress = (event: KeyboardEvent) => {
     const { value } = this.state;
     const { type } = this.props;
@@ -158,7 +164,7 @@ export class NewTreeElement extends React.Component<NewTreeElementProps, NewTree
             ref={this.inputRef}
             value={value}
             onChange={this.handleChange}
-            onBlur={this.props.onCancel}
+            onBlur={this.handleBlur}
             onKeyDown={this.handleKeyPress}
           />
         </li>
