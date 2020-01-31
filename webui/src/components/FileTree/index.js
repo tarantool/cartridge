@@ -51,7 +51,7 @@ export class FileTree extends React.Component<FileTreeProps, FileTreeState> {
 
     if (expand !== true && (expand === false || expandedEntries.includes(id))) {
       this.setState({
-        expandedEntries: expandedEntries.filter(i => i !== id )
+        expandedEntries: expandedEntries.filter(i => i !== id)
       });
     } else {
       if (!expandedEntries.includes(id)) {
@@ -62,13 +62,15 @@ export class FileTree extends React.Component<FileTreeProps, FileTreeState> {
     }
   }
 
-  handleFolderCreate = (path: string) => {
-    this.expandEntry(path, true);
+  handleFolderCreate = (file: TreeFileItem) => {
+    const { fileId, path } = file;
+    this.expandEntry(fileId, true);
     this.props.onFolderCreate(path);
   }
 
-  handleFileCreate = (path: string) => {
-    this.expandEntry(path, true);
+  handleFileCreate = (file: TreeFileItem) => {
+    const { fileId, path } = file;
+    this.expandEntry(fileId, true);
     this.props.onFileCreate(path);
   }
 
@@ -92,7 +94,7 @@ export class FileTree extends React.Component<FileTreeProps, FileTreeState> {
       <ul className={cx(styles.tree, className, 'meta-test__enterName')}>
         {operationObject === '' && ['createFile', 'createFolder'].includes(fileOperation) && (
           <NewTreeElement
-            type={fileOperation === 'createFolder' ? 'folder' : 'file' }
+            type={fileOperation === 'createFolder' ? 'folder' : 'file'}
             level={0}
             onCancel={onOperationCancel}
             onConfirm={onOperationConfirm}
@@ -110,14 +112,12 @@ export class FileTree extends React.Component<FileTreeProps, FileTreeState> {
                   <NewTreeElement
                     key={item.path}
                     initialValue={item.fileName}
-                    active={selectedFile ? (selectedFile.path === item.path): false}
+                    active={selectedFile ? (selectedFile.path === item.path) : false}
                     type={item.type}
                     level={level}
-                    childsCount={item.items && item.items.length}
-                    expanded={expandedEntries.includes(item.path)}
+                    expanded={expandedEntries.includes(item.fileId)}
                     onCancel={onOperationCancel}
                     onConfirm={onOperationConfirm}
-                    onExpand={this.expandEntry}
                   >
                     {children}
                   </NewTreeElement>
@@ -128,7 +128,7 @@ export class FileTree extends React.Component<FileTreeProps, FileTreeState> {
                     file={item}
                     active={selectedFile ? (selectedFile.path === item.path) : false}
                     level={level}
-                    expanded={expandedEntries.includes(item.path)}
+                    expanded={expandedEntries.includes(item.fileId)}
                     onDelete={onDelete}
                     onExpand={this.expandEntry}
                     onFileCreate={this.handleFileCreate}
@@ -143,7 +143,6 @@ export class FileTree extends React.Component<FileTreeProps, FileTreeState> {
                         level={level + 1}
                         onCancel={onOperationCancel}
                         onConfirm={onOperationConfirm}
-                        onExpand={this.expandEntry}
                       />
                     )}
                     {children}
