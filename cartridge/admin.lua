@@ -16,6 +16,7 @@ local rpc = require('cartridge.rpc')
 local pool = require('cartridge.pool')
 local utils = require('cartridge.utils')
 local roles = require('cartridge.roles')
+local cartridge = require('cartridge')
 local failover = require('cartridge.failover')
 local topology = require('cartridge.topology')
 local twophase = require('cartridge.twophase')
@@ -362,6 +363,9 @@ local function get_info(uri)
                 replication_timeout = box_cfg.replication_timeout,
                 vclock = box_info.vclock,
                 replication_info = {},
+            },
+            cartridge = {
+                version = cartridge.VERSION
             },
         }
 
