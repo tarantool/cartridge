@@ -30,8 +30,8 @@ local gql_type_check_result = gql_types.object({
     fields = {
         error = {
             kind = gql_types.string,
-            description = 'Null if validation passed,' ..
-                ' error message otherwise',
+            description = 'Error details if validation fails,' ..
+                ' null otherwise',
         },
     }
 })
