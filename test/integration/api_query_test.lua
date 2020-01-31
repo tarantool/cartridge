@@ -5,7 +5,6 @@ local g = t.group()
 local test_helper = require('test.helper')
 local helpers = require('cartridge.test-helpers')
 local log = require('log')
-local cartridge = require('cartridge')
 
 g.before_all = function()
     g.cluster = helpers.Cluster:new({
