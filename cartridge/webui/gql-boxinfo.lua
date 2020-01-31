@@ -201,7 +201,7 @@ local boxinfo_schema = {
                 fields = {
                     version = {
                         kind = gql_types.string.nonNull,
-                        description = '',
+                        description = 'Cartridge version',
                     },
                 }
             }).nonNull,

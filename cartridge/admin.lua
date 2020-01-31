@@ -11,7 +11,6 @@ local checks = require('checks')
 local errors = require('errors')
 local uuid_lib = require('uuid')
 local membership = require('membership')
-local cartridge = require('cartridge')
 
 local rpc = require('cartridge.rpc')
 local pool = require('cartridge.pool')
@@ -365,7 +364,7 @@ local function get_info(uri)
                 replication_info = {},
             },
             cartridge = {
-                version = cartridge.VERSION
+                version = require('cartridge').VERSION
             },
         }
 
