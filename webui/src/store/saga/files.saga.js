@@ -34,7 +34,7 @@ function* applyFilesSaga() {
 
       // We don't keep all content in Redux store anymore. Get it from Monaco models:
       const contentIfEdited = getModelValueByFile(getFileIdForMonaco(fileId));
-      const content = (contentIfEdited !== null ? contentIfEdited : initialContent) || '';
+      const content = contentIfEdited !== null ? contentIfEdited : initialContent;
 
       if (type === 'file') {
         if (initialContent !== '' || saved) { // Filter new files
