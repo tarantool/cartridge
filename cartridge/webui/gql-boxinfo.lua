@@ -196,6 +196,15 @@ local boxinfo_schema = {
                     },
                 }
             }).nonNull,
+            cartridge = gql_types.object({
+                name = 'ServerInfoCartridge',
+                fields = {
+                    version = {
+                        kind = gql_types.string.nonNull,
+                        description = 'Cartridge version',
+                    },
+                }
+            }).nonNull,
         }
     }),
     arguments = {},
