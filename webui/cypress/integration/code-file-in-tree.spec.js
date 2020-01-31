@@ -7,7 +7,8 @@ describe('Code page', () => {
 
   //create file and file contents
       cy.get('.meta-test__addFileBtn').click();
-      cy.get('.meta-test__enterName').focused().type('file-in-tree{enter}');
+      cy.get('.meta-test__enterName').focused().type('file-in-tree');
+      cy.get('#root').contains('Tarantool').click();
       cy.get('.ScrollbarsCustom-Content').contains('file-in-tree');
       //reload
       cy.get('button[type="button"]').contains('Reload').click();

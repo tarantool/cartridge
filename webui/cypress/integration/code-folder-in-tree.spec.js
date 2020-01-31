@@ -4,7 +4,8 @@ describe('Code page', () => {
       cy.visit(Cypress.config('baseUrl')+"/admin/cluster/code");
   //create folder
       cy.get('.meta-test__addFolderBtn').click();
-      cy.get('.meta-test__enterName').focused().type('folder-in-tree{enter}');
+      cy.get('.meta-test__enterName').focused().type('folder-in-tree');
+      cy.get('#root').contains('Tarantool').click();
       cy.get('.ScrollbarsCustom-Content').contains('folder-in-tree');
   //create folder in folder
       cy.get('.meta-test__createFolderInTreeBtn').click({ force: true });
