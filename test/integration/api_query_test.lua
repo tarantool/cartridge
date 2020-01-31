@@ -5,6 +5,7 @@ local g = t.group()
 local test_helper = require('test.helper')
 local helpers = require('cartridge.test-helpers')
 local log = require('log')
+local cartridge = require('cartridge')
 
 g.before_all = function()
     g.cluster = helpers.Cluster:new({
@@ -208,6 +209,9 @@ function g.test_server_info_schema()
             replication_fields: __type(name: "ServerInfoReplication") {
                 fields { name }
             }
+            cartridge_fields: __type(name: "ServerInfoCartridge") {
+                fields { name }
+            }
         }]]
     })
 
@@ -216,6 +220,7 @@ function g.test_server_info_schema()
     local field_name_storage = fields_from_map(data['storage_fields'], 'name')
     local field_name_network = fields_from_map(data['network_fields'], 'name')
     local field_name_replica = fields_from_map(data['replication_fields'], 'name')
+    local field_name_cartridge = fields_from_map(data['cartridge_fields'], 'name')
 
     local resp = router:graphql({
         query = string.format(
@@ -227,6 +232,7 @@ function g.test_server_info_schema()
                             storage { %s }
                             network { %s }
                             replication { %s }
+                            cartridge { %s }
                         }
                     }
                 }
@@ -234,7 +240,8 @@ function g.test_server_info_schema()
             table.concat(field_name_general, ' '),
             table.concat(field_name_storage, ' '),
             table.concat(field_name_network, ' '),
-            table.concat(field_name_replica, ' ')
+            table.concat(field_name_replica, ' '),
+            table.concat(field_name_cartridge, ' ')
         )
     })
     log.info(resp['data']['servers'][1])
