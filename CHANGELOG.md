@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Allow specifying `all_rw` replicaset flag in luatest helpers.
 
+- Code applying error in Code editor.
+
 ### Changed
 
 - Network error shows with fixed splash panel instead of notification.
