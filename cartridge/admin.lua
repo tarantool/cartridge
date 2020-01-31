@@ -363,6 +363,9 @@ local function get_info(uri)
                 vclock = box_info.vclock,
                 replication_info = {},
             },
+            cartridge = {
+                version = require('cartridge').VERSION
+            },
         }
 
         for i, replica in pairs(box_info.replication) do
