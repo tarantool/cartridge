@@ -100,6 +100,12 @@ function g.before_all()
     assert(roles.register_role('cartridge.roles.vshard-storage'))
     assert(roles.register_role('cartridge.roles.vshard-router'))
 
+    _G.vshard = {
+        storage = {
+            buckets_count = function() end,
+        }
+    }
+
     g.membership_backup = {}
     g.pool_backup = {}
 
@@ -758,11 +764,6 @@ replicasets:
 end
 
 function g.test_single_group()
-    _G.vshard = {
-        storage = {
-            buckets_count = function() end,
-        }
-    }
     g.mock_package()
     conf = {
         ['vshard.yml'] = yaml.encode({
@@ -774,11 +775,6 @@ function g.test_single_group()
 end
 
 function g.test_multi_group()
-    _G.vshard = {
-        storage = {
-            buckets_count = function() end,
-        }
-    }
     g.mock_package()
     conf = {
         ['vshard_groups.yml'] = yaml.encode({
