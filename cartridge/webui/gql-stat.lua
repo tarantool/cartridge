@@ -1,6 +1,6 @@
 #!/usr/bin/env tarantool
 
-local admin = require('cartridge.admin')
+local pool = require('cartridge.pool')
 local gql_types = require('cartridge.graphql.types')
 
 local statistics_schema = {
@@ -76,8 +76,26 @@ local statistics_schema = {
         }
     }),
     arguments = {},
-    resolve = function(root, _)
-        return admin.get_stat(root.uri), nil
+    resolve = function(root, _, info)
+        local cache = info.context.request_cache
+        assert(cache.topology ~= nil)
+
+        if cache.servers_stat ~= nil then
+            return cache.servers_stat[root.uri]
+        end
+
+        local uri_list = {}
+        for _, server in ipairs(cache.topology.servers) do
+            table.insert(uri_list, server.uri)
+        end
+
+        local stat = pool.map_call(
+            '_G.__cluster_admin_get_stat',
+            {}, {uri_list = uri_list, timeout = 1}
+        )
+
+        cache.servers_stat = stat
+        return cache.servers_stat[root.uri]
     end,
 }
 

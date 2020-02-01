@@ -178,28 +178,61 @@ local gql_type_role = gql_types.object {
     }
 }
 
-local function get_servers(_, args)
-    local servers, err = admin.get_servers(args.uuid)
-    if servers == nil then
+local function get_topology(_, _, info)
+    local cache = info.context.request_cache
+    if cache.topology ~= nil then
+        return cache.topology
+    end
+
+    local topology, err = admin.get_topology()
+    if topology == nil then
         return nil, err
     end
-    for _, server in pairs(servers) do
+
+    for _, server in pairs(topology.servers) do
         server.labels = convert_labels_to_graphql(server.labels)
     end
-    return servers
+
+    local ret = {
+        servers = setmetatable({}, {_index = topology.servers}),
+        replicasets = setmetatable({}, {_index = topology.replicasets}),
+    }
+
+    for _, server in pairs(topology.servers) do
+        table.insert(ret.servers, server)
+    end
+    for _, replicaset in pairs(topology.replicasets) do
+        table.insert(ret.replicasets, replicaset)
+    end
+
+    cache.topology = ret
+    return ret
 end
 
-local function get_replicasets(_, args)
-    local replicasets, err = admin.get_replicasets(args.uuid)
-    if replicasets == nil then
+local function get_servers(_, args, info)
+    local topology, err = get_topology(nil, nil, info)
+    if topology == nil then
         return nil, err
     end
-    for _, replicaset in pairs(replicasets) do
-        for _, server in pairs(replicaset.servers) do
-            server.labels = convert_labels_to_graphql(server.labels)
-        end
+
+    if args.uuid ~= nil then
+        return {topology.servers[args.uuid]}
+    else
+        return topology.servers
     end
-    return replicasets
+end
+
+local function get_replicasets(_, args, info)
+    local topology, err = get_topology(nil, nil, info)
+    if topology == nil then
+        return nil, err
+    end
+
+    if args.uuid ~= nil then
+        return {topology.replicasets[args.uuid]}
+    else
+        return topology.replicasets
+    end
 end
 
 local function edit_topology(_, args)

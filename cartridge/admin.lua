@@ -112,6 +112,12 @@ local function get_server_info(members, uuid, uri)
     return ret
 end
 
+--- Get servers and replicasets lists.
+-- @function get_topology
+-- @local
+-- @treturn[1] {servers={ServerInfo,...},replicasets={ReplicasetInfo,...}}
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 local function get_topology()
     local state, err = confapplier.get_state()
     -- OperationError doesn't influence observing topology
@@ -1128,6 +1134,7 @@ return {
     get_self = get_self,
     get_servers = get_servers,
     get_replicasets = get_replicasets,
+    get_topology = get_topology,
 
     edit_topology = edit_topology,
     probe_server = probe_server,

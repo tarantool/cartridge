@@ -436,3 +436,36 @@ function g.test_clock_delta()
         t.assert_almost_equals(server.clock_delta, 0, 0.1)
     end
 end
+
+function g.test_caching()
+    -- In this test we protect `admin.get_stat` and `get_topology`
+    -- functions from being executed twice in the same request
+    -- and query same data with different aliases
+    g.cluster.main_server.net_box:eval([[
+        local fiber = require('fiber')
+        local admin = require('cartridge.admin')
+        local admin_get_stat = admin.get_stat
+        admin.get_stat = function(...)
+            assert(not fiber.self().storage.get_stat_wasted, "Excess get_stat call")
+            fiber.self().storage.get_stat_wasted = true
+            return admin_get_stat(...)
+        end
+        local admin_get_topology = admin.get_topology
+        admin.get_topology = function()
+            assert(not fiber.self().storage.get_topology_wasted, "Excess get_topology call")
+            fiber.self().storage.get_topology_wasted = true
+            return admin_get_topology()
+        end
+    ]])
+    local resp = g.cluster.main_server:graphql({
+        query = [[{
+            s1: servers {alias statistics {}}
+            s2: servers {alias statistics {}}
+            r1: replicasets {servers {statistics{} replicaset {servers {statistics {}}}}}
+            r2: replicasets {servers {statistics{} replicaset {servers {statistics {}}}}}
+        }]],
+    })
+
+    t.assert_equals(resp.data.s1, resp.data.s2)
+    t.assert_equals(resp.data.r1, resp.data.r2)
+end
