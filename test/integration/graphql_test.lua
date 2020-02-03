@@ -151,17 +151,7 @@ function g.test_reread_request()
         end)
     ]])
 
-    server:graphql({
-        query = [[
-            {
-                cluster {
-                    self {
-                        uri
-                    }
-                }
-            }
-        ]]
-    })
+    server:graphql({ query = '{}' })
 end
 
 function g.test_fail_validate()
