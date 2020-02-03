@@ -47,7 +47,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Apply `custom_proc_title` setting without waiting for `box.cfg`.
 
-- Replace `req:read()` on `req:read_cached()` for GraphQL.
+- Make GraphQL compatible with `req:read_cached()` call in httpd hooks.
 
 ## [2.0.1] - 2020-01-15
 
