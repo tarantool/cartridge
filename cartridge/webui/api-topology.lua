@@ -194,8 +194,8 @@ local function get_topology(_, _, info)
     end
 
     local ret = {
-        servers = setmetatable({}, {_index = topology.servers}),
-        replicasets = setmetatable({}, {_index = topology.replicasets}),
+        servers = setmetatable({}, {__index = topology.servers}),
+        replicasets = setmetatable({}, {__index = topology.replicasets}),
     }
 
     for _, server in pairs(topology.servers) do
@@ -215,7 +215,10 @@ local function get_servers(_, args, info)
         return nil, err
     end
 
+    local cache = info.context.request_cache
     if args.uuid ~= nil then
+        -- Turn off optimization for single-instance query
+        cache.disable_stat_optimization = true
         return {topology.servers[args.uuid]}
     else
         return topology.servers

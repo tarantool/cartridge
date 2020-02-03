@@ -1,6 +1,7 @@
 #!/usr/bin/env tarantool
 
 local pool = require('cartridge.pool')
+local admin = require('cartridge.admin')
 local gql_types = require('cartridge.graphql.types')
 
 local statistics_schema = {
@@ -82,6 +83,8 @@ local statistics_schema = {
 
         if cache.servers_stat ~= nil then
             return cache.servers_stat[root.uri]
+        elseif cache.disable_stat_optimization then
+            return admin.get_stat(root.uri), nil
         end
 
         local uri_list = {}
