@@ -1,10 +1,22 @@
 #!/usr/bin/env tarantool
 
+local fio = require('fio')
+local yaml = require('yaml')
+local roles = require('cartridge.roles')
+local topology = require('cartridge.topology')
+local confapplier = require('cartridge.confapplier')
+local ClusterwideConfig = require('cartridge.clusterwide-config')
+local membership = require('membership')
+local pool = require('cartridge.pool')
+
+local t = require('luatest')
+local g = t.group()
+
 local members = {
     ['localhost:3301'] = {
         uri = 'localhost:3301',
         status = 'alive',
-        payload = {uuid = 'aaaaaaaa-aaaa-4000-b000-000000000001'},
+        payload = { uuid = 'aaaaaaaa-aaaa-4000-b000-000000000001' },
     },
     ['localhost:3302'] = {
         uri = 'localhost:3302',
@@ -27,49 +39,9 @@ local members = {
         payload = {},
     },
 }
-package.loaded['membership'] = {
-    get_member = function(uri)
-        return members[uri]
-    end,
-    myself = function(_)
-        return members['localhost:3301']
-    end,
-    subscribe = function()
-        return require('fiber').cond()
-    end,
-}
 
-package.loaded['cartridge.pool'] = {
-    connect = function()
-        return require('net.box').self
-    end,
-}
-
-_G.vshard = {
-    storage = {
-        buckets_count = function() end,
-    }
-}
-
-local tap = require('tap')
-local yaml = require('yaml')
-local roles = require('cartridge.roles')
-local topology = require('cartridge.topology')
-local confapplier = require('cartridge.confapplier')
-local ClusterwideConfig = require('cartridge.clusterwide-config')
-assert(roles.register_role('cartridge.roles.vshard-storage'))
-assert(roles.register_role('cartridge.roles.vshard-router'))
-local test = tap.test('topology.config')
-
-local function test_all(test, conf)
-test:plan(54)
-
+local conf
 local vshard_group
-if conf['vshard.yml'] then
-    vshard_group = "\n    vshard_group: default\n"
-else
-    vshard_group = "\n    vshard_group: first\n"
-end
 
 local function check_config(result, raw_new, raw_old)
     local topology_new = raw_new and yaml.decode(raw_new) or {}
@@ -89,74 +61,128 @@ local function check_config(result, raw_new, raw_old)
         )
     end
 
-    test:is(ok or err.err, result, result)
+    t.assert_equals(ok or err.err, result, 'Unexpected result')
 end
 
--- check_schema
-test:diag('validate_schema()')
+function g.teardown()
+    membership.get_member = g.membership_backup.get_member
+    membership.subscribe = g.membership_backup.subscribe
+    membership.myself = g.membership_backup.myself
 
-test:diag('   top-level keys')
+    pool.connect = g.pool_backup.connect
+end
 
-check_config('topology_new.auth must be boolean, got string',
+function g.mock_package()
+    g.membership_backup.get_member = membership.get_member
+    g.membership_backup.subscribe = membership.subscribe
+    g.membership_backup.myself = membership.myself
+
+    g.pool_backup.connect = pool.connect
+
+    package.loaded['membership'].get_member = function(uri)
+        return members[uri]
+    end
+
+    package.loaded['membership'].myself = function(_)
+        return members['localhost:3301']
+    end
+
+    package.loaded['membership'].subscribe = function()
+        return require('fiber').cond()
+    end
+
+    package.loaded['cartridge.pool'].connect = function()
+        return require('net.box').self
+    end
+end
+
+function g.before_all()
+    assert(roles.register_role('cartridge.roles.vshard-storage'))
+    assert(roles.register_role('cartridge.roles.vshard-router'))
+
+    _G.vshard = {
+        storage = {
+            buckets_count = function() end,
+        }
+    }
+
+    g.membership_backup = {}
+    g.pool_backup = {}
+
+    g.tempdir = fio.tempdir()
+end
+
+function g.after_all()
+    fio.rmtree(g.tempdir)
+end
+
+local function test_all()
+    if conf['vshard.yml'] then
+        vshard_group = "\n    vshard_group: default\n"
+    else
+        vshard_group = "\n    vshard_group: first\n"
+    end
+
+    -- scheme
+    check_config('topology_new.auth must be boolean, got string',
 [[---
 auth:
 ...]])
 
-check_config('topology_new.failover must be boolean, got string',
+    check_config('topology_new.failover must be boolean, got string',
 [[---
 failover:
 ...]])
 
-check_config('topology_new has unknown parameter "unknown"',
+    check_config('topology_new has unknown parameter "unknown"',
 [[---
 unknown:
 ...]])
 
-test:diag('   servers keys')
-
-check_config('topology_new.servers must be a table, got string',
+    -- servers keys
+    check_config('topology_new.servers must be a table, got string',
 [[---
 servers:
 ...]])
 
-check_config('topology_new.servers must have string keys',
+    check_config('topology_new.servers must have string keys',
 [[---
 servers:
   - srv1
 ...]])
 
-check_config('topology_new.servers key "srv2" is not a valid UUID',
+    check_config('topology_new.servers key "srv2" is not a valid UUID',
 [[---
 servers:
   srv2:
 ...]])
 
-test:diag('   servers')
-
-check_config('topology_new.servers[aaaaaaaa-aaaa-4000-b000-000000000001]'..
+    -- servers
+    check_config('topology_new.servers[aaaaaaaa-aaaa-4000-b000-000000000001]'..
   ' must be either a table or the string "expelled"',
 [[---
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000001: foo
 ...]])
 
-check_config('topology_new.servers[aaaaaaaa-aaaa-4000-b000-000000000001].uri'..
-  ' must be a string, got nil',
+    check_config('topology_new.servers[aaaaaaaa-aaaa-4000-b000-000000000001].uri'..
+      ' must be a string, got nil',
 [[---
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000001:
     replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
 ...]])
 
-check_config('topology_new.servers[aaaaaaaa-aaaa-4000-b000-000000000001].replicaset_uuid'..
-  ' must be a string, got nil',
+    check_config('topology_new.servers[aaaaaaaa-aaaa-4000-b000-000000000001].replicaset_uuid'..
+      ' must be a string, got nil',
 [[---
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000001:
     uri: localhost:3301
 ...]])
-check_config('topology_new.servers[aaaaaaaa-aaaa-4000-b000-000000000001].replicaset_uuid'..
-  ' "set1" is not a valid UUID',
+
+    check_config('topology_new.servers[aaaaaaaa-aaaa-4000-b000-000000000001].replicaset_uuid'..
+      ' "set1" is not a valid UUID',
 [[---
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000001:
@@ -164,8 +190,8 @@ servers:
     replicaset_uuid: set1
 ...]])
 
-check_config('topology_new.servers[aaaaaaaa-aaaa-4000-b000-000000000001].disabled'..
-  ' must be true or false',
+    check_config('topology_new.servers[aaaaaaaa-aaaa-4000-b000-000000000001].disabled'..
+      ' must be true or false',
 [[---
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000001:
@@ -174,8 +200,8 @@ servers:
     replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
 ...]])
 
-check_config('topology_new.servers[aaaaaaaa-aaaa-4000-b000-000000000001]'..
-  ' has unknown parameter "unknown"',
+    check_config('topology_new.servers[aaaaaaaa-aaaa-4000-b000-000000000001]'..
+      ' has unknown parameter "unknown"',
 [[---
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000001:
@@ -184,52 +210,50 @@ servers:
     unknown: true
 ...]])
 
-test:diag('   replicasets keys')
-
-check_config('topology_new.replicasets must be a table, got string',
+    -- replicasets keys
+    check_config('topology_new.replicasets must be a table, got string',
 [[---
 replicasets:
 ...]])
 
-check_config('topology_new.replicasets must have string keys',
+    check_config('topology_new.replicasets must have string keys',
 [[---
 replicasets:
   - set1
 ...]])
 
-check_config('topology_new.replicasets key "set2" is not a valid UUID',
+    check_config('topology_new.replicasets key "set2" is not a valid UUID',
 [[---
 replicasets:
   set2:
 ...]])
 
-test:diag('   replicasets')
-
-check_config('topology_new.replicasets[aaaaaaaa-0000-4000-b000-000000000001]'..
-  ' must be a table',
+    -- replicasets
+    check_config('topology_new.replicasets[aaaaaaaa-0000-4000-b000-000000000001]'..
+      ' must be a table',
 [[---
 replicasets:
   aaaaaaaa-0000-4000-b000-000000000001: foo
 ...]])
 
-check_config('topology_new.replicasets[aaaaaaaa-0000-4000-b000-000000000001]'..
-  '.master must be either string or table, got nil',
+    check_config('topology_new.replicasets[aaaaaaaa-0000-4000-b000-000000000001]'..
+      '.master must be either string or table, got nil',
 [[---
 replicasets:
   aaaaaaaa-0000-4000-b000-000000000001:
     roles: {"vshard-router": true}
 ...]])
 
-check_config('topology_new.replicasets[aaaaaaaa-0000-4000-b000-000000000001]'..
-  '.roles must be a table, got nil',
+    check_config('topology_new.replicasets[aaaaaaaa-0000-4000-b000-000000000001]'..
+      '.roles must be a table, got nil',
 [[---
 replicasets:
   aaaaaaaa-0000-4000-b000-000000000001:
     master: aaaaaaaa-aaaa-4000-b000-000000000001
 ...]])
 
-check_config('topology_new.replicasets[aaaaaaaa-0000-4000-b000-000000000001]'..
-  '.roles must have string keys',
+    check_config('topology_new.replicasets[aaaaaaaa-0000-4000-b000-000000000001]'..
+      '.roles must have string keys',
 [[---
 replicasets:
   aaaaaaaa-0000-4000-b000-000000000001:
@@ -237,8 +261,8 @@ replicasets:
     roles: ["vshard-router"]
 ...]])
 
-check_config('topology_new.replicasets[aaaaaaaa-0000-4000-b000-000000000001]'..
-  '.roles["vshard-router"] must be true or false',
+    check_config('topology_new.replicasets[aaaaaaaa-0000-4000-b000-000000000001]'..
+      '.roles["vshard-router"] must be true or false',
 [[---
 replicasets:
   aaaaaaaa-0000-4000-b000-000000000001:
@@ -246,8 +270,8 @@ replicasets:
     roles: {"vshard-router": 2}
 ...]])
 
-check_config('topology_new.replicasets[aaaaaaaa-0000-4000-b000-000000000001]'..
-  ' has unknown parameter "unknown"',
+    check_config('topology_new.replicasets[aaaaaaaa-0000-4000-b000-000000000001]'..
+      ' has unknown parameter "unknown"',
 [[---
 replicasets:
   aaaaaaaa-0000-4000-b000-000000000001:
@@ -256,8 +280,8 @@ replicasets:
     unknown: true
 ...]])
 
-check_config('topology_new.replicasets[aaaaaaaa-0000-4000-b000-000000000001]'..
-  '.weight must be a number, got string',
+    check_config('topology_new.replicasets[aaaaaaaa-0000-4000-b000-000000000001]'..
+      '.weight must be a number, got string',
 [[---
 replicasets:
   aaaaaaaa-0000-4000-b000-000000000001:
@@ -266,8 +290,8 @@ replicasets:
     weight: over9000
 ...]])
 
-check_config('topology_new.replicasets[aaaaaaaa-0000-4000-b000-000000000001]'..
-  '.alias must be a string, got boolean',
+    check_config('topology_new.replicasets[aaaaaaaa-0000-4000-b000-000000000001]'..
+      '.alias must be a string, got boolean',
 [[---
 replicasets:
   aaaaaaaa-0000-4000-b000-000000000001:
@@ -276,10 +300,9 @@ replicasets:
     alias: false
 ...]])
 
-test:diag('validate_consistency()')
-
-check_config('servers[aaaaaaaa-aaaa-4000-b000-000000000001]'..
-  '.replicaset_uuid is not configured in replicasets table',
+    -- consistency
+    check_config('servers[aaaaaaaa-aaaa-4000-b000-000000000001]'..
+      '.replicaset_uuid is not configured in replicasets table',
 [[---
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000001:
@@ -287,8 +310,8 @@ servers:
     replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
 ...]])
 
-check_config('servers[aaaaaaaa-aaaa-4000-b000-000000000001]'..
-  '.uri "localhost:3301" collision with another server',
+    check_config('servers[aaaaaaaa-aaaa-4000-b000-000000000001]'..
+      '.uri "localhost:3301" collision with another server',
 [[---
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000001:
@@ -303,8 +326,8 @@ replicasets:
     roles: {}
 ...]])
 
-check_config('replicasets[aaaaaaaa-0000-4000-b000-000000000001]'..
-  ' has no servers',
+    check_config('replicasets[aaaaaaaa-0000-4000-b000-000000000001]'..
+      ' has no servers',
 [[---
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000001: expelled
@@ -314,8 +337,8 @@ replicasets:
     roles: {}
 ...]])
 
-check_config('replicasets[aaaaaaaa-0000-4000-b000-000000000001]'..
-  [[ leader "aaaaaaaa-aaaa-4000-b000-000000000002" doesn't exist]],
+    check_config('replicasets[aaaaaaaa-0000-4000-b000-000000000001]'..
+      [[ leader "aaaaaaaa-aaaa-4000-b000-000000000002" doesn't exist]],
 [[---
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000001:
@@ -327,8 +350,8 @@ replicasets:
     roles: {}
 ...]])
 
-check_config('replicasets[aaaaaaaa-0000-4000-b000-000000000001]'..
-  [[ leader "aaaaaaaa-aaaa-4000-b000-000000000002" can't be expelled]],
+    check_config('replicasets[aaaaaaaa-0000-4000-b000-000000000001]' ..
+        [[ leader "aaaaaaaa-aaaa-4000-b000-000000000002" can't be expelled]],
 [[---
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000001:
@@ -341,8 +364,8 @@ replicasets:
     roles: {}
 ...]])
 
-check_config('replicasets[bbbbbbbb-0000-4000-b000-000000000001]'..
-  [[ leader "aaaaaaaa-aaaa-4000-b000-000000000001" belongs to another replicaset]],
+    check_config('replicasets[bbbbbbbb-0000-4000-b000-000000000001]' ..
+        [[ leader "aaaaaaaa-aaaa-4000-b000-000000000001" belongs to another replicaset]],
 [[---
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000001:
@@ -360,8 +383,8 @@ replicasets:
     roles: {}
 ...]])
 
-check_config('replicasets[aaaaaaaa-0000-4000-b000-000000000001]'..
-  '.weight must be non-negative, got -1',
+    check_config('replicasets[aaaaaaaa-0000-4000-b000-000000000001]' ..
+        '.weight must be non-negative, got -1',
 [[---
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000001:
@@ -374,13 +397,13 @@ replicasets:
     weight: -1
 ...]])
 
-local e
-if conf['vshard.yml'] then
-    e = 'At least one vshard-storage (default) must have weight > 0'
-else
-    e = 'At least one vshard-storage (first) must have weight > 0'
-end
-check_config(e,
+    local e
+    if conf['vshard.yml'] then
+        e = 'At least one vshard-storage (default) must have weight > 0'
+    else
+        e = 'At least one vshard-storage (first) must have weight > 0'
+    end
+    check_config(e,
 [[---
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000001:
@@ -394,9 +417,8 @@ replicasets:
     vshard_group .. [[
 ...]])
 
-test:diag('validate_availability()')
-
-check_config('Server "localhost:3311" is not in membership',
+    -- availability
+    check_config('Server "localhost:3311" is not in membership',
 [[---
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000010:
@@ -408,7 +430,7 @@ replicasets:
     roles: {}
 ...]])
 
-check_config('Server "localhost:3302" is unreachable with status "dead"',
+    check_config('Server "localhost:3302" is unreachable with status "dead"',
 [[---
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000010:
@@ -420,7 +442,7 @@ replicasets:
     roles: {}
 ...]])
 
-check_config('Server "localhost:3303" bootstrapped with different uuid "alien"',
+    check_config('Server "localhost:3303" bootstrapped with different uuid "alien"',
 [[---
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000010:
@@ -432,7 +454,7 @@ replicasets:
     roles: {}
 ...]])
 
-check_config('Server "localhost:3304" has error: err',
+    check_config('Server "localhost:3304" has error: err',
 [[---
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000010:
@@ -444,12 +466,12 @@ replicasets:
     roles: {}
 ...]])
 
-check_config('Current instance "localhost:3301" is not listed in config',
+    check_config('Current instance "localhost:3301" is not listed in config',
 [[---
 servers: {}
 ...]])
 
-check_config('Current instance "localhost:3301" can not be disabled',
+    check_config('Current instance "localhost:3301" can not be disabled',
 [[---
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000001:
@@ -462,17 +484,15 @@ replicasets:
     roles: {}
 ...]])
 
-check_config('Current instance "localhost:3301" can not be expelled',
+    check_config('Current instance "localhost:3301" can not be expelled',
 [[---
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000001: expelled
 ...]])
 
-test:diag('validate_upgrade()')
-
-check_config('servers[aaaaaaaa-aaaa-4000-b000-000000000002]'..
-  ' can not be removed from config',
-
+    -- upgrade
+    check_config('servers[aaaaaaaa-aaaa-4000-b000-000000000002]'..
+      ' can not be removed from config',
 [[---
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000001:
@@ -483,7 +503,6 @@ replicasets:
     master: aaaaaaaa-aaaa-4000-b000-000000000001
     roles: {}
 ...]],
-
 [[---
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000001:
@@ -496,7 +515,7 @@ replicasets:
     roles: {}
 ...]])
 
-check_config('servers[aaaaaaaa-aaaa-4000-b000-000000000001] has been expelled earlier',
+    check_config('servers[aaaaaaaa-aaaa-4000-b000-000000000001] has been expelled earlier',
 [[---
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000001:
@@ -507,15 +526,13 @@ replicasets:
     master: aaaaaaaa-aaaa-4000-b000-000000000001
     roles: {}
 ...]],
-
 [[---
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000001: expelled
 ...]])
 
-check_config('servers[aaaaaaaa-aaaa-4000-b000-000000000001]'..
-  '.replicaset_uuid can not be changed',
-
+    check_config('servers[aaaaaaaa-aaaa-4000-b000-000000000001]'..
+      '.replicaset_uuid can not be changed',
 [[---
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000001:
@@ -526,7 +543,6 @@ replicasets:
     master: aaaaaaaa-aaaa-4000-b000-000000000001
     roles: {}
 ...]],
-
 [[---
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000001:
@@ -534,7 +550,7 @@ servers:
     replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
 ...]])
 
-local conf_old_with_weight = [[---
+    local conf_old_with_weight = [[---
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000001:
     uri: localhost:3301
@@ -555,7 +571,7 @@ replicasets:
     vshard_group .. [[
 ...]]
 
-local conf_new_expelled = [[---
+    local conf_new_expelled = [[---
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000001:
     uri: localhost:3301
@@ -569,7 +585,7 @@ replicasets:
     vshard_group .. [[
 ...]]
 
-local conf_new_disabled = [[---
+    local conf_new_disabled = [[---
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000001:
     uri: localhost:3301
@@ -590,56 +606,55 @@ replicasets:
 ...]]
 
 
-check_config('replicasets[bbbbbbbb-0000-4000-b000-000000000001]'..
-  " is a vshard-storage which can't be removed",
-  conf_new_expelled,
-  conf_old_with_weight:format(1)
-)
+    check_config('replicasets[bbbbbbbb-0000-4000-b000-000000000001]'..
+      " is a vshard-storage which can't be removed",
+      conf_new_expelled,
+      conf_old_with_weight:format(1)
+    )
 
-check_config('replicasets[bbbbbbbb-0000-4000-b000-000000000001]'..
-  " is a vshard-storage which can't be removed",
-  conf_new_disabled,
-  conf_old_with_weight:format(1)
-)
+    check_config('replicasets[bbbbbbbb-0000-4000-b000-000000000001]'..
+      " is a vshard-storage which can't be removed",
+      conf_new_disabled,
+      conf_old_with_weight:format(1)
+    )
 
-function _G.vshard.storage.buckets_count()
-    return 1
-end
+    _G.vshard.storage.buckets_count = function()
+        return 1
+    end
 
-check_config('replicasets[bbbbbbbb-0000-4000-b000-000000000001]'..
-  " rebalancing isn't finished yet",
-  conf_new_expelled,
-  conf_old_with_weight:format(0)
-)
+    check_config('replicasets[bbbbbbbb-0000-4000-b000-000000000001]'..
+      " rebalancing isn't finished yet",
+      conf_new_expelled,
+      conf_old_with_weight:format(0)
+    )
 
-check_config('replicasets[bbbbbbbb-0000-4000-b000-000000000001]'..
-  " rebalancing isn't finished yet",
-  conf_new_disabled,
-  conf_old_with_weight:format(0)
-)
+    check_config('replicasets[bbbbbbbb-0000-4000-b000-000000000001]'..
+      " rebalancing isn't finished yet",
+      conf_new_disabled,
+      conf_old_with_weight:format(0)
+    )
 
-function _G.vshard.storage.buckets_count()
-    return 0
-end
+    _G.vshard.storage.buckets_count = function()
+        return 0
+    end
 
-check_config(true,
-  conf_new_expelled,
-  conf_old_with_weight:format(0)
-)
+    check_config(true,
+      conf_new_expelled,
+      conf_old_with_weight:format(0)
+    )
 
-check_config(true,
-  conf_new_disabled,
-  conf_old_with_weight:format(0)
-)
+    check_config(true,
+      conf_new_disabled,
+      conf_old_with_weight:format(0)
+    )
 
-check_config(true,
-  conf_new_disabled,
-  conf_old_with_weight:format("null")
-)
+    check_config(true,
+      conf_new_disabled,
+      conf_old_with_weight:format("null")
+    )
 
-check_config('replicasets[aaaaaaaa-0000-4000-b000-000000000001]'..
-  ' can not enable unknown role "unknown"',
-
+    check_config('replicasets[aaaaaaaa-0000-4000-b000-000000000001]'..
+      ' can not enable unknown role "unknown"',
 [[---
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000001:
@@ -650,7 +665,6 @@ replicasets:
     master: aaaaaaaa-aaaa-4000-b000-000000000001
     roles: {"unknown": true}
 ...]],
-
 [[---
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000001:
@@ -662,10 +676,8 @@ replicasets:
     roles: {}
 ...]])
 
-
-test:diag('valid configs')
-
-check_config(true,
+    -- allvalid configs
+    check_config(true,
 [[---
 auth: false
 failover: false
@@ -680,8 +692,8 @@ replicasets:
     roles: {}
 ...]])
 
-check_config(true,
-    [[---
+    check_config(true,
+[[---
 auth: false
 failover: false
 servers:
@@ -696,7 +708,7 @@ replicasets:
     alias: aliasmaster
 ...]])
 
-check_config(true,
+    check_config(true,
 [[---
 auth: true
 servers:
@@ -713,8 +725,8 @@ replicasets:
     roles: {}
 ...]])
 
--- unknown role is alowed if it was enabled in previous version
-check_config(true,
+    -- unknown role is alowed if it was enabled in previous version
+    check_config(true,
 [[---
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000001:
@@ -725,7 +737,6 @@ replicasets:
     master: aaaaaaaa-aaaa-4000-b000-000000000001
     roles: {"unknown": true}
 ...]],
-
 [[---
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000001:
@@ -737,7 +748,7 @@ replicasets:
     roles: {"unknown": true}
 ...]])
 
-check_config(true,
+    check_config(true,
 [[---
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000001:
@@ -752,26 +763,30 @@ replicasets:
 ...]])
 end
 
-test:plan(2)
-
-test:test('single group', test_all, {
-    ['vshard.yml'] = yaml.encode({
-        bootstrapped = true,
-        bucket_count = 1337,
-    })
-})
-
-test:test('multi-group', test_all, {
-    ['vshard_groups.yml'] = yaml.encode({
-        first = {
+function g.test_single_group()
+    g.mock_package()
+    conf = {
+        ['vshard.yml'] = yaml.encode({
             bootstrapped = true,
             bucket_count = 1337,
-        },
-        second = {
-            bootstrapped = true,
-            bucket_count = 1337,
-        },
-    })
-})
+        })
+    }
+    test_all()
+end
 
-os.exit(test:check() and 0 or 1)
+function g.test_multi_group()
+    g.mock_package()
+    conf = {
+        ['vshard_groups.yml'] = yaml.encode({
+            first = {
+                bootstrapped = true,
+                bucket_count = 1337,
+            },
+            second = {
+                bootstrapped = true,
+                bucket_count = 1337,
+            },
+        })
+    }
+    test_all()
+end

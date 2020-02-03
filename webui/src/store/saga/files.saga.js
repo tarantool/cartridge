@@ -1,5 +1,6 @@
 import { call, put, select, takeEvery } from 'redux-saga/effects';
 import { getErrorMessage } from 'src/api/';
+import { isNetworkError } from 'src/misc/isNetworkError';
 import {
   FETCH_CONFIG_FILES,
   FETCH_CONFIG_FILES_DONE,
@@ -81,6 +82,15 @@ function* applyFilesSaga() {
       payload: error,
       error: true
     });
+
+    if (!isNetworkError(error)) {
+      window.tarantool_enterprise_core.notify({
+        title: 'Error',
+        message: error.message,
+        type: 'error',
+        timeout: 5000
+      });
+    }
   }
 };
 
