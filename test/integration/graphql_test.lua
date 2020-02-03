@@ -141,6 +141,29 @@ g.test_upload = function()
     )
 end
 
+function g.test_reread_request()
+    local server = cluster.main_server
+
+    server.net_box:eval([[
+        local httpd = require('cartridge').service_get('httpd')
+        httpd:hook('before_dispatch', function(self, req)
+            req:read_cached()
+        end)
+    ]])
+
+    server:graphql({
+        query = [[
+            {
+                cluster {
+                    self {
+                        uri
+                    }
+                }
+            }
+        ]]
+    })
+end
+
 function g.test_fail_validate()
     t.assert_error_msg_contains('Field "x" is not defined on type "String"', function()
         cluster.main_server:graphql({

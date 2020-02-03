@@ -215,7 +215,7 @@ local function _execute_graphql(req)
         })
     end
 
-    local body = req:read()
+    local body = req:read_cached()
 
     if body == nil or body == '' then
         return http_finalize({
