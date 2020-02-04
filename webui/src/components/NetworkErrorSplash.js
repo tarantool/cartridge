@@ -19,7 +19,7 @@ export const NetworkErrorSplash = (
     return false;
 
   return (
-    <NotificationSplashFixed onClose={onClose}>
+    <NotificationSplashFixed className='meta-test__NetworkErrorSplash' onClose={onClose}>
       Network connection problem or server disconnected
     </NotificationSplashFixed>
   );
