@@ -154,3 +154,7 @@ function g.test_uninitialized()
     )
     t.assert_equals(code, 0)
 end
+
+function g.test_offline_splash()
+    cypress_run('network-error-splash.spec.js')
+end

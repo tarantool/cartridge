@@ -1,7 +1,8 @@
-// TODO: 
-// - Test cases with 500 error
+// TODO:
+// - Test cases with SIGSTOP+SIGCONT
 // - Think about adding request timeouts to apollo and axios
-// - Improve this test when cypress network features will be done (https://github.com/cypress-io/cypress/issues/687)
+// - Improve this test when cypress network features will be done
+//   (https://github.com/cypress-io/cypress/issues/687)
 
 describe('Error network panel not visible in normal state', () => {
   it('On cluster page', () => {
