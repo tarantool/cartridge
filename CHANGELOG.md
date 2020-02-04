@@ -29,8 +29,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - File tree expanded by default.
 
-- Network error splash test.
-
 ### Changed
 
 - Network error shows with fixed splash panel instead of notification.
