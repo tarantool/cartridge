@@ -23,6 +23,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - New field for `server.boxinfo` of GraphQL request which is shown cartridge version.
 
+- Remember last opened file in code editor to local storage.
+  Opens first file when local storage empty.
+
+- File tree expanded by default.
+
 ### Changed
 
 - Network error shows with fixed splash panel instead of notification.

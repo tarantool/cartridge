@@ -68,7 +68,7 @@ const styles = {
     box-sizing: border-box;
   `,
   sidePanelTitle: css`
-    
+
   `,
   buttonsPanel: css`
     display: flex;
@@ -355,6 +355,7 @@ class Code extends React.Component<CodeProps, CodeState> {
             </div>
             <Scrollbar className={styles.treeScrollWrap}>
               <FileTree
+                initiallyExpanded
                 tree={fileTree}
                 selectedFile={selectedFile}
                 fileOperation={fileOperationType}
