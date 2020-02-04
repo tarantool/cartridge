@@ -29,6 +29,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - File tree expanded by default.
 
+- New lua module for work with `.tar` files. This module has `unpack(tar_content)`
+  and `pack(file_config)` functions for `.tar` format.
+
 ### Changed
 
 - Network error shows with fixed splash panel instead of notification.
