@@ -127,9 +127,8 @@ compatibility:
   script:
     - luatest -v -p compatibility.upgrade
 
-cypress:
+.cypress: &cypress
   <<: *test-template
-  when: manual
   script:
     - luatest -v -p cypress.*
   artifacts:
@@ -141,6 +140,17 @@ cypress:
       - webui/cypress/videos/
   variables:
     IMAGE_NAME: *IMAGE_NAME_EE
+
+cypress-auto:
+  <<: *cypress
+  only:
+    changes:
+      - /webui/**/*
+      - /test/cypress/**/*
+
+cypress-manual:
+  <<: *cypress
+  when: manual
 
 misc:
   <<: *test-template
