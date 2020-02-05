@@ -33,7 +33,7 @@ describe('Error network panel not visible in normal state', () => {
 
 describe('Error network panel visible when server not respond', () => {
   it('On cluster page', () => {
-    cy.exec('kill -SIGKILL $(lsof -sTCP:LISTEN -i :13301 -t)', { failOnNonZeroExit: false })
+    cy.exec('kill -SIGKILL $(lsof -sTCP:LISTEN -i :13301 -t)', { failOnNonZeroExit: true })
     cy.get('a[href="/admin/cluster/dashboard"]').click();
     cy.get('.meta-test__NetworkErrorSplash').contains('Network connection problem or server disconnected')
   })
