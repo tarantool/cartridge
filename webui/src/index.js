@@ -21,6 +21,7 @@ import { PROJECT_NAME } from './constants';
 import { menuReducer } from './menu';
 import ConfigManagement from 'src/pages/ConfigManagement';
 import DemoInfo from 'src/components/DemoInfo';
+import './misc/analytics';
 
 const Code = lazy(() => import('src/pages/Code'));
 const Schema = lazy(() => import('src/pages/Schema'));
