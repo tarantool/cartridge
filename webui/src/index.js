@@ -12,7 +12,11 @@ import {
   appDidMount,
   setConnectionState
 } from 'src/store/actions/app.actions';
-import { logOut, setWelcomeMessage } from 'src/store/actions/auth.actions';
+import {
+  logOut,
+  expectWelcomeMessage,
+  setWelcomeMessage
+} from 'src/store/actions/auth.actions';
 import { PROJECT_NAME } from './constants';
 import { menuReducer } from './menu';
 import ConfigManagement from 'src/pages/ConfigManagement';
@@ -31,7 +35,7 @@ class Root extends React.Component {
       <Provider store={store}>
         <Router history={tarantool_enterprise_core.history}>
           <Suspense fallback={'Loading...'}>
-            <DemoInfo/>
+            <DemoInfo />
             <Switch>
               <Route path={projectPath('dashboard')} component={App} />
               <Route path={projectPath('configuration')} component={ConfigManagement} />
@@ -58,8 +62,12 @@ tarantool_enterprise_core.subscribe('cluster:logout', () => {
   store.dispatch(logOut());
 });
 
+tarantool_enterprise_core.subscribe('cluster:expect_welcome_message', () => {
+  store.dispatch(expectWelcomeMessage(true));
+});
 tarantool_enterprise_core.subscribe('cluster:set_welcome_message', text => {
   store.dispatch(setWelcomeMessage(text));
+  store.dispatch(expectWelcomeMessage(false));
 });
 
 store.dispatch(appDidMount());

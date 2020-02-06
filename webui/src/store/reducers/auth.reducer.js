@@ -14,6 +14,7 @@ import {
   AUTH_TURN_REQUEST,
   AUTH_TURN_REQUEST_SUCCESS,
   SET_AUTH_MODAL_VISIBLE,
+  EXPECT_WELCOME_MESSAGE,
   SET_WELCOME_MESSAGE,
 } from 'src/store/actionTypes';
 
@@ -24,6 +25,7 @@ const initialState = {
   loading: false,
   error: null,
   authModalVisible: false,
+  welcomeMessageExpected: false,
   welcomeMessage: null
 };
 
@@ -99,6 +101,12 @@ export function reducer(state = initialState, { type, payload, error }) {
         ...state,
         error: null,
         authModalVisible: payload.visible
+      };
+
+    case EXPECT_WELCOME_MESSAGE:
+      return {
+        ...state,
+        welcomeMessageExpected: payload.doExpect
       };
 
     case SET_WELCOME_MESSAGE:
