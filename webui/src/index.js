@@ -12,7 +12,7 @@ import {
   appDidMount,
   setConnectionState
 } from 'src/store/actions/app.actions';
-import { logOut } from 'src/store/actions/auth.actions';
+import { logOut, setWelcomeMessage } from 'src/store/actions/auth.actions';
 import { PROJECT_NAME } from './constants';
 import { menuReducer } from './menu';
 import ConfigManagement from 'src/pages/ConfigManagement';
@@ -56,6 +56,10 @@ tarantool_enterprise_core.register(
 
 tarantool_enterprise_core.subscribe('cluster:logout', () => {
   store.dispatch(logOut());
+});
+
+tarantool_enterprise_core.subscribe('cluster:set_welcome_message', text => {
+  store.dispatch(setWelcomeMessage(text));
 });
 
 store.dispatch(appDidMount());

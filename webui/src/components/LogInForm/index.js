@@ -10,6 +10,9 @@ import {
   Button,
   BaseModal,
   Input,
+  Checkbox,
+  InputGroup,
+  Scrollbar,
   Modal,
   Text
 } from '@tarantool.io/ui-kit';
@@ -78,6 +81,14 @@ const styles = {
   formContainer: css`
     flex-grow: 1;
     padding: 24px 32px;
+  `,
+  welcomeMessage: css`
+    height: 150px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+  `,
+  welcomeMessageContent: css`
+    padding: 1em;
   `
 };
 
@@ -101,6 +112,7 @@ class LogInForm extends React.Component {
   render() {
     const {
       error,
+      welcomeMessage,
       onClose
     } = this.props;
 
@@ -110,7 +122,8 @@ class LogInForm extends React.Component {
         onSubmit={this.handleSubmit}
         initialValues={{
           username: '',
-          password: ''
+          password: '',
+          isAgreeChecked: false
         }}
       >
         {({
@@ -144,9 +157,29 @@ class LogInForm extends React.Component {
                 <Text variant="basic">{error || errors.common}</Text>
               </Alert>
             ) : null}
+            {welcomeMessage ? (<>
+              <Scrollbar className={styles.welcomeMessage}>
+                <div className={styles.welcomeMessageContent}>
+                  <Text variant="basic">{welcomeMessage}</Text>
+                </div>
+              </Scrollbar>
+              <br />
+              <InputGroup>
+                <Checkbox checked={values['isAgreeChecked']} name="isAgreeChecked" onChange={handleChange}>
+                  I agree
+                </Checkbox>
+              </InputGroup>
+            </>) : null}
             <div className={styles.actionButtons}>
               {onClose && <Button intent="base" onClick={onClose} className={styles.cancelButton}>Cancel</Button>}
-              <Button className='meta-test__LoginFormBtn' intent="primary" type='submit'>Login</Button>
+              <Button
+                className='meta-test__LoginFormBtn'
+                intent="primary"
+                type="submit"
+                disabled={welcomeMessage && !values['isAgreeChecked']}
+              >
+                Login
+              </Button>
             </div>
           </Form>
         }
@@ -167,7 +200,8 @@ const mapStateToProps = ({
   auth: {
     authorizationEnabled,
     authorized,
-    error
+    error,
+    welcomeMessage
   },
   ui: {
     fetchingAuth
@@ -176,6 +210,7 @@ const mapStateToProps = ({
   authorizationRequired: implements_check_password && authorizationEnabled && !authorized,
   loaded,
   error,
+  welcomeMessage,
   fetchingAuth
 });
 

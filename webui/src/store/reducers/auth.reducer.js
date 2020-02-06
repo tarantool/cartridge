@@ -13,7 +13,8 @@ import {
   AUTH_TURN_REQUEST_ERROR,
   AUTH_TURN_REQUEST,
   AUTH_TURN_REQUEST_SUCCESS,
-  SET_AUTH_MODAL_VISIBLE
+  SET_AUTH_MODAL_VISIBLE,
+  SET_WELCOME_MESSAGE,
 } from 'src/store/actionTypes';
 
 const initialState = {
@@ -22,7 +23,8 @@ const initialState = {
   username: null,
   loading: false,
   error: null,
-  authModalVisible: false
+  authModalVisible: false,
+  welcomeMessage: null
 };
 
 export function reducer(state = initialState, { type, payload, error }) {
@@ -97,6 +99,12 @@ export function reducer(state = initialState, { type, payload, error }) {
         ...state,
         error: null,
         authModalVisible: payload.visible
+      };
+
+    case SET_WELCOME_MESSAGE:
+      return {
+        ...state,
+        welcomeMessage: payload.text
       };
 
     default:
