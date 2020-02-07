@@ -260,7 +260,7 @@ export const reducer = (state: UIState = initialState, { type, payload, error }:
     case FETCH_CONFIG_FILES_FAIL:
       return {
         ...state,
-        fetchConfigFiles: false
+        fetchingConfigFiles: false
       };
 
     case PUT_CONFIG_FILES_CONTENT:

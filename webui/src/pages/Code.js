@@ -149,21 +149,29 @@ type CodeProps = {
 
 class Code extends React.Component<CodeProps, CodeState> {
   state = {
-    loading: true,
+    loading: false,
     fileOperationType: null,
     fileOperationObject: null,
     isReloadConfirmOpened: false
   }
 
+  static getDerivedStateFromProps(nextProps, prevState) {
+    if (prevState.loading === true && nextProps.fetchingConfigFiles === false) {
+      return {
+        loading: false
+      };
+    }
+    return null;
+  }
+
   async componentDidMount() {
-    if (this.props.files.length > 0) {
+    const { dispatch, files } = this.props;
+
+    if (files.length > 0) {
       return;
     }
-
-    this.props.dispatch(fetchConfigFiles());
-    this.setState(() => ({
-      loading: false
-    }))
+    dispatch(fetchConfigFiles());
+    this.setState({ loading: true });
   }
 
   getFileById = (id: ?string) => this.props.files.find(file => file.path === id);
@@ -299,6 +307,7 @@ class Code extends React.Component<CodeProps, CodeState> {
       className,
       fileTree = [],
       isDemoPanelPresent,
+      fetchingConfigFiles,
       puttingConfigFiles,
       selectedFile,
       dispatch
@@ -307,7 +316,8 @@ class Code extends React.Component<CodeProps, CodeState> {
     const {
       fileOperationType,
       fileOperationObject,
-      isReloadConfirmOpened
+      isReloadConfirmOpened,
+      loading
     } = this.state;
 
     const operableFile = this.getFileById(fileOperationObject);
@@ -369,12 +379,23 @@ class Code extends React.Component<CodeProps, CodeState> {
                   <Button
                     text='Reload'
                     size='s'
+                    className={
+                      !loading && fetchingConfigFiles
+                        ? 'meta-test__Code__reload_loading'
+                        : 'meta-test__Code__reload_idle'
+                    }
+                    loading={!loading && fetchingConfigFiles}
                     onClick={this.handleReloadClick}
                     icon={IconRefresh}
                     intent='secondary'
                   />,
                   <Button
                     onClick={this.handleApplyClick}
+                    className={
+                      puttingConfigFiles
+                        ? 'meta-test__Code__apply_loading'
+                        : 'meta-test__Code__apply_idle'
+                    }
                     text='Apply'
                     intent='primary'
                     loading={puttingConfigFiles}
