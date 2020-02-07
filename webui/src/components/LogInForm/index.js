@@ -106,9 +106,9 @@ class LogInForm extends React.Component {
   handleSubmit = async (values, actions) => {
     try {
       await this.props.logIn(values);
-    } catch(e) {
+    } catch (e) {
       actions.setFieldError('common', e.message)
-    } finally{
+    } finally {
       actions.setSubmitting(false)
     }
   };
@@ -123,7 +123,7 @@ class LogInForm extends React.Component {
     <InputGroup>
       <Checkbox checked={values['isAgreeChecked']} name="isAgreeChecked" onChange={handleChange}>
         I agree
-        </Checkbox>
+      </Checkbox>
     </InputGroup>
   </>);
 
@@ -200,12 +200,11 @@ class LogInForm extends React.Component {
                   disabled={!isLoginEnabled}
                 >
                   Login
-              </Button>
+                </Button>
               </div>
             </Form>
           );
-        }
-      }
+        }}
       </Formik>
     );
   }
