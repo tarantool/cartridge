@@ -328,6 +328,20 @@ function g.test_servers()
     )
 
     t.assert_equals(
+        test_helper.table_find_by_attr(servers, 'uri', 'localhost:13304'),
+        {
+            uri = 'localhost:13304',
+            uuid = helpers.uuid('b', 'b', 2),
+            alias = 'storage-2',
+            labels = {},
+            priority = 2,
+            disabled = false,
+            statistics = {vshard_buckets_count = 3000},
+            replicaset = {roles = {'vshard-storage'}}
+        }
+    )
+
+    t.assert_equals(
         test_helper.table_find_by_attr(servers, 'uri', 'localhost:13303'),
         {
             uri = 'localhost:13303',
@@ -436,3 +450,47 @@ function g.test_clock_delta()
         t.assert_almost_equals(server.clock_delta, 0, 0.1)
     end
 end
+
+function g.test_topology_caching()
+    -- In this test we protect `admin.get_topology` function from being
+    -- executed twice in the same request and query same data with
+    -- different aliases
+    g.cluster.main_server.net_box:eval([[
+        local fiber = require('fiber')
+        local admin = require('cartridge.admin')
+        local admin_get_topology = admin.get_topology
+        admin.get_topology = function()
+            assert(
+                not fiber.self().storage.get_topology_wasted,
+                "Excess get_topology call"
+            )
+            fiber.self().storage.get_topology_wasted = true
+            return admin_get_topology()
+        end
+    ]])
+
+    local resp = g.cluster.main_server:graphql({
+        query = [[{
+            s1: servers {alias}
+            s2: servers {alias}
+            replicasets {servers {}}
+        }]],
+    })
+
+    t.assert_equals(resp.data.s1, resp.data.s2)
+
+    local resp = g.cluster.main_server:graphql({
+        query = [[{
+            r1: replicasets {servers {replicaset {servers { uuid }}}}
+            r2: replicasets {servers {replicaset {servers { uuid }}}}
+        }]],
+    })
+
+    t.assert_equals(resp.data.r1, resp.data.r2)
+end
+
+
+-- function g.test_statistics_caching()
+    -- 1. statistics query should be performed with pool.map_call
+    -- 2. filtered query should be performed without optimization
+-- end
