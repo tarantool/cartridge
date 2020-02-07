@@ -19,4 +19,4 @@ build.luarocks
 coverage_result.txt
 .DS_Store
 .vscode
-luacov.stats.out
+luacov.*.out*
