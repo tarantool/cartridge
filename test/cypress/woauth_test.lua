@@ -28,7 +28,6 @@ g.setup = function()
     })
 
     g.cluster:start()
-
 end
 
 g.teardown = function()
