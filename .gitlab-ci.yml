@@ -145,8 +145,8 @@ cypress-auto:
   <<: *cypress
   only:
     changes:
-      - /webui/**/*
-      - /test/cypress/**/*
+      - webui/**/*
+      - test/cypress/**/*
 
 cypress-manual:
   <<: *cypress
