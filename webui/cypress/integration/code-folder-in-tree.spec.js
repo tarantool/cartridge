@@ -2,6 +2,7 @@ describe('Code page', () => {
 
     it('Folder in tree', () => {
       cy.visit(Cypress.config('baseUrl')+"/admin/cluster/code");
+      cy.wait(3000);
   //create folder
       cy.get('.meta-test__addFolderBtn').click();
       cy.get('.meta-test__enterName').focused().type('folder-in-tree');
@@ -14,7 +15,7 @@ describe('Code page', () => {
   //create file in folder
       cy.get('.meta-test__createFileInTreeBtn').eq(0).click({ force: true });
       cy.get('.meta-test__enterName').focused().type('file-in-folder{enter}');
-      cy.get('.ScrollbarsCustom-Content').contains('file-in-folder').click();
+      cy.get('.ScrollbarsCustom-Content').contains('file-in-folder').click({ force: true });
       cy.get('#root').contains('folder-in-tree/file-in-folder');
       cy.get('.monaco-editor textarea').type('new test code');
   
@@ -26,8 +27,7 @@ describe('Code page', () => {
   
   //save changes and full reload code page
       cy.get('button[type="button"]').contains('Apply').click();
-      cy.reload();
-      cy.get('#root').contains('edited-folder-name').click();
+      cy.wait(3000);
       cy.get('.ScrollbarsCustom-Content').contains('folder-in-folder').should('not.exist');
       cy.get('.ScrollbarsCustom-Content').contains('file-in-folder').click();
       cy.get('#root').contains('edited-folder-name/file-in-folder');
