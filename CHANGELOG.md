@@ -34,6 +34,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Add an ability to hide certain WebUI pages by specifying
   `cartridge.cfg({webui_blacklist = {'/admin/code', ...}})`.
 
+- Show Cartridge version in server info dialog.
+
 ### Changed
 
 - Network error shows with fixed splash panel instead of notification.

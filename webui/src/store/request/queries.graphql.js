@@ -78,6 +78,9 @@ export const boxInfoQuery = gql`
         value
       }
       boxinfo {
+        cartridge {
+          version
+        }
         network {
           io_collect_interval
           net_msg_max
@@ -157,6 +160,9 @@ export const instanceDataQuery = gql`
         value
       }
       boxinfo {
+        cartridge {
+          version
+        }
         network {
           io_collect_interval
           net_msg_max
@@ -213,6 +219,12 @@ export const instanceDataQuery = gql`
       }
     }
     
+    descriptionCartridge: __type(name: "ServerInfoCartridge") {
+      fields {
+        name
+        description
+      }
+    }
     descriptionGeneral: __type(name: "ServerInfoGeneral") {
       fields {
         name

@@ -11,6 +11,7 @@ export function getInstanceData({ instanceUUID }) {
   return graphql.fetch(instanceDataQuery, { uuid: instanceUUID })
     .then(({
       servers,
+      descriptionCartridge,
       descriptionGeneral,
       descriptionNetwork,
       descriptionReplication,
@@ -45,6 +46,7 @@ export function getInstanceData({ instanceUUID }) {
         status,
         uri,
         descriptions: {
+          cartridge: descriptionsByName(descriptionCartridge),
           general: descriptionsByName(descriptionGeneral),
           network: descriptionsByName(descriptionNetwork),
           replication: descriptionsByName(descriptionReplication),
