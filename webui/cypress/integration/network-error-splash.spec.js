@@ -7,55 +7,60 @@
 describe('Error network panel not visible in normal state', () => {
   it('On cluster page', () => {
     cy.visit(Cypress.config('baseUrl'));
-    cy.get('.meta-test__NetworkErrorSplash').should('not.exist')
+    cy.get('.meta-test__ProbeServerBtn');
+    cy.get('.meta-test__NetworkErrorSplash').should('not.exist');
   });
 
   it('On users page', () => {
     cy.get('a[href="/admin/cluster/users"]').click();
-    cy.get('.meta-test__NetworkErrorSplash').should('not.exist')
+    cy.get('.meta-test__UsersTable').contains('Cartridge Administrator');
+    cy.get('.meta-test__NetworkErrorSplash').should('not.exist');
   })
 
   it('On config page', () => {
     cy.get('a[href="/admin/cluster/configuration"]').click();
-    cy.get('.meta-test__NetworkErrorSplash').should('not.exist')
+    cy.get('#root').contains('Download configuration');
+    cy.get('.meta-test__NetworkErrorSplash').should('not.exist');
   })
 
   it('On editor page', () => {
     cy.get('a[href="/admin/cluster/code"]').click();
-    cy.get('.meta-test__NetworkErrorSplash').should('not.exist')
+    cy.get('.meta-test__Code__reload_idle');
+    cy.get('.meta-test__NetworkErrorSplash').should('not.exist');
   })
 
   it('On schema page', () => {
     cy.get('a[href="/admin/cluster/schema"]').click();
-    cy.get('.meta-test__NetworkErrorSplash').should('not.exist')
+    cy.get('.monaco-editor textarea');
+    cy.get('.meta-test__NetworkErrorSplash').should('not.exist');
   })
 });
 
 describe('Error network panel visible when server not respond', () => {
   it('On cluster page', () => {
-    cy.exec('kill -SIGKILL $(lsof -sTCP:LISTEN -i :13301 -t)', { failOnNonZeroExit: true })
+    cy.exec('kill -SIGKILL $(lsof -sTCP:LISTEN -i :8081 -t)', { failOnNonZeroExit: true });
     cy.get('a[href="/admin/cluster/dashboard"]').click();
-    cy.get('.meta-test__NetworkErrorSplash').contains('Network connection problem or server disconnected')
+    cy.get('.meta-test__NetworkErrorSplash').contains('Network connection problem or server disconnected');
   })
 
   it('On users page', () => {
     cy.get('a[href="/admin/cluster/users"]').click();
-    cy.get('.meta-test__NetworkErrorSplash').contains('Network connection problem or server disconnected')
+    cy.get('.meta-test__NetworkErrorSplash').contains('Network connection problem or server disconnected');
   })
 
   it('On config page', () => {
     cy.get('a[href="/admin/cluster/configuration"]').click();
-    cy.get('.meta-test__NetworkErrorSplash').contains('Network connection problem or server disconnected')
+    cy.get('.meta-test__NetworkErrorSplash').contains('Network connection problem or server disconnected');
   })
 
   it('On editor page', () => {
     cy.get('a[href="/admin/cluster/code"]').click();
-    cy.get('.meta-test__NetworkErrorSplash').contains('Network connection problem or server disconnected')
+    cy.get('.meta-test__NetworkErrorSplash').contains('Network connection problem or server disconnected');
   })
 
   it('On schema page', () => {
     cy.get('a[href="/admin/cluster/schema"]').click();
-    cy.get('.meta-test__NetworkErrorSplash').contains('Network connection problem or server disconnected')
+    cy.get('.meta-test__NetworkErrorSplash').contains('Network connection problem or server disconnected');
   })
 });
 
