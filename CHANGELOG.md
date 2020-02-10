@@ -21,7 +21,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Code applying error in Code editor.
 
-- New field for `server.boxinfo` of GraphQL request which is shown cartridge version.
+- New GraphQL API fields in `servers{ boxinfo{ cartridge }}`:
+  `version`, `state`, `error`.
 
 - Remember last opened file in code editor to local storage.
   Opens first file when local storage empty.
