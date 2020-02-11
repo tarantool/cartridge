@@ -388,7 +388,7 @@ test:test("server requests", function(test)
         bodyf:close()
         local r = http_client.post('http://127.0.0.1:12345/post', body)
         test:is(r.status, 200, 'status')
-        test:is_deeply(json.decode(r.body), { 541,10,10,458,1375,0,0 },
+        test:is_deeply(json.decode(r.body), { 541,10,10,458,1374,0,0 },
             'req:read() results')
     end)
 

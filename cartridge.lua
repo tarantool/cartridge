@@ -451,10 +451,12 @@ local function cfg(opts, box_opts)
         opts.http_enabled = true
     end
     if opts.http_enabled then
-        local server = http_server.new('0.0.0.0', opts.http_port, { log_requests = false })
-        local router = http_router.new()
-        server:set_router(router)
-        local httpd = http_adapter.new(server, router)
+        local httpd2 = http_server.new(
+            '0.0.0.0', opts.http_port,
+            { log_requests = false }
+        )
+        httpd2:set_router(http_router.new())
+        local httpd = http_adapter.new(httpd2)
 
         local ok, err = HttpInitError:pcall(httpd.start, httpd)
         if not ok then
@@ -473,7 +475,7 @@ local function cfg(opts, box_opts)
 
         local srv_name = httpd.tcp_server:name()
         log.info('Listening HTTP on %s:%s', srv_name.host, srv_name.port)
-        service_registry.set('http-server', server)
+        service_registry.set('httpd-2', httpd2)
         service_registry.set('httpd', httpd)
     end
 

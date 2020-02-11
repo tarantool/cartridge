@@ -157,7 +157,8 @@ local router_fields_set = {
     cache       = true,
 }
 
-local function new_server(server, router)
+local function new_adapter(server)
+    local router = server:router()
     local adapter_options, adapter_options_body = {}, {}
     local adapter_options_mt = {
         __newindex = function(_, key, value)
@@ -225,5 +226,5 @@ local function new_server(server, router)
 end
 
 return {
-    new = new_server
+    new = new_adapter,
 }
