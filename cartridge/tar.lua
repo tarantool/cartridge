@@ -55,40 +55,59 @@ local HEADER_CONF = {
     DEVMAJOR =  { SIZE = 8,   OFFSET = 329 },
     DEVMINOR =  { SIZE = 8,   OFFSET = 337 },
     PREFIX =    { SIZE = 155, OFFSET = 345 },
-    _ =         { SIZE = 12,  OFFSET = 500 },
+    _ =         { SIZE = 12,  OFFSET = 500 }, -- padding
 }
-
-local MAGIC = 'ustar\0'
-local VERSION = ' \0'
-local TYPEFLAG = '0'
-local MODE = '644'
-
 local BLOCKSIZE = 512
 
-local function checksum_header(header)
-    local block = ''
-    if type(header) == 'table' then
-        for _, val in pairs(header) do
-            if val ~= nil then
-                block = block .. val
-            end
+local function checksum(header)
+    checks('string')
+    -- The chksum field represents the simple sum of all bytes in the
+    -- header block. Each 8-bit byte in the header is added to an
+    -- unsigned integer, initialized to zero, the precision of which
+    -- shall be no less than seventeen bits.
+
+    local checksum = 256 -- I have no idea why, but tar works this way
+    for i = 1, BLOCKSIZE do
+        if i <= HEADER_CONF.CHKSUM.OFFSET
+        or i > HEADER_CONF.CHKSUM.OFFSET + HEADER_CONF.CHKSUM.SIZE
+        then
+            -- When calculating the checksum, the chksum field is
+            -- treated as if it were all blanks.
+            checksum = checksum + (header:byte(i) or 0)
         end
-    else
-        block = header
     end
 
-    local sum = 256
-    for i = 1, 148 do
-       sum = sum + (block:byte(i) or 0)
-    end
-    for i = 157, 500 do
-       sum = sum + (block:byte(i) or 0)
-    end
-
-    return sum
+    return checksum
 end
 
-local function string_header(header)
+local function get_header(file)
+    local header = {
+        name =      file.name,
+        mode =      '644',
+        uid =       '\0',
+        gid =       '\0',
+        size =      string.format('%o', #file.content),
+        mtime =     '\0',
+        chksum =    nil,
+        typeflag =  '0',
+        linkname =  '\0',
+        magic =     'ustar',
+        version =   '00',
+        uname =     '\0',
+        gname =     '\0',
+        devmajor =  '\0',
+        devminor =  '\0',
+        prefix =    '\0',
+        _ =         '\0',
+    }
+    local checksum = 256
+    for _, v in pairs(header) do
+        for i = 1, #v do
+            checksum = checksum + v:byte(i)
+        end
+    end
+    header.chksum = string.format('%o', checksum)
+
     local ret = {}
 
     table.insert(ret, string.ljust(header.name,     HEADER_CONF.NAME.SIZE,     '\0'))
@@ -110,31 +129,6 @@ local function string_header(header)
     table.insert(ret, string.ljust(header._,        HEADER_CONF._.SIZE,        '\0'))
 
     return table.concat(ret)
-end
-
-local function get_header(file)
-    local header = {
-        name =      file.name,
-        mode =      MODE,
-        uid =       '\0',
-        gid =       '\0',
-        size =      string.format('%o', #file.content),
-        mtime =     '\0',
-        chksum =    nil,
-        typeflag =  TYPEFLAG,
-        linkname =  '\0',
-        magic =     MAGIC,
-        version =   VERSION,
-        uname =     '\0',
-        gname =     '\0',
-        devmajor =  '\0',
-        devminor =  '\0',
-        prefix =    '\0',
-        _ =         '\0',
-    }
-    header.chksum = string.format('%o', checksum_header(header))
-
-    return string_header(header)
 end
 
 --- Create TAR archive.
@@ -207,7 +201,7 @@ local function header_format_validation(header)
     end
 
     local chksum = read_header_block(header, HEADER_CONF.CHKSUM)
-    if tonumber(chksum, 8) ~= checksum_header(header) then
+    if tonumber(chksum, 8) ~= checksum(header) then
         return nil, UnpackTarError:new('Checksum mismatch')
     end
 
