@@ -1,41 +1,36 @@
 #!/usr/bin/env tarantool
 
--- Generator tar content for regular files and reader content of tar file.
+--- Handle basic tar format.
 --
--- Basic Tar Format (http://www.gnu.org/software/tar/manual/html_node/Standard.html)
+-- <http://www.gnu.org/software/tar/manual/html_node/Standard.html>
 --
--- While an archive may contain many files, the archive itself is a single ordinary file.
--- Physically, an archive consists of a series of file entries terminated by an end-of-archive entry,
--- which consists of two 512 blocks of zero bytes. A file entry usually describes
--- one of the files in the archive (an archive member), and consists of a file header
--- and the contents of the file. File headers contain file names and statistics, checksum information
--- which tar uses to detect file corruption, and information about file types.
+-- While an archive may contain many files, the archive itself is a
+-- single ordinary file. Physically, an archive consists of a series of
+-- file entries terminated by an end-of-archive entry, which consists of
+-- two 512 blocks of zero bytes. A file entry usually describes one of
+-- the files in the archive (an archive member), and consists of a file
+-- header and the contents of the file. File headers contain file names
+-- and statistics, checksum information which tar uses to detect file
+-- corruption, and information about file types.
 --
--- A tar archive file contains a series of blocks. Each block contains BLOCKSIZE (= 512) bytes.
--- Anyone tar archive:
--- +---------+-------+-------+-------+---------+-------+-----
--- | header1 | file1 |  ...  | file1 | header2 | file2 | ...
--- +---------+-------+-------+-------+---------+-------+-----
+-- A tar archive file contains a series of blocks. Each block contains
+-- exactly 512 (`BLOCKSIZE`) bytes:
+--    +---------+-------+-------+-------+---------+-------+-----
+--    | header1 | file1 |  ...  |  ...  | header2 | file2 | ...
+--    +---------+-------+-------+-------+---------+-------+-----
 --
--- All characters in header blocks are represented by using 8-bit characters in the local variant of ASCII.
--- Each field within the structure is contiguous; that is, there is no padding used within the structure.
--- Each character on the archive medium is stored contiguously.
--- Bytes representing the contents of files (after the header block of each file) are not translated
--- in any way and are not constrained to represent characters in any character set.
--- The tar format does not distinguish text files from binary files, and no translation of file contents is performed.
+-- All characters in header blocks are represented by using 8-bit
+-- characters in the local variant of ASCII. Each field within the
+-- structure is contiguous; that is, there is no padding used within the
+-- structure. Each character on the archive medium is stored
+-- contiguously. Bytes representing the contents of files (after the
+-- header block of each file) are not translated in any way and are not
+-- constrained to represent characters in any character set. The tar
+-- format does not distinguish text files from binary files, and no
+-- translation of file contents is performed.
 --
--- This module has two functions. This is packaging in tar file and unpacking tar contents in file config.
--- If we have tar content then we can extract such a table:
--- {
---     ['filename']: 'content',
---     ...
--- }
--- To do this, use the `unpack(tar_content)` function. This takes
--- a string (containing the file tar) and returns a config (like the table above).
---
--- To get the contents of the tar file, we need the same config that we get with the pack function.
--- This is done using the `pack(config_table)` function. This takes
--- a table (file config) and returns a string (tar content).
+-- @module cartridge.tar
+-- @local
 
 local errors = require('errors')
 local checks = require('checks')
@@ -142,6 +137,13 @@ local function get_header(file)
     return string_header(header)
 end
 
+--- Create TAR archive.
+--
+-- @function pack
+-- @tparam {string=string} files
+-- @treturn string The archive
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 local function pack(config)
     checks('table')
 
@@ -221,6 +223,15 @@ local function read_header(tar, offset)
     return header
 end
 
+--- Parse TAR archive.
+--
+-- Only regular files are extracted, directories are ommitted.
+--
+-- @function unpack
+-- @tparam string tar
+-- @treturn {string=string} Extracted files (their names and content)
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 local function unpack(tar)
     checks('string')
     if #tar < BLOCKSIZE then
@@ -262,5 +273,5 @@ end
 
 return {
     pack = pack,
-    unpack = unpack
+    unpack = unpack,
 }
