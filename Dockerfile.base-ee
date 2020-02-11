@@ -8,7 +8,7 @@ RUN set -x &&\
     curl -sL https://rpm.nodesource.com/setup_8.x | bash - &&\
     yum -y install gcc git make cmake unzip python python-pip nodejs &&\
     # cypress deps
-    yum -y install gtk3 xorg-x11-server-Xvfb libXScrnSaver GConf2 alsa-lib
+    yum -y install gtk3 xorg-x11-server-Xvfb libXScrnSaver GConf2 alsa-lib lsof
 
 RUN npm install graphql-cli@3.0.14
 ENV PATH="${PWD}/node_modules/.bin:${PATH}"
