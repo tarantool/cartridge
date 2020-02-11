@@ -149,12 +149,21 @@ local function pack(config)
 
     local ret = {}
     for filename, content in pairs(config) do
-        if type(content) ~= 'string' then
-            return nil, PackTarError:new('Type of content file should be a string')
+        if type(filename) ~= 'string' then
+            local err = "bad argument #1 to pack" ..
+                " (table keys must be strings)"
+            error(err, 2)
+        elseif type(content) ~= 'string' then
+            local err = "bad argument #1 to pack" ..
+                " (table values must be strings)"
+            error(err, 2)
         end
+
         if #filename > HEADER_CONF.NAME.SIZE then
             return nil, PackTarError:new(
-                string.format('Filename size is more then %d', HEADER_CONF.NAME.SIZE))
+                'Too long filename (max %d)',
+                HEADER_CONF.NAME.SIZE
+            )
         end
 
         table.insert(ret, get_header({

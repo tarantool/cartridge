@@ -103,7 +103,7 @@ function g.test_fixtures_pack()
             t.assert_equals(
                 tar_execute('xOf', path, filename),
                 content,
-                string.format('Unexpected content in %q %s', tarname, filename)
+                string.format('Unexpected content in %q (%s)', tarname, filename)
             )
         end
     end
@@ -191,11 +191,28 @@ end
 
 
 function g.test_errors()
+    t.assert_error_msg_contains(
+        'bad argument #1 to nil (string expected, got table)',
+        tar.unpack, {}
+    )
+    t.assert_error_msg_contains(
+        'bad argument #1 to nil (table expected, got string)',
+        tar.pack, 'str'
+    )
+    t.assert_error_msg_equals(
+        'bad argument #1 to pack (table keys must be strings)',
+        tar.pack, {'foo'}
+    )
+    t.assert_error_msg_equals(
+        'bad argument #1 to pack (table values must be strings)',
+        tar.pack, {foo = {}}
+    )
+
     local packed, err = tar.pack({[string.rep('a', 101)] = ''})
     t.assert_equals(packed, nil)
     t.assert_covers(err, {
         class_name = 'PackTarError',
-        err = 'Filename size is more then 100',
+        err = 'Too long filename (max 100)',
     })
 
     local unpacked, err = tar.unpack(digest.urandom(BLOCKSIZE))
