@@ -28,7 +28,6 @@ type ServerInfoModalProps = {
   roles: string,
   status: string,
   uri: string,
-  subsections: string[],
   match: { url: string },
   history: History,
 }
@@ -42,6 +41,14 @@ class ServerInfoModal extends React.Component<ServerInfoModalProps, ServerInfoMo
   state = {
     selectedTab: null
   }
+
+  static tabsOrder = [
+    'general',
+    'cartridge',
+    'replication',
+    'storage',
+    'network'
+  ];
 
   componentDidMount() {
     this.props.pageDidMount({
@@ -59,7 +66,6 @@ class ServerInfoModal extends React.Component<ServerInfoModalProps, ServerInfoMo
 
   render() {
     const {
-      subsections,
       alias,
       instanceUUID,
       activeMasterUUID,
@@ -68,6 +74,8 @@ class ServerInfoModal extends React.Component<ServerInfoModalProps, ServerInfoMo
       status,
       uri
     } = this.props
+    console.log(ServerInfoModal.tabsOrder);
+    
     return (
       <Modal
         className='meta-test__ServerInfoModal'
@@ -85,20 +93,14 @@ class ServerInfoModal extends React.Component<ServerInfoModalProps, ServerInfoMo
             status={status}
             uri={uri}
           />
-          {
-            subsections
-            &&
-            R.filter(R.identity, subsections).length > 0
-            &&
-            <Tabbed
-              tabs={
-                R.filter(R.identity, subsections).map(section => ({
-                  label: section[0].toUpperCase() + section.substring(1),
-                  content: (<ClusterInstanceSection sectionName={section}/>)
-                }))
-              }
-            />
-          }
+          <Tabbed
+            tabs={
+              R.filter(R.identity, ServerInfoModal.tabsOrder).map(section => ({
+                label: section[0].toUpperCase() + section.substring(1),
+                content: (<ClusterInstanceSection sectionName={section}/>)
+              }))
+            }
+          />
           <PopupFooter
             controls={[
               <Button intent={'base'} text={'Close'} onClick={this.close} />
@@ -141,7 +143,6 @@ const mapStateToProps = (state, props) => {
     roles: roles.join(', '),
     status,
     uri,
-    subsections: selectSectionsNames(state),
     instanceUUID: props.instanceUUID
   };
 };

@@ -36,6 +36,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Show Cartridge version in server info dialog.
 
+- Server alias is clickable in replicaset list.
+
 ### Changed
 
 - Network error shows with fixed splash panel instead of notification.
