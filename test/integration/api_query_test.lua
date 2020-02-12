@@ -241,6 +241,8 @@ function g.test_server_info_schema()
             table.concat(field_name_network, ' '),
             table.concat(field_name_replica, ' '),
             table.concat(field_name_cartridge, ' ')
+                -- workaround composite graphql type
+                :gsub('error', 'error {}')
         )
     })
     log.info(resp['data']['servers'][1])
@@ -290,6 +292,7 @@ function g.test_servers()
                     priority
                     replicaset { roles }
                     statistics { vshard_buckets_count }
+                    boxinfo { cartridge { state error { message class_name } } }
                 }
             }
         ]]
@@ -309,7 +312,8 @@ function g.test_servers()
             priority = 1,
             disabled = false,
             statistics = {vshard_buckets_count = box.NULL},
-            replicaset = {roles = {'vshard-router'}}
+            replicaset = {roles = {'vshard-router'}},
+            boxinfo = {cartridge = {error = box.NULL, state = "RolesConfigured"}},
         }
     )
 
@@ -323,7 +327,23 @@ function g.test_servers()
             priority = 1,
             disabled = false,
             statistics = {vshard_buckets_count = 3000},
-            replicaset = {roles = {'vshard-storage'}}
+            replicaset = {roles = {'vshard-storage'}},
+            boxinfo = {cartridge = {error = box.NULL, state = "RolesConfigured"}},
+        }
+    )
+
+    t.assert_equals(
+        test_helper.table_find_by_attr(servers, 'uri', 'localhost:13304'),
+        {
+            uri = 'localhost:13304',
+            uuid = helpers.uuid('b', 'b', 2),
+            alias = 'storage-2',
+            labels = {},
+            priority = 2,
+            disabled = false,
+            statistics = {vshard_buckets_count = 3000},
+            replicaset = {roles = {'vshard-storage'}},
+            boxinfo = {cartridge = {error = box.NULL, state = "RolesConfigured"}},
         }
     )
 
@@ -338,6 +358,7 @@ function g.test_servers()
             disabled = box.NULL,
             statistics = box.NULL,
             replicaset = box.NULL,
+            boxinfo = box.NULL,
         }
     )
 end
@@ -436,3 +457,90 @@ function g.test_clock_delta()
         t.assert_almost_equals(server.clock_delta, 0, 0.1)
     end
 end
+
+function g.test_topology_caching()
+    -- In this test we protect `admin.get_topology` function from being
+    -- executed twice in the same request and query same data with
+    -- different aliases
+    g.cluster.main_server.net_box:eval([[
+        local fiber = require('fiber')
+        local admin = require('cartridge.admin')
+        local admin_get_topology = admin.get_topology
+        admin.get_topology = function()
+            assert(
+                not fiber.self().storage.get_topology_wasted,
+                "Excess get_topology call"
+            )
+            fiber.self().storage.get_topology_wasted = true
+            return admin_get_topology()
+        end
+    ]])
+
+    local resp = g.cluster.main_server:graphql({
+        query = [[{
+            s1: servers {alias}
+            s2: servers {alias}
+            replicasets {servers {}}
+        }]],
+    })
+
+    t.assert_equals(resp.data.s1, resp.data.s2)
+
+    local resp = g.cluster.main_server:graphql({
+        query = [[{
+            r1: replicasets {servers {replicaset {servers { uuid }}}}
+            r2: replicasets {servers {replicaset {servers { uuid }}}}
+        }]],
+    })
+
+    t.assert_equals(resp.data.r1, resp.data.r2)
+end
+
+function g.test_operation_error()
+    local victim = g.cluster:server('storage-2')
+    victim.net_box:eval([[
+        package.loaded['mymodule-permanent'].apply_config = function()
+            error('Artificial Error', 0)
+        end
+    ]])
+
+    -- Dummy mutation doesn't trigger two-phase commit
+    g.cluster.main_server:graphql({
+        query = [[
+            mutation { cluster { config(sections: []) {} } }
+        ]],
+    })
+
+    -- Real tho-phase commit fails on apply stage with artificial error
+    local resp = g.cluster.main_server:graphql({
+        query = [[
+            mutation { cluster { schema(as_yaml: "{}") {} } }
+        ]],
+        raise = false,
+    })
+
+    local err = resp.errors[1]
+    t.assert_equals(err.message, 'Artificial Error')
+    t.assert_covers(err.extensions, {
+        ['io.tarantool.errors.class_name'] = 'ApplyConfigError',
+    })
+
+    local victim_info = g.cluster.main_server:graphql({
+        query = [[query($uuid: String!){
+            servers(uuid: $uuid) {
+                boxinfo {cartridge {
+                    state
+                    error { message class_name stack}
+                }}
+            }
+        }]],
+        variables = {uuid = victim.instance_uuid},
+    }).data.servers[1].boxinfo.cartridge
+
+    t.assert_equals(victim_info.state, 'OperationError')
+    t.assert_covers(victim_info.error, {
+        message = 'Artificial Error',
+        class_name = 'ApplyConfigError',
+    })
+end
+

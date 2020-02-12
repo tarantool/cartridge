@@ -10,8 +10,12 @@ import {
   Button,
   BaseModal,
   Input,
+  Checkbox,
+  InputGroup,
+  Scrollbar,
   Modal,
-  Text
+  Text,
+  Spin
 } from '@tarantool.io/ui-kit';
 import { ModalInfoContainer } from '../styled'
 
@@ -78,6 +82,17 @@ const styles = {
   formContainer: css`
     flex-grow: 1;
     padding: 24px 32px;
+  `,
+  welcomeMessage: css`
+    height: 150px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+  `,
+  welcomeMessageContent: css`
+    padding: 1em;
+  `,
+  emptySpaceUnderSpin: css`
+    height: 60px;
   `
 };
 
@@ -91,16 +106,32 @@ class LogInForm extends React.Component {
   handleSubmit = async (values, actions) => {
     try {
       await this.props.logIn(values);
-    } catch(e) {
+    } catch (e) {
       actions.setFieldError('common', e.message)
-    } finally{
+    } finally {
       actions.setSubmitting(false)
     }
   };
 
+  renderWelcomeMessage = (welcomeMessage, values, handleChange) => (<>
+    <Scrollbar className={styles.welcomeMessage}>
+      <div className={styles.welcomeMessageContent}>
+        <Text variant="p">{welcomeMessage}</Text>
+      </div>
+    </Scrollbar>
+    <br />
+    <InputGroup>
+      <Checkbox checked={values['isAgreeChecked']} name="isAgreeChecked" onChange={handleChange}>
+        I agree
+      </Checkbox>
+    </InputGroup>
+  </>);
+
   render() {
     const {
       error,
+      welcomeMessageExpected,
+      welcomeMessage,
       onClose
     } = this.props;
 
@@ -110,7 +141,8 @@ class LogInForm extends React.Component {
         onSubmit={this.handleSubmit}
         initialValues={{
           username: '',
-          password: ''
+          password: '',
+          isAgreeChecked: false
         }}
       >
         {({
@@ -119,37 +151,60 @@ class LogInForm extends React.Component {
           touched,
           handleChange,
           handleBlur
-        }) =>
-          <Form>
+        }) => {
+          const isLoginEnabled = welcomeMessage
+            ? values['isAgreeChecked']
+            : !welcomeMessageExpected;
 
-            {formProps.map(({ label, field, type }) =>
-              <FieldConstructor
-                key={field}
-                label={label}
-                required={true}
-                input={
-                  <Input
-                    value={values[field]}
-                    onBlur={handleBlur}
-                    onChange={handleChange}
-                    name={field}
-                    type={type || 'text'}
-                  />
-                }
-                error={touched[field] && errors[field]}
-              />
-            )}
-            {error || errors.common ? (
-              <Alert type="error" className={styles.error}>
-                <Text variant="basic">{error || errors.common}</Text>
-              </Alert>
-            ) : null}
-            <div className={styles.actionButtons}>
-              {onClose && <Button intent="base" onClick={onClose} className={styles.cancelButton}>Cancel</Button>}
-              <Button className='meta-test__LoginFormBtn' intent="primary" type='submit'>Login</Button>
-            </div>
-          </Form>
-        }
+          return (
+            <Form>
+              {formProps.map(({ label, field, type }) =>
+                <FieldConstructor
+                  key={field}
+                  label={label}
+                  required={true}
+                  input={
+                    <Input
+                      value={values[field]}
+                      onBlur={handleBlur}
+                      onChange={handleChange}
+                      name={field}
+                      type={type || 'text'}
+                    />
+                  }
+                  error={touched[field] && errors[field]}
+                />
+              )}
+              {error || errors.common ? (
+                <Alert type="error" className={styles.error}>
+                  <Text variant="basic">{error || errors.common}</Text>
+                </Alert>
+              ) : null}
+
+              {(welcomeMessageExpected || welcomeMessage) ? (
+                <Spin enable={!welcomeMessage}>
+                  {welcomeMessage ?
+                    this.renderWelcomeMessage(welcomeMessage, values, handleChange)
+                    :
+                    <div className={styles.emptySpaceUnderSpin}></div>
+                  }
+                </Spin>
+              ) : null}
+
+              <div className={styles.actionButtons}>
+                {onClose && <Button intent="base" onClick={onClose} className={styles.cancelButton}>Cancel</Button>}
+                <Button
+                  className='meta-test__LoginFormBtn'
+                  intent="primary"
+                  type="submit"
+                  disabled={!isLoginEnabled}
+                >
+                  Login
+                </Button>
+              </div>
+            </Form>
+          );
+        }}
       </Formik>
     );
   }
@@ -167,7 +222,9 @@ const mapStateToProps = ({
   auth: {
     authorizationEnabled,
     authorized,
-    error
+    error,
+    welcomeMessageExpected,
+    welcomeMessage
   },
   ui: {
     fetchingAuth
@@ -176,6 +233,8 @@ const mapStateToProps = ({
   authorizationRequired: implements_check_password && authorizationEnabled && !authorized,
   loaded,
   error,
+  welcomeMessageExpected,
+  welcomeMessage,
   fetchingAuth
 });
 
@@ -216,7 +275,7 @@ export const ModalLogInForm = ({ onCancel, visible, ...props }) => (
     destroyOnClose={true}
   >
     <ModalInfoContainer>
-      <ConnectedLogInForm {...props} onClose={onCancel}/>
+      <ConnectedLogInForm {...props} onClose={onCancel} />
     </ModalInfoContainer>
   </Modal>
 )

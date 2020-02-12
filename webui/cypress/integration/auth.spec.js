@@ -9,6 +9,7 @@ describe('Auth', () => {
   it('Login and Enable Auth', () => {
     cy.visit(Cypress.config('baseUrl'));
     cy.get('.meta-test__LoginBtn').click();
+
     cy.get('.meta-test__LoginForm input[name="username"]')
       .type('admin')
       .should('have.value', 'admin');
@@ -22,6 +23,13 @@ describe('Auth', () => {
   })
   it('Login and Disable auth', () => {
     cy.visit(Cypress.config('baseUrl'));
+
+    // check that welcome_message & checkbox do not exist
+    // and login button is enabled
+    cy.get('#root').contains('Happy families are').should('not.exist');
+    cy.get('input[name="isAgreeChecked"]').should('not.exist');
+    cy.get('.meta-test__LoginFormBtn').should('be.enabled');
+
     cy.get('input[name="username"]')
       .type('admin')
       .should('have.value', 'admin');

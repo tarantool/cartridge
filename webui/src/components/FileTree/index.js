@@ -27,6 +27,7 @@ type FileTreeProps = {
   operationObject?: ?string,
   tree: Array<TreeFileItem>,
   selectedFile: FileItem | null,
+  initiallyExpanded: boolean,
   onFileCreate: (parentPath: string) => void,
   onDelete: (id: string) => void,
   onFileOpen: (id: string) => void,
@@ -37,27 +38,43 @@ type FileTreeProps = {
 };
 
 type FileTreeState = {
+  collapsedEntries: string[],
   expandedEntries: string[]
 };
 
 export class FileTree extends React.Component<FileTreeProps, FileTreeState> {
   state = {
+    collapsedEntries: [],
     expandedEntries: []
   };
 
   // TODO: по componentWillUpdate убрать из списка файлы, которые были удалены
   expandEntry = (id: string, expand?: boolean) => {
-    const { expandedEntries } = this.state;
+    const { collapsedEntries, expandedEntries } = this.state;
 
-    if (expand !== true && (expand === false || expandedEntries.includes(id))) {
-      this.setState({
-        expandedEntries: expandedEntries.filter(i => i !== id)
-      });
-    } else {
-      if (!expandedEntries.includes(id)) {
+    if (this.props.initiallyExpanded) {
+      if (expand !== true && (expand === false || !collapsedEntries.includes(id))) {
         this.setState({
-          expandedEntries: [...expandedEntries, id]
+          collapsedEntries: [...collapsedEntries, id]
         });
+      } else {
+        if (collapsedEntries.includes(id)) {
+          this.setState({
+            collapsedEntries: collapsedEntries.filter(i => i !== id)
+          });
+        }
+      }
+    } else {
+      if (expand !== true && (expand === false || expandedEntries.includes(id))) {
+        this.setState({
+          expandedEntries: expandedEntries.filter(i => i !== id)
+        });
+      } else {
+        if (!expandedEntries.includes(id)) {
+          this.setState({
+            expandedEntries: [...expandedEntries, id]
+          });
+        }
       }
     }
   }
@@ -77,6 +94,7 @@ export class FileTree extends React.Component<FileTreeProps, FileTreeState> {
   render() {
     const {
       className,
+      initiallyExpanded,
       fileOperation,
       operationObject,
       tree = [],
@@ -88,7 +106,7 @@ export class FileTree extends React.Component<FileTreeProps, FileTreeState> {
       onOperationCancel
     } = this.props;
 
-    const { expandedEntries } = this.state;
+    const { collapsedEntries, expandedEntries } = this.state;
 
     return (
       <ul className={cx(styles.tree, className, 'meta-test__enterName')}>
@@ -115,7 +133,12 @@ export class FileTree extends React.Component<FileTreeProps, FileTreeState> {
                     active={selectedFile ? (selectedFile.path === item.path) : false}
                     type={item.type}
                     level={level}
-                    expanded={expandedEntries.includes(item.fileId)}
+                    childsCount={item.items && item.items.length}
+                    expanded={(
+                      initiallyExpanded
+                        ? !collapsedEntries.includes(item.fileId)
+                        : expandedEntries.includes(item.fileId)
+                    )}
                     onCancel={onOperationCancel}
                     onConfirm={onOperationConfirm}
                   >
@@ -128,7 +151,11 @@ export class FileTree extends React.Component<FileTreeProps, FileTreeState> {
                     file={item}
                     active={selectedFile ? (selectedFile.path === item.path) : false}
                     level={level}
-                    expanded={expandedEntries.includes(item.fileId)}
+                    expanded={(
+                      initiallyExpanded
+                        ? !collapsedEntries.includes(item.fileId)
+                        : expandedEntries.includes(item.fileId)
+                    )}
                     onDelete={onDelete}
                     onExpand={this.expandEntry}
                     onFileCreate={this.handleFileCreate}

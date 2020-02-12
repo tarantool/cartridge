@@ -212,15 +212,14 @@ function g.test_edit_replicaset()
     local resp = get_replicaset()
     local replicasets = resp['data']['replicasets']
 
-    t.assert_equals(#replicasets, 1)
-    t.assert_equals(replicasets[1], {
+    t.assert_equals(replicasets, {{
         uuid = helpers.uuid('b'),
         roles = {'vshard-storage', 'vshard-router'},
         status = 'healthy',
         weight = 2,
         all_rw = false,
         servers = {{uri = 'localhost:13302'}, {uri = 'localhost:13304'}}
-    })
+    }})
 
     router:graphql({
         query = [[mutation {

@@ -13,7 +13,6 @@ import {
   Text,
   Scrollbar
 } from '@tarantool.io/ui-kit';
-import DemoInfo from 'src/components/DemoInfo';
 import { InputModal } from 'src/components/InputModal';
 import MonacoEditor from 'src/components/MonacoEditor';
 import { FileTree } from 'src/components/FileTree';
@@ -52,6 +51,9 @@ const styles = {
     overflow: hidden;
     background-color: #ffffff;
   `,
+  areaWithPane: css`
+    height: calc(100% - 69px - 112px - 16px);
+  `,
   sidePanel: css`
     flex-shrink: 0;
     display: flex;
@@ -66,7 +68,7 @@ const styles = {
     box-sizing: border-box;
   `,
   sidePanelTitle: css`
-    
+
   `,
   buttonsPanel: css`
     display: flex;
@@ -138,6 +140,7 @@ type CodeProps = {
   className?: string,
   fileTree: Array<TreeFileItem>,
   files: Array<FileItem>,
+  isDemoPanelPresent: boolean,
   fetchingConfigFiles: boolean,
   puttingConfigFiles: boolean,
   selectedFile: FileItem | null,
@@ -146,21 +149,29 @@ type CodeProps = {
 
 class Code extends React.Component<CodeProps, CodeState> {
   state = {
-    loading: true,
+    loading: false,
     fileOperationType: null,
     fileOperationObject: null,
     isReloadConfirmOpened: false
   }
 
+  static getDerivedStateFromProps(nextProps, prevState) {
+    if (prevState.loading === true && nextProps.fetchingConfigFiles === false) {
+      return {
+        loading: false
+      };
+    }
+    return null;
+  }
+
   async componentDidMount() {
-    if (this.props.files.length > 0) {
+    const { dispatch, files } = this.props;
+
+    if (files.length > 0) {
       return;
     }
-
-    this.props.dispatch(fetchConfigFiles());
-    this.setState(() => ({
-      loading: false
-    }))
+    dispatch(fetchConfigFiles());
+    this.setState({ loading: true });
   }
 
   getFileById = (id: ?string) => this.props.files.find(file => file.path === id);
@@ -295,6 +306,8 @@ class Code extends React.Component<CodeProps, CodeState> {
     const {
       className,
       fileTree = [],
+      isDemoPanelPresent,
+      fetchingConfigFiles,
       puttingConfigFiles,
       selectedFile,
       dispatch
@@ -303,15 +316,21 @@ class Code extends React.Component<CodeProps, CodeState> {
     const {
       fileOperationType,
       fileOperationObject,
-      isReloadConfirmOpened
+      isReloadConfirmOpened,
+      loading
     } = this.state;
 
     const operableFile = this.getFileById(fileOperationObject);
 
     return (
       <React.Fragment>
-        <DemoInfo/>
-        <div className={cx(styles.area, className)}>
+        <div
+          className={cx(
+            styles.area,
+            { [styles.areaWithPane]: isDemoPanelPresent },
+            className
+          )}
+        >
           <div className={styles.sidePanel}>
             <div className={styles.sidePanelHeading}>
               <Text variant='h4' className={styles.sidePanelTitle}>Files</Text>
@@ -336,6 +355,7 @@ class Code extends React.Component<CodeProps, CodeState> {
             </div>
             <Scrollbar className={styles.treeScrollWrap}>
               <FileTree
+                initiallyExpanded
                 tree={fileTree}
                 selectedFile={selectedFile}
                 fileOperation={fileOperationType}
@@ -360,12 +380,23 @@ class Code extends React.Component<CodeProps, CodeState> {
                   <Button
                     text='Reload'
                     size='s'
+                    className={
+                      !loading && fetchingConfigFiles
+                        ? 'meta-test__Code__reload_loading'
+                        : 'meta-test__Code__reload_idle'
+                    }
+                    loading={!loading && fetchingConfigFiles}
                     onClick={this.handleReloadClick}
                     icon={IconRefresh}
                     intent='secondary'
                   />,
                   <Button
                     onClick={this.handleApplyClick}
+                    className={
+                      puttingConfigFiles
+                        ? 'meta-test__Code__apply_loading'
+                        : 'meta-test__Code__apply_idle'
+                    }
                     text='Apply'
                     intent='primary'
                     loading={puttingConfigFiles}
@@ -439,12 +470,15 @@ class Code extends React.Component<CodeProps, CodeState> {
 }
 
 const mapStateToProps = (state: State) => {
+  const { app: { clusterSelf } } = state;
+
   return {
     fileTree: selectFileTree(state.codeEditor.files),
     files: state.codeEditor.files,
     fetchingConfigFiles: state.ui.fetchingConfigFiles,
     puttingConfigFiles: state.ui.puttingConfigFiles,
-    selectedFile: selectSelectedFile(state.codeEditor)
+    selectedFile: selectSelectedFile(state.codeEditor),
+    isDemoPanelPresent: !!clusterSelf && clusterSelf.demo_uri
   }
 };
 

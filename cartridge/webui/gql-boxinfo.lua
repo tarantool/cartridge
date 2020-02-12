@@ -3,6 +3,15 @@
 local admin = require('cartridge.admin')
 local gql_types = require('cartridge.graphql.types')
 
+local gql_type_error = gql_types.object({
+    name = 'Error',
+    fields = {
+        message = gql_types.string.nonNull,
+        class_name = gql_types.string,
+        stack = gql_types.string,
+    }
+})
+
 local gql_replica_status = gql_types.object({
     name = 'ReplicaStatus',
     description = 'Statistics for an instance in the replica set.',
@@ -203,6 +212,16 @@ local boxinfo_schema = {
                         kind = gql_types.string.nonNull,
                         description = 'Cartridge version',
                     },
+                    state = {
+                        kind = gql_types.string.nonNull,
+                        description = 'Current instance state',
+                    },
+                    error = {
+                        kind = gql_type_error,
+                        description =
+                            'Error details if instance is in' ..
+                            ' failure state',
+                    }
                 }
             }).nonNull,
         }

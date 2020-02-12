@@ -8,7 +8,7 @@ local helpers = require('cartridge.test-helpers')
 g.setup = function()
 	g.cluster = helpers.Cluster:new({
         datadir = fio.tempdir(),
-        server_command = fio.pathjoin(test_helper.root, 'test', 'integration', 'srv_woauth.lua'),
+        server_command = fio.pathjoin(test_helper.root, 'test', 'integration', 'srv_basic.lua'),
         use_vshard = false,
         cookie = 'test-cluster-cookie',
 
@@ -28,6 +28,11 @@ g.setup = function()
     })
 
     g.cluster:start()
+
+    g.cluster.main_server.net_box:eval([[
+        os.setenv('TARANTOOL_DEMO_URI', 'admin:password@try-cartridge.tarantool.io:26333')
+    ]])
+
 end
 
 g.teardown = function()
@@ -46,6 +51,6 @@ local function cypress_run(spec)
     t.assert_equals(code, 0)
 end
 
-function g.test_auth_switcher_moved()
-    cypress_run('auth-switcher-moved.spec.js')
+function g.test_demo_panel_present()
+    cypress_run('demo-panel-present.spec.js')
 end

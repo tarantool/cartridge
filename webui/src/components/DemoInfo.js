@@ -3,7 +3,7 @@ import * as React from 'react'
 import { connect } from 'react-redux'
 import type { State } from '../store/rootReducer'
 import { Panel } from './Panel'
-import { css } from 'emotion'
+import { css, cx } from 'emotion'
 import styled from 'react-emotion'
 import {
   ConfirmModal, PopupBody, Text, Modal, Tabbed, PopupFooter, Button, Markdown
@@ -59,7 +59,7 @@ python3 example.py
   },
   PHP: {
     markdown: `
-## Connect to Tarantool Cartridge using [php client](https://github.com/tarantool-php/client)
+## Connect to Tarantool Cartridge using [PHP client](https://github.com/tarantool-php/client)
 
 First, **install** *messagepack* and *tarantool client* using *composer*:
 
@@ -96,19 +96,22 @@ php example.php
   }
 }
 
-const FlexContainer = styled.div`
-  display: flex;
-  width: 100%;
-  justify-content: space-between;
-`
+const styles = {
+  wrap: css`
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  `,
+  btn: css`
+    flex-shrink: 0;
+    margin-left: 16px;
+  `
+}
 
 const DemoContext = styled(Panel)`
   margin: 24px 16px;
   padding: 16px;
   display: flex;
-`
-
-const RightContent = styled.div`
 `
 
 const LinkSpan = styled(Text)`
@@ -120,7 +123,11 @@ const Bold = styled.span`
   font-weight: bold;
 `
 
-const MainContent = styled.div``
+const MainContent = styled.div`
+  flex-shrink: 1;
+  display: flex;
+  align-items: center;
+`
 
 const formatUri = (text: string, uri: string) => text.replace(':demo_uri:', uri)
 const formatDecomposeUri = (text: string, uri: string) => {
@@ -131,12 +138,17 @@ const formatDecomposeUri = (text: string, uri: string) => {
     .replace(':host:', host)
 }
 
+type DemoInfoProps = {
+  className: ?string,
+  uri: ?string
+}
+
 type DemoInfoState = {
   isShowReset: boolean,
   isShowConnectInfo: boolean,
 }
 
-class DemoInfo extends React.Component<{ uri: ?string }, DemoInfoState> {
+class DemoInfo extends React.Component<DemoInfoProps, DemoInfoState> {
   state = {
     isShowReset: false,
     isShowConnectInfo: false
@@ -160,7 +172,7 @@ class DemoInfo extends React.Component<{ uri: ?string }, DemoInfoState> {
   }
 
   render() {
-    const { uri } = this.props
+    const { className, uri } = this.props
     const { isShowReset, isShowConnectInfo } = this.state
     if (!uri)
       return null
@@ -213,7 +225,13 @@ class DemoInfo extends React.Component<{ uri: ?string }, DemoInfoState> {
       }
       {
         isShowConnectInfo &&
-        <Modal visible={isShowConnectInfo} title={'Connect info'} onClose={this.hideConnectInfo} wide>
+        <Modal
+          visible={isShowConnectInfo}
+          title={'Connect info'}
+          onClose={this.hideConnectInfo}
+          className='meta-test__DemoInfo_modal'
+          wide
+        >
           <Tabbed tabs={tabs}/>
           <PopupFooter
             controls={[
@@ -222,18 +240,12 @@ class DemoInfo extends React.Component<{ uri: ?string }, DemoInfoState> {
           />
         </Modal>
       }
-      <DemoContext>
-        <FlexContainer>
-          <MainContent>
-            <Text>Your demo server is created. Temporary address of you server:  <Bold>{uri}</Bold></Text>
-            <span style={{ marginLeft: '16px' }}>
-              <Button text={'How to connect?'} intent={'iconic'} onClick={this.showConnectInfo} />
-            </span>
-          </MainContent>
-          <RightContent>
-            <Button text={'Reset configuration'} intent={'iconic'} onClick={this.showResetModal} />
-          </RightContent>
-        </FlexContainer>
+      <DemoContext className={cx(styles.wrap, 'meta-test__DemoInfo', className)}>
+        <MainContent>
+          <Text>Your demo server is created. Temporary address of you server:  <Bold>{uri}</Bold></Text>
+          <Button className={styles.btn} text='How to connect?' intent='iconic' onClick={this.showConnectInfo} />
+        </MainContent>
+        <Button className={styles.btn} text='Reset configuration' intent='iconic' onClick={this.showResetModal} />
       </DemoContext>
     </React.Fragment>
   }

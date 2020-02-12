@@ -7,9 +7,8 @@ set -e
 
 # run tests
 ./taptest.lua
-.rocks/bin/luatest -v
+.rocks/bin/luatest -v --coverage
 
 # collect coverage
-# .rocks/bin/luacov-console ./cluster
-# .rocks/bin/luacov-console -s > coverage_result.txt
-# .rocks/bin/luacov-console -s
+.rocks/bin/luacov-console `pwd`
+.rocks/bin/luacov-console -s

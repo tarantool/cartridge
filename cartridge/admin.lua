@@ -6,6 +6,7 @@
 -- @module cartridge.admin
 
 local fun = require('fun')
+local json = require('json')
 local fiber = require('fiber')
 local checks = require('checks')
 local errors = require('errors')
@@ -112,6 +113,12 @@ local function get_server_info(members, uuid, uri)
     return ret
 end
 
+--- Get servers and replicasets lists.
+-- @function get_topology
+-- @local
+-- @treturn[1] {servers={ServerInfo,...},replicasets={ReplicasetInfo,...}}
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 local function get_topology()
     local state, err = confapplier.get_state()
     -- OperationError doesn't influence observing topology
@@ -309,6 +316,20 @@ local function get_info(uri)
         local box_cfg = box.cfg
         local box_info = box.info()
 
+        local server_state, err = confapplier.get_state()
+        local server_error
+        if err ~= nil then
+            server_error = {
+                message = err.err,
+                class_name = err.class_name,
+                stack = err.stack,
+            }
+
+            if type(err.err) ~= 'string' then
+                server_error.message = json.encode(err.err)
+            end
+        end
+
         local ret = {
             general = {
                 version = box_info.version,
@@ -364,8 +385,10 @@ local function get_info(uri)
                 replication_info = {},
             },
             cartridge = {
-                version = require('cartridge').VERSION
-            },
+                version = require('cartridge').VERSION,
+                state = server_state,
+                error = server_error,
+            }
         }
 
         for i, replica in pairs(box_info.replication) do
@@ -1128,6 +1151,7 @@ return {
     get_self = get_self,
     get_servers = get_servers,
     get_replicasets = get_replicasets,
+    get_topology = get_topology,
 
     edit_topology = edit_topology,
     probe_server = probe_server,

@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
-- Show how-to-connect-demo instructions in WebUI.
+- Show how-to-connect-demo instructions on every page in WebUI.
 
 - Make use of GraphQL error extensions: provide additional information
   about `class_name` and `stack` of original error.
@@ -21,7 +21,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Code applying error in Code editor.
 
-- New field for `server.boxinfo` of GraphQL request which is shown cartridge version.
+- New GraphQL API fields in `servers{ boxinfo{ cartridge }}`:
+  `version`, `state`, `error`.
+
+- Remember last opened file in code editor to local storage.
+  Opens first file when local storage empty.
+
+- File tree expanded by default.
+
+- New internal module to hanle `.tar` files.
 
 ### Changed
 
@@ -46,6 +54,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Replicaset weight input in WebUI accepts float values.
 
 - Apply `custom_proc_title` setting without waiting for `box.cfg`.
+
+- Make GraphQL compatible with `req:read_cached()` call in httpd hooks.
 
 ## [2.0.1] - 2020-01-15
 
