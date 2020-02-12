@@ -10,6 +10,7 @@ file = {
     "cartridge/topology.lua",
     "cartridge/clusterwide-config.lua",
     "cartridge/rpc.lua",
+    "cartridge/tar.lua",
     "cartridge/pool.lua",
     "cartridge/confapplier.lua",
     "cartridge/test-helpers.lua",

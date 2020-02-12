@@ -29,6 +29,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - File tree expanded by default.
 
+- New internal module to hanle `.tar` files.
+
 ### Changed
 
 - Network error shows with fixed splash panel instead of notification.
