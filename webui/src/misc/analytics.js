@@ -16,7 +16,7 @@ if (!Element.prototype.closest) {
   };
 }
 
-const isButton = el => el.tagName === 'BUTTON'
+const isButton = el => el.tagName === 'BUTTON' || !!el.closest('button')
 
 const isLink = el => el.tagName === 'A' || !!el.closest('a')
 
