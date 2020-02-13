@@ -35,14 +35,11 @@ local function get_fields()
     return vars.graphql_schema_fields
 end
 
-local function funcall_wrap(fun_name, trigger_arg)
-    checks('string', {
-        operation = 'string',
-        field = 'string',
-    })
+local function funcall_wrap(fun_name, operation, field_name)
+    checks('string', 'string', 'string')
     return function(...)
         for trigger, _ in pairs(vars.on_resolve_triggers) do
-            trigger(trigger_arg)
+            trigger(operation, field_name)
         end
 
         local res, err = funcall.call(fun_name, ...)
@@ -117,10 +114,9 @@ local function add_callback(opts)
         oldkind.fields[opts.name] = {
             kind = opts.kind,
             arguments = opts.args,
-            resolve = funcall_wrap(opts.callback, {
-                operation = 'query',
-                field = opts.prefix .. '.' .. opts.name,
-            }),
+            resolve = funcall_wrap(opts.callback,
+                'query', opts.prefix .. '.' .. opts.name
+            ),
             description = opts.doc,
         }
 
@@ -133,10 +129,9 @@ local function add_callback(opts)
         vars.callbacks[opts.name] = {
             kind = opts.kind,
             arguments = opts.args,
-            resolve = funcall_wrap(opts.callback, {
-                operation = 'query',
-                field = opts.name,
-            }),
+            resolve = funcall_wrap(opts.callback,
+                'query', opts.name
+            ),
             description = opts.doc,
         }
     end
@@ -162,10 +157,9 @@ local function add_mutation(opts)
         oldkind.fields[opts.name] = {
             kind = opts.kind,
             arguments = opts.args,
-            resolve = funcall_wrap(opts.callback, {
-                operation = 'mutation',
-                field = opts.prefix .. '.' .. opts.name,
-            }),
+            resolve = funcall_wrap(opts.callback,
+                'mutation', opts.prefix .. '.' .. opts.name
+            ),
             description = opts.doc
         }
 
@@ -178,10 +172,9 @@ local function add_mutation(opts)
         vars.mutations[opts.name] = {
             kind = opts.kind,
             arguments = opts.args,
-            resolve = funcall_wrap(opts.callback, {
-                operation = 'mutation',
-                field = opts.name,
-            }),
+            resolve = funcall_wrap(opts.callback,
+                'mutation', opts.name
+            ),
             description = opts.doc,
         }
     end
@@ -325,14 +318,15 @@ local function _execute_graphql(req)
 
         log.error('%s', err)
 
+        local extensions = err.graphql_extensions or {}
+        extensions['io.tarantool.errors.class_name'] = err.class_name
+        extensions['io.tarantool.errors.stack'] = err.stack
+
         -- Specification: https://spec.graphql.org/June2018/#sec-Errors
         return http_finalize({
             errors = {{
                 message = err.err,
-                extensions = {
-                    ['io.tarantool.errors.class_name']  = err.class_name,
-                    ['io.tarantool.errors.stack'] = err.stack,
-                }
+                extensions = extensions,
             }}
         })
     end
@@ -372,8 +366,9 @@ end
 -- It will be executed **before** top-level resolvers, which were
 -- registered using `add_callback` or `add_mutation` methods.
 --
--- The trigger function is called with one argument:
--- `{operation = 'query|mutation', field = '[prefix.]field_name'}`
+-- The trigger function is called with two argument:
+-- - `operation` (*string*): 'query|mutation',
+-- - `field` (*string*): '[prefix.]field_name'.
 --
 -- If the parameters are `(nil, old_trigger)`, then the old trigger is
 -- deleted.
@@ -381,8 +376,8 @@ end
 -- (**Added** in v2.0.1-52)
 --
 -- @usage
---    local function log_request(req)
---        log.info('GraphQL %s: %s', req.operation:upper(), req.field)
+--    local function log_request(operation, field)
+--        log.info('GraphQL %s: %s', operation:upper(), field)
 --        -- Will print "GraphQL QUERY cluster.auth_params"
 --    end)
 --

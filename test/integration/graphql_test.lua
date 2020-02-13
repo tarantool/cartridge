@@ -198,9 +198,12 @@ function g.test_middleware()
 
     -- GraphQL execution can be interrupted by raising error in trigger
     server.net_box:eval([[
+        local errors = require('errors')
         graphql = require('cartridge.graphql')
         function raise()
-            error("You are not welcome here", 0)
+            local err = errors.new('E', 'You are not welcome here')
+            err.graphql_extensions = {code = 403}
+            error(err)
         end
         graphql.on_resolve(raise)
     ]])
@@ -208,6 +211,14 @@ function g.test_middleware()
         "You are not welcome here",
         server.graphql, server, { query = '{replicasets{}}' }
     )
+
+    local response = server:graphql({
+        query = '{servers{}}',
+        raise = false,
+    })
+    local extensions = response.errors[1].extensions
+    t.assert_equals(extensions['io.tarantool.errors.class_name'], 'E')
+    t.assert_equals(extensions['code'], 403)
 
     -- GraphQL callbacks exections can be tracked
     server.net_box:eval([[
@@ -238,10 +249,10 @@ function g.test_middleware()
     t.assert_equals(
         server.net_box:eval('return tracks'),
         {
-            {{operation = 'query',    field = 'servers'}},
-            {{operation = 'query',    field = 'cluster.self'}},
-            {{operation = 'mutation', field = 'probe_server'}},
-            {{operation = 'mutation', field = 'cluster.edit_topology'}},
+            {'query',    'servers'},
+            {'query',    'cluster.self'},
+            {'mutation', 'probe_server'},
+            {'mutation', 'cluster.edit_topology'},
         }
     )
 end
