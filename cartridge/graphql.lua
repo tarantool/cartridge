@@ -18,6 +18,7 @@ local validate = require('cartridge.graphql.validate')
 vars:new('graphql_schema_fields', {})
 vars:new('graphql_schema', {})
 vars:new('model', {})
+vars:new('on_resolve_triggers', {})
 vars:new('callbacks', {})
 vars:new('mutations', {})
 
@@ -34,8 +35,16 @@ local function get_fields()
     return vars.graphql_schema_fields
 end
 
-local function funcall_wrap(fun_name)
+local function funcall_wrap(fun_name, trigger_arg)
+    checks('string', {
+        operation = 'string',
+        field = 'string',
+    })
     return function(...)
+        for trigger, _ in pairs(vars.on_resolve_triggers) do
+            trigger(trigger_arg)
+        end
+
         local res, err = funcall.call(fun_name, ...)
 
         if res == nil then
@@ -108,7 +117,10 @@ local function add_callback(opts)
         oldkind.fields[opts.name] = {
             kind = opts.kind,
             arguments = opts.args,
-            resolve = funcall_wrap(opts.callback),
+            resolve = funcall_wrap(opts.callback, {
+                operation = 'query',
+                field = opts.prefix .. '.' .. opts.name,
+            }),
             description = opts.doc,
         }
 
@@ -121,7 +133,10 @@ local function add_callback(opts)
         vars.callbacks[opts.name] = {
             kind = opts.kind,
             arguments = opts.args,
-            resolve = funcall_wrap(opts.callback),
+            resolve = funcall_wrap(opts.callback, {
+                operation = 'query',
+                field = opts.name,
+            }),
             description = opts.doc,
         }
     end
@@ -147,7 +162,10 @@ local function add_mutation(opts)
         oldkind.fields[opts.name] = {
             kind = opts.kind,
             arguments = opts.args,
-            resolve = funcall_wrap(opts.callback),
+            resolve = funcall_wrap(opts.callback, {
+                operation = 'mutation',
+                field = opts.prefix .. '.' .. opts.name,
+            }),
             description = opts.doc
         }
 
@@ -160,7 +178,10 @@ local function add_mutation(opts)
         vars.mutations[opts.name] = {
             kind = opts.kind,
             arguments = opts.args,
-            resolve = funcall_wrap(opts.callback),
+            resolve = funcall_wrap(opts.callback, {
+                operation = 'mutation',
+                field = opts.name,
+            }),
             description = opts.doc,
         }
     end
@@ -346,6 +367,42 @@ local function init(httpd)
     )
 end
 
+--- Set up trigger for GraphQL handlers.
+--
+-- It will be executed **before** top-level resolvers, which were
+-- registered using `add_callback` or `add_mutation` methods.
+--
+-- The trigger function is called with one argument:
+-- `{operation = 'query|mutation', field = '[prefix.]field_name'}`
+--
+-- If the parameters are `(nil, old_trigger)`, then the old trigger is
+-- deleted.
+--
+-- (**Added** in v2.0.1-52)
+--
+-- @usage
+--    local function log_request(req)
+--        log.info('GraphQL %s: %s', req.operation:upper(), req.field)
+--        -- Will print "GraphQL QUERY cluster.auth_params"
+--    end)
+--
+--    graphql.on_resolve(log_request) -- start logging
+--    graphql.on_resolve(nil, log_request) -- stop logging
+--
+-- @function on_resolve
+-- @tparam function new_trigger
+-- @tparam function old_trigger
+local function on_resolve(trigger_new, trigger_old)
+    checks('?function', '?function')
+    if trigger_old ~= nil then
+        vars.on_resolve_triggers[trigger_old] = nil
+    end
+    if trigger_new ~= nil then
+        vars.on_resolve_triggers[trigger_new] = true
+    end
+    return trigger_new
+end
+
 return {
     init = init,
     set_model = set_model,
@@ -355,4 +412,5 @@ return {
     add_mutation_prefix = add_mutation_prefix,
     add_callback = add_callback,
     add_mutation = add_mutation,
+    on_resolve = on_resolve,
 }

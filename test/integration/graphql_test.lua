@@ -192,3 +192,56 @@ function g.test_error_extensions()
         'Invalid cluster topology config'
     )
 end
+
+function g.test_middleware()
+    local server = cluster.main_server
+
+    -- GraphQL execution can be interrupted by raising error in trigger
+    server.net_box:eval([[
+        graphql = require('cartridge.graphql')
+        function raise()
+            error("You are not welcome here", 0)
+        end
+        graphql.on_resolve(raise)
+    ]])
+    t.assert_error_msg_equals(
+        "You are not welcome here",
+        server.graphql, server, { query = '{replicasets{}}' }
+    )
+
+    -- GraphQL callbacks exections can be tracked
+    server.net_box:eval([[
+        graphql.on_resolve(nil, raise)
+        graphql.on_resolve(require('log').warn)
+
+        tracks = {}
+        function track_graphql(...)
+            table.insert(tracks, {...})
+        end
+        graphql.on_resolve(track_graphql)
+    ]])
+
+    server:graphql({ query = [[
+        query {
+            servers {}
+            cluster {self {}}
+        }
+    ]]})
+
+    server:graphql({ query = [[
+        mutation($uri: String!) {
+            probe_server(uri: $uri)
+            cluster { edit_topology {} }
+        }
+    ]], variables = {uri = server.advertise_uri}})
+
+    t.assert_equals(
+        server.net_box:eval('return tracks'),
+        {
+            {{operation = 'query',    field = 'servers'}},
+            {{operation = 'query',    field = 'cluster.self'}},
+            {{operation = 'mutation', field = 'probe_server'}},
+            {{operation = 'mutation', field = 'cluster.edit_topology'}},
+        }
+    )
+end
