@@ -43,6 +43,7 @@ vars:new('state_notification_timeout', 5)
 vars:new('clusterwide_config')
 
 vars:new('workdir')
+vars:new('advertise_uri')
 vars:new('instance_uuid')
 vars:new('replicaset_uuid')
 
@@ -286,19 +287,20 @@ local function boot_instance(clusterwide_config)
 
     -- The instance should know his uuids.
     local snapshots = fio.glob(fio.pathjoin(vars.workdir, '*.snap'))
-    local advertise_uri = membership.myself().uri
     local instance_uuid
     local replicaset_uuid
     if next(snapshots) == nil then
         -- When snapshots are absent the only way to do it
         -- is to find myself by uri.
-        instance_uuid = topology.find_server_by_uri(topology_cfg, advertise_uri)
+        instance_uuid = topology.find_server_by_uri(
+            topology_cfg, vars.advertise_uri
+        )
 
         if instance_uuid == nil then
             local err = BootError:new(
                 "Couldn't find server %s in clusterwide config," ..
                 " bootstrap impossible",
-                advertise_uri
+                vars.advertise_uri
             )
             set_state('InitError', err)
             return nil, err
@@ -340,7 +342,7 @@ local function boot_instance(clusterwide_config)
             box_opts.replication,
             utils.table_find(
                 box_opts.replication,
-                pool.format_uri(advertise_uri)
+                pool.format_uri(vars.advertise_uri)
             )
         )
         if #box_opts.replication == 0 then
@@ -472,12 +474,14 @@ local function init(opts)
         workdir = 'string',
         box_opts = 'table',
         binary_port = 'number',
+        advertise_uri = 'string',
     })
 
     assert(vars.state == '', 'Unexpected state ' .. vars.state)
     vars.workdir = opts.workdir
     vars.box_opts = opts.box_opts
     vars.binary_port = opts.binary_port
+    vars.advertise_uri = opts.advertise_uri
 
     local ok, err = remote_control.bind('0.0.0.0', vars.binary_port)
     if not ok then
@@ -585,6 +589,7 @@ return {
     wish_state = wish_state,
     get_state = function() return vars.state, vars.error end,
     get_workdir = function() return vars.workdir end,
+    get_advertise_uri = function() return vars.advertise_uri end,
     get_instance_uuid = function() return vars.instance_uuid end,
     get_replicaset_uuid = function() return vars.replicaset_uuid end,
 }

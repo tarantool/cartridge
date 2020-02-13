@@ -379,11 +379,14 @@ local function cfg(opts, box_opts)
         require("membership.options")[opt_name] = opt_value
     end
 
-    log.info('Using advertise_uri "%s:%d"', advertise.host, advertise.service)
-    local ok, err = CartridgeCfgError:pcall(membership.init, advertise.host, advertise.service)
+    local ok, err = CartridgeCfgError:pcall(membership.init,
+        advertise.host, advertise.service
+    )
     if not ok then
         return nil, err
     end
+    local advertise_uri = membership.myself().uri
+    log.info('Using advertise_uri %q', advertise_uri)
 
     if opts.alias == nil then
         opts.alias = args.instance_name
@@ -500,8 +503,9 @@ local function cfg(opts, box_opts)
 
     local ok, err = confapplier.init({
         workdir = opts.workdir,
-        binary_port = advertise.service,
         box_opts = box_opts,
+        binary_port = advertise.service,
+        advertise_uri = advertise_uri,
     })
     if not ok then
         return nil, err
