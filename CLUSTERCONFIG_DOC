@@ -1,0 +1,125 @@
+Кластеный конфиг (`clusterwide config`) это обстракция, котрая удовлетворяет парадигмам ООП. Используется это для описания ролей и топологии кластера.
+
+В lua это представлено в виде таблицы, где ключем является имя файла, а значением его содержимое или распаковананя lua таблица, причем распаковка lua таблиц происходит автоматически для файлов с расширением `.yml`. В файловой системе хранится в отдельной папке в виде файлового дерева. Конфиг можно объявить просто из кода как lua таблица с помощью функции `new(data)`, загруить из yaml файла `load_from_file(filename)`, а так же как директорию `load_from_dir(path)`.
+
+tarantool> ClusterwideConfig = require('cartridge.clusterwide-config')
+tarantool> cofig_from_data = ClusterwideConfig.new({
+		 > 	   -- two files
+		 >     ['forex.yml'] = '{EURRUB_TOM: 70.33, USDRUB_TOM: 63.18}',
+		 >     ['text'] = 'Lorem ipsum dolor sit amet',
+		 > })
+tarantool> cofig_from_file = ClusterwideConfig.load_from_file('filename')
+tarantool> cofig_from_dir = ClusterwideConfig.load_from_dir('path')
+
+Но это только тип данных, что бы работать с кластерным конфигом на сервере (загрузка, применение ролей, запуск нод кластера) требуется модуль `confapplier`.
+Этот модуль реализует внутренний конечный автомат, который помогает управлять кластером. В публичном интерфейсе мы имеем функции: `init(opts)`, `boot_instance(clusterwide_config)`, `apply_config(clusterwide_config)`, `validate_config(clusterwide_config, _)`.
+
+Функция `init(opts)` не сложно понять, что инициализирует `confapplier`. Параметр opts - lua таблица, которая должна содержать такие поля как:
+	- workdir (строка)
+    - box_opts (таблица)
+    - binary_port (число)
+После вызова этой функции мы готовы работать с нашим модулем. Возвращает `true` если что-то пошло не так.
+
+Функция `apply_config(clusterwide_config)` применяет конфиг на кластере, т. е. кофнигурирует `box` репликами из топологии и применяет роли к инстансам, возвращает `true` если все прошло успешно и ошибку если что-то пошло не так.
+
+Функция `boot_instance(clusterwide_config)` запускает инстансы из топологии, делает снапшоты, так же применяет конфиг, возвращает результат применения конфига.
+
+Функция `validate_config(clusterwide_config, _)` - проверяет возможность применения ролей для кофнига. Возвращает результат функции `require('cartridge.roles').validate_config`
+
+Получить сам текущий кластерный конфиг можно с помощью трех функции `get_active_config()`, `get_readonly()`, `get_deepcopy()` (возвращают тип `ClusterwideConfig`):
+
+tarantool> confapplier = require('cartridge.confapplier')
+tarantool> active_clusterwide_config = confapplier.get_active_config()
+tarantool> readonly_clusterwide_config = confapplier.get_readonly()
+tarantool> copy_clusterwide_config = confapplier.get_deepcopy()
+
+Работа с конфигом (чтение/изменение) происходит через функции `get_plaintext(section_name)` (если section_name райно nil, то функция возвращает таблицу со всеми файлами и их содержимым конфига) возвращающая содержание файла с именем `section_name` и `set_plaintext(section_name)` которая задает содержание файла с именем `section_name`, так же есть поддержка API (http, graphql) и в luatest есть возможности работать с конфигом (скачивание/обновление), но это и есть обернутые http запросы.
+
+tarantool> content = clusterwide_config:get_plaintext('filename')
+tarantool> all_plaintext = clusterwide_config:get_plaintext()
+-- and
+tarantool> clusterwide_config:set_plaintext('It's any string')
+
+Доступ к распакованым lua таблицам осуществляется без расширения `.yml` с помощью функций `get_readonly(section_name)` и `get_deepcopy(section_name)` (если section_name райно nil, то функция возвращает таблицу со всеми луа таблицами конфига).
+
+tarantool> for section, data in pairs(clusterwide_config:get_readonly()) do
+		 >     -- To do something
+		 >     -- ...
+		 > end
+-- and
+tarantool> for section, data in pairs(clusterwide_config:get_deepcopy()) do
+		 >     -- To do something
+		 >     -- ...
+		 > end
+
+Так же можно получить копию конфига с помощью функции `copy()`:
+
+tarantool> copy_config = clusterwide_config:copy()
+
+API для кластерного конфига:
+
+1) HTTP:
+В API картриджа есть 2 пути для взаимодействия с конфигом:
+GET - `/admin/config` - для скачивания конфига
+PUT - `/admin/config` - для обновления конфига
+
+При GET запросе к HTTP мы получаем ответ, телом которогое явлеется содержимое 'config.yml', где весь конфиг слит в 1 общий файл. Это файл содержит закодированую в yaml lua таблицу конфига с сервера, не включая в себя системаные секции* и файлы с расширениями `.yml`, т. к. они являются закодироваными таблицами этого же конфига.
+
+*системные секции:global_labels:
+      - alias
+    - auth
+    - topology
+    - users_acl
+    - vshard
+    - vshard_groups
+
+-- Download config http example
+tarantool> http_config = yaml.decode(server:http_request('get', '/admin/config'))
+
+-- Upload config http example
+tarantool> server:http_request('put', '/admin/config', {body = yaml.encode({
+		 > 	   ['custom_config'] = {
+		 > 	           ['It's http method'] = 'Yes'
+		 >	       }
+		 >     })
+		 > })
+
+2) GraphQL:
+Так же можно получить конфиг или его определенные секции с помощью запросов к graphql.
+
+-- Download config http example
+tarantool> graphql_config = server:graphql({
+		 >     query = [[
+		 >	       {
+		 >				cluster {
+		 >					config(sections: $sections)
+		 >				}
+		 >		   }
+		 >     ]],
+		 > 	   variables = {sections = {section_name1, section_name2}},
+		 > })
+
+-- Upload config http example
+tarantool> graphql_config = server:graphql({
+		 >     query = [[
+		 >	       mutation($sections: [String!]) {
+		 >				cluster {
+		 >					config(sections: $sections)
+		 >				}
+		 >		   }
+		 >     ]],
+		 > 	   variables = {sections = {section_name1, section_name2}},
+		 > })
+
+3) Luatest (обертка HTTP):
+В luatest есть возможность взаимодействия с конфигом через встроеные функции `Server:download_config()` и `Server:upload_config(config)`. С помощью тестового "сервера" или "кластера" можно скачать конфиг или обновить его. При использовании кластера, функции вызовутся с главного сервера.
+
+-- Download config luatest example
+tarantool> luatest_config = g.cluster:download_config()
+
+-- Upload config luatest example
+tarantool> g.cluster:upload_config({
+		 >     ['custom_config'] = {
+		 >         ['It's http method'] = 'May be'
+    	 >     }
+		 > })
