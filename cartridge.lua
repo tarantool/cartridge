@@ -179,6 +179,10 @@ end
 --   env `TARANTOOL_CONSOLE_SOCK`,
 --   args `--console-sock`)
 --
+-- @tparam ?table opts.webui_blacklist
+--   List of hidden pages.
+--   (default: {})
+--
 -- @tparam ?table box_opts
 --   tarantool extra box.cfg options (e.g. memtx_memory),
 --   that may require additional tuning
