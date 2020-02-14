@@ -18,6 +18,7 @@ local validate = require('cartridge.graphql.validate')
 vars:new('graphql_schema_fields', {})
 vars:new('graphql_schema', {})
 vars:new('model', {})
+vars:new('on_resolve_triggers', {})
 vars:new('callbacks', {})
 vars:new('mutations', {})
 
@@ -34,8 +35,13 @@ local function get_fields()
     return vars.graphql_schema_fields
 end
 
-local function funcall_wrap(fun_name)
+local function funcall_wrap(fun_name, operation, field_name)
+    checks('string', 'string', 'string')
     return function(...)
+        for trigger, _ in pairs(vars.on_resolve_triggers) do
+            trigger(operation, field_name)
+        end
+
         local res, err = funcall.call(fun_name, ...)
 
         if res == nil then
@@ -108,7 +114,9 @@ local function add_callback(opts)
         oldkind.fields[opts.name] = {
             kind = opts.kind,
             arguments = opts.args,
-            resolve = funcall_wrap(opts.callback),
+            resolve = funcall_wrap(opts.callback,
+                'query', opts.prefix .. '.' .. opts.name
+            ),
             description = opts.doc,
         }
 
@@ -121,7 +129,9 @@ local function add_callback(opts)
         vars.callbacks[opts.name] = {
             kind = opts.kind,
             arguments = opts.args,
-            resolve = funcall_wrap(opts.callback),
+            resolve = funcall_wrap(opts.callback,
+                'query', opts.name
+            ),
             description = opts.doc,
         }
     end
@@ -147,7 +157,9 @@ local function add_mutation(opts)
         oldkind.fields[opts.name] = {
             kind = opts.kind,
             arguments = opts.args,
-            resolve = funcall_wrap(opts.callback),
+            resolve = funcall_wrap(opts.callback,
+                'mutation', opts.prefix .. '.' .. opts.name
+            ),
             description = opts.doc
         }
 
@@ -160,7 +172,9 @@ local function add_mutation(opts)
         vars.mutations[opts.name] = {
             kind = opts.kind,
             arguments = opts.args,
-            resolve = funcall_wrap(opts.callback),
+            resolve = funcall_wrap(opts.callback,
+                'mutation', opts.name
+            ),
             description = opts.doc,
         }
     end
@@ -304,14 +318,15 @@ local function _execute_graphql(req)
 
         log.error('%s', err)
 
+        local extensions = err.graphql_extensions or {}
+        extensions['io.tarantool.errors.class_name'] = err.class_name
+        extensions['io.tarantool.errors.stack'] = err.stack
+
         -- Specification: https://spec.graphql.org/June2018/#sec-Errors
         return http_finalize({
             errors = {{
                 message = err.err,
-                extensions = {
-                    ['io.tarantool.errors.class_name']  = err.class_name,
-                    ['io.tarantool.errors.stack'] = err.stack,
-                }
+                extensions = extensions,
             }}
         })
     end
@@ -346,6 +361,43 @@ local function init(httpd)
     )
 end
 
+--- Set up trigger for GraphQL handlers.
+--
+-- It will be executed **before** top-level resolvers, which were
+-- registered using `add_callback` or `add_mutation` methods.
+--
+-- The trigger function is called with two argument:
+-- - `operation` (*string*): 'query|mutation',
+-- - `field` (*string*): '[prefix.]field_name'.
+--
+-- If the parameters are `(nil, old_trigger)`, then the old trigger is
+-- deleted.
+--
+-- (**Added** in v2.0.1-52)
+--
+-- @usage
+--    local function log_request(operation, field)
+--        log.info('GraphQL %s: %s', operation:upper(), field)
+--        -- Will print "GraphQL QUERY cluster.auth_params"
+--    end)
+--
+--    graphql.on_resolve(log_request) -- start logging
+--    graphql.on_resolve(nil, log_request) -- stop logging
+--
+-- @function on_resolve
+-- @tparam function new_trigger
+-- @tparam function old_trigger
+local function on_resolve(trigger_new, trigger_old)
+    checks('?function', '?function')
+    if trigger_old ~= nil then
+        vars.on_resolve_triggers[trigger_old] = nil
+    end
+    if trigger_new ~= nil then
+        vars.on_resolve_triggers[trigger_new] = true
+    end
+    return trigger_new
+end
+
 return {
     init = init,
     set_model = set_model,
@@ -355,4 +407,5 @@ return {
     add_mutation_prefix = add_mutation_prefix,
     add_callback = add_callback,
     add_mutation = add_mutation,
+    on_resolve = on_resolve,
 }
