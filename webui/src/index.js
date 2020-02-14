@@ -1,3 +1,4 @@
+import './misc/publicPath';
 import React, { lazy, Suspense } from 'react';
 import { Provider } from 'react-redux';
 import { Router, Switch, Route } from 'react-router-dom';

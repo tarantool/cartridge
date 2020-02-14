@@ -13,7 +13,7 @@ local api_topology = require('cartridge.webui.api-topology')
 local api_ddl = require('cartridge.webui.api-ddl')
 
 local function init(httpd)
-    front.init(httpd)
+    front.init(httpd, { enforce_root_redirect = true, prefix = '/tnt' })
     front.add('cluster', front_bundle)
 
     graphql.init(httpd)
