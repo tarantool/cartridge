@@ -11,6 +11,18 @@ local api_config = require('cartridge.webui.api-config')
 local api_vshard = require('cartridge.webui.api-vshard')
 local api_topology = require('cartridge.webui.api-topology')
 local api_ddl = require('cartridge.webui.api-ddl')
+local api_blacklist = require('cartridge.webui.api-blacklist')
+
+local webui_blacklist = {}
+local function set_blacklist(blacklist)
+    require('log').info('call set_blacklist')
+    webui_blacklist = table.deepcopy(blacklist)
+end
+
+local function get_blacklist()
+    require('log').info('call get_blacklist')
+    return table.deepcopy(webui_blacklist)
+end
 
 local function init(httpd)
     front.init(httpd)
@@ -34,9 +46,15 @@ local function init(httpd)
     -- Basic topology operations
     api_topology.init(graphql)
 
+    -- Pages blacklist
+    api_blacklist.init(graphql)
+
     return true
 end
 
 return {
     init = init,
+
+    set_blacklist = set_blacklist,
+    get_blacklist = get_blacklist,
 }

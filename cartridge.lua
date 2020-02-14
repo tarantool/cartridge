@@ -200,6 +200,7 @@ local function cfg(opts, box_opts)
         auth_enabled = '?boolean',
         vshard_groups = '?table',
         console_sock = '?string',
+        webui_blacklist = '?table',
     }, '?table')
 
     local args, err = argparse.parse()
@@ -467,6 +468,10 @@ local function cfg(opts, box_opts)
         local ok, err = CartridgeCfgError:pcall(auth.init, httpd)
         if not ok then
             return nil, err
+        end
+
+        if opts.webui_blacklist then
+            webui.set_blacklist(opts.webui_blacklist)
         end
 
         local srv_name = httpd.tcp_server:name()
