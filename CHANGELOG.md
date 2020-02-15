@@ -31,6 +31,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - New internal module to hanle `.tar` files.
 
+- New GraphQL query `{ webui_blacklist }`.
+
 ### Changed
 
 - Network error shows with fixed splash panel instead of notification.
