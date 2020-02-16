@@ -127,6 +127,11 @@ package.preload['mymodule-hidden'] = function()
     }
 end
 
+local webui_blacklist = os.getenv('TARANTOOL_WEBUI_BLACKLIST')
+if webui_blacklist ~= nil then
+    webui_blacklist = string.split(webui_blacklist, ':')
+end
+
 local ok, err = errors.pcall('CartridgeCfgError', cartridge.cfg, {
     advertise_uri = 'localhost:3301',
     http_port = 8081,
@@ -138,7 +143,8 @@ local ok, err = errors.pcall('CartridgeCfgError', cartridge.cfg, {
         'mymodule-permanent',
         'mymodule-hidden',
         'mymodule',
-    }
+    },
+    webui_blacklist = webui_blacklist,
 })
 if not ok then
     log.error('%s', err)

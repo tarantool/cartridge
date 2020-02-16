@@ -1,5 +1,5 @@
 # source: http://localhost:8081/admin/api
-# timestamp: Sun Feb 02 2020 23:40:18 GMT+0300 (Moscow Standard Time)
+# timestamp: Sun Feb 16 2020 22:45:22 GMT+0300 (Moscow Standard Time)
 
 """Cluster management"""
 type Apicluster {
@@ -21,13 +21,16 @@ type Apicluster {
   """Get list of all registered roles and their dependencies."""
   known_roles: [Role!]!
 
+  """List of pages to be hidden in WebUI"""
+  webui_blacklist: [String!]
+
   """Get list of known vshard storage groups."""
   vshard_known_groups: [String!]!
   vshard_groups: [VshardGroup!]!
-  auth_params: UserManagementAPI!
 
   """Virtual buckets count in cluster"""
   vshard_bucket_count: Int!
+  auth_params: UserManagementAPI!
 
   """Get cluster config sections"""
   config(sections: [String!]): [ConfigSection]!
