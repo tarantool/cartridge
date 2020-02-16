@@ -127,9 +127,9 @@ package.preload['mymodule-hidden'] = function()
     }
 end
 
-local webui_blacklist = string.split(os.getenv('TARANTOOL_WEBUI_BLACKLIST') or '', ':')
-if webui_blacklist == {''} then
-    webui_blacklist = {}
+local webui_blacklist = os.getenv('TARANTOOL_WEBUI_BLACKLIST')
+if webui_blacklist ~= nil then
+    webui_blacklist = string.split(webui_blacklist, ':')
 end
 
 local ok, err = errors.pcall('CartridgeCfgError', cartridge.cfg, {

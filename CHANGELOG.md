@@ -31,7 +31,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - New internal module to hanle `.tar` files.
 
-- New GraphQL query `{ webui_blacklist }`.
+- Add an ability to hide certain WebUI pages by specifying
+  `cartridge.cfg({webui_blacklist = {'/admin/code', ...}})`.
 
 ### Changed
 

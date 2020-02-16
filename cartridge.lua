@@ -179,9 +179,9 @@ end
 --   env `TARANTOOL_CONSOLE_SOCK`,
 --   args `--console-sock`)
 --
--- @tparam ?table opts.webui_blacklist
---   List of hidden pages.
---   (default: {})
+-- @tparam ?{string,...} opts.webui_blacklist
+--   List of pages to be hidden in WebUI.
+--   (**Added** in v2.0.1-53, default: `{}`)
 --
 -- @tparam ?table box_opts
 --   tarantool extra box.cfg options (e.g. memtx_memory),
@@ -474,8 +474,20 @@ local function cfg(opts, box_opts)
             return nil, err
         end
 
-        if opts.webui_blacklist then
-            webui.set_blacklist(opts.webui_blacklist)
+        if opts.webui_blacklist ~= nil then
+            local i = 0
+            local webui_blacklist = {}
+            for _, _ in pairs(opts.webui_blacklist) do
+                i = i + 1
+                local page = opts.webui_blacklist[i]
+                if type(page) ~= 'string' then
+                    error('bad argument opts.webui_blacklist to cartridge.cfg' ..
+                        ' (contiguous array of strings expected)', 2
+                    )
+                end
+                table.insert(webui_blacklist, page)
+            end
+            webui.set_blacklist(webui_blacklist)
         end
 
         local srv_name = httpd.tcp_server:name()

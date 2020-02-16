@@ -11,17 +11,28 @@ local api_config = require('cartridge.webui.api-config')
 local api_vshard = require('cartridge.webui.api-vshard')
 local api_topology = require('cartridge.webui.api-topology')
 local api_ddl = require('cartridge.webui.api-ddl')
-local api_blacklist = require('cartridge.webui.api-blacklist')
+
+local gql_types = require('cartridge.graphql.types')
+
+local module_name = 'cartridge.webui'
 
 local webui_blacklist = {}
 local function set_blacklist(blacklist)
-    require('log').info('call set_blacklist')
     webui_blacklist = table.deepcopy(blacklist)
 end
 
 local function get_blacklist()
-    require('log').info('call get_blacklist')
     return table.deepcopy(webui_blacklist)
+end
+
+local function add_api_blacklist(graphql)
+    graphql.add_callback({
+        prefix = 'cluster',
+        name = 'webui_blacklist',
+        args = {},
+        kind = gql_types.list(gql_types.string.nonNull),
+        callback = module_name .. '.get_blacklist',
+    })
 end
 
 local function init(httpd)
@@ -47,7 +58,7 @@ local function init(httpd)
     api_topology.init(graphql)
 
     -- Pages blacklist
-    api_blacklist.init(graphql)
+    add_api_blacklist(graphql)
 
     return true
 end

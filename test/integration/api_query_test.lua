@@ -548,11 +548,10 @@ function g.test_operation_error()
 end
 
 function g.test_webui_blacklist()
-    local resp = g.cluster.main_server:graphql({query = '{ webui_blacklist }'})
-    t.assert_items_equals(resp['data']['webui_blacklist'], {''}, 'Not expelled graphql responce')
+    local resp = g.cluster.main_server:graphql({query = '{ cluster { webui_blacklist } }'})
+    t.assert_equals(resp['data']['cluster']['webui_blacklist'], {}, 'Not expelled graphql responce')
 
-    local resp = g.server:graphql({query = '{ webui_blacklist }'})
-    t.assert_items_equals(resp['data']['webui_blacklist'],
-        { '/cluster/code', '/cluster/schema'},
-        'Not expelled graphql responce')
+    local resp = g.server:graphql({query = '{ cluster { webui_blacklist } }'})
+    t.assert_equals(resp['data']['cluster']['webui_blacklist'],
+        {'/cluster/code', '/cluster/schema'})
 end

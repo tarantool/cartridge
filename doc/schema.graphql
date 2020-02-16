@@ -167,8 +167,8 @@ type MutationApicluster {
 type Query {
   """Cluster management"""
   cluster: Apicluster
-  replicasets(uuid: String): [Replicaset]
   servers(uuid: String): [Server]
+  replicasets(uuid: String): [Replicaset]
   webui_blacklist: [String!]
 }
 
