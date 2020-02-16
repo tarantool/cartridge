@@ -29,6 +29,7 @@ local function add_api_blacklist(graphql)
     graphql.add_callback({
         prefix = 'cluster',
         name = 'webui_blacklist',
+        doc = 'Get hidden pages list',
         args = {},
         kind = gql_types.list(gql_types.string.nonNull),
         callback = module_name .. '.get_blacklist',
