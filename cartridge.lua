@@ -579,6 +579,33 @@ return {
     -- @refer cartridge.twophase.set_schema
     -- @function _G.cartridge_set_schema
 
+--- Clusterwide DDL schema
+-- @refer cartridge.twophase
+-- @section schema
+
+    --- Get clusterwide DDL schema.
+    -- It's like **\_G.cartridge\_get\_schema**,
+    -- but isn't non-global variable.
+    --
+    -- (**Added** in v2.0.1-54)
+    -- @function get_schema
+    -- @treturn[1] string Schema in YAML format
+    -- @treturn[2] nil
+    -- @treturn[2] table Error description
+    get_schema = _G.cartridge_get_schema,
+
+    --- Apply clusterwide DDL schema.
+    -- It's like **\_G.cartridge\_set\_schema**,
+    -- but isn't non-global variable.
+    --
+    -- (**Added** in v2.0.1-54)
+    -- @function set_schema
+    -- @tparam string schema in YAML format
+    -- @treturn[1] string The same new schema
+    -- @treturn[2] nil
+    -- @treturn[2] table Error description
+    set_schema = _G.cartridge_set_schema,
+
 --- Cluster administration.
 -- @refer cartridge.admin
 -- @section admin

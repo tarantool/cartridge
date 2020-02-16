@@ -38,6 +38,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Server alias is clickable in replicaset list.
 
+- New functions `cartridge.get_shema()` and `cartridge.set_shema(schema)`
+  for get/set clusterwide DDL schema. They are reference
+  `_G.cartridge_get_schema` and `_G.cartridge_set_schema`.
+
 ### Changed
 
 - Network error shows with fixed splash panel instead of notification.
