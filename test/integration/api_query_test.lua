@@ -80,7 +80,7 @@ g.before_all = function()
         cluster_cookie = g.cluster.cookie,
         advertise_port = 13303,
         env = {
-            TARANTOOL_WEBUI_BLACKLIST = '/cluster/code:/cluster/schema'
+            TARANTOOL_WEBUI_BLACKLIST = '/cluster/code:/cluster/schema',
         }
     })
 
@@ -548,10 +548,15 @@ function g.test_operation_error()
 end
 
 function g.test_webui_blacklist()
-    local resp = g.cluster.main_server:graphql({query = '{ cluster { webui_blacklist } }'})
-    t.assert_equals(resp['data']['cluster']['webui_blacklist'], {}, 'Not expelled graphql responce')
+    local query = '{ cluster { webui_blacklist }}'
 
-    local resp = g.server:graphql({query = '{ cluster { webui_blacklist } }'})
-    t.assert_equals(resp['data']['cluster']['webui_blacklist'],
-        {'/cluster/code', '/cluster/schema'})
+    t.assert_equals(
+        g.cluster.main_server:graphql({query = query}).data.cluster,
+        {webui_blacklist = {}}
+    )
+
+    t.assert_equals(
+        g.server:graphql({query = query}).data.cluster,
+        {webui_blacklist = {'/cluster/code', '/cluster/schema'}}
+    )
 end

@@ -181,7 +181,7 @@ end
 --
 -- @tparam ?{string,...} opts.webui_blacklist
 --   List of pages to be hidden in WebUI.
---   (**Added** in v2.0.1-53, default: `{}`)
+--   (**Added** in v2.0.1-54, default: `{}`)
 --
 -- @tparam ?table box_opts
 --   tarantool extra box.cfg options (e.g. memtx_memory),
@@ -206,6 +206,18 @@ local function cfg(opts, box_opts)
         console_sock = '?string',
         webui_blacklist = '?table',
     }, '?table')
+
+    if opts.webui_blacklist ~= nil then
+        local i = 0
+        for _, _ in pairs(opts.webui_blacklist) do
+            i = i + 1
+            if type(opts.webui_blacklist[i]) ~= 'string' then
+                error('bad argument opts.webui_blacklist to cartridge.cfg' ..
+                    ' (contiguous array of strings expected)', 2
+                )
+            end
+        end
+    end
 
     local args, err = argparse.parse()
     if args == nil then
@@ -474,21 +486,7 @@ local function cfg(opts, box_opts)
             return nil, err
         end
 
-        if opts.webui_blacklist ~= nil then
-            local i = 0
-            local webui_blacklist = {}
-            for _, _ in pairs(opts.webui_blacklist) do
-                i = i + 1
-                local page = opts.webui_blacklist[i]
-                if type(page) ~= 'string' then
-                    error('bad argument opts.webui_blacklist to cartridge.cfg' ..
-                        ' (contiguous array of strings expected)', 2
-                    )
-                end
-                table.insert(webui_blacklist, page)
-            end
-            webui.set_blacklist(webui_blacklist)
-        end
+        webui.set_blacklist(opts.webui_blacklist)
 
         local srv_name = httpd.tcp_server:name()
         log.info('Listening HTTP on %s:%s', srv_name.host, srv_name.port)

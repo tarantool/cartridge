@@ -1,5 +1,5 @@
 # source: http://localhost:8081/admin/api
-# timestamp: Sun Feb 16 2020 15:54:44 GMT+0300 (Moscow Standard Time)
+# timestamp: Sun Feb 16 2020 22:45:22 GMT+0300 (Moscow Standard Time)
 
 """Cluster management"""
 type Apicluster {
@@ -21,7 +21,7 @@ type Apicluster {
   """Get list of all registered roles and their dependencies."""
   known_roles: [Role!]!
 
-  """Get hidden pages list"""
+  """List of pages to be hidden in WebUI"""
   webui_blacklist: [String!]
 
   """Get list of known vshard storage groups."""
