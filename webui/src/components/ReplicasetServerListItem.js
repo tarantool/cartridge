@@ -16,7 +16,7 @@ import {
   UriLabel
 } from '@tarantool.io/ui-kit';
 import { showExpelModal } from '../store/actions/clusterPage.actions';
-import { withRouter } from 'react-router-dom';
+import { withRouter, Link } from 'react-router-dom';
 
 const styles = {
   row: css`
@@ -38,6 +38,18 @@ const styles = {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  `,
+  aliasLink: css`
+    color: #000;
+
+    &:hover,
+    &:active {
+      color: #000;
+    }
+
+    &:focus {
+      color: #777;
+    }
   `,
   leaderFlag: css`
     position: absolute;
@@ -183,7 +195,11 @@ class ReplicasetServerListItem extends React.PureComponent<
         <div className={styles.row}>
           {(master || activeMaster) && <LeaderFlag className={styles.leaderFlag} fail={status !== 'healthy'} />}
           <div className={styles.heading}>
-            <Text variant='h4' className={styles.alias}>{alias}</Text>
+            <Text variant='h4' className={styles.alias}>
+              <Link className={styles.aliasLink} to={`/cluster/dashboard/instance/${uuid}`}>
+                {alias}
+              </Link>
+            </Text>
             <UriLabel uri={uri} />
           </div>
           <div className={styles.statusGroup}>
