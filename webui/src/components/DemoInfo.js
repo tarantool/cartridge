@@ -27,13 +27,13 @@ const connectInfoMap: {[key: string]: {markdown: string, decomposed: boolean}} =
     markdown: `
 ## Connect to Tarantool Cartridge using [python client](https://github.com/tarantool/tarantool-python)
 
-First, **install** *tarantool* package using *pip3*:
+**Install** *tarantool* package using *pip3*:
 
 \`\`\`bash
 pip3 install tarantool
 \`\`\`
 
-**Create** a file example.py with the code to get started:
+**Create** a file *example.py* with this code to get started:
 
 \`\`\`python
 from tarantool import Connection
@@ -49,7 +49,7 @@ results = space.select()
 print(results)
 \`\`\`
 
-**Run** the script
+**Run** the script:
 
 \`\`\`bash
 python3 example.py
@@ -61,14 +61,14 @@ python3 example.py
     markdown: `
 ## Connect to Tarantool Cartridge using [PHP client](https://github.com/tarantool-php/client)
 
-First, **install** *messagepack* and *tarantool client* using *composer*:
+**Install** *messagepack* and *tarantool client* using *composer*:
 
 \`\`\`bash
 composer require rybakit/msgpack
 composer require tarantool/client
 \`\`\`
 
-**Create** a file example.php with the code to get started:
+**Create** a file *example.php* with this code to get started:
 
 \`\`\`php
 <?php
@@ -86,7 +86,7 @@ $result = $space->select(Criteria::key([222]));
 print_r($result);
 \`\`\`
 
-**Run** the script
+**Run** the script:
   
 \`\`\`bash
 php example.php
