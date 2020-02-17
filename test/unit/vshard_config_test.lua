@@ -1,5 +1,43 @@
 #!/usr/bin/env tarantool
 
+local fio = require('fio')
+local log = require('log')
+local yaml = require('yaml')
+local vshard_utils = require('cartridge.vshard-utils')
+
+local helpers = require('cartridge.test-helpers')
+
+local t = require('luatest')
+local g = t.group()
+
+function g.before_all()
+    _G.vshard = {
+        storage = {
+            buckets_count = function() end,
+        }
+    }
+end
+
+function g.setup()
+    local root = fio.dirname(fio.abspath(package.search('cartridge')))
+    local server_command = fio.pathjoin(root, 'test', 'unit', 'srv_empty.lua')
+
+    g.server = t.Server:new({
+        command = server_command,
+        workdir = fio.tempdir(),
+        net_box_port = 13301,
+        net_box_credentials = {user = 'admin', password = ''},
+    })
+
+    g.server:start()
+    helpers.retrying({}, t.Server.connect_net_box, g.server)
+end
+
+function g.teardown()
+    g.server:stop()
+    fio.rmtree(g.server.workdir)
+end
+
 local members = {
     ['localhost:3301'] = {
         uri = 'localhost:3301',
@@ -27,81 +65,74 @@ local members = {
         payload = {},
     },
 }
-package.loaded['membership'] = {
-    get_member = function(uri)
-        return members[uri]
-    end,
-    myself = function()
-        return members['localhost:3301']
-    end,
-    subscribe = function()
-        return require('fiber').cond()
-    end,
-}
-
-package.loaded['cartridge.pool'] = {
-    connect = function()
-        return require('net.box').self
-    end,
-}
-
-_G.vshard = {
-    storage = {
-        buckets_count = function() end,
-    }
-}
-
-local tap = require('tap')
-local yaml = require('yaml')
-local vshard_utils = require('cartridge.vshard-utils')
-local test = tap.test('vshard.config')
-
-test:plan(21)
 
 local function check_config(result, raw_new, raw_old)
+    package.loaded['membership'].get_member = function(uri)
+        return members[uri]
+    end
+
+    package.loaded['membership'].myself = function(_)
+        return members['localhost:3301']
+    end
+
+    package.loaded['membership'].subscribe = function()
+        return require('fiber').cond()
+    end
+
+    package.loaded['cartridge.pool'].connect = function()
+        return require('net.box').self
+    end
+
     local conf_new = raw_new and yaml.decode(raw_new) or {}
     local conf_old = raw_old and yaml.decode(raw_old) or {}
 
     local ok, err = vshard_utils.validate_config(conf_new, conf_old)
-    test:is(ok or err.err, result, result)
+    t.assert_equals(ok or err.err, result, result)
 end
 
--- check_schema
-test:diag('validate_vshard_group()')
+local function check_config_remotely(...)
+    g.server.net_box:eval([[
+        local test = require('test.unit.vshard_config_test')
+        test.check_config(...)
+    ]], {...})
+end
 
-test:diag('   top-level keys')
+function g.test_config()
+	-- check_schema
+	log.info('validate_vshard_group()')
 
-check_config('section vshard_groups must be a table',
+	log.info('top-level keys')
+	check_config_remotely('section vshard_groups must be a table',
 [[---
 vshard_groups:
 ...]])
 
-check_config('section vshard_groups must have string keys',
+	check_config_remotely('section vshard_groups must have string keys',
 [[---
 vshard_groups:
   - default
 ...]])
 
-check_config('section vshard_groups["global"] must be a table',
+	check_config_remotely('section vshard_groups["global"] must be a table',
 [[---
 vshard_groups:
   global: false
 ...]])
 
-check_config('vshard_groups["global"].bucket_count must be a number',
+	check_config_remotely('vshard_groups["global"].bucket_count must be a number',
 [[---
 vshard_groups:
   global: {}
 ...]])
 
-check_config('vshard_groups["global"].bucket_count must be positive',
+	check_config_remotely('vshard_groups["global"].bucket_count must be positive',
 [[---
 vshard_groups:
   global:
     bucket_count: 0
 ...]])
 
-check_config([[vshard_groups["global"].bucket_count can't be changed]],
+	check_config_remotely([[vshard_groups["global"].bucket_count can't be changed]],
 [[---
 topology: {}
 vshard_groups:
@@ -117,7 +148,7 @@ vshard_groups:
     bootstrapped: false
 ...]])
 
-check_config('vshard_groups["global"].rebalancer_max_receiving must be a number',
+	check_config_remotely('vshard_groups["global"].rebalancer_max_receiving must be a number',
 [[---
 vshard_groups:
   global:
@@ -126,7 +157,7 @@ vshard_groups:
     rebalancer_max_receiving: value
 ...]])
 
-check_config('vshard_groups["global"].rebalancer_max_receiving must be positive',
+	check_config_remotely('vshard_groups["global"].rebalancer_max_receiving must be positive',
 [[---
 vshard_groups:
   global:
@@ -135,7 +166,7 @@ vshard_groups:
     rebalancer_max_receiving: 0
 ...]])
 
-check_config('vshard_groups["global"].collect_lua_garbage must be a boolean',
+	check_config_remotely('vshard_groups["global"].collect_lua_garbage must be a boolean',
 [[---
 vshard_groups:
   global:
@@ -144,7 +175,7 @@ vshard_groups:
     collect_lua_garbage: value
 ...]])
 
-check_config('vshard_groups["global"].sync_timeout must be a number',
+	check_config_remotely('vshard_groups["global"].sync_timeout must be a number',
 [[---
 vshard_groups:
   global:
@@ -153,7 +184,7 @@ vshard_groups:
     sync_timeout: value
 ...]])
 
-check_config('vshard_groups["global"].sync_timeout must be non-negative',
+	check_config_remotely('vshard_groups["global"].sync_timeout must be non-negative',
 [[---
 vshard_groups:
   global:
@@ -162,7 +193,7 @@ vshard_groups:
     sync_timeout: -1
 ...]])
 
-check_config('vshard_groups["global"].collect_bucket_garbage_interval must be a number',
+	check_config_remotely('vshard_groups["global"].collect_bucket_garbage_interval must be a number',
 [[---
 vshard_groups:
   global:
@@ -171,7 +202,7 @@ vshard_groups:
     collect_bucket_garbage_interval: value
 ...]])
 
-check_config('vshard_groups["global"].collect_bucket_garbage_interval must be positive',
+	check_config_remotely('vshard_groups["global"].collect_bucket_garbage_interval must be positive',
 [[---
 vshard_groups:
   global:
@@ -180,7 +211,7 @@ vshard_groups:
     collect_bucket_garbage_interval: 0
 ...]])
 
-check_config('vshard_groups["global"].rebalancer_disbalance_threshold must be a number',
+	check_config_remotely('vshard_groups["global"].rebalancer_disbalance_threshold must be a number',
 [[---
 vshard_groups:
   global:
@@ -189,7 +220,7 @@ vshard_groups:
     rebalancer_disbalance_threshold: value
 ...]])
 
-check_config('vshard_groups["global"].rebalancer_disbalance_threshold must be non-negative',
+	check_config_remotely('vshard_groups["global"].rebalancer_disbalance_threshold must be non-negative',
 [[---
 vshard_groups:
   global:
@@ -198,7 +229,7 @@ vshard_groups:
     rebalancer_disbalance_threshold: -1
 ...]])
 
-check_config('vshard_groups["global"].bootstrapped must be true or false',
+	check_config_remotely('vshard_groups["global"].bootstrapped must be true or false',
 [[---
 vshard_groups:
   global:
@@ -206,7 +237,7 @@ vshard_groups:
     bootstrapped: nope
 ...]])
 
-check_config('section vshard_groups["global"] has unknown parameter "unknown"',
+	check_config_remotely('section vshard_groups["global"] has unknown parameter "unknown"',
 [[---
 vshard_groups:
   global:
@@ -215,10 +246,9 @@ vshard_groups:
     unknown:
 ...]])
 
-test:diag('   group assignment')
-
-check_config("replicasets[aaaaaaaa-0000-4000-b000-000000000001]" ..
-    [[ can't be added to vshard_group "some", cluster doesn't have any]],
+	log.info('group assignment')
+	check_config_remotely("replicasets[aaaaaaaa-0000-4000-b000-000000000001]" ..
+		[[ can't be added to vshard_group "some", cluster doesn't have any]],
 [[---
 topology:
   replicasets:
@@ -231,8 +261,8 @@ vshard:
   bootstrapped: false
 ...]])
 
-check_config("replicasets[aaaaaaaa-0000-4000-b000-000000000001]" ..
-    " is a vshard-storage and must be assigned to a particular group",
+	check_config_remotely("replicasets[aaaaaaaa-0000-4000-b000-000000000001]" ..
+	    " is a vshard-storage and must be assigned to a particular group",
 [[---
 topology:
   replicasets:
@@ -245,8 +275,8 @@ vshard_groups:
     bootstrapped: false
 ...]])
 
-check_config("replicasets[aaaaaaaa-0000-4000-b000-000000000001]" ..
-    [[.vshard_group "unknown" doesn't exist]],
+	check_config_remotely("replicasets[aaaaaaaa-0000-4000-b000-000000000001]" ..
+	    [[.vshard_group "unknown" doesn't exist]],
 [[---
 topology:
   replicasets:
@@ -260,8 +290,8 @@ vshard_groups:
     bootstrapped: false
 ...]])
 
-check_config("replicasets[aaaaaaaa-0000-4000-b000-000000000001]" ..
-    [[.vshard_group can't be modified]],
+	check_config_remotely("replicasets[aaaaaaaa-0000-4000-b000-000000000001]" ..
+	    [[.vshard_group can't be modified]],
 [[---
 topology:
   replicasets:
@@ -292,5 +322,8 @@ vshard_groups:
     bucket_count: 1
     bootstrapped: false
 ...]])
+end
 
-os.exit(test:check() and 0 or 1)
+return {
+    check_config = check_config,
+}
