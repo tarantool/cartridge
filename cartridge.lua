@@ -362,7 +362,6 @@ local function cfg(opts, box_opts)
         return nil, CartridgeCfgError:new('Invalid port in advertise_uri %q', opts.advertise_uri)
     end
 
-    local membership_options = require("membership.options")
     local membership_new_opts, err = argparse.get_opts({
         swim_protocol_period_seconds = 'number',
         swim_anti_entropy_period_seconds = 'number',
@@ -375,29 +374,9 @@ local function cfg(opts, box_opts)
         return nil, err
     end
 
-
-    if membership_new_opts.swim_protocol_period_seconds ~= nil then
-        membership_options.PROTOCOL_PERIOD_SECONDS = membership_new_opts.swim_protocol_period_seconds
-    end
-
-    if membership_new_opts.swim_anti_entropy_period_seconds ~= nil then
-        membership_options.ANTI_ENTROPY_PERIOD_SECONDS = membership_new_opts.swim_anti_entropy_period_seconds
-    end
-
-    if membership_new_opts.swim_max_packet_size ~= nil then
-        membership_options.MAX_PACKET_SIZE = membership_new_opts.swim_max_packet_size
-    end
-
-    if membership_new_opts.swim_ack_timeout_seconds ~= nil then
-        membership_options.ACK_TIMEOUT_SECONDS = membership_new_opts.swim_ack_timeout_seconds
-    end
-
-    if membership_new_opts.swim_suspect_timeout_seconds ~= nil then
-        membership_options.SUSPECT_TIMEOUT_SECONDS = membership_new_opts.swim_suspect_timeout_seconds
-    end
-
-    if membership_new_opts.swim_num_failure_detection_subgroups ~= nil then
-        membership_options.NUM_FAILURE_DETECTION_SUBGROUPS = membership_new_opts.swim_num_failure_detection_subgroups
+    for opt_name, opt_value in pairs(membership_new_opts) do
+        local opt_name = opt_name:match('swim_(.+)'):upper()
+        require("membership.options")[opt_name] = opt_value
     end
 
     log.info('Using advertise_uri "%s:%d"', advertise.host, advertise.service)
