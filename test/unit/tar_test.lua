@@ -68,7 +68,7 @@ local function tar_execute(opts, tar, filename)
     local cmd = string.format('tar %s %s %s 2>&1', opts, tar, (filename or ''))
     log.info('> %s', cmd)
     local f = io.popen(cmd)
-    return f:read('*all'):strip()
+    return f:read('*all')
 end
 
 local function file_write(path, content)
@@ -94,7 +94,7 @@ function g.test_fixtures_pack()
         file_write(path, packed)
 
         t.assert_items_equals(
-            string.split(tar_execute('tf', path), '\n'),
+            string.split(tar_execute('tf', path):strip(), '\n'),
             table_keys(files),
             string.format('Unexpected listing for %q', tarname)
         )
