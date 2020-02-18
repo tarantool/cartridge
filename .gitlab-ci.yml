@@ -5,7 +5,6 @@ variables:
   IMAGE_TAG: latest
   # Enable caching frontend stuff
   npm_config_cache: "$CI_PROJECT_DIR/.npm"
-  CYPRESS_CACHE_FOLDER: "$CI_PROJECT_DIR/.cache/Cypress"
 
 stages:
   - prebuild
@@ -166,7 +165,6 @@ misc:
       - build.luarocks/
       - webui/build/bundle.lua
       - .npm
-      - .cache/Cypress
       - .rocks/
 
   artifacts:

@@ -10,8 +10,12 @@ RUN set -x &&\
     # cypress deps
     yum -y install gtk3 xorg-x11-server-Xvfb libXScrnSaver GConf2 alsa-lib lsof
 
-RUN npm install graphql-cli@3.0.14
 ENV PATH="${PWD}/node_modules/.bin:${PATH}"
+ENV CYPRESS_CACHE_FOLDER="/root/.cypress"
+RUN npm install \
+        graphql-cli@3.0.14 \
+        cypress@3.4.1 \
+    && npx cypress verify
 
 RUN set -x &&\
     echo "Using tarantool-enterprise-bundle ${BUNDLE_VERSION}" &&\
