@@ -47,11 +47,10 @@ configure_file (
 
 ## Webui ######################################################################
 ###############################################################################
-
 add_custom_command(
   OUTPUT ${WEB_ROOT}/node_modules
   COMMAND NODE_ENV=production npm ci --prefix "${WEB_ROOT}"
-  DEPENDS "${WEB_ROOT}/package.json"
+  DEPENDS "${WEB_ROOT}/package-lock.json"
   COMMENT "Installing node_modules"
 )
 
@@ -62,23 +61,46 @@ add_custom_command(
   COMMENT "Building web archive"
 )
 
-add_custom_target(front-bundle ALL
-  DEPENDS ${WEB_ROOT}/build/bundle.lua
-)
+if(DEFINED ENV{CMAKE_DUMMY_WEBUI})
+  set(DUMMY_WEBUI "$ENV{CMAKE_DUMMY_WEBUI}")
+endif()
+
+if(DUMMY_WEBUI)
+  file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/front-bundle.fake.lua"
+    "return {__data = function() return {} end}\n"
+  )
+  add_custom_target(front-bundle ALL
+    COMMAND ${CMAKE_COMMAND} -E copy
+      "${CMAKE_CURRENT_BINARY_DIR}/front-bundle.fake.lua"
+      "${CMAKE_CURRENT_BINARY_DIR}/front-bundle.lua"
+    COMMENT "Generating fake front-bundle.lua"
+    VERBATIM
+  )
+else()
+  add_custom_target(front-bundle ALL
+    DEPENDS "${WEB_ROOT}/build/bundle.lua"
+    COMMAND ${CMAKE_COMMAND} -E copy
+      "${WEB_ROOT}/build/bundle.lua"
+      "${CMAKE_CURRENT_BINARY_DIR}/front-bundle.lua"
+    COMMENT "Copying real front-bundle.lua"
+    VERBATIM
+  )
+endif()
+
 
 ## API doc ####################################################################
 ###############################################################################
 
 set(DOC_OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/doc/index.html)
 
-if(BUILD_DOC)
-  set(LDOC_FIND_REQUIRED ON)
+if(DEFINED ENV{CMAKE_LDOC_FIND_REQUIRED})
+  set(LDOC_FIND_REQUIRED "$ENV{CMAKE_LDOC_FIND_REQUIRED}")
 endif()
 find_package(Ldoc)
 
 add_custom_command(
   OUTPUT DOC_OUTPUT
-  COMMAND ${LDOC} -t "${PROJECT_NAME}-${version}" -p "${PROJECT_NAME} (${version})" --all .
+  COMMAND ${LDOC} --all .
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
   DEPENDS ${LUA_FILES}
   COMMENT "Building API documentation"
@@ -144,12 +166,8 @@ install(
 )
 
 install(
-  FILES ${CMAKE_CURRENT_BINARY_DIR}/VERSION.lua
+  FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/VERSION.lua
+    ${CMAKE_CURRENT_BINARY_DIR}/front-bundle.lua
   DESTINATION ${TARANTOOL_INSTALL_LUADIR}/${PROJECT_NAME}/
-)
-
-install(
-  FILES ${WEB_ROOT}/build/bundle.lua
-  DESTINATION ${TARANTOOL_INSTALL_LUADIR}/${PROJECT_NAME}
-  RENAME front-bundle.lua
 )
