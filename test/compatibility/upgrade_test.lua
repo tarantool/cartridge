@@ -5,8 +5,7 @@ local errors = require('errors')
 local t = require('luatest')
 local g = t.group()
 
-local test_helper = require('test.helper')
-local helpers = require('cartridge.test-helpers')
+local helpers = require('test.helper')
 
 g.before_all = function()
     g.tempdir = fio.tempdir()
@@ -69,9 +68,7 @@ function g.test_upgrade()
 
     g.cluster = helpers.Cluster:new({
         datadir = g.tempdir,
-        server_command = fio.pathjoin(
-            test_helper.root, 'test', 'integration', 'srv_basic.lua'
-        ),
+        server_command = helpers.entrypoint('srv_basic'),
         use_vshard = true,
         cookie = 'test-cluster-cookie',
         replicasets = {{

@@ -2,14 +2,13 @@ local fio = require('fio')
 local t = require('luatest')
 local g = t.group()
 
-local test_helper = require('test.helper')
-local helpers = require('cartridge.test-helpers')
+local helpers = require('test.helper')
 
 g.before_all = function()
     g.server = helpers.Server:new({
         workdir = fio.tempdir(),
         alias = 'dummy',
-        command = test_helper.server_command,
+        command = helpers.entrypoint('srv_basic'),
         http_port = 8181,
         cluster_cookie = 'test-cluster-cookie',
         advertise_port = 13301,

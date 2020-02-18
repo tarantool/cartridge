@@ -3,8 +3,7 @@ local log = require('log')
 local t = require('luatest')
 local g = t.group()
 
-local test_helper = require('test.helper')
-local helpers = require('cartridge.test-helpers')
+local helpers = require('test.helper')
 
 g.teardown = function()
     if g.cluster then
@@ -27,7 +26,7 @@ function g.test_cookie_change()
     g.tempdir = fio.tempdir()
     g.cluster = helpers.Cluster:new({
         datadir = g.tempdir,
-        server_command = test_helper.server_command,
+        server_command = helpers.entrypoint('srv_basic'),
         replicasets = {
             {
                 uuid = helpers.uuid('a'),
@@ -107,7 +106,7 @@ function g.test_workdir_collision()
     g.tempdir = fio.tempdir()
     g.cluster = helpers.Cluster:new({
         datadir = g.tempdir,
-        server_command = test_helper.server_command,
+        server_command = helpers.entrypoint('srv_basic'),
         replicasets = {{
             uuid = helpers.uuid('a'),
             roles = {'myrole'},
@@ -123,7 +122,7 @@ function g.test_workdir_collision()
     g.server = helpers.Server:new({
         alias = 'invader',
         workdir = g.tempdir,
-        command = test_helper.server_command,
+        command = helpers.entrypoint('srv_basic'),
         cluster_cookie = g.cluster.cookie,
         http_port = 8082,
         advertise_port = 13302,

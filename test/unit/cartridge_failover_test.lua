@@ -1,15 +1,12 @@
 local t = require('luatest')
 local g = t.group()
 
-local helpers = require('cartridge.test-helpers')
+local helpers = require('test.helper')
 local fio = require('fio')
 
 function g.setup()
-    local root = fio.dirname(fio.abspath(package.search('cartridge')))
-    local server_command = fio.pathjoin(root, 'test', 'unit', 'srv_empty.lua')
-
     g.server = t.Server:new({
-        command = server_command,
+        command = helpers.entrypoint('srv_empty'),
         workdir = fio.tempdir(),
         net_box_port = 13301,
         net_box_credentials = {user = 'admin', password = ''},

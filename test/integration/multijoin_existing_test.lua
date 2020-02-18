@@ -2,9 +2,7 @@ local fio = require('fio')
 local t = require('luatest')
 local g = t.group()
 
-local test_helper = require('test.helper')
-
-local helpers = require('cartridge.test-helpers')
+local helpers = require('test.helper')
 
 local cluster
 local servers
@@ -13,7 +11,7 @@ g.before_all = function()
     cluster = helpers.Cluster:new({
         datadir = fio.tempdir(),
         use_vshard = false,
-        server_command = test_helper.server_command,
+        server_command = helpers.entrypoint('srv_basic'),
         replicasets = {
             {
                 alias = 'firstling',
@@ -36,7 +34,7 @@ g.before_all = function()
 
         servers[i] = helpers.Server:new({
             alias = alias,
-            command = test_helper.server_command,
+            command = helpers.entrypoint('srv_basic'),
             workdir = fio.pathjoin(cluster.datadir, alias),
             cluster_cookie = cluster.cookie,
             http_port = http_port,

@@ -2,14 +2,13 @@ local fio = require('fio')
 local t = require('luatest')
 local g = t.group()
 
-local test_helper = require('test.helper')
-local helpers = require('cartridge.test-helpers')
+local helpers = require('test.helper')
 local log = require('log')
 
 g.before_all = function()
     g.cluster = helpers.Cluster:new({
         datadir = fio.tempdir(),
-        server_command = test_helper.server_command,
+        server_command = helpers.entrypoint('srv_basic'),
         use_vshard = true,
         cookie = 'test-cluster-cookie',
 
@@ -73,7 +72,7 @@ g.before_all = function()
     g.server = helpers.Server:new({
         workdir = fio.tempdir(),
         alias = 'spare',
-        command = test_helper.server_command,
+        command = helpers.entrypoint('srv_basic'),
         replicaset_uuid = helpers.uuid('b'),
         instance_uuid = helpers.uuid('b', 'b', 1),
         http_port = 8083,
@@ -306,7 +305,7 @@ function g.test_servers()
     t.assert_equals(#servers, 4)
 
     t.assert_equals(
-        test_helper.table_find_by_attr(servers, 'uri', 'localhost:13301'),
+        helpers.table_find_by_attr(servers, 'uri', 'localhost:13301'),
         {
             uri = 'localhost:13301',
             uuid = helpers.uuid('a', 'a', 1),
@@ -321,7 +320,7 @@ function g.test_servers()
     )
 
     t.assert_equals(
-        test_helper.table_find_by_attr(servers, 'uri', 'localhost:13302'),
+        helpers.table_find_by_attr(servers, 'uri', 'localhost:13302'),
         {
             uri = 'localhost:13302',
             uuid = helpers.uuid('b', 'b', 1),
@@ -336,7 +335,7 @@ function g.test_servers()
     )
 
     t.assert_equals(
-        test_helper.table_find_by_attr(servers, 'uri', 'localhost:13304'),
+        helpers.table_find_by_attr(servers, 'uri', 'localhost:13304'),
         {
             uri = 'localhost:13304',
             uuid = helpers.uuid('b', 'b', 2),
@@ -351,7 +350,7 @@ function g.test_servers()
     )
 
     t.assert_equals(
-        test_helper.table_find_by_attr(servers, 'uri', 'localhost:13303'),
+        helpers.table_find_by_attr(servers, 'uri', 'localhost:13303'),
         {
             uri = 'localhost:13303',
             uuid = '',
@@ -390,7 +389,7 @@ function g.test_replicasets()
     t.assert_equals(#replicasets, 2)
 
     t.assert_equals(
-        test_helper.table_find_by_attr(replicasets, 'uuid', helpers.uuid('a')),
+        helpers.table_find_by_attr(replicasets, 'uuid', helpers.uuid('a')),
         {
             uuid = helpers.uuid('a'),
             alias = 'unnamed',
@@ -405,7 +404,7 @@ function g.test_replicasets()
     )
 
     t.assert_equals(
-        test_helper.table_find_by_attr(replicasets, 'uuid', helpers.uuid('b')),
+        helpers.table_find_by_attr(replicasets, 'uuid', helpers.uuid('b')),
         {
             uuid = helpers.uuid('b'),
             alias = 'unnamed',

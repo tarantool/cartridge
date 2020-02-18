@@ -2,15 +2,12 @@ local fio = require('fio')
 local t = require('luatest')
 local g = t.group()
 
-local test_helper = require('test.helper')
-local helpers = require('cartridge.test-helpers')
+local helpers = require('test.helper')
 
 g.before_all = function()
     g.cluster = helpers.Cluster:new({
         datadir = fio.tempdir(),
-        server_command = fio.pathjoin(test_helper.root,
-            'test', 'integration', 'srv_vshardless.lua'
-        ),
+        server_command = helpers.entrypoint('srv_vshardless'),
         use_vshard = false,
         replicasets = {
             {

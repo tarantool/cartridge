@@ -6,16 +6,13 @@ local rpc = require('cartridge.rpc')
 local checks = require('checks')
 local yaml = require('yaml')
 
-local helpers = require('cartridge.test-helpers')
+local helpers = require('test.helper')
 local t = require('luatest')
 local g = t.group()
 
 function g.setup()
-    local root = fio.dirname(fio.abspath(package.search('cartridge')))
-    local server_command = fio.pathjoin(root, 'test', 'unit', 'srv_empty.lua')
-
     g.server = t.Server:new({
-        command = server_command,
+        command = helpers.entrypoint('srv_empty'),
         workdir = fio.tempdir(),
         net_box_port = 13301,
         http_port = 8082,

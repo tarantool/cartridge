@@ -3,8 +3,7 @@ local fio = require('fio')
 local t = require('luatest')
 local g = t.group()
 
-local test_helper = require('test.helper')
-local helpers = require('cartridge.test-helpers')
+local helpers = require('test.helper')
 
 g.before_all = function()
     g.servers = {}
@@ -12,7 +11,7 @@ g.before_all = function()
         g.servers[i] = helpers.Server:new({
             workdir = fio.tempdir(),
             alias = 's' .. tostring(i),
-            command = test_helper.server_command,
+            command = helpers.entrypoint('srv_basic'),
             replicaset_uuid = helpers.uuid('a'),
             instance_uuid = helpers.uuid('a', 'a', i),
             http_port = 8080 + i,
@@ -71,7 +70,7 @@ function g.test_clock_delta()
             query = [[{ servers { uri clock_delta } }]]
         }).data.servers
         for _, peer in pairs(g.servers) do
-            local clock_delta = test_helper.table_find_by_attr(
+            local clock_delta = helpers.table_find_by_attr(
                 resp, 'uri', peer.advertise_uri
             ).clock_delta
             if clock_delta == nil then

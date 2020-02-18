@@ -6,8 +6,7 @@ local errno = require('errno')
 local t = require('luatest')
 local g = t.group()
 
-local test_helper = require('test.helper')
-local helpers = require('cartridge.test-helpers')
+local helpers = require('test.helper')
 
 local pool = require('cartridge.pool')
 local cluster_cookie = require('cartridge.cluster-cookie')
@@ -15,7 +14,7 @@ local cluster_cookie = require('cartridge.cluster-cookie')
 g.before_all = function()
     g.cluster = helpers.Cluster:new({
         datadir = fio.tempdir(),
-        server_command = test_helper.server_command,
+        server_command = helpers.entrypoint('srv_basic'),
         use_vshard = false,
         replicasets = {
             {

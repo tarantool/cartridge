@@ -1,5 +1,5 @@
 ---
 run_dir: 'dev'
 cfg: instances.yml
-script: test/integration/srv_basic.lua
+script: test/entrypoint/srv_basic.lua
 ...
