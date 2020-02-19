@@ -179,7 +179,8 @@ cypress-auto:
   <<: *cypress-template
   only:
     changes:
-      - webui/**/*
+      - webui/src/**/*
+      - webui/cypress/**/*
       - test/cypress/**/*
 
 cypress-manual:

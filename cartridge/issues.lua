@@ -27,36 +27,36 @@ local function list_on_instance()
 
         local upstream = replication_info.upstream
         if upstream == nil then
-            local warning = {
+            local issue = {
+                level = 'warning',
                 replicaset_uuid = replicaset_uuid,
-                from = replication_info.uuid,
-                to = instance_uuid,
+                instance_uuid = instance_uuid,
                 message = string.format(
                     "Replication from %s to %s isn't running",
                     replica.uri,
                     self_uri
                 )
             }
-            table.insert(ret, warning)
+            table.insert(ret, issue)
         elseif upstream.status ~= 'follow' and upstream.status ~= 'sync' then
-            local warning = {
+            local issue = {
+                level = 'warning',
                 replicaset_uuid = replicaset_uuid,
-                from = replication_info.uuid,
-                to = instance_uuid,
+                instance_uuid = instance_uuid,
                 message = string.format(
-                    'Replication from %s to %s: %s (%q)',
+                    'Replication from %s to %s is %s (%s)',
                     replica.uri,
                     self_uri,
-                    upstream.message or '',
-                    upstream.status
+                    upstream.status,
+                    upstream.message or ''
                 )
             }
-            table.insert(ret, warning)
+            table.insert(ret, issue)
         elseif upstream.lag > box.cfg.replication_sync_lag then
-            local warning = {
+            local issue = {
+                level = 'warning',
                 replicaset_uuid = replicaset_uuid,
-                from = replication_info.uuid,
-                to = instance_uuid,
+                instance_uuid = instance_uuid,
                 message = string.format(
                     'Replication from %s to %s: high lag (%.2g > %g)',
                     replica.uri,
@@ -65,7 +65,7 @@ local function list_on_instance()
                     box.cfg.replication_sync_lag
                 )
             }
-            table.insert(ret, warning)
+            table.insert(ret, issue)
         elseif upstream.idle > box.cfg.replication_timeout then
             -- A replica sends heartbeat messages to the master
             -- every second, and the master is programmed to
@@ -77,10 +77,10 @@ local function list_on_instance()
             -- either the replication is lagging seriously behind,
             -- because the master is running ahead of the replica,
             -- or the network link between the instances is down.
-            local warning = {
+            local issue = {
+                level = 'warning',
                 replicaset_uuid = replicaset_uuid,
-                from = replication_info.uuid,
-                to = instance_uuid,
+                instance_uuid = instance_uuid,
                 message = string.format(
                     'Replication from %s to %s: long idle (%.2g > %g)',
                     replica.uri,
@@ -89,7 +89,7 @@ local function list_on_instance()
                     box.cfg.replication_timeout
                 )
             }
-            table.insert(ret, warning)
+            table.insert(ret, issue)
         end
 
         ::continue::
@@ -104,25 +104,21 @@ local function list_on_cluster()
         table.insert(uri_list, srv.uri)
     end
 
-    local warnings_map = pool.map_call(
-        '_G.__get_replication_warnings_on_instance',
+    local issues_map = pool.map_call(
+        '_G.__cartridge_issues_list_on_instance',
         {}, {uri_list = uri_list, timeout = 5}
     )
 
-    local warnings_list = {}
-    for _, warnings in pairs(warnings_map) do
-        for _, warning in pairs(warnings) do
-            table.insert(warnings_list, {
-                message = warning.message,
-                replicaset_uuid = warning.replicaset_uuid,
-                instance_uuid = warning.to,
-            })
+    local ret = {}
+    for _, issues in pairs(issues_map) do
+        for _, issue in pairs(issues) do
+            table.insert(ret, issue)
         end
     end
-    return warnings_list
+    return ret
 end
 
-_G.__get_replication_warnings_on_instance = list_on_instance
+_G.__cartridge_issues_list_on_instance = list_on_instance
 
 return {
     list_on_cluster = list_on_cluster,

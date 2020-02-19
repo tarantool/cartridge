@@ -103,16 +103,17 @@ local function wish_state(srv, desired_state)
     end)
 end
 
-local function list_warnings(server)
+local function list_issues(server)
     return server:graphql({query = [[{
         cluster {
-            warnings {
+            issues {
+                level
                 message
                 replicaset_uuid
                 instance_uuid
             }
         }
-    }]]}).data.cluster.warnings
+    }]]}).data.cluster.issues
 end
 
 function g.test_failover()
@@ -141,7 +142,7 @@ function g.test_failover()
     })
 
     t.helpers.retrying({}, function()
-        t.assert_equals(list_warnings(g.master), {})
+        t.assert_equals(list_issues(g.master), {})
     end)
 
     --------------------------------------------------------------------
@@ -155,13 +156,18 @@ function g.test_failover()
         slave = false,
     })
     t.helpers.retrying({}, function()
-        local warnings = list_warnings(g.slave)
-        t.assert_equals(#warnings, 1)
-        t.assert_equals(warnings[1].replicaset_uuid, helpers.uuid('a'))
+        local issues = list_issues(g.slave)
+        t.assert_covers(issues[1], {
+            level = 'warning',
+            replicaset_uuid = helpers.uuid('a'),
+            instance_uuid = helpers.uuid('a', 'a', 2),
+        })
         t.assert_str_matches(
-            warnings[1].message,
-            'Replication from localhost:13301 to localhost:13302:.*%(%"disconnected%"%)'
+            issues[1].message,
+            'Replication from localhost:13301' ..
+            ' to localhost:13302 is disconnected .+'
         )
+        t.assert_equals(issues[2], nil)
     end)
 
     --------------------------------------------------------------------
@@ -178,7 +184,7 @@ function g.test_failover()
     })
 
     t.helpers.retrying({}, function()
-        t.assert_equals(list_warnings(g.master), {})
+        t.assert_equals(list_issues(g.master), {})
     end)
 end
 
@@ -395,10 +401,12 @@ function g.test_orphan_connect_timeout()
     wish_state(g.master, 'OperationError')
 
     t.helpers.retrying({}, function()
-        t.assert_equals(list_warnings(g.master), {{
+        t.assert_equals(list_issues(g.master), {{
+            level = 'warning',
             replicaset_uuid = helpers.uuid('a'),
             instance_uuid = helpers.uuid('a', 'a', 1),
-            message = "Replication from localhost:13302 to localhost:13301 isn't running"
+            message = "Replication from localhost:13302" ..
+                " to localhost:13301 isn't running",
         }})
     end)
 
@@ -419,7 +427,7 @@ function g.test_orphan_connect_timeout()
     t.assert_equals(get_leader(g.slave), g.slave.instance_uuid)
     t.assert_equals(is_master(g.slave), true)
     t.helpers.retrying({}, function()
-        t.assert_equals(list_warnings(g.slave), {})
+        t.assert_equals(list_issues(g.slave), {})
     end)
 end
 
@@ -447,14 +455,18 @@ function g.test_orphan_sync_timeout()
     )
 
     t.helpers.retrying({}, function()
-        local warnings = list_warnings(g.master)
-        t.assert_equals(#warnings, 1)
-        t.assert_equals(warnings[1].replicaset_uuid, helpers.uuid('a'))
-        t.assert_equals(warnings[1].instance_uuid, helpers.uuid('a', 'a', 1))
+        local issues = list_issues(g.master)
+        t.assert_covers(issues[1], {
+            level = 'warning',
+            replicaset_uuid = helpers.uuid('a'),
+            instance_uuid = helpers.uuid('a', 'a', 1),
+        })
         t.assert_str_matches(
-            warnings[1].message,
-            'Replication from localhost:13302 to localhost:13301: high lag.*%(.*> 1e%-308.*%)'
+            issues[1].message,
+            'Replication from localhost:13302' ..
+            ' to localhost:13301: high lag %(.+ > 1e%-308%)'
         )
+        t.assert_equals(issues[2], nil)
     end)
 end
 
@@ -532,7 +544,7 @@ function g.test_restart_both()
 
     g.cluster:wait_until_healthy()
     t.helpers.retrying({}, function()
-        t.assert_equals(list_warnings(g.master), {})
+        t.assert_equals(list_issues(g.master), {})
     end)
 end
 
