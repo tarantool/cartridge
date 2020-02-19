@@ -75,6 +75,8 @@ To build and test ``cartridge`` locally, you'll also need:
 
 * ``nodejs`` >= 8 ([instructions](https://github.com/nodesource/distributions));
 * ``npm`` >= 6;
+* ``npm install cypress@3.4.1``;
+* ``npm install graphql-cli@3.0.14``;
 * ``python``, ``pip``.
 
 To build the front end, say:
