@@ -10,14 +10,6 @@ local helpers = require('cartridge.test-helpers')
 local t = require('luatest')
 local g = t.group()
 
-function g.before_all()
-    _G.vshard = {
-        storage = {
-            buckets_count = function() end,
-        }
-    }
-end
-
 function g.setup()
     local root = fio.dirname(fio.abspath(package.search('cartridge')))
     local server_command = fio.pathjoin(root, 'test', 'unit', 'srv_empty.lua')
@@ -66,23 +58,39 @@ local members = {
     },
 }
 
-local function check_config(result, raw_new, raw_old)
-    package.loaded['membership'].get_member = function(uri)
+local M = {}
+local function test_remotely(fn_name, fn)
+    M[fn_name] = function()
+
+package.loaded['membership'] = {
+    get_member = function(uri)
         return members[uri]
-    end
-
-    package.loaded['membership'].myself = function(_)
+    end,
+    myself = function()
         return members['localhost:3301']
-    end
-
-    package.loaded['membership'].subscribe = function()
+    end,
+    subscribe = function()
         return require('fiber').cond()
-    end
+    end,
+}
 
-    package.loaded['cartridge.pool'].connect = function()
+package.loaded['cartridge.pool'] = {
+    connect = function()
         return require('net.box').self
-    end
+    end,
+}
 
+        return fn()
+    end
+    g[fn_name] = function()
+        g.server.net_box:eval([[
+            local test = require('test.unit.vshard_config_test')
+            test[...]()
+        ]], {fn_name})
+    end
+end
+
+local function check_config(result, raw_new, raw_old)
     local conf_new = raw_new and yaml.decode(raw_new) or {}
     local conf_old = raw_old and yaml.decode(raw_old) or {}
 
@@ -90,49 +98,43 @@ local function check_config(result, raw_new, raw_old)
     t.assert_equals(ok or err.err, result, result)
 end
 
-local function check_config_remotely(...)
-    g.server.net_box:eval([[
-        local test = require('test.unit.vshard_config_test')
-        test.check_config(...)
-    ]], {...})
-end
+test_remotely('test_all', function()
 
-function g.test_config()
-	-- check_schema
-	log.info('validate_vshard_group()')
+-- check_schema
+log.info('validate_vshard_group()')
 
-	log.info('top-level keys')
-	check_config_remotely('section vshard_groups must be a table',
+log.info('top-level keys')
+check_config('section vshard_groups must be a table',
 [[---
 vshard_groups:
 ...]])
 
-	check_config_remotely('section vshard_groups must have string keys',
+check_config('section vshard_groups must have string keys',
 [[---
 vshard_groups:
   - default
 ...]])
 
-	check_config_remotely('section vshard_groups["global"] must be a table',
+check_config('section vshard_groups["global"] must be a table',
 [[---
 vshard_groups:
   global: false
 ...]])
 
-	check_config_remotely('vshard_groups["global"].bucket_count must be a number',
+check_config('vshard_groups["global"].bucket_count must be a number',
 [[---
 vshard_groups:
   global: {}
 ...]])
 
-	check_config_remotely('vshard_groups["global"].bucket_count must be positive',
+check_config('vshard_groups["global"].bucket_count must be positive',
 [[---
 vshard_groups:
   global:
     bucket_count: 0
 ...]])
 
-	check_config_remotely([[vshard_groups["global"].bucket_count can't be changed]],
+check_config([[vshard_groups["global"].bucket_count can't be changed]],
 [[---
 topology: {}
 vshard_groups:
@@ -148,7 +150,7 @@ vshard_groups:
     bootstrapped: false
 ...]])
 
-	check_config_remotely('vshard_groups["global"].rebalancer_max_receiving must be a number',
+check_config('vshard_groups["global"].rebalancer_max_receiving must be a number',
 [[---
 vshard_groups:
   global:
@@ -157,7 +159,7 @@ vshard_groups:
     rebalancer_max_receiving: value
 ...]])
 
-	check_config_remotely('vshard_groups["global"].rebalancer_max_receiving must be positive',
+check_config('vshard_groups["global"].rebalancer_max_receiving must be positive',
 [[---
 vshard_groups:
   global:
@@ -166,7 +168,7 @@ vshard_groups:
     rebalancer_max_receiving: 0
 ...]])
 
-	check_config_remotely('vshard_groups["global"].collect_lua_garbage must be a boolean',
+check_config('vshard_groups["global"].collect_lua_garbage must be a boolean',
 [[---
 vshard_groups:
   global:
@@ -175,7 +177,7 @@ vshard_groups:
     collect_lua_garbage: value
 ...]])
 
-	check_config_remotely('vshard_groups["global"].sync_timeout must be a number',
+check_config('vshard_groups["global"].sync_timeout must be a number',
 [[---
 vshard_groups:
   global:
@@ -184,7 +186,7 @@ vshard_groups:
     sync_timeout: value
 ...]])
 
-	check_config_remotely('vshard_groups["global"].sync_timeout must be non-negative',
+check_config('vshard_groups["global"].sync_timeout must be non-negative',
 [[---
 vshard_groups:
   global:
@@ -193,7 +195,7 @@ vshard_groups:
     sync_timeout: -1
 ...]])
 
-	check_config_remotely('vshard_groups["global"].collect_bucket_garbage_interval must be a number',
+check_config('vshard_groups["global"].collect_bucket_garbage_interval must be a number',
 [[---
 vshard_groups:
   global:
@@ -202,7 +204,7 @@ vshard_groups:
     collect_bucket_garbage_interval: value
 ...]])
 
-	check_config_remotely('vshard_groups["global"].collect_bucket_garbage_interval must be positive',
+check_config('vshard_groups["global"].collect_bucket_garbage_interval must be positive',
 [[---
 vshard_groups:
   global:
@@ -211,7 +213,7 @@ vshard_groups:
     collect_bucket_garbage_interval: 0
 ...]])
 
-	check_config_remotely('vshard_groups["global"].rebalancer_disbalance_threshold must be a number',
+check_config('vshard_groups["global"].rebalancer_disbalance_threshold must be a number',
 [[---
 vshard_groups:
   global:
@@ -220,7 +222,7 @@ vshard_groups:
     rebalancer_disbalance_threshold: value
 ...]])
 
-	check_config_remotely('vshard_groups["global"].rebalancer_disbalance_threshold must be non-negative',
+check_config('vshard_groups["global"].rebalancer_disbalance_threshold must be non-negative',
 [[---
 vshard_groups:
   global:
@@ -229,7 +231,7 @@ vshard_groups:
     rebalancer_disbalance_threshold: -1
 ...]])
 
-	check_config_remotely('vshard_groups["global"].bootstrapped must be true or false',
+check_config('vshard_groups["global"].bootstrapped must be true or false',
 [[---
 vshard_groups:
   global:
@@ -237,7 +239,7 @@ vshard_groups:
     bootstrapped: nope
 ...]])
 
-	check_config_remotely('section vshard_groups["global"] has unknown parameter "unknown"',
+check_config('section vshard_groups["global"] has unknown parameter "unknown"',
 [[---
 vshard_groups:
   global:
@@ -246,9 +248,9 @@ vshard_groups:
     unknown:
 ...]])
 
-	log.info('group assignment')
-	check_config_remotely("replicasets[aaaaaaaa-0000-4000-b000-000000000001]" ..
-		[[ can't be added to vshard_group "some", cluster doesn't have any]],
+log.info('group assignment')
+check_config("replicasets[aaaaaaaa-0000-4000-b000-000000000001]" ..
+    [[ can't be added to vshard_group "some", cluster doesn't have any]],
 [[---
 topology:
   replicasets:
@@ -261,8 +263,8 @@ vshard:
   bootstrapped: false
 ...]])
 
-	check_config_remotely("replicasets[aaaaaaaa-0000-4000-b000-000000000001]" ..
-	    " is a vshard-storage and must be assigned to a particular group",
+check_config("replicasets[aaaaaaaa-0000-4000-b000-000000000001]" ..
+    " is a vshard-storage and must be assigned to a particular group",
 [[---
 topology:
   replicasets:
@@ -275,8 +277,8 @@ vshard_groups:
     bootstrapped: false
 ...]])
 
-	check_config_remotely("replicasets[aaaaaaaa-0000-4000-b000-000000000001]" ..
-	    [[.vshard_group "unknown" doesn't exist]],
+check_config("replicasets[aaaaaaaa-0000-4000-b000-000000000001]" ..
+    [[.vshard_group "unknown" doesn't exist]],
 [[---
 topology:
   replicasets:
@@ -290,8 +292,8 @@ vshard_groups:
     bootstrapped: false
 ...]])
 
-	check_config_remotely("replicasets[aaaaaaaa-0000-4000-b000-000000000001]" ..
-	    [[.vshard_group can't be modified]],
+check_config("replicasets[aaaaaaaa-0000-4000-b000-000000000001]" ..
+    [[.vshard_group can't be modified]],
 [[---
 topology:
   replicasets:
@@ -322,8 +324,7 @@ vshard_groups:
     bucket_count: 1
     bootstrapped: false
 ...]])
-end
 
-return {
-    check_config = check_config,
-}
+end)
+
+return M

@@ -31,11 +31,15 @@ function g.teardown()
     fio.rmtree(g.server.workdir)
 end
 
-local function test_candidates_remotely(...)
-    g.server.net_box:eval([[
-        local test = require('test.unit.rpc_test')
-        test.test_candidates(...)
-    ]], {...})
+local M = {}
+local function test_remotely(fn_name, fn)
+    M[fn_name] = fn
+    g[fn_name] = function()
+        g.server.net_box:eval([[
+            local test = require('test.unit.rpc_candidates_test')
+            test[...]()
+        ]], {fn_name})
+    end
 end
 
 -------------------------------------------------------------------------------
@@ -87,6 +91,7 @@ local function apply_mocks(topology_draft)
     local failover = require('cartridge.failover')
     _G.box = {
         cfg = function() end,
+        error = box.error,
         info = {
             cluster = {uuid = 'A'},
             uuid = 'a1',
@@ -112,7 +117,7 @@ local function values(array)
 end
 
 local function test_candidates(test_name, replicasets, opts, expected)
-    checks('string', 'table', 'table', '?table')
+    checks('string', 'table', 'table', 'nil|table')
     apply_mocks(replicasets)
 
     t.assert_equals(
@@ -157,140 +162,139 @@ local draft = {
     }
 }
 
-function g.test()
+test_remotely('test_all', function()
 -------------------------------------------------------------------------------
-    log.info('all alive')
+log.info('all alive')
 
-    test_candidates_remotely('invalid-role',
-        draft, {'invalid-role'},
-        {}
-    )
+test_candidates('invalid-role',
+    draft, {'invalid-role'},
+    {}
+)
 
-    test_candidates_remotely('-leader',
-        draft, {'target-role'},
-        {'a1', 'a2'}
-    )
+test_candidates('-leader',
+    draft, {'target-role'},
+    {'a1', 'a2'}
+)
 
-    test_candidates_remotely('+leader',
-        draft, {'target-role', {leader_only = true}},
-        {'a1'}
-    )
-
--------------------------------------------------------------------------------
-    draft[1][1].status = 'dead'
-    log.info('a1 leader died')
-
-    test_candidates_remotely('-leader -healthy',
-        draft, {'target-role', {healthy_only = false}},
-        {'a1', 'a2'}
-    )
-
-    test_candidates_remotely('-leader +healthy',
-        draft, {'target-role'},
-        {'a2'}
-    )
-
-    test_candidates_remotely('+leader -healthy',
-        draft, {'target-role', {leader_only = true, healthy_only = false}},
-        {'a1'}
-    )
-
-    test_candidates_remotely('+leader +healthy',
-        draft, {'target-role', {leader_only = true}},
-        {}
-    )
+test_candidates('+leader',
+    draft, {'target-role', {leader_only = true}},
+    {'a1'}
+)
 
 -------------------------------------------------------------------------------
-    draft.failover = true
-    log.info('failover enabled')
+draft[1][1].status = 'dead'
+log.info('a1 leader died')
 
-    test_candidates_remotely('-leader -healthy',
-        draft, {'target-role', {healthy_only = false}},
-        {'a1', 'a2'}
-    )
+test_candidates('-leader -healthy',
+    draft, {'target-role', {healthy_only = false}},
+    {'a1', 'a2'}
+)
 
-    test_candidates_remotely('-leader +healthy',
-        draft, {'target-role'},
-        {'a2'}
-    )
+test_candidates('-leader +healthy',
+    draft, {'target-role'},
+    {'a2'}
+)
 
-    test_candidates_remotely('+leader -healthy',
-        draft, {'target-role', {leader_only = true, healthy_only = false}},
-        {'a2'}
-    )
+test_candidates('+leader -healthy',
+    draft, {'target-role', {leader_only = true, healthy_only = false}},
+    {'a1'}
+)
 
-    test_candidates_remotely('+leader +healthy',
-        draft, {'target-role', {leader_only = true}},
-        {'a2'}
-    )
-
--------------------------------------------------------------------------------
-    draft.failover = false
-    log.info('failover disabled')
-    draft[1][1].status = 'alive'
-    log.info('a1 leader restored')
-    draft[2].role = 'target-role'
-    log.info('B target-role enabled')
-
-    test_candidates_remotely('-leader',
-        draft, {'target-role'},
-        {'a1', 'a2', 'b1', 'b2'}
-    )
-
-    test_candidates_remotely('+leader',
-        draft, {'target-role', {leader_only = true}},
-        {'a1', 'b1'}
-    )
+test_candidates('+leader +healthy',
+    draft, {'target-role', {leader_only = true}},
+    {}
+)
 
 -------------------------------------------------------------------------------
-    draft[2][1].state = 'BootError'
-    log.info('b1 has an error')
+draft.failover = true
+log.info('failover enabled')
 
-    test_candidates_remotely('-leader -healthy',
-        draft, {'target-role', {healthy_only = false}},
-        {'a1', 'a2', 'b2', 'b1'}
-    )
+test_candidates('-leader -healthy',
+    draft, {'target-role', {healthy_only = false}},
+    {'a1', 'a2'}
+)
 
-    test_candidates_remotely('-leader +healthy',
-        draft, {'target-role'},
-        {'a1', 'a2', 'b2'}
-    )
+test_candidates('-leader +healthy',
+    draft, {'target-role'},
+    {'a2'}
+)
 
-    test_candidates_remotely('+leader -healthy',
-        draft, {'target-role', {leader_only = true, healthy_only = false}},
-        {'a1', 'b1'}
-    )
+test_candidates('+leader -healthy',
+    draft, {'target-role', {leader_only = true, healthy_only = false}},
+    {'a2'}
+)
 
-    test_candidates_remotely('+leader +healthy',
-        draft, {'target-role', {leader_only = true}},
-        {'a1'}
-    )
+test_candidates('+leader +healthy',
+    draft, {'target-role', {leader_only = true}},
+    {'a2'}
+)
 
 -------------------------------------------------------------------------------
-    draft[1][1].disabled = true
-    log.info('a1 disabled')
+draft.failover = false
+log.info('failover disabled')
+draft[1][1].status = 'alive'
+log.info('a1 leader restored')
+draft[2].role = 'target-role'
+log.info('B target-role enabled')
 
-    test_candidates_remotely('-leader -healthy',
-        draft, {'target-role', {healthy_only = false}},
-        {'a2', 'b2', 'b1'}
-    )
+test_candidates('-leader',
+    draft, {'target-role'},
+    {'a1', 'a2', 'b1', 'b2'}
+)
 
-    test_candidates_remotely('-leader +healthy',
-        draft, {'target-role'},
-        {'a2', 'b2'}
-    )
+test_candidates('+leader',
+    draft, {'target-role', {leader_only = true}},
+    {'a1', 'b1'}
+)
 
-    test_candidates_remotely('+leader -healthy',
-        draft, {'target-role', {leader_only = true, healthy_only = false}},
-        {'b1'}
-    )
+-------------------------------------------------------------------------------
+draft[2][1].state = 'BootError'
+log.info('b1 has an error')
 
-    test_candidates_remotely('+leader +healthy',
-        draft, {'target-role', {leader_only = true}},
-        {}
-    )
-end
+test_candidates('-leader -healthy',
+    draft, {'target-role', {healthy_only = false}},
+    {'a1', 'a2', 'b2', 'b1'}
+)
 
-return {
-    test_candidates = test_candidates,
-}
+test_candidates('-leader +healthy',
+    draft, {'target-role'},
+    {'a1', 'a2', 'b2'}
+)
+
+test_candidates('+leader -healthy',
+    draft, {'target-role', {leader_only = true, healthy_only = false}},
+    {'a1', 'b1'}
+)
+
+test_candidates('+leader +healthy',
+    draft, {'target-role', {leader_only = true}},
+    {'a1'}
+)
+
+-------------------------------------------------------------------------------
+draft[1][1].disabled = true
+log.info('a1 disabled')
+
+test_candidates('-leader -healthy',
+    draft, {'target-role', {healthy_only = false}},
+    {'a2', 'b2', 'b1'}
+)
+
+test_candidates('-leader +healthy',
+    draft, {'target-role'},
+    {'a2', 'b2'}
+)
+
+test_candidates('+leader -healthy',
+    draft, {'target-role', {leader_only = true, healthy_only = false}},
+    {'b1'}
+)
+
+test_candidates('+leader +healthy',
+    draft, {'target-role', {leader_only = true}},
+    {}
+)
+
+end)
+
+return M
