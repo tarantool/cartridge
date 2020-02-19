@@ -1,5 +1,35 @@
 #!/usr/bin/env tarantool
 
+local fio = require('fio')
+local log = require('log')
+local yaml = require('yaml')
+local vshard_utils = require('cartridge.vshard-utils')
+
+local helpers = require('cartridge.test-helpers')
+
+local t = require('luatest')
+local g = t.group()
+
+function g.setup()
+    local root = fio.dirname(fio.abspath(package.search('cartridge')))
+    local server_command = fio.pathjoin(root, 'test', 'unit', 'srv_empty.lua')
+
+    g.server = t.Server:new({
+        command = server_command,
+        workdir = fio.tempdir(),
+        net_box_port = 13301,
+        net_box_credentials = {user = 'admin', password = ''},
+    })
+
+    g.server:start()
+    helpers.retrying({}, t.Server.connect_net_box, g.server)
+end
+
+function g.teardown()
+    g.server:stop()
+    fio.rmtree(g.server.workdir)
+end
+
 local members = {
     ['localhost:3301'] = {
         uri = 'localhost:3301',
@@ -27,6 +57,11 @@ local members = {
         payload = {},
     },
 }
+
+local M = {}
+local function test_remotely(fn_name, fn)
+    M[fn_name] = function()
+
 package.loaded['membership'] = {
     get_member = function(uri)
         return members[uri]
@@ -45,32 +80,30 @@ package.loaded['cartridge.pool'] = {
     end,
 }
 
-_G.vshard = {
-    storage = {
-        buckets_count = function() end,
-    }
-}
-
-local tap = require('tap')
-local yaml = require('yaml')
-local vshard_utils = require('cartridge.vshard-utils')
-local test = tap.test('vshard.config')
-
-test:plan(21)
+        return fn()
+    end
+    g[fn_name] = function()
+        g.server.net_box:eval([[
+            local test = require('test.unit.vshard_config_test')
+            test[...]()
+        ]], {fn_name})
+    end
+end
 
 local function check_config(result, raw_new, raw_old)
     local conf_new = raw_new and yaml.decode(raw_new) or {}
     local conf_old = raw_old and yaml.decode(raw_old) or {}
 
     local ok, err = vshard_utils.validate_config(conf_new, conf_old)
-    test:is(ok or err.err, result, result)
+    t.assert_equals(ok or err.err, result, result)
 end
 
+test_remotely('test_all', function()
+
 -- check_schema
-test:diag('validate_vshard_group()')
+log.info('validate_vshard_group()')
 
-test:diag('   top-level keys')
-
+log.info('top-level keys')
 check_config('section vshard_groups must be a table',
 [[---
 vshard_groups:
@@ -215,8 +248,7 @@ vshard_groups:
     unknown:
 ...]])
 
-test:diag('   group assignment')
-
+log.info('group assignment')
 check_config("replicasets[aaaaaaaa-0000-4000-b000-000000000001]" ..
     [[ can't be added to vshard_group "some", cluster doesn't have any]],
 [[---
@@ -293,4 +325,6 @@ vshard_groups:
     bootstrapped: false
 ...]])
 
-os.exit(test:check() and 0 or 1)
+end)
+
+return M

@@ -1,12 +1,46 @@
 #!/usr/bin/env tarantool
 
-local tap = require('tap')
+local fio = require('fio')
+local log = require('log')
 local rpc = require('cartridge.rpc')
 local checks = require('checks')
-local yaml = require("yaml")
+local yaml = require('yaml')
 
-local test = tap.test('cluster.rpc_candidates')
-test:plan(21)
+local helpers = require('cartridge.test-helpers')
+local t = require('luatest')
+local g = t.group()
+
+function g.setup()
+    local root = fio.dirname(fio.abspath(package.search('cartridge')))
+    local server_command = fio.pathjoin(root, 'test', 'unit', 'srv_empty.lua')
+
+    g.server = t.Server:new({
+        command = server_command,
+        workdir = fio.tempdir(),
+        net_box_port = 13301,
+        http_port = 8082,
+        net_box_credentials = {user = 'admin', password = ''},
+    })
+
+    g.server:start()
+    helpers.retrying({}, t.Server.connect_net_box, g.server)
+end
+
+function g.teardown()
+    g.server:stop()
+    fio.rmtree(g.server.workdir)
+end
+
+local M = {}
+local function test_remotely(fn_name, fn)
+    M[fn_name] = fn
+    g[fn_name] = function()
+        g.server.net_box:eval([[
+            local test = require('test.unit.rpc_candidates_test')
+            test[...]()
+        ]], {fn_name})
+    end
+end
 
 -------------------------------------------------------------------------------
 
@@ -57,6 +91,7 @@ local function apply_mocks(topology_draft)
     local failover = require('cartridge.failover')
     _G.box = {
         cfg = function() end,
+        error = box.error,
         info = {
             cluster = {uuid = 'A'},
             uuid = 'a1',
@@ -85,7 +120,7 @@ local function test_candidates(test_name, replicasets, opts, expected)
     checks('string', 'table', 'table', 'nil|table')
     apply_mocks(replicasets)
 
-    test:is_deeply(
+    t.assert_equals(
         values(rpc.get_candidates(unpack(opts))),
         values(expected),
         test_name
@@ -127,8 +162,9 @@ local draft = {
     }
 }
 
+test_remotely('test_all', function()
 -------------------------------------------------------------------------------
-test:diag('all alive')
+log.info('all alive')
 
 test_candidates('invalid-role',
     draft, {'invalid-role'},
@@ -147,7 +183,7 @@ test_candidates('+leader',
 
 -------------------------------------------------------------------------------
 draft[1][1].status = 'dead'
-test:diag('a1 leader died')
+log.info('a1 leader died')
 
 test_candidates('-leader -healthy',
     draft, {'target-role', {healthy_only = false}},
@@ -171,7 +207,7 @@ test_candidates('+leader +healthy',
 
 -------------------------------------------------------------------------------
 draft.failover = true
-test:diag('failover enabled')
+log.info('failover enabled')
 
 test_candidates('-leader -healthy',
     draft, {'target-role', {healthy_only = false}},
@@ -195,11 +231,11 @@ test_candidates('+leader +healthy',
 
 -------------------------------------------------------------------------------
 draft.failover = false
-test:diag('failover disabled')
+log.info('failover disabled')
 draft[1][1].status = 'alive'
-test:diag('a1 leader restored')
+log.info('a1 leader restored')
 draft[2].role = 'target-role'
-test:diag('B target-role enabled')
+log.info('B target-role enabled')
 
 test_candidates('-leader',
     draft, {'target-role'},
@@ -213,7 +249,7 @@ test_candidates('+leader',
 
 -------------------------------------------------------------------------------
 draft[2][1].state = 'BootError'
-test:diag('b1 has an error')
+log.info('b1 has an error')
 
 test_candidates('-leader -healthy',
     draft, {'target-role', {healthy_only = false}},
@@ -237,7 +273,7 @@ test_candidates('+leader +healthy',
 
 -------------------------------------------------------------------------------
 draft[1][1].disabled = true
-test:diag('a1 disabled')
+log.info('a1 disabled')
 
 test_candidates('-leader -healthy',
     draft, {'target-role', {healthy_only = false}},
@@ -259,4 +295,6 @@ test_candidates('+leader +healthy',
     {}
 )
 
-os.exit(test:check() and 0 or 1)
+end)
+
+return M

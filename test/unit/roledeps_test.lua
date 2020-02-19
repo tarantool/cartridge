@@ -1,20 +1,21 @@
 #!/usr/bin/env tarantool
 
 local log = require('log')
-local tap = require('tap')
 local json = require('json')
 local roles = require('cartridge.roles')
 
-local test = tap.test('cluster.register_role')
-
-test:plan(17)
+local t = require('luatest')
+local g = t.group()
 
 local function check_error(expected_error, fn, ...)
     local _, err = fn(...)
     for _, l in pairs(string.split(tostring(err), '\n')) do
-        test:diag('%s', l)
+        log.info('%s', l)
     end
-    test:like(err.err, expected_error, expected_error)
+    t.assert(
+        string.match(err.err, expected_error),
+        'Expected error: ' .. expected_error
+    )
 end
 
 local function register_roles(...)
@@ -28,6 +29,7 @@ local function register_roles(...)
     return true
 end
 
+function g.test_error()
 -------------------------------------------------------------------------------
 
 check_error([[module 'unknown' not found]],
@@ -152,21 +154,21 @@ local ok, err = register_roles(
 if not ok then
     log.error('%s', err)
 end
-test:is(ok, true, 'register_roles')
+t.assert_equals(ok, true, err)
 
 local vars = require('cartridge.vars').new('cartridge.roles')
 local roles_order = {}
 for i, mod in ipairs(vars.known_roles) do
     roles_order[i] = mod.role_name
-    test:diag('%d) %s -> %s',
+    log.info('%d) %s -> %s',
         i, mod.role_name,
         json.encode(vars.roles_dependencies[mod.role_name])
     )
 end
-test:is_deeply(roles_order, {
+t.assert_equals(roles_order, {
     'vshard-storage', 'vshard-router', 'storage', 'role-c', 'role-d', 'role-b', 'role-a',
-}, 'roles_order')
-test:is_deeply(vars.roles_dependencies, {
+})
+t.assert_equals(vars.roles_dependencies, {
     ['vshard-storage'] = {},
     ['vshard-router'] = {},
     ['storage'] = {'vshard-storage'},
@@ -174,15 +176,16 @@ test:is_deeply(vars.roles_dependencies, {
     ['role-b'] = {'role-c', 'role-d'},
     ['role-c'] = {},
     ['role-d'] = {},
-}, 'roles_dependencies')
+})
 
 for i, mod in ipairs(vars.known_roles) do
-    test:diag('%d) %s <- %s',
+    log.info('%d) %s <- %s',
         i, mod.role_name,
         json.encode(vars.roles_dependants[mod.role_name])
     )
 end
-test:is_deeply(vars.roles_dependants, {
+
+t.assert_equals(vars.roles_dependants, {
     ['vshard-storage'] = {'storage'},
     ['vshard-router'] = {},
     ['storage'] = {},
@@ -190,23 +193,21 @@ test:is_deeply(vars.roles_dependants, {
     ['role-b'] = {'role-a'},
     ['role-c'] = {'role-b'},
     ['role-d'] = {'role-b', 'role-a'},
-}, 'roles_dependants')
+})
 
 local known_roles = roles.get_known_roles()
-test:diag('known_roles: %s', json.encode(known_roles))
-test:is_deeply(known_roles, {
+t.assert_equals(known_roles, {
     'vshard-storage', 'vshard-router', 'storage', 'role-c', 'role-d', 'role-b', 'role-a',
-}, 'known_roles')
+})
 
 local enabled_roles = roles.get_enabled_roles({
     ['vshard-storage'] = false,
     ['storage'] = true,
     ['role-a'] = false,
 })
-test:diag('enabled_roles: %s', json.encode(enabled_roles))
-test:is_deeply(enabled_roles, {
+t.assert_equals(enabled_roles, {
     ['vshard-storage'] = true,
     ['storage'] = true,
-}, 'enabled_roles')
+})
 
-os.exit(test:check() and 0 or 1)
+end
