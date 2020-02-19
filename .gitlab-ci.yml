@@ -12,6 +12,7 @@ stages:
   - test
   - publish
 
+########################################################################
 ###
 ### Prebuilt base docker image
 ### only if Dockerfile or test requirements changed
@@ -24,7 +25,6 @@ stages:
     changes:
       - Dockerfile.base-ee
       - Dockerfile.base-ce
-      - .gitlab-ci.yml
       - test/integration/requirements.txt
   before_script:
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN registry.gitlab.com
@@ -68,8 +68,9 @@ docker-build-ce-2.2:
       --build-arg TARANTOOL_BRANCH=2_2
     DOCKER_FILE: Dockerfile.base-ce
 
+########################################################################
 ###
-### Test
+### Run backend tests
 ###
 .test-template: &test-template
   image: ${CI_REGISTRY_IMAGE}/${IMAGE_NAME}:${IMAGE_TAG}
@@ -78,19 +79,16 @@ docker-build-ce-2.2:
     - docker
   before_script:
     - ls -al # to see if caching works
+    - export CMAKE_DUMMY_WEBUI=YES
     - tarantoolctl rocks make
     - tarantoolctl rocks list
   after_script:
     # avoid caching cartridge rock
     - tarantoolctl rocks remove cartridge
   cache:
-    key: ${IMAGE_NAME}
+    key: ${IMAGE_NAME}-fake-ui
     paths:
       - build.luarocks/
-      - webui/node_modules
-      - webui/build/bundle.lua
-      - .npm
-      - .cache/Cypress
       - .rocks/
 
 integration-ee:
@@ -120,37 +118,10 @@ compatibility:
   variables:
     IMAGE_NAME: *IMAGE_NAME_EE
     CARTRIDGE_OLDER_PATH: /tmp/cartridge-1.2.0
-  before_script:
-    - tarantoolctl rocks make
+  script:
     - mkdir -p $CARTRIDGE_OLDER_PATH
     - (cd $CARTRIDGE_OLDER_PATH; tarantoolctl rocks install cartridge 1.2.0-1)
-  script:
     - luatest -v -p compatibility.upgrade
-
-.cypress: &cypress
-  <<: *test-template
-  script:
-    - luatest -v -p cypress.*
-  artifacts:
-    name: "${CI_COMMIT_REF_NAME}.cypress"
-    when: always
-    expire_in: 1 week
-    paths:
-      - webui/cypress/screenshots/
-      - webui/cypress/videos/
-  variables:
-    IMAGE_NAME: *IMAGE_NAME_EE
-
-cypress-auto:
-  <<: *cypress
-  only:
-    changes:
-      - webui/**/*
-      - test/cypress/**/*
-
-cypress-manual:
-  <<: *cypress
-  when: manual
 
 misc:
   <<: *test-template
@@ -158,22 +129,67 @@ misc:
     - luacheck .
     - ./taptest.lua
     - ./fetch-schema.sh
-    - ./check-flow-graphql.sh
-    - ./frontend-test.sh
-    - ./release.sh
   artifacts:
     name: "${CI_COMMIT_REF_NAME}.misc"
     when: on_success
     expire_in: 1 week
     paths:
       - doc/
-      - release/
-      - release-doc/
-      - luacov.report.out
   variables:
     IMAGE_NAME: *IMAGE_NAME_EE
+    CMAKE_LDOC_FIND_REQUIRED: "YES"
 
+########################################################################
 ###
+### Run frontend tests
+###
+.cypress: &cypress-template
+  image: ${CI_REGISTRY_IMAGE}/${IMAGE_NAME}:${IMAGE_TAG}
+  stage: test
+  tags:
+    - docker
+  variables:
+    IMAGE_NAME: *IMAGE_NAME_EE
+  before_script:
+    - ls -al # to see if caching works
+    - tarantoolctl rocks make
+    - tarantoolctl rocks list
+  script:
+    - luatest -v -p cypress.*
+    - ./frontend-test.sh
+  after_script:
+    # avoid caching cartridge rock
+    - tarantoolctl rocks remove cartridge
+  cache:
+    key: ${IMAGE_NAME}-real-ui
+    paths:
+      - build.luarocks/
+      - webui/build/bundle.lua
+      - .npm
+      - .cache/Cypress
+      - .rocks/
+
+  artifacts:
+    name: "${CI_COMMIT_REF_NAME}.cypress"
+    when: always
+    expire_in: 1 week
+    paths:
+      - webui/cypress/screenshots/
+      - webui/cypress/videos/
+
+cypress-auto:
+  <<: *cypress-template
+  only:
+    changes:
+      - webui/**/*
+      - test/cypress/**/*
+
+cypress-manual:
+  <<: *cypress-template
+  when: manual
+
+
+########################################################################
 ### Publish rocks
 ###
 publish-scm-1:
@@ -192,13 +208,22 @@ publish-release:
   stage: publish
   tags:
     - docker
-  image: centos:7
+  image: ${CI_REGISTRY_IMAGE}/${IMAGE_NAME}:${IMAGE_TAG}
+  variables:
+    IMAGE_NAME: *IMAGE_NAME_EE
   only:
     - tags
   script:
+    - ./release.sh
     - cd release/
     - curl --fail -X PUT -F "rockspec=@${ROCK_NAME}-${CI_COMMIT_TAG}-1.rockspec"
       https://${ROCKS_USERNAME}:${ROCKS_PASSWORD}@rocks.tarantool.org
     - curl --fail -X PUT -F "rockspec=@${ROCK_NAME}-${CI_COMMIT_TAG}-1.all.rock"
       https://${ROCKS_USERNAME}:${ROCKS_PASSWORD}@rocks.tarantool.org
-  dependencies: ["misc"]
+  artifacts:
+    name: "${CI_COMMIT_REF_NAME}.release"
+    when: on_success
+    expire_in: 1 week
+    paths:
+      - release/
+      - release-doc/
