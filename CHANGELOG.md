@@ -42,6 +42,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   for get/set clusterwide DDL schema. They are reference
   `_G.cartridge_get_schema` and `_G.cartridge_set_schema`.
 
+- New GraphQL API to obtain more details on replication status
+  `cluster{ issues{ level message ... }}`.
+
 ### Changed
 
 - Network error shows with fixed splash panel instead of notification.

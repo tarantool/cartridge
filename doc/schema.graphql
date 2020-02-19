@@ -1,5 +1,5 @@
 # source: http://localhost:8081/admin/api
-# timestamp: Sun Feb 16 2020 22:45:22 GMT+0300 (Moscow Standard Time)
+# timestamp: Wed Feb 19 2020 16:19:23 GMT+0300 (Moscow Standard Time)
 
 """Cluster management"""
 type Apicluster {
@@ -9,8 +9,8 @@ type Apicluster {
   """Clusterwide DDL schema"""
   schema: DDLSchema!
 
-  """Get current failover state."""
-  failover: Boolean!
+  """List issues in cluster"""
+  issues: [Issue!]
 
   """Whether it is reasonble to call bootstrap_vshard mutation"""
   can_bootstrap_vshard: Boolean!
@@ -18,19 +18,22 @@ type Apicluster {
   """List authorized users"""
   users(username: String): [User!]
 
+  """Get current failover state."""
+  failover: Boolean!
+
   """Get list of all registered roles and their dependencies."""
   known_roles: [Role!]!
+  auth_params: UserManagementAPI!
 
   """List of pages to be hidden in WebUI"""
   webui_blacklist: [String!]
-
-  """Get list of known vshard storage groups."""
-  vshard_known_groups: [String!]!
   vshard_groups: [VshardGroup!]!
 
   """Virtual buckets count in cluster"""
   vshard_bucket_count: Int!
-  auth_params: UserManagementAPI!
+
+  """Get list of known vshard storage groups."""
+  vshard_known_groups: [String!]!
 
   """Get cluster config sections"""
   config(sections: [String!]): [ConfigSection]!
@@ -88,6 +91,13 @@ type EditTopologyResult {
 type Error {
   stack: String
   class_name: String
+  message: String!
+}
+
+type Issue {
+  level: String!
+  replicaset_uuid: String
+  instance_uuid: String
   message: String!
 }
 
