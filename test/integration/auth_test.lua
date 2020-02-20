@@ -5,13 +5,12 @@ local g = t.group()
 local digest = require('digest')
 local log = require('log')
 
-local test_helper = require('test.helper')
-local helpers = require('cartridge.test-helpers')
+local helpers = require('test.helper')
 
 g.before_all = function()
     g.cluster = helpers.Cluster:new({
         datadir = fio.tempdir(),
-        server_command = test_helper.server_command,
+        server_command = helpers.entrypoint('srv_basic'),
         replicasets = {
             {
                 uuid = helpers.uuid('a'),
@@ -37,7 +36,7 @@ g.before_all = function()
     g.server = helpers.Server:new({
         workdir = fio.pathjoin(g.cluster.datadir, 'dummy'),
         alias = 'dummy',
-        command = test_helper.server_command,
+        command = helpers.entrypoint('srv_basic'),
         replicaset_uuid = helpers.uuid('b'),
         instance_uuid = helpers.uuid('b', 'b', 1),
         http_port = 8083,

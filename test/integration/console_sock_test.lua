@@ -4,8 +4,7 @@ local socket = require('socket')
 local t = require('luatest')
 local g = t.group()
 
-local test_helper = require('test.helper')
-local helpers = require('cartridge.test-helpers')
+local helpers = require('test.helper')
 
 local server
 local tmpdir
@@ -15,7 +14,7 @@ g.before_all = function()
     server = helpers.Server:new({
         alias = 'server',
         workdir = tmpdir,
-        command = test_helper.server_command,
+        command = helpers.entrypoint('srv_basic'),
         advertise_port = 13301,
         http_port = 8080,
         cluster_cookie = 'super-cluster-cookie',

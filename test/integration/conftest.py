@@ -16,7 +16,9 @@ from subprocess import Popen, PIPE, STDOUT
 logging.basicConfig(format='%(name)s > %(message)s', level=logging.INFO)
 
 srv_abspath = os.path.realpath(
-    os.path.dirname(__file__)
+    os.path.join(
+        os.path.dirname(__file__), '..', 'entrypoint'
+    )
 )
 
 TARANTOOL_CONNECTION_TIMEOUT = 5.0

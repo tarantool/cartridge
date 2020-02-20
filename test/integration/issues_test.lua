@@ -2,14 +2,13 @@ local t = require('luatest')
 local g = t.group()
 
 local fio = require('fio')
-local test_helper = require('test.helper')
-local helpers = require('cartridge.test-helpers')
+local helpers = require('test.helper')
 
 g.before_all = function()
     g.cluster = helpers.Cluster:new({
         datadir = fio.tempdir(),
         use_vshard = false,
-        server_command = test_helper.server_command,
+        server_command = helpers.entrypoint('srv_basic'),
         replicasets = {{
             uuid = helpers.uuid('a'),
             roles = {},
@@ -67,7 +66,7 @@ function g.test_broken_replica()
         }]]}).data.cluster.issues
 
         t.assert_equals(
-            test_helper.table_find_by_attr(
+            helpers.table_find_by_attr(
                 issues, 'instance_uuid', helpers.uuid('a', 'a', 2)
             ), {
                 level = 'warning',
@@ -80,7 +79,7 @@ function g.test_broken_replica()
             }
         )
         t.assert_equals(
-            test_helper.table_find_by_attr(
+            helpers.table_find_by_attr(
                 issues, 'instance_uuid', helpers.uuid('a', 'a', 3)
             ), {
                 level = 'warning',

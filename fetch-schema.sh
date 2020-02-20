@@ -1,6 +1,6 @@
 #!/bin/bash
 
-TARANTOOL_WORKDIR=dev/gql-schema test/integration/srv_basic.lua &
+TARANTOOL_WORKDIR=dev/gql-schema test/entrypoint/srv_basic.lua &
 PID=$!
 
 TMP=$(mktemp --suffix .graphql)

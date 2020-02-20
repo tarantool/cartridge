@@ -6,8 +6,7 @@ local log = require('log')
 local json = require('json')
 local http = require('http.server')
 local fiber = require('fiber')
-local test_helper = require('test.helper')
-local helpers = require('cartridge.test-helpers')
+local helpers = require('test.helper')
 
 local ch = fiber.channel(0)
 local function handle_feedback(req)
@@ -33,7 +32,7 @@ g.before_all = function()
     g.cluster = helpers.Cluster:new({
         datadir = g.tempdir,
         use_vshard = false,
-        server_command = test_helper.server_command,
+        server_command = helpers.entrypoint('srv_basic'),
         replicasets = {
             {
                 alias = 'initial-alias',

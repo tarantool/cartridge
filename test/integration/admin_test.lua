@@ -2,8 +2,7 @@ local fio = require('fio')
 local t = require('luatest')
 local g = t.group()
 
-local test_helper = require('test.helper')
-local helpers = require('cartridge.test-helpers')
+local helpers = require('test.helper')
 local digest = require('digest')
 
 local ADMIN_USERNAME = 'admin'
@@ -19,7 +18,7 @@ g.before_all = function()
     g.server = helpers.Server:new({
         alias = 'master',
         workdir = fio.tempdir(),
-        command = fio.pathjoin(test_helper.root, 'test', 'integration', 'srv_woauth.lua'),
+        command = helpers.entrypoint('srv_woauth'),
         advertise_port = 13301,
         http_port = 8081,
         cluster_cookie = ADMIN_PASSWORD,

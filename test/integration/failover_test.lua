@@ -2,9 +2,7 @@ local fio = require('fio')
 local t = require('luatest')
 local g = t.group()
 
-local test_helper = require('test.helper')
-
-local helpers = require('cartridge.test-helpers')
+local helpers = require('test.helper')
 
 local replicaset_uuid = helpers.uuid('b')
 local storage_1_uuid = helpers.uuid('b', 'b', 1)
@@ -17,7 +15,7 @@ g.before_all = function()
     cluster = helpers.Cluster:new({
         datadir = fio.tempdir(),
         use_vshard = true,
-        server_command = test_helper.server_command,
+        server_command = helpers.entrypoint('srv_basic'),
         replicasets = {
             {
                 alias = 'router',

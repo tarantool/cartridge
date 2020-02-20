@@ -5,14 +5,13 @@ local g = t.group()
 
 local fio = require('fio')
 local yaml = require('yaml')
-local test_helper = require('test.helper')
-local helpers = require('cartridge.test-helpers')
+local helpers = require('test.helper')
 
 g.before_all = function()
     g.cluster = helpers.Cluster:new({
         datadir = fio.tempdir(),
         use_vshard = true,
-        server_command = fio.pathjoin(test_helper.root, 'test/unit/instance.lua'),
+        server_command = helpers.entrypoint('srv_basic'),
         cookie = 'test-cluster-cookie',
         base_http_port = 8080,
         base_advertise_port = 13300,
