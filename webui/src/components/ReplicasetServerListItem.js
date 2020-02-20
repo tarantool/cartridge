@@ -111,7 +111,7 @@ const styles = {
   `
 };
 
-const byteUnits = ['Kb', 'Mb', 'Gb', 'Tb', 'Pb'];
+const byteUnits = ['KiB', 'MiB', 'GiB', 'TiB', 'PiB'];
 
 const getReadableBytes = size => {
   let bytes = size;
