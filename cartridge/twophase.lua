@@ -217,6 +217,7 @@ local function _clusterwide(patch)
                 'Ambiguous sections %q and %q',
                 k, k .. '.yml'
             )
+            log.error('%s', err)
             return nil, err
         end
         if v == nil then
@@ -236,6 +237,7 @@ local function _clusterwide(patch)
 
     local _, err = clusterwide_config_new:update_luatables()
     if err ~= nil then
+        log.error('%s', err)
         return nil, err
     end
     clusterwide_config_new:lock()
@@ -256,6 +258,7 @@ local function _clusterwide(patch)
 
     local ok, err = topology.validate(topology_new, topology_old)
     if not ok then
+        log.error('%s', err)
         return nil, err
     end
 
@@ -264,6 +267,7 @@ local function _clusterwide(patch)
         clusterwide_config_old:get_readonly()
     )
     if not ok then
+        log.error('%s', err)
         return nil, err
     end
 
