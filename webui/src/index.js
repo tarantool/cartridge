@@ -22,9 +22,11 @@ import { menuReducer } from './menu';
 import ConfigManagement from 'src/pages/ConfigManagement';
 import DemoInfo from 'src/components/DemoInfo';
 import './misc/analytics';
+import { SectionPreloader } from 'src/components/SectionPreloader';
+import { createLazySection } from 'src/misc/lazySection';
 
-const Code = lazy(() => import('src/pages/Code'));
-const Schema = lazy(() => import('src/pages/Schema'));
+const Code = createLazySection(() => import('src/pages/Code'));
+const Schema = createLazySection(() => import('src/pages/Schema'));
 
 const { tarantool_enterprise_core } = window;
 
@@ -35,7 +37,7 @@ class Root extends React.Component {
     return (
       <Provider store={store}>
         <Router history={tarantool_enterprise_core.history}>
-          <Suspense fallback={'Loading...'}>
+          <Suspense fallback={<SectionPreloader />}>
             <DemoInfo />
             <Switch>
               <Route path={projectPath('dashboard')} component={App} />
