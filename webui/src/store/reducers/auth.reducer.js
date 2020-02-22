@@ -15,7 +15,7 @@ import {
   AUTH_TURN_REQUEST_SUCCESS,
   SET_AUTH_MODAL_VISIBLE,
   EXPECT_WELCOME_MESSAGE,
-  SET_WELCOME_MESSAGE,
+  SET_WELCOME_MESSAGE
 } from 'src/store/actionTypes';
 
 const initialState = {

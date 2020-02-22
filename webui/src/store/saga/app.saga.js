@@ -9,6 +9,7 @@ import {
 } from 'redux-saga/effects';
 import { getErrorMessage as getApiErrorMessage, isDeadServerError, SERVER_NOT_REACHABLE_ERROR_TYPE } from 'src/api';
 import { pageRequestIndicator } from 'src/misc/pageRequestIndicator';
+import { menuFilter } from 'src/menu';
 import {
   APP_DID_MOUNT,
   APP_DATA_REQUEST,
@@ -35,6 +36,10 @@ function* appDataRequestSaga() {
         implements_add_user,
         implements_list_users
       } = clusterSelfResponse.authParams;
+
+      menuFilter.set(clusterSelfResponse.MenuBlacklist);
+      window.tarantool_enterprise_core.dispatch('dispatchToken', { type: '' });
+
       if (implements_add_user || implements_list_users) {
         window.tarantool_enterprise_core.dispatch(
           'dispatchToken',

@@ -18,7 +18,7 @@ import {
   setWelcomeMessage
 } from 'src/store/actions/auth.actions';
 import { PROJECT_NAME } from './constants';
-import { menuReducer } from './menu';
+import { menuReducer, menuFilter } from './menu';
 import ConfigManagement from 'src/pages/ConfigManagement';
 import DemoInfo from 'src/components/DemoInfo';
 import './misc/analytics';
@@ -58,7 +58,9 @@ tarantool_enterprise_core.register(
   PROJECT_NAME,
   menuReducer,
   Root,
-  'react'
+  'react',
+  null,
+  menuFilter.check
 );
 
 tarantool_enterprise_core.subscribe('cluster:logout', () => {
@@ -68,6 +70,7 @@ tarantool_enterprise_core.subscribe('cluster:logout', () => {
 tarantool_enterprise_core.subscribe('cluster:expect_welcome_message', () => {
   store.dispatch(expectWelcomeMessage(true));
 });
+
 tarantool_enterprise_core.subscribe('cluster:set_welcome_message', text => {
   store.dispatch(setWelcomeMessage(text));
   store.dispatch(expectWelcomeMessage(false));
