@@ -212,6 +212,43 @@ function g.test_upload_fail()
     ]])
 end
 
+
+function g.test_rollback()
+    -- hack utils to throw error on file_write
+    g.cluster.main_server.net_box:eval([[
+        local utils = package.loaded["cartridge.utils"]
+        local e_file_write = require('errors').new_class("Artificial error")
+        _G._utils_file_write = utils.file_write
+        utils.file_write = function(filename)
+            return nil, e_file_write:new("Hacked from test")
+        end
+    ]])
+
+    -- try to apply new config - it should fail
+    t.assert_error_msg_contains('Hacked from test', function()
+        g.cluster.main_server:graphql({query = [[
+            mutation {
+                cluster { failover(enabled: false) }
+            }
+        ]]})
+    end)
+
+    -- restore utils.file_write
+    g.cluster.main_server.net_box:eval([[
+        local utils = package.loaded["cartridge.utils"]
+        utils.file_write = _G._utils_file_write
+        _G._utils_file_write = nil
+    ]])
+
+    -- try to apply new config - now it should succeed
+    g.cluster.main_server:graphql({query = [[
+        mutation {
+            cluster { failover(enabled: false) }
+        }
+    ]]})
+end
+
+
 local M = {}
 local function test_remotely(fn_name, fn)
     M[fn_name] = fn
