@@ -26,7 +26,6 @@ local rpc = require('cartridge.rpc')
 local auth = require('cartridge.auth')
 local utils = require('cartridge.utils')
 local roles = require('cartridge.roles')
-local admin = require('cartridge.admin')
 local webui = require('cartridge.webui')
 local argparse = require('cartridge.argparse')
 local topology = require('cartridge.topology')
@@ -35,6 +34,10 @@ local confapplier = require('cartridge.confapplier')
 local vshard_utils = require('cartridge.vshard-utils')
 local cluster_cookie = require('cartridge.cluster-cookie')
 local service_registry = require('cartridge.service-registry')
+
+local lua_api_topology = require('cartridge.lua-api.topology')
+local lua_api_failover = require('cartridge.lua-api.failover')
+local lua_api_deprecated = require('cartridge.lua-api.deprecated')
 
 local CartridgeCfgError = errors.new_class('CartridgeCfgError')
 local HttpInitError = errors.new_class('HttpInitError')
@@ -139,7 +142,7 @@ end
 --  env `TARANTOOL_BUCKET_COUNT`,
 --  args `--bucket-count`)
 --
--- @tparam ?{[string]=VshardGroupParams,...} opts.vshard_groups
+-- @tparam ?{[string]=VshardGroup,...} opts.vshard_groups
 --  vshard storage groups, table keys used as names
 --
 -- @tparam ?boolean opts.http_enabled
@@ -590,82 +593,81 @@ return {
     set_schema = _G.cartridge_set_schema,
 
 --- Cluster administration.
--- @refer cartridge.admin
 -- @section admin
 
     --- .
     -- @field .
-    -- @refer cartridge.admin.ServerInfo
+    -- @refer cartridge.lua-api.get-topology.ServerInfo
     -- @table ServerInfo
 
     --- .
     -- @field .
-    -- @refer cartridge.admin.ReplicasetInfo
+    -- @refer cartridge.lua-api.get-topology.ReplicasetInfo
     -- @table ReplicasetInfo
 
     --- .
-    -- @refer cartridge.admin.get_servers
+    -- @refer cartridge.lua-api.topology.get_servers
     -- @function admin_get_servers
-    admin_get_servers = admin.get_servers,
+    admin_get_servers = lua_api_topology.get_servers,
 
     --- .
-    -- @refer cartridge.admin.get_replicasets
+    -- @refer cartridge.lua-api.topology.get_replicasets
     -- @function admin_get_replicasets
-    admin_get_replicasets = admin.get_replicasets,
+    admin_get_replicasets = lua_api_topology.get_replicasets,
 
     --- .
-    -- @refer cartridge.admin.probe_server
+    -- @refer cartridge.lua-api.topology.probe_server
     -- @function admin_probe_server
-    admin_probe_server = admin.probe_server,
+    admin_probe_server = lua_api_topology.probe_server,
 
     --- .
-    -- @refer cartridge.admin.enable_servers
+    -- @refer cartridge.lua-api.topology.enable_servers
     -- @function admin_enable_servers
-    admin_enable_servers = admin.enable_servers,
+    admin_enable_servers = lua_api_topology.enable_servers,
 
     --- .
-    -- @refer cartridge.admin.disable_servers
+    -- @refer cartridge.lua-api.topology.disable_servers
     -- @function admin_disable_servers
-    admin_disable_servers = admin.disable_servers,
+    admin_disable_servers = lua_api_topology.disable_servers,
 
     --- .
-    -- @refer cartridge.admin.get_failover_enabled
+    -- @refer cartridge.lua-api.failover.get_failover_enabled
     -- @function admin_get_failover
-    admin_get_failover = admin.get_failover_enabled,
+    admin_get_failover = lua_api_failover.get_failover_enabled,
 
     --- Enable failover.
     -- @function admin_enable_failover
     admin_enable_failover = function()
-        return admin.set_failover_enabled(true)
+        return lua_api_failover.set_failover_enabled(true)
     end,
 
     --- Disable failover.
     -- @function admin_disable_failover
     admin_disable_failover = function()
-        return admin.set_failover_enabled(false)
+        return lua_api_failover.set_failover_enabled(false)
     end,
 
 --- Managing cluster topology.
 -- @section topology
 
     --- .
-    -- @refer cartridge.admin.edit_topology
+    -- @refer cartridge.lua-api.edit-topology.edit_topology
     -- @function admin_edit_topology
-    admin_edit_topology = admin.edit_topology,
+    admin_edit_topology = lua_api_topology.edit_topology,
 
     --- .
     -- @field .
-    -- @refer cartridge.admin.EditReplicasetParams
+    -- @refer cartridge.lua-api.edit-topology.EditReplicasetParams
     -- @table EditReplicasetParams
 
     --- .
     -- @field .
-    -- @refer cartridge.admin.EditServerParams
+    -- @refer cartridge.lua-api.edit-topology.EditServerParams
     -- @table EditServerParams
 
     --- .
     -- @field .
-    -- @refer cartridge.admin.JoinServerParams
+    -- @refer cartridge.lua-api.edit-topology.JoinServerParams
     -- @table JoinServerParams
 
 --- Clusterwide configuration.
@@ -737,22 +739,22 @@ return {
 -- @section deprecated
 
     --- .
-    -- @refer cartridge.admin.edit_replicaset
+    -- @refer cartridge.lua-api.deprecated.edit_replicaset
     -- @function admin_edit_replicaset
-    admin_edit_replicaset = admin.edit_replicaset,
+    admin_edit_replicaset = lua_api_deprecated.edit_replicaset,
 
     --- .
-    -- @refer cartridge.admin.edit_server
+    -- @refer cartridge.lua-api.deprecated.edit_server
     -- @function admin_edit_server
-    admin_edit_server = admin.edit_server,
+    admin_edit_server = lua_api_deprecated.edit_server,
 
     --- .
-    -- @refer cartridge.admin.join_server
+    -- @refer cartridge.lua-api.deprecated.join_server
     -- @function admin_join_server
-    admin_join_server = admin.join_server,
+    admin_join_server = lua_api_deprecated.join_server,
 
     --- .
-    -- @refer cartridge.admin.expel_server
+    -- @refer cartridge.lua-api.deprecated.expel_server
     -- @function admin_expel_server
-    admin_expel_server = admin.expel_server,
+    admin_expel_server = lua_api_deprecated.expel_server,
 }

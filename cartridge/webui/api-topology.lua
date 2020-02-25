@@ -1,10 +1,12 @@
 #!/usr/bin/env tarantool
 
-local admin = require('cartridge.admin')
 local roles = require('cartridge.roles')
 local gql_types = require('cartridge.graphql.types')
 local gql_boxinfo_schema = require('cartridge.webui.gql-boxinfo').schema
 local gql_stat_schema = require('cartridge.webui.gql-stat').schema
+local lua_api_topology = require('cartridge.lua-api.topology')
+local lua_api_failover = require('cartridge.lua-api.failover')
+local lua_api_deprecated = require('cartridge.lua-api.deprecated')
 local module_name = 'cartridge.webui.api-topology'
 
 local gql_type_replicaset = gql_types.object {
@@ -184,7 +186,7 @@ local function get_topology(_, _, info)
         return cache.topology
     end
 
-    local topology, err = admin.get_topology()
+    local topology, err = lua_api_topology.get_topology()
     if topology == nil then
         return nil, err
     end
@@ -249,7 +251,7 @@ local function edit_topology(_, args)
         end
     end
 
-    local topology, err = admin.edit_topology(args)
+    local topology, err = lua_api_topology.edit_topology(args)
     if topology == nil then
         return nil, err
     end
@@ -262,29 +264,29 @@ local function edit_topology(_, args)
 end
 
 local function probe_server(_, args)
-    return admin.probe_server(args.uri)
+    return lua_api_topology.probe_server(args.uri)
 end
 
 local function join_server(_, args)
     args.labels = convert_labels_to_keyvalue(args.labels)
-    return admin.join_server(args)
+    return lua_api_deprecated.join_server(args)
 end
 
 local function edit_server(_, args)
     args.labels = convert_labels_to_keyvalue(args.labels)
-    return admin.edit_server(args)
+    return lua_api_deprecated.edit_server(args)
 end
 
 local function expel_server(_, args)
-    return admin.expel_server(args.uuid)
+    return lua_api_deprecated.expel_server(args.uuid)
 end
 
 local function disable_servers(_, args)
-    return admin.disable_servers(args.uuids)
+    return lua_api_topology.disable_servers(args.uuids)
 end
 
 local function edit_replicaset(_, args)
-    return admin.edit_replicaset(args)
+    return lua_api_deprecated.edit_replicaset(args)
 end
 
 local function get_known_roles(_, _)
@@ -302,11 +304,11 @@ local function get_known_roles(_, _)
 end
 
 local function get_failover_enabled(_, _)
-    return admin.get_failover_enabled()
+    return lua_api_failover.get_failover_enabled()
 end
 
 local function set_failover_enabled(_, args)
-    return admin.set_failover_enabled(args.enabled)
+    return lua_api_failover.set_failover_enabled(args.enabled)
 end
 
 local function init(graphql)
@@ -479,7 +481,7 @@ return {
     gql_type_server = gql_type_server,
     gql_type_replicaset = gql_type_replicaset,
 
-    get_self = admin.get_self,
+    get_self = lua_api_topology.get_self,
     get_servers = get_servers,
     get_replicasets = get_replicasets,
 
