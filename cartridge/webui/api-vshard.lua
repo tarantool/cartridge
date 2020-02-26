@@ -2,6 +2,7 @@
 
 local gql_types = require('cartridge.graphql.types')
 local vshard_utils = require('cartridge.vshard-utils')
+local _ = require('cartridge.lua-api.vshard')
 local module_name = 'cartridge.webui.api-vshard'
 
 local gql_type_vsgroup = gql_types.object({
@@ -105,7 +106,7 @@ local function init(graphql)
         name = 'bootstrap_vshard',
         args = {},
         kind = gql_types.boolean,
-        callback = 'cartridge.admin' .. '.bootstrap_vshard',
+        callback = 'cartridge.lua-api.vshard.bootstrap_vshard',
     })
 
     graphql.add_callback({
@@ -114,7 +115,7 @@ local function init(graphql)
         doc = 'Whether it is reasonble to call bootstrap_vshard mutation',
         args = {},
         kind = gql_types.boolean.nonNull,
-        callback = 'cartridge.vshard-utils' .. '.can_bootstrap',
+        callback = 'cartridge.vshard-utils.can_bootstrap',
     })
 
     -- deprecated

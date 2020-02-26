@@ -2,7 +2,6 @@
 file = {
     "cartridge.lua",
     "cartridge/auth.lua",
-    "cartridge/admin.lua",
     "cartridge/roles.lua",
     "cartridge/argparse.lua",
     "cartridge/twophase.lua",
@@ -19,6 +18,15 @@ file = {
     "cartridge/remote-control.lua",
     "cartridge/service-registry.lua",
     "cartridge/user-defined-role.lua",
+
+    "cartridge/lua-api/stat.lua",
+    "cartridge/lua-api/boxinfo.lua",
+    "cartridge/lua-api/get-topology.lua",
+    "cartridge/lua-api/edit-topology.lua",
+    "cartridge/lua-api/topology.lua",
+    "cartridge/lua-api/failover.lua",
+    "cartridge/lua-api/vshard.lua",
+    "cartridge/lua-api/deprecated.lua",
 }
 
 -- luacheck: globals topics

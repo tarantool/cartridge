@@ -1,7 +1,7 @@
 #!/usr/bin/env tarantool
 
-local admin = require('cartridge.admin')
 local gql_types = require('cartridge.graphql.types')
+local lua_api_boxinfo = require('cartridge.lua-api.boxinfo')
 
 local gql_type_error = gql_types.object({
     name = 'Error',
@@ -228,7 +228,7 @@ local boxinfo_schema = {
     }),
     arguments = {},
     resolve = function(root, _)
-        return admin.get_info(root.uri), nil
+        return lua_api_boxinfo.get_info(root.uri), nil
     end,
 }
 

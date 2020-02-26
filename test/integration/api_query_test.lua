@@ -466,15 +466,15 @@ function g.test_topology_caching()
     -- different aliases
     g.cluster.main_server.net_box:eval([[
         local fiber = require('fiber')
-        local admin = require('cartridge.admin')
-        local admin_get_topology = admin.get_topology
-        admin.get_topology = function()
+        local lua_api_topology = require('cartridge.lua-api.topology')
+        local __get_topology = lua_api_topology.get_topology
+        lua_api_topology.get_topology = function()
             assert(
                 not fiber.self().storage.get_topology_wasted,
                 "Excess get_topology call"
             )
             fiber.self().storage.get_topology_wasted = true
-            return admin_get_topology()
+            return __get_topology()
         end
     ]])
 
