@@ -4,6 +4,7 @@
 
 local checks = require('checks')
 local fio = require('fio')
+local fun = require('fun')
 local log = require('log')
 
 local luatest = require('luatest')
@@ -43,6 +44,7 @@ function Cluster:new(object)
         base_advertise_port = '?number',
         use_vshard = '?boolean',
         replicasets = 'table',
+        env = '?table',
     })
     --- Replicaset config.
     -- @table @replicaset_config
@@ -72,6 +74,9 @@ function Cluster:initialize()
     self.servers = {}
     for _, replicaset_config in ipairs(self.replicasets) do
         for i, server_config in ipairs(replicaset_config.servers) do
+            if self.env then
+                server_config.env = fun.chain(self.env, server_config.env or {}):tomap()
+            end
             table.insert(self.servers, self:build_server(server_config, replicaset_config, i))
         end
     end

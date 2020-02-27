@@ -45,6 +45,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - New GraphQL API to obtain more details on replication status
   `cluster{ issues{ level message ... }}`.
 
+- Add option for clusterwide env in test helpers.
+
 ### Changed
 
 - Network error shows with fixed splash panel instead of notification.

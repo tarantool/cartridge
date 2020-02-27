@@ -55,3 +55,30 @@ function g.test_cluster_helper()
     g.cluster:upload_config(yaml.encode({another_section = 'some_value2'}))
     t.assert_equals(g.cluster:download_config(), {another_section = 'some_value2'})
 end
+
+function g.test_new_with_env()
+    local shared_env = {
+        SHARED_ENV_1 = 's-val-1',
+        SHARED_ENV_2 = 's-val-2',
+    }
+    local cluster = helpers.Cluster:new({
+        datadir = '/tmp',
+        server_command = 'true',
+        env = shared_env,
+        replicasets = {
+            {uuid = 'r1', roles = {}, servers = {
+                {alias = 's1'},
+                {alias = 's2', env = {LOCAL_ENV = 'l-val', SHARED_ENV_2 = 'override'}},
+            }},
+            {uuid = 'r2', roles = {}, servers = {
+                {alias = 's3', env = {}},
+            }},
+        }
+    })
+    t.assert_covers(cluster.servers[1].env, shared_env)
+    local expected = table.copy(shared_env)
+    expected.LOCAL_ENV = 'l-val'
+    expected.SHARED_ENV_2 = 'override'
+    t.assert_covers(cluster.servers[2].env, expected)
+    t.assert_covers(cluster.servers[3].env, shared_env)
+end
