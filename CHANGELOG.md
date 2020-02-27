@@ -47,6 +47,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Add option for clusterwide env in test helpers.
 
+- New option in `cartridge.cfg({auto_upgrade_schema=...}, ...)`
+  to perform auto upgrade schema to actual tarantool version
+  (only for leader). It also has bean added for `argparse`.
+
 ### Changed
 
 - Network error shows with fixed splash panel instead of notification.

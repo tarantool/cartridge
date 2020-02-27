@@ -255,10 +255,12 @@ local function apply_config(clusterwide_config)
     return true
 end
 
-
-local function boot_instance(clusterwide_config)
-    checks('ClusterwideConfig')
+local function boot_instance(clusterwide_config, auto_upgrade_schema)
+    checks('ClusterwideConfig', '?boolean')
     assert(clusterwide_config.locked)
+    if auto_upgrade_schema == nil then
+        auto_upgrade_schema = false
+    end
     assert(
         vars.state == 'Unconfigured' -- bootstraping from scratch
         or vars.state == 'ConfigLoaded', -- bootstraping from snapshot
@@ -289,6 +291,7 @@ local function boot_instance(clusterwide_config)
     local snapshots = fio.glob(fio.pathjoin(vars.workdir, '*.snap'))
     local instance_uuid
     local replicaset_uuid
+    local is_leader
     if next(snapshots) == nil then
         -- When snapshots are absent the only way to do it
         -- is to find myself by uri.
@@ -348,7 +351,6 @@ local function boot_instance(clusterwide_config)
         if #box_opts.replication == 0 then
             box_opts.read_only = false
         end
-
     elseif vars.state == 'Unconfigured' then
         -- Instance is being bootstrapped (neither snapshot nor config
         -- don't exist yet)
@@ -365,6 +367,7 @@ local function boot_instance(clusterwide_config)
 
         -- Set up 'star' replication for the bootstrap
         if instance_uuid == leader_uuid then
+            is_leader = true
             box_opts.replication = nil
             box_opts.read_only = false
             -- leader should be bootstrapped with quorum = 0, otherwise
@@ -374,8 +377,20 @@ local function boot_instance(clusterwide_config)
             -- readonly.
             box_opts.replication_connect_quorum = 0
         else
+            is_leader = false
             box_opts.replication = {pool.format_uri(leader.uri)}
         end
+    end
+
+    -- If the config has bean loaded before call
+    if is_leader == nil and auto_upgrade_schema then
+        local instance_uuid = topology.find_server_by_uri(
+            topology_cfg, vars.advertise_uri
+        )
+        local server = topology_cfg.servers[instance_uuid]
+        is_leader = topology.get_leaders_order(
+            topology_cfg, server.replicaset_uuid
+        )[1] == instance_uuid
     end
 
     log.warn('Calling box.cfg()...')
@@ -420,6 +435,18 @@ local function boot_instance(clusterwide_config)
             box.schema.user.passwd,
             username, password
         )
+
+        if is_leader and auto_upgrade_schema then
+            local schema_version = box.space._schema:get{'version'}
+            log.info(string.format('Schema version before upgrade %d.%d.%d',
+                schema_version[2], schema_version[3], schema_version[4]
+            ))
+            box.schema.upgrade()
+            local schema_version = box.space._schema:get{'version'}
+            log.info(string.format('Schema version after upgrade %d.%d.%d',
+                schema_version[2], schema_version[3], schema_version[4]
+            ))
+        end
 
         box.cfg({read_only = read_only})
     end
@@ -475,6 +502,7 @@ local function init(opts)
         box_opts = 'table',
         binary_port = 'number',
         advertise_uri = 'string',
+        auto_upgrade_schema = '?boolean'
     })
 
     assert(vars.state == '', 'Unexpected state ' .. vars.state)
@@ -532,8 +560,13 @@ local function init(opts)
             return true
         end
 
+        local auto_upgrade_schema = opts.auto_upgrade_schema
+        if auto_upgrade_schema == nil then
+            auto_upgrade_schema = false
+        end
+
         set_state('ConfigLoaded')
-        fiber.new(boot_instance, clusterwide_config)
+        fiber.new(boot_instance, clusterwide_config, auto_upgrade_schema)
     end
 
     return true

@@ -118,10 +118,13 @@ compatibility:
   variables:
     IMAGE_NAME: *IMAGE_NAME_EE
     CARTRIDGE_OLDER_PATH: /tmp/cartridge-1.2.0
+    TARANTOOL_OLDER_PATH: ${PWD}/tarantool-enterprise/tarantool
+    TARANTOOL_NEWER_PATH: /usr/bin/tarantool
   script:
     - mkdir -p $CARTRIDGE_OLDER_PATH
     - (cd $CARTRIDGE_OLDER_PATH; tarantoolctl rocks install cartridge 1.2.0-1)
-    - luatest -v -p compatibility.upgrade
+    - curl -L https://tarantool.io/installer.sh | VER=2.2 bash
+    - luatest -v -p compatibility
 
 misc:
   <<: *test-template
