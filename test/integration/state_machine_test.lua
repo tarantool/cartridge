@@ -547,3 +547,29 @@ function g.test_restart_both()
     end)
 end
 
+function g.test_topology_availability()
+    local master = g.cluster:server('master')
+    local slave = g.cluster:server('slave')
+
+    slave.net_box:eval([[
+        require('membership').leave()
+    ]])
+
+    local members = master.net_box:eval([[
+        return require('membership').members()
+    ]])
+    t.assert_equals(members[slave.advertise_uri].status, 'left')
+
+    -- Two-phase commit
+    g.cluster.main_server:graphql({
+        query = [[
+            mutation { cluster { schema(as_yaml: "{}") {} } }
+        ]],
+        raise = false,
+    })
+
+    local res = slave.net_box:eval([[
+        return require('cartridge.confapplier').get_deepcopy('schema.yml');
+    ]])
+    t.assert_equals(res, "{}")
+end
