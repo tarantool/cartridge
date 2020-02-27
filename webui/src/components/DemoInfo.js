@@ -6,7 +6,15 @@ import { Panel } from './Panel'
 import { css, cx } from 'emotion'
 import styled from 'react-emotion'
 import {
-  ConfirmModal, PopupBody, Text, Modal, Tabbed, PopupFooter, Button, Markdown
+  Button,
+  ConfirmModal,
+  CopyToClipboard,
+  Markdown,
+  Modal,
+  PopupBody,
+  PopupFooter,
+  Tabbed,
+  Text,
 } from '@tarantool.io/ui-kit'
 import { validateTarantoolUri } from '../misc/decomposeTarantoolUri';
 
@@ -105,6 +113,10 @@ const styles = {
   btn: css`
     flex-shrink: 0;
     margin-left: 16px;
+  `,
+  copyBtn: css`
+    flex-shrink: 0;
+    margin-left: 8px;
   `
 }
 
@@ -114,13 +126,9 @@ const DemoContext = styled(Panel)`
   display: flex;
 `
 
-const LinkSpan = styled(Text)`
-  cursor: pointer;
-  color: #F5222D;
-`
-
 const Bold = styled.span`
   font-weight: bold;
+  white-space: pre;
 `
 
 const MainContent = styled.div`
@@ -242,7 +250,13 @@ class DemoInfo extends React.Component<DemoInfoProps, DemoInfoState> {
       }
       <DemoContext className={cx(styles.wrap, 'meta-test__DemoInfo', className)}>
         <MainContent>
-          <Text>Your demo server is created. Temporary address of you server:  <Bold>{uri}</Bold></Text>
+          <Text>
+            {'Your demo server is created. Temporary address of you server: '}
+            <Bold>
+              {uri}
+              <CopyToClipboard className={styles.copyBtn} content={uri} intent='iconic' size='s' />
+            </Bold>
+          </Text>
           <Button className={styles.btn} text='How to connect?' intent='iconic' onClick={this.showConnectInfo} />
         </MainContent>
         <Button className={styles.btn} text='Reset configuration' intent='iconic' onClick={this.showResetModal} />
