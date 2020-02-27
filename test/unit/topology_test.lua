@@ -418,42 +418,6 @@ replicasets:
 ...]])
 
     -- availability
-    check_config('Server "localhost:3311" is not in membership',
-[[---
-servers:
-  aaaaaaaa-aaaa-4000-b000-000000000010:
-    uri: localhost:3311
-    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000010
-replicasets:
-  aaaaaaaa-0000-4000-b000-000000000010:
-    master: aaaaaaaa-aaaa-4000-b000-000000000010
-    roles: {}
-...]])
-
-    check_config('Server "localhost:3303" bootstrapped with different uuid "alien"',
-[[---
-servers:
-  aaaaaaaa-aaaa-4000-b000-000000000010:
-    uri: localhost:3303
-    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000010
-replicasets:
-  aaaaaaaa-0000-4000-b000-000000000010:
-    master: aaaaaaaa-aaaa-4000-b000-000000000010
-    roles: {}
-...]])
-
-    check_config('Server "localhost:3304" has error: err',
-[[---
-servers:
-  aaaaaaaa-aaaa-4000-b000-000000000010:
-    uri: localhost:3304
-    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000010
-replicasets:
-  aaaaaaaa-0000-4000-b000-000000000010:
-    master: aaaaaaaa-aaaa-4000-b000-000000000010
-    roles: {}
-...]])
-
     check_config('Current instance "localhost:3301" is not listed in config',
 [[---
 servers: {}

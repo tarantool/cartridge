@@ -352,37 +352,6 @@ end
 
 local function validate_availability(topology)
     checks('table')
-    local servers = topology.servers or {}
-
-    local log = require("log")
-    local yaml = require("yaml")
-    for _it, instance_uuid, server in fun.filter(not_disabled, servers) do
-        local member = membership.get_member(server.uri)
-
-        log.info('\n\n\nMember %s\n%s\n%s', server.uri, yaml.encode(member.payload), type(member.payload.error))
-        e_config:assert(
-            member ~= nil,
-            'Server %q is not in membership', server.uri
-        )
-        e_config:assert(
-            member.status == 'alive', -- or member.status == 'suspect',
-            'Server %q is unreachable with status %q',
-            server.uri, member.status
-        )
-        e_config:assert(
-            (member.payload.uuid == nil) or (member.payload.uuid == instance_uuid),
-            'Server %q bootstrapped with different uuid %q',
-            server.uri, member.payload.uuid
-        )
-        log.info('\n\n\n BERFORE ASSERT PAYLOAD')
-        -- e_config:assert(
-        --     member.payload.error == nil,
-        --     'Server %q has error: %s',
-        --     server.uri, member.payload.error
-        -- )
-        log.info('\n\n\n AFTER ASSERT PAYLOAD')
-
-    end
 
     local myself = membership.myself()
     local myself_uuid = myself.payload.uuid
@@ -528,6 +497,7 @@ local function cluster_is_healthy()
 
     for _it, instance_uuid, server in fun.filter(not_disabled, topology_cfg.servers) do
         local member = membership.get_member(server.uri) or {}
+
         if (member.status ~= 'alive') then
             return nil, string.format(
                 '%s status is %s',

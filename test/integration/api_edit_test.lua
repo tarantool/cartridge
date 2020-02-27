@@ -111,7 +111,7 @@ function g.test_edit_server()
     end
 
     t.assert_error_msg_contains(
-        'Server "localhost:3303" is not in membership',
+        '"localhost:3303": Connection refused',
         edit_server_req,
         {
             uuid = helpers.uuid('a', 'a', 1),
