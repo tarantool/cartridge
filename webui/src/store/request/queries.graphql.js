@@ -23,7 +23,6 @@ export const turnAuthMutation = gql`
   }
 `;
 
-
 export const getClusterQuery = gql`
   query getCluster {
     cluster {
@@ -53,6 +52,7 @@ export const getClusterQuery = gql`
         implements_remove_user
         username
       }
+      MenuBlacklist: webui_blacklist
     }
   }
 `;

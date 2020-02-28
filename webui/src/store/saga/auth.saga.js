@@ -1,6 +1,13 @@
-import { takeLatest, takeEvery, call, put } from 'redux-saga/effects';
+import {
+  takeLatest,
+  takeEvery,
+  call,
+  put,
+  select
+} from 'redux-saga/effects';
 import { isGraphqlAccessDeniedError } from 'src/api/graphql';
 import { isRestAccessDeniedError } from 'src/api/rest';
+import { menuFilter } from 'src/menu';
 import { baseSaga, getRequestSaga } from 'src/store/commonRequest';
 import { logIn, logOut, turnAuth } from 'src/store/request/auth.requests';
 import { pageRequestIndicator } from 'src/misc/pageRequestIndicator';
@@ -58,6 +65,7 @@ function* denyAccessSaga() {
 function* logOutSaga() {
   yield takeLatest(AUTH_LOG_OUT_REQUEST, function* () {
     const indicator = pageRequestIndicator.run();
+    const { auth: { authorizationEnabled } } = yield select();
 
     try {
       const response = yield call(logOut);
@@ -65,6 +73,11 @@ function* logOutSaga() {
 
       yield put({ type: AUTH_LOG_OUT_REQUEST_SUCCESS, payload: response });
       window.tarantool_enterprise_core.dispatch('cluster:logout:done');
+
+      if (authorizationEnabled) {
+        menuFilter.hideAll();
+        window.tarantool_enterprise_core.dispatch('dispatchToken', { type: '' });
+      }
     } catch (error) {
       yield put({ type: AUTH_LOG_OUT_REQUEST_ERROR, error });
       indicator && indicator.error();

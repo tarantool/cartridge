@@ -2,7 +2,6 @@
 import graphql from 'src/api/graphql';
 import { getClusterQuery } from './queries.graphql';
 
-
 export async function getClusterSelf() {
   const response = await graphql.fetch(getClusterQuery);
 
@@ -13,7 +12,8 @@ export async function getClusterSelf() {
     can_bootstrap_vshard,
     vshard_bucket_count,
     vshard_groups,
-    authParams
+    authParams,
+    MenuBlacklist
   } = response.cluster;
 
   return {
@@ -26,6 +26,7 @@ export async function getClusterSelf() {
       vshard_bucket_count,
       vshard_groups
     },
+    MenuBlacklist,
     authParams,
     failover
   };

@@ -1,7 +1,7 @@
 // @flow
 import { PROJECT_NAME } from './constants';
-import * as React from 'react'
-import { css } from 'react-emotion'
+import * as React from 'react';
+import { css } from 'react-emotion';
 import {
   IconCluster,
   IconCode,
@@ -98,3 +98,24 @@ export const menuReducer = (state: MenuItemType[] = menuInitialState, { type, pa
       return state;
   }
 };
+
+const createMenuFilter = () => {
+  let isMenuVisible = false;
+  let hiddenPaths: string[] = [];
+
+  return {
+    check(item: MenuItemType) {
+      if (!isMenuVisible || !item) return false;
+      return !hiddenPaths.some(i => i === item.path);
+    },
+    set(newPaths: string[]): void {
+      hiddenPaths = newPaths;
+      isMenuVisible = true;
+    },
+    hideAll(): void {
+      isMenuVisible = false;
+    }
+  }
+}
+
+export const menuFilter = createMenuFilter();
