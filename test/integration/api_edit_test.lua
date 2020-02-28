@@ -97,7 +97,7 @@ g.setup = function()
 end
 
 function g.test_edit_server()
-    local edit_server_req = function(vars, raise)
+    local edit_server_req = function(vars)
         return g.cluster:server('router'):graphql({
             query = [[
                 mutation($uuid: String! $uri: String!) {
@@ -107,24 +107,20 @@ function g.test_edit_server()
                     )
                 }
             ]],
-            variables = vars,
-            raise = raise,
+            variables = vars
         })
     end
 
-    local err_msg = edit_server_req({
-        uuid = helpers.uuid('a', 'a', 1),
-        uri = 'localhost:3303'
-    }, false).errors[1].message
-
-    local possible_errors = {
+    local _, actual_error = pcall(edit_server_req,
+        {
+            uuid = helpers.uuid('a', 'a', 1),
+            uri = 'localhost:3303'
+        }
+    )
+    t.assert_items_include({
         '"localhost:3303": ' .. errno.strerror(errno.ENETUNREACH),
         '"localhost:3303": ' .. errno.strerror(errno.ECONNREFUSED),
-    }
-
-    if err_msg ~= possible_errors[1] then
-        t.assert_equals(err_msg, possible_errors[2])
-    end
+    }, {tostring(actual_error)})
 
     t.assert_error_msg_contains(
         'Server "cccccccc-cccc-0000-0000-000000000001" is expelled',
