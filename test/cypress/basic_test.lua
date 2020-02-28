@@ -54,6 +54,9 @@ g.setup = function()
         http_port = 8085,
         cluster_cookie = g.cluster.cookie,
         advertise_port = 13310,
+        env = {
+            TARANTOOL_WEBUI_BLACKLIST = '/cluster/configuration',
+        }
     })
 
     g.cluster:start()
@@ -149,7 +152,9 @@ function g.test_uninitialized()
     local code = os.execute(
         'cd webui && npx cypress run' ..
         ' --config baseUrl="http://localhost:8085"' ..
-        ' --spec cypress/integration/uninitialized.spec.js'
+        ' --spec' ..
+        ' cypress/integration/uninitialized.spec.js' ..
+        ',cypress/integration/blacklist-pages.spec.js'
     )
     t.assert_equals(code, 0)
 end
