@@ -350,33 +350,8 @@ local function validate_consistency(topology)
     end
 end
 
-
 local function validate_availability(topology)
     checks('table')
-    local servers = topology.servers or {}
-
-    for _it, instance_uuid, server in fun.filter(not_disabled, servers) do
-        local member = membership.get_member(server.uri)
-        e_config:assert(
-            member ~= nil,
-            'Server %q is not in membership', server.uri
-        )
-        e_config:assert(
-            member.status == 'alive',
-            'Server %q is unreachable with status %q',
-            server.uri, member.status
-        )
-        e_config:assert(
-            (member.payload.uuid == nil) or (member.payload.uuid == instance_uuid),
-            'Server %q bootstrapped with different uuid %q',
-            server.uri, member.payload.uuid
-        )
-        e_config:assert(
-            member.payload.error == nil,
-            'Server %q has error: %s',
-            server.uri, member.payload.error
-        )
-    end
 
     local myself = membership.myself()
     local myself_uuid = myself.payload.uuid

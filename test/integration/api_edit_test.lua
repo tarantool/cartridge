@@ -1,5 +1,6 @@
 local fio = require('fio')
 local t = require('luatest')
+local errno = require('errno')
 local g = t.group()
 
 local helpers = require('test.helper')
@@ -110,14 +111,16 @@ function g.test_edit_server()
         })
     end
 
-    t.assert_error_msg_contains(
-        'Server "localhost:3303" is not in membership',
-        edit_server_req,
+    local _, actual_error = pcall(edit_server_req,
         {
             uuid = helpers.uuid('a', 'a', 1),
             uri = 'localhost:3303'
         }
     )
+    t.assert_items_include({
+        '"localhost:3303": ' .. errno.strerror(errno.ENETUNREACH),
+        '"localhost:3303": ' .. errno.strerror(errno.ECONNREFUSED),
+    }, {tostring(actual_error)})
 
     t.assert_error_msg_contains(
         'Server "cccccccc-cccc-0000-0000-000000000001" is expelled',

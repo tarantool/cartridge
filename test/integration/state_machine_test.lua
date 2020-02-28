@@ -546,4 +546,3 @@ function g.test_restart_both()
         t.assert_equals(list_issues(g.master), {})
     end)
 end
-
