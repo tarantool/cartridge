@@ -1,5 +1,5 @@
 # source: http://localhost:8081/admin/api
-# timestamp: Wed Feb 19 2020 16:19:23 GMT+0300 (Moscow Standard Time)
+# timestamp: Sun Mar 01 2020 23:08:34 GMT+0300 (Moscow Standard Time)
 
 """Cluster management"""
 type Apicluster {
@@ -12,25 +12,25 @@ type Apicluster {
   """List issues in cluster"""
   issues: [Issue!]
 
-  """Whether it is reasonble to call bootstrap_vshard mutation"""
-  can_bootstrap_vshard: Boolean!
+  """Virtual buckets count in cluster"""
+  vshard_bucket_count: Int!
 
   """List authorized users"""
   users(username: String): [User!]
 
   """Get current failover state."""
   failover: Boolean!
-
-  """Get list of all registered roles and their dependencies."""
-  known_roles: [Role!]!
   auth_params: UserManagementAPI!
+
+  """Whether it is reasonble to call bootstrap_vshard mutation"""
+  can_bootstrap_vshard: Boolean!
 
   """List of pages to be hidden in WebUI"""
   webui_blacklist: [String!]
   vshard_groups: [VshardGroup!]!
 
-  """Virtual buckets count in cluster"""
-  vshard_bucket_count: Int!
+  """Get list of all registered roles and their dependencies."""
+  known_roles: [Role!]!
 
   """Get list of known vshard storage groups."""
   vshard_known_groups: [String!]!
@@ -156,15 +156,9 @@ type MutationApicluster {
   """Checks that schema can be applied on cluster"""
   check_schema(as_yaml: String!): DDLCheckResult!
 
-  """Disable listed servers by uuid"""
-  disable_servers(uuids: [String!]): [Server]
+  """Applies updated config on cluster"""
+  config(sections: [ConfigSectionInput]): [ConfigSection]!
   auth_params(cookie_max_age: Long, enabled: Boolean, cookie_renew_age: Long): UserManagementAPI!
-
-  """Remove user"""
-  remove_user(username: String!): User
-
-  """Edit an existing user"""
-  edit_user(password: String, username: String!, fullname: String, email: String): User
   edit_vshard_options(rebalancer_max_receiving: Int, collect_bucket_garbage_interval: Float, collect_lua_garbage: Boolean, sync_timeout: Float, name: String!, rebalancer_disbalance_threshold: Float): VshardGroup!
 
   """Create a new user"""
@@ -173,8 +167,14 @@ type MutationApicluster {
   """Edit cluster topology"""
   edit_topology(replicasets: [EditReplicasetInput], servers: [EditServerInput]): EditTopologyResult
 
-  """Applies updated config on cluster"""
-  config(sections: [ConfigSectionInput]): [ConfigSection]!
+  """Remove user"""
+  remove_user(username: String!): User
+
+  """Edit an existing user"""
+  edit_user(password: String, username: String!, fullname: String, email: String): User
+
+  """Disable listed servers by uuid"""
+  disable_servers(uuids: [String!]): [Server]
 }
 
 type Query {
