@@ -4,11 +4,16 @@ local gql_types = require('cartridge.graphql.types')
 local lua_api_failover = require('cartridge.lua-api.failover')
 
 local function get_failover_enabled(_, _)
-    return lua_api_failover.get_failover_enabled()
+    return lua_api_failover.get_params().enabled
 end
 
 local function set_failover_enabled(_, args)
-    return lua_api_failover.set_failover_enabled(args.enabled)
+    local ok, err = lua_api_failover.set_params(args)
+    if ok == nil then
+        return nil, err
+    end
+
+    return get_failover_enabled()
 end
 
 local function init(graphql)
