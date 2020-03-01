@@ -5,7 +5,6 @@ local gql_types = require('cartridge.graphql.types')
 local gql_boxinfo_schema = require('cartridge.webui.gql-boxinfo').schema
 local gql_stat_schema = require('cartridge.webui.gql-stat').schema
 local lua_api_topology = require('cartridge.lua-api.topology')
-local lua_api_failover = require('cartridge.lua-api.failover')
 local lua_api_deprecated = require('cartridge.lua-api.deprecated')
 local module_name = 'cartridge.webui.api-topology'
 
@@ -303,14 +302,6 @@ local function get_known_roles(_, _)
     return ret
 end
 
-local function get_failover_enabled(_, _)
-    return lua_api_failover.get_failover_enabled()
-end
-
-local function set_failover_enabled(_, args)
-    return lua_api_failover.set_failover_enabled(args.enabled)
-end
-
 local function init(graphql)
 
     graphql.add_callback({
@@ -398,32 +389,11 @@ local function init(graphql)
 
     graphql.add_callback({
         prefix = 'cluster',
-        name = 'failover',
-        doc = 'Get current failover state.',
-        args = {},
-        kind = gql_types.boolean.nonNull,
-        callback = module_name .. '.get_failover_enabled',
-    })
-
-    graphql.add_callback({
-        prefix = 'cluster',
         name = 'known_roles',
         doc = 'Get list of all registered roles and their dependencies.',
         args = {},
         kind = gql_types.list(gql_type_role.nonNull).nonNull,
         callback = module_name .. '.get_known_roles',
-    })
-
-    graphql.add_mutation({
-        prefix = 'cluster',
-        name = 'failover',
-        doc = 'Enable or disable automatic failover. '
-            .. 'Returns new state.',
-        args = {
-            enabled = gql_types.boolean.nonNull,
-        },
-        kind = gql_types.boolean.nonNull,
-        callback = module_name .. '.set_failover_enabled',
     })
 
     graphql.add_mutation({
@@ -495,6 +465,4 @@ return {
     edit_topology = edit_topology,
 
     get_known_roles = get_known_roles,
-    get_failover_enabled = get_failover_enabled,
-    set_failover_enabled = set_failover_enabled,
 }
