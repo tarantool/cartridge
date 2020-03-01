@@ -171,7 +171,7 @@ export async function changeFailover(params: ChangeFailoverArgs) {
   const clusterSelfResponse = await getClusterSelf();
   return {
     changeFailoverResponse: {
-      changeFailover: changeFailoverResponse,
+      changeFailover: changeFailoverResponse.enabled,
       clusterSelf: clusterSelfResponse
     }
   };
