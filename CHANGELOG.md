@@ -59,6 +59,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - - (Lua) `cartridge.admin_get_failover` - deprecated
 - - (Lua) `cartridge.failover_get_params` - added
 - - (Lua) `cartridge.failover_set_params` - added
+- - (GraphQL) `query {cluster {failover{}}}` - changed
+      (returns composite type instead of boolean)
+- - (GraphQL) `mutation {cluster {failover(){}}}` - changed
+      (returns composite type instead of boolean)
 
 ### Fixed
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+set -e -x
 
 # lint
 .rocks/bin/luacheck .
