@@ -23,7 +23,6 @@ g.setup = function()
         }},
     })
 
-
     g.cluster:start()
 end
 
@@ -54,13 +53,13 @@ function g.test_rebootstrap()
         g.server:graphql({query = '{}'})
     end)
 
-    local ok, err = pcall(
-        helpers.Cluster.join_server,
-        g.cluster, g.server
-    )
-    t.assert(err)
-    t.assert_not(ok)
-    t.assert_not(g.server.process:is_alive())
+    local err = t.assert_error(function() g.cluster:join_server(g.server) end)
+
+    -- Retrying was added because of process can be a Zombie
+    -- for a little time due to libev child reaping
+    t.helpers.retrying({}, function()
+        t.assert_not(g.server.process:is_alive())
+    end)
 
     t.assert_equals(g.server.net_box:ping(), false)
     t.assert_equals(g.server.net_box.state, 'error')
