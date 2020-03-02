@@ -55,8 +55,8 @@ function g.test_rebootstrap()
 
     local err = t.assert_error(function() g.cluster:join_server(g.server) end)
 
-    -- Retrying was added because of process can be alive (exists in process table)
-    -- for a little time with Zombie state due to asynchroniuos libev child process waiting
+    -- Retrying was added because of process can be a Zombie
+    -- for a little time due to libev child reaping
     t.helpers.retrying({}, function()
         t.assert_not(g.server.process:is_alive())
     end)
