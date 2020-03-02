@@ -64,6 +64,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - - (GraphQL) `mutation {cluster {failover(){}}}` - changed
       (returns composite type instead of boolean)
 
+- Transition from instance state `ConnectingFullmesh` to `OperationError` is
+  deprecated, now if error occured on instance during `ConnectingFullmesh`
+  state then instance returns an error, but stays at `ConnectingFullmesh`
+  state and tries to reconnect in separate fiber
+
 ### Fixed
 
 - DDL failure if spaces is `null` in input schema.
