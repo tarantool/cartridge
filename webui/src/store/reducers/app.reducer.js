@@ -66,7 +66,7 @@ const initialState: AppState = {
   connectionAlive: true,
   failover: null,
   messages: [],
-  authParams: {},
+  authParams: {}
 };
 
 const appMountReducer = getReducer(APP_DID_MOUNT, { appMount: true });
