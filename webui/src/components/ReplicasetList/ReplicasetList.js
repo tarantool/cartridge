@@ -5,7 +5,6 @@ import { css, cx } from 'emotion';
 import { withRouter } from 'react-router-dom';
 import {
   Button,
-  Divider,
   HealthStatus,
   IconGear,
   Text,
@@ -95,7 +94,10 @@ const styles = {
     margin-bottom: 12px;
   `,
   divider: css`
+    height: 1px;
     margin-top: 16px;
+    margin-bottom: 12px;
+    background-color: #e8e8e8;
   `
 };
 
@@ -159,7 +161,7 @@ class ReplicasetList extends React.PureComponent {
               />
             </div>
             <ReplicasetRoles className={styles.roles} roles={replicaset.roles}/>
-            <Divider className={styles.divider} />
+            <div className={styles.divider} />
             <ReplicasetServerList
               clusterSelf={clusterSelf}
               replicaset={replicaset}

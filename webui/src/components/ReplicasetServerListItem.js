@@ -3,13 +3,16 @@
 import * as React from 'react';
 import { css, cx } from 'react-emotion';
 import Tooltip from 'src/components/Tooltip';
-import Dropdown from 'src/components/Dropdown';
 import ServerLabels, { type Label } from 'src/components/ServerLabels';
 import store from 'src/store/instance';
 import {
+  Button,
+  Dropdown,
+  DropdownItem,
   HealthStatus,
   IconBucket,
   IconChip,
+  IconMore,
   LeaderFlag,
   ProgressBar,
   Text,
@@ -244,23 +247,26 @@ class ReplicasetServerListItem extends React.PureComponent<
         </div>
         <Dropdown
           items={[
-            {
-              text: 'Server details',
-              onClick: () => {
-                history.push(`/cluster/dashboard/instance/${uuid}`)
-              }
-            },
-            {
-              text: 'Expel server',
-              onClick: () => {
-                store.dispatch(showExpelModal(uri))
-              },
-              color: 'rgba(245, 34, 45, 0.65)'
-            }
+            <DropdownItem
+              onClick={() => history.push(`/cluster/dashboard/instance/${uuid}`)}
+            >
+              Server details
+            </DropdownItem>,
+            <DropdownItem
+              className={css`color: rgba(245, 34, 45, 0.65);`}
+              onClick={() => store.dispatch(showExpelModal(uri))}
+            >
+              Expel server
+            </DropdownItem>
           ]}
           className={cx(styles.configureBtn, 'meta-test__ReplicasetServerListItem__dropdownBtn')}
-          size={'s'}
-        />
+        >
+          <Button
+            icon={IconMore}
+            size='s'
+            intent='iconic'
+          />
+        </Dropdown>
         <ServerLabels
           className={styles.tags}
           labels={(labels || [])}
