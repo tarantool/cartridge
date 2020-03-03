@@ -97,19 +97,19 @@ function g.test_uninitialized()
 
     local resp = g.server:graphql({
         query = [[{
-            cluster { failover }
+            cluster { failover {enabled} }
         }]]
     })
 
-    t.assert_equals(resp['data']['cluster']['failover'], false)
+    t.assert_equals(resp.data.cluster.failover.enabled, false)
 
     t.assert_error_msg_contains(
-        'Not bootstrapped yet',
+        "Cluster isn't bootstrapped yet",
         function()
             return g.server:graphql({
                 query = [[
                     mutation {
-                        cluster { failover(enabled: false) }
+                        cluster { failover(enabled: false) {} }
                     }
                 ]]
             })

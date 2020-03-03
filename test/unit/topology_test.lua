@@ -129,9 +129,35 @@ local function test_all()
 auth:
 ...]])
 
-    check_config('topology_new.failover must be boolean, got string',
+    check_config('topology_new.failover must be a table, got string',
 [[---
 failover:
+...]])
+
+    check_config('topology_new.failover.enabled must be boolean, got number',
+[[---
+failover:
+  enabled: 7
+...]])
+
+    check_config('topology_new.failover.enabled must be boolean, got nil',
+[[---
+failover:
+  coordinator_uri: kingdom.com
+...]])
+
+    check_config('topology_new.failover.coordinator_uri must be a string, got boolean',
+[[---
+failover:
+  enabled: true
+  coordinator_uri: false
+...]])
+
+    check_config('topology_new.failover has unknown parameter "unknown"',
+[[---
+failover:
+  enabled: true
+  unknown: yes
 ...]])
 
     check_config('topology_new has unknown parameter "unknown"',
@@ -647,7 +673,8 @@ replicasets:
     check_config(true,
 [[---
 auth: false
-failover: false
+failover:
+  enabled: false
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000001:
     replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
@@ -663,6 +690,9 @@ replicasets:
     check_config(true,
 [[---
 auth: true
+failover:
+  enabled: true
+  coordinator_uri: kingdom.com
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000001:
     replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001

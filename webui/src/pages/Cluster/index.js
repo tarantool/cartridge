@@ -63,7 +63,7 @@ const styles = {
 
 export type ClusterProps = {
   clusterSelf: $PropertyType<AppState, 'clusterSelf'>,
-  failover: boolean,
+  failover: {enabled: boolean},
   pageMount: boolean,
   pageDataRequestStatus: RequestStatusType,
   replicasetCounts: ReplicasetCounts,

@@ -1,5 +1,5 @@
 # source: http://localhost:8081/admin/api
-# timestamp: Sun Mar 01 2020 23:08:34 GMT+0300 (Moscow Standard Time)
+# timestamp: Tue Mar 03 2020 00:12:06 GMT+0300 (Moscow Standard Time)
 
 """Cluster management"""
 type Apicluster {
@@ -18,8 +18,8 @@ type Apicluster {
   """List authorized users"""
   users(username: String): [User!]
 
-  """Get current failover state."""
-  failover: Boolean!
+  """Get automatic failover configuration."""
+  failover: FailoverAPI!
   auth_params: UserManagementAPI!
 
   """Whether it is reasonble to call bootstrap_vshard mutation"""
@@ -94,6 +94,15 @@ type Error {
   message: String!
 }
 
+"""Failover parameters managent"""
+type FailoverAPI {
+  """URI of external coordinator."""
+  coordinator_uri: String
+
+  """Whether automatic failover is enabled."""
+  enabled: Boolean!
+}
+
 type Issue {
   level: String!
   replicaset_uuid: String
@@ -150,8 +159,8 @@ type MutationApicluster {
   """Applies DDL schema on cluster"""
   schema(as_yaml: String!): DDLSchema!
 
-  """Enable or disable automatic failover. Returns new state."""
-  failover(enabled: Boolean!): Boolean!
+  """Configure automatic failover."""
+  failover(coordinator_uri: String, enabled: Boolean): FailoverAPI!
 
   """Checks that schema can be applied on cluster"""
   check_schema(as_yaml: String!): DDLCheckResult!
