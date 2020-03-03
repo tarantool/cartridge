@@ -75,6 +75,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Make GraphQL compatible with `req:read_cached()` call in httpd hooks.
 
+- Avoid "attempt to index nil value" error when using rpc on an
+  uninitialized instance.
+
 ## [2.0.1] - 2020-01-15
 
 ### Added

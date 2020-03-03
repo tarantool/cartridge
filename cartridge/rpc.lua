@@ -80,8 +80,12 @@ local function get_candidates(role_name, opts)
     })
 
     local topology_cfg = confapplier.get_readonly('topology')
-    local servers = topology_cfg.servers
-    local replicasets = topology_cfg.replicasets
+    if topology_cfg == nil then
+        return {}
+    end
+
+    local servers = assert(topology_cfg.servers)
+    local replicasets = assert(topology_cfg.replicasets)
     local active_leaders
     if opts.leader_only then
         active_leaders = failover.get_active_leaders()
