@@ -80,7 +80,7 @@ Start our application:
 
 That's all! You can visit localhost:8081 and see your application Admin Web UI:
 
-<img width="640" alt="cartridge-ui" align="left" src="https://user-images.githubusercontent.com/11336358/75786427-52820c00-5d76-11ea-93a4-309623bda70f.png">
+<img width="640" alt="cartridge-ui" src="https://user-images.githubusercontent.com/11336358/75786427-52820c00-5d76-11ea-93a4-309623bda70f.png">
 
 
 ### Next stages
