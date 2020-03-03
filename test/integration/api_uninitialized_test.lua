@@ -176,3 +176,20 @@ function g.test_membership_options()
         100
     )
 end
+
+function g.test_rpc()
+    local candidates = g.server.net_box:call(
+        'package.loaded.cartridge.rpc_get_candidates',
+        {'myrole-permanent'}
+    )
+    t.assert_equals(candidates, {})
+
+    local _, err = g.server.net_box:call(
+        'package.loaded.cartridge.rpc_call',
+        {'myrole-permanent', 'unknown'}
+    )
+    t.assert_covers(err, {
+        class_name = "RemoteCallError",
+        err = 'No remotes with role "myrole-permanent" available',
+    })
+end
