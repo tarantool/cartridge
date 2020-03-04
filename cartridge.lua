@@ -37,6 +37,7 @@ local service_registry = require('cartridge.service-registry')
 
 local lua_api_topology = require('cartridge.lua-api.topology')
 local lua_api_failover = require('cartridge.lua-api.failover')
+local lua_api_vshard = require('cartridge.lua-api.vshard')
 local lua_api_deprecated = require('cartridge.lua-api.deprecated')
 
 local CartridgeCfgError = errors.new_class('CartridgeCfgError')
@@ -629,6 +630,11 @@ return {
     -- @refer cartridge.lua-api.topology.disable_servers
     -- @function admin_disable_servers
     admin_disable_servers = lua_api_topology.disable_servers,
+
+    --- .
+    -- @refer cartridge.lua-api.vshard.bootstrap_vshard
+    -- @function admin_bootstrap_vshard
+    admin_bootstrap_vshard = lua_api_vshard.bootstrap_vshard,
 
 --- Automatic failover management.
 -- @section failover
