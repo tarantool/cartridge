@@ -128,6 +128,7 @@ function g.test_users()
         ',cypress/integration/edit-user.spec.js' ..
         ',cypress/integration/remove-user.spec.js' ..
         ',cypress/integration/server-details.spec.js' ..
+        ',cypress/integration/server-details-dead-server.spec.js' ..
         ',cypress/integration/login-and-logout.spec.js'..
         ',cypress/integration/auth-switcher-not-moved.spec.js'
     )

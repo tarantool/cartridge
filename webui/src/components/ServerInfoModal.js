@@ -74,8 +74,7 @@ class ServerInfoModal extends React.Component<ServerInfoModalProps, ServerInfoMo
       status,
       uri
     } = this.props
-    console.log(ServerInfoModal.tabsOrder);
-    
+
     return (
       <Modal
         className='meta-test__ServerInfoModal'
