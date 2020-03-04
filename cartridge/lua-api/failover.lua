@@ -8,7 +8,7 @@ local errors = require('errors')
 local twophase = require('cartridge.twophase')
 local confapplier = require('cartridge.confapplier')
 
-local FailoverSetParamsError = errors.new_class('FailoSetParamsError')
+local FailoverSetParamsError = errors.new_class('FailoverSetParamsError')
 
 --- Get failover configuration.
 --
