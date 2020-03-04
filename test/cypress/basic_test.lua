@@ -162,3 +162,7 @@ end
 function g.test_offline_splash()
     cypress_run('network-error-splash.spec.js')
 end
+
+function g.test_dead_server()
+    cypress_run('server-details-dead-server.spec.js')
+end
