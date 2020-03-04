@@ -128,6 +128,7 @@ function g.test_users()
         ',cypress/integration/edit-user.spec.js' ..
         ',cypress/integration/remove-user.spec.js' ..
         ',cypress/integration/server-details.spec.js' ..
+        ',cypress/integration/server-details-dead-server.spec.js' ..
         ',cypress/integration/login-and-logout.spec.js'..
         ',cypress/integration/auth-switcher-not-moved.spec.js'
     )
@@ -161,8 +162,4 @@ end
 
 function g.test_offline_splash()
     cypress_run('network-error-splash.spec.js')
-end
-
-function g.test_dead_server()
-    cypress_run('server-details-dead-server.spec.js')
 end
