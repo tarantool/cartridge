@@ -8,8 +8,13 @@ import {
   showEditUserModal,
   showRemoveUserModal
 } from 'src/store/actions/users.actions';
-import { TiledList } from '@tarantool.io/ui-kit';
-import Dropdown from './Dropdown';
+import {
+  Dropdown,
+  DropdownItem,
+  IconMore,
+  TiledList,
+  Button
+} from '@tarantool.io/ui-kit';
 import NoData from './NoData';
 
 const styles = {
@@ -67,7 +72,7 @@ const buttons = {
   remove: {
     text: 'Remove user',
     handler: ({ item, showRemoveUserModal }) => showRemoveUserModal(item.username),
-    color: 'rgba(245, 34, 45, 0.65)'
+    className: css`color: rgba(245, 34, 45, 0.65);`
   }
 }
 
@@ -95,15 +100,29 @@ class UsersTable extends React.Component {
 
     const actionButtons = (edit, remove) => (item, className) => {
       const filtered = R.compose(
-        R.map(({ handler, ...rest }) => ({
-          ...rest,
-          onClick: () => handler({ item, showEditUserModal, showRemoveUserModal })
-        })),
+        R.map(({ handler, text, className }) => (
+          <DropdownItem
+            className={className}
+            onClick={() => handler({ item, showEditUserModal, showRemoveUserModal })}
+          >
+            {text}
+          </DropdownItem>
+        //   {
+        //   ...rest,
+        //   onClick: () => handler({ item, showEditUserModal, showRemoveUserModal })
+        // }
+        )),
         R.filter(R.identity),
         R.map(([key, exists]) => exists ? buttons[key] : null),
         R.toPairs,
       )({ edit, remove })
-      return filtered.length > 0 ? <Dropdown className={className} items={filtered} size={'s'}/> : null
+      return filtered.length > 0
+        ? (
+          <Dropdown className={className} items={filtered}>
+            <Button icon={IconMore} intent='iconic' size='s' />
+          </Dropdown>
+        )
+        : null
     }
 
     const actionButton = actionButtons(implements_edit_user, implements_remove_user)

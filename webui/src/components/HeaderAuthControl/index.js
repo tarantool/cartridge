@@ -1,10 +1,15 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { Button, IconUser, Text } from '@tarantool.io/ui-kit';
+import {
+  Button,
+  Dropdown,
+  DropdownItem,
+  IconUser,
+  Text
+} from '@tarantool.io/ui-kit';
 import { css, cx } from 'emotion';
 import { ModalLogInForm } from 'src/components/LogInForm';
 import { showAuthModal, hideAuthModal } from 'src/store/actions/auth.actions';
-import Dropdown from '../Dropdown';
 
 const styles = {
   box: css`
@@ -13,13 +18,15 @@ const styles = {
     align-items: center;
     margin: 0 0 0 24px;
   `,
+  dropdown: css`
+    cursor: pointer;
+  `,
   userName: css`
     margin-right: 8px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     color: white;
-    width: 
   `,
   button: css`
     flex-shrink: 0;
@@ -50,13 +57,12 @@ class HeaderAuthControl extends React.Component {
     if (username) {
       return (
         <Dropdown
-          className={cx(styles.box, css`cursor: pointer`, 'meta-test__LogoutBtn')}
-          items={[{ text: 'Log out', onClick: this.sendLogOut }]}
+          className={cx(styles.box, styles.dropdown, 'meta-test__LogoutBtn')}
+          items={[
+            <DropdownItem onClick={this.sendLogOut}>Log out</DropdownItem>
+          ]}
         >
-          <div
-            className={styles.authIcon}
-
-          >
+          <div className={styles.authIcon}>
             <IconUser/>
           </div>
           <span className={styles.userName}><Text variant={'basic'}>{username}</Text></span>
