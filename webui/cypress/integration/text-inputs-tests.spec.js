@@ -53,13 +53,13 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     cy.get('.ProbeServerModal input[name="uri"]')
       .type(' ');
     cy.get('.meta-test__ProbeServerSubmitBtn').click();
-    cy.get('.ProbeServerModal').contains('Probe " " failed: parse error');
+    cy.get('.ProbeServerModal_error').contains('Probe " " failed: parse error');
 
     // II. Fix uri
     cy.get('.ProbeServerModal input[name="uri"]')
       .type('{selectall}localhost:13301{enter}');
-    cy.get('.ProbeServerModal').contains('Probe " " failed: parse error').should('not.exist');
-    cy.get('#root').contains('Probe is OK');
+    cy.get('.ProbeServerModal').should('not.exist');
+    cy.get('#root').contains('Probe is OK').click();
   })
 
   it('3. Edit replicaset dialog',() => {
