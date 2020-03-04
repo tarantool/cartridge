@@ -6,7 +6,7 @@ local rpc = require('cartridge.rpc')
 
 --- Call `vshard.router.bootstrap()`.
 -- This function distributes all buckets across the replica sets.
--- @function bootstrap
+-- @function bootstrap_vshard
 -- @treturn[1] boolean `true`
 -- @treturn[2] nil
 -- @treturn[2] table Error description

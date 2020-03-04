@@ -114,4 +114,13 @@ function g.test_api()
         vshard_known_groups = {},
         vshard_groups = {},
     })
+
+    local _, err = g.cluster.main_server.net_box:call(
+        'package.loaded.cartridge.admin_bootstrap_vshard'
+    )
+
+    t.assert_covers(err, {
+        class_name = 'RemoteCallError',
+        err = 'No remotes with role "vshard-router" available',
+    })
 end
