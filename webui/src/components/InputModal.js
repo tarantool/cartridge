@@ -1,20 +1,11 @@
 // @flow
 import * as React from 'react';
-import { css, cx } from 'emotion';
 import {
   Button,
   Input,
   Modal,
   Text
 } from '@tarantool.io/ui-kit';
-import type { TreeFileItem } from 'src/store/selectors/filesSelectors';
-import type { FileItem } from 'src/store/reducers/files.reducer';
-
-const styles = {
-  popupFileName: css`
-    font-weight: 600;
-  `
-};
 
 type InputModalState = {
   value: string
@@ -73,7 +64,8 @@ export class InputModal extends React.PureComponent<InputModalProps, InputModalS
 
     return (
       <Modal
-        title='Rename file'
+        className={className}
+        title={title}
         visible={visible}
         onClose={onClose}
         footerControls={[
