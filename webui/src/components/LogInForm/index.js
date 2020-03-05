@@ -8,7 +8,7 @@ import { FieldConstructor } from '../FieldGroup';
 import {
   Alert,
   Button,
-  BaseModal,
+  SplashModal,
   Input,
   Checkbox,
   InputGroup,
@@ -25,28 +25,6 @@ const schema = yup.object().shape({
 })
 
 const styles = {
-  formWrap: css`
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    right: 0;
-    z-index: 1;
-    background: #f0f2f5;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    box-sizing: border-box;
-    overflow: auto;
-  `,
-  form: css`
-    width: 100%;
-    max-width: 300px;
-  `,
-  submitBtn: css`
-    width: 100%;
-  `,
   error: css`
     margin-bottom: 30px;
   `,
@@ -57,31 +35,6 @@ const styles = {
   `,
   cancelButton: css`
     margin-right: 16px;
-  `,
-  splashContainer: css`
-    display: flex;
-    flex-direction: row;
-  `,
-  logoContainer: css`
-    width: 68px;
-    flex-grow: 0;
-    flex-shrink: 0;
-    background: #000;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    position: relative;
-  `,
-  logo: css`
-    width: 210px;
-    position: absolute;
-    transform: translate3d(-50%, -50%, 0) rotate(-90deg);
-    left: 50%;
-    top: 50%;
-  `,
-  formContainer: css`
-    flex-grow: 1;
-    padding: 24px 32px;
   `,
   welcomeMessage: css`
     height: 150px;
@@ -247,20 +200,12 @@ const SplashLogInForm = ({
 }) => {
   return loaded && authorizationRequired
     ? (
-      <BaseModal bgColor={'#f0f2f5'}>
-        <div className={styles.splashContainer}>
-          <div className={styles.logoContainer}>
-            <img src={window.tarantool_enterprise_core.logo} className={styles.logo} alt={'Tarantool logo'} />
-          </div>
-          <div className={styles.formContainer}>
-            <Text variant={'h1'}>Authorization</Text>
-            <div className={css`margin: 16px 0 48px 0`}>
-              <Text variant={'basic'} className={css`color: rgba(0, 0, 0, 0.65)`}>Please, input your credentials</Text>
-            </div>
-            <LogInForm {...props} />
-          </div>
-        </div>
-      </BaseModal>
+      <SplashModal
+        title='Authorization'
+        subTitle='Please, input your credentials'
+      >
+        <LogInForm {...props} />
+      </SplashModal>
     )
     : null;
 };
