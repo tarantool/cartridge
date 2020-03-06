@@ -165,4 +165,3 @@ end
 function g.test_offline_splash()
     cypress_run('network-error-splash.spec.js')
 end
-

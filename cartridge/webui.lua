@@ -1,7 +1,6 @@
 #!/usr/bin/env tarantool
 
 local log = require('log')
-local lsp = require('tarantool-lsp')
 local json = require('json').new()
 local front = require('frontend-core')
 local checks = require('checks')
@@ -92,6 +91,7 @@ local function init(httpd, options)
     -- LSP
     local lsp_handler
     if options.lsp_enabled == true then
+        local lsp = require('tarantool-lsp')
         lsp_handler = lsp.create_websocket_handler()
     else
         lsp_handler = function()
