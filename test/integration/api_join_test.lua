@@ -9,7 +9,6 @@ g.before_all = function()
         datadir = fio.tempdir(),
         server_command = helpers.entrypoint('srv_basic'),
         use_vshard = true,
-        cookie = 'test-cluster-cookie',
 
         replicasets = {{
             uuid = helpers.uuid('a'),

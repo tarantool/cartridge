@@ -4,9 +4,10 @@ local g = t.group()
 
 local helpers = require('test.helper')
 local digest = require('digest')
+local uuid = require('uuid')
 
 local ADMIN_USERNAME = 'admin'
-local ADMIN_PASSWORD = '12345'
+local ADMIN_PASSWORD = uuid.str()
 
 local function bauth(username, password)
     local auth_data = string.format("%s:%s", username, password)

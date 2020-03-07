@@ -6,7 +6,6 @@ local checks = require('checks')
 local fio = require('fio')
 local fun = require('fun')
 local log = require('log')
-local uuid = require('uuid')
 
 local luatest = require('luatest')
 local Server = require('cartridge.test-helpers.server')
@@ -16,7 +15,7 @@ local Cluster = {
     CONNECTION_TIMEOUT = 5,
     CONNECTION_RETRY_DELAY = 0.1,
 
-    cookie = uuid.str(),
+    cookie = 'test-cluster-cookie',
     base_http_port = 8080,
     base_advertise_port = 13300,
 }
