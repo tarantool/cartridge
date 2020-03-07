@@ -95,7 +95,7 @@ integration-ee:
   <<: *test-template
   script: &integration-script
     - pytest -v
-    - luatest -v -x cypress.*
+    - luatest -v -x cypress.* -c
   variables:
     IMAGE_NAME: *IMAGE_NAME_EE
 

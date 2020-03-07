@@ -9,7 +9,6 @@ g.before_all = function()
     g.cluster = helpers.Cluster:new({
         datadir = fio.tempdir(),
         server_command = helpers.entrypoint('srv_basic'),
-        cookie = 'test-cluster-cookie',
 
         replicasets = {
             {

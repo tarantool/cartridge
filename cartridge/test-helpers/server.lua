@@ -271,4 +271,10 @@ function Server:download_config()
     return yaml.decode(self:http_request('get', '/admin/config').body)
 end
 
+function Server.generate_cookie()
+    local cookie = string.format('test-cluster-cookie%s', os.getenv('CI_JOB_ID') or '')
+    log.info('\n\n\n%s', cookie)
+    return cookie
+end
+
 return Server
