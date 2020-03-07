@@ -273,7 +273,7 @@ end
 
 function Server.generate_cookie()
     local cookie = string.format('test-cluster-cookie%s', os.getenv('CI_JOB_ID') or '')
-    log.info('\n\n\n%s', cookie)
+    log.info('\n\n\nCOOKIE: %s', cookie)
     return cookie
 end
 
