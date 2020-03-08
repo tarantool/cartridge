@@ -19,7 +19,7 @@ function g:setup()
             alias = alias,
             command = helpers.entrypoint('srv_basic'),
             workdir = fio.pathjoin(self.datadir, alias),
-            cluster_cookie = helpers.Server.generate_cookie(),
+            cluster_cookie = helpers.Server.cookie(),
             http_port = http_port,
             advertise_port = advertise_port,
             instance_uuid = helpers.uuid(rn, rn, sn),

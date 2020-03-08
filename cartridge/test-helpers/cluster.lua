@@ -15,7 +15,7 @@ local Cluster = {
     CONNECTION_TIMEOUT = 5,
     CONNECTION_RETRY_DELAY = 0.1,
 
-    cookie = Server.generate_cookie(),
+    cookie = Server.cookie(),
     base_http_port = 8080,
     base_advertise_port = 13300,
 }
