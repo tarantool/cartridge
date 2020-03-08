@@ -12,7 +12,6 @@ g.before_all = function()
         datadir = fio.tempdir(),
         use_vshard = true,
         server_command = helpers.entrypoint('srv_basic'),
-        cookie = 'test-cluster-cookie',
         base_http_port = 8080,
         base_advertise_port = 13300,
         replicasets = {
@@ -81,4 +80,10 @@ function g.test_new_with_env()
     expected.SHARED_ENV_2 = 'override'
     t.assert_covers(cluster.servers[2].env, expected)
     t.assert_covers(cluster.servers[3].env, shared_env)
+end
+
+function g.test_default_cookie()
+    t.assert_equals(g.cluster.cookie,
+        string.format('test-cluster-cookie%s', os.getenv('CI_JOB_ID') or '')
+    )
 end

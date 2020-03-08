@@ -26,6 +26,7 @@ local checks = require('checks')
 -- @string[opt] object.replicaset_uuid Replicaset identifier.
 -- @return input object
 local Server = luatest.Server:inherit({})
+local cnt = 0
 
 Server.constructor_checks = fun.chain(Server.constructor_checks, {
     alias = 'string',
@@ -272,9 +273,7 @@ function Server:download_config()
 end
 
 function Server.generate_cookie()
-    local cookie = string.format('test-cluster-cookie%s', os.getenv('CI_JOB_ID') or '')
-    log.info('\n\n\nCOOKIE: %s', cookie)
-    return cookie
+    return string.format('test-cluster-cookie%s', os.getenv('CI_JOB_ID') or '')
 end
 
 return Server

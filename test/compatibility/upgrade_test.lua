@@ -70,7 +70,6 @@ function g.test_upgrade()
         datadir = g.tempdir,
         server_command = helpers.entrypoint('srv_basic'),
         use_vshard = true,
-        cookie = 'test-cluster-cookie',
         replicasets = {{
             uuid = helpers.uuid('a'),
             roles = {'vshard-router', 'vshard-storage'},
