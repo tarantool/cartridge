@@ -9,6 +9,8 @@ function g:setup()
 
     self.servers = {}
 
+    local cluster_cookie = require('digest').urandom(6):hex()
+
     local function add_server(rn, sn)
         local id = string.format('%s%d', rn, sn)
         local http_port = 8080 + sn
@@ -19,7 +21,7 @@ function g:setup()
             alias = alias,
             command = helpers.entrypoint('srv_basic'),
             workdir = fio.pathjoin(self.datadir, alias),
-            cluster_cookie = 'test-cluster-cookie',
+            cluster_cookie = cluster_cookie,
             http_port = http_port,
             advertise_port = advertise_port,
             instance_uuid = helpers.uuid(rn, rn, sn),
