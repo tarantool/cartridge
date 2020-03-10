@@ -4,7 +4,6 @@ local g = t.group()
 
 local helpers = require('test.helper')
 local log = require('log')
-local fun = require('fun')
 
 g.before_all = function()
     g.cluster = helpers.Cluster:new({
@@ -588,22 +587,10 @@ end
 
 function g.test_lsp_disabled()
     if os.getenv('TARANTOOL_LSP_ENABLED') ~= nil then
-        t.fail('Please unset TARANTOOL_LSP_ENABLED and run test again')
+        t.skip('Please unset TARANTOOL_LSP_ENABLED and run test again')
     end
 
-    local function check_lsp_disabled(server)
-        return server.net_box:eval('return package.loaded["tarantool-lsp"] ~= nil')
-    end
-
-    local alive_servers = fun.filter(function(server)
-        if server.alias ~= 'expelled' then
-            return server
-        end
-    end, g.cluster.servers):totable()
-
-    for _, server in ipairs(alive_servers) do
-        t.assert_equals(check_lsp_disabled(server), false, server.alias)
-    end
-
-    t.assert_equals(check_lsp_disabled(g.server), false)
+    local code = 'assert(package.loaded["tarantool-lsp"] == nil)'
+    g.cluster:server('storage').net_box:eval(code)
+    g.cluster:server('router').net_box:eval(code)
 end
