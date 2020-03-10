@@ -71,20 +71,26 @@ local state_transitions = {
     -- Remote control is running.
     -- Clusterwide config is loaded.
     -- Remote control initiated `boot_instance()`
-    ['BootstrappingBox'] = {'BoxConfigured', 'BootError'},
+    ['BootstrappingBox'] = {'ConnectingFullmesh', 'BootError'},
 
     -- Remote control is running.
     -- Clusterwide config is loaded.
     -- Function `confapplier.init()` initiated `boot_instance()`
-    ['RecoveringSnapshot'] = {'BoxConfigured', 'BootError'},
+    ['RecoveringSnapshot'] = {'ConnectingFullmesh', 'BootError'},
 
     -- Remote control is stopped.
     -- Recovering snapshot finished.
     -- Box is listening binary port.
-    ['BoxConfigured'] = {'ConnectingFullmesh'},
+    ['ConnectingFullmesh'] = {
+        'ConnectingFullmesh',
+        'BoxConfigured',
+        'BootError',
+    },
+
+    ['BoxConfigured'] = {'ConfiguringRoles'},
+
 
 -- normal operation
-    ['ConnectingFullmesh'] = {'ConfiguringRoles', 'OperationError'},
     ['ConfiguringRoles'] = {'RolesConfigured', 'OperationError'},
     ['RolesConfigured'] = {'ConfiguringRoles'},
 
@@ -196,7 +202,7 @@ end
 --- Apply the role configuration.
 -- @function apply_config
 -- @local
--- @tparam table conf
+-- @tparam table clusterwide_config
 -- @treturn[1] boolean true
 -- @treturn[2] nil
 -- @treturn[2] table Error description
@@ -210,30 +216,15 @@ local function apply_config(clusterwide_config)
     )
 
     vars.clusterwide_config = clusterwide_config
+    set_state('ConfiguringRoles')
 
-    if vars.state == 'BoxConfigured' then
-        set_state('ConnectingFullmesh')
-    end
-
-    local _, err = BoxError:pcall(box.cfg, {
+    box.cfg({replication_connect_quorum = 0})
+    box.cfg({
         replication = topology.get_fullmesh_replication(
             clusterwide_config:get_readonly('topology'), vars.replicaset_uuid
         ),
     })
-    if err ~= nil then
-        set_state('OperationError', err)
-        return nil, err
-    elseif box.info.status == 'orphan' then
-        local err = BoxError:new(
-            'Replication setup failed, instance in orphan mode'
-        )
-        set_state('OperationError', err)
-        return nil, err
-    else
-        box.cfg({replication_connect_quorum = 0})
-    end
 
-    set_state('ConfiguringRoles')
     failover.cfg(clusterwide_config)
 
     local ok, err = ddl_manager.apply_config(
@@ -254,7 +245,6 @@ local function apply_config(clusterwide_config)
     set_state('RolesConfigured')
     return true
 end
-
 
 local function boot_instance(clusterwide_config)
     checks('ClusterwideConfig')
@@ -465,8 +455,40 @@ local function boot_instance(clusterwide_config)
         return nil, err
     end
 
-    set_state('BoxConfigured')
-    return apply_config(clusterwide_config)
+    vars.clusterwide_config = clusterwide_config
+    set_state('ConnectingFullmesh')
+
+    local _, err = BoxError:pcall(box.cfg, {
+        replication = topology.get_fullmesh_replication(
+            topology_cfg, vars.replicaset_uuid
+        ),
+    })
+    if err ~= nil then
+        set_state('BootError', err)
+        return nil, err
+    end
+
+    if box.info.status == 'orphan' then
+        set_state('ConnectingFullmesh')
+        local estr = 'Replication setup failed, instance orphaned'
+        log.warn(estr)
+
+        fiber.new(function()
+            fiber.name('orphan-adoption')
+            while box.info.status == 'orphan' do
+                fiber.sleep(1)
+            end
+
+            log.info("Orphan mode abandoned. Resuming configuration...")
+            set_state('BoxConfigured')
+            apply_config(clusterwide_config)
+        end)
+
+        return nil, BoxError:new(estr)
+    else
+        set_state('BoxConfigured')
+        return apply_config(clusterwide_config)
+    end
 end
 
 local function init(opts)

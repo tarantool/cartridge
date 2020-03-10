@@ -377,7 +377,7 @@ end
 function g.test_orphan_connect_timeout()
     -- If the master can't connect to the slave in
     -- <TARANTOOL_REPLICATION_CONNECT_TIMEOUT> seconds
-    -- it becomes an orphan and transits to OperationError state.
+    -- it stays in ConnectingFullmesh state until it reconnects
 
     g.master:stop()
     g.slave:stop()
@@ -398,7 +398,7 @@ function g.test_orphan_connect_timeout()
             message = "",
         }}
     )
-    wish_state(g.master, 'OperationError')
+    wish_state(g.master, 'ConnectingFullmesh')
 
     t.helpers.retrying({}, function()
         t.assert_equals(list_issues(g.master), {{
@@ -413,6 +413,8 @@ function g.test_orphan_connect_timeout()
     log.info('--------------------------------------------------------')
     g.slave:start()
     wish_state(g.slave, 'RolesConfigured')
+    wish_state(g.master, 'RolesConfigured')
+    g.cluster:wait_until_healthy(g.slave)
 
     t.assert_equals(
         get_upstream_info(g.slave),
@@ -423,9 +425,11 @@ function g.test_orphan_connect_timeout()
         }
     )
 
-    t.assert_equals(rpc_get_candidate(g.slave), g.slave.advertise_uri)
-    t.assert_equals(get_leader(g.slave), g.slave.instance_uuid)
-    t.assert_equals(is_master(g.slave), true)
+    t.assert_equals(rpc_get_candidate(g.slave), g.master.advertise_uri)
+    t.assert_equals(get_leader(g.slave), g.master.instance_uuid)
+    t.assert_equals(is_master(g.slave), false)
+    t.assert_equals(is_master(g.master), true)
+
     t.helpers.retrying({}, function()
         t.assert_equals(list_issues(g.slave), {})
     end)
@@ -441,7 +445,7 @@ function g.test_orphan_sync_timeout()
     g.master.env['TARANTOOL_REPLICATION_SYNC_LAG'] = 1e-308
     g.master.env['TARANTOOL_REPLICATION_SYNC_TIMEOUT'] = 0.1
     g.master:start()
-    wish_state(g.master, 'OperationError')
+    wish_state(g.master, 'ConnectingFullmesh')
 
     t.assert_equals(
         -- master <- slave replication is established instantly
@@ -468,6 +472,11 @@ function g.test_orphan_sync_timeout()
         )
         t.assert_equals(issues[2], nil)
     end)
+
+    g.master.net_box:eval('box.cfg({replication_sync_lag = 30})')
+    wish_state(g.master, 'RolesConfigured')
+    g.cluster:wait_until_healthy(g.master)
+    g.cluster:wait_until_healthy(g.slave)
 end
 
 function g.test_quorum_one()
