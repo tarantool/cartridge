@@ -11,12 +11,15 @@ local fiber = require('fiber')
 local checks = require('checks')
 local errors = require('errors')
 local netbox = require('net.box')
+local fun = require('fun')
 
 local vars = require('cartridge.vars').new('cartridge.pool')
 local cluster_cookie = require('cartridge.cluster-cookie')
 
 vars:new('locks', {})
 vars:new('connections', {})
+vars:new('default_timeout', 5)
+
 local NetboxConnectError = errors.new_class('NetboxConnectError')
 local NetboxMapCallError = errors.new_class('NetboxMapCallError')
 
@@ -72,6 +75,13 @@ local function _connect(uri, options)
     return conn
 end
 
+local function is_connection_alive(conn)
+    return not (conn == nil
+            or conn.state == 'error'
+            or conn.peer_uuid == "00000000-0000-0000-0000-000000000000"
+    )
+end
+
 --- Connect a remote or get cached connection.
 -- Connection is established using `net.box.connect()`.
 -- @function connect
@@ -82,14 +92,30 @@ end
 -- @treturn[2] table Error description
 local function connect(uri, options)
     checks('string', '?table')
-    while vars.locks[uri] do
-        fiber.sleep(0)
-    end
-    vars.locks[uri] = true
-    local conn, err = NetboxConnectError:pcall(_connect, uri, options)
-    vars.locks[uri] = false
 
-    return conn, err
+    local conn = vars.connections[uri]
+    local opts = options or {}
+
+    -- concurrent part won't yeild
+    if not is_connection_alive(conn) then
+        local _uri, err = format_uri(uri)
+        if err ~= nil then
+            return nil, err
+        end
+
+        -- to save previous options
+        local conn_opts = fun.chain(opts, {wait_connected = false}):tomap()
+        conn = netbox.connect(_uri, conn_opts)
+        vars.connections[uri] = conn
+    end
+
+    -- maybe use wait_state instead
+    local ok = conn:wait_connected(opts.timeout) -- or vars.default_timeout)
+    if not ok then
+        return nil, NetboxConnectError:new('%q: %s', uri, conn.error)
+    end
+
+    return conn
 end
 
 local function _pack_values(maps, uri, ...)
