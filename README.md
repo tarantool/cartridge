@@ -52,32 +52,19 @@ with utilities and templates to help:
 To get a template application that usage Tarantool Cartridge and run it you need
 to install `cartridge-cli` utility. We are suggested that [`tarantool`](https://www.tarantool.io/en/download/) is already installed.
 
+Let's install needed dependencies and create an template application:
+
 ```sh
 tarantoolctl rocks install cartridge-cli
-```
-
-Now, you can create your first Tarantool Cartridge application:
-
-```sh
 .rocks/bin/cartridge create --name myapp
-```
-
-Application was created in `./myapp`, welcome:
-
-```sh
 cd myapp
+../.rocks/bin/cartridge build
 ```
 
-Let's install application dependencies locally:
+Start our Cartridge app:
 
 ```sh
-.rocks/bin/cartridge build
-```
-
-Start our application:
-
-```sh
-.rocks/bin/cartridge start
+../.rocks/bin/cartridge start
 ```
 
 That's all! You can visit [localhost:8081](http://localhost:8081) and see your application Admin Web UI:
