@@ -53,6 +53,7 @@ g.before_all = function()
         datadir = fio.tempdir(),
         server_command = helpers.entrypoint('srv_basic'),
         use_vshard = true,
+        cookie = require('digest').urandom(6):hex(),
         replicasets = {
             {
                 uuid = helpers.uuid('a'),

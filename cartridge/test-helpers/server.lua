@@ -271,13 +271,4 @@ function Server:download_config()
     return yaml.decode(self:http_request('get', '/admin/config').body)
 end
 
--- Return server cookie
--- This function returns default cookie if no cookie specified and
--- appends string to make cookie unique in gitlab container (to prevent
--- errors at gitlab due to shared docker network in gitlab runners)
-function Server.cookie(cookie)
-    local default_cookie = 'test-cluster-cookie'
-    return string.format('%s%s', cookie or default_cookie, os.getenv('CI_JOB_ID') or '')
-end
-
 return Server

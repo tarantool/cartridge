@@ -7,6 +7,7 @@ local helpers = require('test.helper')
 
 g.before_all = function()
     g.servers = {}
+    local cluster_cookie = require('digest').urandom(6):hex()
     for i = 1, 3 do
         g.servers[i] = helpers.Server:new({
             workdir = fio.tempdir(),
@@ -15,7 +16,7 @@ g.before_all = function()
             replicaset_uuid = helpers.uuid('a'),
             instance_uuid = helpers.uuid('a', 'a', i),
             http_port = 8080 + i,
-            cluster_cookie = helpers.Server.cookie(),
+            cluster_cookie = cluster_cookie,
             advertise_port = ({13301, 13303, 13305})[i],
             env = {
                 ['CLOCK_DELTA'] = ({0, -7, 3})[i]

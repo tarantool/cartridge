@@ -10,6 +10,7 @@ g.setup = function()
     g.cluster = helpers.Cluster:new({
         datadir = fio.tempdir(),
         server_command = helpers.entrypoint('srv_basic'),
+        cookie = require('digest').urandom(6):hex(),
         replicasets = {
             {
                 uuid = helpers.uuid('a'),
