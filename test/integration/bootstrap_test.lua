@@ -53,11 +53,11 @@ function g.test_cookie_change()
     g.cluster:stop()
     log.warn('Cluster stopped')
 
-    g.new_cookie = require('digest').urandom(6):hex()
+    local cc = 'new-cluster-cookie'
     for _, srv in pairs(g.cluster.servers) do
-        srv.cluster_cookie = g.new_cookie
-        srv.env.TARANTOOL_CLUSTER_COOKIE = g.new_cookie
-        srv.net_box_credentials.password = g.new_cookie
+        srv.cluster_cookie = cc
+        srv.env.TARANTOOL_CLUSTER_COOKIE = cc
+        srv.net_box_credentials.password = cc
     end
     log.warn('Cluster cookie changed')
 
@@ -75,7 +75,7 @@ function g.test_cookie_change()
         return cluster_cookie.cookie()
     ]])
 
-    t.assert_equals(cookie, g.new_cookie)
+    t.assert_equals(cookie, 'new-cluster-cookie')
     g.cluster:wait_until_healthy()
 
     local resp = g.cluster.main_server:graphql({
