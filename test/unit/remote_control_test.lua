@@ -8,6 +8,7 @@ local pickle = require('pickle')
 local netbox = require('net.box')
 local msgpack = require('msgpack')
 local remote_control = require('cartridge.remote-control')
+local helpers = require('luatest.helpers')
 local errno = require('errno')
 
 local username = 'superuser'
@@ -762,4 +763,43 @@ function g.test_switch_rc_to_box()
     t.assert_equals(conn_box.state, "active")
     t.assert_equals(conn_box.peer_uuid, box.info.uuid)
     t.assert_equals(conn_box:call('get_local_secret'), secret)
+end
+
+function g.test_reconnect()
+    local uri = 'superuser:3.141592@localhost:13301'
+
+    local conn = assert(netbox.connect(uri, {
+        wait_connected = false,
+        reconnect_after = 0.2,
+    }))
+
+    helpers.retrying({}, function()
+        t.assert_covers(conn, {state = 'error_reconnect'})
+        t.assert_covers({
+            [errno.strerror(errno.ECONNREFUSED)] = true,
+            [errno.strerror(errno.ENETUNREACH)] = true,
+        }, {[conn.error] = true})
+    end)
+
+    rc_start(13301)
+    t.assert_equals(conn:call('get_local_secret'), secret)
+
+    remote_control.stop()
+    remote_control.drop_connections()
+
+    helpers.retrying({}, function()
+        t.assert_covers(conn, {
+            error = 'Peer closed',
+            state = 'error_reconnect',
+        })
+    end)
+
+    box.cfg({listen = '127.0.0.1:13301'})
+
+    helpers.retrying({}, function()
+        t.assert_covers(conn, {
+            error = nil,
+            state = 'active',
+        })
+    end)
 end
