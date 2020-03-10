@@ -8,8 +8,10 @@ align="right">
 ## Table of contents
 
 * [About Tarantool Cartridge](#about-tarantool-cartridge)
+* [Getting Started](#getting-started)
+   * [Create first application](#create-first-application)
+   * [Next stages](#next-stages)
 * [Installation](#installation)
-* [Usage](#usage)
 * [Contribution](#contribution)
   * [Building from source](#building-from-source)
   * [Running tests](#running-tests)
@@ -35,7 +37,7 @@ on and off on the fly during cluster operation. This allows you to put
 different types of workloads (e.g., compute- and transaction-intensive ones) on
 different physical servers with dedicated hardware.
 
-Tarantool Cartridge has an external utility called `cartridge-cli` which provides you
+Tarantool Cartridge has an external utility called [`cartridge-cli`](https://github.com/tarantool/cartridge-cli) which provides you
 with utilities and templates to help:
 
 * easily set up a development environment for your applications;
@@ -47,7 +49,7 @@ with utilities and templates to help:
 
 ### Create first application
 
-To get a template application that usage Tarantool Cartridge and run it we need
+To get a template application that usage Tarantool Cartridge and run it you need
 to install `cartridge-cli` utility. We are suggested that [`tarantool`](https://www.tarantool.io/en/download/) is already installed.
 
 ```sh
@@ -78,18 +80,21 @@ Start our application:
 .rocks/bin/cartridge start
 ```
 
-That's all! You can visit localhost:8081 and see your application Admin Web UI:
+That's all! You can visit [localhost:8081](http://localhost:8081) and see your application Admin Web UI:
 
 <img width="640" alt="cartridge-ui" src="https://user-images.githubusercontent.com/11336358/75786427-52820c00-5d76-11ea-93a4-309623bda70f.png">
 
 
 ### Next stages
 
-**See** a step-by-step
-[getting started guide](https://github.com/tarantool/cartridge-cli/blob/master/examples/getting-started-app/README.md)
-in the ``cartridge-cli`` repository.
+**See:**
 
-## Installation (for advanced users)
+* Step-by-step [getting started guide](https://github.com/tarantool/cartridge-cli/blob/master/examples/getting-started-app/README.md)
+in the ``cartridge-cli`` repository.
+* [Documentation page](https://www.tarantool.io/en/doc/2.2/book/cartridge/)
+* [API Reference](https://www.tarantool.io/en/rocks/cartridge/1.0/)
+
+## Installation
 
 ```shell
 you@yourmachine $ tarantoolctl rocks install cartridge
