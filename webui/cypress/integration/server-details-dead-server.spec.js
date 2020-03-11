@@ -3,9 +3,10 @@ describe('Server details - dead server', () => {
     cy.visit(Cypress.config('baseUrl'));
     cy.exec('kill -SIGSTOP $(lsof -sTCP:LISTEN -i :8082 -t)', { failOnNonZeroExit: true });
     cy.get('.ServerLabelsHighlightingArea').contains(':13302').closest('li')
+      .should('contain', 'Server status is "dead"')
       .find('.meta-test__ReplicasetServerListItem__dropdownBtn').eq(0).click();
     cy.get('.meta-test__ReplicasetServerListItem__dropdownBtn').contains('Server details').click();
-    cy.get('.meta-test__ServerInfoModal').contains('Server status is "suspect"');
+    cy.get('.meta-test__ServerInfoModal').contains('Server status is "dead"');
     cy.get('.meta-test__ServerInfoModal button').contains('Cartridge').click();
     cy.get('.meta-test__ServerInfoModal button').contains('Replication').click();
     cy.get('.meta-test__ServerInfoModal button').contains('Storage').click();
