@@ -1,5 +1,5 @@
 # source: http://localhost:8081/admin/api
-# timestamp: Tue Mar 03 2020 00:12:06 GMT+0300 (Moscow Standard Time)
+# timestamp: Wed Mar 11 2020 15:50:38 GMT+0300 (GMT+03:00)
 
 """Cluster management"""
 type Apicluster {
@@ -386,11 +386,13 @@ type ServerInfoStorage {
 """A short server information"""
 type ServerShortInfo {
   error: String
+  demo_uri: String
   uri: String!
   alias: String
   state: String
+  instance_name: String
+  app_name: String
   uuid: String
-  demo_uri: String
 }
 
 """
