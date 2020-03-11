@@ -67,6 +67,10 @@ tarantool_enterprise_core.subscribe('cluster:logout', () => {
   store.dispatch(logOut());
 });
 
+tarantool_enterprise_core.subscribe('cluster:post_authorize_hooks', () => {
+  store.dispatch(appDidMount());
+});
+
 tarantool_enterprise_core.subscribe('cluster:expect_welcome_message', () => {
   store.dispatch(expectWelcomeMessage(true));
 });
