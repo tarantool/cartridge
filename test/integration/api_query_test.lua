@@ -559,3 +559,28 @@ function g.test_webui_blacklist()
         {webui_blacklist = {'/cluster/code', '/cluster/schema'}}
     )
 end
+
+function g.test_app_name()
+    local function get_app_info()
+        return g.server:graphql({query = [[{
+            cluster {
+                self {
+                    app_name
+                    instance_name
+                }
+            }
+        }]]}).data.cluster.self
+    end
+    t.assert_equals(get_app_info(), {app_name = box.NULL, instance_name = box.NULL})
+
+    g.server:stop()
+    g.server.env['TARANTOOL_APP_NAME'] = 'app_name'
+    g.server.env['TARANTOOL_INSTANCE_NAME'] = 'instance_name'
+    g.server:start()
+
+    t.helpers.retrying({timeout = 5}, function()
+        g.server:graphql({query = '{}'})
+    end)
+
+    t.assert_equals(get_app_info(), {app_name = 'app_name', instance_name = 'instance_name'})
+end

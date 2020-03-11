@@ -47,6 +47,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Add option for clusterwide env in test helpers.
 
+- New GraphQL API fields in `cluster{ self }`: `app_name`, `instance_name`.
+
 ### Changed
 
 - Network error shows with fixed splash panel instead of notification.

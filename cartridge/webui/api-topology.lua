@@ -422,6 +422,8 @@ local function init(graphql)
                 alias = gql_types.string,
                 state = gql_types.string,
                 error = gql_types.string,
+                app_name = gql_types.string,
+                instance_name = gql_types.string,
             },
         }),
         callback = module_name .. '.get_self',

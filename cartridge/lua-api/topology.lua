@@ -19,6 +19,11 @@ local ProbeServerError = errors.new_class('ProbeServerError')
 local function get_self()
     local myself = membership.myself()
     local state, err = confapplier.get_state()
+    local app_info = require('cartridge.argparse').get_opts({
+        app_name = 'string',
+        instance_name = 'string'
+    })
+
     local result = {
         uri = myself.uri,
         uuid = confapplier.get_instance_uuid(),
@@ -26,6 +31,8 @@ local function get_self()
         alias = myself.payload.alias,
         state = state,
         error = err and err.err or nil,
+        app_name = app_info.app_name,
+        instance_name = app_info.instance_name,
     }
     return result
 end
