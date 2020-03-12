@@ -1,7 +1,7 @@
-import { put, select, takeLatest, call } from 'redux-saga/effects';
+import { put, select, takeLatest } from 'redux-saga/effects';
 import {
   FETCH_CONFIG_FILES_DONE,
-  SELECT_FILE,
+  SELECT_FILE
 } from 'src/store/actionTypes';
 import { LS_CODE_EDITOR_OPENED_FILE } from 'src/constants';
 

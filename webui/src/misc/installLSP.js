@@ -46,7 +46,7 @@ const serviceSymbol = '__service_inited__';
 const createClient = (endpoint, language) => new Promise((resolve, reject) => {
   const { protocol, host } = window.location
   const usedProtocol = protocol === 'https' ? 'wss' : 'ws'
-  const lspEndpoint = `${usedProtocol}://localhost:8081${endpoint}`
+  const lspEndpoint = `${usedProtocol}://${host}${endpoint}`
   const socket = createWebSocket(
     lspEndpoint
   )
