@@ -521,13 +521,22 @@ local function get_failover_params(topology_cfg)
         local err = "Bad argument #1 to get_failover_params" ..
             " (table expected, got ClusterwideConfig)"
         error(err, 2)
+    elseif topology_cfg.failover == nil then
+        return {
+            mode = 'disabled',
+        }
     elseif type(topology_cfg.failover) == 'boolean' then
         return {
             mode = topology_cfg.failover and 'eventual' or 'disabled'
         }
-    else
-        assert(type(topology_cfg.failover) == 'table')
+    elseif type(topology_cfg.failover) == 'table' then
         return topology_cfg.failover
+    else
+        local err = string.format(
+            'assertion failed! topology.failover = %s (%s)',
+            topology_cfg.failover, type(topology_cfg.failover)
+        )
+        error(err)
     end
 end
 
