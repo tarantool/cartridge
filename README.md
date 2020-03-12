@@ -14,6 +14,7 @@ align="right">
 * [Installation](#installation)
 * [Contribution](#contribution)
   * [Building from source](#building-from-source)
+  * [Running demo cluster](#running-demo-cluster)
   * [Auto-generated sources](#auto-generated-sources)
   * [Running tests](#running-tests)
 
@@ -51,9 +52,9 @@ provides you with utilities and templates to help:
 
 ### Create first application
 
-To get a template application that usage Tarantool Cartridge and run it
+To get a template application that uses Tarantool Cartridge and run it
 you need to install `cartridge-cli` utility (supposing that
-[`tarantool`](https://www.tarantool.io/en/download/) is already
+[Tarantool](https://www.tarantool.io/en/download/) is already
 installed).
 
 Long story short, copy-paste it into console:
@@ -66,7 +67,7 @@ cd myapp
 ../.rocks/bin/cartridge start
 ```
 
-That's all! You can visit [localhost:8081](http://localhost:8081) and
+That's all! You can visit <a>http://localhost:8081</a> and
 see your application Admin Web UI:
 
 <img width="640" alt="cartridge-ui" src="https://user-images.githubusercontent.com/11336358/75786427-52820c00-5d76-11ea-93a4-309623bda70f.png">
@@ -75,7 +76,8 @@ see your application Admin Web UI:
 
 **See:**
 
-* Step-by-step [getting started guide](https://github.com/tarantool/cartridge-cli/blob/master/examples/getting-started-app/README.md)
+* Step-by-step
+  [getting started guide](https://github.com/tarantool/cartridge-cli/blob/master/examples/getting-started-app/README.md)
   in the ``cartridge-cli`` repository.
 * [Documentation page](https://www.tarantool.io/en/doc/2.2/book/cartridge/)
 * [API Reference](https://www.tarantool.io/en/rocks/cartridge/1.0/)
@@ -83,14 +85,15 @@ see your application Admin Web UI:
 ## Contribution
 
 From the point of view of cartridge contributor, the workflow differs:
-it implies building the project (documentation, webui) from source and
-running testing.
+it implies building the project from source (documentation, webui) and
+running tests.
 
 ### Building from source
 
 Prerequisites:
 
-* ``tarantool``, ``tarantool-dev`` ([instructions](https://www.tarantool.io/en/download/?v=1.10));
+* ``tarantool``, ``tarantool-dev`` (instructions:
+  <a>https://www.tarantool.io/en/download/?v=1.10</a>);
 * ``git``, ``gcc``, ``cmake``.
 
 The fastest way to build the project is to skip building Web UI:
@@ -111,6 +114,29 @@ installed:
 tarantoolctl rocks install ldoc --server=http://rocks.moonscript.org
 tarantoolctl rocks make
 ```
+
+### Running demo cluster
+
+There are several example entrypoints which are mostly used for testing,
+but can also be useful for demo purposes or experiments:
+
+```sh
+tarantoolctl rocks install cartridge-cli
+.rocks/bin/cartridge start
+
+# or select specific entrypoint
+# .rocks/bin/cartridge start --script ./test/entrypoint/srv_basic.lua
+```
+
+It can be accesed trhough Web UI (<a>http://localhost:8081</a>)
+or with binary protocol:
+
+```sh
+tarantoolctl connect admin@localhost:3301
+```
+
+For more detailed information about `cartridge-cli`
+[see here](https://github.com/tarantool/cartridge-cli#readme).
 
 ### Auto-generated sources
 
