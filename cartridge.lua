@@ -636,25 +636,22 @@ return {
     -- @function admin_bootstrap_vshard
     admin_bootstrap_vshard = lua_api_vshard.bootstrap_vshard,
 
---- Automatic failover management.
--- @section failover
-
     --- .
-    -- @field .
-    -- @refer cartridge.lua-api.failover.FailoverParams
-    -- @table FailoverParams
+    -- @refer cartridge.lua-api.failover.get_failover_enabled
+    -- @function admin_get_failover
+    admin_get_failover = lua_api_failover.get_failover_enabled,
 
-    --- .
-    -- @refer cartridge.lua-api.failover.get_params
-    -- @function failover_get_params
-    failover_get_params = lua_api_failover.get_params,
-    --- .
-    -- @refer cartridge.lua-api.failover.set_params
-    -- @function failover_set_params
-    failover_set_params = lua_api_failover.set_params,
+    --- Enable failover.
+    -- @function admin_enable_failover
+    admin_enable_failover = function()
+        return lua_api_failover.set_failover_enabled(true)
+    end,
 
-    -- TODO: will be implemented later
-    -- failover_switch_leader = lua_api_failover.switch_leader,
+    --- Disable failover.
+    -- @function admin_disable_failover
+    admin_disable_failover = function()
+        return lua_api_failover.set_failover_enabled(false)
+    end,
 
 --- Managing cluster topology.
 -- @section topology
@@ -766,19 +763,4 @@ return {
     -- @refer cartridge.lua-api.deprecated.expel_server
     -- @function admin_expel_server
     admin_expel_server = lua_api_deprecated.expel_server,
-
-    --- .
-    -- @refer cartridge.lua-api.deprecated.get_failover_enabled
-    -- @function admin_get_failover
-    admin_get_failover = lua_api_failover.get_failover_enabled,
-
-    --- .
-    -- @refer cartridge.lua-api.deprecated.enable_failover
-    -- @function admin_enable_failover
-    admin_enable_failover = lua_api_failover.enable,
-
-    --- .
-    -- @refer cartridge.lua-api.deprecated.disable_failover
-    -- @function admin_disable_failover
-    admin_disable_failover = lua_api_failover.disable,
 }

@@ -10,7 +10,6 @@ local membership = require('membership')
 local pool = require('cartridge.pool')
 local confapplier = require('cartridge.confapplier')
 local lua_api_topology = require('cartridge.lua-api.topology')
-local lua_api_failover = require('cartridge.lua-api.failover')
 
 local EditTopologyError = errors.new_class('Editing cluster topology failed')
 
@@ -229,54 +228,9 @@ local function edit_replicaset(args)
     return true
 end
 
---- Get current failover state.
---
--- (**Deprecated** since v2.0.1-78)
--- @function get_failover_enabled
--- @treturn boolean `true`/`false`
-local function get_failover_enabled()
-    return lua_api_failover.get_params().enabled
-end
-
---- Enable failover.
---
--- (**Deprecated** since v2.0.1-78)
--- @function enable_failover
--- @treturn[1] boolean New enabled state
--- @treturn[2] nil
--- @treturn[2] table Error description
-local function enable_failover()
-    local ok, err = lua_api_failover.set_params({enabled = true})
-    if ok == nil then
-        return nil, err
-    end
-
-    return get_failover_enabled()
-end
-
---- Disable failover.
---
--- (**Deprecated** since v2.0.1-78)
--- @function disable_failover
--- @treturn[1] boolean New enabled state
--- @treturn[2] nil
--- @treturn[2] table Error description
-local function disable_failover()
-    local ok, err = lua_api_failover.set_params({enabled = false})
-    if ok == nil then
-        return nil, err
-    end
-
-    return get_failover_enabled()
-end
-
 return {
-    edit_replicaset = edit_replicaset,
-    edit_server = edit_server,
-    join_server = join_server,
-    expel_server = expel_server,
-
-    enable_failover = enable_failover,
-    disable_failover = disable_failover,
-    get_failover_enabled = get_failover_enabled,
+    edit_replicaset = edit_replicaset, -- deprecated
+    edit_server = edit_server, -- deprecated
+    join_server = join_server, -- deprecated
+    expel_server = expel_server, -- deprecated
 }

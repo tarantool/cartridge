@@ -11,7 +11,7 @@ import {
 } from '@tarantool.io/ui-kit';
 import { SwitcherIconContainer, ModalInfoContainer, SwitcherInfoLine } from './styled'
 
-const description = `When enabled, every storage starts monitoring instance statuses.
+const description = `When enabled, every storage starts monitoring instance statuses.  
 If a user-specified master goes down, a replica with the lowest UUID takes its place.
 When the user-specified master comes back online, both roles are restored.`
 
@@ -27,37 +27,32 @@ const FailoverButton = ({
   return (
     <React.Fragment>
       <Switcher
-        className='meta-test__FailoverButton'
         onChange={() => dispatch(setVisibleFailoverModal(true))}
-        checked={failover.enabled}
+        checked={failover}
       >
         Failover
       </Switcher>
       <Modal
-        className='meta-test__FailoverModal'
+        className='meta-test__FailoverControl'
         title="Failover control"
         visible={showFailoverModal}
         onClose={() => dispatch(setVisibleFailoverModal(false))}
         footerControls={[
+          <Button onClick={() => dispatch(setVisibleFailoverModal(false))}>Close</Button>,
           <Button
-            onClick={() => dispatch(setVisibleFailoverModal(false))}
-          >
-            Close
-          </Button>,
-          <Button
-            className='meta-test__SubmitButton'
+            className='meta-test__FailoverControlBtn'
             intent='primary'
-            onClick={() => dispatch(changeFailover({ enabled: !failover.enabled }))}
+            onClick={() => dispatch(changeFailover({ enabled: !failover }))}
           >
-            {failover.enabled ? 'Disable' : 'Enable'}
+            {failover ? 'Disable' : 'Enable'}
           </Button>
         ]}
       >
         <ModalInfoContainer>
           <SwitcherInfoLine>
             <Text variant={'basic'}>
-              <SwitcherIconContainer>{failover.enabled ? <IconOk/> : <IconCancel/>}</SwitcherIconContainer>
-              Failover <b>{failover.enabled ? 'enabled' : 'disabled'}</b>
+              <SwitcherIconContainer>{failover ? <IconOk/> : <IconCancel/>}</SwitcherIconContainer>
+              Failover <b>{failover ? 'enabled' : 'disabled'}</b>
             </Text>
           </SwitcherInfoLine>
           <SwitcherInfoLine>

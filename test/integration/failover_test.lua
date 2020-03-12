@@ -116,21 +116,21 @@ end
 local function get_failover()
     return cluster.main_server:graphql({query = [[
         {
-            cluster { failover {enabled}}
+            cluster { failover }
         }
-    ]]}).data.cluster.failover.enabled
+    ]]}).data.cluster.failover
 end
 
 local function set_failover(enabled)
     local response = cluster.main_server:graphql({
         query = [[
             mutation($enabled: Boolean!) {
-                cluster { failover(enabled: $enabled) {enabled} }
+                cluster { failover(enabled: $enabled) }
             }
         ]],
         variables = {enabled = enabled}
     })
-    return response.data.cluster.failover.enabled
+    return response.data.cluster.failover
 end
 
 local function check_active_master(expected_uuid)
