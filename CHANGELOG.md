@@ -65,13 +65,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 Lua API:
 
 - `cartridge.admin_get_failover` -> `cartridge.failover_get_params`
-- `cartridge.admin_enable_failover` -> `cartridge.failover_set_params`
-- `cartridge.admin_disable_failover`
+- `cartridge.admin_enable/disable_failover` -> `cartridge.failover_set_params`
 
 GraphQL API:
 
-- `query {cluster {failover} }` -> `query {cluster {failover_params} }`
-- `mutation {cluster {failover()} }` -> `mutation {cluster {failover_params()} }`
+- `query {cluster {failover} }` -> `query {cluster {failover_params {...} } }`
+- `mutation {cluster {failover()} }` -> `mutation {cluster {failover_params() {...} } }`
 
 ### Fixed
 
