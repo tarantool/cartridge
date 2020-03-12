@@ -11,7 +11,6 @@ align="right">
 * [Getting Started](#getting-started)
    * [Create first application](#create-first-application)
    * [Next stages](#next-stages)
-* [Installation](#installation)
 * [Contribution](#contribution)
   * [Building from source](#building-from-source)
   * [Running demo cluster](#running-demo-cluster)
