@@ -1,19 +1,19 @@
-#!/usr/bin/env tarantool
-
---- Make decisions regarding instances leadership.
+--- Gather information regarding instances leadership.
 --
 -- Failover can operate in two modes:
 --
 -- * In `disabled` mode the leader is the first server configured in
---   `topology.replicsets[].master` array.
+--   `topology.replicasets[].master` array.
 -- * In `eventual` mode the leader isn't elected consistently.
 --   Instead, every instance in cluster thinks the leader is the
 --   first **healthy** server in replicaset, while instance health is
 --   determined according to membership status (the SWIM protocol).
+-- * In `stateful` mode leaders appointments are polled from the
+--   external storage. (**Added** in v2.0.2-2)
 --
 -- This module behavior depends on the instance state.
 --
--- From the very beginig it reports `is_rw() == false`,
+-- From the very beginning it reports `is_rw() == false`,
 -- `is_leader() == false`, `get_active_leaders() == {}`.
 --
 -- The module is configured when the instance enters `ConfiguringRoles`
@@ -26,9 +26,11 @@
 -- @local
 
 local log = require('log')
+local uri = require('uri')
 local fiber = require('fiber')
 local checks = require('checks')
 local errors = require('errors')
+local netbox = require('net.box')
 local membership = require('membership')
 
 local vars = require('cartridge.vars').new('cartridge.failover')
@@ -38,28 +40,53 @@ local service_registry = require('cartridge.service-registry')
 
 local FailoverError = errors.new_class('FailoverError')
 local ApplyConfigError = errors.new_class('ApplyConfigError')
+local NetboxConnectError = errors.new_class('NetboxConnectError')
 local ValidateConfigError = errors.new_class('ValidateConfigError')
 
-vars:new('mode', 'disabled') -- disabled | eventual
-vars:new('notification', membership.subscribe())
+vars:new('membership_notification', membership.subscribe())
 vars:new('clusterwide_config')
 vars:new('failover_fiber')
 vars:new('cache', {
-    active_leaders = nil,
+    active_leaders = {--[[ [replicaset_uuid] = leader_uuid ]]},
     is_leader = false,
     is_rw = false,
 })
+vars:new('options', {
+    LONGPOLL_TIMEOUT = 30,
+    NETBOX_CALL_TIMEOUT = 1,
+})
 
-local function _get_health_map(topology_cfg, mode)
-    checks('table', 'string')
-    assert(topology_cfg.replicasets ~= nil)
+--- Generate appointments according to clusterwide configuration.
+-- Used in 'disabled' failover mode.
+-- @function _get_appointments_disabled_mode
+-- @local
+local function _get_appointments_disabled_mode(topology_cfg)
+    checks('table')
+    local replicasets = assert(topology_cfg.replicasets)
 
-    local ret = {
-        active_leaders = {--[[ [replicaset_uuid] = leader_uuid ]]},
-        potential_leaders = {--[[ [instance_uuid] = true|false ]]},
-    }
+    local appointments = {}
 
-    for replicaset_uuid, _ in pairs(topology_cfg.replicasets) do
+    for replicaset_uuid, _ in pairs(replicasets) do
+        local leaders = topology.get_leaders_order(
+            topology_cfg, replicaset_uuid
+        )
+        appointments[replicaset_uuid] = leaders[1]
+    end
+
+    return appointments
+end
+
+--- Generate appointments according to membership status.
+-- Used in 'eventual' failover mode.
+-- @function _get_appointments_eventual_mode
+-- @local
+local function _get_appointments_eventual_mode(topology_cfg)
+    checks('table')
+    local replicasets = assert(topology_cfg.replicasets)
+
+    local appointments = {}
+
+    for replicaset_uuid, _ in pairs(replicasets) do
         local leaders = topology.get_leaders_order(
             topology_cfg, replicaset_uuid
         )
@@ -75,43 +102,76 @@ local function _get_health_map(topology_cfg, mode)
                 member.payload.state == 'ConfiguringRoles' or
                 member.payload.state == 'RolesConfigured'
             ) then
-                if ret.active_leaders[replicaset_uuid] == nil
-                and mode == 'eventual'
-                then
-                    ret.active_leaders[replicaset_uuid] = instance_uuid
-                end
-                ret.potential_leaders[instance_uuid] = true
-            else
-                ret.potential_leaders[instance_uuid] = false
+                appointments[replicaset_uuid] = instance_uuid
+                break
             end
         end
 
-        if ret.active_leaders[replicaset_uuid] == nil then
-            ret.active_leaders[replicaset_uuid] = leaders[1]
+        if appointments[replicaset_uuid] == nil then
+            appointments[replicaset_uuid] = leaders[1]
         end
     end
 
-    return ret
+    return appointments
 end
 
-local function refresh_cache()
-    local topology_cfg = vars.clusterwide_config:get_readonly('topology')
-    local health_map = _get_health_map(topology_cfg, vars.mode)
+--- Get appointments from external storage.
+-- Used in 'stateful' failover mode.
+-- @function _get_appointments_stateful_mode
+-- @local
+local function _get_appointments_stateful_mode(conn, timeout)
+    checks('table', 'number')
+    local appointments, err = errors.netbox_call(
+        -- Server will answer in `timeout` seconds (maybe)
+        conn, 'longpoll', {timeout},
+        -- But if it doesn't, we give him another spare second.
+        {timeout = timeout + vars.options.NETBOX_CALL_TIMEOUT}
+    )
 
-    local leader_uuid = health_map.active_leaders[box.info.cluster.uuid]
-    local replicasets = topology_cfg.replicasets
-    local all_rw = replicasets[box.info.cluster.uuid].all_rw
-
-    vars.cache.active_leaders = health_map.active_leaders
-    vars.cache.is_leader = box.info.uuid == leader_uuid
-    vars.cache.is_rw = vars.cache.is_leader or all_rw
-
-    if utils.deepcmp(health_map, vars.cache.health_map) then
-        return false
+    if appointments == nil then
+        return nil, err
     end
-    vars.cache.health_map = health_map
 
-    return true
+    return appointments
+end
+
+--- Accept new appointments.
+--
+-- Get appointments wherever they come from and put them into cache.
+--
+-- @function accept_appointments
+-- @local
+-- @tparam {[string]=string} replicaset_uuid to leader_uuid map
+-- @treturn boolean Whether leadership map has changed
+local function accept_appointments(appointments)
+    checks('table')
+    local topology_cfg = vars.clusterwide_config:get_readonly('topology')
+    local replicasets = assert(topology_cfg.replicasets)
+
+    local old_leaders = table.copy(vars.cache.active_leaders)
+
+    -- Merge new appointments into cache
+    for replicaset_uuid, leader_uuid in pairs(appointments) do
+        vars.cache.active_leaders[replicaset_uuid] = leader_uuid
+    end
+
+    -- Remove replicasets that aren't listed in topology
+    for replicaset_uuid, _ in pairs(vars.cache.active_leaders) do
+        if replicasets[replicaset_uuid] == nil then
+            vars.cache.active_leaders[replicaset_uuid] = nil
+        end
+    end
+
+    -- Constitute oneself
+    if vars.cache.active_leaders[box.info.cluster.uuid] == box.info.uuid then
+        vars.cache.is_leader = true
+        vars.cache.is_rw = true
+    else
+        vars.cache.is_leader = false
+        vars.cache.is_rw = replicasets[box.info.cluster.uuid].all_rw
+    end
+
+    return not utils.deepcmp(old_leaders, vars.cache.active_leaders)
 end
 
 local function apply_config(mod)
@@ -141,25 +201,32 @@ local function apply_config(mod)
     )
 end
 
-local function failover_loop(notification)
+--- Repeatedly fetch new appointments and reconfigure roles.
+--
+-- @function failover_loop
+-- @local
+local function failover_loop(args)
+    checks({
+        get_appointments = 'function',
+    })
     local confapplier = require('cartridge.confapplier')
     local all_roles = require('cartridge.roles').get_all_roles()
 
     ::start_over::
 
-    if vars.mode == 'disabled' then
-        refresh_cache()
-        notification:wait()
-        goto start_over
-    elseif vars.mode == 'eventual' then
-        if not refresh_cache() then
-            -- Nothing changed.
-            -- Wait for the next event.
-            notification:wait()
+    while pcall(fiber.testcancel) do
+        local appointments, err = FailoverError:pcall(args.get_appointments)
+        if appointments == nil then
+            log.warn('%s', err.err)
             goto start_over
         end
 
-        -- The event may arrive during two-pahse commit is in progress.
+        if not accept_appointments(appointments) then
+            -- nothing changed
+            goto start_over
+        end
+
+        -- The event may arrive during two-phase commit is in progress.
         -- We should wait for the appropriate state.
         local state = confapplier.wish_state('RolesConfigured', math.huge)
         if state ~= 'RolesConfigured' then
@@ -167,10 +234,10 @@ local function failover_loop(notification)
             goto start_over
         end
 
+        log.info('Failover triggered')
         confapplier.set_state('ConfiguringRoles')
-        local ok, err = FailoverError:pcall(function()
-            log.info('Failover triggered')
 
+        local ok, err = FailoverError:pcall(function()
             box.cfg({
                 read_only = not vars.cache.is_rw,
             })
@@ -186,47 +253,87 @@ local function failover_loop(notification)
 
             return true
         end)
+
         if ok then
             log.info('Failover step finished')
         else
             log.warn('Failover step failed: %s', err)
         end
         confapplier.set_state('RolesConfigured')
-
-        goto start_over
     end
 end
+
+------------------------------------------------------------------------
 
 --- Initialize the failover module.
 -- @function cfg
 -- @local
 local function cfg(clusterwide_config)
     checks('ClusterwideConfig')
-    local topology_cfg = clusterwide_config:get_readonly('topology')
-    assert(topology_cfg ~= nil)
 
-    local failover_cfg = topology.get_failover_params(topology_cfg)
-    local new_mode = failover_cfg.mode
-    if vars.mode ~= new_mode then
-        vars.notification:signal()
-        log.info('Failover mode set to %q', new_mode)
+    if vars.failover_fiber ~= nil then
+        vars.failover_fiber:cancel()
+        vars.failover_fiber = nil
     end
 
     vars.clusterwide_config = clusterwide_config
-    vars.mode = new_mode
+    local topology_cfg = clusterwide_config:get_readonly('topology')
+    local failover_cfg = topology.get_failover_params(topology_cfg)
+    local first_appointments
 
+    if failover_cfg.mode == 'disabled' then
+        log.info('Failover disabled')
+        first_appointments = _get_appointments_disabled_mode(topology_cfg)
 
-    if vars.failover_fiber == nil
-    or vars.failover_fiber:status() == 'dead'
-    then
-        vars.failover_fiber = fiber.new(failover_loop, vars.notification)
-        vars.failover_fiber:name('cartridge.failover')
+    elseif failover_cfg.mode == 'eventual' then
+        log.info('Eventual failover enabled')
+        first_appointments = _get_appointments_eventual_mode(topology_cfg)
+
+        vars.failover_fiber = fiber.new(failover_loop, {
+            get_appointments = function()
+                vars.membership_notification:wait()
+                return _get_appointments_eventual_mode(topology_cfg)
+            end,
+        })
+        vars.failover_fiber:name('cartridge.eventual-failover')
+
+    elseif failover_cfg.mode == 'stateful' then
+        local conn, err = NetboxConnectError:pcall(
+            netbox.connect, assert(failover_cfg.storage_uri), {
+            wait_connected = false,
+            reconnect_after = 1.0,
+        })
+
+        if conn == nil then
+            log.warn('Stateful failover not enabled: %s', err)
+        else
+            log.info(
+                'Stateful failover enabled with external storage at %s',
+                uri.format(uri.parse(failover_cfg.storage_uri))
+            )
+        end
+
+        -- WARNING: network yields
+        first_appointments = _get_appointments_stateful_mode(conn, 0)
+        if first_appointments == nil then
+            first_appointments = {}
+        end
+
+        vars.failover_fiber = fiber.new(failover_loop, {
+            get_appointments = function()
+                return _get_appointments_stateful_mode(conn,
+                    vars.options.LONGPOLL_TIMEOUT
+                )
+            end,
+        })
+        vars.failover_fiber:name('cartridge.stateful-failover')
     end
 
-    refresh_cache()
+    accept_appointments(first_appointments)
     box.cfg({
         read_only = not vars.cache.is_rw,
     })
+
     return true
 end
 
@@ -235,32 +342,27 @@ end
 -- @local
 -- @return {[replicaset_uuid] = instance_uuid,...}
 local function get_active_leaders()
-    if vars.cache.active_leaders ~= nil then
-        return vars.cache.active_leaders
-    end
+    return vars.cache.active_leaders
+end
+--- Check current instance leadership.
+-- @function is_leader
+-- @local
+-- @treturn boolean true / false
+local function is_leader()
+    return vars.cache.is_leader
+end
 
-    local confapplier = require('cartridge.confapplier')
-    local topology_cfg = confapplier.get_readonly('topology')
-    if topology_cfg == nil then
-        return {}
-    end
-    local health_map = _get_health_map(topology_cfg, 'disabled')
-    return health_map.active_leaders
+--- Check current instance writability.
+-- @function is_rw
+-- @local
+-- @treturn boolean true / false
+local function is_rw()
+    return vars.cache.is_rw
 end
 
 return {
     cfg = cfg,
     get_active_leaders = get_active_leaders,
-
-    --- Check current instance leadership.
-    -- @function is_leader
-    -- @local
-    -- @treturn boolean true / false
-    is_leader = function() return vars.cache.is_leader end,
-
-    --- Check current instance writability.
-    -- @function is_rw
-    -- @local
-    -- @treturn boolean true / false
-    is_rw = function() return vars.cache.is_rw end,
+    is_leader = is_leader,
+    is_rw = is_rw,
 }

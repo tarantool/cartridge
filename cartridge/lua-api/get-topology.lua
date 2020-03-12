@@ -123,6 +123,7 @@ local function get_topology()
     local replicasets = {}
     local known_roles = roles.get_known_roles()
     local leaders_order = {}
+    local failover_cfg = topology.get_failover_params(topology_cfg)
 
     --- Replicaset general information.
     -- @tfield
@@ -162,8 +163,18 @@ local function get_topology()
             uuid = replicaset_uuid,
             roles = {},
             status = 'healthy',
-            master = nil,
-            active_master = nil,
+            master = {
+                uri = 'void',
+                uuid = 'void',
+                status = 'void',
+                message = 'void',
+            },
+            active_master = {
+                uri = 'void',
+                uuid = 'void',
+                status = 'void',
+                message = 'void',
+            },
             weight = nil,
             vshard_group = replicaset.vshard_group,
             servers = {},
@@ -197,9 +208,14 @@ local function get_topology()
         srv.replicaset = replicasets[server.replicaset_uuid]
 
         if leaders_order[server.replicaset_uuid][1] == instance_uuid then
-            srv.replicaset.master = srv
+            if failover_cfg.mode ~= 'stateful' then
+                srv.replicaset.master = srv
+            end
         end
         if active_leaders[server.replicaset_uuid] == instance_uuid then
+            if failover_cfg.mode == 'stateful' then
+                srv.replicaset.master = srv
+            end
             srv.replicaset.active_master = srv
         end
         if srv.status ~= 'healthy' then

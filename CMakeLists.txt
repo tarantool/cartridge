@@ -166,6 +166,11 @@ install(
 )
 
 install(
+  FILES ${CMAKE_CURRENT_SOURCE_DIR}/kingdom.lua
+  DESTINATION ${TARANTOOL_INSTALL_BINDIR}
+)
+
+install(
   FILES
     ${CMAKE_CURRENT_BINARY_DIR}/VERSION.lua
     ${CMAKE_CURRENT_BINARY_DIR}/front-bundle.lua
