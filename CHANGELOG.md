@@ -60,6 +60,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   such fails result in staying in `ConnectingFullmesh` state until it
   succeeds.
 
+### Deprecated
+
+Lua API:
+
+- `cartridge.admin_get_failover` -> `cartridge.failover_get_params`
+- `cartridge.admin_enable_failover` -> `cartridge.failover_set_params`
+- `cartridge.admin_disable_failover`
+
+GraphQL API:
+
+- `query {cluster {failover} }` -> `query {cluster {failover_params} }`
+- `mutation {cluster {failover()} }` -> `mutation {cluster {failover_params()} }`
+
 ### Fixed
 
 - DDL failure if spaces is `null` in input schema.

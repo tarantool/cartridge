@@ -133,6 +133,41 @@ local function set_failover(enabled)
     return response.data.cluster.failover
 end
 
+local function get_failover_params()
+    return cluster.main_server:graphql({query = [[
+        {
+            cluster { failover_params {mode coordinator_uri}}
+        }
+    ]]}).data.cluster.failover_params
+end
+
+local function set_failover_params(vars)
+    local response = cluster.main_server:graphql({
+        query = [[
+            mutation(
+                $mode: String!
+                $coordinator_uri: String
+            ) {
+                cluster {
+                    failover_params(
+                        mode: $mode
+                        coordinator_uri: $coordinator_uri
+                    ) {
+                        mode
+                        coordinator_uri
+                    }
+                }
+            }
+        ]],
+        variables = vars,
+        raise = false,
+    })
+    if response.errors then
+        error(response.errors[1].message, 2)
+    end
+    return response.data.cluster.failover_params
+end
+
 local function check_active_master(expected_uuid)
     -- Make sure active master uuid equals to the given uuid
     local response = cluster.main_server.net_box:eval([[
@@ -206,21 +241,89 @@ g.test_api_failover = function()
             'package.loaded.cartridge.' .. name, {...}
         )
     end
+
+    -- Deprecated API tests
+    -----------------------
+
+    -- Set with deprecated GraphQL API
     t.assert_equals(set_failover(false), false)
     t.assert_equals(get_failover(), false)
+    t.assert_covers(get_failover_params(), {mode = 'disabled'})
     t.assert_equals(_call('admin_get_failover'), false)
+    t.assert_equals(_call('failover_get_params'), {mode = 'disabled'})
 
+    -- Set with deprecated GraphQL API
     t.assert_equals(set_failover(true), true)
     t.assert_equals(get_failover(), true)
+    t.assert_covers(get_failover_params(), {mode = 'eventual'})
     t.assert_equals(_call('admin_get_failover'), true)
+    t.assert_equals(_call('failover_get_params'), {mode = 'eventual'})
 
+    -- Set with deprecated Lua API
     t.assert_equals(_call('admin_disable_failover'), false)
     t.assert_equals(_call('admin_get_failover'), false)
+    t.assert_equals(_call('failover_get_params'), {mode = 'disabled'})
     t.assert_equals(get_failover(), false)
+    t.assert_covers(get_failover_params(), {mode = 'disabled'})
 
+    -- Set with deprecated Lua API
     t.assert_equals(_call('admin_enable_failover'), true)
     t.assert_equals(_call('admin_get_failover'), true)
+    t.assert_equals(_call('failover_get_params'), {mode = 'eventual'})
     t.assert_equals(get_failover(), true)
+    t.assert_covers(get_failover_params(), {mode = 'eventual'})
+
+    -- New failover API tests
+    -------------------------
+
+    -- Set with new GraphQL API
+    t.assert_covers(set_failover_params({mode = 'disabled'}), {mode = 'disabled'})
+    t.assert_covers(get_failover_params(), {mode = 'disabled'})
+    t.assert_equals(get_failover(), false)
+    t.assert_equals(_call('admin_get_failover'), false)
+    t.assert_equals(_call('failover_get_params'), {mode = 'disabled'})
+
+    -- Set with new GraphQL API
+    t.assert_covers(set_failover_params({mode = 'eventual'}), {mode = 'eventual'})
+    t.assert_covers(get_failover_params(), {mode = 'eventual'})
+    t.assert_equals(get_failover(), true)
+    t.assert_equals(_call('admin_get_failover'), true)
+    t.assert_equals(_call('failover_get_params'), {mode = 'eventual'})
+
+    -- Set with new GraphQL API
+    t.assert_error_msg_equals(
+        'topology_new.failover missing coordinator_uri for mode "stateful"',
+        set_failover_params, {mode = 'stateful'}
+    )
+    t.assert_error_msg_equals(
+        'topology_new.failover.coordinator_uri invalid URI "!@#$"',
+        set_failover_params, {coordinator_uri = '!@#$'}
+    )
+    t.assert_equals(
+        set_failover_params({coordinator_uri = 'kingdom.com:8'}),
+        {mode = 'eventual', coordinator_uri = 'kingdom.com:8'}
+    )
+    t.assert_equals(
+        set_failover_params({mode = 'stateful'}),
+        {mode = 'stateful', coordinator_uri = 'kingdom.com:8'}
+    )
+
+    t.assert_equals(
+        get_failover_params(),
+        {mode = 'stateful', coordinator_uri = 'kingdom.com:8'}
+    )
+    t.assert_equals(
+        _call('failover_get_params'),
+        {mode = 'stateful', coordinator_uri = 'kingdom.com:8'}
+    )
+    t.assert_equals(_call('admin_get_failover'), true)
+
+    -- Set with new Lua API
+    t.assert_equals(_call('failover_set_params', {mode = 'disabled'}), true)
+    t.assert_equals(
+        get_failover_params(),
+        {mode = 'disabled', coordinator_uri = 'kingdom.com:8'}
+    )
 end
 
 g.test_switchover = function()

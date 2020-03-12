@@ -129,9 +129,68 @@ local function test_all()
 auth:
 ...]])
 
-    check_config('topology_new.failover must be boolean, got string',
+    check_config('topology_new.failover must be a table, got string',
 [[---
 failover:
+...]])
+
+    check_config('topology_new.failover.mode must be string, got nil',
+[[---
+failover: {}
+...]])
+
+    check_config('topology_new.failover.mode must be string, got number',
+[[---
+failover:
+  mode: 7
+...]])
+
+    check_config('topology_new.failover.mode "one" is unknown',
+[[---
+failover:
+  mode: one
+...]])
+
+    check_config('topology_new.failover missing coordinator_uri for mode "stateful"',
+[[---
+failover:
+  mode: stateful
+  coordinator_uri: null
+...]])
+
+    check_config('topology_new.failover.coordinator_uri must be a string, got boolean',
+[[---
+failover:
+  mode: disabled
+  coordinator_uri: false
+...]])
+
+    check_config('topology_new.failover.coordinator_uri invalid URI ":-0"',
+[[---
+failover:
+  mode: stateful
+  coordinator_uri: ":-0"
+...]])
+
+    check_config('topology_new.failover.coordinator_uri invalid URI "localhost" (missing port)',
+[[---
+failover:
+  mode: stateful
+  coordinator_uri: "localhost"
+...]])
+
+    check_config('topology_new.failover has unknown parameter "enabled"',
+[[---
+failover:
+  mode: eventual
+  enabled: true
+...]])
+
+    check_config('topology_new.failover has unknown parameter "unknown"',
+[[---
+failover:
+  mode: eventual
+  unknown: yes
 ...]])
 
     check_config('topology_new has unknown parameter "unknown"',
@@ -647,7 +706,8 @@ replicasets:
     check_config(true,
 [[---
 auth: false
-failover: false
+failover:
+  mode: eventual
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000001:
     replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
@@ -663,6 +723,9 @@ replicasets:
     check_config(true,
 [[---
 auth: true
+failover:
+  mode: stateful
+  coordinator_uri: kingdom.com:4401
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000001:
     replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
