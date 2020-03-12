@@ -1,21 +1,28 @@
 //Steps:
 //1.Failover
-//      Open probe dialog
 //      Failover turn on
 //      Failover turn off
 
 describe('Failover', () => {
   it('Failover turn on', () => {
-    cy.visit(Cypress.config('baseUrl'));
-    cy.get('.meta-test__FailoverSwitcherBtn').contains('Failover').click();//component:ClusterButtonsPanel
-    cy.get('.meta-test__FailoverControlBtn').click();//component: FailoverButton
-    cy.get('#root').contains('Failover change is OK...');//add to frontend-core classname for notification
+    cy.visit(Cypress.config('baseUrl') + '/admin/cluster/dashboard');
+    cy.get('.meta-test__FailoverButton').should('be.visible');
+    cy.get('.meta-test__FailoverButton').get(':checkbox').should('not.be.checked');
+    cy.get('.meta-test__FailoverButton').click();
+    cy.get('.meta-test__FailoverModal').contains('Failover disabled').should('exist');
+    cy.get('.meta-test__SubmitButton').contains('Enable').click();
+    cy.get('#root').contains('Failover change is OK...').click();
+    cy.get('.meta-test__FailoverButton').get(':checkbox').should('be.checked');
   })
 
   it('Failover turn off', () => {
-    cy.get('.meta-test__FailoverSwitcherBtn').contains('Failover').click();//component:ClusterButtonsPanel
-    cy.get('.meta-test__FailoverControlBtn').click();//component: FailoverButton
-    cy.get('#root').contains('Failover change is OK...');//add to frontend-core classname for notification
+    cy.visit(Cypress.config('baseUrl') + '/admin/cluster/dashboard');
+    cy.get('.meta-test__FailoverButton').should('be.visible');
+    cy.get('.meta-test__FailoverButton').get(':checkbox').should('be.checked');
+    cy.get('.meta-test__FailoverButton').click();
+    cy.get('.meta-test__FailoverModal').contains('Failover enabled').should('exist');
+    cy.get('.meta-test__SubmitButton').contains('Disable').click();
+    cy.get('#root').contains('Failover change is OK...').click();
+    cy.get('.meta-test__FailoverButton').get(':checkbox').should('not.be.checked');
   })
-
 });

@@ -201,10 +201,26 @@ g.test_api_master = function()
 end
 
 g.test_api_failover = function()
-    t.assert_equals(false, set_failover(false))
-    t.assert_equals(false, get_failover())
-    t.assert_equals(true, set_failover(true))
-    t.assert_equals(true, get_failover())
+    local function _call(name, ...)
+        return cluster.main_server.net_box:call(
+            'package.loaded.cartridge.' .. name, {...}
+        )
+    end
+    t.assert_equals(set_failover(false), false)
+    t.assert_equals(get_failover(), false)
+    t.assert_equals(_call('admin_get_failover'), false)
+
+    t.assert_equals(set_failover(true), true)
+    t.assert_equals(get_failover(), true)
+    t.assert_equals(_call('admin_get_failover'), true)
+
+    t.assert_equals(_call('admin_disable_failover'), false)
+    t.assert_equals(_call('admin_get_failover'), false)
+    t.assert_equals(get_failover(), false)
+
+    t.assert_equals(_call('admin_enable_failover'), true)
+    t.assert_equals(_call('admin_get_failover'), true)
+    t.assert_equals(get_failover(), true)
 end
 
 g.test_switchover = function()
