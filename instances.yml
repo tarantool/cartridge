@@ -1,3 +1,6 @@
+cartridge:
+    cluster_cookie: ""
+
 cartridge.srv-1:
     workdir: dev/3301
     advertise_uri: localhost:3301

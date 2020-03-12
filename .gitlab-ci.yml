@@ -127,7 +127,6 @@ misc:
   <<: *test-template
   script:
     - luacheck .
-    - ./taptest.lua
     - ./fetch-schema.sh
   artifacts:
     name: "${CI_COMMIT_REF_NAME}.misc"
