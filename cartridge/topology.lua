@@ -22,10 +22,7 @@ vars:new('known_roles', {
 })
 --[[ topology_cfg: {
     auth = false,
-    failover = nil | boolean | {
-        -- enabled = boolean,
-        -- coordinator_uri = nil | 'kingdom.com:4401',
-    },
+    failover = false,
     servers = {
         -- ['instance-uuid-1'] = 'expelled',
         -- ['instance-uuid-2'] = {
@@ -128,37 +125,9 @@ local function validate_schema(field, topology)
     )
 
     e_config:assert(
-        topology.failover == nil or
-        type(topology.failover) == 'boolean' or
-        type(topology.failover) == 'table',
-        '%s.failover must be a table, got %s', field, type(topology.failover)
+        topology.failover == nil or type(topology.failover) == 'boolean',
+        '%s.failover must be boolean, got %s', field, type(topology.failover)
     )
-
-    if type(topology.failover) == 'table' then
-        e_config:assert(
-            type(topology.failover.enabled) == 'boolean',
-            '%s.failover.enabled must be boolean, got %s',
-            field, type(topology.failover.enabled)
-        )
-
-        e_config:assert(
-            topology.failover.coordinator_uri == nil or
-            type(topology.failover.coordinator_uri) == 'string',
-            '%s.failover.coordinator_uri must be a string, got %s',
-            field, type(topology.failover.coordinator_uri)
-        )
-
-        local known_keys = {
-            ['enabled'] = true,
-            ['coordinator_uri'] = true,
-        }
-        for k, _ in pairs(topology.failover) do
-            e_config:assert(
-                known_keys[k],
-                '%s.failover has unknown parameter %q', field, k
-            )
-        end
-    end
 
     e_config:assert(
         type(servers) == 'table',

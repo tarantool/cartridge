@@ -31,7 +31,7 @@ export const getClusterQuery = gql`
         uuid: uuid
         demo_uri
       }
-      failover { enabled }
+      failover
       knownRoles: known_roles {
         name
         dependencies
@@ -58,7 +58,7 @@ export const getClusterQuery = gql`
 `;
 
 export const boxInfoQuery = gql`
-  query boxInfo ($uuid: String){
+  query boxInfo ($uuid: String){ 
     servers(uuid: $uuid) {
       alias
       status
@@ -218,7 +218,7 @@ export const instanceDataQuery = gql`
         }
       }
     }
-
+    
     descriptionCartridge: __type(name: "ServerInfoCartridge") {
       fields {
         name
@@ -402,9 +402,7 @@ mutation changeFailover (
   cluster {
     failover(
       enabled: $enabled
-    ) {
-      enabled
-    }
+    )
   }
 }
 `;
@@ -512,7 +510,7 @@ export const setFilesMutation = gql`
         filename
         content
       }
-    }
+    }  
   }
 `;
 
