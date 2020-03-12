@@ -1,7 +1,7 @@
 describe('Server details - dead server', () => {
   it('Server details - dead server', () => {
-    cy.visit(Cypress.config('baseUrl'));
     cy.exec('kill -SIGSTOP $(lsof -sTCP:LISTEN -i :8082 -t)', { failOnNonZeroExit: true });
+    cy.visit(Cypress.config('baseUrl'));
     cy.get('.ServerLabelsHighlightingArea').contains(':13302').closest('li')
       .should('contain', 'Server status is "dead"')
       .find('.meta-test__ReplicasetServerListItem__dropdownBtn').eq(0).click();
