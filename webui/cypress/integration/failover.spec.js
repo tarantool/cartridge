@@ -1,3 +1,5 @@
+const testPort = `:13302`;
+
 describe('Failover', () => {
 
   before(function() {
@@ -59,12 +61,12 @@ describe('Failover', () => {
     cy.get('.meta-test__stateboardURI input').should('be.enabled');
     cy.get('.meta-test__stateboardPassword input').should('be.enabled');
 
-    cy.get('.meta-test__stateboardURI input').type('{selectall}{backspace}localhost:13303');
+    cy.get('.meta-test__stateboardURI input').type('{selectall}{backspace}localhost' + testPort);
 
     cy.get('.meta-test__SubmitButton').click();
     cy.get('span:contains(Failover mode) + * + span:contains(stateful)').click();
     cy.get('.meta-test__FailoverButton').contains('Failover: stateful');
-  });
+  })
 
   it('Check issues', () => {
     cy.reload();
@@ -75,6 +77,20 @@ describe('Failover', () => {
     cy.get('.meta-test__ClusterIssuesModal').contains('warning');
     cy.get('.meta-test__ClusterIssuesModal button[type="button"]').click();
     cy.get('.meta-test__ClusterIssuesModal').should('not.exist');
+
+    cy.exec('kill -SIGSTOP $(lsof -sTCP:LISTEN -i :8082 -t)', { failOnNonZeroExit: true });
+    cy.reload();
+    cy.get('.meta-test__ClusterIssuesButton').click();
+    cy.get('.meta-test__ClusterIssuesModal')
+      .contains('Replication from localhost' + testPort);
+    cy.get('.meta-test__closeClusterIssuesModal').click();
+
+    cy.exec('kill -SIGCONT $(lsof -sTCP:LISTEN -i :8082 -t)', { failOnNonZeroExit: true });
+    cy.reload();
+    cy.get('.meta-test__ClusterIssuesButton').click();
+    cy.get('.meta-test__ClusterIssuesModal')
+      .contains('Replication from localhost' + testPort).should('not.exist');
+    cy.get('.meta-test__closeClusterIssuesModal').click();
   })
 
 });
