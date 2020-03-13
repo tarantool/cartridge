@@ -6,6 +6,7 @@
 describe('Failover', () => {
   it('Failover turn on', () => {
     cy.visit(Cypress.config('baseUrl') + '/admin/cluster/dashboard');
+    cy.contains('Replica set');
     cy.get('.meta-test__FailoverButton').should('be.visible');
     cy.get('.meta-test__FailoverButton').get(':checkbox').should('not.be.checked');
     cy.get('.meta-test__FailoverButton').click();
@@ -17,6 +18,7 @@ describe('Failover', () => {
 
   it('Failover turn off', () => {
     cy.visit(Cypress.config('baseUrl') + '/admin/cluster/dashboard');
+    cy.contains('Replica set');
     cy.get('.meta-test__FailoverButton').should('be.visible');
     cy.get('.meta-test__FailoverButton').get(':checkbox').should('be.checked');
     cy.get('.meta-test__FailoverButton').click();

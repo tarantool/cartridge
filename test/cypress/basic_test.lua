@@ -10,7 +10,9 @@ g.setup = function()
         server_command = helpers.entrypoint('srv_basic'),
         use_vshard = true,
         cookie = 'test-cluster-cookie',
-
+        env = {
+            TARANTOOL_SWIM_SUSPECT_TIMEOUT_SECONDS = 0,
+        },
         replicasets = {
             {
                 alias = 'router1-do-not-use-me',
