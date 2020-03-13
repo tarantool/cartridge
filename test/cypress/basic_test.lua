@@ -58,7 +58,8 @@ g.setup = function()
         advertise_port = 13310,
         env = {
             TARANTOOL_WEBUI_BLACKLIST = '/cluster/configuration',
-        }
+            TARANTOOL_SWIM_SUSPECT_TIMEOUT_SECONDS = 1,
+        },
     })
 
     g.cluster:start()
