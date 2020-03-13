@@ -3,11 +3,13 @@ import { Provider } from 'react-redux';
 import { Router, Switch, Route } from 'react-router-dom';
 import App from 'src/app';
 import { isNetworkError } from 'src/misc/isNetworkError';
+import { AUTH_ACCESS_DENIED } from 'src/store/actionTypes';
 import Users from 'src/pages/Users';
 import HeaderAuthControl from 'src/components/HeaderAuthControl';
 import NetworkErrorSplash from 'src/components/NetworkErrorSplash';
 import LogInForm from 'src/components/LogInForm';
 import store from 'src/store/instance'
+import { isGraphqlAccessDeniedError } from 'src/api/graphql';
 import {
   appDidMount,
   setConnectionState
@@ -102,8 +104,20 @@ function graphQLConnectionErrorHandler(response, next) {
   return next(response);
 }
 
+function graphQLAuthErrorHandler(response, next) {
+  if (
+    (response.networkError && response.networkError.statusCode === 401)
+    || isGraphqlAccessDeniedError(response)
+  ) {
+    store.dispatch({ type: AUTH_ACCESS_DENIED })
+  }
+
+  return next(response);
+}
+
 tarantool_enterprise_core.apiMethods.registerApolloHandler('afterware', graphQLConnectionErrorHandler);
 tarantool_enterprise_core.apiMethods.registerApolloHandler('onError', graphQLConnectionErrorHandler);
+tarantool_enterprise_core.apiMethods.registerApolloHandler('onError', graphQLAuthErrorHandler);
 
 function axiosConnectionErrorHandler(response, next) {
   const { app: { connectionAlive } } = store.getState();
@@ -119,5 +133,14 @@ function axiosConnectionErrorHandler(response, next) {
   return next(response);
 }
 
+function axiosAuthErrorHandler(error, next) {
+  if (error.response && error.response.status === 401) {
+    store.dispatch({ type: AUTH_ACCESS_DENIED })
+  }
+
+  return next(error);
+}
+
+tarantool_enterprise_core.apiMethods.registerAxiosHandler('responseError', axiosAuthErrorHandler);
 tarantool_enterprise_core.apiMethods.registerAxiosHandler('responseError', axiosConnectionErrorHandler);
 tarantool_enterprise_core.apiMethods.registerAxiosHandler('response', axiosConnectionErrorHandler);
