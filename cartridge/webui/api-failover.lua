@@ -47,7 +47,7 @@ local function init(graphql)
         prefix = 'cluster',
         name = 'failover',
         doc = 'Get current failover state.'
-            .. ' (Deprecated since v2.0.1-??)',
+            .. ' (Deprecated since v2.0.1-95)',
         args = {},
         kind = gql_types.boolean.nonNull,
         callback = module_name .. '.get_failover_enabled',
@@ -58,7 +58,7 @@ local function init(graphql)
         name = 'failover',
         doc = 'Enable or disable automatic failover. '
             .. 'Returns new state.'
-            .. ' (Deprecated since v2.0.1-??)',
+            .. ' (Deprecated since v2.0.1-95)',
         args = {
             enabled = gql_types.boolean.nonNull,
         },

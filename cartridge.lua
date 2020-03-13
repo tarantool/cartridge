@@ -663,7 +663,7 @@ return {
     admin_get_failover = lua_api_failover.get_failover_enabled,
 
     --- Enable failover.
-    -- (**Deprecated** since v2.0.1-?? in favor of
+    -- (**Deprecated** since v2.0.1-95 in favor of
     -- `cartridge.failover_set_params`)
     -- @function admin_enable_failover
     admin_enable_failover = function()
@@ -671,7 +671,7 @@ return {
     end,
 
     --- Disable failover.
-    -- (**Deprecated** since v2.0.1-?? in favor of
+    -- (**Deprecated** since v2.0.1-95 in favor of
     -- `cartridge.failover_set_params`)
     -- @function admin_disable_failover
     admin_disable_failover = function()

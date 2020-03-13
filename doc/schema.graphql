@@ -9,7 +9,7 @@ type Apicluster {
   """Clusterwide DDL schema"""
   schema: DDLSchema!
 
-  """Get current failover state. (Deprecated since v2.0.1-??)"""
+  """Get current failover state. (Deprecated since v2.0.1-95)"""
   failover: Boolean!
 
   """Get automatic failover configuration."""
@@ -163,7 +163,7 @@ type MutationApicluster {
   schema(as_yaml: String!): DDLSchema!
 
   """
-  Enable or disable automatic failover. Returns new state. (Deprecated since v2.0.1-??)
+  Enable or disable automatic failover. Returns new state. (Deprecated since v2.0.1-95)
   """
   failover(enabled: Boolean!): Boolean!
 
