@@ -104,7 +104,7 @@ function g.test_uninitialized()
     t.assert_equals(resp['data']['cluster']['failover'], false)
 
     t.assert_error_msg_contains(
-        'Not bootstrapped yet',
+        "Cluster isn't bootstrapped yet",
         function()
             return g.server:graphql({
                 query = [[

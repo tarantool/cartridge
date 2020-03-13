@@ -1,5 +1,5 @@
 # source: http://localhost:8081/admin/api
-# timestamp: Thu Mar 12 2020 15:50:58 GMT+0300 (Moscow Standard Time)
+# timestamp: Thu Mar 12 2020 18:09:10 GMT+0300 (Moscow Standard Time)
 
 """Cluster management"""
 type Apicluster {
@@ -9,8 +9,11 @@ type Apicluster {
   """Clusterwide DDL schema"""
   schema: DDLSchema!
 
-  """List issues in cluster"""
-  issues: [Issue!]
+  """Get current failover state. (Deprecated since v2.0.1-95)"""
+  failover: Boolean!
+
+  """Get automatic failover configuration."""
+  failover_params: FailoverAPI!
 
   """Virtual buckets count in cluster"""
   vshard_bucket_count: Int!
@@ -18,22 +21,22 @@ type Apicluster {
   """List authorized users"""
   users(username: String): [User!]
 
-  """Get current failover state."""
-  failover: Boolean!
+  """List issues in cluster"""
+  issues: [Issue!]
   auth_params: UserManagementAPI!
 
-  """Whether it is reasonble to call bootstrap_vshard mutation"""
-  can_bootstrap_vshard: Boolean!
+  """Get list of all registered roles and their dependencies."""
+  known_roles: [Role!]!
 
   """List of pages to be hidden in WebUI"""
   webui_blacklist: [String!]
   vshard_groups: [VshardGroup!]!
 
-  """Get list of all registered roles and their dependencies."""
-  known_roles: [Role!]!
-
   """Get list of known vshard storage groups."""
   vshard_known_groups: [String!]!
+
+  """Whether it is reasonble to call bootstrap_vshard mutation"""
+  can_bootstrap_vshard: Boolean!
 
   """Get cluster config sections"""
   config(sections: [String!]): [ConfigSection]!
@@ -94,6 +97,15 @@ type Error {
   message: String!
 }
 
+"""Failover parameters managent"""
+type FailoverAPI {
+  """Supported modes are "disabled", "eventual" and "stateful"."""
+  mode: String!
+
+  """URI of external coordinator."""
+  coordinator_uri: String
+}
+
 type Issue {
   level: String!
   replicaset_uuid: String
@@ -150,31 +162,36 @@ type MutationApicluster {
   """Applies DDL schema on cluster"""
   schema(as_yaml: String!): DDLSchema!
 
-  """Enable or disable automatic failover. Returns new state."""
+  """
+  Enable or disable automatic failover. Returns new state. (Deprecated since v2.0.1-95)
+  """
   failover(enabled: Boolean!): Boolean!
+
+  """Configure automatic failover."""
+  failover_params(mode: String, coordinator_uri: String): FailoverAPI!
 
   """Checks that schema can be applied on cluster"""
   check_schema(as_yaml: String!): DDLCheckResult!
 
-  """Applies updated config on cluster"""
-  config(sections: [ConfigSectionInput]): [ConfigSection]!
+  """Disable listed servers by uuid"""
+  disable_servers(uuids: [String!]): [Server]
   auth_params(cookie_max_age: Long, enabled: Boolean, cookie_renew_age: Long): UserManagementAPI!
-  edit_vshard_options(rebalancer_max_receiving: Int, collect_bucket_garbage_interval: Float, collect_lua_garbage: Boolean, sync_timeout: Float, name: String!, rebalancer_disbalance_threshold: Float): VshardGroup!
-
-  """Create a new user"""
-  add_user(password: String!, username: String!, fullname: String, email: String): User
-
-  """Edit cluster topology"""
-  edit_topology(replicasets: [EditReplicasetInput], servers: [EditServerInput]): EditTopologyResult
-
-  """Remove user"""
-  remove_user(username: String!): User
 
   """Edit an existing user"""
   edit_user(password: String, username: String!, fullname: String, email: String): User
 
-  """Disable listed servers by uuid"""
-  disable_servers(uuids: [String!]): [Server]
+  """Create a new user"""
+  add_user(password: String!, username: String!, fullname: String, email: String): User
+  edit_vshard_options(rebalancer_max_receiving: Int, collect_bucket_garbage_interval: Float, collect_lua_garbage: Boolean, sync_timeout: Float, name: String!, rebalancer_disbalance_threshold: Float): VshardGroup!
+
+  """Remove user"""
+  remove_user(username: String!): User
+
+  """Edit cluster topology"""
+  edit_topology(replicasets: [EditReplicasetInput], servers: [EditServerInput]): EditTopologyResult
+
+  """Applies updated config on cluster"""
+  config(sections: [ConfigSectionInput]): [ConfigSection]!
 }
 
 type Query {

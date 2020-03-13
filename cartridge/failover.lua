@@ -205,7 +205,8 @@ local function cfg(clusterwide_config)
     local topology_cfg = clusterwide_config:get_readonly('topology')
     assert(topology_cfg ~= nil)
 
-    local new_mode = topology_cfg.failover and 'eventual' or 'disabled'
+    local failover_cfg = topology.get_failover_params(topology_cfg)
+    local new_mode = failover_cfg.mode
     if vars.mode ~= new_mode then
         vars.notification:signal()
         log.info('Failover mode set to %q', new_mode)

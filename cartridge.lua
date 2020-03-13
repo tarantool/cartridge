@@ -636,18 +636,43 @@ return {
     -- @function admin_bootstrap_vshard
     admin_bootstrap_vshard = lua_api_vshard.bootstrap_vshard,
 
+
+--- Automatic failover management.
+-- @section failover
+
+    --- .
+    -- @field .
+    -- @refer cartridge.lua-api.failover.FailoverParams
+    -- @table FailoverParams
+
+    --- .
+    -- @refer cartridge.lua-api.failover.get_params
+    -- @function failover_get_params
+    failover_get_params = lua_api_failover.get_params,
+    --- .
+    -- @refer cartridge.lua-api.failover.set_params
+    -- @function failover_set_params
+    failover_set_params = lua_api_failover.set_params,
+
+    -- TODO: will be implemented later
+    -- failover_switch_leader = lua_api_failover.switch_leader,
+
     --- .
     -- @refer cartridge.lua-api.failover.get_failover_enabled
     -- @function admin_get_failover
     admin_get_failover = lua_api_failover.get_failover_enabled,
 
     --- Enable failover.
+    -- (**Deprecated** since v2.0.1-95 in favor of
+    -- `cartridge.failover_set_params`)
     -- @function admin_enable_failover
     admin_enable_failover = function()
         return lua_api_failover.set_failover_enabled(true)
     end,
 
     --- Disable failover.
+    -- (**Deprecated** since v2.0.1-95 in favor of
+    -- `cartridge.failover_set_params`)
     -- @function admin_disable_failover
     admin_disable_failover = function()
         return lua_api_failover.set_failover_enabled(false)

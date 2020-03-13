@@ -7,6 +7,7 @@
 
 local fun = require('fun')
 -- local log = require('log')
+local uri = require('uri')
 local checks = require('checks')
 local errors = require('errors')
 local membership = require('membership')
@@ -22,7 +23,10 @@ vars:new('known_roles', {
 })
 --[[ topology_cfg: {
     auth = false,
-    failover = false,
+    failover = nil | boolean | {
+        -- mode = 'disabled'|'eventual'|'stateful',
+        -- coordinator_uri = nil | 'kingdom.com:4401',
+    },
     servers = {
         -- ['instance-uuid-1'] = 'expelled',
         -- ['instance-uuid-2'] = {
@@ -125,9 +129,66 @@ local function validate_schema(field, topology)
     )
 
     e_config:assert(
-        topology.failover == nil or type(topology.failover) == 'boolean',
-        '%s.failover must be boolean, got %s', field, type(topology.failover)
+        topology.failover == nil or
+        type(topology.failover) == 'boolean' or
+        type(topology.failover) == 'table',
+        '%s.failover must be a table, got %s', field, type(topology.failover)
     )
+
+    if type(topology.failover) == 'table' then
+        e_config:assert(
+            type(topology.failover.mode) == 'string',
+            '%s.failover.mode must be string, got %s',
+            field, type(topology.failover.mode)
+        )
+        e_config:assert(
+            topology.failover.mode == 'disabled' or
+            topology.failover.mode == 'eventual' or
+            topology.failover.mode == 'stateful',
+            '%s.failover.mode %q is unknown',
+            field, topology.failover.mode
+        )
+
+        if topology.failover.mode == 'stateful' then
+            e_config:assert(
+                topology.failover.coordinator_uri ~= nil,
+                '%s.failover missing coordinator_uri for mode "stateful"',
+                field
+            )
+        end
+
+        if topology.failover.coordinator_uri ~= nil then
+            e_config:assert(
+                type(topology.failover.coordinator_uri) == 'string',
+                '%s.failover.coordinator_uri must be a string, got %s',
+                field, type(topology.failover.coordinator_uri)
+            )
+
+            local parts = uri.parse(topology.failover.coordinator_uri)
+            e_config:assert(
+                type(parts) == 'table',
+                '%s.failover.coordinator_uri invalid URI %q',
+                field, topology.failover.coordinator_uri
+            )
+
+            e_config:assert(
+                parts.service ~= nil,
+                '%s.failover.coordinator_uri invalid URI %q (missing port)',
+                field, topology.failover.coordinator_uri
+            )
+        end
+
+        local known_keys = {
+            ['mode'] = true,
+            ['coordinator_uri'] = true,
+        }
+        for k, _ in pairs(topology.failover) do
+            e_config:assert(
+                known_keys[k],
+                '%s.failover has unknown parameter %q', field, k
+            )
+        end
+    end
 
     e_config:assert(
         type(servers) == 'table',
@@ -450,6 +511,35 @@ local function validate(topology_new, topology_old)
     return true
 end
 
+local function get_failover_params(topology_cfg)
+    checks('?table')
+    if topology_cfg == nil then
+        return {
+            mode = 'disabled',
+        }
+    elseif topology_cfg.__type == 'ClusterwideConfig' then
+        local err = "Bad argument #1 to get_failover_params" ..
+            " (table expected, got ClusterwideConfig)"
+        error(err, 2)
+    elseif topology_cfg.failover == nil then
+        return {
+            mode = 'disabled',
+        }
+    elseif type(topology_cfg.failover) == 'boolean' then
+        return {
+            mode = topology_cfg.failover and 'eventual' or 'disabled'
+        }
+    elseif type(topology_cfg.failover) == 'table' then
+        return topology_cfg.failover
+    else
+        local err = string.format(
+            'assertion failed! topology.failover = %s (%s)',
+            topology_cfg.failover, type(topology_cfg.failover)
+        )
+        error(err)
+    end
+end
+
 --- Find the server in topology config.
 --
 -- (**Added** in v1.2.0-17)
@@ -590,6 +680,7 @@ return {
     not_expelled = not_expelled,
     not_disabled = not_disabled,
 
+    get_failover_params = get_failover_params,
     get_leaders_order = get_leaders_order,
     cluster_is_healthy = cluster_is_healthy,
     probe_missing_members = probe_missing_members,
