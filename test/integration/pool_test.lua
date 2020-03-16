@@ -33,6 +33,17 @@ g.before_all = function()
         },
     })
 
+    g.server = helpers.Server:new({
+        workdir = fio.pathjoin(g.cluster.datadir, 'victim'),
+        alias = 'victim',
+        command = helpers.entrypoint('srv_basic'),
+        replicaset_uuid = helpers.uuid('b'),
+        instance_uuid = helpers.uuid('b', 'b', 1),
+        http_port = 8082,
+        cluster_cookie = g.cluster.cookie,
+        advertise_port = 13315,
+    })
+
     g.cluster:start()
     g.cluster.main_server.net_box:eval([[
         local remote_control = require('cartridge.remote-control')
@@ -52,12 +63,18 @@ g.before_all = function()
         })
     ]])
 
+    g.server:start()
+    t.helpers.retrying({}, function()
+        g.server:graphql({query = '{}'})
+    end)
+
     cluster_cookie.init(g.cluster.datadir)
     cluster_cookie.set_cookie(g.cluster.cookie)
 end
 
 g.after_all = function()
     g.cluster:stop()
+    g.server:stop()
     fio.rmtree(g.cluster.datadir)
 end
 
@@ -184,7 +201,7 @@ function g.test_negative()
     })
 
     t.assert_equals(retmap, {})
-    assert_err_equals(errmap, '!@#$%^&*()',      'FormatURIError: Invalid URI "!@#$%^&*()"')
+    assert_err_equals(errmap, '!@#$%^&*()',      'FormatURIError: Malformed URI "!@#$%^&*()"')
     assert_err_equals(errmap, 'localhost:13301', 'Net.box call failed: Too long WAL write')
     assert_err_equals(errmap, 'localhost:13302', 'Net.box call failed: Too long WAL write')
     assert_err_equals(errmap, 'localhost:13309', 'NetboxConnectError: "localhost:13309": Invalid greeting')
@@ -220,7 +237,7 @@ function g.test_errors_united()
     t.assert_items_equals(
         err.err:split('\n'),
         {
-            'Invalid URI ")(*&^%$#@!"',
+            'Malformed URI ")(*&^%$#@!"',
             'Segmentation fault',
             '"localhost:13309": Invalid greeting',
         }
@@ -240,4 +257,88 @@ function g.test_positive()
         ['localhost:13302'] = 16,
     })
     t.assert_equals(errmap, nil)
+end
+
+
+function g.test_deprecation()
+    local errors = require('errors')
+    local deprecation_errors = {}
+    errors.set_deprecation_handler(function(err)
+        table.insert(deprecation_errors, err.str)
+    end)
+
+    local conn, err = pool.connect(g.cluster.main_server.advertise_uri)
+    t.assert_equals(err, nil)
+    t.assert_equals(conn.opts, {
+        user = 'admin',
+        wait_connected = false,
+    })
+
+    t.assert_equals(#deprecation_errors, 0)
+
+    g.cluster.main_server.net_box:eval([[
+        box.schema.user.create('test1', {password = 'X'})
+        box.schema.user.grant('test1', 'read,write,execute,create,drop','universe')
+    ]])
+
+    conn:close()
+
+    local conn, err = pool.connect(g.cluster.main_server.advertise_uri, {
+        user = 'test1',
+        password = 'X',
+        connect_timeout = 0.1,
+        wait_connected = true,
+        reconnect_after = 1,
+    })
+
+    t.assert_equals(err, nil)
+    t.assert_equals(conn.opts, {
+        user = 'admin',     -- other users deprecated
+        wait_connected = false,
+        connect_timeout = nil,
+        reconnect_after = nil,
+        password = nil,
+    })
+
+    t.assert_equals(#deprecation_errors, 3)
+
+    t.assert_str_contains(deprecation_errors[1],
+        'DeprecationError: Options "user" and "password" are useless ' ..
+        'in pool.connect, they never worked as intended and will never do'
+    )
+
+    t.assert_str_contains(deprecation_errors[2],
+        'DeprecationError: Option "reconnect_after" is useless in pool.connect, ' ..
+        'it never worked as intended and will never do'
+    )
+
+    t.assert_str_contains(deprecation_errors[3],
+        'DeprecationError: Option "connect_timeout" is useless in pool.connect, ' ..
+        'use "wait_connected" instead'
+    )
+end
+
+
+function g.test_pool_connect()
+    local conn, err = pool.connect('localhost:13999')
+    t.assert_equals(conn, nil)
+    t.assert_equals(err.str, 'NetboxConnectError: "localhost:13999": Connection refused')
+
+    g.server.process:kill('STOP')
+    local conn, err = pool.connect('localhost:13315', {wait_connected = 0.1})
+    t.assert_equals(conn, nil)
+    t.assert_equals(err.str, 'NetboxConnectError: "localhost:13315": Connection not established (yet)')
+
+    local conn, err = pool.connect('localhost:13315', {connect_timeout = 0.1})
+    t.assert_equals(conn, nil)
+    t.assert_equals(err.str, 'NetboxConnectError: "localhost:13315": Connection not established (yet)')
+
+    local conn, err = pool.connect('localhost:13315', {wait_connected = false})
+    t.assert_equals(err, nil)
+    t.assert_equals(conn.state, 'initial')
+
+    g.server.process:kill('CONT')
+    t.helpers.retrying({}, function()
+        t.assert_equals(conn.state, 'active')
+    end)
 end

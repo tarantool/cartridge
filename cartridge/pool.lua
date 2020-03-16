@@ -17,7 +17,6 @@ local cluster_cookie = require('cartridge.cluster-cookie')
 
 vars:new('locks', {})
 vars:new('connections', {})
-vars:new('default_timeout', 5)
 
 local FormatURIError = errors.new_class('FormatURIError')
 local NetboxConnectError = errors.new_class('NetboxConnectError')
@@ -33,7 +32,9 @@ local NetboxMapCallError = errors.new_class('NetboxMapCallError')
 local function format_uri(uri)
     local parts = uri_lib.parse(uri)
     if parts == nil then
-        return nil, FormatURIError.new('Invalid URI %q', uri)
+        return nil, FormatURIError:new('Malformed URI %q', uri)
+    elseif parts.service == nil then
+        return nil, FormatURIError:new('Missing port in URI %q', uri)
     end
     return uri_lib.format({
         host = parts.host,
@@ -60,6 +61,7 @@ local function connect(uri, opts)
         reconnect_after = '?number', -- deprecated
         connect_timeout = '?number', -- deprecated
     })
+
     if opts.user ~= nil or opts.password ~= nil then
         errors.deprecate(
             'Options "user" and "password" are useless in pool.connect,' ..
@@ -73,7 +75,30 @@ local function connect(uri, opts)
         )
     end
 
-    local wait_connected = vars.default_timeout
+    local conn = vars.connections[uri]
+    if conn == nil
+    or conn.state == 'error'
+    or conn.state == 'closed'
+    then
+        -- concurrent part, won't yeild
+        local _, err = format_uri(uri)
+        if err ~= nil then
+            return nil, err
+        end
+
+        conn, err = NetboxConnectError:pcall(netbox.connect, uri, {
+            user = cluster_cookie.username(),
+            password = cluster_cookie.cookie(),
+            wait_connected = false,
+        })
+        if err ~= nil then
+            return nil, err
+        end
+
+        vars.connections[uri] = conn
+    end
+
+    local wait_connected
     if opts.connect_timeout ~= nil then
         errors.deprecate(
             'Option "connect_timeout" is useless in pool.connect,' ..
@@ -84,32 +109,6 @@ local function connect(uri, opts)
     if type(opts.wait_connected) == 'number' then
         wait_connected = opts.wait_connected
     elseif opts.wait_connected == false then
-        wait_connected = false
-    end
-
-    local conn = vars.connections[uri]
-
-    if conn == nil
-    or conn.state == 'error'
-    then
-        -- concurrent part, won't yeild
-
-        local parts = uri_lib.parse(uri)
-        if parts == nil then
-            return nil, FormatURIError.new('Malformed URI %q', uri)
-        elseif parts.service == nil then
-            return nil, FormatURIError.new('Missing port in URI %q', uri)
-        end
-
-        conn = netbox.connect(uri, {
-            user = cluster_cookie.username(),
-            password = cluster_cookie.password(),
-            wait_connected = false,
-        })
-        vars.connections[uri] = conn
-    end
-
-    if not wait_connected then
         return conn
     end
 
