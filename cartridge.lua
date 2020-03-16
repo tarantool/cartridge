@@ -292,11 +292,38 @@ local function cfg(opts, box_opts)
     if opts.workdir == nil then
         opts.workdir = '.'
     end
-    opts.workdir = fio.abspath(opts.workdir)
 
+    opts.workdir = fio.abspath(opts.workdir)
     local ok, err = utils.mktree(opts.workdir)
     if not ok then
         return nil, err
+    end
+
+    local box_workdir = opts.workdir
+    if box_opts.work_dir ~= nil then
+        log.warn("Box option 'work_dir' is deprecated. Please dont't use it")
+        box_opts.work_dir = fio.abspath(box_opts.work_dir)
+        box_workdir = box_opts.work_dir
+
+        local ok, err = utils.mktree(box_opts.work_dir)
+        if not ok then
+            return nil, err
+        end
+    else
+        -- set current dir as new root dir for process chdir (due to box.cfg makes chdir)
+        box_opts.work_dir = fio.abspath('.')
+    end
+
+    for _, option in ipairs({'memtx_dir', 'vinyl_dir', 'wal_dir'}) do
+        local path = box_opts[option] or '.'
+        if not path:startswith('/') then
+            path = fio.pathjoin(box_workdir, path)
+        end
+        box_opts[option] = fio.abspath(path)
+        local ok, err = utils.mktree(box_opts[option])
+        if not ok then
+            return nil, err
+        end
     end
 
     cluster_cookie.init(opts.workdir)

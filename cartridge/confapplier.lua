@@ -263,10 +263,7 @@ local function boot_instance(clusterwide_config)
     end
 
     local box_opts = table.deepcopy(vars.box_opts)
-    -- TODO: https://github.com/tarantool/cartridge/issues/189
-    box_opts.wal_dir = vars.workdir
-    box_opts.memtx_dir = vars.workdir
-    box_opts.vinyl_dir = vars.workdir
+
     -- Don't start listening until bootstrap/recovery finishes
     -- and prevent overriding box_opts.listen
     box_opts.listen = box.NULL
@@ -276,7 +273,7 @@ local function boot_instance(clusterwide_config)
     end
 
     -- The instance should know his uuids.
-    local snapshots = fio.glob(fio.pathjoin(vars.workdir, '*.snap'))
+    local snapshots = fio.glob(fio.pathjoin(box_opts.memtx_dir, '*.snap'))
     local instance_uuid
     local replicaset_uuid
     if next(snapshots) == nil then
@@ -313,7 +310,7 @@ local function boot_instance(clusterwide_config)
         log.warn(
             "Snapshot not found in %s, can't recover." ..
             " Did previous bootstrap attempt fail?",
-            vars.workdir
+            box_opts.memtx_dir
         )
         log.warn("Will try to rebootsrap, but it may fail again.")
 
@@ -524,12 +521,12 @@ local function init(opts)
         })
         log.info('Remote control ready to accept connections')
 
-        local snapshots = fio.glob(fio.pathjoin(vars.workdir, '*.snap'))
+        local snapshots = fio.glob(fio.pathjoin(vars.box_opts.memtx_dir, '*.snap'))
         if next(snapshots) ~= nil then
             local err = InitError:new(
                 "Snapshot was found in %s, but config.yml wasn't." ..
                 " Where did it go?",
-                vars.workdir
+                vars.box_opts.memtx_dir
             )
             set_state('InitError', err)
             return true
