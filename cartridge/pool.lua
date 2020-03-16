@@ -81,16 +81,14 @@ local function connect(uri, opts)
     or conn.state == 'closed'
     then
         -- concurrent part, won't yeild
-        local _, err = format_uri(uri)
+        local _uri, err = format_uri(uri)
         if err ~= nil then
             return nil, err
         end
 
-        conn, err = NetboxConnectError:pcall(netbox.connect, uri, {
-            user = cluster_cookie.username(),
-            password = cluster_cookie.cookie(),
-            wait_connected = false,
-        })
+        conn, err = NetboxConnectError:pcall(netbox.connect,
+            _uri, {wait_connected = false}
+        )
         if err ~= nil then
             return nil, err
         end
@@ -106,6 +104,7 @@ local function connect(uri, opts)
         )
         wait_connected = opts.connect_timeout
     end
+
     if type(opts.wait_connected) == 'number' then
         wait_connected = opts.wait_connected
     elseif opts.wait_connected == false then
