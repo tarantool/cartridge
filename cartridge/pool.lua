@@ -11,7 +11,6 @@ local fiber = require('fiber')
 local checks = require('checks')
 local errors = require('errors')
 local netbox = require('net.box')
-local fun = require('fun')
 
 local vars = require('cartridge.vars').new('cartridge.pool')
 local cluster_cookie = require('cartridge.cluster-cookie')
@@ -20,6 +19,7 @@ vars:new('locks', {})
 vars:new('connections', {})
 vars:new('default_timeout', 5)
 
+local FormatURIError = errors.new_class('FormatURIError')
 local NetboxConnectError = errors.new_class('NetboxConnectError')
 local NetboxMapCallError = errors.new_class('NetboxMapCallError')
 
@@ -33,10 +33,7 @@ local NetboxMapCallError = errors.new_class('NetboxMapCallError')
 local function format_uri(uri)
     local parts = uri_lib.parse(uri)
     if parts == nil then
-        return nil, errors.new(
-            'FormatURIError',
-            'Invalid URI %q', uri
-        )
+        return nil, FormatURIError.new('Invalid URI %q', uri)
     end
     return uri_lib.format({
         host = parts.host,
@@ -44,42 +41,6 @@ local function format_uri(uri)
         login = cluster_cookie.username(),
         password = cluster_cookie.cookie()
     }, true)
-end
-
-local function _connect(uri, options)
-    local conn, err = vars.connections[uri]
-
-    if conn == nil
-    or not conn:is_connected()
-    or conn.peer_uuid == "00000000-0000-0000-0000-000000000000"
-    then
-        local _uri, _err = format_uri(uri)
-        if _uri == nil then
-            return nil, _err
-        end
-
-        conn, err = netbox.connect(_uri, options)
-    end
-
-    if not conn then
-        return nil, err
-    end
-
-    vars.connections[uri] = conn
-    if not conn:is_connected() then
-        err = NetboxConnectError:new(
-            '%q: %s', uri, conn.error
-        )
-        return nil, err
-    end
-    return conn
-end
-
-local function is_connection_alive(conn)
-    return not (conn == nil
-            or conn.state == 'error'
-            or conn.peer_uuid == "00000000-0000-0000-0000-000000000000"
-    )
 end
 
 --- Connect a remote or get cached connection.
@@ -90,29 +51,73 @@ end
 -- @return[1] `net.box` connection
 -- @treturn[2] nil
 -- @treturn[2] table Error description
-local function connect(uri, options)
-    checks('string', '?table')
+local function connect(uri, opts)
+    opts = opts or {}
+    checks('string', {
+        wait_connected = '?boolean|number',
+        user = '?string', -- deprecated
+        password = '?string', -- deprecated
+        reconnect_after = '?number', -- deprecated
+        connect_timeout = '?number', -- deprecated
+    })
+    if opts.user ~= nil or opts.password ~= nil then
+        errors.deprecate(
+            'Options "user" and "password" are useless in pool.connect,' ..
+            ' they never worked as intended and will never do'
+        )
+    end
+    if opts.reconnect_after ~= nil then
+        errors.deprecate(
+            'Option "reconnect_after" is useless in pool.connect,' ..
+            ' it never worked as intended and will never do'
+        )
+    end
+
+    local wait_connected = vars.default_timeout
+    if opts.connect_timeout ~= nil then
+        errors.deprecate(
+            'Option "connect_timeout" is useless in pool.connect,' ..
+            ' use "wait_connected" instead'
+        )
+        wait_connected = opts.connect_timeout
+    end
+    if type(opts.wait_connected) == 'number' then
+        wait_connected = opts.wait_connected
+    elseif opts.wait_connected == false then
+        wait_connected = false
+    end
 
     local conn = vars.connections[uri]
-    local opts = options or {}
 
-    -- concurrent part won't yeild
-    if not is_connection_alive(conn) then
-        local _uri, err = format_uri(uri)
-        if err ~= nil then
-            return nil, err
+    if conn == nil
+    or conn.state == 'error'
+    then
+        -- concurrent part, won't yeild
+
+        local parts = uri_lib.parse(uri)
+        if parts == nil then
+            return nil, FormatURIError.new('Malformed URI %q', uri)
+        elseif parts.service == nil then
+            return nil, FormatURIError.new('Missing port in URI %q', uri)
         end
 
-        -- to save previous options
-        local conn_opts = fun.chain(opts, {wait_connected = false}):tomap()
-        conn = netbox.connect(_uri, conn_opts)
+        conn = netbox.connect(uri, {
+            user = cluster_cookie.username(),
+            password = cluster_cookie.password(),
+            wait_connected = false,
+        })
         vars.connections[uri] = conn
     end
 
-    -- maybe use wait_state instead
-    local ok = conn:wait_connected(opts.timeout) -- or vars.default_timeout)
+    if not wait_connected then
+        return conn
+    end
+
+    local ok = conn:wait_connected(wait_connected)
     if not ok then
-        return nil, NetboxConnectError:new('%q: %s', uri, conn.error)
+        return nil, NetboxConnectError:new('%q: %s',
+            uri, conn.error or "Connection not established (yet)"
+        )
     end
 
     return conn
