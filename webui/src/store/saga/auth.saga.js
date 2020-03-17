@@ -54,14 +54,6 @@ function* logInSaga() {
   });
 }
 
-function* denyAccessSaga() {
-  yield takeEvery('*', function* ({ error }) {
-    if (error && (isRestAccessDeniedError(error) || isGraphqlAccessDeniedError(error))) {
-      yield put({ type: AUTH_ACCESS_DENIED });
-    }
-  });
-}
-
 function* logOutSaga() {
   yield takeLatest(AUTH_LOG_OUT_REQUEST, function* () {
     const indicator = pageRequestIndicator.run();
@@ -96,6 +88,5 @@ const turnAuthSaga = getRequestSaga(
 export const saga = baseSaga(
   logInSaga,
   logOutSaga,
-  turnAuthSaga,
-  denyAccessSaga
+  turnAuthSaga
 );
