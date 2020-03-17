@@ -32,9 +32,9 @@ local NetboxMapCallError = errors.new_class('NetboxMapCallError')
 local function format_uri(uri)
     local parts = uri_lib.parse(uri)
     if parts == nil then
-        return nil, FormatURIError:new('Malformed URI %q', uri)
+        return nil, FormatURIError:new('Invalid URI %q', uri)
     elseif parts.service == nil then
-        return nil, FormatURIError:new('Missing port in URI %q', uri)
+        return nil, FormatURIError:new('Invalid URI %q (missing port)', uri)
     end
     return uri_lib.format({
         host = parts.host,

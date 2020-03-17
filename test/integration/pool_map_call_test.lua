@@ -184,7 +184,7 @@ function g.test_negative()
     })
 
     t.assert_equals(retmap, {})
-    assert_err_equals(errmap, '!@#$%^&*()',      'FormatURIError: Malformed URI "!@#$%^&*()"')
+    assert_err_equals(errmap, '!@#$%^&*()',      'FormatURIError: Invalid URI "!@#$%^&*()"')
     assert_err_equals(errmap, 'localhost:13301', 'Net.box call failed: Too long WAL write')
     assert_err_equals(errmap, 'localhost:13302', 'Net.box call failed: Too long WAL write')
     assert_err_equals(errmap, 'localhost:13309', 'NetboxConnectError: "localhost:13309": Invalid greeting')
@@ -220,7 +220,7 @@ function g.test_errors_united()
     t.assert_items_equals(
         err.err:split('\n'),
         {
-            'Malformed URI ")(*&^%$#@!"',
+            'Invalid URI ")(*&^%$#@!"',
             'Segmentation fault',
             '"localhost:13309": Invalid greeting',
         }
