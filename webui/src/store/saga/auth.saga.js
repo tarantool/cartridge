@@ -14,7 +14,6 @@ import { pageRequestIndicator } from 'src/misc/pageRequestIndicator';
 
 import {
   APP_DID_MOUNT,
-  AUTH_ACCESS_DENIED,
   AUTH_TURN_REQUEST,
   AUTH_TURN_REQUEST_SUCCESS,
   AUTH_TURN_REQUEST_ERROR,
@@ -38,9 +37,9 @@ function* logInSaga() {
         type: AUTH_LOG_IN_REQUEST_SUCCESS,
         payload: response
       });
-      window.tarantool_enterprise_core.dispatch('cluster:login:done', response);
 
       if (response.authorized) {
+        window.tarantool_enterprise_core.dispatch('cluster:login:done', response);
         yield put({ type: APP_DID_MOUNT });
       }
     } catch (error) {
