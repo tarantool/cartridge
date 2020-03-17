@@ -45,7 +45,7 @@ local function format_uri(uri)
 end
 
 --- Connect a remote or get cached connection.
--- Connection is established using `net.box.wait_connected()`.
+-- Connection is established using `net.box.connect()`.
 -- @function connect
 -- @tparam string uri
 -- @tparam[opt] table opts
