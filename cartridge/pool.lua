@@ -45,10 +45,21 @@ local function format_uri(uri)
 end
 
 --- Connect a remote or get cached connection.
--- Connection is established using `net.box.connect()`.
+-- Connection is established using `net.box.wait_connected()`.
 -- @function connect
 -- @tparam string uri
 -- @tparam[opt] table opts
+-- @tparam ?boolean|number opts.wait_connected
+--   by default, connection creation is blocked until the
+--   connection is established, but passing `wait_connected=false`
+--   makes it return immediately. Also, passing a timeout makes it
+--   wait before returning (e.g. `wait_connected=1.5` makes it wait
+--   at most 1.5 seconds).
+-- @tparam ?number opts.connect_timeout (*deprecated*)
+--   Use `wait_connected` instead
+-- @param opts.user (*deprecated*) don't use it
+-- @param opts.password (*deprecated*) don't use it
+-- @param opts.reconnect_after (*deprecated*) don't use it
 -- @return[1] `net.box` connection
 -- @treturn[2] nil
 -- @treturn[2] table Error description
