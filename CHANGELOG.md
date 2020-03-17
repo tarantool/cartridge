@@ -6,37 +6,24 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-### Added
+## [2.0.2] - 2020-03-17
 
-- Show how-to-connect-demo instructions on every page in WebUI.
+### Added
 
 - Make use of GraphQL error extensions: provide additional information
   about `class_name` and `stack` of original error.
-
-- Validate YAML in code editor WebUI.
 
 - Expose membership options with argparse.
 
 - Allow specifying `all_rw` replicaset flag in luatest helpers.
 
-- Code applying error in Code editor.
-
 - New GraphQL API fields in `servers{ boxinfo{ cartridge }}`:
   `version`, `state`, `error`.
-
-- Remember last opened file in code editor to local storage.
-  Opens first file when local storage empty.
-
-- File tree expanded by default.
 
 - New internal module to hanle `.tar` files.
 
 - Add an ability to hide certain WebUI pages by specifying
   `cartridge.cfg({webui_blacklist = {'/admin/code', ...}})`.
-
-- Show Cartridge version in server info dialog.
-
-- Server alias is clickable in replicaset list.
 
 - New functions `cartridge.get_shema()` and `cartridge.set_shema(schema)`
   for get/set clusterwide DDL schema. They are reference
@@ -51,9 +38,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 
-- Network error shows with fixed splash panel instead of notification.
-
-- Remove redundant topology availability checks.
+- Remove redundant topology availability checks from two-phase commit.
 
 - Prevent instance state transition from `ConnectingFullmesh` to
   `OperationError` if replication fails to connect or to sync. Since now
@@ -93,14 +78,33 @@ GraphQL API:
 - Update errors rock dependency to 2.1.2: eliminate duplicate stack
   trace from `error.str` field.
 
-- Replicaset weight input in WebUI accepts float values.
-
 - Apply `custom_proc_title` setting without waiting for `box.cfg`.
 
 - Make GraphQL compatible with `req:read_cached()` call in httpd hooks.
 
 - Avoid "attempt to index nil value" error when using rpc on an
   uninitialized instance.
+
+### Enhanced in WebUI
+
+- Show how-to-connect-demo instructions on every page in WebUI.
+
+- Validate YAML in code editor WebUI.
+
+- Code applying error in Code editor.
+
+- Remember last opened file in code editor to local storage.
+  Opens first file when local storage empty.
+
+- File tree expanded by default.
+
+- Show Cartridge version in server info dialog.
+
+- Server alias is clickable in replicaset list.
+
+- Network error shows with fixed splash panel instead of notification.
+
+- Replicaset weight input in WebUI accepts float values.
 
 ## [2.0.1] - 2020-01-15
 
