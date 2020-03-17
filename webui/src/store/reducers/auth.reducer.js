@@ -1,4 +1,4 @@
-import { getGraphqlErrorMessage } from 'src/api/graphql';
+import { isGraphqlAccessDeniedError, getGraphqlErrorMessage } from 'src/api/graphql';
 
 import {
   APP_DATA_REQUEST_ERROR,
@@ -57,7 +57,7 @@ export function reducer(state = initialState, { type, payload, error }) {
       return {
         ...state,
         loading: false,
-        error: getGraphqlErrorMessage(error) || 'Request error'
+        error: isGraphqlAccessDeniedError(error) ? null : (getGraphqlErrorMessage(error) || 'Request error')
       };
 
     case AUTH_LOG_IN_REQUEST_SUCCESS:

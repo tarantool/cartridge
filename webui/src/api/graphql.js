@@ -58,4 +58,5 @@ export const getGraphqlErrorMessage
 
 export const isGraphqlAccessDeniedError
   = error =>
-    isGraphqlErrorResponse(error) && getGraphqlErrorMessage(error) === 'Unauthorized';
+    (isGraphqlErrorResponse(error) && getGraphqlErrorMessage(error) === 'Unauthorized')
+    || (error.networkError && error.networkError.statusCode === 401);
