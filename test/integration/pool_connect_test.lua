@@ -8,7 +8,7 @@ local pool = require('cartridge.pool')
 local cluster_cookie = require('cartridge.cluster-cookie')
 local remote_control = require('cartridge.remote-control')
 
-g.before_all(function()
+g.before_all = function()
     g.datadir = fio.tempdir()
     g.cookie = require('digest').urandom(6):hex()
     cluster_cookie.init(g.datadir)
@@ -17,12 +17,13 @@ g.before_all(function()
     local ok, err = remote_control.bind('127.0.0.1', 13301)
     t.assert_equals(err, nil)
     t.assert_equals(ok, true)
-end)
+end
 
-g.after_all(function()
+g.after_all = function()
     fio.rmtree(g.datadir)
+    remote_control.drop_connections()
     remote_control.stop()
-end)
+end
 
 function g.test_identity()
     local conn, err = pool.connect('localhost:13301', {wait_connected = false})
