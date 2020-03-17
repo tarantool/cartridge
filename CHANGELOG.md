@@ -60,6 +60,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   such fails result in staying in `ConnectingFullmesh` state until it
   succeeds.
 
+- Specifying `pool.connect()` options `user`, `password`,
+  `reconnect_after` are deprecated and ignored, they never worked as
+  intended and will never do. Option `connect_timeout` is deprecated,
+  but for backward compatibility treated as `wait_connected`.
+
 ### Deprecated
 
 Lua API:

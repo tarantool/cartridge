@@ -17,6 +17,8 @@ local cluster_cookie = require('cartridge.cluster-cookie')
 
 vars:new('locks', {})
 vars:new('connections', {})
+
+local FormatURIError = errors.new_class('FormatURIError')
 local NetboxConnectError = errors.new_class('NetboxConnectError')
 local NetboxMapCallError = errors.new_class('NetboxMapCallError')
 
@@ -30,10 +32,9 @@ local NetboxMapCallError = errors.new_class('NetboxMapCallError')
 local function format_uri(uri)
     local parts = uri_lib.parse(uri)
     if parts == nil then
-        return nil, errors.new(
-            'FormatURIError',
-            'Invalid URI %q', uri
-        )
+        return nil, FormatURIError:new('Invalid URI %q', uri)
+    elseif parts.service == nil then
+        return nil, FormatURIError:new('Invalid URI %q (missing port)', uri)
     end
     return uri_lib.format({
         host = parts.host,
@@ -43,53 +44,92 @@ local function format_uri(uri)
     }, true)
 end
 
-local function _connect(uri, options)
-    local conn, err = vars.connections[uri]
-
-    if conn == nil
-    or not conn:is_connected()
-    or conn.peer_uuid == "00000000-0000-0000-0000-000000000000"
-    then
-        local _uri, _err = format_uri(uri)
-        if _uri == nil then
-            return nil, _err
-        end
-
-        conn, err = netbox.connect(_uri, options)
-    end
-
-    if not conn then
-        return nil, err
-    end
-
-    vars.connections[uri] = conn
-    if not conn:is_connected() then
-        err = NetboxConnectError:new(
-            '%q: %s', uri, conn.error
-        )
-        return nil, err
-    end
-    return conn
-end
-
 --- Connect a remote or get cached connection.
 -- Connection is established using `net.box.connect()`.
 -- @function connect
 -- @tparam string uri
 -- @tparam[opt] table opts
+-- @tparam ?boolean|number opts.wait_connected
+--   by default, connection creation is blocked until the
+--   connection is established, but passing `wait_connected=false`
+--   makes it return immediately. Also, passing a timeout makes it
+--   wait before returning (e.g. `wait_connected=1.5` makes it wait
+--   at most 1.5 seconds).
+-- @tparam ?number opts.connect_timeout (*deprecated*)
+--   Use `wait_connected` instead
+-- @param opts.user (*deprecated*) don't use it
+-- @param opts.password (*deprecated*) don't use it
+-- @param opts.reconnect_after (*deprecated*) don't use it
 -- @return[1] `net.box` connection
 -- @treturn[2] nil
 -- @treturn[2] table Error description
-local function connect(uri, options)
-    checks('string', '?table')
-    while vars.locks[uri] do
-        fiber.sleep(0)
-    end
-    vars.locks[uri] = true
-    local conn, err = NetboxConnectError:pcall(_connect, uri, options)
-    vars.locks[uri] = false
+local function connect(uri, opts)
+    opts = opts or {}
+    checks('string', {
+        wait_connected = '?boolean|number',
+        user = '?string', -- deprecated
+        password = '?string', -- deprecated
+        reconnect_after = '?number', -- deprecated
+        connect_timeout = '?number', -- deprecated
+    })
 
-    return conn, err
+    if opts.user ~= nil or opts.password ~= nil then
+        errors.deprecate(
+            'Options "user" and "password" are useless in pool.connect,' ..
+            ' they never worked as intended and will never do'
+        )
+    end
+    if opts.reconnect_after ~= nil then
+        errors.deprecate(
+            'Option "reconnect_after" is useless in pool.connect,' ..
+            ' it never worked as intended and will never do'
+        )
+    end
+
+    local conn = vars.connections[uri]
+    if conn == nil
+    or conn.state == 'error'
+    or conn.state == 'closed'
+    then
+        -- concurrent part, won't yeild
+        local _uri, err = format_uri(uri)
+        if err ~= nil then
+            return nil, err
+        end
+
+        conn, err = NetboxConnectError:pcall(netbox.connect,
+            _uri, {wait_connected = false}
+        )
+        if err ~= nil then
+            return nil, err
+        end
+
+        vars.connections[uri] = conn
+    end
+
+    local wait_connected
+    if opts.connect_timeout ~= nil then
+        errors.deprecate(
+            'Option "connect_timeout" is useless in pool.connect,' ..
+            ' use "wait_connected" instead'
+        )
+        wait_connected = opts.connect_timeout
+    end
+
+    if type(opts.wait_connected) == 'number' then
+        wait_connected = opts.wait_connected
+    elseif opts.wait_connected == false then
+        return conn
+    end
+
+    local ok = conn:wait_connected(wait_connected)
+    if not ok then
+        return nil, NetboxConnectError:new('%q: %s',
+            uri, conn.error or "Connection not established (yet)"
+        )
+    end
+
+    return conn
 end
 
 local function _pack_values(maps, uri, ...)
