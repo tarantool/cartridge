@@ -10,31 +10,38 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
-- Make use of GraphQL error extensions: provide additional information
-  about `class_name` and `stack` of original error.
-
-- Expose membership options with argparse.
-
-- Allow specifying `all_rw` replicaset flag in luatest helpers.
-
-- New GraphQL API fields in `servers{ boxinfo{ cartridge }}`:
-  `version`, `state`, `error`.
+- Expose membership options in `argparse` module (edit them with
+  environment variables and command-line arguments).
 
 - New internal module to hanle `.tar` files.
 
-- Add an ability to hide certain WebUI pages by specifying
-  `cartridge.cfg({webui_blacklist = {'/admin/code', ...}})`.
+Lua API:
 
-- New functions `cartridge.get_shema()` and `cartridge.set_shema(schema)`
-  for get/set clusterwide DDL schema. They are reference
-  `_G.cartridge_get_schema` and `_G.cartridge_set_schema`.
+- `cartridge.cfg({webui_blacklist = {'/admin/code', ...}})`: blacklist
+  certain WebUI pages.
 
-- New GraphQL API to obtain more details on replication status
-  `cluster{ issues{ level message ... }}`.
+- `cartridge.get_schema()` referencing older `_G.cartridge_get_schema`.
+
+- `cartridge.set_schema()` referencing older `_G.cartridge_set_schema`.
+
+GraphQL API:
+
+- Make use of GraphQL error extensions: provide additional information
+  about `class_name` and `stack` of original error.
+
+- `cluster{ issues{ level message ... }}`: obtain more details on
+  replication status
+
+- `cluster{ self {...} }`: new fields `app_name`, `instance_name`.
+
+- `servers{ boxinfo { cartridge {...} }}`: new fields `version`,
+  `state`, `error`.
+
+Test helpers:
+
+- Allow specifying `all_rw` replicaset flag in luatest helpers.
 
 - Add option for clusterwide env in test helpers.
-
-- New GraphQL API fields in `cluster{ self }`: `app_name`, `instance_name`.
 
 ### Changed
 
@@ -64,9 +71,9 @@ GraphQL API:
 
 ### Fixed
 
-- DDL failure if spaces is `null` in input schema.
+- Fix DDL failure if `spaces` field is `null` in input schema.
 
-- Content of `cluster_cookie` is checked for absence of special
+- Check content of `cluster_cookie` for absence of special
   characters so it doesn't break the authotization.
   Allowed symbols are `[a-zA-Z0-9_.~-]`.
 
@@ -87,24 +94,24 @@ GraphQL API:
 
 ### Enhanced in WebUI
 
-- Show how-to-connect-demo instructions on every page in WebUI.
+- Add an ability to hide certain WebUI pages.
 
 - Validate YAML in code editor WebUI.
 
-- Code applying error in Code editor.
+- Fix showing errors in Code editor page.
 
-- Remember last opened file in code editor to local storage.
-  Opens first file when local storage empty.
+- Remember last open file in Code editor page.
+  Open first file when local storage is empty.
 
-- File tree expanded by default.
+- Expand file tree in Code editor page by default.
 
 - Show Cartridge version in server info dialog.
 
 - Server alias is clickable in replicaset list.
 
-- Network error shows with fixed splash panel instead of notification.
+- Show networking errors in splash panel instead of notifications.
 
-- Replicaset weight input in WebUI accepts float values.
+- Accept float values for vshard-storage weight.
 
 ## [2.0.1] - 2020-01-15
 
