@@ -6,54 +6,47 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [2.0.2] - 2020-03-17
+
 ### Added
 
-- Show how-to-connect-demo instructions on every page in WebUI.
+- Expose membership options in `argparse` module (edit them with
+  environment variables and command-line arguments).
+
+- New internal module to handle `.tar` files.
+
+Lua API:
+
+- `cartridge.cfg({webui_blacklist = {'/admin/code', ...}})`: blacklist
+  certain WebUI pages.
+
+- `cartridge.get_schema()` referencing older `_G.cartridge_get_schema`.
+
+- `cartridge.set_schema()` referencing older `_G.cartridge_set_schema`.
+
+GraphQL API:
 
 - Make use of GraphQL error extensions: provide additional information
   about `class_name` and `stack` of original error.
 
-- Validate YAML in code editor WebUI.
+- `cluster{ issues{ level message ... }}`: obtain more details on
+  replication status
 
-- Expose membership options with argparse.
+- `cluster{ self {...} }`: new fields `app_name`, `instance_name`.
+
+- `servers{ boxinfo { cartridge {...} }}`: new fields `version`,
+  `state`, `error`.
+
+Test helpers:
 
 - Allow specifying `all_rw` replicaset flag in luatest helpers.
 
-- Code applying error in Code editor.
-
-- New GraphQL API fields in `servers{ boxinfo{ cartridge }}`:
-  `version`, `state`, `error`.
-
-- Remember last opened file in code editor to local storage.
-  Opens first file when local storage empty.
-
-- File tree expanded by default.
-
-- New internal module to hanle `.tar` files.
-
-- Add an ability to hide certain WebUI pages by specifying
-  `cartridge.cfg({webui_blacklist = {'/admin/code', ...}})`.
-
-- Show Cartridge version in server info dialog.
-
-- Server alias is clickable in replicaset list.
-
-- New functions `cartridge.get_shema()` and `cartridge.set_shema(schema)`
-  for get/set clusterwide DDL schema. They are reference
-  `_G.cartridge_get_schema` and `_G.cartridge_set_schema`.
-
-- New GraphQL API to obtain more details on replication status
-  `cluster{ issues{ level message ... }}`.
-
-- Add option for clusterwide env in test helpers.
-
-- New GraphQL API fields in `cluster{ self }`: `app_name`, `instance_name`.
+- Add `cluster({env = ...})` option for specifying clusterwide
+  environment variables.
 
 ### Changed
 
-- Network error shows with fixed splash panel instead of notification.
-
-- Remove redundant topology availability checks.
+- Remove redundant topology availability checks from two-phase commit.
 
 - Prevent instance state transition from `ConnectingFullmesh` to
   `OperationError` if replication fails to connect or to sync. Since now
@@ -79,21 +72,19 @@ GraphQL API:
 
 ### Fixed
 
-- DDL failure if spaces is `null` in input schema.
+- Fix DDL failure if `spaces` field is `null` in input schema.
 
-- Content of `cluster_cookie` is checked for absence of special
-  characters so it doesn't break the authotization.
+- Check content of `cluster_cookie` for absence of special
+  characters so it doesn't break the authorization.
   Allowed symbols are `[a-zA-Z0-9_.~-]`.
 
 - Drop remote-control connections after full-featured `box.cfg` becomes
   available to prevent clients from using limited functionality for too
-  long. During instance recovery remote-controll won't accept any
-  connections: clients wait for box.cfg to finish recvovery.
+  long. During instance recovery remote-control won't accept any
+  connections: clients wait for box.cfg to finish recovery.
 
 - Update errors rock dependency to 2.1.2: eliminate duplicate stack
   trace from `error.str` field.
-
-- Replicaset weight input in WebUI accepts float values.
 
 - Apply `custom_proc_title` setting without waiting for `box.cfg`.
 
@@ -101,6 +92,27 @@ GraphQL API:
 
 - Avoid "attempt to index nil value" error when using rpc on an
   uninitialized instance.
+
+### Enhanced in WebUI
+
+- Add an ability to hide certain WebUI pages.
+
+- Validate YAML in code editor WebUI.
+
+- Fix showing errors in Code editor page.
+
+- Remember last open file in Code editor page.
+  Open first file when local storage is empty.
+
+- Expand file tree in Code editor page by default.
+
+- Show Cartridge version in server info dialog.
+
+- Server alias is clickable in replicaset list.
+
+- Show networking errors in splash panel instead of notifications.
+
+- Accept float values for vshard-storage weight.
 
 ## [2.0.1] - 2020-01-15
 
