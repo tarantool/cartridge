@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Expose membership options in `argparse` module (edit them with
   environment variables and command-line arguments).
 
-- New internal module to hanle `.tar` files.
+- New internal module to handle `.tar` files.
 
 Lua API:
 
@@ -41,7 +41,8 @@ Test helpers:
 
 - Allow specifying `all_rw` replicaset flag in luatest helpers.
 
-- Add option for clusterwide env in test helpers.
+- Add `cluster({env = ...})` option for specifying clusterwide
+  environment variables.
 
 ### Changed
 
@@ -74,13 +75,13 @@ GraphQL API:
 - Fix DDL failure if `spaces` field is `null` in input schema.
 
 - Check content of `cluster_cookie` for absence of special
-  characters so it doesn't break the authotization.
+  characters so it doesn't break the authorization.
   Allowed symbols are `[a-zA-Z0-9_.~-]`.
 
 - Drop remote-control connections after full-featured `box.cfg` becomes
   available to prevent clients from using limited functionality for too
-  long. During instance recovery remote-controll won't accept any
-  connections: clients wait for box.cfg to finish recvovery.
+  long. During instance recovery remote-control won't accept any
+  connections: clients wait for box.cfg to finish recovery.
 
 - Update errors rock dependency to 2.1.2: eliminate duplicate stack
   trace from `error.str` field.
