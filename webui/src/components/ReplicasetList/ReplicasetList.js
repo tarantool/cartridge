@@ -8,9 +8,9 @@ import {
   HealthStatus,
   IconGear,
   Text,
-  TiledList
+  TiledList,
+  Tooltip
 } from '@tarantool.io/ui-kit';
-import Tooltip from 'src/components/Tooltip';
 import ReplicasetRoles from 'src/components/ReplicasetRoles';
 import ReplicasetServerList from 'src/components/ReplicasetServerList';
 import { addSearchParams } from 'src/misc/url';

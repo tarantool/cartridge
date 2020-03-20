@@ -2,7 +2,6 @@
 // TODO: move to uikit
 import * as React from 'react';
 import { css, cx } from 'react-emotion';
-import Tooltip from 'src/components/Tooltip';
 import ServerLabels, { type Label } from 'src/components/ServerLabels';
 import store from 'src/store/instance';
 import {
@@ -12,10 +11,12 @@ import {
   HealthStatus,
   IconBucket,
   IconChip,
+  IconGeoPin,
   IconMore,
   LeaderFlag,
   ProgressBar,
   Text,
+  Tooltip,
   UriLabel
 } from '@tarantool.io/ui-kit';
 import { showExpelModal } from '../store/actions/clusterPage.actions';
@@ -135,6 +136,7 @@ type ServerAction = {
 }
 
 type Server = {
+  selfURI?: string,
   statistics?: {
     arenaUsed: number,
     bucketsCount: number,
@@ -172,6 +174,7 @@ class ReplicasetServerListItem extends React.PureComponent<
   render() {
     const {
       activeMaster,
+      selfURI,
       statistics,
       status,
       uri,
@@ -203,7 +206,7 @@ class ReplicasetServerListItem extends React.PureComponent<
                 {alias}
               </Link>
             </Text>
-            <UriLabel uri={uri} />
+            <UriLabel uri={uri} icon={selfURI && uri === selfURI && IconGeoPin} />
           </div>
           <div className={styles.statusGroup}>
             <HealthStatus className={styles.status} status={status} message={message} />

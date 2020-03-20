@@ -4,7 +4,6 @@ import { css } from 'react-emotion';
 import { Formik } from 'formik';
 
 import SelectedServersList from 'src/components/SelectedServersList';
-import Tooltip from 'src/components/Tooltip';
 import {
   Button,
   IconInfo,
@@ -14,7 +13,8 @@ import {
   PopupBody,
   PopupFooter,
   RadioButton,
-  Text
+  Text,
+  Tooltip
 } from '@tarantool.io/ui-kit';
 import ReplicasetRoles from 'src/components/ReplicasetRoles';
 import FormField from 'src/components/FormField';
@@ -116,6 +116,7 @@ type JoinReplicasetFormData = {
 type JoinReplicasetFormProps = {
   filter: string,
   filteredReplicasetList?: Replicaset[],
+  selfURI?: string,
   onCancel: () => void,
   onSubmit: (d: JoinReplicasetFormData) => void,
   replicasetList?: Replicaset[],
@@ -145,6 +146,7 @@ class JoinReplicasetForm extends React.Component<JoinReplicasetFormProps> {
     const {
       filter,
       filteredReplicasetList,
+      selfURI,
       onCancel,
       onSubmit,
       replicasetList,
@@ -176,7 +178,7 @@ class JoinReplicasetForm extends React.Component<JoinReplicasetFormProps> {
           return (
             <form onSubmit={handleSubmit}>
               <PopupBody>
-                <SelectedServersList className={styles.splash} serverList={selectedServers} />
+                <SelectedServersList className={styles.splash} serverList={selectedServers} selfURI={selfURI} />
                 <FormField
                   className={styles.wideField}
                   itemClassName={styles.radioWrap}

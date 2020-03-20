@@ -20,6 +20,7 @@ type ServerInfoModalProps = {
   pageDidMount: ({ instanceUUID: string }) => void,
   resetPageState: () => void,
   alias: string,
+  selfURI?: string,
   instanceUUID: string,
   labels: { name: string, value: string }[],
   message?: string,
@@ -68,6 +69,7 @@ class ServerInfoModal extends React.Component<ServerInfoModalProps, ServerInfoMo
     const {
       alias,
       instanceUUID,
+      selfURI,
       activeMasterUUID,
       masterUUID,
       message,
@@ -87,6 +89,7 @@ class ServerInfoModal extends React.Component<ServerInfoModalProps, ServerInfoMo
           <ServerShortInfo
             alias={alias}
             activeMaster={instanceUUID === activeMasterUUID}
+            selfURI={selfURI}
             master={instanceUUID === masterUUID}
             message={message}
             status={status}
@@ -135,6 +138,7 @@ const mapStateToProps = (state, props) => {
 
   return {
     alias,
+    selfURI: state.app.clusterSelf.uri,
     labels,
     message,
     masterUUID,

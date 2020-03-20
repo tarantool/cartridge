@@ -22,6 +22,7 @@ type EditReplicasetModalProps = {
   replicasetList?: Replicaset[],
   history: History,
   location: Location,
+  selfURI?: string
 }
 
 class EditReplicasetModal extends React.Component<EditReplicasetModalProps> {
@@ -31,7 +32,8 @@ class EditReplicasetModal extends React.Component<EditReplicasetModalProps> {
       loading,
       vshard_groups,
       replicasetList,
-      selectedReplicasetUuid
+      selectedReplicasetUuid,
+      selfURI
     } = this.props;
 
     const selectedReplicaset = (
@@ -57,6 +59,7 @@ class EditReplicasetModal extends React.Component<EditReplicasetModalProps> {
             onSubmit={this.handleEditReplicasetSubmit}
             onCancel={this.handleClose}
             loading={!!loading}
+            selfURI={selfURI}
           />
         }
       </Modal>
@@ -81,7 +84,8 @@ const mapStateToProps = state => {
     app: {
       clusterSelf: {
         knownRoles,
-        vshard_groups
+        vshard_groups,
+        uri: selfURI
       }
     },
     clusterPage: {
@@ -96,6 +100,7 @@ const mapStateToProps = state => {
     vshard_groups,
     replicasetList,
     selectedReplicasetUuid,
+    selfURI,
     loading: !pageDataRequestStatus.loaded || pageDataRequestStatus.loading
   };
 };

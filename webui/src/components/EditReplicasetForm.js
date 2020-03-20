@@ -89,7 +89,8 @@ type EditReplicasetFormProps = {
   onCancel: () => void,
   onSubmit: (d: EditReplicasetArgs) => void,
   replicaset?: Replicaset,
-  vshard_groups?: VshardGroup[]
+  vshard_groups?: VshardGroup[],
+  selfURI?: string
 };
 
 const EditReplicasetForm = ({
@@ -98,7 +99,8 @@ const EditReplicasetForm = ({
   onCancel,
   onSubmit,
   vshard_groups,
-  replicaset
+  replicaset,
+  selfURI
 }:
 EditReplicasetFormProps) => {
   if (!replicaset) {
@@ -300,6 +302,7 @@ EditReplicasetFormProps) => {
                         R.map(([val]) => val),
                         R.groupBy(R.prop('uuid'))
                       )(replicaset.servers || [])}
+                      selfURI={selfURI}
                     />
                   </LabeledInput>
                 )}

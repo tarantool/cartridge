@@ -42,6 +42,7 @@ type ConfigureServerModalProps = {
   setModalFilter: Function,
   joinServer: Function,
   createReplicaset: Function,
+  selfURI?: string
 }
 
 class ConfigureServerModal extends React.Component<ConfigureServerModalProps> {
@@ -55,7 +56,8 @@ class ConfigureServerModal extends React.Component<ConfigureServerModalProps> {
       replicasetList,
       serverList,
       selectedServerUri,
-      setModalFilter
+      setModalFilter,
+      selfURI
     } = this.props;
 
     const selectedServers = (
@@ -77,6 +79,7 @@ class ConfigureServerModal extends React.Component<ConfigureServerModalProps> {
               knownRoles={knownRoles}
               onSubmit={this.handleCreateReplicasetSubmit}
               onCancel={this.handleClose}
+              selfURI={selfURI}
             />
           </div>
         )
@@ -96,6 +99,7 @@ class ConfigureServerModal extends React.Component<ConfigureServerModalProps> {
               filteredReplicasetList={filteredReplicasetList}
               selectedServers={selectedServers}
               setFilter={setModalFilter}
+              selfURI={selfURI}
             />
           </div>
         )
@@ -142,7 +146,8 @@ const mapStateToProps = state => {
     app: {
       clusterSelf: {
         knownRoles,
-        vshard_groups
+        vshard_groups,
+        uri: selfURI
       }
     },
     clusterPage: {
@@ -164,6 +169,7 @@ const mapStateToProps = state => {
     replicasetList,
     selectedServerUri,
     serverList,
+    selfURI,
     loading: !pageDataRequestStatus.loaded || pageDataRequestStatus.loading
   };
 };

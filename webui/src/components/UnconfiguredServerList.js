@@ -7,6 +7,7 @@ import {
   Button,
   HealthStatus,
   IconGear,
+  IconGeoPin,
   Text,
   TiledList,
   UriLabel
@@ -91,7 +92,7 @@ class UnconfiguredServerList extends React.PureComponent<UnconfiguredServerListP
             /> */}
             <div className={styles.heading}>
               <Text variant='h4' tag='span'>{item.alias}</Text>
-              <UriLabel uri={item.uri} />
+              <UriLabel uri={item.uri} icon={uri && item.uri === uri && IconGeoPin} />
             </div>
             <HealthStatus className={styles.status} status={item.status} message={item.message} />
             <Button

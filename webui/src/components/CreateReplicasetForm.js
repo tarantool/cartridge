@@ -83,6 +83,7 @@ const initialValues = {
 };
 
 type CreateReplicasetFormProps = {
+  selfURI?: string,
   knownRoles?: Role[],
   onCancel: () => void,
   onSubmit: (d: CreateReplicasetArgs) => void,
@@ -92,6 +93,7 @@ type CreateReplicasetFormProps = {
 };
 
 const CreateReplicasetForm = ({
+  selfURI,
   knownRoles,
   onCancel,
   onSubmit,
@@ -128,7 +130,7 @@ CreateReplicasetFormProps) => (
       return (
         <form className={styles.form} onSubmit={handleSubmit}>
           <PopupBody className={styles.wrap}>
-            <SelectedServersList className={styles.splash} serverList={selectedServers} />
+            <SelectedServersList className={styles.splash} serverList={selectedServers} selfURI={selfURI} />
             <FormSpy
               subscription={{ values: true }}
               onChange={({ values }) => {

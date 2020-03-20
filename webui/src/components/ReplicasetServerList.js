@@ -107,6 +107,7 @@ class ReplicasetServerList extends React.PureComponent<ReplicasetServerListProps
                   onServerLabelClick={onServerLabelClick}
                   tagsHighlightingClassName={SERVER_LABELS_HIGHLIGHTING_CLASS}
                   totalBucketsCount={clusterSelf && clusterSelf.vshard_bucket_count}
+                  selfURI={clusterSelf && clusterSelf.uri}
                   {...server}
                 />
               )}

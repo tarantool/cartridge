@@ -2,7 +2,13 @@
 // TODO: move to uikit
 import * as React from 'react';
 import { css } from 'react-emotion';
-import { HealthStatus, LeaderFlag, Text, UriLabel } from '@tarantool.io/ui-kit';
+import {
+  HealthStatus,
+  IconGeoPin,
+  LeaderFlag,
+  Text,
+  UriLabel
+} from '@tarantool.io/ui-kit';
 
 const styles = {
   item: css`
@@ -34,6 +40,7 @@ const styles = {
 
 type ServerShortInfoProps = {
   activeMaster?: boolean,
+  selfURI?: string,
   status?: string,
   uri: string,
   alias: string,
@@ -44,6 +51,7 @@ export default class ServerShortInfo extends React.PureComponent<ServerShortInfo
   render() {
     const {
       activeMaster,
+      selfURI,
       status,
       uri,
       alias,
@@ -59,7 +67,7 @@ export default class ServerShortInfo extends React.PureComponent<ServerShortInfo
           )}
           <div className={styles.heading}>
             <Text variant='h4'>{alias}</Text>
-            <UriLabel uri={uri} />
+            <UriLabel uri={uri} icon={selfURI && uri === selfURI && IconGeoPin} />
           </div>
           <HealthStatus status={status} message={message} />
         </div>
