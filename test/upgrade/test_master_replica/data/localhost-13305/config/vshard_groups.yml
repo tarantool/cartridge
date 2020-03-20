@@ -1,0 +1,10 @@
+---
+default:
+  rebalancer_max_receiving: 100
+  bootstrapped: true
+  collect_bucket_garbage_interval: 0.5
+  collect_lua_garbage: false
+  sync_timeout: 1
+  bucket_count: 3000
+  rebalancer_disbalance_threshold: 1
+...

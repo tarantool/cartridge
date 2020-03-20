@@ -1,0 +1,35 @@
+---
+replicasets:
+  bbbbbbbb-0000-0000-0000-000000000000:
+    weight: 1
+    master:
+    - bbbbbbbb-bbbb-0000-0000-000000000001
+    - bbbbbbbb-bbbb-0000-0000-000000000002
+    alias: unnamed
+    roles:
+      myrole-permanent: true
+      vshard-storage: true
+    vshard_group: default
+  aaaaaaaa-0000-0000-0000-000000000000:
+    master:
+    - aaaaaaaa-aaaa-0000-0000-000000000001
+    weight: 0
+    roles:
+      myrole-permanent: true
+      vshard-router: true
+    alias: unnamed
+servers:
+  bbbbbbbb-bbbb-0000-0000-000000000002:
+    disabled: false
+    replicaset_uuid: bbbbbbbb-0000-0000-0000-000000000000
+    uri: localhost:13305
+  bbbbbbbb-bbbb-0000-0000-000000000001:
+    disabled: false
+    replicaset_uuid: bbbbbbbb-0000-0000-0000-000000000000
+    uri: localhost:13303
+  aaaaaaaa-aaaa-0000-0000-000000000001:
+    disabled: false
+    replicaset_uuid: aaaaaaaa-0000-0000-0000-000000000000
+    uri: localhost:13301
+failover: false
+...
