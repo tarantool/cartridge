@@ -2,7 +2,6 @@
 // TODO: move to uikit
 import * as React from 'react';
 import { css, cx } from 'react-emotion';
-import Tooltip from 'src/components/Tooltip';
 import ServerLabels, { type Label } from 'src/components/ServerLabels';
 import store from 'src/store/instance';
 import {
@@ -17,6 +16,7 @@ import {
   LeaderFlag,
   ProgressBar,
   Text,
+  Tooltip,
   UriLabel
 } from '@tarantool.io/ui-kit';
 import { showExpelModal } from '../store/actions/clusterPage.actions';

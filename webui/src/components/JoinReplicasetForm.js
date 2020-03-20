@@ -4,7 +4,6 @@ import { css } from 'react-emotion';
 import { Formik } from 'formik';
 
 import SelectedServersList from 'src/components/SelectedServersList';
-import Tooltip from 'src/components/Tooltip';
 import {
   Button,
   IconInfo,
@@ -14,7 +13,8 @@ import {
   PopupBody,
   PopupFooter,
   RadioButton,
-  Text
+  Text,
+  Tooltip
 } from '@tarantool.io/ui-kit';
 import ReplicasetRoles from 'src/components/ReplicasetRoles';
 import FormField from 'src/components/FormField';
