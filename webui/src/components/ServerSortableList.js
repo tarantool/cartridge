@@ -2,7 +2,13 @@ import React from 'react'
 import { sortableContainer, sortableElement } from 'react-sortable-hoc';
 import { css, cx } from 'react-emotion';
 import arrayMove from 'array-move'
-import { IconBurger, LeaderFlagSmall, Text, UriLabel } from '@tarantool.io/ui-kit';
+import {
+  IconBurger,
+  IconGeoPin,
+  LeaderFlagSmall,
+  Text,
+  UriLabel
+} from '@tarantool.io/ui-kit';
 
 const styles = {
   uriIcon: css`
@@ -58,14 +64,14 @@ const styles = {
   `
 }
 
-const SortableItem = sortableElement(({ item, num }) =>
+const SortableItem = sortableElement(({ item, num, selfURI }) =>
   <div className={styles.sortableItem}>
     <Text className={styles.alias} tag='div'>
       <IconBurger className={styles.iconMargin} />
       {item.alias || item.uuid}
     </Text>
     {num === 0 ?<LeaderFlagSmall  className={styles.leaderFlag} /> : null}
-    <UriLabel className={styles.serverUriWrap} uri={item.uri} />
+    <UriLabel className={styles.serverUriWrap} uri={item.uri} icon={selfURI && item.uri === selfURI && IconGeoPin} />
   </div>
 );
 
@@ -73,7 +79,13 @@ const SortableContainer = sortableContainer(({ children, className = '' }) => {
   return <div className={className}>{children}</div>;
 });
 
-export const ServerSortableList = ({ onChange, value, key, serverMap }) => {
+export const ServerSortableList = ({
+  onChange,
+  value,
+  key,
+  serverMap,
+  selfURI
+}) => {
   const items = value
   return (
     <SortableContainer
@@ -84,7 +96,13 @@ export const ServerSortableList = ({ onChange, value, key, serverMap }) => {
       className={cx(styles.container, 'co')}
     >
       {items.map((item, index) => (
-        <SortableItem key={item[key]} num={index} index={index} item={serverMap[item]}/>
+        <SortableItem
+          key={item[key]}
+          num={index}
+          index={index}
+          item={serverMap[item]}
+          selfURI={selfURI}
+        />
       ))}
     </SortableContainer>
   )
