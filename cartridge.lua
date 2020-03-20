@@ -187,6 +187,13 @@ end
 --   List of pages to be hidden in WebUI.
 --   (**Added** in v2.0.1-54, default: `{}`)
 --
+-- @tparam ?boolean opts.upgrade_schema
+--   Run schema upgrade on the leader instance.
+--   (**Added** in v2.0.2-3,
+--   default: `false`, overridden by
+--   env `TARANTOOL_UPGRADE_SCHEMA`
+--   args `--upgrade-schema`)
+--
 -- @tparam ?table box_opts
 --   tarantool extra box.cfg options (e.g. memtx_memory),
 --   that may require additional tuning
@@ -209,6 +216,7 @@ local function cfg(opts, box_opts)
         vshard_groups = '?table',
         console_sock = '?string',
         webui_blacklist = '?table',
+        upgrade_schema = '?boolean',
     }, '?table')
 
     if opts.webui_blacklist ~= nil then
@@ -542,6 +550,7 @@ local function cfg(opts, box_opts)
     local ok, err = confapplier.init({
         workdir = opts.workdir,
         box_opts = box_opts,
+        cartridge_opts = opts,
         binary_port = advertise.service,
         advertise_uri = advertise_uri,
     })
