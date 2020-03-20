@@ -36,7 +36,7 @@ local gql_type_userapi = gql_types.object({
             description = 'Type of external storage for the mode' ..
                 ' "stateful". Only "tarantool" is supported now.',
         },
-        tarantool_params = gql_type_tarantool_cfg.nonNull,
+        tarantool_params = gql_type_tarantool_cfg,
     }
 })
 
@@ -67,7 +67,7 @@ local function init(graphql)
         prefix = 'cluster',
         name = 'failover',
         doc = 'Get current failover state.'
-            .. ' (Deprecated since v2.0.2-??)',
+            .. ' (Deprecated since v2.0.2-2)',
         args = {},
         kind = gql_types.boolean.nonNull,
         callback = module_name .. '.get_failover_enabled',
@@ -78,7 +78,7 @@ local function init(graphql)
         name = 'failover',
         doc = 'Enable or disable automatic failover. '
             .. 'Returns new state.'
-            .. ' (Deprecated since v2.0.2-??)',
+            .. ' (Deprecated since v2.0.2-2)',
         args = {
             enabled = gql_types.boolean.nonNull,
         },

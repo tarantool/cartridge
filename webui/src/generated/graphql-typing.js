@@ -19,20 +19,26 @@ export type Apicluster = {
   self?: ?ServerShortInfo,
   /** Clusterwide DDL schema */
   schema: DdlSchema,
-  /** Get current failover state. */
+  /** Get current failover state. (Deprecated since v2.0.2-2) */
   failover: $ElementType<Scalars, "Boolean">,
-  /** Whether it is reasonble to call bootstrap_vshard mutation */
-  can_bootstrap_vshard: $ElementType<Scalars, "Boolean">,
-  /** List authorized users */
-  users?: ?Array<User>,
-  /** Get list of all registered roles and their dependencies. */
-  known_roles: Array<Role>,
-  /** Get list of known vshard storage groups. */
-  vshard_known_groups: Array<$ElementType<Scalars, "String">>,
-  vshard_groups: Array<VshardGroup>,
-  auth_params: UserManagementApi,
+  /** Get automatic failover configuration. */
+  failover_params: FailoverApi,
   /** Virtual buckets count in cluster */
   vshard_bucket_count: $ElementType<Scalars, "Int">,
+  /** List authorized users */
+  users?: ?Array<User>,
+  /** List issues in cluster */
+  issues?: ?Array<Issue>,
+  auth_params: UserManagementApi,
+  /** Get list of all registered roles and their dependencies. */
+  known_roles: Array<Role>,
+  /** List of pages to be hidden in WebUI */
+  webui_blacklist?: ?Array<$ElementType<Scalars, "String">>,
+  vshard_groups: Array<VshardGroup>,
+  /** Get list of known vshard storage groups. */
+  vshard_known_groups: Array<$ElementType<Scalars, "String">>,
+  /** Whether it is reasonble to call bootstrap_vshard mutation */
+  can_bootstrap_vshard: $ElementType<Scalars, "Boolean">,
   /** Get cluster config sections */
   config: Array<?ConfigSection>
 };
@@ -61,7 +67,7 @@ export type ConfigSectionInput = {
 
 /** Result of schema validation */
 export type DdlCheckResult = {
-  /** Null if validation passed, error message otherwise */
+  /** Error details if validation fails, null otherwise */
   error?: ?$ElementType<Scalars, "String">
 };
 
@@ -94,6 +100,40 @@ export type EditServerInput = {
 export type EditTopologyResult = {
   replicasets: Array<?Replicaset>,
   servers: Array<?Server>
+};
+
+export type Error = {
+  stack?: ?$ElementType<Scalars, "String">,
+  class_name?: ?$ElementType<Scalars, "String">,
+  message: $ElementType<Scalars, "String">
+};
+
+/** Failover parameters managent */
+export type FailoverApi = {
+  tarantool_params: FailoverStateProviderCfgTarantool,
+  /** Supported modes are "disabled", "eventual" and "stateful". */
+  mode: $ElementType<Scalars, "String">,
+  /** Type of external storage for the mode "stateful". Only "tarantool" is supported now. */
+  state_provider?: ?$ElementType<Scalars, "String">
+};
+
+/** State provider configuration (Tarantool) */
+export type FailoverStateProviderCfgInputTarantool = {
+  uri: $ElementType<Scalars, "String">,
+  password: $ElementType<Scalars, "String">
+};
+
+/** State provider configuration (Tarantool) */
+export type FailoverStateProviderCfgTarantool = {
+  uri: $ElementType<Scalars, "String">,
+  password: $ElementType<Scalars, "String">
+};
+
+export type Issue = {
+  level: $ElementType<Scalars, "String">,
+  replicaset_uuid?: ?$ElementType<Scalars, "String">,
+  instance_uuid?: ?$ElementType<Scalars, "String">,
+  message: $ElementType<Scalars, "String">
 };
 
 /** Parameters for joining a new server */
@@ -170,20 +210,22 @@ export type MutationExpel_ServerArgs = {
 export type MutationApicluster = {
   /** Applies DDL schema on cluster */
   schema: DdlSchema,
-  /** Enable or disable automatic failover. Returns new state. */
+  /** Enable or disable automatic failover. Returns new state. (Deprecated since v2.0.2-2) */
   failover: $ElementType<Scalars, "Boolean">,
+  /** Configure automatic failover. */
+  failover_params: FailoverApi,
   /** Checks that schema can be applied on cluster */
   check_schema: DdlCheckResult,
   /** Disable listed servers by uuid */
   disable_servers?: ?Array<?Server>,
   auth_params: UserManagementApi,
-  /** Remove user */
-  remove_user?: ?User,
   /** Edit an existing user */
   edit_user?: ?User,
-  edit_vshard_options: VshardGroup,
   /** Create a new user */
   add_user?: ?User,
+  edit_vshard_options: VshardGroup,
+  /** Remove user */
+  remove_user?: ?User,
   /** Edit cluster topology */
   edit_topology?: ?EditTopologyResult,
   /** Applies updated config on cluster */
@@ -198,6 +240,13 @@ export type MutationApiclusterSchemaArgs = {
 /** Cluster management */
 export type MutationApiclusterFailoverArgs = {
   enabled: $ElementType<Scalars, "Boolean">
+};
+
+/** Cluster management */
+export type MutationApiclusterFailover_ParamsArgs = {
+  tarantool_params?: ?FailoverStateProviderCfgInputTarantool,
+  mode?: ?$ElementType<Scalars, "String">,
+  state_provider?: ?$ElementType<Scalars, "String">
 };
 
 /** Cluster management */
@@ -218,13 +267,16 @@ export type MutationApiclusterAuth_ParamsArgs = {
 };
 
 /** Cluster management */
-export type MutationApiclusterRemove_UserArgs = {
-  username: $ElementType<Scalars, "String">
+export type MutationApiclusterEdit_UserArgs = {
+  password?: ?$ElementType<Scalars, "String">,
+  username: $ElementType<Scalars, "String">,
+  fullname?: ?$ElementType<Scalars, "String">,
+  email?: ?$ElementType<Scalars, "String">
 };
 
 /** Cluster management */
-export type MutationApiclusterEdit_UserArgs = {
-  password?: ?$ElementType<Scalars, "String">,
+export type MutationApiclusterAdd_UserArgs = {
+  password: $ElementType<Scalars, "String">,
   username: $ElementType<Scalars, "String">,
   fullname?: ?$ElementType<Scalars, "String">,
   email?: ?$ElementType<Scalars, "String">
@@ -241,11 +293,8 @@ export type MutationApiclusterEdit_Vshard_OptionsArgs = {
 };
 
 /** Cluster management */
-export type MutationApiclusterAdd_UserArgs = {
-  password: $ElementType<Scalars, "String">,
-  username: $ElementType<Scalars, "String">,
-  fullname?: ?$ElementType<Scalars, "String">,
-  email?: ?$ElementType<Scalars, "String">
+export type MutationApiclusterRemove_UserArgs = {
+  username: $ElementType<Scalars, "String">
 };
 
 /** Cluster management */
@@ -340,10 +389,20 @@ export type Server = {
 
 /** Server information and configuration. */
 export type ServerInfo = {
+  cartridge: ServerInfoCartridge,
+  storage: ServerInfoStorage,
   network: ServerInfoNetwork,
   general: ServerInfoGeneral,
-  replication: ServerInfoReplication,
-  storage: ServerInfoStorage
+  replication: ServerInfoReplication
+};
+
+export type ServerInfoCartridge = {
+  /** Current instance state */
+  state: $ElementType<Scalars, "String">,
+  /** Cartridge version */
+  version: $ElementType<Scalars, "String">,
+  /** Error details if instance is in failure state */
+  error?: ?Error
 };
 
 export type ServerInfoGeneral = {
@@ -419,11 +478,13 @@ export type ServerInfoStorage = {
 /** A short server information */
 export type ServerShortInfo = {
   error?: ?$ElementType<Scalars, "String">,
+  demo_uri?: ?$ElementType<Scalars, "String">,
   uri: $ElementType<Scalars, "String">,
   alias?: ?$ElementType<Scalars, "String">,
   state?: ?$ElementType<Scalars, "String">,
-  uuid?: ?$ElementType<Scalars, "String">,
-  demo_uri?: ?$ElementType<Scalars, "String">
+  instance_name?: ?$ElementType<Scalars, "String">,
+  app_name?: ?$ElementType<Scalars, "String">,
+  uuid?: ?$ElementType<Scalars, "String">
 };
 
 /** Slab allocator statistics. This can be used to monitor the total memory usage (in bytes) and memory fragmentation. */
@@ -531,7 +592,7 @@ export type GetClusterQuery = { __typename?: "Query" } & {
   cluster: ?({ __typename?: "Apicluster" } & $Pick<
     Apicluster,
     { failover: *, can_bootstrap_vshard: *, vshard_bucket_count: * }
-  > & {
+  > & { MenuBlacklist: $ElementType<Apicluster, "webui_blacklist"> } & {
       clusterSelf: ?({ __typename?: "ServerShortInfo" } & $Pick<
         ServerShortInfo,
         { demo_uri: * }
@@ -584,6 +645,10 @@ export type BoxInfoQuery = { __typename?: "Query" } & {
         { name: *, value: * }
       >)>,
       boxinfo: ?({ __typename?: "ServerInfo" } & {
+        cartridge: { __typename?: "ServerInfoCartridge" } & $Pick<
+          ServerInfoCartridge,
+          { version: * }
+        >,
         network: { __typename?: "ServerInfoNetwork" } & $Pick<
           ServerInfoNetwork,
           { io_collect_interval: *, net_msg_max: *, readahead: * }
@@ -671,6 +736,10 @@ export type InstanceDataQuery = { __typename?: "Query" } & {
         { name: *, value: * }
       >)>,
       boxinfo: ?({ __typename?: "ServerInfo" } & {
+        cartridge: { __typename?: "ServerInfoCartridge" } & $Pick<
+          ServerInfoCartridge,
+          { version: * }
+        >,
         network: { __typename?: "ServerInfoNetwork" } & $Pick<
           ServerInfoNetwork,
           { io_collect_interval: *, net_msg_max: *, readahead: * }
@@ -735,6 +804,11 @@ export type InstanceDataQuery = { __typename?: "Query" } & {
         >
       })
     })>,
+  descriptionCartridge: ?({ __typename?: "__Type" } & {
+    fields: ?Array<
+      { __typename?: "__Field" } & $Pick<__Field, { name: *, description: * }>
+    >
+  }),
   descriptionGeneral: ?({ __typename?: "__Type" } & {
     fields: ?Array<
       { __typename?: "__Field" } & $Pick<__Field, { name: *, description: * }>

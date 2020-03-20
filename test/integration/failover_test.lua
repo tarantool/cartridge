@@ -307,7 +307,7 @@ g.test_api_failover = function()
         set_failover_params, {tarantool_params = {uri = '!@#$'}}
     )
     t.assert_error_msg_equals(
-        'topology_new.failover.tarantool_params.password must be string, got nil',
+        'topology_new.failover.tarantool_params.password must be a string, got nil',
         set_failover_params, {tarantool_params = {uri = 'localhost:9'}}
     )
 
