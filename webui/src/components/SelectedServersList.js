@@ -2,7 +2,7 @@
 // TODO: split and move to uikit
 import React from 'react';
 import { css, cx } from 'react-emotion';
-import { Text, UriLabel } from '@tarantool.io/ui-kit';
+import { IconGeoPin, Text, UriLabel } from '@tarantool.io/ui-kit';
 import type { Server } from 'src/generated/graphql-typing';
 
 const styles = {
@@ -40,16 +40,17 @@ const styles = {
 
 type SelectedServersListProps = {
   className?: string,
+  selfURI?: string,
   serverList?: Server[],
 }
 
-const SelectedServersList = ({ className, serverList }: SelectedServersListProps) => (
+const SelectedServersList = ({ className, selfURI, serverList }: SelectedServersListProps) => (
   <ul className={cx(styles.serversList, className)}>
     <Text variant='h3'>Selected servers:</Text>
     {serverList && serverList.map(server => (
       <li className={styles.serversListItem}>
         <Text className={styles.serverListItemAlias} variant='h5' tag='span'>{server.alias}</Text>
-        <UriLabel uri={server.uri} />
+        <UriLabel uri={server.uri} icon={selfURI && selfURI === server.uri && IconGeoPin} />
       </li>
     ))}
   </ul>

@@ -12,6 +12,7 @@ import {
   HealthStatus,
   IconBucket,
   IconChip,
+  IconGeoPin,
   IconMore,
   LeaderFlag,
   ProgressBar,
@@ -135,6 +136,7 @@ type ServerAction = {
 }
 
 type Server = {
+  selfURI?: string,
   statistics?: {
     arenaUsed: number,
     bucketsCount: number,
@@ -172,6 +174,7 @@ class ReplicasetServerListItem extends React.PureComponent<
   render() {
     const {
       activeMaster,
+      selfURI,
       statistics,
       status,
       uri,
@@ -203,7 +206,7 @@ class ReplicasetServerListItem extends React.PureComponent<
                 {alias}
               </Link>
             </Text>
-            <UriLabel uri={uri} />
+            <UriLabel uri={uri} icon={selfURI && uri === selfURI && IconGeoPin} />
           </div>
           <div className={styles.statusGroup}>
             <HealthStatus className={styles.status} status={status} message={message} />

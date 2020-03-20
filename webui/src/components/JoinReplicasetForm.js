@@ -116,6 +116,7 @@ type JoinReplicasetFormData = {
 type JoinReplicasetFormProps = {
   filter: string,
   filteredReplicasetList?: Replicaset[],
+  selfURI?: string,
   onCancel: () => void,
   onSubmit: (d: JoinReplicasetFormData) => void,
   replicasetList?: Replicaset[],
@@ -145,6 +146,7 @@ class JoinReplicasetForm extends React.Component<JoinReplicasetFormProps> {
     const {
       filter,
       filteredReplicasetList,
+      selfURI,
       onCancel,
       onSubmit,
       replicasetList,
@@ -176,7 +178,7 @@ class JoinReplicasetForm extends React.Component<JoinReplicasetFormProps> {
           return (
             <form onSubmit={handleSubmit}>
               <PopupBody>
-                <SelectedServersList className={styles.splash} serverList={selectedServers} />
+                <SelectedServersList className={styles.splash} serverList={selectedServers} selfURI={selfURI} />
                 <FormField
                   className={styles.wideField}
                   itemClassName={styles.radioWrap}
