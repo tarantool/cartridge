@@ -136,7 +136,11 @@ end
 local function get_failover_params()
     return cluster.main_server:graphql({query = [[
         {
-            cluster { failover_params {mode coordinator_uri}}
+            cluster { failover_params {
+                mode
+                state_provider
+                tarantool_params {uri password}
+            }}
         }
     ]]}).data.cluster.failover_params
 end
@@ -146,15 +150,18 @@ local function set_failover_params(vars)
         query = [[
             mutation(
                 $mode: String!
-                $coordinator_uri: String
+                $state_provider: String!
+                $tarantool_params: FailoverStateProviderCfgInputTarantool
             ) {
                 cluster {
                     failover_params(
                         mode: $mode
-                        coordinator_uri: $coordinator_uri
+                        state_provider: $state_provider
+                        tarantool_params: $tarantool_params
                     ) {
                         mode
-                        coordinator_uri
+                        state_provider
+                        tarantool_params {uri password}
                     }
                 }
             }
@@ -292,29 +299,50 @@ g.test_api_failover = function()
 
     -- Set with new GraphQL API
     t.assert_error_msg_equals(
-        'topology_new.failover missing coordinator_uri for mode "stateful"',
+        'topology_new.failover missing state_provider for mode "stateful"',
         set_failover_params, {mode = 'stateful'}
     )
     t.assert_error_msg_equals(
-        'topology_new.failover.coordinator_uri invalid URI "!@#$"',
-        set_failover_params, {coordinator_uri = '!@#$'}
+        'topology_new.failover.tarantool_params.uri invalid URI "!@#$"',
+        set_failover_params, {tarantool_params = {uri = '!@#$'}}
+    )
+    t.assert_error_msg_equals(
+        'topology_new.failover.tarantool_params.password must be string, got nil',
+        set_failover_params, {tarantool_params = {uri = 'localhost:9'}}
+    )
+
+    local tarantool_params = {uri = 'kingdom.com:8', password = 'xxx'}
+    t.assert_equals(
+        set_failover_params({tarantool_params = tarantool_params}),
+        {
+            mode = 'eventual',
+            tarantool_params = tarantool_params,
+        }
     )
     t.assert_equals(
-        set_failover_params({coordinator_uri = 'kingdom.com:8'}),
-        {mode = 'eventual', coordinator_uri = 'kingdom.com:8'}
-    )
-    t.assert_equals(
-        set_failover_params({mode = 'stateful'}),
-        {mode = 'stateful', coordinator_uri = 'kingdom.com:8'}
+        set_failover_params({mode = 'stateful', state_provider = 'tarantool'}),
+        {
+            mode = 'stateful',
+            state_provider = 'tarantool',
+            tarantool_params = tarantool_params,
+        }
     )
 
     t.assert_equals(
         get_failover_params(),
-        {mode = 'stateful', coordinator_uri = 'kingdom.com:8'}
+        {
+            mode = 'stateful',
+            state_provider = 'tarantool',
+            tarantool_params = tarantool_params,
+        }
     )
     t.assert_equals(
         _call('failover_get_params'),
-        {mode = 'stateful', coordinator_uri = 'kingdom.com:8'}
+        {
+            mode = 'stateful',
+            state_provider = 'tarantool',
+            tarantool_params = tarantool_params,
+        }
     )
     t.assert_equals(_call('admin_get_failover'), true)
 
@@ -322,7 +350,11 @@ g.test_api_failover = function()
     t.assert_equals(_call('failover_set_params', {mode = 'disabled'}), true)
     t.assert_equals(
         get_failover_params(),
-        {mode = 'disabled', coordinator_uri = 'kingdom.com:8'}
+        {
+            mode = 'disabled',
+            state_provider = 'tarantool',
+            tarantool_params = tarantool_params,
+        }
     )
 end
 

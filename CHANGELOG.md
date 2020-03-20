@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Deprecated
+
+Lua API:
+
+- `cartridge.admin_get_failover` -> `cartridge.failover_get_params`
+- `cartridge.admin_enable/disable_failover` -> `cartridge.failover_set_params`
+
+GraphQL API:
+
+- `query {cluster {failover} }` -> `query {cluster {failover_params {...} } }`
+- `mutation {cluster {failover()} }` -> `mutation {cluster {failover_params() {...} } }`
+
 ## [2.0.2] - 2020-03-17
 
 ### Added
@@ -57,18 +69,6 @@ Test helpers:
   `reconnect_after` are deprecated and ignored, they never worked as
   intended and will never do. Option `connect_timeout` is deprecated,
   but for backward compatibility treated as `wait_connected`.
-
-### Deprecated
-
-Lua API:
-
-- `cartridge.admin_get_failover` -> `cartridge.failover_get_params`
-- `cartridge.admin_enable/disable_failover` -> `cartridge.failover_set_params`
-
-GraphQL API:
-
-- `query {cluster {failover} }` -> `query {cluster {failover_params {...} } }`
-- `mutation {cluster {failover()} }` -> `mutation {cluster {failover_params() {...} } }`
 
 ### Fixed
 

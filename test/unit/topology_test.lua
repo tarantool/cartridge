@@ -145,38 +145,60 @@ failover:
   mode: 7
 ...]])
 
-    check_config('topology_new.failover.mode "one" is unknown',
+    check_config('topology_new.failover unknown mode "one"',
 [[---
 failover:
   mode: one
 ...]])
 
-    check_config('topology_new.failover missing coordinator_uri for mode "stateful"',
+    check_config('topology_new.failover missing state_provider for mode "stateful"',
 [[---
 failover:
   mode: stateful
-  coordinator_uri: null
+  state_provider: null
 ...]])
 
-    check_config('topology_new.failover.coordinator_uri must be a string, got boolean',
+    check_config('topology_new.failover.state_provider must be a string, got boolean',
 [[---
 failover:
   mode: disabled
-  coordinator_uri: false
+  state_provider: false
 ...]])
 
-    check_config('topology_new.failover.coordinator_uri invalid URI ":-0"',
+    check_config('topology_new.failover unknown state_provider "joe"',
+[[---
+failover:
+  mode: disabled
+  state_provider: joe
+...]])
+
+
+    check_config('topology_new.failover.tarantool_params.uri invalid URI ":-0"',
+[[---
+failover:
+  mode: eventual
+  tarantool_params: {uri: ":-0"}
+...]])
+
+    check_config('topology_new.failover missing tarantool_params',
 [[---
 failover:
   mode: stateful
-  coordinator_uri: ":-0"
+  state_provider: tarantool
 ...]])
 
-    check_config('topology_new.failover.coordinator_uri invalid URI "localhost" (missing port)',
+    check_config('topology_new.failover.tarantool_params.uri invalid URI "localhost" (missing port)',
 [[---
 failover:
-  mode: stateful
-  coordinator_uri: "localhost"
+  mode: eventual
+  tarantool_params: {uri: "localhost"}
+...]])
+
+    check_config('topology_new.failover.tarantool_params.password must be a string, got nil',
+[[---
+failover:
+  mode: eventual
+  tarantool_params: {uri: "localhost:9"}
 ...]])
 
     check_config('topology_new.failover has unknown parameter "enabled"',
@@ -725,7 +747,10 @@ replicasets:
 auth: true
 failover:
   mode: stateful
-  coordinator_uri: kingdom.com:4401
+  state_provider: tarantool
+  tarantool_params:
+    uri: kingdom.com:4401
+    password: ''
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000001:
     replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001

@@ -24,8 +24,9 @@ vars:new('known_roles', {
 --[[ topology_cfg: {
     auth = false,
     failover = nil | boolean | {
-        -- mode = 'disabled'|'eventual'|'stateful',
-        -- coordinator_uri = nil | 'kingdom.com:4401',
+        -- mode = 'disabled' | 'eventual' | 'stateful',
+        -- state_provider = nil | 'tarantool',
+        -- tarantool_params = nil | {uri = string, password = string},
     },
     servers = {
         -- ['instance-uuid-1'] = 'expelled',
@@ -145,42 +146,89 @@ local function validate_schema(field, topology)
             topology.failover.mode == 'disabled' or
             topology.failover.mode == 'eventual' or
             topology.failover.mode == 'stateful',
-            '%s.failover.mode %q is unknown',
+            '%s.failover unknown mode %q',
             field, topology.failover.mode
         )
 
         if topology.failover.mode == 'stateful' then
             e_config:assert(
-                topology.failover.coordinator_uri ~= nil,
-                '%s.failover missing coordinator_uri for mode "stateful"',
+                topology.failover.state_provider ~= nil,
+                '%s.failover missing state_provider for mode "stateful"',
                 field
             )
         end
 
-        if topology.failover.coordinator_uri ~= nil then
+        if topology.failover.state_provider ~= nil then
             e_config:assert(
-                type(topology.failover.coordinator_uri) == 'string',
-                '%s.failover.coordinator_uri must be a string, got %s',
-                field, type(topology.failover.coordinator_uri)
+                type(topology.failover.state_provider) == 'string',
+                '%s.failover.state_provider must be a string, got %s',
+                field, type(topology.failover.state_provider)
+            )
+        end
+
+        if topology.failover.state_provider == 'tarantool' then
+            e_config:assert(
+                topology.failover.tarantool_params ~= nil,
+                '%s.failover missing tarantool_params',
+                field
+            )
+        elseif topology.failover.state_provider ~= nil then
+            e_config:assert(false,
+                '%s.failover unknown state_provider %q',
+                field, topology.failover.state_provider
+            )
+        end
+
+        if topology.failover.tarantool_params ~= nil then
+            local params = topology.failover.tarantool_params
+            local field = field .. '.failover.tarantool_params'
+            e_config:assert(
+                type(params) == 'table',
+                '%s must be a table, got %s',
+                field, type(params)
             )
 
-            local parts = uri.parse(topology.failover.coordinator_uri)
+            e_config:assert(
+                type(params.uri) == 'string',
+                '%s.uri must be a string, got %s',
+                field, type(params.uri)
+            )
+
+            local parts = uri.parse(params.uri)
             e_config:assert(
                 type(parts) == 'table',
-                '%s.failover.coordinator_uri invalid URI %q',
-                field, topology.failover.coordinator_uri
+                '%s.uri invalid URI %q',
+                field, params.uri
             )
 
             e_config:assert(
                 parts.service ~= nil,
-                '%s.failover.coordinator_uri invalid URI %q (missing port)',
-                field, topology.failover.coordinator_uri
+                '%s.uri invalid URI %q (missing port)',
+                field, params.uri
             )
+
+            e_config:assert(
+                type(params.password) == 'string',
+                '%s.password must be a string, got %s',
+                field, type(params.params)
+            )
+
+            local known_keys = {
+                ['uri'] = true,
+                ['password'] = true,
+            }
+            for k, _ in pairs(params) do
+                e_config:assert(
+                    known_keys[k],
+                    '%s has unknown parameter %q', field, k
+                )
+            end
         end
 
         local known_keys = {
             ['mode'] = true,
-            ['coordinator_uri'] = true,
+            ['state_provider'] = true,
+            ['tarantool_params'] = true,
         }
         for k, _ in pairs(topology.failover) do
             e_config:assert(
