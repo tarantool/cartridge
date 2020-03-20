@@ -4,6 +4,24 @@ local gql_types = require('cartridge.graphql.types')
 local lua_api_failover = require('cartridge.lua-api.failover')
 
 
+local gql_type_tarantool_cfg = gql_types.object {
+    name = 'FailoverStateProviderCfgTarantool',
+    description = 'State provider configuration (Tarantool)',
+    fields = {
+        uri = gql_types.string.nonNull,
+        password = gql_types.string.nonNull,
+    }
+}
+
+local gql_type_tarantool_cfg_input = gql_types.inputObject {
+    name = 'FailoverStateProviderCfgInputTarantool',
+    description = 'State provider configuration (Tarantool)',
+    fields = {
+        uri = gql_types.string.nonNull,
+        password = gql_types.string.nonNull,
+    }
+}
+
 local gql_type_userapi = gql_types.object({
     name = 'FailoverAPI',
     description = 'Failover parameters managent',
@@ -13,10 +31,12 @@ local gql_type_userapi = gql_types.object({
             description = 'Supported modes are "disabled",' ..
                 ' "eventual" and "stateful".',
         },
-        coordinator_uri = {
+        state_provider = {
             kind = gql_types.string,
-            description = 'URI of external coordinator.',
+            description = 'Type of external storage for the mode' ..
+                ' "stateful". Only "tarantool" is supported now.',
         },
+        tarantool_params = gql_type_tarantool_cfg,
     }
 })
 
@@ -47,7 +67,7 @@ local function init(graphql)
         prefix = 'cluster',
         name = 'failover',
         doc = 'Get current failover state.'
-            .. ' (Deprecated since v2.0.1-95)',
+            .. ' (Deprecated since v2.0.2-2)',
         args = {},
         kind = gql_types.boolean.nonNull,
         callback = module_name .. '.get_failover_enabled',
@@ -58,7 +78,7 @@ local function init(graphql)
         name = 'failover',
         doc = 'Enable or disable automatic failover. '
             .. 'Returns new state.'
-            .. ' (Deprecated since v2.0.1-95)',
+            .. ' (Deprecated since v2.0.2-2)',
         args = {
             enabled = gql_types.boolean.nonNull,
         },
@@ -81,7 +101,8 @@ local function init(graphql)
         doc = 'Configure automatic failover.',
         args = {
             mode = gql_types.string,
-            coordinator_uri = gql_types.string,
+            state_provider = gql_types.string,
+            tarantool_params = gql_type_tarantool_cfg_input,
         },
         kind = gql_type_userapi.nonNull,
         callback = module_name .. '.set_failover_params',

@@ -1,5 +1,5 @@
 # source: http://localhost:8081/admin/api
-# timestamp: Thu Mar 12 2020 18:09:10 GMT+0300 (Moscow Standard Time)
+# timestamp: Fri Mar 20 2020 17:22:05 GMT+0300 (Moscow Standard Time)
 
 """Cluster management"""
 type Apicluster {
@@ -9,7 +9,7 @@ type Apicluster {
   """Clusterwide DDL schema"""
   schema: DDLSchema!
 
-  """Get current failover state. (Deprecated since v2.0.1-95)"""
+  """Get current failover state. (Deprecated since v2.0.2-2)"""
   failover: Boolean!
 
   """Get automatic failover configuration."""
@@ -99,11 +99,27 @@ type Error {
 
 """Failover parameters managent"""
 type FailoverAPI {
+  tarantool_params: FailoverStateProviderCfgTarantool
+
   """Supported modes are "disabled", "eventual" and "stateful"."""
   mode: String!
 
-  """URI of external coordinator."""
-  coordinator_uri: String
+  """
+  Type of external storage for the mode "stateful". Only "tarantool" is supported now.
+  """
+  state_provider: String
+}
+
+"""State provider configuration (Tarantool)"""
+input FailoverStateProviderCfgInputTarantool {
+  uri: String!
+  password: String!
+}
+
+"""State provider configuration (Tarantool)"""
+type FailoverStateProviderCfgTarantool {
+  uri: String!
+  password: String!
 }
 
 type Issue {
@@ -163,12 +179,12 @@ type MutationApicluster {
   schema(as_yaml: String!): DDLSchema!
 
   """
-  Enable or disable automatic failover. Returns new state. (Deprecated since v2.0.1-95)
+  Enable or disable automatic failover. Returns new state. (Deprecated since v2.0.2-2)
   """
   failover(enabled: Boolean!): Boolean!
 
   """Configure automatic failover."""
-  failover_params(mode: String, coordinator_uri: String): FailoverAPI!
+  failover_params(tarantool_params: FailoverStateProviderCfgInputTarantool, mode: String, state_provider: String): FailoverAPI!
 
   """Checks that schema can be applied on cluster"""
   check_schema(as_yaml: String!): DDLCheckResult!
