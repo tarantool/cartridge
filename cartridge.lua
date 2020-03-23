@@ -299,6 +299,36 @@ local function cfg(opts, box_opts)
         return nil, err
     end
 
+    if box_opts.work_dir ~= nil then
+        log.warn(
+            "Box option 'work_dir' is deprecated." ..
+            " Please, dont't use it"
+        )
+        local ok, err = utils.mktree(box_opts.work_dir)
+        if not ok then
+            return nil, err
+        end
+    end
+
+    for _, option in pairs({'memtx_dir', 'vinyl_dir', 'wal_dir'}) do
+        local path = box_opts[option]
+        if path == nil then
+            path = opts.workdir
+        end
+
+        if not path:startswith('/') then
+            -- calc relative path
+            path = fio.pathjoin(opts.workdir, path)
+        end
+
+        box_opts[option] = path
+
+        local ok, err = utils.mktree(path)
+        if not ok then
+            return nil, err
+        end
+    end
+
     cluster_cookie.init(opts.workdir)
     if opts.cluster_cookie ~= nil then
         cluster_cookie.set_cookie(opts.cluster_cookie)
