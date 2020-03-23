@@ -3,35 +3,25 @@ cartridge:
 
 cartridge.srv-1:
     workdir: dev/3301
-    memtx_dir: memtx
-    wal_dir: wal
     advertise_uri: localhost:3301
     http_port: 8081
 
 cartridge.srv-2:
     workdir: dev/3302
-    memtx_dir: memtx
-    wal_dir: wal
     advertise_uri: localhost:3302
     http_port: 8082
 
 cartridge.srv-3:
     workdir: dev/3303
-    memtx_dir: memtx
-    wal_dir: wal
     advertise_uri: localhost:3303
     http_port: 8083
 
 cartridge.srv-4:
     workdir: dev/3304
-    memtx_dir: memtx
-    wal_dir: wal
     advertise_uri: localhost:3304
     http_port: 8084
 
 cartridge.srv-5:
-    workdir: dev/3305
-    memtx_dir: memtx
-    wal_dir: wal
+    workdir: ./dev/3305
     advertise_uri: localhost:3305
     http_port: 8085

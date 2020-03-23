@@ -12,8 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Respect `box.cfg` options `wal_dir`, `memtx_dir`, `vinyl_dir`. They
   can be either absolute or relative - in the later case it's calculated
-  relative to `cartridge.workdir`, but if `box.work_dir` specified, path
-  calculated from it.
+  relative to `cartridge.workdir`.
 
 ### Deprecated
 
