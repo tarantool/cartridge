@@ -26,7 +26,6 @@
 -- @local
 
 local log = require('log')
-local uri = require('uri')
 local fiber = require('fiber')
 local checks = require('checks')
 local errors = require('errors')
@@ -297,11 +296,14 @@ local function cfg(clusterwide_config)
         })
         vars.failover_fiber:name('cartridge.eventual-failover')
 
-    elseif failover_cfg.mode == 'stateful' then
+    elseif failover_cfg.mode == 'stateful' and failover_cfg.state_provider == 'tarantool' then
+        local params = assert(failover_cfg.tarantool_params)
         local conn, err = NetboxConnectError:pcall(
-            netbox.connect, assert(failover_cfg.storage_uri), {
+            netbox.connect, assert(params.uri), {
             wait_connected = false,
             reconnect_after = 1.0,
+            user = 'client',
+            password = params.password,
         })
 
         if conn == nil then
@@ -309,7 +311,7 @@ local function cfg(clusterwide_config)
         else
             log.info(
                 'Stateful failover enabled with external storage at %s',
-                uri.format(uri.parse(failover_cfg.storage_uri))
+                params.uri
             )
         end
 
@@ -327,6 +329,8 @@ local function cfg(clusterwide_config)
             end,
         })
         vars.failover_fiber:name('cartridge.stateful-failover')
+    else
+        error('Unknown failover mode')
     end
 
     accept_appointments(first_appointments)

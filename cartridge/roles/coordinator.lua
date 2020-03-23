@@ -4,6 +4,7 @@ local checks = require('checks')
 local errors = require('errors')
 local netbox = require('net.box')
 local membership = require('membership')
+local uri_lib = require('uri')
 
 local vars = require('cartridge.vars').new('cartridge.roles.coordinator')
 local topology = require('cartridge.topology')
@@ -244,15 +245,29 @@ local function apply_config(conf, _)
         return true
     end
 
+    if failover_cfg.state_provider ~= 'tarantool' then
+        local err = string.format(
+            'assertion failed! unknown state_provider %s',
+            failover_cfg.state_provider
+        )
+        error(err)
+    end
+
     if vars.connect_fiber == nil
     or vars.connect_fiber:status() == 'dead'
     then
-        log.info('Starting failover coordinator with external storage at %s',
-            failover_cfg.storage_uri
+        log.info(
+            'Starting failover coordinator' ..
+            ' with external storage at %s',
+            failover_cfg.tarantool_params.uri
         )
-        vars.connect_fiber = fiber.new(connect_loop,
-            failover_cfg.storage_uri
-        )
+
+        local parts = uri_lib.parse(failover_cfg.tarantool_params.uri)
+        parts.login = 'client'
+        parts.password = failover_cfg.tarantool_params.password
+        local storage_uri = uri_lib.format(parts, true)
+
+        vars.connect_fiber = fiber.new(connect_loop, storage_uri)
         vars.connect_fiber:name('failover-connect-kv')
     end
     vars.membership_notification:broadcast()

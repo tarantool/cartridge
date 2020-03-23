@@ -72,12 +72,11 @@ g.before_all(function()
         'package.loaded.cartridge.failover_set_params',
         {{
             mode = 'stateful',
-            storage_uri = require('uri').format({
-                host = '127.0.0.1',
-                service = tostring(g.kingdom.net_box_port),
-                login = 'client',
+            state_provider = 'tarantool',
+            tarantool_params = {
+                uri = g.kingdom.net_box_uri,
                 password = kvpassword,
-            }, true),
+            },
         }}
     )
     helpers.retrying({}, function()
