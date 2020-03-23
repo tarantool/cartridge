@@ -42,6 +42,7 @@ function g.test_graphql_known_roles()
     })
 
     t.assert_equals(response.data.cluster.known_roles, {
+        {name = 'failover-coordinator', dependencies = {}},
         {name = 'vshard-storage', dependencies = {}},
         {name = 'vshard-router', dependencies = {}},
         {name = 'myrole-dependency', dependencies = {}},

@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   can be either absolute or relative - in the later case it's calculated
   relative to `cartridge.workdir`.
 
+- Implement stateful failover mode.
+
 ### Deprecated
 
 Lua API:

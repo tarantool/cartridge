@@ -509,6 +509,10 @@ local function cfg(opts, box_opts)
         service_registry.set('httpd', httpd)
     end
 
+    local ok, err = roles.register_role('cartridge.roles.coordinator')
+    if not ok then
+        return nil, err
+    end
     for _, role in ipairs(opts.roles or {}) do
         local ok, err = roles.register_role(role)
         if not ok then

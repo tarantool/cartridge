@@ -44,6 +44,7 @@ function g.test_api()
     })
 
     t.assert_equals(res['data']['cluster']['known_roles'], {
+        {['name'] = 'failover-coordinator', ['dependencies'] = {}},
         {['name'] = 'vshard-storage', ['dependencies'] = {}},
         {['name'] = 'vshard-router', ['dependencies'] = {}},
         {['name'] = 'myrole-dependency', ['dependencies'] = {}},
