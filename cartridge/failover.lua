@@ -369,9 +369,9 @@ local function is_rw()
 end
 
 --- Get current stateful failover coordinator
--- @function get_kingdom_conn
+-- @function get_coordinator
 -- @tparam ?number timeout
--- @return[1] coordinator (table)
+-- @treturn[1] table coordinator
 -- @treturn[2] nil
 -- @treturn[2] table Error description
 local function get_coordinator(timeout)
