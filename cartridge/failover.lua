@@ -41,6 +41,7 @@ local FailoverError = errors.new_class('FailoverError')
 local ApplyConfigError = errors.new_class('ApplyConfigError')
 local NetboxConnectError = errors.new_class('NetboxConnectError')
 local ValidateConfigError = errors.new_class('ValidateConfigError')
+local StateProviderError = errors.new_class('StateProviderError')
 
 vars:new('membership_notification', membership.subscribe())
 vars:new('clusterwide_config')
@@ -374,10 +375,10 @@ end
 -- @treturn[2] nil
 -- @treturn[2] table Error description
 local function get_coordinator()
-    if vars.kingdom_conn == nil then
-        return nil, NetboxConnectError:new(
-            'There is no connection to external storage'
-        )
+    if vars.kingdom_conn == nil
+    or not vars.kingdom_conn:is_connected()
+    then
+        return nil, StateProviderError:new('State provider unavailable')
     end
 
     return errors.netbox_call(

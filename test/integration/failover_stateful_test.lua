@@ -109,14 +109,16 @@ function g.test_kingdom_restart()
     fio.rmtree(g.kingdom.workdir)
     g.kingdom:stop()
 
-    local res, err = eval('router', [[
-        return require('cartridge.failover').get_coordinator()
-    ]])
-    t.assert_not(res)
-    t.assert_covers(err, {
-        class_name = 'Net.box call failed',
-        err = 'Connection reset by peer'
-    })
+    helpers.retrying({}, function()
+        local res, err = eval('router', [[
+            return require('cartridge.failover').get_coordinator()
+        ]])
+        t.assert_not(res)
+        t.assert_covers(err, {
+            class_name = 'StateProviderError',
+            err = 'State provider unavailable'
+        })
+    end)
 
     g.kingdom:start()
     helpers.retrying({}, function()
@@ -127,12 +129,14 @@ function g.test_kingdom_restart()
         )
     end)
 
-    t.assert_equals(
-        eval('router', "return require('cartridge.failover').get_coordinator()"), {
-            uri = 'localhost:13301',
-            uuid = 'aaaaaaaa-aaaa-0000-0000-000000000001'
-        }
-    )
+    helpers.retrying({}, function()
+        t.assert_equals(
+            eval('router', "return require('cartridge.failover').get_coordinator()"), {
+                uri = 'localhost:13301',
+                uuid = 'aaaaaaaa-aaaa-0000-0000-000000000001'
+            }
+        )
+    end)
 
     helpers.retrying({}, function()
         t.assert_equals(eval('router',    q_leadership), storage_1_uuid)
