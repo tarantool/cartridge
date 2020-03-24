@@ -370,6 +370,26 @@ g.test_switchover = function()
     set_master(replicaset_uuid, storage_2_uuid)
     cluster:retrying({}, check_active_master, storage_2_uuid)
     t.assert_equals(get_master(replicaset_uuid), {storage_2_uuid, storage_2_uuid})
+
+    -- Promotion is not available for disabled failover
+    local ok, err = cluster.main_server.net_box:eval([[
+        return require('cartridge').failover_promote(...)
+    ]], {{[replicaset_uuid] = storage_1_uuid}})
+    t.assert_equals(ok, nil)
+    t.assert_covers(err, {
+        class_name = 'PromoteLeaderError',
+        err = 'Promotion only works with stateful failover, not in "disabled" mode',
+    })
+
+    set_failover(true)
+    local ok, err = cluster.main_server.net_box:eval([[
+        return require('cartridge').failover_promote(...)
+    ]], {{[replicaset_uuid] = storage_1_uuid}})
+    t.assert_equals(ok, nil)
+    t.assert_covers(err, {
+        class_name = 'PromoteLeaderError',
+        err = 'Promotion only works with stateful failover, not in "eventual" mode',
+    })
 end
 
 g.test_sigkill = function()

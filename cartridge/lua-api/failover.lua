@@ -8,8 +8,11 @@ local errors = require('errors')
 local twophase = require('cartridge.twophase')
 local topology = require('cartridge.topology')
 local confapplier = require('cartridge.confapplier')
+local failover = require('cartridge.failover')
+local rpc = require('cartridge.rpc')
 
 local FailoverSetParamsError = errors.new_class('FailoverSetParamsError')
+local PromoteLeaderError = errors.new_class('PromoteLeaderError')
 
 --- Get failover configuration.
 --
@@ -115,9 +118,48 @@ local function set_failover_enabled(enabled)
     return get_failover_enabled()
 end
 
+--- Promote leaders in replicasets.
+--
+-- @function promote
+-- @tparam table { [replicaset_uuid] = leader_uuid }
+-- @treturn[1] boolean true On success
+-- @treturn[2] nil
+-- @treturn[2] table Error description
+local function promote(replicaset_leaders)
+    checks('table')
+
+    local mode = get_params().mode
+    if mode ~= 'stateful' then
+        return nil, PromoteLeaderError:new("Promotion only works with stateful failover, not in %q mode", mode)
+    end
+
+    local coordinator, err = failover.get_coordinator()
+    if err ~= nil then
+        return nil, err
+    end
+
+    if coordinator == nil then
+        return nil, PromoteLeaderError:new('There is no active coordinator')
+    end
+
+    local _, err = rpc.call(
+            'failover-coordinator',
+            'appoint_leaders',
+            {replicaset_leaders},
+            { uri = coordinator.uri }
+    )
+
+    if err ~= nil then
+        return nil, err
+    end
+
+    return true
+end
+
 return {
     get_params = get_params,
     set_params = set_params,
+    promote = promote,
     get_failover_enabled = get_failover_enabled, -- deprecated
     set_failover_enabled = set_failover_enabled, -- deprecated
 }

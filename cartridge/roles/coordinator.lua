@@ -284,6 +284,10 @@ end
 -- @treturn[2] table Error description
 local function appoint_leaders(leaders)
     checks('table')
+
+    local servers = vars.topology_cfg.servers
+    local replicasets = vars.topology_cfg.replicasets
+
     local updates = {}
     for k, v in pairs(leaders) do
         if type(k) ~= 'string' or type(v) ~= 'string' then
@@ -291,6 +295,21 @@ local function appoint_leaders(leaders)
                 ' (keys and values must be strings)', 2
             )
         end
+
+        local replicaset = replicasets[k]
+        if replicaset == nil then
+            return nil, AppointmentError:new('Replicaset "%s" does not exist', k)
+        end
+
+        local server = servers[v]
+        if server == nil then
+            return nil, AppointmentError:new('Server "%s" does not exist', v)
+        end
+
+        if server.replicaset_uuid ~= k then
+            return nil, AppointmentError:new('Server "%s" does not belong to replicaset "%s"', v, k)
+        end
+
         table.insert(updates, {k, v})
     end
 
