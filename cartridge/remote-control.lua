@@ -354,7 +354,8 @@ local function bind(host, port)
 
     if not server then
         local err = errors.new('RemoteControlError',
-            "Can't start server: %s", errno.strerror()
+            "Can't start server on %s:%s: %s",
+            host, port, errno.strerror()
         )
         return nil, err
     end

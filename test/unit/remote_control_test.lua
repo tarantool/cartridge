@@ -112,7 +112,7 @@ function g.test_start()
     t.assert_not(ok)
     t.assert_equals(err.class_name, "RemoteControlError")
     t.assert_equals(err.err,
-        "Can't start server: " .. errno.strerror(errno.EADDRINUSE)
+        "Can't start server on 127.0.0.1:13301: " .. errno.strerror(errno.EADDRINUSE)
     )
 
     remote_control.stop()
@@ -123,29 +123,29 @@ function g.test_start()
     t.assert_equals(err.class_name, "RemoteControlError")
     -- MacOS and Linux returns different errno
     assertStrOneOf(err.err, {
-        "Can't start server: " .. errno.strerror(errno.EIO),
-        "Can't start server: " .. errno.strerror(errno.EAFNOSUPPORT),
+        "Can't start server on 0.0.0.0:-1: " .. errno.strerror(errno.EIO),
+        "Can't start server on 0.0.0.0:-1: " .. errno.strerror(errno.EAFNOSUPPORT),
     })
 
     local ok, err = remote_control.bind('255.255.255.255', 13301)
     t.assert_not(ok)
     t.assert_equals(err.class_name, "RemoteControlError")
     t.assert_equals(err.err,
-        "Can't start server: " .. errno.strerror(errno.EINVAL)
+        "Can't start server on 255.255.255.255:13301: " .. errno.strerror(errno.EINVAL)
     )
 
     local ok, err = remote_control.bind('google.com', 13301)
     t.assert_not(ok)
     t.assert_equals(err.class_name, "RemoteControlError")
     t.assert_equals(err.err,
-        "Can't start server: " .. errno.strerror(errno.EADDRNOTAVAIL)
+        "Can't start server on google.com:13301: " .. errno.strerror(errno.EADDRNOTAVAIL)
     )
 
     local ok, err = remote_control.bind('8.8.8.8', 13301)
     t.assert_not(ok)
     t.assert_equals(err.class_name, "RemoteControlError")
     t.assert_equals(err.err,
-        "Can't start server: " .. errno.strerror(errno.EADDRNOTAVAIL)
+        "Can't start server on 8.8.8.8:13301: " .. errno.strerror(errno.EADDRNOTAVAIL)
     )
 
     local ok, err = remote_control.bind('localhost', 13301)
