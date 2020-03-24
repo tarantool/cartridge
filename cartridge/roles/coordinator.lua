@@ -153,7 +153,9 @@ local function take_control(uri)
     if conn == nil then
         return nil, err
     elseif not conn:is_connected() then
-        return nil, NetboxConnectError:new('%q: %s', uri, conn.error)
+        return nil, NetboxConnectError:new('"%s:%s": %s',
+            conn.host, conn.port, conn.error
+        )
     end
 
     local lock_delay, err = errors.netbox_call(conn, 'get_lock_delay',
