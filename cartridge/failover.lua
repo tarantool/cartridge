@@ -41,10 +41,12 @@ local FailoverError = errors.new_class('FailoverError')
 local ApplyConfigError = errors.new_class('ApplyConfigError')
 local NetboxConnectError = errors.new_class('NetboxConnectError')
 local ValidateConfigError = errors.new_class('ValidateConfigError')
+local StateProviderError = errors.new_class('StateProviderError')
 
 vars:new('membership_notification', membership.subscribe())
 vars:new('clusterwide_config')
 vars:new('failover_fiber')
+vars:new('kingdom_conn')
 vars:new('cache', {
     active_leaders = {--[[ [replicaset_uuid] = leader_uuid ]]},
     is_leader = false,
@@ -308,12 +310,15 @@ local function cfg(clusterwide_config)
 
         if conn == nil then
             log.warn('Stateful failover not enabled: %s', err)
+            return nil, err
         else
             log.info(
                 'Stateful failover enabled with external storage at %s',
                 params.uri
             )
         end
+
+        vars.kingdom_conn = conn
 
         -- WARNING: network yields
         first_appointments = _get_appointments_stateful_mode(conn, 0)
@@ -364,9 +369,28 @@ local function is_rw()
     return vars.cache.is_rw
 end
 
+--- Get current stateful failover coordinator
+-- @function get_coordinator
+-- @treturn[1] table coordinator
+-- @treturn[2] nil
+-- @treturn[2] table Error description
+local function get_coordinator()
+    if vars.kingdom_conn == nil
+    or not vars.kingdom_conn:is_connected()
+    then
+        return nil, StateProviderError:new('State provider unavailable')
+    end
+
+    return errors.netbox_call(
+        vars.kingdom_conn, 'get_coordinator',
+        {}, {timeout = vars.options.NETBOX_CALL_TIMEOUT}
+    )
+end
+
 return {
     cfg = cfg,
     get_active_leaders = get_active_leaders,
     is_leader = is_leader,
     is_rw = is_rw,
+    get_coordinator = get_coordinator,
 }
