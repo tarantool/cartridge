@@ -114,10 +114,7 @@ function g.test_kingdom_restart()
         return require('cartridge.failover').get_coordinator()
     ]])
     t.assert_not(res)
-    t.assert_covers(err, {
-        err = 'Connection reset by peer',
-        class_name = 'Net.box call failed'
-    })
+    t.assert_covers(err, {class_name = 'Net.box call failed'})
 
     g.kingdom:start()
     helpers.retrying({}, function()
