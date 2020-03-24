@@ -25,7 +25,7 @@ class App extends React.Component {
   renderApp = () => {
     return (
       <PageLayout>
-        <AppTitle title={'Cluster'}/>
+        <AppTitle title='Cluster'/>
         <Switch>
           <Route path={`/cluster/dashboard/instance/:instanceUUID`} component={ClusterPage} />
           <Route component={ClusterPage} />

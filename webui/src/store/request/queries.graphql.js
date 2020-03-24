@@ -27,6 +27,8 @@ export const getClusterQuery = gql`
   query getCluster {
     cluster {
       clusterSelf: self {
+        app_name
+        instance_name
         uri: uri
         uuid: uuid
         demo_uri

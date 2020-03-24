@@ -29,7 +29,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Indicate memory fragmentation level in WebUI.
 
-- Failover leader promotion
+- Failover leader promotion.
+
+- Show application and instance names in app title.
 
 ### Changed
 
