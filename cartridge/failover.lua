@@ -45,6 +45,7 @@ local ValidateConfigError = errors.new_class('ValidateConfigError')
 vars:new('membership_notification', membership.subscribe())
 vars:new('clusterwide_config')
 vars:new('failover_fiber')
+vars:new('kingdom_conn')
 vars:new('cache', {
     active_leaders = {--[[ [replicaset_uuid] = leader_uuid ]]},
     is_leader = false,
@@ -308,12 +309,15 @@ local function cfg(clusterwide_config)
 
         if conn == nil then
             log.warn('Stateful failover not enabled: %s', err)
+            return nil, err
         else
             log.info(
                 'Stateful failover enabled with external storage at %s',
                 params.uri
             )
         end
+
+        vars.kingdom_conn = conn
 
         -- WARNING: network yields
         first_appointments = _get_appointments_stateful_mode(conn, 0)
@@ -364,9 +368,18 @@ local function is_rw()
     return vars.cache.is_rw
 end
 
+--- Get cached connection to kingdom at failover stateful mode
+-- @function get_kingdom_conn
+-- @local
+-- @treturn conn / nil
+local function get_kingdom_conn()
+    return vars.kingdom_conn
+end
+
 return {
     cfg = cfg,
     get_active_leaders = get_active_leaders,
     is_leader = is_leader,
     is_rw = is_rw,
+    get_kingdom_conn = get_kingdom_conn,
 }
