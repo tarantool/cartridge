@@ -106,15 +106,17 @@ local function eval(alias, ...)
 end
 
 function g.test_kingdom_restart()
-    local router = g.cluster:server('router')
     fio.rmtree(g.kingdom.workdir)
     g.kingdom:stop()
 
-    local res, err = router.net_box:eval([[
+    local res, err = eval('router', [[
         return require('cartridge.failover').get_coordinator()
     ]])
     t.assert_not(res)
-    t.assert_covers(err, {class_name = 'Net.box call failed'})
+    t.assert_covers(err, {
+        class_name = 'Net.box call failed',
+        err = 'Connection reset by peer'
+    })
 
     g.kingdom:start()
     helpers.retrying({}, function()
@@ -126,7 +128,7 @@ function g.test_kingdom_restart()
     end)
 
     t.assert_equals(
-        router.net_box:eval("return require('cartridge.failover').get_coordinator()"), {
+        eval('router', "return require('cartridge.failover').get_coordinator()"), {
             uri = 'localhost:13301',
             uuid = 'aaaaaaaa-aaaa-0000-0000-000000000001'
         }

@@ -370,11 +370,10 @@ end
 
 --- Get current stateful failover coordinator
 -- @function get_coordinator
--- @tparam ?number timeout
 -- @treturn[1] table coordinator
 -- @treturn[2] nil
 -- @treturn[2] table Error description
-local function get_coordinator(timeout)
+local function get_coordinator()
     if vars.kingdom_conn == nil then
         return nil, NetboxConnectError:new(
             'There is no connection to external storage'
@@ -383,7 +382,7 @@ local function get_coordinator(timeout)
 
     return errors.netbox_call(
         vars.kingdom_conn, 'get_coordinator',
-        {}, {timeout = timeout or 5}
+        {}, {timeout = vars.options.NETBOX_CALL_TIMEOUT}
     )
 end
 
