@@ -123,7 +123,7 @@ local function is_kingdom_alive()
 
     local coordinator, err = errors.netbox_call(
         conn,
-        '_G.get_coordinator',
+        'get_coordinator',
         {}, {timeout = 5}
     )
     if err ~= nil then

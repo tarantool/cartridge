@@ -105,7 +105,25 @@ local function eval(alias, ...)
     return g.cluster:server(alias).net_box:eval(...)
 end
 
+local function list_warnings(server)
+    return server:graphql({query = [[{
+        cluster {
+            issues {
+                level
+                replicaset_uuid
+                message
+                instance_uuid
+                topic
+            }
+        }
+    }]]}).data.cluster
+end
+
 function g.test_kingdom_restart()
+    local res = list_warnings(g.cluster:server('router'))
+    log.info('\n\n\n')
+    log.info(res)
+
     fio.rmtree(g.kingdom.workdir)
     g.kingdom:stop()
 
@@ -144,6 +162,10 @@ function g.test_kingdom_restart()
         t.assert_equals(eval('storage-2', q_leadership), storage_1_uuid)
         t.assert_equals(eval('storage-3', q_leadership), storage_1_uuid)
     end)
+
+    local res = list_warnings(g.cluster:server('router'))
+    log.info('\n\n\n')
+    log.info(res)
 
     t.assert_equals(eval('storage-1', q_readonliness), false)
     t.assert_equals(eval('storage-2', q_readonliness), true)
@@ -245,6 +267,10 @@ function g.test_leaderless()
         g.cluster:server(s):start()
     end
 
+    local res = list_warnings(g.cluster:server('router'))
+    log.info('\n\n\n')
+    log.info(res)
+
     -----------------------------------------------------
     -- Chack that replicaset without leaders can exist
     g.cluster:wait_until_healthy(g.cluster.main_server)
@@ -309,4 +335,10 @@ function g.test_leaderless()
     t.assert_equals(eval('storage-1', q_readonliness), false)
     t.assert_equals(eval('storage-2', q_readonliness), true)
     t.assert_equals(eval('storage-3', q_readonliness), true)
+    t.helpers.retrying({}, function()
+        local res = list_warnings(g.cluster:server('router'))
+        log.info('\n\n\nkingdom restarted')
+        log.info(res)
+        error()
+    end)
 end
