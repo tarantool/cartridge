@@ -368,12 +368,23 @@ local function is_rw()
     return vars.cache.is_rw
 end
 
---- Get cached connection to kingdom at failover stateful mode
+--- Get current stateful failover coordinator
 -- @function get_kingdom_conn
--- @local
--- @treturn conn / nil
-local function get_kingdom_conn()
-    return vars.kingdom_conn
+-- @tparam ?number timeout
+-- @return[1] coordinator (table)
+-- @treturn[2] nil
+-- @treturn[2] table Error description
+local function get_coordinator(timeout)
+    if vars.kingdom_conn == nil then
+        return nil, NetboxConnectError:new(
+            'There is no connection to external storage'
+        )
+    end
+
+    return errors.netbox_call(
+        vars.kingdom_conn, 'get_coordinator',
+        {}, {timeout = timeout or 5}
+    )
 end
 
 return {
@@ -381,5 +392,5 @@ return {
     get_active_leaders = get_active_leaders,
     is_leader = is_leader,
     is_rw = is_rw,
-    get_kingdom_conn = get_kingdom_conn,
+    get_coordinator = get_coordinator,
 }
