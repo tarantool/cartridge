@@ -105,8 +105,8 @@ local function eval(alias, ...)
     return g.cluster:server(alias).net_box:eval(...)
 end
 
-local function list_warnings(server)
-    return server:graphql({query = [[{
+local function list_warnings(name)
+    return g.cluster:server(name):graphql({query = [[{
         cluster {
             issues {
                 level
@@ -116,14 +116,10 @@ local function list_warnings(server)
                 topic
             }
         }
-    }]]}).data.cluster
+    }]]}).data.cluster.issues
 end
 
 function g.test_kingdom_restart()
-    local res = list_warnings(g.cluster:server('router'))
-    log.info('\n\n\n')
-    log.info(res)
-
     fio.rmtree(g.kingdom.workdir)
     g.kingdom:stop()
 
@@ -136,6 +132,14 @@ function g.test_kingdom_restart()
             class_name = 'StateProviderError',
             err = 'State provider unavailable'
         })
+
+        t.assert_equals(list_warnings('router'), {{
+            topic = 'failover',
+            message = "Can't get active coordinators from kigdom, seems it's fallen: State provider unavailable",
+            level = 'critical',
+            instance_uuid = box.NULL,
+            replicaset_uuid = box.NULL,
+        }})
     end)
 
     g.kingdom:start()
@@ -154,6 +158,7 @@ function g.test_kingdom_restart()
                 uuid = 'aaaaaaaa-aaaa-0000-0000-000000000001'
             }
         )
+        t.assert_equals(list_warnings('router'), {})
     end)
 
     helpers.retrying({}, function()
@@ -162,10 +167,6 @@ function g.test_kingdom_restart()
         t.assert_equals(eval('storage-2', q_leadership), storage_1_uuid)
         t.assert_equals(eval('storage-3', q_leadership), storage_1_uuid)
     end)
-
-    local res = list_warnings(g.cluster:server('router'))
-    log.info('\n\n\n')
-    log.info(res)
 
     t.assert_equals(eval('storage-1', q_readonliness), false)
     t.assert_equals(eval('storage-2', q_readonliness), true)
@@ -267,9 +268,8 @@ function g.test_leaderless()
         g.cluster:server(s):start()
     end
 
-    local res = list_warnings(g.cluster:server('router'))
-    log.info('\n\n\n')
-    log.info(res)
+    -- here check
+    local res = list_warnings('router')
 
     -----------------------------------------------------
     -- Chack that replicaset without leaders can exist
@@ -336,9 +336,6 @@ function g.test_leaderless()
     t.assert_equals(eval('storage-2', q_readonliness), true)
     t.assert_equals(eval('storage-3', q_readonliness), true)
     t.helpers.retrying({}, function()
-        local res = list_warnings(g.cluster:server('router'))
-        log.info('\n\n\nkingdom restarted')
-        log.info(res)
-        error()
+        t.assert_equals(list_warnings('router'), {})
     end)
 end

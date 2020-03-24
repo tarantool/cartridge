@@ -128,23 +128,24 @@ local function list_on_cluster()
     if failover_cfg.mode == 'stateful' then
         local coordinator, err = failover.get_coordinator()
 
-        local issue
         if err ~= nil then
-            issue = string.format(
-                "Can't get active coordinators from kigdom, seems it's fallen: %s", err.err
-            )
-        elseif not coordinator then
-            issue = 'There is no active coordinator in kingdom'
-        else
-            check_failover = true
-        end
-
-        if issue ~= nil then
             table.insert(ret, {
                 level = 'critical',
                 topic = 'failover',
-                message = issue,
+                message = string.format(
+                    "Can't get active coordinators" ..
+                    " from kigdom, seems it's fallen: %s",
+                    err.err
+                )
             })
+        elseif not coordinator then
+            table.insert(ret, {
+                level = 'critical',
+                topic = 'failover',
+                message = 'There is no active coordinator in kingdom'
+            })
+        else
+            check_failover = true
         end
     end
 
