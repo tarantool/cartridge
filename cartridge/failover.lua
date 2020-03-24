@@ -47,6 +47,7 @@ vars:new('membership_notification', membership.subscribe())
 vars:new('clusterwide_config')
 vars:new('failover_fiber')
 vars:new('kingdom_conn')
+vars:new('failover_stateful_err', nil)
 vars:new('cache', {
     active_leaders = {--[[ [replicaset_uuid] = leader_uuid ]]},
     is_leader = false,
@@ -87,6 +88,7 @@ local function _get_appointments_eventual_mode(topology_cfg)
 
     local appointments = {}
 
+    vars.failover_stateful_err = nil
     for replicaset_uuid, _ in pairs(replicasets) do
         local leaders = topology.get_leaders_order(
             topology_cfg, replicaset_uuid
@@ -129,6 +131,7 @@ local function _get_appointments_stateful_mode(conn, timeout)
         {timeout = timeout + vars.options.NETBOX_CALL_TIMEOUT}
     )
 
+    vars.failover_stateful_err = err
     if appointments == nil then
         return nil, err
     end
@@ -273,8 +276,10 @@ local function cfg(clusterwide_config)
     checks('ClusterwideConfig')
 
     if vars.failover_fiber ~= nil then
-        vars.failover_fiber:cancel()
+        -- to prevent race conditions at get_stateful_issues
+        local old_failover_fiber = vars.failover_fiber
         vars.failover_fiber = nil
+        old_failover_fiber:cancel()
     end
 
     vars.clusterwide_config = clusterwide_config
@@ -387,10 +392,32 @@ local function get_coordinator()
     )
 end
 
+local function get_stateful_issues()
+    if not vars.failover_fiber then
+        return {}
+    end
+
+    local issues = {}
+    if vars.failover_fiber:status() == 'dead' then
+        table.insert("Failover fiber isn't runnig!")
+    end
+
+    if vars.failover_stateful_err ~= nil then
+        table.insert(
+            string.format(
+                'Stateful failover not enabled: %s',
+                vars.failover_stateful_err.err
+            )
+        )
+    end
+    return issues
+end
+
 return {
     cfg = cfg,
     get_active_leaders = get_active_leaders,
     is_leader = is_leader,
     is_rw = is_rw,
     get_coordinator = get_coordinator,
+    get_stateful_issues = get_stateful_issues,
 }

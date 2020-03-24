@@ -2,8 +2,10 @@ local fun = require('fun')
 local pool = require('cartridge.pool')
 local topology = require('cartridge.topology')
 local confapplier = require('cartridge.confapplier')
+local failover = require('cartridge.failover')
+local errors = require('errors')
 
-local function list_on_instance()
+local function list_on_instance(check_failover)
     local enabled_servers = {}
     local topology_cfg = confapplier.get_readonly('topology')
     for _, uuid, server in fun.filter(topology.not_disabled, topology_cfg.servers) do
@@ -29,6 +31,7 @@ local function list_on_instance()
         if upstream == nil then
             local issue = {
                 level = 'warning',
+                topic = 'replication',
                 replicaset_uuid = replicaset_uuid,
                 instance_uuid = instance_uuid,
                 message = string.format(
@@ -41,6 +44,7 @@ local function list_on_instance()
         elseif upstream.status ~= 'follow' and upstream.status ~= 'sync' then
             local issue = {
                 level = 'warning',
+                topic = 'replication',
                 replicaset_uuid = replicaset_uuid,
                 instance_uuid = instance_uuid,
                 message = string.format(
@@ -55,6 +59,7 @@ local function list_on_instance()
         elseif upstream.lag > box.cfg.replication_sync_lag then
             local issue = {
                 level = 'warning',
+                topic = 'replication',
                 replicaset_uuid = replicaset_uuid,
                 instance_uuid = instance_uuid,
                 message = string.format(
@@ -79,6 +84,7 @@ local function list_on_instance()
             -- or the network link between the instances is down.
             local issue = {
                 level = 'warning',
+                topic = 'replication',
                 replicaset_uuid = replicaset_uuid,
                 instance_uuid = instance_uuid,
                 message = string.format(
@@ -94,22 +100,72 @@ local function list_on_instance()
 
         ::continue::
     end
+
+    if check_failover then
+        local failover_issues = failover.get_stateful_issues()
+        for _, issue in ipairs(failover_issues) do
+            table.insert(ret, {
+                level = 'warning',
+                instance_uuid = instance_uuid,
+                message = issue,
+                topic = 'failover'
+            })
+        end
+    end
     return ret
+end
+
+local function is_kingdom_alive()
+    local conn = failover.get_kingdom_conn()
+    if conn == nil then
+        return nil, string.format("Can't connect to kigdom, seems it's fallen")
+    end
+
+    local coordinator, err = errors.netbox_call(
+        conn,
+        '_G.get_coordinator',
+        {}, {timeout = 5}
+    )
+    if err ~= nil then
+        return nil, string.format(
+            "Can't get active coordinators from kigdom, seems it's fallen: %s", err.err
+        )
+    end
+
+    if coordinator == nil then
+        return nil, 'There is no active coordinator in kingdom'
+    end
+    return true
 end
 
 local function list_on_cluster()
     local uri_list = {}
     local topology_cfg = confapplier.get_readonly('topology')
+    local failover_cfg = topology.get_failover_params(topology_cfg)
     for _, _, srv in fun.filter(topology.not_disabled, topology_cfg.servers) do
         table.insert(uri_list, srv.uri)
     end
 
+    local ret = {}
+    local check_failover = false
+    if failover_cfg.mode == 'stateful' then
+        local ok, err = is_kingdom_alive()
+        if ok then
+            check_failover = true
+        else
+            table.insert(ret, {
+                level = 'critical',
+                topic = 'failover',
+                message = err,
+            })
+        end
+    end
+
     local issues_map = pool.map_call(
         '_G.__cartridge_issues_list_on_instance',
-        {}, {uri_list = uri_list, timeout = 5}
+        {check_failover}, {uri_list = uri_list, timeout = 5}
     )
 
-    local ret = {}
     for _, issues in pairs(issues_map) do
         for _, issue in pairs(issues) do
             table.insert(ret, issue)
