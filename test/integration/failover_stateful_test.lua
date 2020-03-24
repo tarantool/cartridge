@@ -13,23 +13,22 @@ local storage_3_uuid = helpers.uuid('b', 'b', 3)
 local router_uuid = helpers.uuid('a')
 local router_1_uuid = helpers.uuid('a', 'a', 1)
 
-local kvpassword = require('digest').urandom(6):hex()
-
 g.before_all(function()
     g.datadir = fio.tempdir()
 
     fio.mktree(fio.pathjoin(g.datadir, 'kingdom'))
+    g.kvpassword = require('digest').urandom(6):hex()
     g.kingdom = require('luatest.server'):new({
         command = fio.pathjoin(helpers.project_root, 'kingdom.lua'),
         workdir = fio.pathjoin(g.datadir, 'kingdom'),
         net_box_port = 14401,
         net_box_credentials = {
             user = 'client',
-            password = kvpassword,
+            password = g.kvpassword,
         },
         env = {
             TARANTOOL_LOCK_DELAY = 1,
-            TARANTOOL_PASSWORD = kvpassword,
+            TARANTOOL_PASSWORD = g.kvpassword,
         },
     })
     g.kingdom:start()
@@ -79,7 +78,7 @@ g.before_all(function()
             state_provider = 'tarantool',
             tarantool_params = {
                 uri = g.kingdom.net_box_uri,
-                password = kvpassword,
+                password = g.kvpassword,
             },
         }}
     )
@@ -109,6 +108,20 @@ local function eval(alias, ...)
     return g.cluster:server(alias).net_box:eval(...)
 end
 
+local function list_warnings(name)
+    return g.cluster:server(name):graphql({query = [[{
+        cluster {
+            issues {
+                level
+                replicaset_uuid
+                message
+                instance_uuid
+                topic
+            }
+        }
+    }]]}).data.cluster.issues
+end
+
 function g.test_kingdom_restart()
     fio.rmtree(g.kingdom.workdir)
     g.kingdom:stop()
@@ -122,6 +135,14 @@ function g.test_kingdom_restart()
             class_name = 'StateProviderError',
             err = 'State provider unavailable'
         })
+
+        t.assert_items_include(list_warnings('router'), {{
+            level = 'critical',
+            topic = 'failover',
+            message = "Can't get active coordinators from kigdom, seems it's fallen: State provider unavailable",
+            instance_uuid = box.NULL,
+            replicaset_uuid = box.NULL,
+        }})
     end)
 
     g.kingdom:start()
@@ -140,6 +161,7 @@ function g.test_kingdom_restart()
                 uuid = 'aaaaaaaa-aaaa-0000-0000-000000000001'
             }
         )
+        t.assert_equals(list_warnings('router'), {})
     end)
 
     helpers.retrying({}, function()
@@ -451,4 +473,72 @@ function g.test_leaderless()
     t.assert_equals(eval('storage-1', q_readonliness), false)
     t.assert_equals(eval('storage-2', q_readonliness), true)
     t.assert_equals(eval('storage-3', q_readonliness), true)
+    t.helpers.retrying({}, function()
+        t.assert_equals(list_warnings('router'), {})
+    end)
+end
+
+function g.test_issues()
+    -- kill coordinator
+    g.cluster.main_server:stop()
+
+    -- kill failover fiber on storage
+    eval('storage-1', [[
+        local vars = require('cartridge.vars').new('cartridge.failover')
+        vars.kingdom_conn:close()
+        if vars.failover_fiber:status() ~= 'dead' then
+            vars.failover_fiber:cancel()
+        end
+    ]])
+
+    helpers.retrying({}, function()
+        t.assert_items_equals(list_warnings('storage-1'), {{
+            level = 'critical',
+            topic = 'failover',
+            message = "Can't get active coordinators from kigdom, seems it's fallen: State provider unavailable",
+            replicaset_uuid = box.NULL,
+            instance_uuid = box.NULL,
+
+        }, {
+            level = 'warning',
+            topic = 'failover',
+            message = "Failover fiber isn't runnig!",
+            replicaset_uuid = box.NULL,
+            instance_uuid = storage_1_uuid,
+        }})
+
+        t.assert_items_equals(list_warnings('storage-2'), {{
+            level = 'warning',
+            topic = 'failover',
+            message = "Failover fiber isn't runnig!",
+            instance_uuid = storage_1_uuid,
+            replicaset_uuid = box.NULL,
+        }, {
+            level = 'critical',
+            topic = 'failover',
+            message = "There is no active coordinator in kingdom",
+            replicaset_uuid = box.NULL,
+            instance_uuid = box.NULL,
+        }})
+    end)
+
+    g.cluster.main_server:start()
+    g.cluster:wait_until_healthy(g.cluster.main_server)
+
+    -- speedup longpoll
+    for _, server in ipairs(g.cluster.servers) do
+        eval(server.alias, [[
+            local vars = require('cartridge.vars').new('cartridge.failover')
+            vars.options.LONGPOLL_TIMEOUT = 1
+        ]])
+    end
+
+    -- call twopc for apply_config
+    g.cluster:server('storage-1'):graphql({query = [[
+        mutation { cluster { schema(as_yaml: "{}") {} } }
+    ]]})
+
+    helpers.retrying({}, function()
+        t.assert_equals(list_warnings('storage-1'), {})
+    end)
 end

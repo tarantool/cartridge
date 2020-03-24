@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Add new field Graphql field `cluster{ issues {topic} }`
 
+- Extend issues API for stateful failover
+
 ### Deprecated
 
 Lua API:
