@@ -115,29 +115,6 @@ local function list_on_instance(check_failover)
     return ret
 end
 
-local function is_kingdom_alive()
-    local conn = failover.get_kingdom_conn()
-    if conn == nil then
-        return nil, string.format("Can't connect to kigdom, seems it's fallen")
-    end
-
-    local coordinator, err = errors.netbox_call(
-        conn,
-        'get_coordinator',
-        {}, {timeout = 5}
-    )
-    if err ~= nil then
-        return nil, string.format(
-            "Can't get active coordinators from kigdom, seems it's fallen: %s", err.err
-        )
-    end
-
-    if coordinator == nil then
-        return nil, 'There is no active coordinator in kingdom'
-    end
-    return true
-end
-
 local function list_on_cluster()
     local uri_list = {}
     local topology_cfg = confapplier.get_readonly('topology')
@@ -149,14 +126,24 @@ local function list_on_cluster()
     local ret = {}
     local check_failover = false
     if failover_cfg.mode == 'stateful' then
-        local ok, err = is_kingdom_alive()
-        if ok then
-            check_failover = true
+        local coordinator, err = failover.get_coordinator()
+
+        local issue
+        if err ~= nil then
+            issue = string.format(
+                "Can't get active coordinators from kigdom, seems it's fallen: %s", err.err
+            )
+        elseif not coordinator then
+            issue = 'There is no active coordinator in kingdom'
         else
+            check_failover = true
+        end
+
+        if issue ~= nil then
             table.insert(ret, {
                 level = 'critical',
                 topic = 'failover',
-                message = err,
+                message = issue,
             })
         end
     end
