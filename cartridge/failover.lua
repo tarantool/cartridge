@@ -217,12 +217,12 @@ local function failover_loop(args)
 
     while pcall(fiber.testcancel) do
         local appointments, err = FailoverError:pcall(args.get_appointments)
+        fiber.testcancel()
+
         if appointments == nil then
             log.warn('%s', err.err)
             goto start_over
-        end
-
-        if not accept_appointments(appointments) then
+        elseif not accept_appointments(appointments) then
             -- nothing changed
             goto start_over
         end

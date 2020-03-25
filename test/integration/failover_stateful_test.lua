@@ -154,6 +154,36 @@ function g.test_kingdom_restart()
     t.assert_equals(eval('storage-3', q_readonliness), true)
 end
 
+function g.test_coordinator_restart()
+    eval('router', [[
+        local cartridge = require('cartridge')
+        local coordinator = cartridge.service_get('failover-coordinator')
+        return coordinator.stop()
+    ]])
+
+    helpers.retrying({}, function()
+        t.assert_equals(
+            g.kingdom.net_box:call('get_coordinator'),
+            nil
+        )
+    end)
+
+    eval('router', [[
+        local confapplier = require('cartridge.confapplier')
+        return confapplier.apply_config(confapplier.get_active_config())
+    ]])
+
+    helpers.retrying({}, function()
+        t.assert_equals(
+            g.kingdom.net_box:call('get_coordinator'),
+            {
+                uri = g.cluster:server('router').advertise_uri,
+                uuid = g.cluster:server('router').instance_uuid,
+            }
+        )
+    end)
+end
+
 function g.test_leader_restart()
     t.assert_equals(
         g.kingdom.net_box:call('longpoll', {0}),

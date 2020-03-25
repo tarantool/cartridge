@@ -188,11 +188,13 @@ local function take_control(uri)
     control_fiber:name('failover-coordinate')
 
     repeat
+        -- Warning: fragile code.
+        -- Cancelled fibers raise error on every yield
         if not pcall(fiber.sleep, lock_delay/2) then
             break
         end
 
-        if control_fiber:status() == 'dead'
+        if pcall(fiber.status, control_fiber) == 'dead'
         or not errors.netbox_call(conn, 'acquire_lock',
             lock_args, {timeout = vars.options.NETBOX_CALL_TIMEOUT}
         ) then
@@ -200,11 +202,9 @@ local function take_control(uri)
         end
     until not pcall(fiber.testcancel)
 
-    conn:close()
+    pcall(conn.close, conn)
+    pcall(fiber.cancel, control_fiber)
     vars.conn = nil
-    if control_fiber:status() ~= 'dead' then
-        control_fiber:cancel()
-    end
 
     log.info('Lock released')
     return true
