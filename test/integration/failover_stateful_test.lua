@@ -113,7 +113,6 @@ local function list_warnings(name)
                 replicaset_uuid
                 message
                 instance_uuid
-                topic
             }
         }
     }]]}).data.cluster.issues
@@ -134,7 +133,6 @@ function g.test_kingdom_restart()
         })
 
         t.assert_equals(list_warnings('router'), {{
-            topic = 'failover',
             message = "Can't get active coordinators from kigdom, seems it's fallen: State provider unavailable",
             level = 'critical',
             instance_uuid = box.NULL,
@@ -344,7 +342,6 @@ function g.test_issues()
 
     helpers.retrying({}, function()
         t.assert_equals(list_warnings('storage-1'), {{
-            topic = 'failover',
             level = 'critical',
             message = 'There is no active coordinator in kingdom',
             instance_uuid = box.NULL,
@@ -385,13 +382,11 @@ function g.test_issues()
 
     helpers.retrying({timeout = 5}, function()
         t.assert_items_equals(list_warnings('storage-1'), {{
-            topic = 'failover',
             level = 'warning',
             message = "Failover fiber isn't runnig!",
             instance_uuid = storage_1_uuid,
             replicaset_uuid = box.NULL,
         }, {
-            topic = 'failover',
             level = 'warning',
             message = "Stateful failover not enabled: message",
             instance_uuid = storage_1_uuid,

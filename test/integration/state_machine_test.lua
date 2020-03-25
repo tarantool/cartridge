@@ -111,7 +111,6 @@ local function list_issues(server)
                 message
                 replicaset_uuid
                 instance_uuid
-                topic
             }
         }
     }]]}).data.cluster.issues
@@ -162,7 +161,6 @@ function g.test_failover()
             level = 'warning',
             replicaset_uuid = helpers.uuid('a'),
             instance_uuid = helpers.uuid('a', 'a', 2),
-            topic = 'replication',
         })
         t.assert_str_matches(
             issues[1].message,
@@ -409,8 +407,6 @@ function g.test_orphan_connect_timeout()
             instance_uuid = helpers.uuid('a', 'a', 1),
             message = "Replication from localhost:13302" ..
                 " to localhost:13301 isn't running",
-            topic = 'replication',
-
         }})
     end)
 
@@ -468,8 +464,6 @@ function g.test_orphan_sync_timeout()
             level = 'warning',
             replicaset_uuid = helpers.uuid('a'),
             instance_uuid = helpers.uuid('a', 'a', 1),
-            topic = 'replication',
-
         })
         t.assert_str_matches(
             issues[1].message,

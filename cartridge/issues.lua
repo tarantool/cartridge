@@ -30,7 +30,6 @@ local function list_on_instance(check_failover)
         if upstream == nil then
             local issue = {
                 level = 'warning',
-                topic = 'replication',
                 replicaset_uuid = replicaset_uuid,
                 instance_uuid = instance_uuid,
                 message = string.format(
@@ -43,7 +42,6 @@ local function list_on_instance(check_failover)
         elseif upstream.status ~= 'follow' and upstream.status ~= 'sync' then
             local issue = {
                 level = 'warning',
-                topic = 'replication',
                 replicaset_uuid = replicaset_uuid,
                 instance_uuid = instance_uuid,
                 message = string.format(
@@ -58,7 +56,6 @@ local function list_on_instance(check_failover)
         elseif upstream.lag > box.cfg.replication_sync_lag then
             local issue = {
                 level = 'warning',
-                topic = 'replication',
                 replicaset_uuid = replicaset_uuid,
                 instance_uuid = instance_uuid,
                 message = string.format(
@@ -83,7 +80,6 @@ local function list_on_instance(check_failover)
             -- or the network link between the instances is down.
             local issue = {
                 level = 'warning',
-                topic = 'replication',
                 replicaset_uuid = replicaset_uuid,
                 instance_uuid = instance_uuid,
                 message = string.format(
@@ -107,7 +103,6 @@ local function list_on_instance(check_failover)
                 level = 'warning',
                 instance_uuid = instance_uuid,
                 message = issue,
-                topic = 'failover'
             })
         end
     end
@@ -130,7 +125,6 @@ local function list_on_cluster()
         if err ~= nil then
             table.insert(ret, {
                 level = 'critical',
-                topic = 'failover',
                 message = string.format(
                     "Can't get active coordinators" ..
                     " from kigdom, seems it's fallen: %s",
@@ -140,7 +134,6 @@ local function list_on_cluster()
         elseif not coordinator then
             table.insert(ret, {
                 level = 'critical',
-                topic = 'failover',
                 message = 'There is no active coordinator in kingdom'
             })
         else
