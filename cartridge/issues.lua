@@ -29,6 +29,7 @@ local function list_on_instance()
         if upstream == nil then
             local issue = {
                 level = 'warning',
+                topic = 'replication',
                 replicaset_uuid = replicaset_uuid,
                 instance_uuid = instance_uuid,
                 message = string.format(
@@ -41,6 +42,7 @@ local function list_on_instance()
         elseif upstream.status ~= 'follow' and upstream.status ~= 'sync' then
             local issue = {
                 level = 'warning',
+                topic = 'replication',
                 replicaset_uuid = replicaset_uuid,
                 instance_uuid = instance_uuid,
                 message = string.format(
@@ -55,6 +57,7 @@ local function list_on_instance()
         elseif upstream.lag > box.cfg.replication_sync_lag then
             local issue = {
                 level = 'warning',
+                topic = 'replication',
                 replicaset_uuid = replicaset_uuid,
                 instance_uuid = instance_uuid,
                 message = string.format(
@@ -79,6 +82,7 @@ local function list_on_instance()
             -- or the network link between the instances is down.
             local issue = {
                 level = 'warning',
+                topic = 'replication',
                 replicaset_uuid = replicaset_uuid,
                 instance_uuid = instance_uuid,
                 message = string.format(

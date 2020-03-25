@@ -191,6 +191,7 @@ local function list_issues(server)
                 message
                 replicaset_uuid
                 instance_uuid
+                topic
             }
         }
     }]]}).data.cluster.issues
@@ -480,11 +481,13 @@ g.test_sigstop = function()
         replicaset_uuid = replicaset_uuid,
         instance_uuid = storage_2_uuid,
         message = "Replication from localhost:13302 to localhost:13303 isn't running",
+        topic = 'replication',
     }, {
         level = 'warning',
         replicaset_uuid = replicaset_uuid,
         instance_uuid = storage_3_uuid,
         message = "Replication from localhost:13302 to localhost:13304 isn't running",
+        topic = 'replication',
     }})
 
     -- Send SIGCONT to server1
