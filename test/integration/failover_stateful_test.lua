@@ -10,11 +10,15 @@ local storage_1_uuid = helpers.uuid('b', 'b', 1)
 local storage_2_uuid = helpers.uuid('b', 'b', 2)
 local storage_3_uuid = helpers.uuid('b', 'b', 3)
 
+local router_uuid = helpers.uuid('a')
+local router_1_uuid = helpers.uuid('a', 'a', 1)
+
+local kvpassword = require('digest').urandom(6):hex()
+
 g.before_all(function()
     g.datadir = fio.tempdir()
 
     fio.mktree(fio.pathjoin(g.datadir, 'kingdom'))
-    local kvpassword = require('digest').urandom(6):hex()
     g.kingdom = require('luatest.server'):new({
         command = fio.pathjoin(helpers.project_root, 'kingdom.lua'),
         workdir = fio.pathjoin(g.datadir, 'kingdom'),
@@ -44,10 +48,10 @@ g.before_all(function()
         replicasets = {
             {
                 alias = 'router',
-                uuid = helpers.uuid('a'),
+                uuid = router_uuid,
                 roles = {'vshard-router', 'failover-coordinator'},
                 servers = {
-                    {alias = 'router', instance_uuid = helpers.uuid('a', 'a', 1)},
+                    {alias = 'router', instance_uuid = router_1_uuid},
                 },
             },
             {
@@ -154,7 +158,7 @@ function g.test_leader_restart()
     t.assert_equals(
         g.kingdom.net_box:call('longpoll', {0}),
         {
-            [helpers.uuid('a')] = helpers.uuid('a', 'a', 1),
+            [router_uuid] = router_1_uuid,
             [storage_uuid] = storage_1_uuid,
         }
     )
@@ -217,7 +221,7 @@ function g.test_leader_restart()
     t.assert_equals(eval('storage-3', q_leadership), storage_2_uuid)
 
     -----------------------------------------------------
-    -- Switching leadership is accomplised by the coordinator rpc
+    -- Switching leadership is accomplished by the coordinator rpc
 
     log.info('--------------------------------------------------------')
     local ok, err = eval('router', [[
@@ -235,6 +239,111 @@ function g.test_leader_restart()
     end)
 end
 
+local q_promote = [[
+    return require('cartridge').failover_promote(...)
+]]
+
+function g.test_leader_promote()
+    g.kingdom:connect_net_box()
+    helpers.retrying({}, function()
+        t.assert(g.kingdom.net_box:call('get_coordinator') ~= nil)
+    end)
+
+    -------------------------------------------------------
+
+    local storage = g.cluster:server('storage-1')
+    local resp = storage:graphql({
+        query = [[
+        mutation(
+                $replicaset_uuid: String!
+                $instance_uuid: String!
+            ) {
+            cluster {
+                failover_promote(
+                    replicaset_uuid: $replicaset_uuid
+                    instance_uuid: $instance_uuid
+                ) {}
+            }
+        }]],
+        variables = {
+            replicaset_uuid = storage_uuid,
+            instance_uuid = storage_2_uuid,
+        }
+    })
+    t.assert_type(resp['data'], 'table')
+    t.assert_equals(resp['data']['cluster']['failover_promote'], true)
+
+    helpers.retrying({}, function()
+        t.assert_equals(eval('router',    q_leadership), storage_2_uuid)
+        t.assert_equals(eval('storage-1', q_leadership), storage_2_uuid)
+        t.assert_equals(eval('storage-2', q_leadership), storage_2_uuid)
+        t.assert_equals(eval('storage-3', q_leadership), storage_2_uuid)
+    end)
+
+    local ok, err = eval('storage-1', q_promote, {{[storage_uuid] = storage_1_uuid}})
+    t.assert(ok, err ~= nil and err.err)
+    t.assert_equals(err, nil)
+
+    helpers.retrying({}, function()
+        t.assert_equals(eval('router',    q_leadership), storage_1_uuid)
+        t.assert_equals(eval('storage-1', q_leadership), storage_1_uuid)
+        t.assert_equals(eval('storage-2', q_leadership), storage_1_uuid)
+        t.assert_equals(eval('storage-3', q_leadership), storage_1_uuid)
+    end)
+
+    -------------------------------------------------------
+
+    local ok, err = eval('storage-1', q_promote, {{[storage_uuid] = 'invalid_uuid'}})
+    t.assert_equals(ok, nil)
+    t.assert_covers(err, {
+        class_name = 'AppointmentError',
+        err = 'Server "invalid_uuid" does not exist',
+    })
+
+    local ok, err = eval('storage-1', q_promote, {{['invalid_uuid'] = storage_1_uuid}})
+    t.assert_equals(ok, nil)
+    t.assert_covers(err, {
+        class_name = 'AppointmentError',
+        err = 'Replicaset "invalid_uuid" does not exist',
+    })
+
+    local ok, err = eval('storage-1', q_promote, {{[router_uuid] = storage_1_uuid}})
+    t.assert_equals(ok, nil)
+    t.assert_covers(err, {
+        class_name = 'AppointmentError',
+        err = ('Server "%s" does not belong to replicaset "%s"'):format(storage_1_uuid, router_uuid),
+    })
+
+    -------------------------------------------------------
+
+    g.kingdom:stop()
+
+    local ok, err = eval('storage-1', q_promote, {{[router_uuid] = storage_1_uuid}})
+    t.assert_equals(ok, nil)
+    t.assert_covers(err, {
+        class_name = 'Net.box call failed',
+    })
+
+    g.kingdom:start()
+    helpers.retrying({}, function()
+        g.kingdom:connect_net_box()
+    end)
+
+    -------------------------------------------------------
+
+    local router = g.cluster:server('router')
+    router:stop()
+
+    local ok, err = eval('storage-1', q_promote, {{[router_uuid] = storage_1_uuid}})
+    t.assert_equals(ok, nil)
+    t.assert_covers(err, {
+        class_name = 'StateProviderError',
+        err = 'State provider unavailable',
+    })
+
+    router:start()
+end
+
 function g.test_leaderless()
     g.kingdom:stop()
     local router = g.cluster:server('router')
@@ -246,7 +355,7 @@ function g.test_leaderless()
     end
 
     -----------------------------------------------------
-    -- Chack that replicaset without leaders can exist
+    -- Check that replicaset without leaders can exist
     g.cluster:wait_until_healthy(g.cluster.main_server)
     t.assert_equals(eval('router',    q_leadership), box.NULL)
     t.assert_equals(eval('storage-1', q_leadership), box.NULL)
@@ -295,6 +404,9 @@ function g.test_leaderless()
     -- Check cluster repairs
 
     g.kingdom:start()
+    helpers.retrying({}, function()
+        g.kingdom:connect_net_box()
+    end)
     local q_waitrw = 'return {pcall(box.ctl.wait_rw, 3)}'
 
     t.assert_equals(eval('router',    q_waitrw), {true})

@@ -1,5 +1,5 @@
 # source: http://localhost:8081/admin/api
-# timestamp: Fri Mar 20 2020 17:22:05 GMT+0300 (Moscow Standard Time)
+# timestamp: Tue Mar 24 2020 17:37:42 GMT+0300 (MSK)
 
 """Cluster management"""
 type Apicluster {
@@ -189,25 +189,28 @@ type MutationApicluster {
   """Checks that schema can be applied on cluster"""
   check_schema(as_yaml: String!): DDLCheckResult!
 
-  """Disable listed servers by uuid"""
-  disable_servers(uuids: [String!]): [Server]
-  auth_params(cookie_max_age: Long, enabled: Boolean, cookie_renew_age: Long): UserManagementAPI!
+  """Applies updated config on cluster"""
+  config(sections: [ConfigSectionInput]): [ConfigSection]!
 
-  """Edit an existing user"""
-  edit_user(password: String, username: String!, fullname: String, email: String): User
+  """Edit cluster topology"""
+  edit_topology(replicasets: [EditReplicasetInput], servers: [EditServerInput]): EditTopologyResult
+  auth_params(cookie_max_age: Long, enabled: Boolean, cookie_renew_age: Long): UserManagementAPI!
 
   """Create a new user"""
   add_user(password: String!, username: String!, fullname: String, email: String): User
+
+  """Edit an existing user"""
+  edit_user(password: String, username: String!, fullname: String, email: String): User
   edit_vshard_options(rebalancer_max_receiving: Int, collect_bucket_garbage_interval: Float, collect_lua_garbage: Boolean, sync_timeout: Float, name: String!, rebalancer_disbalance_threshold: Float): VshardGroup!
+
+  """Promote the instance to the leader of replicaset"""
+  failover_promote(replicaset_uuid: String!, instance_uuid: String!): Boolean!
 
   """Remove user"""
   remove_user(username: String!): User
 
-  """Edit cluster topology"""
-  edit_topology(replicasets: [EditReplicasetInput], servers: [EditServerInput]): EditTopologyResult
-
-  """Applies updated config on cluster"""
-  config(sections: [ConfigSectionInput]): [ConfigSection]!
+  """Disable listed servers by uuid"""
+  disable_servers(uuids: [String!]): [Server]
 }
 
 type Query {

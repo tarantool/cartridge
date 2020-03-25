@@ -61,6 +61,12 @@ local function set_failover_enabled(_, args)
     return lua_api_failover.set_failover_enabled(args.enabled)
 end
 
+local function promote(_, args)
+    local replicaset_uuid = args['replicaset_uuid']
+    local instance_uuid = args['instance_uuid']
+    return lua_api_failover.promote({[replicaset_uuid] = instance_uuid})
+end
+
 local function init(graphql)
 
     graphql.add_callback({
@@ -107,6 +113,18 @@ local function init(graphql)
         kind = gql_type_userapi.nonNull,
         callback = module_name .. '.set_failover_params',
     })
+
+    graphql.add_mutation({
+        prefix = 'cluster',
+        name = 'failover_promote',
+        doc = 'Promote the instance to the leader of replicaset',
+        args = {
+            replicaset_uuid = gql_types.string.nonNull,
+            instance_uuid = gql_types.string.nonNull,
+        },
+        kind = gql_types.boolean.nonNull,
+        callback = module_name .. '.promote',
+    })
 end
 
 return {
@@ -115,4 +133,5 @@ return {
     set_failover_enabled = set_failover_enabled,
     get_failover_params = get_failover_params,
     set_failover_params = set_failover_params,
+    promote = promote,
 }

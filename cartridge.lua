@@ -687,10 +687,10 @@ return {
     -- @refer cartridge.lua-api.failover.set_params
     -- @function failover_set_params
     failover_set_params = lua_api_failover.set_params,
-
-    -- TODO: will be implemented later
-    -- failover_switch_leader = lua_api_failover.switch_leader,
-
+    --- .
+    -- @refer cartridge.lua-api.failover.promote
+    -- @function failover_promote
+    failover_promote = lua_api_failover.promote,
     --- .
     -- @refer cartridge.lua-api.failover.get_failover_enabled
     -- @function admin_get_failover
