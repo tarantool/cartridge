@@ -272,8 +272,15 @@ end
 local function cfg(clusterwide_config)
     checks('ClusterwideConfig')
 
+    if vars.kingdom_conn then
+        vars.kingdom_conn:close()
+        vars.kingdom_conn = nil
+    end
+
     if vars.failover_fiber ~= nil then
-        vars.failover_fiber:cancel()
+        if vars.failover_fiber:status() ~= 'dead' then
+            vars.failover_fiber:cancel()
+        end
         vars.failover_fiber = nil
     end
 
