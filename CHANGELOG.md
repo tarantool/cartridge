@@ -16,6 +16,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Implement stateful failover mode.
 
+- Extend issues API for stateful failover, also add
+  new field: `cluster{ issues {topic} }`
+
 ### Deprecated
 
 Lua API:

@@ -1,5 +1,5 @@
 # source: http://localhost:8081/admin/api
-# timestamp: Fri Mar 20 2020 17:22:05 GMT+0300 (Moscow Standard Time)
+# timestamp: Wed Mar 25 2020 03:33:35 GMT+0300 (GMT+03:00)
 
 """Cluster management"""
 type Apicluster {
@@ -124,9 +124,10 @@ type FailoverStateProviderCfgTarantool {
 
 type Issue {
   level: String!
-  replicaset_uuid: String
   instance_uuid: String
+  replicaset_uuid: String
   message: String!
+  topic: String
 }
 
 """Parameters for joining a new server"""

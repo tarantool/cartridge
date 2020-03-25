@@ -47,7 +47,7 @@ vars:new('membership_notification', membership.subscribe())
 vars:new('clusterwide_config')
 vars:new('failover_fiber')
 vars:new('kingdom_conn')
-vars:new('failover_stateful_err', nil)
+vars:new('failover_stateful_err')
 vars:new('cache', {
     active_leaders = {--[[ [replicaset_uuid] = leader_uuid ]]},
     is_leader = false,
@@ -275,11 +275,16 @@ end
 local function cfg(clusterwide_config)
     checks('ClusterwideConfig')
 
+    if vars.kingdom_conn then
+        vars.kingdom_conn:close()
+        vars.kingdom_conn = nil
+    end
+
     if vars.failover_fiber ~= nil then
-        -- to prevent race conditions at get_stateful_issues
-        local old_failover_fiber = vars.failover_fiber
+        if vars.failover_fiber:status() ~= 'dead' then
+            vars.failover_fiber:cancel()
+        end
         vars.failover_fiber = nil
-        old_failover_fiber:cancel()
     end
 
     vars.clusterwide_config = clusterwide_config
@@ -399,12 +404,12 @@ local function get_stateful_issues()
 
     local issues = {}
     if vars.failover_fiber:status() == 'dead' then
-        table.insert("Failover fiber isn't runnig!")
+        table.insert(issues, "Failover fiber isn't runnig!")
     end
 
     if vars.failover_stateful_err ~= nil then
         table.insert(
-            string.format(
+            issues, string.format(
                 'Stateful failover not enabled: %s',
                 vars.failover_stateful_err.err
             )

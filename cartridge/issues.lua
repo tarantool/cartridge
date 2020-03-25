@@ -3,7 +3,6 @@ local pool = require('cartridge.pool')
 local topology = require('cartridge.topology')
 local confapplier = require('cartridge.confapplier')
 local failover = require('cartridge.failover')
-local errors = require('errors')
 
 local function list_on_instance(check_failover)
     local enabled_servers = {}

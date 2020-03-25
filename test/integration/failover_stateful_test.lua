@@ -14,18 +14,18 @@ g.before_all(function()
     g.datadir = fio.tempdir()
 
     fio.mktree(fio.pathjoin(g.datadir, 'kingdom'))
-    local kvpassword = require('digest').urandom(6):hex()
+    g.kvpassword = require('digest').urandom(6):hex()
     g.kingdom = require('luatest.server'):new({
         command = fio.pathjoin(helpers.project_root, 'kingdom.lua'),
         workdir = fio.pathjoin(g.datadir, 'kingdom'),
         net_box_port = 14401,
         net_box_credentials = {
             user = 'client',
-            password = kvpassword,
+            password = g.kvpassword,
         },
         env = {
             TARANTOOL_LOCK_DELAY = 1,
-            TARANTOOL_PASSWORD = kvpassword,
+            TARANTOOL_PASSWORD = g.kvpassword,
         },
     })
     g.kingdom:start()
@@ -75,7 +75,7 @@ g.before_all(function()
             state_provider = 'tarantool',
             tarantool_params = {
                 uri = g.kingdom.net_box_uri,
-                password = kvpassword,
+                password = g.kvpassword,
             },
         }}
     )
@@ -268,9 +268,6 @@ function g.test_leaderless()
         g.cluster:server(s):start()
     end
 
-    -- here check
-    local res = list_warnings('router')
-
     -----------------------------------------------------
     -- Chack that replicaset without leaders can exist
     g.cluster:wait_until_healthy(g.cluster.main_server)
@@ -337,5 +334,68 @@ function g.test_leaderless()
     t.assert_equals(eval('storage-3', q_readonliness), true)
     t.helpers.retrying({}, function()
         t.assert_equals(list_warnings('router'), {})
+    end)
+end
+
+function g.test_issues()
+    -------------------------------------------------------------
+    -- Check there is no coordinator
+    g.cluster.main_server:stop()
+
+    helpers.retrying({}, function()
+        t.assert_equals(list_warnings('storage-1'), {{
+            topic = 'failover',
+            level = 'critical',
+            message = 'There is no active coordinator in kingdom',
+            instance_uuid = box.NULL,
+            replicaset_uuid = box.NULL,
+        }})
+    end)
+
+    g.cluster.main_server:start()
+    g.cluster:wait_until_healthy(g.cluster.main_server)
+    helpers.retrying({}, function()
+        t.assert_equals(list_warnings('storage-1'), {})
+    end)
+
+    -------------------------------------------------------------
+    -- Check issues on instance
+
+    eval('storage-1', [[
+        local vars = require('cartridge.vars').new('cartridge.failover')
+        vars.kingdom_conn:close()
+        if vars.failover_fiber:status() ~= 'dead' then
+            vars.failover_fiber:cancel()
+        end
+
+        -- here we need to create connection else issues shows that there is no
+        -- connection to kingdom
+        vars.kingdom_conn = require('net.box').connect(...)
+    ]], {'localhost:' .. g.kingdom.net_box_port, {
+            wait_connected = false,
+            reconnect_after = 1.0,
+            user = 'client',
+            password = g.kvpassword,
+    }})
+
+    eval('storage-1', [[
+        local vars = require('cartridge.vars').new('cartridge.failover')
+        vars.failover_stateful_err = require('errors').new('error', 'message')
+    ]])
+
+    helpers.retrying({timeout = 5}, function()
+        t.assert_items_equals(list_warnings('storage-1'), {{
+            topic = 'failover',
+            level = 'warning',
+            message = "Failover fiber isn't runnig!",
+            instance_uuid = storage_1_uuid,
+            replicaset_uuid = box.NULL,
+        }, {
+            topic = 'failover',
+            level = 'warning',
+            message = "Stateful failover not enabled: message",
+            instance_uuid = storage_1_uuid,
+            replicaset_uuid = box.NULL,
+        }})
     end)
 end
