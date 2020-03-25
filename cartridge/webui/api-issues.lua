@@ -10,7 +10,7 @@ local gql_type_warning = gql_types.object({
         message = gql_types.string.nonNull,
         replicaset_uuid = gql_types.string,
         instance_uuid = gql_types.string,
-        topic = gql_types.string,
+        topic = gql_types.string.nonNull,
     }
 })
 

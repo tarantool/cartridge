@@ -1,5 +1,5 @@
 # source: http://localhost:8081/admin/api
-# timestamp: Wed Mar 25 2020 14:26:59 GMT+0300 (GMT+03:00)
+# timestamp: Wed Mar 25 2020 14:32:37 GMT+0300 (GMT+03:00)
 
 """Cluster management"""
 type Apicluster {
@@ -127,7 +127,7 @@ type Issue {
   instance_uuid: String
   replicaset_uuid: String
   message: String!
-  topic: String
+  topic: String!
 }
 
 """Parameters for joining a new server"""
