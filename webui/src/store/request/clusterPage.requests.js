@@ -24,7 +24,17 @@ const filterServerStat = response => {
 
 export function getPageData() {
   return graphql.fetch(listQuery)
-    .then(filterServerStat);
+    .then(
+      ({
+        cluster: {
+          issues
+        },
+        ...response
+      }) => filterServerStat({
+        ...response,
+        issues
+      })
+    );
 }
 
 type RefreshListsArgs = {
@@ -34,7 +44,19 @@ type RefreshListsArgs = {
 export function refreshLists(params: RefreshListsArgs = {}) {
   const graph = params.shouldRequestStat ? listQuery : listQueryWithoutStat;
   return graphql.fetch(graph)
-    .then(params.shouldRequestStat ? filterServerStat : null);
+    .then(
+      params.shouldRequestStat
+        ? ({
+          cluster: {
+            issues
+          },
+          ...response
+        }) => filterServerStat({
+          ...response,
+          issues
+        })
+        : null
+    );
 }
 
 export function getServerStat() {
