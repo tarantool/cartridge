@@ -130,7 +130,10 @@ local function promote(replicaset_leaders)
 
     local mode = get_params().mode
     if mode ~= 'stateful' then
-        return nil, PromoteLeaderError:new("Promotion only works with stateful failover, not in %q mode", mode)
+        return nil, PromoteLeaderError:new(
+            'Promotion only works with stateful failover,' ..
+            ' not in %q mode', mode
+        )
     end
 
     local coordinator, err = failover.get_coordinator()

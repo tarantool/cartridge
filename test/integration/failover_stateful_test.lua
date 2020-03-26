@@ -137,9 +137,10 @@ function g.test_kingdom_restart()
         })
 
         t.assert_items_include(list_warnings('router'), {{
-            level = 'critical',
+            level = 'warning',
             topic = 'failover',
-            message = "Can't get active coordinators from kigdom, seems it's fallen: State provider unavailable",
+            message = "Can't obtain failover coordinator:" ..
+                " State provider unavailable",
             instance_uuid = box.NULL,
             replicaset_uuid = box.NULL,
         }})
@@ -480,61 +481,38 @@ end
 
 function g.test_issues()
     -- kill coordinator
-    g.cluster.main_server:stop()
-
+    eval('router', [[
+        local cartridge = require('cartridge')
+        local coordinator = cartridge.service_get('failover-coordinator')
+        coordinator.stop()
+    ]])
     -- kill failover fiber on storage
-    eval('storage-1', [[
+    eval('storage-3', [[
         local vars = require('cartridge.vars').new('cartridge.failover')
         vars.kingdom_conn:close()
-        if vars.failover_fiber:status() ~= 'dead' then
-            vars.failover_fiber:cancel()
-        end
+        vars.failover_fiber:cancel()
     ]])
 
     helpers.retrying({}, function()
-        t.assert_items_equals(list_warnings('storage-1'), {{
-            level = 'critical',
+        t.assert_items_equals(list_warnings('router'), {{
+            level = 'warning',
             topic = 'failover',
-            message = "Can't get active coordinators from kigdom, seems it's fallen: State provider unavailable",
+            message = "There is no active failover coordinator",
             replicaset_uuid = box.NULL,
             instance_uuid = box.NULL,
-
         }, {
             level = 'warning',
             topic = 'failover',
-            message = "Failover fiber isn't runnig!",
+            message = "Failover is stuck on " ..
+                g.cluster:server('storage-3').advertise_uri ..
+                ": Failover fiber is dead!",
             replicaset_uuid = box.NULL,
-            instance_uuid = storage_1_uuid,
-        }})
-
-        t.assert_items_equals(list_warnings('storage-2'), {{
-            level = 'warning',
-            topic = 'failover',
-            message = "Failover fiber isn't runnig!",
-            instance_uuid = storage_1_uuid,
-            replicaset_uuid = box.NULL,
-        }, {
-            level = 'critical',
-            topic = 'failover',
-            message = "There is no active coordinator in kingdom",
-            replicaset_uuid = box.NULL,
-            instance_uuid = box.NULL,
+            instance_uuid = storage_3_uuid,
         }})
     end)
 
-    g.cluster.main_server:start()
-    g.cluster:wait_until_healthy(g.cluster.main_server)
-
-    -- speedup longpoll
-    for _, server in ipairs(g.cluster.servers) do
-        eval(server.alias, [[
-            local vars = require('cartridge.vars').new('cartridge.failover')
-            vars.options.LONGPOLL_TIMEOUT = 1
-        ]])
-    end
-
-    -- call twopc for apply_config
-    g.cluster:server('storage-1'):graphql({query = [[
+    -- Trigger apply_config
+    g.cluster.main_server:graphql({query = [[
         mutation { cluster { schema(as_yaml: "{}") {} } }
     ]]})
 

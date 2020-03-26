@@ -106,7 +106,10 @@ local function list_on_instance()
             level = 'warning',
             topic = 'failover',
             instance_uuid = instance_uuid,
-            message = failover_error.err,
+            message = string.format(
+                'Failover is stuck on %s: %s',
+                self_uri, failover_error.err
+            ),
         })
     end
     return ret
@@ -126,19 +129,17 @@ local function list_on_cluster()
 
         if err ~= nil then
             table.insert(ret, {
-                level = 'critical',
+                level = 'warning',
                 topic = 'failover',
                 message = string.format(
-                    "Can't get active coordinators" ..
-                    " from kigdom, seems it's fallen: %s",
-                    err.err
+                    "Can't obtain failover coordinator: %s", err.err
                 )
             })
-        elseif not coordinator then
+        elseif coordinator == nil then
             table.insert(ret, {
-                level = 'critical',
+                level = 'warning',
                 topic = 'failover',
-                message = 'There is no active coordinator in kingdom'
+                message = 'There is no active failover coordinator'
             })
         end
     end

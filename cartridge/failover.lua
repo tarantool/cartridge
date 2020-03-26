@@ -221,8 +221,10 @@ local function failover_loop(args)
         fiber.testcancel()
 
         if appointments == nil then
-            vars.failover_err = err
             log.warn('%s', err.err)
+            vars.failover_err = FailoverError:new(
+                "Error fetching appointments: %s", err.err
+            )
             goto start_over
         end
 
@@ -338,9 +340,11 @@ local function cfg(clusterwide_config)
         -- WARNING: network yields
         local appointments, err = _get_appointments_stateful_mode(conn, 0)
         if appointments == nil then
-            first_appointments = {}
-            vars.failover_err = err
             log.warn('Failed to get first appointments: %s', err)
+            vars.failover_err = FailoverError:new(
+                "Error fetching first appointments: %s", err.err
+            )
+            first_appointments = {}
         else
             first_appointments = appointments
         end
@@ -407,14 +411,13 @@ local function get_coordinator()
 end
 
 local function get_error()
-    if vars.failover_fiber then
-        if vars.failover_fiber:status() == 'dead' then
-            return FailoverError:new("Failover fiber isn't runnig!")
-        end
-
-        return vars.failover_err
+    if vars.failover_fiber ~= nil
+    and vars.failover_fiber:status() == 'dead'
+    then
+        return FailoverError:new('Failover fiber is dead!')
     end
-    return nil
+
+    return vars.failover_err
 end
 
 return {
