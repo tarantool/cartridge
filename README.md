@@ -9,8 +9,8 @@ align="right">
 
 * [About Tarantool Cartridge](#about-tarantool-cartridge)
 * [Getting Started](#getting-started)
-   * [Create first application](#create-first-application)
-   * [Next stages](#next-stages)
+  * [Create first application](#create-first-application)
+  * [Next stages](#next-stages)
 * [Contribution](#contribution)
   * [Building from source](#building-from-source)
   * [Running demo cluster](#running-demo-cluster)
@@ -39,13 +39,13 @@ different types of workloads (e.g., compute- and transaction-intensive ones) on
 different physical servers with dedicated hardware.
 
 Tarantool Cartridge has an external utility called
-[`cartridge-cli`](https://github.com/tarantool/cartridge-cli) which
+[cartridge-cli](https://github.com/tarantool/cartridge-cli) which
 provides you with utilities and templates to help:
 
 * easily set up a development environment for your applications;
 * plug the necessary Lua modules;
 * pack the applications in an environment-independent way: together with
-   module binaries and Tarantool executables.
+  module binaries and Tarantool executables.
 
 ## Getting Started
 
@@ -66,8 +66,8 @@ cd myapp
 ../.rocks/bin/cartridge start
 ```
 
-That's all! You can visit <a>http://localhost:8081</a> and
-see your application Admin Web UI:
+That's all! You can visit [http://localhost:8081](http://localhost:8081) 
+and see your application Admin Web UI:
 
 <img width="640" alt="cartridge-ui" src="https://user-images.githubusercontent.com/11336358/75786427-52820c00-5d76-11ea-93a4-309623bda70f.png">
 
@@ -92,7 +92,7 @@ running tests.
 Prerequisites:
 
 * ``tarantool``, ``tarantool-dev`` (instructions:
-  <a>https://www.tarantool.io/en/download/?v=1.10</a>);
+  [https://www.tarantool.io/en/download/?v=1.10](https://www.tarantool.io/en/download/?v=1.10));
 * ``git``, ``gcc``, ``cmake``.
 
 The fastest way to build the project is to skip building Web UI:
@@ -127,7 +127,7 @@ tarantoolctl rocks install cartridge-cli
 # .rocks/bin/cartridge start --script ./test/entrypoint/srv_basic.lua
 ```
 
-It can be accesed trhough Web UI (<a>http://localhost:8081</a>)
+It can be accessed through Web UI ([http://localhost:8081](http://localhost:8081))
 or with binary protocol:
 
 ```sh
