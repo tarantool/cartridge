@@ -127,7 +127,7 @@ tarantoolctl rocks install cartridge-cli
 # .rocks/bin/cartridge start --script ./test/entrypoint/srv_basic.lua
 ```
 
-It can be accesed trhough Web UI ([http://localhost:8081](http://localhost:8081))
+It can be accessed through Web UI ([http://localhost:8081](http://localhost:8081))
 or with binary protocol:
 
 ```sh
