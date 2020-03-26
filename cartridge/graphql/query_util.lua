@@ -1,5 +1,6 @@
 local path = (...):gsub('%.[^%.]+$', '')
 local types = require(path .. '.types')
+local util = require(path .. '.util')
 
 local function typeFromAST(node, schema)
   local innerType
