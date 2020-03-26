@@ -550,9 +550,9 @@ local function cfg(opts, box_opts)
     local ok, err = confapplier.init({
         workdir = opts.workdir,
         box_opts = box_opts,
-        cartridge_opts = opts,
         binary_port = advertise.service,
         advertise_uri = advertise_uri,
+        upgrade_schema = opts.upgrade_schema,
     })
     if not ok then
         return nil, err

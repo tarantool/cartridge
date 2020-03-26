@@ -48,7 +48,7 @@ vars:new('instance_uuid')
 vars:new('replicaset_uuid')
 
 vars:new('box_opts', nil)
-vars:new('cartridge_opts', nil)
+vars:new('upgrade_schema', nil)
 
 local state_transitions = {
 -- init()
@@ -255,13 +255,15 @@ local function cartridge_schema_upgrade(clusterwide_config)
     --  * We run upgrade as soon as possible to avoid Tarantool upgrade bugs:
     --    (https://github.com/tarantool/tarantool/issues/4691)
     local topology_cfg = clusterwide_config:get_readonly('topology') or {}
-    local instance_uuid = box.info.uuid
-    local server = topology_cfg.servers[instance_uuid]
-    if server == nil then
+    local leaders_order = errors.pcall('E',
+        topology.get_leaders_order, topology_cfg, box.info.cluster.uuid
+    )
+
+    if leaders_order == nil then
         return
     end
-    local leader_uuid = topology.get_leaders_order(topology_cfg, server.replicaset_uuid)[1]
-    if leader_uuid == instance_uuid then
+
+    if leaders_order[1] == box.info.uuid then
         log.info('Run box.schema.upgrade()...')
         box.schema.upgrade()
     end
@@ -424,7 +426,7 @@ local function boot_instance(clusterwide_config)
         local read_only = box.cfg.read_only
         box.cfg({read_only = false})
 
-        if vars.cartridge_opts.upgrade_schema == true then
+        if vars.upgrade_schema then
             cartridge_schema_upgrade(clusterwide_config)
         end
 
@@ -517,17 +519,17 @@ local function init(opts)
     checks({
         workdir = 'string',
         box_opts = 'table',
-        cartridge_opts = 'table',
         binary_port = 'number',
         advertise_uri = 'string',
+        upgrade_schema = 'boolean',
     })
 
     assert(vars.state == '', 'Unexpected state ' .. vars.state)
     vars.workdir = opts.workdir
     vars.box_opts = opts.box_opts
-    vars.cartridge_opts = opts.cartridge_opts
     vars.binary_port = opts.binary_port
     vars.advertise_uri = opts.advertise_uri
+    vars.upgrade_schema = opts.upgrade_schema
 
     local ok, err = remote_control.bind('0.0.0.0', vars.binary_port)
     if not ok then
