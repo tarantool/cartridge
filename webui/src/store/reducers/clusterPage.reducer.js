@@ -51,7 +51,7 @@ import {
   getRequestReducer
 } from 'src/store/commonRequest';
 import type { RequestStatusType } from 'src/store/commonTypes';
-import type { Replicaset, Server, ServerStat } from 'src/generated/graphql-typing';
+import type { Issue, Replicaset, Server, ServerStat } from 'src/generated/graphql-typing';
 import { getErrorMessage } from 'src/api';
 
 export type ServerStatWithUUID = {
@@ -60,15 +60,8 @@ export type ServerStatWithUUID = {
   statistics: ServerStat
 };
 
-export type ClusterIssue = {
-  level: string,
-  message: string,
-  replicaset_uuid?: string,
-  instance_uuid?: string
-}
-
 export type ClusterPageState = {
-  issues: ClusterIssue[],
+  issues: Issue[],
   replicasetFilter: string,
   modalReplicasetFilter: string,
   pageMount: boolean,

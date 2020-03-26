@@ -55,6 +55,9 @@ const styles = {
     margin-left: -8px;
     margin-right: 12px;
   `,
+  statusWarning: css`
+    color: rgba(245, 34, 45, 0.65);
+  `,
   statusButton: css`
     display: block;
     padding-left: 8px;
@@ -166,14 +169,14 @@ class ReplicasetList extends React.PureComponent {
                         ? (
                           <Button
                             className={styles.statusButton}
-                            intent='iconic'
+                            intent='secondary'
                             size='s'
                             onClick={() => this.showIssuesModal(replicaset.uuid)}
                           >
                             <HealthStatus
-                              className={styles.status}
-                              message={replicaset.message}
-                              status={replicaset.status}
+                              className={cx(styles.status, styles.statusWarning)}
+                              message='have issues'
+                              status='bad'
                             />
                           </Button>
                         )

@@ -5,10 +5,10 @@ import {
   Modal,
   Text
 } from '@tarantool.io/ui-kit';
-import type { ClusterIssue } from 'src/store/reducers/clusterPage.reducer'
+import type { Issue } from 'src/generated/graphql-typing';
 
 type ClusterIssuesModalProps = {
-  issues: ClusterIssue[],
+  issues: Issue[],
   onClose: (e: MouseEvent) => void,
   visible: boolean,
 }

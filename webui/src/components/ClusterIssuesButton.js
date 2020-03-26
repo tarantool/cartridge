@@ -9,7 +9,7 @@ import {
 } from '@tarantool.io/ui-kit';
 import { ClusterIssuesModal } from 'src/components/ClusterIssuesModal';
 import type { State } from 'src/store/rootReducer';
-import type { ClusterIssue } from 'src/store/reducers/clusterPage.reducer'
+import type { Issue } from 'src/generated/graphql-typing';
 
 const styles = {
   contrastIcon: css`fill: gray;`
@@ -18,7 +18,7 @@ const styles = {
 const IconOkContrast = ({ className, props }) => <IconOk className={cx(styles.contrastIcon, className)} {...props} />
 
 type ClusterIssuesButtonProps = {
-  issues: ClusterIssue[]
+  issues: Issue[]
 }
 
 type ClusterIssuesButtonState = {
