@@ -16,6 +16,26 @@ local function get_env()
     return vars.registered_types
 end
 
+local function initFields(kind, fields)
+  assert(type(fields) == 'table', 'fields table must be provided')
+
+  local result = {}
+
+  for fieldName, field in pairs(fields) do
+    field = field.__type and { kind = field } or field
+    result[fieldName] = {
+      name = fieldName,
+      kind = field.kind,
+      description = field.description,
+      deprecationReason = field.deprecationReason,
+      arguments = field.arguments or {},
+      resolve = kind == 'Object' and field.resolve or nil
+    }
+  end
+
+  return result
+end
+
 function types.nonNull(kind)
   assert(kind, 'Must provide a type')
 
@@ -118,26 +138,6 @@ function types.interface(config)
   get_env()[config.name] = instance
 
   return instance
-end
-
-function initFields(kind, fields)
-  assert(type(fields) == 'table', 'fields table must be provided')
-
-  local result = {}
-
-  for fieldName, field in pairs(fields) do
-    field = field.__type and { kind = field } or field
-    result[fieldName] = {
-      name = fieldName,
-      kind = field.kind,
-      description = field.description,
-      deprecationReason = field.deprecationReason,
-      arguments = field.arguments or {},
-      resolve = kind == 'Object' and field.resolve or nil
-    }
-  end
-
-  return result
 end
 
 function types.enum(config)
@@ -457,8 +457,6 @@ end
 local function validate(type_obj, value)
     type_obj = types.resolve(type_obj)
     local type_name = type_obj.name
-
-    --print('obj: ' .. type_name)
 
     if type_obj.__type == 'Object' then
         if type(value) ~= 'table' then
