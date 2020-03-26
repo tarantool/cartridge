@@ -79,6 +79,16 @@ g.test_upload = function()
         ).data.test, '22B'
     )
 
+    -- Variables
+    t.assert_equals(
+        server:graphql({
+            query = [[
+                query ($arg: String! $arg2: String!)
+                    { test(arg: $arg, arg2: $arg2) }
+            ]], variables = {arg = 'B', arg2 = '22'}}
+        ).data.test, 'B22'
+    )
+
     server.net_box:eval([[
         package.loaded['test']['test'] = function(root, args)
             error('Error C', 0)
