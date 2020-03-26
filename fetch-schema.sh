@@ -3,8 +3,8 @@
 TARANTOOL_WORKDIR=dev/gql-schema test/entrypoint/srv_basic.lua &
 PID=$!
 
-TMP=$(mktemp --suffix .graphql)
-graphql get-schema -o $TMP
+TMP=$(uuidgen).graphql
+npx graphql get-schema -o $TMP
 
 OUTPUT="doc/schema.graphql"
 diff \
