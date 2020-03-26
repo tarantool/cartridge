@@ -3,6 +3,7 @@ local types = require(path .. '.types')
 local util = require(path .. '.util')
 local introspection = require(path .. '.introspection')
 local query_util = require(path .. '.query_util')
+local validate_variables = require(path .. '.validate_variables')
 
 local function getFieldResponseKey(field)
   return field.alias and field.alias.name.value or field.name.value
@@ -70,48 +71,69 @@ local function defaultResolver(object, arguments, info)
   return object[info.fieldASTs[1].name.value]
 end
 
+local function getOperation(tree, operationName)
+    local operation
+
+    for _, definition in ipairs(tree.definitions) do
+        if definition.kind == 'operation' then
+            if not operationName and operation then
+                error('Operation name must be specified if more than one operation exists.')
+            end
+
+            if not operationName or definition.name.value == operationName then
+                operation = definition
+            end
+        end
+    end
+
+    if not operation then
+        if operationName then
+            error('Unknown operation "' .. operationName .. '"')
+        else
+            error('Must provide an operation')
+        end
+    end
+
+    return operation
+end
+
+local function getFragmentDefinitions(tree)
+    local fragmentMap = {}
+
+    for _, definition in ipairs(tree.definitions) do
+        if definition.kind == 'fragmentDefinition' then
+            fragmentMap[definition.name.value] = definition
+        end
+    end
+
+    return fragmentMap
+end
+
+-- Extract variableTypes from the operation.
+local function getVariableTypes(schema, operation)
+    local variableTypes = {}
+
+    for _, definition in ipairs(operation.variableDefinitions or {}) do
+        variableTypes[definition.variable.name.value] =
+            query_util.typeFromAST(definition.type, schema)
+    end
+
+    return variableTypes
+end
+
 local function buildContext(schema, tree, rootValue, variables, operationName)
-  local context = {
-    schema = schema,
-    rootValue = rootValue,
-    variables = variables,
-    operation = nil,
-    fragmentMap = {},
-    defaultValues = {},
-    request_cache = {},
+  local operation = getOperation(tree, operationName)
+  local fragmentMap = getFragmentDefinitions(tree)
+  local variableTypes = getVariableTypes(schema, operation)
+  return {
+      schema = schema,
+      rootValue = rootValue,
+      variables = variables,
+      operation = operation,
+      fragmentMap = fragmentMap,
+      variableTypes = variableTypes,
+      request_cache = {},
   }
-
-  for _, definition in ipairs(tree.definitions) do
-    if definition.kind == 'operation' then
-      if not operationName and context.operation then
-        error('Operation name must be specified if more than one operation exists.')
-      end
-
-      if not operationName or definition.name.value == operationName then
-        context.operation = definition
-      end
-
-      for _, variableDefinition in ipairs(definition.variableDefinitions or {}) do
-          if variableDefinition.defaultValue ~= nil then
-              context.defaultValues[variableDefinition.variable.name.value] =
-                  variableDefinition.defaultValue.value
-
-          end
-      end
-    elseif definition.kind == 'fragmentDefinition' then
-      context.fragmentMap[definition.name.value] = definition
-    end
-  end
-
-  if not context.operation then
-    if operationName then
-      error('Unknown operation "' .. operationName .. '"')
-    else
-      error('Must provide an operation')
-    end
-  end
-
-  return context
 end
 
 local function collectFields(objectType, selections, visitedFragments, result, context)
@@ -296,6 +318,8 @@ local function execute(schema, tree, rootValue, variables, operationName)
   if not rootType then
     error('Unsupported operation "' .. context.operation.operation .. '"')
   end
+
+  validate_variables.validate_variables(context)
 
   return evaluateSelections(rootType, rootValue, context.operation.selectionSet.selections, context)
 end

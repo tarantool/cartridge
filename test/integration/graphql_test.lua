@@ -89,6 +89,13 @@ g.test_upload = function()
         ).data.test, 'B22'
     )
 
+    t.assert_error_msg_contains('Variable "arg2" expected to be non-null',
+        server.graphql, server, {
+            query = [[
+                query ($arg: String! $arg2: String!)
+                    { test(arg: $arg, arg2: $arg2) }
+            ]], variables = {}})
+
     server.net_box:eval([[
         package.loaded['test']['test'] = function(root, args)
             error('Error C', 0)
