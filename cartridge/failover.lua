@@ -47,6 +47,7 @@ vars:new('membership_notification', membership.subscribe())
 vars:new('clusterwide_config')
 vars:new('failover_fiber')
 vars:new('kingdom_conn')
+vars:new('failover_err')
 vars:new('cache', {
     active_leaders = {--[[ [replicaset_uuid] = leader_uuid ]]},
     is_leader = false,
@@ -221,8 +222,15 @@ local function failover_loop(args)
 
         if appointments == nil then
             log.warn('%s', err.err)
+            vars.failover_err = FailoverError:new(
+                "Error fetching appointments: %s", err.err
+            )
             goto start_over
-        elseif not accept_appointments(appointments) then
+        end
+
+        vars.failover_err = nil
+
+        if not accept_appointments(appointments) then
             -- nothing changed
             goto start_over
         end
@@ -284,6 +292,8 @@ local function cfg(clusterwide_config)
         vars.failover_fiber = nil
     end
 
+    vars.failover_err = nil
+
     vars.clusterwide_config = clusterwide_config
     local topology_cfg = clusterwide_config:get_readonly('topology')
     local failover_cfg = topology.get_failover_params(topology_cfg)
@@ -328,9 +338,15 @@ local function cfg(clusterwide_config)
         vars.kingdom_conn = conn
 
         -- WARNING: network yields
-        first_appointments = _get_appointments_stateful_mode(conn, 0)
-        if first_appointments == nil then
+        local appointments, err = _get_appointments_stateful_mode(conn, 0)
+        if appointments == nil then
+            log.warn('Failed to get first appointments: %s', err)
+            vars.failover_err = FailoverError:new(
+                "Error fetching first appointments: %s", err.err
+            )
             first_appointments = {}
+        else
+            first_appointments = appointments
         end
 
         vars.failover_fiber = fiber.new(failover_loop, {
@@ -394,10 +410,21 @@ local function get_coordinator()
     )
 end
 
+local function get_error()
+    if vars.failover_fiber ~= nil
+    and vars.failover_fiber:status() == 'dead'
+    then
+        return FailoverError:new('Failover fiber is dead!')
+    end
+
+    return vars.failover_err
+end
+
 return {
     cfg = cfg,
     get_active_leaders = get_active_leaders,
     is_leader = is_leader,
     is_rw = is_rw,
     get_coordinator = get_coordinator,
+    get_error = get_error,
 }

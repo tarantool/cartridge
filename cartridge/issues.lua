@@ -2,6 +2,7 @@ local fun = require('fun')
 local pool = require('cartridge.pool')
 local topology = require('cartridge.topology')
 local confapplier = require('cartridge.confapplier')
+local failover = require('cartridge.failover')
 
 local function list_on_instance()
     local enabled_servers = {}
@@ -98,14 +99,49 @@ local function list_on_instance()
 
         ::continue::
     end
+
+    local failover_error = failover.get_error()
+    if failover_error ~= nil then
+        table.insert(ret, {
+            level = 'warning',
+            topic = 'failover',
+            instance_uuid = instance_uuid,
+            message = string.format(
+                'Failover is stuck on %s: %s',
+                self_uri, failover_error.err
+            ),
+        })
+    end
     return ret
 end
 
 local function list_on_cluster()
     local uri_list = {}
     local topology_cfg = confapplier.get_readonly('topology')
+    local failover_cfg = topology.get_failover_params(topology_cfg)
     for _, _, srv in fun.filter(topology.not_disabled, topology_cfg.servers) do
         table.insert(uri_list, srv.uri)
+    end
+
+    local ret = {}
+    if failover_cfg.mode == 'stateful' then
+        local coordinator, err = failover.get_coordinator()
+
+        if err ~= nil then
+            table.insert(ret, {
+                level = 'warning',
+                topic = 'failover',
+                message = string.format(
+                    "Can't obtain failover coordinator: %s", err.err
+                )
+            })
+        elseif coordinator == nil then
+            table.insert(ret, {
+                level = 'warning',
+                topic = 'failover',
+                message = 'There is no active failover coordinator'
+            })
+        end
     end
 
     local issues_map = pool.map_call(
@@ -113,7 +149,6 @@ local function list_on_cluster()
         {}, {uri_list = uri_list, timeout = 5}
     )
 
-    local ret = {}
     for _, issues in pairs(issues_map) do
         for _, issue in pairs(issues) do
             table.insert(ret, issue)
