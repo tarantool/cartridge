@@ -254,6 +254,14 @@ export const instanceDataQuery = gql`
 
 export const listQuery = gql`
 query serverList {
+  cluster {
+    issues {
+      level
+      replicaset_uuid
+      instance_uuid
+      message
+    }
+  }
   serverList: servers {
     uuid
     alias

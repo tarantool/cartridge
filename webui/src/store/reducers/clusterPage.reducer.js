@@ -60,7 +60,15 @@ export type ServerStatWithUUID = {
   statistics: ServerStat
 };
 
+export type ClusterIssue = {
+  level: string,
+  message: string,
+  replicaset_uuid?: string,
+  instance_uuid?: string
+}
+
 export type ClusterPageState = {
+  issues: ClusterIssue[],
   replicasetFilter: string,
   modalReplicasetFilter: string,
   pageMount: boolean,
@@ -92,6 +100,7 @@ export type ClusterPageState = {
 };
 
 export const initialState: ClusterPageState = {
+  issues: [],
   replicasetFilter: '',
   modalReplicasetFilter: '',
   pageMount: false,
