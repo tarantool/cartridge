@@ -149,8 +149,8 @@ local function set_failover_params(vars)
     local response = cluster.main_server:graphql({
         query = [[
             mutation(
-                $mode: String!
-                $state_provider: String!
+                $mode: String
+                $state_provider: String
                 $tarantool_params: FailoverStateProviderCfgInputTarantool
             ) {
                 cluster {
@@ -305,7 +305,7 @@ g.test_api_failover = function()
     )
     t.assert_error_msg_equals(
         'topology_new.failover.tarantool_params.uri invalid URI "!@#$"',
-        set_failover_params, {tarantool_params = {uri = '!@#$'}}
+        set_failover_params, {tarantool_params = {uri = '!@#$', password = 'xxx'}}
     )
     t.assert_error_msg_equals(
         'topology_new.failover.tarantool_params.password must be a string, got nil',
