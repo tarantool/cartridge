@@ -22,7 +22,7 @@ import type { State } from 'src/store/rootReducer';
 import * as React from 'react';
 import { css, cx } from 'react-emotion';
 import type { RouterHistory, Location } from 'react-router';
-import type { ClusterIssue } from 'src/store/reducers/clusterPage.reducer'
+import type { Issue } from 'src/generated/graphql-typing';
 import PageDataErrorMessage from 'src/components/PageDataErrorMessage';
 import ReplicasetList from 'src/components/ReplicasetList';
 import UnconfiguredServerList from 'src/components/UnconfiguredServerList';
@@ -65,7 +65,7 @@ const styles = {
 export type ClusterProps = {
   clusterSelf: $PropertyType<AppState, 'clusterSelf'>,
   failover: boolean,
-  issues: ClusterIssue[],
+  issues: Issue[],
   pageMount: boolean,
   pageDataRequestStatus: RequestStatusType,
   replicasetCounts: ReplicasetCounts,

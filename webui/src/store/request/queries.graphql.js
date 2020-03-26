@@ -260,6 +260,7 @@ query serverList {
       replicaset_uuid
       instance_uuid
       message
+      topic
     }
   }
   serverList: servers {
