@@ -94,7 +94,7 @@ const mapStateToProps = (
   },
   { sectionName }
 ) => {
-  const section = boxinfo && boxinfo[sectionName] || {};
+  const section = (boxinfo && boxinfo[sectionName]) || {};
 
   return {
     descriptions: descriptions[sectionName],

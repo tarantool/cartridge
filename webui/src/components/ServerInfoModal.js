@@ -9,8 +9,6 @@ import {
   PopupFooter
 } from '@tarantool.io/ui-kit';
 import { pageDidMount, resetPageState } from 'src/store/actions/clusterInstancePage.actions';
-import isEqual from 'lodash/isEqual';
-import { defaultMemoize, createSelectorCreator } from 'reselect';
 import { withRouter } from 'react-router-dom'
 import ServerShortInfo from 'src/components/ServerShortInfo';
 import ClusterInstanceSection from './ClusterInstanceSection'
@@ -26,7 +24,6 @@ type ServerInfoModalProps = {
   message?: string,
   masterUUID: string,
   activeMasterUUID?: string,
-  roles: string,
   status: string,
   uri: string,
   match: { url: string },
@@ -114,26 +111,18 @@ class ServerInfoModal extends React.Component<ServerInfoModalProps, ServerInfoMo
   }
 }
 
-const getSectionsNames = state => Object.keys(state.clusterInstancePage.boxinfo || {});
-
-const selectSectionsNames = createSelectorCreator(
-  defaultMemoize,
-  isEqual
-)(
-  getSectionsNames,
-  sectionsNames => sectionsNames
-)
-
 const mapStateToProps = (state, props) => {
   const {
     alias,
-    labels,
     message,
-    masterUUID,
-    activeMasterUUID,
-    roles = [],
     status,
     uri
+  } = state.clusterPage.serverList.find(({ uuid }) => uuid === props.instanceUUID) || {};
+
+  const {
+    labels,
+    masterUUID,
+    activeMasterUUID
   } = state.clusterInstancePage;
 
   return {
@@ -143,7 +132,6 @@ const mapStateToProps = (state, props) => {
     message,
     masterUUID,
     activeMasterUUID,
-    roles: roles.join(', '),
     status,
     uri,
     instanceUUID: props.instanceUUID
