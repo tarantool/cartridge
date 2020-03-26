@@ -13,8 +13,7 @@ describe('Server details - dead server', () => {
     cy.get('.meta-test__ServerInfoModal button').contains('Network').click();
     cy.get('.meta-test__ServerInfoModal button').contains('General').click();
     cy.exec('kill -SIGCONT $(lsof -sTCP:LISTEN -i :8082 -t)', { failOnNonZeroExit: true });
-    // FIXME panel with status isn't updated
-    // cy.get('.meta-test__ServerInfoModal').contains('healthy');
+    cy.get('.meta-test__ServerInfoModal').contains('healthy');
     cy.get('.meta-test__ServerInfoModal').contains('instance_uuid');
     cy.get('.meta-test__ServerInfoModal').contains('bbbbbbbb-bbbb-0000-0000-000000000001');
     cy.get('.meta-test__ServerInfoModal button').contains('Close').click();
