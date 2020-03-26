@@ -140,7 +140,7 @@ local function collectFields(objectType, selections, visitedFragments, result, c
   return result
 end
 
-local evaluateSelection
+local evaluateSelections
 local serializemap = {__serialize='map'}
 
 local function completeValue(fieldType, result, subSelections, context, opts)
