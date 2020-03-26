@@ -1,7 +1,7 @@
 local path = (...):gsub('%.[^%.]+$', '')
 local types = require(path .. '.types')
 local util = require(path .. '.util')
-local schema = require(path .. '.schema')
+local query_util = require(path .. '.query_util')
 local introspection = require(path .. '.introspection')
 
 local function getParentField(context, name, count)
@@ -476,21 +476,8 @@ function rules.variableUsageAllowed(node, context)
           local variableDefinition = variableMap[variableName]
           local hasDefault = variableDefinition.defaultValue ~= nil
 
-          local function typeFromAST(variable)
-            local innerType
-            if variable.kind == 'listType' then
-              innerType = typeFromAST(variable.type)
-              return innerType and types.list(innerType)
-            elseif variable.kind == 'nonNullType' then
-              innerType = typeFromAST(variable.type)
-              return innerType and types.nonNull(innerType)
-            else
-              assert(variable.kind == 'namedType', 'Variable must be a named type')
-              return context.schema:getType(variable.name.value)
-            end
-          end
-
-          local variableType = typeFromAST(variableDefinition.type)
+          local variableType = query_util.typeFromAST(variableDefinition.type,
+                  context.schema)
 
           if hasDefault and variableType.__type ~= 'NonNull' then
             variableType = types.nonNull(variableType)

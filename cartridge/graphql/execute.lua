@@ -2,20 +2,7 @@ local path = (...):gsub('%.[^%.]+$', '')
 local types = require(path .. '.types')
 local util = require(path .. '.util')
 local introspection = require(path .. '.introspection')
-
-local function typeFromAST(node, schema)
-  local innerType
-  if node.kind == 'listType' then
-    innerType = typeFromAST(node.type)
-    return innerType and types.list(innerType)
-  elseif node.kind == 'nonNullType' then
-    innerType = typeFromAST(node.type)
-    return innerType and types.nonNull(innerType)
-  else
-    assert(node.kind == 'namedType', 'Variable must be a named type')
-    return schema:getType(node.name.value)
-  end
-end
+local query_util = require(path .. '.query_util')
 
 local function getFieldResponseKey(field)
   return field.alias and field.alias.name.value or field.name.value
@@ -50,7 +37,7 @@ end
 local function doesFragmentApply(fragment, type, context)
   if not fragment.typeCondition then return true end
 
-  local innerType = typeFromAST(fragment.typeCondition, context.schema)
+  local innerType = query_util.typeFromAST(fragment.typeCondition, context.schema)
 
   if innerType == type then
     return true
