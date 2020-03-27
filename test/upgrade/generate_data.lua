@@ -18,7 +18,6 @@ local cluster = helpers.Cluster:new({
     use_vshard = true,
     cookie = 'tmp',
     env = {
-        TARANTOOL_UPGRADE_SCHEMA = 'true',
         TARANTOOL_CHECKPOINT_COUNT = '1',
     },
     replicasets = {{

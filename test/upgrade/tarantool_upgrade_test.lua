@@ -15,13 +15,11 @@ g.before_all(function()
     )
     assert(ok, err)
 
-    local cookie = 'upgrade-1.10-2.2'
-
     g.cluster = helpers.Cluster:new({
         datadir = datadir,
         server_command = helpers.entrypoint('srv_basic'),
         use_vshard = true,
-        cookie = cookie,
+        cookie = require('digest').urandom(6):hex(),
         env = {
             TARANTOOL_UPGRADE_SCHEMA = 'true',
         },
@@ -47,9 +45,11 @@ g.before_all(function()
             }},
         }},
     })
-    -- We start cluster from existing 1.10 snapshots
-    -- with schema version {'1', '10', '2'}
+
+    -- We start cluster from existing snapshots
+    -- Don't try to bootstrap it again
     g.cluster.bootstrapped = true
+
     g.cluster:start()
 end)
 
@@ -62,11 +62,11 @@ function g.test_upgrade()
     local tarantool_version = _G._TARANTOOL
     t.skip_if(tarantool_version < '2.0', 'Tarantool version should be greater 2.0')
 
-    for _, srv in pairs(g.clusrer.servers) do
+    for _, srv in pairs(g.cluster.servers) do
         local ok, v = pcall(function()
             return srv.net_box.space._schema:get({'version'})
         end)
-        t.assert(ok, "Error inspecting" .. srv.alias .. ': ' .. v)
+        t.assert(ok, string.format("Error inspecting %s: %s", srv.alias, v))
         t.assert(v[1] > '1', srv.alias .. ' upgrate to 2.x failed')
     end
 

@@ -521,7 +521,7 @@ local function init(opts)
         box_opts = 'table',
         binary_port = 'number',
         advertise_uri = 'string',
-        upgrade_schema = 'boolean',
+        upgrade_schema = '?boolean',
     })
 
     assert(vars.state == '', 'Unexpected state ' .. vars.state)
