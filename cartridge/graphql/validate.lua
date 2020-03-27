@@ -1,6 +1,7 @@
 local path = (...):gsub('%.[^%.]+$', '')
 local rules = require(path .. '.rules')
 local introspection = require(path .. '.introspection')
+local util = require(path .. '.util')
 
 local function getParentField(context, name, count)
   if introspection.fieldMap[name] then return introspection.fieldMap[name] end
@@ -276,7 +277,8 @@ local function validate(schema, tree)
     usedFragments = {},
     objects = {},
     currentOperation = nil,
-    variableReferences = nil
+    variableReferences = nil,
+    skipVariableUseCheck = {}, -- operation name -> boolean
   }
 
   local function visit(node)

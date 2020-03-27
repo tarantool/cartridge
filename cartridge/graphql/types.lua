@@ -68,6 +68,15 @@ function types.nullable(kind)
     return types.nullable(kind.ofType)
 end
 
+function types.bare(kind)
+    assert(type(kind) == 'table', 'kind must be a table, got ' .. type(kind))
+
+    if kind.ofType == nil then return kind end
+
+    assert(kind.ofType ~= nil, 'kind.ofType must not be nil')
+    return types.bare(kind.ofType)
+end
+
 function types.scalar(config)
   assert(type(config.name) == 'string', 'type name must be provided as a string')
   assert(type(config.serialize) == 'function', 'serialize must be a function')

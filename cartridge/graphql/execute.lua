@@ -225,7 +225,6 @@ end
 local function getFieldEntry(objectType, object, fields, context)
   local firstField = fields[1]
   local fieldName = firstField.name.value
-  local responseKey = getFieldResponseKey(firstField)
   local fieldType = introspection.fieldMap[fieldName] or objectType.fields[fieldName]
 
   if fieldType == nil then
@@ -240,11 +239,10 @@ local function getFieldEntry(objectType, object, fields, context)
   local arguments = util.map(fieldType.arguments or {}, function(argument, name)
     local supplied = argumentMap[name] and argumentMap[name].value
 
-    local value = supplied and util.coerceValue(supplied, argument,
-                                                context.variables,
-                                                context.defaultValues)
-    if value ~= nil then
-      return value
+    supplied = util.coerceValue(supplied, argument, context.variables,
+      {strict_non_null = true})
+    if supplied ~= nil then
+      return supplied
     end
 
     return argument.defaultValue

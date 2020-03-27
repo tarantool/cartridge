@@ -171,7 +171,7 @@ function g.test_reread_request()
 end
 
 function g.test_fail_validate()
-    t.assert_error_msg_contains('Field "x" is not defined on type "String"', function()
+    t.assert_error_msg_contains('Scalar values cannot have subselections', function()
         cluster.main_server:graphql({
             query = [[
                 { cluster { self { uri { x } } } }
