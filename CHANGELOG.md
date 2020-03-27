@@ -20,6 +20,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Extend issues API for stateful failover
 
+- New option in `cartridge.cfg({upgrade_schema=...}, ...)`
+  to perform auto upgrade schema to actual tarantool version
+  (only for leader). It also has bean added for `argparse`.
+
 ### Deprecated
 
 Lua API:

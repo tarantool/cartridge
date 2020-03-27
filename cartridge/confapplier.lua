@@ -48,6 +48,7 @@ vars:new('instance_uuid')
 vars:new('replicaset_uuid')
 
 vars:new('box_opts', nil)
+vars:new('upgrade_schema', nil)
 
 local state_transitions = {
 -- init()
@@ -246,6 +247,28 @@ local function apply_config(clusterwide_config)
     return true
 end
 
+local function cartridge_schema_upgrade(clusterwide_config)
+    -- This was done in such way for several reasons:
+    --  * We don't have a way to check is current schema version is latest
+    --    (https://github.com/tarantool/tarantool/issues/4574)
+    --  * We run upgrade only on the "leader" instance to prevent replication conflicts
+    --  * We run upgrade as soon as possible to avoid Tarantool upgrade bugs:
+    --    (https://github.com/tarantool/tarantool/issues/4691)
+    local topology_cfg = clusterwide_config:get_readonly('topology') or {}
+    local leaders_order = errors.pcall('E',
+        topology.get_leaders_order, topology_cfg, box.info.cluster.uuid
+    )
+
+    if leaders_order == nil then
+        return
+    end
+
+    if leaders_order[1] == box.info.uuid then
+        log.info('Run box.schema.upgrade()...')
+        box.schema.upgrade()
+    end
+end
+
 local function boot_instance(clusterwide_config)
     checks('ClusterwideConfig')
     assert(clusterwide_config.locked)
@@ -403,6 +426,10 @@ local function boot_instance(clusterwide_config)
         local read_only = box.cfg.read_only
         box.cfg({read_only = false})
 
+        if vars.upgrade_schema then
+            cartridge_schema_upgrade(clusterwide_config)
+        end
+
         BoxError:pcall(
             box.schema.user.passwd,
             username, password
@@ -494,6 +521,7 @@ local function init(opts)
         box_opts = 'table',
         binary_port = 'number',
         advertise_uri = 'string',
+        upgrade_schema = '?boolean',
     })
 
     assert(vars.state == '', 'Unexpected state ' .. vars.state)
@@ -501,6 +529,7 @@ local function init(opts)
     vars.box_opts = opts.box_opts
     vars.binary_port = opts.binary_port
     vars.advertise_uri = opts.advertise_uri
+    vars.upgrade_schema = opts.upgrade_schema
 
     local ok, err = remote_control.bind('0.0.0.0', vars.binary_port)
     if not ok then
