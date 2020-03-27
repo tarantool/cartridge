@@ -89,6 +89,13 @@ g.test_upload = function()
         ).data.test, 'B22'
     )
 
+    t.assert_error_msg_contains('Variable "arg2" expected to be non-null',
+        server.graphql, server, {
+            query = [[
+                query ($arg: String! $arg2: String!)
+                    { test(arg: $arg, arg2: $arg2) }
+            ]], variables = {}})
+
     server.net_box:eval([[
         package.loaded['test']['test'] = function(root, args)
             error('Error C', 0)
@@ -164,7 +171,7 @@ function g.test_reread_request()
 end
 
 function g.test_fail_validate()
-    t.assert_error_msg_contains('Field "x" is not defined on type "String"', function()
+    t.assert_error_msg_contains('Scalar values cannot have subselections', function()
         cluster.main_server:graphql({
             query = [[
                 { cluster { self { uri { x } } } }
