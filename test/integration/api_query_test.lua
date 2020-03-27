@@ -223,8 +223,7 @@ function g.test_server_info_schema()
     local field_name_replica = fields_from_map(data['replication_fields'], 'name')
     local field_name_cartridge = fields_from_map(data['cartridge_fields'], 'name')
 
-    local resp = router:graphql({
-        query = string.format(
+    local query = string.format(
             [[
                 {
                     servers {
@@ -242,10 +241,13 @@ function g.test_server_info_schema()
             table.concat(field_name_storage, ' '),
             table.concat(field_name_network, ' '),
             table.concat(field_name_replica, ' '),
-            table.concat(field_name_cartridge, ' ')
-                -- workaround composite graphql type
+            table.concat(field_name_cartridge, ' '))
+            -- workaround composite graphql type
                 :gsub('error', 'error {}')
-        )
+                :gsub('replication_info', 'replication_info {}')
+
+    local resp = router:graphql({
+        query = query,
     })
     log.info(resp['data']['servers'][1])
 end
@@ -289,7 +291,7 @@ function g.test_servers()
                     uri
                     uuid
                     alias
-                    labels
+                    labels { }
                     disabled
                     priority
                     replicaset { roles }

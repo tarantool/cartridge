@@ -315,7 +315,7 @@ function g.test_leader_promote()
                 failover_promote(
                     replicaset_uuid: $replicaset_uuid
                     instance_uuid: $instance_uuid
-                ) {}
+                )
             }
         }]],
         variables = {
@@ -370,12 +370,14 @@ function g.test_leader_promote()
     -------------------------------------------------------
 
     g.kingdom:stop()
-
-    local ok, err = eval('storage-1', q_promote, {{[router_uuid] = storage_1_uuid}})
-    t.assert_equals(ok, nil)
-    t.assert_covers(err, {
-        class_name = 'Net.box call failed',
-    })
+    helpers.retrying({}, function()
+        local ok, err = eval('storage-1', q_promote, {{[router_uuid] = storage_1_uuid}})
+        t.assert_equals(ok, nil)
+        t.assert_covers(err, {
+            class_name = 'StateProviderError',
+            err = 'State provider unavailable',
+        })
+    end)
 
     g.kingdom:start()
     helpers.retrying({}, function()
