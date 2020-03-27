@@ -24,11 +24,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   to perform auto upgrade schema to actual tarantool version
   (only for leader). It also has bean added for `argparse`.
 
-- Graphql validation significantly improved.
-Currently scalar value cannot have subselections.
-Composite types must have subselections.
-Also the problem when non-nullable arguments could be
-omitted in variable list was solved.
+- GraphQL validation significantly improved: scalar values can't have
+  subselections; composite types must have subselections; omitting
+  non-nullable arguments in variable list is forbidden.
 
 ### Deprecated
 
