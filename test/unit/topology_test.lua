@@ -100,11 +100,11 @@ function g.before_all()
     assert(roles.register_role('cartridge.roles.vshard-storage'))
     assert(roles.register_role('cartridge.roles.vshard-router'))
 
-    _G.vshard = {
+    rawset(_G, 'vshard', {
         storage = {
             buckets_count = function() end,
         }
-    }
+    })
 
     g.membership_backup = {}
     g.pool_backup = {}
