@@ -1,3 +1,5 @@
+require('strict').off()
+
 local t = require('luatest')
 local g = t.group()
 

@@ -144,7 +144,7 @@ g.test_advertise_uri = function()
     )
     _sock:close()
 
-    check_error('Can not ping myself: ping was not sent',
+    check_error('Can not ping myself',
         cartridge.cfg, {
             workdir = g.tempdir,
             advertise_uri = 'invalid-host:13301',
