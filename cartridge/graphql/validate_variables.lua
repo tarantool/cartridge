@@ -20,6 +20,7 @@ local function checkVariableValue(variableName, value, variableType)
   local isList = variableType.__type == 'List'
   local isScalar = variableType.__type == 'Scalar'
   local isInputObject = variableType.__type == 'InputObject'
+  local isEnum = variableType.__type == 'Enum'
 
   -- Nullable variable type + null value case: value can be nil only when
   -- isNonNull is false.
@@ -77,6 +78,16 @@ local function checkVariableValue(variableName, value, variableType)
     end
 
     return
+  end
+
+  if isEnum then
+      for _, item in pairs(variableType.values) do
+        if util.cmpdeeply(item.value, value) then
+          return
+        end
+      end
+      error(('Wrong variable "%s" for the Enum "%s" with value %s'):format(
+        variableName, variableType.name, value))
   end
 
   if isScalar then

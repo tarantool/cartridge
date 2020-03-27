@@ -1,3 +1,4 @@
+local ffi = require('ffi')
 local yaml = require('yaml').new({encode_use_tostring = true})
 
 local function map(t, fn)
@@ -206,6 +207,45 @@ local function is_array(table)
     return max >= 0
 end
 
+-- Copied from tarantool/tap
+local function cmpdeeply(got, expected)
+    if type(expected) == "number" or type(got) == "number" then
+        if got ~= got and expected ~= expected then
+            return true -- nan
+        end
+        return got == expected
+    end
+
+    if ffi.istype('bool', got) then got = (got == 1) end
+    if ffi.istype('bool', expected) then expected = (expected == 1) end
+
+    if type(got) ~= type(expected) then
+        return false
+    end
+
+    if type(got) ~= 'table' or type(expected) ~= 'table' then
+        return got == expected
+    end
+
+    local visited_keys = {}
+
+    for i, v in pairs(got) do
+        visited_keys[i] = true
+        if not cmpdeeply(v, expected[i]) then
+            return false
+        end
+    end
+
+    -- check if expected contains more keys then got
+    for i in pairs(expected) do
+        if visited_keys[i] ~= true then
+            return false
+        end
+    end
+
+    return true
+end
+
 return {
   map = map,
   find = find,
@@ -219,4 +259,5 @@ return {
 
   is_array = is_array,
   check = check,
+  cmpdeeply = cmpdeeply,
 }
