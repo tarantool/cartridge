@@ -118,6 +118,11 @@ end
 local function list_on_cluster()
     local uri_list = {}
     local topology_cfg = confapplier.get_readonly('topology')
+
+    if topology_cfg == nil then
+        return {}
+    end
+
     local failover_cfg = topology.get_failover_params(topology_cfg)
     for _, _, srv in fun.filter(topology.not_disabled, topology_cfg.servers) do
         table.insert(uri_list, srv.uri)
