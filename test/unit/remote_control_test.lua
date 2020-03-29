@@ -198,7 +198,7 @@ function g.test_late_accept()
     t.assert_equals({conn_1.state, conn_1.error}, {"initial", nil})
 
     local conn_2 = netbox.connect(url, {connect_timeout = 0.2})
-    t.assert_equals({conn_2.state, conn_2.error}, {"error", "Connection timed out"})
+    t.assert_equals({conn_2.state, conn_2.error}, {"error", errno.strerror(errno.ETIMEDOUT)})
 
     remote_control.drop_connections()
 
