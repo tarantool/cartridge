@@ -588,10 +588,11 @@ function g.test_app_name()
 end
 
 function g.test_issues_uninitialized_instance()
-    t.assert_equals(g.server:graphql({
-        query = [[{
+    t.assert_equals(
+        g.server:graphql({query = [[{
             cluster {
                 issues {}
-            }}
-        ]]}).data.cluster.issues, {})
+            }
+        }]]}).data.cluster.issues, {}
+    )
 end

@@ -36,6 +36,10 @@ GraphQL API:
 - `query {cluster {failover} }` -> `query {cluster {failover_params {...} } }`
 - `mutation {cluster {failover()} }` -> `mutation {cluster {failover_params() {...} } }`
 
+### Fixed
+
+- Fix quering failure `cluster {issues {...} }` on uninitialized instance
+
 ## [2.0.2] - 2020-03-17
 
 ### Added
