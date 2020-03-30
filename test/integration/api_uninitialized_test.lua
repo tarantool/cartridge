@@ -194,7 +194,7 @@ function g.test_rpc()
     })
 end
 
-function g.test_issues_uninitialized_instance()
+function g.test_issues()
     t.assert_equals(
         g.server:graphql({query = [[{
             cluster {
