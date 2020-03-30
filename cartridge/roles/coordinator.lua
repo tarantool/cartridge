@@ -149,14 +149,18 @@ end
 
 local function take_control(uri)
     checks('string')
-    local conn, err = NetboxConnectError:pcall(netbox.connect, uri)
-    if conn == nil then
-        return nil, err
-    elseif not conn:is_connected() then
-        return nil, NetboxConnectError:new('"%s:%s": %s',
-            conn.host, conn.port, conn.error
-        )
+    if vars.conn == nil or not vars.conn:is_connected() then
+        local conn, err = NetboxConnectError:pcall(netbox.connect, uri)
+        if conn == nil then
+            return nil, err
+        elseif not conn:is_connected() then
+            return nil, NetboxConnectError:new('"%s:%s": %s',
+                conn.host, conn.port, conn.error
+            )
+        end
+        vars.conn = conn
     end
+    local conn = vars.conn
 
     local lock_delay, err = errors.netbox_call(conn, 'get_lock_delay',
         nil, {timeout = vars.options.NETBOX_CALL_TIMEOUT}
@@ -183,7 +187,6 @@ local function take_control(uri)
     end
 
     log.info('Lock acquired')
-    vars.conn = conn
     local control_fiber = fiber.new(control_loop, conn)
     control_fiber:name('failover-coordinate')
 
