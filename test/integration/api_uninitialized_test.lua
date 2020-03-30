@@ -193,3 +193,13 @@ function g.test_rpc()
         err = 'No remotes with role "myrole-permanent" available',
     })
 end
+
+function g.test_issues_uninitialized_instance()
+    t.assert_equals(
+        g.server:graphql({query = [[{
+            cluster {
+                issues {}
+            }
+        }]]}).data.cluster.issues, {}
+    )
+end

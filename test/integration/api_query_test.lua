@@ -586,13 +586,3 @@ function g.test_app_name()
 
     t.assert_equals(get_app_info(), {app_name = 'app_name', instance_name = 'instance_name'})
 end
-
-function g.test_issues_uninitialized_instance()
-    t.assert_equals(
-        g.server:graphql({query = [[{
-            cluster {
-                issues {}
-            }
-        }]]}).data.cluster.issues, {}
-    )
-end
