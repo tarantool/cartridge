@@ -260,7 +260,10 @@ local visitors = {
 
     children = function(node)
       return util.map(node.value.values or {}, function(value)
-        return value.value
+        if value.value ~= nil then
+          return value.value
+        end
+        return value
       end)
     end,
 
@@ -275,6 +278,12 @@ local visitors = {
     end,
 
     rules = { rules.uniqueInputObjectFields }
+  },
+
+  list = {
+    children = function(node)
+      return node.values
+    end,
   },
 
   variable = {
@@ -300,7 +309,6 @@ local function validate(schema, tree)
     objects = {},
     currentOperation = nil,
     variableReferences = nil,
-    skipVariableUseCheck = {}, -- operation name -> boolean
   }
 
   local function visit(node)
