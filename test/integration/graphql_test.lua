@@ -295,6 +295,40 @@ g.test_nested_input = function()
     )
 end
 
+g.test_missed_variable = function()
+    local server = cluster.main_server
+
+    server.net_box:eval([[
+        package.loaded['test'] = package.loaded['test'] or {}
+        package.loaded['test']['test_missed_var'] = function(root, args)
+          return 'ok'
+        end
+        local graphql = require('cartridge.graphql')
+        local types = require('cartridge.graphql.types')
+
+        graphql.add_mutation({
+            name = 'test_missed_var',
+            args = {
+                arg = types.string,
+                arg2 = types.string,
+            },
+            kind = types.string,
+            callback = 'test.missed_var',
+        })
+    ]])
+
+    t.assert_error_msg_contains('Unknown variable "arg"', function()
+         server:graphql({
+            query = [[
+                mutation($arg2: String) {
+                    test_missed_var(arg: $arg, arg2: $arg2)
+                }
+            ]],
+            variables = {arg = 'arg', arg2 = 'arg2'}}
+        )
+    end)
+end
+
 function g.test_fail_validate()
     t.assert_error_msg_equals('Scalar field "uri" cannot have subselections', function()
         return cluster.main_server:graphql({
