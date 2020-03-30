@@ -151,7 +151,7 @@ local function list_on_cluster()
 
     local issues_map = pool.map_call(
         '_G.__cartridge_issues_list_on_instance',
-        {}, {uri_list = uri_list, timeout = 5}
+        {}, {uri_list = uri_list, timeout = 1}
     )
 
     for _, issues in pairs(issues_map) do

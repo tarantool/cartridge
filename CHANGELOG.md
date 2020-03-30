@@ -28,6 +28,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   subselections; composite types must have subselections; omitting
   non-nullable arguments in variable list is forbidden.
 
+- Indicate replication and failover issues in WebUI.
+
 ### Deprecated
 
 Lua API:

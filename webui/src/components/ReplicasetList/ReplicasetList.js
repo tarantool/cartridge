@@ -7,6 +7,7 @@ import {
   Button,
   HealthStatus,
   IconGear,
+  Modal,
   Text,
   TiledList,
   Tooltip
@@ -14,6 +15,7 @@ import {
 import ReplicasetRoles from 'src/components/ReplicasetRoles';
 import ReplicasetServerList from 'src/components/ReplicasetServerList';
 import { addSearchParams } from 'src/misc/url';
+import { ClusterIssuesModal } from 'src/components/ClusterIssuesModal';
 
 const styles = {
   header: css`
@@ -42,13 +44,27 @@ const styles = {
     flex-shrink: 0;
     margin-bottom: 12px;
   `,
-  status: css`
-    display: flex;
+  statusWrap: css`
     flex-shrink: 0;
     flex-basis: 193px;
+  `,
+  status: css`
+    display: flex;
     align-items: center;
+    height: 22px;
     margin-left: -8px;
     margin-right: 12px;
+  `,
+  statusWarning: css`
+    color: rgba(245, 34, 45, 0.65);
+  `,
+  statusButton: css`
+    display: block;
+    padding-left: 8px;
+    padding-right: 8px;
+    margin-left: -8px;
+    margin-top: -1px;
+    margin-bottom: -1px;
   `,
   vshardTooltip: css`
     display: inline;
@@ -104,6 +120,14 @@ const styles = {
 const prepareReplicasetList = dataSource => [...dataSource].sort((a, b) => b.uuid < a.uuid ? 1 : -1);
 
 class ReplicasetList extends React.PureComponent {
+  state = {
+    showReplicasetIssues: null
+  };
+
+  hideIssuesModal = () => this.setState({ showReplicasetIssues: null });
+
+  showIssuesModal = replicasetUUID => this.setState({ showReplicasetIssues: replicasetUUID });
+
   prepareReplicasetList = defaultMemoize(prepareReplicasetList);
 
   render() {
@@ -111,68 +135,107 @@ class ReplicasetList extends React.PureComponent {
       className,
       clusterSelf,
       editReplicaset,
+      issues,
       joinServer,
       createReplicaset,
       onServerLabelClick
     } = this.props;
 
+    const { showReplicasetIssues } = this.state;
+
     const replicasetList = this.getReplicasetList();
 
+    const replicasetsWithIssues = issues
+      .filter(({ replicaset_uuid }) => !!replicaset_uuid)
+      .map(({ replicaset_uuid }) => replicaset_uuid);
+
     return (
-      <TiledList
-        className={className}
-        corners='soft'
-        itemKey='uuid'
-        items={replicasetList}
-        itemRender={replicaset => (
-          <React.Fragment>
-            <div className={styles.header}>
-              <Tooltip className={styles.aliasTooltip} content={replicaset.alias}>
-                <Text className={styles.alias} variant='h3'>{replicaset.alias}</Text>
-              </Tooltip>
-              <div className={styles.statusGroup}>
-                <HealthStatus className={styles.status} message={replicaset.message} status={replicaset.status} />
-                <Text className={styles.vshard} variant='p' tag='div' upperCase>
-                  {(replicaset.vshard_group || replicaset.weight) && [
-                    <Tooltip className={styles.vshardTooltip} content='Storage group'>
-                      {replicaset.vshard_group}
-                    </Tooltip>,
-                    <Tooltip className={styles.vshardTooltip} content='Replica set weight'>
-                      {replicaset.weight}
-                    </Tooltip>
-                  ]}
-                  {replicaset.all_rw && (
-                    <Tooltip
-                      className={cx(styles.vshardTooltip, 'meta-test__ReplicasetList_allRw_enabled')}
-                      content='All instances in the replicaset writeable'
-                    >
-                      all rw
-                    </Tooltip>
-                  )}
-                </Text>
+      <>
+        <TiledList
+          className={className}
+          corners='soft'
+          itemKey='uuid'
+          items={replicasetList}
+          itemRender={replicaset => (
+            <React.Fragment>
+              <div className={styles.header}>
+                <Tooltip className={styles.aliasTooltip} content={replicaset.alias}>
+                  <Text className={styles.alias} variant='h3'>{replicaset.alias}</Text>
+                </Tooltip>
+                <div className={styles.statusGroup}>
+                  <div className={styles.statusWrap}>
+                    {
+                      replicasetsWithIssues.includes(replicaset.uuid)
+                        ? (
+                          <Button
+                            className={styles.statusButton}
+                            intent='secondary'
+                            size='s'
+                            onClick={() => this.showIssuesModal(replicaset.uuid)}
+                          >
+                            <HealthStatus
+                              className={cx(styles.status, styles.statusWarning)}
+                              message='have issues'
+                              status='bad'
+                            />
+                          </Button>
+                        )
+                        : (
+                          <HealthStatus
+                            className={styles.status}
+                            message={replicaset.message}
+                            status={replicaset.status}
+                          />
+                        )
+                    }
+                  </div>
+                  <Text className={styles.vshard} variant='p' tag='div' upperCase>
+                    {(replicaset.vshard_group || replicaset.weight) && [
+                      <Tooltip className={styles.vshardTooltip} content='Storage group'>
+                        {replicaset.vshard_group}
+                      </Tooltip>,
+                      <Tooltip className={styles.vshardTooltip} content='Replica set weight'>
+                        {replicaset.weight}
+                      </Tooltip>
+                    ]}
+                    {replicaset.all_rw && (
+                      <Tooltip
+                        className={cx(styles.vshardTooltip, 'meta-test__ReplicasetList_allRw_enabled')}
+                        content='All instances in the replicaset writeable'
+                      >
+                        all rw
+                      </Tooltip>
+                    )}
+                  </Text>
+                </div>
+                <Button
+                  className={styles.editBtn}
+                  icon={IconGear}
+                  intent='secondary'
+                  onClick={() => this.handleEditReplicasetRequest(replicaset)}
+                  size='s'
+                  text='Edit'
+                />
               </div>
-              <Button
-                className={styles.editBtn}
-                icon={IconGear}
-                intent='secondary'
-                onClick={() => this.handleEditReplicasetRequest(replicaset)}
-                size='s'
-                text='Edit'
+              <ReplicasetRoles className={styles.roles} roles={replicaset.roles}/>
+              <div className={styles.divider} />
+              <ReplicasetServerList
+                clusterSelf={clusterSelf}
+                replicaset={replicaset}
+                editReplicaset={editReplicaset}
+                joinServer={joinServer}
+                createReplicaset={createReplicaset}
+                onServerLabelClick={onServerLabelClick}
               />
-            </div>
-            <ReplicasetRoles className={styles.roles} roles={replicaset.roles}/>
-            <div className={styles.divider} />
-            <ReplicasetServerList
-              clusterSelf={clusterSelf}
-              replicaset={replicaset}
-              editReplicaset={editReplicaset}
-              joinServer={joinServer}
-              createReplicaset={createReplicaset}
-              onServerLabelClick={onServerLabelClick}
-            />
-          </React.Fragment>
-        )}
-      />
+            </React.Fragment>
+          )}
+        />
+        <ClusterIssuesModal
+          visible={showReplicasetIssues || false}
+          issues={issues.filter(({ replicaset_uuid }) => replicaset_uuid === showReplicasetIssues)}
+          onClose={this.hideIssuesModal}
+        />
+      </>
     );
   }
 

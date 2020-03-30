@@ -110,7 +110,7 @@ export type Error = {
 
 /** Failover parameters managent */
 export type FailoverApi = {
-  tarantool_params: FailoverStateProviderCfgTarantool,
+  tarantool_params?: ?FailoverStateProviderCfgTarantool,
   /** Supported modes are "disabled", "eventual" and "stateful". */
   mode: $ElementType<Scalars, "String">,
   /** Type of external storage for the mode "stateful". Only "tarantool" is supported now. */
@@ -131,9 +131,10 @@ export type FailoverStateProviderCfgTarantool = {
 
 export type Issue = {
   level: $ElementType<Scalars, "String">,
-  replicaset_uuid?: ?$ElementType<Scalars, "String">,
   instance_uuid?: ?$ElementType<Scalars, "String">,
-  message: $ElementType<Scalars, "String">
+  replicaset_uuid?: ?$ElementType<Scalars, "String">,
+  message: $ElementType<Scalars, "String">,
+  topic: $ElementType<Scalars, "String">
 };
 
 /** Parameters for joining a new server */
@@ -216,20 +217,22 @@ export type MutationApicluster = {
   failover_params: FailoverApi,
   /** Checks that schema can be applied on cluster */
   check_schema: DdlCheckResult,
-  /** Disable listed servers by uuid */
-  disable_servers?: ?Array<?Server>,
-  auth_params: UserManagementApi,
-  /** Edit an existing user */
-  edit_user?: ?User,
-  /** Create a new user */
-  add_user?: ?User,
-  edit_vshard_options: VshardGroup,
-  /** Remove user */
-  remove_user?: ?User,
+  /** Applies updated config on cluster */
+  config: Array<?ConfigSection>,
   /** Edit cluster topology */
   edit_topology?: ?EditTopologyResult,
-  /** Applies updated config on cluster */
-  config: Array<?ConfigSection>
+  auth_params: UserManagementApi,
+  /** Create a new user */
+  add_user?: ?User,
+  /** Edit an existing user */
+  edit_user?: ?User,
+  edit_vshard_options: VshardGroup,
+  /** Promote the instance to the leader of replicaset */
+  failover_promote: $ElementType<Scalars, "Boolean">,
+  /** Remove user */
+  remove_user?: ?User,
+  /** Disable listed servers by uuid */
+  disable_servers?: ?Array<?Server>
 };
 
 /** Cluster management */
@@ -255,8 +258,14 @@ export type MutationApiclusterCheck_SchemaArgs = {
 };
 
 /** Cluster management */
-export type MutationApiclusterDisable_ServersArgs = {
-  uuids?: ?Array<$ElementType<Scalars, "String">>
+export type MutationApiclusterConfigArgs = {
+  sections?: ?Array<?ConfigSectionInput>
+};
+
+/** Cluster management */
+export type MutationApiclusterEdit_TopologyArgs = {
+  replicasets?: ?Array<?EditReplicasetInput>,
+  servers?: ?Array<?EditServerInput>
 };
 
 /** Cluster management */
@@ -267,16 +276,16 @@ export type MutationApiclusterAuth_ParamsArgs = {
 };
 
 /** Cluster management */
-export type MutationApiclusterEdit_UserArgs = {
-  password?: ?$ElementType<Scalars, "String">,
+export type MutationApiclusterAdd_UserArgs = {
+  password: $ElementType<Scalars, "String">,
   username: $ElementType<Scalars, "String">,
   fullname?: ?$ElementType<Scalars, "String">,
   email?: ?$ElementType<Scalars, "String">
 };
 
 /** Cluster management */
-export type MutationApiclusterAdd_UserArgs = {
-  password: $ElementType<Scalars, "String">,
+export type MutationApiclusterEdit_UserArgs = {
+  password?: ?$ElementType<Scalars, "String">,
   username: $ElementType<Scalars, "String">,
   fullname?: ?$ElementType<Scalars, "String">,
   email?: ?$ElementType<Scalars, "String">
@@ -293,19 +302,19 @@ export type MutationApiclusterEdit_Vshard_OptionsArgs = {
 };
 
 /** Cluster management */
+export type MutationApiclusterFailover_PromoteArgs = {
+  replicaset_uuid: $ElementType<Scalars, "String">,
+  instance_uuid: $ElementType<Scalars, "String">
+};
+
+/** Cluster management */
 export type MutationApiclusterRemove_UserArgs = {
   username: $ElementType<Scalars, "String">
 };
 
 /** Cluster management */
-export type MutationApiclusterEdit_TopologyArgs = {
-  replicasets?: ?Array<?EditReplicasetInput>,
-  servers?: ?Array<?EditServerInput>
-};
-
-/** Cluster management */
-export type MutationApiclusterConfigArgs = {
-  sections?: ?Array<?ConfigSectionInput>
+export type MutationApiclusterDisable_ServersArgs = {
+  uuids?: ?Array<$ElementType<Scalars, "String">>
 };
 
 export type Query = {
@@ -834,6 +843,14 @@ export type InstanceDataQuery = { __typename?: "Query" } & {
 export type ServerListQueryVariables = {};
 
 export type ServerListQuery = { __typename?: "Query" } & {
+  cluster: ?({ __typename?: "Apicluster" } & {
+    issues: ?Array<
+      { __typename?: "Issue" } & $Pick<
+        Issue,
+        { level: *, replicaset_uuid: *, instance_uuid: *, message: *, topic: * }
+      >
+    >
+  }),
   serverList: ?Array<?({ __typename?: "Server" } & $Pick<
     Server,
     { uuid: *, alias: *, uri: *, status: *, message: * }

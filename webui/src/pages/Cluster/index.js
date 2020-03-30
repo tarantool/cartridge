@@ -22,6 +22,7 @@ import type { State } from 'src/store/rootReducer';
 import * as React from 'react';
 import { css, cx } from 'react-emotion';
 import type { RouterHistory, Location } from 'react-router';
+import type { Issue } from 'src/generated/graphql-typing';
 import PageDataErrorMessage from 'src/components/PageDataErrorMessage';
 import ReplicasetList from 'src/components/ReplicasetList';
 import UnconfiguredServerList from 'src/components/UnconfiguredServerList';
@@ -64,6 +65,7 @@ const styles = {
 export type ClusterProps = {
   clusterSelf: $PropertyType<AppState, 'clusterSelf'>,
   failover: boolean,
+  issues: Issue[],
   pageMount: boolean,
   pageDataRequestStatus: RequestStatusType,
   replicasetCounts: ReplicasetCounts,
@@ -131,6 +133,7 @@ class Cluster extends React.Component<ClusterProps> {
       clusterSelf,
       filter,
       filteredReplicasetList,
+      issues,
       replicasetList,
       routerParams,
       serverCounts
@@ -204,6 +207,7 @@ class Cluster extends React.Component<ClusterProps> {
                 <ReplicasetList
                   clusterSelf={clusterSelf}
                   dataSource={filteredReplicasetList}
+                  issues={issues}
                   onServerLabelClick={this.handleServerLabelClick}
                 />
               )
@@ -308,6 +312,7 @@ const mapStateToProps = (state: State, { match: { params } }) => {
       failover
     },
     clusterPage: {
+      issues,
       pageMount,
       pageDataRequestStatus,
       replicasetFilter,
@@ -326,6 +331,7 @@ const mapStateToProps = (state: State, { match: { params } }) => {
     filteredReplicasetList: replicasetFilter
       ? filterReplicasetListSelector(state)
       : replicasetList,
+    issues,
     pageMount,
     pageDataRequestStatus,
     replicasetCounts: getReplicasetCounts(state),

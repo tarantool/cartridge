@@ -70,6 +70,9 @@ g.setup = function()
 end
 
 g.teardown = function()
+    for _, srv in pairs(g.cluster.servers) do
+        srv.process:kill('CONT')
+    end
     g.cluster:stop()
     g.server:stop()
     fio.rmtree(g.cluster.datadir)
