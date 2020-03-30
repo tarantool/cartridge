@@ -171,10 +171,18 @@ function g.test_reread_request()
 end
 
 function g.test_fail_validate()
-    t.assert_error_msg_contains('Scalar values cannot have subselections', function()
+    t.assert_error_msg_contains('Scalar field "uri" cannot have subselections', function()
         cluster.main_server:graphql({
             query = [[
-                { cluster { self { uri { x } } } }
+                { cluster { self { uuid uri { x } state } } }
+            ]]
+        })
+    end)
+
+    t.assert_error_msg_contains('Composite field "replicaset" must have subselections', function()
+        cluster.main_server:graphql({
+            query = [[
+                { servers { alias replicaset storage { } uuid } }
             ]]
         })
     end)
