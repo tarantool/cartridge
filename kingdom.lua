@@ -128,27 +128,36 @@ local lock = {
 
 function _G.acquire_lock(uuid, uri)
     checks('string', 'string')
+
+    if box.session.id() ~= lock.session_id
+    and box.session.storage.lock_acquired then
+        -- lock was stolen while the session was inactive
+        return nil, 'The lock was stolen'
+    end
+
     local now = clock.monotonic()
 
     if box.session.id() ~= lock.session_id
     and box.session.exists(lock.session_id)
     and now < lock.session_expiry then
+        -- lock is in another session
         return false
     end
 
     lock.session_id = box.session.id()
     lock.session_expiry = now + LOCK_DELAY
+    box.session.storage.lock_acquired = true
 
     if lock.coordinator == nil
     or lock.coordinator.uuid ~= uuid
     or lock.coordinator.uri ~= uri
     then
-        box.space.coordinator_audit:insert({nil, fiber.time(), uuid, uri})
-        log.info('Long live the coordinator %q (%s)!', uri, uuid)
         lock.coordinator = {
             uuid = uuid,
             uri = uri,
         }
+        box.space.coordinator_audit:insert({nil, fiber.time(), uuid, uri})
+        log.info('Long live the coordinator %q (%s)!', uri, uuid)
     end
 
     return true

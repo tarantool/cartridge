@@ -58,7 +58,7 @@ function g.test_locks()
         false
     )
     t.assert_equals(
-        {c2:call('set_leaders', {{'A', 'a1'}})},
+        {c2:call('set_leaders', {{{'A', 'a1'}}})},
         {box.NULL, 'You are not holding the lock'}
     )
     t.assert_equals(
@@ -144,4 +144,50 @@ function g.test_passwd()
     end)
 
     t.assert_equals(g.kingdom.net_box:call('get_lock_delay'), 40)
+end
+
+function g.test_outage()
+    -- Test case:
+    -- 1. Coordinator C1 acquires a lock and freezes;
+    -- 2. Lock delay expires and kingdom allows C2 to acquire it again;
+    -- 3. C2 writes some decisions and releases a lock;
+    -- 4. C1 comes back;
+    -- Goal: C1 must be informed on his outage
+
+    g.kingdom:stop()
+    g.kingdom.env.TARANTOOL_LOCK_DELAY = '0'
+    g.kingdom:start()
+    helpers.retrying({}, function()
+        g.kingdom:connect_net_box()
+    end)
+
+    local payload = {uuid.str(), 'localhost:9'}
+
+    local c1 = connect(g.kingdom)
+    t.assert_equals(
+        {c1:call('acquire_lock', payload)},
+        {true}
+    )
+    t.assert_equals(
+        -- C1 can renew expired lock if it wasn't stolen yen
+        {c1:call('acquire_lock', payload)},
+        {true}
+    )
+
+    local c2 = connect(g.kingdom)
+    t.assert_equals(
+        {c2:call('acquire_lock', payload)},
+        {true}
+    )
+    c2:close()
+
+    t.assert_equals(
+        -- C1 can't renew lock after if was stolen by C2
+        {c1:call('acquire_lock', payload)},
+        {box.NULL, 'The lock was stolen'}
+    )
+    t.assert_equals(
+        {c1:call('set_leaders', {{}})},
+        {box.NULL, 'You are not holding the lock'}
+    )
 end
