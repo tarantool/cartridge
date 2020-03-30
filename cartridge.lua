@@ -453,7 +453,7 @@ local function cfg(opts, box_opts)
 
     -- Gracefully leave membership in case of stop if box.ctl.on_shutdown supported
     if box.ctl.on_shutdown ~= nil then
-        box.ctl.on_shutdown(membership.leave)
+        box.ctl.on_shutdown(function() pcall(membership.leave) end)
     end
 
     if opts.auth_backend_name == nil then
