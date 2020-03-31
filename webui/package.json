@@ -34,6 +34,8 @@
     "css-loader": "3.1.0",
     "dotenv": "4.0.0",
     "dotenv-expand": "4.2.0",
+    "effector": "20.13.4",
+    "effector-react": "20.6.3",
     "emotion": "^9.2.6",
     "eslint": "6.1.0",
     "eslint-config-react-app": "2.1.0",

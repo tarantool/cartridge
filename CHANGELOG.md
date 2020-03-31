@@ -44,6 +44,8 @@ GraphQL API:
 
 ### Fixed
 
+- Fix no feedback on successful config uploaded
+
 - Fix quering failure `cluster {issues {...} }` on uninitialized instance
 
 ## [2.0.2] - 2020-03-17
