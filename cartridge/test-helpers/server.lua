@@ -271,4 +271,19 @@ function Server:download_config()
     return yaml.decode(self:http_request('get', '/admin/config').body)
 end
 
+--- List issues on a cluster
+function Server:list_cluster_issues()
+    return self:graphql({query = [[{
+        cluster {
+            issues {
+                level
+                message
+                replicaset_uuid
+                instance_uuid
+                topic
+            }
+        }
+    }]]}).data.cluster.issues
+end
+
 return Server

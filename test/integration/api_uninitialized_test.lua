@@ -195,11 +195,5 @@ function g.test_rpc()
 end
 
 function g.test_issues()
-    t.assert_equals(
-        g.server:graphql({query = [[{
-            cluster {
-                issues {}
-            }
-        }]]}).data.cluster.issues, {}
-    )
+    t.assert_equals(g.server:list_cluster_issues(), {})
 end

@@ -55,22 +55,14 @@ function g.test_broken_replica()
 
 
     t.helpers.retrying({}, function()
-        local issues = master:graphql({query = [[{
-            cluster {
-                issues {
-                    level
-                    replicaset_uuid
-                    message
-                    instance_uuid
-                }
-            }
-        }]]}).data.cluster.issues
+        local issues = master:list_cluster_issues()
 
         t.assert_equals(
             helpers.table_find_by_attr(
                 issues, 'instance_uuid', helpers.uuid('a', 'a', 2)
             ), {
                 level = 'warning',
+                topic = 'replication',
                 replicaset_uuid = helpers.uuid('a'),
                 instance_uuid = helpers.uuid('a', 'a', 2),
                 message = "Replication from localhost:13301" ..
@@ -84,6 +76,7 @@ function g.test_broken_replica()
                 issues, 'instance_uuid', helpers.uuid('a', 'a', 3)
             ), {
                 level = 'warning',
+                topic = 'replication',
                 replicaset_uuid = helpers.uuid('a'),
                 instance_uuid = helpers.uuid('a', 'a', 3),
                 message = "Replication from localhost:13301" ..
