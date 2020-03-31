@@ -75,7 +75,8 @@ type UploadProps = {
   name: string,
   multiple?: boolean,
   className?: string,
-  label?: string
+  label?: string,
+  files?: Array<File>
 }
 
 export default function UploadZone(
@@ -85,10 +86,11 @@ export default function UploadZone(
     name,
     multiple,
     className,
-    label
+    label,
+    files
   }: UploadProps
 ) {
-  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [selectedFiles, setSelectedFiles] = useState<Array<File>>([]);
 
   const {
     getRootProps,
@@ -102,6 +104,8 @@ export default function UploadZone(
       setSelectedFiles(files)
     }
   });
+
+  const refFiles = files || selectedFiles
 
   const { ref, ...rootProps } = getRootProps({
     isDragAccept
@@ -121,9 +125,9 @@ export default function UploadZone(
           </UploadNotice>
         </Container>
       </DropzoneContainer>
-      {selectedFiles.length > 0 && <UploadableFiles>
-        {selectedFiles.map(x => {
-          return <UploadableFile><IconAttach/><FileName>{x.path}</FileName></UploadableFile>
+      {refFiles.length > 0 && <UploadableFiles>
+        {refFiles.map(x => {
+          return <UploadableFile><IconAttach/><FileName>{x.name}</FileName></UploadableFile>
         })}
       </UploadableFiles>}
     </div>

@@ -57,6 +57,8 @@ mutation($uuid: String!) {
 - Fix bug in GraphQL query `cluster {issues {...} }` on uninitialized
   instance.
 
+- Show WebUI notification on successful config upload.
+
 ## [2.0.2] - 2020-03-17
 
 ### Added
