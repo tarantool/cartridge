@@ -579,9 +579,12 @@ function g.test_membership_leave()
     )
 end
 
-function g.test_memory_issues()
+
+function g.test_issues()
     t.assert_equals(helpers.list_cluster_issues(g.cluster.main_server), {})
 
+    -----------------------------------------------------------------------------
+    -- memory usage issues
     local server = g.cluster:server('storage')
     server.net_box:eval([[
         _G._old_slab_info = box.slab.info
@@ -630,4 +633,23 @@ function g.test_memory_issues()
 
     server.net_box:eval('box.slab.info = _G._old_slab_info')
     t.assert_equals(helpers.list_cluster_issues(g.cluster.main_server), {})
+
+    -----------------------------------------------------------------------------
+    -- clock desync issues
+    g.cluster.main_server.net_box:eval([[
+        local vars = require('cartridge.vars').new('cartridge.issues')
+        vars.limits.desync_threshold_warning = 0
+    ]])
+
+    local res = helpers.list_cluster_issues(g.cluster.main_server)
+    t.assert_equals(#res, 1)
+    t.assert_equals(res[1].topic, 'clock')
+    t.assert_equals(res[1].level, 'warning')
+    t.assert_str_matches(res[1].message,
+        'Too big clock difference %(.* sec%) between localhost:(%d+) and localhost:(%d+)'
+    )
+    g.cluster.main_server.net_box:eval([[
+        local vars = require('cartridge.vars').new('cartridge.issues')
+        vars.limits = nil
+    ]])
 end
