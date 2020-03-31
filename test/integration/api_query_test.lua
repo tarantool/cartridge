@@ -640,16 +640,22 @@ function g.test_issues()
         local vars = require('cartridge.vars').new('cartridge.issues')
         vars.limits.desync_threshold_warning = 0
     ]])
-
-    local res = helpers.list_cluster_issues(g.cluster.main_server)
-    t.assert_equals(#res, 1)
-    t.assert_equals(res[1].topic, 'clock')
-    t.assert_equals(res[1].level, 'warning')
-    t.assert_str_matches(res[1].message,
-        'Too big clock difference %(.* sec%) between localhost:(%d+) and localhost:(%d+)'
-    )
+    local issues = helpers.list_cluster_issues(g.cluster.main_server)
     g.cluster.main_server.net_box:eval([[
         local vars = require('cartridge.vars').new('cartridge.issues')
-        vars.limits = nil
+        vars.limits = nil -- reset default values
     ]])
+
+    t.assert_covers(issues[1], {
+        topic = 'clock',
+        level = 'warning',
+        instance_uuid = box.NULL,
+        replicaset_uuid = box.NULL,
+    })
+    t.assert_str_matches(issues[1].message,
+        'Clock difference between' ..
+        ' localhost:%d+ and localhost:%d+' ..
+        ' exceed threshold %(.+ > 0%)'
+    )
+    t.assert_not(next(issues, 1))
 end

@@ -183,7 +183,8 @@ local function list_on_cluster()
     end
 
     -----------------------------------------------------------------------------
-    -- get general cluster issues about clock desync
+    -- Check clock desynchronization
+
     local min_delta = 0
     local max_delta = 0
     local min_delta_uri = topology_cfg.servers[box.info.uuid].uri
@@ -211,14 +212,17 @@ local function list_on_cluster()
             level = 'warning',
             topic = 'clock',
             message = string.format(
-                'Too big clock difference (%f sec) between %s and %s',
-                diff, min_delta_uri, max_delta_uri
+                'Clock difference between %s and %s' ..
+                ' exceed threshold (%.2g > %g)',
+                min_delta_uri, max_delta_uri,
+                diff, vars.limits.desync_threshold_warning
             )
         })
     end
 
     -----------------------------------------------------------------------------
-    -- get general cluster issues about stateful failover
+    -- Check stateful failover issues
+
     local failover_cfg = topology.get_failover_params(topology_cfg)
     if failover_cfg.mode == 'stateful' then
         local coordinator, err = failover.get_coordinator()
@@ -241,8 +245,8 @@ local function list_on_cluster()
     end
 
     -----------------------------------------------------------------------------
-    -- get personal instance issues (about: replication, failover, memory usage)
-    -- on each cluster instances
+    -- Get each instance issues (replication, failover, memory usage)
+
     local issues_map = pool.map_call(
         '_G.__cartridge_issues_list_on_instance',
         {}, {uri_list = uri_list, timeout = 1}
