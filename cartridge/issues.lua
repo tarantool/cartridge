@@ -3,6 +3,11 @@ local pool = require('cartridge.pool')
 local topology = require('cartridge.topology')
 local confapplier = require('cartridge.confapplier')
 local failover = require('cartridge.failover')
+local vars = require('cartridge.vars').new('cartridge.issues')
+vars:new('limits', {
+    critical_fragmentation_treshold = 0.9,
+    fragmentation_treshold = 0.6,
+})
 
 local function list_on_instance()
     local enabled_servers = {}
@@ -112,6 +117,40 @@ local function list_on_instance()
             ),
         })
     end
+
+    local mem_info = box.slab.info()
+    local items_used_ratio = mem_info.items_used / (mem_info.items_size + 0.0001) -- to prevent divide by zero
+    local arena_used_ratio = mem_info.arena_used / (mem_info.arena_size + 0.0001)
+    local quota_used_ratio = mem_info.quota_used / (mem_info.quota_size + 0.0001)
+
+    if arena_used_ratio > vars.limits.critical_fragmentation_treshold
+    and quota_used_ratio > vars.limits.critical_fragmentation_treshold
+    and items_used_ratio > vars.limits.critical_fragmentation_treshold
+    then
+        table.insert(ret, {
+            level = 'critical',
+            topic = 'memory',
+            instance_uuid = instance_uuid,
+            message = string.format(
+                'Your memory is (highly) fragmented on %s.',
+                self_uri
+            ),
+        })
+    elseif arena_used_ratio > vars.limits.fragmentation_treshold
+    and quota_used_ratio > vars.limits.fragmentation_treshold
+    and items_used_ratio > vars.limits.fragmentation_treshold
+    then
+        table.insert(ret, {
+            level = 'warning',
+            topic = 'memory',
+            instance_uuid = instance_uuid,
+            message = string.format(
+                'Your memory is fragmented on %s.',
+                self_uri
+            ),
+        })
+    end
+
     return ret
 end
 
