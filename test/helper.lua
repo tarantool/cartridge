@@ -38,4 +38,18 @@ function helpers.table_find_by_attr(tbl, key, value)
     end
 end
 
+function helpers.list_cluster_issues(server)
+    return server:graphql({query = [[{
+        cluster {
+            issues {
+                level
+                message
+                replicaset_uuid
+                instance_uuid
+                topic
+            }
+        }
+    }]]}).data.cluster.issues
+end
+
 return helpers

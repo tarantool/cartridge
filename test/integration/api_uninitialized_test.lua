@@ -195,5 +195,5 @@ function g.test_rpc()
 end
 
 function g.test_issues()
-    t.assert_equals(g.server:list_cluster_issues(), {})
+    t.assert_equals(helpers.list_cluster_issues(g.server), {})
 end

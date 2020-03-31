@@ -55,7 +55,7 @@ function g.test_broken_replica()
 
 
     t.helpers.retrying({}, function()
-        local issues = master:list_cluster_issues()
+        local issues = helpers.list_cluster_issues(master)
 
         t.assert_equals(
             helpers.table_find_by_attr(

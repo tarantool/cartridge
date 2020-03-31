@@ -122,7 +122,7 @@ function g.test_kingdom_restart()
             err = 'State provider unavailable'
         })
 
-        t.assert_items_include(g.cluster:server('router'):list_cluster_issues(), {{
+        t.assert_items_include(helpers.list_cluster_issues(g.cluster:server('router')), {{
             level = 'warning',
             topic = 'failover',
             message = "Can't obtain failover coordinator:" ..
@@ -148,7 +148,7 @@ function g.test_kingdom_restart()
                 uuid = 'aaaaaaaa-aaaa-0000-0000-000000000001'
             }
         )
-        t.assert_equals(g.cluster:server('router'):list_cluster_issues(), {})
+        t.assert_equals(helpers.list_cluster_issues(g.cluster:server('router')), {})
     end)
 
     helpers.retrying({}, function()
@@ -463,7 +463,7 @@ function g.test_leaderless()
     t.assert_equals(eval('storage-2', q_readonliness), true)
     t.assert_equals(eval('storage-3', q_readonliness), true)
     t.helpers.retrying({}, function()
-        t.assert_equals(g.cluster:server('router'):list_cluster_issues(), {})
+        t.assert_equals(helpers.list_cluster_issues(g.cluster:server('router')), {})
     end)
 end
 
@@ -482,7 +482,7 @@ function g.test_issues()
     ]])
 
     helpers.retrying({}, function()
-        t.assert_items_equals(g.cluster:server('router'):list_cluster_issues(), {{
+        t.assert_items_equals(helpers.list_cluster_issues(g.cluster:server('router')), {{
             level = 'warning',
             topic = 'failover',
             message = "There is no active failover coordinator",
@@ -505,6 +505,6 @@ function g.test_issues()
     ]]})
 
     helpers.retrying({}, function()
-        t.assert_equals(g.cluster:server('storage-1'):list_cluster_issues(), {})
+        t.assert_equals(helpers.list_cluster_issues(g.cluster:server('storage-1')), {})
     end)
 end

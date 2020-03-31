@@ -129,7 +129,7 @@ function g.test_failover()
     })
 
     t.helpers.retrying({}, function()
-        t.assert_equals(g.master:list_cluster_issues(), {})
+        t.assert_equals(helpers.list_cluster_issues(g.master), {})
     end)
 
     --------------------------------------------------------------------
@@ -143,7 +143,7 @@ function g.test_failover()
         slave = false,
     })
     t.helpers.retrying({}, function()
-        local issues = g.slave:list_cluster_issues()
+        local issues = helpers.list_cluster_issues(g.slave)
         t.assert_covers(issues[1], {
             level = 'warning',
             replicaset_uuid = helpers.uuid('a'),
@@ -172,7 +172,7 @@ function g.test_failover()
     })
 
     t.helpers.retrying({}, function()
-        t.assert_equals(g.master:list_cluster_issues(), {})
+        t.assert_equals(helpers.list_cluster_issues(g.master), {})
     end)
 end
 
@@ -389,7 +389,7 @@ function g.test_orphan_connect_timeout()
     wish_state(g.master, 'ConnectingFullmesh')
 
     t.helpers.retrying({}, function()
-        t.assert_equals(g.master:list_cluster_issues(), {{
+        t.assert_equals(helpers.list_cluster_issues(g.master), {{
             level = 'warning',
             replicaset_uuid = helpers.uuid('a'),
             instance_uuid = helpers.uuid('a', 'a', 1),
@@ -420,7 +420,7 @@ function g.test_orphan_connect_timeout()
     t.assert_equals(is_master(g.master), true)
 
     t.helpers.retrying({}, function()
-        t.assert_equals(g.slave:list_cluster_issues(), {})
+        t.assert_equals(helpers.list_cluster_issues(g.slave), {})
     end)
 end
 
@@ -448,7 +448,7 @@ function g.test_orphan_sync_timeout()
     )
 
     t.helpers.retrying({}, function()
-        local issues = g.master:list_cluster_issues()
+        local issues = helpers.list_cluster_issues(g.master)
         t.assert_covers(issues[1], {
             level = 'warning',
             replicaset_uuid = helpers.uuid('a'),
@@ -543,6 +543,6 @@ function g.test_restart_both()
 
     g.cluster:wait_until_healthy()
     t.helpers.retrying({}, function()
-        t.assert_equals(g.master:list_cluster_issues(), {})
+        t.assert_equals(helpers.list_cluster_issues(g.master), {})
     end)
 end
