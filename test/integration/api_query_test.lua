@@ -586,3 +586,19 @@ function g.test_app_name()
 
     t.assert_equals(get_app_info(), {app_name = 'app_name', instance_name = 'instance_name'})
 end
+
+function g.test_membership_leave()
+    t.skip_if(box.ctl.on_shutdown == nil,
+        'box.ctl.on_shutdown is not supported' ..
+        ' in Tarantool ' .. _TARANTOOL
+    )
+
+    t.assert_equals(
+        g.cluster.main_server.net_box:eval([[
+            local membership = require('membership')
+            local member = membership.members()[...]
+            return member.status
+        ]], {g.cluster:server('expelled').advertise_uri}),
+        'left'
+    )
+end
