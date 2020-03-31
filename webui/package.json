@@ -109,7 +109,9 @@
     "whatwg-fetch": "2.0.3",
     "yup": "^0.27.0"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "nock": "12.0.3"
+  },
   "scripts": {
     "start": "node scripts/start.js",
     "build": "node scripts/build.js",
@@ -126,7 +128,8 @@
       "src/**/*.{js,jsx,mjs}"
     ],
     "setupFiles": [
-      "<rootDir>/config/polyfills.js"
+      "<rootDir>/config/polyfills.js",
+      "<rootDir>/config/jestSetup.js"
     ],
     "testMatch": [
       "<rootDir>/src/**/__tests__/**/*.{js,jsx,mjs}",

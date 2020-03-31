@@ -181,7 +181,7 @@ export function editReplicaset(
 type UploadConfigParams = { data: FormData };
 
 export async function uploadConfig(params: UploadConfigParams) {
-  return rest.put(process.env.REACT_APP_CONFIG_ENDPOINT, params.data, {
+  return rest.put('/admin/config', params.data, {
     headers: { 'Content-Type': 'application/yaml;charset=UTF-8' }
   });
 }

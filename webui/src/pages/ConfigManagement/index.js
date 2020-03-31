@@ -6,7 +6,9 @@ import { TitledPanel } from '../../components/Panel'
 import { Alert, Button, IconDownload, Text } from '@tarantool.io/ui-kit';
 import UploadZone from '../../components/UploadZone';
 import { useStore } from 'effector-react'
-import { $configForm, dropFiles, uploadClick, configPageMount } from '../../store/effector/configUpload';
+import { createConfigApi } from '../../store/effector/configUpload';
+
+const { $configForm, dropFiles, uploadClick, configPageMount } = createConfigApi()
 
 const { AppTitle } = window.tarantool_enterprise_core.components;
 
