@@ -2,22 +2,21 @@ local log = require('log')
 local fiber = require('fiber')
 local checks = require('checks')
 local errors = require('errors')
-local netbox = require('net.box')
 local membership = require('membership')
-local uri_lib = require('uri')
 
 local vars = require('cartridge.vars').new('cartridge.roles.coordinator')
 local topology = require('cartridge.topology')
 local confapplier = require('cartridge.confapplier')
+local stateboard_client = require('cartridge.stateboard-client')
 
 local AppointmentError = errors.new_class('AppointmentError')
 local CoordinatorError = errors.new_class('CoordinatorError')
-local NetboxConnectError = errors.new_class('NetboxConnectError')
 
 vars:new('membership_notification', membership.subscribe())
 vars:new('connect_fiber', nil)
 vars:new('topology_cfg', nil)
-vars:new('conn', nil)
+vars:new('client', nil)
+vars:new('session', nil)
 vars:new('options', {
     RECONNECT_PERIOD = 5,
     IMMUNITY_TIMEOUT = 15,
@@ -52,6 +51,7 @@ local function pack_decision(leader_uuid)
     return {
         leader = leader_uuid,
         immunity = fiber.time() + vars.options.IMMUNITY_TIMEOUT,
+        -- decision is immune if fiber.time() < immunity
     }
 end
 
@@ -89,23 +89,9 @@ local function make_decision(ctx, replicaset_uuid)
     end
 end
 
-local function control_loop(conn)
-    local leaders, err = errors.netbox_call(conn, 'get_leaders',
-        nil, {timeout = vars.options.NETBOX_CALL_TIMEOUT}
-    )
-    if leaders == nil then
-        log.error('%s', err)
-        return
-    end
-
-    local ctx = {
-        members = nil,
-        decisions = {},
-    }
-
-    for replicaset_uuid, leader_uuid in pairs(leaders) do
-        ctx.decisions[replicaset_uuid] = pack_decision(leader_uuid)
-    end
+local function control_loop(session)
+    checks('stateboard_session')
+    local ctx = assert(session.ctx)
 
     repeat
         ctx.members = membership.members()
@@ -123,68 +109,81 @@ local function control_loop(conn)
             end
         end
 
+        local now = fiber.time()
         if next(updates) ~= nil then
-            local ok, err = errors.netbox_call(conn, 'set_leaders',
-                {updates}, {timeout = vars.options.NETBOX_CALL_TIMEOUT}
-            )
+            local ok, err = session:set_leaders(updates)
             if ok == nil then
                 log.error('%s', err)
                 break
             end
         end
 
-        local now = fiber.time()
         local next_moment = math.huge
         for _, decision in pairs(ctx.decisions) do
-            if (now < decision.immunity)
+            if (decision.immunity >= now)
             and (decision.immunity < next_moment)
             then
                 next_moment = decision.immunity
             end
         end
 
+        assert(next_moment >= now)
         vars.membership_notification:wait(next_moment - now)
-    until not pcall(fiber.testcancel)
+    until not pcall(fiber.testcancel) or not session:is_locked()
 end
 
-local function take_control(uri)
-    checks('string')
-    local conn, err = NetboxConnectError:pcall(netbox.connect, uri)
-    if conn == nil then
-        return nil, err
-    elseif not conn:is_connected() then
-        return nil, NetboxConnectError:new('"%s:%s": %s',
-            conn.host, conn.port, conn.error
-        )
-    end
-
-    local lock_delay, err = errors.netbox_call(conn, 'get_lock_delay',
-        nil, {timeout = vars.options.NETBOX_CALL_TIMEOUT}
-    )
-    if lock_delay == nil then
-        return nil, err
-    end
+local function take_control(client)
+    checks('stateboard_client')
+    assert(vars.session == nil or not vars.session:is_locked())
 
     local lock_args = {
         confapplier.get_instance_uuid(),
         confapplier.get_advertise_uri()
     }
 
-    local ok, err = errors.netbox_call(conn, 'acquire_lock',
-        lock_args, {timeout = vars.options.NETBOX_CALL_TIMEOUT}
-    )
+    local session, err = client:get_session()
+    if session == nil then
+        return nil, err
+    end
+    assert(session.ctx == nil)
 
-    if ok == nil then
+    local lock_delay, err = session:get_lock_delay()
+    if lock_delay == nil then
         return nil, err
     end
 
-    if ok ~= true then
-        return false
+    while true do
+        local ok, err = session:acquire_lock(lock_args)
+        if ok == nil then
+            return nil, err
+        end
+
+        if not ok then
+            fiber.sleep(lock_delay/2)
+        else
+            break
+        end
     end
 
+    local leaders, err = session:get_leaders()
+    if leaders == nil then
+        return nil, err
+    end
+
+    local ctx = {
+        members = nil,
+        decisions = {}
+    }
+    for replicaset_uuid, leader_uuid in pairs(leaders) do
+        ctx.decisions[replicaset_uuid] = pack_decision(leader_uuid)
+    end
+
+    session.ctx = ctx
+    vars.session = session
+
     log.info('Lock acquired')
-    vars.conn = conn
-    local control_fiber = fiber.new(control_loop, conn)
+    --------------------------------------------------------------------
+    local control_fiber = fiber.new(control_loop, session)
     control_fiber:name('failover-coordinate')
 
     repeat
@@ -195,47 +194,53 @@ local function take_control(uri)
         end
 
         if pcall(fiber.status, control_fiber) == 'dead'
-        or not errors.netbox_call(conn, 'acquire_lock',
-            lock_args, {timeout = vars.options.NETBOX_CALL_TIMEOUT}
-        ) then
+        or not session:acquire_lock(lock_args)
+        then
             break
         end
     until not pcall(fiber.testcancel)
 
-    pcall(conn.close, conn)
-    pcall(fiber.cancel, control_fiber)
-    vars.conn = nil
-
+    session:drop()
     log.info('Lock released')
+    pcall(fiber.cancel, control_fiber)
+
     return true
 end
 
-local function connect_loop(uri)
-    checks('string')
+local function take_control_loop(client)
+    checks('stateboard_client')
+
     repeat
         local t1 = fiber.time()
-        local ok, err = CoordinatorError:pcall(take_control, uri)
+        local ok, err = CoordinatorError:pcall(take_control, client)
         local t2 = fiber.time()
 
         if ok == nil then
+            fiber.testcancel()
             log.error('%s', type(err) == 'table' and err.err or err)
         end
 
         if ok ~= true then
             fiber.sleep(t1 + vars.options.RECONNECT_PERIOD - t2)
         end
-
     until not pcall(fiber.testcancel)
 end
 
 local function stop()
-    if vars.connect_fiber == nil then
-        return
-    elseif vars.connect_fiber:status() ~= 'dead' then
-        vars.connect_fiber:cancel()
+    if vars.connect_fiber ~= nil then
+        pcall(fiber.cancel, vars.connect_fiber)
+        vars.connect_fiber = nil
     end
 
-    vars.connect_fiber = nil
+    if vars.session ~= nil then
+        vars.session:drop()
+        vars.session = nil
+    end
+
+    if vars.client ~= nil then
+        vars.client:drop_session()
+        vars.client = nil
+    end
 end
 
 local function apply_config(conf, _)
@@ -247,7 +252,22 @@ local function apply_config(conf, _)
         return true
     end
 
-    if failover_cfg.state_provider ~= 'tarantool' then
+    if failover_cfg.state_provider == 'tarantool' then
+        local params = assert(failover_cfg.tarantool_params)
+
+        if vars.client == nil
+        or vars.client.state_provider ~= 'tarantool'
+        or vars.client.uri ~= params.uri
+        or vars.client.password ~= params.password
+        then
+            stop()
+            vars.client = stateboard_client.new({
+                uri = params.uri,
+                password = params.password,
+                call_timeout = vars.options.NETBOX_CALL_TIMEOUT,
+            })
+        end
+    else
         local err = string.format(
             'assertion failed! unknown state_provider %s',
             failover_cfg.state_provider
@@ -264,14 +284,10 @@ local function apply_config(conf, _)
             failover_cfg.tarantool_params.uri
         )
 
-        local parts = uri_lib.parse(failover_cfg.tarantool_params.uri)
-        parts.login = 'client'
-        parts.password = failover_cfg.tarantool_params.password
-        local storage_uri = uri_lib.format(parts, true)
-
-        vars.connect_fiber = fiber.new(connect_loop, storage_uri)
-        vars.connect_fiber:name('failover-connect-kv')
+        vars.connect_fiber = fiber.new(take_control_loop, vars.client)
+        vars.connect_fiber:name('failover-take-control')
     end
+
     vars.membership_notification:broadcast()
     return true
 end
@@ -288,7 +304,6 @@ local function appoint_leaders(leaders)
     local servers = vars.topology_cfg.servers
     local replicasets = vars.topology_cfg.replicasets
 
-    local updates = {}
     for k, v in pairs(leaders) do
         if type(k) ~= 'string' or type(v) ~= 'string' then
             error('bad argument #1 to appoint_leaders' ..
@@ -298,34 +313,47 @@ local function appoint_leaders(leaders)
 
         local replicaset = replicasets[k]
         if replicaset == nil then
-            return nil, AppointmentError:new('Replicaset "%s" does not exist', k)
+            return nil, AppointmentError:new(
+                "Replicaset %q doesn't exist", k
+            )
         end
 
         local server = servers[v]
         if server == nil then
-            return nil, AppointmentError:new('Server "%s" does not exist', v)
+            return nil, AppointmentError:new(
+                "Server %q doesn't exist", v
+            )
         end
 
         if server.replicaset_uuid ~= k then
-            return nil, AppointmentError:new('Server "%s" does not belong to replicaset "%s"', v, k)
+            return nil, AppointmentError:new(
+                "Server %q doesn't belong to replicaset %q", v, k
+            )
         end
-
-        table.insert(updates, {k, v})
     end
 
-    if vars.conn == nil then
-        return nil, AppointmentError:new("Lock not acquired")
+    local session = vars.session
+
+    if session == nil or not session:is_locked() then
+        return nil, AppointmentError:new("No active coordinator session")
     end
 
-    local ok, err = errors.netbox_call(vars.conn, 'set_leaders',
-        {updates}, {timeout = vars.options.NETBOX_CALL_TIMEOUT}
-    )
+    local updates = {}
+    for replicaset_uuid, leader_uuid in pairs(leaders) do
+        local decision = pack_decision(leader_uuid)
+        table.insert(updates, {replicaset_uuid, decision.leader})
+        session.ctx.decisions[replicaset_uuid] = decision
+    end
+
+    local ok, err = session:set_leaders(updates)
     if ok == nil then
+        session:drop()
         return nil, AppointmentError:new(
             type(err) == 'table' and err.err or err
         )
     end
 
+    vars.membership_notification:broadcast()
     return true
 end
 
