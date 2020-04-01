@@ -4,6 +4,10 @@ local util = require(path .. '.util')
 local introspection = require(path .. '.introspection')
 local query_util = require(path .. '.query_util')
 
+local function error(...)
+  return _G.error(..., 0)
+end
+
 local function getParentField(context, name, count)
   if introspection.fieldMap[name] then return introspection.fieldMap[name] end
 
@@ -413,11 +417,6 @@ function rules.variableDefaultValuesHaveCorrectType(node, context)
 end
 
 function rules.variablesAreUsed(node, context)
-  local operationName = node.name and node.name.value or ''
-  if context.skipVariableUseCheck[operationName] then
-    return
-  end
-
   if node.variableDefinitions then
     for _, definition in ipairs(node.variableDefinitions) do
       local variableName = definition.variable.name.value

@@ -204,7 +204,7 @@ __Type = types.object({
             return 'NON_NULL'
           end
 
-          error('Unknown type ' .. kind)
+          error('Unknown type ' .. kind, 0)
         end
       },
 

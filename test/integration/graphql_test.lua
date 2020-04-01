@@ -25,6 +25,7 @@ g.before_all = function()
     })
     cluster:start()
 end
+
 g.after_all = function()
     cluster:stop()
     fio.rmtree(cluster.datadir)
@@ -89,7 +90,7 @@ g.test_upload = function()
         ).data.test, 'B22'
     )
 
-    t.assert_error_msg_contains('Variable "arg2" expected to be non-null',
+    t.assert_error_msg_equals('Variable "arg2" expected to be non-null',
         server.graphql, server, {
             query = [[
                 query ($arg: String! $arg2: String!)
@@ -111,7 +112,7 @@ g.test_upload = function()
             error({Error = 'D'})
         end
     ]])
-    t.assert_error_msg_matches('{"Error":"D"}',
+    t.assert_error_msg_equals('{"Error":"D"}',
         helpers.Server.graphql, server,
         {query = '{ test(arg: "TEST") }'}
     )
@@ -121,7 +122,7 @@ g.test_upload = function()
             return nil, 'Error E'
         end
     ]])
-    t.assert_error_msg_contains('Error E',
+    t.assert_error_msg_equals('Error E',
         helpers.Server.graphql, server,
         {query = '{ test(arg: "TEST") }'}
     )
@@ -141,7 +142,7 @@ g.test_upload = function()
             return nil, {Error = "G"}
         end
     ]])
-    t.assert_error_msg_matches('{"Error":"G"}',
+    t.assert_error_msg_equals('{"Error":"G"}',
         helpers.Server.graphql, server,
         {query = '{ test(arg: "TEST") }'}
     )
@@ -151,7 +152,7 @@ g.test_upload = function()
             return nil, require('errors').new('CustomError', {Error = "H"})
         end
     ]])
-    t.assert_error_msg_matches('{"Error":"H"}',
+    t.assert_error_msg_equals('{"Error":"H"}',
         helpers.Server.graphql, server,
         {query = '{ test(arg: "TEST") }'}
     )
@@ -170,17 +171,141 @@ function g.test_reread_request()
     server:graphql({ query = '{}' })
 end
 
+g.test_nested_input = function()
+    local server = cluster.main_server
+
+    server.net_box:eval([[
+        package.loaded['test'] = {}
+        package.loaded['test']['test_nested_InputObject'] = function(root, args)
+          return args.servers[1].field
+        end
+
+        package.loaded['test']['test_nested_list'] = function(root, args)
+          return args.servers[1]
+        end
+
+        package.loaded['test']['test_nested_InputObject_complex'] = function(root, args)
+          return ('%s+%s+%s'):format(args.upvalue, args.servers.field2, args.servers.test.field[1])
+        end
+
+        local graphql = require('cartridge.graphql')
+        local types = require('cartridge.graphql.types')
+
+        local nested_InputObject = types.inputObject {
+            name = 'nested_InputObject',
+            fields = {
+                field = types.string.nonNull,
+            }
+        }
+
+        graphql.add_mutation({
+            name = 'test_nested_InputObject',
+            args = {
+                servers = types.list(nested_InputObject),
+            },
+            kind = types.string,
+            callback = 'test.test_nested_InputObject',
+        })
+
+        graphql.add_mutation({
+            name = 'test_nested_list',
+            args = {
+                servers = types.list(types.string),
+            },
+            kind = types.string,
+            callback = 'test.test_nested_list',
+        })
+
+        graphql.add_callback({
+            name = 'test_nested_InputObject_complex',
+            args = {
+                upvalue = types.string,
+                servers = types.inputObject({
+                    name = 'ComplexInputObject',
+                    fields = {
+                        field2 = types.string,
+                        test = types.inputObject({
+                            name = 'ComplexNestedInputObject',
+                            fields = {
+                                field = types.list(types.string)
+                            }
+                        }),
+                    }
+                }),
+            },
+            kind = types.string,
+            callback = 'test.test_nested_InputObject_complex',
+        })
+    ]])
+
+    t.assert_equals(
+        server:graphql({
+            query = [[
+                mutation($field: String!) {
+                    test_nested_InputObject(
+                        servers: [{ field: $field }]
+                    )
+                }
+            ]],
+        variables = {field = 'echo'}}
+        ).data.test_nested_InputObject, 'echo'
+    )
+
+    t.assert_error_msg_equals('Unused variable "field"', function()
+        return server:graphql({
+            query = [[
+                mutation($field: String!) {
+                    test_nested_InputObject(
+                        servers: [{ field: "not-variable" }]
+                    )
+                }
+            ]],
+        variables = {field = 'echo'}}
+        )
+    end)
+
+    t.assert_equals(
+        server:graphql({
+            query = [[
+                mutation($field: String!) {
+                    test_nested_list(
+                        servers: [$field]
+                    )
+                }
+            ]],
+        variables = {field = 'echo'}}
+        ).data.test_nested_list, 'echo'
+    )
+
+    t.assert_equals(
+        server:graphql({
+            query = [[
+                query($field: String! $field2: String! $upvalue: String!) {
+                    test_nested_InputObject_complex(
+                        upvalue: $upvalue,
+                        servers: {
+                            field2: $field2
+                            test: { field: [$field] }
+                        }
+                    )
+                }
+            ]],
+        variables = {field = 'echo', field2 = 'field', upvalue = 'upvalue'}}
+        ).data.test_nested_InputObject_complex, 'upvalue+field+echo'
+    )
+end
+
 function g.test_fail_validate()
-    t.assert_error_msg_contains('Scalar field "uri" cannot have subselections', function()
-        cluster.main_server:graphql({
+    t.assert_error_msg_equals('Scalar field "uri" cannot have subselections', function()
+        return cluster.main_server:graphql({
             query = [[
                 { cluster { self { uuid uri { x } state } } }
             ]]
         })
     end)
 
-    t.assert_error_msg_contains('Composite field "replicaset" must have subselections', function()
-        cluster.main_server:graphql({
+    t.assert_error_msg_equals('Composite field "replicaset" must have subselections', function()
+        return cluster.main_server:graphql({
             query = [[
                 { servers { alias replicaset storage { } uuid } }
             ]]

@@ -40,7 +40,7 @@ local function funcall_wrap(fun_name, operation, field_name)
         local res, err = funcall.call(fun_name, ...)
 
         if res == nil then
-            error(err)
+            error(err, 0)
         end
 
         return res
@@ -104,7 +104,7 @@ local function add_callback(opts)
     if opts.prefix then
         local obj = vars.callbacks[opts.prefix]
         if obj == nil then
-            error('No such callback prefix ' .. opts.prefix)
+            error('No such callback prefix ' .. opts.prefix, 0)
         end
 
         local oldkind = obj.kind
@@ -148,7 +148,7 @@ local function add_mutation(opts)
     if opts.prefix then
         local obj = vars.mutations[opts.prefix]
         if obj == nil then
-            error('No such mutation prefix ' .. opts.prefix)
+            error('No such mutation prefix ' .. opts.prefix, 0)
         end
 
         local oldkind = obj.kind
