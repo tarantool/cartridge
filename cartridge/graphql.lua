@@ -15,8 +15,7 @@ local funcall = require('cartridge.graphql.funcall')
 local validate = require('cartridge.graphql.validate')
 
 
-vars:new('graphql_schema_fields', {})
-vars:new('graphql_schema', {})
+vars:new('graphql_schema', nil)
 vars:new('model', {})
 vars:new('on_resolve_triggers', {})
 vars:new('callbacks', {})
@@ -29,10 +28,6 @@ local e_graphql_execute = errors.new_class('Graphql execution failed')
 
 local function set_model(model_entrypoints)
     vars.model = model_entrypoints
-end
-
-local function get_fields()
-    return vars.graphql_schema_fields
 end
 
 local function funcall_wrap(fun_name, operation, field_name)
@@ -69,6 +64,7 @@ local function add_callback_prefix(prefix, doc)
         description = doc,
     }
     vars.callbacks[prefix] = obj
+    vars.graphql_schema = nil
     return obj
 end
 
@@ -91,6 +87,7 @@ local function add_mutation_prefix(prefix, doc)
         description = doc,
     }
     vars.mutations[prefix] = obj
+    vars.graphql_schema = nil
     return obj
 end
 
@@ -135,6 +132,7 @@ local function add_callback(opts)
             description = opts.doc,
         }
     end
+    vars.graphql_schema = nil
 end
 
 local function add_mutation(opts)
@@ -178,10 +176,15 @@ local function add_mutation(opts)
             description = opts.doc,
         }
     end
+    vars.graphql_schema = nil
 end
 
 local function get_schema()
-    local fields = table.copy(get_fields())
+    if vars.graphql_schema ~= nil then
+        return vars.graphql_schema
+    end
+
+    local fields = {}
 
     for name, fun in pairs(vars.callbacks) do
         fields[name] = fun
