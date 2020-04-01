@@ -5,8 +5,8 @@ local confapplier = require('cartridge.confapplier')
 local failover = require('cartridge.failover')
 local vars = require('cartridge.vars').new('cartridge.issues')
 vars:new('limits', {
-    critical_fragmentation_treshold = 0.9,
-    fragmentation_treshold = 0.6,
+    fragmentation_threshold_critical = 0.9,
+    fragmentation_threshold_warning = 0.6,
 })
 
 local function list_on_instance()
@@ -118,35 +118,48 @@ local function list_on_instance()
         })
     end
 
-    local mem_info = box.slab.info()
-    local items_used_ratio = mem_info.items_used / (mem_info.items_size + 0.0001) -- to prevent divide by zero
-    local arena_used_ratio = mem_info.arena_used / (mem_info.arena_size + 0.0001)
-    local quota_used_ratio = mem_info.quota_used / (mem_info.quota_size + 0.0001)
+    -- used_ratio values in box.slab.info() are strings
+    -- so we calulate them again manually
+    -- Magic formula taken from tarantool src/box/lua/slab.c
+    -- See also: http://kostja.github.io/misc/2017/02/17/tarantool-memory.html
+    -- See also: https://github.com/tarantool/doc/issues/421
+    local slab_info = box.slab.info()
+    local items_used_ratio = slab_info.items_used / (slab_info.items_size + 0.0001)
+    local arena_used_ratio = slab_info.arena_used / (slab_info.arena_size + 0.0001)
+    local quota_used_ratio = slab_info.quota_used / (slab_info.quota_size + 0.0001)
 
-    if arena_used_ratio > vars.limits.critical_fragmentation_treshold
-    and quota_used_ratio > vars.limits.critical_fragmentation_treshold
-    and items_used_ratio > vars.limits.critical_fragmentation_treshold
+    if  items_used_ratio > vars.limits.fragmentation_threshold_critical
+    and arena_used_ratio > vars.limits.fragmentation_threshold_critical
+    and quota_used_ratio > vars.limits.fragmentation_threshold_critical
     then
         table.insert(ret, {
             level = 'critical',
             topic = 'memory',
             instance_uuid = instance_uuid,
             message = string.format(
-                'Your memory is (highly) fragmented on %s.',
-                self_uri
+                'Running out of memory on %s:' ..
+                ' used %s (items), %s (arena), %s (quota)',
+                self_uri,
+                slab_info.items_used_ratio,
+                slab_info.arena_used_ratio,
+                slab_info.quota_used_ratio
             ),
         })
-    elseif arena_used_ratio > vars.limits.fragmentation_treshold
-    and quota_used_ratio > vars.limits.fragmentation_treshold
-    and items_used_ratio > vars.limits.fragmentation_treshold
+    elseif items_used_ratio > vars.limits.fragmentation_threshold_warning
+    and arena_used_ratio > vars.limits.fragmentation_threshold_critical
+    and quota_used_ratio > vars.limits.fragmentation_threshold_critical
     then
         table.insert(ret, {
             level = 'warning',
             topic = 'memory',
             instance_uuid = instance_uuid,
             message = string.format(
-                'Your memory is fragmented on %s.',
-                self_uri
+                'Memory is highly fragmented on %s:' ..
+                ' used %s (items), %s (arena), %s (quota)',
+                self_uri,
+                slab_info.items_used_ratio,
+                slab_info.arena_used_ratio,
+                slab_info.quota_used_ratio
             ),
         })
     end
