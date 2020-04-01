@@ -168,3 +168,21 @@ end
 function g.test_offline_splash()
     cypress_run('network-error-splash.spec.js')
 end
+
+function g.test_401()
+    g.cluster.main_server.net_box:eval([[
+        local cartridge = require('cartridge')
+        local httpd = cartridge.service_get('httpd')
+        for _, route in ipairs(httpd.routes) do
+            if route.path == '/admin/api' then
+                if route.method == 'POST' then
+                    route.sub = function()
+                        return {status = 401}
+                    end
+                end
+            end
+        end
+    ]])
+    -- require('fiber').sleep(1000)
+    cypress_run('401-error.js')
+end
