@@ -90,7 +90,7 @@ local function checkVariableValue(variableName, value, variableType)
           return
         end
       end
-      error(('Wrong variable "%s" for the Enum "%s" with value %s'):format(
+      error(('Wrong variable "%s" for the Enum "%s" with value "%s"'):format(
         variableName, variableType.name, value))
   end
 

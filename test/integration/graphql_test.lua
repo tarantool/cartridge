@@ -35,7 +35,7 @@ g.test_upload = function()
     local server = cluster.main_server
 
     server.net_box:eval([[
-        package.loaded['test'] = {}
+        package.loaded['test'] = package.loaded['test'] or {}
         package.loaded['test']['test'] = function(root, args)
           return args[1].value
         end
@@ -48,6 +48,8 @@ g.test_upload = function()
             args = {
                 arg=types.string.nonNull,
                 arg2=types.string,
+                arg3=types.int,
+                arg4=types.long,
             },
             kind = types.string.nonNull,
             callback = 'test.test',
@@ -136,6 +138,24 @@ g.test_upload = function()
             query = [[
                 query { test(arg: "") }
             ]], variables = {unknown_arg = ''}
+        }) end
+    )
+
+    t.assert_error_msg_equals(
+        'Could not coerce "8589934592" to "Int"',
+        function() return server:graphql({
+            query = [[
+                query { test(arg: "", arg3: 8589934592) }
+            ]], variables = {}
+        }) end
+    )
+
+    t.assert_error_msg_equals(
+        'Could not coerce "18446744073709551614" to "Long"',
+        function() return server:graphql({
+            query = [[
+                query { test(arg: "", arg4: 18446744073709551614) }
+            ]], variables = {}
         }) end
     )
 
@@ -229,7 +249,7 @@ g.test_upload = function()
     )
 end
 
-function g.test_reread_request()
+g.test_reread_request = function()
     local server = cluster.main_server
 
     server.net_box:eval([[
@@ -240,6 +260,69 @@ function g.test_reread_request()
     ]])
 
     server:graphql({ query = '{}' })
+end
+
+
+g.test_enum = function()
+    local server = cluster.main_server
+
+    server.net_box:eval([[
+        package.loaded['test'] = package.loaded['test'] or {}
+        package.loaded['test']['test_enum'] = function(root, args)
+          return args.arg.field
+        end
+
+        local graphql = require('cartridge.graphql')
+        local types = require('cartridge.graphql.types')
+
+        local simple_enum = types.enum {
+            name = 'simple_enum',
+            values = {
+                a = { value = 'a' },
+                b = { value = 'b' },
+            },
+        }
+
+        local input_object = types.inputObject({
+            name = 'simple_input_object',
+            fields = {
+                field = simple_enum,
+            }
+        })
+
+        graphql.add_callback({
+            name = 'simple_enum',
+            args = {
+                arg = input_object,
+            },
+            kind = types.string,
+            callback = 'test.test_enum',
+        })
+    ]])
+
+    t.assert_equals(
+        server:graphql({
+            query = [[
+                query($arg: simple_input_object) {
+                    simple_enum(arg: $arg)
+                }
+            ]],
+        variables = {arg = {field = 'a'}}}
+        ).data.simple_enum, 'a'
+    )
+
+
+    t.assert_error_msg_equals(
+            'Wrong variable "arg.field" for the Enum "simple_enum" with value "d"',
+            function() return server:graphql({
+            query = [[
+                query($arg: simple_input_object) {
+                    simple_enum(arg: $arg)
+                }
+            ]],
+        variables = {arg = {field = 'd'}}}
+        )
+    end)
 end
 
 g.test_nested_input = function()
