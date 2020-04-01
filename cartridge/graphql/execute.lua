@@ -5,6 +5,10 @@ local introspection = require(path .. '.introspection')
 local query_util = require(path .. '.query_util')
 local validate_variables = require(path .. '.validate_variables')
 
+local function error(...)
+  return _G.error(..., 0)
+end
+
 local function getFieldResponseKey(field)
   return field.alias and field.alias.name.value or field.name.value
 end

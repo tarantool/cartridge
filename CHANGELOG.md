@@ -16,19 +16,22 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Implement stateful failover mode.
 
-- Add new field Graphql field `cluster{ issues {topic} }`
+- Add new field GraphQL field `cluster{ issues {topic} }`
 
 - Extend issues API for stateful failover
 
-- New option in `cartridge.cfg({upgrade_schema=...}, ...)`
-  to perform auto upgrade schema to actual tarantool version
-  (only for leader). It also has bean added for `argparse`.
-
-- GraphQL validation significantly improved: scalar values can't have
-  subselections; composite types must have subselections; omitting
-  non-nullable arguments in variable list is forbidden.
+- New option in `cartridge.cfg({upgrade_schema=...})`
+  to automatically upgrade schema to modern tarantool version
+  (only for leader). It also has been added for `argparse`.
 
 - Indicate replication and failover issues in WebUI.
+
+### Changed
+
+- Make GraphQL validation stricter: scalar values can't have
+  sub-selections; composite types must have sub-selections; omitting
+  non-nullable arguments in variable list is forbidden. Your code **may
+  be affected** if it doesn't conform GraphQL specification.
 
 ### Deprecated
 
@@ -44,7 +47,15 @@ GraphQL API:
 
 ### Fixed
 
-- Fix quering failure `cluster {issues {...} }` on uninitialized instance
+- Properly handle nested input object in GraphQL:
+```graphql
+mutation($uuid: String!) {
+  cluster { edit_topology(servers: [{uuid: $uuid ...}]) {} }
+}
+```
+
+- Fix bug in GraphQL query `cluster {issues {...} }` on uninitialized
+  instance.
 
 ## [2.0.2] - 2020-03-17
 

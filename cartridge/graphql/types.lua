@@ -11,6 +11,10 @@ local types_load_error = errors.new_class("types_load_error")
 
 vars:new('registered_types', {})
 
+local function error(...)
+  return _G.error(..., 0)
+end
+
 local types = {}
 
 local function get_env()
