@@ -166,7 +166,7 @@ install(
 )
 
 install(
-  FILES ${CMAKE_CURRENT_SOURCE_DIR}/kingdom.lua
+  FILES ${CMAKE_CURRENT_SOURCE_DIR}/state_board.lua
   DESTINATION ${TARANTOOL_INSTALL_BINDIR}
 )
 

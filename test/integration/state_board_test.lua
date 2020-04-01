@@ -10,9 +10,9 @@ g.before_each(function()
     g.datadir = fio.tempdir()
     local password = require('digest').urandom(6):hex()
 
-    fio.mktree(fio.pathjoin(g.datadir, 'kingdom'))
-    g.kingdom = require('luatest.server'):new({
-        command = fio.pathjoin(helpers.project_root, 'kingdom.lua'),
+    fio.mktree(fio.pathjoin(g.datadir, 'state_board'))
+    g.state_board = require('luatest.server'):new({
+        command = fio.pathjoin(helpers.project_root, 'state_board.lua'),
         workdir = fio.pathjoin(g.datadir),
         net_box_port = 13301,
         net_box_credentials = {
@@ -24,14 +24,14 @@ g.before_each(function()
             TARANTOOL_LOCK_DELAY = 40,
         },
     })
-    g.kingdom:start()
+    g.state_board:start()
     helpers.retrying({}, function()
-        g.kingdom:connect_net_box()
+        g.state_board:connect_net_box()
     end)
 end)
 
 g.after_each(function()
-    g.kingdom:stop()
+    g.state_board:stop()
     fio.rmtree(g.datadir)
 end)
 
@@ -40,8 +40,8 @@ local function connect(srv)
 end
 
 function g.test_locks()
-    local c1 = connect(g.kingdom)
-    local c2 = connect(g.kingdom)
+    local c1 = connect(g.state_board)
+    local c2 = connect(g.state_board)
     local kid = uuid.str()
 
     t.assert_equals(
@@ -83,7 +83,7 @@ function g.test_locks()
 end
 
 function g.test_appointments()
-    local c = connect(g.kingdom)
+    local c = connect(g.state_board)
     local kid = uuid.str()
     t.assert_equals(
         c:call('acquire_lock', {kid, 'localhost:9'}),
@@ -108,7 +108,7 @@ function g.test_appointments()
 end
 
 function g.test_longpolling()
-    local c1 = connect(g.kingdom)
+    local c1 = connect(g.state_board)
     local kid = uuid.str()
     t.assert_equals(
         c1:call('acquire_lock', {kid, 'localhost:9'}),
@@ -116,7 +116,7 @@ function g.test_longpolling()
     )
     c1:call('set_leaders', {{{'A', 'a1'}, {'B', 'b1'}}})
 
-    local c2 = connect(g.kingdom)
+    local c2 = connect(g.state_board)
     t.assert_equals(c2:call('longpoll'), {A = 'a1', B = 'b1'})
     local future = c2:call('longpoll', {0.2}, {is_async = true})
     c1:call('set_leaders', {{{'A', 'a2'}}})
@@ -135,13 +135,13 @@ end
 function g.test_passwd()
     local new_password = require('digest').urandom(6):hex()
 
-    g.kingdom:stop()
-    g.kingdom.env.TARANTOOL_PASSWORD = new_password
-    g.kingdom.net_box_credentials.password = new_password
-    g.kingdom:start()
+    g.state_board:stop()
+    g.state_board.env.TARANTOOL_PASSWORD = new_password
+    g.state_board.net_box_credentials.password = new_password
+    g.state_board:start()
     helpers.retrying({}, function()
-        g.kingdom:connect_net_box()
+        g.state_board:connect_net_box()
     end)
 
-    t.assert_equals(g.kingdom.net_box:call('get_lock_delay'), 40)
+    t.assert_equals(g.state_board.net_box:call('get_lock_delay'), 40)
 end

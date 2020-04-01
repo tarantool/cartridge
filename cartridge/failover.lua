@@ -46,7 +46,7 @@ local StateProviderError = errors.new_class('StateProviderError')
 vars:new('membership_notification', membership.subscribe())
 vars:new('clusterwide_config')
 vars:new('failover_fiber')
-vars:new('kingdom_conn')
+vars:new('state_board_conn')
 vars:new('failover_err')
 vars:new('cache', {
     active_leaders = {--[[ [replicaset_uuid] = leader_uuid ]]},
@@ -280,9 +280,9 @@ end
 local function cfg(clusterwide_config)
     checks('ClusterwideConfig')
 
-    if vars.kingdom_conn then
-        vars.kingdom_conn:close()
-        vars.kingdom_conn = nil
+    if vars.state_board_conn then
+        vars.state_board_conn:close()
+        vars.state_board_conn = nil
     end
 
     if vars.failover_fiber ~= nil then
@@ -335,7 +335,7 @@ local function cfg(clusterwide_config)
             )
         end
 
-        vars.kingdom_conn = conn
+        vars.state_board_conn = conn
 
         -- WARNING: network yields
         local appointments, err = _get_appointments_stateful_mode(conn, 0)
@@ -398,14 +398,14 @@ end
 -- @treturn[2] nil
 -- @treturn[2] table Error description
 local function get_coordinator()
-    if vars.kingdom_conn == nil
-    or not vars.kingdom_conn:is_connected()
+    if vars.state_board_conn == nil
+    or not vars.state_board_conn:is_connected()
     then
         return nil, StateProviderError:new('State provider unavailable')
     end
 
     return errors.netbox_call(
-        vars.kingdom_conn, 'get_coordinator',
+        vars.state_board_conn, 'get_coordinator',
         {}, {timeout = vars.options.NETBOX_CALL_TIMEOUT}
     )
 end

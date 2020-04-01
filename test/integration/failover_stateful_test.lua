@@ -16,11 +16,11 @@ local router_1_uuid = helpers.uuid('a', 'a', 1)
 g.before_all(function()
     g.datadir = fio.tempdir()
 
-    fio.mktree(fio.pathjoin(g.datadir, 'kingdom'))
+    fio.mktree(fio.pathjoin(g.datadir, 'state_board'))
     g.kvpassword = require('digest').urandom(6):hex()
-    g.kingdom = require('luatest.server'):new({
-        command = fio.pathjoin(helpers.project_root, 'kingdom.lua'),
-        workdir = fio.pathjoin(g.datadir, 'kingdom'),
+    g.state_board = require('luatest.server'):new({
+        command = fio.pathjoin(helpers.project_root, 'state_board.lua'),
+        workdir = fio.pathjoin(g.datadir, 'state_board'),
         net_box_port = 14401,
         net_box_credentials = {
             user = 'client',
@@ -31,9 +31,9 @@ g.before_all(function()
             TARANTOOL_PASSWORD = g.kvpassword,
         },
     })
-    g.kingdom:start()
+    g.state_board:start()
     helpers.retrying({}, function()
-        g.kingdom:connect_net_box()
+        g.state_board:connect_net_box()
     end)
 
     g.cluster = helpers.Cluster:new({
@@ -77,15 +77,15 @@ g.before_all(function()
             mode = 'stateful',
             state_provider = 'tarantool',
             tarantool_params = {
-                uri = g.kingdom.net_box_uri,
+                uri = g.state_board.net_box_uri,
                 password = g.kvpassword,
             },
         }}
     )
     helpers.retrying({}, function()
-        g.kingdom:connect_net_box()
+        g.state_board:connect_net_box()
         t.assert_covers(
-            g.kingdom.net_box:call('get_leaders'),
+            g.state_board.net_box:call('get_leaders'),
             {[storage_uuid] = storage_1_uuid}
         )
     end)
@@ -93,7 +93,7 @@ end)
 
 g.after_all(function()
     g.cluster:stop()
-    g.kingdom:stop()
+    g.state_board:stop()
     fio.rmtree(g.datadir)
 end)
 
@@ -122,9 +122,9 @@ local function list_warnings(name)
     }]]}).data.cluster.issues
 end
 
-function g.test_kingdom_restart()
-    fio.rmtree(g.kingdom.workdir)
-    g.kingdom:stop()
+function g.test_state_board_restart()
+    fio.rmtree(g.state_board.workdir)
+    g.state_board:stop()
 
     helpers.retrying({}, function()
         local res, err = eval('router', [[
@@ -146,11 +146,11 @@ function g.test_kingdom_restart()
         }})
     end)
 
-    g.kingdom:start()
+    g.state_board:start()
     helpers.retrying({}, function()
-        g.kingdom:connect_net_box()
+        g.state_board:connect_net_box()
         t.assert_covers(
-            g.kingdom.net_box:call('get_leaders'),
+            g.state_board.net_box:call('get_leaders'),
             {[storage_uuid] = storage_1_uuid}
         )
     end)
@@ -186,7 +186,7 @@ function g.test_coordinator_restart()
 
     helpers.retrying({}, function()
         t.assert_equals(
-            g.kingdom.net_box:call('get_coordinator'),
+            g.state_board.net_box:call('get_coordinator'),
             nil
         )
     end)
@@ -198,7 +198,7 @@ function g.test_coordinator_restart()
 
     helpers.retrying({}, function()
         t.assert_equals(
-            g.kingdom.net_box:call('get_coordinator'),
+            g.state_board.net_box:call('get_coordinator'),
             {
                 uri = g.cluster:server('router').advertise_uri,
                 uuid = g.cluster:server('router').instance_uuid,
@@ -209,7 +209,7 @@ end
 
 function g.test_leader_restart()
     t.assert_equals(
-        g.kingdom.net_box:call('longpoll', {0}),
+        g.state_board.net_box:call('longpoll', {0}),
         {
             [router_uuid] = router_1_uuid,
             [storage_uuid] = storage_1_uuid,
@@ -219,7 +219,7 @@ function g.test_leader_restart()
     -----------------------------------------------------
     g.cluster:server('storage-1'):stop()
     t.assert_equals(
-        g.kingdom.net_box:call('longpoll', {3}),
+        g.state_board.net_box:call('longpoll', {3}),
         {[storage_uuid] = storage_2_uuid}
     )
 
@@ -297,9 +297,9 @@ local q_promote = [[
 ]]
 
 function g.test_leader_promote()
-    g.kingdom:connect_net_box()
+    g.state_board:connect_net_box()
     helpers.retrying({}, function()
-        t.assert(g.kingdom.net_box:call('get_coordinator') ~= nil)
+        t.assert(g.state_board.net_box:call('get_coordinator') ~= nil)
     end)
 
     -------------------------------------------------------
@@ -369,7 +369,7 @@ function g.test_leader_promote()
 
     -------------------------------------------------------
 
-    g.kingdom:stop()
+    g.state_board:stop()
     helpers.retrying({}, function()
         local ok, err = eval('storage-1', q_promote, {{[router_uuid] = storage_1_uuid}})
         t.assert_equals(ok, nil)
@@ -379,9 +379,9 @@ function g.test_leader_promote()
         })
     end)
 
-    g.kingdom:start()
+    g.state_board:start()
     helpers.retrying({}, function()
-        g.kingdom:connect_net_box()
+        g.state_board:connect_net_box()
     end)
 
     -------------------------------------------------------
@@ -400,7 +400,7 @@ function g.test_leader_promote()
 end
 
 function g.test_leaderless()
-    g.kingdom:stop()
+    g.state_board:stop()
     local router = g.cluster:server('router')
     -- restart both router (which is a failover coordinator)
     -- and storage-1 (which is a leader among storages)
@@ -458,9 +458,9 @@ function g.test_leaderless()
     -----------------------------------------------------
     -- Check cluster repairs
 
-    g.kingdom:start()
+    g.state_board:start()
     helpers.retrying({}, function()
-        g.kingdom:connect_net_box()
+        g.state_board:connect_net_box()
     end)
     local q_waitrw = 'return {pcall(box.ctl.wait_rw, 3)}'
 
@@ -491,7 +491,7 @@ function g.test_issues()
     -- kill failover fiber on storage
     eval('storage-3', [[
         local vars = require('cartridge.vars').new('cartridge.failover')
-        vars.kingdom_conn:close()
+        vars.state_board_conn:close()
         vars.failover_fiber:cancel()
     ]])
 

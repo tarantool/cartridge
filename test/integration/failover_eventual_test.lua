@@ -312,7 +312,7 @@ g.test_api_failover = function()
         set_failover_params, {tarantool_params = {uri = 'localhost:9'}}
     )
 
-    local tarantool_params = {uri = 'kingdom.com:8', password = 'xxx'}
+    local tarantool_params = {uri = 'state_board.com:8', password = 'xxx'}
     t.assert_equals(
         set_failover_params({tarantool_params = tarantool_params}),
         {
