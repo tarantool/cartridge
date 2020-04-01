@@ -108,20 +108,6 @@ local function eval(alias, ...)
     return g.cluster:server(alias).net_box:eval(...)
 end
 
-local function list_warnings(name)
-    return g.cluster:server(name):graphql({query = [[{
-        cluster {
-            issues {
-                level
-                replicaset_uuid
-                message
-                instance_uuid
-                topic
-            }
-        }
-    }]]}).data.cluster.issues
-end
-
 function g.test_kingdom_restart()
     fio.rmtree(g.kingdom.workdir)
     g.kingdom:stop()
@@ -136,7 +122,7 @@ function g.test_kingdom_restart()
             err = 'State provider unavailable'
         })
 
-        t.assert_items_include(list_warnings('router'), {{
+        t.assert_items_include(helpers.list_cluster_issues(g.cluster:server('router')), {{
             level = 'warning',
             topic = 'failover',
             message = "Can't obtain failover coordinator:" ..
@@ -162,7 +148,7 @@ function g.test_kingdom_restart()
                 uuid = 'aaaaaaaa-aaaa-0000-0000-000000000001'
             }
         )
-        t.assert_equals(list_warnings('router'), {})
+        t.assert_equals(helpers.list_cluster_issues(g.cluster:server('router')), {})
     end)
 
     helpers.retrying({}, function()
@@ -477,7 +463,7 @@ function g.test_leaderless()
     t.assert_equals(eval('storage-2', q_readonliness), true)
     t.assert_equals(eval('storage-3', q_readonliness), true)
     t.helpers.retrying({}, function()
-        t.assert_equals(list_warnings('router'), {})
+        t.assert_equals(helpers.list_cluster_issues(g.cluster:server('router')), {})
     end)
 end
 
@@ -496,7 +482,7 @@ function g.test_issues()
     ]])
 
     helpers.retrying({}, function()
-        t.assert_items_equals(list_warnings('router'), {{
+        t.assert_items_equals(helpers.list_cluster_issues(g.cluster:server('router')), {{
             level = 'warning',
             topic = 'failover',
             message = "There is no active failover coordinator",
@@ -519,6 +505,6 @@ function g.test_issues()
     ]]})
 
     helpers.retrying({}, function()
-        t.assert_equals(list_warnings('storage-1'), {})
+        t.assert_equals(helpers.list_cluster_issues(g.cluster:server('storage-1')), {})
     end)
 end
