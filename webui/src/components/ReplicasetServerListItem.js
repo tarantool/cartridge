@@ -66,12 +66,6 @@ const styles = {
   iconMarginSmall: css`
     margin-right: 4px;
   `,
-  uriIcon: css`
-    margin-right: 4px;
-  `,
-  uri: css`
-    color: rgba(0, 0, 0, 0.65);
-  `,
   statusGroup: css`
     display: flex;
     flex-basis: 576px;
