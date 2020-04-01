@@ -90,13 +90,56 @@ g.test_upload = function()
         ).data.test, 'B22'
     )
 
-    t.assert_error_msg_equals('Variable "arg2" expected to be non-null',
-        server.graphql, server, {
+    t.assert_error_msg_equals(
+        'Variable "arg2" expected to be non-null',
+        function() return server:graphql({
             query = [[
                 query ($arg: String! $arg2: String!)
                     { test(arg: $arg, arg2: $arg2) }
-            ]], variables = {}})
+            ]], variables = {}
+        }) end
+    )
 
+    t.assert_error_msg_equals(
+        'Variable "arg" type mismatch:' ..
+        ' the variable type "String" is not compatible' ..
+        ' with the argument type "NonNull(String)"',
+        function() return server:graphql({
+            query = [[
+                query ($arg: String)
+                    { test(arg: $arg) }
+            ]], variables = {}
+        }) end
+    )
+
+    t.assert_error_msg_equals(
+        'Required argument "arg" was not supplied.',
+        function() return server:graphql({
+            query = [[
+                query { test(arg2: "") }
+            ]]
+        }) end
+    )
+
+    t.assert_error_msg_equals(
+        'Unknown variable "unknown_arg"',
+        function() return server:graphql({
+            query = [[
+                query { test(arg: $unknown_arg) }
+            ]]
+        }) end
+    )
+
+    t.assert_error_msg_equals(
+        'There is no declaration for the variable "unknown_arg"',
+        function() return server:graphql({
+            query = [[
+                query { test(arg: "") }
+            ]], variables = {unknown_arg = ''}
+        }) end
+    )
+
+    -- Errors in handlers
     server.net_box:eval([[
         package.loaded['test']['test'] = function(root, args)
             error('Error C', 0)
@@ -155,6 +198,34 @@ g.test_upload = function()
     t.assert_error_msg_equals('{"Error":"H"}',
         helpers.Server.graphql, server,
         {query = '{ test(arg: "TEST") }'}
+    )
+
+    -- Fields sub-selections
+    t.assert_error_msg_equals(
+        'Scalar field "uri" cannot have subselections',
+        function() return cluster.main_server:graphql({
+            query = [[
+                { cluster { self { uuid uri { x } state } } }
+            ]]
+        }) end
+    )
+
+    t.assert_error_msg_equals(
+        'Composite field "replicaset" must have subselections',
+        function() return cluster.main_server:graphql({
+            query = [[
+                { servers { alias replicaset storage { } uuid } }
+            ]]
+        }) end
+    )
+
+    t.assert_error_msg_equals(
+        'Field "unknown" is not defined on type "Server"',
+        function() return cluster.main_server:graphql({
+            query = [[
+                { servers { unknown } }
+            ]]
+        }) end
     )
 end
 
@@ -293,58 +364,6 @@ g.test_nested_input = function()
         variables = {field = 'echo', field2 = 'field', upvalue = 'upvalue'}}
         ).data.test_nested_InputObject_complex, 'upvalue+field+echo'
     )
-end
-
-g.test_missed_variable = function()
-    local server = cluster.main_server
-
-    server.net_box:eval([[
-        package.loaded['test'] = package.loaded['test'] or {}
-        package.loaded['test']['test_missed_var'] = function(root, args)
-          return 'ok'
-        end
-        local graphql = require('cartridge.graphql')
-        local types = require('cartridge.graphql.types')
-
-        graphql.add_mutation({
-            name = 'test_missed_var',
-            args = {
-                arg = types.string,
-                arg2 = types.string,
-            },
-            kind = types.string,
-            callback = 'test.missed_var',
-        })
-    ]])
-
-    t.assert_error_msg_contains('Unknown variable "arg"', function()
-         server:graphql({
-            query = [[
-                mutation($arg2: String) {
-                    test_missed_var(arg: $arg, arg2: $arg2)
-                }
-            ]],
-            variables = {arg = 'arg', arg2 = 'arg2'}}
-        )
-    end)
-end
-
-function g.test_fail_validate()
-    t.assert_error_msg_equals('Scalar field "uri" cannot have subselections', function()
-        return cluster.main_server:graphql({
-            query = [[
-                { cluster { self { uuid uri { x } state } } }
-            ]]
-        })
-    end)
-
-    t.assert_error_msg_equals('Composite field "replicaset" must have subselections', function()
-        return cluster.main_server:graphql({
-            query = [[
-                { servers { alias replicaset storage { } uuid } }
-            ]]
-        })
-    end)
 end
 
 function g.test_error_extensions()
