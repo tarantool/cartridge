@@ -245,6 +245,11 @@ local function _clusterwide(patch)
 
     local topology_old = clusterwide_config_old:get_readonly('topology')
     local topology_new = clusterwide_config_new:get_readonly('topology')
+    if topology_new == nil then
+        return nil, PatchClusterwideError:new(
+            "Topology not specified, seems that cluster isn't bootstrapped"
+        )
+    end
 
     topology.probe_missing_members(topology_new.servers)
 
