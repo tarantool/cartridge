@@ -184,5 +184,5 @@ function g.test_401()
         end
     ]])
     -- require('fiber').sleep(1000)
-    cypress_run('401-error.js')
+    cypress_run('401-error.spec.js')
 end
