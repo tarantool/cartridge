@@ -92,7 +92,7 @@ local function control_loop(session)
     checks('stateboard_session')
     local ctx = assert(session.ctx)
 
-    repeat
+    while true do
         ctx.members = membership.members()
 
         local updates = {}
@@ -112,6 +112,9 @@ local function control_loop(session)
         if next(updates) ~= nil then
             local ok, err = session:set_leaders(updates)
             if ok == nil then
+                -- don't log an error in case the fiber was cancelled
+                fiber.testcancel()
+
                 log.error('%s', err)
                 break
             end
@@ -128,7 +131,8 @@ local function control_loop(session)
 
         assert(next_moment >= now)
         vars.membership_notification:wait(next_moment - now)
-    until not pcall(fiber.testcancel) or not session:is_locked()
+        fiber.testcancel()
+    end
 end
 
 local function take_control(client)
@@ -180,9 +184,9 @@ local function take_control(client)
     local control_fiber = fiber.new(control_loop, session)
     control_fiber:name('failover-coordinate')
 
+    -- Warning: fragile code.
+    -- The goal: perform garbage collection when the fiber is cancelled
     repeat
-        -- Warning: fragile code.
-        -- Cancelled fibers raise error on every yield
         if not pcall(fiber.sleep, lock_delay/2) then
             break
         end
@@ -195,29 +199,33 @@ local function take_control(client)
     until not pcall(fiber.testcancel)
 
     session:drop()
-    log.info('Lock released')
-    pcall(fiber.cancel, control_fiber)
+    pcall(function()
+        control_fiber:cancel()
+    end)
 
+    log.info('Lock released')
     return true
 end
 
 local function take_control_loop(client)
     checks('stateboard_client')
 
-    repeat
+    while true do
         local t1 = fiber.time()
         local ok, err = CoordinatorError:pcall(take_control, client)
         local t2 = fiber.time()
 
         if ok == nil then
+            -- don't log an error in case the fiber was cancelled
             fiber.testcancel()
+
             log.error('%s', type(err) == 'table' and err.err or err)
         end
 
         if ok ~= true then
             fiber.sleep(t1 + vars.options.RECONNECT_PERIOD - t2)
         end
-    until not pcall(fiber.testcancel)
+    end
 end
 
 local function stop()
@@ -341,6 +349,7 @@ local function appoint_leaders(leaders)
     end
 
     local ok, err = session:set_leaders(updates)
+    vars.membership_notification:broadcast()
     if ok == nil then
         session:drop()
         return nil, AppointmentError:new(
@@ -348,7 +357,6 @@ local function appoint_leaders(leaders)
         )
     end
 
-    vars.membership_notification:broadcast()
     return true
 end
 
