@@ -135,15 +135,16 @@ function g.test_self()
         ]]
     })
 
-    t.assert_equals(resp['data']['cluster']['self'], {
-        uri = string.format( "localhost:%d", router_server.net_box_port),
-        uuid = router_server.instance_uuid,
-        alias = router_server.alias,
+    t.assert_equals(resp['data']['cluster'], {
+        self = {
+            uri = string.format( "localhost:%d", router_server.net_box_port),
+            uuid = router_server.instance_uuid,
+            alias = router_server.alias,
+        },
+        can_bootstrap_vshard = false,
+        vshard_bucket_count = 3000,
+        vshard_known_groups = {'default'}
     })
-
-    t.assert_equals(resp['data']['cluster']['can_bootstrap_vshard'], false)
-    t.assert_equals(resp['data']['cluster']['vshard_bucket_count'], 3000)
-    t.assert_equals(resp['data']['cluster']['vshard_known_groups'], {'default'})
 
     local function _get_demo_uri()
         return router_server:graphql({query = [[{
@@ -309,13 +310,7 @@ function g.test_servers()
         ]]
     })
 
-    local servers = resp['data']['servers']
-
-    t.assert_equals(#servers, 4)
-
-    t.assert_equals(
-        helpers.table_find_by_attr(servers, 'uri', 'localhost:13301'),
-        {
+    t.assert_items_equals(resp['data']['servers'], {{
             uri = 'localhost:13301',
             uuid = helpers.uuid('a', 'a', 1),
             alias = 'router',
@@ -325,12 +320,7 @@ function g.test_servers()
             statistics = {vshard_buckets_count = box.NULL},
             replicaset = {roles = {'vshard-router'}},
             boxinfo = {cartridge = {error = box.NULL, state = "RolesConfigured"}},
-        }
-    )
-
-    t.assert_equals(
-        helpers.table_find_by_attr(servers, 'uri', 'localhost:13302'),
-        {
+        }, {
             uri = 'localhost:13302',
             uuid = helpers.uuid('b', 'b', 1),
             alias = 'storage',
@@ -340,12 +330,7 @@ function g.test_servers()
             statistics = {vshard_buckets_count = 3000},
             replicaset = {roles = {'vshard-storage'}},
             boxinfo = {cartridge = {error = box.NULL, state = "RolesConfigured"}},
-        }
-    )
-
-    t.assert_equals(
-        helpers.table_find_by_attr(servers, 'uri', 'localhost:13304'),
-        {
+        }, {
             uri = 'localhost:13304',
             uuid = helpers.uuid('b', 'b', 2),
             alias = 'storage-2',
@@ -355,12 +340,7 @@ function g.test_servers()
             statistics = {vshard_buckets_count = 3000},
             replicaset = {roles = {'vshard-storage'}},
             boxinfo = {cartridge = {error = box.NULL, state = "RolesConfigured"}},
-        }
-    )
-
-    t.assert_equals(
-        helpers.table_find_by_attr(servers, 'uri', 'localhost:13303'),
-        {
+        }, {
             uri = 'localhost:13303',
             uuid = '',
             alias = 'spare',
@@ -371,7 +351,7 @@ function g.test_servers()
             replicaset = box.NULL,
             boxinfo = box.NULL,
         }
-    )
+    })
 end
 
 function g.test_replicasets()
@@ -393,13 +373,7 @@ function g.test_replicasets()
         ]]
     })
 
-    local replicasets = resp['data']['replicasets']
-
-    t.assert_equals(#replicasets, 2)
-
-    t.assert_equals(
-        helpers.table_find_by_attr(replicasets, 'uuid', helpers.uuid('a')),
-        {
+    t.assert_items_equals(resp.data.replicasets, {{
             uuid = helpers.uuid('a'),
             alias = 'unnamed',
             roles = {'vshard-router'},
@@ -409,12 +383,7 @@ function g.test_replicasets()
             servers = {{uri = 'localhost:13301', priority = 1}},
             all_rw = false,
             weight = box.NULL,
-        }
-    )
-
-    t.assert_equals(
-        helpers.table_find_by_attr(replicasets, 'uuid', helpers.uuid('b')),
-        {
+        }, {
             uuid = helpers.uuid('b'),
             alias = 'unnamed',
             roles = {'vshard-storage'},
@@ -428,7 +397,7 @@ function g.test_replicasets()
                 {uri = 'localhost:13304', priority = 2},
             }
         }
-    )
+    })
 end
 
 function g.test_probe_server()
