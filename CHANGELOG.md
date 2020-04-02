@@ -32,6 +32,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   non-nullable arguments in variable list is forbidden. Your code **may
   be affected** if it doesn't conform GraphQL specification.
 
+- auth_params graphql endpoint returns "fullname" (if it was specified)
+  instead of "username".
+
 ### Deprecated
 
 Lua API:

@@ -75,8 +75,21 @@ end
 local function get_auth_params()
     local callbacks = auth.get_callbacks()
     local params = auth.get_params()
+
+    local user, username
+    local session_username = auth.get_session_username()
+    if session_username ~= nil then
+        user = auth.get_user(session_username)
+    end
+
+    if user ~= nil and user.fullname ~= nil then
+        username = user.fullname
+    else
+        username = session_username
+    end
+
     return {
-        username = auth.get_session_username(),
+        username = username,
 
         enabled = params.enabled,
         cookie_max_age = params.cookie_max_age,
