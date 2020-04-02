@@ -11,6 +11,8 @@ import {
   HealthStatus,
   IconBucket,
   IconChip,
+  IconChipWarning,
+  IconChipDanger,
   IconGeoPin,
   IconMore,
   LeaderFlag,
@@ -19,6 +21,10 @@ import {
   Tooltip,
   UriLabel
 } from '@tarantool.io/ui-kit';
+import {
+  calculateMemoryFragmentationLevel,
+  type MemoryUsageRatios
+} from 'src/misc/memoryStatistics';
 import { showExpelModal } from '../store/actions/clusterPage.actions';
 import { withRouter, Link } from 'react-router-dom';
 
@@ -135,7 +141,7 @@ type Server = {
     arenaUsed: number,
     bucketsCount: number,
     quotaSize: number
-  },
+  } & MemoryUsageRatios,
   status: string,
   uri: string,
   alias?: string,
@@ -232,7 +238,7 @@ class ReplicasetServerListItem extends React.PureComponent<
                   }
                   <div className={styles.memStats}>
                     <div>
-                      <IconChip className={styles.iconMargin} />
+                      <MemoryIcon {...statistics} />
                       <Text variant='h5' tag='span'>{usageText}</Text>
                     </div>
                     <ProgressBar
@@ -278,5 +284,28 @@ class ReplicasetServerListItem extends React.PureComponent<
     )
   }
 }
+
+
+const MemoryIcon = (statistics: $PropertyType<Server, 'statistics'>) => {
+  if (statistics) {
+    const fragmentationLevel = calculateMemoryFragmentationLevel(statistics);
+    switch (fragmentationLevel) {
+      case 'high':
+        return (
+          <Tooltip tag='span' content="Warning: Your memory is highly fragmented">
+            <IconChipDanger className={styles.iconMargin} />
+          </Tooltip>
+        );
+      case 'medium':
+        return (
+          <Tooltip tag='span' content="Warning: Your memory is fragmented">
+            <IconChipWarning className={styles.iconMargin} />
+          </Tooltip>
+        );
+    }
+  }
+  return <IconChip className={styles.iconMargin} />;
+};
+
 
 export default withRouter(ReplicasetServerListItem);

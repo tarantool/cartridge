@@ -317,6 +317,9 @@ query serverList {
       quotaSize: quota_size
       arenaUsed: arena_used
       bucketsCount: vshard_buckets_count
+      quota_used_ratio
+      arena_used_ratio
+      items_used_ratio
     }
   }
 }
@@ -377,6 +380,9 @@ query serverStat {
       quotaSize: quota_size
       arenaUsed: arena_used
       bucketsCount: vshard_buckets_count
+      quota_used_ratio
+      arena_used_ratio
+      items_used_ratio
     }
   }
 }`;
