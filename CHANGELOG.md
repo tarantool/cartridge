@@ -58,6 +58,8 @@ mutation($uuid: String!) {
 
 - Show WebUI notification on successful config upload.
 
+- Fix `add_user` on uninitialized instance
+
 ## [2.0.2] - 2020-03-17
 
 ### Added

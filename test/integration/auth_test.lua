@@ -475,6 +475,17 @@ function g.test_uninitialized()
     local lsid = resp.cookies['lsid'][1]
     check_401(g.server, {headers = {cookie = 'lsid='}})
     check_200(g.server, {headers = {cookie = 'lsid=' .. lsid}})
+
+    t.assert_error_msg_contains(
+        "PatchClusterwideError: Topology not specified, " ..
+        "seems that cluster isn't bootstrapped",
+        _add_user, g.server, 'new_admin', 'password'
+    )
+
+    t.assert_error_msg_contains(
+        "edit_user() can't change integrated superuser 'admin'",
+        _edit_user, g.server, g.server_user, 'password11'
+    )
 end
 
 function g.test_keepalive()
