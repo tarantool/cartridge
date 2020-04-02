@@ -218,9 +218,10 @@ local function failover_loop(args)
 
     while pcall(fiber.testcancel) do
         local appointments, err = FailoverError:pcall(args.get_appointments)
-        fiber.testcancel()
-
         if appointments == nil then
+            -- don't log an error in case the fiber was cancelled
+            fiber.testcancel()
+
             log.warn('%s', err.err)
             vars.failover_err = FailoverError:new(
                 "Error fetching appointments: %s", err.err
