@@ -169,7 +169,7 @@ function g.test_outage()
         {true}
     )
     t.assert_equals(
-        -- C1 can renew expired lock if it wasn't stolen yen
+        -- C1 can renew expired lock if it wasn't stolen yet
         {c1:call('acquire_lock', payload)},
         {true}
     )
@@ -182,7 +182,7 @@ function g.test_outage()
     c2:close()
 
     t.assert_equals(
-        -- C1 can't renew lock after if was stolen by C2
+        -- C1 can't renew lock after it was stolen by C2
         {c1:call('acquire_lock', payload)},
         {box.NULL, 'The lock was stolen'}
     )
