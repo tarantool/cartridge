@@ -16,7 +16,6 @@ vars:new('membership_notification', membership.subscribe())
 vars:new('connect_fiber', nil)
 vars:new('topology_cfg', nil)
 vars:new('client', nil)
-vars:new('session', nil)
 vars:new('options', {
     RECONNECT_PERIOD = 5,
     IMMUNITY_TIMEOUT = 15,
@@ -134,17 +133,14 @@ end
 
 local function take_control(client)
     checks('stateboard_client')
-    assert(vars.session == nil or not vars.session:is_locked())
 
     local lock_args = {
         confapplier.get_instance_uuid(),
         confapplier.get_advertise_uri()
     }
 
-    local session, err = client:get_session()
-    if session == nil then
-        return nil, err
-    end
+    local session = client:get_session()
+    assert(not session:is_locked())
     assert(session.ctx == nil)
 
     local lock_delay, err = session:get_lock_delay()
@@ -177,9 +173,7 @@ local function take_control(client)
     for replicaset_uuid, leader_uuid in pairs(leaders) do
         ctx.decisions[replicaset_uuid] = pack_decision(leader_uuid)
     end
-
     session.ctx = ctx
-    vars.session = session
 
     log.info('Lock acquired')
     --------------------------------------------------------------------
@@ -193,7 +187,7 @@ local function take_control(client)
             break
         end
 
-        if pcall(fiber.status, control_fiber) == 'dead'
+        if fiber.status(control_fiber) == 'dead'
         or not session:acquire_lock(lock_args)
         then
             break
@@ -230,11 +224,6 @@ local function stop()
     if vars.connect_fiber ~= nil then
         pcall(fiber.cancel, vars.connect_fiber)
         vars.connect_fiber = nil
-    end
-
-    if vars.session ~= nil then
-        vars.session:drop()
-        vars.session = nil
     end
 
     if vars.client ~= nil then
@@ -332,9 +321,15 @@ local function appoint_leaders(leaders)
         end
     end
 
-    local session = vars.session
+    if vars.client == nil then
+        return nil, AppointmentError:new("No state provider configured")
+    end
 
-    if session == nil or not session:is_locked() then
+    local session = vars.client.session
+    if session == nil
+    or session.ctx == nil
+    or not session:is_locked()
+    then
         return nil, AppointmentError:new("No active coordinator session")
     end
 
