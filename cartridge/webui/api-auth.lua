@@ -76,18 +76,11 @@ local function get_auth_params()
     local callbacks = auth.get_callbacks()
     local params = auth.get_params()
 
-    local user, username
-    local session_username = auth.get_session_username()
-    if session_username ~= nil then
-        user = auth.get_user(session_username)
-    end
-
+    local username = auth.get_session_username()
+    local user = username and auth.get_user(username)
     if user ~= nil and user.fullname ~= nil then
         username = user.fullname
-    else
-        username = session_username
     end
-
     return {
         username = username,
 
