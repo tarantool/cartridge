@@ -1,4 +1,5 @@
 local fun = require('fun')
+local checks = require('checks')
 local pool = require('cartridge.pool')
 local topology = require('cartridge.topology')
 local confapplier = require('cartridge.confapplier')
@@ -7,8 +8,8 @@ local membership = require('membership')
 local vars = require('cartridge.vars').new('cartridge.issues')
 vars:new('limits', {
     fragmentation_threshold_critical = 0.9,
-    fragmentation_threshold_warning = 0.6,
-    desync_threshold_warning = 5 -- in seconds
+    fragmentation_threshold_warning  = 0.6,
+    desync_threshold_warning         = 5,
 })
 
 local function list_on_instance()
@@ -260,8 +261,19 @@ local function list_on_cluster()
     return ret
 end
 
+local function set_limits(new_limits)
+    checks({
+        fragmentation_threshold_critical = '?number',
+        fragmentation_threshold_warning = '?number',
+        desync_threshold_warning = '?number',
+    })
+    vars.limits = fun.chain(vars.limits, new_limits):tomap()
+    return true
+end
+
 _G.__cartridge_issues_list_on_instance = list_on_instance
 
 return {
     list_on_cluster = list_on_cluster,
+    set_limits = set_limits,
 }

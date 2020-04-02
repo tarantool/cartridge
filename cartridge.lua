@@ -27,6 +27,7 @@ local auth = require('cartridge.auth')
 local utils = require('cartridge.utils')
 local roles = require('cartridge.roles')
 local webui = require('cartridge.webui')
+local issues = require('cartridge.issues')
 local argparse = require('cartridge.argparse')
 local topology = require('cartridge.topology')
 local twophase = require('cartridge.twophase')
@@ -551,6 +552,18 @@ local function cfg(opts, box_opts)
     end
 
     vshard_utils.set_known_groups(vshard_groups, opts.bucket_count)
+
+    local issue_limits, err = argparse.get_opts({
+        fragmentation_threshold_critical = 'number',
+        fragmentation_threshold_warning  = 'number',
+        desync_threshold_warning         = 'number'
+    })
+
+    if err ~= nil then
+        return nil, err
+    end
+
+    issues.set_limits(issue_limits)
 
     local ok, err = confapplier.init({
         workdir = opts.workdir,
