@@ -579,9 +579,12 @@ function g.test_membership_leave()
     )
 end
 
-function g.test_memory_issues()
+
+function g.test_issues()
     t.assert_equals(helpers.list_cluster_issues(g.cluster.main_server), {})
 
+    -----------------------------------------------------------------------------
+    -- memory usage issues
     local server = g.cluster:server('storage')
     server.net_box:eval([[
         _G._old_slab_info = box.slab.info
@@ -630,4 +633,29 @@ function g.test_memory_issues()
 
     server.net_box:eval('box.slab.info = _G._old_slab_info')
     t.assert_equals(helpers.list_cluster_issues(g.cluster.main_server), {})
+
+    -----------------------------------------------------------------------------
+    -- clock desync issues
+    g.cluster.main_server.net_box:eval([[
+        local vars = require('cartridge.vars').new('cartridge.issues')
+        vars.limits.desync_threshold_warning = 0
+    ]])
+    local issues = helpers.list_cluster_issues(g.cluster.main_server)
+    g.cluster.main_server.net_box:eval([[
+        local vars = require('cartridge.vars').new('cartridge.issues')
+        vars.limits = nil -- reset default values
+    ]])
+
+    t.assert_covers(issues[1], {
+        topic = 'clock',
+        level = 'warning',
+        instance_uuid = box.NULL,
+        replicaset_uuid = box.NULL,
+    })
+    t.assert_str_matches(issues[1].message,
+        'Clock difference between' ..
+        ' localhost:%d+ and localhost:%d+' ..
+        ' exceed threshold %(.+ > 0%)'
+    )
+    t.assert_not(next(issues, 1))
 end

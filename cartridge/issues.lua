@@ -3,10 +3,12 @@ local pool = require('cartridge.pool')
 local topology = require('cartridge.topology')
 local confapplier = require('cartridge.confapplier')
 local failover = require('cartridge.failover')
+local membership = require('membership')
 local vars = require('cartridge.vars').new('cartridge.issues')
 vars:new('limits', {
     fragmentation_threshold_critical = 0.9,
     fragmentation_threshold_warning = 0.6,
+    desync_threshold_warning = 5 -- in seconds
 })
 
 local function list_on_instance()
@@ -168,19 +170,60 @@ local function list_on_instance()
 end
 
 local function list_on_cluster()
+    local ret = {}
     local uri_list = {}
     local topology_cfg = confapplier.get_readonly('topology')
 
     if topology_cfg == nil then
-        return {}
+        return ret
     end
 
-    local failover_cfg = topology.get_failover_params(topology_cfg)
     for _, _, srv in fun.filter(topology.not_disabled, topology_cfg.servers) do
         table.insert(uri_list, srv.uri)
     end
 
-    local ret = {}
+    -----------------------------------------------------------------------------
+    -- Check clock desynchronization
+
+    local min_delta = 0
+    local max_delta = 0
+    local min_delta_uri = topology_cfg.servers[box.info.uuid].uri
+    local max_delta_uri = topology_cfg.servers[box.info.uuid].uri
+    local members = membership.members()
+    for _, server_uri in pairs(uri_list) do
+        local member = members[server_uri]
+        if member and member.status == 'alive' and member.clock_delta ~= nil then
+            if member.clock_delta < min_delta then
+                min_delta = member.clock_delta
+                min_delta_uri = server_uri
+            end
+
+            if member.clock_delta > max_delta then
+                max_delta = member.clock_delta
+                max_delta_uri = server_uri
+            end
+        end
+    end
+
+    -- difference in seconds
+    local diff = (max_delta - min_delta) * 1e-6
+    if diff > vars.limits.desync_threshold_warning then
+        table.insert(ret, {
+            level = 'warning',
+            topic = 'clock',
+            message = string.format(
+                'Clock difference between %s and %s' ..
+                ' exceed threshold (%.2g > %g)',
+                min_delta_uri, max_delta_uri,
+                diff, vars.limits.desync_threshold_warning
+            )
+        })
+    end
+
+    -----------------------------------------------------------------------------
+    -- Check stateful failover issues
+
+    local failover_cfg = topology.get_failover_params(topology_cfg)
     if failover_cfg.mode == 'stateful' then
         local coordinator, err = failover.get_coordinator()
 
@@ -200,6 +243,9 @@ local function list_on_cluster()
             })
         end
     end
+
+    -----------------------------------------------------------------------------
+    -- Get each instance issues (replication, failover, memory usage)
 
     local issues_map = pool.map_call(
         '_G.__cartridge_issues_list_on_instance',
