@@ -134,7 +134,7 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
       >
         <FormField label='Failover mode' className={styles.field} itemClassName={styles.radioFieldItem}>
           <RadioButton
-            className={cx(styles.radio, styles.borderedRadio)}
+            className={cx(styles.radio, styles.borderedRadio, 'meta-test__disableRadioBtn')}
             checked={mode === 'disabled'}
             onChange={() => this.handleModeChange('disabled')}
           >
@@ -147,7 +147,7 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
             </div>
           </RadioButton>
           <RadioButton
-            className={cx(styles.radio, styles.borderedRadio)}
+            className={cx(styles.radio, styles.borderedRadio, 'meta-test__eventualRadioBtn')}
             checked={mode === 'eventual'}
             onChange={() => this.handleModeChange('eventual')}
           >
@@ -161,7 +161,7 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
             </div>
           </RadioButton>
           <RadioButton
-            className={styles.radio}
+            className={cx(styles.radio, 'meta-test__statefulRadioBtn')}
             checked={mode === 'stateful'}
             onChange={() => this.handleModeChange('stateful')}
           >
@@ -177,6 +177,7 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
         <div className={styles.inputs}>
           <LabeledInput className={styles.inputField} label='Stateful storage URI'>
             <Input
+              className='meta-test__statefulStorageURI'
               value={uri}
               disabled={mode !== 'stateful'}
               onChange={this.handleURIChange}
@@ -184,6 +185,7 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
           </LabeledInput>
           <LabeledInput className={styles.inputField} label='Storage password'>
             <Input
+              className='meta-test__storagePassword'
               value={password}
               disabled={mode !== 'stateful'}
               onChange={this.handlePasswordChange}

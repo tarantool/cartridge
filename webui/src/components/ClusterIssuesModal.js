@@ -15,11 +15,12 @@ type ClusterIssuesModalProps = {
 
 export const ClusterIssuesModal = ({ issues, visible, onClose }: ClusterIssuesModalProps) => (
   <Modal
+    classname='meta-test__ClusterIssuesModal'
     visible={visible}
     onClose={onClose}
     title={`Issues: ${issues.length}`}
     footerControls={[
-      <Button onClick={onClose}>Close</Button>
+      <Button classname='meta-test__closeClusterIssuesModal' onClick={onClose}>Close </Button>
     ]}
   >
     <ul>
