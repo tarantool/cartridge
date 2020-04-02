@@ -609,3 +609,56 @@ function g.test_membership_leave()
         'left'
     )
 end
+
+function g.test_memory_issues()
+    t.assert_equals(helpers.list_cluster_issues(g.cluster.main_server), {})
+
+    local server = g.cluster:server('storage')
+    server.net_box:eval([[
+        _G._old_slab_info = box.slab.info
+        _G._slab_data = {
+            items_used = 6.1,
+            items_size = 0,
+            quota_used = 9.1,
+            quota_size = 10,
+            arena_used = 9.1,
+            arena_size = 10,
+            arena_used_ratio = '91.00%',
+            items_used_ratio = '6100000.00%',
+            quota_used_ratio = '91.00%',
+        }
+        box.slab.info = function ()
+            return _G._slab_data
+        end
+    ]])
+
+    t.assert_equals(
+        helpers.list_cluster_issues(g.cluster.main_server),
+        {{
+            level = 'critical',
+            topic = 'memory',
+            message = 'Running out of memory on localhost:13302:' ..
+            ' used 6100000.00% (items), 91.00% (arena), 91.00% (quota)',
+            replicaset_uuid = box.NULL,
+            instance_uuid = server.instance_uuid,
+        }}
+    )
+    server.net_box:eval([[
+        _G._slab_data.items_size = 10
+        _G._slab_data.items_used_ratio = '61.00%'
+   ]])
+    t.assert_equals(
+        helpers.list_cluster_issues(g.cluster.main_server),
+        {{
+            level = 'warning',
+            topic = 'memory',
+            message = 'Memory is highly fragmented on localhost:13302:' ..
+                ' used 61.00% (items), 91.00% (arena), 91.00% (quota)',
+            replicaset_uuid = box.NULL,
+            instance_uuid = server.instance_uuid,
+        }}
+    )
+
+    server.net_box:eval('box.slab.info = _G._old_slab_info')
+    t.assert_equals(helpers.list_cluster_issues(g.cluster.main_server), {})
+end

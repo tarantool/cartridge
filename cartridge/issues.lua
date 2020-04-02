@@ -3,6 +3,11 @@ local pool = require('cartridge.pool')
 local topology = require('cartridge.topology')
 local confapplier = require('cartridge.confapplier')
 local failover = require('cartridge.failover')
+local vars = require('cartridge.vars').new('cartridge.issues')
+vars:new('limits', {
+    fragmentation_threshold_critical = 0.9,
+    fragmentation_threshold_warning = 0.6,
+})
 
 local function list_on_instance()
     local enabled_servers = {}
@@ -112,6 +117,53 @@ local function list_on_instance()
             ),
         })
     end
+
+    -- used_ratio values in box.slab.info() are strings
+    -- so we calulate them again manually
+    -- Magic formula taken from tarantool src/box/lua/slab.c
+    -- See also: http://kostja.github.io/misc/2017/02/17/tarantool-memory.html
+    -- See also: https://github.com/tarantool/doc/issues/421
+    local slab_info = box.slab.info()
+    local items_used_ratio = slab_info.items_used / (slab_info.items_size + 0.0001)
+    local arena_used_ratio = slab_info.arena_used / (slab_info.arena_size + 0.0001)
+    local quota_used_ratio = slab_info.quota_used / (slab_info.quota_size + 0.0001)
+
+    if  items_used_ratio > vars.limits.fragmentation_threshold_critical
+    and arena_used_ratio > vars.limits.fragmentation_threshold_critical
+    and quota_used_ratio > vars.limits.fragmentation_threshold_critical
+    then
+        table.insert(ret, {
+            level = 'critical',
+            topic = 'memory',
+            instance_uuid = instance_uuid,
+            message = string.format(
+                'Running out of memory on %s:' ..
+                ' used %s (items), %s (arena), %s (quota)',
+                self_uri,
+                slab_info.items_used_ratio,
+                slab_info.arena_used_ratio,
+                slab_info.quota_used_ratio
+            ),
+        })
+    elseif items_used_ratio > vars.limits.fragmentation_threshold_warning
+    and arena_used_ratio > vars.limits.fragmentation_threshold_critical
+    and quota_used_ratio > vars.limits.fragmentation_threshold_critical
+    then
+        table.insert(ret, {
+            level = 'warning',
+            topic = 'memory',
+            instance_uuid = instance_uuid,
+            message = string.format(
+                'Memory is highly fragmented on %s:' ..
+                ' used %s (items), %s (arena), %s (quota)',
+                self_uri,
+                slab_info.items_used_ratio,
+                slab_info.arena_used_ratio,
+                slab_info.quota_used_ratio
+            ),
+        })
+    end
+
     return ret
 end
 
