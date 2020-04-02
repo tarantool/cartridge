@@ -122,20 +122,20 @@ local function _remove_user(server, username)
     ]], {username})
 end
 
-local function _add_user(server, username, password)
+local function _add_user(server, username, password, fullname)
     server.net_box:eval([[
         local auth = require('cartridge.auth')
         local res, err = auth.add_user(...)
         assert(res, tostring(err))
-    ]], {username, password})
+    ]], {username, password, fullname})
 end
 
-local function _edit_user(server, username, password)
+local function _edit_user(server, username, password, fullname)
     server.net_box:eval([[
         local auth = require('cartridge.auth')
         local res, err = auth.edit_user(...)
         assert(res, tostring(err))
-    ]], {username, password})
+    ]], {username, password, fullname})
 end
 
 local function _test_login(alias, auth)
@@ -272,6 +272,7 @@ function g.test_auth_disabled()
     local PASSWORD1 = 'Red Nickel'
     local USERNAME2 = 'Grouse'
     local PASSWORD2 = 'Silver Copper'
+    local FULLNAME2 = 'Vladimir Mayakovsky'
     check_200(server)
 
     local function add_user(vars)
@@ -288,29 +289,29 @@ function g.test_auth_disabled()
                         password:$password
                         fullname:$fullname
                         email:$email
-                    ) { username }
+                    ) { username fullname }
                 }
             }]],
             variables = vars
-        })['data']['cluster']['add_user']['username']
+        })['data']['cluster']['add_user']
     end
 
     t.assert_equals(
         add_user({
             username = USERNAME1,
-            password = PASSWORD1
+            password = PASSWORD1,
         }),
-        USERNAME1
+        { username = USERNAME1, fullname = box.NULL }
     )
 
     t.assert_equals(
         add_user({
             username = USERNAME2,
             password = PASSWORD2,
-            fullname = USERNAME2,
+            fullname = FULLNAME2,
             email = 'tester@tarantool.org'
         }),
-        USERNAME2
+        { username = USERNAME2, fullname = FULLNAME2 }
     )
 
     t.assert_error_msg_contains(
@@ -559,6 +560,7 @@ function g.test_set_params_graphql()
     local server = g.cluster:server('master')
     local USERNAME = 'Heron'
     local PASSWORD = 'Silver Titanium'
+    local FULLNAME = 'Hermann Hesse'
     _add_user(server, USERNAME, PASSWORD)
 
     local resp = _login(server, USERNAME, PASSWORD)
@@ -569,6 +571,7 @@ function g.test_set_params_graphql()
         return server:graphql({query = [[{
                 cluster {
                     auth_params {
+                        username
                         enabled
                         cookie_max_age
                     }
@@ -597,7 +600,7 @@ function g.test_set_params_graphql()
             }]],
             variables = {
                 enabled = enabled,
-                cookie_max_age = cookie_max_age
+                cookie_max_age = cookie_max_age,
             }},
             {http = {headers = {cookie = cookie_lsid}}}
         )['data']['cluster']['auth_params']
@@ -644,6 +647,19 @@ function g.test_set_params_graphql()
     t.assert_equals(
         get_auth_params(g.cluster:server('replica'))['cookie_max_age'],
         69
+    )
+    t.assert_equals(
+        get_auth_params(g.cluster:server('master'))['username'],
+        USERNAME
+    )
+    _edit_user(server, USERNAME, nil, FULLNAME)
+    t.assert_equals(
+        get_auth_params(g.cluster:server('master'))['username'],
+        FULLNAME
+    )
+    t.assert_equals(
+        get_auth_params(g.cluster:server('replica'))['username'],
+        FULLNAME
     )
 
     local function login(alias)

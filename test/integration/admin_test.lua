@@ -6,6 +6,7 @@ local helpers = require('test.helper')
 local digest = require('digest')
 
 local ADMIN_USERNAME = 'admin'
+local ADMIN_FULLNAME = 'Cartridge Administrator'
 local ADMIN_PASSWORD = '12345'
 
 local function bauth(username, password)
@@ -60,7 +61,7 @@ function g.test_api()
 
     local auth_params = resp['data']['cluster']['auth_params']
     t.assert_equals(auth_params['enabled'], true)
-    t.assert_equals(auth_params['username'], ADMIN_USERNAME)
+    t.assert_equals(auth_params['username'], ADMIN_FULLNAME)
 
     local add_user = function(username, password)
         return g.server:graphql({
