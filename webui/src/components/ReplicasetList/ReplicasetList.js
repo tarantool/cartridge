@@ -7,7 +7,6 @@ import {
   Button,
   HealthStatus,
   IconGear,
-  Modal,
   Text,
   TiledList,
   Tooltip

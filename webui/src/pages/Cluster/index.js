@@ -8,7 +8,6 @@ import {
   closeReplicasetPopup,
   uploadConfig,
   applyTestConfig,
-  changeFailover,
   resetPageState,
   setFilter
 } from 'src/store/actions/clusterPage.actions';
@@ -64,7 +63,6 @@ const styles = {
 
 export type ClusterProps = {
   clusterSelf: $PropertyType<AppState, 'clusterSelf'>,
-  failover: boolean,
   issues: Issue[],
   pageMount: boolean,
   pageDataRequestStatus: RequestStatusType,
@@ -90,7 +88,6 @@ export type ClusterProps = {
     uri: ?string
   }) => void,
   createMessage: () => void,
-  changeFailover: () => void,
   resetPageState: ResetPageStateActionCreator,
   setFilter: SetFilterActionCreator,
   routerParams: null | { instanceUUID: string },
@@ -307,10 +304,7 @@ class Cluster extends React.Component<ClusterProps> {
 
 const mapStateToProps = (state: State, { match: { params } }) => {
   const {
-    app: {
-      clusterSelf,
-      failover
-    },
+    app: { clusterSelf },
     clusterPage: {
       issues,
       pageMount,
@@ -326,7 +320,6 @@ const mapStateToProps = (state: State, { match: { params } }) => {
 
   return {
     clusterSelf,
-    failover,
     filter: replicasetFilter,
     filteredReplicasetList: replicasetFilter
       ? filterReplicasetListSelector(state)
@@ -352,7 +345,6 @@ const mapDispatchToProps = {
   closeReplicasetPopup,
   uploadConfig,
   applyTestConfig,
-  changeFailover,
   resetPageState,
   setFilter
 };

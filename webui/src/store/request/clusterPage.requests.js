@@ -11,7 +11,7 @@ import {
   probeMutation,
   serverStatQuery
 } from './queries.graphql';
-import type { EditTopologyMutationVariables } from 'src/generated/graphql-typing'
+import type { EditTopologyMutationVariables, FailoverApi } from 'src/generated/graphql-typing'
 
 const filterServerStat = response => {
   const serverStat
@@ -186,15 +186,9 @@ export async function uploadConfig(params: UploadConfigParams) {
   });
 }
 
-type ChangeFailoverArgs = { enabled: boolean };
+export async function changeFailover(params: FailoverApi) {
+  await graphql.mutate(changeFailoverMutation, params);
+  const cluster = await getClusterSelf();
 
-export async function changeFailover(params: ChangeFailoverArgs) {
-  const changeFailoverResponse = await graphql.mutate(changeFailoverMutation, params);
-  const clusterSelfResponse = await getClusterSelf();
-  return {
-    changeFailoverResponse: {
-      changeFailover: changeFailoverResponse,
-      clusterSelf: clusterSelfResponse
-    }
-  };
+  return cluster;
 }

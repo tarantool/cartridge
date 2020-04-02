@@ -31,7 +31,14 @@ export const getClusterQuery = gql`
         uuid: uuid
         demo_uri
       }
-      failover
+      failover_params {
+        tarantool_params {
+          uri
+          password
+        }
+        mode
+        state_provider
+      } 
       knownRoles: known_roles {
         name
         dependencies
@@ -406,12 +413,18 @@ mutation editTopology (
 
 export const changeFailoverMutation = gql`
 mutation changeFailover (
-  $enabled: Boolean!,
+  $mode: String!,
+  $state_provider: String,
+  $tarantool_params: FailoverStateProviderCfgInputTarantool
 ) {
   cluster {
-    failover(
-      enabled: $enabled
-    )
+    failover_params(
+      mode: $mode
+      state_provider: $state_provider
+      tarantool_params: $tarantool_params
+    ) {
+      mode
+    }
   }
 }
 `;

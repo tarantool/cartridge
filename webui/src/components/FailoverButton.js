@@ -1,78 +1,45 @@
+// @flow
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { changeFailover, setVisibleFailoverModal } from 'src/store/actions/clusterPage.actions';
-import {
-  Button,
-  IconOk,
-  IconCancel,
-  Modal,
-  Switcher,
-  Text
-} from '@tarantool.io/ui-kit';
-import { SwitcherIconContainer, ModalInfoContainer, SwitcherInfoLine } from './styled'
+import { setVisibleFailoverModal } from 'src/store/actions/clusterPage.actions';
+import { Button } from '@tarantool.io/ui-kit';
+import FailoverModal from './FailoverModal';
 
-const description = `When enabled, every storage starts monitoring instance statuses.
-If a user-specified master goes down, a replica with the lowest UUID takes its place.
-When the user-specified master comes back online, both roles are restored.`
+type FailoverButtonProps = {
+  mode: string,
+  visible: boolean,
+  showFailoverModal: boolean,
+  dispatch: (action: any) => void
+}
 
-const FailoverButton = ({
-  dispatch,
-  failover,
-  showFailoverModal,
-  visible
-}) => {
+const FailoverButton = (
+  {
+    dispatch,
+    mode,
+    showFailoverModal,
+    visible
+  }: FailoverButtonProps
+) => {
   if (!visible)
     return null;
 
   return (
     <React.Fragment>
-      <Switcher
+      <Button
         className='meta-test__FailoverButton'
-        onChange={() => dispatch(setVisibleFailoverModal(true))}
-        checked={failover}
+        intent='secondary'
+        onClick={() => dispatch(setVisibleFailoverModal(true))}
       >
-        Failover
-      </Switcher>
-      <Modal
-        className='meta-test__FailoverModal'
-        title="Failover control"
-        visible={showFailoverModal}
-        onClose={() => dispatch(setVisibleFailoverModal(false))}
-        footerControls={[
-          <Button
-            className='meta-test__CancelButton'
-            onClick={() => dispatch(setVisibleFailoverModal(false))}
-          >
-            Close
-          </Button>,
-          <Button
-            className='meta-test__SubmitButton'
-            intent='primary'
-            onClick={() => dispatch(changeFailover({ enabled: !failover }))}
-          >
-            {failover ? 'Disable' : 'Enable'}
-          </Button>
-        ]}
-      >
-        <ModalInfoContainer>
-          <SwitcherInfoLine>
-            <Text variant={'basic'}>
-              <SwitcherIconContainer>{failover ? <IconOk/> : <IconCancel/>}</SwitcherIconContainer>
-              Failover <b>{failover ? 'enabled' : 'disabled'}</b>
-            </Text>
-          </SwitcherInfoLine>
-          <SwitcherInfoLine>
-            <Text variant={'basic'}>{description}</Text>
-          </SwitcherInfoLine>
-        </ModalInfoContainer>
-      </Modal>
+        {`Failover: ${mode}`}
+      </Button>
+      {showFailoverModal && <FailoverModal />}
     </React.Fragment>
   );
 };
 
 export default connect(({ app, ui }) => {
   return {
-    failover: app.failover,
+    mode: app.failover_params.mode,
     showFailoverModal: ui.showFailoverModal,
     visible: !!(app.clusterSelf && app.clusterSelf.configured)
   }
