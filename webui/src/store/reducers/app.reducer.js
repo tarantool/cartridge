@@ -21,7 +21,7 @@ import {
   getRequestReducer
 } from 'src/store/commonRequest';
 import type { RequestStatusType } from 'src/store/commonTypes';
-import type { Role } from 'src/generated/graphql-typing';
+import type { Role, FailoverApi } from 'src/generated/graphql-typing';
 
 type AppMessage = {
   content: {
@@ -45,7 +45,7 @@ export type AppState = {
     demo_uri: ?string,
   },
   connectionAlive: boolean,
-  failover: null,
+  failover_params: FailoverApi,
   messages: AppMessage[],
   authParams: {
     enabled: ?false,
@@ -64,7 +64,11 @@ const initialState: AppState = {
   appDataRequestErrorMessage: null,
   clusterSelf: {},
   connectionAlive: true,
-  failover: null,
+  failover_params: {
+    mode: 'disabled',
+    tarantool_params: null,
+    state_provider: null
+  },
   messages: [],
   authParams: {}
 };
@@ -123,14 +127,14 @@ export const reducer = baseReducer(
         return {
           ...state,
           clusterSelf: action.payload.clusterSelf,
-          failover: action.payload.failover
+          failover_params: action.payload.failover_params
         };
 
       case CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_SUCCESS:
         return {
           ...state,
-          clusterSelf: action.payload.changeFailoverResponse.clusterSelf.clusterSelf,
-          failover: action.payload.changeFailoverResponse.clusterSelf.failover
+          clusterSelf: action.payload.clusterSelf,
+          failover_params: action.payload.failover_params
         };
 
       case APP_CREATE_MESSAGE:

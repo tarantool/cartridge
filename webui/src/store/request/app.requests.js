@@ -7,7 +7,7 @@ export async function getClusterSelf() {
 
   const {
     clusterSelf,
-    failover,
+    failover_params,
     knownRoles,
     can_bootstrap_vshard,
     vshard_bucket_count,
@@ -28,6 +28,6 @@ export async function getClusterSelf() {
     },
     MenuBlacklist,
     authParams,
-    failover
+    failover_params
   };
 }

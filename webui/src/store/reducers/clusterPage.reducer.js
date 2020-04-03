@@ -121,7 +121,9 @@ export const initialState: ClusterPageState = {
   applyTestConfigRequestStatus: getInitialRequestStatus(),
   applyTestConfigResponse: null,
   changeFailoverRequestStatus: getInitialRequestStatus(),
-  changeFailoverResponse: null
+  changeFailoverResponse: {
+    mode: 'disabled'
+  }
 };
 
 const pageMountReducer = getPageMountReducer(CLUSTER_PAGE_DID_MOUNT);
