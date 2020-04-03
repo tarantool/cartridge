@@ -336,21 +336,24 @@ function g.test_leader_promote()
     t.assert_equals(ok, nil)
     t.assert_covers(err, {
         class_name = 'AppointmentError',
-        err = 'Server "invalid_uuid" does not exist',
+        err = [[Server "invalid_uuid" doesn't exist]],
     })
 
     local ok, err = eval('storage-1', q_promote, {{['invalid_uuid'] = storage_1_uuid}})
     t.assert_equals(ok, nil)
     t.assert_covers(err, {
         class_name = 'AppointmentError',
-        err = 'Replicaset "invalid_uuid" does not exist',
+        err = [[Replicaset "invalid_uuid" doesn't exist]],
     })
 
     local ok, err = eval('storage-1', q_promote, {{[router_uuid] = storage_1_uuid}})
     t.assert_equals(ok, nil)
     t.assert_covers(err, {
         class_name = 'AppointmentError',
-        err = ('Server "%s" does not belong to replicaset "%s"'):format(storage_1_uuid, router_uuid),
+        err = string.format(
+            [[Server %q doesn't belong to replicaset %q]],
+            storage_1_uuid, router_uuid
+        ),
     })
 
     -------------------------------------------------------
