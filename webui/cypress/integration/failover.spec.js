@@ -62,17 +62,17 @@ describe('Failover', () => {
     cy.get('.meta-test__SubmitButton').click();
     cy.get('#root').contains('Failover change is OK...').click();
     cy.get('.meta-test__FailoverButton').contains('Failover: stateful');
+  });
 
+  it('Check issues', () => {
     cy.reload();
     cy.contains('Replica sets');
     cy.get('.meta-test__ClusterIssuesButton').should('be.enabled');
     cy.get('.meta-test__ClusterIssuesButton').contains('Issues: 4');
     cy.get('.meta-test__ClusterIssuesButton').click();
-    cy.get('button[classname="meta-test__closeClusterIssuesModal"]').click();
-    cy.get('button[classname="meta-test__closeClusterIssuesModal"]').should('not.exist');
-    // cy.get('.meta-test__ClusterIssuesModal').contains('warning');
-    // cy.get('.meta-test__ClusterIssuesModal button[type="button"]').click();
-    // cy.get('.meta-test__ClusterIssuesModal').should('not.be.visible');
+    cy.get('.meta-test__ClusterIssuesModal').contains('warning');
+    cy.get('.meta-test__ClusterIssuesModal button[type="button"]').click();
+    cy.get('.meta-test__ClusterIssuesModal').should('not.exist');
   })
 
 });
