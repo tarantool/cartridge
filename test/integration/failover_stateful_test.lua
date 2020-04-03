@@ -250,7 +250,7 @@ function g.test_leader_restart()
         ]],
         variables = {
             uuid = storage_uuid,
-            master_uuid = {storage_3_uuid},
+            master_uuid = {storage_1_uuid, storage_3_uuid, storage_2_uuid},
         },
     })
 
@@ -290,8 +290,8 @@ function g.test_leader_promote()
 
     -------------------------------------------------------
 
-    local storage = g.cluster:server('storage-1')
-    local resp = storage:graphql({
+    local storage_1 = g.cluster:server('storage-1')
+    local resp = storage_1:graphql({
         query = [[
         mutation(
                 $replicaset_uuid: String!
@@ -319,15 +319,20 @@ function g.test_leader_promote()
         t.assert_equals(eval('storage-3', q_leadership), storage_2_uuid)
     end)
 
-    local ok, err = eval('storage-1', q_promote, {{[storage_uuid] = storage_1_uuid}})
-    t.assert(ok, err ~= nil and err.err)
-    t.assert_equals(err, nil)
+    local storage_2 = g.cluster:server('storage-2')
+    storage_2:stop()
 
     helpers.retrying({}, function()
         t.assert_equals(eval('router',    q_leadership), storage_1_uuid)
         t.assert_equals(eval('storage-1', q_leadership), storage_1_uuid)
-        t.assert_equals(eval('storage-2', q_leadership), storage_1_uuid)
         t.assert_equals(eval('storage-3', q_leadership), storage_1_uuid)
+    end)
+
+    storage_2:start()
+    -- g.cluster:wait_until_healthy(g.cluster.main_server)
+
+    helpers.retrying({}, function()
+        t.assert_equals(eval('storage-2', q_leadership), storage_1_uuid)
     end)
 
     -------------------------------------------------------
@@ -511,33 +516,3 @@ function g.test_issues()
         t.assert_equals(helpers.list_cluster_issues(g.cluster:server('storage-1')), {})
     end)
 end
-
-function g.test_appoint_leader_not_ovveriden()
-    t.assert_covers(
-        g.stateboard.net_box:call('get_leaders'),
-        {[storage_uuid] = storage_1_uuid}
-    )
-
-    local ok, err = eval('router', [[
-        local cartridge = require('cartridge')
-        local coordinator = cartridge.service_get('failover-coordinator')
-        return coordinator.appoint_leaders(...)
-    ]], {{[storage_uuid] = storage_3_uuid}})
-    t.assert_equals({ok, err}, {true, nil})
-
-    t.assert_covers(
-        g.stateboard.net_box:call('longpoll', {3}),
-        {[storage_uuid] = storage_3_uuid}
-    )
-
-    g.cluster:server('storage-1'):stop()
-    -- check that leader doesn't change
-    t.assert_equals(g.stateboard.net_box:call('longpoll', {3}), {})
-    local decisions = eval('router', [[
-        local vars = require('cartridge.vars').new('cartridge.roles.coordinator')
-        assert(vars.client and vars.client.session and vars.client.session.ctx)
-        return vars.client.session.ctx.decisions
-    ]])
-    t.assert_equals(decisions[storage_uuid].leader, storage_3_uuid)
-end
-
