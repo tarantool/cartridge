@@ -70,8 +70,8 @@ local function is_alive(session)
     checks('stateboard_session')
     assert(session.connection ~= nil)
 
-    return session.connection.state == 'initial'
-        or session.connection:is_connected()
+    return session.connection.state ~= 'error'
+        and session.connection.state ~= 'closed'
 end
 
 local function drop(session)

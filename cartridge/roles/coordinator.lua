@@ -199,9 +199,7 @@ local function take_control(client)
     until not pcall(fiber.testcancel)
 
     session:drop()
-    pcall(function()
-        control_fiber:cancel()
-    end)
+    pcall(fiber.cancel, control_fiber)
 
     log.info('Lock released')
     return true
@@ -213,12 +211,10 @@ local function take_control_loop(client)
     while true do
         local t1 = fiber.time()
         local ok, err = CoordinatorError:pcall(take_control, client)
+        fiber.testcancel()
         local t2 = fiber.time()
 
         if ok == nil then
-            -- don't log an error in case the fiber was cancelled
-            fiber.testcancel()
-
             log.error('%s', type(err) == 'table' and err.err or err)
         end
 
