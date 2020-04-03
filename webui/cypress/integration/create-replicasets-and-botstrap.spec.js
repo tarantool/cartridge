@@ -1,28 +1,23 @@
-//Steps:
-//1. Click Bootstrap Vshard: without vshard-router role, without vshard-storage role:
-//      Press the button Bootstrap Vshard
-//2. Create replicaset with vshard-router and myrole roles
-//      Press the button Configure
-//      Fill the field 'name of replica set'
-//      Check roles: vshard-router and myrole
-//      Press the button 'Create replica set'
-//3. Click Bootstrap Vshard: with vshard-router, without vshard-storage
-//      Press the button Bootstrap Vshard
-//4. Create replicaset with vshard-storage role
-//      Press the button Configure
-//      Fill the field 'name of replica set'
-//      Check roles: vshard-storage
-//      Check group: Group
-//      Fill the field Weigth
-//      Press the button 'Create replica set'
-//5. Success Bootstrap Vshard
-//      Press the button Bootstrap Vshard
-//      Press Escape for close dialog
-//      Press Enter in dialog
+const testPort = `:13311`;
 
 describe('Replicaset configuration & Bootstrap Vshard', () => {
+
+  before(function() {
+    cy.visit(Cypress.config('baseUrl')+"/admin/cluster/dashboard");
+  });
+
+  it('You are here marker in unconfigured server list', () => {
+    cy.get('.meta-test__UnconfiguredServerList').contains(testPort).closest('li')
+    .find('.meta-test__youAreHereIcon');
+  });
+
+  it('You are here marker in selected servers list', () => {
+    cy.get('.meta-test__UnconfiguredServerList').contains(testPort).closest('li').find('.meta-test__configureBtn').click();
+    cy.get('.meta-test__ConfigureServerModal').contains(testPort).closest('li').find('.meta-test__youAreHereIcon');
+    cy.get('button[type="button"]').contains('Cancel').click();
+  });
+  
   it('Click Bootstrap Vshard: without vshard-router, without vshard-storage', () => {
-    cy.visit(Cypress.config('baseUrl'));
     cy.get('.meta-test__BootstrapButton').click();
     cy.get('.meta-test__BootStrapPanel__vshard-router_disabled');//component: BootstrapPanel
     cy.get('.meta-test__BootStrapPanel__vshard-storage_disabled');//component: BootstrapPanel
@@ -87,4 +82,10 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     cy.get('#root').contains('VShard bootstrap is OK. Please wait for list refresh...');//add to frontend-core classname for notification
     cy.get('.meta-test__BootstrapButton').should('not.exist');
   })
+
+  it('You are here marker in replicaset server list', () => {
+    cy.get('.ServerLabelsHighlightingArea').contains(testPort).closest('li')
+    .find('.meta-test__youAreHereIcon');
+  });
+
 });
