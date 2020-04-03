@@ -10,9 +10,9 @@ g.before_each(function()
     g.datadir = fio.tempdir()
     local password = require('digest').urandom(6):hex()
 
-    fio.mktree(fio.pathjoin(g.datadir, 'kingdom'))
-    g.kingdom = require('luatest.server'):new({
-        command = fio.pathjoin(helpers.project_root, 'kingdom.lua'),
+    fio.mktree(fio.pathjoin(g.datadir, 'stateboard'))
+    g.stateboard = require('luatest.server'):new({
+        command = fio.pathjoin(helpers.project_root, 'stateboard.lua'),
         workdir = fio.pathjoin(g.datadir),
         net_box_port = 13301,
         net_box_credentials = {
@@ -24,14 +24,14 @@ g.before_each(function()
             TARANTOOL_LOCK_DELAY = 40,
         },
     })
-    g.kingdom:start()
+    g.stateboard:start()
     helpers.retrying({}, function()
-        g.kingdom:connect_net_box()
+        g.stateboard:connect_net_box()
     end)
 end)
 
 g.after_each(function()
-    g.kingdom:stop()
+    g.stateboard:stop()
     fio.rmtree(g.datadir)
 end)
 
@@ -40,8 +40,8 @@ local function connect(srv)
 end
 
 function g.test_locks()
-    local c1 = connect(g.kingdom)
-    local c2 = connect(g.kingdom)
+    local c1 = connect(g.stateboard)
+    local c2 = connect(g.stateboard)
     local kid = uuid.str()
 
     t.assert_equals(
@@ -83,7 +83,7 @@ function g.test_locks()
 end
 
 function g.test_appointments()
-    local c = connect(g.kingdom)
+    local c = connect(g.stateboard)
     local kid = uuid.str()
     t.assert_equals(
         c:call('acquire_lock', {kid, 'localhost:9'}),
@@ -108,7 +108,7 @@ function g.test_appointments()
 end
 
 function g.test_longpolling()
-    local c1 = connect(g.kingdom)
+    local c1 = connect(g.stateboard)
     local kid = uuid.str()
     t.assert_equals(
         c1:call('acquire_lock', {kid, 'localhost:9'}),
@@ -116,7 +116,7 @@ function g.test_longpolling()
     )
     c1:call('set_leaders', {{{'A', 'a1'}, {'B', 'b1'}}})
 
-    local c2 = connect(g.kingdom)
+    local c2 = connect(g.stateboard)
     t.assert_equals(c2:call('longpoll'), {A = 'a1', B = 'b1'})
     local future = c2:call('longpoll', {0.2}, {is_async = true})
     c1:call('set_leaders', {{{'A', 'a2'}}})
@@ -135,35 +135,35 @@ end
 function g.test_passwd()
     local new_password = require('digest').urandom(6):hex()
 
-    g.kingdom:stop()
-    g.kingdom.env.TARANTOOL_PASSWORD = new_password
-    g.kingdom.net_box_credentials.password = new_password
-    g.kingdom:start()
+    g.stateboard:stop()
+    g.stateboard.env.TARANTOOL_PASSWORD = new_password
+    g.stateboard.net_box_credentials.password = new_password
+    g.stateboard:start()
     helpers.retrying({}, function()
-        g.kingdom:connect_net_box()
+        g.stateboard:connect_net_box()
     end)
 
-    t.assert_equals(g.kingdom.net_box:call('get_lock_delay'), 40)
+    t.assert_equals(g.stateboard.net_box:call('get_lock_delay'), 40)
 end
 
 function g.test_outage()
     -- Test case:
     -- 1. Coordinator C1 acquires a lock and freezes;
-    -- 2. Lock delay expires and kingdom allows C2 to acquire it again;
+    -- 2. Lock delay expires and stateboard allows C2 to acquire it again;
     -- 3. C2 writes some decisions and releases a lock;
     -- 4. C1 comes back;
     -- Goal: C1 must be informed on his outage
 
-    g.kingdom:stop()
-    g.kingdom.env.TARANTOOL_LOCK_DELAY = '0'
-    g.kingdom:start()
+    g.stateboard:stop()
+    g.stateboard.env.TARANTOOL_LOCK_DELAY = '0'
+    g.stateboard:start()
     helpers.retrying({}, function()
-        g.kingdom:connect_net_box()
+        g.stateboard:connect_net_box()
     end)
 
     local payload = {uuid.str(), 'localhost:9'}
 
-    local c1 = connect(g.kingdom)
+    local c1 = connect(g.stateboard)
     t.assert_equals(
         {c1:call('acquire_lock', payload)},
         {true}
@@ -174,7 +174,7 @@ function g.test_outage()
         {true}
     )
 
-    local c2 = connect(g.kingdom)
+    local c2 = connect(g.stateboard)
     t.assert_equals(
         {c2:call('acquire_lock', payload)},
         {true}

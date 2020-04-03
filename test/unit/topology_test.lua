@@ -749,7 +749,7 @@ failover:
   mode: stateful
   state_provider: tarantool
   tarantool_params:
-    uri: kingdom.com:4401
+    uri: stateboard.com:4401
     password: ''
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000001:
