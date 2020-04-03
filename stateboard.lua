@@ -14,6 +14,10 @@ local opts = argparse.get_opts({
     lock_delay = 'number',
 })
 
+if opts.workdir == nil then
+    error('"workdir" must be specified', 0)
+end
+
 local ok, err = fio.mktree(opts.workdir)
 if not ok then error(err, 0) end
 
