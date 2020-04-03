@@ -29,7 +29,7 @@ local log = require('log')
 local fiber = require('fiber')
 local checks = require('checks')
 local errors = require('errors')
-local netbox = require('net.box')
+local stateboard_client = require('cartridge.stateboard-client')
 local membership = require('membership')
 
 local vars = require('cartridge.vars').new('cartridge.failover')
@@ -39,14 +39,13 @@ local service_registry = require('cartridge.service-registry')
 
 local FailoverError = errors.new_class('FailoverError')
 local ApplyConfigError = errors.new_class('ApplyConfigError')
-local NetboxConnectError = errors.new_class('NetboxConnectError')
 local ValidateConfigError = errors.new_class('ValidateConfigError')
 local StateProviderError = errors.new_class('StateProviderError')
 
 vars:new('membership_notification', membership.subscribe())
 vars:new('clusterwide_config')
 vars:new('failover_fiber')
-vars:new('stateboard_conn')
+vars:new('stateboard_client')
 vars:new('failover_err')
 vars:new('cache', {
     active_leaders = {--[[ [replicaset_uuid] = leader_uuid ]]},
@@ -121,15 +120,8 @@ end
 -- Used in 'stateful' failover mode.
 -- @function _get_appointments_stateful_mode
 -- @local
-local function _get_appointments_stateful_mode(conn, timeout)
-    checks('table', 'number')
-    local appointments, err = errors.netbox_call(
-        -- Server will answer in `timeout` seconds (maybe)
-        conn, 'longpoll', {timeout},
-        -- But if it doesn't, we give him another spare second.
-        {timeout = timeout + vars.options.NETBOX_CALL_TIMEOUT}
-    )
-
+local function _get_appointments_stateful_mode(session, timeout)
+    local appointments, err = session:longpoll(timeout)
     if appointments == nil then
         return nil, err
     end
@@ -281,9 +273,9 @@ end
 local function cfg(clusterwide_config)
     checks('ClusterwideConfig')
 
-    if vars.stateboard_conn then
-        vars.stateboard_conn:close()
-        vars.stateboard_conn = nil
+    if vars.stateboard_client then
+        vars.stateboard_client:drop_session()
+        vars.stateboard_client = nil
     end
 
     if vars.failover_fiber ~= nil then
@@ -318,15 +310,14 @@ local function cfg(clusterwide_config)
 
     elseif failover_cfg.mode == 'stateful' and failover_cfg.state_provider == 'tarantool' then
         local params = assert(failover_cfg.tarantool_params)
-        local conn, err = NetboxConnectError:pcall(
-            netbox.connect, assert(params.uri), {
-            wait_connected = false,
-            reconnect_after = 1.0,
-            user = 'client',
+        local client, err = stateboard_client.new({
+            uri = assert(params.uri),
             password = params.password,
+            reconnect_after = 1.0,
+            call_timeout = vars.options.NETBOX_CALL_TIMEOUT,
         })
 
-        if conn == nil then
+        if client == nil then
             log.warn('Stateful failover not enabled: %s', err)
             return nil, err
         else
@@ -336,10 +327,11 @@ local function cfg(clusterwide_config)
             )
         end
 
-        vars.stateboard_conn = conn
+        vars.stateboard_client = client
+        local session = client:get_session()
 
         -- WARNING: network yields
-        local appointments, err = _get_appointments_stateful_mode(conn, 0)
+        local appointments, err = _get_appointments_stateful_mode(session, 0)
         if appointments == nil then
             log.warn('Failed to get first appointments: %s', err)
             vars.failover_err = FailoverError:new(
@@ -352,7 +344,7 @@ local function cfg(clusterwide_config)
 
         vars.failover_fiber = fiber.new(failover_loop, {
             get_appointments = function()
-                return _get_appointments_stateful_mode(conn,
+                return _get_appointments_stateful_mode(session,
                     vars.options.LONGPOLL_TIMEOUT
                 )
             end,
@@ -399,16 +391,13 @@ end
 -- @treturn[2] nil
 -- @treturn[2] table Error description
 local function get_coordinator()
-    if vars.stateboard_conn == nil
-    or not vars.stateboard_conn:is_connected()
+    local session = vars.stateboard_client:get_session()
+    if not session:is_connected()
     then
         return nil, StateProviderError:new('State provider unavailable')
     end
 
-    return errors.netbox_call(
-        vars.stateboard_conn, 'get_coordinator',
-        {}, {timeout = vars.options.NETBOX_CALL_TIMEOUT}
-    )
+    return session:get_coordinator()
 end
 
 local function get_error()

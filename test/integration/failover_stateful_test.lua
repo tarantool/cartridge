@@ -485,7 +485,7 @@ function g.test_issues()
     -- kill failover fiber on storage
     eval('storage-3', [[
         local vars = require('cartridge.vars').new('cartridge.failover')
-        vars.stateboard_conn:close()
+        vars.stateboard_client:drop_session()
         vars.failover_fiber:cancel()
     ]])
 

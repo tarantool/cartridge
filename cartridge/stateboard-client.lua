@@ -58,6 +58,26 @@ local function get_leaders(session)
     )
 end
 
+local function longpoll(session, timeout)
+    checks('stateboard_session', 'uint64')
+    assert(session.connection ~= nil)
+
+    return errors.netbox_call(session.connection,
+        'longpoll', {timeout},
+        {timeout = timeout + session.call_timeout}
+    )
+end
+
+local function get_coordinator(session)
+    checks('stateboard_session')
+    assert(session.connection ~= nil)
+
+    return errors.netbox_call(session.connection,
+        'get_coordinator', nil,
+        {timeout = session.call_timeout}
+    )
+end
+
 local function is_locked(session)
     checks('stateboard_session')
     assert(session.connection ~= nil)
@@ -72,6 +92,13 @@ local function is_alive(session)
 
     return session.connection.state ~= 'error'
         and session.connection.state ~= 'closed'
+end
+
+local function is_connected(session)
+    checks('stateboard_session')
+    assert(session.connection ~= nil)
+
+    return session.connection:is_connected()
 end
 
 local function drop(session)
@@ -89,10 +116,13 @@ local session_mt = {
     __index = {
         is_alive = is_alive,
         is_locked = is_locked,
+        is_connected = is_connected,
         acquire_lock = acquire_lock,
         set_leaders = set_leaders,
         get_leaders = get_leaders,
         get_lock_delay = get_lock_delay,
+        longpoll = longpoll,
+        get_coordinator = get_coordinator,
         drop = drop,
     },
 }
@@ -109,6 +139,7 @@ local function get_session(client)
         user = 'client',
         password = client.password,
         wait_connected = false,
+        reconnect_after = client.reconnect_after,
     })
 
     local session = {
@@ -141,6 +172,7 @@ local function new(opts)
         uri = 'string',
         password = 'string',
         call_timeout = 'number',
+        reconnect_after = '?uint64',
     })
 
     local client = {
@@ -149,6 +181,7 @@ local function new(opts)
         uri = opts.uri,
         password = opts.password,
         call_timeout = opts.call_timeout,
+        reconnect_after = opts.reconnect_after,
     }
     return setmetatable(client, client_mt)
 end
