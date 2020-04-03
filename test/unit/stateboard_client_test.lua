@@ -144,10 +144,13 @@ function g.test_broken_sessions()
     local session = create_session(client)
     local leaders, err = session:get_leaders()
     t.assert_equals(leaders, nil)
-    t.assert_covers(err, {
-        class_name = "Net.box call failed",
-        err = "Connection refused"
-    })
+    t.assert_equals(err.class_name, "Net.box call failed")
+
+    local valid_errors = {
+        ["Connection refused"] = true,
+        ["Network is unreachable"] = true, -- inside docker
+    }
+    t.assert_equals(valid_errors[err.err], true)
     t.assert_equals(session:is_alive(), false)
     t.assert_is_not(client:get_session(), session)
 
@@ -163,7 +166,7 @@ function g.test_broken_sessions()
     t.assert_is_not(client:get_session(), session)
 end
 
-function g.test_two_sesssions_aquire_lock()
+function g.test_two_sesssions_acquire_lock()
     local client = create_client('localhost:13301', g.password, 1)
     local session = create_session(client)
 
@@ -182,9 +185,11 @@ function g.test_two_sesssions_aquire_lock()
     t.assert_equals(session:is_locked(), false)
     t.assert_is_not(client:get_session(), session)
 
-    local ok, err = new_session:acquire_lock({g.lock_uuid, g.lock_uri})
-    t.assert_equals(ok, true)
-    t.assert_equals(err, nil)
-    t.assert_equals(new_session:is_locked(), true)
+    t.helpers.retrying({}, function()
+        local ok, err = new_session:acquire_lock({g.lock_uuid, g.lock_uri})
+        t.assert_equals(ok, true)
+        t.assert_equals(err, nil)
+        t.assert_equals(new_session:is_locked(), true)
+    end)
     new_session:drop()
 end
