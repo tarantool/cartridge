@@ -165,9 +165,16 @@ install(
   DESTINATION ${TARANTOOL_INSTALL_LUADIR}
 )
 
+# Make stateboard.lua executable and requireable at the same time
+install(
+  FILES ${CMAKE_CURRENT_SOURCE_DIR}/stateboard.lua
+  DESTINATION ${TARANTOOL_INSTALL_LUADIR}
+)
+
 install(
   FILES ${CMAKE_CURRENT_SOURCE_DIR}/stateboard.lua
   DESTINATION ${TARANTOOL_INSTALL_BINDIR}
+  RENAME stateboard
 )
 
 install(
