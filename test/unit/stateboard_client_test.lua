@@ -1,40 +1,73 @@
-local fio = require('fio')
+#!/usr/bin/env tarantool
+
+local net_box = require('net.box')
+local remote_control = require('cartridge.remote-control')
 local stateboard_client = require('cartridge.stateboard-client')
 
 local t = require('luatest')
 local g = t.group()
 
-local helpers = require('test.helper')
-
-g.before_each(function()
-    g.datadir = fio.tempdir()
-    g.password = require('digest').urandom(6):hex()
-    g.lock_uuid = helpers.uuid('b', 'b', 1)
-    g.lock_uri = 'localhost:13305'
-
-    fio.mktree(fio.pathjoin(g.datadir, 'stateboard'))
-    g.kingdom = require('luatest.server'):new({
-        command = fio.pathjoin(helpers.project_root, 'stateboard.lua'),
-        workdir = fio.pathjoin(g.datadir),
-        net_box_port = 13301,
-        net_box_credentials = {
-            user = 'client',
-            password = g.password,
-        },
-        env = {
-            TARANTOOL_PASSWORD = g.password,
-            TARANTOOL_LOCK_DELAY = 40,
-        },
+local function mock_stateboard()
+    remote_control.accept({
+        username = 'client',
+        password = g.cookie,
     })
-    g.kingdom:start()
-    helpers.retrying({}, function()
-        g.kingdom:connect_net_box()
-    end)
+    local conn = net_box.connect('localhost:13301', {password = g.cookie, user = 'client'})
+    t.assert_not_equals(conn.state, 'error')
+
+    conn:eval([[
+        LOCK_DELAY = 10
+        _G.lock = {
+            session_id = 0,
+            session_expiry = 0,
+        }
+        _G.leaders = {}
+
+        _G.acquire_lock = function(uuid, uri)
+            if box.session.id() ~= lock.session_id and box.session.exists(lock.session_id) then
+                return false
+            end
+
+            lock.session_id = box.session.id()
+            box.session.storage.lock_acquired = true
+
+            return true
+        end
+
+        _G.set_leaders = function(leaders)
+            if lock.session_id ~= box.session.id() then
+                return nil, 'You are not holding the lock'
+            end
+            _G.leaders = leaders
+            return true
+        end
+
+        _G.get_leaders = function()
+            local ret = {}
+            for _, v in pairs(leaders) do
+                ret[v.replicaset_uuid] = v.instance_uuid
+            end
+            return ret
+        end
+
+        function _G.get_lock_delay()
+            return LOCK_DELAY
+        end
+    ]])
+end
+
+g.before_all(function()
+    g.cookie = require('digest').urandom(6):hex()
+
+    local ok, err = remote_control.bind('127.0.0.1', 13301)
+    t.assert_equals(err, nil)
+    t.assert_equals(ok, true)
+    mock_stateboard()
 end)
 
-g.after_each(function()
-    g.kingdom:stop()
-    fio.rmtree(g.datadir)
+g.after_all(function()
+    remote_control.drop_connections()
+    remote_control.stop()
 end)
 
 local function create_client(uri, password, call_timeout)
@@ -45,151 +78,64 @@ local function create_client(uri, password, call_timeout)
     })
 end
 
--- creates new session on new client
-local function create_session(client)
+function g.test_session()
+    -- check get_session always returns alive one
+    local client = create_client('localhost:13301', g.cookie, 1)
     local session = client:get_session()
     t.assert_equals(session:is_alive(), true)
     t.assert_is(client:get_session(), session)
-    t.assert_is(client.session, session)
-    return session
+
+    local ok = session:acquire_lock({'uuid', 'uri'})
+    t.assert_equals(ok, true)
+    t.assert_equals(session:is_alive(), true)
+    t.assert_equals(session:is_locked(), true)
+    t.assert_is(client:get_session(), session)
+
+    -- check get_session creates new session if old one is dead
+    remote_control.drop_connections()
+    local ok, err = session:get_leaders()
+    t.assert_equals(ok, nil)
+    t.assert_covers(err, {
+        class_name = 'Net.box call failed',
+        err = 'Peer closed',
+    })
+    t.assert_is_not(client:get_session(), session)
+
+    -- check that session looses lock if connection is interrupded
+    t.assert_equals(session:is_alive(), false)
+    t.assert_equals(session:is_locked(), false)
 end
 
-function g.test_refresh_session()
-    local client = create_client('localhost:13301', g.password, 1)
-    local session = create_session(client)
-
-    local leaders, err = session:get_leaders()
-    t.assert_equals(err, nil)
-    t.assert_equals(leaders, {})
+function g.test_drop_session()
+    local client = create_client('localhost:13301', g.cookie, 1)
+    local session = client:get_session()
     t.assert_equals(session:is_alive(), true)
     t.assert_is(client:get_session(), session)
 
-    client:drop_session()
-    t.assert_covers(session.connection, {error = 'Connection closed', state = 'closed'})
-
-    local new_session = client:get_session()
-    t.assert_is_not(new_session, session)
-    new_session:drop()
-    t.assert_covers(new_session.connection, {error = 'Connection closed', state = 'closed'})
-    t.assert_is_not(client:get_session(), session)
-end
-
-function g.test_good_session()
-    local client = create_client('localhost:13301', g.password, 1)
-    local session = create_session(client)
-
-    t.assert_covers(session, {
-        lock_delay = nil,
-        lock_acquired = false,
-    })
-
-    local leaders, err = session:get_leaders()
-    t.assert_equals(err, nil)
-    t.assert_equals(leaders, {})
-
-    local delay, err = session:get_lock_delay()
-    t.assert_equals(err, nil)
-    t.assert_equals(delay, 40)
-    t.assert_equals(session.lock_delay, delay)
-
-    -----------------------------------------------------------------------------
-    -- set_leaders and acquire_lock
-    local replica_uuid = helpers.uuid('a')
-    local leader_uuid = helpers.uuid('a', 'a', 1)
-    local ok, err = session:set_leaders({{replica_uuid, leader_uuid}})
-    t.assert_equals(err, 'You are not holding the lock')
-    t.assert_equals(ok, nil)
-
-    t.assert_equals(session:is_locked(), false)
-
-    local ok, err = session:acquire_lock({g.lock_uuid, g.lock_uri})
-    t.assert_equals(err, nil)
+    local ok = session:acquire_lock({'uuid', 'uri'})
     t.assert_equals(ok, true)
-    t.assert_equals(session:is_locked(), true)
-
-    local ok, err = session:set_leaders({{replica_uuid, leader_uuid}})
-    t.assert_equals(err, nil)
-    t.assert_equals(ok, true)
-
-    local leaders, err = session:get_leaders()
-    t.assert_equals(err, nil)
-    t.assert_equals(leaders, {[replica_uuid] = leader_uuid})
-
-    t.assert_covers(session, {
-        lock_delay = 40,
-        lock_acquired = true
-    })
-
-    -----------------------------------------------------------------------------
-    -- drop session
-    -- explicitly close net_box connection
-    session.connection:close()
-    t.assert_equals(session:is_alive(), false)
-    t.assert_equals(session:is_locked(), false)
-    t.assert_covers(session, {
-        lock_delay = 40,
-        lock_acquired = true
-    })
-
-    -- use session method to clear context
-    session:drop()
-    t.assert_covers(session, {
-        lock_delay = 40,
-        lock_acquired = false
-    })
-end
-
-function g.test_broken_sessions()
-    local client = create_client('localhost:13999', g.password, 1)
-    local session = create_session(client)
-    local leaders, err = session:get_leaders()
-    t.assert_equals(leaders, nil)
-    t.assert_equals(err.class_name, "Net.box call failed")
-
-    local valid_errors = {
-        ["Connection refused"] = true,
-        ["Network is unreachable"] = true, -- inside docker
-    }
-    t.assert_equals(valid_errors[err.err], true)
-    t.assert_equals(session:is_alive(), false)
-    t.assert_is_not(client:get_session(), session)
-
-    local client = create_client('localhost:13301', 'password', 1)
-    local session = create_session(client)
-    local leaders, err = session:get_leaders()
-    t.assert_equals(leaders, nil)
-    t.assert_covers(err, {
-        class_name = "Net.box call failed",
-        err = "Incorrect password supplied for user 'client'"
-    })
-    t.assert_equals(session:is_alive(), false)
-    t.assert_is_not(client:get_session(), session)
-end
-
-function g.test_two_sesssions_acquire_lock()
-    local client = create_client('localhost:13301', g.password, 1)
-    local session = create_session(client)
-
-    local ok, err = session:acquire_lock({g.lock_uuid, g.lock_uri})
-    t.assert_equals(err, nil)
-    t.assert_equals(ok, true)
+    t.assert_equals(session:is_alive(), true)
     t.assert_equals(session:is_locked(), true)
     t.assert_is(client:get_session(), session)
 
-    local new_session = create_session(create_client('localhost:13301', g.password, 1))
-    local ok, err = new_session:acquire_lock({g.lock_uuid, g.lock_uri})
-    t.assert_equals(ok, false)
-    t.assert_equals(err, nil)
+    client:drop_session()
 
-    session:drop()
+    -- check dropping session makes it dead
+    local ok, err = session:get_leaders()
+    t.assert_equals(ok, nil)
+    t.assert_covers(err, {
+        class_name = 'Net.box call failed',
+        err = 'Connection closed',
+    })
+
+    -- check dropping session releases lock and make it dead
+    t.assert_equals(session:is_alive(), false)
     t.assert_equals(session:is_locked(), false)
-    t.assert_is_not(client:get_session(), session)
 
-    t.helpers.retrying({}, function()
-        local ok, err = new_session:acquire_lock({g.lock_uuid, g.lock_uri})
-        t.assert_equals(ok, true)
-        t.assert_equals(err, nil)
-        t.assert_equals(new_session:is_locked(), true)
-    end)
-    new_session:drop()
+    -- check drop session is idempotent
+    client:drop_session()
+    t.assert_equals(session:is_alive(), false)
+    t.assert_equals(session:is_locked(), false)
+
+    t.assert_is_not(client:get_session(), session)
 end
