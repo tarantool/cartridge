@@ -9,7 +9,7 @@ local vars = require('cartridge.vars').new('cartridge.issues')
 vars:new('limits', {
     fragmentation_threshold_critical = 0.9,
     fragmentation_threshold_warning  = 0.6,
-    desync_threshold_warning         = 5,
+    clock_delta_threshold_warning    = 5,
 })
 
 local function list_on_instance()
@@ -208,7 +208,7 @@ local function list_on_cluster()
 
     -- difference in seconds
     local diff = (max_delta - min_delta) * 1e-6
-    if diff > vars.limits.desync_threshold_warning then
+    if diff > vars.limits.clock_delta_threshold_warning then
         table.insert(ret, {
             level = 'warning',
             topic = 'clock',
@@ -216,7 +216,7 @@ local function list_on_cluster()
                 'Clock difference between %s and %s' ..
                 ' exceed threshold (%.2g > %g)',
                 min_delta_uri, max_delta_uri,
-                diff, vars.limits.desync_threshold_warning
+                diff, vars.limits.clock_delta_threshold_warning
             )
         })
     end
@@ -265,7 +265,7 @@ local function set_limits(new_limits)
     checks({
         fragmentation_threshold_critical = '?number',
         fragmentation_threshold_warning = '?number',
-        desync_threshold_warning = '?number',
+        clock_delta_threshold_warning = '?number',
     })
     vars.limits = fun.chain(vars.limits, new_limits):tomap()
     return true

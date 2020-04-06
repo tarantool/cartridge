@@ -24,6 +24,11 @@ g.before_all = function()
                 instance_uuid = helpers.uuid('a', 'a', 3)
             }},
         }},
+        env = {
+            TARANTOOL_CLOCK_DELTA_THRESHOLD_WARNING = 100000000,
+            TARANTOOL_FRAGMENTATION_THRESHOLD_WARNING = 100000000,
+            TARANTOOL_FRAGMENTATION_THRESHOLD_CRITICAL = 100000000,
+        }
     })
     g.cluster:start()
 end
@@ -31,6 +36,33 @@ end
 g.after_all = function()
     g.cluster:stop()
     fio.rmtree(g.cluster.datadir)
+end
+
+function g.test_issues_limits()
+    local server = g.cluster:server('master')
+    t.assert_equals(
+        server.net_box:eval("return require('cartridge.vars').new('cartridge.issues').limits"),
+        {
+            clock_delta_threshold_warning = 100000000,
+            fragmentation_threshold_warning = 100000000,
+            fragmentation_threshold_critical = 100000000
+        }
+    )
+
+    -- restore to defaults by calling set_limits
+    server.net_box:eval([[require("cartridge.issues").set_limits({
+        clock_delta_threshold_warning = 5,
+        fragmentation_threshold_warning = 0.6,
+        fragmentation_threshold_critical = 0.9
+    })]])
+    t.assert_equals(
+        server.net_box:eval("return require('cartridge.vars').new('cartridge.issues').limits"),
+        {
+            clock_delta_threshold_warning = 5,
+            fragmentation_threshold_warning = 0.6,
+            fragmentation_threshold_critical = 0.9
+        }
+    )
 end
 
 function g.test_broken_replica()

@@ -556,7 +556,7 @@ local function cfg(opts, box_opts)
     local issue_limits, err = argparse.get_opts({
         fragmentation_threshold_critical = 'number',
         fragmentation_threshold_warning  = 'number',
-        desync_threshold_warning         = 'number'
+        clock_delta_threshold_warning    = 'number'
     })
 
     if err ~= nil then
