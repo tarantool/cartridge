@@ -92,7 +92,11 @@ class UnconfiguredServerList extends React.PureComponent<UnconfiguredServerListP
             /> */}
             <div className={styles.heading}>
               <Text variant='h4' tag='span'>{item.alias}</Text>
-              <UriLabel uri={item.uri} icon={uri && item.uri === uri && IconGeoPin} />
+              <UriLabel 
+                uri={item.uri} 
+                icon={uri && item.uri === uri && IconGeoPin} 
+                className={uri && item.uri === uri && 'meta-test__youAreHereIcon'} 
+              />
             </div>
             <HealthStatus className={styles.status} status={item.status} message={item.message} />
             <Button

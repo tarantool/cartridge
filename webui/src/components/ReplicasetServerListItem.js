@@ -206,7 +206,11 @@ class ReplicasetServerListItem extends React.PureComponent<
                 {alias}
               </Link>
             </Text>
-            <UriLabel uri={uri} icon={selfURI && uri === selfURI && IconGeoPin} />
+            <UriLabel 
+              uri={uri} 
+              icon={selfURI && uri === selfURI && IconGeoPin} 
+              className={selfURI && uri === selfURI && 'meta-test__youAreHereIcon'}
+            />
           </div>
           <div className={styles.statusGroup}>
             <HealthStatus className={styles.status} status={status} message={message} />
