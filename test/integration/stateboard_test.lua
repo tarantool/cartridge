@@ -12,7 +12,7 @@ g.before_each(function()
 
     fio.mktree(fio.pathjoin(g.datadir, 'stateboard'))
     g.stateboard = require('luatest.server'):new({
-        command = fio.pathjoin(helpers.project_root, 'stateboard.lua'),
+        command = helpers.entrypoint('srv_stateboard'),
         workdir = fio.pathjoin(g.datadir),
         net_box_port = 13301,
         net_box_credentials = {
