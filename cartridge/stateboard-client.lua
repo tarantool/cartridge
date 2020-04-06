@@ -1,3 +1,4 @@
+local fiber = require('fiber')
 local checks = require('checks')
 local errors = require('errors')
 local netbox = require('net.box')
@@ -58,6 +59,16 @@ local function get_leaders(session)
     )
 end
 
+local function get_coordinator(session)
+    checks('stateboard_session')
+    assert(session.connection ~= nil)
+
+    return errors.netbox_call(session.connection,
+        'get_coordinator', nil,
+        {timeout = session.call_timeout}
+    )
+end
+
 local function is_locked(session)
     checks('stateboard_session')
     assert(session.connection ~= nil)
@@ -72,6 +83,13 @@ local function is_alive(session)
 
     return session.connection.state ~= 'error'
         and session.connection.state ~= 'closed'
+end
+
+local function is_connected(session)
+    checks('stateboard_session')
+    assert(session.connection ~= nil)
+
+    return session.connection:is_connected()
 end
 
 local function drop(session)
@@ -89,10 +107,12 @@ local session_mt = {
     __index = {
         is_alive = is_alive,
         is_locked = is_locked,
+        is_connected = is_connected,
         acquire_lock = acquire_lock,
         set_leaders = set_leaders,
         get_leaders = get_leaders,
         get_lock_delay = get_lock_delay,
+        get_coordinator = get_coordinator,
         drop = drop,
     },
 }
@@ -128,9 +148,36 @@ local function drop_session(client)
     end
 end
 
+local function longpoll(client, timeout)
+    checks('stateboard_client', 'number')
+
+    local deadline = fiber.time() + timeout
+
+    while true do
+        local session = client:get_session()
+        local timeout = deadline - fiber.time()
+
+        local ret, err = errors.netbox_call(session.connection,
+            'longpoll', {timeout},
+            {timeout = timeout + client.call_timeout}
+        )
+
+        if ret ~= nil then
+            return ret
+        end
+
+        if fiber.time() < deadline then
+            fiber.sleep(client.call_timeout)
+        else
+            return nil, err
+        end
+    end
+end
+
 local client_mt = {
     __type = 'stateboard_client',
     __index = {
+        longpoll = longpoll,
         get_session = get_session,
         drop_session = drop_session,
     },
