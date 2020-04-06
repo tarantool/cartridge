@@ -2,6 +2,10 @@ local t = require('luatest')
 local g = t.group()
 
 local parse = require('cartridge.graphql.parse').parse
+local types = require('cartridge.graphql.types')
+local schema = require('cartridge.graphql.schema')
+local validate = require('cartridge.graphql.validate').validate
+
 function g.test_parse_comments()
     t.assert_equals(parse('#').definitions, {})
     t.assert_equals(parse('#{}').definitions, {})
@@ -492,4 +496,421 @@ function g.test_parse_nonNullType()
     nonNullType = parse('query($a:[b]!){}').definitions[1].variableDefinitions[1].type
     t.assert_equals(nonNullType.kind, 'nonNullType')
     t.assert_equals(nonNullType.type.kind, 'listType')
+end
+
+local dogCommand = types.enum({
+    name = 'DogCommand',
+    values = {
+        SIT = true,
+        DOWN = true,
+        HEEL = true
+    }
+})
+
+local pet = types.interface({
+    name = 'Pet',
+    fields = {
+        name = types.string.nonNull,
+        nickname = types.int
+    }
+})
+
+local dog = types.object({
+    name = 'Dog',
+    interfaces = { pet },
+    fields = {
+        name = types.string,
+        nickname = types.string,
+        barkVolume = types.int,
+        doesKnowCommand = {
+            kind = types.boolean.nonNull,
+            arguments = {
+                dogCommand = dogCommand.nonNull
+            }
+        },
+        isHouseTrained = {
+            kind = types.boolean.nonNull,
+            arguments = {
+                atOtherHomes = types.boolean
+            }
+        },
+        complicatedField = {
+            kind = types.boolean,
+            arguments = {
+                complicatedArgument = types.inputObject({
+                    name = 'complicated',
+                    fields = {
+                        x = types.string,
+                        y = types.integer,
+                        z = types.inputObject({
+                            name = 'alsoComplicated',
+                            fields = {
+                                x = types.string,
+                                y = types.integer
+                            }
+                        })
+                    }
+                })
+            }
+        }
+    }
+})
+
+local sentient = types.interface({
+    name = 'Sentient',
+    fields = {
+        name = types.string.nonNull
+    }
+})
+
+local alien = types.object({
+    name = 'Alien',
+    interfaces = sentient,
+    fields = {
+        name = types.string.nonNull,
+        homePlanet = types.string
+    }
+})
+
+local human = types.object({
+    name = 'Human',
+    fields = {
+        name = types.string.nonNull
+    }
+})
+
+local cat = types.object({
+    name = 'Cat',
+    fields = {
+        name = types.string.nonNull,
+        nickname = types.string,
+        meowVolume = types.int
+    }
+})
+
+local catOrDog = types.union({
+    name = 'CatOrDog',
+    types = { cat, dog }
+})
+
+local dogOrHuman = types.union({
+    name = 'DogOrHuman',
+    types = { dog, human }
+})
+
+local humanOrAlien = types.union({
+    name = 'HumanOrAlien',
+    types = { human, alien }
+})
+
+local query = types.object({
+    name = 'Query',
+    fields = {
+        dog = {
+            kind = dog,
+            args = {
+                name = {
+                    kind = types.string
+                }
+            }
+        },
+        cat = cat,
+        pet = pet,
+        sentient = sentient,
+        catOrDog = catOrDog,
+        humanOrAlien = humanOrAlien,
+        dogOrHuman = dogOrHuman,
+    }
+})
+
+local schema = schema.create({ query = query })
+local function expectError(message, document)
+    if not message then
+        validate(schema, parse(document))
+    else
+        t.assert_error_msg_contains(message, validate, schema, parse(document))
+    end
+end
+
+function g.test_rules_uniqueOperationNames()
+    -- errors if two operations have the same name
+    expectError('Multiple operations exist named', [[
+        query foo { }
+        query foo { }
+    ]])
+
+    -- passes if all operations have different names
+    expectError(nil, [[
+        query foo { }
+        query bar { }
+    ]])
+end
+
+function g.test_rules_loneAnonymousOperation()
+    local message = 'Cannot have more than one operation when'
+
+    -- fails if there is more than one operation and one of them is anonymous'
+    expectError(message, [[
+        query { }
+        query named { }
+    ]])
+
+    expectError(message, [[
+        query named { }
+        query { }
+    ]])
+
+    expectError(message, [[
+        query { }
+        query { }
+    ]])
+
+    -- passes if there is one anonymous operation
+    expectError(nil, '{}')
+
+    -- passes if there are two named operations
+    expectError(nil, [[
+        query one {}
+        query two {}
+    ]])
+end
+
+function g.test_rules_fieldsDefinedOnType()
+    local message = 'is not defined on type'
+
+    -- fails if a field does not exist on an object type
+    expectError(message, '{ doggy { name } }')
+    expectError(message, '{ dog { age } }')
+
+    -- passes if all fields exist on object types
+    expectError(nil, '{ dog { name } }')
+
+    -- understands aliases
+    expectError(nil, '{ doggy: dog { name } }')
+    expectError(message, '{ dog: doggy { name } }')
+end
+
+function g.test_rules_argumentsDefinedOnType()
+    local message = 'Non-existent argument'
+
+    -- passes if no arguments are supplied
+    expectError(nil, '{ dog { isHouseTrained } }')
+
+    -- errors if an argument name does not match the schema
+    expectError(message, [[{
+      dog {
+        doesKnowCommand(doggyCommand: SIT)
+      }
+    }]])
+
+    -- errors if an argument is supplied to a field that takes none
+    expectError(message, [[{
+      dog {
+        name(truncateToLength: 32)
+      }
+    }]])
+
+    -- passes if all argument names match the schema
+    expectError(nil, [[{
+      dog {
+        doesKnowCommand(dogCommand: SIT)
+      }
+    }]])
+end
+
+function g.test_rules_scalarFieldsAreLeaves()
+    local message = 'cannot have subselections'
+
+    -- fails if a scalar field has a subselection
+    expectError(message, '{ dog { name { firstLetter } } }')
+
+    -- passes if all scalar fields are leaves
+    expectError(nil, '{ dog { name nickname } }')
+end
+
+function g.test_rules_compositeFieldsAreNotLeaves()
+    local message = 'must have subselections'
+
+    -- fails if an object is a leaf
+    expectError(message, '{ dog }')
+
+    -- fails if an interface is a leaf
+    expectError(message, '{ pet }')
+
+    -- fails if a union is a leaf
+    expectError(message, '{ catOrDog }')
+
+    -- passes if all composite types have subselections
+    expectError(nil, '{ dog { name } pet { } }')
+end
+
+function g.test_rules_unambiguousSelections()
+    -- fails if two fields with identical response keys have different types
+    expectError('Type name mismatch', [[{
+        dog {
+          barkVolume
+          barkVolume: name
+        }
+    }]])
+
+    -- fails if two fields have different argument sets
+    expectError('Argument mismatch', [[{
+        dog {
+          doesKnowCommand(dogCommand: SIT)
+          doesKnowCommand(dogCommand: DOWN)
+        }
+    }]])
+
+    -- passes if fields are identical
+    expectError(nil, [[{
+        dog {
+          doesKnowCommand(dogCommand: SIT)
+          doesKnowCommand: doesKnowCommand(dogCommand: SIT)
+        }
+    }]])
+end
+function g.test_rules_uniqueArgumentNames()
+    local message = 'Encountered multiple arguments named'
+
+    -- fails if a field has two arguments with the same name
+    expectError(message, [[{
+      dog {
+        doesKnowCommand(dogCommand: SIT, dogCommand: DOWN)
+      }
+    }]])
+end
+
+function g.test_rules_argumentsOfCorrectType()
+    -- fails if an argument has an incorrect type
+    expectError('Expected enum value', [[{
+      dog {
+        doesKnowCommand(dogCommand: 4)
+      }
+    }]])
+end
+
+function g.test_rules_requiredArgumentsPresent()
+    local message = 'was not supplied'
+
+    -- fails if a non-null argument is not present
+    expectError(message, [[{
+      dog {
+        doesKnowCommand
+      }
+    }]])
+end
+
+function g.test_rules_uniqueFragmentNames()
+    local message = 'Encountered multiple fragments named'
+
+    -- fails if there are two fragment definitions with the same name
+    expectError(message, [[
+      query { dog { ...nameFragment } }
+      fragment nameFragment on Dog { name }
+      fragment nameFragment on Dog { name }
+    ]])
+
+    -- passes if all fragment definitions have different names
+    expectError(nil, [[
+      query { dog { ...one ...two } }
+      fragment one on Dog { name }
+      fragment two on Dog { name }
+    ]])
+end
+
+function g.test_rules_fragmentHasValidType()
+    -- fails if a framgent refers to a non-composite type
+    expectError('Fragment type must be an Object, Interface, or Union', 'fragment f on DogCommand {}')
+
+    -- fails if a fragment refers to a non-existent type
+    expectError('Fragment refers to non-existent type', 'fragment f on Hyena {}')
+
+    -- passes if a fragment refers to a composite type
+    expectError(nil, '{ dog { ...f } } fragment f on Dog {}')
+end
+
+function g.test_rules_noUnusedFragments()
+    local message = 'was not used'
+
+    -- fails if a fragment is not used
+    expectError(message, 'fragment f on Dog {}')
+end
+
+function g.test_rules_fragmentSpreadTargetDefined()
+    local message = 'Fragment spread refers to non-existent'
+
+    -- fails if the fragment does not exist
+    expectError(message, '{ dog { ...f } }')
+end
+
+function g.test_rules_fragmentDefinitionHasNoCycles()
+    local message = 'Fragment definition has cycles'
+
+    -- fails if a fragment spread has cycles
+    expectError(message, [[
+      { dog { ...f } }
+      fragment f on Dog { ...g }
+      fragment g on Dog { ...h }
+      fragment h on Dog { ...f }
+    ]])
+end
+
+function g.test_rules_fragmentSpreadIsPossible()
+    local message = 'Fragment type condition is not possible'
+
+    -- fails if a fragment type condition refers to a different object than the parent object
+    expectError(message, [[
+      { dog { ...f } }
+      fragment f on Cat { }
+    ]])
+
+
+    -- fails if a fragment type condition refers to an interface that the parent object does not implement
+    expectError(message, [[
+      { dog { ...f } }
+      fragment f on Sentient { }
+    ]])
+
+
+    -- fails if a fragment type condition refers to a union that the parent object does not belong to
+    expectError(message, [[
+      { dog { ...f } }
+      fragment f on HumanOrAlien { }
+    ]])
+
+end
+
+function g.test_rules_uniqueInputObjectFields()
+    local message = 'Multiple input object fields named'
+
+    -- fails if an input object has two fields with the same name
+    expectError(message, [[
+      {
+        dog {
+          complicatedField(complicatedArgument: {x: "hi", x: "hi"})
+        }
+      }
+    ]])
+
+
+    -- passes if an input object has nested fields with the same name
+    expectError(nil, [[
+      {
+        dog {
+          complicatedField(complicatedArgument: {x: "hi", z: {x: "hi"}})
+        }
+      }
+    ]])
+
+end
+
+function g.test_rules_directivesAreDefined()
+    local message = 'Unknown directive'
+
+    -- fails if a directive does not exist
+    expectError(message, 'query @someRandomDirective {}')
+
+
+    -- passes if directives exists
+    expectError(nil, 'query @skip {}')
 end
