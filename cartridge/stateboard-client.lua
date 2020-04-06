@@ -1,3 +1,4 @@
+local fiber = require('fiber')
 local checks = require('checks')
 local errors = require('errors')
 local netbox = require('net.box')
@@ -58,16 +59,6 @@ local function get_leaders(session)
     )
 end
 
-local function longpoll(session, timeout)
-    checks('stateboard_session', 'uint64')
-    assert(session.connection ~= nil)
-
-    return errors.netbox_call(session.connection,
-        'longpoll', {timeout},
-        {timeout = timeout + session.call_timeout}
-    )
-end
-
 local function get_coordinator(session)
     checks('stateboard_session')
     assert(session.connection ~= nil)
@@ -121,7 +112,6 @@ local session_mt = {
         set_leaders = set_leaders,
         get_leaders = get_leaders,
         get_lock_delay = get_lock_delay,
-        longpoll = longpoll,
         get_coordinator = get_coordinator,
         drop = drop,
     },
@@ -139,7 +129,6 @@ local function get_session(client)
         user = 'client',
         password = client.password,
         wait_connected = false,
-        reconnect_after = client.reconnect_after,
     })
 
     local session = {
@@ -159,9 +148,36 @@ local function drop_session(client)
     end
 end
 
+local function longpoll(client, timeout)
+    checks('stateboard_client', 'number')
+
+    local deadline = fiber.time() + timeout
+
+    while true do
+        local session = client:get_session()
+        local timeout = deadline - fiber.time()
+
+        local ret, err = errors.netbox_call(session.connection,
+            'longpoll', {timeout},
+            {timeout = timeout + client.call_timeout}
+        )
+
+        if ret ~= nil then
+            return ret
+        end
+
+        if fiber.time() < deadline then
+            fiber.sleep(client.call_timeout)
+        else
+            return nil, err
+        end
+    end
+end
+
 local client_mt = {
     __type = 'stateboard_client',
     __index = {
+        longpoll = longpoll,
         get_session = get_session,
         drop_session = drop_session,
     },
@@ -172,7 +188,6 @@ local function new(opts)
         uri = 'string',
         password = 'string',
         call_timeout = 'number',
-        reconnect_after = '?uint64',
     })
 
     local client = {
@@ -181,7 +196,6 @@ local function new(opts)
         uri = opts.uri,
         password = opts.password,
         call_timeout = opts.call_timeout,
-        reconnect_after = opts.reconnect_after,
     }
     return setmetatable(client, client_mt)
 end
