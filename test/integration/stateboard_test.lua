@@ -1,6 +1,7 @@
 local fio = require('fio')
 local uuid = require('uuid')
-local netbox = require('net.box')
+local fiber = require('fiber')
+local stateboard_client = require('cartridge.stateboard-client')
 local t = require('luatest')
 local g = t.group()
 
@@ -35,101 +36,114 @@ g.after_each(function()
     fio.rmtree(g.datadir)
 end)
 
-local function connect(srv)
-    return netbox.connect(srv.net_box_port, srv.net_box_credentials)
+local function create_client(srv)
+    return stateboard_client.new({
+        uri = 'localhost:' .. srv.net_box_port,
+        password = srv.net_box_credentials.password,
+        call_timeout = 1,
+    })
 end
 
 function g.test_locks()
-    local c1 = connect(g.stateboard)
-    local c2 = connect(g.stateboard)
+    local session1 = create_client(g.stateboard):get_session()
+    local session2 = create_client(g.stateboard):get_session()
     local kid = uuid.str()
 
     t.assert_equals(
-        c1:call('acquire_lock', {kid, 'localhost:9'}),
+        session1:acquire_lock({kid, 'localhost:9'}),
         true
     )
     t.assert_equals(
-        c1:call('get_coordinator'),
+        session1:get_coordinator(),
         {uuid = kid, uri = 'localhost:9'}
     )
 
     t.assert_equals(
-        c2:call('acquire_lock', {uuid.str(), 'localhost:11'}),
+        session2:acquire_lock({uuid.str(), 'localhost:11'}),
         false
     )
+
+    local ok, err = session2:set_leaders({{'A', 'a1'}})
+    t.assert_equals(ok, nil)
+    t.assert_equals(err, 'You are not holding the lock')
+
     t.assert_equals(
-        {c2:call('set_leaders', {{{'A', 'a1'}}})},
-        {box.NULL, 'You are not holding the lock'}
-    )
-    t.assert_equals(
-        c2:call('get_coordinator'),
+        session2:get_coordinator(),
         {uuid = kid, uri = 'localhost:9'}
     )
 
-    c1:close()
+    session1:drop()
+
     local kid = uuid.str()
     helpers.retrying({}, function()
-        t.assert_equals(c2:call('get_coordinator'), box.NULL)
+        t.assert_equals(session2:get_coordinator(), nil)
     end)
 
     t.assert_equals(
-        c2:call('acquire_lock', {kid, 'localhost:11'}),
+        session2:acquire_lock({kid, 'localhost:11'}),
         true
     )
     t.assert_equals(
-        c2:call('get_coordinator'),
+        session2:get_coordinator(),
         {uuid = kid, uri = 'localhost:11'}
     )
 end
 
 function g.test_appointments()
-    local c = connect(g.stateboard)
+    local session = create_client(g.stateboard):get_session()
     local kid = uuid.str()
     t.assert_equals(
-        c:call('acquire_lock', {kid, 'localhost:9'}),
-        true
+        session:acquire_lock({kid, 'localhost:9'}), true
     )
 
     t.assert_equals(
-        c:call('set_leaders', {{{'A', 'a1'}, {'B', 'b1'}}}),
-        true
+        session:set_leaders({{'A', 'a1'}, {'B', 'b1'}}), true
     )
 
     t.assert_equals(
-        c:call('get_leaders'),
-        {A = 'a1', B = 'b1'}
+        session:get_leaders(), {A = 'a1', B = 'b1'}
     )
 
-    t.assert_error_msg_equals(
+    local ok, err = session:set_leaders({{'A', 'a2'}, {'A', 'a3'}})
+    t.assert_equals(ok, nil)
+    t.assert_equals(err.err,
         "Duplicate key exists in unique index 'ordinal'" ..
-        " in space 'leader_audit'",
-        c.call, c, 'set_leaders', {{{'A', 'a2'}, {'A', 'a3'}}}
+        " in space 'leader_audit'"
     )
 end
 
 function g.test_longpolling()
-    local c1 = connect(g.stateboard)
+    local client1 = create_client(g.stateboard)
+    local session1 = client1:get_session()
     local kid = uuid.str()
     t.assert_equals(
-        c1:call('acquire_lock', {kid, 'localhost:9'}),
+        session1:acquire_lock({kid, 'localhost:9'}),
         true
     )
-    c1:call('set_leaders', {{{'A', 'a1'}, {'B', 'b1'}}})
+    session1:set_leaders({{'A', 'a1'}, {'B', 'b1'}})
 
-    local c2 = connect(g.stateboard)
-    t.assert_equals(c2:call('longpoll'), {A = 'a1', B = 'b1'})
-    local future = c2:call('longpoll', {0.2}, {is_async = true})
-    c1:call('set_leaders', {{{'A', 'a2'}}})
+    local client2 = create_client(g.stateboard)
+    t.assert_equals(client2:longpoll(0), {A = 'a1', B = 'b1'})
 
-    local ret, err = future:wait_result(0.1) -- err is cdata
-    t.assert_equals({ret, tostring(err)}, { {{A = 'a2'}}, 'nil' })
+    local function async_longpoll()
+        local chan = fiber.channel(1)
+        fiber.new(function()
+            local ret, err = client2:longpoll(0.2)
+            chan:put({ret, err})
+        end)
+        return chan
+    end
 
-    local future = c2:call('longpoll', {0.2}, {is_async = true})
-    local ret, err = future:wait_result(0.1) -- err is cdata
-    t.assert_equals({ret, tostring(err)}, {nil, 'Timeout exceeded'})
+    local chan = async_longpoll()
+    session1:set_leaders({{'A', 'a2'}})
+    t.assert_equals(chan:get(0.1), {{A = 'a2'}, nil})
 
-    local ret, err = future:wait_result(0.2)  -- err is cdata
-    t.assert_equals({ret, tostring(err)}, { {{}}, 'nil' })
+    local chan = async_longpoll()
+    -- there is no data in channel
+    t.assert_equals(chan:get(0.1), nil)
+
+    -- data recieved
+    t.assert_equals(chan:get(0.2), {{}, nil})
 end
 
 function g.test_passwd()
@@ -143,7 +157,7 @@ function g.test_passwd()
         g.stateboard:connect_net_box()
     end)
 
-    t.assert_equals(g.stateboard.net_box:call('get_lock_delay'), 40)
+    t.assert_equals(create_client(g.stateboard):get_session():get_lock_delay(), 40)
 end
 
 function g.test_outage()
@@ -163,31 +177,27 @@ function g.test_outage()
 
     local payload = {uuid.str(), 'localhost:9'}
 
-    local c1 = connect(g.stateboard)
+    local session1 = create_client(g.stateboard):get_session()
     t.assert_equals(
-        {c1:call('acquire_lock', payload)},
-        {true}
+        session1:acquire_lock(payload), true
     )
     t.assert_equals(
         -- C1 can renew expired lock if it wasn't stolen yet
-        {c1:call('acquire_lock', payload)},
-        {true}
+        session1:acquire_lock(payload), true
     )
 
-    local c2 = connect(g.stateboard)
+    local session2 = create_client(g.stateboard):get_session()
     t.assert_equals(
-        {c2:call('acquire_lock', payload)},
-        {true}
+        session2:acquire_lock(payload), true
     )
-    c2:close()
+    session2:drop()
 
-    t.assert_equals(
-        -- C1 can't renew lock after it was stolen by C2
-        {c1:call('acquire_lock', payload)},
-        {box.NULL, 'The lock was stolen'}
-    )
-    t.assert_equals(
-        {c1:call('set_leaders', {{}})},
-        {box.NULL, 'You are not holding the lock'}
-    )
+    -- C1 can't renew lock after it was stolen by C2
+    local ok, err = session1:acquire_lock(payload)
+    t.assert_equals(ok, nil)
+    t.assert_equals(err, 'The lock was stolen')
+
+    local ok, err = session1:set_leaders({})
+    t.assert_equals(ok, nil)
+    t.assert_equals(err, 'You are not holding the lock')
 end
