@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Add new field GraphQL field `cluster{ issues {topic} }` and extend
   list of inspected topics with `replication`, `failover`, `memory`, `clock`.
 
+- Make issues thresholds configurable via argparse.
+
 - New option in `cartridge.cfg({upgrade_schema=...})`
   to automatically upgrade schema to modern tarantool version
   (only for leader). It also has been added for `argparse`.

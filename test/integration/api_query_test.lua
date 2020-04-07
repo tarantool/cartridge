@@ -637,8 +637,7 @@ function g.test_issues()
     -----------------------------------------------------------------------------
     -- clock desync issues
     g.cluster.main_server.net_box:eval([[
-        local vars = require('cartridge.vars').new('cartridge.issues')
-        vars.limits.desync_threshold_warning = 0
+        require('cartridge.issues').set_limits({clock_delta_threshold_warning = 0})
     ]])
     local issues = helpers.list_cluster_issues(g.cluster.main_server)
     g.cluster.main_server.net_box:eval([[
