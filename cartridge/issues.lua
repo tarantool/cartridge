@@ -1,3 +1,42 @@
+--- Monitor issues across cluster instances.
+--
+-- Cartridge detects the following problems:
+--
+-- Replication:
+--
+-- * "Replication from ... to ... isn't running" -
+--   when `box.info.replication.upstream == nil`;
+-- * "Replication from ... to ... is stopped/orphan/etc. (...)";
+-- * "Replication from ... to ...: high lag" -
+--   when `upstream.lag > box.cfg.replication_sync_lag`;
+-- * "Replication from ... to ...: long idle" -
+--   when `upstream.idle > box.cfg.replication_timeout`;
+--
+-- Failover:
+--
+-- * "Can't obtain failover coordinator (...)";
+-- * "There is no active failover coordinator";
+-- * "Failover is stuck on ...: Error fetching appointments (...)";
+-- * "Failover is stuck on ...: Failover fiber is dead" -
+--   this is likely a bug;
+--
+-- Clock:
+--
+-- * "Clock difference between ... and ... exceed threshold"
+--  `limits.clock_delta_threshold_warning`;
+--
+-- Memory:
+--
+-- * "Running out of memory on ..." - when all 3 metrics
+--   `items_used_ratio`, `arena_used_ratio`, `quota_used_ratio` from
+--   `box.slab.info()` exceed `limits.fragmentation_threshold_critical`;
+-- * "Memory is highly fragmented on ..." - when
+--   `items_used_ratio > limits.fragmentation_threshold_warning` and
+--   both `arena_used_ratio`, `quota_used_ratio` exceed critical limit.
+--
+-- @module cartridge.issues
+-- @local
+
 local fun = require('fun')
 local checks = require('checks')
 local pool = require('cartridge.pool')
@@ -6,11 +45,19 @@ local confapplier = require('cartridge.confapplier')
 local failover = require('cartridge.failover')
 local membership = require('membership')
 local vars = require('cartridge.vars').new('cartridge.issues')
-vars:new('limits', {
-    fragmentation_threshold_critical = 0.9,
-    fragmentation_threshold_warning  = 0.6,
-    clock_delta_threshold_warning    = 5,
-})
+
+--- Thresholds for issuing warnings.
+-- All settings are local, not clusterwide. They can be changed with
+-- corresponding environment variables (`TARANTOOL_*`) or command-line
+-- arguments. See `cartridge.argparse` module for details.
+--
+-- @table limits
+local default_limits = {
+    fragmentation_threshold_critical = 0.9, -- number: *default*: 0.9.
+    fragmentation_threshold_warning  = 0.6, -- number: *default*: 0.6.
+    clock_delta_threshold_warning    = 5, -- number: *default*: 5.
+}
+vars:new('limits', default_limits)
 
 local function list_on_instance()
     local enabled_servers = {}
@@ -183,7 +230,6 @@ local function list_on_cluster()
         table.insert(uri_list, srv.uri)
     end
 
-    -----------------------------------------------------------------------------
     -- Check clock desynchronization
 
     local min_delta = 0
@@ -221,7 +267,6 @@ local function list_on_cluster()
         })
     end
 
-    -----------------------------------------------------------------------------
     -- Check stateful failover issues
 
     local failover_cfg = topology.get_failover_params(topology_cfg)
@@ -245,7 +290,6 @@ local function list_on_cluster()
         end
     end
 
-    -----------------------------------------------------------------------------
     -- Get each instance issues (replication, failover, memory usage)
 
     local issues_map = pool.map_call(
@@ -261,13 +305,13 @@ local function list_on_cluster()
     return ret
 end
 
-local function set_limits(new_limits)
+local function set_limits(limits)
     checks({
         fragmentation_threshold_critical = '?number',
         fragmentation_threshold_warning = '?number',
         clock_delta_threshold_warning = '?number',
     })
-    vars.limits = fun.chain(vars.limits, new_limits):tomap()
+    vars.limits = fun.chain(vars.limits, limits):tomap()
     return true
 end
 

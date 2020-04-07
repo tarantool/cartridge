@@ -18,13 +18,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Add new field GraphQL field `cluster{ issues {topic} }` and extend
   list of inspected topics with `replication`, `failover`, `memory`, `clock`.
-  Thresholds for issues with topic `memory` and `clock` are configurable with
-  `argparse` options. Set environment variable `TARANTOOL_CLOCK_DELTA_THRESHOLD_WARNING`
-  (in seconds it should be `number` > 0) to configure threshold for issues with topic `clock`.
-  Set environment variable `TARANTOOL_FRAGMENTATION_THRESHOLD_CRITICAL` (it should be `number`
-  in range [0, 1]) and `TARANTOOL_FRAGMENTATION_THRESHOLD_WARNING` (it should be `number`
-  in range [0, `TARANTOOL_FRAGMENTATION_THRESHOLD_CRITICAL`)) to configure thresholds for
-  issues with topic `memory`.
+
+- Make issues thresholds configurable via argparse.
 
 - New option in `cartridge.cfg({upgrade_schema=...})`
   to automatically upgrade schema to modern tarantool version

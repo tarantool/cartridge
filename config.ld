@@ -3,6 +3,7 @@ file = {
     "cartridge.lua",
     "cartridge/auth.lua",
     "cartridge/roles.lua",
+    "cartridge/issues.lua",
     "cartridge/argparse.lua",
     "cartridge/twophase.lua",
     "cartridge/failover.lua",
