@@ -92,7 +92,7 @@ function g.test_timeout()
 
     t.assert_equals(retmap, {})
     assert_err_equals(errmap, 'localhost:13301',
-        'Net.box call failed: Timeout exceeded'
+        'NetboxCallError: Timeout exceeded'
     )
 end
 
@@ -185,8 +185,8 @@ function g.test_negative()
 
     t.assert_equals(retmap, {})
     assert_err_equals(errmap, '!@#$%^&*()',      'FormatURIError: Invalid URI "!@#$%^&*()"')
-    assert_err_equals(errmap, 'localhost:13301', 'Net.box call failed: Too long WAL write')
-    assert_err_equals(errmap, 'localhost:13302', 'Net.box call failed: Too long WAL write')
+    assert_err_equals(errmap, 'localhost:13301', 'NetboxCallError: Too long WAL write')
+    assert_err_equals(errmap, 'localhost:13302', 'NetboxCallError: Too long WAL write')
     assert_err_equals(errmap, 'localhost:13309', 'NetboxConnectError: "localhost:13309": Invalid greeting')
     assert_err_equals(errmap, 'localhost:9',
         'NetboxConnectError: "localhost:9": ' .. errno.strerror(errno.ECONNREFUSED),

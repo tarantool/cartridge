@@ -52,7 +52,7 @@ function g.test_session()
     local ok, err = session:get_leaders()
     t.assert_equals(ok, nil)
     t.assert_covers(err, {
-        class_name = 'Net.box call failed',
+        class_name = 'NetboxCallError',
         err = 'Peer closed',
     })
     t.assert_is_not(client:get_session(), session)
@@ -80,7 +80,7 @@ function g.test_drop_session()
     local ok, err = session:get_leaders()
     t.assert_equals(ok, nil)
     t.assert_covers(err, {
-        class_name = 'Net.box call failed',
+        class_name = 'NetboxCallError',
         err = 'Connection closed',
     })
 

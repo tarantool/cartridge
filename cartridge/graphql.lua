@@ -304,14 +304,7 @@ local function _execute_graphql(req)
     )
 
     if data == nil then
-        -- TODO replace with errors.is_error_object as we upgrade errors
-        if not (type(err) == 'table'
-            and err.err ~= nil
-            and err.str ~= nil
-            and err.line ~= nil
-            and err.file ~= nil
-            and err.class_name ~= nil
-        ) then
+        if not errors.is_error_object(err) then
             err = e_graphql_execute:new(err or "Unknown error")
         end
 
