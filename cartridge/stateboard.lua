@@ -8,7 +8,7 @@ local checks = require('checks')
 local argparse = require('cartridge.argparse')
 
 local LOCK_DELAY
-function _G.get_lock_delay()
+local function get_lock_delay()
     return LOCK_DELAY
 end
 
@@ -19,7 +19,7 @@ local lock = {
     session_expiry = 0,
 }
 
-function _G.acquire_lock(uuid, uri)
+local function acquire_lock(uuid, uri)
     checks('string', 'string')
 
     if box.session.id() ~= lock.session_id
@@ -56,7 +56,7 @@ function _G.acquire_lock(uuid, uri)
     return true
 end
 
-local function set_leaders(leaders)
+local function set_leaders_impl(leaders)
     if type(leaders) ~= 'table' then
         local err = string.format(
             "bad argument to #1 to set_leaders" ..
@@ -83,11 +83,11 @@ local function set_leaders(leaders)
     return true
 end
 
-function _G.set_leaders(...)
-    return box.atomic(set_leaders, ...)
+local function set_leaders(...)
+    return box.atomic(set_leaders_impl, ...)
 end
 
-function _G.get_leaders()
+local function get_leaders()
     local ret = {}
     for _, v in box.space.leader:pairs() do
         ret[v.replicaset_uuid] = v.instance_uuid
@@ -96,7 +96,7 @@ function _G.get_leaders()
     return ret
 end
 
-function _G.longpoll(timeout)
+local function longpoll(timeout)
     checks('?number')
     if timeout == nil then
         timeout = 1
@@ -108,7 +108,7 @@ function _G.longpoll(timeout)
 
     if session.ordinal == nil then
         session.ordinal = latest_ordinal
-        return _G.get_leaders()
+        return get_leaders()
     elseif session.ordinal > latest_ordinal then
         error('Impossibru! (session_ordinal > latest_ordinal)')
     elseif session.ordinal == latest_ordinal then
@@ -123,7 +123,7 @@ function _G.longpoll(timeout)
     return ret
 end
 
-function _G.get_coordinator()
+local function get_coordinator()
     if lock ~= nil
     and box.session.exists(lock.session_id)
     and clock.monotonic() < lock.session_expiry then
@@ -131,13 +131,17 @@ function _G.get_coordinator()
     end
 end
 
-local function start()
-    local opts = argparse.get_opts({
+local function cfg()
+    local opts, err = argparse.get_opts({
         listen = 'string',
         workdir = 'string',
         password = 'string',
         lock_delay = 'number',
     })
+
+    if err ~= nil then
+        error('Configuration error: ' .. tostring(err), 0)
+    end
 
     LOCK_DELAY = opts.lock_delay or 10
     if LOCK_DELAY == nil then
@@ -155,6 +159,16 @@ local function start()
 
     box.cfg({ work_dir = opts.workdir })
 
+    ------------------------------------------------------------------------
+
+    rawset(_G, 'get_lock_delay', get_lock_delay)
+    rawset(_G, 'acquire_lock', acquire_lock)
+    rawset(_G, 'set_leaders', set_leaders)
+    rawset(_G, 'get_leaders', get_leaders)
+    rawset(_G, 'longpoll', longpoll)
+    rawset(_G, 'get_coordinator', get_coordinator)
+
+    ------------------------------------------------------------------------
     box.schema.user.create('client', { if_not_exists = true })
     box.schema.user.passwd('client', opts.password)
 
@@ -251,10 +265,10 @@ local function start()
         fiber.self():name('audit-log')
         -- It's not good to print logs inside a transaction
         -- thus logging is performed in the separate fiber
-        _G.longpoll(0)
+        longpoll(0)
 
         while true do
-            for replicaset_uuid, instance_uuid in pairs(_G.longpoll(10)) do
+            for replicaset_uuid, instance_uuid in pairs(longpoll(10)) do
                 log.info('New leader %s -> %s', replicaset_uuid, instance_uuid)
             end
         end
@@ -262,5 +276,5 @@ local function start()
 end
 
 return {
-    start = start,
+    cfg = cfg,
 }

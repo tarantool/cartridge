@@ -165,6 +165,11 @@ install(
   DESTINATION ${TARANTOOL_INSTALL_LUADIR}
 )
 
+file(
+    WRITE ${TARANTOOL_INSTALL_BINDIR}/stateboard
+    "#!/usr/bin/env tarantool\n\nrequire('cartridge.stateboard').cfg()\n"
+)
+
 install(
   FILES
     ${CMAKE_CURRENT_BINARY_DIR}/VERSION.lua

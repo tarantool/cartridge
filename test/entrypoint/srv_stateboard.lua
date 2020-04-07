@@ -2,4 +2,4 @@
 
 require('strict').on()
 local stateboard = require('cartridge.stateboard')
-stateboard.start()
+stateboard.cfg()
