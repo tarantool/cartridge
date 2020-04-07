@@ -37,6 +37,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - auth_params graphql endpoint returns "fullname" (if it was specified)
   instead of "username".
 
+- Update `errors` dependency to 2.1.3.
+
 ### Deprecated
 
 Lua API:
