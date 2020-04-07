@@ -1,5 +1,3 @@
-#!/usr/bin/env tarantool
-
 local log = require('log')
 local fio = require('fio')
 local clock = require('clock')
@@ -108,7 +106,7 @@ local function longpoll(timeout)
 
     if session.ordinal == nil then
         session.ordinal = latest_ordinal
-        return get_leaders()
+        return _G.get_leaders()
     elseif session.ordinal > latest_ordinal then
         error('Impossibru! (session_ordinal > latest_ordinal)')
     elseif session.ordinal == latest_ordinal then
@@ -265,10 +263,10 @@ local function cfg()
         fiber.self():name('audit-log')
         -- It's not good to print logs inside a transaction
         -- thus logging is performed in the separate fiber
-        longpoll(0)
+        _G.longpoll(0)
 
         while true do
-            for replicaset_uuid, instance_uuid in pairs(longpoll(10)) do
+            for replicaset_uuid, instance_uuid in pairs(_G.longpoll(10)) do
                 log.info('New leader %s -> %s', replicaset_uuid, instance_uuid)
             end
         end
