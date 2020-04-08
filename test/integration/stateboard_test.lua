@@ -140,7 +140,7 @@ function g.test_longpolling()
 
     local chan = async_longpoll()
     c1:set_leaders({{'A', 'a2'}})
-    t.assert_equals(chan:get(0.1), {{A = 'a2'}, nil})
+    t.assert_equals(chan:get(0.1), {{A = 'a2'}})
 
     local chan = async_longpoll()
     -- there is no data in channel
