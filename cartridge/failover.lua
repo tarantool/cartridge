@@ -304,7 +304,9 @@ local function cfg(clusterwide_config)
         })
         vars.failover_fiber:name('cartridge.eventual-failover')
 
-    elseif failover_cfg.mode == 'stateful' and failover_cfg.state_provider == 'tarantool' then
+    elseif failover_cfg.mode == 'stateful'
+    and failover_cfg.state_provider == 'tarantool'
+    then
         local params = assert(failover_cfg.tarantool_params)
         vars.client = stateboard_client.new({
             uri = assert(params.uri),
@@ -337,8 +339,16 @@ local function cfg(clusterwide_config)
             end,
         })
         vars.failover_fiber:name('cartridge.stateful-failover')
+    elseif failover_cfg.mode == 'stateful' then
+        return nil, ApplyConfigError:new(
+            'Unknown failover state provider %q',
+            failover_cfg.state_provider
+        )
     else
-        error('Unknown failover mode')
+        return nil, ApplyConfigError:new(
+            'Unknown failover mode %q',
+            failover_cfg.mode
+        )
     end
 
     accept_appointments(first_appointments)

@@ -35,6 +35,7 @@ local BoxError = errors.new_class('BoxError')
 local InitError = errors.new_class('InitError')
 local BootError = errors.new_class('BootError')
 local StateError = errors.new_class('StateError')
+local OperationError = errors.new_class('OperationError')
 
 vars:new('state', '')
 vars:new('error')
@@ -226,9 +227,15 @@ local function apply_config(clusterwide_config)
         ),
     })
 
-    failover.cfg(clusterwide_config)
+    local ok, err = OperationError:pcall(failover.cfg,
+        clusterwide_config
+    )
+    if not ok then
+        set_state('OperationError', err)
+        return nil, err
+    end
 
-    local ok, err = ddl_manager.apply_config(
+    local ok, err = OperationError:pcall(ddl_manager.apply_config,
         clusterwide_config:get_readonly(),
         {is_master = failover.is_leader()}
     )
