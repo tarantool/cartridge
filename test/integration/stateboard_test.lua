@@ -147,7 +147,7 @@ function g.test_longpolling()
     t.assert_equals(chan:get(0.1), nil)
 
     -- data recieved
-    t.assert_equals(chan:get(0.2), {{}, nil})
+    t.assert_equals(chan:get(0.2), {{}})
 end
 
 function g.test_passwd()
