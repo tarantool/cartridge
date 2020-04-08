@@ -134,11 +134,6 @@ auth:
 failover:
 ...]])
 
-    check_config('topology_new.failover.mode must be string, got nil',
-[[---
-failover: {}
-...]])
-
     check_config('topology_new.failover.mode must be string, got number',
 [[---
 failover:
@@ -199,13 +194,6 @@ failover:
 failover:
   mode: eventual
   tarantool_params: {uri: "localhost:9"}
-...]])
-
-    check_config('topology_new.failover has unknown parameter "enabled"',
-[[---
-failover:
-  mode: eventual
-  enabled: true
 ...]])
 
     check_config('topology_new.failover has unknown parameter "unknown"',
