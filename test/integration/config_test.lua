@@ -324,8 +324,10 @@ test_remotely('test_patch_clusterwide', function()
     --------------------------------------------------------------------
     local ok, err = _patch({['data'] = "Fun, fun, fun, fun",})
     t.assert_equals(ok, nil)
-    t.assert_equals(err.class_name, 'LoadConfigError')
-    t.assert_equals(err.err, 'Ambiguous sections "data" and "data.yml"')
+    t.assert_covers(err, {
+        class_name = 'LoadConfigError',
+        err = 'Ambiguous sections "data" and "data.yml"'
+    })
     local ok, err = _patch({
         ['data'] = "Fun, fun, fun, fun",
         ['data.yml'] = box.NULL,
@@ -338,8 +340,10 @@ test_remotely('test_patch_clusterwide', function()
     --------------------------------------------------------------------
     local ok, err = _patch({['data.yml'] = "---\nWeekend\n...",})
     t.assert_equals(ok, nil)
-    t.assert_equals(err.class_name, 'LoadConfigError')
-    t.assert_equals(err.err, 'Ambiguous sections "data" and "data.yml"')
+    t.assert_covers(err, {
+        class_name = 'LoadConfigError',
+        err = 'Ambiguous sections "data" and "data.yml"'
+    })
     local ok, err = _patch({
         ['data'] = box.NULL,
         ['data.yml'] = "---\nWeekend\n...",
@@ -355,8 +359,10 @@ test_remotely('test_patch_clusterwide', function()
         ['conflict.yml'] = "xxx",
     })
     t.assert_equals(ok, nil)
-    t.assert_equals(err.class_name, 'PatchClusterwideError')
-    t.assert_equals(err.err, 'Ambiguous sections "conflict" and "conflict.yml"')
+    t.assert_covers(err, {
+        class_name = 'PatchClusterwideError',
+        err = 'Ambiguous sections "conflict" and "conflict.yml"',
+    })
 end)
 
 

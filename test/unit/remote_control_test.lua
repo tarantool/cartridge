@@ -103,17 +103,19 @@ function g.test_start()
     box.cfg({listen = box.NULL})
     local ok, err = remote_control.bind('127.0.0.1', 13301)
     t.assert_not(ok)
-    t.assert_equals(err.class_name, "RemoteControlError")
-    t.assert_equals(err.err, "Already running")
+    t.assert_covers(err, {
+        class_name = "RemoteControlError",
+        err = "Already running"
+    })
 
     remote_control.stop()
     box.cfg({listen = '127.0.0.1:13301'})
     local ok, err = remote_control.bind('127.0.0.1', 13301)
     t.assert_not(ok)
-    t.assert_equals(err.class_name, "RemoteControlError")
-    t.assert_equals(err.err,
-        "Can't start server on 127.0.0.1:13301: " .. errno.strerror(errno.EADDRINUSE)
-    )
+    t.assert_covers(err, {
+        class_name = "RemoteControlError",
+        err = "Can't start server on 127.0.0.1:13301: " .. errno.strerror(errno.EADDRINUSE)
+    })
 
     remote_control.stop()
     box.cfg({listen = box.NULL})
@@ -129,24 +131,24 @@ function g.test_start()
 
     local ok, err = remote_control.bind('255.255.255.255', 13301)
     t.assert_not(ok)
-    t.assert_equals(err.class_name, "RemoteControlError")
-    t.assert_equals(err.err,
-        "Can't start server on 255.255.255.255:13301: " .. errno.strerror(errno.EINVAL)
-    )
+    t.assert_covers(err, {
+        class_name = "RemoteControlError",
+        err = "Can't start server on 255.255.255.255:13301: " .. errno.strerror(errno.EINVAL)
+    })
 
     local ok, err = remote_control.bind('google.com', 13301)
     t.assert_not(ok)
-    t.assert_equals(err.class_name, "RemoteControlError")
-    t.assert_equals(err.err,
-        "Can't start server on google.com:13301: " .. errno.strerror(errno.EADDRNOTAVAIL)
-    )
+    t.assert_covers(err, {
+        class_name = "RemoteControlError",
+        err = "Can't start server on google.com:13301: " .. errno.strerror(errno.EADDRNOTAVAIL)
+    })
 
     local ok, err = remote_control.bind('8.8.8.8', 13301)
     t.assert_not(ok)
-    t.assert_equals(err.class_name, "RemoteControlError")
-    t.assert_equals(err.err,
-        "Can't start server on 8.8.8.8:13301: " .. errno.strerror(errno.EADDRNOTAVAIL)
-    )
+    t.assert_covers(err, {
+        class_name = "RemoteControlError",
+        err = "Can't start server on 8.8.8.8:13301: " .. errno.strerror(errno.EADDRNOTAVAIL)
+    })
 
     local ok, err = remote_control.bind('localhost', 13301)
     t.assert_not(err)
@@ -159,7 +161,6 @@ function g.test_peer_uuid()
     local conn = assert(netbox.connect('localhost:13301'))
     t.assert_equals(conn.peer_uuid, "00000000-0000-0000-0000-000000000000")
 end
-
 
 function g.test_drop_connections()
     rc_start(13301)

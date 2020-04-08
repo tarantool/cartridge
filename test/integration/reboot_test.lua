@@ -105,11 +105,11 @@ function g.test_absent_config()
         ]])
 
         t.assert_equals(state, 'InitError')
-        t.assert_equals(err.class_name, 'InitError')
-        t.assert_equals(err.err,
-            "Snapshot was found in " .. g.cluster.main_server.workdir ..
+        t.assert_covers(err, {
+            class_name = 'InitError',
+            err = "Snapshot was found in " .. g.cluster.main_server.workdir ..
             ", but config.yml wasn't. Where did it go?"
-        )
+        })
     end)
 
     local resp = srv:graphql({
@@ -192,9 +192,9 @@ function g.test_invalid_config()
 
     t.assert_equals(state, 'BootError')
 
-    t.assert_equals(err.class_name, 'BootError')
-    t.assert_equals(err.err,
-        "Server " .. g.cluster.main_server.instance_uuid ..
+    t.assert_covers(err, {
+        class_name = 'BootError',
+        err = "Server " .. g.cluster.main_server.instance_uuid ..
         " not in clusterwide config, no idea what to do now"
-    )
+    })
 end
