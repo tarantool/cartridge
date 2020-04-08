@@ -7,6 +7,7 @@ local yaml = require('yaml')
 local checks = require('checks')
 local errno = require('errno')
 local utils = require('cartridge.utils')
+local helpers = require('test.helper')
 local ClusterwideConfig = require('cartridge.clusterwide-config')
 
 g.setup = function()
@@ -332,16 +333,14 @@ function g.test_save_err()
     write_tree({['config'] = '---\n...'})
 
     local cfg = ClusterwideConfig.new({['b'] = 'b'})
-    local ok, err = ClusterwideConfig.save(cfg, g.tempdir .. '/config')
-    t.assert_equals(ok, nil)
-    t.assert_equals(err.class_name, 'SaveConfigError')
-    t.assert_equals(err.err,
-        string.format(
+    helpers.assert_error_tuple({
+        class_name = 'SaveConfigError',
+        err = string.format(
             "%s: %s",
             g.tempdir .. '/config',
             errno.strerror(errno.ENOTDIR)
         )
-    )
+    }, ClusterwideConfig.save(cfg, g.tempdir .. '/config'))
     t.assert_equals(utils.file_read(g.tempdir .. '/config'), '---\n...')
 end
 

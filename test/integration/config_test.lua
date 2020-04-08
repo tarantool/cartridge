@@ -322,10 +322,10 @@ test_remotely('test_patch_clusterwide', function()
     t.assert_equals(_get_ro('data.yml'), '{afterwards: sunday}')
 
     --------------------------------------------------------------------
-    local ok, err = _patch({['data'] = "Fun, fun, fun, fun",})
-    t.assert_equals(ok, nil)
-    t.assert_equals(err.class_name, 'LoadConfigError')
-    t.assert_equals(err.err, 'Ambiguous sections "data" and "data.yml"')
+    helpers.assert_error_tuple({
+        class_name = 'LoadConfigError',
+        err = 'Ambiguous sections "data" and "data.yml"'
+    }, _patch({['data'] = "Fun, fun, fun, fun",}))
     local ok, err = _patch({
         ['data'] = "Fun, fun, fun, fun",
         ['data.yml'] = box.NULL,
@@ -336,10 +336,10 @@ test_remotely('test_patch_clusterwide', function()
     t.assert_equals(_get_ro('data.yml'), nil)
 
     --------------------------------------------------------------------
-    local ok, err = _patch({['data.yml'] = "---\nWeekend\n...",})
-    t.assert_equals(ok, nil)
-    t.assert_equals(err.class_name, 'LoadConfigError')
-    t.assert_equals(err.err, 'Ambiguous sections "data" and "data.yml"')
+    helpers.assert_error_tuple({
+        class_name = 'LoadConfigError',
+        err = 'Ambiguous sections "data" and "data.yml"'
+    }, _patch({['data.yml'] = "---\nWeekend\n...",}))
     local ok, err = _patch({
         ['data'] = box.NULL,
         ['data.yml'] = "---\nWeekend\n...",
@@ -350,13 +350,13 @@ test_remotely('test_patch_clusterwide', function()
     t.assert_equals(_get_ro('data.yml'), "---\nWeekend\n...")
 
     --------------------------------------------------------------------
-    local ok, err = _patch({
+    helpers.assert_error_tuple({
+        class_name = 'PatchClusterwideError',
+        err = 'Ambiguous sections "conflict" and "conflict.yml"',
+    }, _patch({
         ['conflict'] = {},
         ['conflict.yml'] = "xxx",
-    })
-    t.assert_equals(ok, nil)
-    t.assert_equals(err.class_name, 'PatchClusterwideError')
-    t.assert_equals(err.err, 'Ambiguous sections "conflict" and "conflict.yml"')
+    }))
 end)
 
 

@@ -9,6 +9,7 @@ local netbox = require('net.box')
 local msgpack = require('msgpack')
 local remote_control = require('cartridge.remote-control')
 local helpers = require('luatest.helpers')
+local test_helpers = require('test.helper')
 local errno = require('errno')
 
 local username = 'superuser'
@@ -101,19 +102,17 @@ end
 function g.test_start()
     rc_start(13301)
     box.cfg({listen = box.NULL})
-    local ok, err = remote_control.bind('127.0.0.1', 13301)
-    t.assert_not(ok)
-    t.assert_equals(err.class_name, "RemoteControlError")
-    t.assert_equals(err.err, "Already running")
+    test_helpers.assert_error_tuple({
+        class_name = "RemoteControlError",
+        err = "Already running"
+    }, remote_control.bind('127.0.0.1', 13301))
 
     remote_control.stop()
     box.cfg({listen = '127.0.0.1:13301'})
-    local ok, err = remote_control.bind('127.0.0.1', 13301)
-    t.assert_not(ok)
-    t.assert_equals(err.class_name, "RemoteControlError")
-    t.assert_equals(err.err,
-        "Can't start server on 127.0.0.1:13301: " .. errno.strerror(errno.EADDRINUSE)
-    )
+    test_helpers.assert_error_tuple({
+        class_name = "RemoteControlError",
+        err = "Can't start server on 127.0.0.1:13301: " .. errno.strerror(errno.EADDRINUSE)
+    }, remote_control.bind('127.0.0.1', 13301))
 
     remote_control.stop()
     box.cfg({listen = box.NULL})
@@ -127,30 +126,22 @@ function g.test_start()
         "Can't start server on 0.0.0.0:-1: " .. errno.strerror(errno.EAFNOSUPPORT),
     })
 
-    local ok, err = remote_control.bind('255.255.255.255', 13301)
-    t.assert_not(ok)
-    t.assert_equals(err.class_name, "RemoteControlError")
-    t.assert_equals(err.err,
-        "Can't start server on 255.255.255.255:13301: " .. errno.strerror(errno.EINVAL)
-    )
+    test_helpers.assert_error_tuple({
+        class_name = "RemoteControlError",
+        err = "Can't start server on 255.255.255.255:13301: " .. errno.strerror(errno.EINVAL)
+    }, remote_control.bind('255.255.255.255', 13301))
 
-    local ok, err = remote_control.bind('google.com', 13301)
-    t.assert_not(ok)
-    t.assert_equals(err.class_name, "RemoteControlError")
-    t.assert_equals(err.err,
-        "Can't start server on google.com:13301: " .. errno.strerror(errno.EADDRNOTAVAIL)
-    )
+    test_helpers.assert_error_tuple({
+        class_name = "RemoteControlError",
+        err = "Can't start server on google.com:13301: " .. errno.strerror(errno.EADDRNOTAVAIL)
+    }, remote_control.bind('google.com', 13301))
 
-    local ok, err = remote_control.bind('8.8.8.8', 13301)
-    t.assert_not(ok)
-    t.assert_equals(err.class_name, "RemoteControlError")
-    t.assert_equals(err.err,
-        "Can't start server on 8.8.8.8:13301: " .. errno.strerror(errno.EADDRNOTAVAIL)
-    )
+    test_helpers.assert_error_tuple({
+        class_name = "RemoteControlError",
+        err = "Can't start server on 8.8.8.8:13301: " .. errno.strerror(errno.EADDRNOTAVAIL)
+    }, remote_control.bind('8.8.8.8', 13301))
 
-    local ok, err = remote_control.bind('localhost', 13301)
-    t.assert_not(err)
-    t.assert_equals(ok, true)
+    t.assert_equals({remote_control.bind('localhost', 13301)}, {true, nil})
     remote_control.stop()
 end
 
@@ -159,7 +150,6 @@ function g.test_peer_uuid()
     local conn = assert(netbox.connect('localhost:13301'))
     t.assert_equals(conn.peer_uuid, "00000000-0000-0000-0000-000000000000")
 end
-
 
 function g.test_drop_connections()
     rc_start(13301)

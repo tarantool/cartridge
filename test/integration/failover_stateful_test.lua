@@ -336,41 +336,32 @@ function g.test_leader_promote()
     end)
 
     -------------------------------------------------------
-
-    local ok, err = eval('storage-1', q_promote, {{[storage_uuid] = 'invalid_uuid'}})
-    t.assert_equals(ok, nil)
-    t.assert_covers(err, {
+    helpers.assert_error_tuple({
         class_name = 'AppointmentError',
         err = [[Server "invalid_uuid" doesn't exist]],
-    })
+    }, eval('storage-1', q_promote, {{[storage_uuid] = 'invalid_uuid'}}))
 
-    local ok, err = eval('storage-1', q_promote, {{['invalid_uuid'] = storage_1_uuid}})
-    t.assert_equals(ok, nil)
-    t.assert_covers(err, {
+    helpers.assert_error_tuple({
         class_name = 'AppointmentError',
         err = [[Replicaset "invalid_uuid" doesn't exist]],
-    })
+    }, eval('storage-1', q_promote, {{['invalid_uuid'] = storage_1_uuid}}))
 
-    local ok, err = eval('storage-1', q_promote, {{[router_uuid] = storage_1_uuid}})
-    t.assert_equals(ok, nil)
-    t.assert_covers(err, {
+    helpers.assert_error_tuple({
         class_name = 'AppointmentError',
         err = string.format(
             [[Server %q doesn't belong to replicaset %q]],
             storage_1_uuid, router_uuid
         ),
-    })
+    }, eval('storage-1', q_promote, {{[router_uuid] = storage_1_uuid}}))
 
     -------------------------------------------------------
 
     g.stateboard:stop()
     helpers.retrying({}, function()
-        local ok, err = eval('storage-1', q_promote, {{[router_uuid] = storage_1_uuid}})
-        t.assert_equals(ok, nil)
-        t.assert_covers(err, {
+        helpers.assert_error_tuple({
             class_name = 'StateProviderError',
             err = 'State provider unavailable',
-        })
+        }, eval('storage-1', q_promote, {{[router_uuid] = storage_1_uuid}}))
     end)
 
     g.stateboard:start()
@@ -383,12 +374,10 @@ function g.test_leader_promote()
     local router = g.cluster:server('router')
     router:stop()
 
-    local ok, err = eval('storage-1', q_promote, {{[router_uuid] = storage_1_uuid}})
-    t.assert_equals(ok, nil)
-    t.assert_covers(err, {
+    helpers.assert_error_tuple({
         class_name = 'StateProviderError',
         err = 'State provider unavailable',
-    })
+    }, eval('storage-1', q_promote, {{[router_uuid] = storage_1_uuid}}))
 
     router:start()
 end

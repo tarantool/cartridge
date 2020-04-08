@@ -63,12 +63,10 @@ function g.test_locks()
         false
     )
 
-    local ok, err = c2:set_leaders({{'A', 'a1'}})
-    t.assert_equals(ok, nil)
-    t.assert_covers(err, {
+    helpers.assert_error_tuple({
         class_name = 'SessionError',
         err = 'You are not holding the lock'
-    })
+    }, c2:set_leaders({{'A', 'a1'}}))
 
     t.assert_equals(
         c2:get_coordinator(),
@@ -110,13 +108,11 @@ function g.test_appointments()
         {A = 'a1', B = 'b1'}
     )
 
-    local ok, err = c:set_leaders({{'A', 'a2'}, {'A', 'a3'}})
-    t.assert_equals(ok, nil)
-    t.assert_covers(err, {
+    helpers.assert_error_tuple({
         class_name = 'NetboxCallError',
         err = "Duplicate key exists in unique index 'ordinal'" ..
         " in space 'leader_audit'"
-    })
+    }, c:set_leaders({{'A', 'a2'}, {'A', 'a3'}}))
 end
 
 function g.test_longpolling()
@@ -202,14 +198,13 @@ function g.test_outage()
     c2:drop()
 
     -- C1 can't renew lock after it was stolen by C2
-    local ok, err = c1:acquire_lock(payload)
     helpers.assert_error_tuple({
         class_name = 'SessionError',
         err = 'The lock was stolen'
     }, c1:acquire_lock(payload))
 
     helpers.assert_error_tuple({
-        class_name = 'SessionError1',
+        class_name = 'SessionError',
         err = 'You are not holding the lock'
     }, c1:set_leaders({}))
 end

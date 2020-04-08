@@ -78,7 +78,6 @@ function helpers.assert_error_tuple(expected_err, tuple_ok, tuple_err)
 
     local ok, err = pcall(require('luatest').assert_covers, tuple_err, expected_err)
     if not ok then
-        require('log').info(err)
         error(err.message, 2)
     end
     return true

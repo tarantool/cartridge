@@ -2,10 +2,8 @@
 
 local t = require('luatest')
 local g = t.group()
-
+local helpers = require('test.helper')
 local label_utils = require("cartridge.label-utils")
-local errors = require("errors")
-local e_label_config = errors.new_class("Label configuration error")
 
 --[[
   Instance labels assertions
@@ -41,11 +39,10 @@ end
 
 function g.test_labels_error()
     local function check_error(expected_err, labels_data)
-        local ok, err = label_utils.validate_labels("testing", labels_data)
-        t.assert_equals(ok, nil)
-        t.assert_equals(err.class_name, expected_err.name)
+        helpers.assert_error_tuple(expected_err, label_utils.validate_labels("testing", labels_data))
     end
 
+    local e_label_config = {class_name = 'Label configuration error'}
     check_error(e_label_config, {labels = 1})
     check_error(e_label_config, {labels = true})
     check_error(e_label_config, {
