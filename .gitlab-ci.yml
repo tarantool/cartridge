@@ -121,7 +121,7 @@ compatibility:
   script:
     - mkdir -p $CARTRIDGE_OLDER_PATH
     - (cd $CARTRIDGE_OLDER_PATH; tarantoolctl rocks install cartridge 1.2.0-1)
-    - luatest -v -p compatibility.upgrade
+    - luatest -v -p compatibility.cartridge_upgrade
 
 misc:
   <<: *test-template
