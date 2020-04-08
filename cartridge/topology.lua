@@ -138,11 +138,13 @@ local function validate_schema(field, topology)
 
     if type(topology.failover) == 'table' then
         e_config:assert(
+            topology.failover.mode == nil or
             type(topology.failover.mode) == 'string',
             '%s.failover.mode must be string, got %s',
             field, type(topology.failover.mode)
         )
         e_config:assert(
+            topology.failover.mode == nil or
             topology.failover.mode == 'disabled' or
             topology.failover.mode == 'eventual' or
             topology.failover.mode == 'stateful',
@@ -229,6 +231,10 @@ local function validate_schema(field, topology)
             ['mode'] = true,
             ['state_provider'] = true,
             ['tarantool_params'] = true,
+            -- For the sake of backward compatibility with v2.0.1-78
+            -- See bug https://github.com/tarantool/cartridge/issues/754
+            ['enabled'] = true,
+            ['coordinator_uri'] = true,
         }
         for k, _ in pairs(topology.failover) do
             e_config:assert(
@@ -578,7 +584,11 @@ local function get_failover_params(topology_cfg)
             mode = topology_cfg.failover and 'eventual' or 'disabled'
         }
     elseif type(topology_cfg.failover) == 'table' then
-        return topology_cfg.failover
+        return {
+            mode = topology_cfg.failover.mode or 'disabled',
+            state_provider = topology_cfg.failover.state_provider,
+            tarantool_params = topology_cfg.failover.tarantool_params,
+        }
     else
         local err = string.format(
             'assertion failed! topology.failover = %s (%s)',
