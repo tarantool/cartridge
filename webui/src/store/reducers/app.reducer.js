@@ -124,12 +124,6 @@ export const reducer = baseReducer(
 
       case CLUSTER_SELF_UPDATE:
       case CLUSTER_PAGE_CREATE_REPLICASET_REQUEST_SUCCESS:
-        return {
-          ...state,
-          clusterSelf: action.payload.clusterSelf,
-          failover_params: action.payload.failover_params
-        };
-
       case CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_SUCCESS:
         return {
           ...state,

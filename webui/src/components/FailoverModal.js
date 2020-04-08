@@ -2,11 +2,14 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { css, cx } from 'emotion';
+import { getGraphqlErrorMessage } from 'src/api/graphql';
 import { changeFailover, setVisibleFailoverModal } from 'src/store/actions/clusterPage.actions';
 import {
+  Alert,
   Button,
   FormField,
   Input,
+  InputPassword,
   LabeledInput,
   Modal,
   RadioButton,
@@ -54,7 +57,8 @@ const styles = {
 type FailoverModalProps = FailoverApi & {
   dispatch: (action: FSA) => void,
   changeFailover: (failover: FailoverApi) => void,
-  setVisibleFailoverModal: (visible: boolean) => void
+  setVisibleFailoverModal: (visible: boolean) => void,
+  error?: string | Error
 }
 
 type FailoverModalState = {
@@ -90,7 +94,9 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
     }
   }
 
-  handleSubmit = () => {
+  handleSubmit = (e: Event) => {
+    e.preventDefault();
+
     const { mode, uri, password } = this.state;
 
     this.props.changeFailover({
@@ -103,7 +109,7 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
   }
 
   render() {
-    const { setVisibleFailoverModal } = this.props;
+    const { setVisibleFailoverModal, error } = this.props;
 
     const {
       mode,
@@ -116,6 +122,7 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
         className='meta-test__FailoverModal'
         title='Failover control'
         onClose={() => setVisibleFailoverModal(false)}
+        onSubmit={this.handleSubmit}
         footerControls={[
           <Button
             className='meta-test__CancelButton'
@@ -126,7 +133,7 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
           <Button
             className='meta-test__SubmitButton'
             intent='primary'
-            onClick={this.handleSubmit}
+            type='submit'
           >
             Apply
           </Button>
@@ -184,21 +191,31 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
             />
           </LabeledInput>
           <LabeledInput className={styles.inputField} label='Storage password'>
-            <Input
+            <InputPassword
               className='meta-test__storagePassword'
               value={password}
               disabled={mode !== 'stateful'}
               onChange={this.handlePasswordChange}
-              type='password'
             />
           </LabeledInput>
         </div>
+        {error && (
+          <Alert type="error">
+            <Text variant="basic">{error}</Text>
+          </Alert>
+        )}
       </Modal>
     );
   }
 }
 
-const mapStateToProps = ({ app: { failover_params } }) => failover_params;
+const mapStateToProps = ({
+  app: { failover_params },
+  clusterPage: { changeFailoverRequestStatus: { error } }
+}) => ({
+  ...failover_params,
+  error: error && getGraphqlErrorMessage(error)
+});
 
 const mapDispatchToProps = { changeFailover, setVisibleFailoverModal };
 

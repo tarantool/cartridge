@@ -27,7 +27,6 @@ const FailoverButton = (
     <React.Fragment>
       <Button
         className='meta-test__FailoverButton'
-        intent='secondary'
         onClick={() => dispatch(setVisibleFailoverModal(true))}
       >
         {`Failover: ${mode}`}

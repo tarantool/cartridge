@@ -203,6 +203,30 @@ function* createReplicasetRequestSaga() {
   });
 };
 
+function* changeFailoverRequestSaga() {
+  yield takeLatest(CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST, function* ({ payload: requestPayload = {} }) {
+    let response;
+    try {
+      const response = yield call(changeFailover, requestPayload);
+
+      yield put({ type: CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_SUCCESS, payload: response });
+
+      window.tarantool_enterprise_core.notify({
+        title: 'Failover mode',
+        message: response.failover_params.mode,
+        type: 'success',
+        timeout: 5000
+      });
+    } catch (error) {
+      yield put({
+        type: CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_ERROR,
+        error
+      });
+      return;
+    }
+  });
+};
+
 const expelServerRequestSaga = getRequestSaga(
   CLUSTER_PAGE_EXPEL_SERVER_REQUEST,
   CLUSTER_PAGE_EXPEL_SERVER_REQUEST_SUCCESS,
@@ -222,13 +246,6 @@ const uploadConfigRequestSaga = getRequestSaga(
   CLUSTER_PAGE_UPLOAD_CONFIG_REQUEST_SUCCESS,
   CLUSTER_PAGE_UPLOAD_CONFIG_REQUEST_ERROR,
   uploadConfig,
-);
-
-const changeFailoverRequestSaga = getRequestSaga(
-  CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST,
-  CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_SUCCESS,
-  CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_ERROR,
-  changeFailover,
 );
 
 const updateClusterSelfOnBootstrap = function* () {
@@ -251,7 +268,8 @@ const updateListsOnTopologyEdit = function* () {
     CLUSTER_PAGE_JOIN_SERVER_REQUEST_SUCCESS,
     CLUSTER_PAGE_EXPEL_SERVER_REQUEST_SUCCESS,
     CLUSTER_PAGE_REPLICASET_EDIT_REQUEST_SUCCESS,
-    CLUSTER_PAGE_PROBE_SERVER_REQUEST_SUCCESS
+    CLUSTER_PAGE_PROBE_SERVER_REQUEST_SUCCESS,
+    CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_SUCCESS
   ];
 
   yield takeLatest(topologyEditTokens, function* () {
