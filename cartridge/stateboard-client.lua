@@ -3,6 +3,9 @@ local checks = require('checks')
 local errors = require('errors')
 local netbox = require('net.box')
 
+local ClientError  = errors.new_class('ClientError')
+local SessionError = errors.new_class('SessionError')
+
 local function acquire_lock(session, lock_args)
     checks('stateboard_session', 'table')
     assert(session.connection ~= nil)
@@ -12,7 +15,7 @@ local function acquire_lock(session, lock_args)
         {timeout = session.call_timeout}
     )
     if lock_acquired == nil then
-        return nil, err
+        return nil, SessionError:new(err)
     end
 
     session.lock_acquired = lock_acquired
@@ -32,7 +35,7 @@ local function get_lock_delay(session)
         {timeout = session.call_timeout}
     )
     if lock_delay == nil then
-        return nil, err
+        return nil, SessionError:new(err)
     end
 
     session.lock_delay = lock_delay
@@ -43,30 +46,45 @@ local function set_leaders(session, updates)
     checks('stateboard_session', 'table')
     assert(session.connection ~= nil)
 
-    return errors.netbox_call(session.connection,
+    local ok, err = errors.netbox_call(session.connection,
         'set_leaders', {updates},
         {timeout = session.call_timeout}
     )
+
+    if ok == nil then
+        return nil, SessionError:new(err)
+    end
+    return ok
 end
 
 local function get_leaders(session)
     checks('stateboard_session')
     assert(session.connection ~= nil)
 
-    return errors.netbox_call(session.connection,
+    local leaders, err = errors.netbox_call(session.connection,
         'get_leaders', nil,
         {timeout = session.call_timeout}
     )
+
+    if leaders == nil then
+        return nil, SessionError:new(err)
+    end
+    return leaders
 end
 
 local function get_coordinator(session)
     checks('stateboard_session')
     assert(session.connection ~= nil)
 
-    return errors.netbox_call(session.connection,
+    local coodinator, err = errors.netbox_call(session.connection,
         'get_coordinator', nil,
         {timeout = session.call_timeout}
     )
+
+    if err ~= nil then
+        return nil, SessionError:new(err)
+    end
+    return coodinator
 end
 
 local function is_locked(session)
@@ -169,7 +187,7 @@ local function longpoll(client, timeout)
         if fiber.time() < deadline then
             fiber.sleep(client.call_timeout)
         else
-            return nil, err
+            return nil, ClientError:new(err)
         end
     end
 end
