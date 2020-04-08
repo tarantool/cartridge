@@ -203,18 +203,15 @@ function g.test_outage()
 
     -- C1 can't renew lock after it was stolen by C2
     local ok, err = c1:acquire_lock(payload)
-    t.assert_equals(ok, nil)
-    t.assert_covers(err, {
+    helpers.assert_error_tuple({
         class_name = 'SessionError',
         err = 'The lock was stolen'
-    })
+    }, c1:acquire_lock(payload))
 
-    local ok, err = c1:set_leaders({})
-    t.assert_equals(ok, nil)
-    t.assert_covers(err, {
-        class_name = 'SessionError',
+    helpers.assert_error_tuple({
+        class_name = 'SessionError1',
         err = 'You are not holding the lock'
-    })
+    }, c1:set_leaders({}))
 end
 
 function g.test_client_session()
