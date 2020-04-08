@@ -1,4 +1,6 @@
+local t = require('luatest')
 local fio = require('fio')
+local errors = require('errors')
 local digest = require('digest')
 local helpers = table.copy(require('cartridge.test-helpers'))
 
@@ -51,5 +53,36 @@ function helpers.list_cluster_issues(server)
         }
     }]]}).data.cluster.issues
 end
+
+function helpers.assert_error_tuple(expected_err, tuple_ok, tuple_err)
+    if type(expected_err) ~= 'table' then
+        error(
+            string.format('Bad argument #1 ' ..
+                '(table expected, got %s)', type(expected_err)
+            ), 2
+        )
+    end
+
+    local ok, err = pcall(t.assert_equals, tuple_ok, nil, 'Bad first tuple element')
+    if not ok then
+        error(err.message, 2)
+    end
+
+    if not errors.is_error_object(tuple_err) then
+        error(
+            string.format('Bad second tuple element ' ..
+                '(error object expected, got %s)', type(tuple_err)
+            ), 2
+        )
+    end
+
+    local ok, err = pcall(require('luatest').assert_covers, tuple_err, expected_err)
+    if not ok then
+        require('log').info(err)
+        error(err.message, 2)
+    end
+    return true
+end
+
 
 return helpers
