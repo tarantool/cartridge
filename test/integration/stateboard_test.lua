@@ -63,10 +63,12 @@ function g.test_locks()
         false
     )
 
-    t.assert_equals(
-        {c2:set_leaders({{'A', 'a1'}})},
-        {nil, 'You are not holding the lock'}
-    )
+    local ok, err = c2:set_leaders({{'A', 'a1'}})
+    t.assert_equals(ok, nil)
+    t.assert_covers(err, {
+        class_name = 'SessionError',
+        err = 'You are not holding the lock'
+    })
 
     t.assert_equals(
         c2:get_coordinator(),
@@ -199,14 +201,18 @@ function g.test_outage()
     )
     c2:drop()
 
-    t.assert_equals(
-        -- C1 can't renew lock after it was stolen by C2
-        {c1:acquire_lock(payload)},
-        {nil, 'The lock was stolen'}
-    )
+    -- C1 can't renew lock after it was stolen by C2
+    local ok, err = c1:acquire_lock(payload)
+    t.assert_equals(ok, nil)
+    t.assert_covers(err, {
+        class_name = 'SessionError',
+        err = 'The lock was stolen'
+    })
 
-    t.assert_equals(
-        {c1:set_leaders({})},
-        {nil, 'You are not holding the lock'}
-    )
+    local ok, err = c1:set_leaders({})
+    t.assert_equals(ok, nil)
+    t.assert_covers(err, {
+        class_name = 'SessionError',
+        err = 'You are not holding the lock'
+    })
 end
