@@ -63,9 +63,10 @@ function g.test_locks()
         false
     )
 
-    local ok, err = c2:set_leaders({{'A', 'a1'}})
-    t.assert_equals(ok, nil)
-    t.assert_equals(err, 'You are not holding the lock')
+    t.assert_equals(
+        {c2:set_leaders({{'A', 'a1'}})},
+        {nil, 'You are not holding the lock'}
+    )
 
     t.assert_equals(
         c2:get_coordinator(),
@@ -125,17 +126,17 @@ function g.test_longpolling()
     )
     c1:set_leaders({{'A', 'a1'}, {'B', 'b1'}})
 
-    local client2 = create_client(g.stateboard)
-    t.assert_equals(client2:longpoll(0), {A = 'a1', B = 'b1'})
-
+    local client = create_client(g.stateboard)
     local function async_longpoll()
         local chan = fiber.channel(1)
         fiber.new(function()
-            local ret, err = client2:longpoll(0.2)
+            local ret, err = client:longpoll(0.2)
             chan:put({ret, err})
         end)
         return chan
     end
+
+    t.assert_equals(client:longpoll(0), {A = 'a1', B = 'b1'})
 
     local chan = async_longpoll()
     c1:set_leaders({{'A', 'a2'}})
@@ -182,25 +183,30 @@ function g.test_outage()
 
     local c1 = create_client(g.stateboard):get_session()
     t.assert_equals(
-        c1:acquire_lock(payload), true
+        {c1:acquire_lock(payload)},
+        {true}
     )
     t.assert_equals(
         -- C1 can renew expired lock if it wasn't stolen yet
-        c1:acquire_lock(payload), true
+        {c1:acquire_lock(payload)},
+        {true}
     )
 
     local c2 = create_client(g.stateboard):get_session()
     t.assert_equals(
-        c2:acquire_lock(payload), true
+        {c2:acquire_lock(payload)},
+        {true}
     )
     c2:drop()
 
-    -- C1 can't renew lock after it was stolen by C2
-    local ok, err = c1:acquire_lock(payload)
-    t.assert_equals(ok, nil)
-    t.assert_equals(err, 'The lock was stolen')
+    t.assert_equals(
+        -- C1 can't renew lock after it was stolen by C2
+        {c1:acquire_lock(payload)},
+        {nil, 'The lock was stolen'}
+    )
 
-    local ok, err = c1:set_leaders({})
-    t.assert_equals(ok, nil)
-    t.assert_equals(err, 'You are not holding the lock')
+    t.assert_equals(
+        {c1:set_leaders({})},
+        {nil, 'You are not holding the lock'}
+    )
 end
