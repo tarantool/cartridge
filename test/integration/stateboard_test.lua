@@ -232,11 +232,18 @@ function g.test_client_session()
 
     -- get_session creates new session if old one is dead
     g.stateboard:stop()
+    t.helpers.retrying({}, function()
+        t.assert_covers(session.connection, {
+            state = 'error',
+            error = 'Peer closed'
+        })
+    end)
+
     local ok, err = session:get_leaders()
     t.assert_equals(ok, nil)
     t.assert_covers(err, {
         class_name = 'NetboxCallError',
-        err = 'Connection reset by peer',
+        err = 'Peer closed',
     })
     t.assert_is_not(client:get_session(), session)
 
