@@ -217,7 +217,7 @@ function g.test_graphql_errors()
         ' removing spaces is forbidden'
     )
     _test(_schema:gsub('memtx', 'vinyl'),
-        'Incompatible schema: space["test_space"]' ..
+        'Incompatible schema: spaces["test_space"]' ..
         ' //engine (expected memtx, got vinyl)'
     )
 end
