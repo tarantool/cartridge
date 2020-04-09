@@ -79,7 +79,7 @@ function g.test_locks()
 
     local kid = uuid.str()
     helpers.retrying({}, function()
-        t.assert_equals(c1:get_coordinator(), nil)
+        t.assert_equals({c2:get_coordinator()}, {nil})
     end)
 
     t.assert_equals(
