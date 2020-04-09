@@ -136,114 +136,6 @@ local function validate_schema(field, topology)
         '%s.failover must be a table, got %s', field, type(topology.failover)
     )
 
-    if type(topology.failover) == 'table' then
-        e_config:assert(
-            topology.failover.mode == nil or
-            type(topology.failover.mode) == 'string',
-            '%s.failover.mode must be string, got %s',
-            field, type(topology.failover.mode)
-        )
-        e_config:assert(
-            topology.failover.mode == nil or
-            topology.failover.mode == 'disabled' or
-            topology.failover.mode == 'eventual' or
-            topology.failover.mode == 'stateful',
-            '%s.failover unknown mode %q',
-            field, topology.failover.mode
-        )
-
-        if topology.failover.mode == 'stateful' then
-            e_config:assert(
-                topology.failover.state_provider ~= nil,
-                '%s.failover missing state_provider for mode "stateful"',
-                field
-            )
-        end
-
-        if topology.failover.state_provider ~= nil then
-            e_config:assert(
-                type(topology.failover.state_provider) == 'string',
-                '%s.failover.state_provider must be a string, got %s',
-                field, type(topology.failover.state_provider)
-            )
-        end
-
-        if topology.failover.state_provider == 'tarantool' then
-            e_config:assert(
-                topology.failover.tarantool_params ~= nil,
-                '%s.failover missing tarantool_params',
-                field
-            )
-        elseif topology.failover.state_provider ~= nil then
-            e_config:assert(false,
-                '%s.failover unknown state_provider %q',
-                field, topology.failover.state_provider
-            )
-        end
-
-        if topology.failover.tarantool_params ~= nil then
-            local params = topology.failover.tarantool_params
-            local field = field .. '.failover.tarantool_params'
-            e_config:assert(
-                type(params) == 'table',
-                '%s must be a table, got %s',
-                field, type(params)
-            )
-
-            e_config:assert(
-                type(params.uri) == 'string',
-                '%s.uri must be a string, got %s',
-                field, type(params.uri)
-            )
-
-            local parts = uri.parse(params.uri)
-            e_config:assert(
-                type(parts) == 'table',
-                '%s.uri invalid URI %q',
-                field, params.uri
-            )
-
-            e_config:assert(
-                parts.service ~= nil,
-                '%s.uri invalid URI %q (missing port)',
-                field, params.uri
-            )
-
-            e_config:assert(
-                type(params.password) == 'string',
-                '%s.password must be a string, got %s',
-                field, type(params.params)
-            )
-
-            local known_keys = {
-                ['uri'] = true,
-                ['password'] = true,
-            }
-            for k, _ in pairs(params) do
-                e_config:assert(
-                    known_keys[k],
-                    '%s has unknown parameter %q', field, k
-                )
-            end
-        end
-
-        local known_keys = {
-            ['mode'] = true,
-            ['state_provider'] = true,
-            ['tarantool_params'] = true,
-            -- For the sake of backward compatibility with v2.0.1-78
-            -- See bug https://github.com/tarantool/cartridge/issues/754
-            ['enabled'] = true,
-            ['coordinator_uri'] = true,
-        }
-        for k, _ in pairs(topology.failover) do
-            e_config:assert(
-                known_keys[k],
-                '%s.failover has unknown parameter %q', field, k
-            )
-        end
-    end
-
     e_config:assert(
         type(servers) == 'table',
         '%s.servers must be a table, got %s', field, type(servers)
@@ -415,6 +307,117 @@ local function validate_schema(field, topology)
     end
 end
 
+local function validate_failover_schema(field, topology)
+
+    if type(topology.failover) == 'table' then
+        e_config:assert(
+            topology.failover.mode == nil or
+            type(topology.failover.mode) == 'string',
+            '%s.failover.mode must be string, got %s',
+            field, type(topology.failover.mode)
+        )
+        e_config:assert(
+            topology.failover.mode == nil or
+            topology.failover.mode == 'disabled' or
+            topology.failover.mode == 'eventual' or
+            topology.failover.mode == 'stateful',
+            '%s.failover unknown mode %q',
+            field, topology.failover.mode
+        )
+
+        if topology.failover.mode == 'stateful' then
+            e_config:assert(
+                topology.failover.state_provider ~= nil,
+                '%s.failover missing state_provider for mode "stateful"',
+                field
+            )
+        end
+
+        if topology.failover.state_provider ~= nil then
+            e_config:assert(
+                type(topology.failover.state_provider) == 'string',
+                '%s.failover.state_provider must be a string, got %s',
+                field, type(topology.failover.state_provider)
+            )
+        end
+
+        if topology.failover.state_provider == 'tarantool' then
+            e_config:assert(
+                topology.failover.tarantool_params ~= nil,
+                '%s.failover missing tarantool_params',
+                field
+            )
+        elseif topology.failover.state_provider ~= nil then
+            e_config:assert(false,
+                '%s.failover unknown state_provider %q',
+                field, topology.failover.state_provider
+            )
+        end
+
+        if topology.failover.tarantool_params ~= nil then
+            local params = topology.failover.tarantool_params
+            local field = field .. '.failover.tarantool_params'
+            e_config:assert(
+                type(params) == 'table',
+                '%s must be a table, got %s',
+                field, type(params)
+            )
+
+            e_config:assert(
+                type(params.uri) == 'string',
+                '%s.uri must be a string, got %s',
+                field, type(params.uri)
+            )
+
+            local parts = uri.parse(params.uri)
+            e_config:assert(
+                type(parts) == 'table',
+                '%s.uri invalid URI %q',
+                field, params.uri
+            )
+
+            e_config:assert(
+                parts.service ~= nil,
+                '%s.uri invalid URI %q (missing port)',
+                field, params.uri
+            )
+
+            e_config:assert(
+                type(params.password) == 'string',
+                '%s.password must be a string, got %s',
+                field, type(params.params)
+            )
+
+            local known_keys = {
+                ['uri'] = true,
+                ['password'] = true,
+            }
+            for k, _ in pairs(params) do
+                e_config:assert(
+                    known_keys[k],
+                    '%s has unknown parameter %q', field, k
+                )
+            end
+        end
+
+        local known_keys = {
+            ['mode'] = true,
+            ['state_provider'] = true,
+            ['tarantool_params'] = true,
+            -- For the sake of backward compatibility with v2.0.1-78
+            -- See bug https://github.com/tarantool/cartridge/issues/754
+            ['enabled'] = true,
+            ['coordinator_uri'] = true,
+        }
+        for k, _ in pairs(topology.failover) do
+            e_config:assert(
+                known_keys[k],
+                '%s.failover has unknown parameter %q', field, k
+            )
+        end
+    end
+end
+
 local function validate_consistency(topology)
     checks('table')
     local servers = topology.servers or {}
@@ -558,6 +561,7 @@ local function validate(topology_new, topology_old)
 
     validate_schema('topology_old', topology_old)
     validate_schema('topology_new', topology_new)
+    validate_failover_schema('topology_new', topology_new)
     validate_consistency(topology_new)
     validate_availability(topology_new)
     validate_upgrade(topology_new, topology_old)
@@ -584,11 +588,30 @@ local function get_failover_params(topology_cfg)
             mode = topology_cfg.failover and 'eventual' or 'disabled'
         }
     elseif type(topology_cfg.failover) == 'table' then
-        return {
-            mode = topology_cfg.failover.mode or 'disabled',
+        local ret = {
+            mode = topology_cfg.failover.mode,
             state_provider = topology_cfg.failover.state_provider,
             tarantool_params = topology_cfg.failover.tarantool_params,
         }
+
+        if ret.mode == nil
+        and type(topology_cfg.failover.enabled) == 'boolean'
+        then
+            -- backward compatibility with 2.0.1-78
+            -- see https://github.com/tarantool/cartridge/pull/617
+            ret.mode = topology_cfg.failover.enabled and 'eventual' or 'disabled'
+        end
+
+        if ret.mode == 'stateful'
+        and ret.state_provider == nil
+        then
+            -- backward compatibility with 2.0.1-95
+            -- see https://github.com/tarantool/cartridge/pull/651
+            ret.mode = 'disabled'
+            -- because stateful failover itself wasn't implemented yet
+        end
+
+        return ret
     else
         local err = string.format(
             'assertion failed! topology.failover = %s (%s)',
