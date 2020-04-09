@@ -218,7 +218,7 @@ function g.test_outage()
 end
 
 function g.test_client_session()
-    -- check get_session always returns alive one
+    -- get_session always returns alive one
     local client = create_client(g.stateboard)
     local session = client:get_session()
     t.assert_equals(session:is_alive(), true)
@@ -230,8 +230,7 @@ function g.test_client_session()
     t.assert_equals(session:is_locked(), true)
     t.assert_is(client:get_session(), session)
 
-    -- check get_session creates new session if old one is dead
-    -- remote_control.drop_connections()
+    -- get_session creates new session if old one is dead
     g.stateboard:stop()
     local ok, err = session:get_leaders()
     t.assert_equals(ok, nil)
@@ -241,7 +240,7 @@ function g.test_client_session()
     })
     t.assert_is_not(client:get_session(), session)
 
-    -- check that session looses lock if connection is interrupded
+    -- session looses lock if connection is interrupded
     t.assert_equals(session:is_alive(), false)
     t.assert_equals(session:is_locked(), false)
 end
@@ -260,7 +259,6 @@ function g.test_client_drop_session()
 
     client:drop_session()
 
-    -- check dropping session makes it dead
     local ok, err = session:get_leaders()
     t.assert_equals(ok, nil)
     t.assert_covers(err, {
@@ -268,11 +266,11 @@ function g.test_client_drop_session()
         err = 'Connection closed',
     })
 
-    -- check dropping session releases lock and make it dead
+    -- dropping session releases lock and make it dead
     t.assert_equals(session:is_alive(), false)
     t.assert_equals(session:is_locked(), false)
 
-    -- check drop session is idempotent
+    -- dropping session is idempotent
     client:drop_session()
     t.assert_equals(session:is_alive(), false)
     t.assert_equals(session:is_locked(), false)
