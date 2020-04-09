@@ -82,30 +82,3 @@ function g.test_new_with_env()
     t.assert_covers(cluster.servers[2].env, expected)
     t.assert_covers(cluster.servers[3].env, shared_env)
 end
-
-function g.test_helpers_assert_error_tuple()
-    t.assert_error_msg_contains(
-        'Bad argument #1 (table expected, got nil)',
-        helpers.assert_error_tuple
-    )
-
-    local error_part = {class_name = 'Error'}
-
-    local err_tuple = function() return true end
-    t.assert_error_msg_contains(
-        'Bad first tuple element\nexpected: nil, actual: true',
-        helpers.assert_error_tuple, error_part, err_tuple()
-    )
-
-    local err_tuple = function() end
-    t.assert_error_msg_contains(
-        'Bad second tuple element (error object expected, got nil)',
-        helpers.assert_error_tuple, error_part, err_tuple()
-    )
-
-    local err_tuple = function()
-        return nil, require('errors').new('Error')
-    end
-
-    helpers.assert_error_tuple(error_part, err_tuple())
-end

@@ -9,7 +9,6 @@ local netbox = require('net.box')
 local msgpack = require('msgpack')
 local remote_control = require('cartridge.remote-control')
 local helpers = require('luatest.helpers')
-local test_helpers = require('test.helper')
 local errno = require('errno')
 
 local username = 'superuser'
@@ -102,17 +101,21 @@ end
 function g.test_start()
     rc_start(13301)
     box.cfg({listen = box.NULL})
-    test_helpers.assert_error_tuple({
+    local ok, err = remote_control.bind('127.0.0.1', 13301)
+    t.assert_not(ok)
+    t.assert_covers(err, {
         class_name = "RemoteControlError",
         err = "Already running"
-    }, remote_control.bind('127.0.0.1', 13301))
+    })
 
     remote_control.stop()
     box.cfg({listen = '127.0.0.1:13301'})
-    test_helpers.assert_error_tuple({
+    local ok, err = remote_control.bind('127.0.0.1', 13301)
+    t.assert_not(ok)
+    t.assert_covers(err, {
         class_name = "RemoteControlError",
         err = "Can't start server on 127.0.0.1:13301: " .. errno.strerror(errno.EADDRINUSE)
-    }, remote_control.bind('127.0.0.1', 13301))
+    })
 
     remote_control.stop()
     box.cfg({listen = box.NULL})
@@ -126,22 +129,30 @@ function g.test_start()
         "Can't start server on 0.0.0.0:-1: " .. errno.strerror(errno.EAFNOSUPPORT),
     })
 
-    test_helpers.assert_error_tuple({
+    local ok, err = remote_control.bind('255.255.255.255', 13301)
+    t.assert_not(ok)
+    t.assert_covers(err, {
         class_name = "RemoteControlError",
         err = "Can't start server on 255.255.255.255:13301: " .. errno.strerror(errno.EINVAL)
-    }, remote_control.bind('255.255.255.255', 13301))
+    })
 
-    test_helpers.assert_error_tuple({
+    local ok, err = remote_control.bind('google.com', 13301)
+    t.assert_not(ok)
+    t.assert_covers(err, {
         class_name = "RemoteControlError",
         err = "Can't start server on google.com:13301: " .. errno.strerror(errno.EADDRNOTAVAIL)
-    }, remote_control.bind('google.com', 13301))
+    })
 
-    test_helpers.assert_error_tuple({
+    local ok, err = remote_control.bind('8.8.8.8', 13301)
+    t.assert_not(ok)
+    t.assert_covers(err, {
         class_name = "RemoteControlError",
         err = "Can't start server on 8.8.8.8:13301: " .. errno.strerror(errno.EADDRNOTAVAIL)
-    }, remote_control.bind('8.8.8.8', 13301))
+    })
 
-    t.assert_equals({remote_control.bind('localhost', 13301)}, {true, nil})
+    local ok, err = remote_control.bind('localhost', 13301)
+    t.assert_not(err)
+    t.assert_equals(ok, true)
     remote_control.stop()
 end
 
