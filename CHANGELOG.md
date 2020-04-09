@@ -39,6 +39,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Update `errors` dependency to 2.1.3.
 
+- Update `ddl` dependency to 1.1.0.
+
 ### Deprecated
 
 Lua API:
