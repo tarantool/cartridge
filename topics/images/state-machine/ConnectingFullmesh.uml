@@ -1,0 +1,4 @@
+[BootstrappingBox or RecoveringSnapshot]->[ConnectingFullmesh]
+[ConnectingFullmesh]->[BoxConfigured]
+[ConnectingFullmesh]->[ConnectingFullmesh]
+[ConnectingFullmesh]->[BootError]
