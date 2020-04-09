@@ -62,35 +62,35 @@ function g.test_newstyle_err()
         fio.pathjoin(g.tempdir, 'not_existing')
     )
     t.assert_equals(cfg, nil)
-    t.assert_equals(err.class_name, 'LoadConfigError')
-    t.assert_equals(err.err,
-        string.format(
+    t.assert_covers(err, {
+        class_name = 'LoadConfigError',
+        err = string.format(
             "Error loading %q: %s",
             fio.pathjoin(g.tempdir, 'not_existing'),
             errno.strerror(errno.ENOENT)
         )
-    )
+    })
 
     write_tree({
         ['cfg1/bad.yml'] = ',',
     })
     local cfg, err = ClusterwideConfig.load(g.tempdir .. '/cfg1')
     t.assert_equals(cfg, nil)
-    t.assert_equals(err.class_name, 'LoadConfigError')
-    t.assert_equals(err.err,
-        'Error parsing section "bad.yml": unexpected END event'
-    )
+    t.assert_covers(err, {
+        class_name = 'LoadConfigError',
+        err = 'Error parsing section "bad.yml": unexpected END event'
+    })
 
     write_tree({
         ['cfg2/bad.yml'] = '{__file: not_existing.txt}',
     })
     local cfg, err = ClusterwideConfig.load(g.tempdir .. '/cfg2')
     t.assert_equals(cfg, nil)
-    t.assert_equals(err.class_name, 'LoadConfigError')
-    t.assert_equals(err.err,
-        'Error loading section "bad":' ..
+    t.assert_covers(err, {
+        class_name = 'LoadConfigError',
+        err =  'Error loading section "bad":' ..
         ' inclusion "not_existing.txt" not found'
-    )
+    })
 end
 
 function g.test_oldstyle_ok()
@@ -150,37 +150,37 @@ function g.test_oldstyle_err()
         fio.pathjoin(g.tempdir, 'not_existing.yml')
     )
     t.assert_equals(cfg, nil)
-    t.assert_equals(err.class_name, 'LoadConfigError')
-    t.assert_equals(err.err,
-        string.format(
+    t.assert_covers(err, {
+        class_name = 'LoadConfigError',
+        err = string.format(
             "Error loading %q: %s",
             fio.pathjoin(g.tempdir, 'not_existing.yml'),
             errno.strerror(errno.ENOENT)
         )
-    )
+    })
 
     write_tree({['bad1/main.yml'] = ','})
     local cfg, err = ClusterwideConfig.load(g.tempdir .. '/bad1/main.yml')
     t.assert_equals(cfg, nil)
-    t.assert_equals(err.class_name, 'LoadConfigError')
-    t.assert_equals(err.err,
-        string.format(
+    t.assert_covers(err, {
+        class_name = 'LoadConfigError',
+        err = string.format(
             "Error parsing %q: unexpected END event",
             fio.pathjoin(g.tempdir, 'bad1/main.yml'),
             errno.strerror(errno.ENOENT)
         )
-    )
+    })
 
     write_tree({['bad2/main.yml'] = [[
         side_config: {__file: 'not_existing.txt'}
     ]]})
     local cfg, err = ClusterwideConfig.load(g.tempdir .. '/bad2/main.yml')
     t.assert_equals(cfg, nil)
-    t.assert_equals(err.class_name, 'LoadConfigError')
-    t.assert_equals(err.err,
-        'Error loading section "side_config":' ..
+    t.assert_covers(err, {
+        class_name = 'LoadConfigError',
+        err = 'Error loading section "side_config":' ..
         ' inclusion "not_existing.txt" not found'
-    )
+    })
 end
 
 function g.test_preserving_plaintext()
@@ -231,8 +231,10 @@ function g.test_create_err()
         ['x.yml'] = 'bar'
     })
     t.assert_equals(cfg, nil)
-    t.assert_equals(err.class_name, 'LoadConfigError')
-    t.assert_equals(err.err, 'Ambiguous sections "x" and "x.yml"')
+    t.assert_covers(err, {
+        class_name = 'LoadConfigError',
+        err = 'Ambiguous sections "x" and "x.yml"'
+    })
 end
 
 
@@ -334,14 +336,14 @@ function g.test_save_err()
     local cfg = ClusterwideConfig.new({['b'] = 'b'})
     local ok, err = ClusterwideConfig.save(cfg, g.tempdir .. '/config')
     t.assert_equals(ok, nil)
-    t.assert_equals(err.class_name, 'SaveConfigError')
-    t.assert_equals(err.err,
-        string.format(
+    t.assert_covers(err, {
+        class_name = 'SaveConfigError',
+        err = string.format(
             "%s: %s",
             g.tempdir .. '/config',
             errno.strerror(errno.ENOTDIR)
         )
-    )
+    })
     t.assert_equals(utils.file_read(g.tempdir .. '/config'), '---\n...')
 end
 

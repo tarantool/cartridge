@@ -4,8 +4,6 @@ local t = require('luatest')
 local g = t.group()
 
 local label_utils = require("cartridge.label-utils")
-local errors = require("errors")
-local e_label_config = errors.new_class("Label configuration error")
 
 --[[
   Instance labels assertions
@@ -40,24 +38,26 @@ function g.test_labels_ok()
 end
 
 function g.test_labels_error()
-    local function check_error(expected_err, labels_data)
+    local function check_error(labels_data)
         local ok, err = label_utils.validate_labels("testing", labels_data)
         t.assert_equals(ok, nil)
-        t.assert_equals(err.class_name, expected_err.name)
+        t.assert_covers(err, {
+            class_name = "Label configuration error"
+        })
     end
 
-    check_error(e_label_config, {labels = 1})
-    check_error(e_label_config, {labels = true})
-    check_error(e_label_config, {
+    check_error({labels = 1})
+    check_error({labels = true})
+    check_error({
         labels = function()
         end
     })
-    check_error(e_label_config, {labels = "asdfsd"})
-    check_error(e_label_config, {labels = {[""] = ""}})
-    check_error(e_label_config, {labels = {[""] = "1234"}})
-    check_error(e_label_config, {labels = {[".label"] = "1234"}})
-    check_error(e_label_config, {labels = {["label."] = "1234"}})
-    check_error(e_label_config, {labels = {["io..tarantool"] = "1234"}})
-    check_error(e_label_config, {labels = {["io.tarantool..vshard"] = "1234"}})
-    check_error(e_label_config, {labels = {["io.tarantool/vshard"] = "1234"}})
+    check_error({labels = "asdfsd"})
+    check_error({labels = {[""] = ""}})
+    check_error({labels = {[""] = "1234"}})
+    check_error({labels = {[".label"] = "1234"}})
+    check_error({labels = {["label."] = "1234"}})
+    check_error({labels = {["io..tarantool"] = "1234"}})
+    check_error({labels = {["io.tarantool..vshard"] = "1234"}})
+    check_error({labels = {["io.tarantool/vshard"] = "1234"}})
 end
