@@ -11,7 +11,9 @@ import {
   IconRefresh,
   PopupBody,
   Text,
-  Scrollbar
+  Scrollbar,
+  NonIdealState,
+  splashSelectFileSvg
 } from '@tarantool.io/ui-kit';
 import { InputModal } from 'src/components/InputModal';
 import MonacoEditor from 'src/components/MonacoEditor';
@@ -33,7 +35,6 @@ import { getLanguageByFileName, getFileIdForMonaco } from 'src/misc/monacoModelS
 import type { TreeFileItem } from 'src/store/selectors/filesSelectors';
 import type { FileItem } from 'src/store/reducers/files.reducer';
 import { type State } from 'src/store/rootReducer';
-import { IconFileWithCode } from 'src/components/Icon/icons/IconFileWithCode';
 
 const options = {
   fixedOverflowWidgets: true,
@@ -114,19 +115,15 @@ const styles = {
   `,
   splash: css`
     display: flex;
-    flex-direction: column;
     flex-grow: 1;
     align-items: center;
     justify-content: center;
-    text-align: center;
-    color: rgba(0, 0, 0, 0.25);
-    font-size: 14px;
   `,
-  splashIcon: css`
-    width: 35px;
-    height: 35px;
-    margin-bottom: 16px;
-  `
+  selectFileIcon: css`
+    width: 80px;
+    height: 112px;
+    margin-bottom: 24px;
+  `,
 };
 
 type CodeState = {
@@ -146,6 +143,17 @@ type CodeProps = {
   selectedFile: FileItem | null,
   dispatch: Function,
 }
+
+
+const IconSelectFile = () => (
+  <svg
+    viewBox={splashSelectFileSvg.viewBox}
+    className={styles.selectFileIcon}
+  >
+    <use xlinkHref={`#${splashSelectFileSvg.id}`}/>
+  </svg>
+);
+
 
 class Code extends React.Component<CodeProps, CodeState> {
   state = {
@@ -425,10 +433,11 @@ class Code extends React.Component<CodeProps, CodeState> {
                 />
               </>
               :
-              <div className={styles.splash}>
-                <IconFileWithCode className={styles.splashIcon} />
-                Please select a file
-              </div>
+              <NonIdealState
+                icon={IconSelectFile}
+                title='Please select a file'
+                className={styles.splash}
+              />
             }
           </div>
           {operableFile && typeof operableFile.type === 'string' && (
