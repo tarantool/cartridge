@@ -19,7 +19,7 @@ describe('Memory fragmentation level by statistics', () => {
       expectedValue: 'high',
       cases: [
         {
-          itLabel: '91 - 91 - 91 %',
+          itLabel: '91-91-91 %',
           values: ['91%', '91%', '91%']
         },
         {
@@ -27,7 +27,7 @@ describe('Memory fragmentation level by statistics', () => {
           values: ['90.00001%', '90.0001%', '90.001%']
         },
         {
-          itLabel: '100 - 100 - 100 %',
+          itLabel: '100-100-100 %',
           values: ['100%', '100%', '100%']
         },
       ]
@@ -37,8 +37,8 @@ describe('Memory fragmentation level by statistics', () => {
       expectedValue: 'medium',
       cases: [
         {
-          itLabel: '91 - 61 - 61 % (bottom edge)',
-          values: ['91%', '61%', '61%']
+          itLabel: '91-91-61 % (bottom edge)',
+          values: ['91%', '91%', '61%']
         },
 
       ]
@@ -48,8 +48,8 @@ describe('Memory fragmentation level by statistics', () => {
       expectedValue: 'low',
       cases: [
         {
-          itLabel: '90-60-60% (top edge)',
-          values: ['90%', '60%', '60%']
+          itLabel: '90-90-60% (top edge)',
+          values: ['90%', '90%', '60%']
         },
         {
           itLabel: '0-0-0% (bottom edge)',
