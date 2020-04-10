@@ -292,13 +292,13 @@ const MemoryIcon = (statistics: $PropertyType<Server, 'statistics'>) => {
     switch (fragmentationLevel) {
       case 'high':
         return (
-          <Tooltip tag='span' content="Warning: Your memory is highly fragmented">
+          <Tooltip tag='span' content="Running out of memory">
             <IconChipDanger className={styles.iconMargin} />
           </Tooltip>
         );
       case 'medium':
         return (
-          <Tooltip tag='span' content="Warning: Your memory is fragmented">
+          <Tooltip tag='span' content="Memory is highly fragmented">
             <IconChipWarning className={styles.iconMargin} />
           </Tooltip>
         );

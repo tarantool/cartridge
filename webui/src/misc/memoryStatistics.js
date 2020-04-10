@@ -22,16 +22,16 @@ export const calculateMemoryFragmentationLevel = (
   const items_used_ratio = parsePercents(statistics.items_used_ratio);
 
   if (
-    arena_used_ratio > 0.9
+    items_used_ratio > 0.9
+    && arena_used_ratio > 0.9
     && quota_used_ratio > 0.9
-    && items_used_ratio > 0.9
   ) {
     return 'high';
 
   } else if (
-    arena_used_ratio > 0.9
-    && quota_used_ratio > 0.6
-    && items_used_ratio > 0.6
+    items_used_ratio > 0.6
+    && arena_used_ratio > 0.9
+    && quota_used_ratio > 0.9
   ) {
     return 'medium';
   }
