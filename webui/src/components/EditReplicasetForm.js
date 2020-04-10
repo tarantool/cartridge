@@ -28,7 +28,7 @@ import {
   validateForm
 } from 'src/misc/replicasetFormFunctions';
 import { VSHARD_STORAGE_ROLE_NAME } from 'src/constants';
-import { ServerSortableList } from './ServerSortableList';
+import ServerSortableList from './ServerSortableList';
 
 const styles = {
   wrap: css`
@@ -298,6 +298,7 @@ EditReplicasetFormProps) => {
                       value={value}
                       key={'uuid'}
                       onChange={v => form.change(name, v)}
+                      replicaset={replicaset}
                       serverMap={R.compose(
                         R.map(([val]) => val),
                         R.groupBy(R.prop('uuid'))

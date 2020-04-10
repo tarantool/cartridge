@@ -2,11 +2,10 @@
 import * as React from 'react';
 import { defaultMemoize } from 'reselect';
 import { css } from 'react-emotion';
+import { connect } from 'react-redux';
 import { FlatList } from '@tarantool.io/ui-kit';
 import ReplicasetServerListItem from 'src/components/ReplicasetServerListItem';
-import type {
-  Replicaset
-} from 'src/generated/graphql-typing';
+import type { Replicaset } from 'src/generated/graphql-typing';
 
 const SERVER_LABELS_HIGHLIGHTING_CLASS = 'ServerLabelsHighlightingArea';
 
@@ -84,6 +83,7 @@ const prepareServers = (replicaset: Replicaset) => {
 
 type ReplicasetServerListProps = {
   clusterSelf: any,
+  failoverMode: string,
   replicaset: Replicaset,
   editReplicaset: (r: Replicaset) => void,
   onServerLabelClick: () => void
@@ -91,7 +91,7 @@ type ReplicasetServerListProps = {
 
 class ReplicasetServerList extends React.PureComponent<ReplicasetServerListProps> {
   render() {
-    const { clusterSelf, onServerLabelClick } = this.props;
+    const { clusterSelf, failoverMode, onServerLabelClick, replicaset } = this.props;
     const servers = this.getServers();
 
     return (
@@ -107,7 +107,9 @@ class ReplicasetServerList extends React.PureComponent<ReplicasetServerListProps
                   onServerLabelClick={onServerLabelClick}
                   tagsHighlightingClassName={SERVER_LABELS_HIGHLIGHTING_CLASS}
                   totalBucketsCount={clusterSelf && clusterSelf.vshard_bucket_count}
+                  replicasetUUID={replicaset.uuid}
                   selfURI={clusterSelf && clusterSelf.uri}
+                  showFailoverPromote={servers && servers.length > 1 && failoverMode === 'stateful'}
                   {...server}
                 />
               )}
@@ -131,4 +133,6 @@ class ReplicasetServerList extends React.PureComponent<ReplicasetServerListProps
   prepareServers = defaultMemoize(prepareServers);
 }
 
-export default ReplicasetServerList;
+const mapStateToProps = ({ app: { failover_params: { mode: failoverMode } } }) => ({ failoverMode });
+
+export default connect(mapStateToProps)(ReplicasetServerList);

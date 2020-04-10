@@ -25,7 +25,7 @@ import {
   type MemoryUsageRatios
 } from 'src/misc/memoryStatistics';
 import { getMemoryFragmentationLevel } from 'src/store/selectors/clusterPage';
-import { showExpelModal } from '../store/actions/clusterPage.actions';
+import { failoverPromoteLeader, showExpelModal } from '../store/actions/clusterPage.actions';
 import { withRouter, Link } from 'react-router-dom';
 
 const styles = {
@@ -159,6 +159,8 @@ type ReplicasetServerListItemProps = {
   ...$Exact<Server>,
   activeMaster?: boolean,
   onServerLabelClick?: (label: Label) => void,
+  replicasetUUID: string,
+  showFailoverPromote?: boolean,
   tagsHighlightingClassName?: string,
   totalBucketsCount?: number
 };
@@ -174,7 +176,9 @@ class ReplicasetServerListItem extends React.PureComponent<
   render() {
     const {
       activeMaster,
+      replicasetUUID,
       selfURI,
+      showFailoverPromote,
       statistics,
       status,
       uri,
@@ -206,9 +210,9 @@ class ReplicasetServerListItem extends React.PureComponent<
                 {alias}
               </Link>
             </Text>
-            <UriLabel 
-              uri={uri} 
-              icon={selfURI && uri === selfURI && IconGeoPin} 
+            <UriLabel
+              uri={uri}
+              icon={selfURI && uri === selfURI && IconGeoPin}
               className={selfURI && uri === selfURI && 'meta-test__youAreHereIcon'}
             />
           </div>
@@ -254,11 +258,16 @@ class ReplicasetServerListItem extends React.PureComponent<
         </div>
         <Dropdown
           items={[
-            <DropdownItem
-              onClick={() => history.push(`/cluster/dashboard/instance/${uuid}`)}
-            >
+            <DropdownItem onClick={() => history.push(`/cluster/dashboard/instance/${uuid}`)}>
               Server details
             </DropdownItem>,
+            showFailoverPromote
+              ? (
+                <DropdownItem onClick={() => store.dispatch(failoverPromoteLeader(replicasetUUID, uuid))}>
+                  Promote a leader
+                </DropdownItem>
+              )
+              : null,
             <DropdownItem
               className={css`color: rgba(245, 34, 45, 0.65);`}
               onClick={() => store.dispatch(showExpelModal(uri))}

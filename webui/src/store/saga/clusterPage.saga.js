@@ -42,6 +42,9 @@ import {
   CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST,
   CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_SUCCESS,
   CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_ERROR,
+  CLUSTER_PAGE_FAILOVER_PROMOTE_REQUEST,
+  CLUSTER_PAGE_FAILOVER_PROMOTE_REQUEST_SUCCESS,
+  CLUSTER_PAGE_FAILOVER_PROMOTE_REQUEST_ERROR,
   CLUSTER_PAGE_STATE_RESET,
   CLUSTER_SELF_UPDATE
 } from 'src/store/actionTypes';
@@ -53,6 +56,7 @@ import {
   getServerStat,
   bootstrapVshard,
   probeServer,
+  promoteFailoverLeader,
   joinServer,
   createReplicaset,
   expelServer,
@@ -165,6 +169,30 @@ const probeServerRequestSaga = function* () {
   });
 };
 
+const failoverPromoteRequestSaga = function* () {
+  yield takeLatest(CLUSTER_PAGE_FAILOVER_PROMOTE_REQUEST, function* ({ payload }) {
+    try {
+      console.log(payload);
+      const response = yield call(promoteFailoverLeader, payload);
+
+      yield put({ type: CLUSTER_PAGE_FAILOVER_PROMOTE_REQUEST_SUCCESS });
+    } catch (error) {
+      yield put({
+        type: CLUSTER_PAGE_FAILOVER_PROMOTE_REQUEST_ERROR,
+        payload: error,
+        error: true
+      });
+      console.dir(error)
+      window.tarantool_enterprise_core.notify({
+        title: 'Leader promotion error',
+        message: error.message,
+        type: 'error',
+        timeout: 0
+      });
+    }
+  });
+};
+
 const joinServerRequestSaga = getRequestSaga(
   CLUSTER_PAGE_JOIN_SERVER_REQUEST,
   CLUSTER_PAGE_JOIN_SERVER_REQUEST_SUCCESS,
@@ -250,6 +278,7 @@ const updateListsOnTopologyEdit = function* () {
     CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST_SUCCESS,
     CLUSTER_PAGE_JOIN_SERVER_REQUEST_SUCCESS,
     CLUSTER_PAGE_EXPEL_SERVER_REQUEST_SUCCESS,
+    CLUSTER_PAGE_FAILOVER_PROMOTE_REQUEST_SUCCESS,
     CLUSTER_PAGE_REPLICASET_EDIT_REQUEST_SUCCESS,
     CLUSTER_PAGE_PROBE_SERVER_REQUEST_SUCCESS
   ];
@@ -260,6 +289,7 @@ const updateListsOnTopologyEdit = function* () {
 }
 
 export const saga = baseSaga(
+  failoverPromoteRequestSaga,
   pageDataRequestSaga,
   refreshListsRequestSaga,
   bootstrapVshardRequestSaga,

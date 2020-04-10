@@ -16,6 +16,7 @@ import {
   CLUSTER_PAGE_UPLOAD_CONFIG_REQUEST,
   CLUSTER_PAGE_APPLY_TEST_CONFIG_REQUEST,
   CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST,
+  CLUSTER_PAGE_FAILOVER_PROMOTE_REQUEST,
   CLUSTER_PAGE_STATE_RESET,
   SET_BOOSTRAP_VSHARD_PANEL_VISIBLE,
   SET_FAILOVER_MODAL_VISIBLE,
@@ -177,6 +178,11 @@ export const resetPageState = getActionCreator(CLUSTER_PAGE_STATE_RESET);
 export const changeFailover = getActionCreator(CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST, null, {
   successMessage: 'Failover change is OK...'
 });
+
+export const failoverPromoteLeader = (replicaset_uuid: string, instance_uuid: string) => ({
+  type: CLUSTER_PAGE_FAILOVER_PROMOTE_REQUEST,
+  payload: { replicaset_uuid, instance_uuid }
+})
 
 export const setVisibleBootstrapVshardPanel = (visible: boolean) => {
   return {

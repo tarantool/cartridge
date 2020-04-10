@@ -435,6 +435,19 @@ mutation changeFailover (
 }
 `;
 
+export const promoteFailoverLeaderMutation = gql`
+mutation promoteFailoverLeader (
+  $replicaset_uuid: String!,
+  $instance_uuid: String!
+) {
+  cluster {
+  	failover_promote(
+      replicaset_uuid: $replicaset_uuid,
+      instance_uuid: $instance_uuid
+    )
+  }
+}
+`
 
 export const fetchUsersQuery = gql`
   query fetchUsers {

@@ -29,6 +29,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Indicate memory fragmentation level in WebUI.
 
+- Failover leader promotion
+
 ### Changed
 
 - Make GraphQL validation stricter: scalar values can't have
