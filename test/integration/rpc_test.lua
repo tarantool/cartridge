@@ -169,12 +169,26 @@ function g.test_routing()
         'myrole', 'void', nil,
         {uri = 'localhost:0'}
     )
-    t.assert_covers({
-        ['"localhost:0": ' .. errno.strerror(errno.ECONNREFUSED)] = true,
-        ['"localhost:0": ' .. errno.strerror(errno.ENETUNREACH)] = true,
-    }, {[err.err] = true})
-    t.assert_equals(err.class_name, 'NetboxConnectError')
     t.assert_not(res)
+    t.assert_items_include(
+        {
+            '"localhost:0": ' .. errno.strerror(errno.ECONNREFUSED),
+            '"localhost:0": ' .. errno.strerror(errno.ENETUNREACH),
+            '"localhost:0": ' .. errno.strerror(errno.EADDRNOTAVAIL),
+        }, {err.err}
+    )
+
+    local res, err = rpc_call(B2,
+        'myrole', 'void', nil,
+        {uri = 'localhost:9'}
+    )
+    t.assert_not(res)
+    t.assert_items_include(
+        {
+            '"localhost:9": ' .. errno.strerror(errno.ECONNREFUSED),
+            '"localhost:9": ' .. errno.strerror(errno.ENETUNREACH),
+        }, {err.err}
+    )
 
     t.assert_error_msg_contains(
         'bad argument opts.uri to rpc_call' ..
