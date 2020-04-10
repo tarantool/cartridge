@@ -9,6 +9,7 @@ import {
   listQuery,
   listQueryWithoutStat,
   probeMutation,
+  promoteFailoverLeaderMutation,
   serverStatQuery
 } from './queries.graphql';
 import type { EditTopologyMutationVariables, FailoverApi } from 'src/generated/graphql-typing'
@@ -188,7 +189,9 @@ export async function uploadConfig(params: UploadConfigParams) {
 
 export async function changeFailover(params: FailoverApi) {
   await graphql.mutate(changeFailoverMutation, params);
-  const cluster = await getClusterSelf();
+  return await getClusterSelf();
+}
 
-  return cluster;
+export async function promoteFailoverLeader(params: FailoverApi) {
+  return await graphql.mutate(promoteFailoverLeaderMutation, params);
 }

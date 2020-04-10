@@ -600,7 +600,7 @@ export type GetClusterQueryVariables = {};
 export type GetClusterQuery = { __typename?: "Query" } & {
   cluster: ?({ __typename?: "Apicluster" } & $Pick<
     Apicluster,
-    { failover: *, can_bootstrap_vshard: *, vshard_bucket_count: * }
+    { can_bootstrap_vshard: *, vshard_bucket_count: * }
   > & { MenuBlacklist: $ElementType<Apicluster, "webui_blacklist"> } & {
       clusterSelf: ?({ __typename?: "ServerShortInfo" } & $Pick<
         ServerShortInfo,
@@ -609,6 +609,14 @@ export type GetClusterQuery = { __typename?: "Query" } & {
           uri: $ElementType<ServerShortInfo, "uri">,
           uuid: $ElementType<ServerShortInfo, "uuid">
         }),
+      failover_params: { __typename?: "FailoverAPI" } & $Pick<
+        FailoverApi,
+        { mode: *, state_provider: * }
+      > & {
+          tarantool_params: ?({
+            __typename?: "FailoverStateProviderCfgTarantool"
+          } & $Pick<FailoverStateProviderCfgTarantool, { uri: *, password: * }>)
+        },
       knownRoles: Array<
         { __typename?: "Role" } & $Pick<Role, { name: *, dependencies: * }>
       >,
@@ -989,14 +997,18 @@ export type EditTopologyMutation = { __typename?: "Mutation" } & {
 };
 
 export type ChangeFailoverMutationVariables = {
-  enabled: $ElementType<Scalars, "Boolean">
+  mode: $ElementType<Scalars, "String">,
+  state_provider?: ?$ElementType<Scalars, "String">,
+  tarantool_params?: ?FailoverStateProviderCfgInputTarantool
 };
 
 export type ChangeFailoverMutation = { __typename?: "Mutation" } & {
-  cluster: ?({ __typename?: "MutationApicluster" } & $Pick<
-    MutationApicluster,
-    { failover: * }
-  >)
+  cluster: ?({ __typename?: "MutationApicluster" } & {
+    failover_params: { __typename?: "FailoverAPI" } & $Pick<
+      FailoverApi,
+      { mode: * }
+    >
+  })
 };
 
 export type FetchUsersQueryVariables = {};

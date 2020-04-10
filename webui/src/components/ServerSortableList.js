@@ -1,7 +1,8 @@
-import React from 'react'
+import React from 'react';
 import { sortableContainer, sortableElement } from 'react-sortable-hoc';
 import { css, cx } from 'react-emotion';
-import arrayMove from 'array-move'
+import arrayMove from 'array-move';
+import { connect } from 'react-redux';
 import {
   IconBurger,
   IconGeoPin,
@@ -64,13 +65,13 @@ const styles = {
   `
 }
 
-const SortableItem = sortableElement(({ item, num, selfURI }) =>
+const SortableItem = sortableElement(({ item, isLeader, selfURI }) =>
   <div className={styles.sortableItem}>
     <Text className={styles.alias} tag='div'>
       <IconBurger className={styles.iconMargin} />
       {item.alias || item.uuid}
     </Text>
-    {num === 0 ?<LeaderFlagSmall  className={styles.leaderFlag} /> : null}
+    {isLeader ? <LeaderFlagSmall className={styles.leaderFlag} /> : null}
     <UriLabel className={styles.serverUriWrap} uri={item.uri} icon={selfURI && item.uri === selfURI && IconGeoPin} />
   </div>
 );
@@ -80,9 +81,11 @@ const SortableContainer = sortableContainer(({ children, className = '' }) => {
 });
 
 export const ServerSortableList = ({
+  failoverMode,
   onChange,
   value,
   key,
+  replicaset,
   serverMap,
   selfURI
 }) => {
@@ -100,6 +103,9 @@ export const ServerSortableList = ({
           key={item[key]}
           num={index}
           index={index}
+          isLeader={failoverMode === 'stateful'
+            ? replicaset.active_master && (replicaset.active_master.uuid === serverMap[item].uuid)
+            : index === 0}
           item={serverMap[item]}
           selfURI={selfURI}
         />
@@ -107,3 +113,7 @@ export const ServerSortableList = ({
     </SortableContainer>
   )
 }
+
+const mapStateToProps = ({ app: { failover_params: { mode: failoverMode } } }) => ({ failoverMode });
+
+export default connect(mapStateToProps)(ServerSortableList);
