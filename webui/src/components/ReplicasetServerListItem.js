@@ -11,6 +11,8 @@ import {
   HealthStatus,
   IconBucket,
   IconChip,
+  IconChipWarning,
+  IconChipDanger,
   IconGeoPin,
   IconMore,
   LeaderFlag,
@@ -19,6 +21,10 @@ import {
   Tooltip,
   UriLabel
 } from '@tarantool.io/ui-kit';
+import {
+  type MemoryUsageRatios
+} from 'src/misc/memoryStatistics';
+import { getMemoryFragmentationLevel } from 'src/store/selectors/clusterPage';
 import { showExpelModal } from '../store/actions/clusterPage.actions';
 import { withRouter, Link } from 'react-router-dom';
 
@@ -65,12 +71,6 @@ const styles = {
   `,
   iconMarginSmall: css`
     margin-right: 4px;
-  `,
-  uriIcon: css`
-    margin-right: 4px;
-  `,
-  uri: css`
-    color: rgba(0, 0, 0, 0.65);
   `,
   statusGroup: css`
     display: flex;
@@ -141,7 +141,7 @@ type Server = {
     arenaUsed: number,
     bucketsCount: number,
     quotaSize: number
-  },
+  } & MemoryUsageRatios,
   status: string,
   uri: string,
   alias?: string,
@@ -238,7 +238,7 @@ class ReplicasetServerListItem extends React.PureComponent<
                   }
                   <div className={styles.memStats}>
                     <div>
-                      <IconChip className={styles.iconMargin} />
+                      <MemoryIcon {...statistics} />
                       <Text variant='h5' tag='span'>{usageText}</Text>
                     </div>
                     <ProgressBar
@@ -284,5 +284,28 @@ class ReplicasetServerListItem extends React.PureComponent<
     )
   }
 }
+
+
+const MemoryIcon = (statistics: $PropertyType<Server, 'statistics'>) => {
+  if (statistics) {
+    const fragmentationLevel = getMemoryFragmentationLevel(statistics);
+    switch (fragmentationLevel) {
+      case 'high':
+        return (
+          <Tooltip tag='span' content="Running out of memory">
+            <IconChipDanger className={styles.iconMargin} />
+          </Tooltip>
+        );
+      case 'medium':
+        return (
+          <Tooltip tag='span' content="Memory is highly fragmented">
+            <IconChipWarning className={styles.iconMargin} />
+          </Tooltip>
+        );
+    }
+  }
+  return <IconChip className={styles.iconMargin} />;
+};
+
 
 export default withRouter(ReplicasetServerListItem);
