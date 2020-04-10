@@ -1,9 +1,19 @@
 // @flow
 import * as R from 'ramda';
-import { createSelector } from 'reselect';
+import {
+  createSelector,
+  createSelectorCreator,
+  defaultMemoize
+} from 'reselect';
+import isEqual from 'lodash/isEqual';
 import type { State } from 'src/store/rootReducer';
 import type { ServerStatWithUUID } from 'src/store/reducers/clusterPage.reducer';
 import type { Replicaset, Server } from 'src/generated/graphql-typing';
+import {
+  calculateMemoryFragmentationLevel,
+  type FragmentationLevel,
+  type MemoryUsageRatios
+} from 'src/misc/memoryStatistics';
 
 
 const prepareReplicasetList = (
@@ -201,3 +211,14 @@ export const getSectionsNames = (state: State): Array<string> => Object.keys(sta
 export const isBootstrapped = (state: State) => (
   R.path(['app', 'clusterSelf', 'vshard_groups', '0', 'bootstrapped'], state) || false
 )
+
+
+const createDeepEqualSelector = createSelectorCreator(defaultMemoize, isEqual);
+
+export const getMemoryFragmentationLevel
+: (statistics: MemoryUsageRatios) => FragmentationLevel = createDeepEqualSelector(
+  [
+    statistics => statistics
+  ],
+  calculateMemoryFragmentationLevel
+);

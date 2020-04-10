@@ -22,9 +22,9 @@ import {
   UriLabel
 } from '@tarantool.io/ui-kit';
 import {
-  calculateMemoryFragmentationLevel,
   type MemoryUsageRatios
 } from 'src/misc/memoryStatistics';
+import { getMemoryFragmentationLevel } from 'src/store/selectors/clusterPage';
 import { showExpelModal } from '../store/actions/clusterPage.actions';
 import { withRouter, Link } from 'react-router-dom';
 
@@ -288,7 +288,7 @@ class ReplicasetServerListItem extends React.PureComponent<
 
 const MemoryIcon = (statistics: $PropertyType<Server, 'statistics'>) => {
   if (statistics) {
-    const fragmentationLevel = calculateMemoryFragmentationLevel(statistics);
+    const fragmentationLevel = getMemoryFragmentationLevel(statistics);
     switch (fragmentationLevel) {
       case 'high':
         return (
