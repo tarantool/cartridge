@@ -17,7 +17,7 @@ describe('Failover', () => {
 
 
     cy.get('.meta-test__SubmitButton').click();
-    cy.get('#root').contains('Failover change is OK...').click();
+    cy.get('span:contains(Failover mode) + * + span:contains(disabled)').click();
     cy.get('.meta-test__FailoverButton').contains('Failover: disabled');
     cy.get('.meta-test__ClusterIssuesButton').should('be.disabled');
   })
@@ -31,7 +31,7 @@ describe('Failover', () => {
     cy.get('.meta-test__storagePassword input').should('be.disabled');
 
     cy.get('.meta-test__SubmitButton').click();
-    cy.get('#root').contains('Failover change is OK...').click();
+    cy.get('span:contains(Failover mode) + * + span:contains(eventual)').click();
     cy.get('.meta-test__FailoverButton').contains('Failover: eventual');
     cy.get('.meta-test__ClusterIssuesButton').should('be.disabled');
   })
@@ -44,7 +44,9 @@ describe('Failover', () => {
     cy.get('.meta-test__storagePassword input').type('{selectall}{backspace}');
 
     cy.get('.meta-test__SubmitButton').click();
-    cy.get('#root').contains('topology_new.failover.tarantool_params.uri invalid URI ""').click();
+    cy.get('.meta-test__FailoverModal')
+      .contains('topology_new.failover.tarantool_params.uri invalid URI ""')
+      .trigger('keydown', { keyCode: 27, which: 27 });
     cy.get('.meta-test__FailoverButton').contains('Failover: eventual');
     cy.get('.meta-test__ClusterIssuesButton').should('be.disabled');
   })
@@ -52,7 +54,7 @@ describe('Failover', () => {
   it('Failover Stateful: success', () => {
     cy.get('.meta-test__FailoverButton').click();
 
-    cy.get('.meta-test__statefulRadioBtn').click();
+    cy.get('.meta-test__statefulRadioBtn').click().click();
 
     cy.get('.meta-test__statefulStorageURI input').should('be.enabled');
     cy.get('.meta-test__storagePassword input').should('be.enabled');
@@ -60,7 +62,7 @@ describe('Failover', () => {
     cy.get('.meta-test__statefulStorageURI input').type('{selectall}{backspace}localhost:13303');
 
     cy.get('.meta-test__SubmitButton').click();
-    cy.get('#root').contains('Failover change is OK...').click();
+    cy.get('span:contains(Failover mode) + * + span:contains(stateful)').click();
     cy.get('.meta-test__FailoverButton').contains('Failover: stateful');
   });
 
