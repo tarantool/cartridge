@@ -116,7 +116,36 @@ const styles = {
   `
 };
 
-const prepareReplicasetList = dataSource => [...dataSource].sort((a, b) => b.uuid < a.uuid ? 1 : -1);
+const prepareReplicasetList = dataSource => [...dataSource].sort((a, b) => {
+  if (a.alias && !b.alias) {
+    return -1;
+  }
+
+  if (!a.alias && b.alias) {
+    return 1;
+  }
+
+  if (a.alias !== b.alias) {
+    return b.alias < a.alias ? 1 : -1;
+  }
+
+  let a_leader = a.servers.find(server => server.uuid === a.master.uuid);
+  let b_leader = b.servers.find(server => server.uuid === b.master.uuid);
+
+  // here we need to check aliases again as below;
+  if (a_leader.alias && !b_leader.alias) {
+    return -1;
+  }
+
+
+  if (a_leader.alias) {
+    if (b_leader.alias) {
+      return b_leader.alias < a_leader.alias ? 1 : -1;
+    }
+    return -1;
+  }
+  return b.uuid < a.uuid ? 1 : -1;
+});
 
 class ReplicasetList extends React.PureComponent {
   state = {
