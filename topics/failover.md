@@ -29,14 +29,14 @@ renamed yet due to historical reasons).
 
 It's important to say, that we discuss distributed system. And every
 instance has it's own opinion. Even if all opinions coincide there still
-may be races between instances, and one (and application developer)
-should take then into account when designing roles and their
+may be races between instances, and one (an application developer)
+should take them into account when designing roles and their
 interaction.
 
 ## Leader appointment rules
 
 The logics behind leader election depends on the **failover mode** which
-are three: disables, eventual, and stateful.
+are three: disabled, eventual, and stateful.
 
 ### Disabled mode
 
@@ -105,8 +105,8 @@ slightly differently than eventual failover does:
   Healthy leaders aren't switched automatically even if it's not first.
   Changing failover priority doesn't affect it too.
 
-- All appointments (self-made and fetched) are immune for the first time
-  (which is tunable with IMMUNITY_TIMEOUT option, see below).
+- Every appointment (self-made or fetched) is immune for the first time
+  (which is controlled with `IMMUNITY_TIMEOUT` option).
 
 #### The case: external provider outage
 
@@ -123,22 +123,40 @@ or due to disabling the role everywhere. Just like previously, instances
 do nothing about it - they keep fetching leadership map from the state
 provider. But it will remain the same until a coordinator appears.
 
+## Manual leader promotion
+
+It differs a lot depending on the failover mode.
+
+In disabled and eventual modes one can only promote a leader by changing
+failover priority (apply new clusterwide configuration).
+
+In stateful mode failover priority doesn't make much sence (except for
+the first appointment). Instead,
+
 ## Failover configuration
 
-Failover parameters are:
+These are cluster-wide parameters:
 
 * `mode`: "disabled" / "eventual" / "stateful".
 * `state_provider`: only "tarantool" is supported for now.
-* `tarantool_params`: `{uri = "...", password = "..."}`
+* `tarantool_params`: `{uri = "...", password = "..."}`.
 
 ### Lua API
 
-See `cartridge.failover_set_params`, `cartridge.failover_get_params`.
+See:
+
+- `cartridge.failover_get_params`,
+- `cartridge.failover_set_params`,
+- `cartridge.failover_promote`.
 
 ### GraphQL API
 
-With your favorite GraphQL client see introspection on
-`mutation{cluster{failover_params(){}}}`, `query{cluster{failover_params{}}}`
+Use your favorite GraphQL client (e.g.
+[Altair](https://altair.sirmuel.design/)) to see requests introspection:
+
+- `query {cluster{failover_params{}}}`,
+- `mutation {cluster{failover_params(){}}}`,
+- `mutation {cluster{failover_promote()}}`.
 
 ## Stateboard configuration
 
@@ -159,32 +177,15 @@ command-line arguments or via environment variables, e.g.:
 
 ## Fine-tuning failover behavior
 
-Beside failover priority and mode there are few other options that
-influence failover operation.
+Besides failover priority and mode there are few other private options
+that influence failover operation.
 
 * `failover` `LONGPOLL_TIMEOUT` (default: 30) -
-  too obvious to be explained, see long polling algorithm.
+  the long polling algorithm timeout;
 * `failover/coordinator` `NETBOX_CALL_TIMEOUT` (default: 1) -
-  timeout of the `stateboard` client connection
+  `stateboard` client connection timeout;
 * `coordinator` `RECONNECT_PERIOD` (default: 5) -
-  time to reconnect if stateboard is unreachable.
-* `coordinator` `IMMUNITY_TIMEOUT` (default: 15)
+  time to reconnect if `stateboard` is unreachable;
+* `coordinator` `IMMUNITY_TIMEOUT` (default: 15) -
+  minimal amount of time to wait before overriding an appointment.
 
-It's not recommended to modify them. This API is private and could be
-changed without any notice. But if you're brave enough, you can access
-it as follows:
-
-```lua
-vars = require('cartridge.vars')
-coordinator_vars = vars.new('cartridge.roles.coordinator')
-coordinator_vars.options = {
-    RECONNECT_PERIOD = 5,
-    IMMUNITY_TIMEOUT = 15,
-    NETBOX_CALL_TIMEOUT = 1,
-}
-failover_vars = vars.new('cartridge.failover')
-failover_vars.options = {
-    LONGPOLL_TIMEOUT = 30,
-    NETBOX_CALL_TIMEOUT = 1,
-}
-```
