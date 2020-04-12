@@ -116,33 +116,33 @@ const styles = {
   `
 };
 
-const prepareReplicasetList = dataSource => [...dataSource].sort((a, b) => {
-  if (a.alias && !b.alias) {
+const compareAliases = (aAlias, bAlias) => {
+  if (aAlias && !bAlias) {
     return -1;
   }
 
-  if (!a.alias && b.alias) {
+  if (!aAlias && bAlias) {
     return 1;
   }
 
-  if (a.alias !== b.alias) {
-    return b.alias < a.alias ? 1 : -1;
+  if (aAlias !== bAlias) {
+    return bAlias < aAlias ? 1 : -1;
+  }
+  return null;
+}
+
+const prepareReplicasetList = dataSource => [...dataSource].sort((a, b) => {
+  let result = compareAliases(a.alias, b.alias)
+  if (result) {
+    return result;
   }
 
-  let a_leader = a.servers.find(server => server.uuid === a.master.uuid);
-  let b_leader = b.servers.find(server => server.uuid === b.master.uuid);
+  const a_leader = a.servers.find(server => server.uuid === a.master.uuid);
+  const b_leader = b.servers.find(server => server.uuid === b.master.uuid);
 
-  // here we need to check aliases again as below;
-  if (a_leader.alias && !b_leader.alias) {
-    return -1;
-  }
-
-
-  if (a_leader.alias) {
-    if (b_leader.alias) {
-      return b_leader.alias < a_leader.alias ? 1 : -1;
-    }
-    return -1;
+  result = compareAliases(a_leader.alias, b_leader.alias)
+  if (result) {
+    return result;
   }
   return b.uuid < a.uuid ? 1 : -1;
 });
