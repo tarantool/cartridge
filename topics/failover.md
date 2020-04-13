@@ -181,12 +181,14 @@ command-line arguments or via environment variables, e.g.:
 Besides failover priority and mode there are few other private options
 that influence failover operation.
 
-* `failover` `LONGPOLL_TIMEOUT` (default: 30) -
-  the long polling algorithm timeout;
-* `failover/coordinator` `NETBOX_CALL_TIMEOUT` (default: 1) -
-  `stateboard` client connection timeout;
-* `coordinator` `RECONNECT_PERIOD` (default: 5) -
-  time to reconnect if `stateboard` is unreachable;
-* `coordinator` `IMMUNITY_TIMEOUT` (default: 15) -
-  minimal amount of time to wait before overriding an appointment.
+* `LONGPOLL_TIMEOUT` (`failover`) - the long polling algorithm timeout
+  (default: 30);
 
+* `NETBOX_CALL_TIMEOUT` (`failover/coordinator`) - `stateboard` client
+  connection timeout (default: 1);
+
+* `RECONNECT_PERIOD` (`coordinator`) - time to reconnect if `stateboard`
+  is unreachable (default: 5);
+
+* `IMMUNITY_TIMEOUT` (`coordinator`) - minimal amount of time to wait
+  before overriding an appointment (default: 15).
