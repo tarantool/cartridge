@@ -89,7 +89,6 @@ export type ClusterPageState = {
   applyTestConfigRequestStatus: RequestStatusType,
   // applyTestConfigResponse: null,
   changeFailoverRequestStatus: RequestStatusType,
-  // changeFailoverResponse: null,
 };
 
 export const initialState: ClusterPageState = {
@@ -121,9 +120,6 @@ export const initialState: ClusterPageState = {
   applyTestConfigRequestStatus: getInitialRequestStatus(),
   applyTestConfigResponse: null,
   changeFailoverRequestStatus: getInitialRequestStatus(),
-  changeFailoverResponse: {
-    mode: 'disabled'
-  }
 };
 
 const pageMountReducer = getPageMountReducer(CLUSTER_PAGE_DID_MOUNT);

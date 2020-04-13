@@ -28,6 +28,7 @@ import type {
   CreateReplicasetArgs,
   EditReplicasetArgs
 } from '../request/clusterPage.requests';
+import type { FailoverApi } from 'src/generated/graphql-typing';
 
 /**
  * @param {Object} payload
@@ -171,13 +172,12 @@ export type ResetPageStateAction = { type: 'CLUSTER_PAGE_STATE_RESET' };
 export type ResetPageStateActionCreator = () => ResetPageStateAction;
 export const resetPageState = getActionCreator(CLUSTER_PAGE_STATE_RESET);
 
-/**
- * @param {Object} payload
- * @param {boolean} payload.enabled
- */
-export const changeFailover = getActionCreator(CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST, null, {
-  successMessage: 'Failover change is OK...'
-});
+
+export const changeFailover = (payload: FailoverApi) => ({ type: CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST, payload });
+
+export type changeFailoverActionCreator = typeof setVisibleBootstrapVshardPanel;
+export type changeFailoverAction = $Call<setVisibleBootstrapVshardPanelActionCreator, FailoverApi>;
+
 
 export const failoverPromoteLeader = (replicaset_uuid: string, instance_uuid: string) => ({
   type: CLUSTER_PAGE_FAILOVER_PROMOTE_REQUEST,

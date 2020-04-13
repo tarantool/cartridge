@@ -1,7 +1,7 @@
 import {
   SET_BOOSTRAP_VSHARD_PANEL_VISIBLE,
   SET_FAILOVER_MODAL_VISIBLE,
-  CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST,
+  CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_SUCCESS,
   CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST,
   CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST_ERROR,
   CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST_SUCCESS,
@@ -117,7 +117,7 @@ export const reducer = (state: UIState = initialState, { type, payload, error }:
         probeServerModalVisible: false
       };
 
-    case CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST: {
+    case CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_SUCCESS: {
       return {
         ...state,
         showFailoverModal: false
