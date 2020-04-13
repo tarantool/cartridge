@@ -131,7 +131,8 @@ In disabled and eventual modes one can only promote a leader by changing
 failover priority (apply new clusterwide configuration).
 
 In stateful mode failover priority doesn't make much sence (except for
-the first appointment). Instead,
+the first appointment). Instead, one should use separate promotion API
+which pushes manual appointment to the state provider.
 
 ## Failover configuration
 
