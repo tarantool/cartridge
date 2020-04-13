@@ -175,24 +175,24 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
             <div>
               <Text className={styles.radioLabel}>Stateful</Text>
               <Text className={styles.radioDescription} tag='p'>
-                Leader appointments are polled from the external storage.
+                Leader appointments are polled from the external state provider.
                 Decisions are taken by one of the instances with the failover-coordinator role enabled.
               </Text>
             </div>
           </RadioButton>
         </FormField>
         <div className={styles.inputs}>
-          <LabeledInput className={styles.inputField} label='Stateful storage URI'>
+          <LabeledInput className={styles.inputField} label='State provider URI'>
             <Input
-              className='meta-test__statefulStorageURI'
+              className='meta-test__stateboardURI'
               value={uri}
               disabled={mode !== 'stateful'}
               onChange={this.handleURIChange}
             />
           </LabeledInput>
-          <LabeledInput className={styles.inputField} label='Storage password'>
+          <LabeledInput className={styles.inputField} label='Password'>
             <InputPassword
-              className='meta-test__storagePassword'
+              className='meta-test__stateboardPassword'
               value={password}
               disabled={mode !== 'stateful'}
               onChange={this.handlePasswordChange}
