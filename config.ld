@@ -32,7 +32,6 @@ file = {
 
 -- luacheck: globals topics
 topics = {
-    "README.md",
     "CHANGELOG.md",
     "topics/failover.md",
 }

@@ -3,7 +3,7 @@
 One of important concepts in cluster topology is **the leader** setting.
 Leader is an instance, which is responsible for performing key
 operations, for simplicity one can think of it as of the only writable
-master. Every replica set has it's own leader, and there's usually not
+master. Every replica set has its own leader, and there's usually not
 more than one.
 
 Which instance will become a leader depends on topology settings and
@@ -28,7 +28,7 @@ specifies `is_master` flag (which actually means `is_leader`, but wasn't
 renamed yet due to historical reasons).
 
 It's important to say, that we discuss distributed system. And every
-instance has it's own opinion. Even if all opinions coincide there still
+instance has its own opinion. Even if all opinions coincide there still
 may be races between instances, and one (an application developer)
 should take them into account when designing roles and their
 interaction.
@@ -82,7 +82,7 @@ polling technique.
 All decisions are made by **the coordinator** - the one who holds the
 lock. Coordinator is implemented as a built-in cartridge role. There may
 be many instances with the coordinator role enabled, but only one of
-them could acquire the lock at the same time. We call him the active
+them could acquire the lock at the same time. We call him the "active"
 one.
 
 The lock is released automatically when TCP connection is closed, or it
@@ -161,7 +161,7 @@ Use your favorite GraphQL client (e.g.
 
 ## Stateboard configuration
 
-Stateboard does support `cartridge.argprase` options similar to other
+Stateboard supports `cartridge.argprase` options similar to other
 cartridge instances:
 
 * `listen`
