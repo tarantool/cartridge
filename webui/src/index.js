@@ -56,13 +56,14 @@ class Root extends React.Component {
   }
 }
 
+menuFilter.hideAll()
+
 tarantool_enterprise_core.register(
   PROJECT_NAME,
   menuReducer,
   Root,
   'react',
-  null,
-  menuFilter.check
+  null
 );
 
 tarantool_enterprise_core.subscribe('cluster:logout', () => {

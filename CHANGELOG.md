@@ -45,6 +45,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Update `ddl` dependency to 1.1.0.
 
+- Refactor frontend menu filter API with new version of frontend-core module
+
 ### Deprecated
 
 Lua API:
