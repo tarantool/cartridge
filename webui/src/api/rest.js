@@ -1,5 +1,5 @@
 import axios from 'axios';
-import _ from 'lodash';
+import { get as _get } from 'lodash';
 
 const axiosInstance = axios.create()
 
@@ -36,10 +36,10 @@ export const isRestAccessDeniedError
 
 export const isAxiosError
   = error =>
-    !!(_.get(error, 'config.adapter', false));
+    !!(_get(error, 'config.adapter', false));
 
 export const getAxiosErrorMessage
   = error =>
-    (_.get(error, 'response.data.class_name', false) && _.get(error, 'response.data.err', false))
-      ? `${_.get(error, 'response.data.class_name')}: ${_.get(error, 'response.data.err')}`
+    (_get(error, 'response.data.class_name', false) && _get(error, 'response.data.err', false))
+      ? `${_get(error, 'response.data.class_name')}: ${_get(error, 'response.data.err')}`
       : error.message;
