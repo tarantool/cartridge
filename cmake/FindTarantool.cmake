@@ -34,12 +34,19 @@ if(TARANTOOL_FOUND)
         CACHE PATH "Directory for storing Lua modules written in Lua")
     set(TARANTOOL_INSTALL_LUADIR "${CMAKE_INSTALL_DATADIR}/tarantool"
         CACHE PATH "Directory for storing Lua modules written in C")
+    set(TARANTOOL_INSTALL_BINDIR "${CMAKE_INSTALL_BINDIR}"
+        CACHE PATH "Directory for storing Lua scripts")
 
     if (NOT TARANTOOL_FIND_QUIETLY AND NOT FIND_TARANTOOL_DETAILS)
         set(FIND_TARANTOOL_DETAILS ON CACHE INTERNAL "Details about TARANTOOL")
         message(STATUS "Tarantool LUADIR is ${TARANTOOL_INSTALL_LUADIR}")
         message(STATUS "Tarantool LIBDIR is ${TARANTOOL_INSTALL_LIBDIR}")
+        message(STATUS "Tarantool BINDIR is ${TARANTOOL_INSTALL_BINDIR}")
     endif ()
 endif()
-mark_as_advanced(TARANTOOL_INCLUDE_DIRS TARANTOOL_INSTALL_LIBDIR
-    TARANTOOL_INSTALL_LUADIR)
+mark_as_advanced(
+    TARANTOOL_INCLUDE_DIRS
+    TARANTOOL_INSTALL_LIBDIR
+    TARANTOOL_INSTALL_LUADIR
+    TARANTOOL_INSTALL_BINDIR
+)

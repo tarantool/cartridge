@@ -136,24 +136,17 @@ enable_testing()
 
 add_test(
   NAME lint
-  COMMAND luacheck cartridge-scm-1.rockspec
-  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-)
-
-add_test(
-  NAME test_unit
-  COMMAND ${TARANTOOL} ${CMAKE_CURRENT_SOURCE_DIR}/taptest.lua
-  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-)
-
-add_test(
-  NAME test_integration
-  COMMAND pytest -v
+  COMMAND luacheck .
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 ## Install ####################################################################
 ###############################################################################
+
+file(
+    WRITE ${CMAKE_CURRENT_BINARY_DIR}/stateboard
+    "#!/usr/bin/env tarantool\n\nrequire('cartridge.stateboard').cfg()\n"
+)
 
 install(
   DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}
@@ -165,9 +158,9 @@ install(
   DESTINATION ${TARANTOOL_INSTALL_LUADIR}
 )
 
-file(
-    WRITE ${TARANTOOL_INSTALL_BINDIR}/stateboard
-    "#!/usr/bin/env tarantool\n\nrequire('cartridge.stateboard').cfg()\n"
+install(
+  PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/stateboard
+  DESTINATION ${TARANTOOL_INSTALL_BINDIR}
 )
 
 install(
