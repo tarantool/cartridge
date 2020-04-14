@@ -116,35 +116,24 @@ const styles = {
   `
 };
 
-const compareAliases = (aAlias, bAlias) => {
-  if (aAlias && !bAlias) {
-    return -1;
-  }
-
-  if (!aAlias && bAlias) {
-    return 1;
-  }
-
-  if (aAlias !== bAlias) {
-    return bAlias < aAlias ? 1 : -1;
-  }
-  return null;
-}
-
 const prepareReplicasetList = dataSource => [...dataSource].sort((a, b) => {
-  let result = compareAliases(a.alias, b.alias)
-  if (result) {
-    return result;
+  let aValue = a.alias || '';
+  let bValue = b.alias || '';
+
+  if (aValue === bValue) {
+    aValue = a.servers[0].alias || '';
+    bValue = b.servers[0].alias || '';
   }
 
-  const a_leader = a.servers.find(server => server.uuid === a.master.uuid);
-  const b_leader = b.servers.find(server => server.uuid === b.master.uuid);
-
-  result = compareAliases(a_leader.alias, b_leader.alias)
-  if (result) {
-    return result;
+  if (aValue === bValue) {
+    aValue = a.uuid;
+    bValue = b.uuid;
   }
-  return b.uuid < a.uuid ? 1 : -1;
+
+  if (aValue === '' || bValue === '') {
+    return aValue < bValue ? 1 : -1;
+  }
+  return aValue < bValue ? -1 : 1;
 });
 
 class ReplicasetList extends React.PureComponent {
