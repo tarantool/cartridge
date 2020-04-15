@@ -1,6 +1,5 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { isNil } from 'ramda';
 import {
   Button,
   Dropdown,
@@ -55,7 +54,7 @@ class HeaderAuthControl extends React.Component {
     if (!implements_check_password)
       return null;
 
-    if (!isNil(username)) {
+    if (authorized) {
       return (
         <Dropdown
           className={cx(styles.box, styles.dropdown, 'meta-test__LogoutBtn')}
