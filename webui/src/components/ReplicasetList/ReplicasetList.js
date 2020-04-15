@@ -116,7 +116,22 @@ const styles = {
   `
 };
 
-const prepareReplicasetList = dataSource => [...dataSource].sort((a, b) => b.uuid < a.uuid ? 1 : -1);
+const prepareReplicasetList = dataSource => [...dataSource].sort((a, b) => {
+  let aValue = a.alias || '';
+  let bValue = b.alias || '';
+
+  if (aValue === bValue) {
+    aValue = a.servers[0].alias || '';
+    bValue = b.servers[0].alias || '';
+  }
+
+  if (aValue === bValue) {
+    aValue = a.uuid;
+    bValue = b.uuid;
+  }
+
+  return aValue < bValue ? -1 : 1;
+});
 
 class ReplicasetList extends React.PureComponent {
   state = {
