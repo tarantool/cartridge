@@ -326,6 +326,7 @@ class Code extends React.Component<CodeProps, CodeState> {
       <React.Fragment>
         <div
           className={cx(
+            'meta-test__Code',
             styles.area,
             { [styles.areaWithPane]: isDemoPanelPresent },
             className
@@ -353,7 +354,9 @@ class Code extends React.Component<CodeProps, CodeState> {
                 />
               </div>
             </div>
-            <Scrollbar className={styles.treeScrollWrap}>
+            <Scrollbar
+              className={cx('meta-test__Code__FileTree', styles.treeScrollWrap)}
+            >
               <FileTree
                 initiallyExpanded
                 tree={fileTree}
