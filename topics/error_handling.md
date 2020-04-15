@@ -71,11 +71,34 @@ stack traceback:
         [C]: in function 'pcall'
 ```
 
-
+Data included in exception object (exception type, message, traceback) may be easily converted to string using `tostring()` function.
 
 ## GraphQL 
 
 If error occurs, GraphQL returns the result that contains `errors` entry. GraphQL implemented in Cartridge additionally introduces `stack` and `class_name` extensions that originate from `errors` class object. As a result, all information about error provided by `errors` module is embedded in GraphQL response.  The rest is up to programmer. They must ensure correct error handling using tools from `errors` module. 
 
+If necessary, it is possible to provide additional error information with a help of `graphql_extensions`. 
+
+```lua
+local err = errors.new('SpecialError', 'I have some extra info in graphql_extensions!')
+err.graphql_extensions = {code = 403}
+```
+
+In such way code of this `SpecialError` will be placed in the `errors` entry of GraphQL response alongside with `stack` trace and `class_name`. 
+
+So, `graphql_extensions` is table that helps to specify error. Be sure not to use `io.tarantool.errors.stack` and `io.tarantool.errors.class_name` as key because values associated with them will be overwritten with `errors` object's `stack` and `class_name`. 
+
 ## HTTP
+
+In a nutshell `errors` object is a table. This means that it can be swiftly represented as a json. Such approach is used for handling errors via http
+
+```
+req.render_response({
+        status = http_code,
+        headers = {
+            ['content-type'] = "application/json; charset=utf-8"
+        },
+        body = json.encode(err),
+    })
+```
 
