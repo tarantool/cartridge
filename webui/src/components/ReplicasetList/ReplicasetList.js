@@ -130,9 +130,6 @@ const prepareReplicasetList = dataSource => [...dataSource].sort((a, b) => {
     bValue = b.uuid;
   }
 
-  if (aValue === '' || bValue === '') {
-    return aValue < bValue ? 1 : -1;
-  }
   return aValue < bValue ? -1 : 1;
 });
 
