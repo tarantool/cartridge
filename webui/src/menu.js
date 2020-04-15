@@ -11,6 +11,8 @@ import {
   type MenuItemType
 } from '@tarantool.io/ui-kit';
 
+const { tarantool_enterprise_core } = window;
+
 const matchPath = (path, link) => {
   if (path.length === 0)
     return false;
@@ -100,20 +102,29 @@ export const menuReducer = (state: MenuItemType[] = menuInitialState, { type, pa
 };
 
 const createMenuFilter = () => {
-  let isMenuVisible = false;
-  let hiddenPaths: string[] = [];
+
+  const generateFilter = (isMenuVisible: boolean, hiddenPaths: string[]) => (item: MenuItemType): boolean => {
+    if (!isMenuVisible || !item) return false;
+    return !hiddenPaths.some(i => i === item.path);
+  }
+
+  let unregisterCurrentFilter = null
+
+  const changeFilter = (filter: Function) => {
+    const unregisterFilter = tarantool_enterprise_core.pageFilter.registerFilter(filter)
+    // dispose current filter
+    if (unregisterCurrentFilter) {
+      unregisterCurrentFilter()
+    }
+    unregisterCurrentFilter = unregisterFilter
+  }
 
   return {
-    check(item: MenuItemType) {
-      if (!isMenuVisible || !item) return false;
-      return !hiddenPaths.some(i => i === item.path);
-    },
     set(newPaths: string[]): void {
-      hiddenPaths = newPaths;
-      isMenuVisible = true;
+      changeFilter(generateFilter(true, newPaths))
     },
     hideAll(): void {
-      isMenuVisible = false;
+      changeFilter(generateFilter(false, []))
     }
   }
 }
