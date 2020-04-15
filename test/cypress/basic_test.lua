@@ -177,8 +177,14 @@ function g.test_401()
         for _, route in ipairs(httpd.routes) do
             if route.path == '/admin/api' then
                 if route.method == 'POST' then
-                    route.sub = function()
-                        return {status = 401}
+                    local _sub = route.sub
+                    route.sub = function(req)
+                        cartridge.http_authorize_request(req)
+                        if cartridge.http_get_username() ~= 'admin' then
+                            return {status = 401}
+                        end
+
+                        return _sub(req)
                     end
                 end
             end

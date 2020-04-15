@@ -201,6 +201,7 @@ const SplashLogInForm = ({
   return loaded && authorizationRequired
     ? (
       <SplashModal
+        className='meta-test__LoginFormSplash'
         title='Authorization'
         subTitle='Please, input your credentials'
       >
