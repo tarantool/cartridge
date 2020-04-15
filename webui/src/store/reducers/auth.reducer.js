@@ -1,4 +1,5 @@
 import { isGraphqlAccessDeniedError, getGraphqlErrorMessage } from 'src/api/graphql';
+import { isNil } from 'ramda';
 
 import {
   APP_DATA_REQUEST_ERROR,
@@ -35,8 +36,8 @@ export function reducer(state = initialState, { type, payload, error }) {
       return {
         ...state,
         authorizationEnabled: payload.authParams.enabled || false,
-        authorized: !!payload.authParams.username,
-        username: payload.authParams.username || null,
+        authorized: !isNil(payload.authParams.username),
+        username: payload.authParams.username,
         loading: false,
         error: null
       };
@@ -64,7 +65,7 @@ export function reducer(state = initialState, { type, payload, error }) {
       return {
         ...state,
         authorized: payload.authorized,
-        username: payload.username || null,
+        username: payload.username,
         loading: false,
         error: payload.error || null,
         authModalVisible: state.authModalVisible && !payload.authorized

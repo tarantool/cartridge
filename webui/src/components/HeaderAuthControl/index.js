@@ -54,7 +54,7 @@ class HeaderAuthControl extends React.Component {
     if (!implements_check_password)
       return null;
 
-    if (username) {
+    if (authorized) {
       return (
         <Dropdown
           className={cx(styles.box, styles.dropdown, 'meta-test__LogoutBtn')}
