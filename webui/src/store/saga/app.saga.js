@@ -31,6 +31,14 @@ function* appDataRequestSaga() {
     let response;
     try {
       const clusterSelfResponse = yield call(getClusterSelf);
+      const { app_name, instance_name } = clusterSelfResponse.clusterSelf;
+
+      if (app_name || instance_name) {
+        window.tarantool_enterprise_core.dispatch(
+          'setAppName',
+          [app_name, instance_name].filter(i => i).join('.')
+        );
+      }
 
       const {
         implements_add_user,
