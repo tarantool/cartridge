@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [2.1.0] - 2020-04-16
+
 ### Added
 
 - Implement stateful failover mode. You can read more in "Failover
