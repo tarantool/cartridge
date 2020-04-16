@@ -250,6 +250,79 @@ function g.test_rollback()
 end
 
 
+function g.test_config_patch()
+    local test_sections = {
+        {filename = 'key1', content = 'aaa'},
+        {filename = 'key2', content = '45'}
+    }
+
+    t.assert_items_equals(set_sections(test_sections), test_sections)
+    t.assert_items_equals(get_sections({'key1', 'key2'}),  test_sections)
+
+    local test_section = {{filename = 'key1', content = 'bbb'}}
+    t.assert_equals(set_sections(test_section), test_section)
+    t.assert_items_equals(get_sections({'key1', 'key2'}),  {
+        {filename = 'key1', content = 'bbb'},
+        {filename = 'key2', content = '45'}
+    })
+
+    g.cluster.main_server.net_box:eval([[
+        _G.__key1_patcher = function(new_config, old_config)
+            local key1 = old_config:get_readonly('key1')
+            new_config:set_plaintext('key1', key1 .. new_config:get_readonly('key1'))
+            return new_config
+        end
+
+        _G.__key2_patcher = function(new_config, old_config)
+            local key2 = old_config:get_readonly('key2')
+            new_config:set_plaintext('key2', tostring(new_config:get_readonly('key2') + tonumber(key2)))
+            return new_config
+        end
+
+        require("cartridge.twophase").on_patch(__key1_patcher)
+        require("cartridge.twophase").on_patch(__key2_patcher)
+    ]])
+
+    local ret = set_sections({
+        {filename = 'key1', content = 'aaa'},
+        {filename = 'key2', content = '20'}
+    })
+    local expected_sections = {
+        {filename = 'key1', content = 'bbbaaa'},
+        {filename = 'key2', content = '65'}
+    }
+    t.assert_items_equals(ret, expected_sections)
+    t.assert_items_equals(get_sections({'key1', 'key2'}), expected_sections)
+
+    g.cluster.main_server.net_box:eval([[
+        require("cartridge.twophase").on_patch(nil, __key1_patcher)
+        require("cartridge.twophase").on_patch(nil, __key2_patcher)
+    ]])
+
+    local ret = set_sections({
+        {filename = 'key1', content = box.NULL},
+        {filename = 'key2', content = box.NULL}
+    })
+    t.assert_equals(ret, {})
+    t.assert_equals(get_sections({'key1', 'key2'}), {})
+
+    g.cluster.main_server.net_box:eval([[
+        _G.__patcher = function(new_config, old_config)
+            error('error raised')
+        end
+        require("cartridge.twophase").on_patch(__patcher)
+    ]])
+
+    t.assert_error_msg_contains('error raised',
+        set_sections, {{filename = 'key1', content = 'aaa'}}
+    )
+
+    g.cluster.main_server.net_box:eval([[
+        require("cartridge.twophase").on_patch(nil, __patcher)
+    ]])
+end
+
+
 local M = {}
 local function test_remotely(fn_name, fn)
     M[fn_name] = fn
