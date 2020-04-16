@@ -1,3 +1,5 @@
+require('strict').on()
+
 local fio = require('fio')
 local digest = require('digest')
 local helpers = table.copy(require('cartridge.test-helpers'))
