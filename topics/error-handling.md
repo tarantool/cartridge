@@ -1,8 +1,15 @@
 # Error handling guidelines
 
-## `errors`
+Almost all errors in Cartridge follow `return nil, err` style, where
+`err` is an error object produced by `errors`
+[module](https://github.com/tarantool/errors). Cartridge doesn't raise
+errors except for bugs and functions contracts mismatch. Developing new
+roles should follow these guidelines as well.
 
-The main tool of handling errors and exceptions in Tarantool is `errors` [module](https://github.com/tarantool/errors).   It allows you to create a specific error class which helps to locate the problem's source. For this purpose, exception object contains an exception type, stack traceback and a message.
+## Error objects in Lua
+
+Error classes help to locate the problem's source. For this purpose, an
+error object contains it's class, stack traceback and a message.
 
 ```lua
 local errors = require('errors')
@@ -32,10 +39,13 @@ stack traceback:
 For uniform error handling `errors` provides `pcall` API:
 
 ```lua
-print(DangerousError:pcall(some_fancy_function, 'what could possibly go wrong?'))
+local ret, err = DangerousError:pcall(
+    some_fancy_function, 'what could possibly go wrong?'
+)
+print(ret, err)
 ```
 
-```
+```text
 nil	DangerousError: Oh boy
 stack traceback:
 	test.lua:9: in function <test.lua:4>
@@ -49,7 +59,7 @@ stack traceback:
 print(DangerousError:pcall(error, 'what could possibly go wrong?'))
 ```
 
-```
+```text
 nil	DangerousError: what could possibly go wrong?
 stack traceback:
 	[C]: in function 'xpcall'
@@ -57,7 +67,9 @@ stack traceback:
 	test.lua:15: in main chunk
 ```
 
-However, `net.box` doesn't keep stack trace from the remote. In that case `errors.netbox_eval` comes to the rescue. It will find stack trace from local and remote hosts and restore metatables.
+Remote `net.box` calls don't keep stack trace from the remote. In that
+case `errors.netbox_eval` comes to the rescue. It will find stack trace
+from local and remote hosts and restore metatables.
 
 ```
 > conn = require('net.box').connect('localhost:3301')
@@ -71,34 +83,50 @@ stack traceback:
         [C]: in function 'pcall'
 ```
 
-Data included in exception object (exception type, message, traceback) may be easily converted to string using `tostring()` function.
+Data included in error object (class name, message, traceback)
+may be easily converted to string using `tostring()` function.
 
-## GraphQL 
+## GraphQL
 
-If error occurs, GraphQL returns the result that contains `errors` entry. GraphQL implemented in Cartridge additionally introduces `stack` and `class_name` extensions that originate from `errors` class object. As a result, all information about error provided by `errors` module is embedded in GraphQL response.  The rest is up to programmer. They must ensure correct error handling using tools from `errors` module. 
+GraphQL implementation in cartridge wraps `errors` module so a typical
+error responce looks as follows:
 
-If necessary, it is possible to provide additional error information with a help of `graphql_extensions`. 
+```json
+{
+    "errors":[{
+        "message":"what could possibly go wrong?",
+        "extensions":{
+            "io.tarantool.errors.stack":"stack traceback: ...",
+            "io.tarantool.errors.class_name":"DangerousError"
+        }
+    }]
+}
+```
+
+Read more about errors in GraphQL specification
+[here](http://spec.graphql.org/draft/#sec-Errors.Error-result-format).
+
+If you're going to implement GraphQL handler, you can add your own
+extension like this:
 
 ```lua
-local err = errors.new('SpecialError', 'I have some extra info in graphql_extensions!')
+local err = DangerousError:new('I have extension')
 err.graphql_extensions = {code = 403}
 ```
 
-In such way code of this `SpecialError` will be placed in the `errors` entry of GraphQL response alongside with `stack` trace and `class_name`. 
-
-So, `graphql_extensions` is table that helps to specify error. Be sure not to use `io.tarantool.errors.stack` and `io.tarantool.errors.class_name` as key because values associated with them will be overwritten with `errors` object's `stack` and `class_name`. 
-
 ## HTTP
 
-In a nutshell `errors` object is a table. This means that it can be swiftly represented as a json. Such approach is used for handling errors via http
+In a nutshell `errors` object is a table. This means that it can be
+swiftly represented as a json. Such approach is used by Cartridge to
+handle errors via http:
 
 ```
 req.render_response({
-        status = http_code,
-        headers = {
-            ['content-type'] = "application/json; charset=utf-8"
-        },
-        body = json.encode(err),
-    })
+    status = 500,
+    headers = {
+        ['content-type'] = "application/json; charset=utf-8"
+    },
+    body = json.encode(err),
+})
 ```
 
