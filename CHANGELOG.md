@@ -8,30 +8,20 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
-- Show "You are here" marker in webui.
+- Implement stateful failover mode. You can read more in "Failover
+  architecture" documentation topic (see `failover.md`).
 
 - Respect `box.cfg` options `wal_dir`, `memtx_dir`, `vinyl_dir`. They
   can be either absolute or relative - in the later case it's calculated
   relative to `cartridge.workdir`.
 
-- Implement stateful failover mode.
-
-- Add new field GraphQL field `cluster{ issues {topic} }` and extend
-  list of inspected topics with `replication`, `failover`, `memory`, `clock`.
-
-- Make issues thresholds configurable via argparse.
-
 - New option in `cartridge.cfg({upgrade_schema=...})`
   to automatically upgrade schema to modern tarantool version
   (only for leader). It also has been added for `argparse`.
 
-- Indicate replication and failover issues in WebUI.
-
-- Indicate memory fragmentation level in WebUI.
-
-- Failover leader promotion.
-
-- Show application and instance names in app title.
+- Extend GraphQL `issues` API with various topics: `replication`,
+  `failover`, `memory`, `clock`. Make thresholds configurable via
+  argparse.
 
 ### Changed
 
@@ -40,14 +30,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   non-nullable arguments in variable list is forbidden. Your code **may
   be affected** if it doesn't conform GraphQL specification.
 
-- auth_params graphql endpoint returns "fullname" (if it was specified)
+- GraphQL query `auth_params` returns "fullname" (if it was specified)
   instead of "username".
 
 - Update `errors` dependency to 2.1.3.
 
 - Update `ddl` dependency to 1.1.0.
-
-- Refactor frontend menu filter API with new version of frontend-core module
 
 ### Deprecated
 
@@ -70,12 +58,23 @@ mutation($uuid: String!) {
 }
 ```
 
-- Fix bug in GraphQL query `cluster {issues {...} }` on uninitialized
-  instance.
-
 - Show WebUI notification on successful config upload.
 
-- Fix `add_user` on uninitialized instance
+- Repair GraphQL queries `add_user`, `issues` on uninitialized instance.
+
+### Enhanced in WebUI
+
+- Show "You are here" marker.
+
+- Show application and instance names in app title.
+
+- Indicate replication and failover issues.
+
+- Fix bug with multiple menu items selected.
+
+- Refactor pages filtering, forbid opening blacklisted pages.
+
+- Enable JS chunks caching.
 
 ## [2.0.2] - 2020-03-17
 
