@@ -1,7 +1,7 @@
 // @flow
 // TODO: move to uikit
 import * as React from 'react';
-import { css } from 'react-emotion';
+import { css, cx } from 'react-emotion';
 import {
   HealthStatus,
   IconGeoPin,
@@ -60,7 +60,7 @@ export default class ServerShortInfo extends React.PureComponent<ServerShortInfo
     } = this.props;
 
     return (
-      <div className={styles.item, 'meta-test__serverShortInfoModal'}>
+      <div className={cx(styles.item, 'meta-test__serverShortInfoModal')}>
         <div className={styles.row}>
           {(master || activeMaster) && (
             <LeaderFlag className={styles.leaderFlag} fail={status !== 'healthy'} />
