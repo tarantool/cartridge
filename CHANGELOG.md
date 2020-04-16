@@ -8,7 +8,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
-- Implement stateful failover mode.
+- Implement stateful failover mode. You can read more in "Failover
+  architecture" documentation topic (see `failover.md`).
 
 - Respect `box.cfg` options `wal_dir`, `memtx_dir`, `vinyl_dir`. They
   can be either absolute or relative - in the later case it's calculated
