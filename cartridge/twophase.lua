@@ -237,13 +237,7 @@ local function _clusterwide(patch)
     end
 
     for trigger, _ in pairs(vars.on_patch_triggers) do
-        local _, err = PatchClusterwideError:pcall(trigger,
-            clusterwide_config_new,
-            clusterwide_config_old
-        )
-        if err ~= nil then
-            return nil, err
-        end
+        trigger(clusterwide_config_new, clusterwide_config_old)
     end
 
     local _, err = clusterwide_config_new:update_luatables()
@@ -466,6 +460,8 @@ end
 -- - `conf_old` (`ClusterWideConfig`)
 --
 -- It is allowed to modify `conf_new`, but not `conf_old`.
+-- Return values are ignored. If calling a trigger raises an error,
+-- `patch_clusterwide` returns it as `nil, err`.
 --
 -- (**Added** in v2.1.0-4)
 --
