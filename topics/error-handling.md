@@ -120,7 +120,7 @@ In a nutshell `errors` object is a table. This means that it can be
 swiftly represented as a json. Such approach is used by Cartridge to
 handle errors via http:
 
-```
+```lua
 req.render_response({
     status = 500,
     headers = {
