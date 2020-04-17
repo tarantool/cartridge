@@ -250,6 +250,47 @@ function g.test_rollback()
 end
 
 
+function g.test_on_patch_trigger()
+    g.cluster.main_server.net_box:eval([[
+        _G.__trigger = function(conf_new, conf_old)
+            error(conf_new:get_readonly('e.txt'), 0)
+        end
+
+        require("cartridge.twophase").on_patch(__trigger)
+    ]])
+
+    t.assert_error_msg_contains('Boom!',
+        set_sections, {{filename = 'e.txt', content = 'Boom!'}}
+    )
+
+    g.cluster.main_server.net_box:eval([[
+        require("cartridge.twophase").on_patch(nil, __trigger)
+
+        _G.__trigger = function(conf_new, conf_old)
+            local txt = conf_new:get_readonly('i.txt')
+            local i = tonumber(txt) or 0
+            conf_new:set_plaintext('i.txt', tostring(i + 1))
+        end
+
+        require("cartridge.twophase").on_patch(__trigger)
+        require("cartridge.twophase").on_patch(function(...)
+            _G.__trigger(...)
+            return 'nobody', 'checks', 'return', 'values'
+        end)
+    ]])
+
+    t.assert_items_equals(
+        set_sections({{filename = 'i.txt', content = ''}}),
+        {{filename = 'i.txt', content = '2'}}
+    )
+    t.assert_items_equals(set_sections({}), {})
+    t.assert_items_equals(
+        get_sections({'i.txt'}),
+        {{filename = 'i.txt', content = '4'}}
+    )
+end
+
+
 local M = {}
 local function test_remotely(fn_name, fn)
     M[fn_name] = fn

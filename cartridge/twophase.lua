@@ -34,6 +34,7 @@ yaml.cfg({
 
 vars:new('locks', {})
 vars:new('prepared_config', nil)
+vars:new('on_patch_triggers', {})
 
 --- Two-phase commit - preparation stage.
 --
@@ -233,6 +234,10 @@ local function _clusterwide(patch)
 
             clusterwide_config_new:set_plaintext(k, yaml.encode(v))
         end
+    end
+
+    for trigger, _ in pairs(vars.on_patch_triggers) do
+        trigger(clusterwide_config_new, clusterwide_config_old)
     end
 
     local _, err = clusterwide_config_new:update_luatables()
@@ -443,6 +448,46 @@ local function set_schema(schema_yml)
     return get_schema()
 end
 
+--- Set up trigger for for patch_clusterwide.
+--
+-- It will be executed **before** new new config applied.
+--
+-- If the parameters are `(nil, old_trigger)`, then the old trigger is
+-- deleted.
+--
+-- The trigger function is called with two argument:
+-- - `conf_new` (`ClusterwideConfig`)
+-- - `conf_old` (`ClusterWideConfig`)
+--
+-- It is allowed to modify `conf_new`, but not `conf_old`.
+-- Return values are ignored. If calling a trigger raises an error,
+-- `patch_clusterwide` returns it as `nil, err`.
+--
+-- (**Added** in v2.1.0-4)
+--
+-- @usage
+--    local function inject_data(conf_new, _)
+--        local data_yml = yaml.encode({foo = 'bar'})
+--        conf_new:set_plaintext('data.yml', data_yml)
+--    end)
+--
+--    twophase.on_patch(inject_data) -- set custom patch modifier trigger
+--    twophase.on_patch(nil, inject_data) -- drop trigger
+--
+-- @function on_patch
+-- @tparam function trigger_new
+-- @tparam function trigger_old
+local function on_patch(trigger_new, trigger_old)
+    checks('?function', '?function')
+    if trigger_old ~= nil then
+        vars.on_patch_triggers[trigger_old] = nil
+    end
+    if trigger_new ~= nil then
+        vars.on_patch_triggers[trigger_new] = true
+    end
+    return trigger_new
+end
+
 _G.__cartridge_clusterwide_config_prepare_2pc = function(...) return errors.pcall('E', prepare_2pc, ...) end
 _G.__cartridge_clusterwide_config_commit_2pc = function(...) return errors.pcall('E', commit_2pc, ...) end
 _G.__cartridge_clusterwide_config_abort_2pc = function(...) return errors.pcall('E', abort_2pc, ...) end
@@ -465,6 +510,7 @@ _G.__cluster_confapplier_commit_2pc = function(...) return errors.pcall('E', com
 _G.__cluster_confapplier_abort_2pc = function(...) return errors.pcall('E', abort_2pc, ...) end
 
 return {
+    on_patch = on_patch,
     get_schema = get_schema,
     set_schema = set_schema,
     patch_clusterwide = patch_clusterwide,
