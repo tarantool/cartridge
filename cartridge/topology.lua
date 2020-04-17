@@ -7,7 +7,6 @@
 
 local fun = require('fun')
 -- local log = require('log')
-local uri = require('uri')
 local checks = require('checks')
 local errors = require('errors')
 local membership = require('membership')

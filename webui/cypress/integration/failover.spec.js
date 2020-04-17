@@ -47,7 +47,7 @@ describe('Failover', () => {
 
     cy.get('.meta-test__SubmitButton').click();
     cy.get('.meta-test__FailoverModal')
-      .contains('topology_new.failover.tarantool_params.uri invalid URI ""')
+      .contains('topology_new.failover.tarantool_params.uri: Invalid URI ""')
       .trigger('keydown', { keyCode: 27, which: 27 });
     cy.get('.meta-test__FailoverButton').contains('Failover: eventual');
     cy.get('.meta-test__ClusterIssuesButton').should('be.disabled');
