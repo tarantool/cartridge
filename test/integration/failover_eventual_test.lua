@@ -290,7 +290,7 @@ g.test_api_failover = function()
         set_failover_params, {mode = 'stateful'}
     )
     t.assert_error_msg_equals(
-        'topology_new.failover.tarantool_params.uri invalid URI "!@#$"',
+        'topology_new.failover.tarantool_params.uri: Invalid URI "!@#$"',
         set_failover_params, {tarantool_params = {uri = '!@#$', password = 'xxx'}}
     )
     t.assert_error_msg_contains(
