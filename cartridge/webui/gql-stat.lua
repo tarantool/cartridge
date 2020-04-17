@@ -1,5 +1,3 @@
-#!/usr/bin/env tarantool
-
 local pool = require('cartridge.pool')
 local gql_types = require('cartridge.graphql.types')
 local lua_api_stat = require('cartridge.lua-api.stat')

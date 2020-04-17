@@ -1,5 +1,3 @@
-#!/usr/bin/env tarantool
-
 --- Administrators authentication and authorization.
 --
 -- @module cartridge.auth

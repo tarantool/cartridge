@@ -1,4 +1,3 @@
-#!/usr/bin/env tarantool
 -- luacheck: ignore _it
 
 local fun = require('fun')

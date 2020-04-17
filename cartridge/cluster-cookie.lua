@@ -1,5 +1,3 @@
-#!/usr/bin/env tarantool
-
 local os = require('os')
 local fio = require('fio')
 local errno = require('errno')

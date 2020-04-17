@@ -1,5 +1,3 @@
-#!/usr/bin/env tarantool
-
 --- Inter-role interaction.
 --
 -- These functions make

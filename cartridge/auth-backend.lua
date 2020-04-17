@@ -1,5 +1,3 @@
-#!/usr/bin/env tarantool
-
 local fiber = require('fiber')
 local cartridge = require('cartridge')
 local checks = require('checks')

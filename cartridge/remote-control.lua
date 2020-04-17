@@ -1,5 +1,3 @@
-#!/usr/bin/env tarantool
-
 --- Tarantool remote control server.
 --
 -- Allows to control an instance over TCP by `net.box` `call` and `eval`.

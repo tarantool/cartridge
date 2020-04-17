@@ -1,5 +1,3 @@
-#!/usr/bin/env tarantool
-
 --- Configuration management primitives.
 --
 -- Implements the internal state machine which helps to manage cluster

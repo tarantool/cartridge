@@ -1,5 +1,3 @@
-#!/usr/bin/env tarantool
-
 local _ = require('cartridge.issues')
 local gql_types = require('cartridge.graphql.types')
 

@@ -1,5 +1,3 @@
-#!/usr/bin/env tarantool
-
 local log = require('log')
 local ddl = require('ddl')
 local yaml = require('yaml')

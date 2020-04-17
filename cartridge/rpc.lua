@@ -1,5 +1,3 @@
-#!/usr/bin/env tarantool
-
 --- Remote procedure calls between cluster instances.
 --
 -- @module cartridge.rpc

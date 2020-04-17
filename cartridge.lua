@@ -1,5 +1,3 @@
-#!/usr/bin/env tarantool
-
 --- Tarantool framework for distributed applications development.
 --
 -- Cartridge provides you a simple way

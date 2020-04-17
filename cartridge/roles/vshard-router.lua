@@ -1,5 +1,3 @@
-#!/usr/bin/env tarantool
-
 local log = require('log')
 local vshard = require('vshard')
 local checks = require('checks')
