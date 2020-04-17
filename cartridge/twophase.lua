@@ -1,5 +1,3 @@
-#!/usr/bin/env tarantool
-
 --- Clusterwide configuration propagation two-phase algorithm.
 --
 -- (**Added** in v1.2.0-19)

@@ -1,4 +1,3 @@
-#!/usr/bin/env tarantool
 -- luacheck: ignore _it
 
 --- Topology validation and filtering.

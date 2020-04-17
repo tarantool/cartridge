@@ -1,5 +1,3 @@
-#!/usr/bin/env tarantool
-
 --- Role management (internal module).
 --
 -- The module consolidates all the role management functions:

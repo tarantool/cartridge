@@ -1,5 +1,3 @@
-#!/usr/bin/env tarantool
-
 local checks = require('checks')
 local errors = require('errors')
 

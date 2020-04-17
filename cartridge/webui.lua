@@ -1,6 +1,3 @@
-#!/usr/bin/env tarantool
-
--- local log = require('log')
 local front = require('frontend-core')
 
 local vars = require('cartridge.vars').new('cartridge.webui')

@@ -1,5 +1,3 @@
-#!/usr/bin/env tarantool
-
 --- The abstraction, representing clusterwide configuration.
 --
 -- Clusterwide configuration is more than just a lua table. It's an

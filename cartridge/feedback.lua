@@ -1,5 +1,3 @@
-#!/usr/bin/env tarantool
-
 local log   = require('log')
 local json  = require('json')
 local fiber = require('fiber')

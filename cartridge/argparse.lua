@@ -1,5 +1,3 @@
-#!/usr/bin/env tarantool
-
 --- Gather configuration options.
 --
 -- The module tries to read configuration options from multiple sources

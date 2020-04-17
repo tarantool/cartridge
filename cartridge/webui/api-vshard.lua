@@ -1,5 +1,3 @@
-#!/usr/bin/env tarantool
-
 local gql_types = require('cartridge.graphql.types')
 local vshard_utils = require('cartridge.vshard-utils')
 local _ = require('cartridge.lua-api.vshard')

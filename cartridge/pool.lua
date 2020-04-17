@@ -1,5 +1,3 @@
-#!/usr/bin/env tarantool
-
 --- Connection pool.
 --
 -- Reuse tarantool net.box connections with ease.

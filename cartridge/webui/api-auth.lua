@@ -1,5 +1,3 @@
-#!/usr/bin/env tarantool
-
 local errors = require('errors')
 
 local auth = require('cartridge.auth')

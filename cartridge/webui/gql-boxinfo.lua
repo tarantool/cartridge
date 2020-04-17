@@ -1,5 +1,3 @@
-#!/usr/bin/env tarantool
-
 local gql_types = require('cartridge.graphql.types')
 local lua_api_boxinfo = require('cartridge.lua-api.boxinfo')
 

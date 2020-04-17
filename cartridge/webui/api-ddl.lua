@@ -1,5 +1,3 @@
-#!/usr/bin/env tarantool
-
 local yaml = require('yaml')
 local errors = require('errors')
 local netbox = require('net.box')

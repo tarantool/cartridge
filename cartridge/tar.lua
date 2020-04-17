@@ -1,5 +1,3 @@
-#!/usr/bin/env tarantool
-
 --- Handle basic tar format.
 --
 -- <http://www.gnu.org/software/tar/manual/html_node/Standard.html>
