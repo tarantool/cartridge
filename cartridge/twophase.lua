@@ -34,7 +34,7 @@ yaml.cfg({
 
 vars:new('locks', {})
 vars:new('prepared_config', nil)
-vars:new('on_config_apply', {})
+vars:new('on_patch_triggers', {})
 
 --- Two-phase commit - preparation stage.
 --
@@ -236,9 +236,10 @@ local function _clusterwide(patch)
         end
     end
 
-    for trigger, _ in pairs(vars.on_config_apply) do
-        local _, err = PatchClusterwideError:pcall(
-            trigger, clusterwide_config_new, clusterwide_config_old
+    for trigger, _ in pairs(vars.on_patch_triggers) do
+        local _, err = PatchClusterwideError:pcall(trigger,
+            clusterwide_config_new,
+            clusterwide_config_old
         )
         if err ~= nil then
             return nil, err
@@ -453,29 +454,29 @@ local function set_schema(schema_yml)
     return get_schema()
 end
 
-
 --- Set up trigger for for patch_clusterwide.
 --
 -- It will be executed **before** new new config applied.
 --
--- The trigger function is called with two argument:
--- - `conf_new` (*table*): 'new ClusterWideConfig',
--- - `conf_old` (*table*): 'old ClusterWideConfig'.
---
 -- If the parameters are `(nil, old_trigger)`, then the old trigger is
 -- deleted.
 --
--- (**Added** in v2.1.0-1)
+-- The trigger function is called with two argument:
+-- - `conf_new` (`ClusterwideConfig`)
+-- - `conf_old` (`ClusterWideConfig`)
+--
+-- It is allowed to modify `conf_new`, but not `conf_old`.
+--
+-- (**Added** in v2.1.0-4)
 --
 -- @usage
---    local function update_string_data(conf_new, conf_old)
---        local old_data = config.get_readonly('data')
---        conf_new:set_plaintext('data' old_data .. conf_new:get_readonly('data'))
---        return patch
+--    local function inject_data(conf_new, _)
+--        local data_yml = yaml.encode({foo = 'bar'})
+--        conf_new:set_plaintext('data.yml', data_yml)
 --    end)
 --
---    twophase.on_patch(update_string_data) -- set custom patch modifier trigger
---    twophase.on_patch(nil, update_string_data) -- drop trigger
+--    twophase.on_patch(inject_data) -- set custom patch modifier trigger
+--    twophase.on_patch(nil, inject_data) -- drop trigger
 --
 -- @function on_patch
 -- @tparam function trigger_new
@@ -483,10 +484,10 @@ end
 local function on_patch(trigger_new, trigger_old)
     checks('?function', '?function')
     if trigger_old ~= nil then
-        vars.on_config_apply[trigger_old] = nil
+        vars.on_patch_triggers[trigger_old] = nil
     end
     if trigger_new ~= nil then
-        vars.on_config_apply[trigger_new] = true
+        vars.on_patch_triggers[trigger_new] = true
     end
     return trigger_new
 end
