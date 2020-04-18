@@ -182,22 +182,23 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
           </RadioButton>
         </FormField>
         <div className={styles.inputs}>
-          <LabeledInput className={styles.inputField} label='State provider URI'>
-            <Input
-              className='meta-test__stateboardURI'
-              value={uri}
-              disabled={mode !== 'stateful'}
-              onChange={this.handleURIChange}
-            />
-          </LabeledInput>
-          <LabeledInput className={styles.inputField} label='Password'>
-            <InputPassword
-              className='meta-test__stateboardPassword'
-              value={password}
-              disabled={mode !== 'stateful'}
-              onChange={this.handlePasswordChange}
-            />
-          </LabeledInput>
+          <LabeledInput
+            className={styles.inputField}
+            label='State provider URI'
+            inputClassName='meta-test__stateboardURI'
+            value={uri}
+            disabled={mode !== 'stateful'}
+            onChange={this.handleURIChange}
+          />
+          <LabeledInput
+            className={styles.inputField}
+            label='Password'
+            inputComponent={InputPassword}
+            inputClassName='meta-test__stateboardPassword'
+            value={password}
+            disabled={mode !== 'stateful'}
+            onChange={this.handlePasswordChange}
+          />
         </div>
         {error && (
           <Alert type="error">

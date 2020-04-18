@@ -82,6 +82,7 @@ const SortableContainer = sortableContainer(({ children, className = '' }) => {
 
 export const ServerSortableList = ({
   failoverMode,
+  itemClassName,
   onChange,
   value,
   key,
@@ -100,6 +101,7 @@ export const ServerSortableList = ({
     >
       {items.map((item, index) => (
         <SortableItem
+          className={itemClassName}
           key={item[key]}
           num={index}
           index={index}
