@@ -234,6 +234,19 @@ g.test_auth_backend = function()
     )
 end
 
+g.test_console_sock = function()
+    g.mock_membership()
+    check_error('Length of console_sock is more than UNIX_PATH_MAX',
+        cartridge.cfg, {
+            workdir = '/tmp',
+            advertise_uri = 'unused:0',
+            http_enabled = false,
+            roles = {},
+            console_sock = string.format('%s/%s.sock', g.tempdir, ('a'):rep(108))
+        }
+    )
+end
+
 -- ok -------------------------------------------------------------------------
 -------------------------------------------------------------------------------
 

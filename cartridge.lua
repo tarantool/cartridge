@@ -576,9 +576,13 @@ local function cfg(opts, box_opts)
 
     if opts.console_sock ~= nil then
         local console = require('console')
-        local ok, err = CartridgeCfgError:pcall(console.listen, 'unix/:' .. opts.console_sock)
-        if not ok then
+        local sock, err = CartridgeCfgError:pcall(console.listen, 'unix/:' .. opts.console_sock)
+        if not sock then
             return nil, err
+        end
+
+        if #sock:name().port < #opts.console_sock then
+            return nil, CartridgeCfgError:new('Length of console_sock is more than UNIX_PATH_MAX')
         end
     end
 
