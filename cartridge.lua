@@ -585,7 +585,7 @@ local function cfg(opts, box_opts)
         if #unix_port < #opts.console_sock then
             sock:close()
             fio.unlink(unix_port)
-            return nil, CartridgeCfgError:new('Length of console_sock is more than UNIX_PATH_MAX')
+            return nil, CartridgeCfgError:new('Too long console_sock exceeds UNIX_PATH_MAX limit')
         end
     end
 
