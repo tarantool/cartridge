@@ -1,8 +1,8 @@
 # Error handling guidelines
 
 Almost all errors in Cartridge follow `return nil, err` style, where
-`err` is an error object produced by `errors`
-[`errors`](https://github.com/tarantool/errors) module+. Cartridge
+`err` is an error object produced by
+[`errors`](https://github.com/tarantool/errors) module. Cartridge
 doesn't raise errors except for bugs and functions contracts mismatch.
 Developing new roles should follow these guidelines as well.
 
@@ -52,7 +52,6 @@ stack traceback:
 	[C]: in function 'xpcall'
 	.rocks/share/tarantool/errors.lua:139: in function 'pcall'
 	test.lua:15: in main chunk
-
 ```
 
 ```lua
