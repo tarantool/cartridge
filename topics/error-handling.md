@@ -39,9 +39,7 @@ stack traceback:
 For uniform error handling `errors` provides `:pcall` API:
 
 ```lua
-local ret, err = DangerousError:pcall(
-    some_fancy_function, 'what could possibly go wrong?'
-)
+local ret, err = DangerousError:pcall(some_fancy_function)
 print(ret, err)
 ```
 
@@ -66,10 +64,10 @@ stack traceback:
 	test.lua:15: in main chunk
 ```
 
-For `errors` `:pcall` there is no difference between `return nil, err`
-and `error(err)` approaches.
+For `errors.pcall` there is no difference between `return nil, err` and
+`error()` approaches.
 
-Note that `errors` `:pcall` API differs from vanilla lua
+Note that `errors.pcall` API differs from vanilla lua
 [`pcall`](https://www.lua.org/pil/8.4.html). Instead of `true` former
 returns values returned from the call. If there is error, it returns
 `nil` instead of `false`, plus error message.

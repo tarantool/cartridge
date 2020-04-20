@@ -34,6 +34,7 @@ file = {
 topics = {
     "CHANGELOG.md",
     "topics/failover.md",
+    "topics/error-handling.md",
 }
 
 -- luacheck: globals format
