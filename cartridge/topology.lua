@@ -6,7 +6,6 @@
 
 local fun = require('fun')
 -- local log = require('log')
-local uri = require('uri')
 local checks = require('checks')
 local errors = require('errors')
 local membership = require('membership')
@@ -368,17 +367,11 @@ local function validate_failover_schema(field, topology)
                 field, type(params.uri)
             )
 
-            local parts = uri.parse(params.uri)
+            local _, err = pool.format_uri(params.uri)
             e_config:assert(
-                type(parts) == 'table',
-                '%s.uri invalid URI %q',
-                field, params.uri
-            )
-
-            e_config:assert(
-                parts.service ~= nil,
-                '%s.uri invalid URI %q (missing port)',
-                field, params.uri
+                not err,
+                '%s.uri: %s',
+                field, err and err.err
             )
 
             e_config:assert(

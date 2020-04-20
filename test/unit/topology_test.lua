@@ -168,7 +168,7 @@ failover:
 ...]])
 
 
-    check_config('topology_new.failover.tarantool_params.uri invalid URI ":-0"',
+    check_config('topology_new.failover.tarantool_params.uri: Invalid URI ":-0"',
 [[---
 failover:
   mode: eventual
@@ -182,7 +182,7 @@ failover:
   state_provider: tarantool
 ...]])
 
-    check_config('topology_new.failover.tarantool_params.uri invalid URI "localhost" (missing port)',
+    check_config('topology_new.failover.tarantool_params.uri: Invalid URI "localhost" (missing port)',
 [[---
 failover:
   mode: eventual
