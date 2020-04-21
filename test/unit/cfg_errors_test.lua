@@ -234,6 +234,24 @@ g.test_auth_backend = function()
     )
 end
 
+g.test_console_sock = function()
+    g.mock_membership()
+
+    local sock_dir = fio.pathjoin(g.tempdir, 'sock')
+    fio.mktree(sock_dir)
+
+    check_error('Too long console_sock exceeds UNIX_PATH_MAX limit',
+        cartridge.cfg, {
+            workdir = '/tmp',
+            advertise_uri = 'unused:0',
+            http_enabled = false,
+            roles = {},
+            console_sock = string.format('%s/%s.sock', sock_dir, ('a'):rep(110)),
+        }
+    )
+    t.assert_equals(fio.listdir(sock_dir), {})
+end
+
 -- ok -------------------------------------------------------------------------
 -------------------------------------------------------------------------------
 
