@@ -1,18 +1,16 @@
 # Cluster configuration
 
-`Cartridge` orchestrates a distributed system of Tarantool instances - a
-cluster. One of the core concepts is a clusterwide configuration. Every
-instance in clsuter stores a copy of it. `Cartridge` manages it to be
-identical everywhere by two-phase commit algorithm.
+Cartridge orchestrates a distributed system of Tarantool instances - a
+cluster. One of the core concepts is a **clusterwide configuration**.
+Every instance in clsuter stores a copy of it. Cartridge manages it to
+be identical everywhere by two-phase commit algorithm.
 
-`Cartridge` configuration is a Lua object `ClusterWideConfig` in terms
-of OOP programming. This object used for disturbed cluster
-configuration and contains necessary cluster information, such as:
+Clusterwide configuration contains the options that must be identical on
+every cluster node, such as topology of the cluster, failover and vshard
+configuration, authentication params and ACLs, and user-defined config.
 
-- topology,
-- DDL schema,
-- vshard configuration,
-- authentication params and ACLs.
+Clusterwide configuration doesn't provide instance specific parameters:
+ports, workdirs, memory settings etc.
 
 # Clusterwide config managment
 
