@@ -7,6 +7,7 @@ local socket = require('socket')
 local pickle = require('pickle')
 local netbox = require('net.box')
 local msgpack = require('msgpack')
+local tarantool = require('tarantool')
 local remote_control = require('cartridge.remote-control')
 local helpers = require('luatest.helpers')
 local errno = require('errno')
@@ -205,8 +206,8 @@ function g.test_late_accept()
 
     local ok, conn_3 = f:join()
     t.assert_equals(ok, true)
-    t.assert_equals({conn_1.state, conn_1.error}, {"error", "Peer closed"})
-    t.assert_equals({conn_3.state, conn_3.error}, {"error", "Peer closed"})
+    t.assert_equals({conn_1.state, conn_1.error}, {"error", "Invalid greeting"})
+    t.assert_equals({conn_3.state, conn_3.error}, {"error", "Invalid greeting"})
 
     --------------------------------------------------------------------
     local conn_4 = netbox.connect(url, {wait_connected = false})
@@ -812,4 +813,35 @@ function g.test_reconnect()
             state = 'active',
         })
     end)
+end
+
+function g.test_socket_gc()
+    local ok, err = remote_control.bind('127.0.0.1', 13301)
+    t.assert_equals(err, nil)
+    t.assert_equals(ok, true)
+
+    local function fdcnt()
+        local pid = tarantool.pid()
+        local procfd = fio.pathjoin('/proc', tostring(pid), 'fd')
+        -- Subtract 1 fd allocated by `opendir` syscall
+        return #fio.listdir(procfd) - 1
+    end
+
+    local initial_fdcnt = fdcnt()
+
+    for i = 1, 16 do
+        local s = socket.tcp_connect('127.0.0.1', 13301)
+        t.assert(s, string.format('socket #%s: %s', i, errno.strerror()))
+        s:close()
+        require('fiber').sleep(0)
+    end
+
+    -- One socket still remains in CLOSE_WAIT state
+    t.assert_equals(fdcnt(), initial_fdcnt+1)
+
+    remote_control.accept({username = username, password = password})
+    require('fiber').sleep(0)
+
+    -- It disappears after accept()
+    t.assert_equals(fdcnt(), initial_fdcnt)
 end
