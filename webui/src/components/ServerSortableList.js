@@ -66,12 +66,12 @@ const styles = {
 }
 
 const SortableItem = sortableElement(({ item, isLeader, selfURI }) =>
-  <div className={styles.sortableItem}>
+  <div className={cx(styles.sortableItem, 'meta-test__FailoverServerList')}>
     <Text className={styles.alias} tag='div'>
       <IconBurger className={styles.iconMargin} />
       {item.alias || item.uuid}
     </Text>
-    {isLeader ? <LeaderFlagSmall className={styles.leaderFlag} /> : null}
+    {isLeader ? <LeaderFlagSmall className={cx(styles.leaderFlag, 'meta-test__LeaderFlag')} /> : null}
     <UriLabel className={styles.serverUriWrap} uri={item.uri} icon={selfURI && item.uri === selfURI && IconGeoPin} />
   </div>
 );
