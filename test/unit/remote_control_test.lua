@@ -2,6 +2,7 @@ local t = require('luatest')
 local g = t.group()
 
 local fio = require('fio')
+local fiber = require('fiber')
 local digest = require('digest')
 local socket = require('socket')
 local pickle = require('pickle')
@@ -191,7 +192,6 @@ function g.test_late_accept()
     t.assert_equals(ok, true)
     local url = 'superuser:3.141592@localhost:13301'
 
-    local fiber = require('fiber')
     local f = fiber.new(netbox.connect, url)
     f:name('netbox_connect')
     f:set_joinable(true)
@@ -833,14 +833,14 @@ function g.test_socket_gc()
         local s = socket.tcp_connect('127.0.0.1', 13301)
         t.assert(s, string.format('socket #%s: %s', i, errno.strerror()))
         s:close()
-        require('fiber').sleep(0)
+        fiber.sleep(0)
     end
 
     -- One socket still remains in CLOSE_WAIT state
     t.assert_equals(fdcnt(), initial_fdcnt+1)
 
     remote_control.accept({username = username, password = password})
-    require('fiber').sleep(0)
+    fiber.sleep(0)
 
     -- It disappears after accept()
     t.assert_equals(fdcnt(), initial_fdcnt)
