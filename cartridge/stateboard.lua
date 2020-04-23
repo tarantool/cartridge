@@ -157,7 +157,13 @@ local function cfg()
         error(err, 0)
     end
 
-    box.cfg({ work_dir = opts.workdir })
+    local box_opts, err = argparse.get_box_opts()
+    if err ~= nil then
+        error('Configuration error: ' .. tostring(err), 0)
+    end
+    box_opts.work_dir = opts.workdir
+
+    box.cfg(box_opts)
 
     if opts.console_sock ~= nil then
         local sock = console.listen('unix/:' .. opts.console_sock)
