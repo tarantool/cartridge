@@ -3,6 +3,7 @@ local fio = require('fio')
 local clock = require('clock')
 local fiber = require('fiber')
 local checks = require('checks')
+local console = require('console')
 local argparse = require('cartridge.argparse')
 
 local LOCK_DELAY
@@ -135,6 +136,7 @@ local function cfg()
         workdir = 'string',
         password = 'string',
         lock_delay = 'number',
+        console_sock = 'string'
     })
 
     if err ~= nil then
@@ -156,6 +158,16 @@ local function cfg()
     end
 
     box.cfg({ work_dir = opts.workdir })
+
+    if opts.console_sock ~= nil then
+        local sock = console.listen('unix/:' .. opts.console_sock)
+        local unix_port = sock:name().port
+        if #unix_port < #opts.console_sock then
+            sock:close()
+            fio.unlink(unix_port)
+            error('Too long console_sock exceeds UNIX_PATH_MAX limit')
+        end
+    end
 
     ------------------------------------------------------------------------
 

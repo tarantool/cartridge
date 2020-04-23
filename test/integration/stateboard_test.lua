@@ -23,6 +23,7 @@ g.before_each(function()
         env = {
             TARANTOOL_PASSWORD = password,
             TARANTOOL_LOCK_DELAY = 40,
+            TARANTOOL_CONSOLE_SOCK = fio.pathjoin(g.datadir, 'console.sock')
         },
     })
     g.stateboard:start()
@@ -283,4 +284,12 @@ function g.test_client_drop_session()
     t.assert_equals(session:is_locked(), false)
 
     t.assert_is_not(client:get_session(), session)
+end
+
+function g.test_stateboard_console()
+    local s = require('socket').tcp_connect('unix/', fio.pathjoin(g.datadir, 'console.sock'))
+    t.assert(s)
+    local greeting = s:read('\n')
+    t.assert(greeting)
+    t.assert_str_matches(greeting:strip(), 'Tarantool.*%(Lua console%)')
 end
