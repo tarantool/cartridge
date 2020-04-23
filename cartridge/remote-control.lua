@@ -308,9 +308,29 @@ local function rc_handle(s)
     vars.handlers[s] = fiber.self()
     s._client_user = 'guest'
     s._client_salt = salt
-    if not vars.accept then
-        vars.accept_cond:wait()
+
+    -- When a client reconnects before the server started accepting
+    -- requests it's reasonable to avoid waiting for one-second timeout.
+    -- We wake up all the handlers so they could check if their
+    -- sockets were closed.
+    vars.accept_cond:broadcast()
+
+    while not vars.accept do
+        vars.accept_cond:wait(1)
+        fiber.testcancel()
+
+        -- Socket can become readable in two cases:
+        -- 1. It was closed by the client. On the server side it stays
+        --    in CLOSE_WAIT state. The server should close it and
+        --    release asap.
+        -- 2. Server received data even before it has sent the greeting.
+        --    This case doesn't conform to Tarantool iproto protocol.
+        if s:readable(0) then
+            vars.handlers[s] = nil
+            return
+        end
     end
+
     s:write(greeting)
 
     while vars.handlers[s] do
@@ -398,8 +418,7 @@ local function stop()
 
     vars.server:close()
     vars.server = nil
-    vars.accept = nil
-    vars.accept_cond = nil
+    vars.accept = false
 end
 
 --- Explicitly drop all established connections.
@@ -412,8 +431,8 @@ local function drop_connections()
 
     for s, handler in pairs(handlers) do
         if handler ~= fiber.self() then
-            pcall(fiber.cancel, handler)
-            pcall(socket.close, s)
+            pcall(function() handler:cancel() end)
+            pcall(function() s:close() end)
         end
     end
 end

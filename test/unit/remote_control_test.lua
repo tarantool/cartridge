@@ -2,11 +2,13 @@ local t = require('luatest')
 local g = t.group()
 
 local fio = require('fio')
+local fiber = require('fiber')
 local digest = require('digest')
 local socket = require('socket')
 local pickle = require('pickle')
 local netbox = require('net.box')
 local msgpack = require('msgpack')
+local tarantool = require('tarantool')
 local remote_control = require('cartridge.remote-control')
 local helpers = require('luatest.helpers')
 local errno = require('errno')
@@ -190,7 +192,6 @@ function g.test_late_accept()
     t.assert_equals(ok, true)
     local url = 'superuser:3.141592@localhost:13301'
 
-    local fiber = require('fiber')
     local f = fiber.new(netbox.connect, url)
     f:name('netbox_connect')
     f:set_joinable(true)
@@ -205,8 +206,8 @@ function g.test_late_accept()
 
     local ok, conn_3 = f:join()
     t.assert_equals(ok, true)
-    t.assert_equals({conn_1.state, conn_1.error}, {"error", "Peer closed"})
-    t.assert_equals({conn_3.state, conn_3.error}, {"error", "Peer closed"})
+    t.assert_equals({conn_1.state, conn_1.error}, {"error", "Invalid greeting"})
+    t.assert_equals({conn_3.state, conn_3.error}, {"error", "Invalid greeting"})
 
     --------------------------------------------------------------------
     local conn_4 = netbox.connect(url, {wait_connected = false})
@@ -812,4 +813,38 @@ function g.test_reconnect()
             state = 'active',
         })
     end)
+end
+
+function g.test_socket_gc()
+    local ok, err = remote_control.bind('127.0.0.1', 13301)
+    t.assert_equals(err, nil)
+    t.assert_equals(ok, true)
+
+    local function lsof()
+        local f = io.popen('lsof -i -a -p ' .. tarantool.pid())
+        local lsof = f:read('*all'):strip():split('\n')
+        table.remove(lsof, 1) -- heading
+        return lsof
+    end
+
+    local initial_lsof = lsof()
+
+    for i = 1, 16 do
+        local s = socket.tcp_connect('127.0.0.1', 13301)
+        t.assert(s, string.format('socket #%s: %s', i, errno.strerror()))
+        s:close()
+        fiber.sleep(0)
+    end
+
+    -- One socket still remains in CLOSE_WAIT state
+    local current_lsof = lsof()
+    t.assert_equals(#current_lsof, #initial_lsof + 1,
+        'Too many open sockets\n' .. table.concat(current_lsof, '\n')
+    )
+
+    remote_control.accept({username = username, password = password})
+    fiber.sleep(0)
+
+    -- It disappears after accept()
+    t.assert_equals(lsof(), initial_lsof)
 end

@@ -6,9 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-### Added
+### Fixed
 
-- Validation of `console_sock` length.
+- Avoid trimming `console_sock` it it's name is too long.
+
+- Fix fd leak during box recovery.
 
 - Support `console_sock` option in stateboard
 
