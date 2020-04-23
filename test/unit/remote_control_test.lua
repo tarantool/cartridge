@@ -820,14 +820,14 @@ function g.test_socket_gc()
     t.assert_equals(err, nil)
     t.assert_equals(ok, true)
 
-    local function fdcnt()
-        local pid = tarantool.pid()
-        local procfd = fio.pathjoin('/proc', tostring(pid), 'fd')
-        -- Subtract 1 fd allocated by `opendir` syscall
-        return #fio.listdir(procfd) - 1
+    local function lsof()
+        local f = io.popen('lsof -i -a -p ' .. tarantool.pid())
+        local lsof = f:read('*all'):strip():split('\n')
+        table.remove(lsof, 1) -- heading
+        return lsof
     end
 
-    local initial_fdcnt = fdcnt()
+    local initial_lsof = lsof()
 
     for i = 1, 16 do
         local s = socket.tcp_connect('127.0.0.1', 13301)
@@ -837,11 +837,14 @@ function g.test_socket_gc()
     end
 
     -- One socket still remains in CLOSE_WAIT state
-    t.assert_equals(fdcnt(), initial_fdcnt+1)
+    local current_lsof = lsof()
+    t.assert_equals(#current_lsof, #initial_lsof + 1,
+        'Too many open sockets\n' .. table.concat(current_lsof, '\n')
+    )
 
     remote_control.accept({username = username, password = password})
     fiber.sleep(0)
 
     -- It disappears after accept()
-    t.assert_equals(fdcnt(), initial_fdcnt)
+    t.assert_equals(lsof(), initial_lsof)
 end
