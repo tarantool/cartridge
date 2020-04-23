@@ -1,338 +1,205 @@
-# Cluster configuration
+# Clusterwide configuration
 
 Cartridge orchestrates a distributed system of Tarantool instances - a
 cluster. One of the core concepts is a **clusterwide configuration**.
-Every instance in clsuter stores a copy of it. Cartridge manages it to
-be identical everywhere by two-phase commit algorithm.
+Every instance in cluster stores a copy of it.
 
 Clusterwide configuration contains the options that must be identical on
 every cluster node, such as topology of the cluster, failover and vshard
-configuration, authentication params and ACLs, and user-defined config.
+configuration, authentication parameters and ACLs, and user-defined
+configuration.
 
 Clusterwide configuration doesn't provide instance specific parameters:
 ports, workdirs, memory settings etc.
 
-# Clusterwide config managment
+## Internal representation
 
-## Twophase commit
-There is no need to create configuration manually, because managing configuration
-lifecycle is a part of `twophase` module. This module is a clusterwide configuration
-propagation two-phase algorithm. Main function of this module is a
-`private` function `_clusterwide(patch)` which accepts `config patch` and
-creates new `configuration` by merging old one with current `patch`. After configuration
-creation, instance where `_clusterwide` was called, initiates `twophase commit`
-for applying this config on cluster instances by `pool.map_call` (map-reduce).
+On file system clusterwide configuration is represented by a **file
+tree**. Inside `workdir` of any configured instance one can find the
+following directory:
 
-There are three stages at twohphase algorithm:
-- Prepare stage:
-  From this stage we can go to `Commit` stage if there was no errors and to `Abort` stage
-  if error occures at some instances during `map_call`.
-  So if error occures at this stage config won't be applied on cluster instances
-  (rollbacks to previous config - `config.backup`)
+```text
+config/
+├── auth.yml
+├── topology.yml
+└── vshard_groups.yml
+```
 
-- Commit stage:
-  This stage is final.
-  If there was no error - config applied.
-  But if error occures at this stage on some instances, then this cluster instances
-  will be at unconsistent state and there is no way exept manually instances recover.
+This is the clusterwide configuration with three default **config
+sections** - `auth`, `topology`, and `vshard_groups`.
 
-- Abort stage:
-  This stage is final.
-  Abort config changes on instances and rollbacks to previous config.
+Due to historical reasons clusterwide configuration has two appearances:
+old-style single-file `config.yml` with all sections combined, and
+modern multi-file representation mentioned above. Before cartridge v2.0
+it used to look as follows, and this representation is still used in
+HTTP API and luatest helpers.
 
-`Twophase` module has `public` wrapper for `_clusterwide` - function `thwophase.patch_clusterwide(patch)`,
-also `patch_clusterwide` is a part of public `cartridge` API named `cartridge.config_patch_clusterwide`
-
-# ClusterWideconfig representation
-
-`ClusterWideConfig` configuration is a Lua object in terms OOP programming
-You can read more in doc about ClusterWideConfig.
-
-We metioned in `doc` that `ClusterWideConfig` stores data in two formats:
-- yaml encoded data
-- unmarshalled data
-
-`ClusterWideConfig` contains two tables `_plaintext` (yaml encoded data) and `_luatables`.
-`_luatables` is a dynamic `ClusterWideConfig` part - it's unmarshalled `_plaintext` cache
-with lazy initialization. When `_paintext` part was updated, `_luatables` invalidates,
-and at the next access to `_luatables` data by `ClusterWideConfig` methods this table
-will be recreated.
-
-
-Also `ClusterWideConfig` supports nested configuration files.
-
-### Raw representation
-
-Lets extend example `config` from doc:
-```lua
-tarantool> cfg = ClusterwideConfig.new({
-         >     -- two files in folder
-         >     ['text']        = 'Lorem ipsum dolor sit amet',
-         >     ['forex.yml']   = '{EURRUB_TOM: 70.33, USDRUB_TOM: 63.18}',
-         > })
-...
-
-tarantool> cfg
+```yaml
+# config.yml
 ---
-- _plaintext:
-    forex.yml: '{EURRUB_TOM: 70.33, USDRUB_TOM: 63.18}'
-    text: Lorem ipsum dolor sit amet
-  locked: false
-  _luatables:
-    forex.yml: '{EURRUB_TOM: 70.33, USDRUB_TOM: 63.18}'
-    forex:
-      EURRUB_TOM: 70.33
-      USDRUB_TOM: 63.18
-    text: Lorem ipsum dolor sit amet
+auth: {...}
+topology: {...}
+vshard_groups: {...}
 ...
 ```
 
-### Filesystem representation
+Beyond these essential sections clusterwide configuration may be used
+for storing some other role-specific data. Clusterwide configuration
+supports YAML as well as plain text sections. It can also be organized
+in nested subdirectories.
 
-On filesystem `ClusterWideConfig` is represented by a `File tree`.
-So `ClusterWideConfig` supports nested configuration files.
-To create nested configuration files, just add section to
-`ClusterWideConfig` with path_delimiter `/` (as showd before).
+In Lua it's represented by `ClusterwideConfig` object (a table with
+metamethods). Refer to `cartridge.clusterwide-config` module
+documentation for more details.
 
-Lets add nested configuration data to previous config:
-```lua
-tarantool> cfg:set_plaintext('files/files1', 'file1 data')
-tarantool> cfg:set_plaintext('files/files2', 'file2 data')
-```
+## Two-phase commit
 
-This is how config represents on filesystem.
-```
-|- config_dir
-            |- forex.yml
-            |- text
-            |- files
-                   |- file1
-                   |- file2
-```
+Cartridge manages clusterwide configuration to be identical everywhere
+by two-phase commit algorithm implemented in `cartridge.twophase`
+module. Modification of clusterwide configuration implies applying it on
+every instance in the cluster.
 
-# Applying config API
+Almost every modyfication of cluster parameters triggers it:
+joining/expelling a server, editing replicaset roles, managing users,
+setting failover and vshard configuration.
 
-API for apply new config:
-- Lua
-- Http and Graphql
-- Luatest
+Two-phase commit require all instances to be alive and healthy,
+otherwise it returns an error.
 
-## Lua API
-- `cartridge.config_patch_clusterwide(patch)`
-- `cartridge.config_get_deepcopy(section_name)`
-- `cartridge.config_get_readonly(section_name)`
+For more details, please, refer to the
+`cartridge.config_patch_clusterwide` API reference.
 
-This functions are useful for creating custom `cartridge` roles, or custom http handlers,
-when you need to store data at `ClusterWideConfig`.
+## Managing role-specific data
 
-There are also many API endpoints that implicitly calls `patch_clusterwide()`
-Some of them:
-- Auth: `auth.set_params()`
-- Users acl: `add_user`/`edit_user`/`remove_user`
-- Topology: `edit_topology` (and deprecated `edit_server`/`expel_server`/`join_server`/`edit_replicaset`)
-- Vshard: `vshard-utils.edit_vshard_options()`, `cartridge.admin_bootstrap_vshard()`
-- Failover: `lua_api_failover.set_failover_params()`
-- DDL: `cartridge_get_schema`/`cartridge_set_schema`
+Beside system sections clusterwide configuration may be used for storing
+some other **role-specific data**. It supports YAML as well as plain
+text sections. And it can also be organized in nested subdirectories.
 
-## HTTP and graphql API
+Role-specific sections are used by some third-party roles, i.e.
+[sharded-queue](https://github.com/tarantool/sharded-queue) and
+[cartridge-extensions](https://github.com/tarantool/cartridge-extensions).
 
-Both graphql API and HTTP API don't quering/modifying following cluster sections (named `system_sections`)
-- auth, auth.yml,
-- topology, topology.yml
-- users_acl, users_acl.yml
-- vshard, vshard.yml,
-- vshard_groups, vshard_groups.yml
+A user can influence clusterwide configuration in various ways. One can
+alter configuration using Lua, HTTP or GraphQL API. Also there are
+Luatest helpers available.
 
-Sections has duplicates with/without `.yml` extension, because new ClusterwideConfig works with
-`.yml` extension and sections without extension we have to save for backward compatibility.
+### HTTP API
 
-This sections can't be modified by raw update/download config, but `cartridge` gives public
-`graphql`.
-Some of them:
-- Auth: `add_user`/`edit_user`/`remove_user`
-- Topology: `edit_topology` (and deprecated `edit_server`/`expel_server`/`join_server`/`edit_replicaset`) and failover gql endoints
+It works with old-style single-file representation only. It's useful
+when there are only few sections needed.
 
-## Graphql API
-
-### Graphql types
-
-```graphql
-"""A section of clusterwide configuration"""
-type ConfigSection {
-  filename: String!
-  content: String!
-}
-
-"""A section of clusterwide configuration"""
-input ConfigSectionInput {
-  filename: String!
-  content: String
-}
-```
-
-### Quering config sections:
-
-```graphql
-"""Applies updated config on cluster"""
-mutation {
-  cluster {
-    config(sections: [ConfigSectionInput]): [ConfigSection]!
-  }
-}
-
-"""Get cluster config sections"""
-query {
-  cluster {
-    config(sections: [String!]): [ConfigSection]!
-  }
-}
-```
-
-### Examples
-
-Add example quering and settign, also may be show system section
-```graphql
-###################################################################
-# Upload section
-mutation {
-  cluster {
-    config(sections: [{filename: "file", content: "data"}]) {
-      filename
-      content
-    }
-	}
-}
-
-# Result of this mutation
-{
-  "data": {
-    "cluster": {
-      "config": [{
-          "filename": "file",
-          "content": "data"
-      }]
-    }
-  }
-}
-
-############################################################################
-# Upload system secton raises an error
-mutation {
-  cluster {
-    config(sections: [{filename: "vshard.yml", content: "data"}]) {}
-	}
-}
-
-# Result
-{
-  "errors": [
-    {
-      "message": "uploading system section \"vshard.yml\" is forbidden",
-    } ...
-  ]
-}
-
-# Quering sections
-query {
-  cluster {
-    config {
-      filename
-      content
-    }
-  }
-}
-
-# Result of this query
-{
-  "data": {
-    "cluster": {
-      "config": [{
-          "filename": "file",
-          "content": "data"
-      }]
-    }
-  }
-}
-```
-
-## HTTP API
-
-Currently supported only uploading/downloading yaml config.
-
-### Upload config:
-
-`HTTP PUT /admin/config`
-
-Example of use:
-
-Lets create config at `~/config.yml`, and fill it with data:
-
-```yml
-key: value
-```
-
-After upload this config to cluster:
+Example:
 
 ```bash
-you@yourmachine $ curl -X PUT http://localhost:8081/admin/config --upload-file ~/config.yml # path to config
+cat > config.yml << CONFIG
+---
+custom_section: {}
+...
+CONFIG
 ```
 
-After that instance logs will be like that:
-
-```log
-srv-1 | 2020-04-16 01:39:58.974 [99441] main/147/http/127.0.0.1:64126 api-config.lua:160 W> Config uploaded
-srv-1 | 2020-04-16 01:39:58.976 [99441] main/147/http/127.0.0.1:64126 twophase.lua:200 W> Updating config clusterwide...
-srv-1 | 2020-04-16 01:39:58.977 [99441] main/147/http/127.0.0.1:64126 twophase.lua:260 W> Clusterwide config didn't change, skipping
-```
-
-### Download config:
-
-`HTTP GET /admin/config`
-
-Example of use:
+Upload new config:
 
 ```bash
-you@yourmachine $ curl http://localhost:8081/admin/config
----
-key: value
-...
+curl -v "localhost:8081/admin/config" -X PUT --data-binary @config.yml
 ```
 
-### Luatest API
+Download it:
 
-`cartridge.test_helpers.server` extends basic `luatest.server` with some useful methods, one of
-them is `upload_config` - it's a wrapper over `HTTP PUT /admin/config`.
+```bash
+curl -v "localhost:8081/admin/config" -o config.yml
+```
+
+It's suitable for role-specific sections only. System sections
+(`topology`, `auth`, `vshard_groups`, `users_acl`) can't be neither
+uploaded nor downloaded.
+
+### GraphQL API
+
+GraphQL API, by contrast, is only suitable for managing plain-text
+sections in modern multi-file appearance. It is mostly used by WebUI,
+but sometimes it's also helpful in tests:
 
 ```lua
--- @tparam string|table config - table will be encoded as yaml and posted to /admin/config.
-function Server:upload_config(config)
-    ...
+g.cluster.main_server:graphql({query = [[
+    mutation($sections: [ConfigSectionInput!]) {
+        cluster {
+            config(sections: $sections) {
+                filename
+                content
+            }
+        }
+    }]],
+    variables = {sections = {
+      {
+        filename = 'custom_section.yml',
+        content = '---\n{}\n...',
+      }
+    }}
+})
+```
+
+Unlike HTTP API, GraphQL affects only sections mentioned in query. All
+other sections remain unchanged.
+
+Similar to HTTP API, GraphQL `cluster {config}` query isn't suitable for
+managing system sections.
+
+### Lua API
+
+It's not the most convenient way to configure third-party role, but it
+may be useful for the role developer. Please, refer to according API
+reference:
+
+- `cartridge.config_patch_clusterwide`
+- `cartridge.config_get_deepcopy`
+- `cartridge.config_get_readonly`
+
+Example (from `sharded-queue`, simplified):
+
+```lua
+function create_tube(tube_name, tube_opts)
+    local tubes = cartridge.config_get_deepcopy('tubes') or {}
+    tubes[tube_name] = tube_opts or {}
+
+    return cartridge.config_patch_clusterwide({tubes = tubes})
+end
+
+local function validate_config(conf)
+    local tubes = conf.tubes or {}
+    for tube_name, tube_opts in pairs(tubes) do
+        -- validate tube_opts
+    end
+    return true
+end
+
+local function apply_config(conf, opts)
+    if opts.is_master then
+        local tubes = cfg.tubes or {}
+        -- create tubes according to the configuration
+    end
+    return true
 end
 ```
 
-Also `cartridge.test_helpers.cluster` has the same method for uploading config
-(it's a shortcut for `cluster.main_server:upload_config(config)`).
+### Luatest helpers
+
+Cartridge test helpers provide methods for configuration management:
+
+- `cartridge.test-helpers.cluster:upload_config`,
+- `cartridge.test-helpers.cluster:download_config`.
+
+Internally they wrap HTTP API.
+
+Example:
 
 ```lua
-function Cluster:upload_config(config)
-    ...
-end
-```
-
-Example of use:
-
-```lua
--- create cluster
-g.before_all = function()
-  g.cluster = helpers.Cluster.new(...)
-end
-
-...
-
-local custom_config = {
-  ['custom_config'] = {
-      ['Ultimate Question of Life, the Universe, and Everything'] = 42
-  }
-}
-g.cluster:upload_config(custom_config)
+g.before_all(function()
+    g.cluster = helpers.Cluster.new(...)
+    g.cluster:upload_config({some_section = 'some_value'})
+    t.assert_equals(
+        g.cluster:download_config(),
+        {some_section = 'some_value'}
+    )
+end)
 ```
