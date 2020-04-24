@@ -157,7 +157,16 @@ local function cfg()
         error(err, 0)
     end
 
-    box.cfg({ work_dir = opts.workdir })
+    local box_opts, err = argparse.get_box_opts()
+    if err ~= nil then
+        error('Box configuration error: ' .. tostring(err), 0)
+    end
+
+    -- listen will be enabled when all spaces are set up
+    box_opts.listen = nil
+    box_opts.work_dir = opts.workdir
+
+    box.cfg(box_opts)
 
     if opts.console_sock ~= nil then
         local sock = console.listen('unix/:' .. opts.console_sock)
@@ -268,6 +277,22 @@ local function cfg()
 
     -- Enable listen port only after all spaces are set up
     box.cfg({ listen = opts.listen })
+
+    -- Emulate support for NOTIFY_SOCKET in old tarantool.
+    -- NOTIFY_SOCKET is fully supported in >= 2.2.2
+    local tnt_version = string.split(_TARANTOOL, '.')
+    local tnt_major = tonumber(tnt_version[1])
+    local tnt_minor = tonumber(tnt_version[2])
+    local tnt_patch = tonumber(tnt_version[3]:split('-')[1])
+    if (tnt_major < 2) or (tnt_major == 2 and tnt_minor < 2) or
+            (tnt_major == 2 and tnt_minor == 2 and tnt_patch < 2) then
+        local notify_socket = os.getenv('NOTIFY_SOCKET')
+        if notify_socket then
+            local socket = require('socket')
+            local sock = assert(socket('AF_UNIX', 'SOCK_DGRAM', 0), 'Can not create socket')
+            sock:sendto('unix/', notify_socket, 'READY=1')
+        end
+    end
 
     ------------------------------------------------------------------------
 
