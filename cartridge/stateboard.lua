@@ -159,9 +159,11 @@ local function cfg()
 
     local box_opts, err = argparse.get_box_opts()
     if err ~= nil then
-        error('Configuration error: ' .. tostring(err), 0)
+        error('Box configuration error: ' .. tostring(err), 0)
     end
     box_opts.work_dir = opts.workdir
+    -- listen will be enabled when all spaces are set up
+    box_opts.listen = nil
 
     box.cfg(box_opts)
 

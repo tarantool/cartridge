@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Support `console_sock` option in stateboard
 
+- Box options support in stateboard
+
 ## [2.1.1] - 2020-04-20
 
 ### Fixed

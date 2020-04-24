@@ -23,7 +23,9 @@ g.before_each(function()
         env = {
             TARANTOOL_PASSWORD = password,
             TARANTOOL_LOCK_DELAY = 40,
-            TARANTOOL_CONSOLE_SOCK = fio.pathjoin(g.datadir, 'console.sock')
+            TARANTOOL_CONSOLE_SOCK = fio.pathjoin(g.datadir, 'console.sock'),
+            TARANTOOL_PID_FILE = 'unique_pid_file.pid',
+            TARANTOOL_CUSTOM_PROC_TITLE = 'stateboard',
         },
     })
     g.stateboard:start()
@@ -292,4 +294,23 @@ function g.test_stateboard_console()
     local greeting = s:read('\n')
     t.assert(greeting)
     t.assert_str_matches(greeting:strip(), 'Tarantool.*%(Lua console%)')
+end
+
+function g.test_box_options()
+
+    local path_to_pid = fio.pathjoin(g.stateboard.workdir, g.stateboard.env.TARANTOOL_PID_FILE)
+    -- specified pid file should have been created
+    t.assert(fio.path.exists(path_to_pid))
+
+    local s = require('socket').tcp_connect('unix/', fio.pathjoin(g.datadir, 'console.sock'))
+    s:write([[
+        proc, proc_data = require('title').get()
+        return ';'..proc_data['custom_title']..';'
+        ]])
+
+    local output = s:read(';')
+    output = s:read(';'):split(';')[1]
+
+    t.assert_equals(output, g.stateboard.env.TARANTOOL_CUSTOM_PROC_TITLE)
+
 end
