@@ -7,13 +7,13 @@ import {
   Button,
   Checkbox,
   Input,
+  LabeledInput,
   PopupBody,
   PopupFooter,
   RadioButton,
   Text
 } from '@tarantool.io/ui-kit';
 import SelectedServersList from 'src/components/SelectedServersList';
-import LabeledInput from 'src/components/LabeledInput';
 import FormField from 'src/components/FormField';
 import type {
   Server,
@@ -43,11 +43,6 @@ const styles = {
   weightInput: css`
     width: 97px;
   `,
-  errorMessage: css`
-    display: block;
-    height: 20px;
-    color: #F5222D;
-  `,
   splash: css`
     flex-basis: 100%;
     max-width: 100%;
@@ -62,6 +57,7 @@ const styles = {
     flex-basis: calc(33.33% - 32px);
     margin-left: 16px;
     margin-right: 16px;
+    margin-bottom: 24px;
   `,
   doubleField: css`
     flex-basis: calc(66% - 32px);
@@ -153,16 +149,16 @@ CreateReplicasetFormProps) => (
             />
             <Field name='alias'>
               {({ input: { name, value, onChange }, meta: { error } }) => (
-                <LabeledInput className={styles.field} label='Replica set name'>
-                  <Input
-                    name={name}
-                    className={styles.input}
-                    onChange={onChange}
-                    value={value}
-                    error={error}
-                  />
-                  <Text variant='p' className={styles.errorMessage}>{error}</Text>
-                </LabeledInput>
+                <LabeledInput
+                  className={styles.field}
+                  label='Replica set name'
+                  name={name}
+                  inputClassName={styles.input}
+                  onChange={onChange}
+                  value={value}
+                  error={!!error}
+                  message={error}
+                />
               )}
             </Field>
             <Field name='roles'>
@@ -225,18 +221,18 @@ CreateReplicasetFormProps) => (
             </Field>
             <Field name='weight'>
               {({ input: { name, value, onChange }, meta: { error } }) => (
-                <LabeledInput className={styles.field} label='Replica set weight'>
-                  <Input
-                    className={styles.weightInput}
-                    name={name}
-                    error={error}
-                    value={value}
-                    onChange={onChange}
-                    disabled={!vshardStorageRoleChecked}
-                    placeholder='Auto'
-                  />
-                  <Text variant='p' className={styles.errorMessage}>{error}</Text>
-                </LabeledInput>
+                <LabeledInput
+                  className={styles.field}
+                  label='Replica set weight'
+                  inputClassName={styles.weightInput}
+                  name={name}
+                  error={error}
+                  value={value}
+                  onChange={onChange}
+                  disabled={!vshardStorageRoleChecked}
+                  placeholder='Auto'
+                  message={error}
+                />
               )}
             </Field>
             <Field name='vshard_group'>

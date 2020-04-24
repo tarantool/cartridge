@@ -53,7 +53,7 @@ export const validateForm = ({
   if (alias && alias.length > 63) {
     errors.alias = 'Alias must not exceed 63 character';
   } else if (alias && alias.length && !(/^[a-zA-Z0-9-_.]+$/).test(alias)) {
-    errors.alias = 'Alias must contain only alphanumerics [a-zA-Z], dots (.), underscores (_) or dashes (-)';
+    errors.alias = 'Allowed symbols are: a-z, A-Z, 0-9, _ . -';
   }
 
   if ((roles || []).includes(VSHARD_STORAGE_ROLE_NAME) && !vshard_group) {

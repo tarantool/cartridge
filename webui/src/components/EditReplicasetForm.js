@@ -7,13 +7,13 @@ import {
   Button,
   Checkbox,
   Input,
+  LabeledInput,
   PopupBody,
   PopupFooter,
   RadioButton,
   Text
 } from '@tarantool.io/ui-kit';
 import SelectedReplicaset from 'src/components/SelectedReplicaset';
-import LabeledInput from 'src/components/LabeledInput';
 import FormField from 'src/components/FormField';
 import type {
   Role,
@@ -41,11 +41,6 @@ const styles = {
   weightInput: css`
     width: 97px;
   `,
-  errorMessage: css`
-    display: block;
-    height: 20px;
-    color: #F5222D;
-  `,
   radioWrap: css`
     display: flex;
     justify-content: space-between;
@@ -66,6 +61,7 @@ const styles = {
     flex-basis: calc(33.33% - 32px);
     margin-left: 16px;
     margin-right: 16px;
+    margin-bottom: 24px;
   `,
   wideField: css`
     flex-basis: 100%;
@@ -171,16 +167,16 @@ EditReplicasetFormProps) => {
               />
               <Field name='alias'>
                 {({ input: { name, value, onChange }, meta: { error } }) => (
-                  <LabeledInput className={styles.field} label='Replica set name'>
-                    <Input
-                      name={name}
-                      className={styles.input}
-                      onChange={onChange}
-                      value={value}
-                      error={error}
-                    />
-                    <Text variant='p' className={styles.errorMessage}>{error}</Text>
-                  </LabeledInput>
+                  <LabeledInput
+                    className={styles.field}
+                    label='Replica set name'
+                    name={name}
+                    inputClassName={styles.input}
+                    onChange={onChange}
+                    value={value}
+                    error={error}
+                    message={error}
+                  />
                 )}
               </Field>
               <Field name='roles'>
@@ -243,18 +239,18 @@ EditReplicasetFormProps) => {
               </Field>
               <Field name='weight'>
                 {({ input: { name, value, onChange }, meta: { error } }) => (
-                  <LabeledInput className={styles.field} label='Replica set weight'>
-                    <Input
-                      className={styles.weightInput}
-                      name={name}
-                      error={error}
-                      value={value}
-                      onChange={onChange}
-                      disabled={!vshardStorageRoleChecked}
-                      placeholder='Auto'
-                    />
-                    <Text variant='p' className={styles.errorMessage}>{errors.weight}</Text>
-                  </LabeledInput>
+                  <LabeledInput
+                    className={styles.field}
+                    label='Replica set weight'
+                    inputClassName={styles.weightInput}
+                    name={name}
+                    error={error}
+                    value={value}
+                    onChange={onChange}
+                    disabled={!vshardStorageRoleChecked}
+                    placeholder='Auto'
+                    message={errors.weight}
+                  />
                 )}
               </Field>
               <Field name='vshard_group'>
@@ -293,19 +289,17 @@ EditReplicasetFormProps) => {
                     className={cx('ser', styles.wideField)}
                     itemClassName={styles.radioWrap}
                     label='Failover priority'
-                  >
-                    <ServerSortableList
-                      value={value}
-                      key={'uuid'}
-                      onChange={v => form.change(name, v)}
-                      replicaset={replicaset}
-                      serverMap={R.compose(
-                        R.map(([val]) => val),
-                        R.groupBy(R.prop('uuid'))
-                      )(replicaset.servers || [])}
-                      selfURI={selfURI}
-                    />
-                  </LabeledInput>
+                    inputComponent={ServerSortableList}
+                    value={value}
+                    key={'uuid'}
+                    onChange={v => form.change(name, v)}
+                    replicaset={replicaset}
+                    serverMap={R.compose(
+                      R.map(([val]) => val),
+                      R.groupBy(R.prop('uuid'))
+                    )(replicaset.servers || [])}
+                    selfURI={selfURI}
+                  />
                 )}
               </Field>
             </PopupBody>

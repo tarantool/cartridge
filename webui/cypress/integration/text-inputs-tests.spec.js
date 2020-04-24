@@ -14,13 +14,13 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     // I. Invalid alias
     cy.get('.meta-test__ConfigureServerModal input[name="alias"]')
       .type(' ');
-    cy.get('.meta-test__ConfigureServerModal').contains('Alias must contain only alphanumerics');
+    cy.get('.meta-test__ConfigureServerModal').contains('Allowed symbols are: a-z, A-Z, 0-9, _ . -');
     cy.get('.meta-test__CreateReplicaSetBtn').should('be.disabled');
 
     // II. Fix alias
     cy.get('.meta-test__ConfigureServerModal input[name="alias"]')
       .type('{selectall}{backspace}');
-    cy.get('.meta-test__ConfigureServerModal').contains('Alias must contain only alphanumerics').should('not.exist');
+    cy.get('.meta-test__ConfigureServerModal').contains('Allowed symbols are: a-z, A-Z, 0-9, _ . -').should('not.exist');
     cy.get('.meta-test__CreateReplicaSetBtn').should('be.enabled');
 
     // III. Select all roles
@@ -69,13 +69,13 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     // I.
     cy.get('.meta-test__EditReplicasetModal input[name="alias"]')
       .type(' ');
-    cy.get('.meta-test__EditReplicasetModal').contains('Alias must contain only alphanumerics');
+    cy.get('.meta-test__EditReplicasetModal').contains('Allowed symbols are: a-z, A-Z, 0-9, _ . -');
     cy.get('.meta-test__EditReplicasetSaveBtn').should('be.disabled');
 
     // II.
     cy.get('.meta-test__EditReplicasetModal input[name="alias"]')
       .type('{selectall}{backspace}');
-    cy.get('.meta-test__EditReplicasetModal').contains('Alias must contain only alphanumerics').should('not.exist');
+    cy.get('.meta-test__EditReplicasetModal').contains('Allowed symbols are: a-z, A-Z, 0-9, _ . -').should('not.exist');
     cy.get('.meta-test__EditReplicasetSaveBtn').should('be.enabled');
 
     // III.
