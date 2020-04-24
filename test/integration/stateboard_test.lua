@@ -306,7 +306,7 @@ function g.test_client_drop_session()
 end
 
 function g.test_stateboard_console()
-    local s = require('socket').tcp_connect(
+    local s = socket.tcp_connect(
         'unix/', g.stateboard.env.TARANTOOL_CONSOLE_SOCK
     )
     t.assert(s)
