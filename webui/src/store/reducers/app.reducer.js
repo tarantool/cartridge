@@ -1,6 +1,4 @@
 // @flow
-import { isGraphqlErrorResponse, isGraphqlAccessDeniedError } from 'src/api/graphql';
-import { isRestErrorResponse, isRestAccessDeniedError } from 'src/api/rest';
 import {
   APP_DID_MOUNT,
   APP_DATA_REQUEST,
@@ -34,7 +32,7 @@ type AppMessage = {
 export type AppState = {
   appMount: boolean,
   appDataRequestStatus: RequestStatusType,
-  appDataRequestErrorMessage: null,
+  appDataRequestError: ?Error,
   clusterSelf: {
     uri: ?string,
     uuid: ?string,
@@ -48,20 +46,20 @@ export type AppState = {
   failover_params: FailoverApi,
   messages: AppMessage[],
   authParams: {
-    enabled: ?false,
-    implements_add_user: ?false,
-    implements_check_password: ?false,
-    implements_list_users: ?false,
-    implements_edit_user: ?false,
-    implements_remove_user: ?false,
-    username: ?null
+    enabled?: boolean,
+    implements_add_user?: boolean,
+    implements_check_password?: boolean,
+    implements_list_users?: boolean,
+    implements_edit_user?: boolean,
+    implements_remove_user?: boolean,
+    username?: ?string
   },
 };
 
 const initialState: AppState = {
   appMount: false,
   appDataRequestStatus: getInitialRequestStatus(),
-  appDataRequestErrorMessage: null,
+  appDataRequestError: null,
   clusterSelf: {},
   connectionAlive: true,
   failover_params: {
@@ -87,38 +85,20 @@ export const reducer = baseReducer(
   appMountReducer,
   appDataRequestReducer,
 )(
-  (state, action) => {
+  (state: AppState, action): AppState => {
     switch (action.type) {
       case APP_DATA_REQUEST:
         return {
           ...state,
-          appDataRequestErrorMessage: null
+          appDataRequestError: null
         };
 
       case APP_DATA_REQUEST_ERROR: {
         const { error } = action;
 
-        if (isRestErrorResponse(error) && !isRestAccessDeniedError(error)) {
-          return {
-            ...state,
-            appDataRequestErrorMessage: {
-              text: error.responseText
-            }
-          };
-        }
-
-        if (isGraphqlErrorResponse(error) && !isGraphqlAccessDeniedError(error)) {
-          return {
-            ...state,
-            appDataRequestErrorMessage: {
-              text: error
-            }
-          };
-        }
-
         return {
           ...state,
-          appDataRequestErrorMessage: {}
+          appDataRequestError: error
         };
       }
 

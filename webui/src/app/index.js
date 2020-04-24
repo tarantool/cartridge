@@ -9,7 +9,7 @@ const mapStateToProps = state => {
     app: {
       appMount,
       appDataRequestStatus,
-      appDataRequestErrorMessage,
+      appDataRequestError,
       clusterSelf,
       messages,
       authParams: {
@@ -25,7 +25,7 @@ const mapStateToProps = state => {
   return {
     appMount,
     appDataRequestStatus,
-    appDataRequestErrorMessage,
+    appDataRequestError,
     clusterSelf,
     authorizationRequired: implements_check_password && authorizationEnabled && !authorized,
     messages
