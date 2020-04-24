@@ -10,6 +10,8 @@ set(TARANTOOL_FIND_REQUIRED ON)
 find_package(Tarantool)
 include_directories(${TARANTOOL_INCLUDE_DIRS})
 
+add_subdirectory(topics)
+
 get_filename_component(WEB_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/webui" ABSOLUTE)
 
 file(GLOB_RECURSE FRONTEND_FILES
@@ -23,6 +25,10 @@ file(GLOB_RECURSE FRONTEND_FILES
 file(GLOB_RECURSE LUA_FILES
   "${CMAKE_CURRENT_SOURCE_DIR}/cartridge.lua"
   "${CMAKE_CURRENT_SOURCE_DIR}/cartridge/*.lua"
+)
+
+file(GLOB_RECURSE TOPICS_FILES
+  "${CMAKE_CURRENT_SOURCE_DIR}/topics/*.md"
 )
 
 ## VERSION ####################################################################
@@ -99,20 +105,21 @@ endif()
 find_package(Ldoc)
 
 add_custom_command(
-  OUTPUT DOC_OUTPUT
+  OUTPUT ${DOC_OUTPUT}
   COMMAND ${LDOC} --all .
+  COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${CMAKE_CURRENT_SOURCE_DIR}/topics/images
+    ${CMAKE_CURRENT_SOURCE_DIR}/doc/topics/images
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-  DEPENDS ${LUA_FILES}
+  DEPENDS ${LUA_FILES} ${TOPICS_FILES} ${UML_FILES} topics-images
   COMMENT "Building API documentation"
   VERBATIM
 )
 
 if(LDOC_FOUND)
-  add_custom_target(doc ALL
-    DEPENDS DOC_OUTPUT)
+  add_custom_target(doc ALL DEPENDS ${DOC_OUTPUT})
 else()
-  add_custom_target(doc
-    DEPENDS DOC_OUTPUT)
+  add_custom_target(doc DEPENDS ${DOC_OUTPUT})
 endif()
 
 ## GraphQL schema #############################################################
