@@ -6,11 +6,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [2.1.2] - 2020-04-24
+
 ### Fixed
 
-- Avoid trimming `console_sock` it it's name is too long.
+- Avoid trimming `console_sock` if it's name is too long.
 
-- Fix fd leak during box recovery.
+- Fix file descriptors leak during box recovery.
 
 - Support `console_sock` option in stateboard as well as notify socket
   and other box options similar to regular cartridge instances.
