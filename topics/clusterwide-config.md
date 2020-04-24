@@ -1,21 +1,21 @@
 # Clusterwide configuration
 
 Cartridge orchestrates a distributed system of Tarantool instances - a
-cluster. One of the core concepts is a **clusterwide configuration**.
-Every instance in cluster stores a copy of it.
+cluster. One of the core concepts is **clusterwide configuration**.
+Every instance in a cluster stores a copy of it.
 
-Clusterwide configuration contains the options that must be identical on
-every cluster node, such as topology of the cluster, failover and vshard
+Clusterwide configuration contains options that must be identical on
+every cluster node, such as the topology of the cluster, failover and vshard
 configuration, authentication parameters and ACLs, and user-defined
 configuration.
 
-Clusterwide configuration doesn't provide instance specific parameters:
-ports, workdirs, memory settings etc.
+Clusterwide configuration doesn't provide instance-specific parameters:
+ports, workdirs, memory settings, etc.
 
 ## Internal representation
 
-On file system clusterwide configuration is represented by a **file
-tree**. Inside `workdir` of any configured instance one can find the
+In the file system, clusterwide configuration is represented by a **file
+tree**. Inside `workdir` of any configured instance you can find the
 following directory:
 
 ```text
@@ -29,10 +29,11 @@ This is the clusterwide configuration with three default **config
 sections** - `auth`, `topology`, and `vshard_groups`.
 
 Due to historical reasons clusterwide configuration has two appearances:
-old-style single-file `config.yml` with all sections combined, and
-modern multi-file representation mentioned above. Before cartridge v2.0
-it used to look as follows, and this representation is still used in
-HTTP API and luatest helpers.
+* old-style single-file `config.yml` with all sections combined, and
+* modern multi-file representation mentioned above.
+
+Before cartridge v2.0 it used to look as follows, and this representation is
+still used in HTTP API and luatest helpers.
 
 ```yaml
 # config.yml
@@ -43,27 +44,27 @@ vshard_groups: {...}
 ...
 ```
 
-Beyond these essential sections clusterwide configuration may be used
+Beyond these essential sections, clusterwide configuration may be used
 for storing some other role-specific data. Clusterwide configuration
 supports YAML as well as plain text sections. It can also be organized
 in nested subdirectories.
 
-In Lua it's represented by `ClusterwideConfig` object (a table with
-metamethods). Refer to `cartridge.clusterwide-config` module
+In Lua it's represented by the `ClusterwideConfig` object (a table with
+metamethods). Refer to the `cartridge.clusterwide-config` module
 documentation for more details.
 
 ## Two-phase commit
 
 Cartridge manages clusterwide configuration to be identical everywhere
-by two-phase commit algorithm implemented in `cartridge.twophase`
-module. Modification of clusterwide configuration implies applying it on
+using the two-phase commit algorithm implemented in the `cartridge.twophase`
+module. Changes in clusterwide configuration imply applying it on
 every instance in the cluster.
 
-Almost every modyfication of cluster parameters triggers it:
-joining/expelling a server, editing replicaset roles, managing users,
+Almost every change in cluster parameters triggers a two-phase commit:
+joining/expelling a server, editing replica set roles, managing users,
 setting failover and vshard configuration.
 
-Two-phase commit require all instances to be alive and healthy,
+Two-phase commit requires all instances to be alive and healthy,
 otherwise it returns an error.
 
 For more details, please, refer to the
@@ -71,7 +72,7 @@ For more details, please, refer to the
 
 ## Managing role-specific data
 
-Beside system sections clusterwide configuration may be used for storing
+Beside system sections, clusterwide configuration may be used for storing
 some other **role-specific data**. It supports YAML as well as plain
 text sections. And it can also be organized in nested subdirectories.
 
@@ -79,7 +80,7 @@ Role-specific sections are used by some third-party roles, i.e.
 [sharded-queue](https://github.com/tarantool/sharded-queue) and
 [cartridge-extensions](https://github.com/tarantool/cartridge-extensions).
 
-A user can influence clusterwide configuration in various ways. One can
+A user can influence clusterwide configuration in various ways. You can
 alter configuration using Lua, HTTP or GraphQL API. Also there are
 Luatest helpers available.
 
@@ -111,13 +112,13 @@ curl -v "localhost:8081/admin/config" -o config.yml
 ```
 
 It's suitable for role-specific sections only. System sections
-(`topology`, `auth`, `vshard_groups`, `users_acl`) can't be neither
+(`topology`, `auth`, `vshard_groups`, `users_acl`) can be neither
 uploaded nor downloaded.
 
 ### GraphQL API
 
 GraphQL API, by contrast, is only suitable for managing plain-text
-sections in modern multi-file appearance. It is mostly used by WebUI,
+sections in the modern multi-file appearance. It is mostly used by WebUI,
 but sometimes it's also helpful in tests:
 
 ```lua
@@ -139,16 +140,16 @@ g.cluster.main_server:graphql({query = [[
 })
 ```
 
-Unlike HTTP API, GraphQL affects only sections mentioned in query. All
-other sections remain unchanged.
+Unlike HTTP API, GraphQL affects only the sections mentioned in the query. All
+the other sections remain unchanged.
 
-Similar to HTTP API, GraphQL `cluster {config}` query isn't suitable for
+Similarly to HTTP API, GraphQL `cluster {config}` query isn't suitable for
 managing system sections.
 
 ### Lua API
 
 It's not the most convenient way to configure third-party role, but it
-may be useful for the role developer. Please, refer to according API
+may be useful for role development. Please, refer to the corresponding API
 reference:
 
 - `cartridge.config_patch_clusterwide`
