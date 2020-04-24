@@ -172,7 +172,7 @@ type ReplicasetServerListItemState = {
 class ReplicasetServerListItem extends React.PureComponent<
   ReplicasetServerListItemProps,
   ReplicasetServerListItemState
-> {
+  > {
   render() {
     const {
       activeMaster,
@@ -203,7 +203,12 @@ class ReplicasetServerListItem extends React.PureComponent<
     return (
       <React.Fragment>
         <div className={styles.row}>
-          {(master || activeMaster) && <LeaderFlag className={styles.leaderFlag} fail={status !== 'healthy'} />}
+          {(master || activeMaster) &&
+            <LeaderFlag
+              className={cx(styles.leaderFlag, 'meta-test_leaderFlag')}
+              fail={status !== 'healthy'}
+            />
+          }
           <div className={styles.heading}>
             <Text variant='h4' className={styles.alias}>
               <Link className={styles.aliasLink} to={`/cluster/dashboard/instance/${uuid}`}>

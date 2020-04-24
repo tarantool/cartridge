@@ -5,6 +5,28 @@ local g = t.group()
 local helpers = require('test.helper')
 
 g.setup = function()
+    g.datadir = fio.tempdir()
+
+    fio.mktree(fio.pathjoin(g.datadir, 'stateboard'))
+    g.kvpassword = 'password'
+    g.stateboard = require('luatest.server'):new({
+        command = helpers.entrypoint('srv_stateboard'),
+        workdir = fio.pathjoin(g.datadir, 'stateboard'),
+        net_box_port = 14401,
+        net_box_credentials = {
+            user = 'client',
+            password = g.kvpassword,
+        },
+        env = {
+            TARANTOOL_LOCK_DELAY = 1,
+            TARANTOOL_PASSWORD = g.kvpassword,
+        },
+    })
+    g.stateboard:start()
+    helpers.retrying({}, function()
+        g.stateboard:connect_net_box()
+    end)
+
 	g.cluster = helpers.Cluster:new({
         datadir = fio.tempdir(),
         server_command = helpers.entrypoint('srv_basic'),
@@ -29,7 +51,7 @@ g.setup = function()
             }, {
                 alias = 'storage1-do-not-use-me',
                 uuid = helpers.uuid('b'),
-                roles = {'vshard-storage'},
+                roles = {'vshard-storage', 'failover-coordinator'},
                 servers = {
                     {
                         alias = 'storage',
@@ -192,4 +214,8 @@ function g.test_401()
     ]])
     -- require('fiber').sleep(1000)
     cypress_run('401-error.spec.js')
+end
+
+function g.test_leader_promotion()
+    cypress_run('leader-promotion.spec.js')
 end
