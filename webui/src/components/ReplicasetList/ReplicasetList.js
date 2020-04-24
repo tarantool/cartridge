@@ -25,10 +25,10 @@ const styles = {
     padding-right: 103px;
   `,
   aliasTooltip: css`
-    flex-basis: 463px;
+    flex-basis: 458px;
     flex-grow: 1;
     flex-shrink: 0;
-    margin-right: 24px;
+    margin-right: 16px;
     margin-bottom: 8px;
     overflow: hidden;
   `,
@@ -39,8 +39,9 @@ const styles = {
   `,
   statusGroup: css`
     display: flex;
-    flex-basis: 530px;
+    flex-basis: 592px;
     flex-shrink: 0;
+    margin-right: -55px;
     margin-bottom: 12px;
   `,
   statusWrap: css`
@@ -70,7 +71,9 @@ const styles = {
     font-weight: bold;
   `,
   vshard: css`
-    flex-basis: 306px;
+    position: absolute;
+    right: 76px;
+    width: 343px;
     margin-left: 12px;
     margin-right: 12px;
     color: rgba(0, 0, 0, 0.65);

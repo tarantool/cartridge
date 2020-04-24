@@ -29,16 +29,16 @@ const styles = {
     margin-right: 16px;
   `,
   heading: css`
-    flex-basis: 463px;
+    flex-basis: 458px;
     flex-grow: 1;
     flex-shrink: 0;
-    margin-right: 24px;
+    margin-right: 16px;
     margin-bottom: 8px;
     overflow: hidden;
   `,
   status: css`
     display: flex;
-    flex-basis: 498px;
+    flex-basis: 505px;
     flex-shrink: 0;
     align-items: center;
     margin-bottom: 8px;
