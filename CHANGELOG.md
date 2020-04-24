@@ -12,9 +12,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Fix fd leak during box recovery.
 
-- Support `console_sock` option in stateboard
-
-- Box options support in stateboard
+- Support `console_sock` option in stateboard as well as notify socket
+  and other box options similar to regular cartridge instances.
 
 ## [2.1.1] - 2020-04-20
 

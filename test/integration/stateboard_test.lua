@@ -1,6 +1,8 @@
 local fio = require('fio')
 local uuid = require('uuid')
 local fiber = require('fiber')
+local socket = require('socket')
+local utils = require('cartridge.utils')
 local stateboard_client = require('cartridge.stateboard-client')
 local t = require('luatest')
 local g = t.group()
@@ -24,11 +26,26 @@ g.before_each(function()
             TARANTOOL_PASSWORD = password,
             TARANTOOL_LOCK_DELAY = 40,
             TARANTOOL_CONSOLE_SOCK = fio.pathjoin(g.datadir, 'console.sock'),
-            TARANTOOL_PID_FILE = 'unique_pid_file.pid',
-            TARANTOOL_CUSTOM_PROC_TITLE = 'stateboard',
+            NOTIFY_SOCKET = fio.pathjoin(g.datadir, 'notify.sock'),
+            TARANTOOL_PID_FILE = 'stateboard.pid',
+            TARANTOOL_CUSTOM_PROC_TITLE = 'stateboard-proc-title',
         },
     })
+
+    local notify_socket = socket('AF_UNIX', 'SOCK_DGRAM', 0)
+    t.assert(notify_socket, 'Can not create socket')
+    t.assert(
+        notify_socket:bind('unix/', g.stateboard.env.NOTIFY_SOCKET),
+        notify_socket:error()
+    )
+
     g.stateboard:start()
+
+    t.helpers.retrying({}, function()
+        t.assert(notify_socket:readable(1), "Socket isn't readable")
+        t.assert_str_matches(notify_socket:recv(), 'READY=1')
+    end)
+
     helpers.retrying({}, function()
         g.stateboard:connect_net_box()
     end)
@@ -289,7 +306,9 @@ function g.test_client_drop_session()
 end
 
 function g.test_stateboard_console()
-    local s = require('socket').tcp_connect('unix/', fio.pathjoin(g.datadir, 'console.sock'))
+    local s = require('socket').tcp_connect(
+        'unix/', g.stateboard.env.TARANTOOL_CONSOLE_SOCK
+    )
     t.assert(s)
     local greeting = s:read('\n')
     t.assert(greeting)
@@ -297,20 +316,17 @@ function g.test_stateboard_console()
 end
 
 function g.test_box_options()
+    local pid_file = fio.pathjoin(
+        g.stateboard.workdir,
+        g.stateboard.env.TARANTOOL_PID_FILE
+    )
 
-    local path_to_pid = fio.pathjoin(g.stateboard.workdir, g.stateboard.env.TARANTOOL_PID_FILE)
-    -- specified pid file should have been created
-    t.assert(fio.path.exists(path_to_pid))
+    local pid, err = utils.file_read(pid_file)
+    t.assert_equals(err, nil)
+    t.assert_equals(pid, tostring(g.stateboard.process.pid))
 
-    local s = require('socket').tcp_connect('unix/', fio.pathjoin(g.datadir, 'console.sock'))
-    s:write([[
-        proc, proc_data = require('title').get()
-        return ';'..proc_data['custom_title']..';'
-        ]])
-
-    local output = s:read(';')
-    output = s:read(';'):split(';')[1]
-
-    t.assert_equals(output, g.stateboard.env.TARANTOOL_CUSTOM_PROC_TITLE)
-
+    local ps = io.popen('ps -o args= -p ' .. pid)
+    t.assert_str_matches(ps:read('*all'):strip(),
+        'tarantool .+ <running>: stateboard%-proc%-title'
+    )
 end
