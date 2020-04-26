@@ -1,3 +1,4 @@
+// dir: TD
 [*]->[Unconfigured]
 [*]->[ConfigFound]
 [Unconfigured]->[BootstrappingBox or RecoveringSnapshot]

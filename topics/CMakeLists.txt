@@ -4,16 +4,26 @@ file(GLOB_RECURSE UML_FILES
   "${CMAKE_CURRENT_SOURCE_DIR}/uml/*.uml"
 )
 set(UML_FILES ${UML_FILES} PARENT_SCOPE)
+set(TMP "${CMAKE_CURRENT_SOURCE_DIR}/tmp.uml")
 
 # pip3 install https://github.com/wandernauta/yuml/zipball/master
 
 foreach(SRC ${UML_FILES})
+  set(DIRECTION LR)
   string(REGEX REPLACE "uml/(.+)\\.uml" "images/\\1.svg" DST "${SRC}")
   get_filename_component(DIR ${DST} DIRECTORY)
+
+  file(STRINGS ${SRC} LINE REGEX "// dir: .+")
+  if (LINE)
+      string(REGEX REPLACE "// dir: " "" DIRECTION ${LINE})
+  endif()
+
   add_custom_command(
     OUTPUT ${DST}
     COMMAND ${CMAKE_COMMAND} -E make_directory ${DIR}
-    COMMAND yuml -i ${SRC} -o ${DST} -f svg -s plain --dir LR
+    COMMAND sed "/\\/\\//d" ${SRC} > ${TMP}
+    COMMAND yuml -o ${DST} -i ${TMP} -f svg -s plain --dir ${DIRECTION}
+    COMMAND rm ${TMP}
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     DEPENDS ${SRC}
     COMMENT "Rendering ${DST}"
