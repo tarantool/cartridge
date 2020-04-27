@@ -111,7 +111,7 @@ add_custom_command(
     ${CMAKE_CURRENT_SOURCE_DIR}/topics/images
     ${CMAKE_CURRENT_SOURCE_DIR}/doc/topics/images
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-  DEPENDS ${LUA_FILES} ${TOPICS_FILES} ${UML_OUTPUT}
+  DEPENDS ${LUA_FILES} ${TOPICS_FILES} ${UML_OUTPUT} topics-images
   COMMENT "Building API documentation"
   VERBATIM
 )
