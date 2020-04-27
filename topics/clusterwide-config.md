@@ -82,7 +82,7 @@ Role-specific sections are used by some third-party roles, i.e.
 
 A user can influence clusterwide configuration in various ways. You can
 alter configuration using Lua, HTTP or GraphQL API. Also there are
-Luatest helpers available.
+(luatest)[https://github.com/tarantool/luatest] helpers available.
 
 ### HTTP API
 
@@ -114,6 +114,8 @@ curl -v "localhost:8081/admin/config" -o config.yml
 It's suitable for role-specific sections only. System sections
 (`topology`, `auth`, `vshard_groups`, `users_acl`) can be neither
 uploaded nor downloaded.
+
+If authorization is enabled, use `curl` option `--user username:password`.
 
 ### GraphQL API
 
