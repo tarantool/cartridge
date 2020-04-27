@@ -84,6 +84,9 @@ g.setup = function()
         },
     })
 
+    g.server.env['TARANTOOL_APP_NAME'] = 'app_name'
+    g.server.env['TARANTOOL_INSTANCE_NAME'] = 'instance_name'
+
     g.cluster:start()
     g.server:start()
 
@@ -218,4 +221,14 @@ end
 
 function g.test_leader_promotion()
     cypress_run('leader-promotion.spec.js')
+end
+
+function g.test_application_name()
+    local code = os.execute(
+        'cd webui && npx cypress run' ..
+        ' --config baseUrl="http://localhost:8085"' ..
+        ' --spec' ..
+        ' cypress/integration/application-name.spec.js'
+    )
+    t.assert_equals(code, 0)
 end

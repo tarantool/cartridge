@@ -4,6 +4,7 @@ describe('Schema section', () => {
     const defaultText = '---\nspaces: []\n...\n';
 
     cy.visit(Cypress.config('baseUrl')+"/admin/cluster/schema");
+    cy.contains('Tarantool/Schema');
     cy.get('.monaco-editor textarea').should('have.value', defaultText);
 
     ////////////////////////////////////////////////////////////////////
