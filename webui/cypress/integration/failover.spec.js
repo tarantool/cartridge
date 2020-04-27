@@ -74,21 +74,23 @@ describe('Failover', () => {
     cy.get('.meta-test__ClusterIssuesButton').should('be.enabled');
     cy.get('.meta-test__ClusterIssuesButton').contains('Issues: 4');
     cy.get('.meta-test__ClusterIssuesButton').click();
-    cy.get('.meta-test__ClusterIssuesModal').contains('warning');
+    cy.get('.meta-test__ClusterIssuesModal', { timeout: 6000 }).contains('warning');
     cy.get('.meta-test__ClusterIssuesModal button[type="button"]').click();
     cy.get('.meta-test__ClusterIssuesModal').should('not.exist');
 
     cy.exec('kill -SIGSTOP $(lsof -sTCP:LISTEN -i :8082 -t)', { failOnNonZeroExit: true });
     cy.reload();
+    cy.contains('Replica sets');
     cy.get('.meta-test__ClusterIssuesButton').click();
-    cy.get('.meta-test__ClusterIssuesModal')
+    cy.get('.meta-test__ClusterIssuesModal', { timeout: 6000 })
       .contains('Replication from localhost' + testPort);
     cy.get('.meta-test__closeClusterIssuesModal').click();
 
     cy.exec('kill -SIGCONT $(lsof -sTCP:LISTEN -i :8082 -t)', { failOnNonZeroExit: true });
     cy.reload();
+    cy.contains('Replica sets');
     cy.get('.meta-test__ClusterIssuesButton').click();
-    cy.get('.meta-test__ClusterIssuesModal')
+    cy.get('.meta-test__ClusterIssuesModal', { timeout: 6000 })
       .contains('Replication from localhost' + testPort).should('not.exist');
     cy.get('.meta-test__closeClusterIssuesModal').click();
   })
