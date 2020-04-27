@@ -3,7 +3,6 @@ cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
 file(GLOB_RECURSE UML_FILES
   "${CMAKE_CURRENT_SOURCE_DIR}/uml/*.uml"
 )
-set(UML_FILES ${UML_FILES} PARENT_SCOPE)
 set(TMP "${CMAKE_CURRENT_SOURCE_DIR}/tmp.uml")
 
 # pip3 install https://github.com/wandernauta/yuml/zipball/master
@@ -32,6 +31,7 @@ foreach(SRC ${UML_FILES})
   list(APPEND UML_OUTPUT "${DST}")
 endforeach()
 
+set(UML_OUTPUT ${UML_OUTPUT} PARENT_SCOPE)
 add_custom_target(topics-images ALL
   DEPENDS ${UML_OUTPUT}
 )
