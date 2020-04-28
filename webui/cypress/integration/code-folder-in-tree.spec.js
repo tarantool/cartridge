@@ -1,5 +1,10 @@
 describe('Code page', () => {
 
+      before(function() {
+            cy.visit(Cypress.config('baseUrl')+"/admin/cluster/code");
+            cy.contains('Files');
+          })
+
     it('Folder in tree', () => {
       function reload() {
             cy.get('.meta-test__Code__reload_idle').click();
@@ -10,7 +15,6 @@ describe('Code page', () => {
             cy.get('.meta-test__Code__apply_idle').click();
             cy.get('.meta-test__Code__apply_loading').should('not.exist');
       }
-      cy.visit(Cypress.config('baseUrl')+"/admin/cluster/code");
 
       //create folder
       cy.get('.meta-test__addFolderBtn').click();

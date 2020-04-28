@@ -39,27 +39,27 @@ describe('Error network panel not visible in normal state', () => {
 describe('Error network panel visible when server not respond', () => {
   it('On cluster page', () => {
     cy.exec('kill -SIGKILL $(lsof -sTCP:LISTEN -i :8081 -t)', { failOnNonZeroExit: true });
-    cy.get('a[href="/admin/cluster/dashboard"]').click();
+    cy.get('a[href="/admin/cluster/dashboard"]', { timeout: 6000 }).click();
     cy.get('.meta-test__NetworkErrorSplash').contains('Network connection problem or server disconnected');
   })
 
   it('On users page', () => {
-    cy.get('a[href="/admin/cluster/users"]').click();
+    cy.get('a[href="/admin/cluster/users"]', { timeout: 6000 }).click();
     cy.get('.meta-test__NetworkErrorSplash').contains('Network connection problem or server disconnected');
   })
 
   it('On config page', () => {
-    cy.get('a[href="/admin/cluster/configuration"]').click();
+    cy.get('a[href="/admin/cluster/configuration"]', { timeout: 6000 }).click();
     cy.get('.meta-test__NetworkErrorSplash').contains('Network connection problem or server disconnected');
   })
 
   it('On editor page', () => {
-    cy.get('a[href="/admin/cluster/code"]').click();
+    cy.get('a[href="/admin/cluster/code"]', { timeout: 6000 }).click();
     cy.get('.meta-test__NetworkErrorSplash').contains('Network connection problem or server disconnected');
   })
 
   it('On schema page', () => {
-    cy.get('a[href="/admin/cluster/schema"]').click();
+    cy.get('a[href="/admin/cluster/schema"]', { timeout: 6000 }).click();
     cy.get('.meta-test__NetworkErrorSplash').contains('Network connection problem or server disconnected');
   })
 });
