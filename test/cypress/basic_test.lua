@@ -34,6 +34,7 @@ g.setup = function()
         cookie = 'test-cluster-cookie',
         env = {
             TARANTOOL_SWIM_SUSPECT_TIMEOUT_SECONDS = 0,
+            TARANTOOL_APP_NAME = 'cartridge-testing',
         },
         replicasets = {
             {
@@ -43,6 +44,7 @@ g.setup = function()
                 servers = {
                     {
                         alias = 'router',
+                        env = {TARANTOOL_INSTANCE_NAME = 'r1'},
                         instance_uuid = helpers.uuid('a', 'a', 1),
                         advertise_port = 13301,
                         http_port = 8081
@@ -83,9 +85,6 @@ g.setup = function()
             TARANTOOL_SWIM_SUSPECT_TIMEOUT_SECONDS = 1,
         },
     })
-
-    g.server.env['TARANTOOL_APP_NAME'] = 'app_name'
-    g.server.env['TARANTOOL_INSTANCE_NAME'] = 'instance_name'
 
     g.cluster:start()
     g.server:start()
@@ -142,6 +141,7 @@ function g.test_probe_server()
     local code = os.execute(
         "cd webui && npx cypress run --spec" ..
         ' cypress/integration/probe-server.spec.js' ..
+        ',cypress/integration/application-name.spec.js' ..
         ',cypress/integration/demo-panel-not-present.spec.js'
     )
     t.assert_equals(code, 0)
@@ -221,14 +221,4 @@ end
 
 function g.test_leader_promotion()
     cypress_run('leader-promotion.spec.js')
-end
-
-function g.test_application_name()
-    local code = os.execute(
-        'cd webui && npx cypress run' ..
-        ' --config baseUrl="http://localhost:8085"' ..
-        ' --spec' ..
-        ' cypress/integration/application-name.spec.js'
-    )
-    t.assert_equals(code, 0)
 end
