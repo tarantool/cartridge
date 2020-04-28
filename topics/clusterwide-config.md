@@ -82,7 +82,7 @@ Role-specific sections are used by some third-party roles, i.e.
 
 A user can influence clusterwide configuration in various ways. You can
 alter configuration using Lua, HTTP or GraphQL API. Also there are
-(luatest)[https://github.com/tarantool/luatest] helpers available.
+[luatest](https://github.com/tarantool/luatest) helpers available.
 
 ### HTTP API
 
