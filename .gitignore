@@ -3,6 +3,7 @@
 .tarantool.cookie
 .rocks
 .cache
+.doctrees
 __pycache__
 dev
 doc
@@ -16,6 +17,7 @@ CMakeCache.txt
 cmake_install.cmake
 CTestTestfile.cmake
 build.luarocks
+build.rst
 coverage_result.txt
 .DS_Store
 .vscode
