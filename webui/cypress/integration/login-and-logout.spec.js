@@ -1,34 +1,34 @@
 describe('Login', () => {
 
-  // it('Login error', () => {
-  //   cy.visit(Cypress.config('baseUrl'));
-  //   cy.get('.meta-test__LoginBtn').click();
-  //   cy.get('.meta-test__LoginForm input[name="username"]')
-  //     .type('error')
-  //     .should('have.value', 'error');
-  //   cy.get('.meta-test__LoginForm input[name="password"]')
-  //     .type('test-cluster-cookie');
-  //   cy.get('.meta-test__LoginFormBtn').click();
-  //   cy.get('.meta-test__LoginForm').contains('Authentication failed');//try to found logout btn
-  // })
+  it('Login error', () => {
+    cy.visit(Cypress.config('baseUrl'));
+    cy.get('.meta-test__LoginBtn').click();
+    cy.get('.meta-test__LoginForm input[name="username"]')
+      .type('error')
+      .should('have.value', 'error');
+    cy.get('.meta-test__LoginForm input[name="password"]')
+      .type('test-cluster-cookie');
+    cy.get('.meta-test__LoginFormBtn').click();
+    cy.get('.meta-test__LoginForm').contains('Authentication failed');//try to found logout btn
+  })
 
-  // it('Success login', () => {
-  //   cy.visit(Cypress.config('baseUrl'));
-  //   cy.get('.meta-test__LoginBtn').click();
-  //   cy.get('.meta-test__LoginForm input[name="username"]')
-  //     .type('{selectall}{del}')
-  //     .type('admin')
-  //     .should('have.value', 'admin');
-  //   cy.get('.meta-test__LoginForm input[name="password"]')
-  //     .type('test-cluster-cookie');
-  //   cy.get('.meta-test__LoginFormBtn').click();
-  //   cy.get('.meta-test__LogoutBtn');//try to found logout btn
-  // })
+  it('Success login', () => {
+    cy.visit(Cypress.config('baseUrl'));
+    cy.get('.meta-test__LoginBtn').click();
+    cy.get('.meta-test__LoginForm input[name="username"]')
+      .type('{selectall}{del}')
+      .type('admin')
+      .should('have.value', 'admin');
+    cy.get('.meta-test__LoginForm input[name="password"]')
+      .type('test-cluster-cookie');
+    cy.get('.meta-test__LoginFormBtn').click();
+    cy.get('.meta-test__LogoutBtn');//try to found logout btn
+  })
 
-  // it('Logout', () => {
-  //   cy.get('.meta-test__LogoutBtn').click();
-  //   cy.get('li').contains('Log out').click();
-  // })
+  it('Logout', () => {
+    cy.get('.meta-test__LogoutBtn').click();
+    cy.get('li').contains('Log out').click();
+  })
 
   it('Check login user with empty name', () => {
     cy.visit(Cypress.config('baseUrl') + '/admin/cluster/users');
@@ -51,7 +51,7 @@ describe('Login', () => {
 
     cy.get('.meta-test__LoginBtn').should('not.exist');
     cy.get('.meta-test__LogoutBtn span:contains(testfullname)');
-    
+
     //delete fullname and reload a page:
     cy.get('.meta-test__UsersTable').find('button').eq(1).click();
     cy.get('li').contains('Edit user').click();
