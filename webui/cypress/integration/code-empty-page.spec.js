@@ -10,4 +10,3 @@ describe('Code page', () => {
       cy.get('#root').contains('Files successfuly applied');
     });
   });
-  
