@@ -161,7 +161,7 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
             <div>
               <Text className={styles.radioLabel}>Eventual</Text>
               <Text className={styles.radioDescription} tag='p'>
-                The leader isnt't elected consistently.
+                The leader isn't elected consistently.
                 Every instance thinks the leader is the first healthy server in the replicaset.
                 The instance health is determined according to the membership status (the SWIM protocol).
               </Text>
