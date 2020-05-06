@@ -71,7 +71,7 @@ local function mergeSelectionSets(fields)
   return selections
 end
 
-local function defaultResolver(object, arguments, info)
+local function defaultResolver(object, _, info)
   return object[info.fieldASTs[1].name.value]
 end
 
@@ -253,7 +253,7 @@ local function getFieldEntry(objectType, object, fields, context)
   end)
 
   --[[
-      Make arguments ordered map using metatble.
+      Make arguments ordered map using metatable.
       This way callback can use positions to access argument values.
       For example buisness logic depends on argument positions to choose
       appropriate storage iteration.
