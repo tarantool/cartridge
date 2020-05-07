@@ -211,9 +211,7 @@ class Cluster extends React.Component<ClusterProps> {
                 />
               )
               : (
-                <div>
-                  No replicaset found
-                </div>
+                <div>No replicaset found</div>
               )
             }
           </PageSection>

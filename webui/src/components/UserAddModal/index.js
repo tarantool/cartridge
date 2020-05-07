@@ -1,45 +1,24 @@
 import React from 'react';
-import { connect } from 'react-redux';
-import { hideAddUserModal } from 'src/store/actions/users.actions';
+import { useStore } from 'effector-react';
 import { Modal } from '@tarantool.io/ui-kit';
-import UserAddForm from './UserAddForm';
+import usersStore from 'src/store/effector/users';
+import { UserAddForm } from './UserAddForm';
 
-class UserAddModal extends React.Component {
-  render() {
-    const {
-      addUserModalVisible,
-      hideAddUserModal
-    } = this.props;
+const { $userAddModal, hideModal } = usersStore;
 
-    return (
-      <Modal
-        className='meta-test__UserAddForm'
-        title="Add a new user"
-        visible={addUserModalVisible}
-        onCancel={hideAddUserModal}
-        destroyOnClose={true}
-        footer={null}
-        onClose={hideAddUserModal}
-      >
-        <UserAddForm onClose={hideAddUserModal} />
-      </Modal>
-    );
-  }
-}
+export const UserAddModal = () => {
+  const { visible, error } = useStore($userAddModal);
 
-const mapStateToProps = ({
-  ui: {
-    addUserModalVisible
-  }
-}) => ({
-  addUserModalVisible
-});
-
-const mapDispatchToProps = {
-  hideAddUserModal
+  return (
+    <Modal
+      className='meta-test__UserAddForm'
+      title="Add a new user"
+      visible={visible}
+      destroyOnClose={true}
+      footer={null}
+      onClose={hideModal}
+    >
+      <UserAddForm onClose={hideModal} error={error} />
+    </Modal>
+  );
 };
-
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(UserAddModal);

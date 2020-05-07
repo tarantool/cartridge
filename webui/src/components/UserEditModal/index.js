@@ -1,52 +1,29 @@
 import React from 'react';
-import { connect } from 'react-redux';
-import { hideEditUserModal } from 'src/store/actions/users.actions';
+import { useStore } from 'effector-react';
 import { Modal } from '@tarantool.io/ui-kit';
-import UserEditForm from './UserEditForm';
+import usersStore from 'src/store/effector/users';
+import { UserEditForm } from './UserEditForm';
 
-class UserEditModal extends React.Component {
-  render() {
-    const {
-      editUserModalVisible,
-      error,
-      loading,
-      hideEditUserModal,
-      username
-    } = this.props;
+const { $userEditModal, hideModal } = usersStore;
 
-    return (
-      <Modal
-        className='meta-test__UserEditModal'
-        title={`Edit ${username}`}
-        visible={editUserModalVisible}
-        width={550}
-        onClose={hideEditUserModal}
-      >
-        <UserEditForm
-          error={error}
-          loading={loading}
-          onClose={hideEditUserModal}
-        />
-      </Modal>
-    );
-  }
-}
+export const UserEditModal =({
+  error,
+  loading
+}) => {
+  const { visible, username } = useStore($userEditModal);
 
-const mapStateToProps = ({
-  ui: {
-    editUserModalVisible,
-    editUserId: username
-  }
-}) => ({
-  editUserModalVisible,
-  username
-});
-
-const mapDispatchToProps = {
-  hideEditUserModal
+  return (
+    <Modal
+      className='meta-test__UserEditModal'
+      title={`Edit ${username}`}
+      visible={visible}
+      onClose={hideModal}
+    >
+      <UserEditForm
+        error={error}
+        loading={loading}
+        onClose={hideModal}
+      />
+    </Modal>
+  );
 };
-
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(UserEditModal);

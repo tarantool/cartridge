@@ -1,19 +1,27 @@
+// @flow
 import graphql from 'src/api/graphql';
 import { addUserMutation, editUserMutation, fetchUsersQuery, removeUserMutation } from './queries.graphql';
+import type { User, AddUserMutationVariables, EditUserMutationVariables } from 'src/generated/graphql-typing';
 
-export function getUserList() {
+type GetUsersListOutput = {
+  items: User[]
+};
+
+export function getUserList(): GetUsersListOutput {
   return graphql.fetch(fetchUsersQuery)
     .then(({ cluster }) => ({
       items: cluster.users
     }));
 }
 
-export function addUser({
-  email,
-  fullname,
-  password,
-  username
-}) {
+export function addUser(
+  {
+    email,
+    fullname,
+    password,
+    username
+  }: AddUserMutationVariables
+) {
   return graphql.mutate(addUserMutation, {
     email, fullname, password, username
   })
@@ -22,12 +30,14 @@ export function addUser({
     }));
 }
 
-export function editUser({
-  email,
-  fullname,
-  password,
-  username
-}) {
+export function editUser(
+  {
+    email,
+    fullname,
+    password,
+    username
+  }: EditUserMutationVariables
+) {
   return graphql.mutate(editUserMutation, {
     email, fullname, password: password || undefined, username
   })
@@ -36,7 +46,7 @@ export function editUser({
     }));
 }
 
-export function removeUser(username) {
+export function removeUser(username: string) {
   return graphql.mutate(removeUserMutation, { username })
     .then(({ cluster }) => ({
       user: cluster.remove_user

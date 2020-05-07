@@ -1,20 +1,25 @@
 import React from 'react';
-import { connect } from 'react-redux';
+import { useStore } from 'effector-react';
 import { css } from 'emotion';
-import { editUser } from 'src/store/actions/users.actions';
-import { Alert, Button, Input, Text } from '@tarantool.io/ui-kit';
-import { FieldConstructor } from '../FieldGroup';
+import {
+  Alert,
+  Button,
+  Text,
+  LabeledInput,
+  InputPassword
+} from '@tarantool.io/ui-kit';
 import { Formik, Form } from 'formik';
 import * as Yup from 'yup';
 import { pickAll } from 'ramda';
+import usersStore from 'src/store/effector/users';
 
+const { $userToMutate, editUserFx } = usersStore;
 
 const schema = Yup.object().shape({
   fullname: Yup.string(),
   email: Yup.string().email(),
   password: Yup.string()
 })
-
 
 const styles = {
   error: css`
@@ -33,123 +38,84 @@ const styles = {
 };
 
 
-const formProps = [
-  { label: 'New password', field: 'password', type: 'password' },
-  { label: 'email', field: 'email' },
-  { label: 'fullname', field: 'fullname' }
-]
+const submit = async (values, actions) => {
+  const obj = pickAll(['email', 'fullname', 'username'], values)
+  if (values.password) {
+    obj.password = values.password
+  }
+  try {
+    await editUserFx(obj);
+  } catch(e) {
+    return;
+  }
+};
 
 
-class UserEditForm extends React.Component {
-  submit = async (values, actions) => {
-    const { editUser, username } = this.props;
-    const obj = pickAll(['email', 'fullname'], values)
-    if (values.password) {
-      obj.password = values.password
-    }
-    try {
-      await editUser({ ...obj, username });
-    } catch(e) {
-      actions.setFieldError('common', e.message)
-    } finally{
-      actions.setSubmitting(false)
-    }
-  };
+export const UserEditForm = ({
+  error,
+  onClose
+}) => {
+  const { username, fullname, email } = useStore($userToMutate);
+  const pending = useStore(editUserFx.pending);
 
-  render() {
-    const {
-      error,
-      fullname,
-      email,
-      onClose
-    } = this.props;
-
-    return (
-      <Formik
-        initialValues={{
-          fullname: fullname || '',
-          email: email || '',
-          password: ''
-        }}
-        validationSchema={schema}
-        onSubmit={this.submit}
-      >
-        {({
-          values,
-          errors,
-          touched,
-          handleChange,
-          handleBlur,
-          handleSubmit,
-          isSubmitting
-        }) => (<Form>
-          {formProps.map(({ label, field, type }) =>
-            <FieldConstructor
-              key={field}
-              label={label}
-              input={
-                <Input
-                  value={values[field]}
-                  onBlur={handleBlur}
-                  onChange={handleChange}
-                  name={field}
-                  type={type || 'text'}
-                  size='m'
-                />
-              }
-              error={touched[field] && errors[field]}
-            />
-          )}
+  return (
+    <Formik
+      initialValues={{
+        fullname: fullname || '',
+        email: email || '',
+        password: ''
+      }}
+      validationSchema={schema}
+      onSubmit={(values, actions) => submit({ ...values, username }, actions)}
+    >
+      {({
+        values,
+        errors,
+        touched,
+        handleChange,
+        handleBlur,
+        handleSubmit
+      }) => (
+        <Form>
+          <LabeledInput
+            label='New password'
+            name='password'
+            value={values['password']}
+            error={touched['password'] && errors['password']}
+            message={errors['password']}
+            onBlur={handleBlur}
+            onChange={handleChange}
+            inputComponent={InputPassword}
+          />
+          <LabeledInput
+            label='E-mail'
+            name='email'
+            value={values['email']}
+            error={touched['email'] && errors['email']}
+            message={errors['email']}
+            onBlur={handleBlur}
+            onChange={handleChange}
+          />
+          <LabeledInput
+            label='Full name'
+            name='fullname'
+            value={values['fullname']}
+            error={touched['fullname'] && errors['fullname']}
+            message={errors['fullname']}
+            onBlur={handleBlur}
+            onChange={handleChange}
+          />
           {error || errors.common ? (
             <Alert type="error" className={styles.error}>
               <Text variant="basic">{error || errors.common}</Text>
             </Alert>
           ) : null}
           <div className={styles.actionButtons}>
-            {onClose && <Button onClick={onClose} className={styles.cancelButton} size='l'>Cancel</Button>}
-            <Button intent="primary" type='submit' size='l'>Save</Button>
+            {onClose && <Button intent="base" onClick={onClose} className={styles.cancelButton}>Cancel</Button>}
+            <Button intent="primary" type='submit' loading={pending}>Save</Button>
           </div>
         </Form>
-        )}
-      </Formik>
-    );
-  }
-}
-
-const selectUser = (state, username) => {
-  let user = null;
-  state.users.items.some(item => {
-    if (item.username === username) {
-      user = item;
-      return true;
-    }
-    return false;
-  });
-  return user;
+      )}
+    </Formik>
+  );
 };
-
-const mapStateToProps = state => {
-  const {
-    users: {
-      mutationError: error
-    },
-    ui: {
-      fetchingUserMutation: loading,
-      editUserId: username
-    }
-  } = state;
-
-  return {
-    error,
-    loading,
-    username,
-    ...(username && selectUser(state, username))
-  };
-};
-
-const connectedForm = connect(
-  mapStateToProps,
-  { editUser }
-)(UserEditForm);
-
-export default connectedForm;
