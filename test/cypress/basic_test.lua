@@ -155,7 +155,7 @@ function g.test_users()
     local code = os.execute(
         "cd webui && npx cypress run --spec" ..
         ' cypress/integration/auth.spec.js' ..
-        ',cypress/integration/users.spec.js' .. 
+        ',cypress/integration/users.spec.js' ..
         ',cypress/integration/server-details.spec.js' ..
         ',cypress/integration/server-details-dead-server.spec.js' ..
         ',cypress/integration/login-and-logout.spec.js'..
