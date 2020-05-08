@@ -95,18 +95,16 @@ endif()
 ## API doc ####################################################################
 ###############################################################################
 
-set(SPHINX_BUILD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/doc/_html_build/")
-set(SPHINX_OUTPUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/doc")
-set(RST_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/rst")
-set(LDOC_DEST_DIR "${RST_SOURCE_DIR}/cartridge_api")
-
 set(DOC_OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/doc)
 
 if(DEFINED ENV{CMAKE_LDOC_FIND_REQUIRED})
   set(LDOC_FIND_REQUIRED "$ENV{CMAKE_LDOC_FIND_REQUIRED}")
-  set(SPHINX_FIND_REQUIRED "$ENV{CMAKE_SPHINX_FIND_REQUIRED}")
 endif()
 find_package(Ldoc)
+
+if(DEFINED ENV{CMAKE_SPHINX_FIND_REQUIRED})
+  set(SPHINX_FIND_REQUIRED "$ENV{CMAKE_SPHINX_FIND_REQUIRED}")
+endif()
 find_package(Sphinx)
 
 add_custom_command(
@@ -115,7 +113,7 @@ add_custom_command(
   COMMAND ${CMAKE_COMMAND} -E copy_directory
     ${CMAKE_CURRENT_SOURCE_DIR}/rst
     ${CMAKE_CURRENT_BINARY_DIR}/build.rst
-  COMMAND ${LDOC} .
+  COMMAND ${LDOC} --all .
     --ext rst
     --dir "${CMAKE_CURRENT_BINARY_DIR}/build.rst/cartridge_api"
   COMMAND ${SPHINX}
