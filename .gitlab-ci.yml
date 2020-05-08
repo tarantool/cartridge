@@ -26,6 +26,7 @@ stages:
       - Dockerfile.base-ee
       - Dockerfile.base-ce
       - test/integration/requirements.txt
+      - rst/requirements.txt
   before_script:
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN registry.gitlab.com
   script:

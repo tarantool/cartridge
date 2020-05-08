@@ -106,10 +106,11 @@ But if you want to build frontend too, you'll also need:
 * ``nodejs`` >= 8 ([instructions](https://github.com/nodesource/distributions));
 * ``npm`` >= 6.
 
-Documentation is generated from source code, but only if `ldoc` tool is
+Documentation is generated from source code, but only if `ldoc` and `sphinx` tool is
 installed:
 
 ```sh
+pip install 'sphinx==3.0.3'
 tarantoolctl rocks install \
   https://raw.githubusercontent.com/tarantool/LDoc/tarantool/ldoc-scm-2.rockspec \
   --server=http://rocks.moonscript.org
