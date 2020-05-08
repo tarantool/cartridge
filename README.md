@@ -66,7 +66,7 @@ cd myapp
 ../.rocks/bin/cartridge start
 ```
 
-That's all! You can visit [http://localhost:8081](http://localhost:8081) 
+That's all! You can visit [http://localhost:8081](http://localhost:8081)
 and see your application Admin Web UI:
 
 <img width="640" alt="cartridge-ui" src="https://user-images.githubusercontent.com/11336358/75786427-52820c00-5d76-11ea-93a4-309623bda70f.png">
@@ -110,7 +110,9 @@ Documentation is generated from source code, but only if `ldoc` tool is
 installed:
 
 ```sh
-tarantoolctl rocks install ldoc --server=http://rocks.moonscript.org
+tarantoolctl rocks install \
+  https://raw.githubusercontent.com/tarantool/LDoc/tarantool/ldoc-scm-2.rockspec \
+  --server=http://rocks.moonscript.org
 tarantoolctl rocks make
 ```
 
