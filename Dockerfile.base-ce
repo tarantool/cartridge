@@ -5,7 +5,7 @@ ARG TARANTOOL_BRANCH
 RUN set -x &&\
     yum -y install https://centos7.iuscommunity.org/ius-release.rpm &&\
     curl -sL https://rpm.nodesource.com/setup_8.x | bash - &&\
-    yum -y install gcc git make cmake unzip python python-pip nodejs &&\
+    yum -y install gcc git make cmake unzip python3 nodejs &&\
     # cypress deps
     yum -y install gtk3 xorg-x11-server-Xvfb libXScrnSaver GConf2 alsa-lib lsof
 
@@ -35,7 +35,7 @@ ENV PATH="${PWD}/.rocks/bin:${PATH}"
 COPY test/integration/requirements.txt /tmp/test-requirements.txt
 COPY rst/requirements.txt /tmp/doc-requirements.txt
 
-RUN pip install \
+RUN pip3 install \
     -r /tmp/test-requirements.txt \
     -r /tmp/doc-requirements.txt
 RUN rm tmp/*-requirements.txt
