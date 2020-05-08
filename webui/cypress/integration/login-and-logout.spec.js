@@ -63,11 +63,10 @@ describe('Login', () => {
     cy.get('.meta-test__LogoutBtn span:contains()');
     cy.get('.meta-test__LoginBtn').should('not.exist');
 
-    cy.get('.meta-test__UsersTable').find('button').eq(1).click();
-    cy.get('li').contains('Remove user').click();
-    cy.get('.meta-test__UserRemoveModal button[type="button"]').contains('Remove').click();
+    //logout and remove testuser:
+    cy.get('.meta-test__LogoutBtn').click();
+    cy.get('li').contains('Log out').click();
 
-    //remove testuser:
     cy.get('.meta-test__UsersTable').find('button').eq(1).click();
     cy.get('li').contains('Remove user').click();
     cy.get('.meta-test__UserRemoveModal button[type="button"]:contains(Remove)').click();

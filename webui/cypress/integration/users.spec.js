@@ -37,7 +37,7 @@ describe('Users', () => {
     cy.get('li').contains('Remove user').click();
     cy.get('.meta-test__UserRemoveModal button[type="button"]:contains(Remove)').click();
     cy.get('.meta-test__addUserBtn'); //it is a litle delay
-    cy.get('.meta-test__UsersTable').contains('Full Name donottouch').should('not.exist');
+    cy.get('.meta-test__UsersTable').contains('user_do_not_touch').should('not.exist');
   })
 
 });
