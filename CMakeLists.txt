@@ -25,6 +25,10 @@ file(GLOB_RECURSE LUA_FILES
   "${CMAKE_CURRENT_SOURCE_DIR}/cartridge/*.lua"
 )
 
+file(GLOB_RECURSE DOC_FILES
+  "${CMAKE_CURRENT_SOURCE_DIR}/rst/*"
+)
+
 ## VERSION ####################################################################
 ###############################################################################
 
@@ -91,28 +95,43 @@ endif()
 ## API doc ####################################################################
 ###############################################################################
 
-set(DOC_OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/doc/index.html)
+set(DOC_OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/doc)
 
 if(DEFINED ENV{CMAKE_LDOC_FIND_REQUIRED})
   set(LDOC_FIND_REQUIRED "$ENV{CMAKE_LDOC_FIND_REQUIRED}")
 endif()
 find_package(Ldoc)
 
+if(DEFINED ENV{CMAKE_SPHINX_FIND_REQUIRED})
+  set(SPHINX_FIND_REQUIRED "$ENV{CMAKE_SPHINX_FIND_REQUIRED}")
+endif()
+find_package(Sphinx)
+
 add_custom_command(
-  OUTPUT DOC_OUTPUT
-  COMMAND ${LDOC} --all .
+  OUTPUT ${DOC_OUTPUT}/index.html
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-  DEPENDS ${LUA_FILES}
+  COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${CMAKE_CURRENT_SOURCE_DIR}/rst
+    ${CMAKE_CURRENT_BINARY_DIR}/build.rst
+  COMMAND ${LDOC} --all .
+    --ext rst
+    --dir "${CMAKE_CURRENT_BINARY_DIR}/build.rst/cartridge_api"
+  COMMAND ${SPHINX}
+      "${CMAKE_CURRENT_BINARY_DIR}/build.rst"
+      "${DOC_OUTPUT}"
+      -d "${CMAKE_CURRENT_BINARY_DIR}/.doctrees"
+      -b html
+  DEPENDS ${DOC_FILES} ${LUA_FILES}
   COMMENT "Building API documentation"
   VERBATIM
 )
 
-if(LDOC_FOUND)
+if(LDOC_FOUND AND SPHINX_FOUND)
   add_custom_target(doc ALL
-    DEPENDS DOC_OUTPUT)
+    DEPENDS "${DOC_OUTPUT}/index.html")
 else()
   add_custom_target(doc
-    DEPENDS DOC_OUTPUT)
+    DEPENDS "${DOC_OUTPUT}/index.html")
 endif()
 
 ## GraphQL schema #############################################################

@@ -1,3 +1,4 @@
 * text eol=lf
 *.snap binary
 *.xlog binary
+*.png binary

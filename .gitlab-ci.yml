@@ -26,6 +26,7 @@ stages:
       - Dockerfile.base-ee
       - Dockerfile.base-ce
       - test/integration/requirements.txt
+      - rst/requirements.txt
   before_script:
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN registry.gitlab.com
   script:
@@ -40,8 +41,6 @@ stages:
       -f ${DOCKER_FILE}
       .
     - docker push ${CI_REGISTRY_IMAGE}/${IMAGE_NAME}:${IMAGE_TAG}
-  after_script:
-    - docker logout registry.gitlab.com
 
 docker-build-ee:
   <<: *docker-build-template
@@ -137,6 +136,7 @@ misc:
   variables:
     IMAGE_NAME: *IMAGE_NAME_EE
     CMAKE_LDOC_FIND_REQUIRED: "YES"
+    CMAKE_SPHINX_FIND_REQUIRED: "YES"
 
 ########################################################################
 ###

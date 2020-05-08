@@ -66,7 +66,7 @@ cd myapp
 ../.rocks/bin/cartridge start
 ```
 
-That's all! You can visit [http://localhost:8081](http://localhost:8081) 
+That's all! You can visit [http://localhost:8081](http://localhost:8081)
 and see your application Admin Web UI:
 
 <img width="640" alt="cartridge-ui" src="https://user-images.githubusercontent.com/11336358/75786427-52820c00-5d76-11ea-93a4-309623bda70f.png">
@@ -106,11 +106,14 @@ But if you want to build frontend too, you'll also need:
 * ``nodejs`` >= 8 ([instructions](https://github.com/nodesource/distributions));
 * ``npm`` >= 6.
 
-Documentation is generated from source code, but only if `ldoc` tool is
+Documentation is generated from source code, but only if `ldoc` and `sphinx` tool is
 installed:
 
 ```sh
-tarantoolctl rocks install ldoc --server=http://rocks.moonscript.org
+pip install 'sphinx==3.0.3'
+tarantoolctl rocks install \
+  https://raw.githubusercontent.com/tarantool/LDoc/tarantool/ldoc-scm-2.rockspec \
+  --server=http://rocks.moonscript.org
 tarantoolctl rocks make
 ```
 
