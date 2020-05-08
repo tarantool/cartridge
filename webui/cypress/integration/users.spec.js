@@ -4,7 +4,7 @@ describe('Users', () => {
     cy.visit(Cypress.config('baseUrl'));
     cy.get('a[href="/admin/cluster/users"]').click();
   })
-  
+
   it('Add user', () => {
     cy.get('.meta-test__addUserBtn').click({ force: true });
     cy.get('.meta-test__UserAddForm input[name="username"]')
@@ -33,10 +33,10 @@ describe('Users', () => {
   })
 
   it('Remove user', () => {
-    cy.get('.meta-test__UsersTable').find('button').eq(1).click();
+    cy.get('.meta-test__UsersTable li:contains(user_do_not_touch)').find('button').click();
     cy.get('li').contains('Remove user').click();
     cy.get('.meta-test__UserRemoveModal button[type="button"]:contains(Remove)').click();
-    cy.get('.meta-test__addUserBtn'); //it is a litle delay
+
     cy.get('.meta-test__UsersTable').contains('user_do_not_touch').should('not.exist');
   })
 
