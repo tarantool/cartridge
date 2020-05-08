@@ -66,5 +66,10 @@ describe('Login', () => {
     cy.get('.meta-test__UsersTable').find('button').eq(1).click();
     cy.get('li').contains('Remove user').click();
     cy.get('.meta-test__UserRemoveModal button[type="button"]').contains('Remove').click();
+
+    //remove testuser:
+    cy.get('.meta-test__UsersTable').find('button').eq(1).click();
+    cy.get('li').contains('Remove user').click();
+    cy.get('.meta-test__UserRemoveModal button[type="button"]:contains(Remove)').click();
   })
 });
