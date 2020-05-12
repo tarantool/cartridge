@@ -1,142 +1,152 @@
 # Failover architecture
 
-One of important concepts in cluster topology is **the leader** setting.
-Leader is an instance, which is responsible for performing key
-operations, for simplicity one can think of it as of the only writable
-master. Every replica set has its own leader, and there's usually not
+An important concept in cluster topology is appointing **a leader**.
+Leader is an instance which is responsible for performing key
+operations. To keep things simple, you can think of a leader as of the only
+writable master. Every replica set has its own leader, and there's usually not
 more than one.
 
 Which instance will become a leader depends on topology settings and
 failover configuration.
 
-One of important topology parameters is the **failover priority** within
-replica set. It's an ordered list of instances. By default, the first
-instance in the list will become a leader, but with failover enabled it
+An important topology parameter is the **failover priority** within
+a replica set. This is an ordered list of instances. By default, the first
+instance in the list becomes a leader, but with the failover enabled it
 may be changed automatically if the first one is malfunctioning.
 
 ## Instance configuration upon leadership change
 
-When cartridge configures roles it takes into account **leadership map**
-(consolidated in `failover.lua` module). Leadership map is composed when
-the instance enters `ConfiguringRoles` state for the first time. Later
+When Cartridge configures roles, it takes into account the **leadership map**
+(consolidated in the `failover.lua` module). The leadership map is composed when
+the instance enters the `ConfiguringRoles` state for the first time. Later
 the map is updated according to the failover mode.
 
-Every change is leadership map is accompanied by the instance
-re-configuration. When the map changes the cartridge updates `read_only`
-setting and calls `apply_config` callback for every role. It also
-specifies `is_master` flag (which actually means `is_leader`, but wasn't
-renamed yet due to historical reasons).
+Every change in the leadership map is accompanied by instance
+re-configuration. When the map changes, Cartridge updates the `read_only`
+setting and calls the `apply_config` callback for every role. It also
+specifies the `is_master` flag (which actually means `is_leader`, but hasn't
+been renamed yet due to historical reasons).
 
-It's important to say, that we discuss distributed system. And every
-instance has its own opinion. Even if all opinions coincide there still
-may be races between instances, and one (an application developer)
+It's important to say that we discuss a *distributed* system where every
+instance has its own opinion. Even if all opinions coincide, there still
+may be races between instances, and you (as an application developer)
 should take them into account when designing roles and their
 interaction.
 
 ## Leader appointment rules
 
-The logics behind leader election depends on the **failover mode** which
-are three: disabled, eventual, and stateful.
+The logic behind leader election depends on the **failover mode**:
+disabled, eventual, or stateful.
 
 ### Disabled mode
 
 This is the simplest case. The leader is always the first instance in
-failover priority. No automatic switching is performed. When it's dead,
+the failover priority. No automatic switching is performed. When it's dead,
 it's dead.
 
 ### Eventual failover
 
-In `eventual` mode the leader isn't elected consistently. Instead, every
-instance in cluster thinks the leader is the first **healthy** server in
-replicaset, while instance health is determined according to membership
-status (the SWIM protocol).
+In the `eventual` mode, the leader isn't elected consistently. Instead, every
+instance in the cluster thinks that the leader is the first **healthy** instance
+in the failover priority list, while instance health is determined according to
+the membership status (the SWIM protocol).
 
-Leader election in eventual failover mode should be spoken of as
-follows. Suppose there are two replica sets in cluster - a single router
-"R" and a pair of storages "S1" and "S2". Than we can say:
-all three R, S1, S2 agree that S1 is the leader.
+Leader election is done as follows.
+Suppose there are two replica sets in the cluster:
 
-SWIM protocol makes us sure that *eventually* all instances will find
+* a single router "R",
+* two storages, "S1" and "S2".
+
+Then we can say: all the three instances (R, S1, S2) agree that S1 is the leader.
+
+The SWIM protocol guarantees that *eventually* all instances will find a
 common ground, but it's not guaranteed for every intermediate moment of
-time. So we may come into situation soon after S1 dies, when R already
-informed and thinks S2 is a leader, but S2 didn't receive the gossip yet
-and still thinks he's not. The similar situation can result in both S1
-and S2 considering themselves to be leaders.
+time. So we may get a conflict.
+
+For example, soon after S1 goes down, R is already informed and thinks
+that S2 is the leader, but S2 hasn't received the gossip yet and still thinks
+he's not. This is a conflict.
+
+Similarly, when S1 recovers and takes the leadership, but S2 may be unaware of
+that yet. So, both S1 and S2 consider themselves as leaders.
 
 Moreover, SWIM protocol isn't perfect and still can produce
 false-negative gossips (announce the instance is dead when it's not).
 
 ### Stateful failover
 
-This mode relies on two new actors. As before, every instance composes
-his own leadership map, but now it's fetched from **external state
-provider** (that's why it's called stateful). In future cartridge is
-going to support different providers, such as consul or etcd, but
-nowadays there's only one - `stateboard`. It's a stand-alone Tarantool
-instance which implements domain specific key-value storage (simply
+As in case of eventual failover, every instance composes its own leadership map,
+but now the map is fetched from an **external state provider**
+(that's why this failover mode called "stateful"). In future, Cartridge is
+going to support different providers, such as Consul or etcd, but
+nowadays there's only one - `stateboard`. This is a standalone Tarantool
+instance which implements a domain-specific key-value storage (simply
 `replicaset_uuid -> leader_uuid`) and a locking mechanism.
 
-Changes in leadership map are obtained form stateboard with the long
-polling technique.
+Changes in the leadership map are obtained from the stateboard with the
+[long polling technique](https://en.wikipedia.org/wiki/Push_technology#Long_polling).
 
-All decisions are made by **the coordinator** - the one who holds the
-lock. Coordinator is implemented as a built-in cartridge role. There may
+All decisions are made by **the coordinator** - the one that holds the
+lock. The coordinator is implemented as a built-in Cartridge role. There may
 be many instances with the coordinator role enabled, but only one of
-them could acquire the lock at the same time. We call him the "active"
+them can acquire the lock at the same time. We call this coordinator the "active"
 one.
 
-The lock is released automatically when TCP connection is closed, or it
-may expire if coordinator becomes unresponsive (the timeout is set by
-stateboard `--lock_delay` option), so the coordinator renews it from
-time to time.
+The lock is released automatically when the TCP connection is closed, or it
+may expire if the coordinator becomes unresponsive (the timeout is set by the
+stateboard's `--lock_delay` option), so the coordinator renews the lock from
+time to time in order to be considered alive.
 
-Coordinator makes his decision basing on SWIM data, but he does it
-slightly differently than eventual failover does:
+The coordinator makes a decision based on the SWIM data, but the decision
+algorithm is slightly different from that in case of eventual failover:
 
-- Right after acquiring the lock in the state provider, coordinator
-  fetches leadership map.
+* Right after acquiring the lock from the state provider, the coordinator
+  fetches the leadership map.
 
-- If there is no appointment for a replicaset, coordinator appoints the
-  first leader according to failover priority notwithstanding it's
-  SWIM status.
+* If there is no leader appointed for the replica set, the coordinator
+  appoints the first leader according to the failover priority, regardless of
+  the SWIM status.
 
-- If a leader becomes degraded, coordinator makes another decision. New
-  leader is the first healthy instance from failover priority list.
-  Healthy leaders aren't switched automatically even if it's not first.
-  Changing failover priority doesn't affect it too.
+* If a leader becomes degraded, the coordinator makes a decision. A new
+  leader is the first healthy instance from the failover priority list.
+  If an old leader recovers, no leader change is made until the current
+  leader down. Changing failover priority doesn't affect this.
 
-- Every appointment (self-made or fetched) is immune for the first time
-  (which is controlled with `IMMUNITY_TIMEOUT` option).
+* Every appointment (self-made or fetched) is immune for a while
+  (controlled by the `IMMUNITY_TIMEOUT` option).
 
 #### The case: external provider outage
 
-In this case instances do nothing: who was a leader remains a leader,
-who was read-only remains read-only. If any instance restarts during
-external state provider outage, it composes empty leadership map, i.e.
-it doesn't know who's actually a leader and thinks there a none of
-them.
+In this case instances do nothing: the leader remains a leader,
+read-only instances remain read-only. If any instance restarts during an
+external state provider outage, it composes an empty leadership map:
+it doesn't know who actually is a leader and thinks there is none.
 
 #### The case: coordinator outage
 
-Active coordinator may be absent in cluster either because of a failure
-or due to disabling the role everywhere. Just like previously, instances
-do nothing about it - they keep fetching leadership map from the state
-provider. But it will remain the same until a coordinator appears.
+An active coordinator may be absent in a cluster either because of a failure
+or due to disabling the role everywhere. Just like in the previous case,
+instances do nothing about it: they keep fetching the leadership map from the
+state provider. But it will remain the same until a coordinator appears.
 
 ## Manual leader promotion
 
 It differs a lot depending on the failover mode.
 
-In disabled and eventual modes one can only promote a leader by changing
-failover priority (apply new clusterwide configuration).
+In the disabled and eventual modes, you can only promote a leader by changing
+the failover priority (and applying a new clusterwide configuration).
 
-In stateful mode failover priority doesn't make much sence (except for
-the first appointment). Instead, one should use separate promotion API
-which pushes manual appointment to the state provider.
+In the stateful mode, the failover priority doesn't make much sense (except for
+the first appointment). Instead, you should use the promotion API
+(the Lua
+[cartridge.failover_promote](https://www.tarantool.io/en/doc/latest/book/cartridge/cartridge_api/modules/cartridge/#failover-promote-replicaset-uuid)
+or
+the GraphQL `mutation {cluster{failover_promote()}}`)
+which pushes manual appointments to the state provider.
 
 ## Failover configuration
 
-These are cluster-wide parameters:
+These are clusterwide parameters:
 
 * `mode`: "disabled" / "eventual" / "stateful".
 * `state_provider`: only "tarantool" is supported for now.
@@ -146,14 +156,14 @@ These are cluster-wide parameters:
 
 See:
 
-- `cartridge.failover_get_params`,
-- `cartridge.failover_set_params`,
-- `cartridge.failover_promote`.
+* [cartridge.failover_get_params](https://www.tarantool.io/en/doc/latest/book/cartridge/cartridge_api/modules/cartridge/#failover-get-params),
+* [cartridge.failover_set_params](https://www.tarantool.io/en/doc/latest/book/cartridge/cartridge_api/modules/cartridge/#failover-set-params-opts),
+* [cartridge.failover_promote](https://www.tarantool.io/en/doc/latest/book/cartridge/cartridge_api/modules/cartridge/#failover-promote-replicaset-uuid).
 
 ### GraphQL API
 
 Use your favorite GraphQL client (e.g.
-[Altair](https://altair.sirmuel.design/)) to see requests introspection:
+[Altair](https://altair.sirmuel.design/)) for requests introspection:
 
 - `query {cluster{failover_params{}}}`,
 - `mutation {cluster{failover_params(){}}}`,
@@ -161,15 +171,15 @@ Use your favorite GraphQL client (e.g.
 
 ## Stateboard configuration
 
-Stateboard supports `cartridge.argprase` options similar to other
-cartridge instances:
+Like other Cartridge instances, the stateboard supports `cartridge.argprase`
+options:
 
 * `listen`
 * `workdir`
 * `password`
 * `lock_delay`
 
-And, similar to other argparse options, they can be passed via
+Similarly to other `argparse` options, they can be passed via
 command-line arguments or via environment variables, e.g.:
 
 ```bash
@@ -178,17 +188,17 @@ command-line arguments or via environment variables, e.g.:
 
 ## Fine-tuning failover behavior
 
-Besides failover priority and mode there are few other private options
-that influence failover operation.
+Besides failover priority and mode, there are some other private options
+that influence failover operation:
 
-* `LONGPOLL_TIMEOUT` (`failover`) - the long polling timeout to
+* `LONGPOLL_TIMEOUT` (`failover`) - the long polling timeout (in seconds) to
   fetch new appointments (default: 30);
 
-* `NETBOX_CALL_TIMEOUT` (`failover/coordinator`) - `stateboard` client
-  connection timeout applied to all communications (default: 1);
+* `NETBOX_CALL_TIMEOUT` (`failover/coordinator`) - stateboard client's
+  connection timeout (in seconds) applied to all communications (default: 1);
 
-* `RECONNECT_PERIOD` (`coordinator`) - time to reconnect to the
-  `stateboard` if it's unreachable (default: 5);
+* `RECONNECT_PERIOD` (`coordinator`) - time (in seconds) to reconnect to the
+  stateboard if it's unreachable (default: 5);
 
-* `IMMUNITY_TIMEOUT` (`coordinator`) - minimal amount of time to wait
-  before overriding an appointment (default: 15).
+* `IMMUNITY_TIMEOUT` (`coordinator`) - minimal amount of time (in seconds)
+  to wait before overriding an appointment (default: 15).
