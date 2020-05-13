@@ -24,3 +24,9 @@ coverage_result.txt
 luacov.*.out*
 /node_modules
 /package-lock.json
+*.mo
+/rst/cartridge_api
+/rst/locale/cartridge_api/
+/rst/locale/cartridge_cli/
+/rst/locale/ru/LC_MESSAGES/cartridge_api/
+/rst/locale/ru/LC_MESSAGES/cartridge_cli/

@@ -1,0 +1,737 @@
+
+msgid "Cartridge Command Line Interface"
+msgstr ""
+
+msgid "Installation"
+msgstr ""
+
+msgid "RPM package (CentOS, Fedora)"
+msgstr ""
+
+msgid ""
+"# Select a Tarantool version (copy one of these lines):\n"
+"TARANTOOL_VERSION=1_10\n"
+"TARANTOOL_VERSION=2x\n"
+"TARANTOOL_VERSION=2_2\n"
+"\n"
+"# Set up the Tarantool packages repository:\n"
+"curl -s "
+"https://packagecloud.io/install/repositories/tarantool/$TARANTOOL_VERSION/script.rpm.sh"
+" | sudo bash\n"
+"\n"
+"# Install the package:\n"
+"sudo yum install cartridge-cli\n"
+"\n"
+"# Check the installation:\n"
+"cartridge --version"
+msgstr ""
+
+msgid "DEB package (Debian, Ubuntu)"
+msgstr ""
+
+msgid ""
+"# Select a Tarantool version (copy one of these lines):\n"
+"TARANTOOL_VERSION=1_10\n"
+"TARANTOOL_VERSION=2x\n"
+"TARANTOOL_VERSION=2_2\n"
+"\n"
+"# Set up the Tarantool packages repository:\n"
+"curl -s "
+"https://packagecloud.io/install/repositories/tarantool/$TARANTOOL_VERSION/script.deb.sh"
+" | sudo bash\n"
+"\n"
+"# Install the package:\n"
+"sudo apt-get install cartridge-cli\n"
+"\n"
+"# Check the installation:\n"
+"cartridge --version"
+msgstr ""
+
+msgid "Homebrew (MacOS)"
+msgstr ""
+
+msgid ""
+"brew install cartridge-cli\n"
+"\n"
+"# Check the installation:\n"
+"cartridge --version"
+msgstr ""
+
+msgid "From luarocks"
+msgstr ""
+
+msgid ""
+"To install ``cartridge-cli`` to the project’s folder (installed "
+"`Tarantool <https://www.tarantool.io/download/>`__ is required):"
+msgstr ""
+
+msgid "tarantoolctl rocks install cartridge-cli"
+msgstr ""
+
+msgid ""
+"The executable will be available at ``.rocks/bin/cartridge``. Optionally,"
+" you can add ``.rocks/bin`` to the executable path:"
+msgstr ""
+
+msgid "export PATH=$PWD/.rocks/bin/:$PATH"
+msgstr ""
+
+msgid ""
+"If you have both global packages installed, the ``cartridge`` executable "
+"will use the project-specific version installed when running from its "
+"directory."
+msgstr ""
+
+msgid "Usage"
+msgstr ""
+
+msgid "For more details, say:"
+msgstr ""
+
+msgid "cartridge --help"
+msgstr ""
+
+msgid "These commands are supported:"
+msgstr ""
+
+msgid "``create`` - create a new app from template;"
+msgstr ""
+
+msgid "``pack`` - pack application into a distributable bundle;"
+msgstr ""
+
+msgid "``build`` - build application for local development;"
+msgstr ""
+
+msgid "``start`` - start a Tarantool instance(s);"
+msgstr ""
+
+msgid "``stop`` - stop a Tarantool instance(s)."
+msgstr ""
+
+msgid "Applications lifecycle"
+msgstr ""
+
+msgid "Create an application from a template:"
+msgstr ""
+
+msgid "cartridge create --name myapp"
+msgstr ""
+
+msgid "Build an application:"
+msgstr ""
+
+msgid "cartridge build ./myapp"
+msgstr ""
+
+msgid "Run instances locally:"
+msgstr ""
+
+msgid ""
+"cartridge start\n"
+"cartridge stop"
+msgstr ""
+
+msgid "Pack an application into a distributable, for example into an RPM package:"
+msgstr ""
+
+msgid "cartridge pack rpm ./myapp"
+msgstr ""
+
+msgid "Building an application"
+msgstr ""
+
+msgid ""
+"You can call ``cartridge build [<path>]`` command to build application "
+"locally. It can be useful for local development."
+msgstr ""
+
+msgid ""
+"This command requires one argument - path to the application. By default "
+"- it’s ``.`` (current directory)."
+msgstr ""
+
+msgid "These steps will be performed on running this command:"
+msgstr ""
+
+msgid "running ``cartridge.pre-build`` (or [DEPRECATED] ``.cartridge.pre``);"
+msgstr ""
+
+msgid "running ``tarantoolctl rocks make``."
+msgstr ""
+
+msgid "Application packing details"
+msgstr ""
+
+msgid ""
+"An application can be packed by running the ``cartridge pack <type> "
+"[<path>]`` command."
+msgstr ""
+
+msgid ""
+"These types of packages are supported: ``rpm``, ``deb``, ``tgz``, "
+"``rock``, and ``docker``."
+msgstr ""
+
+msgid "If ``path`` isn’t specified, current directory is used by default."
+msgstr ""
+
+msgid ""
+"For ``rpm``, ``deb``, and ``tgz``, we also deliver rocks modules and "
+"executables specific for the system where the ``cartridge pack`` command "
+"is running."
+msgstr ""
+
+msgid ""
+"For ``docker``, the resulting image will contain rocks modules and "
+"executables specific for the base image (``centos:8``)."
+msgstr ""
+
+msgid "Common options:"
+msgstr ""
+
+msgid "``--name``: name of the app to pack;"
+msgstr ""
+
+msgid "``--version``: application version."
+msgstr ""
+
+msgid ""
+"The result will be named as ``<name>-<version>.<type>``. By default, the "
+"application name is detected from the rockspec, and the application "
+"version is detected from ``git describe``."
+msgstr ""
+
+msgid "Build directory"
+msgstr ""
+
+msgid ""
+"By default, application build is performed in the temporarily directory "
+"in the ``~/.cartridge/tmp/``, so the packaging process doesn’t affect the"
+" contents of your application directory."
+msgstr ""
+
+msgid ""
+"You can specify custom build directory for your project in "
+"``CARTRIDGE_BUILDDIR`` environment variable. If this directory doesn’t "
+"exists, it will be created, used for building the application and then "
+"removed. **Note**, that specified directory can’t be project "
+"subdirectory."
+msgstr ""
+
+msgid ""
+"If you specify existent directory in ``CARTRIDGE_BUILDDIR`` environment "
+"variable, ``CARTRIDGE_BUILDDIR/build.cartridge`` repository will be used "
+"for build and then removed. This directory will be cleaned before "
+"building application."
+msgstr ""
+
+msgid "General packing flow and options"
+msgstr ""
+
+msgid "A package build comprises these steps:"
+msgstr ""
+
+msgid "1. Forming the distribution directory"
+msgstr ""
+
+msgid ""
+"On this stage, some files will be filtered out: \\* First, ``git clean -X"
+" -d -f`` will be called to remove all untracked and ignored files. \\* "
+"Then ``.rocks`` and ``.git`` directories will be removed."
+msgstr ""
+
+msgid ""
+"*Note*: All application files should have at least ``a+r`` permissions "
+"(``a+rx`` for directories). Otherwise, ``cartridge pack`` command raises "
+"an error. Files permissions will be kept “as they are”, and the code "
+"files owner will be set to ``root:root`` in the resulting package."
+msgstr ""
+
+msgid "2. Building an application"
+msgstr ""
+
+msgid ""
+"*Note*: When packing in docker, this stage is running in the container "
+"itself, so all rocks dependencies will be installed correctly. For other "
+"package types, this stage is running on the local machine, so the "
+"resulting package will contain rocks modules and binaries specific for "
+"the local OS."
+msgstr ""
+
+msgid "First, ``cartridge.pre-build`` script is run (if it’s present)."
+msgstr ""
+
+msgid ""
+"Then, ``tarantoolctl rocks make`` command is run to deliver all rocks "
+"dependencies specified in the rockspec. It will form the ``.rocks`` "
+"directory that will be delivered in the resulting package."
+msgstr ""
+
+msgid "Finally, ``cartridge.post-build`` script is run (if it’s present)."
+msgstr ""
+
+msgid "Special files"
+msgstr ""
+
+msgid ""
+"You can place these files in your application root to control the "
+"application packing flow (see `examples <#examples>`__ below):"
+msgstr ""
+
+msgid ""
+"``cartridge.pre-build``: a script to be run before ``tarantoolctl rocks "
+"make``. The main purpose of this script is to build some non-standard "
+"rocks modules (for example, from a submodule)."
+msgstr ""
+
+msgid ""
+"``cartridge.post-build``: a script to be run after ``tarantoolctl rocks "
+"make``. The main purpose of this script is to remove build artifacts from"
+" result package."
+msgstr ""
+
+msgid ""
+"[DEPRECATED] ``.cartridge.ignore``: here you can specify some files and "
+"directories to be excluded from the package build. See the `documentation"
+" <https://www.tarantool.io/ru/doc/1.10/book/cartridge/cartridge_dev"
+"/#using-cartridge-ignore-files>`__ for details."
+msgstr ""
+
+msgid ""
+"[DEPRECATED] ``.cartridge.pre``: a script to be run before ``tarantoolctl"
+" rocks make``. The main purpose of this script is to build some non-"
+"standard rocks modules (for example, from a submodule)."
+msgstr ""
+
+msgid ""
+"*Note*: You can use any of these approaches (just take care not to mix "
+"them): ``cartridge.pre-build`` + ``cartridge.post-build`` or deprecated "
+"``.cartridge.ignore`` + ``.cartridge.pre``."
+msgstr ""
+
+msgid ""
+"*Note*: Packing to docker image isn’t compatible with the deprecated "
+"packing flow."
+msgstr ""
+
+msgid "Special files examples"
+msgstr ""
+
+msgid "``cartridge.pre-build``:"
+msgstr ""
+
+msgid ""
+"#!/bin/sh\n"
+"\n"
+"# The main purpose of this script is to build some non-standard rocks "
+"modules.\n"
+"# It will be ran before `tarantoolctl rocks make` on application build\n"
+"\n"
+"tarantoolctl rocks make --chdir ./third_party/my-custom-rock-module"
+msgstr ""
+
+msgid "``cartridge.post-build``:"
+msgstr ""
+
+msgid ""
+"#!/bin/sh\n"
+"\n"
+"# The main purpose of this script is to remove build artifacts from "
+"result package.\n"
+"# It will be ran after `tarantoolctl rocks make` on application build\n"
+"\n"
+"rm -rf third_party\n"
+"rm -rf node_modules\n"
+"rm -rf doc"
+msgstr ""
+
+msgid "Application packing type-specific details"
+msgstr ""
+
+msgid "TGZ"
+msgstr ""
+
+msgid ""
+"``cartridge pack tgz ./myapp`` will create a .tgz archive containing the "
+"application source code and rocks modules described in the application "
+"rockspec."
+msgstr ""
+
+msgid "RPM and DEB"
+msgstr ""
+
+msgid "``cartridge pack rpm|deb ./myapp`` will create an RPM or DEB package."
+msgstr ""
+
+msgid ""
+"If you use an opensource version of Tarantool, the package has a "
+"``tarantool`` dependency (version >= ``<major>.<minor>`` and < "
+"``<major+1>``, where ``<major>.<minor>`` is the version of Tarantool used"
+" for application packing). You should enable the Tarantool repo to allow "
+"your package manager install this dependency correctly."
+msgstr ""
+
+msgid "After package installation:"
+msgstr ""
+
+msgid ""
+"the application code and rocks modules described in the application "
+"rockspec will be placed in the ``/usr/share/tarantool/<app_name>`` "
+"directory (for Tarantool Enterprise, this directory will also contain "
+"``tarantool`` and ``tarantoolctl`` binaries);"
+msgstr ""
+
+msgid ""
+"unit files for running the application as a ``systemd`` service will be "
+"delivered in ``/etc/systemd/system``."
+msgstr ""
+
+msgid "These directories will be created:"
+msgstr ""
+
+msgid "``/etc/tarantool/conf.d/`` - directory for instances configuration;"
+msgstr ""
+
+msgid "``/var/lib/tarantool/`` - directory to store instances snapshots;"
+msgstr ""
+
+msgid ""
+"``/var/run/tarantool/`` - directory to store PID-files and console "
+"sockets."
+msgstr ""
+
+msgid ""
+"Read the `doc "
+"<https://www.tarantool.io/en/doc/2.2/book/cartridge/cartridge_dev"
+"/#deploying-an-application>`__ to learn more about deploying a Tarantool "
+"Cartridge application."
+msgstr ""
+
+msgid "To start the ``instance-1`` instance of the ``myapp`` service:"
+msgstr ""
+
+msgid "systemctl start myapp@instance-1"
+msgstr ""
+
+msgid ""
+"This instance will look for its `configuration "
+"<https://www.tarantool.io/en/doc/2.2/book/cartridge/cartridge_dev"
+"/#configuring-instances>`__ across all sections of the YAML file(s) "
+"stored in ``/etc/tarantool/conf.d/*``."
+msgstr ""
+
+msgid "Docker"
+msgstr ""
+
+msgid "``cartridge pack docker ./myapp`` will build a docker image."
+msgstr ""
+
+msgid "Specific options:"
+msgstr ""
+
+msgid "``--tag`` - resulting image tag;"
+msgstr ""
+
+msgid ""
+"``--from`` - path to the base dockerfile for runtime image (default to "
+"``Dockerfile.cartridge`` in the project root);"
+msgstr ""
+
+msgid ""
+"``--build-from`` - path to the base dockerfile for build image (default "
+"to ``Dockerfile.build.cartridge`` in the project root);"
+msgstr ""
+
+msgid ""
+"``--sdk-local`` - flag indicates that SDK from local machine should be "
+"installed on the image;"
+msgstr ""
+
+msgid ""
+"``--sdk-path`` - path to SDK to be installed on the image (env "
+"``TARANTOOL_SDK_PATH``, has lower priority);"
+msgstr ""
+
+msgid ""
+"**Note**, that one and only one of ``--sdk-local`` and ``--sdk-path`` "
+"options should be specified for Tarantool Enterprise."
+msgstr ""
+
+msgid "Image tag"
+msgstr ""
+
+msgid "The image is tagged as follows:"
+msgstr ""
+
+msgid "``<name>:<detected_version>``: by default;"
+msgstr ""
+
+msgid "``<name>:<version>``: if the ``--version`` parameter is specified;"
+msgstr ""
+
+msgid "``<tag>``: if the ``--tag`` parameter is specified."
+msgstr ""
+
+msgid ""
+"``<name>`` can be specified in the ``--name`` parameter, otherwise it "
+"will be auto-detected from the application rockspec."
+msgstr ""
+
+msgid "Tarantool Enterprise SDK"
+msgstr ""
+
+msgid ""
+"If you use Tarantool Enterprise, you should explicitly specify Tarantool "
+"SDK to be delivered on the result image. If you want to use SDK from your"
+" local machine, just pass ``--sdk-local`` flag to ``cartridge pack "
+"docker`` command. You can specify local path to the other SDK using "
+"``--sdk-path`` option (can be passed in environment variable "
+"``TARANTOOL_SDK_PATH``, has lower priority)."
+msgstr ""
+
+msgid "Build and runtime images"
+msgstr ""
+
+msgid ""
+"In fact, two images are created - build image and runtime image. Build "
+"image is used to perform application build. Then, application files are "
+"delivered to the runtime image (that is exactly the result of running "
+"``cartridge pack docker``)."
+msgstr ""
+
+msgid ""
+"Both images are created based on ``centos:8``. All packages required for "
+"the default ``cartridge`` application build (``git``, ``gcc``, ``make``, "
+"``cmake``, ``unzip``) are installed on the build image. Opensource "
+"Tarantool is installed on both images (if Tarantool Enterprise isn’t "
+"used)."
+msgstr ""
+
+msgid ""
+"If your application requires some other applications for build or "
+"runtime, you can specify base layers for build and runtime images:"
+msgstr ""
+
+msgid "build image: ``Dockerfile.build.cartridge`` or ``--build-from``;"
+msgstr ""
+
+msgid "runtime image: ``Dockerfile.cartridge`` or ``--from``."
+msgstr ""
+
+msgid ""
+"The base image dockerfile should be started with the ``FROM centos:8`` "
+"line (except comments)."
+msgstr ""
+
+msgid ""
+"For example, if your application requires ``gcc-c++`` for build and "
+"``zip`` for runtime:"
+msgstr ""
+
+msgid "``Dockerfile.cartridge.build``:"
+msgstr ""
+
+msgid ""
+"FROM centos:8\n"
+"RUN yum install -y gcc-c++\n"
+"# Note, that git, gcc, make, cmake, unzip packages\n"
+"# will be installed anyway"
+msgstr ""
+
+msgid "``Dockerfile.cartridge``:"
+msgstr ""
+
+msgid ""
+"FROM centos:8\n"
+"RUN yum install -y zip"
+msgstr ""
+
+msgid "Building the app"
+msgstr ""
+
+msgid ""
+"If you want the ``docker build`` command to be run with custom arguments,"
+" you can specify them using the ``TARANTOOL_DOCKER_BUILD_ARGS`` "
+"environment variable. For example, ``TARANTOOL_DOCKER_BUILD_ARGS='--no-"
+"cache --quiet'``"
+msgstr ""
+
+msgid "Using the result image"
+msgstr ""
+
+msgid ""
+"The application code will be placed in the "
+"``/usr/share/tarantool/${app_name}`` directory. An opensource version of "
+"Tarantool will be installed to the image."
+msgstr ""
+
+msgid ""
+"The run directory is ``/var/run/tarantool/${app_name}``, the workdir is "
+"``/var/lib/tarantool/${app_name}``."
+msgstr ""
+
+msgid "To start the ``instance-1`` instance of the ``myapp`` application, say:"
+msgstr ""
+
+msgid ""
+"docker run -d \\\n"
+"                --name instance-1 \\\n"
+"                -e TARANTOOL_INSTANCE_NAME=instance-1 \\\n"
+"                -e TARANTOOL_ADVERTISE_URI=3302 \\\n"
+"                -e TARANTOOL_CLUSTER_COOKIE=secret \\\n"
+"                -e TARANTOOL_HTTP_PORT=8082 \\\n"
+"                myapp:1.0.0"
+msgstr ""
+
+msgid "By default, ``TARANTOOL_INSTANCE_NAME`` is set to ``default``."
+msgstr ""
+
+msgid "To check the instance logs:"
+msgstr ""
+
+msgid "docker logs instance-1"
+msgstr ""
+
+msgid ""
+"It is the user’s responsibility to set up a proper advertise URI "
+"(``<host>:<port>``) if the containers are deployed on different machines."
+msgstr ""
+
+msgid ""
+"If the user specifies only a port, ``cartridge`` will use an auto-"
+"detected IP, so the user needs to configure docker networks to set up "
+"inter-instance communication."
+msgstr ""
+
+msgid ""
+"You can use docker volumes to store instance snapshots and xlogs on the "
+"host machine. To start an image with a new application code, just stop "
+"the old container and start a new one using the new image."
+msgstr ""
+
+msgid "Managing instances"
+msgstr ""
+
+msgid ""
+"cartridge start [APP_NAME[.INSTANCE_NAME]] [options]\n"
+"\n"
+"Options\n"
+"    --script FILE       Application's entry point.\n"
+"                        Defaults to TARANTOOL_SCRIPT,\n"
+"                        or ./init.lua when running from the app's "
+"directory,\n"
+"                        or :apps_path/:app_name/init.lua in a multi-app "
+"env.\n"
+"\n"
+"    --apps-path PATH    Path to apps directory when running in a multi-"
+"app env.\n"
+"                        Default to /usr/share/tarantool\n"
+"\n"
+"    --run-dir DIR       Directory with pid and sock files.\n"
+"                        Defaults to TARANTOOL_RUN_DIR or "
+"/var/run/tarantool\n"
+"\n"
+"    --cfg FILE          Cartridge instances config file.\n"
+"                        Defaults to TARANTOOL_CFG or ./instances.yml\n"
+"\n"
+"    --daemonize / -d    Start in background"
+msgstr ""
+
+msgid "It starts a ``tarantool`` instance with enforced environment variables."
+msgstr ""
+
+msgid ""
+"With the ``--daemonize`` option, it also waits until the app’s main "
+"script is finished."
+msgstr ""
+
+#, python-format
+msgid ""
+"TARANTOOL_INSTANCE_NAME\n"
+"TARANTOOL_CFG\n"
+"TARANTOOL_PID_FILE - %run_dir%/%instance_name%.pid\n"
+"TARANTOOL_CONSOLE_SOCK - %run_dir%/%instance_name%.pid"
+msgstr ""
+
+msgid ""
+"``cartridge.cfg()`` uses ``TARANTOOL_INSTANCE_NAME`` to read the "
+"instance’s configuration from the file provided in ``TARANTOOL_CFG``."
+msgstr ""
+
+msgid ""
+"Default options for the ``cartridge`` command can be overridden in "
+"``./.cartridge.yml`` or ``~/.cartridge.yml``, also options from "
+"``.cartridge.yml`` can be overriden by corresponding to them environment "
+"variables ``TARANTOOL_*``."
+msgstr ""
+
+msgid "Here is an example content of ``.config.yml``:"
+msgstr ""
+
+msgid ""
+"run_dir: tmp/run\n"
+"cfg: cartridge.yml\n"
+"apps_path: /usr/local/share/tarantool\n"
+"script: init.lua"
+msgstr ""
+
+msgid ""
+"When ``APP_NAME`` is not provided, it is parsed from the ``./*.rockspec``"
+" filename."
+msgstr ""
+
+msgid ""
+"When ``INSTANCE_NAME`` is not provided, ``cartridge`` reads the ``cfg`` "
+"file and starts all defined instances:"
+msgstr ""
+
+msgid ""
+"# in the application directory\n"
+"cartridge start # starts all instances\n"
+"cartridge start .router_1 # start single instance\n"
+"\n"
+"# in a multi-application environment\n"
+"cartridge start app_1 # starts all instances of app_1\n"
+"cartridge start app_1.router_1 # start single instance"
+msgstr ""
+
+msgid "To stop one or more running instances, say:"
+msgstr ""
+
+msgid ""
+"cartridge stop [APP_NAME[.INSTANCE_NAME]] [options]\n"
+"\n"
+"These options from `start` command are supported\n"
+"    --run-dir DIR\n"
+"    --cfg FILE"
+msgstr ""
+
+msgid "Misc"
+msgstr ""
+
+msgid "Running end-to-end tests"
+msgstr ""
+
+msgid ""
+"vagrant up\n"
+"\n"
+"# Centos\n"
+"vagrant ssh centos < test/e2e/start-rpm.sh\n"
+"vagrant ssh centos < test/e2e/test-cluster.sh\n"
+"vagrant reload centos\n"
+"sleep 1\n"
+"vagrant ssh centos < test/e2e/test-cluster.sh\n"
+"vagrant ssh centos < test/e2e/cleanup.sh\n"
+"\n"
+"# Ubuntu\n"
+"vagrant ssh ubuntu < test/e2e/start-deb.sh\n"
+"vagrant ssh ubuntu < test/e2e/test-cluster.sh\n"
+"vagrant reload ubuntu\n"
+"sleep 1\n"
+"vagrant ssh ubuntu < test/e2e/test-cluster.sh\n"
+"vagrant ssh ubuntu < test/e2e/cleanup.sh\n"
+"\n"
+"vagrant halt"
+msgstr ""
+
