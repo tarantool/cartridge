@@ -12,10 +12,18 @@ source_suffix = '.rst'
 project = u'Cartridge'
 
 # |release| The full version, including alpha/beta/rc tags.
-release = "2.0.1"
+release = "2.1.2"
 # |version| The short X.Y version.
-version = '2.0'
+version = '2.1'
 
 exclude_patterns = [
-    'conf.py'
+    'conf.py',
+    'images',
+    'requirements.txt',
+    'locale'
 ]
+
+language = 'en'
+locale_dirs = ['./locale']
+gettext_compact = False
+gettext_location = False

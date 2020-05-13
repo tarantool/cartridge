@@ -1,0 +1,10 @@
+
+msgid "Tarantool Cartridge"
+msgstr ""
+
+msgid "In this chapter, we explain how you can benefit with Tarantool Cartridge, a framework for developing, deploying, and managing applications based on Tarantool."
+msgstr ""
+
+msgid "This chapter contains the following sections:"
+msgstr ""
+
