@@ -33,7 +33,13 @@ import BootstrapPanel from 'src/components/BootstrapPanel';
 import {
   IconSearch,
   Input,
-  PageSection
+  PageSection,
+  Dropdown,
+  DropdownItem,
+  DropdownDivider,
+  Scrollbar,
+  Button,
+  IconChevron
 } from '@tarantool.io/ui-kit';
 import type { AppState } from 'src/store/reducers/ui.reducer';
 import type {
@@ -56,8 +62,8 @@ import ServerInfoModal from '../../components/ServerInfoModal';
 
 const styles = {
   clusterFilter: css`
-    width: 305px;
-    position: sticky;
+    width: 385px;
+    position: relative;
   `
 };
 
@@ -184,20 +190,17 @@ class Cluster extends React.Component<ClusterProps> {
           <PageSection
             subTitle={this.getReplicasetsTitleCounters()}
             title='Replica sets'
-            topRightControls={
-              replicasetList.length > 1
-                ? [
-                  <Input
-                    className={cx(styles.clusterFilter, 'meta-test__Filter')}
-                    placeholder={'Filter by uri, uuid, role, alias or labels'}
-                    value={filter}
-                    onChange={this.handleFilterChange}
-                    onClearClick={this.handleFilterClear}
-                    rightIcon={<IconSearch />}
-                  />
-                ]
-                : []
-            }
+            topRightControls={[
+              <Input
+                className={cx(styles.clusterFilter, 'meta-test__Filter')}
+                placeholder={'Filter by uri, uuid, role, alias or labels'}
+                value={filter}
+                onChange={this.handleFilterChange}
+                onClearClick={this.handleFilterClear}
+                rightIcon={<IconSearch />}
+                leftElement={this.replicasetFilterPresetsDropdown}
+              />
+            ]}
           >
             {filteredReplicasetList.length
               ? (
@@ -291,14 +294,79 @@ class Cluster extends React.Component<ClusterProps> {
   };
 
   getReplicasetsTitleCounters = () => {
+    const {
+      filter,
+      filteredReplicasetList,
+    } = this.props;
     const { configured } = this.props.serverCounts;
     const { total, unhealthy } = this.props.replicasetCounts;
     return <React.Fragment>
+      {filter
+        ? <>
+          <b>{filteredReplicasetList.length}{` selected | `}</b>
+        </>
+        :
+        null
+      }
       <b>{total}</b>{` total | `}
       <b>{unhealthy}</b>{` unhealthy | `}
       <b>{configured}</b>{` server${configured === 1 ? '' : 's'}`}
     </React.Fragment>;
   }
+
+  getDropdownOption = prefix => option => (
+    <DropdownItem
+      onClick={() => this.props.setFilter(
+        `${prefix}:${option.indexOf(' ') !== -1 ? `"${option.toLowerCase()}"` : option.toLowerCase()}`
+      )}
+    >
+      {option}
+    </DropdownItem>
+  );
+
+  replicasetFilterPresetsDropdown = (
+    <Dropdown
+      items={(
+        <Scrollbar className={css`z-index: 10000; height: 250px; width: 10em;`}>
+          {
+            [
+              'Healthy',
+              'Unhealthy',
+            ].map(this.getDropdownOption('status'))
+          }
+          <DropdownDivider />
+          {
+            [
+              'Stateful Connector',
+              'Input_processor',
+              'Connector',
+              'Scheduler',
+              'Storage',
+              'Task_runner',
+            ].map(this.getDropdownOption('role'))
+          }
+        </Scrollbar>
+      )}
+    >
+      <Button
+        className={css`
+          border-top-right-radius: 0;
+          border-bottom-right-radius: 0;
+          height: 2.4em;
+          width: 6.5em;
+        `}
+        intent='secondary'
+        iconRight={() => (
+          <IconChevron
+            direction='down'
+            className={css`margin-left: .5em; fill: rgba(245, 34, 45, 0.65);`}
+          />
+        )}
+      >
+        Filter
+      </Button>
+    </Dropdown>
+  )
 }
 
 
