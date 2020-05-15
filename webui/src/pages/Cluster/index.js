@@ -327,7 +327,7 @@ class Cluster extends React.Component<ClusterProps> {
   replicasetFilterPresetsDropdown = (
     <Dropdown
       items={(
-        <Scrollbar className={css`z-index: 10000; height: 250px; width: 10em;`}>
+        <Scrollbar className={css`height: 250px; width: 12em;`}>
           {
             [
               'Healthy',
@@ -336,14 +336,11 @@ class Cluster extends React.Component<ClusterProps> {
           }
           <DropdownDivider />
           {
-            [
-              'Stateful Connector',
-              'Input_processor',
-              'Connector',
-              'Scheduler',
-              'Storage',
-              'Task_runner',
-            ].map(this.getDropdownOption('role'))
+            this.props.clusterSelf
+            &&
+            this.props.clusterSelf.knownRoles
+            &&
+            this.props.clusterSelf.knownRoles.map(role => this.getDropdownOption('role')(role.name))
           }
         </Scrollbar>
       )}

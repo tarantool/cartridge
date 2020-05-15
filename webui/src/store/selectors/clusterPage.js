@@ -87,14 +87,29 @@ type SearchableReplicaset = {
   ...$Exact<WithSearchStringAndServersType>
 };
 
+type SearchTokenObject = {
+  value: string,
+  asSubstring: boolean,
+  not: boolean
+};
+
+type TokensByPrefix = {
+  all: Array<string>,
+  [prefix: string]: Array<SearchTokenObject>
+};
+
 export const selectSearchableReplicasetList: (s: State) => SearchableReplicaset[] = createSelector(
   selectReplicasetListWithStat,
   (replicasetList: Replicaset[]): SearchableReplicaset[] => {
     return replicasetList.map(({ servers, ...replicaSet }) => {
       let replicaSetSearchIndex = [replicaSet.alias, ...(replicaSet.roles || [])];
 
-      const searchableServers: SearchableServer[] = servers.map (server  => {
+      const searchableServers: SearchableServer[] = servers.map(server => {
         const serverSearchIndex = [server.uri, (server.alias || '')];
+
+        if (replicaSet.status === 'healthy') {
+          serverSearchIndex.push('healthy');
+        }
 
         (server.labels || []).forEach(label => {
           if (label) {
@@ -120,12 +135,114 @@ export const selectSearchableReplicasetList: (s: State) => SearchableReplicaset[
     });
   });
 
+export const getFilterData = (filterQuery: string): Object => {
+
+  // @TODO respect quotes (") and backslashes (\)
+  let tokenizedQuery = filterQuery.toLowerCase().split(' ').map(x => x.trim()).filter(x => !!x);
+
+  let onlyUnhealthy = false;
+  if (tokenizedQuery.indexOf('unhealthy') !== -1) {
+    if (tokenizedQuery.indexOf('healthy') !== -1) {
+      // mutually exclusive
+      return [];
+    }
+    onlyUnhealthy = true;
+    // word "unhealthy" isn't put in replicaSet.searchString to not be found by "healthy" search word
+    // tokenizedQuery = tokenizedQuery.filter(token => token !== 'unhealthy');
+  }
+
+  // ------
+  const prefixes = {
+    replicaSet: [
+      'uuid',
+      'roles',
+      'alias',
+      'status'
+    ],
+    server: [
+      'uri',
+      'uuid',
+      'alias',
+      'labels',
+      'status'
+    ]
+  };
+
+
+  const SEPARATOR = ':';
+  const tokensByPrefix: TokensByPrefix = tokenizedQuery.reduce((acc, tokenString) => {
+    let prefix;
+    let value;
+
+    const separatorIndex = tokenString.indexOf(SEPARATOR);
+    if (separatorIndex === -1) {
+      prefix = 'all';
+      value = tokenString;
+    } else {
+      // Example: For `status*:healthy`, prefix='status', modifier='*'
+      const prefixAndModifier = tokenString.substring(0, separatorIndex);
+      value = tokenString.substring(separatorIndex + 1);
+
+      if (value === '') {
+        // pass by if empty value
+        return acc;
+      }
+
+      const modifier = prefixAndModifier.slice(-1);
+      if (modifier === '!' || modifier === '*') {
+        prefix = prefixAndModifier.slice(0, -1);
+      } else {
+        prefix = prefixAndModifier;
+      }
+      const tokenObject: SearchTokenObject = {
+        value,
+        asSubstring: modifier === '*',
+        not: modifier === '!'
+      };
+
+      // Some mapping
+      // @TODO eliminate hardcode
+      if (prefix === 'role') {
+        prefix = 'roles';
+      }
+
+      // treat unknown prefixes as just part of the value
+      if (
+        prefixes.replicaSet.indexOf(prefix) === -1
+        &&
+        prefixes.server.indexOf(prefix) === -1
+      ) {
+        prefix = 'all';
+        value = tokenString;
+      } else {
+        value = tokenObject;
+      }
+    }
+
+    // (Flow don't understand more general code with "?:")
+    if (prefix === 'all') {
+      acc['all'].push(tokenString);
+    } else {
+      acc[prefix] = acc[prefix] || ([]: SearchTokenObject[]);
+      acc[prefix].push(((value: any): SearchTokenObject));
+    }
+
+    return acc;
+  }, ({ all: [] }: TokensByPrefix));
+
+  return {
+    tokensByPrefix,
+    tokenizedQuery,
+    onlyUnhealthy
+  };
+}
+
 export const filterReplicasetList = (state: State, filterQuery: string): Replicaset[] => {
-  const tokenizedQuery = filterQuery.toLowerCase().split(' ').map(x => x.trim()).filter(x => !!x);
+  const { tokensByPrefix, tokenizedQuery, onlyUnhealthy } = getFilterData(filterQuery);
 
   const filterByTokens = R.filter(
     R.allPass(
-      tokenizedQuery.map(token => r => r.searchString.includes(token) || r.uuid.startsWith(token))
+      tokensByPrefix.all.map(token => r => r.searchString.includes(token) || r.uuid.startsWith(token))
     )
   );
 
@@ -135,7 +252,53 @@ export const filterReplicasetList = (state: State, filterQuery: string): Replica
 
   const filteredReplicasetList = filterByTokens(selectSearchableReplicasetList(state));
 
-  return filteredReplicasetList.map(replicaSet => {
+  const getUnhealthy = list => list.filter(({ status }) => status !== 'healthy');
+
+  const isInProperty = (property, searchSrting, asSubstring = false) => {
+    if (Array.isArray(property)) {
+      if (asSubstring) {
+        return property.some(propValue => {
+          // deny if not string
+          return (typeof propValue === 'string') && propValue.indexOf(searchSrting) !== -1
+        })
+      }
+      return property.indexOf(searchSrting) !== -1;
+    } else {
+      if (asSubstring) {
+        // deny if not string
+        return (typeof property === 'string') && property.indexOf(searchSrting) !== -1
+      }
+      return property === searchSrting;
+    }
+  };
+
+  const filterByProperty = (list, property, tokensForProperty: SearchTokenObject[]) => list.filter(item => (
+    tokensForProperty.every(token => {
+      if (token.not) {
+        return !isInProperty(item[property], token.value);
+      }
+      if (token.asSubstring) {
+        return isInProperty(item[property], token.value, true);
+      }
+      return isInProperty(item[property], token.value);
+    })
+  ));
+
+  let filteredByProperties = filteredReplicasetList;
+  Object.entries(tokensByPrefix).forEach(([property, tokensForProperty]) => {
+    if (property !== 'all') {
+      filteredByProperties = filterByProperty(
+        filteredByProperties,
+        property,
+        ((tokensForProperty: any): SearchTokenObject[])
+      );
+    }
+  });
+
+  const preparedReplicasetList = (onlyUnhealthy
+    ? getUnhealthy(filteredByProperties)
+    : filteredByProperties
+  ).map(replicaSet => {
     let matchingServersCount = 0;
 
     const servers = replicaSet.servers.map(server => {
@@ -147,7 +310,7 @@ export const filterReplicasetList = (state: State, filterQuery: string): Replica
 
       return {
         ...server,
-        filterMatching: filterServerByTokens(server.searchString)
+        filterMatching
       }
     });
 
@@ -157,6 +320,7 @@ export const filterReplicasetList = (state: State, filterQuery: string): Replica
       servers
     }
   });
+  return preparedReplicasetList;
 };
 
 export const filterReplicasetListSelector = (state: State): Replicaset[] => {
@@ -216,9 +380,9 @@ export const isBootstrapped = (state: State) => (
 const createDeepEqualSelector = createSelectorCreator(defaultMemoize, isEqual);
 
 export const getMemoryFragmentationLevel
-: (statistics: MemoryUsageRatios) => FragmentationLevel = createDeepEqualSelector(
-  [
-    statistics => statistics
-  ],
-  calculateMemoryFragmentationLevel
-);
+  : (statistics: MemoryUsageRatios) => FragmentationLevel = createDeepEqualSelector(
+    [
+      statistics => statistics
+    ],
+    calculateMemoryFragmentationLevel
+  );

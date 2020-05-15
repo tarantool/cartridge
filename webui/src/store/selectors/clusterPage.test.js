@@ -1,6 +1,8 @@
 import {
   getServerCounts,
-  getReplicasetCounts
+  getReplicasetCounts,
+  filterReplicasetList,
+  getFilterData
 } from './clusterPage';
 
 const brokenState = { clusterPage: {} };
@@ -204,6 +206,34 @@ const state = {
   }
 }
 
+const stubReplicaSet = (() => {
+  let uniqUuid = 0;
+  return updateShape => ({
+    servers: [],
+    active_master: {
+      uuid: 'abc'
+    },
+    vshard_group: null,
+    weight: null,
+    status: 'healthy',
+    master: {
+      uuid: 'abc'
+    },
+    uuid: `uuid-${uniqUuid++}`,
+    roles: [],
+    ...updateShape
+  })
+})();
+
+const stubState = replicasetList => ({
+  clusterPage: {
+    replicasetList,
+    serverList: [
+      //...
+    ]
+  }
+});
+
 describe('getServerCounts', () => {
   it('correctly counts servers', () => {
     expect(getServerCounts(state)).toEqual({ configured: 3, unconfigured: 2, total: 5 });
@@ -227,5 +257,143 @@ describe('getReplicasetCounts', () => {
 
   it('handles empty state', () => {
     expect(getReplicasetCounts(brokenState)).toEqual({ total: 0, unhealthy: 0 });
+  });
+});
+
+
+describe('filter (search) replicasets', () => {
+  it('unknown prefix are treated as simple value', () => {
+    const filterQuery = 'unknown-prefix:value';
+    expect(getFilterData(filterQuery).tokensByPrefix).toEqual({
+      all: [filterQuery]
+    });
+  });
+
+  it('modifiers are parsed correctly', () => {
+    const filterQuery = 'alias:exactly-this alias*:this-substring alias!:not-this';
+    expect(getFilterData(filterQuery).tokensByPrefix).toEqual({
+      all: [],
+      alias: [
+        {
+          asSubstring: false,
+          not: false,
+          value: 'exactly-this'
+        },
+        {
+          asSubstring: true,
+          not: false,
+          value: 'this-substring'
+        },
+        {
+          asSubstring: false,
+          not: true,
+          value: 'not-this'
+        }
+      ]
+    });
+  });
+
+  it('reolicaSet prefixes (uuid, role, alias, status) are detected', () => {
+    const filterQuery = 'uuid:some-uuid role:some-role alias:some-alias status:healthy';
+    expect(getFilterData(filterQuery).tokensByPrefix).toEqual({
+      all: [],
+      uuid: [
+        {
+          asSubstring: false,
+          not: false,
+          value: 'some-uuid'
+        }
+      ],
+      roles: [
+        {
+          asSubstring: false,
+          not: false,
+          value: 'some-role'
+        }
+      ],
+      alias: [
+        {
+          asSubstring: false,
+          not: false,
+          value: 'some-alias'
+        }
+      ],
+      status: [
+        {
+          asSubstring: false,
+          not: false,
+          value: 'healthy'
+        }
+      ]
+    });
+  });
+
+  it('correctly finds status:healthy', () => {
+    const filterQuery = 'status:healthy';
+    const filteredList = filterReplicasetList(state, filterQuery);
+    expect(
+      filteredList.length
+    ).toEqual(
+      state.clusterPage.replicasetList.length
+    );
+  });
+
+  it('return [] if nothing can be found', () => {
+    expect(filterReplicasetList(unhealthyState, 'status:healthy')).toEqual([]);
+    expect(filterReplicasetList(brokenState, 'abrakadabra')).toEqual([]);
+  });
+});
+
+describe('Correctly finds (filters) replicaset by ...', () => {
+  it('by "uuid:..."', () => {
+    const replicaToBeFound = stubReplicaSet({ uuid: 'uuid-to-be-found' });
+    const replicaOther = stubReplicaSet({ uuid: 'uuid-other' });
+    const state = stubState([ replicaToBeFound, replicaOther ]);
+
+    const result = filterReplicasetList(state, 'uuid-to-be-found');
+    expect(result.length).toEqual(1);
+    expect(result[0].uuid).toEqual(replicaToBeFound.uuid);
+  });
+
+  it('by "role:..."', () => {
+    const replicaToBeFound = stubReplicaSet({
+      roles: [ 'myrole-dependency', 'myrole' ]
+    });
+    const replicaOther = stubReplicaSet({
+      roles: [ 'some-other-role', 'myrole' ]
+    });
+    const state = stubState([ replicaToBeFound, replicaOther ]);
+
+    const result = filterReplicasetList(state, 'role:myrole-dependency');
+    expect(result.length).toEqual(1);
+    expect(result[0].uuid).toEqual(replicaToBeFound.uuid);
+  });
+
+  it('by "alias:..."', () => {
+    const replicaToBeFound = stubReplicaSet({ alias: 'svr-1' });
+    const replicaOther = stubReplicaSet({ alias: 'srv-5' });
+    const state = stubState([ replicaOther, replicaToBeFound ]);
+
+    const result = filterReplicasetList(state, 'alias:svr-1');
+    expect(result.length).toEqual(1);
+    expect(result[0].uuid).toEqual(replicaToBeFound.uuid);
+  });
+
+  describe('by "status:..."', () => {
+    const replicaHealthy = stubReplicaSet({ status: 'healthy' });
+    const replicaUnhealthy = stubReplicaSet({ status: 'unhealthy' });
+    const state = stubState([ replicaUnhealthy, replicaHealthy ]);
+
+    it('status:healthy', () => {
+      const result = filterReplicasetList(state, 'status:healthy');
+      expect(result.length).toEqual(1);
+      expect(result[0].uuid).toEqual(replicaHealthy.uuid);
+    });
+
+    it('status:unhealthy', () => {
+      const result = filterReplicasetList(state, 'status:unhealthy');
+      expect(result.length).toEqual(1);
+      expect(result[0].uuid).toEqual(replicaUnhealthy.uuid);
+    });
   });
 });
