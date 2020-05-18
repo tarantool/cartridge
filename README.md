@@ -137,6 +137,18 @@ or with binary protocol:
 tarantoolctl connect admin@localhost:3301
 ```
 
+If stateful failover mode is also needed, one should launch external
+state provider - `stateboard`:
+
+```sh
+.rocks/bin/cartridge start --stateboard
+```
+
+And set failover params according to `instances.yml`. The defaults are:
+
+* State provider URI: `localhost:4401`;
+* Password: `qwerty`.
+
 For more detailed information about `cartridge-cli`
 [see here](https://github.com/tarantool/cartridge-cli#readme).
 

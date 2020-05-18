@@ -162,11 +162,6 @@ add_test(
 ## Install ####################################################################
 ###############################################################################
 
-file(
-    WRITE ${CMAKE_CURRENT_BINARY_DIR}/stateboard
-    "#!/usr/bin/env tarantool\n\nrequire('cartridge.stateboard').cfg()\n"
-)
-
 install(
   DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}
   DESTINATION ${TARANTOOL_INSTALL_LUADIR}
@@ -178,8 +173,9 @@ install(
 )
 
 install(
-  PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/stateboard
+  PROGRAMS ${CMAKE_CURRENT_SOURCE_DIR}/stateboard.init.lua
   DESTINATION ${TARANTOOL_INSTALL_BINDIR}
+  RENAME stateboard
 )
 
 install(
