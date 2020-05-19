@@ -140,18 +140,6 @@ export const getFilterData = (filterQuery: string): Object => {
   // @TODO respect quotes (") and backslashes (\)
   let tokenizedQuery = filterQuery.toLowerCase().split(' ').map(x => x.trim()).filter(x => !!x);
 
-  let onlyUnhealthy = false;
-  if (tokenizedQuery.indexOf('unhealthy') !== -1) {
-    if (tokenizedQuery.indexOf('healthy') !== -1) {
-      // mutually exclusive
-      return [];
-    }
-    onlyUnhealthy = true;
-    // word "unhealthy" isn't put in replicaSet.searchString to not be found by "healthy" search word
-    // tokenizedQuery = tokenizedQuery.filter(token => token !== 'unhealthy');
-  }
-
-  // ------
   const prefixes = {
     replicaSet: [
       'uuid',
@@ -167,7 +155,6 @@ export const getFilterData = (filterQuery: string): Object => {
       'status'
     ]
   };
-
 
   const SEPARATOR = ':';
   const tokensByPrefix: TokensByPrefix = tokenizedQuery.reduce((acc, tokenString) => {
@@ -232,13 +219,12 @@ export const getFilterData = (filterQuery: string): Object => {
 
   return {
     tokensByPrefix,
-    tokenizedQuery,
-    onlyUnhealthy
+    tokenizedQuery
   };
 }
 
 export const filterReplicasetList = (state: State, filterQuery: string): Replicaset[] => {
-  const { tokensByPrefix, tokenizedQuery, onlyUnhealthy } = getFilterData(filterQuery);
+  const { tokensByPrefix, tokenizedQuery } = getFilterData(filterQuery);
 
   const filterByTokens = R.filter(
     R.allPass(
@@ -251,8 +237,6 @@ export const filterReplicasetList = (state: State, filterQuery: string): Replica
   );
 
   const filteredReplicasetList = filterByTokens(selectSearchableReplicasetList(state));
-
-  const getUnhealthy = list => list.filter(({ status }) => status !== 'healthy');
 
   const isInProperty = (property, searchSrting, asSubstring = false) => {
     if (Array.isArray(property)) {
@@ -295,10 +279,7 @@ export const filterReplicasetList = (state: State, filterQuery: string): Replica
     }
   });
 
-  const preparedReplicasetList = (onlyUnhealthy
-    ? getUnhealthy(filteredByProperties)
-    : filteredByProperties
-  ).map(replicaSet => {
+  const preparedReplicasetList = filteredByProperties.map(replicaSet => {
     let matchingServersCount = 0;
 
     const servers = replicaSet.servers.map(server => {
