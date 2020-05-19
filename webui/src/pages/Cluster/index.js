@@ -24,6 +24,7 @@ import type { RouterHistory, Location } from 'react-router';
 import type { Issue } from 'src/generated/graphql-typing';
 import PageDataErrorMessage from 'src/components/PageDataErrorMessage';
 import ReplicasetList from 'src/components/ReplicasetList';
+import ReplicasetFilterInput from 'src/components/ReplicasetFilterInput';
 import UnconfiguredServerList from 'src/components/UnconfiguredServerList';
 import { addSearchParams, getSearchParams } from 'src/misc/url';
 import EditReplicasetModal from 'src/components/EditReplicasetModal';
@@ -135,6 +136,7 @@ class Cluster extends React.Component<ClusterProps> {
     const {
       clusterSelf,
       filter,
+      setFilter,
       filteredReplicasetList,
       issues,
       replicasetList,
@@ -191,14 +193,11 @@ class Cluster extends React.Component<ClusterProps> {
             subTitle={this.getReplicasetsTitleCounters()}
             title='Replica sets'
             topRightControls={[
-              <Input
+              <ReplicasetFilterInput
                 className={cx(styles.clusterFilter, 'meta-test__Filter')}
-                placeholder={'Filter by uri, uuid, role, alias or labels'}
                 value={filter}
-                onChange={this.handleFilterChange}
-                onClearClick={this.handleFilterClear}
-                rightIcon={<IconSearch />}
-                leftElement={this.replicasetFilterPresetsDropdown}
+                setValue={setFilter}
+                roles={clusterSelf && clusterSelf.knownRoles}
               />
             ]}
           >
@@ -255,7 +254,7 @@ class Cluster extends React.Component<ClusterProps> {
     }
   };
 
-  handleServerLabelClick = ({ name, value }: Label) => this.props.setFilter(`${name}: ${value}`);
+  handleServerLabelClick = ({ name, value }: Label) => this.props.setFilter(`${name}:${value}`);
 
   handleFilterClear = () => void this.props.setFilter('');
 
