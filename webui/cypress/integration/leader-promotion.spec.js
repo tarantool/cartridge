@@ -2,7 +2,7 @@ describe('Leader promotion tests', () => {
 
   function toggle_to_valid_stateboard() {
     cy.get('.meta-test__FailoverButton').click();
-    cy.get('.meta-test__statefulRadioBtn').click().click();
+    cy.get('.meta-test__statefulRadioBtn').click();
     cy.get('.meta-test__stateboardURI input').type('{selectall}{backspace}localhost:14401');
     cy.get('.meta-test__stateboardPassword input').type('{selectall}{backspace}password');
     cy.get('.meta-test__SubmitButton').click();

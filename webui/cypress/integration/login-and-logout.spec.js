@@ -10,10 +10,10 @@ describe('Login', () => {
       .type('test-cluster-cookie');
     cy.get('.meta-test__LoginFormBtn').click();
     cy.get('.meta-test__LoginForm').contains('Authentication failed');//try to found logout btn
+    cy.get('.meta-test__LoginForm button[type="button"]').contains('Cancel').click();
   })
 
   it('Success login', () => {
-    cy.visit(Cypress.config('baseUrl'));
     cy.get('.meta-test__LoginBtn').click();
     cy.get('.meta-test__LoginForm input[name="username"]')
       .type('{selectall}{del}')
@@ -31,8 +31,8 @@ describe('Login', () => {
   })
 
   it('Check login user with empty name', () => {
-    cy.visit(Cypress.config('baseUrl') + '/admin/cluster/users');
-
+    cy.get('a[href="/admin/cluster/users"]').click();
+    
     //create user without fullname:
     cy.get('.meta-test__addUserBtn').click();
     cy.get('.meta-test__UserAddForm input[name="username"]').type('testuser');

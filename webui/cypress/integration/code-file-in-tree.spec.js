@@ -13,7 +13,7 @@ describe('Code page', () => {
       }
 
       cy.visit(Cypress.config('baseUrl')+"/admin/cluster/code");
-      reload()
+      // reload()
 
       //create file and file contents
       cy.get('.meta-test__addFileBtn').click();

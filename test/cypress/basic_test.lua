@@ -115,6 +115,10 @@ local function cypress_run(spec)
     t.assert_equals(code, 0)
 end
 
+function g.test_leader_promotion()
+    cypress_run('leader-promotion.spec.js')
+end
+
 function g.test_default_group()
     g.cluster.main_server:graphql({
         query = [[mutation {
@@ -137,18 +141,21 @@ function g.test_text_inputs()
     cypress_run('text-inputs-tests.spec.js')
 end
 
-function g.test_probe_server()
+function g.test_cluster_page()
+    g.cluster.main_server:graphql({
+        query = [[mutation {
+            probe_server(
+                uri: "localhost:13310"
+            )
+        }]]
+    })
     local code = os.execute(
         "cd webui && npx cypress run --spec" ..
-        ' cypress/integration/probe-server.spec.js' ..
-        ',cypress/integration/application-name.spec.js' ..
-        ',cypress/integration/demo-panel-not-present.spec.js'
+        ' cypress/integration/probe-server.spec.js'..
+        ',cypress/integration/demo-panel-not-present.spec.js'..
+        ',cypress/integration/failover.spec.js'
     )
     t.assert_equals(code, 0)
-end
-
-function g.test_failover()
-    cypress_run('failover.spec.js')
 end
 
 function g.test_users()
@@ -164,16 +171,13 @@ function g.test_users()
     t.assert_equals(code, 0)
 end
 
-function g.test_schema_editor()
-    cypress_run('schema-editor.spec.js')
-end
-
-function g.test_code()
+function g.test_code_and_schema()
     local code = os.execute(
         "cd webui && npx cypress run --spec" ..
         ' cypress/integration/code-empty-page.spec.js' ..
         ',cypress/integration/code-file-in-tree.spec.js' ..
-        ',cypress/integration/code-folder-in-tree.spec.js'
+        ',cypress/integration/code-folder-in-tree.spec.js'..
+        ',cypress/integration/schema-editor.spec.js'
     )
     t.assert_equals(code, 0)
 end
@@ -215,8 +219,4 @@ function g.test_401()
     ]])
     -- require('fiber').sleep(1000)
     cypress_run('401-error.spec.js')
-end
-
-function g.test_leader_promotion()
-    cypress_run('leader-promotion.spec.js')
 end

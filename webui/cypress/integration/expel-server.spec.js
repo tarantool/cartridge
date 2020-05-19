@@ -17,11 +17,10 @@ describe('Expel server', () => {
     cy.get('.meta-test__ReplicasetServerListItem__dropdownBtn').contains('Expel server').click();
     cy.get('.meta-test__ExpelServerModal button[type="button"]').contains('Expel').click();
 
-    cy.get('#root').contains('Expel is OK. Please wait for list refresh...');
+    cy.get('#root').contains('Expel is OK. Please wait for list refresh...').click();
   })
 
   it('Show expel error', () => {
-    cy.reload();
     cy.get('li').contains('storage1-do-not-use-me').closest('li').find('.meta-test__ReplicasetServerListItem__dropdownBtn').eq(0).click();
     cy.get('.meta-test__ReplicasetServerListItem__dropdownBtn').contains('Expel server').click();
     cy.get('.meta-test__ExpelServerModal button[type="button"]').contains('Expel').click();
