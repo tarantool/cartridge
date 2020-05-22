@@ -25,3 +25,8 @@ cartridge.srv-5:
     workdir: ./dev/3305
     advertise_uri: localhost:3305
     http_port: 8085
+
+cartridge-stateboard:
+    workdir: ./dev/stateboard
+    password: qwerty
+    listen: 4401
