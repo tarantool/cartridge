@@ -7,11 +7,14 @@ local ClientError  = errors.new_class('ClientError')
 local SessionError = errors.new_class('SessionError')
 
 local function acquire_lock(session, lock_args)
-    checks('stateboard_session', 'table')
+    checks('stateboard_session', {
+        uuid = 'string',
+        uri = 'string',
+    })
     assert(session.connection ~= nil)
 
     local lock_acquired, err = errors.netbox_call(session.connection,
-        'acquire_lock', lock_args,
+        'acquire_lock', {lock_args},
         {timeout = session.call_timeout}
     )
     if lock_acquired == nil then
@@ -103,13 +106,6 @@ local function is_alive(session)
         and session.connection.state ~= 'closed'
 end
 
-local function is_connected(session)
-    checks('stateboard_session')
-    assert(session.connection ~= nil)
-
-    return session.connection:is_connected()
-end
-
 local function drop(session)
     checks('stateboard_session')
     assert(session.connection ~= nil)
@@ -125,7 +121,6 @@ local session_mt = {
     __index = {
         is_alive = is_alive,
         is_locked = is_locked,
-        is_connected = is_connected,
         acquire_lock = acquire_lock,
         set_leaders = set_leaders,
         get_leaders = get_leaders,
@@ -186,6 +181,7 @@ local function longpoll(client, timeout)
 
         if fiber.time() < deadline then
             fiber.sleep(client.call_timeout)
+            -- continue
         else
             return nil, ClientError:new(err)
         end
