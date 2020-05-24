@@ -467,6 +467,72 @@ g.test_nested_input = function()
     )
 end
 
+g.test_custom_type_scalar_variables = function()
+    local server = cluster.main_server
+
+    server.net_box:eval([[
+        package.loaded['test'] = {}
+        package.loaded['test']['test_custom_type_scalar'] = function(root, args)
+          return args.servers[1]
+        end
+
+        local graphql = require('cartridge.graphql')
+        local types = require('cartridge.graphql.types')
+
+        local custom_string = types.scalar({
+            name = 'CustomString',
+            description = 'Custom string type',
+            serialize = tostring,
+            parseValue = tostring,
+            parseLiteral = function(node)
+              if node.kind == 'string' then
+                return node.value
+              end
+            end,
+            isValueOfTheType = function(value)
+              return type(value) == 'string'
+            end,
+        })
+
+        graphql.add_callback({
+            name = 'test_custom_type_scalar',
+            args = {
+                servers = types.list(custom_string.nonNull).nonNull,
+            },
+            kind = types.string,
+            callback = 'test.test_custom_type_scalar',
+        })
+    ]])
+
+    t.assert_equals(
+        server:graphql({
+            query = [[
+                query($field: CustomString!) {
+                    test_custom_type_scalar(
+                        servers: [$field]
+                    )
+                }
+            ]],
+        variables = {field = 'echo'}}
+        ).data.test_custom_type_scalar, 'echo'
+    )
+
+    t.assert_error_msg_equals('Variable "field" type mismatch: ' ..
+            'the variable type "NonNull(String)" is not compatible with the argument type '..
+            '"NonNull(CustomString)"', function()
+        return server:graphql({
+            query = [[
+                query($field: String!) {
+                    test_custom_type_scalar(
+                        servers: [$field]
+                    )
+                }
+            ]],
+        variables = {field = 'echo'}}
+        )
+    end)
+end
+
 function g.test_error_extensions()
     local request = {
         query = [[mutation($uuids: [String!]) {
