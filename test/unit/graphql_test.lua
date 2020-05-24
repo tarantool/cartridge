@@ -769,6 +769,7 @@ function g.test_rules_unambiguousSelections()
         }
     }]])
 end
+
 function g.test_rules_uniqueArgumentNames()
     local message = 'Encountered multiple arguments named'
 
@@ -913,4 +914,36 @@ function g.test_rules_directivesAreDefined()
 
     -- passes if directives exists
     expectError(nil, 'query @skip {}')
+end
+
+function g.test_types_isValueOfTheType_for_scalars()
+    t.assert_error(function()
+        types.scalar({
+            name = 'MyString',
+            description = "Custom string type",
+            serialize = tostring,
+            parseValue = tostring,
+            parseLiteral = function(node)
+                if node.kind == 'string' then
+                    return node.value
+                end
+            end,
+        })
+    end)
+
+    local CustomString = types.scalar({
+        name = 'MyString',
+        description = "Custom string type",
+        serialize = tostring,
+        parseValue = tostring,
+        parseLiteral = function(node)
+            if node.kind == 'string' then
+                return node.value
+            end
+        end,
+        isValueOfTheType = function(value)
+            return type(value) == 'string'
+        end,
+    })
+    t.assert_equals(CustomString.__type, 'Scalar')
 end
