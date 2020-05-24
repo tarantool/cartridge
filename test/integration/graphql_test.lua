@@ -151,10 +151,28 @@ g.test_upload = function()
     )
 
     t.assert_error_msg_equals(
+        'Could not coerce "123.4" to "Int"',
+        function() return server:graphql({
+            query = [[
+                query { test(arg: "", arg3: 123.4) }
+            ]], variables = {}
+        }) end
+    )
+
+    t.assert_error_msg_equals(
         'Could not coerce "18446744073709551614" to "Long"',
         function() return server:graphql({
             query = [[
                 query { test(arg: "", arg4: 18446744073709551614) }
+            ]], variables = {}
+        }) end
+    )
+
+    t.assert_error_msg_equals(
+        'Could not coerce "123.4" to "Long"',
+        function() return server:graphql({
+            query = [[
+                query { test(arg: "", arg4: 123.4) }
             ]], variables = {}
         }) end
     )
