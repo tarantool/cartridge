@@ -17,10 +17,12 @@ import {
   Tooltip
 } from '@tarantool.io/ui-kit';
 import ReplicasetRoles from 'src/components/ReplicasetRoles';
+import ReplicasetFilterInput from 'src/components/ReplicasetFilterInput';
 import FormField from 'src/components/FormField';
 import type {
   Server,
-  Replicaset
+  Replicaset,
+  Role
 } from 'src/generated/graphql-typing';
 
 const styles = {
@@ -120,6 +122,7 @@ type JoinReplicasetFormProps = {
   onCancel: () => void,
   onSubmit: (d: JoinReplicasetFormData) => void,
   replicasetList?: Replicaset[],
+  knownRoles?: Role[],
   setFilter: (s: string) => void,
   selectedServers?: Server[]
 };
@@ -150,7 +153,8 @@ class JoinReplicasetForm extends React.Component<JoinReplicasetFormProps> {
       onCancel,
       onSubmit,
       replicasetList,
-      selectedServers
+      selectedServers,
+      knownRoles
     } = this.props;
 
     return (
@@ -200,13 +204,11 @@ class JoinReplicasetForm extends React.Component<JoinReplicasetFormProps> {
                     </Text>
                   )}
                   topRightControls={[
-                    <Input
+                    <ReplicasetFilterInput
                       className={styles.filter}
-                      placeholder='Filter by uri, uuid, role, alias or labels'
                       value={filter}
-                      onChange={this.handleFilterChange}
-                      onClearClick={this.handleFilterClear}
-                      rightIcon={<IconSearch />}
+                      setValue={this.props.setFilter}
+                      roles={knownRoles}
                     />
                   ]}
                 >
@@ -262,12 +264,6 @@ class JoinReplicasetForm extends React.Component<JoinReplicasetFormProps> {
       </Formik>
     );
   }
-
-  handleFilterChange = (e: SyntheticInputEvent<HTMLInputElement>) => {
-    this.props.setFilter(e.target.value);
-  };
-
-  handleFilterClear = () => this.props.setFilter('');
 }
 
 export default JoinReplicasetForm;

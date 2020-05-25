@@ -107,10 +107,6 @@ export const selectSearchableReplicasetList: (s: State) => SearchableReplicaset[
       const searchableServers: SearchableServer[] = servers.map(server => {
         const serverSearchIndex = [server.uri, (server.alias || '')];
 
-        if (replicaSet.status === 'healthy') {
-          serverSearchIndex.push('healthy');
-        }
-
         (server.labels || []).forEach(label => {
           if (label) {
             serverSearchIndex.push(`${label.name}:`, label.value);
