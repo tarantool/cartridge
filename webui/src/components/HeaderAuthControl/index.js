@@ -58,6 +58,7 @@ class HeaderAuthControl extends React.Component {
       return (
         <Dropdown
           className={cx(styles.box, styles.dropdown, 'meta-test__LogoutBtn')}
+          popoverClassName='meta-test__LogoutDropdown'
           items={[
             <DropdownItem onClick={this.sendLogOut}>Log out</DropdownItem>
           ]}
