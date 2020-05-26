@@ -521,6 +521,19 @@ local function isVariableTypesValid(argument, argumentType, context,
         'is not compatible with the argument type "%s"'):format(variableName,
         util.getTypeName(variableType), util.getTypeName(argumentType))
     end
+  elseif argument.value.kind == 'list' then
+    -- find variables deeper
+    local parentType = argumentType
+    if parentType.__type == 'NonNull' then
+      parentType = parentType.ofType
+    end
+    local childType = parentType.ofType
+
+    for _, child in ipairs(argument.value.values) do
+      local ok, err = isVariableTypesValid({value = child}, childType, context,
+              variableMap)
+      if not ok then return false, err end
+    end
   elseif argument.value.kind == 'inputObject' then
     -- find variables deeper
     for _, child in ipairs(argument.value.values) do

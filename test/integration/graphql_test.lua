@@ -151,10 +151,28 @@ g.test_upload = function()
     )
 
     t.assert_error_msg_equals(
+        'Could not coerce "123.4" to "Int"',
+        function() return server:graphql({
+            query = [[
+                query { test(arg: "", arg3: 123.4) }
+            ]], variables = {}
+        }) end
+    )
+
+    t.assert_error_msg_equals(
         'Could not coerce "18446744073709551614" to "Long"',
         function() return server:graphql({
             query = [[
                 query { test(arg: "", arg4: 18446744073709551614) }
+            ]], variables = {}
+        }) end
+    )
+
+    t.assert_error_msg_equals(
+        'Could not coerce "123.4" to "Long"',
+        function() return server:graphql({
+            query = [[
+                query { test(arg: "", arg4: 123.4) }
             ]], variables = {}
         }) end
     )
@@ -447,6 +465,162 @@ g.test_nested_input = function()
         variables = {field = 'echo', field2 = 'field', upvalue = 'upvalue'}}
         ).data.test_nested_InputObject_complex, 'upvalue+field+echo'
     )
+end
+
+g.test_custom_type_scalar_variables = function()
+    local server = cluster.main_server
+
+    server.net_box:eval([[
+        package.loaded['test'] = {}
+        package.loaded['test']['test_custom_type_scalar'] = function(_, args)
+          return args.field
+        end
+        package.loaded['test']['test_custom_type_scalar_list'] = function(_, args)
+          return args.fields[1]
+        end
+        package.loaded['test']['test_custom_type_scalar_inputObject'] = function(_, args)
+          return args.object.nested_object.field
+        end
+
+        local graphql = require('cartridge.graphql')
+        local types = require('cartridge.graphql.types')
+
+        local custom_string = types.scalar({
+            name = 'CustomString',
+            description = 'Custom string type',
+            serialize = tostring,
+            parseValue = tostring,
+            parseLiteral = function(node)
+              if node.kind == 'string' then
+                return node.value
+              end
+            end,
+            isValueOfTheType = function(value)
+              return type(value) == 'string'
+            end,
+        })
+
+        graphql.add_callback({
+            name = 'test_custom_type_scalar',
+            args = {
+                field = custom_string.nonNull,
+            },
+            kind = types.string,
+            callback = 'test.test_custom_type_scalar',
+        })
+
+        graphql.add_callback({
+            name = 'test_custom_type_scalar_list',
+            args = {
+                fields = types.list(custom_string.nonNull).nonNull,
+            },
+            kind = types.string,
+            callback = 'test.test_custom_type_scalar_list',
+        })
+
+        graphql.add_callback({
+            name = 'test_custom_type_scalar_inputObject',
+            args = {
+                object = types.inputObject({
+                    name = 'ComplexCustomInputObject',
+                    fields = {
+                        nested_object = types.inputObject({
+                            name = 'ComplexCustomNestedInputObject',
+                            fields = {
+                                field = custom_string,
+                            }
+                        }),
+                    }
+                }),
+            },
+            kind = types.string,
+            callback = 'test.test_custom_type_scalar_inputObject',
+        })
+    ]])
+
+    t.assert_equals(
+        server:graphql({
+            query = [[
+                query($field: CustomString!) {
+                    test_custom_type_scalar(
+                        field: $field
+                    )
+                }
+            ]],
+        variables = {field = 'echo'}}
+        ).data.test_custom_type_scalar, 'echo'
+    )
+
+    t.assert_error_msg_equals('Variable "field" type mismatch: ' ..
+            'the variable type "NonNull(String)" is not compatible with the argument type '..
+            '"NonNull(CustomString)"', function()
+        return server:graphql({
+            query = [[
+                query($field: String!) {
+                    test_custom_type_scalar(
+                        field: $field
+                    )
+                }
+            ]],
+        variables = {field = 'echo'}}
+        )
+    end)
+
+    t.assert_equals(
+        server:graphql({
+            query = [[
+                query($field: CustomString!) {
+                    test_custom_type_scalar_list(
+                        fields: [$field]
+                    )
+                }
+            ]],
+        variables = {field = 'echo'}}
+        ).data.test_custom_type_scalar_list, 'echo'
+    )
+
+    t.assert_error_msg_equals('Variable "field" type mismatch: ' ..
+            'the variable type "NonNull(String)" is not compatible with the argument type '..
+            '"NonNull(CustomString)"', function()
+        return server:graphql({
+            query = [[
+                query($field: String!) {
+                    test_custom_type_scalar_list(
+                        fields: [$field]
+                    )
+                }
+            ]],
+        variables = {field = 'echo'}}
+        )
+    end)
+
+    t.assert_equals(
+        server:graphql({
+            query = [[
+                query($field: CustomString!) {
+                    test_custom_type_scalar_inputObject(
+                        object: { nested_object: { field: $field } }
+                    )
+                }
+            ]],
+        variables = {field = 'echo'}}
+        ).data.test_custom_type_scalar_inputObject, 'echo'
+    )
+
+    t.assert_error_msg_equals('Variable "field" type mismatch: ' ..
+            'the variable type "NonNull(String)" is not compatible with the argument type '..
+            '"CustomString"', function()
+        return server:graphql({
+            query = [[
+                query($field: String!) {
+                    test_custom_type_scalar_inputObject(
+                        object: { nested_object: { field: $field } }
+                    )
+                }
+            ]],
+        variables = {field = 'echo'}}
+        )
+    end)
 end
 
 function g.test_error_extensions()
