@@ -140,6 +140,13 @@ local function get_failover_params()
                 mode
                 state_provider
                 tarantool_params {uri password}
+                etcd2_params {
+                    prefix
+                    lock_delay
+                    endpoints
+                    username
+                    password
+                }
             }}
         }
     ]]}).data.cluster.failover_params
@@ -152,16 +159,25 @@ local function set_failover_params(vars)
                 $mode: String
                 $state_provider: String
                 $tarantool_params: FailoverStateProviderCfgInputTarantool
+                $etcd2_params: FailoverStateProviderCfgInputEtcd2
             ) {
                 cluster {
                     failover_params(
                         mode: $mode
                         state_provider: $state_provider
                         tarantool_params: $tarantool_params
+                        etcd2_params: $etcd2_params
                     ) {
                         mode
                         state_provider
                         tarantool_params {uri password}
+                        etcd2_params {
+                            prefix
+                            lock_delay
+                            endpoints
+                            username
+                            password
+                        }
                     }
                 }
             }
@@ -297,12 +313,64 @@ g.test_api_failover = function()
         'Variable "tarantool_params.password" expected to be non-null',
         set_failover_params, {tarantool_params = {uri = 'localhost:9'}}
     )
+    t.assert_error_msg_contains(
+        'topology_new.failover.etcd2_params.endpoints[1]: Invalid URI "%^&*"',
+        set_failover_params, {etcd2_params = {endpoints = {'%^&*'}}}
+    )
+
+    local etcd2_params = {
+        prefix = '/',
+        lock_delay = 10,
+        endpoints = {'goo.gl:9'},
+        username = '',
+        password = '',
+    }
+    t.assert_equals(
+        set_failover_params({
+            etcd2_params = {lock_delay = 36.6, prefix = 'kv'},
+        }), {
+            mode = 'eventual',
+            etcd2_params = {
+                prefix = 'kv',
+                lock_delay = 36.6,
+                username = '',
+                password = '',
+                endpoints = {
+                    'http://127.0.0.1:4001',
+                    'http://127.0.0.1:2379',
+                },
+            },
+        }
+    )
+    t.assert_equals(
+        set_failover_params({
+            etcd2_params = {endpoints = {'goo.gl:9'}},
+        }), {
+            mode = 'eventual',
+            etcd2_params = {
+                prefix = '/',
+                lock_delay = 10,
+                endpoints = {'goo.gl:9'},
+                username = '',
+                password = '',
+            },
+        }
+    )
+
+    t.assert_equals(
+        get_failover_params(),
+        {
+            mode = 'eventual',
+            etcd2_params = etcd2_params,
+        }
+    )
 
     local tarantool_params = {uri = 'stateboard.com:8', password = 'xxx'}
     t.assert_equals(
         set_failover_params({tarantool_params = tarantool_params}),
         {
             mode = 'eventual',
+            etcd2_params = etcd2_params,
             tarantool_params = tarantool_params,
         }
     )
@@ -311,6 +379,7 @@ g.test_api_failover = function()
         {
             mode = 'stateful',
             state_provider = 'tarantool',
+            etcd2_params = etcd2_params,
             tarantool_params = tarantool_params,
         }
     )
@@ -320,14 +389,16 @@ g.test_api_failover = function()
         {
             mode = 'stateful',
             state_provider = 'tarantool',
+            etcd2_params = etcd2_params,
             tarantool_params = tarantool_params,
         }
     )
-    t.assert_covers(
+    t.assert_equals(
         _call('failover_get_params'),
         {
             mode = 'stateful',
             state_provider = 'tarantool',
+            etcd2_params = etcd2_params,
             tarantool_params = tarantool_params,
         }
     )
@@ -355,6 +426,7 @@ g.test_api_failover = function()
         {
             mode = 'disabled',
             state_provider = 'tarantool',
+            etcd2_params = etcd2_defaults,
             tarantool_params = tarantool_params,
         }
     )

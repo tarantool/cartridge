@@ -110,11 +110,30 @@ export type Error = {
 
 /** Failover parameters managent */
 export type FailoverApi = {
-  tarantool_params?: ?FailoverStateProviderCfgTarantool,
   /** Supported modes are "disabled", "eventual" and "stateful". */
   mode: $ElementType<Scalars, "String">,
-  /** Type of external storage for the mode "stateful". Only "tarantool" is supported now. */
-  state_provider?: ?$ElementType<Scalars, "String">
+  tarantool_params?: ?FailoverStateProviderCfgTarantool,
+  /** Type of external storage for the stateful failover mode. Supported types are "tarantool" and "etcd2". */
+  state_provider?: ?$ElementType<Scalars, "String">,
+  etcd2_params?: ?FailoverStateProviderCfgEtcd2
+};
+
+/** State provider configuration (etcd-v2) */
+export type FailoverStateProviderCfgEtcd2 = {
+  password: $ElementType<Scalars, "String">,
+  lock_delay: $ElementType<Scalars, "Float">,
+  endpoints: Array<$ElementType<Scalars, "String">>,
+  username: $ElementType<Scalars, "String">,
+  prefix: $ElementType<Scalars, "String">
+};
+
+/** State provider configuration (etcd-v2) */
+export type FailoverStateProviderCfgInputEtcd2 = {
+  password?: ?$ElementType<Scalars, "String">,
+  lock_delay?: ?$ElementType<Scalars, "Float">,
+  endpoints?: ?Array<$ElementType<Scalars, "String">>,
+  username?: ?$ElementType<Scalars, "String">,
+  prefix?: ?$ElementType<Scalars, "String">
 };
 
 /** State provider configuration (Tarantool) */
@@ -247,9 +266,10 @@ export type MutationApiclusterFailoverArgs = {
 
 /** Cluster management */
 export type MutationApiclusterFailover_ParamsArgs = {
-  tarantool_params?: ?FailoverStateProviderCfgInputTarantool,
   mode?: ?$ElementType<Scalars, "String">,
-  state_provider?: ?$ElementType<Scalars, "String">
+  tarantool_params?: ?FailoverStateProviderCfgInputTarantool,
+  state_provider?: ?$ElementType<Scalars, "String">,
+  etcd2_params?: ?FailoverStateProviderCfgInputEtcd2
 };
 
 /** Cluster management */
@@ -604,7 +624,7 @@ export type GetClusterQuery = { __typename?: "Query" } & {
   > & { MenuBlacklist: $ElementType<Apicluster, "webui_blacklist"> } & {
       clusterSelf: ?({ __typename?: "ServerShortInfo" } & $Pick<
         ServerShortInfo,
-        { demo_uri: * }
+        { app_name: *, instance_name: *, demo_uri: * }
       > & {
           uri: $ElementType<ServerShortInfo, "uri">,
           uuid: $ElementType<ServerShortInfo, "uuid">
@@ -902,11 +922,14 @@ export type ServerListQuery = { __typename?: "Query" } & {
     Server,
     { uuid: *, uri: * }
   > & {
-      statistics: ?({ __typename?: "ServerStat" } & {
-        quotaSize: $ElementType<ServerStat, "quota_size">,
-        arenaUsed: $ElementType<ServerStat, "arena_used">,
-        bucketsCount: $ElementType<ServerStat, "vshard_buckets_count">
-      })
+      statistics: ?({ __typename?: "ServerStat" } & $Pick<
+        ServerStat,
+        { quota_used_ratio: *, arena_used_ratio: *, items_used_ratio: * }
+      > & {
+          quotaSize: $ElementType<ServerStat, "quota_size">,
+          arenaUsed: $ElementType<ServerStat, "arena_used">,
+          bucketsCount: $ElementType<ServerStat, "vshard_buckets_count">
+        })
     })>
 };
 
@@ -961,11 +984,14 @@ export type ServerStatQuery = { __typename?: "Query" } & {
     Server,
     { uuid: *, uri: * }
   > & {
-      statistics: ?({ __typename?: "ServerStat" } & {
-        quotaSize: $ElementType<ServerStat, "quota_size">,
-        arenaUsed: $ElementType<ServerStat, "arena_used">,
-        bucketsCount: $ElementType<ServerStat, "vshard_buckets_count">
-      })
+      statistics: ?({ __typename?: "ServerStat" } & $Pick<
+        ServerStat,
+        { quota_used_ratio: *, arena_used_ratio: *, items_used_ratio: * }
+      > & {
+          quotaSize: $ElementType<ServerStat, "quota_size">,
+          arenaUsed: $ElementType<ServerStat, "arena_used">,
+          bucketsCount: $ElementType<ServerStat, "vshard_buckets_count">
+        })
     })>
 };
 
@@ -1009,6 +1035,18 @@ export type ChangeFailoverMutation = { __typename?: "Mutation" } & {
       { mode: * }
     >
   })
+};
+
+export type PromoteFailoverLeaderMutationVariables = {
+  replicaset_uuid: $ElementType<Scalars, "String">,
+  instance_uuid: $ElementType<Scalars, "String">
+};
+
+export type PromoteFailoverLeaderMutation = { __typename?: "Mutation" } & {
+  cluster: ?({ __typename?: "MutationApicluster" } & $Pick<
+    MutationApicluster,
+    { failover_promote: * }
+  >)
 };
 
 export type FetchUsersQueryVariables = {};
