@@ -1,6 +1,6 @@
 // @flow
 import React from 'react';
-import { css } from 'react-emotion';
+import { css, cx } from 'react-emotion';
 import { Formik } from 'formik';
 
 import SelectedServersList from 'src/components/SelectedServersList';
@@ -205,8 +205,8 @@ class JoinReplicasetForm extends React.Component<JoinReplicasetFormProps> {
                   )}
                   topRightControls={[
                     <ReplicasetFilterInput
-                      className={styles.filter}
-                      value={filter}
+                      className={cx(styles.filter, 'meta-test__Filter')}
+                      value={filter} 
                       setValue={this.props.setFilter}
                       roles={knownRoles}
                     />

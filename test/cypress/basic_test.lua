@@ -219,3 +219,14 @@ end
 function g.test_leader_promotion()
     cypress_run('leader-promotion.spec.js')
 end
+
+function g.test_replicaset_filtering()
+    g.cluster.main_server:graphql({
+        query = [[mutation {
+            probe_server(
+                uri: "localhost:13310"
+            )
+        }]]
+    })
+    cypress_run('replicaset-filtering.spec.js')
+end
