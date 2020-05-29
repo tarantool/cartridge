@@ -100,6 +100,7 @@ function* appMessageSaga() {
         window.tarantool_enterprise_core.notify({
           title: 'An error has occurred',
           message: messageText,
+          details: action.error.extensions ? action.error.extensions['io.tarantool.errors.stack'] : null,
           type: messageType,
           timeout: 0
         });
@@ -124,6 +125,7 @@ function* appMessageSaga() {
         window.tarantool_enterprise_core.notify({
           title: 'An error has occurred',
           message: messageText,
+          details: action.error.extensions ? action.error.extensions['io.tarantool.errors.stack'] : null,
           type: messageType,
           timeout: 0
         });

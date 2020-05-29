@@ -87,6 +87,7 @@ function* applyFilesSaga() {
       window.tarantool_enterprise_core.notify({
         title: 'Error',
         message: error.message,
+        details: error.extensions ? error.extensions['io.tarantool.errors.stack'] : null,
         type: 'error',
         timeout: 5000
       });
