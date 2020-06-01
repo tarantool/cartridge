@@ -408,6 +408,86 @@ local function validate_failover_schema(field, topology)
             end
         end
 
+        if topology.failover.etcd2_params ~= nil then
+            local params = topology.failover.etcd2_params
+            local field = field .. '.failover.etcd2_params'
+            e_config:assert(
+                type(params) == 'table',
+                '%s must be a table, got %s',
+                field, type(params)
+            )
+
+            e_config:assert(
+                type(params.prefix) == 'string',
+                '%s.prefix must be a string, got %s',
+                field, type(params.prefix)
+            )
+
+            e_config:assert(
+                params.username == nil or
+                type(params.username) == 'string',
+                '%s.username must be a string, got %s',
+                field, type(params.username)
+            )
+
+            e_config:assert(
+                params.password == nil or
+                type(params.password) == 'string',
+                '%s.password must be a string, got %s',
+                field, type(params.password)
+            )
+
+            e_config:assert(
+                type(params.lock_delay) == 'number',
+                '%s.lock_delay must be a number, got %s',
+                field, type(params.lock_delay)
+            )
+
+            if params.endpoints ~= nil then
+                e_config:assert(
+                    type(params.endpoints) == 'table',
+                    '%s.endpoints must be a table, got %s',
+                    field, type(params.endpoints)
+                )
+
+                local i = 1
+                for k, _ in pairs(params.endpoints) do
+                    e_config:assert(
+                        type(k) == 'number',
+                        '%s.endpoints must have integer keys', field
+                    )
+
+                    local uri = params.endpoints[i]
+                    e_config:assert(
+                        type(uri) == 'string',
+                        '%s.endpoints must be a contiguous array of strings', field
+                    )
+
+                    local _, err = pool.format_uri(uri)
+                    e_config:assert(
+                        not err,
+                        '%s.endpoints[%d]: %s',
+                        field, i, err and err.err
+                    )
+                    i = i + 1
+                end
+            end
+
+            local known_keys = {
+                ['prefix'] = true,
+                ['endpoints'] = true,
+                ['lock_delay'] = true,
+                ['username'] = true,
+                ['password'] = true,
+            }
+            for k, _ in pairs(params) do
+                e_config:assert(
+                    known_keys[k],
+                    '%s has unknown parameter %q', field, k
+                )
+            end
+        end
+
         local known_keys = {
             ['mode'] = true,
             ['state_provider'] = true,
