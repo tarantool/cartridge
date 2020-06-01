@@ -2,7 +2,7 @@ describe('Leader promotion tests', () => {
 
   function toggle_to_valid_stateboard() {
     cy.get('.meta-test__FailoverButton').click();
-    cy.get('.meta-test__statefulRadioBtn').click().click();
+    cy.get('.meta-test__statefulRadioBtn').click();
     cy.get('.meta-test__stateboardURI input').type('{selectall}{backspace}localhost:14401');
     cy.get('.meta-test__stateboardPassword input').type('{selectall}{backspace}password');
     cy.get('.meta-test__SubmitButton').click();
@@ -86,7 +86,7 @@ describe('Leader promotion tests', () => {
     cy.get('.meta-test__EditReplicasetModal input[name="roles"][value="failover-coordinator"]')
       .should('not.be.checked');
     cy.get('.meta-test__EditReplicasetSaveBtn').click();
-    cy.get('#root').contains('Edit is OK. Please wait for list refresh...').click();
+    cy.get('span:contains(Edit is OK. Please wait for list refresh...)').click();
 
     toggle_to_valid_stateboard()
 

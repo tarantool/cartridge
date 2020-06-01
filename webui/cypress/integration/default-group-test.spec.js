@@ -1,12 +1,3 @@
-//Steps:
-//1. Open Create replicaset dialog
-//2. Check Select all roles
-//3. Check Deselect all roles
-//4. Check role vshard-storage
-//5. Create replicaset
-//6. Open Edit replicaset dialog
-//7. Try to change radiobutton Default in saved replicaset
-
 describe('Default group tests', () => {
 
   it('1. Open Create replicaset dialog', () => {

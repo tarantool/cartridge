@@ -46,7 +46,6 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
   })
 
   it('2. Probe server dialog',() => {
-    cy.visit(Cypress.config('baseUrl'));
     cy.get('.meta-test__ProbeServerBtn').click();
 
     // I. Invalid uri
@@ -59,11 +58,10 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     cy.get('.ProbeServerModal input[name="uri"]')
       .type('{selectall}localhost:13301{enter}');
     cy.get('.ProbeServerModal').should('not.exist');
-    cy.get('#root').contains('Probe is OK').click();
+    cy.get('span:contains(Probe is OK)').click();
   })
 
   it('3. Edit replicaset dialog',() => {
-    cy.visit(Cypress.config('baseUrl'));
     cy.get('li').contains('test-replicaset').closest('li').find('button').contains('Edit').click({ force: true });
 
     // I.

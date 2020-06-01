@@ -79,7 +79,7 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     cy.get('.meta-test__BootStrapPanel__vshard-router_enabled');
     cy.get('.meta-test__BootStrapPanel__vshard-storage_enabled');
     cy.get('.meta-test__BootstrapButton').click();
-    cy.get('#root').contains('VShard bootstrap is OK. Please wait for list refresh...');//add to frontend-core classname for notification
+    cy.get('span:contains(VShard bootstrap is OK. Please wait for list refresh...)').click();
     cy.get('.meta-test__BootstrapButton').should('not.exist');
   })
 
