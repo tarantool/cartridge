@@ -29,13 +29,13 @@ local log = require('log')
 local fiber = require('fiber')
 local checks = require('checks')
 local errors = require('errors')
-local stateboard_client = require('cartridge.stateboard-client')
 local membership = require('membership')
 
 local vars = require('cartridge.vars').new('cartridge.failover')
 local utils = require('cartridge.utils')
 local topology = require('cartridge.topology')
 local service_registry = require('cartridge.service-registry')
+local stateboard_client = require('cartridge.stateboard-client')
 
 local FailoverError = errors.new_class('FailoverError')
 local ApplyConfigError = errors.new_class('ApplyConfigError')
@@ -304,20 +304,25 @@ local function cfg(clusterwide_config)
         })
         vars.failover_fiber:name('cartridge.eventual-failover')
 
-    elseif failover_cfg.mode == 'stateful'
-    and failover_cfg.state_provider == 'tarantool'
-    then
-        local params = assert(failover_cfg.tarantool_params)
-        vars.client = stateboard_client.new({
-            uri = assert(params.uri),
-            password = params.password,
-            call_timeout = vars.options.NETBOX_CALL_TIMEOUT,
-        })
+    elseif failover_cfg.mode == 'stateful' then
+        if failover_cfg.state_provider == 'tarantool' then
+            local params = assert(failover_cfg.tarantool_params)
+            vars.client = stateboard_client.new({
+                uri = assert(params.uri),
+                password = params.password,
+                call_timeout = vars.options.NETBOX_CALL_TIMEOUT,
+            })
 
-        log.info(
-            'Stateful failover enabled with external storage at %s',
-            params.uri
-        )
+            log.info(
+                'Stateful failover enabled with stateboard at %s',
+                params.uri
+            )
+        else
+            return nil, ApplyConfigError:new(
+                'Unknown failover state provider %q',
+                failover_cfg.state_provider
+            )
+        end
 
         -- WARNING: network yields
         local appointments, err = _get_appointments_stateful_mode(vars.client, 0)
@@ -339,11 +344,6 @@ local function cfg(clusterwide_config)
             end,
         })
         vars.failover_fiber:name('cartridge.stateful-failover')
-    elseif failover_cfg.mode == 'stateful' then
-        return nil, ApplyConfigError:new(
-            'Unknown failover state provider %q',
-            failover_cfg.state_provider
-        )
     else
         return nil, ApplyConfigError:new(
             'Unknown failover mode %q',
