@@ -23,8 +23,18 @@ vars:new('known_roles', {
     auth = false,
     failover = nil | boolean | {
         -- mode = 'disabled' | 'eventual' | 'stateful',
-        -- state_provider = nil | 'tarantool',
-        -- tarantool_params = nil | {uri = string, password = string},
+        -- state_provider = nil | 'tarantool' | 'etcd2',
+        -- tarantool_params = nil | {
+        --     uri = string,
+        --     password = string,
+        -- },
+        -- etcd2_params = nil | {
+        --     prefix = string,
+        --     lock_delay = number,
+        --     endpoints = nil | {string,...},
+        --     username = nil | string,
+        --     password = nil | string,
+        -- },
     },
     servers = {
         -- ['instance-uuid-1'] = 'expelled',
@@ -345,6 +355,12 @@ local function validate_failover_schema(field, topology)
                 '%s.failover missing tarantool_params',
                 field
             )
+        elseif topology.failover.state_provider == 'etcd2' then
+            e_config:assert(
+                topology.failover.etcd2_params ~= nil,
+                '%s.failover missing etcd2_params',
+                field
+            )
         elseif topology.failover.state_provider ~= nil then
             e_config:assert(false,
                 '%s.failover unknown state_provider %q',
@@ -396,6 +412,7 @@ local function validate_failover_schema(field, topology)
             ['mode'] = true,
             ['state_provider'] = true,
             ['tarantool_params'] = true,
+            ['etcd2_params'] = true,
             -- For the sake of backward compatibility with v2.0.1-78
             -- See bug https://github.com/tarantool/cartridge/issues/754
             ['enabled'] = true,
@@ -584,6 +601,7 @@ local function get_failover_params(topology_cfg)
             mode = topology_cfg.failover.mode,
             state_provider = topology_cfg.failover.state_provider,
             tarantool_params = topology_cfg.failover.tarantool_params,
+            etcd2_params = topology_cfg.failover.etcd2_params,
         }
 
         if ret.mode == nil
