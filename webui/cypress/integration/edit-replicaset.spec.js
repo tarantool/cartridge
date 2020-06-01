@@ -1,10 +1,3 @@
-//Steps:
-//1.Edit Replica Set
-//      Press the button Edit
-//      Clear old value in the field 'name of replica set' and fill a new value
-//      Uncheck role: myrole
-//      Press the button Save
-
 describe('Edit Replica Set', () => {
   it('Edit Replica Set', () => {
     cy.visit(Cypress.config('baseUrl'));
@@ -22,10 +15,10 @@ describe('Edit Replica Set', () => {
       .uncheck({ force: true })
       .should('not.be.checked');
 
-    cy.get('.meta-test__EditReplicasetSaveBtn').click();//component:EditReplicasetForm
+    cy.get('.meta-test__EditReplicasetSaveBtn').click();
 
     cy.get('#root').contains('editedRouter').closest('li').find('.meta-test__ReplicasetList_allRw_enabled').should('not.exist');
-    cy.get('#root').contains('Edit is OK. Please wait for list refresh...'); //add to frontend-core classname for notification
+    cy.get('span:contains(Edit is OK. Please wait for list refresh...)').click();
   })
 
 });

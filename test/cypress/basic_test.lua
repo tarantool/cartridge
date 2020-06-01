@@ -141,7 +141,6 @@ function g.test_probe_server()
     local code = os.execute(
         "cd webui && npx cypress run --spec" ..
         ' cypress/integration/probe-server.spec.js' ..
-        ',cypress/integration/application-name.spec.js' ..
         ',cypress/integration/demo-panel-not-present.spec.js'
     )
     t.assert_equals(code, 0)

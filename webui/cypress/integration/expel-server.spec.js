@@ -1,14 +1,3 @@
-//Steps:
-//Precondition: There is 1 configured server (not leader) in replica set
-//1.Expel server
-//      Open Expel dialog
-//      Press the button Expel
-//Precondition: There is 1 configured server (leader) in replica set
-//2.Show expel error
-//      Open Expel dialog
-//      Try to expel leader
-//      Show expel error
-
 describe('Expel server', () => {
 
   it('Expel server', () => {
@@ -17,7 +6,7 @@ describe('Expel server', () => {
     cy.get('.meta-test__ReplicasetServerListItem__dropdown').contains('Expel server').click();
     cy.get('.meta-test__ExpelServerModal button[type="button"]').contains('Expel').click();
 
-    cy.get('#root').contains('Expel is OK. Please wait for list refresh...');
+    cy.get('span:contains(Expel is OK. Please wait for list refresh...)').click();
   })
 
   it('Show expel error', () => {
@@ -26,7 +15,7 @@ describe('Expel server', () => {
     cy.get('.meta-test__ReplicasetServerListItem__dropdown').contains('Expel server').click();
     cy.get('.meta-test__ExpelServerModal button[type="button"]').contains('Expel').click();
     cy.get('.meta-test__ExpelServerModal button[type="button"]').contains('Cancel').click();
-    cy.get('#root').contains('An error has occurred');
+    cy.get('span:contains(An error has occurred)').click();
 
   })
 });
