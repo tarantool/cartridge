@@ -18,8 +18,11 @@ local lock = {
     session_expiry = 0,
 }
 
-local function acquire_lock(uuid, uri)
-    checks('string', 'string')
+local function acquire_lock(lock_args)
+    checks({
+        uuid = 'string',
+        uri = 'string',
+    })
 
     if box.session.id() ~= lock.session_id
     and box.session.storage.lock_acquired then
@@ -41,15 +44,17 @@ local function acquire_lock(uuid, uri)
     box.session.storage.lock_acquired = true
 
     if lock.coordinator == nil
-    or lock.coordinator.uuid ~= uuid
-    or lock.coordinator.uri ~= uri
+    or lock.coordinator.uuid ~= lock_args.uuid
+    or lock.coordinator.uri ~= lock_args.uri
     then
-        lock.coordinator = {
-            uuid = uuid,
-            uri = uri,
-        }
-        box.space.coordinator_audit:insert({nil, fiber.time(), uuid, uri})
-        log.info('Long live the coordinator %q (%s)!', uri, uuid)
+        lock.coordinator = lock_args
+        box.space.coordinator_audit:insert(
+            {nil, fiber.time(), lock_args.uuid, lock_args.uri}
+        )
+        log.info(
+            'Long live the coordinator %q (%s)!',
+            lock_args.uri, lock_args.uuid
+        )
     end
 
     return true

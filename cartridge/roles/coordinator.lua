@@ -139,8 +139,8 @@ local function take_control(client)
     checks('stateboard_client')
 
     local lock_args = {
-        confapplier.get_instance_uuid(),
-        confapplier.get_advertise_uri()
+        uuid = confapplier.get_instance_uuid(),
+        uri = confapplier.get_advertise_uri(),
     }
 
     local session = client:get_session()
