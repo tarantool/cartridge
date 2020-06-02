@@ -189,11 +189,11 @@ failover:
   tarantool_params: {uri: "localhost"}
 ...]])
 
-    check_config('topology_new.failover.tarantool_params.password must be a string, got nil',
+    check_config('topology_new.failover.tarantool_params.password must be a string, got cdata',
 [[---
 failover:
   mode: eventual
-  tarantool_params: {uri: "localhost:9"}
+  tarantool_params: {uri: "localhost:9", password: null}
 ...]])
 
     check_config('topology_new.failover missing etcd2_params',
@@ -210,19 +210,21 @@ failover:
   etcd2_params: false
 ...]])
 
-    check_config('topology_new.failover.etcd2_params.prefix must be a string, got nil',
+    check_config('topology_new.failover.etcd2_params.prefix must be a string, got cdata',
 [[---
 failover:
   mode: disabled
-  etcd2_params: {}
+  etcd2_params:
+    prefix: null
 ...]])
 
-    check_config('topology_new.failover.etcd2_params.lock_delay must be a number, got nil',
+    check_config('topology_new.failover.etcd2_params.lock_delay must be a number, got cdata',
 [[---
 failover:
   mode: disabled
   etcd2_params:
     prefix: /
+    lock_delay: null
 ...]])
 
     check_config('topology_new.failover.etcd2_params.username must be a string, got table',
@@ -346,19 +348,21 @@ servers:
 ...]])
 
     check_config('topology_new.servers[aaaaaaaa-aaaa-4000-b000-000000000001].uri'..
-      ' must be a string, got nil',
+      ' must be a string, got cdata',
 [[---
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000001:
     replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
+    uri: null
 ...]])
 
     check_config('topology_new.servers[aaaaaaaa-aaaa-4000-b000-000000000001].replicaset_uuid'..
-      ' must be a string, got nil',
+      ' must be a string, got cdata',
 [[---
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000001:
     uri: localhost:3301
+    replicaset_uuid: null
 ...]])
 
     check_config('topology_new.servers[aaaaaaaa-aaaa-4000-b000-000000000001].replicaset_uuid'..
@@ -417,19 +421,21 @@ replicasets:
 ...]])
 
     check_config('topology_new.replicasets[aaaaaaaa-0000-4000-b000-000000000001]'..
-      '.master must be either string or table, got nil',
+      '.master must be either string or table, got cdata',
 [[---
 replicasets:
   aaaaaaaa-0000-4000-b000-000000000001:
     roles: {"vshard-router": true}
+    master: null
 ...]])
 
     check_config('topology_new.replicasets[aaaaaaaa-0000-4000-b000-000000000001]'..
-      '.roles must be a table, got nil',
+      '.roles must be a table, got cdata',
 [[---
 replicasets:
   aaaaaaaa-0000-4000-b000-000000000001:
     master: aaaaaaaa-aaaa-4000-b000-000000000001
+    roles: null
 ...]])
 
     check_config('topology_new.replicasets[aaaaaaaa-0000-4000-b000-000000000001]'..
