@@ -3,21 +3,23 @@ local g = t.group()
 
 local fio = require('fio')
 local uuid = require('uuid')
+local json = require('json')
 local fiber = require('fiber')
 local httpc = require('http.client')
+local digest = require('digest')
 local etcd2_client = require('cartridge.etcd2-client')
 
 local helpers = require('test.helper')
 
 local URI = 'http://127.0.0.1:14001'
 
-local function create_client()
+local function create_client(username, password)
     return etcd2_client.new({
         prefix = 'etcd2_client_test',
         lock_delay = g.lock_delay,
         endpoints = {URI},
-        username = '',
-        password = '',
+        username = username or '',
+        password = password or '',
         request_timeout = 1,
     })
 end
@@ -275,4 +277,52 @@ function g.test_client_session()
     -- session looses lock if connection is interrupded
     t.assert_equals(session:is_alive(), false)
     t.assert_equals(session:is_locked(), false)
+end
+
+function g.test_authentication()
+    local password = digest.urandom(6):hex()
+    local credentials = "root:" .. password
+    local http_auth = "Basic " .. digest.base64_encode(credentials)
+
+    httpc.put(URI .. '/v2/auth/users/root', json.encode({
+        user = 'root',
+        password = password,
+    }))
+    httpc.put(URI .. '/v2/auth/enable')
+    httpc.put(URI .. '/v2/auth/roles/guest', json.encode({
+        role = 'guest',
+        revoke = {kv = {
+            read = {'/*'},
+            write = {'/*'},
+        }},
+    }), {
+        verbose = true,
+        headers = {['Authorization'] = http_auth},
+    })
+
+    local payload = {uuid = uuid.str(), uri = 'localhost:9'}
+
+    local c1 = create_client():get_session()
+    local c2 = create_client('root', 'fraud'):get_session()
+    local c3 = create_client('root', password):get_session()
+
+    -- C1 isn't authorized
+    local ok, err = c1:acquire_lock(payload)
+    t.assert_equals(ok, nil)
+    t.assert_covers(err, {
+        class_name = 'EtcdError',
+        err = 'The request requires user authentication' ..
+            ' (110): Insufficient credentials',
+    })
+
+    local ok, err = c2:acquire_lock(payload)
+    t.assert_equals(ok, nil)
+    t.assert_covers(err, {
+        class_name = 'EtcdError',
+        err = 'The request requires user authentication' ..
+            ' (110): Insufficient credentials',
+    })
+
+    local ok, err = c3:acquire_lock(payload)
+    t.assert_equals({ok, err}, {true, nil})
 end
