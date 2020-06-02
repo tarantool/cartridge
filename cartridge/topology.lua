@@ -393,7 +393,7 @@ local function validate_failover_schema(field, topology)
             e_config:assert(
                 type(params.password) == 'string',
                 '%s.password must be a string, got %s',
-                field, type(params.params)
+                field, type(params.password)
             )
 
             local known_keys = {
