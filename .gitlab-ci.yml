@@ -151,11 +151,11 @@ misc:
     IMAGE_NAME: *IMAGE_NAME_EE
   before_script:
     - ls -al # to see if caching works
-    - tarantoolctl rocks make
+    - time tarantoolctl rocks make
     - tarantoolctl rocks list
   script:
-    - luatest -v -p cypress.*
-    - ./frontend-test.sh
+    - luatest -v -c -p cypress.*
+    - time ./frontend-test.sh
   after_script:
     # avoid caching cartridge rock
     - tarantoolctl rocks remove cartridge
