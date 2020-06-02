@@ -597,6 +597,49 @@ g.test_custom_type_scalar_variables = function()
     t.assert_equals(
         server:graphql({
             query = [[
+                query($fields: [CustomString!]!) {
+                    test_custom_type_scalar_list(
+                        fields: $fields
+                    )
+                }
+            ]],
+        variables = {fields = {'echo'}}}
+        ).data.test_custom_type_scalar_list, 'echo'
+    )
+
+    t.assert_error_msg_equals('Variable "fields" type mismatch: ' ..
+            'the variable type "NonNull(List(NonNull(String)))" is not compatible with the argument type '..
+            '"NonNull(List(NonNull(CustomString)))"', function()
+        return server:graphql({
+            query = [[
+                query($fields: [String!]!) {
+                    test_custom_type_scalar_list(
+                        fields: $fields
+                    )
+                }
+            ]],
+        variables = {fields = {'echo'}}}
+        )
+    end)
+
+    t.assert_error_msg_equals('Variable "fields" type mismatch: ' ..
+            'the variable type "List(NonNull(String))" is not compatible with the argument type '..
+            '"NonNull(List(NonNull(CustomString)))"', function()
+        return server:graphql({
+            query = [[
+                query($fields: [String!]) {
+                    test_custom_type_scalar_list(
+                        fields: $fields
+                    )
+                }
+            ]],
+        variables = {fields = {'echo'}}}
+        )
+    end)
+
+    t.assert_equals(
+        server:graphql({
+            query = [[
                 query($field: CustomString!) {
                     test_custom_type_scalar_inputObject(
                         object: { nested_object: { field: $field } }
