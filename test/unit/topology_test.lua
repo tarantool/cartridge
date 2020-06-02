@@ -196,6 +196,117 @@ failover:
   tarantool_params: {uri: "localhost:9"}
 ...]])
 
+    check_config('topology_new.failover missing etcd2_params',
+[[---
+failover:
+  mode: stateful
+  state_provider: etcd2
+...]])
+
+    check_config('topology_new.failover.etcd2_params must be a table, got boolean',
+[[---
+failover:
+  mode: disabled
+  etcd2_params: false
+...]])
+
+    check_config('topology_new.failover.etcd2_params.prefix must be a string, got nil',
+[[---
+failover:
+  mode: disabled
+  etcd2_params: {}
+...]])
+
+    check_config('topology_new.failover.etcd2_params.lock_delay must be a number, got nil',
+[[---
+failover:
+  mode: disabled
+  etcd2_params:
+    prefix: /
+...]])
+
+    check_config('topology_new.failover.etcd2_params.username must be a string, got table',
+[[---
+failover:
+  mode: disabled
+  etcd2_params:
+    prefix: /
+    username: {}
+...]])
+
+    check_config('topology_new.failover.etcd2_params.password must be a string, got number',
+[[---
+failover:
+  mode: disabled
+  etcd2_params:
+    prefix: /
+    username:
+    password: 0
+...]])
+
+    check_config('topology_new.failover.etcd2_params.endpoints must be a table, got string',
+[[---
+failover:
+  mode: disabled
+  etcd2_params:
+    prefix: /
+    lock_delay: 30
+    endpoints: localhost
+...]])
+
+    check_config('topology_new.failover.etcd2_params.endpoints must have integer keys',
+[[---
+failover:
+  mode: disabled
+  etcd2_params:
+    prefix: /
+    lock_delay: 30
+    endpoints:
+      localhost: true
+...]])
+
+    check_config('topology_new.failover.etcd2_params.endpoints must be a contiguous array of strings',
+[[---
+failover:
+  mode: disabled
+  etcd2_params:
+    prefix: /
+    lock_delay: 30
+    endpoints: [1, 2, 3]
+...]])
+
+    check_config('topology_new.failover.etcd2_params.endpoints must be a contiguous array of strings',
+[[---
+failover:
+  mode: disabled
+  etcd2_params:
+    prefix: /
+    lock_delay: 30
+    endpoints:
+      - null
+      - localhost:8080
+...]])
+
+    check_config('topology_new.failover.etcd2_params.endpoints[1]: Invalid URI "localhost" (missing port)',
+[[---
+failover:
+  mode: disabled
+  etcd2_params:
+    prefix: /
+    lock_delay: 30
+    endpoints: ["localhost"]
+...]])
+
+    check_config('topology_new.failover.etcd2_params has unknown parameter "unknown"',
+[[---
+failover:
+  mode: disabled
+  etcd2_params:
+    prefix: /
+    lock_delay: 30
+    unknown:
+...]])
+
     check_config('topology_new.failover has unknown parameter "unknown"',
 [[---
 failover:
@@ -739,6 +850,12 @@ failover:
   tarantool_params:
     uri: stateboard.com:4401
     password: ''
+  etcd2_params:
+    prefix: /
+    lock_delay: 0
+    endpoints: null
+    username: null
+    password: null
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000001:
     replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
