@@ -27,9 +27,23 @@ local function get_params()
     -- @tfield string mode
     --   Supported modes are "disabled", "eventual" and "stateful"
     -- @tfield nil|string state_provider
-    --   Only "tarantool" is supported now
+    --   Supported state providers are "tarantool" and "etcd2"
     -- @tfield nil|table tarantool_params
-    --   `{uri = 'string', password = 'string'}`
+    -- @tfield string tarantool_params.uri
+    -- @tfield string tarantool_params.password
+    -- @tfield nil|table etcd2_params
+    -- @tfield string etcd2_params.prefix
+    --   Prefix is used for etcd v2 requests as follows:
+    --   endpoint/v2/keys/prefix/key
+    -- @tfield number lock_delay
+    --   Determines lock's time-to-live
+    -- @tfield nil|table etcd2_params.endpoints
+    --   URIs that are used to discover and to access etcd cluster instances.
+    --   If nil then the standard ones are used:
+    --   localhost:2379
+    --   localhost:4001
+    -- @tfield nil|string etcd2_params.username
+    -- @tfield nil|string etcd2_params.password
     return topology.get_failover_params(
         confapplier.get_readonly('topology')
     )
@@ -43,6 +57,7 @@ end
 -- @tparam ?string opts.mode
 -- @tparam ?string opts.state_provider
 -- @tparam ?table opts.tarantool_params
+-- @tparam ?table opts.etcd2_params
 -- @treturn[1] boolean `true` if config applied successfully
 -- @treturn[2] nil
 -- @treturn[2] table Error description
@@ -51,6 +66,7 @@ local function set_params(opts)
         mode = '?string',
         state_provider = '?string',
         tarantool_params = '?table',
+        etcd2_params = '?table',
     })
 
     local topology_cfg = confapplier.get_deepcopy('topology')
@@ -80,6 +96,9 @@ local function set_params(opts)
     end
     if opts.tarantool_params ~= nil then
         topology_cfg.failover.tarantool_params = opts.tarantool_params
+    end
+    if opts.etcd2_params ~= nil then
+        topology_cfg.failover.etcd2_params = opts.etcd2_params
     end
 
     local ok, err = twophase.patch_clusterwide({topology = topology_cfg})
