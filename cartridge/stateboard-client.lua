@@ -138,15 +138,15 @@ local function get_session(client)
         return client.session
     end
 
-    local connection = netbox.connect(client.uri, {
+    local connection = netbox.connect(client.cfg.uri, {
         user = 'client',
-        password = client.password,
+        password = client.cfg.password,
         wait_connected = false,
     })
 
     local session = {
         lock_acquired = false,
-        call_timeout = client.call_timeout,
+        call_timeout = client.cfg.call_timeout,
         connection = connection,
     }
     client.session = setmetatable(session, session_mt)
@@ -172,7 +172,7 @@ local function longpoll(client, timeout)
 
         local ret, err = errors.netbox_call(session.connection,
             'longpoll', {timeout},
-            {timeout = timeout + client.call_timeout}
+            {timeout = timeout + client.cfg.call_timeout}
         )
 
         if ret ~= nil then
@@ -180,7 +180,7 @@ local function longpoll(client, timeout)
         end
 
         if fiber.time() < deadline then
-            fiber.sleep(client.call_timeout)
+            fiber.sleep(client.cfg.call_timeout)
             -- continue
         else
             return nil, ClientError:new(err)
@@ -197,7 +197,7 @@ local client_mt = {
     },
 }
 
-local function new(opts)
+local function new(cfg)
     checks({
         uri = 'string',
         password = 'string',
@@ -207,9 +207,7 @@ local function new(opts)
     local client = {
         state_provider = 'tarantool',
         session = nil,
-        uri = opts.uri,
-        password = opts.password,
-        call_timeout = opts.call_timeout,
+        cfg = table.deepcopy(cfg),
     }
     return setmetatable(client, client_mt)
 end

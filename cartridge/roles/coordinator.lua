@@ -5,6 +5,7 @@ local errors = require('errors')
 local membership = require('membership')
 
 local vars = require('cartridge.vars').new('cartridge.roles.coordinator')
+local utils = require('cartridge.utils')
 local topology = require('cartridge.topology')
 local confapplier = require('cartridge.confapplier')
 local stateboard_client = require('cartridge.stateboard-client')
@@ -247,18 +248,24 @@ local function apply_config(conf, _)
 
     if failover_cfg.state_provider == 'tarantool' then
         local params = assert(failover_cfg.tarantool_params)
+        local client_cfg = {
+            uri = params.uri,
+            password = params.password,
+            call_timeout = vars.options.NETBOX_CALL_TIMEOUT,
+        }
 
         if vars.client == nil
         or vars.client.state_provider ~= 'tarantool'
-        or vars.client.uri ~= params.uri
-        or vars.client.password ~= params.password
+        or not utils.deepcmp(vars.client.cfg, client_cfg)
         then
             stop()
-            vars.client = stateboard_client.new({
-                uri = params.uri,
-                password = params.password,
-                call_timeout = vars.options.NETBOX_CALL_TIMEOUT,
-            })
+            vars.client = stateboard_client.new(client_cfg)
+
+            log.info(
+                'Starting failover coordinator' ..
+                ' with external storage (stateboard) at %s',
+                client_cfg.uri
+            )
         end
     else
         local err = string.format(
@@ -271,12 +278,9 @@ local function apply_config(conf, _)
     if vars.connect_fiber == nil
     or vars.connect_fiber:status() == 'dead'
     then
-        log.info(
-            'Starting failover coordinator' ..
-            ' with external storage at %s',
-            failover_cfg.tarantool_params.uri
-        )
-
+        if vars.connect_fiber ~= nil then
+            log.warn('Failover coordinator fiber was dead, restarting')
+        end
         vars.connect_fiber = fiber.new(take_control_loop, vars.client)
         vars.connect_fiber:name('failover-take-control')
     end
