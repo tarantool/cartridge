@@ -5,6 +5,8 @@ local g = t.group()
 local helpers = require('test.helper')
 
 g.before_all = function()
+    local t1 = require('clock').time()
+
     g.cluster = helpers.Cluster:new({
         datadir = fio.tempdir(),
         server_command = helpers.entrypoint('srv_basic'),
@@ -69,6 +71,8 @@ g.before_all = function()
     g.cluster:start()
     g.server3:start()
     g.server4:start()
+    local t2 = require('clock').time()
+    require('log').info('before_each: %s', t2-t1)
 end
 
 g.after_all = function()
@@ -83,7 +87,7 @@ end
 
 function g.test_edit_join_expel()
     local code = os.execute(
-        "cd webui && npx cypress run --spec" ..
+        "cd webui && time -f \"npx_cypress_run %E\" npx cypress run --spec" ..
         " cypress/integration/edit-replicaset.spec.js" ..
         ",cypress/integration/expel-server.spec.js" ..
         ",cypress/integration/join-replicaset.spec.js" ..

@@ -5,6 +5,7 @@ local g = t.group()
 local helpers = require('test.helper')
 
 g.setup = function()
+    local t1 = require('clock').time()
 	g.cluster = helpers.Cluster:new({
         datadir = fio.tempdir(),
         server_command = helpers.entrypoint('srv_basic'),
@@ -31,7 +32,8 @@ g.setup = function()
     g.cluster.main_server.net_box:eval([[
         os.setenv('TARANTOOL_DEMO_URI', 'admin:password@try-cartridge.tarantool.io:26333')
     ]])
-
+    local t2 = require('clock').time()
+    require('log').info('before_each: %s', t2-t1)
 end
 
 g.teardown = function()
@@ -41,7 +43,7 @@ end
 
 local function cypress_run(spec)
     local code = os.execute(
-        "cd webui && npx cypress run --spec " ..
+        "cd webui && time -f \"npx_cypress_run %E\" npx cypress run --spec " ..
         fio.pathjoin('cypress/integration', spec)
     )
     if code ~= 0 then

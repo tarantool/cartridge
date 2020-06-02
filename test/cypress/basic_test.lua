@@ -5,6 +5,7 @@ local g = t.group()
 local helpers = require('test.helper')
 
 g.setup = function()
+    local t1 = require('clock').time()
     g.datadir = fio.tempdir()
 
     fio.mktree(fio.pathjoin(g.datadir, 'stateboard'))
@@ -89,9 +90,12 @@ g.setup = function()
     g.cluster:start()
     g.server:start()
 
+
     t.helpers.retrying({timeout = 5}, function()
         g.server:graphql({query = '{}'})
     end)
+    local t2 = require('clock').time()
+    require('log').info('before_each: %s', t2-t1)
 end
 
 g.teardown = function()
@@ -106,7 +110,7 @@ end
 
 local function cypress_run(spec)
     local code = os.execute(
-        "cd webui && npx cypress run --spec " ..
+        "cd webui && time -f \"npx_cypress_run %E\" npx cypress run --spec " ..
         fio.pathjoin('cypress/integration', spec)
     )
     if code ~= 0 then
@@ -139,7 +143,7 @@ end
 
 function g.test_probe_server()
     local code = os.execute(
-        "cd webui && npx cypress run --spec" ..
+        "cd webui && time -f \"npx_cypress_run %E\" npx cypress run --spec" ..
         ' cypress/integration/probe-server.spec.js' ..
         ',cypress/integration/demo-panel-not-present.spec.js'
     )
@@ -152,7 +156,7 @@ end
 
 function g.test_users()
     local code = os.execute(
-        "cd webui && npx cypress run --spec" ..
+        "cd webui && time -f \"npx_cypress_run %E\" npx cypress run --spec" ..
         ' cypress/integration/auth.spec.js' ..
         ',cypress/integration/users.spec.js' ..
         ',cypress/integration/server-details.spec.js' ..
@@ -169,7 +173,7 @@ end
 
 function g.test_code()
     local code = os.execute(
-        "cd webui && npx cypress run --spec" ..
+        "cd webui && time -f \"npx_cypress_run %E\" npx cypress run --spec" ..
         ' cypress/integration/code-empty-page.spec.js' ..
         ',cypress/integration/code-file-in-tree.spec.js' ..
         ',cypress/integration/code-folder-in-tree.spec.js'
@@ -179,7 +183,7 @@ end
 
 function g.test_uninitialized()
     local code = os.execute(
-        'cd webui && npx cypress run' ..
+        'cd webui && time -f \"npx_cypress_run %E\" npx cypress run' ..
         ' --config baseUrl="http://localhost:8085"' ..
         ' --spec' ..
         ' cypress/integration/uninitialized.spec.js' ..

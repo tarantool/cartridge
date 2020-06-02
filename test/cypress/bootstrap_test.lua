@@ -8,6 +8,7 @@ local servers = {}
 local tempdir = fio.tempdir()
 
 g.before_all = function()
+    local t1 = require('clock').time()
     local function add_server(i)
         local http_port = 8080 + i
         local advertise_port = 13310 + i
@@ -34,6 +35,8 @@ g.before_all = function()
     for _, server in pairs(servers) do
         server:start()
     end
+    local t2 = require('clock').time()
+    require('log').info('before_each: %s', t2-t1)
 end
 
 g.after_all = function()
@@ -47,7 +50,7 @@ end
 
 function g.test_bootstrap()
     local code = os.execute(
-        "cd webui && npx cypress run --spec" ..
+        "cd webui && time -f \"npx_cypress_run %E\" npx cypress run --spec" ..
         ' cypress/integration/create-replicasets-and-botstrap.spec.js'
     )
     t.assert_equals(code, 0)
