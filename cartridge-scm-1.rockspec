@@ -14,6 +14,7 @@ dependencies = {
     'vshard == 0.1.15-1',
     'membership == 2.2.0-1',
     'frontend-core == 6.5.1-1',
+    'metrics == 0.2.0'
 }
 
 external_dependencies = {
