@@ -44,3 +44,5 @@ RUN pip3 install \
     -r /tmp/test-requirements.txt \
     -r /tmp/doc-requirements.txt
 RUN rm tmp/*-requirements.txt
+
+RUN yum -y install time
