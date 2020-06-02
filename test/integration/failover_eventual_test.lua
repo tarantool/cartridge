@@ -343,6 +343,37 @@ g.test_api_failover = function()
             tarantool_params = tarantool_params,
         }
     )
+
+    local etcd2_params = {
+        prefix = '/',
+        lock_delay = 30,
+        endpoints = {'localhost:2379'},
+        username = 'user',
+        password = 'qwerty',
+    }
+
+    t.assert_equals(_call('failover_set_params', {etcd2_params = etcd2_params}), true)
+    t.assert_equals(
+        _call('failover_get_params'),
+        {
+            mode = 'disabled',
+            state_provider = 'tarantool',
+            tarantool_params = tarantool_params,
+            etcd2_params = etcd2_params,
+        }
+    )
+
+    t.assert_equals(_call('failover_set_params', {state_provider = 'etcd2'}), true)
+    t.assert_equals(
+        _call('failover_get_params'),
+        {
+            mode = 'disabled',
+            state_provider = 'etcd2',
+            tarantool_params = tarantool_params,
+            etcd2_params = etcd2_params,
+        }
+    )
+
 end
 
 g.test_switchover = function()
