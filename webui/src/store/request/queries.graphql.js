@@ -34,6 +34,13 @@ export const getClusterQuery = gql`
         demo_uri
       }
       failover_params {
+        etcd2_params {
+          password
+          lock_delay
+          endpoints
+          username
+          prefix
+        } 
         tarantool_params {
           uri
           password
@@ -423,12 +430,14 @@ export const changeFailoverMutation = gql`
 mutation changeFailover (
   $mode: String!,
   $state_provider: String,
+  $etcd2_params: FailoverStateProviderCfgInputEtcd2,
   $tarantool_params: FailoverStateProviderCfgInputTarantool
 ) {
   cluster {
     failover_params(
       mode: $mode
       state_provider: $state_provider
+      etcd2_params: $etcd2_params
       tarantool_params: $tarantool_params
     ) {
       mode

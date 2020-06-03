@@ -7,21 +7,21 @@ import { changeFailover, setVisibleFailoverModal } from 'src/store/actions/clust
 import {
   Alert,
   Button,
+  DropdownItem,
   FormField,
-  Input,
+  IconChevron,
   InputPassword,
   LabeledInput,
   Modal,
   RadioButton,
-  Text
+  Text,
+  colors,
+  withDropdown
 } from '@tarantool.io/ui-kit';
-import type { FailoverApi } from 'src/generated/graphql-typing.js';
+import { FAILOVER_STATE_PROVIDERS } from 'src/constants';
+import type { FailoverApi, MutationApiclusterFailover_ParamsArgs } from 'src/generated/graphql-typing.js';
 
 const styles = {
-  field: css`
-    margin-left: 16px;
-    margin-right: 16px;
-  `,
   radioFieldItem: css`
     margin-bottom: 8px;
   `,
@@ -46,65 +46,146 @@ const styles = {
   `,
   inputs: css`
     display: flex;
+    flex-wrap: wrap;
+    margin-left: -16px;
+    margin-right: -16px;
   `,
   inputField: css`
-    width: 188px;
+    flex-shrink: 0;
+    width: calc(50% - 36px);
     margin-left: 16px;
     margin-right: 16px;
+    box-sizing: border-box;
+  `,
+  selectBox: css`
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+  `,
+  selectBoxIcon: css`
+    fill: ${colors.intentBase};
+    transform: rotate(180deg);
+  `,
+  textarea: css`
+    width: 100%;
+    height: 120px;
+    border: 1px solid rgb(217, 217, 217);
+    box-sizing: border-box;
+    border-radius: 4px;
+    background-color: rgb(255, 255, 255);
+    padding: 5px 16px;
+    margin-bottom: 4px;
+    font-family: "Open Sans", Arial, sans-serif;
+    font-size: 14px;
+    line-height: 22px;
+    color: rgba(0, 0, 0, 0.65);
+    resize: none;
   `
 }
 
+const TextArea = props => <textarea {...props} />
+
+const DropdownButton = withDropdown(Button);
+
+const SelectBox = ({ values = [], value, onChange, disabled }) => (
+  <DropdownButton
+    label='State provider'
+    className={styles.selectBox}
+    disabled={disabled}
+    iconRight={() => <IconChevron className={styles.selectBoxIcon} />}
+    text={value || values[0] || ''}
+    items={values.map(value => (
+      <DropdownItem onClick={() => onChange(value)}>{value}</DropdownItem>
+    ))}
+  />
+);
+
+
 type FailoverModalProps = FailoverApi & {
   dispatch: (action: FSA) => void,
-  changeFailover: (failover: FailoverApi) => void,
+  changeFailover: (failover: MutationApiclusterFailover_ParamsArgs) => void,
   setVisibleFailoverModal: (visible: boolean) => void,
   error?: string | Error
 }
 
 type FailoverModalState = {
   mode: string,
-  uri: string,
-  password: string
+  state_provider?: string,
+  tarantool_params: {
+    uri: string,
+    password: string
+  },
+  etcd2_params: {
+    lock_delay: ?string,
+    username: ?string,
+    password: ?string,
+    prefix: ?string,
+    endpoints: ?string
+  }
 }
 
 class FailoverModal extends React.Component<FailoverModalProps, FailoverModalState> {
   constructor(props) {
     super(props);
 
-    const { mode, tarantool_params } = props;
+    const { mode, tarantool_params, etcd2_params, state_provider } = props;
 
     this.state = {
       mode,
-      uri: (tarantool_params && tarantool_params.uri) || '',
-      password: (tarantool_params && tarantool_params.password) || ''
+      tarantool_params: {
+        uri: (tarantool_params && tarantool_params.uri) || '',
+        password: (tarantool_params && tarantool_params.password) || ''
+      },
+      state_provider: state_provider || 'tarantool',
+      etcd2_params: {
+        endpoints: (etcd2_params && etcd2_params.endpoints && etcd2_params.endpoints.join('\n')) || '',
+        password: (etcd2_params && etcd2_params.password) || '',
+        lock_delay: ((etcd2_params && etcd2_params.lock_delay) || '').toString(),
+        username: (etcd2_params && etcd2_params.username) || '',
+        prefix: (etcd2_params && etcd2_params.prefix) || ''
+      }
     }
   }
 
   handleModeChange = (mode: string) => this.setState({ mode });
 
-  handleURIChange = (e: InputEvent) => {
-    if (e.target instanceof HTMLInputElement) {
-      this.setState({ uri: e.target.value });
-    }
-  }
+  handleStateProviderChange = (state_provider: string) => this.setState({ state_provider });
 
-  handlePasswordChange = (e: InputEvent) => {
-    if (e.target instanceof HTMLInputElement) {
-      this.setState({ password: e.target.value });
+  handleInputChange = (fieldPath: [string, string]) => ({ target }: InputEvent) => {
+
+    if (target && (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement)) {
+      this.setState(prevState => ({
+        [fieldPath[0]]: {
+          ...prevState[fieldPath[0]],
+          [fieldPath[1]]: target.value
+        }
+      }));
     }
   }
 
   handleSubmit = (e: Event) => {
     e.preventDefault();
 
-    const { mode, uri, password } = this.state;
+    const { mode, etcd2_params, tarantool_params, state_provider } = this.state;
+
+    const etcd2LockDelay = parseFloat(etcd2_params.lock_delay);
 
     this.props.changeFailover({
       mode,
-      tarantool_params: mode === 'stateful'
-        ? { uri, password }
+      tarantool_params: mode === 'stateful' && state_provider === 'tarantool'
+        ? tarantool_params
         : null,
-      state_provider: mode === 'stateful' ? 'tarantool' : null
+      etcd2_params: mode === 'stateful' && state_provider === 'etcd2'
+        ? {
+          prefix: etcd2_params.prefix || null,
+          username: etcd2_params.username || null,
+          password: etcd2_params.password || null,
+          endpoints: etcd2_params.endpoints ? etcd2_params.endpoints.split('\n') : null,
+          lock_delay: isNaN(etcd2LockDelay) ? null : etcd2LockDelay
+        }
+        : null,
+      state_provider: mode === 'stateful' ? state_provider : null
     });
   }
 
@@ -113,8 +194,9 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
 
     const {
       mode,
-      uri,
-      password
+      state_provider,
+      tarantool_params,
+      etcd2_params
     } = this.state;
 
     return (
@@ -139,7 +221,7 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
           </Button>
         ]}
       >
-        <FormField label='Failover mode' className={styles.field} itemClassName={styles.radioFieldItem}>
+        <FormField label='Failover mode' itemClassName={styles.radioFieldItem}>
           <RadioButton
             className={cx(styles.radio, styles.borderedRadio, 'meta-test__disableRadioBtn')}
             checked={mode === 'disabled'}
@@ -181,25 +263,78 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
             </div>
           </RadioButton>
         </FormField>
-        <div className={styles.inputs}>
-          <LabeledInput
-            className={styles.inputField}
-            label='State provider URI'
-            inputClassName='meta-test__stateboardURI'
-            value={uri}
-            disabled={mode !== 'stateful'}
-            onChange={this.handleURIChange}
-          />
-          <LabeledInput
-            className={styles.inputField}
-            label='Password'
-            inputComponent={InputPassword}
-            inputClassName='meta-test__stateboardPassword'
-            value={password}
-            disabled={mode !== 'stateful'}
-            onChange={this.handlePasswordChange}
-          />
-        </div>
+        <LabeledInput
+          label='State provider'
+          inputComponent={SelectBox}
+          values={FAILOVER_STATE_PROVIDERS}
+          value={state_provider}
+          disabled={mode !== 'stateful'}
+          onChange={this.handleStateProviderChange}
+        />
+        {state_provider === 'tarantool' && (
+          <div className={styles.inputs}>
+            <LabeledInput
+              className={styles.inputField}
+              label='State provider URI'
+              inputClassName='meta-test__stateboardURI'
+              value={tarantool_params.uri}
+              disabled={mode !== 'stateful'}
+              onChange={this.handleInputChange(['tarantool_params', 'uri'])}
+            />
+            <LabeledInput
+              className={styles.inputField}
+              label='Password'
+              inputComponent={InputPassword}
+              inputClassName='meta-test__stateboardPassword'
+              value={tarantool_params.password}
+              disabled={mode !== 'stateful'}
+              onChange={this.handleInputChange(['tarantool_params', 'password'])}
+            />
+          </div>
+        )}
+        {state_provider === 'etcd2' && (
+          <>
+            <div className={styles.inputs}>
+              <LabeledInput
+                className={styles.inputField}
+                label='Username'
+                value={etcd2_params.username}
+                disabled={mode !== 'stateful'}
+                onChange={this.handleInputChange(['etcd2_params', 'username'])}
+              />
+              <LabeledInput
+                className={styles.inputField}
+                label='Password'
+                inputComponent={InputPassword}
+                value={etcd2_params.password}
+                disabled={mode !== 'stateful'}
+                onChange={this.handleInputChange(['etcd2_params', 'password'])}
+              />
+              <LabeledInput
+                className={styles.inputField}
+                label='Delay, seconds'
+                value={etcd2_params.lock_delay}
+                disabled={mode !== 'stateful'}
+                onChange={this.handleInputChange(['etcd2_params', 'lock_delay'])}
+              />
+              <LabeledInput
+                className={styles.inputField}
+                label='Prefix'
+                value={etcd2_params.prefix}
+                disabled={mode !== 'stateful'}
+                onChange={this.handleInputChange(['etcd2_params', 'prefix'])}
+              />
+            </div>
+            <LabeledInput
+              label='etcd2 endpoints'
+              inputComponent={TextArea}
+              inputClassName={styles.textarea}
+              value={etcd2_params.endpoints}
+              disabled={mode !== 'stateful'}
+              onChange={this.handleInputChange(['etcd2_params', 'endpoints'])}
+            />
+          </>
+        )}
         {error && (
           <Alert type="error">
             <Text variant="basic">{error}</Text>
