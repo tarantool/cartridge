@@ -22,6 +22,30 @@ local gql_type_tarantool_cfg_input = gql_types.inputObject {
     }
 }
 
+local gql_type_etcd2_cfg = gql_types.object {
+    name = 'FailoverStateProviderCfgEtcd2',
+    description = 'State provider configuration (etcd-v2)',
+    fields = {
+        prefix = gql_types.string.nonNull,
+        lock_delay = gql_types.float.nonNull,
+        endpoints = gql_types.list(gql_types.string.nonNull).nonNull,
+        username = gql_types.string.nonNull,
+        password = gql_types.string.nonNull,
+    }
+}
+
+local gql_type_etcd2_cfg_input = gql_types.inputObject {
+    name = 'FailoverStateProviderCfgInputEtcd2',
+    description = 'State provider configuration (etcd-v2)',
+    fields = {
+        prefix = gql_types.string,
+        lock_delay = gql_types.float,
+        endpoints = gql_types.list(gql_types.string.nonNull),
+        username = gql_types.string,
+        password = gql_types.string,
+    }
+}
+
 local gql_type_userapi = gql_types.object({
     name = 'FailoverAPI',
     description = 'Failover parameters managent',
@@ -33,10 +57,12 @@ local gql_type_userapi = gql_types.object({
         },
         state_provider = {
             kind = gql_types.string,
-            description = 'Type of external storage for the mode' ..
-                ' "stateful". Only "tarantool" is supported now.',
+            description = 'Type of external storage for the stateful' ..
+                ' failover mode. Supported types are "tarantool" and' ..
+                ' "etcd2".',
         },
         tarantool_params = gql_type_tarantool_cfg,
+        etcd2_params = gql_type_etcd2_cfg,
     }
 })
 
@@ -109,6 +135,7 @@ local function init(graphql)
             mode = gql_types.string,
             state_provider = gql_types.string,
             tarantool_params = gql_type_tarantool_cfg_input,
+            etcd2_params = gql_type_etcd2_cfg_input,
         },
         kind = gql_type_userapi.nonNull,
         callback = module_name .. '.set_failover_params',

@@ -26,24 +26,24 @@ local function get_params()
     -- @table FailoverParams
     -- @tfield string mode
     --   Supported modes are "disabled", "eventual" and "stateful"
-    -- @tfield nil|string state_provider
-    --   Supported state providers are "tarantool" and "etcd2"
-    -- @tfield nil|table tarantool_params
+    -- @tfield ?string state_provider
+    --   Supported state providers are "tarantool" and "etcd2".
+    -- @tfield ?table tarantool_params
+    --   (added in v2.0.2-2)
     -- @tfield string tarantool_params.uri
     -- @tfield string tarantool_params.password
-    -- @tfield nil|table etcd2_params
+    -- @tfield ?table etcd2_params
+    --   (added in v2.1.2-26)
     -- @tfield string etcd2_params.prefix
-    --   Prefix is used for etcd v2 requests as follows:
-    --   endpoint/v2/keys/prefix/key
-    -- @tfield number lock_delay
-    --   Determines lock's time-to-live
-    -- @tfield nil|table etcd2_params.endpoints
+    --   Prefix used for etcd keys: `<prefix>/lock` and
+    --   `<prefix>/leaders`
+    -- @tfield ?number lock_delay
+    --   Determines lock's time-to-live (default: 10)
+    -- @tfield ?table etcd2_params.endpoints
     --   URIs that are used to discover and to access etcd cluster instances.
-    --   If nil then the standard ones are used:
-    --   localhost:2379
-    --   localhost:4001
-    -- @tfield nil|string etcd2_params.username
-    -- @tfield nil|string etcd2_params.password
+    --   (default: `{'http://localhost:2379', 'http://localhost:4001'}`)
+    -- @tfield ?string etcd2_params.username (default: "")
+    -- @tfield ?string etcd2_params.password (default: "")
     return topology.get_failover_params(
         confapplier.get_readonly('topology')
     )
@@ -58,6 +58,7 @@ end
 -- @tparam ?string opts.state_provider
 -- @tparam ?table opts.tarantool_params
 -- @tparam ?table opts.etcd2_params
+--   (added in v2.1.2-26)
 -- @treturn[1] boolean `true` if config applied successfully
 -- @treturn[2] nil
 -- @treturn[2] table Error description
