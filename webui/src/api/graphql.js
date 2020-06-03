@@ -44,17 +44,21 @@ export default {
   }
 };
 
-export const isGraphqlErrorResponse
-  = error =>
-    Array.isArray(error.graphQLErrors)
-    && error.graphQLErrors.length > 0
-    && 'message' in error.graphQLErrors[0];
+export const getGraphqlError = error => (
+  Array.isArray(error.graphQLErrors)
+  && error.graphQLErrors.length > 0
+  && error.graphQLErrors[0]
+) || null;
 
-export const getGraphqlErrorMessage
-  = error =>
-    (Array.isArray(error.graphQLErrors)
-    && error.graphQLErrors.length > 0
-    && error.graphQLErrors[0].message) || 'GraphQL error with empty message';
+export const isGraphqlErrorResponse = error => {
+  const gqlError = getGraphqlError(error);
+  return !!(gqlError && 'message' in gqlError);
+}
+
+export const getGraphqlErrorMessage = error => {
+  const gqlError = getGraphqlError(error);
+  return (gqlError && gqlError.message) || 'GraphQL error with empty message';
+}
 
 export const isGraphqlAccessDeniedError
   = error =>
