@@ -12,27 +12,37 @@ import {
   Link,
   colors
 } from '@tarantool.io/ui-kit';
-import usersStore from 'src/store/effector/users';
-import { BUILT_IN_USERS } from 'src/constants';
-
-const {
+import {
   showUserEditModal,
   showUserRemoveModal,
   resetUsersList,
   fetchUsersListFx,
   $usersList
-} = usersStore;
+} from 'src/store/effector/users';
+import { BUILT_IN_USERS } from 'src/constants';
 
 const styles = {
   table: css`
-    tr td:last-child {
-      width: 1%;
-      white-space: nowrap;
+    table-layout: fixed;
+
+    th:last-child {
+      width: 10%;
+    }
+
+    td {
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
   `,
-  username: css`
+  tableLink: css`
     color: ${colors.dark};
     font-weight: 600;
+    text-decoration: none;
+
+    &:hover,
+    &:focus {
+      text-decoration: underline;
+    }
   `
 };
 
@@ -48,7 +58,7 @@ const tableColumns = memoizeWith(
       Cell: ({ cell: { value } }) => (
         <Link
           href='#'
-          className={styles.username}
+          className={styles.tableLink}
           onClick={e => { e.preventDefault(); showUserEditModal(value); }}
         >
           {value}

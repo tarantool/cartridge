@@ -8,9 +8,8 @@ import { UserAddModal } from 'src/components/UserAddModal';
 import { UserEditModal } from 'src/components/UserEditModal';
 import { UserRemoveModal } from 'src/components/UserRemoveModal';
 import AuthToggleButton from 'src/components/AuthToggleButton';
-import usersStore from 'src/store/effector/users';
+import { showUserAddModal } from 'src/store/effector/users';
 
-const { showUserAddModal } = usersStore;
 const { AppTitle } = window.tarantool_enterprise_core.components;
 
 type UsersProps = {
@@ -22,7 +21,6 @@ type UsersProps = {
 };
 
 const Users = ({
-  fetchingUserList,
   implements_add_user,
   implements_list_users,
   implements_edit_user,
@@ -49,7 +47,6 @@ const Users = ({
     <AppTitle title='Users' />
     {implements_list_users && (
       <UsersTable
-        loading={fetchingUserList}
         implements_edit_user={implements_edit_user}
         implements_remove_user={implements_remove_user}
       />

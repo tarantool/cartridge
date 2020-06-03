@@ -110,6 +110,9 @@ const styles = {
   `,
   tags: css`
     margin-top: 8px;
+  `,
+  btnMore: css`
+    width: 24px;
   `
 };
 

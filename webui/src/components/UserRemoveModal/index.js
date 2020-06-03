@@ -2,9 +2,7 @@ import React from 'react';
 import { css } from 'emotion';
 import { useStore } from 'effector-react';
 import { Alert, ConfirmModal, Text } from '@tarantool.io/ui-kit';
-import usersStore from 'src/store/effector/users';
-
-const { $userRemoveModal, hideModal, removeUserFx } = usersStore;
+import { $userRemoveModal, hideModal, removeUserFx } from 'src/store/effector/users';
 
 const styles = {
   error: css`
