@@ -244,26 +244,26 @@ g.test_api_failover = function()
     t.assert_equals(get_failover(), false)
     t.assert_covers(get_failover_params(), {mode = 'disabled'})
     t.assert_equals(_call('admin_get_failover'), false)
-    t.assert_equals(_call('failover_get_params'), {mode = 'disabled'})
+    t.assert_covers(_call('failover_get_params'), {mode = 'disabled'})
 
     -- Set with deprecated GraphQL API
     t.assert_equals(set_failover(true), true)
     t.assert_equals(get_failover(), true)
     t.assert_covers(get_failover_params(), {mode = 'eventual'})
     t.assert_equals(_call('admin_get_failover'), true)
-    t.assert_equals(_call('failover_get_params'), {mode = 'eventual'})
+    t.assert_covers(_call('failover_get_params'), {mode = 'eventual'})
 
     -- Set with deprecated Lua API
     t.assert_equals(_call('admin_disable_failover'), false)
     t.assert_equals(_call('admin_get_failover'), false)
-    t.assert_equals(_call('failover_get_params'), {mode = 'disabled'})
+    t.assert_covers(_call('failover_get_params'), {mode = 'disabled'})
     t.assert_equals(get_failover(), false)
     t.assert_covers(get_failover_params(), {mode = 'disabled'})
 
     -- Set with deprecated Lua API
     t.assert_equals(_call('admin_enable_failover'), true)
     t.assert_equals(_call('admin_get_failover'), true)
-    t.assert_equals(_call('failover_get_params'), {mode = 'eventual'})
+    t.assert_covers(_call('failover_get_params'), {mode = 'eventual'})
     t.assert_equals(get_failover(), true)
     t.assert_covers(get_failover_params(), {mode = 'eventual'})
 
@@ -275,14 +275,14 @@ g.test_api_failover = function()
     t.assert_covers(get_failover_params(), {mode = 'disabled'})
     t.assert_equals(get_failover(), false)
     t.assert_equals(_call('admin_get_failover'), false)
-    t.assert_equals(_call('failover_get_params'), {mode = 'disabled'})
+    t.assert_covers(_call('failover_get_params'), {mode = 'disabled'})
 
     -- Set with new GraphQL API
     t.assert_covers(set_failover_params({mode = 'eventual'}), {mode = 'eventual'})
     t.assert_covers(get_failover_params(), {mode = 'eventual'})
     t.assert_equals(get_failover(), true)
     t.assert_equals(_call('admin_get_failover'), true)
-    t.assert_equals(_call('failover_get_params'), {mode = 'eventual'})
+    t.assert_covers(_call('failover_get_params'), {mode = 'eventual'})
 
     -- Set with new GraphQL API
     t.assert_error_msg_equals(
@@ -323,7 +323,7 @@ g.test_api_failover = function()
             tarantool_params = tarantool_params,
         }
     )
-    t.assert_equals(
+    t.assert_covers(
         _call('failover_get_params'),
         {
             mode = 'stateful',
@@ -334,7 +334,22 @@ g.test_api_failover = function()
     t.assert_equals(_call('admin_get_failover'), true)
 
     -- Set with new Lua API
-    t.assert_equals(_call('failover_set_params', {mode = 'disabled'}), true)
+    t.assert_equals(_call('failover_set_params', {
+        mode = 'disabled',
+        etcd2_params = {},
+    }), true)
+
+    local etcd2_defaults = {
+        prefix = '/',
+        lock_delay = 10,
+        username = '',
+        password = '',
+        endpoints = {
+            'http://127.0.0.1:4001',
+            'http://127.0.0.1:2379',
+        },
+    }
+
     t.assert_equals(
         get_failover_params(),
         {
@@ -343,37 +358,15 @@ g.test_api_failover = function()
             tarantool_params = tarantool_params,
         }
     )
-
-    local etcd2_params = {
-        prefix = '/',
-        lock_delay = 30,
-        endpoints = {'localhost:2379'},
-        username = 'user',
-        password = 'qwerty',
-    }
-
-    t.assert_equals(_call('failover_set_params', {etcd2_params = etcd2_params}), true)
     t.assert_equals(
         _call('failover_get_params'),
         {
             mode = 'disabled',
             state_provider = 'tarantool',
             tarantool_params = tarantool_params,
-            etcd2_params = etcd2_params,
+            etcd2_params = etcd2_defaults,
         }
     )
-
-    t.assert_equals(_call('failover_set_params', {state_provider = 'etcd2'}), true)
-    t.assert_equals(
-        _call('failover_get_params'),
-        {
-            mode = 'disabled',
-            state_provider = 'etcd2',
-            tarantool_params = tarantool_params,
-            etcd2_params = etcd2_params,
-        }
-    )
-
 end
 
 g.test_switchover = function()

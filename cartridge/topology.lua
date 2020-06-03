@@ -29,8 +29,8 @@ vars:new('known_roles', {
         --     password = string,
         -- },
         -- etcd2_params = nil | {
-        --     prefix = string,
-        --     lock_delay = number,
+        --     prefix = nil | string,
+        --     lock_delay = nil | number,
         --     endpoints = nil | {string,...},
         --     username = nil | string,
         --     password = nil | string,
@@ -418,6 +418,7 @@ local function validate_failover_schema(field, topology)
             )
 
             e_config:assert(
+                params.prefix == nil or
                 type(params.prefix) == 'string',
                 '%s.prefix must be a string, got %s',
                 field, type(params.prefix)
@@ -438,6 +439,7 @@ local function validate_failover_schema(field, topology)
             )
 
             e_config:assert(
+                params.lock_delay == nil or
                 type(params.lock_delay) == 'number',
                 '%s.lock_delay must be a number, got %s',
                 field, type(params.lock_delay)
@@ -660,8 +662,9 @@ end
 
 local function get_failover_params(topology_cfg)
     checks('?table')
+    local ret
     if topology_cfg == nil then
-        return {
+        ret = {
             mode = 'disabled',
         }
     elseif topology_cfg.__type == 'ClusterwideConfig' then
@@ -669,39 +672,24 @@ local function get_failover_params(topology_cfg)
             " (table expected, got ClusterwideConfig)"
         error(err, 2)
     elseif topology_cfg.failover == nil then
-        return {
+        ret = {
             mode = 'disabled',
         }
     elseif type(topology_cfg.failover) == 'boolean' then
-        return {
+        ret = {
             mode = topology_cfg.failover and 'eventual' or 'disabled'
         }
     elseif type(topology_cfg.failover) == 'table' then
-        local ret = {
+        ret = {
             mode = topology_cfg.failover.mode,
             state_provider = topology_cfg.failover.state_provider,
             tarantool_params = topology_cfg.failover.tarantool_params,
-            etcd2_params = topology_cfg.failover.etcd2_params,
+            etcd2_params = table.deepcopy(topology_cfg.failover.etcd2_params),
         }
 
-        if ret.mode == nil
-        and type(topology_cfg.failover.enabled) == 'boolean'
-        then
-            -- backward compatibility with 2.0.1-78
-            -- see https://github.com/tarantool/cartridge/pull/617
-            ret.mode = topology_cfg.failover.enabled and 'eventual' or 'disabled'
+        if ret.etcd2_params ~= nil then
+            utils.table_setrw(ret.etcd2_params)
         end
-
-        if ret.mode == 'stateful'
-        and ret.state_provider == nil
-        then
-            -- backward compatibility with 2.0.1-95
-            -- see https://github.com/tarantool/cartridge/pull/651
-            ret.mode = 'disabled'
-            -- because stateful failover itself wasn't implemented yet
-        end
-
-        return ret
     else
         local err = string.format(
             'assertion failed! topology.failover = %s (%s)',
@@ -709,6 +697,55 @@ local function get_failover_params(topology_cfg)
         )
         error(err)
     end
+
+    if ret.mode == nil
+    and type(topology_cfg.failover.enabled) == 'boolean'
+    then
+        -- backward compatibility with 2.0.1-78
+        -- see https://github.com/tarantool/cartridge/pull/617
+        ret.mode = topology_cfg.failover.enabled and 'eventual' or 'disabled'
+    end
+
+    if ret.mode == 'stateful'
+    and ret.state_provider == nil
+    then
+        -- backward compatibility with 2.0.1-95
+        -- see https://github.com/tarantool/cartridge/pull/651
+        ret.mode = 'disabled'
+        -- because stateful failover itself wasn't implemented yet
+    end
+
+    -- Enrich etcd2 params with defaults
+    if ret.etcd2_params == nil then
+        ret.etcd2_params = {}
+    end
+
+    if ret.etcd2_params.prefix == nil then
+        ret.etcd2_params.prefix = '/'
+    end
+
+    if ret.etcd2_params.lock_delay == nil then
+        ret.etcd2_params.lock_delay = 10
+    end
+
+    if ret.etcd2_params.endpoints == nil
+    or next(ret.etcd2_params.endpoints) == nil
+    then
+        ret.etcd2_params.endpoints = {
+            'http://127.0.0.1:4001',
+            'http://127.0.0.1:2379',
+        }
+    end
+
+    if ret.etcd2_params.username == nil then
+        ret.etcd2_params.username = ""
+    end
+
+    if ret.etcd2_params.password == nil then
+        ret.etcd2_params.password = ""
+    end
+
+    return ret
 end
 
 --- Find the server in topology config.

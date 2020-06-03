@@ -210,21 +210,21 @@ failover:
   etcd2_params: false
 ...]])
 
-    check_config('topology_new.failover.etcd2_params.prefix must be a string, got cdata',
+    check_config('topology_new.failover.etcd2_params.prefix must be a string, got boolean',
 [[---
 failover:
   mode: disabled
   etcd2_params:
-    prefix: null
+    prefix: false
 ...]])
 
-    check_config('topology_new.failover.etcd2_params.lock_delay must be a number, got cdata',
+    check_config('topology_new.failover.etcd2_params.lock_delay must be a number, got string',
 [[---
 failover:
   mode: disabled
   etcd2_params:
     prefix: /
-    lock_delay: null
+    lock_delay: X
 ...]])
 
     check_config('topology_new.failover.etcd2_params.username must be a string, got table',
