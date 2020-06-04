@@ -83,6 +83,7 @@ const presetsDropdown = (setValue: (s: string) => void, roles: Role[] = []): Rea
           className={styles.chevron}
         />
       )}
+      popoverClassName='meta-test__Filter__Dropdown'
     >
     Filter
     </DropdownButton>

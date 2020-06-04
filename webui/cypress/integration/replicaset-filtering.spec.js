@@ -5,7 +5,7 @@ const localhost10 = `localhost:13310`;
 describe('Replicaset filtering', () => {
 
   before(function () {
-    cy.visit(Cypress.config('baseUrl') + "/admin/cluster/dashboard");
+    cy.visit(Cypress.config('baseUrl') + '/admin/cluster/dashboard');
   })
 
   it('Stop servers', () => {
@@ -28,7 +28,7 @@ describe('Replicaset filtering', () => {
 
     //Role
     cy.get('button[type="button"]:contains(Filter)').click();
-    cy.get('.ScrollbarsCustom-Content').find('li:contains(vshard-storage)').click();
+    cy.get('.meta-test__Filter__Dropdown').find('li:contains(vshard-storage)').click();
     cy.get('.meta-test__Filter input').should('have.value', 'role:vshard-storage');
     cy.get('.ServerLabelsHighlightingArea').contains(testPort4);
     cy.get('#root').contains('storage1-do-not-use-me');

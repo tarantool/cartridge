@@ -257,10 +257,7 @@ export const filterReplicasetList = (state: State, filterQuery: string): Replica
       if (token.not) {
         return !isInProperty(item[property], token.value);
       }
-      if (token.asSubstring) {
-        return isInProperty(item[property], token.value, true);
-      }
-      return isInProperty(item[property], token.value);
+      return isInProperty(item[property], token.value, token.asSubstring);
     })
   ));
 
