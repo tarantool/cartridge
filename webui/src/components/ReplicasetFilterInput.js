@@ -23,6 +23,10 @@ const styles = {
   chevron: css`
     margin-left: .5em;
     fill: rgba(245, 34, 45, 0.65);
+  `,
+  scrollable: css`
+    height: 250px;
+    width: 12em;
   `
 };
 
@@ -51,33 +55,39 @@ const ReplicasetFilterInput = ({
 );
 
 
-const presetsDropdown = (setValue: (s: string) => void, roles: Role[] = []): React.Node => (
-  <DropdownButton
-    items={(
-      <Scrollbar className={css`height: 250px; width: 12em;`}>
-        {
-          [
-            'Healthy',
-            'Unhealthy'
-          ].map(getDropdownOption('status', setValue))
-        }
-        <DropdownDivider />
-        {
-          roles.map(role => getDropdownOption('role', setValue)(role.name))
-        }
-      </Scrollbar>
-    )}
-    intent='secondary'
-    iconRight={() => (
-      <IconChevron
-        direction='down'
-        className={styles.chevron}
-      />
-    )}
-  >
+const presetsDropdown = (setValue: (s: string) => void, roles: Role[] = []): React.Node => {
+  const WrapComponent = roles.length > 5
+    ? ({ children }) => <Scrollbar className={styles.scrollable}>{children}</Scrollbar>
+    : ({ children }) => <>{children}</>;
+
+  return (
+    <DropdownButton
+      items={(
+        <WrapComponent>
+          {
+            [
+              'Healthy',
+              'Unhealthy'
+            ].map(getDropdownOption('status', setValue))
+          }
+          <DropdownDivider />
+          {
+            roles.map(role => getDropdownOption('role', setValue)(role.name))
+          }
+        </WrapComponent>
+      )}
+      intent='secondary'
+      iconRight={() => (
+        <IconChevron
+          direction='down'
+          className={styles.chevron}
+        />
+      )}
+    >
     Filter
-  </DropdownButton>
-);
+    </DropdownButton>
+  );
+};
 
 const getDropdownOption = (prefix, setValue) => option => (
   <DropdownItem
