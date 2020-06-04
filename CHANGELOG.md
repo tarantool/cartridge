@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- When running under systemd use `<APP_NAME>.<INSTANCE_NAME>` as
+  default syslog identity.
+
 ### Enhanced in WebUI
 
 - Prettier errors displaying.
