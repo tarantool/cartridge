@@ -32,15 +32,7 @@ import ConfigureServerModal from 'src/components/ConfigureServerModal';
 import ClusterButtonsPanel from 'src/components/ClusterButtonsPanel';
 import BootstrapPanel from 'src/components/BootstrapPanel';
 import {
-  IconSearch,
-  Input,
-  PageSection,
-  Dropdown,
-  DropdownItem,
-  DropdownDivider,
-  Scrollbar,
-  Button,
-  IconChevron
+  PageSection
 } from '@tarantool.io/ui-kit';
 import type { AppState } from 'src/store/reducers/ui.reducer';
 import type {
@@ -295,7 +287,7 @@ class Cluster extends React.Component<ClusterProps> {
   getReplicasetsTitleCounters = () => {
     const {
       filter,
-      filteredReplicasetList,
+      filteredReplicasetList
     } = this.props;
     const { configured } = this.props.serverCounts;
     const { total, unhealthy } = this.props.replicasetCounts;
@@ -312,57 +304,6 @@ class Cluster extends React.Component<ClusterProps> {
       <b>{configured}</b>{` server${configured === 1 ? '' : 's'}`}
     </React.Fragment>;
   }
-
-  getDropdownOption = prefix => option => (
-    <DropdownItem
-      onClick={() => this.props.setFilter(
-        `${prefix}:${option.indexOf(' ') !== -1 ? `"${option.toLowerCase()}"` : option.toLowerCase()}`
-      )}
-    >
-      {option}
-    </DropdownItem>
-  );
-
-  replicasetFilterPresetsDropdown = (
-    <Dropdown
-      items={(
-        <Scrollbar className={css`height: 250px; width: 12em;`}>
-          {
-            [
-              'Healthy',
-              'Unhealthy',
-            ].map(this.getDropdownOption('status'))
-          }
-          <DropdownDivider />
-          {
-            this.props.clusterSelf
-            &&
-            this.props.clusterSelf.knownRoles
-            &&
-            this.props.clusterSelf.knownRoles.map(role => this.getDropdownOption('role')(role.name))
-          }
-        </Scrollbar>
-      )}
-    >
-      <Button
-        className={css`
-          border-top-right-radius: 0;
-          border-bottom-right-radius: 0;
-          height: 2.4em;
-          width: 6.5em;
-        `}
-        intent='secondary'
-        iconRight={() => (
-          <IconChevron
-            direction='down'
-            className={css`margin-left: .5em; fill: rgba(245, 34, 45, 0.65);`}
-          />
-        )}
-      >
-        Filter
-      </Button>
-    </Dropdown>
-  )
 }
 
 

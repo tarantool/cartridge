@@ -1,6 +1,5 @@
 // @flow
 import * as React from 'react';
-import { connect } from 'react-redux';
 import { css, cx } from 'react-emotion';
 import {
   IconSearch,
@@ -59,7 +58,7 @@ const presetsDropdown = (setValue: (s: string) => void, roles: Role[] = []): Rea
         {
           [
             'Healthy',
-            'Unhealthy',
+            'Unhealthy'
           ].map(getDropdownOption('status', setValue))
         }
         <DropdownDivider />

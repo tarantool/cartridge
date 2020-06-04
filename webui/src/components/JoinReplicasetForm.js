@@ -7,8 +7,6 @@ import SelectedServersList from 'src/components/SelectedServersList';
 import {
   Button,
   IconInfo,
-  IconSearch,
-  Input,
   LeaderFlagSmall,
   PopupBody,
   PopupFooter,
@@ -26,20 +24,6 @@ import type {
 } from 'src/generated/graphql-typing';
 
 const styles = {
-  input: css`
-    margin-bottom: 4px;
-  `,
-  aliasInput: css`
-    width: 50%;
-  `,
-  weightInput: css`
-    width: 97px;
-  `,
-  errorMessage: css`
-    display: block;
-    height: 20px;
-    color: #F5222D;
-  `,
   filter: css`
     width: 305px;
   `,
@@ -206,7 +190,7 @@ class JoinReplicasetForm extends React.Component<JoinReplicasetFormProps> {
                   topRightControls={[
                     <ReplicasetFilterInput
                       className={cx(styles.filter, 'meta-test__Filter')}
-                      value={filter} 
+                      value={filter}
                       setValue={this.props.setFilter}
                       roles={knownRoles}
                     />
