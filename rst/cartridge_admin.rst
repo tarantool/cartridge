@@ -10,7 +10,8 @@ Cartridge.
 .. NOTE::
 
     For more information on managing Tarantool instances, see the
-    :ref:`Server administration <admin>` section.
+    `server administration section <https://www.tarantool.io/en/doc/latest/book/admin/>`_
+    of the Tarantool manual.
 
 Before deploying the cluster, familiarize yourself with the notion of
 :ref:`cluster roles <cartridge-roles>` and
@@ -56,6 +57,8 @@ In the web interface, do the following:
      .. image:: images/auth_creds-border-5px.png
         :align: left
         :scale: 40%
+
+     |nbsp|
 
    * If disabled (for easier testing), simply proceed to configuring the
      cluster.
@@ -123,6 +126,8 @@ In the web interface, do the following:
       :align: left
       :scale: 40%
 
+   |nbsp|
+
 #. (Optional) If required by topology, populate the second replica set
    with more storage nodes:
 
@@ -138,6 +143,8 @@ In the web interface, do the following:
          :align: left
          :scale: 40%
 
+      |nbsp|
+
 #. Depending on cluster topology:
 
    * add more instances to the first or second replica sets, or
@@ -149,6 +156,8 @@ In the web interface, do the following:
    .. image:: images/final-cluster-border-5px.png
       :align: left
       :scale: 40%
+
+   |nbsp|
 
 #. (Optional) By default, all new ``vshard-storage`` replica sets get a weight
    of ``1`` before the ``vshard`` bootstrap in the next step.
@@ -170,7 +179,7 @@ In the web interface, do the following:
    |nbsp|
 
    For more information on buckets and replica set's weights, see the
-   :ref:`vshard module documentation <vshard>`.
+   `vshard module documentation <https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/>`_.
 
 #. Bootstrap ``vshard`` by clicking the corresponding button, or by saying
    ``cartridge.admin.boostrap_vshard()`` over the administrative console.
@@ -251,10 +260,8 @@ Upon adding a newly deployed instance to a new or existing replica set:
    On this step, the new instance does not have a UUID yet.
 
 #. Once the instance realizes its presence is known to the cluster, it calls
-   the ``box.cfg`` function and starts living its life.
-
-   For more information, see the
-   :ref:`box.cfg submodule reference <box_introspection-box_cfg>`.
+   the `box.cfg <https://www.tarantool.io/en/doc/latest/reference/reference_lua/box_cfg/>`_
+   function and starts living its life.
 
 An optimal strategy for connecting new nodes to the cluster is to deploy a new
 zero-weight replica set instance by instance, and then increase the weight.
@@ -273,6 +280,8 @@ To populate the cluster with more nodes, do the following:
       :align: left
       :scale: 40%
 
+   |nbsp|
+
    If a node is accessible, it will appear in the list.
 
 #. In the Web interface:
@@ -290,6 +299,8 @@ To populate the cluster with more nodes, do the following:
          .. image:: images/zero-border-5px.png
             :align: left
             :scale: 40%
+
+         |nbsp|
 
    * Or add the instances to existing replica sets:
      click **Configure** next to an unconfigured server, click **Join replica set**
@@ -350,7 +361,7 @@ Data rebalancing
 
 Rebalancing (resharding) is initiated periodically and upon adding a new replica
 set with a non-zero weight to the cluster. For more information, see the
-:ref:`rebalancing process section <vshard-rebalancing>`
+`rebalancing process section <https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_admin/#rebalancing-process>`_
 of the ``vshard`` module documentation.
 
 The most convenient way to trace through the process of rebalancing is to monitor
@@ -398,6 +409,8 @@ To deactivate a set, do the following:
       :align: left
       :scale: 40%
 
+   |nbsp|
+
 #. Wait for the rebalancing process to finish migrating all the set's buckets
    away. You can monitor the current bucket number as described in the
    :ref:`data rebalancing section <cartridge-rebalance-data>`.
@@ -420,6 +433,8 @@ To expel an instance, click **...** next to it, then click **Expel server** and
 .. image:: images/expelling-instance-border-5px.png
    :align: left
    :scale: 40%
+
+|nbsp|
 
 .. _cartridge-node-failure:
 
@@ -447,6 +462,8 @@ To set the priority in a replica set:
       :align: left
       :scale: 40%
 
+   |nbsp|
+
 The failover is disabled by default. To enable it:
 
 #. Click **Failover**:
@@ -455,11 +472,15 @@ The failover is disabled by default. To enable it:
       :align: left
       :scale: 40%
 
+   |nbsp|
+
 #. In the **Failover control** box, click **Enable**:
 
    .. image:: images/failover-control-border-5px.png
       :align: left
       :scale: 40%
+
+   |nbsp|
 
 The failover status will change to enabled:
 
@@ -469,7 +490,9 @@ The failover status will change to enabled:
 
 |nbsp|
 
-For more information, see the :ref:`replication section <replication>`.
+For more information, see the
+`replication section <https://www.tarantool.io/en/doc/latest/book/replication/>`_
+of the Tarantool manual.
 
 .. _cartridge-switch-master:
 
@@ -485,12 +508,16 @@ To manually switch the master in a replica set:
       :align: left
       :scale: 40%
 
+   |nbsp|
+
 #. Scroll to the bottom of the **Edit replica set** box to see the list of
    servers. The server on the top is the master.
 
    .. image:: images/switch-master-border-5px.png
       :align: left
       :scale: 40%
+
+   |nbsp|
 
 #. Drag a required server to the top position and click **Save**.
 
@@ -571,7 +598,7 @@ newer tuples. Below is the code in Lua:
 .. _cartridge-monitor-shard:
 
 -------------------------------------------------------------------------------
-Monitoring cluster via CLI
+Monitoring a cluster via CLI
 -------------------------------------------------------------------------------
 
 This section describes parameters you can monitor over the administrative
@@ -731,7 +758,8 @@ Potential issues
   be obsolete compared with the data on the master.
 
   **Solution:** Check the replication status of the replica. Further instructions
-  are given in the :ref:`Tarantool troubleshooting guide <admin-troubleshooting-guide>`.
+  are given in the
+  `Tarantool troubleshooting guide <https://www.tarantool.io/en/doc/latest/book/admin/troubleshoot/>`_.
 
 * ``OUT_OF_SYNC`` — Mal-synchronization occured. The lag exceeds T3 threshold (10 sec.).
 
@@ -741,7 +769,8 @@ Potential issues
   obsolete compared with the data on the master.
 
   **Solution:** Check the replication status of the replica. Further instructions
-  are given in the :ref:`Tarantool troubleshooting guide <admin-troubleshooting-guide>`.
+  are given in the
+  `Tarantool troubleshooting guide <https://www.tarantool.io/en/doc/latest/book/admin/troubleshoot/>`_.
 
 .. _unreachable_replica:
 
@@ -885,7 +914,9 @@ Potential issues
 Troubleshooting
 -------------------------------------------------------------------------------
 
-Please see the :ref:`Troubleshooting guide <admin-troubleshooting-guide>`.
+Please see the
+`troubleshooting guide <https://www.tarantool.io/en/doc/latest/book/admin/troubleshoot/>`_.
+in the Tarantool manual.
 
 .. _cartridge-recovery:
 
@@ -893,7 +924,9 @@ Please see the :ref:`Troubleshooting guide <admin-troubleshooting-guide>`.
 Disaster recovery
 -------------------------------------------------------------------------------
 
-Please see the section :ref:`Disaster recovery <admin-disaster_recovery>`.
+Please see the
+`disaster recovery section <https://www.tarantool.io/en/doc/latest/book/admin/disaster_recovery/>`_
+in the Tarantool manual.
 
 .. _cartridge-backups:
 
@@ -901,4 +934,9 @@ Please see the section :ref:`Disaster recovery <admin-disaster_recovery>`.
 Backups
 -------------------------------------------------------------------------------
 
-Please see the section :ref:`Backups <admin-backups>`.
+Please see the
+`backups section <https://www.tarantool.io/en/doc/latest/book/admin/backups/>`_
+in the Tarantool manual.
+
+.. |nbsp| unicode:: 0xA0
+   :trim:

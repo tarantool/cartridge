@@ -4,19 +4,24 @@
 Tarantool Cartridge developer's guide
 ================================================================================
 
-For a quick start, skip the details below and jump right away to this detailed
-`guide <https://github.com/tarantool/cartridge-cli/blob/master/examples/getting-started-app/README.md>`_
-to creating a cluster-aware Tarantool application.
+For a quick start, skip the details below and jump right away to the
+`Cartridge getting started guide <https://www.tarantool.io/en/doc/latest/getting_started/getting_started_cartridge/>`_.
 
-For a deep dive into what you can do with Tarantool Cartridge, go on with this section.
+For a deep dive into what you can develop with Tarantool Cartridge,
+go on with the Cartridge developer's guide.
+
+.. _cartridge-intro-dev:
+
+--------------------------------------------------------------------------------
+Introduction
+--------------------------------------------------------------------------------
 
 To develop and start an application, in short, you need to go through the
 following steps:
 
-#. :ref:`Install <cartridge-install>` Tarantool Cartridge and other
+#. :ref:`Install <cartridge-install-dev>` Tarantool Cartridge and other
    components of the development environment.
-#. Choose a :ref:`template <cartridge-templates>` for the application and
-   create a project.
+#. :ref:`Create a project <cartridge-project>`.
 #. Develop the application.
    In case it is a cluster-aware application, implement its logic in
    a custom (user-defined) :ref:`cluster role <cartridge-roles>`
@@ -29,79 +34,48 @@ following steps:
 
 The following sections provide details for each of these steps.
 
-.. _cartridge-install:
+.. _cartridge-install-dev:
 
 --------------------------------------------------------------------------------
 Installing Tarantool Cartridge
 --------------------------------------------------------------------------------
 
-#. Install ``catridge-cli``, a command-line tool for developing, deploying, and
-   managing Tarantool applications:
+#. `Install <https://github.com/tarantool/cartridge-cli#installation>`_
+   ``cartridge-cli``, a command-line tool for developing, deploying, and
+   managing Tarantool applications.
 
-   .. code-block:: console
+#. `Install <https://git-scm.com/book/en/v2/Getting-Started-Installing-Git>`_
+   ``git``, a version control system.
 
-       $ tarantoolctl rocks install cartridge-cli
+#. `Install <https://www.npmjs.com/get-npm>`_
+   ``npm``, a package manager for ``node.js``.
 
-   The Cartridge framework will come as a dependency when you create your project.
-
-   Everything will be installed to ``.rocks/bin``, so for convenient usage
-   add ``.rocks/bin`` to the executable path:
-
-   .. code-block:: console
-
-       $ export PATH=$PWD/.rocks/bin/:$PATH
-
-#. Install ``git``, a version control system.
-
-#. Install ``npm``, a package manager for ``node.js``.
-
-#. Install the ``unzip`` utility.
+#. `Install <https://linuxize.com/post/how-to-unzip-files-in-linux/>`_
+   the ``unzip`` utility.
 
 .. _cartridge-templates:
+.. _cartridge-project:
 
 --------------------------------------------------------------------------------
-Application templates
+Creating a project
 --------------------------------------------------------------------------------
 
-Tarantool Cartridge provides you with two templates that help
-instantly set up the application development environment:
-
-* ``plain``, for developing an application that runs on a single or multiple
-  independent Tarantool instances (e.g. acting as a proxy to
-  third-party databases) -- that's what you could do before,
-  :ref:`without Tarantool Cartridge <app_server-creating_app>`,
-  but now it's more convenient.
-* ``cartridge``, for developing a cluster-aware application -- this is an
-  exclusive feature of Tarantool Cartridge.
-
-To create a project based on either template, in any directory say:
+To set up your development environment, create a project using the
+Tarantool Cartridge project template. In any directory, say:
 
 .. code-block:: console
 
-    # plain application
-    $ plain create --name <app_name> /path/to/
-
-    # - OR -
-
-    # cluster application
-    $ cartridge create --name <app_name> /path/to/
+   $ cartridge create --name <app_name> /path/to/
 
 This will automatically set up a Git repository in a new ``/path/to/<app_name>/``
 directory, tag it with :ref:`version <cartridge-versioning>` ``0.1.0``,
-and put the necessary files into it (read about default files for each template
-below).
+and put the necessary files into it.
 
 In this Git repository, you can develop the application (by simply editing
 the default files provided by the template), plug the necessary
 modules, and then easily pack everything to deploy on your server(s).
 
-.. _cartridge-template-plain:
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Plain template
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The plain template creates the ``<app_name>/`` directory with the following
+The project template creates the ``<app_name>/`` directory with the following
 contents:
 
 * ``<app_name>-scm-1.rockspec`` file where you can specify the application
@@ -110,24 +84,13 @@ contents:
 * ``init.lua`` file which is the entry point for your application.
 * ``.git`` file necessary for a Git repository.
 * ``.gitignore`` file to ignore the unnecessary files.
-
-.. _cartridge-template-cluster:
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Cluster template
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-In addition to the files listed in the plain template section, the cluster
-template contains the following:
-
 * ``env.lua`` file that sets common rock paths so that the application can be
   started from any directory.
 * ``custom-role.lua`` file that is a placeholder for a custom (user-defined)
   :ref:`cluster role <cartridge-roles>`.
 
-The entry point file (``init.lua``) of the cluster template differs from the
-plain one. Among other things, it loads the ``cartridge`` module and calls its
-initialization function:
+The entry point file (``init.lua``), among other things, loads the ``cartridge``
+module and calls its initialization function:
 
 .. code-block:: lua
 
@@ -170,10 +133,12 @@ Notice that you can specify a cookie for the cluster (``cluster_cookie`` paramet
 if you need to run several clusters in the same network. The cookie can be any
 string value.
 
-Before developing a cluster-aware application, familiarize yourself with
-the notion of :ref:`cluster roles <cartridge-roles>`
-and make sure to define a custom role to initialize the database for the cluster
-application.
+Now you can develop an application that will run on a single or multiple
+independent Tarantool instances (e.g. acting as a proxy to third-party databases)
+-- or will run in a cluster.
+
+If you plan to develop a cluster-aware application, first familiarize yourself
+with the notion of :ref:`cluster roles <cartridge-roles>`.
 
 .. _cartridge-roles:
 
@@ -181,14 +146,18 @@ application.
 Cluster roles
 --------------------------------------------------------------------------------
 
-A Tarantool Cartridge cluster segregates instance functionality in a role-based
-way. **Cluster roles** are Lua modules that implement some instance-specific
-functions and/or logic.
+**Cluster roles** are Lua modules that implement some specific
+functions and/or logic. In other words, a Tarantool Cartridge cluster
+segregates instance functionality in a role-based way.
 
-Since all instances running cluster applications use the same source code and
-are aware of all the defined roles (and plugged modules), multiple different
-roles can be dynamically enabled and disabled on any number of instances
-without restarts even during cluster operation.
+Since all instances running cluster applications use the same source code and are
+aware of all the defined roles (and plugged modules), you can dynamically enable
+and disable multiple different roles without restarts, even during cluster operation.
+
+Note that every instance in a replica set performs the same roles and you cannot
+enable/disable roles individually on some instances. In other words, configuration
+of enabled roles is set up *per replica set*. See a step-by-step configuration example
+in :ref:`this guide <cartridge-deployment>`.
 
 .. _cartridge-built-in-roles:
 
@@ -207,25 +176,12 @@ automatic sharding:
   .. NOTE::
 
      For more information on sharding, see the
-     :ref:`vshard module documentation <vshard>`.
+     `vshard module documentation <https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/>`_.
 
-With the built-in and custom roles, Tarantool Cartridge allows you to develop
-applications with separated compute and transaction handling. Later, the
-relevant workload-specific roles can be enabled on different instances running
+With the built-in and :ref:`custom roles <cartridge-custom-roles>`, you can
+develop applications with separated compute and transaction handling -- and
+enable relevant workload-specific roles on different instances running
 on physical servers with workload-dedicated hardware.
-
-Neither ``vshard-router`` nor ``vshard-storage`` manage spaces, indexes, or
-formats. To start developing an application, edit the ``custom-role.lua``
-placeholder file: add a ``box.schema.space.create()`` call to your first
-cluster role.
-
-Additionally, you can implement several such roles to:
-
-* define stored procedures;
-* implement functionality on top of ``vshard``;
-* go without ``vshard`` at all;
-* implement one or multiple supplementary services such as
-  e-mail notifier, replicator, etc.
 
 .. _cartridge-custom-roles:
 
@@ -233,33 +189,24 @@ Additionally, you can implement several such roles to:
 Custom roles
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To implement a *custom* cluster role, do the following:
+You can implement custom roles for any purposes, for example:
 
-#. Register the new role in the cluster by modifying the ``cartridge.cfg()``
-   call in the ``init.lua`` entry point file:
+* define stored procedures;
+* implement extra features on top of ``vshard``;
+* go without ``vshard`` at all;
+* implement one or multiple supplementary services such as
+  e-mail notifier, replicator, etc.
 
-   .. code-block:: lua
-      :emphasize-lines: 7
+To implement a custom cluster role, do the following:
 
-      ...
-      local cartridge = require('cartridge')
-      ...
-      cartridge.cfg({
-        workdir = ...,
-        advertise_uri = ...,
-        roles = {'custom-role'},
-      })
-      ...
-
-   where ``custom-role`` is the name of the Lua module to be loaded.
-
-#. Implement the role in a file with the appropriate name (``custom-role.lua``).
-   For example:
+#. Take the ``app/roles/custom.lua`` file in your project as a sample.
+   Rename this file as you wish, e.g. ``app/roles/custom-role.lua``,
+   and implement the role's logic. For example:
 
    .. code-block:: lua
 
+      -- Implement a custom role in app/roles/custom-role.lua
       #!/usr/bin/env tarantool
-      -- Custom role implementation
       local role_name = 'custom-role'
 
       local function init()
@@ -276,23 +223,43 @@ To implement a *custom* cluster role, do the following:
           stop = stop,
       }
 
-   Where the ``role_name`` may differ from the module name passed to the
+   Here the ``role_name`` value may differ from the module name passed to the
    ``cartridge.cfg()`` function. If the ``role_name`` variable is not specified,
-   the module name is the default value.
+   the module (= LUA FILE NAME???) name is the default value.
 
    .. NOTE::
 
       Role names must be unique as it is impossible to register multiple
       roles with the same name.
 
-The role module does not have required functions but the cluster may execute the
-following ones during the role's life cycle:
+#. Register the new role in the cluster by modifying the ``cartridge.cfg()``
+   call in the ``init.lua`` entry point file:
+
+   .. code-block:: lua
+      :emphasize-lines: 8
+
+      -- Register a custom role in init.lua
+      ...
+      local cartridge = require('cartridge')
+      ...
+      cartridge.cfg({
+        workdir = ...,
+        advertise_uri = ...,
+        roles = {'custom-role'},
+      })
+      ...
+
+   where ``custom-role`` is the name of the Lua module to be loaded.
+
+The role module does not have required functions, but the cluster may execute the
+following ones during the :ref:`role's life cycle <cartridge-role-lifecycle>`:
 
 * ``init()`` is the role's *initialization* function.
 
-  Inside the function's body you can call any ``box`` functions:
-  create spaces, indexes, grant permissions, etc. Here is what the
-  initialization function may look like:
+  Inside the function's body you can call any
+  `box <https://www.tarantool.io/en/doc/latest/reference/reference_lua/box/>`_
+  functions: create spaces, indexes, grant permissions, etc.
+  Here is what the initialization function may look like:
 
   .. code-block:: lua
      :emphasize-lines: 3
@@ -317,21 +284,26 @@ following ones during the role's life cycle:
 
   .. NOTE::
 
-     The function's body is wrapped in a conditional statement that
-     lets you call ``box`` functions on masters only. This protects
-     against replication collisions as data propagates to replicas
-     automatically.
+     * Neither ``vshard-router`` nor ``vshard-storage`` manage spaces, indexes,
+       or formats. You should do it within a *custom* role: add
+       a ``box.schema.space.create()`` call to your first cluster role, as shown
+       in the example above.
+
+     * The function's body is wrapped in a conditional statement that
+       lets you call ``box`` functions on masters only. This protects
+       against replication collisions as data propagates to replicas
+       automatically.
 
 * ``stop()`` is the role's *termination* function. Implement it if
   initialization starts a fiber that has to be stopped or does any job that
-  has to be undone on termination.
+  needs to be undone on termination.
 
-* ``validate_config()`` and ``apply_config()`` are *validation* and
-  *application* functions that make custom roles configurable. Implement
-  them if some configuration data has to be stored cluster-wide.
+* ``validate_config()`` and ``apply_config()`` are functions that *validate* and
+  *apply* the role's configuration.
+  Implement them if some configuration data needs to be stored cluster-wide.
 
 Next, get a grip on the :ref:`role's life cycle <cartridge-role-lifecycle>` to
-implement the necessary functions.
+implement the functions you need.
 
 .. _cartridge-role-dependencies:
 
@@ -346,7 +318,7 @@ For example:
 
    .. code-block:: lua
 
-      -- Role dependencies defined in custom-role.lua
+      -- Role dependencies defined in app/roles/custom-role.lua
       local role_name = 'custom-role'
       ...
       return {
@@ -372,6 +344,7 @@ Groups are specified in the cluster's configuration:
 
 .. code-block:: lua
 
+    -- Specify groups in init.lua
     cartridge.cfg({
         vshard_groups = {'hot', 'cold'},
         ...
@@ -387,7 +360,7 @@ The assignment can never be changed.
 Another limitation is that you cannot add groups dynamically
 (this will become available in future).
 
-Finally, mind the new syntax for router access.
+Finally, mind the syntax for router access.
 Every instance with a ``vshard-router`` role enabled initializes multiple
 routers. All of them are accessible through the role:
 
@@ -396,14 +369,16 @@ routers. All of them are accessible through the role:
     local router_role = cartridge.service_get('vshard-router')
     router_role.get('hot'):call(...)
 
-If you have no roles specified, you can access a static router as before:
+If you have no roles specified, you can access a static router as before
+(when Tarantool Cartridge was unaware of groups):
 
 .. code-block:: lua
 
     local vhsard = require('vshard')
     vshard.router.call(...)
 
-However, when using the new API, you must call a static router with a colon:
+However, when using the current group-aware API, you must call a static router
+with a colon:
 
 .. code-block:: lua
 
@@ -414,24 +389,26 @@ However, when using the new API, you must call a static router with a colon:
 .. _cartridge-role-lifecycle:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Role's life cycle and the order of function execution
+Role's life cycle (and the order of function execution)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The cluster displays all custom role names along with the built-in ``vshard``
-ones in the web interface. Cluster administrators can enable and disable
-them for particular instances either via the web interface or cluster public
-API. For example:
+The cluster displays the names of all custom roles along with the built-in ``vshard-*``
+roles in the :ref:`web interface <cartridge-deployment>`.
+Cluster administrators can enable and disable them for particular instances --
+either via the web interface or via the cluster
+`public API <https://www.tarantool.io/en/rocks/cartridge/1.0/modules/cartridge.admin/#edit-topology-args>`_.
+For example:
 
 .. code-block:: kconfig
 
     cartridge.admin.edit_replicaset('replicaset-uuid', {roles = {'vshard-router', 'custom-role'}})
 
-If multiple roles are enabled on an instance at the same time, the cluster first
+If you enable multiple roles on an instance at the same time, the cluster first
 initializes the built-in roles (if any) and then the custom ones (if any) in the
 order the latter were listed in ``cartridge.cfg()``.
 
 If a custom role has dependent roles, the dependencies are registered and
-validated first, prior to the role itself.
+validated first, *prior* to the role itself.
 
 The cluster calls the role's functions in the following circumstances:
 
@@ -447,8 +424,8 @@ The cluster calls the role's functions in the following circumstances:
 
 * The ``apply_config()`` function upon every configuration update.
 
-Hence, if the cluster is tasked with performing the following actions, it
-will execute the functions listed in the following order:
+As a tryout, let's task the cluster with some actions and see the order of
+executing the role's functions:
 
 * Join an instance or create a replica set, both with an enabled role:
 
@@ -484,7 +461,7 @@ Considering the described behavior:
   * Configure the built-in :ref:`HTTP server <cartridge-httpd-instance>`.
   * Execute any code related to the role's initialization.
 
-* The ``stop()`` functions must undo any job that has to be undone on role's
+* The ``stop()`` functions must undo any job that needs to be undone on role's
   termination.
 
 * The ``validate_config()`` function must validate any configuration change.
@@ -492,7 +469,7 @@ Considering the described behavior:
 * The ``apply_config()`` function may execute any code related to a configuration
   change, e.g., take care of an ``expirationd`` fiber.
 
-The validation and application functions together allow you to customize the
+The validation and application functions together allow you to change the
 cluster-wide configuration as described in the
 :ref:`next section <cartridge-role-config>`.
 
@@ -509,26 +486,26 @@ You can:
 
   .. code-block:: yaml
 
-      # YAML configuration file
+      # in YAML configuration file
       my_role:
         notify_url: "https://localhost:8080"
 
   .. code-block:: lua
 
-      -- init.lua file
+      -- in init.lua file
       local notify_url = 'http://localhost'
       function my_role.apply_config(conf, opts)
         local conf = conf['my_role'] or {}
         notify_url = conf.notify_url or 'default'
       end
 
-* Download and upload cluster-wide configuration using
-  :ref:`cluster UI <cartridge-ui-configuration>` or
+* Download and upload cluster-wide configuration using the
+  :ref:`web interface <cartridge-ui-configuration>` or
   API (via GET/PUT queries to ``admin/config`` endpoint like
   ``curl localhost:8081/admin/config`` and
   ``curl -X PUT -d "{'my_parameter': 'value'}" localhost:8081/admin/config``).
 
-* Utilize it in your role ``apply_config()`` function.
+* Utilize it in your role's ``apply_config()`` function.
 
 Every instance in the cluster stores a copy of the configuration file in its
 working directory (configured by ``cartridge.cfg({workdir = ...})``):
@@ -536,16 +513,16 @@ working directory (configured by ``cartridge.cfg({workdir = ...})``):
 * ``/var/lib/tarantool/<instance_name>/config.yml`` for instances deployed from
   RPM packages and managed by ``systemd``.
 * ``/home/<username>/tarantool_state/var/lib/tarantool/config.yml`` for
-  instances deployed from archives.
+  instances deployed from tar+gz archives.
 
 The cluster's configuration is a Lua table, downloaded and uploaded as YAML.
-If some application-specific configuration data, e.g., a database schema as
-defined by DDL (data definition language), has to be stored on every instance
+If some application-specific configuration data, e.g. a database schema as
+defined by DDL (data definition language), needs to be stored on every instance
 in the cluster, you can implement your own API by adding a custom section to
 the table. The cluster will help you spread it safely across all instances.
 
-Such section goes in parallel (in the same file) with the topology-specific
-and ``vshard``-specific ones the cluster automatically generates.
+Such section goes in the same file with topology-specific
+and ``vshard``-specific sections that the cluster generates automatically.
 Unlike the generated, the custom section's modification, validation, and
 application logic has to be defined.
 
@@ -566,20 +543,20 @@ The common way is to define two functions:
     see the :ref:`next section <cartridge-role-config-apply>`.
 
 When implementing validation and application functions that call ``box``
-ones for some reason, the following precautions apply:
+ones for some reason, mind the following precautions:
 
 * Due to the :ref:`role's life cycle <cartridge-role-lifecycle>`, the cluster
   does not guarantee an automatic ``box.cfg()`` call prior to calling
   ``validate_config()``.
 
-  If the validation function is to call any ``box`` functions (e.g., to check
+  If the validation function calls any ``box`` functions (e.g., to check
   a format), make sure the calls are wrapped in a protective conditional
   statement that checks if ``box.cfg()`` has already happened:
 
   .. code-block:: Lua
      :emphasize-lines: 3
 
-     -- Inside the validation function:
+     -- Inside the validate_config() function:
 
      if type(box.cfg) == 'table' then
 
@@ -587,13 +564,13 @@ ones for some reason, the following precautions apply:
 
      end
 
-* Unlike the validation and similar to initialization function,
+* Unlike the validation function,
   ``apply_config()`` can call ``box`` functions freely as the cluster applies
   custom configuration after the automatic ``box.cfg()`` call.
 
   However, creating spaces, users, etc., can cause replication collisions when
   performed on both master and replica instances simultaneously. The appropriate
-  way is to call such ``box`` functions on masters only and let the changes
+  way is to call such ``box`` functions *on masters only* and let the changes
   propagate to replicas automatically.
 
   Upon the ``apply_config(conf, opts)`` execution, the cluster passes an
@@ -603,7 +580,7 @@ ones for some reason, the following precautions apply:
   .. code-block:: Lua
      :emphasize-lines: 3
 
-     -- Inside the configuration application function:
+     -- Inside the apply_config() function:
 
      if opts.is_master then
 
@@ -675,7 +652,7 @@ Applying custom role's configuration
 
 With the implementation showed by the :ref:`example <cartridge-role-config-example>`,
 you can call the ``set_secret()`` function to apply the new configuration via
-the administrative console or an HTTP endpoint if the role exports one.
+the administrative console -- or an HTTP endpoint if the role exports one.
 
 The ``set_secret()`` function calls ``cartridge.confapplier.patch_clusterwide()``
 which performs a two-phase commit:
@@ -696,7 +673,7 @@ which performs a two-phase commit:
    * If successful (i.e., returns ``true``), the instance saves the new
      configuration to a temporary file named ``config.prepare.yml`` within the
      working directory.
-   * (**Abort phase**) Otherwise, the instance reports an error and all other
+   * (**Abort phase**) Otherwise, the instance reports an error and all the other
      instances roll back the update: remove the file they may have already
      prepared.
 
@@ -704,9 +681,9 @@ which performs a two-phase commit:
    commits the changes. Every instance:
 
    #. Creates the active configuration's hard-link.
-   #. Atomically replaces the active one with the prepared. The atomic
-      replacement is indivisible -- it can either succeed or fail entirely,
-      never partially.
+   #. Atomically replaces the active configuration file with the prepared one.
+      The atomic replacement is indivisible -- it can either succeed or fail
+      entirely, never partially.
    #. Calls the ``apply_config()`` function of every registered role.
 
 If any of these steps fail, an error pops up in the web interface next to the
@@ -763,7 +740,7 @@ the ``init()`` function of some role, e.g. a role that exposes API over HTTP:
       end
    end
 
-For more information on the usage of Tarantool's HTTP server, see
+For more information on using Tarantool's HTTP server, see
 `its documentation <https://github.com/tarantool/http>`_.
 
 .. _cartridge-auth-enable:
@@ -772,7 +749,7 @@ For more information on the usage of Tarantool's HTTP server, see
 Implementing authorization in the web interface
 -------------------------------------------------------------------------------
 
-To implement authorization in the web interface of every instance in Tarantool
+To implement authorization in the web interface of every instance in a Tarantool
 cluster:
 
 #. Implement a new, say, ``auth`` module with a ``check_password`` function. It
@@ -949,6 +926,10 @@ exceptions relative to the rest of the templates does not matter, while in
     |                                 | if it matches other patterns                    |
     +---------------------------------+-------------------------------------------------+
 
+.. include:: topics/failover.rst
+
+.. include:: topics/clusterwide-config.rst
+
 .. _cartridge-deploy:
 
 --------------------------------------------------------------------------------
@@ -1024,7 +1005,7 @@ Deploying as a tar+gz archive
    This will create a tar+gz archive (e.g. ``./my_app-0.1.0-1.tgz``).
 
 #. Upload the archive to target servers, with ``tarantool`` and (optionally)
-   :ref:`cartridge-cli <cartridge-install>` installed.
+   :ref:`cartridge-cli <cartridge-install-dev>` installed.
 
 #. Extract the archive:
 
@@ -1093,77 +1074,6 @@ This deployment method is intended for local testing only.
 
 #. In case it is a cluster-aware application, proceed to
    :ref:`deploying the cluster <cartridge-deployment>`.
-
-.. _cartridge-config:
-
---------------------------------------------------------------------------------
-Configuring instances
---------------------------------------------------------------------------------
-
-Instance configuration includes two sets of parameters:
-
-* `cartridge.cfg() parameters <https://www.tarantool.io/en/rocks/cartridge/1.0/modules/cartridge.argparse/#cluster-opts>`_;
-* `box.cfg() parameters <https://www.tarantool.io/en/rocks/cartridge/1.0/modules/cartridge.argparse/#box-opts>`_.
-
-You can set any of these parameters in:
-
-#. Command line arguments.
-#. Environment variables.
-#. YAML configuration file.
-#. ``init.lua`` file.
-
-The order here indicates the priority: command-line arguments override
-environment variables, and so forth.
-
-No matter how you :ref:`start the instances <cartridge-run>`, you need to set
-the following ``cartridge.cfg()`` parameters for each instance:
-
-* ``advertise_uri`` -- either ``<HOST>:<PORT>``, or ``<HOST>:``, or ``<PORT>``.
-  Used by other instances to connect to the current one.
-  **DO NOT** specify ``0.0.0.0`` -- this must be
-  an external IP address, not a socket bind.
-* ``http_port`` -- port to open administrative web interface and API on.
-  Defaults to ``8081``.
-  To disable it, specify ``"http_enabled": False``.
-* ``workdir`` -- a directory where all data will be stored:
-  snapshots, wal logs, and ``cartridge`` configuration file.
-  Defaults to ``.``.
-
-.. _cartridge-config-cartridge-cli:
-.. _cartridge-config-systemctl:
-
-If you start instances using ``cartridge`` CLI or ``systemctl``,
-save the configuration as a YAML file, for example:
-
-.. code-block:: kconfig
-
-    my_app.router: {"advertise_uri": "localhost:3301", "http_port": 8080}
-    my_app.storage_A: {"advertise_uri": "localhost:3302", "http_enabled": False}
-    my_app.storage_B: {"advertise_uri": "localhost:3303", "http_enabled": False}
-
-With ``cartridge`` CLI, you can pass the path to this file as the ``--cfg``
-command-line argument to the ``cartridge start`` command -- or specify the path
-in ``cartridge`` CLI configuration (in ``./.cartridge.yml`` or ``~/.cartridge.yml``):
-
-.. code-block:: kconfig
-
-    cfg: cartridge.yml
-    run_dir: tmp/run
-    apps_path: /usr/local/share/tarantool
-
-With ``systemctl``, save the YAML file to ``/etc/tarantool/conf.d/``
-(the default ``systemd`` path) or to a location set in the ``TARANTOOL_CFG``
-environment variable.
-
-.. _cartridge-config-tarantool:
-
-If you start instances with ``tarantool init.lua``,
-you need to pass other configuration options as command-line parameters and
-environment variables, for example:
-
-.. code-block:: console
-
-    $ tarantool init.lua --alias router --memtx-memory 100 --workdir "~/db/3301" --advertise_uri "localhost:3301" --http_port "8080"
 
 .. _cartridge-run:
 
@@ -1302,3 +1212,5 @@ Start/stop using ``systemctl``
   .. code-block:: console
 
       $ systemctl stop APP_NAME@INSTANCE_1 APP_NAME@INSTANCE_2 ... APP_NAME@INSTANCE_<N>
+
+.. include:: topics/error-handling.rst

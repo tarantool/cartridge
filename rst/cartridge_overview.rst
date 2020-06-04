@@ -5,13 +5,13 @@ About Tarantool Cartridge
 ================================================================================
 
 Tarantool Cartridge is the recommended alternative to the
-:ref:`old-school practices <app_server-creating_app>` of application development
-for Tarantool.
+`old-school practices <https://www.tarantool.io/en/doc/latest/book/app_server/>`_
+of application development for Tarantool.
 
 .. _cluster-app:
 
 As a software development kit (SDK), Tarantool Cartridge provides you with
-utilities and :ref:`templates <cartridge-templates>` to help:
+utilities and an :ref:`application template <cartridge-templates>` to help:
 
 * easily set up a development environment for your applications;
 * plug the necessary Lua modules.

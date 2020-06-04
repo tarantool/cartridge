@@ -1,9 +1,7 @@
 import sys
 import os
 
-
 sys.path.insert(0, os.path.abspath('..'))
-
 
 master_doc = 'index'
 
@@ -20,7 +18,8 @@ exclude_patterns = [
     'conf.py',
     'images',
     'requirements.txt',
-    'locale'
+    'locale',
+    'topics/*'
 ]
 
 language = 'en'
