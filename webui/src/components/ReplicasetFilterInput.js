@@ -5,7 +5,7 @@ import { css, cx } from 'react-emotion';
 import {
   IconSearch,
   Input,
-  Dropdown,
+  withDropdown,
   DropdownItem,
   DropdownDivider,
   Scrollbar,
@@ -13,6 +13,8 @@ import {
   IconChevron
 } from '@tarantool.io/ui-kit';
 import type { Role } from 'src/generated/graphql-typing';
+
+const DropdownButton = withDropdown(Button);
 
 const styles = {
   clusterFilter: css`
@@ -51,7 +53,7 @@ const ReplicasetFilterInput = ({
 
 
 const presetsDropdown = (setValue: (s: string) => void, roles: Role[] = []): React.Node => (
-  <Dropdown
+  <DropdownButton
     items={(
       <Scrollbar className={css`height: 250px; width: 12em;`}>
         {
@@ -66,25 +68,16 @@ const presetsDropdown = (setValue: (s: string) => void, roles: Role[] = []): Rea
         }
       </Scrollbar>
     )}
+    intent='secondary'
+    iconRight={() => (
+      <IconChevron
+        direction='down'
+        className={styles.chevron}
+      />
+    )}
   >
-    <Button
-      className={css`
-        border-top-right-radius: 0;
-        border-bottom-right-radius: 0;
-        height: 2.4em;
-        width: 6.5em;
-      `}
-      intent='secondary'
-      iconRight={() => (
-        <IconChevron
-          direction='down'
-          className={styles.chevron}
-        />
-      )}
-    >
-      Filter
-    </Button>
-  </Dropdown>
+    Filter
+  </DropdownButton>
 );
 
 const getDropdownOption = (prefix, setValue) => option => (
