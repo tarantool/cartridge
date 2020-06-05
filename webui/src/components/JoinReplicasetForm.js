@@ -1,14 +1,12 @@
 // @flow
 import React from 'react';
-import { css } from 'react-emotion';
+import { css, cx } from 'react-emotion';
 import { Formik } from 'formik';
 
 import SelectedServersList from 'src/components/SelectedServersList';
 import {
   Button,
   IconInfo,
-  IconSearch,
-  Input,
   LeaderFlagSmall,
   PopupBody,
   PopupFooter,
@@ -17,27 +15,15 @@ import {
   Tooltip
 } from '@tarantool.io/ui-kit';
 import ReplicasetRoles from 'src/components/ReplicasetRoles';
+import ReplicasetFilterInput from 'src/components/ReplicasetFilterInput';
 import FormField from 'src/components/FormField';
 import type {
   Server,
-  Replicaset
+  Replicaset,
+  Role
 } from 'src/generated/graphql-typing';
 
 const styles = {
-  input: css`
-    margin-bottom: 4px;
-  `,
-  aliasInput: css`
-    width: 50%;
-  `,
-  weightInput: css`
-    width: 97px;
-  `,
-  errorMessage: css`
-    display: block;
-    height: 20px;
-    color: #F5222D;
-  `,
   filter: css`
     width: 305px;
   `,
@@ -120,6 +106,7 @@ type JoinReplicasetFormProps = {
   onCancel: () => void,
   onSubmit: (d: JoinReplicasetFormData) => void,
   replicasetList?: Replicaset[],
+  knownRoles?: Role[],
   setFilter: (s: string) => void,
   selectedServers?: Server[]
 };
@@ -150,7 +137,8 @@ class JoinReplicasetForm extends React.Component<JoinReplicasetFormProps> {
       onCancel,
       onSubmit,
       replicasetList,
-      selectedServers
+      selectedServers,
+      knownRoles
     } = this.props;
 
     return (
@@ -200,13 +188,11 @@ class JoinReplicasetForm extends React.Component<JoinReplicasetFormProps> {
                     </Text>
                   )}
                   topRightControls={[
-                    <Input
-                      className={styles.filter}
-                      placeholder='Filter by uri, uuid, role, alias or labels'
+                    <ReplicasetFilterInput
+                      className={cx(styles.filter, 'meta-test__Filter')}
                       value={filter}
-                      onChange={this.handleFilterChange}
-                      onClearClick={this.handleFilterClear}
-                      rightIcon={<IconSearch />}
+                      setValue={this.props.setFilter}
+                      roles={knownRoles}
                     />
                   ]}
                 >
@@ -262,12 +248,6 @@ class JoinReplicasetForm extends React.Component<JoinReplicasetFormProps> {
       </Formik>
     );
   }
-
-  handleFilterChange = (e: SyntheticInputEvent<HTMLInputElement>) => {
-    this.props.setFilter(e.target.value);
-  };
-
-  handleFilterClear = () => this.props.setFilter('');
 }
 
 export default JoinReplicasetForm;

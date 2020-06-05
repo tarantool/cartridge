@@ -29,7 +29,7 @@ describe('Memory fragmentation level by statistics', () => {
         {
           itLabel: '100-100-100 %',
           values: ['100%', '100%', '100%']
-        },
+        }
       ]
     },
     {
@@ -39,8 +39,7 @@ describe('Memory fragmentation level by statistics', () => {
         {
           itLabel: '91-91-61 % (bottom edge)',
           values: ['91%', '91%', '61%']
-        },
-
+        }
       ]
     },
     {
@@ -58,9 +57,9 @@ describe('Memory fragmentation level by statistics', () => {
         {
           itLabel: 'fragmentation is "low" if arena_used_ratio < 90%',
           values: ['80%', '100%', '100%']
-        },
+        }
       ]
-    },
+    }
   ];
 
   testCases.forEach(({ describeLabel, expectedValue, cases }) => {

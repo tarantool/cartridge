@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Enhanced in WebUI
 
 - Prettier errors displaying.
+- Enhance replicaset filtering by role / status.
 
 ## [2.1.2] - 2020-04-24
 

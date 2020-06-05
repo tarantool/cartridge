@@ -24,6 +24,7 @@ import type { RouterHistory, Location } from 'react-router';
 import type { Issue } from 'src/generated/graphql-typing';
 import PageDataErrorMessage from 'src/components/PageDataErrorMessage';
 import ReplicasetList from 'src/components/ReplicasetList';
+import ReplicasetFilterInput from 'src/components/ReplicasetFilterInput';
 import UnconfiguredServerList from 'src/components/UnconfiguredServerList';
 import { addSearchParams, getSearchParams } from 'src/misc/url';
 import EditReplicasetModal from 'src/components/EditReplicasetModal';
@@ -31,8 +32,6 @@ import ConfigureServerModal from 'src/components/ConfigureServerModal';
 import ClusterButtonsPanel from 'src/components/ClusterButtonsPanel';
 import BootstrapPanel from 'src/components/BootstrapPanel';
 import {
-  IconSearch,
-  Input,
   PageSection
 } from '@tarantool.io/ui-kit';
 import type { AppState } from 'src/store/reducers/ui.reducer';
@@ -56,8 +55,8 @@ import ServerInfoModal from '../../components/ServerInfoModal';
 
 const styles = {
   clusterFilter: css`
-    width: 305px;
-    position: sticky;
+    width: 385px;
+    position: relative;
   `
 };
 
@@ -129,6 +128,7 @@ class Cluster extends React.Component<ClusterProps> {
     const {
       clusterSelf,
       filter,
+      setFilter,
       filteredReplicasetList,
       issues,
       replicasetList,
@@ -184,20 +184,14 @@ class Cluster extends React.Component<ClusterProps> {
           <PageSection
             subTitle={this.getReplicasetsTitleCounters()}
             title='Replica sets'
-            topRightControls={
-              replicasetList.length > 1
-                ? [
-                  <Input
-                    className={cx(styles.clusterFilter, 'meta-test__Filter')}
-                    placeholder={'Filter by uri, uuid, role, alias or labels'}
-                    value={filter}
-                    onChange={this.handleFilterChange}
-                    onClearClick={this.handleFilterClear}
-                    rightIcon={<IconSearch />}
-                  />
-                ]
-                : []
-            }
+            topRightControls={[
+              <ReplicasetFilterInput
+                className={cx(styles.clusterFilter, 'meta-test__Filter')}
+                value={filter}
+                setValue={setFilter}
+                roles={clusterSelf && clusterSelf.knownRoles}
+              />
+            ]}
           >
             {filteredReplicasetList.length
               ? (
@@ -252,7 +246,7 @@ class Cluster extends React.Component<ClusterProps> {
     }
   };
 
-  handleServerLabelClick = ({ name, value }: Label) => this.props.setFilter(`${name}: ${value}`);
+  handleServerLabelClick = ({ name, value }: Label) => this.props.setFilter(`${name}:${value}`);
 
   handleFilterClear = () => void this.props.setFilter('');
 
@@ -291,9 +285,20 @@ class Cluster extends React.Component<ClusterProps> {
   };
 
   getReplicasetsTitleCounters = () => {
+    const {
+      filter,
+      filteredReplicasetList
+    } = this.props;
     const { configured } = this.props.serverCounts;
     const { total, unhealthy } = this.props.replicasetCounts;
     return <React.Fragment>
+      {filter
+        ? <>
+          <b>{filteredReplicasetList.length}{` selected | `}</b>
+        </>
+        :
+        null
+      }
       <b>{total}</b>{` total | `}
       <b>{unhealthy}</b>{` unhealthy | `}
       <b>{configured}</b>{` server${configured === 1 ? '' : 's'}`}

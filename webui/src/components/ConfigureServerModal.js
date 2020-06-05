@@ -98,6 +98,7 @@ class ConfigureServerModal extends React.Component<ConfigureServerModalProps> {
               replicasetList={replicasetList}
               filteredReplicasetList={filteredReplicasetList}
               selectedServers={selectedServers}
+              knownRoles={knownRoles}
               setFilter={setModalFilter}
               selfURI={selfURI}
             />

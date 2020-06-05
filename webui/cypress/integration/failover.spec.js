@@ -83,7 +83,7 @@ describe('Failover', () => {
     cy.contains('Replica sets');
     cy.get('.meta-test__ClusterIssuesButton').click();
     cy.get('.meta-test__ClusterIssuesModal', { timeout: 6000 })
-      .contains('Replication from localhost' + testPort);
+      .contains('Replication from localhost' + testPort + ' to localhost:13304: long idle');
     cy.get('.meta-test__closeClusterIssuesModal').click();
 
     cy.exec('kill -SIGCONT $(lsof -sTCP:LISTEN -i :8082 -t)', { failOnNonZeroExit: true });
@@ -91,7 +91,8 @@ describe('Failover', () => {
     cy.contains('Replica sets');
     cy.get('.meta-test__ClusterIssuesButton').click();
     cy.get('.meta-test__ClusterIssuesModal', { timeout: 6000 })
-      .contains('Replication from localhost' + testPort).should('not.exist');
+      .contains('Replication from localhost' + testPort + ' to localhost:13304: long idle')
+      .should('not.exist');
     cy.get('.meta-test__closeClusterIssuesModal').click();
   })
 
