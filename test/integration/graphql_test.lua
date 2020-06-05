@@ -343,6 +343,27 @@ g.test_enum = function()
     end)
 end
 
+g.test_unknown_query_mutation = function()
+    local server = cluster.main_server
+    t.assert_error_msg_equals(
+        'Field "UNKNOWN_TYPE" is not defined on type "Query"',
+        function() return server:graphql({
+            query = [[
+                query { UNKNOWN_TYPE(arg: "") }
+            ]], variables = {}
+        }) end
+    )
+
+    t.assert_error_msg_equals(
+        'Field "UNKNOWN_TYPE" is not defined on type "Mutation"',
+        function() return server:graphql({
+            query = [[
+                mutation { UNKNOWN_TYPE(arg: "") }
+            ]], variables = {}
+        }) end
+    )
+end
+
 g.test_nested_input = function()
     local server = cluster.main_server
 
