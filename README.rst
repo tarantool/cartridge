@@ -121,9 +121,9 @@ Prerequisites:
 
 The fastest way to build the project is to skip building the Web UI:
 
-```sh
-CMAKE_DUMMY_WEBUI=true tarantoolctl rocks make
-```
+.. code-block:: console
+
+    CMAKE_DUMMY_WEBUI=true tarantoolctl rocks make
 
 But if you want to build the frontend too, you'll also need:
 
