@@ -116,6 +116,9 @@ add_custom_command(
   COMMAND ${CMAKE_COMMAND} -E copy
     ${CMAKE_CURRENT_SOURCE_DIR}/README.rst
     ${CMAKE_CURRENT_BINARY_DIR}/build.rst/README.rst
+  COMMAND ${CMAKE_COMMAND} -E copy
+    ${CMAKE_CURRENT_SOURCE_DIR}/CHANGELOG.rst
+    ${CMAKE_CURRENT_BINARY_DIR}/build.rst/CHANGELOG.rst
   COMMAND ${LDOC} --all .
     --ext rst
     --dir "${CMAKE_CURRENT_BINARY_DIR}/build.rst/cartridge_api"

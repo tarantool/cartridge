@@ -32,7 +32,6 @@ file = {
 
 -- luacheck: globals topics
 topics = {
-    "CHANGELOG.md",
 }
 
 -- luacheck: globals format
