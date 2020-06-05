@@ -19,3 +19,4 @@ This documentation contains the following sections:
    cartridge_admin
    Cartridge API<cartridge_api/index>
    Cartridge CLI<cartridge_cli/index>
+   Changelog <../CHANGELOG.rst>
