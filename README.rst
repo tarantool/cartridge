@@ -74,7 +74,7 @@ you need to install the `cartridge-cli` utility (supposing that
 
 Long story short, copy-paste this into the console:
 
-.. code-block:: console
+.. code-block:: bash
 
     tarantoolctl rocks install cartridge-cli
     .rocks/bin/cartridge create --name myapp
@@ -96,7 +96,7 @@ Next steps
 See:
 
 * A more detailed
-  `getting started guide <https://www.tarantool.io/en/doc/2.2/getting_started/getting_started_cartridge/>`_
+  `getting started guide <https://www.tarantool.io/en/doc/latest/getting_started/getting_started_cartridge/>`_
 * More
   `application examples <https://github.com/tarantool/examples>`_
 * `Cartridge documentation <https://www.tarantool.io/en/doc/latest/book/cartridge/>`_
@@ -121,7 +121,7 @@ Prerequisites:
 
 The fastest way to build the project is to skip building the Web UI:
 
-.. code-block:: console
+.. code-block:: bash
 
     CMAKE_DUMMY_WEBUI=true tarantoolctl rocks make
 
@@ -133,7 +133,7 @@ But if you want to build the frontend too, you'll also need:
 Documentation is generated from source code, but only if the ``ldoc`` and ``sphinx``
 tools are installed:
 
-.. code-block:: console
+.. code-block:: bash
 
     pip install 'sphinx==3.0.3'
     tarantoolctl rocks install \
@@ -148,7 +148,7 @@ Running a demo cluster
 There are several example entry points which are mostly used for testing,
 but can also be useful for demo purposes or experiments:
 
-.. code-block:: console
+.. code-block:: bash
 
     tarantoolctl rocks install cartridge-cli
     .rocks/bin/cartridge start
@@ -159,14 +159,14 @@ but can also be useful for demo purposes or experiments:
 It can be accessed through the Web UI (http://localhost:8081)
 or via the binary protocol:
 
-.. code-block:: console
+.. code-block:: bash
 
     tarantoolctl connect admin@localhost:3301
 
 If you also need the stateful failover mode, launch an external state provider
 |--| ``stateboard``:
 
-.. code-block:: console
+.. code-block:: bash
 
     .rocks/bin/cartridge start --stateboard
 
@@ -185,7 +185,7 @@ Auto-generated sources
 After the GraphQL API is changed, don't forget to fetch the schema
 ``doc/schema.graphql``:
 
-.. code-block:: console
+.. code-block:: bash
 
     npm install graphql-cli@3.0.14
     ./fetch-schema.sh
@@ -194,7 +194,7 @@ After the GraphQL API is changed, don't forget to fetch the schema
 Running tests
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. code-block:: console
+.. code-block:: bash
 
     # Backend
     tarantoolctl rocks install luacheck

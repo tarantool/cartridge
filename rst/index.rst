@@ -14,7 +14,7 @@ This documentation contains the following sections:
    :maxdepth: 2
    :numbered: 0
 
-   ../README
+   Overview <../README>
    cartridge_dev
    cartridge_admin
    Cartridge API<cartridge_api/index>
