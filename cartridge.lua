@@ -258,7 +258,11 @@ local function cfg(opts, box_opts)
     -- makes it possible to filter by severity with
     -- systemctl
     if utils.under_systemd() and box_opts.log == nil then
-        box_opts.log = 'syslog:identity=tarantool'
+        local identity = table.concat({
+            args.app_name or 'tarantool',
+            args.instance_name
+        }, '.')
+        box_opts.log = string.format('syslog:identity=%s', identity)
     end
 
     if box_opts.custom_proc_title == nil and args.instance_name ~= nil then
