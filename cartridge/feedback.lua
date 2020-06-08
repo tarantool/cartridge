@@ -1,3 +1,4 @@
+local fio = require('fio')
 local log   = require('log')
 local json  = require('json')
 local fiber = require('fiber')
@@ -12,7 +13,7 @@ end
 
 local _daemon_mt = getmetatable(daemon)
 
--- copy-pased from tarantool-1.10.3-124-g3b1e75ece
+-- copy-pasted from tarantool-1.10.3-124-g3b1e75ece
 local function get_fiber_id(f)
     local fid = 0
     if f ~= nil and f:status() ~= "dead" then
@@ -21,7 +22,7 @@ local function get_fiber_id(f)
     return fid
 end
 
--- copy-pased from tarantool-1.10.3-124-g3b1e75ece
+-- copy-pasted from tarantool-1.10.3-124-g3b1e75ece
 local function feedback_loop(self)
     fiber.name(PREFIX, { truncate = true })
 
@@ -38,7 +39,7 @@ local function feedback_loop(self)
     self.shutdown:put("stopped")
 end
 
--- copy-pased from tarantool-1.10.3-124-g3b1e75ece
+-- copy-pasted from tarantool-1.10.3-124-g3b1e75ece
 local function guard_loop(self)
     fiber.name(string.format("guard of %s", PREFIX), {truncate=true})
 
@@ -57,7 +58,7 @@ local function guard_loop(self)
     self.shutdown:put("stopped")
 end
 
--- copy-pased from tarantool-1.10.3-124-g3b1e75ece
+-- copy-pasted from tarantool-1.10.3-124-g3b1e75ece
 local function start(self)
     self:stop()
     if self.enabled then
@@ -68,7 +69,7 @@ local function start(self)
     log.verbose("%s started", PREFIX)
 end
 
--- copy-pased from tarantool-1.10.3-124-g3b1e75ece
+-- copy-pasted from tarantool-1.10.3-124-g3b1e75ece
 local function stop(self)
     if (get_fiber_id(self.guard) ~= 0) then
         self.guard:cancel()
@@ -111,6 +112,31 @@ function _daemon_mt.__index.generate_feedback()
     end
 
     feedback.rocks['cartridge'] = require('cartridge').VERSION
+
+    local searchroot
+    if package.searchroot ~= nil then
+        searchroot = package.searchroot()
+    else
+        searchroot = fio.abspath(fio.dirname(arg[0]))
+    end
+
+    local manifest = {}
+    local manifest_path = fio.pathjoin(searchroot,
+        '.rocks/share/tarantool/rocks/manifest'
+    )
+
+    if not pcall(loadfile(manifest_path, 't', manifest))
+    or type(manifest.dependencies) ~= 'table'
+    then
+        return feedback
+    end
+
+    for rock_name, versions in pairs(manifest.dependencies) do
+        if feedback.rocks[rock_name] == nil then
+            feedback.rocks[rock_name] = next(versions)
+        end
+    end
+
     return feedback
 end
 
