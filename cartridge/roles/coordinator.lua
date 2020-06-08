@@ -9,6 +9,7 @@ local utils = require('cartridge.utils')
 local topology = require('cartridge.topology')
 local confapplier = require('cartridge.confapplier')
 local stateboard_client = require('cartridge.stateboard-client')
+local etcd2_client = require('cartridge.etcd2-client')
 
 local AppointmentError = errors.new_class('AppointmentError')
 local CoordinatorError = errors.new_class('CoordinatorError')
@@ -90,7 +91,7 @@ local function make_decision(ctx, replicaset_uuid)
 end
 
 local function control_loop(session)
-    checks('stateboard_session')
+    checks('stateboard_session|etcd2_session')
     local ctx = assert(session.ctx)
 
     while true do
@@ -137,7 +138,7 @@ local function control_loop(session)
 end
 
 local function take_control(client)
-    checks('stateboard_client')
+    checks('stateboard_client|etcd2_client')
 
     local lock_args = {
         uuid = confapplier.get_instance_uuid(),
@@ -207,7 +208,7 @@ local function take_control(client)
 end
 
 local function take_control_loop(client)
-    checks('stateboard_client')
+    checks('stateboard_client|etcd2_client')
 
     while true do
         local t1 = fiber.time()
@@ -266,6 +267,24 @@ local function apply_config(conf, _)
                 ' with external storage (stateboard) at %s',
                 client_cfg.uri
             )
+        end
+    elseif failover_cfg.state_provider == 'etcd2' then
+        local params = assert(failover_cfg.etcd2_params)
+        local client_cfg = {
+            endpoints = params.endpoints,
+            prefix = params.prefix,
+            username = params.username,
+            password = params.password,
+            lock_delay = params.lock_delay,
+            request_timeout = vars.options.NETBOX_CALL_TIMEOUT,
+        }
+
+        if vars.client == nil
+        or vars.client.state_provider ~= 'etcd2'
+        or not utils.deepcmp(vars.client.cfg, client_cfg)
+        then
+            stop()
+            vars.client = etcd2_client.new(client_cfg)
         end
     else
         local err = string.format(
