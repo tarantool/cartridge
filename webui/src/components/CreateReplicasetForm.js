@@ -107,7 +107,7 @@ CreateReplicasetFormProps) => (
       onSubmit({
         ...values,
         alias: values.alias || null,
-        uri: (selectedServers && selectedServers[0].uri) || '',
+        uri: (selectedServers && selectedServers[0] && selectedServers[0].uri) || '',
         weight: parseFloat(values.weight)
       });
     }}
