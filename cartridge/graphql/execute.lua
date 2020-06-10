@@ -72,6 +72,11 @@ local function mergeSelectionSets(fields)
 end
 
 local function defaultResolver(object, _, info)
+  if type(object) ~= 'table' then
+    local objectType = info.fieldASTs[1].kind
+    local name = info.fieldASTs[1].name.value
+    error(('Expected a table for %s %q'):format(objectType, name))
+  end
   return object[info.fieldASTs[1].name.value]
 end
 
@@ -197,6 +202,9 @@ local function completeValue(fieldType, result, subSelections, context, opts)
     local innerType = fieldType.ofType
 
     if type(result) ~= 'table' then
+      if innerType.__type == 'NonNull' then
+        innerType = innerType.ofType
+      end
       error('Expected a table for ' .. innerType.name .. ' list')
     end
 

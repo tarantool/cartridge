@@ -281,7 +281,7 @@ g.test_reread_request = function()
 end
 
 
-g.test_enum = function()
+g.test_enum_input = function()
     local server = cluster.main_server
 
     server.net_box:eval([[
@@ -341,6 +341,53 @@ g.test_enum = function()
         variables = {arg = {field = 'd'}}}
         )
     end)
+end
+
+g.test_enum_output = function()
+    local server = cluster.main_server
+
+    server.net_box:eval([[
+        package.loaded['test'] = package.loaded['test'] or {}
+        package.loaded['test']['test_enum_output'] = function(_, _)
+            return {value = 'a'}
+        end
+
+        local graphql = require('cartridge.graphql')
+        local types = require('cartridge.graphql.types')
+
+        local simple_enum = types.enum {
+            name = 'simple_enum_output',
+            values = {
+                a = { value = 'a' },
+                b = { value = 'b' },
+            },
+        }
+
+        local object = types.object({
+            name = 'simple_object',
+            fields = {
+                value = simple_enum,
+            }
+        })
+
+        graphql.add_callback({
+            name = 'test_enum_output',
+            args = {},
+            kind = object,
+            callback = 'test.test_enum_output',
+        })
+    ]])
+
+    t.assert_equals(
+        server:graphql({
+            query = [[
+                query {
+                    test_enum_output{ value }
+                }
+            ]],
+        variables = {}}
+        ).data.test_enum_output.value, 'a'
+    )
 end
 
 g.test_unknown_query_mutation = function()
@@ -683,6 +730,174 @@ g.test_custom_type_scalar_variables = function()
                 }
             ]],
         variables = {field = 'echo'}}
+        )
+    end)
+end
+
+g.test_output_type_mismatch_error = function()
+    local server = cluster.main_server
+
+    server.net_box:eval([[
+        local fiber = require('fiber')
+        package.loaded['test'] = {}
+        package.loaded['test']['expected_list'] = function(_, args)
+            if args.type == 'boolean' then
+                return {{value = {true}}}
+            elseif args.type == 'boolean_list' then
+                return {{value = {{value = true}}}}
+            elseif args.type == 'string' then
+                return {{value = {'Hello'}}}
+            elseif args.type == 'number' then
+                return 123
+            elseif args.type == 'cdata' then
+                return 123LL
+            elseif args.type == 'userdata' then
+                return fiber.create(function() end)
+            elseif args.type == 'object' then
+                return {a = 'b'}
+            end
+            return {{value = {{value = {1}}}}, {value = {{value = {2}}}}}
+        end
+
+        local graphql = require('cartridge.graphql')
+        local types = require('cartridge.graphql.types')
+
+        local nested_type = types.object({
+            name = 'NestedObjectWithValue',
+            fields = {
+                value = types.list(types.int),
+            },
+        })
+
+        local obj_type = types.object({
+            name = 'ObjectWithValue',
+            fields = {
+                value = types.list(nested_type),
+            },
+        })
+
+        graphql.add_callback({
+            name = 'expected_list',
+            args = {
+                type = types.string,
+            },
+            kind = types.list(obj_type),
+            callback = 'test.expected_list',
+        })
+    ]])
+
+    t.assert_equals(
+        server:graphql({
+            query = [[
+                query($type: String) {
+                    expected_list(type: $type) { value { value } }
+                }
+            ]],
+        variables = {type = box.NULL}}
+        ).data.expected_list, {{value = {{value = {1}}}}, {value = {{value = {2}}}}}
+    )
+
+    t.assert_error_msg_equals('Expected a table for field "value"', function()
+        return server:graphql({
+            query = [[
+                query($type: String) {
+                    expected_list(type: $type) { value { value } }
+                }
+            ]],
+        variables = {type = 'boolean'}}
+        )
+    end)
+
+    t.assert_error_msg_equals('Expected a table for Int list', function()
+        return server:graphql({
+            query = [[
+                query($type: String) {
+                    expected_list(type: $type) { value { value } }
+                }
+            ]],
+        variables = {type = 'boolean_list'}}
+        )
+    end)
+
+    t.assert_error_msg_equals('Expected a table for field "value"', function()
+        return server:graphql({
+            query = [[
+                query($type: String) {
+                    expected_list(type: $type) { value { value } }
+                }
+            ]],
+        variables = {type = 'string'}}
+        )
+    end)
+
+    t.assert_error_msg_equals('Expected a table for ObjectWithValue list', function()
+        return server:graphql({
+            query = [[
+                query($type: String) {
+                    expected_list(type: $type) { value { value } }
+                }
+            ]],
+        variables = {type = 'cdata'}}
+        )
+    end)
+
+    t.assert_error_msg_equals('Expected a table for ObjectWithValue list', function()
+        return server:graphql({
+            query = [[
+                query($type: String) {
+                    expected_list(type: $type) { value { value } }
+                }
+            ]],
+        variables = {type = 'userdata'}}
+        )
+    end)
+
+    server.net_box:eval([[
+        package.loaded['test'] = {}
+        package.loaded['test']['test_custom_type_scalar_object'] = function(_, args)
+          return {value = true}
+        end
+
+        local graphql = require('cartridge.graphql')
+        local types = require('cartridge.graphql.types')
+
+        local custom_string = types.scalar({
+            name = 'CustomTestString',
+            description = 'Custom string type',
+            serialize = tostring,
+            parseValue = tostring,
+            parseLiteral = function(node)
+              if node.kind == 'string' then
+                return node.value
+              end
+            end,
+            isValueOfTheType = function(value)
+              return type(value) == 'string'
+            end,
+        })
+
+        local object = types.object({
+            name = 'test_non_null_custom_object',
+            fields = {
+                value = types.list(custom_string.nonNull),
+            }
+        })
+
+        graphql.add_callback({
+            name = 'test_custom_type_scalar_object',
+            args = {},
+            kind = object,
+            callback = 'test.test_custom_type_scalar_object',
+        })
+    ]])
+
+    t.assert_error_msg_equals('Expected a table for CustomTestString list', function()
+        return server:graphql({
+            query = [[
+                query {
+                    test_custom_type_scalar_object { value }
+                }
+            ]]}
         )
     end)
 end
