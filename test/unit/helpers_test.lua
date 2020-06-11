@@ -18,20 +18,13 @@ g.before_all = function()
         replicasets = {
             {
                 alias = 'vshard',
-                uuid = helpers.uuid('b'),
                 roles = {'vshard-router', 'vshard-storage'},
-                servers = {
-                    {instance_uuid = helpers.uuid('b', 'b', 1)},
-                }
+                servers = 1,
             },
             {
                 alias = 'myrole',
-                uuid = helpers.uuid('a'),
                 roles = {'myrole'},
-                servers = {
-                    {instance_uuid = helpers.uuid('a', 'a', 1)},
-                    {instance_uuid = helpers.uuid('a', 'a', 2)},
-                }
+                servers = 2
             },
         },
     })
@@ -44,11 +37,19 @@ g.after_all = function()
     fio.rmtree(g.cluster.datadir)
 end
 
-function g.test_cluster_helper()
+local function build_cluster(config)
+    config.datadir = '/tmp'
+    config.server_command = 'true'
+    return helpers.Cluster:new(config)
+end
+
+function g.test_cluster_bootstrap()
     for i, server in ipairs(g.cluster.servers) do
         t.assert_equals(type(server.process.pid), 'number', 'Server ' .. i .. ' not started')
     end
+end
 
+function g.test_config_management()
     g.cluster:upload_config({some_section = 'some_value'})
     t.assert_equals(g.cluster:download_config(), {some_section = 'some_value'})
 
@@ -56,14 +57,72 @@ function g.test_cluster_helper()
     t.assert_equals(g.cluster:download_config(), {another_section = 'some_value2'})
 end
 
+function g.test_servers_access()
+    local cluster = build_cluster({replicasets = {
+        {roles = {}, alias = 'vshard', servers = 1},
+        {roles = {}, alias = 'myrole', servers = {
+            {alias = 'custom-alias'},
+            {},
+        }},
+    }})
+    t.assert_equals(#cluster.servers, 3)
+    t.assert_equals(cluster:server('vshard-1'), cluster.servers[1])
+    t.assert_equals(cluster:server('custom-alias'), cluster.servers[2])
+    t.assert_equals(cluster:server('myrole-2'), cluster.servers[3])
+    t.assert_error_msg_contains('Server myrole-3 not found', function()
+        g.cluster:server('myrole-3')
+    end)
+end
+
+function g.test_replicaset_uuid_generation()
+    local uuids = {}
+    for _ = 1, 2 do
+        local cluster = build_cluster({replicasets = {
+            {roles = {}, servers = {{}}, alias = ''},
+            {roles = {}, servers = {{}}, alias = ''},
+        }})
+        for i = 1, 2 do
+            local uuid = cluster.replicasets[i].uuid
+            t.assert_not(uuids[uuid], 'Generated uuid is not unique: ' .. uuid)
+            uuids[uuid] = true
+        end
+    end
+end
+
+function g.test_new_with_servers_count()
+    local cluster = build_cluster({replicasets = {
+        {roles = {}, servers = 2, alias = 'router'},
+        {roles = {}, servers = 3, alias = 'storage'},
+    }})
+    t.assert_equals(#cluster.replicasets[1].servers, 2)
+    t.assert_equals(#cluster.replicasets[2].servers, 3)
+    t.assert_covers(cluster.servers[1], {alias = 'router-1'})
+    t.assert_covers(cluster.servers[2], {alias = 'router-2'})
+    t.assert_covers(cluster.servers[3], {alias = 'storage-1'})
+    t.assert_covers(cluster.servers[5], {alias = 'storage-3'})
+
+    t.assert_error_msg_contains('servers count must be positive', build_cluster, {replicasets = {
+        {roles = {}, servers = 0, alias = 'router'},
+    }})
+    t.assert_error_msg_contains('servers count must be positive', build_cluster, {replicasets = {
+        {roles = {}, servers = -10, alias = 'router'},
+    }})
+end
+
+function g.test_new_without_replicaset_and_server_alias()
+    t.assert_error_msg_contains('Either replicaset.alias or server.alias must be given',
+        build_cluster, {replicasets = {
+            {roles = {}, servers = 2},
+        }}
+    )
+end
+
 function g.test_new_with_env()
     local shared_env = {
         SHARED_ENV_1 = 's-val-1',
         SHARED_ENV_2 = 's-val-2',
     }
-    local cluster = helpers.Cluster:new({
-        datadir = '/tmp',
-        server_command = 'true',
+    local cluster = build_cluster({
         env = shared_env,
         replicasets = {
             {uuid = 'r1', roles = {}, servers = {

@@ -6,6 +6,7 @@ local checks = require('checks')
 local fio = require('fio')
 local fun = require('fun')
 local log = require('log')
+local uuid = require('uuid')
 
 local luatest = require('luatest')
 local Server = require('cartridge.test-helpers.server')
@@ -49,18 +50,19 @@ function Cluster:new(object)
     --- Replicaset config.
     -- @table @replicaset_config
     -- @string[opt] alias Prefix to generate server alias automatically.
-    -- @string uuid Replicaset uuid.
+    -- @string[opt] uuid Replicaset uuid.
     -- @tparam {string} roles List of roles for servers in the replicaset.
     -- @tparam ?string vshard_group Name of vshard group.
     -- @tparam ?boolan all_rw Make all replicas writable.
-    -- @tab servers List of objects to build `Server`s with.
+    -- @tparam table|number servers List of objects to build `Server`s with or
+    --      number of servers in replicaset.
     for _, replicaset in pairs(object.replicasets) do
         (function(_) checks({
             alias = '?string',
-            uuid = 'string',
+            uuid = '?string',
             roles = 'table',
             vshard_group = '?string',
-            servers = 'table',
+            servers = 'table|number',
             all_rw = '?boolean',
         }) end)(replicaset)
     end
@@ -73,6 +75,13 @@ end
 function Cluster:initialize()
     self.servers = {}
     for _, replicaset_config in ipairs(self.replicasets) do
+        replicaset_config.uuid = replicaset_config.uuid or uuid.str()
+        if type(replicaset_config.servers) == 'number' then
+            assert(replicaset_config.servers > 0, 'servers count must be positive')
+            replicaset_config.servers = fun.range(replicaset_config.servers):
+                map(function() return {} end):totable()
+        end
+        assert(#replicaset_config.servers > 0, 'Replicaset must contain at least one server')
         for i, server_config in ipairs(replicaset_config.servers) do
             if self.env then
                 server_config.env = fun.chain(self.env, server_config.env or {}):tomap()
@@ -188,6 +197,7 @@ function Cluster:build_server(config, replicaset_config, sn)
     for key, value in pairs(config) do
         server_config[key] = value
     end
+    assert(server_config.alias, 'Either replicaset.alias or server.alias must be given')
     if server_config.workdir == nil then
         server_config.workdir = fio.pathjoin(
             self.datadir, 'localhost-' .. server_config.advertise_port
