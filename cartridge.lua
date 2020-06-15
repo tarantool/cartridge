@@ -101,9 +101,9 @@ end
 --
 -- After this call, you can operate the instance via Tarantool console.
 -- Notice that this call does not initialize the database - `box.cfg` is not called yet.
--- Do not try to call `box.cfg` yourself, the cartridge will do it when it is time.
+-- Do not try to call `box.cfg` yourself: `cartridge` will do it when it is time.
 --
--- Both cartridge.cfg and box.cfg options can be configured with
+-- Both `cartridge.cfg` and `box.cfg` options can be configured with
 -- command-line arguments or environment variables.
 --
 -- @function cfg

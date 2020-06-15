@@ -664,7 +664,7 @@ which performs a two-phase commit:
 #. The cluster checks if the new configuration can be applied on all instances
    except disabled and expelled. All instances subject to update must be healthy
    and ``alive`` according to the
-   `membership module <https://www.tarantool.io/en/doc/1.10/reference/reference_rock/membership/>`_.
+   `membership module <https://www.tarantool.io/en/doc/latest/reference/reference_rock/membership/>`_.
 
 #. (**Preparation phase**) The cluster propagates the patched configuration.
    Every instance validates it with the ``validate_config()`` function of
@@ -1189,7 +1189,7 @@ Start/stop using ``systemctl``
       $ systemctl start APP_NAME
 
   This will start a  ``systemd`` service that will listen to the
-  port specified in :ref:`instance configuration <cartridge-config>`
+  port specified in :ref:`instance configuration <cartridge-run-systemctl-config>`
   (``http_port`` parameter).
 
 * To run multiple instances on one or multiple servers:
@@ -1212,5 +1212,25 @@ Start/stop using ``systemctl``
   .. code-block:: console
 
       $ systemctl stop APP_NAME@INSTANCE_1 APP_NAME@INSTANCE_2 ... APP_NAME@INSTANCE_<N>
+
+.. _cartridge-run-systemctl-config:
+
+When running instances with ``systemctl``, you can specify instance configuration
+in a YAML file.
+
+This file can contain `these options <https://www.tarantool.io/en/doc/latest/book/cartridge/cartridge_api/modules/cartridge.argparse/#tables>`_;
+see an example `here <https://www.tarantool.io/en/doc/latest/book/cartridge/cartridge_cli/#usage-example>`_).
+
+Save this file to ``/etc/tarantool/conf.d/`` (the default ``systemd`` path)
+or to a location set in the ``TARANTOOL_CFG`` environment variable.
+The file name doesn't matter: it can be ``instances.yml`` or anything else you like.
+
+The workflow is like this:
+``systemctl`` obtains ``app_name`` (and ``instance_name``, if specified)
+from the name of the application's ``systemd`` unit file
+(e.g. ``APP_NAME`` or ``APP_NAME@INSTANCE_1``),
+and ``cartridge`` then looks across all YAML files in
+``/etc/tarantool/conf.d`` for a section with the appropriate name
+(e.g. ``app_name`` or ``app_name.instance_1``).
 
 .. include:: topics/error-handling.rst

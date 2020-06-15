@@ -7,7 +7,7 @@
 -- 2. `TARANTOOL_<VARNAME>` environment variables
 -- 3. configuration files
 --
--- One can specify a configuration file using the `--cfg <CONFIG_FILE>` option
+-- You can specify a configuration file using the `--cfg <CONFIG_FILE>` option
 -- or the `TARANTOOL_CFG=<CONFIG_FILE>` environment variable.
 --
 -- Configuration files are `yaml` files, divided into
@@ -20,13 +20,13 @@
 --      memtx_memory: 1024000000
 --      some_option: "router specific value"
 --
--- Within the configuration file argparse looks for multiple matching section:
+-- Within the configuration file, `argparse` looks for multiple matching sections:
 --
 -- 1. The section named `<APP_NAME>.<INSTANCE_NAME>` is parsed first.
 --   Application name is derived automatically from the rockspec filename in the
---   project directory. Or it can be can be specified manually with `--app-name`
---   command line argument or `TARANTOOL_APP_NAME` environment variable.
---   Instance name can be specified the same way either as `--instance-name`
+--   project directory. Or it can be can be specified manually with the `--app-name`
+--   command line argument or the `TARANTOOL_APP_NAME` environment variable.
+--   Instance name can be specified the same way, either as `--instance-name`
 --   or `TARANTOOL_INSTANCE_NAME`.
 -- 2. The common `<APP_NAME>` section is parsed next.
 -- 3. Finally, the section `[default]` with global configuration is parsed
@@ -37,9 +37,9 @@
 -- In this case, sections named after parts are also parsed:
 -- first `[myapp.router.1]`, then `[myapp.router]`, then `[myapp]`.
 --
--- Instead of a single configuration file one can use a directory.
+-- Instead of a single configuration file, you can use a directory.
 -- In this case, all files in the directory are parsed.
--- To avoid conflicts the same section mustn't repeat across different files.
+-- To avoid conflicts, the same section mustn't repeat across different files.
 --
 -- @module cartridge.argparse
 
@@ -75,8 +75,8 @@ end
 
 --- Common `cartridge.cfg` options.
 --
--- Options, which are not listed here (like `roles`)
--- can't be modified with argparse and should be configured in code.
+-- Options which are not listed below (like `roles`)
+-- can't be modified with `argparse` and should be configured in code.
 --
 -- @table cluster_opts
 local cluster_opts = {
@@ -85,7 +85,7 @@ local cluster_opts = {
     http_port = 'number', -- **number**
     http_enabled = 'boolean', -- **boolean**
     advertise_uri = 'string', -- **string**
-    cluster_cookie = 'string', -- **string**
+    cluster_cookie = 'string', -- **string**a
     console_sock = 'string', -- **string**
     auth_enabled = 'boolean', -- **boolean**
     bucket_count = 'number', -- **number**
@@ -301,7 +301,7 @@ local function supplement(to, from)
     return to
 end
 
---- Parse command line arguments, environment variables, and config files.
+--- Parse command line arguments, environment variables, and configuration files.
 --
 -- @function parse
 -- @treturn {argname=value,...}
@@ -357,12 +357,12 @@ local function parse()
     return args
 end
 
---- Filter results of parsing and cast variables to a given type.
+--- Filter the results of parsing and cast variables to a given type.
 --
--- From all configuration options gathered by `parse`, select only ones
--- specified in filter.
+-- From all configuration options gathered by `parse`, select only those
+-- specified in the filter.
 --
--- For example, running application as the following:
+-- For example, running an application as following:
 --    ./init.lua --alias router --memtx-memory 100
 -- results in:
 --    parse()            -> {memtx_memory = "100", alias = "router"}
