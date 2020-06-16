@@ -633,6 +633,12 @@ export type GetClusterQuery = { __typename?: "Query" } & {
         FailoverApi,
         { mode: *, state_provider: * }
       > & {
+          etcd2_params: ?({
+            __typename?: "FailoverStateProviderCfgEtcd2"
+          } & $Pick<
+            FailoverStateProviderCfgEtcd2,
+            { password: *, lock_delay: *, endpoints: *, username: *, prefix: * }
+          >),
           tarantool_params: ?({
             __typename?: "FailoverStateProviderCfgTarantool"
           } & $Pick<FailoverStateProviderCfgTarantool, { uri: *, password: * }>)
@@ -1025,6 +1031,7 @@ export type EditTopologyMutation = { __typename?: "Mutation" } & {
 export type ChangeFailoverMutationVariables = {
   mode: $ElementType<Scalars, "String">,
   state_provider?: ?$ElementType<Scalars, "String">,
+  etcd2_params?: ?FailoverStateProviderCfgInputEtcd2,
   tarantool_params?: ?FailoverStateProviderCfgInputTarantool
 };
 
