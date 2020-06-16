@@ -47,6 +47,7 @@ class EditReplicasetModal extends React.Component<EditReplicasetModalProps> {
         visible={!!selectedReplicasetUuid}
         loading={loading}
         onClose={this.handleClose}
+        thinBorders
         wide
       >
         {

@@ -2,6 +2,7 @@
 
 import * as React from 'react'
 import { connect } from 'react-redux'
+import { css } from 'emotion';
 import {
   Button,
   Modal,
@@ -13,6 +14,13 @@ import { withRouter } from 'react-router-dom'
 import ServerShortInfo from 'src/components/ServerShortInfo';
 import ClusterInstanceSection from './ClusterInstanceSection'
 import * as R from 'ramda';
+
+const styles = {
+  shortInfo: css`
+    margin-left: 16px;
+    margin-right: 16px;
+  `
+}
 
 type ServerInfoModalProps = {
   pageDidMount: ({ instanceUUID: string }) => void,
@@ -78,13 +86,18 @@ class ServerInfoModal extends React.Component<ServerInfoModalProps, ServerInfoMo
       <Modal
         className='meta-test__ServerInfoModal'
         title='Server details'
+        footerControls={[
+          <Button onClick={this.onClose} text='Close' />
+        ]}
         visible={true}
         onClose={this.close}
+        thinBorders
         wide
       >
         <React.Fragment>
           <ServerShortInfo
             alias={alias}
+            className={styles.shortInfo}
             activeMaster={instanceUUID === activeMasterUUID}
             selfURI={selfURI}
             master={instanceUUID === masterUUID}

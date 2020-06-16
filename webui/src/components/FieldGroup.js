@@ -32,11 +32,6 @@ export const FieldInput = styled.div`
    height: 32px;
 `
 
-export const FormContainer = styled.div`
-  padding: 0 16px;
-  
-`
-
 export const FieldConstructor = ({ label, input, required, error }) =>
   <FieldGroup>
     <FieldLabel>{label}{required && <FieldRequired>*</FieldRequired>}:</FieldLabel>

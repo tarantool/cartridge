@@ -6,12 +6,10 @@ import { Form, Field, FormSpy } from 'react-final-form';
 import {
   Button,
   Checkbox,
-  Input,
   LabeledInput,
   PopupBody,
   PopupFooter,
-  RadioButton,
-  Text
+  RadioButton
 } from '@tarantool.io/ui-kit';
 import SelectedServersList from 'src/components/SelectedServersList';
 import FormField from 'src/components/FormField';

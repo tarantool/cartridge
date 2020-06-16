@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import { css } from 'emotion';
 import { editUser } from 'src/store/actions/users.actions';
 import { Alert, Button, Input, Text } from '@tarantool.io/ui-kit';
-import { FieldConstructor, FormContainer } from '../FieldGroup';
+import { FieldConstructor } from '../FieldGroup';
 import { Formik, Form } from 'formik';
 import * as Yup from 'yup';
 import * as R from 'ramda';
@@ -83,34 +83,31 @@ class UserEditForm extends React.Component {
           handleSubmit,
           isSubmitting
         }) => (<Form>
-          <FormContainer>
-
-            {formProps.map(({ label, field, type }) =>
-              <FieldConstructor
-                key={field}
-                label={label}
-                input={
-                  <Input
-                    value={values[field]}
-                    onBlur={handleBlur}
-                    onChange={handleChange}
-                    name={field}
-                    type={type || 'text'}
-                  />
-                }
-                error={touched[field] && errors[field]}
-              />
-            )}
-            {error || errors.common ? (
-              <Alert type="error" className={styles.error}>
-                <Text variant="basic">{error || errors.common}</Text>
-              </Alert>
-            ) : null}
-            <div className={styles.actionButtons}>
-              {onClose && <Button intent="base" onClick={onClose} className={styles.cancelButton}>Cancel</Button>}
-              <Button intent="primary" type='submit'>Save</Button>
-            </div>
-          </FormContainer>
+          {formProps.map(({ label, field, type }) =>
+            <FieldConstructor
+              key={field}
+              label={label}
+              input={
+                <Input
+                  value={values[field]}
+                  onBlur={handleBlur}
+                  onChange={handleChange}
+                  name={field}
+                  type={type || 'text'}
+                />
+              }
+              error={touched[field] && errors[field]}
+            />
+          )}
+          {error || errors.common ? (
+            <Alert type="error" className={styles.error}>
+              <Text variant="basic">{error || errors.common}</Text>
+            </Alert>
+          ) : null}
+          <div className={styles.actionButtons}>
+            {onClose && <Button intent="base" onClick={onClose} className={styles.cancelButton}>Cancel</Button>}
+            <Button intent="primary" type='submit'>Save</Button>
+          </div>
         </Form>
         )}
       </Formik>

@@ -51,6 +51,7 @@ export default class ServerShortInfo extends React.PureComponent<ServerShortInfo
   render() {
     const {
       activeMaster,
+      className,
       selfURI,
       status,
       uri,
@@ -60,16 +61,16 @@ export default class ServerShortInfo extends React.PureComponent<ServerShortInfo
     } = this.props;
 
     return (
-      <div className={cx(styles.item, 'meta-test__serverShortInfoModal')}>
+      <div className={cx(styles.item, 'meta-test__serverShortInfoModal', className)}>
         <div className={styles.row}>
           {(master || activeMaster) && (
             <LeaderFlag className={styles.leaderFlag} fail={status !== 'healthy'} />
           )}
           <div className={styles.heading}>
             <Text variant='h4'>{alias}</Text>
-            <UriLabel 
-              uri={uri} 
-              icon={selfURI && uri === selfURI && IconGeoPin} 
+            <UriLabel
+              uri={uri}
+              icon={selfURI && uri === selfURI && IconGeoPin}
               className={selfURI && uri === selfURI && 'meta-test__youAreHereIcon'}
             />
           </div>

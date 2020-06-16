@@ -1,15 +1,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { ConfirmModal } from '@tarantool.io/ui-kit';
+import { ConfirmModal, Text } from '@tarantool.io/ui-kit';
 import { hideRemoveUserModal, removeUser } from 'src/store/actions/users.actions';
-import styled from 'react-emotion'
-
-const Container = styled.div`
-  padding: 0 16px;
-  font-size: 14px;
-  font-family: Open Sans;
-  line-height: 22px;
-`
 
 class UserRemoveModal extends React.Component {
   handleOk = () => this.props.removeUser(this.props.username);
@@ -24,13 +16,13 @@ class UserRemoveModal extends React.Component {
     return (
       <ConfirmModal
         className='meta-test__UserRemoveModal'
-        title="Please confirm"
+        title='Please confirm'
         visible={removeUserModalVisible}
         onCancel={hideRemoveUserModal}
         onConfirm={this.handleOk}
-        confirmText="Remove"
+        confirmText='Remove'
       >
-        <Container>Removing user {username}</Container>
+        <Text>Removing user {username}</Text>
       </ConfirmModal>
     );
   }

@@ -14,7 +14,7 @@ import {
   PopupBody,
   PopupFooter,
   Tabbed,
-  Text,
+  Text
 } from '@tarantool.io/ui-kit'
 import { validateTarantoolUri } from '../misc/decomposeTarantoolUri';
 
@@ -219,16 +219,8 @@ class DemoInfo extends React.Component<DemoInfoProps, DemoInfoState> {
           onConfirm={this.makeReset}
           confirmText={'Reset'}
         >
-          <PopupBody>
-            <p>
-              <Text>
-                Do you really want to reset your settings?
-              </Text>
-            </p>
-            <p>
-              <Text>This action will result in data loss.</Text>
-            </p>
-          </PopupBody>
+          <Text tag='p'>Do you really want to reset your settings?</Text>
+          <Text tag='p'>This action will result in data loss.</Text>
         </ConfirmModal>
       }
       {
@@ -238,6 +230,7 @@ class DemoInfo extends React.Component<DemoInfoProps, DemoInfoState> {
           title={'Connect info'}
           onClose={this.hideConnectInfo}
           className='meta-test__DemoInfo_modal'
+          thinBorders
           wide
         >
           <Tabbed tabs={tabs}/>

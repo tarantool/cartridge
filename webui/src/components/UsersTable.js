@@ -114,7 +114,7 @@ class UsersTable extends React.Component {
         )),
         R.filter(R.identity),
         R.map(([key, exists]) => exists ? buttons[key] : null),
-        R.toPairs,
+        R.toPairs
       )({ edit, remove })
       return filtered.length > 0
         ? (
@@ -135,7 +135,7 @@ class UsersTable extends React.Component {
             className={styles.row}
           >
             {columns.map(({ dataIndex, className }) =>
-              <div className={cx(styles.field, className,)} title={item[dataIndex]}>{item[dataIndex]}</div>
+              <div className={cx(styles.field, className)} title={item[dataIndex]}>{item[dataIndex]}</div>
             )}
             {
               actionButton(item, styles.actions)
