@@ -24,6 +24,11 @@ import type {
 } from 'src/generated/graphql-typing';
 
 const styles = {
+  wrap: css`
+    width: calc(100% + 32px);
+    margin-left: -16px;
+    margin-right: -16px;
+  `,
   filter: css`
     width: 305px;
   `,
@@ -165,7 +170,7 @@ class JoinReplicasetForm extends React.Component<JoinReplicasetFormProps> {
         }) => {
           return (
             <form onSubmit={handleSubmit}>
-              <PopupBody>
+              <PopupBody className={styles.wrap}>
                 <SelectedServersList className={styles.splash} serverList={selectedServers} selfURI={selfURI} />
                 <FormField
                   className={styles.wideField}

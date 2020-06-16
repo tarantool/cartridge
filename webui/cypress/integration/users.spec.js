@@ -18,7 +18,7 @@ describe('Users', () => {
 
   it('Edit user', () => {
     cy.get('.meta-test__UsersTable').find('button').eq(1).click();
-    cy.get('li').contains('Edit user').click();
+    cy.get('.meta-test__UsersTableItem__dropdown *').contains('Edit user').click();
     cy.get('.meta-test__UserEditModal input[name="password"]')
       .type('{selectall}{del}')
       .type('321');
@@ -34,7 +34,7 @@ describe('Users', () => {
 
   it('Remove user', () => {
     cy.get('.meta-test__UsersTable li:contains(user_do_not_touch)').find('button').click();
-    cy.get('li').contains('Remove user').click();
+    cy.get('.meta-test__UsersTableItem__dropdown *').contains('Remove user').click();
     cy.get('.meta-test__UserRemoveModal button[type="button"]:contains(Remove)').click();
 
     cy.get('.meta-test__UsersTable').contains('user_do_not_touch').should('not.exist');

@@ -1,7 +1,7 @@
 describe('Test 401 error', () => {
 
   before(function () {
-    cy.visit(Cypress.config('baseUrl')+"/admin/cluster/dashboard");
+    cy.visit(Cypress.config('baseUrl')+'/admin/cluster/dashboard');
   })
 
   it('Test 401 error', () => {
@@ -11,7 +11,7 @@ describe('Test 401 error', () => {
     cy.get('input[name="password"]').type('test-cluster-cookie{enter}');
 
     cy.get('.meta-test__LogoutBtn').contains('Cartridge Administrator').click();
-    cy.get('li:contains(Log out)').click();
+    cy.get('.meta-test__LogoutDropdown *:contains(Log out)').click();
 
     cy.get('.meta-test__LoginFormSplash').should('be.visible');
   })

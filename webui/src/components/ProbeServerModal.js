@@ -61,7 +61,8 @@ class ProbeServerModal extends React.PureComponent<ProbeServerModalProps> {
           {({
             values,
             handleChange,
-            handleSubmit
+            handleSubmit,
+            resetForm
           }) => (
             <Modal
               className='ProbeServerModal'
@@ -75,7 +76,10 @@ class ProbeServerModal extends React.PureComponent<ProbeServerModalProps> {
               ]}
               visible={probeServerModalVisible}
               title='Probe server'
-              onClose={() => setProbeServerModalVisible(false)}
+              onClose={() => {
+                setProbeServerModalVisible(false);
+                resetForm();
+              }}
               onSubmit={handleSubmit}
             >
               <div className={styles.formInner}>

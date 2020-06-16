@@ -118,7 +118,11 @@ class UsersTable extends React.Component {
       )({ edit, remove })
       return filtered.length > 0
         ? (
-          <Dropdown className={className} items={filtered}>
+          <Dropdown
+            className={className}
+            items={filtered}
+            popoverClassName='meta-test__UsersTableItem__dropdown'
+          >
             <Button icon={IconMore} intent='iconic' size='s' />
           </Dropdown>
         )

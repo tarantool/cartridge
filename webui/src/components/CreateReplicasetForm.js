@@ -34,6 +34,9 @@ const styles = {
   wrap: css`
     display: flex;
     flex-wrap: wrap;
+    width: calc(100% + 32px);
+    margin-left: -16px;
+    margin-right: -16px;
   `,
   input: css`
     margin-bottom: 4px;

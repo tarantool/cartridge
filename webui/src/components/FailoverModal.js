@@ -52,7 +52,7 @@ const styles = {
   `,
   inputField: css`
     flex-shrink: 0;
-    width: calc(50% - 36px);
+    width: calc(50% - 32px);
     margin-left: 16px;
     margin-right: 16px;
     box-sizing: border-box;

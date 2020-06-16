@@ -2,25 +2,16 @@
 
 import * as React from 'react'
 import { connect } from 'react-redux'
-import { css } from 'emotion';
 import {
   Button,
   Modal,
-  Tabbed,
-  PopupFooter
+  Tabbed
 } from '@tarantool.io/ui-kit';
 import { pageDidMount, resetPageState } from 'src/store/actions/clusterInstancePage.actions';
 import { withRouter } from 'react-router-dom'
 import ServerShortInfo from 'src/components/ServerShortInfo';
 import ClusterInstanceSection from './ClusterInstanceSection'
 import * as R from 'ramda';
-
-const styles = {
-  shortInfo: css`
-    margin-left: 16px;
-    margin-right: 16px;
-  `
-}
 
 type ServerInfoModalProps = {
   pageDidMount: ({ instanceUUID: string }) => void,
@@ -97,7 +88,6 @@ class ServerInfoModal extends React.Component<ServerInfoModalProps, ServerInfoMo
         <React.Fragment>
           <ServerShortInfo
             alias={alias}
-            className={styles.shortInfo}
             activeMaster={instanceUUID === activeMasterUUID}
             selfURI={selfURI}
             master={instanceUUID === masterUUID}
@@ -112,11 +102,6 @@ class ServerInfoModal extends React.Component<ServerInfoModalProps, ServerInfoMo
                 content: (<ClusterInstanceSection sectionName={section}/>)
               }))
             }
-          />
-          <PopupFooter
-            controls={[
-              <Button intent={'base'} text={'Close'} onClick={this.close} />
-            ]}
           />
         </React.Fragment>
       </Modal>
