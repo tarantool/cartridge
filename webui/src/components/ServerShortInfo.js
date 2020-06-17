@@ -40,6 +40,7 @@ const styles = {
 
 type ServerShortInfoProps = {
   activeMaster?: boolean,
+  className?: string,
   selfURI?: string,
   status?: string,
   uri: string,
