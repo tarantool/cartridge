@@ -91,13 +91,12 @@ Stateful failover
 
 As in case of eventual failover, every instance composes its own leadership map,
 but now the map is fetched from an **external state provider**
-(that's why this failover mode called "stateful"). In future, Cartridge is
-going to support different providers, such as Consul or etcd, but
-nowadays there's only one -- ``stateboard``. This is a standalone Tarantool
-instance which implements a domain-specific key-value storage (simply
+(that's why this failover mode called "stateful"). Nowadays there are two state
+providers supported -- ``etcd`` and ``stateboard`` (standalone Tarantool instance).
+State provider serves as a domain-specific key-value storage (simply
 ``replicaset_uuid -> leader_uuid``) and a locking mechanism.
 
-Changes in the leadership map are obtained from the stateboard with the
+Changes in the leadership map are obtained from the state provider with the
 `long polling technique <https://en.wikipedia.org/wiki/Push_technology#Long_polling>`_.
 
 All decisions are made by **the coordinator** -- the one that holds the
@@ -107,8 +106,9 @@ them can acquire the lock at the same time. We call this coordinator the "active
 one.
 
 The lock is released automatically when the TCP connection is closed, or it
-may expire if the coordinator becomes unresponsive (the timeout is set by the
-stateboard's ``--lock_delay`` option), so the coordinator renews the lock from
+may expire if the coordinator becomes unresponsive (in ``stateboard`` it's set
+by the stateboard's ``--lock_delay`` option, for ``etcd`` it's a part of
+clusterwide configuration), so the coordinator renews the lock from
 time to time in order to be considered alive.
 
 The coordinator makes a decision based on the SWIM data, but the decision
@@ -160,6 +160,7 @@ In the stateful mode, the failover priority doesn't make much sense (except for
 the first appointment). Instead, you should use the promotion API
 (the Lua
 `cartridge.failover_promote <https://www.tarantool.io/en/doc/latest/book/cartridge/cartridge_api/modules/cartridge/#failover-promote-replicaset-uuid>`_
+.. TODO make link internal, it's the same document
 or
 the GraphQL ``mutation {cluster{failover_promote()}}``)
 which pushes manual appointments to the state provider.
@@ -171,8 +172,9 @@ Failover configuration
 These are clusterwide parameters:
 
 * ``mode``: "disabled" / "eventual" / "stateful".
-* ``state_provider``: only "tarantool" is supported for now.
+* ``state_provider``: "tarantool" / "etcd".
 * ``tarantool_params``: ``{uri = "...", password = "..."}``.
+* ``etcd2_params``: ``{endpoints = {...}, prefix = "/", lock_delay = 10, username = "", password = ""}``.
 
 *******************************************************************************
 Lua API
@@ -183,6 +185,7 @@ See:
 * `cartridge.failover_get_params <https://www.tarantool.io/en/doc/latest/book/cartridge/cartridge_api/modules/cartridge/#failover-get-params>`_,
 * `cartridge.failover_set_params <https://www.tarantool.io/en/doc/latest/book/cartridge/cartridge_api/modules/cartridge/#failover-set-params-opts>`_,
 * `cartridge.failover_promote <https://www.tarantool.io/en/doc/latest/book/cartridge/cartridge_api/modules/cartridge/#failover-promote-replicaset-uuid>`_.
+.. TODO make links internal
 
 *******************************************************************************
 GraphQL API
@@ -228,7 +231,7 @@ that influence failover operation:
   connection timeout (in seconds) applied to all communications (default: 1);
 
 * ``RECONNECT_PERIOD`` (``coordinator``) -- time (in seconds) to reconnect to the
-  stateboard if it's unreachable (default: 5);
+  state provider if it's unreachable (default: 5);
 
 * ``IMMUNITY_TIMEOUT`` (``coordinator``) -- minimal amount of time (in seconds)
   to wait before overriding an appointment (default: 15).

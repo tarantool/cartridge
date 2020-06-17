@@ -18,6 +18,7 @@ Added
 
 - When running under systemd use ``<APP_NAME>.<INSTANCE_NAME>`` as
   default syslog identity.
+- Support ``etcd`` as state provider for stateful failover.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Changed
