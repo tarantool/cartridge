@@ -73,7 +73,7 @@ describe('Leader promotion tests', () => {
     cy.get('span:contains(Failover mode) + * + span:contains(stateful)').click();
 
     cy.get('li').contains('13302').closest('li').find('.meta-test__ReplicasetServerListItem__dropdownBtn').click();
-    cy.get('.meta-test__ReplicasetServerListItem__dropdown *').contains('Promote a leader').click({ force: true });
+    cy.get('.meta-test__ReplicasetServerListItem__dropdown :contains(Promote a leader)').click({ force: true });
     cy.get('span:contains(Leader promotion error) + * + span:contains(GraphQL error: State provider unavailable)')
       .click();
   })

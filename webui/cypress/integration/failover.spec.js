@@ -41,7 +41,7 @@ describe('Failover', () => {
   it('Failover Stateful: error', () => {
     cy.get('.meta-test__FailoverButton').click();
 
-    cy.get('.meta-test__statefulRadioBtn').click();
+    cy.get('.meta-test__statefulRadioBtn').click({force:true});
     cy.get('.meta-test__stateboardURI input').type('{selectall}{backspace}');
     cy.get('.meta-test__stateboardPassword input').type('{selectall}{backspace}');
 
