@@ -11,7 +11,7 @@ describe('Test 401 error', () => {
     cy.get('input[name="password"]').type('test-cluster-cookie{enter}');
 
     cy.get('.meta-test__LogoutBtn').contains('Cartridge Administrator').click();
-    cy.get('.meta-test__LogoutDropdown *:contains(Log out)').click();
+    cy.get('.meta-test__LogoutDropdown *:contains(Log out)').click({ force: true });
 
     cy.get('.meta-test__LoginFormSplash').should('be.visible');
   })
