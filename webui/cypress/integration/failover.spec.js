@@ -137,7 +137,7 @@ describe('Failover', () => {
       })
 
     cy.get('.meta-test__SubmitButton').click();
-    cy.get('span:contains(Failover mode) + * + span:contains(stateful)').click();
+    cy.get('span:contains(Failover mode) + span:contains(stateful)').click();
     cy.get('.meta-test__FailoverButton').contains('Failover: stateful');
   })
 
