@@ -3,7 +3,7 @@ describe('Schema section', () => {
     const selectAllKeys = Cypress.platform == 'darwin' ? '{cmd}a' : '{ctrl}a';
     const defaultText = '---\nspaces: []\n...\n';
 
-    cy.visit(Cypress.config('baseUrl')+"/admin/cluster/schema");
+    cy.visit(Cypress.config('baseUrl')+'/admin/cluster/schema');
     cy.contains('Tarantool/Schema');
     cy.get('.monaco-editor textarea').should('have.value', defaultText);
 
@@ -26,7 +26,7 @@ describe('Schema section', () => {
     cy.get('#root').contains('Schema is valid');
 
     cy.get('button[type="button"]').contains('Apply').click();
-    cy.get('span:contains(Success) + * + span:contains(Schema successfully applied)').click();
+    cy.get('span:contains(Success) + span:contains(Schema successfully applied)').click();
 
     ////////////////////////////////////////////////////////////////////
     cy.get('.monaco-editor textarea').type(selectAllKeys + '{backspace}');
@@ -45,7 +45,7 @@ describe('Schema section', () => {
 
     cy.get('button[type="button"]').contains('Apply').click();
     cy.get('#root').contains('Bad argument #1 to ddl.check_schema').should('not.exist');
-    cy.get('span:contains(Success) + * + span:contains(Schema successfully applied)').click();
+    cy.get('span:contains(Success) + span:contains(Schema successfully applied)').click();
 
     cy.get('button[type="button"]').contains('Reload').click();
     cy.get('.monaco-editor textarea').should('have.value', defaultText);

@@ -19,7 +19,7 @@ describe('Failover', () => {
 
 
     cy.get('.meta-test__SubmitButton').click();
-    cy.get('span:contains(Failover mode) + * + span:contains(disabled)').click();
+    cy.get('span:contains(Failover mode) + span:contains(disabled)').click();
     cy.get('.meta-test__FailoverButton').contains('Failover: disabled');
     cy.get('.meta-test__ClusterIssuesButton').should('be.disabled');
   })
@@ -33,7 +33,7 @@ describe('Failover', () => {
     cy.get('.meta-test__stateboardPassword input').should('be.disabled');
 
     cy.get('.meta-test__SubmitButton').click();
-    cy.get('span:contains(Failover mode) + * + span:contains(eventual)').click();
+    cy.get('span:contains(Failover mode) + span:contains(eventual)').click();
     cy.get('.meta-test__FailoverButton').contains('Failover: eventual');
     cy.get('.meta-test__ClusterIssuesButton').should('be.disabled');
   })
@@ -41,7 +41,7 @@ describe('Failover', () => {
   it('Failover Stateful: error', () => {
     cy.get('.meta-test__FailoverButton').click();
 
-    cy.get('.meta-test__statefulRadioBtn').click({force:true});
+    cy.get('.meta-test__statefulRadioBtn').click({ force: true });
     cy.get('.meta-test__stateboardURI input').type('{selectall}{backspace}');
     cy.get('.meta-test__stateboardPassword input').type('{selectall}{backspace}');
 
@@ -64,7 +64,7 @@ describe('Failover', () => {
     cy.get('.meta-test__stateboardURI input').type('{selectall}{backspace}localhost' + testPort);
 
     cy.get('.meta-test__SubmitButton').click();
-    cy.get('span:contains(Failover mode) + * + span:contains(stateful)').click();
+    cy.get('span:contains(Failover mode) + span:contains(stateful)').click();
     cy.get('.meta-test__FailoverButton').contains('Failover: stateful');
   })
 
