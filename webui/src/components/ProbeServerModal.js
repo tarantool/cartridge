@@ -8,7 +8,6 @@ import {
   Button,
   Input,
   Modal,
-  PopupFooter,
   Text
 } from '@tarantool.io/ui-kit';
 import { probeServer } from 'src/store/actions/clusterPage.actions';
@@ -19,7 +18,7 @@ import {
 
 const styles = {
   formInner: css`
-    padding: 0 16px 16px;
+    margin-bottom: 16px;
   `,
   error: css`
     margin-bottom: 16px;
@@ -53,54 +52,55 @@ class ProbeServerModal extends React.PureComponent<ProbeServerModalProps> {
           onClick={() => setProbeServerModalVisible(true)}
           text='Probe server'
         />
-        <Modal
-          className='ProbeServerModal'
-          visible={probeServerModalVisible}
-          title='Probe server'
-          onClose={() => setProbeServerModalVisible(false)}
+        <Formik
+          initialValues={{
+            uri: ''
+          }}
+          onSubmit={this.handleSubmit}
         >
-          <Formik
-            initialValues={{
-              uri: ''
-            }}
-            onSubmit={this.handleSubmit}
-          >
-            {({
-              values,
-              handleChange,
-              handleSubmit
-            }) => (
-              <form onSubmit={handleSubmit}>
-                <div className={styles.formInner}>
-                  {error && (
-                    <Alert className={cx(styles.error, 'ProbeServerModal_error')} type='error'>
-                      <Text tag='span'>{error}</Text>
-                    </Alert>
-                  )}
-                  <Text className={styles.text}>
-                    Probe a server if it wasn't discovered automatically by UDP broadcast.
-                  </Text>
-                  <Input
-                    name='uri'
-                    value={values.uri}
-                    onChange={handleChange}
-                    placeholder='Server URI, e.g. localhost:3301'
-                  />
-                </div>
-                <PopupFooter
-                  controls={[
-                    <Button
-                      className='meta-test__ProbeServerSubmitBtn'
-                      type='submit'
-                      intent='primary'
-                      text='Submit'
-                    />
-                  ]}
+          {({
+            values,
+            handleChange,
+            handleSubmit,
+            resetForm
+          }) => (
+            <Modal
+              className='ProbeServerModal'
+              footerControls={[
+                <Button
+                  className='meta-test__ProbeServerSubmitBtn'
+                  type='submit'
+                  intent='primary'
+                  text='Submit'
                 />
-              </form>
-            )}
-          </Formik>
-        </Modal>
+              ]}
+              visible={probeServerModalVisible}
+              title='Probe server'
+              onClose={() => {
+                setProbeServerModalVisible(false);
+                resetForm();
+              }}
+              onSubmit={handleSubmit}
+            >
+              <div className={styles.formInner}>
+                {error && (
+                  <Alert className={cx(styles.error, 'ProbeServerModal_error')} type='error'>
+                    <Text tag='span'>{error}</Text>
+                  </Alert>
+                )}
+                <Text className={styles.text}>
+                  Probe a server if it wasn't discovered automatically by UDP broadcast.
+                </Text>
+                <Input
+                  name='uri'
+                  value={values.uri}
+                  onChange={handleChange}
+                  placeholder='Server URI, e.g. localhost:3301'
+                />
+              </div>
+            </Modal>
+          )}
+        </Formik>
       </React.Fragment>
     );
   }

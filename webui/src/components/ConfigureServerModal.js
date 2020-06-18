@@ -114,6 +114,7 @@ class ConfigureServerModal extends React.Component<ConfigureServerModalProps> {
         visible={!!selectedServerUri}
         loading={loading}
         onClose={this.handleClose}
+        thinBorders
         wide
       >
         <Tabbed tabs={tabs} />

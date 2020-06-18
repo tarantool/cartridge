@@ -6,7 +6,7 @@ import { css } from 'emotion';
 
 const styles = {
   listInner: css`
-    padding: 24px 16px;
+    padding: 24px 0;
   `,
   listItem: css`
     display: flex;

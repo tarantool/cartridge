@@ -1,7 +1,8 @@
 // @flow
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { turnAuth } from 'src/store/actions/auth.actions';
+import { css } from 'emotion';
+import styled from 'react-emotion';
 import {
   ConfirmModal,
   IconCancel,
@@ -9,8 +10,18 @@ import {
   Switcher,
   Text
 } from '@tarantool.io/ui-kit';
-import { SwitcherIconContainer, ModalInfoContainer, SwitcherInfoLine } from './styled'
+import { turnAuth } from 'src/store/actions/auth.actions';
 
+const styles = {
+  paragraph: css`
+    margin: 0 0 24px;
+  `
+};
+
+const SwitcherIconContainer = styled.span`
+  display: inline-block;
+  margin-right: 8px;
+`
 
 type AuthToggleButtonProps = {
   implements_check_password: boolean,
@@ -59,19 +70,13 @@ class AuthToggleButton extends React.Component<AuthToggleButtonProps, {visible: 
             onCancel={this.hideModal}
             title={'Authorization'}
           >
-            <ModalInfoContainer>
-              <SwitcherInfoLine>
-                <Text variant={'basic'}>
-                  <SwitcherIconContainer>{authorizationEnabled ? <IconOk/> : <IconCancel/>}</SwitcherIconContainer>
+            <Text tag='p' className={styles.paragraph}>
+              <SwitcherIconContainer>{authorizationEnabled ? <IconOk/> : <IconCancel/>}</SwitcherIconContainer>
                   Authorization <b>{authorizationEnabled ? 'enabled' : 'disabled'}</b>
-                </Text>
-              </SwitcherInfoLine>
-              <SwitcherInfoLine>
-                <Text variant={'basic'}>
+            </Text>
+            <Text tag='p' className={styles.paragraph}>
                   When you enable this option, an authorization page will be available to you each time the session ends
-                </Text>
-              </SwitcherInfoLine>
-            </ModalInfoContainer>
+            </Text>
           </ConfirmModal>
         </React.Fragment>
       ) :

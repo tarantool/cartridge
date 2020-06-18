@@ -4,7 +4,7 @@ import { Alert, Button, Input, Text } from '@tarantool.io/ui-kit';
 import { css } from 'emotion';
 import { addUser } from 'src/store/actions/users.actions';
 import { Formik, Form } from 'formik';
-import { FormContainer, FieldConstructor } from '../FieldGroup'
+import { FieldConstructor } from '../FieldGroup'
 import * as Yup from 'yup';
 
 const schema = Yup.object().shape({
@@ -81,35 +81,32 @@ class UserAddForm extends React.Component {
           handleSubmit,
           isSubmitting
         }) => (<Form>
-          <FormContainer>
-
-            {formProps.map(field =>
-              <FieldConstructor
-                key={field}
-                label={field}
-                required={requiredFields.includes(field)}
-                input={
-                  <Input
-                    value={values[field]}
-                    onBlur={handleBlur}
-                    onChange={handleChange}
-                    name={field}
-                    type={field === 'password' ? 'password' : 'text'}
-                  />
-                }
-                error={touched[field] && errors[field]}
-              />
-            )}
-            {error || errors.common ? (
-              <Alert type="error" className={styles.error}>
-                <Text variant="basic">{error || errors.common}</Text>
-              </Alert>
-            ) : null}
-            <div className={styles.actionButtons}>
-              {onClose && <Button intent="base" onClick={onClose} className={styles.cancelButton}>Cancel</Button>}
-              <Button intent="primary" type='submit'>Add</Button>
-            </div>
-          </FormContainer>
+          {formProps.map(field =>
+            <FieldConstructor
+              key={field}
+              label={field}
+              required={requiredFields.includes(field)}
+              input={
+                <Input
+                  value={values[field]}
+                  onBlur={handleBlur}
+                  onChange={handleChange}
+                  name={field}
+                  type={field === 'password' ? 'password' : 'text'}
+                />
+              }
+              error={touched[field] && errors[field]}
+            />
+          )}
+          {error || errors.common ? (
+            <Alert type="error" className={styles.error}>
+              <Text variant="basic">{error || errors.common}</Text>
+            </Alert>
+          ) : null}
+          <div className={styles.actionButtons}>
+            {onClose && <Button intent="base" onClick={onClose} className={styles.cancelButton}>Cancel</Button>}
+            <Button intent="primary" type='submit'>Add</Button>
+          </div>
         </Form>
         )}
       </Formik>

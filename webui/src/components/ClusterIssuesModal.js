@@ -1,11 +1,19 @@
 // @flow
 import * as React from 'react';
+import { css } from 'emotion';
 import {
   Button,
   Modal,
   Text
 } from '@tarantool.io/ui-kit';
 import type { Issue } from 'src/generated/graphql-typing';
+
+const styles = {
+  list: css`
+    padding: 0;
+    list-style-position: inside;
+  `
+};
 
 type ClusterIssuesModalProps = {
   issues: Issue[],
@@ -23,7 +31,7 @@ export const ClusterIssuesModal = ({ issues, visible, onClose }: ClusterIssuesMo
       <Button className='meta-test__closeClusterIssuesModal' onClick={onClose}>Close </Button>
     ]}
   >
-    <ul>
+    <ul className={styles.list}>
       {issues.map(({ level, message }) => (
         <Text tag='li'><b>{level}:</b> {message}</Text>
       ))}

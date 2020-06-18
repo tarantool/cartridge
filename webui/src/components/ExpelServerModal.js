@@ -6,7 +6,6 @@ import { Alert, ConfirmModal, Text } from '@tarantool.io/ui-kit';
 import { expelServer, hideExpelModal } from '../store/actions/clusterPage.actions';
 import { selectServerByUri } from '../store/selectors/clusterPage';
 import { formatServerName } from '../misc/server';
-import { css } from 'react-emotion'
 
 type ExpelServerModalProps = {
   expelModal: ?string,
@@ -25,24 +24,20 @@ class ExpelServerModal extends React.Component<ExpelServerModalProps>{
     return (
       <ConfirmModal
         className='meta-test__ExpelServerModal'
-        title={'Expel server'}
+        title='Expel server'
         visible={!!expelModal}
-        confirmText={'Expel'}
+        confirmText='Expel'
         onConfirm={() => {this.props.dispatch(expelServer(serverInfo))}}
         onCancel={() => {this.props.dispatch(hideExpelModal())}}
       >
-        <div className={css`padding: 16px`}>
-          <p className={css``}>
-            <Text variant={'basic'}>
-              Do you really want to expel the server {serverInfo ? formatServerName(serverInfo) : ''}?
-            </Text>
-          </p>
-          {error ? (
-            <Alert type="error" >
-              <Text variant="basic">{error}</Text>
-            </Alert>
-          ) : null}
-        </div>
+        <Text tag='p' >
+          Do you really want to expel the server {serverInfo ? formatServerName(serverInfo) : ''}?
+        </Text>
+        {error ? (
+          <Alert type='error' >
+            <Text>{error}</Text>
+          </Alert>
+        ) : null}
       </ConfirmModal>
     )
   }

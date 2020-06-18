@@ -291,7 +291,7 @@ class ReplicasetServerListItem extends React.PureComponent<
             </DropdownItem>
           ]}
           className={cx(styles.configureBtn, 'meta-test__ReplicasetServerListItem__dropdownBtn')}
-          popoverClassName={'meta-test__ReplicasetServerListItem__dropdown'}
+          popoverClassName='meta-test__ReplicasetServerListItem__dropdown'
         >
           <Button
             icon={IconMore}

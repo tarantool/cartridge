@@ -17,7 +17,6 @@ import {
   Text,
   Spin
 } from '@tarantool.io/ui-kit';
-import { ModalInfoContainer } from '../styled'
 
 const schema = yup.object().shape({
   username: yup.string().required(),
@@ -220,9 +219,7 @@ export const ModalLogInForm = ({ onCancel, visible, ...props }) => (
     onClose={onCancel}
     destroyOnClose={true}
   >
-    <ModalInfoContainer>
-      <ConnectedLogInForm {...props} onClose={onCancel} />
-    </ModalInfoContainer>
+    <ConnectedLogInForm {...props} onClose={onCancel} />
   </Modal>
 )
 

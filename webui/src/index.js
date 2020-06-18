@@ -145,3 +145,5 @@ function axiosAuthErrorHandler(error, next) {
 tarantool_enterprise_core.apiMethods.registerAxiosHandler('responseError', axiosAuthErrorHandler);
 tarantool_enterprise_core.apiMethods.registerAxiosHandler('responseError', axiosConnectionErrorHandler);
 tarantool_enterprise_core.apiMethods.registerAxiosHandler('response', axiosConnectionErrorHandler);
+
+tarantool_enterprise_core.install();

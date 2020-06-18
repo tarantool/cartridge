@@ -6,12 +6,10 @@ import { Form, Field, FormSpy } from 'react-final-form';
 import {
   Button,
   Checkbox,
-  Input,
   LabeledInput,
   PopupBody,
   PopupFooter,
-  RadioButton,
-  Text
+  RadioButton
 } from '@tarantool.io/ui-kit';
 import SelectedServersList from 'src/components/SelectedServersList';
 import FormField from 'src/components/FormField';
@@ -36,6 +34,9 @@ const styles = {
   wrap: css`
     display: flex;
     flex-wrap: wrap;
+    width: calc(100% + 32px);
+    margin-left: -16px;
+    margin-right: -16px;
   `,
   input: css`
     margin-bottom: 4px;

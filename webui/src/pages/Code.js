@@ -9,13 +9,11 @@ import {
   IconCreateFolder,
   IconCreateFile,
   IconRefresh,
-  PopupBody,
   Text,
   Scrollbar,
   NonIdealState,
   splashSelectFileSvg
 } from '@tarantool.io/ui-kit';
-import { InputModal } from 'src/components/InputModal';
 import MonacoEditor from 'src/components/MonacoEditor';
 import { FileTree } from 'src/components/FileTree';
 import { selectFileTree, selectSelectedFile } from 'src/store/selectors/filesSelectors';
@@ -123,7 +121,7 @@ const styles = {
     width: 80px;
     height: 112px;
     margin-bottom: 24px;
-  `,
+  `
 };
 
 type CodeState = {
@@ -421,7 +419,7 @@ class Code extends React.Component<CodeProps, CodeState> {
               <>
                 <MonacoEditor
                   className={styles.editor}
-                  language={selectedFile && getLanguageByFileName(selectedFile.fileName) || null}
+                  language={(selectedFile && getLanguageByFileName(selectedFile.fileName)) || null}
                   options={{
                     ...options,
                     readOnly: !selectedFile
@@ -442,19 +440,17 @@ class Code extends React.Component<CodeProps, CodeState> {
           </div>
           {operableFile && typeof operableFile.type === 'string' && (
             <ConfirmModal
-              title='Delete file'
+              title={`Delete ${operableFile.type}`}
               className='meta-test__deleteModal'
               visible={fileOperationType === 'delete'}
               onCancel={this.handleFileOperationCancel}
               onConfirm={this.handleFileDeleteConfirm}
             >
-              <PopupBody>
-                <Text>
-                  {'Are you sure you want to delete the '}
-                  <Text className={styles.popupFileName}>{operableFile && operableFile.fileName}</Text>
-                  {` ${operableFile.type}`}
-                </Text>
-              </PopupBody>
+              <Text>
+                {'Are you sure you want to delete the '}
+                <Text className={styles.popupFileName}>{operableFile && operableFile.fileName}</Text>
+                {` ${operableFile.type}`}
+              </Text>
             </ConfirmModal>
           )}
           {isReloadConfirmOpened && (
@@ -466,13 +462,11 @@ class Code extends React.Component<CodeProps, CodeState> {
                 this.setState({ isReloadConfirmOpened: false });
               }}
             >
-              <PopupBody>
-                <Text>
-                  Are you sure you want to reload all the files?
-                  <br />
-                  All unsaved changes will be reset
-                </Text>
-              </PopupBody>
+              <Text>
+                Are you sure you want to reload all the files?
+                <br />
+                All unsaved changes will be reset
+              </Text>
             </ConfirmModal>
           )}
         </div>

@@ -26,14 +26,12 @@ const styles = {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    color: white;
   `,
   button: css`
     flex-shrink: 0;
   `,
   authIcon: css`
     margin-right: 8px;
-    cursor: pointer;
   `
 };
 
@@ -63,10 +61,8 @@ class HeaderAuthControl extends React.Component {
             <DropdownItem onClick={this.sendLogOut}>Log out</DropdownItem>
           ]}
         >
-          <div className={styles.authIcon}>
-            <IconUser/>
-          </div>
-          <span className={styles.userName}><Text variant={'basic'}>{username}</Text></span>
+          <IconUser className={styles.authIcon} />
+          <Text className={styles.userName}>{username}</Text>
         </Dropdown>
       )
     }
@@ -76,8 +72,8 @@ class HeaderAuthControl extends React.Component {
         {!authorized &&
         <Button
           className='meta-test__LoginBtn'
-          text={'Log in'}
-          intent={'base'}
+          text='Log in'
+          intent='base'
           onClick={() => showAuthModal()}
         />
         }

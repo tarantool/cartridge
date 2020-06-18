@@ -7,7 +7,6 @@ import {
   withDropdown,
   DropdownItem,
   DropdownDivider,
-  Scrollbar,
   Button,
   IconChevron
 } from '@tarantool.io/ui-kit';
@@ -21,12 +20,7 @@ const styles = {
     position: relative;
   `,
   chevron: css`
-    margin-left: .5em;
     fill: rgba(245, 34, 45, 0.65);
-  `,
-  scrollable: css`
-    height: 250px;
-    width: 12em;
   `
 };
 
@@ -55,40 +49,26 @@ const ReplicasetFilterInput = ({
 );
 
 
-const presetsDropdown = (setValue: (s: string) => void, roles: Role[] = []): React.Node => {
-  const WrapComponent = roles.length > 5
-    ? ({ children }) => <Scrollbar className={styles.scrollable}>{children}</Scrollbar>
-    : ({ children }) => <>{children}</>;
-
-  return (
-    <DropdownButton
-      items={(
-        <WrapComponent>
-          {
-            [
-              'Healthy',
-              'Unhealthy'
-            ].map(getDropdownOption('status', setValue))
-          }
-          <DropdownDivider />
-          {
-            roles.map(role => getDropdownOption('role', setValue)(role.name))
-          }
-        </WrapComponent>
-      )}
-      intent='secondary'
-      iconRight={() => (
-        <IconChevron
-          direction='down'
-          className={styles.chevron}
-        />
-      )}
-      popoverClassName='meta-test__Filter__Dropdown'
-    >
-    Filter
-    </DropdownButton>
-  );
-};
+const presetsDropdown = (
+  setValue: (s: string) => void, roles: Role[] = []
+): React.Node => (
+  <DropdownButton
+    items={[
+      ...['Healthy', 'Unhealthy'].map(getDropdownOption('status', setValue)),
+      <DropdownDivider />,
+      ...roles.map(role => getDropdownOption('role', setValue)(role.name))
+    ]}
+    intent='secondary'
+    iconRight={({ className }) => (
+      <IconChevron
+        direction='down'
+        className={cx(styles.chevron, className)}
+      />
+    )}
+    text='Filter'
+    popoverClassName='meta-test__Filter__Dropdown'
+  />
+);
 
 const getDropdownOption = (prefix, setValue) => option => (
   <DropdownItem

@@ -5,8 +5,7 @@ import { connect } from 'react-redux'
 import {
   Button,
   Modal,
-  Tabbed,
-  PopupFooter
+  Tabbed
 } from '@tarantool.io/ui-kit';
 import { pageDidMount, resetPageState } from 'src/store/actions/clusterInstancePage.actions';
 import { withRouter } from 'react-router-dom'
@@ -78,8 +77,12 @@ class ServerInfoModal extends React.Component<ServerInfoModalProps, ServerInfoMo
       <Modal
         className='meta-test__ServerInfoModal'
         title='Server details'
+        footerControls={[
+          <Button onClick={this.close} text='Close' />
+        ]}
         visible={true}
         onClose={this.close}
+        thinBorders
         wide
       >
         <React.Fragment>
@@ -99,11 +102,6 @@ class ServerInfoModal extends React.Component<ServerInfoModalProps, ServerInfoMo
                 content: (<ClusterInstanceSection sectionName={section}/>)
               }))
             }
-          />
-          <PopupFooter
-            controls={[
-              <Button intent={'base'} text={'Close'} onClick={this.close} />
-            ]}
           />
         </React.Fragment>
       </Modal>

@@ -27,7 +27,7 @@ describe('Login', () => {
 
   it('Logout', () => {
     cy.get('.meta-test__LogoutBtn').click();
-    cy.get('li').contains('Log out').click();
+    cy.get('.meta-test__LogoutDropdown *').contains('Log out').click();
   })
 
   it('Check login user with empty name', () => {
@@ -53,10 +53,10 @@ describe('Login', () => {
 
     //logout and remove testuser:
     cy.get('.meta-test__LogoutBtn').click();
-    cy.get('li').contains('Log out').click();
+    cy.get('.meta-test__LogoutDropdown *').contains('Log out').click();
 
     cy.get('.meta-test__UsersTable li:contains(testuser)').find('button').click();
-    cy.get('li').contains('Remove user').click();
+    cy.get('.meta-test__UsersTableItem__dropdown *').contains('Remove user').click();
     cy.get('.meta-test__UserRemoveModal button[type="button"]:contains(Remove)').click();
   })
 });

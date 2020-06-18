@@ -2,11 +2,11 @@ describe('Leader promotion tests', () => {
 
   function toggle_to_valid_stateboard() {
     cy.get('.meta-test__FailoverButton').click();
-    cy.get('.meta-test__statefulRadioBtn').click();
+    cy.get('.meta-test__statefulRadioBtn').click({ force: true });
     cy.get('.meta-test__stateboardURI input').type('{selectall}{backspace}localhost:14401');
     cy.get('.meta-test__stateboardPassword input').type('{selectall}{backspace}password');
     cy.get('.meta-test__SubmitButton').click();
-    cy.get('span:contains(Failover mode) + * + span:contains(stateful)').click();
+    cy.get('span:contains(Failover mode) + span:contains(stateful)').click();
   }
 
   before(function () {
@@ -18,37 +18,37 @@ describe('Leader promotion tests', () => {
 
   it('The "Promote a leader" button should be absent in disable mode', () => {
     cy.get('li').contains('13301').closest('li').find('.meta-test__ReplicasetServerListItem__dropdownBtn').click();
-    cy.get('li').contains('Promote a leader').should('not.exist');
+    cy.get('.meta-test__ReplicasetServerListItem__dropdown *').contains('Promote a leader').should('not.exist');
 
     cy.get('li').contains('13304').closest('li').find('.meta-test__ReplicasetServerListItem__dropdownBtn').click();
-    cy.get('li').contains('Promote a leader').should('not.exist');
+    cy.get('.meta-test__ReplicasetServerListItem__dropdown *').contains('Promote a leader').should('not.exist');
   })
 
   it('The "Promote a leader" button should be absent in eventual mode', () => {
     cy.get('.meta-test__FailoverButton').click();
     cy.get('.meta-test__eventualRadioBtn').click();
     cy.get('.meta-test__SubmitButton').click();
-    cy.get('span:contains(Failover mode) + * + span:contains(eventual)').click();
+    cy.get('span:contains(Failover mode) + span:contains(eventual)').click();
 
     cy.get('li').contains('13301').closest('li').find('.meta-test__ReplicasetServerListItem__dropdownBtn').click();
-    cy.get('li').contains('Promote a leader').should('not.exist');
+    cy.get('.meta-test__ReplicasetServerListItem__dropdown *').contains('Promote a leader').should('not.exist');
 
     cy.get('li').contains('13304').closest('li').find('.meta-test__ReplicasetServerListItem__dropdownBtn').click();
-    cy.get('li').contains('Promote a leader').should('not.exist');
+    cy.get('.meta-test__ReplicasetServerListItem__dropdown *').contains('Promote a leader').should('not.exist');
   })
 
   it('The "Promote a leader" button in stateful mode + success when promote a leader', () => {
     toggle_to_valid_stateboard()
 
     cy.get('li').contains('13301').closest('li').find('.meta-test__ReplicasetServerListItem__dropdownBtn').click();
-    cy.get('li').contains('Promote a leader').should('not.exist');
+    cy.get('.meta-test__ReplicasetServerListItem__dropdown *').contains('Promote a leader').should('not.exist');
 
     cy.get('.ServerLabelsHighlightingArea').contains('13302').closest('li')
       .find('.meta-test_leaderFlag');
     cy.get('.ServerLabelsHighlightingArea').contains('13304').closest('li')
       .find('.meta-test_leaderFlag').should('not.exist');
     cy.get('li').contains('13304').closest('li').find('.meta-test__ReplicasetServerListItem__dropdownBtn').click();
-    cy.get('li').contains('Promote a leader').click();
+    cy.get('.meta-test__ReplicasetServerListItem__dropdown *').contains('Promote a leader').click();
     cy.get('.ServerLabelsHighlightingArea').contains('13302').closest('li')
       .find('.meta-test_leaderFlag').should('not.exist');
     cy.get('.ServerLabelsHighlightingArea').contains('13304').closest('li')
@@ -70,11 +70,11 @@ describe('Leader promotion tests', () => {
     cy.get('.meta-test__stateboardURI input').type('{selectall}{backspace}localhost:13301');
     cy.get('.meta-test__stateboardPassword input').type('{selectall}{backspace}');
     cy.get('.meta-test__SubmitButton').click();
-    cy.get('span:contains(Failover mode) + * + span:contains(stateful)').click();
+    cy.get('span:contains(Failover mode) + span:contains(stateful)').click();
 
     cy.get('li').contains('13302').closest('li').find('.meta-test__ReplicasetServerListItem__dropdownBtn').click();
-    cy.get('li').contains('Promote a leader').click();
-    cy.get('span:contains(Leader promotion error) + * + span:contains(GraphQL error: State provider unavailable)')
+    cy.get('.meta-test__ReplicasetServerListItem__dropdown :contains(Promote a leader)').click({ force: true });
+    cy.get('span:contains(Leader promotion error) + span:contains(GraphQL error: State provider unavailable)')
       .click();
   })
 
@@ -91,8 +91,8 @@ describe('Leader promotion tests', () => {
     toggle_to_valid_stateboard()
 
     cy.get('li').contains('13302').closest('li').find('.meta-test__ReplicasetServerListItem__dropdownBtn').click();
-    cy.get('li').contains('Promote a leader').click();
-    cy.get('span:contains(Leader promotion error) + * + span:contains(GraphQL error: There is no active coordinator)')
+    cy.get('.meta-test__ReplicasetServerListItem__dropdown *').contains('Promote a leader').click();
+    cy.get('span:contains(Leader promotion error) + span:contains(GraphQL error: There is no active coordinator)')
       .click();
   })
 
