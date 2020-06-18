@@ -89,7 +89,7 @@ false-negative gossips (announce the instance is dead when it's not).
 Stateful failover
 *******************************************************************************
 
-As in case of eventual failover, every instance composes its own leadership map,
+Similarly to the eventual mode, every instance composes its own leadership map,
 but now the map is fetched from an **external state provider**
 (that's why this failover mode called "stateful"). Nowadays there are two state
 providers supported -- ``etcd`` and ``stateboard`` (standalone Tarantool instance).
@@ -158,10 +158,7 @@ the failover priority (and applying a new clusterwide configuration).
 
 In the stateful mode, the failover priority doesn't make much sense (except for
 the first appointment). Instead, you should use the promotion API
-(the Lua
-`cartridge.failover_promote <https://www.tarantool.io/en/doc/latest/book/cartridge/cartridge_api/modules/cartridge/#failover-promote-replicaset-uuid>`_
-.. TODO make link internal, it's the same document
-or
+(the Lua :ref:`cartridge.failover_promote <cartridge.failover_promote>` or
 the GraphQL ``mutation {cluster{failover_promote()}}``)
 which pushes manual appointments to the state provider.
 
@@ -182,10 +179,9 @@ Lua API
 
 See:
 
-* `cartridge.failover_get_params <https://www.tarantool.io/en/doc/latest/book/cartridge/cartridge_api/modules/cartridge/#failover-get-params>`_,
-* `cartridge.failover_set_params <https://www.tarantool.io/en/doc/latest/book/cartridge/cartridge_api/modules/cartridge/#failover-set-params-opts>`_,
-* `cartridge.failover_promote <https://www.tarantool.io/en/doc/latest/book/cartridge/cartridge_api/modules/cartridge/#failover-promote-replicaset-uuid>`_.
-.. TODO make links internal
+* :ref:`cartridge.failover_get_params <cartridge.failover_get_params>`,
+* :ref:`cartridge.failover_set_params <cartridge.failover_set_params>`,
+* :ref:`cartridge.failover_promote <cartridge.failover_promote>`.
 
 *******************************************************************************
 GraphQL API
