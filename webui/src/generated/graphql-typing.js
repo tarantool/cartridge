@@ -115,7 +115,8 @@ export type FailoverApi = {
   tarantool_params?: ?FailoverStateProviderCfgTarantool,
   /** Type of external storage for the stateful failover mode. Supported types are "tarantool" and "etcd2". */
   state_provider?: ?$ElementType<Scalars, "String">,
-  etcd2_params?: ?FailoverStateProviderCfgEtcd2
+  etcd2_params?: ?FailoverStateProviderCfgEtcd2,
+  consistent_switchover?: ?$ElementType<Scalars, "Boolean">
 };
 
 /** State provider configuration (etcd-v2) */
@@ -269,7 +270,8 @@ export type MutationApiclusterFailover_ParamsArgs = {
   mode?: ?$ElementType<Scalars, "String">,
   tarantool_params?: ?FailoverStateProviderCfgInputTarantool,
   state_provider?: ?$ElementType<Scalars, "String">,
-  etcd2_params?: ?FailoverStateProviderCfgInputEtcd2
+  etcd2_params?: ?FailoverStateProviderCfgInputEtcd2,
+  consistent_switchover?: ?$ElementType<Scalars, "Boolean">
 };
 
 /** Cluster management */

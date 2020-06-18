@@ -63,6 +63,7 @@ local gql_type_userapi = gql_types.object({
         },
         tarantool_params = gql_type_tarantool_cfg,
         etcd2_params = gql_type_etcd2_cfg,
+        consistent_switchover = gql_types.boolean,
     }
 })
 
@@ -136,6 +137,7 @@ local function init(graphql)
             state_provider = gql_types.string,
             tarantool_params = gql_type_tarantool_cfg_input,
             etcd2_params = gql_type_etcd2_cfg_input,
+            consistent_switchover = gql_types.boolean,
         },
         kind = gql_type_userapi.nonNull,
         callback = module_name .. '.set_failover_params',

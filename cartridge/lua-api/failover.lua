@@ -44,6 +44,7 @@ local function get_params()
     --   (default: `{'http://localhost:2379', 'http://localhost:4001'}`)
     -- @tfield ?string etcd2_params.username (default: "")
     -- @tfield ?string etcd2_params.password (default: "")
+    -- @tfield ?boolean consistent_switchover
     return topology.get_failover_params(
         confapplier.get_readonly('topology')
     )
@@ -59,6 +60,7 @@ end
 -- @tparam ?table opts.tarantool_params
 -- @tparam ?table opts.etcd2_params
 --   (added in v2.1.2-26)
+-- @tparam ?boolean opts.consistent_switchover
 -- @treturn[1] boolean `true` if config applied successfully
 -- @treturn[2] nil
 -- @treturn[2] table Error description
@@ -68,6 +70,7 @@ local function set_params(opts)
         state_provider = '?string',
         tarantool_params = '?table',
         etcd2_params = '?table',
+        consistent_switchover = '?boolean',
     })
 
     local topology_cfg = confapplier.get_deepcopy('topology')
@@ -100,6 +103,9 @@ local function set_params(opts)
     end
     if opts.etcd2_params ~= nil then
         topology_cfg.failover.etcd2_params = opts.etcd2_params
+    end
+    if opts.consistent_switchover ~= nil then
+        topology_cfg.failover.consistent_switchover = opts.consistent_switchover
     end
 
     local ok, err = twophase.patch_clusterwide({topology = topology_cfg})

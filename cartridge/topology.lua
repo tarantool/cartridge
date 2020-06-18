@@ -35,6 +35,7 @@ vars:new('known_roles', {
         --     username = nil | string,
         --     password = nil | string,
         -- },
+        -- consistent_switchover = boolean,
     },
     servers = {
         -- ['instance-uuid-1'] = 'expelled',
@@ -490,11 +491,27 @@ local function validate_failover_schema(field, topology)
             end
         end
 
+        e_config:assert(
+            topology.failover.consistent_switchover == nil or
+            type(topology.failover.consistent_switchover) == 'boolean',
+            'consistent_switchover must be a boolean, got %s',
+            type(topology.failover.consistent_switchover)
+        )
+
+        if topology.failover.consistent_switchover == true then
+            e_config:assert(
+                topology.failover.mode == 'stateful',
+                'Consistent switchover is supported only in a stateful failover mode'
+            )
+        end
+
+
         local known_keys = {
             ['mode'] = true,
             ['state_provider'] = true,
             ['tarantool_params'] = true,
             ['etcd2_params'] = true,
+            ['consistent_switchover'] = true,
             -- For the sake of backward compatibility with v2.0.1-78
             -- See bug https://github.com/tarantool/cartridge/issues/754
             ['enabled'] = true,
@@ -685,6 +702,7 @@ local function get_failover_params(topology_cfg)
             state_provider = topology_cfg.failover.state_provider,
             tarantool_params = topology_cfg.failover.tarantool_params,
             etcd2_params = table.deepcopy(topology_cfg.failover.etcd2_params),
+            consistent_switchover = topology_cfg.failover.consistent_switchover,
         }
 
         if ret.etcd2_params ~= nil then

@@ -147,6 +147,7 @@ local function get_failover_params()
                     username
                     password
                 }
+                consistent_switchover
             }}
         }
     ]]}).data.cluster.failover_params
@@ -160,6 +161,7 @@ local function set_failover_params(vars)
                 $state_provider: String
                 $tarantool_params: FailoverStateProviderCfgInputTarantool
                 $etcd2_params: FailoverStateProviderCfgInputEtcd2
+                $consistent_switchover: Boolean
             ) {
                 cluster {
                     failover_params(
@@ -167,6 +169,7 @@ local function set_failover_params(vars)
                         state_provider: $state_provider
                         tarantool_params: $tarantool_params
                         etcd2_params: $etcd2_params
+                        consistent_switchover: $consistent_switchover
                     ) {
                         mode
                         state_provider
@@ -178,6 +181,7 @@ local function set_failover_params(vars)
                             username
                             password
                         }
+                        consistent_switchover
                     }
                 }
             }
@@ -301,6 +305,14 @@ g.test_api_failover = function()
     t.assert_covers(_call('failover_get_params'), {mode = 'eventual'})
 
     -- Set with new GraphQL API
+    t.assert_error_msg_contains(
+        'Consistent switchover is supported only in a stateful failover mode',
+        set_failover_params, {mode = 'disabled', consistent_switchover = true}
+    )
+    t.assert_error_msg_contains(
+        'Consistent switchover is supported only in a stateful failover mode',
+        set_failover_params, {mode = 'eventual', consistent_switchover = true}
+    )
     t.assert_error_msg_equals(
         'topology_new.failover missing state_provider for mode "stateful"',
         set_failover_params, {mode = 'stateful'}
@@ -385,12 +397,29 @@ g.test_api_failover = function()
     )
 
     t.assert_equals(
+        set_failover_params(
+        {
+            mode = 'stateful',
+            state_provider = 'tarantool',
+            consistent_switchover = false
+        }),
+        {
+            mode = 'stateful',
+            state_provider = 'tarantool',
+            etcd2_params = etcd2_params,
+            tarantool_params = tarantool_params,
+            consistent_switchover = false,
+        }
+    )
+
+    t.assert_equals(
         get_failover_params(),
         {
             mode = 'stateful',
             state_provider = 'tarantool',
             etcd2_params = etcd2_params,
             tarantool_params = tarantool_params,
+            consistent_switchover = false,
         }
     )
     t.assert_equals(
@@ -400,6 +429,7 @@ g.test_api_failover = function()
             state_provider = 'tarantool',
             etcd2_params = etcd2_params,
             tarantool_params = tarantool_params,
+            consistent_switchover = false,
         }
     )
     t.assert_equals(_call('admin_get_failover'), true)
@@ -408,6 +438,7 @@ g.test_api_failover = function()
     t.assert_equals(_call('failover_set_params', {
         mode = 'disabled',
         etcd2_params = {},
+        consistent_switchover = false,
     }), true)
 
     local etcd2_defaults = {
@@ -428,6 +459,7 @@ g.test_api_failover = function()
             state_provider = 'tarantool',
             etcd2_params = etcd2_defaults,
             tarantool_params = tarantool_params,
+            consistent_switchover = false,
         }
     )
     t.assert_equals(
@@ -437,6 +469,7 @@ g.test_api_failover = function()
             state_provider = 'tarantool',
             tarantool_params = tarantool_params,
             etcd2_params = etcd2_defaults,
+            consistent_switchover = false,
         }
     )
 end

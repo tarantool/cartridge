@@ -309,6 +309,29 @@ failover:
     unknown:
 ...]])
 
+    check_config('consistent_switchover must be a boolean, got number',
+[[---
+failover:
+  mode: stateful
+  state_provider: tarantool
+  tarantool_params: {uri: "localhost:9", password: "qwerty"}
+  consistent_switchover: 1
+...]])
+
+    check_config('Consistent switchover is supported only in a stateful failover mode',
+[[---
+failover:
+  mode: disabled
+  consistent_switchover: true
+...]])
+
+    check_config('Consistent switchover is supported only in a stateful failover mode',
+[[---
+failover:
+  mode: eventual
+  consistent_switchover: true
+...]])
+
     check_config('topology_new.failover has unknown parameter "unknown"',
 [[---
 failover:
