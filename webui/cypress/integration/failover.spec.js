@@ -10,11 +10,11 @@ describe('Failover', () => {
   })
 
   function etcd2InputsShouldNotExist() {
-    cy.get('.meta-test__stateboardUsername input').should('not.exist');
-    cy.get('.meta-test__stateboardUserPassword input').should('not.exist');
-    cy.get('.meta-test__stateboardLockDelay input').should('not.exist');
-    cy.get('.meta-test__stateboardPrefix input').should('not.exist');
-    cy.get('.meta-test__stateboardEndpoints textarea').should('not.exist');
+    cy.get('.meta-test__etcd2Username input').should('not.exist');
+    cy.get('.meta-test__etcd2Password input').should('not.exist');
+    cy.get('.meta-test__etcd2LockDelay input').should('not.exist');
+    cy.get('.meta-test__etcd2Prefix input').should('not.exist');
+    cy.get('.meta-test__etcd2Endpoints textarea').should('not.exist');
   }
 
   it('Failover Disable', () => {
@@ -67,7 +67,7 @@ describe('Failover', () => {
 
     cy.get('.meta-test__statefulRadioBtn').click().click();
 
-    cy.get('.meta-test__stateboardChoice').find('button')
+    cy.get('.meta-test__stateProviderChoice').find('button')
       .then(($button) => {
         expect($button).to.have.text('tarantool')
       })
@@ -116,10 +116,10 @@ describe('Failover', () => {
 
     cy.get('.meta-test__statefulRadioBtn').click().click();
 
-    cy.get('.meta-test__stateboardChoice').find('button').click();
+    cy.get('.meta-test__stateProviderChoice').find('button').click();
     cy.contains('etcd2').click();
 
-    cy.get('.meta-test__stateboardChoice').find('button')
+    cy.get('.meta-test__stateProviderChoice').find('button')
       .then(($button) => {
         expect($button).to.have.text('etcd2')
       })
@@ -127,11 +127,11 @@ describe('Failover', () => {
     cy.get('.meta-test__stateboardURI input').should('not.exist');
     cy.get('.meta-test__stateboardPassword input').should('not.exist');
 
-    cy.get('.meta-test__stateboardUsername input').should('have.value', '');
-    cy.get('.meta-test__stateboardUserPassword input').should('have.value', '');
-    cy.get('.meta-test__stateboardLockDelay input').should('have.value', '10');
-    cy.get('.meta-test__stateboardPrefix input').should('have.value', '/');
-    cy.get('.meta-test__stateboardEndpoints').find('textarea')
+    cy.get('.meta-test__etcd2Username input').should('have.value', '');
+    cy.get('.meta-test__etcd2Password input').should('have.value', '');
+    cy.get('.meta-test__etcd2LockDelay input').should('have.value', '10');
+    cy.get('.meta-test__etcd2Prefix input').should('have.value', '/');
+    cy.get('.meta-test__etcd2Endpoints').find('textarea')
       .then(($textarea) => {
         expect($textarea).to.have.text('http://127.0.0.1:4001\nhttp://127.0.0.1:2379')
       })
