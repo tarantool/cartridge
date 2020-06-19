@@ -38,7 +38,7 @@ local function get_params()
     --   Prefix used for etcd keys: `<prefix>/lock` and
     --   `<prefix>/leaders`
     -- @tfield ?number lock_delay
-    --   Determines lock's time-to-live (default: 10)
+    --   Timeout (in seconds), determines lock's time-to-live (default: 10)
     -- @tfield ?table etcd2_params.endpoints
     --   URIs that are used to discover and to access etcd cluster instances.
     --   (default: `{'http://localhost:2379', 'http://localhost:4001'}`)
