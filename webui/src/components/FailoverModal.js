@@ -265,6 +265,7 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
         </FormField>
         <LabeledInput
           label='State provider'
+          className='meta-test__stateProviderChoice'
           inputComponent={SelectBox}
           values={FAILOVER_STATE_PROVIDERS}
           value={state_provider}
@@ -298,6 +299,7 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
               <LabeledInput
                 className={styles.inputField}
                 label='Username'
+                inputClassName='meta-test__etcd2Username'
                 value={etcd2_params.username}
                 disabled={mode !== 'stateful'}
                 onChange={this.handleInputChange(['etcd2_params', 'username'])}
@@ -305,6 +307,7 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
               <LabeledInput
                 className={styles.inputField}
                 label='Password'
+                inputClassName='meta-test__etcd2Password'
                 inputComponent={InputPassword}
                 value={etcd2_params.password}
                 disabled={mode !== 'stateful'}
@@ -313,6 +316,7 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
               <LabeledInput
                 className={styles.inputField}
                 label='Delay, seconds'
+                inputClassName='meta-test__etcd2LockDelay'
                 value={etcd2_params.lock_delay}
                 disabled={mode !== 'stateful'}
                 onChange={this.handleInputChange(['etcd2_params', 'lock_delay'])}
@@ -320,6 +324,7 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
               <LabeledInput
                 className={styles.inputField}
                 label='Prefix'
+                inputClassName='meta-test__etcd2Prefix'
                 value={etcd2_params.prefix}
                 disabled={mode !== 'stateful'}
                 onChange={this.handleInputChange(['etcd2_params', 'prefix'])}
@@ -327,6 +332,7 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
             </div>
             <LabeledInput
               label='etcd2 endpoints'
+              className='meta-test__etcd2Endpoints'
               inputComponent={TextArea}
               inputClassName={styles.textarea}
               value={etcd2_params.endpoints}

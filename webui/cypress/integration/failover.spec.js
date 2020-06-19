@@ -2,12 +2,20 @@ const testPort = `:13302`;
 
 describe('Failover', () => {
 
-  before(function() {
+  before(function () {
     cy.visit(Cypress.config('baseUrl') + '/admin/cluster/dashboard');
     cy.contains('Replica sets');
     cy.get('.meta-test__FailoverButton').should('be.visible');
     cy.get('.meta-test__FailoverButton').contains('Failover: disabled');
   })
+
+  function etcd2InputsShouldNotExist() {
+    cy.get('.meta-test__etcd2Username input').should('not.exist');
+    cy.get('.meta-test__etcd2Password input').should('not.exist');
+    cy.get('.meta-test__etcd2LockDelay input').should('not.exist');
+    cy.get('.meta-test__etcd2Prefix input').should('not.exist');
+    cy.get('.meta-test__etcd2Endpoints textarea').should('not.exist');
+  }
 
   it('Failover Disable', () => {
     cy.get('.meta-test__FailoverButton').click();
@@ -16,7 +24,7 @@ describe('Failover', () => {
 
     cy.get('.meta-test__stateboardURI input').should('be.disabled');
     cy.get('.meta-test__stateboardPassword input').should('be.disabled');
-
+    etcd2InputsShouldNotExist()
 
     cy.get('.meta-test__SubmitButton').click();
     cy.get('span:contains(Failover mode) + span:contains(disabled)').click();
@@ -31,6 +39,7 @@ describe('Failover', () => {
 
     cy.get('.meta-test__stateboardURI input').should('be.disabled');
     cy.get('.meta-test__stateboardPassword input').should('be.disabled');
+    etcd2InputsShouldNotExist()
 
     cy.get('.meta-test__SubmitButton').click();
     cy.get('span:contains(Failover mode) + span:contains(eventual)').click();
@@ -41,7 +50,7 @@ describe('Failover', () => {
   it('Failover Stateful: error', () => {
     cy.get('.meta-test__FailoverButton').click();
 
-    cy.get('.meta-test__statefulRadioBtn').click({ force: true });
+    cy.get('.meta-test__statefulRadioBtn').click().click();
     cy.get('.meta-test__stateboardURI input').type('{selectall}{backspace}');
     cy.get('.meta-test__stateboardPassword input').type('{selectall}{backspace}');
 
@@ -53,13 +62,19 @@ describe('Failover', () => {
     cy.get('.meta-test__ClusterIssuesButton').should('be.disabled');
   })
 
-  it('Failover Stateful: success', () => {
+  it('Failover Stateful - TARANTOOL: success', () => {
     cy.get('.meta-test__FailoverButton').click();
 
     cy.get('.meta-test__statefulRadioBtn').click().click();
 
+    cy.get('.meta-test__stateProviderChoice').find('button')
+      .then(($button) => {
+        expect($button).to.have.text('tarantool')
+      })
+
     cy.get('.meta-test__stateboardURI input').should('be.enabled');
     cy.get('.meta-test__stateboardPassword input').should('be.enabled');
+    etcd2InputsShouldNotExist()
 
     cy.get('.meta-test__stateboardURI input').type('{selectall}{backspace}localhost' + testPort);
 
@@ -94,6 +109,36 @@ describe('Failover', () => {
       .contains('Replication from localhost' + testPort + ' to localhost:13304: long idle')
       .should('not.exist');
     cy.get('.meta-test__closeClusterIssuesModal').click();
+  })
+
+  it('Failover Stateful - ETCD2: success', () => {
+    cy.get('.meta-test__FailoverButton').click();
+
+    cy.get('.meta-test__statefulRadioBtn').click().click();
+
+    cy.get('.meta-test__stateProviderChoice').find('button').click();
+    cy.contains('etcd2').click();
+
+    cy.get('.meta-test__stateProviderChoice').find('button')
+      .then(($button) => {
+        expect($button).to.have.text('etcd2')
+      })
+
+    cy.get('.meta-test__stateboardURI input').should('not.exist');
+    cy.get('.meta-test__stateboardPassword input').should('not.exist');
+
+    cy.get('.meta-test__etcd2Username input').should('have.value', '');
+    cy.get('.meta-test__etcd2Password input').should('have.value', '');
+    cy.get('.meta-test__etcd2LockDelay input').should('have.value', '10');
+    cy.get('.meta-test__etcd2Prefix input').should('have.value', '/');
+    cy.get('.meta-test__etcd2Endpoints').find('textarea')
+      .then(($textarea) => {
+        expect($textarea).to.have.text('http://127.0.0.1:4001\nhttp://127.0.0.1:2379')
+      })
+
+    cy.get('.meta-test__SubmitButton').click();
+    cy.get('span:contains(Failover mode) + span:contains(stateful)').click();
+    cy.get('.meta-test__FailoverButton').contains('Failover: stateful');
   })
 
 });

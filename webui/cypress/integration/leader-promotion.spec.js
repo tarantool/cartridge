@@ -91,7 +91,7 @@ describe('Leader promotion tests', () => {
     toggle_to_valid_stateboard()
 
     cy.get('li').contains('13302').closest('li').find('.meta-test__ReplicasetServerListItem__dropdownBtn').click();
-    cy.get('.meta-test__ReplicasetServerListItem__dropdown *').contains('Promote a leader').click();
+    cy.get('.meta-test__ReplicasetServerListItem__dropdown :contains(Promote a leader)').click({ force: true });
     cy.get('span:contains(Leader promotion error) + span:contains(GraphQL error: There is no active coordinator)')
       .click();
   })
