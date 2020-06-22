@@ -51,6 +51,7 @@ g.before_all = function()
     })
     g.cluster:start()
 end
+
 g.after_all = function()
     g.httpd:stop()
     g.cluster:stop()
@@ -64,4 +65,5 @@ function g.test_feedback()
     t.assert_equals(msg.server_id, helpers.uuid('a', 'a', 1))
     t.assert_equals(msg.cluster_id, helpers.uuid('a'))
     t.assert_type(msg.rocks.cartridge, 'string')
+    t.assert_type(msg.rocks.http, 'string')
 end

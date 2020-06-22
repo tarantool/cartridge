@@ -24,6 +24,9 @@ Added
 Changed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+- Improved rocks detection for feedback daemon. Besides cartridge version it
+  now parses manifest file from the .rocks/ directory and collects rocks
+  versions.
 - Make uuid parameters optional for test helpers. Make `servers` option accept
   number of servers in replicaset.
 
