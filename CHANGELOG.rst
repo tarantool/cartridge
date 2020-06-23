@@ -53,6 +53,7 @@ Enhanced in WebUI
 
 - Prettier errors displaying.
 - Enhance replicaset filtering by role / status.
+- Error stacktrace received from the backend is shown in notifications.
 
 -------------------------------------------------------------------------------
 [2.1.2] - 2020-04-24
