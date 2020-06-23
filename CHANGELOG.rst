@@ -12,6 +12,10 @@ and this project adheres to
 [Unreleased]
 -------------------------------------------------------------------------------
 
+-------------------------------------------------------------------------------
+[2.2.0] - 2020-06-23
+-------------------------------------------------------------------------------
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Added
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -24,11 +28,11 @@ Added
 Changed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- Improved rocks detection for feedback daemon. Besides cartridge version it
-  now parses manifest file from the .rocks/ directory and collects rocks
+- Improve rocks detection for feedback daemon. Besides cartridge version it
+  now parses manifest file from the ``.rocks/`` directory and collects rocks
   versions.
-- Make uuid parameters optional for test helpers. Make `servers` option accept
-  number of servers in replicaset.
+- Make ``uuid`` parameters optional for test helpers.
+  Make ``servers`` option accept number of servers in replicaset.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Enhanced in WebUI
@@ -70,8 +74,8 @@ Fixed
 Added
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- Implement stateful failover mode. You can read more in "Failover
-  architecture" documentation topic (see ``rst/topics/failover.rst``).
+- Implement stateful failover mode. You can read more in
+  ":ref:`Failover architecture <cartridge-failover>`" documentation topic.
 
 - Respect ``box.cfg`` options ``wal_dir``, ``memtx_dir``, ``vinyl_dir``. They
   can be either absolute or relative - in the later case it's calculated
