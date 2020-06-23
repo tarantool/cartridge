@@ -185,7 +185,7 @@ class ReplicasetList extends React.PureComponent {
                       replicasetsWithIssues.includes(replicaset.uuid)
                         ? (
                           <Button
-                            className={styles.statusButton}
+                            className={cx(styles.statusButton, 'meta-test__haveIssues')}
                             intent='secondary'
                             size='s'
                             onClick={() => this.showIssuesModal(replicaset.uuid)}

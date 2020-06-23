@@ -93,6 +93,8 @@ describe('Failover', () => {
     cy.get('.meta-test__ClusterIssuesModal button[type="button"]').click();
     cy.get('.meta-test__ClusterIssuesModal').should('not.exist');
 
+    cy.get('.meta-test__haveIssues').should('not.exist');
+
     cy.exec('kill -SIGSTOP $(lsof -sTCP:LISTEN -i :8082 -t)', { failOnNonZeroExit: true });
     cy.reload();
     cy.contains('Replica sets');
@@ -103,6 +105,8 @@ describe('Failover', () => {
         ' to localhost:13304 (storage-2): long idle'
       );
     cy.get('.meta-test__closeClusterIssuesModal').click();
+
+    cy.get('.meta-test__haveIssues').parents('li:contains(storage1-do-not-use-me)');
 
     cy.exec('kill -SIGCONT $(lsof -sTCP:LISTEN -i :8082 -t)', { failOnNonZeroExit: true });
     cy.reload();
