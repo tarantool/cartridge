@@ -562,13 +562,17 @@ g.test_sigstop = function()
         level = 'warning',
         replicaset_uuid = replicaset_uuid,
         instance_uuid = storage_2_uuid,
-        message = "Replication from localhost:13302 to localhost:13303 isn't running",
+        message =
+            "Replication from localhost:13302 (storage-1)" ..
+            " to localhost:13303 (storage-2) isn't running",
         topic = 'replication',
     }, {
         level = 'warning',
         replicaset_uuid = replicaset_uuid,
         instance_uuid = storage_3_uuid,
-        message = "Replication from localhost:13302 to localhost:13304 isn't running",
+        message =
+            "Replication from localhost:13302 (storage-1)" ..
+            " to localhost:13304 (storage-3) isn't running",
         topic = 'replication',
     }})
 
