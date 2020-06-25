@@ -152,8 +152,8 @@ function g.test_failover()
         })
         t.assert_str_matches(
             issues[1].message,
-            'Replication from localhost:13301' ..
-            ' to localhost:13302 is disconnected .+'
+            'Replication from localhost:13301 %(master%)' ..
+            ' to localhost:13302 %(slave%) is disconnected .+'
         )
         t.assert_equals(issues[2], nil)
     end)
@@ -394,7 +394,8 @@ function g.test_orphan_connect_timeout()
             replicaset_uuid = helpers.uuid('a'),
             instance_uuid = helpers.uuid('a', 'a', 1),
             message = "Replication from localhost:13302" ..
-                " to localhost:13301 isn't running",
+                -- slave alias is unknown due to restart
+                " to localhost:13301 (master) isn't running",
             topic = 'replication',
         }})
     end)
@@ -457,8 +458,8 @@ function g.test_orphan_sync_timeout()
         })
         t.assert_str_matches(
             issues[1].message,
-            'Replication from localhost:13302' ..
-            ' to localhost:13301: high lag %(.+ > 1e%-308%)'
+            'Replication from localhost:13302 %(slave%)' ..
+            ' to localhost:13301 %(master%): high lag %(.+ > 1e%-308%)'
         )
         t.assert_equals(issues[2], nil)
     end)

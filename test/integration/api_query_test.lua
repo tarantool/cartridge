@@ -609,7 +609,7 @@ function g.test_issues()
         {{
             level = 'critical',
             topic = 'memory',
-            message = 'Running out of memory on localhost:13302:' ..
+            message = 'Running out of memory on localhost:13302 (storage):' ..
             ' used 6100000.00% (items), 91.00% (arena), 91.00% (quota)',
             replicaset_uuid = box.NULL,
             instance_uuid = server.instance_uuid,
@@ -624,7 +624,7 @@ function g.test_issues()
         {{
             level = 'warning',
             topic = 'memory',
-            message = 'Memory is highly fragmented on localhost:13302:' ..
+            message = 'Memory is highly fragmented on localhost:13302 (storage):' ..
                 ' used 61.00% (items), 91.00% (arena), 91.00% (quota)',
             replicaset_uuid = box.NULL,
             instance_uuid = server.instance_uuid,
@@ -653,7 +653,7 @@ function g.test_issues()
     })
     t.assert_str_matches(issues[1].message,
         'Clock difference between' ..
-        ' localhost:%d+ and localhost:%d+' ..
+        ' localhost:%d+ %([%w%-]+%) and localhost:%d+ %([%w%-]+%)' ..
         ' exceed threshold %(.+ > 0%)'
     )
     t.assert_not(next(issues, 1))

@@ -59,6 +59,15 @@ local default_limits = {
 }
 vars:new('limits', default_limits)
 
+local function describe(uri)
+    local member = membership.get_member(uri)
+    if member ~= nil and member.payload.alias ~= nil then
+        return string.format('%s (%s)', uri, member.payload.alias)
+    else
+        return uri
+    end
+end
+
 local function list_on_instance()
     local enabled_servers = {}
     local topology_cfg = confapplier.get_readonly('topology')
@@ -90,8 +99,8 @@ local function list_on_instance()
                 instance_uuid = instance_uuid,
                 message = string.format(
                     "Replication from %s to %s isn't running",
-                    replica.uri,
-                    self_uri
+                    describe(replica.uri),
+                    describe(self_uri)
                 )
             }
             table.insert(ret, issue)
@@ -103,8 +112,8 @@ local function list_on_instance()
                 instance_uuid = instance_uuid,
                 message = string.format(
                     'Replication from %s to %s is %s (%s)',
-                    replica.uri,
-                    self_uri,
+                    describe(replica.uri),
+                    describe(self_uri),
                     upstream.status,
                     upstream.message or ''
                 )
@@ -118,8 +127,8 @@ local function list_on_instance()
                 instance_uuid = instance_uuid,
                 message = string.format(
                     'Replication from %s to %s: high lag (%.2g > %g)',
-                    replica.uri,
-                    self_uri,
+                    describe(replica.uri),
+                    describe(self_uri),
                     upstream.lag,
                     box.cfg.replication_sync_lag
                 )
@@ -143,8 +152,8 @@ local function list_on_instance()
                 instance_uuid = instance_uuid,
                 message = string.format(
                     'Replication from %s to %s: long idle (%.2g > %g)',
-                    replica.uri,
-                    self_uri,
+                    describe(replica.uri),
+                    describe(self_uri),
                     upstream.idle,
                     box.cfg.replication_timeout
                 )
@@ -163,7 +172,8 @@ local function list_on_instance()
             instance_uuid = instance_uuid,
             message = string.format(
                 'Failover is stuck on %s: %s',
-                self_uri, failover_error.err
+                describe(self_uri),
+                failover_error.err
             ),
         })
     end
@@ -189,7 +199,7 @@ local function list_on_instance()
             message = string.format(
                 'Running out of memory on %s:' ..
                 ' used %s (items), %s (arena), %s (quota)',
-                self_uri,
+                describe(self_uri),
                 slab_info.items_used_ratio,
                 slab_info.arena_used_ratio,
                 slab_info.quota_used_ratio
@@ -206,7 +216,7 @@ local function list_on_instance()
             message = string.format(
                 'Memory is highly fragmented on %s:' ..
                 ' used %s (items), %s (arena), %s (quota)',
-                self_uri,
+                describe(self_uri),
                 slab_info.items_used_ratio,
                 slab_info.arena_used_ratio,
                 slab_info.quota_used_ratio
@@ -261,7 +271,7 @@ local function list_on_cluster()
             message = string.format(
                 'Clock difference between %s and %s' ..
                 ' exceed threshold (%.2g > %g)',
-                min_delta_uri, max_delta_uri,
+                describe(min_delta_uri), describe(max_delta_uri),
                 diff, vars.limits.clock_delta_threshold_warning
             )
         })

@@ -501,7 +501,7 @@ function g.test_issues()
             topic = 'failover',
             message = "Failover is stuck on " ..
                 g.cluster:server('storage-3').advertise_uri ..
-                ": Failover fiber is dead!",
+                " (storage-3): Failover fiber is dead!",
             replicaset_uuid = box.NULL,
             instance_uuid = storage_3_uuid,
         }})

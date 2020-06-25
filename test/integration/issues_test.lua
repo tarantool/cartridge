@@ -97,8 +97,8 @@ function g.test_broken_replica()
                 topic = 'replication',
                 replicaset_uuid = helpers.uuid('a'),
                 instance_uuid = helpers.uuid('a', 'a', 2),
-                message = "Replication from localhost:13301" ..
-                    " to localhost:13302 is stopped" ..
+                message = "Replication from localhost:13301 (master)" ..
+                    " to localhost:13302 (replica1) is stopped" ..
                     " (Duplicate key exists in unique index" ..
                     " 'primary' in space '_space')",
             }
@@ -111,8 +111,8 @@ function g.test_broken_replica()
                 topic = 'replication',
                 replicaset_uuid = helpers.uuid('a'),
                 instance_uuid = helpers.uuid('a', 'a', 3),
-                message = "Replication from localhost:13301" ..
-                    " to localhost:13303 is stopped" ..
+                message = "Replication from localhost:13301 (master)" ..
+                    " to localhost:13303 (replica2) is stopped" ..
                     " (Duplicate key exists in unique index" ..
                     " 'primary' in space '_space')",
             }
