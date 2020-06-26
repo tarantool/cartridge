@@ -77,13 +77,13 @@ const appDataRequestReducer = getRequestReducer(
   APP_DATA_REQUEST,
   APP_DATA_REQUEST_SUCCESS,
   APP_DATA_REQUEST_ERROR,
-  'appDataRequestStatus',
+  'appDataRequestStatus'
 );
 
 export const reducer = baseReducer(
   initialState,
   appMountReducer,
-  appDataRequestReducer,
+  appDataRequestReducer
 )(
   (state: AppState, action): AppState => {
     switch (action.type) {
@@ -121,7 +121,7 @@ export const reducer = baseReducer(
         return {
           ...state,
           messages: state.messages.map(
-            message => message.content === action.payload.content ? { ...message, done: true } : message,
+            message => message.content === action.payload.content ? { ...message, done: true } : message
           )
         };
 

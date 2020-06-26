@@ -6,7 +6,7 @@ import { Formik } from 'formik';
 import {
   Alert,
   Button,
-  Input,
+  LabeledInput,
   Modal,
   Text
 } from '@tarantool.io/ui-kit';
@@ -83,21 +83,22 @@ class ProbeServerModal extends React.PureComponent<ProbeServerModalProps> {
               onSubmit={handleSubmit}
             >
               <div className={styles.formInner}>
-                {error && (
-                  <Alert className={cx(styles.error, 'ProbeServerModal_error')} type='error'>
-                    <Text tag='span'>{error}</Text>
-                  </Alert>
-                )}
                 <Text className={styles.text}>
                   Probe a server if it wasn't discovered automatically by UDP broadcast.
                 </Text>
-                <Input
+                <LabeledInput
+                  label='Server URI'
                   name='uri'
                   value={values.uri}
                   onChange={handleChange}
                   placeholder='Server URI, e.g. localhost:3301'
                 />
               </div>
+              {error && (
+                <Alert className={cx(styles.error, 'ProbeServerModal_error')} type='error'>
+                  <Text tag='span'>{error}</Text>
+                </Alert>
+              )}
             </Modal>
           )}
         </Formik>

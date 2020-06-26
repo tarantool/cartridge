@@ -7,8 +7,8 @@ import {
   takeEvery,
   takeLatest
 } from 'redux-saga/effects';
+import { graphqlErrorNotification } from 'src/misc/graphqlErrorNotification';
 import { getErrorMessage as getApiErrorMessage, isDeadServerError, SERVER_NOT_REACHABLE_ERROR_TYPE } from 'src/api';
-import { isGraphqlErrorResponse, getGraphqlError } from 'src/api/graphql';
 import { pageRequestIndicator } from 'src/misc/pageRequestIndicator';
 import { menuFilter } from 'src/menu';
 import {
@@ -98,13 +98,7 @@ function* appMessageSaga() {
         };
         yield put({ type: APP_CREATE_MESSAGE, payload: messagePayload });
 
-        window.tarantool_enterprise_core.notify({
-          title: 'An error has occurred',
-          message: messageText,
-          details: action.error.extensions ? action.error.extensions['io.tarantool.errors.stack'] : null,
-          type: messageType,
-          timeout: 0
-        });
+        graphqlErrorNotification(action.error);
       }
     } else {
       if (action.requestPayload) {
@@ -123,18 +117,8 @@ function* appMessageSaga() {
         };
         yield put({ type: APP_CREATE_MESSAGE, payload: messagePayload });
 
-        let errorExtensions = null;
-        if(isGraphqlErrorResponse(action.error)) {
-          const errorData = getGraphqlError(action.error);
-          errorExtensions = errorData && errorData.extensions;
-        }
-        window.tarantool_enterprise_core.notify({
-          title: 'An error has occurred',
-          message: messageText,
-          details: errorExtensions ? errorExtensions['io.tarantool.errors.stack'] : null,
-          type: messageType,
-          timeout: 0
-        });
+        graphqlErrorNotification(action.error);
+
       }
     }
 
@@ -169,5 +153,5 @@ function* doneMessage() {
 export const saga = baseSaga(
   appDataRequestSaga,
   appMessageSaga,
-  doneMessage,
+  doneMessage
 );

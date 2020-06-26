@@ -175,8 +175,8 @@ export const resetPageState = getActionCreator(CLUSTER_PAGE_STATE_RESET);
 
 export const changeFailover = (payload: FailoverApi) => ({ type: CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST, payload });
 
-export type changeFailoverActionCreator = typeof setVisibleBootstrapVshardPanel;
-export type changeFailoverAction = $Call<setVisibleBootstrapVshardPanelActionCreator, FailoverApi>;
+export type changeFailoverActionCreator = typeof changeFailover;
+export type changeFailoverAction = $Call<changeFailoverActionCreator, FailoverApi>;
 
 
 export const failoverPromoteLeader = (replicaset_uuid: string, instance_uuid: string) => ({

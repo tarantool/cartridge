@@ -44,49 +44,49 @@ export default () => {
 
 
   return <div className={styles.container}>
-    <AppTitle title={'Configuration files'}/>
+    <AppTitle title='Configuration files'/>
     <Text variant='h2' className={styles.title}>Configuration Management</Text>
 
     <TitledPanel
-      className={css`margin-bottom: 16px`}
-      title={<Text variant={'h3'}>Download configuration</Text>}
+      className={css`margin-bottom: 16px;`}
+      title={<Text variant='h3'>Download configuration</Text>}
       content={
-        <form action={process.env.REACT_APP_CONFIG_ENDPOINT} method={'get'}>
+        <form action={process.env.REACT_APP_CONFIG_ENDPOINT} method='get'>
           <p className={styles.downloadNotice}>Current configuration can be downloaded here.</p>
           <Button
             className='meta-test__DownloadBtn'
             icon={IconDownload}
-            intent={'secondary'}
-            text={'Download'}
-            type={'submit'}
+            intent='secondary'
+            text='Download'
+            type='submit'
           />
         </form>
       }
     />
     <TitledPanel
-      title={<Text variant={'h3'}>Upload configuration</Text>}
+      title={<Text variant='h3'>Upload configuration</Text>}
       content={
         <React.Fragment>
           <UploadZone
             handler={dropFiles}
-            name={'file'}
-            label={'Choose config file to upload'}
+            name='file'
+            label='Choose config file to upload'
             multiple={false}
             files={files}
           />
           {error && (
-            <Alert type="error">
+            <Alert type='error'>
               <Text>{error}</Text>
             </Alert>
           )}
           {success && (
-            <Alert type="success">
+            <Alert type='success'>
               <Text>Successfully uploaded</Text>
             </Alert>
           )}
           <Button
-            intent={'secondary'}
-            text={'Save'}
+            intent='secondary'
+            text='Save'
             disabled={!buttonAvailable}
             loading={submitting}
             onClick={uploadClick}

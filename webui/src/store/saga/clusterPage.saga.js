@@ -64,6 +64,7 @@ import {
   uploadConfig,
   changeFailover
 } from 'src/store/request/clusterPage.requests';
+import { graphqlErrorNotification } from 'src/misc/graphqlErrorNotification';
 import { REFRESH_LIST_INTERVAL } from 'src/constants';
 
 const STAT_REQUEST_PERIOD = 10;
@@ -73,7 +74,7 @@ const pageDataRequestSaga = getSignalRequestSaga(
   CLUSTER_PAGE_DATA_REQUEST,
   CLUSTER_PAGE_DATA_REQUEST_SUCCESS,
   CLUSTER_PAGE_DATA_REQUEST_ERROR,
-  getPageData,
+  getPageData
 );
 
 function* refreshListsTaskSaga() {
@@ -137,7 +138,7 @@ const bootstrapVshardRequestSaga = getRequestSaga(
   CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST,
   CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST_SUCCESS,
   CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST_ERROR,
-  bootstrapVshard,
+  bootstrapVshard
 );
 
 const probeServerRequestSaga = function* () {
@@ -172,9 +173,7 @@ const probeServerRequestSaga = function* () {
 const failoverPromoteRequestSaga = function* () {
   yield takeLatest(CLUSTER_PAGE_FAILOVER_PROMOTE_REQUEST, function* ({ payload }) {
     try {
-      console.log(payload);
-      const response = yield call(promoteFailoverLeader, payload);
-
+      yield call(promoteFailoverLeader, payload);
       yield put({ type: CLUSTER_PAGE_FAILOVER_PROMOTE_REQUEST_SUCCESS });
     } catch (error) {
       yield put({
@@ -182,14 +181,7 @@ const failoverPromoteRequestSaga = function* () {
         payload: error,
         error: true
       });
-      console.dir(error)
-      window.tarantool_enterprise_core.notify({
-        title: 'Leader promotion error',
-        message: error.message,
-        details: error.extensions ? error.extensions['io.tarantool.errors.stack'] : null,
-        type: 'error',
-        timeout: 0
-      });
+      graphqlErrorNotification(error, 'Leader promotion error');
     }
   });
 };
@@ -198,7 +190,7 @@ const joinServerRequestSaga = getRequestSaga(
   CLUSTER_PAGE_JOIN_SERVER_REQUEST,
   CLUSTER_PAGE_JOIN_SERVER_REQUEST_SUCCESS,
   CLUSTER_PAGE_JOIN_SERVER_REQUEST_ERROR,
-  joinServer,
+  joinServer
 );
 
 function* createReplicasetRequestSaga() {
@@ -234,7 +226,6 @@ function* createReplicasetRequestSaga() {
 
 function* changeFailoverRequestSaga() {
   yield takeLatest(CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST, function* ({ payload: requestPayload = {} }) {
-    let response;
     try {
       const response = yield call(changeFailover, requestPayload);
 
@@ -260,21 +251,21 @@ const expelServerRequestSaga = getRequestSaga(
   CLUSTER_PAGE_EXPEL_SERVER_REQUEST,
   CLUSTER_PAGE_EXPEL_SERVER_REQUEST_SUCCESS,
   CLUSTER_PAGE_EXPEL_SERVER_REQUEST_ERROR,
-  expelServer,
+  expelServer
 );
 
 const editReplicasetRequestSaga = getRequestSaga(
   CLUSTER_PAGE_REPLICASET_EDIT_REQUEST,
   CLUSTER_PAGE_REPLICASET_EDIT_REQUEST_SUCCESS,
   CLUSTER_PAGE_REPLICASET_EDIT_REQUEST_ERROR,
-  editReplicaset,
+  editReplicaset
 );
 
 const uploadConfigRequestSaga = getRequestSaga(
   CLUSTER_PAGE_UPLOAD_CONFIG_REQUEST,
   CLUSTER_PAGE_UPLOAD_CONFIG_REQUEST_SUCCESS,
   CLUSTER_PAGE_UPLOAD_CONFIG_REQUEST_ERROR,
-  uploadConfig,
+  uploadConfig
 );
 
 const updateClusterSelfOnBootstrap = function* () {

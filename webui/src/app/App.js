@@ -1,6 +1,5 @@
 import React from 'react';
 import { Route, Switch } from 'react-router-dom';
-import { css, cx } from 'emotion';
 
 import { isGraphqlErrorResponse, isGraphqlAccessDeniedError } from 'src/api/graphql';
 import { isRestErrorResponse, isRestAccessDeniedError } from 'src/api/rest';
