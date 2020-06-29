@@ -200,6 +200,33 @@ local function apply_config(mod)
     )
 end
 
+--- Wait for box.info.vclock[id] to reach desired LSN.
+--
+-- @function wait_vclock
+-- @local
+--
+-- @tparam number id
+-- @tparam number lsn
+-- @tparam number pause
+-- @tparam number timeout
+-- @treturn boolean true / false
+local function wait_lsn(id, lsn, pause, timeout)
+    checks('number', 'number', 'number', 'number')
+    local deadline = fiber.time() + timeout
+
+    while true do
+        if (box.info.vclock[id] or 0) >= lsn then
+            return true
+        end
+
+        if fiber.time() >= deadline then
+            return false
+        end
+
+        fiber.sleep(pause)
+    end
+end
+
 local function reconfigure_all()
     local confapplier = require('cartridge.confapplier')
     local all_roles = require('cartridge.roles').get_all_roles()

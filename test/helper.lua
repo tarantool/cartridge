@@ -67,4 +67,24 @@ function helpers.box_cfg()
     fio.rmtree(tempdir)
 end
 
+function helpers.assert_ge(actual, expected, message)
+    if not (actual >= expected) then
+        local err = string.format('expected: %s >= %s', actual, expected)
+        if message ~= nil then
+            err = message .. '\n' .. err
+        end
+        error(err, 2)
+    end
+end
+
+function helpers.assert_le(actual, expected, message)
+    if not (actual <= expected) then
+        local err = string.format('expected: %s <= %s', actual, expected)
+        if message ~= nil then
+            err = message .. '\n' .. err
+        end
+        error(err, 2)
+    end
+end
+
 return helpers
