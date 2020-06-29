@@ -779,3 +779,51 @@ function g.test_middleware()
         }
     )
 end
+
+g.test_default_values = function()
+    local server = cluster.main_server
+
+    server.net_box:eval([[
+        package.loaded['test'] = package.loaded['test'] or {}
+        package.loaded['test']['test_default_value'] = function(_, args)
+            if args.arg == nil then
+                return 'nil'
+            end
+            return args.arg
+        end
+
+        local graphql = require('cartridge.graphql')
+        local types = require('cartridge.graphql.types')
+
+        graphql.add_callback({
+            name = 'test_default_value',
+            args = {
+                arg = types.string,
+            },
+            kind = types.string,
+            callback = 'test.test_default_value',
+        })
+    ]])
+
+    t.assert_equals(
+        server:graphql({
+            query = [[
+                query($arg: String = "default_value") {
+                    test_default_value(arg: $arg)
+                }
+            ]],
+        variables = {}}
+        ).data.test_default_value, 'default_value'
+    )
+
+    t.assert_equals(
+        server:graphql({
+            query = [[
+                query($arg: String = "default_value") {
+                    test_default_value(arg: $arg)
+                }
+            ]],
+        variables = {arg = box.NULL}}
+        ).data.test_default_value, 'nil'
+    )
+end

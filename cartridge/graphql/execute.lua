@@ -240,16 +240,25 @@ local function getFieldEntry(objectType, object, fields, context)
     argumentMap[argument.name.value] = argument
   end
 
+  local defaultValues = {}
+  if context.operation.variableDefinitions ~= nil then
+    for _, value in ipairs(context.operation.variableDefinitions) do
+      if value.defaultValue ~= nil then
+        defaultValues[value.variable.name.value] = value.defaultValue.value
+      end
+    end
+  end
+
   local arguments = util.map(fieldType.arguments or {}, function(argument, name)
     local supplied = argumentMap[name] and argumentMap[name].value
 
     supplied = util.coerceValue(supplied, argument, context.variables,
       {strict_non_null = true})
-    if supplied ~= nil then
+    if type(supplied) ~= 'nil' then
       return supplied
     end
 
-    return argument.defaultValue
+    return defaultValues[name]
   end)
 
   --[[
