@@ -265,6 +265,28 @@ local function cfg(opts, box_opts)
         box_opts.log = string.format('syslog:identity=%s', identity)
     end
 
+    if log.cfg ~= nil then
+        local _, err = CartridgeCfgError:pcall(log.cfg, {
+            log = box_opts.log,
+            level = box_opts.log_level,
+            nonblock = box_opts.log_nonblock,
+        })
+
+        if err ~= nil then
+            return nil, err
+        end
+
+        -- Workaround for log_format can't be set at boot time
+        -- See https://github.com/tarantool/tarantool/issues/5121
+        local _, err = CartridgeCfgError:pcall(log.cfg, {
+            format = box_opts.log_format,
+        })
+
+        if err ~= nil then
+            return nil, err
+        end
+    end
+
     if box_opts.custom_proc_title == nil and args.instance_name ~= nil then
         if args.app_name == nil then
             box_opts.custom_proc_title = args.instance_name
