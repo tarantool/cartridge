@@ -244,7 +244,8 @@ local function getFieldEntry(objectType, object, fields, context)
   if context.operation.variableDefinitions ~= nil then
     for _, value in ipairs(context.operation.variableDefinitions) do
       if value.defaultValue ~= nil then
-        defaultValues[value.variable.name.value] = value.defaultValue.value
+        local variableType = query_util.typeFromAST(value.type, context.schema)
+        defaultValues[value.variable.name.value] = util.coerceValue(value.defaultValue, variableType)
       end
     end
   end
