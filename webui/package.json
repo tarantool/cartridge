@@ -15,7 +15,7 @@
     "@graphql-codegen/typescript-compatibility": "^1.2.0",
     "@tarantool.io/frontend-core": "7.1.0",
     "@tarantool.io/lua-bundler-webpack-plugin": "^1.0.1",
-    "@tarantool.io/ui-kit": "0.18.1",
+    "@tarantool.io/ui-kit": "0.19.1",
     "antd": "3.18.2",
     "apollo-boost": "0.4.0",
     "apollo-link-http": "^1.5.14",
