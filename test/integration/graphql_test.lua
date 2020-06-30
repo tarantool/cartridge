@@ -792,6 +792,20 @@ g.test_default_values = function()
             return args.arg
         end
 
+        package.loaded['test']['test_default_list'] = function(_, args)
+            if args.arg == nil then
+                return 'nil'
+            end
+            return args.arg[1]
+        end
+
+        package.loaded['test']['test_default_object'] = function(_, args)
+            if args.arg == nil then
+                return 'nil'
+            end
+            return args.arg.field
+        end
+
         local graphql = require('cartridge.graphql')
         local types = require('cartridge.graphql.types')
 
@@ -802,6 +816,31 @@ g.test_default_values = function()
             },
             kind = types.string,
             callback = 'test.test_default_value',
+        })
+
+        graphql.add_callback({
+            name = 'test_default_list',
+            args = {
+                arg = types.list(types.string),
+            },
+            kind = types.string,
+            callback = 'test.test_default_list',
+        })
+
+        local input_object = types.inputObject({
+            name = 'default_input_object',
+            fields = {
+                field = types.string,
+            }
+        })
+
+        graphql.add_callback({
+            name = 'test_default_object',
+            args = {
+                arg = input_object,
+            },
+            kind = types.string,
+            callback = 'test.test_default_object',
         })
     ]])
 
@@ -825,5 +864,49 @@ g.test_default_values = function()
             ]],
         variables = {arg = box.NULL}}
         ).data.test_default_value, 'nil'
+    )
+
+    t.assert_equals(
+        server:graphql({
+            query = [[
+                query($arg: [String] = ["default_value"]) {
+                    test_default_list(arg: $arg)
+                }
+            ]],
+        variables = {}}
+        ).data.test_default_list, 'default_value'
+    )
+
+    t.assert_equals(
+        server:graphql({
+            query = [[
+                query($arg: [String] = ["default_value"]) {
+                    test_default_list(arg: $arg)
+                }
+            ]],
+        variables = {arg = box.NULL}}
+        ).data.test_default_list, 'nil'
+    )
+
+    t.assert_equals(
+        server:graphql({
+            query = [[
+                query($arg: default_input_object = {field: "default_value"}) {
+                    test_default_object(arg: $arg)
+                }
+            ]],
+        variables = {}}
+        ).data.test_default_object, 'default_value'
+    )
+
+    t.assert_equals(
+        server:graphql({
+            query = [[
+                query($arg: default_input_object = {field: "default_value"}) {
+                    test_default_object(arg: $arg)
+                }
+            ]],
+        variables = {arg = box.NULL}}
+        ).data.test_default_object, 'nil'
     )
 end
