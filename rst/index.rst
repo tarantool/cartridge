@@ -14,9 +14,9 @@ This documentation contains the following sections:
    :maxdepth: 2
    :numbered: 0
 
-   Overview <../README>
+   Overview <README>
    cartridge_dev
    cartridge_admin
    Cartridge API<cartridge_api/index>
    Cartridge CLI<cartridge_cli/index>
-   Changelog <../CHANGELOG.rst>
+   Changelog <CHANGELOG>
