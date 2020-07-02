@@ -56,7 +56,7 @@ describe('Code page', () => {
       cy.get('.monaco-editor textarea').type(selectAllKeys + '{backspace}');
       cy.get('.monaco-editor textarea').type('some: [] test code2');
       apply()
-      cy.get('#root').contains('GraphQL error: Error parsing section "file-in-tree2.yml": did not find expected key at document');
+      cy.get('#root').contains('LoadConfigError: Error parsing section "file-in-tree2.yml": did not find expected key at document');
       reload()
       cy.get('.monaco-editor textarea').should('have.value', 'some test code2');
 
