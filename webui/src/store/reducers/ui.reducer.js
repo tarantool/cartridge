@@ -39,7 +39,6 @@ import {
   SHOW_EXPEL_MODAL,
   HIDE_EXPEL_MODAL,
   CLUSTER_PAGE_EXPEL_SERVER_REQUEST_SUCCESS,
-  CLUSTER_PAGE_EXPEL_SERVER_REQUEST,
   CLUSTER_PAGE_EXPEL_SERVER_REQUEST_ERROR,
   FETCH_CONFIG_FILES,
   FETCH_CONFIG_FILES_DONE,
@@ -65,8 +64,7 @@ export type UIState = {
   fetchingUserMutation: boolean,
   fetchingConfigFiles: boolean,
   puttingConfigFiles: boolean,
-  expelModal: ?string,
-  expelError: ?string,
+  expelModal: ?string
 };
 
 const initialState: UIState = {
@@ -85,8 +83,7 @@ const initialState: UIState = {
   fetchingUserMutation: false,
   fetchingConfigFiles: false,
   puttingConfigFiles: false,
-  expelModal: null,
-  expelError: null
+  expelModal: null
 };
 
 export const reducer = (state: UIState = initialState, { type, payload, error }: FSA): UIState => {
@@ -279,25 +276,12 @@ export const reducer = (state: UIState = initialState, { type, payload, error }:
     case SHOW_EXPEL_MODAL: {
       return {
         ...state,
-        expelModal: payload,
-        expelError: null
-      }
-    }
-    case CLUSTER_PAGE_EXPEL_SERVER_REQUEST: {
-      return {
-        ...state,
-        expelError: null
-      }
-    }
-
-    case CLUSTER_PAGE_EXPEL_SERVER_REQUEST_ERROR: {
-      return {
-        ...state,
-        expelError: error.message
+        expelModal: payload
       }
     }
 
     case HIDE_EXPEL_MODAL:
+    case CLUSTER_PAGE_EXPEL_SERVER_REQUEST_ERROR:
     case CLUSTER_PAGE_EXPEL_SERVER_REQUEST_SUCCESS: {
       return {
         ...state,

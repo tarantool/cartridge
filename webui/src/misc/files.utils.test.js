@@ -35,7 +35,7 @@ describe('isDescendant', () => {
 
 
 describe('validateFileNameExtension', () => {
-  const itAllowsExtention = (ext: string) => it(`allows .${ext}`, () => {
+  const itAllowsExtension = (ext: string) => it(`allows .${ext}`, () => {
     expect(validateFileNameExtension(`a.${ext}`)).toEqual(true);
     expect(validateFileNameExtension(`1.${ext}`)).toEqual(true);
     expect(validateFileNameExtension(`..${ext}`)).toEqual(true);
@@ -43,27 +43,27 @@ describe('validateFileNameExtension', () => {
     expect(validateFileNameExtension(` .${ext}`)).toEqual(true);
     expect(validateFileNameExtension(`long_file-name.${ext}`)).toEqual(true);
   });
-  itAllowsExtention('lua');
-  itAllowsExtention('yml');
+  itAllowsExtension('lua');
+  itAllowsExtension('yml');
 
-  it('allows empty names (with extention)', () => {
+  it('allows empty names (with extension)', () => {
     expect(validateFileNameExtension('.lua')).toEqual(true);
     expect(validateFileNameExtension('.yml')).toEqual(true);
   });
 
-  it('tests only last extention', () => {
+  it('tests only last extension', () => {
     expect(validateFileNameExtension('name.yml.sh')).toEqual(false);
     expect(validateFileNameExtension('name.sh.yml')).toEqual(true);
     expect(validateFileNameExtension('.sh.lua.lua.sh')).toEqual(false);
     expect(validateFileNameExtension('.yml.yml')).toEqual(true);
   });
 
-  it('forbid names without extentions', () => {
+  it('forbid names without extensions', () => {
     expect(validateFileNameExtension('name')).toEqual(false);
     expect(validateFileNameExtension('README')).toEqual(false);
   });
 
-  it('forbid other extentions', () => {
+  it('forbid other extensions', () => {
     [
       'yaml',
       'sh',

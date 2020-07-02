@@ -1,6 +1,6 @@
 import { call, put, select, takeEvery } from 'redux-saga/effects';
-import { getErrorMessage } from 'src/api/';
-import { isNetworkError } from 'src/misc/isNetworkError';
+import * as R from 'ramda';
+import { graphqlErrorNotification } from 'src/misc/graphqlErrorNotification';
 import {
   FETCH_CONFIG_FILES,
   FETCH_CONFIG_FILES_DONE,
@@ -11,7 +11,6 @@ import {
 } from 'src/store/actionTypes';
 import { applyFiles, getFiles } from 'src/store/request/files.requests';
 import { baseSaga } from 'src/store/commonRequest';
-import * as R from 'ramda';
 import { getModelValueByFile, getFileIdForMonaco, setModelValueByFile } from 'src/misc/monacoModelStorage';
 
 
@@ -83,14 +82,7 @@ function* applyFilesSaga() {
       error: true
     });
 
-    if (!isNetworkError(error)) {
-      window.tarantool_enterprise_core.notify({
-        title: 'Error',
-        message: error.message,
-        type: 'error',
-        timeout: 5000
-      });
-    }
+    graphqlErrorNotification(error);
   }
 };
 
