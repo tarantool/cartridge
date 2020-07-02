@@ -797,59 +797,49 @@ g.test_output_type_mismatch_error = function()
         ).data.expected_list, {{value = {{value = {1}}}}, {value = {{value = {2}}}}}
     )
 
-    t.assert_error_msg_equals('Expected a table for field "value"', function()
+    t.assert_error_msg_equals('Expected a table for "NestedObjectWithValue" object, got "boolean"', function()
         return server:graphql({
             query = [[
-                query($type: String) {
-                    expected_list(type: $type) { value { value } }
+                query {
+                    expected_list(type: "boolean") { value { value } }
                 }
-            ]],
-        variables = {type = 'boolean'}}
-        )
+            ]]})
     end)
 
-    t.assert_error_msg_equals('Expected a table for Int list', function()
+    t.assert_error_msg_equals('Expected a table for "Int" list, got "boolean"', function()
         return server:graphql({
             query = [[
-                query($type: String) {
-                    expected_list(type: $type) { value { value } }
+                query {
+                    expected_list(type: "boolean_list") { value { value } }
                 }
-            ]],
-        variables = {type = 'boolean_list'}}
-        )
+            ]]})
     end)
 
-    t.assert_error_msg_equals('Expected a table for field "value"', function()
+    t.assert_error_msg_equals('Expected a table for "NestedObjectWithValue" object, got "string"', function()
         return server:graphql({
             query = [[
-                query($type: String) {
-                    expected_list(type: $type) { value { value } }
+                query {
+                    expected_list(type: "string") { value { value } }
                 }
-            ]],
-        variables = {type = 'string'}}
-        )
+            ]]})
     end)
 
-    t.assert_error_msg_equals('Expected a table for ObjectWithValue list', function()
+    t.assert_error_msg_equals('Expected a table for "ObjectWithValue" list, got "cdata"', function()
         return server:graphql({
             query = [[
-                query($type: String) {
-                    expected_list(type: $type) { value { value } }
+                query {
+                    expected_list(type: "cdata") { value { value } }
                 }
-            ]],
-        variables = {type = 'cdata'}}
-        )
+            ]]})
     end)
 
-    t.assert_error_msg_equals('Expected a table for ObjectWithValue list', function()
+    t.assert_error_msg_equals('Expected a table for "ObjectWithValue" list, got "userdata"', function()
         return server:graphql({
             query = [[
-                query($type: String) {
-                    expected_list(type: $type) { value { value } }
+                query {
+                    expected_list(type: "userdata") { value { value } }
                 }
-            ]],
-        variables = {type = 'userdata'}}
-        )
+            ]]})
     end)
 
     server.net_box:eval([[
@@ -891,7 +881,7 @@ g.test_output_type_mismatch_error = function()
         })
     ]])
 
-    t.assert_error_msg_equals('Expected a table for CustomTestString list', function()
+    t.assert_error_msg_equals('Expected a table for "NonNull(CustomTestString)" list, got "boolean"', function()
         return server:graphql({
             query = [[
                 query {
