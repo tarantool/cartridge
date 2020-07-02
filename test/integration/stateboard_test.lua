@@ -331,3 +331,28 @@ function g.test_box_options()
         'tarantool .+ <running>: stateboard%-proc%-title'
     )
 end
+
+function g.test_vclockkeeper()
+    local client = create_client(g.stateboard)
+    local session = client:get_session()
+
+    local ok, err = session:get_vclockkeeper('A')
+    t.assert_equals(ok, nil)
+    t.assert_equals(err, nil)
+
+    local vclockkeeper = {
+        replicaset_uuid = 'A',
+        instance_uuid = 'a1',
+    }
+    local ok = session:set_vclockkeeper(vclockkeeper)
+    t.assert_equals(ok, true)
+    local ok = session:get_vclockkeeper('A')
+    t.assert_equals(ok, vclockkeeper)
+
+    vclockkeeper.vclock = {[1] = 10}
+    local ok = session:set_vclockkeeper(vclockkeeper)
+    t.assert_equals(ok, true)
+    local ok = session:get_vclockkeeper('A')
+    t.assert_equals(ok, vclockkeeper)
+
+end

@@ -135,6 +135,33 @@ local function get_coordinator()
     end
 end
 
+local function set_vclockkeeper_impl(replicaset_uuid, instance_uuid, vclock)
+    checks('string', 'string', '?table')
+
+    box.space.vclockkeeper:upsert(
+        {replicaset_uuid, instance_uuid, vclock},
+        {{'=', 2, instance_uuid}, {'=', 3, vclock or box.NULL}}
+    )
+
+    box.space.vclockkeeper_audit:insert({nil, fiber.time(),
+        replicaset_uuid, instance_uuid, vclock
+    })
+
+    return true
+end
+
+local function set_vclockkeeper(...)
+    return box.atomic(set_vclockkeeper_impl, ...)
+end
+
+local function get_vclockkeeper(replicaset_uuid)
+    local vclockkeeper = box.space.vclockkeeper:get({replicaset_uuid})
+    if vclockkeeper ~= nil then
+        vclockkeeper = vclockkeeper:tomap({names_only = true})
+    end
+    return vclockkeeper
+end
+
 local function cfg()
     local opts, err = argparse.get_opts({
         listen = 'string',
@@ -191,6 +218,8 @@ local function cfg()
     rawset(_G, 'get_leaders', get_leaders)
     rawset(_G, 'longpoll', longpoll)
     rawset(_G, 'get_coordinator', get_coordinator)
+    rawset(_G, 'set_vclockkeeper', set_vclockkeeper)
+    rawset(_G, 'get_vclockkeeper', get_vclockkeeper)
 
     ------------------------------------------------------------------------
     box.schema.user.create('client', { if_not_exists = true })
@@ -203,6 +232,8 @@ local function cfg()
     box.schema.func.create('set_leaders', { if_not_exists = true })
     box.schema.func.create('get_leaders', { if_not_exists = true })
     box.schema.func.create('longpoll', { if_not_exists = true })
+    box.schema.func.create('set_vclockkeeper', { if_not_exists = true })
+    box.schema.func.create('get_vclockkeeper', { if_not_exists = true })
 
     ------------------------------------------------------------------------
     box.schema.sequence.create('coordinator_audit', {
@@ -267,17 +298,62 @@ local function cfg()
     })
 
     ------------------------------------------------------------------------
+    box.schema.sequence.create('vclockkeeper_audit', {
+        if_not_exists = true
+    })
+    box.schema.space.create('vclockkeeper_audit', {
+        format = {
+            { name = 'ordinal', type = 'unsigned', is_nullable = false },
+            { name = 'time', type = 'number', is_nullable = false },
+            { name = 'replicaset_uuid', type = 'string', is_nullable = false },
+            { name = 'instance_uuid', type = 'string', is_nullable = false },
+            { name = 'vclock', type = 'any', is_nullable = true },
+        },
+        if_not_exists = true,
+    })
+
+    box.space.vclockkeeper_audit:create_index('ordinal', {
+        unique = true,
+        type = 'TREE',
+        parts = { { field = 'ordinal', type = 'unsigned' } },
+        sequence = 'vclockkeeper_audit',
+        if_not_exists = true,
+    })
+
+    ------------------------------------------------------------------------
+    box.schema.space.create('vclockkeeper', {
+        format = {
+            { name = 'replicaset_uuid', type = 'string', is_nullable = false },
+            { name = 'instance_uuid', type = 'string', is_nullable = false },
+            { name = 'vclock', type = 'any', is_nullable = true },
+        },
+        if_not_exists = true,
+    })
+
+    box.space.vclockkeeper:create_index('replicaset_uuid', {
+        unique = true,
+        type = 'TREE',
+        parts = { { field = 'replicaset_uuid', type = 'string' } },
+        if_not_exists = true,
+    })
+
+    ------------------------------------------------------------------------
 
     box.schema.user.grant('client', 'read,write', 'space', 'coordinator_audit', { if_not_exists = true })
     box.schema.user.grant('client', 'read,write', 'space', 'leader_audit', { if_not_exists = true })
     box.schema.user.grant('client', 'read,write', 'space', 'leader', { if_not_exists = true })
+    box.schema.user.grant('client', 'read,write', 'space', 'vclockkeeper', { if_not_exists = true })
+    box.schema.user.grant('client', 'read,write', 'space', 'vclockkeeper_audit', { if_not_exists = true })
     box.schema.user.grant('client', 'read,write', 'sequence', 'coordinator_audit', { if_not_exists = true })
     box.schema.user.grant('client', 'read,write', 'sequence', 'leader_audit', { if_not_exists = true })
+    box.schema.user.grant('client', 'read,write', 'sequence', 'vclockkeeper_audit', { if_not_exists = true })
     box.schema.user.grant('client', 'execute', 'function', 'get_coordinator', { if_not_exists = true })
     box.schema.user.grant('client', 'execute', 'function', 'get_lock_delay', { if_not_exists = true })
     box.schema.user.grant('client', 'execute', 'function', 'acquire_lock', { if_not_exists = true })
     box.schema.user.grant('client', 'execute', 'function', 'set_leaders', { if_not_exists = true })
     box.schema.user.grant('client', 'execute', 'function', 'get_leaders', { if_not_exists = true })
+    box.schema.user.grant('client', 'execute', 'function', 'set_vclockkeeper', { if_not_exists = true })
+    box.schema.user.grant('client', 'execute', 'function', 'get_vclockkeeper', { if_not_exists = true })
     box.schema.user.grant('client', 'execute', 'function', 'longpoll', { if_not_exists = true })
 
     -- Enable listen port only after all spaces are set up

@@ -90,6 +90,42 @@ local function get_coordinator(session)
     return coodinator
 end
 
+local function set_vclockkeeper(session, args)
+    checks('stateboard_session', {
+        replicaset_uuid = 'string',
+        instance_uuid = 'string',
+        vclock = '?table',
+    })
+    assert(session.connection ~= nil)
+
+    local ok, err = errors.netbox_call(session.connection,
+        'set_vclockkeeper', {
+            args.replicaset_uuid,
+            args.instance_uuid,
+            args.vclock,
+        },
+        {timeout = session.call_timeout}
+    )
+
+    if ok == nil then
+        return nil, SessionError:new(err)
+    end
+    return ok
+end
+
+local function get_vclockkeeper(session, replicaset_uuid)
+    checks('stateboard_session', 'string')
+    local vclockkeeper, err = errors.netbox_call(session.connection,
+        'get_vclockkeeper', {replicaset_uuid},
+        {timeout = session.call_timeout}
+    )
+
+    if err ~= nil then
+        return nil, SessionError:new(err)
+    end
+    return vclockkeeper
+end
+
 local function is_locked(session)
     checks('stateboard_session')
     assert(session.connection ~= nil)
@@ -126,6 +162,8 @@ local session_mt = {
         get_leaders = get_leaders,
         get_lock_delay = get_lock_delay,
         get_coordinator = get_coordinator,
+        set_vclockkeeper = set_vclockkeeper,
+        get_vclockkeeper = get_vclockkeeper,
         drop = drop,
     },
 }
