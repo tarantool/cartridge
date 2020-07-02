@@ -738,10 +738,13 @@ g.test_output_type_mismatch_error = function()
     local server = cluster.main_server
 
     server.net_box:eval([[
-        local fiber = require('fiber')
         package.loaded['test'] = {}
-        package.loaded['test']['callback'] = function(_, args)
+        package.loaded['test']['callback'] = function(_, _)
             return true
+        end
+
+        package.loaded['test']['callback_for_nested'] = function(_, _)
+            return { values = true }
         end
 
         local graphql = require('cartridge.graphql')
@@ -751,6 +754,20 @@ g.test_output_type_mismatch_error = function()
             name = 'ObjectWithValue',
             fields = {
                 value = types.string,
+            },
+        })
+
+        local nested_obj_type = types.object({
+            name = 'NestedObjectWithValue',
+            fields = {
+                value = types.string,
+            },
+        })
+
+        local complex_obj_type = types.object({
+            name = 'ComplexObjectWithValue',
+            fields = {
+                values = types.list(nested_obj_type),
             },
         })
 
@@ -771,9 +788,15 @@ g.test_output_type_mismatch_error = function()
             kind = types.list(types.int),
             callback = 'test.callback',
         })
+
+        graphql.add_callback({
+            name = 'expected_list_with_nested',
+            kind = types.list(complex_obj_type),
+            callback = 'test.callback_for_nested',
+        })
     ]])
 
-    t.assert_error_msg_equals('Expected a table for "NonNull(Int)" list, got "boolean"', function()
+    t.assert_error_msg_equals('Expected "expected_nonnull_list" to be an "array", got "boolean"', function()
         return server:graphql({
             query = [[
                 query {
@@ -782,7 +805,7 @@ g.test_output_type_mismatch_error = function()
             ]]})
     end)
 
-    t.assert_error_msg_equals('Expected a table for "ObjectWithValue" object, got "boolean"', function()
+    t.assert_error_msg_equals('Expected "expected_obj" to be a "map", got "boolean"', function()
         return server:graphql({
             query = [[
                 query {
@@ -791,7 +814,7 @@ g.test_output_type_mismatch_error = function()
             ]]})
     end)
 
-    t.assert_error_msg_equals('Expected a table for "Int" list, got "boolean"', function()
+    t.assert_error_msg_equals('Expected "expected_list" to be an "array", got "boolean"', function()
         return server:graphql({
             query = [[
                 query {
@@ -800,62 +823,13 @@ g.test_output_type_mismatch_error = function()
             ]]})
     end)
 
-    t.assert_error_msg_equals('Expected a table for "Int" list, got "boolean"', function()
-       return server:graphql({
-           query = [[
-               query {
-                   expected_list
-               }
-           ]]})
-    end)
-
-    server.net_box:eval([[
-        package.loaded['test'] = {}
-        package.loaded['test']['test_custom_type_scalar_object'] = function(_, args)
-          return {value = true}
-        end
-
-        local graphql = require('cartridge.graphql')
-        local types = require('cartridge.graphql.types')
-
-        local custom_string = types.scalar({
-            name = 'CustomTestString',
-            description = 'Custom string type',
-            serialize = tostring,
-            parseValue = tostring,
-            parseLiteral = function(node)
-              if node.kind == 'string' then
-                return node.value
-              end
-            end,
-            isValueOfTheType = function(value)
-              return type(value) == 'string'
-            end,
-        })
-
-        local object = types.object({
-            name = 'test_non_null_custom_object',
-            fields = {
-                value = types.list(custom_string.nonNull),
-            }
-        })
-
-        graphql.add_callback({
-            name = 'test_custom_type_scalar_object',
-            args = {},
-            kind = object,
-            callback = 'test.test_custom_type_scalar_object',
-        })
-    ]])
-
-    t.assert_error_msg_equals('Expected a table for "NonNull(CustomTestString)" list, got "boolean"', function()
+    t.assert_error_msg_equals('Expected "expected_list_with_nested" to be an "array", got "map"', function()
         return server:graphql({
             query = [[
                 query {
-                    test_custom_type_scalar_object { value }
+                    expected_list_with_nested { values { value } }
                 }
-            ]]}
-        )
+            ]]})
     end)
 end
 
