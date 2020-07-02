@@ -90,6 +90,69 @@ local function get_coordinator(session)
     return coodinator
 end
 
+local function set_vclockkeeper(session, replicaset_uuid, instance_uuid, vclock)
+    checks('stateboard_session', 'string', 'string', '?table')
+    assert(session.connection ~= nil)
+
+    local keeper, err = errors.netbox_call(session.connection,
+        'get_vclockkeeper', {replicaset_uuid},
+        {timeout = session.call_timeout}
+    )
+    if err ~= nil then
+        return nil, SessionError:new(err)
+    end
+
+    local ordinal = nil
+    if keeper == nil then
+        -- No keeper persisted
+        goto set_vclockkeeper
+    else
+        ordinal = keeper.ordinal
+    end
+
+    if keeper.instance_uuid == instance_uuid
+    and vclock == nil
+    then
+        -- No update needed
+        return true
+    end
+
+    ::set_vclockkeeper::
+    local ok, err = errors.netbox_call(session.connection,
+        'set_vclockkeeper', {
+            replicaset_uuid,
+            instance_uuid,
+            ordinal,
+            vclock,
+        },
+        {timeout = session.call_timeout}
+    )
+
+    if ok == nil then
+        return nil, SessionError:new(err)
+    end
+
+    return true
+end
+
+local function get_vclockkeeper(session, replicaset_uuid)
+    checks('stateboard_session', 'string')
+    local vclockkeeper, err = errors.netbox_call(session.connection,
+        'get_vclockkeeper', {replicaset_uuid},
+        {timeout = session.call_timeout}
+    )
+
+    if err ~= nil then
+        return nil, SessionError:new(err)
+    end
+
+    if vclockkeeper ~= nil then
+        vclockkeeper.ordinal = nil
+    end
+
+    return vclockkeeper
+end
+
 local function is_locked(session)
     checks('stateboard_session')
     assert(session.connection ~= nil)
@@ -126,6 +189,8 @@ local session_mt = {
         get_leaders = get_leaders,
         get_lock_delay = get_lock_delay,
         get_coordinator = get_coordinator,
+        set_vclockkeeper = set_vclockkeeper,
+        get_vclockkeeper = get_vclockkeeper,
         drop = drop,
     },
 }
