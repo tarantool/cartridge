@@ -8,6 +8,10 @@ describe('Replicaset filtering', () => {
     cy.visit(Cypress.config('baseUrl') + '/admin/cluster/dashboard');
   })
 
+  it('Tab title on Cluster page', () => {
+    cy.get('head title').should('contain', 'cartridge.srv-1: Cluster')
+  })
+
   it('Stop servers', () => {
     cy.exec('kill -SIGSTOP $(lsof -sTCP:LISTEN -i :8084 -t)', { failOnNonZeroExit: true });
     cy.exec('kill -SIGSTOP $(lsof -sTCP:LISTEN -i :8082 -t)', { failOnNonZeroExit: true });

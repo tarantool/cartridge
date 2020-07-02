@@ -5,7 +5,7 @@
 describe('Download configuration file', () => {
 
   it('Tab title on Configuration files page', () => {
-    cy.get('head title').should('contain', 'Configuration files')
+    cy.get('head title').should('contain', 'cartridge.srv-1: Configuration files')
   })
 
   it('Download configuration file', () => {
@@ -18,4 +18,5 @@ describe('Download configuration file', () => {
       cy.get('[data-cy="file-input"]').upload({ fileContent, fileName, mimeType: 'application/json' });
     }); */
   })
+
 });

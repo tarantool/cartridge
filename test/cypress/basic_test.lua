@@ -34,7 +34,7 @@ g.setup = function()
         cookie = 'test-cluster-cookie',
         env = {
             TARANTOOL_SWIM_SUSPECT_TIMEOUT_SECONDS = 0,
-            TARANTOOL_APP_NAME = 'cartridge-testing',
+            TARANTOOL_APP_NAME = 'cartridge',
         },
         replicasets = {
             {
@@ -44,7 +44,7 @@ g.setup = function()
                 servers = {
                     {
                         alias = 'router',
-                        env = {TARANTOOL_INSTANCE_NAME = 'r1'},
+                        env = {TARANTOOL_INSTANCE_NAME = 'srv-1'},
                         instance_uuid = helpers.uuid('a', 'a', 1),
                         advertise_port = 13301,
                         http_port = 8081
@@ -57,6 +57,7 @@ g.setup = function()
                 servers = {
                     {
                         alias = 'storage',
+                        env = {TARANTOOL_INSTANCE_NAME = 'srv-2'},
                         instance_uuid = helpers.uuid('b', 'b', 1),
                         advertise_port = 13302,
                         http_port = 8082

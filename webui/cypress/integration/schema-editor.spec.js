@@ -52,7 +52,7 @@ describe('Schema section', () => {
   })
 
   it('Tab title on Schema page', () => {
-    cy.get('head title').should('contain', 'Schema')
+    cy.get('head title').should('contain', 'cartridge.srv-1: Schema')
   })
 
 });
