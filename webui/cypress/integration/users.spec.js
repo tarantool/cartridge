@@ -5,6 +5,10 @@ describe('Users', () => {
     cy.get('a[href="/admin/cluster/users"]').click();
   })
 
+  it('Tab title on Users page', () => {
+    cy.get('head title').should('contain', 'Users')
+  })
+
   it('Add user', () => {
     cy.get('.meta-test__addUserBtn').click({ force: true });
     cy.get('.meta-test__UserAddForm input[name="username"]')

@@ -3,6 +3,11 @@
 //import 'cypress-file-upload'; for upload, do it later
 
 describe('Download configuration file', () => {
+
+  it('Tab title on Configuration files page', () => {
+    cy.get('head title').should('contain', 'Configuration files')
+  })
+
   it('Download configuration file', () => {
     cy.visit(Cypress.config('baseUrl'));
     cy.get('a[href="/admin/cluster/configuration"]').click();

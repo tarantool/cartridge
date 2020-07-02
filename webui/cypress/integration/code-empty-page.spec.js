@@ -8,5 +8,10 @@ describe('Code page', () => {
     cy.get('#root').contains('Please select a file');
     cy.get('button[type="button"]').contains('Apply').click();
     cy.get('span:contains(Success) + span:contains(Files successfuly applied)').click();
-  });
+  })
+
+  it('Tab title on Code page', () => {
+    cy.get('head title').should('contain', 'Code')
+  })
+
 });
