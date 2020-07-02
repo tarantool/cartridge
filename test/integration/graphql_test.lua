@@ -281,7 +281,7 @@ g.test_reread_request = function()
 end
 
 
-g.test_enum = function()
+g.test_enum_input = function()
     local server = cluster.main_server
 
     server.net_box:eval([[
@@ -341,6 +341,53 @@ g.test_enum = function()
         variables = {arg = {field = 'd'}}}
         )
     end)
+end
+
+g.test_enum_output = function()
+    local server = cluster.main_server
+
+    server.net_box:eval([[
+        package.loaded['test'] = package.loaded['test'] or {}
+        package.loaded['test']['test_enum_output'] = function(_, _)
+            return {value = 'a'}
+        end
+
+        local graphql = require('cartridge.graphql')
+        local types = require('cartridge.graphql.types')
+
+        local simple_enum = types.enum {
+            name = 'simple_enum_output',
+            values = {
+                a = { value = 'a' },
+                b = { value = 'b' },
+            },
+        }
+
+        local object = types.object({
+            name = 'simple_object',
+            fields = {
+                value = simple_enum,
+            }
+        })
+
+        graphql.add_callback({
+            name = 'test_enum_output',
+            args = {},
+            kind = object,
+            callback = 'test.test_enum_output',
+        })
+    ]])
+
+    t.assert_equals(
+        server:graphql({
+            query = [[
+                query {
+                    test_enum_output{ value }
+                }
+            ]],
+        variables = {}}
+        ).data.test_enum_output.value, 'a'
+    )
 end
 
 g.test_unknown_query_mutation = function()
@@ -684,6 +731,105 @@ g.test_custom_type_scalar_variables = function()
             ]],
         variables = {field = 'echo'}}
         )
+    end)
+end
+
+g.test_output_type_mismatch_error = function()
+    local server = cluster.main_server
+
+    server.net_box:eval([[
+        package.loaded['test'] = {}
+        package.loaded['test']['callback'] = function(_, _)
+            return true
+        end
+
+        package.loaded['test']['callback_for_nested'] = function(_, _)
+            return { values = true }
+        end
+
+        local graphql = require('cartridge.graphql')
+        local types = require('cartridge.graphql.types')
+
+        local obj_type = types.object({
+            name = 'ObjectWithValue',
+            fields = {
+                value = types.string,
+            },
+        })
+
+        local nested_obj_type = types.object({
+            name = 'NestedObjectWithValue',
+            fields = {
+                value = types.string,
+            },
+        })
+
+        local complex_obj_type = types.object({
+            name = 'ComplexObjectWithValue',
+            fields = {
+                values = types.list(nested_obj_type),
+            },
+        })
+
+        graphql.add_callback({
+            name = 'expected_nonnull_list',
+            kind = types.list(types.int.nonNull),
+            callback = 'test.callback',
+        })
+
+        graphql.add_callback({
+            name = 'expected_obj',
+            kind = obj_type,
+            callback = 'test.callback',
+        })
+
+        graphql.add_callback({
+            name = 'expected_list',
+            kind = types.list(types.int),
+            callback = 'test.callback',
+        })
+
+        graphql.add_callback({
+            name = 'expected_list_with_nested',
+            kind = types.list(complex_obj_type),
+            callback = 'test.callback_for_nested',
+        })
+    ]])
+
+    t.assert_error_msg_equals('Expected "expected_nonnull_list" to be an "array", got "boolean"', function()
+        return server:graphql({
+            query = [[
+                query {
+                    expected_nonnull_list
+                }
+            ]]})
+    end)
+
+    t.assert_error_msg_equals('Expected "expected_obj" to be a "map", got "boolean"', function()
+        return server:graphql({
+            query = [[
+                query {
+                    expected_obj { value }
+                }
+            ]]})
+    end)
+
+    t.assert_error_msg_equals('Expected "expected_list" to be an "array", got "boolean"', function()
+        return server:graphql({
+            query = [[
+                query {
+                    expected_list
+                }
+            ]]})
+    end)
+
+    t.assert_error_msg_equals('Expected "expected_list_with_nested" to be an "array", got "map"', function()
+        return server:graphql({
+            query = [[
+                query {
+                    expected_list_with_nested { values { value } }
+                }
+            ]]})
     end)
 end
 
