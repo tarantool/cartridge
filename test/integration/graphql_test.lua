@@ -740,68 +740,53 @@ g.test_output_type_mismatch_error = function()
     server.net_box:eval([[
         local fiber = require('fiber')
         package.loaded['test'] = {}
-        package.loaded['test']['expected_list'] = function(_, args)
-            if args.type == 'boolean' then
-                return {{value = {true}}}
-            elseif args.type == 'boolean_list' then
-                return {{value = {{value = true}}}}
-            elseif args.type == 'string' then
-                return {{value = {'Hello'}}}
-            elseif args.type == 'number' then
-                return 123
-            elseif args.type == 'cdata' then
-                return 123LL
-            elseif args.type == 'userdata' then
-                return fiber.create(function() end)
-            elseif args.type == 'object' then
-                return {a = 'b'}
-            end
-            return {{value = {{value = {1}}}}, {value = {{value = {2}}}}}
+        package.loaded['test']['callback'] = function(_, args)
+            return true
         end
 
         local graphql = require('cartridge.graphql')
         local types = require('cartridge.graphql.types')
 
-        local nested_type = types.object({
-            name = 'NestedObjectWithValue',
-            fields = {
-                value = types.list(types.int),
-            },
-        })
-
         local obj_type = types.object({
             name = 'ObjectWithValue',
             fields = {
-                value = types.list(nested_type),
+                value = types.string,
             },
         })
 
         graphql.add_callback({
+            name = 'expected_nonnull_list',
+            kind = types.list(types.int.nonNull),
+            callback = 'test.callback',
+        })
+
+        graphql.add_callback({
+            name = 'expected_obj',
+            kind = obj_type,
+            callback = 'test.callback',
+        })
+
+        graphql.add_callback({
             name = 'expected_list',
-            args = {
-                type = types.string,
-            },
-            kind = types.list(obj_type),
-            callback = 'test.expected_list',
+            kind = types.list(types.int),
+            callback = 'test.callback',
         })
     ]])
 
-    t.assert_equals(
-        server:graphql({
-            query = [[
-                query($type: String) {
-                    expected_list(type: $type) { value { value } }
-                }
-            ]],
-        variables = {type = box.NULL}}
-        ).data.expected_list, {{value = {{value = {1}}}}, {value = {{value = {2}}}}}
-    )
-
-    t.assert_error_msg_equals('Expected a table for "NestedObjectWithValue" object, got "boolean"', function()
+    t.assert_error_msg_equals('Expected a table for "NonNull(Int)" list, got "boolean"', function()
         return server:graphql({
             query = [[
                 query {
-                    expected_list(type: "boolean") { value { value } }
+                    expected_nonnull_list
+                }
+            ]]})
+    end)
+
+    t.assert_error_msg_equals('Expected a table for "ObjectWithValue" object, got "boolean"', function()
+        return server:graphql({
+            query = [[
+                query {
+                    expected_obj { value }
                 }
             ]]})
     end)
@@ -810,36 +795,18 @@ g.test_output_type_mismatch_error = function()
         return server:graphql({
             query = [[
                 query {
-                    expected_list(type: "boolean_list") { value { value } }
+                    expected_list
                 }
             ]]})
     end)
 
-    t.assert_error_msg_equals('Expected a table for "NestedObjectWithValue" object, got "string"', function()
-        return server:graphql({
-            query = [[
-                query {
-                    expected_list(type: "string") { value { value } }
-                }
-            ]]})
-    end)
-
-    t.assert_error_msg_equals('Expected a table for "ObjectWithValue" list, got "cdata"', function()
-        return server:graphql({
-            query = [[
-                query {
-                    expected_list(type: "cdata") { value { value } }
-                }
-            ]]})
-    end)
-
-    t.assert_error_msg_equals('Expected a table for "ObjectWithValue" list, got "userdata"', function()
-        return server:graphql({
-            query = [[
-                query {
-                    expected_list(type: "userdata") { value { value } }
-                }
-            ]]})
+    t.assert_error_msg_equals('Expected a table for "Int" list, got "boolean"', function()
+       return server:graphql({
+           query = [[
+               query {
+                   expected_list
+               }
+           ]]})
     end)
 
     server.net_box:eval([[
