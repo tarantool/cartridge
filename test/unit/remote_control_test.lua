@@ -1,7 +1,6 @@
 local t = require('luatest')
 local g = t.group()
 
-local fio = require('fio')
 local fiber = require('fiber')
 local digest = require('digest')
 local socket = require('socket')
@@ -10,7 +9,7 @@ local netbox = require('net.box')
 local msgpack = require('msgpack')
 local tarantool = require('tarantool')
 local remote_control = require('cartridge.remote-control')
-local helpers = require('luatest.helpers')
+local helpers = require('test.helper')
 local errno = require('errno')
 
 local username = 'superuser'
@@ -39,12 +38,8 @@ function _G.object:method()
     assert(self == _G.object, "Use object:method instead")
 end
 
-function g.before_all()
-    g.datadir = fio.tempdir()
-    box.cfg({
-        memtx_dir = g.datadir,
-        wal_mode = 'none',
-    })
+g.before_all(function()
+    helpers.box_cfg()
     box.schema.user.create(
         username,
         { if_not_exists = true }
@@ -57,13 +52,7 @@ function g.before_all()
         { if_not_exists = true }
     )
     box.schema.user.passwd(username, password)
-end
-
-function g.after_all()
-    box.cfg({listen = box.NULL})
-    fio.rmtree(g.datadir)
-    g.datadir = nil
-end
+end)
 
 local function rc_start(port)
     local ok, err = remote_control.bind('127.0.0.1', port)
@@ -77,11 +66,11 @@ local function rc_start(port)
     })
 end
 
-function g.teardown()
+g.after_each(function()
     box.cfg({listen = box.NULL})
     remote_control.stop()
     collectgarbage() -- cleanup sockets, created with netbox.connect
-end
+end)
 
 -------------------------------------------------------------------------------
 

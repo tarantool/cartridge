@@ -54,4 +54,17 @@ function helpers.list_cluster_issues(server)
     }]]}).data.cluster.issues
 end
 
+function helpers.box_cfg()
+    if type(box.cfg) ~= 'function' then
+        return
+    end
+
+    local tempdir = fio.tempdir()
+    box.cfg({
+        memtx_dir = tempdir,
+        wal_mode = 'none',
+    })
+    fio.rmtree(tempdir)
+end
+
 return helpers
