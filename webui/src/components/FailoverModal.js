@@ -15,6 +15,7 @@ import {
   Modal,
   RadioButton,
   Text,
+  TextArea,
   colors,
   withDropdown
 } from '@tarantool.io/ui-kit';
@@ -66,25 +67,8 @@ const styles = {
   selectBoxIcon: css`
     fill: ${colors.intentBase};
     transform: rotate(180deg);
-  `,
-  textarea: css`
-    width: 100%;
-    height: 120px;
-    border: 1px solid rgb(217, 217, 217);
-    box-sizing: border-box;
-    border-radius: 4px;
-    background-color: rgb(255, 255, 255);
-    padding: 5px 16px;
-    margin-bottom: 4px;
-    font-family: "Open Sans", Arial, sans-serif;
-    font-size: 14px;
-    line-height: 22px;
-    color: rgba(0, 0, 0, 0.65);
-    resize: none;
   `
 }
-
-const TextArea = props => <textarea {...props} />
 
 const DropdownButton = withDropdown(Button);
 
@@ -334,9 +318,9 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
               label='etcd2 endpoints'
               className='meta-test__etcd2Endpoints'
               inputComponent={TextArea}
-              inputClassName={styles.textarea}
               value={etcd2_params.endpoints}
               disabled={mode !== 'stateful'}
+              rows={5}
               onChange={this.handleInputChange(['etcd2_params', 'endpoints'])}
             />
           </>

@@ -50,9 +50,9 @@ const SelectedServersList = ({ className, selfURI, serverList }: SelectedServers
     {serverList && serverList.map(server => (
       <li className={styles.serversListItem}>
         <Text className={styles.serverListItemAlias} variant='h5' tag='span'>{server.alias}</Text>
-        <UriLabel 
-          uri={server.uri} 
-          icon={selfURI && selfURI === server.uri && IconGeoPin} 
+        <UriLabel
+          uri={server.uri}
+          icon={selfURI && selfURI === server.uri && IconGeoPin}
           className={selfURI && selfURI === server.uri && 'meta-test__youAreHereIcon'}
         />
       </li>
