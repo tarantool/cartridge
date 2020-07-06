@@ -1,7 +1,11 @@
 // @flow
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { isBootstrapped as checkIsBootstrapped } from 'src/store/selectors/clusterPage';
+import {
+  isBootstrapped as checkIsBootstrapped,
+  isRouterPresent,
+  isStoragePresent
+} from 'src/store/selectors/clusterPage';
 import { bootstrapVshard, setVisibleBootstrapVshardPanel } from 'src/store/actions/clusterPage.actions';
 import { Button } from '@tarantool.io/ui-kit';
 import type { State } from 'src/store/rootReducer';
@@ -27,15 +31,11 @@ const BootstrapButton = ({
   );
 };
 
-const mapStateToProps = (state: State) => {
-  const { app, ui } = state;
-
-  return {
-    can_bootstrap_vshard: (app.clusterSelf && app.clusterSelf.can_bootstrap_vshard) || false,
-    isBootstrapped: checkIsBootstrapped(state),
-    requesting: ui.requestingBootstrapVshard
-  }
-};
+const mapStateToProps = (state: State) => ({
+  can_bootstrap_vshard: (isRouterPresent(state) && isStoragePresent(state)) || false,
+  isBootstrapped: checkIsBootstrapped(state),
+  requesting: state.ui.requestingBootstrapVshard
+});
 
 const mapDispatchToProps = {
   bootstrapVshard,

@@ -6,6 +6,7 @@ import {
   defaultMemoize
 } from 'reselect';
 import isEqual from 'lodash/isEqual';
+import { VSHARD_STORAGE_ROLE_NAME, VSHARD_ROUTER_ROLE_NAME } from 'src/constants';
 import type { State } from 'src/store/rootReducer';
 import type { ServerStatWithUUID } from 'src/store/reducers/clusterPage.reducer';
 import type { Replicaset, Server } from 'src/generated/graphql-typing';
@@ -71,6 +72,10 @@ export const isRolePresentSelectorCreator = (roleName: string): IsRolePresentSel
     return false;
   }
 );
+
+export const isStoragePresent = isRolePresentSelectorCreator(VSHARD_STORAGE_ROLE_NAME);
+
+export const isRouterPresent = isRolePresentSelectorCreator(VSHARD_ROUTER_ROLE_NAME);
 
 type SearchableServer = {
   ...$Exact<Server>,

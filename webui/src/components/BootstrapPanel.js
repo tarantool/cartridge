@@ -2,9 +2,8 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { css, cx } from 'emotion'
 import { setVisibleBootstrapVshardPanel } from '../store/actions/clusterPage.actions';
-import { isBootstrapped, isRolePresentSelectorCreator } from '../store/selectors/clusterPage';
+import { isBootstrapped, isRouterPresent, isStoragePresent } from '../store/selectors/clusterPage';
 import { IconCancel, IconOk, PageCard, Text } from '@tarantool.io/ui-kit';
-import { VSHARD_STORAGE_ROLE_NAME, VSHARD_ROUTER_ROLE_NAME } from 'src/constants';
 import type { State } from 'src/store/rootReducer';
 
 const styles = {
@@ -17,9 +16,6 @@ const styles = {
     margin-bottom: 16px;
   `
 };
-
-const isStoragePresent = isRolePresentSelectorCreator(VSHARD_STORAGE_ROLE_NAME);
-const isRouterPresent = isRolePresentSelectorCreator(VSHARD_ROUTER_ROLE_NAME);
 
 class BootstrapPanel extends React.Component {
   render() {
@@ -75,8 +71,6 @@ const mapStateToProps = (state: State) => {
   }
 };
 
-const mapDispatchToProps = {
-  setVisibleBootstrapVshardPanel
-};
+const mapDispatchToProps = { setVisibleBootstrapVshardPanel };
 
 export default connect(mapStateToProps, mapDispatchToProps)(BootstrapPanel);
