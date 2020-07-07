@@ -5,7 +5,8 @@
 .cache
 .doctrees
 __pycache__
-dev
+/dev
+/tmp
 doc
 release
 release-doc

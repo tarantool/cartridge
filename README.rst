@@ -65,22 +65,30 @@ Getting started
 --------------------------------------------------------------------------------
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Create your first application
+Prerequisites
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To get a template application that uses Tarantool Cartridge and run it,
-you need to install the `cartridge-cli` utility (supposing that
-`Tarantool <https://www.tarantool.io/en/download/>`_ is already installed).
+you need to install several packages:
+
+* ``tarantool`` and ``tarantool-dev``
+  (see these `instructions <https://www.tarantool.io/en/download/>`_);
+* ``cartridge-cli``
+  (see these `instructions <https://github.com/tarantool/cartridge-cli#installation>`_)
+* ``git``, ``gcc``, ``cmake`` and ``make``.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Create your first application
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Long story short, copy-paste this into the console:
 
 .. code-block:: bash
 
-    tarantoolctl rocks install cartridge-cli
-    .rocks/bin/cartridge create --name myapp
+    cartridge create --name myapp
     cd myapp
-    ../.rocks/bin/cartridge build
-    ../.rocks/bin/cartridge start
+    cartridge build
+    cartridge start
 
 That's all! Now you can visit http://localhost:8081 and see your application's
 Admin Web UI:
@@ -114,11 +122,6 @@ and running tests.
 Building from source
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Prerequisites:
-
-* ``tarantool``, ``tarantool-dev`` (see these `instructions <https://www.tarantool.io/en/download/?v=1.10>`_);
-* ``git``, ``gcc``, ``cmake``.
-
 The fastest way to build the project is to skip building the Web UI:
 
 .. code-block:: bash
@@ -150,11 +153,10 @@ but can also be useful for demo purposes or experiments:
 
 .. code-block:: bash
 
-    tarantoolctl rocks install cartridge-cli
-    .rocks/bin/cartridge start
+    cartridge start
 
     # or select a specific entry point
-    # .rocks/bin/cartridge start --script ./test/entrypoint/srv_basic.lua
+    # cartridge start --script ./test/entrypoint/srv_vshardless.lua
 
 It can be accessed through the Web UI (http://localhost:8081)
 or via the binary protocol:
@@ -168,15 +170,15 @@ If you also need the stateful failover mode, launch an external state provider
 
 .. code-block:: bash
 
-    .rocks/bin/cartridge start --stateboard
+    cartridge start --stateboard
 
 And set failover parameters according to ``instances.yml``. The defaults are:
 
 * State provider URI: ``localhost:4401``;
 * Password: ``qwerty``.
 
-For more details about ``cartridge-cli``, see
-https://github.com/tarantool/cartridge-cli#readme.
+For more details about ``cartridge-cli``, see its
+`usage <https://github.com/tarantool/cartridge-cli#usage>`_.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Auto-generated sources
