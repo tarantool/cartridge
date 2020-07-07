@@ -47,6 +47,7 @@ vars:new('membership_notification', membership.subscribe())
 vars:new('clusterwide_config')
 vars:new('failover_fiber')
 vars:new('failover_err')
+vars:new('schedule', {})
 vars:new('client')
 vars:new('cache', {
     active_leaders = {--[[ [replicaset_uuid] = leader_uuid ]]},
@@ -129,6 +130,8 @@ end
 --- Accept new appointments.
 --
 -- Get appointments wherever they come from and put them into cache.
+-- Cached active_leaders table is never modified, but overriden by it's
+-- modified copy (if necessary).
 --
 -- @function accept_appointments
 -- @local
@@ -139,22 +142,21 @@ local function accept_appointments(appointments)
     local topology_cfg = vars.clusterwide_config:get_readonly('topology')
     local replicasets = assert(topology_cfg.replicasets)
 
-    local old_leaders = table.copy(vars.cache.active_leaders)
+    local active_leaders = table.copy(vars.cache.active_leaders)
 
-    -- Merge new appointments into cache
+    -- Merge new appointments
     for replicaset_uuid, leader_uuid in pairs(appointments) do
-        vars.cache.active_leaders[replicaset_uuid] = leader_uuid
+        active_leaders[replicaset_uuid] = leader_uuid
     end
 
     -- Remove replicasets that aren't listed in topology
-    for replicaset_uuid, _ in pairs(vars.cache.active_leaders) do
+    for replicaset_uuid, _ in pairs(active_leaders) do
         if replicasets[replicaset_uuid] == nil then
-            vars.cache.active_leaders[replicaset_uuid] = nil
+            active_leaders[replicaset_uuid] = nil
         end
     end
 
-    -- Constitute oneself
-    if vars.cache.active_leaders[box.info.cluster.uuid] == box.info.uuid then
+    if active_leaders[box.info.cluster.uuid] == box.info.uuid then
         vars.cache.is_leader = true
         vars.cache.is_rw = true
     else
@@ -162,10 +164,16 @@ local function accept_appointments(appointments)
         vars.cache.is_rw = replicasets[box.info.cluster.uuid].all_rw
     end
 
-    return not utils.deepcmp(old_leaders, vars.cache.active_leaders)
+    if utils.deepcmp(vars.cache.active_leaders, active_leaders) then
+        return false
+    end
+
+    vars.cache.active_leaders = active_leaders
+    return true
 end
 
 local function apply_config(mod)
+    checks('?table')
     if mod == nil then
         return true
     end
@@ -192,6 +200,49 @@ local function apply_config(mod)
     )
 end
 
+local function reconfigure_all()
+    local confapplier = require('cartridge.confapplier')
+    local all_roles = require('cartridge.roles').get_all_roles()
+
+    -- WARNING: implicit yield
+    -- The event may arrive while two-phase commit is in progress.
+    -- We should wait for the appropriate state.
+    local state = confapplier.wish_state('RolesConfigured', math.huge)
+    fiber.testcancel()
+
+    if state ~= 'RolesConfigured' then
+        log.info('Skipping failover step - state is %s', state)
+        return
+    end
+
+    fiber.self().storage.is_busy = true
+    confapplier.set_state('ConfiguringRoles')
+
+    local ok, err = FailoverError:pcall(function()
+        box.cfg({
+            read_only = not vars.cache.is_rw,
+        })
+
+        for _, role_name in ipairs(all_roles) do
+            local mod = service_registry.get(role_name)
+            local _, err = apply_config(mod)
+            if err then
+                log.error('Role %q failover failed', mod.role_name)
+                log.error('%s', err)
+            end
+        end
+
+        return true
+    end)
+
+    if ok then
+        log.info('Failover step finished')
+    else
+        log.warn('Failover step failed: %s', err)
+    end
+    confapplier.set_state('RolesConfigured')
+end
+
 --- Repeatedly fetch new appointments and reconfigure roles.
 --
 -- @function failover_loop
@@ -200,65 +251,53 @@ local function failover_loop(args)
     checks({
         get_appointments = 'function',
     })
-    local confapplier = require('cartridge.confapplier')
-    local all_roles = require('cartridge.roles').get_all_roles()
 
-    ::start_over::
-
-    while pcall(fiber.testcancel) do
+    while true do
+        -- WARNING: implicit yield
         local appointments, err = FailoverError:pcall(args.get_appointments)
-        if appointments == nil then
-            -- don't log an error in case the fiber was cancelled
-            fiber.testcancel()
+        fiber.testcancel()
 
+        local csw1 = fiber.info()[fiber.id()].csw
+
+        if appointments == nil then
             log.warn('%s', err.err)
             vars.failover_err = FailoverError:new(
                 "Error fetching appointments: %s", err.err
             )
-            goto start_over
+            goto continue
         end
 
         vars.failover_err = nil
 
         if not accept_appointments(appointments) then
             -- nothing changed
-            goto start_over
+            goto continue
         end
 
-        -- The event may arrive during two-phase commit is in progress.
-        -- We should wait for the appropriate state.
-        local state = confapplier.wish_state('RolesConfigured', math.huge)
-        if state ~= 'RolesConfigured' then
-            log.info('Skipping failover step - state is %s', state)
-            goto start_over
-        end
-
-        log.info('Failover triggered')
-        confapplier.set_state('ConfiguringRoles')
-
-        local ok, err = FailoverError:pcall(function()
-            box.cfg({
-                read_only = not vars.cache.is_rw,
-            })
-
-            for _, role_name in ipairs(all_roles) do
-                local mod = service_registry.get(role_name)
-                local _, err = apply_config(mod)
-                if err then
-                    log.error('Role %q failover failed', mod.role_name)
-                    log.error('%s', err)
-                end
+        -- Cancel all pending tasks
+        for id, task in pairs(vars.schedule) do
+            if task:status() == 'dead' then
+                vars.schedule[id] = nil
+            elseif not task.storage.is_busy then
+                vars.schedule[id] = nil
+                task:cancel()
+            -- else
+                -- preserve busy tasks
             end
-
-            return true
-        end)
-
-        if ok then
-            log.info('Failover step finished')
-        else
-            log.warn('Failover step failed: %s', err)
         end
-        confapplier.set_state('RolesConfigured')
+
+        -- Schedule new task
+        do
+            local task = fiber.new(reconfigure_all, vars.cache.active_leaders)
+            local id = task:id()
+            task:name('cartridge.failover.task')
+            vars.schedule[id] = task
+            log.info('Failover triggered, reapply scheduled (fiber %d)', id)
+        end
+
+        ::continue::
+        local csw2 = fiber.info()[fiber.id()].csw
+        assert(csw1 == csw2, 'Unexpected yield')
     end
 end
 
@@ -273,6 +312,17 @@ local function cfg(clusterwide_config)
     if vars.client then
         vars.client:drop_session()
         vars.client = nil
+    end
+
+    -- Cancel all pending tasks
+    for id, task in pairs(vars.schedule) do
+        if task:status() == 'dead' then
+            vars.schedule[id] = nil
+        else
+            assert(not task.storage.is_busy)
+            vars.schedule[id] = nil
+            task:cancel()
+        end
     end
 
     if vars.failover_fiber ~= nil then

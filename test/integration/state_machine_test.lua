@@ -6,7 +6,7 @@ local log = require('log')
 
 local helpers = require('test.helper')
 
-g.setup = function()
+g.before_each(function()
     g.cluster = helpers.Cluster:new({
         datadir = fio.tempdir(),
         server_command = helpers.entrypoint('srv_basic'),
@@ -35,12 +35,12 @@ g.setup = function()
 
     g.master = g.cluster:server('master')
     g.slave = g.cluster:server('slave')
-end
+end)
 
-g.teardown = function()
+g.after_each(function()
     g.cluster:stop()
     fio.rmtree(g.cluster.datadir)
-end
+end)
 
 local function is_master(srv)
     return srv.net_box:eval([[
@@ -267,8 +267,7 @@ function g.test_leader_death()
                 )
                 return myrole._apply_config_backup(conf, opts)
             end
-        end),
-        g.slave.advertise_uri
+        end)
     })
 
     -- Trigger patch_clusterwide
@@ -287,6 +286,115 @@ function g.test_leader_death()
         t.assert_equals(is_master(g.slave), true)
     end)
 end
+
+function g.test_blinking()
+    -- Sequence of actions:
+    --
+    -- m  : dies
+    --   s: Trigger failover
+    --   s: ConfiguringRoles, sleep 0.5
+    -- m  : repairs
+    --   s: Don't trigger failover yet (state is inappropriate)
+    --   s: RolesConfigured
+    --   s: Trigger failover
+
+    -- Monkeypatch apply_config on slave to be slow
+    g.slave.net_box:eval('loadstring(...)()', {
+        string.dump(function()
+            local myrole = require('mymodule')
+
+            myrole._apply_config_backup = myrole.apply_config
+            myrole.apply_config = function(conf, opts)
+                require('fiber').sleep(0.5)
+                require('log').warn('I am %s',
+                    opts.is_master and 'leader' or 'looser'
+                )
+                return myrole._apply_config_backup(conf, opts)
+            end
+        end)
+    })
+
+    -- Simulate master death
+    g.slave.net_box:eval('loadstring(...)()', {
+        string.dump(function()
+            local events = require('membership.events')
+            local opts = require('membership.options')
+            events.generate('localhost:13301', opts.DEAD)
+        end),
+    })
+
+    t.helpers.retrying({}, function()
+        t.assert_equals(is_master(g.slave), true)
+    end)
+    t.helpers.retrying({}, function()
+        t.assert_equals(is_master(g.slave), false)
+    end)
+end
+
+function g.test_fiber_cancel()
+    -- Sequence of actions:
+    --
+    --   s: Fake ConfiguringRoles
+    -- m  : dies
+    --   s: Don't trigger failover yet (state is inappropriate)
+    --   s: RolesConfigured
+    --   s: Reapply config -> restart failover fiber
+    --   s: ConfiguringRoles (is_leader = true)
+    --   s: RolesConfigures
+    -- m  : repairs
+    --   s: Trigger failover (is_leader = false)
+
+    g.slave.net_box:eval('loadstring(...)()', {
+        string.dump(function()
+            local log = require('log')
+            local fiber = require('fiber')
+            local opts = require('membership.options')
+            local events = require('membership.events')
+            local confapplier = require('cartridge.confapplier')
+            local clusterwide_config = confapplier.get_active_config()
+            local myrole = require('mymodule')
+
+            -- 1. Monkeypatch apply_config to be slow
+            myrole._apply_config_backup = myrole.apply_config
+            myrole.apply_config = function(conf, opts)
+                if not pcall(fiber.sleep, 0.5) then
+                    myrole.is_master = function()
+                        return "apply_config was aborted"
+                    end
+                end
+                require('log').warn('I am %s',
+                    opts.is_master and 'leader' or 'looser'
+                )
+                return myrole._apply_config_backup(conf, opts)
+            end
+
+            -- 2. Prevent triggering failover yet
+            log.info('Fake set_state -> ConfiguringRoles')
+            confapplier.set_state('ConfiguringRoles')
+
+            -- 3. Produce an event, make failover fiber to wish state
+            log.info('Produce false rumor')
+            events.generate('localhost:13301', opts.DEAD)
+            fiber.sleep(0)
+
+            log.info('Fake set_state -> RolesConfigured')
+            confapplier.set_state('RolesConfigured')
+
+            -- 4. Cancel fiber by reappplying config
+            log.info('Reapply config')
+            confapplier.validate_config(clusterwide_config)
+            confapplier.apply_config(clusterwide_config)
+        end)
+    })
+
+    t.helpers.retrying({}, function()
+        t.assert_equals(is_master(g.slave), true)
+    end)
+    t.helpers.retrying({}, function()
+        t.assert_equals(is_master(g.slave), false)
+    end)
+end
+
 
 function g.test_leader_recovery()
     -- Old leader shouldn't take its role until recovery is finished
