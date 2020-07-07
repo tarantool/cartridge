@@ -71,7 +71,7 @@ Prerequisites
 To get a template application that uses Tarantool Cartridge and run it,
 you need to install several packages:
 
-* ``tarantool``, ``tarantool-dev``, ``cartridge-cli``
+* ``tarantool`` and ``tarantool-dev``
   (see these `instructions <https://www.tarantool.io/en/download/>`_);
 * ``git``, ``gcc``, ``cmake`` and ``make``.
 
