@@ -74,7 +74,7 @@ you need to install several packages:
 * ``tarantool`` and ``tarantool-dev``
   (see these `instructions <https://www.tarantool.io/en/download/>`_);
 * ``cartridge-cli``
-  (see these `<instructions https://github.com/tarantool/cartridge-cli#installation>`_)
+  (see these `instructions <https://github.com/tarantool/cartridge-cli#installation>`_)
 * ``git``, ``gcc``, ``cmake`` and ``make``.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
