@@ -1,5 +1,11 @@
 ---
-run_dir: 'dev'
 cfg: instances.yml
 script: test/entrypoint/srv_basic.lua
+
+# for CLI < 2.0
+run_dir: 'dev'
+
+# for CLI >= 2.0
+run-dir: './tmp/run'
+data-dir: './tmp/data'
 ...
