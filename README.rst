@@ -178,7 +178,7 @@ And set failover parameters according to ``instances.yml``. The defaults are:
 * Password: ``qwerty``.
 
 For more details about ``cartridge-cli``, see its
-[usage](https://github.com/tarantool/cartridge-cli#usage).
+`usage <https://github.com/tarantool/cartridge-cli#usage>`_.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Auto-generated sources
