@@ -176,6 +176,82 @@ local function get_coordinator(session)
     end
 end
 
+local function set_vclockkeeper(session, replicaset_uuid, instance_uuid, vclock)
+    checks('etcd2_session', 'string', 'string', '?table')
+    assert(session.connection ~= nil)
+    local request_args = {}
+
+    local resp, err = session.connection:request('GET',
+        '/vclockkeeper/'..replicaset_uuid)
+
+    if err ~= nil then
+        if err.etcd_code == etcd2.EcodeKeyNotFound then
+            request_args.prevExist = false
+            goto set_vclockkeeper
+        else
+            return nil, SessionError:new(err)
+        end
+    end
+
+    do
+        local keeper = json.decode(resp.node.value)
+        if keeper.instance_uuid == instance_uuid and
+        vclock == nil then
+            -- No update needed
+            return true
+        end
+    end
+
+    request_args.prevIndex = resp.node.modifiedIndex
+
+    ::set_vclockkeeper::
+    -- there must be no interventions between get_vclockkeeper and
+    -- set_vclockkeeper during consistent switchover
+
+    local vclockkeeper = json.encode({
+        instance_uuid = instance_uuid,
+        vclock = vclock and setmetatable(vclock, {_serialize = 'sequence'}),
+    })
+
+    request_args.value = vclockkeeper
+
+    local resp, err = session.connection:request('PUT',
+        '/vclockkeeper/'.. replicaset_uuid, request_args)
+
+    if resp == nil then
+        return nil, SessionError:new(err)
+    end
+
+    session.vclockkeeper_index = nil
+    session.replicaset_uuid = nil
+    return true
+end
+
+local function get_vclockkeeper(session, replicaset_uuid)
+    checks('etcd2_session', 'string')
+    assert(session.connection ~= nil)
+
+    local resp, err = session.connection:request('GET',
+        '/vclockkeeper/'..replicaset_uuid)
+
+    if err ~= nil then
+        if err.etcd_code == etcd2.EcodeKeyNotFound then
+            return nil
+        else
+            return SessionError:new(err)
+        end
+    end
+
+    local vclockkeeper = json.decode(resp.node.value)
+    vclockkeeper.replicaset_uuid = replicaset_uuid
+
+    -- vclockkeeper_index will be checked in set_vclockkeeper
+    session.vclockkeeper_index = resp.node.modifiedIndex
+    session.vclockkeeper_replicaset = replicaset_uuid
+
+    return vclockkeeper
+end
+
 local function is_locked(session)
     checks('etcd2_session')
     return session.connection:is_connected()
@@ -216,6 +292,8 @@ local session_mt = {
         get_leaders = get_leaders,
         get_lock_delay = get_lock_delay,
         get_coordinator = get_coordinator,
+        set_vclockkeeper = set_vclockkeeper,
+        get_vclockkeeper = get_vclockkeeper,
         drop = drop,
     },
 }

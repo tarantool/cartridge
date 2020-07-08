@@ -112,11 +112,8 @@ local function control_loop(session)
 
         local now = fiber.clock()
         if next(updates) ~= nil then
-            -- TODO vclockkeeper handling in etcd2
-            if vars.client.state_provider ~= 'etcd2' then
-                for _, update in ipairs(updates) do
-                    session:set_vclockkeeper(update[1], update[2])
-                end
+            for _, update in ipairs(updates) do
+                session:set_vclockkeeper(update[1], update[2])
             end
 
             local ok, err = session:set_leaders(updates)
