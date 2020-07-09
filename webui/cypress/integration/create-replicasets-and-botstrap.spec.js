@@ -6,6 +6,10 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     cy.visit(Cypress.config('baseUrl')+"/admin/cluster/dashboard");
   });
 
+  it('Tab title on Cluster page', () => {
+    cy.title().should('eq', 'server1: Cluster')
+  })
+
   it('You are here marker in unconfigured server list', () => {
     cy.get('.meta-test__UnconfiguredServerList').contains(testPort).closest('li')
     .find('.meta-test__youAreHereIcon');
@@ -16,7 +20,7 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     cy.get('.meta-test__ConfigureServerModal').contains(testPort).closest('li').find('.meta-test__youAreHereIcon');
     cy.get('button[type="button"]').contains('Cancel').click();
   });
-  
+
   it('Click Bootstrap Vshard: without vshard-router, without vshard-storage', () => {
     cy.get('.meta-test__BootstrapButton').click();
     cy.get('.meta-test__BootStrapPanel__vshard-router_disabled');//component: BootstrapPanel

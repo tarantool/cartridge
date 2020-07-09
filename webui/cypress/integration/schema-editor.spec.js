@@ -49,5 +49,10 @@ describe('Schema section', () => {
 
     cy.get('button[type="button"]').contains('Reload').click();
     cy.get('.monaco-editor textarea').should('have.value', defaultText);
-  });
+  })
+
+  it('Tab title on Schema page', () => {
+    cy.title().should('eq', 'cartridge-testing.r1: Schema')
+  })
+
 });
