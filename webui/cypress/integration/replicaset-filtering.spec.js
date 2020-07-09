@@ -9,7 +9,7 @@ describe('Replicaset filtering', () => {
   })
 
   it('Tab title on Cluster page', () => {
-    cy.get('head title').should('contain', 'cartridge.srv-1: Cluster')
+    cy.title().should('eq', 'cartridge-testing.r1: Cluster')
   })
 
   it('Stop servers', () => {

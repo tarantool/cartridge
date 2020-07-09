@@ -22,6 +22,9 @@ g.before_all = function()
             advertise_port = advertise_port,
             instance_uuid = helpers.uuid('a', 'a', i),
             replicaset_uuid = helpers.uuid('a'),
+            env = {
+                TARANTOOL_INSTANCE_NAME = alias,
+            },
         })
     end
 

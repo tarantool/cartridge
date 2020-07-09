@@ -6,7 +6,7 @@ describe('Users', () => {
   })
 
   it('Tab title on Users page', () => {
-    cy.get('head title').should('contain', 'cartridge.srv-1: Users')
+    cy.title().should('eq', 'cartridge-testing.r1: Users')
   })
 
   it('Add user', () => {

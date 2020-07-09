@@ -1,7 +1,7 @@
 describe('Probe server', () => {
   it('opens probe dialog', () => {
     cy.visit(Cypress.config('baseUrl'));
-    cy.contains('cartridge.srv-1'); //check application name
+    cy.contains('cartridge-testing.r1'); //check application name
     cy.get('.meta-test__ProbeServerBtn').click();
   });
 

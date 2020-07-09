@@ -11,12 +11,12 @@ describe('Code page', () => {
   })
 
   it('Tab title on Code page', () => {
-    cy.get('head title').should('contain', 'cartridge.srv-1: Code')
+    cy.title().should('eq', 'cartridge-testing.r1: Code')
   })
 
   it('Tab title on Code page on 8082', () => {
     cy.visit('http://localhost:8082/admin/cluster/code');
-    cy.get('head title').should('contain', 'cartridge.srv-2: Code')
+    cy.title().should('eq', 'cartridge-testing: Code')
   })
 
 });
