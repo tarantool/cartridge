@@ -8,6 +8,7 @@ describe('Error details', () => {
 
   function checksForErrorDetails(){
     cy.contains('Invalid cluster topology config');
+    cy.get('div').contains('stack traceback:');
 
     cy.get('button[type="button"]:contains(Copy details)').trigger('mouseover');
     cy.get('div').contains('Copy to clipboard');
