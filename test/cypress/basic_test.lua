@@ -230,3 +230,7 @@ function g.test_replicaset_filtering()
     })
     cypress_run('replicaset-filtering.spec.js')
 end
+
+function g.test_error_details()
+    cypress_run('error-details.spec.js')
+end
