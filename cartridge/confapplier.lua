@@ -136,7 +136,7 @@ local function set_state(new_state, err)
     membership.set_payload('state', new_state)
     vars.state = new_state
     vars.error = err
-    vars.state_notification:signal()
+    vars.state_notification:broadcast()
 end
 
 --- Make a wish for meeting desired state.
@@ -233,16 +233,19 @@ local function apply_config(clusterwide_config)
         return nil, err
     end
 
+    local role_opts = {is_master = failover.is_leader()}
+
     local ok, err = OperationError:pcall(ddl_manager.apply_config,
-        clusterwide_config:get_readonly(),
-        {is_master = failover.is_leader()}
+        clusterwide_config:get_readonly(), role_opts
     )
     if not ok then
         set_state('OperationError', err)
         return nil, err
     end
 
-    local ok, err = roles.apply_config(clusterwide_config:get_readonly())
+    local ok, err = roles.apply_config(
+        clusterwide_config:get_readonly(), role_opts
+    )
     if not ok then
         set_state('OperationError', err)
         return nil, err

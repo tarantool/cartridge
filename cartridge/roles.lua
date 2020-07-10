@@ -18,7 +18,6 @@ local errors = require('errors')
 local vars = require('cartridge.vars').new('cartridge.roles')
 local utils = require('cartridge.utils')
 local topology = require('cartridge.topology')
-local failover = require('cartridge.failover')
 local service_registry = require('cartridge.service-registry')
 
 local RegisterRoleError = errors.new_class('RegisterRoleError')
@@ -275,11 +274,15 @@ end
 -- @function apply_config
 -- @local
 -- @tparam table conf
+-- @tparam table opts
+-- @tparam boolean is_master
 -- @treturn[1] boolean true
 -- @treturn[2] nil
 -- @treturn[2] table Error description
-local function apply_config(conf)
-    checks('table')
+local function apply_config(conf, opts)
+    checks('table', {
+        is_master = 'boolean',
+    })
     if conf.__type == 'ClusterwideConfig' then
         local err = "Bad argument #1 to apply_config" ..
             " (table expected, got ClusterwideConfig)"
@@ -298,8 +301,7 @@ local function apply_config(conf)
             and (type(mod.init) == 'function')
             then
                 local _, _err = ApplyConfigError:pcall(
-                    mod.init,
-                    {is_master = failover.is_leader()}
+                    mod.init, opts
                 )
                 if _err ~= nil then
                     if err == nil then
@@ -315,8 +317,7 @@ local function apply_config(conf)
 
             if type(mod.apply_config) == 'function' then
                 local _, _err = ApplyConfigError:pcall(
-                    mod.apply_config, conf,
-                    {is_master = failover.is_leader()}
+                    mod.apply_config, conf, opts
                 )
                 if _err ~= nil then
                     if err == nil then
@@ -332,8 +333,7 @@ local function apply_config(conf)
             and (type(mod.stop) == 'function')
             then
                 local _, _err = ApplyConfigError:pcall(
-                    mod.stop,
-                    {is_master = failover.is_leader()}
+                    mod.stop, opts
                 )
                 if _err ~= nil then
                     if err == nil then
