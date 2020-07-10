@@ -110,7 +110,8 @@ local function set_vclockkeeper(session, args)
     if ok == nil then
         return nil, SessionError:new(err)
     end
-    return ok
+
+    return true
 end
 
 local function get_vclockkeeper(session, replicaset_uuid)
