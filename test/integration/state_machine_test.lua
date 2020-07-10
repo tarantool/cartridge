@@ -287,7 +287,7 @@ function g.test_leader_death()
     end)
 end
 
-function g.test_blinking()
+function g.test_blinking_slow()
     -- Sequence of actions:
     --
     -- m  : dies
@@ -331,6 +331,69 @@ function g.test_blinking()
     end)
 end
 
+function g.test_blinking_fast()
+    -- Sequence of actions:
+    --
+    --   s: Protect from becoming rw
+    --   s: Fake ConfiguringRoles
+    -- m  : dies
+    -- m  : repairs
+    --   s: RolesConfigured
+    --   s: Shouldn't become writable
+
+    g.slave.net_box:eval('loadstring(...)()', {
+        string.dump(function()
+            local log = require('log')
+            local fiber = require('fiber')
+            local myrole = require('mymodule')
+            local confapplier = require('cartridge.confapplier')
+
+            -- 1. Protect myrole from becoming a leader
+            myrole._apply_config_backup = myrole.apply_config
+            myrole.apply_config = function(conf, opts)
+                if opts.is_master then
+                    log.error('DANGER! Slave is rw!')
+                    os.exit(-1)
+                end
+                fiber.sleep(0)
+                return myrole._apply_config_backup(conf, opts)
+            end
+
+            fiber.create(function()
+                require('log').warn('Slave protected from becoming rw')
+            end)
+
+            -- 2. Prevent triggering failover yet
+            log.info('Fake set_state -> ConfiguringRoles')
+            confapplier.set_state('ConfiguringRoles')
+
+            local opts = require('membership.options')
+            local events = require('membership.events')
+            local membership = require('membership')
+            local m = membership.get_member('localhost:13301')
+
+            -- 3. Produce an event, make failover fiber to wish state
+            log.info('Produce false rumor (master death)')
+            events.generate(m.uri, opts.DEAD, m.incarnation, m.payload)
+            fiber.sleep(0)
+            log.info('Produce false rumor (master resurrected)')
+            events.generate(m.uri, opts.ALIVE, m.incarnation+1, m.payload)
+            fiber.sleep(0)
+
+            log.info('Fake set_state -> RolesConfigured')
+            confapplier.set_state('RolesConfigured')
+
+            -- 4. Wait when failover step
+            assert(confapplier.wish_state('ConfiguringRoles') == 'ConfiguringRoles')
+            assert(confapplier.wish_state('RolesConfigured') == 'RolesConfigured')
+        end)
+    })
+
+    t.helpers.retrying({}, function()
+        t.assert_equals(is_master(g.slave), false)
+    end)
+end
+
 function g.test_fiber_cancel()
     -- Sequence of actions:
     --
@@ -340,7 +403,7 @@ function g.test_fiber_cancel()
     --   s: RolesConfigured
     --   s: Reapply config -> restart failover fiber
     --   s: ConfiguringRoles (is_leader = true)
-    --   s: RolesConfigures
+    --   s: RolesConfigured
     -- m  : repairs
     --   s: Trigger failover (is_leader = false)
 
@@ -358,9 +421,8 @@ function g.test_fiber_cancel()
             myrole._apply_config_backup = myrole.apply_config
             myrole.apply_config = function(conf, opts)
                 if not pcall(fiber.sleep, 0.5) then
-                    myrole.is_master = function()
-                        return "apply_config was aborted"
-                    end
+                    log.error('DANGER! Apply_config fiber aborted!')
+                    os.exit(-1)
                 end
                 require('log').warn('I am %s',
                     opts.is_master and 'leader' or 'looser'
