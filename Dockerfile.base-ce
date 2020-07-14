@@ -3,7 +3,7 @@ FROM centos:7
 ARG TARANTOOL_BRANCH
 
 RUN set -x &&\
-    yum -y install https://centos7.iuscommunity.org/ius-release.rpm &&\
+    yum -y install https://repo.ius.io/ius-release-el7.rpm &&\
     curl -sL https://rpm.nodesource.com/setup_8.x | bash - &&\
     yum -y install gcc git make cmake unzip python3 nodejs &&\
     # cypress deps
