@@ -264,6 +264,8 @@ local function constitute_oneself(active_leaders, opts)
         return true
     end
 
+    log.info("Performing a consistent switchover")
+
     local deadline = fiber.time() + opts.timeout
 
     -- Go to the external state provider
@@ -280,51 +282,54 @@ local function constitute_oneself(active_leaders, opts)
     end
     fiber.testcancel()
 
-    if vclockkeeper == nil
-    or vclockkeeper.vclock == nil
-    then
+    if vclockkeeper == nil then
         -- It's absent, no need to wait anyone
         goto set_vclockkeeper
     elseif vclockkeeper.instance_uuid == instance_uuid then
         -- It's me already
+        vars.cache.is_vclockkeeper = true
+        vars.cache.is_leader = true
+        vars.cache.is_rw = true
         return true
     end
 
-    -- Go to the vclockkeeper and query its LSN
-    local vclockkeeper_uuid = vclockkeeper.instance_uuid
-    local vclockkeeper_uri = topology_cfg.servers[vclockkeeper_uuid].uri
+    do
+        -- Go to the vclockkeeper and query its LSN
+        local vclockkeeper_uuid = vclockkeeper.instance_uuid
+        local vclockkeeper_uri = topology_cfg.servers[vclockkeeper_uuid].uri
 
-    local timeout = deadline - fiber.time()
-    -- WARNING: implicit yield
-    local vclockkeeper_info, err = errors.netbox_eval(
-        pool.connect(vclockkeeper_uri, {wait_connected = false}), [[
-        box.ctl.wait_ro(...)
-        return {
-            id  = box.info.id,
-            lsn = box.info.lsn,
-        }
-    ]], {timeout}, {timeout = timeout + opts.NETBOX_CALL_TIMEOUT})
-    fiber.testcancel()
+        local timeout = deadline - fiber.time()
+        -- WARNING: implicit yield
+        local vclockkeeper_info, err = errors.netbox_eval(
+            pool.connect(vclockkeeper_uri, {wait_connected = false}), [[
+            box.ctl.wait_ro(...)
+            return {
+                id  = box.info.id,
+                lsn = box.info.lsn,
+            }
+        ]], {timeout}, {timeout = timeout + vars.options.NETBOX_CALL_TIMEOUT})
+        fiber.testcancel()
 
-    if vclockkeeper_info == nil then
-        return nil, ConsistentSwitchoverError:new(err)
-    end
+        if vclockkeeper_info == nil then
+            return nil, ConsistentSwitchoverError:new(err)
+        end
 
-    -- Wait async replication to arrive
-    -- WARNING: implicit yield
-    local timeout = deadline - fiber.time()
-    local ok = wait_lsn(
-        vclockkeeper_info.id,
-        vclockkeeper_info.lsn,
-        vars.options.WAITLSN_PAUSE,
-        timeout
-    )
-    if not ok then
-        return nil, ConsistentSwitchoverError:new(
-            "Can't catch up with the vclockkeeper"
+        -- Wait async replication to arrive
+        -- WARNING: implicit yield
+        local timeout = deadline - fiber.time()
+        local ok = wait_lsn(
+            vclockkeeper_info.id,
+            vclockkeeper_info.lsn,
+            vars.options.WAITLSN_PAUSE,
+            timeout
         )
+        if not ok then
+            return nil, ConsistentSwitchoverError:new(
+                "Can't catch up with the vclockkeeper"
+            )
+        end
+        fiber.testcancel()
     end
-    fiber.testcancel()
 
     -- The last one thing: persist our vclock
     ::set_vclockkeeper::
@@ -346,87 +351,10 @@ local function constitute_oneself(active_leaders, opts)
     vars.cache.is_leader = true
     vars.cache.is_rw = true
 
+    log.info('Consistent switchover is successful')
+
     return true
 end
-
--- IN PROGRESS Consistent leader switchover
--- local function consistent_switchover(timeout)
---     checks('?number')
-
---     local topology_cfg = vars.clusterwide_config:get_readonly('topology')
---     local failover_cfg = topology.get_failover_params(topology_cfg)
-
---     if failover_cfg.consistent_switchover ~= true then
---         return false
---     end
-
---     if not is_leader() then
---         -- not a leader, nothing to do
---         return false
---     end
-
---     timeout = timeout or 1
-
-
---     local replicaset_uuid = require('cartridge.confapplier').get_replicaset_uuid()
---     local instance_uuid = require('cartridge.confapplier').get_instance_uuid()
-
---     if vars.client == nil then
---         return nil, StateProviderError:new("No state provider configured")
---     end
-
---     local session = vars.client.session
---     if session == nil or not session:is_alive() then
---         return nil, StateProviderError:new('State provider unavailable')
---     end
-
---     local vclockkeeper, err = session:get_vclockkeeper(replicaset_uuid)
---     if err ~= nil then
---         return nil, ConsistentSwitchoverError:new(err)
---     end
-
---     if vclockkeeper ~= nil and vclockkeeper.vclock ~= nil then
---         local old_master_uri = topology_cfg.servers[vclockkeeper.instance_uuid].uri
---         local old_master, err = pool.connect(old_master_uri)
---         if err ~= nil then
---             return nil, ConsistentSwitchoverError:new(err)
---         end
-
---         local old_master_info, err = errors.netbox_eval(old_master, [[
---             box.ctl.wait_ro(...)
---             return {
---                 id  = box.info.id,
---                 vclock = box.info.vclock,
---             }
---         ]], {deadline}, {timeout = timeout})
---         local old_master_id = old_master_info.id
---         local old_master_lsn = old_master_info.vclock[old_master_id]
-
---         -- TODO Unable to get old master's lsn
---         if err ~= nil then
---             return nil, ConsistentSwitchoverError:new(err)
---         end
-
---         if wait_lsn(old_master_id, old_master_lsn, 0.01, timeout) == false then
---             return nil
---         end
---     end
-
---     local _, err = vars.client.session:set_vclockkeeper({
---         replicaset_uuid = replicaset_uuid,
---         instance_uuid = instance_uuid,
---         vclock = box.info().vclock,
---     })
-
---     if err ~= nil then
---         return nil, ConsistentSwitchoverError:new(
---             'Unable to set a new vclockkeeper'
---         )
---     end
-
---     vars.cache.is_rw = true
---     return true
--- end
 
 local function reconfigure_all(active_leaders)
     local confapplier = require('cartridge.confapplier')
@@ -437,7 +365,7 @@ local function reconfigure_all(active_leaders)
     local t1 = fiber.time()
     -- WARNING: implicit yield
     local ok, _ = constitute_oneself(active_leaders, {
-        timout = vars.options.WAITLSN_TIMEOUT,
+        timeout = vars.options.WAITLSN_TIMEOUT,
     })
     fiber.testcancel()
     local t2 = fiber.time()
@@ -447,19 +375,6 @@ local function reconfigure_all(active_leaders)
         -- TODO set failover_err
         goto start_over
     end
-
-    -- if ok == nil then
-    --     if err == nil then
-    --         vars.failover_err = ConsistentSwitchoverError:new(
-    --             "Cannot catch up with the vclockkeeper"
-    --         )
-    --     else
-    --         vars.failover_err = ConsistentSwitchoverError:new(
-    --             "During consistent_switchover error occured: %s",
-    --              err
-    --         )
-    --     end
-    -- end
 
     -- WARNING: implicit yield
     -- The event may arrive while two-phase commit is in progress.
@@ -597,7 +512,7 @@ local function cfg(clusterwide_config)
     local failover_cfg = topology.get_failover_params(topology_cfg)
     local first_appointments
 
-    if failover_cfg.mode == 'stateful' or failover_cfg.consistent_switchover == true then
+    if failover_cfg.mode == 'stateful' then
         if failover_cfg.state_provider == 'tarantool' then
             local params = assert(failover_cfg.tarantool_params)
             vars.client = stateboard_client.new({

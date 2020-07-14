@@ -116,7 +116,7 @@ local function control_loop(session)
                 session:set_vclockkeeper({
                     replicaset_uuid = update[1],
                     instance_uuid = update[2],
-                    vclock = nil,
+                    vclock = {},
                 })
             end
 
