@@ -177,6 +177,24 @@ g.test_upload = function()
         }) end
     )
 
+    t.assert_error_msg_equals(
+        'Could not coerce "inputObject" to "String"',
+        function() return server:graphql({
+            query = [[
+                query { test(arg: {a: "123"}, arg4: 123) }
+            ]], variables = {}
+        }) end
+    )
+
+    t.assert_error_msg_equals(
+        'Could not coerce "list" to "String"',
+        function() return server:graphql({
+            query = [[
+                query { test(arg: ["123"], arg4: 123) }
+            ]], variables = {}
+        }) end
+    )
+
     -- Errors in handlers
     server.net_box:eval([[
         package.loaded['test']['test'] = function(root, args)
@@ -646,6 +664,17 @@ g.test_custom_type_scalar_variables = function()
         variables = {field = 'echo'}}
         ).data.test_custom_type_scalar_list, 'echo'
     )
+
+    t.assert_error_msg_equals('Could not coerce "inputObject" to "CustomString"', function()
+        return server:graphql({
+            query = [[
+                query {
+                    test_custom_type_scalar_list(
+                        fields: [{a: "2"}]
+                    )
+                }
+            ]]})
+    end)
 
     t.assert_error_msg_equals('Variable "field" type mismatch: ' ..
             'the variable type "NonNull(String)" is not compatible with the argument type '..
