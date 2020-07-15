@@ -936,7 +936,7 @@ exceptions relative to the rest of the templates does not matter, while in
 Deploying an application
 --------------------------------------------------------------------------------
 
-After you've developed you application locally, you can deploy
+After you've developed your application locally, you can deploy
 it to a test or production environment.
 
 "Deploy" includes packing the application into a specific distribution format,
