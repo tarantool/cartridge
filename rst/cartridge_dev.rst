@@ -225,7 +225,7 @@ To implement a custom cluster role, do the following:
 
    Here the ``role_name`` value may differ from the module name passed to the
    ``cartridge.cfg()`` function. If the ``role_name`` variable is not specified,
-   the module (= LUA FILE NAME???) name is the default value.
+   the module name is the default value.
 
    .. NOTE::
 
@@ -936,6 +936,12 @@ exceptions relative to the rest of the templates does not matter, while in
 Deploying an application
 --------------------------------------------------------------------------------
 
+After you've developed you application locally, you can deploy
+it to a test or production environment.
+
+"Deploy" includes packing the application into a specific distribution format,
+installing to the target system, and running the application.
+
 You have four options to deploy a Tarantool Cartridge application:
 
 * as an :ref:`rpm <cartridge-deploy-rpm>` package (for production);
@@ -950,6 +956,9 @@ You have four options to deploy a Tarantool Cartridge application:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Deploying as an rpm or deb package
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The choice between DEB and RPM depends on the package manager of the target OS.
+For example, DEB is native for Debian Linux, and RPM -- for CentOS.
 
 #. Pack the application into a distributable:
 
@@ -989,6 +998,18 @@ Deploying as an rpm or deb package
 
 #. In case it is a cluster-aware application, proceed to
    :ref:`deploying the cluster <cartridge-deployment>`.
+
+   .. NOTE::
+
+       If you're migrating your application from local test environment to
+       production, you can re-use your test configuration at this step:
+
+       1. In the cluster web interface of the test environment, click
+          **Configuration files > Download**
+          to save the test configuration.
+       2. In the cluster web interface of the production environment, click
+          **Configuration files > Upload**
+          to upload the saved configuration.
 
 .. _cartridge-deploy-tgz:
 
@@ -1038,6 +1059,18 @@ Deploying as a tar+gz archive
 #. In case it is a cluster-aware application, proceed to
    :ref:`deploying the cluster <cartridge-deployment>`.
 
+   .. NOTE::
+
+       If you're migrating your application from local test environment to
+       production, you can re-use your test configuration at this step:
+
+       1. In the cluster web interface of the test environment, click
+          **Configuration files > Download**
+          to save the test configuration.
+       2. In the cluster web interface of the production environment, click
+          **Configuration files > Upload**
+          to upload the saved configuration.
+
 .. _cartridge-deploy-rock:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1074,6 +1107,18 @@ This deployment method is intended for local testing only.
 
 #. In case it is a cluster-aware application, proceed to
    :ref:`deploying the cluster <cartridge-deployment>`.
+
+   .. NOTE::
+
+       If you're migrating your application from local test environment to
+       production, you can re-use your test configuration at this step:
+
+       1. In the cluster web interface of the test environment, click
+          **Configuration files > Download**
+          to save the test configuration.
+       2. In the cluster web interface of the production environment, click
+          **Configuration files > Upload**
+          to upload the saved configuration.
 
 .. _cartridge-run:
 
@@ -1215,22 +1260,53 @@ Start/stop using ``systemctl``
 
 .. _cartridge-run-systemctl-config:
 
-When running instances with ``systemctl``, you can specify instance configuration
-in a YAML file.
+When running instances with ``systemctl``, keep these practices in mind:
 
-This file can contain `these options <https://www.tarantool.io/en/doc/latest/book/cartridge/cartridge_api/modules/cartridge.argparse/#tables>`_;
-see an example `here <https://www.tarantool.io/en/doc/latest/book/cartridge/cartridge_cli/#usage-example>`_).
+* You can specify *instance configuration* in a YAML file.
 
-Save this file to ``/etc/tarantool/conf.d/`` (the default ``systemd`` path)
-or to a location set in the ``TARANTOOL_CFG`` environment variable.
-The file name doesn't matter: it can be ``instances.yml`` or anything else you like.
+  This file can contain `these options <https://www.tarantool.io/en/doc/latest/book/cartridge/cartridge_api/modules/cartridge.argparse/#tables>`_;
+  see an example `here <https://www.tarantool.io/en/doc/latest/book/cartridge/cartridge_cli/#usage-example>`_).
 
-The workflow is like this:
-``systemctl`` obtains ``app_name`` (and ``instance_name``, if specified)
-from the name of the application's ``systemd`` unit file
-(e.g. ``APP_NAME`` or ``APP_NAME@INSTANCE_1``),
-and ``cartridge`` then looks across all YAML files in
-``/etc/tarantool/conf.d`` for a section with the appropriate name
-(e.g. ``app_name`` or ``app_name.instance_1``).
+  Save this file to ``/etc/tarantool/conf.d/`` (the default ``systemd`` path)
+  or to a location set in the ``TARANTOOL_CFG`` environment variable
+  (if you've edited the application's ``systemd`` unit file).
+  The file name doesn't matter: it can be ``instances.yml`` or anything else you like.
+
+  Here's what ``systemd`` is doing further:
+
+  * obtains ``app_name`` (and ``instance_name``, if specified)
+    from the name of the application's ``systemd`` unit file
+    (e.g. ``APP_NAME@default`` or ``APP_NAME@INSTANCE_1``);
+  * sets default console socket (e.g. ``/var/run/tarantool/APP_NAME@INSTANCE_1.control``),
+    PID file (e.g. ``/var/run/tarantool/APP_NAME@INSTANCE_1.pid``)
+    and ``workdir`` (e.g. ``/var/lib/tarantool/<APP_NAME>.<INSTANCE_NAME>``).
+    Environment=TARANTOOL_WORKDIR=${workdir}.%i
+    Q: what's the workdir for 2 cases:
+    no instance name specified and multi-instance setup?
+
+  Finally, ``cartridge`` looks across all YAML files in
+  ``/etc/tarantool/conf.d`` for a section with the appropriate name
+  (e.g. ``app_name`` that contains common configuration for all instances,
+  and ``app_name.instance_1`` that contain instance-specific configuration).
+  As a result, Cartridge options ``workdir``, ``console_sock``, and ``pid_file``
+  in the YAML file
+  `cartridge.cfg <https://www.tarantool.io/en/doc/latest/book/cartridge/cartridge_api/modules/cartridge/#cfg-opts-box-opts>`_
+  become useless, because ``systemd`` overrides them.
+
+* The default tool for querying logs is `journalctl <https://www.freedesktop.org/software/systemd/man/journalctl.html>`_.
+  For example:
+
+  .. code-block:: console
+
+      # show log messages for a systemd unit named APP_NAME.INSTANCE_1
+      $ journalctl -u APP_NAME.INSTANCE_1
+
+      # show only the most recent messages and continuously print new ones
+      $ journalctl -f -u APP_NAME.INSTANCE_1
+
+  If really needed, you can change logging-related ``box.cfg`` options in
+  the YAML configuration file:
+  see `log <https://www.tarantool.io/en/doc/2.3/reference/configuration/#confval-log>`_
+  and other related options.
 
 .. include:: topics/error-handling.rst
