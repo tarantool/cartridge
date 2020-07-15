@@ -826,7 +826,7 @@ Application versioning
 Tarantool Cartridge understands semantic versioning as described at
 `semver.org <https://semver.org>`_.
 When developing an application, create new Git branches and tag them appropriately.
-These tags are used to calculate version increments for subsequent packaging.
+These tags are used to calculate version increments for subsequent packing.
 
 For example, if your application has version 1.2.1, tag your current branch with
 ``1.2.1`` (annotated or not).
@@ -1281,8 +1281,6 @@ When running instances with ``systemctl``, keep these practices in mind:
     PID file (e.g. ``/var/run/tarantool/APP_NAME@INSTANCE_1.pid``)
     and ``workdir`` (e.g. ``/var/lib/tarantool/<APP_NAME>.<INSTANCE_NAME>``).
     Environment=TARANTOOL_WORKDIR=${workdir}.%i
-    Q: what's the workdir for 2 cases:
-    no instance name specified and multi-instance setup?
 
   Finally, ``cartridge`` looks across all YAML files in
   ``/etc/tarantool/conf.d`` for a section with the appropriate name
