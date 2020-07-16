@@ -264,8 +264,6 @@ local function constitute_oneself(active_leaders, opts)
         return true
     end
 
-    log.info("Performing a consistent switchover")
-
     local deadline = fiber.time() + opts.timeout
 
     -- Go to the external state provider
@@ -296,7 +294,12 @@ local function constitute_oneself(active_leaders, opts)
     do
         -- Go to the vclockkeeper and query its LSN
         local vclockkeeper_uuid = vclockkeeper.instance_uuid
-        local vclockkeeper_uri = topology_cfg.servers[vclockkeeper_uuid].uri
+        local vclockkeeper_srv = topology_cfg.servers[vclockkeeper_uuid]
+        if vclockkeeper_srv == nil then
+            return nil, ConsistentSwitchoverError:new('Alien vclockkeeper')
+        end
+
+        local vclockkeeper_uri = vclockkeeper_srv.uri
 
         local timeout = deadline - fiber.time()
         -- WARNING: implicit yield
@@ -372,7 +375,6 @@ local function reconfigure_all(active_leaders)
 
     if not ok then
         fiber.sleep(t1 + vars.options.WAITLSN_TIMEOUT - t2)
-        -- TODO set failover_err
         goto start_over
     end
 
@@ -602,18 +604,14 @@ local function cfg(clusterwide_config)
         timeout = vars.options.WAITLSN_TIMEOUT
     })
     if ok == nil then
-        vars.failover_err = vars.failover_err or FailoverError:new(
-            "Error reaching consistency: %s", err.err
-        )
-    end
-
-    -- TODO check race between starting tasks from here and from failover_fiber
-    if next(vars.schedule) == nil then
-        local task = fiber.new(reconfigure_all, vars.cache.active_leaders)
-        local id = task:id()
-        task:name('cartridge.failover.task')
-        vars.schedule[id] = task
-        log.info('Failover triggered, reapply scheduled (fiber %d)', id)
+        log.warn("Error reaching consistency: %s", err.err)
+        if next(vars.schedule) == nil then
+            local task = fiber.new(reconfigure_all, vars.cache.active_leaders)
+            local id = task:id()
+            task:name('cartridge.failover.task')
+            vars.schedule[id] = task
+            log.info('Failover triggered, reapply scheduled (fiber %d)', id)
+        end
     end
 
     box.cfg({
@@ -669,6 +667,15 @@ local function get_error()
     and vars.failover_fiber:status() == 'dead'
     then
         return FailoverError:new('Failover fiber is dead!')
+    end
+
+    local confapplier = require('cartridge.confapplier')
+    local instance_uuid = confapplier.get_instance_uuid()
+    local replicaset_uuid = confapplier.get_replicaset_uuid()
+
+    if vars.cache.active_leaders[replicaset_uuid] == instance_uuid
+    and not vars.cache.is_leader then
+        return ConsistentSwitchoverError:new('Consistency not reached yet')
     end
 
     return vars.failover_err
