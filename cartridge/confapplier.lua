@@ -595,6 +595,11 @@ local function init(opts)
     return true
 end
 
+--- Get current ClusterwideConfig object of instance
+--
+-- @function get_active_config
+-- @return @{cartridge.clusterwide-config} or nil,
+-- if instance not bootstrapped.
 local function get_active_config()
     return vars.clusterwide_config
 end

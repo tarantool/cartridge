@@ -908,16 +908,6 @@ Potential issues
   error message to detect this replica set. Then fix the issue in the same way
   as for :ref:`UNREACHABLE_REPLICA <unreachable_replica>`.
 
-.. _cartridge-troubleshooting:
-
--------------------------------------------------------------------------------
-Troubleshooting
--------------------------------------------------------------------------------
-
-Please see the
-`troubleshooting guide <https://www.tarantool.io/en/doc/latest/book/admin/troubleshoot/>`_.
-in the Tarantool manual.
-
 .. _cartridge-recovery:
 
 -------------------------------------------------------------------------------
@@ -940,3 +930,5 @@ in the Tarantool manual.
 
 .. |nbsp| unicode:: 0xA0
    :trim:
+
+.. include:: topics/troubleshooting.rst
