@@ -1,10 +1,17 @@
 .. _cartridge-troubleshooting:
 
-Tarantool cartridge troubleshooting
-=================================================================================
+-------------------------------------------------------------------------------
+Troubleshooting
+-------------------------------------------------------------------------------
 
+First of all, see the
+`troubleshooting guide <https://www.tarantool.io/en/doc/latest/book/admin/troubleshoot/>`_.
+in the Tarantool manual. Also there are other cartridge-specific
+problems considered below.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 What to do if there are two or more crashed instances in cluster and quorum lost?
----------------------------------------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 * Firsly need to know uuids of crashed instances
 * After detecting uuids of crashed instances, disable them from alive instance.
@@ -42,18 +49,19 @@ Resolving this problem via Graphql:
 Resolving this problem via lua-api:
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-.. code-block:: lua
+.. code-block:: bash
 
     # connect to console of alive instance
+    tarantoolctl connect user:password@instance_advertise_uri
 
-    tarantoolctl connect user@password:instance_advertise_uri
+.. code-block:: lua
 
-    > cartridge = require('cartridge')
-    > servers = cartridge.admin_get_servers()
-    > uuids = {} -- array of broken servers
-    > for _, server in ipairs(servers) do
-    >     if server.status == 'unreachable' then
-    >        table.insert(uuids, server.uuid)
-    >     end
-    > end
-    > cartridge.admin_disable_servers(uuids)
+    cartridge = require('cartridge')
+    servers = cartridge.admin_get_servers()
+    uuids = {} -- array of broken servers
+    for _, server in ipairs(servers) do
+        if server.status == 'unreachable' then
+           table.insert(uuids, server.uuid)
+        end
+    end
+    cartridge.admin_disable_servers(uuids)
