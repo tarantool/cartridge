@@ -2,31 +2,24 @@
 // TODO: move to uikit
 import * as React from 'react';
 import { css, cx } from 'react-emotion';
-import ServerLabels, { type Label } from 'src/components/ServerLabels';
-import store from 'src/store/instance';
+import { type Label } from 'src/components/ServerLabels';
 import {
-  Button,
-  Dropdown,
-  DropdownItem,
   HealthStatus,
   IconBucket,
   IconChip,
   IconChipWarning,
   IconChipDanger,
   IconGeoPin,
-  IconMore,
   LeaderFlag,
   ProgressBar,
   Text,
   Tooltip,
   UriLabel
 } from '@tarantool.io/ui-kit';
-import {
-  type MemoryUsageRatios
-} from 'src/misc/memoryStatistics';
-import { getMemoryFragmentationLevel } from 'src/store/selectors/clusterPage';
-import { failoverPromoteLeader, showExpelModal } from '../store/actions/clusterPage.actions';
 import { withRouter, Link } from 'react-router-dom';
+import { type MemoryUsageRatios } from 'src/misc/memoryStatistics';
+import { getMemoryFragmentationLevel } from 'src/store/selectors/clusterPage';
+import { ReplicasetServerListItemDropdown } from './ReplicasetServerListItemDropdown'
 
 const styles = {
   row: css`
@@ -91,11 +84,6 @@ const styles = {
   memProgress: css`
     width: auto;
     margin-left: 20px;
-  `,
-  configureBtn: css`
-    position: absolute;
-    top: 12px;
-    right: 12px;
   `,
   status: css`
     flex-basis: 193px;
@@ -271,39 +259,12 @@ class ReplicasetServerListItem extends React.PureComponent<
             </div>
           </div>
         </div>
-        <Dropdown
-          items={[
-            <DropdownItem onClick={() => history.push(`/cluster/dashboard/instance/${uuid}`)}>
-              Server details
-            </DropdownItem>,
-            showFailoverPromote
-              ? (
-                <DropdownItem onClick={() => store.dispatch(failoverPromoteLeader(replicasetUUID, uuid))}>
-                  Promote a leader
-                </DropdownItem>
-              )
-              : null,
-            <DropdownItem
-              className={css`color: rgba(245, 34, 45, 0.65);`}
-              onClick={() => store.dispatch(showExpelModal(uri))}
-            >
-              Expel server
-            </DropdownItem>
-          ]}
-          className={cx(styles.configureBtn, 'meta-test__ReplicasetServerListItem__dropdownBtn')}
-          popoverClassName='meta-test__ReplicasetServerListItem__dropdown'
-        >
-          <Button
-            icon={IconMore}
-            size='s'
-            intent='iconic'
-          />
-        </Dropdown>
-        <ServerLabels
-          className={styles.tags}
-          labels={(labels || [])}
-          onLabelClick={onServerLabelClick}
-          highlightingOnHover={tagsHighlightingClassName}
+        <ReplicasetServerListItemDropdown
+          replicasetUUID={replicasetUUID}
+          showFailoverPromote={showFailoverPromote}
+          uri={uri}
+          history={history}
+          uuid={uuid}
         />
       </React.Fragment>
     )
