@@ -13,14 +13,25 @@ problems considered below.
 What to do if there are two or more crashed instances in cluster and quorum lost?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+What is ``quorum``: each cluster instance is a member of cluster quorum,
+so cluster quorum is a set of it's instances.
+
+What is ``lost quorum`` problem: quorum requires all of it's instances to
+be alive, so if one of instance is broken (for example instance was crashed/stopped
+or there is lost connection to instance) then quorum becomes lost.
+
+To reslove ``lost quorum`` problem follow next steps:
+
 * Firsly need to know uuids of crashed instances
 * After detecting uuids of crashed instances, disable them from alive instance.
 
 There are two ways to get servers list and disabling them: Graphql and lua-api.
 
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 Examples:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 Resolving this problem via Graphql:
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
@@ -46,6 +57,7 @@ Resolving this problem via Graphql:
         }
     }
 
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 Resolving this problem via lua-api:
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
