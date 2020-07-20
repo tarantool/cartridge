@@ -179,3 +179,104 @@ Read next articles about:
 
 * :ref:`Deactivating replicasets <cartridge-deactivate-replica-set>`
 * :ref:`Expelling instances <cartridge-expelling-instances>`
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Work with cluster config
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Before you start, please read related article about :ref:`cluster config <cartridge-config>`.
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+How to update config on the whole cluster?
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Here is an examples of updating config:
+
+* :ref:`HTTP API <cartridge-config-http-api>`
+* :ref:`GraphQL API <cartridge-config-graphql-api>`
+* :ref:`Lua API <cartridge-config-lua-api>`
+* :ref:`Luatest API <cartridge-config-luatest-api>`
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+How to update config on a single instance?
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+There is no API for changing config for a single instance, so there will be workaround for 
+this problem:
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+**Update config through instance console**
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+#.  Connect to instance console via ``tarantoolctl``
+#.  Get an active instance config via ``cartridge.confapplier.get_active_config()``
+    to see :ref:`cartridge.confapplier <cartridge.confapplier>`
+#.  Make a copy of active_config
+#.  Modify config as it's needed, use ``cfg:set_plaintext('key', value)`` method
+#.  Lock this config ``cfg:lock()`` (because it's needed to apply)
+#.  Call ``confapplier.apply_config()`` to apply new config on this instance
+#.  If you want to save your new config, just call ``cartridge.clusterwidie_config.save(cfg, path)``
+
+
+For example:
+
+.. code-block:: bash
+
+    # connect to console of required instance
+    tarantoolctl connect user:password@instance_advertise_uri
+
+.. code-block:: lua
+
+    confapplier = require('cartridge.confapplier')
+    cfg = confapplier.get_active_config()
+    -- get copy of active config
+    new_cfg = cfg:copy()
+    -- set new attribute to config copy
+    new_cfg:set_plaintext('new_attribute.yml', 10)
+    -- lock config for futher apply
+    new_cfg:lock()
+    -- apply_config on instance
+    confapplier.apply_config(new_cfg);
+
+    -- for example save config on filesystem
+    clusterwidie_config = require('cartridge.clusterwidie-config')
+    clusterwidie_config.save(new_cfg, some_path)
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+**Update config by changing it's on filesystem**
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+If you've changed config on filesystem and want to load config do next steps
+
+#. Connect to instance console via ``tarantoolctl``,
+#. Load config from filesystem via ``cartridge.clusterwidie_config.load(path)``
+#. Lock this config
+#. Apply this config on current instance via ``confapplier.apply_config(new_cfg)``
+
+For example:
+
+.. code-block:: bash
+
+    # connect to console of required instance
+    tarantoolctl connect user:password@instance_advertise_uri
+
+.. code-block:: lua
+
+    confapplier = require('cartridge.confapplier')
+    clusterwidie_config = require('cartridge.clusterwidie-config')
+    -- load config from filesystem
+    loaded_config = clusterwidie_config.load(some_path)
+    -- lock config for futher apply
+    loaded_config:lock()
+    -- apply_config on instance
+    confapplier.apply_config(loaded_config)
+
+.. NOTE::
+    After this manipulation required instance will work with new config, and cluster
+    config will be at inconsistent state (config on this instance differs from config
+    at other cluster instances).
+
+    Also if current instance will initiate updating cluster config, then all cluster
+    instances will have the same config as on this instance, but if another cluster
+    instance initiate updating cluster config then local changes for this instance
+    will be dropped.

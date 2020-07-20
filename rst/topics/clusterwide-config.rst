@@ -166,6 +166,8 @@ A user can influence clusterwide configuration in various ways. You can
 alter configuration using Lua, HTTP or GraphQL API. Also there are
 `luatest <https://github.com/tarantool/luatest>`_ helpers available.
 
+.. _cartridge-config-http-api:
+
 *******************************************************************************
 HTTP API
 *******************************************************************************
@@ -201,6 +203,8 @@ uploaded nor downloaded.
 
 If authorization is enabled, use the ``curl`` option ``--user username:password``.
 
+.. _cartridge-config-graphql-api:
+
 *******************************************************************************
 GraphQL API
 *******************************************************************************
@@ -233,6 +237,8 @@ the other sections remain unchanged.
 
 Similarly to HTTP API, GraphQL ``cluster {config}`` query isn't suitable for
 managing system sections.
+
+.. _cartridge-config-lua-api:
 
 *******************************************************************************
 Lua API
@@ -272,6 +278,8 @@ Example (from ``sharded-queue``, simplified):
         end
         return true
     end
+
+.. _cartridge-config-luatest-api:
 
 *******************************************************************************
 Luatest helpers
