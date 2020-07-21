@@ -85,83 +85,79 @@ Changing IP:Port configuration of instances in cluster
 Currently cartridge doesn't provide api for changing instance IP:Port, so there is
 only one method - do it manually.
 
-There are two ways to do it:
+Here is workaround for this problem:
 
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-First way is slow, because it needs to stop whole cluster:
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#.  Shut down instances, which uri must be changed
+#.  Start these instances on a new IP:Port (after that these instances will be broken
+    and they will stay at ``ConnectingFullmesh`` state - this means that quorum lost)
+#.  Connect to these instances via ``tarantoolctl``
 
-#.  Stop whole cluster
-#.  Go to cluster config folder
-#.  Change topology section of instance config for each instacne
-    of cluster (``cluster_cfg_dir/instance_n_cfg/topology.yml``).
-    Modify ``servers`` section of topology.yml by seting new IP:Port
-    for required servers.
+    Here is example connection to single instance:
 
-    .. code-block:: yaml
+    .. code-block:: bash
 
-        # topology.yml
-        replicasets:
-            ...
-        servers:
-            uuid1:
-                uri: # change this field
+        tarantoolctl connect user:password@instance_advertise_new_uri
 
-#.  Start all cluster (and don't forget to start required instances
-    on a new IP:Port)
+#.  Make following steps on these instances:
 
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-Second way needs to stop only one instance of cluster:
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    * Save old value
+      `box.cfg.replication_connect_quorum <https://www.tarantool.io/en/doc/1.10/reference/configuration/#cfg-replication-replication-connect-timeout>`_ 
+      to variable
+    * Call ``box.cfg({replication_connect_quorum = 0})``, (after that these
+      instances becomes alive, and quorum returns).
 
-#.  Stop an instance which uri need to be changed
-#.  Change it's config file ``topology.yml`` (as described above)
-#.  Start this instance on a new IP:Port,
-#.  Call :ref:`cartridge.admin_edit_topology <cartridge.admin_edit_topology>`
-    from this instance with ``uuid`` of this instance and it's new ``IP:Port``.
+    .. NOTE::
 
-.. NOTE::
+        Don't close instances consoles during this procedure
 
-    Be aware, while you have stopped instance, quorum is broken (so you can't apply
-    config on cluster), but when instance become alive quorum becomes alive too
+    Here is an example:
 
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-Here is an examples, how to call ``admin_edit_topology``:
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    .. code-block:: lua
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-Through Graphql:
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+        -- if replication_connect_quorum is nil (default value)
+        -- set it to box.NULL for further restoring
+        _G.__old_replication_connect_quorum = box.cfg.replication_connect_quorum or box.NULL
+        box.cfg({replication_connect_quorum = 0})
 
-.. code-block:: graphql
+#.  When quorum returned, call :ref:`edit_topology <cartridge.admin_edit_topology>`
+    from any instance (via lua-api or GraphQL) with uuid of changed instances and
+    their new uri
 
-    # Send follwing graphql requests from modified instance
+    Here is an example with lua-api:
 
-    mutation {
-        cluster {
-            edit_topology(servers: [{uuid: instance_uuid, uri: instance_uri}])
-            {}
+    .. code-block:: lua
+
+        cartridge = require('cartridge')
+
+        cartridge.admin_edit_topology({
+            servers = {
+                {
+                    uuid: instance1_uuid,
+                    uri: instance1_new_uri,
+                },
+                ...
+            }
+        })
+
+
+    Here is an example with GraphQL:
+
+    .. code-block:: graphql
+
+        mutation {
+            cluster {
+                edit_topology(servers: [{uuid: instance1_uuid, uri: instance1_new_uri} ...])
+                {}
+            }
         }
-    }
+    
+#.  At the end restore old value of ``replication_connect_quorum`` on updated instances
+    throuh their consoles (after that, you can close connections to instances - close
+    their consoles)
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-Through lua-api:
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+    .. code-block:: lua
 
-.. code-block:: bash
-
-    # connect to console to instance, which uri changed
-    tarantoolctl connect user:password@instance_advertise_uri
-
-.. code-block:: lua
-
-    cartridge = require('cartridge')
-    cartridge.admin_edit_topology({
-        servers = {{
-            uuid = box.info.uuid, # instance_uuid
-            uri = new_instance_uri
-        }}
-    })
+        box.cfg({replication_connect_quorum = _G.__old_replication_connect_quorum})
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Delete repliscaset from cluster
