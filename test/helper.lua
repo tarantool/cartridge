@@ -67,4 +67,19 @@ function helpers.box_cfg()
     fio.rmtree(tempdir)
 end
 
+function helpers.wish_state(srv, desired_state, timeout)
+    srv.net_box:eval([[
+        local confapplier = require('cartridge.confapplier')
+        local desired_state, timeout = ...
+        local state = confapplier.wish_state(desired_state, timeout)
+        if state ~= desired_state then
+            local err = string.format(
+                'Inappropriate state %q ~= desired %q',
+                state, desired_state
+            )
+            error(err, 0)
+        end
+    ]], {desired_state, timeout})
+end
+
 return helpers
