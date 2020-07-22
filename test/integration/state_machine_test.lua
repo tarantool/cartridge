@@ -88,21 +88,6 @@ local function get_upstream_info(srv)
     end
 end
 
-local function wish_state(srv, desired_state)
-    g.cluster:retrying({}, function()
-        srv.net_box:eval([[
-            local confapplier = require('cartridge.confapplier')
-            local desired_state = ...
-            local state = confapplier.wish_state(desired_state)
-            assert(
-                state == desired_state,
-                string.format('Inappropriate state %q ~= desired %q',
-                state, desired_state)
-            )
-        ]], {desired_state})
-    end)
-end
-
 function g.test_failover()
     local function _ro_map()
         local resp = g.cluster:server('slave'):graphql({query = [[{
@@ -466,7 +451,7 @@ function g.test_leader_recovery()
 
     log.info('--------------------------------------------------------')
     g.master:start()
-    wish_state(g.master, 'ConnectingFullmesh')
+    helpers.wish_state(g.master, 'ConnectingFullmesh')
     g.master.net_box:eval([[
         _G.protection_fiber = require('fiber').create(function()
             require('log').warn('Master protected from becoming rw')
@@ -543,7 +528,7 @@ function g.test_orphan_connect_timeout()
     log.info('--------------------------------------------------------')
     g.master.env['TARANTOOL_REPLICATION_CONNECT_TIMEOUT'] = 1
     g.master:start()
-    wish_state(g.master, 'ConnectingFullmesh')
+    helpers.wish_state(g.master, 'ConnectingFullmesh')
     t.assert_equals(
         g.master:graphql({
             query = [[ { servers {uuid message} } ]]
@@ -556,7 +541,7 @@ function g.test_orphan_connect_timeout()
             message = "",
         }}
     )
-    wish_state(g.master, 'ConnectingFullmesh')
+    helpers.wish_state(g.master, 'ConnectingFullmesh')
 
     t.helpers.retrying({}, function()
         t.assert_equals(helpers.list_cluster_issues(g.master), {{
@@ -572,9 +557,9 @@ function g.test_orphan_connect_timeout()
 
     log.info('--------------------------------------------------------')
     g.slave:start()
-    wish_state(g.slave, 'RolesConfigured')
-    wish_state(g.master, 'RolesConfigured')
     g.cluster:wait_until_healthy(g.slave)
+    helpers.wish_state(g.slave, 'RolesConfigured')
+    helpers.wish_state(g.master, 'RolesConfigured')
 
     t.assert_equals(
         get_upstream_info(g.slave),
@@ -605,7 +590,7 @@ function g.test_orphan_sync_timeout()
     g.master.env['TARANTOOL_REPLICATION_SYNC_LAG'] = 1e-308
     g.master.env['TARANTOOL_REPLICATION_SYNC_TIMEOUT'] = 0.1
     g.master:start()
-    wish_state(g.master, 'ConnectingFullmesh')
+    helpers.wish_state(g.master, 'ConnectingFullmesh')
 
     t.assert_equals(
         -- master <- slave replication is established instantly
@@ -635,9 +620,9 @@ function g.test_orphan_sync_timeout()
     end)
 
     g.master.net_box:eval('box.cfg({replication_sync_lag = 30})')
-    wish_state(g.master, 'RolesConfigured')
     g.cluster:wait_until_healthy(g.master)
     g.cluster:wait_until_healthy(g.slave)
+    helpers.wish_state(g.master, 'RolesConfigured')
 end
 
 function g.test_quorum_one()
@@ -650,7 +635,7 @@ function g.test_quorum_one()
     log.info('--------------------------------------------------------')
     g.master.env['TARANTOOL_REPLICATION_CONNECT_QUORUM'] = 1
     g.master:start()
-    wish_state(g.master, 'RolesConfigured')
+    helpers.wish_state(g.master, 'RolesConfigured')
 
     t.assert_equals(rpc_get_candidate(g.master), g.master.advertise_uri)
     t.assert_equals(get_leader(g.master), g.master.instance_uuid)
@@ -691,8 +676,8 @@ end
 function g.test_restart_both()
     g.cluster:stop()
     g.cluster:start()
-    wish_state(g.master, 'RolesConfigured')
-    wish_state(g.slave, 'RolesConfigured')
+    helpers.wish_state(g.master, 'RolesConfigured')
+    helpers.wish_state(g.slave, 'RolesConfigured')
 
     t.assert_equals(
         get_upstream_info(g.master),
