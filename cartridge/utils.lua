@@ -1,6 +1,7 @@
 local fio = require('fio')
 local ffi = require('ffi')
 local errno = require('errno')
+local fiber = require('fiber')
 local checks = require('checks')
 local errors = require('errors')
 
@@ -205,7 +206,7 @@ local function set_readonly(tbl, ro)
     return tbl
 end
 
---- Return true if we run under systemd
+--- Return true if we run under systemd.
 -- systemd detection based on http://unix.stackexchange.com/a/164092
 local function under_systemd()
     local rv = os.execute("systemctl 2>/dev/null | grep '\\-\\.mount' " ..
@@ -305,6 +306,33 @@ local function http_read_body(req)
     return form_body
 end
 
+--- Wait for box.info.vclock[id] to reach desired LSN.
+--
+-- @function wait_lsn
+-- @local
+--
+-- @tparam number id
+-- @tparam number lsn
+-- @tparam number pause
+-- @tparam number timeout
+-- @treturn boolean true / false
+local function wait_lsn(id, lsn, pause, timeout)
+    checks('number', 'number', 'number', 'number')
+    local deadline = fiber.time() + timeout
+
+    while true do
+        if (box.info.vclock[id] or 0) >= lsn then
+            return true
+        end
+
+        if fiber.time() >= deadline then
+            return false
+        end
+
+        fiber.sleep(pause)
+    end
+end
+
 return {
     deepcmp = deepcmp,
     table_find = table_find,
@@ -329,4 +357,6 @@ return {
     end,
 
     http_read_body = http_read_body,
+
+    wait_lsn = wait_lsn,
 }
