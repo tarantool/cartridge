@@ -88,40 +88,78 @@ only one method - do it manually.
 Here is workaround for this problem:
 
 #.  Shut down instances, which uri must be changed
-#.  Start these instances on a new IP:Port (after that these instances will be broken
-    and they will stay at ``ConnectingFullmesh`` state - this means that quorum lost)
-#.  Connect to these instances via ``tarantoolctl``
+#.  Start these instances on a new IP:Port and set
+    `replication_connect_quorum <https://www.tarantool.io/en/doc/1.10/reference/configuration/#cfg-replication-replication-connect-timeout>`_
+    = 0 (otherwise these instances will be broken and they will stay
+    at ``ConnectingFullmesh`` state - this means that quorum lost).
 
-    Here is example connection to single instance:
+    There are two ways to set ``replication_connect_quorum=0``:
 
-    .. code-block:: bash
+    * Set environment variable ``TARANTOOL_REPLICATION_CONNECT_QUORUM=0``
+      before starting these instances
+    * Or directly connect to these instances, after they've started through
+      ``tarantoolct`` and call ``box.cfg()`` like follow:
 
-        tarantoolctl connect user:password@instance_advertise_new_uri
+      .. code-block:: bash
 
-#.  Make following steps on these instances:
+          tarantoolctl connect user:password@instance_advertise_new_uri
 
-    * Save old value
-      `box.cfg.replication_connect_quorum <https://www.tarantool.io/en/doc/1.10/reference/configuration/#cfg-replication-replication-connect-timeout>`_ 
-      to variable
-    * Call ``box.cfg({replication_connect_quorum = 0})``, (after that these
-      instances becomes alive, and quorum returns).
+      .. code-block:: lua
 
-    .. NOTE::
+          box.cfg({replication_connect_quorum = 0})
 
-        Don't close instances consoles during this procedure
+#.  When quorum returned, call :ref:`edit_topology <cartridge.admin_edit_topology>`
+    from any instance (via lua-api or GraphQL) with uuid of changed instances and
+    their new uri
 
     Here is an example:
 
     .. code-block:: lua
 
-        -- if replication_connect_quorum is nil (default value)
-        -- set it to box.NULL for further restoring
-        _G.__old_replication_connect_quorum = box.cfg.replication_connect_quorum or box.NULL
-        box.cfg({replication_connect_quorum = 0})
+        cartridge = require('cartridge')
+        membership = require('membership')
 
-#.  When quorum returned, call :ref:`edit_topology <cartridge.admin_edit_topology>`
-    from any instance (via lua-api or GraphQL) with uuid of changed instances and
-    their new uri
+        -- get members list
+        members = membership.members()
+
+
+        -- find uuid and uri of dead instances
+        dead_members = {}
+        for _, member in pairs(members) do
+            if member.status == 'dead' then
+                dead_members[member.uri] = member.payload.uuid
+            end
+        end
+
+        -- array of servers for edit_topology call
+        edit_server_list = {}
+
+        -- search instances which uri changed
+        -- it's an instances which presents at members map twice
+        -- (they have the same uuid, but different uri
+        -- and instance with old uri has status dead)
+        for dead_uri, dead_uuid in pairs(dead_members) do
+            for _, member in pairs(members) do
+                if member.status == 'alive'
+                    and member.payload.uuid == dead_uuid
+                    and member.uri ~= dead_uri
+                then
+                    table.insert(edit_server_list, {uuid = dead_uuid, uri = member.uri})
+                end
+            end
+        end
+
+        -- call edit_topology
+        cartridge.admin_edit_topology({servers = edit_server_list})
+
+    .. NOTE::
+        If you restarted the whole cluster, script above won't help (membership
+        table dropped and there is no payload for dead instances). Here is one
+        way is to call ``edit_topology`` with manually specified uuid and new_uri of
+        changed instances
+
+    Here is expamples how to update call ``edit_topology`` after
+    restarting whole cluster:
 
     Here is an example with lua-api:
 
@@ -151,13 +189,6 @@ Here is workaround for this problem:
             }
         }
     
-#.  At the end restore old value of ``replication_connect_quorum`` on updated instances
-    throuh their consoles (after that, you can close connections to instances - close
-    their consoles)
-
-    .. code-block:: lua
-
-        box.cfg({replication_connect_quorum = _G.__old_replication_connect_quorum})
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Delete repliscaset from cluster
