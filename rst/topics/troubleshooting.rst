@@ -202,10 +202,78 @@ If instance has role ``vshard-storage`` then deactivate this replicaset.
 
     You can't delete last replicaset with ``vshard-storage`` role
 
-Read next articles about:
+Read this articles before you start:
 
 * :ref:`Deactivating replicasets <cartridge-deactivate-replica-set>`
 * :ref:`Expelling instances <cartridge-expelling-instances>`
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Resolving this problem
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+#.  If replicaset has vshard-storage role (and it isn't last in cluster),
+    we need :ref:`deactivate replicaset <cartridge-deactivate-replica-set>` (you
+    can do it from ``webui``) and wait
+    :ref:`data rebalancing <cartridge-rebalance-data>` (also you can see that
+    rebalancing finised in ``webui`` - there is no buckets on replicaset
+    instances). After that follow next steps.
+#.  Get all servers uuid's of replicaset which must be deleted.
+#.  Expell whole servers of this replicaset by their uuid's
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Here is an example of expelling servers (after rebalancing process finished):
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+Via lua-api:
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+.. code-block:: bash
+
+    # connect to instance, that won't be deleted
+    tarantoolctl connect user:password@instance_uri
+
+.. code-block:: lua
+
+    cartridge = require('cartridge')
+
+    -- set required replicaset uuid
+    replicaset_uuid = 'deleting_replicaset_uuid'
+
+    replicaset = cartridge.admin_get_replicasets(replicaset_uuid)[1] or {}
+
+    servers_to_expell = {}
+    for _, server in pairs(replicaset.servers) do
+        table.insert(servers_to_expell, {uuid = server.uuid, expelled = true})
+    end
+
+    cartridge.admin_edit_topology({servers = servers_to_expell})
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+Via GraphQL:
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+.. code-block:: graphql
+
+    # Send follwing graphql requests from instance that won't be deleted
+
+    # Get list of replicaset servers by replicaset_uuid
+    query {
+        replicasets(uuid: replicaset_uuid) {
+            servers {
+                uuid
+            }
+        }
+    }
+
+    # Call this mutation with servers uuid from previous request
+    mutation {
+	    cluster {
+            edit_topology(servers: [
+                {uuid: server1_uuid,  expelled: true}, ...]
+                ) {}
+        }
+    }
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Work with cluster config
