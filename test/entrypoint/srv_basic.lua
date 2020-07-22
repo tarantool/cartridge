@@ -102,11 +102,19 @@ package.preload['mymodule-dependency'] = function()
 end
 
 package.preload['mymodule-permanent'] = function()
+    local log = require('log')
     return {
         role_name = 'myrole-permanent',
         permanent = true,
         get_role_name = function()
             return 'myrole-permanent'
+        end,
+
+        init = function(opts)
+            log.info('--- init({is_master = %s})', opts.is_master)
+        end,
+        apply_config = function(_, opts)
+            log.info('--- apply_config({is_master = %s})', opts.is_master)
         end,
 
         -- rpc functions
