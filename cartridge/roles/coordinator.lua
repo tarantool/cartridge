@@ -112,6 +112,10 @@ local function control_loop(session)
 
         local now = fiber.time()
         if next(updates) ~= nil then
+            for _, update in pairs(updates) do
+                session:set_vclockkeeper(update[1], update[2])
+            end
+
             local ok, err = session:set_leaders(updates)
             if ok == nil then
                 -- don't log an error in case the fiber was cancelled

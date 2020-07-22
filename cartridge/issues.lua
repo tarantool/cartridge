@@ -19,6 +19,9 @@
 -- * "Failover is stuck on ...: Error fetching appointments (...)";
 -- * "Failover is stuck on ...: Failover fiber is dead" -
 --   this is likely a bug;
+
+-- Switchover:
+-- * "Consistency on ... isn't reached yet";
 --
 -- Clock:
 --
@@ -174,6 +177,22 @@ local function list_on_instance()
                 'Failover is stuck on %s: %s',
                 describe(self_uri),
                 failover_error.err
+            ),
+        })
+    end
+
+    if failover.consistency_needed()
+    and failover.get_active_leaders()[replicaset_uuid] == instance_uuid
+    and not failover.is_vclockkeeper()
+    then
+        table.insert(ret, {
+            level = 'warning',
+            topic = 'switchover',
+            instance_uuid = instance_uuid,
+            replicaset_uuid = replicaset_uuid,
+            message = string.format(
+                "Consistency on %s isn't reached yet",
+                describe(self_uri)
             ),
         })
     end
