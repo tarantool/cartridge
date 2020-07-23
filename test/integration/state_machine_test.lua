@@ -326,6 +326,8 @@ function g.test_blinking_fast()
     --   s: RolesConfigured
     --   s: Shouldn't become writable
 
+    helpers.protect_from_rw(g.slave)
+
     g.slave.net_box:eval('loadstring(...)()', {
         string.dump(function()
             local log = require('log')
@@ -333,20 +335,12 @@ function g.test_blinking_fast()
             local myrole = require('mymodule')
             local confapplier = require('cartridge.confapplier')
 
-            -- 1. Protect myrole from becoming a leader
+            -- 1. Make apply_config yield
             myrole._apply_config_backup = myrole.apply_config
             myrole.apply_config = function(conf, opts)
-                if opts.is_master then
-                    log.error('DANGER! Slave is rw!')
-                    os.exit(-1)
-                end
                 fiber.sleep(0)
                 return myrole._apply_config_backup(conf, opts)
             end
-
-            fiber.create(function()
-                require('log').warn('Slave protected from becoming rw')
-            end)
 
             -- 2. Prevent triggering failover yet
             log.info('Fake set_state -> ConfiguringRoles')
@@ -377,6 +371,8 @@ function g.test_blinking_fast()
     t.helpers.retrying({}, function()
         t.assert_equals(is_master(g.slave), false)
     end)
+
+    helpers.unprotect(g.slave)
 end
 
 function g.test_fiber_cancel()
@@ -452,15 +448,7 @@ function g.test_leader_recovery()
     log.info('--------------------------------------------------------')
     g.master:start()
     helpers.wish_state(g.master, 'ConnectingFullmesh')
-    g.master.net_box:eval([[
-        _G.protection_fiber = require('fiber').create(function()
-            require('log').warn('Master protected from becoming rw')
-            if pcall(box.ctl.wait_rw) then
-                require('log').error('DANGER! Master is rw!')
-                os.exit(-1)
-            end
-        end)
-    ]])
+    helpers.protect_from_rw(g.master)
 
     t.assert_equals(
         get_upstream_info(g.master),
@@ -487,9 +475,7 @@ function g.test_leader_recovery()
     t.assert_equals(is_master(g.slave), true)
     t.assert_equals(is_master(g.master), box.NULL)
 
-    g.master.net_box:eval([[
-        _G.protection_fiber:cancel()
-    ]])
+    helpers.unprotect(g.master)
     -- Simulate the end of recovery (successfull)
     g.slave.net_box:eval("box.cfg({listen = ...})", {g.slave.net_box_port})
     g.cluster:wait_until_healthy(g.slave)
