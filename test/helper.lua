@@ -82,6 +82,28 @@ function helpers.wish_state(srv, desired_state, timeout)
     ]], {desired_state, timeout})
 end
 
+function helpers.protect_from_rw(srv)
+    srv.net_box:eval([[
+        local log = require('log')
+        local fiber = require('fiber')
+        local function protection()
+            log.warn('Instance protected from becoming rw')
+            if pcall(box.ctl.wait_rw) then
+                log.error('DANGER! Instance is rw!')
+                os.exit(-1)
+            end
+        end
+        _G._protection_fiber = fiber.new(protection)
+        fiber.sleep(0)
+    ]])
+end
+
+function helpers.unprotect(srv)
+    srv.net_box:eval([[
+        _G._protection_fiber:cancel()
+    ]])
+end
+
 function helpers.assert_ge(actual, expected, message)
     if not (actual >= expected) then
         local err = string.format('expected: %s >= %s', actual, expected)
