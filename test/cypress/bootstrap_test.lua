@@ -5,9 +5,9 @@ local g = t.group()
 local helpers = require('test.helper')
 
 local servers = {}
-local tempdir = fio.tempdir()
 
 g.before_all = function()
+    g.tempdir = fio.tempdir()
     local function add_server(i)
         local http_port = 8080 + i
         local advertise_port = 13310 + i
@@ -16,7 +16,7 @@ g.before_all = function()
         servers[i] = helpers.Server:new({
             alias = alias,
             command = helpers.entrypoint('srv_basic'),
-            workdir = fio.pathjoin(tempdir, alias),
+            workdir = fio.pathjoin(g.tempdir, alias),
             cluster_cookie = 'test-cluster-cookie',
             http_port = http_port,
             advertise_port = advertise_port,
@@ -44,8 +44,7 @@ g.after_all = function()
         server:stop()
     end
 
-    fio.rmtree(tempdir)
-    tempdir = nil
+    fio.rmtree(g.tempdir)
 end
 
 function g.test_bootstrap()
