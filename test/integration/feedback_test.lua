@@ -50,6 +50,10 @@ g.before_all = function()
         },
     })
     g.cluster:start()
+
+    g.msg = ch:get(2)
+    t.assert_type(g.msg, 'table', 'No feedback received')
+    log.info('Feedback: %s', json.encode(g.msg))
 end
 
 g.after_all = function()
@@ -59,11 +63,16 @@ g.after_all = function()
 end
 
 function g.test_feedback()
-    local msg = ch:get(2)
-    t.assert_type(msg, 'table', 'No feedback received')
-    log.info('Feedback: %s', json.encode(msg))
-    t.assert_equals(msg.server_id, helpers.uuid('a', 'a', 1))
-    t.assert_equals(msg.cluster_id, helpers.uuid('a'))
-    t.assert_type(msg.rocks.cartridge, 'string')
-    t.assert_type(msg.rocks.http, 'string')
+    t.assert_equals(g.msg.server_id, helpers.uuid('a', 'a', 1))
+    t.assert_equals(g.msg.cluster_id, helpers.uuid('a'))
+    t.assert_type(g.msg.rocks.cartridge, 'string')
+end
+
+function g.test_rocks()
+    t.skip_if(
+        package.setsearchroot == nil,
+        'package.searchroot not implemented'
+    )
+
+    t.assert_type(g.msg.rocks.http, 'string')
 end
