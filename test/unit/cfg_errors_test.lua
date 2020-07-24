@@ -238,18 +238,29 @@ g.test_console_sock = function()
     g.mock_membership()
 
     local sock_dir = fio.pathjoin(g.tempdir, 'sock')
+    local sock_name = string.format('%s/%s.sock', sock_dir, ('a'):rep(110))
     fio.mktree(sock_dir)
 
-    check_error('Too long console_sock exceeds UNIX_PATH_MAX limit',
-        cartridge.cfg, {
-            workdir = '/tmp',
-            advertise_uri = 'unused:0',
-            http_enabled = false,
-            roles = {},
-            console_sock = string.format('%s/%s.sock', sock_dir, ('a'):rep(110)),
-        }
-    )
+    local ok, err = cartridge.cfg({
+        workdir = '/tmp',
+        advertise_uri = 'unused:0',
+        http_enabled = false,
+        roles = {},
+        console_sock = sock_name,
+    })
+
+    t.assert_not(ok)
+    t.assert_covers(err, {class_name = 'CartridgeCfgError'})
     t.assert_equals(fio.listdir(sock_dir), {})
+
+    -- Tarantool < 2.3.2
+    local e1 = 'Too long console_sock exceeds UNIX_PATH_MAX limit'
+    -- The message differs in 2.3.2+
+    local e2 = 'failed to create server unix/:' .. sock_name ..
+        ': ' .. errno.strerror(errno.ENOBUFS)
+    if err.err ~= e1 and not err.err:match(e2) then
+        error(string.format('Unexpected error:\n%s', err))
+    end
 end
 
 -- ok -------------------------------------------------------------------------
