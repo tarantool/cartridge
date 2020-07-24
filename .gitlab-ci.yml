@@ -1,7 +1,6 @@
 variables:
   GIT_STRATEGY: clone
   ROCK_NAME: cartridge
-  BUNDLE_VERSION: "1.10.4-8-g3f2b35b"
   IMAGE_TAG: latest
   TMPDIR: /dev/shm
   # Enable caching frontend stuff
@@ -17,16 +16,19 @@ stages:
 ### Prebuilt base docker image
 ### only if Dockerfile or test requirements changed
 ###
-.docker-build-base: &docker-build-template
+.docker-build-base:
   stage: prebuild
   tags:
     - shell
-  only:
-    changes:
-      - Dockerfile.base-ee
-      - Dockerfile.base-ce
-      - test/integration/requirements.txt
-      - rst/requirements.txt
+  rules:
+    - # if
+      changes:
+        - .gitlab-ci.yml
+        - Dockerfile.base-ee
+        - Dockerfile.base-ce
+        - test/integration/requirements.txt
+        - rst/requirements.txt
+      when: always
   before_script:
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN registry.gitlab.com
   script:
@@ -42,36 +44,36 @@ stages:
       .
     - docker push ${CI_REGISTRY_IMAGE}/${IMAGE_NAME}:${IMAGE_TAG}
 
-docker-build-ee:
-  <<: *docker-build-template
+docker-build-ee-1.10:
+  extends: .docker-build-base
   variables:
-    IMAGE_NAME: &IMAGE_NAME_EE base-ee
+    IMAGE_NAME: &IMAGE_NAME_EE_1_10 base-ee-1.10
     BUILD_ARGS: >
       --build-arg DOWNLOAD_TOKEN=${DOWNLOAD_TOKEN}
-      --build-arg BUNDLE_VERSION=${BUNDLE_VERSION}
+      --build-arg BUNDLE_VERSION=1.10.6-17-g41a8cbc
     DOCKER_FILE: Dockerfile.base-ee
 
 docker-build-ce-1.10:
-  <<: *docker-build-template
+  extends: .docker-build-base
   variables:
     IMAGE_NAME: &IMAGE_NAME_CE_1_10 base-ce-1.10
     BUILD_ARGS: >
       --build-arg TARANTOOL_BRANCH=1_10
     DOCKER_FILE: Dockerfile.base-ce
 
-docker-build-ce-2.2:
-  <<: *docker-build-template
+docker-build-ce-2.3:
+  extends: .docker-build-base
   variables:
-    IMAGE_NAME: &IMAGE_NAME_CE_2_2 base-ce-2.2
+    IMAGE_NAME: &IMAGE_NAME_CE_2_3 base-ce-2.3
     BUILD_ARGS: >
-      --build-arg TARANTOOL_BRANCH=2_2
+      --build-arg TARANTOOL_BRANCH=2_3
     DOCKER_FILE: Dockerfile.base-ce
 
 ########################################################################
 ###
 ### Run backend tests
 ###
-.test-template: &test-template
+.test-template:
   image: ${CI_REGISTRY_IMAGE}/${IMAGE_NAME}:${IMAGE_TAG}
   stage: test
   tags:
@@ -90,32 +92,33 @@ docker-build-ce-2.2:
       - build.luarocks/
       - .rocks/
 
-integration-ee:
-  <<: *test-template
-  script: &integration-script
+.integration-template:
+  extends: .test-template
+  script:
     - pytest -v
     - luatest -v -x cypress.*
+
+integration-ee-1.10:
+  extends: .integration-template
   variables:
-    IMAGE_NAME: *IMAGE_NAME_EE
+    IMAGE_NAME: *IMAGE_NAME_EE_1_10
 
 integration-ce-1.10:
-  <<: *test-template
-  script: *integration-script
+  extends: .integration-template
   variables:
     IMAGE_NAME: *IMAGE_NAME_CE_1_10
   when: manual
 
-integration-ce-2.2:
-  <<: *test-template
-  script: *integration-script
+integration-ce-2.3:
+  extends: .integration-template
   variables:
-    IMAGE_NAME: *IMAGE_NAME_CE_2_2
+    IMAGE_NAME: *IMAGE_NAME_CE_2_3
   when: manual
 
 compatibility:
-  <<: *test-template
+  extends: .test-template
   variables:
-    IMAGE_NAME: *IMAGE_NAME_EE
+    IMAGE_NAME: *IMAGE_NAME_EE_1_10
     CARTRIDGE_OLDER_PATH: /tmp/cartridge-1.2.0
   script:
     - mkdir -p $CARTRIDGE_OLDER_PATH
@@ -123,7 +126,7 @@ compatibility:
     - luatest -v -p compatibility.cartridge_upgrade
 
 misc:
-  <<: *test-template
+  extends: .test-template
   script:
     - luacheck .
     - ./fetch-schema.sh
@@ -134,7 +137,7 @@ misc:
     paths:
       - doc/
   variables:
-    IMAGE_NAME: *IMAGE_NAME_EE
+    IMAGE_NAME: *IMAGE_NAME_EE_1_10
     CMAKE_LDOC_FIND_REQUIRED: "YES"
     CMAKE_SPHINX_FIND_REQUIRED: "YES"
 
@@ -142,13 +145,23 @@ misc:
 ###
 ### Run frontend tests
 ###
-.cypress: &cypress-template
+cypress:
   image: ${CI_REGISTRY_IMAGE}/${IMAGE_NAME}:${IMAGE_TAG}
   stage: test
+  rules:
+    - # if
+      changes:
+        - webui/src/**/*
+        - webui/cypress/**/*
+        - test/cypress/**/*
+      when: on_success
+    - # else
+      when: manual
+      allow_failure: true
   tags:
     - docker
   variables:
-    IMAGE_NAME: *IMAGE_NAME_EE
+    IMAGE_NAME: *IMAGE_NAME_EE_1_10
   before_script:
     - ls -al # to see if caching works
     - tarantoolctl rocks make
@@ -175,19 +188,6 @@ misc:
       - webui/cypress/screenshots/
       - webui/cypress/videos/
 
-cypress-auto:
-  <<: *cypress-template
-  only:
-    changes:
-      - webui/src/**/*
-      - webui/cypress/**/*
-      - test/cypress/**/*
-
-cypress-manual:
-  <<: *cypress-template
-  when: manual
-
-
 ########################################################################
 ### Publish rocks
 ###
@@ -196,8 +196,8 @@ publish-scm-1:
   tags:
     - docker
   image: centos:7
-  only:
-    - master
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master"'
   script:
     - curl --fail -X PUT -F "rockspec=@${ROCK_NAME}-scm-1.rockspec"
       https://${ROCKS_USERNAME}:${ROCKS_PASSWORD}@rocks.tarantool.org
@@ -209,9 +209,9 @@ publish-release:
     - docker
   image: ${CI_REGISTRY_IMAGE}/${IMAGE_NAME}:${IMAGE_TAG}
   variables:
-    IMAGE_NAME: *IMAGE_NAME_EE
-  only:
-    - tags
+    IMAGE_NAME: *IMAGE_NAME_EE_1_10
+  rules:
+    - if: $CI_COMMIT_TAG
   script:
     - ./release.sh
     - cd release/
