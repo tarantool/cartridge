@@ -68,7 +68,6 @@ g_stateboard.before_all(function()
     local g = g_stateboard
     g.datadir = fio.tempdir()
 
-    fio.mktree(fio.pathjoin(g.datadir, 'stateboard'))
     g.kvpassword = require('digest').urandom(6):hex()
     g.state_provider = require('luatest.server'):new({
         command = helpers.entrypoint('srv_stateboard'),
@@ -138,9 +137,7 @@ g_etcd2.before_all(function()
         helpers.retrying({}, function()
             local resp = httpc.put(URI .. '/v2/keys/hello?value=world')
             assert(resp.status == 200, resp.body)
-            require('log').info(
-                httpc.get(URI ..'/version').body
-            )
+            log.info('%s', httpc.get(URI ..'/version').body)
         end)
     end
     function g.state_provider:stop()

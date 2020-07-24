@@ -8,7 +8,6 @@ helpers.project_root = fio.dirname(debug.sourcedir())
 
 local __fio_tempdir = fio.tempdir
 fio.tempdir = function(base)
-    require('log').info(debug.traceback())
     base = base or os.getenv('TMPDIR')
     if base == nil or base == '/tmp' then
         return __fio_tempdir()
