@@ -493,7 +493,13 @@ local function cfg(clusterwide_config)
         vars.failover_fiber:name('cartridge.eventual-failover')
 
     elseif failover_cfg.mode == 'stateful' then
-        vars.consistency_needed = true
+        if topology_cfg.replicasets[box.info.cluster.uuid].all_rw then
+            -- Replicasets with all_rw flag imply that
+            -- consistent switchover isn't necessary
+            vars.consistency_needed = false
+        else
+            vars.consistency_needed = true
+        end
 
         if failover_cfg.state_provider == 'tarantool' then
             local params = assert(failover_cfg.tarantool_params)
@@ -527,13 +533,6 @@ local function cfg(clusterwide_config)
                 'Unknown failover state provider %q',
                 failover_cfg.state_provider
             )
-        end
-
-        -- all_rw is an equivalent of an inconsistent switchover
-        local confapplier = require('cartridge.confapplier')
-        local replicaset_uuid = confapplier.get_replicaset_uuid()
-        if topology_cfg.replicasets[replicaset_uuid].all_rw == true then
-            vars.consistency_needed = false
         end
 
         -- WARNING: implicit yield
