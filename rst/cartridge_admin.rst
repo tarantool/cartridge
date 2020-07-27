@@ -931,4 +931,4 @@ in the Tarantool manual.
 .. |nbsp| unicode:: 0xA0
    :trim:
 
-.. include:: topics/troubleshooting.rst
+.. include:: troubleshooting.rst

@@ -9,189 +9,166 @@ First of all, see the
 in the Tarantool manual. Also there are other cartridge-specific
 problems considered below.
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-What to do if there are two or more crashed instances in cluster and quorum lost?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-What is ``quorum``: each cluster instance is a member of cluster quorum,
-so cluster quorum is a set of it's instances.
-
-What is ``lost quorum`` problem: quorum requires all of it's instances to
-be alive, so if one of instance is broken (for example instance was crashed/stopped
-or there is lost connection to instance) then quorum becomes lost.
-
-To reslove ``lost quorum`` problem follow next steps:
-
-* Firsly need to know uuids of crashed instances
-* After detecting uuids of crashed instances, disable them from alive instance.
-
-There are two ways to get servers list and disabling them: Graphql and lua-api.
-
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-Examples:
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-Resolving this problem via Graphql:
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-
-.. code-block:: graphql
-
-    # Send follwing graphql requests to alive instance
-
-    # Get list uuid and statuses of cluster servers
-    query {
-        servers {
-            status
-            uuid
-        }
-    }
-
-    # After that we need to copy uuid of crashed servers
-    # and paste them to following mutation
-
-    # Disable servers
-    mutation {
-        cluster {
-            disable_servers(uuids: ["uuid1", ...]) {}
-        }
-    }
-
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-Resolving this problem via lua-api:
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-
-.. code-block:: bash
-
-    # connect to console of alive instance
-    tarantoolctl connect user:password@instance_advertise_uri
-
-.. code-block:: lua
-
-    cartridge = require('cartridge')
-    servers = cartridge.admin_get_servers()
-    uuids = {} -- array of broken servers
-    for _, server in ipairs(servers) do
-        if server.status == 'unreachable' then
-           table.insert(uuids, server.uuid)
-        end
-    end
-    cartridge.admin_disable_servers(uuids)
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Changing IP:Port configuration of instances in cluster
+Editing clusterwide configuration in WebUI returns an error
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Currently cartridge doesn't provide api for changing instance IP:Port, so there is
-only one method - do it manually.
+**Examples**:
 
-Here is workaround for this problem:
+* ``NetboxConnectError: "localhost:3302": Connection refused``;
+* ``Prepare2pcError: Instance state is OperationError, can't apply config in this state``.
 
-#.  Shut down instances, which uri must be changed
-#.  Start these instances on a new IP:Port and set
-    `replication_connect_quorum <https://www.tarantool.io/en/doc/1.10/reference/configuration/#cfg-replication-replication-connect-timeout>`_
-    = 0 (otherwise these instances will be broken and they will stay
-    at ``ConnectingFullmesh`` state - this means that quorum lost).
+**The root problem**: all cluster instances are equal, and all of them store a
+copy of  clusterwide configuration, which must be the same. If an
+instance degrades (can't accept new configuration) - the quorum is lost.
+It prevents further config modifications to avoid inconsistency.
 
-    There are two ways to set ``replication_connect_quorum=0``:
+But sometimes inconsistency is needed to repair the system at least
+partially and temporarily. It can be achieved by disabling degraded
+instances.
 
-    * Set environment variable ``TARANTOOL_REPLICATION_CONNECT_QUORUM=0``
-      before starting these instances
-    * Or directly connect to these instances, after they've started through
-      ``tarantoolct`` and call ``box.cfg()`` like follow:
+**Solution**
 
-      .. code-block:: bash
+#.  Connect to console of alive instance
 
-          tarantoolctl connect user:password@instance_advertise_new_uri
+    .. code-block:: bash
 
-      .. code-block:: lua
+        tarantoolctl connect user:password@instance_advertise_uri
 
-          box.cfg({replication_connect_quorum = 0})
-
-#.  When quorum returned, call :ref:`edit_topology <cartridge.admin_edit_topology>`
-    from any instance (via lua-api or GraphQL) with uuid of changed instances and
-    their new uri
-
-    Here is an example:
+#.  Inspect what's going on
 
     .. code-block:: lua
 
         cartridge = require('cartridge')
-        membership = require('membership')
+        report = {}
+        for _, srv in pairs(cartridge.admin_get_servers()) do
+            report[srv.uuid] = {uri = srv.uri, status = srv.status, message = srv.message}
+        end
+        return report
 
-        -- get members list
-        members = membership.members()
+#.  If you're ready to proceed, run the following snippet. It'll disable
+    all instances which are not healthy. After that, you could operate
+    WebUI as usual.
 
+    .. code-block:: lua
 
-        -- find uuid and uri of dead instances
-        dead_members = {}
-        for _, member in pairs(members) do
-            if member.status == 'dead' then
-                dead_members[member.uri] = member.payload.uuid
+        disable_list = {}
+        for uuid, srv in pairs(report) do
+            if srv.status ~= 'healthy' then
+               table.insert(disable_list, uuid)
             end
         end
+        return cartridge.admin_disable_servers(disable_list)
 
-        -- array of servers for edit_topology call
-        edit_server_list = {}
+#.  And when it's necessary to bring disabled instances back, re-enable
+    them in a similar manner:
 
-        -- search instances which uri changed
-        -- it's an instances which presents at members map twice
-        -- (they have the same uuid, but different uri
-        -- and instance with old uri has status dead)
-        for dead_uri, dead_uuid in pairs(dead_members) do
-            for _, member in pairs(members) do
-                if member.status == 'alive'
-                    and member.payload.uuid == dead_uuid
-                    and member.uri ~= dead_uri
+    .. code-block:: lua
+
+        cartridge = require('cartridge')
+        enable_list = {}
+        for _, srv in pairs(cartridge.admin_get_servers()) do
+            if srv.disabled then
+               table.insert(enable_list, srv.uuid)
+            end
+        end
+        return cartridge.admin_enable_servers(enable_list)
+
+
+.. _troubleshooting-stuck-connecting-fullmesh:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+An instance is stuck in ConnectingFullmesh state upon restart
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Example**:
+
+.. image:: images/stuck-connecting-fullmesh.png
+
+**The root problem**: after restart, the instance tries to connect all
+its replicas and remains in ``ConnectingFullmesh`` state until it
+succeeds. If it can't (due to replica URI unavailability or for any
+other reason) — it's stuck forever.
+
+**Solution**:
+
+Set `replication_connect_quorum <https://www.tarantool.io/en/doc/latest/reference/configuration/#cfg-replication-replication-connect-quorum>`_ option to zero. In
+may be accomplished in two ways:
+
+* By restarting it with corresponding option set
+  (in environment variables or in the
+  :ref:`instance configuration file <cartridge-run-systemctl-config>`);
+* Or without restart — by running the following one-liner:
+
+    .. code-block:: bash
+
+        echo "box.cfg({replication_connect_quorum = 0})" | tarantoolctl connect <advertise_uri>
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+I want to run instance with new advertise_uri
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**The root problem**: ``advertise_uri`` parameter is persisted in
+clusterwide configuration. Even if it changes upon restart, the rest of
+cluster keeps using an old one, and cluster may behave "strange".
+
+**The solution**:
+
+The clusterwide configuration should be updated.
+
+
+#.  Make sure all instances are running and not stuck in ConnectingFullmesh
+    state (see :ref:`above <troubleshooting-stuck-connecting-fullmesh>`).
+
+#.  Make sure all instances have discovered each other (i.e. they look
+    healthy in WebUI)
+
+#.  Run the following snippet in tarantool console. It'll prepare a
+    patch for the clusterwide configuration.
+
+    .. code-block:: lua
+
+        cartridge = require('cartridge')
+        members = require('membership').members()
+
+        edit_list = {}
+        changelog = {}
+        for _, srv in pairs(cartridge.admin_get_servers()) do
+            for _, m in pairs(members) do
+                if m.status == 'alive'
+                and m.payload.uuid == srv.uuid
+                and m.uri ~= srv.uri
                 then
-                    table.insert(edit_server_list, {uuid = dead_uuid, uri = member.uri})
+                    table.insert(edit_list, {uuid = srv.uuid, uri = m.uri})
+                    table.insert(changelog, string.format('%s -> %s (%s)', srv.uri, m.uri, m.payload.alias))
+                    break
                 end
             end
         end
+        return changelog
 
-        -- call edit_topology
-        cartridge.admin_edit_topology({servers = edit_server_list})
+    As a result you'll see a brief summary like following:
 
-    .. NOTE::
-        If you restarted the whole cluster, script above won't help (membership
-        table dropped and there is no payload for dead instances). Here is one
-        way is to call ``edit_topology`` with manually specified uuid and new_uri of
-        changed instances
+    .. code-block:: tarantoolsession
 
-    Here is expamples how to update call ``edit_topology`` after
-    restarting whole cluster:
+        localhost:3301> return changelog
+        ---
+        - - localhost:13301 -> localhost:3301 (srv-1)
+          - localhost:13302 -> localhost:3302 (srv-2)
+          - localhost:13303 -> localhost:3303 (srv-3)
+          - localhost:13304 -> localhost:3304 (srv-4)
+          - localhost:13305 -> localhost:3305 (srv-5)
+        ...
 
-    Here is an example with lua-api:
+#.  Finally, apply that patch:
 
     .. code-block:: lua
 
-        cartridge = require('cartridge')
-
-        cartridge.admin_edit_topology({
-            servers = {
-                {
-                    uuid: instance1_uuid,
-                    uri: instance1_new_uri,
-                },
-                ...
-            }
-        })
-
-
-    Here is an example with GraphQL:
-
-    .. code-block:: graphql
-
-        mutation {
-            cluster {
-                edit_topology(servers: [{uuid: instance1_uuid, uri: instance1_new_uri} ...])
-                {}
-            }
-        }
-    
+        cartridge.admin_edit_topology({servers = edit_list})
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Delete repliscaset from cluster
+Delete replicaset from cluster
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To delete replicaset from cluster entirely, expell all instances of this
