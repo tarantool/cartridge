@@ -24,8 +24,8 @@ Configuration basics
 
 Instance configuration includes two sets of parameters:
 
-* `cartridge.cfg() parameters <https://www.tarantool.io/en/rocks/cartridge/1.0/modules/cartridge.argparse/#cluster-opts>`_;
-* `box.cfg() parameters <https://www.tarantool.io/en/rocks/cartridge/1.0/modules/cartridge.argparse/#box-opts>`_.
+* :ref:`cartridge.cfg() parameters <cartridge.argparse.cluster_opts>`;
+* :ref:`box.cfg() parameters <cartridge.argparse.box_opts>`.
 
 You can set any of these parameters in:
 
