@@ -331,3 +331,66 @@ function g.test_box_options()
         'tarantool .+ <running>: stateboard%-proc%-title'
     )
 end
+
+function g.test_vclockkeeper()
+    local client = create_client(g.stateboard)
+    local session = client:get_session()
+
+    local ok, err = session:get_vclockkeeper('A')
+    t.assert_equals(ok, nil)
+    t.assert_equals(err, nil)
+
+    local ok, err = session:set_vclockkeeper('A', 'a1')
+    t.assert_equals({ok, err}, {true, nil})
+    t.assert_equals(session:get_vclockkeeper('A'), {
+        replicaset_uuid = 'A',
+        instance_uuid = 'a1',
+    })
+
+    local ok, err = session:set_vclockkeeper('A', 'a1', {[1] = 10})
+    t.assert_equals({ok, err}, {true, nil})
+    t.assert_equals(session:get_vclockkeeper('A'), {
+        replicaset_uuid = 'A',
+        instance_uuid = 'a1',
+        vclock = {[1] = 10},
+    })
+
+    local ok, err = session:set_vclockkeeper('A', 'a1')
+    t.assert_equals({ok, err}, {true, nil})
+    t.assert_equals(session:get_vclockkeeper('A'), {
+        replicaset_uuid = 'A',
+        instance_uuid = 'a1',
+        vclock = {[1] = 10},
+    })
+
+    local ok, err = session:set_vclockkeeper('A', 'a2')
+    t.assert_equals({ok, err}, {true, nil})
+    t.assert_equals(session:get_vclockkeeper('A'), {
+        replicaset_uuid = 'A',
+        instance_uuid = 'a2',
+    })
+
+    local function set_vclockkeeper_async(vclock)
+        local chan = fiber.channel(1)
+        fiber.new(function()
+            chan:put({session:set_vclockkeeper('A', 'a3', vclock)})
+        end)
+        return chan
+    end
+
+    g.stateboard.process:kill('STOP')
+    local c1 = set_vclockkeeper_async({[1] = 101})
+    local c2 = set_vclockkeeper_async({[1] = 102})
+    fiber.sleep(0)
+    g.stateboard.process:kill('CONT')
+
+    t.assert_equals(c1:get(), {true, nil})
+    local ret2, err2 = unpack(c2:get())
+    t.assert_equals(ret2, nil)
+    t.assert_equals(err2.class_name, 'SessionError')
+    t.assert_str_matches(err2.err,
+        'Ordinal comparison failed %(requested %d+, current %d+%)'
+    )
+
+    t.assert_equals(session:get_vclockkeeper('A').vclock, {[1] = 101})
+end
