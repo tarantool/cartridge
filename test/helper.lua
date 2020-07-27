@@ -7,8 +7,8 @@ local helpers = table.copy(require('cartridge.test-helpers'))
 helpers.project_root = fio.dirname(debug.sourcedir())
 
 local __fio_tempdir = fio.tempdir
-fio.tempdir = function()
-    local base = os.getenv('TMPDIR')
+fio.tempdir = function(base)
+    base = base or os.getenv('TMPDIR')
     if base == nil or base == '/tmp' then
         return __fio_tempdir()
     else
