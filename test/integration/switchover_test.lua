@@ -42,7 +42,7 @@ g.before_all(function()
     end)
 
     g.client = stateboard_client.new({
-        uri = 'localhost:' .. g.stateboard.net_box_port,
+        uri = '127.0.0.1:' .. g.stateboard.net_box_port,
         password = g.stateboard.net_box_credentials.password,
         call_timeout = 1,
     })
@@ -76,7 +76,7 @@ g.before_all(function()
         mode = 'stateful',
         state_provider = 'tarantool',
         tarantool_params = {
-            uri = g.stateboard.net_box_uri,
+            uri = '127.0.0.1:' .. g.stateboard.net_box_port,
             password = g.kvpassword,
         },
     }})
