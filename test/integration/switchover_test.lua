@@ -526,3 +526,47 @@ function g.test_enabling()
     )
     t.assert_equals(g.session:get_coordinator(), box.NULL)
 end
+
+local function set_all_rw(replicaset_uuid, all_rw)
+    A1:graphql({
+        query = [[
+            mutation($uuid: String!, $all_rw: Boolean!) {
+                edit_replicaset(
+                    uuid: $uuid
+                    all_rw: $all_rw
+                )
+            }
+        ]],
+        variables = {
+            uuid = replicaset_uuid,
+            all_rw = all_rw,
+        }
+    })
+end
+
+function g.test_all_rw()
+    -- If all_rw == true then consistent promotion is not performed
+
+    -- Make sure that B1 is a leader
+    t.assert(g.session:set_leaders({{uB, uB1}}))
+    helpers.retrying({}, function()
+        t.assert_equals(A1.net_box:eval(q_leadership, {uB}), uB1)
+    end)
+
+    -- Leader is rw, replica is ro
+    t.assert_equals(B1.net_box:eval(q_readonliness), false)
+    t.assert_equals(B2.net_box:eval(q_readonliness), true)
+
+    -- B: all_rw = true
+    set_all_rw(uB, true)
+
+    -- wait_lsn is doomed to fail
+    -- But it will not be performed
+    t.assert(g.session:set_vclockkeeper(uB, 'nobody'))
+
+    -- Promote B1 inconsistently
+    t.assert(g.session:set_leaders({{uB, uB2}}))
+    helpers.retrying({}, function()
+        t.assert_equals(B2.net_box:eval(q_readonliness), false)
+    end)
+end

@@ -529,6 +529,13 @@ local function cfg(clusterwide_config)
             )
         end
 
+        -- all_rw is an equivalent of an inconsistent switchover
+        local confapplier = require('cartridge.confapplier')
+        local replicaset_uuid = confapplier.get_replicaset_uuid()
+        if topology_cfg.replicasets[replicaset_uuid].all_rw == true then
+            vars.consistency_needed = false
+        end
+
         -- WARNING: implicit yield
         local appointments, err = _get_appointments_stateful_mode(vars.client, 0)
         if appointments == nil then
