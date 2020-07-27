@@ -26,10 +26,7 @@ end
 
 g.before_each(function()
     local etcd_path = os.getenv('ETCD_PATH')
-    t.skip_if(
-        etcd_path == nil,
-        'Missing etcd. Skipping'
-    )
+    t.skip_if(etcd_path == nil, 'etcd missing')
 
     g.datadir = fio.tempdir()
     g.etcd = t.Process:start(etcd_path, {
