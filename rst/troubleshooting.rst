@@ -1,13 +1,13 @@
 .. _cartridge-troubleshooting:
 
--------------------------------------------------------------------------------
+================================================================================
 Troubleshooting
--------------------------------------------------------------------------------
+================================================================================
 
-First of all, see the
-`troubleshooting guide <https://www.tarantool.io/en/doc/latest/book/admin/troubleshoot/>`_.
-in the Tarantool manual. Also there are other cartridge-specific
-problems considered below.
+First of all, see the similar
+`guide <https://www.tarantool.io/en/doc/latest/book/admin/troubleshoot/>`_
+in the Tarantool manual. Below you can find other cartridge-specific
+problems considered.
 
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -168,159 +168,29 @@ The clusterwide configuration should be updated.
         cartridge.admin_edit_topology({servers = edit_list})
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Delete replicaset from cluster
+The cluster is doomed, I've edited config by hands. How do I reload it?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To delete replicaset from cluster entirely, expell all instances of this
-replicaset and it will lead to deleting replicaset from cluster.
-If instance has role ``vshard-storage`` then deactivate this replicaset.
-
-.. NOTE::
-
-    You can't delete last replicaset with ``vshard-storage`` role
-
-Read this articles before you start:
-
-* :ref:`Deactivating replicasets <cartridge-deactivate-replica-set>`
-* :ref:`Expelling instances <cartridge-expelling-instances>`
-
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-Resolving this problem
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-#.  If replicaset has vshard-storage role (and it isn't last in cluster),
-    we need :ref:`deactivate replicaset <cartridge-deactivate-replica-set>` (you
-    can do it from ``webui``) and wait
-    :ref:`data rebalancing <cartridge-rebalance-data>` (also you can see that
-    rebalancing finised in ``webui`` - there is no buckets on replicaset
-    instances). After that follow next steps.
-#.  Get all servers uuid's of replicaset which must be deleted.
-#.  Expell whole servers of this replicaset by their uuid's
-
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-Here is an example of expelling servers (after rebalancing process finished):
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-Via lua-api:
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-
-.. code-block:: bash
-
-    # connect to instance, that won't be deleted
-    tarantoolctl connect user:password@instance_uri
+I hope you're asure it's quite dangerous and you know what you're doing.
+There's some useful information about :ref:`clusterwide configuration <cartridge-config>`
+anatomy and "normal" management API. But if you still want to reload
+it manually, then do (in tarantool console):
 
 .. code-block:: lua
-
-    cartridge = require('cartridge')
-
-    -- set required replicaset uuid
-    replicaset_uuid = 'deleting_replicaset_uuid'
-
-    replicaset = cartridge.admin_get_replicasets(replicaset_uuid)[1] or {}
-
-    servers_to_expell = {}
-    for _, server in pairs(replicaset.servers) do
-        table.insert(servers_to_expell, {uuid = server.uuid, expelled = true})
-    end
-
-    cartridge.admin_edit_topology({servers = servers_to_expell})
-
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-Via GraphQL:
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-
-.. code-block:: graphql
-
-    # Send follwing graphql requests from instance that won't be deleted
-
-    # Get list of replicaset servers by replicaset_uuid
-    query {
-        replicasets(uuid: replicaset_uuid) {
-            servers {
-                uuid
-            }
-        }
-    }
-
-    # Call this mutation with servers uuid from previous request
-    mutation {
-	    cluster {
-            edit_topology(servers: [
-                {uuid: server1_uuid,  expelled: true}, ...]
-                ) {}
-        }
-    }
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Work with cluster config
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Before you start, please read related article about :ref:`cluster config <cartridge-config>`.
-
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-How to update config on the whole cluster?
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-Here is an examples of updating config:
-
-* :ref:`HTTP API <cartridge-config-http-api>`
-* :ref:`GraphQL API <cartridge-config-graphql-api>`
-* :ref:`Lua API <cartridge-config-lua-api>`
-* :ref:`Luatest API <cartridge-config-luatest-api>`
-
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-How to update config on a single instance?
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-There is no API for changing config for a single instance, so there is one tested
-workaround for this problem
-
-#.  Modify config of required instance (in place), which stored on filesystem
-#.  Connect to console of this instance via ``tarantoolctl``,
-#.  Load config from filesystem via
-    :ref:`cartridge.clusterwidie_config.load() <cartridge.clusterwide-config.load>`
-#.  Lock this config
-#.  Apply this config on current instance via
-    :ref:`cartridge.confapplier.apply_config() <cartridge.confapplier.apply_config>`
-
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-Example reloading config from filesystem:
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-
-.. code-block:: bash
-
-    # for example add new_attribute.yml to instance config
-    echo 'value' > instance_config_path/new_attribute.yml
-
-    # connect to console of required instance
-    tarantoolctl connect user:password@instance_advertise_uri
-
-.. code-block:: lua
-
-    fio = require('fio')
-    confapplier = require('cartridge.confapplier')
-    clusterwidie_config = require('cartridge.clusterwide-config')
-
-    -- get instance working directory
-    workdir = confapplier.get_workdir()
-
-    -- get instance config path
-    config_filename = fio.pathjoin(workdir, 'config')
 
     -- load config from filesystem
-    loaded_config = clusterwidie_config.load(config_filename)
-    -- lock config for futher apply
-    loaded_config:lock()
-    -- apply_config on instance
-    confapplier.apply_config(loaded_config)
+    clusterwidie_config = require('cartridge.clusterwide-config')
+    cfg = clusterwidie_config.load('./config')
+    cfg:lock()
+
+    confapplier = require('cartridge.confapplier')
+    confapplier.apply_config(cfg)
+
+This snippet reloads configuretion on a single instance. All other instances
+continue operate as before.
 
 .. NOTE::
-    After this manipulation required instance will work with new config, and cluster
-    config will be at inconsistent state (config on this instance differs from config
-    at other cluster instances).
 
-    Also if current instance will initiate updating cluster config, then all cluster
-    instances will have the same config as on this instance, but if another cluster
-    instance initiate updating cluster config then local changes for this instance
-    will be dropped.
+    In case of further config modifications are made with two-phase
+    commit (e.g. via WebUI or with Lua API), the active config of an
+    active instance will be spread across the cluster.

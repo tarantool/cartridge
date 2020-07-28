@@ -1,7 +1,7 @@
 .. _cartridge-admin:
 
 ===============================================================================
-Tarantool Cartridge administrator's guide
+Admin's guide
 ===============================================================================
 
 This guide explains how to deploy and manage a Tarantool cluster with Tarantool
@@ -433,6 +433,13 @@ To expel an instance, click **...** next to it, then click **Expel server** and
 .. image:: images/expelling-instance-border-5px.png
    :align: left
    :scale: 40%
+
+.. NOTE::
+
+    There are two restrictions:
+    * You can't expel a leader if it has a replica. Switch leadership first.
+    * You can't expel vshard-storage if it has buckets. Set weight to zero
+      and wait when rebalancing ends.
 
 |nbsp|
 
@@ -930,5 +937,3 @@ in the Tarantool manual.
 
 .. |nbsp| unicode:: 0xA0
    :trim:
-
-.. include:: troubleshooting.rst
