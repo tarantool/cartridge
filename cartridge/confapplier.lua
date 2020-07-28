@@ -277,6 +277,22 @@ local function cartridge_schema_upgrade(clusterwide_config)
     end
 end
 
+local function log_bootinfo()
+    local version_path = fio.pathjoin(fio.dirname(arg[0]), 'VERSION')
+    local version_content = utils.file_read(version_path)
+
+    log.info('Cartridge %s', require('cartridge').VERSION)
+    if version_content ~= nil then
+        for _, l in pairs(version_content:split('\n')) do
+            log.info(l)
+        end
+    end
+
+    log.info('server alias %s', membership.myself().payload.alias)
+    log.info('advertise uri %s', vars.advertise_uri)
+    log.info('working directory %s', vars.workdir)
+end
+
 local function boot_instance(clusterwide_config)
     checks('ClusterwideConfig')
     assert(clusterwide_config.locked)
@@ -395,6 +411,10 @@ local function boot_instance(clusterwide_config)
             box_opts.replication = {pool.format_uri(leader.uri)}
         end
     end
+
+    -- Don't wait when box.cfg returns (it may be long)
+    -- But imitate it is logged from the same fiber
+    fiber.new(log_bootinfo):name(fiber.name())
 
     log.warn('Calling box.cfg()...')
     -- This operation may be long
@@ -640,6 +660,7 @@ end
 return {
     init = init,
     boot_instance = boot_instance,
+    log_bootinfo = log_bootinfo,
     apply_config = apply_config,
     validate_config = validate_config,
 
