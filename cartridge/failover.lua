@@ -40,10 +40,10 @@ local stateboard_client = require('cartridge.stateboard-client')
 local etcd2_client = require('cartridge.etcd2-client')
 
 local FailoverError = errors.new_class('FailoverError')
+local SwitchoverError = errors.new_class('SwitchoverError')
 local ApplyConfigError = errors.new_class('ApplyConfigError')
 local ValidateConfigError = errors.new_class('ValidateConfigError')
 local StateProviderError = errors.new_class('StateProviderError')
-local ConsistentSwitchoverError = errors.new_class('ConsistentSwitchoverError')
 
 vars:new('membership_notification', membership.subscribe())
 vars:new('consistency_needed', false)
@@ -64,6 +64,14 @@ vars:new('options', {
     LONGPOLL_TIMEOUT = 30,
     NETBOX_CALL_TIMEOUT = 1,
 })
+
+function _G.__cartridge_failover_get_lsn(timeout)
+    box.ctl.wait_ro(timeout)
+    return {
+        id  = box.info.id,
+        lsn = box.info.lsn,
+    }
+end
 
 --- Generate appointments according to clusterwide configuration.
 -- Used in 'disabled' failover mode.
@@ -239,10 +247,10 @@ local function constitute_oneself(active_leaders, opts)
     -- Query current vclockkeeper
     -- WARNING: implicit yield
     local vclockkeeper, err = session:get_vclockkeeper(replicaset_uuid)
-    if err ~= nil then
-        return nil, ConsistentSwitchoverError:new(err)
-    end
     fiber.testcancel()
+    if err ~= nil then
+        return nil, SwitchoverError:new(err)
+    end
 
     if vclockkeeper == nil then
         -- It's absent, no need to wait anyone
@@ -257,25 +265,24 @@ local function constitute_oneself(active_leaders, opts)
         local vclockkeeper_uuid = vclockkeeper.instance_uuid
         local vclockkeeper_srv = topology_cfg.servers[vclockkeeper_uuid]
         if vclockkeeper_srv == nil then
-            return nil, ConsistentSwitchoverError:new('Alien vclockkeeper')
+            return nil, SwitchoverError:new('Alien vclockkeeper %q',
+                vclockkeeper.instance_uuid
+            )
         end
 
         local vclockkeeper_uri = vclockkeeper_srv.uri
 
         local timeout = deadline - fiber.time()
         -- WARNING: implicit yield
-        local vclockkeeper_info, err = errors.netbox_eval(
-            pool.connect(vclockkeeper_uri, {wait_connected = false}), [[
-            box.ctl.wait_ro(...)
-            return {
-                id  = box.info.id,
-                lsn = box.info.lsn,
-            }
-        ]], {timeout}, {timeout = timeout + vars.options.NETBOX_CALL_TIMEOUT})
+        local vclockkeeper_info, err = errors.netbox_call(
+            pool.connect(vclockkeeper_uri, {wait_connected = false}),
+            '__cartridge_failover_get_lsn', {timeout},
+            {timeout = timeout + vars.options.NETBOX_CALL_TIMEOUT}
+        )
         fiber.testcancel()
 
         if vclockkeeper_info == nil then
-            return nil, ConsistentSwitchoverError:new(err)
+            return nil, SwitchoverError:new(err)
         end
 
         -- Wait async replication to arrive
@@ -288,7 +295,7 @@ local function constitute_oneself(active_leaders, opts)
             timeout
         )
         if not ok then
-            return nil, ConsistentSwitchoverError:new(
+            return nil, SwitchoverError:new(
                 "Can't catch up with the vclockkeeper"
             )
         end
@@ -307,7 +314,7 @@ local function constitute_oneself(active_leaders, opts)
     fiber.testcancel()
 
     if ok == nil then
-        return nil, ConsistentSwitchoverError:new(err)
+        return nil, SwitchoverError:new(err)
     end
 
     -- Hooray, instance is a legal vclockkeeper now.
@@ -619,6 +626,14 @@ local function is_vclockkeeper()
     return vars.cache.is_vclockkeeper
 end
 
+--- Check if current configuration implies consistent switchover.
+-- @function consistency_needed
+-- @local
+-- @treturn boolean true / false
+local function consistency_needed()
+    return vars.consistency_needed
+end
+
 --- Get current stateful failover coordinator
 -- @function get_coordinator
 -- @treturn[1] table coordinator
@@ -653,7 +668,7 @@ return {
     get_coordinator = get_coordinator,
     get_error = get_error,
 
-    consistency_needed = function() return vars.consistency_needed end,
+    consistency_needed = consistency_needed,
     is_vclockkeeper = is_vclockkeeper,
     is_leader = is_leader,
     is_rw = is_rw,
