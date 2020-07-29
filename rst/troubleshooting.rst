@@ -4,11 +4,10 @@
 Troubleshooting
 ================================================================================
 
-First of all, see the similar
+First of all, see a similar
 `guide <https://www.tarantool.io/en/doc/latest/book/admin/troubleshoot/>`_
-in the Tarantool manual. Below you can find other cartridge-specific
+in the Tarantool manual. Below you can find other Cartridge-specific
 problems considered.
-
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Editing clusterwide configuration in WebUI returns an error
@@ -20,23 +19,23 @@ Editing clusterwide configuration in WebUI returns an error
 * ``Prepare2pcError: Instance state is OperationError, can't apply config in this state``.
 
 **The root problem**: all cluster instances are equal, and all of them store a
-copy of  clusterwide configuration, which must be the same. If an
-instance degrades (can't accept new configuration) - the quorum is lost.
-It prevents further config modifications to avoid inconsistency.
+copy of clusterwide configuration, which must be the same. If an
+instance degrades (can't accept new configuration) -- the quorum is lost.
+This prevents further configuration modifications to avoid inconsistency.
 
-But sometimes inconsistency is needed to repair the system at least
+But sometimes inconsistency is needed to repair the system, at least
 partially and temporarily. It can be achieved by disabling degraded
 instances.
 
-**Solution**
+**Solution**:
 
-#.  Connect to console of alive instance
+#.  Connect to the console of the alive instance.
 
     .. code-block:: bash
 
         tarantoolctl connect user:password@instance_advertise_uri
 
-#.  Inspect what's going on
+#.  Inspect what's going on.
 
     .. code-block:: lua
 
@@ -48,7 +47,7 @@ instances.
         return report
 
 #.  If you're ready to proceed, run the following snippet. It'll disable
-    all instances which are not healthy. After that, you could operate
+    all instances which are not healthy. After that, you can use the
     WebUI as usual.
 
     .. code-block:: lua
@@ -61,7 +60,7 @@ instances.
         end
         return cartridge.admin_disable_servers(disable_list)
 
-#.  And when it's necessary to bring disabled instances back, re-enable
+#.  When it's necessary to bring disabled instances back, re-enable
     them in a similar manner:
 
     .. code-block:: lua
@@ -75,56 +74,56 @@ instances.
         end
         return cartridge.admin_enable_servers(enable_list)
 
-
 .. _troubleshooting-stuck-connecting-fullmesh:
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-An instance is stuck in ConnectingFullmesh state upon restart
+An instance is stuck in the ConnectingFullmesh state upon restart
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Example**:
 
 .. image:: images/stuck-connecting-fullmesh.png
+   :align: left
+   :scale: 100%
 
-**The root problem**: after restart, the instance tries to connect all
-its replicas and remains in ``ConnectingFullmesh`` state until it
+**The root problem**: after restart, the instance tries to connect to all
+its replicas and remains in the ``ConnectingFullmesh`` state until it
 succeeds. If it can't (due to replica URI unavailability or for any
-other reason) — it's stuck forever.
+other reason) -- it's stuck forever.
 
 **Solution**:
 
-Set `replication_connect_quorum <https://www.tarantool.io/en/doc/latest/reference/configuration/#cfg-replication-replication-connect-quorum>`_ option to zero. In
-may be accomplished in two ways:
+Set the `replication_connect_quorum <https://www.tarantool.io/en/doc/latest/reference/configuration/#cfg-replication-replication-connect-quorum>`_
+option to zero. It may be accomplished in two ways:
 
-* By restarting it with corresponding option set
+* By restarting it with the corresponding option set
   (in environment variables or in the
   :ref:`instance configuration file <cartridge-run-systemctl-config>`);
-* Or without restart — by running the following one-liner:
+* Or without restart -- by running the following one-liner:
 
-    .. code-block:: bash
+  .. code-block:: bash
 
-        echo "box.cfg({replication_connect_quorum = 0})" | tarantoolctl connect <advertise_uri>
-
+      echo "box.cfg({replication_connect_quorum = 0})" | tarantoolctl connect <advertise_uri>
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-I want to run instance with new advertise_uri
+I want to run an instance with a new advertise_uri
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**The root problem**: ``advertise_uri`` parameter is persisted in
-clusterwide configuration. Even if it changes upon restart, the rest of
-cluster keeps using an old one, and cluster may behave "strange".
+**The root problem**: ``advertise_uri`` parameter is persisted in the
+clusterwide configuration. Even if it changes upon restart, the rest of the
+cluster keeps using the old one, and the cluster may behave in an odd way.
 
-**The solution**:
+**Solution**:
 
 The clusterwide configuration should be updated.
 
-
-#.  Make sure all instances are running and not stuck in ConnectingFullmesh
+#.  Make sure all instances are running and not stuck in the ConnectingFullmesh
     state (see :ref:`above <troubleshooting-stuck-connecting-fullmesh>`).
 
 #.  Make sure all instances have discovered each other (i.e. they look
-    healthy in WebUI)
+    healthy in the WebUI).
 
-#.  Run the following snippet in tarantool console. It'll prepare a
+#.  Run the following snippet in the Tarantool console. It'll prepare a
     patch for the clusterwide configuration.
 
     .. code-block:: lua
@@ -148,7 +147,7 @@ The clusterwide configuration should be updated.
         end
         return changelog
 
-    As a result you'll see a brief summary like following:
+    As a result you'll see a brief summary like the following one:
 
     .. code-block:: tarantoolsession
 
@@ -161,20 +160,25 @@ The clusterwide configuration should be updated.
           - localhost:13305 -> localhost:3305 (srv-5)
         ...
 
-#.  Finally, apply that patch:
+#.  Finally, apply the patch:
 
     .. code-block:: lua
 
         cartridge.admin_edit_topology({servers = edit_list})
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The cluster is doomed, I've edited config by hands. How do I reload it?
+The cluster is doomed, I've edited the config manually. How do I reload it?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-I hope you're asure it's quite dangerous and you know what you're doing.
-There's some useful information about :ref:`clusterwide configuration <cartridge-config>`
-anatomy and "normal" management API. But if you still want to reload
-it manually, then do (in tarantool console):
+.. WARNING::
+
+    Please be aware that it's quite risky and you know what you're doing.
+    There's some useful information about
+    :ref:`clusterwide configuration <cartridge-config>`
+    anatomy and "normal" management API.
+
+But if you're still determined to reload the configuration manually, you can do
+(in the Tarantool console):
 
 .. code-block:: lua
 
@@ -186,11 +190,11 @@ it manually, then do (in tarantool console):
     confapplier = require('cartridge.confapplier')
     confapplier.apply_config(cfg)
 
-This snippet reloads configuretion on a single instance. All other instances
-continue operate as before.
+This snippet reloads the configuration on a single instance. All other instances
+continue operating as before.
 
 .. NOTE::
 
-    In case of further config modifications are made with two-phase
-    commit (e.g. via WebUI or with Lua API), the active config of an
-    active instance will be spread across the cluster.
+    If further configuration modifications are made with a two-phase
+    commit (e.g. via the WebUI or with the Lua API), the active configuration
+    of an active instance will be spread across the cluster.
