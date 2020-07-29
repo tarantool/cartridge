@@ -181,6 +181,7 @@ local function list_on_instance()
         })
     end
 
+    -- It should be a vclockkeeper, but it's not
     if failover.consistency_needed()
     and failover.get_active_leaders()[replicaset_uuid] == instance_uuid
     and not failover.is_vclockkeeper()

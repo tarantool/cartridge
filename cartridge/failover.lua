@@ -26,6 +26,7 @@
 -- @local
 
 local log = require('log')
+local json = require('json')
 local fiber = require('fiber')
 local checks = require('checks')
 local errors = require('errors')
@@ -256,7 +257,7 @@ local function constitute_oneself(active_leaders, opts)
         -- It's absent, no need to wait anyone
         goto set_vclockkeeper
     elseif vclockkeeper.instance_uuid == instance_uuid then
-        -- It's me already
+        -- It's me already, but vclock still should be persisted
         goto set_vclockkeeper
     end
 
@@ -294,22 +295,21 @@ local function constitute_oneself(active_leaders, opts)
             vars.options.WAITLSN_PAUSE,
             timeout
         )
+        fiber.testcancel()
         if not ok then
             return nil, SwitchoverError:new(
                 "Can't catch up with the vclockkeeper"
             )
         end
-        fiber.testcancel()
     end
 
     -- The last one thing: persist our vclock
     ::set_vclockkeeper::
+    local vclock = box.info.vclock
 
     -- WARNING: implicit yield
     local ok, err = session:set_vclockkeeper(
-        replicaset_uuid,
-        instance_uuid,
-        box.info().vclock
+        replicaset_uuid, instance_uuid, vclock
     )
     fiber.testcancel()
 
@@ -322,7 +322,9 @@ local function constitute_oneself(active_leaders, opts)
     vars.cache.is_leader = true
     vars.cache.is_rw = true
 
-    log.info('Consistent switchover is successful')
+    log.info('Vclock persisted: %s',
+        json.encode(setmetatable(vclock, {_serialize = 'sequence'}))
+    )
 
     return true
 end
@@ -618,7 +620,7 @@ local function is_rw()
     return vars.cache.is_rw
 end
 
---- Check if current instance is a legal vclockkeeper.
+--- Check if current instance has persisted his vclock.
 -- @function is_vclockkeeper
 -- @local
 -- @treturn boolean true / false
