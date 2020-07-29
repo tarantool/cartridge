@@ -258,8 +258,13 @@ g.test_console_sock = function()
     -- The message differs in 2.3.2+
     local e2 = 'failed to create server unix/:' .. sock_name ..
         ': ' .. errno.strerror(errno.ENOBUFS)
-    if err.err ~= e1 and not err.err:match(e2) then
-        error(string.format('Unexpected error:\n%s', err))
+    if err.err ~= e1 and not err.err:endswith(e2) then
+        error(
+            'Unexpected error message:\n' ..
+            'expected: ' .. e1 .. '\n' ..
+            '      or: ' .. e2 .. '\n' ..
+            '  actual: ' .. tostring(err)
+        )
     end
 end
 
