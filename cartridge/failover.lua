@@ -61,7 +61,7 @@ vars:new('cache', {
 })
 vars:new('options', {
     WAITLSN_PAUSE = 0.2,
-    WAITLSN_TIMEOUT = 5,
+    WAITLSN_TIMEOUT = 3,
     LONGPOLL_TIMEOUT = 30,
     NETBOX_CALL_TIMEOUT = 1,
 })

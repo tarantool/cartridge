@@ -122,11 +122,12 @@ local q_leadership = [[
 
 function g.test_2pc_forceful()
     -- Testing scenario:
-    -- 1. Promote X2 as a leader
-    -- 2. Trigger apply_config
-    -- 3. An attempt to constitute_oneself fails
-    -- 4. Manually set X2 as vclockkeeper
-    -- 5. Expect it to become rw
+    -- 1. Promote A1 as a leader
+    -- 2. An attempt to constitute_oneself fails
+    -- 3. Trigger apply_config
+    -- 4. An attempt to constitute_oneself still fails
+    -- 5. Manually set A1 as vclockkeeper
+    -- 6. Expect it to become rw
 
     -- Prevent wait_lsn from accomplishing successfully
     t.assert(g.session:set_leaders({{uA, 'nobody'}}))
@@ -240,19 +241,8 @@ function g.test_promotion_abortion()
         t.assert_equals(B2.net_box:eval(q_is_vclockkeeper), false)
     end)
 
-    -- Protect A2 from becoming rw
-    B2.net_box:eval([[
-        local log = require('log')
-        local fiber = require('fiber')
-        _G.protection_fiber = fiber.new(function()
-            log.warn('B2 protected from becoming rw')
-            if pcall(box.ctl.wait_rw) then
-                log.error('DANGER! B2 is rw!')
-                os.exit(-1)
-            end
-        end)
-        fiber.sleep(0)
-    ]])
+    -- Protect B2 from becoming rw
+    helpers.protect_from_rw(B2)
 
     -- Prevent wait_lsn from accomplishing successfully
     B2.net_box:eval([[
@@ -264,7 +254,7 @@ function g.test_promotion_abortion()
     -- Promote B2
     t.assert(g.session:set_leaders({{uB, uB2}}))
     t.assert_error_msg_equals("timed out",
-        function() B2.net_box:call('box.ctl.wait_rw', {0.1}) end
+        function() B2.net_box:call('box.ctl.wait_rw', {0.2}) end
     )
 
     t.assert_equals(B1.net_box:eval(q_leadership, {uB}), uB2)
@@ -307,8 +297,12 @@ function g.test_promotion_abortion()
     end)
 
     -- Revert all hacks in fixtures
-    B2.net_box:eval('_G.protection_fiber:cancel()')
     B2.net_box:eval('box.cfg({replication = _r})')
+    t.assert_error_msg_equals("timed out",
+        function() B2.net_box:call('box.ctl.wait_rw', {0.2}) end
+    )
+
+    helpers.unprotect(B2)
 end
 
 function g.test_promotion_late()
