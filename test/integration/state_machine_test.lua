@@ -388,6 +388,11 @@ function g.test_fiber_cancel()
     -- m  : repairs
     --   s: Trigger failover (is_leader = false)
 
+    local future = g.slave.net_box:eval(
+        'return pcall(box.ctl.wait_rw)', nil,
+        {is_async = true}
+    )
+
     g.slave.net_box:eval('loadstring(...)()', {
         string.dump(function()
             local log = require('log')
@@ -430,9 +435,7 @@ function g.test_fiber_cancel()
         end)
     })
 
-    t.helpers.retrying({}, function()
-        t.assert_equals(is_master(g.slave), true)
-    end)
+    t.assert_equals(future:wait_result(3), {true})
     t.helpers.retrying({}, function()
         t.assert_equals(is_master(g.slave), false)
     end)
