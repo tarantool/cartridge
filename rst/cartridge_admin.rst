@@ -1,7 +1,7 @@
 .. _cartridge-admin:
 
 ===============================================================================
-Tarantool Cartridge administrator's guide
+Administrator's guide
 ===============================================================================
 
 This guide explains how to deploy and manage a Tarantool cluster with Tarantool
@@ -435,6 +435,14 @@ To expel an instance, click **...** next to it, then click **Expel server** and
    :scale: 40%
 
 |nbsp|
+
+.. NOTE::
+
+    There are two restrictions:
+
+    * You can't expel a leader if it has a replica. Switch leadership first.
+    * You can't expel a vshard-storage if it has buckets. Set the weight to zero
+      and wait until rebalancing is completed.
 
 .. _cartridge-node-failure:
 
@@ -907,16 +915,6 @@ Potential issues
   **Solution:** The replica set has an unreachable master and replica. Check the
   error message to detect this replica set. Then fix the issue in the same way
   as for :ref:`UNREACHABLE_REPLICA <unreachable_replica>`.
-
-.. _cartridge-troubleshooting:
-
--------------------------------------------------------------------------------
-Troubleshooting
--------------------------------------------------------------------------------
-
-Please see the
-`troubleshooting guide <https://www.tarantool.io/en/doc/latest/book/admin/troubleshoot/>`_.
-in the Tarantool manual.
 
 .. _cartridge-recovery:
 

@@ -1,7 +1,7 @@
 .. _cartridge-dev:
 
 ================================================================================
-Tarantool Cartridge developer's guide
+Developer's guide
 ================================================================================
 
 For a quick start, skip the details below and jump right away to the
