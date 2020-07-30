@@ -229,11 +229,11 @@ end
 local function longpoll(client, timeout)
     checks('stateboard_client', 'number')
 
-    local deadline = fiber.time() + timeout
+    local deadline = fiber.clock() + timeout
 
     while true do
         local session = client:get_session()
-        local timeout = deadline - fiber.time()
+        local timeout = deadline - fiber.clock()
 
         local ret, err = errors.netbox_call(session.connection,
             'longpoll', {timeout},
@@ -244,7 +244,7 @@ local function longpoll(client, timeout)
             return ret
         end
 
-        if fiber.time() < deadline then
+        if fiber.clock() < deadline then
             fiber.sleep(client.cfg.call_timeout)
             -- continue
         else

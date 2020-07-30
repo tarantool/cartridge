@@ -51,8 +51,8 @@ local function pack_decision(leader_uuid)
     checks('string')
     return {
         leader = leader_uuid,
-        immunity = fiber.time() + vars.options.IMMUNITY_TIMEOUT,
-        -- decision is immune if fiber.time() < immunity
+        immunity = fiber.clock() + vars.options.IMMUNITY_TIMEOUT,
+        -- decision is immune if fiber.clock() < immunity
     }
 end
 
@@ -61,7 +61,7 @@ local function make_decision(ctx, replicaset_uuid)
 
     local current_decision = ctx.decisions[replicaset_uuid]
     if current_decision ~= nil then
-        if fiber.time() < current_decision.immunity
+        if fiber.clock() < current_decision.immunity
         or vars.healthcheck(ctx.members, current_decision.leader)
         then
             return nil
@@ -110,7 +110,7 @@ local function control_loop(session)
             end
         end
 
-        local now = fiber.time()
+        local now = fiber.clock()
         if next(updates) ~= nil then
             -- TODO vclockkeeper handling in etcd2
             if vars.client.state_provider ~= 'etcd2' then
@@ -218,10 +218,10 @@ local function take_control_loop(client)
     checks('stateboard_client|etcd2_client')
 
     while true do
-        local t1 = fiber.time()
+        local t1 = fiber.clock()
         local ok, err = CoordinatorError:pcall(take_control, client)
         fiber.testcancel()
-        local t2 = fiber.time()
+        local t2 = fiber.clock()
 
         if ok == nil then
             log.error('%s', type(err) == 'table' and err.err or err)

@@ -153,8 +153,8 @@ local function wish_state(state, timeout)
         timeout = vars.state_notification_timeout
     end
 
-    local deadline = fiber.time() + timeout
-    while fiber.time() < deadline do
+    local deadline = fiber.clock() + timeout
+    while fiber.clock() < deadline do
         if vars.state == state then
             -- Wish granted
             break
@@ -163,7 +163,7 @@ local function wish_state(state, timeout)
             break
         else
             -- Wish could be granted soon, just wait a little bit
-            vars.state_notification:wait(deadline - fiber.time())
+            vars.state_notification:wait(deadline - fiber.clock())
         end
     end
 
