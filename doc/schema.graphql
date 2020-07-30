@@ -1,5 +1,5 @@
 # source: http://localhost:8081/admin/api
-# timestamp: Wed Jun 03 2020 13:01:27 GMT+0300 (Moscow Standard Time)
+# timestamp: Thu Jul 30 2020 12:28:54 GMT+0300 (Moscow Standard Time)
 
 """Cluster management"""
 type Apicluster {
@@ -223,7 +223,7 @@ type MutationApicluster {
   edit_vshard_options(rebalancer_max_receiving: Int, collect_bucket_garbage_interval: Float, collect_lua_garbage: Boolean, sync_timeout: Float, name: String!, rebalancer_disbalance_threshold: Float): VshardGroup!
 
   """Promote the instance to the leader of replicaset"""
-  failover_promote(replicaset_uuid: String!, instance_uuid: String!): Boolean!
+  failover_promote(force_inconsistency: Boolean, replicaset_uuid: String!, instance_uuid: String!): Boolean!
 
   """Remove user"""
   remove_user(username: String!): User

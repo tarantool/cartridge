@@ -521,6 +521,107 @@ function g.test_enabling()
     t.assert_equals(g.session:get_coordinator(), box.NULL)
 end
 
+function g.test_api()
+    -- Enable coordinator
+    g.client:drop_session()
+    g.session = g.client:get_session()
+    t.assert_equals(g.session:get_coordinator(), box.NULL)
+    B2.net_box:eval(q_set_wait_lsn_timeout, {0.2})
+
+    A1.net_box:eval(
+        [[require("cartridge").admin_edit_topology(...)]],
+        {{replicasets = {{uuid = uA, roles = {'failover-coordinator'}}}}}
+    )
+    helpers.retrying({}, function()
+        t.assert_covers(g.session:get_coordinator(), {uuid = uA1})
+    end)
+
+    local query = [[
+        mutation(
+            $replicaset_uuid: String!
+            $instance_uuid: String!
+        ) {
+        cluster {
+            failover_promote(
+                replicaset_uuid: $replicaset_uuid
+                instance_uuid: $instance_uuid
+                force_inconsistency: true
+            )
+        }
+    }]]
+
+    -- Disrupt successfull switchover
+    t.assert(g.session:set_vclockkeeper(uB, 'nobody'))
+
+    -- Hack set_vclockkeeper (inconcistency forcing) to fail
+    A1.net_box:eval([[
+        local vars = require('cartridge.vars').new('cartridge.failover')
+        vars.client.session.set_vclockkeeper = function()
+            return nil, require('errors').new('ArtificialError', 'Boo')
+        end
+    ]])
+    t.assert_error_msg_equals(
+        "Promotion succeeded, but inconsistency wasn't forced: Boo",
+        A1.graphql, A1, {
+            query = query,
+            variables = {
+                replicaset_uuid = uB,
+                instance_uuid = uB2,
+            },
+        }
+    )
+
+    -- Check intermediate state: B2 is a leader, but can't sync up
+    helpers.retrying({}, function()
+        t.assert_equals(B2.net_box:eval(q_leadership, {uB}), uB2)
+    end)
+    t.assert_equals(B2.net_box:eval(q_is_vclockkeeper), false)
+    t.assert_equals(
+        helpers.list_cluster_issues(A1),
+        {{
+            level = "warning",
+            topic = "switchover",
+            instance_uuid = uB2,
+            replicaset_uuid = uB,
+            message = "Consistency on " .. B2.advertise_uri ..
+                " (B2) isn't reached yet",
+        }}
+    )
+
+    -- Revert the hack and test API normally
+    A1.net_box:eval([[
+        local vars = require('cartridge.vars').new('cartridge.failover')
+        vars.client:drop_session()
+        vars.client:get_session()
+    ]])
+
+    local resp = A1:graphql({
+        query = query,
+        variables = {
+            replicaset_uuid = uB,
+            instance_uuid = uB2,
+        }
+    })
+    t.assert_type(resp['data'], 'table')
+    t.assert_equals(resp.data, {cluster = {failover_promote = true}})
+    helpers.retrying({}, function()
+        t.assert_equals(B2.net_box:eval(q_is_vclockkeeper), true)
+    end)
+    t.assert_equals(helpers.list_cluster_issues(A1), {})
+    t.assert_equals(g.session:get_vclockkeeper(uB), {
+        replicaset_uuid = uB,
+        instance_uuid = uB2,
+        vclock = B2.net_box:eval('return box.info.vclock'),
+    })
+
+    -- Revert all hacks in fixtures
+    A1.net_box:eval(
+        [[require("cartridge").admin_edit_topology(...)]],
+        {{replicasets = {{uuid = uA, roles = {}}}}}
+    )
+    t.assert_equals(g.session:get_coordinator(), box.NULL)
+end
+
 function g.test_all_rw()
     -- Replicasets with all_rw flag shouldn't fail on box.ctl.wait_ro().
 

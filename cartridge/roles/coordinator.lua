@@ -316,8 +316,10 @@ local function apply_config(conf, _)
 end
 
 --- Manually set leaders.
+--
 -- @function appoint_leaders
 -- @tparam {[string]=string,...} replicaset_uuid to leader_uuid mapping
+--
 -- @treturn[1] boolean true
 -- @treturn[2] nil
 -- @treturn[2] table Error description
