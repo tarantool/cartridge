@@ -173,7 +173,7 @@ local function promote(replicaset_leaders, opts)
     local _, err = rpc.call(
             'failover-coordinator',
             'appoint_leaders',
-            {replicaset_leaders, opts},
+            {replicaset_leaders},
             { uri = coordinator.uri }
     )
 
@@ -181,10 +181,7 @@ local function promote(replicaset_leaders, opts)
         return nil, err
     end
 
-    if opts == nil
-    or opts.force_inconsistency == nil
-    or not opts.force_inconsistency -- beware box.NULL
-    then
+    if opts == nil or opts.force_inconsistency == false then
         return true
     end
 
