@@ -689,8 +689,14 @@ local function force_inconsistency(leaders)
 
     local err
     for replicaset_uuid, instance_uuid in pairs(leaders) do
-        local _, _err = session:set_vclockkeeper(replicaset_uuid, instance_uuid)
-        err = err or _err
+        local _ok, _err = session:set_vclockkeeper(replicaset_uuid, instance_uuid)
+        if _ok == nil then
+            err = _err
+            log.warn(
+                'Forcing inconsistency for %s failed: %s', instance_uuid,
+                errors.is_error_object(_err) and _err.err or _err
+            )
+        end
     end
 
     if err ~= nil then
