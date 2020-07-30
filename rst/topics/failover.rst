@@ -162,6 +162,18 @@ the first appointment). Instead, you should use the promotion API
 the GraphQL ``mutation {cluster{failover_promote()}}``)
 which pushes manual appointments to the state provider.
 
+Stateful failover implies **consistent promotion**: every instance before
+becoming writable performs ``wait_lsn`` operation to sync with the previous one.
+
+The information about "previous leader" (we call it **vclockkeeper**) is also
+stored in the external storage. Even when old leader is demoted, it remains a
+vclockkeeper until the new one succeessfully awaits and persists his vclock in
+the external storage.
+
+If replication is stuck and consistent promotion isn't possible, a user has two
+options: revert promotion (re-promote the old one) or force it inconsistently
+(the GraphQL API for that will be added soon).
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Failover configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

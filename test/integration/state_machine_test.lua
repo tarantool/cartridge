@@ -368,10 +368,9 @@ function g.test_blinking_fast()
         end)
     })
 
-    t.helpers.retrying({}, function()
-        t.assert_equals(is_master(g.slave), false)
-    end)
-
+    t.assert_error_msg_equals("timed out",
+        function() g.slave.net_box:call('box.ctl.wait_rw', {1}) end
+    )
     helpers.unprotect(g.slave)
 end
 

@@ -16,6 +16,9 @@ and this project adheres to
 Added
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+- When failover mode is stateful, all manual leader promotions will be consistent:
+  every instance before becoming writable performs `wait_lsn` operation to
+  sync with previous one.
 - Early logger initialization (for Tarantool > 2.5.0-100, which supports it).
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
