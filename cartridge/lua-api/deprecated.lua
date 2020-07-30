@@ -97,10 +97,10 @@ local function join_server(args)
         return true
     end
 
-    local deadline = fiber.time() + timeout
+    local deadline = fiber.clock() + timeout
     local cond = membership.subscribe()
     local conn = nil
-    while not conn and fiber.time() < deadline do
+    while not conn and fiber.clock() < deadline do
         cond:wait(0.2)
 
         local member = membership.get_member(args.uri)

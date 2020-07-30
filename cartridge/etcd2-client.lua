@@ -258,11 +258,11 @@ end
 local function longpoll(client, timeout)
     checks('etcd2_client', 'number')
 
-    local deadline = fiber.time() + timeout
+    local deadline = fiber.clock() + timeout
 
     while true do
         local session = client:get_session()
-        local timeout = deadline - fiber.time()
+        local timeout = deadline - fiber.clock()
 
         local resp, err
         if session.longpoll_index == nil then
@@ -282,7 +282,7 @@ local function longpoll(client, timeout)
             return json.decode(resp.node.value)
         end
 
-        if fiber.time() < deadline then
+        if fiber.clock() < deadline then
             -- connection refused etc.
             fiber.sleep(session.connection.request_timeout)
         elseif err.http_code == 408 then

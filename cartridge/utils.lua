@@ -318,14 +318,14 @@ end
 -- @treturn boolean true / false
 local function wait_lsn(id, lsn, pause, timeout)
     checks('number', 'number', 'number', 'number')
-    local deadline = fiber.time() + timeout
+    local deadline = fiber.clock() + timeout
 
     while true do
         if (box.info.vclock[id] or 0) >= lsn then
             return true
         end
 
-        if fiber.time() >= deadline then
+        if fiber.clock() >= deadline then
             return false
         end
 
