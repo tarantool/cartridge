@@ -521,6 +521,57 @@ function g.test_enabling()
     t.assert_equals(g.session:get_coordinator(), box.NULL)
 end
 
+function g.test_api()
+    -- Enable coordinator
+    g.client:drop_session()
+    g.session = g.client:get_session()
+    t.assert_equals(g.session:get_coordinator(), box.NULL)
+    A1.net_box:eval(
+        [[require("cartridge").admin_edit_topology(...)]],
+        {{replicasets = {{uuid = uA, roles = {'failover-coordinator'}}}}}
+    )
+    helpers.retrying({}, function()
+        t.assert_covers(g.session:get_coordinator(), {uuid = uA1})
+    end)
+
+    local query = [[
+        mutation(
+            $replicaset_uuid: String!
+            $instance_uuid: String!
+        ) {
+        cluster {
+            failover_promote(
+                replicaset_uuid: $replicaset_uuid
+                instance_uuid: $instance_uuid
+                force_inconsistency: true
+            )
+        }
+    }]]
+
+    -- Test GraphQL forceful promotion API
+    t.assert(g.session:set_vclockkeeper(uB, 'nobody'))
+    local resp = A1:graphql({
+        query = query,
+        variables = {
+            replicaset_uuid = uB,
+            instance_uuid = uB2,
+        }
+    })
+    t.assert_type(resp['data'], 'table')
+    t.assert_equals(resp['data']['cluster']['failover_promote'], true)
+    t.assert_equals(g.session:get_vclockkeeper(uB), {
+        replicaset_uuid = uB,
+        instance_uuid = uB2,
+    })
+
+    -- Revert all hacks in fixtures
+    A1.net_box:eval(
+        [[require("cartridge").admin_edit_topology(...)]],
+        {{replicasets = {{uuid = uA, roles = {}}}}}
+    )
+    t.assert_equals(g.session:get_coordinator(), box.NULL)
+end
+
 function g.test_all_rw()
     -- Replicasets with all_rw flag shouldn't fail on box.ctl.wait_ro().
 

@@ -142,11 +142,16 @@ end
 --
 -- @function promote
 -- @tparam table { [replicaset_uuid] = leader_uuid }
+-- @tparam[opt] table opts
+-- @tparam ?boolean opts.force_inconsistency
+--
 -- @treturn[1] boolean true On success
 -- @treturn[2] nil
 -- @treturn[2] table Error description
-local function promote(replicaset_leaders)
-    checks('table')
+local function promote(replicaset_leaders, opts)
+    checks('table', {
+        force_inconsistency = '?boolean',
+    })
 
     local mode = get_params().mode
     if mode ~= 'stateful' then
@@ -168,12 +173,27 @@ local function promote(replicaset_leaders)
     local _, err = rpc.call(
             'failover-coordinator',
             'appoint_leaders',
-            {replicaset_leaders},
+            {replicaset_leaders, opts},
             { uri = coordinator.uri }
     )
 
     if err ~= nil then
         return nil, err
+    end
+
+    if opts == nil
+    or opts.force_inconsistency == nil
+    or not opts.force_inconsistency -- beware box.NULL
+    then
+        return true
+    end
+
+    local ok, err = failover.force_inconsistency(replicaset_leaders)
+    if ok == nil then
+        return nil, PromoteLeaderError:new(
+            "Promotion succeeded, but inconsistency wasn't forced: %s",
+            errors.is_error_object(err) and err.err or err
+        )
     end
 
     return true

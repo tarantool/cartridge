@@ -90,7 +90,11 @@ end
 local function promote(_, args)
     local replicaset_uuid = args['replicaset_uuid']
     local instance_uuid = args['instance_uuid']
-    return lua_api_failover.promote({[replicaset_uuid] = instance_uuid})
+    local opts = {
+        force_inconsistency = args['force_inconsistency']
+    }
+
+    return lua_api_failover.promote({[replicaset_uuid] = instance_uuid}, opts)
 end
 
 local function init(graphql)
@@ -148,6 +152,7 @@ local function init(graphql)
         args = {
             replicaset_uuid = gql_types.string.nonNull,
             instance_uuid = gql_types.string.nonNull,
+            force_inconsistency = gql_types.boolean,
         },
         kind = gql_types.boolean.nonNull,
         callback = module_name .. '.promote',

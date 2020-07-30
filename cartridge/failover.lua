@@ -664,6 +664,42 @@ local function get_error()
     return vars.failover_err
 end
 
+--- Force inconsistent leader switching.
+-- Do it by resetting vclockkepers in state provider.
+--
+-- @function force_inconsistency
+-- @local
+-- @tparam {[string]=string,...} replicaset_uuid to leader_uuid mapping
+--
+-- @treturn[1] boolean true
+-- @treturn[2] nil
+-- @treturn[2] table Error description
+local function force_inconsistency(leaders)
+    -- TODO vclockkeeper handling in etcd2
+    if vars.client.state_provider == 'etcd2' then
+        return nil, StateProviderError:new(
+            'Consistent switchover not implemented for etcd yet'
+        )
+    end
+
+    local session = vars.client.session
+    if session == nil or not session:is_alive() then
+        return nil, StateProviderError:new('State provider unavailable')
+    end
+
+    local err
+    for replicaset_uuid, instance_uuid in pairs(leaders) do
+        local _, _err = session:set_vclockkeeper(replicaset_uuid, instance_uuid)
+        err = err or _err
+    end
+
+    if err ~= nil then
+        return nil, err
+    end
+
+    return true
+end
+
 return {
     cfg = cfg,
     get_active_leaders = get_active_leaders,
@@ -674,4 +710,6 @@ return {
     is_vclockkeeper = is_vclockkeeper,
     is_leader = is_leader,
     is_rw = is_rw,
+
+    force_inconsistency = force_inconsistency,
 }

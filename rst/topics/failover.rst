@@ -172,7 +172,7 @@ the external storage.
 
 If replication is stuck and consistent promotion isn't possible, a user has two
 options: revert promotion (re-promote the old one) or force it inconsistently
-(the GraphQL API for that will be added soon).
+(all kinds of ``failover_promote`` API has ``force_inconsistency`` flag).
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Failover configuration

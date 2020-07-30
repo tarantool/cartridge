@@ -18,7 +18,9 @@ Added
 
 - When failover mode is stateful, all manual leader promotions will be consistent:
   every instance before becoming writable performs `wait_lsn` operation to
-  sync with previous one.
+  sync with previous one. If consistency couldn't be reached due to replication
+  failure, a user could either revert it (promote previous leader), or force
+  promotion to be inconsistent.
 - Early logger initialization (for Tarantool > 2.5.0-100, which supports it).
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
