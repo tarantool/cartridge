@@ -675,11 +675,11 @@ end
 -- @treturn[2] nil
 -- @treturn[2] table Error description
 local function force_inconsistency(leaders)
-    -- TODO vclockkeeper handling in etcd2
-    if vars.client.state_provider == 'etcd2' then
-        return nil, StateProviderError:new(
-            'Consistent switchover not implemented for etcd yet'
-        )
+    if vars.client == nil then
+        return nil, StateProviderError:new("No state provider configured")
+    elseif vars.client.state_provider == 'etcd2' then
+        -- TODO vclockkeeper handling in etcd2
+        return true
     end
 
     local session = vars.client.session
