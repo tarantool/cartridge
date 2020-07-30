@@ -237,7 +237,7 @@ local function constitute_oneself(active_leaders, opts)
         return true
     end
 
-    local deadline = fiber.time() + opts.timeout
+    local deadline = fiber.clock() + opts.timeout
 
     -- Go to the external state provider
     local session = assert(vars.client):get_session()
@@ -273,7 +273,7 @@ local function constitute_oneself(active_leaders, opts)
 
         local vclockkeeper_uri = vclockkeeper_srv.uri
 
-        local timeout = deadline - fiber.time()
+        local timeout = deadline - fiber.clock()
         -- WARNING: implicit yield
         local vclockkeeper_info, err = errors.netbox_call(
             pool.connect(vclockkeeper_uri, {wait_connected = false}),
@@ -288,7 +288,7 @@ local function constitute_oneself(active_leaders, opts)
 
         -- Wait async replication to arrive
         -- WARNING: implicit yield
-        local timeout = deadline - fiber.time()
+        local timeout = deadline - fiber.clock()
         local ok = utils.wait_lsn(
             vclockkeeper_info.id,
             vclockkeeper_info.lsn,
@@ -335,13 +335,13 @@ local function reconfigure_all(active_leaders)
 
 ::start_over::
 
-    local t1 = fiber.time()
+    local t1 = fiber.clock()
     -- WARNING: implicit yield
     local ok, _ = constitute_oneself(active_leaders, {
         timeout = vars.options.WAITLSN_TIMEOUT,
     })
     fiber.testcancel()
-    local t2 = fiber.time()
+    local t2 = fiber.clock()
 
     if not ok then
         fiber.sleep(t1 + vars.options.WAITLSN_TIMEOUT - t2)
