@@ -12,8 +12,9 @@ end
 
 local log = require('log')
 local fio = require('fio')
-local checks = require('checks')
 local errno = require('errno')
+local fiber = require('fiber')
+local checks = require('checks')
 local socket = require('socket')
 local cartridge = require('cartridge')
 local membership = require('membership')
@@ -26,6 +27,9 @@ function g.after_all()
     fio.rmtree(g.tempdir)
 end
 
+local fn_true = function() return true end
+local fn_false = function() return false end
+
 function g.mock_membership()
     g.membership_backup = {
         init = membership.init,
@@ -34,9 +38,6 @@ function g.mock_membership()
         myself = require('membership.members').myself,
     }
 
-    local fn_true = function()
-        return true
-    end
     membership.probe_uri = fn_true
     membership.broadcast = fn_true
 
@@ -266,6 +267,52 @@ g.test_console_sock = function()
             '  actual: ' .. tostring(err)
         )
     end
+end
+
+-- resolve_dns ----------------------------------------------------------------
+-------------------------------------------------------------------------------
+
+g.test_dns_resolve_after_wait = function()
+    g.mock_membership()
+    membership.probe_uri = fn_false
+    os.setenv('TARANTOOL_PROBE_URI_TIMEOUT', '0.3')
+
+    fiber.create(function()
+        -- sleep time < probe_uri_timeout == 0.3
+        fiber.sleep(0.1)
+        membership.probe_uri = fn_true
+    end)
+
+    local ok, err = cartridge.cfg({
+        workdir = g.tempdir,
+        advertise_uri = 'localhost:13001',
+        roles = {},
+        http_enabled = false,
+    })
+    t.assert(ok, err)
+
+    os.setenv('TARANTOOL_PROBE_URI_TIMEOUT', nil)
+    membership.probe_uri = fn_true
+end
+
+g.test_dns_not_resolve_after_wait = function()
+    g.mock_membership()
+    membership.probe_uri = fn_false
+    os.setenv('TARANTOOL_PROBE_URI_TIMEOUT', '0.3')
+
+    local start_time = fiber.clock()
+    check_error('Can not ping myself',
+        cartridge.cfg, {
+            workdir = g.tempdir,
+            advertise_uri = 'localhost:13001',
+            roles = {},
+            http_enabled = false,
+        }
+    )
+    t.assert(fiber.clock() - start_time > 0.3, 'Waited time < probe_uri_timeout')
+
+    os.setenv('TARANTOOL_PROBE_URI_TIMEOUT', nil)
+    membership.probe_uri = fn_true
 end
 
 -- ok -------------------------------------------------------------------------

@@ -22,6 +22,7 @@ Added
   failure, a user could either revert it (promote previous leader), or force
   promotion to be inconsistent.
 - Early logger initialization (for Tarantool > 2.5.0-100, which supports it).
+- Probe uri timeout in cartridge.cfg.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed

@@ -19,6 +19,7 @@ local errors = require('errors')
 local membership = require('membership')
 local membership_network = require('membership.network')
 local http = require('http.server')
+local fiber = require('fiber')
 
 local rpc = require('cartridge.rpc')
 local auth = require('cartridge.auth')
@@ -461,9 +462,28 @@ local function cfg(opts, box_opts)
 
     membership.set_encryption_key(cluster_cookie.cookie())
     membership.set_payload('alias', opts.alias)
-    local ok, estr = membership.probe_uri(membership.myself().uri)
-    if not ok then
-        return nil, CartridgeCfgError:new('Can not ping myself: %s', estr)
+
+    local probe_uri_opts, err = argparse.get_opts({probe_uri_timeout = 'number'})
+    if err ~= nil then
+        return nil, err
+    end
+
+    local delay = require('membership.options').ACK_TIMEOUT_SECONDS
+    local deadline = fiber.clock() + (probe_uri_opts.probe_uri_timeout or 0)
+
+    while true do
+        local next_wakeup = fiber.clock() + delay
+        local ok, estr = membership.probe_uri(membership.myself().uri)
+        local now = fiber.clock()
+        if ok then
+            log.info('Probe uri was successful')
+            break
+        elseif now >= deadline then
+            return nil, CartridgeCfgError:new('Can not ping myself: %s', estr)
+        else
+            log.info('Can not ping myself: %s', estr)
+            fiber.sleep(next_wakeup - now)
+        end
     end
 
     -- broadcast several popular ports
