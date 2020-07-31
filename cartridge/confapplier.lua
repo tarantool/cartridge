@@ -448,6 +448,7 @@ local function boot_instance(clusterwide_config)
 
     -- Box is ready, start listening full-featured iproto protocol
     remote_control.stop()
+    log.info('Remote control stopped')
     local _, err = BoxError:pcall(
         box.cfg, {listen = vars.binary_port}
     )
