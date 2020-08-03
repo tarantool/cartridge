@@ -651,6 +651,12 @@ local function cfg(opts, box_opts)
         end
     end
 
+    -- Only log boot info if box.cfg wasn't called yet
+    -- Otherwise it's logged by confapplier.boot_instance
+    if type(box.cfg) == 'function' then
+        confapplier.log_bootinfo()
+    end
+
     return true
 end
 
