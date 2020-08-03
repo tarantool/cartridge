@@ -34,6 +34,9 @@ g.before_all = function()
         http_port = 8082,
         cluster_cookie = g.cluster.cookie,
         advertise_port = 13302,
+        env = {
+            TARANTOOL_LOG = '| cat',
+        }
     })
 
     g.cluster:start()

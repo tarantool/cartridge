@@ -1,6 +1,7 @@
 local t = require('luatest')
 local g = t.group()
 
+local log = require('log')
 local fiber = require('fiber')
 local digest = require('digest')
 local socket = require('socket')
@@ -804,19 +805,19 @@ function g.test_reconnect()
     end)
 end
 
+local function lsof(pid)
+    local f = io.popen('lsof -Pi -a -p ' .. pid)
+    local lsof = f:read('*all'):strip():split('\n')
+    table.remove(lsof, 1) -- heading
+    return lsof
+end
+
 function g.test_socket_gc()
     local ok, err = remote_control.bind('127.0.0.1', 13301)
     t.assert_equals(err, nil)
     t.assert_equals(ok, true)
 
-    local function lsof()
-        local f = io.popen('lsof -i -a -p ' .. tarantool.pid())
-        local lsof = f:read('*all'):strip():split('\n')
-        table.remove(lsof, 1) -- heading
-        return lsof
-    end
-
-    local initial_lsof = lsof()
+    local initial_lsof = lsof(tarantool.pid())
 
     for i = 1, 16 do
         local s = socket.tcp_connect('127.0.0.1', 13301)
@@ -826,7 +827,7 @@ function g.test_socket_gc()
     end
 
     -- One socket still remains in CLOSE_WAIT state
-    local current_lsof = lsof()
+    local current_lsof = lsof(tarantool.pid())
     t.assert_equals(#current_lsof, #initial_lsof + 1,
         'Too many open sockets\n' .. table.concat(current_lsof, '\n')
     )
@@ -835,5 +836,44 @@ function g.test_socket_gc()
     fiber.sleep(0)
 
     -- It disappears after accept()
-    t.assert_equals(lsof(), initial_lsof)
+    t.assert_equals(lsof(tarantool.pid()), initial_lsof)
+end
+
+function g.test_fd_cloexec()
+    local utils = require('cartridge.utils')
+
+    -- Bind remote control
+    local ok, err = remote_control.bind('127.0.0.1', 13301)
+    t.assert_equals({ok, err}, {true, nil})
+
+    -- Connect it
+    local client = socket.tcp_connect('127.0.0.1', 13301)
+    t.assert(client, errno.strerror())
+    fiber.sleep(0)
+
+    -- Client socket has to be managed by ourselves
+    local client_fd = client:fd()
+    utils.fd_cloexec(client_fd)
+
+    local proc = t.Process:start('/usr/bin/env', {'sleep', '1'})
+    fiber.sleep(0)
+
+    print()
+    log.info('Parent FDs:\n%s', table.concat(lsof(tarantool.pid()), '\n'))
+    log.info('Child FDs:\n%s', table.concat(lsof(proc.pid), '\n'))
+
+    -- Check that port can be bound again
+    client:close()
+    remote_control.stop()
+    remote_control.drop_connections()
+    local ok, err = remote_control.bind('127.0.0.1', 13301)
+    t.assert_equals({ok, err}, {true, nil})
+
+    -- Check invalid usage
+    local ok, err = utils.fd_cloexec(client_fd)
+    t.assert_equals(ok, nil)
+    t.assert_covers(err, {
+        class_name = 'FcntlError',
+        err = 'fcntl(F_GETFD) failed: Bad file descriptor',
+    })
 end

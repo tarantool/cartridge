@@ -22,6 +22,7 @@ local digest = require('digest')
 local pickle = require('pickle')
 local uuid_lib = require('uuid')
 local msgpack = require('msgpack')
+local utils = require('cartridge.utils')
 local vars = require('cartridge.vars').new('cartridge.remote-control')
 
 vars:new('server')
@@ -31,6 +32,7 @@ vars:new('handlers', {})
 vars:new('accept', false)
 vars:new('accept_cond', fiber.cond())
 
+local RemoteControlError = errors.new_class('RemoteControlError')
 local error_t = ffi.typeof('struct error')
 
 local function _pack(...)
@@ -295,6 +297,8 @@ local function communicate(s)
 end
 
 local function rc_handle(s)
+    utils.fd_cloexec(s:fd())
+
     local version = string.match(_TARANTOOL, "^([%d%.]+)") or '???'
     local salt = digest.urandom(32)
 
@@ -334,7 +338,7 @@ local function rc_handle(s)
     s:write(greeting)
 
     while vars.handlers[s] do
-        local ok, err = errors.pcall('RemoteControlError', communicate, s)
+        local ok, err = RemoteControlError:pcall(communicate, s)
         if err ~= nil then
             log.error('%s', err)
         end
@@ -360,9 +364,7 @@ local function bind(host, port)
     checks('string', 'string|number')
 
     if vars.server ~= nil then
-        return nil, errors.new('RemoteControlError',
-            'Already running'
-        )
+        return nil, RemoteControlError:new('Already running')
     end
 
     local server = socket.tcp_server(host, port, {
@@ -371,11 +373,20 @@ local function bind(host, port)
     })
 
     if not server then
-        local err = errors.new('RemoteControlError',
+        local err = RemoteControlError:new(
             "Can't start server on %s:%s: %s",
             host, port, errno.strerror()
         )
         return nil, err
+    end
+
+    -- Workaround for https://github.com/tarantool/tarantool/issues/5220.
+    -- If tarantool uses logging into pipe, remote-control fd is
+    -- inherited by the forked process and never closed. It makes further
+    -- box.cfg listen to fail because address already in use.
+    local ok, err = utils.fd_cloexec(server:fd())
+    if ok == nil then
+        log.warn('%s', err)
     end
 
     vars.server = server

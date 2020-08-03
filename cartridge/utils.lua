@@ -1,10 +1,12 @@
 local fio = require('fio')
 local ffi = require('ffi')
+local bit = require('bit')
 local errno = require('errno')
 local fiber = require('fiber')
 local checks = require('checks')
 local errors = require('errors')
 
+local FcntlError = errors.new_class('FcntlError')
 local OpenFileError = errors.new_class('OpenFileError')
 local ReadFileError = errors.new_class('ReadFileError')
 local WriteFileError = errors.new_class('WriteFileError')
@@ -12,8 +14,12 @@ local WriteFileError = errors.new_class('WriteFileError')
 
 ffi.cdef[[
 int getppid(void);
+int fcntl (int, int, ...);
 ]]
 
+local F_GETFD = 1
+local F_SETFD = 2
+local FD_CLOEXEC = 1
 
 local function deepcmp(got, expected, extra)
     if extra == nil then
@@ -333,6 +339,45 @@ local function wait_lsn(id, lsn, pause, timeout)
     end
 end
 
+
+-- Set FD_CLOEXEC flag for the given file descriptor.
+--
+-- See: https://www.gnu.org/software/libc/manual/html_node/Descriptor-Flags.html
+--
+-- @function
+-- @local
+--
+-- @tparam number fd
+--
+-- @treturn[1] boolean true
+-- @treturn[2] nil
+-- @treturn[2] table Error description
+local function fd_cloexec(fd)
+    checks('number')
+
+    local ret = ffi.C.fcntl(fd, F_GETFD)
+    if ret < 0 then
+        return nil, FcntlError:new(
+            "fcntl(F_GETFD) failed: %s", errno.strerror()
+        )
+    end
+
+    if bit.band(ret, FD_CLOEXEC) ~= 0 then
+        -- already ok
+        return true
+    end
+
+    local flags = ffi.cast('uint64_t', bit.bor(ret, FD_CLOEXEC))
+    local ret = ffi.C.fcntl(fd, F_SETFD, flags)
+    if ret < 0 then
+        return nil, FcntlError:new(
+            "fcntl(F_SETFD) failed: %s", errno.strerror()
+        )
+    end
+
+    return true
+end
+
 return {
     deepcmp = deepcmp,
     table_find = table_find,
@@ -359,4 +404,5 @@ return {
     http_read_body = http_read_body,
 
     wait_lsn = wait_lsn,
+    fd_cloexec = fd_cloexec,
 }
