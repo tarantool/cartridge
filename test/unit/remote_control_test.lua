@@ -1,6 +1,7 @@
 local t = require('luatest')
 local g = t.group()
 
+local log = require('log')
 local fiber = require('fiber')
 local digest = require('digest')
 local socket = require('socket')
@@ -805,7 +806,7 @@ function g.test_reconnect()
 end
 
 local function lsof(pid)
-    local f = io.popen('lsof -i -a -p ' .. pid)
+    local f = io.popen('lsof -Pi -a -p ' .. pid)
     local lsof = f:read('*all'):strip():split('\n')
     table.remove(lsof, 1) -- heading
     return lsof
@@ -857,8 +858,9 @@ function g.test_fd_cloexec()
     local proc = t.Process:start('/usr/bin/env', {'sleep', '1'})
     fiber.sleep(0)
 
-    -- Check that subprocess doesn't inherit any descriptors
-    t.assert_equals(lsof(proc.pid), {})
+    print()
+    log.info('Parent FDs:\n%s', table.concat(lsof(tarantool.pid()), '\n'))
+    log.info('Child FDs:\n%s', table.concat(lsof(proc.pid), '\n'))
 
     -- Check that port can be bound again
     client:close()
