@@ -119,7 +119,8 @@ local function add_user(username, password, fullname, email)
         fullname = fullname,
         email = email,
         created_at = fiber.time64(),
-        password_data = create_password(password)
+        password_data = create_password(password),
+        version = 1,
     }
 
     local ok, err = cartridge.config_patch_clusterwide({users_acl = users_acl})
@@ -160,6 +161,11 @@ local function edit_user(username, password, fullname, email)
 
     if password ~= nil then
         user.password_data = update_password(password, user.password_data)
+        if user.version == nil then
+            user.version = 1
+        else
+            user.version = user.version + 1
+        end
     end
 
     if uid == nil then

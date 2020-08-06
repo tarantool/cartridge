@@ -179,14 +179,15 @@ local function get_params()
     }
 end
 
-local function create_cookie(uid)
-    checks('string')
+local function create_cookie(uid, version)
+    checks('string', '?number')
     local ts = tostring(fiber.time())
     local key = cluster_cookie.cookie()
 
     local cookie = {
         ts = ts,
         uid = uid,
+        version = version,
         hmac = digest.base64_encode(
             crypto.hmac.sha512(key, uid .. ts),
             {nopad = true, nowrap = true, urlsafe = true}
@@ -331,10 +332,18 @@ local function login(req)
     end)
 
     if ok then
+        local user_version
+        if vars.callbacks.get_user ~= nil then
+            local user = vars.callbacks.get_user(username)
+            if user ~= nil then
+                user_version = user.version
+            end
+        end
+
         return {
             status = 200,
             headers = {
-                ['set-cookie'] = create_cookie(username),
+                ['set-cookie'] = create_cookie(username, user_version),
             },
         }
     elseif err ~= nil then
@@ -377,6 +386,7 @@ local function coerce_user(user)
         username = user.username,
         fullname = user.fullname,
         email = user.email,
+        version = user.version,
     }
 end
 
@@ -610,12 +620,14 @@ local function authorize_request(req)
     local auth_cfg = get_params()
     local cookie_raw = req:cookie('lsid')
     local cookie_ts = 0
-    local username = nil
+    local cookie_version
+    local username
     repeat
         local cookie, err = e_check_cookie:pcall(get_cookie_uid, cookie_raw)
         if cookie ~= nil and cookie.uid ~= nil then
             username = cookie.uid
             cookie_ts = cookie.ts
+            cookie_version = cookie.version
             break
         elseif err then
             log.error('%s', err)
@@ -633,9 +645,16 @@ local function authorize_request(req)
         end
     until true
 
+    local user
     if username and vars.callbacks.get_user ~= nil then
-        local user = get_user(username)
+        user = get_user(username)
         if not user then
+            username = nil
+        end
+    end
+
+    if cookie_version ~= nil then
+        if user ~= nil and user.version ~= cookie_version then
             username = nil
         end
     end
@@ -647,7 +666,7 @@ local function authorize_request(req)
         and auth_cfg.cookie_renew_age >= 0
         and fiber.time() - cookie_ts > auth_cfg.cookie_renew_age
         then
-            fiber_storage['http_session_set_cookie'] = create_cookie(username)
+            fiber_storage['http_session_set_cookie'] = create_cookie(username, user.version)
         end
 
         return true
