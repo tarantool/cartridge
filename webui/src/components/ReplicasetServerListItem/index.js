@@ -260,6 +260,7 @@ class ReplicasetServerListItem extends React.PureComponent<
           </div>
         </div>
         <ReplicasetServerListItemDropdown
+          activeMaster={activeMaster}
           replicasetUUID={replicasetUUID}
           showFailoverPromote={showFailoverPromote}
           uri={uri}

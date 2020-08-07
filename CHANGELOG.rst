@@ -24,6 +24,7 @@ Added
 - Early logger initialization (for Tarantool > 2.5.0-100, which supports it).
 - Add `probe_uri_timeout` argparse option responsible for retrying
   "Can't ping myself" error on startup.
+- "Force leader promotion" action for current leader in webui.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed

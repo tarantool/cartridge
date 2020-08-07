@@ -1,5 +1,4 @@
 // @flow
-// TODO: move to uikit
 import * as React from 'react';
 import { css, cx } from 'react-emotion';
 import {
@@ -20,6 +19,7 @@ const styles = {
 };
 
 type ReplicasetServerListItemDropdownProps = {
+  activeMaster?: boolean,
   replicasetUUID: string,
   showFailoverPromote?: boolean,
   uri: string,
@@ -32,6 +32,7 @@ export class ReplicasetServerListItemDropdown extends React.PureComponent<
 > {
   render() {
     const {
+      activeMaster,
       replicasetUUID,
       showFailoverPromote,
       uri,
@@ -47,8 +48,12 @@ export class ReplicasetServerListItemDropdown extends React.PureComponent<
           </DropdownItem>,
           showFailoverPromote
             ? (
-              <DropdownItem onClick={() => store.dispatch(failoverPromoteLeader(replicasetUUID, uuid))}>
-                Promote a leader
+              <DropdownItem
+                onClick={() => store.dispatch(
+                  failoverPromoteLeader(replicasetUUID, uuid, activeMaster)
+                )}
+              >
+                {activeMaster ? 'Force promote a leader' : 'Promote a leader'}
               </DropdownItem>
             )
             : null,

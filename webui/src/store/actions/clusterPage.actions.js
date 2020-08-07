@@ -179,9 +179,13 @@ export type changeFailoverActionCreator = typeof changeFailover;
 export type changeFailoverAction = $Call<changeFailoverActionCreator, FailoverApi>;
 
 
-export const failoverPromoteLeader = (replicaset_uuid: string, instance_uuid: string) => ({
+export const failoverPromoteLeader = (
+  replicaset_uuid: string,
+  instance_uuid: string,
+  force_inconsistency?: boolean
+) => ({
   type: CLUSTER_PAGE_FAILOVER_PROMOTE_REQUEST,
-  payload: { replicaset_uuid, instance_uuid }
+  payload: { replicaset_uuid, instance_uuid, force_inconsistency  }
 })
 
 export const setVisibleBootstrapVshardPanel = (visible: boolean) => {
