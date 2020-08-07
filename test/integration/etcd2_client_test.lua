@@ -323,3 +323,86 @@ function g.test_authentication()
     local ok, err = c3:acquire_lock(payload)
     t.assert_equals({ok, err}, {true, nil})
 end
+
+function g.test_vclockkeeper()
+    local client = create_client()
+    local session = client:get_session()
+
+    local ok, err = session:get_vclockkeeper('A')
+    t.assert_equals(ok, nil)
+    t.assert_equals(err, nil)
+
+    local ok, err = session:set_vclockkeeper('A', 'a1')
+    t.assert_equals({ok, err}, {true, nil})
+    t.assert_equals(session:get_vclockkeeper('A'), {
+        replicaset_uuid = 'A',
+        instance_uuid = 'a1',
+    })
+
+    local ok, err = session:set_vclockkeeper('A', 'a1', {[1] = 10})
+    t.assert_equals({ok, err}, {true, nil})
+    t.assert_equals(session:get_vclockkeeper('A'), {
+        replicaset_uuid = 'A',
+        instance_uuid = 'a1',
+        vclock = {[1] = 10},
+    })
+
+    local ok, err = session:set_vclockkeeper('A', 'a1')
+    t.assert_equals({ok, err}, {true, nil})
+    t.assert_equals(session:get_vclockkeeper('A'), {
+        replicaset_uuid = 'A',
+        instance_uuid = 'a1',
+        vclock = {[1] = 10},
+    })
+
+    local ok, err = session:set_vclockkeeper('A', 'a2')
+    t.assert_equals({ok, err}, {true, nil})
+    t.assert_equals(session:get_vclockkeeper('A'), {
+        replicaset_uuid = 'A',
+        instance_uuid = 'a2',
+    })
+
+    local function set_vclockkeeper_async(r, s, vclock)
+        local chan = fiber.channel(1)
+        fiber.new(function()
+            chan:put({session:set_vclockkeeper(r, s, vclock)})
+        end)
+        return chan
+    end
+
+    g.etcd:kill('STOP')
+    local c1 = set_vclockkeeper_async('A', 'a3', {[1] = 101})
+    local c2 = set_vclockkeeper_async('A', 'a3', {[1] = 102})
+    fiber.sleep(0)
+    g.etcd:kill('CONT')
+
+    t.assert_equals(c1:get(0.2), {true, nil})
+    local ret2, err2 = unpack(c2:get(0.2))
+    t.assert_equals(ret2, nil)
+    t.assert_equals(err2.class_name, 'EtcdError')
+    t.assert_str_matches(err2.err,
+        'Compare failed %(%d+%): %[%d+ != %d+%]'
+    )
+
+    t.assert_equals(session:get_vclockkeeper('A').vclock, {[1] = 101})
+
+    g.etcd:kill('STOP')
+    local c1 = set_vclockkeeper_async('B', 'b1')
+    local c2 = set_vclockkeeper_async('B', 'b2')
+    fiber.sleep(0)
+    g.etcd:kill('CONT')
+
+    t.assert_equals(c1:get(0.2), {true, nil})
+    local ret2, err2 = unpack(c2:get(0.2))
+    t.assert_equals(ret2, nil)
+    t.assert_equals(err2.class_name, 'EtcdError')
+    t.assert_str_matches(err2.err,
+        'Key already exists %(%d+%): ' ..
+        '/etcd2_client_test/vclockkeeper/B'
+    )
+
+    t.assert_equals(session:get_vclockkeeper('B'), {
+        replicaset_uuid = 'B',
+        instance_uuid = 'b1',
+    })
+end

@@ -370,17 +370,17 @@ function g.test_vclockkeeper()
         instance_uuid = 'a2',
     })
 
-    local function set_vclockkeeper_async(vclock)
+    local function set_vclockkeeper_async(r, s, vclock)
         local chan = fiber.channel(1)
         fiber.new(function()
-            chan:put({session:set_vclockkeeper('A', 'a3', vclock)})
+            chan:put({session:set_vclockkeeper(r, s, vclock)})
         end)
         return chan
     end
 
     g.stateboard.process:kill('STOP')
-    local c1 = set_vclockkeeper_async({[1] = 101})
-    local c2 = set_vclockkeeper_async({[1] = 102})
+    local c1 = set_vclockkeeper_async('A', 'a3', {[1] = 101})
+    local c2 = set_vclockkeeper_async('A', 'a3', {[1] = 102})
     fiber.sleep(0)
     g.stateboard.process:kill('CONT')
 
@@ -393,4 +393,23 @@ function g.test_vclockkeeper()
     )
 
     t.assert_equals(session:get_vclockkeeper('A').vclock, {[1] = 101})
+
+    g.stateboard.process:kill('STOP')
+    local c1 = set_vclockkeeper_async('B', 'b1')
+    local c2 = set_vclockkeeper_async('B', 'b2')
+    fiber.sleep(0)
+    g.stateboard.process:kill('CONT')
+
+    t.assert_equals(c1:get(), {true, nil})
+    local ret2, err2 = unpack(c2:get())
+    t.assert_equals(ret2, nil)
+    t.assert_equals(err2.class_name, 'SessionError')
+    t.assert_str_matches(err2.err,
+        'Ordinal comparison failed %(requested nil, current %d+%)'
+    )
+
+    t.assert_equals(session:get_vclockkeeper('B'), {
+        replicaset_uuid = 'B',
+        instance_uuid = 'b1',
+    })
 end

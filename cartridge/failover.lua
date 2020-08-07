@@ -523,8 +523,6 @@ local function cfg(clusterwide_config)
                 params.uri
             )
         elseif failover_cfg.state_provider == 'etcd2' then
-            -- TODO vclockkeeper handling in etcd2
-            vars.consistency_needed = false
             local params = assert(failover_cfg.etcd2_params)
             vars.client = etcd2_client.new({
                 endpoints = params.endpoints,
@@ -677,9 +675,6 @@ end
 local function force_inconsistency(leaders)
     if vars.client == nil then
         return nil, StateProviderError:new("No state provider configured")
-    elseif vars.client.state_provider == 'etcd2' then
-        -- TODO vclockkeeper handling in etcd2
-        return true
     end
 
     local session = vars.client.session
