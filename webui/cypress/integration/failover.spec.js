@@ -87,13 +87,13 @@ describe('Failover', () => {
     cy.reload();
     cy.contains('Replica sets');
     cy.get('.meta-test__ClusterIssuesButton').should('be.enabled');
-    cy.get('.meta-test__ClusterIssuesButton').contains('Issues: 4');
+    cy.get('.meta-test__ClusterIssuesButton').contains('Issues: 6');
     cy.get('.meta-test__ClusterIssuesButton').click();
     cy.get('.meta-test__ClusterIssuesModal', { timeout: 6000 }).contains('warning');
     cy.get('.meta-test__ClusterIssuesModal button[type="button"]').click();
     cy.get('.meta-test__ClusterIssuesModal').should('not.exist');
 
-    cy.get('.meta-test__haveIssues').should('not.exist');
+    cy.get('.meta-test__haveIssues').should('exist');
 
     cy.exec('kill -SIGSTOP $(lsof -sTCP:LISTEN -i :8082 -t)', { failOnNonZeroExit: true });
     cy.reload();
