@@ -6,11 +6,8 @@ import { isRestErrorResponse, isRestAccessDeniedError } from 'src/api/rest';
 import { getErrorMessage } from 'src/api';
 import ClusterPage from 'src/pages/Cluster';
 import {
-  PageLayout,
   SplashErrorFatal
 } from '@tarantool.io/ui-kit';
-
-const { AppTitle } = window.tarantool_enterprise_core.components;
 
 class App extends React.Component {
   render() {
@@ -30,13 +27,10 @@ class App extends React.Component {
 
   renderApp = () => {
     return (
-      <PageLayout>
-        <AppTitle title='Cluster'/>
-        <Switch>
-          <Route path={`/cluster/dashboard/instance/:instanceUUID`} component={ClusterPage} />
-          <Route component={ClusterPage} />
-        </Switch>
-      </PageLayout>
+      <Switch>
+        {/* <Route path={`/cluster/dashboard/instance/:instanceUUID`} component={ClusterPage} /> */}
+        <Route component={ClusterPage} />
+      </Switch>
     );
   };
 

@@ -10,6 +10,7 @@ import {
   IconCreateFile,
   IconRefresh,
   Text,
+  PageLayout,
   Scrollbar,
   NonIdealState,
   splashSelectFileSvg
@@ -41,17 +42,19 @@ const options = {
 };
 
 const styles = {
+  page: css`
+    height: calc(100% - 69px);
+  `,
+  pageWithPane: css`
+    height: calc(100% - 69px - 112px);
+  `,
   area: css`
     display: flex;
     flex-direction: row;
-    height: calc(100% - 69px - 32px);
-    margin: 16px;
+    flex-grow: 1;
     border-radius: 4px;
     overflow: hidden;
     background-color: #ffffff;
-  `,
-  areaWithPane: css`
-    height: calc(100% - 69px - 112px - 16px);
   `,
   sidePanel: css`
     flex-shrink: 0;
@@ -132,7 +135,6 @@ type CodeState = {
 }
 
 type CodeProps = {
-  className?: string,
   fileTree: Array<TreeFileItem>,
   files: Array<FileItem>,
   isDemoPanelPresent: boolean,
@@ -310,7 +312,6 @@ class Code extends React.Component<CodeProps, CodeState> {
 
   render() {
     const {
-      className,
       fileTree = [],
       isDemoPanelPresent,
       fetchingConfigFiles,
@@ -329,15 +330,16 @@ class Code extends React.Component<CodeProps, CodeState> {
     const operableFile = this.getFileById(fileOperationObject);
 
     return (
-      <React.Fragment>
-        <div
-          className={cx(
-            'meta-test__Code',
-            styles.area,
-            { [styles.areaWithPane]: isDemoPanelPresent },
-            className
-          )}
-        >
+      <PageLayout
+        className={cx(
+          'meta-test__Code',
+          styles.page,
+          { [styles.pageWithPane]: isDemoPanelPresent }
+        )}
+        heading='Code'
+        wide
+      >
+        <div className={cx('meta-test__Code', styles.area)}>
           <div className={styles.sidePanel}>
             <div className={styles.sidePanelHeading}>
               <Text variant='h4' className={styles.sidePanelTitle}>Files</Text>
@@ -470,7 +472,7 @@ class Code extends React.Component<CodeProps, CodeState> {
             </ConfirmModal>
           )}
         </div>
-      </React.Fragment>
+      </PageLayout>
     );
   }
 }

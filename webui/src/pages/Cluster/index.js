@@ -1,5 +1,9 @@
 // @flow
 import { connect } from 'react-redux';
+import { Route, Switch } from 'react-router-dom';
+import * as React from 'react';
+import { css, cx } from 'react-emotion';
+import type { RouterHistory, Location } from 'react-router';
 import {
   pageDidMount,
   selectServer,
@@ -18,9 +22,6 @@ import {
   selectReplicasetListWithStat
 } from 'src/store/selectors/clusterPage';
 import type { State } from 'src/store/rootReducer';
-import * as React from 'react';
-import { css, cx } from 'react-emotion';
-import type { RouterHistory, Location } from 'react-router';
 import type { Issue } from 'src/generated/graphql-typing';
 import PageDataErrorMessage from 'src/components/PageDataErrorMessage';
 import ReplicasetList from 'src/components/ReplicasetList';
@@ -32,6 +33,7 @@ import ConfigureServerModal from 'src/components/ConfigureServerModal';
 import ClusterButtonsPanel from 'src/components/ClusterButtonsPanel';
 import BootstrapPanel from 'src/components/BootstrapPanel';
 import {
+  PageLayout,
   PageSection
 } from '@tarantool.io/ui-kit';
 import type { AppState } from 'src/store/reducers/ui.reducer';
@@ -52,6 +54,8 @@ import type {
 import type { ReplicasetCounts, ServerCounts } from 'src/store/selectors/clusterPage';
 import ExpelServerModal from '../../components/ExpelServerModal';
 import ServerInfoModal from '../../components/ServerInfoModal';
+
+const { AppTitle } = window.tarantool_enterprise_core.components;
 
 const styles = {
   clusterFilter: css`
@@ -88,8 +92,7 @@ export type ClusterProps = {
   }) => void,
   createMessage: () => void,
   resetPageState: ResetPageStateActionCreator,
-  setFilter: SetFilterActionCreator,
-  routerParams: null | { instanceUUID: string },
+  setFilter: SetFilterActionCreator
 };
 
 class Cluster extends React.Component<ClusterProps> {
@@ -132,25 +135,28 @@ class Cluster extends React.Component<ClusterProps> {
       filteredReplicasetList,
       issues,
       replicasetList,
-      routerParams,
       serverCounts
     } = this.props;
 
     const unlinkedServers = this.getUnlinkedServers();
 
     return (
-      <React.Fragment>
-        {
-          routerParams && routerParams.instanceUUID
-            ?
-            <ServerInfoModal instanceUUID={routerParams.instanceUUID} key={routerParams.instanceUUID} />
-            :
-            null
-        }
+      <PageLayout heading='Cluster' headingContent={<ClusterButtonsPanel />}>
+        <AppTitle title='Cluster'/>
+        <Switch>
+          <Route
+            path={`/cluster/dashboard/instance/:instanceUUID`}
+            render={({ match: { params } }) => {
+              const instanceUUID: ?string = params && params.instanceUUID;
+              return instanceUUID
+                ? <ServerInfoModal instanceUUID={instanceUUID} />
+                : null;
+            }}
+          />
+        </Switch>
         <ExpelServerModal />
         <EditReplicasetModal />
         <ConfigureServerModal />
-        <ClusterButtonsPanel />
         <BootstrapPanel />
         {unlinkedServers && unlinkedServers.length
           ? (
@@ -167,7 +173,7 @@ class Cluster extends React.Component<ClusterProps> {
               subTitle={
                 <React.Fragment>
                   <b>{serverCounts.unconfigured}</b>
-                  {` Unconfigured server${serverCounts.unconfigured > 1 ? 's' : ''}`}
+                  {` unconfigured server${serverCounts.unconfigured > 1 ? 's' : ''}`}
                 </React.Fragment>
               }
             >
@@ -210,7 +216,7 @@ class Cluster extends React.Component<ClusterProps> {
             }
           </PageSection>
         )}
-      </React.Fragment>
+      </PageLayout>
     );
   };
 
@@ -307,7 +313,7 @@ class Cluster extends React.Component<ClusterProps> {
 }
 
 
-const mapStateToProps = (state: State, { match: { params } }) => {
+const mapStateToProps = (state: State) => {
   const {
     app: { clusterSelf },
     clusterPage: {
@@ -337,8 +343,7 @@ const mapStateToProps = (state: State, { match: { params } }) => {
     selectedServerUri,
     selectedReplicasetUuid,
     serverList,
-    serverCounts: getServerCounts(state),
-    routerParams: params
+    serverCounts: getServerCounts(state)
   };
 };
 

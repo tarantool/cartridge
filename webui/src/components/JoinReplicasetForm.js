@@ -6,6 +6,7 @@ import { Formik } from 'formik';
 import SelectedServersList from 'src/components/SelectedServersList';
 import {
   Button,
+  FormField,
   IconInfo,
   LeaderFlagSmall,
   PopupBody,
@@ -16,7 +17,6 @@ import {
 } from '@tarantool.io/ui-kit';
 import ReplicasetRoles from 'src/components/ReplicasetRoles';
 import ReplicasetFilterInput from 'src/components/ReplicasetFilterInput';
-import FormField from 'src/components/FormField';
 import type {
   Server,
   Replicaset,
@@ -177,7 +177,7 @@ class JoinReplicasetForm extends React.Component<JoinReplicasetFormProps> {
                   itemClassName={styles.radioWrap}
                   label='Choose replica set'
                   subTitle={(
-                    <Text variant='h5' upperCase tag='span'>
+                    <Text variant='p' tag='span'>
                       <b>{(replicasetList && replicasetList.length) || 0}</b> total
                       {
                         filteredReplicasetList
@@ -224,7 +224,7 @@ class JoinReplicasetForm extends React.Component<JoinReplicasetFormProps> {
                         content={this.renderServersTooltipContent(servers, master.uuid)}
                       >
                         <IconInfo />
-                        <Text variant='h5' upperCase tag='span'>
+                        <Text variant='basic' tag='span'>
                           <b>{servers.length}</b>
                           {` total server${servers.length > 1 ? 's' : ''}`}
                         </Text>
