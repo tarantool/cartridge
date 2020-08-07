@@ -1,9 +1,14 @@
+local log = require('log')
 local fio = require('fio')
 local t = require('luatest')
-local g = t.group()
-
+local httpc = require('http.client')
 local helpers = require('test.helper')
+
+local etcd2_client = require('cartridge.etcd2-client')
 local stateboard_client = require('cartridge.stateboard-client')
+
+local g_etcd2 = t.group('integration.switchover.etcd2')
+local g_stateboard = t.group('integration.switchover.stateboard')
 
 local uA = helpers.uuid('a')
 local uB = helpers.uuid('b')
@@ -14,39 +19,7 @@ local A1
 local B1
 local B2
 
-g.before_all(function()
-    g.datadir = fio.tempdir()
-
-    -- Start stateboard instance
-    fio.mktree(fio.pathjoin(g.datadir, 'stateboard'))
-    g.kvpassword = require('digest').urandom(6):hex()
-    g.stateboard = require('luatest.server'):new({
-        command = helpers.entrypoint('srv_stateboard'),
-        workdir = fio.pathjoin(g.datadir, 'stateboard'),
-        net_box_port = 14401,
-        net_box_credentials = {
-            user = 'client',
-            password = g.kvpassword,
-        },
-        env = {
-            TARANTOOL_LOCK_DELAY = 9000,
-            TARANTOOL_PASSWORD = g.kvpassword,
-            TARANTOOL_CONSOLE_SOCK = fio.pathjoin(
-                g.datadir, 'stateboard', 'console.sock'
-            ),
-        },
-    })
-    g.stateboard:start()
-    helpers.retrying({}, function()
-        g.stateboard:connect_net_box()
-    end)
-
-    g.client = stateboard_client.new({
-        uri = '127.0.0.1:' .. g.stateboard.net_box_port,
-        password = g.stateboard.net_box_credentials.password,
-        call_timeout = 1,
-    })
-
+local function setup_cluster(g)
     g.cluster = helpers.Cluster:new({
         datadir = g.datadir,
         use_vshard = false,
@@ -70,25 +43,148 @@ g.before_all(function()
     A1 = g.cluster:server('A1')
     B1 = g.cluster:server('B1')
     B2 = g.cluster:server('B2')
+end
+
+g_stateboard.before_all(function()
+    local g = g_stateboard
+    g.datadir = fio.tempdir()
+
+    fio.mktree(fio.pathjoin(g.datadir, 'stateboard'))
+    g.kvpassword = require('digest').urandom(6):hex()
+    g.state_provider = require('luatest.server'):new({
+        command = helpers.entrypoint('srv_stateboard'),
+        workdir = fio.pathjoin(g.datadir, 'stateboard'),
+        net_box_port = 14401,
+        net_box_credentials = {
+            user = 'client',
+            password = g.kvpassword,
+        },
+        env = {
+            TARANTOOL_LOCK_DELAY = 9000,
+            TARANTOOL_PASSWORD = g.kvpassword,
+            TARANTOOL_CONSOLE_SOCK = fio.pathjoin(
+                g.datadir, 'stateboard', 'console.sock'
+            ),
+        },
+    })
+    g.state_provider:start()
+    helpers.retrying({}, function()
+        g.state_provider:connect_net_box()
+    end)
+
+    g.client = stateboard_client.new({
+        uri = '127.0.0.1:' .. g.state_provider.net_box_port,
+        password = g.state_provider.net_box_credentials.password,
+        call_timeout = 1,
+    })
+
+    setup_cluster(g)
 
     B1.net_box:call('box.schema.sequence.create', {'test'})
     B1.net_box:call('package.loaded.cartridge.failover_set_params', {{
         mode = 'stateful',
         state_provider = 'tarantool',
         tarantool_params = {
-            uri = '127.0.0.1:' .. g.stateboard.net_box_port,
+            uri = '127.0.0.1:' .. g.state_provider.net_box_port,
             password = g.kvpassword,
         },
     }})
 end)
 
-g.after_all(function()
-    g.cluster:stop()
-    g.stateboard:stop()
-    fio.rmtree(g.datadir)
+g_etcd2.before_all(function()
+    local g = g_etcd2
+    local etcd_path = os.getenv('ETCD_PATH')
+    t.skip_if(etcd_path == nil, 'etcd missing')
+
+    g.datadir = fio.tempdir()
+    g.state_provider = {
+        -- Etcd has a specific feature: upon restart it preallocates
+        -- WAL file with 64MB size, and it can't be configured.
+        -- See https://github.com/etcd-io/etcd/issues/9422
+        --
+        -- Our Gitlab CI uses tmpfs at `/dev/shm` as TMPDIR.
+        -- It's size is also limited, in our case the same 64MB.
+        -- As a result, restarting etcd fails with an error:
+        -- C | etcdserver: open wal error: no space left on device
+        --
+        -- As a workaround we start etcd with workdir in `/tmp` and
+        -- ignore TMPDIR setting
+        workdir = fio.tempdir('/tmp'),
+        URI = 'http://127.0.0.1:14001',
+    }
+    function g.state_provider:start()
+        self.process = t.Process:start(etcd_path, {
+            '--data-dir', self.workdir,
+            '--listen-peer-urls', 'http://localhost:17001',
+            '--listen-client-urls', self.URI,
+            '--advertise-client-urls', self.URI,
+        })
+
+        helpers.retrying({}, function()
+            local resp = httpc.put(self.URI .. '/v2/keys/hello?value=world')
+            assert(resp.status == 200, resp.body)
+            log.info('%s', httpc.get(self.URI ..'/version').body)
+        end)
+    end
+    function g.state_provider:stop()
+        local process = self.process
+        if process == nil then
+            return
+        end
+        self.process:kill()
+        helpers.retrying({}, function()
+            t.assert_not(process:is_alive(), 'Etcd is still running')
+        end)
+        log.warn('Etcd killed')
+        self.process = nil
+        g.session:drop()
+    end
+
+    function g.state_provider:connect_net_box()
+        local resp = httpc.put(self.URI .. '/v2/keys/hello?value=world')
+        assert(resp.status == 200, resp.body)
+        log.info('%s', httpc.get(self.URI ..'/version').body)
+    end
+
+    g.state_provider:start()
+    g.client = etcd2_client.new({
+        prefix = 'switchover_test',
+        endpoints = {g.state_provider.URI},
+        lock_delay = 5,
+        username = '',
+        password = '',
+        request_timeout = 1,
+    })
+
+    setup_cluster(g)
+
+    B1.net_box:call('box.schema.sequence.create', {'test'})
+    t.assert(A1.net_box:call(
+        'package.loaded.cartridge.failover_set_params',
+        {{
+            mode = 'stateful',
+            state_provider = 'etcd2',
+            etcd2_params = {
+                prefix = 'switchover_test',
+                endpoints = {g.state_provider.URI},
+                lock_delay = 5,
+            },
+        }}
+    ))
+
 end)
 
-g.before_each(function()
+local function after_all(g)
+    g.cluster:stop()
+    g.state_provider:stop()
+    fio.rmtree(g.state_provider.workdir)
+    fio.rmtree(g.datadir)
+end
+
+g_etcd2.after_all(function() after_all(g_etcd2) end)
+g_stateboard.after_all(function() after_all(g_stateboard) end)
+
+local function before_each(g)
     g.session = g.client:get_session()
     t.assert(g.session:acquire_lock({uuid = 'test-uuid', uri = 'test'}))
     t.assert(g.session:set_vclockkeeper(uA, uA1))
@@ -98,13 +194,19 @@ g.before_each(function()
     helpers.retrying({}, function()
         t.assert_equals(helpers.list_cluster_issues(A1), {})
     end)
-end)
+end
 
-g.after_each(function()
+g_etcd2.before_each(function() before_each(g_etcd2) end)
+g_stateboard.before_each(function() before_each(g_stateboard) end)
+
+local function after_each(g)
     for _, srv in pairs(g.cluster.servers) do
         srv.process:kill('CONT')
     end
-end)
+end
+
+g_etcd2.after_each(function() after_each(g_etcd2) end)
+g_stateboard.after_each(function() after_each(g_stateboard) end)
 
 local q_readonliness = "return box.info.ro"
 local q_set_wait_lsn_timeout = [[
@@ -120,7 +222,12 @@ local q_leadership = [[
     return failover.get_active_leaders()[...]
 ]]
 
-function g.test_2pc_forceful()
+local function add(name, fn)
+    g_stateboard[name] = fn
+    g_etcd2[name] = fn
+end
+
+add('test_2pc_forceful', function(g)
     -- Testing scenario:
     -- 1. Promote A1 as a leader
     -- 2. An attempt to constitute_oneself fails
@@ -184,10 +291,10 @@ function g.test_2pc_forceful()
         t.assert_equals(A1.net_box:eval(q_readonliness), false)
         t.assert_equals(A1.net_box:eval(q_is_vclockkeeper), true)
     end)
-end
+end)
 
-function g.test_promotion_forceful()
-    -- Scenario:
+add('test_promotion_forceful', function(g)
+   -- Scenario:
     -- 1. B1 is a leader and a vclockkeeper
     -- 2. B2 gets promoted but can't accomplish wait_lsn
     -- 3. B2 becomes a vclockkeeper through a force promotion
@@ -227,9 +334,9 @@ function g.test_promotion_forceful()
     helpers.retrying({}, function()
         t.assert_equals(helpers.list_cluster_issues(A1), {})
     end)
-end
+end)
 
-function g.test_promotion_abortion()
+add('test_promotion_abortion', function(g)
     -- Scenario:
     -- 1. B1 is a leader and a vclockkeeper
     -- 2. B2 gets promoted but can't accomplish wait_lsn
@@ -303,9 +410,9 @@ function g.test_promotion_abortion()
     )
 
     helpers.unprotect(B2)
-end
+end)
 
-function g.test_promotion_late()
+add('test_promotion_late', function(g)
     -- Scenario:
     -- 1. B1 is a leader and a vclockkeeper
     -- 2. B2 gets promoted but can't accomplish wait_lsn
@@ -365,10 +472,9 @@ function g.test_promotion_late()
         t.assert_equals(B1.net_box:eval(q_readonliness), true)
         t.assert_equals(B2.net_box:eval(q_readonliness), false)
     end)
-end
+end)
 
-
-function g.test_vclockkeeper_caching()
+add('test_vclockkeeper_caching', function(g)
     -- Scenario:
     -- 1. A1 is a vclockkeeper
     -- 2. B2 gets promoted
@@ -380,12 +486,13 @@ function g.test_vclockkeeper_caching()
     t.assert_equals(A1.net_box:eval(q_readonliness), false)
     t.assert_equals(A1.net_box:eval(q_is_vclockkeeper), true)
 
-    local conn = require('socket').tcp_connect(
-        'unix/', g.stateboard.env.TARANTOOL_CONSOLE_SOCK
-    )
-    conn:write([[
-        _get_vclockkeeper_backup = get_vclockkeeper
-        get_vclockkeeper = function() error('Banned', 0) end
+
+    A1.net_box:eval([[
+        local vars = require('cartridge.vars').new('cartridge.failover')
+        _get_vclockkeeper_backup = vars.client.session.get_vclockkeeper
+        vars.client.session.get_vclockkeeper = function()
+            error('Banned', 0)
+        end
     ]])
 
     -- Monkeypatch apply_config to count reconfiguration events
@@ -412,26 +519,26 @@ function g.test_vclockkeeper_caching()
     t.assert_equals(A1.net_box:eval('return config_incarnation'), 1)
 
     -- Revert all hacks in fixtures
-    conn:write([[
-        get_vclockkeeper = _get_vclockkeeper_backup
-        _get_vclockkeeper_backup = nil
+    A1.net_box:eval([[
+        local vars = require('cartridge.vars').new('cartridge.failover')
+        vars.client.session.get_vclockkeeper = _get_vclockkeeper_backup
     ]])
-end
+end)
 
-function g.test_enabling()
+add('test_enabling', function(g)
     -- Scenario:
-    -- 1. Stateboard goes down
+    -- 1. State provider goes down
     -- 2. Reenable failover
     -- 3. A1 is stuck on fetching first appointments, but remains writable
-    -- 4. Stateboard returns
+    -- 4. State provider returns
     -- 5. A1 persists his vclock
     -- 6. Enable failover-coordinator role, it shouldn't spoil vclock value
 
     A1.net_box:eval(q_set_wait_lsn_timeout, {0.2})
     B1.net_box:eval(q_set_wait_lsn_timeout, {0.2})
 
-    -- Stateboard is unavailable
-    g.stateboard:stop()
+    -- State provider is unavailable
+    g.state_provider:stop()
 
     -- Turn it off and on again
     local q_set_failover_params = [[
@@ -452,16 +559,22 @@ function g.test_enabling()
             topic = "failover",
             instance_uuid = box.NULL,
             replicaset_uuid = box.NULL,
-            message = "Can't obtain failover coordinator:" ..
-                " State provider unavailable",
+            message = "Can't obtain failover coordinator: " ..(
+                g.name == 'integration.switchover.etcd2' and
+                g.state_provider.URI .. "/v2/members:" ..
+                " Couldn't connect to server" or
+                "State provider unavailable"),
         }, {
             level = "warning",
             topic = "failover",
             instance_uuid = uA1,
             replicaset_uuid = box.NULL  ,
             message = "Failover is stuck on " .. A1.advertise_uri ..
-                " (A1): Error fetching first appointments:" ..
-                " Connection refused",
+                " (A1): Error fetching first appointments: " ..(
+                g.name == 'integration.switchover.etcd2' and
+                g.state_provider.URI .. "/v2/members:" ..
+                " Couldn't connect to server" or
+                "Connection refused"),
         }, {
             level = "warning",
             topic = "switchover",
@@ -472,24 +585,28 @@ function g.test_enabling()
         }}
     )
 
-    -- Repair stateboard (empty)
-    fio.rmtree(g.stateboard.workdir)
-    g.stateboard:start()
+
+    -- Repair state provider (empty)
+    fio.rmtree(g.state_provider.workdir)
+    g.state_provider:start()
     helpers.retrying({}, function()
-        g.stateboard:connect_net_box()
+        g.state_provider:connect_net_box()
     end)
     g.session = g.client:get_session()
 
     -- A1 becomes a legitimate vclockkeeper
+    t.assert_equals(g.session:get_leaders(), {})
     helpers.retrying({}, function()
         t.assert_equals(A1.net_box:eval(q_is_vclockkeeper), true)
     end)
+
     t.assert_equals(g.session:get_leaders(), {})
     t.assert_equals(g.session:get_vclockkeeper(uA), {
         replicaset_uuid = uA,
         instance_uuid = uA1,
         vclock = A1.net_box:eval('return box.info.vclock'),
     })
+
 
     -- Enable coordinator
     A1.net_box:eval(
@@ -519,10 +636,10 @@ function g.test_enabling()
         {{replicasets = {{uuid = uA, roles = {}}}}}
     )
     t.assert_equals(g.session:get_coordinator(), box.NULL)
-end
+end)
 
-function g.test_api()
-    -- Enable coordinator
+add('test_api', function(g)
+   -- Enable coordinator
     g.client:drop_session()
     g.session = g.client:get_session()
     t.assert_equals(g.session:get_coordinator(), box.NULL)
@@ -620,9 +737,9 @@ function g.test_api()
         {{replicasets = {{uuid = uA, roles = {}}}}}
     )
     t.assert_equals(g.session:get_coordinator(), box.NULL)
-end
+end)
 
-function g.test_all_rw()
+add('test_all_rw', function(g)
     -- Replicasets with all_rw flag shouldn't fail on box.ctl.wait_ro().
 
     -- Make sure that B1 is a leader
@@ -662,4 +779,4 @@ function g.test_all_rw()
 
     -- Revert all hacks in fixtures
     set_all_rw(false)
-end
+end)
