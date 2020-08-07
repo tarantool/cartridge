@@ -190,6 +190,16 @@ local function validate_config(clusterwide_config, _)
         conf_old = {}
     end
 
+    if vars.state == 'Unconfigured' then
+        local ok, err = topology.validate_self_uri(
+            clusterwide_config:get_readonly('topology')
+        )
+
+        if not ok then
+            return nil, err
+        end
+    end
+
     local ok, err = ddl_manager.validate_config(conf_new, conf_old)
     if not ok then
         return nil, err
@@ -331,7 +341,7 @@ local function boot_instance(clusterwide_config)
         )
 
         if instance_uuid == nil then
-            local err = BootError:new(
+            local err = InitError:new(
                 "Couldn't find server %s in clusterwide config," ..
                 " bootstrap impossible",
                 vars.advertise_uri

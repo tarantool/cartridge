@@ -877,6 +877,26 @@ local function get_fullmesh_replication(topology_cfg, replicaset_uuid)
     return replication
 end
 
+local function validate_self_uri(topology_cfg)
+    checks('table')
+    if topology_cfg.__type == 'ClusterwideConfig' then
+        local err = "Bad argument #1 to find_server_by_uri" ..
+            " (table expected, got ClusterwideConfig)"
+        error(err, 2)
+    end
+
+    local myself = membership.myself()
+    local server = find_server_by_uri(topology_cfg, myself.uri)
+    if not server then
+        return nil, e_config:new(
+            "Uri %q not found at config topology, maybe" ..
+            " uri from config differs from uri specified" ..
+            " at instance starting, or instance is missed", myself.uri
+        )
+    end
+    return true
+end
+
 return {
     validate = function(...)
         return e_config:pcall(validate, ...)
@@ -895,4 +915,5 @@ return {
 
     find_server_by_uri = find_server_by_uri,
     get_fullmesh_replication = get_fullmesh_replication,
+    validate_self_uri = validate_self_uri,
 }

@@ -6,7 +6,6 @@ local fun = require('fun')
 local checks = require('checks')
 local errors = require('errors')
 local uuid_lib = require('uuid')
-local membership = require('membership')
 
 local roles = require('cartridge.roles')
 local topology = require('cartridge.topology')
@@ -32,17 +31,6 @@ local function __join_server(topology_cfg, params)
         labels = '?table',
         replicaset_uuid = 'string',
     })
-
-    local members = membership.members()
-    if members[params.uri] == nil then
-        return nil, EditTopologyError:new(
-            "Invalid attempt to call join_server()." ..
-            " Here is a problem with instance uri %s:" ..
-            " please check that instance with this uri" ..
-            " exists or host of uri the same host as specified" ..
-            " at starting instance", params.uri
-        )
-    end
 
     if topology_cfg.servers[params.uuid] ~= nil then
         return nil, EditTopologyError:new(

@@ -132,6 +132,29 @@ function g.test_join_server()
         end
     )
 
+    t.assert_error_msg_contains(
+        [[Uri "localhost:13302" not found at config topology, maybe uri]] ..
+        [[ from config differs from uri specified at instance starting,]] ..
+        [[ or instance is missed]],
+        function()
+            g.cluster.main_server:graphql({query = [[
+                mutation boot($replicasets: [EditReplicasetInput!]) {
+                cluster {
+                    edit_topology(replicasets: $replicasets) {
+                        replicasets { uuid }
+                    }
+                }
+                }]],
+                variables = {replicasets = {{
+                    uuid = helpers.uuid('b'),
+                    join_servers = {{
+                        uri = '127.0.0.1:13302'
+                    }}
+                }}}
+            })
+        end
+    )
+
     main:graphql({
         query = [[mutation {
             join_server(
@@ -191,31 +214,5 @@ function g.test_join_server()
                 weight = 0,
             }
         }
-    )
-end
-
-function g.test_join_uri_difference()
-    t.assert_error_msg_contains(
-        "Invalid attempt to call join_server(). Here is a" ..
-        " problem with instance uri 127.0.0.1:13302: please" ..
-        " check that instance with this uri exists or host" ..
-        " of uri the same host as specified at starting instance",
-        function()
-            g.cluster.main_server:graphql({query = [[
-                mutation boot($replicasets: [EditReplicasetInput!]) {
-                cluster {
-                    edit_topology(replicasets: $replicasets) {
-                        replicasets { uuid }
-                    }
-                }
-                }]],
-                variables = {replicasets = {{
-                    uuid = helpers.uuid('b'),
-                    join_servers = {{
-                        uri = '127.0.0.1:13302'
-                    }}
-                }}}
-            })
-        end
     )
 end
