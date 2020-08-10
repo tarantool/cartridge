@@ -394,3 +394,44 @@ function g.test_save_ok()
         '---\n{a: "val"}\n...'
     )
 end
+
+function g.test_checksum()
+    -- New configs are similar, as are their checksums
+    t.assert_equals(
+        ClusterwideConfig.new():get_checksum(),
+        ClusterwideConfig.new():get_checksum()
+    )
+
+    -- Different tables result in checksum mismatch (obviously)
+    local cfg1 = ClusterwideConfig.new({['a'] = 'A'})
+    local cfg2 = ClusterwideConfig.new({['a'] = 'B'})
+    t.assert_not_equals(cfg1:get_checksum(), cfg2:get_checksum())
+
+    -- Copy of cfg1 should have the same checksum
+    cfg2 = cfg1:copy()
+    t.assert_equals(cfg1:get_checksum(), cfg2:get_checksum())
+
+    -- Changing in cfg with set_plaintext should result in change of
+    -- checksum as well
+    cfg1:set_plaintext('b', 'Hello there')
+    t.assert_not_equals(cfg1:get_checksum(), cfg2:get_checksum())
+    cfg2:set_plaintext('b', 'Hello there')
+    t.assert_equals(cfg1:get_checksum(), cfg2:get_checksum())
+
+    -- Sections and their content should be hashed separatly
+    t.assert_not_equals(
+        ClusterwideConfig.new({['foo'] = 'bar'}):get_checksum(),
+        ClusterwideConfig.new({['foob'] = 'ar'}):get_checksum()
+    )
+
+    local c1 = {a = 'A', b = 'B'}
+    local c2 = {b = 'B', a = 'A'}
+    -- Two tables differ by inner representation
+    t.assert(next(c1) ~= next(c2))
+    -- Iteration order does not affect checksum calculation
+    t.assert_equals(
+        ClusterwideConfig.new(c1):get_checksum(),
+        ClusterwideConfig.new(c2):get_checksum()
+    )
+
+end
