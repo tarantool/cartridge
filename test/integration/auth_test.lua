@@ -773,4 +773,24 @@ function g.test_invalidate_cookie_on_password_change()
     lsid = resp.cookies['lsid'][1]
     cookie_lsid = 'lsid=' .. lsid
     check_200(server, {headers = {cookie = cookie_lsid}})
+
+    local function edit_user(cookie, vars)
+        return server:http_request('post', '/admin/api', {
+            http = {headers = {cookie = cookie}},
+            json = {
+                query = [[
+                mutation($username:String! $password:String) {
+                    cluster {
+                        edit_user(username:$username password:$password) { username }
+                    }
+                }]],
+                variables = vars,
+            },
+            raise = false,
+        })
+    end
+
+    local resp = edit_user(cookie_lsid, {username = USERNAME, password = PASSWORD})
+    local cookie = resp.headers['set-cookie']
+    check_200(server, {headers = {cookie = cookie}})
 end

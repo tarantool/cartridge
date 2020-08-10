@@ -184,12 +184,16 @@ local function create_cookie(uid, version)
     local ts = tostring(fiber.time())
     local key = cluster_cookie.cookie()
 
+    local msg = uid .. ts
+    if version ~= nil then
+        msg = msg .. tostring(version)
+    end
     local cookie = {
         ts = ts,
         uid = uid,
         version = version,
         hmac = digest.base64_encode(
-            crypto.hmac.sha512(key, uid .. ts),
+            crypto.hmac.sha512(key, msg),
             {nopad = true, nowrap = true, urlsafe = true}
         )
     }
@@ -234,8 +238,12 @@ local function get_cookie_uid(raw)
     end
 
     local key = cluster_cookie.cookie()
+    local msg = cookie.uid .. cookie.ts
+    if cookie.version ~= nil then
+        msg = msg .. tostring(cookie.version)
+    end
     local calc = digest.base64_encode(
-        crypto.hmac.sha512(key, cookie.uid .. cookie.ts),
+        crypto.hmac.sha512(key, msg),
         {nopad = true, nowrap = true, urlsafe = true}
     )
 
@@ -382,6 +390,7 @@ local function coerce_user(user)
     -- @tfield string username
     -- @tfield ?string fullname
     -- @tfield ?string email
+    -- @tfield ?number version
     return {
         username = user.username,
         fullname = user.fullname,
@@ -512,6 +521,10 @@ local function edit_user(username, password, fullname, email)
             return nil, err
         end
 
+        local fiber_storage = fiber.self().storage
+        if password ~= nil and fiber_storage['http_session_username'] == user.username then
+            fiber_storage['http_session_set_cookie'] = create_cookie(username, user.version)
+        end
         return user
     end)
 end
