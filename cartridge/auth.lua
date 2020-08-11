@@ -180,7 +180,7 @@ local function get_params()
 end
 
 local function create_cookie(uid, version)
-    checks('string', '?number')
+    checks('string', '?')
     local ts = tostring(fiber.time())
     local key = cluster_cookie.cookie()
 
