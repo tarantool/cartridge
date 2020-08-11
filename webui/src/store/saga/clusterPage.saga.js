@@ -175,6 +175,13 @@ const failoverPromoteRequestSaga = function* () {
     try {
       yield call(promoteFailoverLeader, payload);
       yield put({ type: CLUSTER_PAGE_FAILOVER_PROMOTE_REQUEST_SUCCESS });
+
+      window.tarantool_enterprise_core.notify({
+        title: 'Failover',
+        message: 'Leader promotion successful',
+        type: 'success',
+        timeout: 5000
+      });
     } catch (error) {
       yield put({
         type: CLUSTER_PAGE_FAILOVER_PROMOTE_REQUEST_ERROR,
