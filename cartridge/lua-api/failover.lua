@@ -144,6 +144,7 @@ end
 -- @tparam table { [replicaset_uuid] = leader_uuid }
 -- @tparam[opt] table opts
 -- @tparam ?boolean opts.force_inconsistency
+--   (default: **false**)
 --
 -- @treturn[1] boolean true On success
 -- @treturn[2] nil
@@ -170,27 +171,30 @@ local function promote(replicaset_leaders, opts)
         return nil, PromoteLeaderError:new('There is no active coordinator')
     end
 
-    local _, err = rpc.call(
+    local ok, err = rpc.call(
             'failover-coordinator',
             'appoint_leaders',
             {replicaset_leaders},
             { uri = coordinator.uri }
     )
 
-    if err ~= nil then
+    if ok == nil then
         return nil, err
     end
 
-    if opts == nil or opts.force_inconsistency == false then
-        return true
+    if opts ~= nil and opts.force_inconsistency == true then
+        local ok, err = failover.force_inconsistency(replicaset_leaders)
+        if ok == nil then
+            return nil, PromoteLeaderError:new(
+                "Promotion succeeded, but inconsistency wasn't forced: %s",
+                errors.is_error_object(err) and err.err or err
+            )
+        end
     end
 
-    local ok, err = failover.force_inconsistency(replicaset_leaders)
+    local ok, err = failover.wait_consistency(replicaset_leaders)
     if ok == nil then
-        return nil, PromoteLeaderError:new(
-            "Promotion succeeded, but inconsistency wasn't forced: %s",
-            errors.is_error_object(err) and err.err or err
-        )
+        return nil, err
     end
 
     return true

@@ -74,6 +74,10 @@ function _G.__cartridge_failover_get_lsn(timeout)
     }
 end
 
+function _G.__cartridge_failover_wait_rw(timeout)
+    return errors.pcall('WaitRwError', box.ctl.wait_rw, timeout)
+end
+
 --- Generate appointments according to clusterwide configuration.
 -- Used in 'disabled' failover mode.
 -- @function _get_appointments_disabled_mode
@@ -701,6 +705,43 @@ local function force_inconsistency(leaders)
     return true
 end
 
+--- Wait when promoted instances become vclockkepers.
+--
+-- @function wait_consistency
+-- @local
+-- @tparam {[string]=string,...} replicaset_uuid to leader_uuid mapping
+--
+-- @treturn[1] boolean true
+-- @treturn[2] nil
+-- @treturn[2] table Error description
+local function wait_consistency(leaders)
+    local topology_cfg = vars.clusterwide_config:get_readonly('topology')
+    assert(topology_cfg.servers)
+
+    local uri_list = {}
+    for _, instance_uuid in pairs(leaders) do
+        assert(topology_cfg.servers[instance_uuid])
+        table.insert(uri_list, topology_cfg.servers[instance_uuid].uri)
+    end
+
+    local timeout = vars.options.WAITLSN_TIMEOUT
+    local _, err = pool.map_call(
+        '_G.__cartridge_failover_wait_rw', {timeout},
+        {
+            uri_list = uri_list,
+            timeout = timeout + vars.options.NETBOX_CALL_TIMEOUT,
+        }
+    )
+
+    if err ~= nil then
+        log.warn("Waiting consistent switchover didn't succeed: %s", err)
+        local _, err = next(err.suberrors)
+        return nil, err
+    end
+
+    return true
+end
+
 return {
     cfg = cfg,
     get_active_leaders = get_active_leaders,
@@ -713,4 +754,5 @@ return {
     is_rw = is_rw,
 
     force_inconsistency = force_inconsistency,
+    wait_consistency = wait_consistency,
 }
