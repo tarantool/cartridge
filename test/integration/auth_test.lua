@@ -746,3 +746,51 @@ function g.test_cookie_expiry()
     set_max_age(3600)
     t.assert_equals(get_username(), USERNAME)
 end
+
+function g.test_invalidate_cookie_on_password_change()
+    local USERNAME = 'Niles Rumfoord'
+    local PASSWORD = 'Beatrice'
+    local server = g.cluster:server('master')
+    set_auth_enabled_internal(g.cluster, true)
+    _add_user(server, USERNAME, PASSWORD)
+
+    local resp = _login(server, USERNAME, PASSWORD)
+    log.info('login successful')
+    t.assert_equals(resp.status, 200)
+    t.assert_not_equals(resp.cookies['lsid'], nil)
+    local lsid = resp.cookies['lsid'][1]
+    local cookie_lsid = 'lsid=' .. lsid
+    check_200(server, {headers = {cookie = cookie_lsid}})
+
+    local NEW_PASSWORD = 'Salo'
+    _edit_user(server, USERNAME, NEW_PASSWORD)
+    check_401(server, {headers = {cookie = cookie_lsid}})
+
+    resp = _login(server, USERNAME, NEW_PASSWORD)
+    log.info('login successful')
+    t.assert_equals(resp.status, 200)
+    t.assert_not_equals(resp.cookies['lsid'], nil)
+    lsid = resp.cookies['lsid'][1]
+    cookie_lsid = 'lsid=' .. lsid
+    check_200(server, {headers = {cookie = cookie_lsid}})
+
+    local function edit_user(cookie, vars)
+        return server:http_request('post', '/admin/api', {
+            http = {headers = {cookie = cookie}},
+            json = {
+                query = [[
+                mutation($username:String! $password:String) {
+                    cluster {
+                        edit_user(username:$username password:$password) { username }
+                    }
+                }]],
+                variables = vars,
+            },
+            raise = false,
+        })
+    end
+
+    local resp = edit_user(cookie_lsid, {username = USERNAME, password = PASSWORD})
+    local cookie = resp.headers['set-cookie']
+    check_200(server, {headers = {cookie = cookie}})
+end
