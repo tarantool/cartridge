@@ -290,6 +290,25 @@ local function get_basic_auth_uid(auth)
     end
 end
 
+--- Create session for current user.
+--
+-- Creates session for user with specified username and user version
+-- or clear it if no arguments passed.
+--
+-- (**Added** in v2.2.0-43)
+-- @function set_lsid_cookie
+-- @within Authorizarion
+-- @tparam table user
+local function set_lsid_cookie(user)
+    checks('?table')
+    local fiber_storage = fiber.self().storage
+    if user == nil then
+        fiber_storage['http_session_set_cookie'] = 'lsid=""; Path=/; Max-Age=0'
+    else
+        fiber_storage['http_session_set_cookie'] = create_cookie(user.username, user.version)
+    end
+end
+
 --- Get username for the current HTTP session.
 --
 -- (**Added** in v1.1.0-4)
@@ -523,7 +542,7 @@ local function edit_user(username, password, fullname, email)
 
         local fiber_storage = fiber.self().storage
         if password ~= nil and fiber_storage['http_session_username'] == user.username then
-            fiber_storage['http_session_set_cookie'] = create_cookie(username, user.version)
+            set_lsid_cookie(user)
         end
         return user
     end)
@@ -633,8 +652,8 @@ local function authorize_request(req)
     local auth_cfg = get_params()
     local cookie_raw = req:cookie('lsid')
     local cookie_ts = 0
+    local username = nil
     local cookie_version
-    local username
     repeat
         local cookie, err = e_check_cookie:pcall(get_cookie_uid, cookie_raw)
         if cookie ~= nil and cookie.uid ~= nil then
@@ -679,12 +698,12 @@ local function authorize_request(req)
         and auth_cfg.cookie_renew_age >= 0
         and fiber.time() - cookie_ts > auth_cfg.cookie_renew_age
         then
-            fiber_storage['http_session_set_cookie'] = create_cookie(username, user.version)
+            set_lsid_cookie(user)
         end
 
         return true
     elseif cookie_raw then
-        fiber_storage['http_session_set_cookie'] = 'lsid=""; Path=/; Max-Age=0'
+        set_lsid_cookie()
     end
 
     if not auth_cfg.enabled then
@@ -815,4 +834,6 @@ return {
     authorize_request = authorize_request,
     render_response = render_response,
     get_session_username = get_session_username,
+
+    set_lsid_cookie = set_lsid_cookie,
 }
