@@ -58,7 +58,7 @@ docker-build-ce-1.10:
   variables:
     IMAGE_NAME: &IMAGE_NAME_CE_1_10 base-ce-1.10
     BUILD_ARGS: >
-      --build-arg TARANTOOL_BRANCH=1_10
+      --build-arg TARANTOOL_BRANCH=1.10
     DOCKER_FILE: Dockerfile.base-ce
 
 docker-build-ce-2.3:
@@ -66,7 +66,7 @@ docker-build-ce-2.3:
   variables:
     IMAGE_NAME: &IMAGE_NAME_CE_2_3 base-ce-2.3
     BUILD_ARGS: >
-      --build-arg TARANTOOL_BRANCH=2_3
+      --build-arg TARANTOOL_BRANCH=2.3
     DOCKER_FILE: Dockerfile.base-ce
 
 ########################################################################
@@ -83,6 +83,7 @@ docker-build-ce-2.3:
     - export CMAKE_DUMMY_WEBUI=YES
     - tarantoolctl rocks make
     - tarantoolctl rocks list
+    - tarantool --version
   after_script:
     # avoid caching cartridge rock
     - tarantoolctl rocks remove cartridge
