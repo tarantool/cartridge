@@ -643,7 +643,9 @@ add('test_api', function(g)
     g.client:drop_session()
     g.session = g.client:get_session()
     t.assert_equals(g.session:get_coordinator(), box.NULL)
+    A1.net_box:eval(q_set_wait_lsn_timeout, {0.2})
     B2.net_box:eval(q_set_wait_lsn_timeout, {0.2})
+    helpers.protect_from_rw(B2)
 
     A1.net_box:eval(
         [[require("cartridge").admin_edit_topology(...)]],
@@ -657,12 +659,13 @@ add('test_api', function(g)
         mutation(
             $replicaset_uuid: String!
             $instance_uuid: String!
+            $force: Boolean
         ) {
         cluster {
             failover_promote(
                 replicaset_uuid: $replicaset_uuid
                 instance_uuid: $instance_uuid
-                force_inconsistency: true
+                force_inconsistency: $force
             )
         }
     }]]
@@ -684,6 +687,7 @@ add('test_api', function(g)
             variables = {
                 replicaset_uuid = uB,
                 instance_uuid = uB2,
+                force = true,
             },
         }
     )
@@ -705,18 +709,33 @@ add('test_api', function(g)
         }}
     )
 
-    -- Revert the hack and test API normally
+    -- Revert the hack
     A1.net_box:eval([[
         local vars = require('cartridge.vars').new('cartridge.failover')
         vars.client:drop_session()
         vars.client:get_session()
     ]])
 
+    -- Consistent promotion fails because the keeper is still "nobody"
+    t.assert_error_msg_equals(
+        'timed out',
+        A1.graphql, A1, {
+            query = query,
+            variables = {
+                replicaset_uuid = uB,
+                instance_uuid = uB2,
+            },
+        }
+    )
+
+    -- Now force inconsistency
+    helpers.unprotect(B2)
     local resp = A1:graphql({
         query = query,
         variables = {
             replicaset_uuid = uB,
             instance_uuid = uB2,
+            force = true,
         }
     })
     t.assert_type(resp['data'], 'table')
