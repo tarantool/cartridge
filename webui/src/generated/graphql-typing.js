@@ -323,6 +323,7 @@ export type MutationApiclusterEdit_Vshard_OptionsArgs = {
 
 /** Cluster management */
 export type MutationApiclusterFailover_PromoteArgs = {
+  force_inconsistency?: ?$ElementType<Scalars, "Boolean">,
   replicaset_uuid: $ElementType<Scalars, "String">,
   instance_uuid: $ElementType<Scalars, "String">
 };

@@ -24,10 +24,10 @@ export function getInstanceData({ instanceUUID }) {
         message,
         replicaset: {
           active_master: {
-            uuid: masterUUID
+            uuid: activeMasterUUID
           },
           master: {
-            uuid: activeMasterUUID
+            uuid: masterUUID
           },
           roles
         },

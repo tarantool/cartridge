@@ -449,12 +449,14 @@ mutation changeFailover (
 export const promoteFailoverLeaderMutation = gql`
 mutation promoteFailoverLeader (
   $replicaset_uuid: String!,
-  $instance_uuid: String!
+  $instance_uuid: String!,
+  $force_inconsistency: Boolean
 ) {
   cluster {
   	failover_promote(
       replicaset_uuid: $replicaset_uuid,
-      instance_uuid: $instance_uuid
+      instance_uuid: $instance_uuid,
+      force_inconsistency: $force_inconsistency
     )
   }
 }

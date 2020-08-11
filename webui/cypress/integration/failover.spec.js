@@ -68,7 +68,7 @@ describe('Failover', () => {
     cy.get('.meta-test__statefulRadioBtn').click().click();
 
     cy.get('.meta-test__stateProviderChoice').find('button')
-      .then(($button) => {
+      .then($button => {
         expect($button).to.have.text('tarantool')
       })
 
@@ -130,7 +130,7 @@ describe('Failover', () => {
     cy.contains('etcd2').click();
 
     cy.get('.meta-test__stateProviderChoice').find('button')
-      .then(($button) => {
+      .then($button => {
         expect($button).to.have.text('etcd2')
       })
 
@@ -142,7 +142,7 @@ describe('Failover', () => {
     cy.get('.meta-test__etcd2LockDelay input').should('have.value', '10');
     cy.get('.meta-test__etcd2Prefix input').should('have.value', '/');
     cy.get('.meta-test__etcd2Endpoints').find('textarea')
-      .then(($textarea) => {
+      .then($textarea => {
         expect($textarea).to.have.text('http://127.0.0.1:4001\nhttp://127.0.0.1:2379')
       })
 
