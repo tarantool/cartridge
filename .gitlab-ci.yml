@@ -47,7 +47,7 @@ stages:
 docker-build-ee-1.10:
   extends: .docker-build-base
   variables:
-    IMAGE_NAME: &IMAGE_NAME_EE_1_10 base-ee-1.10
+    IMAGE_NAME: &IMAGE_NAME_EE_1_10 2.2-base-ee-1.10
     BUILD_ARGS: >
       --build-arg DOWNLOAD_TOKEN=${DOWNLOAD_TOKEN}
       --build-arg BUNDLE_VERSION=1.10.6-17-g41a8cbc
@@ -56,7 +56,7 @@ docker-build-ee-1.10:
 docker-build-ce-1.10:
   extends: .docker-build-base
   variables:
-    IMAGE_NAME: &IMAGE_NAME_CE_1_10 base-ce-1.10
+    IMAGE_NAME: &IMAGE_NAME_CE_1_10 2.2-base-ce-1.10
     BUILD_ARGS: >
       --build-arg TARANTOOL_BRANCH=1_10
     DOCKER_FILE: Dockerfile.base-ce
@@ -64,7 +64,7 @@ docker-build-ce-1.10:
 docker-build-ce-2.3:
   extends: .docker-build-base
   variables:
-    IMAGE_NAME: &IMAGE_NAME_CE_2_3 base-ce-2.3
+    IMAGE_NAME: &IMAGE_NAME_CE_2_3 2.2-base-ce-2.3
     BUILD_ARGS: >
       --build-arg TARANTOOL_BRANCH=2_3
     DOCKER_FILE: Dockerfile.base-ce
