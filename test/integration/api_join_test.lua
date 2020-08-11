@@ -133,9 +133,9 @@ function g.test_join_server()
     )
 
     t.assert_error_msg_contains(
-        [[Uri "localhost:13302" not found at config topology, maybe uri]] ..
-        [[ from config differs from uri specified at instance starting,]] ..
-        [[ or instance is missed]],
+       "Couldn't find server localhost:13302 in clusterwide config:" ..
+       " check there is no difference uri at config and uri specified" ..
+       " at instance starting",
         function()
             g.cluster.main_server:graphql({query = [[
                 mutation boot($replicasets: [EditReplicasetInput!]) {

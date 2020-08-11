@@ -49,6 +49,13 @@ vars:new('on_patch_triggers', {})
 local function prepare_2pc(data)
     local clusterwide_config = ClusterwideConfig.new(data):lock()
 
+    local topology_cfg = clusterwide_config:get_readonly('topology')
+    local ok, err = topology.validate_self_uri(topology_cfg)
+    if not ok then
+        log.warn('%s', err)
+        return nil, err
+    end
+
     local ok, err = confapplier.validate_config(clusterwide_config)
     if not ok then
         log.warn('%s', err)

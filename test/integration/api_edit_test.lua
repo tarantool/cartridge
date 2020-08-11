@@ -139,6 +139,17 @@ function g.test_edit_server()
             uri = 'localhost:3303'
         }
     )
+
+    t.assert_error_msg_contains(
+        "Couldn't find server localhost:13301 in clusterwide config:" ..
+        " check there is no difference uri at config and uri specified" ..
+        " at instance starting",
+        edit_server_req,
+        {
+            uuid = helpers.uuid('a', 'a', 1),
+            uri = '127.0.0.1:13301'
+        }
+    )
 end
 
 
