@@ -84,6 +84,13 @@ local function set_leaders_impl(leaders)
         })
     end
     notification:broadcast()
+
+    box.on_commit(function()
+        for _, leader in ipairs(leaders) do
+            log.info('New leader %s -> %s', leader[1], leader[2])
+        end
+    end)
+
     return true
 end
 
@@ -158,6 +165,13 @@ local function set_vclockkeeper_impl(replicaset_uuid, instance_uuid, ordinal, vc
             {'=', 4, vclock or box.NULL},
         }
     )
+
+    box.on_commit(function()
+        log.info('New vclockkeeper %s -> %s%s',
+            replicaset_uuid, instance_uuid,
+            vclock == nil and ' (forceful)' or ''
+        )
+    end)
 
     return true
 end
@@ -387,21 +401,6 @@ local function cfg()
             sock:sendto('unix/', notify_socket, 'READY=1')
         end
     end
-
-    ------------------------------------------------------------------------
-
-    fiber.new(function()
-        fiber.self():name('audit-log')
-        -- It's not good to print logs inside a transaction
-        -- thus logging is performed in the separate fiber
-        _G.longpoll(0)
-
-        while true do
-            for replicaset_uuid, instance_uuid in pairs(_G.longpoll(10)) do
-                log.info('New leader %s -> %s', replicaset_uuid, instance_uuid)
-            end
-        end
-    end)
 end
 
 return {
