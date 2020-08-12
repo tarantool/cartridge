@@ -362,38 +362,50 @@ function g.test_vclockkeeper()
         instance_uuid = 'a2',
     })
 
+    local chan_success = fiber.channel(1)
+    local chan_fail = fiber.channel(1)
     local function set_vclockkeeper_async(r, s, vclock)
-        local chan = fiber.channel(1)
         fiber.new(function()
-            chan:put({session:set_vclockkeeper(r, s, vclock)})
+            local res, err = session:set_vclockkeeper(r, s, vclock)
+            if res ~= nil then
+                local vclockkeeper = {
+                    replicaset_uuid = r,
+                    instance_uuid = s,
+                    vclock = vclock
+                }
+                chan_success:put({res, err, vclockkeeper})
+            else
+                chan_fail:put({res, err})
+            end
         end)
-        return chan
     end
 
     g.etcd:kill('STOP')
-    local c1 = set_vclockkeeper_async('A', 'a3', {[1] = 101})
-    local c2 = set_vclockkeeper_async('A', 'a3', {[1] = 102})
+    set_vclockkeeper_async('A', 'a3', {[1] = 101})
+    set_vclockkeeper_async('A', 'a3', {[1] = 102})
     fiber.sleep(0)
     g.etcd:kill('CONT')
 
-    t.assert_equals(c1:get(0.2), {true, nil})
-    local ret2, err2 = unpack(c2:get(0.2))
+    local ret1, err1, vclockkeeper = unpack(chan_success:get(0.2))
+    t.assert_equals({ret1, err1}, {true, nil})
+    local ret2, err2 = unpack(chan_fail:get(0.2))
     t.assert_equals(ret2, nil)
     t.assert_equals(err2.class_name, 'EtcdError')
     t.assert_str_matches(err2.err,
         'Compare failed %(%d+%): %[%d+ != %d+%]'
     )
 
-    t.assert_equals(session:get_vclockkeeper('A').vclock, {[1] = 101})
+    t.assert_equals(session:get_vclockkeeper('A'), vclockkeeper)
 
     g.etcd:kill('STOP')
-    local c1 = set_vclockkeeper_async('B', 'b1')
-    local c2 = set_vclockkeeper_async('B', 'b2')
+    set_vclockkeeper_async('B', 'b1')
+    set_vclockkeeper_async('B', 'b2')
     fiber.sleep(0)
     g.etcd:kill('CONT')
 
-    t.assert_equals(c1:get(0.2), {true, nil})
-    local ret2, err2 = unpack(c2:get(0.2))
+    local ret1, err1, vclockkeeper = unpack(chan_success:get(0.2))
+    t.assert_equals({ret1, err1}, {true, nil})
+    local ret2, err2 = unpack(chan_fail:get(0.2))
     t.assert_equals(ret2, nil)
     t.assert_equals(err2.class_name, 'EtcdError')
     t.assert_str_matches(err2.err,
@@ -401,8 +413,5 @@ function g.test_vclockkeeper()
         '/etcd2_client_test/vclockkeeper/B'
     )
 
-    t.assert_equals(session:get_vclockkeeper('B'), {
-        replicaset_uuid = 'B',
-        instance_uuid = 'b1',
-    })
+    t.assert_equals(session:get_vclockkeeper('B'), vclockkeeper)
 end
