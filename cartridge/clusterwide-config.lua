@@ -71,6 +71,25 @@ local LoadConfigError = errors.new_class('LoadConfigError')
 local SaveConfigError = errors.new_class('SaveConfigError')
 local RemoveConfigError = errors.new_class('RemoveConfigError')
 
+local function generate_checksum(clusterwide_config)
+    checks('ClusterwideConfig')
+
+    local keys = {}
+    for section, _ in pairs(clusterwide_config._plaintext) do
+        table.insert(keys, section)
+    end
+    table.sort(keys)
+
+    local checksum = digest.crc32.new()
+    for _, section in ipairs(keys) do
+        checksum:update(string.format('[%s] = ', section))
+        checksum:update(clusterwide_config._plaintext[section])
+    end
+
+    rawset(clusterwide_config, '_checksum', checksum:result())
+    return clusterwide_config
+end
+
 local function update_luatables(clusterwide_config)
     checks('ClusterwideConfig')
 
@@ -175,6 +194,8 @@ clusterwide_config_mt = {
             end
 
             rawset(self._plaintext, section_name, content)
+
+            rawset(self, '_checksum', nil)
             rawset(self, '_luatables', nil)
             return self
         end,
@@ -217,7 +238,19 @@ clusterwide_config_mt = {
             end
         end,
 
+        get_checksum = function(self)
+            checks('ClusterwideConfig')
+            assert(self._plaintext ~= nil)
+
+            if self._checksum == nil then
+                self:generate_checksum()
+            end
+
+            return self._checksum
+        end,
+
         update_luatables = update_luatables,
+        generate_checksum = generate_checksum,
     }
 }
 
