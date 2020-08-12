@@ -55,7 +55,7 @@ local function get_server_info(members, uuid, uri)
     -- among the members with given uuid
     for _, m in pairs(members) do
         if m.payload.uuid == uuid
-        and m.timestamp > (member.timestamp or 0) then
+        and m.timestamp > (member and member.timestamp or 0) then
             member = m
         end
     end
