@@ -27,6 +27,8 @@ Added
 - "Force leader promotion" action for current leader in webui.
 - New test helper: ``cartridge.test-helpers.etcd``.
 - `rpc_call` supports `on_push` and `on_push_ctx` net.box options.
+- Replicasets leaders will have orange flags instead of green ones while
+  they are read-only.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed

@@ -23,21 +23,6 @@ const filterServerStat = response => {
   };
 };
 
-export function getPageData() {
-  return graphql.fetch(listQuery)
-    .then(
-      ({
-        cluster: {
-          issues
-        },
-        ...response
-      }) => filterServerStat({
-        ...response,
-        issues
-      })
-    );
-}
-
 type RefreshListsArgs = {
   shouldRequestStat?: boolean
 };
@@ -45,6 +30,28 @@ type RefreshListsArgs = {
 export function refreshLists(params: RefreshListsArgs = {}) {
   const graph = params.shouldRequestStat ? listQuery : listQueryWithoutStat;
   return graphql.fetch(graph)
+    .then(
+      ({ replicasetList, serverList, ...rest }) => ({
+        replicasetList: replicasetList.map(({ servers, ...rest }) => ({
+          servers: servers.map(
+            ({ boxinfo, ...server }) => ({
+              boxinfo,
+              ro: (boxinfo && boxinfo.general && boxinfo.general.ro),
+              ...server
+            })
+          ),
+          ...rest
+        })),
+        serverList: serverList.map(
+          ({ boxinfo, ...server }) => ({
+            boxinfo,
+            ro: (boxinfo && boxinfo.general && boxinfo.general.ro),
+            ...server
+          })
+        ),
+        ...rest
+      })
+    )
     .then(
       params.shouldRequestStat
         ? ({
@@ -58,6 +65,10 @@ export function refreshLists(params: RefreshListsArgs = {}) {
         })
         : null
     );
+}
+
+export function getPageData() {
+  return refreshLists({ shouldRequestStat: true });
 }
 
 export function getServerStat() {

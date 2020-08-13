@@ -27,6 +27,7 @@ type ServerInfoModalProps = {
   uri: string,
   match: { url: string },
   history: History,
+  ro?: boolean
 }
 
 type ServerInfoModalState = {
@@ -70,7 +71,8 @@ class ServerInfoModal extends React.Component<ServerInfoModalProps, ServerInfoMo
       masterUUID,
       message,
       status,
-      uri
+      uri,
+      ro
     } = this.props
 
     return (
@@ -93,6 +95,7 @@ class ServerInfoModal extends React.Component<ServerInfoModalProps, ServerInfoMo
             message={message}
             status={status}
             uri={uri}
+            ro={ro}
           />
           <Tabbed
             tabs={
@@ -113,7 +116,8 @@ const mapStateToProps = (state, props) => {
     alias,
     message,
     status,
-    uri
+    uri,
+    ro
   } = state.clusterPage.serverList.find(({ uuid }) => uuid === props.instanceUUID) || {};
 
   const {
@@ -131,7 +135,8 @@ const mapStateToProps = (state, props) => {
     activeMasterUUID,
     status,
     uri,
-    instanceUUID: props.instanceUUID
+    instanceUUID: props.instanceUUID,
+    ro
   };
 };
 

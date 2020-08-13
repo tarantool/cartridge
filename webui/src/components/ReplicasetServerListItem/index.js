@@ -160,7 +160,8 @@ type ReplicasetServerListItemProps = {
   replicasetUUID: string,
   showFailoverPromote?: boolean,
   tagsHighlightingClassName?: string,
-  totalBucketsCount?: number
+  totalBucketsCount?: number,
+  ro?: boolean
 };
 
 type ReplicasetServerListItemState = {
@@ -188,7 +189,8 @@ class ReplicasetServerListItem extends React.PureComponent<
       tagsHighlightingClassName,
       totalBucketsCount,
       history,
-      uuid
+      uuid,
+      ro
     } = this.props;
 
     const usageText = statistics
@@ -204,7 +206,7 @@ class ReplicasetServerListItem extends React.PureComponent<
           {(master || activeMaster) &&
             <LeaderFlag
               className={cx(styles.leaderFlag, 'meta-test_leaderFlag')}
-              fail={status !== 'healthy'}
+              state={status !== 'healthy' ? 'bad' : ro === false ? 'good' : 'warning'}
             />
           }
           <div className={styles.heading}>

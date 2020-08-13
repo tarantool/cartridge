@@ -46,7 +46,8 @@ type ServerShortInfoProps = {
   uri: string,
   alias: string,
   message?: string,
-  master?: boolean
+  master?: boolean,
+  ro?: boolean
 };
 export default class ServerShortInfo extends React.PureComponent<ServerShortInfoProps> {
   render() {
@@ -58,14 +59,18 @@ export default class ServerShortInfo extends React.PureComponent<ServerShortInfo
       uri,
       alias,
       message,
-      master
+      master,
+      ro
     } = this.props;
 
     return (
       <div className={cx(styles.item, 'meta-test__serverShortInfoModal', className)}>
         <div className={styles.row}>
           {(master || activeMaster) && (
-            <LeaderFlag className={styles.leaderFlag} fail={status !== 'healthy'} />
+            <LeaderFlag
+              className={styles.leaderFlag}
+              state={status !== 'healthy' ? 'bad' : ro === false ? 'good' : 'warning'}
+            />
           )}
           <div className={styles.heading}>
             <Text variant='h4'>{alias}</Text>

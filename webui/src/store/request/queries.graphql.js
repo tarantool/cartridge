@@ -285,6 +285,9 @@ query serverList {
     uri
     status
     message
+    boxinfo {
+      general { ro }
+    }
     replicaset {
       uuid
     }
@@ -309,6 +312,9 @@ query serverList {
       uri
       priority
       status
+      boxinfo {
+        general { ro }
+      }
       message
       replicaset {
         uuid
@@ -342,6 +348,9 @@ query serverListWithoutStat {
     uri
     status
     message
+    boxinfo {
+      general { ro }
+    }
     replicaset {
       uuid
     }
@@ -366,6 +375,9 @@ query serverListWithoutStat {
       uri
       priority
       status
+      boxinfo {
+        general { ro }
+      }
       message
       replicaset {
         uuid
