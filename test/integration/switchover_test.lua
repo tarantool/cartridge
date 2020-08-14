@@ -1,7 +1,5 @@
-local log = require('log')
 local fio = require('fio')
 local t = require('luatest')
-local httpc = require('http.client')
 local helpers = require('test.helper')
 
 local etcd2_client = require('cartridge.etcd2-client')
@@ -97,59 +95,17 @@ g_etcd2.before_all(function()
     t.skip_if(etcd_path == nil, 'etcd missing')
 
     g.datadir = fio.tempdir()
-    g.state_provider = {
-        -- Etcd has a specific feature: upon restart it preallocates
-        -- WAL file with 64MB size, and it can't be configured.
-        -- See https://github.com/etcd-io/etcd/issues/9422
-        --
-        -- Our Gitlab CI uses tmpfs at `/dev/shm` as TMPDIR.
-        -- It's size is also limited, in our case the same 64MB.
-        -- As a result, restarting etcd fails with an error:
-        -- C | etcdserver: open wal error: no space left on device
-        --
-        -- As a workaround we start etcd with workdir in `/tmp` and
-        -- ignore TMPDIR setting
+    g.state_provider = helpers.Etcd:new({
         workdir = fio.tempdir('/tmp'),
-        URI = 'http://127.0.0.1:14001',
-    }
-    function g.state_provider:start()
-        self.process = t.Process:start(etcd_path, {
-            '--data-dir', self.workdir,
-            '--listen-peer-urls', 'http://localhost:17001',
-            '--listen-client-urls', self.URI,
-            '--advertise-client-urls', self.URI,
-        })
-
-        helpers.retrying({}, function()
-            local resp = httpc.put(self.URI .. '/v2/keys/hello?value=world')
-            assert(resp.status == 200, resp.body)
-            log.info('%s', httpc.get(self.URI ..'/version').body)
-        end)
-    end
-    function g.state_provider:stop()
-        local process = self.process
-        if process == nil then
-            return
-        end
-        self.process:kill()
-        helpers.retrying({}, function()
-            t.assert_not(process:is_alive(), 'Etcd is still running')
-        end)
-        log.warn('Etcd killed')
-        self.process = nil
-        g.session:drop()
-    end
-
-    function g.state_provider:connect_net_box()
-        local resp = httpc.put(self.URI .. '/v2/keys/hello?value=world')
-        assert(resp.status == 200, resp.body)
-        log.info('%s', httpc.get(self.URI ..'/version').body)
-    end
+        etcd_path = etcd_path,
+        peer_url = 'http://127.0.0.1:17001',
+        client_url = 'http://127.0.0.1:14001',
+    })
 
     g.state_provider:start()
     g.client = etcd2_client.new({
         prefix = 'switchover_test',
-        endpoints = {g.state_provider.URI},
+        endpoints = {g.state_provider.client_url},
         lock_delay = 5,
         username = '',
         password = '',
@@ -166,7 +122,7 @@ g_etcd2.before_all(function()
             state_provider = 'etcd2',
             etcd2_params = {
                 prefix = 'switchover_test',
-                endpoints = {g.state_provider.URI},
+                endpoints = {g.state_provider.client_url},
                 lock_delay = 5,
             },
         }}
@@ -539,6 +495,7 @@ add('test_enabling', function(g)
 
     -- State provider is unavailable
     g.state_provider:stop()
+    g.session:drop()
 
     -- Turn it off and on again
     local q_set_failover_params = [[
@@ -561,7 +518,7 @@ add('test_enabling', function(g)
             replicaset_uuid = box.NULL,
             message = "Can't obtain failover coordinator: " ..(
                 g.name == 'integration.switchover.etcd2' and
-                g.state_provider.URI .. "/v2/members:" ..
+                g.state_provider.client_url .. "/v2/members:" ..
                 " Couldn't connect to server" or
                 "State provider unavailable"),
         }, {
@@ -572,7 +529,7 @@ add('test_enabling', function(g)
             message = "Failover is stuck on " .. A1.advertise_uri ..
                 " (A1): Error fetching first appointments: " ..(
                 g.name == 'integration.switchover.etcd2' and
-                g.state_provider.URI .. "/v2/members:" ..
+                g.state_provider.client_url .. "/v2/members:" ..
                 " Couldn't connect to server" or
                 "Connection refused"),
         }, {

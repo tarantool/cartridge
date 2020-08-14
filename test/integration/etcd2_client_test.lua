@@ -28,26 +28,32 @@ g.before_each(function()
     local etcd_path = os.getenv('ETCD_PATH')
     t.skip_if(etcd_path == nil, 'etcd missing')
 
-    g.datadir = fio.tempdir()
-    g.etcd = t.Process:start(etcd_path, {
-        '--data-dir', g.datadir,
-        '--listen-peer-urls', 'http://localhost:17001',
-        '--listen-client-urls', URI,
-        '--advertise-client-urls', URI,
-    })
-    helpers.retrying({}, function()
-        local resp = httpc.put(URI .. '/v2/keys/hello?value=world')
-        assert(resp.status == 200)
-        require('log').info(
-            httpc.get(URI ..'/version').body
-        )
-    end)
+    -- Etcd has a specific feature: upon restart it preallocates
+    -- WAL file with 64MB size, and it can't be configured.
+    -- See https://github.com/etcd-io/etcd/issues/9422
+    --
+    -- Our Gitlab CI uses tmpfs at `/dev/shm` as TMPDIR.
+    -- It's size is also limited, in our case the same 64MB.
+    -- As a result, restarting etcd fails with an error:
+    -- C | etcdserver: open wal error: no space left on device
+    --
+    -- As a workaround we start etcd with workdir in `/tmp` and
+    -- ignore TMPDIR setting
+    g.datadir = fio.tempdir('/tmp')
 
+    g.etcd = helpers.Etcd:new({
+        workdir = g.datadir,
+        etcd_path = etcd_path,
+        peer_url = 'http://127.0.0.1:17001',
+        client_url = URI,
+    })
+
+    g.etcd:start()
     g.lock_delay = 40
 end)
 
 g.after_each(function()
-    g.etcd:kill()
+    g.etcd:stop()
     fio.rmtree(g.datadir)
 end)
 
@@ -380,11 +386,11 @@ function g.test_vclockkeeper()
         end)
     end
 
-    g.etcd:kill('STOP')
+    g.etcd.process:kill('STOP')
     set_vclockkeeper_async('A', 'a3', {[1] = 101})
     set_vclockkeeper_async('A', 'a3', {[1] = 102})
     fiber.sleep(0)
-    g.etcd:kill('CONT')
+    g.etcd.process:kill('CONT')
 
     local ret1, err1, vclockkeeper = unpack(chan_success:get(0.2))
     t.assert_equals({ret1, err1}, {true, nil})
@@ -397,11 +403,11 @@ function g.test_vclockkeeper()
 
     t.assert_equals(session:get_vclockkeeper('A'), vclockkeeper)
 
-    g.etcd:kill('STOP')
+    g.etcd.process:kill('STOP')
     set_vclockkeeper_async('B', 'b1')
     set_vclockkeeper_async('B', 'b2')
     fiber.sleep(0)
-    g.etcd:kill('CONT')
+    g.etcd.process:kill('CONT')
 
     local ret1, err1, vclockkeeper = unpack(chan_success:get(0.2))
     t.assert_equals({ret1, err1}, {true, nil})
