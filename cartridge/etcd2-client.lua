@@ -372,12 +372,31 @@ local function longpoll(client, timeout)
     end
 end
 
+--- Check that etcd cluster has a quorum.
+--
+-- @function check_quorum
+-- @treturn[1] boolean true
+-- @treturn[2] nil
+-- @treturn[2] table Error description
+local function check_quorum(client)
+    local session = client:get_session()
+    local resp, err = session.connection:request('GET', '/lock?quorum=true')
+    if resp ~= nil then
+        return true
+    elseif err.etcd_code == etcd2.EcodeKeyNotFound then
+        return true
+    end
+
+    return false, err
+end
+
 local client_mt = {
     __type = 'etcd2_client',
     __index = {
         longpoll = longpoll,
         get_session = get_session,
         drop_session = drop_session,
+        check_quorum = check_quorum,
     },
 }
 

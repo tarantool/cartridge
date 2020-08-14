@@ -41,19 +41,47 @@ g.before_each(function()
     -- ignore TMPDIR setting
     g.datadir = fio.tempdir('/tmp')
 
-    g.etcd = helpers.Etcd:new({
-        workdir = g.datadir,
+    g.etcd_a = helpers.Etcd:new({
+        name = 'a',
+        workdir = g.datadir .. '/a',
         etcd_path = etcd_path,
         peer_url = 'http://127.0.0.1:17001',
         client_url = URI,
+        env = {
+            ETCD_INITIAL_ADVERTISE_PEER_URLS = 'http://127.0.0.1:17001',
+            ETCD_INITIAL_CLUSTER = 'a=http://127.0.0.1:17001',
+        }
     })
+    g.etcd_a:start()
 
-    g.etcd:start()
+    local resp = httpc.post(URI ..'/v2/members',
+        json.encode({peerURLs = {'http://127.0.0.1:17002'}}),
+        {headers = {['Content-Type'] = 'application/json'}}
+    )
+    t.assert(resp.status == 201, resp.body)
+
+    g.etcd_b = helpers.Etcd:new({
+        name = 'b',
+        workdir = g.datadir .. '/b',
+        etcd_path = etcd_path,
+        peer_url = 'http://127.0.0.1:17002',
+        client_url = 'http://127.0.0.1:14002',
+        env = {
+            ETCD_INITIAL_ADVERTISE_PEER_URLS = 'http://127.0.0.1:17002',
+            ETCD_INITIAL_CLUSTER_STATE = 'existing',
+            ETCD_INITIAL_CLUSTER =
+                'a=http://127.0.0.1:17001,' ..
+                'b=http://127.0.0.1:17002',
+        }
+    })
+    g.etcd_b:start()
+
     g.lock_delay = 40
 end)
 
 g.after_each(function()
-    g.etcd:stop()
+    g.etcd_a:stop()
+    g.etcd_b:stop()
     fio.rmtree(g.datadir)
 end)
 
@@ -287,12 +315,19 @@ function g.test_authentication()
     local credentials = "root:" .. password
     local http_auth = "Basic " .. digest.base64_encode(credentials)
 
-    httpc.put(URI .. '/v2/auth/users/root', json.encode({
-        user = 'root',
-        password = password,
-    }))
-    httpc.put(URI .. '/v2/auth/enable')
-    httpc.put(URI .. '/v2/auth/roles/guest', json.encode({
+    helpers.retrying({}, function()
+        -- Without retrying it fails sometimes with an error message:
+        -- "Not capable of accessing auth feature during rolling upgrades"
+        local resp = httpc.put(URI .. '/v2/auth/users/root', json.encode({
+            user = 'root',
+            password = password,
+        }))
+        t.assert(resp.status == 201, resp.body)
+    end)
+
+    local resp = httpc.put(URI .. '/v2/auth/enable')
+    t.assert(resp.status == 200, resp.body)
+    local resp = httpc.put(URI .. '/v2/auth/roles/guest', json.encode({
         role = 'guest',
         revoke = {kv = {
             read = {'/*'},
@@ -302,6 +337,7 @@ function g.test_authentication()
         verbose = true,
         headers = {['Authorization'] = http_auth},
     })
+    t.assert(resp.status == 200, resp.body)
 
     local payload = {uuid = uuid.str(), uri = 'localhost:9'}
 
@@ -386,11 +422,11 @@ function g.test_vclockkeeper()
         end)
     end
 
-    g.etcd.process:kill('STOP')
+    g.etcd_a.process:kill('STOP')
     set_vclockkeeper_async('A', 'a3', {[1] = 101})
     set_vclockkeeper_async('A', 'a3', {[1] = 102})
     fiber.sleep(0)
-    g.etcd.process:kill('CONT')
+    g.etcd_a.process:kill('CONT')
 
     local ret1, err1, vclockkeeper = unpack(chan_success:get(0.2))
     t.assert_equals({ret1, err1}, {true, nil})
@@ -403,11 +439,11 @@ function g.test_vclockkeeper()
 
     t.assert_equals(session:get_vclockkeeper('A'), vclockkeeper)
 
-    g.etcd.process:kill('STOP')
+    g.etcd_b.process:kill('STOP')
     set_vclockkeeper_async('B', 'b1')
     set_vclockkeeper_async('B', 'b2')
     fiber.sleep(0)
-    g.etcd.process:kill('CONT')
+    g.etcd_b.process:kill('CONT')
 
     local ret1, err1, vclockkeeper = unpack(chan_success:get(0.2))
     t.assert_equals({ret1, err1}, {true, nil})
@@ -421,3 +457,21 @@ function g.test_vclockkeeper()
 
     t.assert_equals(session:get_vclockkeeper('B'), vclockkeeper)
 end
+
+function g.test_quorum()
+    local client = create_client()
+    t.assert_equals(client:check_quorum(), true)
+
+    g.etcd_b.process:kill('STOP')
+    t.assert_equals(client:check_quorum(), false)
+
+    g.etcd_a.process:kill('STOP')
+    t.assert_equals(client:check_quorum(), false)
+
+    g.etcd_b.process:kill('CONT')
+    t.assert_equals(client:check_quorum(), false)
+
+    g.etcd_a.process:kill('CONT')
+    t.assert_equals(client:check_quorum(), true)
+end
+
