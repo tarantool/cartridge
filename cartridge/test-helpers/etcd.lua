@@ -64,11 +64,9 @@ end
 
 --- Start the node.
 function Etcd:start()
-    local env = os.environ()
     local log_cmd = {}
     for k, v in pairs(self.env) do
         table.insert(log_cmd, string.format('%s=%q', k, v))
-        env[k] = v
     end
     table.insert(log_cmd, self.command)
     for _, v in ipairs(self.args) do
@@ -77,7 +75,7 @@ function Etcd:start()
 
     log.debug(table.concat(log_cmd, ' '))
 
-    self.process = Process:start(self.etcd_path, self.args, env, {
+    self.process = Process:start(self.etcd_path, self.args, self.env, {
         output_prefix = 'etcd-' .. self.name,
     })
     log.debug('Started server PID: ' .. self.process.pid)
