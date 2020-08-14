@@ -78,7 +78,7 @@ g_stateboard.before_all(function()
             password = g.kvpassword,
         },
         env = {
-            TARANTOOL_LOCK_DELAY = 1,
+            TARANTOOL_LOCK_DELAY = 2,
             TARANTOOL_PASSWORD = g.kvpassword,
         },
     })
@@ -157,7 +157,7 @@ g_etcd2.before_all(function()
     g.client = etcd2_client.new({
         prefix = 'failover_stateful_test',
         endpoints = {URI},
-        lock_delay = 1,
+        lock_delay = 5,
         username = '',
         password = '',
         request_timeout = 1,
@@ -173,7 +173,7 @@ g_etcd2.before_all(function()
             etcd2_params = {
                 prefix = 'failover_stateful_test',
                 endpoints = {URI},
-                lock_delay = 1,
+                lock_delay = 5,
             },
         }}
     ))
@@ -312,10 +312,12 @@ add('test_leader_restart', function(g)
     -----------------------------------------------------
     g.client:longpoll(0)
     S1:stop()
-    t.assert_covers(
-        g.client:longpoll(3),
-        {[storage_uuid] = storage_2_uuid}
-    )
+    helpers.retrying({}, function()
+        t.assert_covers(
+            g.client:longpoll(3),
+            {[storage_uuid] = storage_2_uuid}
+        )
+    end)
 
     helpers.retrying({}, function()
         t.assert_equals(R1.net_box:eval(q_leadership), storage_2_uuid)
@@ -323,9 +325,11 @@ add('test_leader_restart', function(g)
         t.assert_equals(S3.net_box:eval(q_leadership), storage_2_uuid)
     end)
 
-    t.assert_equals(R1.net_box:eval(q_readonliness), false)
-    t.assert_equals(S2.net_box:eval(q_readonliness), false)
-    t.assert_equals(S3.net_box:eval(q_readonliness), true)
+    helpers.retrying({}, function()
+        t.assert_equals(R1.net_box:eval(q_readonliness), false)
+        t.assert_equals(S2.net_box:eval(q_readonliness), false)
+        t.assert_equals(S3.net_box:eval(q_readonliness), true)
+    end)
 
     -----------------------------------------------------
     -- After old s1 recovers it doesn't take leadership
