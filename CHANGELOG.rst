@@ -25,6 +25,7 @@ Added
 - Add `probe_uri_timeout` argparse option responsible for retrying
   "Can't ping myself" error on startup.
 - "Force leader promotion" action for current leader in webui.
+- New test helper: ``cartridge.test-helpers.etcd``.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed

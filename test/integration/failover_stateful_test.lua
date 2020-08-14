@@ -1,7 +1,6 @@
 local log = require('log')
 local fio = require('fio')
 local t = require('luatest')
-local httpc = require('http.client')
 local helpers = require('test.helper')
 
 local etcd2_client = require('cartridge.etcd2-client')
@@ -112,46 +111,12 @@ g_etcd2.before_all(function()
 
     local URI = 'http://127.0.0.1:14001'
     g.datadir = fio.tempdir()
-    g.state_provider = {
-        -- Etcd has a specific feature: upon restart it preallocates
-        -- WAL file with 64MB size, and it can't be configured.
-        -- See https://github.com/etcd-io/etcd/issues/9422
-        --
-        -- Our Gitlab CI uses tmpfs at `/dev/shm` as TMPDIR.
-        -- It's size is also limited, in our case the same 64MB.
-        -- As a result, restarting etcd fails with an error:
-        -- C | etcdserver: open wal error: no space left on device
-        --
-        -- As a workaround we start etcd with workdir in `/tmp` and
-        -- ignore TMPDIR setting
+    g.state_provider = helpers.Etcd:new({
         workdir = fio.tempdir('/tmp'),
-    }
-    function g.state_provider:start()
-        self.process = t.Process:start(etcd_path, {
-            '--data-dir', self.workdir,
-            '--listen-peer-urls', 'http://localhost:17001',
-            '--listen-client-urls', URI,
-            '--advertise-client-urls', URI,
-        })
-
-        helpers.retrying({}, function()
-            local resp = httpc.put(URI .. '/v2/keys/hello?value=world')
-            assert(resp.status == 200, resp.body)
-            log.info('%s', httpc.get(URI ..'/version').body)
-        end)
-    end
-    function g.state_provider:stop()
-        local process = self.process
-        if process == nil then
-            return
-        end
-        self.process:kill()
-        helpers.retrying({}, function()
-            t.assert_not(process:is_alive(), 'Etcd is still running')
-        end)
-        log.warn('Etcd killed')
-        self.process = nil
-    end
+        etcd_path = etcd_path,
+        peer_url = 'http://127.0.0.1:17001',
+        client_url = 'http://127.0.0.1:14001',
+    })
 
     g.state_provider:start()
     g.client = etcd2_client.new({

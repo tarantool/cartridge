@@ -16,6 +16,7 @@ file = {
     "cartridge/test-helpers.lua",
     "cartridge/test-helpers/cluster.lua",
     "cartridge/test-helpers/server.lua",
+    "cartridge/test-helpers/etcd.lua",
     "cartridge/remote-control.lua",
     "cartridge/service-registry.lua",
     "cartridge/user-defined-role.lua",
