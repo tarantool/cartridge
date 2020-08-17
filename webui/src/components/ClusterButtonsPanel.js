@@ -7,7 +7,7 @@ import FailoverButton from 'src/components/FailoverButton';
 import BootstrapButton from 'src/components/BootstrapButton';
 import ProbeServerModal from 'src/components/ProbeServerModal';
 import ClusterIssuesButton from 'src/components/ClusterIssuesButton';
-import { PageSection } from '@tarantool.io/ui-kit';
+import { ControlsPanel } from '@tarantool.io/ui-kit';
 import type { State } from 'src/store/rootReducer';
 
 type ClusterButtonsPanelProps = {
@@ -24,9 +24,9 @@ const ClusterButtonsPanel = (
     showToggleAuth
   }: ClusterButtonsPanelProps) => {
   return (
-    <PageSection
+    <ControlsPanel
       className='meta-test__ButtonsPanel'
-      topRightControls={[
+      controls={[
         <ClusterIssuesButton />,
         <ProbeServerModal />,
         showToggleAuth && <AuthToggleButton />,

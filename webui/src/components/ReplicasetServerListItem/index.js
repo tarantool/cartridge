@@ -236,7 +236,7 @@ class ReplicasetServerListItem extends React.PureComponent<
                         )}
                       >
                         <IconBucket className={styles.iconMargin} />
-                        <Text className={styles.statsText} variant='h5' tag='span'>
+                        <Text className={styles.statsText} variant='p' tag='span'>
                           Buckets: <b>{(statistics && statistics.bucketsCount) || '-'}</b>
                         </Text>
                       </Tooltip>
@@ -246,7 +246,7 @@ class ReplicasetServerListItem extends React.PureComponent<
                   <div className={styles.memStats}>
                     <div>
                       <MemoryIcon {...statistics} className={styles.iconMargin} />
-                      <Text className={styles.statsText} variant='h5' tag='span'>{usageText}</Text>
+                      <Text className={styles.statsText} variant='p' tag='span'>{usageText}</Text>
                     </div>
                     <ProgressBar
                       className={styles.memProgress}

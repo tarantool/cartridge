@@ -6,13 +6,13 @@ import { Form, Field, FormSpy } from 'react-final-form';
 import {
   Button,
   Checkbox,
+  FormField,
   LabeledInput,
   PopupBody,
   PopupFooter,
   RadioButton
 } from '@tarantool.io/ui-kit';
 import SelectedReplicaset from 'src/components/SelectedReplicaset';
-import FormField from 'src/components/FormField';
 import type {
   Role,
   Replicaset,

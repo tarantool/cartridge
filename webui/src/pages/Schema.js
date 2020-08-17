@@ -11,21 +11,25 @@ import {
   setSchema,
   validateSchema
 } from 'src/store/actions/schema.actions';
-import { Alert, IconRefresh, Button, ControlsPanel } from '@tarantool.io/ui-kit';
+import {
+  Alert, IconRefresh, Button, ControlsPanel, PageLayout
+} from '@tarantool.io/ui-kit';
 
 const styles = {
+  page: css`
+    height: calc(100% - 69px);
+  `,
+  pageWithPane: css`
+    height: calc(100% - 69px - 112px);
+  `,
   area: css`
     display: flex;
     flex-direction: column;
-    height: calc(100% - 69px - 32px);
+    flex-grow: 1;
     padding: 16px;
-    margin: 16px;
     border-radius: 4px;
     box-sizing: border-box;
     background-color: #ffffff;
-  `,
-  areaWithPane: css`
-    height: calc(100% - 69px - 112px - 16px);
   `,
   cardMargin: css`
     padding: 24px 16px;
@@ -50,7 +54,6 @@ const styles = {
 };
 
 type SchemaProps = {
-  className?: string,
   isDemoPanelPresent: boolean,
   value: string,
   valueChanged: boolean,
@@ -73,7 +76,6 @@ class Schema extends React.Component<SchemaProps> {
 
   render() {
     const {
-      className,
       error,
       isDemoPanelPresent,
       value,
@@ -86,46 +88,48 @@ class Schema extends React.Component<SchemaProps> {
     } = this.props;
 
     return (
-      <div
+      <PageLayout
         className={cx(
-          styles.area,
-          { [styles.areaWithPane]: isDemoPanelPresent },
-          className
+          styles.page,
+          { [styles.pageWithPane]: isDemoPanelPresent }
         )}
+        heading='Schema'
       >
-        <div className={styles.panel}>
-          <ControlsPanel
-            thin
-            controls={[
-              <Button
-                text='Reload'
-                intent='secondary'
-                size='s'
-                onClick={getSchema}
-                icon={IconRefresh}
-              />,
-              <Button text='Validate' size='s' onClick={validateSchema} />,
-              <Button
-                onClick={applySchema}
-                text='Apply'
-                intent='primary'
-                size='s'
-                loading={uploading}
-                disabled={loading}
-              />
-            ]}
+        <div className={styles.area}>
+          <div className={styles.panel}>
+            <ControlsPanel
+              thin
+              controls={[
+                <Button
+                  text='Reload'
+                  intent='secondary'
+                  size='s'
+                  onClick={getSchema}
+                  icon={IconRefresh}
+                />,
+                <Button text='Validate' size='s' onClick={validateSchema} />,
+                <Button
+                  onClick={applySchema}
+                  text='Apply'
+                  intent='primary'
+                  size='s'
+                  loading={uploading}
+                  disabled={loading}
+                />
+              ]}
+            />
+          </div>
+          <SchemaEditor
+            className={styles.editor}
+            fileId='ddl'
+            value={value}
+            onChange={setSchema}
           />
+          {error && (
+            <Alert className={styles.errorPanel} type='error'>{error}</Alert>
+          )}
         </div>
-        <SchemaEditor
-          className={styles.editor}
-          fileId='ddl'
-          value={value}
-          onChange={setSchema}
-        />
-        {error && (
-          <Alert className={styles.errorPanel} type='error'>{error}</Alert>
-        )}
-      </div>
+      </PageLayout>
     );
   }
 }
