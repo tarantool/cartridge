@@ -69,6 +69,14 @@ docker-build-ce-2.3:
       --build-arg TARANTOOL_BRANCH=2.3
     DOCKER_FILE: Dockerfile.base-ce
 
+docker-build-ce-2.6:
+  extends: .docker-build-base
+  variables:
+    IMAGE_NAME: &IMAGE_NAME_CE_2_6 base-ce-2.6
+    BUILD_ARGS: >
+      --build-arg TARANTOOL_BRANCH=2.6
+    DOCKER_FILE: Dockerfile.base-ce
+
 ########################################################################
 ###
 ### Run backend tests
@@ -83,7 +91,6 @@ docker-build-ce-2.3:
     - export CMAKE_DUMMY_WEBUI=YES
     - tarantoolctl rocks make
     - tarantoolctl rocks list
-    - tarantool --version
   after_script:
     # avoid caching cartridge rock
     - tarantoolctl rocks remove cartridge
@@ -92,29 +99,48 @@ docker-build-ce-2.3:
     paths:
       - build.luarocks/
       - .rocks/
+  rules:
+    - if: '$NIGHTLY_TEST == "true"'
+      when: never
+    - # else
+      when: on_success
 
-.integration-template:
+integration-ee-1.10:
   extends: .test-template
+  variables:
+    IMAGE_NAME: *IMAGE_NAME_EE_1_10
   script:
     - pytest -v
     - luatest -v -x cypress.*
 
-integration-ee-1.10:
-  extends: .integration-template
-  variables:
-    IMAGE_NAME: *IMAGE_NAME_EE_1_10
+.integration-ce:
+  extends: .test-template
+  script:
+    - yum -y upgrade tarantool
+    - tarantool --version
+    - pytest -v
+    - luatest -v -x cypress.*
+  rules:
+    - if: '$NIGHTLY_TEST == "true"'
+      when: always
+    - # else
+      when: manual
+      allow_failure: true
 
 integration-ce-1.10:
-  extends: .integration-template
+  extends: .integration-ce
   variables:
     IMAGE_NAME: *IMAGE_NAME_CE_1_10
-  when: manual
 
 integration-ce-2.3:
-  extends: .integration-template
+  extends: .integration-ce
   variables:
     IMAGE_NAME: *IMAGE_NAME_CE_2_3
-  when: manual
+
+integration-ce-2.6:
+  extends: .integration-ce
+  variables:
+    IMAGE_NAME: *IMAGE_NAME_CE_2_6
 
 compatibility:
   extends: .test-template
@@ -150,7 +176,9 @@ cypress:
   image: ${CI_REGISTRY_IMAGE}/${IMAGE_NAME}:${IMAGE_TAG}
   stage: test
   rules:
-    - # if
+    - if: '$NIGHTLY_TEST == "true"'
+      when: never
+    - # elseif
       changes:
         - webui/src/**/*
         - webui/cypress/**/*
@@ -198,6 +226,8 @@ publish-scm-1:
     - docker
   image: centos:7
   rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+      when: never
     - if: '$CI_COMMIT_BRANCH == "master"'
   script:
     - curl --fail -X PUT -F "rockspec=@${ROCK_NAME}-scm-1.rockspec"
@@ -212,6 +242,8 @@ publish-release:
   variables:
     IMAGE_NAME: *IMAGE_NAME_EE_1_10
   rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+      when: never
     - if: $CI_COMMIT_TAG
   script:
     - ./release.sh
