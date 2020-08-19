@@ -34,6 +34,8 @@ Fixed
 - Eventual failover may miss an event while roles are being reconfigured.
 - Compatibility with pipe logging
   (see: https://github.com/tarantool/tarantool/issues/5220)
+- Non-informative assertion when instance is bootstrapped with a distinct
+  ``advertise_uri``.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Enhanced is WebUI

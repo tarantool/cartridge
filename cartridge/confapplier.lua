@@ -187,6 +187,18 @@ local function validate_config(clusterwide_config, _)
         conf_old = vars.clusterwide_config:get_readonly()
     end
     if conf_old == nil then
+        local instance_uuid = topology.find_server_by_uri(
+            conf_new.topology, vars.advertise_uri
+        )
+        if instance_uuid == nil then
+            local err = BootError:new(
+                "Missing %s in clusterwide config," ..
+                " check advertise_uri correctness",
+                vars.advertise_uri
+            )
+            return nil, err
+        end
+
         conf_old = {}
     end
 
@@ -322,23 +334,16 @@ local function boot_instance(clusterwide_config)
     -- The instance should know his uuids.
     local snapshots = fio.glob(fio.pathjoin(box_opts.memtx_dir, '*.snap'))
     local instance_uuid
-    local replicaset_uuid
     if next(snapshots) == nil then
         -- When snapshots are absent the only way to do it
         -- is to find myself by uri.
         instance_uuid = topology.find_server_by_uri(
             topology_cfg, vars.advertise_uri
         )
+    end
 
-        if instance_uuid == nil then
-            local err = BootError:new(
-                "Couldn't find server %s in clusterwide config," ..
-                " bootstrap impossible",
-                vars.advertise_uri
-            )
-            set_state('InitError', err)
-            return nil, err
-        end
+    local replicaset_uuid
+    if instance_uuid ~= nil then
 
         local server = topology_cfg.servers[instance_uuid]
         replicaset_uuid = server.replicaset_uuid
@@ -362,7 +367,17 @@ local function boot_instance(clusterwide_config)
         log.warn("Will try to rebootsrap, but it may fail again.")
 
         set_state('BootstrappingBox')
-        box_opts.instance_uuid = assert(instance_uuid)
+        if instance_uuid == nil then
+            local err = BootError:new(
+                "Missing %s in clusterwide config." ..
+                " Bootstrap impossible, check advertise_uri correctness",
+                vars.advertise_uri
+            )
+            set_state('BootError', err)
+            return nil, err
+        end
+
+        box_opts.instance_uuid = instance_uuid
         box_opts.replicaset_uuid = assert(replicaset_uuid)
         box_opts.replication_connect_quorum = 1
         box_opts.replication = topology.get_fullmesh_replication(

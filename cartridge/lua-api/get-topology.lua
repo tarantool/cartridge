@@ -238,7 +238,7 @@ local function get_topology()
                 uri = m.uri,
                 uuid = '',
                 status = 'unconfigured',
-                message = m.payload.error or m.payload.warning or '',
+                message = m.payload.state or '',
                 clock_delta = m.clock_delta and (m.clock_delta * 1e-6),
                 alias = m.payload.alias,
             })
