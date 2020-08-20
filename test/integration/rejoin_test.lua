@@ -6,7 +6,7 @@ local g = t.group()
 
 local helpers = require('test.helper')
 
-g.setup = function()
+g.before_each(function()
     g.cluster = helpers.Cluster:new({
         datadir = fio.tempdir(),
         server_command = helpers.entrypoint('srv_basic'),
@@ -25,16 +25,16 @@ g.setup = function()
     })
 
     g.cluster:start()
-end
+end)
 
-g.teardown = function()
+g.after_each(function()
     g.cluster:stop()
     fio.rmtree(g.cluster.datadir)
     if g.server ~= nil then
         g.server:stop()
         fio.rmtree(g.server.workdir)
     end
-end
+end)
 
 function g.test_rebootstrap()
     g.server = helpers.Server:new({
@@ -72,8 +72,30 @@ function g.test_rebootstrap()
         )
     end
 
+    -- Test for https://github.com/tarantool/cartridge/issues/972
+    -- Before the fix it used to fail with an assertion
+    -- "invalid transition Unconfigured -> InitError".
+    -- Now it correctly reports BootError.
+    g.server.env['TARANTOOL_ADVERTISE_URI'] = 'localhost:13304'
+    t.Server.start(g.server)
+    t.helpers.retrying({}, function()
+        t.assert_items_include(
+            g.cluster.main_server:graphql({
+                query = '{ servers { uri uuid status message }}',
+            }).data.servers,
+            {{
+                uri = 'localhost:13304',
+                uuid = '',
+                status = 'unconfigured',
+                message = 'BootError',
+            }}
+        )
+    end)
+    g.server:stop()
+
     -- Heal the server and restart
     log.info('--------------------------------------------------------')
+    g.server.env['TARANTOOL_ADVERTISE_URI'] = 'localhost:13303'
     g.server.env['TARANTOOL_MEMTX_MEMORY'] = nil
     g.server:start()
     g.cluster:wait_until_healthy()

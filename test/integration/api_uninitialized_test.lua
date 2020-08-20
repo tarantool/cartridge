@@ -95,6 +95,21 @@ function g.test_uninitialized()
         end
     )
 
+    -- edit_topology message slightly differs from join_server
+    t.assert_error_msg_equals(
+        [[Missing localhost:13301 in clusterwide config,]] ..
+        [[ check advertise_uri correctness]],
+        function()
+            return g.server:graphql({query = [[
+                mutation{ cluster {
+                    edit_topology(replicasets: [{
+                        join_servers: [{uri: "127.0.0.1:13301"}]
+                    }]) {}
+                }}
+            ]]})
+        end
+    )
+
     local resp = g.server:graphql({
         query = [[{
             cluster { failover }

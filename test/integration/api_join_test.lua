@@ -132,6 +132,20 @@ function g.test_join_server()
         end
     )
 
+    t.assert_error_msg_equals(
+        [[Missing localhost:13302 in clusterwide config,]] ..
+        [[ check advertise_uri correctness]],
+        function()
+            return main:graphql({
+                query = [[mutation { cluster {
+                    edit_topology(replicasets: [{
+                        join_servers: [{uri: "127.0.0.1:13302"}]
+                    }]) {}
+                }}]]
+            })
+        end
+    )
+
     main:graphql({
         query = [[mutation {
             join_server(
