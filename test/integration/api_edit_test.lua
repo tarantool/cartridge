@@ -123,6 +123,26 @@ function g.test_edit_server()
     }, {tostring(actual_error)})
 
     t.assert_error_msg_contains(
+        'servers[bbbbbbbb-bbbb-0000-0000-000000000001].uri' ..
+        ' "localhost:13302" collision with another server',
+        edit_server_req,
+        {
+            uuid = helpers.uuid('b', 'b', 2), -- storage-2
+            uri = 'localhost:13302', -- storage-1
+        }
+    )
+
+    local main = g.cluster.main_server
+    edit_server_req({
+        uuid = g.cluster.main_server.instance_uuid,
+        uri = '127.0.0.1:' .. main.advertise_port,
+    })
+    edit_server_req({
+        uuid = g.cluster.main_server.instance_uuid,
+        uri = 'localhost:' .. main.advertise_port,
+    })
+
+    t.assert_error_msg_contains(
         'Server "cccccccc-cccc-0000-0000-000000000001" is expelled',
         edit_server_req,
         {
