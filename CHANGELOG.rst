@@ -26,6 +26,7 @@ Added
   "Can't ping myself" error on startup.
 - "Force leader promotion" action for current leader in webui.
 - New test helper: ``cartridge.test-helpers.etcd``.
+- `rpc_call` supports `on_push` and `on_push_ctx` net.box options.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed

@@ -198,3 +198,43 @@ function g.test_routing()
         {uri = B2.advertise_uri, leader_only = true}
     )
 end
+
+function g.test_push()
+    local function rpc_call(server, role_name, fn_name, args, kv_args)
+        local res, err = server.net_box:eval([[
+            local role_name, fn_name, args, kv_args = ...
+            local rpc = require('cartridge.rpc')
+            local result = {}
+            local function on_push(ctx, data)
+                result.ctx = ctx
+                result.data = data
+            end
+            kv_args.on_push = on_push
+            kv_args.on_push_ctx = 'context'
+            local ok, err = rpc.call(role_name, fn_name, args, kv_args)
+            if not ok then
+                return nil, err
+            end
+            return result
+        ]], {role_name, fn_name, args, kv_args})
+        return res, err
+    end
+
+    local B2 = g.cluster:server('B2')
+    local res, err = rpc_call(
+        B2, 'myrole', 'push', {1}, {prefer_local=false}
+    )
+
+    t.assert_equals(err, nil)
+    t.assert_equals(type(res), 'table')
+    t.assert_equals(res.ctx, 'context')
+    t.assert_equals(res.data, 2)
+
+    t.assert_error_msg_contains(
+        'bad argument opts.on_push/opts.on_push_ctx to rpc_call' ..
+        ' (allowed to be used only with opts.prefer_local=false)',
+        rpc_call, B2,
+        'myrole', 'push', {1},
+        {prefer_local = true}
+    )
+end

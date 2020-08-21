@@ -187,6 +187,8 @@ end
 -- @param opts.remote_only (*deprecated*) Use `prefer_local` instead.
 -- @param opts.timeout passed to `net.box` `conn:call` options.
 -- @param opts.buffer passed to `net.box` `conn:call` options.
+-- @param opts.on_push passed to `net.box` `conn:call` options.
+-- @param opts.on_push_ctx passed to `net.box` `conn:call` options.
 --
 -- @return[1] `conn:call()` result
 -- @treturn[2] nil
@@ -200,6 +202,8 @@ local function call_remote(role_name, fn_name, args, opts)
         uri = '?string',
         timeout = '?', -- for net.box.call
         buffer = '?', -- for net.box.call
+        on_push = '?function', -- for net.box.call
+        on_push_ctx = '?', -- for net.box.call
     })
 
     if opts.uri ~= nil and opts.leader_only then
@@ -220,6 +224,12 @@ local function call_remote(role_name, fn_name, args, opts)
 
     if prefer_local == nil then
         prefer_local = true
+    end
+
+    if (opts.on_push ~= nil or opts.on_push_ctx ~= nil) and opts.prefer_local ~= false then
+        local err = "bad argument opts.on_push/opts.on_push_ctx to rpc_call" ..
+            " (allowed to be used only with opts.prefer_local=false)"
+        error(err, 2)
     end
 
     local leader_only = opts.leader_only
@@ -251,6 +261,8 @@ local function call_remote(role_name, fn_name, args, opts)
             {
                 timeout = opts.timeout,
                 buffer = opts.buffer,
+                on_push = opts.on_push,
+                on_push_ctx = opts.on_push_ctx,
             }
         )
     end
