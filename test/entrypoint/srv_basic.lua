@@ -89,6 +89,10 @@ package.preload['mymodule'] = function()
         -- rpc functions
         dog_goes = function() return "woof" end,
         throw = function(msg) error(msg, 2) end,
+        push = function(x)
+            box.session.push(x + 1)
+            return true
+        end,
     }
 end
 
