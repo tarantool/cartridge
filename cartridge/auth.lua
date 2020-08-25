@@ -34,7 +34,6 @@ local ADMIN_USER = {
     fullname = 'Cartridge Administrator'
 }
 
-errors.new_class('RenderHTTPError', {log_on_creation = true})
 local e_check_cookie = errors.new_class('Checking cookie failed')
 local e_check_header = errors.new_class('Checking auth headers failed')
 local e_callback = errors.new_class('Auth callback failed')
