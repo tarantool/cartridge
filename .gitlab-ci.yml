@@ -1,3 +1,14 @@
+workflow:
+  # Eliminate Gitlab CI warnings:
+  # jobs may allow multiple pipelines to run for a single action due to
+  # `rules:when` clause with no `workflow:rules` - read more:
+  # https://docs.gitlab.com/ee/ci/troubleshooting.html#pipeline-warnings
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: never
+    - # else
+      when: always
+
 variables:
   GIT_STRATEGY: clone
   ROCK_NAME: cartridge
