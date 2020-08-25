@@ -82,7 +82,6 @@ class ServerInfoModal extends React.Component<ServerInfoModalProps, ServerInfoMo
         ]}
         visible={true}
         onClose={this.close}
-        thinBorders
         wide
       >
         <React.Fragment>

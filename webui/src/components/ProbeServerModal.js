@@ -87,7 +87,7 @@ class ProbeServerModal extends React.PureComponent<ProbeServerModalProps> {
                   Probe a server if it wasn't discovered automatically by UDP broadcast.
                 </Text>
                 <LabeledInput
-                  label='Server URI'
+                  label='Server URI to probe'
                   name='uri'
                   value={values.uri}
                   onChange={handleChange}

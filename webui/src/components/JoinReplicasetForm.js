@@ -9,7 +9,6 @@ import {
   FormField,
   IconInfo,
   LeaderFlagSmall,
-  PopupBody,
   PopupFooter,
   RadioButton,
   Text,
@@ -170,8 +169,8 @@ class JoinReplicasetForm extends React.Component<JoinReplicasetFormProps> {
         }) => {
           return (
             <form onSubmit={handleSubmit}>
-              <PopupBody className={styles.wrap}>
-                <SelectedServersList className={styles.splash} serverList={selectedServers} selfURI={selfURI} />
+              <SelectedServersList className={styles.splash} serverList={selectedServers} selfURI={selfURI} />
+              <div className={styles.wrap}>
                 <FormField
                   className={styles.wideField}
                   itemClassName={styles.radioWrap}
@@ -233,7 +232,7 @@ class JoinReplicasetForm extends React.Component<JoinReplicasetFormProps> {
                     </React.Fragment>
                   ))}
                 </FormField>
-              </PopupBody>
+              </div>
               <PopupFooter
                 className={styles.splash}
                 controls={([

@@ -8,7 +8,6 @@ import {
   Checkbox,
   FormField,
   LabeledInput,
-  PopupBody,
   PopupFooter,
   RadioButton
 } from '@tarantool.io/ui-kit';
@@ -140,8 +139,8 @@ EditReplicasetFormProps) => {
 
         return (
           <form onSubmit={handleSubmit}>
-            <PopupBody className={styles.wrap}>
-              <SelectedReplicaset className={styles.splash} replicaset={replicaset} />
+            <SelectedReplicaset className={styles.splash} replicaset={replicaset} />
+            <div className={styles.wrap}>
               <FormSpy
                 subscription={{ values: true }}
                 onChange={({ values }) => {
@@ -303,7 +302,7 @@ EditReplicasetFormProps) => {
                   />
                 )}
               </Field>
-            </PopupBody>
+            </div>
             <PopupFooter
               controls={([
                 <Button type='button' onClick={onCancel}>Cancel</Button>,

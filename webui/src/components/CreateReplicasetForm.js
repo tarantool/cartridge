@@ -8,7 +8,6 @@ import {
   Checkbox,
   FormField,
   LabeledInput,
-  PopupBody,
   PopupFooter,
   RadioButton
 } from '@tarantool.io/ui-kit';
@@ -29,8 +28,6 @@ import {
 import { VSHARD_STORAGE_ROLE_NAME } from 'src/constants';
 
 const styles = {
-  form: css`
-  `,
   wrap: css`
     display: flex;
     flex-wrap: wrap;
@@ -125,9 +122,9 @@ CreateReplicasetFormProps) => (
       const rolesColumns = (knownRoles && knownRoles.length > 6) ? 3 : 2;
 
       return (
-        <form className={styles.form} onSubmit={handleSubmit}>
-          <PopupBody className={styles.wrap}>
-            <SelectedServersList className={styles.splash} serverList={selectedServers} selfURI={selfURI} />
+        <form onSubmit={handleSubmit}>
+          <SelectedServersList className={styles.splash} serverList={selectedServers} selfURI={selfURI} />
+          <div className={styles.wrap}>
             <FormSpy
               subscription={{ values: true }}
               onChange={({ values }) => {
@@ -266,7 +263,7 @@ CreateReplicasetFormProps) => (
                 </FormField>
               )}
             </Field>
-          </PopupBody>
+          </div>
           <PopupFooter
             controls={([
               <Button type='button' onClick={onCancel}>Cancel</Button>,
