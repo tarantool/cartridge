@@ -17,29 +17,31 @@ Added
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 - When failover mode is stateful, all manual leader promotions will be consistent:
-  every instance before becoming writable performs `wait_lsn` operation to
+  every instance before becoming writable performs ``wait_lsn`` operation to
   sync with previous one. If consistency couldn't be reached due to replication
   failure, a user could either revert it (promote previous leader), or force
   promotion to be inconsistent.
 - Early logger initialization (for Tarantool > 2.5.0-100, which supports it).
-- Add `probe_uri_timeout` argparse option responsible for retrying
+- Add ``probe_uri_timeout`` argparse option responsible for retrying
   "Can't ping myself" error on startup.
-- "Force leader promotion" action for current leader in webui.
 - New test helper: ``cartridge.test-helpers.etcd``.
-- `rpc_call` supports `on_push` and `on_push_ctx` net.box options.
-- Replicasets leaders will have orange flags instead of green ones while
-  they are read-only.
+- Support ``on_push`` and ``on_push_ctx`` options for ``cartridge.rpc_call()``.
+- Changing users password invalidates HTTP cookie.
+- Support GraphQL `default variables <https://graphql.org/learn/queries/#default-variables>`_.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 - Eventual failover may miss an event while roles are being reconfigured.
-- Compatibility with pipe logging
-  (see: https://github.com/tarantool/tarantool/issues/5220)
+- Compatibility with pipe logging, see
+  `tarantool/tarantool#5220 <https://github.com/tarantool/tarantool/issues/5220>`_.
 - Non-informative assertion when instance is bootstrapped with a distinct
   ``advertise_uri``.
 - Indexing ``nil`` value in ``get_topology()`` query.
+- Initialization race of vshard storage which results in ``OperationError``.
+- Lack of vshard router reconnection attempts to the replicas.
+- Make GraphQL syntax errors more clear.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Enhanced is WebUI
@@ -47,6 +49,8 @@ Enhanced is WebUI
 
 - Show instance names in issues list.
 - Show app name in window title.
+- Add "Force leader promotion" button in stateful failover mode.
+- Indicate consistent switchover problems with a yellow leader flag.
 
 -------------------------------------------------------------------------------
 [2.2.0] - 2020-06-23

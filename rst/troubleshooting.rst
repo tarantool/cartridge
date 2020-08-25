@@ -183,7 +183,7 @@ But if you're still determined to reload the configuration manually, you can do
 .. code-block:: lua
 
     -- load config from filesystem
-    clusterwidie_config = require('cartridge.clusterwide-config')
+    clusterwide_config = require('cartridge.clusterwide-config')
     cfg = clusterwidie_config.load('./config')
     cfg:lock()
 
