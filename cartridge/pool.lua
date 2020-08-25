@@ -13,7 +13,6 @@ local netbox = require('net.box')
 local vars = require('cartridge.vars').new('cartridge.pool')
 local cluster_cookie = require('cartridge.cluster-cookie')
 
-vars:new('locks', {})
 vars:new('connections', {})
 
 local FormatURIError = errors.new_class('FormatURIError')
