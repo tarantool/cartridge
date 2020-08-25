@@ -18,6 +18,9 @@ describe('Replicaset filtering', () => {
   })
 
   it('Filter in replicaset list', () => {
+    cy.reload();
+    cy.contains('Replica sets', { timeout: 8000 });
+
     //Healthy
     cy.get('button[type="button"]:contains(Filter)').click();
     cy.get('.meta-test__Filter__Dropdown *:contains(Healthy)').click();
