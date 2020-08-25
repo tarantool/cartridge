@@ -94,6 +94,7 @@ class Schema extends React.Component<SchemaProps> {
           { [styles.pageWithPane]: isDemoPanelPresent }
         )}
         heading='Schema'
+        wide
       >
         <div className={styles.area}>
           <div className={styles.panel}>

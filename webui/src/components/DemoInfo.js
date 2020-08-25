@@ -230,7 +230,6 @@ class DemoInfo extends React.Component<DemoInfoProps, DemoInfoState> {
           title={'Connect info'}
           onClose={this.hideConnectInfo}
           className='meta-test__DemoInfo_modal'
-          thinBorders
           wide
         >
           <Tabbed tabs={tabs}/>
