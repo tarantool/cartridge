@@ -42,6 +42,7 @@ Fixed
 - Initialization race of vshard storage which results in ``OperationError``.
 - Lack of vshard router reconnection attempts to the replicas.
 - Make GraphQL syntax errors more clear.
+- Better ``errors.pcall()`` performance, ``errors`` rock updated to v2.1.4.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Enhanced is WebUI
