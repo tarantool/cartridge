@@ -85,7 +85,7 @@ describe('Failover', () => {
 
   it('Check issues', () => {
     cy.reload();
-    cy.contains('Replica sets');
+    cy.contains('Replica sets', { timeout: 6000 });
     cy.get('.meta-test__ClusterIssuesButton').should('be.enabled');
     cy.get('.meta-test__ClusterIssuesButton').contains('Issues: 6');
     cy.get('.meta-test__ClusterIssuesButton').click();
@@ -97,7 +97,7 @@ describe('Failover', () => {
 
     cy.exec('kill -SIGSTOP $(lsof -sTCP:LISTEN -i :8082 -t)', { failOnNonZeroExit: true });
     cy.reload();
-    cy.contains('Replica sets');
+    cy.contains('Replica sets', { timeout: 6000 });
     cy.get('.meta-test__ClusterIssuesButton').click();
     cy.get('.meta-test__ClusterIssuesModal', { timeout: 6000 })
       .contains(
