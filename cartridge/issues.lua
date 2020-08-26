@@ -21,6 +21,7 @@
 --   this is likely a bug;
 
 -- Switchover:
+--
 -- * "Consistency on ... isn't reached yet";
 --
 -- Clock:
@@ -37,9 +38,14 @@
 --   `items_used_ratio > limits.fragmentation_threshold_warning` and
 --   both `arena_used_ratio`, `quota_used_ratio` exceed critical limit.
 --
+-- Config mismatch:
+--
+-- * "Configuration checksum mismatch on ...".
+--
 -- @module cartridge.issues
 -- @local
 
+local log = require('log')
 local fun = require('fun')
 local checks = require('checks')
 local pool = require('cartridge.pool')
@@ -71,7 +77,7 @@ local function describe(uri)
     end
 end
 
-local function list_on_instance()
+local function list_on_instance(opts)
     local enabled_servers = {}
     local topology_cfg = confapplier.get_readonly('topology')
     for _, uuid, server in fun.filter(topology.not_disabled, topology_cfg.servers) do
@@ -244,6 +250,29 @@ local function list_on_instance()
         })
     end
 
+    local checksum = confapplier.get_active_config():get_checksum()
+    if opts ~= nil
+    and opts.checksum ~= nil
+    and opts.checksum ~= checksum
+    then
+        log.verbose(
+            'Config checksum mismatch:' ..
+            ' %s (local) vs %s (remote)',
+            checksum, opts.checksum
+        )
+
+        table.insert(ret, {
+            level = 'warning',
+            topic = 'config_mismatch',
+            instance_uuid = instance_uuid,
+            replicaset_uuid = replicaset_uuid,
+            message = string.format(
+                'Configuration checksum mismatch on %s',
+                describe(self_uri)
+            ),
+        })
+    end
+
     return ret
 end
 
@@ -324,7 +353,8 @@ local function list_on_cluster()
 
     local issues_map = pool.map_call(
         '_G.__cartridge_issues_list_on_instance',
-        {}, {uri_list = uri_list, timeout = 1}
+        {{checksum = confapplier.get_active_config():get_checksum()}},
+        {uri_list = uri_list, timeout = 1}
     )
 
     for _, issues in pairs(issues_map) do
