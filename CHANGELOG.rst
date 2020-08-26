@@ -44,7 +44,7 @@ Fixed
   ``advertise_uri``.
 - Indexing ``nil`` value in ``get_topology()`` query.
 - Initialization race of vshard storage which results in ``OperationError``.
-- Lack of vshard router reconnection attempts to the replicas.
+- Lack of vshard router attempts to reconnect to the replicas.
 - Make GraphQL syntax errors more clear.
 - Better ``errors.pcall()`` performance, ``errors`` rock updated to v2.1.4.
 
@@ -54,7 +54,7 @@ Enhanced is WebUI
 
 - Show instance names in issues list.
 - Show app name in window title.
-- Add "Force leader promotion" button in stateful failover mode.
+- Add the "Force leader promotion" button in the stateful failover mode.
 - Indicate consistent switchover problems with a yellow leader flag.
 
 -------------------------------------------------------------------------------
