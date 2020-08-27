@@ -450,13 +450,6 @@ function g.test_call()
         t.assert_equals(conn:call('math.pow', {2, 4}), 16)
         t.assert_equals(conn:call('_G.math.pow', {2, 5}), 32)
 
-        -- Allow running tests in strict mode
-        -- Error message differs in this case:
-        -- - "Procedure '' is not defined"
-        -- + "variable '' is not declared"
-        local _G_mt = getmetatable(_G)
-        setmetatable(_G, nil)
-
         t.assert_error_msg_contains(
             "Procedure '' is not defined",
             conn.call, conn, ''
@@ -516,8 +509,6 @@ function g.test_call()
             "Use object:method instead",
             conn.call, conn, 'object.method'
         )
-
-        setmetatable(_G, _G_mt)
 
         t.assert_equals({conn:call('multireturn')}, {box.NULL, "Artificial Error", 3})
         t.assert_equals({conn:call('varargs')}, {})

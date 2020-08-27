@@ -52,45 +52,25 @@ local function rc_eval(code, args)
     return _pack(fun(unpack(args)))
 end
 
-local function is_callable(fun)
-    if type(fun) == 'function' then
-        return true
-    elseif type(fun) == 'table' then
-        local mt = getmetatable(fun)
-        return mt and mt.__call
-    else
-        return false
+local call_loadproc = box.internal.call_loadproc
+local function pack_tail(status, ...)
+    if not status then
+        return status, ...
     end
+    return status, _pack(...)
 end
 
-local function rc_call(function_path, args)
-    checks('string', 'table')
-
-    local mod_path, delimiter, fun_name = function_path:match('^(.-)([%.%:]?)([_%w]*)$')
-
-    local mod = _G
-    if delimiter ~= '' then
-        local mod_parts = string.split(mod_path, '.')
-        for i = 1, #mod_parts do
-            if type(mod) ~= 'table' then
-                break
-            end
-            mod = mod[mod_parts[i]]
-        end
+local function rc_call(function_path, ...)
+    checks('string')
+    local exists, proc, obj = pcall(call_loadproc, function_path)
+    if not exists then
+        return false, proc
     end
 
-    if type(mod) ~= 'table'
-    or not is_callable(mod[fun_name])
-    then
-        error(string.format(
-            "Procedure '%s' is not defined", function_path
-        ))
-    end
-
-    if delimiter == ':' then
-        return _pack(mod[fun_name](mod, unpack(args)))
+    if obj ~= nil then
+        return pack_tail(pcall(proc, obj, ...))
     else
-        return _pack(mod[fun_name](unpack(args)))
+        return pack_tail(pcall(proc, ...))
     end
 end
 
@@ -263,7 +243,7 @@ local function communicate(s)
             return true
         end
 
-        local ok, ret = pcall(rc_call, fn_name, fn_args)
+        local ok, ret = rc_call(fn_name, unpack(fn_args))
         if ok then
             reply_ok(s, sync, ret)
             return true
