@@ -122,3 +122,27 @@ function g.test_broken_replica()
         end
     end)
 end
+
+function g.test_config_mismatch()
+    local master = g.cluster.main_server
+    local replica2 = g.cluster:server('replica2')
+    replica2.net_box:eval([[
+        local confapplier = require('cartridge.confapplier')
+        local cfg = confapplier.get_active_config():copy()
+        cfg:set_plaintext('todo.txt', '- Test config mismatch')
+        cfg:lock()
+        confapplier.apply_config(cfg)
+    ]])
+
+    t.assert_items_include(
+        helpers.list_cluster_issues(master),
+        {{
+            level = 'warning',
+            topic = 'config_mismatch',
+            instance_uuid = helpers.uuid('a', 'a', 3),
+            replicaset_uuid = helpers.uuid('a'),
+            message = 'Configuration checksum mismatch' ..
+                ' on localhost:13303 (replica2)',
+        }}
+    )
+end
