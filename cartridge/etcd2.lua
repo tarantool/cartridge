@@ -66,32 +66,29 @@ local function request(connection, method, path, args, opts)
 
         local url = connection.endpoints[eidx] .. path
         local resp = httpc.request(method, url, body, http_opts)
-        if resp == nil or resp.status >= 500 then
-            lasterror = HttpError:new('%s: %s',
-                url, resp and (resp.body or resp.reason)
+
+        if resp.headers == nil then
+            lasterror = HttpError:new('%s: %s', url, resp.reason)
+            lasterror.http_code = resp.status
+            goto continue
+        end
+
+        local etcd_cluster_id = resp.headers['x-etcd-cluster-id']
+        if etcd_cluster_id ~= connection.etcd_cluster_id then
+            lasterror = EtcdConnectionError:new(
+                '%s: etcd cluster id mismatch (expected %s, got %s)',
+                url, connection.etcd_cluster_id, etcd_cluster_id
             )
             goto continue
         end
 
-        local etcd_cluster_id = resp.headers and resp.headers['x-etcd-cluster-id']
-        if etcd_cluster_id ~= connection.etcd_cluster_id then
-            lasterror = EtcdConnectionError:new('Etcd cluster id mismatch')
-            goto continue
-        end
-
+        connection.eidx = eidx
         local ok, data = pcall(json.decode, resp.body)
         if not ok then
-            lasterror = HttpError:new(resp.body or resp.reason)
-            lasterror.http_code = resp.status
-            if resp.status == 408 then -- timeout
-                return nil, lasterror
-            else
-                goto continue
-            end
-        end
-
-        connection.eidx = eidx
-        if data.errorCode then
+            local err = HttpError:new('%s: %s', url, resp.body or resp.reason)
+            err.http_code = resp.status
+            return nil, err
+        elseif data.errorCode then
             local err = EtcdError:new('%s (%s): %s',
                 data.message, data.errorCode, data.cause
             )
