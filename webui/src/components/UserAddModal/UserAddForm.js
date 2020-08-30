@@ -104,8 +104,10 @@ class UserAddForm extends React.Component {
             </Alert>
           ) : null}
           <div className={styles.actionButtons}>
-            {onClose && <Button intent="base" onClick={onClose} className={styles.cancelButton}>Cancel</Button>}
-            <Button intent="primary" type='submit'>Add</Button>
+            {onClose && (
+              <Button onClick={onClose} className={styles.cancelButton} size='l'>Cancel</Button>
+            )}
+            <Button intent="primary" type='submit' size='l'>Add</Button>
           </div>
         </Form>
         )}

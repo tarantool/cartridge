@@ -37,6 +37,7 @@ const Users = ({
           text='Add user'
           intent='primary'
           onClick={showAddUserModal}
+          size='l'
         >
           Add user
         </Button>

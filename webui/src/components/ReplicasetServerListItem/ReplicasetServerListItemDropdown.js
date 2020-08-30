@@ -70,7 +70,7 @@ export class ReplicasetServerListItemDropdown extends React.PureComponent<
         <Button
           icon={IconMore}
           size='s'
-          intent='iconic'
+          intent='plain'
         />
       </Dropdown>
     )

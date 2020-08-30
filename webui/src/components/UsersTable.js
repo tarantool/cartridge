@@ -123,7 +123,7 @@ class UsersTable extends React.Component {
             items={filtered}
             popoverClassName='meta-test__UsersTableItem__dropdown'
           >
-            <Button icon={IconMore} intent='iconic' size='s' />
+            <Button icon={IconMore} intent='plain' size='s' />
           </Dropdown>
         )
         : null

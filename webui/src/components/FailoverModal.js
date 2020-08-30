@@ -193,6 +193,7 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
           <Button
             className='meta-test__CancelButton'
             onClick={() => setVisibleFailoverModal(false)}
+            size='l'
           >
             Cancel
           </Button>,
@@ -200,6 +201,7 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
             className='meta-test__SubmitButton'
             intent='primary'
             type='submit'
+            size='l'
           >
             Apply
           </Button>

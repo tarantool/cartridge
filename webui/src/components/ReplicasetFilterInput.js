@@ -58,7 +58,7 @@ const presetsDropdown = (
       <DropdownDivider />,
       ...roles.map(role => getDropdownOption('role', setValue)(role.name))
     ]}
-    intent='secondary'
+    intent='dark'
     iconRight={({ className }) => (
       <IconChevron
         direction='down'

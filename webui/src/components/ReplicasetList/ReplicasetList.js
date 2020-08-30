@@ -6,7 +6,7 @@ import { withRouter } from 'react-router-dom';
 import {
   Button,
   HealthStatus,
-  IconGear,
+  IconEdit,
   Text,
   TiledList,
   Tooltip
@@ -186,7 +186,7 @@ class ReplicasetList extends React.PureComponent {
                         ? (
                           <Button
                             className={cx(styles.statusButton, 'meta-test__haveIssues')}
-                            intent='secondary'
+                            intent='plain'
                             size='s'
                             onClick={() => this.showIssuesModal(replicaset.uuid)}
                           >
@@ -227,10 +227,9 @@ class ReplicasetList extends React.PureComponent {
                 </div>
                 <Button
                   className={styles.editBtn}
-                  icon={IconGear}
+                  icon={IconEdit}
                   intent='secondary'
                   onClick={() => this.handleEditReplicasetRequest(replicaset)}
-                  size='s'
                   text='Edit'
                 />
               </div>

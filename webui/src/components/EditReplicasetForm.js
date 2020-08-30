@@ -305,12 +305,13 @@ EditReplicasetFormProps) => {
             </div>
             <PopupFooter
               controls={([
-                <Button type='button' onClick={onCancel}>Cancel</Button>,
+                <Button type='button' onClick={onCancel} size='l'>Cancel</Button>,
                 <Button
                   className='meta-test__EditReplicasetSaveBtn'
                   intent='primary'
                   type='submit'
                   disabled={!!Object.keys(errors).length}
+                  size='l'
                 >
                   Save
                 </Button>

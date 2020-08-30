@@ -144,12 +144,15 @@ class LogInForm extends React.Component {
               ) : null}
 
               <div className={styles.actionButtons}>
-                {onClose && <Button intent="base" onClick={onClose} className={styles.cancelButton}>Cancel</Button>}
+                {onClose && (
+                  <Button onClick={onClose} className={styles.cancelButton} size='l'>Cancel</Button>
+                )}
                 <Button
                   className='meta-test__LoginFormBtn'
                   intent="primary"
                   type="submit"
                   disabled={!isLoginEnabled}
+                  size='l'
                 >
                   Login
                 </Button>

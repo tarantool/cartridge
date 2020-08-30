@@ -28,6 +28,7 @@ const FailoverButton = (
       <Button
         className='meta-test__FailoverButton'
         onClick={() => dispatch(setVisibleFailoverModal(true))}
+        size='l'
       >
         {`Failover: ${mode}`}
       </Button>

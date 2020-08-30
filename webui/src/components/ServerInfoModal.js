@@ -80,7 +80,7 @@ class ServerInfoModal extends React.Component<ServerInfoModalProps, ServerInfoMo
         className='meta-test__ServerInfoModal'
         title='Server details'
         footerControls={[
-          <Button onClick={this.close} text='Close' />
+          <Button onClick={this.close} text='Close' size='l' />
         ]}
         visible={true}
         onClose={this.close}
