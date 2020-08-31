@@ -182,42 +182,58 @@ But if you're still determined to reload the configuration manually, you can do
 
 .. code-block:: lua
 
-    local ClusterwideConfig = require('cartridge.clusterwide-config')
-    local confapplier = require('cartridge.confapplier')
+    function reload_clusterwide_config()
+        local changelog = {}
 
-    -- load config from filesystem
-    local cfg, err = ClusterwideConfig.load('{{ .ConfigPath }}')
-    if err ~= nil then
-        error(string.format('Failed to load new config: %s', err))
+        local ClusterwideConfig = require('cartridge.clusterwide-config')
+        local confapplier = require('cartridge.confapplier')
+
+        -- load config from filesystem
+        table.insert(changelog, 'Loading new config...')
+
+        local cfg, err = ClusterwideConfig.load('./config')
+        if err ~= nil then
+            return changelog, string.format('Failed to load new config: %s', err)
+        end
+
+        -- check instance state
+        table.insert(changelog, 'Checking instance config state...')
+
+        local roles_configured_state = 'RolesConfigured'
+        local connecting_fullmesh_state = 'ConnectingFullmesh'
+
+        local state = confapplier.wish_state(roles_configured_state, 10)
+
+        if state == connecting_fullmesh_state then
+            return changelog, string.format(
+                'Failed to reach %s config state. Stuck in %s. ' ..
+                    'Call "box.cfg({replication_connect_quorum = 0})" in instance console and try again',
+                roles_configured_state, state
+            )
+        end
+
+        if state ~= roles_configured_state then
+            return changelog, string.format(
+                'Failed to reach %s config state. Stuck in %s',
+                roles_configured_state, state
+            )
+        end
+
+        -- apply config changes
+        table.insert(changelog, 'Applying config changes...')
+
+        cfg:lock()
+        local ok, err = confapplier.apply_config(cfg)
+        if err ~= nil then
+            return changelog, string.format('Failed to apply new config: %s', err)
+        end
+
+        table.insert(changelog, 'Cluster-wide configuration was successfully updated')
+
+        return changelog
     end
 
-    -- check instance state
-    local roles_configured_state = 'RolesConfigured'
-    local connecting_fullmesh_state = 'ConnectingFullmesh'
-
-    local state = confapplier.wish_state(roles_configured_state, {{ .WishStateTimeout }})
-
-    if state == connecting_fullmesh_state then
-        error(string.format(
-            'Failed to reach %s config state. Stuck in %s. ' ..
-                'Call "box.cfg({replication_connect_quorum = 0})" in instance console and try again',
-            roles_configured_state, state
-        ))
-    end
-
-    if state ~= roles_configured_state then
-        error(string.format(
-            'Failed to reach %s config state. Stuck in %s',
-            roles_configured_state, state
-        ))
-    end
-
-    -- apply config changes
-    cfg:lock()
-    local ok, err = confapplier.apply_config(cfg)
-    if err ~= nil then
-        error(string.format('Failed to apply new config: %s', err))
-    end
+    reload_clusterwide_config()
 
 This snippet reloads the configuration on a single instance. All other instances
 continue operating as before.
