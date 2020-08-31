@@ -33,7 +33,7 @@ instances.
 
     .. code-block:: bash
 
-        tarantoolctl connect user:password@instance_advertise_uri
+        tarantoolctl connect /var/run/tarantool/<app-name>.<instance-name>.control
 
 #.  Inspect what's going on.
 
@@ -103,7 +103,7 @@ option to zero. It may be accomplished in two ways:
 
   .. code-block:: bash
 
-      echo "box.cfg({replication_connect_quorum = 0})" | tarantoolctl connect <advertise_uri>
+      echo "box.cfg({replication_connect_quorum = 0})" | tarantoolctl connect /var/run/tarantool/<app-name>.<instance-name>.control
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 I want to run an instance with a new advertise_uri
