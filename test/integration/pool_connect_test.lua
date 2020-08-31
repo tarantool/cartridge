@@ -8,7 +8,7 @@ local pool = require('cartridge.pool')
 local cluster_cookie = require('cartridge.cluster-cookie')
 local remote_control = require('cartridge.remote-control')
 
-g.before_all(function()
+g.before_each(function()
     g.datadir = fio.tempdir()
     g.cookie = require('digest').urandom(6):hex()
     cluster_cookie.init(g.datadir)
@@ -19,7 +19,7 @@ g.before_all(function()
     t.assert_equals(ok, true)
 end)
 
-g.after_all(function()
+g.after_each(function()
     fio.rmtree(g.datadir)
     remote_control.drop_connections()
     remote_control.stop()
@@ -64,3 +64,24 @@ function g.test_errors()
     })
 end
 
+function g.test_gc()
+    remote_control.accept({
+        username = 'admin',
+        password = g.cookie,
+    })
+
+    local weak_table = setmetatable({}, {__mode = 'k'})
+
+    do
+        local conn, err = pool.connect('localhost:13301')
+        t.assert_equals(err, nil)
+        t.assert_covers(conn, {state = 'active'})
+        weak_table[conn] = true
+    end
+
+    collectgarbage()
+
+    -- The test may be flaky, see
+    -- https://github.com/tarantool/tarantool/issues/5081
+    t.assert_equals(next(weak_table), nil)
+end
