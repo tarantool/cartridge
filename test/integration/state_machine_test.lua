@@ -448,6 +448,7 @@ function g.test_leader_recovery()
     g.slave.net_box:eval("box.cfg({listen = box.NULL})")
 
     log.info('--------------------------------------------------------')
+    g.master.env['TARANTOOL_REPLICATION_CONNECT_QUORUM'] = 2
     g.master:start()
     helpers.wish_state(g.master, 'ConnectingFullmesh')
     helpers.protect_from_rw(g.master)
@@ -515,6 +516,7 @@ function g.test_orphan_connect_timeout()
 
     log.info('--------------------------------------------------------')
     g.master.env['TARANTOOL_REPLICATION_CONNECT_TIMEOUT'] = 1
+    g.master.env['TARANTOOL_REPLICATION_CONNECT_QUORUM'] = 2
     g.master:start()
     helpers.wish_state(g.master, 'ConnectingFullmesh')
     t.assert_equals(
@@ -577,6 +579,7 @@ function g.test_orphan_sync_timeout()
     g.master.env['TARANTOOL_REPLICATION_CONNECT_TIMEOUT'] = 0.1
     g.master.env['TARANTOOL_REPLICATION_SYNC_LAG'] = 1e-308
     g.master.env['TARANTOOL_REPLICATION_SYNC_TIMEOUT'] = 0.1
+    g.master.env['TARANTOOL_REPLICATION_CONNECT_QUORUM'] = 2
     g.master:start()
     helpers.wish_state(g.master, 'ConnectingFullmesh')
 
@@ -614,14 +617,11 @@ function g.test_orphan_sync_timeout()
 end
 
 function g.test_quorum_one()
-    -- It's possible to avoid orphan status by explicitly specifying
-    -- TARANTOOL_REPLICATION_CONNECT_QUORUM = 1 (or 0)
-
     g.master:stop()
     g.slave:stop()
 
     log.info('--------------------------------------------------------')
-    g.master.env['TARANTOOL_REPLICATION_CONNECT_QUORUM'] = 1
+    -- By default quorum = 0 and instance never orphans.
     g.master:start()
     helpers.wish_state(g.master, 'RolesConfigured')
 
@@ -629,6 +629,7 @@ function g.test_quorum_one()
     t.assert_equals(get_leader(g.master), g.master.instance_uuid)
     t.assert_equals(is_master(g.master), true)
 
+    g.slave.env['TARANTOOL_REPLICATION_CONNECT_QUORUM'] = 2
     g.slave:start()
     g.cluster:wait_until_healthy(g.slave)
 
@@ -663,6 +664,8 @@ end
 
 function g.test_restart_both()
     g.cluster:stop()
+    g.master.env['TARANTOOL_REPLICATION_CONNECT_QUORUM'] = 2
+    g.slave.env['TARANTOOL_REPLICATION_CONNECT_QUORUM'] = 2
     g.cluster:start()
     helpers.wish_state(g.master, 'RolesConfigured')
     helpers.wish_state(g.slave, 'RolesConfigured')

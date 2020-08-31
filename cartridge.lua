@@ -363,6 +363,10 @@ local function cfg(opts, box_opts)
         end
     end
 
+    if box_opts.replication_connect_quorum == nil then
+        box_opts.replication_connect_quorum = 0
+    end
+
     cluster_cookie.init(opts.workdir)
     if opts.cluster_cookie ~= nil then
         cluster_cookie.set_cookie(opts.cluster_cookie)
