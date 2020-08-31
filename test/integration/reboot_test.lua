@@ -6,7 +6,7 @@ local g = t.group()
 local helpers = require('test.helper')
 local utils = require('cartridge.utils')
 
-g.setup = function()
+g.before_each(function()
     g.cluster = helpers.Cluster:new({
         datadir = fio.tempdir(),
         server_command = helpers.entrypoint('srv_basic'),
@@ -26,12 +26,12 @@ g.setup = function()
         },
     })
     g.cluster:start()
-end
+end)
 
-g.teardown = function()
+g.after_each(function()
     g.cluster:stop()
     fio.rmtree(g.cluster.datadir)
-end
+end)
 
 function g.test_oldstyle_config()
     g.cluster:stop()
@@ -197,4 +197,17 @@ function g.test_invalid_config()
         err = "Server " .. g.cluster.main_server.instance_uuid ..
         " not in clusterwide config, no idea what to do now"
     })
+end
+
+function g.test_advertise_change()
+    local master = g.cluster.main_server
+    master.net_box:call('box.schema.sequence.create', {'test'})
+    master:stop()
+
+    master.env['TARANTOOL_ADVERTISE_URI'] = '127.0.0.1:13310'
+    master.net_box_uri = '127.0.0.1:13310'
+    master:start()
+
+    helpers.wish_state(master, 'RolesConfigured', 1)
+    t.assert(master.net_box:call('box.sequence.test:next'))
 end
