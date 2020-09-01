@@ -4,7 +4,6 @@ import { css } from 'emotion';
 import { logIn } from 'src/store/actions/auth.actions';
 import { Formik, Form } from 'formik'
 import * as yup from 'yup'
-import { FieldConstructor } from '../FieldGroup';
 import {
   Alert,
   Button,
@@ -17,6 +16,8 @@ import {
   Text,
   Spin
 } from '@tarantool.io/ui-kit';
+import { FieldConstructor } from '../FieldGroup';
+import logo from '../../assets/tarantool-logo-full.svg';
 
 const schema = yup.object().shape({
   username: yup.string().required(),
@@ -206,6 +207,7 @@ const SplashLogInForm = ({
         className='meta-test__LoginFormSplash'
         title='Authorization'
         subTitle='Please, input your credentials'
+        logo={logo}
       >
         <LogInForm {...props} />
       </SplashModal>
