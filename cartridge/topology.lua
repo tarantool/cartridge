@@ -778,6 +778,65 @@ local function find_server_by_uri(topology_cfg, uri)
     return nil
 end
 
+--- Merge servers URIs form topology_cfg with fresh membership status.
+--
+-- This function sustains cartridge operability in case of
+-- advertise_uri change. The uri map is composed basing on
+-- topology_cfg, but if some of them turns out to be dead, the
+-- member with corresponding payload.uuid is searched beyond.
+--
+-- (**Added** in v2.3.0-7)
+--
+-- @function refine_servers_uri
+-- @local
+-- @tparam table topology_cfg
+-- @treturn {[uuid] = uri} with all servers except expelled ones.
+local function refine_servers_uri(topology_cfg)
+    checks('table')
+    if topology_cfg.__type == 'ClusterwideConfig' then
+        local err = "Bad argument #1 to find_server_by_uri" ..
+            " (table expected, got ClusterwideConfig)"
+        error(err, 2)
+    end
+
+    local members_fresh = membership.members()
+    local members_known = {}
+    local ret = {}
+
+    -- Step 1: get URIs from topology_cfg as is.
+    for _, uuid, srv in fun.filter(not_expelled, topology_cfg.servers) do
+        ret[uuid] = assert(srv.uri)
+        -- Mark members we already processed
+        members_known[srv.uri] = members_fresh[srv.uri]
+        members_fresh[srv.uri] = nil
+    end
+
+    -- Step 2: Try to find another member among the unprocessed.
+    for uuid, uri in pairs(ret) do
+        local member = members_known[uri]
+
+        if member ~= nil
+        and (member.status == 'alive' or member.status == 'suspect')
+        then
+            goto continue
+        end
+
+        for uri, m in pairs(members_fresh) do
+            if m.payload.uuid == uuid
+            and (m.status == 'alive' or m.status == 'suspect')
+            then
+                members_fresh[uri] = nil
+                ret[uuid] = uri
+                break
+            end
+        end
+
+        ::continue::
+    end
+
+    return ret
+end
+
 --- Check the cluster health.
 -- It is healthy if all instances are healthy.
 --
@@ -898,6 +957,7 @@ return {
     get_failover_params = get_failover_params,
     get_leaders_order = get_leaders_order,
     cluster_is_healthy = cluster_is_healthy,
+    refine_servers_uri = refine_servers_uri,
     probe_missing_members = probe_missing_members,
 
     find_server_by_uri = find_server_by_uri,

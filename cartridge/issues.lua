@@ -38,9 +38,10 @@
 --   `items_used_ratio > limits.fragmentation_threshold_warning` and
 --   both `arena_used_ratio`, `quota_used_ratio` exceed critical limit.
 --
--- Config mismatch:
+-- Configuration:
 --
 -- * "Configuration checksum mismatch on ...".
+-- * "Advertise URI (...) differs from clusterwide config (...)".
 --
 -- @module cartridge.issues
 -- @local
@@ -88,6 +89,23 @@ local function list_on_instance(opts)
     local instance_uuid = box.info.uuid
     local replicaset_uuid = box.info.cluster.uuid
     local self_uri = enabled_servers[instance_uuid].uri
+    local instance_uri = confapplier.get_advertise_uri()
+
+    if instance_uri ~= self_uri then
+        local issue = {
+            level = 'warning',
+            topic = 'configuration',
+            replicaset_uuid = replicaset_uuid,
+            instance_uuid = instance_uuid,
+            message = string.format(
+                "Advertise URI (%s)"..
+                " differs from clusterwide config (%s)",
+                instance_uri,
+                self_uri
+            )
+        }
+        table.insert(ret, issue)
+    end
 
     for _, replication_info in pairs(box.info.replication) do
         local replica = enabled_servers[replication_info.uuid]
@@ -285,8 +303,9 @@ local function list_on_cluster()
         return ret
     end
 
-    for _, _, srv in fun.filter(topology.not_disabled, topology_cfg.servers) do
-        table.insert(uri_list, srv.uri)
+    local refined_uri_list = topology.refine_servers_uri(topology_cfg)
+    for _, uuid, _ in fun.filter(topology.not_disabled, topology_cfg.servers) do
+        table.insert(uri_list, refined_uri_list[uuid])
     end
 
     -- Check clock desynchronization
