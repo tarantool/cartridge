@@ -4,19 +4,20 @@ import { css } from 'emotion';
 import { logIn } from 'src/store/actions/auth.actions';
 import { Formik, Form } from 'formik'
 import * as yup from 'yup'
-import { FieldConstructor } from '../FieldGroup';
 import {
   Alert,
   Button,
   SplashModal,
-  Input,
+  InputPassword,
   Checkbox,
   InputGroup,
+  LabeledInput,
   Scrollbar,
   Modal,
   Text,
   Spin
 } from '@tarantool.io/ui-kit';
+import logo from '../../assets/tarantool-logo-full.svg';
 
 const schema = yup.object().shape({
   username: yup.string().required(),
@@ -35,6 +36,9 @@ const styles = {
   cancelButton: css`
     margin-right: 16px;
   `,
+  requiredStar: css`
+    color: red;
+  `,
   welcomeMessage: css`
     height: 150px;
     border: 1px solid #ddd;
@@ -47,12 +51,6 @@ const styles = {
     height: 60px;
   `
 };
-
-
-const formProps = [
-  { label: 'Username', field: 'username' },
-  { label: 'Password', field: 'password', type: 'password' }
-]
 
 class LogInForm extends React.Component {
   handleSubmit = async (values, actions) => {
@@ -110,23 +108,25 @@ class LogInForm extends React.Component {
 
           return (
             <Form>
-              {formProps.map(({ label, field, type }) =>
-                <FieldConstructor
-                  key={field}
-                  label={label}
-                  required={true}
-                  input={
-                    <Input
-                      value={values[field]}
-                      onBlur={handleBlur}
-                      onChange={handleChange}
-                      name={field}
-                      type={type || 'text'}
-                    />
-                  }
-                  error={touched[field] && errors[field]}
-                />
-              )}
+              <LabeledInput
+                label={<>Username<Text className={styles.requiredStar}>*</Text></>}
+                value={values.username}
+                onBlur={handleBlur}
+                onChange={handleChange}
+                name='username'
+                error={touched.username && !!errors.username}
+                message={touched.username && errors.username}
+              />
+              <LabeledInput
+                label={<>Password<Text className={styles.requiredStar}>*</Text></>}
+                value={values.password}
+                onBlur={handleBlur}
+                onChange={handleChange}
+                inputComponent={InputPassword}
+                name='password'
+                error={touched.password && !!errors.password}
+                message={touched.password && errors.password}
+              />
               {error || errors.common ? (
                 <Alert type="error" className={styles.error}>
                   <Text variant="basic">{error || errors.common}</Text>
@@ -144,12 +144,15 @@ class LogInForm extends React.Component {
               ) : null}
 
               <div className={styles.actionButtons}>
-                {onClose && <Button intent="base" onClick={onClose} className={styles.cancelButton}>Cancel</Button>}
+                {onClose && (
+                  <Button onClick={onClose} className={styles.cancelButton} size='l'>Cancel</Button>
+                )}
                 <Button
                   className='meta-test__LoginFormBtn'
                   intent="primary"
                   type="submit"
                   disabled={!isLoginEnabled}
+                  size='l'
                 >
                   Login
                 </Button>
@@ -203,6 +206,7 @@ const SplashLogInForm = ({
         className='meta-test__LoginFormSplash'
         title='Authorization'
         subTitle='Please, input your credentials'
+        logo={logo}
       >
         <LogInForm {...props} />
       </SplashModal>
@@ -213,7 +217,7 @@ const SplashLogInForm = ({
 export const ModalLogInForm = ({ onCancel, visible, ...props }) => (
   <Modal
     className='meta-test__LoginForm'
-    title={'Authorization'}
+    title='Authorization'
     visible={visible}
     footer={null}
     onClose={onCancel}

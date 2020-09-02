@@ -27,6 +27,7 @@ const BootstrapButton = ({
       intent='primary'
       text='Bootstrap vshard'
       onClick={can_bootstrap_vshard ? bootstrapVshard : setVisibleBootstrapVshardPanel}
+      size='l'
     />
   );
 };

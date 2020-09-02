@@ -105,8 +105,8 @@ class UserEditForm extends React.Component {
             </Alert>
           ) : null}
           <div className={styles.actionButtons}>
-            {onClose && <Button intent="base" onClick={onClose} className={styles.cancelButton}>Cancel</Button>}
-            <Button intent="primary" type='submit'>Save</Button>
+            {onClose && <Button onClick={onClose} className={styles.cancelButton} size='l'>Cancel</Button>}
+            <Button intent="primary" type='submit' size='l'>Save</Button>
           </div>
         </Form>
         )}

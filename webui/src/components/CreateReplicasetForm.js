@@ -266,12 +266,13 @@ CreateReplicasetFormProps) => (
           </div>
           <PopupFooter
             controls={([
-              <Button type='button' onClick={onCancel}>Cancel</Button>,
+              <Button type='button' onClick={onCancel} size='l'>Cancel</Button>,
               <Button
                 className='meta-test__CreateReplicaSetBtn'
                 intent='primary'
                 type='submit'
                 disabled={Object.keys(errors).length > 0}
+                size='l'
               >
                 Create replica set
               </Button>

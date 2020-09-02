@@ -59,7 +59,7 @@ export default () => {
             <Button
               className='meta-test__DownloadBtn'
               icon={IconDownload}
-              intent='secondary'
+              intent='primary'
               text='Download'
               type='submit'
             />

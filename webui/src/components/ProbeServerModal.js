@@ -1,7 +1,7 @@
 // @flow
 import React from 'react';
 import { connect } from 'react-redux';
-import { css, cx } from 'emotion';
+import { css } from 'emotion';
 import { Formik } from 'formik';
 import {
   Alert,
@@ -17,12 +17,6 @@ import {
 } from 'src/store/actions/clusterPage.actions';
 
 const styles = {
-  formInner: css`
-    margin-bottom: 16px;
-  `,
-  error: css`
-    margin-bottom: 16px;
-  `,
   text: css`
     display: block;
     margin-bottom: 16px;
@@ -51,6 +45,7 @@ class ProbeServerModal extends React.PureComponent<ProbeServerModalProps> {
           className='meta-test__ProbeServerBtn'
           onClick={() => setProbeServerModalVisible(true)}
           text='Probe server'
+          size='l'
         />
         <Formik
           initialValues={{
@@ -72,6 +67,7 @@ class ProbeServerModal extends React.PureComponent<ProbeServerModalProps> {
                   type='submit'
                   intent='primary'
                   text='Submit'
+                  size='l'
                 />
               ]}
               visible={probeServerModalVisible}
@@ -82,20 +78,18 @@ class ProbeServerModal extends React.PureComponent<ProbeServerModalProps> {
               }}
               onSubmit={handleSubmit}
             >
-              <div className={styles.formInner}>
-                <Text className={styles.text}>
-                  Probe a server if it wasn't discovered automatically by UDP broadcast.
-                </Text>
-                <LabeledInput
-                  label='Server URI to probe'
-                  name='uri'
-                  value={values.uri}
-                  onChange={handleChange}
-                  placeholder='Server URI, e.g. localhost:3301'
-                />
-              </div>
+              <Text className={styles.text}>
+                Probe a server if it wasn't discovered automatically by UDP broadcast.
+              </Text>
+              <LabeledInput
+                label='Server URI to probe'
+                name='uri'
+                value={values.uri}
+                onChange={handleChange}
+                placeholder='Server URI, e.g. localhost:3301'
+              />
               {error && (
-                <Alert className={cx(styles.error, 'ProbeServerModal_error')} type='error'>
+                <Alert className={'ProbeServerModal_error'} type='error'>
                   <Text tag='span'>{error}</Text>
                 </Alert>
               )}

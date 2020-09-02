@@ -108,7 +108,12 @@ class Schema extends React.Component<SchemaProps> {
                   onClick={getSchema}
                   icon={IconRefresh}
                 />,
-                <Button text='Validate' size='s' onClick={validateSchema} />,
+                <Button
+                  text='Validate'
+                  intent='secondary'
+                  size='s'
+                  onClick={validateSchema}
+                />,
                 <Button
                   onClick={applySchema}
                   text='Apply'

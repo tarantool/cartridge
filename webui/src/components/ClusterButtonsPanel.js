@@ -33,6 +33,7 @@ const ClusterButtonsPanel = (
         showFailover && <FailoverButton />,
         showBootstrap && <BootstrapButton />
       ]}
+      thin
     />
   );
 };

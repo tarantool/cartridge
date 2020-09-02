@@ -235,7 +235,7 @@ class DemoInfo extends React.Component<DemoInfoProps, DemoInfoState> {
           <Tabbed tabs={tabs}/>
           <PopupFooter
             controls={[
-              <Button text='Close' onClick={this.hideConnectInfo}/>
+              <Button text='Close' onClick={this.hideConnectInfo} size='l' />
             ]}
           />
         </Modal>

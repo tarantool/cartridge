@@ -1,3 +1,5 @@
+// Deprecated, do not use
+
 import * as React from 'react'
 import styled from 'react-emotion'
 

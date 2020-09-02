@@ -43,10 +43,11 @@ class ClusterIssuesButton extends React.Component<ClusterIssuesButtonProps, Clus
         <Button
           className='meta-test__ClusterIssuesButton'
           disabled={!issues.length}
-          intent='secondary'
+          intent={issues.length ? 'primary' : 'base'}
           icon={issues.length ? IconCancel : IconOkContrast}
           onClick={this.showModal}
           text={`Issues: ${issues.length}`}
+          size='l'
         />
         <ClusterIssuesModal
           visible={visible}
