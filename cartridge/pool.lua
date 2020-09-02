@@ -15,6 +15,11 @@ local cluster_cookie = require('cartridge.cluster-cookie')
 
 vars:new('connections', setmetatable({}, {__mode = 'v'}))
 
+vars:new('refkeeper_data', {})
+vars:new('refkeeper_fiber', nil)
+vars:new('refkeeper_notify', fiber.cond())
+vars:new('refkeeper_duration', 60)
+
 local FormatURIError = errors.new_class('FormatURIError')
 local NetboxConnectError = errors.new_class('NetboxConnectError')
 local NetboxMapCallError = errors.new_class('NetboxMapCallError')
@@ -41,8 +46,46 @@ local function format_uri(uri)
     }, true)
 end
 
+local function refkeeper_cleanup()
+    -- Cleanup outdated references and allow garbage collection
+    local now = fiber.clock()
+
+    for conn, ts in pairs(vars.refkeeper_data) do
+        local deadline = ts + vars.refkeeper_duration
+        if deadline <= now then
+            vars.refkeeper_data[conn] = nil
+        end
+    end
+end
+
+local function refkeeper_loop()
+    fiber.name('cartridge.pool.refkeeper')
+
+    while true do
+        refkeeper_cleanup()
+        local now = fiber.clock()
+        local next_wakeup = math.huge
+
+        for _, ts in pairs(vars.refkeeper_data) do
+            local deadline = ts + vars.refkeeper_duration
+            if deadline < next_wakeup then
+                next_wakeup = deadline
+            end
+        end
+
+        assert(next_wakeup > now)
+        vars.refkeeper_notify:wait(next_wakeup - now)
+        fiber.testcancel()
+    end
+end
+
 --- Connect a remote or get cached connection.
 -- Connection is established using `net.box.connect()`.
+--
+-- The pool keeps a reference to the connection object for a while
+-- so it's not garbage-collected prematurely. The time is controlled
+-- by the `refkeeper_duration` parameter (default: 60s).
+--
 -- @function connect
 -- @tparam string uri
 -- @tparam[opt] table opts
@@ -102,6 +145,17 @@ local function connect(uri, opts)
         end
 
         vars.connections[uri] = conn
+    end
+
+    if vars.refkeeper_duration > 0 then
+        vars.refkeeper_data[conn] = fiber.clock()
+        vars.refkeeper_notify:broadcast()
+    end
+
+    if vars.refkeeper_fiber == nil
+    or vars.refkeeper_fiber:status() == 'dead'
+    then
+        vars.refkeeper_fiber = fiber.new(refkeeper_loop)
     end
 
     local wait_connected
@@ -261,8 +315,44 @@ local function map_call(fn_name, args, opts)
     return retmap, united_error
 end
 
+--- Configure pool parameters.
+-- (*Added* in v2.3.0-??)
+--
+-- @function set_params
+-- @within Configuration
+-- @tparam table opts
+-- @tparam ?number opts.refkeeper_duration in seconds
+-- @treturn boolean `true`
+local function set_params(opts)
+    checks({
+        refkeeper_duration = '?number',
+    })
+
+    if opts.refkeeper_duration ~= nil then
+        vars.refkeeper_duration = opts.refkeeper_duration
+        vars.refkeeper_notify:broadcast()
+        refkeeper_cleanup()
+    end
+
+    return true
+end
+
+--- Retrieve pool parameters.
+-- (*Added* in v2.3.0-??)
+--
+-- @function get_params
+-- @within Configuration
+-- @treturn table
+local function get_params()
+    return {
+        refkeeper_duration = vars.refkeeper_duration,
+    }
+end
+
 return {
     connect = connect,
-    format_uri = format_uri,
     map_call = map_call,
+    format_uri = format_uri,
+    set_params = set_params,
+    get_params = get_params,
 }

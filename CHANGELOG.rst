@@ -16,7 +16,8 @@ and this project adheres to
 Changed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- Netbox connections established by ``pool.connect`` can be garbage-collected.
+- Netbox connections established by ``pool.connect`` can be garbage-collected,
+  but no earlier than after `refkeeper_duration`.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Enhanced is WebUI
