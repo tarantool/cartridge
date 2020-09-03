@@ -233,7 +233,8 @@ local function apply_config(clusterwide_config)
     box.cfg({replication_connect_quorum = 0})
     box.cfg({
         replication = topology.get_fullmesh_replication(
-            clusterwide_config:get_readonly('topology'), vars.replicaset_uuid
+            clusterwide_config:get_readonly('topology'), vars.replicaset_uuid,
+            vars.instance_uuid, vars.advertise_uri
         ),
     })
 
@@ -381,18 +382,11 @@ local function boot_instance(clusterwide_config)
         box_opts.replicaset_uuid = assert(replicaset_uuid)
         box_opts.replication_connect_quorum = 1
         box_opts.replication = topology.get_fullmesh_replication(
-            topology_cfg, box_opts.replicaset_uuid
-        )
-        -- Workaround for https://github.com/tarantool/tarantool/issues/3760
-        -- which wasn't cherry-picked to tarantool 1.10 yet.
-        -- Due to the bug box_opts.replication_connect_quorum was ignored
-        -- and box.cfg used to hang
-        table.remove(
-            box_opts.replication,
-            utils.table_find(
-                box_opts.replication,
-                pool.format_uri(vars.advertise_uri)
-            )
+            topology_cfg, replicaset_uuid,
+            -- Workaround for https://github.com/tarantool/tarantool/issues/3760
+            -- Due to the bug box_opts.replication_connect_quorum was ignored
+            -- and box.cfg used to hang
+            instance_uuid, nil
         )
         if #box_opts.replication == 0 then
             box_opts.read_only = false
@@ -528,7 +522,8 @@ local function boot_instance(clusterwide_config)
 
     local _, err = BoxError:pcall(box.cfg, {
         replication = topology.get_fullmesh_replication(
-            topology_cfg, vars.replicaset_uuid
+            topology_cfg, vars.replicaset_uuid,
+            vars.instance_uuid, vars.advertise_uri
         ),
     })
     if err ~= nil then
