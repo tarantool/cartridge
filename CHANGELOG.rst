@@ -24,6 +24,7 @@ Enhanced is WebUI
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 - Indicate config checksum mismatch in issues list.
+- Indicate the change of `arvertise_uri` in issues list.
 
 -------------------------------------------------------------------------------
 [2.3.0] - 2020-08-26

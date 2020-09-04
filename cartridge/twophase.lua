@@ -284,8 +284,9 @@ local function _clusterwide(patch)
     -- Prepare a server group to be configured
     local uri_list = {}
     local abortion_list = {}
-    for _, _, srv in fun.filter(topology.not_disabled, topology_new.servers) do
-        table.insert(uri_list, srv.uri)
+    local refined_uri_list = topology.refine_servers_uri(topology_new)
+    for _, uuid, _ in fun.filter(topology.not_disabled, topology_new.servers) do
+        table.insert(uri_list, refined_uri_list[uuid])
     end
 
     -- this is mostly for testing purposes
