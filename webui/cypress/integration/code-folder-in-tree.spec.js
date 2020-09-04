@@ -19,7 +19,7 @@ describe('Code page', () => {
       //create folder
       cy.get('.meta-test__addFolderBtn').click();
       cy.get('.meta-test__enterName').focused().type('folder-in-tree');
-      cy.get('#root').contains('Tarantool').click();
+      cy.get('.test__Header').click();
       cy.get('.meta-test__Code__FileTree').contains('folder-in-tree');
 
       //create folder in folder
