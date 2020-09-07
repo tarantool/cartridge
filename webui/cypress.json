@@ -1,4 +1,6 @@
 {
   "trashAssetsBeforeRuns": false,
-  "baseUrl": "http://localhost:8081"
+  "baseUrl": "http://localhost:8081",
+  "viewportHeight": 768,
+  "viewportWidth": 1280
 }
