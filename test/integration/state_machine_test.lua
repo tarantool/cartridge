@@ -690,3 +690,39 @@ function g.test_restart_both()
         t.assert_equals(helpers.list_cluster_issues(g.master), {})
     end)
 end
+
+function g.test_operation_error()
+    g.slave.net_box:eval([[
+        local mymodule = package.loaded['mymodule']
+        mymodule.apply_config = function()
+            error('Artificial Error', 0)
+        end
+    ]])
+
+    local uA = helpers.uuid('a')
+    local set_roles = [[
+        local uuid, roles = ...
+        local ok, err = require("cartridge").admin_edit_topology({
+            replicasets = {{uuid = uuid, roles = roles}}
+        })
+
+        if ok == nil then
+            return nil, err
+        end
+
+        return true
+    ]]
+
+    local ok, err = g.master.net_box:eval(set_roles, {uA, {}})
+    t.assert_equals({ok, err}, {true, nil})
+
+    local ok, err = g.master.net_box:eval(set_roles, {uA, {'myrole'}})
+    t.assert_equals(ok, nil)
+    t.assert_covers(err, {
+        class_name = 'ApplyConfigError',
+        err = 'Artificial Error',
+    })
+
+    local ok, err = g.master.net_box:eval(set_roles, {uA, {}})
+    t.assert_equals({ok, err}, {true, nil})
+end

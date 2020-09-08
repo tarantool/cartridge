@@ -97,7 +97,7 @@ local state_transitions = {
 -- errors
     ['InitError'] = {},
     ['BootError'] = {},
-    ['OperationError'] = {}, -- {'BoxConfigured'}
+    ['OperationError'] = {'ConfiguringRoles'}
     -- Disabled
     -- Expelled
 }
@@ -223,6 +223,7 @@ local function apply_config(clusterwide_config)
     assert(clusterwide_config.locked)
     assert(
         vars.state == 'BoxConfigured'
+        or vars.state == 'OperationError'
         or vars.state == 'RolesConfigured',
         'Unexpected state ' .. vars.state
     )

@@ -26,6 +26,8 @@ Fixed
 - Don't stuck in ``ConnectingFullmesh`` state when instance is restarted with a
   different ``advertise_uri``. Also keep "Server details" dialog in WebUI
   operable in this case.
+- Allow applying config when instance is in ``OperationError``. It doesn't cause
+  loss of quorum anymore.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Enhanced is WebUI
