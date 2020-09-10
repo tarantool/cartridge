@@ -1,4 +1,5 @@
 {
+  "defaultCommandTimeout": 8000,
   "trashAssetsBeforeRuns": false,
   "baseUrl": "http://localhost:8081",
   "viewportHeight": 768,
