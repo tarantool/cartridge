@@ -17,7 +17,7 @@ describe('Code page', () => {
       //create file and file contents
       cy.get('.meta-test__addFileBtn').click();
       cy.get('.meta-test__enterName').focused().type('file-in-tree1.yml');
-      cy.get('#root').contains('Tarantool').click();
+      cy.get('.test__Header').click();
       cy.get('.ScrollbarsCustom-Content').contains('file-in-tree1.yml');
 
       //reload
