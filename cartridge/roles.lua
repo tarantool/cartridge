@@ -306,9 +306,8 @@ local function apply_config(conf, opts)
                 if _err ~= nil then
                     if err == nil then
                         err = _err
-                    else
-                        log.error('%s', _err)
                     end
+                    log.error('%s', _err)
                     goto continue
                 end
             end
@@ -322,9 +321,8 @@ local function apply_config(conf, opts)
                 if _err ~= nil then
                     if err == nil then
                         err = _err
-                    else
-                        log.error('%s', _err)
                     end
+                    log.error('%s', _err)
                 end
             end
         else
@@ -338,9 +336,8 @@ local function apply_config(conf, opts)
                 if _err ~= nil then
                     if err == nil then
                         err = _err
-                    else
-                        log.error('%s', _err)
                     end
+                    log.error('%s', _err)
                 end
             end
 
