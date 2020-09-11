@@ -57,7 +57,7 @@ local function setup_cluster(g)
     g.cluster:start()
     R1.net_box:eval([[
         local vars = require('cartridge.vars').new('cartridge.roles.coordinator')
-        vars.options.IMMUNITY_TIMEOUT = 0
+        vars.options.IMMUNITY_TIMEOUT = 1
         vars.options.RECONNECT_PERIOD = 1
         require('log').info('Coordinator options updated')
     ]])
@@ -122,7 +122,7 @@ g_etcd2.before_all(function()
     g.client = etcd2_client.new({
         prefix = 'failover_stateful_test',
         endpoints = {URI},
-        lock_delay = 5,
+        lock_delay = 3,
         username = '',
         password = '',
         request_timeout = 1,
@@ -138,7 +138,7 @@ g_etcd2.before_all(function()
             etcd2_params = {
                 prefix = 'failover_stateful_test',
                 endpoints = {URI},
-                lock_delay = 5,
+                lock_delay = 3,
             },
         }}
     ))
@@ -329,7 +329,7 @@ add('test_leader_restart', function(g)
         ]],
         variables = {
             uuid = storage_uuid,
-            master_uuid = {storage_1_uuid, storage_3_uuid, storage_2_uuid},
+            master_uuid = {storage_1_uuid, storage_2_uuid, storage_3_uuid},
         },
     })
 
@@ -343,6 +343,7 @@ add('test_leader_restart', function(g)
     -- Switching leadership is accomplished by the coordinator rpc
 
     log.info('--------------------------------------------------------')
+    g.cluster:wait_until_healthy(g.cluster.main_server)
     local ok, err = R1.net_box:eval([[
         local cartridge = require('cartridge')
         local coordinator = cartridge.service_get('failover-coordinator')
@@ -407,7 +408,6 @@ add('test_leader_promote', function(g)
     end)
 
     S2:start()
-
     helpers.retrying({}, function()
         t.assert_equals(S2.net_box:eval(q_leadership), storage_1_uuid)
     end)
