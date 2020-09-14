@@ -13,6 +13,16 @@ and this project adheres to
 -------------------------------------------------------------------------------
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Added
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- New option in ``cartridge.config_patch_clusterwide``: ``{never_skip = true}``
+  to avoid skipping two-phase commit even the patch doesn't introduce any
+  changes. By default it's now applied to the HTTP config upload API
+  ``PUT /admin/config`` and to the GraphQL ``cluster{ sections(){} }`` mutation.
+  In all other cases old behavior is preserved for the sake of compatibility.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

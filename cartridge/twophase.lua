@@ -185,17 +185,15 @@ end
 --
 -- @function patch_clusterwide
 -- @tparam table patch
+-- @tparam table opts
+-- @tparam ?boolean opts.never_skip
+--   Avoid skipping two-phase commit even if the patch doesn't
+--   introduce any changes. Otherwise it returns `true` immediately.
+--   (default: **false**)
 -- @treturn[1] boolean true
 -- @treturn[2] nil
 -- @treturn[2] table Error description
-local function _clusterwide(patch)
-    checks('table')
-    if patch.__type == 'ClusterwideConfig' then
-        local err = "bad argument #1 to patch_clusterwide" ..
-            " (table expected, got ClusterwideConfig)"
-        error(err, 2)
-    end
-
+local function _clusterwide(patch, opts)
     log.warn('Updating config clusterwide...')
 
     local clusterwide_config_old = confapplier.get_active_config()
@@ -244,7 +242,6 @@ local function _clusterwide(patch)
         return nil, err
     end
     clusterwide_config_new:lock()
-    -- log.info('%s', yaml.encode(clusterwide_config_new:get_readonly()))
 
     local topology_old = clusterwide_config_old:get_readonly('topology')
     local topology_new = clusterwide_config_new:get_readonly('topology')
@@ -256,7 +253,7 @@ local function _clusterwide(patch)
 
     topology.probe_missing_members(topology_new.servers)
 
-    if utils.deepcmp(
+    if (not opts or opts.never_skip ~= true) and utils.deepcmp(
         clusterwide_config_new:get_plaintext(),
         clusterwide_config_old:get_plaintext()
     ) then
@@ -386,7 +383,16 @@ local function _clusterwide(patch)
     end
 end
 
-local function patch_clusterwide(patch)
+local function patch_clusterwide(patch, opts)
+    checks('table', {
+        never_skip = '?boolean',
+    })
+    if patch.__type == 'ClusterwideConfig' then
+        local err = "bad argument #1 to patch_clusterwide" ..
+            " (table expected, got ClusterwideConfig)"
+        error(err, 2)
+    end
+
     if vars.locks['clusterwide'] == true  then
         return nil, AtomicCallError:new(
             'cartridge.patch_clusterwide is already running'
@@ -394,7 +400,7 @@ local function patch_clusterwide(patch)
     end
 
     vars.locks['clusterwide'] = true
-    local ok, err = PatchClusterwideError:pcall(_clusterwide, patch)
+    local ok, err = PatchClusterwideError:pcall(_clusterwide, patch, opts)
     vars.locks['clusterwide'] = false
 
     if not ok then

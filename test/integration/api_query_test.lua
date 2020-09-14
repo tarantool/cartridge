@@ -485,16 +485,15 @@ function g.test_operation_error()
     ]])
 
     -- Dummy mutation doesn't trigger two-phase commit
-    g.cluster.main_server:graphql({
-        query = [[
-            mutation { cluster { config(sections: []) {} } }
-        ]],
-    })
+    local ok, err = g.cluster.main_server.net_box:call(
+        'package.loaded.cartridge.config_patch_clusterwide', {{}}
+    )
+    t.assert_equals({ok, err}, {true, nil})
 
     -- Real tho-phase commit fails on apply stage with artificial error
     local resp = g.cluster.main_server:graphql({
         query = [[
-            mutation { cluster { schema(as_yaml: "{}") {} } }
+            mutation { cluster { config(sections: []) {} } }
         ]],
         raise = false,
     })

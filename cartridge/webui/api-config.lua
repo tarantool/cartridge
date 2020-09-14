@@ -126,7 +126,7 @@ local function upload_config(clusterwide_config)
         end
     end
 
-    return twophase.patch_clusterwide(patch)
+    return twophase.patch_clusterwide(patch, {never_skip = true})
 end
 
 local function upload_config_handler(req)
@@ -233,7 +233,7 @@ local function set_sections(_, args)
         table.insert(query_sections, input.filename)
     end
 
-    local ok, err = twophase.patch_clusterwide(patch)
+    local ok, err = twophase.patch_clusterwide(patch, {never_skip = true})
     if not ok then
         return nil, err
     end
