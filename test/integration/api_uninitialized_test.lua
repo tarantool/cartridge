@@ -47,6 +47,9 @@ function g.test_uninitialized()
                         uuid
                         alias
                     }
+                    suggestions {
+                        refine_uri {}
+                    }
                     can_bootstrap_vshard
                     vshard_bucket_count
                 }
@@ -74,6 +77,10 @@ function g.test_uninitialized()
         uri = 'localhost:13301',
         alias = 'dummy',
         uuid = box.NULL
+    })
+
+    t.assert_equals(resp['data']['cluster']['suggestions'], {
+        refine_uri = box.NULL,
     })
 
     t.assert_equals(resp['data']['cluster']['can_bootstrap_vshard'], false)
