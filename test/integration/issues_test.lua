@@ -65,42 +65,6 @@ function g.test_issues_limits()
     )
 end
 
-function g.test_uri_change()
-    local master = g.cluster.main_server
-
-    master:stop()
-    master.env['TARANTOOL_ADVERTISE_URI'] = 'localhost:13311'
-    master.net_box_uri = 'localhost:13311'
-    master:start()
-
-    t.helpers.retrying({}, function()
-        local issues = helpers.list_cluster_issues(master)
-
-        t.assert_equals(
-            helpers.table_find_by_attr(
-                issues, 'instance_uuid', helpers.uuid('a', 'a', 1)
-            ), {
-                level = 'warning',
-                topic = 'configuration',
-                replicaset_uuid = helpers.uuid('a'),
-                instance_uuid = helpers.uuid('a', 'a', 1),
-                message = "Advertise URI (localhost:13311)"..
-                " differs from clusterwide config (localhost:13301)",
-            }
-        )
-    end)
-
-    -- fix all what has been broken
-    master:stop()
-    master.env['TARANTOOL_ADVERTISE_URI'] = 'localhost:13301'
-    master.net_box_uri = 'localhost:13301'
-    master:start()
-
-    t.helpers.retrying({}, function()
-        t.assert_equals(helpers.list_cluster_issues(master), {})
-    end)
-end
-
 function g.test_broken_replica()
     local master = g.cluster.main_server
     local replica1 = g.cluster:server('replica1')
