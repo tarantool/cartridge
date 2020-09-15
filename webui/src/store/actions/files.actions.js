@@ -10,7 +10,7 @@ import {
   DELETE_FOLDER
 } from '../actionTypes'
 
-export const fetchConfigFiles = () => ({ type: FETCH_CONFIG_FILES });
+export const fetchConfigFiles = (initial?: bool = false) => ({ type: FETCH_CONFIG_FILES, payload: { initial } });
 
 export const setIsContentChanged = (fileId: string, isChanged: boolean) => ({
   type: SET_IS_CONTENT_CHANGED,
