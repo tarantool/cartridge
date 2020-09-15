@@ -17,7 +17,8 @@ Fixed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 - Don't stuck in ``ConnectingFullmesh`` state when instance is restarted with a
-  different ``advertise_uri``.
+  different ``advertise_uri``. Also keep "Server details" dialog in WebUI
+  operable in this case.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Enhanced is WebUI
