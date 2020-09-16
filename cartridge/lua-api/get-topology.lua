@@ -126,29 +126,27 @@ local function get_topology()
     end
 
     local active_leaders = failover.get_active_leaders()
+    local refined_uri = topology.refine_servers_uri(topology_cfg)
 
     for _, instance_uuid, server in fun.filter(topology.not_expelled, topology_cfg.servers) do
-        local uri = server.uri
+        local uri = assert(refined_uri[instance_uuid])
         local member = members[uri]
-        local alias = nil
-        if member and member.payload then
-            alias = member.payload.alias
-        end
+        members[uri] = nil
 
         local srv = {
             uri = uri,
             uuid = instance_uuid,
-            alias = alias,
+            disabled = not topology.not_disabled(instance_uuid, server),
+            alias = nil,
+            status = nil,
+            message = nil,
+            priority = nil,
+            replicaset = replicasets[server.replicaset_uuid],
             clock_delta = nil,
         }
 
-        -- find the most fresh information
-        -- among the members with given uuid
-        for _, m in pairs(members) do
-            if m.payload.uuid == instance_uuid
-            and m.timestamp > (member and member.timestamp or 0) then
-                member = m
-            end
+        if member ~= nil and member.payload ~= nil then
+            srv.alias = member.payload.alias
         end
 
         if not member or member.status == 'left' then
@@ -177,16 +175,11 @@ local function get_topology()
             srv.message = member.payload.state or 'UnknownState'
         end
 
-        if member and member.status == 'alive' and member.clock_delta ~= nil then
+        if member ~= nil and member.status == 'alive'
+        and member.clock_delta ~= nil
+        then
             srv.clock_delta = member.clock_delta * 1e-6
         end
-
-        if member and member.uri ~= nil then
-            members[member.uri] = nil
-        end
-
-        srv.disabled = not topology.not_disabled(instance_uuid, server)
-        srv.replicaset = replicasets[server.replicaset_uuid]
 
         if leaders_order[server.replicaset_uuid][1] == instance_uuid then
             if failover_cfg.mode ~= 'stateful' then

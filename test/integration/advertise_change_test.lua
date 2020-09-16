@@ -84,3 +84,26 @@ function g.test_issues()
         }}
     )
 end
+
+function g.test_topology_query()
+    local servers = g.cluster.main_server:graphql({
+        query = [[{
+            servers {
+                uri uuid alias
+                boxinfo { general { listen ro } }
+            }
+        }]]
+    }).data.servers
+
+    t.assert_items_include(servers, {{
+        uri = 'localhost:13311',
+        uuid = g.A1.instance_uuid,
+        alias = 'A-1',
+        boxinfo = {general = {listen = '13311', ro = false}},
+    }, {
+        uri = 'localhost:13312',
+        uuid = g.B1.instance_uuid,
+        alias = 'B-1',
+        boxinfo = {general = {listen = '13312', ro = false}},
+    }})
+end
