@@ -123,7 +123,7 @@ integration-ee-1.10:
     IMAGE_NAME: *IMAGE_NAME_EE_1_10
   script:
     - pytest -v
-    - luatest -v -x cypress.* | tee luatest.log
+    - luatest -v | tee luatest.log
 
 .integration-ce:
   extends: .test-template
@@ -131,7 +131,7 @@ integration-ee-1.10:
     - yum -y upgrade tarantool
     - tarantool --version
     - pytest -v
-    - luatest -v -x cypress.* | tee luatest.log
+    - luatest -v | tee luatest.log
   rules:
     - if: '$NIGHTLY_TEST == "true"'
       when: always
@@ -208,8 +208,8 @@ cypress:
     - tarantoolctl rocks make
     - tarantoolctl rocks list
   script:
-    - luatest -v -p cypress.*
     - ./frontend-test.sh
+    - ./cypress-test.sh
   after_script:
     # avoid caching cartridge rock
     - tarantoolctl rocks remove cartridge

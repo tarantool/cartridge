@@ -1,23 +1,53 @@
-const testPort = `:13311`;
-
 describe('Replicaset configuration & Bootstrap Vshard', () => {
 
-  before(function() {
-    cy.visit(Cypress.config('baseUrl')+"/admin/cluster/dashboard");
+  before(() => {
+    cy.task('tarantool', {code: `
+      cleanup()
+      _G.cluster = helpers.Cluster:new({
+        datadir = fio.tempdir(),
+        server_command = helpers.entrypoint('srv_basic'),
+        use_vshard = false,
+        cookie = helpers.random_cookie(),
+        replicasets = {{
+          uuid = helpers.uuid('a'),
+          alias = 'dummy',
+          roles = {},
+          servers = {{http_port = 8080}, {}, {}},
+        }}
+      })
+
+      for _, server in ipairs(_G.cluster.servers) do
+        server.env.TARANTOOL_INSTANCE_NAME = server.alias
+        server:start()
+      end
+
+      helpers.retrying({}, function()
+        _G.cluster:server('dummy-1'):graphql({query = '{}'})
+      end)
+      return true
+    `}).should('deep.eq', [true]);
+  });
+
+  after(() => {
+    cy.task('tarantool', {code: `cleanup()`});
+  });
+
+  it('Open WebUI', () => {
+    cy.visit('/admin/cluster/dashboard')
   });
 
   it('Tab title on Cluster page', () => {
-    cy.title().should('eq', 'server1: Cluster')
+    cy.title().should('eq', 'dummy-1: Cluster')
   })
 
   it('You are here marker in unconfigured server list', () => {
-    cy.get('.meta-test__UnconfiguredServerList').contains(testPort).closest('li')
+    cy.get('.meta-test__UnconfiguredServerList').contains(':13301').closest('li')
     .find('.meta-test__youAreHereIcon');
   });
 
   it('You are here marker in selected servers list', () => {
-    cy.get('.meta-test__UnconfiguredServerList').contains(testPort).closest('li').find('.meta-test__configureBtn').click();
-    cy.get('.meta-test__ConfigureServerModal').contains(testPort).closest('li').find('.meta-test__youAreHereIcon');
+    cy.get('.meta-test__UnconfiguredServerList').contains(':13301').closest('li').find('.meta-test__configureBtn').click();
+    cy.get('.meta-test__ConfigureServerModal').contains(':13301').closest('li').find('.meta-test__youAreHereIcon');
     cy.get('button[type="button"]').contains('Cancel').click();
   });
 
@@ -30,8 +60,8 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
   it('Creates replicaset with vshard-router and myrole roles', () => {
     cy.get('.meta-test__configureBtn').first().click();//component: UnconfiguredServerList
     cy.get('.meta-test__ConfigureServerModal input[name="alias"]')
-      .type('router1-do-not-use-me')
-      .should('have.value', 'router1-do-not-use-me');
+      .type('test-router')
+      .should('have.value', 'test-router');
     cy.get('.meta-test__ConfigureServerModal input[name="roles"][value="myrole"]').check({ force: true });
     cy.get('.meta-test__ConfigureServerModal input[name="roles"][value="vshard-router"]').check({ force: true });
 
@@ -45,7 +75,7 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
 
     cy.get('.meta-test__CreateReplicaSetBtn').click();//component: CreateReplicasetForm
 
-    cy.get('#root').contains('router1-do-not-use-me');
+    cy.get('#root').contains('test-router');
   })
 
   it('Click Bootstrap Vshard: with vshard-router, without vshard-storage', () => {
@@ -57,8 +87,8 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
   it('Create replicaset with vshard-storage role', () => {
     cy.get('.meta-test__configureBtn').first().click();//component: UnconfiguredServerList
     cy.get('.meta-test__ConfigureServerModal input[name="alias"]')
-      .type('storage1-do-not-use-me')
-      .should('have.value', 'storage1-do-not-use-me');
+      .type('test-storage')
+      .should('have.value', 'test-storage');
     cy.get('.meta-test__ConfigureServerModal input[name="roles"][value="vshard-storage"]').check({ force: true });
     cy.get('.meta-test__ConfigureServerModal input[name="vshard_group"][value="default"]').check({ force: true });
     cy.get('.meta-test__ConfigureServerModal input[name="weight"]')
@@ -75,7 +105,7 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
 
     cy.get('.meta-test__CreateReplicaSetBtn').click();
 
-    cy.get('#root').contains('storage1-do-not-use-me');
+    cy.get('#root').contains('test-storage');
     cy.get('.meta-test__ReplicasetList_allRw_enabled').should('have.length', 2);
   })
 
@@ -88,7 +118,7 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
   })
 
   it('You are here marker in replicaset server list', () => {
-    cy.get('.ServerLabelsHighlightingArea').contains(testPort).closest('li')
+    cy.get('.ServerLabelsHighlightingArea').contains(':13301').closest('li')
     .find('.meta-test__youAreHereIcon');
   });
 

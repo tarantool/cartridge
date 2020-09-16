@@ -1,12 +1,81 @@
-const testPort4 = `:13304`;
-const localhost10 = `localhost:13310`;
 
 
 describe('Replicaset filtering', () => {
+  const testPort4 = `:13304`;
+  const localhost10 = `localhost:13305`;
 
-  before(function () {
-    cy.visit(Cypress.config('baseUrl') + '/admin/cluster/dashboard');
-  })
+  before(() => {
+    cy.task('tarantool', {
+      code: `
+        cleanup()
+        fio = require('fio')
+        helpers = require('test.helper')
+
+        local workdir = fio.tempdir()
+        _G.cluster = helpers.Cluster:new({
+          datadir = workdir,
+          server_command = helpers.entrypoint('srv_basic'),
+          use_vshard = true,
+          cookie = 'test-cluster-cookie',
+
+          env = {
+              TARANTOOL_SWIM_SUSPECT_TIMEOUT_SECONDS = 0,
+              TARANTOOL_APP_NAME = 'cartridge-testing',
+          },
+          replicasets = {{
+            alias = 'router1-do-not-use-me',
+            uuid = helpers.uuid('a'),
+            roles = {'vshard-router'},
+            servers = {{
+              alias = 'router',
+              env = {TARANTOOL_INSTANCE_NAME = 'r1'},
+              instance_uuid = helpers.uuid('a', 'a', 1),
+              advertise_port = 13300,
+              http_port = 8080
+            }}
+          }, {
+            alias = 'storage1-do-not-use-me',
+            uuid = helpers.uuid('b'),
+            roles = {'vshard-storage', 'failover-coordinator'},
+            servers = {{
+              alias = 'storage',
+              instance_uuid = helpers.uuid('b', 'b', 1),
+              advertise_port = 13302,
+              http_port = 8082
+            }, {
+              alias = 'storage-2',
+              instance_uuid = helpers.uuid('b', 'b', 2),
+              advertise_port = 13304,
+              http_port = 8084
+            }}
+          }}
+        })
+
+        _G.server = helpers.Server:new({
+            workdir = workdir.."/spare",
+            alias = 'spare',
+            command = helpers.entrypoint('srv_basic'),
+            replicaset_uuid = helpers.uuid('с'),
+            instance_uuid = helpers.uuid('b', 'b', 3),
+            http_port = 8085,
+            cluster_cookie = _G.cluster.cookie,
+            advertise_port = 13305,
+            env = {TARANTOOL_SWIM_SUSPECT_TIMEOUT_SECONDS = 1},
+        })
+        _G.cluster:start()
+        _G.server:start()
+        return true
+      `
+    }).should('deep.eq', [true])
+  });
+
+  after(() => {
+    cy.task('tarantool', {code: `cleanup()`});
+  });
+
+  it('Open WebUI', () => {
+    cy.visit('/admin/cluster/dashboard')
+  });
 
   it('Tab title on Cluster page', () => {
     cy.title().should('eq', 'cartridge-testing.r1: Cluster')

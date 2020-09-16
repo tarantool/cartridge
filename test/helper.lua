@@ -138,4 +138,8 @@ function helpers.assert_le(actual, expected, message)
     end
 end
 
+function helpers.random_cookie()
+    return digest.urandom(6):hex()
+end
+
 return helpers

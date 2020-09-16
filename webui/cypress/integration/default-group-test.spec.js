@@ -1,7 +1,34 @@
 describe('Default group tests', () => {
 
+  before(() => {
+    cy.task('tarantool', {code: `
+      cleanup()
+      _G.server = helpers.Server:new({
+        alias = 'spare',
+        workdir = fio.tempdir(),
+        command = helpers.entrypoint('srv_basic'),
+        replicaset_uuid = helpers.uuid('с'),
+        http_port = 8080,
+        advertise_port = 13300,
+        cluster_cookie = helpers.random_cookie(),
+      })
+      _G.server:start()
+      helpers.retrying({timeout = 5}, function()
+        _G.server:graphql({query = '{}'})
+      end)
+      return true
+    `}).should('deep.eq', [true]);
+  });
+
+  after(() => {
+    cy.task('tarantool', {code: `cleanup()`});
+  });
+
+  it('Open WebUI', () => {
+    cy.visit('/admin/cluster/dashboard')
+  });
+
   it('1. Open Create replicaset dialog', () => {
-    cy.visit(Cypress.config('baseUrl'));
     cy.get('.meta-test__configureBtn').first().click();//component: UnconfiguredServerList
     cy.get('.meta-test__ConfigureServerModal input[name="alias"]')
       .type('for-default-group-tests');

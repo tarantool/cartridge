@@ -1,23 +1,68 @@
-describe('Code page', () => {
+
+
+describe('Code page: file in tree', () => {
+    
+      before(() => {
+        cy.task('tarantool', {
+          code: `
+            cleanup()
+            fio = require('fio')
+            helpers = require('test.helper')
+    
+            local workdir = fio.tempdir()
+            _G.cluster = helpers.Cluster:new({
+              datadir = workdir,
+              server_command = helpers.entrypoint('srv_basic'),
+              use_vshard = true,
+              cookie = 'test-cluster-cookie',
+              env = {
+                  TARANTOOL_SWIM_SUSPECT_TIMEOUT_SECONDS = 0,
+                  TARANTOOL_APP_NAME = 'cartridge-testing',
+              },
+              replicasets = {{
+                alias = 'test-replicaset',
+                uuid = helpers.uuid('a'),
+                roles = {'vshard-router', 'vshard-storage', 'failover-coordinator'},
+                servers = {{
+                  alias = 'server1',
+                  env = {TARANTOOL_INSTANCE_NAME = 'r1'},
+                  instance_uuid = helpers.uuid('a', 'a', 1),
+                  advertise_port = 13300,
+                  http_port = 8080
+                }}
+              }}
+            })
+    
+            _G.cluster:start()
+            return _G.cluster.datadir
+          `
+        })
+      });
+    
+      after(() => {
+        cy.task('tarantool', {code: `cleanup()`});
+      });
+    
+      it('Open WebUI', () => {
+        cy.visit('/admin/cluster/code')
+      });
 
     it('File in tree', () => {
       const selectAllKeys = Cypress.platform == 'darwin' ? '{cmd}a' : '{ctrl}a';
       function reload() {
-            cy.get('.meta-test__Code__reload_idle').click();
+            cy.get('.meta-test__Code__reload_idle').click({force: true});
             cy.get('button[type="button"]').contains('Ok').click();
             cy.get('.meta-test__Code__reload_loading').should('not.exist');
       }
       function apply() {
-            cy.get('.meta-test__Code__apply_idle').click();
+            cy.get('.meta-test__Code__apply_idle').click({force: true});
             cy.get('.meta-test__Code__apply_loading').should('not.exist');
       }
-
-      cy.visit(Cypress.config('baseUrl')+"/admin/cluster/code");
 
       //create file and file contents
       cy.get('.meta-test__addFileBtn').click();
       cy.get('.meta-test__enterName').focused().type('file-in-tree1.yml');
-      cy.get('.test__Header').click();
+      cy.get('#root').contains('cartridge-testing.r1').click();
       cy.get('.ScrollbarsCustom-Content').contains('file-in-tree1.yml');
 
       //reload
@@ -44,6 +89,7 @@ describe('Code page', () => {
       cy.get('.monaco-editor textarea').should('have.value', 'some test code');
 
       reload()
+      cy.wait(1000)
       cy.get('.monaco-editor textarea').should('have.value', '');
 
       cy.get('.ScrollbarsCustom-Content').contains('file-in-tree2.yml').click();

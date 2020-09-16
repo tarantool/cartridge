@@ -1,7 +1,9 @@
 {
-  "defaultCommandTimeout": 8000,
-  "trashAssetsBeforeRuns": false,
-  "baseUrl": "http://localhost:8081",
-  "viewportHeight": 768,
-  "viewportWidth": 1280
+    "baseUrl": "http://localhost:8080",
+    "trashAssetsBeforeRuns": false,
+    "defaultCommandTimeout": 10000,
+    "env": {
+        "launcherHost": "127.0.0.1",
+        "launcherPort": 3333
+    }
 }

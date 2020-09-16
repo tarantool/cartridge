@@ -1,13 +1,38 @@
-const testPort = `:13302`;
+const testPort = `:13301`;
 
 describe('Failover', () => {
 
-  before(function () {
-    cy.visit(Cypress.config('baseUrl') + '/admin/cluster/dashboard');
-    cy.contains('Replica sets');
+  before(() => {
+    cy.task('tarantool', {code: `
+      cleanup()
+
+      _G.cluster = helpers.Cluster:new({
+        datadir = fio.tempdir(),
+        server_command = helpers.entrypoint('srv_basic'),
+        use_vshard = false,
+        cookie = helpers.random_cookie(),
+        env = {TARANTOOL_SWIM_SUSPECT_TIMEOUT_SECONDS = 0},
+        replicasets = {{
+          alias = 'dummy',
+          roles = {},
+          servers = {{http_port = 8080}, {}},
+        }}
+      })
+
+      _G.cluster:start()
+      return true
+    `}).should('deep.eq', [true]);
+  });
+
+  after(() => {
+    cy.task('tarantool', {code: `cleanup()`});
+  });
+
+  it('Open WebUI', () => {
+    cy.visit('/admin/cluster/dashboard');
     cy.get('.meta-test__FailoverButton').should('be.visible');
     cy.get('.meta-test__FailoverButton').contains('Failover: disabled');
-  })
+  });
 
   function etcd2InputsShouldNotExist() {
     cy.get('.meta-test__etcd2Username input').should('not.exist');
@@ -19,9 +44,7 @@ describe('Failover', () => {
 
   it('Failover Disable', () => {
     cy.get('.meta-test__FailoverButton').click();
-
     cy.get('.meta-test__disableRadioBtn').click();
-
     cy.get('.meta-test__stateboardURI input').should('be.disabled');
     cy.get('.meta-test__stateboardPassword input').should('be.disabled');
     etcd2InputsShouldNotExist()
@@ -34,9 +57,7 @@ describe('Failover', () => {
 
   it('Failover Eventual', () => {
     cy.get('.meta-test__FailoverButton').click();
-
     cy.get('.meta-test__eventualRadioBtn').click();
-
     cy.get('.meta-test__stateboardURI input').should('be.disabled');
     cy.get('.meta-test__stateboardPassword input').should('be.disabled');
     etcd2InputsShouldNotExist()
@@ -84,38 +105,37 @@ describe('Failover', () => {
   })
 
   it('Check issues', () => {
-    cy.reload();
-    cy.contains('Replica sets', { timeout: 6000 });
+    cy.contains('Replica sets');
     cy.get('.meta-test__ClusterIssuesButton').should('be.enabled');
-    cy.get('.meta-test__ClusterIssuesButton').contains('Issues: 6');
+    cy.get('.meta-test__ClusterIssuesButton').contains('Issues: 4');
     cy.get('.meta-test__ClusterIssuesButton').click();
-    cy.get('.meta-test__ClusterIssuesModal', { timeout: 6000 }).contains('warning');
+    cy.get('.meta-test__ClusterIssuesModal').contains('warning');
     cy.get('.meta-test__ClusterIssuesModal button[type="button"]').click();
     cy.get('.meta-test__ClusterIssuesModal').should('not.exist');
 
     cy.get('.meta-test__haveIssues').should('exist');
 
-    cy.exec('kill -SIGSTOP $(lsof -sTCP:LISTEN -i :8082 -t)', { failOnNonZeroExit: true });
+    cy.task('tarantool', {code: `_G.cluster:server('dummy-2'):stop()`});
     cy.reload();
-    cy.contains('Replica sets', { timeout: 6000 });
+    cy.contains('Replica sets');
     cy.get('.meta-test__ClusterIssuesButton').click();
-    cy.get('.meta-test__ClusterIssuesModal', { timeout: 6000 })
+    cy.get('.meta-test__ClusterIssuesModal')
       .contains(
-        'Replication from localhost' + testPort + ' (storage)' +
-        ' to localhost:13304 (storage-2): long idle'
+        'Replication from localhost:13302 (dummy-2) to' +
+        ' localhost:13301 (dummy-1) is disconnected'
       );
     cy.get('.meta-test__closeClusterIssuesModal').click();
 
-    cy.get('.meta-test__haveIssues').parents('li:contains(storage1-do-not-use-me)');
+    cy.get('.meta-test__haveIssues').parents('li:contains(dummy)');
 
-    cy.exec('kill -SIGCONT $(lsof -sTCP:LISTEN -i :8082 -t)', { failOnNonZeroExit: true });
+    cy.task('tarantool', {code: `_G.cluster:server('dummy-2'):start()`});
     cy.reload();
     cy.contains('Replica sets');
     cy.get('.meta-test__ClusterIssuesButton').click();
     cy.get('.meta-test__ClusterIssuesModal', { timeout: 6000 })
       .contains(
         'Replication from localhost' + testPort + ' (storage)' +
-        ' to localhost:13304 (storage-2): long idle'
+        ' to localhost:13301 (storage-2): long idle'
       )
       .should('not.exist');
     cy.get('.meta-test__closeClusterIssuesModal').click();
@@ -150,5 +170,4 @@ describe('Failover', () => {
     cy.get('span:contains(Failover mode) + span:contains(stateful)').click();
     cy.get('.meta-test__FailoverButton').contains('Failover: stateful');
   })
-
 });
