@@ -162,6 +162,19 @@ function g.test_self()
     t.assert_equals(_get_demo_uri(g.server), demo_uri)
 end
 
+function g.test_suggestions()
+    local suggestions = g.cluster.main_server:graphql({
+        query = [[{
+            cluster { suggestions {
+                refine_uri {}
+            }}
+        }]]
+    }).data.cluster.suggestions
+
+    t.assert_equals(suggestions, {
+        refine_uri = box.NULL,
+    })
+end
 
 function g.test_custom_http_endpoint()
     local router = g.cluster:server('router')

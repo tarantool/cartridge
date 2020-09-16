@@ -1,5 +1,6 @@
 cartridge:
     cluster_cookie: ""
+    replication_connect_quorum: 1
 
 cartridge.srv-1:
     workdir: dev/3301

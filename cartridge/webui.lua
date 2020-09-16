@@ -11,6 +11,7 @@ local api_vshard = require('cartridge.webui.api-vshard')
 local api_topology = require('cartridge.webui.api-topology')
 local api_failover = require('cartridge.webui.api-failover')
 local api_ddl = require('cartridge.webui.api-ddl')
+local api_suggestions = require('cartridge.webui.api-suggestions')
 local gql_types = require('cartridge.graphql.types')
 
 local module_name = 'cartridge.webui'
@@ -50,6 +51,7 @@ local function init(httpd)
 
     -- Replication warnings and other problems
     api_issues.init(graphql)
+    api_suggestions.init(graphql)
 
     graphql.add_callback({
         prefix = 'cluster',

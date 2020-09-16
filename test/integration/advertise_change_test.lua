@@ -107,3 +107,27 @@ function g.test_topology_query()
         boxinfo = {general = {listen = '13312', ro = false}},
     }})
 end
+
+function g.test_suggestion()
+    local suggestions = g.cluster.main_server:graphql({
+        query = [[{
+            cluster { suggestions {
+                refine_uri {
+                    uuid
+                    uri_old
+                    uri_new
+                }
+            }}
+        }]]
+    }).data.cluster.suggestions
+
+    t.assert_items_equals(suggestions.refine_uri, {{
+        uuid = g.A1.instance_uuid,
+        uri_new = g.A1.net_box_uri,
+        uri_old = 'localhost:13301',
+    }, {
+        uuid = g.B1.instance_uuid,
+        uri_new = g.B1.net_box_uri,
+        uri_old = 'localhost:13302',
+    }})
+end

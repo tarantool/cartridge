@@ -1,5 +1,5 @@
 # source: http://localhost:8081/admin/api
-# timestamp: Thu Jul 30 2020 12:28:54 GMT+0300 (Moscow Standard Time)
+# timestamp: Wed Sep 16 2020 20:30:29 GMT+0300 (Moscow Standard Time)
 
 """Cluster management"""
 type Apicluster {
@@ -9,34 +9,37 @@ type Apicluster {
   """Clusterwide DDL schema"""
   schema: DDLSchema!
 
-  """Get current failover state. (Deprecated since v2.0.2-2)"""
-  failover: Boolean!
+  """List issues in cluster"""
+  issues: [Issue!]
 
   """Get automatic failover configuration."""
   failover_params: FailoverAPI!
 
-  """Virtual buckets count in cluster"""
-  vshard_bucket_count: Int!
+  """Get current failover state. (Deprecated since v2.0.2-2)"""
+  failover: Boolean!
+
+  """Show suggestions to resolve operation problems"""
+  suggestions: Suggestions
 
   """List authorized users"""
   users(username: String): [User!]
 
-  """List issues in cluster"""
-  issues: [Issue!]
+  """Whether it is reasonble to call bootstrap_vshard mutation"""
+  can_bootstrap_vshard: Boolean!
   auth_params: UserManagementAPI!
 
-  """Get list of all registered roles and their dependencies."""
-  known_roles: [Role!]!
+  """Get list of known vshard storage groups."""
+  vshard_known_groups: [String!]!
 
   """List of pages to be hidden in WebUI"""
   webui_blacklist: [String!]
   vshard_groups: [VshardGroup!]!
 
-  """Get list of known vshard storage groups."""
-  vshard_known_groups: [String!]!
+  """Get list of all registered roles and their dependencies."""
+  known_roles: [Role!]!
 
-  """Whether it is reasonble to call bootstrap_vshard mutation"""
-  can_bootstrap_vshard: Boolean!
+  """Virtual buckets count in cluster"""
+  vshard_bucket_count: Int!
 
   """Get cluster config sections"""
   config(sections: [String!]): [ConfigSection]!
@@ -237,6 +240,13 @@ type Query {
   cluster: Apicluster
   servers(uuid: String): [Server]
   replicasets(uuid: String): [Replicaset]
+}
+
+"""A suggestion to reconfigure cluster topology"""
+type RefineUriSuggestion {
+  uri_new: String!
+  uuid: String!
+  uri_old: String!
 }
 
 """Group of servers replicating the same data"""
@@ -487,6 +497,10 @@ type ServerStat {
   The efficient memory used for storing tuples and indexes together (omitting allocated, but currently free slabs)
   """
   arena_used: Long!
+}
+
+type Suggestions {
+  refine_uri: [RefineUriSuggestion!]
 }
 
 """A single user account information"""
