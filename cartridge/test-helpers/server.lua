@@ -46,6 +46,9 @@ function Server:initialize()
         user = 'admin',
         password = self.cluster_cookie,
     }
+    if self.instance_uuid == nil then
+        self.instance_uuid = require('uuid').str()
+    end
     getmetatable(getmetatable(self)).initialize(self)
 end
 

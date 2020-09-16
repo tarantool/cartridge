@@ -1,0 +1,86 @@
+local fio = require('fio')
+local fun = require('fun')
+local t = require('luatest')
+local g = t.group()
+
+local helpers = require('test.helper')
+
+local function move(srv, uri)
+    srv.env['TARANTOOL_ADVERTISE_URI'] = uri
+    srv.net_box_uri = uri
+end
+
+g.before_all(function()
+    g.cluster = helpers.Cluster:new({
+        datadir = fio.tempdir(),
+        use_vshard = false,
+        server_command = helpers.entrypoint('srv_basic'),
+        cookie = require('digest').urandom(6):hex(),
+        replicasets = {{
+            uuid = helpers.uuid('a'),
+            roles = {},
+            alias = 'A',
+            servers = {
+                {advertise_port = 13301},
+            },
+        }, {
+            uuid = helpers.uuid('b'),
+            roles = {},
+            alias = 'B',
+            servers = {
+                {advertise_port = 13302},
+                {advertise_port = 13303},
+            },
+        }},
+        env = {
+            TARANTOOL_REPLICATION_CONNECT_QUORUM = 1,
+            TARANTOOL_SWIM_SUSPECT_TIMEOUT_SECONDS = 0,
+        }
+    })
+
+    g.cluster:start()
+    g.A1 = g.cluster:server('A-1')
+    g.B1 = g.cluster:server('B-1')
+    g.B2 = g.cluster:server('B-2')
+
+    fun.foreach(function(s) s:stop() end, g.cluster.servers)
+    move(g.A1, 'localhost:13311')
+    move(g.B1, 'localhost:13312')
+    fun.foreach(function(s) s:start() end, g.cluster.servers)
+
+    helpers.retrying({}, function()
+        g.cluster.main_server.net_box:eval([[
+            local m = require('membership')
+            assert(m.get_member('localhost:13301').status == 'dead')
+            assert(m.get_member('localhost:13302').status == 'dead')
+            assert(m.get_member('localhost:13311').payload.uuid)
+            assert(m.get_member('localhost:13312').payload.uuid)
+        ]])
+    end)
+end)
+
+g.after_all(function()
+    g.cluster:stop()
+    fio.rmtree(g.cluster.datadir)
+end)
+
+function g.test_issues()
+    t.assert_items_include(
+        helpers.list_cluster_issues(g.cluster.main_server),
+        {{
+            level = 'warning',
+            topic = 'configuration',
+            instance_uuid = g.A1.instance_uuid,
+            replicaset_uuid = g.A1.replicaset_uuid,
+            message = 'Advertise URI (localhost:13311) differs' ..
+                ' from clusterwide config (localhost:13301)',
+        }, {
+            level = 'warning',
+            topic = 'configuration',
+            instance_uuid = g.B1.instance_uuid,
+            replicaset_uuid = g.B1.replicaset_uuid,
+            message = 'Advertise URI (localhost:13312) differs' ..
+                ' from clusterwide config (localhost:13302)',
+        }}
+    )
+end
