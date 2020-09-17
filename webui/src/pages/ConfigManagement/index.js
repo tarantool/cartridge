@@ -10,7 +10,8 @@ import {
   IconAttach,
   IconDownload,
   PageLayout,
-  Text
+  Text,
+  colors
 } from '@tarantool.io/ui-kit';
 import UploadZone from '../../components/UploadZone';
 import { useStore } from 'effector-react';
@@ -43,11 +44,13 @@ const styles = {
     margin-bottom: 24px;
   `,
   alert: css`
-    margin-top: 15px;
+    margin-top: 0;
     margin-bottom: 20px;
   `,
-  uploadError: css`
-    margin-bottom: 20px;
+  attachIcon: css`
+    margin-right: 6px;
+    margin-left: 30px;
+    fill: ${colors.intentSuccess};
   `
 }
 
@@ -61,8 +64,7 @@ const ConfigManagement = ({ isDemoPanelPresent }: ConfigManagementProps) => {
   const {
     files,
     error,
-    success,
-    buttonAvailable,
+    successfulFileName,
     submitting
   } = useStore($configForm)
 
@@ -92,21 +94,23 @@ const ConfigManagement = ({ isDemoPanelPresent }: ConfigManagementProps) => {
         <Text variant='h2'>Upload configuration</Text>
         <Text className={styles.panelNote} tag='p'>New configuration can be uploaded here.</Text>
         {error && (
-          <Alert type='error'>
+          <Alert className={styles.alert} type='error'>
             {error}
           </Alert>
         )}
-        {success && (
-          <Alert type='success'>
-            Successfully uploaded
+        {successfulFileName && (
+          <Alert className={styles.alert} type='success'>
+            New configuration is uploaded.
+            <IconAttach className={styles.attachIcon} />
+            {successfulFileName}
           </Alert>
         )}
         <UploadZone
           className={styles.dropZone}
-          disabled={!buttonAvailable}
           handler={dropFiles}
           name='file'
           label='Choose config file to upload'
+          loading={submitting}
           multiple={false}
           files={files}
         />

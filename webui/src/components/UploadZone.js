@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import styled from 'react-emotion';
 import { css, cx } from 'emotion';
 import { useDropzone } from 'react-dropzone';
-import { IconBox, Text, colors } from '@tarantool.io/ui-kit';
+import { IconBox, IconSpinner, Text, colors } from '@tarantool.io/ui-kit';
 
 const styles = {
   wrap: css`
@@ -64,9 +64,12 @@ export default function UploadZone(
     multiple,
     className,
     label,
+    loading,
     files
   }: UploadZoneProps
 ) {
+  const Icon = loading ? IconSpinner : IconBox;
+
   const [selectedFiles, setSelectedFiles] = useState<Array<File>>([]);
 
   const {
@@ -82,7 +85,7 @@ export default function UploadZone(
     }
   });
 
-  const refFiles = files || selectedFiles
+  // const refFiles = files || selectedFiles
 
   const { ref, ...rootProps } = getRootProps({
     isDragAccept
@@ -94,13 +97,14 @@ export default function UploadZone(
         {...rootProps}
       >
         <input {...getInputProps()} name={name}/>
-        <IconBox className={styles.icon} />
+        <Icon className={styles.icon} />
         <Text variant='h3' tag='span'>
-            Click or drag file to this area to upload
+          {loading
+            ? 'Uploading...'
+            : 'Click or drag file to this area to upload'}
         </Text>
-        {!!label && <Text className={styles.notice}>{label}</Text>}
+        {!!label && !loading && <Text className={styles.notice}>{label}</Text>}
       </Container>
-      {refFiles.length > 0 && console.log(refFiles)}
     </div>
   );
 }

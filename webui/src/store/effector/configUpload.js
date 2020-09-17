@@ -31,9 +31,6 @@ export const $files: Store<Array<File>> = createStore([])
   .reset(submitConfig.done)
   .reset(configPageMount)
 
-
-export const $buttonAvailable: Store<boolean> = $files.map(files => files.length > 0)
-
 export const $error: Store<?string> = createStore(null)
   .on(submitConfig.fail, (_, { error }) => getErrorMessage(error))
   .reset(submitConfig)
@@ -41,17 +38,25 @@ export const $error: Store<?string> = createStore(null)
   .reset(configPageMount)
 
 
-export const $success: Store<boolean> = createStore(false)
-  .on(submitConfig.done, R.T)
+export const $successfulFileName: Store<?string> = createStore(null)
+  .on(
+    submitConfig.done,
+    (_, { params }) => {
+      try {
+        return params[0].name;
+      } catch (err) {
+        return null;
+      }
+    }
+  )
   .reset(submitConfig)
   .reset(dropFiles)
   .reset(configPageMount)
 
 export const $configForm = createStoreObject({
   files: $files,
-  buttonAvailable: $buttonAvailable,
   error: $error,
-  success: $success,
+  successfulFileName: $successfulFileName,
   submitting: submitConfig.pending
 })
 
