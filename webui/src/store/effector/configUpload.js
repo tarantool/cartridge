@@ -13,7 +13,6 @@ import * as R from 'ramda'
 
 export const configPageMount = createEvent<any>('config page mount')
 export const dropFiles = createEvent<Array<File>>('drop files')
-export const uploadClick = createEvent<any>('upload click')
 
 export const submitConfig: Effect<Array<File>, boolean, Error> = createEffect('submit config', {
   handler: async files => {
@@ -58,7 +57,7 @@ export const $configForm = createStoreObject({
 
 sample({
   source: $files,
-  clock: uploadClick,
+  clock: dropFiles,
   fn: files => files,
   target: submitConfig
 })

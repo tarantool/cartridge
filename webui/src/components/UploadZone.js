@@ -1,48 +1,25 @@
 // @flow
-import React, { useState } from 'react'
-import styled from 'react-emotion'
+import React, { useState } from 'react';
+import styled from 'react-emotion';
+import { css, cx } from 'emotion';
 import { useDropzone } from 'react-dropzone';
-import { IconAttach, IconBox } from '@tarantool.io/ui-kit';
+import { IconBox, Text, colors } from '@tarantool.io/ui-kit';
 
-const UploadTitle = styled.p`
-  font-size: 16px;
-  line-height: 24px;
-  font-weight: 600;
-  font-family: Open Sans;
-  margin: 16px 0;
-  letter-spacing: 0.32px;
-  color: #000;
-`
-
-const DropzoneContainer = styled.div`
-  margin-bottom: 16px;
-`
-
-const UploadNotice = styled.span`
-  font-family: Open Sans;
-  font-size: 14px;
-  font-weight: normal;
-  font-style: normal;
-  font-stretch: normal;
-  line-height: 1.57;
-  letter-spacing: 0.28px;
-  color: #000000;
-`
-
-const UploadableFiles = styled.div`
-  display: block;
-  margin-bottom: 16px;
-`
-const UploadableFile = styled.div`
-  
-`
-
-const FileName = styled.span`
-  display: inline-block;
-  margin-left 6px;
-`
-
-const defaultNotice = `Support for a single or bulk upload`
+const styles = {
+  wrap: css`
+    display: flex;
+  `,
+  icon: css`
+    width: 48px;
+    height: 48px;
+    margin-bottom: 16px;
+    fill: ${colors.intentBase};
+  `,
+  notice: css`
+    margin-top: 16px;
+    color: ${colors.dark65};
+  `
+};
 
 const getColor = props => {
   if (props.isDragAccept) {
@@ -52,24 +29,24 @@ const getColor = props => {
 }
 
 const Container = styled.div`
-  cursor: pointer;
   flex: 1;
   display: flex;
   flex-direction: column;
+  justify-content: center;
   align-items: center;
-  padding: 24px;
-  border-width: 2px;
-  border-radius: 2px;
+  padding: 20px;
+  border-width: 1px;
+  border-radius: 4px;
   border-color: ${props => getColor(props)};
   border-style: dashed;
-  background-color: #fafafa;
-  color: #bdbdbd;
-  outline: none;
+  background-color: ${colors.intentBaseActive};
   transition: border .24s ease-in-out;
+  outline: none;
+  cursor: pointer;
 `;
 
 
-type UploadProps = {
+type UploadZoneProps = {
   accept?: string,
   handler?: Function,
   name: string,
@@ -88,7 +65,7 @@ export default function UploadZone(
     className,
     label,
     files
-  }: UploadProps
+  }: UploadZoneProps
 ) {
   const [selectedFiles, setSelectedFiles] = useState<Array<File>>([]);
 
@@ -112,24 +89,18 @@ export default function UploadZone(
   })
 
   return (
-    <div className={className || ''} ref={ref}>
-      <DropzoneContainer>
-        <Container
-          {...rootProps}
-        >
-          <input {...getInputProps()} name={name}/>
-          <IconBox/>
-          <UploadTitle>Click or drag file to this area to upload</UploadTitle>
-          <UploadNotice>
-            {label ? label : defaultNotice}
-          </UploadNotice>
-        </Container>
-      </DropzoneContainer>
-      {refFiles.length > 0 && <UploadableFiles>
-        {refFiles.map(x => {
-          return <UploadableFile><IconAttach/><FileName>{x.name}</FileName></UploadableFile>
-        })}
-      </UploadableFiles>}
+    <div className={cx(styles.wrap, className)} ref={ref}>
+      <Container
+        {...rootProps}
+      >
+        <input {...getInputProps()} name={name}/>
+        <IconBox className={styles.icon} />
+        <Text variant='h3' tag='span'>
+            Click or drag file to this area to upload
+        </Text>
+        {!!label && <Text className={styles.notice}>{label}</Text>}
+      </Container>
+      {refFiles.length > 0 && console.log(refFiles)}
     </div>
   );
 }
