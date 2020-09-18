@@ -16,7 +16,7 @@ const styles = {
     fill: ${colors.intentBase};
   `,
   notice: css`
-    margin-top: 16px;
+    margin-top: 10px;
     color: ${colors.dark65};
   `
 };
