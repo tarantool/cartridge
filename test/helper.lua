@@ -54,6 +54,20 @@ function helpers.list_cluster_issues(server)
     }]]}).data.cluster.issues
 end
 
+function helpers.get_suggestions(server)
+    return server:graphql({
+        query = [[{
+            cluster { suggestions {
+                refine_uri {
+                    uuid
+                    uri_old
+                    uri_new
+                }
+            }}
+        }]]
+    }).data.cluster.suggestions
+end
+
 function helpers.box_cfg()
     if type(box.cfg) ~= 'function' then
         return

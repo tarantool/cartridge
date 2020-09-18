@@ -109,18 +109,7 @@ function g.test_topology_query()
 end
 
 function g.test_suggestion()
-    local suggestions = g.cluster.main_server:graphql({
-        query = [[{
-            cluster { suggestions {
-                refine_uri {
-                    uuid
-                    uri_old
-                    uri_new
-                }
-            }}
-        }]]
-    }).data.cluster.suggestions
-
+    local suggestions = helpers.get_suggestions(g.cluster.main_server)
     t.assert_items_equals(suggestions.refine_uri, {{
         uuid = g.A1.instance_uuid,
         uri_new = g.A1.net_box_uri,
@@ -130,4 +119,38 @@ function g.test_suggestion()
         uri_new = g.B1.net_box_uri,
         uri_old = 'localhost:13302',
     }})
+end
+
+function g.test_2pc()
+    local query = [[ mutation($servers: [EditServerInput]) {
+      cluster{ edit_topology(servers: $servers){} }
+    }]]
+
+    g.cluster.main_server:graphql({
+        query = query,
+        variables = {servers = {
+            {uuid = g.A1.instance_uuid, uri = g.A1.net_box_uri},
+        }},
+    })
+
+    g.cluster.main_server:graphql({
+        query = query,
+        variables = {servers = {
+            {uuid = g.B1.instance_uuid, uri = g.B1.net_box_uri},
+        }},
+    })
+
+    t.assert_equals(helpers.get_suggestions(g.A1), {refine_uri = box.NULL})
+    helpers.retrying({}, function()
+        -- Replication takes time to re-establish
+        t.assert_equals(helpers.list_cluster_issues(g.A1), {})
+    end)
+
+    g.cluster.main_server:graphql({
+        query = query,
+        variables = {servers = {
+            {uuid = g.A1.instance_uuid, uri = 'localhost:13301'},
+            {uuid = g.B1.instance_uuid, uri = 'localhost:13302'},
+        }},
+    })
 end
