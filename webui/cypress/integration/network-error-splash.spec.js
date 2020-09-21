@@ -1,7 +1,8 @@
 describe('Network error panel', () => {
 
   before(() => {
-    cy.task('tarantool', {code: `
+    cy.task('tarantool', {
+      code: `
       cleanup()
 
       _G.cluster = helpers.Cluster:new({
@@ -18,11 +19,12 @@ describe('Network error panel', () => {
 
       _G.cluster:start()
       return true
-    `}).should('deep.eq', [true]);
+    `
+    }).should('deep.eq', [true]);
   });
 
   after(() => {
-    cy.task('tarantool', {code: `cleanup()`});
+    cy.task('tarantool', { code: `cleanup()` });
   });
 
   it('Check presence', () => {
@@ -33,7 +35,7 @@ describe('Network error panel', () => {
     cy.get('.meta-test__NetworkErrorSplash').should('not.exist');
 
     // Now kill the server
-    cy.task('tarantool', {code: `_G.cluster.main_server:stop()`});
+    cy.task('tarantool', { code: `_G.cluster.main_server:stop()` });
 
     cy.get('.meta-test__NetworkErrorSplash').should('exist')
       .contains('Network connection problem or server disconnected');
@@ -63,7 +65,7 @@ describe('Network error panel', () => {
     cy.get('.meta-test__NetworkErrorSplash').should('exist');
 
     // Repair the server
-    cy.task('tarantool', {code: `_G.cluster.main_server:start()`});
+    cy.task('tarantool', { code: `_G.cluster.main_server:start()` });
     cy.get('button:contains(Retry)').click();
     cy.get('.meta-test__NetworkErrorSplash').should('not.exist');
   })
