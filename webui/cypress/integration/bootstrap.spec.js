@@ -39,11 +39,6 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
       .closest('li').find('.meta-test__youAreHereIcon');
   });
 
-  // it('You are here marker in selected servers list', () => {
-    // cy.get('.meta-test__UnconfiguredServerList').contains(':13301').closest('li').find('.meta-test__configureBtn').click();
-    // cy.get('button[type="button"]').contains('Cancel').click();
-  // });
-
   it('Bootstrap vshard on unconfigured cluster', () => {
     cy.get('.meta-test__BootstrapButton').click();
     cy.get('.meta-test__BootstrapPanel__vshard-router_disabled').should('exist');
