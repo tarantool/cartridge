@@ -4,6 +4,9 @@
 Tarantool Cartridge
 ********************************************************************************
 
+**Cluster** management in Tarantool is powered by the Tarantool Cartridge
+framework.
+
 Here we explain how you can benefit with Tarantool Cartridge,
 a framework for developing, deploying, and managing applications
 based on Tarantool.
