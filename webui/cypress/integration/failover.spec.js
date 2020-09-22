@@ -1,5 +1,3 @@
-const testPort = `:13301`;
-
 describe('Failover', () => {
 
   before(() => {
@@ -42,7 +40,7 @@ describe('Failover', () => {
     cy.get('.meta-test__etcd2Endpoints textarea').should('not.exist');
   }
 
-  it('Failover Disable', () => {
+  it('Failover Disabled', () => {
     cy.get('.meta-test__FailoverButton').click();
     cy.get('.meta-test__disableRadioBtn').click();
     cy.get('.meta-test__stateboardURI input').should('be.disabled');
@@ -68,7 +66,7 @@ describe('Failover', () => {
     cy.get('.meta-test__ClusterIssuesButton').should('be.disabled');
   })
 
-  it('Failover Stateful: error', () => {
+  it('Failover Stateful - TARANTOOL: error', () => {
     cy.get('.meta-test__FailoverButton').click();
 
     cy.get('.meta-test__statefulRadioBtn').click().click();
@@ -78,77 +76,35 @@ describe('Failover', () => {
     cy.get('.meta-test__SubmitButton').click();
     cy.get('.meta-test__FailoverModal')
       .contains('topology_new.failover.tarantool_params.uri: Invalid URI ""')
-      .trigger('keydown', { keyCode: 27, which: 27 });
+      .trigger('keydown', { keyCode: 27, which: 27 }); // press esc button
     cy.get('.meta-test__FailoverButton').contains('Failover: eventual');
     cy.get('.meta-test__ClusterIssuesButton').should('be.disabled');
   })
 
   it('Failover Stateful - TARANTOOL: success', () => {
     cy.get('.meta-test__FailoverButton').click();
-
     cy.get('.meta-test__statefulRadioBtn').click().click();
-
     cy.get('.meta-test__stateProviderChoice').find('button')
       .then($button => {
-        expect($button).to.have.text('tarantool')
+        expect($button).to.have.text('tarantool');
       })
 
     cy.get('.meta-test__stateboardURI input').should('be.enabled');
     cy.get('.meta-test__stateboardPassword input').should('be.enabled');
     etcd2InputsShouldNotExist()
 
-    cy.get('.meta-test__stateboardURI input').type('{selectall}{backspace}localhost' + testPort);
+    cy.get('.meta-test__stateboardURI input').type('{selectall}{backspace}localhost:14401');
 
     cy.get('.meta-test__SubmitButton').click();
     cy.get('span:contains(Failover mode) + span:contains(stateful)').click();
     cy.get('.meta-test__FailoverButton').contains('Failover: stateful');
   })
 
-  it('Check issues', () => {
-    cy.contains('Replica sets');
-    cy.get('.meta-test__ClusterIssuesButton').should('be.enabled');
-    cy.get('.meta-test__ClusterIssuesButton').contains('Issues: 4');
-    cy.get('.meta-test__ClusterIssuesButton').click();
-    cy.get('.meta-test__ClusterIssuesModal').contains('warning');
-    cy.get('.meta-test__ClusterIssuesModal button[type="button"]').click();
-    cy.get('.meta-test__ClusterIssuesModal').should('not.exist');
-
-    cy.get('.meta-test__haveIssues').should('exist');
-
-    cy.task('tarantool', {code: `_G.cluster:server('dummy-2'):stop()`});
-    cy.reload();
-    cy.contains('Replica sets');
-    cy.get('.meta-test__ClusterIssuesButton').click();
-    cy.get('.meta-test__ClusterIssuesModal')
-      .contains(
-        'Replication from localhost:13302 (dummy-2) to' +
-        ' localhost:13301 (dummy-1) is disconnected'
-      );
-    cy.get('.meta-test__closeClusterIssuesModal').click();
-
-    cy.get('.meta-test__haveIssues').parents('li:contains(dummy)');
-
-    cy.task('tarantool', {code: `_G.cluster:server('dummy-2'):start()`});
-    cy.reload();
-    cy.contains('Replica sets');
-    cy.get('.meta-test__ClusterIssuesButton').click();
-    cy.get('.meta-test__ClusterIssuesModal', { timeout: 6000 })
-      .contains(
-        'Replication from localhost' + testPort + ' (storage)' +
-        ' to localhost:13301 (storage-2): long idle'
-      )
-      .should('not.exist');
-    cy.get('.meta-test__closeClusterIssuesModal').click();
-  })
-
   it('Failover Stateful - ETCD2: success', () => {
     cy.get('.meta-test__FailoverButton').click();
-
     cy.get('.meta-test__statefulRadioBtn').click().click();
-
     cy.get('.meta-test__stateProviderChoice').find('button').click();
     cy.contains('etcd2').click();
-
     cy.get('.meta-test__stateProviderChoice').find('button')
       .then($button => {
         expect($button).to.have.text('etcd2')
@@ -161,13 +117,30 @@ describe('Failover', () => {
     cy.get('.meta-test__etcd2Password input').should('have.value', '');
     cy.get('.meta-test__etcd2LockDelay input').should('have.value', '10');
     cy.get('.meta-test__etcd2Prefix input').should('have.value', '/');
-    cy.get('.meta-test__etcd2Endpoints').find('textarea')
-      .then($textarea => {
-        expect($textarea).to.have.text('http://127.0.0.1:4001\nhttp://127.0.0.1:2379')
-      })
+    cy.get('.meta-test__etcd2Endpoints textarea')
+      .should('have.text', 'http://127.0.0.1:4001\nhttp://127.0.0.1:2379');
 
     cy.get('.meta-test__SubmitButton').click();
     cy.get('span:contains(Failover mode) + span:contains(stateful)').click();
     cy.get('.meta-test__FailoverButton').contains('Failover: stateful');
+  })
+
+  it('Check issues', () => {
+    cy.reload();
+    cy.contains('Replica sets');
+    cy.get('.meta-test__ClusterIssuesButton').should('be.enabled');
+    cy.get('.meta-test__ClusterIssuesButton').contains('Issues: 4');
+    cy.get('.meta-test__ClusterIssuesButton').click();
+
+    cy.get('.meta-test__ClusterIssuesModal')
+      .contains("warning: Can't obtain failover coordinator: ");
+    cy.get('.meta-test__ClusterIssuesModal button[type="button"]').click();
+    cy.get('.meta-test__ClusterIssuesModal').should('not.exist');
+
+    cy.get('.meta-test__haveIssues').click();
+    cy.get('.meta-test__ClusterIssuesModal').contains('Issues: 1');
+    cy.get('.meta-test__ClusterIssuesModal').contains(
+      "warning: Consistency on localhost:13301 (dummy-1) isn't reached yet"
+    );
   })
 });
