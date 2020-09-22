@@ -2,6 +2,8 @@
     "baseUrl": "http://localhost:8080",
     "trashAssetsBeforeRuns": false,
     "defaultCommandTimeout": 10000,
+    "viewportWidth": 1280,
+    "viewportHeight": 768,
     "env": {
         "launcherHost": "127.0.0.1",
         "launcherPort": 3333

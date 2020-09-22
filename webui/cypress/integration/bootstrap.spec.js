@@ -34,31 +34,28 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
 
   it('Open WebUI', () => {
     cy.visit('/admin/cluster/dashboard')
-  });
-
-  it('Tab title on Cluster page', () => {
     cy.title().should('eq', 'dummy-1: Cluster')
-  })
-
-  it('You are here marker in unconfigured server list', () => {
-    cy.get('.meta-test__UnconfiguredServerList').contains(':13301').closest('li')
-    .find('.meta-test__youAreHereIcon');
+    cy.get('.meta-test__UnconfiguredServerList').contains(':13301')
+      .closest('li').find('.meta-test__youAreHereIcon');
   });
 
-  it('You are here marker in selected servers list', () => {
-    cy.get('.meta-test__UnconfiguredServerList').contains(':13301').closest('li').find('.meta-test__configureBtn').click();
-    cy.get('.meta-test__ConfigureServerModal').contains(':13301').closest('li').find('.meta-test__youAreHereIcon');
-    cy.get('button[type="button"]').contains('Cancel').click();
-  });
+  // it('You are here marker in selected servers list', () => {
+    // cy.get('.meta-test__UnconfiguredServerList').contains(':13301').closest('li').find('.meta-test__configureBtn').click();
+    // cy.get('button[type="button"]').contains('Cancel').click();
+  // });
 
-  it('Click Bootstrap Vshard: without vshard-router, without vshard-storage', () => {
+  it('Bootstrap vshard on unconfigured cluster', () => {
     cy.get('.meta-test__BootstrapButton').click();
-    cy.get('.meta-test__BootStrapPanel__vshard-router_disabled');//component: BootstrapPanel
-    cy.get('.meta-test__BootStrapPanel__vshard-storage_disabled');//component: BootstrapPanel
-  })
+    cy.get('.meta-test__BootstrapPanel__vshard-router_disabled').should('exist');
+    cy.get('.meta-test__BootstrapPanel__vshard-storage_disabled').should('exist');
+    cy.get('.meta-test__BootstrapPanel use:first').click();
+    cy.get('.meta-test__BootstrapPanel').should('not.exist');
+  });
 
-  it('Creates replicaset with vshard-router and myrole roles', () => {
-    cy.get('.meta-test__configureBtn').first().click();//component: UnconfiguredServerList
+  it('Configure vshard-router', () => {
+    cy.get('.meta-test__configureBtn').first().click();
+    cy.get('.meta-test__ConfigureServerModal').contains('dummy-1')
+      .closest('li').find('.meta-test__youAreHereIcon').should('exist');
     cy.get('.meta-test__ConfigureServerModal input[name="alias"]')
       .type('test-router')
       .should('have.value', 'test-router');
@@ -73,19 +70,21 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     cy.get('.meta-test__ConfigureServerModal input[name="all_rw"]').check({ force: true });
     cy.get('.meta-test__ConfigureServerModal input[name="all_rw"]').should('be.checked');
 
-    cy.get('.meta-test__CreateReplicaSetBtn').click();//component: CreateReplicasetForm
-
+    cy.get('.meta-test__CreateReplicaSetBtn').click();
     cy.get('#root').contains('test-router');
-  })
 
-  it('Click Bootstrap Vshard: with vshard-router, without vshard-storage', () => {
+    cy.get('.ServerLabelsHighlightingArea').contains('dummy-1')
+      .closest('li').find('.meta-test__youAreHereIcon').should('exist');
+  });
+
+  it('Bootstrap vshard on semi-configured cluster', () => {
     cy.get('.meta-test__BootstrapButton').click();
-    cy.get('.meta-test__BootStrapPanel__vshard-router_enabled');
-    cy.get('.meta-test__BootStrapPanel__vshard-storage_disabled');
-  })
+    cy.get('.meta-test__BootstrapPanel__vshard-router_enabled').should('exist');
+    cy.get('.meta-test__BootstrapPanel__vshard-storage_disabled').should('exist');
+  });
 
-  it('Create replicaset with vshard-storage role', () => {
-    cy.get('.meta-test__configureBtn').first().click();//component: UnconfiguredServerList
+  it('Configure vshard-storage', () => {
+    cy.get('.meta-test__configureBtn').first().click();
     cy.get('.meta-test__ConfigureServerModal input[name="alias"]')
       .type('test-storage')
       .should('have.value', 'test-storage');
@@ -107,19 +106,14 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
 
     cy.get('#root').contains('test-storage');
     cy.get('.meta-test__ReplicasetList_allRw_enabled').should('have.length', 2);
-  })
+  });
 
-  it('Success Bootstrap Vshard', () => {
-    cy.get('.meta-test__BootStrapPanel__vshard-router_enabled');
-    cy.get('.meta-test__BootStrapPanel__vshard-storage_enabled');
+  it('Bootstrap vshard on fully-configured cluster', () => {
+    cy.get('.meta-test__BootstrapPanel__vshard-router_enabled');
+    cy.get('.meta-test__BootstrapPanel__vshard-storage_enabled');
     cy.get('.meta-test__BootstrapButton').click();
     cy.get('span:contains(VShard bootstrap is OK. Please wait for list refresh...)').click();
     cy.get('.meta-test__BootstrapButton').should('not.exist');
-  })
-
-  it('You are here marker in replicaset server list', () => {
-    cy.get('.ServerLabelsHighlightingArea').contains(':13301').closest('li')
-    .find('.meta-test__youAreHereIcon');
+    cy.get('.meta-test__BootstrapPanel').should('not.exist');
   });
-
 });
