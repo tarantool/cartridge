@@ -65,9 +65,7 @@ import {
   changeFailover
 } from 'src/store/request/clusterPage.requests';
 import { graphqlErrorNotification } from 'src/misc/graphqlErrorNotification';
-import { REFRESH_LIST_INTERVAL } from 'src/constants';
-
-const STAT_REQUEST_PERIOD = 10;
+import { REFRESH_LIST_INTERVAL, STAT_REQUEST_PERIOD } from 'src/constants';
 
 const pageDataRequestSaga = getSignalRequestSaga(
   CLUSTER_PAGE_DID_MOUNT,
@@ -81,7 +79,8 @@ function* refreshListsTaskSaga() {
   let requestNum = 0;
 
   while (true) {
-    yield delay(REFRESH_LIST_INTERVAL);
+    const { cartridge_refresh_interval } = (window.__tarantool_variables || {});
+    yield delay(parseInt(cartridge_refresh_interval || REFRESH_LIST_INTERVAL));
     requestNum++;
     yield refreshListsSaga(requestNum);
   }
@@ -92,7 +91,9 @@ function* refreshListsSaga(requestNum = 0) {
 
   let response;
   try {
-    const shouldRequestStat = requestNum % STAT_REQUEST_PERIOD === 0;
+    const { cartridge_stat_period } = (window.__tarantool_variables || {});
+    const shouldRequestStat =
+      requestNum % parseInt(cartridge_stat_period || STAT_REQUEST_PERIOD) === 0;
     if (shouldRequestStat) {
       response = yield call(refreshLists, { shouldRequestStat: true });
     } else {
