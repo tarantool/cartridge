@@ -75,13 +75,13 @@ describe('Demo panel', () => {
     cy.get('a[href="/admin/cluster/users"]').click();
     cy.get('.meta-test__DemoInfo').should('be.visible');
 
+    cy.get('a[href="/admin/cluster/schema"]').click();
+    cy.get('.meta-test__DemoInfo').should('be.visible');
+
     cy.get('a[href="/admin/cluster/configuration"]').click();
     cy.get('.meta-test__DemoInfo').should('be.visible');
 
     cy.get('a[href="/admin/cluster/code"]').click();
-    cy.get('.meta-test__DemoInfo').should('be.visible');
-
-    cy.get('a[href="/admin/cluster/schema"]').click();
     cy.get('.meta-test__DemoInfo').should('be.visible');
 
     cy.get('.meta-test__DemoInfo button[type="button"]:contains(Reset configuration)').click();
