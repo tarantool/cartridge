@@ -202,12 +202,12 @@ Running tests
     tarantoolctl rocks install luacheck
     tarantoolctl rocks install luatest 0.5.0
     .rocks/bin/luacheck .
-    .rocks/bin/luatest -v --exclude cypress
+    .rocks/bin/luatest -v
 
     # Frontend
-    npm install cypress@3.4.1
+    npm install cypress@4.12.1
     ./frontend-test.sh
-    .rocks/bin/luatest -v -p cypress
+    ./cypress-test.sh
 
     # Collect coverage
     tarantoolctl rocks install luacov

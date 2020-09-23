@@ -1,100 +1,70 @@
-// TODO:
-// - Test cases with SIGSTOP+SIGCONT
-// - Think about adding request timeouts to apollo and axios
-// - Improve this test when cypress network features will be done
-//   (https://github.com/cypress-io/cypress/issues/687)
+describe('Network error panel', () => {
 
-describe('Error network panel not visible in normal state', () => {
-  it('On cluster page', () => {
-    cy.visit(Cypress.config('baseUrl'));
-    cy.get('.meta-test__ProbeServerBtn');
-    cy.get('.meta-test__NetworkErrorSplash').should('not.exist');
+  before(() => {
+    cy.task('tarantool', {code: `
+      cleanup()
+
+      _G.cluster = helpers.Cluster:new({
+        datadir = fio.tempdir(),
+        server_command = helpers.entrypoint('srv_basic'),
+        use_vshard = false,
+        cookie = helpers.random_cookie(),
+        replicasets = {{
+          alias = 'test-replicaset',
+          roles = {},
+          servers = {{http_port = 8080}},
+        }}
+      })
+
+      _G.cluster:start()
+      return true
+    `}).should('deep.eq', [true]);
   });
 
-  it('On users page', () => {
+  after(() => {
+    cy.task('tarantool', {code: `cleanup()`});
+  });
+
+  it('Check presence', () => {
+    cy.visit('/');
+
+    // It's fine yet
+    cy.get('.meta-test__ProbeServerBtn');
+    cy.get('.meta-test__NetworkErrorSplash').should('not.exist');
+
+    // Now kill the server
+    cy.task('tarantool', {code: `_G.cluster.main_server:stop()`});
+
+    cy.get('.meta-test__NetworkErrorSplash').should('exist')
+      .contains('Network connection problem or server disconnected');
+
     cy.get('a[href="/admin/cluster/users"]').click();
-    cy.get('.meta-test__UsersTable').contains('Cartridge Administrator');
-    cy.get('.meta-test__NetworkErrorSplash').should('not.exist');
-  })
+    cy.get('#root').contains('No Data').should('exist');
+    cy.get('#root').contains('LOADING').should('not.exist');
+    cy.get('.meta-test__NetworkErrorSplash').should('exist');
 
-  it('On config page', () => {
+    cy.get('a[href="/admin/cluster/dashboard"]').click();
+    cy.get('#root').contains('Network problem').should('exist');
+
     cy.get('a[href="/admin/cluster/configuration"]').click();
-    cy.get('#root').contains('Download configuration');
-    cy.get('.meta-test__NetworkErrorSplash').should('not.exist');
-  })
+    cy.get('#root').contains('Configuration Management').should('exist');
+    cy.get('.meta-test__NetworkErrorSplash').should('exist');
 
-  it('On editor page', () => {
     cy.get('a[href="/admin/cluster/code"]').click();
-    cy.get('.meta-test__Code__reload_idle');
-    cy.get('.meta-test__NetworkErrorSplash').should('not.exist');
-  })
+    cy.get('#root').contains('Loading...').should('not.exist');
+    cy.get('#root').contains('Error loading component').should('exist');
+    cy.get('button:contains(Retry)').should('exist');
+    cy.get('.meta-test__NetworkErrorSplash').should('exist');
 
-  it('On schema page', () => {
     cy.get('a[href="/admin/cluster/schema"]').click();
-    cy.get('.monaco-editor textarea');
+    cy.get('#root').contains('Loading...').should('not.exist');
+    cy.get('#root').contains('Error loading component').should('exist');
+    cy.get('button:contains(Retry)').should('exist');
+    cy.get('.meta-test__NetworkErrorSplash').should('exist');
+
+    // Repair the server
+    cy.task('tarantool', {code: `_G.cluster.main_server:start()`});
+    cy.get('button:contains(Retry)').click();
     cy.get('.meta-test__NetworkErrorSplash').should('not.exist');
   })
 });
-
-describe('Error network panel visible when server not respond', () => {
-  it('On cluster page', () => {
-    cy.exec('kill -SIGKILL $(lsof -sTCP:LISTEN -i :8081 -t)', { failOnNonZeroExit: true });
-    cy.get('a[href="/admin/cluster/dashboard"]', { timeout: 8000 }).click();
-    cy.get('.meta-test__NetworkErrorSplash').contains('Network connection problem or server disconnected');
-  })
-
-  it('On users page', () => {
-    cy.get('a[href="/admin/cluster/users"]', { timeout: 8000, force: true }).click();
-    cy.get('.meta-test__NetworkErrorSplash').contains('Network connection problem or server disconnected');
-  })
-
-  it('On config page', () => {
-    cy.get('a[href="/admin/cluster/configuration"]', { timeout: 8000, force: true }).click();
-    cy.get('.meta-test__NetworkErrorSplash').contains('Network connection problem or server disconnected');
-  })
-
-  it('On editor page', () => {
-    cy.get('a[href="/admin/cluster/code"]', { timeout: 8000, force: true }).click();
-    cy.get('.meta-test__NetworkErrorSplash').contains('Network connection problem or server disconnected');
-  })
-
-  it('On schema page', () => {
-    cy.on('uncaught:exception', (err, runnable) => {
-      expect(err.message).to.include('something about the error')
-      // return false to prevent the error from
-      // failing this test
-      return false
-    })
-
-    cy.get('a[href="/admin/cluster/schema"]', { timeout: 8000}).click();
-    cy.get('.meta-test__NetworkErrorSplash').contains('Network connection problem or server disconnected');
-  })
-});
-
-// describe('Error network panel disappears when reconnecting', () => {
-//   it('On cluster page', () => {
-//     cy.exec('kill -SIGCONT $(lsof -sTCP:LISTEN -i :3301 -t)', { failOnNonZeroExit: false })
-//     cy.get('a[href="/admin/cluster/dashboard"]').click();
-//     cy.get('.meta-test__NetworkErrorSplash').should('not.exist')
-//   });
-
-//   it('On users page', () => {
-//     cy.get('a[href="/admin/cluster/users"]').click();
-//     cy.get('.meta-test__NetworkErrorSplash').should('not.exist')
-//   })
-
-//   it('On config page', () => {
-//     cy.get('a[href="/admin/cluster/configuration"]').click();
-//     cy.get('.meta-test__NetworkErrorSplash').should('not.exist')
-//   })
-
-//   it('On editor page', () => {
-//     cy.get('a[href="/admin/cluster/code"]').click();
-//     cy.get('.meta-test__NetworkErrorSplash').should('not.exist')
-//   })
-
-//   it('On schema page', () => {
-//     cy.get('a[href="/admin/cluster/schema"]').click();
-//     cy.get('.meta-test__NetworkErrorSplash').should('not.exist')
-//   })
-// });

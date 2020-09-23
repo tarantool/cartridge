@@ -32,20 +32,25 @@ class BootstrapPanel extends React.Component {
       return null;
 
     return (
-      <PageCard title="Bootstrap vshard" onClose={() => setVisibleBootstrapVshardPanel(false)} showCorner>
+      <PageCard
+        className='meta-test__BootstrapPanel'
+        title="Bootstrap vshard"
+        onClose={() => setVisibleBootstrapVshardPanel(false)}
+        showCorner
+      >
         <Text className={styles.row} variant='h4'>
           After you complete editing the topology, you need to bootstrap vshard to render storages operable.
         </Text>
         <Text className={styles.row}>
           {routerPresent
-            ? <IconOk className={cx(styles.iconMargin, 'meta-test__BootStrapPanel__vshard-router_enabled')} />
-            : <IconCancel className={cx(styles.iconMargin, 'meta-test__BootStrapPanel__vshard-router_disabled')} />}
+            ? <IconOk className={cx(styles.iconMargin, 'meta-test__BootstrapPanel__vshard-router_enabled')} />
+            : <IconCancel className={cx(styles.iconMargin, 'meta-test__BootstrapPanel__vshard-router_disabled')} />}
           One role vshard-router enabled
         </Text>
         <Text className={styles.row}>
           {storagePresent
-            ? <IconOk className={cx(styles.iconMargin, 'meta-test__BootStrapPanel__vshard-storage_enabled')} />
-            : <IconCancel className={cx(styles.iconMargin, 'meta-test__BootStrapPanel__vshard-storage_disabled')} />}
+            ? <IconOk className={cx(styles.iconMargin, 'meta-test__BootstrapPanel__vshard-storage_enabled')} />
+            : <IconCancel className={cx(styles.iconMargin, 'meta-test__BootstrapPanel__vshard-storage_disabled')} />}
           One role vshard-storage enabled
         </Text>
         <Text className={styles.row}>Afterwards, any change in topology will trigger data rebalancing</Text>
