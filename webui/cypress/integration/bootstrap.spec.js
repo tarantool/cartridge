@@ -205,8 +205,7 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     cy.get('.meta-test__EditReplicasetModal').contains('Field accepts number').should('not.exist');
     cy.get('.meta-test__EditReplicasetSaveBtn').should('be.enabled');
 
-    cy.get('.meta-test__EditReplicasetSaveBtn').click();
-    cy.get('.meta-test__EditReplicasetModal').should('not.exist');
+    cy.get('.meta-test__EditReplicasetModal input[name="weight"]').type('1.35');
 
     cy.get('form input[value="vshard-storage"]').uncheck({ force: true });
     cy.get('form input[value="default"]').should('be.checked').should('be.disabled');
@@ -215,6 +214,7 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     cy.get('form input[value="vshard-storage"]').check({ force: true });
 
     cy.get('.meta-test__EditReplicasetSaveBtn').click();
+    cy.get('.meta-test__EditReplicasetModal').should('not.exist');
     cy.get('span:contains(Successful) + span:contains(Edit is OK. Please wait for list refresh...)').click();
 
     cy.get('#root').contains('edited-storage').closest('li')
