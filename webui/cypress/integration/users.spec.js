@@ -63,6 +63,20 @@ describe('Users', () => {
     cy.get('.meta-test__UsersTable').contains('user_do_not_touch');
   })
 
+  it('Login and logout user without full name', () => {
+    //login user:
+    cy.get('.meta-test__LoginBtn').click();
+    cy.get('.meta-test__LoginForm input[name="username"]').type('user_do_not_touch');
+    cy.get('.meta-test__LoginForm input[name="password"]').type('123');
+    cy.get('.meta-test__LoginFormBtn').click();
+
+    cy.get('.meta-test__LoginBtn').should('not.exist');
+
+    //logout and remove testuser:
+    cy.get('.meta-test__LogoutBtn').click();
+    cy.get('.meta-test__LogoutDropdown *').contains('Log out').click();
+  })
+
   it('Edit user', () => {
     cy.get('.meta-test__UsersTable').find('button').eq(1).click();
     cy.get('.meta-test__UsersTableItem__dropdown *').contains('Edit user').click();
