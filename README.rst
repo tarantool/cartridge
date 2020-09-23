@@ -4,6 +4,10 @@
 Tarantool Cartridge: a framework for distributed applications development
 ================================================================================
 
+.. raw:: html
+
+    <img src="https://github.com/tarantool/cartridge/blob/master/cartridge.png" height="400px">
+
 .. contents::
 
 --------------------------------------------------------------------------------
