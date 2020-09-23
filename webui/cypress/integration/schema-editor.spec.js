@@ -3,40 +3,28 @@
 describe('Schema section', () => {
 
   before(() => {
-    cy.task('tarantool', {
-      code: `
-        cleanup()
-        fio = require('fio')
-        helpers = require('test.helper')
+    cy.task('tarantool', {code: `
+      cleanup()
 
-        local workdir = fio.tempdir()
-        _G.cluster = helpers.Cluster:new({
-          datadir = workdir,
-          server_command = helpers.entrypoint('srv_basic'),
-          use_vshard = true,
-          cookie = 'test-cluster-cookie',
-          env = {
-              TARANTOOL_SWIM_SUSPECT_TIMEOUT_SECONDS = 0,
-              TARANTOOL_APP_NAME = 'cartridge-testing',
-          },
-          replicasets = {{
-            alias = 'test-replicaset',
-            uuid = helpers.uuid('a'),
-            roles = {'vshard-router', 'vshard-storage', 'failover-coordinator'},
-            servers = {{
-              alias = 'server1',
-              env = {TARANTOOL_INSTANCE_NAME = 'r1'},
-              instance_uuid = helpers.uuid('a', 'a', 1),
-              advertise_port = 13300,
-              http_port = 8080
-            }}
-          }}
-        })
+      _G.cluster = helpers.Cluster:new({
+        datadir = fio.tempdir(),
+        server_command = helpers.entrypoint('srv_basic'),
+        use_vshard = true,
+        cookie = helpers.random_cookie(),
+        replicasets = {{
+          uuid = helpers.uuid('a'),
+          alias = 'dummy',
+          roles = {'vshard-router', 'vshard-storage', 'failover-coordinator'},
+          servers = {{http_port = 8080}, {}},
+        }}
+      })
 
-        _G.cluster:start()
-        return _G.cluster.datadir
-      `
-    })
+      for _, srv in pairs(_G.cluster.servers) do
+        srv.env.TARANTOOL_INSTANCE_NAME = srv.alias
+      end
+      _G.cluster:start()
+      return true
+    `}).should('deep.eq', [true]);
   });
 
   after(() => {
@@ -98,7 +86,7 @@ describe('Schema section', () => {
   })
 
   it('Tab title on Schema page', () => {
-    cy.title().should('eq', 'cartridge-testing.r1: Schema')
+    cy.title().should('eq', 'dummy-1: Schema');
   })
 
 });

@@ -29,8 +29,23 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
   });
 
   after(() => {
-    cy.task('tarantool', {code: `cleanup()`});
+    cy.task('tarantool', { code: `cleanup()` });
   });
+
+  function checksForErrorDetails() {
+    cy.contains('Invalid cluster topology config');
+    cy.get('div').contains('stack traceback:');
+
+    cy.get('button[type="button"]:contains(Copy details)').trigger('mouseover');
+    cy.get('div').contains('Copy to clipboard');
+
+    cy.get('button[type="button"]:contains(Copy details)').click();
+    cy.get('div').contains('Copied');
+    cy.get('div').contains('Copy to clipboard');
+
+    cy.get('button[type="button"]').contains('Close').click();
+    cy.contains('Invalid cluster topology config').should('not.exist');
+  }
 
   it('Open WebUI', () => {
     cy.visit('/admin/cluster/dashboard')
@@ -47,7 +62,7 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     cy.get('.meta-test__BootstrapPanel').should('not.exist');
   });
 
-  it('Select all roles', () =>{
+  it('Select all roles', () => {
     // Open create replicaset dialog
     cy.get('.meta-test__configureBtn').first().click();
     cy.get('form input[name="alias"]').type('for-default-group-tests');
@@ -77,11 +92,23 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
 
     cy.get('form').contains('dummy-1')
       .closest('li').find('.meta-test__youAreHereIcon').should('exist');
+
+    //Try to enter invalid alias
+    cy.get('.meta-test__ConfigureServerModal input[name="alias"]')
+      .type(' ');
+    cy.get('.meta-test__ConfigureServerModal').contains('Allowed symbols are: a-z, A-Z, 0-9, _ . -');
+    cy.get('.meta-test__CreateReplicaSetBtn').should('be.disabled');
+
+    //Fix invalid alias
+    cy.get('.meta-test__ConfigureServerModal input[name="alias"]')
+      .type('{selectall}{backspace}');
+    cy.get('.meta-test__ConfigureServerModal').contains('Allowed symbols are: a-z, A-Z, 0-9, _ . -').should('not.exist');
+    cy.get('.meta-test__CreateReplicaSetBtn').should('be.enabled');
     cy.get('form input[name="alias"]').type('test-router').should('have.value', 'test-router');
-    cy.get('form input[value="myrole"]').check({force: true}).should('be.checked');;
+    cy.get('form input[value="myrole"]').check({ force: true }).should('be.checked');;
     cy.get('form input[value="myrole-dependency"]').should('be.disabled').should('be.checked');
 
-    cy.get('form input[value="vshard-router"]').check({force: true}).should('be.checked');
+    cy.get('form input[value="vshard-router"]').check({ force: true }).should('be.checked');
     cy.get('form input[value="vshard-storage"]').should('not.be.checked');
 
     cy.get('form input[name="all_rw"]').check({ force: true });
@@ -115,8 +142,17 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
 
     cy.get('form input[value="vshard-storage"]').check({ force: true });
 
+    // Try to enter invalid weight
+    cy.get('.meta-test__ConfigureServerModal input[name="weight"]')
+      .type('q');
+    cy.get('.meta-test__ConfigureServerModal').contains('Field accepts number');
+    cy.get('.meta-test__CreateReplicaSetBtn').should('be.disabled');
+
+    //Fix invalid weight
+    cy.get('.meta-test__ConfigureServerModal input[name="weight"]')
+      .type('{selectall}{backspace}').type('1.35').should('have.value', '1.35');
+    cy.get('.meta-test__ConfigureServerModal').contains('Field accepts number').should('not.exist');
     cy.get('.meta-test__CreateReplicaSetBtn').should('be.enabled');
-    cy.get('form input[name="weight"]').type('1.35').should('have.value', '1.35');
 
     cy.get('form input[value="myrole"]').should('not.be.checked');
     cy.get('form input[value="myrole-dependency"]').should('not.be.checked');
@@ -143,6 +179,15 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
   it('Edit vshard-storage', () => {
     cy.get('li').contains('test-storage').closest('li').find('button').contains('Edit').click();
 
+    // Try to enter empty alias
+    cy.get('.meta-test__EditReplicasetModal input[name="alias"]').type(' ');
+    cy.get('.meta-test__EditReplicasetModal').contains('Allowed symbols are: a-z, A-Z, 0-9, _ . -');
+    cy.get('.meta-test__EditReplicasetSaveBtn').should('be.disabled');
+    cy.get('.meta-test__EditReplicasetModal input[name="alias"]')
+      .type('{selectall}{backspace}');
+    cy.get('.meta-test__EditReplicasetModal').contains('Allowed symbols are: a-z, A-Z, 0-9, _ . -').should('not.exist');
+    cy.get('.meta-test__EditReplicasetSaveBtn').should('be.enabled');
+
     cy.get('form input[name="alias"]').type('{selectall}edited-storage').should('have.value', 'edited-storage');
     cy.get('form input[name="all_rw"]').uncheck({ force: true }).should('not.be.checked');
 
@@ -151,6 +196,17 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     cy.get('form input[value="vshard-storage"]').should('be.checked');
     cy.get('form input[value="default"]').should('be.checked').should('be.disabled');
     cy.get('form input[name="weight"]').should('be.enabled');
+
+    // Try to enter invalid weight
+    cy.get('.meta-test__EditReplicasetModal input[name="weight"]').type('q');
+    cy.get('.meta-test__EditReplicasetModal').contains('Field accepts number');
+    cy.get('.meta-test__EditReplicasetSaveBtn').should('be.disabled');
+    cy.get('.meta-test__EditReplicasetModal input[name="weight"]').type('{selectall}{backspace}');
+    cy.get('.meta-test__EditReplicasetModal').contains('Field accepts number').should('not.exist');
+    cy.get('.meta-test__EditReplicasetSaveBtn').should('be.enabled');
+
+    cy.get('.meta-test__EditReplicasetSaveBtn').click();
+    cy.get('.meta-test__EditReplicasetModal').should('not.exist');
 
     cy.get('form input[value="vshard-storage"]').uncheck({ force: true });
     cy.get('form input[value="default"]').should('be.checked').should('be.disabled');
@@ -182,12 +238,28 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     cy.get('span:contains(Expel is OK. Please wait for list refresh...)').click();
   });
 
-  it('Show expel error', () => {
+  it('Show expel error and error details', () => {
     cy.get('li').contains('dummy-1').closest('li')
       .find('.meta-test__ReplicasetServerListItem__dropdownBtn').click();
     cy.get('.meta-test__ReplicasetServerListItem__dropdown *').contains('Expel server').click();
     cy.get('.meta-test__ExpelServerModal button[type="button"]').contains('Expel').click();
+    cy.get('span:contains(Current instance "localhost:13301" can not be expelled)');
+    cy.get('button[type="button"]:contains(Error details)').click();
+    checksForErrorDetails();
 
-    cy.get('span:contains(Current instance "localhost:13301" can not be expelled)').click();
   });
+
+  it('Error details in notification list', () => {
+    cy.get('button.meta-test__LoginBtn').parent('div').prev().click();
+    cy.get('button[type="button"]:contains(Error details)').click();
+    checksForErrorDetails();
+  })
+
+  it('Check Clear button in notification list', () => {
+    cy.get('button.meta-test__LoginBtn').parent('div').prev().click();
+    cy.get('button:contains(Clear)').click();
+    cy.get('button.meta-test__LoginBtn').parent('div').prev().click();
+    cy.get('span').contains('No notifications');
+  })
+
 });
