@@ -32,6 +32,14 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     cy.task('tarantool', {code: `cleanup()`});
   });
 
+  function vshardGroup() {
+    return cy.get('.meta-test__ConfigureServerModal input[name="vshard_group"][value="default"]')
+  }
+
+  function replicaSetWeight() {
+    return cy.get('.meta-test__ConfigureServerModal input[name="weight"]')
+  }
+
   it('Open WebUI', () => {
     cy.visit('/admin/cluster/dashboard')
     cy.title().should('eq', 'dummy-1: Cluster')
@@ -45,6 +53,30 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     cy.get('.meta-test__BootstrapPanel__vshard-storage_disabled').should('exist');
     cy.get('.meta-test__BootstrapPanel use:first').click();
     cy.get('.meta-test__BootstrapPanel').should('not.exist');
+  });
+
+  it('Select all roles', () =>{
+    // Open create replicaset dialog
+    cy.get('.meta-test__configureBtn').first().click();
+    cy.get('.meta-test__ConfigureServerModal input[name="alias"]').type('for-default-group-tests');
+    vshardGroup().should('be.disabled');
+    replicaSetWeight().should('be.disabled');
+    cy.get('.meta-test__CreateReplicaSetBtn').should('be.enabled');
+
+    // Check Select all roles
+    cy.get('.meta-test__ConfigureServerModal button[type="button"]').contains('Select all').click();
+    vshardGroup().should('be.checked');
+    replicaSetWeight().should('be.enabled');
+    cy.get('.meta-test__CreateReplicaSetBtn').should('be.enabled');
+
+    // Check Deselect all roles
+    cy.get('.meta-test__ConfigureServerModal button[type="button"]').contains('Deselect all').click();
+    vshardGroup().should('be.disabled');
+    replicaSetWeight().should('be.disabled');
+    cy.get('.meta-test__CreateReplicaSetBtn').should('be.enabled');
+
+    // close dialog without saving
+    cy.get('.meta-test__ConfigureServerModal button[type="button"]:contains(Cancel)').click();
   });
 
   it('Configure vshard-router', () => {
@@ -85,6 +117,9 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
       .should('have.value', 'test-storage');
     cy.get('.meta-test__ConfigureServerModal input[name="roles"][value="vshard-storage"]').check({ force: true });
     cy.get('.meta-test__ConfigureServerModal input[name="vshard_group"][value="default"]').check({ force: true });
+    cy.get('.meta-test__ConfigureServerModal input[name="vshard_group"][value="default"]').should('be.checked');
+    cy.get('.meta-test__ConfigureServerModal input[name="weight"]').should('be.enabled');
+    cy.get('.meta-test__CreateReplicaSetBtn').should('be.enabled');
     cy.get('.meta-test__ConfigureServerModal input[name="weight"]')
       .type('1.35')
       .should('have.value', '1.35');

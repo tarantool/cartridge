@@ -17,43 +17,53 @@ describe('Default group tests', () => {
         _G.server:graphql({query = '{}'})
       end)
       return true
-    `}).should('deep.eq', [true]);
+    `}).should('deep.eq', [true]); 
   });
 
   after(() => {
     cy.task('tarantool', {code: `cleanup()`});
   });
 
+  function vshardGroup() {
+    return cy.get('.meta-test__ConfigureServerModal input[name="vshard_group"][value="default"]')
+  }
+
+  function replicaSetWeight() {
+    return cy.get('.meta-test__ConfigureServerModal input[name="weight"]')
+  }
+
+
   it('Open WebUI', () => {
     cy.visit('/admin/cluster/dashboard')
   });
 
-  it('1. Open Create replicaset dialog', () => {
-    cy.get('.meta-test__configureBtn').first().click();//component: UnconfiguredServerList
-    cy.get('.meta-test__ConfigureServerModal input[name="alias"]')
-      .type('for-default-group-tests');
-    cy.get('.meta-test__ConfigureServerModal input[name="vshard_group"][value="default"]').should('be.disabled');
-    cy.get('.meta-test__ConfigureServerModal input[name="weight"]').should('be.disabled');
-    cy.get('.meta-test__CreateReplicaSetBtn').should('be.enabled');
-  })
+  // it('1. Open Create replicaset dialog', () => {
+  //   cy.get('.meta-test__configureBtn').first().click();//component: UnconfiguredServerList
+  //   cy.get('.meta-test__ConfigureServerModal input[name="alias"]')
+  //     .type('for-default-group-tests');
 
-  it('2. Check Select all roles', () => {
-    cy.get('.meta-test__ConfigureServerModal button[type="button"]').contains('Select all').click();
-    cy.get('.meta-test__ConfigureServerModal input[name="vshard_group"][value="default"]').should('be.checked');
-    cy.get('.meta-test__ConfigureServerModal input[name="weight"]').should('be.enabled');
-    cy.get('.meta-test__CreateReplicaSetBtn').should('be.enabled');
-  })
+  //   vshardGroup().should('be.disabled');
+  //   replicaSetWeight().should('be.disabled');
+  //   cy.get('.meta-test__CreateReplicaSetBtn').should('be.enabled');
+  // })
 
-  it('3. Check Deselect all roles', () => {
-    cy.get('.meta-test__ConfigureServerModal button[type="button"]').contains('Deselect all').click();
-    cy.get('.meta-test__ConfigureServerModal input[name="vshard_group"][value="default"]').should('be.disabled');
-    cy.get('.meta-test__ConfigureServerModal input[name="weight"]').should('be.disabled');
-    cy.get('.meta-test__CreateReplicaSetBtn').should('be.enabled');
-  })
+  // it('2. Check Select all roles', () => {
+  //   cy.get('.meta-test__ConfigureServerModal button[type="button"]').contains('Select all').click();
+  //   cy.get('.meta-test__ConfigureServerModal input[name="vshard_group"][value="default"]').should('be.checked');
+  //   cy.get('.meta-test__ConfigureServerModal input[name="weight"]').should('be.enabled');
+  //   cy.get('.meta-test__CreateReplicaSetBtn').should('be.enabled');
+  // })
+
+  // it('3. Check Deselect all roles', () => {
+  //   cy.get('.meta-test__ConfigureServerModal button[type="button"]').contains('Deselect all').click();
+  //   cy.get('.meta-test__ConfigureServerModal input[name="vshard_group"][value="default"]').should('be.disabled');
+  //   cy.get('.meta-test__ConfigureServerModal input[name="weight"]').should('be.disabled');
+  //   cy.get('.meta-test__CreateReplicaSetBtn').should('be.enabled');
+  // })
 
 
   it('4. Check role vshard-storage', () => {
-    cy.get('.meta-test__ConfigureServerModal input[name="roles"][value="vshard-storage"]').check({ force: true });
+    cy.get('.meta-test__ConfigureServerModal input[name="roles"][value="vshard-storage"]').check();
     cy.get('.meta-test__ConfigureServerModal input[name="vshard_group"][value="default"]').should('be.checked');
     cy.get('.meta-test__ConfigureServerModal input[name="weight"]').should('be.enabled');
     cy.get('.meta-test__CreateReplicaSetBtn').should('be.enabled');
