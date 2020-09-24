@@ -6,18 +6,13 @@ local helpers = table.copy(require('cartridge.test-helpers'))
 
 helpers.project_root = fio.dirname(debug.sourcedir())
 
-local __fio_tempdir = fio.tempdir
 fio.tempdir = function(base)
     base = base or os.getenv('TMPDIR')
-    if base == nil or base == '/tmp' then
-        return __fio_tempdir()
-    else
-        local random = digest.urandom(9)
-        local suffix = digest.base64_encode(random, {urlsafe = true})
-        local path = fio.pathjoin(base, 'tmp.cartridge.' .. suffix)
-        fio.mktree(path)
-        return path
-    end
+    local random = digest.urandom(9)
+    local suffix = digest.base64_encode(random, {urlsafe = true})
+    local path = fio.pathjoin(base, 'tmp.cartridge.' .. suffix)
+    fio.mktree(path)
+    return path
 end
 
 function helpers.entrypoint(name)
