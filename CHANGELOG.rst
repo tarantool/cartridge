@@ -18,6 +18,8 @@ Added
 
 - New GraphQL API: ``{cluster {suggestions {refine_uri {}}}}`` to heal the
   cluster after relocation of servers ``advertise_uri``.
+- New `cartridge.cfg` option `swim_broadcast` (default true) to disable
+  instances discovery on start.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed

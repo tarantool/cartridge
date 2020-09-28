@@ -137,6 +137,20 @@ end
 --  env `TARANTOOL_CLUSTER_COOKIE`,
 --  args `--cluster-cookie`)
 --
+-- @tparam ?boolean opts.swim_broadcast
+--  Announce own `advertise_uri` over UDP broadcast.
+--
+--  Cartridge health-checks are governed by SWIM protocol. To simplify
+--  instances discovery on start it can UDP broadcast all networks
+--  known from `getifaddrs()` C call. The broadcast is sent to several
+--  ports: default 3301, the `<PORT>` from the `advertise_uri` option,
+--  and its neighbours `<PORT>+1` and `<PORT>-1`.
+--
+--  (**Added** in v2.3.0-23,
+--  default: true, overridden by
+--  env `TARANTOOL_SWIM_BROADCAST`,
+--  args `--swim-broadcast`)
+--
 -- @tparam ?number opts.bucket_count
 --  bucket count for vshard cluster. See vshard doc for more details.
 --  (default: 30000, overridden by
@@ -217,6 +231,7 @@ local function cfg(opts, box_opts)
         console_sock = '?string',
         webui_blacklist = '?table',
         upgrade_schema = '?boolean',
+        swim_broadcast = '?boolean',
     }, '?table')
 
     if opts.webui_blacklist ~= nil then
@@ -486,14 +501,19 @@ local function cfg(opts, box_opts)
         end
     end
 
-    -- broadcast several popular ports
-    for p, _ in pairs({
-        [3301] = true,
-        [advertise.service] = true,
-        [advertise.service-1] = true,
-        [advertise.service+1] = true,
-    }) do
-        membership.broadcast(p)
+    if opts.swim_broadcast == nil then
+        opts.swim_broadcast = true
+    end
+    if opts.swim_broadcast then
+        -- broadcast several popular ports
+        for p, _ in pairs({
+            [3301] = true,
+            [advertise.service] = true,
+            [advertise.service-1] = true,
+            [advertise.service+1] = true,
+        }) do
+            membership.broadcast(p)
+        end
     end
 
     -- Gracefully leave membership in case of stop if box.ctl.on_shutdown supported
