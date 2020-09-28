@@ -7,7 +7,7 @@ local helpers = table.copy(require('cartridge.test-helpers'))
 helpers.project_root = fio.dirname(debug.sourcedir())
 
 fio.tempdir = function(base)
-    base = base or os.getenv('TMPDIR')
+    base = base or os.getenv('TMPDIR') or '/tmp'
     local random = digest.urandom(9)
     local suffix = digest.base64_encode(random, {urlsafe = true})
     local path = fio.pathjoin(base, 'tmp.cartridge.' .. suffix)
