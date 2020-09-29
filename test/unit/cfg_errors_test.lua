@@ -320,12 +320,14 @@ end
 
 g.test_positive = function()
     g.mock_membership()
+    membership.broadcast = function() error('Forbidden', 0) end
     -- Test successful cartridge.cfg
 
     local opts = {
             workdir = '/tmp',
             advertise_uri = 'unused:0',
             http_enabled = false,
+            swim_broadcast = false,
         roles = {
             'cartridge.roles.vshard-storage',
             'cartridge.roles.vshard-router',

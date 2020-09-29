@@ -90,6 +90,7 @@ local cluster_opts = {
     auth_enabled = 'boolean', -- **boolean**
     bucket_count = 'number', -- **number**
     upgrade_schema = 'boolean', -- **boolean**
+    swim_broadcast = 'boolean', -- **boolean**
 }
 
 --- Common [box.cfg](https://www.tarantool.io/en/doc/latest/reference/configuration/) tuning options.
