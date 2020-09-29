@@ -161,7 +161,8 @@ end
 -- Find a suitable healthy instance with an enabled role and
 -- perform a [`net.box` `conn:call`](
 -- https://tarantool.io/en/doc/latest/reference/reference_lua/net_box/#net-box-call)
--- on it.
+-- on it. `rpc.call()` can only be used for functions defined in role return table
+-- unlike `net.box` `conn:call()`, which is used for global functions as well.
 --
 -- @function call
 --
