@@ -269,16 +269,7 @@ export const instanceDataQuery = gql`
 `;
 
 export const listQuery = gql`
-query serverList {
-  cluster {
-    issues {
-      level
-      replicaset_uuid
-      instance_uuid
-      message
-      topic
-    }
-  }
+query serverList ($withStats: Boolean!) {
   serverList: servers {
     uuid
     alias
@@ -325,7 +316,7 @@ query serverList {
       }
     }
   }
-  serverStat: servers {
+  serverStat: servers @include(if: $withStats) {
     uuid
     uri
     statistics {
@@ -337,60 +328,24 @@ query serverList {
       items_used_ratio
     }
   }
-}
-`;
-
-export const listQueryWithoutStat = gql`
-query serverListWithoutStat {
-  serverList: servers {
-    uuid
-    alias
-    uri
-    status
-    message
-    boxinfo {
-      general { ro }
-    }
-    replicaset {
-      uuid
-    }
-  }
-  replicasetList: replicasets {
-    alias
-    all_rw
-    uuid
-    status
-    roles
-    vshard_group
-    master {
-      uuid
-    }
-    active_master {
-      uuid
-    }
-    weight
-    servers {
-      uuid
-      alias
-      uri
-      priority
-      status
-      boxinfo {
-        general { ro }
-      }
-      message
-      replicaset {
+  cluster @include(if: $withStats) {
+    suggestions {
+      refine_uri {
         uuid
-      }
-      labels {
-        name
-        value
-      }
+        uri_old
+        uri_new
+      } 
+    }
+    issues {
+      level
+      replicaset_uuid
+      instance_uuid
+      message
+      topic
     }
   }
 }
 `;
-
 
 export const serverStatQuery = gql`
 query serverStat {

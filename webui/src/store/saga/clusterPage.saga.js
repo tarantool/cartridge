@@ -64,6 +64,7 @@ import {
   uploadConfig,
   changeFailover
 } from 'src/store/request/clusterPage.requests';
+import { statsResponseSuccess, statsResponseError } from 'src/store/effector/cluster';
 import { graphqlErrorNotification } from 'src/misc/graphqlErrorNotification';
 import { REFRESH_LIST_INTERVAL, STAT_REQUEST_PERIOD } from 'src/constants';
 
@@ -72,7 +73,10 @@ const pageDataRequestSaga = getSignalRequestSaga(
   CLUSTER_PAGE_DATA_REQUEST,
   CLUSTER_PAGE_DATA_REQUEST_SUCCESS,
   CLUSTER_PAGE_DATA_REQUEST_ERROR,
-  getPageData
+  () => getPageData().then(data => {
+    statsResponseSuccess(data);
+    return data;
+  })
 );
 
 function* refreshListsTaskSaga() {
@@ -96,6 +100,7 @@ function* refreshListsSaga(requestNum = 0) {
       requestNum % parseInt(cartridge_stat_period || STAT_REQUEST_PERIOD) === 0;
     if (shouldRequestStat) {
       response = yield call(refreshLists, { shouldRequestStat: true });
+      statsResponseSuccess(response);
     } else {
       const listsResponse = yield call(refreshLists);
 
@@ -113,6 +118,7 @@ function* refreshListsSaga(requestNum = 0) {
       };
     }
   } catch (error) {
+    statsResponseError(error.message);
     yield put({ type: CLUSTER_PAGE_REFRESH_LISTS_REQUEST_ERROR, error, requestPayload: {} });
   }
   if (response) {

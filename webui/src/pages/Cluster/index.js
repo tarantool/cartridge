@@ -34,6 +34,9 @@ import ConfigureServerModal from 'src/components/ConfigureServerModal';
 import ClusterButtonsPanel from 'src/components/ClusterButtonsPanel';
 import BootstrapPanel from 'src/components/BootstrapPanel';
 import { PageLayout } from 'src/components/PageLayout';
+import { ClusterSuggestionsPanel } from 'src/components/ClusterSuggestionsPanel';
+import { PageSection } from '@tarantool.io/ui-kit';
+import { clusterPageMount } from 'src/store/effector/cluster';
 import type { AppState } from 'src/store/reducers/ui.reducer';
 import type {
   Label,
@@ -103,6 +106,7 @@ class Cluster extends React.Component<ClusterProps> {
     const selectedServerUri = getSearchParams(location.search).s || null;
     const selectedReplicasetUuid = getSearchParams(location.search).r || null;
 
+    clusterPageMount();
     pageDidMount(selectedServerUri, selectedReplicasetUuid);
   }
 
@@ -156,6 +160,7 @@ class Cluster extends React.Component<ClusterProps> {
         <EditReplicasetModal />
         <ConfigureServerModal />
         <BootstrapPanel />
+        <ClusterSuggestionsPanel />
         {unlinkedServers && unlinkedServers.length
           ? (
             <PageSection

@@ -19,26 +19,28 @@ export type Apicluster = {
   self?: ?ServerShortInfo,
   /** Clusterwide DDL schema */
   schema: DdlSchema,
-  /** Get current failover state. (Deprecated since v2.0.2-2) */
-  failover: $ElementType<Scalars, "Boolean">,
-  /** Get automatic failover configuration. */
-  failover_params: FailoverApi,
-  /** Virtual buckets count in cluster */
-  vshard_bucket_count: $ElementType<Scalars, "Int">,
-  /** List authorized users */
-  users?: ?Array<User>,
   /** List issues in cluster */
   issues?: ?Array<Issue>,
+  /** Get automatic failover configuration. */
+  failover_params: FailoverApi,
+  /** Get current failover state. (Deprecated since v2.0.2-2) */
+  failover: $ElementType<Scalars, "Boolean">,
+  /** Show suggestions to resolve operation problems */
+  suggestions?: ?Suggestions,
+  /** List authorized users */
+  users?: ?Array<User>,
+  /** Whether it is reasonble to call bootstrap_vshard mutation */
+  can_bootstrap_vshard: $ElementType<Scalars, "Boolean">,
   auth_params: UserManagementApi,
-  /** Get list of all registered roles and their dependencies. */
-  known_roles: Array<Role>,
+  /** Get list of known vshard storage groups. */
+  vshard_known_groups: Array<$ElementType<Scalars, "String">>,
   /** List of pages to be hidden in WebUI */
   webui_blacklist?: ?Array<$ElementType<Scalars, "String">>,
   vshard_groups: Array<VshardGroup>,
-  /** Get list of known vshard storage groups. */
-  vshard_known_groups: Array<$ElementType<Scalars, "String">>,
-  /** Whether it is reasonble to call bootstrap_vshard mutation */
-  can_bootstrap_vshard: $ElementType<Scalars, "Boolean">,
+  /** Get list of all registered roles and their dependencies. */
+  known_roles: Array<Role>,
+  /** Virtual buckets count in cluster */
+  vshard_bucket_count: $ElementType<Scalars, "Int">,
   /** Get cluster config sections */
   config: Array<?ConfigSection>
 };
@@ -353,6 +355,13 @@ export type QueryReplicasetsArgs = {
   uuid?: ?$ElementType<Scalars, "String">
 };
 
+/** A suggestion to reconfigure cluster topology */
+export type RefineUriSuggestion = {
+  uri_new: $ElementType<Scalars, "String">,
+  uuid: $ElementType<Scalars, "String">,
+  uri_old: $ElementType<Scalars, "String">
+};
+
 /** Group of servers replicating the same data */
 export type Replicaset = {
   /** The active leader. It may differ from "master" if failover is enabled and configured leader isn't healthy. */
@@ -541,6 +550,10 @@ export type ServerStat = {
   arena_size: $ElementType<Scalars, "Long">,
   /** The efficient memory used for storing tuples and indexes together (omitting allocated, but currently free slabs) */
   arena_used: $ElementType<Scalars, "Long">
+};
+
+export type Suggestions = {
+  refine_uri?: ?Array<RefineUriSuggestion>
 };
 
 /** A single user account information */
@@ -875,21 +888,21 @@ export type InstanceDataQuery = { __typename?: "Query" } & {
   })
 };
 
-export type ServerListQueryVariables = {};
+export type ServerListQueryVariables = {
+  withStats: $ElementType<Scalars, "Boolean">
+};
 
 export type ServerListQuery = { __typename?: "Query" } & {
-  cluster: ?({ __typename?: "Apicluster" } & {
-    issues: ?Array<
-      { __typename?: "Issue" } & $Pick<
-        Issue,
-        { level: *, replicaset_uuid: *, instance_uuid: *, message: *, topic: * }
-      >
-    >
-  }),
   serverList: ?Array<?({ __typename?: "Server" } & $Pick<
     Server,
     { uuid: *, alias: *, uri: *, status: *, message: * }
   > & {
+      boxinfo: ?({ __typename?: "ServerInfo" } & {
+        general: { __typename?: "ServerInfoGeneral" } & $Pick<
+          ServerInfoGeneral,
+          { ro: * }
+        >
+      }),
       replicaset: ?({ __typename?: "Replicaset" } & $Pick<
         Replicaset,
         { uuid: * }
@@ -914,6 +927,12 @@ export type ServerListQuery = { __typename?: "Query" } & {
           Server,
           { uuid: *, alias: *, uri: *, priority: *, status: *, message: * }
         > & {
+            boxinfo: ?({ __typename?: "ServerInfo" } & {
+              general: { __typename?: "ServerInfoGeneral" } & $Pick<
+                ServerInfoGeneral,
+                { ro: * }
+              >
+            }),
             replicaset: ?({ __typename?: "Replicaset" } & $Pick<
               Replicaset,
               { uuid: * }
@@ -937,51 +956,23 @@ export type ServerListQuery = { __typename?: "Query" } & {
           arenaUsed: $ElementType<ServerStat, "arena_used">,
           bucketsCount: $ElementType<ServerStat, "vshard_buckets_count">
         })
-    })>
-};
-
-export type ServerListWithoutStatQueryVariables = {};
-
-export type ServerListWithoutStatQuery = { __typename?: "Query" } & {
-  serverList: ?Array<?({ __typename?: "Server" } & $Pick<
-    Server,
-    { uuid: *, alias: *, uri: *, status: *, message: * }
-  > & {
-      replicaset: ?({ __typename?: "Replicaset" } & $Pick<
-        Replicaset,
-        { uuid: * }
-      >)
     })>,
-  replicasetList: ?Array<?({ __typename?: "Replicaset" } & $Pick<
-    Replicaset,
-    {
-      alias: *,
-      all_rw: *,
-      uuid: *,
-      status: *,
-      roles: *,
-      vshard_group: *,
-      weight: *
-    }
-  > & {
-      master: { __typename?: "Server" } & $Pick<Server, { uuid: * }>,
-      active_master: { __typename?: "Server" } & $Pick<Server, { uuid: * }>,
-      servers: Array<
-        { __typename?: "Server" } & $Pick<
-          Server,
-          { uuid: *, alias: *, uri: *, priority: *, status: *, message: * }
-        > & {
-            replicaset: ?({ __typename?: "Replicaset" } & $Pick<
-              Replicaset,
-              { uuid: * }
-            >),
-            labels: ?Array<?({ __typename?: "Label" } & $Pick<
-              Label,
-              { name: *, value: * }
-            >)>
-          }
+  cluster: ?({ __typename?: "Apicluster" } & {
+    suggestions: ?({ __typename?: "Suggestions" } & {
+      refine_uri: ?Array<
+        { __typename?: "RefineUriSuggestion" } & $Pick<
+          RefineUriSuggestion,
+          { uuid: *, uri_old: *, uri_new: * }
+        >
       >
-    })>
+    }),
+    issues: ?Array<
+      { __typename?: "Issue" } & $Pick<
+        Issue,
+        { level: *, replicaset_uuid: *, instance_uuid: *, message: *, topic: * }
+      >
+    >
+  })
 };
 
 export type ServerStatQueryVariables = {};
@@ -1047,7 +1038,8 @@ export type ChangeFailoverMutation = { __typename?: "Mutation" } & {
 
 export type PromoteFailoverLeaderMutationVariables = {
   replicaset_uuid: $ElementType<Scalars, "String">,
-  instance_uuid: $ElementType<Scalars, "String">
+  instance_uuid: $ElementType<Scalars, "String">,
+  force_inconsistency?: ?$ElementType<Scalars, "Boolean">
 };
 
 export type PromoteFailoverLeaderMutation = { __typename?: "Mutation" } & {
