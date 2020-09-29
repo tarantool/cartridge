@@ -164,6 +164,17 @@ end
 -- on it. `rpc.call()` can only be used for functions defined in role return table
 -- unlike `net.box` `conn:call()`, which is used for global functions as well.
 --
+-- @usage
+--    -- myrole.lua
+--    return {
+--        role_name = 'myrole',
+--        add = function(a, b) return a + b end,
+--    }
+--
+-- @usage
+--    -- call it as follows:
+--    cartridge.rpc_call('myrole', 'add', {2, 2}) -- returns 4
+--
 -- @function call
 --
 -- @tparam string role_name

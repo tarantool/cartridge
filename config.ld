@@ -92,6 +92,7 @@ custom_display_name_handler = function(item, default_handler)
 
         item.ret = ref_item.ret
         item.args = ref_item.args
+        item.usage = ref_item.usage
         item.params = ref_item.params
         item.summary = ref_item.summary
         item.modifiers = ref_item.modifiers
