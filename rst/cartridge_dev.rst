@@ -981,7 +981,24 @@ For example, DEB is native for Debian Linux, and RPM -- for CentOS.
        # -- OR --
        $ dpkg -i APP_NAME-VERSION.deb
 
-#. :ref:`Configure the instance(s) <cartridge-config>`.
+#. Configure the instance(s).
+   Create a file called ``/etc/tarantool/conf.d/instances.yml``.
+   For example:
+
+   .. code-block:: yaml
+
+       my_app:
+         cluster_cookie: secret-cookie
+
+       my_app.instance-1:
+         http_port: 8081
+         advertise_uri: localhost:3301
+
+       my_app.instance-2:
+         http_port: 8082
+         advertise_uri: localhost:3302
+
+   See details :ref:`here <cartridge-config>`.
 
 #. Start Tarantool instances with the corresponding services.
    You can do it using :ref:`systemctl <cartridge-run-systemctl>`, for example:
@@ -1034,7 +1051,24 @@ Deploying as a tar+gz archive
 
        $ tar -xzvf APP_NAME-VERSION.tgz
 
-#. :ref:`Configure the instance(s) <cartridge-config>`.
+#. Configure the instance(s).
+   Create a file called ``/etc/tarantool/conf.d/instances.yml``.
+   For example:
+
+   .. code-block:: yaml
+
+       my_app:
+         cluster_cookie: secret-cookie
+
+       my_app.instance-1:
+         http_port: 8081
+         advertise_uri: localhost:3301
+
+       my_app.instance-2:
+         http_port: 8082
+         advertise_uri: localhost:3302
+
+   See details :ref:`here <cartridge-config>`.
 
 #. Start Tarantool instance(s). You can do it using:
 
@@ -1083,7 +1117,24 @@ This deployment method is intended for local testing only.
 
    $ tarantoolctl rocks make
 
-#. :ref:`Configure the instance(s) <cartridge-config>`.
+#. Configure the instance(s).
+   Create a file called ``/etc/tarantool/conf.d/instances.yml``.
+   For example:
+
+   .. code-block:: yaml
+
+       my_app:
+         cluster_cookie: secret-cookie
+
+       my_app.instance-1:
+         http_port: 8081
+         advertise_uri: localhost:3301
+
+       my_app.instance-2:
+         http_port: 8082
+         advertise_uri: localhost:3302
+
+   See details :ref:`here <cartridge-config>`.
 
 #. Start Tarantool instance(s). You can do it using:
 
