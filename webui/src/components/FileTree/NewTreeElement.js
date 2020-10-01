@@ -1,15 +1,11 @@
 // @flow
 import * as React from 'react';
-import { connect } from 'react-redux';
 import { css, cx } from 'emotion';
 import {
-  Button,
-  ControlsPanel,
   IconChevron,
   IconFile,
   IconFolder,
-  Input,
-  Text
+  Input
 } from '@tarantool.io/ui-kit';
 
 const styles = {
@@ -126,9 +122,7 @@ export class NewTreeElement extends React.Component<NewTreeElementProps, NewTree
       expanded,
       initialValue,
       level,
-      type,
-      onCancel,
-      onConfirm
+      type
     } = this.props;
 
     const { value } = this.state;
@@ -166,6 +160,7 @@ export class NewTreeElement extends React.Component<NewTreeElementProps, NewTree
             onChange={this.handleChange}
             onBlur={this.handleBlur}
             onKeyDown={this.handleKeyPress}
+            size='m'
           />
         </li>
         {expanded && children}

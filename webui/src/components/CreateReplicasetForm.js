@@ -35,9 +35,6 @@ const styles = {
     margin-left: -16px;
     margin-right: -16px;
   `,
-  input: css`
-    margin-bottom: 4px;
-  `,
   weightInput: css`
     width: 97px;
   `,
@@ -55,7 +52,6 @@ const styles = {
     flex-basis: calc(33.33% - 32px);
     margin-left: 16px;
     margin-right: 16px;
-    margin-bottom: 24px;
   `,
   doubleField: css`
     flex-basis: calc(66% - 32px);
@@ -151,7 +147,6 @@ CreateReplicasetFormProps) => (
                   className={styles.field}
                   label='Replica set name'
                   name={name}
-                  inputClassName={styles.input}
                   onChange={onChange}
                   value={value}
                   error={!!error}

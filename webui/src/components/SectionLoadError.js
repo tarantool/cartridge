@@ -2,7 +2,6 @@
 import * as React from 'react';
 import { css, cx } from 'emotion';
 import {
-  Button,
   NonIdealStateAction,
   splashGenericErrorSvg
 } from '@tarantool.io/ui-kit';
@@ -15,7 +14,7 @@ const styles = {
     width: 80px;
     height: 80px;
     margin-bottom: 24px;
-  `,
+  `
 };
 
 type SectionLoadErrorProps = {
