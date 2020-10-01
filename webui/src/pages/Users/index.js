@@ -29,7 +29,7 @@ const Users = ({
 }: UsersProps) => (
   <PageLayout
     heading='Users'
-    controls={[
+    topRightControls={[
       showToggleAuth && <AuthToggleButton />,
       implements_add_user && (
         <Button

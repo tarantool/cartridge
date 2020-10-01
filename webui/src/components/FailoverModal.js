@@ -72,10 +72,16 @@ const styles = {
 
 const DropdownButton = withDropdown(Button);
 
-const SelectBox = ({ values = [], value, onChange, disabled }) => (
+const SelectBox = ({
+  className,
+  values = [],
+  value,
+  onChange,
+  disabled
+}) => (
   <DropdownButton
     label='State provider'
-    className={styles.selectBox}
+    className={cx(styles.selectBox, className)}
     disabled={disabled}
     iconRight={() => <IconChevron className={styles.selectBoxIcon} />}
     text={value || values[0] || ''}

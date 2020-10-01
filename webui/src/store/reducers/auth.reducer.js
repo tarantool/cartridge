@@ -93,7 +93,7 @@ export function reducer(state = initialState, { type, payload, error }) {
         ...state,
         authorizationEnabled: true,
         authorized: false,
-        username: null,
+        username: null
       };
 
     case SET_AUTH_MODAL_VISIBLE:

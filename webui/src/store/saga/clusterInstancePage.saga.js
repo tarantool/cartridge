@@ -26,7 +26,7 @@ const pageDataRequestSaga = getSignalRequestSaga(
   CLUSTER_INSTANCE_DATA_REQUEST,
   CLUSTER_INSTANCE_DATA_REQUEST_SUCCESS,
   CLUSTER_INSTANCE_DATA_REQUEST_ERROR,
-  getInstanceData,
+  getInstanceData
 );
 
 function* refreshInstanceStatsSaga() {

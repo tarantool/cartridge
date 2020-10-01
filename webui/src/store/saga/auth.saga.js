@@ -1,12 +1,9 @@
 import {
   takeLatest,
-  takeEvery,
   call,
   put,
   select
 } from 'redux-saga/effects';
-import { isGraphqlAccessDeniedError } from 'src/api/graphql';
-import { isRestAccessDeniedError } from 'src/api/rest';
 import { menuFilter } from 'src/menu';
 import { baseSaga, getRequestSaga } from 'src/store/commonRequest';
 import { logIn, logOut, turnAuth } from 'src/store/request/auth.requests';
@@ -81,7 +78,7 @@ const turnAuthSaga = getRequestSaga(
   AUTH_TURN_REQUEST,
   AUTH_TURN_REQUEST_SUCCESS,
   AUTH_TURN_REQUEST_ERROR,
-  turnAuth,
+  turnAuth
 );
 
 export const saga = baseSaga(

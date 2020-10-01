@@ -3,7 +3,7 @@ import { css } from 'emotion';
 import { getErrorMessage, isNetworkError } from 'src/api';
 import {
   SplashErrorNetwork,
-  SplashErrorFatal,
+  SplashErrorFatal
 } from '@tarantool.io/ui-kit';
 
 const style = css`

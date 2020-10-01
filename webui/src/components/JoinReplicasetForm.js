@@ -199,6 +199,7 @@ class JoinReplicasetForm extends React.Component<JoinReplicasetFormProps> {
                       roles={knownRoles}
                     />
                   ]}
+                  largeMargins
                 >
                   {filteredReplicasetList && filteredReplicasetList.map(({
                     alias,

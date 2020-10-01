@@ -90,7 +90,7 @@ function initPageRequestIndicator(props = {}) {
           .setTimeout(prepare)
           .setTimeout(
             () => (setTransitions(firstStepTransition), setWidth(width = firstStepPercentage)),
-            pendingStepFrequency,
+            pendingStepFrequency
           )
           .setTimeout(() => setTransitions(pendingStepTransition))
           .setInterval(pending, pendingStepFrequency);
@@ -100,7 +100,7 @@ function initPageRequestIndicator(props = {}) {
         this.dropQueue()
           .setTimeout(
             () => (setTransitions(nextStepTransition), setWidth(width = getNextWidth(nextStepPercentage))),
-            pendingStepTransition,
+            pendingStepTransition
           )
           .setInterval(pending, pendingStepFrequency);
       }
@@ -109,7 +109,7 @@ function initPageRequestIndicator(props = {}) {
         this.dropQueue()
           .setTimeout(
             () => (error && setDanger(), setTransitions(successStepTransition), setWidth(width = 100)),
-            successStepTimeout,
+            successStepTimeout
           )
           .setTimeout(() => setOpacity('0'), opacityTransition)
           .setTimeout(reset)

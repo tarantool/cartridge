@@ -94,6 +94,7 @@ class UserEditForm extends React.Component {
                   onChange={handleChange}
                   name={field}
                   type={type || 'text'}
+                  size='m'
                 />
               }
               error={touched[field] && errors[field]}

@@ -93,6 +93,7 @@ class UserAddForm extends React.Component {
                   onChange={handleChange}
                   name={field}
                   type={field === 'password' ? 'password' : 'text'}
+                  size='m'
                 />
               }
               error={touched[field] && errors[field]}

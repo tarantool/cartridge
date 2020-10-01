@@ -119,7 +119,7 @@ export const initialState: ClusterPageState = {
   uploadConfigRequestStatus: getInitialRequestStatus(),
   applyTestConfigRequestStatus: getInitialRequestStatus(),
   applyTestConfigResponse: null,
-  changeFailoverRequestStatus: getInitialRequestStatus(),
+  changeFailoverRequestStatus: getInitialRequestStatus()
 };
 
 const pageMountReducer = getPageMountReducer(CLUSTER_PAGE_DID_MOUNT);
@@ -128,70 +128,70 @@ const pageDataRequestReducer = getRequestReducer(
   CLUSTER_PAGE_DATA_REQUEST,
   CLUSTER_PAGE_DATA_REQUEST_SUCCESS,
   CLUSTER_PAGE_DATA_REQUEST_ERROR,
-  'pageDataRequestStatus',
+  'pageDataRequestStatus'
 );
 
 const refreshListsRequestReducer = getRequestReducer(
   CLUSTER_PAGE_REFRESH_LISTS_REQUEST,
   CLUSTER_PAGE_REFRESH_LISTS_REQUEST_SUCCESS,
   CLUSTER_PAGE_REFRESH_LISTS_REQUEST_ERROR,
-  'refreshListsRequestStatus',
+  'refreshListsRequestStatus'
 );
 
 const bootstrapVshardRequestReducer = getRequestReducer(
   CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST,
   CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST_SUCCESS,
   CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST_ERROR,
-  'bootstrapVshardRequestStatus',
+  'bootstrapVshardRequestStatus'
 );
 
 const joinServerRequestReducer = getRequestReducer(
   CLUSTER_PAGE_JOIN_SERVER_REQUEST,
   CLUSTER_PAGE_JOIN_SERVER_REQUEST_SUCCESS,
   CLUSTER_PAGE_JOIN_SERVER_REQUEST_ERROR,
-  'joinServerRequestStatus',
+  'joinServerRequestStatus'
 );
 
 const createReplicasetRequestReducer = getRequestReducer(
   CLUSTER_PAGE_CREATE_REPLICASET_REQUEST,
   CLUSTER_PAGE_CREATE_REPLICASET_REQUEST_SUCCESS,
   CLUSTER_PAGE_CREATE_REPLICASET_REQUEST_ERROR,
-  'createReplicasetRequestStatus',
+  'createReplicasetRequestStatus'
 );
 
 const expelServerRequestReducer = getRequestReducer(
   CLUSTER_PAGE_EXPEL_SERVER_REQUEST,
   CLUSTER_PAGE_EXPEL_SERVER_REQUEST_SUCCESS,
   CLUSTER_PAGE_EXPEL_SERVER_REQUEST_ERROR,
-  'joinServerRequestStatus',
+  'joinServerRequestStatus'
 );
 
 const editReplicasetRequestReducer = getRequestReducer(
   CLUSTER_PAGE_REPLICASET_EDIT_REQUEST,
   CLUSTER_PAGE_REPLICASET_EDIT_REQUEST_SUCCESS,
   CLUSTER_PAGE_REPLICASET_EDIT_REQUEST_ERROR,
-  'replicasetEditResponse',
+  'replicasetEditResponse'
 );
 
 const uploadConfigRequestReducer = getRequestReducer(
   CLUSTER_PAGE_UPLOAD_CONFIG_REQUEST,
   CLUSTER_PAGE_UPLOAD_CONFIG_REQUEST_SUCCESS,
   CLUSTER_PAGE_UPLOAD_CONFIG_REQUEST_ERROR,
-  'uploadConfigRequestStatus',
+  'uploadConfigRequestStatus'
 );
 
 const applyTestConfigRequestReducer = getRequestReducer(
   CLUSTER_PAGE_APPLY_TEST_CONFIG_REQUEST,
   CLUSTER_PAGE_APPLY_TEST_CONFIG_REQUEST_SUCCESS,
   CLUSTER_PAGE_APPLY_TEST_CONFIG_REQUEST_ERROR,
-  'applyTestConfigResponse',
+  'applyTestConfigResponse'
 );
 
 const changeFailoverRequestReducer = getRequestReducer(
   CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST,
   CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_SUCCESS,
   CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_ERROR,
-  'changeFailoverRequestStatus',
+  'changeFailoverRequestStatus'
 );
 
 const pageStateResetReducer = getReducer(CLUSTER_PAGE_STATE_RESET, initialState);
@@ -209,7 +209,7 @@ export const reducer = baseReducer(
   uploadConfigRequestReducer,
   applyTestConfigRequestReducer,
   changeFailoverRequestReducer,
-  pageStateResetReducer,
+  pageStateResetReducer
 )(
   (state: ClusterPageState, action): ClusterPageState => {
     switch (action.type) {

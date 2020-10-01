@@ -44,6 +44,7 @@ const ReplicasetFilterInput = ({
     onChange={e => setValue(e.target.value)}
     onClearClick={() => setValue('')}
     rightIcon={<IconSearch />}
+    size='m'
     leftElement={presetsDropdown(setValue, roles || [])}
   />
 );

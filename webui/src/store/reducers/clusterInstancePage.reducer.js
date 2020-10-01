@@ -43,14 +43,14 @@ const pageDataRequestReducer = getRequestReducer(
   CLUSTER_INSTANCE_DATA_REQUEST,
   CLUSTER_INSTANCE_DATA_REQUEST_SUCCESS,
   CLUSTER_INSTANCE_DATA_REQUEST_ERROR,
-  'pageDataRequestStatus',
+  'pageDataRequestStatus'
 );
 
 const refreshRequestReducer = getRequestReducer(
   CLUSTER_INSTANCE_REFRESH_REQUEST,
   CLUSTER_INSTANCE_REFRESH_REQUEST_SUCCESS,
   CLUSTER_INSTANCE_REFRESH_REQUEST_ERROR,
-  'refreshRequestStatus',
+  'refreshRequestStatus'
 );
 
 
@@ -61,7 +61,7 @@ export const reducer = baseReducer(
   pageMountReducer,
   pageDataRequestReducer,
   refreshRequestReducer,
-  pageStateResetReducer,
+  pageStateResetReducer
 )(
   (state, action) => {
     switch (action.type) {

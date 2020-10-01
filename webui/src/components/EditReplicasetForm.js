@@ -35,9 +35,6 @@ const styles = {
     margin-left: -16px;
     margin-right: -16px;
   `,
-  input: css`
-    margin-bottom: 4px;
-  `,
   weightInput: css`
     width: 97px;
   `,
@@ -61,7 +58,6 @@ const styles = {
     flex-basis: calc(33.33% - 32px);
     margin-left: 16px;
     margin-right: 16px;
-    margin-bottom: 24px;
   `,
   wideField: css`
     flex-basis: 100%;
@@ -171,11 +167,11 @@ EditReplicasetFormProps) => {
                     className={styles.field}
                     label='Replica set name'
                     name={name}
-                    inputClassName={styles.input}
                     onChange={onChange}
                     value={value}
                     error={error}
                     message={error}
+                    largeMargins
                   />
                 )}
               </Field>
@@ -201,6 +197,7 @@ EditReplicasetFormProps) => {
                       />
                     )}
                     verticalSort
+                    largeMargins
                   >
                     {knownRoles && knownRoles.reduceRight(
                       (acc, { name, dependencies }) => {
@@ -250,12 +247,18 @@ EditReplicasetFormProps) => {
                     disabled={!vshardStorageRoleChecked}
                     placeholder='Auto'
                     message={errors.weight}
+                    largeMargins
                   />
                 )}
               </Field>
               <Field name='vshard_group'>
                 {({ input: { name: fieldName, value, onChange } }) => (
-                  <FormField className={styles.field} label='Vshard group' info={vshardTooltipInfo}>
+                  <FormField
+                    className={styles.field}
+                    label='Vshard group'
+                    info={vshardTooltipInfo}
+                    largeMargins
+                  >
                     {vshard_groups && vshard_groups.map(({ name }) => (
                       <RadioButton
                         onChange={onChange}
@@ -272,7 +275,12 @@ EditReplicasetFormProps) => {
               </Field>
               <Field name='all_rw'>
                 {({ input: { name: fieldName, value, onChange } }) => (
-                  <FormField className={styles.field} label='All writable' info={allRwTooltipInfo}>
+                  <FormField
+                    className={styles.field}
+                    label='All writable'
+                    info={allRwTooltipInfo}
+                    largeMargins
+                  >
                     <Checkbox
                       onChange={onChange}
                       name={fieldName}
@@ -299,6 +307,7 @@ EditReplicasetFormProps) => {
                       R.groupBy(R.prop('uuid'))
                     )(replicaset.servers || [])}
                     selfURI={selfURI}
+                    largeMargins
                   />
                 )}
               </Field>
