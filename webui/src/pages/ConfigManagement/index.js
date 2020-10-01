@@ -76,7 +76,7 @@ const ConfigManagement = ({ isDemoPanelPresent }: ConfigManagementProps) => {
         styles.page,
         { [styles.pageWithPane]: isDemoPanelPresent }
       )}
-      controls={[
+      topRightControls={[
         <a href={process.env.REACT_APP_CONFIG_ENDPOINT}>
           <Button
             className='meta-test__DownloadBtn'

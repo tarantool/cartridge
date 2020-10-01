@@ -9,7 +9,6 @@ import {
 import type { Effect, Store } from 'effector'
 import { uploadConfig } from '../request/clusterPage.requests';
 import { getErrorMessage } from '../../api';
-import * as R from 'ramda'
 
 export const configPageMount = createEvent<any>('config page mount')
 export const dropFiles = createEvent<Array<File>>('drop files')
