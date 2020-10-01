@@ -11,9 +11,9 @@ import {
   IconDownload,
   PageLayout,
   Text,
+  UploadZone,
   colors
 } from '@tarantool.io/ui-kit';
-import UploadZone from '../../components/UploadZone';
 import { useStore } from 'effector-react';
 import { $configForm, dropFiles, configPageMount } from '../../store/effector/configUpload';
 import { type State } from 'src/store/rootReducer';
