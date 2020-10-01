@@ -260,6 +260,6 @@ class DemoInfo extends React.Component<DemoInfoProps, DemoInfoState> {
 
 export default connect(({ app: { clusterSelf } }: State) => {
   return {
-    uri: clusterSelf && clusterSelf.demo_uri || null
+    uri: (clusterSelf && clusterSelf.demo_uri) || null
   }
 })(DemoInfo)

@@ -1,8 +1,6 @@
 // @flow
 import React from 'react';
-import { connect } from 'react-redux';
 import { css, cx } from 'emotion';
-import { Button, ControlsPanel, Text, IconRefresh } from '@tarantool.io/ui-kit';
 import type { TreeFileItem } from 'src/store/selectors/filesSelectors';
 import type { FileItem } from 'src/store/reducers/files.reducer';
 import { FileTreeElement } from './FileTreeElement';

@@ -25,7 +25,7 @@ function* openFirstFileSaga() {
 
     if (storedPath !== null) {
       file = files.find(({ type, path }) => type === 'file' && path === storedPath);
-      if (!file) 
+      if (!file)
         file = getFileToOpen(files)
     } else {
       file = getFileToOpen(files)

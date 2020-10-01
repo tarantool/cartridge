@@ -2,9 +2,6 @@
 
 import {
   FETCH_CONFIG_FILES_DONE,
-  PUT_CONFIG_FILES_CONTENT,
-  PUT_CONFIG_FILES_CONTENT_DONE,
-  PUT_CONFIG_FILES_CONTENT_FAIL,
   SET_IS_CONTENT_CHANGED,
   CREATE_FILE,
   CREATE_FOLDER,
@@ -82,7 +79,7 @@ const updateFile = (
   fileList: FileList,
   fileId: string,
   updateObj: UpdateObj,
-  payload: Object = {},
+  payload: Object = {}
 ): FileList => {
   const updatedItems: FileList = fileList.map(file => {
     const obj = {}
@@ -282,7 +279,7 @@ export default (state: Array<FileItem> = [], { type, payload }: FSA) => {
           {
             saved: !payload.isChanged
           },
-          payload,
+          payload
         )
       }
       break;
@@ -299,7 +296,7 @@ export default (state: Array<FileItem> = [], { type, payload }: FSA) => {
         return renameFile(
           state,
           payload.id,
-          payload.name,
+          payload.name
         )
       }
       break;
@@ -309,7 +306,7 @@ export default (state: Array<FileItem> = [], { type, payload }: FSA) => {
         return renameFolder(
           state,
           payload.id,
-          payload.name,
+          payload.name
         )
       }
       break;
@@ -318,7 +315,7 @@ export default (state: Array<FileItem> = [], { type, payload }: FSA) => {
       if (payload && payload.id) {
         return deleteFile(
           state,
-          payload.id,
+          payload.id
         )
       }
       break;
@@ -326,7 +323,7 @@ export default (state: Array<FileItem> = [], { type, payload }: FSA) => {
       if (payload && payload.id) {
         return deleteFolder(
           state,
-          payload.id,
+          payload.id
         )
       }
       break;

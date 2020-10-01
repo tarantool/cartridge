@@ -1,10 +1,8 @@
 // @flow
 import * as React from 'react';
-import { connect } from 'react-redux';
 import { css, cx } from 'emotion';
 import {
   Button,
-  ControlsPanel,
   DotIndicator,
   IconChevron,
   IconCreateFolder,

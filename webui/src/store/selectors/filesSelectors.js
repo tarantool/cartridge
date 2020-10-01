@@ -20,11 +20,9 @@ export type TreeFileItem = FileItem & {
 const toTreeItem = (file: FileItem): TreeFileItem => ({ ...file, items: [] })
 
 const cmpByFileName = (a, b) => (
-  a.fileName < b.fileName && -1
-  ||
-  a.fileName > b.fileName && 1
-  ||
-  0
+  (a.fileName < b.fileName && -1)
+    || (a.fileName > b.fileName && 1)
+    || 0
 );
 
 const cmpByType = (a, b) => {
