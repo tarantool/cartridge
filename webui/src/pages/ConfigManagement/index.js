@@ -100,7 +100,7 @@ const ConfigManagement = ({ isDemoPanelPresent }: ConfigManagementProps) => {
         )}
         {successfulFileName && (
           <Alert className={styles.alert} type='success'>
-            New configuration is uploaded.
+            New configuration uploaded successfully.
             <IconAttach className={styles.attachIcon} />
             {successfulFileName}
           </Alert>
