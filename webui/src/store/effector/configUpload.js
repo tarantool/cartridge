@@ -9,11 +9,9 @@ import {
 import type { Effect, Store } from 'effector'
 import { uploadConfig } from '../request/clusterPage.requests';
 import { getErrorMessage } from '../../api';
-import * as R from 'ramda'
 
 export const configPageMount = createEvent<any>('config page mount')
 export const dropFiles = createEvent<Array<File>>('drop files')
-export const uploadClick = createEvent<any>('upload click')
 
 export const submitConfig: Effect<Array<File>, boolean, Error> = createEffect('submit config', {
   handler: async files => {
@@ -32,9 +30,6 @@ export const $files: Store<Array<File>> = createStore([])
   .reset(submitConfig.done)
   .reset(configPageMount)
 
-
-export const $buttonAvailable: Store<boolean> = $files.map(files => files.length > 0)
-
 export const $error: Store<?string> = createStore(null)
   .on(submitConfig.fail, (_, { error }) => getErrorMessage(error))
   .reset(submitConfig)
@@ -42,23 +37,31 @@ export const $error: Store<?string> = createStore(null)
   .reset(configPageMount)
 
 
-export const $success: Store<boolean> = createStore(false)
-  .on(submitConfig.done, R.T)
+export const $successfulFileName: Store<?string> = createStore(null)
+  .on(
+    submitConfig.done,
+    (_, { params }) => {
+      try {
+        return params[0].name;
+      } catch (err) {
+        return null;
+      }
+    }
+  )
   .reset(submitConfig)
   .reset(dropFiles)
   .reset(configPageMount)
 
 export const $configForm = createStoreObject({
   files: $files,
-  buttonAvailable: $buttonAvailable,
   error: $error,
-  success: $success,
+  successfulFileName: $successfulFileName,
   submitting: submitConfig.pending
 })
 
 sample({
   source: $files,
-  clock: uploadClick,
+  clock: dropFiles,
   fn: files => files,
   target: submitConfig
 })
