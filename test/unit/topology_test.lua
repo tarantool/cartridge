@@ -583,6 +583,21 @@ replicasets:
     weight: -1
 ...]])
 
+    check_config('topology_new.servers[aaaaaaaa-aaaa-4000-b000-000000000001]' ..
+        '.zone must be a string, got number',
+[[---
+servers:
+  aaaaaaaa-aaaa-4000-b000-000000000001:
+    uri: localhost:3301
+    replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
+    zone : 1
+replicasets:
+  aaaaaaaa-0000-4000-b000-000000000001:
+    master: aaaaaaaa-aaaa-4000-b000-000000000001
+    roles: {"vshard-storage": true}
+    weight: 1
+...]])
+
     local e
     if conf['vshard.yml'] then
         e = 'At least one vshard-storage (default) must have weight > 0'

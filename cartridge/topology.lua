@@ -42,6 +42,7 @@ vars:new('known_roles', {
         --     uri = 'localhost:3301',
         --     disabled = false,
         --     replicaset_uuid = 'replicaset-uuid-2',
+        --     zone = nil | string,
         -- },
     },
     replicasets = {
@@ -189,13 +190,20 @@ local function validate_schema(field, topology)
                 '%s.replicaset_uuid %q is not a valid UUID', field, server.replicaset_uuid
             )
 
+            e_config:assert(
+                server.zone == nil or
+                type(server.zone) == 'string',
+                '%s.zone must be a string, got %s', field, type(server.zone)
+            )
+
             label_utils.validate_labels(field, server)
 
             local known_keys = {
                 ['uri'] = true,
                 ['disabled'] = true,
                 ['replicaset_uuid'] = true,
-                ['labels'] = true
+                ['labels'] = true,
+                ['zone'] = true,
             }
             for k, _ in pairs(server) do
                 e_config:assert(
@@ -628,7 +636,6 @@ local function validate_upgrade(topology_new, topology_old)
         end
     end
 end
-
 
 --- Validate topology configuration.
 --
