@@ -154,3 +154,42 @@ function g.test_2pc()
         }},
     })
 end
+
+function g.test_failover()
+    -- Test for https://github.com/tarantool/cartridge/issues/1029
+
+    local ok, err = g.A1.net_box:call(
+        'package.loaded.cartridge.failover_set_params',
+        {{mode = 'eventual'}}
+    )
+    t.assert_equals({ok, err}, {true, nil})
+
+    local ok, err = g.B1.net_box:call(
+        'package.loaded.cartridge.admin_probe_server',
+        {g.B2.advertise_uri}
+    )
+    t.assert_equals({ok, err}, {true, nil})
+
+    local servers = g.cluster.main_server:graphql({
+        query = [[{
+            servers {
+                uuid
+                boxinfo { general { listen ro } }
+            }
+        }]]
+    }).data.servers
+
+    t.assert_items_include(servers, {{
+        uuid = g.B1.instance_uuid,
+        boxinfo = {general = {listen = '13312', ro = true}},
+    }, {
+        uuid = g.B2.instance_uuid,
+        boxinfo = {general = {listen = '13303', ro = false}},
+    }})
+
+    local ok, err = g.A1.net_box:call(
+        'package.loaded.cartridge.failover_set_params',
+        {{mode = 'disabled'}}
+    )
+    t.assert_equals({ok, err}, {true, nil})
+end
