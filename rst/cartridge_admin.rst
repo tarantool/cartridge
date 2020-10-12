@@ -29,7 +29,7 @@ Tarantool instances according to the desired cluster topology, for example:
 
 .. code-block:: yaml
 
-    my_app.router: {"advertise_uri": "localhost:3301", "http_port": 3301, "workdir": "./tmp/router"}
+    my_app.router: {"advertise_uri": "localhost:3301", "http_port": 8080, "workdir": "./tmp/router"}
     my_app.storage_A_master: {"advertise_uri": "localhost:3302", "http_enabled": False, "workdir": "./tmp/storage-a-master"}
     my_app.storage_A_replica: {"advertise_uri": "localhost:3303", "http_enabled": False, "workdir": "./tmp/storage-a-replica"}
     my_app.storage_B_master: {"advertise_uri": "localhost:3304", "http_enabled": False, "workdir": "./tmp/storage-b-master"}
@@ -45,7 +45,7 @@ Then :ref:`start the instances <cartridge-run>`, for example using
 And bootstrap the cluster.
 You can do this via the Web interface which is available at
 ``http://<instance_hostname>:<instance_http_port>``
-(in this example, ``http://localhost:3301``).
+(in this example, ``http://localhost:8080``).
 
 In the web interface, do the following:
 
