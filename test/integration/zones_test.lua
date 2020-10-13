@@ -160,6 +160,21 @@ function g.test_distances()
         g.A3.net_box:eval(q_get_priority, {uuid}),
         {'z3', 'z1', 'z2'}
     )
+
+    -- vshard doesn't handle box.NULL, so the cartridge should
+    -- omit it before calling vshard.cfg()
+    distances.z3.z3 = nil
+
+    local a1_cfg = g.A1.net_box:eval([[
+        local conf = require('cartridge').config_get_readonly()
+        local utils = require('cartridge.vshard-utils')
+        return utils.get_vshard_config('default', conf)
+    ]])
+    t.assert_covers(a1_cfg, {zone = 'z1', weights = distances})
+    local replicas = a1_cfg.sharding[g.A1.replicaset_uuid].replicas
+    t.assert_equals(replicas[g.A1.instance_uuid].zone, 'z1')
+    t.assert_equals(replicas[g.A2.instance_uuid].zone, 'z2')
+    t.assert_equals(replicas[g.A3.instance_uuid].zone, 'z3')
 end
 
 function g.test_validation()
