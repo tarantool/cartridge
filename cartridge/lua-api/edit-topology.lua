@@ -257,6 +257,7 @@ end
 --- Servers modifications.
 -- @tfield ?string uri
 -- @tfield string uuid
+-- @tfield ?string zone
 -- @tfield ?table labels
 -- @tfield ?boolean disabled
 -- @tfield ?boolean expelled

@@ -54,6 +54,7 @@ local confapplier = require('cartridge.confapplier')
 --   seconds), obtained from the membership module (SWIM protocol).
 --   Positive values mean remote clock are ahead of local, and vice
 --   versa.
+-- @tfield string zone
 -- @table ServerInfo
 
 --- Get servers and replicasets lists.
