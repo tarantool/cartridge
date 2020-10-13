@@ -61,34 +61,44 @@ local function validate_distances(zone_distances)
         return
     end
 
+    ValidateConfigError:assert(
+        type(zone_distances) == 'table',
+        'zone_distances must be a table, got %s', type(zone_distances)
+    )
+
     for zone1, v in pairs(zone_distances) do
         ValidateConfigError:assert(
             type(zone1) == 'string',
-            'Zone\'s label must be a string, got %s', type(zone1)
+            'Zone label must be a string, got %s', type(zone1)
         )
 
         ValidateConfigError:assert(
             type(v) == 'table',
-            'Zone must be map of relative weights of other zones, got %s', type(zone1)
+            'Zone %s must be map of relative weights of other zones, got %s',
+            zone1, type(v)
         )
 
         for zone2, distance in pairs(v) do
             ValidateConfigError:assert(
                 type(zone2) == 'string',
-                'Zone\'s label must be a string, got %s', type(zone2)
+                'Zone label must be a string, got %s', type(zone2)
             )
 
-            ValidateConfigError:assert(
-                distance == nil or
-                (type(distance) == 'number' and distance >= 0),
-                'Distance must be nil or non-negative number'
-            )
-            ValidateConfigError:assert(
-                zone1 ~= zone2 or
-                distance == 0 or
-                distance == nil,
-                'Distance of own zone must be either nil or 0'
-            )
+            if distance ~= nil then
+                ValidateConfigError:assert(
+                    type(distance) == 'number' and distance >= 0,
+                    'Distance %s-%s must be nil or non-negative number, got %s',
+                    zone1, zone2, distance
+                )
+            end
+
+            if zone1 == zone2 then
+                ValidateConfigError:assert(
+                    distance == nil or distance == 0,
+                    'Distance of own zone %s must be either nil or 0, got %s',
+                    zone1, distance
+                )
+            end
         end
     end
 end
@@ -436,13 +446,11 @@ local function get_vshard_config(group_name, conf)
     local zone_distances = confapplier.get_deepcopy('zone_distances')
     if zone_distances == nil then
         zone_distances = nil
-    end
-
-    if zone_distances ~= nil then
-        for first_zone, zone in pairs(zone_distances) do
-            for second_zone, distance in pairs(zone) do
+    else
+        for zone1, zone in pairs(zone_distances) do
+            for zone2, distance in pairs(zone) do
                 if distance == nil then
-                    zone_distances[first_zone][second_zone] = nil
+                    zone_distances[zone1][zone2] = nil
                 end
             end
         end
