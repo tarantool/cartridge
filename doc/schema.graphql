@@ -1,5 +1,5 @@
 # source: http://localhost:8081/admin/api
-# timestamp: Wed Sep 16 2020 20:30:29 GMT+0300 (Moscow Standard Time)
+# timestamp: Tue Oct 13 2020 16:59:24 GMT+0300 (Moscow Standard Time)
 
 """Cluster management"""
 type Apicluster {
@@ -87,6 +87,7 @@ input EditServerInput {
   disabled: Boolean
   uuid: String!
   expelled: Boolean
+  zone: String
 }
 
 type EditTopologyResult {
@@ -315,6 +316,7 @@ type Server {
   boxinfo: ServerInfo
   status: String!
   uuid: String!
+  zone: String
   replicaset: Replicaset
   alias: String
   uri: String!

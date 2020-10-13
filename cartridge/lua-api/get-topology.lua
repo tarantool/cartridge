@@ -137,6 +137,7 @@ local function get_topology()
             uri = uri,
             uuid = instance_uuid,
             disabled = not topology.not_disabled(instance_uuid, server),
+            zone = server.zone,
             alias = nil,
             status = nil,
             message = nil,

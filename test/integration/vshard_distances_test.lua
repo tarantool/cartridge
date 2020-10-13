@@ -66,9 +66,14 @@ function g.test_zones()
     })
     t.assert_equals({ok, err}, {true, nil})
 
-    local topology_cfg = get_config('topology')
-    t.assert_equals(topology_cfg.servers[g.A1.instance_uuid].zone, 'z1')
-    t.assert_equals(topology_cfg.servers[g.A2.instance_uuid].zone, 'z2')
+    t.assert_items_equals(
+        g.A1:graphql({query = '{servers {uuid zone}}'}).data.servers,
+        {
+            {uuid = g.A1.instance_uuid, zone = 'z1'},
+            {uuid = g.A2.instance_uuid, zone = 'z2'},
+            {uuid = g.A3.instance_uuid, zone = box.NULL},
+        }
+    )
 
     local ok, err = set_zones({
         [g.A1.instance_uuid] = box.NULL, -- null doesn't edit value
@@ -79,6 +84,29 @@ function g.test_zones()
     local topology_cfg = get_config('topology')
     t.assert_equals(topology_cfg.servers[g.A1.instance_uuid].zone, 'z1')
     t.assert_equals(topology_cfg.servers[g.A2.instance_uuid].zone, nil)
+
+    local resp = g.A1:graphql({query = [[
+        mutation($servers: [EditServerInput]) {
+            cluster {
+                edit_topology(servers: $servers){
+                    servers {uuid zone}
+                }
+            }
+        }
+    ]], variables = {
+        servers = {
+            {uuid = g.A1.instance_uuid, zone = ''},
+            {uuid = g.A2.instance_uuid, zone = 'z2'},
+        }
+    }})
+
+    t.assert_equals(
+        resp.data.cluster.edit_topology.servers,
+        {
+            {uuid = g.A1.instance_uuid, zone = box.NULL},
+            {uuid = g.A2.instance_uuid, zone = 'z2'},
+        }
+    )
 
     t.assert_error_msg_contains (
         "bad argument params.zone to __edit_server"..
