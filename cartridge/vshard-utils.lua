@@ -61,6 +61,9 @@ local function validate_distances(zone_distances)
         return
     end
 
+    -- See also vshard cfg_check_weights()
+    -- https://github.com/tarantool/vshard/blob/master/vshard/cfg.lua
+
     ValidateConfigError:assert(
         type(zone_distances) == 'table',
         'zone_distances must be a table, got %s', type(zone_distances)
@@ -74,7 +77,7 @@ local function validate_distances(zone_distances)
 
         ValidateConfigError:assert(
             type(v) == 'table',
-            'Zone %s must be map of relative weights of other zones, got %s',
+            'Zone %s must be a map of relative weights of other zones, got %s',
             zone1, type(v)
         )
 
@@ -438,7 +441,7 @@ local function get_vshard_config(group_name, conf)
 
     local instance_uuid = confapplier.get_instance_uuid()
     local zone = topology_cfg.servers[instance_uuid].zone
-    -- get rid of box.NULL
+    -- Get rid of box.NULL
     if zone == nil then
         zone = nil
     end
@@ -449,6 +452,7 @@ local function get_vshard_config(group_name, conf)
     else
         for zone1, zone in pairs(zone_distances) do
             for zone2, distance in pairs(zone) do
+                -- Get rid of box.NULL
                 if distance == nil then
                     zone_distances[zone1][zone2] = nil
                 end
@@ -464,9 +468,10 @@ local function get_vshard_config(group_name, conf)
         collect_bucket_garbage_interval = vshard_groups[group_name].collect_bucket_garbage_interval,
         rebalancer_disbalance_threshold = vshard_groups[group_name].rebalancer_disbalance_threshold,
         sharding = sharding,
+        read_only = not failover.is_rw(),
         weights = zone_distances,
         zone = zone,
-        read_only = not failover.is_rw(),
+        -- See also https://github.com/tarantool/vshard/issues/253
     }
 end
 

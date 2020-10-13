@@ -118,7 +118,6 @@ end
 function g.test_distances()
     local q_get_priority = [[
         local replicaset = require('vshard').router.routeall()[...]
-        require('log').info(replicaset.priority_list)
         return require('fun').iter(replicaset.priority_list)
             :map(function(r) return r.zone end)
             :totable()
@@ -196,7 +195,7 @@ function g.test_validation()
     local ok, err = set_distances({z1 = true})
     t.assert_equals(ok, nil)
     t.assert_equals(err.err,
-        'Zone z1 must be map of relative weights' ..
+        'Zone z1 must be a map of relative weights' ..
         ' of other zones, got boolean'
     )
 
