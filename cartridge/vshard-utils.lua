@@ -56,6 +56,56 @@ local function validate_group_weights(group_name, topology)
     end
 end
 
+local function validate_distances(zone_distances)
+    if zone_distances == nil then
+        return
+    end
+
+    -- See also vshard cfg_check_weights()
+    -- https://github.com/tarantool/vshard/blob/master/vshard/cfg.lua
+
+    ValidateConfigError:assert(
+        type(zone_distances) == 'table',
+        'zone_distances must be a table, got %s', type(zone_distances)
+    )
+
+    for zone1, v in pairs(zone_distances) do
+        ValidateConfigError:assert(
+            type(zone1) == 'string',
+            'Zone label must be a string, got %s', type(zone1)
+        )
+
+        ValidateConfigError:assert(
+            type(v) == 'table',
+            'Zone %s must be a map of relative weights of other zones, got %s',
+            zone1, type(v)
+        )
+
+        for zone2, distance in pairs(v) do
+            ValidateConfigError:assert(
+                type(zone2) == 'string',
+                'Zone label must be a string, got %s', type(zone2)
+            )
+
+            if distance ~= nil then
+                ValidateConfigError:assert(
+                    type(distance) == 'number' and distance >= 0,
+                    'Distance %s-%s must be nil or non-negative number, got %s',
+                    zone1, zone2, distance
+                )
+            end
+
+            if zone1 == zone2 then
+                ValidateConfigError:assert(
+                    distance == nil or distance == 0,
+                    'Distance of own zone %s must be either nil or 0, got %s',
+                    zone1, distance
+                )
+            end
+        end
+    end
+end
+
 local function validate_group_upgrade(group_name, topology_new, topology_old)
     checks('string', 'table', 'table')
     local replicasets_new = topology_new.replicasets or {}
@@ -268,6 +318,7 @@ local function validate_config(conf_new, conf_old)
         end
     end
 
+    validate_distances(conf_new.zone_distances);
     return true
 end
 
@@ -374,6 +425,7 @@ local function get_vshard_config(group_name, conf)
             local replicas = sharding[replicaset_uuid].replicas
             replicas[instance_uuid] = {
                 name = server.uri,
+                zone = server.zone,
                 uri = pool.format_uri(server.uri),
                 master = (active_leaders[replicaset_uuid] == instance_uuid),
             }
@@ -387,6 +439,27 @@ local function get_vshard_config(group_name, conf)
         vshard_groups = conf.vshard_groups
     end
 
+    local instance_uuid = confapplier.get_instance_uuid()
+    local zone = topology_cfg.servers[instance_uuid].zone
+    -- Get rid of box.NULL
+    if zone == nil then
+        zone = nil
+    end
+
+    local zone_distances = confapplier.get_deepcopy('zone_distances')
+    if zone_distances == nil then
+        zone_distances = nil
+    else
+        for zone1, zone in pairs(zone_distances) do
+            for zone2, distance in pairs(zone) do
+                -- Get rid of box.NULL
+                if distance == nil then
+                    zone_distances[zone1][zone2] = nil
+                end
+            end
+        end
+    end
+
     return {
         bucket_count = vshard_groups[group_name].bucket_count,
         rebalancer_max_receiving = vshard_groups[group_name].rebalancer_max_receiving,
@@ -396,6 +469,9 @@ local function get_vshard_config(group_name, conf)
         rebalancer_disbalance_threshold = vshard_groups[group_name].rebalancer_disbalance_threshold,
         sharding = sharding,
         read_only = not failover.is_rw(),
+        weights = zone_distances,
+        zone = zone,
+        -- See also https://github.com/tarantool/vshard/issues/253
     }
 end
 

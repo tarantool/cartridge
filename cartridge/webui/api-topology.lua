@@ -103,6 +103,7 @@ local gql_type_server = gql_types.object {
         statistics = gql_stat_schema,
         boxinfo = gql_boxinfo_schema,
         labels = gql_types.list(gql_type_label),
+        zone = gql_types.string,
     }
 }
 
@@ -112,6 +113,7 @@ local gql_type_edit_server_input = gql_types.inputObject {
     fields = {
         uri = gql_types.string,
         uuid = gql_types.string.nonNull,
+        zone = gql_types.string,
         labels = gql_types.list(gql_type_label_input),
         disabled = gql_types.boolean,
         expelled = gql_types.boolean,

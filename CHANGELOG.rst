@@ -20,6 +20,8 @@ Added
   cluster after relocation of servers ``advertise_uri``.
 - New `cartridge.cfg` option `swim_broadcast` (default true) to disable
   instances discovery on start.
+- Add support of replica weights and zones via a clusterwide config new section
+ `zone_distances` and a server parameter `zone`.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed

@@ -54,6 +54,7 @@ local confapplier = require('cartridge.confapplier')
 --   seconds), obtained from the membership module (SWIM protocol).
 --   Positive values mean remote clock are ahead of local, and vice
 --   versa.
+-- @tfield string zone
 -- @table ServerInfo
 
 --- Get servers and replicasets lists.
@@ -137,6 +138,7 @@ local function get_topology()
             uri = uri,
             uuid = instance_uuid,
             disabled = not topology.not_disabled(instance_uuid, server),
+            zone = server.zone,
             alias = nil,
             status = nil,
             message = nil,

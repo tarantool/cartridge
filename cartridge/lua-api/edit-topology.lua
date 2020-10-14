@@ -61,6 +61,7 @@ local function __edit_server(topology_cfg, params)
     checks(topology_cfg_checker, {
         uuid = 'string',
         uri = '?string',
+        zone = '?string',
         labels = '?table',
         disabled = '?boolean',
         expelled = '?boolean',
@@ -75,6 +76,14 @@ local function __edit_server(topology_cfg, params)
 
     if params.uri ~= nil then
         server.uri = params.uri
+    end
+
+    if params.zone == nil then -- luacheck: ignore 542
+        -- don't edit
+    elseif params.zone:strip() == '' then
+        server.zone = nil
+    else
+        server.zone = params.zone
     end
 
     if params.labels ~= nil then
@@ -248,6 +257,7 @@ end
 --- Servers modifications.
 -- @tfield ?string uri
 -- @tfield string uuid
+-- @tfield ?string zone
 -- @tfield ?table labels
 -- @tfield ?boolean disabled
 -- @tfield ?boolean expelled
