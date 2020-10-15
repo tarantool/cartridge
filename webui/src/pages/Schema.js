@@ -1,7 +1,7 @@
 // @flow
 import React from 'react';
 import { connect } from 'react-redux';
-import { css, cx } from 'emotion';
+import { css } from 'emotion';
 import SchemaEditor from 'src/components/SchemaEditor';
 import { isValueChanged } from 'src/store/selectors/schema';
 import { type State } from 'src/store/rootReducer';
@@ -16,12 +16,6 @@ import {
 } from '@tarantool.io/ui-kit';
 
 const styles = {
-  page: css`
-    height: calc(100% - 69px);
-  `,
-  pageWithPane: css`
-    height: calc(100% - 69px - 112px);
-  `,
   area: css`
     display: flex;
     flex-direction: column;
@@ -54,7 +48,6 @@ const styles = {
 };
 
 type SchemaProps = {
-  isDemoPanelPresent: boolean,
   value: string,
   valueChanged: boolean,
   error: ?string,
@@ -77,7 +70,6 @@ class Schema extends React.Component<SchemaProps> {
   render() {
     const {
       error,
-      isDemoPanelPresent,
       value,
       loading,
       uploading,
@@ -89,11 +81,8 @@ class Schema extends React.Component<SchemaProps> {
 
     return (
       <PageLayout
-        className={cx(
-          styles.page,
-          { [styles.pageWithPane]: isDemoPanelPresent }
-        )}
         heading='Schema'
+        stretchVertical
         wide
       >
         <div className={styles.area}>
@@ -142,7 +131,6 @@ class Schema extends React.Component<SchemaProps> {
 
 const mapStateToProps = (state: State) => {
   const {
-    app: { clusterSelf },
     schema: {
       value,
       error,
@@ -152,7 +140,6 @@ const mapStateToProps = (state: State) => {
   } = state;
 
   return {
-    isDemoPanelPresent: !!clusterSelf && clusterSelf.demo_uri,
     value,
     valueChanged: isValueChanged(state),
     error,

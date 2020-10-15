@@ -42,12 +42,6 @@ const options = {
 };
 
 const styles = {
-  page: css`
-    height: calc(100% - 69px);
-  `,
-  pageWithPane: css`
-    height: calc(100% - 69px - 112px);
-  `,
   area: css`
     display: flex;
     flex-direction: row;
@@ -137,7 +131,6 @@ type CodeState = {
 type CodeProps = {
   fileTree: Array<TreeFileItem>,
   files: Array<FileItem>,
-  isDemoPanelPresent: boolean,
   fetchingConfigFiles: boolean,
   puttingConfigFiles: boolean,
   selectedFile: FileItem | null,
@@ -313,7 +306,6 @@ class Code extends React.Component<CodeProps, CodeState> {
   render() {
     const {
       fileTree = [],
-      isDemoPanelPresent,
       fetchingConfigFiles,
       puttingConfigFiles,
       selectedFile,
@@ -331,11 +323,6 @@ class Code extends React.Component<CodeProps, CodeState> {
 
     return (
       <PageLayout
-        className={cx(
-          'meta-test__Code',
-          styles.page,
-          { [styles.pageWithPane]: isDemoPanelPresent }
-        )}
         heading='Code'
         wide
       >
@@ -477,17 +464,12 @@ class Code extends React.Component<CodeProps, CodeState> {
   }
 }
 
-const mapStateToProps = (state: State) => {
-  const { app: { clusterSelf } } = state;
-
-  return {
-    fileTree: selectFileTree(state.codeEditor.files),
-    files: state.codeEditor.files,
-    fetchingConfigFiles: state.ui.fetchingConfigFiles,
-    puttingConfigFiles: state.ui.puttingConfigFiles,
-    selectedFile: selectSelectedFile(state.codeEditor),
-    isDemoPanelPresent: !!clusterSelf && clusterSelf.demo_uri
-  }
-};
+const mapStateToProps = (state: State) => ({
+  fileTree: selectFileTree(state.codeEditor.files),
+  files: state.codeEditor.files,
+  fetchingConfigFiles: state.ui.fetchingConfigFiles,
+  puttingConfigFiles: state.ui.puttingConfigFiles,
+  selectedFile: selectSelectedFile(state.codeEditor)
+});
 
 export default connect(mapStateToProps)(Code)
