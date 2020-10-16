@@ -31,7 +31,8 @@ const pageDataRequestSaga = getSignalRequestSaga(
 
 function* refreshInstanceStatsSaga() {
   while (true) {
-    yield delay(REFRESH_LIST_INTERVAL);
+    const { cartridge_refresh_interval } = (window.__tarantool_variables || {});
+    yield delay(parseInt(cartridge_refresh_interval || REFRESH_LIST_INTERVAL));
     yield put({ type: CLUSTER_INSTANCE_REFRESH_REQUEST });
 
     let response;

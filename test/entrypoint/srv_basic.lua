@@ -11,6 +11,14 @@ errors.set_deprecation_handler(function(err)
     os.exit(1)
 end)
 
+local frontend = require('frontend-core')
+if frontend.set_variable then
+    -- Compatibility tests run on cartridge 1.2.0
+    -- which doesn't support it yet.
+    frontend.set_variable('cartridge_refresh_interval', 500)
+    frontend.set_variable('cartridge_stat_period', 2)
+end
+
 package.preload['mymodule'] = function()
     local state = nil
     local master = nil

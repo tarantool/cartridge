@@ -40,6 +40,8 @@ Enhanced is WebUI
 - Indicate config checksum mismatch in issues list.
 - Indicate the change of `arvertise_uri` in issues list.
 - Upated layout of config management page.
+- Refresh interval and stat refresh period variables can be customized via
+  frontend-core's ``set_variable`` feature or at runtime.
 
 -------------------------------------------------------------------------------
 [2.3.0] - 2020-08-26
