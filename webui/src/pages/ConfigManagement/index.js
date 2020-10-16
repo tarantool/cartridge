@@ -8,11 +8,11 @@ import {
   Button,
   IconAttach,
   IconDownload,
-  PageLayout,
   Text,
   UploadZone,
   colors
 } from '@tarantool.io/ui-kit';
+import { PageLayout } from 'src/components/PageLayout';
 import { useStore } from 'effector-react';
 import { $configForm, dropFiles, configPageMount } from '../../store/effector/configUpload';
 

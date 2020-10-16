@@ -10,12 +10,12 @@ import {
   IconCreateFile,
   IconRefresh,
   Text,
-  PageLayout,
   Scrollbar,
   NonIdealState,
   splashSelectFileSvg
 } from '@tarantool.io/ui-kit';
 import MonacoEditor from 'src/components/MonacoEditor';
+import { PageLayout } from 'src/components/PageLayout';
 import { FileTree } from 'src/components/FileTree';
 import { selectFileTree, selectSelectedFile } from 'src/store/selectors/filesSelectors';
 import { selectFile } from 'src/store/actions/editor.actions';
@@ -349,24 +349,24 @@ class Code extends React.Component<CodeProps, CodeState> {
                 />
               </div>
             </div>
-            <Scrollbar
-              className={cx('meta-test__Code__FileTree', styles.treeScrollWrap)}
-            >
-              <FileTree
-                initiallyExpanded
-                tree={fileTree}
-                selectedFile={selectedFile}
-                fileOperation={fileOperationType}
-                operationObject={fileOperationObject}
-                onOperationConfirm={this.handleFileOperationConfirm}
-                onOperationCancel={this.handleFileOperationCancel}
-                onFileOpen={id => dispatch(selectFile(id))}
-                onFileCreate={this.handleFileCreateClick}
-                onFolderCreate={this.handleFolderCreateClick}
-                onDelete={this.handleFileDeleteClick}
-                onRename={this.handleFileRenameClick}
-              />
-            </Scrollbar>
+            <div className={cx('meta-test__Code__FileTree', styles.treeScrollWrap)}>
+              <Scrollbar>
+                <FileTree
+                  initiallyExpanded
+                  tree={fileTree}
+                  selectedFile={selectedFile}
+                  fileOperation={fileOperationType}
+                  operationObject={fileOperationObject}
+                  onOperationConfirm={this.handleFileOperationConfirm}
+                  onOperationCancel={this.handleFileOperationCancel}
+                  onFileOpen={id => dispatch(selectFile(id))}
+                  onFileCreate={this.handleFileCreateClick}
+                  onFolderCreate={this.handleFolderCreateClick}
+                  onDelete={this.handleFileDeleteClick}
+                  onRename={this.handleFileRenameClick}
+                />
+              </Scrollbar>
+            </div>
           </div>
           <div className={styles.mainContent}>
 

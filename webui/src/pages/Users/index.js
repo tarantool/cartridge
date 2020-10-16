@@ -1,7 +1,8 @@
 // @flow
 import React from 'react';
 import { connect } from 'react-redux';
-import { Button, PageLayout } from '@tarantool.io/ui-kit';
+import { Button } from '@tarantool.io/ui-kit';
+import { PageLayout } from 'src/components/PageLayout';
 import UsersTable from '../../components/UsersTable';
 import SpinnerLoader from '../../components/SpinnerLoader';
 import UserAddModal from 'src/components/UserAddModal';

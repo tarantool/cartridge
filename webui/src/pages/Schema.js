@@ -2,6 +2,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import { css } from 'emotion';
+import { Alert, IconRefresh, Button, ControlsPanel } from '@tarantool.io/ui-kit';
 import SchemaEditor from 'src/components/SchemaEditor';
 import { isValueChanged } from 'src/store/selectors/schema';
 import { type State } from 'src/store/rootReducer';
@@ -11,9 +12,7 @@ import {
   setSchema,
   validateSchema
 } from 'src/store/actions/schema.actions';
-import {
-  Alert, IconRefresh, Button, ControlsPanel, PageLayout
-} from '@tarantool.io/ui-kit';
+import { PageLayout } from 'src/components/PageLayout';
 
 const styles = {
   area: css`
