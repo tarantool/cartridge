@@ -1,23 +1,19 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { PopupBody, Text } from '@tarantool.io/ui-kit';
+import { Text, colors } from '@tarantool.io/ui-kit';
 import CollapsibleJSONRenderer from 'src/components/CollapsibleJSONRenderer';
 import { css } from 'emotion';
 
 const styles = {
   listInner: css`
-    padding: 24px 0;
+    padding: 0;
   `,
   listItem: css`
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 6px 16px;
-    
-    & + & {
-      border-top: 1px solid #d9d9d9;
-    }
-    
+    padding: 8px 20px;
+
     &:nth-child(2n) {
       background-color: #fafafa; 
     }
@@ -30,16 +26,8 @@ const styles = {
   rightCol: css`
     max-width: 50%;
   `,
-  key: css`
-    line-height: 18px;
-  `,
   description: css`
-    line-height: 16px;
-    font-size: 11px;
-    color: rgba(0, 0, 0, 0.65);
-  `,
-  value: css`
-    line-height: 18px;
+    color: ${colors.dark40};
   `
 };
 
@@ -50,9 +38,9 @@ const fieldsDisplayTypes = {
 };
 
 const renderers = {
-  boolean: value => <Text variant="basic" className={styles.value}>{value.toString()}</Text>,
+  boolean: value => <Text variant='basic'>{value.toString()}</Text>,
   string: value => (
-    <Text variant="basic" className={styles.value}>
+    <Text variant='basic'>
       {value instanceof Array ? `[${value.join(', ')}]` : value}
     </Text>
   ),
@@ -61,16 +49,14 @@ const renderers = {
 
 const ClusterInstanceSection = ({ descriptions = {}, params = [] }) => {
   return (
-    <PopupBody className={styles.listInner}>
+    <div className={styles.listInner}>
       {params.map(({ name, value, displayAs = 'string' }, index) => (
         <div className={styles.listItem}>
           <div className={styles.leftCol}>
-            <Text variant="basic" className={styles.key}>
-              {name}
-            </Text>
+            <Text variant='basic'>{name}</Text>
             {descriptions[name]
               ? (
-                <Text variant="basic" className={styles.description}>
+                <Text variant='basic' className={styles.description}>
                   {descriptions[name]}
                 </Text>
               )
@@ -81,7 +67,7 @@ const ClusterInstanceSection = ({ descriptions = {}, params = [] }) => {
           </div>
         </div>
       ))}
-    </PopupBody>
+    </div>
   );
 };
 

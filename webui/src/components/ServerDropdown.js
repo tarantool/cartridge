@@ -5,36 +5,35 @@ import {
   Button,
   Dropdown,
   DropdownItem,
-  IconMore
+  IconMore,
+  type ButtonProps
 } from '@tarantool.io/ui-kit';
 import store from 'src/store/instance';
 import { failoverPromoteLeader, showExpelModal } from 'src/store/actions/clusterPage.actions';
 
-const styles = {
-  configureBtn: css`
-    position: absolute;
-    top: 12px;
-    right: 12px;
-  `
-};
-
-type ReplicasetServerListItemDropdownProps = {
+type ServerDropdownProps = {
+  className?: string,
   activeMaster?: boolean,
   replicasetUUID: string,
+  intent?: $ElementType<ButtonProps, 'intent'>,
+  size?: $ElementType<ButtonProps, 'size'>,
   showFailoverPromote?: boolean,
+  showServerDetails:? boolean,
   uri: string,
   history: History,
   uuid: string
 };
 
-export class ReplicasetServerListItemDropdown extends React.PureComponent<
-  ReplicasetServerListItemDropdownProps
-> {
+export class ServerDropdown extends React.PureComponent<ServerDropdownProps> {
   render() {
     const {
       activeMaster,
+      className,
+      intent,
       replicasetUUID,
       showFailoverPromote,
+      showServerDetails,
+      size,
       uri,
       history,
       uuid
@@ -43,9 +42,13 @@ export class ReplicasetServerListItemDropdown extends React.PureComponent<
     return (
       <Dropdown
         items={[
-          <DropdownItem onClick={() => history.push(`/cluster/dashboard/instance/${uuid}`)}>
-            Server details
-          </DropdownItem>,
+          showServerDetails
+            ? (
+              <DropdownItem onClick={() => history.push(`/cluster/dashboard/instance/${uuid}`)}>
+                Server details
+              </DropdownItem>
+            )
+            : null,
           showFailoverPromote
             ? (
               <DropdownItem
@@ -64,13 +67,13 @@ export class ReplicasetServerListItemDropdown extends React.PureComponent<
             Expel server
           </DropdownItem>
         ]}
-        className={cx(styles.configureBtn, 'meta-test__ReplicasetServerListItem__dropdownBtn')}
+        className={cx(className, 'meta-test__ReplicasetServerListItem__dropdownBtn')}
         popoverClassName='meta-test__ReplicasetServerListItem__dropdown'
       >
         <Button
           icon={IconMore}
-          size='s'
-          intent='plain'
+          size={size || 's'}
+          intent={intent || 'plain'}
         />
       </Dropdown>
     )

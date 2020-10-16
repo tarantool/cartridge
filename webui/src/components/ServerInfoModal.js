@@ -2,23 +2,43 @@
 
 import * as React from 'react'
 import { connect } from 'react-redux'
+import { css } from 'emotion';
+import * as R from 'ramda';
 import {
   Button,
+  ControlsPanel,
   Modal,
-  Tabbed
+  Tabbed,
+  Text,
+  colors
 } from '@tarantool.io/ui-kit';
 import { pageDidMount, resetPageState } from 'src/store/actions/clusterInstancePage.actions';
 import { withRouter } from 'react-router-dom'
 import ServerShortInfo from 'src/components/ServerShortInfo';
 import ClusterInstanceSection from './ClusterInstanceSection'
-import { filter, identity } from 'ramda';
+import { ServerDropdown } from './ServerDropdown';
+
+const flagStyles = css`
+  display: inline-block;
+  padding: 1px;
+  background-color: ${colors.intentSuccessBorder};
+  font-size: 11px;
+  color: ${colors.dark65};
+  text-transform: uppercase;
+`;
+
+const LeaderFlag = ({ state }: { state: string }) => (
+  <Text variant='h5' tag='span' className={flagStyles}>Leader</Text>
+);
 
 type ServerInfoModalProps = {
+  history: History,
   pageDidMount: ({ instanceUUID: string }) => void,
   resetPageState: () => void,
   alias: string,
   selfURI?: string,
   instanceUUID: string,
+  replicasetUUID: string,
   labels: { name: string, value: string }[],
   message?: string,
   masterUUID: string,
@@ -34,7 +54,6 @@ type ServerInfoModalState = {
   selectedTab: ?string,
 }
 
-
 class ServerInfoModal extends React.Component<ServerInfoModalProps, ServerInfoModalState>{
   state = {
     selectedTab: null
@@ -42,7 +61,7 @@ class ServerInfoModal extends React.Component<ServerInfoModalProps, ServerInfoMo
 
   static tabsOrder = [
     'general',
-    'cartridge',
+    // 'cartridge',
     'replication',
     'storage',
     'network'
@@ -65,6 +84,8 @@ class ServerInfoModal extends React.Component<ServerInfoModalProps, ServerInfoMo
   render() {
     const {
       alias,
+      history,
+      replicasetUUID,
       instanceUUID,
       selfURI,
       activeMasterUUID,
@@ -75,10 +96,20 @@ class ServerInfoModal extends React.Component<ServerInfoModalProps, ServerInfoMo
       ro
     } = this.props
 
+    const activeMaster = instanceUUID === activeMasterUUID;
+    const master = instanceUUID === masterUUID;
+
     return (
       <Modal
         className='meta-test__ServerInfoModal'
-        title='Server details'
+        title={<>
+          {alias || instanceUUID}
+          {(master || activeMaster) && (
+            <LeaderFlag
+              state={status !== 'healthy' ? 'bad' : ro === false ? 'good' : 'warning'}
+            />
+          )}
+        </>}
         footerControls={[
           <Button onClick={this.close} text='Close' size='l' />
         ]}
@@ -86,26 +117,43 @@ class ServerInfoModal extends React.Component<ServerInfoModalProps, ServerInfoMo
         onClose={this.close}
         wide
       >
-        <React.Fragment>
-          <ServerShortInfo
-            alias={alias}
-            activeMaster={instanceUUID === activeMasterUUID}
-            selfURI={selfURI}
-            master={instanceUUID === masterUUID}
-            message={message}
-            status={status}
-            uri={uri}
-            ro={ro}
-          />
-          <Tabbed
-            tabs={
-              filter(identity, ServerInfoModal.tabsOrder).map(section => ({
-                label: section[0].toUpperCase() + section.substring(1),
-                content: (<ClusterInstanceSection sectionName={section}/>)
-              }))
-            }
-          />
-        </React.Fragment>
+        <ControlsPanel
+          controls={[
+            <Button
+              intent='secondary'
+              text='Promote'
+              onClick={() => null}
+              size='l'
+            />,
+            <ServerDropdown
+              intent='secondary'
+              activeMaster={activeMaster}
+              replicasetUUID={replicasetUUID}
+              uri={uri}
+              history={history}
+              uuid={instanceUUID}
+              size='l'
+            />
+          ]}
+        />
+        <ServerShortInfo
+          alias={alias}
+          activeMaster={instanceUUID === activeMasterUUID}
+          selfURI={selfURI}
+          master={instanceUUID === masterUUID}
+          message={message}
+          status={status}
+          uri={uri}
+          ro={ro}
+        />
+        <Tabbed
+          tabs={
+            R.filter(R.identity, ServerInfoModal.tabsOrder).map(section => ({
+              label: section[0].toUpperCase() + section.substring(1),
+              content: (<ClusterInstanceSection sectionName={section}/>)
+            }))
+          }
+        />
       </Modal>
     )
   }
@@ -117,7 +165,8 @@ const mapStateToProps = (state, props) => {
     message,
     status,
     uri,
-    ro
+    ro,
+    replicaset: { uuid: replicasetUUID }
   } = state.clusterPage.serverList.find(({ uuid }) => uuid === props.instanceUUID) || {};
 
   const {
@@ -133,6 +182,7 @@ const mapStateToProps = (state, props) => {
     message,
     masterUUID,
     activeMasterUUID,
+    replicasetUUID,
     status,
     uri,
     instanceUUID: props.instanceUUID,

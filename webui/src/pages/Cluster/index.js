@@ -132,6 +132,7 @@ class Cluster extends React.Component<ClusterProps> {
     const {
       clusterSelf,
       filter,
+      history,
       setFilter,
       filteredReplicasetList,
       issues,
@@ -150,7 +151,12 @@ class Cluster extends React.Component<ClusterProps> {
             render={({ match: { params } }) => {
               const instanceUUID: ?string = params && params.instanceUUID;
               return instanceUUID
-                ? <ServerInfoModal instanceUUID={instanceUUID} />
+                ? (
+                  <ServerInfoModal
+                    instanceUUID={instanceUUID}
+                    history={history}
+                  />
+                )
                 : null;
             }}
           />
