@@ -4,6 +4,7 @@ import { Route, Switch } from 'react-router-dom';
 import * as React from 'react';
 import { css, cx } from 'react-emotion';
 import type { RouterHistory, Location } from 'react-router';
+import { PageSection } from '@tarantool.io/ui-kit';
 import {
   pageDidMount,
   selectServer,
@@ -32,10 +33,7 @@ import EditReplicasetModal from 'src/components/EditReplicasetModal';
 import ConfigureServerModal from 'src/components/ConfigureServerModal';
 import ClusterButtonsPanel from 'src/components/ClusterButtonsPanel';
 import BootstrapPanel from 'src/components/BootstrapPanel';
-import {
-  PageLayout,
-  PageSection
-} from '@tarantool.io/ui-kit';
+import { PageLayout } from 'src/components/PageLayout';
 import type { AppState } from 'src/store/reducers/ui.reducer';
 import type {
   Label,

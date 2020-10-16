@@ -1,36 +1,28 @@
 // @flow
 
 import React, { useEffect } from 'react'
-import { css, cx } from 'emotion';
-import { connect } from 'react-redux';
+import { css } from 'emotion';
 import { Panel } from '../../components/Panel'
 import {
   Alert,
   Button,
   IconAttach,
   IconDownload,
-  PageLayout,
   Text,
   UploadZone,
   colors
 } from '@tarantool.io/ui-kit';
+import { PageLayout } from 'src/components/PageLayout';
 import { useStore } from 'effector-react';
 import { $configForm, dropFiles, configPageMount } from '../../store/effector/configUpload';
-import { type State } from 'src/store/rootReducer';
 
 const { AppTitle } = window.tarantool_enterprise_core.components;
 
 const styles = {
-  page: css`
-    height: calc(100% - 69px);
-  `,
   panel: css`
     display: flex;
     flex-direction: column;
     height: 600px;
-  `,
-  pageWithPane: css`
-    height: calc(100% - 69px - 112px);
   `,
   panelNote: css`
     margin-top: 6px;
@@ -72,10 +64,6 @@ const ConfigManagement = ({ isDemoPanelPresent }: ConfigManagementProps) => {
   return (
     <PageLayout
       heading='Configuration Management'
-      className={cx(
-        styles.page,
-        { [styles.pageWithPane]: isDemoPanelPresent }
-      )}
       topRightControls={[
         <a href={process.env.REACT_APP_CONFIG_ENDPOINT}>
           <Button
@@ -119,8 +107,4 @@ const ConfigManagement = ({ isDemoPanelPresent }: ConfigManagementProps) => {
   );
 };
 
-const mapStateToProps = ({ app: { clusterSelf } }: State) => ({
-  isDemoPanelPresent: !!clusterSelf && clusterSelf.demo_uri
-});
-
-export default connect(mapStateToProps)(ConfigManagement);
+export default ConfigManagement;

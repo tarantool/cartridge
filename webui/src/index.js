@@ -22,7 +22,6 @@ import {
 import { PROJECT_NAME } from './constants';
 import { menuReducer, menuFilter } from './menu';
 import ConfigManagement from 'src/pages/ConfigManagement';
-import DemoInfo from 'src/components/DemoInfo';
 import './misc/analytics';
 import { SectionPreloader } from 'src/components/SectionPreloader';
 import { createLazySection } from 'src/misc/lazySection';
@@ -40,7 +39,6 @@ class Root extends React.Component {
       <Provider store={store}>
         <Router history={tarantool_enterprise_core.history}>
           <Suspense fallback={<SectionPreloader />}>
-            <DemoInfo />
             <Switch>
               <Route path={projectPath('dashboard')} component={App} />
               <Route path={projectPath('configuration')} component={ConfigManagement} />

@@ -10,12 +10,12 @@ import {
   IconCreateFile,
   IconRefresh,
   Text,
-  PageLayout,
   Scrollbar,
   NonIdealState,
   splashSelectFileSvg
 } from '@tarantool.io/ui-kit';
 import MonacoEditor from 'src/components/MonacoEditor';
+import { PageLayout } from 'src/components/PageLayout';
 import { FileTree } from 'src/components/FileTree';
 import { selectFileTree, selectSelectedFile } from 'src/store/selectors/filesSelectors';
 import { selectFile } from 'src/store/actions/editor.actions';
@@ -42,12 +42,6 @@ const options = {
 };
 
 const styles = {
-  page: css`
-    height: calc(100% - 69px);
-  `,
-  pageWithPane: css`
-    height: calc(100% - 69px - 112px);
-  `,
   area: css`
     display: flex;
     flex-direction: row;
@@ -137,7 +131,6 @@ type CodeState = {
 type CodeProps = {
   fileTree: Array<TreeFileItem>,
   files: Array<FileItem>,
-  isDemoPanelPresent: boolean,
   fetchingConfigFiles: boolean,
   puttingConfigFiles: boolean,
   selectedFile: FileItem | null,
@@ -313,7 +306,6 @@ class Code extends React.Component<CodeProps, CodeState> {
   render() {
     const {
       fileTree = [],
-      isDemoPanelPresent,
       fetchingConfigFiles,
       puttingConfigFiles,
       selectedFile,
@@ -331,11 +323,6 @@ class Code extends React.Component<CodeProps, CodeState> {
 
     return (
       <PageLayout
-        className={cx(
-          'meta-test__Code',
-          styles.page,
-          { [styles.pageWithPane]: isDemoPanelPresent }
-        )}
         heading='Code'
         wide
       >
@@ -362,24 +349,24 @@ class Code extends React.Component<CodeProps, CodeState> {
                 />
               </div>
             </div>
-            <Scrollbar
-              className={cx('meta-test__Code__FileTree', styles.treeScrollWrap)}
-            >
-              <FileTree
-                initiallyExpanded
-                tree={fileTree}
-                selectedFile={selectedFile}
-                fileOperation={fileOperationType}
-                operationObject={fileOperationObject}
-                onOperationConfirm={this.handleFileOperationConfirm}
-                onOperationCancel={this.handleFileOperationCancel}
-                onFileOpen={id => dispatch(selectFile(id))}
-                onFileCreate={this.handleFileCreateClick}
-                onFolderCreate={this.handleFolderCreateClick}
-                onDelete={this.handleFileDeleteClick}
-                onRename={this.handleFileRenameClick}
-              />
-            </Scrollbar>
+            <div className={cx('meta-test__Code__FileTree', styles.treeScrollWrap)}>
+              <Scrollbar>
+                <FileTree
+                  initiallyExpanded
+                  tree={fileTree}
+                  selectedFile={selectedFile}
+                  fileOperation={fileOperationType}
+                  operationObject={fileOperationObject}
+                  onOperationConfirm={this.handleFileOperationConfirm}
+                  onOperationCancel={this.handleFileOperationCancel}
+                  onFileOpen={id => dispatch(selectFile(id))}
+                  onFileCreate={this.handleFileCreateClick}
+                  onFolderCreate={this.handleFolderCreateClick}
+                  onDelete={this.handleFileDeleteClick}
+                  onRename={this.handleFileRenameClick}
+                />
+              </Scrollbar>
+            </div>
           </div>
           <div className={styles.mainContent}>
 
@@ -477,17 +464,12 @@ class Code extends React.Component<CodeProps, CodeState> {
   }
 }
 
-const mapStateToProps = (state: State) => {
-  const { app: { clusterSelf } } = state;
-
-  return {
-    fileTree: selectFileTree(state.codeEditor.files),
-    files: state.codeEditor.files,
-    fetchingConfigFiles: state.ui.fetchingConfigFiles,
-    puttingConfigFiles: state.ui.puttingConfigFiles,
-    selectedFile: selectSelectedFile(state.codeEditor),
-    isDemoPanelPresent: !!clusterSelf && clusterSelf.demo_uri
-  }
-};
+const mapStateToProps = (state: State) => ({
+  fileTree: selectFileTree(state.codeEditor.files),
+  files: state.codeEditor.files,
+  fetchingConfigFiles: state.ui.fetchingConfigFiles,
+  puttingConfigFiles: state.ui.puttingConfigFiles,
+  selectedFile: selectSelectedFile(state.codeEditor)
+});
 
 export default connect(mapStateToProps)(Code)
