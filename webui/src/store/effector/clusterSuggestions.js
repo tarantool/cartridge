@@ -16,13 +16,14 @@ import {
   statsResponseError,
   type ClusterRefineURISuggestion
 } from './cluster';
+import type { EditServerInput } from 'src/generated/graphql-typing';
 
 export const applyClick = createEvent<any>('apply click');
 export const detailsClick = createEvent<any>('details modal click');
 export const detailsClose = createEvent<any>('details modal close');
 
 export const submitChangesFx: Effect<
-  Array<{ uuid: string, uri?: ?string }>,
+  Array<EditServerInput>,
   void,
   Error
 > = createEffect(

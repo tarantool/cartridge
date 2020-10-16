@@ -35,7 +35,6 @@ import ClusterButtonsPanel from 'src/components/ClusterButtonsPanel';
 import BootstrapPanel from 'src/components/BootstrapPanel';
 import { PageLayout } from 'src/components/PageLayout';
 import { ClusterSuggestionsPanel } from 'src/components/ClusterSuggestionsPanel';
-import { PageSection } from '@tarantool.io/ui-kit';
 import { clusterPageMount } from 'src/store/effector/cluster';
 import type { AppState } from 'src/store/reducers/ui.reducer';
 import type {
