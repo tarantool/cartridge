@@ -81,7 +81,6 @@ class Schema extends React.Component<SchemaProps> {
     return (
       <PageLayout
         heading='Schema'
-        stretchVertical
         wide
       >
         <div className={styles.area}>
