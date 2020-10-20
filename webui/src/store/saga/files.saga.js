@@ -86,7 +86,7 @@ function* applyFilesSaga() {
   }
 };
 
-function* fetchFilesSaga() {
+function* fetchFilesSaga({ payload: { initial } = {} } = {}) {
   try {
     const response = yield call(getFiles);
 
@@ -114,6 +114,10 @@ function* fetchFilesSaga() {
       type: FETCH_CONFIG_FILES_FAIL,
       error
     });
+
+    if (!initial) {
+      graphqlErrorNotification(error);
+    }
   }
 }
 

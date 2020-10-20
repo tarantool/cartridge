@@ -171,7 +171,7 @@ class Code extends React.Component<CodeProps, CodeState> {
     if (files.length > 0) {
       return;
     }
-    dispatch(fetchConfigFiles());
+    dispatch(fetchConfigFiles(true));
     this.setState({ loading: true });
   }
 

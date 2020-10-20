@@ -19,9 +19,11 @@ function* getSchemaSaga() {
     const response = yield call(getSchema);
     yield put({ type: CLUSTER_PAGE_SCHEMA_GET_REQUEST_SUCCESS, payload: response });
   } catch (error) {
+    const errorText = getErrorMessage(error);
     yield put({
       type: CLUSTER_PAGE_SCHEMA_GET_REQUEST_ERROR,
-      error
+      payload: errorText,
+      error: true
     });
   }
 };
