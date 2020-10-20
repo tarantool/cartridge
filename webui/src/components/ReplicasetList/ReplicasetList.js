@@ -245,6 +245,7 @@ class ReplicasetList extends React.PureComponent {
               />
             </React.Fragment>
           )}
+          outer={false}
         />
         <ClusterIssuesModal
           visible={showReplicasetIssues || false}

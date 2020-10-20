@@ -7,12 +7,15 @@ import {
   changeFailoverMutation,
   editTopologyMutation,
   listQuery,
-  listQueryWithoutStat,
   probeMutation,
   promoteFailoverLeaderMutation,
   serverStatQuery
 } from './queries.graphql';
-import type { EditTopologyMutationVariables, FailoverApi } from 'src/generated/graphql-typing'
+import type {
+  EditTopologyMutationVariables,
+  EditServerInput,
+  FailoverApi
+} from 'src/generated/graphql-typing'
 
 const filterServerStat = response => {
   const serverStat
@@ -28,8 +31,7 @@ type RefreshListsArgs = {
 };
 
 export function refreshLists(params: RefreshListsArgs = {}) {
-  const graph = params.shouldRequestStat ? listQuery : listQueryWithoutStat;
-  return graphql.fetch(graph)
+  return graphql.fetch(listQuery, { withStats: !!params.shouldRequestStat })
     .then(
       ({ replicasetList, serverList, ...rest }) => ({
         replicasetList: replicasetList.map(({ servers, ...rest }) => ({
@@ -56,12 +58,14 @@ export function refreshLists(params: RefreshListsArgs = {}) {
       params.shouldRequestStat
         ? ({
           cluster: {
-            issues
+            issues,
+            suggestions
           },
           ...response
         }) => filterServerStat({
           ...response,
-          issues
+          issues,
+          suggestions
         })
         : null
     );
@@ -150,6 +154,10 @@ export function expelServer({ uuid }: ExpelServerArgs) {
   };
 
   return graphql.mutate(editTopologyMutation, mutationVariables);
+}
+
+export function editServers(servers: EditServerInput[]) {
+  return graphql.mutate(editTopologyMutation, { servers });
 }
 
 export type EditReplicasetArgs = {

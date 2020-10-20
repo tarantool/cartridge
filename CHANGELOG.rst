@@ -42,6 +42,7 @@ Enhanced is WebUI
 - Upated layout of config management page.
 - Refresh interval and stat refresh period variables can be customized via
   frontend-core's ``set_variable`` feature or at runtime.
+- Show suggestions for `arvertise_uri`.
 
 -------------------------------------------------------------------------------
 [2.3.0] - 2020-08-26

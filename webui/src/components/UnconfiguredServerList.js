@@ -107,6 +107,7 @@ class UnconfiguredServerList extends React.PureComponent<UnconfiguredServerListP
             />
           </React.Fragment>
         )}
+        outer={false}
       />
     );
   };
