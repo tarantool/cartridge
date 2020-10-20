@@ -23,14 +23,33 @@ describe('Uninitialized', () => {
   });
 
   after(() => {
-    cy.task('tarantool', {code: `cleanup()`});
+    cy.task('tarantool', { code: `cleanup()` });
   });
 
   it('Open WebUI', () => {
-    cy.visit('/admin/cluster/schema')
+    cy.visit('/admin/cluster/code')
+  });
+
+  it('Code without bootstrap', () => {
+    // files reload should fail
+    cy.get('button[type="button"]:contains("Reload")').click();
+    cy.get('body').contains('Are you sure you want to reload all the files?');
+    cy.get('button[type="button"]:contains("Ok")').click();
+    cy.get('span:contains("Cluster isn\'t bootstrapped yet")').click();
+
+    // create file
+    cy.get('.meta-test__addFileBtn').click();
+    cy.get('.meta-test__enterName').focused().type('file-in-tree\n');
+    cy.get('.meta-test__Code__FileTree').contains('file-in-tree');
+
+    // file upload should fail too
+    cy.get('button[type="button"]:contains("Apply")').click();
+    cy.get('span:contains("Cluster isn\'t bootstrapped yet")').click();
   });
 
   it('Schema without bootstrap', () => {
+    cy.get('a[href="/admin/cluster/schema"]').click();
+
     cy.get('button[type="button"]:contains("Validate")').click();
     cy.get('#root').contains('Cluster isn\'t bootstrapped yet');
 
