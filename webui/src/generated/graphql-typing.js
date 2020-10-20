@@ -96,7 +96,8 @@ export type EditServerInput = {
   labels?: ?Array<?LabelInput>,
   disabled?: ?$ElementType<Scalars, "Boolean">,
   uuid: $ElementType<Scalars, "String">,
-  expelled?: ?$ElementType<Scalars, "Boolean">
+  expelled?: ?$ElementType<Scalars, "Boolean">,
+  zone?: ?$ElementType<Scalars, "String">
 };
 
 export type EditTopologyResult = {
@@ -411,6 +412,7 @@ export type Server = {
   boxinfo?: ?ServerInfo,
   status: $ElementType<Scalars, "String">,
   uuid: $ElementType<Scalars, "String">,
+  zone?: ?$ElementType<Scalars, "String">,
   replicaset?: ?Replicaset,
   alias?: ?$ElementType<Scalars, "String">,
   uri: $ElementType<Scalars, "String">,

@@ -86,7 +86,7 @@ function* applyFilesSaga() {
   }
 };
 
-function* fetchFilesSaga({ payload: { initial } }) {
+function* fetchFilesSaga({ payload: { initial } = {} } = {}) {
   try {
     const response = yield call(getFiles);
 
