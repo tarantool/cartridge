@@ -1232,6 +1232,9 @@ The options are:
 ``--cfg FILE``
         Cartridge instances YAML configuration file.
         Defaults to ``TARANTOOL_CFG`` or ``./instances.yml``.
+        The ``instances.yml`` file contains ``cartridge.cfg()``
+        parameters described in the :ref:`configuration section <cartridge-config-basic>`
+        of this guide.
 
 ``--foreground``
         Do not daemonize.
