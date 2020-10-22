@@ -253,12 +253,22 @@ local function longpoll(client, timeout)
     end
 end
 
+--- Check that stateboard is available.
+--
+-- @function check_quorum
+-- @treturn boolean true / false
+local function check_quorum(client)
+    local session = client:get_session()
+    return session.connection:ping()
+end
+
 local client_mt = {
     __type = 'stateboard_client',
     __index = {
         longpoll = longpoll,
         get_session = get_session,
         drop_session = drop_session,
+        check_quorum = check_quorum,
     },
 }
 

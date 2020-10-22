@@ -62,6 +62,8 @@ vars:new('cache', {
 vars:new('options', {
     WAITLSN_PAUSE = 0.2,
     WAITLSN_TIMEOUT = 3,
+    FENCING_PAUSE = 5,
+    FENCING_TIMEOUT = 20,
     LONGPOLL_TIMEOUT = 30,
     NETBOX_CALL_TIMEOUT = 1,
 })
@@ -107,7 +109,6 @@ local function schedule_add()
     vars.schedule[id] = task
     return id
 end
-
 
 --- Generate appointments according to clusterwide configuration.
 -- Used in 'disabled' failover mode.
@@ -240,6 +241,86 @@ local function apply_config(mod)
     return ApplyConfigError:pcall(
         mod.apply_config, conf, {is_master = vars.cache.is_leader}
     )
+end
+
+local function fencing_check()
+    if assert(vars.client):check_quorum() then
+        return true
+    end
+
+    local confapplier = require('cartridge.confapplier')
+    local replicaset_uuid = confapplier.get_replicaset_uuid()
+
+    local topology_cfg = confapplier.get_readonly('topology')
+
+    local leaders_order = topology.get_leaders_order(topology_cfg, replicaset_uuid)
+    for _, instance_uuid in ipairs(leaders_order) do
+        local server = assert(topology_cfg.servers[instance_uuid])
+        if not topology.not_disabled(instance_uuid, server) then
+            goto continue
+        end
+
+        local member = membership.get_member(server.uri)
+
+        if member ~= nil
+        and (member.status == 'alive')
+        and (member.payload.uuid == instance_uuid)
+        then
+            goto continue
+        end
+
+        do return false end
+        ::continue::
+    end
+
+    return true
+end
+
+local function fencing_watch()
+    log.info(
+        'Fencing activated (step %s, timeout %s)',
+        vars.options.FENCING_PAUSE, vars.options.FENCING_TIMEOUT
+    )
+
+    local deadline = fiber.clock() + vars.options.FENCING_TIMEOUT
+    repeat
+        fiber.sleep(vars.options.FENCING_PAUSE)
+
+        if (fencing_check()) then
+            deadline = fiber.clock() + vars.options.FENCING_TIMEOUT
+        end
+    until fiber.clock() > deadline
+
+    log.warn('Fencing triggered')
+
+    if not accept_appointments({[box.info.cluster.uuid] = box.NULL}) then
+        log.error('Leader is null already!')
+    end
+
+    log.warn(
+        'Fencing triggered, reapply scheduled (fiber %d)',
+        schedule_add()
+    )
+end
+
+local function fencing_start()
+    assert(vars.fencing_fiber == nil)
+    if not vars.cache.is_leader or not vars.consistency_needed then
+        return
+    end
+
+    vars.fencing_fiber = fiber.new(fencing_watch)
+    vars.fencing_fiber:name('cartridge.fencing')
+end
+
+local function fencing_cancel()
+    if vars.fencing_fiber == nil then
+        return
+    end
+    if vars.fencing_fiber:status() ~= 'dead' then
+        vars.fencing_fiber:cancel()
+    end
+    vars.fencing_fiber = nil
 end
 
 local function constitute_oneself(active_leaders, opts)
@@ -397,6 +478,9 @@ function reconfigure_all(active_leaders)
     fiber.self().storage.is_busy = true
     confapplier.set_state('ConfiguringRoles')
 
+    fencing_cancel()
+    fencing_start()
+
     local ok, err = FailoverError:pcall(function()
         box.cfg({
             read_only = not vars.cache.is_rw,
@@ -476,6 +560,7 @@ local function cfg(clusterwide_config)
         vars.client = nil
     end
 
+    fencing_cancel()
     schedule_clear()
     assert(next(vars.schedule) == nil)
 
@@ -602,6 +687,7 @@ local function cfg(clusterwide_config)
         end
     end
 
+    fencing_start()
     box.cfg({
         read_only = not vars.cache.is_rw,
     })
