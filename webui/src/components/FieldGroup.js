@@ -2,6 +2,7 @@
 
 import * as React from 'react'
 import styled from 'react-emotion'
+import { baseFontFamily } from '@tarantool.io/ui-kit'
 
 export const FieldGroup = styled.div`
   padding-bottom: 24px;
@@ -13,7 +14,7 @@ export const FieldLabel = styled.label`
   font-size: 14px;
   line-height: 24px;
   font-weight: 600;
-  font-family: Open Sans;
+  font-family: ${baseFontFamily};
   overflow: hidden;
   display: block;
   color: #000;

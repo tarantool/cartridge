@@ -1,5 +1,5 @@
 // @flow
-import * as R from 'ramda';
+import { filter, allPass, path } from 'ramda';
 import {
   createSelector,
   createSelectorCreator,
@@ -227,13 +227,13 @@ export const getFilterData = (filterQuery: string): Object => {
 export const filterReplicasetList = (state: State, filterQuery: string): Replicaset[] => {
   const { tokensByPrefix, tokenizedQuery } = getFilterData(filterQuery);
 
-  const filterByTokens = R.filter(
-    R.allPass(
+  const filterByTokens = filter(
+    allPass(
       tokensByPrefix.all.map(token => r => r.searchString.includes(token) || r.uuid.startsWith(token))
     )
   );
 
-  const filterServerByTokens = R.allPass(
+  const filterServerByTokens = allPass(
     tokenizedQuery.map(token => searchString => searchString.includes(token))
   );
 
@@ -352,7 +352,7 @@ export const getReplicasetCounts: (s: State) => ReplicasetCounts = createSelecto
 export const getSectionsNames = (state: State): Array<string> => Object.keys(state.clusterInstancePage.boxinfo || {});
 
 export const isBootstrapped = (state: State) => (
-  R.path(['app', 'clusterSelf', 'vshard_groups', '0', 'bootstrapped'], state) || false
+  path(['app', 'clusterSelf', 'vshard_groups', '0', 'bootstrapped'], state) || false
 )
 
 

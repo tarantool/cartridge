@@ -6,7 +6,7 @@ import { Alert, Button, Input, Text } from '@tarantool.io/ui-kit';
 import { FieldConstructor } from '../FieldGroup';
 import { Formik, Form } from 'formik';
 import * as Yup from 'yup';
-import * as R from 'ramda';
+import { pickAll } from 'ramda';
 
 
 const schema = Yup.object().shape({
@@ -43,7 +43,7 @@ const formProps = [
 class UserEditForm extends React.Component {
   submit = async (values, actions) => {
     const { editUser, username } = this.props;
-    const obj = R.pickAll(['email', 'fullname'], values)
+    const obj = pickAll(['email', 'fullname'], values)
     if (values.password) {
       obj.password = values.password
     }

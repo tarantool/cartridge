@@ -11,7 +11,7 @@ import { pageDidMount, resetPageState } from 'src/store/actions/clusterInstanceP
 import { withRouter } from 'react-router-dom'
 import ServerShortInfo from 'src/components/ServerShortInfo';
 import ClusterInstanceSection from './ClusterInstanceSection'
-import * as R from 'ramda';
+import { filter, identity } from 'ramda';
 
 type ServerInfoModalProps = {
   pageDidMount: ({ instanceUUID: string }) => void,
@@ -99,7 +99,7 @@ class ServerInfoModal extends React.Component<ServerInfoModalProps, ServerInfoMo
           />
           <Tabbed
             tabs={
-              R.filter(R.identity, ServerInfoModal.tabsOrder).map(section => ({
+              filter(identity, ServerInfoModal.tabsOrder).map(section => ({
                 label: section[0].toUpperCase() + section.substring(1),
                 content: (<ClusterInstanceSection sectionName={section}/>)
               }))

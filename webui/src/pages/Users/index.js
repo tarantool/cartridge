@@ -4,7 +4,6 @@ import { connect } from 'react-redux';
 import { Button } from '@tarantool.io/ui-kit';
 import { PageLayout } from 'src/components/PageLayout';
 import UsersTable from '../../components/UsersTable';
-import SpinnerLoader from '../../components/SpinnerLoader';
 import UserAddModal from 'src/components/UserAddModal';
 import UserEditModal from 'src/components/UserEditModal';
 import UserRemoveModal from 'src/components/UserRemoveModal';
@@ -46,12 +45,10 @@ const Users = ({
     ]}
   >
     <AppTitle title='Users' />
-    <SpinnerLoader loading={fetchingUserList}>
-      {implements_list_users && <UsersTable />}
-      <UserRemoveModal />
-      {implements_add_user && <UserAddModal />}
-      <UserEditModal />
-    </SpinnerLoader>
+    {implements_list_users && <UsersTable loading={fetchingUserList} />}
+    <UserRemoveModal />
+    {implements_add_user && <UserAddModal />}
+    <UserEditModal />
   </PageLayout>
 );
 

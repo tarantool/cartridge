@@ -1,81 +1,98 @@
+// @flow
 import React from 'react';
 import { connect } from 'react-redux';
-import { css, cx } from 'emotion';
-import * as R from 'ramda';
+import { css } from 'emotion';
+import { memoizeWith, identity } from 'ramda';
+import {
+  Button,
+  ControlsPanel,
+  IconEdit,
+  IconBucket,
+  Table,
+  Link,
+  colors
+} from '@tarantool.io/ui-kit';
 import {
   getUsersList,
   resetUserState,
   showEditUserModal,
   showRemoveUserModal
 } from 'src/store/actions/users.actions';
-import {
-  Dropdown,
-  DropdownItem,
-  IconMore,
-  Text,
-  TiledList,
-  Button
-} from '@tarantool.io/ui-kit';
-import NoData from './NoData';
+import { BUILT_IN_USERS } from 'src/constants';
 
 const styles = {
-  clickableRow: css`
-    cursor: pointer;
-  `,
-  row: css`
-    display: flex;
-    flex-direction: row;
-    flex-wrap: nowrap;
+  table: css`
+    tr td:last-child {
+      width: 1%;
+      white-space: nowrap;
+    }
   `,
   username: css`
+    color: ${colors.dark};
     font-weight: 600;
-  `,
-  field: css`
-    width: 300px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    flex-grow: 0;
-    flex-shrink: 0;
-    color: #000000;
-  `,
-  actions: css`
-    margin-left: auto;
   `
 };
 
-const columns = [
-  {
-    title: 'Username',
-    dataIndex: 'username',
-    className: styles.username
-  },
-  {
-    title: 'Full name',
-    dataIndex: 'fullname',
-    key: 'fullname'
-  },
-  {
-    title: 'E-mail',
-    dataIndex: 'email'
-  }
-];
-
-const buttons = {
-  edit: {
-    text: 'Edit user',
-    handler: ({ item, showEditUserModal }) => showEditUserModal(item.username)
-  },
-  remove: {
-    text: 'Remove user',
-    handler: ({ item, showRemoveUserModal }) => showRemoveUserModal(item.username),
-    className: css`color: rgba(245, 34, 45, 0.65);`
-  }
-}
+const tableColumns = memoizeWith(
+  identity,
+  (
+    allowEdit,
+    allowDelete,
+    showEditUserModal,
+    showRemoveUserModal
+  ) => ([
+    {
+      Header: 'Username',
+      accessor: 'username',
+      Cell: ({ cell: { value } }) => (
+        <Link
+          href='#'
+          className={styles.username}
+          onClick={e => { e.preventDefault(); showEditUserModal(value); }}
+        >
+          {value}
+        </Link>
+      )
+    },
+    {
+      Header: 'Full name',
+      accessor: 'fullname',
+      Cell: ({ cell: { value } }) => value || '—'
+    },
+    {
+      Header: 'E-mail',
+      accessor: 'email',
+      Cell: ({ cell: { value } }) => value || '—'
+    },
+    {
+      Header: 'Actions',
+      disableSortBy: true,
+      Cell: ({ row: { values } }) => {
+        return (
+          <ControlsPanel
+            thin
+            controls={[
+              <Button
+                onClick={() => showEditUserModal(values.username)}
+                intent='secondary'
+                disabled={!allowEdit || BUILT_IN_USERS.includes(values.username)}
+                icon={IconEdit}
+              />,
+              <Button
+                onClick={() => showRemoveUserModal(values.username)}
+                intent='secondary'
+                disabled={!allowDelete || BUILT_IN_USERS.includes(values.username)}
+                icon={IconBucket}
+              />
+            ]}
+          />
+        );
+      }
+    }
+  ])
+);
 
 class UsersTable extends React.Component {
-
-
   componentDidMount() {
     this.props.getUsersList();
   }
@@ -84,72 +101,28 @@ class UsersTable extends React.Component {
     this.props.resetUserState();
   }
 
-  handleRow = item => this.props.implements_edit_user && this.props.showEditUserModal(item.username)
-
   render() {
     const {
       items,
       implements_edit_user,
       implements_remove_user,
+      loading,
       showEditUserModal,
       showRemoveUserModal
     } = this.props;
 
-    const actionButtons = (edit, remove) => (item, className) => {
-      const filtered = R.compose(
-        R.map(({ handler, text, className }) => (
-          <DropdownItem
-            className={className}
-            onClick={() => handler({ item, showEditUserModal, showRemoveUserModal })}
-          >
-            {text}
-          </DropdownItem>
-        //   {
-        //   ...rest,
-        //   onClick: () => handler({ item, showEditUserModal, showRemoveUserModal })
-        // }
-        )),
-        R.filter(R.identity),
-        R.map(([key, exists]) => exists ? buttons[key] : null),
-        R.toPairs
-      )({ edit, remove })
-      return filtered.length > 0
-        ? (
-          <Dropdown
-            className={className}
-            items={filtered}
-            popoverClassName='meta-test__UsersTableItem__dropdown'
-          >
-            <Button icon={IconMore} intent='plain' size='s' />
-          </Dropdown>
-        )
-        : null
-    }
-
-    const actionButton = actionButtons(implements_edit_user, implements_remove_user)
-
-    return items.length ? (
-      <TiledList
-        className='meta-test__UsersTable'
-        itemRender={item =>
-          <div
-            className={styles.row}
-          >
-            {columns.map(({ dataIndex, className }) =>
-              <Text className={cx(styles.field, className)} title={item[dataIndex]}>{item[dataIndex]}</Text>
-            )}
-            {
-              actionButton(item, styles.actions)
-            }
-          </div>}
-        items={items}
-        columns={implements_edit_user || implements_remove_user ? this.columnsWithActions : this.columns}
-        dataSource={items}
-        itemKey='username'
-        outer={false}
+    return (
+      <Table
+        className={styles.table}
+        columns={tableColumns(
+          implements_edit_user,
+          implements_remove_user,
+          showEditUserModal,
+          showRemoveUserModal
+        )}
+        data={items}
+        loading={loading}
       />
-    ) : (
-      <NoData />
     );
   }
 }

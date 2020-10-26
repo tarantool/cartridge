@@ -1,7 +1,7 @@
 // @flow
 import React from 'react';
 import { css } from 'react-emotion';
-import * as R from 'ramda';
+import { uniq } from 'ramda';
 import { Form, Field, FormSpy } from 'react-final-form';
 import {
   Button,
@@ -194,7 +194,7 @@ CreateReplicasetFormProps) => (
 
                             form.change(
                               fieldName,
-                              R.uniq([...newDependencies, ...rolesWithoutDependencies])
+                              uniq([...newDependencies, ...rolesWithoutDependencies])
                             )
                           }}
                           name={fieldName}

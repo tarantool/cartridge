@@ -211,7 +211,7 @@ class Cluster extends React.Component<ClusterProps> {
                 />
               )
               : (
-                <div className="trTable-noData">
+                <div>
                   No replicaset found
                 </div>
               )

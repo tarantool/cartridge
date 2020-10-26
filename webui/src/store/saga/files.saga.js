@@ -1,5 +1,5 @@
 import { call, put, select, takeEvery } from 'redux-saga/effects';
-import * as R from 'ramda';
+import { difference } from 'ramda';
 import { graphqlErrorNotification } from 'src/misc/graphqlErrorNotification';
 import {
   FETCH_CONFIG_FILES,
@@ -50,7 +50,7 @@ function* applyFilesSaga() {
     const initialPaths = Object.keys(initialMap);
     const filesPaths = Object.keys(filesMap);
 
-    const toDelete = R.difference(initialPaths, filesPaths);
+    const toDelete = difference(initialPaths, filesPaths);
 
     updatedFiles.push(...toDelete.map(filename => ({ filename, content: null })))
 
