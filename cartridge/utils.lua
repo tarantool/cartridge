@@ -1,3 +1,8 @@
+--- Auxiliary functions (internal module).
+--
+-- @module cartridge.utils
+-- @local
+
 local fio = require('fio')
 local ffi = require('ffi')
 local bit = require('bit')
@@ -10,7 +15,6 @@ local FcntlError = errors.new_class('FcntlError')
 local OpenFileError = errors.new_class('OpenFileError')
 local ReadFileError = errors.new_class('ReadFileError')
 local WriteFileError = errors.new_class('WriteFileError')
-
 
 ffi.cdef[[
 int getppid(void);
@@ -99,6 +103,32 @@ local function table_append(to, from)
         table.insert(to, item)
     end
     return to
+end
+
+local function assert_upvalues(fn, ups)
+    checks('function', 'table')
+
+    local got = {}
+    for i = 1, debug.getinfo(fn, 'u').nups do
+        got[i] = debug.getupvalue(fn, i)
+    end
+
+    table.sort(got)
+    table.sort(ups)
+
+    if #got ~= #ups then goto fail end
+    for i = 1, #ups do
+        if got[i] ~= ups[i] then goto fail end
+    end
+
+    do return end
+
+    ::fail::
+    local err = string.format(
+        'Unexpected upvalues, [%s] expected, got [%s]',
+        table.concat(ups, ', '), table.concat(got, ', ')
+    )
+    error(err, 2)
 end
 
 local function file_exists(name)
@@ -383,6 +413,7 @@ return {
     table_find = table_find,
     table_count = table_count,
     table_append = table_append,
+    assert_upvalues = assert_upvalues,
 
     mktree = mktree,
     file_read = file_read,

@@ -12,34 +12,24 @@ local function check_error(expected_error, fn, ...)
     for _, l in pairs(string.split(tostring(err), '\n')) do
         log.info('%s', l)
     end
-    t.assert(
-        string.match(err.err, expected_error),
-        'Expected error: ' .. expected_error
-    )
+    return t.assert_str_matches(err.err, expected_error)
 end
 
 local function register_roles(...)
-    for _, role in ipairs({...}) do
-        local ok, err = roles.register_role(role)
-        if not ok then
-            return nil, err
-        end
-    end
-
-    return true
+    return roles.cfg({...})
 end
 
 function g.test_error()
 -------------------------------------------------------------------------------
 
-check_error([[module 'unknown' not found]],
+check_error([[module 'unknown' not found:.+]],
     register_roles, 'unknown'
 )
 
 -------------------------------------------------------------------------------
 
 package.preload['my-mod'] = function()
-    error('My role cant be loaded')
+    error('My role cant be loaded', 0)
 end
 check_error([[My role cant be loaded]],
     register_roles, 'my-mod'
@@ -59,7 +49,7 @@ package.loaded['mod-a1'] = nil
 package.loaded['mod-a2'] = nil
 package.preload['mod-a1'] = function() return {role_name = 'role-a'} end
 package.preload['mod-a2'] = function() return {role_name = 'role-a'} end
-check_error([[Role "role%-a" name clash]],
+check_error([[Role "role%-a" name clash between mod%-a2 and mod%-a1]],
     register_roles, 'mod-a1', 'mod-a2'
 )
 
@@ -67,7 +57,7 @@ check_error([[Role "role%-a" name clash]],
 
 package.loaded['my-mod'] = nil
 package.preload['my-mod'] = function() return true end
-check_error([[Module "my%-mod" must return a table]],
+check_error([[Module "my%-mod" must return a table, got boolean]],
     register_roles, 'my-mod'
 )
 
@@ -75,7 +65,7 @@ check_error([[Module "my%-mod" must return a table]],
 
 package.loaded['my-mod'] = nil
 package.preload['my-mod'] = function() return {role_name = 1} end
-check_error([[Module "my%-mod" role_name must be a string]],
+check_error([[Module "my%-mod" role_name must be a string, got number]],
     register_roles, 'my-mod'
 )
 
@@ -83,7 +73,7 @@ check_error([[Module "my%-mod" role_name must be a string]],
 
 package.loaded['my-mod'] = nil
 package.preload['my-mod'] = function() return {dependencies = 'no'} end
-check_error([[Module "my%-mod" dependencies must be a table]],
+check_error([[Module "my%-mod" dependencies must be a table, got string]],
     register_roles, 'my-mod'
 )
 
@@ -91,7 +81,7 @@ check_error([[Module "my%-mod" dependencies must be a table]],
 
 package.loaded['my-mod'] = nil
 package.preload['my-mod'] = function() return { dependencies = {'unknown'} } end
-check_error([[module 'unknown' not found]],
+check_error([[module 'unknown' not found:.+]],
     register_roles, 'my-mod'
 )
 
@@ -99,7 +89,7 @@ check_error([[module 'unknown' not found]],
 
 package.loaded['my-mod'] = nil
 package.preload['my-mod'] = function() return { dependencies = {'my-mod'} } end
-check_error([[Module "my%-mod" circular dependency not allowed]],
+check_error([[Module "my%-mod" circular dependency prohibited]],
     register_roles, 'my-mod'
 )
 
@@ -117,7 +107,7 @@ end
 package.preload['mod-c'] = function()
     return { role_name = 'role-c', dependencies = {'mod-a'} }
 end
-check_error([[Module "mod%-a" circular dependency not allowed]],
+check_error([[Module "mod%-a" circular dependency prohibited]],
     register_roles, 'mod-a'
 )
 
@@ -158,46 +148,29 @@ t.assert_equals(ok, true, err)
 
 local vars = require('cartridge.vars').new('cartridge.roles')
 local roles_order = {}
-for i, mod in ipairs(vars.known_roles) do
-    roles_order[i] = mod.role_name
+for i, role in ipairs(vars.by_number) do
+    roles_order[i] = role.role_name
     log.info('%d) %s -> %s',
-        i, mod.role_name,
-        json.encode(vars.roles_dependencies[mod.role_name])
+        i, role.role_name,
+        json.encode(role.dependencies)
     )
 end
 t.assert_equals(roles_order, {
-    'vshard-storage', 'vshard-router', 'storage', 'role-c', 'role-d', 'role-b', 'role-a',
+    'failover-coordinator', 'vshard-storage', 'vshard-router',
+    'storage', 'role-c', 'role-d', 'role-b', 'role-a',
 })
-t.assert_equals(vars.roles_dependencies, {
-    ['vshard-storage'] = {},
-    ['vshard-router'] = {},
-    ['storage'] = {'vshard-storage'},
-    ['role-a'] = {'role-b', 'role-c', 'role-d'},
-    ['role-b'] = {'role-c', 'role-d'},
-    ['role-c'] = {},
-    ['role-d'] = {},
-})
-
-for i, mod in ipairs(vars.known_roles) do
-    log.info('%d) %s <- %s',
-        i, mod.role_name,
-        json.encode(vars.roles_dependants[mod.role_name])
-    )
-end
-
-t.assert_equals(vars.roles_dependants, {
-    ['vshard-storage'] = {'storage'},
-    ['vshard-router'] = {},
-    ['storage'] = {},
-    ['role-a'] = {},
-    ['role-b'] = {'role-a'},
-    ['role-c'] = {'role-b'},
-    ['role-d'] = {'role-b', 'role-a'},
-})
+t.assert_equals(roles.get_role_dependencies('vshard-storage'), {})
+t.assert_equals(roles.get_role_dependencies('vshard-router'), {})
+t.assert_equals(roles.get_role_dependencies('storage'), {'vshard-storage'})
+t.assert_equals(roles.get_role_dependencies('role-a'), {'role-b', 'role-c', 'role-d'})
+t.assert_equals(roles.get_role_dependencies('role-b'), {'role-c', 'role-d'})
+t.assert_equals(roles.get_role_dependencies('role-c'), {})
+t.assert_equals(roles.get_role_dependencies('role-d'), {})
 
 local known_roles = roles.get_known_roles()
 t.assert_equals(known_roles, {
-    'vshard-storage', 'vshard-router', 'storage', 'role-c', 'role-d', 'role-b', 'role-a',
+    'failover-coordinator', 'vshard-storage', 'vshard-router',
+    'storage', 'role-c', 'role-d', 'role-b', 'role-a',
 })
 
 local enabled_roles = roles.get_enabled_roles({
