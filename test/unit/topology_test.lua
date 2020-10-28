@@ -97,8 +97,10 @@ function g.mock_package()
 end
 
 function g.before_all()
-    assert(roles.register_role('cartridge.roles.vshard-storage'))
-    assert(roles.register_role('cartridge.roles.vshard-router'))
+    assert(roles.cfg({
+      'cartridge.roles.vshard-storage',
+      'cartridge.roles.vshard-router',
+    }))
 
     rawset(_G, 'vshard', {
         storage = {

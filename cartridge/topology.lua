@@ -10,15 +10,12 @@ local checks = require('checks')
 local errors = require('errors')
 local membership = require('membership')
 
-local vars = require('cartridge.vars').new('cartridge.topology')
 local pool = require('cartridge.pool')
+local roles = require('cartridge.roles')
 local utils = require('cartridge.utils')
 local label_utils = require('cartridge.label-utils')
 
 local e_config = errors.new_class('Invalid cluster topology config')
-vars:new('known_roles', {
-    -- [role_name] = true/false,
-})
 --[[ topology_cfg: {
     auth = false,
     failover = nil | boolean | {
@@ -643,7 +640,7 @@ local function validate_upgrade(topology_new, topology_old)
             local enabled_old = replicaset_old and replicaset_old.roles[role]
             if enabled_new and not enabled_old then
                 e_config:assert(
-                    vars.known_roles[role],
+                    roles.get_role(role),
                     'replicasets[%s] can not enable unknown role %q',
                     replicaset_uuid, tostring(role)
                 )
@@ -973,9 +970,6 @@ end
 return {
     validate = function(...)
         return e_config:pcall(validate, ...)
-    end,
-    add_known_role = function(role_name)
-        vars.known_roles[role_name] = true
     end,
 
     not_expelled = not_expelled,
