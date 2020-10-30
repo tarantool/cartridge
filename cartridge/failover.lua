@@ -78,6 +78,37 @@ function _G.__cartridge_failover_wait_rw(timeout)
     return errors.pcall('WaitRwError', box.ctl.wait_rw, timeout)
 end
 
+local reconfigure_all -- function implemented below
+
+--- Cancel all pending reconfigure_all tasks.
+-- @function schedule_clear
+-- @local
+local function schedule_clear()
+    for id, task in pairs(vars.schedule) do
+        if task:status() == 'dead' then
+            vars.schedule[id] = nil
+        elseif not task.storage.is_busy then
+            vars.schedule[id] = nil
+            task:cancel()
+        -- else
+            -- preserve busy tasks
+        end
+    end
+end
+
+--- Schedule new reconfigure_all task.
+-- @function schedule_add
+-- @local
+local function schedule_add()
+    schedule_clear()
+    local task = fiber.new(reconfigure_all, vars.cache.active_leaders)
+    local id = task:id()
+    task:name('cartridge.failover.task')
+    vars.schedule[id] = task
+    return id
+end
+
+
 --- Generate appointments according to clusterwide configuration.
 -- Used in 'disabled' failover mode.
 -- @function _get_appointments_disabled_mode
@@ -333,7 +364,7 @@ local function constitute_oneself(active_leaders, opts)
     return true
 end
 
-local function reconfigure_all(active_leaders)
+function reconfigure_all(active_leaders)
     local confapplier = require('cartridge.confapplier')
     local all_roles = require('cartridge.roles').get_all_roles()
 
@@ -417,30 +448,13 @@ local function failover_loop(args)
 
         vars.failover_err = nil
 
-        if not accept_appointments(appointments) then
+        if accept_appointments(appointments) then
             -- nothing changed
-            goto continue
-        end
-
-        -- Cancel all pending tasks
-        for id, task in pairs(vars.schedule) do
-            if task:status() == 'dead' then
-                vars.schedule[id] = nil
-            elseif not task.storage.is_busy then
-                vars.schedule[id] = nil
-                task:cancel()
-            -- else
-                -- preserve busy tasks
-            end
-        end
-
-        -- Schedule new task
-        do
-            local task = fiber.new(reconfigure_all, vars.cache.active_leaders)
-            local id = task:id()
-            task:name('cartridge.failover.task')
-            vars.schedule[id] = task
-            log.info('Failover triggered, reapply scheduled (fiber %d)', id)
+            local id = schedule_add()
+            log.info(
+                'Failover triggered, reapply' ..
+                ' scheduled (fiber %d)', id
+            )
         end
 
         ::continue::
@@ -462,16 +476,8 @@ local function cfg(clusterwide_config)
         vars.client = nil
     end
 
-    -- Cancel all pending tasks
-    for id, task in pairs(vars.schedule) do
-        if task:status() == 'dead' then
-            vars.schedule[id] = nil
-        else
-            assert(not task.storage.is_busy)
-            vars.schedule[id] = nil
-            task:cancel()
-        end
-    end
+    schedule_clear()
+    assert(next(vars.schedule) == nil)
 
     if vars.failover_fiber ~= nil then
         if vars.failover_fiber:status() ~= 'dead' then
@@ -583,11 +589,11 @@ local function cfg(clusterwide_config)
     if ok == nil then
         log.warn("Error reaching consistency: %s", err)
         if next(vars.schedule) == nil then
-            local task = fiber.new(reconfigure_all, vars.cache.active_leaders)
-            local id = task:id()
-            task:name('cartridge.failover.task')
-            vars.schedule[id] = task
-            log.info('Consistency not reached, another attempt scheduled (fiber %d)', id)
+            local id = schedule_add()
+            log.info(
+                'Consistency not reached, another' ..
+                ' attempt scheduled (fiber %d)', id
+            )
         end
     end
 
