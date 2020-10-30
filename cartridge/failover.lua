@@ -512,8 +512,13 @@ local function cfg(clusterwide_config)
         vars.failover_fiber:name('cartridge.eventual-failover')
 
     elseif failover_cfg.mode == 'stateful' then
-        if topology_cfg.replicasets[box.info.cluster.uuid].all_rw then
+        local replicaset_uuid = box.info.cluster.uuid
+        if topology_cfg.replicasets[replicaset_uuid].all_rw then
             -- Replicasets with all_rw flag imply that
+            -- consistent switchover isn't necessary
+            vars.consistency_needed = false
+        elseif #topology.get_leaders_order(topology_cfg, replicaset_uuid) == 1 then
+            -- Replicaset consists of a single server
             -- consistent switchover isn't necessary
             vars.consistency_needed = false
         else

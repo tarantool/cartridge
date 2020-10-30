@@ -176,6 +176,11 @@ options: to revert promotion (to re-promote the old leader) or to force it
 inconsistently (all kinds of ``failover_promote`` API has
 ``force_inconsistency`` flag).
 
+Consistent promotion doesn't work for replicasets with `all_rw` flag enabled
+and for single-instance replicasets. In these two cases an instance doesn't
+even try to query `vclockkeeper` and to perform `wait_lsn`. But the coordinator
+still appoints a new leader if the current one dies.
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Failover configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
