@@ -250,3 +250,35 @@ that influence failover operation:
 
 * ``IMMUNITY_TIMEOUT`` (``coordinator``) -- minimal amount of time (in seconds)
   to wait before overriding an appointment (default: 15).
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Fencing
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Fencing ensures that leader that lost connection with its own replicas and
+a state provider is in read-only mode.
+
+It is implemented as a separate fiber guard that periodically checks
+connections with a state provider and, if it is now available, with
+replicas.
+
+Fencing fiber guard is started by a leader of a replicaset at the end
+of the switchover in case of a stateful failover. However, if there are no
+replicas or replicaset is `all_rw = true` then fencing is not initiated.
+
+The first thing fencing guard checks is state provider's quorum.
+Only if it is lost replicas are checked. Then, if at least one replica
+is unavailable, fencing is triggered.
+
+If something went wrong (e.g. etcd cluster lost its quorum and replica's
+connection is down) fencing is triggered. It schedules a new failover
+task with `box.NULL` as a new leader. After this task is complete
+instance is not vclockkeeper anymore. And old leader becomes
+read-only. In order to reclaim leadership instance should perform a
+consistent switchover which requires available state provider.
+
+There are two parameters that can affect fencing:
+
+* ``FENCING_TIMEOUT`` -- the fencing timeout (in seconds) to wait recovery of connections;
+
+* ``FENCING_PAUSE`` -- the period (in seconds) of fencing fiber guard's work.
