@@ -1,7 +1,8 @@
 describe('Replicaset configuration & Bootstrap Vshard', () => {
 
   before(() => {
-    cy.task('tarantool', {code: `
+    cy.task('tarantool', {
+      code: `
       cleanup()
       _G.cluster = helpers.Cluster:new({
         datadir = fio.tempdir(),
@@ -25,7 +26,8 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
         _G.cluster:server('dummy-1'):graphql({query = '{}'})
       end)
       return true
-    `}).should('deep.eq', [true]);
+    `
+    }).should('deep.eq', [true]);
   });
 
   after(() => {
@@ -250,15 +252,15 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
   });
 
   it('Error details in notification list', () => {
-    cy.get('button.meta-test__LoginBtn').parent('div').prev().click();
+    cy.get('button.meta-test__LoginBtn').parent('div').parent('div').prev().click();
     cy.get('button[type="button"]:contains(Error details)').click();
     checksForErrorDetails();
   })
 
   it('Check Clear button in notification list', () => {
-    cy.get('button.meta-test__LoginBtn').parent('div').prev().click();
+    cy.get('button.meta-test__LoginBtn').parent('div').parent('div').prev().click();
     cy.get('button:contains(Clear)').click();
-    cy.get('button.meta-test__LoginBtn').parent('div').prev().click();
+    cy.get('button.meta-test__LoginBtn').parent('div').parent('div').prev().click();
     cy.get('span').contains('No notifications');
   })
 

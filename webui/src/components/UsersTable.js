@@ -12,6 +12,7 @@ import {
   Dropdown,
   DropdownItem,
   IconMore,
+  Text,
   TiledList,
   Button
 } from '@tarantool.io/ui-kit';
@@ -27,7 +28,6 @@ const styles = {
     flex-wrap: nowrap;
   `,
   username: css`
-    font-size: 16px;
     font-weight: 600;
   `,
   field: css`
@@ -37,9 +37,6 @@ const styles = {
     white-space: nowrap;
     flex-grow: 0;
     flex-shrink: 0;
-    font-size: 14px;
-    font-family: Open Sans;
-    line-height: 22px;
     color: #000000;
   `,
   actions: css`
@@ -139,7 +136,7 @@ class UsersTable extends React.Component {
             className={styles.row}
           >
             {columns.map(({ dataIndex, className }) =>
-              <div className={cx(styles.field, className)} title={item[dataIndex]}>{item[dataIndex]}</div>
+              <Text className={cx(styles.field, className)} title={item[dataIndex]}>{item[dataIndex]}</Text>
             )}
             {
               actionButton(item, styles.actions)

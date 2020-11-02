@@ -1,6 +1,7 @@
 import * as React from 'react';
 import styled from 'react-emotion';
-import { IconBoxNoData } from '@tarantool.io/ui-kit';
+import { css } from 'emotion';
+import { IconBoxNoData, Text } from '@tarantool.io/ui-kit';
 
 const Container = styled.div`
   display: flex;
@@ -10,14 +11,10 @@ const Container = styled.div`
   left: 50%;
 `
 
-const Text = styled.span`
+const textStyle = css`
   margin-top: 13px;
-  font-size: 14px;
-  font-weight: normal;
   font-style: normal;
   font-stretch: normal;
-  line-height: 1.57;
-  letter-spacing: 0.28px;
   color: rgba(0, 0, 0, 0.65);
 `
 
@@ -30,7 +27,7 @@ function NoData({ text = 'No Data' }: NoDataProps) {
   return (
     <Container>
       <IconBoxNoData />
-      <Text>{text}</Text>
+      <Text className={textStyle}>{text}</Text>
     </Container>
   )
 };
