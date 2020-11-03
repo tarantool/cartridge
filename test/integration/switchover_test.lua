@@ -185,36 +185,36 @@ end
 
 add('test_2pc_forceful', function(g)
     -- Testing scenario:
-    -- 1. Promote A1 as a leader
+    -- 1. Promote B1 as a leader
     -- 2. An attempt to constitute_oneself fails
     -- 3. Trigger apply_config
     -- 4. An attempt to constitute_oneself still fails
-    -- 5. Manually set A1 as vclockkeeper
+    -- 5. Manually set B1 as vclockkeeper
     -- 6. Expect it to become rw
 
     -- Prevent wait_lsn from accomplishing successfully
-    t.assert(g.session:set_leaders({{uA, 'nobody'}}))
-    t.assert(g.session:set_vclockkeeper(uA, 'nobody'))
+    t.assert(g.session:set_vclockkeeper(uB, 'nobody'))
+    t.assert(g.session:set_leaders({{uB, 'nobody'}}))
     helpers.retrying({}, function()
-        t.assert_equals(A1.net_box:eval(q_leadership, {uA}), 'nobody')
+        t.assert_equals(B1.net_box:eval(q_leadership, {uB}), 'nobody')
     end)
 
-    t.assert_equals(A1.net_box:eval(q_readonliness), true)
-    t.assert_equals(A1.net_box:eval(q_is_vclockkeeper), false)
+    t.assert_equals(B1.net_box:eval(q_readonliness), true)
+    t.assert_equals(B1.net_box:eval(q_is_vclockkeeper), false)
 
-    -- Promote A1
-    t.assert(g.session:set_leaders({{uA, uA1}}))
+    -- Promote B1
+    t.assert(g.session:set_leaders({{uB, uB1}}))
     helpers.retrying({}, function()
-        t.assert_equals(A1.net_box:eval(q_leadership, {uA}), uA1)
+        t.assert_equals(B1.net_box:eval(q_leadership, {uB}), uB1)
     end)
-    t.assert_equals(A1.net_box:eval(q_readonliness), true)
-    t.assert_equals(A1.net_box:eval(q_is_vclockkeeper), false)
+    t.assert_equals(B1.net_box:eval(q_readonliness), true)
+    t.assert_equals(B1.net_box:eval(q_is_vclockkeeper), false)
 
     A1.net_box:eval(q_set_wait_lsn_timeout, {0.1})
 
-    -- Trigger two-phase commit
+    -- Trigger apply_config
     -- An attempt to constitute_oneself fails
-    local ok, err = A1.net_box:eval([[
+    local ok, err = B1.net_box:eval([[
         local confapplier = require('cartridge.confapplier')
         local active_config = confapplier.get_active_config()
         require('log').warn('Triggering apply_config')
@@ -224,28 +224,28 @@ add('test_2pc_forceful', function(g)
     -- Applying configuration succeeds
     t.assert_equals({ok, err}, {true, nil})
 
-    -- But A1 still waits LSN from "nobody" (forever)
-    t.assert_equals(A1.net_box:eval(q_readonliness), true)
-    t.assert_equals(A1.net_box:eval(q_is_vclockkeeper), false)
+    -- But B1 still waits LSN from "nobody" (forever)
+    t.assert_equals(B1.net_box:eval(q_readonliness), true)
+    t.assert_equals(B1.net_box:eval(q_is_vclockkeeper), false)
     t.assert_items_equals(
-        helpers.list_cluster_issues(A1),
+        helpers.list_cluster_issues(B1),
         {{
             level = "warning",
             topic = "switchover",
-            instance_uuid = uA1,
-            replicaset_uuid = uA,
-            message = "Consistency on " .. A1.advertise_uri ..
-                " (A1) isn't reached yet",
+            instance_uuid = uB1,
+            replicaset_uuid = uB,
+            message = "Consistency on " .. B1.advertise_uri ..
+                " (B1) isn't reached yet",
         }}
     )
 
-    -- Manually set A1 as vclockkeeper
-    t.assert(g.session:set_vclockkeeper(uA, uA1))
+    -- Manually set B1 as vclockkeeper
+    t.assert(g.session:set_vclockkeeper(uB, uB1))
 
     -- Expect it to become rw
     helpers.retrying({}, function()
-        t.assert_equals(A1.net_box:eval(q_readonliness), false)
-        t.assert_equals(A1.net_box:eval(q_is_vclockkeeper), true)
+        t.assert_equals(B1.net_box:eval(q_readonliness), false)
+        t.assert_equals(B1.net_box:eval(q_is_vclockkeeper), true)
     end)
 end)
 
@@ -432,18 +432,18 @@ end)
 
 add('test_vclockkeeper_caching', function(g)
     -- Scenario:
-    -- 1. A1 is a vclockkeeper
-    -- 2. B2 gets promoted
-    -- 3. A1 successfully longpolls new appointments
-    -- 4. But A1 is unable to get info about vclockkeeper
+    -- 1. B1 is a vclockkeeper
+    -- 2. A2 (non-existant) gets promoted
+    -- 3. B1 successfully longpolls new appointments
+    -- 4. But B1 is unable to get info about vclockkeeper
     -- 5. apply_config is still triggered
 
-    t.assert_equals(A1.net_box:eval(q_leadership, {uA}), uA1)
-    t.assert_equals(A1.net_box:eval(q_readonliness), false)
-    t.assert_equals(A1.net_box:eval(q_is_vclockkeeper), true)
+    t.assert_equals(B1.net_box:eval(q_leadership, {uB}), uB1)
+    t.assert_equals(B1.net_box:eval(q_readonliness), false)
+    t.assert_equals(B1.net_box:eval(q_is_vclockkeeper), true)
 
 
-    A1.net_box:eval([[
+    B1.net_box:eval([[
         local vars = require('cartridge.vars').new('cartridge.failover')
         _get_vclockkeeper_backup = vars.client.session.get_vclockkeeper
         vars.client.session.get_vclockkeeper = function()
@@ -452,7 +452,7 @@ add('test_vclockkeeper_caching', function(g)
     ]])
 
     -- Monkeypatch apply_config to count reconfiguration events
-    A1.net_box:eval('loadstring(...)()', {
+    B1.net_box:eval('loadstring(...)()', {
         string.dump(function()
             local myrole = require('mymodule-permanent')
 
@@ -465,17 +465,17 @@ add('test_vclockkeeper_caching', function(g)
         end)
     })
 
-    t.assert_equals(A1.net_box:eval('return config_incarnation'), 0)
+    t.assert_equals(B1.net_box:eval('return config_incarnation'), 0)
 
-    t.assert(g.session:set_leaders({{uB, uB2}}))
+    t.assert(g.session:set_leaders({{uA, 'someone-else'}}))
     helpers.retrying({}, function()
-        t.assert_equals(A1.net_box:eval(q_leadership, {uB}), uB2)
+        t.assert_equals(B1.net_box:eval(q_leadership, {uA}), 'someone-else')
     end)
 
-    t.assert_equals(A1.net_box:eval('return config_incarnation'), 1)
+    t.assert_equals(B1.net_box:eval('return config_incarnation'), 1)
 
     -- Revert all hacks in fixtures
-    A1.net_box:eval([[
+    B1.net_box:eval([[
         local vars = require('cartridge.vars').new('cartridge.failover')
         vars.client.session.get_vclockkeeper = _get_vclockkeeper_backup
     ]])
@@ -485,9 +485,9 @@ add('test_enabling', function(g)
     -- Scenario:
     -- 1. State provider goes down
     -- 2. Reenable failover
-    -- 3. A1 is stuck on fetching first appointments, but remains writable
+    -- 3. B1 is stuck on fetching first appointments, but remains writable
     -- 4. State provider returns
-    -- 5. A1 persists his vclock
+    -- 5. B1 persists his vclock
     -- 6. Enable failover-coordinator role, it shouldn't spoil vclock value
 
     A1.net_box:eval(q_set_wait_lsn_timeout, {0.2})
@@ -506,9 +506,9 @@ add('test_enabling', function(g)
     A1.net_box:eval(q_set_failover_params, {{mode = 'stateful'}})
 
     -- Constituting oneself fails, but it remains writable
-    t.assert_equals(A1.net_box:eval(q_leadership, {uA}), uA1)
-    t.assert_equals(A1.net_box:eval(q_readonliness), false)
-    t.assert_equals(A1.net_box:eval(q_is_vclockkeeper), false)
+    t.assert_equals(B1.net_box:eval(q_leadership, {uB}), uB1)
+    t.assert_equals(B1.net_box:eval(q_readonliness), false)
+    t.assert_equals(B1.net_box:eval(q_is_vclockkeeper), false)
     t.assert_items_include(
         helpers.list_cluster_issues(A1),
         {{
@@ -535,9 +535,9 @@ add('test_enabling', function(g)
         }, {
             level = "warning",
             topic = "switchover",
-            instance_uuid = uA1,
-            replicaset_uuid = uA,
-            message = "Consistency on " .. A1.advertise_uri .. " (A1)" ..
+            instance_uuid = uB1,
+            replicaset_uuid = uB,
+            message = "Consistency on " .. B1.advertise_uri .. " (B1)" ..
                 " isn't reached yet",
         }}
     )
@@ -551,17 +551,17 @@ add('test_enabling', function(g)
     end)
     g.session = g.client:get_session()
 
-    -- A1 becomes a legitimate vclockkeeper
+    -- B1 becomes a legitimate vclockkeeper
     t.assert_equals(g.session:get_leaders(), {})
     helpers.retrying({}, function()
-        t.assert_equals(A1.net_box:eval(q_is_vclockkeeper), true)
+        t.assert_equals(B1.net_box:eval(q_is_vclockkeeper), true)
     end)
 
     t.assert_equals(g.session:get_leaders(), {})
-    t.assert_equals(g.session:get_vclockkeeper(uA), {
-        replicaset_uuid = uA,
-        instance_uuid = uA1,
-        vclock = A1.net_box:eval('return box.info.vclock'),
+    t.assert_equals(g.session:get_vclockkeeper(uB), {
+        replicaset_uuid = uB,
+        instance_uuid = uB1,
+        vclock = B1.net_box:eval('return box.info.vclock'),
     })
 
 
@@ -571,20 +571,20 @@ add('test_enabling', function(g)
         {{replicasets = {{uuid = uA, roles = {'failover-coordinator'}}}}}
     )
 
-    -- Coordinator promotes A1, but shouldn't spoil vclock
+    -- Coordinator promotes B1, but shouldn't spoil vclock
     helpers.retrying({}, function()
-        t.assert_covers(g.session:get_leaders(), {[uA] = uA1})
+        t.assert_covers(g.session:get_leaders(), {[uB] = uB1})
     end)
-    t.assert_equals(g.session:get_vclockkeeper(uA), {
-        replicaset_uuid = uA,
-        instance_uuid = uA1,
-        vclock = A1.net_box:eval('return box.info.vclock'),
+    t.assert_equals(g.session:get_vclockkeeper(uB), {
+        replicaset_uuid = uB,
+        instance_uuid = uB1,
+        vclock = B1.net_box:eval('return box.info.vclock'),
     })
 
     -- Everything is fine now
-    t.assert_equals(A1.net_box:eval(q_leadership, {uA}), uA1)
-    t.assert_equals(A1.net_box:eval(q_readonliness), false)
-    t.assert_equals(A1.net_box:eval(q_is_vclockkeeper), true)
+    t.assert_equals(B1.net_box:eval(q_leadership, {uB}), uB1)
+    t.assert_equals(B1.net_box:eval(q_readonliness), false)
+    t.assert_equals(B1.net_box:eval(q_is_vclockkeeper), true)
     t.assert_equals(helpers.list_cluster_issues(A1), {})
 
     -- Revert all hacks in fixtures
@@ -744,8 +744,7 @@ add('test_all_rw', function(g)
     t.assert_equals(B2.net_box:eval(q_readonliness), false)
 
     -- Promote B1 (inconsistently)
-    -- wait_lsn is doomed to fail
-    -- but it will not be performed
+    -- wait_ro is doomed to fail, but it won't be executed
     t.assert(g.session:set_leaders({{uB, uB2}}))
     helpers.retrying({}, function()
         t.assert_equals(B2.net_box:eval(q_leadership, {uB}), uB2)
@@ -755,4 +754,17 @@ add('test_all_rw', function(g)
 
     -- Revert all hacks in fixtures
     set_all_rw(false)
+end)
+
+add('test_alone_instance', function(g)
+    -- Single-instance replicaset doesn't need consistency.
+
+    t.assert_equals(A1.net_box:eval(q_readonliness), false)
+    t.assert_equals(A1.net_box:eval(q_is_vclockkeeper), false)
+    t.assert_equals(A1.net_box:eval(q_leadership, {uA}), uA1)
+    t.assert_equals(g.session:get_vclockkeeper(uA), {
+        replicaset_uuid = uA,
+        instance_uuid = uA1,
+        vclock = nil,
+    })
 end)
