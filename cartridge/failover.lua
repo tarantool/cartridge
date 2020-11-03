@@ -297,10 +297,8 @@ local function fencing_watch()
         log.error('Leader is null already!')
     end
 
-    log.warn(
-        'Fencing triggered, reapply scheduled (fiber %d)',
-        schedule_add()
-    )
+    local id = schedule_add()
+    log.warn('Fencing triggered, reapply scheduled (fiber %d)', id)
 end
 
 local function fencing_start()

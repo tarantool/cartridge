@@ -182,6 +182,32 @@ even try to query `vclockkeeper` and to perform `wait_lsn`. But the coordinator
 still appoints a new leader if the current one dies.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Fencing
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Neither eventual nor stateful failover modes don't protect a replicaset
+from the presence of multiple leaders when the network is partitioned.
+But fencing does. It enforces at-most-one leader policy in a replicaset.
+
+Fencing operates as a fiber that occasionally checks connectivity with
+the state provider and with replicas. Fencing fiber runs on
+vclockkeepers; it starts right after consistent promotion succeeds.
+Replicasets which don't need consistency (single-instance and
+``all_rw``) don't defense, though.
+
+The condition for fencing actuation is the loss of both the state
+provider quorum and at least one replica. Otherwise, if either state
+provider is healthy or all replicas are alive, the fencing fiber waits
+and doesn't intervene.
+
+When fencing is actuated, it generates a fake appointment locally and
+sets the leader to ``nil``. Consequently, the instance becomes
+read-only. Subsequent recovery is only possible when the quorum
+reestablishes; replica connection isn't a must for recovery. Recovery is
+performed according to the rules of consistent switchover unless some
+other instance has already been promoted to a new leader.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Failover configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -191,6 +217,13 @@ These are clusterwide parameters:
 * ``state_provider``: "tarantool" / "etcd".
 * ``tarantool_params``: ``{uri = "...", password = "..."}``.
 * ``etcd2_params``: ``{endpoints = {...}, prefix = "/", lock_delay = 10, username = "", password = ""}``.
+* ``fencing_enabled``: ``true`` / ``false``;
+* ``fencing_pause`` -- the period of performing the check;
+* ``fencing_timout`` -- time to actuate fencing after the check fails;
+* ``failover_timeout`` -- time to declare unresponsive member as dead
+  (affects all failover modes).
+
+It's required that ``failover_timeout > fencing_timeout > fencing_pause``.
 
 *******************************************************************************
 Lua API
@@ -250,35 +283,3 @@ that influence failover operation:
 
 * ``IMMUNITY_TIMEOUT`` (``coordinator``) -- minimal amount of time (in seconds)
   to wait before overriding an appointment (default: 15).
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Fencing
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Fencing ensures that leader that lost connection with its own replicas and
-a state provider is in read-only mode.
-
-It is implemented as a separate fiber guard that periodically checks
-connections with a state provider and, if it is now available, with
-replicas.
-
-Fencing fiber guard is started by a leader of a replicaset at the end
-of the switchover in case of a stateful failover. However, if there are no
-replicas or replicaset is `all_rw = true` then fencing is not initiated.
-
-The first thing fencing guard checks is state provider's quorum.
-Only if it is lost replicas are checked. Then, if at least one replica
-is unavailable, fencing is triggered.
-
-If something went wrong (e.g. etcd cluster lost its quorum and replica's
-connection is down) fencing is triggered. It schedules a new failover
-task with `box.NULL` as a new leader. After this task is complete
-instance is not vclockkeeper anymore. And old leader becomes
-read-only. In order to reclaim leadership instance should perform a
-consistent switchover which requires available state provider.
-
-There are two parameters that can affect fencing:
-
-* ``FENCING_TIMEOUT`` -- the fencing timeout (in seconds) to wait recovery of connections;
-
-* ``FENCING_PAUSE`` -- the period (in seconds) of fencing fiber guard's work.
