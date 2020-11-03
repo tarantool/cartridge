@@ -241,6 +241,8 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
   });
 
   it('Show expel error and error details', () => {
+    cy.get('button.meta-test__LoginBtn').parent('div').parent('div').prev().click();
+    cy.get('button:contains(Clear)').click();
     cy.get('li').contains('dummy-1').closest('li')
       .find('.meta-test__ReplicasetServerListItem__dropdownBtn').click();
     cy.get('.meta-test__ReplicasetServerListItem__dropdown *').contains('Expel server').click();
@@ -248,7 +250,6 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     cy.get('span:contains(Current instance "localhost:13301" can not be expelled)');
     cy.get('button[type="button"]:contains(Error details)').click();
     checksForErrorDetails();
-
   });
 
   it('Error details in notification list', () => {
