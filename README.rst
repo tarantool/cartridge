@@ -134,7 +134,7 @@ The fastest way to build the project is to skip building the Web UI:
 
 But if you want to build the frontend too, you'll also need:
 
-* ``nodejs`` >= 8 (see these `instructions <https://github.com/nodesource/distributions>`_);
+* ``nodejs`` >= 12 (see these `instructions <https://github.com/nodesource/distributions>`_);
 * ``npm`` >= 6.
 
 Documentation is generated from source code, but only if the ``ldoc`` and ``sphinx``
