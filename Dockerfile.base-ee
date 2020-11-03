@@ -5,7 +5,7 @@ ARG DOWNLOAD_TOKEN
 
 RUN set -x &&\
     yum -y install https://repo.ius.io/ius-release-el7.rpm &&\
-    curl -sL https://rpm.nodesource.com/setup_8.x | bash - &&\
+    curl -sL https://rpm.nodesource.com/setup_12.x | bash - &&\
     yum -y install gcc git make cmake unzip python3 nodejs &&\
     # cypress deps
     yum -y install gtk3 xorg-x11-server-Xvfb libXScrnSaver GConf2 alsa-lib lsof

@@ -102,10 +102,10 @@ type FailoverModalProps = FailoverApi & {
 type FailoverModalState = {
   mode: string,
   state_provider?: string,
-  tarantool_params: {
+  tarantool_params: {|
     uri: string,
     password: string
-  },
+  |},
   etcd2_params: {
     lock_delay: ?string,
     username: ?string,
