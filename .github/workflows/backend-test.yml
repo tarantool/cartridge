@@ -1,0 +1,94 @@
+name: Backend Test
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  misc:
+    runs-on: ubuntu-latest
+    env:
+      CMAKE_DUMMY_WEBUI: true
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+      - uses: actions/setup-python@v2
+      - run: python -m pip install -r rst/requirements.txt
+
+      - name: Install tarantool
+        run: |
+          curl -L https://tarantool.io/installer.sh | sudo VER=1.10 bash
+
+      - name: Install ldoc
+        run: >
+          tarantoolctl rocks install --server=http://rocks.moonscript.org
+          https://raw.githubusercontent.com/tarantool/ldoc/tarantool/ldoc-scm-2.rockspec
+
+      - name: Build cartridge
+        env:
+          CMAKE_LDOC_FIND_REQUIRED: "YES"
+          CMAKE_SPHINX_FIND_REQUIRED: "YES"
+        run: |
+          tarantoolctl rocks make
+
+      - name: Lint
+        run: |
+          tarantoolctl rocks install luacheck
+          .rocks/bin/luacheck .
+
+      - name: Check schema
+        run: |
+          npm install graphql-cli@3.0.14
+          ./fetch-schema.sh
+
+  luatest:
+    strategy:
+      fail-fast: false
+      matrix:
+        runs-on: [ubuntu-latest]
+        tarantool: ['1.10']
+    runs-on: ${{ matrix.runs-on }}
+    env:
+      CMAKE_DUMMY_WEBUI: true
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install tarantool
+        run: |
+          curl -L https://tarantool.io/installer.sh | sudo VER=${{ matrix.tarantool }} bash
+          tarantoolctl rocks install luatest 0.5.0
+
+      - name: Install etcd
+        uses: ./.github/actions/setup-etcd
+        if: runner.os == 'Linux'
+        with:
+          etcd-version: v2.3.8
+          install-prefix: etcd-v2.3.8
+
+      - name: Cache build dir
+        uses: actions/cache@v2
+        with:
+          path: |
+            .rocks/
+            build.luarocks/
+          key: backend-build-${{ runner.os }}
+
+      - name: Build cartridge
+        run: |
+          tarantoolctl rocks make
+
+      - name: Run tests
+        env:
+          ETCD_PATH: etcd-v2.3.8/etcd
+          CARTRIDGE_OLDER_PATH: cartridge-1.2.0
+        run: |
+          mkdir -p $CARTRIDGE_OLDER_PATH
+          pushd $CARTRIDGE_OLDER_PATH
+          tarantoolctl rocks install cartridge 1.2.0-1
+          popd
+
+          .rocks/bin/luatest -v
+
+      - name: Cleanup cached paths
+        run: |
+          tarantoolctl rocks remove cartridge

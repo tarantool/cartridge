@@ -68,7 +68,7 @@ function g.test_upgrade()
 
     g.cluster = helpers.Cluster:new({
         datadir = g.tempdir,
-        server_command = helpers.entrypoint('srv_basic'),
+        server_command = fio.abspath(helpers.entrypoint('srv_basic')),
         cookie = require('digest').urandom(6):hex(),
         use_vshard = true,
         replicasets = {{
