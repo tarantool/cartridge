@@ -243,7 +243,9 @@ local function apply_config(mod)
     )
 end
 
+-- Check connectivity with the state provider and with replicas
 local function fencing_check()
+    -- If state provider is available then there is no need to trigger fencing
     if assert(vars.client):check_quorum() then
         return true
     end
@@ -253,6 +255,7 @@ local function fencing_check()
 
     local topology_cfg = confapplier.get_readonly('topology')
 
+    -- Otherwise connectivity with replicas is checked
     local leaders_order = topology.get_leaders_order(topology_cfg, replicaset_uuid)
     for _, instance_uuid in ipairs(leaders_order) do
         local server = assert(topology_cfg.servers[instance_uuid])
@@ -269,6 +272,10 @@ local function fencing_check()
             goto continue
         end
 
+        -- if connection with at least one replica is lost then fencing
+        -- should be triggered
+        log.warn('State provider is unavailable.')
+        log.warn('Connection with replica (%s) is lost', member.payload.uuid)
         do return false end
         ::continue::
     end
@@ -286,7 +293,7 @@ local function fencing_watch()
     repeat
         fiber.sleep(vars.options.FENCING_PAUSE)
 
-        if (fencing_check()) then
+        if fencing_check() then
             deadline = fiber.clock() + vars.options.FENCING_TIMEOUT
         end
     until fiber.clock() > deadline
@@ -294,21 +301,11 @@ local function fencing_watch()
     log.warn('Fencing triggered')
 
     if not accept_appointments({[box.info.cluster.uuid] = box.NULL}) then
-        log.error('Leader is null already!')
+        log.error('Leader is null already. Has fencing been triggered before?')
     end
 
     local id = schedule_add()
     log.warn('Fencing triggered, reapply scheduled (fiber %d)', id)
-end
-
-local function fencing_start()
-    assert(vars.fencing_fiber == nil)
-    if not vars.cache.is_leader or not vars.consistency_needed then
-        return
-    end
-
-    vars.fencing_fiber = fiber.new(fencing_watch)
-    vars.fencing_fiber:name('cartridge.fencing')
 end
 
 local function fencing_cancel()
@@ -319,6 +316,13 @@ local function fencing_cancel()
         vars.fencing_fiber:cancel()
     end
     vars.fencing_fiber = nil
+end
+
+local function fencing_start()
+    fencing_cancel()
+
+    vars.fencing_fiber = fiber.new(fencing_watch)
+    vars.fencing_fiber:name('cartridge.fencing')
 end
 
 local function constitute_oneself(active_leaders, opts)
@@ -476,8 +480,9 @@ function reconfigure_all(active_leaders)
     fiber.self().storage.is_busy = true
     confapplier.set_state('ConfiguringRoles')
 
-    fencing_cancel()
-    fencing_start()
+    if vars.cache.is_leader and vars.consistency_needed then
+        fencing_start()
+    end
 
     local ok, err = FailoverError:pcall(function()
         box.cfg({
@@ -685,7 +690,10 @@ local function cfg(clusterwide_config)
         end
     end
 
-    fencing_start()
+    if vars.cache.is_leader and vars.consistency_needed then
+        fencing_start()
+    end
+
     box.cfg({
         read_only = not vars.cache.is_rw,
     })

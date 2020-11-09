@@ -197,11 +197,12 @@ add('test_basics', function(g)
 
     -- State provider is unavailable
     g.state_provider:stop()
-    require('fiber').sleep(0.5)
 
-    t.assert_equals(B1.net_box:eval(q_is_vclockkeeper), true)
-    t.assert_equals(B1.net_box:eval(q_readonliness), false)
-    t.assert_equals(B1.net_box:eval(q_leadership, {uB}), uB1)
+    helpers.retrying({}, function()
+        t.assert_equals(B1.net_box:eval(q_is_vclockkeeper), true)
+        t.assert_equals(B1.net_box:eval(q_readonliness), false)
+        t.assert_equals(B1.net_box:eval(q_leadership, {uB}), uB1)
+    end)
 
     t.assert_equals(A1.net_box:eval(q_is_vclockkeeper), false)
     t.assert_equals(A1.net_box:eval(q_readonliness), false)
