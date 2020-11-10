@@ -73,16 +73,20 @@ describe('Demo panel', () => {
     cy.get('.meta-test__DemoInfo_modal button:contains(Close)').click();
 
     cy.get('a[href="/admin/cluster/users"]').click();
-    cy.get('.meta-test__DemoInfo').should('be.visible');
+    cy.get('h1:contains(Users)');
+    cy.get('.meta-test__DemoInfo').should('exist');
 
     cy.get('a[href="/admin/cluster/schema"]').click();
-    cy.get('.meta-test__DemoInfo').should('be.visible');
+    cy.get('h1:contains(Schema)');
+    cy.get('.meta-test__DemoInfo').should('exist');
 
     cy.get('a[href="/admin/cluster/configuration"]').click();
-    cy.get('.meta-test__DemoInfo').should('be.visible');
+    cy.get('h1:contains(Configuration)');
+    cy.get('.meta-test__DemoInfo').should('exist');
 
     cy.get('a[href="/admin/cluster/code"]').click();
-    cy.get('.meta-test__DemoInfo').should('be.visible');
+    cy.get('h1:contains(Code)');
+    cy.get('.meta-test__DemoInfo').should('exist');
 
     cy.get('.meta-test__DemoInfo button[type="button"]:contains(Reset configuration)').click();
     cy.get('div:contains(Do you really want to reset your settings?)').find('button:contains(Reset)').click();
