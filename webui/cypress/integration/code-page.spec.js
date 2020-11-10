@@ -82,7 +82,9 @@ describe('Code page', () => {
 
     //check for page change
     cy.get('a[href="/admin/cluster/dashboard"]').click();
+    cy.get('h1:contains(Cluster)');
     cy.get('a[href="/admin/cluster/code"]').click();
+    cy.get('h1:contains(Code)');
     cy.get('.monaco-editor textarea').should('have.value', 'some test code');
 
     reload();
