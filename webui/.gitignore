@@ -22,3 +22,4 @@ yarn-debug.log*
 yarn-error.log*
 /cypress/*
 !/cypress/integration
+!/cypress/support
