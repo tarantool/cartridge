@@ -1,11 +1,21 @@
 local log = require('log')
-local vshard = require('vshard')
 local checks = require('checks')
+local vshard = require('vshard')
 
 local vars = require('cartridge.vars').new('cartridge.roles.vshard-storage')
 local pool = require('cartridge.pool')
 local utils = require('cartridge.utils')
+local hotreload = require('cartridge.hotreload')
 local vshard_utils = require('cartridge.vshard-utils')
+
+hotreload.whitelist_globals({
+    "__module_vshard_lua_gc",
+    "__module_vshard_router",
+    "__module_vshard_storage",
+    "__module_vshard_util",
+    "future_storage_call_result",
+    "gc_bucket_f",
+})
 
 vars:new('vshard_cfg')
 local _G_vshard_backup
@@ -26,8 +36,11 @@ local function apply_config(conf, _)
     end
 
     log.info('Reconfiguring vshard.storage...')
+    local snap1 = hotreload.snap_fibers()
     vshard.storage.cfg(vshard_cfg, box.info.uuid)
     vars.vshard_cfg = vshard_cfg
+    local snap2 = hotreload.snap_fibers()
+    hotreload.whitelist_fibers(hotreload.diff(snap1, snap2))
 end
 
 local function init()

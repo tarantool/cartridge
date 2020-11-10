@@ -19,6 +19,7 @@ local utils = require('cartridge.utils')
 local roles = require('cartridge.roles')
 local topology = require('cartridge.topology')
 local failover = require('cartridge.failover')
+local hotreload = require('cartridge.hotreload')
 local ddl_manager = require('cartridge.ddl-manager')
 local remote_control = require('cartridge.remote-control')
 local cluster_cookie = require('cartridge.cluster-cookie')
@@ -92,12 +93,14 @@ local state_transitions = {
 
 -- normal operation
     ['ConfiguringRoles'] = {'RolesConfigured', 'OperationError'},
-    ['RolesConfigured'] = {'ConfiguringRoles'},
+    ['RolesConfigured'] = {'ConfiguringRoles', 'ReloadingRoles'},
+    ['ReloadingRoles'] = {'BoxConfigured', 'ReloadError'},
 
 -- errors
     ['InitError'] = {},
     ['BootError'] = {},
-    ['OperationError'] = {'ConfiguringRoles'}
+    ['OperationError'] = {'ConfiguringRoles', 'ReloadingRoles'},
+    ['ReloadError'] = {'ReloadingRoles'},
     -- Disabled
     -- Expelled
 }
@@ -118,6 +121,7 @@ local function set_state(new_state, err)
 
     if new_state == 'InitError'
     or new_state == 'BootError'
+    or new_state == 'ReloadError'
     or new_state == 'OperationError'
     then
         if err == nil then
@@ -430,7 +434,10 @@ local function boot_instance(clusterwide_config)
     -- This operation may be long
     -- It recovers snapshot
     -- Or bootstraps replication
+    local snap1 = hotreload.snap_fibers()
     box.cfg(box_opts)
+    local snap2 = hotreload.snap_fibers()
+    hotreload.whitelist_fibers(hotreload.diff(snap1, snap2))
 
     local username = cluster_cookie.username()
     local password = cluster_cookie.cookie()

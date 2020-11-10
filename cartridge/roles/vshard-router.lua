@@ -7,8 +7,18 @@ local vars = require('cartridge.vars').new('cartridge.roles.vshard-router')
 local pool = require('cartridge.pool')
 local utils = require('cartridge.utils')
 local twophase = require('cartridge.twophase')
+local hotreload = require('cartridge.hotreload')
 local confapplier = require('cartridge.confapplier')
 local vshard_utils = require('cartridge.vshard-utils')
+
+hotreload.whitelist_globals({
+    "__module_vshard_lua_gc",
+    "__module_vshard_router",
+    "__module_vshard_storage",
+    "__module_vshard_util",
+    "future_storage_call_result",
+    "gc_bucket_f",
+})
 
 local e_bootstrap_vshard = errors.new_class('Bootstrapping vshard failed')
 local e_create_router = errors.new_class('Error creating vshard-router')
@@ -62,6 +72,7 @@ local function apply_config(conf)
             log.info('Reconfiguring %s ...', router_name)
 
             local router = vars.routers[router_name]
+            local snap1 = hotreload.snap_fibers()
 
             if router ~= nil then
                 router:cfg(vshard_cfg)
@@ -78,6 +89,9 @@ local function apply_config(conf)
                     )
                 end
             end
+
+            local snap2 = hotreload.snap_fibers()
+            hotreload.whitelist_fibers(hotreload.diff(snap1, snap2))
 
             vars.routers[router_name] = router
             vars.vshard_cfg[router_name] = vshard_cfg

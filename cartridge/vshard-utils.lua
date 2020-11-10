@@ -372,7 +372,9 @@ local function get_known_groups()
 
     for _, g in pairs(vshard_groups) do
         if g.rebalancer_max_receiving == nil then
-            g.rebalancer_max_receiving = vshard_consts.DEFAULT_REBALANCER_MAX_RECEIVING
+            g.rebalancer_max_receiving = assert(
+                vshard_consts.DEFAULT_REBALANCER_MAX_RECEIVING
+            )
         end
 
         if g.collect_lua_garbage == nil then
@@ -380,15 +382,19 @@ local function get_known_groups()
         end
 
         if g.sync_timeout == nil then
-            g.sync_timeout = vshard_consts.DEFAULT_SYNC_TIMEOUT
+            g.sync_timeout = assert(vshard_consts.DEFAULT_SYNC_TIMEOUT)
         end
 
         if g.collect_bucket_garbage_interval == nil then
-            g.collect_bucket_garbage_interval = vshard_consts.DEFAULT_COLLECT_BUCKET_GARBAGE_INTERVAL
+            g.collect_bucket_garbage_interval = assert(
+                vshard_consts.DEFAULT_COLLECT_BUCKET_GARBAGE_INTERVAL
+            )
         end
 
         if g.rebalancer_disbalance_threshold == nil then
-            g.rebalancer_disbalance_threshold = vshard_consts.DEFAULT_REBALANCER_DISBALANCE_THRESHOLD
+            g.rebalancer_disbalance_threshold = assert(
+                vshard_consts.DEFAULT_REBALANCER_DISBALANCE_THRESHOLD
+            )
         end
     end
 

@@ -31,6 +31,7 @@ local issues = require('cartridge.issues')
 local argparse = require('cartridge.argparse')
 local topology = require('cartridge.topology')
 local twophase = require('cartridge.twophase')
+local hotreload = require('cartridge.hotreload')
 local confapplier = require('cartridge.confapplier')
 local vshard_utils = require('cartridge.vshard-utils')
 local cluster_cookie = require('cartridge.cluster-cookie')
@@ -464,6 +465,7 @@ local function cfg(opts, box_opts)
         require("membership.options")[opt_name] = opt_value
     end
 
+    local snap1 = hotreload.snap_fibers()
     local ok, err = CartridgeCfgError:pcall(membership.init,
         advertise.host, advertise.service
     )
@@ -472,6 +474,8 @@ local function cfg(opts, box_opts)
     end
     local advertise_uri = membership.myself().uri
     log.info('Using advertise_uri %q', advertise_uri)
+    local snap2 = hotreload.snap_fibers()
+    hotreload.whitelist_fibers(hotreload.diff(snap1, snap2))
 
     if opts.alias == nil then
         opts.alias = args.instance_name
@@ -520,7 +524,10 @@ local function cfg(opts, box_opts)
 
     -- Gracefully leave membership in case of stop if box.ctl.on_shutdown supported
     if box.ctl.on_shutdown ~= nil then
+        local snap1 = hotreload.snap_fibers()
         box.ctl.on_shutdown(function() pcall(membership.leave) end)
+        local snap2 = hotreload.snap_fibers()
+        hotreload.whitelist_fibers(hotreload.diff(snap1, snap2))
     end
 
     if opts.auth_backend_name == nil then
@@ -567,10 +574,13 @@ local function cfg(opts, box_opts)
             { log_requests = false }
         )
 
+        local snap1 = hotreload.snap_fibers()
         local ok, err = HttpInitError:pcall(httpd.start, httpd)
         if not ok then
             return nil, err
         end
+        local snap2 = hotreload.snap_fibers()
+        hotreload.whitelist_fibers(hotreload.diff(snap1, snap2))
 
         local ok, err = HttpInitError:pcall(webui.init, httpd)
         if not ok then
@@ -589,18 +599,7 @@ local function cfg(opts, box_opts)
         service_registry.set('httpd', httpd)
     end
 
-    local ok, err = roles.cfg(opts.roles)
-    if not ok then
-        return nil, err
-    end
-
-    -- metrics.init()
-    -- admin.init()
-
-    -- startup_tune.init()
-    -- errors.monkeypatch_netbox_call()
-    -- netbox_fiber_storage.monkeypatch_netbox_call()
-
+    -- Set up vshard groups
     if next(vshard_groups) == nil then
         vshard_groups = nil
     else
@@ -613,6 +612,7 @@ local function cfg(opts, box_opts)
 
     vshard_utils.set_known_groups(vshard_groups, opts.bucket_count)
 
+    -- Set up issues
     local issue_limits, err = argparse.get_opts({
         fragmentation_threshold_critical = 'number',
         fragmentation_threshold_warning  = 'number',
@@ -625,17 +625,7 @@ local function cfg(opts, box_opts)
 
     issues.set_limits(issue_limits)
 
-    local ok, err = confapplier.init({
-        workdir = opts.workdir,
-        box_opts = box_opts,
-        binary_port = advertise.service,
-        advertise_uri = advertise_uri,
-        upgrade_schema = opts.upgrade_schema,
-    })
-    if not ok then
-        return nil, err
-    end
-
+    -- Start console sock
     if opts.console_sock ~= nil then
         local console = require('console')
         local sock_name = 'unix/:' .. opts.console_sock
@@ -682,6 +672,24 @@ local function cfg(opts, box_opts)
         end
     end
 
+    -- Do last few steps
+    hotreload.save_state()
+    local ok, err = roles.cfg(opts.roles)
+    if not ok then
+        return nil, err
+    end
+
+    local ok, err = confapplier.init({
+        workdir = opts.workdir,
+        box_opts = box_opts,
+        binary_port = advertise.service,
+        advertise_uri = advertise_uri,
+        upgrade_schema = opts.upgrade_schema,
+    })
+    if not ok then
+        return nil, err
+    end
+
     -- Only log boot info if box.cfg wasn't called yet
     -- Otherwise it's logged by confapplier.boot_instance
     if type(box.cfg) == 'function' then
@@ -698,6 +706,7 @@ return {
     VERSION = VERSION,
 
     cfg = cfg,
+    reload_roles = roles.reload,
 
     --- .
     -- @refer cartridge.topology.cluster_is_healthy
