@@ -587,18 +587,7 @@ local function cfg(opts, box_opts)
         service_registry.set('httpd', httpd)
     end
 
-    local ok, err = roles.cfg(opts.roles)
-    if not ok then
-        return nil, err
-    end
-
-    -- metrics.init()
-    -- admin.init()
-
-    -- startup_tune.init()
-    -- errors.monkeypatch_netbox_call()
-    -- netbox_fiber_storage.monkeypatch_netbox_call()
-
+    -- Set up vshard groups
     if next(vshard_groups) == nil then
         vshard_groups = nil
     else
@@ -611,6 +600,7 @@ local function cfg(opts, box_opts)
 
     vshard_utils.set_known_groups(vshard_groups, opts.bucket_count)
 
+    -- Set up issues
     local issue_limits, err = argparse.get_opts({
         fragmentation_threshold_critical = 'number',
         fragmentation_threshold_warning  = 'number',
@@ -623,17 +613,7 @@ local function cfg(opts, box_opts)
 
     issues.set_limits(issue_limits)
 
-    local ok, err = confapplier.init({
-        workdir = opts.workdir,
-        box_opts = box_opts,
-        binary_port = advertise.service,
-        advertise_uri = advertise_uri,
-        upgrade_schema = opts.upgrade_schema,
-    })
-    if not ok then
-        return nil, err
-    end
-
+    -- Start console sock
     if opts.console_sock ~= nil then
         local console = require('console')
         local sock, err = CartridgeCfgError:pcall(console.listen, 'unix/:' .. opts.console_sock)
@@ -663,6 +643,23 @@ local function cfg(opts, box_opts)
             local sock = assert(socket('AF_UNIX', 'SOCK_DGRAM', 0), 'Can not create socket')
             sock:sendto('unix/', notify_socket, 'READY=1')
         end
+    end
+
+    -- Do last few steps
+    local ok, err = roles.cfg(opts.roles)
+    if not ok then
+        return nil, err
+    end
+
+    local ok, err = confapplier.init({
+        workdir = opts.workdir,
+        box_opts = box_opts,
+        binary_port = advertise.service,
+        advertise_uri = advertise_uri,
+        upgrade_schema = opts.upgrade_schema,
+    })
+    if not ok then
+        return nil, err
     end
 
     -- Only log boot info if box.cfg wasn't called yet

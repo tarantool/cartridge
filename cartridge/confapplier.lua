@@ -92,12 +92,14 @@ local state_transitions = {
 
 -- normal operation
     ['ConfiguringRoles'] = {'RolesConfigured', 'OperationError'},
-    ['RolesConfigured'] = {'ConfiguringRoles'},
+    ['RolesConfigured'] = {'ConfiguringRoles', 'ReloadingRoles'},
+    ['ReloadingRoles'] = {'BoxConfigured', 'ReloadError'},
 
 -- errors
     ['InitError'] = {},
     ['BootError'] = {},
-    ['OperationError'] = {'ConfiguringRoles'}
+    ['OperationError'] = {'ConfiguringRoles'},
+    ['ReloadError'] = {'ReloadingRoles'},
     -- Disabled
     -- Expelled
 }

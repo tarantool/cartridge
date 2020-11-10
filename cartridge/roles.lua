@@ -17,11 +17,13 @@ local errors = require('errors')
 
 local vars = require('cartridge.vars').new('cartridge.roles')
 local utils = require('cartridge.utils')
+local hotreload = require('cartridge.hotreload')
 local service_registry = require('cartridge.service-registry')
 
 local RegisterRoleError = errors.new_class('RegisterRoleError')
 local ValidateConfigError = errors.new_class('ValidateConfigError')
 local ApplyConfigError = errors.new_class('ApplyConfigError')
+local ReloadError = errors.new_class('HotReloadError')
 
 vars:new('by_number', {})
 vars:new('by_package', {})
@@ -122,6 +124,9 @@ local function cfg(roles)
         by_package = {},
         by_role_name = {},
     }
+
+    hotreload.save_state()
+    vars.roles = table.copy(roles)
 
     local ok, err = register_role(ctx, 'cartridge.roles.coordinator')
     if not ok then
@@ -373,6 +378,50 @@ local function apply_config(conf, opts)
     return true
 end
 
+local function reload()
+    local confapplier = require('cartridge.confapplier')
+    local state = confapplier.get_state()
+    if state ~= 'RolesConfigured' and state ~= 'ReloadError' then
+        return nil, ReloadError:new('Inappropriate state %q', state)
+    end
+
+    local failover = require('cartridge.failover')
+    local opts = {is_master = failover.is_leader()}
+
+    confapplier.set_state('ReloadingRoles')
+
+    for _, role in ipairs(vars.by_number) do
+        if (service_registry.get(role.role_name) ~= nil)
+        and (type(role.M.stop) == 'function')
+        then
+            local _, err = ReloadError:pcall(role.M.stop, opts)
+            if err ~= nil then
+                log.error('%s', err)
+            end
+        end
+
+        service_registry.set(role.role_name, nil)
+    end
+
+    hotreload.load_state()
+
+    local ok, err = cfg(vars.roles)
+    if ok == nil then
+        confapplier.set_state('ReloadError', err)
+        return nil, err
+    end
+
+    local clusterwide_config = confapplier.get_active_config()
+    local ok, err = confapplier.validate_config(clusterwide_config)
+    if ok == nil then
+        confapplier.set_state('ReloadError', err)
+        return nil, err
+    end
+
+    confapplier.set_state('BoxConfigured', err)
+
+    return confapplier.apply_config(clusterwide_config)
+end
 
 return {
     cfg = cfg,
@@ -384,4 +433,5 @@ return {
 
     validate_config = validate_config,
     apply_config = apply_config,
+    reload = reload,
 }
