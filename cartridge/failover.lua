@@ -243,9 +243,17 @@ local function apply_config(mod)
     )
 end
 
--- Check connectivity with the state provider and with replicas
-local function fencing_check()
-    -- If state provider is available then there is no need to trigger fencing
+--- Perform the fencing healthcheck.
+--
+-- Fencing is actuated when the instance disconnects from both
+-- the state provider and a replica, i.e. the check returns false.
+--
+-- @function fencing_check
+-- @local
+-- @treturn boolean true / false
+local function fencing_healthcheck()
+    -- If state provider is available then
+    -- there is no need to actuate fencing yet
     if assert(vars.client):check_quorum() then
         return true
     end
@@ -255,7 +263,7 @@ local function fencing_check()
 
     local topology_cfg = confapplier.get_readonly('topology')
 
-    -- Otherwise connectivity with replicas is checked
+    -- Otherwise check connectivity with replicas
     local leaders_order = topology.get_leaders_order(topology_cfg, replicaset_uuid)
     for _, instance_uuid in ipairs(leaders_order) do
         local server = assert(topology_cfg.servers[instance_uuid])
@@ -272,11 +280,12 @@ local function fencing_check()
             goto continue
         end
 
-        -- if connection with at least one replica is lost then fencing
-        -- should be triggered
-        log.warn('State provider is unavailable.')
-        log.warn('Connection with replica (%s) is lost', member.payload.uuid)
+        log.warn(
+            'State provider lacks the quorum' ..
+            ' and replica (%s) is unavailable', server.uri
+        )
         do return false end
+
         ::continue::
     end
 
@@ -285,7 +294,7 @@ end
 
 local function fencing_watch()
     log.info(
-        'Fencing activated (step %s, timeout %s)',
+        'Fencing enabled (step %s, timeout %s)',
         vars.options.FENCING_PAUSE, vars.options.FENCING_TIMEOUT
     )
 
@@ -293,19 +302,19 @@ local function fencing_watch()
     repeat
         fiber.sleep(vars.options.FENCING_PAUSE)
 
-        if fencing_check() then
+        if fencing_healthcheck() then
+            -- postpone the fencing actuation
             deadline = fiber.clock() + vars.options.FENCING_TIMEOUT
         end
     until fiber.clock() > deadline
 
-    log.warn('Fencing triggered')
-
     if not accept_appointments({[box.info.cluster.uuid] = box.NULL}) then
-        log.error('Leader is null already. Has fencing been triggered before?')
+        log.error('Assertion failed. Was fencing actuated twice?')
+        return
     end
 
     local id = schedule_add()
-    log.warn('Fencing triggered, reapply scheduled (fiber %d)', id)
+    log.warn('Fencing actuated, reapply scheduled (fiber %d)', id)
 end
 
 local function fencing_cancel()
