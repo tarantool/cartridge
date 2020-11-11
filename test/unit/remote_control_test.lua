@@ -530,7 +530,6 @@ function g.test_call()
         )
         t.assert_not(ok)
         t.assert_equals(type(err), 'cdata')
-        t.assert_equals(err.code, box.error.PROC_LUA)
         t.assert_equals(err.message, 'ScriptError')
 
         local ok, err = pcall(conn.call, conn, 'eval', {[1] = [[
@@ -541,7 +540,6 @@ function g.test_call()
         ]]})
         t.assert_not(ok)
         t.assert_equals(type(err), 'cdata')
-        t.assert_equals(err.code, box.error.PROC_LUA)
         t.assert_equals(err.message, 'TableError')
 
         local ok, err = pcall(conn.call, conn, 'eval',
@@ -559,7 +557,6 @@ function g.test_call()
         )
         t.assert_not(ok)
         t.assert_equals(type(err), 'cdata')
-        t.assert_equals(err.code, box.error.SYSTEM)
         t.assert_equals(err.message, 'timed out')
 
         t.assert_not(conn.error)
@@ -606,7 +603,6 @@ function g.test_eval()
         )
         t.assert_not(ok)
         t.assert_equals(type(err), 'cdata')
-        t.assert_equals(err.code, box.error.PROC_LUA)
         t.assert_equals(err.message, 'ScriptError')
 
         local ok, err = pcall(conn.eval, conn, [[
@@ -617,7 +613,6 @@ function g.test_eval()
         ]])
         t.assert_not(ok)
         t.assert_equals(type(err), 'cdata')
-        t.assert_equals(err.code, box.error.PROC_LUA)
         t.assert_equals(err.message, 'TableError')
 
         local ok, err = pcall(conn.eval, conn,
@@ -633,7 +628,6 @@ function g.test_eval()
         )
         t.assert_not(ok)
         t.assert_equals(type(err), 'cdata')
-        t.assert_equals(err.code, box.error.SYSTEM)
         t.assert_equals(err.message, 'timed out')
 
         t.assert_not(conn.error)
