@@ -22,8 +22,9 @@ Added
   instances discovery on start.
 - Add support of replica weights and zones via a clusterwide config new section
  `zone_distances` and a server parameter `zone`.
-- Fencing for stateful failover to prevent corrupted leader from writing
-  in case of missing connection with its replicas and state provider.
+- Implement a fencing feature. It protects a replicaset from the presence of
+  multiple leaders when the network is partitioned and forces the leader to
+  become read-only.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
