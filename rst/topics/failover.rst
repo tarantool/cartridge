@@ -182,6 +182,32 @@ even try to query `vclockkeeper` and to perform `wait_lsn`. But the coordinator
 still appoints a new leader if the current one dies.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Fencing
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Neither eventual nor stateful failover modes don't protect a replicaset
+from the presence of multiple leaders when the network is partitioned.
+But fencing does. It enforces at-most-one leader policy in a replicaset.
+
+Fencing operates as a fiber that occasionally checks connectivity with
+the state provider and with replicas. Fencing fiber runs on
+vclockkeepers; it starts right after consistent promotion succeeds.
+Replicasets which don't need consistency (single-instance and
+``all_rw``) don't defense, though.
+
+The condition for fencing actuation is the loss of both the state
+provider quorum and at least one replica. Otherwise, if either state
+provider is healthy or all replicas are alive, the fencing fiber waits
+and doesn't intervene.
+
+When fencing is actuated, it generates a fake appointment locally and
+sets the leader to ``nil``. Consequently, the instance becomes
+read-only. Subsequent recovery is only possible when the quorum
+reestablishes; replica connection isn't a must for recovery. Recovery is
+performed according to the rules of consistent switchover unless some
+other instance has already been promoted to a new leader.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Failover configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -191,6 +217,10 @@ These are clusterwide parameters:
 * ``state_provider``: "tarantool" / "etcd".
 * ``tarantool_params``: ``{uri = "...", password = "..."}``.
 * ``etcd2_params``: ``{endpoints = {...}, prefix = "/", lock_delay = 10, username = "", password = ""}``.
+* ``fencing_pause`` -- the period of performing the check;
+* ``fencing_timout`` -- time to actuate fencing after the check fails;
+
+It's required that ``fencing_timeout > fencing_pause``.
 
 *******************************************************************************
 Lua API

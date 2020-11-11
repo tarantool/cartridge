@@ -22,6 +22,8 @@ Added
   instances discovery on start.
 - Add support of replica weights and zones via a clusterwide config new section
  `zone_distances` and a server parameter `zone`.
+- Fencing for stateful failover to prevent corrupted leader from writing
+  in case of missing connection with its replicas and state provider.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed

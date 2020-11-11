@@ -376,7 +376,7 @@ end
 --
 -- @function check_quorum
 -- @treturn[1] boolean true
--- @treturn[2] nil
+-- @treturn[2] false
 -- @treturn[2] table Error description
 local function check_quorum(client)
     local session = client:get_session()
