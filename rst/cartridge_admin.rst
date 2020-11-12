@@ -916,6 +916,21 @@ Potential issues
   error message to detect this replica set. Then fix the issue in the same way
   as for :ref:`UNREACHABLE_REPLICA <unreachable_replica>`.
 
+.. _cartridge-upgrading_schema:
+
+-------------------------------------------------------------------------------
+Upgrading schema
+-------------------------------------------------------------------------------
+
+When upgrading Tarantool to a newer version, please don't forget to:
+
+1. Stop the cluster
+2. Make sure that ``upgrade_schema`` :ref:`option <cartridge.cfg>` is enabled
+3. Start the cluster again
+
+This will automatically apply ``box.schema.upgrade()`` on the leader, according
+to the failover priority in the topology configuration.
+
 .. _cartridge-recovery:
 
 -------------------------------------------------------------------------------
