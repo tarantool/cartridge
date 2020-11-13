@@ -3,6 +3,7 @@ local vshard = require('vshard')
 local checks = require('checks')
 
 local vars = require('cartridge.vars').new('cartridge.roles.vshard-storage')
+local pool = require('cartridge.pool')
 local utils = require('cartridge.utils')
 local vshard_utils = require('cartridge.vshard-utils')
 
@@ -33,6 +34,26 @@ local function init()
 end
 
 local function stop()
+    local confapplier = require('cartridge.confapplier')
+    local advertise_uri = confapplier.get_advertise_uri()
+    local instance_uuid = confapplier.get_instance_uuid()
+    local replicaset_uuid = confapplier.get_replicaset_uuid()
+
+    -- Vshard storage doesnt't have a `stop` function yet,
+    -- but we can defuse it by setting fake empty config.
+    -- See https://github.com/tarantool/vshard/issues/121
+    vshard.storage.cfg({
+        listen = box.cfg.listen,
+        read_only = box.cfg.read_only,
+        sharding = {[replicaset_uuid] = {
+            replicas = {[instance_uuid] = {
+                uri = pool.format_uri(advertise_uri),
+                name = advertise_uri,
+                master = false,
+            }},
+        }}
+    }, instance_uuid)
+    vars.vshard_cfg = nil
     rawset(_G, 'vshard', nil)
 end
 

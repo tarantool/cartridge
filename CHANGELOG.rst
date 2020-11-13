@@ -35,6 +35,7 @@ Fixed
   operable in this case.
 - Allow applying config when instance is in ``OperationError``. It doesn't cause
   loss of quorum anymore.
+- Stop vshard fibers when the corresponding role is disabled.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Enhanced is WebUI

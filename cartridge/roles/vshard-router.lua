@@ -81,7 +81,38 @@ local function apply_config(conf)
 
             vars.routers[router_name] = router
             vars.vshard_cfg[router_name] = vshard_cfg
+            router:discovery_set('on')
         end
+    end
+end
+
+local function stop()
+    local confapplier = require('cartridge.confapplier')
+    local advertise_uri = confapplier.get_advertise_uri()
+    local instance_uuid = confapplier.get_instance_uuid()
+    local replicaset_uuid = confapplier.get_replicaset_uuid()
+
+    for router_name, router in pairs(vars.routers) do
+        router:cfg({
+            sharding = {[replicaset_uuid] = {
+                replicas = {[instance_uuid] = {
+                    uri = pool.format_uri(advertise_uri),
+                    name = advertise_uri,
+                    master = false,
+                }},
+            }}
+        }, instance_uuid)
+
+        vars.vshard_cfg[router_name] = nil
+
+        if router.failover_fiber ~= nil
+        and router.failover_fiber:status() == 'suspended'
+        then
+            router.failover_fiber:cancel()
+            router.failover_fiber = nil
+        end
+
+        router:discovery_set('off')
     end
 end
 
@@ -199,6 +230,7 @@ return {
     role_name = 'vshard-router',
     validate_config = vshard_utils.validate_config,
     apply_config = apply_config,
+    stop = stop,
 
     get = get,
     bootstrap = bootstrap,
