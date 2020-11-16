@@ -64,6 +64,9 @@ local gql_type_userapi = gql_types.object({
         failover_timeout = gql_types.float,
         tarantool_params = gql_type_tarantool_cfg,
         etcd2_params = gql_type_etcd2_cfg,
+        fencing_enabled = gql_types.boolean,
+        fencing_pause = gql_types.float,
+        fencing_timeout = gql_types.float,
     }
 })
 
@@ -142,6 +145,9 @@ local function init(graphql)
             failover_timeout = gql_types.float,
             tarantool_params = gql_type_tarantool_cfg_input,
             etcd2_params = gql_type_etcd2_cfg_input,
+            fencing_enabled = gql_types.boolean,
+            fencing_pause = gql_types.float,
+            fencing_timeout = gql_types.float,
         },
         kind = gql_type_userapi.nonNull,
         callback = module_name .. '.set_failover_params',
