@@ -223,13 +223,14 @@ These are clusterwide parameters:
 * ``mode``: "disabled" / "eventual" / "stateful".
 * ``state_provider``: "tarantool" / "etcd".
 * ``failover_timeout`` -- time (in seconds) to mark ``suspect`` members
-  as ``dead`` and trigger failover.
+  as ``dead`` and trigger failover (default: 20).
 * ``tarantool_params``: ``{uri = "...", password = "..."}``.
 * ``etcd2_params``: ``{endpoints = {...}, prefix = "/", lock_delay = 10, username = "", password = ""}``.
-* ``fencing_pause`` -- the period of performing the check;
-* ``fencing_timout`` -- time to actuate fencing after the check fails;
+* ``fencing_enabled``: true / false (default: false).
+* ``fencing_pause`` -- the period of performing the check (default: 2).
+* ``fencing_timeout`` -- time to actuate fencing after the check fails (default: 10).
 
-It's required that ``fencing_timeout > fencing_pause``.
+It's required that ``failover_timeout > fencing_timeout > fencing_pause``.
 
 *******************************************************************************
 Lua API

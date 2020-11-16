@@ -31,7 +31,7 @@ local function get_params()
     -- @tfield number failover_timeout
     --   (added in v2.3.0-52)
     --   Timeout (in seconds), used by membership to
-    --   mark `suspect` members as `dead` (default: 3)
+    --   mark `suspect` members as `dead` (default: 20)
     -- @tfield ?table tarantool_params
     --   (added in v2.0.2-2)
     -- @tfield string tarantool_params.uri
@@ -48,6 +48,16 @@ local function get_params()
     --   (default: `{'http://localhost:2379', 'http://localhost:4001'}`)
     -- @tfield ?string etcd2_params.username (default: "")
     -- @tfield ?string etcd2_params.password (default: "")
+    -- @tfield boolean fencing_enabled (default: false)
+    --   (added in v2.3.0-57)
+    -- @tfield number fencing_pause
+    --   (added in v2.3.0-57)
+    --   The period (in seconds) of performing the check
+    --   (default: "2")
+    -- @tfield number fencing_timeout
+    --   (added in v2.3.0-57)
+    --   Time (in seconds) to actuate fencing after the check fails
+    --   (default: "10")
     return topology.get_failover_params(
         confapplier.get_readonly('topology')
     )
@@ -60,11 +70,17 @@ end
 -- @tparam table opts
 -- @tparam ?string opts.mode
 -- @tparam ?string opts.state_provider
--- @tparam ?string opts.failover_timeout
+-- @tparam ?number opts.failover_timeout
 --   (added in v2.3.0-52)
 -- @tparam ?table opts.tarantool_params
 -- @tparam ?table opts.etcd2_params
 --   (added in v2.1.2-26)
+-- @tparam ?boolean opts.fencing_enabled
+--   (added in v2.3.0-57)
+-- @tparam ?number opts.fencing_pause
+--   (added in v2.3.0-57)
+-- @tparam ?number opts.fencing_timeout
+--   (added in v2.3.0-57)
 -- @treturn[1] boolean `true` if config applied successfully
 -- @treturn[2] nil
 -- @treturn[2] table Error description
@@ -72,9 +88,12 @@ local function set_params(opts)
     checks({
         mode = '?string',
         state_provider = '?string',
+        failover_timeout = '?number',
         tarantool_params = '?table',
         etcd2_params = '?table',
-        failover_timeout = '?number',
+        fencing_enabled = '?boolean',
+        fencing_pause = '?number',
+        fencing_timeout = '?number',
     })
 
     local topology_cfg = confapplier.get_deepcopy('topology')
@@ -102,6 +121,9 @@ local function set_params(opts)
     if opts.state_provider ~= nil then
         topology_cfg.failover.state_provider = opts.state_provider
     end
+    if opts.failover_timeout ~= nil then
+        topology_cfg.failover.failover_timeout = opts.failover_timeout
+    end
     if opts.tarantool_params ~= nil then
         topology_cfg.failover.tarantool_params = opts.tarantool_params
     end
@@ -109,9 +131,16 @@ local function set_params(opts)
         topology_cfg.failover.etcd2_params = opts.etcd2_params
     end
 
-    if opts.failover_timeout ~= nil then
-        topology_cfg.failover.failover_timeout = opts.failover_timeout
+    if opts.fencing_enabled ~= nil then
+        topology_cfg.failover.fencing_enabled = opts.fencing_enabled
     end
+    if opts.fencing_pause ~= nil then
+        topology_cfg.failover.fencing_pause = opts.fencing_pause
+    end
+    if opts.fencing_timeout ~= nil then
+        topology_cfg.failover.fencing_timeout = opts.fencing_timeout
+    end
+
 
     local ok, err = twophase.patch_clusterwide({topology = topology_cfg})
     if not ok then

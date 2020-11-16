@@ -49,7 +49,9 @@ local StateProviderError = errors.new_class('StateProviderError')
 vars:new('membership_notification', membership.subscribe())
 vars:new('consistency_needed', false)
 vars:new('clusterwide_config')
+vars:new('fencing_timeout')
 vars:new('failover_fiber')
+vars:new('fencing_pause')
 vars:new('failover_err')
 vars:new('schedule', {})
 vars:new('client')
@@ -62,8 +64,6 @@ vars:new('cache', {
 vars:new('options', {
     WAITLSN_PAUSE = 0.2,
     WAITLSN_TIMEOUT = 3,
-    FENCING_PAUSE = 5,
-    FENCING_TIMEOUT = 20,
     LONGPOLL_TIMEOUT = 30,
     NETBOX_CALL_TIMEOUT = 1,
 })
@@ -295,16 +295,20 @@ end
 local function fencing_watch()
     log.info(
         'Fencing enabled (step %s, timeout %s)',
-        vars.options.FENCING_PAUSE, vars.options.FENCING_TIMEOUT
+        vars.fencing_pause, vars.fencing_timeout
     )
 
-    local deadline = fiber.clock() + vars.options.FENCING_TIMEOUT
+    if (vars.fencing_pause > vars.fencing_timeout) then
+        log.warn('Fencing timeout is less than fencing pause')
+    end
+
+    local deadline = fiber.clock() + vars.fencing_timeout
     repeat
-        fiber.sleep(vars.options.FENCING_PAUSE)
+        fiber.sleep(vars.fencing_pause)
 
         if fencing_healthcheck() then
             -- postpone the fencing actuation
-            deadline = fiber.clock() + vars.options.FENCING_TIMEOUT
+            deadline = fiber.clock() + vars.fencing_timeout
         end
     until fiber.clock() > deadline
 
@@ -489,7 +493,9 @@ function reconfigure_all(active_leaders)
     fiber.self().storage.is_busy = true
     confapplier.set_state('ConfiguringRoles')
 
-    if vars.cache.is_leader and vars.consistency_needed then
+    if vars.cache.is_leader
+    and vars.consistency_needed
+    and vars.fencing_enabled then
         fencing_start()
     end
 
@@ -656,6 +662,10 @@ local function cfg(clusterwide_config)
             )
         end
 
+        vars.fencing_enabled = failover_cfg.fencing_enabled
+        vars.fencing_pause = failover_cfg.fencing_pause
+        vars.fencing_timeout = failover_cfg.fencing_timeout
+
         -- WARNING: implicit yield
         local appointments, err = _get_appointments_stateful_mode(vars.client, 0)
         if appointments == nil then
@@ -702,7 +712,9 @@ local function cfg(clusterwide_config)
         end
     end
 
-    if vars.cache.is_leader and vars.consistency_needed then
+    if vars.cache.is_leader
+    and vars.consistency_needed
+    and vars.fencing_enabled then
         fencing_start()
     end
 

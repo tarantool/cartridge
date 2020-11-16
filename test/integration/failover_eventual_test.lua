@@ -422,6 +422,10 @@ g.test_api_failover = function()
             failover_timeout = 0,
             etcd2_params = etcd2_params,
             tarantool_params = tarantool_params,
+            fencing_enabled = true,
+            fencing_pause = 1,
+            fencing_timeout = 2,
+            failover_timeout = 3,
         }
     )
     t.assert_equals(_call('admin_get_failover'), true)
@@ -462,6 +466,10 @@ g.test_api_failover = function()
             failover_timeout = 3,
             tarantool_params = tarantool_params,
             etcd2_params = etcd2_defaults,
+            fencing_enabled = true,
+            fencing_pause = 1,
+            fencing_timeout = 2,
+            failover_timeout = 3,
         }
     )
 end

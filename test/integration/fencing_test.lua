@@ -166,15 +166,13 @@ end
 
 local q_readonliness = "return box.info.ro"
 local q_set_fencing_params = [[
-    local vars = require('cartridge.vars').new('cartridge.failover')
+    local cartridge = require('cartridge')
     local pause, timeout = ...
-    vars.options.FENCING_PAUSE = pause
-    vars.options.FENCING_TIMEOUT = timeout
 
-    local failover = require('cartridge.failover')
-    local confapplier = require('cartridge.confapplier')
-
-    failover.cfg(confapplier.get_active_config())
+    cartridge.failover_set_params({
+        fencing_pause = pause,
+        fencing_timeout = timeout,
+    })
 ]]
 local q_is_vclockkeeper = [[
     local failover = require('cartridge.failover')

@@ -190,6 +190,78 @@ failover:
   failover_timeout: NaN
 ...]])
 
+    check_config('topology_new.failover.fencing_enabled must be boolean, got string',
+[[---
+failover:
+  mode: disabled
+  fencing_enabled: yes, please
+...]])
+
+    check_config('topology_new.failover.fencing_pause must be a number, got string',
+[[---
+failover:
+  mode: disabled
+  fencing_enabled: true
+  fencing_pause: foo
+...]])
+
+    check_config('topology_new.failover.fencing_pause must be non-negative, got -1',
+[[---
+failover:
+  mode: disabled
+  fencing_enabled: true
+  fencing_pause: -1
+...]])
+
+    check_config('topology_new.failover.fencing_pause must be non-negative, got nan',
+[[---
+failover:
+  mode: disabled
+  fencing_enabled: true
+  fencing_pause: NaN
+...]])
+
+    check_config('topology_new.failover.fencing_timeout must be a number, got string',
+[[---
+failover:
+  mode: disabled
+  fencing_enabled: true
+  fencing_timeout: bar
+...]])
+
+    check_config('topology_new.failover.fencing_timeout must be non-negative, got -1',
+[[---
+failover:
+  mode: disabled
+  fencing_enabled: true
+  fencing_timeout: -1
+...]])
+
+    check_config('topology_new.failover.fencing_timeout must be non-negative, got nan',
+[[---
+failover:
+  mode: disabled
+  fencing_enabled: true
+  fencing_timeout: NaN
+...]])
+
+    check_config('topology_new.failover.failover_timeout must be specified when fencing is enabled',
+[[---
+failover:
+  mode: disabled
+  fencing_enabled: true
+  fencing_timeout: 1
+...]])
+
+    check_config('topology_new.failover.failover_timeout must be greater than fencing_timeout',
+[[---
+failover:
+  mode: disabled
+  failover_timeout: 0
+  fencing_enabled: true
+  fencing_timeout: 1
+...]])
+
     check_config('topology_new.failover.tarantool_params.uri: Invalid URI ":-0"',
 [[---
 failover:
@@ -901,6 +973,9 @@ failover:
     endpoints: null
     username: null
     password: null
+  fencing_enabled: false
+  fencing_pause: 1
+  fencing_timeout: 10
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000001:
     replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
