@@ -1,5 +1,5 @@
 # source: http://localhost:8081/admin/api
-# timestamp: Tue Oct 13 2020 16:59:24 GMT+0300 (Moscow Standard Time)
+# timestamp: Thu Nov 19 2020 17:14:28 GMT+0300 (Moscow Standard Time)
 
 """Cluster management"""
 type Apicluster {
@@ -103,14 +103,16 @@ type Error {
 
 """Failover parameters managent"""
 type FailoverAPI {
-  """Supported modes are "disabled", "eventual" and "stateful"."""
-  mode: String!
-  tarantool_params: FailoverStateProviderCfgTarantool
+  failover_timeout: Float
 
   """
   Type of external storage for the stateful failover mode. Supported types are "tarantool" and "etcd2".
   """
   state_provider: String
+  tarantool_params: FailoverStateProviderCfgTarantool
+
+  """Supported modes are "disabled", "eventual" and "stateful"."""
+  mode: String!
   etcd2_params: FailoverStateProviderCfgEtcd2
 }
 
@@ -207,7 +209,7 @@ type MutationApicluster {
   failover(enabled: Boolean!): Boolean!
 
   """Configure automatic failover."""
-  failover_params(mode: String, tarantool_params: FailoverStateProviderCfgInputTarantool, state_provider: String, etcd2_params: FailoverStateProviderCfgInputEtcd2): FailoverAPI!
+  failover_params(failover_timeout: Float, state_provider: String, tarantool_params: FailoverStateProviderCfgInputTarantool, mode: String, etcd2_params: FailoverStateProviderCfgInputEtcd2): FailoverAPI!
 
   """Checks that schema can be applied on cluster"""
   check_schema(as_yaml: String!): DDLCheckResult!

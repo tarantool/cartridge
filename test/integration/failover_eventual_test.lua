@@ -139,6 +139,7 @@ local function get_failover_params()
             cluster { failover_params {
                 mode
                 state_provider
+                failover_timeout
                 tarantool_params {uri password}
                 etcd2_params {
                     prefix
@@ -158,6 +159,7 @@ local function set_failover_params(vars)
             mutation(
                 $mode: String
                 $state_provider: String
+                $failover_timeout: Float
                 $tarantool_params: FailoverStateProviderCfgInputTarantool
                 $etcd2_params: FailoverStateProviderCfgInputEtcd2
             ) {
@@ -165,11 +167,13 @@ local function set_failover_params(vars)
                     failover_params(
                         mode: $mode
                         state_provider: $state_provider
+                        failover_timeout: $failover_timeout
                         tarantool_params: $tarantool_params
                         etcd2_params: $etcd2_params
                     ) {
                         mode
                         state_provider
+                        failover_timeout
                         tarantool_params {uri password}
                         etcd2_params {
                             prefix
@@ -300,6 +304,12 @@ g.test_api_failover = function()
     t.assert_equals(_call('admin_get_failover'), true)
     t.assert_covers(_call('failover_get_params'), {mode = 'eventual'})
 
+    t.assert_covers(set_failover_params(
+        {failover_timeout = 5}),
+        {failover_timeout = 5}
+    )
+    t.assert_covers(get_failover_params(), {failover_timeout = 5})
+
     -- Set with new GraphQL API
     t.assert_error_msg_equals(
         'topology_new.failover missing state_provider for mode "stateful"',
@@ -330,6 +340,7 @@ g.test_api_failover = function()
             etcd2_params = {lock_delay = 36.6, prefix = 'kv'},
         }), {
             mode = 'eventual',
+            failover_timeout = 5,
             etcd2_params = {
                 prefix = 'kv',
                 lock_delay = 36.6,
@@ -347,6 +358,7 @@ g.test_api_failover = function()
             etcd2_params = {endpoints = {'goo.gl:9'}},
         }), {
             mode = 'eventual',
+            failover_timeout = 5,
             etcd2_params = {
                 prefix = '/',
                 lock_delay = 10,
@@ -361,6 +373,7 @@ g.test_api_failover = function()
         get_failover_params(),
         {
             mode = 'eventual',
+            failover_timeout = 5,
             etcd2_params = etcd2_params,
         }
     )
@@ -370,6 +383,7 @@ g.test_api_failover = function()
         set_failover_params({tarantool_params = tarantool_params}),
         {
             mode = 'eventual',
+            failover_timeout = 5,
             etcd2_params = etcd2_params,
             tarantool_params = tarantool_params,
         }
@@ -379,6 +393,7 @@ g.test_api_failover = function()
         {
             mode = 'stateful',
             state_provider = 'tarantool',
+            failover_timeout = 5,
             etcd2_params = etcd2_params,
             tarantool_params = tarantool_params,
         }
@@ -389,6 +404,7 @@ g.test_api_failover = function()
         {
             mode = 'stateful',
             state_provider = 'tarantool',
+            failover_timeout = 5,
             etcd2_params = etcd2_params,
             tarantool_params = tarantool_params,
         }
@@ -398,6 +414,7 @@ g.test_api_failover = function()
         {
             mode = 'stateful',
             state_provider = 'tarantool',
+            failover_timeout = 5,
             etcd2_params = etcd2_params,
             tarantool_params = tarantool_params,
         }
@@ -407,6 +424,7 @@ g.test_api_failover = function()
     -- Set with new Lua API
     t.assert_equals(_call('failover_set_params', {
         mode = 'disabled',
+        failover_timeout = 5,
         etcd2_params = {},
     }), true)
 
@@ -426,6 +444,7 @@ g.test_api_failover = function()
         {
             mode = 'disabled',
             state_provider = 'tarantool',
+            failover_timeout = 5,
             etcd2_params = etcd2_defaults,
             tarantool_params = tarantool_params,
         }
@@ -435,9 +454,16 @@ g.test_api_failover = function()
         {
             mode = 'disabled',
             state_provider = 'tarantool',
+            failover_timeout = 5,
             tarantool_params = tarantool_params,
             etcd2_params = etcd2_defaults,
         }
+    )
+
+    -- set failover_timeout to default
+    t.assert_covers(set_failover_params(
+        {failover_timeout = 3}),
+        {failover_timeout = 3}
     )
 end
 
