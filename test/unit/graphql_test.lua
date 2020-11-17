@@ -623,12 +623,12 @@ local query = types.object({
     }
 })
 
-local schema = schema.create({ query = query })
+local schema_instance = schema.create({ query = query })
 local function expectError(message, document)
     if not message then
-        validate(schema, parse(document))
+        validate(schema_instance, parse(document))
     else
-        t.assert_error_msg_contains(message, validate, schema, parse(document))
+        t.assert_error_msg_contains(message, validate, schema_instance, parse(document))
     end
 end
 
@@ -946,4 +946,86 @@ function g.test_types_isValueOfTheType_for_scalars()
         end,
     })
     t.assert_equals(CustomString.__type, 'Scalar')
+end
+
+function g.test_types_for_different_schemas()
+    local object_1 = types.object({
+        name = 'Object',
+        fields = {
+            long_1 = types.long,
+            string_1 = types.string,
+        },
+        schema = '1',
+    })
+
+    local query_1 = types.object({
+        name = 'Query',
+        fields = {
+            object = {
+                kind = object_1,
+                args = {
+                    name = {
+                        string = types.string
+                    }
+                }
+            },
+            object_list = types.list('Object'),
+        },
+        schema = '1',
+    })
+
+    local object_2 = types.object({
+        name = 'Object',
+        fields = {
+            long_2 = types.long,
+            string_2 = types.string,
+        },
+        schema = '2',
+    })
+
+    local query_2 = types.object({
+        name = 'Query',
+        fields = {
+            object = {
+                kind = object_2,
+                args = {
+                    name = {
+                        string = types.string
+                    }
+                }
+            },
+            object_list = types.list('Object'),
+        },
+        schema = '2',
+    })
+
+    local schema_1 = schema.create({query = query_1}, '1')
+    local schema_2 = schema.create({query = query_2}, '2')
+
+    validate(schema_1, parse([[
+         query { object { long_1 string_1 } }
+    ]]))
+
+    validate(schema_2, parse([[
+         query { object { long_2 string_2 } }
+    ]]))
+
+    validate(schema_1, parse([[
+         query { object_list { long_1 string_1 } }
+    ]]))
+
+    validate(schema_2, parse([[
+         query { object_list { long_2 string_2 } }
+    ]]))
+
+    -- Errors
+    t.assert_error_msg_contains('Field "long_2" is not defined on type "Object"',
+            validate, schema_1, parse([[query { object { long_2 string_1 } }]]))
+    t.assert_error_msg_contains('Field "string_2" is not defined on type "Object"',
+            validate, schema_1, parse([[query { object { long_1 string_2 } }]]))
+
+    t.assert_error_msg_contains('Field "long_2" is not defined on type "Object"',
+            validate, schema_1, parse([[query { object_list { long_2 string_1 } }]]))
+    t.assert_error_msg_contains('Field "string_2" is not defined on type "Object"',
+            validate, schema_1, parse([[query { object_list { long_1 string_2 } }]]))
 end
