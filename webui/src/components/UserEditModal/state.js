@@ -1,4 +1,4 @@
-// @flow
+// @flo - temporarely disable flow because of effector's sample typing problems
 import {
   createEvent,
   sample,
@@ -19,12 +19,12 @@ import {
   editUserFx
 } from 'src/store/effector/users';
 
-type initFormProps = ?{ fullname?: string, email?: string };
+type initFormProps = ?{ fullname?: string | null, email?: string | null };
 
 type formValuesType = ?{
-  password?: string,
-  fullname?: string,
-  email?: string
+  password?: string | null,
+  fullname?: string | null,
+  email?: string | null
 };
 
 export const createFormStore = (values: initFormProps) => {
@@ -59,13 +59,26 @@ export const createFormStore = (values: initFormProps) => {
 
   guard({
     source: sample({
-      source: {
-        username: $usernameToMutate,
-        fullname: fullnameField.$value,
-        password: passwordField.$value,
-        email: emailField.$value,
-        errors: $errors
-      },
+      source: combine(
+        $usernameToMutate,
+        fullnameField.$value,
+        passwordField.$value,
+        emailField.$value,
+        $errors,
+        (
+          username,
+          fullname,
+          password,
+          email,
+          errors
+        ) => ({
+          username,
+          fullname,
+          password,
+          email,
+          errors
+        })
+      ),
       clock: submitForm,
       fn: values => {
         const obj = pickAll(['email', 'fullname', 'username'], values)
