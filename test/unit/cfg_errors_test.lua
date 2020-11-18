@@ -19,34 +19,29 @@ local socket = require('socket')
 local cartridge = require('cartridge')
 local membership = require('membership')
 
-function g.before_all()
+g.before_all(function()
     g.tempdir = fio.tempdir()
-end
+    g.membership_backup = table.copy(membership)
+end)
 
-function g.after_all()
+g.after_all(function()
     fio.rmtree(g.tempdir)
-end
+end)
 
 local fn_true = function() return true end
 local fn_false = function() return false end
 
 function g.mock_membership()
-    g.membership_backup = {
-        init = membership.init,
-        probe_uri = membership.probe_uri,
-        broadcast = membership.broadcast,
-        myself = require('membership.members').myself,
-    }
-
+    table.clear(membership)
+    membership.init = fn_true
     membership.probe_uri = fn_true
     membership.broadcast = fn_true
-
-    membership.init = function(host, port)
-        require('membership.options').set_advertise_uri(host .. ':' .. port)
-        return true
+    membership.set_encryption_key = fn_true
+    membership.set_payload = fn_true
+    membership.subscribe = function()
+        return fiber.cond()
     end
-
-    require('membership.members').myself = function()
+    membership.myself = function()
         return {
             uri = 'unused:0',
             status = require('membership.options').ALIVE,
@@ -56,13 +51,10 @@ function g.mock_membership()
     end
 end
 
-function g.teardown()
-    if g.membership_backup ~= nil then
-        membership.init = g.membership_backup.init
-        membership.probe_uri = g.membership_backup.probe_uri
-        membership.broadcast = g.membership_backup.broadcast
-        require('membership.members').myself =
-            g.membership_backup.myself
+g.after_each(function()
+    table.clear(membership)
+    for k, v in pairs(g.membership_backup) do
+        membership[k] = v
     end
 
     cartridge = nil
@@ -74,7 +66,7 @@ function g.teardown()
     rawset(_G, "_cluster_vars_defaults", nil)
     rawset(_G, "_cluster_vars_values", nil)
     cartridge = require('cartridge')
-end
+end)
 
 local function check_error(expected_error, fn, ...)
     checks('string', 'function')
@@ -136,7 +128,9 @@ g.test_advertise_uri = function()
 
     local _sock = socket('AF_INET', 'SOCK_DGRAM', 'udp')
     _sock:bind('0.0.0.0', 13301)
-    check_error('Socket bind error: ' .. errno.strerror(errno.EADDRINUSE),
+    check_error(
+        'Socket bind error (13301/udp): ' ..
+        errno.strerror(errno.EADDRINUSE),
         cartridge.cfg, {
             workdir = g.tempdir,
             advertise_uri = 'localhost:13301',
