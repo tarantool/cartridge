@@ -41,7 +41,8 @@ describe('Network error panel', () => {
       .contains('Network connection problem or server disconnected');
 
     cy.get('a[href="/admin/cluster/users"]').click();
-    cy.get('#root').contains('No Data').should('exist');
+    cy.get('h1:contains(Users)');
+    cy.get('#root').contains('The list is empty').should('exist');
     cy.get('#root').contains('LOADING').should('not.exist');
     cy.get('.meta-test__NetworkErrorSplash').should('exist');
 
