@@ -37,7 +37,7 @@ export const createFormStore = (values: initFormProps) => {
   const $isFormValid = $errors.map<bool>(errors => !errors);
   const $showAllErrors = createStore<bool>(false);
 
-  const resetForm = createEvent<void>('Reset form');
+  const resetForm = createEvent<any>('Reset form');
   const submitForm = createEvent<void>('Submit form')
 
   // init
@@ -48,6 +48,7 @@ export const createFormStore = (values: initFormProps) => {
     usernameField.reset();
   })
 
+  forward({ from: addUserFx.done, to: resetForm });
   forward({ from: hideModal, to: resetForm });
 
   guard({

@@ -1,7 +1,7 @@
 // @flow
 import React, { useEffect } from 'react';
 import { useStore } from 'effector-react';
-import { css } from 'emotion';
+import { css, cx } from 'emotion';
 import { memoizeWith, identity } from 'ramda';
 import {
   Button,
@@ -43,6 +43,15 @@ const styles = {
     &:focus {
       text-decoration: underline;
     }
+  `,
+  tableLinkDisabled: css`
+    cursor: default;
+    text-decoration: none;
+
+    &:hover,
+    &:focus {
+      text-decoration: none;
+    }
   `
 };
 
@@ -58,8 +67,16 @@ const tableColumns = memoizeWith(
       Cell: ({ cell: { value } }) => (
         <Link
           href='#'
-          className={styles.tableLink}
-          onClick={e => { e.preventDefault(); showUserEditModal(value); }}
+          className={cx(
+            styles.tableLink,
+            { [styles.tableLinkDisabled]: !allowEdit || BUILT_IN_USERS.includes(value) }
+          )}
+          tabIndex={(!allowEdit || BUILT_IN_USERS.includes(value)) && -1}
+          onClick={e => {
+            e.preventDefault();
+            if (allowEdit && !BUILT_IN_USERS.includes(value))
+              showUserEditModal(value);
+          }}
         >
           {value}
         </Link>

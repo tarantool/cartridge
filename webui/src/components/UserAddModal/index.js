@@ -78,7 +78,7 @@ const PasswordInput = createComponent(
     { blur, change, $field: { value, visited }, $disabled: disabled }
   ) => (
     <LabeledInput
-      label='New password'
+      label='Password'
       type='password'
       value={value}
       onChange={change}
