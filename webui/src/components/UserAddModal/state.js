@@ -1,4 +1,4 @@
-// @flo - temporarely disable flow because of effector's sample typing problems
+// @flow
 import {
   combine,
   createEffect,
@@ -112,6 +112,7 @@ export const createFormStore = (values: initFormProps) => {
     })
   })
 
+  // $FlowFixMe
   sample({
     source: combine(
       usernameField.$value,
