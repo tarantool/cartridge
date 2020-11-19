@@ -29,7 +29,7 @@ local function get_params()
     -- @tfield ?string state_provider
     --   Supported state providers are "tarantool" and "etcd2".
     -- @tfield number failover_timeout
-    --   (added in v2.3.0-48)
+    --   (added in v2.3.0-52)
     --   Timeout (in seconds), used by membership to
     --   mark `suspect` members as `dead` (default: 3)
     -- @tfield ?table tarantool_params
@@ -60,6 +60,8 @@ end
 -- @tparam table opts
 -- @tparam ?string opts.mode
 -- @tparam ?string opts.state_provider
+-- @tparam ?string opts.failover_timeout
+--   (added in v2.3.0-52)
 -- @tparam ?table opts.tarantool_params
 -- @tparam ?table opts.etcd2_params
 --   (added in v2.1.2-26)

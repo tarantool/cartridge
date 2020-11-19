@@ -167,11 +167,32 @@ failover:
   state_provider: joe
 ...]])
 
+    check_config('topology_new.failover.failover_timeout must be a number, got string',
+[[---
+failover:
+  mode: disabled
+  failover_timeout: kinda sus
+...]])
+
+    check_config('topology_new.failover.failover_timeout must be non-negative, got -1',
+[[---
+failover:
+  mode: disabled
+  failover_timeout: -1
+...]])
+
+    check_config('topology_new.failover.failover_timeout must be non-negative, got nan',
+[[---
+failover:
+  mode: disabled
+  failover_timeout: NaN
+...]])
 
     check_config('topology_new.failover.tarantool_params.uri: Invalid URI ":-0"',
 [[---
 failover:
   mode: eventual
+  failover_timeout: 0
   tarantool_params: {uri: ":-0"}
 ...]])
 
@@ -868,6 +889,7 @@ auth: true
 failover:
   mode: stateful
   state_provider: tarantool
+  failover_timeout: Inf
   tarantool_params:
     uri: stateboard.com:4401
     password: ''

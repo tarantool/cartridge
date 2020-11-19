@@ -176,10 +176,6 @@ local q_set_fencing_params = [[
 
     failover.cfg(confapplier.get_active_config())
 ]]
-local q_get_failover_params = [[
-    local cartridge = require('cartridge')
-    return cartridge.failover_get_params()
-]]
 local q_is_vclockkeeper = [[
     local failover = require('cartridge.failover')
     return failover.is_vclockkeeper()
@@ -188,51 +184,6 @@ local q_leadership = [[
     local failover = require('cartridge.failover')
     return failover.get_active_leaders()[...]
 ]]
-
-add('test_failover_timeout', function()
-    A1:graphql({
-        query = [[
-            mutation {
-                cluster {
-                    failover_params(failover_timeout: 4) {}
-                }
-            }
-        ]],
-    })
-
-
-    local failover_params = A1.net_box:eval(q_get_failover_params)
-    local membership_suspect = A1.net_box:eval([[
-        return require('membership.options').SUSPECT_TIMEOUT_SECONDS
-    ]])
-    t.assert_equals(failover_params.failover_timeout, 4)
-    t.assert_equals(failover_params.failover_timeout, membership_suspect)
-
-    t.assert_error_msg_contains(
-        'bad argument opts.failover_timeout'..
-        ' to nil (?number expected, got string)',
-        function()
-            A1.net_box:eval(
-                [[return require('cartridge').failover_set_params(...)]],
-                {{failover_timeout = 'kinda sus'}}
-            )
-        end
-    )
-
-    A1.net_box:eval([[
-        local cartridge = require('cartridge')
-        cartridge.failover_set_params({
-            failover_timeout = 0,
-        })
-    ]])
-
-    local failover_params = A1.net_box:eval(q_get_failover_params)
-    local membership_suspect = A1.net_box:eval([[
-        return require('membership.options').SUSPECT_TIMEOUT_SECONDS
-    ]])
-    t.assert_equals(failover_params.failover_timeout, 0)
-    t.assert_equals(membership_suspect, 0)
-end)
 
 add('test_basics', function(g)
     t.assert(g.session:set_leaders({{uB, uB1}}))

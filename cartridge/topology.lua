@@ -342,12 +342,18 @@ local function validate_failover_schema(field, topology)
             field, topology.failover.mode
         )
 
-        e_config:assert(
-            topology.failover.failover_timeout == nil or
-            type(topology.failover.failover_timeout) == 'number',
-            '%s.failover.failover_timeout must be a number, got %s',
-            field, type(topology.failover.failover_timeout)
-        )
+        if topology.failover.failover_timeout ~= nil then
+            e_config:assert(
+                type(topology.failover.failover_timeout) == 'number',
+                '%s.failover.failover_timeout must be a number, got %s',
+                field, type(topology.failover.failover_timeout)
+            )
+            e_config:assert(
+                topology.failover.failover_timeout >= 0,
+                '%s.failover.failover_timeout must be non-negative, got %s',
+                field, topology.failover.failover_timeout
+            )
+        end
 
         if topology.failover.mode == 'stateful' then
             e_config:assert(

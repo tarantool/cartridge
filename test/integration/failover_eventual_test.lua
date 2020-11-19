@@ -305,10 +305,15 @@ g.test_api_failover = function()
     t.assert_covers(_call('failover_get_params'), {mode = 'eventual'})
 
     t.assert_covers(set_failover_params(
-        {failover_timeout = 5}),
-        {failover_timeout = 5}
+        {failover_timeout = 0}),
+        {failover_timeout = 0}
     )
-    t.assert_covers(get_failover_params(), {failover_timeout = 5})
+    t.assert_covers(get_failover_params(), {failover_timeout = 0})
+    t.assert_equals(
+        cluster.main_server.net_box:eval([[
+            return require('membership.options').SUSPECT_TIMEOUT_SECONDS
+        ]]), 0
+    )
 
     -- Set with new GraphQL API
     t.assert_error_msg_equals(
@@ -340,7 +345,7 @@ g.test_api_failover = function()
             etcd2_params = {lock_delay = 36.6, prefix = 'kv'},
         }), {
             mode = 'eventual',
-            failover_timeout = 5,
+            failover_timeout = 0,
             etcd2_params = {
                 prefix = 'kv',
                 lock_delay = 36.6,
@@ -358,7 +363,7 @@ g.test_api_failover = function()
             etcd2_params = {endpoints = {'goo.gl:9'}},
         }), {
             mode = 'eventual',
-            failover_timeout = 5,
+            failover_timeout = 0,
             etcd2_params = {
                 prefix = '/',
                 lock_delay = 10,
@@ -373,7 +378,7 @@ g.test_api_failover = function()
         get_failover_params(),
         {
             mode = 'eventual',
-            failover_timeout = 5,
+            failover_timeout = 0,
             etcd2_params = etcd2_params,
         }
     )
@@ -383,7 +388,7 @@ g.test_api_failover = function()
         set_failover_params({tarantool_params = tarantool_params}),
         {
             mode = 'eventual',
-            failover_timeout = 5,
+            failover_timeout = 0,
             etcd2_params = etcd2_params,
             tarantool_params = tarantool_params,
         }
@@ -393,7 +398,7 @@ g.test_api_failover = function()
         {
             mode = 'stateful',
             state_provider = 'tarantool',
-            failover_timeout = 5,
+            failover_timeout = 0,
             etcd2_params = etcd2_params,
             tarantool_params = tarantool_params,
         }
@@ -404,7 +409,7 @@ g.test_api_failover = function()
         {
             mode = 'stateful',
             state_provider = 'tarantool',
-            failover_timeout = 5,
+            failover_timeout = 0,
             etcd2_params = etcd2_params,
             tarantool_params = tarantool_params,
         }
@@ -414,7 +419,7 @@ g.test_api_failover = function()
         {
             mode = 'stateful',
             state_provider = 'tarantool',
-            failover_timeout = 5,
+            failover_timeout = 0,
             etcd2_params = etcd2_params,
             tarantool_params = tarantool_params,
         }
@@ -424,7 +429,7 @@ g.test_api_failover = function()
     -- Set with new Lua API
     t.assert_equals(_call('failover_set_params', {
         mode = 'disabled',
-        failover_timeout = 5,
+        failover_timeout = 3,
         etcd2_params = {},
     }), true)
 
@@ -444,7 +449,7 @@ g.test_api_failover = function()
         {
             mode = 'disabled',
             state_provider = 'tarantool',
-            failover_timeout = 5,
+            failover_timeout = 3,
             etcd2_params = etcd2_defaults,
             tarantool_params = tarantool_params,
         }
@@ -454,16 +459,10 @@ g.test_api_failover = function()
         {
             mode = 'disabled',
             state_provider = 'tarantool',
-            failover_timeout = 5,
+            failover_timeout = 3,
             tarantool_params = tarantool_params,
             etcd2_params = etcd2_defaults,
         }
-    )
-
-    -- set failover_timeout to default
-    t.assert_covers(set_failover_params(
-        {failover_timeout = 3}),
-        {failover_timeout = 3}
     )
 end
 
