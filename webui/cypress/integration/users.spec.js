@@ -38,7 +38,7 @@ describe('Users', () => {
   });
 
   after(() => {
-    cy.task('tarantool', {code: `cleanup()`});
+    cy.task('tarantool', { code: `cleanup()` });
   });
 
   it('Open WebUI', () => {
@@ -50,34 +50,88 @@ describe('Users', () => {
     cy.title().should('eq', 'cartridge-testing.r1: Users')
   })
 
-  it('Add user', () => {
-    cy.get('.meta-test__addUserBtn').click();
+  it('Users page before changing', function () {
+    cy.get('h1:contains(Users)');
+    cy.get('.meta-test__AuthToggle input').should('not.be.checked');
+    cy.get('button:contains(Add user)').should('be.enabled');
 
-    //Required field checks on Add user form
-    cy.get('.meta-test__UserAddForm button[type="submit"]').contains('Add').click();
-    cy.get('label:contains(username)').nextAll('div:contains(username is a required field)');
-    cy.get('label:contains(password)').nextAll('div:contains(password is a required field)');
+    cy.get('thead th').each((tHeadRow, index) => {
+      const headings = ["Username", "Full name", "E-mail", "Actions"];
+      cy.wrap(tHeadRow).should('contain', headings[index]);
+    });
 
-    cy.get('.meta-test__UserAddForm input[name="username"]').type('user_do_not_touch')
-      .should('have.value', 'user_do_not_touch');
-    cy.get('.meta-test__UserAddForm input[name="password"]').type('123');
+    cy.get('tbody td').eq(0).find('a:contains(admin)');
+    cy.get('tbody td').eq(1).contains('Cartridge Administrator');
+    cy.get('tbody td').eq(2).contains('—');
+    cy.get('tbody td').eq(3).find('button').eq(0).should('be.disabled');
+    cy.get('tbody td').eq(3).find('button').eq(1).should('be.disabled');
+  });
 
-    //Try to enter invalid email on Add user form
-    cy.get('.meta-test__UserAddForm input[name="email"]').type('not_valid');
-    cy.get('.meta-test__UserAddForm input[name="username"]').focus();
-    cy.get('.meta-test__UserAddForm').contains('email must be a valid email');
-    cy.get('.meta-test__UserAddForm input[name="email"]').type('{selectall}{backspace}').blur();
-    cy.get('.meta-test__UserAddForm').contains('email must be a valid email').should('not.exist');
-    
-    cy.get('.meta-test__UserAddForm button[type="submit"]').contains('Add').click();
-    cy.get('.meta-test__UsersTable').contains('user_do_not_touch');
-  })
+  it('Checks for add user form fields', function () {
+    cy.get('button:contains(Add user)').click();
+    cy.get('h2:contains(Add a new user)');
+
+    //Add user form before changing
+    cy.get('label:contains(Username)').parent('div').next().find('input')
+      .should('have.value', '');
+    cy.get('label:contains(Password)').parent('div').next().find('input')
+      .should('have.value', '');
+    cy.get('label:contains(Email)').parent('div').next().find('input')
+      .should('have.value', '');
+    cy.get('label:contains(Full name)').parent('div').next().find('input')
+      .should('have.value', '');
+
+    //Checks for compliance
+    cy.get('.meta-test__UserAddForm button:contains(Add)').click();
+    cy.get('label:contains(Username)').parent('div').next().next()
+      .contains('username is a required field');
+    cy.get('label:contains(Password)').parent('div').next().next()
+      .contains('password is a required field');
+
+    //Validation errors
+    cy.get('label:contains(Email)').parent('div').next().find('input')
+      .type('q');
+    cy.get('label:contains(Email)').parent('div').next().next()
+      .contains('email must be a valid email');
+
+    //close modal without saving
+    cy.get('h2:contains(Add a new user)').next().click();
+  });
+
+  it('Add new user: success', function () {
+    cy.get('button:contains(Add user)').click();
+    cy.get('h2:contains(Add a new user)');
+
+    cy.get('label:contains(Username)').parent('div').next().find('input')
+      .type('TestUserName');
+    cy.get('label:contains(Password)').parent('div').next().find('input')
+      .type('userpassword');
+    cy.get('label:contains(Email)').parent('div').next().find('input')
+      .type('testuser@qq.qq');
+
+    cy.get('.meta-test__UserAddForm button:contains(Add)').click();
+    cy.get('tbody tr[role="row"]').should('have.length', 2);
+
+    //checks for new user in list:
+    cy.get('a:contains(TestUserName)').parents('tr').then((TestUserRow) => {
+      cy.wrap(TestUserRow).find('td').eq(0).find('a:contains(TestUserName)');
+      cy.wrap(TestUserRow).find('td').eq(2).contains('testuser@qq.qq');
+      cy.wrap(TestUserRow).find('td').eq(3).find('button').eq(0).should('be.enabled');
+      cy.wrap(TestUserRow).find('td').eq(3).find('button').eq(1).should('be.enabled');
+    })
+  });
+
+  it('Click on user name -> opening modal Edit user', function () {
+    cy.get('a:contains(TestUserName)').click();
+    cy.get('h2:contains(Edit TestUserName)').next().click();
+    cy.get('h2:contains(Edit TestUserName)').should('not.exist');
+  });
 
   it('Login and logout user without full name', () => {
     //login:
     cy.get('.meta-test__LoginBtn').click();
-    cy.get('.meta-test__LoginForm input[name="username"]').type('user_do_not_touch');
-    cy.get('.meta-test__LoginForm input[name="password"]').type('123');
+    cy.get('.meta-test__LoginForm input[name="username"]').type('TestUserName');
+    cy.get('.meta-test__LoginForm input[name="password"]').type('userpassword');
     cy.get('.meta-test__LoginFormBtn').click();
 
     cy.get('.meta-test__LogoutBtn').children('span').should('contain', '');
@@ -92,53 +146,76 @@ describe('Users', () => {
     //logout:
     cy.get('.meta-test__LogoutBtn').click();
     cy.get('.meta-test__LogoutDropdown *').contains('Log out').click();
-  })
+  });
 
-  it('Edit user', () => {
-    cy.get('.meta-test__UsersTable').find('button').eq(1).click();
-    cy.get('.meta-test__UsersTableItem__dropdown *').contains('Edit user').click();
-    cy.get('.meta-test__UserEditModal h2').contains('Edit user_do_not_touch');
+  it('Edit user', function () {
+    cy.get('a:contains(TestUserName)').parents('tr').find('td').eq(3).find('button').eq(0).click();
+    cy.get('h2:contains(Edit TestUserName)');
 
-    cy.get('.meta-test__UserEditModal input[name="password"]').type('{selectall}{del}321');
+    cy.get('label:contains(New password)').parent('div').next().find('input')
+      .type('{selectall}{del}EditedPassword');
+    cy.get('label:contains(Email)').parent('div').next().find('input')
+      .type('{selectall}{del}ee@ee.ee');
+    cy.get('label:contains(Full name)').parent('div').next().find('input')
+      .type('{selectall}{del}Edited Full Name');
+    cy.get('button:contains(Save)').click();
 
-    //Try to enter invalid email on Edit user form
-    cy.get('.meta-test__UserEditModal input[name="email"]').type('not_valid');
-    cy.get('.meta-test__UserEditModal button[type="submit"]').contains('Save').click();
-    cy.get('label:contains(email)').nextAll('div:contains(email must be a valid email)');
-    cy.get('.meta-test__UserEditModal input[name="email"]').type('{selectall}{backspace}').blur();
-    cy.get('.meta-test__UserEditModal').contains('email must be a valid email').should('not.exist');
-    
-    cy.get('.meta-test__UserEditModal input[name="email"]')
-      .type('donottouch@qq.qq')
-      .should('have.value', 'donottouch@qq.qq');
-    cy.get('.meta-test__UserEditModal input[name="fullname"]')
-      .type('Full Name donottouch')
-      .should('have.value', 'Full Name donottouch');
-    cy.get('.meta-test__UserEditModal button[type="submit"]').contains('Save').click();
-    cy.get('.meta-test__UsersTable').contains('Full Name donottouch');
-  })
+    cy.get('a:contains(TestUserName)').parents('tr').then((TestUserRow) => {
+      cy.wrap(TestUserRow).find('td').eq(1).contains('Edited Full Name');
+      cy.wrap(TestUserRow).find('td').eq(2).contains('ee@ee.ee');
+      cy.wrap(TestUserRow).find('td').eq(3).find('button').eq(0).should('be.enabled');
+      cy.wrap(TestUserRow).find('td').eq(3).find('button').eq(1).should('be.enabled');
+    });
+  });
+
+  it('Create user: errors', function () {
+    cy.get('button:contains(Add user)').click();
+    cy.get('h2:contains(Add a new user)');
+
+    cy.get('label:contains(Username)').parent('div').next().find('input')
+      .type('TestUserName');
+    cy.get('label:contains(Password)').parent('div').next().find('input')
+      .type('userpassword');
+    cy.get('label:contains(Email)').parent('div').next().find('input')
+      .type('ee@ee.ee');
+
+    cy.get('.meta-test__UserAddForm button:contains(Add)').click();
+
+    cy.get('.meta-test__UserAddForm').find('span:contains(User already exists: \'TestUserName\')');
+    cy.get('label:contains(Username)').parent('div').next().find('input')
+      .type('{selectall}{del}NewUserName');
+    cy.get('.meta-test__UserAddForm button:contains(Add)').click();
+
+    cy.get('.meta-test__UserAddForm').find('span:contains(E-mail already in use: \'ee@ee.ee\')');
+    cy.get('label:contains(Email)').parent('div').next().find('input')
+      .type('{selectall}{del}new@qq.qq');
+    cy.get('.meta-test__UserAddForm button:contains(Add)').click();
+
+    cy.get('tbody tr[role="row"]').should('have.length', 3);
+  });
 
   it('Login and logout user with full name', () => {
     //login:
     cy.get('.meta-test__LoginBtn').click();
-    cy.get('.meta-test__LoginForm input[name="username"]').type('user_do_not_touch');
-    cy.get('.meta-test__LoginForm input[name="password"]').type('321');
+    cy.get('.meta-test__LoginForm input[name="username"]').type('TestUserName');
+    cy.get('.meta-test__LoginForm input[name="password"]').type('EditedPassword');
     cy.get('.meta-test__LoginFormBtn').click();
 
-    cy.get('.meta-test__LogoutBtn').children('span').should('contain', 'Full Name donottouch');
+    cy.get('.meta-test__LogoutBtn').children('span').should('contain', 'Edited Full Name');
     cy.get('.meta-test__LoginBtn').should('not.exist');
 
     //logout:
     cy.get('.meta-test__LogoutBtn').click();
     cy.get('.meta-test__LogoutDropdown *').contains('Log out').click();
-  })
+  });
 
   it('Remove user', () => {
-    cy.get('.meta-test__UsersTable li:contains(user_do_not_touch)').find('button').click();
-    cy.get('.meta-test__UsersTableItem__dropdown *').contains('Remove user').click();
-    cy.get('.meta-test__UserRemoveModal button[type="button"]:contains(Remove)').click();
+    cy.get('a:contains(TestUserName)').parents('tr').find('td').eq(3).find('button').eq(1).click();
+    cy.get('.meta-test__UserRemoveModal h2:contains(Please confirm)');
+    cy.get('.meta-test__UserRemoveModal span:contains(Removing user TestUserName)');
+    cy.get('.meta-test__UserRemoveModal button:contains(Remove)').click();
 
-    cy.get('.meta-test__UsersTable').contains('user_do_not_touch').should('not.exist');
-  })
-
+    cy.get('.meta-test__UserRemoveModal').should('not.exist');
+    cy.contains('TestUserName').should('not.exist');
+  });
 });
