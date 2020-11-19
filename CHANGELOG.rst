@@ -25,6 +25,9 @@ Added
 - Implement a fencing feature. It protects a replicaset from the presence of
   multiple leaders when the network is partitioned and forces the leader to
   become read-only.
+- New failover parameter ``failover_timout`` specifies the time (in seconds)
+  used by membership to mark ``suspect`` members as ``dead`` which triggers
+  failover.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
