@@ -1,20 +1,23 @@
 
-msgid "Tarantool Cartridge developer's guide"
+msgid "Developer's guide"
 msgstr ""
 
-msgid "For a quick start, skip the details below and jump right away to this detailed `guide <https://github.com/tarantool/cartridge-cli/blob/master/examples/getting-started-app/README.md>`_ to creating a cluster-aware Tarantool application."
+msgid "For a quick start, skip the details below and jump right away to the `Cartridge getting started guide <https://www.tarantool.io/en/doc/latest/getting_started/getting_started_cartridge/>`_."
 msgstr ""
 
-msgid "For a deep dive into what you can do with Tarantool Cartridge, go on with this section."
+msgid "For a deep dive into what you can develop with Tarantool Cartridge, go on with the Cartridge developer's guide."
+msgstr ""
+
+msgid "Introduction"
 msgstr ""
 
 msgid "To develop and start an application, in short, you need to go through the following steps:"
 msgstr ""
 
-msgid ":ref:`Install <cartridge-install>` Tarantool Cartridge and other components of the development environment."
+msgid ":ref:`Install <cartridge-install-dev>` Tarantool Cartridge and other components of the development environment."
 msgstr ""
 
-msgid "Choose a :ref:`template <cartridge-templates>` for the application and create a project."
+msgid ":ref:`Create a project <cartridge-project>`."
 msgstr ""
 
 msgid "Develop the application. In case it is a cluster-aware application, implement its logic in a custom (user-defined) :ref:`cluster role <cartridge-roles>` to initialize the database in a cluster environment."
@@ -32,64 +35,31 @@ msgstr ""
 msgid "Installing Tarantool Cartridge"
 msgstr ""
 
-msgid "Install ``catridge-cli``, a command-line tool for developing, deploying, and managing Tarantool applications:"
+msgid "`Install <https://github.com/tarantool/cartridge-cli#installation>`_ ``cartridge-cli``, a command-line tool for developing, deploying, and managing Tarantool applications."
 msgstr ""
 
-msgid "$ tarantoolctl rocks install cartridge-cli"
+msgid "`Install <https://git-scm.com/book/en/v2/Getting-Started-Installing-Git>`_ ``git``, a version control system."
 msgstr ""
 
-msgid "The Cartridge framework will come as a dependency when you create your project."
+msgid "`Install <https://www.npmjs.com/get-npm>`_ ``npm``, a package manager for ``node.js``."
 msgstr ""
 
-msgid "Everything will be installed to ``.rocks/bin``, so for convenient usage add ``.rocks/bin`` to the executable path:"
+msgid "`Install <https://linuxize.com/post/how-to-unzip-files-in-linux/>`_ the ``unzip`` utility."
 msgstr ""
 
-msgid "$ export PATH=$PWD/.rocks/bin/:$PATH"
+msgid "Creating a project"
 msgstr ""
 
-msgid "Install ``git``, a version control system."
+msgid "To set up your development environment, create a project using the Tarantool Cartridge project template. In any directory, say:"
 msgstr ""
 
-msgid "Install ``npm``, a package manager for ``node.js``."
-msgstr ""
-
-msgid "Install the ``unzip`` utility."
-msgstr ""
-
-msgid "Application templates"
-msgstr ""
-
-msgid "Tarantool Cartridge provides you with two templates that help instantly set up the application development environment:"
-msgstr ""
-
-msgid "``plain``, for developing an application that runs on a single or multiple independent Tarantool instances (e.g. acting as a proxy to third-party databases) -- that's what you could do before, :ref:`without Tarantool Cartridge <app_server-creating_app>`, but now it's more convenient."
-msgstr ""
-
-msgid "``cartridge``, for developing a cluster-aware application -- this is an exclusive feature of Tarantool Cartridge."
-msgstr ""
-
-msgid "To create a project based on either template, in any directory say:"
-msgstr ""
-
-msgid "# plain application\n"
-"$ plain create --name <app_name> /path/to/\n"
-"\n"
-"# - OR -\n"
-"\n"
-"# cluster application\n"
-"$ cartridge create --name <app_name> /path/to/"
-msgstr ""
-
-msgid "This will automatically set up a Git repository in a new ``/path/to/<app_name>/`` directory, tag it with :ref:`version <cartridge-versioning>` ``0.1.0``, and put the necessary files into it (read about default files for each template below)."
+msgid "This will automatically set up a Git repository in a new ``/path/to/<app_name>/`` directory, tag it with :ref:`version <cartridge-versioning>` ``0.1.0``, and put the necessary files into it."
 msgstr ""
 
 msgid "In this Git repository, you can develop the application (by simply editing the default files provided by the template), plug the necessary modules, and then easily pack everything to deploy on your server(s)."
 msgstr ""
 
-msgid "Plain template"
-msgstr ""
-
-msgid "The plain template creates the ``<app_name>/`` directory with the following contents:"
+msgid "The project template creates the ``<app_name>/`` directory with the following contents:"
 msgstr ""
 
 msgid "``<app_name>-scm-1.rockspec`` file where you can specify the application dependencies."
@@ -107,35 +77,13 @@ msgstr ""
 msgid "``.gitignore`` file to ignore the unnecessary files."
 msgstr ""
 
-msgid "Cluster template"
-msgstr ""
-
-msgid "In addition to the files listed in the plain template section, the cluster template contains the following:"
-msgstr ""
-
 msgid "``env.lua`` file that sets common rock paths so that the application can be started from any directory."
 msgstr ""
 
 msgid "``custom-role.lua`` file that is a placeholder for a custom (user-defined) :ref:`cluster role <cartridge-roles>`."
 msgstr ""
 
-msgid "The entry point file (``init.lua``) of the cluster template differs from the plain one. Among other things, it loads the ``cartridge`` module and calls its initialization function:"
-msgstr ""
-
-msgid "...\n"
-"local cartridge = require('cartridge')\n"
-"...\n"
-"cartridge.cfg({\n"
-"-- cartridge options example\n"
-"  workdir = '/var/lib/tarantool/app',\n"
-"  advertise_uri = 'localhost:3301',\n"
-"  cluster_cookie = 'super-cluster-cookie',\n"
-"  ...\n"
-"}, {\n"
-"-- box options example\n"
-"  memtx_memory = 1000000000,\n"
-"  ... })\n"
-" ..."
+msgid "The entry point file (``init.lua``), among other things, loads the ``cartridge`` module and calls its initialization function:"
 msgstr ""
 
 msgid "The ``cartridge.cfg()`` call renders the instance operable via the administrative console but does not call ``box.cfg()`` to configure instances."
@@ -168,16 +116,22 @@ msgstr ""
 msgid "Notice that you can specify a cookie for the cluster (``cluster_cookie`` parameter) if you need to run several clusters in the same network. The cookie can be any string value."
 msgstr ""
 
-msgid "Before developing a cluster-aware application, familiarize yourself with the notion of :ref:`cluster roles <cartridge-roles>` and make sure to define a custom role to initialize the database for the cluster application."
+msgid "Now you can develop an application that will run on a single or multiple independent Tarantool instances (e.g. acting as a proxy to third-party databases) -- or will run in a cluster."
+msgstr ""
+
+msgid "If you plan to develop a cluster-aware application, first familiarize yourself with the notion of :ref:`cluster roles <cartridge-roles>`."
 msgstr ""
 
 msgid "Cluster roles"
 msgstr ""
 
-msgid "A Tarantool Cartridge cluster segregates instance functionality in a role-based way. **Cluster roles** are Lua modules that implement some instance-specific functions and/or logic."
+msgid "**Cluster roles** are Lua modules that implement some specific functions and/or logic. In other words, a Tarantool Cartridge cluster segregates instance functionality in a role-based way."
 msgstr ""
 
-msgid "Since all instances running cluster applications use the same source code and are aware of all the defined roles (and plugged modules), multiple different roles can be dynamically enabled and disabled on any number of instances without restarts even during cluster operation."
+msgid "Since all instances running cluster applications use the same source code and are aware of all the defined roles (and plugged modules), you can dynamically enable and disable multiple different roles without restarts, even during cluster operation."
+msgstr ""
+
+msgid "Note that every instance in a replica set performs the same roles and you cannot enable/disable roles individually on some instances. In other words, configuration of enabled roles is set up *per replica set*. See a step-by-step configuration example in :ref:`this guide <cartridge-deployment>`."
 msgstr ""
 
 msgid "Built-in roles"
@@ -192,22 +146,22 @@ msgstr ""
 msgid "``vshard-storage`` that handles the ``vshard``'s *transaction-intensive* workload: stores and manages a subset of a dataset."
 msgstr ""
 
-msgid "For more information on sharding, see the :ref:`vshard module documentation <vshard>`."
+msgid "For more information on sharding, see the `vshard module documentation <https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/>`_."
 msgstr ""
 
-msgid "With the built-in and custom roles, Tarantool Cartridge allows you to develop applications with separated compute and transaction handling. Later, the relevant workload-specific roles can be enabled on different instances running on physical servers with workload-dedicated hardware."
+msgid "With the built-in and :ref:`custom roles <cartridge-custom-roles>`, you can develop applications with separated compute and transaction handling -- and enable relevant workload-specific roles on different instances running on physical servers with workload-dedicated hardware."
 msgstr ""
 
-msgid "Neither ``vshard-router`` nor ``vshard-storage`` manage spaces, indexes, or formats. To start developing an application, edit the ``custom-role.lua`` placeholder file: add a ``box.schema.space.create()`` call to your first cluster role."
+msgid "Custom roles"
 msgstr ""
 
-msgid "Additionally, you can implement several such roles to:"
+msgid "You can implement custom roles for any purposes, for example:"
 msgstr ""
 
 msgid "define stored procedures;"
 msgstr ""
 
-msgid "implement functionality on top of ``vshard``;"
+msgid "implement extra features on top of ``vshard``;"
 msgstr ""
 
 msgid "go without ``vshard`` at all;"
@@ -216,95 +170,46 @@ msgstr ""
 msgid "implement one or multiple supplementary services such as e-mail notifier, replicator, etc."
 msgstr ""
 
-msgid "Custom roles"
+msgid "To implement a custom cluster role, do the following:"
 msgstr ""
 
-msgid "To implement a *custom* cluster role, do the following:"
+msgid "Take the ``app/roles/custom.lua`` file in your project as a sample. Rename this file as you wish, e.g. ``app/roles/custom-role.lua``, and implement the role's logic. For example:"
 msgstr ""
 
-msgid "Register the new role in the cluster by modifying the ``cartridge.cfg()`` call in the ``init.lua`` entry point file:"
-msgstr ""
-
-msgid "...\n"
-"local cartridge = require('cartridge')\n"
-"...\n"
-"cartridge.cfg({\n"
-"  workdir = ...,\n"
-"  advertise_uri = ...,\n"
-"  roles = {'custom-role'},\n"
-"})\n"
-"..."
-msgstr ""
-
-msgid "where ``custom-role`` is the name of the Lua module to be loaded."
-msgstr ""
-
-msgid "Implement the role in a file with the appropriate name (``custom-role.lua``). For example:"
-msgstr ""
-
-msgid "#!/usr/bin/env tarantool\n"
-"-- Custom role implementation\n"
-"local role_name = 'custom-role'\n"
-"\n"
-"local function init()\n"
-"...\n"
-"end\n"
-"\n"
-"local function stop()\n"
-"...\n"
-"end\n"
-"\n"
-"return {\n"
-"    role_name = role_name,\n"
-"    init = init,\n"
-"    stop = stop,\n"
-"}"
-msgstr ""
-
-msgid "Where the ``role_name`` may differ from the module name passed to the ``cartridge.cfg()`` function. If the ``role_name`` variable is not specified, the module name is the default value."
+msgid "Here the ``role_name`` value may differ from the module name passed to the ``cartridge.cfg()`` function. If the ``role_name`` variable is not specified, the module name is the default value."
 msgstr ""
 
 msgid "Role names must be unique as it is impossible to register multiple roles with the same name."
 msgstr ""
 
-msgid "The role module does not have required functions but the cluster may execute the following ones during the role's life cycle:"
+msgid "Register the new role in the cluster by modifying the ``cartridge.cfg()`` call in the ``init.lua`` entry point file:"
+msgstr ""
+
+msgid "where ``custom-role`` is the name of the Lua module to be loaded."
+msgstr ""
+
+msgid "The role module does not have required functions, but the cluster may execute the following ones during the :ref:`role's life cycle <cartridge-role-lifecycle>`:"
 msgstr ""
 
 msgid "``init()`` is the role's *initialization* function."
 msgstr ""
 
-msgid "Inside the function's body you can call any ``box`` functions: create spaces, indexes, grant permissions, etc. Here is what the initialization function may look like:"
+msgid "Inside the function's body you can call any `box <https://www.tarantool.io/en/doc/latest/reference/reference_lua/box/>`_ functions: create spaces, indexes, grant permissions, etc. Here is what the initialization function may look like:"
 msgstr ""
 
-msgid "local function init(opts)\n"
-"    -- The cluster passes an 'opts' Lua table containing an 'is_master' flag.\n"
-"    if opts.is_master then\n"
-"        local customer = box.schema.space.create('customer',\n"
-"            { if_not_exists = true }\n"
-"        )\n"
-"        customer:format({\n"
-"            {'customer_id', 'unsigned'},\n"
-"            {'bucket_id', 'unsigned'},\n"
-"            {'name', 'string'},\n"
-"        })\n"
-"        customer:create_index('customer_id', {\n"
-"            parts = {'customer_id'},\n"
-"            if_not_exists = true,\n"
-"        })\n"
-"    end\n"
-"end"
+msgid "Neither ``vshard-router`` nor ``vshard-storage`` manage spaces, indexes, or formats. You should do it within a *custom* role: add a ``box.schema.space.create()`` call to your first cluster role, as shown in the example above."
 msgstr ""
 
 msgid "The function's body is wrapped in a conditional statement that lets you call ``box`` functions on masters only. This protects against replication collisions as data propagates to replicas automatically."
 msgstr ""
 
-msgid "``stop()`` is the role's *termination* function. Implement it if initialization starts a fiber that has to be stopped or does any job that has to be undone on termination."
+msgid "``stop()`` is the role's *termination* function. Implement it if initialization starts a fiber that has to be stopped or does any job that needs to be undone on termination."
 msgstr ""
 
-msgid "``validate_config()`` and ``apply_config()`` are *validation* and *application* functions that make custom roles configurable. Implement them if some configuration data has to be stored cluster-wide."
+msgid "``validate_config()`` and ``apply_config()`` are functions that *validate* and *apply* the role's configuration. Implement them if some configuration data needs to be stored cluster-wide."
 msgstr ""
 
-msgid "Next, get a grip on the :ref:`role's life cycle <cartridge-role-lifecycle>` to implement the necessary functions."
+msgid "Next, get a grip on the :ref:`role's life cycle <cartridge-role-lifecycle>` to implement the functions you need."
 msgstr ""
 
 msgid "Defining role dependencies"
@@ -314,16 +219,6 @@ msgid "You can instruct the cluster to apply some other roles if your custom rol
 msgstr ""
 
 msgid "For example:"
-msgstr ""
-
-msgid "-- Role dependencies defined in custom-role.lua\n"
-"local role_name = 'custom-role'\n"
-"...\n"
-"return {\n"
-"    role_name = role_name,\n"
-"    dependencies = {'cartridge.roles.vshard-router'},\n"
-"    ...\n"
-"}"
 msgstr ""
 
 msgid "Here ``vshard-router`` role will be initialized automatically for every instance with ``custom-role`` enabled."
@@ -338,12 +233,6 @@ msgstr ""
 msgid "Groups are specified in the cluster's configuration:"
 msgstr ""
 
-msgid "cartridge.cfg({\n"
-"    vshard_groups = {'hot', 'cold'},\n"
-"    ...\n"
-"})"
-msgstr ""
-
 msgid "If no groups are specified, the cluster assumes that all replica sets belong to the ``default`` group."
 msgstr ""
 
@@ -353,41 +242,25 @@ msgstr ""
 msgid "Another limitation is that you cannot add groups dynamically (this will become available in future)."
 msgstr ""
 
-msgid "Finally, mind the new syntax for router access. Every instance with a ``vshard-router`` role enabled initializes multiple routers. All of them are accessible through the role:"
+msgid "Finally, mind the syntax for router access. Every instance with a ``vshard-router`` role enabled initializes multiple routers. All of them are accessible through the role:"
 msgstr ""
 
-msgid "local router_role = cartridge.service_get('vshard-router')\n"
-"router_role.get('hot'):call(...)"
+msgid "If you have no roles specified, you can access a static router as before (when Tarantool Cartridge was unaware of groups):"
 msgstr ""
 
-msgid "If you have no roles specified, you can access a static router as before:"
+msgid "However, when using the current group-aware API, you must call a static router with a colon:"
 msgstr ""
 
-msgid "local vhsard = require('vshard')\n"
-"vshard.router.call(...)"
+msgid "Role's life cycle (and the order of function execution)"
 msgstr ""
 
-msgid "However, when using the new API, you must call a static router with a colon:"
+msgid "The cluster displays the names of all custom roles along with the built-in ``vshard-*`` roles in the :ref:`web interface <cartridge-deployment>`. Cluster administrators can enable and disable them for particular instances -- either via the web interface or via the cluster `public API <https://www.tarantool.io/en/rocks/cartridge/1.0/modules/cartridge.admin/#edit-topology-args>`_. For example:"
 msgstr ""
 
-msgid "local router_role = cartridge.service_get('vshard-router')\n"
-"local default_router = router_role.get() -- or router_role.get('default')\n"
-"default_router:call(...)"
+msgid "If you enable multiple roles on an instance at the same time, the cluster first initializes the built-in roles (if any) and then the custom ones (if any) in the order the latter were listed in ``cartridge.cfg()``."
 msgstr ""
 
-msgid "Role's life cycle and the order of function execution"
-msgstr ""
-
-msgid "The cluster displays all custom role names along with the built-in ``vshard`` ones in the web interface. Cluster administrators can enable and disable them for particular instances either via the web interface or cluster public API. For example:"
-msgstr ""
-
-msgid "cartridge.admin.edit_replicaset('replicaset-uuid', {roles = {'vshard-router', 'custom-role'}})"
-msgstr ""
-
-msgid "If multiple roles are enabled on an instance at the same time, the cluster first initializes the built-in roles (if any) and then the custom ones (if any) in the order the latter were listed in ``cartridge.cfg()``."
-msgstr ""
-
-msgid "If a custom role has dependent roles, the dependencies are registered and validated first, prior to the role itself."
+msgid "If a custom role has dependent roles, the dependencies are registered and validated first, *prior* to the role itself."
 msgstr ""
 
 msgid "The cluster calls the role's functions in the following circumstances:"
@@ -405,7 +278,7 @@ msgstr ""
 msgid "The ``apply_config()`` function upon every configuration update."
 msgstr ""
 
-msgid "Hence, if the cluster is tasked with performing the following actions, it will execute the functions listed in the following order:"
+msgid "As a tryout, let's task the cluster with some actions and see the order of executing the role's functions:"
 msgstr ""
 
 msgid "Join an instance or create a replica set, both with an enabled role:"
@@ -450,7 +323,7 @@ msgstr ""
 msgid "Execute any code related to the role's initialization."
 msgstr ""
 
-msgid "The ``stop()`` functions must undo any job that has to be undone on role's termination."
+msgid "The ``stop()`` functions must undo any job that needs to be undone on role's termination."
 msgstr ""
 
 msgid "The ``validate_config()`` function must validate any configuration change."
@@ -459,7 +332,7 @@ msgstr ""
 msgid "The ``apply_config()`` function may execute any code related to a configuration change, e.g., take care of an ``expirationd`` fiber."
 msgstr ""
 
-msgid "The validation and application functions together allow you to customize the cluster-wide configuration as described in the :ref:`next section <cartridge-role-config>`."
+msgid "The validation and application functions together allow you to change the cluster-wide configuration as described in the :ref:`next section <cartridge-role-config>`."
 msgstr ""
 
 msgid "Configuring custom roles"
@@ -471,23 +344,10 @@ msgstr ""
 msgid "Store configurations for your custom roles as sections in cluster-wide configuration, for example:"
 msgstr ""
 
-msgid "# YAML configuration file\n"
-"my_role:\n"
-"  notify_url: \"https://localhost:8080\""
+msgid "Download and upload cluster-wide configuration using the :ref:`web interface <cartridge-ui-configuration>` or API (via GET/PUT queries to ``admin/config`` endpoint like ``curl localhost:8081/admin/config`` and ``curl -X PUT -d \"{'my_parameter': 'value'}\" localhost:8081/admin/config``)."
 msgstr ""
 
-msgid "-- init.lua file\n"
-"local notify_url = 'http://localhost'\n"
-"function my_role.apply_config(conf, opts)\n"
-"  local conf = conf['my_role'] or {}\n"
-"  notify_url = conf.notify_url or 'default'\n"
-"end"
-msgstr ""
-
-msgid "Download and upload cluster-wide configuration using :ref:`cluster UI <cartridge-ui-configuration>` or API (via GET/PUT queries to ``admin/config`` endpoint like ``curl localhost:8081/admin/config`` and ``curl -X PUT -d \"{'my_parameter': 'value'}\" localhost:8081/admin/config``)."
-msgstr ""
-
-msgid "Utilize it in your role ``apply_config()`` function."
+msgid "Utilize it in your role's ``apply_config()`` function."
 msgstr ""
 
 msgid "Every instance in the cluster stores a copy of the configuration file in its working directory (configured by ``cartridge.cfg({workdir = ...})``):"
@@ -496,13 +356,13 @@ msgstr ""
 msgid "``/var/lib/tarantool/<instance_name>/config.yml`` for instances deployed from RPM packages and managed by ``systemd``."
 msgstr ""
 
-msgid "``/home/<username>/tarantool_state/var/lib/tarantool/config.yml`` for instances deployed from archives."
+msgid "``/home/<username>/tarantool_state/var/lib/tarantool/config.yml`` for instances deployed from tar+gz archives."
 msgstr ""
 
-msgid "The cluster's configuration is a Lua table, downloaded and uploaded as YAML. If some application-specific configuration data, e.g., a database schema as defined by DDL (data definition language), has to be stored on every instance in the cluster, you can implement your own API by adding a custom section to the table. The cluster will help you spread it safely across all instances."
+msgid "The cluster's configuration is a Lua table, downloaded and uploaded as YAML. If some application-specific configuration data, e.g. a database schema as defined by DDL (data definition language), needs to be stored on every instance in the cluster, you can implement your own API by adding a custom section to the table. The cluster will help you spread it safely across all instances."
 msgstr ""
 
-msgid "Such section goes in parallel (in the same file) with the topology-specific and ``vshard``-specific ones the cluster automatically generates. Unlike the generated, the custom section's modification, validation, and application logic has to be defined."
+msgid "Such section goes in the same file with topology-specific and ``vshard``-specific sections that the cluster generates automatically. Unlike the generated, the custom section's modification, validation, and application logic has to be defined."
 msgstr ""
 
 msgid "The common way is to define two functions:"
@@ -517,84 +377,28 @@ msgstr ""
 msgid "The ``validate_config()`` function must detect all configuration problems that may lead to ``apply_config()`` errors. For more information, see the :ref:`next section <cartridge-role-config-apply>`."
 msgstr ""
 
-msgid "When implementing validation and application functions that call ``box`` ones for some reason, the following precautions apply:"
+msgid "When implementing validation and application functions that call ``box`` ones for some reason, mind the following precautions:"
 msgstr ""
 
 msgid "Due to the :ref:`role's life cycle <cartridge-role-lifecycle>`, the cluster does not guarantee an automatic ``box.cfg()`` call prior to calling ``validate_config()``."
 msgstr ""
 
-msgid "If the validation function is to call any ``box`` functions (e.g., to check a format), make sure the calls are wrapped in a protective conditional statement that checks if ``box.cfg()`` has already happened:"
+msgid "If the validation function calls any ``box`` functions (e.g., to check a format), make sure the calls are wrapped in a protective conditional statement that checks if ``box.cfg()`` has already happened:"
 msgstr ""
 
-msgid "-- Inside the validation function:\n"
-"\n"
-"if type(box.cfg) == 'table' then\n"
-"\n"
-"    -- Here you can call box functions\n"
-"\n"
-"end"
+msgid "Unlike the validation function, ``apply_config()`` can call ``box`` functions freely as the cluster applies custom configuration after the automatic ``box.cfg()`` call."
 msgstr ""
 
-msgid "Unlike the validation and similar to initialization function, ``apply_config()`` can call ``box`` functions freely as the cluster applies custom configuration after the automatic ``box.cfg()`` call."
-msgstr ""
-
-msgid "However, creating spaces, users, etc., can cause replication collisions when performed on both master and replica instances simultaneously. The appropriate way is to call such ``box`` functions on masters only and let the changes propagate to replicas automatically."
+msgid "However, creating spaces, users, etc., can cause replication collisions when performed on both master and replica instances simultaneously. The appropriate way is to call such ``box`` functions *on masters only* and let the changes propagate to replicas automatically."
 msgstr ""
 
 msgid "Upon the ``apply_config(conf, opts)`` execution, the cluster passes an ``is_master`` flag in the ``opts`` table which you can use to wrap collision-inducing ``box`` functions in a protective conditional statement:"
-msgstr ""
-
-msgid "-- Inside the configuration application function:\n"
-"\n"
-"if opts.is_master then\n"
-"\n"
-"    -- Here you can call box functions\n"
-"\n"
-"end"
 msgstr ""
 
 msgid "Custom configuration example"
 msgstr ""
 
 msgid "Consider the following code as part of the role's module (``custom-role.lua``) implementation:"
-msgstr ""
-
-msgid "#!/usr/bin/env tarantool\n"
-"-- Custom role implementation\n"
-"\n"
-"local cartridge = require('cartridge')\n"
-"\n"
-"local role_name = 'custom-role'\n"
-"\n"
-"-- Modify the config by implementing some setter (an alternative to HTTP PUT)\n"
-"local function set_secret(secret)\n"
-"    local custom_role_cfg = cartridge.confapplier.get_deepcopy(role_name) or {}\n"
-"    custom_role_cfg.secret = secret\n"
-"    cartridge.confapplier.patch_clusterwide({\n"
-"        [role_name] = custom_role_cfg,\n"
-"    })\n"
-"end\n"
-"-- Validate\n"
-"local function validate_config(cfg)\n"
-"    local custom_role_cfg = cfg[role_name] or {}\n"
-"    if custom_role_cfg.secret ~= nil then\n"
-"        assert(type(custom_role_cfg.secret) == 'string', 'custom-role.secret must be a string')\n"
-"    end\n"
-"    return true\n"
-"end\n"
-"-- Apply\n"
-"local function apply_config(cfg)\n"
-"    local custom_role_cfg = cfg[role_name] or {}\n"
-"    local secret = custom_role_cfg.secret or 'default-secret'\n"
-"    -- Make use of it\n"
-"end\n"
-"\n"
-"return {\n"
-"    role_name = role_name,\n"
-"    set_secret = set_secret,\n"
-"    validate_config = validate_config,\n"
-"    apply_config = apply_config,\n"
-"}"
 msgstr ""
 
 msgid "Once the configuration is customized, do one of the following:"
@@ -612,7 +416,7 @@ msgstr ""
 msgid "Applying custom role's configuration"
 msgstr ""
 
-msgid "With the implementation showed by the :ref:`example <cartridge-role-config-example>`, you can call the ``set_secret()`` function to apply the new configuration via the administrative console or an HTTP endpoint if the role exports one."
+msgid "With the implementation showed by the :ref:`example <cartridge-role-config-example>`, you can call the ``set_secret()`` function to apply the new configuration via the administrative console -- or an HTTP endpoint if the role exports one."
 msgstr ""
 
 msgid "The ``set_secret()`` function calls ``cartridge.confapplier.patch_clusterwide()`` which performs a two-phase commit:"
@@ -621,7 +425,7 @@ msgstr ""
 msgid "It patches the active configuration in memory: copies the table and replaces the ``\"custom-role\"`` section in the copy with the one given by the ``set_secret()`` function."
 msgstr ""
 
-msgid "The cluster checks if the new configuration can be applied on all instances except disabled and expelled. All instances subject to update must be healthy and ``alive`` according to the `membership module <https://www.tarantool.io/en/doc/1.10/reference/reference_rock/membership/>`_."
+msgid "The cluster checks if the new configuration can be applied on all instances except disabled and expelled. All instances subject to update must be healthy and ``alive`` according to the `membership module <https://www.tarantool.io/en/doc/latest/reference/reference_rock/membership/>`_."
 msgstr ""
 
 msgid "(**Preparation phase**) The cluster propagates the patched configuration. Every instance validates it with the ``validate_config()`` function of every registered role. Depending on the validation's result:"
@@ -630,7 +434,7 @@ msgstr ""
 msgid "If successful (i.e., returns ``true``), the instance saves the new configuration to a temporary file named ``config.prepare.yml`` within the working directory."
 msgstr ""
 
-msgid "(**Abort phase**) Otherwise, the instance reports an error and all other instances roll back the update: remove the file they may have already prepared."
+msgid "(**Abort phase**) Otherwise, the instance reports an error and all the other instances roll back the update: remove the file they may have already prepared."
 msgstr ""
 
 msgid "(**Commit phase**) Upon successful preparation of all instances, the cluster commits the changes. Every instance:"
@@ -639,7 +443,7 @@ msgstr ""
 msgid "Creates the active configuration's hard-link."
 msgstr ""
 
-msgid "Atomically replaces the active one with the prepared. The atomic replacement is indivisible -- it can either succeed or fail entirely, never partially."
+msgid "Atomically replaces the active configuration file with the prepared one. The atomic replacement is indivisible -- it can either succeed or fail entirely, never partially."
 msgstr ""
 
 msgid "Calls the ``apply_config()`` function of every registered role."
@@ -657,48 +461,16 @@ msgstr ""
 msgid "The cluster launches an ``httpd`` server instance during initialization (``cartridge.cfg()``). You can bind a port to the instance via an environmental variable:"
 msgstr ""
 
-msgid "-- Get the port from an environmental variable or the default one:\n"
-"local http_port = os.getenv('HTTP_PORT') or '8080'\n"
-"\n"
-"local ok, err = cartridge.cfg({\n"
-"   ...\n"
-"   -- Pass the port to the cluster:\n"
-"   http_port = http_port,\n"
-"   ...\n"
-"})"
-msgstr ""
-
 msgid "To make use of the ``httpd`` instance, access it and configure routes inside the ``init()`` function of some role, e.g. a role that exposes API over HTTP:"
 msgstr ""
 
-msgid "local function init(opts)\n"
-"\n"
-"...\n"
-"\n"
-"   -- Get the httpd instance:\n"
-"   local httpd = cartridge.service_get('httpd')\n"
-"   if httpd ~= nil then\n"
-"       -- Configure a route to, for example, metrics:\n"
-"       httpd:route({\n"
-"               method = 'GET',\n"
-"               path = '/metrics',\n"
-"               public = true,\n"
-"           },\n"
-"           function(req)\n"
-"               return req:render({json = stat.stat()})\n"
-"           end\n"
-"       )\n"
-"   end\n"
-"end"
-msgstr ""
-
-msgid "For more information on the usage of Tarantool's HTTP server, see `its documentation <https://github.com/tarantool/http>`_."
+msgid "For more information on using Tarantool's HTTP server, see `its documentation <https://github.com/tarantool/http>`_."
 msgstr ""
 
 msgid "Implementing authorization in the web interface"
 msgstr ""
 
-msgid "To implement authorization in the web interface of every instance in Tarantool cluster:"
+msgid "To implement authorization in the web interface of every instance in a Tarantool cluster:"
 msgstr ""
 
 msgid "Implement a new, say, ``auth`` module with a ``check_password`` function. It should check the credentials of any user trying to log in to the web interface."
@@ -707,32 +479,7 @@ msgstr ""
 msgid "The ``check_password`` function accepts a username and password and returns an authentication success or failure."
 msgstr ""
 
-msgid "-- auth.lua\n"
-"\n"
-"-- Add a function to check the credentials\n"
-"local function check_password(username, password)\n"
-"\n"
-"    -- Check the credentials any way you like\n"
-"\n"
-"    -- Return an authentication success or failure\n"
-"    if not ok then\n"
-"        return false\n"
-"    end\n"
-"    return true\n"
-"end\n"
-"..."
-msgstr ""
-
 msgid "Pass the implemented ``auth`` module name as a parameter to ``cartridge.cfg()``, so the cluster can use it:"
-msgstr ""
-
-msgid "-- init.lua\n"
-"\n"
-"local ok, err = cartridge.cfg({\n"
-"    auth_backend_name = 'auth',\n"
-"    -- The cluster will automatically call 'require()' on the 'auth' module.\n"
-"    ...\n"
-"})"
 msgstr ""
 
 msgid "This adds a **Log in** button to the upper right corner of the web interface but still lets the unsigned users interact with the interface. This is convenient for testing."
@@ -744,32 +491,19 @@ msgstr ""
 msgid "To require the authorization of every user in the web interface even before the cluster bootstrap, add the following line:"
 msgstr ""
 
-msgid "-- init.lua\n"
-"\n"
-"local ok, err = cartridge.cfg({\n"
-"    auth_backend_name = 'auth',\n"
-"    auth_enabled = true,\n"
-"    ...\n"
-"})"
-msgstr ""
-
 msgid "With the authentication enabled and the ``auth`` module implemented, the user will not be able to even bootstrap the cluster without logging in. After the successful login and bootstrap, the authentication can be enabled and disabled cluster-wide in the web interface and the ``auth_enabled`` parameter is ignored."
 msgstr ""
 
 msgid "Application versioning"
 msgstr ""
 
-msgid "Tarantool Cartridge understands semantic versioning as described at `semver.org <https://semver.org>`_. When developing an application, create new Git branches and tag them appropriately. These tags are used to calculate version increments for subsequent packaging."
+msgid "Tarantool Cartridge understands semantic versioning as described at `semver.org <https://semver.org>`_. When developing an application, create new Git branches and tag them appropriately. These tags are used to calculate version increments for subsequent packing."
 msgstr ""
 
 msgid "For example, if your application has version 1.2.1, tag your current branch with ``1.2.1`` (annotated or not)."
 msgstr ""
 
 msgid "To retrieve the current version from Git, say:"
-msgstr ""
-
-msgid "$ git describe --long --tags\n"
-"1.2.1-12-g74864f2"
 msgstr ""
 
 msgid "This output shows that we are 12 commits after the version 1.2.1. If we are to package the application at this point, it will have a full version of ``1.2.1-12`` and its package will be named ``<app_name>-1.2.1-12.rpm``."
@@ -904,137 +638,271 @@ msgstr ""
 msgid "every **file or folder** will be ignored even if it matches other patterns"
 msgstr ""
 
-msgid "Deploying an application"
+msgid "Failover architecture"
 msgstr ""
 
-msgid "You have four options to deploy a Tarantool Cartridge application:"
+msgid "An important concept in cluster topology is appointing **a leader**. Leader is an instance which is responsible for performing key operations. To keep things simple, you can think of a leader as of the only writable master. Every replica set has its own leader, and there's usually not more than one."
 msgstr ""
 
-msgid "as an :ref:`rpm <cartridge-deploy-rpm>` package (for production);"
+msgid "Which instance will become a leader depends on topology settings and failover configuration."
 msgstr ""
 
-msgid "as a :ref:`deb <cartridge-deploy-deb>` package (for production);"
+msgid "An important topology parameter is the **failover priority** within a replica set. This is an ordered list of instances. By default, the first instance in the list becomes a leader, but with the failover enabled it may be changed automatically if the first one is malfunctioning."
 msgstr ""
 
-msgid "as a :ref:`tar+gz <cartridge-deploy-tgz>` archive (for testing, or as a workaround for production if root access is unavailable)."
+msgid "Instance configuration upon a leader change"
 msgstr ""
 
-msgid ":ref:`from sources <cartridge-deploy-rock>` (for local testing only)."
+msgid "When Cartridge configures roles, it takes into account the **leadership map** (consolidated in the ``failover.lua`` module). The leadership map is composed when the instance enters the ``ConfiguringRoles`` state for the first time. Later the map is updated according to the failover mode."
 msgstr ""
 
-msgid "Deploying as an rpm or deb package"
+msgid "Every change in the leadership map is accompanied by instance re-configuration. When the map changes, Cartridge updates the ``read_only`` setting and calls the ``apply_config`` callback for every role. It also specifies the ``is_master`` flag (which actually means ``is_leader``, but hasn't been renamed yet due to historical reasons)."
 msgstr ""
 
-msgid "Pack the application into a distributable:"
+msgid "It's important to say that we discuss a *distributed* system where every instance has its own opinion. Even if all opinions coincide, there still may be races between instances, and you (as an application developer) should take them into account when designing roles and their interaction."
 msgstr ""
 
-msgid "$ cartridge pack rpm APP_NAME\n"
-"# -- OR --\n"
-"$ cartridge pack deb APP_NAME"
+msgid "Leader appointment rules"
 msgstr ""
 
-msgid "This will create an RPM package (e.g. ``./my_app-0.1.0-1.rpm``) or a DEB package (e.g. ``./my_app-0.1.0-1.deb``)."
+msgid "The logic behind leader election depends on the **failover mode**: disabled, eventual, or stateful."
 msgstr ""
 
-msgid "Upload the package to target servers, with ``systemctl`` supported."
+msgid "Disabled mode"
 msgstr ""
 
-msgid "Install:"
+msgid "This is the simplest case. The leader is always the first instance in the failover priority. No automatic switching is performed. When it's dead, it's dead."
 msgstr ""
 
-msgid "$ yum install APP_NAME-VERSION.rpm\n"
-"# -- OR --\n"
-"$ dpkg -i APP_NAME-VERSION.deb"
+msgid "Eventual failover"
 msgstr ""
 
-msgid ":ref:`Configure the instance(s) <cartridge-config>`."
+msgid "In the ``eventual`` mode, the leader isn't elected consistently. Instead, every instance in the cluster thinks that the leader is the first **healthy** instance in the failover priority list, while instance health is determined according to the membership status (the SWIM protocol)."
 msgstr ""
 
-msgid "Start Tarantool instances with the corresponding services. You can do it using :ref:`systemctl <cartridge-run-systemctl>`, for example:"
+msgid "Leader election is done as follows. Suppose there are two replica sets in the cluster:"
 msgstr ""
 
-msgid "# starts a single instance\n"
-"$ systemctl start my_app\n"
-"\n"
-"# starts multiple instances\n"
-"$ systemctl start my_app@router\n"
-"$ systemctl start my_app@storage_A\n"
-"$ systemctl start my_app@storage_B"
+msgid "a single router \"R\","
 msgstr ""
 
-msgid "In case it is a cluster-aware application, proceed to :ref:`deploying the cluster <cartridge-deployment>`."
+msgid "two storages, \"S1\" and \"S2\"."
 msgstr ""
 
-msgid "Deploying as a tar+gz archive"
+msgid "Then we can say: all the three instances (R, S1, S2) agree that S1 is the leader."
 msgstr ""
 
-msgid "$ cartridge pack tgz APP_NAME"
+msgid "The SWIM protocol guarantees that *eventually* all instances will find a common ground, but it's not guaranteed for every intermediate moment of time. So we may get a conflict."
 msgstr ""
 
-msgid "This will create a tar+gz archive (e.g. ``./my_app-0.1.0-1.tgz``)."
+msgid "For example, soon after S1 goes down, R is already informed and thinks that S2 is the leader, but S2 hasn't received the gossip yet and still thinks he's not. This is a conflict."
 msgstr ""
 
-msgid "Upload the archive to target servers, with ``tarantool`` and (optionally) :ref:`cartridge-cli <cartridge-install>` installed."
+msgid "Similarly, when S1 recovers and takes the leadership, S2 may be unaware of that yet. So, both S1 and S2 consider themselves as leaders."
 msgstr ""
 
-msgid "Extract the archive:"
+msgid "Moreover, SWIM protocol isn't perfect and still can produce false-negative gossips (announce the instance is dead when it's not)."
 msgstr ""
 
-msgid "$ tar -xzvf APP_NAME-VERSION.tgz"
+msgid "Stateful failover"
 msgstr ""
 
-msgid "Start Tarantool instance(s). You can do it using:"
+msgid "Similarly to the eventual mode, every instance composes its own leadership map, but now the map is fetched from an **external state provider** (that's why this failover mode called \"stateful\"). Nowadays there are two state providers supported -- ``etcd`` and ``stateboard`` (standalone Tarantool instance). State provider serves as a domain-specific key-value storage (simply ``replicaset_uuid -> leader_uuid``) and a locking mechanism."
 msgstr ""
 
-msgid ":ref:`tarantool <cartridge-run-tarantool>`, for example:"
+msgid "Changes in the leadership map are obtained from the state provider with the `long polling technique <https://en.wikipedia.org/wiki/Push_technology#Long_polling>`_."
 msgstr ""
 
-msgid "$ tarantool init.lua # starts a single instance"
+msgid "All decisions are made by **the coordinator** -- the one that holds the lock. The coordinator is implemented as a built-in Cartridge role. There may be many instances with the coordinator role enabled, but only one of them can acquire the lock at the same time. We call this coordinator the \"active\" one."
 msgstr ""
 
-msgid "or :ref:`cartridge <cartridge-run-cartridge>`, for example:"
+msgid "The lock is released automatically when the TCP connection is closed, or it may expire if the coordinator becomes unresponsive (in ``stateboard`` it's set by the stateboard's ``--lock_delay`` option, for ``etcd`` it's a part of clusterwide configuration), so the coordinator renews the lock from time to time in order to be considered alive."
 msgstr ""
 
-msgid "# in application directory\n"
-"$ cartridge start # starts all instances\n"
-"$ cartridge start .router_1 # starts a single instance\n"
-"\n"
-"# in multi-application environment\n"
-"$ cartridge start my_app # starts all instances of my_app\n"
-"$ cartridge start my_app.router # starts a single instance"
+msgid "The coordinator makes a decision based on the SWIM data, but the decision algorithm is slightly different from that in case of eventual failover:"
 msgstr ""
 
-msgid "Deploying from sources"
+msgid "Right after acquiring the lock from the state provider, the coordinator fetches the leadership map."
 msgstr ""
 
-msgid "This deployment method is intended for local testing only."
+msgid "If there is no leader appointed for the replica set, the coordinator appoints the first leader according to the failover priority, regardless of the SWIM status."
 msgstr ""
 
-msgid "Pull all dependencies to the ``.rocks`` directory:"
+msgid "If a leader becomes degraded, the coordinator makes a decision. A new leader is the first healthy instance from the failover priority list. If an old leader recovers, no leader change is made until the current leader down. Changing failover priority doesn't affect this."
 msgstr ""
 
-msgid "$ tarantoolctl rocks make"
+msgid "Every appointment (self-made or fetched) is immune for a while (controlled by the ``IMMUNITY_TIMEOUT`` option)."
 msgstr ""
 
-msgid "# in application directory\n"
-"cartridge start # starts all instances\n"
-"cartridge start .router_1 # starts a single instance\n"
-"\n"
-"# in multi-application environment\n"
-"cartridge start my_app # starts all instances of my_app\n"
-"cartridge start my_app.router # starts a single instance"
+msgid "The case: external provider outage"
+msgstr ""
+
+msgid "In this case instances do nothing: the leader remains a leader, read-only instances remain read-only. If any instance restarts during an external state provider outage, it composes an empty leadership map: it doesn't know who actually is a leader and thinks there is none."
+msgstr ""
+
+msgid "The case: coordinator outage"
+msgstr ""
+
+msgid "An active coordinator may be absent in a cluster either because of a failure or due to disabling the role everywhere. Just like in the previous case, instances do nothing about it: they keep fetching the leadership map from the state provider. But it will remain the same until a coordinator appears."
+msgstr ""
+
+msgid "Manual leader promotion"
+msgstr ""
+
+msgid "It differs a lot depending on the failover mode."
+msgstr ""
+
+msgid "In the disabled and eventual modes, you can only promote a leader by changing the failover priority (and applying a new clusterwide configuration)."
+msgstr ""
+
+msgid "In the stateful mode, the failover priority doesn't make much sense (except for the first appointment). Instead, you should use the promotion API (the Lua :ref:`cartridge.failover_promote <cartridge.failover_promote>` or the GraphQL ``mutation {cluster{failover_promote()}}``) which pushes manual appointments to the state provider."
+msgstr ""
+
+msgid "The stateful failover mode implies **consistent promotion**: before becoming writable, each instance performs the ``wait_lsn`` operation to sync up with the previous one."
+msgstr ""
+
+msgid "Information about the previous leader (we call it a *vclockkeeper*) is also stored on the external storage. Even when the old leader is demoted, it remains the vclockkeeper until the new leader successfully awaits and persists its vclock on the external storage."
+msgstr ""
+
+msgid "If replication is stuck and consistent promotion isn't possible, a user has two options: to revert promotion (to re-promote the old leader) or to force it inconsistently (all kinds of ``failover_promote`` API has ``force_inconsistency`` flag)."
+msgstr ""
+
+msgid "Consistent promotion doesn't work for replicasets with `all_rw` flag enabled and for single-instance replicasets. In these two cases an instance doesn't even try to query `vclockkeeper` and to perform `wait_lsn`. But the coordinator still appoints a new leader if the current one dies."
+msgstr ""
+
+msgid "Fencing"
+msgstr ""
+
+msgid "Neither eventual nor stateful failover modes don't protect a replicaset from the presence of multiple leaders when the network is partitioned. But fencing does. It enforces at-most-one leader policy in a replicaset."
+msgstr ""
+
+msgid "Fencing operates as a fiber that occasionally checks connectivity with the state provider and with replicas. Fencing fiber runs on vclockkeepers; it starts right after consistent promotion succeeds. Replicasets which don't need consistency (single-instance and ``all_rw``) don't defense, though."
+msgstr ""
+
+msgid "The condition for fencing actuation is the loss of both the state provider quorum and at least one replica. Otherwise, if either state provider is healthy or all replicas are alive, the fencing fiber waits and doesn't intervene."
+msgstr ""
+
+msgid "When fencing is actuated, it generates a fake appointment locally and sets the leader to ``nil``. Consequently, the instance becomes read-only. Subsequent recovery is only possible when the quorum reestablishes; replica connection isn't a must for recovery. Recovery is performed according to the rules of consistent switchover unless some other instance has already been promoted to a new leader."
+msgstr ""
+
+msgid "Failover configuration"
+msgstr ""
+
+msgid "These are clusterwide parameters:"
+msgstr ""
+
+msgid "``mode``: \"disabled\" / \"eventual\" / \"stateful\"."
+msgstr ""
+
+msgid "``state_provider``: \"tarantool\" / \"etcd\"."
+msgstr ""
+
+msgid "``tarantool_params``: ``{uri = \"...\", password = \"...\"}``."
+msgstr ""
+
+msgid "``etcd2_params``: ``{endpoints = {...}, prefix = \"/\", lock_delay = 10, username = \"\", password = \"\"}``."
+msgstr ""
+
+msgid "``fencing_pause`` -- the period of performing the check;"
+msgstr ""
+
+msgid "``fencing_timout`` -- time to actuate fencing after the check fails;"
+msgstr ""
+
+msgid "It's required that ``fencing_timeout > fencing_pause``."
+msgstr ""
+
+msgid "Lua API"
+msgstr ""
+
+msgid "See:"
+msgstr ""
+
+msgid ":ref:`cartridge.failover_get_params <cartridge.failover_get_params>`,"
+msgstr ""
+
+msgid ":ref:`cartridge.failover_set_params <cartridge.failover_set_params>`,"
+msgstr ""
+
+msgid ":ref:`cartridge.failover_promote <cartridge.failover_promote>`."
+msgstr ""
+
+msgid "GraphQL API"
+msgstr ""
+
+msgid "Use your favorite GraphQL client (e.g. `Altair <https://altair.sirmuel.design/>`_) for requests introspection:"
+msgstr ""
+
+msgid "``query {cluster{failover_params{}}}``,"
+msgstr ""
+
+msgid "``mutation {cluster{failover_params(){}}}``,"
+msgstr ""
+
+msgid "``mutation {cluster{failover_promote()}}``."
+msgstr ""
+
+msgid "Stateboard configuration"
+msgstr ""
+
+msgid "Like other Cartridge instances, the stateboard supports ``cartridge.argprase`` options:"
+msgstr ""
+
+msgid "``listen``"
+msgstr ""
+
+msgid "``workdir``"
+msgstr ""
+
+msgid "``password``"
+msgstr ""
+
+msgid "``lock_delay``"
+msgstr ""
+
+msgid "Similarly to other ``argparse`` options, they can be passed via command-line arguments or via environment variables, e.g.:"
+msgstr ""
+
+msgid "Fine-tuning failover behavior"
+msgstr ""
+
+msgid "Besides failover priority and mode, there are some other private options that influence failover operation:"
+msgstr ""
+
+msgid "``LONGPOLL_TIMEOUT`` (``failover``) -- the long polling timeout (in seconds) to fetch new appointments (default: 30);"
+msgstr ""
+
+msgid "``NETBOX_CALL_TIMEOUT`` (``failover/coordinator``) -- stateboard client's connection timeout (in seconds) applied to all communications (default: 1);"
+msgstr ""
+
+msgid "``RECONNECT_PERIOD`` (``coordinator``) -- time (in seconds) to reconnect to the state provider if it's unreachable (default: 5);"
+msgstr ""
+
+msgid "``IMMUNITY_TIMEOUT`` (``coordinator``) -- minimal amount of time (in seconds) to wait before overriding an appointment (default: 15)."
 msgstr ""
 
 msgid "Configuring instances"
 msgstr ""
 
+msgid "Cartridge orchestrates a distributed system of Tarantool instances -- a cluster. One of the core concepts is **clusterwide configuration**. Every instance in a cluster stores a copy of it."
+msgstr ""
+
+msgid "Clusterwide configuration contains options that must be identical on every cluster node, such as the topology of the cluster, failover and vshard configuration, authentication parameters and ACLs, and user-defined configuration."
+msgstr ""
+
+msgid "Clusterwide configuration doesn't provide instance-specific parameters: ports, workdirs, memory settings, etc."
+msgstr ""
+
+msgid "Configuration basics"
+msgstr ""
+
 msgid "Instance configuration includes two sets of parameters:"
 msgstr ""
 
-msgid "`cartridge.cfg() parameters <https://www.tarantool.io/en/rocks/cartridge/1.0/modules/cartridge.argparse/#cluster-opts>`_;"
+msgid ":ref:`cartridge.cfg() parameters <cartridge.argparse.cluster_opts>`;"
 msgstr ""
 
-msgid "`box.cfg() parameters <https://www.tarantool.io/en/rocks/cartridge/1.0/modules/cartridge.argparse/#box-opts>`_."
+msgid ":ref:`box.cfg() parameters <cartridge.argparse.box_opts>`."
 msgstr ""
 
 msgid "You can set any of these parameters in:"
@@ -1070,17 +938,7 @@ msgstr ""
 msgid "If you start instances using ``cartridge`` CLI or ``systemctl``, save the configuration as a YAML file, for example:"
 msgstr ""
 
-msgid "my_app.router: {\"advertise_uri\": \"localhost:3301\", \"http_port\": 8080}\n"
-"my_app.storage_A: {\"advertise_uri\": \"localhost:3302\", \"http_enabled\": False}\n"
-"my_app.storage_B: {\"advertise_uri\": \"localhost:3303\", \"http_enabled\": False}"
-msgstr ""
-
 msgid "With ``cartridge`` CLI, you can pass the path to this file as the ``--cfg`` command-line argument to the ``cartridge start`` command -- or specify the path in ``cartridge`` CLI configuration (in ``./.cartridge.yml`` or ``~/.cartridge.yml``):"
-msgstr ""
-
-msgid "cfg: cartridge.yml\n"
-"run_dir: tmp/run\n"
-"apps_path: /usr/local/share/tarantool"
 msgstr ""
 
 msgid "With ``systemctl``, save the YAML file to ``/etc/tarantool/conf.d/`` (the default ``systemd`` path) or to a location set in the ``TARANTOOL_CFG`` environment variable."
@@ -1089,7 +947,214 @@ msgstr ""
 msgid "If you start instances with ``tarantool init.lua``, you need to pass other configuration options as command-line parameters and environment variables, for example:"
 msgstr ""
 
-msgid "$ tarantool init.lua --alias router --memtx-memory 100 --workdir \"~/db/3301\" --advertise_uri \"localhost:3301\" --http_port \"8080\""
+msgid "Internal representation of clusterwide configuration"
+msgstr ""
+
+msgid "In the file system, clusterwide configuration is represented by a **file tree**. Inside ``workdir`` of any configured instance you can find the following directory:"
+msgstr ""
+
+msgid "This is the clusterwide configuration with three default **config sections** -- ``auth``, ``topology``, and ``vshard_groups``."
+msgstr ""
+
+msgid "Due to historical reasons clusterwide configuration has two appearances:"
+msgstr ""
+
+msgid "old-style single-file ``config.yml`` with all sections combined, and"
+msgstr ""
+
+msgid "modern multi-file representation mentioned above."
+msgstr ""
+
+msgid "Before cartridge v2.0 it used to look as follows, and this representation is still used in HTTP API and ``luatest`` helpers."
+msgstr ""
+
+msgid "Beyond these essential sections, clusterwide configuration may be used for storing some other role-specific data. Clusterwide configuration supports YAML as well as plain text sections. It can also be organized in nested subdirectories."
+msgstr ""
+
+msgid "In Lua it's represented by the ``ClusterwideConfig`` object (a table with metamethods). Refer to the ``cartridge.clusterwide-config`` module documentation for more details."
+msgstr ""
+
+msgid "Two-phase commit"
+msgstr ""
+
+msgid "Cartridge manages clusterwide configuration to be identical everywhere using the two-phase commit algorithm implemented in the ``cartridge.twophase`` module. Changes in clusterwide configuration imply applying it on every instance in the cluster."
+msgstr ""
+
+msgid "Almost every change in cluster parameters triggers a two-phase commit: joining/expelling a server, editing replica set roles, managing users, setting failover and vshard configuration."
+msgstr ""
+
+msgid "Two-phase commit requires all instances to be alive and healthy, otherwise it returns an error."
+msgstr ""
+
+msgid "For more details, please, refer to the ``cartridge.config_patch_clusterwide`` API reference."
+msgstr ""
+
+msgid "Managing role-specific data"
+msgstr ""
+
+msgid "Beside system sections, clusterwide configuration may be used for storing some other **role-specific data**. It supports YAML as well as plain text sections. And it can also be organized in nested subdirectories."
+msgstr ""
+
+msgid "Role-specific sections are used by some third-party roles, i.e. `sharded-queue <https://github.com/tarantool/sharded-queue>`_ and `cartridge-extensions <https://github.com/tarantool/cartridge-extensions>`_."
+msgstr ""
+
+msgid "A user can influence clusterwide configuration in various ways. You can alter configuration using Lua, HTTP or GraphQL API. Also there are `luatest <https://github.com/tarantool/luatest>`_ helpers available."
+msgstr ""
+
+msgid "HTTP API"
+msgstr ""
+
+msgid "It works with old-style single-file representation only. It's useful when there are only few sections needed."
+msgstr ""
+
+msgid "Example:"
+msgstr ""
+
+msgid "Upload new config:"
+msgstr ""
+
+msgid "Download it:"
+msgstr ""
+
+msgid "It's suitable for role-specific sections only. System sections (``topology``, ``auth``, ``vshard_groups``, ``users_acl``) can be neither uploaded nor downloaded."
+msgstr ""
+
+msgid "If authorization is enabled, use the ``curl`` option ``--user username:password``."
+msgstr ""
+
+msgid "GraphQL API, by contrast, is only suitable for managing plain-text sections in the modern multi-file appearance. It is mostly used by WebUI, but sometimes it's also helpful in tests:"
+msgstr ""
+
+msgid "Unlike HTTP API, GraphQL affects only the sections mentioned in the query. All the other sections remain unchanged."
+msgstr ""
+
+msgid "Similarly to HTTP API, GraphQL ``cluster {config}`` query isn't suitable for managing system sections."
+msgstr ""
+
+msgid "It's not the most convenient way to configure third-party role, but it may be useful for role development. Please, refer to the corresponding API reference:"
+msgstr ""
+
+msgid "``cartridge.config_patch_clusterwide``"
+msgstr ""
+
+msgid "``cartridge.config_get_deepcopy``"
+msgstr ""
+
+msgid "``cartridge.config_get_readonly``"
+msgstr ""
+
+msgid "Example (from ``sharded-queue``, simplified):"
+msgstr ""
+
+msgid "Luatest helpers"
+msgstr ""
+
+msgid "Cartridge test helpers provide methods for configuration management:"
+msgstr ""
+
+msgid "``cartridge.test-helpers.cluster:upload_config``,"
+msgstr ""
+
+msgid "``cartridge.test-helpers.cluster:download_config``."
+msgstr ""
+
+msgid "Internally they wrap the HTTP API."
+msgstr ""
+
+msgid "Deploying an application"
+msgstr ""
+
+msgid "After you've developed your application locally, you can deploy it to a test or production environment."
+msgstr ""
+
+msgid "\"Deploy\" includes packing the application into a specific distribution format, installing to the target system, and running the application."
+msgstr ""
+
+msgid "You have four options to deploy a Tarantool Cartridge application:"
+msgstr ""
+
+msgid "as an :ref:`rpm <cartridge-deploy-rpm>` package (for production);"
+msgstr ""
+
+msgid "as a :ref:`deb <cartridge-deploy-deb>` package (for production);"
+msgstr ""
+
+msgid "as a :ref:`tar+gz <cartridge-deploy-tgz>` archive (for testing, or as a workaround for production if root access is unavailable)."
+msgstr ""
+
+msgid ":ref:`from sources <cartridge-deploy-rock>` (for local testing only)."
+msgstr ""
+
+msgid "Deploying as an rpm or deb package"
+msgstr ""
+
+msgid "The choice between DEB and RPM depends on the package manager of the target OS. For example, DEB is native for Debian Linux, and RPM -- for CentOS."
+msgstr ""
+
+msgid "Pack the application into a distributable:"
+msgstr ""
+
+msgid "This will create an RPM package (e.g. ``./my_app-0.1.0-1.rpm``) or a DEB package (e.g. ``./my_app-0.1.0-1.deb``)."
+msgstr ""
+
+msgid "Upload the package to target servers, with ``systemctl`` supported."
+msgstr ""
+
+msgid "Install:"
+msgstr ""
+
+msgid "Configure the instance(s). Create a file called ``/etc/tarantool/conf.d/instances.yml``. For example:"
+msgstr ""
+
+msgid "See details :ref:`here <cartridge-config>`."
+msgstr ""
+
+msgid "Start Tarantool instances with the corresponding services. You can do it using :ref:`systemctl <cartridge-run-systemctl>`, for example:"
+msgstr ""
+
+msgid "In case it is a cluster-aware application, proceed to :ref:`deploying the cluster <cartridge-deployment>`."
+msgstr ""
+
+msgid "If you're migrating your application from local test environment to production, you can re-use your test configuration at this step:"
+msgstr ""
+
+msgid "In the cluster web interface of the test environment, click **Configuration files > Download** to save the test configuration."
+msgstr ""
+
+msgid "In the cluster web interface of the production environment, click **Configuration files > Upload** to upload the saved configuration."
+msgstr ""
+
+msgid "Deploying as a tar+gz archive"
+msgstr ""
+
+msgid "This will create a tar+gz archive (e.g. ``./my_app-0.1.0-1.tgz``)."
+msgstr ""
+
+msgid "Upload the archive to target servers, with ``tarantool`` and (optionally) :ref:`cartridge-cli <cartridge-install-dev>` installed."
+msgstr ""
+
+msgid "Extract the archive:"
+msgstr ""
+
+msgid "Start Tarantool instance(s). You can do it using:"
+msgstr ""
+
+msgid ":ref:`tarantool <cartridge-run-tarantool>`, for example:"
+msgstr ""
+
+msgid "or :ref:`cartridge <cartridge-run-cartridge>`, for example:"
+msgstr ""
+
+msgid "Deploying from sources"
+msgstr ""
+
+msgid "This deployment method is intended for local testing only."
+msgstr ""
+
+msgid "Pull all dependencies to the ``.rocks`` directory:"
+msgstr ""
+
+msgid "$ tarantoolctl rocks make"
 msgstr ""
 
 msgid "Starting/stopping instances"
@@ -1104,9 +1169,6 @@ msgstr ""
 msgid "With ``tarantool``, you can start only a single instance:"
 msgstr ""
 
-msgid "$ tarantool init.lua # the simplest command"
-msgstr ""
-
 msgid "You can also :ref:`specify more options <cartridge-config-tarantool>` on the command line or in environment variables."
 msgstr ""
 
@@ -1117,9 +1179,6 @@ msgid "Start/stop using ``cartridge`` CLI"
 msgstr ""
 
 msgid "With ``cartridge`` CLI, you can start one or multiple instances:"
-msgstr ""
-
-msgid "$ cartridge start [APP_NAME[.INSTANCE_NAME]] [options]"
 msgstr ""
 
 msgid "The options are:"
@@ -1164,9 +1223,6 @@ msgstr ""
 msgid "Do not daemonize."
 msgstr ""
 
-msgid "cartridge start my_app --cfg demo.yml --run_dir ./tmp/run --foreground"
-msgstr ""
-
 msgid "It starts all ``tarantool`` instances specified in ``cfg`` file, in foreground, with enforced :ref:`environment variables <cartridge-config>`."
 msgstr ""
 
@@ -1176,19 +1232,7 @@ msgstr ""
 msgid "When ``INSTANCE_NAME`` is not provided, ``cartridge`` reads ``cfg`` file and starts all defined instances:"
 msgstr ""
 
-msgid "# in application directory\n"
-"cartridge start # starts all instances\n"
-"cartridge start .router_1 # start single instance\n"
-"\n"
-"# in multi-application environment\n"
-"cartridge start my_app # starts all instances of my_app\n"
-"cartridge start my_app.router # start a single instance"
-msgstr ""
-
 msgid "To stop the instances, say:"
-msgstr ""
-
-msgid "$ cartridge stop [APP_NAME[.INSTANCE_NAME]] [options]"
 msgstr ""
 
 msgid "These options from the ``cartridge start`` command are supported:"
@@ -1200,19 +1244,10 @@ msgstr ""
 msgid "To run a single instance:"
 msgstr ""
 
-msgid "$ systemctl start APP_NAME"
-msgstr ""
-
-msgid "This will start a  ``systemd`` service that will listen to the port specified in :ref:`instance configuration <cartridge-config>` (``http_port`` parameter)."
+msgid "This will start a  ``systemd`` service that will listen to the port specified in :ref:`instance configuration <cartridge-run-systemctl-config>` (``http_port`` parameter)."
 msgstr ""
 
 msgid "To run multiple instances on one or multiple servers:"
-msgstr ""
-
-msgid "$ systemctl start APP_NAME@INSTANCE_1\n"
-"$ systemctl start APP_NAME@INSTANCE_2\n"
-"...\n"
-"$ systemctl start APP_NAME@INSTANCE_N"
 msgstr ""
 
 msgid "where ``APP_NAME@INSTANCE_N`` is the instantiated service name for ``systemd`` with an incremental ``N`` -- a number, unique for every instance, added to the port the instance will listen to (e.g., ``3301``, ``3302``, etc.)"
@@ -1221,6 +1256,86 @@ msgstr ""
 msgid "To stop all services on a server, use the ``systemctl stop`` command and specify instance names one by one. For example:"
 msgstr ""
 
-msgid "$ systemctl stop APP_NAME@INSTANCE_1 APP_NAME@INSTANCE_2 ... APP_NAME@INSTANCE_<N>"
+msgid "When running instances with ``systemctl``, keep these practices in mind:"
 msgstr ""
 
+msgid "You can specify *instance configuration* in a YAML file."
+msgstr ""
+
+msgid "This file can contain `these options <https://www.tarantool.io/en/doc/latest/book/cartridge/cartridge_api/modules/cartridge.argparse/#tables>`_; see an example `here <https://www.tarantool.io/en/doc/latest/book/cartridge/cartridge_cli/#usage-example>`_)."
+msgstr ""
+
+msgid "Save this file to ``/etc/tarantool/conf.d/`` (the default ``systemd`` path) or to a location set in the ``TARANTOOL_CFG`` environment variable (if you've edited the application's ``systemd`` unit file). The file name doesn't matter: it can be ``instances.yml`` or anything else you like."
+msgstr ""
+
+msgid "Here's what ``systemd`` is doing further:"
+msgstr ""
+
+msgid "obtains ``app_name`` (and ``instance_name``, if specified) from the name of the application's ``systemd`` unit file (e.g. ``APP_NAME@default`` or ``APP_NAME@INSTANCE_1``);"
+msgstr ""
+
+msgid "sets default console socket (e.g. ``/var/run/tarantool/APP_NAME@INSTANCE_1.control``), PID file (e.g. ``/var/run/tarantool/APP_NAME@INSTANCE_1.pid``) and ``workdir`` (e.g. ``/var/lib/tarantool/<APP_NAME>.<INSTANCE_NAME>``). Environment=TARANTOOL_WORKDIR=${workdir}.%i"
+msgstr ""
+
+msgid "Finally, ``cartridge`` looks across all YAML files in ``/etc/tarantool/conf.d`` for a section with the appropriate name (e.g. ``app_name`` that contains common configuration for all instances, and ``app_name.instance_1`` that contain instance-specific configuration). As a result, Cartridge options ``workdir``, ``console_sock``, and ``pid_file`` in the YAML file `cartridge.cfg <https://www.tarantool.io/en/doc/latest/book/cartridge/cartridge_api/modules/cartridge/#cfg-opts-box-opts>`_ become useless, because ``systemd`` overrides them."
+msgstr ""
+
+msgid "The default tool for querying logs is `journalctl <https://www.freedesktop.org/software/systemd/man/journalctl.html>`_. For example:"
+msgstr ""
+
+msgid "If really needed, you can change logging-related ``box.cfg`` options in the YAML configuration file: see `log <https://www.tarantool.io/en/doc/2.3/reference/configuration/#confval-log>`_ and other related options."
+msgstr ""
+
+msgid "Error handling guidelines"
+msgstr ""
+
+msgid "Almost all errors in Cartridge follow the ``return nil, err`` style, where ``err`` is an error object produced by Tarantool's `errors <https://github.com/tarantool/errors>`_ module. Cartridge doesn't raise errors except for bugs and functions contracts mismatch. Developing new roles should follow these guidelines as well."
+msgstr ""
+
+msgid "Error objects in Lua"
+msgstr ""
+
+msgid "Error classes help to locate the problem's source. For this purpose, an error object contains its class, stack traceback, and a message."
+msgstr ""
+
+msgid "For uniform error handling, ``errors`` provides the ``:pcall`` API:"
+msgstr ""
+
+msgid "```lua print(DangerousError:pcall(error, 'what could possibly go wrong?')) ```"
+msgstr ""
+
+msgid "For ``errors.pcall`` there is no difference between the ``return nil, err`` and ``error()`` approaches."
+msgstr ""
+
+msgid "Note that ``errors.pcall`` API differs from the vanilla Lua `pcall <https://www.lua.org/pil/8.4.html>`_. Instead of ``true`` the former returns values returned from the call. If there is an error, it returns ``nil`` instead of ``false``, plus an error message."
+msgstr ""
+
+msgid "Remote ``net.box`` calls keep no stack trace from the remote. In that case, ``errors.netbox_eval`` comes to the rescue. It will find a stack trace from local and remote hosts and restore metatables."
+msgstr ""
+
+msgid "However, ``vshard`` implemented in Tarantool doesn't utilize the ``errors`` module. Instead it uses `its own errors <https://github.com/tarantool/vshard/blob/master/vshard/error.lua>`_. Keep this in mind when working with ``vshard`` functions."
+msgstr ""
+
+msgid "Data included in an error object (class name, message, traceback) may be easily converted to string using the ``tostring()`` function."
+msgstr ""
+
+msgid "GraphQL"
+msgstr ""
+
+msgid "GraphQL implementation in Cartridge wraps the ``errors`` module, so a typical error response looks as follows:"
+msgstr ""
+
+msgid "Read more about errors in the `GraphQL specification <http://spec.graphql.org/draft/#sec-Errors.Error-result-format>`_."
+msgstr ""
+
+msgid "If you're going to implement a GraphQL handler, you can add your own extension like this:"
+msgstr ""
+
+msgid "It will lead to the following response:"
+msgstr ""
+
+msgid "HTTP"
+msgstr ""
+
+msgid "In a nutshell, an ``errors`` object is a table. This means that it can be swiftly represented in JSON. This approach is used by Cartridge to handle errors via http:"
+msgstr ""
