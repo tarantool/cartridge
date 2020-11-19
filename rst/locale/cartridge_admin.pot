@@ -20,7 +20,7 @@ msgstr ""
 msgid "Then :ref:`start the instances <cartridge-run>`, for example using ``cartridge`` CLI:"
 msgstr ""
 
-msgid "And bootstrap the cluster. You can do this via the Web interface which is available at ``http://<instance_hostname>:<instance_http_port>`` (in this example, ``http://localhost:3301``)."
+msgid "And bootstrap the cluster. You can do this via the Web interface which is available at ``http://<instance_hostname>:<instance_http_port>`` (in this example, ``http://localhost:8080``)."
 msgstr ""
 
 msgid "In the web interface, do the following:"
@@ -625,4 +625,3 @@ msgstr ""
 
 msgid "Please see the `backups section <https://www.tarantool.io/en/doc/latest/book/admin/backups/>`_ in the Tarantool manual."
 msgstr ""
-

@@ -10,4 +10,3 @@ msgstr ""
 
 msgid "This documentation contains the following sections:"
 msgstr ""
-

@@ -94,4 +94,3 @@ msgstr ""
 
 msgid "If further configuration modifications are made with a two-phase commit (e.g. via the WebUI or with the Lua API), the active configuration of an active instance will be spread across the cluster."
 msgstr ""
-

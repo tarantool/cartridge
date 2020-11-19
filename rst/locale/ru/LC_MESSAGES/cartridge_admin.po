@@ -48,10 +48,11 @@ msgstr ""
 "Затем, :ref:`запустите экземпляры <cartridge-run>`, например, используя "
 "CLI в ``cartridge``:"
 
+#, fuzzy
 msgid ""
 "And bootstrap the cluster. You can do this via the Web interface which is"
 " available at ``http://<instance_hostname>:<instance_http_port>`` (in "
-"this example, ``http://localhost:3301``)."
+"this example, ``http://localhost:8080``)."
 msgstr ""
 "И загрузите кластер. Это можно сделать через веб-интерфейс, который "
 "доступен по адресу "

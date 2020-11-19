@@ -1574,6 +1574,47 @@ msgid ""
 "``force_inconsistency`` flag)."
 msgstr ""
 
+msgid ""
+"Consistent promotion doesn't work for replicasets with `all_rw` flag "
+"enabled and for single-instance replicasets. In these two cases an "
+"instance doesn't even try to query `vclockkeeper` and to perform "
+"`wait_lsn`. But the coordinator still appoints a new leader if the "
+"current one dies."
+msgstr ""
+
+msgid "Fencing"
+msgstr ""
+
+msgid ""
+"Neither eventual nor stateful failover modes don't protect a replicaset "
+"from the presence of multiple leaders when the network is partitioned. "
+"But fencing does. It enforces at-most-one leader policy in a replicaset."
+msgstr ""
+
+msgid ""
+"Fencing operates as a fiber that occasionally checks connectivity with "
+"the state provider and with replicas. Fencing fiber runs on "
+"vclockkeepers; it starts right after consistent promotion succeeds. "
+"Replicasets which don't need consistency (single-instance and ``all_rw``)"
+" don't defense, though."
+msgstr ""
+
+msgid ""
+"The condition for fencing actuation is the loss of both the state "
+"provider quorum and at least one replica. Otherwise, if either state "
+"provider is healthy or all replicas are alive, the fencing fiber waits "
+"and doesn't intervene."
+msgstr ""
+
+msgid ""
+"When fencing is actuated, it generates a fake appointment locally and "
+"sets the leader to ``nil``. Consequently, the instance becomes read-only."
+" Subsequent recovery is only possible when the quorum reestablishes; "
+"replica connection isn't a must for recovery. Recovery is performed "
+"according to the rules of consistent switchover unless some other "
+"instance has already been promoted to a new leader."
+msgstr ""
+
 #, fuzzy
 msgid "Failover configuration"
 msgstr "В конфигурационном файле формата YAML."
@@ -1593,6 +1634,15 @@ msgstr ""
 msgid ""
 "``etcd2_params``: ``{endpoints = {...}, prefix = \"/\", lock_delay = 10, "
 "username = \"\", password = \"\"}``."
+msgstr ""
+
+msgid "``fencing_pause`` -- the period of performing the check;"
+msgstr ""
+
+msgid "``fencing_timout`` -- time to actuate fencing after the check fails;"
+msgstr ""
+
+msgid "It's required that ``fencing_timeout > fencing_pause``."
 msgstr ""
 
 msgid "Lua API"
@@ -2053,7 +2103,13 @@ msgstr "Загрузите пакет на необходимые серверы
 msgid "Install:"
 msgstr "Установите:"
 
-msgid ":ref:`Configure the instance(s) <cartridge-config>`."
+msgid ""
+"Configure the instance(s). Create a file called "
+"``/etc/tarantool/conf.d/instances.yml``. For example:"
+msgstr ""
+
+#, fuzzy
+msgid "See details :ref:`here <cartridge-config>`."
 msgstr ":ref:`Выполните конфигурацию экземпляров <cartridge-config>`."
 
 msgid ""
