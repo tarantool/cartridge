@@ -1,11 +1,11 @@
 
-msgid "Tarantool Cartridge administrator's guide"
+msgid "Administrator's guide"
 msgstr ""
 
 msgid "This guide explains how to deploy and manage a Tarantool cluster with Tarantool Cartridge."
 msgstr ""
 
-msgid "For more information on managing Tarantool instances, see the :ref:`Server administration <admin>` section."
+msgid "For more information on managing Tarantool instances, see the `server administration section <https://www.tarantool.io/en/doc/latest/book/admin/>`_ of the Tarantool manual."
 msgstr ""
 
 msgid "Before deploying the cluster, familiarize yourself with the notion of :ref:`cluster roles <cartridge-roles>` and :ref:`deploy Tarantool instances <cartridge-deploy>` according to the desired cluster topology."
@@ -17,17 +17,7 @@ msgstr ""
 msgid "To deploy the cluster, first, :ref:`configure <cartridge-config>` your Tarantool instances according to the desired cluster topology, for example:"
 msgstr ""
 
-msgid "my_app.router: {\"advertise_uri\": \"localhost:3301\", \"http_port\": 3301, \"workdir\": \"./tmp/router\"}\n"
-"my_app.storage_A_master: {\"advertise_uri\": \"localhost:3302\", \"http_enabled\": False, \"workdir\": \"./tmp/storage-a-master\"}\n"
-"my_app.storage_A_replica: {\"advertise_uri\": \"localhost:3303\", \"http_enabled\": False, \"workdir\": \"./tmp/storage-a-replica\"}\n"
-"my_app.storage_B_master: {\"advertise_uri\": \"localhost:3304\", \"http_enabled\": False, \"workdir\": \"./tmp/storage-b-master\"}\n"
-"my_app.storage_B_replica: {\"advertise_uri\": \"localhost:3305\", \"http_enabled\": False, \"workdir\": \"./tmp/storage-b-replica\"}"
-msgstr ""
-
 msgid "Then :ref:`start the instances <cartridge-run>`, for example using ``cartridge`` CLI:"
-msgstr ""
-
-msgid "cartridge start my_app --cfg demo.yml --run_dir ./tmp/run --foreground"
 msgstr ""
 
 msgid "And bootstrap the cluster. You can do this via the Web interface which is available at ``http://<instance_hostname>:<instance_http_port>`` (in this example, ``http://localhost:3301``)."
@@ -42,13 +32,13 @@ msgstr ""
 msgid "If enabled (in production), enter your credentials and click **Login**:"
 msgstr ""
 
+msgid "|nbsp|"
+msgstr ""
+
 msgid "If disabled (for easier testing), simply proceed to configuring the cluster."
 msgstr ""
 
 msgid "Click **Сonfigure** next to the first unconfigured server to create the first replica set -- solely for the router (intended for *compute-intensive* workloads)."
-msgstr ""
-
-msgid "|nbsp|"
 msgstr ""
 
 msgid "In the pop-up window, check the ``vshard-router`` role -- or any custom role that has ``vshard-router`` as a dependent role (in this example, this is a custom role named ``app.roles.api``)."
@@ -114,7 +104,7 @@ msgstr ""
 msgid "To make different replica sets store different numbers of buckets, click **Edit** next to a replica set, change its default weight, and click **Save**:"
 msgstr ""
 
-msgid "For more information on buckets and replica set's weights, see the :ref:`vshard module documentation <vshard>`."
+msgid "For more information on buckets and replica set's weights, see the `vshard module documentation <https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/>`_."
 msgstr ""
 
 msgid "Bootstrap ``vshard`` by clicking the corresponding button, or by saying ``cartridge.admin.boostrap_vshard()`` over the administrative console."
@@ -198,10 +188,7 @@ msgstr ""
 msgid "The new instance waits until another instance in the cluster receives the configuration update and discovers it, again, using the ``membership`` module. On this step, the new instance does not have a UUID yet."
 msgstr ""
 
-msgid "Once the instance realizes its presence is known to the cluster, it calls the ``box.cfg`` function and starts living its life."
-msgstr ""
-
-msgid "For more information, see the :ref:`box.cfg submodule reference <box_introspection-box_cfg>`."
+msgid "Once the instance realizes its presence is known to the cluster, it calls the `box.cfg <https://www.tarantool.io/en/doc/latest/reference/reference_lua/box_cfg/>`_ function and starts living its life."
 msgstr ""
 
 msgid "An optimal strategy for connecting new nodes to the cluster is to deploy a new zero-weight replica set instance by instance, and then increase the weight. Once the weight is updated and all cluster nodes are notified of the configuration change, buckets start migrating to new nodes."
@@ -246,54 +233,22 @@ msgstr ""
 msgid "listing all servers in the cluster:"
 msgstr ""
 
-msgid "query {\n"
-"    servers { alias uri uuid }\n"
-"}"
-msgstr ""
-
 msgid "listing all replica sets with their servers:"
-msgstr ""
-
-msgid "query {\n"
-"    replicasets {\n"
-"        uuid\n"
-"        roles\n"
-"        servers { uri uuid }\n"
-"    }\n"
-"}"
 msgstr ""
 
 msgid "joining a server to a new replica set with a storage role enabled:"
 msgstr ""
 
-msgid "mutation {\n"
-"    join_server(\n"
-"        uri: \"localhost:33003\"\n"
-"        roles: [\"vshard-storage\"]\n"
-"    )\n"
-"}"
-msgstr ""
-
 msgid "Data rebalancing"
 msgstr ""
 
-msgid "Rebalancing (resharding) is initiated periodically and upon adding a new replica set with a non-zero weight to the cluster. For more information, see the :ref:`rebalancing process section <vshard-rebalancing>` of the ``vshard`` module documentation."
+msgid "Rebalancing (resharding) is initiated periodically and upon adding a new replica set with a non-zero weight to the cluster. For more information, see the `rebalancing process section <https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/vshard_admin/#rebalancing-process>`_ of the ``vshard`` module documentation."
 msgstr ""
 
 msgid "The most convenient way to trace through the process of rebalancing is to monitor the number of active buckets on storage nodes. Initially, a newly added replica set has 0 active buckets. After a few minutes, the background rebalancing process begins to transfer buckets from other replica sets to the new one. Rebalancing continues until the data is distributed evenly among all replica sets."
 msgstr ""
 
 msgid "To monitor the current number of buckets, connect to any Tarantool instance over the :ref:`administrative console <cartridge-manage-sharding-cli>`, and say:"
-msgstr ""
-
-msgid "tarantool> vshard.storage.info().bucket\n"
-"---\n"
-"- receiving: 0\n"
-"  active: 1000\n"
-"  total: 1000\n"
-"  garbage: 0\n"
-"  sending: 0\n"
-"..."
 msgstr ""
 
 msgid "The number of buckets may be increasing or decreasing depending on whether the rebalancer is migrating buckets to or from the storage node."
@@ -329,6 +284,15 @@ msgstr ""
 msgid "To expel an instance, click **...** next to it, then click **Expel server** and **Expel**:"
 msgstr ""
 
+msgid "There are two restrictions:"
+msgstr ""
+
+msgid "You can't expel a leader if it has a replica. Switch leadership first."
+msgstr ""
+
+msgid "You can't expel a vshard-storage if it has buckets. Set the weight to zero and wait until rebalancing is completed."
+msgstr ""
+
 msgid "Enabling automatic failover"
 msgstr ""
 
@@ -359,7 +323,7 @@ msgstr ""
 msgid "The failover status will change to enabled:"
 msgstr ""
 
-msgid "For more information, see the :ref:`replication section <replication>`."
+msgid "For more information, see the `replication section <https://www.tarantool.io/en/doc/latest/book/replication/>`_ of the Tarantool manual."
 msgstr ""
 
 msgid "Switching the replica set's master"
@@ -410,24 +374,7 @@ msgstr ""
 msgid "This example shows how to use the ``space.before_replace`` trigger to prevent replication conflicts. Suppose we have a ``box.space.test`` table that is modified in multiple replicas at the same time. We store one payload field in this table. To ensure consistency, we also store the last modification time in each tuple of this table and set the ``space.before_replace`` trigger, which gives preference to newer tuples. Below is the code in Lua:"
 msgstr ""
 
-msgid "fiber = require('fiber')\n"
-"-- define a function that will modify the function test_replace(tuple)\n"
-"        -- add a timestamp to each tuple in the space\n"
-"        tuple = box.tuple.new(tuple):update{{'!', 2, fiber.time()}}\n"
-"        box.space.test:replace(tuple)\n"
-"end\n"
-"box.cfg{ } -- restore from the local directory\n"
-"-- set the trigger to avoid conflicts\n"
-"box.space.test:before_replace(function(old, new)\n"
-"        if old ~= nil and new ~= nil and new[2] < old[2] then\n"
-"                return old -- ignore the request\n"
-"        end\n"
-"        -- otherwise apply as is\n"
-"end)\n"
-"box.cfg{ replication = {...} } -- subscribe"
-msgstr ""
-
-msgid "Monitoring cluster via CLI"
+msgid "Monitoring a cluster via CLI"
 msgstr ""
 
 msgid "This section describes parameters you can monitor over the administrative console."
@@ -437,9 +384,6 @@ msgid "Connecting to nodes via CLI"
 msgstr ""
 
 msgid "Each Tarantool node (``router``/``storage``) provides an administrative console (Command Line Interface) for debugging, monitoring, and troubleshooting. The console acts as a Lua interpreter and displays the result in the human-readable YAML format. To connect to a Tarantool instance via the console, say:"
-msgstr ""
-
-msgid "$ tarantoolctl connect <instance_hostname>:<port>"
 msgstr ""
 
 msgid "where the ``<instance_hostname>:<port>`` is the instance's URI."
@@ -452,31 +396,6 @@ msgid "Use ``vshard.storage.info()`` to obtain information on storage nodes."
 msgstr ""
 
 msgid "Output example"
-msgstr ""
-
-msgid "tarantool> vshard.storage.info()\n"
-"---\n"
-"- replicasets:\n"
-"    <replicaset_2>:\n"
-"    uuid: <replicaset_2>\n"
-"    master:\n"
-"        uri: storage:storage@127.0.0.1:3303\n"
-"    <replicaset_1>:\n"
-"    uuid: <replicaset_1>\n"
-"    master:\n"
-"        uri: storage:storage@127.0.0.1:3301\n"
-"  bucket: <!-- buckets status\n"
-"    receiving: 0 <!-- buckets in the RECEIVING state\n"
-"    active: 2 <!-- buckets in the ACTIVE state\n"
-"    garbage: 0 <!-- buckets in the GARBAGE state (are to be deleted)\n"
-"    total: 2 <!-- total number of buckets\n"
-"    sending: 0 <!-- buckets in the SENDING state\n"
-"  status: 1 <!-- the status of the replica set\n"
-"  replication:\n"
-"    status: disconnected <!-- the status of the replication\n"
-"    idle: <idle>\n"
-"  alerts:\n"
-"  - ['MASTER_IS_UNREACHABLE', 'Master is unreachable: disconnected']"
 msgstr ""
 
 msgid "Status list"
@@ -611,7 +530,7 @@ msgstr ""
 msgid "**Cluster condition:** For read-only requests to the replica, the data may be obsolete compared with the data on the master."
 msgstr ""
 
-msgid "**Solution:** Check the replication status of the replica. Further instructions are given in the :ref:`Tarantool troubleshooting guide <admin-troubleshooting-guide>`."
+msgid "**Solution:** Check the replication status of the replica. Further instructions are given in the `Tarantool troubleshooting guide <https://www.tarantool.io/en/doc/latest/book/admin/troubleshoot/>`_."
 msgstr ""
 
 msgid "``OUT_OF_SYNC`` — Mal-synchronization occured. The lag exceeds T3 threshold (10 sec.)."
@@ -642,28 +561,6 @@ msgid "Monitoring routers"
 msgstr ""
 
 msgid "Use ``vshard.router.info()`` to obtain information on the router."
-msgstr ""
-
-msgid "tarantool> vshard.router.info()\n"
-"---\n"
-"- replicasets:\n"
-"    <replica set UUID>:\n"
-"      master:\n"
-"        status: <available / unreachable / missing>\n"
-"        uri: <!-- URI of master\n"
-"        uuid: <!-- UUID of instance\n"
-"      replica:\n"
-"        status: <available / unreachable / missing>\n"
-"        uri: <!-- URI of replica used for slave requests\n"
-"        uuid: <!-- UUID of instance\n"
-"      uuid: <!-- UUID of replica set\n"
-"    <replica set UUID>: ...\n"
-"    ...\n"
-"  status: <!-- status of router\n"
-"  bucket:\n"
-"    known: <!-- number of buckets with the known destination\n"
-"    unknown: <!-- number of other buckets\n"
-"  alerts: [<alert code>, <alert description>], ..."
 msgstr ""
 
 msgid "The ``router`` works in a regular way."
@@ -717,21 +614,15 @@ msgstr ""
 msgid "**Solution:** The replica set has an unreachable master and replica. Check the error message to detect this replica set. Then fix the issue in the same way as for :ref:`UNREACHABLE_REPLICA <unreachable_replica>`."
 msgstr ""
 
-msgid "Troubleshooting"
-msgstr ""
-
-msgid "Please see the :ref:`Troubleshooting guide <admin-troubleshooting-guide>`."
-msgstr ""
-
 msgid "Disaster recovery"
 msgstr ""
 
-msgid "Please see the section :ref:`Disaster recovery <admin-disaster_recovery>`."
+msgid "Please see the `disaster recovery section <https://www.tarantool.io/en/doc/latest/book/admin/disaster_recovery/>`_ in the Tarantool manual."
 msgstr ""
 
 msgid "Backups"
 msgstr ""
 
-msgid "Please see the section :ref:`Backups <admin-backups>`."
+msgid "Please see the `backups section <https://www.tarantool.io/en/doc/latest/book/admin/backups/>`_ in the Tarantool manual."
 msgstr ""
 

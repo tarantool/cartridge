@@ -3,13 +3,19 @@ msgid "Tarantool Cartridge"
 msgstr "Tarantool Cartridge"
 
 msgid ""
-"In this chapter, we explain how you can benefit with Tarantool Cartridge,"
-" a framework for developing, deploying, and managing applications based "
-"on Tarantool."
+"**Cluster** management in Tarantool is powered by the Tarantool Cartridge"
+" framework."
+msgstr ""
+
+#, fuzzy
+msgid ""
+"Here we explain how you can benefit with Tarantool Cartridge, a framework"
+" for developing, deploying, and managing applications based on Tarantool."
 msgstr ""
 "В этой мы расскажем о том, какие преимущества предоставляет Tarantool "
 "Cartridge, платформа для разработки, развертывания и управления "
 "приложениями на основе Tarantool'а."
 
-msgid "This chapter contains the following sections:"
+#, fuzzy
+msgid "This documentation contains the following sections:"
 msgstr "Эта глава состоит из следующих разделов:"

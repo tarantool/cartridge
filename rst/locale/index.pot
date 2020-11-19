@@ -2,9 +2,12 @@
 msgid "Tarantool Cartridge"
 msgstr ""
 
-msgid "In this chapter, we explain how you can benefit with Tarantool Cartridge, a framework for developing, deploying, and managing applications based on Tarantool."
+msgid "**Cluster** management in Tarantool is powered by the Tarantool Cartridge framework."
 msgstr ""
 
-msgid "This chapter contains the following sections:"
+msgid "Here we explain how you can benefit with Tarantool Cartridge, a framework for developing, deploying, and managing applications based on Tarantool."
+msgstr ""
+
+msgid "This documentation contains the following sections:"
 msgstr ""
 
