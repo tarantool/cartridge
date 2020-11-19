@@ -1,184 +1,157 @@
-import React from 'react';
-import { connect } from 'react-redux';
+// @flow
+import React, { useEffect } from 'react';
+import { useStore } from 'effector-react';
 import { css, cx } from 'emotion';
-import * as R from 'ramda';
+import { memoizeWith, identity } from 'ramda';
 import {
-  getUsersList,
-  resetUserState,
-  showEditUserModal,
-  showRemoveUserModal
-} from 'src/store/actions/users.actions';
-import {
-  Dropdown,
-  DropdownItem,
-  IconMore,
-  Text,
-  TiledList,
-  Button
+  Button,
+  ControlsPanel,
+  IconEdit,
+  IconBucket,
+  Table,
+  Link,
+  colors
 } from '@tarantool.io/ui-kit';
-import NoData from './NoData';
+import {
+  showUserEditModal,
+  showUserRemoveModal,
+  resetUsersList,
+  fetchUsersListFx,
+  $usersList
+} from 'src/store/effector/users';
+import { BUILT_IN_USERS } from 'src/constants';
 
 const styles = {
-  clickableRow: css`
-    cursor: pointer;
+  table: css`
+    table-layout: fixed;
+
+    th:last-child {
+      width: 10%;
+    }
+
+    td {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
   `,
-  row: css`
-    display: flex;
-    flex-direction: row;
-    flex-wrap: nowrap;
-  `,
-  username: css`
+  tableLink: css`
+    color: ${colors.dark};
     font-weight: 600;
+    text-decoration: none;
+
+    &:hover,
+    &:focus {
+      text-decoration: underline;
+    }
   `,
-  field: css`
-    width: 300px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    flex-grow: 0;
-    flex-shrink: 0;
-    color: #000000;
-  `,
-  actions: css`
-    margin-left: auto;
+  tableLinkDisabled: css`
+    cursor: default;
+    text-decoration: none;
+
+    &:hover,
+    &:focus {
+      text-decoration: none;
+    }
   `
 };
 
-const columns = [
-  {
-    title: 'Username',
-    dataIndex: 'username',
-    className: styles.username
-  },
-  {
-    title: 'Full name',
-    dataIndex: 'fullname',
-    key: 'fullname'
-  },
-  {
-    title: 'E-mail',
-    dataIndex: 'email'
-  }
-];
+const tableColumns = memoizeWith(
+  identity,
+  (
+    allowEdit,
+    allowDelete
+  ) => ([
+    {
+      Header: 'Username',
+      accessor: 'username',
+      Cell: ({ cell: { value } }) => (
+        <Link
+          href='#'
+          className={cx(
+            styles.tableLink,
+            { [styles.tableLinkDisabled]: !allowEdit || BUILT_IN_USERS.includes(value) }
+          )}
+          tabIndex={(!allowEdit || BUILT_IN_USERS.includes(value)) && -1}
+          onClick={e => {
+            e.preventDefault();
+            if (allowEdit && !BUILT_IN_USERS.includes(value))
+              showUserEditModal(value);
+          }}
+        >
+          {value}
+        </Link>
+      )
+    },
+    {
+      Header: 'Full name',
+      accessor: 'fullname',
+      Cell: ({ cell: { value } }) => value || '—'
+    },
+    {
+      Header: 'E-mail',
+      accessor: 'email',
+      Cell: ({ cell: { value } }) => value || '—'
+    },
+    {
+      Header: 'Actions',
+      disableSortBy: true,
+      Cell: ({ row: { values } }) => {
+        return (
+          <ControlsPanel
+            thin
+            controls={[
+              <Button
+                onClick={() => showUserEditModal(values.username)}
+                intent='secondary'
+                disabled={!allowEdit || BUILT_IN_USERS.includes(values.username)}
+                icon={IconEdit}
+              />,
+              <Button
+                onClick={() => showUserRemoveModal(values.username)}
+                intent='secondary'
+                disabled={!allowDelete || BUILT_IN_USERS.includes(values.username)}
+                icon={IconBucket}
+              />
+            ]}
+          />
+        );
+      }
+    }
+  ])
+);
 
-const buttons = {
-  edit: {
-    text: 'Edit user',
-    handler: ({ item, showEditUserModal }) => showEditUserModal(item.username)
-  },
-  remove: {
-    text: 'Remove user',
-    handler: ({ item, showRemoveUserModal }) => showRemoveUserModal(item.username),
-    className: css`color: rgba(245, 34, 45, 0.65);`
-  }
+type UsersTableProps = {
+  implements_edit_user: boolean,
+  implements_remove_user: boolean
 }
 
-class UsersTable extends React.Component {
+export const UsersTable = (
+  {
+    implements_edit_user,
+    implements_remove_user
+  }: UsersTableProps
+) => {
+  useEffect(
+    () => {
+      fetchUsersListFx();
+      return resetUsersList;
+    },
+    []
+  );
 
+  const items = useStore($usersList);
 
-  componentDidMount() {
-    this.props.getUsersList();
-  }
+  const fetching = useStore(fetchUsersListFx.pending);
 
-  componentWillUnmount() {
-    this.props.resetUserState();
-  }
-
-  handleRow = item => this.props.implements_edit_user && this.props.showEditUserModal(item.username)
-
-  render() {
-    const {
-      items,
-      implements_edit_user,
-      implements_remove_user,
-      showEditUserModal,
-      showRemoveUserModal
-    } = this.props;
-
-    const actionButtons = (edit, remove) => (item, className) => {
-      const filtered = R.compose(
-        R.map(({ handler, text, className }) => (
-          <DropdownItem
-            className={className}
-            onClick={() => handler({ item, showEditUserModal, showRemoveUserModal })}
-          >
-            {text}
-          </DropdownItem>
-        //   {
-        //   ...rest,
-        //   onClick: () => handler({ item, showEditUserModal, showRemoveUserModal })
-        // }
-        )),
-        R.filter(R.identity),
-        R.map(([key, exists]) => exists ? buttons[key] : null),
-        R.toPairs
-      )({ edit, remove })
-      return filtered.length > 0
-        ? (
-          <Dropdown
-            className={className}
-            items={filtered}
-            popoverClassName='meta-test__UsersTableItem__dropdown'
-          >
-            <Button icon={IconMore} intent='plain' size='s' />
-          </Dropdown>
-        )
-        : null
-    }
-
-    const actionButton = actionButtons(implements_edit_user, implements_remove_user)
-
-    return items.length ? (
-      <TiledList
-        className='meta-test__UsersTable'
-        itemRender={item =>
-          <div
-            className={styles.row}
-          >
-            {columns.map(({ dataIndex, className }) =>
-              <Text className={cx(styles.field, className)} title={item[dataIndex]}>{item[dataIndex]}</Text>
-            )}
-            {
-              actionButton(item, styles.actions)
-            }
-          </div>}
-        items={items}
-        columns={implements_edit_user || implements_remove_user ? this.columnsWithActions : this.columns}
-        dataSource={items}
-        itemKey='username'
-        outer={false}
-      />
-    ) : (
-      <NoData />
-    );
-  }
-}
-
-const mapStateToProps = ({
-  app: {
-    authParams: {
-      implements_remove_user,
-      implements_edit_user
-    }
-  },
-  users: {
-    items
-  },
-  ui: {
-    fetchingUserList
-  }
-}) => ({
-  fetchingUserList,
-  items,
-  implements_remove_user,
-  implements_edit_user
-});
-
-const mapDispatchToProps = {
-  getUsersList,
-  resetUserState,
-  showEditUserModal,
-  showRemoveUserModal
+  return (
+    <Table
+      className={styles.table}
+      columns={tableColumns(
+        implements_edit_user,
+        implements_remove_user
+      )}
+      data={items}
+      loading={fetching}
+    />
+  );
 };
-
-export default connect(mapStateToProps, mapDispatchToProps)(UsersTable);

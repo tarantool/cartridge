@@ -1,5 +1,5 @@
 // @flow
-import * as R from 'ramda';
+import { uniq } from 'ramda';
 import { VSHARD_STORAGE_ROLE_NAME } from 'src/constants';
 import type { Replicaset, Role } from 'src/generated/graphql-typing';
 
@@ -19,7 +19,7 @@ export const getRolesDependencies = (activeRoles: string[], rolesOptions?: ?Role
       result.push(...dependencies);
     }
   });
-  return R.uniq(result);
+  return uniq(result);
 };
 
 export const isVShardGroupInputDisabled = (

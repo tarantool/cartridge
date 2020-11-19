@@ -1,7 +1,13 @@
 // @flow
 import React from 'react';
 import { css, cx } from 'react-emotion';
-import * as R from 'ramda';
+import {
+  compose,
+  map,
+  groupBy,
+  prop,
+  uniq
+} from 'ramda';
 import { Form, Field, FormSpy } from 'react-final-form';
 import {
   Button,
@@ -216,7 +222,7 @@ EditReplicasetFormProps) => {
 
                               form.change(
                                 fieldName,
-                                R.uniq([...newDependencies, ...rolesWithoutDependencies])
+                                uniq([...newDependencies, ...rolesWithoutDependencies])
                               )
                             }}
                             name={fieldName}
@@ -302,9 +308,9 @@ EditReplicasetFormProps) => {
                     key={'uuid'}
                     onChange={v => form.change(name, v)}
                     replicaset={replicaset}
-                    serverMap={R.compose(
-                      R.map(([val]) => val),
-                      R.groupBy(R.prop('uuid'))
+                    serverMap={compose(
+                      map(([val]) => val),
+                      groupBy(prop('uuid'))
                     )(replicaset.servers || [])}
                     selfURI={selfURI}
                     largeMargins

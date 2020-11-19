@@ -1,5 +1,5 @@
 import React from 'react';
-import { IconChevron, Text } from '@tarantool.io/ui-kit';
+import { IconChevron, Text, baseFontFamily } from '@tarantool.io/ui-kit';
 import { css, cx } from 'emotion';
 
 const styles = {
@@ -38,7 +38,7 @@ const styles = {
     padding: 0;
     border: 0;
     line-height: 18px;
-    font-family: 'Open Sans', sans-serif;
+    font-family: ${baseFontFamily};
     font-size: 14px;
     line-height: 22px;
     color: #f5222d;

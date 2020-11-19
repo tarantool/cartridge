@@ -7,7 +7,6 @@ import { saga as clusterInstancePageSaga } from 'src/store/saga/clusterInstanceP
 import { saga as editorSaga } from 'src/store/saga/editor.saga';
 import { saga as schemaSaga } from 'src/store/saga/schema.saga';
 import { saga as filesSaga } from 'src/store/saga/files.saga';
-import { saga as usersSaga } from 'src/store/saga/users.saga';
 
 export default function* rootSaga() {
   yield all([
@@ -17,7 +16,6 @@ export default function* rootSaga() {
     clusterInstancePageSaga,
     editorSaga,
     schemaSaga,
-    filesSaga,
-    usersSaga
+    filesSaga
   ].map(saga => saga()));
 }

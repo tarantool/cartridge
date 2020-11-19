@@ -47,6 +47,8 @@ Enhanced is WebUI
   frontend-core's ``set_variable`` feature or at runtime.
 - Show suggestions for `arvertise_uri`.
 - Show files requesting error on the code editor page.
+- Fixed bug with errors displaying in modals on Users page.
+- Users page state rewritten with effector.
 
 -------------------------------------------------------------------------------
 [2.3.0] - 2020-08-26

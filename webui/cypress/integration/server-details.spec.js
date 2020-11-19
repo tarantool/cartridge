@@ -82,7 +82,5 @@ describe('Server details', () => {
     cy.get('.meta-test__ServerInfoModal button').contains('Close').click();
     cy.get('.ServerLabelsHighlightingArea').contains(':13302').closest('li')
       .contains('healthy');
-
-
   });
 });

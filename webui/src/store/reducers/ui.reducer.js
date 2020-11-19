@@ -19,23 +19,7 @@ import {
   AUTH_LOG_OUT_REQUEST,
   AUTH_TURN_REQUEST,
   APP_DATA_REQUEST,
-  SET_ADD_USER_MODAL_VISIBLE,
-  SET_REMOVE_USER_MODAL_VISIBLE,
-  SET_EDIT_USER_MODAL_VISIBLE,
   SET_PROBE_SERVER_MODAL_VISIBLE,
-  USER_STATE_RESET,
-  USER_LIST_REQUEST_SUCCESS,
-  USER_LIST_REQUEST_ERROR,
-  USER_ADD_REQUEST_ERROR,
-  USER_EDIT_REQUEST_ERROR,
-  USER_REMOVE_REQUEST_ERROR,
-  USER_REMOVE_REQUEST_SUCCESS,
-  USER_EDIT_REQUEST_SUCCESS,
-  USER_ADD_REQUEST_SUCCESS,
-  USER_LIST_REQUEST,
-  USER_ADD_REQUEST,
-  USER_REMOVE_REQUEST,
-  USER_EDIT_REQUEST,
   SHOW_EXPEL_MODAL,
   HIDE_EXPEL_MODAL,
   CLUSTER_PAGE_EXPEL_SERVER_REQUEST_SUCCESS,
@@ -50,18 +34,11 @@ import {
 
 export type UIState = {
   bootstrapPanelVisible: boolean,
-  addUserModalVisible: boolean,
-  editUserModalVisible: boolean,
-  editUserId: ?string,
   probeServerModalVisible: boolean,
-  removeUserModalVisible: boolean,
-  removeUserId: ?string,
   requestingBootstrapVshard: boolean,
   showFailoverModal: boolean,
   requestinFailover: boolean,
   fetchingAuth: boolean,
-  fetchingUserList: boolean,
-  fetchingUserMutation: boolean,
   fetchingConfigFiles: boolean,
   puttingConfigFiles: boolean,
   expelModal: ?string
@@ -69,18 +46,11 @@ export type UIState = {
 
 const initialState: UIState = {
   bootstrapPanelVisible: false,
-  addUserModalVisible: false,
-  editUserModalVisible: false,
-  editUserId: null,
   probeServerModalVisible: false,
-  removeUserModalVisible: false,
-  removeUserId: null,
   requestingBootstrapVshard: false,
   showFailoverModal: false,
   requestinFailover: false,
   fetchingAuth: false,
-  fetchingUserList: false,
-  fetchingUserMutation: false,
   fetchingConfigFiles: false,
   puttingConfigFiles: false,
   expelModal: null
@@ -166,85 +136,6 @@ export const reducer = (state: UIState = initialState, { type, payload, error }:
       return {
         ...state,
         fetchingAuth: true
-      };
-
-    case SET_ADD_USER_MODAL_VISIBLE:
-      return {
-        ...state,
-        addUserModalVisible: payload.visible
-      };
-
-    case SET_REMOVE_USER_MODAL_VISIBLE:
-      return {
-        ...state,
-        removeUserModalVisible: payload.visible,
-        removeUserId: payload.visible ? payload.username : null
-      };
-
-    case SET_EDIT_USER_MODAL_VISIBLE:
-      return {
-        ...state,
-        editUserModalVisible: payload.visible,
-        editUserId: payload.visible ? payload.username : null
-      };
-
-    case USER_STATE_RESET:
-      return {
-        ...state,
-        fetchingUserList: false,
-        fetchingUserMutation: false
-      };
-
-    case USER_LIST_REQUEST_SUCCESS:
-    case USER_LIST_REQUEST_ERROR:
-      return {
-        ...state,
-        fetchingUserList: false
-      };
-
-    case USER_ADD_REQUEST_ERROR:
-    case USER_EDIT_REQUEST_ERROR:
-      return {
-        ...state,
-        fetchingUserMutation: false
-      };
-
-    case USER_REMOVE_REQUEST_ERROR:
-    case USER_REMOVE_REQUEST_SUCCESS:
-      return {
-        ...state,
-        fetchingUserMutation: false,
-        removeUserModalVisible: false,
-        removeUserId: null
-      };
-
-    case USER_EDIT_REQUEST_SUCCESS:
-      return {
-        ...state,
-        fetchingUserMutation: false,
-        editUserModalVisible: false,
-        editUserId: null
-      };
-
-    case USER_ADD_REQUEST_SUCCESS:
-      return {
-        ...state,
-        fetchingUserMutation: false,
-        addUserModalVisible: false
-      };
-
-    case USER_LIST_REQUEST:
-      return {
-        ...state,
-        fetchingUserList: true
-      };
-
-    case USER_ADD_REQUEST:
-    case USER_REMOVE_REQUEST:
-    case USER_EDIT_REQUEST:
-      return {
-        ...state,
-        fetchingUserMutation: true
       };
 
     case FETCH_CONFIG_FILES:

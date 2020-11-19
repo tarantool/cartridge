@@ -8,7 +8,6 @@ import { reducer as clusterPageReducer, type ClusterPageState } from 'src/store/
 import { reducer as clusterInstancePageReducer } from 'src/store/reducers/clusterInstancePage.reducer';
 import { reducer as schemaReducer, type SchemaState } from 'src/store/reducers/schema.reducer';
 import { default as codeEditorReducer, type CodeEditorState } from 'src/store/reducers/codeEditor.reducer';
-import { reducer as usersReducer } from 'src/store/reducers/users.reducer';
 import { reducer as ui, type UIState } from 'src/store/reducers/ui.reducer';
 
 export type State = {
@@ -27,7 +26,6 @@ const rootReducer = combineReducers({
   clusterPage: clusterPageReducer,
   clusterInstancePage: clusterInstancePageReducer,
   schema: schemaReducer,
-  users: usersReducer,
   ui,
   codeEditor: codeEditorReducer
 });

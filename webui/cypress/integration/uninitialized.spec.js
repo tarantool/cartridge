@@ -64,15 +64,15 @@ describe('Uninitialized', () => {
     cy.get('a[href="/admin/cluster/users"]').click();
 
     cy.get('.meta-test__addUserBtn').click({ force: true });
-    cy.get('.meta-test__UserAddForm input[name="username"]')
+    cy.get('label:contains(Username)').parent('div').next().find('input')
       .type('unitialisedUser');
-    cy.get('.meta-test__UserAddForm input[name="password"]')
-      .type('123');
+    cy.get('label:contains(Password)').parent('div').next().find('input')
+      .type('111');
     cy.get('.meta-test__UserAddForm button[type="submit"]').contains('Add').click();
     cy.get('.meta-test__UserAddForm')
       .contains('Topology not specified, seems that cluster isn\'t bootstrapped');
     cy.get('.meta-test__UserAddForm button[type="button"]').contains('Cancel').click();
-    cy.get('.meta-test__UsersTable').contains('unitialisedUser').should('not.exist');
+    cy.contains('unitialisedUser').should('not.exist');
   });
 
 });
