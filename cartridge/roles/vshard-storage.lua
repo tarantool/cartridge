@@ -8,7 +8,7 @@ local utils = require('cartridge.utils')
 local vshard_utils = require('cartridge.vshard-utils')
 
 vars:new('vshard_cfg')
-local _G_vhsard_backup
+local _G_vshard_backup
 
 local function apply_config(conf, _)
     checks('table', {is_master = 'boolean'})
@@ -31,7 +31,7 @@ local function apply_config(conf, _)
 end
 
 local function init()
-    _G_vhsard_backup = rawget(_G, 'vshard')
+    _G_vshard_backup = rawget(_G, 'vshard')
     rawset(_G, 'vshard', vshard)
 end
 
@@ -57,7 +57,8 @@ local function stop()
         }}
     }, instance_uuid)
     vars.vshard_cfg = nil
-    rawset(_G, 'vshard', _G_vhsard_backup)
+    rawset(_G, 'vshard', _G_vshard_backup)
+    _G_vshard_backup = nil
 end
 
 return {

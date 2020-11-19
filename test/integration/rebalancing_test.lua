@@ -139,7 +139,6 @@ function g.test()
         expel_sA1
     )
 
-    -- Speed up rebalancing
     g.sA1.net_box:call('vshard.storage.rebalancer_enable')
     helpers.retrying({}, function()
         g.sA1.net_box:call('vshard.storage.rebalancer_wakeup')

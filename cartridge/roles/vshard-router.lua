@@ -106,7 +106,7 @@ local function stop()
         vars.vshard_cfg[router_name] = nil
 
         if router.failover_fiber ~= nil
-        and router.failover_fiber:status() == 'suspended'
+        and router.failover_fiber:status() ~= 'dead'
         then
             router.failover_fiber:cancel()
             router.failover_fiber = nil
