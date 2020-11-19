@@ -105,8 +105,8 @@ export const UserAddModal = () => {
       onClose={hideModal}
       onSubmit={handleSubmit}
       footerControls={[
-        hideModal && <Button intent="base" onClick={hideModal}>Cancel</Button>,
-        <Button intent="primary" type='submit' loading={pending}>Add</Button>
+        hideModal && <Button intent="base" onClick={hideModal} size='l'>Cancel</Button>,
+        <Button intent="primary" type='submit' loading={pending} size='l'>Add</Button>
       ]}
     >
       <UsernameInput

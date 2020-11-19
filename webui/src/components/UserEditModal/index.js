@@ -81,8 +81,8 @@ export const UserEditModal = () => {
       onClose={hideModal}
       onSubmit={handleSubmit}
       footerControls={[
-        hideModal && <Button intent="base" onClick={hideModal}>Cancel</Button>,
-        <Button intent="primary" type='submit' loading={pending}>Save</Button>
+        hideModal && <Button intent="base" onClick={hideModal} size='l'>Cancel</Button>,
+        <Button intent="primary" type='submit' loading={pending} size='l'>Save</Button>
       ]}
     >
       <PasswordInput />
