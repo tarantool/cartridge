@@ -614,6 +614,24 @@ msgstr ""
 msgid "**Solution:** The replica set has an unreachable master and replica. Check the error message to detect this replica set. Then fix the issue in the same way as for :ref:`UNREACHABLE_REPLICA <unreachable_replica>`."
 msgstr ""
 
+msgid "Upgrading schema"
+msgstr ""
+
+msgid "When upgrading Tarantool to a newer version, please don't forget to:"
+msgstr ""
+
+msgid "Stop the cluster"
+msgstr ""
+
+msgid "Make sure that ``upgrade_schema`` :ref:`option <cartridge.cfg>` is enabled"
+msgstr ""
+
+msgid "Start the cluster again"
+msgstr ""
+
+msgid "This will automatically apply ``box.schema.upgrade()`` on the leader, according to the failover priority in the topology configuration."
+msgstr ""
+
 msgid "Disaster recovery"
 msgstr ""
 
@@ -625,3 +643,4 @@ msgstr ""
 
 msgid "Please see the `backups section <https://www.tarantool.io/en/doc/latest/book/admin/backups/>`_ in the Tarantool manual."
 msgstr ""
+

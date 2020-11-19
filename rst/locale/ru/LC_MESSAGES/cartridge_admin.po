@@ -1195,6 +1195,31 @@ msgstr ""
 " описано в решении ошибки :ref:`UNREACHABLE_REPLICA "
 "<unreachable_replica>`."
 
+msgid "Upgrading schema"
+msgstr "Обновление схемы"
+
+msgid "When upgrading Tarantool to a newer version, please don't forget to:"
+msgstr ""
+"Во время перехода на более новую версиб Tarantool, пожалуйста, не "
+"забудьте:"
+
+msgid "Stop the cluster"
+msgstr "Остановить кластер"
+
+msgid "Make sure that ``upgrade_schema`` :ref:`option <cartridge.cfg>` is enabled"
+msgstr "Убедиться, что включена :ref:`опция <cartridge.cfg>` ``upgrade_schema``"
+
+msgid "Start the cluster again"
+msgstr "Затем снова запустить кластер"
+
+msgid ""
+"This will automatically apply ``box.schema.upgrade()`` on the leader, "
+"according to the failover priority in the topology configuration."
+msgstr ""
+"Это автоматически применит ``box.schema.upgrade()`` на лидере, в "
+"соответствии с приоритетом восстановления после отказа (failover) в "
+"конфигурации топологии."
+
 msgid "Disaster recovery"
 msgstr "Аварийное восстановление"
 
