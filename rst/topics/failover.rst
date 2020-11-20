@@ -63,10 +63,10 @@ instance in the cluster thinks that the leader is the first **healthy** instance
 in the failover priority list, while instance health is determined according to
 the membership status (the SWIM protocol).
 
-The member is considered to be healthy if both is true:
+The member is considered healthy if both are true:
 
 1. It reports either ``ConfiguringRoles`` or ``RolesConfigured`` state;
-2. And it's SWIM status is either ``alive`` or ``suspect``.
+2. Its SWIM status is either ``alive`` or ``suspect``.
 
 A ``suspect`` member becomes ``dead`` after the ``failover_timout`` expires.
 
