@@ -28,6 +28,10 @@ local function get_params()
     --   Supported modes are "disabled", "eventual" and "stateful"
     -- @tfield ?string state_provider
     --   Supported state providers are "tarantool" and "etcd2".
+    -- @tfield number failover_timeout
+    --   (added in v2.3.0-52)
+    --   Timeout (in seconds), used by membership to
+    --   mark `suspect` members as `dead` (default: 3)
     -- @tfield ?table tarantool_params
     --   (added in v2.0.2-2)
     -- @tfield string tarantool_params.uri
@@ -37,7 +41,7 @@ local function get_params()
     -- @tfield string etcd2_params.prefix
     --   Prefix used for etcd keys: `<prefix>/lock` and
     --   `<prefix>/leaders`
-    -- @tfield ?number lock_delay
+    -- @tfield ?number etcd2_params.lock_delay
     --   Timeout (in seconds), determines lock's time-to-live (default: 10)
     -- @tfield ?table etcd2_params.endpoints
     --   URIs that are used to discover and to access etcd cluster instances.
@@ -56,6 +60,8 @@ end
 -- @tparam table opts
 -- @tparam ?string opts.mode
 -- @tparam ?string opts.state_provider
+-- @tparam ?string opts.failover_timeout
+--   (added in v2.3.0-52)
 -- @tparam ?table opts.tarantool_params
 -- @tparam ?table opts.etcd2_params
 --   (added in v2.1.2-26)
@@ -68,6 +74,7 @@ local function set_params(opts)
         state_provider = '?string',
         tarantool_params = '?table',
         etcd2_params = '?table',
+        failover_timeout = '?number',
     })
 
     local topology_cfg = confapplier.get_deepcopy('topology')
@@ -100,6 +107,10 @@ local function set_params(opts)
     end
     if opts.etcd2_params ~= nil then
         topology_cfg.failover.etcd2_params = opts.etcd2_params
+    end
+
+    if opts.failover_timeout ~= nil then
+        topology_cfg.failover.failover_timeout = opts.failover_timeout
     end
 
     local ok, err = twophase.patch_clusterwide({topology = topology_cfg})

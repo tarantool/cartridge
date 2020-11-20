@@ -35,6 +35,7 @@ vars:new('known_roles', {
         --     username = nil | string,
         --     password = nil | string,
         -- },
+        -- failover_timeout = nil | number,
     },
     servers = {
         -- ['instance-uuid-1'] = 'expelled',
@@ -341,6 +342,19 @@ local function validate_failover_schema(field, topology)
             field, topology.failover.mode
         )
 
+        if topology.failover.failover_timeout ~= nil then
+            e_config:assert(
+                type(topology.failover.failover_timeout) == 'number',
+                '%s.failover.failover_timeout must be a number, got %s',
+                field, type(topology.failover.failover_timeout)
+            )
+            e_config:assert(
+                topology.failover.failover_timeout >= 0,
+                '%s.failover.failover_timeout must be non-negative, got %s',
+                field, topology.failover.failover_timeout
+            )
+        end
+
         if topology.failover.mode == 'stateful' then
             e_config:assert(
                 topology.failover.state_provider ~= nil,
@@ -507,6 +521,7 @@ local function validate_failover_schema(field, topology)
             -- See bug https://github.com/tarantool/cartridge/issues/754
             ['enabled'] = true,
             ['coordinator_uri'] = true,
+            ['failover_timeout'] = true,
         }
         for k, _ in pairs(topology.failover) do
             e_config:assert(
@@ -692,6 +707,7 @@ local function get_failover_params(topology_cfg)
             state_provider = topology_cfg.failover.state_provider,
             tarantool_params = topology_cfg.failover.tarantool_params,
             etcd2_params = table.deepcopy(topology_cfg.failover.etcd2_params),
+            failover_timeout = topology_cfg.failover.failover_timeout,
         }
 
         if ret.etcd2_params ~= nil then
@@ -750,6 +766,10 @@ local function get_failover_params(topology_cfg)
 
     if ret.etcd2_params.password == nil then
         ret.etcd2_params.password = ""
+    end
+
+    if ret.failover_timeout == nil then
+        ret.failover_timeout = 3
     end
 
     return ret

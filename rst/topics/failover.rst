@@ -63,6 +63,13 @@ instance in the cluster thinks that the leader is the first **healthy** instance
 in the failover priority list, while instance health is determined according to
 the membership status (the SWIM protocol).
 
+The member is considered healthy if both are true:
+
+1. It reports either ``ConfiguringRoles`` or ``RolesConfigured`` state;
+2. Its SWIM status is either ``alive`` or ``suspect``.
+
+A ``suspect`` member becomes ``dead`` after the ``failover_timout`` expires.
+
 Leader election is done as follows.
 Suppose there are two replica sets in the cluster:
 
@@ -121,7 +128,7 @@ algorithm is slightly different from that in case of eventual failover:
   appoints the first leader according to the failover priority, regardless of
   the SWIM status.
 
-* If a leader becomes degraded, the coordinator makes a decision. A new
+* If a leader becomes ``dead``, the coordinator makes a decision. A new
   leader is the first healthy instance from the failover priority list.
   If an old leader recovers, no leader change is made until the current
   leader down. Changing failover priority doesn't affect this.
@@ -215,6 +222,8 @@ These are clusterwide parameters:
 
 * ``mode``: "disabled" / "eventual" / "stateful".
 * ``state_provider``: "tarantool" / "etcd".
+* ``failover_timeout`` -- time (in seconds) to mark ``suspect`` members
+  as ``dead`` and trigger failover.
 * ``tarantool_params``: ``{uri = "...", password = "..."}``.
 * ``etcd2_params``: ``{endpoints = {...}, prefix = "/", lock_delay = 10, username = "", password = ""}``.
 * ``fencing_pause`` -- the period of performing the check;

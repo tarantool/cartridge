@@ -683,6 +683,9 @@ local function cfg(clusterwide_config)
         )
     end
 
+    require("membership.options").SUSPECT_TIMEOUT_SECONDS =
+        failover_cfg.failover_timeout
+
     accept_appointments(first_appointments)
 
     local ok, err = constitute_oneself(vars.cache.active_leaders, {
