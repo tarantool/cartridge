@@ -929,7 +929,7 @@ When upgrading Tarantool to a newer version, please don't forget to:
 3. Start the cluster again
 
 This will automatically apply `box.schema.upgrade()
-<https://www.tarantool.io/ru/doc/latest/book/admin/upgrades/#admin-upgrades>`_
+<https://www.tarantool.io/en/doc/latest/book/admin/upgrades/#admin-upgrades>`_
 on the leader, according to the failover priority in the topology configuration.
 
 .. _cartridge-recovery:
