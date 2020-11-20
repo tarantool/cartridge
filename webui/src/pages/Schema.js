@@ -2,7 +2,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import { css } from 'emotion';
-import { Alert, IconRefresh, Button, ControlsPanel } from '@tarantool.io/ui-kit';
+import { Alert, IconRefresh, Button } from '@tarantool.io/ui-kit';
 import SchemaEditor from 'src/components/SchemaEditor';
 import { isValueChanged } from 'src/store/selectors/schema';
 import { type State } from 'src/store/rootReducer';
@@ -22,6 +22,7 @@ const styles = {
     padding: 16px;
     border-radius: 4px;
     box-sizing: border-box;
+    overflow: hidden;
     background-color: #ffffff;
   `,
   cardMargin: css`
@@ -30,13 +31,6 @@ const styles = {
   `,
   title: css`
     margin-left: 16px;
-  `,
-  panel: css`
-    display: flex;
-    justify-content: flex-end;
-    padding-bottom: 16px;
-    margin-bottom: 16px;
-    border-bottom: 1px solid #E8E8E8;
   `,
   editor: css`
     flex-grow: 1;
@@ -82,36 +76,31 @@ class Schema extends React.Component<SchemaProps> {
       <PageLayout
         heading='Schema'
         wide
+        topRightControls={[
+          <Button
+            text='Reload'
+            intent='base'
+            size='l'
+            onClick={getSchema}
+            icon={IconRefresh}
+          />,
+          <Button
+            text='Validate'
+            intent='base'
+            size='l'
+            onClick={validateSchema}
+          />,
+          <Button
+            onClick={applySchema}
+            text='Apply'
+            intent='primary'
+            size='l'
+            loading={uploading}
+            disabled={loading}
+          />
+        ]}
       >
         <div className={styles.area}>
-          <div className={styles.panel}>
-            <ControlsPanel
-              thin
-              controls={[
-                <Button
-                  text='Reload'
-                  intent='secondary'
-                  size='s'
-                  onClick={getSchema}
-                  icon={IconRefresh}
-                />,
-                <Button
-                  text='Validate'
-                  intent='secondary'
-                  size='s'
-                  onClick={validateSchema}
-                />,
-                <Button
-                  onClick={applySchema}
-                  text='Apply'
-                  intent='primary'
-                  size='s'
-                  loading={uploading}
-                  disabled={loading}
-                />
-              ]}
-            />
-          </div>
           <SchemaEditor
             className={styles.editor}
             fileId='ddl'
