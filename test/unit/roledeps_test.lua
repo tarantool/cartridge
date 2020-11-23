@@ -148,7 +148,7 @@ t.assert_equals(ok, true, err)
 
 local vars = require('cartridge.vars').new('cartridge.roles')
 local roles_order = {}
-for i, role in ipairs(vars.by_number) do
+for i, role in ipairs(vars.roles_by_number) do
     roles_order[i] = role.role_name
     log.info('%d) %s -> %s',
         i, role.role_name,
