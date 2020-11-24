@@ -1,7 +1,7 @@
 --- Role management (internal module).
 --
 -- The module consolidates all the role management functions:
--- `register_role`, some getters, `validate_config` and `apply_config`.
+-- `cfg`, some getters, `validate_config` and `apply_config`.
 --
 -- The module is almost stateless, it's only state is a collection of
 -- registered roles.
@@ -17,108 +17,148 @@ local errors = require('errors')
 
 local vars = require('cartridge.vars').new('cartridge.roles')
 local utils = require('cartridge.utils')
-local topology = require('cartridge.topology')
 local service_registry = require('cartridge.service-registry')
 
 local RegisterRoleError = errors.new_class('RegisterRoleError')
 local ValidateConfigError = errors.new_class('ValidateConfigError')
 local ApplyConfigError = errors.new_class('ApplyConfigError')
 
-vars:new('known_roles', {
-    -- [i] = mod,
-    -- [role_name] = mod,
-})
-vars:new('roles_dependencies', {
-    -- [role_name] = {role_name_1, role_name_2}
-})
-vars:new('roles_dependants', {
-    -- [role_name] = {role_name_1, role_name_2}
-})
+vars:new('roles_by_number', {})
+vars:new('roles_by_role_name', {})
+vars:new('roles_by_module_name', {})
 
+-- Register Lua module as a Cartridge Role.
+-- Role registration implies requiring the module and all its
+-- dependencies. Role names must be unique, and there must be no
+-- circular dependencies.
+local function register_role(ctx, module_name)
+    checks({
+        roles_by_number = 'table',
+        roles_by_role_name = 'table',
+        roles_by_module_name = 'table',
+    }, 'string')
 
-local function register_role(module_name)
-    checks('string')
-    local function e(...)
-        vars.known_roles = {}
-        vars.roles_dependencies = {}
-        vars.roles_dependants = {}
-        return RegisterRoleError:new(2, ...)
-    end
-    local mod = package.loaded[module_name]
-    if type(mod) == 'table' and vars.known_roles[mod.role_name] then
+    if ctx.roles_by_module_name[module_name] then
         -- Already loaded
-        return mod
+        return ctx.roles_by_module_name[module_name]
     end
 
-    local mod, err = RegisterRoleError:pcall(require, module_name)
-    if not mod then
-        return nil, e(err)
-    elseif type(mod) ~= 'table' then
-        return nil, e('Module %q must return a table', module_name)
+    local M, err = RegisterRoleError:pcall(require, module_name)
+    if err ~= nil then
+        return nil, err
+    elseif type(M) ~= 'table' then
+        return nil, RegisterRoleError:new(
+            'Module %q must return a table, got %s', module_name, type(M)
+        )
     end
 
-    if mod.role_name == nil then
-        mod.role_name = module_name
+    local role = {
+        M = M,
+        deps = {},
+        role_name = M.role_name or module_name,
+        module_name = module_name,
+    }
+
+    if type(role.role_name) ~= 'string' then
+        return nil, RegisterRoleError:new(
+            'Module %q role_name must be a string, got %s',
+            module_name, type(role.role_name)
+        )
     end
 
-    if type(mod.role_name) ~= 'string' then
-        return nil, e('Module %q role_name must be a string', module_name)
-    end
-
-    if vars.known_roles[mod.role_name] ~= nil then
-        return nil, e('Role %q name clash', mod.role_name)
-    end
-
-    local dependencies = mod.dependencies or {}
+    local dependencies = M.dependencies or {}
     if type(dependencies) ~= 'table' then
-        return nil, e('Module %q dependencies must be a table', module_name)
+        return nil, RegisterRoleError:new(
+            'Module %q dependencies must be a table, got %s',
+            module_name, type(dependencies)
+        )
     end
 
-    vars.roles_dependencies[mod.role_name] = {}
-    vars.roles_dependants[mod.role_name] = {}
-    vars.known_roles[mod.role_name] = mod
+    if ctx.roles_by_role_name[role.role_name] ~= nil then
+        return nil, RegisterRoleError:new(
+            'Role %q name clash between %s and %s',
+            role.role_name, module_name,
+            ctx.roles_by_role_name[role.role_name].module_name
+        )
+    end
 
-    local function deps_append(tbl, deps)
-        for _, dep in pairs(deps) do
-            if not utils.table_find(tbl, dep) then
-                table.insert(tbl, dep)
+    ctx.roles_by_module_name[module_name] = role
+    ctx.roles_by_role_name[role.role_name] = role
+
+    for _, dep in ipairs(dependencies) do
+        local dep_role, err = register_role(ctx, dep)
+        if not dep_role then
+            return nil, err
+        end
+
+        if not utils.table_find(role.deps, dep_role) then
+            table.insert(role.deps, dep_role)
+        end
+
+        -- Inherit subdependencies
+        for _, subdep in ipairs(dep_role.deps) do
+            if not utils.table_find(role.deps, subdep) then
+                table.insert(role.deps, subdep)
             end
         end
     end
 
-    for _, dep_name in ipairs(dependencies) do
-        local dep_mod, err = register_role(dep_name)
-        if not dep_mod then
+    if utils.table_find(role.deps, role) then
+        return nil, RegisterRoleError:new(
+            'Module %q circular dependency prohibited', module_name
+        )
+    end
+
+    table.insert(ctx.roles_by_number, role)
+    return role
+end
+utils.assert_upvalues(register_role, {
+    'RegisterRoleError',
+    'register_role',
+    'checks',
+    'utils'
+})
+
+--- Load modules and register them as Cartridge Roles.
+--
+-- This function is internal, it's called as a part of `cartridge.cfg`.
+--
+-- @function cfg
+-- @local
+-- @tparam {string,...} module_names
+-- @treturn[1] boolean true
+-- @treturn[2] nil
+-- @treturn[2] table Error description
+local function cfg(module_names)
+    checks('table')
+    local ctx = {
+        roles_by_number = {},
+        roles_by_role_name = {},
+        roles_by_module_name = {},
+    }
+
+    local ok, err = register_role(ctx, 'cartridge.roles.coordinator')
+    if not ok then
+        return nil, err
+    end
+
+    for _, role in ipairs(module_names or {}) do
+        local ok, err = register_role(ctx, role)
+        if not ok then
             return nil, err
         end
-
-        deps_append(
-            vars.roles_dependencies[mod.role_name],
-            {dep_mod.role_name}
-        )
-        deps_append(
-            vars.roles_dependencies[mod.role_name],
-            vars.roles_dependencies[dep_mod.role_name]
-        )
-
-        deps_append(
-            vars.roles_dependants[dep_mod.role_name],
-            {mod.role_name}
-        )
     end
 
-    if utils.table_find(vars.roles_dependencies[mod.role_name], mod.role_name) then
-        return nil, e('Module %q circular dependency not allowed', module_name)
-    end
-    topology.add_known_role(mod.role_name)
-    vars.known_roles[#vars.known_roles+1] = mod
-
-    return mod
+    vars.roles_by_number = ctx.roles_by_number
+    vars.roles_by_role_name = ctx.roles_by_role_name
+    vars.roles_by_module_name = ctx.roles_by_module_name
+    return true
 end
 
 local function get_role(role_name)
     checks('string')
-    return vars.known_roles[role_name]
+    local role = vars.roles_by_role_name[role_name]
+    return role and role.M
 end
 
 --- List all registered roles.
@@ -131,8 +171,8 @@ end
 local function get_all_roles()
     local ret = {}
 
-    for _, mod in ipairs(vars.known_roles) do
-        table.insert(ret, mod.role_name)
+    for _, role in ipairs(vars.roles_by_number) do
+        table.insert(ret, role.role_name)
     end
 
     return ret
@@ -148,9 +188,11 @@ end
 local function get_known_roles()
     local ret = {}
 
-    for _, mod in ipairs(vars.known_roles) do
-        if not (mod.permanent or mod.hidden) then
-            table.insert(ret, mod.role_name)
+    for _, role in ipairs(vars.roles_by_number) do
+        if not role.M.permanent
+        and not role.M.hidden
+        then
+            table.insert(ret, role.role_name)
         end
     end
 
@@ -175,9 +217,9 @@ local function get_enabled_roles(roles)
 
     local ret = {}
 
-    for _, mod in ipairs(vars.known_roles) do
-        if mod.permanent then
-            ret[mod.role_name] = true
+    for _, role in ipairs(vars.roles_by_number) do
+        if role.M.permanent then
+            ret[role.role_name] = true
         end
     end
 
@@ -189,22 +231,15 @@ local function get_enabled_roles(roles)
             role_name, enabled = k, v
         end
 
-        repeat -- until true
-            if not enabled then
-                break
-            end
-
+        if enabled then
             ret[role_name] = true
-
-            local deps = vars.roles_dependencies[role_name]
-            if deps == nil then
-                break
+            local role = vars.roles_by_role_name[role_name]
+            if role ~= nil then
+                for _, dep_role in ipairs(role.deps) do
+                    ret[dep_role.role_name] = true
+                end
             end
-
-            for _, dep_name in ipairs(deps) do
-                ret[dep_name] = true
-            end
-        until true
+        end
     end
 
     return ret
@@ -220,11 +255,10 @@ end
 local function get_role_dependencies(role_name)
     checks('?string')
     local ret = {}
-
-    for _, dep_name in ipairs(vars.roles_dependencies[role_name]) do
-        local mod = vars.known_roles[dep_name]
-        if not (mod.permanent or mod.hidden) then
-            table.insert(ret, mod.role_name)
+    local role = vars.roles_by_role_name[role_name]
+    for _, dep_role in ipairs(role.deps) do
+        if not (dep_role.M.permanent or dep_role.M.hidden) then
+            table.insert(ret, dep_role.role_name)
         end
     end
 
@@ -252,15 +286,15 @@ local function validate_config(conf_new, conf_old)
         error(err, 2)
     end
 
-    for _, mod in ipairs(vars.known_roles) do
-        if type(mod.validate_config) == 'function' then
+    for _, role in ipairs(vars.roles_by_number) do
+        if type(role.M.validate_config) == 'function' then
             local ok, err = ValidateConfigError:pcall(
-                mod.validate_config, conf_new, conf_old
+                role.M.validate_config, conf_new, conf_old
             )
             if not ok then
                 err = err or ValidateConfigError:new(
                     'Role %q method validate_config() returned %s',
-                    mod.role_name, ok
+                    role.role_name, ok
                 )
                 return nil, err
             end
@@ -293,15 +327,14 @@ local function apply_config(conf, opts)
 
     local err
     local enabled_roles = get_enabled_roles(my_replicaset.roles)
-    for _, mod in ipairs(vars.known_roles) do
-        local role_name = mod.role_name
-        if enabled_roles[role_name] then
+    for _, role in ipairs(vars.roles_by_number) do
+        if enabled_roles[role.role_name] then
             -- Start the role
-            if (service_registry.get(role_name) == nil)
-            and (type(mod.init) == 'function')
+            if (service_registry.get(role.role_name) == nil)
+            and (type(role.M.init) == 'function')
             then
                 local _, _err = ApplyConfigError:pcall(
-                    mod.init, opts
+                    role.M.init, opts
                 )
                 if _err ~= nil then
                     if err == nil then
@@ -312,11 +345,11 @@ local function apply_config(conf, opts)
                 end
             end
 
-            service_registry.set(role_name, mod)
+            service_registry.set(role.role_name, role.M)
 
-            if type(mod.apply_config) == 'function' then
+            if type(role.M.apply_config) == 'function' then
                 local _, _err = ApplyConfigError:pcall(
-                    mod.apply_config, conf, opts
+                    role.M.apply_config, conf, opts
                 )
                 if _err ~= nil then
                     if err == nil then
@@ -327,11 +360,11 @@ local function apply_config(conf, opts)
             end
         else
             -- Stop the role
-            if (service_registry.get(role_name) ~= nil)
-            and (type(mod.stop) == 'function')
+            if (service_registry.get(role.role_name) ~= nil)
+            and (type(role.M.stop) == 'function')
             then
                 local _, _err = ApplyConfigError:pcall(
-                    mod.stop, opts
+                    role.M.stop, opts
                 )
                 if _err ~= nil then
                     if err == nil then
@@ -341,7 +374,7 @@ local function apply_config(conf, opts)
                 end
             end
 
-            service_registry.set(role_name, nil)
+            service_registry.set(role.role_name, nil)
         end
 
         ::continue::
@@ -356,7 +389,7 @@ end
 
 
 return {
-    register_role = register_role,
+    cfg = cfg,
     get_role = get_role,
     get_all_roles = get_all_roles,
     get_known_roles = get_known_roles,
