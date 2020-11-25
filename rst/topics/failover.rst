@@ -226,11 +226,11 @@ These are clusterwide parameters:
   as ``dead`` and trigger failover (default: 20).
 * ``tarantool_params``: ``{uri = "...", password = "..."}``.
 * ``etcd2_params``: ``{endpoints = {...}, prefix = "/", lock_delay = 10, username = "", password = ""}``.
-* ``fencing_enabled``: true / false (default: false).
-* ``fencing_pause`` -- the period of performing the check (default: 2).
+* ``fencing_enabled``: ``true`` / ``false`` (default: false).
 * ``fencing_timeout`` -- time to actuate fencing after the check fails (default: 10).
+* ``fencing_pause`` -- the period of performing the check (default: 2).
 
-It's required that ``failover_timeout > fencing_timeout > fencing_pause``.
+It's required that ``failover_timeout > fencing_timeout >= fencing_pause``.
 
 *******************************************************************************
 Lua API

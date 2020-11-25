@@ -201,23 +201,20 @@ failover:
 [[---
 failover:
   mode: disabled
-  fencing_enabled: true
   fencing_pause: foo
 ...]])
 
-    check_config('topology_new.failover.fencing_pause must be non-negative, got -1',
+    check_config('topology_new.failover.fencing_pause must be positive, got 0',
 [[---
 failover:
   mode: disabled
-  fencing_enabled: true
-  fencing_pause: -1
+  fencing_pause: 0
 ...]])
 
-    check_config('topology_new.failover.fencing_pause must be non-negative, got nan',
+    check_config('topology_new.failover.fencing_pause must be positive, got nan',
 [[---
 failover:
   mode: disabled
-  fencing_enabled: true
   fencing_pause: NaN
 ...]])
 
@@ -225,7 +222,6 @@ failover:
 [[---
 failover:
   mode: disabled
-  fencing_enabled: true
   fencing_timeout: bar
 ...]])
 
@@ -233,7 +229,6 @@ failover:
 [[---
 failover:
   mode: disabled
-  fencing_enabled: true
   fencing_timeout: -1
 ...]])
 
@@ -241,7 +236,6 @@ failover:
 [[---
 failover:
   mode: disabled
-  fencing_enabled: true
   fencing_timeout: NaN
 ...]])
 
@@ -257,9 +251,9 @@ failover:
 [[---
 failover:
   mode: disabled
-  failover_timeout: 0
-  fencing_enabled: true
+  failover_timeout: 1
   fencing_timeout: 1
+  fencing_enabled: true
 ...]])
 
     check_config('topology_new.failover.tarantool_params.uri: Invalid URI ":-0"',
@@ -408,6 +402,7 @@ failover:
 [[---
 failover:
   mode: eventual
+  fencing_timeout: 0
   unknown: yes
 ...]])
 
@@ -974,8 +969,8 @@ failover:
     username: null
     password: null
   fencing_enabled: false
+  fencing_timeout: 0
   fencing_pause: 1
-  fencing_timeout: 10
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000001:
     replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001

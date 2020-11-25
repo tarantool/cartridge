@@ -149,8 +149,8 @@ local function get_failover_params()
                     password
                 }
                 fencing_enabled
-                fencing_pause
                 fencing_timeout
+                fencing_pause
             }}
         }
     ]]}).data.cluster.failover_params
@@ -166,8 +166,8 @@ local function set_failover_params(vars)
                 $tarantool_params: FailoverStateProviderCfgInputTarantool
                 $etcd2_params: FailoverStateProviderCfgInputEtcd2
                 $fencing_enabled: Boolean
-                $fencing_pause: Float
                 $fencing_timeout: Float
+                $fencing_pause: Float
             ) {
                 cluster {
                     failover_params(
@@ -177,8 +177,8 @@ local function set_failover_params(vars)
                         tarantool_params: $tarantool_params
                         etcd2_params: $etcd2_params
                         fencing_enabled: $fencing_enabled
-                        fencing_pause: $fencing_pause
                         fencing_timeout: $fencing_timeout
+                        fencing_pause: $fencing_pause
                     ) {
                         mode
                         state_provider
@@ -192,8 +192,8 @@ local function set_failover_params(vars)
                             password
                         }
                         fencing_enabled
-                        fencing_pause
                         fencing_timeout
+                        fencing_pause
                     }
                 }
             }
@@ -387,8 +387,8 @@ g.test_api_failover = function()
                 },
             },
             fencing_enabled = false,
-            fencing_pause = 2,
             fencing_timeout = 4,
+            fencing_pause = 2,
         }
     )
     t.assert_equals(
@@ -405,8 +405,8 @@ g.test_api_failover = function()
                 password = '',
             },
             fencing_enabled = false,
-            fencing_pause = 2,
             fencing_timeout = 4,
+            fencing_pause = 2,
         }
     )
 
@@ -417,8 +417,8 @@ g.test_api_failover = function()
             failover_timeout = 0,
             etcd2_params = etcd2_params,
             fencing_enabled = false,
-            fencing_pause = 2,
             fencing_timeout = 4,
+            fencing_pause = 2,
         }
     )
 
@@ -431,8 +431,8 @@ g.test_api_failover = function()
             etcd2_params = etcd2_params,
             tarantool_params = tarantool_params,
             fencing_enabled = false,
-            fencing_pause = 2,
             fencing_timeout = 4,
+            fencing_pause = 2,
         }
     )
     t.assert_equals(
@@ -444,8 +444,8 @@ g.test_api_failover = function()
             etcd2_params = etcd2_params,
             tarantool_params = tarantool_params,
             fencing_enabled = false,
-            fencing_pause = 2,
             fencing_timeout = 4,
+            fencing_pause = 2,
         }
     )
 
@@ -458,8 +458,8 @@ g.test_api_failover = function()
             etcd2_params = etcd2_params,
             tarantool_params = tarantool_params,
             fencing_enabled = false,
-            fencing_pause = 2,
             fencing_timeout = 4,
+            fencing_pause = 2,
         }
     )
     t.assert_equals(
@@ -471,8 +471,8 @@ g.test_api_failover = function()
             etcd2_params = etcd2_params,
             tarantool_params = tarantool_params,
             fencing_enabled = false,
-            fencing_pause = 2,
             fencing_timeout = 4,
+            fencing_pause = 2,
         }
     )
     t.assert_equals(_call('admin_get_failover'), true)
@@ -504,8 +504,8 @@ g.test_api_failover = function()
             etcd2_params = etcd2_defaults,
             tarantool_params = tarantool_params,
             fencing_enabled = false,
-            fencing_pause = 2,
             fencing_timeout = 4,
+            fencing_pause = 2,
         }
     )
     t.assert_equals(
@@ -517,8 +517,8 @@ g.test_api_failover = function()
             tarantool_params = tarantool_params,
             etcd2_params = etcd2_defaults,
             fencing_enabled = false,
-            fencing_pause = 2,
             fencing_timeout = 4,
+            fencing_pause = 2,
         }
     )
 end

@@ -48,16 +48,19 @@ local function get_params()
     --   (default: `{'http://localhost:2379', 'http://localhost:4001'}`)
     -- @tfield ?string etcd2_params.username (default: "")
     -- @tfield ?string etcd2_params.password (default: "")
-    -- @tfield boolean fencing_enabled (default: false)
+    -- @tfield boolean fencing_enabled
     --   (added in v2.3.0-57)
-    -- @tfield number fencing_pause
-    --   (added in v2.3.0-57)
-    --   The period (in seconds) of performing the check
-    --   (default: "2")
+    --   Abandon leadership when both the state provider quorum and at
+    --   least one replica are lost (suitable in stateful mode only,
+    --   default: false)
     -- @tfield number fencing_timeout
     --   (added in v2.3.0-57)
     --   Time (in seconds) to actuate fencing after the check fails
-    --   (default: "10")
+    --   (default: 10)
+    -- @tfield number fencing_pause
+    --   (added in v2.3.0-57)
+    --   The period (in seconds) of performing the check
+    --   (default: 2)
     return topology.get_failover_params(
         confapplier.get_readonly('topology')
     )
@@ -77,9 +80,9 @@ end
 --   (added in v2.1.2-26)
 -- @tparam ?boolean opts.fencing_enabled
 --   (added in v2.3.0-57)
--- @tparam ?number opts.fencing_pause
---   (added in v2.3.0-57)
 -- @tparam ?number opts.fencing_timeout
+--   (added in v2.3.0-57)
+-- @tparam ?number opts.fencing_pause
 --   (added in v2.3.0-57)
 -- @treturn[1] boolean `true` if config applied successfully
 -- @treturn[2] nil
@@ -92,8 +95,8 @@ local function set_params(opts)
         tarantool_params = '?table',
         etcd2_params = '?table',
         fencing_enabled = '?boolean',
-        fencing_pause = '?number',
         fencing_timeout = '?number',
+        fencing_pause = '?number',
     })
 
     local topology_cfg = confapplier.get_deepcopy('topology')
@@ -134,13 +137,12 @@ local function set_params(opts)
     if opts.fencing_enabled ~= nil then
         topology_cfg.failover.fencing_enabled = opts.fencing_enabled
     end
-    if opts.fencing_pause ~= nil then
-        topology_cfg.failover.fencing_pause = opts.fencing_pause
-    end
     if opts.fencing_timeout ~= nil then
         topology_cfg.failover.fencing_timeout = opts.fencing_timeout
     end
-
+    if opts.fencing_pause ~= nil then
+        topology_cfg.failover.fencing_pause = opts.fencing_pause
+    end
 
     local ok, err = twophase.patch_clusterwide({topology = topology_cfg})
     if not ok then

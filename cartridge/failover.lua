@@ -49,9 +49,7 @@ local StateProviderError = errors.new_class('StateProviderError')
 vars:new('membership_notification', membership.subscribe())
 vars:new('consistency_needed', false)
 vars:new('clusterwide_config')
-vars:new('fencing_timeout')
 vars:new('failover_fiber')
-vars:new('fencing_pause')
 vars:new('failover_err')
 vars:new('schedule', {})
 vars:new('client')
@@ -61,6 +59,13 @@ vars:new('cache', {
     is_leader = false,
     is_rw = false,
 })
+vars:new('fencing_fiber')
+do
+    local defaults = topology.get_failover_params()
+    vars:new('fencing_enabled', defaults.fencing_enabled)
+    vars:new('fencing_timeout', defaults.fencing_timeout)
+    vars:new('fencing_pause', defaults.fencing_pause)
+end
 vars:new('options', {
     WAITLSN_PAUSE = 0.2,
     WAITLSN_TIMEOUT = 3,
@@ -298,8 +303,8 @@ local function fencing_watch()
         vars.fencing_pause, vars.fencing_timeout
     )
 
-    if (vars.fencing_pause > vars.fencing_timeout) then
-        log.warn('Fencing timeout is less than fencing pause')
+    if not (vars.fencing_timeout >= vars.fencing_pause) then
+        log.warn('Fencing timeout should be >= pause')
     end
 
     local deadline = fiber.clock() + vars.fencing_timeout
@@ -493,9 +498,10 @@ function reconfigure_all(active_leaders)
     fiber.self().storage.is_busy = true
     confapplier.set_state('ConfiguringRoles')
 
-    if vars.cache.is_leader
+    if vars.fencing_enabled
+    and vars.cache.is_leader
     and vars.consistency_needed
-    and vars.fencing_enabled then
+    then
         fencing_start()
     end
 
@@ -663,8 +669,8 @@ local function cfg(clusterwide_config)
         end
 
         vars.fencing_enabled = failover_cfg.fencing_enabled
-        vars.fencing_pause = failover_cfg.fencing_pause
         vars.fencing_timeout = failover_cfg.fencing_timeout
+        vars.fencing_pause = failover_cfg.fencing_pause
 
         -- WARNING: implicit yield
         local appointments, err = _get_appointments_stateful_mode(vars.client, 0)
@@ -712,9 +718,10 @@ local function cfg(clusterwide_config)
         end
     end
 
-    if vars.cache.is_leader
+    if vars.fencing_enabled
+    and vars.cache.is_leader
     and vars.consistency_needed
-    and vars.fencing_enabled then
+    then
         fencing_start()
     end
 

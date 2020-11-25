@@ -1,5 +1,5 @@
 # source: http://localhost:8081/admin/api
-# timestamp: Tue Nov 24 2020 05:40:04 GMT+0300 (Moscow Standard Time)
+# timestamp: Wed Nov 25 2020 19:56:51 GMT+0300 (Moscow Standard Time)
 
 """Cluster management"""
 type Apicluster {
@@ -103,9 +103,9 @@ type Error {
 
 """Failover parameters managent"""
 type FailoverAPI {
-  fencing_enabled: Boolean
-  fencing_timeout: Float
-  failover_timeout: Float
+  fencing_enabled: Boolean!
+  fencing_timeout: Float!
+  failover_timeout: Float!
 
   """Supported modes are "disabled", "eventual" and "stateful"."""
   mode: String!
@@ -115,7 +115,7 @@ type FailoverAPI {
   """
   state_provider: String
   tarantool_params: FailoverStateProviderCfgTarantool
-  fencing_pause: Float
+  fencing_pause: Float!
   etcd2_params: FailoverStateProviderCfgEtcd2
 }
 

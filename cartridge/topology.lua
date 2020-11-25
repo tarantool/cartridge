@@ -34,8 +34,8 @@ local e_config = errors.new_class('Invalid cluster topology config')
         --     password = nil | string,
         -- },
         -- fencing_enabled = nil | boolean,
-        -- fencing_pause = nil | number,
         -- fencing_timeout = nil | number,
+        -- fencing_pause = nil | number,
     },
     servers = {
         -- ['instance-uuid-1'] = 'expelled',
@@ -362,36 +362,36 @@ local function validate_failover_schema(field, topology)
             field, type(topology.failover.fencing_enabled)
         )
 
+        if topology.failover.fencing_pause ~= nil then
+            e_config:assert(
+                type(topology.failover.fencing_pause) == 'number',
+                '%s.failover.fencing_pause must be a number, got %s',
+                field, type(topology.failover.fencing_pause)
+            )
+
+            e_config:assert(
+                topology.failover.fencing_pause > 0,
+                '%s.failover.fencing_pause must be positive, got %s',
+                field, topology.failover.fencing_pause
+            )
+        end
+
+        if topology.failover.fencing_timeout ~= nil then
+            e_config:assert(
+                type(topology.failover.fencing_timeout) == 'number',
+                '%s.failover.fencing_timeout must be a number, got %s',
+                field, type(topology.failover.fencing_timeout)
+            )
+
+            e_config:assert(
+                topology.failover.fencing_timeout >= 0,
+                '%s.failover.fencing_timeout must be non-negative, got %s',
+                field, topology.failover.fencing_timeout
+            )
+        end
+
+
         if topology.failover.fencing_enabled == true then
-
-            if topology.failover.fencing_pause ~= nil then
-                e_config:assert(
-                    type(topology.failover.fencing_pause) == 'number',
-                    '%s.failover.fencing_pause must be a number, got %s',
-                    field, type(topology.failover.fencing_pause)
-                )
-
-                e_config:assert(
-                    topology.failover.fencing_pause >= 0,
-                    '%s.failover.fencing_pause must be non-negative, got %s',
-                    field, topology.failover.fencing_pause
-                )
-            end
-
-            if topology.failover.fencing_timeout ~= nil then
-                e_config:assert(
-                    type(topology.failover.fencing_timeout) == 'number',
-                    '%s.failover.fencing_timeout must be a number, got %s',
-                    field, type(topology.failover.fencing_timeout)
-                )
-
-                e_config:assert(
-                    topology.failover.fencing_timeout >= 0,
-                    '%s.failover.fencing_timeout must be non-negative, got %s',
-                    field, topology.failover.fencing_timeout
-                )
-            end
-
             e_config:assert(
                 topology.failover.failover_timeout ~= nil,
                 '%s.failover.failover_timeout must be specified'
@@ -400,8 +400,7 @@ local function validate_failover_schema(field, topology)
             )
 
             e_config:assert(
-                topology.failover.failover_timeout
-                > topology.failover.fencing_timeout,
+                topology.failover.failover_timeout > topology.failover.fencing_timeout,
                 '%s.failover.failover_timeout must be greater than fencing_timeout',
                 field
             )
@@ -571,13 +570,13 @@ local function validate_failover_schema(field, topology)
             ['failover_timeout'] = true,
             ['tarantool_params'] = true,
             ['etcd2_params'] = true,
+            ['fencing_enabled'] = true,
+            ['fencing_timeout'] = true,
+            ['fencing_pause'] = true,
             -- For the sake of backward compatibility with v2.0.1-78
             -- See bug https://github.com/tarantool/cartridge/issues/754
             ['enabled'] = true,
             ['coordinator_uri'] = true,
-            ['fencing_enabled'] = true,
-            ['fencing_pause'] = true,
-            ['fencing_timeout'] = true,
         }
         for k, _ in pairs(topology.failover) do
             e_config:assert(
@@ -765,8 +764,8 @@ local function get_failover_params(topology_cfg)
             tarantool_params = topology_cfg.failover.tarantool_params,
             etcd2_params = table.deepcopy(topology_cfg.failover.etcd2_params),
             fencing_enabled = topology_cfg.failover.fencing_enabled,
-            fencing_pause = topology_cfg.failover.fencing_pause,
             fencing_timeout = topology_cfg.failover.fencing_timeout,
+            fencing_pause = topology_cfg.failover.fencing_pause,
         }
 
         if ret.etcd2_params ~= nil then
@@ -836,12 +835,12 @@ local function get_failover_params(topology_cfg)
         ret.fencing_enabled = false
     end
 
-    if ret.fencing_pause == nil then
-        ret.fencing_pause = 2
-    end
-
     if ret.fencing_timeout == nil then
         ret.fencing_timeout = 10
+    end
+
+    if ret.fencing_pause == nil then
+        ret.fencing_pause = 2
     end
 
     return ret

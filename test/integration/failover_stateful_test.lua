@@ -24,7 +24,6 @@ local function setup_cluster(g)
         server_command = helpers.entrypoint('srv_basic'),
         cookie = require('digest').urandom(6):hex(),
         env = {
-            TARANTOOL_SWIM_SUSPECT_TIMEOUT_SECONDS = 0,
             TARANTOOL_SWIM_PROTOCOL_PERIOD_SECONDS = 0.2,
         },
         replicasets = {
@@ -62,11 +61,10 @@ local function setup_cluster(g)
         require('log').info('Coordinator options updated')
     ]])
 
-    g.cluster.main_server.net_box:eval([[
-        require('cartridge').failover_set_params({
-            failover_timeout = 0
-        })
-    ]])
+    g.cluster.main_server.net_box:call(
+        'package.loaded.cartridge.failover_set_params',
+        {{failover_timeout = 0}}
+    )
 end
 
 g_stateboard.before_all(function()

@@ -46,14 +46,15 @@ local function setup_cluster(g)
     B1 = g.cluster:server('B1')
     B2 = g.cluster:server('B2')
 
-    g.cluster.main_server.net_box:eval([[
-        require('cartridge').failover_set_params({
+    g.cluster.main_server.net_box:call(
+        'package.loaded.cartridge.failover_set_params',
+        {{
             failover_timeout = 3,
             fencing_enabled = true,
-            fencing_pause = 1,
             fencing_timeout = 2,
-        })
-    ]])
+            fencing_pause = 1,
+        }}
+    )
 end
 
 g_stateboard.before_all(function()
@@ -179,8 +180,8 @@ local q_set_fencing_params = [[
     local pause, timeout = ...
 
     cartridge.failover_set_params({
-        fencing_pause = pause,
         fencing_timeout = timeout,
+        fencing_pause = pause,
     })
 ]]
 local q_is_vclockkeeper = [[
