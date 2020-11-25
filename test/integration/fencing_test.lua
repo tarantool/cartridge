@@ -45,6 +45,15 @@ local function setup_cluster(g)
     A1 = g.cluster:server('A1')
     B1 = g.cluster:server('B1')
     B2 = g.cluster:server('B2')
+
+    g.cluster.main_server.net_box:eval([[
+        require('cartridge').failover_set_params({
+            failover_timeout = 3,
+            fencing_enabled = true,
+            fencing_pause = 1,
+            fencing_timeout = 2,
+        })
+    ]])
 end
 
 g_stateboard.before_all(function()

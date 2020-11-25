@@ -61,6 +61,12 @@ local function setup_cluster(g)
         vars.options.RECONNECT_PERIOD = 1
         require('log').info('Coordinator options updated')
     ]])
+
+    g.cluster.main_server.net_box:eval([[
+        require('cartridge').failover_set_params({
+            failover_timeout = 0
+        })
+    ]])
 end
 
 g_stateboard.before_all(function()

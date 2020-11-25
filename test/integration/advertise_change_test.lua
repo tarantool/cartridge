@@ -43,6 +43,10 @@ g.before_all(function()
     g.B1 = g.cluster:server('B-1')
     g.B2 = g.cluster:server('B-2')
 
+    g.cluster.main_server.net_box:eval([[
+        require('cartridge').failover_set_params({failover_timeout = 0})
+    ]])
+
     fun.foreach(function(s) s:stop() end, g.cluster.servers)
     move(g.A1, 'localhost:13311')
     move(g.B1, 'localhost:13312')

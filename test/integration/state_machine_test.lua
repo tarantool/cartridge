@@ -31,6 +31,13 @@ g.before_each(function()
             cluster { failover(enabled: true) }
         }
     ]]})
+
+    g.cluster.main_server:graphql({query = [[
+        mutation {
+            cluster { failover_params(failover_timeout: 3) {}}
+        }
+    ]]})
+
     log.warn('Failover enabled')
 
     g.master = g.cluster:server('master')
