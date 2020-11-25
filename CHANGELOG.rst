@@ -21,13 +21,15 @@ Added
 - New `cartridge.cfg` option `swim_broadcast` (default true) to disable
   instances discovery on start.
 - Add support of replica weights and zones via a clusterwide config new section
- `zone_distances` and a server parameter `zone`.
+  ``zone_distances`` and a server parameter ``zone``.
 - Implement a fencing feature. It protects a replicaset from the presence of
   multiple leaders when the network is partitioned and forces the leader to
   become read-only.
 - New failover parameter ``failover_timout`` specifies the time (in seconds)
   used by membership to mark ``suspect`` members as ``dead`` which triggers
   failover.
+- New argparse options support for tarantool 2.5+: ``replication_synchro_quorum``,
+  ``replication_synchro_timeout``, ``memtx_use_mvcc_engine``.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
