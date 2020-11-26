@@ -30,6 +30,14 @@ Added
   failover.
 - New argparse options support for tarantool 2.5+: ``replication_synchro_quorum``,
   ``replication_synchro_timeout``, ``memtx_use_mvcc_engine``.
+- Fencing parameters ``fencing_enabled``, ``fencing_pause``, ``fencing_timeout``
+  are available for customization via Lua API and GraphQL API.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Changed
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Default value of ``failover_timeout`` increased from 3 to 20 seconds.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed

@@ -45,6 +45,16 @@ local function setup_cluster(g)
     A1 = g.cluster:server('A1')
     B1 = g.cluster:server('B1')
     B2 = g.cluster:server('B2')
+
+    g.cluster.main_server.net_box:call(
+        'package.loaded.cartridge.failover_set_params',
+        {{
+            failover_timeout = 3,
+            fencing_enabled = true,
+            fencing_timeout = 2,
+            fencing_pause = 1,
+        }}
+    )
 end
 
 g_stateboard.before_all(function()
@@ -166,15 +176,13 @@ end
 
 local q_readonliness = "return box.info.ro"
 local q_set_fencing_params = [[
-    local vars = require('cartridge.vars').new('cartridge.failover')
+    local cartridge = require('cartridge')
     local pause, timeout = ...
-    vars.options.FENCING_PAUSE = pause
-    vars.options.FENCING_TIMEOUT = timeout
 
-    local failover = require('cartridge.failover')
-    local confapplier = require('cartridge.confapplier')
-
-    failover.cfg(confapplier.get_active_config())
+    cartridge.failover_set_params({
+        fencing_timeout = timeout,
+        fencing_pause = pause,
+    })
 ]]
 local q_is_vclockkeeper = [[
     local failover = require('cartridge.failover')

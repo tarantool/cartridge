@@ -148,6 +148,9 @@ local function get_failover_params()
                     username
                     password
                 }
+                fencing_enabled
+                fencing_timeout
+                fencing_pause
             }}
         }
     ]]}).data.cluster.failover_params
@@ -162,6 +165,9 @@ local function set_failover_params(vars)
                 $failover_timeout: Float
                 $tarantool_params: FailoverStateProviderCfgInputTarantool
                 $etcd2_params: FailoverStateProviderCfgInputEtcd2
+                $fencing_enabled: Boolean
+                $fencing_timeout: Float
+                $fencing_pause: Float
             ) {
                 cluster {
                     failover_params(
@@ -170,6 +176,9 @@ local function set_failover_params(vars)
                         failover_timeout: $failover_timeout
                         tarantool_params: $tarantool_params
                         etcd2_params: $etcd2_params
+                        fencing_enabled: $fencing_enabled
+                        fencing_timeout: $fencing_timeout
+                        fencing_pause: $fencing_pause
                     ) {
                         mode
                         state_provider
@@ -182,6 +191,9 @@ local function set_failover_params(vars)
                             username
                             password
                         }
+                        fencing_enabled
+                        fencing_timeout
+                        fencing_pause
                     }
                 }
             }
@@ -315,6 +327,24 @@ g.test_api_failover = function()
         ]]), 0
     )
 
+    t.assert_covers(set_failover_params(
+        {fencing_enabled = false}),
+        {fencing_enabled = false}
+    )
+    t.assert_covers(get_failover_params(), {fencing_enabled = false})
+
+    t.assert_covers(set_failover_params(
+        {fencing_pause = 2}),
+        {fencing_pause = 2}
+    )
+    t.assert_covers(get_failover_params(), {fencing_pause = 2})
+
+    t.assert_covers(set_failover_params(
+        {fencing_timeout = 4}),
+        {fencing_timeout = 4}
+    )
+    t.assert_covers(get_failover_params(), {fencing_timeout = 4})
+
     -- Set with new GraphQL API
     t.assert_error_msg_equals(
         'topology_new.failover missing state_provider for mode "stateful"',
@@ -356,6 +386,9 @@ g.test_api_failover = function()
                     'http://127.0.0.1:2379',
                 },
             },
+            fencing_enabled = false,
+            fencing_timeout = 4,
+            fencing_pause = 2,
         }
     )
     t.assert_equals(
@@ -371,6 +404,9 @@ g.test_api_failover = function()
                 username = '',
                 password = '',
             },
+            fencing_enabled = false,
+            fencing_timeout = 4,
+            fencing_pause = 2,
         }
     )
 
@@ -380,6 +416,9 @@ g.test_api_failover = function()
             mode = 'eventual',
             failover_timeout = 0,
             etcd2_params = etcd2_params,
+            fencing_enabled = false,
+            fencing_timeout = 4,
+            fencing_pause = 2,
         }
     )
 
@@ -391,6 +430,9 @@ g.test_api_failover = function()
             failover_timeout = 0,
             etcd2_params = etcd2_params,
             tarantool_params = tarantool_params,
+            fencing_enabled = false,
+            fencing_timeout = 4,
+            fencing_pause = 2,
         }
     )
     t.assert_equals(
@@ -401,6 +443,9 @@ g.test_api_failover = function()
             failover_timeout = 0,
             etcd2_params = etcd2_params,
             tarantool_params = tarantool_params,
+            fencing_enabled = false,
+            fencing_timeout = 4,
+            fencing_pause = 2,
         }
     )
 
@@ -412,6 +457,9 @@ g.test_api_failover = function()
             failover_timeout = 0,
             etcd2_params = etcd2_params,
             tarantool_params = tarantool_params,
+            fencing_enabled = false,
+            fencing_timeout = 4,
+            fencing_pause = 2,
         }
     )
     t.assert_equals(
@@ -422,6 +470,9 @@ g.test_api_failover = function()
             failover_timeout = 0,
             etcd2_params = etcd2_params,
             tarantool_params = tarantool_params,
+            fencing_enabled = false,
+            fencing_timeout = 4,
+            fencing_pause = 2,
         }
     )
     t.assert_equals(_call('admin_get_failover'), true)
@@ -452,6 +503,9 @@ g.test_api_failover = function()
             failover_timeout = 3,
             etcd2_params = etcd2_defaults,
             tarantool_params = tarantool_params,
+            fencing_enabled = false,
+            fencing_timeout = 4,
+            fencing_pause = 2,
         }
     )
     t.assert_equals(
@@ -462,6 +516,9 @@ g.test_api_failover = function()
             failover_timeout = 3,
             tarantool_params = tarantool_params,
             etcd2_params = etcd2_defaults,
+            fencing_enabled = false,
+            fencing_timeout = 4,
+            fencing_pause = 2,
         }
     )
 end

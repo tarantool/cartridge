@@ -34,7 +34,6 @@ g.before_all(function()
         }},
         env = {
             TARANTOOL_REPLICATION_CONNECT_QUORUM = 1,
-            TARANTOOL_SWIM_SUSPECT_TIMEOUT_SECONDS = 0,
         }
     })
 
@@ -42,6 +41,11 @@ g.before_all(function()
     g.A1 = g.cluster:server('A-1')
     g.B1 = g.cluster:server('B-1')
     g.B2 = g.cluster:server('B-2')
+
+    g.cluster.main_server.net_box:call(
+        'package.loaded.cartridge.failover_set_params',
+        {{failover_timeout = 0}}
+    )
 
     fun.foreach(function(s) s:stop() end, g.cluster.servers)
     move(g.A1, 'localhost:13311')

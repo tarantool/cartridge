@@ -59,11 +59,16 @@ vars:new('cache', {
     is_leader = false,
     is_rw = false,
 })
+vars:new('fencing_fiber')
+do
+    local defaults = topology.get_failover_params()
+    vars:new('fencing_enabled', defaults.fencing_enabled)
+    vars:new('fencing_timeout', defaults.fencing_timeout)
+    vars:new('fencing_pause', defaults.fencing_pause)
+end
 vars:new('options', {
     WAITLSN_PAUSE = 0.2,
     WAITLSN_TIMEOUT = 3,
-    FENCING_PAUSE = 5,
-    FENCING_TIMEOUT = 20,
     LONGPOLL_TIMEOUT = 30,
     NETBOX_CALL_TIMEOUT = 1,
 })
@@ -295,16 +300,20 @@ end
 local function fencing_watch()
     log.info(
         'Fencing enabled (step %s, timeout %s)',
-        vars.options.FENCING_PAUSE, vars.options.FENCING_TIMEOUT
+        vars.fencing_pause, vars.fencing_timeout
     )
 
-    local deadline = fiber.clock() + vars.options.FENCING_TIMEOUT
+    if not (vars.fencing_timeout >= vars.fencing_pause) then
+        log.warn('Fencing timeout should be >= pause')
+    end
+
+    local deadline = fiber.clock() + vars.fencing_timeout
     repeat
-        fiber.sleep(vars.options.FENCING_PAUSE)
+        fiber.sleep(vars.fencing_pause)
 
         if fencing_healthcheck() then
             -- postpone the fencing actuation
-            deadline = fiber.clock() + vars.options.FENCING_TIMEOUT
+            deadline = fiber.clock() + vars.fencing_timeout
         end
     until fiber.clock() > deadline
 
@@ -489,7 +498,10 @@ function reconfigure_all(active_leaders)
     fiber.self().storage.is_busy = true
     confapplier.set_state('ConfiguringRoles')
 
-    if vars.cache.is_leader and vars.consistency_needed then
+    if vars.fencing_enabled
+    and vars.cache.is_leader
+    and vars.consistency_needed
+    then
         fencing_start()
     end
 
@@ -656,6 +668,10 @@ local function cfg(clusterwide_config)
             )
         end
 
+        vars.fencing_enabled = failover_cfg.fencing_enabled
+        vars.fencing_timeout = failover_cfg.fencing_timeout
+        vars.fencing_pause = failover_cfg.fencing_pause
+
         -- WARNING: implicit yield
         local appointments, err = _get_appointments_stateful_mode(vars.client, 0)
         if appointments == nil then
@@ -702,7 +718,10 @@ local function cfg(clusterwide_config)
         end
     end
 
-    if vars.cache.is_leader and vars.consistency_needed then
+    if vars.fencing_enabled
+    and vars.cache.is_leader
+    and vars.consistency_needed
+    then
         fencing_start()
     end
 
