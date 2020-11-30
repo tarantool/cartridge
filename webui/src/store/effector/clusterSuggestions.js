@@ -18,9 +18,9 @@ import {
 } from './cluster';
 import type { EditServerInput } from 'src/generated/graphql-typing';
 
-export const applyClick = createEvent<any>('apply click');
-export const detailsClick = createEvent<any>('details modal click');
-export const detailsClose = createEvent<any>('details modal close');
+export const applyClick = createEvent<mixed>('apply click');
+export const detailsClick = createEvent<mixed>('details modal click');
+export const detailsClose = createEvent<mixed>('details modal close');
 
 export const submitChangesFx: Effect<
   Array<EditServerInput>,

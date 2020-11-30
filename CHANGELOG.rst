@@ -63,6 +63,7 @@ Enhanced is WebUI
 - Show files requesting error on the code editor page.
 - Fixed bug with errors displaying in modals on Users page.
 - Users page state rewritten with effector.
+- Updated server details modal, added support of replica zones.
 
 -------------------------------------------------------------------------------
 [2.3.0] - 2020-08-26

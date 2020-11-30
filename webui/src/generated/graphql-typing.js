@@ -913,7 +913,7 @@ export type ServerListQuery = ({
     })> |}
   })>, serverStat?: ?Array<?({
       ...{ __typename?: 'Server' },
-    ...$Pick<Server, {| uuid: *, uri: * |}>,
+    ...$Pick<Server, {| uuid: *, uri: *, zone?: * |}>,
     ...{| statistics?: ?({
         ...{ __typename?: 'ServerStat' },
       ...$Pick<ServerStat, {| quota_used_ratio: *, arena_used_ratio: *, items_used_ratio: * |}>,

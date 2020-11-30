@@ -37,8 +37,8 @@ export const createFormStore = (values: initFormProps) => {
   const $isFormValid = $errors.map<bool>(errors => !errors);
   const $showAllErrors = createStore<bool>(false);
 
-  const resetForm = createEvent<any>('Reset form');
-  const submitForm = createEvent<void>('Submit form')
+  const resetForm = createEvent<mixed>('Reset form');
+  const submitForm = createEvent<mixed>('Submit form');
 
   // init
   resetForm.watch(() => {

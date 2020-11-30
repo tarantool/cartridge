@@ -9,7 +9,6 @@ import {
 } from 'redux-saga/effects';
 import { graphqlErrorNotification } from 'src/misc/graphqlErrorNotification';
 import { getErrorMessage as getApiErrorMessage, isDeadServerError, SERVER_NOT_REACHABLE_ERROR_TYPE } from 'src/api';
-import { pageRequestIndicator } from 'src/misc/pageRequestIndicator';
 import { menuFilter } from 'src/menu';
 import {
   APP_DID_MOUNT,
@@ -25,7 +24,6 @@ import { getClusterSelf } from 'src/store/request/app.requests';
 function* appDataRequestSaga() {
   yield takeLatest(APP_DID_MOUNT, function* load(action) {
     const { payload: requestPayload = {} } = action;
-    const indicator = pageRequestIndicator.run();
 
     yield put({ type: APP_DATA_REQUEST, payload: requestPayload });
 
@@ -66,12 +64,10 @@ function* appDataRequestSaga() {
       };
     } catch (error) {
       yield put({ type: APP_DATA_REQUEST_ERROR, error, requestPayload, __errorMessage: false });
-      indicator.error();
       return undefined;
     }
 
     yield put({ type: APP_DATA_REQUEST_SUCCESS, payload: response, requestPayload });
-    indicator.success();
   });
 };
 

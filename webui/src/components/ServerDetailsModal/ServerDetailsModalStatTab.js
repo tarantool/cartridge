@@ -1,17 +1,18 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import { Text, colors } from '@tarantool.io/ui-kit';
-import CollapsibleJSONRenderer from 'src/components/CollapsibleJSONRenderer';
+import CollapsibleJSONRenderer from './CollapsibleJSONRenderer';
 import { css } from 'emotion';
 
 const styles = {
-  listInner: css`
+  wrap: css`
     padding: 0;
   `,
   listItem: css`
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex-wrap: wrap;
     padding: 8px 20px;
 
     &:nth-child(2n) {
@@ -26,6 +27,9 @@ const styles = {
   rightCol: css`
     max-width: 50%;
   `,
+  subColumnContent: css`
+    width: 100%;
+  `,
   description: css`
     color: ${colors.dark40};
   `
@@ -38,18 +42,24 @@ const fieldsDisplayTypes = {
 };
 
 const renderers = {
-  boolean: value => <Text variant='basic'>{value.toString()}</Text>,
+  boolean: value => (
+    <div className={styles.rightCol}>
+      <Text variant='basic'>{value.toString()}</Text>
+    </div>
+  ),
   string: value => (
-    <Text variant='basic'>
-      {value instanceof Array ? `[${value.join(', ')}]` : value}
-    </Text>
+    <div className={styles.rightCol}>
+      <Text variant='basic'>
+        {value instanceof Array ? `[${value.join(', ')}]` : value}
+      </Text>
+    </div>
   ),
   json: value => <CollapsibleJSONRenderer value={value} />
 };
 
-const ClusterInstanceSection = ({ descriptions = {}, params = [] }) => {
+const ServerDetailsModalStatTab = ({ descriptions = {}, params = [] }) => {
   return (
-    <div className={styles.listInner}>
+    <div className={styles.wrap}>
       {params.map(({ name, value, displayAs = 'string' }, index) => (
         <div className={styles.listItem}>
           <div className={styles.leftCol}>
@@ -62,9 +72,7 @@ const ClusterInstanceSection = ({ descriptions = {}, params = [] }) => {
               )
               : null}
           </div>
-          <div className={styles.rightCol}>
-            {renderers[displayAs](value, index)}
-          </div>
+          {renderers[displayAs](value, index)}
         </div>
       ))}
     </div>
@@ -84,15 +92,12 @@ const mapStateToProps = (
 
   return {
     descriptions: descriptions[sectionName],
-    params: Object.keys(section)
-      .map(key => {
-        const param = {
-          name: key,
-          value: section[key]
-        };
+    params: Object.entries(section)
+      .map(([name, value]) => {
+        const param = { name, value };
 
-        if (fieldsDisplayTypes[key]) {
-          param.displayAs = fieldsDisplayTypes[key];
+        if (fieldsDisplayTypes[name]) {
+          param.displayAs = fieldsDisplayTypes[name];
         }
 
         return param;
@@ -100,5 +105,5 @@ const mapStateToProps = (
   }
 };
 
-export default connect(mapStateToProps)(ClusterInstanceSection);
+export default connect(mapStateToProps)(ServerDetailsModalStatTab);
 

@@ -9,7 +9,6 @@ import {
   takeLatest,
   takeEvery
 } from 'redux-saga/effects';
-import { pageRequestIndicator } from 'src/misc/pageRequestIndicator';
 import {
   CLUSTER_PAGE_DID_MOUNT,
   CLUSTER_PAGE_DATA_REQUEST,
@@ -154,11 +153,9 @@ const probeServerRequestSaga = function* () {
       payload: requestPayload = {},
       __payload: { successMessage } = {}
     } = action;
-    const indicator = pageRequestIndicator.run();
 
     try {
       const response = yield call(probeServer, requestPayload);
-      indicator.success();
 
       yield put({
         type: CLUSTER_PAGE_PROBE_SERVER_REQUEST_SUCCESS,
@@ -171,7 +168,6 @@ const probeServerRequestSaga = function* () {
         payload: error,
         error: true
       });
-      indicator.error();
       return;
     }
   });
@@ -210,14 +206,11 @@ const joinServerRequestSaga = getRequestSaga(
 function* createReplicasetRequestSaga() {
   yield takeLatest(CLUSTER_PAGE_CREATE_REPLICASET_REQUEST, function* load(action) {
     const { payload: requestPayload = {} } = action;
-    const indicator = pageRequestIndicator.run();
 
     let response;
     try {
       const createReplicasetResponse = yield call(createReplicaset, requestPayload);
-      indicator.next();
       const clusterSelfResponse = yield call(getClusterSelf);
-      indicator.success();
 
       response = {
         ...createReplicasetResponse,
@@ -232,7 +225,7 @@ function* createReplicasetRequestSaga() {
         requestPayload,
         __errorMessage: true
       });
-      indicator.error();
+
       return;
     }
   });

@@ -18,7 +18,7 @@ type ServerDropdownProps = {
   intent?: $ElementType<ButtonProps, 'intent'>,
   size?: $ElementType<ButtonProps, 'size'>,
   showFailoverPromote?: boolean,
-  showServerDetails:? boolean,
+  showServerDetails?: boolean,
   uri: string,
   history: History,
   uuid: string

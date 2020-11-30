@@ -319,6 +319,7 @@ query serverList ($withStats: Boolean!) {
   serverStat: servers @include(if: $withStats) {
     uuid
     uri
+    zone
     statistics {
       quotaSize: quota_size
       arenaUsed: arena_used

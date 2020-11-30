@@ -53,8 +53,8 @@ import type {
 } from 'src/store/actions/clusterPage.actions';
 import type { ReplicasetCounts, ServerCounts } from 'src/store/selectors/clusterPage';
 import ExpelServerModal from '../../components/ExpelServerModal';
-import ServerInfoModal from '../../components/ServerInfoModal';
-
+import ServerDetailsModal from '../../components/ServerDetailsModal';
+import { ZoneAddModal } from '../../components/ZoneAddModal';
 const { AppTitle } = window.tarantool_enterprise_core.components;
 
 const styles = {
@@ -152,7 +152,7 @@ class Cluster extends React.Component<ClusterProps> {
               const instanceUUID: ?string = params && params.instanceUUID;
               return instanceUUID
                 ? (
-                  <ServerInfoModal
+                  <ServerDetailsModal
                     instanceUUID={instanceUUID}
                     history={history}
                   />
@@ -166,6 +166,7 @@ class Cluster extends React.Component<ClusterProps> {
         <ConfigureServerModal />
         <BootstrapPanel />
         <ClusterSuggestionsPanel />
+        <ZoneAddModal />
         {unlinkedServers && unlinkedServers.length
           ? (
             <PageSection
