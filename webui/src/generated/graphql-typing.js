@@ -123,11 +123,15 @@ export type Error = {|
 /** Failover parameters managent */
 export type FailoverApi = {|
   __typename?: 'FailoverAPI',
+  fencing_enabled: $ElementType<Scalars, 'Boolean'>,
+  fencing_timeout: $ElementType<Scalars, 'Float'>,
+  failover_timeout: $ElementType<Scalars, 'Float'>,
   /** Supported modes are "disabled", "eventual" and "stateful". */
   mode: $ElementType<Scalars, 'String'>,
-  tarantool_params?: ?FailoverStateProviderCfgTarantool,
   /** Type of external storage for the stateful failover mode. Supported types are "tarantool" and "etcd2". */
   state_provider?: ?$ElementType<Scalars, 'String'>,
+  tarantool_params?: ?FailoverStateProviderCfgTarantool,
+  fencing_pause: $ElementType<Scalars, 'Float'>,
   etcd2_params?: ?FailoverStateProviderCfgEtcd2,
 |};
 
@@ -294,9 +298,13 @@ export type MutationApiclusterFailoverArgs = {|
 
 /** Cluster management */
 export type MutationApiclusterFailover_ParamsArgs = {|
+  fencing_enabled?: ?$ElementType<Scalars, 'Boolean'>,
+  fencing_timeout?: ?$ElementType<Scalars, 'Float'>,
+  failover_timeout?: ?$ElementType<Scalars, 'Float'>,
   mode?: ?$ElementType<Scalars, 'String'>,
-  tarantool_params?: ?FailoverStateProviderCfgInputTarantool,
   state_provider?: ?$ElementType<Scalars, 'String'>,
+  tarantool_params?: ?FailoverStateProviderCfgInputTarantool,
+  fencing_pause?: ?$ElementType<Scalars, 'Float'>,
   etcd2_params?: ?FailoverStateProviderCfgInputEtcd2,
 |};
 
