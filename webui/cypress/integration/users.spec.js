@@ -13,10 +13,7 @@ describe('Users', () => {
           server_command = helpers.entrypoint('srv_basic'),
           use_vshard = true,
           cookie = 'test-cluster-cookie',
-          env = {
-              TARANTOOL_SWIM_SUSPECT_TIMEOUT_SECONDS = 0,
-              TARANTOOL_APP_NAME = 'cartridge-testing',
-          },
+          env = {TARANTOOL_APP_NAME = 'cartridge-testing'},
           replicasets = {{
             alias = 'test-replicaset',
             uuid = helpers.uuid('a'),
@@ -32,6 +29,10 @@ describe('Users', () => {
         })
 
         _G.cluster:start()
+        _G.cluster.main_server.net_box:call(
+          'package.loaded.cartridge.failover_set_params',
+          {{failover_timeout = 0}}
+        )
         return _G.cluster.datadir
       `
     })

@@ -31,10 +31,7 @@ describe('Leader promotion tests', () => {
         server_command = helpers.entrypoint('srv_basic'),
         use_vshard = true,
         cookie = helpers.random_cookie(),
-        env = {
-            TARANTOOL_SWIM_SUSPECT_TIMEOUT_SECONDS = 0,
-            TARANTOOL_APP_NAME = 'cartridge-testing',
-        },
+        env = {TARANTOOL_APP_NAME = 'cartridge-testing'},
         replicasets = {{
           uuid = helpers.uuid('a'),
           alias = 'test-router',
@@ -51,6 +48,10 @@ describe('Leader promotion tests', () => {
       _G.cluster:server('test-storage-1').env.TARANTOOL_CONSOLE_SOCK =
         _G.cluster.datadir .. '/s-1.control'
       _G.cluster:start()
+      _G.cluster.main_server.net_box:call(
+        'package.loaded.cartridge.failover_set_params',
+        {{failover_timeout = 0}}
+      )
       return true
     `}).should('deep.eq', [true]);
   });

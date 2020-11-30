@@ -9,7 +9,6 @@ describe('Server details', () => {
         server_command = helpers.entrypoint('srv_basic'),
         use_vshard = false,
         cookie = helpers.random_cookie(),
-        env = {TARANTOOL_SWIM_SUSPECT_TIMEOUT_SECONDS = 0},
         replicasets = {{
           uuid = helpers.uuid('a'),
           alias = 'dummy',
@@ -19,6 +18,10 @@ describe('Server details', () => {
       })
 
       _G.cluster:start()
+      _G.cluster.main_server.net_box:call(
+        'package.loaded.cartridge.failover_set_params',
+        {{failover_timeout = 0}}
+      )
       return true
     `}).should('deep.eq', [true]);
   });
@@ -50,14 +53,14 @@ describe('Server details', () => {
     cy.task('tarantool', {code: `_G.cluster:server('dummy-2'):stop()`});
 
     cy.get('.ServerLabelsHighlightingArea').contains('dummy-2')
-      .closest('li').should('contain', 'Server status is "dead"');
+      .closest('li').should('contain', 'Server uri is not in membership');
 
     cy.get('li').contains('dummy-2').closest('li')
       .find('.meta-test__ReplicasetServerListItem__dropdownBtn').click();
     cy.get('.meta-test__ReplicasetServerListItem__dropdown *')
       .contains('Server details').click();
 
-    cy.get('.meta-test__ServerInfoModal').contains('Server status is "dead"');
+    cy.get('.meta-test__ServerInfoModal').contains('Server uri is not in membership');
     cy.get('.meta-test__ServerInfoModal').contains('instance_uuid').should('not.exist');
 
     cy.get('.meta-test__ServerInfoModal button').contains('Cartridge').click();
