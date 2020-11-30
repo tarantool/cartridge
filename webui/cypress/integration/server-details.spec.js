@@ -53,14 +53,14 @@ describe('Server details', () => {
     cy.task('tarantool', {code: `_G.cluster:server('dummy-2'):stop()`});
 
     cy.get('.ServerLabelsHighlightingArea').contains('dummy-2')
-      .closest('li').should('contain', 'Server uri is not in membership');
+      .closest('li').should('contain', 'Server status id "dead"');
 
     cy.get('li').contains('dummy-2').closest('li')
       .find('.meta-test__ReplicasetServerListItem__dropdownBtn').click();
     cy.get('.meta-test__ReplicasetServerListItem__dropdown *')
       .contains('Server details').click();
 
-    cy.get('.meta-test__ServerInfoModal').contains('Server uri is not in membership');
+    cy.get('.meta-test__ServerInfoModal').contains('SServer status id "dead"');
     cy.get('.meta-test__ServerInfoModal').contains('instance_uuid').should('not.exist');
 
     cy.get('.meta-test__ServerInfoModal button').contains('Cartridge').click();
