@@ -43,7 +43,11 @@ export type AppState = {
     demo_uri: ?string,
   },
   connectionAlive: boolean,
-  failover_params: FailoverApi,
+  failover_params: {
+    mode: $PropertyType<FailoverApi, 'mode'>,
+    tarantool_params: $PropertyType<FailoverApi, 'tarantool_params'>,
+    state_provider: $PropertyType<FailoverApi, 'state_provider'>
+  },
   messages: AppMessage[],
   authParams: {
     enabled?: boolean,

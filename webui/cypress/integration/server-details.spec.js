@@ -9,7 +9,6 @@ describe('Server details', () => {
         server_command = helpers.entrypoint('srv_basic'),
         use_vshard = false,
         cookie = helpers.random_cookie(),
-        env = {TARANTOOL_SWIM_SUSPECT_TIMEOUT_SECONDS = 0},
         replicasets = {{
           uuid = helpers.uuid('a'),
           alias = 'dummy',
@@ -19,6 +18,10 @@ describe('Server details', () => {
       })
 
       _G.cluster:start()
+      _G.cluster.main_server.net_box:call(
+        'package.loaded.cartridge.failover_set_params',
+        {{failover_timeout = 0}}
+      )
       return true
     `}).should('deep.eq', [true]);
   });

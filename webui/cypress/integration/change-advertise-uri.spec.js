@@ -10,15 +10,17 @@ describe('Change advertise uri', () => {
         server_command = helpers.entrypoint('srv_basic'),
         use_vshard = false,
         cookie = 'test-cluster-cookie',
-        env = {TARANTOOL_SWIM_SUSPECT_TIMEOUT_SECONDS = 0},
         replicasets = {{
           alias = 'test-replicaset',
           roles = {'vshard-router', 'vshard-storage', 'failover-coordinator'},
           servers = {{http_port = 8080}},
         }}
       })
-
       _G.cluster:start()
+      _G.cluster.main_server.net_box:call(
+        'package.loaded.cartridge.failover_set_params',
+        {{failover_timeout = 0}}
+      )
       _G.cluster.main_server:stop()
 
       _G.cluster.main_server.env['TARANTOOL_ADVERTISE_URI'] = 'localhost:13312'
@@ -38,7 +40,7 @@ describe('Change advertise uri', () => {
   });
 
   it('Server In replica set', () => {
-    cy.get('li').contains('test-replicaset-1').closest('li').should('contain', 'healthy');
+    cy.get('li').contains('test-replicaset').closest('li').should('contain', 'healthy');
     cy.get('.ReplicasetServerList').should('contain', 'localhost:13312');
     cy.get('.meta-test__haveIssues');
   });
