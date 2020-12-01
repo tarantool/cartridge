@@ -138,11 +138,58 @@ function g.test_config_mismatch()
         helpers.list_cluster_issues(master),
         {{
             level = 'warning',
-            topic = 'config_mismatch',
+            topic = 'configuration',
             instance_uuid = helpers.uuid('a', 'a', 3),
             replicaset_uuid = helpers.uuid('a'),
             message = 'Configuration checksum mismatch' ..
                 ' on localhost:13303 (replica2)',
         }}
+    )
+end
+
+function g.test_twophase_config_locked()
+    local master = g.cluster.main_server
+    local current_issues = helpers.list_cluster_issues(master)
+    master.net_box:eval([[
+        local confapplier = require('cartridge.confapplier')
+        local cfg = confapplier.get_active_config():copy()
+        require('cartridge.twophase').patch_clusterwide(cfg:get_plaintext())
+    ]])
+
+    -- Issue shouldn't appear during or after valid two-phase commit
+    t.assert_items_equals(
+        helpers.list_cluster_issues(master),
+        current_issues
+    )
+
+    local issue = {
+            level = 'warning',
+            topic = 'configuration',
+            instance_uuid = helpers.uuid('a', 'a', 3),
+            replicaset_uuid = helpers.uuid('a'),
+            message = 'Configuration is prepared and locked'..
+                ' on localhost:13303 (replica2) but two-phase'..
+                ' is not in progress',
+    }
+
+    local replica2 = g.cluster:server('replica2')
+    replica2.net_box:eval([[
+        local confapplier = require('cartridge.confapplier')
+        local cfg = confapplier.get_active_config():copy()
+        _G.__cartridge_clusterwide_config_prepare_2pc(cfg:get_plaintext())
+    ]])
+
+    -- It appears after a single prepare 2pc
+    t.assert_items_include(
+        helpers.list_cluster_issues(master),
+        {issue}
+    )
+
+    -- And remains after instance's restart
+    replica2:stop()
+    replica2:start()
+    t.assert_items_include(
+        helpers.list_cluster_issues(master),
+        {issue}
     )
 end

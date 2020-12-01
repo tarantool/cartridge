@@ -64,6 +64,7 @@ Enhanced is WebUI
 - Fixed bug with errors displaying in modals on Users page.
 - Users page state rewritten with effector.
 - Updated server details modal, added support of replica zones.
+- Indicate config is prepared and locked in issues list.
 
 -------------------------------------------------------------------------------
 [2.3.0] - 2020-08-26
