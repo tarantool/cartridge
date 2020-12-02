@@ -8,12 +8,12 @@ import {
   Modal,
   Text
 } from '@tarantool.io/ui-kit';
+import { zoneAddModalClose } from 'src/store/effector/clusterZones';
 import {
   $zoneAddModal,
   zoneInputChange,
-  addServerZone,
-  zoneAddModalClose
-} from 'src/store/effector/clusterZones';
+  addServerZone
+} from 'src/store/effector/clusterZones/zoneAddModal';
 
 const handleInputChange = ({ target }: InputEvent) => {
   if (target instanceof HTMLInputElement) {

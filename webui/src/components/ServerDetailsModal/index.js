@@ -23,7 +23,10 @@ import {
   resetPageState
 } from 'src/store/actions/clusterInstancePage.actions';
 import { withRouter } from 'react-router-dom'
-import { zoneAddModalOpen } from 'src/store/effector/clusterZones';
+import {
+  submitZoneFx,
+  zoneAddModalOpen
+} from 'src/store/effector/clusterZones';
 import store from 'src/store/instance';
 import { failoverPromoteLeader } from 'src/store/actions/clusterPage.actions';
 import ServerDetailsModalStatTab from './ServerDetailsModalStatTab'
@@ -185,9 +188,15 @@ class ServerDetailsModal extends React.Component<
                 size='l'
                 iconRight={IconChevronDown}
                 popoverClassName={styles.popover}
+                // TODO: add loading state while applying
                 popoverContent={<>
                   {zoneList.map(zoneName => (
-                    <DropdownItem key={zoneName}>{zoneName}</DropdownItem>
+                    <DropdownItem
+                      key={zoneName}
+                      onClick={() => submitZoneFx({ uuid: instanceUUID, zone: zoneName })}
+                    >
+                      {zoneName}
+                    </DropdownItem>
                   ))}
                   {zoneList.length
                     ? <DropdownDivider />

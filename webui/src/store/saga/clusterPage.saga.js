@@ -45,7 +45,8 @@ import {
   CLUSTER_PAGE_FAILOVER_PROMOTE_REQUEST_SUCCESS,
   CLUSTER_PAGE_FAILOVER_PROMOTE_REQUEST_ERROR,
   CLUSTER_PAGE_STATE_RESET,
-  CLUSTER_SELF_UPDATE
+  CLUSTER_SELF_UPDATE,
+  CLUSTER_PAGE_ZONE_UPDATE
 } from 'src/store/actionTypes';
 import { baseSaga, getRequestSaga, getSignalRequestSaga } from 'src/store/commonRequest';
 import { getClusterSelf } from 'src/store/request/app.requests';
@@ -297,7 +298,8 @@ const updateListsOnTopologyEdit = function* () {
     CLUSTER_PAGE_FAILOVER_PROMOTE_REQUEST_SUCCESS,
     CLUSTER_PAGE_REPLICASET_EDIT_REQUEST_SUCCESS,
     CLUSTER_PAGE_PROBE_SERVER_REQUEST_SUCCESS,
-    CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_SUCCESS
+    CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_SUCCESS,
+    CLUSTER_PAGE_ZONE_UPDATE
   ];
 
   yield takeLatest(topologyEditTokens, function* () {
