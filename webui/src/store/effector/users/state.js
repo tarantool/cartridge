@@ -43,7 +43,7 @@ export const $userRemoveModal = createStoreObject({
   error: $userMutationError
 });
 
-export const fetchUsersListFx = createEffect<any, UsersList, string>({
+export const fetchUsersListFx = createEffect<mixed, UsersList, string>({
   handler: async () => {
     const { items } = await getUserList();
     return items;

@@ -2,7 +2,6 @@
 // TODO: move to uikit
 import * as React from 'react';
 import { css, cx } from 'react-emotion';
-import { type Label } from 'src/components/ServerLabels';
 import {
   HealthStatus,
   IconBucket,
@@ -19,7 +18,8 @@ import {
 import { withRouter, Link } from 'react-router-dom';
 import { type MemoryUsageRatios } from 'src/misc/memoryStatistics';
 import { getMemoryFragmentationLevel } from 'src/store/selectors/clusterPage';
-import { ReplicasetServerListItemDropdown } from './ReplicasetServerListItemDropdown'
+import { ServerDropdown } from 'src/components/ServerDropdown';
+import { type Label } from 'src/components/ServerLabels';
 
 const styles = {
   row: css`
@@ -111,8 +111,10 @@ const styles = {
   tags: css`
     margin-top: 8px;
   `,
-  btnMore: css`
-    width: 24px;
+  configureBtn: css`
+    position: absolute;
+    top: 12px;
+    right: 12px;
   `
 };
 
@@ -261,10 +263,12 @@ class ReplicasetServerListItem extends React.PureComponent<
             </div>
           </div>
         </div>
-        <ReplicasetServerListItemDropdown
+        <ServerDropdown
           activeMaster={activeMaster}
+          className={styles.configureBtn}
           replicasetUUID={replicasetUUID}
           showFailoverPromote={showFailoverPromote}
+          showServerDetails
           uri={uri}
           history={history}
           uuid={uuid}

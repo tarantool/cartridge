@@ -9,7 +9,6 @@ import {
   takeLatest,
   takeEvery
 } from 'redux-saga/effects';
-import { pageRequestIndicator } from 'src/misc/pageRequestIndicator';
 import {
   CLUSTER_PAGE_DID_MOUNT,
   CLUSTER_PAGE_DATA_REQUEST,
@@ -46,7 +45,8 @@ import {
   CLUSTER_PAGE_FAILOVER_PROMOTE_REQUEST_SUCCESS,
   CLUSTER_PAGE_FAILOVER_PROMOTE_REQUEST_ERROR,
   CLUSTER_PAGE_STATE_RESET,
-  CLUSTER_SELF_UPDATE
+  CLUSTER_SELF_UPDATE,
+  CLUSTER_PAGE_ZONE_UPDATE
 } from 'src/store/actionTypes';
 import { baseSaga, getRequestSaga, getSignalRequestSaga } from 'src/store/commonRequest';
 import { getClusterSelf } from 'src/store/request/app.requests';
@@ -154,11 +154,9 @@ const probeServerRequestSaga = function* () {
       payload: requestPayload = {},
       __payload: { successMessage } = {}
     } = action;
-    const indicator = pageRequestIndicator.run();
 
     try {
       const response = yield call(probeServer, requestPayload);
-      indicator.success();
 
       yield put({
         type: CLUSTER_PAGE_PROBE_SERVER_REQUEST_SUCCESS,
@@ -171,7 +169,6 @@ const probeServerRequestSaga = function* () {
         payload: error,
         error: true
       });
-      indicator.error();
       return;
     }
   });
@@ -210,14 +207,11 @@ const joinServerRequestSaga = getRequestSaga(
 function* createReplicasetRequestSaga() {
   yield takeLatest(CLUSTER_PAGE_CREATE_REPLICASET_REQUEST, function* load(action) {
     const { payload: requestPayload = {} } = action;
-    const indicator = pageRequestIndicator.run();
 
     let response;
     try {
       const createReplicasetResponse = yield call(createReplicaset, requestPayload);
-      indicator.next();
       const clusterSelfResponse = yield call(getClusterSelf);
-      indicator.success();
 
       response = {
         ...createReplicasetResponse,
@@ -232,7 +226,7 @@ function* createReplicasetRequestSaga() {
         requestPayload,
         __errorMessage: true
       });
-      indicator.error();
+
       return;
     }
   });
@@ -304,7 +298,8 @@ const updateListsOnTopologyEdit = function* () {
     CLUSTER_PAGE_FAILOVER_PROMOTE_REQUEST_SUCCESS,
     CLUSTER_PAGE_REPLICASET_EDIT_REQUEST_SUCCESS,
     CLUSTER_PAGE_PROBE_SERVER_REQUEST_SUCCESS,
-    CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_SUCCESS
+    CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_SUCCESS,
+    CLUSTER_PAGE_ZONE_UPDATE
   ];
 
   yield takeLatest(topologyEditTokens, function* () {

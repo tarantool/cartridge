@@ -40,13 +40,13 @@ describe('Server details', () => {
     cy.get('.meta-test__ReplicasetServerListItem__dropdown *')
       .contains('Server details').click();
 
-    cy.get('.meta-test__ServerInfoModal button').contains('Cartridge').click();
-    cy.get('.meta-test__ServerInfoModal button').contains('Replication').click();
-    cy.get('.meta-test__ServerInfoModal button').contains('Storage').click();
-    cy.get('.meta-test__ServerInfoModal button').contains('Network').click();
-    cy.get('.meta-test__ServerInfoModal button').contains('General').click();
-    cy.get('.meta-test__ServerInfoModal').closest('div').find('.meta-test__youAreHereIcon');
-    cy.get('.meta-test__ServerInfoModal button').contains('Close').click();
+    cy.get('.meta-test__ServerDetailsModal button').contains('Cartridge').click();
+    cy.get('.meta-test__ServerDetailsModal button').contains('Replication').click();
+    cy.get('.meta-test__ServerDetailsModal button').contains('Storage').click();
+    cy.get('.meta-test__ServerDetailsModal button').contains('Network').click();
+    cy.get('.meta-test__ServerDetailsModal button').contains('General').click();
+    cy.get('.meta-test__ServerDetailsModal').closest('div').find('.meta-test__youAreHereIcon');
+    cy.get('.meta-test__ServerDetailsModal button').contains('Close').click();
   });
 
   it('Dead server', () => {
@@ -60,29 +60,29 @@ describe('Server details', () => {
     cy.get('.meta-test__ReplicasetServerListItem__dropdown *')
       .contains('Server details').click();
 
-    cy.get('.meta-test__ServerInfoModal').contains('Server status is "dead"');
-    cy.get('.meta-test__ServerInfoModal').contains('instance_uuid').should('not.exist');
+    cy.get('.meta-test__ServerDetailsModal').contains('Server status is "dead"');
+    cy.get('.meta-test__ServerDetailsModal').contains('instance_uuid').should('not.exist');
 
-    cy.get('.meta-test__ServerInfoModal button').contains('Cartridge').click();
-    cy.get('.meta-test__ServerInfoModal button').contains('Replication').click();
-    cy.get('.meta-test__ServerInfoModal button').contains('Storage').click();
-    cy.get('.meta-test__ServerInfoModal button').contains('Network').click();
-    cy.get('.meta-test__ServerInfoModal button').contains('General').click();
+    cy.get('.meta-test__ServerDetailsModal button').contains('Cartridge').click();
+    cy.get('.meta-test__ServerDetailsModal button').contains('Replication').click();
+    cy.get('.meta-test__ServerDetailsModal button').contains('Storage').click();
+    cy.get('.meta-test__ServerDetailsModal button').contains('Network').click();
+    cy.get('.meta-test__ServerDetailsModal button').contains('General').click();
 
     cy.task('tarantool', {code: `_G.cluster:server('dummy-2'):start()`});
 
-    cy.get('.meta-test__ServerInfoModal').contains('healthy');
-    cy.get('.meta-test__ServerInfoModal').contains('instance_uuid');
+    cy.get('.meta-test__ServerDetailsModal').contains('healthy');
+    cy.get('.meta-test__ServerDetailsModal').contains('instance_uuid');
 
     cy.task('tarantool', {code: `
       return _G.cluster:server('dummy-2').instance_uuid
     `}).then((resp) => {
       const uuid = resp[0];
-      cy.get('.meta-test__ServerInfoModal').contains(uuid);
+      cy.get('.meta-test__ServerDetailsModal').contains(uuid);
 
     });
 
-    cy.get('.meta-test__ServerInfoModal button').contains('Close').click();
+    cy.get('.meta-test__ServerDetailsModal button').contains('Close').click();
     cy.get('.ServerLabelsHighlightingArea').contains(':13302').closest('li')
       .contains('healthy');
   });

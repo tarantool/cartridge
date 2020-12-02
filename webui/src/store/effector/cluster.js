@@ -17,6 +17,6 @@ export type ClusterState = {
   suggestions?: ClusterSuggestions
 };
 
-export const clusterPageMount = createEvent<any>('cluster page mount');
+export const clusterPageMount = createEvent<mixed>('cluster page mount');
 export const statsResponseSuccess = createEvent<ClusterState>('stats response success');
 export const statsResponseError = createEvent<string>('stats response error');

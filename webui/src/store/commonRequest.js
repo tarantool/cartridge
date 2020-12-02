@@ -6,8 +6,6 @@ import {
   takeLatest
 } from 'redux-saga/effects';
 
-import { pageRequestIndicator } from 'src/misc/pageRequestIndicator';
-
 export function getInitialRequestStatus() {
   return {
     loading: false,
@@ -133,12 +131,10 @@ const createSaga = (effect, SIGNAL, REQUEST, REQUEST_SUCCESS, REQUEST_ERROR, req
       const {
         payload: requestPayload = {},
         __payload: {
-          noIndicator,
           noErrorMessage,
           successMessage
         } = {}
       } = action;
-      const indicator = noIndicator ? null : pageRequestIndicator.run();
 
       if (SIGNAL) {
         yield put({ type: REQUEST, payload: requestPayload });
@@ -147,7 +143,6 @@ const createSaga = (effect, SIGNAL, REQUEST, REQUEST_SUCCESS, REQUEST_ERROR, req
       let response;
       try {
         response = yield call(request, requestPayload);
-        indicator && indicator.success();
       } catch (error) {
         yield put({
           type: REQUEST_ERROR,
@@ -155,7 +150,7 @@ const createSaga = (effect, SIGNAL, REQUEST, REQUEST_SUCCESS, REQUEST_ERROR, req
           requestPayload,
           __errorMessage: !noErrorMessage
         });
-        indicator && indicator.error();
+
         return;
       }
 
