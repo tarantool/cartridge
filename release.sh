@@ -2,9 +2,9 @@
 
 set -e
 
-if [ -n "$CI_COMMIT_TAG" ]
+if [ -n "$1" ]
 then
-    TAG="$CI_COMMIT_TAG"
+    TAG="$1"
 else
     TAG=$(git describe --exact-match HEAD 2>/dev/null || true)
 fi
@@ -12,7 +12,7 @@ fi
 if [ -z "$TAG" ]
 then
     echo "No git tag found. Skipping release."
-    exit 0
+    exit 1
 fi
 
 echo "Preparing release \"$TAG\""

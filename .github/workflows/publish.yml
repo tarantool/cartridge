@@ -1,0 +1,47 @@
+name: Publish
+
+on:
+  push:
+    branches: [master]
+    tags:
+
+env:
+  ROCKS_USERNAME: ${{ secrets.ROCKS_USERNAME }}
+  ROCKS_PASSWORD: ${{ secrets.ROCKS_PASSWORD }}
+  CMAKE_LDOC_FIND_REQUIRED: 'YES'
+  CMAKE_SPHINX_FIND_REQUIRED: 'YES'
+
+jobs:
+  scm-1:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+    steps:
+      - uses: actions/checkout@v2
+      - name: Upload rockspec
+        run: ./upload.sh cartridge-scm-1.rockspec
+
+  release:
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+      - uses: actions/setup-python@v2
+      - run: python -m pip install -r rst/requirements.txt
+
+      - name: Install tarantool
+        run: |
+          curl -L https://tarantool.io/installer.sh | sudo VER=1.10 bash
+          sudo apt install -y tarantool tarantool-dev
+
+      - name: Install ldoc
+        run: >
+          tarantoolctl rocks install --server=http://rocks.moonscript.org
+          https://raw.githubusercontent.com/tarantool/ldoc/tarantool/ldoc-scm-2.rockspec
+
+      - name: Upload rockspec
+        run: |
+          TAG=${GITHUB_REF##*/}
+          ./release.sh $TAG
+          ./upload.sh release/membership-${TAG}-1.rockspec
+          ./upload.sh release/membership-${TAG}-1.all.rock
