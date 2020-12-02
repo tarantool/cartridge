@@ -84,6 +84,7 @@ jobs:
         run: |
           mkdir -p $CARTRIDGE_OLDER_PATH
           pushd $CARTRIDGE_OLDER_PATH
+          # Prerequisite for compatibility.cartridge_upgrade_test
           tarantoolctl rocks install cartridge 1.2.0-1
           popd
 
