@@ -10,7 +10,7 @@ import type { Effect, Store } from 'effector'
 import { uploadConfig } from '../request/clusterPage.requests';
 import { getErrorMessage } from '../../api';
 
-export const configPageMount = createEvent<mixed>('config page mount')
+export const configPageMount = createEvent<void>('config page mount');
 export const dropFiles = createEvent<Array<File>>('drop files')
 
 export const submitConfig: Effect<Array<File>, boolean, Error> = createEffect('submit config', {
