@@ -24,7 +24,7 @@ import {
 } from 'src/store/actions/clusterInstancePage.actions';
 import { withRouter } from 'react-router-dom'
 import {
-  submitZoneFx,
+  setInstanceZoneFx,
   zoneAddModalOpen
 } from 'src/store/effector/clusterZones';
 import store from 'src/store/instance';
@@ -193,7 +193,7 @@ class ServerDetailsModal extends React.Component<
                   {zoneList.map(zoneName => (
                     <DropdownItem
                       key={zoneName}
-                      onClick={() => submitZoneFx({ uuid: instanceUUID, zone: zoneName })}
+                      onClick={() => setInstanceZoneFx({ uuid: instanceUUID, zone: zone === zoneName ? '' : zoneName })}
                     >
                       {zoneName}
                     </DropdownItem>

@@ -17,18 +17,17 @@ export const zoneAddModalOpen = createEvent<string>('zone adding modal open');
 export const zoneAddModalClose = createEvent<mixed>('zone adding modal close');
 
 export const $zoneAddForInstance: Store<string | null> = createStore(null);
-export const $zoneAddModalVisible = $zoneAddForInstance.map<boolean>(uuid => !!uuid);
 export const $error: Store<?string> = createStore(null);
 
-export const submitZoneFx: Effect<
-  { uuid: string | null, zone: string },
+export const setInstanceZoneFx: Effect<
+  { uuid: string | null, zone?: string },
   void,
   Error
 > = createEffect(
   'submit server zone change',
   {
     handler: async ({ uuid, zone }) => {
-      if (uuid && zone) await editServers([{ uuid, zone }]);
+      if (uuid) await editServers([{ uuid, zone: zone || '' }]);
       else throw new Error('Invalid zone name or UUID');
     }
   }
@@ -37,16 +36,13 @@ export const submitZoneFx: Effect<
 // init
 $zoneAddForInstance
   .on(zoneAddModalOpen, (_, uuid) => uuid)
-  .reset(submitZoneFx.done)
   .reset(zoneAddModalClose)
   .reset(clusterPageMount);
 
 $error
-  .on(submitZoneFx.failData, (_, error) => getErrorMessage(error))
-  .reset(submitZoneFx)
-  .reset(submitZoneFx.done)
-  .reset(zoneAddModalClose)
-  .reset(zoneAddModalOpen)
+  .on(setInstanceZoneFx.failData, (_, error) => getErrorMessage(error))
+  .reset(setInstanceZoneFx)
+  .reset(setInstanceZoneFx.done)
   .reset(clusterPageMount);
 
-submitZoneFx.done.watch(() => store.dispatch({ type: CLUSTER_PAGE_ZONE_UPDATE }));
+setInstanceZoneFx.done.watch(() => store.dispatch({ type: CLUSTER_PAGE_ZONE_UPDATE }));
