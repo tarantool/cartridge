@@ -16,7 +16,7 @@ jobs:
       - name: Install tarantool
         run: |
           curl -L https://tarantool.io/installer.sh | sudo VER=1.10 bash
-          tarantoolctl rocks install luatest 0.5.0
+          tarantoolctl rocks install luatest 0.5.2
 
       - name: Cache build dir
         uses: actions/cache@v2
@@ -51,4 +51,3 @@ jobs:
       - name: Cleanup cached paths
         run: |
           tarantoolctl rocks remove cartridge
-

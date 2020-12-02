@@ -1,5 +1,5 @@
 name: 'Setup etcd'
-description: 'Setup tarantool environment and add it to the PATH'
+description: 'Setup etcd and add it to the PATH'
 inputs:
   etcd-version:
     description: 'Release name from https://github.com/etcd-io/etcd/releases'
@@ -8,9 +8,6 @@ inputs:
   install-prefix:
     description: 'Where to extract the archive'
     default: './etcd'
-  export-path:
-    description: 'Whether to export PATH environment variable'
-    default: false
 runs:
   using: 'composite'
   steps:
@@ -35,11 +32,3 @@ runs:
         set -x
         ${INSTALL_PREFIX}/etcd --version
         ${INSTALL_PREFIX}/etcdctl version
-
-    - shell: bash
-      run: |
-        if ( "${{ inputs.export-path }}" == "true" ); then
-          echo "/path/to/dir" >> $GITHUB_PATH
-        fi
-
-
