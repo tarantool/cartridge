@@ -2,7 +2,6 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import { noop, throttle } from 'lodash';
 import monaco from '../../misc/initMonacoEditor';
-import { subscribeOnTargetEvent } from '../../misc/eventHandler';
 import { getModelByFile, setModelByFile } from '../../misc/monacoModelStorage';
 import { getYAMLError } from '../../misc/yamlValidation';
 
@@ -55,25 +54,7 @@ export default class MonacoEditor extends React.Component {
 
   componentDidMount() {
     this.initMonaco();
-    this.unsubcribeResize = subscribeOnTargetEvent(window, 'resize', this.throttledAdjustEditorSize)
   }
-
-  adjustEditorSize() {
-    if (this.containerElement && this.editor) {
-      const { width, height } = this.state
-      const { clientWidth, clientHeight } = this.containerElement
-      if (width !== clientWidth && height !== clientHeight) {
-        this.setState(() => ({
-          height: clientHeight,
-          width: clientWidth
-        }), () => {
-          this.editor.layout()
-        })
-      }
-    }
-  }
-
-  throttledAdjustEditorSize = throttle(this.adjustEditorSize, 1000, { leading: false })
 
   setValidationError = () => {
     const {
@@ -127,10 +108,11 @@ export default class MonacoEditor extends React.Component {
     if (prevProps.theme !== theme) {
       monaco.editor.setTheme(theme);
     }
-    this.throttledAdjustEditorSize()
+
     if (prevProps.options !== options) {
       editor.updateOptions(options);
     }
+
     if (prevProps.cursor !== cursor) {
       editor.setSelection(cursor)
       editor.revealLine(this.props.cursor.startLineNumber)
@@ -139,7 +121,6 @@ export default class MonacoEditor extends React.Component {
 
   componentWillUnmount() {
     this.destroyMonaco();
-    this.unsubcribeResize();
   }
 
   assignRef = component => {
@@ -188,8 +169,6 @@ export default class MonacoEditor extends React.Component {
 
   editorDidMount(editor) {
     this.props.editorDidMount(editor, monaco);
-
-    this.adjustEditorSize();
 
     if (this.props.cursor !== DEF_CURSOR) {
       editor.setSelection(this.props.cursor)

@@ -5,13 +5,13 @@ import { css, cx } from 'emotion';
 import {
   Button,
   ConfirmModal,
-  ControlsPanel,
   IconCreateFolder,
   IconCreateFile,
   IconRefresh,
   Text,
   Scrollbar,
   NonIdealState,
+  colors,
   splashSelectFileSvg
 } from '@tarantool.io/ui-kit';
 import MonacoEditor from 'src/components/MonacoEditor';
@@ -54,27 +54,24 @@ const styles = {
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
-    width: 255px;
+    width: 274px;
     background-color: #fafafa;
   `,
   sidePanelHeading: css`
     display: flex;
+    align-items: center;
     min-height: 56px;
-    padding: 16px;
+    padding: 15px;
     box-sizing: border-box;
-  `,
-  sidePanelTitle: css`
-
   `,
   buttonsPanel: css`
     display: flex;
     flex-wrap: nowrap;
     align-items: center;
-    padding-left: 6px;
+    padding-left: 2px;
   `,
   fileActionBtn: css`
-    line-height: 16px;
-    padding: 0 2px;
+    margin-left: 4px;
   `,
   treeScrollWrap: css`
     flex-grow: 1;
@@ -83,7 +80,6 @@ const styles = {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
-    padding: 16px;
     box-sizing: border-box;
     overflow: hidden;
   `,
@@ -101,12 +97,14 @@ const styles = {
     display: flex;
     justify-content: space-between;
     align-items: baseline;
-    padding-bottom: 16px;
-    margin-bottom: 16px;
-    border-bottom: 1px solid #E8E8E8;
+    margin: 20px;
+  `,
+  currentPath: css`
+    color: ${colors.dark40};
   `,
   editor: css`
     flex-grow: 1;
+    overflow: hidden;
   `,
   splash: css`
     display: flex;
@@ -325,16 +323,44 @@ class Code extends React.Component<CodeProps, CodeState> {
       <PageLayout
         heading='Code'
         wide
+        topRightControls={[
+          <Button
+            text='Reload'
+            size='l'
+            className={
+              !loading && fetchingConfigFiles
+                ? 'meta-test__Code__reload_loading'
+                : 'meta-test__Code__reload_idle'
+            }
+            loading={!loading && fetchingConfigFiles}
+            onClick={this.handleReloadClick}
+            icon={IconRefresh}
+            intent='base'
+          />,
+          <Button
+            onClick={this.handleApplyClick}
+            className={
+              puttingConfigFiles
+                ? 'meta-test__Code__apply_loading'
+                : 'meta-test__Code__apply_idle'
+            }
+            text='Apply'
+            intent='primary'
+            loading={puttingConfigFiles}
+            size='l'
+            disabled={false}
+          />
+        ]}
       >
         <div className={cx('meta-test__Code', styles.area)}>
           <div className={styles.sidePanel}>
             <div className={styles.sidePanelHeading}>
-              <Text variant='h4' className={styles.sidePanelTitle}>Files</Text>
+              <Text variant='h4'>Files</Text>
               <div className={styles.buttonsPanel}>
                 <Button
                   className={cx(styles.fileActionBtn, 'meta-test__addFolderBtn')}
                   intent='plain'
-                  size='xs'
+                  size='m'
                   icon={IconCreateFolder}
                   onClick={() => this.handleFolderCreateClick('')}
                   title='Create folder'
@@ -342,7 +368,7 @@ class Code extends React.Component<CodeProps, CodeState> {
                 <Button
                   className={cx(styles.fileActionBtn, 'meta-test__addFileBtn')}
                   intent='plain'
-                  size='xs'
+                  size='m'
                   icon={IconCreateFile}
                   onClick={() => this.handleFileCreateClick('')}
                   title='Create file'
@@ -371,41 +397,12 @@ class Code extends React.Component<CodeProps, CodeState> {
           <div className={styles.mainContent}>
 
             <div className={styles.panel}>
-              <Text>{selectedFile && selectedFile.path}</Text>
-              <ControlsPanel
-                thin
-                controls={[
-                  <Button
-                    text='Reload'
-                    size='s'
-                    className={
-                      !loading && fetchingConfigFiles
-                        ? 'meta-test__Code__reload_loading'
-                        : 'meta-test__Code__reload_idle'
-                    }
-                    loading={!loading && fetchingConfigFiles}
-                    onClick={this.handleReloadClick}
-                    icon={IconRefresh}
-                    intent='secondary'
-                  />,
-                  <Button
-                    onClick={this.handleApplyClick}
-                    className={
-                      puttingConfigFiles
-                        ? 'meta-test__Code__apply_loading'
-                        : 'meta-test__Code__apply_idle'
-                    }
-                    text='Apply'
-                    intent='primary'
-                    loading={puttingConfigFiles}
-                    size='s'
-                    disabled={false}
-                  />
-                ]}
-              />
+              <Text className={styles.currentPath} variant='p' tag='span'>
+                {selectedFile && selectedFile.path.replaceAll('/', ' / ')}
+              </Text>
             </div>
-            {selectedFile ?
-              <>
+            {selectedFile
+              ? (
                 <MonacoEditor
                   className={styles.editor}
                   language={(selectedFile && getLanguageByFileName(selectedFile.fileName)) || null}
@@ -418,13 +415,14 @@ class Code extends React.Component<CodeProps, CodeState> {
                   isContentChanged={selectedFile ? !selectedFile.saved : null}
                   setIsContentChanged={this.handleSetIsContentChanged}
                 />
-              </>
-              :
-              <NonIdealState
-                icon={IconSelectFile}
-                title='Please select a file'
-                className={styles.splash}
-              />
+              )
+              : (
+                <NonIdealState
+                  icon={IconSelectFile}
+                  title='Please select a file'
+                  className={styles.splash}
+                />
+              )
             }
           </div>
           {operableFile && typeof operableFile.type === 'string' && (

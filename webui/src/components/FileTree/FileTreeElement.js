@@ -4,31 +4,32 @@ import { css, cx } from 'emotion';
 import {
   Button,
   DotIndicator,
+  IconBucket,
   IconChevron,
   IconCreateFolder,
   IconCreateFile,
-  IconDelete,
   IconEdit,
   IconFile,
   IconFolder,
-  Text
+  Text,
+  colors
 } from '@tarantool.io/ui-kit';
 import type { TreeFileItem } from 'src/store/selectors/filesSelectors';
 
 const styles = {
-  element: css`
+  row: css`
     position: relative;
     display: flex;
     flex-wrap: nowrap;
     justify-content: flex-start;
     align-items: center;
-    height: 34px;
-    padding-right: 8px;
+    height: 38px;
+    padding-right: 11px;
     user-select: none;
     cursor: pointer;
 
     &:hover {
-      background-color: #f6ebec;
+      background-color: ${colors.dark10};
     }
 
     .FileTreeElement__btns {
@@ -40,7 +41,7 @@ const styles = {
     }
   `,
   active: css`
-    background-color: #f6ebec;
+    background-color: ${colors.dark10};
   `,
   deleted: css`
     text-decoration: line-through;
@@ -63,18 +64,13 @@ const styles = {
   `,
   buttonsPanel: css`
     position: absolute;
-    top: calc(50% - 9px);
+    top: calc(50% - 12px);
     right: 8px;
     display: flex;
     flex-wrap: nowrap;
-    background-color: #f6ebec;
   `,
   fileActionBtn: css`
-    line-height: 16px;
-    padding: 0 2px;
-  `,
-  fileActionBtnMargin: css`
-    margin-right: 8px;
+    margin-left: 4px;
   `
 };
 
@@ -115,7 +111,7 @@ export const FileTreeElement = (
     <React.Fragment>
       <li
         className={cx(
-          styles.element,
+          styles.row,
           { [styles.active]: active },
           className
         )}
@@ -151,16 +147,16 @@ export const FileTreeElement = (
             <React.Fragment>
               <Button
                 className={cx(styles.fileActionBtn, 'meta-test__createFolderInTreeBtn')}
-                intent='plain'
-                size='xs'
+                intent='secondary'
+                size='s'
                 icon={IconCreateFolder}
                 onClick={e => { e.stopPropagation(); onFolderCreate(file); }}
                 title='Create folder'
               />
               <Button
-                className={cx(styles.fileActionBtn, styles.fileActionBtnMargin, 'meta-test__createFileInTreeBtn')}
-                intent='plain'
-                size='xs'
+                className={cx(styles.fileActionBtn, 'meta-test__createFileInTreeBtn')}
+                intent='secondary'
+                size='s'
                 icon={IconCreateFile}
                 onClick={e => { e.stopPropagation(); onFileCreate(file); }}
                 title='Create file'
@@ -169,17 +165,17 @@ export const FileTreeElement = (
           )}
           <Button
             className={cx(styles.fileActionBtn, 'meta-test__editFolderInTreeBtn')}
-            intent='plain'
-            size='xs'
+            intent='secondary'
+            size='s'
             icon={IconEdit}
             onClick={e => { e.stopPropagation(); onRename(file.path); }}
             title='Rename'
           />
           <Button
             className={cx(styles.fileActionBtn, 'meta-test__deleteFolderInTreeBtn')}
-            intent='plain'
-            size='xs'
-            icon={IconDelete}
+            intent='secondary'
+            size='s'
+            icon={IconBucket}
             onClick={e => { e.stopPropagation(); onDelete(file.path); }}
             title='Delete'
           />
