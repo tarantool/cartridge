@@ -26,8 +26,8 @@ jobs:
 
       - name: Build cartridge
         env:
-          CMAKE_LDOC_FIND_REQUIRED: "YES"
-          CMAKE_SPHINX_FIND_REQUIRED: "YES"
+          CMAKE_LDOC_FIND_REQUIRED: 'YES'
+          CMAKE_SPHINX_FIND_REQUIRED: 'YES'
         run: |
           tarantoolctl rocks make
 
