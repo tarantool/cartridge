@@ -1,5 +1,5 @@
 name: 'Setup etcd'
-description: 'Download and extract etcd release archive'
+description: 'Setup etcd and add it to the PATH'
 inputs:
   etcd-version:
     description: 'Release name from https://github.com/etcd-io/etcd/releases'
@@ -32,3 +32,4 @@ runs:
         set -x
         ${INSTALL_PREFIX}/etcd --version
         ${INSTALL_PREFIX}/etcdctl version
+        echo "${INSTALL_PREFIX}" >> $GITHUB_PATH

@@ -47,16 +47,27 @@ jobs:
       matrix:
         runs-on: [ubuntu-latest]
         tarantool: ['1.10']
+        include:
+        - runs-on: macos-latest
+          tarantool: null # we don't choose version in brew
     runs-on: ${{ matrix.runs-on }}
     env:
       CMAKE_DUMMY_WEBUI: true
     steps:
       - uses: actions/checkout@v2
 
-      - name: Install tarantool
-        run: |
-          curl -L https://tarantool.io/installer.sh | sudo VER=${{ matrix.tarantool }} bash
-          tarantoolctl rocks install luatest 0.5.2
+      - name: Install tarantool (apt)
+        if: runner.os == 'Linux'
+        run: >
+          curl -L https://tarantool.io/installer.sh |
+          sudo VER=${{ matrix.tarantool }} bash
+
+      - name: Install tarantool (brew)
+        if: runner.os == 'macOS'
+        run: brew install tarantool
+
+      - name: Install luatest
+        run: tarantoolctl rocks install luatest 0.5.2
 
       - name: Install etcd
         uses: ./.github/actions/setup-etcd
@@ -65,21 +76,19 @@ jobs:
           etcd-version: v2.3.8
           install-prefix: etcd-v2.3.8
 
-      - name: Cache build dir
+      - name: Cache rocks
         uses: actions/cache@v2
         with:
-          path: |
-            .rocks/
-            build.luarocks/
-          key: backend-build-${{ runner.os }}
+          path: .rocks/
+          key: backend-build-${{ runner.os }}-${{ hashFiles('*.rockspec') }}
+          restore-keys: |
+            backend-build-${{ runner.os }}-
 
       - name: Build cartridge
-        run: |
-          tarantoolctl rocks make
+        run: tarantoolctl rocks make
 
       - name: Run tests
         env:
-          ETCD_PATH: etcd-v2.3.8/etcd
           CARTRIDGE_OLDER_PATH: cartridge-1.2.0
         run: |
           mkdir -p $CARTRIDGE_OLDER_PATH
@@ -88,8 +97,13 @@ jobs:
           tarantoolctl rocks install cartridge 1.2.0-1
           popd
 
+          ETCD_PATH=$(which etcd || true)
+          if [ -n "$ETCD_PATH" ]; then
+            export ETCD_PATH
+          fi
+
+          sudo ulimit -n 24576 || true
           .rocks/bin/luatest -v
 
       - name: Cleanup cached paths
-        run: |
-          tarantoolctl rocks remove cartridge
+        run: tarantoolctl rocks remove cartridge
