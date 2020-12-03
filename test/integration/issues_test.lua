@@ -137,7 +137,7 @@ function g.test_config_mismatch()
     replica2.net_box:eval([[
         local confapplier = require('cartridge.confapplier')
         local cfg = confapplier.get_active_config():copy()
-        cfg:set_plaintext('todo.txt', '- Test config mismatch')
+        cfg:set_plaintext('todo1.txt', '- Test config mismatch')
         cfg:lock()
         confapplier.apply_config(cfg)
     ]])
@@ -157,7 +157,7 @@ function g.test_config_mismatch()
     replica2.net_box:eval([[
         local confapplier = require('cartridge.confapplier')
         local cfg = confapplier.get_active_config():copy()
-        cfg:set_plaintext('todo.txt', nil)
+        cfg:set_plaintext('todo1.txt', nil)
         cfg:lock()
         confapplier.apply_config(cfg)
     ]])
@@ -179,7 +179,7 @@ function g.test_twophase_config_locked()
 
     local future = master.net_box:call(
         'package.loaded.cartridge.config_patch_clusterwide',
-        {{['todo.txt'] = '- Test 2pc lock'}},
+        {{['todo2.txt'] = '- Test 2pc lock'}},
         {is_async = true}
     )
 
