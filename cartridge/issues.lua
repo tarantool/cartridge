@@ -295,7 +295,8 @@ local function list_on_instance(opts)
 
     local workdir = confapplier.get_workdir()
     local path_prepare = fio.pathjoin(workdir, 'config.prepare')
-    if (opts == nil or opts.patch_clusterwide_lock ~= true)
+    if opts ~= nil
+    and opts.check_2pc_lock == true
     and fio.path.exists(path_prepare) then
         table.insert(ret, {
             level = 'warning',
@@ -303,8 +304,7 @@ local function list_on_instance(opts)
             instance_uuid = instance_uuid,
             replicaset_uuid = replicaset_uuid,
             message = string.format(
-                'Configuration is prepared and locked on %s'..
-                ' but two-phase is not in progress',
+                'Configuration is prepared and locked on %s',
                 describe(self_uri)
             ),
         })
@@ -390,13 +390,13 @@ local function list_on_cluster()
     -- Get each instance issues (replication, failover, memory usage)
 
     local twophase_vars = require('cartridge.vars').new('cartridge.twophase')
-    local patch_clusterwide_lock = twophase_vars.locks['clusterwide']
+    local patch_in_progress = assert(twophase_vars.locks)['clusterwide']
 
     local issues_map = pool.map_call(
         '_G.__cartridge_issues_list_on_instance',
         {{
             checksum = confapplier.get_active_config():get_checksum(),
-            patch_clusterwide_lock = patch_clusterwide_lock,
+            check_2pc_lock = not patch_in_progress,
         }},
         {uri_list = uri_list, timeout = 1}
     )

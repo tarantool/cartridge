@@ -63,11 +63,14 @@ function g.test_issues_limits()
             fragmentation_threshold_critical = 0.9
         }
     )
+
+    t.assert_equals(helpers.list_cluster_issues(server), {})
 end
 
 function g.test_broken_replica()
     local master = g.cluster.main_server
     local replica1 = g.cluster:server('replica1')
+    local replica2 = g.cluster:server('replica2')
 
     master.net_box:eval([[
         __replication = box.cfg.replication
@@ -78,6 +81,9 @@ function g.test_broken_replica()
         box.cfg{read_only = false}
         box.schema.space.create('test')
     ]])
+    t.helpers.retrying({}, function()
+        replica2.net_box:eval('assert(box.space.test)')
+    end)
 
     master.net_box:eval([[
         box.schema.space.create('test')
@@ -85,41 +91,43 @@ function g.test_broken_replica()
         __replication = nil
     ]])
 
+    local function issue_fmt(from, to)
+        return {
+            level = 'warning',
+            topic = 'replication',
+            replicaset_uuid = g.cluster:server(to).replicaset_uuid,
+            instance_uuid = g.cluster:server(to).instance_uuid,
+            message = string.format("Replication" ..
+                " from %s (%s) to %s (%s) is stopped" ..
+                " (Duplicate key exists in unique index" ..
+                " 'primary' in space '_space')",
+                g.cluster:server(from).advertise_uri, from,
+                g.cluster:server(to).advertise_uri, to
+            )
+        }
+    end
 
     t.helpers.retrying({}, function()
-        local issues = helpers.list_cluster_issues(master)
+        t.assert_items_equals(helpers.list_cluster_issues(master), {
+            issue_fmt('master', 'replica1'),
+            issue_fmt('master', 'replica2'),
+            issue_fmt('replica1', 'master'),
+            issue_fmt('replica2', 'master'),
+        })
+    end)
 
-        t.assert_equals(
-            helpers.table_find_by_attr(
-                issues, 'instance_uuid', helpers.uuid('a', 'a', 2)
-            ), {
-                level = 'warning',
-                topic = 'replication',
-                replicaset_uuid = helpers.uuid('a'),
-                instance_uuid = helpers.uuid('a', 'a', 2),
-                message = "Replication from localhost:13301 (master)" ..
-                    " to localhost:13302 (replica1) is stopped" ..
-                    " (Duplicate key exists in unique index" ..
-                    " 'primary' in space '_space')",
-            }
-        )
-        t.assert_equals(
-            helpers.table_find_by_attr(
-                issues, 'instance_uuid', helpers.uuid('a', 'a', 3)
-            ), {
-                level = 'warning',
-                topic = 'replication',
-                replicaset_uuid = helpers.uuid('a'),
-                instance_uuid = helpers.uuid('a', 'a', 3),
-                message = "Replication from localhost:13301 (master)" ..
-                    " to localhost:13303 (replica2) is stopped" ..
-                    " (Duplicate key exists in unique index" ..
-                    " 'primary' in space '_space')",
-            }
-        )
-        if #issues ~= 4 then
-            t.assert_not(issues)
-        end
+    for _, srv in ipairs({master, replica1, replica2}) do
+        srv.net_box:eval([[
+            box.cfg({replication_skip_conflict = true})
+            __replication = box.cfg.replication
+            pcall(box.cfg, {replication = box.NULL})
+            pcall(box.cfg, {replication = __replication})
+            __replication = nil
+        ]])
+    end
+
+    t.helpers.retrying({}, function()
+        t.assert_equals(helpers.list_cluster_issues(master), {})
     end)
 end
 
@@ -145,51 +153,60 @@ function g.test_config_mismatch()
                 ' on localhost:13303 (replica2)',
         }}
     )
-end
 
-function g.test_twophase_config_locked()
-    local master = g.cluster.main_server
-    local current_issues = helpers.list_cluster_issues(master)
-    master.net_box:eval([[
-        local confapplier = require('cartridge.confapplier')
-        local cfg = confapplier.get_active_config():copy()
-        require('cartridge.twophase').patch_clusterwide(cfg:get_plaintext())
-    ]])
-
-    -- Issue shouldn't appear during or after valid two-phase commit
-    t.assert_items_equals(
-        helpers.list_cluster_issues(master),
-        current_issues
-    )
-
-    local issue = {
-            level = 'warning',
-            topic = 'configuration',
-            instance_uuid = helpers.uuid('a', 'a', 3),
-            replicaset_uuid = helpers.uuid('a'),
-            message = 'Configuration is prepared and locked'..
-                ' on localhost:13303 (replica2) but two-phase'..
-                ' is not in progress',
-    }
-
-    local replica2 = g.cluster:server('replica2')
     replica2.net_box:eval([[
         local confapplier = require('cartridge.confapplier')
         local cfg = confapplier.get_active_config():copy()
-        _G.__cartridge_clusterwide_config_prepare_2pc(cfg:get_plaintext())
+        cfg:set_plaintext('todo.txt', nil)
+        cfg:lock()
+        confapplier.apply_config(cfg)
     ]])
 
-    -- It appears after a single prepare 2pc
-    t.assert_items_include(
-        helpers.list_cluster_issues(master),
-        {issue}
+    t.assert_equals(helpers.list_cluster_issues(master), {})
+end
+
+function g.test_twophase_config_locked()
+    require('log').info('test started')
+
+    local master = g.cluster.main_server
+    local replica1 = g.cluster:server('replica1')
+    local replica2 = g.cluster:server('replica2')
+    t.assert_equals(helpers.list_cluster_issues(master), {})
+    t.assert_equals(helpers.list_cluster_issues(replica1), {})
+
+    -- Make validate_config hang on replica2
+    replica2.process:kill('STOP')
+
+    local future = master.net_box:call(
+        'package.loaded.cartridge.config_patch_clusterwide',
+        {{['todo.txt'] = '- Test 2pc lock'}},
+        {is_async = true}
     )
 
-    -- And remains after instance's restart
-    replica2:stop()
-    replica2:start()
-    t.assert_items_include(
-        helpers.list_cluster_issues(master),
-        {issue}
-    )
+    t.helpers.retrying({}, function()
+        t.assert_equals(fio.path.exists(master.workdir .. '/config.prepare'), true)
+        t.assert_equals(fio.path.exists(replica1.workdir .. '/config.prepare'), true)
+        t.assert_equals(fio.path.exists(replica2.workdir .. '/config.prepare'), false)
+    end)
+
+    -- It's not an issue when config is locked while 2pc is in progress
+    t.assert_equals(helpers.list_cluster_issues(master), {})
+
+    -- But it's an issue from replicas point of view
+    t.assert_items_include(helpers.list_cluster_issues(replica1), {{
+        level = 'warning',
+        topic = 'configuration',
+        instance_uuid = master.instance_uuid,
+        replicaset_uuid = master.replicaset_uuid,
+        message = 'Configuration is prepared and locked'..
+            ' on localhost:13301 (master)',
+    }})
+
+    t.assert_equals(future:is_ready(), false)
+    replica2.process:kill('CONT')
+    t.assert_equals(future:wait_result(), {true})
+
+    t.helpers.retrying({}, function()
+        t.assert_equals(helpers.list_cluster_issues(master), {})
+    end)
 end
