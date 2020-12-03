@@ -166,8 +166,6 @@ function g.test_config_mismatch()
 end
 
 function g.test_twophase_config_locked()
-    require('log').info('test started')
-
     local master = g.cluster.main_server
     local replica1 = g.cluster:server('replica1')
     local replica2 = g.cluster:server('replica2')
