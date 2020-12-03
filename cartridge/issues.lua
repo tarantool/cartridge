@@ -42,10 +42,12 @@
 --
 -- * "Configuration checksum mismatch on ...".
 -- * "Advertise URI (...) differs from clusterwide config (...)".
+-- * "Configuration is prepared and locked on ..."
 --
 -- @module cartridge.issues
 -- @local
 
+local fio = require('fio')
 local log = require('log')
 local fun = require('fun')
 local checks = require('checks')
@@ -281,11 +283,28 @@ local function list_on_instance(opts)
 
         table.insert(ret, {
             level = 'warning',
-            topic = 'config_mismatch',
+            topic = 'configuration',
             instance_uuid = instance_uuid,
             replicaset_uuid = replicaset_uuid,
             message = string.format(
                 'Configuration checksum mismatch on %s',
+                describe(self_uri)
+            ),
+        })
+    end
+
+    local workdir = confapplier.get_workdir()
+    local path_prepare = fio.pathjoin(workdir, 'config.prepare')
+    if opts ~= nil
+    and opts.check_2pc_lock == true
+    and fio.path.exists(path_prepare) then
+        table.insert(ret, {
+            level = 'warning',
+            topic = 'configuration',
+            instance_uuid = instance_uuid,
+            replicaset_uuid = replicaset_uuid,
+            message = string.format(
+                'Configuration is prepared and locked on %s',
                 describe(self_uri)
             ),
         })
@@ -370,9 +389,15 @@ local function list_on_cluster()
 
     -- Get each instance issues (replication, failover, memory usage)
 
+    local twophase_vars = require('cartridge.vars').new('cartridge.twophase')
+    local patch_in_progress = assert(twophase_vars.locks)['clusterwide']
+
     local issues_map = pool.map_call(
         '_G.__cartridge_issues_list_on_instance',
-        {{checksum = confapplier.get_active_config():get_checksum()}},
+        {{
+            checksum = confapplier.get_active_config():get_checksum(),
+            check_2pc_lock = not patch_in_progress,
+        }},
         {uri_list = uri_list, timeout = 1}
     )
 
