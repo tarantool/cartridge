@@ -48,6 +48,7 @@ local function stop()
         listen = box.cfg.listen,
         read_only = box.cfg.read_only,
         replication = box.cfg.replication,
+        bucket_count = vars.vshard_cfg.bucket_count,
         sharding = {[replicaset_uuid] = {
             replicas = {[instance_uuid] = {
                 uri = pool.format_uri(advertise_uri),
