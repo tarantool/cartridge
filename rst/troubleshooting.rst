@@ -33,7 +33,7 @@ instances.
 
     .. code-block:: bash
 
-        tarantoolctl connect user:password@instance_advertise_uri
+        tarantoolctl connect unix/:/var/run/tarantool/<app-name>.<instance-name>.control
 
 #.  Inspect what's going on.
 
@@ -103,7 +103,8 @@ option to zero. It may be accomplished in two ways:
 
   .. code-block:: bash
 
-      echo "box.cfg({replication_connect_quorum = 0})" | tarantoolctl connect <advertise_uri>
+      echo "box.cfg({replication_connect_quorum = 0})" | tarantoolctl connect \
+      unix/:/var/run/tarantool/<app-name>.<instance-name>.control
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 I want to run an instance with a new advertise_uri
@@ -182,13 +183,58 @@ But if you're still determined to reload the configuration manually, you can do
 
 .. code-block:: lua
 
-    -- load config from filesystem
-    clusterwide_config = require('cartridge.clusterwide-config')
-    cfg = clusterwidie_config.load('./config')
-    cfg:lock()
+    function reload_clusterwide_config()
+        local changelog = {}
 
-    confapplier = require('cartridge.confapplier')
-    confapplier.apply_config(cfg)
+        local ClusterwideConfig = require('cartridge.clusterwide-config')
+        local confapplier = require('cartridge.confapplier')
+
+        -- load config from filesystem
+        table.insert(changelog, 'Loading new config...')
+
+        local cfg, err = ClusterwideConfig.load('./config')
+        if err ~= nil then
+            return changelog, string.format('Failed to load new config: %s', err)
+        end
+
+        -- check instance state
+        table.insert(changelog, 'Checking instance config state...')
+
+        local roles_configured_state = 'RolesConfigured'
+        local connecting_fullmesh_state = 'ConnectingFullmesh'
+
+        local state = confapplier.wish_state(roles_configured_state, 10)
+
+        if state == connecting_fullmesh_state then
+            return changelog, string.format(
+                'Failed to reach %s config state. Stuck in %s. ' ..
+                    'Call "box.cfg({replication_connect_quorum = 0})" in instance console and try again',
+                roles_configured_state, state
+            )
+        end
+
+        if state ~= roles_configured_state then
+            return changelog, string.format(
+                'Failed to reach %s config state. Stuck in %s',
+                roles_configured_state, state
+            )
+        end
+
+        -- apply config changes
+        table.insert(changelog, 'Applying config changes...')
+
+        cfg:lock()
+        local ok, err = confapplier.apply_config(cfg)
+        if err ~= nil then
+            return changelog, string.format('Failed to apply new config: %s', err)
+        end
+
+        table.insert(changelog, 'Cluster-wide configuration was successfully updated')
+
+        return changelog
+    end
+
+    reload_clusterwide_config()
 
 This snippet reloads the configuration on a single instance. All other instances
 continue operating as before.
@@ -198,3 +244,150 @@ continue operating as before.
     If further configuration modifications are made with a two-phase
     commit (e.g. via the WebUI or with the Lua API), the active configuration
     of an active instance will be spread across the cluster.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Repairing cluster using Cartridge CLI `repair` command
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Cartridge CLI has `repair <https://github.com/tarantool/cartridge-cli#repairing-a-cluster>`_
+command since version
+`2.3.0 <https://github.com/tarantool/cartridge-cli/releases/tag/2.3.0>`_.
+
+It can be used to get current topology, remove instance from cluster, change repicaset leader
+or change instance advertise URI.
+
+.. NOTE::
+
+    ``cartridge repair`` patches the cluster-wide configuration files of
+    application instances placed ON THE LOCAL MACHINE. It means that running
+    ``cartridge repair`` on all machines is user responsibility.
+
+.. NOTE::
+
+    It's not enough to apply new configuration: the configuration should be
+    reloaded by the instance. If your application uses ``cartridge >= 2.0.0``,
+    you can simply use ``--reload`` flag to reload configuration. Otherwise, you
+    need to restart instances or reload configuration manually.
+
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Changing instance advertise URI
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To change instance advertise URI you have to perform these actions:
+
+#.  Start instance with a new advertise URI.
+    The easiest way is to change ``advertise_uri`` value in the
+    :ref:`instance configuration file <cartridge-run-systemctl-config>`).
+
+#.  Make sure instances are running and not stuck in the ConnectingFullmesh
+    state (see :ref:`above <troubleshooting-stuck-connecting-fullmesh>`).
+
+#.  Get instance UUID:
+    * open ``server details`` tab in WebUI;
+    * call ``cartridge repair list-topology --name <app-name>`` and find desired instance UUID:
+    * get instance ``box.info().uuid``:
+
+    .. code-block:: bash
+
+        echo "return box.info().uuid" | tarantoolctl connect \
+        unix/:/var/run/tarantool/<app-name>.<instance-name>.control
+
+#.  Now we need to update instance advertise URI in all instances cluster-wide
+    configuration files on each machine. Run ``cartridge repair set-advertise-uri``
+    with ``--dry-run`` flag on each machine to check cluster-wide config changes
+    computed  by ``cartridge-cli``:
+
+    .. code-block:: bash
+
+        cartridge repair set-advertise-uri \
+          --name myapp \
+          --dry-run \
+          <instance-uuid> <new-advertise-uri>
+
+#.  Run ``cartridge repair set-advertise-uri`` without ``--dry-run`` flag on
+    each machine to apply config changes computed by ``cartridge-cli``.
+    If your application uses ``cartridge >= 2.0.0``, you can specify
+    ``--reload`` flag to load new cluter-wide configuration on instances.
+    Otherwise, you need to restart instances or reload configuration manually.
+
+    .. code-block:: bash
+
+        cartridge repair set-advertise-uri \
+          --name myapp \
+          --verbose \
+          --reload \
+          <instance-uuid> <new-advertise-uri>
+
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Changing replicaset leader
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+You can change replicaset leader using ``cartridge repair`` command.
+
+#.  Get replicaset UUID and new leader UUID (in WebUI or by calling
+    ``cartridge repair list-topology --name <app-name>``).
+
+#.  Now we need to update cluster-wide config for all instances on each machine.
+    Run ``cartridge repair set-leader`` with ``--dry-run`` flag on each machine
+    to check cluster-wide config changes computed by `` cartridge-cli``:
+
+    .. code-block:: bash
+
+        cartridge repair set-leader \
+          --name myapp \
+          --dry-run \
+          <replicaset-uuid> <instance-uuid>
+
+#.  Run ``cartridge repair set-advertise-uri`` without ``--dry-run`` flag on
+    each machine to apply config changes computed by ``cartridge-cli``.
+    If your application uses ``cartridge >= 2.0.0``, you can specify
+    ``--reload`` flag to load new cluter-wide configuration on instances.
+    Otherwise, you need to restart instances or reload configuration manually.
+
+    .. code-block:: bash
+
+        cartridge repair set-leader \
+          --name myapp \
+          --verbose \
+          --reload \
+          <replicaset-uuid> <instance-uuid>
+
+
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Removing instance from the cluster
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+You can remove instance from cluster using ``cartridge repair`` command.
+
+#.  Get instance UUID:
+    * open ``server details`` tab in WebUI;
+    * call ``cartridge repair list-topology --name <app-name>`` and find desired instance UUID:
+    * get instance ``box.info().uuid``:
+
+    .. code-block:: bash
+
+        echo "return box.info().uuid" | tarantoolctl connect \
+        unix/:/var/run/tarantool/<app-name>.<instance-name>.control
+
+#.  Now we need to update cluster-wide config for all instances on each machine.
+    Run ``cartridge repair remove-instance`` with ``--dry-run`` flag on each
+    machine to check cluster-wide config changes computed by ``cartridge-cli``:
+
+    .. code-block:: bash
+
+      cartridge repair remove-instance \
+        --name myapp \
+        --dry-run \
+        <replicaset-uuid>
+
+#. Run ``cartridge repair remove-instance`` without ``--dry-run`` flag on each machine to apply config changes computed by ``cartridge-cli``.
+   If your application uses ``cartridge >= 2.0.0``, you can specify ``--reload`` flag to load new cluter-wide configuration on instances.
+   Otherwise, you need to restart instances or reload configuration manually.
+
+   .. code-block:: bash
+
+      cartridge repair set-leader \
+        --name myapp \
+        --verbose \
+        --reload \
+        <replicaset-uuid> <instance-uuid>
