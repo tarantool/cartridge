@@ -94,6 +94,7 @@ local function stop()
 
     for router_name, router in pairs(vars.routers) do
         router:cfg({
+            bucket_count = router.total_bucket_count,
             sharding = {[replicaset_uuid] = {
                 replicas = {[instance_uuid] = {
                     uri = pool.format_uri(advertise_uri),

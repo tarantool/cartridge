@@ -21,6 +21,9 @@ g.before_all = function()
             roles = {'myrole', 'vshard-router', 'vshard-storage'},
             servers = {{instance_uuid = helpers.uuid('b', 'b', 1)}},
         }},
+        env = {
+            TARANTOOL_BUCKET_COUNT = 300,
+        }
     })
     g.cluster:start()
     g.sA1 = g.cluster:server('sA-1')
@@ -48,7 +51,7 @@ g.before_all = function()
     )
 
     g.cluster.main_server.net_box:eval([[
-        for i = 1, 3000 do
+        for i = 1, 300 do
             vshard.router.callrw(
                 i, 'box.space.test:insert',
                 {{i, i, string.format('i%04d', i)}}
@@ -101,8 +104,8 @@ local function get(srv, i)
 end
 
 function g.test()
-    t.assert_equals(g.sA1.net_box:call('box.space.test:len'), 1500)
-    t.assert_equals(g.sB1.net_box:call('box.space.test:len'), 1500)
+    t.assert_equals(g.sA1.net_box:call('box.space.test:len'), 150)
+    t.assert_equals(g.sB1.net_box:call('box.space.test:len'), 150)
 
     -- Rebalancer runs on sA1
     g.sA1.net_box:eval([[assert(vshard.storage.internal.rebalancer_fiber ~= nil)]])
@@ -144,14 +147,14 @@ function g.test()
         g.sA1.net_box:call('vshard.storage.rebalancer_wakeup')
 
         t.assert_equals(g.sA1.net_box:call('vshard.storage.buckets_count'), 0)
-        t.assert_equals(g.sB1.net_box:call('vshard.storage.buckets_count'), 3000)
+        t.assert_equals(g.sB1.net_box:call('vshard.storage.buckets_count'), 300)
         t.assert_equals(g.sA1.net_box:call('box.space.test:len'), 0)
-        t.assert_equals(g.sB1.net_box:call('box.space.test:len'), 3000)
+        t.assert_equals(g.sB1.net_box:call('box.space.test:len'), 300)
     end)
 
     set_roles(g.sA1, {'myrole'})
 
-    local ok, err = get(g.sA1, 1500)
+    local ok, err = get(g.sA1, 150)
     t.assert_equals(ok, nil)
     t.assert_covers(err, {
         type = 'ShardingError',
@@ -161,7 +164,7 @@ function g.test()
             ' replicaset ' .. g.sA1.replicaset_uuid,
     })
     t.assert_equals(get(g.sB1, 1), {1, 1, 'i0001'})
-    t.assert_equals(get(g.sB1, 3000), {3000, 3000, 'i3000'})
+    t.assert_equals(get(g.sB1, 300), {300, 300, 'i0300'})
 
     helpers.retrying({}, function() g.sA1.net_box:eval([[
         for _, f in pairs(require('fiber').info()) do
@@ -187,17 +190,17 @@ function g.test()
     set_weight(g.sA1, 2)
 
     helpers.retrying({}, function()
-        t.assert_equals(g.sA1.net_box:call('vshard.storage.buckets_count'), 2000)
-        t.assert_equals(g.sB1.net_box:call('vshard.storage.buckets_count'), 1000)
+        t.assert_equals(g.sA1.net_box:call('vshard.storage.buckets_count'), 200)
+        t.assert_equals(g.sB1.net_box:call('vshard.storage.buckets_count'), 100)
     end)
 
-    t.assert_equals(g.sA1.net_box:call('vshard.router.bucket_count'), 3000)
-    t.assert_equals(g.sB1.net_box:call('vshard.router.bucket_count'), 3000)
-    t.assert_equals(g.sA1.net_box:call('box.space.test:len'), 2000)
-    t.assert_equals(g.sB1.net_box:call('box.space.test:len'), 1000)
+    t.assert_equals(g.sA1.net_box:call('vshard.router.bucket_count'), 300)
+    t.assert_equals(g.sB1.net_box:call('vshard.router.bucket_count'), 300)
+    t.assert_equals(g.sA1.net_box:call('box.space.test:len'), 200)
+    t.assert_equals(g.sB1.net_box:call('box.space.test:len'), 100)
 
     t.assert_equals(get(g.sA1, 1), {1, 1, 'i0001'})
     t.assert_equals(get(g.sB1, 1), {1, 1, 'i0001'})
-    t.assert_equals(get(g.sA1, 3000), {3000, 3000, 'i3000'})
-    t.assert_equals(get(g.sB1, 3000), {3000, 3000, 'i3000'})
+    t.assert_equals(get(g.sA1, 300), {300, 300, 'i0300'})
+    t.assert_equals(get(g.sB1, 300), {300, 300, 'i0300'})
 end
