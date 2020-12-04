@@ -185,6 +185,20 @@ test_candidates('+leader',
 )
 
 -------------------------------------------------------------------------------
+draft[1][1].status = 'suspect'
+log.info('a1 leader suspect')
+
+test_candidates('-leader +healthy',
+    draft, {'target-role'},
+    {'a1', 'a2'}
+)
+
+test_candidates('+leader +healthy',
+    draft, {'target-role', {leader_only = true}},
+    {'a1'}
+)
+
+-------------------------------------------------------------------------------
 draft[1][1].status = 'dead'
 log.info('a1 leader died')
 

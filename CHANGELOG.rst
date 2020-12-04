@@ -38,6 +38,8 @@ Changed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 - Default value of ``failover_timeout`` increased from 3 to 20 seconds.
+- RPC functions now consider ``suspect`` members as healthy to be in agreement
+  with failover.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
