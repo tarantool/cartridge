@@ -42,7 +42,7 @@ local function member_is_healthy(uri, instance_uuid)
     local member = membership.get_member(uri)
     return (
         (member ~= nil)
-        and (member.status == 'alive')
+        and (member.status == 'alive' or member.status == 'suspect')
         and (member.payload.uuid == instance_uuid)
         and (
             member.payload.state == 'ConfiguringRoles' or
@@ -62,7 +62,9 @@ end
 --   Filter instances which are leaders now.
 --   (default: **false**)
 -- @tparam ?boolean opts.healthy_only
---   Filter instances which have membership status healthy.
+--   The member is considered healthy if
+--   it reports either `ConfiguringRoles` or `RolesConfigured` state
+--   and its SWIM status is either `alive` or `suspect`
 --   (added in v1.1.0-11, default: **true**)
 --
 -- @treturn[1] {string,...} URIs
