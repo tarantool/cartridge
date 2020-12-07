@@ -14,6 +14,7 @@ local title = require('title')
 local fio = require('fio')
 local uri = require('uri')
 local log = require('log')
+local errno = require('errno')
 local checks = require('checks')
 local errors = require('errors')
 local membership = require('membership')
@@ -40,6 +41,7 @@ local lua_api_failover = require('cartridge.lua-api.failover')
 local lua_api_vshard = require('cartridge.lua-api.vshard')
 local lua_api_deprecated = require('cartridge.lua-api.deprecated')
 
+local ConsoleListenError = errors.new_class('ConsoleListenError')
 local CartridgeCfgError = errors.new_class('CartridgeCfgError')
 local HttpInitError = errors.new_class('HttpInitError')
 
@@ -636,16 +638,31 @@ local function cfg(opts, box_opts)
 
     if opts.console_sock ~= nil then
         local console = require('console')
-        local sock, err = CartridgeCfgError:pcall(console.listen, 'unix/:' .. opts.console_sock)
-        if not sock then
-            return nil, err
+        local sock_name = 'unix/:' .. opts.console_sock
+        local ok, sock = pcall(console.listen, sock_name)
+        local _errno = errno()
+
+        if ok then
+            -- In Tarantool < 2.3.2 `console.listen` didn't raise,
+            -- but created a socket with trimmed filename
+            local unix_port = sock:name().port
+            if #unix_port < #opts.console_sock then
+                sock:close()
+                fio.unlink(unix_port)
+                ok = false
+                _errno = errno.ENOBUFS
+            end
         end
 
-        local unix_port = sock:name().port
-        if #unix_port < #opts.console_sock then
-            sock:close()
-            fio.unlink(unix_port)
-            return nil, CartridgeCfgError:new('Too long console_sock exceeds UNIX_PATH_MAX limit')
+        if not ok then
+            local strerror
+            if _errno == errno.ENOBUFS then
+                strerror = 'Too long console_sock exceeds UNIX_PATH_MAX limit'
+            else
+                strerror = errno.strerror(_errno)
+            end
+
+            return nil, ConsoleListenError:new('%s: %s', sock_name, strerror)
         end
     end
 
