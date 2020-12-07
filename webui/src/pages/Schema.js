@@ -1,17 +1,17 @@
 // @flow
-import React from 'react';
-import { connect } from 'react-redux';
+import React, { useEffect } from 'react';
 import { css } from 'emotion';
+import { useStore } from 'effector-react';
 import { Alert, IconRefresh, Button } from '@tarantool.io/ui-kit';
 import SchemaEditor from 'src/components/SchemaEditor';
-import { isValueChanged } from 'src/store/selectors/schema';
-import { type State } from 'src/store/rootReducer';
 import {
-  getSchema,
-  applySchema,
-  setSchema,
-  validateSchema
-} from 'src/store/actions/schema.actions';
+  $form,
+  applyClick,
+  getSchemaFx,
+  inputChange,
+  validateClick,
+  schemaPageMount
+} from 'src/store/effector/schema';
 import { PageLayout } from 'src/components/PageLayout';
 
 const styles = {
@@ -40,109 +40,62 @@ const styles = {
   `
 };
 
-type SchemaProps = {
-  value: string,
-  valueChanged: boolean,
-  error: ?string,
-  loading: boolean,
-  uploading: boolean,
-  getSchema: () => void,
-  setSchema: (s: string) => void,
-  resetSchema: () => void,
-  applySchema: () => void,
-  validateSchema: () => void,
-};
+const Schema = () => {
+  useEffect(() => {
+    schemaPageMount();
+  }, []);
 
-class Schema extends React.Component<SchemaProps> {
-  componentDidMount() {
-    if (!this.props.value) {
-      this.props.getSchema();
-    }
-  }
-
-  render() {
-    const {
-      error,
-      value,
-      loading,
-      uploading,
-      applySchema,
-      getSchema,
-      setSchema,
-      validateSchema
-    } = this.props;
-
-    return (
-      <PageLayout
-        heading='Schema'
-        wide
-        topRightControls={[
-          <Button
-            text='Reload'
-            intent='base'
-            size='l'
-            onClick={getSchema}
-            icon={IconRefresh}
-          />,
-          <Button
-            text='Validate'
-            intent='base'
-            size='l'
-            onClick={validateSchema}
-          />,
-          <Button
-            onClick={applySchema}
-            text='Apply'
-            intent='primary'
-            size='l'
-            loading={uploading}
-            disabled={loading}
-          />
-        ]}
-      >
-        <div className={styles.area}>
-          <SchemaEditor
-            className={styles.editor}
-            fileId='ddl'
-            value={value}
-            onChange={setSchema}
-          />
-          {error && (
-            <Alert className={styles.errorPanel} type='error'>{error}</Alert>
-          )}
-        </div>
-      </PageLayout>
-    );
-  }
-}
-
-const mapStateToProps = (state: State) => {
   const {
-    schema: {
-      value,
-      error,
-      loading,
-      uploading
-    }
-  } = state;
-
-  return {
-    value,
-    valueChanged: isValueChanged(state),
-    error,
+    checking,
     loading,
-    uploading
-  };
+    uploading,
+    value,
+    error
+  } = useStore($form);
+
+  return (
+    <PageLayout
+      heading='Schema'
+      wide
+      topRightControls={[
+        <Button
+          text='Reload'
+          intent='base'
+          size='l'
+          onClick={getSchemaFx}
+          icon={IconRefresh}
+          loading={loading}
+        />,
+        <Button
+          text='Validate'
+          intent='base'
+          size='l'
+          onClick={validateClick}
+          loading={checking}
+        />,
+        <Button
+          onClick={applyClick}
+          text='Apply'
+          intent='primary'
+          size='l'
+          loading={uploading}
+          disabled={loading}
+        />
+      ]}
+    >
+      <div className={styles.area}>
+        <SchemaEditor
+          className={styles.editor}
+          fileId='ddl'
+          value={value}
+          onChange={inputChange}
+        />
+        {error && (
+          <Alert className={styles.errorPanel} type='error'>{error}</Alert>
+        )}
+      </div>
+    </PageLayout>
+  );
 };
 
-const mapDispatchToProps = {
-  getSchema,
-  applySchema,
-  setSchema,
-  validateSchema
-};
-
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(Schema);
+export default Schema;
