@@ -4,19 +4,19 @@ on:
   push:
   workflow_dispatch:
 
+env:
+  CMAKE_DUMMY_WEBUI: false
+
 jobs:
   webui-test:
-    runs-on: ubuntu-latest
-    env:
-      CMAKE_DUMMY_WEBUI: false
+    runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v1
 
-      - name: Install tarantool
-        run: |
-          curl -L https://tarantool.io/installer.sh | sudo VER=1.10 bash
-          tarantoolctl rocks install luatest 0.5.2
+      - uses: rosik/setup-tarantool@v1
+        with:
+          tarantool-version: '1.10'
 
       - name: Cache build dir
         uses: actions/cache@v2
@@ -28,8 +28,8 @@ jobs:
             webui/node_modules/
           key: frontend-build
 
-      - name: Build cartridge
-        run: tarantoolctl rocks make
+      - run: tarantoolctl rocks install luatest 0.5.2
+      - run: tarantoolctl rocks make
 
       - name: Cache cypress
         id: cache-cypress
@@ -38,16 +38,11 @@ jobs:
           path: ~/.cache/Cypress
           key: cypress-cache-${{ runner.os }}
 
-      - name: Setup cypress
-        run: |
-          npm install cypress@4.12.1
-          npx cypress cache list
+      - run: npm install cypress@4.12.1
+      - run: npx cypress cache list
 
-      - name: Run tests
-        run: |
-          ./cypress-test.sh
-          ./frontend-test.sh
+      - run: ./cypress-test.sh
+      - run: ./frontend-test.sh
 
-      - name: Cleanup cached paths
-        run: |
-          tarantoolctl rocks remove cartridge
+      # Cleanup cached paths
+      - run: tarantoolctl rocks remove cartridge
