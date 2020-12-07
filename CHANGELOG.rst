@@ -51,6 +51,8 @@ Fixed
 - Allow applying config when instance is in ``OperationError``. It doesn't cause
   loss of quorum anymore.
 - Stop vshard fibers when the corresponding role is disabled.
+- Make ``console.listen`` error more clear when ``console_sock`` exceeds
+  ``UNIX_PATH_MAX`` limit.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Enhanced is WebUI
