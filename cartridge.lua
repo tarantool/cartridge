@@ -14,6 +14,7 @@ local title = require('title')
 local fio = require('fio')
 local uri = require('uri')
 local log = require('log')
+local errno = require('errno')
 local checks = require('checks')
 local errors = require('errors')
 local membership = require('membership')
@@ -636,16 +637,27 @@ local function cfg(opts, box_opts)
 
     if opts.console_sock ~= nil then
         local console = require('console')
-        local sock, err = CartridgeCfgError:pcall(console.listen, 'unix/:' .. opts.console_sock)
-        if not sock then
+        local sock, err = CartridgeCfgError:pcall(
+            console.listen, 'unix/:' .. opts.console_sock
+        )
+
+        if sock == nil and errno() == errno.ENOBUFS then
+            return nil, CartridgeCfgError:new(
+                'Too long console_sock exceeds UNIX_PATH_MAX limit'
+            )
+        elseif sock == nil then
             return nil, err
         end
 
+        -- In Tarantool < 2.3.2 `console.listen` didn't raise,
+        -- but created a socket with trimmed filename
         local unix_port = sock:name().port
         if #unix_port < #opts.console_sock then
             sock:close()
             fio.unlink(unix_port)
-            return nil, CartridgeCfgError:new('Too long console_sock exceeds UNIX_PATH_MAX limit')
+            return nil, CartridgeCfgError:new(
+                'Too long console_sock exceeds UNIX_PATH_MAX limit'
+            )
         end
     end
 

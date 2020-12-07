@@ -245,22 +245,11 @@ g.test_console_sock = function()
     })
 
     t.assert_not(ok)
-    t.assert_covers(err, {class_name = 'CartridgeCfgError'})
+    t.assert_covers(err, {
+        class_name = 'CartridgeCfgError',
+        err = 'Too long console_sock exceeds UNIX_PATH_MAX limit',
+    })
     t.assert_equals(fio.listdir(sock_dir), {})
-
-    -- Tarantool < 2.3.2
-    local e1 = 'Too long console_sock exceeds UNIX_PATH_MAX limit'
-    -- The message differs in 2.3.2+
-    local e2 = 'failed to create server unix/:' .. sock_name ..
-        ': ' .. errno.strerror(errno.ENOBUFS)
-    if err.err ~= e1 and not err.err:endswith(e2) then
-        error(
-            'Unexpected error message:\n' ..
-            'expected: ' .. e1 .. '\n' ..
-            '      or: ' .. e2 .. '\n' ..
-            '  actual: ' .. tostring(err)
-        )
-    end
 end
 
 -- resolve_dns ----------------------------------------------------------------
