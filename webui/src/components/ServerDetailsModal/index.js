@@ -188,6 +188,7 @@ class ServerDetailsModal extends React.Component<
                 size='l'
                 iconRight={IconChevronDown}
                 popoverClassName={styles.popover}
+                disabled={status !== 'healthy'}
                 // TODO: add loading state while applying
                 popoverContent={<>
                   {zoneList.map(zoneName => (

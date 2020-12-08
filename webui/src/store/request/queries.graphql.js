@@ -2,6 +2,20 @@
 
 import gql from 'graphql-tag'
 
+const serverStatFragment = `
+uuid
+uri
+zone
+statistics {
+  quotaSize: quota_size
+  arenaUsed: arena_used
+  bucketsCount: vshard_buckets_count
+  quota_used_ratio
+  arena_used_ratio
+  items_used_ratio
+}
+`;
+
 export const authQuery =  gql`
   query Auth {
     cluster {
@@ -316,19 +330,7 @@ query serverList ($withStats: Boolean!) {
       }
     }
   }
-  serverStat: servers @include(if: $withStats) {
-    uuid
-    uri
-    zone
-    statistics {
-      quotaSize: quota_size
-      arenaUsed: arena_used
-      bucketsCount: vshard_buckets_count
-      quota_used_ratio
-      arena_used_ratio
-      items_used_ratio
-    }
-  }
+  serverStat: servers @include(if: $withStats) { ${serverStatFragment} }
   cluster @include(if: $withStats) {
     suggestions {
       refine_uri {
@@ -350,18 +352,7 @@ query serverList ($withStats: Boolean!) {
 
 export const serverStatQuery = gql`
 query serverStat {
-  serverStat: servers {
-    uuid
-    uri
-    statistics {
-      quotaSize: quota_size
-      arenaUsed: arena_used
-      bucketsCount: vshard_buckets_count
-      quota_used_ratio
-      arena_used_ratio
-      items_used_ratio
-    }
-  }
+  serverStat: servers { ${serverStatFragment} }
 }`;
 
 export const bootstrapMutation = gql`
