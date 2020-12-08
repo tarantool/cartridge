@@ -5,7 +5,6 @@ import arrayMove from 'array-move';
 import { connect } from 'react-redux';
 import {
   IconBurger,
-  IconGeoPin,
   LeaderFlagSmall,
   Text,
   UriLabel
@@ -71,8 +70,18 @@ const SortableItem = sortableElement(({ item, isLeader, selfURI }) =>
       <IconBurger className={styles.iconMargin} />
       {item.alias || item.uuid}
     </Text>
-    {isLeader ? <LeaderFlagSmall className={cx(styles.leaderFlag, 'meta-test__LeaderFlag')} /> : null}
-    <UriLabel className={styles.serverUriWrap} uri={item.uri} icon={selfURI && item.uri === selfURI && IconGeoPin} />
+    {isLeader
+      ? (
+        <LeaderFlagSmall
+          className={cx(styles.leaderFlag, 'meta-test__LeaderFlag')}
+        />
+      )
+      : null}
+    <UriLabel
+      className={styles.serverUriWrap}
+      uri={item.uri}
+      weAreHere={selfURI && item.uri === selfURI}
+    />
   </div>
 );
 

@@ -8,7 +8,6 @@ import {
   IconChip,
   IconChipWarning,
   IconChipDanger,
-  IconGeoPin,
   LeaderFlag,
   ProgressBar,
   Text,
@@ -219,7 +218,7 @@ class ReplicasetServerListItem extends React.PureComponent<
             </Text>
             <UriLabel
               uri={uri}
-              icon={selfURI && uri === selfURI && IconGeoPin}
+              weAreHere={selfURI && uri === selfURI}
               className={selfURI && uri === selfURI && 'meta-test__youAreHereIcon'}
             />
           </div>

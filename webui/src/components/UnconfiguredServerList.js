@@ -6,7 +6,6 @@ import { defaultMemoize } from 'reselect';
 import {
   Button,
   HealthStatus,
-  IconGeoPin,
   Text,
   TiledList,
   UriLabel
@@ -93,11 +92,15 @@ class UnconfiguredServerList extends React.PureComponent<UnconfiguredServerListP
               <Text variant='h4' tag='span'>{item.alias}</Text>
               <UriLabel
                 uri={item.uri}
-                icon={uri && item.uri === uri && IconGeoPin}
+                weAreHere={uri && item.uri === uri}
                 className={uri && item.uri === uri && 'meta-test__youAreHereIcon'}
               />
             </div>
-            <HealthStatus className={styles.status} status={item.status} message={item.message} />
+            <HealthStatus
+              className={styles.status}
+              status={item.status}
+              message={item.message}
+            />
             <Button
               className={cx(styles.configureBtn,'meta-test__configureBtn',
                 { [styles.hiddenButton]: !(uuid || (uri === item.uri)) } )}
