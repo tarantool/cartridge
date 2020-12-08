@@ -193,6 +193,7 @@ class ServerDetailsModal extends React.Component<
                     <DropdownItem
                       key={zoneName}
                       onClick={() => setInstanceZoneFx({ uuid: instanceUUID, zone: zone === zoneName ? '' : zoneName })}
+                      className='meta-test__ZoneListItem'
                     >
                       {zoneName}
                     </DropdownItem>
