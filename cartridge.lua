@@ -869,6 +869,11 @@ return {
     -- @function config_patch_clusterwide
     config_patch_clusterwide = twophase.patch_clusterwide,
 
+    --- .
+    -- @refer cartridge.twophase.force_reapply
+    -- @function config_force_reapply
+    config_force_reapply = twophase.force_reapply,
+
 --- Inter-role interaction.
 -- @refer cartridge.service-registry
 -- @section service_registry

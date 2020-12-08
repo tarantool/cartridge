@@ -23,6 +23,7 @@ local AtomicCallError = errors.new_class('AtomicCallError')
 local PatchClusterwideError = errors.new_class('PatchClusterwideError')
 local Prepare2pcError = errors.new_class('Prepare2pcError')
 local Commit2pcError = errors.new_class('Commit2pcError')
+local Reapply2pcError = errors.new_class('Reapply2pcError')
 local GetSchemaError = errors.new_class('GetSchemaError')
 
 yaml.cfg({
@@ -163,6 +164,79 @@ local function abort_2pc()
     ClusterwideConfig.remove(path_prepare)
     vars.prepared_config = nil
     return true
+end
+
+local function reapply_2pc(data)
+    -- remove prepared config if it is present
+    local workdir = confapplier.get_workdir()
+    local path_prepare = fio.pathjoin(workdir, 'config.prepare')
+    ClusterwideConfig.remove(path_prepare)
+    vars.prepared_config = nil
+
+    -- presume that new config is validated on the calling instance
+    local clusterwide_config = ClusterwideConfig.new(data):lock()
+
+    local state = confapplier.wish_state('RolesConfigured')
+    if state ~= 'Unconfigured'
+    and state ~= 'RolesConfigured'
+    and state ~= 'OperationError'
+    then
+        local err = Reapply2pcError:new(
+            "Instance state is %s, can't reapply config in this state",
+            state
+        )
+        log.warn('%s', err)
+        return nil, err
+    end
+
+    -- mimic 2pc prepare stage
+    local ok, err = ClusterwideConfig.save(clusterwide_config, path_prepare)
+    if not ok then
+        log.warn('%s', err)
+        return nil, err
+    end
+
+    vars.prepared_config = clusterwide_config
+
+    local path_backup = fio.pathjoin(workdir, 'config.backup')
+    local path_active = fio.pathjoin(workdir, 'config')
+
+    ClusterwideConfig.remove(path_backup)
+
+    if fio.path.exists(path_active) then
+        local ok = fio.rename(path_active, path_backup)
+        if ok then
+            log.info('Backup of active config created: %q', path_backup)
+        else
+            log.warn('Creation of config backup failed: %s', errno.strerror())
+        end
+    end
+
+    local prepared_config = vars.prepared_config
+
+    local ok = fio.rename(path_prepare, path_active)
+    if not ok then
+        local err = Commit2pcError:new(
+            "Can't move %q: %s", path_prepare, errno.strerror()
+        )
+        log.error('%s', err)
+        return nil, err
+    end
+
+    vars.prepared_config = nil
+
+    if state == 'Unconfigured' then
+        return confapplier.boot_instance(prepared_config)
+    elseif state == 'RolesConfigured' or state == 'OperationError' then
+        return confapplier.apply_config(prepared_config)
+    else
+        local err = Commit2pcError:new(
+            "Instance state is %s, can't apply config in this state",
+            state
+        )
+        log.error('%s', err)
+        return nil, err
+    end
 end
 
 --- Edit the clusterwide configuration.
@@ -408,6 +482,93 @@ local function patch_clusterwide(patch)
 end
 
 
+-- @function force_reapply
+-- @tparam table uuids
+-- @treturn[1] boolean true
+-- @treturn[2] nil
+-- @treturn[2] table Error description
+local function _clusterwide_force_reapply(uuids)
+    checks('table')
+
+    local clusterwide_config = confapplier.get_active_config()
+    local current_topology = clusterwide_config:get_readonly('topology')
+
+    local _2pc_error
+
+    -- Prepare a server group to be configured
+    local uri_list = {}
+    local abortion_list = {}
+    local refined_uri_list = topology.refine_servers_uri(current_topology)
+    for _, uuid, _ in fun.filter(topology.not_disabled, current_topology.servers) do
+        if uuids[uuid] then
+            table.insert(uri_list, refined_uri_list[uuid])
+        end
+    end
+
+    -- this is mostly for testing purposes
+    -- it allows to determine apply order
+    -- in real world it does not affect anything
+    table.sort(uri_list)
+
+    do
+        log.warn('Force reapply is active')
+
+        local retmap, errmap = pool.map_call(
+            '_G.__cartridge_clusterwide_config_reapply_2pc', {clusterwide_config:get_plaintext()},
+            {uri_list = uri_list, timeout = 5}
+        )
+
+        for _, uri in ipairs(uri_list) do
+            if retmap[uri] then
+                log.warn('Reapplied config at %s', uri)
+                table.insert(abortion_list, uri)
+            end
+        end
+        for _, uri in ipairs(uri_list) do
+            if retmap[uri] == nil then
+                local err = errmap and errmap[uri]
+                if err == nil then
+                    err = Reapply2pcError:new('Unknown error at %s', uri)
+                end
+                log.error('Error reappling config at %s:\n%s', uri, err)
+                _2pc_error = err
+            end
+        end
+
+    end
+
+    if _2pc_error == nil then
+        log.warn('Clusterwide config reapplied successfully')
+        return true
+    else
+        log.error('Clusterwide config reapply failed')
+        return nil, _2pc_error
+    end
+end
+
+local function force_reapply(uuids)
+    if vars.locks['clusterwide'] == true  then
+        return nil, AtomicCallError:new(
+            'cartridge.patch_clusterwide is already running'
+        )
+    end
+
+    local uuids_set = {}
+    for _, uuid in ipairs(uuids) do
+        uuids_set[uuid] = true
+    end
+
+    vars.locks['clusterwide'] = true
+    local ok, err = PatchClusterwideError:pcall(_clusterwide_force_reapply, uuids_set)
+    vars.locks['clusterwide'] = false
+
+    if not ok then
+        return nil, err
+    end
+
+    return true
+end
+
 --- Get clusterwide DDL schema.
 --
 -- (**Added** in v1.2.0-28)
@@ -493,6 +654,8 @@ end
 _G.__cartridge_clusterwide_config_prepare_2pc = function(...) return errors.pcall('E', prepare_2pc, ...) end
 _G.__cartridge_clusterwide_config_commit_2pc = function(...) return errors.pcall('E', commit_2pc, ...) end
 _G.__cartridge_clusterwide_config_abort_2pc = function(...) return errors.pcall('E', abort_2pc, ...) end
+_G.__cartridge_clusterwide_config_reapply_2pc = function(...) return errors.pcall('E', reapply_2pc, ...) end
+
 
 -- Keep backward compatibility with the good old cartridge 1.2.0.
 _G.__cluster_confapplier_prepare_2pc = function(conf)
@@ -516,4 +679,5 @@ return {
     get_schema = get_schema,
     set_schema = set_schema,
     patch_clusterwide = patch_clusterwide,
+    force_reapply = force_reapply,
 }
