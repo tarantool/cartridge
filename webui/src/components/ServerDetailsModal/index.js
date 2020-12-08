@@ -9,7 +9,6 @@ import {
   ControlsPanel,
   DropdownDivider,
   DropdownItem,
-  IconGeoPin,
   IconChevronDown,
   Modal,
   Tabbed,
@@ -173,7 +172,7 @@ class ServerDetailsModal extends React.Component<
         <div className={styles.firstLine}>
           <div>
             <UriLabel
-              icon={selfURI && uri === selfURI && IconGeoPin}
+              weAreHere={selfURI && uri === selfURI}
               className={selfURI && uri === selfURI && 'meta-test__youAreHereIcon'}
               title='URI'
               uri={uri}
