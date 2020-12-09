@@ -59,7 +59,9 @@ local function prepare_2pc(data)
     local workdir = confapplier.get_workdir()
     local path_prepare = fio.pathjoin(workdir, 'config.prepare')
 
-    if vars.prepared_config ~= nil then
+    if vars.prepared_config ~= nil
+    or fio.path.exists(path_prepare)
+    then
         local err = Prepare2pcError:new('Two-phase commit is locked')
         log.warn('%s', err)
         return nil, err
@@ -167,6 +169,9 @@ local function abort_2pc()
 end
 
 local function reapply(data)
+    local clusterwide_config = ClusterwideConfig.new(data):lock()
+    vars.prepared_config = clusterwide_config -- lock before wishing state
+
     local state = confapplier.wish_state('RolesConfigured')
     if state ~= 'Unconfigured'
     and state ~= 'RolesConfigured'
@@ -180,13 +185,11 @@ local function reapply(data)
         return nil, err
     end
 
-    local clusterwide_config = ClusterwideConfig.new(data):lock()
-
     local workdir = confapplier.get_workdir()
     local path_prepare = fio.pathjoin(workdir, 'config.prepare')
     local path_backup = fio.pathjoin(workdir, 'config.backup')
     local path_active = fio.pathjoin(workdir, 'config')
-    abort_2pc()
+    ClusterwideConfig.remove(path_prepare)
 
     local ok, err = ClusterwideConfig.save(clusterwide_config, path_prepare)
     if not ok then
@@ -205,6 +208,8 @@ local function reapply(data)
         end
     end
 
+    vars.prepared_config = nil
+
     local ok = fio.rename(path_prepare, path_active)
     if not ok then
         local err = ForceReapplyError:new(
@@ -222,7 +227,7 @@ local function reapply(data)
         return confapplier.apply_config(clusterwide_config)
     else
         local err = ForceReapplyError:new(
-            "Instance state is %s, can't apply config in this state",
+            "Instance state is %s, can't reapply config in this state",
             state
         )
         log.error('%s', err)
@@ -312,7 +317,6 @@ local function _clusterwide(patch)
         return nil, err
     end
     clusterwide_config_new:lock()
-    -- log.info('%s', yaml.encode(clusterwide_config_new:get_readonly()))
 
     local topology_old = clusterwide_config_old:get_readonly('topology')
     local topology_new = clusterwide_config_new:get_readonly('topology')
@@ -499,14 +503,9 @@ local function _force_reapply(uuids)
 
     -- Prepare a server group to be configured
     local uri_list = {}
-    local uuids_set = {}
-    for _, uuid in ipairs(uuids) do
-        uuids_set[uuid] = true
-    end
-
     local refined_uri_list = topology.refine_servers_uri(current_topology)
     for _, uuid, _ in fun.filter(topology.not_disabled, current_topology.servers) do
-        if uuids_set[uuid] then
+        if utils.table_find(uuids, uuid) then
             table.insert(uri_list, refined_uri_list[uuid])
         end
     end

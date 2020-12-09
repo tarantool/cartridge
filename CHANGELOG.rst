@@ -31,7 +31,18 @@ Added
 - New argparse options support for tarantool 2.5+: ``replication_synchro_quorum``,
   ``replication_synchro_timeout``, ``memtx_use_mvcc_engine``.
 - Fencing parameters ``fencing_enabled``, ``fencing_pause``, ``fencing_timeout``
-  are available for customization via Lua API and GraphQL API.
+  are available for customization via Lua and GraphQL API.
+
+- New API ``cartridge.config_force_reapply()`` to heal several operational
+  errors:
+
+  - "Prepare2pcError: Two-phase commit is locked";
+  - "SaveConfigError: .../config.prepare: Directory not empty";
+  - "Configuration is prepared and locked on ..." (an issue);
+  - "Configuration checksum mismatch on ..." (an issue).
+
+  It'll unlock two-phase commit (remove ``config.prepare`` lock), upload the
+  active config from the current instance and reconfigure all roles.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Changed
