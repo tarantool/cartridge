@@ -14,6 +14,7 @@ import {
   checkSchema
 } from '../../request/schema.requests';
 import { getErrorMessage } from '../../../api';
+import type { DdlCheckResult } from '../../../generated/graphql-typing';
 
 export const schemaPageMount = createEvent<mixed>();
 export const applyClick = createEvent<mixed>();
@@ -29,12 +30,12 @@ export const applySchemaFx: Effect<string, void, Error> = createEffect(
   { handler: schema => applySchema(schema) }
 );
 
-export const getSchemaFx: Effect<void, string, Error> = createEffect(
+export const getSchemaFx: Effect<mixed, string, Error> = createEffect(
   'get schema',
   { handler: () => getSchema() }
 );
 
-export const checkSchemaFx: Effect<string, void, Error> = createEffect(
+export const checkSchemaFx: Effect<string, { cluster: { check_schema: DdlCheckResult } }, Error> = createEffect(
   'submit schema',
   { handler: schema => checkSchema(schema) }
 );

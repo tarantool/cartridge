@@ -56,6 +56,19 @@ export default class MonacoEditor extends React.Component {
     this.initMonaco();
   }
 
+  adjustEditorSize() {
+    if (this.containerElement && this.editor) {
+      const { width, height } = this.state
+      const { clientWidth, clientHeight } = this.containerElement
+      if (width !== clientWidth && height !== clientHeight) {
+        this.setState({
+          height: clientHeight,
+          width: clientWidth
+        })
+      }
+    }
+  }
+
   setValidationError = () => {
     const {
       language,
@@ -112,7 +125,6 @@ export default class MonacoEditor extends React.Component {
     if (prevProps.options !== options) {
       editor.updateOptions(options);
     }
-
     if (prevProps.cursor !== cursor) {
       editor.setSelection(cursor)
       editor.revealLine(this.props.cursor.startLineNumber)
@@ -169,6 +181,8 @@ export default class MonacoEditor extends React.Component {
 
   editorDidMount(editor) {
     this.props.editorDidMount(editor, monaco);
+
+    this.adjustEditorSize();
 
     if (this.props.cursor !== DEF_CURSOR) {
       editor.setSelection(this.props.cursor)

@@ -398,7 +398,7 @@ class Code extends React.Component<CodeProps, CodeState> {
 
             <div className={styles.panel}>
               <Text className={styles.currentPath} variant='p' tag='span'>
-                {selectedFile && selectedFile.path.replaceAll('/', ' / ')}
+                {selectedFile && selectedFile.path.replace(/\//g, ' / ')}
               </Text>
             </div>
             {selectedFile

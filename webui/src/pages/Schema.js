@@ -7,6 +7,8 @@ import SchemaEditor from 'src/components/SchemaEditor';
 import {
   $form,
   applyClick,
+  applySchemaFx,
+  checkSchemaFx,
   getSchemaFx,
   inputChange,
   validateClick,
@@ -39,6 +41,20 @@ const styles = {
     margin-bottom: 0;
   `
 };
+
+applySchemaFx.done.watch(() => window.tarantool_enterprise_core.notify({
+  title: 'Success',
+  message: 'Schema successfully applied',
+  type: 'success',
+  timeout: 10000
+}));
+
+checkSchemaFx.done.watch(() => window.tarantool_enterprise_core.notify({
+  title: 'Schema validation',
+  message: 'Schema is valid',
+  type: 'success',
+  timeout: 10000
+}));
 
 const Schema = () => {
   useEffect(() => {
