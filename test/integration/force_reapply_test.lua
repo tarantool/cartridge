@@ -11,22 +11,18 @@ g.before_all(function()
         server_command = helpers.entrypoint('srv_basic'),
         cookie = require('digest').urandom(6):hex(),
         replicasets = {{
-            uuid = helpers.uuid('a'),
+            alias = 'A',
             roles = {},
-            servers = {{
-                alias = 'master',
-                instance_uuid = helpers.uuid('a', 'a', 1)
-            }, {
-                alias = 'replica1',
-                instance_uuid = helpers.uuid('a', 'a', 2)
-            }, {
-                alias = 'replica2',
-                instance_uuid = helpers.uuid('a', 'a', 3)
-            }},
+            servers = 3,
         }},
-        env = {}
     })
     g.cluster:start()
+    g.A1 = g.cluster:server('A-1')
+    g.A2 = g.cluster:server('A-2')
+    g.A3 = g.cluster:server('A-3')
+    t.helpers.retrying({}, function()
+        t.assert_equals(helpers.list_cluster_issues(g.A1), {})
+    end)
 end)
 
 g.after_all(function()
@@ -36,53 +32,59 @@ end)
 
 
 function g.test_twophase_config_locked()
-    local master = g.cluster.main_server
-    local replica1 = g.cluster:server('replica1')
-
-    -- Make validate_config hang on replica2
-    local config = master.net_box:eval(
-            'return require(\'cartridge.confapplier\').'..
-            'get_active_config():get_plaintext()'
+    -- Let's put a spoke in two-phase's wheel
+    local config = g.A1.net_box:eval([[
+        local confapplier = require('cartridge.confapplier')
+        return confapplier.get_active_config():get_plaintext()
+    ]])
+    config['hey.txt'] = 'Hello, locks'
+    g.A2.net_box:call(
+        '_G.__cartridge_clusterwide_config_prepare_2pc', {config}
     )
 
-    config['hey.yml'] = 'that is new'
-
-    -- let's put a spoke in two-phase's wheel
-    replica1.net_box:call(
-        '_G.__cartridge_clusterwide_config_prepare_2pc',
-        {config}
-    )
-
-    t.helpers.retrying({}, function()
-        t.assert_equals(fio.path.exists(replica1.workdir .. '/config.prepare'), true)
-    end)
-
-    local status, err = master.net_box:call(
-        'package.loaded.cartridge.config_patch_clusterwide',
-        {config}
-    )
+    t.assert_equals(fio.path.exists(g.A1.workdir .. '/config.prepare'), false)
+    t.assert_equals(fio.path.exists(g.A2.workdir .. '/config.prepare'), true)
+    t.assert_equals(fio.path.exists(g.A3.workdir .. '/config.prepare'), false)
+    t.assert_equals(helpers.list_cluster_issues(g.A1), {{
+        level = 'warning',
+        topic = 'configuration',
+        instance_uuid = g.A2.instance_uuid,
+        replicaset_uuid = g.A2.replicaset_uuid,
+        message = 'Configuration is prepared and locked'..
+            ' on localhost:13302 (A-2)',
+    }})
 
     -- Eventually commit is locked
-    t.assert_equals(status, nil)
-    t.assert_covers(err, {err = "Two-phase commit is locked"})
+    local ok, err = g.A1.net_box:call(
+        'package.loaded.cartridge.config_patch_clusterwide',
+        {{['bye.txt'] = 'Googbye, locks'}}
+    )
+    t.assert_equals(ok, nil)
+    t.assert_covers(err, {
+        class_name = 'Prepare2pcError',
+        err = 'Two-phase commit is locked',
+    })
 
     -- But force reapply comes to the rescue!
-    master.net_box:call(
+    local ok, err = g.A1.net_box:call(
         'package.loaded.cartridge.config_force_reapply',
-        {{replica1.instance_uuid}}
+        {{g.A2.instance_uuid}}
     )
+    t.assert_equals({ok, err}, {true, nil})
 
-    -- Lock is gone
-    t.helpers.retrying({}, function()
-        t.assert_equals(fio.path.exists(replica1.workdir .. '/config.prepare'), false)
-    end)
+    -- The lock is gone
+    t.assert_equals(fio.path.exists(g.A2.workdir .. '/config.prepare'), false)
 
-    local status, err = master.net_box:call(
+    -- And patch_clusterwide succeeds
+    local ok, err = g.A1.net_box:call(
         'package.loaded.cartridge.config_patch_clusterwide',
-        {config}
+        {{['bye.txt'] = 'Googbye, locks'}}
     )
+    t.assert_equals({ok, err}, {true, nil})
 
-    -- And patch_clusterwide has succeed
-    t.assert_equals(status, true)
-    t.assert_equals(err, nil)
+    t.assert_equals(helpers.list_cluster_issues(g.A1), {})
+    t.assert_equals(
+        g.cluster:download_config(),
+        {['bye.txt'] = 'Googbye, locks'}
+    )
 end
