@@ -32,7 +32,7 @@ end)
 
 
 function g.test_twophase_config_locked()
-    -- Let's put a spoke in two-phase's wheel
+    -- Let's put a spoke in two-phases wheel
     local config = g.A1.net_box:eval([[
         local confapplier = require('cartridge.confapplier')
         return confapplier.get_active_config():get_plaintext()
@@ -54,10 +54,10 @@ function g.test_twophase_config_locked()
             ' on localhost:13302 (A-2)',
     }})
 
-    -- Eventually commit is locked
+    -- Obviously, 2pc is locked
     local ok, err = g.A1.net_box:call(
         'package.loaded.cartridge.config_patch_clusterwide',
-        {{['bye.txt'] = 'Googbye, locks'}}
+        {{['bye.txt'] = 'Goodbye, locks'}}
     )
     t.assert_equals(ok, nil)
     t.assert_covers(err, {
@@ -78,13 +78,13 @@ function g.test_twophase_config_locked()
     -- And patch_clusterwide succeeds
     local ok, err = g.A1.net_box:call(
         'package.loaded.cartridge.config_patch_clusterwide',
-        {{['bye.txt'] = 'Googbye, locks'}}
+        {{['bye.txt'] = 'Goodbye, locks'}}
     )
     t.assert_equals({ok, err}, {true, nil})
 
     t.assert_equals(helpers.list_cluster_issues(g.A1), {})
     t.assert_equals(
         g.cluster:download_config(),
-        {['bye.txt'] = 'Googbye, locks'}
+        {['bye.txt'] = 'Goodbye, locks'}
     )
 end

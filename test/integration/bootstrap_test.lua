@@ -102,7 +102,7 @@ end
 function g.test_workdir_collision()
     -- We create a single-instance cluster
     -- and another instance in the same workdir
-    -- Test checks that attempt to join it boesn't break anything
+    -- Test checks that attempt to join it doesn't break anything
 
     g.tempdir = fio.tempdir()
     g.cluster = helpers.Cluster:new({
@@ -135,7 +135,7 @@ function g.test_workdir_collision()
     g.cluster:start()
 
     t.assert_error_msg_contains(
-        g.tempdir .. '/config.prepare: ',
+        'Two-phase commit is locked',
         helpers.Cluster.join_server, g.cluster, g.server
     )
     g.cluster:wait_until_healthy()

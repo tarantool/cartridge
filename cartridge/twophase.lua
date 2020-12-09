@@ -59,9 +59,7 @@ local function prepare_2pc(data)
     local workdir = confapplier.get_workdir()
     local path_prepare = fio.pathjoin(workdir, 'config.prepare')
 
-    if vars.prepared_config ~= nil
-    or fio.path.exists(path_prepare)
-    then
+    if vars.prepared_config ~= nil then
         local err = Prepare2pcError:new('Two-phase commit is locked')
         log.warn('%s', err)
         return nil, err
@@ -81,6 +79,10 @@ local function prepare_2pc(data)
     end
 
     local ok, err = ClusterwideConfig.save(clusterwide_config, path_prepare)
+    if not ok and fio.path.exists(path_prepare) then
+        err = Prepare2pcError:new('Two-phase commit is locked')
+    end
+
     if not ok then
         log.warn('%s', err)
         return nil, err
