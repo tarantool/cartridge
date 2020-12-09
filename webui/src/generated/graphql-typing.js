@@ -671,6 +671,16 @@ export type VshardGroup = {|
 
 type $Pick<Origin: Object, Keys: Object> = $ObjMapi<Keys, <Key>(k: Key) => $ElementType<Origin, Key>>;
 
+export type ServerStatFieldsFragment = ({
+    ...{ __typename?: 'Server' },
+  ...$Pick<Server, {| uuid: *, uri: *, zone?: * |}>,
+  ...{| statistics?: ?({
+      ...{ __typename?: 'ServerStat' },
+    ...$Pick<ServerStat, {| quota_used_ratio: *, arena_used_ratio: *, items_used_ratio: * |}>,
+    ...{| quotaSize: $ElementType<ServerStat, 'quota_size'>, arenaUsed: $ElementType<ServerStat, 'arena_used'>, bucketsCount?: $ElementType<ServerStat, 'vshard_buckets_count'> |}
+  }) |}
+});
+
 export type AuthQueryVariables = {};
 
 
@@ -913,12 +923,7 @@ export type ServerListQuery = ({
     })> |}
   })>, serverStat?: ?Array<?({
       ...{ __typename?: 'Server' },
-    ...$Pick<Server, {| uuid: *, uri: *, zone?: * |}>,
-    ...{| statistics?: ?({
-        ...{ __typename?: 'ServerStat' },
-      ...$Pick<ServerStat, {| quota_used_ratio: *, arena_used_ratio: *, items_used_ratio: * |}>,
-      ...{| quotaSize: $ElementType<ServerStat, 'quota_size'>, arenaUsed: $ElementType<ServerStat, 'arena_used'>, bucketsCount?: $ElementType<ServerStat, 'vshard_buckets_count'> |}
-    }) |}
+    ...ServerStatFieldsFragment
   })>, cluster?: ?({
       ...{ __typename?: 'Apicluster' },
     ...{| suggestions?: ?({
@@ -941,12 +946,7 @@ export type ServerStatQuery = ({
     ...{ __typename?: 'Query' },
   ...{| serverStat?: ?Array<?({
       ...{ __typename?: 'Server' },
-    ...$Pick<Server, {| uuid: *, uri: * |}>,
-    ...{| statistics?: ?({
-        ...{ __typename?: 'ServerStat' },
-      ...$Pick<ServerStat, {| quota_used_ratio: *, arena_used_ratio: *, items_used_ratio: * |}>,
-      ...{| quotaSize: $ElementType<ServerStat, 'quota_size'>, arenaUsed: $ElementType<ServerStat, 'arena_used'>, bucketsCount?: $ElementType<ServerStat, 'vshard_buckets_count'> |}
-    }) |}
+    ...ServerStatFieldsFragment
   })> |}
 });
 

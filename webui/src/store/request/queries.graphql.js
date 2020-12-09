@@ -1,19 +1,21 @@
 // @flow
 
-import gql from 'graphql-tag'
+import gql from 'graphql-tag';
 
-const serverStatFragment = `
-uuid
-uri
-zone
-statistics {
-  quotaSize: quota_size
-  arenaUsed: arena_used
-  bucketsCount: vshard_buckets_count
-  quota_used_ratio
-  arena_used_ratio
-  items_used_ratio
-}
+export const serverStatFields = gql`
+  fragment serverStatFields on Server {
+    uuid
+    uri
+    zone
+    statistics {
+      quotaSize: quota_size
+      arenaUsed: arena_used
+      bucketsCount: vshard_buckets_count
+      quota_used_ratio
+      arena_used_ratio
+      items_used_ratio
+    }
+  }
 `;
 
 export const authQuery =  gql`
@@ -54,14 +56,14 @@ export const getClusterQuery = gql`
           endpoints
           username
           prefix
-        } 
+        }
         tarantool_params {
           uri
           password
         }
         mode
         state_provider
-      } 
+      }
       knownRoles: known_roles {
         name
         dependencies
@@ -330,14 +332,16 @@ query serverList ($withStats: Boolean!) {
       }
     }
   }
-  serverStat: servers @include(if: $withStats) { ${serverStatFragment} }
+  serverStat: servers @include(if: $withStats) {
+    ...serverStatFields
+  }
   cluster @include(if: $withStats) {
     suggestions {
       refine_uri {
         uuid
         uri_old
         uri_new
-      } 
+      }
     }
     issues {
       level
@@ -348,12 +352,15 @@ query serverList ($withStats: Boolean!) {
     }
   }
 }
+${serverStatFields}
 `;
 
 export const serverStatQuery = gql`
 query serverStat {
-  serverStat: servers { ${serverStatFragment} }
-}`;
+  serverStat: servers { ...serverStatFields }
+}
+${serverStatFields}
+`;
 
 export const bootstrapMutation = gql`
 mutation bootstrap {
