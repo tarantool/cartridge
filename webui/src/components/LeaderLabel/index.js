@@ -2,6 +2,7 @@
 
 import * as React from 'react'
 import { css, cx } from 'emotion';
+import { rgba } from 'emotion-rgba';
 import {
   SVGImage,
   Text,
@@ -18,13 +19,27 @@ const styles = {
     color: ${colors.dark65};
     text-transform: uppercase;
   `,
-  img: css`margin-right: 4px;`
+  img: css`
+    margin-right: 4px;
+    fill: ${colors.dark65};
+  `,
+  imgLight: css`
+    fill: #fff;
+    fill-opacity: 0.65;
+  `
 };
 
 const intentions = {
-  good: css`background-color: ${colors.intentSuccessBorder};`,
-  bad: css`background-color: ${colors.intentDanger};`,
-  warning: css`background-color: ${colors.intentWarningAccent};`
+  good: css`
+    background-color: ${colors.intentSuccessBorder};
+  `,
+  bad: css`
+    background-color: ${colors.intentWarningAccent};
+    color: ${rgba('#fff', 0.65)};
+  `,
+  warning: css`
+    background-color: ${colors.intentWarning};
+  `
 };
 
 type LeaderLabelProps = {
@@ -34,7 +49,13 @@ type LeaderLabelProps = {
 
 export const LeaderLabel = ({ className, state = 'bad' }: LeaderLabelProps) => (
   <Text variant='h5' tag='span' className={cx(styles.label, intentions[state], className)}>
-    <SVGImage glyph={crownPicture} className={styles.img} />
+    <SVGImage
+      glyph={crownPicture}
+      className={cx(
+        styles.img,
+        { [styles.imgLight]: state === 'bad' }
+      )}
+    />
     Leader
   </Text>
 );

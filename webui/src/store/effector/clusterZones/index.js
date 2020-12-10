@@ -28,7 +28,7 @@ export const setInstanceZoneFx: Effect<
   {
     handler: async ({ uuid, zone }) => {
       if (uuid) await editServers([{ uuid, zone: zone || '' }]);
-      else throw new Error('Invalid zone name or UUID');
+      else throw new Error('Invalid server UUID');
     }
   }
 );

@@ -32,7 +32,7 @@ export const submitZoneFx: Effect<
   {
     handler: async ({ uuid, zone }) => {
       if (uuid && zone) await editServers([{ uuid, zone }]);
-      else throw new Error('Invalid zone name or UUID');
+      else throw new Error('Invalid zone name');
     }
   }
 );
