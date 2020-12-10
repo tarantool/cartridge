@@ -51,18 +51,11 @@ configure_file (
 
 ## Webui ######################################################################
 ###############################################################################
-add_custom_command(
-  OUTPUT ${WEB_ROOT}/node_modules
-  COMMAND NODE_ENV=production npm ci --prefix "${WEB_ROOT}"
-  DEPENDS "${WEB_ROOT}/package-lock.json"
-  COMMENT "Installing node_modules"
-)
 
 add_custom_command(
-  OUTPUT ${WEB_ROOT}/build/bundle.lua
-  COMMAND npm run build --prefix "${WEB_ROOT}"
-  DEPENDS ${WEB_ROOT}/node_modules ${FRONTEND_FILES}
-  COMMENT "Building web archive"
+  OUTPUT "${WEB_ROOT}/build/always-run-script"
+  COMMAND ${CMAKE_COMMAND} -P ${WEB_ROOT}/BuildFrontend.cmake
+  COMMENT "Building WebUI"
 )
 
 if(DEFINED ENV{CMAKE_DUMMY_WEBUI})
@@ -82,7 +75,7 @@ if(DUMMY_WEBUI)
   )
 else()
   add_custom_target(front-bundle ALL
-    DEPENDS "${WEB_ROOT}/build/bundle.lua"
+    DEPENDS "${WEB_ROOT}/build/always-run-script"
     COMMAND ${CMAKE_COMMAND} -E copy
       "${WEB_ROOT}/build/bundle.lua"
       "${CMAKE_CURRENT_BINARY_DIR}/front-bundle.lua"

@@ -70,7 +70,8 @@ jobs:
 
       # Run tests
       - run: .rocks/bin/luacheck .
-      - run: |
+      - name: Run tarantoolctl rocks make
+        run: |
           . ./venv/bin/activate
           tarantoolctl rocks make
         env:

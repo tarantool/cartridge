@@ -9,7 +9,11 @@ env:
 
 jobs:
   webui-test:
-    runs-on: ubuntu-18.04
+    strategy:
+      fail-fast: false
+      matrix:
+        runs-on: [ubuntu-18.04]
+    runs-on: ${{ matrix.runs-on }}
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v1
@@ -18,17 +22,46 @@ jobs:
         with:
           tarantool-version: '1.10'
 
-      - name: Cache build dir
+      - name: Cache rocks
+        uses: actions/cache@v2
+        id: cache-webui-rocks
+        with:
+          path: .rocks/
+          key: cache-webui-rocks-${{ matrix.runs-on }}
+      -
+        run: tarantoolctl rocks install luatest 0.5.2
+        if: steps.cache-webui-rocks.outputs.cache-hit != 'true'
+
+      - name: Cache node_modules
+        uses: actions/cache@v2
+        with:
+          path: webui/node_modules/
+          key: >
+            cache-node-modules-${{ hashFiles(
+            'webui/package-lock.json'
+            ) }}
+
+      - name: Cache webui bundle
         uses: actions/cache@v2
         with:
           path: |
-            .rocks/
-            build.luarocks/
-            webui/build/
-            webui/node_modules/
-          key: frontend-build
+            webui/build/bundle.lua
+            webui/build/bundle.md5
+          key: >
+            cache-webui-bundle-${{ hashFiles(
+            'webui/src/*',
+            'webui/config/*.prod.js',
+            'webui/flow-typed/*',
+            'webui/public/*',
+            'webui/.env',
+            'webui/.env.production',
+            'webui/.eslintrc',
+            'webui/.flowconfig',
+            'webui/codegen.yml',
+            'webui/scripts/build.js',
+            'webui/package-lock.json'
+            ) }}
 
-      - run: tarantoolctl rocks install luatest 0.5.2
       - run: tarantoolctl rocks make
 
       - name: Cache cypress
