@@ -1,17 +1,19 @@
 // @flow
-import React from 'react';
-import { connect } from 'react-redux';
+import React, { useEffect } from 'react';
 import { css } from 'emotion';
-import { Alert, IconRefresh, Button, ControlsPanel } from '@tarantool.io/ui-kit';
+import { useStore } from 'effector-react';
+import { Alert, IconRefresh, Button } from '@tarantool.io/ui-kit';
 import SchemaEditor from 'src/components/SchemaEditor';
-import { isValueChanged } from 'src/store/selectors/schema';
-import { type State } from 'src/store/rootReducer';
 import {
-  getSchema,
-  applySchema,
-  setSchema,
-  validateSchema
-} from 'src/store/actions/schema.actions';
+  $form,
+  applyClick,
+  applySchemaFx,
+  checkSchemaFx,
+  getSchemaFx,
+  inputChange,
+  validateClick,
+  schemaPageMount
+} from 'src/store/effector/schema';
 import { PageLayout } from 'src/components/PageLayout';
 
 const styles = {
@@ -22,6 +24,7 @@ const styles = {
     padding: 16px;
     border-radius: 4px;
     box-sizing: border-box;
+    overflow: hidden;
     background-color: #ffffff;
   `,
   cardMargin: css`
@@ -31,13 +34,6 @@ const styles = {
   title: css`
     margin-left: 16px;
   `,
-  panel: css`
-    display: flex;
-    justify-content: flex-end;
-    padding-bottom: 16px;
-    margin-bottom: 16px;
-    border-bottom: 1px solid #E8E8E8;
-  `,
   editor: css`
     flex-grow: 1;
   `,
@@ -46,114 +42,76 @@ const styles = {
   `
 };
 
-type SchemaProps = {
-  value: string,
-  valueChanged: boolean,
-  error: ?string,
-  loading: boolean,
-  uploading: boolean,
-  getSchema: () => void,
-  setSchema: (s: string) => void,
-  resetSchema: () => void,
-  applySchema: () => void,
-  validateSchema: () => void,
-};
+applySchemaFx.done.watch(() => window.tarantool_enterprise_core.notify({
+  title: 'Success',
+  message: 'Schema successfully applied',
+  type: 'success',
+  timeout: 10000
+}));
 
-class Schema extends React.Component<SchemaProps> {
-  componentDidMount() {
-    if (!this.props.value) {
-      this.props.getSchema();
-    }
-  }
+checkSchemaFx.done.watch(() => window.tarantool_enterprise_core.notify({
+  title: 'Schema validation',
+  message: 'Schema is valid',
+  type: 'success',
+  timeout: 10000
+}));
 
-  render() {
-    const {
-      error,
-      value,
-      loading,
-      uploading,
-      applySchema,
-      getSchema,
-      setSchema,
-      validateSchema
-    } = this.props;
+const Schema = () => {
+  useEffect(() => {
+    schemaPageMount();
+  }, []);
 
-    return (
-      <PageLayout
-        heading='Schema'
-        wide
-      >
-        <div className={styles.area}>
-          <div className={styles.panel}>
-            <ControlsPanel
-              thin
-              controls={[
-                <Button
-                  text='Reload'
-                  intent='secondary'
-                  size='s'
-                  onClick={getSchema}
-                  icon={IconRefresh}
-                />,
-                <Button
-                  text='Validate'
-                  intent='secondary'
-                  size='s'
-                  onClick={validateSchema}
-                />,
-                <Button
-                  onClick={applySchema}
-                  text='Apply'
-                  intent='primary'
-                  size='s'
-                  loading={uploading}
-                  disabled={loading}
-                />
-              ]}
-            />
-          </div>
-          <SchemaEditor
-            className={styles.editor}
-            fileId='ddl'
-            value={value}
-            onChange={setSchema}
-          />
-          {error && (
-            <Alert className={styles.errorPanel} type='error'>{error}</Alert>
-          )}
-        </div>
-      </PageLayout>
-    );
-  }
-}
-
-const mapStateToProps = (state: State) => {
   const {
-    schema: {
-      value,
-      error,
-      loading,
-      uploading
-    }
-  } = state;
-
-  return {
-    value,
-    valueChanged: isValueChanged(state),
-    error,
+    checking,
     loading,
-    uploading
-  };
+    uploading,
+    value,
+    error
+  } = useStore($form);
+
+  return (
+    <PageLayout
+      heading='Schema'
+      wide
+      topRightControls={[
+        <Button
+          text='Reload'
+          intent='base'
+          size='l'
+          onClick={getSchemaFx}
+          icon={IconRefresh}
+          loading={loading}
+        />,
+        <Button
+          text='Validate'
+          intent='base'
+          size='l'
+          onClick={validateClick}
+          loading={checking}
+        />,
+        <Button
+          onClick={applyClick}
+          text='Apply'
+          intent='primary'
+          size='l'
+          loading={uploading}
+          disabled={loading}
+        />
+      ]}
+    >
+      <div className={styles.area}>
+        <SchemaEditor
+          className={styles.editor}
+          fileId='ddl'
+          value={value}
+          onChange={inputChange}
+        />
+        {error && (
+          <Alert className={styles.errorPanel} type='error'>{error}</Alert>
+        )}
+      </div>
+    </PageLayout>
+  );
 };
 
-const mapDispatchToProps = {
-  getSchema,
-  applySchema,
-  setSchema,
-  validateSchema
-};
-
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(Schema);
+export default Schema;

@@ -77,7 +77,7 @@ Enhanced is WebUI
 - Show suggestions for `arvertise_uri`.
 - Show files requesting error on the code editor page.
 - Fixed bug with errors displaying in modals on Users page.
-- Users page state rewritten with effector.
+- Users and Schema pages state rewritten with effector.
 - Updated server details modal, added support of replica zones.
 - Indicate config is prepared and locked in issues list.
 

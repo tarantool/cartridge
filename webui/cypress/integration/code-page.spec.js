@@ -1,7 +1,8 @@
 describe('Code page', () => {
 
   before(() => {
-    cy.task('tarantool', {code: `
+    cy.task('tarantool', {
+      code: `
       cleanup()
 
       _G.cluster = helpers.Cluster:new({
@@ -22,23 +23,24 @@ describe('Code page', () => {
       end
       _G.cluster:start()
       return true
-    `}).should('deep.eq', [true]);
+    `
+    }).should('deep.eq', [true]);
   });
 
   after(() => {
-    cy.task('tarantool', {code: `cleanup()`});
+    cy.task('tarantool', { code: `cleanup()` });
   });
 
   const selectAllKeys = Cypress.platform == 'darwin' ? '{cmd}a' : '{ctrl}a';
 
   function reload() {
-    cy.get('.meta-test__Code__reload_idle').click({force: true});
+    cy.get('.meta-test__Code__reload_idle').click({ force: true });
     cy.get('button[type="button"]').contains('Ok').click();
     cy.get('.meta-test__Code__reload_loading').should('not.exist');
     cy.get('.meta-test__Code__reload_idle').should('exist');
   }
   function apply() {
-    cy.get('.meta-test__Code__apply_idle').click({force: true});
+    cy.get('.meta-test__Code__apply_idle').click({ force: true });
     cy.get('.meta-test__Code__apply_loading').should('not.exist');
     cy.get('.meta-test__Code__apply_idle').should('exist');
   }
@@ -148,7 +150,7 @@ describe('Code page', () => {
     cy.get('.monaco-editor textarea').should('have.value', 'edit test code2');
 
     //delete file and file contents
-     //file contents
+    //file contents
     cy.get('.ScrollbarsCustom-Content').contains('edited-file-name2').click();
     cy.get('.monaco-editor textarea').type(selectAllKeys + '{backspace}');
     cy.get('.monaco-editor textarea').type('a{backspace}'); //без этого не работает
@@ -200,7 +202,7 @@ describe('Code page', () => {
     cy.get('.meta-test__createFileInTreeBtn').eq(0).click({ force: true });
     cy.get('.meta-test__enterName').focused().type('file-in-folder{enter}');
     cy.get('.meta-test__Code__FileTree').contains('file-in-folder').click({ force: true });
-    cy.get('.meta-test__Code').contains('folder-in-tree/file-in-folder');
+    cy.get('.meta-test__Code').contains('folder-in-tree / file-in-folder');
     cy.get('.monaco-editor textarea').type('new test code');
 
     //edit folder name
@@ -217,7 +219,7 @@ describe('Code page', () => {
     cy.contains('Not loaded').should('not.exist');
     cy.get('.meta-test__Code__FileTree').contains('folder-in-folder').should('not.exist');
     cy.get('.meta-test__Code__FileTree').contains('file-in-folder').should('exist');
-    cy.get('.meta-test__Code').contains('edited-folder-name/file-in-folder');
+    cy.get('.meta-test__Code').contains('edited-folder-name / file-in-folder');
     cy.get('.monaco-editor textarea').should('have.value', 'new test code');
 
     //delete folder
