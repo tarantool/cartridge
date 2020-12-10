@@ -132,7 +132,7 @@ describe('Server details', () => {
     cy.get('.meta-test__ServerDetailsModal').contains('healthy');
     cy.get('.meta-test__ServerDetailsModal').contains('instance_uuid');
 
-    cy.get('.meta-test__ServerDetailsModal button:contains(Select zone)').click();
+    cy.get('.meta-test__ServerDetailsModal button:contains(Zone Mordor)').click();
     cy.get('button:contains(Add new zone)').click();
     cy.get('.ZoneAddModal input[name="uri"]').type('Rostov');
     cy.get('.meta-test__ZoneAddSubmitBtn').click();
