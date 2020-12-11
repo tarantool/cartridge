@@ -105,7 +105,7 @@ describe('Server details', () => {
     cy.task('tarantool', { code: `_G.cluster:server('dummy-2'):stop()` });
 
     cy.get('.ServerLabelsHighlightingArea').contains('dummy-2')
-      .closest('li').should('contain', 'Server uri is not in membership');
+      .closest('li').should('contain', 'Server status is "dead"');
 
     openServerDetailsModal('dummy-2');
     cy.get('.meta-test__ServerDetailsModal button:contains(Select zone)').click();
@@ -121,7 +121,7 @@ describe('Server details', () => {
     cy.get('h2:contains(Add name of zone)').next().click();
     cy.get('.ZoneAddModal').should('not.exist');
 
-    cy.get('.meta-test__ServerDetailsModal').contains('Server uri is not in membership');
+    cy.get('.meta-test__ServerDetailsModal').contains('Server status is "dead"');
     cy.get('.meta-test__ServerDetailsModal').contains('instance_uuid').should('not.exist');
 
     checkServerDetailsTabs();
