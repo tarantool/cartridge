@@ -74,7 +74,7 @@ jobs:
       - run: npm install cypress@4.12.1
       - run: npx cypress cache list
 
-      - run: ./cypress-test.sh
+      - run: ./cypress-test.sh run --record --key ${{ secrets.CYPRESS_RECORD_KEY }}
       - run: ./frontend-test.sh
 
       # Cleanup cached paths
