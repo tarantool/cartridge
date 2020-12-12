@@ -96,7 +96,7 @@ function g.test_upgrade()
     g.cluster.main_server = leader
     for _, srv in pairs(g.cluster.servers) do
         require('luatest.server').start(srv)
-        g.cluster:retrying({}, function() srv:graphql({query = '{}'}) end)
+        g.cluster:retrying({}, function() srv:graphql({query = '{ servers { uri } }'}) end)
         srv:join_cluster(g.cluster.main_server)
         g.cluster:retrying({}, function() srv:connect_net_box() end)
     end

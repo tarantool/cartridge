@@ -21,7 +21,7 @@ g.before_all = function()
     g.server:start()
 
     t.helpers.retrying({timeout = 5}, function()
-        g.server:graphql({query = '{}'})
+        g.server:graphql({query = '{ servers { uri } }'})
     end)
 end
 
@@ -48,9 +48,9 @@ function g.test_uninitialized()
                         alias
                     }
                     suggestions {
-                        refine_uri {}
-                        force_apply {}
-                        disable_servers {}
+                        refine_uri { uuid }
+                        force_apply { uuid }
+                        disable_servers { uuid }
                     }
                     can_bootstrap_vshard
                     vshard_bucket_count
@@ -115,7 +115,7 @@ function g.test_uninitialized()
                 mutation{ cluster {
                     edit_topology(replicasets: [{
                         join_servers: [{uri: "127.0.0.1:13301"}]
-                    }]) {}
+                    }]) { servers { uri } }
                 }}
             ]]})
         end
@@ -147,7 +147,7 @@ function g.test_uninitialized()
         function()
             return g.server:graphql({
                 query = [[
-                    mutation { cluster { config(sections: []) {} } }
+                    mutation { cluster { config(sections: []) { filename } } }
                 ]]
             })
         end
@@ -157,7 +157,7 @@ function g.test_uninitialized()
         function()
             return g.server:graphql({
                 query = [[
-                    query { cluster { config {} } }
+                    query { cluster { config { filename } } }
                 ]]
             })
         end
@@ -169,7 +169,7 @@ function g.test_uninitialized()
         function()
             return g.server:graphql({
                 query = [[
-                    mutation { cluster { schema(as_yaml: "") {} } }
+                    mutation { cluster { schema(as_yaml: "") { as_yaml } } }
                 ]]
             })
         end

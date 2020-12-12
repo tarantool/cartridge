@@ -47,7 +47,7 @@ function g.test_api_disable()
 
     g.cluster.main_server:graphql({query = [[
         mutation {
-            cluster { disable_servers(uuids: ["bbbbbbbb-bbbb-0000-0000-000000000001"]) {} }
+            cluster { disable_servers(uuids: ["bbbbbbbb-bbbb-0000-0000-000000000001"]) { uri } }
         }
     ]]})
 
@@ -74,7 +74,7 @@ function g.test_suggestion()
 
     g.cluster.main_server:graphql({query = [[
         mutation {
-            cluster { disable_servers(uuids: ["bbbbbbbb-bbbb-0000-0000-000000000001"]) {} }
+            cluster { disable_servers(uuids: ["bbbbbbbb-bbbb-0000-0000-000000000001"]) { uuid } }
         }
     ]]})
     local suggestions = helpers.get_suggestions(g.cluster.main_server)

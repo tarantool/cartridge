@@ -32,7 +32,7 @@ g.before_all = function()
     g.server:start()
     t.helpers.retrying({}, function()
         g.server:graphql({
-            query = '{}'
+            query = '{ servers { uri } }'
         }, {
             http = {headers = bauth(ADMIN_USERNAME, ADMIN_PASSWORD)}
         })
@@ -155,7 +155,7 @@ function g.test_login()
 
     local check_200 = function(data)
         g.server:graphql({
-                query = '{}'
+                query = '{ servers { uri } }'
             }, {
                 http = {headers = data}
             })
@@ -164,7 +164,7 @@ function g.test_login()
     local check_401 = function(data)
         local graphql_fn_call = function(data)
             g.server:graphql({
-                query = '{}'
+                query = '{ servers { uri } }'
             }, {
                 http = {headers = data}
             })

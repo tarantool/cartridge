@@ -29,5 +29,5 @@ cluster = [
 ]
 
 def test_pass(cluster):
-    resp = cluster['master'].graphql(query = '{}')
+    resp = cluster['master'].graphql(query='{servers {uri}}')
     assert "errors" not in resp, resp['errors'][0]['message']

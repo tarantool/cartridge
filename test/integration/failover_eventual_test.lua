@@ -636,16 +636,16 @@ g.test_sigstop = function()
         {
             servers {
                 uri
-                statistics { }
+                statistics { vshard_buckets_count }
             }
         }
     ]]})
 
     t.assert_items_equals(response.data.servers, {
         {uri = cluster:server('storage-1').advertise_uri, statistics = box.NULL},
-        {uri = cluster:server('storage-2').advertise_uri, statistics = {}},
-        {uri = cluster:server('storage-3').advertise_uri, statistics = {}},
-        {uri = cluster:server('router-1').advertise_uri, statistics={}}
+        {uri = cluster:server('storage-2').advertise_uri, statistics = {vshard_buckets_count = 3000}},
+        {uri = cluster:server('storage-3').advertise_uri, statistics = {vshard_buckets_count = 3000}},
+        {uri = cluster:server('router-1').advertise_uri, statistics={vshard_buckets_count = box.NULL}}
     })
 
     t.assert_items_equals(helpers.list_cluster_issues(cluster.main_server), {{
@@ -676,16 +676,16 @@ g.test_sigstop = function()
         {
             servers {
                 uri
-                statistics { }
+                statistics { vshard_buckets_count }
             }
         }
     ]]})
 
     t.assert_items_equals(response.data.servers, {
-        {uri = cluster:server('storage-1').advertise_uri, statistics = {}},
-        {uri = cluster:server('storage-2').advertise_uri, statistics = {}},
-        {uri = cluster:server('storage-3').advertise_uri, statistics = {}},
-        {uri = cluster:server('router-1').advertise_uri, statistics={}}
+        {uri = cluster:server('storage-1').advertise_uri, statistics = {vshard_buckets_count = 3000}},
+        {uri = cluster:server('storage-2').advertise_uri, statistics = {vshard_buckets_count = 3000}},
+        {uri = cluster:server('storage-3').advertise_uri, statistics = {vshard_buckets_count = 3000}},
+        {uri = cluster:server('router-1').advertise_uri, statistics={vshard_buckets_count = box.NULL}}
     })
 
     t.helpers.retrying({}, function()

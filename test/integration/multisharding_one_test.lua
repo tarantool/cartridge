@@ -39,7 +39,7 @@ g.before_all = function()
 
     g.server:start()
     t.helpers.retrying({}, function()
-        g.server:graphql({query = '{}'})
+        g.server:graphql({query = '{ servers { uri } }'})
     end)
 end
 

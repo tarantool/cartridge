@@ -56,7 +56,7 @@ g.before_all = function()
 
     t.helpers.retrying({timeout = 5}, function()
         g.server:graphql(
-            {query = '{}'},
+            {query = '{ servers { uri } }'},
             {http = {headers = {authorization = 'Basic ' .. auth_b64}}}
         )
     end)
@@ -92,13 +92,13 @@ end
 
 local function check_401(server, kv_args)
     local unauthorized = function()
-        server:graphql({query = '{}'}, {http = kv_args})
+        server:graphql({query = '{ servers { uri } }'}, {http = kv_args})
     end
     t.assert_error_msg_contains("Unauthorized", unauthorized)
 end
 
 local function check_200(server, kv_args)
-    server:graphql({query = '{}'}, {http = kv_args})
+    server:graphql({query = '{ servers { uri } }'}, {http = kv_args})
 end
 
 local function get_lsid_max_age(resp)
@@ -687,7 +687,7 @@ function g.test_cookie_renew()
     server:graphql({query = [[
         mutation {
             cluster {
-                auth_params(cookie_renew_age: 0) {}
+                auth_params(cookie_renew_age: 0) { enabled }
             }
         }]]},
         {http = {headers = {cookie = cookie_lsid}}}
@@ -716,7 +716,7 @@ function g.test_cookie_expiry()
         return server:graphql({query = [[
             mutation($max_age: Long) {
                 cluster {
-                    auth_params(cookie_max_age: $max_age) { }
+                    auth_params(cookie_max_age: $max_age) { enabled }
                 }
             }]],
             variables = {max_age = max_age}

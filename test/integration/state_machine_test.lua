@@ -31,7 +31,7 @@ g.before_each(function()
             failover_params(
                 mode: "eventual"
                 failover_timeout: 3
-            ) {}
+            ) { failover_timeout }
         }}
     ]]})
 
@@ -210,7 +210,7 @@ function g.test_confapplier_race()
     -- It should succeed
     g.master:graphql({query = [[
         mutation{ cluster{
-            config(sections: [{filename: "x.txt", content: "XD"}]){}
+            config(sections: [{filename: "x.txt", content: "XD"}]) { filename }
         }}
     ]]})
 end
@@ -265,7 +265,7 @@ function g.test_leader_death()
         function()
             return g.master:graphql({query = [[
                 mutation{ cluster{
-                    config(sections: [{filename: "y.txt", content: "XD"}]){}
+                    config(sections: [{filename: "y.txt", content: "XD"}]){ filename }
                 }}
             ]]})
         end

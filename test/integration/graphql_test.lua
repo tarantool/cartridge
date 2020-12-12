@@ -270,7 +270,7 @@ g.test_upload = function()
         'Composite field "replicaset" must have subselections',
         function() return cluster.main_server:graphql({
             query = [[
-                { servers { alias replicaset storage { } uuid } }
+                { servers { alias replicaset storage { uri } uuid } }
             ]]
         }) end
     )
@@ -295,7 +295,7 @@ g.test_reread_request = function()
         end)
     ]])
 
-    server:graphql({ query = '{}' })
+    server:graphql({ query = '{ servers  { uri } }' })
 end
 
 
@@ -951,7 +951,7 @@ function g.test_error_extensions()
     local request = {
         query = [[mutation($uuids: [String!]) {
             cluster {
-                disable_servers(uuids: $uuids) {}
+                disable_servers(uuids: $uuids) { uuid }
             }
         }]],
         variables = {uuids = {cluster.main_server.instance_uuid}},
@@ -992,11 +992,11 @@ function g.test_middleware()
     ]])
     t.assert_error_msg_equals(
         "You are not welcome here",
-        server.graphql, server, { query = '{replicasets{}}' }
+        server.graphql, server, { query = '{replicasets{ uuid }}' }
     )
 
     local response = server:graphql({
-        query = '{servers{}}',
+        query = '{servers{ uri }}',
         raise = false,
     })
     local extensions = response.errors[1].extensions
@@ -1017,15 +1017,15 @@ function g.test_middleware()
 
     server:graphql({ query = [[
         query {
-            servers {}
-            cluster {self {}}
+            servers { uri }
+            cluster {self { uuid }}
         }
     ]]})
 
     server:graphql({ query = [[
         mutation($uri: String!) {
             probe_server(uri: $uri)
-            cluster { edit_topology {} }
+            cluster { edit_topology { servers { uri } } }
         }
     ]], variables = {uri = server.advertise_uri}})
 

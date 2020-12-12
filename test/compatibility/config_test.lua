@@ -71,16 +71,16 @@ function g.test_failover_2_0_1_78()
         cluster { failover_params(mode: "eventual") {
             mode
             state_provider
-            tarantool_params {}
-            etcd2_params {}
+            tarantool_params { uri }
+            etcd2_params { prefix }
         }}
     }]]}).data.cluster.failover_params
 
     t.assert_equals(failover_params, {
         mode = 'eventual',
         state_provider = box.NULL,
-        tarantool_params = {},
-        etcd2_params = {},
+        tarantool_params = {uri = 'tcp://localhost:4401'},
+        etcd2_params = {prefix = '/'},
     })
 end
 
@@ -134,15 +134,15 @@ function g.test_failover_2_0_1_95()
         cluster { failover_params(mode: "eventual") {
             mode
             state_provider
-            tarantool_params {}
-            etcd2_params {}
+            tarantool_params { uri }
+            etcd2_params { prefix }
         }}
     }]]}).data.cluster.failover_params
 
     t.assert_equals(failover_params, {
         mode = 'eventual',
         state_provider = box.NULL,
-        tarantool_params = {},
-        etcd2_params = {},
+        tarantool_params = {uri = 'tcp://localhost:4401'},
+        etcd2_params = {prefix = '/'},
     })
 end
