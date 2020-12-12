@@ -5,7 +5,7 @@ project(cartridge C)
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 set(CMAKE_SKIP_INSTALL_ALL_DEPENDENCY TRUE)
 
-# Find Tarantool and Lua dependecies
+# Find Tarantool and Lua dependencies
 set(TARANTOOL_FIND_REQUIRED ON)
 find_package(Tarantool)
 include_directories(${TARANTOOL_INCLUDE_DIRS})

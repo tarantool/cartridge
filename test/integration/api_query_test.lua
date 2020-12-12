@@ -92,7 +92,7 @@ g.before_all = function()
 
     g.server:start()
     t.helpers.retrying({timeout = 5}, function()
-        g.server:graphql({query = '{}'})
+        g.server:graphql({query = '{ servers { uri } }'})
         g.cluster.main_server:graphql({
             query = 'mutation($uri: String!) { probe_server(uri:$uri) }',
             variables = {uri = g.server.advertise_uri},
@@ -166,9 +166,9 @@ function g.test_suggestions()
     local suggestions = g.cluster.main_server:graphql({
         query = [[{
             cluster { suggestions {
-                refine_uri {}
-                force_apply {}
-                disable_servers {}
+                refine_uri { uuid }
+                force_apply { uuid }
+                disable_servers { uuid }
             }}
         }]]
     }).data.cluster.suggestions
@@ -268,8 +268,8 @@ function g.test_server_info_schema()
             table.concat(field_name_replica, ' '),
             table.concat(field_name_cartridge, ' '))
             -- workaround composite graphql type
-                :gsub('error', 'error {}')
-                :gsub('replication_info', 'replication_info {}')
+                :gsub('error', 'error { message }')
+                :gsub('replication_info', 'replication_info { id }')
 
     local resp = router:graphql({
         query = query,
@@ -316,7 +316,7 @@ function g.test_servers()
                     uri
                     uuid
                     alias
-                    labels { }
+                    labels { name }
                     disabled
                     priority
                     replicaset { roles }
@@ -477,7 +477,7 @@ function g.test_topology_caching()
         query = [[{
             s1: servers {alias}
             s2: servers {alias}
-            replicasets {servers {}}
+            replicasets {servers { uri }}
         }]],
     })
 
@@ -504,7 +504,7 @@ function g.test_operation_error()
     -- Dummy mutation doesn't trigger two-phase commit
     g.cluster.main_server:graphql({
         query = [[
-            mutation { cluster { config(sections: []) {} } }
+            mutation { cluster { config(sections: []) { filename } } }
         ]],
     })
 
@@ -513,7 +513,7 @@ function g.test_operation_error()
         query = [[
             mutation{ cluster{ config(
                 sections: [{filename: "x.txt", content: "oops"}]
-            ){} }}
+            ){ filename } }}
         ]],
         raise = false,
     })
@@ -576,7 +576,7 @@ function g.test_app_name()
     g.server:start()
 
     t.helpers.retrying({timeout = 5}, function()
-        g.server:graphql({query = '{}'})
+        g.server:graphql({query = '{ servers { uri } }'})
     end)
 
     t.assert_equals(get_app_info(), {app_name = 'app_name', instance_name = 'instance_name'})

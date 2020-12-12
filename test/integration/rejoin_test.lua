@@ -51,7 +51,7 @@ function g.test_rebootstrap()
 
     g.server:start()
     t.helpers.retrying({timeout = 5}, function()
-        g.server:graphql({query = '{}'})
+        g.server:graphql({query = '{ servers { uri } }'})
     end)
 
     local err = t.assert_error(function() g.cluster:join_server(g.server) end)

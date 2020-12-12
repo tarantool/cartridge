@@ -25,7 +25,7 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
       end
 
       helpers.retrying({}, function()
-        _G.cluster:server('dummy-1'):graphql({query = '{}'})
+        _G.cluster:server('dummy-1'):graphql({query = '{ servers { uri } }'})
       end)
 
       return _G.cluster:server('dummy-1').env.TARANTOOL_CONSOLE_SOCK

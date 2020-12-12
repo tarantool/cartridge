@@ -123,13 +123,13 @@ function g.test_absent_config()
     t.assert_error_msg_equals(
         expected_err,
         helpers.Server.graphql, g.cluster.main_server, ({
-            query = [[{ servers {} }]]
+            query = [[{ servers { uuid } }]]
         })
     )
     t.assert_error_msg_equals(
         expected_err,
         helpers.Server.graphql, g.cluster.main_server, ({
-            query = [[{ replicasets {} }]]
+            query = [[{ replicasets { uuid } }]]
         })
     )
 end
