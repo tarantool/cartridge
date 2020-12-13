@@ -69,10 +69,13 @@ local function coerceValue(node, schemaType, variables, opts)
   local defaultValues = opts.defaultValues or {}
 
   if schemaType.__type == 'NonNull' then
+    if node.kind == 'null' then
+      error(('Expected non-null for "%s", got null'):format(getTypeName(schemaType)))
+    end
+
     local res = coerceValue(node, schemaType.ofType, variables, opts)
     if strict_non_null and res == nil then
-      error(('Expected non-null for "%s", got null'):format(
-        getTypeName(schemaType)))
+      error(('Expected non-null for "%s", got null'):format(getTypeName(schemaType)))
     end
     return res
   end
@@ -101,6 +104,10 @@ local function coerceValue(node, schemaType, variables, opts)
       end
     end
     return value
+  end
+
+  if node.kind == 'null' then
+    return box.NULL
   end
 
   if schemaType.__type == 'List' then
