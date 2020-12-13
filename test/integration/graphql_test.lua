@@ -1220,3 +1220,58 @@ g.test_default_values = function()
         ).data.test_json_type, '{"test":123}'
     )
 end
+
+g.test_null = function()
+    local server = cluster.main_server
+
+    server.net_box:eval([[
+        package.loaded['test'] = package.loaded['test'] or {}
+        package.loaded['test']['test_null'] = function(_, args)
+            if args.arg == nil then
+                return 'nil'
+            end
+            return args.arg
+        end
+
+        local graphql = require('cartridge.graphql')
+        local types = require('cartridge.graphql.types')
+
+        graphql.add_callback({
+            name = 'test_null_nullable',
+            args = {
+                arg = types.string,
+            },
+            kind = types.string,
+            callback = 'test.test_null',
+        })
+
+        graphql.add_callback({
+            name = 'test_null_non_nullable',
+            args = {
+                arg = types.string.nonNull,
+            },
+            kind = types.string,
+            callback = 'test.test_null',
+        })
+    ]])
+
+    t.assert_equals(
+        server:graphql({
+            query = [[
+                query {
+                    test_null_nullable(arg: null)
+                }
+            ]],
+        variables = {}}
+        ).data.test_null_nullable, 'nil'
+    )
+
+    t.assert_error_msg_equals('Expected non-null for "NonNull(String)", got null', function()
+        return server:graphql({
+            query = [[
+                query {
+                    test_null_non_nullable(arg: null)
+                }
+            ]]})
+    end)
+end
