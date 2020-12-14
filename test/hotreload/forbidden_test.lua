@@ -8,16 +8,11 @@ g.before_all(function()
     g.cluster = helpers.Cluster:new({
         datadir = fio.tempdir(),
         use_vshard = false,
-        server_command = helpers.entrypoint('srv_woauth'),
+        server_command = helpers.entrypoint('srv_basic'),
         cookie = helpers.random_cookie(),
-        replicasets = {{
-            alias = 'A',
-            roles = {},
-            servers = 1,
-        }},
+        replicasets = {{alias = 'A', roles = {}, servers = 1}},
+        env = {TARANTOOL_FORBID_HOTRELOAD = 'true'},
     })
-    g.srv = g.cluster:server('A-1')
-    g.srv.env['TARANTOOL_CONSOLE_SOCK'] = g.srv.workdir .. '/console.sock'
     g.cluster:start()
 end)
 
@@ -27,7 +22,9 @@ g.after_all(function()
 end)
 
 function g.test_errors()
-    local ok, err = g.srv.net_box:call('package.loaded.cartridge.reload_roles')
+    local ok, err = g.cluster.main_server.net_box:call(
+        'package.loaded.cartridge.reload_roles'
+    )
 
     t.assert_equals(ok, nil)
     t.assert_covers(err, {
