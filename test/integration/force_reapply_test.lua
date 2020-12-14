@@ -112,6 +112,11 @@ local q_set_myrole_counter = [[
 local q_get_counter = [[ return _G.counter ]]
 
 function g.test_graphql_api()
+    t.assert_error_msg_contains(
+        'Server \'alien\' is not in topology',
+        force_reapply, {'alien'}
+    )
+
     for _, srv in pairs(g.cluster.servers) do
         srv.net_box:eval(q_set_myrole_counter)
     end
