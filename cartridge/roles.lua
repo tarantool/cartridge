@@ -392,10 +392,39 @@ local function apply_config(conf, opts)
     return true
 end
 
---- Perform code hot-reload of cartridge roles.
+--- Perform hot-reload of cartridge roles code.
+--
+-- This is an experimental feature, it's only allowed if the application
+-- enables it explicitly: `cartridge.cfg({roles_reload_allowed =
+-- true})`.
+--
+-- Reloading starts by stopping all roles and restoring the initial
+-- state. It's supposed that a role cleans up the global state when
+-- stopped, but even if it doesn't, cartridge kills all fibers and
+-- removes global variables and HTTP routes.
+--
+-- All Lua modules that were loaded during `cartridge.cfg` are unloaded,
+-- including supplementary modules required by a role. Modules, loaded
+-- before `cartridge.cfg` aren't affected.
+--
+-- Instance performs roles reload in a dedicated state `ReloadingRoles`.
+-- If reload fails, the instance enters the `ReloadError` state, which
+-- can later be retried. Otherwise, if reload succeeds, instance
+-- proceeds to the `ConfiguringRoles` state and initializes them as
+-- usual with `validate_config()`, `init()`, and `apply_config()`
+-- callbacks.
 --
 -- @function reload
+-- @treturn[1] boolean true
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 local function reload()
+    if not hotreload.state_saved() then
+        return nil, ReloadError:new(
+            'This application forbids reloading roles'
+        )
+    end
+
     local confapplier = require('cartridge.confapplier')
     local state = confapplier.get_state()
     if state ~= 'RolesConfigured'
@@ -425,6 +454,8 @@ local function reload()
     end
 
     hotreload.load_state()
+    collectgarbage()
+    collectgarbage()
 
     local ok, err = cfg(vars.module_names)
     if ok == nil then
@@ -439,6 +470,7 @@ local function reload()
         return nil, err
     end
 
+    log.warn('Roles reloaded successfully')
     confapplier.set_state('BoxConfigured', err)
 
     return confapplier.apply_config(clusterwide_config)

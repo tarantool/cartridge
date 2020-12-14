@@ -20,35 +20,12 @@ g.before_all(function()
         datadir = fio.tempdir(),
         use_vshard = true,
         server_command = helpers.entrypoint('srv_basic'),
-        cookie = '', -- helpers.random_cookie(),
+        cookie = helpers.random_cookie(),
         replicasets = {
             {alias = 'R', roles = {'vshard-router'}, servers = 1},
             {alias = 'SA', roles = {'vshard-storage'}, servers = 2},
             {alias = 'SB', roles = {'vshard-storage'}, servers = 2}
         },
-        -- replicasets = {{
-        --     alias = 'R',
-        --     uuid = helpers.uuid('a'),
-        --     roles = {'vshard-router'},
-        --     servers = {{instance_uuid = helpers.uuid('a', 'a', 1)}},
-        -- }, {
-        --     alias = 'SA',
-        --     uuid = helpers.uuid('f', 'a'),
-        --     roles = {'vshard-storage'},
-        --     servers = {
-        --         {instance_uuid = helpers.uuid('f', 'a', 1)},
-        --         {instance_uuid = helpers.uuid('f', 'a', 2)},
-        --     },
-        -- }, {
-        --     alias = 'SB',
-        --     uuid = helpers.uuid('e', 'b'),
-        --     roles = {'vshard-storage'},
-        --     servers = {
-        --         {instance_uuid = helpers.uuid('e', 'b', 1)},
-        --         {instance_uuid = helpers.uuid('e', 'b', 2)},
-        --     },
-        -- }},
-
     })
     g.cluster:start()
 
@@ -153,17 +130,14 @@ function g.test_router()
 
     g.highload_fiber:cancel()
 
-    t.assert_equals(
+    t.assert_items_include(
         g.R1.net_box:call(
             'package.loaded.vshard.router.callrw',
             {1, 'box.space.test:select'}
         ),
         g.insertions_passed
     )
-
-    -- t.assert_equals(g.insertions_failed, {})
 end
-
 
 function g.test_storage()
     g.highload_fiber = fiber.new(highload_loop, 'B')
@@ -176,8 +150,6 @@ function g.test_storage()
     end)
 
     reload(g.SA1)
-    -- require('fiber').sleep(1)
-    -- do return end
 
     local cnt = #g.insertions_passed
     if not pcall(g.cluster.retrying, g.cluster, {timeout = 1}, function()
@@ -186,14 +158,11 @@ function g.test_storage()
 
     g.highload_fiber:cancel()
 
-    t.assert_equals(
+    t.assert_items_include(
         g.R1.net_box:call(
             'package.loaded.vshard.router.callrw',
             {1, 'box.space.test:select'}
         ),
         g.insertions_passed
     )
-
-    t.assert_equals(g.insertions_failed, {})
-
 end

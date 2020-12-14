@@ -36,11 +36,8 @@ local function apply_config(conf, _)
     end
 
     log.info('Reconfiguring vshard.storage...')
-    local snap1 = hotreload.snap_fibers()
     vshard.storage.cfg(vshard_cfg, box.info.uuid)
     vars.vshard_cfg = vshard_cfg
-    local snap2 = hotreload.snap_fibers()
-    hotreload.whitelist_fibers(hotreload.diff(snap1, snap2))
 end
 
 local function init()

@@ -1,15 +1,18 @@
 local log = require('log')
 local fiber = require('fiber')
-local checks = require('checks')
 
 local vars = require('cartridge.vars').new('cartridge.hotreload')
 local service_registry = require('cartridge.service-registry')
 
 vars:new('packages', nil)
 vars:new('globals', nil)
-vars:new('routes', nil)
-vars:new('fibers', {})
+vars:new('fibers', nil)
+vars:new('routes_count', nil)
 
+--- Snapshot names of all running fibers.
+--
+-- @function snap_fibers
+-- @treturn {string=true,...} Set of fiber names
 local function snap_fibers()
     local ret = {}
 
@@ -20,6 +23,11 @@ local function snap_fibers()
     return ret
 end
 
+--- Get difference between two snapshots.
+-- @function diff
+-- @tparam {string=true,...} snap1
+-- @tparam {string=true,...} snap2
+-- @treturn {string,...} Keys from snap2 that are not in snap1, sorted
 local function diff(t1, t2)
     local ret = {}
     for k, _ in pairs(t2) do
@@ -32,28 +40,94 @@ local function diff(t1, t2)
     return ret
 end
 
-local function save_state()
-    if vars.packages == nil then
-        vars.packages = table.copy(package.loaded)
-        for k, _ in pairs(vars.packages) do
-            vars.packages[k] = true
-        end
+--- Avoid removing globals with given names.
+--
+-- @function whitelist_globals
+-- @tparam {string,...} names
+local function whitelist_globals(tbl)
+    if not vars.globals then
+        return
     end
 
-    if vars.globals == nil then
-        vars.globals = setmetatable(table.copy(_G), nil)
-        for k, _ in pairs(vars.globals) do
-            vars.globals[k] = true
-        end
-    end
-
-    if vars.routes == nil then
-        local httpd = service_registry.get('httpd')
-        vars.routes = #httpd.routes
+    for _, v in ipairs(tbl) do
+        log.debug('Avoid removing global %q on hot-reload', v)
+        vars.globals[v] = true
     end
 end
 
+--- Avoid cancelling fibers with given names.
+--
+-- Names 'lua', 'main' and '* (net.box)' are ignored and can't be
+-- whitelisted.
+--
+-- @function whitelist_fibers
+-- @tparam {string,...} names
+local function whitelist_fibers(tbl)
+    if not vars.fibers then
+        return
+    end
+
+    for _, v in ipairs(tbl) do
+        if v == 'lua'
+        or v == 'main'
+        or v:endswith('(net.box)')
+        then
+            log.debug('Refusing to whitelist fiber %q', v)
+        else
+            log.debug('Avoid cancelling fiber %q on hot-reload', v)
+            vars.fibers[v] = true
+        end
+    end
+end
+
+--- Check that state was saved.
+--
+-- @function state_saved
+-- @treturn boolean true / false
+local function state_saved()
+    return vars.packages
+        and vars.globals
+        and vars.fibers
+        and vars.routes_count
+end
+
+--- Save initial state.
+--
+-- This includes `package.loaded`, `_G`, fibers, http routes.
+--
+-- @function save_state
+local function save_state()
+    vars.packages = table.copy(package.loaded)
+    for k, _ in pairs(vars.packages) do
+        vars.packages[k] = true
+    end
+
+    vars.globals = setmetatable(table.copy(_G), nil)
+    for k, _ in pairs(vars.globals) do
+        vars.globals[k] = true
+    end
+
+    vars.fibers = {}
+    whitelist_fibers(diff(vars.fibers, snap_fibers()))
+
+    local httpd = service_registry.get('httpd')
+    if httpd ~= nil then
+        vars.routes_count = #httpd.routes
+    else
+        vars.routes_count = 0
+    end
+
+    assert(state_saved())
+end
+
+--- Restore initial state.
+--
+-- Unload packages, cancel fibers, remove globals and http routes.
+--
+-- @function load_state
 local function load_state()
+    assert(state_saved(), "Hot-reload state wasn't saved")
+
     for k, _ in pairs(package.loaded) do
         if not vars.packages[k] then
             -- log.info('Unloading package %q', k)
@@ -76,7 +150,6 @@ local function load_state()
         end
 
         if f.fid == 101
-        or f.name == 'on_shutdown'
         or f.name:startswith('console/')
         or f.name:startswith('applier/')
         or f.name:startswith('applierw/')
@@ -98,7 +171,7 @@ local function load_state()
 
     local httpd = service_registry.get('httpd')
     if httpd ~= nil then
-        for n = #httpd.routes, vars.routes + 1, -1 do
+        for n = #httpd.routes, vars.routes_count + 1, -1 do
             local r = httpd.routes[n]
             log.info('Removing HTTP route %q (%s)', r.path, r.method)
             if httpd.iroutes[r.name] ~= nil then
@@ -109,35 +182,13 @@ local function load_state()
     end
 end
 
-local function whitelist_globals(tbl)
-    checks('table')
-    for _, v in ipairs(tbl) do
-        log.debug('Avoid hot-reloading global %q', v)
-        vars.globals[v] = true
-    end
-end
-
-local function whitelist_fibers(tbl)
-    checks('table')
-    for _, v in ipairs(tbl) do
-        if v == 'lua'
-        or v:endswith('(net.box)')
-        then
-            log.debug('Refusing to whitelist fiber %q', v)
-        else
-            log.debug('Avoid hot-reloading fiber %q', v)
-            vars.fibers[v] = true
-        end
-    end
-end
-
 return {
-    save_state = save_state,
-    load_state = load_state,
-
-    snap_fibers = snap_fibers,
     diff = diff,
-
+    snap_fibers = snap_fibers,
     whitelist_fibers = whitelist_fibers,
     whitelist_globals = whitelist_globals,
+
+    save_state = save_state,
+    load_state = load_state,
+    state_saved = state_saved,
 }

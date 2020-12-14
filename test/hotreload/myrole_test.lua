@@ -166,12 +166,9 @@ end
 function g.test_netbox()
     reload_myrole(function()
         rawset(_G, 'hang', function()
-            local log = require('log')
-            local fiber = require('fiber')
-            fiber.name('weirdo_netbox')
-            log.info('Weird netbox call')
             rawset(_G, 'test_ready', true)
-            fiber.sleep(math.huge)
+            require('log').info('Weird netbox call')
+            require('fiber').sleep(math.huge)
             return true
         end)
         return {role_name = 'myrole'}
@@ -267,15 +264,12 @@ function g.test_routes()
     )
 
     reload_myrole(function()
-        local log = require('log')
-        local fiber = require('fiber')
         local service_registry = require('cartridge.service-registry')
         local httpd = service_registry.get('httpd')
         httpd:route({method = 'GET', path = '/sleep'}, function()
-            fiber.name('weirdo_http')
-            log.info('Weird http callback')
             rawset(_G, 'test_ready', true)
-            fiber.sleep(math.huge)
+            require('log').info('Weird http callback')
+            require('fiber').sleep(math.huge)
             return {status = 200}
         end)
         return {role_name = 'myrole'}

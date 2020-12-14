@@ -165,6 +165,7 @@ local ok, err = errors.pcall('CartridgeCfgError', cartridge.cfg, {
         'mymodule',
     },
     webui_blacklist = webui_blacklist,
+    roles_reload_allowed = true,
 })
 if not ok then
     log.error('%s', err)

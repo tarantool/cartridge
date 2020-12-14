@@ -211,6 +211,10 @@ end
 --   env `TARANTOOL_UPGRADE_SCHEMA`
 --   args `--upgrade-schema`)
 --
+-- @tparam ?boolean opts.roles_reload_allowed
+--   Allow calling `cartridge.reload_roles`.
+--   (**Added** in v2.3.0-73, default: `false`)
+--
 -- @tparam ?table box_opts
 --   tarantool extra box.cfg options (e.g. memtx_memory),
 --   that may require additional tuning
@@ -235,6 +239,7 @@ local function cfg(opts, box_opts)
         webui_blacklist = '?table',
         upgrade_schema = '?boolean',
         swim_broadcast = '?boolean',
+        roles_reload_allowed = '?boolean',
     }, '?table')
 
     if opts.webui_blacklist ~= nil then
@@ -465,7 +470,6 @@ local function cfg(opts, box_opts)
         require("membership.options")[opt_name] = opt_value
     end
 
-    local snap1 = hotreload.snap_fibers()
     local ok, err = CartridgeCfgError:pcall(membership.init,
         advertise.host, advertise.service
     )
@@ -474,8 +478,6 @@ local function cfg(opts, box_opts)
     end
     local advertise_uri = membership.myself().uri
     log.info('Using advertise_uri %q', advertise_uri)
-    local snap2 = hotreload.snap_fibers()
-    hotreload.whitelist_fibers(hotreload.diff(snap1, snap2))
 
     if opts.alias == nil then
         opts.alias = args.instance_name
@@ -524,10 +526,7 @@ local function cfg(opts, box_opts)
 
     -- Gracefully leave membership in case of stop if box.ctl.on_shutdown supported
     if box.ctl.on_shutdown ~= nil then
-        local snap1 = hotreload.snap_fibers()
         box.ctl.on_shutdown(function() pcall(membership.leave) end)
-        local snap2 = hotreload.snap_fibers()
-        hotreload.whitelist_fibers(hotreload.diff(snap1, snap2))
     end
 
     if opts.auth_backend_name == nil then
@@ -574,13 +573,10 @@ local function cfg(opts, box_opts)
             { log_requests = false }
         )
 
-        local snap1 = hotreload.snap_fibers()
         local ok, err = HttpInitError:pcall(httpd.start, httpd)
         if not ok then
             return nil, err
         end
-        local snap2 = hotreload.snap_fibers()
-        hotreload.whitelist_fibers(hotreload.diff(snap1, snap2))
 
         local ok, err = HttpInitError:pcall(webui.init, httpd)
         if not ok then
@@ -673,7 +669,10 @@ local function cfg(opts, box_opts)
     end
 
     -- Do last few steps
-    hotreload.save_state()
+    if opts.roles_reload_allowed == true then
+        hotreload.save_state()
+    end
+
     local ok, err = roles.cfg(opts.roles)
     if not ok then
         return nil, err
@@ -706,6 +705,10 @@ return {
     VERSION = VERSION,
 
     cfg = cfg,
+
+    --- .
+    -- @refer cartridge.roles.reload
+    -- @function reload_roles
     reload_roles = roles.reload,
 
     --- .

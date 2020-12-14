@@ -72,7 +72,6 @@ local function apply_config(conf)
             log.info('Reconfiguring %s ...', router_name)
 
             local router = vars.routers[router_name]
-            local snap1 = hotreload.snap_fibers()
 
             if router ~= nil then
                 router:cfg(vshard_cfg)
@@ -89,9 +88,6 @@ local function apply_config(conf)
                     )
                 end
             end
-
-            local snap2 = hotreload.snap_fibers()
-            hotreload.whitelist_fibers(hotreload.diff(snap1, snap2))
 
             vars.routers[router_name] = router
             vars.vshard_cfg[router_name] = vshard_cfg
