@@ -84,6 +84,7 @@ Enhanced is WebUI
 - Users and Schema pages state rewritten with effector.
 - Updated server details modal, added support of replica zones.
 - Indicate config is prepared and locked in issues list.
+- Fencing parameters adjustable in failover modal.
 
 -------------------------------------------------------------------------------
 [2.3.0] - 2020-08-26
