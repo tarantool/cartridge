@@ -17,7 +17,8 @@ import {
   Text,
   TextArea,
   colors,
-  withDropdown
+  withDropdown,
+  Checkbox
 } from '@tarantool.io/ui-kit';
 import { FAILOVER_STATE_PROVIDERS } from 'src/constants';
 import type { FailoverApi, MutationApiclusterFailover_ParamsArgs } from 'src/generated/graphql-typing.js';
@@ -67,8 +68,20 @@ const styles = {
   selectBoxIcon: css`
     fill: ${colors.intentBase};
     transform: rotate(180deg);
+  `,
+  infoInlineCode: css`
+    color: inherit;
+    font-size: inherit;
   `
 }
+
+const messages = {
+  failoverTimeout: 'Timeout (in seconds), used by membership to mark suspect members as dead (default: 20)',
+  // eslint-disable-next-line max-len
+  fencingEnabled: 'Abandon leadership when both the state provider quorum and at least one replica are lost (default: false)',
+  fencingTimeout: 'Time (in seconds) to actuate fencing after the check fails (default: 10)',
+  fencingPause: 'The period (in seconds) of performing the check (default: 2)'
+};
 
 const DropdownButton = withDropdown(Button);
 
@@ -100,6 +113,10 @@ type FailoverModalProps = FailoverApi & {
 }
 
 type FailoverModalState = {
+  failover_timeout: number,
+  fencing_enabled: bool,
+  fencing_timeout: number,
+  fencing_pause: number,
   mode: string,
   state_provider?: string,
   tarantool_params: {|
@@ -119,9 +136,22 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
   constructor(props) {
     super(props);
 
-    const { mode, tarantool_params, etcd2_params, state_provider } = props;
+    const {
+      failover_timeout,
+      fencing_enabled,
+      fencing_timeout,
+      fencing_pause,
+      mode,
+      tarantool_params,
+      etcd2_params,
+      state_provider
+    } = props;
 
     this.state = {
+      failover_timeout: failover_timeout.toString(),
+      fencing_enabled,
+      fencing_timeout: fencing_timeout.toString(),
+      fencing_pause: fencing_pause.toString(),
       mode,
       tarantool_params: {
         uri: (tarantool_params && tarantool_params.uri) || '',
@@ -142,14 +172,18 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
 
   handleStateProviderChange = (state_provider: string) => this.setState({ state_provider });
 
-  handleInputChange = (fieldPath: [string, string]) => ({ target }: InputEvent) => {
+  handleFencingToggle = () => this.setState(({ fencing_enabled }) => ({ fencing_enabled: !fencing_enabled }));
+
+  handleInputChange = (fieldPath: [string, ?string]) => ({ target }: InputEvent) => {
 
     if (target && (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement)) {
       this.setState(prevState => ({
-        [fieldPath[0]]: {
-          ...prevState[fieldPath[0]],
-          [fieldPath[1]]: target.value
-        }
+        [fieldPath[0]]: fieldPath[1]
+          ? {
+            ...prevState[fieldPath[0]],
+            [fieldPath[1]]: target.value
+          }
+          : target.value
       }));
     }
   }
@@ -157,11 +191,24 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
   handleSubmit = (e: Event) => {
     e.preventDefault();
 
-    const { mode, etcd2_params, tarantool_params, state_provider } = this.state;
+    const {
+      failover_timeout,
+      fencing_enabled,
+      fencing_timeout,
+      fencing_pause,
+      mode,
+      etcd2_params,
+      tarantool_params,
+      state_provider
+    } = this.state;
 
     const etcd2LockDelay = parseFloat(etcd2_params.lock_delay);
 
     this.props.changeFailover({
+      failover_timeout: parseFloat(failover_timeout),
+      fencing_enabled,
+      fencing_timeout: parseFloat(fencing_timeout),
+      fencing_pause: parseFloat(fencing_pause),
       mode,
       tarantool_params: mode === 'stateful' && state_provider === 'tarantool'
         ? tarantool_params
@@ -184,10 +231,16 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
 
     const {
       mode,
+      failover_timeout,
+      fencing_enabled,
+      fencing_pause,
+      fencing_timeout,
       state_provider,
       tarantool_params,
       etcd2_params
     } = this.state;
+
+    const disableFencingParams = mode !== 'stateful' || !fencing_enabled;
 
     return (
       <Modal
@@ -213,6 +266,14 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
           </Button>
         ]}
       >
+        <LabeledInput
+          label='Failover timeout'
+          className='meta-test__failoverTimeout'
+          error={failover_timeout && !failover_timeout.match(/^\d+(\.\d+)*$/)}
+          value={failover_timeout}
+          onChange={this.handleInputChange(['failover_timeout'])}
+          info={messages.failoverTimeout}
+        />
         <FormField label='Failover mode' itemClassName={styles.radioFieldItem}>
           <RadioButton
             className={cx(styles.radio, styles.borderedRadio, 'meta-test__disableRadioBtn')}
@@ -333,6 +394,39 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
             />
           </>
         )}
+        <FormField label='Fencing'>
+          <Checkbox
+            className={cx(styles.radio, 'meta-test__statefulRadioBtn')}
+            disabled={mode !== 'stateful'}
+            checked={fencing_enabled}
+            onChange={() => this.handleFencingToggle()}
+          >
+            <div>
+              <Text className={styles.radioLabel}>Enable</Text>
+              <Text className={styles.radioDescription} tag='p'>
+                {messages.fencingEnabled}
+              </Text>
+            </div>
+          </Checkbox>
+        </FormField>
+        <LabeledInput
+          label='Fencing timeout'
+          className='meta-test__fencingTimeout'
+          disabled={disableFencingParams}
+          error={!disableFencingParams && (fencing_timeout && !fencing_timeout.match(/^\d+(\.\d+)*$/))}
+          info={messages.fencingTimeout}
+          value={fencing_timeout}
+          onChange={this.handleInputChange(['fencing_timeout'])}
+        />
+        <LabeledInput
+          label='Fencing pause'
+          className='meta-test__fencingPause'
+          disabled={disableFencingParams}
+          error={!disableFencingParams && (fencing_pause && !fencing_pause.match(/^\d+(\.\d+)*$/))}
+          info={messages.fencingPause}
+          value={fencing_pause}
+          onChange={this.handleInputChange(['fencing_pause'])}
+        />
         {error && (
           <Alert type="error">
             <Text variant="basic">{error}</Text>
