@@ -12,7 +12,7 @@ g.before_all(function()
         cookie = require('digest').urandom(6):hex(),
         replicasets = {{
             alias = 'A',
-            roles = {},
+            roles = {'myrole-permanent'},
             servers = 3,
         }},
     })
@@ -87,4 +87,40 @@ function g.test_twophase_config_locked()
         g.cluster:download_config(),
         {['bye.txt'] = 'Goodbye, locks'}
     )
+end
+
+local function force_reapply(uuids)
+    return g.cluster.main_server:graphql({
+        query = [[
+            mutation($uuids: [String]) {
+                cluster { config_force_reapply(uuids: $uuids) }
+            }
+        ]],
+        variables = {uuids = uuids}
+    }).data.cluster.config_force_reapply
+end
+
+local q_set_myrole_counter = [[
+    local vars = require('cartridge.vars').new('cartridge.service-registry')
+
+    vars.registry['myrole-permanent'].apply_config = function()
+        _G.counter = _G.counter + 1
+    end
+    _G.counter = 0
+]]
+
+local q_get_counter = [[ return _G.counter ]]
+
+function g.test_graphql_api()
+    for _, srv in pairs(g.cluster.servers) do
+        srv.net_box:eval(q_set_myrole_counter)
+    end
+
+    t.assert(force_reapply({g.A1.instance_uuid}))
+    t.assert(force_reapply({g.A1.instance_uuid, g.A2.instance_uuid}))
+    t.assert(force_reapply({g.A1.instance_uuid, g.A2.instance_uuid, g.A3.instance_uuid}))
+
+    t.assert_equals(g.A1.net_box:eval(q_get_counter), 3)
+    t.assert_equals(g.A2.net_box:eval(q_get_counter), 2)
+    t.assert_equals(g.A3.net_box:eval(q_get_counter), 1)
 end

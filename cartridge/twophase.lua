@@ -507,7 +507,7 @@ local function _force_reapply(uuids)
     local uri_list = {}
     local refined_uri_list = topology.refine_servers_uri(current_topology)
     for _, uuid, _ in fun.filter(topology.not_disabled, current_topology.servers) do
-        if utils.table_find(uuids, uuid) then
+        if prepared_uuid[uuid] then
             table.insert(uri_list, refined_uri_list[uuid])
         end
     end

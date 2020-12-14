@@ -43,6 +43,8 @@ Added
 
   It'll unlock two-phase commit (remove ``config.prepare`` lock), upload the
   active config from the current instance and reconfigure all roles.
+- New GraphQL API: ``mutation {cluster {force_reapply (uuids: [])}}`` to
+  supplement ``cartridge.config_force_reapply()`` API.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Changed
