@@ -242,7 +242,7 @@ failover:
     check_config('topology_new.failover.failover_timeout must be specified when fencing is enabled',
 [[---
 failover:
-  mode: disabled
+  mode: stateful
   fencing_enabled: true
   fencing_timeout: 1
 ...]])
@@ -250,7 +250,16 @@ failover:
     check_config('topology_new.failover.failover_timeout must be greater than fencing_timeout',
 [[---
 failover:
-  mode: disabled
+  mode: stateful
+  failover_timeout: 1
+  fencing_timeout: 1
+  fencing_enabled: true
+...]])
+
+    check_config('topology_new.failover.failover_timeout must be greater than fencing_timeout',
+[[---
+failover:
+  mode: stateful
   failover_timeout: 1
   fencing_timeout: 1
   fencing_enabled: true
@@ -940,6 +949,9 @@ replicasets:
 auth: false
 failover:
   mode: eventual
+  failover_timeout: 1
+  fencing_timeout: 2
+  fencing_enabled: true # but in eventual mode it doesn't matter
 servers:
   aaaaaaaa-aaaa-4000-b000-000000000001:
     replicaset_uuid: aaaaaaaa-0000-4000-b000-000000000001
