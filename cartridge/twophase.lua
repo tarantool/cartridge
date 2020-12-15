@@ -334,8 +334,7 @@ local function _clusterwide(patch)
         clusterwide_config_new:get_plaintext(),
         clusterwide_config_old:get_plaintext()
     ) then
-        log.warn("Clusterwide config didn't change, skipping")
-        return true
+        return nil, PatchClusterwideError:new("Config didn't change")
     end
 
     local ok, err = topology.validate(topology_new, topology_old)
