@@ -604,11 +604,13 @@ local function cfg(clusterwide_config)
 
     if failover_cfg.mode == 'disabled' then
         log.info('Failover disabled')
+        vars.fencing_enabled = false
         vars.consistency_needed = false
         first_appointments = _get_appointments_disabled_mode(topology_cfg)
 
     elseif failover_cfg.mode == 'eventual' then
         log.info('Eventual failover enabled')
+        vars.fencing_enabled = false
         vars.consistency_needed = false
         first_appointments = _get_appointments_eventual_mode(topology_cfg)
 

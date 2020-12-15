@@ -390,8 +390,9 @@ local function validate_failover_schema(field, topology)
             )
         end
 
-
-        if topology.failover.fencing_enabled == true then
+        if topology.failover.mode == 'stateful'
+        and topology.failover.fencing_enabled == true
+        then
             e_config:assert(
                 topology.failover.failover_timeout ~= nil,
                 '%s.failover.failover_timeout must be specified'
@@ -831,7 +832,7 @@ local function get_failover_params(topology_cfg)
     end
 
     -- Enrich fencing params with defaults
-    if ret.fencing_enabled == nil then
+    if ret.mode ~= 'stateful' or ret.fencing_enabled == nil then
         ret.fencing_enabled = false
     end
 
