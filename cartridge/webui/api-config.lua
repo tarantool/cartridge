@@ -18,6 +18,7 @@ yaml.cfg({
 local DecodeYamlError = errors.new_class('DecodeYamlError')
 local DownloadConfigError = errors.new_class('Config download failed')
 local UploadConfigError = errors.new_class('Config upload failed')
+local ForceReapplyError = errors.new_class('Config reapply failed')
 
 local auth = require('cartridge.auth')
 local twophase = require('cartridge.twophase')
@@ -241,6 +242,20 @@ local function set_sections(_, args)
     return get_sections(nil, {sections = query_sections})
 end
 
+local function force_reapply(_, args)
+    checks('?', {uuids = '?table'})
+    if confapplier.get_readonly() == nil then
+        local err = ForceReapplyError:new("Cluster isn't bootstrapped yet")
+        return nil, err
+    end
+
+    local ok, err = twophase.force_reapply(args.uuids)
+    if not ok then
+        return nil, err
+    end
+
+    return true
+end
 
 local function init(graphql, httpd)
     graphql.add_callback({
@@ -265,6 +280,17 @@ local function init(graphql, httpd)
         callback = module_name .. '.set_sections',
     })
 
+    graphql.add_mutation({
+        prefix = 'cluster',
+        name = 'config_force_reapply',
+        doc = 'Reapplies config on the specified nodes',
+        args = {
+            uuids = gql_types.list(gql_types.string)
+        },
+        kind = gql_types.boolean.nonNull,
+        callback = module_name .. '.force_reapply',
+    })
+
     httpd:route({
         path = '/admin/config',
         method = 'PUT'
@@ -281,6 +307,7 @@ return {
     init = init,
     get_sections = get_sections,
     set_sections = set_sections,
+    force_reapply = force_reapply,
 
     upload_config = upload_config,
 }

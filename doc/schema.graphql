@@ -1,5 +1,5 @@
 # source: http://localhost:8081/admin/api
-# timestamp: Wed Nov 25 2020 19:56:51 GMT+0300 (Moscow Standard Time)
+# timestamp: Mon Dec 14 2020 18:56:50 GMT+0300 (Moscow Standard Time)
 
 """Cluster management"""
 type Apicluster {
@@ -203,8 +203,8 @@ type Mutation {
 
 """Cluster management"""
 type MutationApicluster {
-  """Applies DDL schema on cluster"""
-  schema(as_yaml: String!): DDLSchema!
+  """Remove user"""
+  remove_user(username: String!): User
 
   """
   Enable or disable automatic failover. Returns new state. (Deprecated since v2.0.2-2)
@@ -214,18 +214,21 @@ type MutationApicluster {
   """Configure automatic failover."""
   failover_params(fencing_enabled: Boolean, fencing_timeout: Float, failover_timeout: Float, mode: String, state_provider: String, tarantool_params: FailoverStateProviderCfgInputTarantool, fencing_pause: Float, etcd2_params: FailoverStateProviderCfgInputEtcd2): FailoverAPI!
 
-  """Checks that schema can be applied on cluster"""
-  check_schema(as_yaml: String!): DDLCheckResult!
-
   """Applies updated config on cluster"""
   config(sections: [ConfigSectionInput]): [ConfigSection]!
 
-  """Edit cluster topology"""
-  edit_topology(replicasets: [EditReplicasetInput], servers: [EditServerInput]): EditTopologyResult
-  auth_params(cookie_max_age: Long, enabled: Boolean, cookie_renew_age: Long): UserManagementAPI!
+  """Checks that schema can be applied on cluster"""
+  check_schema(as_yaml: String!): DDLCheckResult!
 
   """Create a new user"""
   add_user(password: String!, username: String!, fullname: String, email: String): User
+
+  """Reapplies config on the specified nodes"""
+  config_force_reapply(uuids: [String]): Boolean!
+  auth_params(cookie_max_age: Long, enabled: Boolean, cookie_renew_age: Long): UserManagementAPI!
+
+  """Edit cluster topology"""
+  edit_topology(replicasets: [EditReplicasetInput], servers: [EditServerInput]): EditTopologyResult
 
   """Edit an existing user"""
   edit_user(password: String, username: String!, fullname: String, email: String): User
@@ -234,8 +237,8 @@ type MutationApicluster {
   """Promote the instance to the leader of replicaset"""
   failover_promote(force_inconsistency: Boolean, replicaset_uuid: String!, instance_uuid: String!): Boolean!
 
-  """Remove user"""
-  remove_user(username: String!): User
+  """Applies DDL schema on cluster"""
+  schema(as_yaml: String!): DDLSchema!
 
   """Disable listed servers by uuid"""
   disable_servers(uuids: [String!]): [Server]
