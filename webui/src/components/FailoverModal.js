@@ -61,14 +61,20 @@ const styles = {
 
 /* eslint-disable max-len */
 const messages = {
-  failoverTimeout: 'Timeout (in seconds), used by membership to mark suspect members as dead (default: 20)',
-  fencingEnabled: 'Abandon leadership when both the state provider quorum and at least one replica are lost (default: false)',
-  fencingTimeout: 'Time (in seconds) to actuate fencing after the check fails (default: 10)',
-  fencingPause: 'The period (in seconds) of performing the check (default: 2)',
+  failoverTimeout: 'Timeout in seconds to mark suspect members as dead and trigger failover',
+  fencingEnabled: 'A leader will go read-only when both the state provider and one of replicas are unreachable',
+  fencingTimeout: 'Time in seconds to actuate the fencing after the health check fails',
+  fencingPause: 'The period in seconds of performing the health check',
+  lockDelayInfo: 'Expiration time of a lock that the failover-coordinator role acquires',
   failoverModesInfo: <>
-    <Text tag='p' className={styles.infoTooltip}>{`Disabled - The leader is the first instance according to topology configuration. No automatic decisions are taken.`}</Text>
-    <Text tag='p' className={styles.infoTooltip}>{`Eventual - The leader isn't elected consistently. Every instance thinks the leader is the first healthy server in the replicaset. The instance health is determined according to the membership status (the SWIM protocol).`}</Text>
-    <Text tag='p' className={styles.infoTooltip}>{`Stateful - Leader appointments are polled from the external state provider. Decisions are taken by one of the instances with the failover-coordinator role enabled.`}</Text>
+    <Text tag='b' className={styles.infoTooltip}>{`Disabled:`}</Text>
+    <Text tag='p' className={styles.infoTooltip}>{`The leader is the first instance according to topology configuration. No automatic decisions are taken.`}</Text>
+    <br/>
+    <Text tag='b' className={styles.infoTooltip}>{`Eventual:`}</Text>
+    <Text tag='p' className={styles.infoTooltip}>{`The leader isn't elected consistently. Every instance thinks the leader is the first healthy server in the replicaset. The instance health is determined according to the membership status (the SWIM protocol).`}</Text>
+    <br/>
+    <Text tag='b' className={styles.infoTooltip}>{`Stateful:`}</Text>
+    <Text tag='p' className={styles.infoTooltip}>{`Leader appointments are polled from the external state provider. Decisions are taken by one of the instances with the failover-coordinator role enabled.`}</Text>
   </>,
   invalidFloat: 'Field accepts number, ex: 0, 1, 2.43...'
 };
@@ -266,15 +272,6 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
           </Button>
         ]}
       >
-        <LabeledInput
-          label='Failover timeout'
-          className='meta-test__failoverTimeout'
-          error={errors.failover_timeout}
-          message={errors.failover_timeout && messages.invalidFloat}
-          value={failover_timeout}
-          onChange={this.handleInputChange(['failover_timeout'])}
-          info={messages.failoverTimeout}
-        />
         <FormField
           label='Failover mode'
           info={messages.failoverModesInfo}
@@ -303,89 +300,25 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
             </RadioButton>
           ]}
         </FormField>
+        <LabeledInput
+          label='Failover timeout'
+          className='meta-test__failoverTimeout'
+          error={errors.failover_timeout}
+          message={errors.failover_timeout && messages.invalidFloat}
+          value={failover_timeout}
+          onChange={this.handleInputChange(['failover_timeout'])}
+          info={messages.failoverTimeout}
+        />
         {mode === 'stateful' && <>
-          <LabeledInput
-            label='State provider'
-            className='meta-test__stateProviderChoice'
-            inputComponent={SelectBox}
-            values={FAILOVER_STATE_PROVIDERS}
-            value={state_provider}
-            onChange={this.handleStateProviderChange}
-          />
-          {state_provider === 'tarantool' && (
-            <div className={styles.inputs}>
-              <LabeledInput
-                className={styles.inputField}
-                label='State provider URI'
-                inputClassName='meta-test__stateboardURI'
-                value={tarantool_params.uri}
-                onChange={this.handleInputChange(['tarantool_params', 'uri'])}
-              />
-              <LabeledInput
-                className={styles.inputField}
-                label='Password'
-                inputComponent={InputPassword}
-                inputClassName='meta-test__stateboardPassword'
-                value={tarantool_params.password}
-                onChange={this.handleInputChange(['tarantool_params', 'password'])}
-              />
-            </div>
-          )}
-          {state_provider === 'etcd2' && (
-            <>
-              <div className={styles.inputs}>
-                <LabeledInput
-                  className={styles.inputField}
-                  label='Username'
-                  inputClassName='meta-test__etcd2Username'
-                  value={etcd2_params.username}
-                  onChange={this.handleInputChange(['etcd2_params', 'username'])}
-                />
-                <LabeledInput
-                  className={styles.inputField}
-                  label='Password'
-                  inputClassName='meta-test__etcd2Password'
-                  inputComponent={InputPassword}
-                  value={etcd2_params.password}
-                  onChange={this.handleInputChange(['etcd2_params', 'password'])}
-                />
-                <LabeledInput
-                  className={styles.inputField}
-                  label='Delay, seconds'
-                  error={errors.etcd2_lock_delay}
-                  message={errors.etcd2_lock_delay && messages.invalidFloat}
-                  inputClassName='meta-test__etcd2LockDelay'
-                  value={etcd2_params.lock_delay}
-                  onChange={this.handleInputChange(['etcd2_params', 'lock_delay'])}
-                />
-                <LabeledInput
-                  className={styles.inputField}
-                  label='Prefix'
-                  inputClassName='meta-test__etcd2Prefix'
-                  value={etcd2_params.prefix}
-                  onChange={this.handleInputChange(['etcd2_params', 'prefix'])}
-                />
-              </div>
-              <LabeledInput
-                label='etcd2 endpoints'
-                className='meta-test__etcd2Endpoints'
-                inputComponent={TextArea}
-                value={etcd2_params.endpoints}
-                rows={5}
-                onChange={this.handleInputChange(['etcd2_params', 'endpoints'])}
-              />
-            </>
-          )}
-          <Checkbox
-            className={'meta-test__statefulRadioBtn'}
-            checked={fencing_enabled}
-            onChange={() => this.handleFencingToggle()}
-          >
-            Enable fencing
-          </Checkbox>
-          <Text variant='p' className={styles.fencingCheckboxMessage}>
-            {messages.fencingEnabled}
-          </Text>
+          <FormField label='Fencing' info={messages.fencingEnabled}>
+            <Checkbox
+              className={cx(styles.radio, 'meta-test__statefulRadioBtn')}
+              checked={fencing_enabled}
+              onChange={() => this.handleFencingToggle()}
+            >
+              Enabled
+            </Checkbox>
+          </FormField>
           <div className={styles.inputs}>
             <LabeledInput
               label='Fencing timeout'
@@ -408,6 +341,79 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
               onChange={this.handleInputChange(['fencing_pause'])}
             />
           </div>
+          <LabeledInput
+            label='State provider'
+            className='meta-test__stateProviderChoice'
+            inputComponent={SelectBox}
+            values={FAILOVER_STATE_PROVIDERS}
+            value={state_provider}
+            onChange={this.handleStateProviderChange}
+          />
+          {state_provider === 'tarantool' && (
+            <div className={styles.inputs}>
+              <LabeledInput
+                className={styles.inputField}
+                label='URI'
+                inputClassName='meta-test__stateboardURI'
+                value={tarantool_params.uri}
+                onChange={this.handleInputChange(['tarantool_params', 'uri'])}
+              />
+              <LabeledInput
+                className={styles.inputField}
+                label='Password'
+                inputComponent={InputPassword}
+                inputClassName='meta-test__stateboardPassword'
+                value={tarantool_params.password}
+                onChange={this.handleInputChange(['tarantool_params', 'password'])}
+              />
+            </div>
+          )}
+          {state_provider === 'etcd2' && (
+            <>
+              <LabeledInput
+                label='Endpoints'
+                className='meta-test__etcd2Endpoints'
+                inputComponent={TextArea}
+                value={etcd2_params.endpoints}
+                rows={2}
+                onChange={this.handleInputChange(['etcd2_params', 'endpoints'])}
+              />
+              <div className={styles.inputs}>
+                <LabeledInput
+                  className={styles.inputField}
+                  label='Lock delay'
+                  info ={messages.lockDelayInfo}
+                  error={errors.etcd2_lock_delay}
+                  message={errors.etcd2_lock_delay && messages.invalidFloat}
+                  inputClassName='meta-test__etcd2LockDelay'
+                  value={etcd2_params.lock_delay}
+                  onChange={this.handleInputChange(['etcd2_params', 'lock_delay'])}
+                />
+                <LabeledInput
+                  className={styles.inputField}
+                  label='Prefix'
+                  inputClassName='meta-test__etcd2Prefix'
+                  value={etcd2_params.prefix}
+                  onChange={this.handleInputChange(['etcd2_params', 'prefix'])}
+                />
+                <LabeledInput
+                  className={styles.inputField}
+                  label='Username'
+                  inputClassName='meta-test__etcd2Username'
+                  value={etcd2_params.username}
+                  onChange={this.handleInputChange(['etcd2_params', 'username'])}
+                />
+                <LabeledInput
+                  className={styles.inputField}
+                  label='Password'
+                  inputClassName='meta-test__etcd2Password'
+                  inputComponent={InputPassword}
+                  value={etcd2_params.password}
+                  onChange={this.handleInputChange(['etcd2_params', 'password'])}
+                />
+              </div>
+            </>
+          )}
         </>}
         {error && (
           <Alert type="error">
