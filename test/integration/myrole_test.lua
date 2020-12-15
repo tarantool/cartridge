@@ -123,14 +123,14 @@ function g.test_rename()
     -- The test simulates a situation when the role is renamed in code,
     -- and the server is launced with old name in config.
 
-    g.cluster.main_server:graphql({query = [[
-        mutation {
-            edit_replicaset(
-                uuid: "aaaaaaaa-0000-0000-0000-000000000000"
-                roles: ["myrole"]
-            )
-        }
-    ]]})
+    -- g.cluster.main_server:graphql({query = [[
+    --     mutation {
+    --         edit_replicaset(
+    --             uuid: "aaaaaaaa-0000-0000-0000-000000000000"
+    --             roles: ["myrole"]
+    --         )
+    --     }
+    -- ]]})
 
     g.cluster:stop()
 

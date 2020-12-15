@@ -126,10 +126,9 @@ function g.test_luaapi()
 
     log.info('Reapplying valid schema...')
 
-    t.assert_equals(
-        call('cartridge_set_schema', {schema}),
-        schema
-    )
+    local ok, err = call('cartridge_set_schema', {schema})
+    t.assert_equals(ok, nil)
+    t.assert_equals(err, 'Config didn\'t change')
 
     t.assert_equals(
         call('cartridge_get_schema'),

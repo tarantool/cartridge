@@ -71,8 +71,7 @@ end
 g.setup = function()
     g.cluster.main_server.net_box:eval([[
         local cartridge = require('cartridge')
-        local ok, err = cartridge.config_patch_clusterwide({users_acl = box.NULL})
-        assert(ok, err)
+        cartridge.config_patch_clusterwide({users_acl = box.NULL})
     ]])
 end
 
@@ -611,13 +610,9 @@ function g.test_set_params_graphql()
         get_lsid_max_age(resp)
     )
 
-    t.assert_equals(
-        set_auth_params(false)['enabled'],
-        false
-    )
-    t.assert_equals(
-        set_auth_params(nil)['enabled'],
-        false
+    t.assert_error_msg_contains(
+        "Config didn't change",
+        set_auth_params, false
     )
     t.assert_equals(
         get_auth_params(g.cluster:server('replica'))['enabled'],
@@ -627,10 +622,6 @@ function g.test_set_params_graphql()
         set_auth_params(true)['enabled'],
         true
     )
-    t.assert_equals(
-        set_auth_params(nil)['enabled'],
-        true
-    )
     t.assert_equals(get_auth_params(
         g.cluster:server('replica'))['enabled'],
         true
@@ -638,10 +629,6 @@ function g.test_set_params_graphql()
 
     t.assert_equals(
         set_auth_params(nil, 69)['cookie_max_age'],
-        69
-    )
-    t.assert_equals(
-        set_auth_params(nil, nil)['cookie_max_age'],
         69
     )
     t.assert_equals(

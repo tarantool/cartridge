@@ -498,11 +498,18 @@ function g.test_operation_error()
     ]])
 
     -- Dummy mutation doesn't trigger two-phase commit
-    g.cluster.main_server:graphql({
-        query = [[
-            mutation { cluster { config(sections: []) {} } }
-        ]],
-    })
+    local dummy_mutation = function()
+        return g.cluster.main_server:graphql({
+            query = [[
+                mutation { cluster { config(sections: []) {} } }
+            ]],
+        }).cluster.config
+    end
+
+    t.assert_error_msg_contains(
+        "Config didn't change",
+        dummy_mutation
+    )
 
     -- Real tho-phase commit fails on apply stage with artificial error
     local resp = g.cluster.main_server:graphql({

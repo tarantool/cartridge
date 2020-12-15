@@ -177,7 +177,7 @@ function g.test_distances()
 end
 
 function g.test_validation()
-    t.assert_equals({set_distances()}, {true, nil})
+    set_distances()
     t.assert_equals({set_distances(box.NULL)}, {true, nil})
 
     local ok, err = set_distances('foo')
