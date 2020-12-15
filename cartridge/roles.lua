@@ -454,6 +454,10 @@ local function reload()
     end
 
     hotreload.load_state()
+
+    -- Collect the garbage from unloaded modules.
+    -- Why call it twice? See PiL 3rd edition, §17.6 Finalizers.
+    -- Especially for the term "resurrection". 🧟‍ Grr... argh!
     collectgarbage()
     collectgarbage()
 

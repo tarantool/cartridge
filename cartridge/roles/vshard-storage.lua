@@ -1,6 +1,6 @@
 local log = require('log')
-local checks = require('checks')
 local vshard = require('vshard')
+local checks = require('checks')
 
 local vars = require('cartridge.vars').new('cartridge.roles.vshard-storage')
 local pool = require('cartridge.pool')

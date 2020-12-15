@@ -179,7 +179,6 @@ function g.test_netbox()
         g.srv.net_box:eval('return test_ready')
     end)
 
-    -- require('fiber').sleep(1)
     reload_myrole(function()
         return {role_name = 'myrole'}
     end)

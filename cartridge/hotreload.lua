@@ -72,7 +72,7 @@ local function whitelist_fibers(tbl)
         or v == 'main'
         or v:endswith('(net.box)')
         then
-            log.debug('Refusing to whitelist fiber %q', v)
+            log.debug("Fiber %q can't be whitelisted", v)
         else
             log.debug('Avoid cancelling fiber %q on hot-reload', v)
             vars.fibers[v] = true
@@ -130,7 +130,6 @@ local function load_state()
 
     for k, _ in pairs(package.loaded) do
         if not vars.packages[k] then
-            -- log.info('Unloading package %q', k)
             package.loaded[k] = nil
         end
     end
