@@ -91,40 +91,35 @@ end
 
 local function force_reapply(uuids)
     return g.cluster.main_server:graphql({
-        query = [[
-            mutation($uuids: [String]) {
-                cluster { config_force_reapply(uuids: $uuids) }
-            }
-        ]],
+        query = [[mutation($uuids: [String]) {
+            cluster { config_force_reapply(uuids: $uuids) }
+        }]],
         variables = {uuids = uuids}
-    }).data.cluster.config_force_reapply
+    })
 end
 
-local q_set_myrole_counter = [[
-    local vars = require('cartridge.vars').new('cartridge.service-registry')
-
-    vars.registry['myrole-permanent'].apply_config = function()
-        _G.counter = _G.counter + 1
-    end
-    _G.counter = 0
-]]
-
-local q_get_counter = [[ return _G.counter ]]
-
 function g.test_graphql_api()
-    t.assert_error_msg_contains(
-        'Server \'alien\' is not in topology',
+    t.assert_error_msg_equals(
+        'Server alien not in clusterwide config',
         force_reapply, {'alien'}
     )
 
     for _, srv in pairs(g.cluster.servers) do
-        srv.net_box:eval(q_set_myrole_counter)
+        srv.net_box:eval([[
+            local cartridge = require('cartridge')
+            local myrole = cartridge.service_get('myrole-permanent')
+            myrole.apply_config = function()
+                _G.counter = _G.counter + 1
+            end
+            _G.counter = 0
+        ]])
     end
 
     t.assert(force_reapply({g.A1.instance_uuid}))
     t.assert(force_reapply({g.A1.instance_uuid, g.A2.instance_uuid}))
     t.assert(force_reapply({g.A1.instance_uuid, g.A2.instance_uuid, g.A3.instance_uuid}))
 
+    local q_get_counter = 'return _G.counter'
     t.assert_equals(g.A1.net_box:eval(q_get_counter), 3)
     t.assert_equals(g.A2.net_box:eval(q_get_counter), 2)
     t.assert_equals(g.A3.net_box:eval(q_get_counter), 1)

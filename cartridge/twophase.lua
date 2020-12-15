@@ -503,26 +503,23 @@ local function _force_reapply(uuids)
 
     local _reapply_error
 
-    local prepared_uuid = {}
-    for _, uuid in ipairs(uuids) do
-        prepared_uuid[uuid] = true
-    end
-
     -- Prepare a server group to be configured
     local uri_list = {}
     local refined_uri_list = topology.refine_servers_uri(current_topology)
-    for _, uuid, _ in fun.filter(topology.not_disabled, current_topology.servers) do
-        if prepared_uuid[uuid] then
-            table.insert(uri_list, refined_uri_list[uuid])
-            prepared_uuid[uuid] = nil
+    for _, uuid in ipairs(uuids) do
+        local srv = current_topology.servers[uuid]
+        if not srv then
+            return nil, ForceReapplyError:new(
+                'Server %s not in clusterwide config', uuid
+            )
+        elseif not topology.not_disabled(uuid, srv) then
+            return nil, ForceReapplyError:new(
+                'Server %s is disabled, not suitable' ..
+                ' for reapplying config', uuid
+            )
         end
-    end
 
-    -- Check if all uuids are valid
-    for uuid, _ in pairs(prepared_uuid) do
-        if prepared_uuid[uuid] then
-            return nil, ForceReapplyError:new("Server \'%s\' is not in topology", uuid)
-        end
+        table.insert(uri_list, refined_uri_list[uuid])
     end
 
     do

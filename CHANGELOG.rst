@@ -18,7 +18,7 @@ Added
 
 - New GraphQL API: ``{cluster {suggestions {refine_uri {}}}}`` to heal the
   cluster after relocation of servers ``advertise_uri``.
-- New `cartridge.cfg` option `swim_broadcast` (default true) to disable
+- New ``cartridge.cfg`` option ``swim_broadcast`` (default true) to disable
   instances discovery on start.
 - Add support of replica weights and zones via a clusterwide config new section
   ``zone_distances`` and a server parameter ``zone``.
@@ -33,8 +33,8 @@ Added
 - Fencing parameters ``fencing_enabled``, ``fencing_pause``, ``fencing_timeout``
   are available for customization via Lua and GraphQL API.
 
-- New API ``cartridge.config_force_reapply()`` to heal several operational
-  errors:
+- New Lua API ``cartridge.config_force_reapply()`` and similar GraphQL mutation
+  ``cluster { config_force_reapply() }`` to heal several operational errors:
 
   - "Prepare2pcError: Two-phase commit is locked";
   - "SaveConfigError: .../config.prepare: Directory not empty";
@@ -43,8 +43,6 @@ Added
 
   It'll unlock two-phase commit (remove ``config.prepare`` lock), upload the
   active config from the current instance and reconfigure all roles.
-- New GraphQL API: ``mutation {cluster {force_reapply (uuids: [])}}`` to
-  supplement ``cartridge.config_force_reapply()`` API.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Changed
