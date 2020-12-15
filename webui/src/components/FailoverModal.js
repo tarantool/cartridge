@@ -82,19 +82,22 @@ const SelectBox = ({
   value,
   onChange,
   disabled
-}) => (
-  <DropdownButton
-    label='State provider'
-    className={cx(styles.selectBox, className)}
-    disabled={disabled}
-    iconRight={() => <IconChevron className={styles.selectBoxIcon} />}
-    text={value || values[0] || ''}
-    items={values.map(value => (
-      <DropdownItem onClick={() => onChange(value)}>{value}</DropdownItem>
-    ))}
-  />
-);
+}) => {
+  const currentItem = values.find(([v, displayName]) => v === value);
 
+  return (
+    <DropdownButton
+      label='State provider'
+      className={cx(styles.selectBox, className)}
+      disabled={disabled}
+      iconRight={() => <IconChevron className={styles.selectBoxIcon} />}
+      text={currentItem ? currentItem[1] : (values[0][1] || '')}
+      items={values.map(([value, displayName]) => (
+        <DropdownItem onClick={() => onChange(value)}>{displayName}</DropdownItem>
+      ))}
+    />
+  );
+};
 
 type FailoverModalProps = FailoverApi & {
   dispatch: (action: FSA) => void,
