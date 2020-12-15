@@ -1,7 +1,8 @@
 describe('Server details', () => {
 
   before(() => {
-    cy.task('tarantool', {code: `
+    cy.task('tarantool', {
+      code: `
       cleanup()
 
       _G.cluster = helpers.Cluster:new({
@@ -27,63 +28,124 @@ describe('Server details', () => {
   });
 
   after(() => {
-    cy.task('tarantool', {code: `cleanup()`});
+    cy.task('tarantool', { code: `cleanup()` });
   });
+
+  function openServerDetailsModal(serverAlias) {
+    cy.get('li').contains(serverAlias).closest('li')
+      .find('.meta-test__ReplicasetServerListItem__dropdownBtn').click();
+    cy.get('.meta-test__ReplicasetServerListItem__dropdown *')
+      .contains('Server details').click();
+  };
+
+  function checkServerDetailsTabs() {
+    cy.get('.meta-test__ServerDetailsModal button').contains('Cartridge').click();
+    cy.get('.meta-test__ServerDetailsModal button').contains('Replication').click();
+    cy.get('.meta-test__ServerDetailsModal button').contains('Storage').click();
+    cy.get('.meta-test__ServerDetailsModal button').contains('Network').click();
+    cy.get('.meta-test__ServerDetailsModal button').contains('General').click();
+    cy.get('.meta-test__ServerDetailsModal button').contains('Issues 0').click();
+  };
 
   it('Open WebUI', () => {
     cy.visit('/admin/cluster/dashboard')
   });
 
   it('Alive server', () => {
-    cy.get('li').contains('dummy-1').closest('li')
-      .find('.meta-test__ReplicasetServerListItem__dropdownBtn').click();
-    cy.get('.meta-test__ReplicasetServerListItem__dropdown *')
-      .contains('Server details').click();
+    openServerDetailsModal('dummy-1');
+    checkServerDetailsTabs();
 
-    cy.get('.meta-test__ServerDetailsModal button').contains('Cartridge').click();
-    cy.get('.meta-test__ServerDetailsModal button').contains('Replication').click();
-    cy.get('.meta-test__ServerDetailsModal button').contains('Storage').click();
-    cy.get('.meta-test__ServerDetailsModal button').contains('Network').click();
-    cy.get('.meta-test__ServerDetailsModal button').contains('General').click();
     cy.get('.meta-test__ServerDetailsModal').closest('div').find('.meta-test__youAreHereIcon');
+
+    //add new zone Narnia
+    cy.get('.meta-test__ServerDetailsModal button:contains(Select zone)').click();
+    cy.get('div').contains('You have no any zone,');
+    cy.get('div').contains('please add one.');
+    cy.get('button:contains(Add new zone)').click();
+    cy.get('.ZoneAddModal input[name="uri"]').type('Narnia');
+    cy.get('.meta-test__ZoneAddSubmitBtn').click();
+    cy.get('.ZoneAddModal').should('not.exist');
+    cy.get('.meta-test__ServerDetailsModal').find('button:contains(Zone Narnia)');
+    cy.get('.meta-test__ServerDetailsModal button').contains('Close').click();
+    cy.get('.meta-test__ServerDetailsModal').should('not.exist');
+
+    //checks for dummy-2
+    openServerDetailsModal('dummy-2');
+    cy.get('.meta-test__ServerDetailsModal button:contains(Select zone)').click();
+    cy.get('div').contains('You have no any zone,').should('not.exist');
+    cy.get('.meta-test__ZoneListItem:contains(Narnia)').click();
+    cy.get('.meta-test__ServerDetailsModal').find('button:contains(Zone Narnia)').click();
+
+    //add new zone Mordor
+    cy.get('button:contains(Add new zone)').click();
+    cy.get('.ZoneAddModal input[name="uri"]').type('Mordor');
+    cy.get('.meta-test__ZoneAddSubmitBtn').click();
+    cy.get('.ZoneAddModal').should('not.exist');
+    cy.get('.meta-test__ServerDetailsModal').find('button:contains(Zone Mordor)');
+    cy.get('.meta-test__ServerDetailsModal button').contains('Close').click();
+
+    //delete zone Narnia
+    openServerDetailsModal('dummy-1');
+    cy.get('.meta-test__ServerDetailsModal').find('button:contains(Zone Narnia)').click();
+    cy.get('div').contains('Mordor');
+    cy.get('.meta-test__ZoneListItem:contains(Narnia)').click();
+    cy.get('.meta-test__ServerDetailsModal button:contains(Select zone)').click();
+    cy.get('button:contains(Add new zone)').should('be.enabled');
+    cy.get('div').contains('Mordor');
+    cy.get('div').contains('Narnia').should('not.exist');
+    cy.get('.meta-test__ServerDetailsModal button').contains('Close').click();
+    openServerDetailsModal('dummy-2');
+    cy.get('.meta-test__ServerDetailsModal button:contains(Zone Mordor)').click();
+    cy.get('div').contains('Mordor');
+    cy.get('div').contains('Narnia').should('not.exist');
     cy.get('.meta-test__ServerDetailsModal button').contains('Close').click();
   });
 
   it('Dead server', () => {
-    cy.task('tarantool', {code: `_G.cluster:server('dummy-2'):stop()`});
+    cy.task('tarantool', { code: `_G.cluster:server('dummy-2'):stop()` });
 
     cy.get('.ServerLabelsHighlightingArea').contains('dummy-2')
       .closest('li').should('contain', 'Server status is "dead"');
 
-    cy.get('li').contains('dummy-2').closest('li')
-      .find('.meta-test__ReplicasetServerListItem__dropdownBtn').click();
-    cy.get('.meta-test__ReplicasetServerListItem__dropdown *')
-      .contains('Server details').click();
+    openServerDetailsModal('dummy-2');
+    cy.get('.meta-test__ServerDetailsModal button:contains(Select zone)').click();
+
+    // Zone is reset after server stop:
+    cy.get('div').contains('You have no any zone,');
+    cy.get('div').contains('Mordor').should('not.exist');
+
+    cy.get('button:contains(Add new zone)').click();
+    cy.get('.ZoneAddModal input[name="uri"]').type('Moscow');
+    cy.get('.meta-test__ZoneAddSubmitBtn').click();
+    cy.get('.ZoneAddModal_error').find('span:contains("localhost:13302": Connection refused)');
+    cy.get('h2:contains(Add name of zone)').next().click();
+    cy.get('.ZoneAddModal').should('not.exist');
 
     cy.get('.meta-test__ServerDetailsModal').contains('Server status is "dead"');
     cy.get('.meta-test__ServerDetailsModal').contains('instance_uuid').should('not.exist');
 
-    cy.get('.meta-test__ServerDetailsModal button').contains('Cartridge').click();
-    cy.get('.meta-test__ServerDetailsModal button').contains('Replication').click();
-    cy.get('.meta-test__ServerDetailsModal button').contains('Storage').click();
-    cy.get('.meta-test__ServerDetailsModal button').contains('Network').click();
-    cy.get('.meta-test__ServerDetailsModal button').contains('General').click();
+    checkServerDetailsTabs();
+    cy.get('.meta-test__ServerDetailsModal button').contains('Close').click();
 
-    cy.task('tarantool', {code: `_G.cluster:server('dummy-2'):start()`});
-
+    cy.task('tarantool', { code: `_G.cluster:server('dummy-2'):start()` });
+    openServerDetailsModal('dummy-2');
     cy.get('.meta-test__ServerDetailsModal').contains('healthy');
     cy.get('.meta-test__ServerDetailsModal').contains('instance_uuid');
 
-    cy.task('tarantool', {code: `
-      return _G.cluster:server('dummy-2').instance_uuid
-    `}).then((resp) => {
-      const uuid = resp[0];
-      cy.get('.meta-test__ServerDetailsModal').contains(uuid);
+    cy.get('.meta-test__ServerDetailsModal button:contains(Zone Mordor)').click();
+    cy.get('button:contains(Add new zone)').click();
+    cy.get('.ZoneAddModal input[name="uri"]').type('Rostov');
+    cy.get('.meta-test__ZoneAddSubmitBtn').click();
+    cy.get('.meta-test__ServerDetailsModal').find('button:contains(Zone Rostov)');
 
-    });
+    cy.task('tarantool', {
+      code: `
+        return _G.cluster:server('dummy-2').instance_uuid
+      `}).then((resp) => {
+        const uuid = resp[0];
+        cy.get('.meta-test__ServerDetailsModal').contains(uuid);
+      });
 
     cy.get('.meta-test__ServerDetailsModal button').contains('Close').click();
-    cy.get('.ServerLabelsHighlightingArea').contains(':13302').closest('li')
-      .contains('healthy');
   });
 });
