@@ -3,28 +3,28 @@ describe('Server details', () => {
   before(() => {
     cy.task('tarantool', {
       code: `
-  	cleanup()
+    cleanup()
 
-  	_G.cluster = helpers.Cluster:new({
-    	datadir = fio.tempdir(),
-    	server_command = helpers.entrypoint('srv_basic'),
-    	use_vshard = false,
-    	cookie = helpers.random_cookie(),
-    	replicasets = {{
-      	uuid = helpers.uuid('a'),
-      	alias = 'dummy',
-      	roles = {},
-      	servers = {{http_port = 8080}, {}},
-    	}},
-  	})
+    _G.cluster = helpers.Cluster:new({
+      datadir = fio.tempdir(),
+      server_command = helpers.entrypoint('srv_basic'),
+      use_vshard = false,
+      cookie = helpers.random_cookie(),
+      replicasets = {{
+        uuid = helpers.uuid('a'),
+        alias = 'dummy',
+        roles = {},
+        servers = {{http_port = 8080}, {}},
+      }},
+    })
 
-  	_G.cluster:start()
-  	_G.cluster.main_server.net_box:call(
-    	'package.loaded.cartridge.failover_set_params',
-    	{{failover_timeout = 0}}
-  	)
-  	return true
-	`}).should('deep.eq', [true]);
+    _G.cluster:start()
+    _G.cluster.main_server.net_box:call(
+      'package.loaded.cartridge.failover_set_params',
+      {{failover_timeout = 0}}
+    )
+    return true
+  `}).should('deep.eq', [true]);
   });
 
   after(() => {
@@ -138,7 +138,8 @@ describe('Server details', () => {
     cy.get('.meta-test__ZoneAddSubmitBtn').click();
     cy.get('.meta-test__ServerDetailsModal').find('button:contains(Zone Rostov)');
 
-      cy.task('tarantool', {code: `
+    cy.task('tarantool', {
+      code: `
         return _G.cluster:server('dummy-2').instance_uuid
       `}).then((resp) => {
         const uuid = resp[0];
