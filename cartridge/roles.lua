@@ -17,12 +17,15 @@ local errors = require('errors')
 
 local vars = require('cartridge.vars').new('cartridge.roles')
 local utils = require('cartridge.utils')
+local hotreload = require('cartridge.hotreload')
 local service_registry = require('cartridge.service-registry')
 
 local RegisterRoleError = errors.new_class('RegisterRoleError')
 local ValidateConfigError = errors.new_class('ValidateConfigError')
 local ApplyConfigError = errors.new_class('ApplyConfigError')
+local ReloadError = errors.new_class('HotReloadError')
 
+vars:new('module_names')
 vars:new('roles_by_number', {})
 vars:new('roles_by_role_name', {})
 vars:new('roles_by_module_name', {})
@@ -136,6 +139,8 @@ local function cfg(module_names)
         roles_by_role_name = {},
         roles_by_module_name = {},
     }
+
+    vars.module_names = table.copy(module_names)
 
     local ok, err = register_role(ctx, 'cartridge.roles.coordinator')
     if not ok then
@@ -387,6 +392,93 @@ local function apply_config(conf, opts)
     return true
 end
 
+--- Perform hot-reload of cartridge roles code.
+--
+-- This is an experimental feature, it's only allowed if the application
+-- enables it explicitly: `cartridge.cfg({roles_reload_allowed =
+-- true})`.
+--
+-- Reloading starts by stopping all roles and restoring the initial
+-- state. It's supposed that a role cleans up the global state when
+-- stopped, but even if it doesn't, cartridge kills all fibers and
+-- removes global variables and HTTP routes.
+--
+-- All Lua modules that were loaded during `cartridge.cfg` are unloaded,
+-- including supplementary modules required by a role. Modules, loaded
+-- before `cartridge.cfg` aren't affected.
+--
+-- Instance performs roles reload in a dedicated state `ReloadingRoles`.
+-- If reload fails, the instance enters the `ReloadError` state, which
+-- can later be retried. Otherwise, if reload succeeds, instance
+-- proceeds to the `ConfiguringRoles` state and initializes them as
+-- usual with `validate_config()`, `init()`, and `apply_config()`
+-- callbacks.
+--
+-- @function reload
+-- @treturn[1] boolean true
+-- @treturn[2] nil
+-- @treturn[2] table Error description
+local function reload()
+    if not hotreload.state_saved() then
+        return nil, ReloadError:new(
+            'This application forbids reloading roles'
+        )
+    end
+
+    local confapplier = require('cartridge.confapplier')
+    local state = confapplier.get_state()
+    if state ~= 'RolesConfigured'
+    and state ~= 'ReloadError'
+    and state ~= 'OperationError'
+    then
+        return nil, ReloadError:new('Inappropriate state %q', state)
+    end
+
+    local failover = require('cartridge.failover')
+    local opts = {is_master = failover.is_leader()}
+
+    log.warn('Reloading roles ...')
+    confapplier.set_state('ReloadingRoles')
+
+    for _, role in ipairs(vars.roles_by_number) do
+        if (service_registry.get(role.role_name) ~= nil)
+        and (type(role.M.stop) == 'function')
+        then
+            local _, err = ReloadError:pcall(role.M.stop, opts)
+            if err ~= nil then
+                log.error('%s', err)
+            end
+        end
+
+        service_registry.set(role.role_name, nil)
+    end
+
+    hotreload.load_state()
+
+    -- Collect the garbage from unloaded modules.
+    -- Why call it twice? See PiL 3rd edition, §17.6 Finalizers.
+    -- Especially for the term "resurrection". 🧟‍ Grr... argh!
+    collectgarbage()
+    collectgarbage()
+
+    local ok, err = cfg(vars.module_names)
+    if ok == nil then
+        confapplier.set_state('ReloadError', err)
+        return nil, err
+    end
+
+    local clusterwide_config = confapplier.get_active_config()
+    local ok, err = confapplier.validate_config(clusterwide_config)
+    if ok == nil then
+        confapplier.set_state('ReloadError', err)
+        return nil, err
+    end
+
+    log.warn('Roles reloaded successfully')
+    confapplier.set_state('BoxConfigured', err)
+
+    return confapplier.apply_config(clusterwide_config)
+end
 
 return {
     cfg = cfg,
@@ -398,4 +490,5 @@ return {
 
     validate_config = validate_config,
     apply_config = apply_config,
+    reload = reload,
 }

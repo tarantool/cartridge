@@ -5,7 +5,17 @@ local checks = require('checks')
 local vars = require('cartridge.vars').new('cartridge.roles.vshard-storage')
 local pool = require('cartridge.pool')
 local utils = require('cartridge.utils')
+local hotreload = require('cartridge.hotreload')
 local vshard_utils = require('cartridge.vshard-utils')
+
+hotreload.whitelist_globals({
+    "__module_vshard_lua_gc",
+    "__module_vshard_router",
+    "__module_vshard_storage",
+    "__module_vshard_util",
+    "future_storage_call_result",
+    "gc_bucket_f",
+})
 
 vars:new('vshard_cfg')
 local _G_vshard_backup

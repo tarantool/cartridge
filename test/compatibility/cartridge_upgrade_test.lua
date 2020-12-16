@@ -71,6 +71,7 @@ function g.test_upgrade()
         server_command = fio.abspath(helpers.entrypoint('srv_basic')),
         cookie = require('digest').urandom(6):hex(),
         use_vshard = true,
+        env = {TARANTOOL_FORBID_HOTRELOAD = 'true'},
         replicasets = {{
             uuid = helpers.uuid('a'),
             roles = {'vshard-router', 'vshard-storage'},
@@ -87,7 +88,7 @@ function g.test_upgrade()
                 http_port = 8082,
                 chdir = cartridge_older_path,
             }},
-        }}
+        }},
     })
 
     local leader = g.cluster:server('leader')

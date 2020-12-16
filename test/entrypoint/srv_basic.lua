@@ -152,6 +152,11 @@ if webui_blacklist ~= nil then
     webui_blacklist = string.split(webui_blacklist, ':')
 end
 
+local roles_reload_allowed = nil
+if not os.getenv('TARANTOOL_FORBID_HOTRELOAD') then
+    roles_reload_allowed = true
+end
+
 local ok, err = errors.pcall('CartridgeCfgError', cartridge.cfg, {
     advertise_uri = 'localhost:3301',
     http_port = 8081,
@@ -165,6 +170,7 @@ local ok, err = errors.pcall('CartridgeCfgError', cartridge.cfg, {
         'mymodule',
     },
     webui_blacklist = webui_blacklist,
+    roles_reload_allowed = roles_reload_allowed,
 })
 if not ok then
     log.error('%s', err)

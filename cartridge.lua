@@ -31,6 +31,7 @@ local issues = require('cartridge.issues')
 local argparse = require('cartridge.argparse')
 local topology = require('cartridge.topology')
 local twophase = require('cartridge.twophase')
+local hotreload = require('cartridge.hotreload')
 local confapplier = require('cartridge.confapplier')
 local vshard_utils = require('cartridge.vshard-utils')
 local cluster_cookie = require('cartridge.cluster-cookie')
@@ -210,6 +211,10 @@ end
 --   env `TARANTOOL_UPGRADE_SCHEMA`
 --   args `--upgrade-schema`)
 --
+-- @tparam ?boolean opts.roles_reload_allowed
+--   Allow calling `cartridge.reload_roles`.
+--   (**Added** in v2.3.0-73, default: `false`)
+--
 -- @tparam ?table box_opts
 --   tarantool extra box.cfg options (e.g. memtx_memory),
 --   that may require additional tuning
@@ -234,6 +239,7 @@ local function cfg(opts, box_opts)
         webui_blacklist = '?table',
         upgrade_schema = '?boolean',
         swim_broadcast = '?boolean',
+        roles_reload_allowed = '?boolean',
     }, '?table')
 
     if opts.webui_blacklist ~= nil then
@@ -589,18 +595,7 @@ local function cfg(opts, box_opts)
         service_registry.set('httpd', httpd)
     end
 
-    local ok, err = roles.cfg(opts.roles)
-    if not ok then
-        return nil, err
-    end
-
-    -- metrics.init()
-    -- admin.init()
-
-    -- startup_tune.init()
-    -- errors.monkeypatch_netbox_call()
-    -- netbox_fiber_storage.monkeypatch_netbox_call()
-
+    -- Set up vshard groups
     if next(vshard_groups) == nil then
         vshard_groups = nil
     else
@@ -613,6 +608,7 @@ local function cfg(opts, box_opts)
 
     vshard_utils.set_known_groups(vshard_groups, opts.bucket_count)
 
+    -- Set up issues
     local issue_limits, err = argparse.get_opts({
         fragmentation_threshold_critical = 'number',
         fragmentation_threshold_warning  = 'number',
@@ -625,17 +621,7 @@ local function cfg(opts, box_opts)
 
     issues.set_limits(issue_limits)
 
-    local ok, err = confapplier.init({
-        workdir = opts.workdir,
-        box_opts = box_opts,
-        binary_port = advertise.service,
-        advertise_uri = advertise_uri,
-        upgrade_schema = opts.upgrade_schema,
-    })
-    if not ok then
-        return nil, err
-    end
-
+    -- Start console sock
     if opts.console_sock ~= nil then
         local console = require('console')
         local sock_name = 'unix/:' .. opts.console_sock
@@ -682,6 +668,27 @@ local function cfg(opts, box_opts)
         end
     end
 
+    -- Do last few steps
+    if opts.roles_reload_allowed == true then
+        hotreload.save_state()
+    end
+
+    local ok, err = roles.cfg(opts.roles)
+    if not ok then
+        return nil, err
+    end
+
+    local ok, err = confapplier.init({
+        workdir = opts.workdir,
+        box_opts = box_opts,
+        binary_port = advertise.service,
+        advertise_uri = advertise_uri,
+        upgrade_schema = opts.upgrade_schema,
+    })
+    if not ok then
+        return nil, err
+    end
+
     -- Only log boot info if box.cfg wasn't called yet
     -- Otherwise it's logged by confapplier.boot_instance
     if type(box.cfg) == 'function' then
@@ -698,6 +705,11 @@ return {
     VERSION = VERSION,
 
     cfg = cfg,
+
+    --- .
+    -- @refer cartridge.roles.reload
+    -- @function reload_roles
+    reload_roles = roles.reload,
 
     --- .
     -- @refer cartridge.topology.cluster_is_healthy

@@ -44,6 +44,10 @@ Added
   It'll unlock two-phase commit (remove ``config.prepare`` lock), upload the
   active config from the current instance and reconfigure all roles.
 
+- New feature for hot reloading roles code without restarting an instance --
+  ``cartridge.reload_roles``. The feature is experimental and should be
+  enabled explicitly: ``cartridge.cfg({roles_reload_allowed = true})``.
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Changed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
