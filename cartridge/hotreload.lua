@@ -149,17 +149,22 @@ local function load_state()
         end
 
         if f.fid == 101
+        or f.name == 'checkpoint'
+        or f.name == 'raft_worker'
+        or f.name:startswith('vinyl.')
+        or f.name:startswith('vshard.')
         or f.name:startswith('console/')
         or f.name:startswith('applier/')
         or f.name:startswith('applierw/')
+        or f.name:startswith('watchdog_')
         then
             -- Ignore system fibers
-            log.info('Preserving system fiber %q (%d)', f.name, f.fid)
+            log.debug('Preserving system fiber %q (%d)', f.name, f.fid)
             goto continue
         end
 
         if vars.fibers[f.name] then
-            log.info('Preserving whitelisted fiber %q (%d)', f.name, f.fid)
+            log.debug('Preserving whitelisted fiber %q (%d)', f.name, f.fid)
         else
             log.info('Killing fiber %q (%d)', f.name, f.fid)
             fiber.kill(f.fid)

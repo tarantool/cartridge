@@ -3,12 +3,17 @@ local yaml = require('yaml')
 local fiber = require('fiber')
 local httpc = require('http.client')
 local socket = require('socket')
+local utils = require('cartridge.utils')
 local t = require('luatest')
 local g = t.group()
 
 local helpers = require('test.helper')
 
 local function reload_myrole(fn)
+    -- For the sake of string.dump() function must have no upvalues.
+    -- https://www.lua.org/manual/5.1/manual.html#pdf-string.dump
+    utils.assert_upvalues(fn, {})
+
     local ok, err = g.srv.net_box:eval([[
         package.preload["mymodule"] = loadstring(...)
         return require("cartridge.roles").reload()

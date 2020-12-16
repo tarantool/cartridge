@@ -115,10 +115,8 @@ function g.test_router()
     g.highload_fiber = fiber.new(highload_loop, 'A')
 
     g.cluster:retrying({}, function()
-        t.assert_equals(
-            g.insertions_passed[#g.insertions_passed][3],
-            'A', 'No workload for label A'
-        )
+        local last_insert = g.insertions_passed[#g.insertions_passed]
+        t.assert_equals(last_insert[3], 'A', 'No workload for label A')
     end)
 
     reload(g.R1)
@@ -143,13 +141,18 @@ function g.test_storage()
     g.highload_fiber = fiber.new(highload_loop, 'B')
 
     g.cluster:retrying({}, function()
-        t.assert_equals(
-            g.insertions_passed[#g.insertions_passed][3],
-            'B', 'No workload for label B'
-        )
+        local last_insert = g.insertions_passed[#g.insertions_passed]
+        t.assert_equals(last_insert[3], 'B', 'No workload for label B')
     end)
 
+    -- snapshot with a signal
+    g.SA1.process:kill('USR1')
+
     reload(g.SA1)
+
+    g.cluster:retrying({}, function()
+        g.SA1.net_box:call('box.snapshot')
+    end)
 
     local cnt = #g.insertions_passed
     if not pcall(g.cluster.retrying, g.cluster, {timeout = 1}, function()
