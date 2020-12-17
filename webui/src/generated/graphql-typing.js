@@ -257,36 +257,38 @@ export type MutationExpel_ServerArgs = {|
 /** Cluster management */
 export type MutationApicluster = {|
   __typename?: 'MutationApicluster',
-  /** Applies DDL schema on cluster */
-  schema: DdlSchema,
+  /** Remove user */
+  remove_user?: ?User,
   /** Enable or disable automatic failover. Returns new state. (Deprecated since v2.0.2-2) */
   failover: $ElementType<Scalars, 'Boolean'>,
   /** Configure automatic failover. */
   failover_params: FailoverApi,
-  /** Checks that schema can be applied on cluster */
-  check_schema: DdlCheckResult,
   /** Applies updated config on cluster */
   config: Array<?ConfigSection>,
-  /** Edit cluster topology */
-  edit_topology?: ?EditTopologyResult,
-  auth_params: UserManagementApi,
+  /** Checks that schema can be applied on cluster */
+  check_schema: DdlCheckResult,
   /** Create a new user */
   add_user?: ?User,
+  /** Reapplies config on the specified nodes */
+  config_force_reapply: $ElementType<Scalars, 'Boolean'>,
+  auth_params: UserManagementApi,
+  /** Edit cluster topology */
+  edit_topology?: ?EditTopologyResult,
   /** Edit an existing user */
   edit_user?: ?User,
   edit_vshard_options: VshardGroup,
   /** Promote the instance to the leader of replicaset */
   failover_promote: $ElementType<Scalars, 'Boolean'>,
-  /** Remove user */
-  remove_user?: ?User,
+  /** Applies DDL schema on cluster */
+  schema: DdlSchema,
   /** Disable listed servers by uuid */
   disable_servers?: ?Array<?Server>,
 |};
 
 
 /** Cluster management */
-export type MutationApiclusterSchemaArgs = {|
-  as_yaml: $ElementType<Scalars, 'String'>,
+export type MutationApiclusterRemove_UserArgs = {|
+  username: $ElementType<Scalars, 'String'>,
 |};
 
 
@@ -310,21 +312,29 @@ export type MutationApiclusterFailover_ParamsArgs = {|
 
 
 /** Cluster management */
-export type MutationApiclusterCheck_SchemaArgs = {|
-  as_yaml: $ElementType<Scalars, 'String'>,
-|};
-
-
-/** Cluster management */
 export type MutationApiclusterConfigArgs = {|
   sections?: ?Array<?ConfigSectionInput>,
 |};
 
 
 /** Cluster management */
-export type MutationApiclusterEdit_TopologyArgs = {|
-  replicasets?: ?Array<?EditReplicasetInput>,
-  servers?: ?Array<?EditServerInput>,
+export type MutationApiclusterCheck_SchemaArgs = {|
+  as_yaml: $ElementType<Scalars, 'String'>,
+|};
+
+
+/** Cluster management */
+export type MutationApiclusterAdd_UserArgs = {|
+  password: $ElementType<Scalars, 'String'>,
+  username: $ElementType<Scalars, 'String'>,
+  fullname?: ?$ElementType<Scalars, 'String'>,
+  email?: ?$ElementType<Scalars, 'String'>,
+|};
+
+
+/** Cluster management */
+export type MutationApiclusterConfig_Force_ReapplyArgs = {|
+  uuids?: ?Array<?$ElementType<Scalars, 'String'>>,
 |};
 
 
@@ -337,11 +347,9 @@ export type MutationApiclusterAuth_ParamsArgs = {|
 
 
 /** Cluster management */
-export type MutationApiclusterAdd_UserArgs = {|
-  password: $ElementType<Scalars, 'String'>,
-  username: $ElementType<Scalars, 'String'>,
-  fullname?: ?$ElementType<Scalars, 'String'>,
-  email?: ?$ElementType<Scalars, 'String'>,
+export type MutationApiclusterEdit_TopologyArgs = {|
+  replicasets?: ?Array<?EditReplicasetInput>,
+  servers?: ?Array<?EditServerInput>,
 |};
 
 
@@ -374,8 +382,8 @@ export type MutationApiclusterFailover_PromoteArgs = {|
 
 
 /** Cluster management */
-export type MutationApiclusterRemove_UserArgs = {|
-  username: $ElementType<Scalars, 'String'>,
+export type MutationApiclusterSchemaArgs = {|
+  as_yaml: $ElementType<Scalars, 'String'>,
 |};
 
 
@@ -726,7 +734,7 @@ export type GetClusterQuery = ({
       ...{| uri: $ElementType<ServerShortInfo, 'uri'>, uuid?: $ElementType<ServerShortInfo, 'uuid'> |}
     }), failover_params: ({
         ...{ __typename?: 'FailoverAPI' },
-      ...$Pick<FailoverApi, {| mode: *, state_provider?: * |}>,
+      ...$Pick<FailoverApi, {| failover_timeout: *, fencing_enabled: *, fencing_timeout: *, fencing_pause: *, mode: *, state_provider?: * |}>,
       ...{| etcd2_params?: ?({
           ...{ __typename?: 'FailoverStateProviderCfgEtcd2' },
         ...$Pick<FailoverStateProviderCfgEtcd2, {| password: *, lock_delay: *, endpoints: *, username: *, prefix: * |}>
@@ -989,6 +997,10 @@ export type EditTopologyMutation = ({
 });
 
 export type ChangeFailoverMutationVariables = {
+  failover_timeout?: ?$ElementType<Scalars, 'Float'>,
+  fencing_enabled?: ?$ElementType<Scalars, 'Boolean'>,
+  fencing_timeout?: ?$ElementType<Scalars, 'Float'>,
+  fencing_pause?: ?$ElementType<Scalars, 'Float'>,
   mode: $ElementType<Scalars, 'String'>,
   state_provider?: ?$ElementType<Scalars, 'String'>,
   etcd2_params?: ?FailoverStateProviderCfgInputEtcd2,

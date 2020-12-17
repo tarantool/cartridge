@@ -1,27 +1,30 @@
 #!/bin/bash
 
-TARANTOOL_WORKDIR=dev/gql-schema test/entrypoint/srv_basic.lua &
-PID=$!
+pushd $(dirname "${BASH_SOURCE[0]}")
+tarantool <<LAUNCHER_SCRIPT &
+    httpd = require('http.server').new("localhost", 8080)
+    httpd:start()
+    require('cartridge.webui').init(httpd)
+LAUNCHER_SCRIPT
+trap "kill %1" EXIT
 
-TMP=$(uuidgen).graphql
-npx graphql get-schema -o $TMP
+CHECKSUMS=$(md5sum \
+    doc/schema.graphql \
+    webui/graphql.schema.json \
+    webui/src/generated/graphql-typing.js \
+)
 
-OUTPUT="doc/schema.graphql"
-diff \
-    --ignore-all-space \
-    --ignore-blank-lines \
-    --ignore-matching-lines "^# timestamp:" \
-    $OUTPUT $TMP
-DIFF=$?
+npx graphql get-schema -o doc/schema.graphql
+sed -i '/^# timestamp:/d' doc/schema.graphql
 
-if [ "$DIFF" -eq 0 ]
-then
-    echo "GraphQL schema is up to date!"
-    rm -f $TMP
+npm run graphqlgen --prefix=webui
+
+echo
+echo "Checking changes"
+
+if (md5sum -c - <<< "$CHECKSUMS"); then
+    echo "Everything is up to date!"
 else
-    echo "GraphQL schema was updated!"
-    mv -f $TMP $OUTPUT
+    echo "Generated sources were updated!"
+    exit 1
 fi
-
-kill $PID
-exit $DIFF

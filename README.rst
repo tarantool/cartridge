@@ -189,7 +189,7 @@ Auto-generated sources
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 After the GraphQL API is changed, don't forget to fetch the schema
-``doc/schema.graphql``:
+``doc/schema.graphql`` and re-generate frontend sources:
 
 .. code-block:: bash
 
