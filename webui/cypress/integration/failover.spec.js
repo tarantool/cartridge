@@ -175,9 +175,20 @@ describe('Failover', () => {
     cy.get('.meta-test__etcd2Prefix').should('not.exist');
     cy.get('.meta-test__etcd2Username').should('not.exist');
     cy.get('.meta-test__etcd2Password').should('not.exist');
+
+    cy.get('.meta-test__CancelButton').click();
   });
 
   it('Failover Stateful - TARANTOOL: success', () => {
+    cy.get('.meta-test__FailoverButton').click();
+
+    cy.get('span:contains(topology_new.failover.tarantool_params.uri: Invalid URI "qq" (missing port))')
+      .should('not.exist');
+
+    cy.get('.meta-test__statefulRadioBtn').click();
+    cy.get('.meta-test__fencingEnableCheckbox input').click({force: true});
+    cy.get('.meta-test__fencingTimeout input').type('{selectAll}{del}4');
+
     cy.get('.meta-test__stateboardURI input').type('{selectall}{backspace}localhost:14401');
 
     cy.get('.meta-test__SubmitButton').click();
