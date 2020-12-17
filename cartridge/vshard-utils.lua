@@ -6,6 +6,7 @@ local errors = require('errors')
 
 local vars = require('cartridge.vars').new('cartridge.vshard-utils')
 local pool = require('cartridge.pool')
+local utils = require('cartridge.utils')
 local roles = require('cartridge.roles')
 local topology = require('cartridge.topology')
 local failover = require('cartridge.failover')
@@ -554,6 +555,67 @@ local function edit_vshard_options(group_name, vshard_options)
     return twophase.patch_clusterwide(patch)
 end
 
+
+local function patch_zone_distances(config_new, _)
+    if config_new:get_readonly('zone_distances') ~= nil then
+        return
+    end
+
+    local topology_cfg = config_new:get_readonly('topology')
+    if topology_cfg == nil then
+        return
+    end
+
+    local known_zones = {}
+    for _, server in pairs(topology_cfg.servers) do
+        if server.zone ~= nil
+        and not utils.table_find(known_zones, server.zone)
+        then
+            table.insert(known_zones, server.zone)
+        end
+    end
+
+    if #known_zones == 0 then
+        return
+    end
+
+    table.sort(known_zones)
+
+    local template = {
+        '# Specify physical distance between servers in different zones.',
+        '# https://www.tarantool.io/en/doc/latest/reference' ..
+            '/reference_rock/vshard/vshard_admin/#replica-weights', '',
+        '# Example:',
+        '',
+        '# z1: {z1: 0, z2: 1, z3: 1}',
+        '# z2: {z1: 1, z2: 0, z3: 1}',
+        '# z3: {z1: 1, z2: 1, z3: 0}',
+        '',
+        '# Your zones:',
+        '',
+    }
+
+    for _, z1 in ipairs(known_zones) do
+        local row = {}
+        for _, z2 in ipairs(known_zones) do
+            local s = string.format('%s: %d', z2, z1==z2 and 0 or 1)
+            table.insert(row, s)
+        end
+
+        local l = string.format('# %s: {%s}', z1, table.concat(row, ', '))
+        table.insert(template, l)
+    end
+
+    table.insert(template, '')
+
+    config_new:set_plaintext(
+        'zone_distances.yml',
+        table.concat(template, '\n')
+    )
+end
+
+twophase.on_patch(patch_zone_distances)
+
 return {
     validate_config = function(...)
         return ValidateConfigError:pcall(validate_config, ...)
@@ -565,4 +627,5 @@ return {
     get_vshard_config = get_vshard_config,
     can_bootstrap = can_bootstrap,
     edit_vshard_options = edit_vshard_options,
+    patch_zone_distances = patch_zone_distances,
 }
