@@ -101,6 +101,7 @@ const SelectBox = ({
       items={values.map(([value, displayName]) => (
         <DropdownItem onClick={() => onChange(value)}>{displayName}</DropdownItem>
       ))}
+      popoverClassName='meta-test__StateProvider__Dropdown'
     />
   );
 };
@@ -312,7 +313,7 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
         {mode === 'stateful' && <>
           <FormField label='Fencing' info={messages.fencingEnabled}>
             <Checkbox
-              className={cx(styles.radio, 'meta-test__statefulRadioBtn')}
+              className={cx(styles.radio, 'meta-test__fencingEnableCheckbox')}
               checked={fencing_enabled}
               onChange={() => this.handleFencingToggle()}
             >
