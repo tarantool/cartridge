@@ -10,7 +10,7 @@
 -- * "Replication from ... to ...: high lag" -
 --   when `upstream.lag > box.cfg.replication_sync_lag`;
 -- * "Replication from ... to ...: long idle" -
---   when `upstream.idle > box.cfg.replication_timeout`;
+--   when `upstream.idle > 2 * box.cfg.replication_timeout`;
 --
 -- Failover:
 --
@@ -163,17 +163,18 @@ local function list_on_instance(opts)
                 )
             }
             table.insert(ret, issue)
-        elseif upstream.idle > box.cfg.replication_timeout then
-            -- A replica sends heartbeat messages to the master
-            -- every second, and the master is programmed to
-            -- reconnect automatically if it does not see heartbeat
-            -- messages within replication_timeout seconds.
-            --
-            -- Therefore, in a healthy replication setup, idle
-            -- should never exceed replication_timeout: if it does,
-            -- either the replication is lagging seriously behind,
-            -- because the master is running ahead of the replica,
-            -- or the network link between the instances is down.
+        elseif upstream.idle > 2 * box.cfg.replication_timeout then
+            -- https://www.tarantool.io/en/doc/latest/reference/configuration/#cfg-replication-replication-timeout
+
+            -- If the master has no updates to send to the replicas, it sends
+            -- heartbeat messages every `replication_timeout` seconds, and each
+            -- replica sends an ACK packet back.
+
+            -- Both master and replicas are programmed to drop the connection if
+            -- they get no response in four `replication_timeout periods`. If the
+            -- connection is dropped, a replica tries to reconnect to the
+            -- master.
+
             local issue = {
                 level = 'warning',
                 topic = 'replication',
@@ -184,6 +185,7 @@ local function list_on_instance(opts)
                     describe(replica.uri),
                     describe(self_uri),
                     upstream.idle,
+                    -- the message ignores threshold (2x multiplier)
                     box.cfg.replication_timeout
                 )
             }

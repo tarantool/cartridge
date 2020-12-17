@@ -68,6 +68,8 @@ Fixed
 - Stop vshard fibers when the corresponding role is disabled.
 - Make ``console.listen`` error more clear when ``console_sock`` exceeds
   ``UNIX_PATH_MAX`` limit.
+- Fix ``upstream.idle`` issue tolerance to avoid unnecessary warnings
+  "Replication: long idle (1 > 1)".
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Enhanced is WebUI
