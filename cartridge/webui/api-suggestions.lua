@@ -1,8 +1,10 @@
 local module_name = 'cartridge.webui.api-suggestions'
 
 local fun = require('fun')
+local issues = require('cartridge.issues')
 local topology = require('cartridge.topology')
 local confapplier = require('cartridge.confapplier')
+local lua_api_get_topology = require('cartridge.lua-api.get-topology')
 
 local gql_types = require('cartridge.graphql.types')
 
@@ -13,6 +15,15 @@ local refine_uri_suggestion = gql_types.object({
         uuid = gql_types.string.nonNull,
         uri_old = gql_types.string.nonNull,
         uri_new = gql_types.string.nonNull,
+    }
+})
+
+local force_apply_suggestion = gql_types.object({
+    name = 'ForceApplySuggestion',
+    description = 'A suggestion to force apply config on the specified instance',
+    fields = {
+        uuid = gql_types.string.nonNull,
+        reasons = gql_types.list(gql_types.string.nonNull).nonNull
     }
 })
 
@@ -42,9 +53,72 @@ local function refine_uri()
     return ret
 end
 
-local function get_suggestions()
+local function parse_issues(issues)
+    local reasons_list = {}
+
+    for _, issue in ipairs(issues) do
+        if issue.topic == 'config_mismatch'
+        or issue.topic == 'config_locked' then
+            if reasons_list[issue.instance_uuid] == nil then
+                reasons_list[issue.instance_uuid] = {}
+            end
+
+            if issue.topic == 'config_mismatch' then
+                table.insert(
+                    reasons_list[issue.instance_uuid],
+                    'Configuration checksum mismatch'
+                )
+            end
+
+            if issue.topic == 'config_locked' then
+                table.insert(
+                    reasons_list[issue.instance_uuid],
+                    'Configuration is prepared and locked'
+                )
+            end
+        end
+    end
+
+    local servers = lua_api_get_topology.get_topology().servers
+    for uuid, srv in pairs(servers) do
+        if srv.message == 'OperationError' then
+            if reasons_list[uuid] == nil then
+                reasons_list[uuid] = {}
+            end
+
+            table.insert(reasons_list[uuid], 'Operation Error')
+        end
+    end
+
+    local ret = {}
+    for uuid, reasons in pairs(reasons_list) do
+        table.insert(ret, {
+            uuid = uuid,
+            reasons = reasons
+        })
+    end
+
+    if next(ret) == nil then
+        return nil
+    end
+
+    return ret
+end
+
+local function force_apply(_, _, info)
+    local cache = info.context.request_cache
+    if cache.issues ~= nil then
+        return parse_issues(cache.issues)
+    end
+
+    cache.issues = issues.list_on_cluster()
+    return parse_issues(cache.issues)
+end
+
+local function get_suggestions(_, _, info)
     return {
         refine_uri = refine_uri(),
+        force_apply = force_apply(nil, nil, info),
     }
 end
 
@@ -58,6 +132,7 @@ local function init(graphql)
             name = 'Suggestions',
             fields = {
                 refine_uri = gql_types.list(refine_uri_suggestion.nonNull),
+                force_apply = gql_types.list(force_apply_suggestion.nonNull),
             }
         }),
         callback = module_name .. '.get_suggestions',

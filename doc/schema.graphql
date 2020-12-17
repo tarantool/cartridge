@@ -1,5 +1,5 @@
 # source: http://localhost:8081/admin/api
-# timestamp: Tue Jan 12 2021 16:14:02 GMT+0300 (Moscow Standard Time)
+# timestamp: Fri Jan 15 2021 13:06:04 GMT+0300 (Moscow Standard Time)
 
 """Cluster management"""
 type Apicluster {
@@ -147,6 +147,12 @@ input FailoverStateProviderCfgInputTarantool {
 type FailoverStateProviderCfgTarantool {
   uri: String!
   password: String!
+}
+
+"""A suggestion to force apply config on the specified instance"""
+type ForceApplySuggestion {
+  uuid: String!
+  reasons: [String!]!
 }
 
 type Issue {
@@ -513,6 +519,7 @@ type ServerStat {
 
 type Suggestions {
   refine_uri: [RefineUriSuggestion!]
+  force_apply: [ForceApplySuggestion!]
 }
 
 """A single user account information"""

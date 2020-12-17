@@ -12,6 +12,14 @@ and this project adheres to
 [Unreleased]
 -------------------------------------------------------------------------------
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Added
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- New GraphQL API: ``{cluster {suggestions {force_apply {uuid reasons}}}}`` to
+  heal the cluster in case of config errors like ``Configuration checksum mismatch``,
+  ``Configuration is prepared and locked``, and sometimes ``OperationError``.
+
 -------------------------------------------------------------------------------
 [2.4.0] - 2020-12-29
 -------------------------------------------------------------------------------

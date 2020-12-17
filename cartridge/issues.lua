@@ -285,7 +285,7 @@ local function list_on_instance(opts)
 
         table.insert(ret, {
             level = 'warning',
-            topic = 'configuration',
+            topic = 'config_mismatch',
             instance_uuid = instance_uuid,
             replicaset_uuid = replicaset_uuid,
             message = string.format(
@@ -302,7 +302,7 @@ local function list_on_instance(opts)
     and fio.path.exists(path_prepare) then
         table.insert(ret, {
             level = 'warning',
-            topic = 'configuration',
+            topic = 'config_locked',
             instance_uuid = instance_uuid,
             replicaset_uuid = replicaset_uuid,
             message = string.format(
