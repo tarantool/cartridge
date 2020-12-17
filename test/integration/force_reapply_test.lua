@@ -47,7 +47,7 @@ function g.test_twophase_config_locked()
     t.assert_equals(fio.path.exists(g.A3.workdir .. '/config.prepare'), false)
     t.assert_equals(helpers.list_cluster_issues(g.A1), {{
         level = 'warning',
-        topic = 'configuration',
+        topic = 'config_locked',
         instance_uuid = g.A2.instance_uuid,
         replicaset_uuid = g.A2.replicaset_uuid,
         message = 'Configuration is prepared and locked'..
@@ -123,4 +123,88 @@ function g.test_graphql_api()
     t.assert_equals(g.A1.net_box:eval(q_get_counter), 3)
     t.assert_equals(g.A2.net_box:eval(q_get_counter), 2)
     t.assert_equals(g.A3.net_box:eval(q_get_counter), 1)
+end
+
+local function get_suggestions()
+    return g.cluster.main_server:graphql({
+        query = [[{
+            cluster {
+                suggestions {
+                    force_apply {
+                        uuid
+                        reasons
+                    }
+                }
+            }
+        }]]
+    }).data.cluster.suggestions.force_apply
+end
+
+function g.test_suggestions()
+    -- Wreak some havoc
+    -- Trigger config_lock issue
+    local config = g.A1.net_box:eval([[
+        local confapplier = require('cartridge.confapplier')
+        return confapplier.get_active_config():get_plaintext()
+    ]])
+    config['hey.txt'] = 'Hello, locks'
+    g.A2.net_box:call(
+        '_G.__cartridge_clusterwide_config_prepare_2pc', {config}
+    )
+
+    -- And config_mismatch as well
+    g.A2.net_box:eval([[
+        local confapplier = require('cartridge.confapplier')
+        local cfg = confapplier.get_active_config():copy()
+        cfg:set_plaintext('todo.txt', '- Trigger config mismatch')
+        cfg:lock()
+        confapplier.apply_config(cfg)
+    ]])
+
+    -- One instance can have several reasons to be force-reapplied
+    t.assert_items_equals(get_suggestions(), {
+        {
+            uuid = g.A2.instance_uuid,
+            reasons = {
+                'Configuration checksum mismatch',
+                'Configuration is prepared and locked',
+            },
+        }
+    })
+
+    -- OperationError also should be mentioned in suggestions if present
+    g.A3.net_box:eval([[
+        package.loaded['mymodule-permanent'].apply_config = function()
+            error('Artificial Error', 0)
+        end
+    ]])
+    t.assert_error_msg_equals(
+        'Artificial Error',
+        force_reapply, {g.A3.instance_uuid}
+    )
+    -- Give memebership some time to update servers' status
+    require('fiber').sleep(0.5)
+
+    t.assert_items_equals(get_suggestions(), {
+        {
+            uuid = g.A3.instance_uuid,
+            reasons = {'Operation Error'}
+        },{
+            uuid = g.A2.instance_uuid,
+            reasons = {
+                'Configuration checksum mismatch',
+                'Configuration is prepared and locked',
+            },
+        }
+    })
+
+    t.assert(force_reapply({g.A2.instance_uuid}))
+    t.assert_items_equals(get_suggestions(),
+        {
+            {
+                uuid = g.A3.instance_uuid,
+                reasons = {'Operation Error'}
+            },
+        }
+    )
 end
