@@ -417,7 +417,7 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
           )}
         </>}
         {error && (
-          <Alert type="error">
+          <Alert type="error" className='meta-test__inlineError'>
             <Text variant="basic">{error}</Text>
           </Alert>
         )}

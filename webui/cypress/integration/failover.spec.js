@@ -109,16 +109,16 @@ describe('Failover', () => {
     cy.get('.meta-test__FailoverButton').click();
 
     cy.get('.meta-test__statefulRadioBtn').click();
-    
+
     cy.get('.meta-test__disableRadioBtn input').should('not.be.checked');
     cy.get('.meta-test__eventualRadioBtn input').should('not.be.checked');
     cy.get('.meta-test__statefulRadioBtn input').should('be.checked');
 
     //Fencing tooltip
     cy.get('span:contains(Fencing)').next().trigger('mouseover');
-    cy.get('div').contains('A leader will go read-only when both the state provider ' + 
+    cy.get('div').contains('A leader will go read-only when both the state provider ' +
       'and one of replicas are unreachable');
-    
+
     //Fencing disable
     cy.get('.meta-test__fencingEnableCheckbox input').should('not.be.checked');
     cy.get('.meta-test__fencingTimeout input').should('be.disabled').should('have.value', '10');
@@ -131,7 +131,7 @@ describe('Failover', () => {
     //Fencing pause tooltip
     cy.get('label:contains(Fencing pause)').next().trigger('mouseover');
     cy.get('div').contains('The period in seconds of performing the health check');
-    
+
     //Fencing enable
     cy.get('.meta-test__fencingEnableCheckbox input').click({force: true});
     cy.get('.meta-test__fencingEnableCheckbox input').should('be.checked');
@@ -158,16 +158,22 @@ describe('Failover', () => {
     cy.get('.meta-test__stateboardPassword input').should('have.value', '');
     //error failover_timeout must be greater than fencing_timeout
     cy.get('.meta-test__SubmitButton').click();
-    cy.get('span:contains(topology_new.failover.failover_timeout must be greater than fencing_timeout)');
+    cy.get('.meta-test__inlineError span').should('have.text',
+      'topology_new.failover.failover_timeout must be greater than fencing_timeout'
+    );
     //error Invalid URI ""
     cy.get('.meta-test__fencingTimeout input').type('{selectAll}{del}4');
     cy.get('.meta-test__SubmitButton').click();
-    cy.get('span:contains(topology_new.failover.tarantool_params.uri: Invalid URI "")');
+    cy.get('.meta-test__inlineError span').should('have.text',
+      'topology_new.failover.tarantool_params.uri: Invalid URI ""'
+    );
     //error Invalid URI "" (missing port)
     cy.get('.meta-test__stateboardURI input').type('qq');
     cy.get('.meta-test__stateboardURI input').should('have.value', 'qq');
     cy.get('.meta-test__SubmitButton').click();
-    cy.get('span:contains(topology_new.failover.tarantool_params.uri: Invalid URI "qq" (missing port))');
+    cy.get('.meta-test__inlineError span').should('have.text',
+      'topology_new.failover.tarantool_params.uri: Invalid URI "qq" (missing port)'
+    );
 
     //There is no Etcd inputs
     cy.get('.meta-test__etcd2Endpoints').should('not.exist');
@@ -182,8 +188,7 @@ describe('Failover', () => {
   it('Failover Stateful - TARANTOOL: success', () => {
     cy.get('.meta-test__FailoverButton').click();
 
-    cy.get('span:contains(topology_new.failover.tarantool_params.uri: Invalid URI "qq" (missing port))')
-      .should('not.exist');
+    cy.get('.meta-test__inlineError').should('not.exist');
 
     cy.get('.meta-test__statefulRadioBtn').click();
     cy.get('.meta-test__fencingEnableCheckbox input').click({force: true});
@@ -225,7 +230,9 @@ describe('Failover', () => {
 
     cy.get('.meta-test__etcd2Endpoints textarea').type('{selectAll}{del}qq');
     cy.get('.meta-test__SubmitButton').click();
-    cy.get('span:contains(topology_new.failover.etcd2_params.endpoints[1]: Invalid URI "qq" (missing port))');
+    cy.get('.meta-test__inlineError span').should('have.text',
+      'topology_new.failover.etcd2_params.endpoints[1]: Invalid URI "qq" (missing port)'
+    );
 
     cy.get('.meta-test__etcd2LockDelay input').type('{selectAll}{del}qq');
     cy.get('.meta-test__etcd2LockDelay').next().contains('Field accepts number, ex: 0, 1, 2.43...');
