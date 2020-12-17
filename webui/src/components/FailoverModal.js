@@ -313,7 +313,7 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
         {mode === 'stateful' && <>
           <FormField label='Fencing' info={messages.fencingEnabled}>
             <Checkbox
-              className={cx(styles.radio, 'meta-test__fencingEnableCheckbox')}
+              className='meta-test__fencingEnableCheckbox'
               checked={fencing_enabled}
               onChange={() => this.handleFencingToggle()}
             >
