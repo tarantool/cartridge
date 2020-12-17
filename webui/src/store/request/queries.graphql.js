@@ -50,6 +50,10 @@ export const getClusterQuery = gql`
         demo_uri
       }
       failover_params {
+        failover_timeout
+        fencing_enabled
+        fencing_timeout
+        fencing_pause
         etcd2_params {
           password
           lock_delay
@@ -394,13 +398,21 @@ mutation editTopology (
 
 export const changeFailoverMutation = gql`
 mutation changeFailover (
+  $failover_timeout: Float,
+  $fencing_enabled: Boolean,
+  $fencing_timeout: Float,
+  $fencing_pause: Float,
   $mode: String!,
   $state_provider: String,
   $etcd2_params: FailoverStateProviderCfgInputEtcd2,
   $tarantool_params: FailoverStateProviderCfgInputTarantool
 ) {
   cluster {
-    failover_params(
+    failover_params (
+      failover_timeout: $failover_timeout,
+      fencing_enabled: $fencing_enabled,
+      fencing_timeout: $fencing_timeout,
+      fencing_pause: $fencing_pause,
       mode: $mode
       state_provider: $state_provider
       etcd2_params: $etcd2_params

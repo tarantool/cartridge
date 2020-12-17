@@ -41,7 +41,8 @@ import {
   CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_SUCCESS,
   CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_ERROR,
   CLUSTER_PAGE_STATE_RESET,
-  SET_PROBE_SERVER_MODAL_VISIBLE
+  SET_PROBE_SERVER_MODAL_VISIBLE,
+  SET_FAILOVER_MODAL_VISIBLE
 } from 'src/store/actionTypes';
 import {
   baseReducer,
@@ -244,6 +245,15 @@ export const reducer = baseReducer(
         return {
           ...state,
           probeServerError: null
+        }
+
+      case SET_FAILOVER_MODAL_VISIBLE:
+        return {
+          ...state,
+          changeFailoverRequestStatus: {
+            ...state.changeFailoverRequestStatus,
+            error: null
+          }
         }
 
       case CLUSTER_PAGE_SERVER_LIST_ROW_SELECT:

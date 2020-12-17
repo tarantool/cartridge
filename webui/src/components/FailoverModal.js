@@ -17,34 +17,13 @@ import {
   Text,
   TextArea,
   colors,
-  withDropdown
+  withDropdown,
+  Checkbox
 } from '@tarantool.io/ui-kit';
 import { FAILOVER_STATE_PROVIDERS } from 'src/constants';
 import type { FailoverApi, MutationApiclusterFailover_ParamsArgs } from 'src/generated/graphql-typing.js';
 
 const styles = {
-  radioFieldItem: css`
-    margin-bottom: 8px;
-  `,
-  borderedRadio: css`
-    padding-bottom: 8px;
-    border-bottom: solid 1px #e8e8e8;
-  `,
-  radio: css`
-    align-items: flex-start;
-    margin-bottom: 8px;
-
-    & > input + div {
-      margin-top: 3px;
-    }
-  `,
-  radioLabel: css`
-    display: block;
-    margin-bottom: 8px;
-  `,
-  radioDescription: css`
-    opacity: 0.7;
-  `,
   inputs: css`
     display: flex;
     flex-wrap: wrap;
@@ -67,8 +46,39 @@ const styles = {
   selectBoxIcon: css`
     fill: ${colors.intentBase};
     transform: rotate(180deg);
+  `,
+  infoTooltip: css`
+    color: inherit;
+    font-size: inherit;
+    white-space: pre-line;
+  `,
+  fencingCheckboxMessage: css`
+    display: block;
+    min-height: 20px;
+    margin-bottom: 10px;
   `
 }
+
+/* eslint-disable max-len */
+const messages = {
+  failoverTimeout: 'Timeout in seconds to mark suspect members as dead and trigger failover',
+  fencingEnabled: 'A leader will go read-only when both the state provider and one of replicas are unreachable',
+  fencingTimeout: 'Time in seconds to actuate the fencing after the health check fails',
+  fencingPause: 'The period in seconds of performing the health check',
+  lockDelayInfo: 'Expiration time of a lock that the failover-coordinator role acquires',
+  failoverModesInfo: <>
+    <Text tag='b' className={styles.infoTooltip}>{`Disabled:`}</Text>
+    <Text tag='p' className={styles.infoTooltip}>{`The leader is the first instance according to topology configuration. No automatic decisions are taken.`}</Text>
+    <br/>
+    <Text tag='b' className={styles.infoTooltip}>{`Eventual:`}</Text>
+    <Text tag='p' className={styles.infoTooltip}>{`The leader isn't elected consistently. Every instance thinks the leader is the first healthy server in the replicaset. The instance health is determined according to the membership status (the SWIM protocol).`}</Text>
+    <br/>
+    <Text tag='b' className={styles.infoTooltip}>{`Stateful:`}</Text>
+    <Text tag='p' className={styles.infoTooltip}>{`Leader appointments are polled from the external state provider. Decisions are taken by one of the instances with the failover-coordinator role enabled.`}</Text>
+  </>,
+  invalidFloat: 'Field accepts number, ex: 0, 1, 2.43...'
+};
+/* eslint-enable max-len */
 
 const DropdownButton = withDropdown(Button);
 
@@ -78,19 +88,23 @@ const SelectBox = ({
   value,
   onChange,
   disabled
-}) => (
-  <DropdownButton
-    label='State provider'
-    className={cx(styles.selectBox, className)}
-    disabled={disabled}
-    iconRight={() => <IconChevron className={styles.selectBoxIcon} />}
-    text={value || values[0] || ''}
-    items={values.map(value => (
-      <DropdownItem onClick={() => onChange(value)}>{value}</DropdownItem>
-    ))}
-  />
-);
+}) => {
+  const currentItem = values.find(([v, displayName]) => v === value);
 
+  return (
+    <DropdownButton
+      label='State provider'
+      className={cx(styles.selectBox, className)}
+      disabled={disabled}
+      iconRight={() => <IconChevron className={styles.selectBoxIcon} />}
+      text={currentItem ? currentItem[1] : (values[0][1] || '')}
+      items={values.map(([value, displayName]) => (
+        <DropdownItem onClick={() => onChange(value)}>{displayName}</DropdownItem>
+      ))}
+      popoverClassName='meta-test__StateProvider__Dropdown'
+    />
+  );
+};
 
 type FailoverModalProps = FailoverApi & {
   dispatch: (action: FSA) => void,
@@ -100,6 +114,10 @@ type FailoverModalProps = FailoverApi & {
 }
 
 type FailoverModalState = {
+  failover_timeout: string,
+  fencing_enabled: bool,
+  fencing_timeout: string,
+  fencing_pause: string,
   mode: string,
   state_provider?: string,
   tarantool_params: {|
@@ -119,9 +137,22 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
   constructor(props) {
     super(props);
 
-    const { mode, tarantool_params, etcd2_params, state_provider } = props;
+    const {
+      failover_timeout,
+      fencing_enabled,
+      fencing_timeout,
+      fencing_pause,
+      mode,
+      tarantool_params,
+      etcd2_params,
+      state_provider
+    } = props;
 
     this.state = {
+      failover_timeout: failover_timeout.toString(),
+      fencing_enabled,
+      fencing_timeout: fencing_timeout.toString(),
+      fencing_pause: fencing_pause.toString(),
       mode,
       tarantool_params: {
         uri: (tarantool_params && tarantool_params.uri) || '',
@@ -142,14 +173,17 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
 
   handleStateProviderChange = (state_provider: string) => this.setState({ state_provider });
 
-  handleInputChange = (fieldPath: [string, string]) => ({ target }: InputEvent) => {
+  handleFencingToggle = () => this.setState(({ fencing_enabled }) => ({ fencing_enabled: !fencing_enabled }));
 
+  handleInputChange = (fieldPath: string[]) => ({ target }: InputEvent) => {
     if (target && (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement)) {
       this.setState(prevState => ({
-        [fieldPath[0]]: {
-          ...prevState[fieldPath[0]],
-          [fieldPath[1]]: target.value
-        }
+        [fieldPath[0]]: fieldPath[1]
+          ? {
+            ...prevState[fieldPath[0]],
+            [fieldPath[1]]: target.value
+          }
+          : target.value
       }));
     }
   }
@@ -157,11 +191,24 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
   handleSubmit = (e: Event) => {
     e.preventDefault();
 
-    const { mode, etcd2_params, tarantool_params, state_provider } = this.state;
+    const {
+      failover_timeout,
+      fencing_enabled,
+      fencing_timeout,
+      fencing_pause,
+      mode,
+      etcd2_params,
+      tarantool_params,
+      state_provider
+    } = this.state;
 
     const etcd2LockDelay = parseFloat(etcd2_params.lock_delay);
 
     this.props.changeFailover({
+      failover_timeout: parseFloat(failover_timeout),
+      fencing_enabled,
+      fencing_timeout: parseFloat(fencing_timeout),
+      fencing_pause: parseFloat(fencing_pause),
       mode,
       tarantool_params: mode === 'stateful' && state_provider === 'tarantool'
         ? tarantool_params
@@ -184,10 +231,23 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
 
     const {
       mode,
+      failover_timeout,
+      fencing_enabled,
+      fencing_pause,
+      fencing_timeout,
       state_provider,
       tarantool_params,
       etcd2_params
     } = this.state;
+
+    const disableFencingParams = mode !== 'stateful' || !fencing_enabled;
+
+    const errors = {
+      failover_timeout: failover_timeout && !failover_timeout.match(/^\d+(\.\d*)*$/),
+      etcd2_lock_delay: etcd2_params.lock_delay && !etcd2_params.lock_delay.match(/^\d+(\.\d*)*$/),
+      fencing_timeout: fencing_timeout && !fencing_timeout.match(/^\d+(\.\d*)*$/),
+      fencing_pause: fencing_pause && !fencing_pause.match(/^\d+(\.\d*)*$/)
+    };
 
     return (
       <Modal
@@ -213,128 +273,151 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
           </Button>
         ]}
       >
-        <FormField label='Failover mode' itemClassName={styles.radioFieldItem}>
-          <RadioButton
-            className={cx(styles.radio, styles.borderedRadio, 'meta-test__disableRadioBtn')}
-            checked={mode === 'disabled'}
-            onChange={() => this.handleModeChange('disabled')}
-          >
-            <div>
-              <Text className={styles.radioLabel}>Disabled</Text>
-              <Text className={styles.radioDescription} tag='p'>
-                The leader is the first instance according to topology configuration.
-                No automatic decisions are taken.
-              </Text>
-            </div>
-          </RadioButton>
-          <RadioButton
-            className={cx(styles.radio, styles.borderedRadio, 'meta-test__eventualRadioBtn')}
-            checked={mode === 'eventual'}
-            onChange={() => this.handleModeChange('eventual')}
-          >
-            <div>
-              <Text className={styles.radioLabel}>Eventual</Text>
-              <Text className={styles.radioDescription} tag='p'>
-                The leader isn't elected consistently.
-                Every instance thinks the leader is the first healthy server in the replicaset.
-                The instance health is determined according to the membership status (the SWIM protocol).
-              </Text>
-            </div>
-          </RadioButton>
-          <RadioButton
-            className={cx(styles.radio, 'meta-test__statefulRadioBtn')}
-            checked={mode === 'stateful'}
-            onChange={() => this.handleModeChange('stateful')}
-          >
-            <div>
-              <Text className={styles.radioLabel}>Stateful</Text>
-              <Text className={styles.radioDescription} tag='p'>
-                Leader appointments are polled from the external state provider.
-                Decisions are taken by one of the instances with the failover-coordinator role enabled.
-              </Text>
-            </div>
-          </RadioButton>
+        <FormField
+          label='Failover mode'
+          info={messages.failoverModesInfo}
+        >
+          {[
+            <RadioButton
+              className='meta-test__disableRadioBtn'
+              checked={mode === 'disabled'}
+              onChange={() => this.handleModeChange('disabled')}
+            >
+              Disabled
+            </RadioButton>,
+            <RadioButton
+              className='meta-test__eventualRadioBtn'
+              checked={mode === 'eventual'}
+              onChange={() => this.handleModeChange('eventual')}
+            >
+              Eventual
+            </RadioButton>,
+            <RadioButton
+              className='meta-test__statefulRadioBtn'
+              checked={mode === 'stateful'}
+              onChange={() => this.handleModeChange('stateful')}
+            >
+              Stateful
+            </RadioButton>
+          ]}
         </FormField>
         <LabeledInput
-          label='State provider'
-          className='meta-test__stateProviderChoice'
-          inputComponent={SelectBox}
-          values={FAILOVER_STATE_PROVIDERS}
-          value={state_provider}
-          disabled={mode !== 'stateful'}
-          onChange={this.handleStateProviderChange}
+          label='Failover timeout'
+          className='meta-test__failoverTimeout'
+          error={errors.failover_timeout}
+          message={errors.failover_timeout && messages.invalidFloat}
+          value={failover_timeout}
+          onChange={this.handleInputChange(['failover_timeout'])}
+          info={messages.failoverTimeout}
         />
-        {state_provider === 'tarantool' && (
+        {mode === 'stateful' && <>
+          <FormField label='Fencing' info={messages.fencingEnabled}>
+            <Checkbox
+              className='meta-test__fencingEnableCheckbox'
+              checked={fencing_enabled}
+              onChange={() => this.handleFencingToggle()}
+            >
+              Enabled
+            </Checkbox>
+          </FormField>
           <div className={styles.inputs}>
             <LabeledInput
-              className={styles.inputField}
-              label='State provider URI'
-              inputClassName='meta-test__stateboardURI'
-              value={tarantool_params.uri}
-              disabled={mode !== 'stateful'}
-              onChange={this.handleInputChange(['tarantool_params', 'uri'])}
+              label='Fencing timeout'
+              className={cx(styles.inputField, 'meta-test__fencingTimeout')}
+              disabled={disableFencingParams}
+              error={!disableFencingParams && errors.fencing_timeout}
+              message={!disableFencingParams && errors.fencing_timeout && messages.invalidFloat}
+              info={messages.fencingTimeout}
+              value={fencing_timeout}
+              onChange={this.handleInputChange(['fencing_timeout'])}
             />
             <LabeledInput
-              className={styles.inputField}
-              label='Password'
-              inputComponent={InputPassword}
-              inputClassName='meta-test__stateboardPassword'
-              value={tarantool_params.password}
-              disabled={mode !== 'stateful'}
-              onChange={this.handleInputChange(['tarantool_params', 'password'])}
+              label='Fencing pause'
+              className={cx(styles.inputField, 'meta-test__fencingPause')}
+              disabled={disableFencingParams}
+              error={!disableFencingParams && errors.fencing_pause}
+              message={!disableFencingParams && errors.fencing_pause && messages.invalidFloat}
+              info={messages.fencingPause}
+              value={fencing_pause}
+              onChange={this.handleInputChange(['fencing_pause'])}
             />
           </div>
-        )}
-        {state_provider === 'etcd2' && (
-          <>
+          <LabeledInput
+            label='State provider'
+            className='meta-test__stateProviderChoice'
+            inputComponent={SelectBox}
+            values={FAILOVER_STATE_PROVIDERS}
+            value={state_provider}
+            onChange={this.handleStateProviderChange}
+          />
+          {state_provider === 'tarantool' && (
             <div className={styles.inputs}>
               <LabeledInput
                 className={styles.inputField}
-                label='Username'
-                inputClassName='meta-test__etcd2Username'
-                value={etcd2_params.username}
-                disabled={mode !== 'stateful'}
-                onChange={this.handleInputChange(['etcd2_params', 'username'])}
+                label='URI'
+                inputClassName='meta-test__stateboardURI'
+                value={tarantool_params.uri}
+                onChange={this.handleInputChange(['tarantool_params', 'uri'])}
               />
               <LabeledInput
                 className={styles.inputField}
                 label='Password'
-                inputClassName='meta-test__etcd2Password'
                 inputComponent={InputPassword}
-                value={etcd2_params.password}
-                disabled={mode !== 'stateful'}
-                onChange={this.handleInputChange(['etcd2_params', 'password'])}
-              />
-              <LabeledInput
-                className={styles.inputField}
-                label='Delay, seconds'
-                inputClassName='meta-test__etcd2LockDelay'
-                value={etcd2_params.lock_delay}
-                disabled={mode !== 'stateful'}
-                onChange={this.handleInputChange(['etcd2_params', 'lock_delay'])}
-              />
-              <LabeledInput
-                className={styles.inputField}
-                label='Prefix'
-                inputClassName='meta-test__etcd2Prefix'
-                value={etcd2_params.prefix}
-                disabled={mode !== 'stateful'}
-                onChange={this.handleInputChange(['etcd2_params', 'prefix'])}
+                inputClassName='meta-test__stateboardPassword'
+                value={tarantool_params.password}
+                onChange={this.handleInputChange(['tarantool_params', 'password'])}
               />
             </div>
-            <LabeledInput
-              label='etcd2 endpoints'
-              className='meta-test__etcd2Endpoints'
-              inputComponent={TextArea}
-              value={etcd2_params.endpoints}
-              disabled={mode !== 'stateful'}
-              rows={5}
-              onChange={this.handleInputChange(['etcd2_params', 'endpoints'])}
-            />
-          </>
-        )}
+          )}
+          {state_provider === 'etcd2' && (
+            <>
+              <LabeledInput
+                label='Endpoints'
+                className='meta-test__etcd2Endpoints'
+                inputComponent={TextArea}
+                value={etcd2_params.endpoints}
+                rows={2}
+                onChange={this.handleInputChange(['etcd2_params', 'endpoints'])}
+              />
+              <div className={styles.inputs}>
+                <LabeledInput
+                  className={styles.inputField}
+                  label='Lock delay'
+                  info ={messages.lockDelayInfo}
+                  error={errors.etcd2_lock_delay}
+                  message={errors.etcd2_lock_delay && messages.invalidFloat}
+                  inputClassName='meta-test__etcd2LockDelay'
+                  value={etcd2_params.lock_delay}
+                  onChange={this.handleInputChange(['etcd2_params', 'lock_delay'])}
+                />
+                <LabeledInput
+                  className={styles.inputField}
+                  label='Prefix'
+                  inputClassName='meta-test__etcd2Prefix'
+                  value={etcd2_params.prefix}
+                  onChange={this.handleInputChange(['etcd2_params', 'prefix'])}
+                />
+                <LabeledInput
+                  className={styles.inputField}
+                  label='Username'
+                  inputClassName='meta-test__etcd2Username'
+                  value={etcd2_params.username}
+                  onChange={this.handleInputChange(['etcd2_params', 'username'])}
+                />
+                <LabeledInput
+                  className={styles.inputField}
+                  label='Password'
+                  inputClassName='meta-test__etcd2Password'
+                  inputComponent={InputPassword}
+                  value={etcd2_params.password}
+                  onChange={this.handleInputChange(['etcd2_params', 'password'])}
+                />
+              </div>
+            </>
+          )}
+        </>}
         {error && (
-          <Alert type="error">
+          <Alert type="error" className='meta-test__inlineError'>
             <Text variant="basic">{error}</Text>
           </Alert>
         )}
