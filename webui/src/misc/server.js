@@ -1,1 +1,7 @@
-export const formatServerName = server => server.alias ? server.alias : server.uri
+// @flow
+type Server = {
+  alias?: string,
+  uri: string
+};
+
+export const formatServerName = (server: Server) => server.alias ? server.alias : server.uri
