@@ -59,6 +59,12 @@ local function get_config(...)
     )
 end
 
+local function get_distances()
+    return g.cluster.main_server:graphql({query = [[{
+        cluster { config(sections: ["zone_distances.yml"]) {content} }
+    }]]}).data.cluster.config[1].content
+end
+
 function g.test_zones()
     local ok, err = set_zones({
         [g.A1.instance_uuid] = 'z1',
@@ -74,6 +80,12 @@ function g.test_zones()
             {uuid = g.A3.instance_uuid, zone = box.NULL},
         }
     )
+
+    t.assert_items_include(get_distances():split('\n'), {
+        '# Your zones:',
+        '# z1: {z1: 0, z2: 1}',
+        '# z2: {z1: 1, z2: 0}',
+    })
 
     local ok, err = set_zones({
         [g.A1.instance_uuid] = box.NULL, -- null doesn't edit value
@@ -107,6 +119,11 @@ function g.test_zones()
             {uuid = g.A2.instance_uuid, zone = 'z2'},
         }
     )
+
+    t.assert_items_include(get_distances():split('\n'), {
+        '# Your zones:',
+        '# z2: {z2: 0}',
+    })
 
     t.assert_error_msg_contains (
         "bad argument params.zone to __edit_server"..
@@ -180,9 +197,9 @@ function g.test_validation()
     t.assert_equals({set_distances()}, {true, nil})
     t.assert_equals({set_distances(box.NULL)}, {true, nil})
 
-    local ok, err = set_distances('foo')
+    local ok, err = set_distances(true)
     t.assert_equals(ok, nil)
-    t.assert_equals(err.err, 'zone_distances must be a table, got string')
+    t.assert_equals(err.err, 'zone_distances must be a table, got boolean')
 
     local ok, err = set_distances({'z1'})
     t.assert_equals(ok, nil)
