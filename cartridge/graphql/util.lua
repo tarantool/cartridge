@@ -86,7 +86,16 @@ local function coerceValue(node, schemaType, variables, opts)
   end
 
   if node.kind == 'variable' then
-    return variables[node.name.value]
+    local value = variables[node.name.value]
+    if schemaType.parseValue ~= nil then
+      value = schemaType.parseValue(value)
+    end
+    if strict_non_null and type(value) == 'nil' then
+      error(('Could not coerce variable "%s" with value "%s" to type "%s"'):format(
+          node.name.value, variables[node.name.value], schemaType.name
+      ))
+    end
+    return value
   end
 
   if schemaType.__type == 'List' then
@@ -144,12 +153,14 @@ local function coerceValue(node, schemaType, variables, opts)
   end
 
   if schemaType.__type == 'Scalar' then
-    if schemaType.parseLiteral(node) == nil then
-      error(('Could not coerce "%s" to "%s"'):format(
-        node.value or node.kind, schemaType.name))
+    local value = node.value
+    if schemaType.parseLiteral ~= nil then
+      value = schemaType.parseLiteral(node)
     end
-
-    return schemaType.parseLiteral(node)
+    if strict_non_null and type(value) == 'nil' then
+      error(('Could not coerce value "%s" to type "%s"'):format(node.value or node.kind, schemaType.name))
+    end
+    return value
   end
 end
 

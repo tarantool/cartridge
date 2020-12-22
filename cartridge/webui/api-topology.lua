@@ -240,11 +240,19 @@ local function get_replicasets(_, args, info)
 end
 
 local function edit_topology(_, args)
-    for _, srv in pairs(args.servers or {}) do
+    if args.servers == nil then
+        args.servers = {}
+    end
+
+    for _, srv in pairs(args.servers) do
         srv.labels = convert_labels_to_keyvalue(srv.labels)
     end
 
-    for _, rpl in pairs(args.replicasets or {}) do
+    if args.replicasets == nil then
+        args.replicasets = {}
+    end
+
+    for _, rpl in pairs(args.replicasets) do
         for _, srv in pairs(rpl.join_servers or {}) do
             srv.labels = convert_labels_to_keyvalue(srv.labels)
         end

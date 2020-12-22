@@ -189,6 +189,10 @@ local function completeValue(fieldType, result, subSelections, context, opts)
     return completedResult
   end
 
+  if fieldTypeName == 'Scalar' or fieldTypeName == 'Enum' then
+    return fieldType.serialize(result)
+  end
+
   if result == nil then
     return nil
   end
@@ -210,10 +214,6 @@ local function completeValue(fieldType, result, subSelections, context, opts)
     end
 
     return values
-  end
-
-  if fieldTypeName == 'Scalar' or fieldTypeName == 'Enum' then
-    return fieldType.serialize(result)
   end
 
   if fieldTypeName == 'Object' then
@@ -248,26 +248,24 @@ local function getFieldEntry(objectType, object, fields, context)
     argumentMap[argument.name.value] = argument
   end
 
-  local defaultValues = {}
   if context.operation.variableDefinitions ~= nil then
+    context.variables = context.variables or {}
     for _, value in ipairs(context.operation.variableDefinitions) do
-      if value.defaultValue ~= nil then
-        local variableType = query_util.typeFromAST(value.type, context.schema)
-        defaultValues[value.variable.name.value] = util.coerceValue(value.defaultValue, variableType)
+      local variable_name = value.variable.name.value
+      if type(context.variables[variable_name]) == 'nil' then
+        local default_value = box.NULL
+        if value.defaultValue ~= nil then
+          local variableType = query_util.typeFromAST(value.type, context.schema)
+          default_value = util.coerceValue(value.defaultValue, variableType)
+        end
+        context.variables[variable_name] = default_value
       end
     end
   end
 
   local arguments = util.map(fieldType.arguments or {}, function(argument, name)
     local supplied = argumentMap[name] and argumentMap[name].value
-
-    supplied = util.coerceValue(supplied, argument, context.variables,
-      {strict_non_null = true})
-    if type(supplied) ~= 'nil' then
-      return supplied
-    end
-
-    return defaultValues[name]
+    return util.coerceValue(supplied, argument, context.variables, {strict_non_null = true})
   end)
 
   --[[

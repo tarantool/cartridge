@@ -142,7 +142,7 @@ g.test_upload = function()
     )
 
     t.assert_error_msg_equals(
-        'Could not coerce "8589934592" to "Int"',
+        'Could not coerce value "8589934592" to type "Int"',
         function() return server:graphql({
             query = [[
                 query { test(arg: "", arg3: 8589934592) }
@@ -151,7 +151,7 @@ g.test_upload = function()
     )
 
     t.assert_error_msg_equals(
-        'Could not coerce "123.4" to "Int"',
+        'Could not coerce value "123.4" to type "Int"',
         function() return server:graphql({
             query = [[
                 query { test(arg: "", arg3: 123.4) }
@@ -160,7 +160,7 @@ g.test_upload = function()
     )
 
     t.assert_error_msg_equals(
-        'Could not coerce "18446744073709551614" to "Long"',
+        'Could not coerce value "18446744073709551614" to type "Long"',
         function() return server:graphql({
             query = [[
                 query { test(arg: "", arg4: 18446744073709551614) }
@@ -169,7 +169,7 @@ g.test_upload = function()
     )
 
     t.assert_error_msg_equals(
-        'Could not coerce "123.4" to "Long"',
+        'Could not coerce value "123.4" to type "Long"',
         function() return server:graphql({
             query = [[
                 query { test(arg: "", arg4: 123.4) }
@@ -178,7 +178,7 @@ g.test_upload = function()
     )
 
     t.assert_error_msg_equals(
-        'Could not coerce "inputObject" to "String"',
+        'Could not coerce value "inputObject" to type "String"',
         function() return server:graphql({
             query = [[
                 query { test(arg: {a: "123"}, arg4: 123) }
@@ -187,7 +187,7 @@ g.test_upload = function()
     )
 
     t.assert_error_msg_equals(
-        'Could not coerce "list" to "String"',
+        'Could not coerce value "list" to type "String"',
         function() return server:graphql({
             query = [[
                 query { test(arg: ["123"], arg4: 123) }
@@ -564,25 +564,63 @@ g.test_custom_type_scalar_variables = function()
         package.loaded['test']['test_custom_type_scalar_list'] = function(_, args)
           return args.fields[1]
         end
+        package.loaded['test']['test_json_type'] = function(_, args)
+          if args.field == nil then
+            return nil
+          end
+          assert(type(args.field) == 'table', "Field is not a table! ")
+          assert(args.field.test ~= nil, "No field 'test' in object!")
+          return args.field
+        end
         package.loaded['test']['test_custom_type_scalar_inputObject'] = function(_, args)
           return args.object.nested_object.field
         end
 
+        local json = require('json')
         local graphql = require('cartridge.graphql')
         local types = require('cartridge.graphql.types')
+
+        local function isString(value)
+            return type(value) == 'string'
+        end
+
+        local function coerceString(value)
+            if value ~= nil then
+                value = tostring(value)
+                if not isString(value) then return end
+            end
+
+            return value
+        end
 
         local custom_string = types.scalar({
             name = 'CustomString',
             description = 'Custom string type',
-            serialize = tostring,
-            parseValue = tostring,
+            serialize = coerceString,
+            parseValue = coerceString,
             parseLiteral = function(node)
-              if node.kind == 'string' then
-                return node.value
-              end
+                return coerceString(node.value)
             end,
-            isValueOfTheType = function(value)
-              return type(value) == 'string'
+            isValueOfTheType = isString,
+        })
+
+        local function decodeJson(value)
+            if value ~= nil then
+                return json.decode(value)
+            end
+            return value
+        end
+
+        local json_type = types.scalar({
+            name = 'Json',
+            description = 'Custom type with JSON decoding',
+            serialize = json.encode,
+            parseValue = decodeJson,
+            parseLiteral = function(node)
+                return decodeJson(node.value)
+            end,
+            isValueOfTheType = function(_)
+                return true
             end,
         })
 
@@ -593,6 +631,15 @@ g.test_custom_type_scalar_variables = function()
             },
             kind = types.string,
             callback = 'test.test_custom_type_scalar',
+        })
+
+        graphql.add_callback({
+            name = 'test_json_type',
+            args = {
+                field = json_type,
+            },
+            kind = json_type,
+            callback = 'test.test_json_type',
         })
 
         graphql.add_callback({
@@ -623,6 +670,45 @@ g.test_custom_type_scalar_variables = function()
             callback = 'test.test_custom_type_scalar_inputObject',
         })
     ]])
+
+    t.assert_equals(
+        server:graphql({
+            query = [[
+                query($field: Json) {
+                    test_json_type(
+                        field: $field
+                    )
+                }
+            ]],
+            variables = {field = '{"test": 123}'}}
+        ).data.test_json_type, '{"test":123}'
+    )
+
+    t.assert_equals(
+        server:graphql({
+            query = [[
+                query($field: Json) {
+                    test_json_type(
+                        field: $field
+                    )
+                }
+            ]],
+            variables = {field = box.NULL}}
+        ).data.test_json_type, 'null'
+    )
+
+    t.assert_equals(
+        server:graphql({
+            query = [[
+                query {
+                    test_json_type(
+                        field: "null"
+                    )
+                }
+            ]],
+            variables = {}}
+        ).data.test_json_type, 'null'
+    )
 
     t.assert_equals(
         server:graphql({
@@ -665,7 +751,8 @@ g.test_custom_type_scalar_variables = function()
         ).data.test_custom_type_scalar_list, 'echo'
     )
 
-    t.assert_error_msg_equals('Could not coerce "inputObject" to "CustomString"', function()
+    t.assert_error_msg_equals('Could not coerce value "inputObject" ' ..
+        'to type "CustomString"', function()
         return server:graphql({
             query = [[
                 query {
