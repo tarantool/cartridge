@@ -248,22 +248,22 @@ local function getFieldEntry(objectType, object, fields, context)
     argumentMap[argument.name.value] = argument
   end
 
+  local defaultValues = {}
   if context.operation.variableDefinitions ~= nil then
-    context.variables = context.variables or {}
     for _, value in ipairs(context.operation.variableDefinitions) do
-      local variable_name = value.variable.name.value
-      if type(context.variables[variable_name]) == 'nil' then
-        if value.defaultValue ~= nil then
-          local variableType = query_util.typeFromAST(value.type, context.schema)
-          context.variables[variable_name] = util.coerceValue(value.defaultValue, variableType)
-        end
+      if value.defaultValue ~= nil then
+        local variableType = query_util.typeFromAST(value.type, context.schema)
+        defaultValues[value.variable.name.value] = util.coerceValue(value.defaultValue, variableType)
       end
     end
   end
 
   local arguments = util.map(fieldType.arguments or {}, function(argument, name)
     local supplied = argumentMap[name] and argumentMap[name].value
-    return util.coerceValue(supplied, argument, context.variables, {strict_non_null = true})
+    return util.coerceValue(supplied, argument, context.variables, {
+      strict_non_null = true,
+      defaultValues = defaultValues,
+    })
   end)
 
   --[[

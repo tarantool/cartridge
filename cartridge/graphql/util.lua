@@ -66,6 +66,7 @@ local function coerceValue(node, schemaType, variables, opts)
   variables = variables or {}
   opts = opts or {}
   local strict_non_null = opts.strict_non_null or false
+  local defaultValues = opts.defaultValues or {}
 
   if schemaType.__type == 'NonNull' then
     local res = coerceValue(node, schemaType.ofType, variables, opts)
@@ -87,7 +88,11 @@ local function coerceValue(node, schemaType, variables, opts)
 
   if node.kind == 'variable' then
     local value = variables[node.name.value]
-    if schemaType.parseValue ~= nil then
+    local defaultValue = defaultValues[node.name.value]
+    if type(value) == 'nil' and type(defaultValue) ~= 'nil' then
+      -- default value was parsed by parseLiteral
+      value = defaultValue
+    elseif schemaType.parseValue ~= nil then
       value = schemaType.parseValue(value)
       if strict_non_null and type(value) == 'nil' then
         error(('Could not coerce variable "%s" with value "%s" to type "%s"'):format(
@@ -156,9 +161,9 @@ local function coerceValue(node, schemaType, variables, opts)
     local value = node.value
     if schemaType.parseLiteral ~= nil then
       value = schemaType.parseLiteral(node)
-    end
-    if strict_non_null and type(value) == 'nil' then
-      error(('Could not coerce value "%s" to type "%s"'):format(node.value or node.kind, schemaType.name))
+      if strict_non_null and type(value) == 'nil' then
+        error(('Could not coerce value "%s" to type "%s"'):format(node.value or node.kind, schemaType.name))
+      end
     end
     return value
   end

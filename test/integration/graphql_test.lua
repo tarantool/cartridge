@@ -619,9 +619,7 @@ g.test_custom_type_scalar_variables = function()
             parseLiteral = function(node)
                 return decodeJson(node.value)
             end,
-            isValueOfTheType = function(_)
-                return true
-            end,
+            isValueOfTheType = isString,
         })
 
         graphql.add_callback({
@@ -1068,8 +1066,46 @@ g.test_default_values = function()
             return args.arg.field
         end
 
+        package.loaded['test']['test_json_type'] = function(_, args)
+          if args.field == nil then
+            return nil
+          end
+          assert(type(args.field) == 'table', "Field is not a table! ")
+          assert(args.field.test ~= nil, "No field 'test' in object!")
+          return args.field
+        end
+
+        local json = require('json')
         local graphql = require('cartridge.graphql')
         local types = require('cartridge.graphql.types')
+
+        local function decodeJson(value)
+            require('log').error('$ %s', json.encode(value))
+            if value ~= nil then
+                return json.decode(value)
+            end
+            return value
+        end
+
+        local json_type = types.scalar({
+            name = 'Json',
+            description = 'Custom type with JSON decoding',
+            serialize = json.encode,
+            parseValue = decodeJson,
+            parseLiteral = function(node)
+                return decodeJson(node.value)
+            end,
+            isValueOfTheType = function(value) return type(value) == 'string' end,
+        })
+
+        graphql.add_callback({
+            name = 'test_json_type',
+            args = {
+                field = json_type,
+            },
+            kind = json_type,
+            callback = 'test.test_json_type',
+        })
 
         graphql.add_callback({
             name = 'test_default_value',
@@ -1170,5 +1206,18 @@ g.test_default_values = function()
             ]],
         variables = {arg = box.NULL}}
         ).data.test_default_object, 'nil'
+    )
+
+    t.assert_equals(
+        server:graphql({
+            query = [[
+                query($field: Json = "{\"test\": 123}") {
+                    test_json_type(
+                        field: $field
+                    )
+                }
+            ]],
+            variables = {}}
+        ).data.test_json_type, '{"test":123}'
     )
 end
