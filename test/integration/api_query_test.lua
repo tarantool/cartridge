@@ -507,7 +507,9 @@ function g.test_operation_error()
     -- Real tho-phase commit fails on apply stage with artificial error
     local resp = g.cluster.main_server:graphql({
         query = [[
-            mutation { cluster { schema(as_yaml: "{}") {} } }
+            mutation{ cluster{ config(
+                sections: [{filename: "x.txt", content: "oops"}]
+            ){} }}
         ]],
         raise = false,
     })

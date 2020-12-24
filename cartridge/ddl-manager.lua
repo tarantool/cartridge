@@ -6,46 +6,52 @@ local errors = require('errors')
 
 local failover = require('cartridge.failover')
 
+local SetSchemaError = errors.new_class('SetSchemaError')
 local CheckSchemaError = errors.new_class('CheckSchemaError')
 local DecodeYamlError = errors.new_class('DecodeYamlError')
 
 local _section_name = 'schema.yml'
+local _example_schema = [[## Example:
+#
+# spaces:
+#   customer:
+#     engine: memtx
+#     is_local: false
+#     temporary: false
+#     sharding_key: [customer_id]
+#     format:
+#       - {name: customer_id, type: unsigned, is_nullable: false}
+#       - {name: bucket_id, type: unsigned, is_nullable: false}
+#       - {name: fullname, type: string, is_nullable: false}
+#     indexes:
+#     - name: customer_id
+#       unique: true
+#       type: TREE
+#       parts:
+#         - {path: customer_id, type: unsigned, is_nullable: false}
+#
+#     - name: bucket_id
+#       unique: false
+#       type: TREE
+#       parts:
+#         - {path: bucket_id, type: unsigned, is_nullable: false}
+#
+#     - name: fullname
+#       unique: true
+#       type: TREE
+#       parts:
+#         - {path: fullname, type: string, is_nullable: false}
+]]
 
 local function _from_yaml(schema_yml)
-    if schema_yml == nil then
-        return {}
-    elseif type(schema_yml) ~= 'string' then
-        local err = CheckSchemaError:new(
+    if type(schema_yml) ~= 'string' then
+        return nil, CheckSchemaError:new(
             'Section %q must be a string, got %s',
             _section_name, type(schema_yml)
         )
-        return nil, err
     end
 
-    local schema_tbl, err = DecodeYamlError:pcall(yaml.decode, schema_yml)
-    if schema_tbl == nil then
-        return nil, err
-    end
-
-    if type(schema_tbl) ~= 'table' then
-        local err = CheckSchemaError:new(
-            'Schema must be a table, got %s',
-            type(schema_tbl)
-        )
-        return nil, err
-    end
-
-    if schema_tbl.spaces == nil then
-        schema_tbl.spaces = {}
-    end
-
-    if type(schema_tbl.spaces) ~= 'table' then
-        return nil, CheckSchemaError:new(
-            'Schema.spaces must be a ?table, got %s',
-            type(schema_tbl.spaces)
-        )
-    end
-    return schema_tbl
+    return DecodeYamlError:pcall(yaml.decode, schema_yml)
 end
 
 local function apply_config(conf, opts)
@@ -61,70 +67,54 @@ local function apply_config(conf, opts)
 
     local schema, err = _from_yaml(conf[_section_name])
     if schema == nil then
-        return nil, err
+        if err then
+            return nil, err
+        else
+            return true
+        end
     end
 
     local ok, err = ddl.set_schema(schema)
     if not ok then
-        return nil, err
+        return nil, SetSchemaError:new(err)
     end
 
     return true
 end
 
-local function validate_config(conf_new, conf_old)
+local function validate_config(conf_new, _)
     checks('table', 'table')
 
-    local schema_new, err = _from_yaml(conf_new[_section_name])
-    if schema_new == nil then
-        return nil, err
+    if conf_new[_section_name] == nil then
+        return true
     end
-    local schema_old, err = _from_yaml(conf_old[_section_name])
-    if schema_old == nil then
-        return nil, CheckSchemaError:new(
-            'Error parsing old schema: %s',
-            err.err
+
+    local schema, err = _from_yaml(conf_new[_section_name])
+    if schema == nil then
+        if err then
+            return nil, err
+        else
+            return true
+        end
+    end
+
+    if type(box.cfg) == 'function' then
+        log.info(
+            "Schema validation skipped because" ..
+            " the instance isn't bootstrapped yet"
         )
+        return true
+    elseif not failover.is_leader() then
+        log.info(
+            "Schema validation skipped because" ..
+            " the instance isn't a leader"
+        )
+        return true
     end
 
-    if next(schema_new) ~= nil then
-        if type(box.cfg) == 'function' then
-            -- This case is almost impossible today
-            -- because we don't have public API that
-            -- can inject schema into bootstrap_from_scratch
-            log.warn(
-                "Schema validation is impossible because" ..
-                " instance isn't bootstrapped yet." ..
-                " Set it at your own risk"
-            )
-            return true
-        end
-
-        local active_masters = failover.get_active_leaders()
-        if active_masters[box.info.cluster.uuid] ~= box.info.uuid then
-            log.info(
-                "Schema validation skipped because" ..
-                " instance isn't a leader"
-            )
-            return true
-        end
-
-        local ok, err = ddl.check_schema(schema_new)
-        if not ok then
-            return nil, CheckSchemaError:new(err)
-        end
-    end
-
-    for space_name, _ in pairs(schema_old.spaces or {}) do
-        if schema_new.spaces == nil
-        or schema_new.spaces[space_name] == nil
-        then
-            return nil, CheckSchemaError:new(
-                "Missing space %q in schema," ..
-                " removing spaces is forbidden",
-                space_name
-            )
-        end
+    local ok, err = ddl.check_schema(schema)
+    if not ok then
+        return nil, CheckSchemaError:new(err)
     end
 
     return true
@@ -132,6 +122,7 @@ end
 
 return {
     _section_name = _section_name,
+    _example_schema = _example_schema,
     validate_config = validate_config,
     apply_config = apply_config,
 }

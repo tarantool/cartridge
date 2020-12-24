@@ -70,6 +70,9 @@ Fixed
   ``UNIX_PATH_MAX`` limit.
 - Fix ``upstream.idle`` issue tolerance to avoid unnecessary warnings
   "Replication: long idle (1 > 1)".
+- Allow removing spaces from DDL schema for the sake of ``drop`` migrations.
+- Make DDL schema validation stricter. Forbid redundant keys in schema top-level
+  and make ``spaces`` mandatory.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Enhanced is WebUI

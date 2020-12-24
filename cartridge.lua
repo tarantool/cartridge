@@ -733,7 +733,7 @@ return {
 
     --- Get clusterwide DDL schema.
     -- It's like **\_G.cartridge\_get\_schema**,
-    -- but isn't non-global variable.
+    -- but isn't a global variable.
     --
     -- (**Added** in v2.0.1-54)
     -- @function get_schema
@@ -744,7 +744,7 @@ return {
 
     --- Apply clusterwide DDL schema.
     -- It's like **\_G.cartridge\_set\_schema**,
-    -- but isn't non-global variable.
+    -- but isn't a global variable.
     --
     -- (**Added** in v2.0.1-54)
     -- @function set_schema
