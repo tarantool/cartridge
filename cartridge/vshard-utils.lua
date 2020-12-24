@@ -549,9 +549,7 @@ local function edit_vshard_options(group_name, vshard_options)
     end
 
     for k, v in pairs(vshard_options) do
-        if v ~= nil then
-            group[k] = v
-        end
+        group[k] = v
     end
 
     return twophase.patch_clusterwide(patch)

@@ -89,11 +89,11 @@ local function coerceValue(node, schemaType, variables, opts)
     local value = variables[node.name.value]
     if schemaType.parseValue ~= nil then
       value = schemaType.parseValue(value)
-    end
-    if strict_non_null and type(value) == 'nil' then
-      error(('Could not coerce variable "%s" with value "%s" to type "%s"'):format(
-          node.name.value, variables[node.name.value], schemaType.name
-      ))
+      if strict_non_null and type(value) == 'nil' then
+        error(('Could not coerce variable "%s" with value "%s" to type "%s"'):format(
+            node.name.value, variables[node.name.value], schemaType.name
+        ))
+      end
     end
     return value
   end

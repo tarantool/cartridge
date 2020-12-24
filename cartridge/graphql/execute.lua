@@ -253,12 +253,10 @@ local function getFieldEntry(objectType, object, fields, context)
     for _, value in ipairs(context.operation.variableDefinitions) do
       local variable_name = value.variable.name.value
       if type(context.variables[variable_name]) == 'nil' then
-        local default_value = box.NULL
         if value.defaultValue ~= nil then
           local variableType = query_util.typeFromAST(value.type, context.schema)
-          default_value = util.coerceValue(value.defaultValue, variableType)
+          context.variables[variable_name] = util.coerceValue(value.defaultValue, variableType)
         end
-        context.variables[variable_name] = default_value
       end
     end
   end

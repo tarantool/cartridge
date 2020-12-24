@@ -92,7 +92,7 @@ local function join_server(args)
         return nil, err
     end
 
-    local timeout = args.timeout ~= nil and args.timeout or 0
+    local timeout = args.timeout or 0
     if not (timeout > 0) then
         return true
     end

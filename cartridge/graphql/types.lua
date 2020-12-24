@@ -87,11 +87,11 @@ function types.scalar(config)
   assert(type(config.name) == 'string', 'type name must be provided as a string')
   assert(type(config.serialize) == 'function', 'serialize must be a function')
   assert(type(config.isValueOfTheType) == 'function', 'isValueOfTheType must be a function')
-  if config.parseValue or config.parseLiteral then
-    assert(
-      type(config.parseValue) == 'function' and type(config.parseLiteral) == 'function',
-      'must provide both parseValue and parseLiteral to scalar type'
-    )
+  if config.parseValue then
+    assert(type(config.parseValue) == 'function', 'parseValue must be a function')
+  end
+  if config.parseLiteral then
+    assert(type(config.parseLiteral) == 'function', 'parseLiteral must be a function')
   end
 
   local instance = {
@@ -274,7 +274,6 @@ types.int = types.scalar({
   description = "The `Int` scalar type represents non-fractional signed whole numeric values. " ..
                 "Int can represent values from -(2^31) to 2^31 - 1, inclusive.",
   serialize = coerceInt,
-  parseValue = coerceInt,
   parseLiteral = function(node)
     return coerceInt(node.value)
   end,
@@ -314,7 +313,6 @@ types.long = types.scalar({
   description = "The `Long` scalar type represents non-fractional signed whole numeric values. " ..
                 "Long can represent values from -(2^52) to 2^52 - 1, inclusive.",
   serialize = coerceLong,
-  parseValue = coerceLong,
   parseLiteral = function(node)
     return coerceLong(node.value)
   end,
@@ -337,7 +335,6 @@ end
 types.float = types.scalar({
   name = 'Float',
   serialize = coerceFloat,
-  parseValue = coerceFloat,
   parseLiteral = function(node)
     return coerceFloat(node.value)
   end,
@@ -362,7 +359,6 @@ types.string = types.scalar({
   description = "The `String` scalar type represents textual data, represented as UTF-8 character sequences. " ..
                 "The String type is most often used by GraphQL to represent free-form human-readable text.",
   serialize = coerceString,
-  parseValue = coerceString,
   parseLiteral = function(node)
     return coerceString(node.value)
   end,
@@ -390,7 +386,6 @@ types.boolean = types.scalar({
   name = 'Boolean',
   description = "The `Boolean` scalar type represents `true` or `false`.",
   serialize = coerceBoolean,
-  parseValue = coerceBoolean,
   parseLiteral = function(node)
     return coerceBoolean(node.value)
   end,
@@ -406,7 +401,6 @@ however, defining it as an ID signifies that it is not intended to be human‐re
 types.id = types.scalar({
   name = 'ID',
   serialize = coerceString,
-  parseValue = coerceString,
   parseLiteral = function(node)
     return coerceString(node.value)
   end,
