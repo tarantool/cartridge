@@ -87,11 +87,9 @@ function types.scalar(config)
   assert(type(config.name) == 'string', 'type name must be provided as a string')
   assert(type(config.serialize) == 'function', 'serialize must be a function')
   assert(type(config.isValueOfTheType) == 'function', 'isValueOfTheType must be a function')
+  assert(type(config.parseLiteral) == 'function', 'parseLiteral must be a function')
   if config.parseValue then
     assert(type(config.parseValue) == 'function', 'parseValue must be a function')
-  end
-  if config.parseLiteral then
-    assert(type(config.parseLiteral) == 'function', 'parseLiteral must be a function')
   end
 
   local instance = {
