@@ -37,7 +37,7 @@ g.test_upload = function()
     server.net_box:eval([[
         package.loaded['test'] = package.loaded['test'] or {}
         package.loaded['test']['test'] = function(root, args)
-          return args[1].value
+            return args[1].value
         end
 
         local graphql = require('cartridge.graphql')
@@ -305,7 +305,7 @@ g.test_enum_input = function()
     server.net_box:eval([[
         package.loaded['test'] = package.loaded['test'] or {}
         package.loaded['test']['test_enum'] = function(root, args)
-          return args.arg.field
+            return args.arg.field
         end
 
         local graphql = require('cartridge.graphql')
@@ -435,15 +435,15 @@ g.test_nested_input = function()
     server.net_box:eval([[
         package.loaded['test'] = {}
         package.loaded['test']['test_nested_InputObject'] = function(root, args)
-          return args.servers[1].field
+            return args.servers[1].field
         end
 
         package.loaded['test']['test_nested_list'] = function(root, args)
-          return args.servers[1]
+            return args.servers[1]
         end
 
         package.loaded['test']['test_nested_InputObject_complex'] = function(root, args)
-          return ('%s+%s+%s'):format(args.upvalue, args.servers.field2, args.servers.test.field[1])
+            return ('%s+%s+%s'):format(args.upvalue, args.servers.field2, args.servers.test.field[1])
         end
 
         local graphql = require('cartridge.graphql')
@@ -559,21 +559,21 @@ g.test_custom_type_scalar_variables = function()
     server.net_box:eval([[
         package.loaded['test'] = {}
         package.loaded['test']['test_custom_type_scalar'] = function(_, args)
-          return args.field
+            return args.field
         end
         package.loaded['test']['test_custom_type_scalar_list'] = function(_, args)
-          return args.fields[1]
+            return args.fields[1]
         end
         package.loaded['test']['test_json_type'] = function(_, args)
-          if args.field == nil then
-            return nil
-          end
-          assert(type(args.field) == 'table', "Field is not a table! ")
-          assert(args.field.test ~= nil, "No field 'test' in object!")
-          return args.field
+            if args.field == nil then
+                return nil
+            end
+            assert(type(args.field) == 'table', "Field is not a table! ")
+            assert(args.field.test ~= nil, "No field 'test' in object!")
+            return args.field
         end
         package.loaded['test']['test_custom_type_scalar_inputObject'] = function(_, args)
-          return args.object.nested_object.field
+            return args.object.nested_object.field
         end
 
         local json = require('json')
@@ -1067,12 +1067,12 @@ g.test_default_values = function()
         end
 
         package.loaded['test']['test_json_type'] = function(_, args)
-          if args.field == nil then
-            return nil
-          end
-          assert(type(args.field) == 'table', "Field is not a table! ")
-          assert(args.field.test ~= nil, "No field 'test' in object!")
-          return args.field
+            if args.field == nil then
+                return nil
+            end
+            assert(type(args.field) == 'table', "Field is not a table! ")
+            assert(args.field.test ~= nil, "No field 'test' in object!")
+            return args.field
         end
 
         local json = require('json')
@@ -1080,7 +1080,6 @@ g.test_default_values = function()
         local types = require('cartridge.graphql.types')
 
         local function decodeJson(value)
-            require('log').error('$ %s', json.encode(value))
             if value ~= nil then
                 return json.decode(value)
             end
