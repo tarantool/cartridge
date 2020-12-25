@@ -37,7 +37,7 @@ local function funcall_wrap(fun_name, operation, field_name)
 
         local res, err = funcall.call(fun_name, ...)
 
-        if res == nil then
+        if err ~= nil then
             error(err, 0)
         end
 

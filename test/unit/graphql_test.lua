@@ -917,33 +917,40 @@ function g.test_rules_directivesAreDefined()
 end
 
 function g.test_types_isValueOfTheType_for_scalars()
+    local function isString(value)
+        return type(value) == 'string'
+    end
+
+    local function coerceString(value)
+        if value ~= nil then
+            value = tostring(value)
+            if not isString(value) then return end
+        end
+
+        return value
+    end
+
     t.assert_error(function()
         types.scalar({
             name = 'MyString',
-            description = "Custom string type",
-            serialize = tostring,
-            parseValue = tostring,
+            description = 'Custom string type',
+            serialize = coerceString,
+            parseValue = coerceString,
             parseLiteral = function(node)
-                if node.kind == 'string' then
-                    return node.value
-                end
+                return coerceString(node.value)
             end,
         })
     end)
 
     local CustomString = types.scalar({
         name = 'MyString',
-        description = "Custom string type",
-        serialize = tostring,
-        parseValue = tostring,
+        description = 'Custom string type',
+        serialize = coerceString,
+        parseValue = coerceString,
         parseLiteral = function(node)
-            if node.kind == 'string' then
-                return node.value
-            end
+            return coerceString(node.value)
         end,
-        isValueOfTheType = function(value)
-            return type(value) == 'string'
-        end,
+        isValueOfTheType = isString,
     })
     t.assert_equals(CustomString.__type, 'Scalar')
 end
