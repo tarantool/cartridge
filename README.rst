@@ -1,12 +1,36 @@
 .. _cartridge_readme:
 
 ================================================================================
-Tarantool Cartridge: a framework for distributed applications development
+Tarantool Cartridge
 ================================================================================
+
+A framework for distributed applications development.
 
 .. raw:: html
 
-    <img src="https://github.com/tarantool/cartridge/blob/master/cartridge.png" height="400px">
+  <a href="https://github.com/tarantool/cartridge/actions?query=workflow%3A%22Backend+Test%22">
+    <img src="https://github.com/tarantool/cartridge/workflows/Backend%20Test/badge.svg">
+  </a>
+  <a href="https://github.com/tarantool/cartridge/actions?query=workflow%3A%22Frontend+Test%22">
+    <img src="https://github.com/tarantool/cartridge/workflows/Frontend%20Test/badge.svg">
+  </a>
+  <br/>
+  <a href="https://t.me/tarantool">
+    <img src="https://img.shields.io/badge/telegram%20(EN)-tarantool-blue?logo=telegram&style=social">
+  </a>
+  <br/>
+  <a href="https://t.me/tarantoolru">
+    <img src="https://img.shields.io/badge/telegram%20(RU)-tarantoolru-blue?logo=telegram&style=social">
+  </a>
+
+.. raw:: html
+
+  <p align="center">
+    <img
+      src="https://github.com/tarantool/cartridge/raw/master/cartridge.png"
+      height="400px"
+    >
+  </p>
 
 .. contents::
 
@@ -115,110 +139,13 @@ See:
 * `Cartridge API reference <https://www.tarantool.io/en/doc/latest/book/cartridge/cartridge_api/>`_
 
 --------------------------------------------------------------------------------
-Contribution
+Contributing
 --------------------------------------------------------------------------------
 
-The workflow for Cartridge contributors may be different from that for Cartridge
-users as it it implies building the project from source (documentation, Web UI)
-and running tests.
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Building from source
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The fastest way to build the project is to skip building the Web UI:
-
-.. code-block:: bash
-
-    CMAKE_DUMMY_WEBUI=true tarantoolctl rocks make
-
-But if you want to build the frontend too, you'll also need:
-
-* ``nodejs`` >= 12 (see these `instructions <https://github.com/nodesource/distributions>`_);
-* ``npm`` >= 6.
-
-Documentation is generated from source code, but only if the ``ldoc`` and ``sphinx``
-tools are installed:
-
-.. code-block:: bash
-
-    pip install 'sphinx==3.0.3'
-    tarantoolctl rocks install \
-      https://raw.githubusercontent.com/tarantool/LDoc/tarantool/ldoc-scm-2.rockspec \
-      --server=http://rocks.moonscript.org
-    tarantoolctl rocks make
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Running a demo cluster
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-There are several example entry points which are mostly used for testing,
-but can also be useful for demo purposes or experiments:
-
-.. code-block:: bash
-
-    cartridge start
-
-    # or select a specific entry point
-    # cartridge start --script ./test/entrypoint/srv_vshardless.lua
-
-It can be accessed through the Web UI (http://localhost:8081)
-or via the binary protocol:
-
-.. code-block:: bash
-
-    tarantoolctl connect admin@localhost:3301
-
-If you also need the stateful failover mode, launch an external state provider
-|--| ``stateboard``:
-
-.. code-block:: bash
-
-    cartridge start --stateboard
-
-And set failover parameters according to ``instances.yml``. The defaults are:
-
-* State provider URI: ``localhost:4401``;
-* Password: ``qwerty``.
-
-For more details about ``cartridge-cli``, see its
-`usage <https://github.com/tarantool/cartridge-cli#usage>`_.
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Auto-generated sources
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-After the GraphQL API is changed, don't forget to fetch the schema
-``doc/schema.graphql``:
-
-.. code-block:: bash
-
-    npm install graphql-cli@3.0.14
-    ./fetch-schema.sh
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Running tests
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. code-block:: bash
-
-    # Backend
-    tarantoolctl rocks install luacheck
-    tarantoolctl rocks install luatest 0.5.0
-    .rocks/bin/luacheck .
-    .rocks/bin/luatest -v
-
-    # Frontend
-    npm install cypress@4.12.1
-    ./frontend-test.sh
-    ./cypress-test.sh
-
-    # Collect coverage
-    tarantoolctl rocks install luacov
-    tarantoolctl rocks install luacov-console
-    .rocks/bin/luatest -v --coverage
-    .rocks/bin/luacov-console `pwd`
-    .rocks/bin/luacov-console -s
+The most essential contribution is your *feedback*, don't hesitate to
+`open an issue <https://github.com/tarantool/cartridge/issues/new>`_.
+If you'd like to propose some changes in code, see the contribution
+`guide <https://github.com/tarantool/cartridge/blob/master/CONTRIBUTING.rst>`_.
 
 .. |--| unicode:: U+2013   .. en dash
 .. |---| unicode:: U+2014  .. em dash, trimming surrounding whitespace
