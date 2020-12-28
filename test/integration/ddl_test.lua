@@ -48,46 +48,26 @@ local function _check_schema(server, as_yaml)
     return ret.data.cluster.check_schema
 end
 
-g.before_all = function()
+g.before_all(function()
     g.cluster = helpers.Cluster:new({
         datadir = fio.tempdir(),
         server_command = helpers.entrypoint('srv_basic'),
         use_vshard = true,
         cookie = require('digest').urandom(6):hex(),
         replicasets = {
-            {
-                uuid = helpers.uuid('a'),
-                roles = {'vshard-router'},
-                servers = {
-                    {
-                        alias = 'router',
-                        instance_uuid = helpers.uuid('a', 'a', 1),
-                    }
-                }
-            }, {
-                uuid = helpers.uuid('b'),
-                roles = {'vshard-storage'},
-                servers = {
-                    {
-                        alias = 'storage-1',
-                        instance_uuid = helpers.uuid('b', 'b', 1),
-                    }, {
-                        alias = 'storage-2',
-                        instance_uuid = helpers.uuid('b', 'b', 2),
-                    }
-                }
-            }
+            {alias = 'R', roles = {'vshard-router'}, servers = 1},
+            {alias = 'S', roles = {'vshard-storage'}, servers = 2},
         }
     })
     g.cluster:start()
 
-    _set_schema(g.cluster.main_server, '---\nspaces: null\n...')
-end
+    _set_schema(g.cluster.main_server, 'spaces: {}')
+end)
 
-g.after_all = function()
+g.after_all(function()
     g.cluster:stop()
     fio.rmtree(g.cluster.datadir)
-end
+end)
 
 local _schema = [[
 spaces:
@@ -138,7 +118,7 @@ function g.test_luaapi()
 
     -- Applying schema on a replica may take a while, so we don't check it
     -- See: https://github.com/tarantool/tarantool/issues/4668
-    for _, alias in pairs({'router', 'storage-1'}) do
+    for _, alias in pairs({'R-1', 'S-1'}) do
         local srv = g.cluster:server(alias)
         t.assert_equals(
             {[srv.alias] = srv.net_box:eval([[
@@ -151,9 +131,8 @@ function g.test_luaapi()
     log.info('Patching with invalid schema...')
 
     t.assert_equals(
-        {call('cartridge_set_schema', {'{"spaces":{}}'})},
-        {box.NULL, 'Missing space "test_space" in schema,' ..
-        ' removing spaces is forbidden'}
+        {call('cartridge_set_schema', {'{}'})},
+        {box.NULL, 'spaces: must be a table, got nil'}
     )
 
     t.assert_equals(
@@ -183,7 +162,7 @@ function g.test_replicas()
 
         t.assert_equals(
             {[srv.alias] = _check_schema(srv, '---\n...')},
-            {[srv.alias] = {error = 'Schema must be a table, got string'}}
+            {[srv.alias] = {error = 'Invalid schema (table expected, got string)'}}
         )
     end
 end
@@ -204,20 +183,50 @@ function g.test_graphql_errors()
     end
 
     _test('][', 'unexpected END event')
-    _test('42', 'Schema must be a table, got number')
-    _test('spaces: false',
-        'Schema.spaces must be a ?table, got boolean'
-    )
-    _test('---\nspaces: null\n...',
-        'Missing space "test_space" in schema,' ..
-        ' removing spaces is forbidden'
-    )
-    _test('spaces: {}',
-        'Missing space "test_space" in schema,' ..
-        ' removing spaces is forbidden'
-    )
+    _test('42', 'Invalid schema (table expected, got number)')
+    _test('{}', 'spaces: must be a table, got nil')
+    _test('spaces: false', 'spaces: must be a table, got boolean')
     _test(_schema:gsub('memtx', 'vinyl'),
         'Incompatible schema: spaces["test_space"]' ..
         ' //engine (expected memtx, got vinyl)'
     )
+end
+
+function g.test_space_removal()
+    local server = g.cluster.main_server
+    _set_schema(server, _schema)
+    _set_schema(server, 'spaces: {}')
+
+    for _, srv in pairs(g.cluster.servers) do
+        srv.net_box:ping()
+        t.assert(srv.net_box.space.test_space,
+            string.format('Missing test_space on %s', srv.alias)
+        )
+    end
+end
+
+function g.test_example_schema()
+    local server = g.cluster.main_server
+    t.assert_str_matches(
+        _set_schema(server, '').as_yaml,
+        '## Example:\n.+'
+    )
+
+    local fun = require('fun')
+    local example_yml = fun.map(
+        function(l) return l:gsub('^# ', '') end,
+        _get_schema(server).as_yaml:split('\n')
+    ):totable()
+    example_yml = table.concat(example_yml, '\n')
+
+    _set_schema(server, example_yml)
+
+    local space_name = next(yaml.decode(example_yml).spaces)
+
+    for _, srv in pairs(g.cluster.servers) do
+        srv.net_box:ping()
+        t.assert(srv.net_box.space[space_name],
+            string.format('Missing space %q on %s', space_name, srv.alias)
+        )
+    end
 end

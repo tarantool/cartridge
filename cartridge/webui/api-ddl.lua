@@ -1,4 +1,3 @@
-local yaml = require('yaml')
 local errors = require('errors')
 local netbox = require('net.box')
 
@@ -41,8 +40,8 @@ local function graphql_get_schema()
         )
     end
     local schema_yml = confapplier.get_readonly(_section_name)
-    if schema_yml == nil then
-        schema_yml = yaml.encode({spaces = {}})
+    if schema_yml == nil or schema_yml == '' then
+        schema_yml = ddl_manager._example_schema
     end
 
     return {

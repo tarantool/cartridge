@@ -586,9 +586,17 @@ add('test_issues', function(g)
     end)
 
     -- Trigger apply_config
-    g.cluster.main_server:graphql({query = [[
-        mutation { cluster { schema(as_yaml: "{}") {} } }
-    ]]})
+    g.cluster.main_server:graphql({
+        query = [[
+            mutation ($uuids: [String!]) {
+                cluster { config_force_reapply(uuids: $uuids) }
+            }
+        ]],
+        variables = {uuids = {
+            R1.instance_uuid,
+            S3.instance_uuid,
+        }}
+    })
 
     helpers.retrying({}, function()
         t.assert_equals(helpers.list_cluster_issues(S1), {})
