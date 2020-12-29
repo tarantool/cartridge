@@ -39,7 +39,7 @@ jobs:
         if: steps.cache-misc-venv.outputs.cache-hit != 'true'
 
       # Setup tarantool
-      - uses: rosik/setup-tarantool@v1
+      - uses: tarantool/setup-tarantool@v1
         with:
           tarantool-version: '1.10'
 
@@ -91,7 +91,7 @@ jobs:
     runs-on: ${{ matrix.runs-on }}
     steps:
       - uses: actions/checkout@v2
-      - uses: rosik/setup-tarantool@v1
+      - uses: tarantool/setup-tarantool@v1
         with:
           tarantool-version: '${{ matrix.tarantool }}'
 
