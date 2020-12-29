@@ -12,26 +12,36 @@ and this project adheres to
 [Unreleased]
 -------------------------------------------------------------------------------
 
+-------------------------------------------------------------------------------
+[2.4.0] - 2020-12-29
+-------------------------------------------------------------------------------
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Added
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- New GraphQL API: ``{cluster {suggestions {refine_uri {}}}}`` to heal the
-  cluster after relocation of servers ``advertise_uri``.
-- New ``cartridge.cfg`` option ``swim_broadcast`` (default true) to disable
-  instances discovery on start.
+Zones and zone distances:
+
 - Add support of replica weights and zones via a clusterwide config new section
   ``zone_distances`` and a server parameter ``zone``.
+
+Fencing:
+
 - Implement a fencing feature. It protects a replicaset from the presence of
   multiple leaders when the network is partitioned and forces the leader to
   become read-only.
+
 - New failover parameter ``failover_timout`` specifies the time (in seconds)
   used by membership to mark ``suspect`` members as ``dead`` which triggers
   failover.
-- New argparse options support for tarantool 2.5+: ``replication_synchro_quorum``,
-  ``replication_synchro_timeout``, ``memtx_use_mvcc_engine``.
+
 - Fencing parameters ``fencing_enabled``, ``fencing_pause``, ``fencing_timeout``
-  are available for customization via Lua and GraphQL API.
+  are available for customization via Lua and GraphQL API, and in WebUI too.
+
+Issues and suggestions:
+
+- New GraphQL API: ``{cluster {suggestions {refine_uri {}}}}`` to heal the
+  cluster after relocation of servers ``advertise_uri``.
 
 - New Lua API ``cartridge.config_force_reapply()`` and similar GraphQL mutation
   ``cluster { config_force_reapply() }`` to heal several operational errors:
@@ -44,17 +54,30 @@ Added
   It'll unlock two-phase commit (remove ``config.prepare`` lock), upload the
   active config from the current instance and reconfigure all roles.
 
+Hot-reload:
+
 - New feature for hot reloading roles code without restarting an instance --
   ``cartridge.reload_roles``. The feature is experimental and should be
   enabled explicitly: ``cartridge.cfg({roles_reload_allowed = true})``.
+
+Miscellanous:
+
+- New ``cartridge.cfg`` option ``swim_broadcast`` to manage
+  instances auto-discovery on start. Default: true.
+
+- New argparse options support for tarantool 2.5+:
+  ``replication_synchro_quorum``, ``replication_synchro_timeout``,
+  ``memtx_use_mvcc_engine``.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Changed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- Default value of ``failover_timeout`` increased from 3 to 20 seconds.
+- Default value of ``failover_timeout`` increased from 3 to 20 seconds
+  **(important change)**.
+
 - RPC functions now consider ``suspect`` members as healthy to be in agreement
-  with failover.
+  with failover **(important change)**.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
@@ -63,14 +86,20 @@ Fixed
 - Don't stuck in ``ConnectingFullmesh`` state when instance is restarted with a
   different ``advertise_uri``. Also keep "Server details" dialog in WebUI
   operable in this case.
+
 - Allow applying config when instance is in ``OperationError``. It doesn't cause
   loss of quorum anymore.
+
 - Stop vshard fibers when the corresponding role is disabled.
+
 - Make ``console.listen`` error more clear when ``console_sock`` exceeds
   ``UNIX_PATH_MAX`` limit.
+
 - Fix ``upstream.idle`` issue tolerance to avoid unnecessary warnings
   "Replication: long idle (1 > 1)".
+
 - Allow removing spaces from DDL schema for the sake of ``drop`` migrations.
+
 - Make DDL schema validation stricter. Forbid redundant keys in schema top-level
   and make ``spaces`` mandatory.
 
@@ -78,18 +107,13 @@ Fixed
 Enhanced is WebUI
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+- Update server details modal, add support for server zones.
+- Properly display errors on WebUI pages "Users" and "Code".
 - Indicate config checksum mismatch in issues list.
-- Indicate the change of `arvertise_uri` in issues list.
-- Upated layout of config management page.
+- Indicate the change of ``arvertise_uri`` in issues list.
+- Show an issue if the clusterwide config is locked on an instance.
 - Refresh interval and stat refresh period variables can be customized via
   frontend-core's ``set_variable`` feature or at runtime.
-- Show suggestions for `arvertise_uri`.
-- Show files requesting error on the code editor page.
-- Fixed bug with errors displaying in modals on Users page.
-- Users and Schema pages state rewritten with effector.
-- Updated server details modal, added support of replica zones.
-- Indicate config is prepared and locked in issues list.
-- Fencing parameters adjustable in failover modal.
 
 -------------------------------------------------------------------------------
 [2.3.0] - 2020-08-26
