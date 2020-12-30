@@ -105,7 +105,7 @@ Running tests
     .rocks/bin/luatest -v
 
     # Frontend
-    npm install cypress@4.12.1
+    npm install cypress@6.2.0
     ./frontend-test.sh
     ./cypress-test.sh
 

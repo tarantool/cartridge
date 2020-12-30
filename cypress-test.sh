@@ -40,4 +40,6 @@ LAUNCHER_SCRIPT
 
 trap "kill %1" EXIT
 
+export NODE_ENV=production
+export BABEL_ENV=$NODE_ENV
 npx cypress "$@" -P webui/
