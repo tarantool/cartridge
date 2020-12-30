@@ -582,18 +582,19 @@ function g.test_orphan_sync_timeout()
     g.master.env['TARANTOOL_REPLICATION_SYNC_LAG'] = 1e-308
     g.master.env['TARANTOOL_REPLICATION_SYNC_TIMEOUT'] = 0.1
     g.master:start()
-    helpers.wish_state(g.master, 'ConnectingFullmesh')
 
-    t.assert_equals(
-        -- master <- slave replication is established instantly
-        get_upstream_info(g.master),
-        {
-            uuid = g.slave.instance_uuid,
-            -- it never finish syncing due to the low lag setting
-            upstream_status = "sync",
-            upstream_message = box.NULL,
-        }
-    )
+    t.helpers.retrying({}, function()
+        t.assert_equals(
+            -- master <- slave replication is established instantly
+            get_upstream_info(g.master),
+            {
+                uuid = g.slave.instance_uuid,
+                -- it never finish syncing due to the low lag setting
+                upstream_status = "sync",
+                upstream_message = box.NULL,
+            }
+        )
+    end)
 
     t.helpers.retrying({}, function()
         local issues = helpers.list_cluster_issues(g.master)
