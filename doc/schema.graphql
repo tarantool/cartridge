@@ -1,5 +1,5 @@
 # source: http://localhost:8081/admin/api
-# timestamp: Mon Dec 14 2020 18:56:50 GMT+0300 (Moscow Standard Time)
+# timestamp: Tue Jan 12 2021 16:14:02 GMT+0300 (Moscow Standard Time)
 
 """Cluster management"""
 type Apicluster {
@@ -314,8 +314,10 @@ type ReplicaStatus {
 }
 
 type Role {
-  name: String!
   dependencies: [String!]
+  implies_storage: Boolean!
+  name: String!
+  implies_router: Boolean!
 }
 
 """A server participating in tarantool cluster"""

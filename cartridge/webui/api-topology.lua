@@ -175,6 +175,8 @@ local gql_type_role = gql_types.object {
     name = 'Role',
     fields = {
         name = gql_types.string.nonNull,
+        implies_router = gql_types.boolean.nonNull,
+        implies_storage = gql_types.boolean.nonNull,
         dependencies = gql_types.list(gql_types.string.nonNull),
     }
 }
@@ -291,12 +293,14 @@ end
 local function get_known_roles(_, _)
     local ret = {}
     for _, role_name in ipairs(roles.get_known_roles()) do
-        local role = {
-            name = role_name,
-            dependencies = roles.get_role_dependencies(role_name),
-        }
+        local role = roles.get_role(role_name)
 
-        table.insert(ret, role)
+        table.insert(ret, {
+            name = role_name,
+            implies_router = role.implies_router or false,
+            implies_storage = role.implies_storage or false,
+            dependencies = roles.get_role_dependencies(role_name),
+        })
     end
 
     return ret
