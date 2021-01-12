@@ -460,8 +460,10 @@ export type ReplicaStatus = {|
 
 export type Role = {|
   __typename?: 'Role',
-  name: $ElementType<Scalars, 'String'>,
   dependencies?: ?Array<$ElementType<Scalars, 'String'>>,
+  implies_storage: $ElementType<Scalars, 'Boolean'>,
+  name: $ElementType<Scalars, 'String'>,
+  implies_router: $ElementType<Scalars, 'Boolean'>,
 |};
 
 /** A server participating in tarantool cluster */

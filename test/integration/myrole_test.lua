@@ -38,17 +38,32 @@ end
 function g.test_api()
     local res = g.cluster.main_server:graphql({query = [[{
             cluster {
-                known_roles { name dependencies }
+                known_roles { name dependencies implies_router implies_storage }
             }
         }]]
     })
 
     t.assert_equals(res['data']['cluster']['known_roles'], {
-        {['name'] = 'failover-coordinator', ['dependencies'] = {}},
-        {['name'] = 'vshard-storage', ['dependencies'] = {}},
-        {['name'] = 'vshard-router', ['dependencies'] = {}},
-        {['name'] = 'myrole-dependency', ['dependencies'] = {}},
-        {['name'] = 'myrole', ['dependencies'] = {'myrole-dependency'}}
+        {
+            name = 'failover-coordinator', dependencies = {},
+            implies_router = false, implies_storage = false,
+        },
+        {
+            name = 'vshard-storage', dependencies = {},
+            implies_router = false, implies_storage = true,
+        },
+        {
+            name = 'vshard-router', dependencies = {},
+            implies_router = true, implies_storage = false,
+        },
+        {
+            name = 'myrole-dependency', dependencies = {},
+            implies_router = false, implies_storage = false,
+        },
+        {
+            name = 'myrole', dependencies = { 'myrole-dependency' },
+            implies_router = true, implies_storage = true,
+        },
     })
 end
 

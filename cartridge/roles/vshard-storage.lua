@@ -74,6 +74,8 @@ end
 
 return {
     role_name = 'vshard-storage',
+    implies_storage = true,
+
     apply_config = apply_config,
     init = init,
     stop = stop,

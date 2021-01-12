@@ -239,6 +239,8 @@ end
 
 return {
     role_name = 'vshard-router',
+    implies_router = true,
+
     validate_config = vshard_utils.validate_config,
     apply_config = apply_config,
     stop = stop,
