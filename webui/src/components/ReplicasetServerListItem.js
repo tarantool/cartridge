@@ -224,7 +224,7 @@ class ReplicasetServerListItem extends React.PureComponent<
           </div>
           <div className={styles.statusGroup}>
             <HealthStatus className={styles.status} status={status} message={message} />
-            <div className={styles.stats}>
+            <div className={cx(styles.stats, 'meta-test__bucketIcon')}>
               {statistics && (
                 <React.Fragment>
                   {typeof statistics.bucketsCount === 'number'
