@@ -20,7 +20,7 @@ jobs:
 
       - uses: tarantool/setup-tarantool@v1
         with:
-          tarantool-version: '1.10'
+          tarantool-version: '2.6'
 
       - name: Cache rocks
         uses: actions/cache@v2

@@ -102,7 +102,7 @@ describe('Server details', () => {
   });
 
   it('Dead server', () => {
-    cy.task('tarantool', { code: `_G.cluster:server('dummy-2'):stop()` });
+    cy.task('tarantool', { code: `_G.cluster:server('dummy-2').process:kill('KILL')` });
 
     cy.get('.ServerLabelsHighlightingArea').contains('dummy-2')
       .closest('li').should('contain', 'Server status is "dead"');
