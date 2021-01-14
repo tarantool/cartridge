@@ -71,7 +71,7 @@ jobs:
           path: ~/.cache/Cypress
           key: cypress-cache-${{ runner.os }}
 
-      - run: npm install cypress@4.12.1
+      - run: npm install cypress@6.2.0
       - run: npx cypress cache list
 
       - run: ./cypress-test.sh run --record --key ${{ secrets.CYPRESS_RECORD_KEY }}

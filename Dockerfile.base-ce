@@ -13,7 +13,7 @@ ENV PATH="${PWD}/node_modules/.bin:${PATH}"
 ENV CYPRESS_CACHE_FOLDER="/root/.cypress"
 RUN npm install \
         graphql-cli@3.0.14 \
-        cypress@4.12.1 \
+        cypress@6.2.0 \
     && npx cypress verify
 
 RUN set -x &&\
