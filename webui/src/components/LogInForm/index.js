@@ -1,6 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { css } from 'emotion';
+import { css, cx } from 'emotion';
 import { logIn } from 'src/store/actions/auth.actions';
 import { Formik, Form } from 'formik'
 import * as yup from 'yup'
@@ -12,10 +12,10 @@ import {
   Checkbox,
   InputGroup,
   LabeledInput,
-  Scrollbar,
   Modal,
   Text,
-  Spin
+  Spin,
+  genericStyles
 } from '@tarantool.io/ui-kit';
 import logo from '../../assets/tarantool-logo-full.svg';
 
@@ -41,11 +41,10 @@ const styles = {
   `,
   welcomeMessage: css`
     height: 150px;
+    padding: 12px;
     border: 1px solid #ddd;
     border-radius: 5px;
-  `,
-  welcomeMessageContent: css`
-    padding: 1em;
+    overflow: auto;
   `,
   emptySpaceUnderSpin: css`
     height: 60px;
@@ -64,11 +63,9 @@ class LogInForm extends React.Component {
   };
 
   renderWelcomeMessage = (welcomeMessage, values, handleChange) => (<>
-    <Scrollbar className={styles.welcomeMessage}>
-      <div className={styles.welcomeMessageContent}>
-        <Text variant="p">{welcomeMessage}</Text>
-      </div>
-    </Scrollbar>
+    <div className={cx(styles.welcomeMessage, genericStyles.scrollbars)}>
+      <Text variant="p">{welcomeMessage}</Text>
+    </div>
     <br />
     <InputGroup>
       <Checkbox checked={values['isAgreeChecked']} name="isAgreeChecked" onChange={handleChange}>

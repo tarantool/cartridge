@@ -61,24 +61,24 @@ describe('Code page', () => {
     cy.get('.meta-test__addFileBtn').click();
     cy.get('.meta-test__enterName').focused().type('file-in-tree1.yml');
     cy.get('#root').contains('dummy-1').click();
-    cy.get('.ScrollbarsCustom-Content').contains('file-in-tree1.yml');
+    cy.get('.meta-test__Code__FileTree').contains('file-in-tree1.yml');
 
     reload();
-    cy.get('.ScrollbarsCustom-Content').contains('file-in-tree1.yml').should('not.exist');
+    cy.get('.meta-test__Code__FileTree').contains('file-in-tree1.yml').should('not.exist');
 
     cy.get('.meta-test__addFileBtn').click();
     cy.get('.meta-test__enterName').focused().type('file-in-tree2.yml{enter}');
-    cy.get('.ScrollbarsCustom-Content').contains('file-in-tree2.yml');
+    cy.get('.meta-test__Code__FileTree').contains('file-in-tree2.yml');
 
     apply();
     cy.get('span:contains(Success) + span:contains(Files successfuly applied)').click();
 
-    cy.get('.ScrollbarsCustom-Content').contains('file-in-tree2.yml');
+    cy.get('.meta-test__Code__FileTree').contains('file-in-tree2.yml');
     reload();
-    cy.get('.ScrollbarsCustom-Content').contains('file-in-tree2.yml');
+    cy.get('.meta-test__Code__FileTree').contains('file-in-tree2.yml');
 
     //file contents
-    cy.get('.ScrollbarsCustom-Content').contains('file-in-tree2.yml').click();
+    cy.get('.meta-test__Code__FileTree').contains('file-in-tree2.yml').click();
     cy.get('.monaco-editor textarea').type(selectAllKeys + '{backspace}');
     cy.get('.monaco-editor textarea').type('some test code');
 
@@ -92,7 +92,7 @@ describe('Code page', () => {
     reload();
     cy.get('.monaco-editor textarea').should('have.value', '');
 
-    cy.get('.ScrollbarsCustom-Content').contains('file-in-tree2.yml').click();
+    cy.get('.meta-test__Code__FileTree').contains('file-in-tree2.yml').click();
     cy.get('.monaco-editor textarea').type('some test code2');
 
     apply();
@@ -115,11 +115,11 @@ describe('Code page', () => {
     //edit file and file contents
     cy.get('.meta-test__editFolderInTreeBtn').eq(0).click({ force: true });
     cy.get('.meta-test__enterName').focused().clear().type('edited-file-name{enter}');
-    cy.get('.ScrollbarsCustom-Content').contains('edited-file-name');
+    cy.get('.meta-test__Code__FileTree').contains('edited-file-name');
 
     //reload
     reload()
-    cy.get('.ScrollbarsCustom-Content').contains('edited-file-name').should('not.exist');
+    cy.get('.meta-test__Code__FileTree').contains('edited-file-name').should('not.exist');
 
     //apply
     cy.get('.meta-test__editFolderInTreeBtn').eq(0).click({ force: true });
@@ -128,10 +128,10 @@ describe('Code page', () => {
     cy.get('span:contains(Success) + span:contains(Files successfuly applied)').click();
 
     reload();
-    cy.get('.ScrollbarsCustom-Content').contains('edited-file-name2').click();
+    cy.get('.meta-test__Code__FileTree').contains('edited-file-name2').click();
 
     //file contents
-    cy.get('.ScrollbarsCustom-Content').contains('edited-file-name2').click();
+    cy.get('.meta-test__Code__FileTree').contains('edited-file-name2').click();
     cy.get('.monaco-editor textarea').type(selectAllKeys + '{backspace}');
     cy.get('.monaco-editor textarea').type('edit test code');
     cy.get('.monaco-editor textarea').should('have.value', 'edit test code');
@@ -139,7 +139,7 @@ describe('Code page', () => {
     reload();
     cy.get('.monaco-editor textarea').should('have.value', 'some test code2');
 
-    cy.get('.ScrollbarsCustom-Content').contains('edited-file-name2').click();
+    cy.get('.meta-test__Code__FileTree').contains('edited-file-name2').click();
     cy.get('.monaco-editor textarea').type(selectAllKeys + '{backspace}');
     cy.get('.monaco-editor textarea').type('edit test code2');
 
@@ -151,7 +151,7 @@ describe('Code page', () => {
 
     //delete file and file contents
     //file contents
-    cy.get('.ScrollbarsCustom-Content').contains('edited-file-name2').click();
+    cy.get('.meta-test__Code__FileTree').contains('edited-file-name2').click();
     cy.get('.monaco-editor textarea').type(selectAllKeys + '{backspace}');
     cy.get('.monaco-editor textarea').type('a{backspace}'); //без этого не работает
     cy.get('.monaco-editor textarea').should('have.value', '');
@@ -159,7 +159,7 @@ describe('Code page', () => {
     reload();
     cy.get('.monaco-editor textarea').should('have.value', 'edit test code2');
 
-    cy.get('.ScrollbarsCustom-Content').contains('edited-file-name2').click();
+    cy.get('.meta-test__Code__FileTree').contains('edited-file-name2').click();
     cy.get('.monaco-editor textarea').type(selectAllKeys + '{backspace}');
 
     apply();
@@ -170,10 +170,10 @@ describe('Code page', () => {
 
     cy.get('.meta-test__deleteFolderInTreeBtn').eq(0).click({ force: true });
     cy.get('.meta-test__deleteModal button[type="button"]').contains('Ok').click();
-    cy.get('.ScrollbarsCustom-Content').contains('edited-file-name2').should('not.exist');
+    cy.get('.meta-test__Code__FileTree').contains('edited-file-name2').should('not.exist');
 
     reload();
-    cy.get('.ScrollbarsCustom-Content').contains('edited-file-name2');
+    cy.get('.meta-test__Code__FileTree').contains('edited-file-name2');
 
     cy.get('.meta-test__deleteFolderInTreeBtn').eq(0).click({ force: true });
     cy.get('.meta-test__deleteModal').should('be.visible');
@@ -183,7 +183,7 @@ describe('Code page', () => {
     cy.get('span:contains(Success) + span:contains(Files successfuly applied)').click();
 
     reload();
-    cy.get('.ScrollbarsCustom-Content').contains('edited-file-name2').should('not.exist');
+    cy.get('.meta-test__Code__FileTree').contains('edited-file-name2').should('not.exist');
   });
 
   it('Folder in tree', () => {

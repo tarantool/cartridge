@@ -9,7 +9,6 @@ import {
   IconCreateFile,
   IconRefresh,
   Text,
-  Scrollbar,
   NonIdealState,
   colors,
   splashSelectFileSvg
@@ -72,9 +71,6 @@ const styles = {
   `,
   fileActionBtn: css`
     margin-left: 4px;
-  `,
-  treeScrollWrap: css`
-    flex-grow: 1;
   `,
   mainContent: css`
     flex-grow: 1;
@@ -375,24 +371,21 @@ class Code extends React.Component<CodeProps, CodeState> {
                 />
               </div>
             </div>
-            <div className={cx('meta-test__Code__FileTree', styles.treeScrollWrap)}>
-              <Scrollbar>
-                <FileTree
-                  initiallyExpanded
-                  tree={fileTree}
-                  selectedFile={selectedFile}
-                  fileOperation={fileOperationType}
-                  operationObject={fileOperationObject}
-                  onOperationConfirm={this.handleFileOperationConfirm}
-                  onOperationCancel={this.handleFileOperationCancel}
-                  onFileOpen={id => dispatch(selectFile(id))}
-                  onFileCreate={this.handleFileCreateClick}
-                  onFolderCreate={this.handleFolderCreateClick}
-                  onDelete={this.handleFileDeleteClick}
-                  onRename={this.handleFileRenameClick}
-                />
-              </Scrollbar>
-            </div>
+            <FileTree
+              className={'meta-test__Code__FileTree'}
+              initiallyExpanded
+              tree={fileTree}
+              selectedFile={selectedFile}
+              fileOperation={fileOperationType}
+              operationObject={fileOperationObject}
+              onOperationConfirm={this.handleFileOperationConfirm}
+              onOperationCancel={this.handleFileOperationCancel}
+              onFileOpen={id => dispatch(selectFile(id))}
+              onFileCreate={this.handleFileCreateClick}
+              onFolderCreate={this.handleFolderCreateClick}
+              onDelete={this.handleFileDeleteClick}
+              onRename={this.handleFileRenameClick}
+            />
           </div>
           <div className={styles.mainContent}>
 

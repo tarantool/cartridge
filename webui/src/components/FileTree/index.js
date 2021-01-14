@@ -1,6 +1,7 @@
 // @flow
 import React from 'react';
 import { css, cx } from 'emotion';
+import { genericStyles } from '@tarantool.io/ui-kit';
 import type { TreeFileItem } from 'src/store/selectors/filesSelectors';
 import type { FileItem } from 'src/store/reducers/files.reducer';
 import { FileTreeElement } from './FileTreeElement';
@@ -16,6 +17,8 @@ const styles = {
     padding: 0;
     margin: 0;
     list-style: none;
+    overflow-x: hidden;
+    overflow-y: auto;
   `
 };
 
@@ -107,7 +110,14 @@ export class FileTree extends React.Component<FileTreeProps, FileTreeState> {
     const { collapsedEntries, expandedEntries } = this.state;
 
     return (
-      <ul className={cx(styles.tree, className, 'meta-test__enterName')}>
+      <ul
+        className={cx(
+          styles.tree,
+          genericStyles.scrollbars,
+          className,
+          'meta-test__enterName'
+        )}
+      >
         {operationObject === '' && ['createFile', 'createFolder'].includes(fileOperation) && (
           <NewTreeElement
             type={fileOperation === 'createFolder' ? 'folder' : 'file'}
