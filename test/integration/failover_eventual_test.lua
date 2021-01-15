@@ -363,6 +363,11 @@ g.test_api_failover = function()
         set_failover_params, {etcd2_params = {endpoints = {'%^&*'}}}
     )
 
+    local tarantool_defaults = {
+        uri = 'tcp://localhost:4401',
+        password = '',
+    }
+
     local etcd2_params = {
         prefix = '/',
         lock_delay = 10,
@@ -376,6 +381,7 @@ g.test_api_failover = function()
         }), {
             mode = 'eventual',
             failover_timeout = 0,
+            tarantool_params = tarantool_defaults,
             etcd2_params = {
                 prefix = 'kv',
                 lock_delay = 36.6,
@@ -397,6 +403,7 @@ g.test_api_failover = function()
         }), {
             mode = 'eventual',
             failover_timeout = 0,
+            tarantool_params = tarantool_defaults,
             etcd2_params = {
                 prefix = '/',
                 lock_delay = 10,
@@ -415,6 +422,7 @@ g.test_api_failover = function()
         {
             mode = 'eventual',
             failover_timeout = 0,
+            tarantool_params = tarantool_defaults,
             etcd2_params = etcd2_params,
             fencing_enabled = false,
             fencing_timeout = 4,
@@ -514,8 +522,8 @@ g.test_api_failover = function()
             mode = 'disabled',
             state_provider = 'tarantool',
             failover_timeout = 3,
-            tarantool_params = tarantool_params,
             etcd2_params = etcd2_defaults,
+            tarantool_params = tarantool_params,
             fencing_enabled = false,
             fencing_timeout = 4,
             fencing_pause = 2,

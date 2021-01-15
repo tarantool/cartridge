@@ -797,6 +797,19 @@ local function get_failover_params(topology_cfg)
         -- because stateful failover itself wasn't implemented yet
     end
 
+    -- Enrich tarantool params with defaults
+    if ret.tarantool_params == nil then
+        ret.tarantool_params = {}
+    end
+
+    if ret.tarantool_params.uri == nil then
+        ret.tarantool_params.uri = 'tcp://localhost:4401'
+    end
+
+    if ret.tarantool_params.password == nil then
+        ret.tarantool_params.password = ''
+    end
+
     -- Enrich etcd2 params with defaults
     if ret.etcd2_params == nil then
         ret.etcd2_params = {}

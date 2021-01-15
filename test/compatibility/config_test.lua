@@ -72,13 +72,15 @@ function g.test_failover_2_0_1_78()
             mode
             state_provider
             tarantool_params {}
+            etcd2_params {}
         }}
     }]]}).data.cluster.failover_params
 
     t.assert_equals(failover_params, {
         mode = 'eventual',
         state_provider = box.NULL,
-        tarantool_params = box.NULL,
+        tarantool_params = {},
+        etcd2_params = {},
     })
 end
 
@@ -133,12 +135,14 @@ function g.test_failover_2_0_1_95()
             mode
             state_provider
             tarantool_params {}
+            etcd2_params {}
         }}
     }]]}).data.cluster.failover_params
 
     t.assert_equals(failover_params, {
         mode = 'eventual',
         state_provider = box.NULL,
-        tarantool_params = box.NULL,
+        tarantool_params = {},
+        etcd2_params = {},
     })
 end

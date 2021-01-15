@@ -29,5 +29,5 @@ cartridge.srv-5:
 
 cartridge-stateboard:
     workdir: ./dev/stateboard
-    password: qwerty
+    password: ''
     listen: 4401

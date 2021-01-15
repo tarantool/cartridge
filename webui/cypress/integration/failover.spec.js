@@ -154,7 +154,7 @@ describe('Failover', () => {
     cy.get('button[label="State provider"]').contains('Tarantool (stateboard)').click();
     cy.get('.meta-test__StateProvider__Dropdown *:contains(Tarantool (stateboard))');
     cy.get('.meta-test__StateProvider__Dropdown *:contains(Etcd)');
-    cy.get('.meta-test__stateboardURI input').should('have.value', '');
+    cy.get('.meta-test__stateboardURI input').should('have.value', 'tcp://localhost:4401');
     cy.get('.meta-test__stateboardPassword input').should('have.value', '');
     //error failover_timeout must be greater than fencing_timeout
     cy.get('.meta-test__SubmitButton').click();
@@ -162,6 +162,7 @@ describe('Failover', () => {
       'topology_new.failover.failover_timeout must be greater than fencing_timeout'
     );
     //error Invalid URI ""
+    cy.get('.meta-test__stateboardURI input').type('{selectAll}{del}');
     cy.get('.meta-test__fencingTimeout input').type('{selectAll}{del}4');
     cy.get('.meta-test__SubmitButton').click();
     cy.get('.meta-test__inlineError span').should('have.text',
