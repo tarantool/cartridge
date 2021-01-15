@@ -1,16 +1,18 @@
 local module_name = 'cartridge.webui.api-suggestions'
 
 local fun = require('fun')
+local membership = require('membership')
 local issues = require('cartridge.issues')
 local topology = require('cartridge.topology')
 local confapplier = require('cartridge.confapplier')
-local lua_api_get_topology = require('cartridge.lua-api.get-topology')
 
 local gql_types = require('cartridge.graphql.types')
 
 local refine_uri_suggestion = gql_types.object({
     name = 'RefineUriSuggestion',
-    description = 'A suggestion to reconfigure cluster topology',
+    description =
+        'A suggestion to reconfigure cluster topology because ' ..
+        ' one or more servers were restarted with a new advertise uri',
     fields = {
         uuid = gql_types.string.nonNull,
         uri_old = gql_types.string.nonNull,
@@ -20,10 +22,17 @@ local refine_uri_suggestion = gql_types.object({
 
 local force_apply_suggestion = gql_types.object({
     name = 'ForceApplySuggestion',
-    description = 'A suggestion to force apply config on the specified instance',
+    description =
+        'A suggestion to reapply configuration forcefully.' ..
+        ' There may be several reasons to do that:' ..
+        ' configuration checksum mismatch (config_mismatch);' ..
+        ' the locking of tho-phase commit (config_locked);' ..
+        ' an error during previous config update (operation_error).',
     fields = {
         uuid = gql_types.string.nonNull,
-        reasons = gql_types.list(gql_types.string.nonNull).nonNull
+        config_locked = gql_types.boolean.nonNull,
+        config_mismatch = gql_types.boolean.nonNull,
+        operation_error = gql_types.boolean.nonNull,
     }
 })
 
@@ -53,48 +62,50 @@ local function refine_uri()
     return ret
 end
 
-local function parse_issues(issues)
-    local reasons_list = {}
+local function force_apply(_, _, info)
+    local topology_cfg = confapplier.get_readonly('topology')
+    if topology_cfg == nil then
+        return nil
+    end
 
-    for _, issue in ipairs(issues) do
+    local cache = info.context.request_cache
+    if cache.issues == nil then
+        cache.issues = issues.list_on_cluster()
+    end
+
+    local reasons_map = {}
+
+    for _, issue in ipairs(cache.issues) do
+        local uuid = issue.instance_uuid
+
         if issue.topic == 'config_mismatch'
-        or issue.topic == 'config_locked' then
-            if reasons_list[issue.instance_uuid] == nil then
-                reasons_list[issue.instance_uuid] = {}
-            end
-
-            if issue.topic == 'config_mismatch' then
-                table.insert(
-                    reasons_list[issue.instance_uuid],
-                    'Configuration checksum mismatch'
-                )
-            end
-
-            if issue.topic == 'config_locked' then
-                table.insert(
-                    reasons_list[issue.instance_uuid],
-                    'Configuration is prepared and locked'
-                )
-            end
+        or issue.topic == 'config_locked'
+        then
+            reasons_map[uuid] = reasons_map[uuid] or {}
+            reasons_map[uuid][issue.topic] = true
         end
     end
 
-    local servers = lua_api_get_topology.get_topology().servers
-    for uuid, srv in pairs(servers) do
-        if srv.message == 'OperationError' then
-            if reasons_list[uuid] == nil then
-                reasons_list[uuid] = {}
-            end
+    local refined_uri_list = topology.refine_servers_uri(topology_cfg)
+    for _, uuid, _ in fun.filter(topology.not_disabled, topology_cfg.servers) do
+        local member = membership.get_member(refined_uri_list[uuid])
 
-            table.insert(reasons_list[uuid], 'Operation Error')
+        if member ~= nil
+        and (member.status == 'alive' or member.status == 'suspect')
+        and member.payload.state == 'OperationError'
+        then
+            reasons_map[uuid] = reasons_map[uuid] or {}
+            reasons_map[uuid]['operation_error'] = true
         end
     end
 
     local ret = {}
-    for uuid, reasons in pairs(reasons_list) do
+    for uuid, reasons in pairs(reasons_map) do
         table.insert(ret, {
             uuid = uuid,
-            reasons = reasons
+            config_locked = reasons.config_locked or false,
+            config_mismatch = reasons.config_mismatch or false,
+            operation_error = reasons.operation_error or false,
         })
     end
 
@@ -103,16 +114,6 @@ local function parse_issues(issues)
     end
 
     return ret
-end
-
-local function force_apply(_, _, info)
-    local cache = info.context.request_cache
-    if cache.issues ~= nil then
-        return parse_issues(cache.issues)
-    end
-
-    cache.issues = issues.list_on_cluster()
-    return parse_issues(cache.issues)
 end
 
 local function get_suggestions(_, _, info)

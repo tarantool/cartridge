@@ -1,5 +1,5 @@
 # source: http://localhost:8081/admin/api
-# timestamp: Fri Jan 15 2021 13:06:04 GMT+0300 (Moscow Standard Time)
+# timestamp: Fri Jan 15 2021 17:13:53 GMT+0300 (Moscow Standard Time)
 
 """Cluster management"""
 type Apicluster {
@@ -149,10 +149,17 @@ type FailoverStateProviderCfgTarantool {
   password: String!
 }
 
-"""A suggestion to force apply config on the specified instance"""
+"""
+A suggestion to reapply configuration forcefully. There may be several reasons
+to do that: configuration checksum mismatch (config_mismatch); the locking of
+tho-phase commit (config_locked); an error during previous config update
+(operation_error).
+"""
 type ForceApplySuggestion {
+  config_mismatch: Boolean!
+  config_locked: Boolean!
   uuid: String!
-  reasons: [String!]!
+  operation_error: Boolean!
 }
 
 type Issue {
@@ -257,7 +264,9 @@ type Query {
   replicasets(uuid: String): [Replicaset]
 }
 
-"""A suggestion to reconfigure cluster topology"""
+"""
+A suggestion to reconfigure cluster topology because  one or more servers were restarted with a new advertise uri
+"""
 type RefineUriSuggestion {
   uri_new: String!
   uuid: String!

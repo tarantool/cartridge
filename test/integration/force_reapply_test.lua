@@ -125,23 +125,9 @@ function g.test_graphql_api()
     t.assert_equals(g.A3.net_box:eval(q_get_counter), 1)
 end
 
-local function get_suggestions()
-    return g.cluster.main_server:graphql({
-        query = [[{
-            cluster {
-                suggestions {
-                    force_apply {
-                        uuid
-                        reasons
-                    }
-                }
-            }
-        }]]
-    }).data.cluster.suggestions.force_apply
-end
-
 function g.test_suggestions()
     -- Wreak some havoc
+
     -- Trigger config_lock issue
     local config = g.A1.net_box:eval([[
         local confapplier = require('cartridge.confapplier')
@@ -152,7 +138,7 @@ function g.test_suggestions()
         '_G.__cartridge_clusterwide_config_prepare_2pc', {config}
     )
 
-    -- And config_mismatch as well
+    -- Add config_mismatch as well
     g.A2.net_box:eval([[
         local confapplier = require('cartridge.confapplier')
         local cfg = confapplier.get_active_config():copy()
@@ -160,17 +146,6 @@ function g.test_suggestions()
         cfg:lock()
         confapplier.apply_config(cfg)
     ]])
-
-    -- One instance can have several reasons to be force-reapplied
-    t.assert_items_equals(get_suggestions(), {
-        {
-            uuid = g.A2.instance_uuid,
-            reasons = {
-                'Configuration checksum mismatch',
-                'Configuration is prepared and locked',
-            },
-        }
-    })
 
     -- OperationError also should be mentioned in suggestions if present
     g.A3.net_box:eval([[
@@ -182,29 +157,34 @@ function g.test_suggestions()
         'Artificial Error',
         force_reapply, {g.A3.instance_uuid}
     )
-    -- Give memebership some time to update servers' status
-    require('fiber').sleep(0.5)
 
-    t.assert_items_equals(get_suggestions(), {
-        {
-            uuid = g.A3.instance_uuid,
-            reasons = {'Operation Error'}
-        },{
-            uuid = g.A2.instance_uuid,
-            reasons = {
-                'Configuration checksum mismatch',
-                'Configuration is prepared and locked',
-            },
-        }
-    })
-
-    t.assert(force_reapply({g.A2.instance_uuid}))
-    t.assert_items_equals(get_suggestions(),
-        {
-            {
-                uuid = g.A3.instance_uuid,
-                reasons = {'Operation Error'}
-            },
-        }
+    -- Speed up memebership payload dissemination
+    g.A1.net_box:call(
+        'package.loaded.membership.probe_uri',
+        {g.A3.advertise_uri}
     )
+
+
+    t.assert_items_equals(
+        helpers.get_suggestions(g.A1).force_apply,
+        {{
+            uuid = g.A2.instance_uuid,
+            config_locked = true,
+            config_mismatch = true,
+            operation_error = false,
+        }, {
+            uuid = g.A3.instance_uuid,
+            config_locked = false,
+            config_mismatch = false,
+            operation_error = true,
+        }}
+    )
+
+    -- Go back where it was
+    g.A3.net_box:eval([[
+        package.loaded['mymodule-permanent'].apply_config = nil
+    ]])
+    t.assert(force_reapply({g.A2.instance_uuid, g.A3.instance_uuid}))
+    g.cluster:wait_until_healthy(g.A1)
+    t.assert_is(helpers.get_suggestions(g.A1).force_apply, box.NULL)
 end
