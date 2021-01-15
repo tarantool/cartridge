@@ -47,7 +47,7 @@ function g.test_twophase_config_locked()
     t.assert_equals(fio.path.exists(g.A3.workdir .. '/config.prepare'), false)
     t.assert_equals(helpers.list_cluster_issues(g.A1), {{
         level = 'warning',
-        topic = 'configuration',
+        topic = 'config_locked',
         instance_uuid = g.A2.instance_uuid,
         replicaset_uuid = g.A2.replicaset_uuid,
         message = 'Configuration is prepared and locked'..
@@ -123,4 +123,68 @@ function g.test_graphql_api()
     t.assert_equals(g.A1.net_box:eval(q_get_counter), 3)
     t.assert_equals(g.A2.net_box:eval(q_get_counter), 2)
     t.assert_equals(g.A3.net_box:eval(q_get_counter), 1)
+end
+
+function g.test_suggestions()
+    -- Wreak some havoc
+
+    -- Trigger config_lock issue
+    local config = g.A1.net_box:eval([[
+        local confapplier = require('cartridge.confapplier')
+        return confapplier.get_active_config():get_plaintext()
+    ]])
+    config['hey.txt'] = 'Hello, locks'
+    g.A2.net_box:call(
+        '_G.__cartridge_clusterwide_config_prepare_2pc', {config}
+    )
+
+    -- Add config_mismatch as well
+    g.A2.net_box:eval([[
+        local confapplier = require('cartridge.confapplier')
+        local cfg = confapplier.get_active_config():copy()
+        cfg:set_plaintext('todo.txt', '- Trigger config mismatch')
+        cfg:lock()
+        confapplier.apply_config(cfg)
+    ]])
+
+    -- OperationError also should be mentioned in suggestions if present
+    g.A3.net_box:eval([[
+        package.loaded['mymodule-permanent'].apply_config = function()
+            error('Artificial Error', 0)
+        end
+    ]])
+    t.assert_error_msg_equals(
+        'Artificial Error',
+        force_reapply, {g.A3.instance_uuid}
+    )
+
+    -- Speed up memebership payload dissemination
+    g.A1.net_box:call(
+        'package.loaded.membership.probe_uri',
+        {g.A3.advertise_uri}
+    )
+
+
+    t.assert_items_equals(
+        helpers.get_suggestions(g.A1).force_apply,
+        {{
+            uuid = g.A2.instance_uuid,
+            config_locked = true,
+            config_mismatch = true,
+            operation_error = false,
+        }, {
+            uuid = g.A3.instance_uuid,
+            config_locked = false,
+            config_mismatch = false,
+            operation_error = true,
+        }}
+    )
+
+    -- Go back where it was
+    g.A3.net_box:eval([[
+        package.loaded['mymodule-permanent'].apply_config = nil
+    ]])
+    t.assert(force_reapply({g.A2.instance_uuid, g.A3.instance_uuid}))
+    g.cluster:wait_until_healthy(g.A1)
+    t.assert_is(helpers.get_suggestions(g.A1).force_apply, box.NULL)
 end

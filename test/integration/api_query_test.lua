@@ -167,12 +167,14 @@ function g.test_suggestions()
         query = [[{
             cluster { suggestions {
                 refine_uri {}
+                force_apply {}
             }}
         }]]
     }).data.cluster.suggestions
 
     t.assert_equals(suggestions, {
         refine_uri = box.NULL,
+        force_apply = box.NULL,
     })
 end
 

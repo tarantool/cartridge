@@ -167,6 +167,20 @@ export type FailoverStateProviderCfgTarantool = {|
   password: $ElementType<Scalars, 'String'>,
 |};
 
+/**
+ * A suggestion to reapply configuration forcefully. There may be several reasons
+ * to do that: configuration checksum mismatch (config_mismatch); the locking of
+ * tho-phase commit (config_locked); an error during previous config update
+ * (operation_error).
+ */
+export type ForceApplySuggestion = {|
+  __typename?: 'ForceApplySuggestion',
+  config_mismatch: $ElementType<Scalars, 'Boolean'>,
+  config_locked: $ElementType<Scalars, 'Boolean'>,
+  uuid: $ElementType<Scalars, 'String'>,
+  operation_error: $ElementType<Scalars, 'Boolean'>,
+|};
+
 export type Issue = {|
   __typename?: 'Issue',
   level: $ElementType<Scalars, 'String'>,
@@ -410,7 +424,7 @@ export type QueryReplicasetsArgs = {|
   uuid?: ?$ElementType<Scalars, 'String'>,
 |};
 
-/** A suggestion to reconfigure cluster topology */
+/** A suggestion to reconfigure cluster topology because  one or more servers were restarted with a new advertise uri */
 export type RefineUriSuggestion = {|
   __typename?: 'RefineUriSuggestion',
   uri_new: $ElementType<Scalars, 'String'>,
@@ -629,6 +643,7 @@ export type ServerStat = {|
 export type Suggestions = {|
   __typename?: 'Suggestions',
   refine_uri?: ?Array<RefineUriSuggestion>,
+  force_apply?: ?Array<ForceApplySuggestion>,
 |};
 
 /** A single user account information */

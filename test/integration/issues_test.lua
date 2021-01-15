@@ -146,7 +146,7 @@ function g.test_config_mismatch()
         helpers.list_cluster_issues(master),
         {{
             level = 'warning',
-            topic = 'configuration',
+            topic = 'config_mismatch',
             instance_uuid = helpers.uuid('a', 'a', 3),
             replicaset_uuid = helpers.uuid('a'),
             message = 'Configuration checksum mismatch' ..
@@ -193,7 +193,7 @@ function g.test_twophase_config_locked()
     -- But it's an issue from replicas point of view
     t.assert_items_include(helpers.list_cluster_issues(replica1), {{
         level = 'warning',
-        topic = 'configuration',
+        topic = 'config_locked',
         instance_uuid = master.instance_uuid,
         replicaset_uuid = master.replicaset_uuid,
         message = 'Configuration is prepared and locked'..

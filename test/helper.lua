@@ -58,6 +58,12 @@ function helpers.get_suggestions(server)
                     uri_old
                     uri_new
                 }
+                force_apply {
+                    uuid
+                    config_locked
+                    config_mismatch
+                    operation_error
+                }
             }}
         }]]
     }).data.cluster.suggestions

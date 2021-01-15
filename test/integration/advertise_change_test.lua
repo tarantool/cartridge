@@ -144,7 +144,10 @@ function g.test_2pc()
         }},
     })
 
-    t.assert_equals(helpers.get_suggestions(g.A1), {refine_uri = box.NULL})
+    t.assert_equals(helpers.get_suggestions(g.A1), {
+        refine_uri = box.NULL,
+        force_apply = box.NULL,
+    })
     helpers.retrying({}, function()
         -- Replication takes time to re-establish
         t.assert_equals(helpers.list_cluster_issues(g.A1), {})
