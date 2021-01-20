@@ -8,20 +8,22 @@ A framework for distributed applications development.
 
 .. raw:: html
 
-  <a href="https://github.com/tarantool/cartridge/actions?query=workflow%3A%22Backend+Test%22">
-    <img src="https://github.com/tarantool/cartridge/workflows/Backend%20Test/badge.svg">
-  </a>
-  <a href="https://github.com/tarantool/cartridge/actions?query=workflow%3A%22Frontend+Test%22">
-    <img src="https://github.com/tarantool/cartridge/workflows/Frontend%20Test/badge.svg">
-  </a>
-  <br/>
-  <a href="https://t.me/tarantool">
-    <img src="https://img.shields.io/badge/telegram%20(EN)-tarantool-blue?logo=telegram&style=social">
-  </a>
-  <br/>
-  <a href="https://t.me/tarantoolru">
-    <img src="https://img.shields.io/badge/telegram%20(RU)-tarantoolru-blue?logo=telegram&style=social">
-  </a>
+  <div class="website-hidden">
+    <a href="https://github.com/tarantool/cartridge/actions?query=workflow%3A%22Backend+Test%22">
+      <img src="https://github.com/tarantool/cartridge/workflows/Backend%20Test/badge.svg">
+    </a>
+    <a href="https://github.com/tarantool/cartridge/actions?query=workflow%3A%22Frontend+Test%22">
+      <img src="https://github.com/tarantool/cartridge/workflows/Frontend%20Test/badge.svg">
+    </a>
+    <br/>
+    <a href="https://t.me/tarantool">
+      <img src="https://img.shields.io/badge/telegram%20(EN)-tarantool-blue?logo=telegram&style=social">
+    </a>
+    <br/>
+    <a href="https://t.me/tarantoolru">
+      <img src="https://img.shields.io/badge/telegram%20(RU)-tarantoolru-blue?logo=telegram&style=social">
+    </a>
+  </div>
 
 .. raw:: html
 
