@@ -100,7 +100,8 @@ local function set_leaders(session, updates)
     local old_leaders = session.leaders
     local new_leaders = {}
     for _, leader in ipairs(updates) do
-        local replicaset_uuid, instance_uuid = unpack(leader)
+        local replicaset_uuid = leader[1]
+        local instance_uuid = leader[2]
         if new_leaders[replicaset_uuid] ~= nil then
             return nil, SessionError:new('Duplicate key in updates')
         end

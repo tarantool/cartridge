@@ -194,53 +194,61 @@ function g.test_longpolling()
 end
 
 function g.test_event_cleared()
-    local vclockkeeper = create_client():get_session()
-    -- local c2 = create_client():get_session()
-
-    local etcd2_connection = etcd2.connect(
-        {URI},
-        {
-            prefix = 'etcd2_client_test',
-            request_timeout = 1,
-            username = '',
-            password = ''
-        }
-    )
-
-    t.assert_equals(
-        vclockkeeper:acquire_lock({uuid = 'a1', uri = 'localhost:9'}),
-        true
-    )
-    vclockkeeper:set_leaders({{'A', 'a1'}, {'B', 'b1'}})
+    local httpc = httpc.new({max_connections = 100})
+    local function set_leaders(leaders)
+        local resp = httpc:put(
+            URI .. '/v2/keys/etcd2_client_test/leaders',
+            'value=' .. json.encode(leaders)
+        )
+        t.assert_covers(resp, {reason = "Ok"})
+    end
 
     local client1 = create_client()
     local client2 = create_client()
-    t.assert_equals(client1:longpoll(0), {A = 'a1', B = 'b1'})
-    t.assert_equals(client2:longpoll(0), {A = 'a1', B = 'b1'})
 
+    set_leaders({A = 'a1'})
+    t.assert_equals(client1:longpoll(0.2), {A = 'a1'})
+    t.assert_equals(client2:longpoll(0.2), {A = 'a1'})
+
+    -- Cause the error "The event in requested index is outdated and
+    -- cleared" by inserting 1000 values. The number 1000 is hardcoded
+    -- in the etcd source code:
+    -- https://github.com/etcd-io/etcd/blob/master/server/etcdserver/api/v2store/store.go#L101
+    -- See also: https://github.com/etcd-io/etcd/issues/925#issuecomment-51722404
     local fiber_map = {}
-    for i = 0, 1000 do
+    for i = 1, 100 do
         local fiber_object = fiber.new(function()
-            etcd2_connection:request('PUT', 'foo', {value = i})
+            for _ = 1, 11 do
+                httpc:put(URI .. '/v2/keys/foo?value=bar')
+            end
         end)
         fiber_object:set_joinable(true)
-        table.insert(fiber_map, fiber_object)
+        fiber_map[i] = fiber_object
     end
 
     for _, fiber_object in ipairs(fiber_map) do
         fiber_object:join()
     end
 
+    -- Self-test. We check the behavior of
+    local resp = httpc:get(URI .. '/v2/keys/foo' ..
+        '?wait=true&waitIndex=' .. (client1.session.longpoll_index + 1)
+    )
+    t.assert_covers(resp, {status = 400})
+    t.assert_covers(json.decode(resp.body),
+        {errorCode = etcd2.EcodeEventIndexCleared}
+    )
+
     --  ----s---|-------
     --       ^         ^
     -- In case of cleared history long-polling algorithm will return
     -- old leaders even if they haven't changed
-    t.assert_equals(client1:longpoll(0.1), {A = 'a1', B = 'b1'})
+    t.assert_equals(client1:longpoll(0.1), {A = 'a1'})
 
     --  ----s---|----x--
     --       ^         ^
-    vclockkeeper:set_leaders({{'A', 'a2'}, {'B', 'b1'}})
-    t.assert_equals(client2:longpoll(0.1), {A = "a2", B = "b1"})
+    set_leaders({A = 'a2'})
+    t.assert_equals(client2:longpoll(0.1), {A = 'a2'})
 end
 
 function g.test_client_drop_session()
