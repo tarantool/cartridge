@@ -346,36 +346,42 @@ local function longpoll(client, timeout)
         local resp, err
         if session.longpoll_index == nil then
             resp, err = session.connection:request('GET', '/leaders')
-            if resp == nil and err.etcd_code == etcd2.EcodeKeyNotFound then
-                session.longpoll_index = err.etcd_index
+            -- After a simple GET we can be sure that the response
+            -- represents the newest information at a given x-etcd-index
+            if resp ~= nil then
+                session.longpoll_index = assert(resp.etcd_index)
+            elseif err.etcd_code == etcd2.EcodeKeyNotFound then
+                session.longpoll_index = assert(err.etcd_index)
             end
         else
             resp, err = session.connection:request('GET', '/leaders', {
                 wait = true,
                 waitIndex = session.longpoll_index + 1,
             }, {timeout = timeout})
+            -- A GET with the waitIndex specified will return the next
+            -- modifiedIndex (if it exists), but there may exist the
+            -- newer one.
+            if resp ~= nil then
+                session.longpoll_index = assert(resp.node.modifiedIndex)
+            elseif err.etcd_code == etcd2.EcodeEventIndexCleared then
+                -- The event in requested index is outdated and cleared
+                -- Proceed with a simple GET without waitIndex.
+                session.longpoll_index = nil
+            end
         end
 
         if resp ~= nil then
-            if session.longpoll_index == nil then
-                -- set etcd_index as longpoll_index if it is invalidated
-                -- e.g. an initial request or
-                -- a EcodeEventIndexCleared response
-                session.longpoll_index = resp.etcd_index
-            else
-                session.longpoll_index = resp.node.modifiedIndex
-            end
             return json.decode(resp.node.value)
         end
 
-        if err.etcd_code == etcd2.EcodeEventIndexCleared then
-            -- if event was cleared longpoll_index should be reset
-            session.longpoll_index = nil
-        elseif fiber.clock() < deadline then
-            -- connection refused etc.
+        if fiber.clock() < deadline then
+            -- In case of any error keep retrying till the deadline.
             fiber.sleep(session.connection.request_timeout)
         elseif err.http_code == 408 then
-            -- timeout, no updates
+            -- Timeout. With or without headers
+            if err.etcd_index then
+                session.longpoll_index = err.etcd_index
+            end
             return {}
         else
             return nil, ClientError:new(err)

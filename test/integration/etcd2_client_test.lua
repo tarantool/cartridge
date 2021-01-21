@@ -249,6 +249,12 @@ function g.test_event_cleared()
     --       ^         ^
     set_leaders({A = 'a2'})
     t.assert_equals(client2:longpoll(0.1), {A = 'a2'})
+
+    -- Check that longpoll_index is updated despite leaders aren't modified
+    local old_index = client2.session.longpoll_index
+    httpc:put(URI .. '/v2/keys/foo?value=buzz')
+    t.assert_equals(client2:longpoll(0.1), {})
+    t.assert_equals(client2.session.longpoll_index, old_index + 1)
 end
 
 function g.test_client_drop_session()
