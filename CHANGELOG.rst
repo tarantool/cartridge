@@ -20,6 +20,14 @@ Added
   heal the cluster in case of config errors like ``Configuration checksum mismatch``,
   ``Configuration is prepared and locked``, and sometimes ``OperationError``.
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Fixed
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Properly handle etcd index updates while polling stateful failover updates.
+  The problem affected long-running clusters and resulted in flooding logs with
+  the "Etcd cluster id mismatch" warnings.
+
 -------------------------------------------------------------------------------
 [2.4.0] - 2020-12-29
 -------------------------------------------------------------------------------

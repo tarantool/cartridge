@@ -68,6 +68,22 @@ local function request(connection, method, path, args, opts)
         local resp = httpc.request(method, url, body, http_opts)
 
         if resp.headers == nil then
+            -- Examples:
+            --
+            -- 1. Connection refused
+            -- tarantool> httpc.get('http://localhost:9/')
+            -- ---
+            -- - status: 595
+            --   reason: Couldn't connect to server
+            -- ...
+            --
+            -- 2. Timeout without headers
+            -- tarantool> httpc.get('http://google.com/', {timeout=1e-8})
+            -- ---
+            -- - status: 408
+            --   reason: Timeout was reached
+            -- ...
+
             lasterror = HttpError:new('%s: %s', url, resp.reason)
             lasterror.http_code = resp.status
             goto continue
@@ -85,10 +101,36 @@ local function request(connection, method, path, args, opts)
         connection.eidx = eidx
         local ok, data = pcall(json.decode, resp.body)
         if not ok then
+            -- Example:
+            --
+            -- 3. Longpoll timeout with headers
+            -- tarantool> httpc.get('http://localhost:2379/v2/keys/tmp?wait=true', {timeout=1})
+            -- ---
+            -- - status: 408
+            --   reason: Timeout was reached
+            --   headers:
+            --     x-etcd-cluster-id: cdf818194e3a8c32
+            --     x-etcd-index: '61529'
+            -- ...
+
             local err = HttpError:new('%s: %s', url, resp.body or resp.reason)
             err.http_code = resp.status
+            err.etcd_index = tonumber(resp.headers['x-etcd-index'])
             return nil, err
         elseif data.errorCode then
+            -- Example:
+            --
+            -- 4. Etcd error response
+            -- tarantool> httpc.get('http://localhost:2379/v2/keys/non-existent')
+            -- ---
+            -- - reason: Unknown
+            --   status: 404
+            --   body: '{"errorCode":100,"message":"Key not found","cause":"/non-existent","index":61529}'
+            --   headers:
+            --     x-etcd-cluster-id: cdf818194e3a8c32
+            --     x-etcd-index: '61529'
+            -- ...
+
             local err = EtcdError:new('%s (%s): %s',
                 data.message, data.errorCode, data.cause
             )
@@ -97,6 +139,7 @@ local function request(connection, method, path, args, opts)
             err.etcd_index = data.index
             return nil, err
         else
+            data.etcd_index = tonumber(resp.headers['x-etcd-index'])
             return data
         end
 

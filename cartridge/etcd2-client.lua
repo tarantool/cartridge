@@ -100,7 +100,8 @@ local function set_leaders(session, updates)
     local old_leaders = session.leaders
     local new_leaders = {}
     for _, leader in ipairs(updates) do
-        local replicaset_uuid, instance_uuid = unpack(leader)
+        local replicaset_uuid = leader[1]
+        local instance_uuid = leader[2]
         if new_leaders[replicaset_uuid] ~= nil then
             return nil, SessionError:new('Duplicate key in updates')
         end
@@ -343,28 +344,47 @@ local function longpoll(client, timeout)
         local timeout = deadline - fiber.clock()
 
         local resp, err
+        -- longpoll_index is the latest index received from etcd.
         if session.longpoll_index == nil then
             resp, err = session.connection:request('GET', '/leaders')
-            if resp == nil and err.etcd_code == etcd2.EcodeKeyNotFound then
-                session.longpoll_index = err.etcd_index
+            -- After a simple GET we can be sure that the response
+            -- represents the newest information at a given x-etcd-index
+            if resp ~= nil then
+                session.longpoll_index = assert(resp.etcd_index)
+            elseif err.etcd_code == etcd2.EcodeKeyNotFound then
+                session.longpoll_index = assert(err.etcd_index)
             end
         else
             resp, err = session.connection:request('GET', '/leaders', {
                 wait = true,
                 waitIndex = session.longpoll_index + 1,
             }, {timeout = timeout})
+            -- A GET with the waitIndex specified will return the next
+            -- modifiedIndex (if it exists), but there may exist the
+            -- newer one.
+            if resp ~= nil then
+                session.longpoll_index = assert(resp.node.modifiedIndex)
+            elseif err.etcd_code == etcd2.EcodeEventIndexCleared then
+                -- The event in requested index is outdated and cleared
+                -- Proceed with a simple GET without waitIndex.
+                session.longpoll_index = nil
+            end
         end
 
         if resp ~= nil then
-            session.longpoll_index = resp.node.modifiedIndex
             return json.decode(resp.node.value)
         end
 
         if fiber.clock() < deadline then
-            -- connection refused etc.
+            -- In case of any error keep retrying till the deadline.
             fiber.sleep(session.connection.request_timeout)
         elseif err.http_code == 408 then
-            -- timeout, no updates
+            -- Timeout with headers means that there're no events
+            -- between requested waitIndex and X-Etcd-Index in response.
+            -- Therefore one should bump longpoll_index.
+            if err.etcd_index then
+                session.longpoll_index = err.etcd_index
+            end
             return {}
         else
             return nil, ClientError:new(err)
