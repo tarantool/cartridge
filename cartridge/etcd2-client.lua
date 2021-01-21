@@ -344,6 +344,7 @@ local function longpoll(client, timeout)
         local timeout = deadline - fiber.clock()
 
         local resp, err
+        -- longpoll_index is the latest index received from etcd.
         if session.longpoll_index == nil then
             resp, err = session.connection:request('GET', '/leaders')
             -- After a simple GET we can be sure that the response
@@ -378,7 +379,9 @@ local function longpoll(client, timeout)
             -- In case of any error keep retrying till the deadline.
             fiber.sleep(session.connection.request_timeout)
         elseif err.http_code == 408 then
-            -- Timeout. With or without headers
+            -- Timeout with headers means that there're no events
+            -- between requested waitIndex and X-Etcd-Index in response.
+            -- Therefore one should bump longpoll_index.
             if err.etcd_index then
                 session.longpoll_index = err.etcd_index
             end
