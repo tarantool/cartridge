@@ -356,11 +356,21 @@ local function longpoll(client, timeout)
         end
 
         if resp ~= nil then
-            session.longpoll_index = resp.node.modifiedIndex
+            if session.longpoll_index == nil then
+                -- set etcd_index as longpoll_index if it is invalidated
+                -- e.g. an initial request or
+                -- a EcodeEventIndexCleared response
+                session.longpoll_index = resp.etcd_index
+            else
+                session.longpoll_index = resp.node.modifiedIndex
+            end
             return json.decode(resp.node.value)
         end
 
-        if fiber.clock() < deadline then
+        if err.etcd_code == etcd2.EcodeEventIndexCleared then
+            -- if event was cleared longpoll_index should be reset
+            session.longpoll_index = nil
+        elseif fiber.clock() < deadline then
             -- connection refused etc.
             fiber.sleep(session.connection.request_timeout)
         elseif err.http_code == 408 then

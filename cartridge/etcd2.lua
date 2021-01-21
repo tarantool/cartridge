@@ -97,6 +97,7 @@ local function request(connection, method, path, args, opts)
             err.etcd_index = data.index
             return nil, err
         else
+            data.etcd_index = resp.headers['x-etcd-index']
             return data
         end
 

@@ -5,6 +5,7 @@ local fio = require('fio')
 local uuid = require('uuid')
 local json = require('json')
 local fiber = require('fiber')
+local etcd2 = require('cartridge.etcd2')
 local httpc = require('http.client')
 local digest = require('digest')
 local etcd2_client = require('cartridge.etcd2-client')
@@ -190,6 +191,56 @@ function g.test_longpolling()
 
     -- data recieved
     t.assert_equals(chan:get(0.2), {{}})
+end
+
+function g.test_event_cleared()
+    local vclockkeeper = create_client():get_session()
+    -- local c2 = create_client():get_session()
+
+    local etcd2_connection = etcd2.connect(
+        {URI},
+        {
+            prefix = 'etcd2_client_test',
+            request_timeout = 1,
+            username = '',
+            password = ''
+        }
+    )
+
+    t.assert_equals(
+        vclockkeeper:acquire_lock({uuid = 'a1', uri = 'localhost:9'}),
+        true
+    )
+    vclockkeeper:set_leaders({{'A', 'a1'}, {'B', 'b1'}})
+
+    local client1 = create_client()
+    local client2 = create_client()
+    t.assert_equals(client1:longpoll(0), {A = 'a1', B = 'b1'})
+    t.assert_equals(client2:longpoll(0), {A = 'a1', B = 'b1'})
+
+    local fiber_map = {}
+    for i = 0, 1000 do
+        local fiber_object = fiber.new(function()
+            etcd2_connection:request('PUT', 'foo', {value = i})
+        end)
+        fiber_object:set_joinable(true)
+        table.insert(fiber_map, fiber_object)
+    end
+
+    for _, fiber_object in ipairs(fiber_map) do
+        fiber_object:join()
+    end
+
+    --  ----s---|-------
+    --       ^         ^
+    -- In case of cleared history long-polling algorithm will return
+    -- old leaders even if they haven't changed
+    t.assert_equals(client1:longpoll(0.1), {A = 'a1', B = 'b1'})
+
+    --  ----s---|----x--
+    --       ^         ^
+    vclockkeeper:set_leaders({{'A', 'a2'}, {'B', 'b1'}})
+    t.assert_equals(client2:longpoll(0.1), {A = "a2", B = "b1"})
 end
 
 function g.test_client_drop_session()
@@ -474,4 +525,3 @@ function g.test_quorum()
     g.etcd_a.process:kill('CONT')
     t.assert_equals(client:check_quorum(), true)
 end
-
