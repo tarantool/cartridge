@@ -18,7 +18,6 @@ g.before_all(function()
     })
     g.cluster:start()
 
-
     g.A1 = g.cluster:server('A-1')
     g.A2 = g.cluster:server('A-2')
     g.A3 = g.cluster:server('A-3')

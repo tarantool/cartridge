@@ -134,6 +134,7 @@ local gql_type_edit_replicaset_input = gql_types.inputObject {
                 fields = {
                     uri = gql_types.string.nonNull,
                     uuid = gql_types.string,
+                    zone = gql_types.string,
                     labels = gql_types.list(gql_type_label_input),
                 }
             })
@@ -344,6 +345,7 @@ local function init(graphql)
             replicaset_uuid = gql_types.string,
             roles = gql_types.list(gql_types.string.nonNull),
             timeout = gql_types.float,
+            zone = gql_types.string,
             labels = gql_types.list(gql_type_label_input),
             vshard_group = gql_types.string,
             replicaset_alias = gql_types.string,

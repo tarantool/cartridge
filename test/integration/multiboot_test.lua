@@ -73,6 +73,7 @@ function g:test_bootstrap()
                             status
                             uuid
                             uri
+                            zone
                             labels {name value}
                             boxinfo { general {pid} }
                         }
@@ -87,6 +88,7 @@ function g:test_bootstrap()
                     join_servers = {{
                         uri = a1.advertise_uri,
                         uuid = a1.instance_uuid,
+                        zone = 'z1',
                         labels = {{name = 'addr', value = a1.advertise_uri}},
                     }},
                     failover_priority = {a1.instance_uuid},
@@ -124,6 +126,7 @@ function g:test_bootstrap()
         }
     })
     t.assert_equals(topology.servers[1].uuid, a1.instance_uuid)
+    t.assert_equals(topology.servers[1].zone, 'z1')
 
     local pids = {}
     for _, srv in pairs(topology.servers) do
