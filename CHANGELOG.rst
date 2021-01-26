@@ -19,8 +19,7 @@ Added
 - New GraphQL API: ``{cluster {suggestions {force_apply {uuid reasons}}}}`` to
   heal the cluster in case of config errors like ``Configuration checksum mismatch``,
   ``Configuration is prepared and locked``, and sometimes ``OperationError``.
-- New issue ``state_stuck`` that is triggered when instance is hanging in
-  ``ConfiguringRoles`` state for more than 5s.
+- Show an issue when ``ConfiguringRoles`` state stucks for more than 5s.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
