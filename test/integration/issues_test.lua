@@ -208,3 +208,39 @@ function g.test_twophase_config_locked()
         t.assert_equals(helpers.list_cluster_issues(master), {})
     end)
 end
+
+function g.test_state_hangs()
+    local master = g.cluster.main_server
+    local replica1 = g.cluster:server('replica1')
+
+    local set_state = [[
+        require('cartridge.confapplier').set_state(...)
+    ]]
+    local set_timeout = [[
+        require('cartridge.vars').new('cartridge.confapplier').
+        state_notification_timeout = ...
+    ]]
+
+    t.assert_equals(helpers.list_cluster_issues(master), {})
+
+    replica1.net_box:eval(set_timeout, {0.1})
+    replica1.net_box:eval(set_state, {'ConfiguringRoles'})
+
+    t.helpers.retrying({}, function()
+        t.assert_equals(helpers.list_cluster_issues(master), {{
+            level = 'warning',
+            topic = 'state_stuck',
+            instance_uuid = replica1.instance_uuid,
+            replicaset_uuid = replica1.replicaset_uuid,
+            message = 'Configuring roles is stuck'..
+                ' on localhost:13302 (replica1)' ..
+                ' and hangs for 1s so far',
+        }})
+    end)
+
+    -- nil will restore default timeout value
+    replica1.net_box:eval(set_timeout, {})
+    replica1.net_box:eval(set_state, {'RolesConfigured'})
+
+    t.assert_equals(helpers.list_cluster_issues(master), {})
+end

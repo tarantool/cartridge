@@ -36,13 +36,14 @@
 --   `box.slab.info()` exceed `limits.fragmentation_threshold_critical`;
 -- * "Memory is highly fragmented on ..." - when
 --   `items_used_ratio > limits.fragmentation_threshold_warning` and
---   both `arena_used_ratio`, `quota_used_ratio` exceed critical limit.
+--   both `arena_used_ratio`, `quota_used_ratio` exceed critical limit;
 --
 -- Configuration:
 --
--- * "Configuration checksum mismatch on ...".
--- * "Advertise URI (...) differs from clusterwide config (...)".
--- * "Configuration is prepared and locked on ..."
+-- * "Configuration checksum mismatch on ...";
+-- * "Configuration is prepared and locked on ...";
+-- * "Advertise URI (...) differs from clusterwide config (...)";
+-- * "Configuring roles is stuck on ... and hangs for ... so far";
 --
 -- @module cartridge.issues
 -- @local
@@ -50,6 +51,7 @@
 local fio = require('fio')
 local log = require('log')
 local fun = require('fun')
+local fiber = require('fiber')
 local checks = require('checks')
 local pool = require('cartridge.pool')
 local topology = require('cartridge.topology')
@@ -310,6 +312,25 @@ local function list_on_instance(opts)
                 describe(self_uri)
             ),
         })
+    end
+
+    if confapplier.get_state() == 'ConfiguringRoles' then
+        local confapplier_vars = require('cartridge.vars').new('cartridge.confapplier')
+        local elapsed = fiber.clock() - confapplier_vars.state_timestamp
+        local timeout = confapplier_vars.state_notification_timeout
+        if elapsed > timeout then
+            table.insert(ret, {
+                level = 'warning',
+                topic = 'state_stuck',
+                instance_uuid = instance_uuid,
+                replicaset_uuid = replicaset_uuid,
+                message = string.format(
+                    'Configuring roles is stuck on %s' ..
+                    ' and hangs for %ds so far',
+                    describe(self_uri), elapsed
+                ),
+            })
+        end
     end
 
     return ret

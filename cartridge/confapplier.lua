@@ -40,6 +40,7 @@ vars:new('state', '')
 vars:new('error')
 vars:new('state_notification', fiber.cond())
 vars:new('state_notification_timeout', 5)
+vars:new('state_timestamp', 0) -- last time the state was set
 vars:new('clusterwide_config')
 
 vars:new('workdir')
@@ -140,6 +141,7 @@ local function set_state(new_state, err)
     membership.set_payload('state', new_state)
     vars.state = new_state
     vars.error = err
+    vars.state_timestamp = fiber.clock()
     vars.state_notification:broadcast()
 end
 
