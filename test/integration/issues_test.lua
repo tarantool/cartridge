@@ -252,10 +252,10 @@ function g.test_state_hangs()
     -- When instance passes ConfiguringRoles issue is gone
     t.assert_items_include(helpers.list_cluster_issues(replica1), {})
 
-    replica1.net_box:eval(string.format([[
+    replica1.net_box:eval([[
         local conf_vars = require('cartridge.vars').new('cartridge.confapplier')
-        conf_vars.state_notification_timeout = %d
+        conf_vars.state_notification_timeout = ...
 
         package.loaded['mymodule-permanent'].apply_config = nil
-    ]], old_timeout))
+    ]], {old_timeout})
 end
