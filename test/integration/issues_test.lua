@@ -2,6 +2,7 @@ local t = require('luatest')
 local g = t.group()
 
 local fio = require('fio')
+local fiber = require('fiber')
 local helpers = require('test.helper')
 
 g.before_all(function()
@@ -12,7 +13,7 @@ g.before_all(function()
         cookie = require('digest').urandom(6):hex(),
         replicasets = {{
             uuid = helpers.uuid('a'),
-            roles = {},
+            roles = {'myrole-permanent'},
             servers = {{
                 alias = 'master',
                 instance_uuid = helpers.uuid('a', 'a', 1)
@@ -207,4 +208,54 @@ function g.test_twophase_config_locked()
     t.helpers.retrying({}, function()
         t.assert_equals(helpers.list_cluster_issues(master), {})
     end)
+end
+
+function g.test_state_hangs()
+    local master = g.cluster.main_server
+    local replica1 = g.cluster:server('replica1')
+
+    t.assert_equals(helpers.list_cluster_issues(master), {})
+
+    local old_timeout = replica1.net_box:eval([[
+        local conf_vars = require('cartridge.vars').new('cartridge.confapplier')
+        local old_timeout = conf_vars.state_notification_timeout
+        conf_vars.state_notification_timeout = 0.1
+
+        package.loaded['mymodule-permanent'].apply_config = function()
+            -- instance will stop hanging in ConfiguringRoles after 0.3s
+            require('fiber').sleep(0.3)
+        end
+
+        return old_timeout
+    ]])
+
+    fiber.new(function()
+        master:graphql({
+            query = [[mutation($uuids: [String]) {
+                cluster { config_force_reapply(uuids: $uuids) }
+            }]],
+            variables = {uuids = {replica1.instance_uuid}}
+        })
+    end)
+
+    t.assert_equals(helpers.list_cluster_issues(replica1), {})
+    fiber.sleep(0.1)
+    t.assert_items_include(helpers.list_cluster_issues(replica1), {{
+        level = 'warning',
+        topic = 'state_stuck',
+        instance_uuid = replica1.instance_uuid,
+        replicaset_uuid = replica1.replicaset_uuid,
+        message = 'ConfiguringRoles state hangs'..
+            ' on localhost:13302 (replica1)',
+    }})
+    fiber.sleep(0.3)
+    -- When instance passes ConfiguringRoles issue is gone
+    t.assert_items_include(helpers.list_cluster_issues(replica1), {})
+
+    replica1.net_box:eval(string.format([[
+        local conf_vars = require('cartridge.vars').new('cartridge.confapplier')
+        conf_vars.state_notification_timeout = %d
+
+        package.loaded['mymodule-permanent'].apply_config = nil
+    ]], old_timeout))
 end

@@ -50,6 +50,7 @@
 local fio = require('fio')
 local log = require('log')
 local fun = require('fun')
+local fiber = require('fiber')
 local checks = require('checks')
 local pool = require('cartridge.pool')
 local topology = require('cartridge.topology')
@@ -307,6 +308,23 @@ local function list_on_instance(opts)
             replicaset_uuid = replicaset_uuid,
             message = string.format(
                 'Configuration is prepared and locked on %s',
+                describe(self_uri)
+            ),
+        })
+    end
+
+    local conf_vars = require('cartridge.vars').new('cartridge.confapplier')
+    local timeout = conf_vars.state_notification_timeout
+    local deadline = conf_vars.timestamp + timeout
+    if conf_vars.state == 'ConfiguringRoles'
+    and deadline < fiber.time() then
+        table.insert(ret, {
+            level = 'warning',
+            topic = 'state_stuck',
+            instance_uuid = instance_uuid,
+            replicaset_uuid = replicaset_uuid,
+            message = string.format(
+                'ConfiguringRoles state hangs on %s',
                 describe(self_uri)
             ),
         })
