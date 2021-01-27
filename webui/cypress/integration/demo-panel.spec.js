@@ -1,7 +1,8 @@
 describe('Demo panel', () => {
 
   before(() => {
-    cy.task('tarantool', {code: `
+    cy.task('tarantool', {
+      code: `
       cleanup()
       _G.cluster = helpers.Cluster:new({
         datadir = fio.tempdir(),
@@ -18,11 +19,12 @@ describe('Demo panel', () => {
 
       _G.cluster:start()
       return true
-    `}).should('deep.eq', [true]);
+    `
+    }).should('deep.eq', [true]);
   });
 
   after(() => {
-    cy.task('tarantool', {code: `cleanup()`});
+    cy.task('tarantool', { code: `cleanup()` });
   });
 
   it('Check absence', () => {
@@ -50,13 +52,15 @@ describe('Demo panel', () => {
   })
 
   it('Restart with demo uri', () => {
-    cy.task('tarantool', {code: `
+    cy.task('tarantool', {
+      code: `
       _G.cluster.main_server:stop()
       _G.cluster.main_server.env['TARANTOOL_DEMO_URI'] =
         'admin:password@try-cartridge.tarantool.io:26333'
       _G.cluster.main_server:start()
       return true
-    `}).should('deep.eq', [true]);
+    `
+    }).should('deep.eq', [true]);
   })
 
   it('Check presence', () => {
@@ -65,7 +69,7 @@ describe('Demo panel', () => {
     cy.get('a[href="/admin/cluster/dashboard"]').click();
     cy.get('.meta-test__ProbeServerBtn').should('exist');
 
-    cy.get('.meta-test__DemoInfo').contains('Your demo server is created. Temporary address of you server:');
+    cy.get('.meta-test__DemoInfo').contains('Your demo server is created. Temporary address of your server:');
     cy.get('.meta-test__DemoInfo button[type="button"]:contains(How to connect?)').click();
     cy.get('.meta-test__DemoInfo_modal').contains('Connect to Tarantool Cartridge using python client');
     cy.get('.meta-test__DemoInfo_modal button:contains(PHP)').click();
@@ -90,7 +94,7 @@ describe('Demo panel', () => {
 
     cy.get('.meta-test__DemoInfo button[type="button"]:contains(Reset configuration)').click();
     cy.get('div:contains(Do you really want to reset your settings?)').find('button:contains(Reset)').click();
-    cy.location().should((loc) => {
+    cy.location().should(loc => {
       expect(loc.pathname).to.eq('/admin');
     });
   })

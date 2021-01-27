@@ -243,7 +243,7 @@ class DemoInfo extends React.Component<DemoInfoProps, DemoInfoState> {
       <DemoContext className={cx(styles.wrap, 'meta-test__DemoInfo', className)}>
         <MainContent>
           <Text>
-            {'Your demo server is created. Temporary address of you server: '}
+            {'Your demo server is created. Temporary address of your server: '}
             <Bold>
               {uri}
               <CopyToClipboard className={styles.copyBtn} content={uri} intent='iconic' size='s' />
