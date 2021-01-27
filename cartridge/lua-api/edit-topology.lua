@@ -28,6 +28,7 @@ local function __join_server(topology_cfg, params)
     checks(topology_cfg_checker, {
         uri = 'string',
         uuid = 'string',
+        zone = '?string',
         labels = '?table',
         replicaset_uuid = 'string',
     })
@@ -46,8 +47,13 @@ local function __join_server(topology_cfg, params)
     )
     table.insert(replicaset.master, params.uuid)
 
+    if params.zone ~= nil and params.zone:strip() == '' then
+        params.zone = nil
+    end
+
     local server = {
         uri = params.uri,
+        zone = params.zone,
         labels = params.labels,
         disabled = false,
         replicaset_uuid = params.replicaset_uuid,
@@ -250,6 +256,7 @@ end
 --- Parameters required for joining a new server.
 -- @tfield string uri
 -- @tfield ?string uuid
+-- @tfield ?string zone (**Added** in v2.4.0-14)
 -- @tfield ?table labels
 -- @table JoinServerParams
 -- @within Editing topology

@@ -29,6 +29,8 @@ Fixed
   The problem affected long-running clusters and resulted in flooding logs with
   the "Etcd cluster id mismatch" warnings.
 
+- Allow specifying server zone in ``join_server`` API.
+
 -------------------------------------------------------------------------------
 [2.4.0] - 2020-12-29
 -------------------------------------------------------------------------------

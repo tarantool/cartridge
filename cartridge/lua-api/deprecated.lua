@@ -25,6 +25,7 @@ local EditTopologyError = errors.new_class('Editing cluster topology failed')
 -- @tparam ?string args.replicaset_uuid
 -- @tparam ?{string,...} args.roles
 -- @tparam ?number args.timeout
+-- @tparam ?string args.zone (**Added** in v2.4.0-14)
 -- @tparam ?{[string]=string,...} args.labels
 -- @tparam ?string args.vshard_group
 -- @tparam ?string args.replicaset_alias
@@ -39,6 +40,7 @@ local function join_server(args)
         replicaset_uuid = '?string',
         roles = '?table',
         timeout = '?number',
+        zone = '?string',
         labels = '?table',
         vshard_group = '?string',
         replicaset_alias = '?string',
@@ -71,6 +73,9 @@ local function join_server(args)
         args.replicaset_weight = nil
     end
 
+    if args.zone ~= nil and args.zone:strip() == '' then
+        args.zone = nil
+    end
 
     local topology, err = lua_api_topology.edit_topology({
         -- async = false,
@@ -83,6 +88,7 @@ local function join_server(args)
             join_servers = {{
                 uri = args.uri,
                 uuid = args.instance_uuid,
+                zone = args.zone,
                 labels = args.labels,
             }}
         }}

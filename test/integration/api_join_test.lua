@@ -154,6 +154,7 @@ function g.test_join_server()
                 replicaset_uuid: "bbbbbbbb-0000-0000-0000-000000000000"
                 replicaset_alias: "spare-set"
                 roles: ["vshard-storage"]
+                zone: "z1"
             )
         }]]
     })
@@ -181,6 +182,7 @@ function g.test_join_server()
             servers {
                 uri
                 uuid
+                zone
                 status
                 replicaset { alias uuid status roles weight }
             }
@@ -196,6 +198,7 @@ function g.test_join_server()
         {
             uri = 'localhost:13302',
             uuid = g.server.instance_uuid,
+            zone = 'z1',
             status = 'healthy',
             replicaset = {
                 alias = 'spare-set',

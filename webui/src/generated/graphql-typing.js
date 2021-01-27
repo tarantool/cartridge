@@ -192,6 +192,7 @@ export type Issue = {|
 
 /** Parameters for joining a new server */
 export type JoinServerInput = {|
+  zone?: ?$ElementType<Scalars, 'String'>,
   uri: $ElementType<Scalars, 'String'>,
   uuid?: ?$ElementType<Scalars, 'String'>,
   labels?: ?Array<?LabelInput>,
