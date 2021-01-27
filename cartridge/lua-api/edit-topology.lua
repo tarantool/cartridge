@@ -256,6 +256,7 @@ end
 --- Parameters required for joining a new server.
 -- @tfield string uri
 -- @tfield ?string uuid
+-- @tfield ?string zone (**Added** in v2.4.0-14)
 -- @tfield ?table labels
 -- @table JoinServerParams
 -- @within Editing topology

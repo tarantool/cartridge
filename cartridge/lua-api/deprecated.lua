@@ -25,6 +25,7 @@ local EditTopologyError = errors.new_class('Editing cluster topology failed')
 -- @tparam ?string args.replicaset_uuid
 -- @tparam ?{string,...} args.roles
 -- @tparam ?number args.timeout
+-- @tparam ?string args.zone (**Added** in v2.4.0-14)
 -- @tparam ?{[string]=string,...} args.labels
 -- @tparam ?string args.vshard_group
 -- @tparam ?string args.replicaset_alias
