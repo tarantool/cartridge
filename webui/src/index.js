@@ -23,7 +23,7 @@ import { PROJECT_NAME } from './constants';
 import { menuReducer, menuFilter } from './menu';
 import ConfigManagement from 'src/pages/ConfigManagement';
 import './misc/analytics';
-import { SectionPreloader } from 'src/components/SectionPreloader';
+import { SectionPreloader } from '@tarantool.io/ui-kit';
 import { createLazySection } from 'src/misc/lazySection';
 
 const Code = createLazySection(() => import('src/pages/Code'));

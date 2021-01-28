@@ -16,7 +16,6 @@ const styles = {
     display: flex;
     justify-content: flex-end;
     align-items: center;
-    margin: 0 0 0 24px;
   `,
   dropdown: css`
     cursor: pointer;

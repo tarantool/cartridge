@@ -217,7 +217,7 @@ class DemoInfo extends React.Component<DemoInfoProps, DemoInfoState> {
           visible={isShowReset}
           onCancel={this.hideResetModal}
           onConfirm={this.makeReset}
-          confirmText={'Reset'}
+          confirmText='Reset'
         >
           <Text tag='p'>Do you really want to reset your settings?</Text>
           <Text tag='p'>This action will result in data loss.</Text>
@@ -227,7 +227,7 @@ class DemoInfo extends React.Component<DemoInfoProps, DemoInfoState> {
         isShowConnectInfo &&
         <Modal
           visible={isShowConnectInfo}
-          title={'Connect info'}
+          title='Connect info'
           onClose={this.hideConnectInfo}
           className='meta-test__DemoInfo_modal'
           wide
@@ -243,15 +243,25 @@ class DemoInfo extends React.Component<DemoInfoProps, DemoInfoState> {
       <DemoContext className={cx(styles.wrap, 'meta-test__DemoInfo', className)}>
         <MainContent>
           <Text>
-            {'Your demo server is created. Temporary address of you server: '}
+            {'Your demo server is created. Temporary address of your server: '}
             <Bold>
               {uri}
               <CopyToClipboard className={styles.copyBtn} content={uri} intent='iconic' size='s' />
             </Bold>
           </Text>
-          <Button className={styles.btn} text='How to connect?' intent='iconic' onClick={this.showConnectInfo} />
+          <Button
+            className={cx(styles.btn, 'meta_TryCartridge_HowToConnect')}
+            text='How to connect?'
+            intent='iconic'
+            onClick={this.showConnectInfo}
+          />
         </MainContent>
-        <Button className={styles.btn} text='Reset configuration' intent='iconic' onClick={this.showResetModal} />
+        <Button
+          className={cx(styles.btn, 'meta_TryCartridge_ResetConfig')}
+          text='Reset configuration'
+          intent='iconic'
+          onClick={this.showResetModal}
+        />
       </DemoContext>
     </React.Fragment>
   }
