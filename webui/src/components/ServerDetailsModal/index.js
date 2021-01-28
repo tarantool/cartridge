@@ -296,7 +296,7 @@ const mapStateToProps = (
   const replicaset = clusterPage.replicasetList
     && clusterPage.replicasetList.find(({ uuid }) => uuid === replicasetUUID);
 
-  const serverStat = clusterPage.serverStat.find(({ uuid }) => uuid === instanceUUID);
+  const server = clusterPage.serverList.find(({ uuid }) => uuid === instanceUUID);
 
   return {
     alias,
@@ -310,8 +310,8 @@ const mapStateToProps = (
     replicaset,
     status,
     uri,
-    zone: (serverStat && serverStat.zone) || null,
-    zoneList: uniq(clusterPage.serverStat.map(({ zone }) => zone)).filter(v => v),
+    zone: (server && server.zone) || null,
+    zoneList: uniq(clusterPage.serverList.map(({ zone }) => zone)).filter(v => v),
     instanceUUID: instanceUUID,
     ro
   };

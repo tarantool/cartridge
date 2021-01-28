@@ -6,7 +6,6 @@ export const serverStatFields = gql`
   fragment serverStatFields on Server {
     uuid
     uri
-    zone
     statistics {
       quotaSize: quota_size
       arenaUsed: arena_used
@@ -294,6 +293,7 @@ query serverList ($withStats: Boolean!) {
     uuid
     alias
     uri
+    zone
     status
     message
     boxinfo {

@@ -108,11 +108,9 @@ describe('Server details', () => {
       .closest('li').should('contain', 'Server status is "dead"');
 
     openServerDetailsModal('dummy-2');
-    cy.get('.meta-test__ServerDetailsModal button:contains(Select zone)').click();
+    cy.get('.meta-test__ServerDetailsModal button:contains(Zone Mordor)').click();
 
-    // Zone is reset after server stop:
-    cy.get('div').contains('You have no any zone,');
-    cy.get('div').contains('Mordor').should('not.exist');
+    cy.get('div').contains('Mordor').should('exist');
 
     cy.get('button:contains(Add new zone)').click();
     cy.get('.ZoneAddModal input[name="uri"]').type('Moscow');
