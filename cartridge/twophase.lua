@@ -330,14 +330,6 @@ local function _clusterwide(patch)
 
     topology.probe_missing_members(topology_new.servers)
 
-    if utils.deepcmp(
-        clusterwide_config_new:get_plaintext(),
-        clusterwide_config_old:get_plaintext()
-    ) then
-        log.warn("Clusterwide config didn't change, skipping")
-        return true
-    end
-
     local ok, err = topology.validate(topology_new, topology_old)
     if not ok then
         log.error('%s', err)

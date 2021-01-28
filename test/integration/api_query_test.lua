@@ -499,19 +499,11 @@ function g.test_operation_error()
         end
     ]])
 
-    -- Dummy mutation doesn't trigger two-phase commit
-    g.cluster.main_server:graphql({
-        query = [[
-            mutation { cluster { config(sections: []) {} } }
-        ]],
-    })
-
-    -- Real tho-phase commit fails on apply stage with artificial error
+    -- Since v2.4.0-17 two-phase commit is never skipped
+    -- Tho-phase commit fails on apply stage with artificial error
     local resp = g.cluster.main_server:graphql({
         query = [[
-            mutation{ cluster{ config(
-                sections: [{filename: "x.txt", content: "oops"}]
-            ){} }}
+            mutation { cluster { config(sections: []) {} } }
         ]],
         raise = false,
     })
