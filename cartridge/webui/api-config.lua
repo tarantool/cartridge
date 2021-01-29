@@ -13,6 +13,8 @@ json.cfg({
 })
 yaml.cfg({
     encode_use_tostring = true,
+    encode_load_metatables = false,
+    decode_save_metatables = false,
 })
 
 local DecodeYamlError = errors.new_class('DecodeYamlError')

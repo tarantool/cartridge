@@ -31,7 +31,9 @@ Fixed
 
 - Allow specifying server zone in ``join_server`` API.
 
-- Querying zone names for dead servers.
+- Fix corner cases when querying server zones.
+
+- Don't make yaml formatting ugly during config upload.
 
 -------------------------------------------------------------------------------
 [2.4.0] - 2020-12-29
