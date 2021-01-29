@@ -5,7 +5,7 @@ local g = t.group()
 local json = require('json')
 local helpers = require('test.helper')
 
-g.before_all = function()
+g.before_all(function()
     g.cluster = helpers.Cluster:new({
         datadir = fio.tempdir(),
         server_command = helpers.entrypoint('srv_basic'),
@@ -34,12 +34,12 @@ g.before_all = function()
         local res, err = auth.add_user(...)
         assert(res, tostring(err))
     ]], {'guest', 'guest'})
-end
+end)
 
-g.after_all = function()
+g.after_all(function()
     g.cluster:stop()
     fio.rmtree(g.cluster.datadir)
-end
+end)
 
 local function set_sections(sections)
     return g.cluster.main_server:graphql({query = [[
@@ -249,6 +249,61 @@ function g.test_rollback()
     ]]})
 end
 
+function g.test_formatting()
+    -- Cartridge shouldn't spoil yaml formatting
+    -- https://github.com/tarantool/cartridge/issues/1075
+
+    local srv = g.cluster.main_server
+    srv:upload_config({['test'] = {
+        {1, '2'},
+        {true, 'false'},
+        {box.NULL, 'null'},
+        {a = {b = {}}},
+    }})
+
+    local lines = table.concat({
+        "- - 1",
+        "  - '2'",
+        "- - true",
+        "  - 'false'",
+        "- - null",
+        "  - 'null'",
+        "- a:",
+        "    b: []",
+        ""
+    }, '\n')
+
+    t.assert_equals(
+        get_sections({'test.yml'})[1].content,
+        '---\n' .. lines .. '...\n'
+    )
+
+    t.assert_equals(
+        srv:http_request('get', '/admin/config').body,
+        '---\n' .. 'test:\n' .. lines .. '...\n'
+    )
+
+    local content = "['a', 'b', {c: \"d\"}] ###"
+    -- get/set_sections API preserves formatting
+    set_sections({{filename = 'test.yml', content = content}})
+    t.assert_equals(
+        get_sections(),
+        {{filename = 'test.yml', content = content}}
+    )
+    -- /admin/config re-renders it, but at least it should be pretty.
+    t.assert_equals(
+        srv:http_request('get', '/admin/config').body,
+        table.concat({
+            "---",
+            "test:",
+            "- a",
+            "- b",
+            "- c: d",
+            "...",
+            ""
+        }, '\n')
+    )
+end
 
 function g.test_on_patch_trigger()
     g.cluster.main_server.net_box:eval([[
