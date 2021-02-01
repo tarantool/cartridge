@@ -80,7 +80,7 @@ local function force_apply(_, _, info)
 
     local cache = info.context.request_cache
     if cache.issues == nil then
-        cache.issues = issues.list_on_cluster()
+        cache.issues, cache.issues_err = issues.list_on_cluster()
     end
 
     local reasons_map = {}
@@ -126,7 +126,7 @@ local function force_apply(_, _, info)
     return ret
 end
 
-local function disable_servers()
+local function disable_servers(_, _, info)
     local topology_cfg = confapplier.get_readonly('topology')
     if topology_cfg == nil then
         return nil
@@ -134,11 +134,20 @@ local function disable_servers()
 
     local ret = {}
 
+    local cache = info.context.request_cache
+    if cache.issues == nil then
+        cache.issues, cache.issues_err = issues.list_on_cluster()
+    end
+
+    if cache.issues_err == nil then
+        return nil
+    end
+
     local refined_uri_list = topology.refine_servers_uri(topology_cfg)
     for _, uuid, _ in fun.filter(topology.not_disabled, topology_cfg.servers) do
         local member = membership.get_member(refined_uri_list[uuid])
 
-        if member.status ~= 'alive' and member.status ~= 'suspect' then
+        if cache.issues_err[member.uri] then
             table.insert(ret, {uuid = uuid})
         end
     end
@@ -154,7 +163,7 @@ local function get_suggestions(_, _, info)
     return {
         refine_uri = refine_uri(),
         force_apply = force_apply(nil, nil, info),
-        disable_servers = disable_servers()
+        disable_servers = disable_servers(nil, nil, info)
     }
 end
 

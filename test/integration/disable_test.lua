@@ -30,9 +30,6 @@ g.before_each(function()
                     http_port = 8082,
                 }}
             }
-        },
-        env = {
-            TARANTOOL_SWIM_SUSPECT_TIMEOUT_SECONDS = 0,
         }
     })
     g.victim = g.cluster:server('victim')

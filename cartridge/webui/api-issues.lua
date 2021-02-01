@@ -20,7 +20,7 @@ local function get_issues(_, _, info)
         return cache.issues
     end
 
-    cache.issues = issues.list_on_cluster()
+    cache.issues, cache.issues_err = issues.list_on_cluster()
     return cache.issues
 end
 
