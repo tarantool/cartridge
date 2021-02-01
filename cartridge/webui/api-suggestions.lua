@@ -36,6 +36,16 @@ local force_apply_suggestion = gql_types.object({
     }
 })
 
+local disable_servers_suggestion = gql_types.object({
+    name = 'DisableServerSuggestion',
+    description =
+        'A suggestion to disable malfunctioning servers ' ..
+        'in order to restore the quorum',
+    fields = {
+        uuid = gql_types.string.nonNull,
+    }
+})
+
 local function refine_uri()
     local topology_cfg = confapplier.get_readonly('topology')
     if topology_cfg == nil then
@@ -70,7 +80,7 @@ local function force_apply(_, _, info)
 
     local cache = info.context.request_cache
     if cache.issues == nil then
-        cache.issues = issues.list_on_cluster()
+        cache.issues, cache.issues_err = issues.list_on_cluster()
     end
 
     local reasons_map = {}
@@ -116,10 +126,42 @@ local function force_apply(_, _, info)
     return ret
 end
 
+local function disable_servers(_, _, info)
+    local topology_cfg = confapplier.get_readonly('topology')
+    if topology_cfg == nil then
+        return nil
+    end
+
+    local ret = {}
+
+    local cache = info.context.request_cache
+    if cache.issues == nil then
+        cache.issues, cache.issues_err = issues.list_on_cluster()
+    end
+
+    if cache.issues_err == nil then
+        return nil
+    end
+
+    local refined_uri_list = topology.refine_servers_uri(topology_cfg)
+    for _, uuid, _ in fun.filter(topology.not_disabled, topology_cfg.servers) do
+        if cache.issues_err[refined_uri_list[uuid]] then
+            table.insert(ret, {uuid = uuid})
+        end
+    end
+
+    if next(ret) == nil then
+        return nil
+    end
+
+    return ret
+end
+
 local function get_suggestions(_, _, info)
     return {
         refine_uri = refine_uri(),
         force_apply = force_apply(nil, nil, info),
+        disable_servers = disable_servers(nil, nil, info)
     }
 end
 
@@ -134,6 +176,8 @@ local function init(graphql)
             fields = {
                 refine_uri = gql_types.list(refine_uri_suggestion.nonNull),
                 force_apply = gql_types.list(force_apply_suggestion.nonNull),
+                disable_servers =
+                    gql_types.list(disable_servers_suggestion.nonNull)
             }
         }),
         callback = module_name .. '.get_suggestions',

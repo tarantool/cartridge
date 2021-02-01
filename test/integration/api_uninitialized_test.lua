@@ -50,6 +50,7 @@ function g.test_uninitialized()
                     suggestions {
                         refine_uri {}
                         force_apply {}
+                        disable_servers {}
                     }
                     can_bootstrap_vshard
                     vshard_bucket_count
@@ -83,6 +84,7 @@ function g.test_uninitialized()
     t.assert_equals(resp['data']['cluster']['suggestions'], {
         refine_uri = box.NULL,
         force_apply = box.NULL,
+        disable_servers = box.NULL,
     })
 
     t.assert_equals(resp['data']['cluster']['can_bootstrap_vshard'], false)

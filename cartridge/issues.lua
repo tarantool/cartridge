@@ -415,7 +415,7 @@ local function list_on_cluster()
     local twophase_vars = require('cartridge.vars').new('cartridge.twophase')
     local patch_in_progress = assert(twophase_vars.locks)['clusterwide']
 
-    local issues_map = pool.map_call(
+    local issues_map, err = pool.map_call(
         '_G.__cartridge_issues_list_on_instance',
         {{
             checksum = confapplier.get_active_config():get_checksum(),
@@ -429,7 +429,7 @@ local function list_on_cluster()
             table.insert(ret, issue)
         end
     end
-    return ret
+    return ret, err
 end
 
 local function set_limits(limits)

@@ -1,5 +1,5 @@
 # source: http://localhost:8081/admin/api
-# timestamp: Wed Jan 27 2021 15:01:55 GMT+0300 (Moscow Standard Time)
+# timestamp: Mon Feb 01 2021 19:13:04 GMT+0300 (Moscow Standard Time)
 
 """Cluster management"""
 type Apicluster {
@@ -66,6 +66,13 @@ type DDLCheckResult {
 """The schema"""
 type DDLSchema {
   as_yaml: String!
+}
+
+"""
+A suggestion to disable malfunctioning servers in order to restore the quorum
+"""
+type DisableServerSuggestion {
+  uuid: String!
 }
 
 """Parameters for editing a replicaset"""
@@ -528,8 +535,9 @@ type ServerStat {
 }
 
 type Suggestions {
-  refine_uri: [RefineUriSuggestion!]
   force_apply: [ForceApplySuggestion!]
+  refine_uri: [RefineUriSuggestion!]
+  disable_servers: [DisableServerSuggestion!]
 }
 
 """A single user account information"""

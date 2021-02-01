@@ -4,7 +4,7 @@ local g = t.group()
 
 local helpers = require('test.helper')
 
-g.before_all = function()
+g.before_each(function()
     g.cluster = helpers.Cluster:new({
         datadir = fio.tempdir(),
         server_command = helpers.entrypoint('srv_basic'),
@@ -32,16 +32,18 @@ g.before_all = function()
             }
         }
     })
-    g.cluster:start()
-end
+    g.victim = g.cluster:server('victim')
 
-g.after_all = function()
+    g.cluster:start()
+end)
+
+g.after_each(function()
     g.cluster:stop()
     fio.rmtree(g.cluster.datadir)
-end
+end)
 
 function g.test_api_disable()
-    g.cluster:server('victim'):stop()
+    g.victim:stop()
 
     g.cluster.main_server:graphql({query = [[
         mutation {
@@ -60,4 +62,21 @@ function g.test_api_disable()
     local servers = res.data.servers
     t.assert_equals(#servers, 1)
     t.assert_equals(servers[1], {disabled = true})
+end
+
+function g.test_suggestion()
+    g.victim:stop()
+
+    local suggestions = helpers.get_suggestions(g.cluster.main_server)
+    t.assert_equals(suggestions.disable_servers, {{
+        uuid = g.victim.instance_uuid
+    }})
+
+    g.cluster.main_server:graphql({query = [[
+        mutation {
+            cluster { disable_servers(uuids: ["bbbbbbbb-bbbb-0000-0000-000000000001"]) {} }
+        }
+    ]]})
+    local suggestions = helpers.get_suggestions(g.cluster.main_server)
+    t.assert_equals(suggestions.disable_servers, box.NULL)
 end
