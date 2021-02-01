@@ -85,6 +85,12 @@ export type DdlSchema = {|
   as_yaml: $ElementType<Scalars, 'String'>,
 |};
 
+/** A suggestion to disable malfunctioning servers  in order to restore the quorum */
+export type DisableServersSuggestion = {|
+  __typename?: 'DisableServersSuggestion',
+  uuid: $ElementType<Scalars, 'String'>,
+|};
+
 /** Parameters for editing a replicaset */
 export type EditReplicasetInput = {|
   uuid?: ?$ElementType<Scalars, 'String'>,
@@ -255,13 +261,14 @@ export type MutationEdit_ReplicasetArgs = {|
 export type MutationJoin_ServerArgs = {|
   instance_uuid?: ?$ElementType<Scalars, 'String'>,
   timeout?: ?$ElementType<Scalars, 'Float'>,
+  zone?: ?$ElementType<Scalars, 'String'>,
   uri: $ElementType<Scalars, 'String'>,
   vshard_group?: ?$ElementType<Scalars, 'String'>,
   labels?: ?Array<?LabelInput>,
   replicaset_alias?: ?$ElementType<Scalars, 'String'>,
-  replicaset_weight?: ?$ElementType<Scalars, 'Float'>,
-  roles?: ?Array<$ElementType<Scalars, 'String'>>,
   replicaset_uuid?: ?$ElementType<Scalars, 'String'>,
+  roles?: ?Array<$ElementType<Scalars, 'String'>>,
+  replicaset_weight?: ?$ElementType<Scalars, 'Float'>,
 |};
 
 
@@ -643,8 +650,9 @@ export type ServerStat = {|
 
 export type Suggestions = {|
   __typename?: 'Suggestions',
-  refine_uri?: ?Array<RefineUriSuggestion>,
   force_apply?: ?Array<ForceApplySuggestion>,
+  refine_uri?: ?Array<RefineUriSuggestion>,
+  disable_servers?: ?Array<DisableServersSuggestion>,
 |};
 
 /** A single user account information */
@@ -699,7 +707,7 @@ type $Pick<Origin: Object, Keys: Object> = $ObjMapi<Keys, <Key>(k: Key) => $Elem
 
 export type ServerStatFieldsFragment = ({
     ...{ __typename?: 'Server' },
-  ...$Pick<Server, {| uuid: *, uri: *, zone?: * |}>,
+  ...$Pick<Server, {| uuid: *, uri: * |}>,
   ...{| statistics?: ?({
       ...{ __typename?: 'ServerStat' },
     ...$Pick<ServerStat, {| quota_used_ratio: *, arena_used_ratio: *, items_used_ratio: * |}>,
@@ -910,7 +918,7 @@ export type ServerListQuery = ({
     ...{ __typename?: 'Query' },
   ...{| serverList?: ?Array<?({
       ...{ __typename?: 'Server' },
-    ...$Pick<Server, {| uuid: *, alias?: *, uri: *, status: *, message: * |}>,
+    ...$Pick<Server, {| uuid: *, alias?: *, uri: *, zone?: *, status: *, message: * |}>,
     ...{| boxinfo?: ?({
         ...{ __typename?: 'ServerInfo' },
       ...{| general: ({

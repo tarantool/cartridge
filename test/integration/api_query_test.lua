@@ -168,6 +168,7 @@ function g.test_suggestions()
             cluster { suggestions {
                 refine_uri {}
                 force_apply {}
+                disable_servers {}
             }}
         }]]
     }).data.cluster.suggestions
@@ -175,6 +176,7 @@ function g.test_suggestions()
     t.assert_equals(suggestions, {
         refine_uri = box.NULL,
         force_apply = box.NULL,
+        disable_servers = box.NULL,
     })
 end
 

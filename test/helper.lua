@@ -64,6 +64,9 @@ function helpers.get_suggestions(server)
                     config_mismatch
                     operation_error
                 }
+                disable_servers  {
+                    uuid
+                }
             }}
         }]]
     }).data.cluster.suggestions

@@ -20,6 +20,8 @@ Added
   heal the cluster in case of config errors like ``Configuration checksum mismatch``,
   ``Configuration is prepared and locked``, and sometimes ``OperationError``.
 - Show an issue when ``ConfiguringRoles`` state stucks for more than 5s.
+- New GraphQL API: ``{cluster {suggestions {disable_servers {uuid}}}}``
+  to restore the quorum in case of some servers go offline.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
