@@ -85,9 +85,9 @@ export type DdlSchema = {|
   as_yaml: $ElementType<Scalars, 'String'>,
 |};
 
-/** A suggestion to disable malfunctioning servers  in order to restore the quorum */
-export type DisableServersSuggestion = {|
-  __typename?: 'DisableServersSuggestion',
+/** A suggestion to disable malfunctioning servers in order to restore the quorum */
+export type DisableServerSuggestion = {|
+  __typename?: 'DisableServerSuggestion',
   uuid: $ElementType<Scalars, 'String'>,
 |};
 
@@ -652,7 +652,7 @@ export type Suggestions = {|
   __typename?: 'Suggestions',
   force_apply?: ?Array<ForceApplySuggestion>,
   refine_uri?: ?Array<RefineUriSuggestion>,
-  disable_servers?: ?Array<DisableServersSuggestion>,
+  disable_servers?: ?Array<DisableServerSuggestion>,
 |};
 
 /** A single user account information */

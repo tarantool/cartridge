@@ -1,5 +1,5 @@
 # source: http://localhost:8081/admin/api
-# timestamp: Mon Feb 01 2021 17:26:24 GMT+0300 (Moscow Standard Time)
+# timestamp: Mon Feb 01 2021 19:13:04 GMT+0300 (Moscow Standard Time)
 
 """Cluster management"""
 type Apicluster {
@@ -69,9 +69,9 @@ type DDLSchema {
 }
 
 """
-A suggestion to disable malfunctioning servers  in order to restore the quorum
+A suggestion to disable malfunctioning servers in order to restore the quorum
 """
-type DisableServersSuggestion {
+type DisableServerSuggestion {
   uuid: String!
 }
 
@@ -537,7 +537,7 @@ type ServerStat {
 type Suggestions {
   force_apply: [ForceApplySuggestion!]
   refine_uri: [RefineUriSuggestion!]
-  disable_servers: [DisableServersSuggestion!]
+  disable_servers: [DisableServerSuggestion!]
 }
 
 """A single user account information"""

@@ -37,10 +37,10 @@ local force_apply_suggestion = gql_types.object({
 })
 
 local disable_servers_suggestion = gql_types.object({
-    name = 'DisableServersSuggestion',
+    name = 'DisableServerSuggestion',
     description =
         'A suggestion to disable malfunctioning servers ' ..
-        ' in order to restore the quorum',
+        'in order to restore the quorum',
     fields = {
         uuid = gql_types.string.nonNull,
     }
@@ -145,9 +145,7 @@ local function disable_servers(_, _, info)
 
     local refined_uri_list = topology.refine_servers_uri(topology_cfg)
     for _, uuid, _ in fun.filter(topology.not_disabled, topology_cfg.servers) do
-        local member = membership.get_member(refined_uri_list[uuid])
-
-        if cache.issues_err[member.uri] then
+        if cache.issues_err[refined_uri_list[uuid]] then
             table.insert(ret, {uuid = uuid})
         end
     end
