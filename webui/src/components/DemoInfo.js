@@ -7,10 +7,9 @@ import { css, cx } from 'emotion'
 import styled from 'react-emotion'
 import {
   Button,
-  ConfirmModal,
+  Modal,
   CopyToClipboard,
   Markdown,
-  Modal,
   PopupBody,
   PopupFooter,
   Tabbed,
@@ -116,7 +115,7 @@ const styles = {
   `,
   copyBtn: css`
     flex-shrink: 0;
-    margin-left: 8px;
+    margin-left: 2px;
   `
 }
 
@@ -176,7 +175,10 @@ class DemoInfo extends React.Component<DemoInfoProps, DemoInfoState> {
   }
 
   makeReset = () => {
-    window.location.href = '/?flush_session=1'
+    setTimeout(
+      () => window.location.href = '/?flush_session=1',
+      1000
+    );
   }
 
   render() {
@@ -212,16 +214,28 @@ class DemoInfo extends React.Component<DemoInfoProps, DemoInfoState> {
     return <React.Fragment>
       {
         isShowReset &&
-        <ConfirmModal
+        <Modal
+          footerControls={[
+            <Button
+              onClick={this.hideResetModal}
+              text='Cancel'
+              size='l'
+            />,
+            <Button
+              className='meta_TryCartridge_ResetConfig'
+              intent='primary'
+              onClick={this.makeReset}
+              size='l'
+              text='Reset'
+            />
+          ]}
           title='Reset configuration'
           visible={isShowReset}
-          onCancel={this.hideResetModal}
-          onConfirm={this.makeReset}
-          confirmText='Reset'
+          onClose={this.hideResetModal}
         >
           <Text tag='p'>Do you really want to reset your settings?</Text>
           <Text tag='p'>This action will result in data loss.</Text>
-        </ConfirmModal>
+        </Modal>
       }
       {
         isShowConnectInfo &&
@@ -246,20 +260,25 @@ class DemoInfo extends React.Component<DemoInfoProps, DemoInfoState> {
             {'Your demo server is created. Temporary address of your server: '}
             <Bold>
               {uri}
-              <CopyToClipboard className={styles.copyBtn} content={uri} intent='iconic' size='s' />
+              <CopyToClipboard
+                className={styles.copyBtn}
+                content={uri}
+                intent='plain'
+                size='s'
+              />
             </Bold>
           </Text>
           <Button
             className={cx(styles.btn, 'meta_TryCartridge_HowToConnect')}
             text='How to connect?'
-            intent='iconic'
+            intent='secondary'
             onClick={this.showConnectInfo}
           />
         </MainContent>
         <Button
-          className={cx(styles.btn, 'meta_TryCartridge_ResetConfig')}
+          className={styles.btn}
           text='Reset configuration'
-          intent='iconic'
+          intent='secondary'
           onClick={this.showResetModal}
         />
       </DemoContext>
