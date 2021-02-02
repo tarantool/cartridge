@@ -107,6 +107,16 @@ export function joinServer({ uri, uuid }: JoinServerArgs) {
   return graphql.mutate(editTopologyMutation, mutationVariables);
 }
 
+export function disableServer(uuid: string, disable: boolean) {
+  const mutationVariables: EditTopologyMutationVariables = {
+    servers: [
+      { uuid, disabled: disable }
+    ]
+  };
+
+  return graphql.mutate(editTopologyMutation, mutationVariables);
+}
+
 export type CreateReplicasetArgs = {
   alias: string,
   all_rw: boolean,

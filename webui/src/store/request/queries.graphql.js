@@ -292,6 +292,7 @@ query serverList ($withStats: Boolean!) {
   serverList: servers {
     uuid
     alias
+    disabled
     uri
     zone
     status

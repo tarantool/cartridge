@@ -80,6 +80,7 @@ type ServerDetailsModalProps = {
   pageDidMount: ({ instanceUUID: string }) => void,
   resetPageState: () => void,
   alias: string,
+  disabled: boolean,
   issues: Issue[],
   failoverMode: string,
   selfURI?: string,
@@ -135,6 +136,7 @@ class ServerDetailsModal extends React.Component<
   render() {
     const {
       alias,
+      disabled,
       issues,
       history,
       replicaset = {},
@@ -244,6 +246,7 @@ class ServerDetailsModal extends React.Component<
                 : [],
               replicaset && (
                 <ServerDropdown
+                  disabled={disabled}
                   intent='secondary'
                   activeMaster={activeMaster}
                   replicasetUUID={replicaset.uuid}
@@ -286,6 +289,7 @@ const mapStateToProps = (
 ) => {
   const {
     alias,
+    disabled,
     message,
     status,
     uri,
@@ -306,6 +310,7 @@ const mapStateToProps = (
 
   return {
     alias,
+    disabled,
     selfURI: app.clusterSelf.uri,
     failoverMode: app.failover_params.mode,
     issues: clusterPage.issues.filter(({ instance_uuid }) => instance_uuid === instanceUUID),

@@ -43,7 +43,8 @@ Enhanced is WebUI
 
 - Displaying errors of changing server zones.
 
-- Indication of disabled instances in replicaset list.
+- Indication of disabled instances and manual disability state controls
+  in replicaset list.
 
 -------------------------------------------------------------------------------
 [2.4.0] - 2020-12-29
