@@ -320,6 +320,7 @@ query serverList ($withStats: Boolean!) {
     servers {
       uuid
       alias
+      disabled
       uri
       priority
       status
@@ -329,10 +330,6 @@ query serverList ($withStats: Boolean!) {
       message
       replicaset {
         uuid
-      }
-      labels {
-        name
-        value
       }
     }
   }

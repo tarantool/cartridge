@@ -1,75 +1,10 @@
 // @flow
 import * as React from 'react';
 import { defaultMemoize } from 'reselect';
-import { css } from 'react-emotion';
 import { connect } from 'react-redux';
-import { FlatList } from '@tarantool.io/ui-kit';
+import { FlatList } from './FlatList';
 import ReplicasetServerListItem from 'src/components/ReplicasetServerListItem';
 import type { Replicaset } from 'src/generated/graphql-typing';
-
-const SERVER_LABELS_HIGHLIGHTING_CLASS = 'ServerLabelsHighlightingArea';
-
-const styles = {
-  server: css`
-    position: relative;
-    padding-left: 32px;
-  `,
-  row: css`
-    display: flex;
-    align-items: baseline;
-    margin-bottom: 4px;
-  `,
-  heading: css`
-    flex-basis: 480px;
-    flex-grow: 1;
-    margin-right: 12px;
-  `,
-  leaderFlag: css`
-    position: absolute;
-    top: 0;
-    left: 3px;
-  `,
-  iconMargin: css`
-    margin-right: 4px;
-  `,
-  memProgress: css`
-    width: 183px;
-    margin-left: 24px;
-  `,
-  configureBtn: css`
-    margin-left: 8px;
-  `,
-  status: css`
-    display: flex;
-    flex-basis: 153px;
-    align-items: center;
-    margin-right: 12px;
-    margin-left: 12px;
-  `,
-  stats: css`
-    position: relative;
-    display: flex;
-    flex-basis: 351px;
-    align-items: center;
-    margin-right: 12px;
-    margin-left: 12px;
-
-    & > *:first-child {
-      position: relative;
-      margin-right: 17px;
-    }
-
-    & > *:first-child::before {
-      content: '';
-      position: absolute;
-      top: 0px;
-      right: -8px;
-      width: 1px;
-      height: 18px;
-      background-color: #e8e8e8;
-    }
-  `
-};
 
 const prepareServers = (replicaset: Replicaset) => {
   const masterUuid = replicaset.master.uuid;
@@ -97,24 +32,18 @@ class ReplicasetServerList extends React.PureComponent<ReplicasetServerListProps
     return (
       servers
         ? (
-          <React.Fragment>
-            <FlatList
-              className='ReplicasetServerList'
-              itemClassName={`${styles.server} ${SERVER_LABELS_HIGHLIGHTING_CLASS}`}
-              items={servers}
-              itemRender={server => (
-                <ReplicasetServerListItem
-                  onServerLabelClick={onServerLabelClick}
-                  tagsHighlightingClassName={SERVER_LABELS_HIGHLIGHTING_CLASS}
-                  totalBucketsCount={clusterSelf && clusterSelf.vshard_bucket_count}
-                  replicasetUUID={replicaset.uuid}
-                  selfURI={clusterSelf && clusterSelf.uri}
-                  showFailoverPromote={servers && servers.length > 1 && failoverMode === 'stateful'}
-                  {...server}
-                />
-              )}
-            />
-          </React.Fragment>
+          <FlatList>
+            {servers.map(server => (
+              <ReplicasetServerListItem
+                onServerLabelClick={onServerLabelClick}
+                totalBucketsCount={clusterSelf && clusterSelf.vshard_bucket_count}
+                replicasetUUID={replicaset.uuid}
+                selfURI={clusterSelf && clusterSelf.uri}
+                showFailoverPromote={servers && servers.length > 1 && failoverMode === 'stateful'}
+                {...server}
+              />
+            ))}
+          </FlatList>
         )
         : null
     );
