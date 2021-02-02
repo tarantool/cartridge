@@ -3,31 +3,32 @@ describe('Change advertise uri', () => {
   before(() => {
     cy.task('tarantool', {
       code: `
-      cleanup()
+        cleanup()
 
-      _G.cluster = helpers.Cluster:new({
-        datadir = fio.tempdir(),
-        server_command = helpers.entrypoint('srv_basic'),
-        use_vshard = false,
-        cookie = 'test-cluster-cookie',
-        replicasets = {{
-          alias = 'test-replicaset',
-          roles = {'vshard-router', 'vshard-storage', 'failover-coordinator'},
-          servers = {{http_port = 8080}},
-        }}
-      })
-      _G.cluster:start()
-      _G.cluster.main_server.net_box:call(
-        'package.loaded.cartridge.failover_set_params',
-        {{failover_timeout = 0}}
-      )
-      _G.cluster.main_server:stop()
+        _G.cluster = helpers.Cluster:new({
+          datadir = fio.tempdir(),
+          server_command = helpers.entrypoint('srv_basic'),
+          use_vshard = false,
+          cookie = 'test-cluster-cookie',
+          replicasets = {{
+            alias = 'test-replicaset',
+            roles = {'vshard-router', 'vshard-storage', 'failover-coordinator'},
+            servers = {{http_port = 8080}},
+          }}
+        })
+        _G.cluster:start()
+        _G.cluster.main_server.net_box:call(
+          'package.loaded.cartridge.failover_set_params',
+          {{failover_timeout = 0}}
+        )
+        _G.cluster.main_server:stop()
 
-      _G.cluster.main_server.env['TARANTOOL_ADVERTISE_URI'] = 'localhost:13312'
-      _G.cluster.main_server.net_box_uri = 'localhost:13312'
-      _G.cluster.main_server:start()
-      return true
-    `}).should('deep.eq', [true]);
+        _G.cluster.main_server.env['TARANTOOL_ADVERTISE_URI'] = 'localhost:13312'
+        _G.cluster.main_server.net_box_uri = 'localhost:13312'
+        _G.cluster.main_server:start()
+        return true
+      `
+    }).should('deep.eq', [true]);
   });
 
   after(() => {
@@ -41,7 +42,7 @@ describe('Change advertise uri', () => {
 
   it('Server In replica set', () => {
     cy.get('li').contains('test-replicaset').closest('li').should('contain', 'healthy');
-    cy.get('.ReplicasetServerList').should('contain', 'localhost:13312');
+    cy.get('.meta-test__ReplicasetServerList').should('contain', 'localhost:13312');
     cy.get('.meta-test__haveIssues');
   });
 
@@ -50,7 +51,7 @@ describe('Change advertise uri', () => {
     cy.get('.meta-test__ClusterIssuesButton').contains('Issues: 1');
     cy.get('.meta-test__ClusterIssuesButton').click();
     cy.get('.meta-test__ClusterIssuesModal')
-      .contains("warning: Advertise URI (localhost:13312) differs from clusterwide config (localhost:13301)");
+      .contains('warning: Advertise URI (localhost:13312) differs from clusterwide config (localhost:13301)');
     cy.get('.meta-test__ClusterIssuesModal button[type="button"]').click();
     cy.get('.meta-test__ClusterIssuesModal').should('not.exist');
   });

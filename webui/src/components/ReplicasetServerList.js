@@ -32,7 +32,7 @@ class ReplicasetServerList extends React.PureComponent<ReplicasetServerListProps
     return (
       servers
         ? (
-          <FlatList>
+          <FlatList className='meta-test__ReplicasetServerList'>
             {servers.map(server => (
               <ReplicasetServerListItem
                 onServerLabelClick={onServerLabelClick}
