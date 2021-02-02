@@ -1,4 +1,7 @@
 // @flow
+
+// TODO: Use FlatList from UI-Kit
+
 import * as React from 'react';
 import { css, cx } from 'emotion';
 import { colors } from '@tarantool.io/ui-kit';
