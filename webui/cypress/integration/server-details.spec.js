@@ -100,6 +100,39 @@ describe('Server details', () => {
     cy.get('div').contains('Mordor');
     cy.get('div').contains('Narnia').should('not.exist');
     cy.get('.meta-test__ServerDetailsModal button').contains('Close').click();
+
+    // Enable/disable servers
+    openServerDetailsModal('dummy-1');
+    cy.get('.meta-test__ServerDetailsModal .meta-test__ReplicasetServerListItem__dropdownBtn')
+      .click();
+
+    // Disable leader: will fail
+    cy.get('.meta-test__ReplicasetServerListItem__dropdown div')
+      .contains('Disable server').click();
+    cy.get('span:contains(Invalid cluster topology config: Current instance "localhost:13301" can not be disabled)')
+      .click();
+    cy.get('.meta-test__ServerDetailsModal  span:contains(Disabled)').should('not.exist');
+    cy.get('.meta-test__ServerDetailsModal button').contains('Close').click();
+
+    openServerDetailsModal('dummy-2');
+
+    // Disable replica: will succeed
+    cy.get('.meta-test__ServerDetailsModal .meta-test__ReplicasetServerListItem__dropdownBtn')
+      .click();
+    cy.get('.meta-test__ReplicasetServerListItem__dropdown div')
+      .contains('Disable server').click();
+    cy.get('.meta-test__ServerDetailsModal span:contains(Disabled)').should('exist');
+
+    // Enable replica back: will succeed
+    cy.get('.meta-test__ServerDetailsModal .meta-test__ReplicasetServerListItem__dropdownBtn')
+      .click();
+    cy.get('.meta-test__ReplicasetServerListItem__dropdown div')
+      .contains('Enable server').click();
+    cy.get('.meta-test__ServerDetailsModal span:contains(Disabled)').should('not.exist');
+
+    cy.get('.meta-test__ServerDetailsModal button').contains('Close').click();
+    // Enable/disable servers - end
+
   });
 
   it('Dead server', () => {
@@ -113,7 +146,7 @@ describe('Server details', () => {
 
     cy.get('div').contains('Mordor').should('exist');
     cy.get('.meta-test__ZoneListItem').contains('Mordor').click();
-    cy.get('span:contains(NetboxConnectError: "localhost:13302": Connection refused)');
+    cy.get('span:contains(NetboxConnectError: "localhost:13302": Connection refused)').click();
 
     cy.get('.meta-test__ServerDetailsModal button:contains(Zone Mordor)').click();
     cy.get('button:contains(Add new zone)').click();
@@ -128,6 +161,27 @@ describe('Server details', () => {
 
     checkServerDetailsTabs();
     cy.get('.meta-test__ServerDetailsModal button').contains('Close').click();
+
+    // Enable/disable servers
+    openServerDetailsModal('dummy-2');
+
+    // Disable dead replica: will succeed
+    cy.get('.meta-test__ServerDetailsModal .meta-test__ReplicasetServerListItem__dropdownBtn')
+      .click();
+    cy.get('.meta-test__ReplicasetServerListItem__dropdown div')
+      .contains('Disable server').click();
+    cy.get('.meta-test__ServerDetailsModal span:contains(Disabled)').should('exist');
+
+    // Enable dead replica: will fail
+    cy.get('.meta-test__ServerDetailsModal .meta-test__ReplicasetServerListItem__dropdownBtn')
+      .click();
+    cy.get('.meta-test__ReplicasetServerListItem__dropdown div')
+      .contains('Enable server').click();
+    cy.get('span:contains(NetboxConnectError: "localhost:13302": Connection refused)')
+      .click();
+    cy.get('.meta-test__ServerDetailsModal span:contains(Disabled)').should('exist');
+    cy.get('.meta-test__ServerDetailsModal button').contains('Close').click();
+    // Enable/disable servers - end
 
     cy.task('tarantool', { code: `_G.cluster:server('dummy-2'):start()` });
     openServerDetailsModal('dummy-2');
