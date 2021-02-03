@@ -3,6 +3,7 @@ import {
   createStore,
   createEvent,
   createEffect,
+  guard,
   type Effect,
   type Store
 } from 'effector';
@@ -32,6 +33,11 @@ export const setInstanceZoneFx: Effect<
     }
   }
 );
+
+export const chooseZoneFail = guard<Error>({
+  source: setInstanceZoneFx.failData,
+  filter: $zoneAddForInstance.map(v => !v)
+});
 
 // init
 $zoneAddForInstance

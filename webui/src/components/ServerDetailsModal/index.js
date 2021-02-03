@@ -24,6 +24,7 @@ import {
 import { withRouter } from 'react-router-dom'
 import {
   setInstanceZoneFx,
+  chooseZoneFail,
   zoneAddModalOpen
 } from 'src/store/effector/clusterZones';
 import store from 'src/store/instance';
@@ -33,6 +34,7 @@ import { ServerDetailsModalIssues } from './ServerDetailsModalIssues'
 import { HealthStatus } from '../HealthStatus';
 import { ServerDropdown } from '../ServerDropdown';
 import { LeaderLabel } from '../LeaderLabel';
+import { graphqlErrorNotification } from '../../misc/graphqlErrorNotification';
 import type { Issue, Replicaset } from 'src/generated/graphql-typing';
 
 const styles = {
@@ -68,6 +70,10 @@ const styles = {
 };
 
 const PopoverButton = withPopover(Button);
+
+chooseZoneFail.watch(data => {
+  graphqlErrorNotification(data, 'Zone change error');
+});
 
 type ServerDetailsModalProps = {
   history: History,
