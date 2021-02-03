@@ -34,7 +34,7 @@ export const setInstanceZoneFx: Effect<
   }
 );
 
-export const chooseZoneFail = guard({
+export const chooseZoneFail = guard<Error>({
   source: setInstanceZoneFx.failData,
   filter: $zoneAddForInstance.map(v => !v)
 });
