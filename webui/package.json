@@ -73,7 +73,7 @@
     "react": "16.14.0",
     "react-apollo": "^2.5.5",
     "react-codemirror2": "^5.0.4",
-    "react-dev-utils": "11.0.0",
+    "react-dev-utils": "9.0.1",
     "react-dom": "16.14.0",
     "react-drag-listview": "^0.1.4",
     "react-emotion": "^9.2.6",
@@ -99,7 +99,7 @@
     "vscode-ws-jsonrpc": "0.1.1",
     "webpack": "4.44.2",
     "webpack-bundle-analyzer": "3.6.0",
-    "webpack-dev-server": "3.11.0",
+    "webpack-dev-server": "3.11.2",
     "webpack-manifest-plugin": "2.0.4",
     "whatwg-fetch": "2.0.3",
     "yup": "^0.27.0"
