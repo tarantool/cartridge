@@ -57,6 +57,7 @@ export const ZoneAddModal = () => {
         name='uri'
         value={value}
         onChange={handleInputChange}
+        autoFocus
       />
       {error && (
         <Alert className={'ZoneAddModal_error'} type='error'>

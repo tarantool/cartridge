@@ -106,6 +106,7 @@ class LogInForm extends React.Component {
           return (
             <Form>
               <LabeledInput
+                autoFocus
                 label={<>Username<Text className={styles.requiredStar}>*</Text></>}
                 value={values.username}
                 onBlur={handleBlur}
