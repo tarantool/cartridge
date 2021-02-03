@@ -46,21 +46,25 @@ local disable_servers_suggestion = gql_types.object({
     }
 })
 
-local function refine_uri()
+local function refine_uri(_, _, info)
     local topology_cfg = confapplier.get_readonly('topology')
     if topology_cfg == nil then
         return nil
     end
 
+    local cache = info.context.request_cache
+    if cache.refined_uri == nil then
+        cache.refined_uri = topology.refine_servers_uri(topology_cfg)
+    end
+
     local ret = {}
 
-    local refined_uri_list = topology.refine_servers_uri(topology_cfg)
     for _, uuid, srv in fun.filter(topology.not_disabled, topology_cfg.servers) do
-        if srv.uri ~= refined_uri_list[uuid] then
+        if srv.uri ~= cache.refined_uri[uuid] then
             table.insert(ret, {
                 uuid = uuid,
                 uri_old = srv.uri,
-                uri_new = refined_uri_list[uuid],
+                uri_new = cache.refined_uri[uuid],
             })
         end
     end
@@ -96,9 +100,12 @@ local function force_apply(_, _, info)
         end
     end
 
-    local refined_uri_list = topology.refine_servers_uri(topology_cfg)
+    if cache.refined_uri == nil then
+        cache.refined_uri = topology.refine_servers_uri(topology_cfg)
+    end
+
     for _, uuid, _ in fun.filter(topology.not_disabled, topology_cfg.servers) do
-        local member = membership.get_member(refined_uri_list[uuid])
+        local member = membership.get_member(cache.refined_uri[uuid])
 
         if member ~= nil
         and (member.status == 'alive' or member.status == 'suspect')
@@ -143,9 +150,12 @@ local function disable_servers(_, _, info)
         return nil
     end
 
-    local refined_uri_list = topology.refine_servers_uri(topology_cfg)
+    if cache.refined_uri == nil then
+        cache.refined_uri = topology.refine_servers_uri(topology_cfg)
+    end
+
     for _, uuid, _ in fun.filter(topology.not_disabled, topology_cfg.servers) do
-        if cache.issues_err[refined_uri_list[uuid]] then
+        if cache.issues_err[cache.refined_uri[uuid]] then
             table.insert(ret, {uuid = uuid})
         end
     end
@@ -159,7 +169,7 @@ end
 
 local function get_suggestions(_, _, info)
     return {
-        refine_uri = refine_uri(),
+        refine_uri = refine_uri(nil, nil, info),
         force_apply = force_apply(nil, nil, info),
         disable_servers = disable_servers(nil, nil, info)
     }
