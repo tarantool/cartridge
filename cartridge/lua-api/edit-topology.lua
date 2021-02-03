@@ -3,10 +3,12 @@
 -- @module cartridge.lua-api.edit-topology
 
 local fun = require('fun')
+local yaml = require('yaml')
 local checks = require('checks')
 local errors = require('errors')
 local uuid_lib = require('uuid')
 
+local rpc = require('cartridge.rpc')
 local roles = require('cartridge.roles')
 local topology = require('cartridge.topology')
 local twophase = require('cartridge.twophase')
@@ -281,6 +283,15 @@ local function edit_topology(args)
     })
 
     local args = table.deepcopy(args)
+    local state = confapplier.get_state()
+    if state == 'Unconfigured' and rpc.is_proxy_call_possible() then
+        local res, err = rpc.proxy_call('_G.__proxy_edit_topology', args)
+        if err ~= nil then
+            return nil, err
+        end
+        return yaml.decode(res)
+    end
+
     local topology_cfg = confapplier.get_deepcopy('topology')
     if topology_cfg == nil then
         topology_cfg = {
@@ -382,6 +393,16 @@ local function edit_topology(args)
 
     return ret
 end
+
+local function proxy_edit_topology(args)
+    local ret, err = edit_topology(args)
+    if ret then
+        return yaml.encode(ret)
+    end
+    return nil, err
+end
+
+_G.__proxy_edit_topology = proxy_edit_topology
 
 return {
     edit_topology = edit_topology,

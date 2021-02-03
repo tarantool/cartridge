@@ -22,6 +22,11 @@ Added
 - Show an issue when ``ConfiguringRoles`` state stucks for more than 5s.
 - New GraphQL API: ``{cluster {suggestions {disable_servers {uuid}}}}``
   to restore the quorum in case of some servers go offline.
+- Implement proxy calls from `Unconfigured` instances for next functions:
+
+  - ``cartrige.lua-api.edit_topology``
+  - ``cartrige.lua-api.get_topology``
+  - ``cartrige.lua-api.bootstrap_vshard``
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed

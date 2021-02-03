@@ -17,6 +17,8 @@ local confapplier = require('cartridge.confapplier')
 local service_registry = require('cartridge.service-registry')
 
 local RemoteCallError = errors.new_class('RemoteCallError')
+local ProxyCallError = errors.new_class('ProxyCallError')
+
 
 local function call_local(role_name, fn_name, args)
     checks('string', 'string', '?table')
@@ -282,10 +284,87 @@ local function call_remote(role_name, fn_name, args, opts)
     end
 end
 
+--- Check that proxy call can be performed.
+-- If exists one inststance in membership with state ~= 'Unconfigured'
+-- then proxy call can be performed.
+--
+-- @function is_proxy_call_possible
+--
+-- @return boolean
+local function is_proxy_call_possible()
+    local members = membership.members()
+    for _, member in pairs(members) do
+        local member_state = member.payload and member.payload.state
+        if member_state and member_state ~= 'Unconfigured' then
+            return true
+        end
+    end
+    return false
+end
+
+--- Perform proxy call.
+-- Find a suitable healthy instance and perform a [`net.box` `conn:call`](
+-- https://tarantool.io/en/doc/latest/reference/reference_lua/net_box/#net-box-call)
+--
+-- @function proxy_call
+--
+-- @tparam string fn_name
+-- @tparam[opt] table args
+-- @tparam[opt] table opts
+-- @param opts.timeout passed to `net.box` `conn:call` options.
+--
+-- @return[1] `conn:call()` result
+-- @treturn[2] nil
+-- @treturn[2] table Error description
+local function proxy_call(fn_name, args, opts)
+    opts = opts or {}
+    checks('string', '?table', {
+        timeout = '?'
+    })
+
+    local uri_proxy_list = {}
+    local members = membership.members()
+    for _, member in pairs(members) do
+        if member.status == 'alive' or member.status == 'suspect' then
+            local member_state = member.payload and member.payload.state
+
+            -- Add uri of configured instances at the begin of proxy list
+            if member_state == 'RolesConfigured' then
+                table.insert(uri_proxy_list, 1, member.uri)
+            end
+            if member_state and member_state ~= 'Unconfigured' then
+                table.insert(uri_proxy_list, member.uri)
+            end
+        end
+    end
+
+    if #uri_proxy_list == 0 then
+        return nil, ProxyCallError:new(
+            'No available instances to perform proxy call'
+        )
+    end
+
+    local conn, err
+    for _, uri in ipairs(uri_proxy_list) do
+        conn, err = pool.connect(uri)
+    end
+
+    if not conn then
+        return nil, err
+    end
+
+    args = args and {args}
+    return conn:call(fn_name, args, {
+        timeout = opts.timeout
+    })
+end
+
 _G.__cluster_rpc_call_local = call_local
 
 return {
     get_candidates = get_candidates,
     get_connection = get_connection,
     call = call_remote,
+    proxy_call = proxy_call,
+    is_proxy_call_possible = is_proxy_call_possible,
 }
