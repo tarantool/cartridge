@@ -60,6 +60,7 @@ const UsernameInput = createComponent(
     { blur, change, $field: { value, visited }, ...state }
   ) => (
     <LabeledInput
+      autoFocus
       label='Username'
       type='text'
       value={value}
