@@ -38,7 +38,20 @@ jobs:
       # Make a release
       - run: echo TAG=${GITHUB_REF##*/} >> $GITHUB_ENV
       - run: tarantoolctl rocks new_version --tag ${{ env.TAG }}
-      - run: tarantoolctl rocks install cartridge-${{ env.TAG }}-1.rockspec
+      - run: tarantoolctl rocks make cartridge-${{ env.TAG }}-1.rockspec
+      - run: |
+          mkdir -p check-version
+          # get away from repo sources because `cartridge/VERSION.lua`
+          # always returns 'scm-1' and assertion fails
+          pushd check-version
+          tarantool -l cartridge <<SCRIPT
+          assert(cartridge.VERSION == '${{ env.TAG }}',
+            'version mismatch' ..
+            '\nexpected: ' .. '${{ env.TAG }}' ..
+            '\n  actual: ' .. cartridge.VERSION
+          )
+          SCRIPT
+          popd
       - run: tarantoolctl rocks pack cartridge ${{ env.TAG }}
 
       - uses: tarantool/rocks.tarantool.org/github-action@master
