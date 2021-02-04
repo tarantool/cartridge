@@ -44,7 +44,11 @@ if (REBUILD)
             env NODE_ENV=production
             npm ci  --no-audit --no-progress --prefer-offline
         WORKING_DIRECTORY "${BASE_DIR}"
+        RESULT_VARIABLE _result
     )
+    if (execute_process_result)
+        message(FATAL_ERROR "npm ci failed (exit ${_result})")
+    endif()
     file(WRITE ${HASH_FILE} "${MD5_ACTUAL}")
 else()
     message(STATUS "Skipping node_modules installation")
@@ -76,7 +80,11 @@ if (REBUILD)
     execute_process(
         COMMAND npm run build
         WORKING_DIRECTORY "${BASE_DIR}"
+        RESULT_VARIABLE _result
     )
+    if (execute_process_result)
+        message(FATAL_ERROR "npm run build failed (exit ${_result})")
+    endif()
     file(WRITE ${HASH_FILE} "${MD5_ACTUAL}")
 else()
     message(STATUS "Skipping WebUI bundle build")
