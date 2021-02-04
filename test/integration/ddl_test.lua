@@ -198,10 +198,12 @@ function g.test_space_removal()
     _set_schema(server, 'spaces: {}')
 
     for _, srv in pairs(g.cluster.servers) do
-        srv.net_box:ping()
-        t.assert(srv.net_box.space.test_space,
-            string.format('Missing test_space on %s', srv.alias)
-        )
+        helpers.retrying({}, function()
+            srv.net_box:ping()
+            t.assert(srv.net_box.space.test_space,
+                string.format('Missing test_space on %s', srv.alias)
+            )
+        end)
     end
 end
 
@@ -224,9 +226,11 @@ function g.test_example_schema()
     local space_name = next(yaml.decode(example_yml).spaces)
 
     for _, srv in pairs(g.cluster.servers) do
-        srv.net_box:ping()
-        t.assert(srv.net_box.space[space_name],
-            string.format('Missing space %q on %s', space_name, srv.alias)
-        )
+        helpers.retrying({}, function()
+            srv.net_box:ping()
+            t.assert(srv.net_box.space[space_name],
+                string.format('Missing space %q on %s', space_name, srv.alias)
+            )
+        end)
     end
 end
