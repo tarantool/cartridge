@@ -46,7 +46,7 @@ if (REBUILD)
         WORKING_DIRECTORY "${BASE_DIR}"
         RESULT_VARIABLE _result
     )
-    if (execute_process_result)
+    if (_result)
         message(FATAL_ERROR "npm ci failed (exit ${_result})")
     endif()
     file(WRITE ${HASH_FILE} "${MD5_ACTUAL}")
@@ -82,7 +82,7 @@ if (REBUILD)
         WORKING_DIRECTORY "${BASE_DIR}"
         RESULT_VARIABLE _result
     )
-    if (execute_process_result)
+    if (_result)
         message(FATAL_ERROR "npm run build failed (exit ${_result})")
     endif()
     file(WRITE ${HASH_FILE} "${MD5_ACTUAL}")
