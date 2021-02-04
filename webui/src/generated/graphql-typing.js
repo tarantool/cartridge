@@ -790,7 +790,7 @@ export type BoxInfoQuery = ({
     ...{ __typename?: 'Query' },
   ...{| servers?: ?Array<?({
       ...{ __typename?: 'Server' },
-    ...$Pick<Server, {| alias?: *, status: *, message: *, uri: * |}>,
+    ...$Pick<Server, {| alias?: *, disabled?: *, status: *, message: *, uri: * |}>,
     ...{| replicaset?: ?({
         ...{ __typename?: 'Replicaset' },
       ...$Pick<Replicaset, {| roles?: * |}>,
@@ -940,7 +940,7 @@ export type ServerListQuery = ({
       ...$Pick<Server, {| uuid: * |}>
     }), servers: Array<({
         ...{ __typename?: 'Server' },
-      ...$Pick<Server, {| uuid: *, alias?: *, uri: *, priority?: *, status: *, message: * |}>,
+      ...$Pick<Server, {| uuid: *, alias?: *, disabled?: *, uri: *, priority?: *, status: *, message: * |}>,
       ...{| boxinfo?: ?({
           ...{ __typename?: 'ServerInfo' },
         ...{| general: ({

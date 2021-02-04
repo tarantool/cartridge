@@ -2,7 +2,7 @@
 
 import * as React from 'react'
 import { connect } from 'react-redux'
-import { css } from 'emotion';
+import { css, cx } from 'emotion';
 import { filter, identity, uniq } from 'ramda';
 import {
   Button,
@@ -35,6 +35,7 @@ import { HealthStatus } from '../HealthStatus';
 import { ServerDropdown } from '../ServerDropdown';
 import { LeaderLabel } from '../LeaderLabel';
 import { graphqlErrorNotification } from '../../misc/graphqlErrorNotification';
+import { Label } from '../Label';
 import type { Issue, Replicaset } from 'src/generated/graphql-typing';
 
 const styles = {
@@ -43,10 +44,13 @@ const styles = {
     justify-content: space-between;
     margin-bottom: 21px;
   `,
-  leaderFlag: css`
+  flag: css`
     margin-left: 20px;
     margin-bottom: 3px;
     vertical-align: middle;
+  `,
+  flagMarginBetween: css`
+    margin-left: 10px;
   `,
   headingWidthLimit: css`
     max-width: 780px;
@@ -80,6 +84,7 @@ type ServerDetailsModalProps = {
   pageDidMount: ({ instanceUUID: string }) => void,
   resetPageState: () => void,
   alias: string,
+  disabled: boolean,
   issues: Issue[],
   failoverMode: string,
   selfURI?: string,
@@ -135,6 +140,7 @@ class ServerDetailsModal extends React.Component<
   render() {
     const {
       alias,
+      disabled,
       issues,
       history,
       replicaset = {},
@@ -163,9 +169,14 @@ class ServerDetailsModal extends React.Component<
           <span className={styles.headingWidthLimit}>{alias || instanceUUID}</span>
           {(master || activeMaster) && (
             <LeaderLabel
-              className={styles.leaderFlag}
+              className={styles.flag}
               state={status !== 'healthy' ? 'bad' : ro === false ? 'good' : 'warning'}
             />
+          )}
+          {disabled && (
+            <Label className={cx(styles.flag, { [styles.flagMarginBetween]: master || activeMaster })}>
+              Disabled
+            </Label>
           )}
         </>}
         footerControls={[
@@ -244,6 +255,7 @@ class ServerDetailsModal extends React.Component<
                 : [],
               replicaset && (
                 <ServerDropdown
+                  disabled={disabled}
                   intent='secondary'
                   activeMaster={activeMaster}
                   replicasetUUID={replicaset.uuid}
@@ -286,6 +298,7 @@ const mapStateToProps = (
 ) => {
   const {
     alias,
+    disabled,
     message,
     status,
     uri,
@@ -306,6 +319,7 @@ const mapStateToProps = (
 
   return {
     alias,
+    disabled,
     selfURI: app.clusterSelf.uri,
     failoverMode: app.failover_params.mode,
     issues: clusterPage.issues.filter(({ instance_uuid }) => instance_uuid === instanceUUID),

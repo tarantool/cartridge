@@ -19,14 +19,27 @@ import { type MemoryUsageRatios } from 'src/misc/memoryStatistics';
 import { getMemoryFragmentationLevel } from 'src/store/selectors/clusterPage';
 import { ServerDropdown } from 'src/components/ServerDropdown';
 import { type Label } from 'src/components/ServerLabels';
+import { FlatListItem } from './FlatList';
+
+const SERVER_LABELS_HIGHLIGHTING_CLASS = 'ServerLabelsHighlightingArea';
 
 const styles = {
+  rowWrap: css`
+    position: relative;
+    padding-left: 32px;
+  `,
+  disabledRowWrap: css`
+    background-color: #fafafa;
+  `,
   row: css`
     display: flex;
     flex-wrap: wrap;
     align-items: baseline;
     padding-right: 31px;
     margin-bottom: -8px;
+  `,
+  disabledRow: css`
+    opacity: 0.4;
   `,
   heading: css`
     flex-basis: 415px;
@@ -147,7 +160,7 @@ type Server = {
   status: string,
   uri: string,
   alias?: string,
-  // disabled?: boolean,
+  disabled: boolean,
   message: string,
   // priority?: number,
   labels?: ?Array<Label>,
@@ -160,10 +173,10 @@ type Server = {
 type ReplicasetServerListItemProps = {
   ...$Exact<Server>,
   activeMaster?: boolean,
+  className?: string,
   onServerLabelClick?: (label: Label) => void,
   replicasetUUID: string,
   showFailoverPromote?: boolean,
-  tagsHighlightingClassName?: string,
   totalBucketsCount?: number,
   ro?: boolean
 };
@@ -179,6 +192,7 @@ class ReplicasetServerListItem extends React.PureComponent<
   render() {
     const {
       activeMaster,
+      className,
       replicasetUUID,
       selfURI,
       showFailoverPromote,
@@ -186,6 +200,7 @@ class ReplicasetServerListItem extends React.PureComponent<
       status,
       uri,
       alias,
+      disabled,
       message,
       master,
       totalBucketsCount,
@@ -202,8 +217,15 @@ class ReplicasetServerListItem extends React.PureComponent<
       : 1;
 
     return (
-      <React.Fragment>
-        <div className={styles.row}>
+      <FlatListItem
+        className={cx(
+          styles.rowWrap,
+          { [styles.disabledRowWrap]: disabled },
+          SERVER_LABELS_HIGHLIGHTING_CLASS,
+          className
+        )}
+      >
+        <div className={cx(styles.row, { [styles.disabledRow]: disabled })}>
           {(master || activeMaster) &&
             <LeaderFlag
               className={cx(styles.leaderFlag, 'meta-test_leaderFlag')}
@@ -265,6 +287,7 @@ class ReplicasetServerListItem extends React.PureComponent<
         <ServerDropdown
           activeMaster={activeMaster}
           className={styles.configureBtn}
+          disabled={disabled}
           replicasetUUID={replicasetUUID}
           showFailoverPromote={showFailoverPromote}
           showServerDetails
@@ -272,7 +295,7 @@ class ReplicasetServerListItem extends React.PureComponent<
           history={history}
           uuid={uuid}
         />
-      </React.Fragment>
+      </FlatListItem>
     )
   }
 }

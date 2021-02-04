@@ -1,5 +1,6 @@
 // @flow
 import {
+  CLUSTER_DISABLE_INSTANCE_REQUEST,
   CLUSTER_PAGE_FILTER_SET,
   CLUSTER_PAGE_MODAL_FILTER_SET,
   CLUSTER_PAGE_DID_MOUNT,
@@ -179,14 +180,19 @@ export type changeFailoverActionCreator = typeof changeFailover;
 export type changeFailoverAction = $Call<changeFailoverActionCreator, FailoverApi>;
 
 
+export const disableServer = (uuid: string, disable: bool) => ({
+  type: CLUSTER_DISABLE_INSTANCE_REQUEST,
+  payload: { uuid, disable }
+});
+
 export const failoverPromoteLeader = (
   replicaset_uuid: string,
   instance_uuid: string,
   force_inconsistency?: boolean
 ) => ({
   type: CLUSTER_PAGE_FAILOVER_PROMOTE_REQUEST,
-  payload: { replicaset_uuid, instance_uuid, force_inconsistency  }
-})
+  payload: { replicaset_uuid, instance_uuid, force_inconsistency }
+});
 
 export const setVisibleBootstrapVshardPanel = (visible: boolean) => {
   return {

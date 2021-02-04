@@ -45,12 +45,16 @@ import {
   CLUSTER_PAGE_FAILOVER_PROMOTE_REQUEST_SUCCESS,
   CLUSTER_PAGE_FAILOVER_PROMOTE_REQUEST_ERROR,
   CLUSTER_PAGE_STATE_RESET,
+  CLUSTER_DISABLE_INSTANCE_REQUEST,
+  CLUSTER_DISABLE_INSTANCE_REQUEST_SUCCESS,
+  CLUSTER_DISABLE_INSTANCE_REQUEST_ERROR,
   CLUSTER_SELF_UPDATE,
   CLUSTER_PAGE_ZONE_UPDATE
 } from 'src/store/actionTypes';
 import { baseSaga, getRequestSaga, getSignalRequestSaga } from 'src/store/commonRequest';
 import { getClusterSelf } from 'src/store/request/app.requests';
 import {
+  disableServer,
   getPageData,
   refreshLists,
   getServerStat,
@@ -197,6 +201,22 @@ const failoverPromoteRequestSaga = function* () {
   });
 };
 
+const disableInstanceSaga = function* () {
+  yield takeLatest(CLUSTER_DISABLE_INSTANCE_REQUEST, function* ({ payload: { uuid, disable } }) {
+    try {
+      yield call(disableServer, uuid, disable);
+      yield put({ type: CLUSTER_DISABLE_INSTANCE_REQUEST_SUCCESS });
+    } catch (error) {
+      yield put({
+        type: CLUSTER_DISABLE_INSTANCE_REQUEST_ERROR,
+        payload: error,
+        error: true
+      });
+      graphqlErrorNotification(error, 'Disabled state setting error');
+    }
+  });
+};
+
 const joinServerRequestSaga = getRequestSaga(
   CLUSTER_PAGE_JOIN_SERVER_REQUEST,
   CLUSTER_PAGE_JOIN_SERVER_REQUEST_SUCCESS,
@@ -292,6 +312,7 @@ const updateClusterSelfOnBootstrap = function* () {
 
 const updateListsOnTopologyEdit = function* () {
   const topologyEditTokens = [
+    CLUSTER_DISABLE_INSTANCE_REQUEST_SUCCESS,
     CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST_SUCCESS,
     CLUSTER_PAGE_JOIN_SERVER_REQUEST_SUCCESS,
     CLUSTER_PAGE_EXPEL_SERVER_REQUEST_SUCCESS,
@@ -309,6 +330,7 @@ const updateListsOnTopologyEdit = function* () {
 
 export const saga = baseSaga(
   failoverPromoteRequestSaga,
+  disableInstanceSaga,
   pageDataRequestSaga,
   refreshListsRequestSaga,
   bootstrapVshardRequestSaga,

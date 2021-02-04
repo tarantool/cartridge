@@ -9,11 +9,16 @@ import {
   type ButtonProps
 } from '@tarantool.io/ui-kit';
 import store from 'src/store/instance';
-import { failoverPromoteLeader, showExpelModal } from 'src/store/actions/clusterPage.actions';
+import {
+  disableServer,
+  failoverPromoteLeader,
+  showExpelModal
+} from 'src/store/actions/clusterPage.actions';
 
 type ServerDropdownProps = {
   className?: string,
   activeMaster?: boolean,
+  disabled: boolean,
   replicasetUUID: string,
   intent?: $ElementType<ButtonProps, 'intent'>,
   size?: $ElementType<ButtonProps, 'size'>,
@@ -29,6 +34,7 @@ export class ServerDropdown extends React.PureComponent<ServerDropdownProps> {
     const {
       activeMaster,
       className,
+      disabled,
       intent,
       replicasetUUID,
       showFailoverPromote,
@@ -60,6 +66,13 @@ export class ServerDropdown extends React.PureComponent<ServerDropdownProps> {
               </DropdownItem>
             )
             : null,
+          <DropdownItem
+            onClick={() => store.dispatch(
+              disableServer(uuid, !disabled)
+            )}
+          >
+            {disabled ? 'Enable server' : 'Disable server'}
+          </DropdownItem>,
           <DropdownItem
             className={css`color: rgba(245, 34, 45, 0.65);`}
             onClick={() => store.dispatch(showExpelModal(uri))}
