@@ -57,12 +57,12 @@ describe('Change advertise uri', () => {
   });
 
   it('Cluster Suggestions Panel', () => {
-    cy.get('.meta-test__ClusterSuggestionsPanel').contains('Advertise URI change');
+    cy.get('.meta-test__ClusterSuggestionsPanel').contains('Change advertise URI');
     cy.get('.meta-test__ClusterSuggestionsPanel').contains('Seems that some instances were restarted with' +
       ' a different advertise_uri. Update configuration to fix it.');
     cy.get('.meta-test__ClusterSuggestionsPanel').find('button:contains(Review changes)').click();
 
-    cy.get('.meta-test__ClusterSuggestionsModal').contains('Advertise URI change');
+    cy.get('.meta-test__ClusterSuggestionsModal').contains('Change advertise URI');
     cy.get('.meta-test__ClusterSuggestionsModal').contains('One or more servers were restarted with a new advertise uri');
     cy.get('.meta-test__ClusterSuggestionsModal').contains('localhost:13301 -> localhost:13312');
     cy.get('.meta-test__ClusterSuggestionsModal').find('button:contains(Update)').click();
