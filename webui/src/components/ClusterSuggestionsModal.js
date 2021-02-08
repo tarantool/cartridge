@@ -57,7 +57,7 @@ export const ClusterSuggestionsModal = () => {
         <Button intent='primary' size='l' text='Update' onClick={applyClick} loading={pending} />
       ]}
       onClose={detailsClose}
-      title='Advertise URI change'
+      title='Change advertise URI'
     >
       <Text className={styles.msg} tag='p'>{msg}</Text>
       <Text className={styles.list} tag='ul'>

@@ -31,7 +31,7 @@ export const ClusterSuggestionsPanel = () => {
   return (
     <Panel className={cx(styles.panel, 'meta-test__ClusterSuggestionsPanel')}>
       <div>
-        <Text className={styles.heading} variant='h5'>Advertise URI change</Text>
+        <Text className={styles.heading} variant='h5'>Change advertise URI</Text>
         <Text>
           Seems that some instances were restarted with a different advertise_uri.
           Update configuration to fix it.
