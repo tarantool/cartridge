@@ -27,6 +27,8 @@ Added
   API only.
 - New ``cartridge.cfg`` option ``http_host`` (default: 0.0.0.0). It is used
   to specify the host on which administrative UI and API will be opened.
+- Refactor two-phase commit logics: don't use hardcoded timeout value for the
+  ``prepare`` stage, move ``upload`` to a separate stage.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed

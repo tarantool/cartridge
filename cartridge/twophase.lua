@@ -15,6 +15,7 @@ local checks = require('checks')
 local vars = require('cartridge.vars').new('cartridge.twophase')
 local pool = require('cartridge.pool')
 local utils = require('cartridge.utils')
+local upload = require('cartridge.upload')
 local topology = require('cartridge.topology')
 local confapplier = require('cartridge.confapplier')
 local ClusterwideConfig = require('cartridge.clusterwide-config')
@@ -35,6 +36,14 @@ vars:new('locks', {})
 vars:new('prepared_config', nil)
 vars:new('on_patch_triggers', {})
 
+--- Internal module params.
+-- (**Added** in v2.4.0-32)
+-- @table _options
+-- @tfield number NETBOX_CALL_TIMEOUT (default: 5)
+vars:new('options', {
+    NETBOX_CALL_TIMEOUT = 5,
+})
+
 --- Two-phase commit - preparation stage.
 --
 -- Validate the configuration and acquire a lock setting local variable
@@ -43,11 +52,26 @@ vars:new('on_patch_triggers', {})
 --
 -- @function prepare_2pc
 -- @local
--- @tparam table data clusterwide config content
+-- @tparam string upload_id
 -- @treturn[1] boolean true
 -- @treturn[2] nil
 -- @treturn[2] table Error description
-local function prepare_2pc(data)
+local function prepare_2pc(upload_id)
+    local data
+    if type(upload_id) == 'table' then
+        -- Preserve compatibility with older versions.
+        -- Until cartridge 2.4.0-32 it was `prepare_2pc(data)`.
+        data = upload_id
+    else
+        data = upload.inbox[upload_id]
+        upload.inbox[upload_id] = nil
+        if not data then
+            return nil, Prepare2pcError:new(
+                'Upload not found, see earlier logs for the details'
+            )
+        end
+    end
+
     local clusterwide_config = ClusterwideConfig.new(data):lock()
 
     local ok, err = confapplier.validate_config(clusterwide_config)
@@ -372,12 +396,25 @@ local function _clusterwide(patch)
 
 ::prepare::
     do
+        log.warn('(2PC) Upload stage...')
+
+        local upload_id, err = upload.upload(
+            clusterwide_config_new:get_plaintext(),
+            uri_list
+        )
+        if not upload_id then
+            _2pc_error = err
+            goto finish
+        end
+
         log.warn('(2PC) Preparation stage...')
 
         local retmap, errmap = pool.map_call(
-            '_G.__cartridge_clusterwide_config_prepare_2pc',
-            {clusterwide_config_new:get_plaintext()},
-            {uri_list = uri_list, timeout = 5}
+            '_G.__cartridge_clusterwide_config_prepare_2pc', {upload_id},
+            {
+                uri_list = uri_list,
+                timeout = vars.options.NETBOX_CALL_TIMEOUT,
+            }
         )
 
         for _, uri in ipairs(uri_list) do
@@ -404,14 +441,16 @@ local function _clusterwide(patch)
         end
     end
 
-
 ::apply::
     do
         log.warn('(2PC) Commit stage...')
 
         local retmap, errmap = pool.map_call(
             '_G.__cartridge_clusterwide_config_commit_2pc', nil,
-            {uri_list = uri_list, timeout = 5}
+            {
+                uri_list = uri_list,
+                timeout = vars.options.NETBOX_CALL_TIMEOUT,
+            }
         )
 
         for _, uri in ipairs(uri_list) do
@@ -436,7 +475,10 @@ local function _clusterwide(patch)
 
         local retmap, errmap = pool.map_call(
             '_G.__cartridge_clusterwide_config_abort_2pc', nil,
-            {uri_list = abortion_list, timeout = 5}
+            {
+                uri_list = abortion_list,
+                timeout = vars.options.NETBOX_CALL_TIMEOUT,
+            }
         )
 
         for _, uri in ipairs(abortion_list) do
@@ -528,7 +570,10 @@ local function _force_reapply(uuids)
         local retmap, errmap = pool.map_call(
             '_G.__cartridge_clusterwide_config_reapply',
             {clusterwide_config:get_plaintext()},
-            {uri_list = uri_list, timeout = 5}
+            {
+                uri_list = uri_list,
+                timeout = vars.options.NETBOX_CALL_TIMEOUT,
+            }
         )
 
         for _, uri in ipairs(uri_list) do
@@ -682,6 +727,7 @@ _G.__cluster_confapplier_commit_2pc = function(...) return errors.pcall('E', com
 _G.__cluster_confapplier_abort_2pc = function(...) return errors.pcall('E', abort_2pc, ...) end
 
 return {
+    _options = vars.options,
     on_patch = on_patch,
     get_schema = get_schema,
     set_schema = set_schema,
