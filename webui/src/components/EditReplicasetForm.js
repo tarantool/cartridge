@@ -88,7 +88,7 @@ type EditReplicasetFormProps = {
   replicaset?: Replicaset,
   vshard_groups?: VshardGroup[],
   selfURI?: string,
-  storageRoleName: string
+  storageRolesNames: string[]
 };
 
 const EditReplicasetForm = ({
@@ -99,7 +99,7 @@ const EditReplicasetForm = ({
   vshard_groups,
   replicaset,
   selfURI,
-  storageRoleName
+  storageRolesNames
 }:
 EditReplicasetFormProps) => {
   if (!replicaset) {
@@ -135,7 +135,6 @@ EditReplicasetFormProps) => {
         values = {},
         ...rest
       }) => {
-        const vshardStorageRoleChecked = values.roles.includes(storageRoleName);
         const activeDependencies = getRolesDependencies(values.roles, knownRoles)
         const VShardGroupInputDisabled = isVShardGroupInputDisabled(values.roles, replicaset);
         const rolesColumns = (knownRoles && knownRoles.length > 6) ? 3 : 2;
@@ -148,18 +147,19 @@ EditReplicasetFormProps) => {
                 subscription={{ values: true }}
                 onChange={({ values }) => {
                   if (!values) return;
+                  const vshardStorageRoleChecked = values.roles.some(role => storageRolesNames.includes(role));
 
-                  if (!values.roles.includes(storageRoleName) && typeof values.weight === 'string') {
+                  if (!vshardStorageRoleChecked && typeof values.weight === 'string') {
                     form.change('weight', initialValues && initialValues.weight);
                   }
 
                   if (vshard_groups && vshard_groups.length === 1) {
-                    if (values.roles.includes(storageRoleName) && !values.vshard_group) {
+                    if (vshardStorageRoleChecked && !values.vshard_group) {
                       form.change('vshard_group', vshard_groups[0].name);
                     }
 
                     if (
-                      !values.roles.includes(storageRoleName)
+                      !vshardStorageRoleChecked
                       && !(initialValues && initialValues.vshard_group)
                       && values.vshard_group
                     ) {
@@ -251,7 +251,7 @@ EditReplicasetFormProps) => {
                     error={error}
                     value={value}
                     onChange={onChange}
-                    disabled={!vshardStorageRoleChecked}
+                    disabled={!values.roles.some(role => storageRolesNames.includes(role))}
                     placeholder='Auto'
                     message={errors.weight}
                     largeMargins

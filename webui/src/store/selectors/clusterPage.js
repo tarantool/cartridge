@@ -62,18 +62,18 @@ const selectKnownRoles = (s: State) => {
   }
 };
 
-type VshardRolesNames = { router: ?string, storage: ?string };
+type VshardRolesNames = { router: string[], storage: string[] };
 type SelectVshardRolesNames = (s: State) => VshardRolesNames;
 
 export const selectVshardRolesNames: SelectVshardRolesNames = createSelector(
   selectKnownRoles,
   (roles: Role[]) => {
-    let router, storage;
+    let router = [], storage = [];
 
     try {
       roles.forEach(({ name, implies_storage, implies_router }) => {
-        if (implies_router) router = name;
-        if (implies_storage) storage = name;
+        if (implies_router) router.push(name);
+        if (implies_storage) storage.push(name);
       });
     } catch (e) {}
 
@@ -85,13 +85,11 @@ type IsRolePresentSelector = (s: State) => boolean;
 
 export const isRolePresentSelectorCreator = (roleType: 'storage' | 'router'): IsRolePresentSelector => createSelector(
   [selectReplicasetList, selectVshardRolesNames],
-  (replicasetList: ?Replicaset[], rolesNames: VshardRolesNames): boolean => {
-    const roleName = rolesNames[roleType];
-
-    if (replicasetList && roleName) {
+  (replicasetList: ?Replicaset[], vshardRolesNames: VshardRolesNames): boolean => {
+    if (replicasetList) {
       for (let i = 0; i < replicasetList.length; i++) {
         const { roles } = replicasetList[i];
-        if (roles && roles.includes(roleName)) {
+        if (roles && roles.some(role => vshardRolesNames[roleType].includes(role))) {
           return true;
         }
       }

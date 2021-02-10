@@ -26,8 +26,8 @@ type Props = {
   routerPresent: bool,
   storagePresent: bool,
   setVisibleBootstrapVshardPanel: (v: bool) => void,
-  storageRoleName: string,
-  routerRoleName: string
+  storageRolesNames: string[],
+  routerRolesNames: string[]
 };
 
 const BootstrapPanel = (
@@ -38,8 +38,8 @@ const BootstrapPanel = (
     routerPresent,
     storagePresent,
     setVisibleBootstrapVshardPanel,
-    storageRoleName,
-    routerRoleName
+    storageRolesNames,
+    routerRolesNames
   }: Props
 ) => {
   if (!bootstrapPanelVisible || requestingBootstrapVshard || isBootstrapped)
@@ -59,13 +59,17 @@ const BootstrapPanel = (
         {routerPresent
           ? <IconOk className={cx(styles.iconMargin, 'meta-test__BootstrapPanel__vshard-router_enabled')} />
           : <IconCancel className={cx(styles.iconMargin, 'meta-test__BootstrapPanel__vshard-router_disabled')} />}
-        {`One role ${routerRoleName} enabled`}
+        {routerRolesNames.length === 1
+          ? `One role ${routerRolesNames[0]} enabled`
+          : `One role from ${routerRolesNames.join(' or ')} enabled`}
       </Text>
       <Text className={styles.row}>
         {storagePresent
           ? <IconOk className={cx(styles.iconMargin, 'meta-test__BootstrapPanel__vshard-storage_enabled')} />
           : <IconCancel className={cx(styles.iconMargin, 'meta-test__BootstrapPanel__vshard-storage_disabled')} />}
-        {`One role ${storageRoleName} enabled`}
+        {storageRolesNames.length === 1
+          ? `One role ${storageRolesNames[0]} enabled`
+          : `One role from ${storageRolesNames.join(' or ')} enabled`}
       </Text>
       <Text className={styles.row}>Afterwards, any change in topology will trigger data rebalancing</Text>
     </PageCard>
@@ -87,8 +91,8 @@ const mapStateToProps = (state: State) => {
     requestingBootstrapVshard,
     routerPresent: isRouterPresent(state),
     storagePresent: isStoragePresent(state),
-    storageRoleName: rolesNames.storage,
-    routerRoleName: rolesNames.router
+    storageRolesNames: rolesNames.storage,
+    routerRolesNames: rolesNames.router
   }
 };
 

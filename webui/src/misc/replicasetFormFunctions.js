@@ -26,10 +26,11 @@ export const getRolesDependencies = (activeRoles: string[], rolesOptions?: ?Role
 export const isVShardGroupInputDisabled = (
   roles?: string[],
   replicaset: ?Replicaset
-): boolean => (
-  !(roles || []).includes(selectVshardRolesNames(store.getState()).storage)
+): boolean => {
+  const storageRolesNames = selectVshardRolesNames(store.getState()).storage;
+  return !(roles || []).some(role => storageRolesNames.includes(role))
     || !!(replicaset && replicaset.vshard_group)
-);
+};
 
 type ValidateFormArgs = {
   alias?: string,
@@ -45,9 +46,9 @@ export const validateForm = ({
   weight
 }: ValidateFormArgs) => {
   const errors = {};
-  const { storage: storageRoleName } = selectVshardRolesNames(store.getState());
+  const { storage: storageRolesNames } = selectVshardRolesNames(store.getState());
 
-  if (!storageRoleName) {
+  if (!storageRolesNames.length) {
     errors.vshard_group = `Storage role name not specified`;
     return errors;
   }
@@ -66,8 +67,8 @@ export const validateForm = ({
     errors.alias = 'Allowed symbols are: a-z, A-Z, 0-9, _ . -';
   }
 
-  if ((roles || []).includes(storageRoleName) && !vshard_group) {
-    errors.vshard_group = `Group is required for ${storageRoleName} role`;
+  if ((roles || []).some(role => storageRolesNames.includes(role)) && !vshard_group) {
+    errors.vshard_group = `Group is required for ${storageRolesNames.join(' or ')} role`;
   }
 
   return errors;

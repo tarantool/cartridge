@@ -20,7 +20,7 @@ type EditReplicasetModalProps = {
   loading?:? boolean,
   vshard_groups?: VshardGroup[],
   selectedReplicasetUuid?: string,
-  storageRoleName: string,
+  storageRolesNames: string[],
   replicasetList?: Replicaset[],
   history: History,
   location: Location,
@@ -36,7 +36,7 @@ class EditReplicasetModal extends React.Component<EditReplicasetModalProps> {
       replicasetList,
       selectedReplicasetUuid,
       selfURI,
-      storageRoleName
+      storageRolesNames
     } = this.props;
 
     const selectedReplicaset = (
@@ -63,7 +63,7 @@ class EditReplicasetModal extends React.Component<EditReplicasetModalProps> {
             onCancel={this.handleClose}
             loading={!!loading}
             selfURI={selfURI}
-            storageRoleName={storageRoleName}
+            storageRolesNames={storageRolesNames}
           />
         }
       </Modal>
@@ -105,7 +105,7 @@ const mapStateToProps = state => {
     replicasetList,
     selectedReplicasetUuid,
     selfURI,
-    storageRoleName: selectVshardRolesNames(state).storage,
+    storageRolesNames: selectVshardRolesNames(state).storage,
     loading: !pageDataRequestStatus.loaded || pageDataRequestStatus.loading
   };
 };

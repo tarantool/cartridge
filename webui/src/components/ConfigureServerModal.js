@@ -40,7 +40,7 @@ type ConfigureServerModalProps = {
   replicasetList?: Replicaset[],
   serverList?: Server[],
   selectedServerUri?: string,
-  storageRoleName: string,
+  storageRolesNames: string[],
   history: History,
   location: Location,
   setModalFilter: Function,
@@ -62,7 +62,7 @@ class ConfigureServerModal extends React.Component<ConfigureServerModalProps> {
       selectedServerUri,
       setModalFilter,
       selfURI,
-      storageRoleName
+      storageRolesNames
     } = this.props;
 
     const selectedServers = (
@@ -85,7 +85,7 @@ class ConfigureServerModal extends React.Component<ConfigureServerModalProps> {
               onSubmit={this.handleCreateReplicasetSubmit}
               onCancel={this.handleClose}
               selfURI={selfURI}
-              storageRoleName={storageRoleName}
+              storageRolesNames={storageRolesNames}
             />
           </div>
         )
@@ -176,7 +176,7 @@ const mapStateToProps = state => {
     replicasetList,
     selectedServerUri,
     serverList,
-    storageRoleName: selectVshardRolesNames(state).storage,
+    storageRolesNames: selectVshardRolesNames(state).storage,
     selfURI,
     loading: !pageDataRequestStatus.loaded || pageDataRequestStatus.loading
   };
