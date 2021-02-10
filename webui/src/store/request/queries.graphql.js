@@ -70,6 +70,8 @@ export const getClusterQuery = gql`
       knownRoles: known_roles {
         name
         dependencies
+        implies_storage
+        implies_router
       }
       can_bootstrap_vshard
       vshard_bucket_count

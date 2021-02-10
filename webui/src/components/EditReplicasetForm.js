@@ -30,7 +30,6 @@ import {
   isVShardGroupInputDisabled,
   validateForm
 } from 'src/misc/replicasetFormFunctions';
-import { VSHARD_STORAGE_ROLE_NAME } from 'src/constants';
 import ServerSortableList from './ServerSortableList';
 
 const styles = {
@@ -88,7 +87,8 @@ type EditReplicasetFormProps = {
   onSubmit: (d: EditReplicasetArgs) => void,
   replicaset?: Replicaset,
   vshard_groups?: VshardGroup[],
-  selfURI?: string
+  selfURI?: string,
+  storageRoleName: string
 };
 
 const EditReplicasetForm = ({
@@ -98,7 +98,8 @@ const EditReplicasetForm = ({
   onSubmit,
   vshard_groups,
   replicaset,
-  selfURI
+  selfURI,
+  storageRoleName
 }:
 EditReplicasetFormProps) => {
   if (!replicaset) {
@@ -134,7 +135,7 @@ EditReplicasetFormProps) => {
         values = {},
         ...rest
       }) => {
-        const vshardStorageRoleChecked = values.roles.includes(VSHARD_STORAGE_ROLE_NAME);
+        const vshardStorageRoleChecked = values.roles.includes(storageRoleName);
         const activeDependencies = getRolesDependencies(values.roles, knownRoles)
         const VShardGroupInputDisabled = isVShardGroupInputDisabled(values.roles, replicaset);
         const rolesColumns = (knownRoles && knownRoles.length > 6) ? 3 : 2;
@@ -148,17 +149,17 @@ EditReplicasetFormProps) => {
                 onChange={({ values }) => {
                   if (!values) return;
 
-                  if (!values.roles.includes(VSHARD_STORAGE_ROLE_NAME) && typeof values.weight === 'string') {
+                  if (!values.roles.includes(storageRoleName) && typeof values.weight === 'string') {
                     form.change('weight', initialValues && initialValues.weight);
                   }
 
                   if (vshard_groups && vshard_groups.length === 1) {
-                    if (values.roles.includes(VSHARD_STORAGE_ROLE_NAME) && !values.vshard_group) {
+                    if (values.roles.includes(storageRoleName) && !values.vshard_group) {
                       form.change('vshard_group', vshard_groups[0].name);
                     }
 
                     if (
-                      !values.roles.includes(VSHARD_STORAGE_ROLE_NAME)
+                      !values.roles.includes(storageRoleName)
                       && !(initialValues && initialValues.vshard_group)
                       && values.vshard_group
                     ) {

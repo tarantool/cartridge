@@ -46,6 +46,8 @@ Enhanced is WebUI
 - Indication of disabled instances and manual disability state controls
   in replicaset list.
 
+- Using storage and router role names specified in GraphQL.
+
 -------------------------------------------------------------------------------
 [2.4.0] - 2020-12-29
 -------------------------------------------------------------------------------

@@ -6,10 +6,9 @@ import {
   defaultMemoize
 } from 'reselect';
 import isEqual from 'lodash/isEqual';
-import { VSHARD_STORAGE_ROLE_NAME, VSHARD_ROUTER_ROLE_NAME } from 'src/constants';
 import type { State } from 'src/store/rootReducer';
 import type { ServerStatWithUUID } from 'src/store/reducers/clusterPage.reducer';
-import type { Replicaset, Server } from 'src/generated/graphql-typing';
+import type { Replicaset, Server, Role } from 'src/generated/graphql-typing';
 import {
   calculateMemoryFragmentationLevel,
   type FragmentationLevel,
@@ -55,12 +54,41 @@ export const selectReplicasetListWithStat: (s: State) => Replicaset[] = createSe
   )
 );
 
+const selectKnownRoles = (s: State) => {
+  try {
+    return s.app.clusterSelf.knownRoles || [];
+  } catch (e) {
+    return [];
+  }
+};
+
+type VshardRolesNames = { router: ?string, storage: ?string };
+type SelectVshardRolesNames = (s: State) => VshardRolesNames;
+
+export const selectVshardRolesNames: SelectVshardRolesNames = createSelector(
+  selectKnownRoles,
+  (roles: Role[]) => {
+    let router, storage;
+
+    try {
+      roles.forEach(({ name, implies_storage, implies_router }) => {
+        if (implies_router) router = name;
+        if (implies_storage) storage = name;
+      });
+    } catch (e) {}
+
+    return { router, storage };
+  }
+);
+
 type IsRolePresentSelector = (s: State) => boolean;
 
-export const isRolePresentSelectorCreator = (roleName: string): IsRolePresentSelector => createSelector(
-  selectReplicasetList,
-  (replicasetList: ?Replicaset[]): boolean => {
-    if (replicasetList) {
+export const isRolePresentSelectorCreator = (roleType: 'storage' | 'router'): IsRolePresentSelector => createSelector(
+  [selectReplicasetList, selectVshardRolesNames],
+  (replicasetList: ?Replicaset[], rolesNames: VshardRolesNames): boolean => {
+    const roleName = rolesNames[roleType];
+
+    if (replicasetList && roleName) {
       for (let i = 0; i < replicasetList.length; i++) {
         const { roles } = replicasetList[i];
         if (roles && roles.includes(roleName)) {
@@ -73,9 +101,8 @@ export const isRolePresentSelectorCreator = (roleName: string): IsRolePresentSel
   }
 );
 
-export const isStoragePresent = isRolePresentSelectorCreator(VSHARD_STORAGE_ROLE_NAME);
-
-export const isRouterPresent = isRolePresentSelectorCreator(VSHARD_ROUTER_ROLE_NAME);
+export const isStoragePresent = isRolePresentSelectorCreator('storage');
+export const isRouterPresent = isRolePresentSelectorCreator('router');
 
 type SearchableServer = {
   ...$Exact<Server>,

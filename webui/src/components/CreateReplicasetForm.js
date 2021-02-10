@@ -25,7 +25,6 @@ import {
   isVShardGroupInputDisabled,
   validateForm
 } from 'src/misc/replicasetFormFunctions';
-import { VSHARD_STORAGE_ROLE_NAME } from 'src/constants';
 
 const styles = {
   wrap: css`
@@ -79,6 +78,7 @@ type CreateReplicasetFormProps = {
   onSubmit: (d: CreateReplicasetArgs) => void,
   replicasetList?: Replicaset[],
   selectedServers?: Server[],
+  storageRoleName: string,
   vshard_groups?: VshardGroup[]
 };
 
@@ -89,7 +89,8 @@ const CreateReplicasetForm = ({
   onSubmit,
   vshard_groups,
   replicasetList,
-  selectedServers
+  selectedServers,
+  storageRoleName
 }:
 CreateReplicasetFormProps) => (
   <Form
@@ -112,7 +113,7 @@ CreateReplicasetFormProps) => (
       initialValues,
       values = {}
     }) => {
-      const vshardStorageRoleChecked = values.roles.includes(VSHARD_STORAGE_ROLE_NAME);
+      const vshardStorageRoleChecked = values.roles.includes(storageRoleName);
       const activeDependencies = getRolesDependencies(values.roles, knownRoles)
       const VShardGroupInputDisabled = isVShardGroupInputDisabled(values.roles);
       const rolesColumns = (knownRoles && knownRoles.length > 6) ? 3 : 2;
@@ -126,16 +127,16 @@ CreateReplicasetFormProps) => (
               onChange={({ values }) => {
                 if (!values) return;
 
-                if (!values.roles.includes(VSHARD_STORAGE_ROLE_NAME) && typeof values.weight === 'string') {
+                if (!values.roles.includes(storageRoleName) && typeof values.weight === 'string') {
                   form.change('weight', initialValues && initialValues.weight);
                 }
 
                 if (vshard_groups && vshard_groups.length === 1) {
-                  if (values.roles.includes(VSHARD_STORAGE_ROLE_NAME) && !values.vshard_group) {
+                  if (values.roles.includes(storageRoleName) && !values.vshard_group) {
                     form.change('vshard_group', vshard_groups[0].name);
                   }
 
-                  if (!values.roles.includes(VSHARD_STORAGE_ROLE_NAME) && values.vshard_group) {
+                  if (!values.roles.includes(storageRoleName) && values.vshard_group) {
                     form.change('vshard_group', null);
                   }
                 }
