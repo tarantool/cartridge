@@ -41,7 +41,7 @@ g.test_upload = function()
         end
 
         local graphql = require('cartridge.graphql')
-        local types = require('cartridge.graphql.types')
+        local types = require('graphql.types')
         graphql.add_callback({
             name = 'test',
             doc = '',
@@ -309,7 +309,7 @@ g.test_enum_input = function()
         end
 
         local graphql = require('cartridge.graphql')
-        local types = require('cartridge.graphql.types')
+        local types = require('graphql.types')
 
         local simple_enum = types.enum {
             name = 'simple_enum',
@@ -371,7 +371,7 @@ g.test_enum_output = function()
         end
 
         local graphql = require('cartridge.graphql')
-        local types = require('cartridge.graphql.types')
+        local types = require('graphql.types')
 
         local simple_enum = types.enum {
             name = 'simple_enum_output',
@@ -447,7 +447,7 @@ g.test_nested_input = function()
         end
 
         local graphql = require('cartridge.graphql')
-        local types = require('cartridge.graphql.types')
+        local types = require('graphql.types')
 
         local nested_InputObject = types.inputObject {
             name = 'nested_InputObject',
@@ -578,7 +578,7 @@ g.test_custom_type_scalar_variables = function()
 
         local json = require('json')
         local graphql = require('cartridge.graphql')
-        local types = require('cartridge.graphql.types')
+        local types = require('graphql.types')
 
         local function isString(value)
             return type(value) == 'string'
@@ -862,7 +862,7 @@ g.test_output_type_mismatch_error = function()
         end
 
         local graphql = require('cartridge.graphql')
-        local types = require('cartridge.graphql.types')
+        local types = require('graphql.types')
 
         local obj_type = types.object({
             name = 'ObjectWithValue',
@@ -1077,7 +1077,7 @@ g.test_default_values = function()
 
         local json = require('json')
         local graphql = require('cartridge.graphql')
-        local types = require('cartridge.graphql.types')
+        local types = require('graphql.types')
 
         local function decodeJson(value)
             if value ~= nil then
@@ -1234,7 +1234,7 @@ g.test_null = function()
         end
 
         local graphql = require('cartridge.graphql')
-        local types = require('cartridge.graphql.types')
+        local types = require('graphql.types')
 
         graphql.add_callback({
             name = 'test_null_nullable',

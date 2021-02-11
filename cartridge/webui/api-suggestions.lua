@@ -6,7 +6,7 @@ local issues = require('cartridge.issues')
 local topology = require('cartridge.topology')
 local confapplier = require('cartridge.confapplier')
 
-local gql_types = require('cartridge.graphql.types')
+local gql_types = require('graphql.types')
 
 local refine_uri_suggestion = gql_types.object({
     name = 'RefineUriSuggestion',

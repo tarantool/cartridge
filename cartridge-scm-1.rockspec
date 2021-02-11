@@ -9,12 +9,10 @@ dependencies = {
     'ddl == 1.3.0-1',
     'http == 1.1.0-1',
     'checks == 3.1.0-1',
-    'lulpeg == 0.1.2-1',
     'errors == 2.1.4-1',
     'vshard == 0.1.16-1',
     'membership == 2.3.1-1',
     'frontend-core == 7.5.0-1',
-    'luagraphqlparser == 0.1.0-1',
 }
 
 external_dependencies = {

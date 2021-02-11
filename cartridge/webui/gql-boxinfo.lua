@@ -1,4 +1,4 @@
-local gql_types = require('cartridge.graphql.types')
+local gql_types = require('graphql.types')
 local lua_api_boxinfo = require('cartridge.lua-api.boxinfo')
 
 local gql_type_error = gql_types.object({

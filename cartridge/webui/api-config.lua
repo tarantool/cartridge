@@ -5,7 +5,7 @@ local errors = require('errors')
 local checks = require('checks')
 
 local utils = require('cartridge.utils')
-local gql_types = require('cartridge.graphql.types')
+local gql_types = require('graphql.types')
 local module_name = 'cartridge.webui.api-config'
 
 json.cfg({

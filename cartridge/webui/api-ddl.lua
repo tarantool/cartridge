@@ -6,7 +6,7 @@ local failover = require('cartridge.failover')
 local twophase = require('cartridge.twophase')
 local confapplier = require('cartridge.confapplier')
 local ddl_manager = require('cartridge.ddl-manager')
-local gql_types = require('cartridge.graphql.types')
+local gql_types = require('graphql.types')
 local module_name = 'cartridge.webui.api-ddl'
 
 local GetSchemaError = errors.new_class('GetSchemaError')

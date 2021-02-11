@@ -29,6 +29,23 @@ file(GLOB_RECURSE DOC_FILES
   "${CMAKE_CURRENT_SOURCE_DIR}/rst/*"
 )
 
+## THIRD PARTY ################################################################
+###############################################################################
+
+execute_process(
+  COMMAND git submodule update --init --recursive
+  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+  OUTPUT_VARIABLE GIT_DESCRIBE
+)
+
+execute_process(
+  COMMAND tarantoolctl rocks make --chdir third_party/graphql
+  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+  OUTPUT_VARIABLE GIT_DESCRIBE
+)
+
 ## VERSION ####################################################################
 ###############################################################################
 

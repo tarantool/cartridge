@@ -1,0 +1,3 @@
+[submodule "third_party/graphql"]
+	path = third_party/graphql
+	url = https://github.com/tarantool/graphql
