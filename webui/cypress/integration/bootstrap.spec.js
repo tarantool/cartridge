@@ -19,15 +19,26 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
 
       for _, server in ipairs(_G.cluster.servers) do
         server.env.TARANTOOL_INSTANCE_NAME = server.alias
+        server.env.TARANTOOL_CONSOLE_SOCK =
+          _G.cluster.datadir .. '/' .. server.alias .. '.control'
         server:start()
       end
 
       helpers.retrying({}, function()
         _G.cluster:server('dummy-1'):graphql({query = '{}'})
       end)
-      return true
+
+      return _G.cluster:server('dummy-1').env.TARANTOOL_CONSOLE_SOCK
     `
-    }).should('deep.eq', [true]);
+    }).then((resp) => {
+      const sock = resp[0];
+      expect(sock).to.be.a('string');
+      cy.task('tarantool', {host: 'unix/', port: sock, code: `
+        package.loaded.mymodule.implies_router = true
+        package.loaded.mymodule.implies_storage = true
+        return true
+      `}).should('deep.eq', [true]);
+    });
   });
 
   after(() => {
@@ -60,6 +71,8 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     cy.get('.meta-test__BootstrapButton').click();
     cy.get('.meta-test__BootstrapPanel__vshard-router_disabled').should('exist');
     cy.get('.meta-test__BootstrapPanel__vshard-storage_disabled').should('exist');
+    cy.get('.meta-test__BootstrapPanel').contains('One role from vshard-router or myrole enabled');
+    cy.get('.meta-test__BootstrapPanel').contains('One role from vshard-storage or myrole enabled');
     cy.get('.meta-test__BootstrapPanel use:first').click();
     cy.get('.meta-test__BootstrapPanel').should('not.exist');
   });
@@ -69,46 +82,72 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     cy.get('.meta-test__configureBtn').first().click();
     cy.get('form input[name="alias"]').type('for-default-group-tests');
     cy.get('form input[value="default"]').should('be.disabled');
-    cy.get('form input[name="weight"').should('be.disabled');
+    cy.get('form input[name="weight"]').should('be.disabled');
     cy.get('.meta-test__CreateReplicaSetBtn').should('be.enabled');
 
     // Check Select all roles
     cy.get('button[type="button"]').contains('Select all').click();
     cy.get('form input[value="default"]').should('be.checked');
-    cy.get('form input[name="weight"').should('be.enabled');
+    cy.get('form input[name="weight"]').should('be.enabled');
     cy.get('.meta-test__CreateReplicaSetBtn').should('be.enabled');
 
     // Check Deselect all roles
     cy.get('button[type="button"]').contains('Deselect all').click();
     cy.get('form input[value="default"]').should('be.disabled');
-    cy.get('form input[name="weight"').should('be.disabled');
+    cy.get('form input[name="weight"]').should('be.disabled');
     cy.get('.meta-test__CreateReplicaSetBtn').should('be.enabled');
 
     // close dialog without saving
     cy.get('button[type="button"]:contains(Cancel)').click();
   });
 
-  it('Configure vshard-router', () => {
+  it('Select myrole', () => {
     cy.get('.meta-test__configureBtn:visible').should('have.length', 1).click();
     cy.get('.meta-test__ConfigureServerModal').contains('Join Replica Set').should('not.exist');
 
     cy.get('form').contains('dummy-1')
       .closest('li').find('.meta-test__youAreHereIcon').should('exist');
 
+    // Open create replicaset dialog
+    cy.get('form input[name="weight"]').should('be.disabled');
+    cy.get('form input[value="default"]').should('be.disabled');
+    cy.get('form input[value="vshard-router"]').should('not.be.checked');
+    cy.get('form input[value="vshard-storage"]').should('not.be.checked');
+
+    // Check myrole
+    cy.get('form input[value="myrole"]').check({ force: true }).should('be.checked');
+    cy.get('form input[value="myrole-dependency"]').should('be.disabled').should('be.checked');
+    cy.get('form input[name="weight"]').should('be.enabled');
+    cy.get('form input[value="default"]').should('be.checked');
+
+    cy.get('.meta-test__CreateReplicaSetBtn').click();
+    cy.get('#root').contains('unnamed');
+
+    cy.get('.meta-test__BootstrapButton').click();
+    cy.get('.meta-test__BootstrapPanel__vshard-router_enabled').should('exist');
+    cy.get('.meta-test__BootstrapPanel__vshard-storage_enabled').should('exist');
+
+    cy.get('span:contains(GraphQL error) + span:contains(No remotes with role "vshard-router" available)').click();
+  })
+
+  it('Configure vshard-router', () => {
+    // Disable myrole
+    cy.get('#root').contains('unnamed').closest('li').find('button').contains('Edit').click();
+    cy.get('form input[value="myrole"]').uncheck({ force: true }).should('not.be.checked');
+    cy.get('form input[value="myrole-dependency"]').should('be.enabled').should('not.be.checked');
+
     //Try to enter invalid alias
-    cy.get('.meta-test__ConfigureServerModal input[name="alias"]')
+    cy.get('.meta-test__EditReplicasetModal input[name="alias"]')
       .type(' ');
-    cy.get('.meta-test__ConfigureServerModal').contains('Allowed symbols are: a-z, A-Z, 0-9, _ . -');
-    cy.get('.meta-test__CreateReplicaSetBtn').should('be.disabled');
+    cy.get('.meta-test__EditReplicasetModal').contains('Allowed symbols are: a-z, A-Z, 0-9, _ . -');
+    cy.get('.meta-test__EditReplicasetSaveBtn').should('be.disabled');
 
     //Fix invalid alias
-    cy.get('.meta-test__ConfigureServerModal input[name="alias"]')
+    cy.get('.meta-test__EditReplicasetModal input[name="alias"]')
       .type('{selectall}{backspace}');
-    cy.get('.meta-test__ConfigureServerModal').contains('Allowed symbols are: a-z, A-Z, 0-9, _ . -').should('not.exist');
-    cy.get('.meta-test__CreateReplicaSetBtn').should('be.enabled');
+    cy.get('.meta-test__EditReplicasetModal').contains('Allowed symbols are: a-z, A-Z, 0-9, _ . -').should('not.exist');
+    cy.get('.meta-test__EditReplicasetSaveBtn').should('be.enabled');
     cy.get('form input[name="alias"]').type('test-router').should('have.value', 'test-router');
-    cy.get('form input[value="myrole"]').check({ force: true }).should('be.checked');;
-    cy.get('form input[value="myrole-dependency"]').should('be.disabled').should('be.checked');
 
     cy.get('form input[value="vshard-router"]').check({ force: true }).should('be.checked');
     cy.get('form input[value="vshard-storage"]').should('not.be.checked');
@@ -116,7 +155,7 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     cy.get('form input[name="all_rw"]').check({ force: true });
     cy.get('form input[name="all_rw"]').should('be.checked');
 
-    cy.get('.meta-test__CreateReplicaSetBtn').click();
+    cy.get('.meta-test__EditReplicasetSaveBtn').click();
     cy.get('#root').contains('test-router');
 
     cy.get('.ServerLabelsHighlightingArea').contains('dummy-1')
