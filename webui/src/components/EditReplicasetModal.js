@@ -12,6 +12,7 @@ import type {
 } from 'src/generated/graphql-typing';
 import { editReplicaset } from 'src/store/actions/clusterPage.actions';
 import type { EditReplicasetArgs } from 'src/store/request/clusterPage.requests';
+import { selectVshardRolesNames } from 'src/store/selectors/clusterPage';
 
 type EditReplicasetModalProps = {
   editReplicaset: Function,
@@ -19,6 +20,7 @@ type EditReplicasetModalProps = {
   loading?:? boolean,
   vshard_groups?: VshardGroup[],
   selectedReplicasetUuid?: string,
+  storageRolesNames: string[],
   replicasetList?: Replicaset[],
   history: History,
   location: Location,
@@ -33,7 +35,8 @@ class EditReplicasetModal extends React.Component<EditReplicasetModalProps> {
       vshard_groups,
       replicasetList,
       selectedReplicasetUuid,
-      selfURI
+      selfURI,
+      storageRolesNames
     } = this.props;
 
     const selectedReplicaset = (
@@ -60,6 +63,7 @@ class EditReplicasetModal extends React.Component<EditReplicasetModalProps> {
             onCancel={this.handleClose}
             loading={!!loading}
             selfURI={selfURI}
+            storageRolesNames={storageRolesNames}
           />
         }
       </Modal>
@@ -101,6 +105,7 @@ const mapStateToProps = state => {
     replicasetList,
     selectedReplicasetUuid,
     selfURI,
+    storageRolesNames: selectVshardRolesNames(state).storage,
     loading: !pageDataRequestStatus.loaded || pageDataRequestStatus.loading
   };
 };

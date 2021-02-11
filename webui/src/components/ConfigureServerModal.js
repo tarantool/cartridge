@@ -19,7 +19,10 @@ import {
   joinServer,
   setModalFilter
 } from 'src/store/actions/clusterPage.actions';
-import { filterModalReplicasetListSelector } from 'src/store/selectors/clusterPage';
+import {
+  filterModalReplicasetListSelector,
+  selectVshardRolesNames
+} from 'src/store/selectors/clusterPage';
 
 const styles = {
   tabContent: css`
@@ -37,6 +40,7 @@ type ConfigureServerModalProps = {
   replicasetList?: Replicaset[],
   serverList?: Server[],
   selectedServerUri?: string,
+  storageRolesNames: string[],
   history: History,
   location: Location,
   setModalFilter: Function,
@@ -57,7 +61,8 @@ class ConfigureServerModal extends React.Component<ConfigureServerModalProps> {
       serverList,
       selectedServerUri,
       setModalFilter,
-      selfURI
+      selfURI,
+      storageRolesNames
     } = this.props;
 
     const selectedServers = (
@@ -80,6 +85,7 @@ class ConfigureServerModal extends React.Component<ConfigureServerModalProps> {
               onSubmit={this.handleCreateReplicasetSubmit}
               onCancel={this.handleClose}
               selfURI={selfURI}
+              storageRolesNames={storageRolesNames}
             />
           </div>
         )
@@ -170,6 +176,7 @@ const mapStateToProps = state => {
     replicasetList,
     selectedServerUri,
     serverList,
+    storageRolesNames: selectVshardRolesNames(state).storage,
     selfURI,
     loading: !pageDataRequestStatus.loaded || pageDataRequestStatus.loading
   };

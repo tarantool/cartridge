@@ -1,7 +1,8 @@
 // @flow
 import { uniq } from 'ramda';
-import { VSHARD_STORAGE_ROLE_NAME } from 'src/constants';
 import type { Replicaset, Role } from 'src/generated/graphql-typing';
+import store from 'src/store/instance'
+import { selectVshardRolesNames } from 'src/store/selectors/clusterPage';
 
 export const getDependenciesString = (dependencies: ?string[]) => {
   if (!dependencies || !dependencies.length)
@@ -25,7 +26,11 @@ export const getRolesDependencies = (activeRoles: string[], rolesOptions?: ?Role
 export const isVShardGroupInputDisabled = (
   roles?: string[],
   replicaset: ?Replicaset
-): boolean => !(roles || []).includes(VSHARD_STORAGE_ROLE_NAME) || !!(replicaset && replicaset.vshard_group);
+): boolean => {
+  const storageRolesNames = selectVshardRolesNames(store.getState()).storage;
+  return !(roles || []).some(role => storageRolesNames.includes(role))
+    || !!(replicaset && replicaset.vshard_group)
+};
 
 type ValidateFormArgs = {
   alias?: string,
@@ -41,6 +46,12 @@ export const validateForm = ({
   weight
 }: ValidateFormArgs) => {
   const errors = {};
+  const { storage: storageRolesNames } = selectVshardRolesNames(store.getState());
+
+  if (!storageRolesNames.length) {
+    errors.vshard_group = `Storage role name not specified`;
+    return errors;
+  }
 
   if (typeof weight === 'string') {
     const numericWeight = Number(weight);
@@ -56,8 +67,8 @@ export const validateForm = ({
     errors.alias = 'Allowed symbols are: a-z, A-Z, 0-9, _ . -';
   }
 
-  if ((roles || []).includes(VSHARD_STORAGE_ROLE_NAME) && !vshard_group) {
-    errors.vshard_group = `Group is required for ${VSHARD_STORAGE_ROLE_NAME} role`;
+  if ((roles || []).some(role => storageRolesNames.includes(role)) && !vshard_group) {
+    errors.vshard_group = `Group is required for ${storageRolesNames.join(' or ')} role`;
   }
 
   return errors;
