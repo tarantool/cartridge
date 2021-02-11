@@ -62,7 +62,7 @@ function g.test_api()
         },
         {
             name = 'myrole', dependencies = { 'myrole-dependency' },
-            implies_router = true, implies_storage = true,
+            implies_router = false, implies_storage = false,
         },
     })
 end

@@ -58,8 +58,6 @@ package.preload['mymodule'] = function()
 
     return {
         role_name = 'myrole',
-        implies_router = true,
-        implies_storage = true,
         dependencies = {
             'mymodule-dependency',
             'mymodule-hidden',
