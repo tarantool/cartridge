@@ -2,23 +2,28 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import {
-  isBootstrapped as checkIsBootstrapped,
-  isRouterPresent,
-  isStoragePresent
+  isRouterEnabled,
+  isStorageEnabled
 } from 'src/store/selectors/clusterPage';
 import { bootstrapVshard, setVisibleBootstrapVshardPanel } from 'src/store/actions/clusterPage.actions';
 import { Button } from '@tarantool.io/ui-kit';
 import type { State } from 'src/store/rootReducer';
 
-const BootstrapButton = ({
-  bootstrapVshard,
-  can_bootstrap_vshard,
-  isBootstrapped,
-  requesting,
-  setVisibleBootstrapVshardPanel
-}) => {
-  if (isBootstrapped)
-    return null;
+type Props = {
+  bootstrapVshard: () => void,
+  can_bootstrap_vshard: bool,
+  requesting: bool,
+  setVisibleBootstrapVshardPanel: () => void
+}
+
+const BootstrapButton = (
+  {
+    bootstrapVshard,
+    can_bootstrap_vshard,
+    requesting,
+    setVisibleBootstrapVshardPanel
+  }: Props
+) => {
   // TODO: call getClusterSelf on ModalEditReplicaSet submit action
   return (
     <Button
@@ -33,8 +38,7 @@ const BootstrapButton = ({
 };
 
 const mapStateToProps = (state: State) => ({
-  can_bootstrap_vshard: (isRouterPresent(state) && isStoragePresent(state)) || false,
-  isBootstrapped: checkIsBootstrapped(state),
+  can_bootstrap_vshard: (isRouterEnabled(state) && isStorageEnabled(state)) || false,
   requesting: state.ui.requestingBootstrapVshard
 });
 

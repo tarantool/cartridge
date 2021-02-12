@@ -81,26 +81,41 @@ export const selectVshardRolesNames: SelectVshardRolesNames = createSelector(
   }
 );
 
-type IsRolePresentSelector = (s: State) => boolean;
+type IsRoleAvailableSelector = (s: State) => boolean;
 
-export const isRolePresentSelectorCreator = (roleType: 'storage' | 'router'): IsRolePresentSelector => createSelector(
-  [selectReplicasetList, selectVshardRolesNames],
-  (replicasetList: ?Replicaset[], vshardRolesNames: VshardRolesNames): boolean => {
-    if (replicasetList) {
-      for (let i = 0; i < replicasetList.length; i++) {
-        const { roles } = replicasetList[i];
-        if (roles && roles.some(role => vshardRolesNames[roleType].includes(role))) {
-          return true;
+export const isRoleAvailableSelectorCreator =
+  (roleType: 'storage' | 'router'): IsRoleAvailableSelector => createSelector(
+    selectVshardRolesNames,
+    (vshardRolesNames: VshardRolesNames): boolean => {
+      return !!vshardRolesNames[roleType].length;
+    }
+  );
+
+export const isStorageAvailable = isRoleAvailableSelectorCreator('storage');
+export const isRouterAvailable = isRoleAvailableSelectorCreator('router');
+export const isVshardAvailable = (s: State) => isStorageAvailable(s) && isRouterAvailable(s);
+
+type IsRoleEnabledSelector = (s: State) => boolean;
+
+export const isRoleEnabledSelectorCreator =
+  (roleType: 'storage' | 'router'): IsRoleEnabledSelector => createSelector(
+    [selectReplicasetList, selectVshardRolesNames],
+    (replicasetList: ?Replicaset[], vshardRolesNames: VshardRolesNames): boolean => {
+      if (replicasetList) {
+        for (let i = 0; i < replicasetList.length; i++) {
+          const { roles } = replicasetList[i];
+          if (roles && roles.some(role => vshardRolesNames[roleType].includes(role))) {
+            return true;
+          }
         }
       }
+
+      return false;
     }
+  );
 
-    return false;
-  }
-);
-
-export const isStoragePresent = isRolePresentSelectorCreator('storage');
-export const isRouterPresent = isRolePresentSelectorCreator('router');
+export const isStorageEnabled = isRoleEnabledSelectorCreator('storage');
+export const isRouterEnabled = isRoleEnabledSelectorCreator('router');
 
 type SearchableServer = {
   ...$Exact<Server>,
