@@ -22,8 +22,12 @@ local confapplier = require('cartridge.confapplier')
 --   Replicaset health.
 -- @tfield ServerInfo master
 --   Replicaset leader according to configuration.
+--   (**Deprecated** since v2.4.0-??)
 -- @tfield ServerInfo active_master
 --   Active leader.
+--   (**Deprecated** since v2.4.0-??)
+-- @tfield string active_leader_uuid
+--   The UUID of the leader.
 -- @tfield number weight
 --   Vshard replicaset weight.
 --   Matters only if vshard-storage role is enabled.
@@ -35,6 +39,9 @@ local confapplier = require('cartridge.confapplier')
 --   Human-readable replicaset name.
 -- @tfield {ServerInfo,...} servers
 --   Circular reference to all instances in the replicaset.
+--   (**Deprecated** since v2.4.0-??)
+-- @tfield {string,...} failover_priority
+--   Array of instances UUIDs, sorted by failover priority.
 -- @table ReplicasetInfo
 
 --- Instance general information.
@@ -49,6 +56,8 @@ local confapplier = require('cartridge.confapplier')
 --   Auxilary health status.
 -- @tfield ReplicasetInfo replicaset
 --   Circular reference to a replicaset.
+--   (**Deprecated** since v2.4.0-??)
+-- @tfield ?string replicaset_uuid
 -- @tfield number priority
 --   Leadership priority for automatic failover.
 -- @tfield number clock_delta
@@ -93,27 +102,21 @@ local function get_topology()
     local known_roles = roles.get_known_roles()
     local leaders_order = {}
     local failover_cfg = topology.get_failover_params(topology_cfg)
+    local active_leaders = failover.get_active_leaders()
 
     for replicaset_uuid, replicaset in pairs(topology_cfg.replicasets) do
+        leaders_order[replicaset_uuid] = topology.get_leaders_order(
+            topology_cfg, replicaset_uuid
+        )
+
         replicasets[replicaset_uuid] = {
             uuid = replicaset_uuid,
             roles = {},
             status = 'healthy',
-            master = {
-                uri = 'void',
-                uuid = 'void',
-                status = 'void',
-                message = 'void',
-            },
-            active_master = {
-                uri = 'void',
-                uuid = 'void',
-                status = 'void',
-                message = 'void',
-            },
             weight = nil,
             vshard_group = replicaset.vshard_group,
-            servers = {},
+            active_leader_uuid = active_leaders[replicaset_uuid] or box.NULL,
+            failover_priority = leaders_order[replicaset_uuid],
             all_rw = replicaset.all_rw or false,
             alias = replicaset.alias or 'unnamed',
         }
@@ -129,13 +132,8 @@ local function get_topology()
         if replicaset.roles['vshard-storage'] then
             replicasets[replicaset_uuid].weight = replicaset.weight or 0.0
         end
-
-        leaders_order[replicaset_uuid] = topology.get_leaders_order(
-            topology_cfg, replicaset_uuid
-        )
     end
 
-    local active_leaders = failover.get_active_leaders()
     local refined_uri = topology.refine_servers_uri(topology_cfg)
 
     for _, instance_uuid, server in fun.filter(topology.not_expelled, topology_cfg.servers) do
@@ -152,7 +150,7 @@ local function get_topology()
             status = nil,
             message = nil,
             priority = nil,
-            replicaset = replicasets[server.replicaset_uuid],
+            replicaset_uuid = server.replicaset_uuid,
             clock_delta = nil,
         }
 
@@ -192,19 +190,8 @@ local function get_topology()
             srv.clock_delta = member.clock_delta * 1e-6
         end
 
-        if leaders_order[server.replicaset_uuid][1] == instance_uuid then
-            if failover_cfg.mode ~= 'stateful' then
-                srv.replicaset.master = srv
-            end
-        end
-        if active_leaders[server.replicaset_uuid] == instance_uuid then
-            if failover_cfg.mode == 'stateful' then
-                srv.replicaset.master = srv
-            end
-            srv.replicaset.active_master = srv
-        end
         if srv.status ~= 'healthy' then
-            srv.replicaset.status = 'unhealthy'
+            replicasets[server.replicaset_uuid].status = 'unhealthy'
         end
 
         srv.priority = utils.table_find(
@@ -212,7 +199,6 @@ local function get_topology()
             instance_uuid
         )
         srv.labels = server.labels or {}
-        srv.replicaset.servers[srv.priority] = srv
 
         servers[instance_uuid] = srv
     end
@@ -228,6 +214,47 @@ local function get_topology()
                 alias = m.payload.alias,
             })
         end
+    end
+
+    local void = {
+        uri = 'void',
+        uuid = 'void',
+        status = 'void',
+        message = 'void',
+    }
+
+    local __replicaset_mt = {__index = function(replicaset, key)
+        if key == 'active_master' then
+            return servers[replicaset.active_leader_uuid] or void
+        end
+
+        if key == 'master' then
+            if failover_cfg.mode == 'stateful' then
+                return servers[replicaset.active_leader_uuid] or void
+            else
+                return servers[replicaset.failover_priority[1]] or void
+            end
+        end
+
+        if key == 'servers' then
+            return fun.iter(replicaset.failover_priority)
+                :map(function(uuid) return servers[uuid] end)
+                :totable()
+        end
+    end}
+
+    local __server_mt = {__index = function(server, key)
+        if key == 'replicaset' then
+            return replicasets[server.replicaset_uuid]
+        end
+    end}
+
+    for _, server in pairs(servers) do
+        setmetatable(server, __server_mt)
+    end
+
+    for _, replicaset in pairs(replicasets) do
+        setmetatable(replicaset, __replicaset_mt)
     end
 
     return {
