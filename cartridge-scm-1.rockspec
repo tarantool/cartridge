@@ -13,6 +13,7 @@ dependencies = {
     'vshard == 0.1.16-1',
     'membership == 2.3.1-1',
     'frontend-core == 7.5.0-1',
+    'graphql == 0.1.0-1',
 }
 
 external_dependencies = {
