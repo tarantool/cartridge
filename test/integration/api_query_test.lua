@@ -677,3 +677,51 @@ function g.test_issues()
     )
     t.assert_not(next(issues, 1))
 end
+
+function g.test_cartridge_get_admin()
+    g.cluster:server('router').net_box:eval([[
+        require('membership').probe_uri('localhost:13303')
+    ]])
+    
+    local res = g.cluster:server('router').net_box:eval([[
+        return require('cartridge').admin_get_servers()
+    ]])
+
+    local expected = {{
+            alias = "router",
+            disabled = false,
+            labels = {},
+            priority = 1,
+            replicaset_uuid = "aaaaaaaa-0000-0000-0000-000000000000",
+            uri = "localhost:13301",
+            uuid = "aaaaaaaa-aaaa-0000-0000-000000000001",
+        }, {
+            alias = "storage",
+            disabled = false,
+            labels = {},
+            priority = 1,
+            replicaset_uuid = "bbbbbbbb-0000-0000-0000-000000000000",
+            uri = "localhost:13302",
+            uuid = "bbbbbbbb-bbbb-0000-0000-000000000001",
+        }, {
+            alias = "spare",
+            uri = "localhost:13303",
+            uuid = "",
+        }, {
+            alias = "storage-2",
+            disabled = false,
+            labels = {},
+            priority = 2,
+            replicaset_uuid = "bbbbbbbb-0000-0000-0000-000000000000",
+            uri = "localhost:13304",
+            uuid = "bbbbbbbb-bbbb-0000-0000-000000000002",
+    }}
+
+    t.assert_equals(#expected, #res)
+
+    table.sort(expected, function(a,b) return a.uri < b.uri end)
+    table.sort(res, function(a,b) return a.uri < b.uri end)
+    for i, exp_server in ipairs(expected) do
+        t.assert_covers(res[i], exp_server)
+    end
+end

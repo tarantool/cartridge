@@ -11,6 +11,28 @@ local failover = require('cartridge.failover')
 local topology = require('cartridge.topology')
 local confapplier = require('cartridge.confapplier')
 
+--- Set metatables for each server in topology.servers 
+-- This function uses to save backward compatibility
+-- with circular topology table.
+-- @tparam table topology
+-- @tparam {ServerInfo,..} topology.servers
+-- @tparam {ReplicasetInfo,..} topology.replicasets
+-- @treturn {servers={ServerInfo,...},replicasets={ReplicasetInfo,...}}
+local function set_topology_meta(topology)
+    local servers = topology.servers
+    local replicasets = topology.replicasets
+
+    local __server_mt = {__index = function(server, key)
+        if key == 'replicaset' then
+            return replicasets[server.replicaset_uuid]
+        end
+    end}
+    for _, server in pairs(servers) do
+        setmetatable(server, __server_mt)
+    end
+    return topology
+end
+
 --- Replicaset general information.
 -- @tfield string uuid
 --   The replicaset UUID.
@@ -32,7 +54,7 @@ local confapplier = require('cartridge.confapplier')
 -- @tfield string alias
 --   Human-readable replicaset name.
 -- @tfield {ServerInfo,...} servers
---   Circular reference to all instances in the replicaset.
+--   All instances in the replicaset.
 -- @table ReplicasetInfo
 
 --- Instance general information.
@@ -47,6 +69,8 @@ local confapplier = require('cartridge.confapplier')
 --   Auxilary health status.
 -- @tfield ReplicasetInfo replicaset
 --   Circular reference to a replicaset.
+--   (**Deprecated** since v2.4.0-??)
+-- @tfield ?string replicaset_uuid
 -- @tfield number priority
 --   Leadership priority for automatic failover.
 -- @tfield number clock_delta
@@ -143,9 +167,11 @@ local function get_topology()
             status = nil,
             message = nil,
             priority = nil,
-            replicaset = replicasets[server.replicaset_uuid],
+            replicaset_uuid = server.replicaset_uuid,
             clock_delta = nil,
         }
+
+        local rpl = replicasets[server.replicaset_uuid]
 
         if member ~= nil and member.payload ~= nil then
             srv.alias = member.payload.alias
@@ -185,17 +211,17 @@ local function get_topology()
 
         if leaders_order[server.replicaset_uuid][1] == instance_uuid then
             if failover_cfg.mode ~= 'stateful' then
-                srv.replicaset.master = srv
+                rpl.master = srv
             end
         end
         if active_leaders[server.replicaset_uuid] == instance_uuid then
             if failover_cfg.mode == 'stateful' then
-                srv.replicaset.master = srv
+                rpl.master = srv
             end
-            srv.replicaset.active_master = srv
+            rpl.active_master = srv
         end
         if srv.status ~= 'healthy' then
-            srv.replicaset.status = 'unhealthy'
+            rpl.status = 'unhealthy'
         end
 
         srv.priority = utils.table_find(
@@ -203,7 +229,7 @@ local function get_topology()
             instance_uuid
         )
         srv.labels = server.labels or {}
-        srv.replicaset.servers[srv.priority] = srv
+        rpl.servers[srv.priority] = srv
 
         servers[instance_uuid] = srv
     end
@@ -221,10 +247,10 @@ local function get_topology()
         end
     end
 
-    return {
+    return set_topology_meta({
         servers = servers,
         replicasets = replicasets,
-    }
+    })
 end
 
 return {
