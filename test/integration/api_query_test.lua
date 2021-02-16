@@ -677,3 +677,75 @@ function g.test_issues()
     )
     t.assert_not(next(issues, 1))
 end
+
+function g.test_get_topology_through_net_box()
+    g.cluster:server('router').net_box:eval([[
+        require('membership').probe_uri('localhost:13303')
+    ]])
+
+    -- Test that topology tables have circular refs though metatable
+    g.cluster:server('router').net_box:eval([[
+        local servers = require('cartridge').admin_get_servers()
+        for _, server in pairs(servers) do
+            if server.replicaset_uuid then
+                assert(server.replicaset_uuid == server.replicaset.uuid)
+            end
+        end
+
+        local replicasets = require('cartridge').admin_get_replicasets()
+        for _, rpl in pairs(replicasets) do
+            assert(rpl.master.replicaset.uuid == rpl.uuid)
+            if rpl.active_master then
+                assert(rpl.active_master.replicaset.uuid, rpl.uuid)
+            end
+
+            for _, srv in pairs(rpl.servers) do
+                assert(srv.replicaset.uuid, rpl.uuid)
+            end
+        end
+    ]])
+
+    -- Test that cartridge.admin_get_servers will not fail with
+    -- error: Too high nest level - 129
+    local res = g.cluster:server('router').net_box:eval([[
+        return require('cartridge').admin_get_servers()
+    ]])
+
+    local expected = {{
+            alias = "router",
+            disabled = false,
+            labels = {},
+            priority = 1,
+            replicaset_uuid = "aaaaaaaa-0000-0000-0000-000000000000",
+            uri = "localhost:13301",
+            uuid = "aaaaaaaa-aaaa-0000-0000-000000000001",
+        }, {
+            alias = "storage",
+            disabled = false,
+            labels = {},
+            priority = 1,
+            replicaset_uuid = "bbbbbbbb-0000-0000-0000-000000000000",
+            uri = "localhost:13302",
+            uuid = "bbbbbbbb-bbbb-0000-0000-000000000001",
+        }, {
+            alias = "spare",
+            uri = "localhost:13303",
+            uuid = "",
+        }, {
+            alias = "storage-2",
+            disabled = false,
+            labels = {},
+            priority = 2,
+            replicaset_uuid = "bbbbbbbb-0000-0000-0000-000000000000",
+            uri = "localhost:13304",
+            uuid = "bbbbbbbb-bbbb-0000-0000-000000000002",
+    }}
+
+    t.assert_equals(#expected, #res)
+
+    table.sort(expected, function(a,b) return a.uri < b.uri end)
+    table.sort(res, function(a,b) return a.uri < b.uri end)
+    for i, exp_server in ipairs(expected) do
+        t.assert_covers(res[i], exp_server)
+    end
+end
