@@ -3,7 +3,6 @@
 -- @module cartridge.lua-api.edit-topology
 
 local fun = require('fun')
-local yaml = require('yaml')
 local checks = require('checks')
 local errors = require('errors')
 local uuid_lib = require('uuid')
@@ -289,7 +288,7 @@ local function edit_topology(args)
         if err ~= nil then
             return nil, err
         end
-        return yaml.decode(res)
+        return lua_api_get_topology.set_topology_meta(res, 1)
     end
 
     local topology_cfg = confapplier.get_deepcopy('topology')
@@ -394,15 +393,7 @@ local function edit_topology(args)
     return ret
 end
 
-local function proxy_edit_topology(args)
-    local ret, err = edit_topology(args)
-    if ret then
-        return yaml.encode(ret)
-    end
-    return nil, err
-end
-
-_G.__proxy_edit_topology = proxy_edit_topology
+_G.__proxy_edit_topology = edit_topology
 
 return {
     edit_topology = edit_topology,

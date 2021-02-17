@@ -3,7 +3,6 @@
 -- @module cartridge.lua-api.get-topology
 
 local fun = require('fun')
-local yaml = require('yaml')
 local membership = require('membership')
 
 local rpc = require('cartridge.rpc')
@@ -79,7 +78,7 @@ local function get_topology()
     if state == 'Unconfigured' and rpc.is_proxy_call_possible() then
         local res = rpc.proxy_call('_G.__proxy_get_topology')
         if res ~= nil then
-            return yaml.decode(res)
+            return set_topology_meta(res)
         end
     end
 
@@ -287,14 +286,7 @@ set_topology_meta = function(topology, call_get_topology)
     return topology
 end
 
-
-_G.__proxy_get_topology = function()
-    local res, err = get_topology()
-    if not res then
-        return nil, err
-    end
-    return yaml.encode(res)
-end
+_G.__proxy_get_topology = get_topology
 
 return {
     get_topology = get_topology,

@@ -145,6 +145,22 @@ function g.test_proxy_call_ok()
     })
     t.assert_items_include(topology_from_unconfigured, topology_from_bootsrapped)
 
+
+    -- call edit_topology from uncofnigured server to check that exist circular reference
+    -- from server to its replicaset through metatable
+    server.net_box:eval([[
+        local uuid, zone_name = ...
+        local server = require('cartridge').admin_edit_topology({
+            servers = {{
+                uuid = uuid,
+                zone = zone_name,
+            }}
+        }).servers[1]
+
+        assert(server)
+        assert(server.replicaset_uuid == server.replicaset.uuid)
+    ]], {g.cluster.main_server.instance_uuid, 'zone1'})
+
     -- check bootstrap vshard proxy works
     local resp = server:graphql({query = 'mutation { bootstrap_vshard }'})
     t.assert_equals(resp.data.bootstrap_vshard, true)
