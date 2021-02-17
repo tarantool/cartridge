@@ -51,12 +51,32 @@ describe('Vshardless', () => {
     cy.get('.meta-test__ProbeServerBtn').should('exist');
   });
 
-  it('Checks for vshardless', () => {
+  it('Vshardless: Configure Server Modal', () => {
     cy.get('.meta-test__configureBtn').first().click();
     cy.get('.meta-test__CreateReplicaSetBtn').should('be.enabled');
     cy.get('form input[value="vshard-storage"]').should('not.exist');
     cy.get('form input[name="weight"]').should('be.disabled');
+    // cy.get('.meta-test__ConfigureServerModal').contains('Vshard group').should('not.exist'); //not sure
     cy.get('form input[value="default"]').should('not.exist');
-    cy.get('.meta-test__ConfigureServerModal h2:contains(Configure server)').next().click();
+    //checks all available roles
+    cy.get('button[type="button"]').contains('Select all').click();
+    cy.get('.meta-test__CreateReplicaSetBtn').should('be.enabled');
+    cy.get('.meta-test__CreateReplicaSetBtn').click();
+    cy.get('.meta-test__ReplicasetServerList').should('contain', 'failover-coordinator | myrole');
+    cy.get('.meta-test__configureBtn').should('not.exist');
+  })
+
+  it('Vshardless: Edit Replicaset Modal', () => {
+    cy.get('#root').contains('unnamed').closest('li').find('button').contains('Edit').click();
+    cy.get('.meta-test__EditReplicasetSaveBtn').should('be.enabled');
+    cy.get('form input[value="vshard-storage"]').should('not.exist');
+    cy.get('form input[name="weight"]').should('be.disabled');
+    // cy.get('.meta-test__ConfigureServerModal').contains('Vshard group').should('not.exist'); //not sure
+    cy.get('form input[value="default"]').should('not.exist');
+    //checks all available roles
+    cy.get('button[type="button"]').contains('Deselect all').click();
+    cy.get('.meta-test__EditReplicasetSaveBtn').should('be.enabled');
+    cy.get('.meta-test__EditReplicasetSaveBtn').click();
+    cy.get('.meta-test__ReplicasetServerList').should('not.contain', 'failover-coordinator | myrole');
   })
 })
