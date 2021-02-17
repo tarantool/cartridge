@@ -3,16 +3,17 @@
 -- @module cartridge.lua-api.get-topology
 
 local fun = require('fun')
+local checks = require('checks')
 local membership = require('membership')
+
 
 local utils = require('cartridge.utils')
 local roles = require('cartridge.roles')
 local failover = require('cartridge.failover')
 local topology = require('cartridge.topology')
 local confapplier = require('cartridge.confapplier')
-local info = require('log').info
 
---- Set metatables for each server in topology.servers
+--- Set metatables for each server in topology
 -- This function creates links from server to its replicaset
 -- through metatable for backward compatibility with circular
 -- topology table
@@ -23,10 +24,10 @@ local info = require('log').info
 local function set_topology_meta(topology)
     checks({
         replicasets = 'table',
-        servers = 'table',
+        servers = '?table',
     })
-    info(require('yaml').encode(topology.replicasets))
-    local servers = topology.servers
+
+    local servers = topology.servers or {}
     local replicasets = topology.replicasets
 
     local __server_mt = {__index = function(server, key)
@@ -35,13 +36,10 @@ local function set_topology_meta(topology)
         end
     end}
 
-    -- Set metatable for each server in replicaset
-    -- (if topology table recieved from net.box and
-    -- we need to have circular refs)
+    -- Set metatable for each server in replicaset (if topology table
+    -- recieved from net.box and we want to restore circular refs)
     for _, replicaset in pairs(replicasets) do
-        if replicaset.active_master then
-            setmetatable(replicaset.active_master, __server_mt)
-        end
+        setmetatable(replicaset.active_master, __server_mt)
         setmetatable(replicaset.master, __server_mt)
 
         for _, server in pairs(replicaset.servers) do

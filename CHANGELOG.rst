@@ -24,6 +24,17 @@ Added
   to restore the quorum in case of some servers go offline.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Changed
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Struct ``ServerInfo`` defined at ``cartridge.lua-api.get-topology`` was changed:
+  added field ``replicaset_uuid`` and field ``replicaset`` was deprecated. The aim
+  of this change is to remove circular references at topology table (because of
+  ``net.box`` won't work with circular tables). ``replicaset`` field still acessible
+  (through metatable), but after recieving ``ServerInfo`` struct through ``net.box``,
+  ``replicaset`` field will be empty.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
