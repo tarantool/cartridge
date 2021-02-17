@@ -678,11 +678,35 @@ function g.test_issues()
     t.assert_not(next(issues, 1))
 end
 
-function g.test_cartridge_get_admin()
+function g.test_get_topology_through_net_box()
     g.cluster:server('router').net_box:eval([[
         require('membership').probe_uri('localhost:13303')
     ]])
-    
+
+    -- Test that topology tables have circular refs though metatable
+    g.cluster:server('router').net_box:eval([[
+        local servers = require('cartridge').admin_get_servers()
+        for _, server in pairs(servers) do
+            if server.replicaset_uuid then
+                assert(server.replicaset_uuid == server.replicaset.uuid)
+            end
+        end
+
+        local replicasets = require('cartridge').admin_get_replicasets()
+        for _, rpl in pairs(replicasets) do
+            assert(rpl.master.replicaset.uuid == rpl.uuid)
+            if rpl.active_master then
+                assert(rpl.active_master.replicaset.uuid, rpl.uuid)
+            end
+
+            for _, srv in pairs(rpl.servers) do
+                assert(srv.replicaset.uuid, rpl.uuid)
+            end
+        end
+    ]])
+
+    -- Test that cartridge.admin_get_servers will not fail with
+    -- error: Too high nest level - 129
     local res = g.cluster:server('router').net_box:eval([[
         return require('cartridge').admin_get_servers()
     ]])

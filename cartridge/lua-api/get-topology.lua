@@ -10,15 +10,22 @@ local roles = require('cartridge.roles')
 local failover = require('cartridge.failover')
 local topology = require('cartridge.topology')
 local confapplier = require('cartridge.confapplier')
+local info = require('log').info
 
---- Set metatables for each server in topology.servers 
--- This function uses to save backward compatibility
--- with circular topology table.
+--- Set metatables for each server in topology.servers
+-- This function creates links from server to its replicaset
+-- through metatable for backward compatibility with circular
+-- topology table
 -- @tparam table topology
 -- @tparam {ServerInfo,..} topology.servers
 -- @tparam {ReplicasetInfo,..} topology.replicasets
 -- @treturn {servers={ServerInfo,...},replicasets={ReplicasetInfo,...}}
 local function set_topology_meta(topology)
+    checks({
+        replicasets = 'table',
+        servers = 'table',
+    })
+    info(require('yaml').encode(topology.replicasets))
     local servers = topology.servers
     local replicasets = topology.replicasets
 
@@ -27,6 +34,21 @@ local function set_topology_meta(topology)
             return replicasets[server.replicaset_uuid]
         end
     end}
+
+    -- Set metatable for each server in replicaset
+    -- (if topology table recieved from net.box and
+    -- we need to have circular refs)
+    for _, replicaset in pairs(replicasets) do
+        if replicaset.active_master then
+            setmetatable(replicaset.active_master, __server_mt)
+        end
+        setmetatable(replicaset.master, __server_mt)
+
+        for _, server in pairs(replicaset.servers) do
+            setmetatable(server, __server_mt)
+        end
+    end
+
     for _, server in pairs(servers) do
         setmetatable(server, __server_mt)
     end
@@ -255,4 +277,5 @@ end
 
 return {
     get_topology = get_topology,
+    set_topology_meta = set_topology_meta,
 }
