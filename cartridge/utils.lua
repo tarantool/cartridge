@@ -10,6 +10,7 @@ local errno = require('errno')
 local fiber = require('fiber')
 local checks = require('checks')
 local errors = require('errors')
+local digest = require('digest')
 
 local FcntlError = errors.new_class('FcntlError')
 local OpenFileError = errors.new_class('OpenFileError')
@@ -224,6 +225,13 @@ local function file_write(path, data, opts, perm)
     return data
 end
 
+--- Add random suffix to the file path.
+local function randomize_path(path)
+    path = string.gsub(path, '/$', '')
+    local random = digest.urandom(9)
+    local suffix = digest.base64_encode(random, {urlsafe = true})
+    return path .. '.' .. suffix
+end
 
 local mt_readonly = {
     __newindex = function()
@@ -434,6 +442,7 @@ return {
     file_read = file_read,
     file_write = file_write,
     file_exists = file_exists,
+    randomize_path = randomize_path,
 
     under_systemd = under_systemd,
     is_email_valid = is_email_valid,
