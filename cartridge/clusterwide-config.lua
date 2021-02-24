@@ -399,12 +399,6 @@ local function load_from_dir(path)
     return new(plaintext)
 end
 
-local function randomize(filename)
-    local random = digest.urandom(9)
-    local suffix = digest.base64_encode(random, {urlsafe = true})
-    return filename .. '.' .. suffix
-end
-
 --- Remove config from filesystem atomically.
 --
 -- The atomicity is achieved by splitting it into two phases:
@@ -420,10 +414,7 @@ end
 -- @treturn[2] nil
 -- @treturn[2] table Error description
 local function remove(path)
-    local random_path = fio.pathjoin(
-        fio.dirname(path),
-        randomize(fio.basename(path))
-    )
+    local random_path = utils.randomize_path(path)
 
     local ok = fio.rename(path, random_path)
     if not ok then
@@ -458,15 +449,9 @@ end
 -- @treturn[2] table Error description
 local function save(clusterwide_config, path)
     checks('ClusterwideConfig', 'string')
+    local random_path = utils.randomize_path(path)
 
-    local random_path = fio.pathjoin(
-        fio.dirname(path),
-        randomize(fio.basename(path))
-    )
-
-    local ok, err
-
-    ok, err = utils.mktree(random_path)
+    local ok, err = utils.mktree(random_path)
     if not ok then
         return nil, err
     end

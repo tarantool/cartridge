@@ -16,3 +16,21 @@ function g.test_upvalues()
         utils.assert_upvalues, f, {'t3'}
     )
 end
+
+function g.test_randomize_path()
+    local digest = require('digest')
+    local urandom_original = digest.urandom
+    digest.urandom = function(n) return string.rep("\0", n) end
+
+    t.assert_equals(
+        utils.randomize_path('/some/file'),
+        '/some/file.AAAAAAAAAAAA'
+    )
+
+    t.assert_equals(
+        utils.randomize_path('/some/dir/'),
+        '/some/dir.AAAAAAAAAAAA'
+    )
+
+    digest.urandom = urandom_original
+end
