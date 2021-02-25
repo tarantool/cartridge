@@ -171,9 +171,10 @@ local function mktree(path)
                 )
             end
         elseif not stat:is_dir() then
+            local EEXIST = assert(errno.EEXIST)
             return nil, errors.new('MktreeError',
                 'Error creating directory %q: %s',
-                current_dir, errno.strerror(errno.EEXIST)
+                current_dir, errno.strerror(EEXIST)
             )
         end
     end

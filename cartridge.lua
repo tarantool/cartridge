@@ -636,13 +636,13 @@ local function cfg(opts, box_opts)
                 sock:close()
                 fio.unlink(unix_port)
                 ok = false
-                _errno = errno.ENOBUFS
+                _errno = assert(errno.ENOBUFS)
             end
         end
 
         if not ok then
             local strerror
-            if _errno == errno.ENOBUFS then
+            if _errno == assert(errno.ENOBUFS) then
                 strerror = 'Too long console_sock exceeds UNIX_PATH_MAX limit'
             else
                 strerror = errno.strerror(_errno)

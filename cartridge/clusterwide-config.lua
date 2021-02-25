@@ -511,9 +511,10 @@ local function load(path)
     checks('string')
 
     if not fio.path.lexists(path) then
+        local ENOENT = assert(errno.ENOENT)
         local err = LoadConfigError:new(
             'Error loading %q: %s',
-            path, errno.strerror(errno.ENOENT)
+            path, errno.strerror(ENOENT)
         )
         return nil, err
     end
