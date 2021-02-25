@@ -341,6 +341,15 @@ query serverList ($withStats: Boolean!) {
   }
   cluster @include(if: $withStats) {
     suggestions {
+      disable_servers {
+        uuid
+      }
+      force_apply {
+        config_mismatch
+        config_locked
+        uuid
+        operation_error
+      } 
       refine_uri {
         uuid
         uri_old
@@ -543,6 +552,17 @@ export const setFilesMutation = gql`
         content
       }
     }  
+  }
+`;
+
+export const disableServersMutation = gql`
+  mutation disable_servers($uuids: [String!]) {
+    cluster {
+      disable_servers(uuids: $uuids) {
+        uuid
+        disabled
+      }
+    }
   }
 `;
 
