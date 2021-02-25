@@ -141,3 +141,11 @@ function g.test_new_with_env()
     t.assert_covers(cluster.servers[2].env, expected)
     t.assert_covers(cluster.servers[3].env, shared_env)
 end
+
+function g.test_errno()
+    local errno = require('errno')
+    t.assert_error_msg_contains(
+        "errno 'ENOSUCHERRNO' is not declared",
+        function() return errno.ENOSUCHERRNO end
+    )
+end

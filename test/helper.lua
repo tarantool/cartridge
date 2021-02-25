@@ -4,6 +4,14 @@ local fio = require('fio')
 local digest = require('digest')
 local helpers = table.copy(require('cartridge.test-helpers'))
 
+local errno = require('errno')
+local errno_list = getmetatable(errno).__index
+setmetatable(errno_list, {
+    __index = function(_, k)
+        error("errno '" .. k .. "' is not declared")
+    end,
+})
+
 helpers.project_root = fio.dirname(debug.sourcedir())
 
 fio.tempdir = function(base)
