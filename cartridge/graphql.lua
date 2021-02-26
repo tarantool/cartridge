@@ -5,12 +5,12 @@ local errors = require('errors')
 
 local auth = require('cartridge.auth')
 local vars = require('cartridge.vars').new('cartridge.graphql')
-local types = require('cartridge.graphql.types')
-local parse = require('cartridge.graphql.parse')
-local schema = require('cartridge.graphql.schema')
-local execute = require('cartridge.graphql.execute')
-local funcall = require('cartridge.graphql.funcall')
-local validate = require('cartridge.graphql.validate')
+local types = require('graphql.types')
+local parse = require('graphql.parse')
+local schema = require('graphql.schema')
+local execute = require('graphql.execute')
+local funcall = require('cartridge.funcall')
+local validate = require('graphql.validate')
 
 
 vars:new('graphql_schema', nil)

@@ -127,7 +127,7 @@ end
 
 function g.test_2pc()
     local query = [[ mutation($servers: [EditServerInput]) {
-      cluster{ edit_topology(servers: $servers){} }
+      cluster{ edit_topology(servers: $servers){ servers { uri } } }
     }]]
 
     g.cluster.main_server:graphql({

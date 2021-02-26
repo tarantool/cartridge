@@ -1,7 +1,7 @@
 local module_name = 'cartridge.webui.api-issues'
 
 local issues = require('cartridge.issues')
-local gql_types = require('cartridge.graphql.types')
+local gql_types = require('graphql.types')
 
 local gql_type_warning = gql_types.object({
     name = 'Issue',

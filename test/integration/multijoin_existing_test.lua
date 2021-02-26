@@ -70,7 +70,7 @@ g.test_patch_topology = function()
             $replicasets: [EditReplicasetInput!]
         ){
             cluster {
-                edit_topology(replicasets:$replicasets){}
+                edit_topology(replicasets:$replicasets) { servers { uri } }
             }
         }]],
         variables = {

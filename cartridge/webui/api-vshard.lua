@@ -1,4 +1,4 @@
-local gql_types = require('cartridge.graphql.types')
+local gql_types = require('graphql.types')
 local vshard_utils = require('cartridge.vshard-utils')
 local _ = require('cartridge.lua-api.vshard')
 local module_name = 'cartridge.webui.api-vshard'

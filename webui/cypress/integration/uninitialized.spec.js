@@ -16,7 +16,7 @@ describe('Uninitialized', () => {
       })
       _G.server:start()
       helpers.retrying({timeout = 5}, function()
-        _G.server:graphql({query = '{}'})
+        _G.server:graphql({query = '{ servers { uri } }'})
       end)
       return true
     `}).should('deep.eq', [true]);

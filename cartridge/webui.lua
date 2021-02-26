@@ -12,7 +12,7 @@ local api_topology = require('cartridge.webui.api-topology')
 local api_failover = require('cartridge.webui.api-failover')
 local api_ddl = require('cartridge.webui.api-ddl')
 local api_suggestions = require('cartridge.webui.api-suggestions')
-local gql_types = require('cartridge.graphql.types')
+local gql_types = require('graphql.types')
 
 local module_name = 'cartridge.webui'
 

@@ -1,7 +1,7 @@
 local errors = require('errors')
 
 local auth = require('cartridge.auth')
-local gql_types = require('cartridge.graphql.types')
+local gql_types = require('graphql.types')
 local module_name = 'cartridge.webui.api-auth'
 
 local gql_type_user = gql_types.object({

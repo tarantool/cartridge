@@ -43,7 +43,7 @@ g.before_all = function()
 
     g.server:start()
     t.helpers.retrying({timeout = 5}, function()
-        g.server:graphql({query = '{}'})
+        g.server:graphql({query = '{ servers { uri } }'})
     end)
 end
 
@@ -140,7 +140,7 @@ function g.test_join_server()
                 query = [[mutation { cluster {
                     edit_topology(replicasets: [{
                         join_servers: [{uri: "127.0.0.1:13302"}]
-                    }]) {}
+                    }]) { servers { uri } }
                 }}]]
             })
         end
@@ -160,7 +160,7 @@ function g.test_join_server()
     })
 
     t.helpers.retrying({timeout = 5, delay = 0.1}, function()
-         g.server:graphql({query = '{}'})
+         g.server:graphql({query = '{ servers { uri } }'})
     end)
 
     t.helpers.retrying({timeout = 5, delay = 0.1}, function()

@@ -39,7 +39,7 @@ function g:setup()
     end
 
     for _, server in pairs(self.servers) do
-        helpers.retrying({}, function() server:graphql({query = '{}'}) end)
+        helpers.retrying({}, function() server:graphql({query = '{ servers { uri } }'}) end)
     end
 end
 

@@ -126,7 +126,7 @@ function Cluster:apply_topology()
         query = [[
             mutation boot($replicasets: [EditReplicasetInput]) {
                 cluster {
-                    edit_topology(replicasets: $replicasets) {}
+                    edit_topology(replicasets: $replicasets) { servers { uri } }
                 }
             }
         ]],
@@ -218,7 +218,7 @@ function Cluster:join_server(server)
         end)
     else
         self.main_server = server
-        self:retrying({}, function() server:graphql({query = '{}'}) end)
+        self:retrying({}, function() server:graphql({query = '{ servers { uri } }'}) end)
     end
 
     server:join_cluster(self.main_server, {timeout = self.CONNECTION_TIMEOUT})

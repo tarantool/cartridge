@@ -1,6 +1,6 @@
 local module_name = 'cartridge.webui.api-failover'
 
-local gql_types = require('cartridge.graphql.types')
+local gql_types = require('graphql.types')
 local lua_api_failover = require('cartridge.lua-api.failover')
 
 
