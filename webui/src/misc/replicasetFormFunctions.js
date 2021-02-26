@@ -48,11 +48,6 @@ export const validateForm = ({
   const errors = {};
   const { storage: storageRolesNames } = selectVshardRolesNames(store.getState());
 
-  if (!storageRolesNames.length) {
-    errors.vshard_group = `Storage role name not specified`;
-    return errors;
-  }
-
   if (typeof weight === 'string') {
     const numericWeight = Number(weight);
 
