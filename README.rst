@@ -118,12 +118,14 @@ Long story short, copy-paste this into the console:
     cartridge create --name myapp
     cd myapp
     cartridge build
-    cartridge start
+    cartridge start -d
+    cartridge replicasets setup --bootstrap-vshard
+
 
 That's all! Now you can visit http://localhost:8081 and see your application's
 Admin Web UI:
 
-.. image:: https://user-images.githubusercontent.com/11336358/75786427-52820c00-5d76-11ea-93a4-309623bda70f.png
+.. image:: https://user-images.githubusercontent.com/32142520/109290877-3d30a800-7839-11eb-8fcf-8b3de1237a3b.png
    :align: center
    :scale: 100%
 
