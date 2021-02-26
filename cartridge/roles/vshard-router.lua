@@ -144,17 +144,8 @@ local function bootstrap_group(group_name, vsgroup)
 
     for _, replicaset in pairs(info.replicasets or {}) do
         local uri = replicaset.master.uri
-        local conn, _ = pool.connect(uri)
-
-        if conn == nil then
-            return nil, e_bootstrap_vshard:new(
-                '%q in %s not ready yet',
-                uri, router_name
-            )
-        end
-
         local ready = errors.netbox_eval(
-            conn,
+            pool.connect(uri, {wait_connected = false}),
             'return box.space._bucket ~= nil',
             {}, {timeout = 1}
         )

@@ -33,6 +33,9 @@ Fixed
   the ``apply_config`` is made by every instance individually. The validation
   step is never skipped.
 
+- Avoid WebUI and ``pool.map_call`` requests hanging because of network
+  connection problems.
+
 -------------------------------------------------------------------------------
 [2.5.0] - 2021-03-05
 -------------------------------------------------------------------------------

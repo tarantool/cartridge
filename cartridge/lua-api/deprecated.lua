@@ -117,7 +117,9 @@ local function join_server(args)
             member.payload.state == 'ConfiguringRoles' or
             member.payload.state == 'RolesConfigured'
         ) then
-            conn = pool.connect(args.uri)
+            conn = pool.connect(args.uri, {
+                wait_connected = deadline - fiber.clock()
+            })
         end
     end
     membership.unsubscribe(cond)

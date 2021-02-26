@@ -76,21 +76,24 @@ local function graphql_check_schema(_, args)
     local conf_old = {[_section_name] = confapplier.get_readonly(_section_name)}
 
     local active_leaders = failover.get_active_leaders()
-    local conn, err
+    local uri, conn
     if active_leaders[box.info.cluster.uuid] == box.info.uuid then
         conn = netbox.self
     else
         for _, leader_uuid in pairs(active_leaders) do
-            local uri = topology_cfg.servers[leader_uuid].uri
-            conn, err = pool.connect(uri)
-            if conn ~= nil then
+            uri = topology_cfg.servers[leader_uuid].uri
+            conn = pool.connect(uri, {wait_connected = false})
+
+            if conn:wait_connected() then
                 break
             end
         end
     end
 
-    if conn == nil then
-        return nil, err
+    if not conn:is_connected() then
+        return nil, CheckSchemaError:new('%q: %s',
+            uri, conn.error or "Connection not established (yet)"
+        )
     end
 
     local ret, err = errors.netbox_eval(conn,
