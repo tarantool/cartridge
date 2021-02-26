@@ -48,6 +48,8 @@ Enhanced is WebUI
 
 - Using storage and router role names specified in GraphQL.
 
+- Suggestion to disable broken instances.
+
 -------------------------------------------------------------------------------
 [2.4.0] - 2020-12-29
 -------------------------------------------------------------------------------

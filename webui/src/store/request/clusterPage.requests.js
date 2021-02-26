@@ -5,6 +5,7 @@ import { getClusterSelf } from 'src/store/request/app.requests';
 import {
   bootstrapMutation,
   changeFailoverMutation,
+  disableServersMutation,
   editTopologyMutation,
   listQuery,
   probeMutation,
@@ -224,3 +225,5 @@ export async function changeFailover(params: FailoverApi) {
 export async function promoteFailoverLeader(params: FailoverApi) {
   return await graphql.mutate(promoteFailoverLeaderMutation, params);
 }
+
+export const disableServers = (uuids: Array<string>) => graphql.mutate(disableServersMutation, { uuids });

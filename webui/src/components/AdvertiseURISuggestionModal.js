@@ -10,8 +10,8 @@ import {
   colors
 } from '@tarantool.io/ui-kit';
 import {
-  $advertiseModal,
-  applyClick,
+  $advertiseURIModal,
+  advertiseURIApplyClick,
   detailsClose
 } from 'src/store/effector/clusterSuggestions'
 
@@ -39,22 +39,22 @@ Now they’re unreachable for RPC (i.e for vshard-routers) \
 and replication isn\'t running.\
 To make it operable again the clusterwide configuration should be updated:';
 
-export const ClusterSuggestionsModal = () => {
+export const AdvertiseURISuggestionModal = () => {
   const {
     visible,
     error,
     pending,
     suggestions
-  } = useStore($advertiseModal);
+  } = useStore($advertiseURIModal);
 
   if (!visible)
     return null;
 
   return (
     <Modal
-      className={'meta-test__ClusterSuggestionsModal'}
+      className={'meta-test__AdvertiseURISuggestionModal'}
       footerControls={[
-        <Button intent='primary' size='l' text='Update' onClick={applyClick} loading={pending} />
+        <Button intent='primary' size='l' text='Update' onClick={advertiseURIApplyClick} loading={pending} />
       ]}
       onClose={detailsClose}
       title='Change advertise URI'

@@ -770,7 +770,7 @@ export type GetClusterQuery = ({
       }) |}
     }), knownRoles: Array<({
         ...{ __typename?: 'Role' },
-      ...$Pick<Role, {| name: *, dependencies?: * |}>
+      ...$Pick<Role, {| name: *, dependencies?: *, implies_storage: *, implies_router: * |}>
     })>, vshard_groups: Array<({
         ...{ __typename?: 'VshardGroup' },
       ...$Pick<VshardGroup, {| name: *, bucket_count: *, bootstrapped: * |}>
@@ -790,7 +790,7 @@ export type BoxInfoQuery = ({
     ...{ __typename?: 'Query' },
   ...{| servers?: ?Array<?({
       ...{ __typename?: 'Server' },
-    ...$Pick<Server, {| alias?: *, disabled?: *, status: *, message: *, uri: * |}>,
+    ...$Pick<Server, {| alias?: *, status: *, message: *, uri: * |}>,
     ...{| replicaset?: ?({
         ...{ __typename?: 'Replicaset' },
       ...$Pick<Replicaset, {| roles?: * |}>,
@@ -918,7 +918,7 @@ export type ServerListQuery = ({
     ...{ __typename?: 'Query' },
   ...{| serverList?: ?Array<?({
       ...{ __typename?: 'Server' },
-    ...$Pick<Server, {| uuid: *, alias?: *, uri: *, zone?: *, status: *, message: * |}>,
+    ...$Pick<Server, {| uuid: *, alias?: *, disabled?: *, uri: *, zone?: *, status: *, message: * |}>,
     ...{| boxinfo?: ?({
         ...{ __typename?: 'ServerInfo' },
       ...{| general: ({
@@ -950,10 +950,7 @@ export type ServerListQuery = ({
       }), replicaset?: ?({
           ...{ __typename?: 'Replicaset' },
         ...$Pick<Replicaset, {| uuid: * |}>
-      }), labels?: ?Array<?({
-          ...{ __typename?: 'Label' },
-        ...$Pick<Label, {| name: *, value: * |}>
-      })> |}
+      }) |}
     })> |}
   })>, serverStat?: ?Array<?({
       ...{ __typename?: 'Server' },
