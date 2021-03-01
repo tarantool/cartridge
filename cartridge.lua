@@ -28,6 +28,7 @@ local utils = require('cartridge.utils')
 local roles = require('cartridge.roles')
 local webui = require('cartridge.webui')
 local issues = require('cartridge.issues')
+local graphql = require('cartridge.graphql')
 local argparse = require('cartridge.argparse')
 local topology = require('cartridge.topology')
 local twophase = require('cartridge.twophase')
@@ -169,6 +170,15 @@ end
 --  env `TARANTOOL_HTTP_ENABLED`,
 --  args `--http-enabled`)
 --
+-- (**Added** in v2.4.0-37)
+-- @tparam ?boolean opts.webui_enabled
+--  whether webui should be initialized. It also enables HTTP and
+--  GraphQL API (issues, suggestions, etc). Doesn't affect opts.auth_enabled
+--  Ignored if http_enabled = false
+--  (default: true, overridden by
+--  env `TARANTOOL_WEBUI_ENABLED`,
+--  args `--webui-enabled`)
+--
 -- @tparam ?string|number opts.http_port
 --  port to open administrative UI and API on
 --  (default: 8081, derived from
@@ -230,6 +240,7 @@ local function cfg(opts, box_opts)
         bucket_count = '?number',
         http_port = '?string|number',
         http_enabled = '?boolean',
+        webui_enabled = '?boolean',
         alias = '?string',
         roles = 'table',
         auth_backend_name = '?string',
@@ -567,6 +578,9 @@ local function cfg(opts, box_opts)
     if opts.http_enabled == nil then
         opts.http_enabled = true
     end
+    if opts.webui_enabled == nil then
+        opts.webui_enabled = true
+    end
     if opts.http_enabled then
         local httpd = http.new(
             '0.0.0.0', opts.http_port,
@@ -578,9 +592,13 @@ local function cfg(opts, box_opts)
             return nil, err
         end
 
-        local ok, err = HttpInitError:pcall(webui.init, httpd)
-        if not ok then
-            return nil, err
+        if opts.webui_enabled then
+            local ok, err = HttpInitError:pcall(webui.init, httpd)
+            if not ok then
+                return nil, err
+            end
+        else
+            graphql.init(httpd)
         end
 
         local ok, err = CartridgeCfgError:pcall(auth.init, httpd)

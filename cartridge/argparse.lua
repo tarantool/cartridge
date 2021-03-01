@@ -84,6 +84,7 @@ local cluster_opts = {
     workdir = 'string', -- **string**
     http_port = 'number', -- **number**
     http_enabled = 'boolean', -- **boolean**
+    webui_enabled = 'boolean', -- **boolean**
     advertise_uri = 'string', -- **string**
     cluster_cookie = 'string', -- **string**
     console_sock = 'string', -- **string**
