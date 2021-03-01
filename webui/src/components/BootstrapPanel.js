@@ -3,7 +3,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { css, cx } from 'emotion'
 import { setVisibleBootstrapVshardPanel } from '../store/actions/clusterPage.actions';
-import { isBootstrapped, isRouterPresent, isStoragePresent } from '../store/selectors/clusterPage';
+import { isBootstrapped, isRouterEnabled, isStorageEnabled } from '../store/selectors/clusterPage';
 import { IconCancel, IconOk, PageCard, Text } from '@tarantool.io/ui-kit';
 import type { State } from 'src/store/rootReducer';
 import { selectVshardRolesNames } from 'src/store/selectors/clusterPage';
@@ -89,8 +89,8 @@ const mapStateToProps = (state: State) => {
     bootstrapPanelVisible,
     isBootstrapped: isBootstrapped(state),
     requestingBootstrapVshard,
-    routerPresent: isRouterPresent(state),
-    storagePresent: isStoragePresent(state),
+    routerPresent: isRouterEnabled(state),
+    storagePresent: isStorageEnabled(state),
     storageRolesNames: rolesNames.storage,
     routerRolesNames: rolesNames.router
   }

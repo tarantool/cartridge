@@ -48,7 +48,9 @@ Enhanced is WebUI
 
 - Using storage and router role names specified in GraphQL.
 
-- Suggestion to disable broken instances.
+- Show a suggestion to disable broken instances.
+
+- Hide bootstrap button in vshardless cluster.
 
 -------------------------------------------------------------------------------
 [2.4.0] - 2020-12-29
