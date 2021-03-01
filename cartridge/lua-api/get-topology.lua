@@ -1,6 +1,7 @@
 --- Administration functions (`get-topology` implementation).
 --
 -- @module cartridge.lua-api.get-topology
+local mod_name = 'cartridge.lua-api.get-topology'
 
 local fun = require('fun')
 local membership = require('membership')
@@ -10,6 +11,8 @@ local roles = require('cartridge.roles')
 local failover = require('cartridge.failover')
 local topology = require('cartridge.topology')
 local confapplier = require('cartridge.confapplier')
+
+local lua_api_proxy = require('cartridge.lua-api.proxy')
 
 --- Replicaset general information.
 -- @tfield string uuid
@@ -64,6 +67,13 @@ local confapplier = require('cartridge.confapplier')
 -- @treturn[2] nil
 -- @treturn[2] table Error description
 local function get_topology()
+    local ret, err = lua_api_proxy.call(mod_name .. '.get_topology')
+    if ret ~= nil then
+        return ret
+    elseif err ~= nil then
+        return nil, err
+    end
+
     local state, err = confapplier.get_state()
     -- OperationError doesn't influence observing topology
     if state == 'InitError' or state == 'BootError' then
@@ -220,6 +230,8 @@ local function get_topology()
             })
         end
     end
+
+    table.sort(servers, function(l, r) return l.uri < r.uri end)
 
     return {
         servers = servers,
