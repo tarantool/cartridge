@@ -355,11 +355,11 @@ g.test_webui_disabled = function()
     membership.broadcast = function() error('Forbidden', 0) end
 
     local opts = {
-            workdir = '/tmp',
-            advertise_uri = 'unused:0',
-            http_enabled = true,
-            webui_enabled = false,
-            swim_broadcast = false,
+        workdir = '/tmp',
+        advertise_uri = 'unused:0',
+        http_enabled = true,
+        webui_enabled = false,
+        swim_broadcast = false,
         roles = {
             'cartridge.roles.vshard-storage',
             'cartridge.roles.vshard-router',
@@ -372,16 +372,10 @@ g.test_webui_disabled = function()
 
     local service = require('cartridge.service-registry')
     local httpd = service.get('httpd')
-    local routes = httpd.routes
+    t.assert_items_equals(
+        require('fun').iter(httpd.routes):map(function(r) return r.path end):totable(),
+        {"/login", "/logout", "/admin/api"}
+    )
 
-    local function compare_routes(a,b)
-        return a['path'] < b['path']
-    end
-    table.sort(routes, compare_routes)
-
-    t.assert_equals(#routes, 3)
-    t.assert_equals(routes[1].path, '/admin/api')
-    t.assert_equals(routes[2].path, '/login')
-    t.assert_equals(routes[3].path, '/logout')
     httpd:stop()
 end

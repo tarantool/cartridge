@@ -22,8 +22,9 @@ Added
 - Show an issue when ``ConfiguringRoles`` state stucks for more than 5s.
 - New GraphQL API: ``{cluster {suggestions {disable_servers {uuid}}}}``
   to restore the quorum in case of some servers go offline.
-- New cluster option ``webui_enabled`` to disable webui, HTTP and GraphQL API.
-  (by default it's enabled).
+- New ``cartridge.cfg`` option ``webui_enabled`` (default: true). Otherwise,
+  HTTP server remains operable (and GraphQL too), but serves user-defined roles
+  API only.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed

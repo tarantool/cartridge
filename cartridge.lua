@@ -170,12 +170,13 @@ end
 --  env `TARANTOOL_HTTP_ENABLED`,
 --  args `--http-enabled`)
 --
--- (**Added** in v2.4.0-37)
 -- @tparam ?boolean opts.webui_enabled
---  whether webui should be initialized. It also enables HTTP and
---  GraphQL API (issues, suggestions, etc). Doesn't affect opts.auth_enabled
---  Ignored if http_enabled = false
---  (default: true, overridden by
+--  whether WebUI and corresponding API (HTTP + GraphQL) should be
+--  initialized. Ignored if `http_enabled` is `false`. Doesn't
+--  affect `auth_enabled`.
+--
+--  (**Added** in v2.4.0-38,
+--  default: true, overridden by
 --  env `TARANTOOL_WEBUI_ENABLED`,
 --  args `--webui-enabled`)
 --
@@ -592,21 +593,21 @@ local function cfg(opts, box_opts)
             return nil, err
         end
 
-        if opts.webui_enabled then
-            local ok, err = HttpInitError:pcall(webui.init, httpd)
-            if not ok then
-                return nil, err
-            end
-        else
-            graphql.init(httpd)
-        end
-
         local ok, err = CartridgeCfgError:pcall(auth.init, httpd)
         if not ok then
             return nil, err
         end
 
-        webui.set_blacklist(opts.webui_blacklist)
+        graphql.init(httpd)
+
+        if opts.webui_enabled then
+            local ok, err = HttpInitError:pcall(webui.init, httpd)
+            if not ok then
+                return nil, err
+            end
+
+            webui.set_blacklist(opts.webui_blacklist)
+        end
 
         local srv_name = httpd.tcp_server:name()
         log.info('Listening HTTP on %s:%s', srv_name.host, srv_name.port)
