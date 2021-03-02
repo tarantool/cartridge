@@ -578,7 +578,7 @@ export type ServerInfoReplication = {|
   replication_skip_conflict?: ?$ElementType<Scalars, 'Boolean'>,
   replication_sync_lag?: ?$ElementType<Scalars, 'Float'>,
   /** Statistics for all instances in the replica set in regard to the current instance */
-  replication_info?: ?Array<ReplicaStatus>,
+  replication_info?: ?Array<?ReplicaStatus>,
   /** The vector clock of replication log sequence numbers */
   vclock?: ?Array<?$ElementType<Scalars, 'Long'>>,
   replication_timeout?: ?$ElementType<Scalars, 'Float'>,
@@ -818,7 +818,7 @@ export type BoxInfoQuery = ({
       }), replication: ({
           ...{ __typename?: 'ServerInfoReplication' },
         ...$Pick<ServerInfoReplication, {| replication_connect_quorum?: *, replication_connect_timeout?: *, replication_sync_timeout?: *, replication_skip_conflict?: *, replication_sync_lag?: *, vclock?: *, replication_timeout?: * |}>,
-        ...{| replication_info?: ?Array<({
+        ...{| replication_info?: ?Array<?({
             ...{ __typename?: 'ReplicaStatus' },
           ...$Pick<ReplicaStatus, {| downstream_status?: *, id?: *, upstream_peer?: *, upstream_idle?: *, upstream_message?: *, lsn?: *, upstream_lag?: *, upstream_status?: *, uuid: *, downstream_message?: * |}>
         })> |}
@@ -867,7 +867,7 @@ export type InstanceDataQuery = ({
       }), replication: ({
           ...{ __typename?: 'ServerInfoReplication' },
         ...$Pick<ServerInfoReplication, {| replication_connect_quorum?: *, replication_connect_timeout?: *, replication_sync_timeout?: *, replication_skip_conflict?: *, replication_sync_lag?: *, vclock?: *, replication_timeout?: * |}>,
-        ...{| replication_info?: ?Array<({
+        ...{| replication_info?: ?Array<?({
             ...{ __typename?: 'ReplicaStatus' },
           ...$Pick<ReplicaStatus, {| downstream_status?: *, id?: *, upstream_peer?: *, upstream_idle?: *, upstream_message?: *, lsn?: *, upstream_lag?: *, upstream_status?: *, uuid: *, downstream_message?: * |}>
         })> |}
@@ -959,7 +959,13 @@ export type ServerListQuery = ({
       ...{ __typename?: 'Apicluster' },
     ...{| suggestions?: ?({
         ...{ __typename?: 'Suggestions' },
-      ...{| refine_uri?: ?Array<({
+      ...{| disable_servers?: ?Array<({
+          ...{ __typename?: 'DisableServerSuggestion' },
+        ...$Pick<DisableServerSuggestion, {| uuid: * |}>
+      })>, force_apply?: ?Array<({
+          ...{ __typename?: 'ForceApplySuggestion' },
+        ...$Pick<ForceApplySuggestion, {| config_mismatch: *, config_locked: *, uuid: *, operation_error: * |}>
+      })>, refine_uri?: ?Array<({
           ...{ __typename?: 'RefineUriSuggestion' },
         ...$Pick<RefineUriSuggestion, {| uuid: *, uri_old: *, uri_new: * |}>
       })> |}
@@ -1183,6 +1189,22 @@ export type Set_FilesMutation = ({
     ...{| config: Array<?({
         ...{ __typename?: 'ConfigSection' },
       ...$Pick<ConfigSection, {| filename: *, content: * |}>
+    })> |}
+  }) |}
+});
+
+export type Disable_ServersMutationVariables = {
+  uuids?: ?Array<$ElementType<Scalars, 'String'>>,
+};
+
+
+export type Disable_ServersMutation = ({
+    ...{ __typename?: 'Mutation' },
+  ...{| cluster?: ?({
+      ...{ __typename?: 'MutationApicluster' },
+    ...{| disable_servers?: ?Array<?({
+        ...{ __typename?: 'Server' },
+      ...$Pick<Server, {| uuid: *, disabled?: * |}>
     })> |}
   }) |}
 });

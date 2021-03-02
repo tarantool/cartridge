@@ -37,6 +37,9 @@ Fixed
 
 - Don't make yaml formatting ugly during config upload.
 
+- "No value provided for non-null ReplicaStatus" GraphQL error
+  after removing a replica from the `box.space._cluster`.
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Enhanced is WebUI
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
