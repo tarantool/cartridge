@@ -349,3 +349,33 @@ g.test_positive = function()
         cartridge.cfg, opts
     )
 end
+
+g.test_webui_disabled = function()
+    g.mock_membership()
+    membership.broadcast = function() error('Forbidden', 0) end
+
+    local opts = {
+        workdir = '/tmp',
+        advertise_uri = 'unused:0',
+        http_enabled = true,
+        webui_enabled = false,
+        swim_broadcast = false,
+        roles = {
+            'cartridge.roles.vshard-storage',
+            'cartridge.roles.vshard-router',
+        },
+    }
+
+    local ok, err = cartridge.cfg(opts)
+    t.assert_equals(err, nil)
+    t.assert_equals(ok, true)
+
+    local service = require('cartridge.service-registry')
+    local httpd = service.get('httpd')
+    t.assert_items_equals(
+        require('fun').iter(httpd.routes):map(function(r) return r.path end):totable(),
+        {"/login", "/logout", "/admin/api"}
+    )
+
+    httpd:stop()
+end

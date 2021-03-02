@@ -30,7 +30,6 @@ local function init(httpd)
     front.init(httpd)
     front.add('cluster', front_bundle)
 
-    graphql.init(httpd)
     graphql.add_mutation_prefix('cluster', 'Cluster management')
     graphql.add_callback_prefix('cluster', 'Cluster management')
 
