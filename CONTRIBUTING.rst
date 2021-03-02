@@ -63,6 +63,7 @@ but can also be useful for demo purposes or experiments:
 .. code-block:: bash
 
     cartridge start
+    cartridge replicasets setup --bootstrap-vshard
 
     # or select a specific entry point
     # cartridge start --script ./test/entrypoint/srv_vshardless.lua

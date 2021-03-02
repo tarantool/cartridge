@@ -1,0 +1,22 @@
+R:
+  instances:
+  - srv-1
+  roles:
+  - failover-coordinator
+  - vshard-router
+  - myrole-dependency
+  - myrole
+S-A:
+  instances:
+  - srv-2
+  - srv-3
+  roles:
+  - vshard-storage
+  weight: 1
+S-B:
+  instances:
+  - srv-4
+  - srv-5
+  roles:
+  - vshard-storage
+  weight: 1
