@@ -147,6 +147,18 @@ g.test_advertise_uri = function()
     end)
 end
 
+g.test_http_host = function()
+    check_error('Can\'t create tcp_server: Input/output error',
+        cartridge.cfg, {
+            workdir = g.tempdir,
+            http_host = 'invalid-host',
+            advertise_uri = 'localhost:13301',
+            roles = {},
+        }
+    )
+    membership.leave()
+end
+
 -- roles ----------------------------------------------------------------------
 -------------------------------------------------------------------------------
 g.test_roles = function()

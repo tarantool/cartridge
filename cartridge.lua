@@ -188,6 +188,13 @@ end
 --  env `TARANTOOL_HTTP_PORT`,
 --  args `--http-port`)
 --
+-- @tparam ?string opts.http_host
+--  host to open administrative UI and API on
+--  (**Added** in v2.4.0-3?
+--  default: 0.0.0.0, overridden by
+--  env `TARANTOOL_HTTP_HOST`,
+--  args `--http-host`)
+--
 -- @tparam ?string opts.alias
 -- human-readable instance name that will be available in administrative UI
 --  (default: argparse instance name, overridden by
@@ -240,6 +247,7 @@ local function cfg(opts, box_opts)
         cluster_cookie = '?string',
         bucket_count = '?number',
         http_port = '?string|number',
+        http_host = '?string',
         http_enabled = '?boolean',
         webui_enabled = '?boolean',
         alias = '?string',
@@ -575,6 +583,9 @@ local function cfg(opts, box_opts)
             opts.http_port = 8081
         end
     end
+    if opts.http_host == nil then
+        opts.http_host = '0.0.0.0'
+    end
 
     if opts.http_enabled == nil then
         opts.http_enabled = true
@@ -584,7 +595,7 @@ local function cfg(opts, box_opts)
     end
     if opts.http_enabled then
         local httpd = http.new(
-            '0.0.0.0', opts.http_port,
+            opts.http_host, opts.http_port,
             { log_requests = false }
         )
 
