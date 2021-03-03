@@ -44,8 +44,7 @@ const styles = {
 
 const fieldLabels = {
   operation_error: 'Operation error',
-  config_locked: 'Config is locked ',
-  config_mismatch: 'Config mismatch'
+  config_error: 'Configuration error'
 }
 
 const msg = 'Some instances are misconfigured. \

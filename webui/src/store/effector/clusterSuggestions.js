@@ -98,18 +98,27 @@ const $forceApplySuggestion: Store<?ForceApplySuggestion[]> = createStore(null)
   .reset(statsResponseError)
   .reset(clusterPageMount);
 
+
+/*
+It was decided to combine elements from 'config_locked' and 'config_mismatch'
+into one group 'config_error'.
+*/
 type ForceApplySuggestionByReason = [
   ['operation_error', string[]],
-  ['config_locked', string[]],
-  ['config_mismatch', string[]]
+  ['config_error', string[]]
 ]
 
 const $forceApplySuggestionByReason: Store<ForceApplySuggestionByReason> = $forceApplySuggestion.map(state => {
-  const r = { operation_error: [], config_locked: [], config_mismatch: [] };
-  state && state.forEach(
-    ({ uuid, ...rest }) => Object.entries(rest)
-      .map(([k, v]) => (v && r[k].push(uuid)))
-  );
+  const r = { operation_error: [], config_error: [] };
+  state && state
+    .map(({ config_locked, config_mismatch, ...rest }) => ({
+      config_error: config_locked || config_mismatch,
+      ...rest
+    }))
+    .forEach(
+      ({ uuid, ...rest }) => Object.entries(rest)
+        .map(([k, v]) => (v && r[k].push(uuid)))
+    );
   return ((Object.entries(r): any): ForceApplySuggestionByReason);
 });
 
