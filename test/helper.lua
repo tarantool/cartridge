@@ -1,8 +1,10 @@
 require('strict').on()
 
 local fio = require('fio')
+local checks = require('checks')
 local digest = require('digest')
 local helpers = table.copy(require('cartridge.test-helpers'))
+local utils = require('cartridge.utils')
 
 local errno = require('errno')
 local errno_list = getmetatable(errno).__index
@@ -152,6 +154,22 @@ end
 
 function helpers.random_cookie()
     return digest.urandom(6):hex()
+end
+
+function helpers.run_remotely(srv, fn)
+    checks('table', 'function')
+    utils.assert_upvalues(fn, {})
+
+    local ok, ret = srv.net_box:eval([[
+        local fn = loadstring(...)
+        return pcall(fn)
+    ]], {string.dump(fn)})
+
+    if not ok then
+        error(ret, 0)
+    end
+
+    return ret
 end
 
 return helpers
