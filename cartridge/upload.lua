@@ -7,7 +7,6 @@
 
 local log = require('log')
 local fio = require('fio')
-local fun = require('fun')
 local errno = require('errno')
 local fiber = require('fiber')
 local checks = require('checks')
@@ -32,18 +31,24 @@ vars:new('inbox', {})
 -- before previous stages finish.
 vars:new('upload_fibers', {})
 
-vars:new('options', {
-    upload_prefix = '/tmp',
-    netbox_call_timeout = 1,
-    transmission_timeout = 30,
-})
+-- Temporary directory used for saving files during upload.
+vars:new('upload_prefix', '/tmp')
 
-vars:new('get_upload_path', function(upload_id)
+local function set_upload_prefix(prefix)
+    vars.upload_prefix = prefix
+end
+
+local function get_upload_prefix()
+    return vars.upload_prefix
+end
+
+local function get_upload_path(upload_id)
+    checks('string')
     return fio.pathjoin(
-        vars.options.upload_prefix,
+        vars.upload_prefix,
         'cartridge-upload.' .. upload_id
     )
-end)
+end
 
 -- The upload starts by creating a shared resource - a directory named
 -- after the `upload_id`. The instances who can create it before
@@ -54,7 +59,7 @@ local function upload_begin(upload_id)
 
     vars.upload_fibers[upload_id] = fiber.self()
 
-    local upload_path = vars.get_upload_path(upload_id)
+    local upload_path = get_upload_path(upload_id)
     local ok, err = utils.mktree(fio.dirname(upload_path))
     fiber.testcancel()
     if ok == nil then
@@ -89,7 +94,7 @@ local function upload_transmit(upload_id, payload)
 
     vars.upload_fibers[upload_id] = fiber.self()
 
-    local upload_path = vars.get_upload_path(upload_id)
+    local upload_path = get_upload_path(upload_id)
     local payload_path = fio.pathjoin(upload_path, 'payload')
     local ok, err = utils.file_write(payload_path, payload)
     fiber.testcancel()
@@ -109,7 +114,7 @@ local function upload_finish(upload_id)
 
     vars.upload_fibers[upload_id] = fiber.self()
 
-    local upload_path = vars.get_upload_path(upload_id)
+    local upload_path = get_upload_path(upload_id)
     local payload_path = fio.pathjoin(upload_path, 'payload')
     local payload, err = utils.file_read(payload_path)
 
@@ -136,7 +141,7 @@ local function upload_cleanup(upload_id)
         vars.upload_fibers[upload_id] = nil
     end
 
-    local upload_path = vars.get_upload_path(upload_id)
+    local upload_path = get_upload_path(upload_id)
     local random_path = utils.randomize_path(upload_path)
 
     local ok = fio.rename(upload_path, random_path)
@@ -188,8 +193,12 @@ end
 -- @treturn[1] string `upload_id` (if at least one upload succeded)
 -- @treturn[2] nil
 -- @treturn[2] table Error description
-local function upload(data, uri_list)
-    checks('?', 'table')
+local function upload(data, opts)
+    checks('?', {
+        uri_list = 'table',
+        netbox_call_timeout = '?number',
+        transmission_timeout = '?number',
+    })
     local ok, payload = pcall(msgpack.encode, data)
     if not ok then
         return nil, UploadError:new(
@@ -205,12 +214,12 @@ local function upload(data, uri_list)
         local retmap, errmap = pool.map_call(
             '_G.__cartridge_upload_begin', {upload_id},
             {
-                uri_list = uri_list,
-                timeout = vars.options.netbox_call_timeout,
+                uri_list = opts.uri_list,
+                timeout = opts.netbox_call_timeout,
             }
         )
 
-        for _, uri in ipairs(uri_list) do
+        for _, uri in ipairs(opts.uri_list) do
             if retmap == nil or retmap[uri] == nil then
                 local err = errmap and errmap[uri]
                 if err == nil then
@@ -233,7 +242,7 @@ local function upload(data, uri_list)
             '_G.__cartridge_upload_transmit', {upload_id, payload},
             {
                 uri_list = transmitters_list,
-                timeout = vars.options.transmission_timeout,
+                timeout = opts.transmission_timeout,
             }
         )
 
@@ -257,12 +266,12 @@ local function upload(data, uri_list)
         local retmap, errmap = pool.map_call(
             '_G.__cartridge_upload_finish', {upload_id},
             {
-                uri_list = uri_list,
-                timeout = vars.options.netbox_call_timeout,
+                uri_list = opts.uri_list,
+                timeout = opts.netbox_call_timeout,
             }
         )
 
-        for _, uri in ipairs(uri_list) do
+        for _, uri in ipairs(opts.uri_list) do
             if retmap == nil or retmap[uri] == nil then
                 log.warn(
                     'Error finishing upload on %s:\n%s',
@@ -277,12 +286,12 @@ local function upload(data, uri_list)
         local retmap, errmap = pool.map_call(
             '_G.__cartridge_upload_cleanup', {upload_id},
             {
-                uri_list = uri_list,
-                timeout = vars.options.netbox_call_timeout,
+                uri_list = opts.uri_list,
+                timeout = opts.netbox_call_timeout,
             }
         )
 
-        for _, uri in ipairs(uri_list) do
+        for _, uri in ipairs(opts.uri_list) do
             if retmap == nil or retmap[uri] == nil then
                 log.warn(
                     'Error cleaning up %s:\n%s',
@@ -299,16 +308,6 @@ local function upload(data, uri_list)
     return upload_id
 end
 
-local function set_options(options)
-    checks({
-        upload_prefix = '?string',
-        netbox_call_timeout = '?number',
-        transmission_timeout = '?number',
-    })
-    vars.options = fun.chain(vars.options, options):tomap()
-    return true
-end
-
 _G.__cartridge_upload_begin = function(...) return errors.pcall('E', upload_begin, ...) end
 _G.__cartridge_upload_transmit = function(...) return errors.pcall('E', upload_transmit, ...) end
 _G.__cartridge_upload_finish = function(...) return errors.pcall('E', upload_finish, ...) end
@@ -317,5 +316,7 @@ _G.__cartridge_upload_cleanup = function(...) return errors.pcall('E', upload_cl
 return {
     inbox = vars.inbox,
     upload = upload,
-    set_options = set_options,
+    get_upload_path = get_upload_path,
+    get_upload_prefix = get_upload_prefix,
+    set_upload_prefix = set_upload_prefix,
 }

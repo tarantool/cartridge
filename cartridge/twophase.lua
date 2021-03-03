@@ -37,7 +37,9 @@ vars:new('prepared_config', nil)
 vars:new('on_patch_triggers', {})
 
 vars:new('options', {
-    netbox_call_timeout = 5,
+    netbox_call_timeout = 1,
+    upload_config_timeout = 30,
+    apply_config_timeout = 10,
 })
 
 --- Two-phase commit - preparation stage.
@@ -394,10 +396,12 @@ local function _clusterwide(patch)
     do
         log.warn('(2PC) Upload stage...')
 
-        local upload_id, err = upload.upload(
-            clusterwide_config_new:get_plaintext(),
-            uri_list
-        )
+        local data = clusterwide_config_new:get_plaintext()
+        local upload_id, err = upload.upload(data, {
+            uri_list = uri_list,
+            netbox_call_timeout = vars.options.netbox_call_timeout,
+            transmission_timeout = vars.options.upload_config_timeout,
+        })
         if not upload_id then
             _2pc_error = err
             goto finish
@@ -445,7 +449,7 @@ local function _clusterwide(patch)
             '_G.__cartridge_clusterwide_config_commit_2pc', nil,
             {
                 uri_list = uri_list,
-                timeout = vars.options.netbox_call_timeout,
+                timeout = vars.options.apply_config_timeout,
             }
         )
 
@@ -568,7 +572,7 @@ local function _force_reapply(uuids)
             {clusterwide_config:get_plaintext()},
             {
                 uri_list = uri_list,
-                timeout = vars.options.netbox_call_timeout,
+                timeout = vars.options.apply_config_timeout,
             }
         )
 

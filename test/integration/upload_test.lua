@@ -117,7 +117,8 @@ end
 
 function g.test_finish_failure()
     g.s1.net_box:eval([[
-        package.loaded['cartridge.upload'].set_options({netbox_call_timeout = 0.1})
+        local twophase_vars = require('cartridge.vars').new('cartridge.twophase')
+        twophase_vars.options.netbox_call_timeout = 0.1
         _G.upload_finish_original = _G.__cartridge_upload_finish
         _G.__cartridge_upload_finish = function()
             require('fiber').sleep(0.3)
@@ -153,7 +154,8 @@ function g.test_finish_failure()
 
     -- Revert all hacks
     g.s1.net_box:eval([[
-        package.loaded['cartridge.upload'].set_options({netbox_call_timeout = 1})
+        local twophase_vars = require('cartridge.vars').new('cartridge.twophase')
+        twophase_vars.options.netbox_call_timeout = 0.1
         _G.__cartridge_upload_finish = _G.upload_finish_original
     ]])
 end

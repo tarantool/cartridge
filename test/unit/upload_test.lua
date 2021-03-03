@@ -5,17 +5,9 @@ local fio = require('fio')
 local errno = require('errno')
 local msgpack = require('msgpack')
 
-local utils
-local upload
-local upload_vars
-local log_warn_original
-
-g.before_all(function()
-    utils = require('cartridge.utils')
-    upload = require('cartridge.upload')
-    upload_vars = require('cartridge.vars').new('cartridge.upload')
-    log_warn_original = package.loaded.log.warn
-end)
+local utils = require('cartridge.utils')
+local upload = require('cartridge.upload')
+local log_warn_original = package.loaded.log.warn
 
 g.before_each(function()
     g.datadir = fio.tempdir()
@@ -38,17 +30,17 @@ end)
 
 function g.test_begin()
     local prefix = g.datadir
-    upload.set_options({upload_prefix = prefix})
+    upload.set_upload_prefix(prefix)
     t.assert_equals(_G.__cartridge_upload_begin('1'), true)
     t.assert_equals(_G.__cartridge_upload_begin('1'), false)
 
     -- Upload can create a prefix if it doesn't exist
     local prefix = g.datadir .. '/subdir'
-    upload.set_options({upload_prefix = prefix})
+    upload.set_upload_prefix(prefix)
     t.assert_equals(_G.__cartridge_upload_begin('2'), true)
 
     local prefix = g.datadir .. '/not-a-dir'
-    upload.set_options({upload_prefix = prefix})
+    upload.set_upload_prefix(prefix)
     utils.file_write(prefix, '')
     local ok, err = _G.__cartridge_upload_begin('3')
     t.assert_equals(ok, nil)
@@ -61,15 +53,15 @@ function g.test_begin()
     })
 
     local prefix = g.datadir
-    upload.set_options({upload_prefix = prefix})
-    utils.file_write(upload_vars.get_upload_path('4'), '')
+    upload.set_upload_prefix(prefix)
+    utils.file_write(upload.get_upload_path('4'), '')
     local ok, err = _G.__cartridge_upload_begin('4')
     t.assert_equals(ok, nil)
     t.assert_covers(err, {
         class_name = 'UploadError',
         err = string.format(
             'Error creating directory %q: %s',
-            upload_vars.get_upload_path('4'),
+            upload.get_upload_path('4'),
             errno.strerror(errno.EEXIST)
         )
     })
@@ -77,7 +69,7 @@ end
 
 function g.test_transmit()
     local prefix = g.datadir
-    upload.set_options({upload_prefix = prefix})
+    upload.set_upload_prefix(prefix)
 
     local ok, err = _G.__cartridge_upload_transmit('upload_id', 'data')
     t.assert_equals(ok, nil)
@@ -85,7 +77,7 @@ function g.test_transmit()
         class_name = 'OpenFileError',
         err = string.format(
             '%s/payload: %s',
-            upload_vars.get_upload_path('upload_id'),
+            upload.get_upload_path('upload_id'),
             errno.strerror(errno.ENOENT)
         )
     })
@@ -97,7 +89,7 @@ end
 
 function g.test_finish()
     local prefix = g.datadir
-    upload.set_options({upload_prefix = prefix})
+    upload.set_upload_prefix(prefix)
 
     local ok, err = _G.__cartridge_upload_finish('upload_id')
     t.assert_equals(ok, nil)
@@ -105,7 +97,7 @@ function g.test_finish()
         class_name = 'OpenFileError',
         err = string.format(
             '%s/payload: %s',
-            upload_vars.get_upload_path('upload_id'),
+            upload.get_upload_path('upload_id'),
             errno.strerror(errno.ENOENT)
         )
     })
@@ -130,12 +122,12 @@ end
 
 function g.test_cleanup()
     local prefix = g.datadir .. '/cleanup_failure'
-    upload.set_options({upload_prefix = prefix})
+    upload.set_upload_prefix(prefix)
 
     _G.__cartridge_upload_begin('upload_id')
     _G.__cartridge_upload_transmit('upload_id', '')
 
-    local upload_path = upload_vars.get_upload_path('upload_id')
+    local upload_path = upload.get_upload_path('upload_id')
     local payload_path = fio.pathjoin(upload_path, 'payload')
     t.assert(fio.path.exists(payload_path))
 
@@ -172,14 +164,14 @@ function g.test_cleanup()
 end
 
 function g.test_upload()
-    local ok, err = upload.upload(function() end, {})
+    local ok, err = upload.upload(function() end, {uri_list = {}})
     t.assert_equals(ok, nil)
     t.assert_covers(err, {
         class_name = 'UploadError',
         err = "Error serializing msgpack: unsupported Lua type 'function'",
     })
 
-    local ok, err = upload.upload(box.NULL, {})
+    local ok, err = upload.upload(box.NULL, {uri_list = {}})
     t.assert_not(err)
     t.assert(ok)
 end

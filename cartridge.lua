@@ -670,7 +670,7 @@ local function cfg(opts, box_opts)
         end
 
         opts.upload_prefix = path
-        upload.set_options({upload_prefix = path})
+        upload.set_upload_prefix(path)
     end
 
     -- Start console sock
