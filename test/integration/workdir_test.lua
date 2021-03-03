@@ -56,7 +56,7 @@ function g.test_abspath()
     local workdir = g.cluster.main_server.workdir
     t.assert_items_equals(
         fio.listdir(g.datadir),
-        {'wal', 'memtx', 'vinyl', fio.basename(workdir)}
+        {'wal', 'memtx', 'vinyl', fio.basename(workdir), 'upload'}
     )
     t.assert_items_equals(
         fio.listdir(workdir),
@@ -117,7 +117,7 @@ function g.test_chdir()
     local workdir = g.cluster.main_server.workdir
     t.assert_items_equals(
         fio.listdir(g.datadir),
-        {'cd', 'wal', 'memtx', fio.basename(workdir)}
+        {'cd', 'wal', 'memtx', fio.basename(workdir), 'upload'}
     )
     t.assert_items_equals(
         fio.listdir(workdir),
