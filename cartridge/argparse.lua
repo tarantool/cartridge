@@ -83,6 +83,7 @@ local cluster_opts = {
     alias = 'string', -- **string**
     workdir = 'string', -- **string**
     http_port = 'number', -- **number**
+    http_host = 'string', -- **string**
     http_enabled = 'boolean', -- **boolean**
     webui_enabled = 'boolean', -- **boolean**
     advertise_uri = 'string', -- **string**

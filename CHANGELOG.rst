@@ -25,6 +25,8 @@ Added
 - New ``cartridge.cfg`` option ``webui_enabled`` (default: true). Otherwise,
   HTTP server remains operable (and GraphQL too), but serves user-defined roles
   API only.
+- New ``cartridge.cfg`` option ``http_host`` (default: 0.0.0.0). It is used
+  to specify the host on which administrative UI and API will be opened.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed

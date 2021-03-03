@@ -8,7 +8,6 @@ g.server = t.Server:new({
     command = helpers.entrypoint('srv_empty'),
     workdir = fio.tempdir(),
     net_box_port = 13300,
-    http_port = 8082,
     net_box_credentials = {user = 'admin', password = ''},
 })
 
@@ -144,6 +143,57 @@ g.test_advertise_uri = function()
             class_name = 'CartridgeCfgError',
             err = 'Can not ping myself: ping was not sent',
         })
+    end)
+end
+
+-- http -----------------------------------------------------------------------
+-------------------------------------------------------------------------------
+
+
+g.test_http = function()
+    helpers.run_remotely(g.server, function()
+        local t = require('luatest')
+        local errno = require('errno')
+
+        local ok, err = require('cartridge').cfg({
+            swim_broadcast = false,
+            advertise_uri = 'localhost:13301',
+            http_host = '255.255.255.255',
+            workdir = os.getenv('TARANTOOL_WORKDIR'),
+            roles = {},
+        })
+
+        t.assert_equals(ok, nil)
+        t.assert_covers(err, {class_name = 'HttpInitError'})
+        t.assert_str_matches(err.err, '.+: ' ..
+            "Can't create tcp_server: " ..
+                errno.strerror(assert(errno.EINVAL))
+        )
+    end)
+
+    helpers.run_remotely(g.server, function()
+        local t = require('luatest')
+        local errno = require('errno')
+
+        local _sock = require('socket')('AF_INET', 'SOCK_STREAM', 'tcp')
+        _sock:bind('0.0.0.0', 18080)
+
+        local ok, err = require('cartridge').cfg({
+            swim_broadcast = false,
+            advertise_uri = 'localhost:13301',
+            http_port = 18080,
+            workdir = os.getenv('TARANTOOL_WORKDIR'),
+            roles = {},
+        })
+
+        t.assert_equals(ok, nil)
+        t.assert_covers(err, {class_name = 'HttpInitError'})
+        t.assert_str_matches(err.err, '.+: ' ..
+            "Can't create tcp_server: " ..
+                errno.strerror(assert(errno.EADDRINUSE))
+        )
+
+        _sock:close()
     end)
 end
 
@@ -372,6 +422,7 @@ g.test_positive = function()
         local opts = {
             workdir = os.getenv('TARANTOOL_WORKDIR'),
             advertise_uri = 'unused:0',
+            http_host = '127.0.0.1',
             http_enabled = true,
             webui_enabled = false,
             swim_broadcast = false,
@@ -386,6 +437,16 @@ g.test_positive = function()
 
         local service = require('cartridge.service-registry')
         local httpd = service.get('httpd')
+        t.assert_equals(
+            setmetatable(httpd.tcp_server:name(), nil),
+            {
+                protocol = "tcp",
+                family = "AF_INET",
+                type = "SOCK_STREAM",
+                host = "127.0.0.1",
+                port = 8081,
+            }
+        )
         t.assert_items_equals(
             fun.map(function(r) return r.path end, httpd.routes):totable(),
             {"/login", "/logout", "/admin/api"}
