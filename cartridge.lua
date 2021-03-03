@@ -190,8 +190,8 @@ end
 --
 -- @tparam ?string opts.http_host
 --  host to open administrative UI and API on
---  (**Added** in v2.4.0-3?
---  default: 0.0.0.0, overridden by
+--  (**Added** in v2.4.0-42
+--  default: "0.0.0.0", overridden by
 --  env `TARANTOOL_HTTP_HOST`,
 --  args `--http-host`)
 --
