@@ -36,12 +36,8 @@ vars:new('locks', {})
 vars:new('prepared_config', nil)
 vars:new('on_patch_triggers', {})
 
---- Internal module params.
--- (**Added** in v2.4.0-32)
--- @table _options
--- @tfield number NETBOX_CALL_TIMEOUT (default: 5)
 vars:new('options', {
-    NETBOX_CALL_TIMEOUT = 5,
+    netbox_call_timeout = 5,
 })
 
 --- Two-phase commit - preparation stage.
@@ -60,7 +56,7 @@ local function prepare_2pc(upload_id)
     local data
     if type(upload_id) == 'table' then
         -- Preserve compatibility with older versions.
-        -- Until cartridge 2.4.0-32 it was `prepare_2pc(data)`.
+        -- Until cartridge 2.4.0-43 it was `prepare_2pc(data)`.
         data = upload_id
     else
         data = upload.inbox[upload_id]
@@ -413,7 +409,7 @@ local function _clusterwide(patch)
             '_G.__cartridge_clusterwide_config_prepare_2pc', {upload_id},
             {
                 uri_list = uri_list,
-                timeout = vars.options.NETBOX_CALL_TIMEOUT,
+                timeout = vars.options.netbox_call_timeout,
             }
         )
 
@@ -449,7 +445,7 @@ local function _clusterwide(patch)
             '_G.__cartridge_clusterwide_config_commit_2pc', nil,
             {
                 uri_list = uri_list,
-                timeout = vars.options.NETBOX_CALL_TIMEOUT,
+                timeout = vars.options.netbox_call_timeout,
             }
         )
 
@@ -477,7 +473,7 @@ local function _clusterwide(patch)
             '_G.__cartridge_clusterwide_config_abort_2pc', nil,
             {
                 uri_list = abortion_list,
-                timeout = vars.options.NETBOX_CALL_TIMEOUT,
+                timeout = vars.options.netbox_call_timeout,
             }
         )
 
@@ -572,7 +568,7 @@ local function _force_reapply(uuids)
             {clusterwide_config:get_plaintext()},
             {
                 uri_list = uri_list,
-                timeout = vars.options.NETBOX_CALL_TIMEOUT,
+                timeout = vars.options.netbox_call_timeout,
             }
         )
 
@@ -727,7 +723,6 @@ _G.__cluster_confapplier_commit_2pc = function(...) return errors.pcall('E', com
 _G.__cluster_confapplier_abort_2pc = function(...) return errors.pcall('E', abort_2pc, ...) end
 
 return {
-    _options = vars.options,
     on_patch = on_patch,
     get_schema = get_schema,
     set_schema = set_schema,

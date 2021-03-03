@@ -1,6 +1,6 @@
 --- Spread the data across instances in a network-efficient manner.
 --
--- (**Added** in v2.4.0-32)
+-- (**Added** in v2.4.0-43)
 --
 -- @module cartridge.upload
 -- @local
@@ -26,20 +26,17 @@ local UploadError = errors.new_class('UploadError')
 -- @table inbox
 vars:new('inbox', {})
 
---- Internal module params.
--- @table options
-local default_options = {
-    upload_prefix = '/tmp', -- string: *default*: "/tmp".
-    netbox_call_timeout = 1, -- number: *default*: 1.
-    transmission_timeout = 30, -- number: *default*: 30.
-}
-vars:new('options', default_options)
-
 -- All four functions begin / transmit / finish / cleanup do yield.
 -- Since they are called over netbox (each in an individual fiber),
 -- there may be a situation (usually abnormal), when cleanup starts
 -- before previous stages finish.
 vars:new('upload_fibers', {})
+
+vars:new('options', {
+    upload_prefix = '/tmp',
+    netbox_call_timeout = 1,
+    transmission_timeout = 30,
+})
 
 vars:new('get_upload_path', function(upload_id)
     return fio.pathjoin(

@@ -238,7 +238,7 @@ end
 --   Temporary directory used for saving files during clusterwide
 --   config upload. If relative path is specified, it's evaluated
 --   relative to the `workdir`.
---   (**Added** in v2.4.0-36,
+--   (**Added** in v2.4.0-43,
 --   default: `/tmp`, overridden by
 --   env `TARANTOOL_UPLOAD_PREFIX`,
 --   args `--upload-prefix`)
