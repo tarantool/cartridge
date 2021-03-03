@@ -1,5 +1,5 @@
 # source: http://localhost:8081/admin/api
-# timestamp: Mon Feb 01 2021 19:13:04 GMT+0300 (Moscow Standard Time)
+# timestamp: Tue Mar 02 2021 20:36:01 GMT+0300 (Moscow Standard Time)
 
 """Cluster management"""
 type Apicluster {
@@ -445,7 +445,7 @@ type ServerInfoReplication {
   """
   Statistics for all instances in the replica set in regard to the current instance
   """
-  replication_info: [ReplicaStatus!]
+  replication_info: [ReplicaStatus]
 
   """The vector clock of replication log sequence numbers"""
   vclock: [Long]

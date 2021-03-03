@@ -195,7 +195,7 @@ local boxinfo_schema = {
                             ' replication log sequence numbers',
                     },
                     replication_info = {
-                        kind = gql_types.list(gql_replica_status.nonNull),
+                        kind = gql_types.list(gql_replica_status),
                         description =
                             'Statistics for all instances' ..
                             ' in the replica set in regard to the' ..

@@ -100,8 +100,9 @@ local function get_info(uri)
             }
         }
 
-        for i, replica in pairs(box_info.replication) do
-            ret.replication.replication_info[i] = {
+        for i = 1, table.maxn(box_info.replication) do
+            local replica = box_info.replication[i]
+            ret.replication.replication_info[i] = replica and {
                 id = replica.id,
                 lsn = replica.lsn,
                 uuid = replica.uuid,
@@ -112,7 +113,7 @@ local function get_info(uri)
                 upstream_lag = replica.upstream and replica.upstream.lag,
                 downstream_status = replica.downstream and replica.downstream.status,
                 downstream_message = replica.downstream and replica.downstream.message,
-            }
+            } or box.NULL
         end
 
         return ret
