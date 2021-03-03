@@ -6,11 +6,13 @@ import { Button, Text } from '@tarantool.io/ui-kit';
 import {
   $panelsVisibility,
   advertiseURIDetailsClick,
-  disableServersDetailsClick
+  disableServersDetailsClick,
+  forceApplyConfDetailsClick
 } from 'src/store/effector/clusterSuggestions';
 import { Panel } from './Panel';
 import { AdvertiseURISuggestionModal } from './AdvertiseURISuggestionModal';
 import DisableServersSuggestionModal from './DisableServersSuggestionModal';
+import ForceApplySuggestionModal from './ForceApplySuggestionModal';
 
 const styles = {
   wrap: css`
@@ -28,7 +30,7 @@ const styles = {
 };
 
 export const ClusterSuggestionsPanel = () => {
-  const { advertiseURI, disableServers } = useStore($panelsVisibility);
+  const { advertiseURI, disableServers, forceApply } = useStore($panelsVisibility);
 
   return (
     <div className={styles.wrap}>
@@ -59,6 +61,21 @@ export const ClusterSuggestionsPanel = () => {
             </div>
             <Button text='Review' onClick={disableServersDetailsClick} intent='primary' size='l' />
             <DisableServersSuggestionModal />
+          </Panel>
+        )
+        : null}
+      {forceApply
+        ? (
+          <Panel className={cx(styles.panel, 'meta-test__ClusterSuggestionsPanel')}>
+            <div>
+              <Text className={styles.heading} variant='h5'>Force apply configuration</Text>
+              <Text>
+                Some instances are misconfigured.
+                You can heal it by reapplying configuration forcefully.
+              </Text>
+            </div>
+            <Button text='Review' onClick={forceApplyConfDetailsClick} intent='primary' size='l' />
+            <ForceApplySuggestionModal />
           </Panel>
         )
         : null}

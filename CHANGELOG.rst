@@ -58,6 +58,8 @@ Enhanced is WebUI
 
 - Show a suggestion to disable broken instances.
 
+- Show a suggestion to force reapply clusterwide configuration.
+
 - Hide bootstrap button in vshardless cluster.
 
 -------------------------------------------------------------------------------
