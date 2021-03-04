@@ -74,13 +74,7 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     ////////////////////////////////////////////////////////////////////
     cy.log('Bootstrap vshard on unconfigured cluster');
     ////////////////////////////////////////////////////////////////////
-    cy.get('.meta-test__BootstrapButton').click();
-    cy.get('.meta-test__BootstrapPanel__vshard-router_disabled').should('exist');
-    cy.get('.meta-test__BootstrapPanel__vshard-storage_disabled').should('exist');
-    cy.get('.meta-test__BootstrapPanel').contains('One role from vshard-router or myrole enabled');
-    cy.get('.meta-test__BootstrapPanel').contains('One role from vshard-storage or myrole enabled');
-    cy.get('.meta-test__BootstrapPanel use:first').click();
-    cy.get('.meta-test__BootstrapPanel').should('not.exist');
+    cy.get('.meta-test__BootstrapButton').should('not.exist');
 
     ////////////////////////////////////////////////////////////////////
     cy.log('Select all roles');

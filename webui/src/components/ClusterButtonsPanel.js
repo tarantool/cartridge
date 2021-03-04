@@ -54,7 +54,8 @@ const mapStateToProps = (state: State) => {
 
   return {
     showFailover: !!(clusterSelf && clusterSelf.configured),
-    showBootstrap: isVshardAvailable(state) && !isBootstrapped(state),
+    showBootstrap: !!(clusterSelf && clusterSelf.configured)
+      && isVshardAvailable(state) && !isBootstrapped(state),
     showToggleAuth: !implements_add_user && !implements_list_users && implements_check_password
   }
 };
