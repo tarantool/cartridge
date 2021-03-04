@@ -31,7 +31,7 @@ jobs:
         id: cache-misc-venv
         with:
           path: ./venv
-          key: cache-misc-venv-${{ matrix.runs-on }}-01
+          key: cache-misc-venv-${{ matrix.runs-on }}-02
       -
         run: |
           python -m venv ./venv && . ./venv/bin/activate
@@ -49,7 +49,8 @@ jobs:
         id: cache-misc-rocks
         with:
           path: .rocks/
-          key: cache-misc-rocks-${{ matrix.runs-on }}
+          key: cache-misc-rocks-${{ matrix.runs-on }}-${{ hashFiles('cartridge-scm-1.rockspec') }}
+          restore-keys: cache-misc-rocks-${{ matrix.runs-on }}
       -
         run: tarantoolctl rocks install luacheck
         if: steps.cache-misc-rocks.outputs.cache-hit != 'true'
