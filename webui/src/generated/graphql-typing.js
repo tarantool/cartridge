@@ -1209,6 +1209,19 @@ export type Disable_ServersMutation = ({
   }) |}
 });
 
+export type Config_Force_ReapplyMutationVariables = {
+  uuids?: ?Array<$ElementType<Scalars, 'String'>>,
+};
+
+
+export type Config_Force_ReapplyMutation = ({
+    ...{ __typename?: 'Mutation' },
+  ...{| cluster?: ?({
+      ...{ __typename?: 'MutationApicluster' },
+    ...$Pick<MutationApicluster, {| config_force_reapply: * |}>
+  }) |}
+});
+
 export type ConfigFilesQueryVariables = {};
 
 
