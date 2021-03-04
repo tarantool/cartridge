@@ -61,6 +61,8 @@ local function upload_begin(upload_id)
 
     local upload_path = get_upload_path(upload_id)
     local ok, err = utils.mktree(fio.dirname(upload_path))
+    -- If the fiber is cancelled, the `upload_fibers` is cleaned up
+    -- during the `upload_cleanup` stage (which in fact cancelled it).
     fiber.testcancel()
     if ok == nil then
         vars.upload_fibers[upload_id] = nil
@@ -96,6 +98,8 @@ local function upload_transmit(upload_id, payload)
     local upload_path = get_upload_path(upload_id)
     local payload_path = fio.pathjoin(upload_path, 'payload')
     local ok, err = utils.file_write(payload_path, payload)
+    -- If the fiber is cancelled, the `upload_fibers` is cleaned up
+    -- during the `upload_cleanup` stage (which in fact cancelled it).
     fiber.testcancel()
     if not ok then
         vars.upload_fibers[upload_id] = nil
