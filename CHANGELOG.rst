@@ -62,7 +62,8 @@ Enhanced is WebUI
 
 - Show a suggestion to force reapply clusterwide configuration.
 
-- Hide bootstrap button in vshardless cluster.
+- Hide bootstrap button when it's not necessary
+  (e.g. before the cluster is bootstrapped, and in vshardless cluster too).
 
 -------------------------------------------------------------------------------
 [2.4.0] - 2020-12-29
