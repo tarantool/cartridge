@@ -346,7 +346,7 @@ local function _clusterwide(patch)
     local topology_new = clusterwide_config_new:get_readonly('topology')
     if topology_new == nil then
         return nil, PatchClusterwideError:new(
-            "Topology not specified, seems that cluster isn't bootstrapped"
+            "Current instance isn't bootstrapped yet"
         )
     end
 
@@ -631,7 +631,7 @@ end
 local function get_schema()
     if confapplier.get_readonly() == nil then
         return nil, GetSchemaError:new(
-            "Cluster isn't bootstrapped yet"
+            "Current instance isn't bootstrapped yet"
         )
     end
     local schema_yml = confapplier.get_readonly('schema.yml')

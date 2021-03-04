@@ -78,7 +78,9 @@ local function download_config_handler(req)
 
     local clusterwide_config = confapplier.get_active_config()
     if clusterwide_config == nil then
-        local err = DownloadConfigError:new("Cluster isn't bootstrapped yet")
+        local err = DownloadConfigError:new(
+            "Current instance isn't bootstrapped yet"
+        )
         return http_finalize_error(409, err)
     end
 
@@ -139,7 +141,9 @@ local function upload_config_handler(req)
     end
 
     if confapplier.get_readonly() == nil then
-        local err = UploadConfigError:new("Cluster isn't bootstrapped yet")
+        local err = UploadConfigError:new(
+            "Current instance isn't bootstrapped yet"
+        )
         return http_finalize_error(409, err)
     end
 
@@ -192,7 +196,9 @@ local function get_sections(_, args)
     checks('?', {sections = '?table'})
     local clusterwide_config = confapplier.get_active_config()
     if clusterwide_config == nil then
-        local err = DownloadConfigError:new("Cluster isn't bootstrapped yet")
+        local err = DownloadConfigError:new(
+            "Current instance isn't bootstrapped yet"
+        )
         return nil, err
     end
 
@@ -213,7 +219,9 @@ end
 local function set_sections(_, args)
     checks('?', {sections = '?table'})
     if confapplier.get_readonly() == nil then
-        local err = UploadConfigError:new("Cluster isn't bootstrapped yet")
+        local err = UploadConfigError:new(
+            "Current instance isn't bootstrapped yet"
+        )
         return nil, err
     end
 
@@ -247,7 +255,9 @@ end
 local function force_reapply(_, args)
     checks('?', {uuids = '?table'})
     if confapplier.get_readonly() == nil then
-        local err = ForceReapplyError:new("Cluster isn't bootstrapped yet")
+        local err = ForceReapplyError:new(
+            "Current instance isn't bootstrapped yet"
+        )
         return nil, err
     end
 
