@@ -36,7 +36,7 @@ local gql_type_check_result = gql_types.object({
 local function graphql_get_schema()
     if confapplier.get_readonly() == nil then
         return nil, GetSchemaError:new(
-            "Cluster isn't bootstrapped yet"
+            "Current instance isn't bootstrapped yet"
         )
     end
     local schema_yml = confapplier.get_readonly(_section_name)
@@ -52,7 +52,7 @@ end
 local function graphql_set_schema(_, args)
     if confapplier.get_readonly() == nil then
         return nil, GetSchemaError:new(
-            "Cluster isn't bootstrapped yet"
+            "Current instance isn't bootstrapped yet"
         )
     end
     local patch = {[_section_name] = args.as_yaml}
@@ -68,7 +68,7 @@ local function graphql_check_schema(_, args)
     local topology_cfg = confapplier.get_readonly('topology')
     if topology_cfg == nil then
         return nil, CheckSchemaError:new(
-            "Cluster isn't bootstrapped yet"
+            "Current instance isn't bootstrapped yet"
         )
     end
 

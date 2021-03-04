@@ -101,7 +101,9 @@ local function set_params(opts)
 
     local topology_cfg = confapplier.get_deepcopy('topology')
     if topology_cfg == nil then
-        return nil, FailoverSetParamsError:new("Cluster isn't bootstrapped yet")
+        return nil, FailoverSetParamsError:new(
+            "Current instance isn't bootstrapped yet"
+        )
     end
 
     if opts == nil then

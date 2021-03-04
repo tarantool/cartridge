@@ -36,7 +36,7 @@ describe('Uninitialized', () => {
     cy.get('button[type="button"]:contains("Reload")').click();
     cy.get('body').contains('Are you sure you want to reload all the files?');
     cy.get('button[type="button"]:contains("Ok")').click();
-    cy.get('span:contains("Cluster isn\'t bootstrapped yet")').click();
+    cy.get('span:contains("Current instance isn\'t bootstrapped yet")').click();
 
     // create file
     cy.get('.meta-test__addFileBtn').click();
@@ -45,7 +45,7 @@ describe('Uninitialized', () => {
 
     // file upload should fail too
     cy.get('button[type="button"]:contains("Apply")').click();
-    cy.get('span:contains("Cluster isn\'t bootstrapped yet")').click();
+    cy.get('span:contains("Current instance isn\'t bootstrapped yet")').click();
 
     ////////////////////////////////////////////////////////////////////
     cy.log('Schema without bootstrap');
@@ -53,13 +53,13 @@ describe('Uninitialized', () => {
     cy.get('a[href="/admin/cluster/schema"]').click();
 
     cy.get('button[type="button"]:contains("Validate")').click();
-    cy.get('#root').contains('Cluster isn\'t bootstrapped yet');
+    cy.get('#root').contains('Current instance isn\'t bootstrapped yet');
 
     cy.get('button[type="button"]:contains("Reload")').click();
     cy.get('.monaco-editor textarea').should('have.value', '');
 
     cy.get('button[type="button"]:contains("Apply")').click();
-    cy.get('#root').contains('Cluster isn\'t bootstrapped yet');
+    cy.get('#root').contains('Current instance isn\'t bootstrapped yet');
 
     ////////////////////////////////////////////////////////////////////
     cy.log('Try to add user without bootstrap');
@@ -73,7 +73,7 @@ describe('Uninitialized', () => {
       .type('111');
     cy.get('.meta-test__UserAddForm button[type="submit"]').contains('Add').click();
     cy.get('.meta-test__UserAddForm')
-      .contains('Topology not specified, seems that cluster isn\'t bootstrapped');
+      .contains('Current instance isn\'t bootstrapped yet');
     cy.get('.meta-test__UserAddForm button[type="button"]').contains('Cancel').click();
     cy.contains('unitialisedUser').should('not.exist');
   });

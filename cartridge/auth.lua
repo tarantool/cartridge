@@ -116,7 +116,7 @@ local function set_params(opts)
 
     if confapplier.get_readonly() == nil then
         return nil, errors.new('AuthSetParamsError',
-            "Cluster isn't bootstrapped yet"
+            "Current instance isn't bootstrapped yet"
         )
     end
 

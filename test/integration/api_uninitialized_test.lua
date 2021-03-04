@@ -130,7 +130,7 @@ function g.test_uninitialized()
     t.assert_equals(resp['data']['cluster']['failover'], false)
 
     t.assert_error_msg_contains(
-        "Cluster isn't bootstrapped yet",
+        "Current instance isn't bootstrapped yet",
         function()
             return g.server:graphql({
                 query = [[
@@ -143,7 +143,7 @@ function g.test_uninitialized()
     )
 
     t.assert_error_msg_contains(
-        "Cluster isn't bootstrapped yet",
+        "Current instance isn't bootstrapped yet",
         function()
             return g.server:graphql({
                 query = [[
@@ -153,7 +153,7 @@ function g.test_uninitialized()
         end
     )
     t.assert_error_msg_contains(
-        "Cluster isn't bootstrapped yet",
+        "Current instance isn't bootstrapped yet",
         function()
             return g.server:graphql({
                 query = [[
@@ -165,7 +165,7 @@ function g.test_uninitialized()
 
 
     t.assert_error_msg_contains(
-        "Cluster isn't bootstrapped yet",
+        "Current instance isn't bootstrapped yet",
         function()
             return g.server:graphql({
                 query = [[
@@ -175,7 +175,7 @@ function g.test_uninitialized()
         end
     )
     t.assert_error_msg_contains(
-        "Cluster isn't bootstrapped yet",
+        "Current instance isn't bootstrapped yet",
         function()
             return g.server:graphql({
                 query = [[

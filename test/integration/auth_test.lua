@@ -478,8 +478,7 @@ function g.test_uninitialized()
     check_200(g.server, {headers = {cookie = 'lsid=' .. lsid}})
 
     t.assert_error_msg_contains(
-        "PatchClusterwideError: Topology not specified, " ..
-        "seems that cluster isn't bootstrapped",
+        "PatchClusterwideError: Current instance isn't bootstrapped yet",
         _add_user, g.server, 'new_admin', 'password'
     )
 
