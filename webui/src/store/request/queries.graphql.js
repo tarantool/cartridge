@@ -566,6 +566,14 @@ export const disableServersMutation = gql`
   }
 `;
 
+export const configForceReapplyMutation = gql`
+  mutation config_force_reapply ($uuids: [String!]) {
+    cluster {
+      config_force_reapply(uuids: $uuids)
+    }
+  }
+`;
+
 export const getFilesQuery = gql`
   query configFiles {
     cluster {

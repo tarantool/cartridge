@@ -5,6 +5,7 @@ import { getClusterSelf } from 'src/store/request/app.requests';
 import {
   bootstrapMutation,
   changeFailoverMutation,
+  configForceReapplyMutation,
   disableServersMutation,
   editTopologyMutation,
   listQuery,
@@ -20,7 +21,11 @@ import type {
 
 const filterServerStat = response => {
   const serverStat
-    = response.serverStat.filter(stat => stat.uuid && stat.statistics && !Array.isArray(stat.statistics));
+    = response.serverStat.filter(
+      stat => stat.uuid
+        && stat.statistics
+        && !Array.isArray(stat.statistics)
+    );
   return {
     ...response,
     serverStat
@@ -226,4 +231,12 @@ export async function promoteFailoverLeader(params: FailoverApi) {
   return await graphql.mutate(promoteFailoverLeaderMutation, params);
 }
 
-export const disableServers = (uuids: Array<string>) => graphql.mutate(disableServersMutation, { uuids });
+export const disableServers = (uuids: Array<string>) => graphql.mutate(
+  disableServersMutation,
+  { uuids }
+);
+
+export const configForceReapply = (uuids: Array<string>) => graphql.mutate(
+  configForceReapplyMutation,
+  { uuids }
+);
