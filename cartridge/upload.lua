@@ -67,8 +67,7 @@ local function upload_begin(upload_id)
         return nil, err
     end
 
-    local ok = fio.mkdir(upload_path)
-    local _errno = errno()
+    local ok, _errno = fio.mkdir(upload_path), errno()
     fiber.testcancel()
 
     vars.upload_fibers[upload_id] = nil
@@ -144,8 +143,7 @@ local function upload_cleanup(upload_id)
     local upload_path = get_upload_path(upload_id)
     local random_path = utils.randomize_path(upload_path)
 
-    local ok = fio.rename(upload_path, random_path)
-    local _errno = errno()
+    local ok, _errno = fio.rename(upload_path, random_path), errno()
     if not ok then
         if not fio.path.is_dir(upload_path) then
             -- No such file, upload_path is already clean.
@@ -159,8 +157,7 @@ local function upload_cleanup(upload_id)
         end
     end
 
-    local ok = fio.rmtree(random_path)
-    local _errno = errno()
+    local ok, _errno = fio.rmtree(random_path), errno()
     if not ok then
         log.warn(
             "Error removing %s: %s",
