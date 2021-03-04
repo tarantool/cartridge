@@ -12,6 +12,7 @@ file = {
     "cartridge/rpc.lua",
     "cartridge/tar.lua",
     "cartridge/pool.lua",
+    "cartridge/upload.lua",
     "cartridge/confapplier.lua",
     "cartridge/test-helpers.lua",
     "cartridge/test-helpers/cluster.lua",

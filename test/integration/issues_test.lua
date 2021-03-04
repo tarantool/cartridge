@@ -173,7 +173,16 @@ function g.test_twophase_config_locked()
     t.assert_equals(helpers.list_cluster_issues(replica1), {})
 
     -- Make validate_config hang on replica2
-    replica2.process:kill('STOP')
+    replica2.net_box:eval([[
+        _G.inf_sleep = true
+        local prepare_2pc = _G.__cartridge_clusterwide_config_prepare_2pc
+        _G.__cartridge_clusterwide_config_prepare_2pc = function(...)
+            while _G.inf_sleep do
+                require('fiber').sleep(0.1)
+            end
+            return prepare_2pc(...)
+        end
+    ]])
 
     local future = master.net_box:call(
         'package.loaded.cartridge.config_patch_clusterwide',
@@ -201,7 +210,7 @@ function g.test_twophase_config_locked()
     }})
 
     t.assert_equals(future:is_ready(), false)
-    replica2.process:kill('CONT')
+    replica2.net_box:eval('_G.inf_sleep = nil')
     t.assert_equals(future:wait_result(), {true})
 
     t.helpers.retrying({}, function()

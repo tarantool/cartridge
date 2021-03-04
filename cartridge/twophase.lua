@@ -15,6 +15,7 @@ local checks = require('checks')
 local vars = require('cartridge.vars').new('cartridge.twophase')
 local pool = require('cartridge.pool')
 local utils = require('cartridge.utils')
+local upload = require('cartridge.upload')
 local topology = require('cartridge.topology')
 local confapplier = require('cartridge.confapplier')
 local ClusterwideConfig = require('cartridge.clusterwide-config')
@@ -35,6 +36,12 @@ vars:new('locks', {})
 vars:new('prepared_config', nil)
 vars:new('on_patch_triggers', {})
 
+vars:new('options', {
+    netbox_call_timeout = 1,
+    upload_config_timeout = 30,
+    apply_config_timeout = 10,
+})
+
 --- Two-phase commit - preparation stage.
 --
 -- Validate the configuration and acquire a lock setting local variable
@@ -43,11 +50,26 @@ vars:new('on_patch_triggers', {})
 --
 -- @function prepare_2pc
 -- @local
--- @tparam table data clusterwide config content
+-- @tparam string upload_id
 -- @treturn[1] boolean true
 -- @treturn[2] nil
 -- @treturn[2] table Error description
-local function prepare_2pc(data)
+local function prepare_2pc(upload_id)
+    local data
+    if type(upload_id) == 'table' then
+        -- Preserve compatibility with older versions.
+        -- Until cartridge 2.4.0-43 it was `prepare_2pc(data)`.
+        data = upload_id
+    else
+        data = upload.inbox[upload_id]
+        upload.inbox[upload_id] = nil
+        if not data then
+            return nil, Prepare2pcError:new(
+                'Upload not found, see earlier logs for the details'
+            )
+        end
+    end
+
     local clusterwide_config = ClusterwideConfig.new(data):lock()
 
     local ok, err = confapplier.validate_config(clusterwide_config)
@@ -372,12 +394,27 @@ local function _clusterwide(patch)
 
 ::prepare::
     do
+        log.warn('(2PC) Upload stage...')
+
+        local data = clusterwide_config_new:get_plaintext()
+        local upload_id, err = upload.upload(data, {
+            uri_list = uri_list,
+            netbox_call_timeout = vars.options.netbox_call_timeout,
+            transmission_timeout = vars.options.upload_config_timeout,
+        })
+        if not upload_id then
+            _2pc_error = err
+            goto finish
+        end
+
         log.warn('(2PC) Preparation stage...')
 
         local retmap, errmap = pool.map_call(
-            '_G.__cartridge_clusterwide_config_prepare_2pc',
-            {clusterwide_config_new:get_plaintext()},
-            {uri_list = uri_list, timeout = 5}
+            '_G.__cartridge_clusterwide_config_prepare_2pc', {upload_id},
+            {
+                uri_list = uri_list,
+                timeout = vars.options.netbox_call_timeout,
+            }
         )
 
         for _, uri in ipairs(uri_list) do
@@ -404,14 +441,16 @@ local function _clusterwide(patch)
         end
     end
 
-
 ::apply::
     do
         log.warn('(2PC) Commit stage...')
 
         local retmap, errmap = pool.map_call(
             '_G.__cartridge_clusterwide_config_commit_2pc', nil,
-            {uri_list = uri_list, timeout = 5}
+            {
+                uri_list = uri_list,
+                timeout = vars.options.apply_config_timeout,
+            }
         )
 
         for _, uri in ipairs(uri_list) do
@@ -436,7 +475,10 @@ local function _clusterwide(patch)
 
         local retmap, errmap = pool.map_call(
             '_G.__cartridge_clusterwide_config_abort_2pc', nil,
-            {uri_list = abortion_list, timeout = 5}
+            {
+                uri_list = abortion_list,
+                timeout = vars.options.netbox_call_timeout,
+            }
         )
 
         for _, uri in ipairs(abortion_list) do
@@ -528,7 +570,10 @@ local function _force_reapply(uuids)
         local retmap, errmap = pool.map_call(
             '_G.__cartridge_clusterwide_config_reapply',
             {clusterwide_config:get_plaintext()},
-            {uri_list = uri_list, timeout = 5}
+            {
+                uri_list = uri_list,
+                timeout = vars.options.apply_config_timeout,
+            }
         )
 
         for _, uri in ipairs(uri_list) do

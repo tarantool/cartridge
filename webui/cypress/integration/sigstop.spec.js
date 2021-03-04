@@ -52,7 +52,7 @@ describe('Checking for situations when a connection is lost using SIGSTOP', () =
     cy.get('.meta-test__ClusterIssuesButton').contains('Issues: 1');
     cy.get('.meta-test__ClusterIssuesButton').click();
     cy.get('.meta-test__ClusterIssuesModal')
-      .contains("warning: Replication from localhost:13302 (dummy-2) to localhost:13301 (dummy-1) is disconnected (timed out)");
+      .contains("warning: Replication from localhost:13302 (dummy-2) to localhost:13301 (dummy-1)");
     cy.get('.meta-test__ClusterIssuesModal button[type="button"]').click();
 
     //Check buckets
@@ -79,8 +79,6 @@ describe('Checking for situations when a connection is lost using SIGSTOP', () =
     //Cluster page: Try to add new zone
     openServerDetailsModal('dummy-2');
     tryToSubmitTestZone();
-    cy.get('.ZoneAddModal_error').find('span:contains(Two-phase commit is locked)', { timeout: 15000 });
-    cy.get('h2:contains(Add name of zone)').next().click();
     cy.get('.meta-test__ServerDetailsModal button:contains(Close)').click();
 
     //Cluster page: Check buckets
@@ -92,11 +90,7 @@ describe('Checking for situations when a connection is lost using SIGSTOP', () =
     cy.contains('dummy-2').closest('li').contains('healthy');
 
     //Cluster page: Check Issue
-    cy.get('.meta-test__ClusterIssuesButton').contains('Issues: 1');
-    cy.get('.meta-test__ClusterIssuesButton').click();
-    cy.get('.meta-test__ClusterIssuesModal')
-      .contains("warning: Configuration is prepared and locked on localhost:13302 (dummy-2)");
-    cy.get('.meta-test__ClusterIssuesModal button[type="button"]').click();
+    cy.get('.meta-test__ClusterIssuesButton').contains('Issues: 0');
   });
 
 });

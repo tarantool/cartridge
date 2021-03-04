@@ -29,6 +29,7 @@ local roles = require('cartridge.roles')
 local webui = require('cartridge.webui')
 local issues = require('cartridge.issues')
 local graphql = require('cartridge.graphql')
+local upload = require('cartridge.upload')
 local argparse = require('cartridge.argparse')
 local topology = require('cartridge.topology')
 local twophase = require('cartridge.twophase')
@@ -233,6 +234,15 @@ end
 --   Allow calling `cartridge.reload_roles`.
 --   (**Added** in v2.3.0-73, default: `false`)
 --
+-- @tparam ?string opts.upload_prefix
+--   Temporary directory used for saving files during clusterwide
+--   config upload. If relative path is specified, it's evaluated
+--   relative to the `workdir`.
+--   (**Added** in v2.4.0-43,
+--   default: `/tmp`, overridden by
+--   env `TARANTOOL_UPLOAD_PREFIX`,
+--   args `--upload-prefix`)
+--
 -- @tparam ?table box_opts
 --   tarantool extra box.cfg options (e.g. memtx_memory),
 --   that may require additional tuning
@@ -260,6 +270,7 @@ local function cfg(opts, box_opts)
         upgrade_schema = '?boolean',
         swim_broadcast = '?boolean',
         roles_reload_allowed = '?boolean',
+        upload_prefix = '?string',
     }, '?table')
 
     if opts.webui_blacklist ~= nil then
@@ -650,6 +661,17 @@ local function cfg(opts, box_opts)
     end
 
     issues.set_limits(issue_limits)
+
+    if opts.upload_prefix ~= nil then
+        local path = opts.upload_prefix
+        if not path:startswith('/') then
+            -- calc relative path
+            path = fio.pathjoin(opts.workdir, path)
+        end
+
+        opts.upload_prefix = path
+        upload.set_upload_prefix(path)
+    end
 
     -- Start console sock
     if opts.console_sock ~= nil then

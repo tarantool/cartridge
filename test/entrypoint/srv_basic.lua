@@ -11,8 +11,8 @@ errors.set_deprecation_handler(function(err)
     os.exit(1)
 end)
 
-local frontend = require('frontend-core')
-if frontend.set_variable then
+local frontend = package.loaded['frontend-core']
+if frontend and frontend.set_variable then
     -- Compatibility tests run on cartridge 1.2.0
     -- which doesn't support it yet.
     frontend.set_variable('cartridge_refresh_interval', 500)
@@ -171,6 +171,9 @@ local ok, err = errors.pcall('CartridgeCfgError', cartridge.cfg, {
     },
     webui_blacklist = webui_blacklist,
     roles_reload_allowed = roles_reload_allowed,
+    -- Compatibility tests run on cartridge 1.2.0
+    -- which doesn't support it yet.
+    upload_prefix = package.loaded['cartridge.upload'] and '../upload',
 })
 if not ok then
     log.error('%s', err)

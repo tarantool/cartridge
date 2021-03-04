@@ -93,6 +93,7 @@ local cluster_opts = {
     bucket_count = 'number', -- **number**
     upgrade_schema = 'boolean', -- **boolean**
     swim_broadcast = 'boolean', -- **boolean**
+    upload_prefix = 'string', -- **string**
 }
 
 --- Common [box.cfg](https://www.tarantool.io/en/doc/latest/reference/configuration/) tuning options.
