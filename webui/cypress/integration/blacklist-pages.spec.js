@@ -1,7 +1,8 @@
 describe('Blacklist pages', () => {
 
   before(() => {
-    cy.task('tarantool', {code: `
+    cy.task('tarantool', {
+      code: `
       cleanup()
 
       _G.cluster = helpers.Cluster:new({
@@ -23,20 +24,23 @@ describe('Blacklist pages', () => {
   });
 
   after(() => {
-    cy.task('tarantool', {code: `cleanup()`});
+    cy.task('tarantool', { code: `cleanup()` });
   });
 
-  it('Blacklisted pages arent visible', () => {
-    // Blacklisted pages aren't listed in menu
-    cy.visit('/admin/cluster/dashboard')
+  it('Test: blacklist-pages', () => {
+
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Blacklisted pages are not listed in menu');
+    ////////////////////////////////////////////////////////////////////
+    cy.visit('/admin/cluster/dashboard');
     cy.contains('Not loaded').should('not.exist');
     cy.contains('test-replicaset');
     cy.get('a[href="/admin/cluster/dashboard"]').should('exist');
     cy.get('a[href="/admin/cluster/configuration"]').should('not.exist');
-  });
 
-  it('Blacklisted pages cant be visited', () => {
-    // Blacklisted pages can't be visited
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Blacklisted pages cant be visited');
+    ////////////////////////////////////////////////////////////////////
     cy.visit('/admin/cluster/configuration');
     cy.contains('Not loaded').should('exist');
   });

@@ -18,5 +18,4 @@ describe('Test the plugin', () => {
       return true
     `});
   });
-
 });

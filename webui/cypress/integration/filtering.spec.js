@@ -1,7 +1,8 @@
 describe('Replicaset filtering', () => {
 
   before(() => {
-    cy.task('tarantool', {code: `
+    cy.task('tarantool', {
+      code: `
       cleanup()
 
       _G.cluster = helpers.Cluster:new({
@@ -48,15 +49,20 @@ describe('Replicaset filtering', () => {
   });
 
   after(() => {
-    cy.task('tarantool', {code: `cleanup()`});
+    cy.task('tarantool', { code: `cleanup()` });
   });
 
-  it('Open WebUI', () => {
-    cy.visit('/admin/cluster/dashboard')
-    cy.title().should('eq', 'cartridge-testing: Cluster')
-  });
+  it('Test: filtering', () => {
 
-  it('Dashboard filtering', () => {
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Open WebUI');
+    ////////////////////////////////////////////////////////////////////
+    cy.visit('/admin/cluster/dashboard');
+    cy.title().should('eq', 'cartridge-testing: Cluster');
+
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Dashboard filtering');
+    ////////////////////////////////////////////////////////////////////
     cy.contains('Replica sets');
 
     // Healthy
@@ -86,9 +92,10 @@ describe('Replicaset filtering', () => {
     cy.get('.meta-test__Filter').find('input').type('test-storage-1');
     cy.get('#root').contains('test-storage');
     cy.get('#root').contains('test-router').should('not.exist');
-  })
 
-  it('Join server dialog filtering', () => {
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Join server dialog filtering');
+    ////////////////////////////////////////////////////////////////////
     cy.get('li').contains('spare').closest('li').find('button')
       .contains('Configure').click();
     cy.get('.meta-test__ConfigureServerModal').contains('Join Replica Set').click();
@@ -128,4 +135,4 @@ describe('Replicaset filtering', () => {
 
     cy.get('.meta-test__ConfigureServerModal button[type="button"]:contains(Cancel)').click();
   });
-})
+});

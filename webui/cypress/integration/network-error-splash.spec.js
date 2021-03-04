@@ -19,15 +19,18 @@ describe('Network error panel', () => {
 
       _G.cluster:start()
       return true
-    `
-    }).should('deep.eq', [true]);
+    `}).should('deep.eq', [true]);
   });
 
   after(() => {
     cy.task('tarantool', { code: `cleanup()` });
   });
 
-  it('Check presence', () => {
+  it('Test: network-error-splash', () => {
+
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Check presence');
+    ////////////////////////////////////////////////////////////////////
     cy.visit('/');
 
     // It's fine yet
@@ -69,5 +72,5 @@ describe('Network error panel', () => {
     cy.task('tarantool', { code: `_G.cluster.main_server:start()` });
     cy.get('button:contains(Retry)').click();
     cy.get('.meta-test__NetworkErrorSplash').should('not.exist');
-  })
+  });
 });

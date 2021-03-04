@@ -1,7 +1,8 @@
 describe('Global 401 handler', () => {
 
   before(() => {
-    cy.task('tarantool', {code: `
+    cy.task('tarantool', {
+      code: `
       cleanup()
 
       _G.cluster = helpers.Cluster:new({
@@ -22,11 +23,11 @@ describe('Global 401 handler', () => {
       _G.cluster:start()
       return _G.cluster.datadir
     `}).then((resp) => {
-      const workdir = resp[0];
-      expect(workdir).to.be.a('string');
-      cy.task('tarantool', {
-        host: 'unix/', port: workdir+'/control.sock',
-        code: `
+        const workdir = resp[0];
+        expect(workdir).to.be.a('string');
+        cy.task('tarantool', {
+          host: 'unix/', port: workdir + '/control.sock',
+          code: `
           local fun = require('fun')
           local cartridge = require('cartridge')
           local httpd = cartridge.service_get('httpd')
@@ -44,20 +45,24 @@ describe('Global 401 handler', () => {
           end
 
           return true
-        `
-      }).should('deep.eq', [true]);
-    });
+        `}).should('deep.eq', [true]);
+      });
   });
 
   after(() => {
-    cy.task('tarantool', {code: `cleanup()`});
+    cy.task('tarantool', { code: `cleanup()` });
   });
 
-  it('Open WebUI', () => {
-    cy.visit('/admin/cluster/dashboard')
-  });
+  it('Test: global-401-handler', () => {
 
-  it('Test 401 error', () => {
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Open WebUI');
+    ////////////////////////////////////////////////////////////////////
+    cy.visit('/admin/cluster/dashboard');
+
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Test 401 error');
+    ////////////////////////////////////////////////////////////////////
     cy.get('.meta-test__LoginFormSplash').contains('Authorization');
     cy.get('.meta-test__LoginFormSplash').contains('Please, input your credentials');
     cy.get('input[name="username"]').type('admin');
@@ -67,5 +72,5 @@ describe('Global 401 handler', () => {
     cy.get('.meta-test__LogoutDropdown *:contains(Log out)').click();
 
     cy.get('.meta-test__LoginFormSplash').should('be.visible');
-  })
+  });
 });

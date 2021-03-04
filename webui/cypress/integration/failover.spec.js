@@ -27,13 +27,7 @@ describe('Failover', () => {
   });
 
   after(() => {
-    cy.task('tarantool', {code: `cleanup()`});
-  });
-
-  it('Open WebUI', () => {
-    cy.visit('/admin/cluster/dashboard');
-    cy.get('.meta-test__FailoverButton').should('be.visible');
-    cy.get('.meta-test__FailoverButton').contains('Failover: disabled');
+    cy.task('tarantool', { code: `cleanup()` });
   });
 
   function statefulInputsShouldNotExist() {
@@ -46,7 +40,18 @@ describe('Failover', () => {
     cy.get('label:contains(Password)').should('not.exist');
   }
 
-  it('Failover Disabled: modal before changing', () => {
+  it('Test: failover', () => {
+
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Open WebUI');
+    ////////////////////////////////////////////////////////////////////
+    cy.visit('/admin/cluster/dashboard');
+    cy.get('.meta-test__FailoverButton').should('be.visible');
+    cy.get('.meta-test__FailoverButton').contains('Failover: disabled');
+
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Failover Disabled: modal before changing');
+    ////////////////////////////////////////////////////////////////////
     cy.get('.meta-test__FailoverButton').click();
 
     statefulInputsShouldNotExist;
@@ -85,9 +90,10 @@ describe('Failover', () => {
     cy.get('span:contains(Failover mode) + span:contains(disabled)').click();
     cy.get('.meta-test__FailoverButton').contains('Failover: disabled');
     cy.get('.meta-test__ClusterIssuesButton').should('be.disabled');
-  });
 
-  it('Failover Eventual', () => {
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Failover Eventual');
+    ////////////////////////////////////////////////////////////////////
     cy.get('.meta-test__FailoverButton').click();
     cy.get('.meta-test__eventualRadioBtn').click();
 
@@ -103,9 +109,10 @@ describe('Failover', () => {
     cy.get('span:contains(Failover mode) + span:contains(eventual)').click();
     cy.get('.meta-test__FailoverButton').contains('Failover: eventual');
     cy.get('.meta-test__ClusterIssuesButton').should('be.disabled');
-  });
 
-  it('Failover Stateful - TARANTOOL: error', () => {
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Failover Stateful - TARANTOOL: error');
+    ////////////////////////////////////////////////////////////////////
     cy.get('.meta-test__FailoverButton').click();
 
     cy.get('.meta-test__statefulRadioBtn').click();
@@ -133,7 +140,7 @@ describe('Failover', () => {
     cy.get('div').contains('The period in seconds of performing the health check');
 
     //Fencing enable
-    cy.get('.meta-test__fencingEnableCheckbox input').click({force: true});
+    cy.get('.meta-test__fencingEnableCheckbox input').click({ force: true });
     cy.get('.meta-test__fencingEnableCheckbox input').should('be.checked');
     //change Fencing timeout
     cy.get('.meta-test__fencingTimeout input').should('be.enabled');
@@ -184,15 +191,16 @@ describe('Failover', () => {
     cy.get('.meta-test__etcd2Password').should('not.exist');
 
     cy.get('.meta-test__CancelButton').click();
-  });
 
-  it('Failover Stateful - TARANTOOL: success', () => {
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Failover Stateful - TARANTOOL: success');
+    ////////////////////////////////////////////////////////////////////
     cy.get('.meta-test__FailoverButton').click();
 
     cy.get('.meta-test__inlineError').should('not.exist');
 
     cy.get('.meta-test__statefulRadioBtn').click();
-    cy.get('.meta-test__fencingEnableCheckbox input').click({force: true});
+    cy.get('.meta-test__fencingEnableCheckbox input').click({ force: true });
     cy.get('.meta-test__fencingTimeout input').type('{selectAll}{del}4');
 
     cy.get('.meta-test__stateboardURI input').type('{selectall}{backspace}localhost:14401');
@@ -200,9 +208,10 @@ describe('Failover', () => {
     cy.get('.meta-test__SubmitButton').click();
     cy.get('span:contains(Failover mode) + span:contains(stateful)').click();
     cy.get('.meta-test__FailoverButton').contains('Failover: stateful');
-  });
 
-  it('Failover Stateful - ETCD: success', () => {
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Failover Stateful - ETCD: success');
+    ////////////////////////////////////////////////////////////////////
     cy.get('.meta-test__FailoverButton').click();
     cy.get('.meta-test__statefulRadioBtn').click();
     cy.get('button[label="State provider"]').contains('Tarantool (stateboard)').click();
@@ -223,9 +232,10 @@ describe('Failover', () => {
     //There is no Tarantool (stateboard) inputs
     cy.get('.meta-test__stateboardURI').should('not.exist');
     cy.get('.meta-test__stateboardPassword').should('not.exist');
-  });
 
-  it('Failover Stateful - ETCD: errors', () => {
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Failover Stateful - ETCD: errors');
+    ////////////////////////////////////////////////////////////////////
     cy.get('.meta-test__FailoverButton').click();
     cy.get('.meta-test__statefulRadioBtn').click();
 
@@ -241,9 +251,10 @@ describe('Failover', () => {
     cy.get('.meta-test__etcd2LockDelay').next().contains('Field accepts number)').should('not.exist');
 
     cy.get('.meta-test__CancelButton').click();
-  });
 
-  it('Check issues', () => {
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Check issues');
+    ////////////////////////////////////////////////////////////////////
     cy.contains('Replica sets');
     cy.get('.meta-test__ClusterIssuesButton').should('be.enabled');
     cy.get('.meta-test__ClusterIssuesButton').contains('Issues: 4');

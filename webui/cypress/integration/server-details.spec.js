@@ -24,8 +24,7 @@ describe('Server details', () => {
           {{failover_timeout = 0}}
         )
         return true
-      `
-    }).should('deep.eq', [true]);
+      `}).should('deep.eq', [true]);
   });
 
   after(() => {
@@ -48,11 +47,13 @@ describe('Server details', () => {
     cy.get('.meta-test__ServerDetailsModal button').contains('Issues 0').click();
   };
 
-  it('Open WebUI', () => {
-    cy.visit('/admin/cluster/dashboard')
-  });
+  it('Test: serever-details', () => {
 
-  it('Alive server', () => {
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Alive server');
+    ////////////////////////////////////////////////////////////////////
+    cy.visit('/admin/cluster/dashboard');
+
     openServerDetailsModal('dummy-1');
     checkServerDetailsTabs();
 
@@ -131,11 +132,10 @@ describe('Server details', () => {
     cy.get('.meta-test__ServerDetailsModal span:contains(Disabled)').should('not.exist');
 
     cy.get('.meta-test__ServerDetailsModal button').contains('Close').click();
-    // Enable/disable servers - end
 
-  });
-
-  it('Dead server', () => {
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Dead server');
+    ////////////////////////////////////////////////////////////////////
     cy.task('tarantool', { code: `_G.cluster:server('dummy-2').process:kill('KILL')` });
 
     cy.get('.ServerLabelsHighlightingArea').contains('dummy-2')

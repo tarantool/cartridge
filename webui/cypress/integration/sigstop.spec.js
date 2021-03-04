@@ -4,6 +4,7 @@ describe('Checking for situations when a connection is lost using SIGSTOP', () =
     cy.task('tarantool', {
       code: `
         cleanup()
+
         _G.cluster = helpers.Cluster:new({
           datadir = fio.tempdir(),
           server_command = helpers.entrypoint('srv_basic'),
@@ -43,7 +44,11 @@ describe('Checking for situations when a connection is lost using SIGSTOP', () =
     cy.get('.meta-test__ZoneAddSubmitBtn').click();
   };
 
-  it('Stop server', () => {
+  it('Test: sigstop', () => {
+
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Stop server');
+    ////////////////////////////////////////////////////////////////////
     cy.exec('kill -SIGSTOP $(lsof -sTCP:LISTEN -i :8082 -t)', { failOnNonZeroExit: false });
     cy.visit('/admin/cluster/dashboard');
     cy.get('h1:contains(Cluster)');
@@ -69,10 +74,10 @@ describe('Checking for situations when a connection is lost using SIGSTOP', () =
     cy.get('.ZoneAddModal_error').find('span:contains(Timeout exceeded)');
     cy.get('h2:contains(Add name of zone)').next().click();
     cy.get('.meta-test__ServerDetailsModal button:contains(Close)').click();
-  });
 
-  it('Cont server', () => {
-
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Cont server');
+    ////////////////////////////////////////////////////////////////////
     cy.exec('kill -SIGCONT $(lsof -sTCP:LISTEN -i :8082 -t)', { failOnNonZeroExit: false });
     cy.reload();
 
@@ -92,5 +97,4 @@ describe('Checking for situations when a connection is lost using SIGSTOP', () =
     //Cluster page: Check Issue
     cy.get('.meta-test__ClusterIssuesButton').contains('Issues: 0');
   });
-
 });
