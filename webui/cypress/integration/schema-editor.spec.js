@@ -27,14 +27,15 @@ describe('Schema section', () => {
   });
 
   after(() => {
-    cy.task('tarantool', {code: `cleanup()`});
+    cy.task('tarantool', { code: `cleanup()` });
   });
 
-  it('Open WebUI', () => {
+  it('Test: schema-editor', () => {
+
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Schema with bootstrap');
+    ////////////////////////////////////////////////////////////////////
     cy.visit('/admin/cluster/schema');
-  });
-
-  it('Schema with bootstrap', () => {
     const selectAllKeys = Cypress.platform == 'darwin' ? '{cmd}a' : '{ctrl}a';
     const defaultText = '---\nspaces: []\n...\n';
 
@@ -87,10 +88,10 @@ describe('Schema section', () => {
     cy.get('.monaco-editor').contains('---');
     cy.get('.monaco-editor').contains('spaces: []');
     cy.get('.monaco-editor').contains('...');
-  })
 
-  it('Tab title on Schema page', () => {
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Tab title on Schema page');
+    ////////////////////////////////////////////////////////////////////
     cy.title().should('eq', 'dummy-1: Schema');
-  })
-
+  });
 });

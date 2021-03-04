@@ -1,10 +1,10 @@
-
-
 describe('Uninitialized', () => {
 
   before(() => {
-    cy.task('tarantool', {code: `
+    cy.task('tarantool', {
+      code: `
       cleanup()
+
       _G.server = helpers.Server:new({
         alias = 'spare',
         workdir = fio.tempdir(),
@@ -26,11 +26,12 @@ describe('Uninitialized', () => {
     cy.task('tarantool', { code: `cleanup()` });
   });
 
-  it('Open WebUI', () => {
-    cy.visit('/admin/cluster/code')
-  });
+  it('Test: uninitialized', () => {
 
-  it('Code without bootstrap', () => {
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Code without bootstrap');
+    ////////////////////////////////////////////////////////////////////
+    cy.visit('/admin/cluster/code');
     // files reload should fail
     cy.get('button[type="button"]:contains("Reload")').click();
     cy.get('body').contains('Are you sure you want to reload all the files?');
@@ -45,9 +46,10 @@ describe('Uninitialized', () => {
     // file upload should fail too
     cy.get('button[type="button"]:contains("Apply")').click();
     cy.get('span:contains("Cluster isn\'t bootstrapped yet")').click();
-  });
 
-  it('Schema without bootstrap', () => {
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Schema without bootstrap');
+    ////////////////////////////////////////////////////////////////////
     cy.get('a[href="/admin/cluster/schema"]').click();
 
     cy.get('button[type="button"]:contains("Validate")').click();
@@ -58,9 +60,10 @@ describe('Uninitialized', () => {
 
     cy.get('button[type="button"]:contains("Apply")').click();
     cy.get('#root').contains('Cluster isn\'t bootstrapped yet');
-  });
 
-  it('Try to add user without bootstrap', () => {
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Try to add user without bootstrap');
+    ////////////////////////////////////////////////////////////////////
     cy.get('a[href="/admin/cluster/users"]').click();
 
     cy.get('.meta-test__addUserBtn').click({ force: true });
@@ -74,5 +77,4 @@ describe('Uninitialized', () => {
     cy.get('.meta-test__UserAddForm button[type="button"]').contains('Cancel').click();
     cy.contains('unitialisedUser').should('not.exist');
   });
-
 });

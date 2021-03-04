@@ -1,7 +1,8 @@
 describe('Auth', () => {
 
   before(() => {
-    cy.task('tarantool', {code: `
+    cy.task('tarantool', {
+      code: `
       cleanup()
 
       _G.cluster = helpers.Cluster:new({
@@ -22,16 +23,21 @@ describe('Auth', () => {
   });
 
   after(() => {
-    cy.task('tarantool', {code: `cleanup()`});
+    cy.task('tarantool', { code: `cleanup()` });
   });
 
-  it('Open WebUI', () => {
+  it('Test: auth', () => {
+
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Open WebUI');
+    ////////////////////////////////////////////////////////////////////
     cy.visit('/admin/cluster/dashboard');
     cy.get('.meta-test__ProbeServerBtn').should('exist');
     cy.get('.meta-test__AuthToggle').should('not.exist');
-  });
 
-  it('Login error', () => {
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Login error');
+    ////////////////////////////////////////////////////////////////////
     cy.get('.meta-test__LoginBtn').click();
     cy.get('.meta-test__LoginForm input[name="username"]')
       .type('error')
@@ -41,9 +47,10 @@ describe('Auth', () => {
     cy.get('.meta-test__LoginFormBtn').click();
     cy.get('.meta-test__LoginForm').contains('Authentication failed');
     cy.get('.meta-test__LoginForm button[type="button"]').contains('Cancel').click();
-  });
 
-  it('Login and Enable Auth', () => {
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Login and Enable Auth');
+    ////////////////////////////////////////////////////////////////////
     cy.get('.meta-test__LoginBtn').click();
 
     cy.get('.meta-test__LoginForm input[name="username"]')
@@ -57,15 +64,16 @@ describe('Auth', () => {
     cy.get('.meta-test__AuthToggle input').should('not.be.checked')
     cy.get('.meta-test__AuthToggle').click();
     cy.get('.meta-test__ConfirmModal').contains('Enable').click();
-  });
 
-  it('Logout', () => {
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Logout');
+    ////////////////////////////////////////////////////////////////////
     cy.get('.meta-test__LogoutBtn').click();
     cy.get('.meta-test__LogoutDropdown *').contains('Log out').click();
-  });
-  
-  it('Login and Disable auth', () => {
-    // cy.get('a[href="/admin/cluster/dashboard"]').click()
+
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Login and Disable auth');
+    ////////////////////////////////////////////////////////////////////
     cy.get('.meta-test__LoginFormSplash').should('exist');
 
     cy.get('input[name="username"]').type('admin');
@@ -77,10 +85,12 @@ describe('Auth', () => {
     cy.get('.meta-test__AuthToggle').click();
     cy.get('.meta-test__ConfirmModal').contains('Disable').click();
     cy.get('.meta-test__AuthToggle input').should('not.be.checked');
-  });
 
-  it('Disabled users page usecase ', () => {
-    cy.task('tarantool', {code: `
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Disabled users page usecase');
+    ////////////////////////////////////////////////////////////////////
+    cy.task('tarantool', {
+      code: `
       _G.cluster.main_server:stop()
       _G.cluster.main_server.command = helpers.entrypoint('srv_woauth')
       _G.cluster.main_server:start()

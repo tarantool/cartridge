@@ -23,8 +23,7 @@ describe('Code page', () => {
       end
       _G.cluster:start()
       return true
-    `
-    }).should('deep.eq', [true]);
+    `}).should('deep.eq', [true]);
   });
 
   after(() => {
@@ -45,19 +44,25 @@ describe('Code page', () => {
     cy.get('.meta-test__Code__apply_idle').should('exist');
   }
 
-  it('Open WebUI', () => {
+  it('Test: code-page', () => {
+
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Open WebUI');
+    ////////////////////////////////////////////////////////////////////
     cy.visit('/admin/cluster/code');
     cy.get('.meta-test__Code__apply_idle').should('exist');
     cy.title().should('eq', 'dummy-1: Code');
-  });
 
-  it('Empty code page', () => {
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Empty code page');
+    ////////////////////////////////////////////////////////////////////
     cy.get('#root').contains('Please select a file');
     cy.get('button[type="button"]').contains('Apply').click();
     cy.get('span:contains(Success) + span:contains(Files successfuly applied)').click();
-  })
 
-  it('File in tree', () => {
+    ////////////////////////////////////////////////////////////////////
+    cy.log('File in tree');
+    ////////////////////////////////////////////////////////////////////
     cy.get('.meta-test__addFileBtn').click();
     cy.get('.meta-test__enterName').focused().type('file-in-tree1.yml');
     cy.get('#root').contains('dummy-1').click();
@@ -101,7 +106,7 @@ describe('Code page', () => {
     reload();
     cy.get('.monaco-editor textarea').should('have.value', 'some test code2');
 
-    // wrong yaml error
+    //wrong yaml error
     cy.get('.monaco-editor textarea').type(selectAllKeys + '{backspace}');
     cy.get('.monaco-editor textarea').type('some: [] test code2');
     apply()
@@ -184,9 +189,11 @@ describe('Code page', () => {
 
     reload();
     cy.get('.meta-test__Code__FileTree').contains('edited-file-name2').should('not.exist');
-  });
 
-  it('Folder in tree', () => {
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Folder in tree');
+    ////////////////////////////////////////////////////////////////////
+
     //create folder
     cy.get('.meta-test__addFolderBtn').click();
     cy.get('.meta-test__enterName').focused().type('folder-in-tree');
@@ -231,6 +238,5 @@ describe('Code page', () => {
     cy.get('span:contains(Success) + span:contains(Files successfuly applied)').click();
 
     cy.get('.meta-test__Code__FileTree').contains('edited-folder-name').should('not.exist');
-  })
-
+  });
 });

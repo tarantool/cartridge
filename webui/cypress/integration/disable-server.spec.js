@@ -1,4 +1,5 @@
 describe('Disable server', () => {
+
   before(() => {
     cy.task('tarantool', {
       code: `
@@ -32,7 +33,7 @@ describe('Disable server', () => {
     cy.task('tarantool', { code: `cleanup()` });
   });
 
-  it('Test all', () => {
+  it('Test: disable-server', () => {
     cy.visit('/admin/cluster/dashboard');
     cy.get('h1:contains(Cluster)');
 

@@ -3,55 +3,57 @@ describe('Users', () => {
   before(() => {
     cy.task('tarantool', {
       code: `
-        cleanup()
-        fio = require('fio')
-        helpers = require('test.helper')
+      cleanup()
 
-        local workdir = fio.tempdir()
-        _G.cluster = helpers.Cluster:new({
-          datadir = workdir,
-          server_command = helpers.entrypoint('srv_basic'),
-          use_vshard = true,
-          cookie = 'test-cluster-cookie',
-          env = {TARANTOOL_APP_NAME = 'cartridge-testing'},
-          replicasets = {{
-            alias = 'test-replicaset',
-            uuid = helpers.uuid('a'),
-            roles = {'vshard-router', 'vshard-storage', 'failover-coordinator'},
-            servers = {{
-              alias = 'server1',
-              env = {TARANTOOL_INSTANCE_NAME = 'r1'},
-              instance_uuid = helpers.uuid('a', 'a', 1),
-              advertise_port = 13300,
-              http_port = 8080
-            }}
+      fio = require('fio')
+      helpers = require('test.helper')
+
+      local workdir = fio.tempdir()
+      _G.cluster = helpers.Cluster:new({
+        datadir = workdir,
+        server_command = helpers.entrypoint('srv_basic'),
+        use_vshard = true,
+        cookie = 'test-cluster-cookie',
+        env = {TARANTOOL_APP_NAME = 'cartridge-testing'},
+        replicasets = {{
+          alias = 'test-replicaset',
+          uuid = helpers.uuid('a'),
+          roles = {'vshard-router', 'vshard-storage', 'failover-coordinator'},
+          servers = {{
+            alias = 'server1',
+            env = {TARANTOOL_INSTANCE_NAME = 'r1'},
+            instance_uuid = helpers.uuid('a', 'a', 1),
+            advertise_port = 13300,
+            http_port = 8080
           }}
-        })
+        }}
+      })
 
-        _G.cluster:start()
-        _G.cluster.main_server.net_box:call(
-          'package.loaded.cartridge.failover_set_params',
-          {{failover_timeout = 0}}
-        )
-        return _G.cluster.datadir
-      `
-    })
+      _G.cluster:start()
+      _G.cluster.main_server.net_box:call(
+        'package.loaded.cartridge.failover_set_params',
+        {{failover_timeout = 0}}
+      )
+      return _G.cluster.datadir
+    `});
   });
 
   after(() => {
     cy.task('tarantool', { code: `cleanup()` });
   });
 
-  it('Open WebUI', () => {
-    cy.visit('/admin/cluster/dashboard')
-  });
+  it('Test: users', () => {
 
-  it('Tab title on Users page', () => {
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Tab title on Users page');
+    ////////////////////////////////////////////////////////////////////
+    cy.visit('/admin/cluster/dashboard');
     cy.get('a[href="/admin/cluster/users"]').click();
-    cy.title().should('eq', 'cartridge-testing.r1: Users')
-  })
+    cy.title().should('eq', 'cartridge-testing.r1: Users');
 
-  it('Users page before changing', function () {
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Users page before changing');
+    ////////////////////////////////////////////////////////////////////
     cy.get('h1:contains(Users)');
     cy.get('.meta-test__AuthToggle input').should('not.be.checked');
     cy.get('button:contains(Add user)').should('be.enabled');
@@ -66,9 +68,10 @@ describe('Users', () => {
     cy.get('tbody td').eq(2).contains('—');
     cy.get('tbody td').eq(3).find('button').eq(0).should('be.disabled');
     cy.get('tbody td').eq(3).find('button').eq(1).should('be.disabled');
-  });
 
-  it('Checks for add user form fields', function () {
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Checks for add user form fields');
+    ////////////////////////////////////////////////////////////////////
     cy.get('button:contains(Add user)').click();
     cy.get('h2:contains(Add a new user)');
 
@@ -97,9 +100,10 @@ describe('Users', () => {
 
     //close modal without saving
     cy.get('h2:contains(Add a new user)').next().click();
-  });
 
-  it('Add new user: success', function () {
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Add new user: success');
+    ////////////////////////////////////////////////////////////////////
     cy.get('button:contains(Add user)').click();
     cy.get('h2:contains(Add a new user)');
 
@@ -119,16 +123,19 @@ describe('Users', () => {
       cy.wrap(TestUserRow).find('td').eq(2).contains('testuser@qq.qq');
       cy.wrap(TestUserRow).find('td').eq(3).find('button').eq(0).should('be.enabled');
       cy.wrap(TestUserRow).find('td').eq(3).find('button').eq(1).should('be.enabled');
-    })
-  });
+    });
 
-  it('Click on user name -> opening modal Edit user', function () {
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Click on user name -> opening modal Edit user');
+    ////////////////////////////////////////////////////////////////////
     cy.get('a:contains(TestUserName)').click();
     cy.get('h2:contains(Edit TestUserName)').next().click();
     cy.get('h2:contains(Edit TestUserName)').should('not.exist');
-  });
 
-  it('Login and logout user without full name', () => {
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Login and logout user without full name');
+    ////////////////////////////////////////////////////////////////////
+
     //login:
     cy.get('.meta-test__LoginBtn').click();
     cy.get('.meta-test__LoginForm input[name="username"]').type('TestUserName');
@@ -138,18 +145,19 @@ describe('Users', () => {
     cy.get('.meta-test__LogoutBtn').children('span').should('contain', '');
     cy.get('.meta-test__LoginBtn').should('not.exist');
 
-    // //User cant delete himself
-    // cy.get('.meta-test__UsersTable li:contains(user_do_not_touch)').find('button').click();
-    // cy.get('.meta-test__UsersTableItem__dropdown *').contains('Remove user').click();
-    // cy.get('.meta-test__UserRemoveModal button[type="button"]:contains(Remove)').click();
-    // cy.get('span:contains(user can not remove himself)').click(); //bug: error doesnt show
+    //User cant delete himself
+    cy.get('a:contains(TestUserName)').parents('tr').find('td').eq(3).find('button').eq(1).click();
+    cy.get('.meta-test__UserRemoveModal button:contains(Remove)').click();
+    cy.get('span:contains(user can not remove himself)');
+    cy.get('.meta-test__UserRemoveModal button:contains(Cancel)').click();
 
     //logout:
     cy.get('.meta-test__LogoutBtn').click();
     cy.get('.meta-test__LogoutDropdown *').contains('Log out').click();
-  });
 
-  it('Edit user', function () {
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Edit user');
+    ////////////////////////////////////////////////////////////////////
     cy.get('a:contains(TestUserName)').parents('tr').find('td').eq(3).find('button').eq(0).click();
     cy.get('h2:contains(Edit TestUserName)');
 
@@ -167,9 +175,10 @@ describe('Users', () => {
       cy.wrap(TestUserRow).find('td').eq(3).find('button').eq(0).should('be.enabled');
       cy.wrap(TestUserRow).find('td').eq(3).find('button').eq(1).should('be.enabled');
     });
-  });
 
-  it('Create user: errors', function () {
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Create user: errors');
+    ////////////////////////////////////////////////////////////////////
     cy.get('button:contains(Add user)').click();
     cy.get('h2:contains(Add a new user)');
 
@@ -193,9 +202,11 @@ describe('Users', () => {
     cy.get('.meta-test__UserAddForm button:contains(Add)').click();
 
     cy.get('tbody tr[role="row"]').should('have.length', 3);
-  });
 
-  it('Login and logout user with full name', () => {
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Login and logout user with full name');
+    ////////////////////////////////////////////////////////////////////
+
     //login:
     cy.get('.meta-test__LoginBtn').click();
     cy.get('.meta-test__LoginForm input[name="username"]').type('TestUserName');
@@ -208,9 +219,10 @@ describe('Users', () => {
     //logout:
     cy.get('.meta-test__LogoutBtn').click();
     cy.get('.meta-test__LogoutDropdown *').contains('Log out').click();
-  });
 
-  it('Remove user', () => {
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Remove user');
+    ////////////////////////////////////////////////////////////////////
     cy.get('a:contains(TestUserName)').parents('tr').find('td').eq(3).find('button').eq(1).click();
     cy.get('.meta-test__UserRemoveModal h2:contains(Please confirm)');
     cy.get('.meta-test__UserRemoveModal span:contains(Removing user TestUserName)');

@@ -4,6 +4,7 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     cy.task('tarantool', {
       code: `
       cleanup()
+
       _G.cluster = helpers.Cluster:new({
         datadir = fio.tempdir(),
         server_command = helpers.entrypoint('srv_basic'),
@@ -29,16 +30,16 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
       end)
 
       return _G.cluster:server('dummy-1').env.TARANTOOL_CONSOLE_SOCK
-    `
-    }).then((resp) => {
-      const sock = resp[0];
-      expect(sock).to.be.a('string');
-      cy.task('tarantool', {host: 'unix/', port: sock, code: `
+    `}).then((resp) => {
+        const sock = resp[0];
+        expect(sock).to.be.a('string');
+        cy.task('tarantool', {
+          host: 'unix/', port: sock, code: `
         package.loaded.mymodule.implies_router = true
         package.loaded.mymodule.implies_storage = true
         return true
       `}).should('deep.eq', [true]);
-    });
+      });
   });
 
   after(() => {
@@ -60,14 +61,19 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     cy.contains('Invalid cluster topology config').should('not.exist');
   }
 
-  it('Open WebUI', () => {
-    cy.visit('/admin/cluster/dashboard')
-    cy.title().should('eq', 'dummy-1: Cluster')
+  it('Test: bootstrap', () => {
+
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Open WebUI');
+    ////////////////////////////////////////////////////////////////////
+    cy.visit('/admin/cluster/dashboard');
+    cy.title().should('eq', 'dummy-1: Cluster');
     cy.get('.meta-test__UnconfiguredServerList').contains(':13301')
       .closest('li').find('.meta-test__youAreHereIcon');
-  });
 
-  it('Bootstrap vshard on unconfigured cluster', () => {
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Bootstrap vshard on unconfigured cluster');
+    ////////////////////////////////////////////////////////////////////
     cy.get('.meta-test__BootstrapButton').click();
     cy.get('.meta-test__BootstrapPanel__vshard-router_disabled').should('exist');
     cy.get('.meta-test__BootstrapPanel__vshard-storage_disabled').should('exist');
@@ -75,9 +81,11 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     cy.get('.meta-test__BootstrapPanel').contains('One role from vshard-storage or myrole enabled');
     cy.get('.meta-test__BootstrapPanel use:first').click();
     cy.get('.meta-test__BootstrapPanel').should('not.exist');
-  });
 
-  it('Select all roles', () => {
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Select all roles');
+    ////////////////////////////////////////////////////////////////////
+
     // Open create replicaset dialog
     cy.get('.meta-test__configureBtn').first().click();
     cy.get('form input[name="alias"]').type('for-default-group-tests');
@@ -99,9 +107,10 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
 
     // close dialog without saving
     cy.get('button[type="button"]:contains(Cancel)').click();
-  });
 
-  it('Select myrole', () => {
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Select myrole');
+    ////////////////////////////////////////////////////////////////////
     cy.get('.meta-test__configureBtn:visible').should('have.length', 1).click();
     cy.get('.meta-test__ConfigureServerModal').contains('Join Replica Set').should('not.exist');
 
@@ -128,9 +137,11 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     cy.get('.meta-test__BootstrapPanel__vshard-storage_enabled').should('exist');
 
     cy.get('span:contains(GraphQL error) + span:contains(No remotes with role "vshard-router" available)').click();
-  })
 
-  it('Configure vshard-router', () => {
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Configure vshard-router');
+    ////////////////////////////////////////////////////////////////////
+
     // Disable myrole
     cy.get('#root').contains('unnamed').closest('li').find('button').contains('Edit').click();
     cy.get('form input[value="myrole"]').uncheck({ force: true }).should('not.be.checked');
@@ -160,15 +171,17 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
 
     cy.get('.ServerLabelsHighlightingArea').contains('dummy-1')
       .closest('li').find('.meta-test__youAreHereIcon').should('exist');
-  });
 
-  it('Bootstrap vshard on semi-configured cluster', () => {
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Bootstrap vshard on semi-configured cluster');
+    ////////////////////////////////////////////////////////////////////
     cy.get('.meta-test__BootstrapButton').click();
     cy.get('.meta-test__BootstrapPanel__vshard-router_enabled').should('exist');
     cy.get('.meta-test__BootstrapPanel__vshard-storage_disabled').should('exist');
-  });
 
-  it('Configure vshard-storage', () => {
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Configure vshard-storage');
+    ////////////////////////////////////////////////////////////////////
     cy.get('.meta-test__configureBtn:visible').should('have.length', 2);
     cy.contains('dummy-2').closest('li').find('.meta-test__configureBtn').click();
 
@@ -206,18 +219,20 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
 
     cy.get('#root').contains('test-storage');
     cy.get('.meta-test__ReplicasetList_allRw_enabled').should('have.length', 2);
-  });
 
-  it('Bootstrap vshard on fully-configured cluster', () => {
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Bootstrap vshard on fully-configured cluster');
+    ////////////////////////////////////////////////////////////////////
     cy.get('.meta-test__BootstrapPanel__vshard-router_enabled');
     cy.get('.meta-test__BootstrapPanel__vshard-storage_enabled');
     cy.get('.meta-test__BootstrapButton').click();
     cy.get('span:contains(VShard bootstrap is OK. Please wait for list refresh...)').click();
     cy.get('.meta-test__BootstrapButton').should('not.exist');
     cy.get('.meta-test__BootstrapPanel').should('not.exist');
-  });
 
-  it('Edit vshard-storage', () => {
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Edit vshard-storage');
+    ////////////////////////////////////////////////////////////////////
     cy.get('li').contains('test-storage').closest('li').find('button').contains('Edit').click();
 
     // Try to enter empty alias
@@ -260,26 +275,29 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
 
     cy.get('#root').contains('edited-storage').closest('li')
       .find('.meta-test__ReplicasetList_allRw_enabled').should('not.exist');
-  });
 
-  it('Join existing replicaset', () => {
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Join existing replicaset');
+    ////////////////////////////////////////////////////////////////////
     cy.get('.meta-test__configureBtn').should('have.length', 1).click({ force: true });
     cy.get('.meta-test__ConfigureServerModal').contains('Join Replica Set').click();
     cy.get('form input[name="replicasetUuid"]').first().check({ force: true });
     cy.get('.meta-test__JoinReplicaSetBtn').click();
     cy.get('span:contains(Successful) + span:contains(Join is OK. Please wait for list refresh...)').click();
-  });
 
-  it('Expel server', () => {
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Expel server');
+    ////////////////////////////////////////////////////////////////////
     cy.get('li').contains('dummy-3').closest('li')
       .find('.meta-test__ReplicasetServerListItem__dropdownBtn').click();
     cy.get('.meta-test__ReplicasetServerListItem__dropdown *').contains('Expel server').click();
     cy.get('.meta-test__ExpelServerModal button[type="button"]').contains('Expel').click();
 
     cy.get('span:contains(Expel is OK. Please wait for list refresh...)').click();
-  });
 
-  it('Show expel error and error details', () => {
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Show expel error and error details');
+    ////////////////////////////////////////////////////////////////////
     cy.get('button.meta-test__LoginBtn').parent('div').parent('div').prev().click();
     cy.get('button:contains(Clear)').click();
     cy.get('li').contains('dummy-1').closest('li')
@@ -289,19 +307,20 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     cy.get('span:contains(Current instance "localhost:13301" can not be expelled)');
     cy.get('button[type="button"]:contains(Error details)').click();
     checksForErrorDetails();
-  });
 
-  it('Error details in notification list', () => {
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Error details in notification list');
+    ////////////////////////////////////////////////////////////////////
     cy.get('button.meta-test__LoginBtn').parent('div').parent('div').prev().click();
     cy.get('button[type="button"]:contains(Error details)').click();
     checksForErrorDetails();
-  })
 
-  it('Check Clear button in notification list', () => {
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Check Clear button in notification list');
+    ////////////////////////////////////////////////////////////////////
     cy.get('button.meta-test__LoginBtn').parent('div').parent('div').prev().click();
     cy.get('button:contains(Clear)').click();
     cy.get('button.meta-test__LoginBtn').parent('div').parent('div').prev().click();
     cy.get('span').contains('No notifications');
-  })
-
+  });
 });

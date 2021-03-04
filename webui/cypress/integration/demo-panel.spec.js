@@ -19,16 +19,19 @@ describe('Demo panel', () => {
 
       _G.cluster:start()
       return true
-    `
-    }).should('deep.eq', [true]);
+    `}).should('deep.eq', [true]);
   });
 
   after(() => {
     cy.task('tarantool', { code: `cleanup()` });
   });
 
-  it('Check absence', () => {
-    cy.visit('/')
+  it('Test: demo-panel', () => {
+
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Check absence');
+    ////////////////////////////////////////////////////////////////////
+    cy.visit('/');
 
     cy.get('a[href="/admin/cluster/dashboard"]').click();
     cy.get('.meta-test__ProbeServerBtn').should('exist');
@@ -49,9 +52,10 @@ describe('Demo panel', () => {
     cy.get('a[href="/admin/cluster/schema"]').click();
     cy.get('.monaco-editor textarea').should('exist');
     cy.get('.meta-test__DemoInfo').should('not.exist');
-  })
 
-  it('Restart with demo uri', () => {
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Restart with demo uri');
+    ////////////////////////////////////////////////////////////////////
     cy.task('tarantool', {
       code: `
       _G.cluster.main_server:stop()
@@ -61,9 +65,10 @@ describe('Demo panel', () => {
       return true
     `
     }).should('deep.eq', [true]);
-  })
 
-  it('Check presence', () => {
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Check presence');
+    ////////////////////////////////////////////////////////////////////
     cy.reload();
 
     cy.get('a[href="/admin/cluster/dashboard"]').click();
@@ -97,5 +102,5 @@ describe('Demo panel', () => {
     cy.location().should(loc => {
       expect(loc.pathname).to.eq('/admin');
     });
-  })
+  });
 });
