@@ -9,9 +9,6 @@ env:
   CMAKE_DUMMY_WEBUI: true
   # Prerequisite for some etcd-related tests
   ETCD_PATH: etcd-v2.3.8/etcd
-  # Prerequisite for compatibility.cartridge_upgrade_test
-  CARTRIDGE_OLDER_PATH: cartridge-1.2.0
-  CARTRIDGE_OLDER_VERSION: 1.2.0-1
 
 jobs:
   misc:
@@ -103,21 +100,6 @@ jobs:
         with:
           etcd-version: v2.3.8
           install-prefix: etcd-v2.3.8
-
-      # Setup older cartridge for compatibility.cartridge_upgrade_test
-      - name: Cache ${{ env.CARTRIDGE_OLDER_PATH }}
-        id: cache-older-cartridge
-        uses: actions/cache@v2
-        with:
-          path: ${{ env.CARTRIDGE_OLDER_PATH }}
-          key: cache-${{ env.CARTRIDGE_OLDER_PATH }}-${{ matrix.runs-on }}
-      - name: Install ${{ env.CARTRIDGE_OLDER_PATH }}
-        if: steps.cache-older-cartridge.outputs.cache-hit != 'true'
-        run: |
-          mkdir -p ${{ env.CARTRIDGE_OLDER_PATH }}
-          pushd ${{ env.CARTRIDGE_OLDER_PATH }}
-          tarantoolctl rocks install cartridge ${{ env.CARTRIDGE_OLDER_VERSION }}
-          popd
 
       # Setup luatest
       - name: Cache rocks
