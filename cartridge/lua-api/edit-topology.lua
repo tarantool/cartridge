@@ -1,6 +1,7 @@
 --- Administration functions (`edit-topology` implementation).
 --
 -- @module cartridge.lua-api.edit-topology
+local mod_name = 'cartridge.lua-api.edit-topology'
 
 local fun = require('fun')
 local checks = require('checks')
@@ -13,6 +14,7 @@ local twophase = require('cartridge.twophase')
 local vshard_utils = require('cartridge.vshard-utils')
 local confapplier = require('cartridge.confapplier')
 
+local lua_api_proxy = require('cartridge.lua-api.proxy')
 local lua_api_get_topology = require('cartridge.lua-api.get-topology')
 
 local EditTopologyError = errors.new_class('Editing cluster topology failed')
@@ -279,6 +281,14 @@ local function edit_topology(args)
         replicasets = '?table',
         servers = '?table',
     })
+
+    local state, err = confapplier.get_state()
+    if state == 'Unconfigured' and lua_api_proxy.can_call() then
+        -- Try to proxy call
+        return lua_api_proxy.call(mod_name .. '.edit_topology', args)
+    elseif state == 'InitError' or state == 'BootError' then
+        return nil, err
+    end
 
     local args = table.deepcopy(args)
     local topology_cfg = confapplier.get_deepcopy('topology')

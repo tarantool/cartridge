@@ -47,18 +47,22 @@
 --
 -- @module cartridge.issues
 -- @local
+local mod_name = 'cartridge.issues'
 
 local fio = require('fio')
 local log = require('log')
 local fun = require('fun')
 local fiber = require('fiber')
 local checks = require('checks')
+local membership = require('membership')
+
 local pool = require('cartridge.pool')
 local topology = require('cartridge.topology')
-local confapplier = require('cartridge.confapplier')
 local failover = require('cartridge.failover')
-local membership = require('membership')
-local vars = require('cartridge.vars').new('cartridge.issues')
+local confapplier = require('cartridge.confapplier')
+local lua_api_proxy = require('cartridge.lua-api.proxy')
+
+local vars = require('cartridge.vars').new(mod_name)
 
 --- Thresholds for issuing warnings.
 -- All settings are local, not clusterwide. They can be changed with
@@ -337,6 +341,19 @@ local function list_on_instance(opts)
 end
 
 local function list_on_cluster()
+    local state, err = confapplier.get_state()
+    if state == 'Unconfigured' and lua_api_proxy.can_call()  then
+        -- Try to proxy call
+        local ret = lua_api_proxy.call(mod_name .. '.list_on_cluster')
+        if ret ~= nil then
+            return ret
+        -- else
+            -- Don't return an error, go on
+        end
+    elseif state == 'InitError' or state == 'BootError' then
+        return nil, err
+    end
+
     local ret = {}
     local uri_list = {}
     local topology_cfg = confapplier.get_readonly('topology')
