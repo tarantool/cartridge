@@ -54,7 +54,7 @@ jobs:
         if: steps.cache-compatibility-rocks.outputs.cache-hit != 'true'
 
       - run: tarantoolctl rocks make
-      - run: .rocks/bin/luatest -v -p compatibility.cartridge_upgrade
+      - run: .rocks/bin/luatest -v -p compatibility.*
 
       # Cleanup cached paths
       - run: tarantoolctl rocks remove cartridge
