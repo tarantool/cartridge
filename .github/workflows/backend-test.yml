@@ -80,56 +80,6 @@ jobs:
       # Cleanup cached paths
       - run: tarantoolctl rocks remove cartridge
 
-  compatibility:
-    strategy:
-      fail-fast: false
-      matrix:
-        runs-on: [ubuntu-18.04]
-        tarantool: ['1.10']
-        cartridge: ['1.2.0', '2.3.0', '2.4.0']
-    runs-on: ${{ matrix.runs-on }}
-    env:
-      CARTRIDGE_OLDER_PATH: cartridge-${{ matrix.cartridge }}
-      CARTRIDGE_OLDER_VERSION: ${{ matrix.cartridge }}-1
-    steps:
-      - uses: actions/checkout@v2
-      - uses: tarantool/setup-tarantool@v1
-        with:
-          tarantool-version: '${{ matrix.tarantool }}'
-
-      # Setup older cartridge for compatibility.cartridge_upgrade_test
-      - name: Cache ${{ env.CARTRIDGE_OLDER_PATH }}
-        id: cache-older-cartridge
-        uses: actions/cache@v2
-        with:
-          path: ${{ env.CARTRIDGE_OLDER_PATH }}
-          key: cache-${{ env.CARTRIDGE_OLDER_PATH }}-${{ matrix.runs-on }}
-      - name: Install ${{ env.CARTRIDGE_OLDER_PATH }}
-        if: steps.cache-older-cartridge.outputs.cache-hit != 'true'
-        run: |
-          mkdir -p ${{ env.CARTRIDGE_OLDER_PATH }}
-          pushd ${{ env.CARTRIDGE_OLDER_PATH }}
-          tarantoolctl rocks install cartridge ${{ env.CARTRIDGE_OLDER_VERSION }}
-          popd
-
-      # Setup luatest
-      - name: Cache rocks
-        uses: actions/cache@v2
-        id: cache-luatest-rocks
-        with:
-          path: .rocks/
-          key: cache-luatest-rocks-${{ matrix.runs-on }}-${{ hashFiles('cartridge-scm-1.rockspec') }}
-          restore-keys: cache-luatest-rocks-${{ matrix.runs-on }}
-      -
-        run: tarantoolctl rocks install luatest 0.5.2
-        if: steps.cache-luatest-rocks.outputs.cache-hit != 'true'
-
-      - run: tarantoolctl rocks make
-      - run: .rocks/bin/luatest -v -p compatibility.cartridge_upgrade
-
-      # Cleanup cached paths
-      - run: tarantoolctl rocks remove cartridge
-
   luatest:
     strategy:
       fail-fast: false
