@@ -12,24 +12,42 @@ and this project adheres to
 [Unreleased]
 -------------------------------------------------------------------------------
 
+-------------------------------------------------------------------------------
+[2.5.0] - 2021-03-05
+-------------------------------------------------------------------------------
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Added
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- New GraphQL API: ``{cluster {suggestions {force_apply {uuid reasons}}}}`` to
-  heal the cluster in case of config errors like ``Configuration checksum mismatch``,
+Issues and suggestions:
+
+- Show an issue when ``ConfiguringRoles`` state gets stuck for more than 5s.
+
+- New GraphQL API: ``{ cluster { suggestions { force_apply } } }`` to heal the
+  cluster in case of config errors like ``Configuration checksum mismatch``,
   ``Configuration is prepared and locked``, and sometimes ``OperationError``.
-- Show an issue when ``ConfiguringRoles`` state stucks for more than 5s.
-- New GraphQL API: ``{cluster {suggestions {disable_servers {uuid}}}}``
-  to restore the quorum in case of some servers go offline.
-- New ``cartridge.cfg`` option ``webui_enabled`` (default: true). Otherwise,
-  HTTP server remains operable (and GraphQL too), but serves user-defined roles
-  API only.
-- New ``cartridge.cfg`` option ``http_host`` (default: 0.0.0.0). It is used
-  to specify the host on which administrative UI and API will be opened.
-- Refactor two-phase commit logics: don't use hardcoded timeout value for the
-  ``prepare`` stage, move ``upload`` to a separate stage.
-- Allow operating cluster from an unconfigured instance WebUI.
+
+- New GraphQL API: ``{ cluster { suggestions { disable_servers } } }`` to
+  restore the quorum in case of some servers go offline.
+
+Configuration options:
+
+- New ``cartridge.cfg`` option ``webui_enabled`` (default: ``true``). Otherwise,
+  HTTP server remains operable (and GraphQL too), but serves user-defined
+  roles API only.
+
+- New ``cartridge.cfg`` option ``http_host`` (default: ``0.0.0.0``) which
+  allows to specify the bind address of the HTTP server.
+
+Miscellaneous:
+
+- Allow observing cluster from an unconfigured instance WebUI.
+
+- Introduce a new graphql parser (``libgraphqlparser`` instead of ``lulpeg``).
+  It conforms to the newer GraphQL specification and provides better error
+  messages. The "null" literal is now supported. But some other GraphQL
+  expressions are considered invalid (e.g. empty subselection).
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
@@ -39,32 +57,26 @@ Fixed
   The problem affected long-running clusters and resulted in flooding logs with
   the "Etcd cluster id mismatch" warnings.
 
+- Refactor two-phase commit (``patch_clusterwide``) logics: don't use hardcoded
+  timeout for the ``prepare`` stage, move ``upload`` to a separate stage.
+
+- Eliminate GraphQL error "No value provided for non-null ReplicaStatus" when
+  a replica is removed from the ``box.space._cluster``.
+
 - Allow specifying server zone in ``join_server`` API.
 
-- Fix corner cases when querying server zones.
-
-- Don't make yaml formatting ugly during config upload.
-
-- "No value provided for non-null ReplicaStatus" GraphQL error
-  after removing a replica from the `box.space._cluster`.
+- Don't make formatting ugly during config upload.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Enhanced is WebUI
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- Displaying errors of changing server zones.
-
-- Indication of disabled instances and manual disability state controls
-  in replicaset list.
-
-- Using storage and router role names specified in GraphQL.
-
+- Allow disabling instances and fix their style.
 - Show a suggestion to disable broken instances.
-
 - Show a suggestion to force reapply clusterwide configuration.
-
-- Hide bootstrap button when it's not necessary
-  (e.g. before the cluster is bootstrapped, and in vshardless cluster too).
+- Hide the bootstrap button when it's not necessary (e.g. before the cluster
+  is bootstrapped, and in vshardless cluster too).
+- Properly display an error if changing server zone fails.
 
 -------------------------------------------------------------------------------
 [2.4.0] - 2020-12-29
@@ -94,7 +106,7 @@ Fencing:
 
 Issues and suggestions:
 
-- New GraphQL API: ``{cluster {suggestions {refine_uri {}}}}`` to heal the
+- New GraphQL API: ``{ cluster { suggestions { refine_uri } } }`` to heal the
   cluster after relocation of servers ``advertise_uri``.
 
 - New Lua API ``cartridge.config_force_reapply()`` and similar GraphQL mutation
