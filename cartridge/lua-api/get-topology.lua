@@ -67,16 +67,16 @@ local lua_api_proxy = require('cartridge.lua-api.proxy')
 -- @treturn[2] nil
 -- @treturn[2] table Error description
 local function get_topology()
-    local ret, err = lua_api_proxy.call(mod_name .. '.get_topology')
-    if ret ~= nil then
-        return ret
-    elseif err ~= nil then
-        return nil, err
-    end
-
     local state, err = confapplier.get_state()
-    -- OperationError doesn't influence observing topology
-    if state == 'InitError' or state == 'BootError' then
+    if state == 'Unconfigured' and lua_api_proxy.can_call() then
+        -- Try to proxy call
+        local ret = lua_api_proxy.call(mod_name .. '.get_topology')
+        if ret ~= nil then
+            return ret
+        -- else
+            -- Don't return an error, go on
+        end
+    elseif state == 'InitError' or state == 'BootError' then
         return nil, err
     end
 

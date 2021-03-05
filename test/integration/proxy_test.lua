@@ -9,70 +9,56 @@ g.before_each(function()
         datadir = fio.tempdir(),
         use_vshard = false,
         server_command = helpers.entrypoint('srv_basic'),
-        cookie = require('digest').urandom(6):hex(),
-        replicasets = {
-            {
-                alias = 'main',
-                uuid = helpers.uuid('a'),
-                roles =  {'vshard-router', 'vshard-storage'},
-                servers = {
-                    {instance_uuid = helpers.uuid('a', 'a', 1)},
-                },
-            }
-        },
+        cookie = helpers.random_cookie(),
+        replicasets = {{
+            alias = 'main',
+            roles =  {},
+            servers = 1,
+        }},
+    })
+    g.cluster:start()
+
+    g.main_server = g.cluster.main_server
+    g.unconfigured = helpers.Server:new({
+        alias = 'unconfigured',
+        workdir = fio.pathjoin(g.cluster.datadir, 'unconfigured'),
+        command = helpers.entrypoint('srv_basic'),
+        cluster_cookie = g.cluster.cookie,
+        http_port = 8082,
+        advertise_port = 13302,
+        replicaset_uuid = g.cluster.main_server.replicaset_uuid,
     })
 
-    g.servers = {}
-    for i = 2, 3 do
-        local http_port = 8080 + i
-        local advertise_port = 13300 + i
-        local alias = string.format('srv%d', i - 1)
-
-        g.servers[i - 1] = helpers.Server:new({
-            alias = alias,
-            command = helpers.entrypoint('srv_basic'),
-            workdir = fio.pathjoin(g.cluster.datadir, alias),
-            cluster_cookie = g.cluster.cookie,
-            http_port = http_port,
-            advertise_port = advertise_port,
-            instance_uuid = helpers.uuid('a', 'a', i),
-        })
-    end
-
-    for _, server in pairs(g.servers) do
-        server:start()
-    end
-    g.cluster:start()
+    g.unconfigured:start()
+    t.helpers.retrying({}, function()
+        g.unconfigured:graphql({query = '{ servers {uri} }'})
+        local probe = g.unconfigured.net_box:call(
+            'package.loaded.membership.probe_uri',
+            {g.main_server.advertise_uri}
+        )
+        t.assert_equals(probe, true)
+    end)
 end)
 
 g.after_each(function()
-    for _, server in pairs(g.servers or {}) do
-        server:stop()
-    end
+    g.unconfigured:stop()
     g.cluster:stop()
 
     fio.rmtree(g.cluster.datadir)
+    g.unconfigured = nil
     g.cluster = nil
-    g.servers = nil
 end)
 
-
-local function edit_topology(server, rpl_uuid, join_servers)
+local function edit_replicasets(server, args)
     return server:graphql({query = [[
         mutation($replicasets: [EditReplicasetInput]) {
             cluster {
                 edit_topology(replicasets: $replicasets) {
                     servers {uuid uri}
-                    replicasets {uuid master { uuid uri }}
                 }
             }
         }]],
-        variables = {
-            replicasets = {{
-                uuid = rpl_uuid,
-                join_servers = join_servers,
-            }}
-        },
+        variables = {replicasets = args},
         raise = false,
     })
 end
@@ -83,65 +69,99 @@ local function get_topology(server)
     }).data.servers
 end
 
-function g.test_dead_destination()
-    local server = g.servers[1]
+function g.test_alive_destination()
+    -- both instances show the same info
+    local expected = {
+        {uri = 'localhost:13301', uuid = g.main_server.instance_uuid},
+        {uri = 'localhost:13302', uuid = ''},
+    }
+    t.assert_items_equals(get_topology(g.main_server), expected)
+    t.assert_items_equals(get_topology(g.unconfigured), expected)
 
-    g.cluster.main_server:stop()
-    server.net_box:call(
-        'package.loaded.membership.probe_uri',
-        {g.cluster.main_server.advertise_uri}
+    -- join unconfigured server to the existing cluster
+    local join_servers = {{
+        uuid = g.unconfigured.instance_uuid,
+        uri = g.unconfigured.advertise_uri,
+    }}
+    t.assert_equals(
+        edit_replicasets(g.unconfigured, {{
+            uuid = g.unconfigured.replicaset_uuid,
+            join_servers = join_servers
+        }}),
+        {data = {cluster = {edit_topology = {servers = join_servers}}}}
     )
 
-    local resp = get_topology(server)
-    t.assert_items_include(resp, {
-        {uri = 'localhost:13303', uuid = ''},
-        {uri = 'localhost:13302', uuid = ''}
-    })
-
-    local rpl_uuid = helpers.uuid('b')
-    local resp = edit_topology(server, rpl_uuid,
-        {{uri = 'localhost:13302', uuid = server.instance_uuid}}
-    ).data.cluster.edit_topology
-
-    t.assert_equals(resp.replicasets, {{
-        master = {uri = "localhost:13302", uuid = server.instance_uuid},
-        uuid = rpl_uuid,
-    }})
-    t.assert_equals(resp.servers, {
-        {uri = "localhost:13302", uuid = server.instance_uuid}
-    })
+    -- both instances show the same
+    t.assert_items_equals(
+        get_topology(g.main_server),
+        get_topology(g.unconfigured)
+    )
 end
 
-function g.test_alive_destination()
-    local server = g.servers[1]
-    server.net_box:call(
-        'package.loaded.membership.probe_uri',
-        {g.cluster.main_server.advertise_uri}
-    )
-
-    -- check get_topology proxy works
-    local topology_from_bootsrapped = get_topology(g.cluster.main_server)
-    local topology_from_unconfigured = get_topology(server)
-    t.assert_items_include(topology_from_bootsrapped, {
-        {uri = 'localhost:13302', uuid = ''},
-        {uri = 'localhost:13301', uuid = g.cluster.main_server.instance_uuid},
-        {uri = 'localhost:13303', uuid = ''}
-    })
-    t.assert_items_include(topology_from_unconfigured, topology_from_bootsrapped)
-
-    -- bootstrap remotely
-    local join_servers = {
-        {uri = 'localhost:13302', uuid = g.servers[1].instance_uuid},
-        {uri = 'localhost:13303', uuid = g.servers[2].instance_uuid}
-    }
-
-    local resp = edit_topology(
-        server, helpers.uuid('a'), join_servers
-    ).data.cluster.edit_topology
-
-    t.assert_equals(resp.replicasets, {{
-        master = {uri = "localhost:13301", uuid = helpers.uuid('a', 'a', 1)},
-        uuid = helpers.uuid('a'),
+function g.test_dead_destination()
+    g.main_server.net_box:call('box.cfg', {{
+        listen = box.NULL, -- restrict connections
+        replication = box.NULL, -- produce an issue
     }})
-    t.assert_items_include(resp.servers, join_servers)
+    helpers.run_remotely(g.unconfigured, function()
+        -- Make sure unconfigured server isn't connected to main.
+        local t = require('luatest')
+        local pool = require('cartridge.pool')
+        pool.connect('localhost:13301', {wait_connected = false}):close()
+        local ok, err = pool.connect('localhost:13301')
+        t.assert_equals(ok, nil)
+        t.assert_covers(err, {
+            class_name = 'NetboxConnectError',
+            err = '"localhost:13301": Connection refused',
+        })
+
+        -- But it's alive in membership and suitable for proxying
+        local proxy = require('cartridge.lua-api.proxy')
+        t.assert_equals(proxy.can_call(), true)
+    end)
+
+    t.assert_items_equals(get_topology(g.main_server), {
+        {uri = 'localhost:13301', uuid = g.main_server.instance_uuid},
+        {uri = 'localhost:13302', uuid = ''},
+    })
+    t.assert_items_equals(get_topology(g.unconfigured), {
+        {uri = 'localhost:13302', uuid = ''},
+    })
+
+    -- Todo check alien issue in scope of
+    -- https://github.com/tarantool/cartridge/issues/1301
+
+    t.assert_covers(
+        edit_replicasets(g.unconfigured, {{
+            uuid = g.unconfigured.replicaset_uuid,
+            join_servers = {{
+                uuid = g.unconfigured.instance_uuid,
+                uri = g.unconfigured.advertise_uri,
+            }}
+        }}).errors[1],
+        {message = 'Connection refused'}
+    )
+end
+
+function g.test_issues()
+    -- Check that issue are proxied
+    g.main_server.net_box:eval([[
+        local workdir = require('cartridge.confapplier').get_workdir()
+        require('fio').mktree(workdir .. '/config.prepare/lock')
+    ]])
+
+    local expected_issues = {{
+        level = "warning",
+        topic = "config_locked",
+        instance_uuid = g.main_server.instance_uuid,
+        replicaset_uuid = g.main_server.replicaset_uuid,
+        message = 'Configuration is prepared and locked' ..
+            ' on localhost:13301 (main-1)',
+    }}
+
+    t.assert_items_equals(helpers.list_cluster_issues(g.main_server), expected_issues)
+    t.assert_items_equals(helpers.list_cluster_issues(g.unconfigured), expected_issues)
+
+    g.main_server:stop()
+    t.assert_items_equals(helpers.list_cluster_issues(g.unconfigured), {})
 end

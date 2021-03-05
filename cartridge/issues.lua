@@ -341,10 +341,16 @@ local function list_on_instance(opts)
 end
 
 local function list_on_cluster()
-    local ret, err = lua_api_proxy.call(mod_name .. '.list_on_cluster')
-    if ret ~= nil then
-        return ret
-    elseif err ~= nil then
+    local state, err = confapplier.get_state()
+    if state == 'Unconfigured' and lua_api_proxy.can_call()  then
+        -- Try to proxy call
+        local ret = lua_api_proxy.call(mod_name .. '.list_on_cluster')
+        if ret ~= nil then
+            return ret
+        -- else
+            -- Don't return an error, go on
+        end
+    elseif state == 'InitError' or state == 'BootError' then
         return nil, err
     end
 

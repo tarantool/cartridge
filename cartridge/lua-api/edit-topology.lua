@@ -282,10 +282,11 @@ local function edit_topology(args)
         servers = '?table',
     })
 
-    local ret, err = lua_api_proxy.call(mod_name .. '.edit_topology', args)
-    if ret ~= nil then
-        return ret
-    elseif err ~= nil then
+    local state, err = confapplier.get_state()
+    if state == 'Unconfigured' and lua_api_proxy.can_call() then
+        -- Try to proxy call
+        return lua_api_proxy.call(mod_name .. '.edit_topology', args)
+    elseif state == 'InitError' or state == 'BootError' then
         return nil, err
     end
 

@@ -1,26 +1,20 @@
+local mod_name = 'cartridge.lua-api.proxy'
+
+local log = require('log')
 local yaml = require('yaml')
 local checks = require('checks')
 local errors = require('errors')
 local membership = require('membership')
 
 local pool = require('cartridge.pool')
-local confapplier = require('cartridge.confapplier')
-
-local vars = require('cartridge.vars').new('cartridge.lua-api.proxy')
-
+local vars = require('cartridge.vars').new(mod_name)
 vars:new('destination')
 
-local function call(function_name, ...)
-    checks('string')
-
-    if confapplier.get_state() ~= 'Unconfigured' then
-        return nil
-    end
-
+local function get_destination()
     if vars.destination ~= nil then
         local member = membership.get_member(vars.destination)
         if member ~= nil and member.status == 'alive' then
-            goto call
+            return vars.destination
         else
             vars.destination = nil
         end
@@ -44,12 +38,18 @@ local function call(function_name, ...)
         ::continue::
     end
 
-    if vars.destination == nil then
-        return nil
-    end
+    return vars.destination
+end
 
-::call::
-    local conn = pool.connect(vars.destination, {wait_connected = false})
+local function can_call()
+    return get_destination() ~= nil
+end
+
+local function call(function_name, ...)
+    checks('string')
+
+    local destination = get_destination()
+    local conn = pool.connect(destination, {wait_connected = false})
 
     -- Both get_topology and edit_topology API return recursive lua
     -- tables which can't be passed over netbox as is. So we transfer
@@ -62,6 +62,7 @@ local function call(function_name, ...)
 
     if ret == nil then
         vars.destination = nil
+        log.warn('Proxy %s to %s: %s', function_name, destination, err)
         return nil, err
     end
 
@@ -69,5 +70,6 @@ local function call(function_name, ...)
 end
 
 return {
+    can_call = can_call,
     call = call,
 }
