@@ -9,6 +9,7 @@ import {
   IconEdit,
   Text,
   TiledList,
+  TiledListItem,
   Tooltip
 } from '@tarantool.io/ui-kit';
 import ReplicasetRoles from 'src/components/ReplicasetRoles';
@@ -170,11 +171,10 @@ class ReplicasetList extends React.PureComponent {
       <>
         <TiledList
           className={className}
-          corners='soft'
-          itemKey='uuid'
-          items={replicasetList}
-          itemRender={replicaset => (
-            <React.Fragment>
+          outer={false}
+        >
+          {replicasetList.map(replicaset => (
+            <TiledListItem key={replicaset.uuid} corners='soft'>
               <div className={styles.header}>
                 <Tooltip className={styles.aliasTooltip} content={replicaset.alias}>
                   <Text className={styles.alias} variant='h3'>{replicaset.alias}</Text>
@@ -243,10 +243,9 @@ class ReplicasetList extends React.PureComponent {
                 createReplicaset={createReplicaset}
                 onServerLabelClick={onServerLabelClick}
               />
-            </React.Fragment>
-          )}
-          outer={false}
-        />
+            </TiledListItem>
+          ))}
+        </TiledList>
         <ClusterIssuesModal
           visible={showReplicasetIssues || false}
           issues={issues.filter(({ replicaset_uuid }) => replicaset_uuid === showReplicasetIssues)}

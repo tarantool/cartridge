@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { css, cx } from 'react-emotion';
 import {
+  FlatListItem,
   HealthStatus,
   IconBucket,
   IconChip,
@@ -19,7 +20,6 @@ import { type MemoryUsageRatios } from 'src/misc/memoryStatistics';
 import { getMemoryFragmentationLevel } from 'src/store/selectors/clusterPage';
 import { ServerDropdown } from 'src/components/ServerDropdown';
 import { type Label } from 'src/components/ServerLabels';
-import { FlatListItem } from './FlatList';
 
 const SERVER_LABELS_HIGHLIGHTING_CLASS = 'ServerLabelsHighlightingArea';
 

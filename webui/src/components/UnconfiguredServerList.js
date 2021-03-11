@@ -8,6 +8,7 @@ import {
   HealthStatus,
   Text,
   TiledList,
+  TiledListItem,
   UriLabel
 } from '@tarantool.io/ui-kit';
 import type { Server } from 'src/generated/graphql-typing';
@@ -77,12 +78,14 @@ class UnconfiguredServerList extends React.PureComponent<UnconfiguredServerListP
 
     return (
       <TiledList
-        className='meta-test__UnconfiguredServerList'
-        itemClassName={cx(styles.row, this.props.className)}
-        itemKey="uri"
-        items={dataSource}
-        itemRender={item => (
-          <React.Fragment>
+        className={cx(
+          this.props.className,
+          'meta-test__UnconfiguredServerList'
+        )}
+        outer={false}
+      >
+        {dataSource.map(item => (
+          <TiledListItem className={styles.row} itemKey={item.uri}>
             {/* <Checkbox
               className={styles.checkBox}
               checked={false}
@@ -108,10 +111,9 @@ class UnconfiguredServerList extends React.PureComponent<UnconfiguredServerListP
               onClick={() => this.props.onServerConfigure(item)}
               text='Configure'
             />
-          </React.Fragment>
-        )}
-        outer={false}
-      />
+          </TiledListItem>
+        ))}
+      </TiledList>
     );
   };
 
