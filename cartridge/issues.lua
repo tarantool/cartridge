@@ -427,6 +427,25 @@ local function list_on_cluster()
         end
     end
 
+    -- Check aliens in membership
+
+    for uri, member in membership.pairs() do
+        local uuid = member.payload.uuid
+        if member.status ~= 'left' and uuid ~= nil
+            and topology_cfg.servers[uuid] == nil
+        then
+            table.insert(ret, {
+                level = 'warning',
+                topic = 'aliens',
+                message = string.format(
+                    'Unknown instance at membership table %s',
+                    describe(uri)
+                )
+            })
+        end
+    end
+
+
     -- Get each instance issues (replication, failover, memory usage)
 
     local twophase_vars = require('cartridge.vars').new('cartridge.twophase')

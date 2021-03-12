@@ -253,3 +253,37 @@ function g.test_state_hangs()
 
     t.assert_equals(helpers.list_cluster_issues(master), {})
 end
+
+function g.test_alien_uuids()
+    local master = g.cluster.main_server
+    local replica2 = g.cluster:server('replica2')
+
+    -- reset replica2 membership data
+    replica2.net_box:eval([[
+        local uuid = ...
+        local membership = require('membership')
+        _G.__old_member_data = membership.myself().payload
+        membership.init('localhost', 13309)
+        membership.set_payload('uuid', uuid)
+        membership.set_payload('alias', 'alien')
+        membership.probe_uri('localhost:13301')
+    ]], {helpers.uuid('b', 'b', 1)})
+
+    t.assert_equals(helpers.list_cluster_issues(master), {{
+        level = 'warning',
+        topic = 'aliens',
+        message = 'Unknown instance at membership table localhost:13309 (alien)',
+    }})
+
+    -- restore replica2 membership data
+    replica2.net_box:eval([[
+        local membership = require('membership')
+        membership.leave()
+        membership.init('localhost', 13303)
+        for k, v in pairs (_G.__old_member_data) do
+            membership.set_payload(k, v)
+        end
+        membership.probe_uri('localhost:13301')
+    ]])
+    t.assert_equals(helpers.list_cluster_issues(master), {})
+end
