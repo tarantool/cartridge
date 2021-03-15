@@ -21,6 +21,14 @@ Issues and suggestions:
 - Extend GraphQL ``issues`` API with ``aliens`` topic. The issues warns if
   two separate clusters share the same cluster cookie.
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Fixed
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- The ``commit_2pc`` on every instance individually decides whether the new
+  config has no changes compared to the local one. If so, ``apply_config`` will
+  be skipped.
+
 -------------------------------------------------------------------------------
 [2.5.0] - 2021-03-05
 -------------------------------------------------------------------------------

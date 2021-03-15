@@ -18,7 +18,7 @@ g.before_all(function()
         replicasets = {{
             alias = 'main',
             uuid = helpers.uuid('a'),
-            roles = {},
+            roles = {'myrole-permanent'},
             servers = {
                 -- first upload group: s1 and s2
                 {env = {TARANTOOL_UPLOAD_PREFIX = g.upload_path_1}},
@@ -158,4 +158,92 @@ function g.test_finish_failure()
         twophase_vars.options.netbox_call_timeout = 0.1
         _G.__cartridge_upload_finish = _G.upload_finish_original
     ]])
+end
+
+function g.test_unchanged_config()
+    -- s2 will think that every prepared_config has no changes
+    g.s2.net_box:eval([[
+        _G.old_commit_2pc = _G.__cartridge_clusterwide_config_commit_2pc
+        _G.__cartridge_clusterwide_config_commit_2pc = function()
+            local vars = require('cartridge.vars').new('cartridge.twophase')
+            local confapplier = require('cartridge.confapplier')
+            vars.prepared_config = confapplier.get_active_config()
+            return _G.old_commit_2pc()
+        end
+    ]])
+
+    local function config_version()
+        local res = {}
+        local q_get_version = [[
+            local confapplier = require('cartridge.confapplier')
+            local config = confapplier.get_active_config()
+            return config:get_readonly()['version.txt']
+        ]]
+        res.s1 = g.s1.net_box:eval(q_get_version)
+        res.s2 = g.s2.net_box:eval(q_get_version)
+        res.s3 = g.s3.net_box:eval(q_get_version)
+        return res
+    end
+
+    local function new_version(version)
+        local result, err = g.s1.net_box:call(
+            'package.loaded.cartridge.config_patch_clusterwide',
+            {{['version.txt'] = version}}
+        )
+        t.assert_equals(err, nil)
+        t.assert_equals(result, true)
+    end
+
+    -- s2 will not apply 'unchanged' config.
+    -- However it is ok for s1 and s3.
+    new_version('1')
+    t.assert_covers(config_version(), {s1 = '1', s2 = box.NULL, s3 = '1'})
+
+    -- Trigger OperationError on s3. That means that apply_config can't be
+    -- skipped even if config is unchanged.
+    g.s3.net_box:eval([[
+        package.loaded['mymodule-permanent'].apply_config = function()
+            error('Artificial Error', 0)
+        end
+    ]])
+    local function force_reapply(uuids)
+        return g.cluster.main_server:graphql({
+            query = [[mutation($uuids: [String]) {
+                cluster { config_force_reapply(uuids: $uuids) }
+            }]],
+            variables = {uuids = uuids}
+        })
+    end
+    t.assert_error_msg_equals(
+        'Artificial Error',
+        force_reapply, {g.s3.instance_uuid}
+    )
+    helpers.wish_state(g.s3, 'OperationError')
+
+    -- Fix s2 and s3. s2 will recognize previous config as new. It is unchanged
+    -- for others. But s3's state is OperationError thus config will be
+    -- reapplied.
+    g.s1.net_box:eval([[
+        package.loaded['mymodule-permanent'].apply_config = function()
+            error('Should not be called', 0)
+        end
+    ]])
+    g.s2.net_box:eval([[
+        _G.__cartridge_clusterwide_config_commit_2pc = _G.old_commit_2pc
+        _G.old_commit_2pc = nil
+    ]])
+    g.s3.net_box:eval([[
+        package.loaded['mymodule-permanent'].apply_config = nil
+    ]])
+
+    new_version('1')
+    t.assert_covers(config_version(), {s1 = '1', s2 = '1', s3 = '1'})
+    helpers.wish_state(g.s3, 'RolesConfigured')
+
+
+    g.s1.net_box:eval([[
+        package.loaded['mymodule-permanent'].apply_config = nil
+    ]])
+    new_version('2')
+    t.assert_covers(config_version(), {s1 = '2', s2 = '2', s3 = '2'})
 end
