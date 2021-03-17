@@ -25,9 +25,9 @@ Issues and suggestions:
 Fixed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- The ``commit_2pc`` on every instance individually decides whether the new
-  config has no changes compared to the local one. If so, ``apply_config`` will
-  be skipped.
+- Don't skip two-phase commit prematurely. From now on, the decision to skip
+  the ``apply_config`` is made by every instance individually. The validation
+  step is never skipped.
 
 -------------------------------------------------------------------------------
 [2.5.0] - 2021-03-05
