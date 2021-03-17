@@ -43,6 +43,7 @@ g.before_all(function()
 end)
 
 g.after_all(function()
+    g.alien:stop()
     g.cluster:stop()
     fio.rmtree(g.cluster.datadir)
 end)
@@ -263,21 +264,21 @@ function g.test_state_hangs()
     t.assert_equals(helpers.list_cluster_issues(master), {})
 end
 
-function g.test_alien_uuids()
+function g.test_aliens()
     local master = g.cluster.main_server
 
     g.alien:start()
-    g.alien.net_box:eval([[
-        local uuid = ...
+    helpers.run_remotely(g.alien, function()
         local membership = require('membership')
-        membership.set_payload('uuid', uuid)
+        membership.set_payload('uuid', '( OO )')
         membership.probe_uri('localhost:13301')
-    ]], {helpers.uuid('b', 'b', 1)})
+    end)
 
     t.assert_equals(helpers.list_cluster_issues(master), {{
         level = 'warning',
         topic = 'aliens',
-        message = 'Instance localhost:13309 (alien) with alien uuid is in the membership',
+        message = 'Instance localhost:13309 (alien)' ..
+            ' with alien uuid is in the membership',
     }})
 
     g.alien:stop()

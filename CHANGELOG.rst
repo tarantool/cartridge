@@ -18,9 +18,8 @@ Added
 
 Issues and suggestions:
 
-- Extend GraphQL ``issues`` API with ``aliens`` topic. This issues shows that
-  instance from another cluster with the same cluster cookie are visible in
-  membership table.
+- Extend GraphQL ``issues`` API with ``aliens`` topic. The issues warns if
+  two separate clusters share the same cluster cookie.
 
 -------------------------------------------------------------------------------
 [2.5.0] - 2021-03-05

@@ -19,7 +19,7 @@
 -- * "Failover is stuck on ...: Error fetching appointments (...)";
 -- * "Failover is stuck on ...: Failover fiber is dead" -
 --   this is likely a bug;
-
+--
 -- Switchover:
 --
 -- * "Consistency on ... isn't reached yet";
@@ -45,9 +45,10 @@
 -- * "Advertise URI (...) differs from clusterwide config (...)";
 -- * "Configuring roles is stuck on ... and hangs for ... so far";
 --
--- Aliens:
+-- Alien members:
 --
--- * "Instance ... with alien uuid is in the membership"
+-- * "Instance ... with alien uuid is in the membership" -
+--   when two separate clusters share the same cluster cookie;
 --
 -- @module cartridge.issues
 -- @local
