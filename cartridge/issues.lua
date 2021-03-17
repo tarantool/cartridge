@@ -19,7 +19,7 @@
 -- * "Failover is stuck on ...: Error fetching appointments (...)";
 -- * "Failover is stuck on ...: Failover fiber is dead" -
 --   this is likely a bug;
-
+--
 -- Switchover:
 --
 -- * "Consistency on ... isn't reached yet";
@@ -44,6 +44,11 @@
 -- * "Configuration is prepared and locked on ...";
 -- * "Advertise URI (...) differs from clusterwide config (...)";
 -- * "Configuring roles is stuck on ... and hangs for ... so far";
+--
+-- Alien members:
+--
+-- * "Instance ... with alien uuid is in the membership" -
+--   when two separate clusters share the same cluster cookie;
 --
 -- @module cartridge.issues
 -- @local
@@ -426,6 +431,26 @@ local function list_on_cluster()
             })
         end
     end
+
+    -- Check aliens in membership
+
+    for uri, member in membership.pairs() do
+        local uuid = member.payload.uuid
+        if member.status == 'alive'
+        and uuid ~= nil
+        and topology_cfg.servers[uuid] == nil
+        then
+            table.insert(ret, {
+                level = 'warning',
+                topic = 'aliens',
+                message = string.format(
+                    'Instance %s with alien uuid is in the membership',
+                    describe(uri)
+                )
+            })
+        end
+    end
+
 
     -- Get each instance issues (replication, failover, memory usage)
 

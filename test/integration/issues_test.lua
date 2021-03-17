@@ -31,9 +31,19 @@ g.before_all(function()
         }
     })
     g.cluster:start()
+
+    g.alien = helpers.Server:new({
+        alias = 'alien',
+        workdir = fio.pathjoin(g.cluster.datadir, 'alien'),
+        command = helpers.entrypoint('srv_basic'),
+        cluster_cookie = g.cluster.cookie,
+        advertise_port = 13309,
+        http_port = 8089,
+    })
 end)
 
 g.after_all(function()
+    g.alien:stop()
     g.cluster:stop()
     fio.rmtree(g.cluster.datadir)
 end)
@@ -252,4 +262,27 @@ function g.test_state_hangs()
     replica1.net_box:eval(set_state, {'RolesConfigured'})
 
     t.assert_equals(helpers.list_cluster_issues(master), {})
+end
+
+function g.test_aliens()
+    local master = g.cluster.main_server
+
+    g.alien:start()
+    helpers.run_remotely(g.alien, function()
+        local membership = require('membership')
+        membership.set_payload('uuid', '( OO )')
+        membership.probe_uri('localhost:13301')
+    end)
+
+    t.assert_equals(helpers.list_cluster_issues(master), {{
+        level = 'warning',
+        topic = 'aliens',
+        message = 'Instance localhost:13309 (alien)' ..
+            ' with alien uuid is in the membership',
+    }})
+
+    g.alien:stop()
+    t.helpers.retrying({}, function()
+        t.assert_equals(helpers.list_cluster_issues(master), {})
+    end)
 end
