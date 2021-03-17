@@ -31,6 +31,15 @@ g.before_all(function()
         }
     })
     g.cluster:start()
+
+    g.alien = helpers.Server:new({
+        alias = 'alien',
+        workdir = fio.pathjoin(g.cluster.datadir, 'alien'),
+        command = helpers.entrypoint('srv_basic'),
+        cluster_cookie = g.cluster.cookie,
+        advertise_port = 13309,
+        http_port = 8089,
+    })
 end)
 
 g.after_all(function()
@@ -256,34 +265,23 @@ end
 
 function g.test_alien_uuids()
     local master = g.cluster.main_server
-    local replica2 = g.cluster:server('replica2')
 
-    -- reset replica2 membership data
-    replica2.net_box:eval([[
+    g.alien:start()
+    g.alien.net_box:eval([[
         local uuid = ...
         local membership = require('membership')
-        _G.__old_member_data = membership.myself().payload
-        membership.init('localhost', 13309)
         membership.set_payload('uuid', uuid)
-        membership.set_payload('alias', 'alien')
         membership.probe_uri('localhost:13301')
     ]], {helpers.uuid('b', 'b', 1)})
 
     t.assert_equals(helpers.list_cluster_issues(master), {{
         level = 'warning',
         topic = 'aliens',
-        message = 'Unknown instance at membership table localhost:13309 (alien)',
+        message = 'Instance localhost:13309 (alien) with alien uuid is in the membership',
     }})
 
-    -- restore replica2 membership data
-    replica2.net_box:eval([[
-        local membership = require('membership')
-        membership.leave()
-        membership.init('localhost', 13303)
-        for k, v in pairs (_G.__old_member_data) do
-            membership.set_payload(k, v)
-        end
-        membership.probe_uri('localhost:13301')
-    ]])
-    t.assert_equals(helpers.list_cluster_issues(master), {})
+    g.alien:stop()
+    t.helpers.retrying({}, function()
+        t.assert_equals(helpers.list_cluster_issues(master), {})
+    end)
 end

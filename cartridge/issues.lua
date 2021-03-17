@@ -45,6 +45,10 @@
 -- * "Advertise URI (...) differs from clusterwide config (...)";
 -- * "Configuring roles is stuck on ... and hangs for ... so far";
 --
+-- Aliens:
+--
+-- * "Instance ... with alien uuid is in the membership"
+--
 -- @module cartridge.issues
 -- @local
 local mod_name = 'cartridge.issues'
@@ -431,14 +435,15 @@ local function list_on_cluster()
 
     for uri, member in membership.pairs() do
         local uuid = member.payload.uuid
-        if member.status ~= 'left' and uuid ~= nil
-            and topology_cfg.servers[uuid] == nil
+        if member.status == 'alive'
+        and uuid ~= nil
+        and topology_cfg.servers[uuid] == nil
         then
             table.insert(ret, {
                 level = 'warning',
                 topic = 'aliens',
                 message = string.format(
-                    'Unknown instance at membership table %s',
+                    'Instance %s with alien uuid is in the membership',
                     describe(uri)
                 )
             })
