@@ -12,9 +12,9 @@ g.before_all(function()
         server_command = helpers.entrypoint('srv_basic'),
         cookie = "secret-cluster-cookie",
         replicasets = {{
-                           alias = 'r1',
+                           alias = 'r',
                            roles = {'vshard-router'},
-                           servers = 1,
+                           servers = 3,
                        },
                        {
                            alias = 's1',
@@ -25,7 +25,9 @@ g.before_all(function()
     })
     g.cluster:start()
 
-    g.r1 = g.cluster:server('r1-1')
+    g.r1 = g.cluster:server('r-1')
+    g.r2 = g.cluster:server('r-2')
+    g.r3 = g.cluster:server('r-3')
     g.s1_zone_2_master = g.cluster:server('s1-1')
     g.s1_zone_1_replica = g.cluster:server('s1-2')
     g.s1_zone_3_replica = g.cluster:server('s1-3')
@@ -75,6 +77,8 @@ end
 function g.test_spec()
     local ok, err = set_zones({
         [g.r1.instance_uuid] = 'z1',
+        [g.r2.instance_uuid] = 'z2',
+        [g.r3.instance_uuid] = 'z3',
         [g.s1_zone_1_replica.instance_uuid] = 'z1',
         [g.s1_zone_2_master.instance_uuid] = 'z2',
         [g.s1_zone_3_replica.instance_uuid] = 'z3',
@@ -83,35 +87,65 @@ function g.test_spec()
 
     local topology_cfg = get_config('topology')
     t.assert_equals(topology_cfg.servers[g.r1.instance_uuid].zone, 'z1')
+    t.assert_equals(topology_cfg.servers[g.r2.instance_uuid].zone, 'z2')
+    t.assert_equals(topology_cfg.servers[g.r3.instance_uuid].zone, 'z3')
     t.assert_equals(topology_cfg.servers[g.s1_zone_1_replica.instance_uuid].zone, 'z1')
     t.assert_equals(topology_cfg.servers[g.s1_zone_2_master.instance_uuid].zone, 'z2')
     t.assert_equals(topology_cfg.servers[g.s1_zone_3_replica.instance_uuid].zone, 'z3')
 
     local distances = {
-        z1 = {z2 = 10, z3 = 1},
+        z1 = {z2 = 10, z3 = 11},
         z2 = {z1 = 10, z3 = 12},
-        z3 = {z1 = 1, z2 =  12},
+        z3 = {z1 = 11, z2 =  12},
     }
     local ok, err = set_distances(distances)
     t.assert_equals({ok, err}, {true, nil})
     t.assert_items_equals(get_config('zone_distances'), distances)
 
 
-    local res = g.r1.net_box:eval([[
-        local vshard = require('vshard')
-        local replicaset_uuid = ...
-        return vshard.router.routeall()[replicaset_uuid]:callre("box.info")
-    ]], {g.s1_zone_3_replica.replicaset_uuid})
-
-
-    log.info("res: " .. res.uuid)
     log.info("s1_zone_1_replica: " .. g.s1_zone_1_replica.instance_uuid)
     log.info("s1_zone_2_master: " .. g.s1_zone_2_master.instance_uuid)
     log.info("s1_zone_3_replica: " .. g.s1_zone_3_replica.instance_uuid)
-    -- always goes to master
-    -- it will be wrong:
-    t.assert_equals(res.uuid, g.s1_zone_3_replica.instance_uuid)
+
+    helpers.retrying({}, function()
+        local res = g.r1.net_box:eval([[
+            local vshard = require('vshard')
+            local replicaset_uuid = ...
+            return vshard.router.routeall()[replicaset_uuid]:callre("box.info")
+        ]], {g.s1_zone_3_replica.replicaset_uuid})
 
 
+        log.info("res: " .. res.uuid)
+
+        t.assert_equals(res.uuid, g.s1_zone_1_replica.instance_uuid)
+    end)
+
+
+    helpers.retrying({}, function()
+        local res = g.r2.net_box:eval([[
+            local vshard = require('vshard')
+            local replicaset_uuid = ...
+            return vshard.router.routeall()[replicaset_uuid]:callre("box.info")
+        ]], {g.s1_zone_3_replica.replicaset_uuid})
+
+
+        log.info("res: " .. res.uuid)
+
+        t.assert_equals(res.uuid, g.s1_zone_1_replica.instance_uuid)
+    end)
+
+
+    helpers.retrying({}, function()
+        local res = g.r3.net_box:eval([[
+            local vshard = require('vshard')
+            local replicaset_uuid = ...
+            return vshard.router.routeall()[replicaset_uuid]:callre("box.info")
+        ]], {g.s1_zone_3_replica.replicaset_uuid})
+
+
+        log.info("res: " .. res.uuid)
+
+        t.assert_equals(res.uuid, g.s1_zone_3_replica.instance_uuid)
+    end)
 
 end
