@@ -261,7 +261,7 @@ function g.test_leader_death()
 
     -- Trigger patch_clusterwide
     t.assert_error_msg_equals(
-        "Apply fails sometimes, who'd have thought?",
+        [["localhost:13301": Apply fails sometimes, who'd have thought?]],
         function()
             return g.master:graphql({query = [[
                 mutation{ cluster{
@@ -679,7 +679,7 @@ function g.test_operation_error()
     t.assert_equals(ok, nil)
     t.assert_covers(err, {
         class_name = 'ApplyConfigError',
-        err = 'Artificial Error',
+        err = '"localhost:13302": Artificial Error',
     })
 
     local ok, err = g.master.net_box:eval(set_roles, {uA, {}})

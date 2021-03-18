@@ -63,7 +63,7 @@ function g.test_begining_failure()
     t.assert_equals(res, nil)
     t.assert_covers(err, {
         class_name = 'NetboxCallError',
-        err = 'Timeout exceeded',
+        err = '"localhost:13302": Timeout exceeded',
     })
 
     -- prefix should be cleaned up even if upload_begin fails
@@ -102,7 +102,7 @@ function g.test_transmission_failure()
     t.assert_equals(res, nil)
     t.assert_covers(err, {
         class_name = 'NetboxCallError',
-        err = 'Artificial transmission failure',
+        err = '"localhost:13303": Artificial transmission failure',
     })
 
     -- prefix should be cleaned up even if upload_transmit fails
@@ -145,7 +145,7 @@ function g.test_finish_failure()
     t.assert_equals(res, nil)
     t.assert_covers(err, {
         class_name = 'Prepare2pcError',
-        err = 'Upload not found, see earlier logs for the details',
+        err = '"localhost:13301": Upload not found, see earlier logs for the details',
     })
 
     -- prefix should be cleaned up even if upload_transmit fails

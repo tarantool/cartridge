@@ -63,11 +63,14 @@ function g.test_api()
     t.assert_not(err)
     t.assert_equals(res, 'initialized')
 
-    local res, err = rpc_call(server, 'myrole', 'fn_undefined')
+    local res, err = rpc_call(server, 'myrole',
+        'fn_undefined', nil,
+        {uri = "127.0.0.1:13303"}
+    )
     t.assert_not(res)
     t.assert_covers(err, {
         class_name = 'RemoteCallError',
-        err =  'Role "myrole" has no method "fn_undefined"'
+        err =  '"127.0.0.1:13303": Role "myrole" has no method "fn_undefined"'
     })
 
     local res, err = rpc_call(server, 'unknown-role', 'fn_undefined')
@@ -85,7 +88,7 @@ function g.test_errors()
     t.assert_not(res)
     t.assert_covers(err, {
         class_name = 'RemoteCallError',
-        err = 'Boo',
+        err = '"localhost:13302": Boo',
     })
     t.assert_str_contains(err.stack, 'during net.box call to localhost:13302')
 

@@ -108,7 +108,7 @@ function g.test_uninitialized()
 
     -- edit_topology message slightly differs from join_server
     t.assert_error_msg_equals(
-        [[Missing localhost:13301 in clusterwide config,]] ..
+        [["127.0.0.1:13301": Missing localhost:13301 in clusterwide config,]] ..
         [[ check advertise_uri correctness]],
         function()
             return g.server:graphql({query = [[

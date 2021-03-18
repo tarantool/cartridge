@@ -132,7 +132,7 @@ function g.test_luaapi()
 
     t.assert_equals(
         {call('cartridge_set_schema', {'{}'})},
-        {box.NULL, 'spaces: must be a table, got nil'}
+        {box.NULL, '"localhost:13302": spaces: must be a table, got nil'}
     )
 
     t.assert_equals(

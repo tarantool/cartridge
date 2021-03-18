@@ -135,8 +135,8 @@ function g.test_appointments()
     t.assert_equals(ok, nil)
     t.assert_covers(err, {
         class_name = 'NetboxCallError',
-        err = "Duplicate key exists in unique index 'ordinal'" ..
-        " in space 'leader_audit'"
+        err = '"localhost:13301": Duplicate key exists' ..
+        " in unique index 'ordinal' in space 'leader_audit'"
     })
 end
 
@@ -264,7 +264,7 @@ function g.test_client_session()
     t.assert_equals(ok, nil)
     t.assert_covers(err, {
         class_name = 'NetboxCallError',
-        err = 'Peer closed',
+        err = '"localhost:13301": Peer closed',
     })
     t.assert_is_not(client:get_session(), session)
 
@@ -291,7 +291,7 @@ function g.test_client_drop_session()
     t.assert_equals(ok, nil)
     t.assert_covers(err, {
         class_name = 'NetboxCallError',
-        err = 'Connection closed',
+        err = '"localhost:13301": Connection closed',
     })
 
     -- dropping session releases lock and make it dead

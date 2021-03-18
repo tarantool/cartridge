@@ -16,10 +16,11 @@ and this project adheres to
 Added
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Issues and suggestions:
-
 - Extend GraphQL ``issues`` API with ``aliens`` topic. The issues warns if
   two separate clusters share the same cluster cookie.
+
+- Enhance error messages when they're transferred over network. Supply it
+  with the connection URI.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
