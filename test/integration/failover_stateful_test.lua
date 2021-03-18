@@ -422,14 +422,14 @@ add('test_leader_promote', function(g)
     t.assert_equals(ok, nil)
     t.assert_covers(err, {
         class_name = 'AppointmentError',
-        err = [[Server "invalid_uuid" doesn't exist]],
+        err = [["localhost:13301": Server "invalid_uuid" doesn't exist]],
     })
 
     local ok, err = S1.net_box:eval(q_promote, {{['invalid_uuid'] = storage_1_uuid}})
     t.assert_equals(ok, nil)
     t.assert_covers(err, {
         class_name = 'AppointmentError',
-        err = [[Replicaset "invalid_uuid" doesn't exist]],
+        err = [["localhost:13301": Replicaset "invalid_uuid" doesn't exist]],
     })
 
     local ok, err = S1.net_box:eval(q_promote, {{[router_uuid] = storage_1_uuid}})
@@ -437,7 +437,7 @@ add('test_leader_promote', function(g)
     t.assert_covers(err, {
         class_name = 'AppointmentError',
         err = string.format(
-            [[Server %q doesn't belong to replicaset %q]],
+            [["localhost:13301": Server %q doesn't belong to replicaset %q]],
             storage_1_uuid, router_uuid
         ),
     })

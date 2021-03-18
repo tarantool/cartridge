@@ -520,7 +520,7 @@ function g.test_operation_error()
     })
 
     local err = resp.errors[1]
-    t.assert_covers(err, {message = 'Artificial Error'})
+    t.assert_covers(err, {message = '"localhost:13304": Artificial Error'})
     t.assert_covers(err.extensions, {
         ['io.tarantool.errors.class_name'] = 'ApplyConfigError',
     })

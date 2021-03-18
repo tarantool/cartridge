@@ -62,7 +62,7 @@ function g.test_twophase_config_locked()
     t.assert_equals(ok, nil)
     t.assert_covers(err, {
         class_name = 'Prepare2pcError',
-        err = 'Two-phase commit is locked',
+        err = '"localhost:13302": Two-phase commit is locked',
     })
 
     -- But force reapply comes to the rescue!
@@ -154,7 +154,7 @@ function g.test_suggestions()
         end
     ]])
     t.assert_error_msg_equals(
-        'Artificial Error',
+        '"localhost:13303": Artificial Error',
         force_reapply, {g.A3.instance_uuid}
     )
 

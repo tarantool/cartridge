@@ -5,7 +5,7 @@ find_program(LDOC ldoc
 )
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(LDOC
+find_package_handle_standard_args(Ldoc
     REQUIRED_VARS LDOC
 )
 

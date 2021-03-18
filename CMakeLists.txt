@@ -128,7 +128,7 @@ add_custom_command(
   VERBATIM
 )
 
-if(LDOC_FOUND AND SPHINX_FOUND)
+if(Ldoc_FOUND AND Sphinx_FOUND)
   add_custom_target(doc ALL
     DEPENDS "${DOC_OUTPUT}/index.html")
 else()

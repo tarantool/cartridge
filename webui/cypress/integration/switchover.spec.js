@@ -219,7 +219,8 @@ describe('Leader promotion tests', () => {
     cy.get('span:contains(Edit is OK. Please wait for list refresh...)').click();
 
     dropdownMenu('13302').contains('Promote a leader').click();
-    cy.get('span:contains(Leader promotion error) + span:contains(WaitRwError: timed out)').click();
+    cy.get('span:contains(Leader promotion error)' +
+      ' + span:contains(WaitRwError: "localhost:13302": timed out)').click();
 
     leaderFlag('13302').invoke('css', 'fill', orangeIcon);
     leaderFlag('13303').should('not.exist');

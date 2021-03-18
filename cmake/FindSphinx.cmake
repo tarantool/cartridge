@@ -5,7 +5,7 @@ find_program(SPHINX sphinx-build
 )
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(SPHINX
+find_package_handle_standard_args(Sphinx
     REQUIRED_VARS SPHINX
 )
 

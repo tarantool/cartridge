@@ -531,7 +531,7 @@ add('test_enabling', function(g)
                 g.name == 'integration.switchover.etcd2' and
                 g.state_provider.client_url .. "/v2/members:" ..
                 " Couldn't connect to server" or
-                "Connection refused"),
+                '"127.0.0.1:14401": Connection refused'),
         }, {
             level = "warning",
             topic = "switchover",
@@ -675,7 +675,7 @@ add('test_api', function(g)
 
     -- Consistent promotion fails because the keeper is still "nobody"
     t.assert_error_msg_equals(
-        'timed out',
+        '"localhost:13303": timed out',
         A1.graphql, A1, {
             query = query,
             variables = {

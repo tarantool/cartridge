@@ -133,7 +133,7 @@ function g.test_join_server()
     )
 
     t.assert_error_msg_equals(
-        [[Missing localhost:13302 in clusterwide config,]] ..
+        [["127.0.0.1:13302": Missing localhost:13302 in clusterwide config,]] ..
         [[ check advertise_uri correctness]],
         function()
             return main:graphql({

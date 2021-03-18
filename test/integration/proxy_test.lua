@@ -139,7 +139,7 @@ function g.test_dead_destination()
                 uri = g.unconfigured.advertise_uri,
             }}
         }}).errors[1],
-        {message = 'Connection refused'}
+        {message = '"localhost:13301": Connection refused'}
     )
 end
 

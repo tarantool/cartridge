@@ -92,7 +92,7 @@ function g.test_timeout()
 
     t.assert_equals(retmap, {})
     assert_err_equals(errmap, 'localhost:13301',
-        'NetboxCallError: Timeout exceeded'
+        'NetboxCallError: "localhost:13301": Timeout exceeded'
     )
 end
 
@@ -185,8 +185,8 @@ function g.test_negative()
 
     t.assert_equals(retmap, {})
     assert_err_equals(errmap, '!@#$%^&*()',      'FormatURIError: Invalid URI "!@#$%^&*()"')
-    assert_err_equals(errmap, 'localhost:13301', 'NetboxCallError: Too long WAL write')
-    assert_err_equals(errmap, 'localhost:13302', 'NetboxCallError: Too long WAL write')
+    assert_err_equals(errmap, 'localhost:13301', 'NetboxCallError: "localhost:13301": Too long WAL write')
+    assert_err_equals(errmap, 'localhost:13302', 'NetboxCallError: "localhost:13302": Too long WAL write')
     assert_err_equals(errmap, 'localhost:13309', 'NetboxConnectError: "localhost:13309": Invalid greeting')
     assert_err_equals(errmap, 'localhost:9',
         'NetboxConnectError: "localhost:9": ' .. errno.strerror(errno.ECONNREFUSED),
@@ -221,7 +221,7 @@ function g.test_errors_united()
         err.err:split('\n'),
         {
             'Invalid URI ")(*&^%$#@!"',
-            'Segmentation fault',
+            '"localhost:13302": Segmentation fault',
             '"localhost:13309": Invalid greeting',
         }
     )
