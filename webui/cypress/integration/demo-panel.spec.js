@@ -72,6 +72,7 @@ describe('Demo panel', () => {
     cy.reload();
 
     cy.get('a[href="/admin/cluster/dashboard"]').click();
+    cy.url().should('include', '/admin/cluster/dashboard');
     cy.get('.meta-test__ProbeServerBtn').should('exist');
 
     cy.get('.meta-test__DemoInfo').contains('Your demo server is created. Temporary address of your server:');
@@ -82,19 +83,19 @@ describe('Demo panel', () => {
     cy.get('.meta-test__DemoInfo_modal button:contains(Close)').click();
 
     cy.get('a[href="/admin/cluster/users"]').click();
-    cy.get('h1:contains(Users)');
-    cy.get('.meta-test__DemoInfo').should('exist');
-
-    cy.get('a[href="/admin/cluster/schema"]').click();
-    cy.get('h1:contains(Schema)');
+    cy.url().should('include', '/admin/cluster/users');
     cy.get('.meta-test__DemoInfo').should('exist');
 
     cy.get('a[href="/admin/cluster/configuration"]').click();
-    cy.get('h1:contains(Configuration)');
+    cy.url().should('include', '/admin/cluster/configuration');
     cy.get('.meta-test__DemoInfo').should('exist');
 
     cy.get('a[href="/admin/cluster/code"]').click();
-    cy.get('h1:contains(Code)');
+    cy.url().should('include', '/admin/cluster/code');
+    cy.get('.meta-test__DemoInfo').should('exist');
+
+    cy.get('a[href="/admin/cluster/schema"]').click();
+    cy.url().should('include', '/admin/cluster/schema');
     cy.get('.meta-test__DemoInfo').should('exist');
 
     cy.get('.meta-test__DemoInfo button[type="button"]:contains(Reset configuration)').click();
