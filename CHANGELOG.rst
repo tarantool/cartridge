@@ -21,6 +21,14 @@ Issues and suggestions:
 - Extend GraphQL ``issues`` API with ``aliens`` topic. The issues warns if
   two separate clusters share the same cluster cookie.
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Fixed
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Don't skip two-phase commit prematurely. From now on, the decision to skip
+  the ``apply_config`` is made by every instance individually. The validation
+  step is never skipped.
+
 -------------------------------------------------------------------------------
 [2.5.0] - 2021-03-05
 -------------------------------------------------------------------------------

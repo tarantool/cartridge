@@ -161,12 +161,21 @@ local function commit_2pc()
         return nil, err
     end
 
-
     local state = confapplier.wish_state('RolesConfigured')
 
     if state == 'Unconfigured' then
         return confapplier.boot_instance(prepared_config)
     elseif state == 'RolesConfigured' or state == 'OperationError' then
+
+        local current_config = confapplier.get_active_config()
+        if state == 'RolesConfigured' and utils.deepcmp(
+            prepared_config:get_plaintext(),
+            current_config:get_plaintext()
+        ) then
+            log.warn("Clusterwide config didn`t change, skipping")
+            return true
+        end
+
         return confapplier.apply_config(prepared_config)
     else
         local err = Commit2pcError:new(
@@ -351,14 +360,6 @@ local function _clusterwide(patch)
     end
 
     topology.probe_missing_members(topology_new.servers)
-
-    if utils.deepcmp(
-        clusterwide_config_new:get_plaintext(),
-        clusterwide_config_old:get_plaintext()
-    ) then
-        log.warn("Clusterwide config didn't change, skipping")
-        return true
-    end
 
     local ok, err = topology.validate(topology_new, topology_old)
     if not ok then

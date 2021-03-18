@@ -495,31 +495,32 @@ end
 
 function g.test_operation_error()
     local victim = g.cluster:server('storage-2')
-    victim.net_box:eval([[
-        package.loaded['mymodule-permanent'].apply_config = function()
+    helpers.run_remotely(victim, function()
+        local mymodule = package.loaded['mymodule-permanent']
+        rawset(_G, 'apply_config_original', mymodule.apply_config)
+        mymodule.apply_config = function()
             error('Artificial Error', 0)
         end
-    ]])
+    end)
+
+    local query = [[ mutation($sections: [ConfigSectionInput]) {
+        cluster { config(sections: $sections) { filename } }
+    }]]
 
     -- Dummy mutation doesn't trigger two-phase commit
     g.cluster.main_server:graphql({
-        query = [[
-            mutation { cluster { config(sections: []) { filename } } }
-        ]],
+        query = query, variables = {sections = {}},
     })
 
-    -- Real tho-phase commit fails on apply stage with artificial error
+    -- Real tho-phase commit causes OperationError
+    local txt = {filename = "x.txt", content = "oops"}
     local resp = g.cluster.main_server:graphql({
-        query = [[
-            mutation{ cluster{ config(
-                sections: [{filename: "x.txt", content: "oops"}]
-            ){ filename } }}
-        ]],
+        query = query, variables = {sections = {txt}},
         raise = false,
     })
 
     local err = resp.errors[1]
-    t.assert_equals(err.message, 'Artificial Error')
+    t.assert_covers(err, {message = 'Artificial Error'})
     t.assert_covers(err.extensions, {
         ['io.tarantool.errors.class_name'] = 'ApplyConfigError',
     })
@@ -541,6 +542,28 @@ function g.test_operation_error()
         message = 'Artificial Error',
         class_name = 'ApplyConfigError',
     })
+
+    -- Revert all hacks and fix the cluster
+    helpers.run_remotely(victim, function()
+        local mymodule = package.loaded['mymodule-permanent']
+        mymodule.apply_config = _G.apply_config_original
+        _G.apply_config_original = nil
+    end)
+
+    t.assert_equals(
+        g.cluster.main_server:graphql({
+            query = '{cluster {config {filename content}}}'
+        }),
+        {data = {cluster = {config = {txt}}}}
+    )
+
+    -- An attempt to reapply the same config shouldn't
+    -- be skipped in the OperationError state
+    g.cluster.main_server:graphql({
+        query = query, variables = {sections = {txt}},
+    })
+
+    g.cluster:wait_until_healthy(g.cluster.main_server)
 end
 
 function g.test_webui_blacklist()
