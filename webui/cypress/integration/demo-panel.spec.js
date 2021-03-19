@@ -100,8 +100,7 @@ describe('Demo panel', () => {
 
     cy.get('.meta-test__DemoInfo button[type="button"]:contains(Reset configuration)').click();
     cy.get('div:contains(Do you really want to reset your settings?)').find('button:contains(Reset)').click();
-    cy.location().should(loc => {
-      expect(loc.pathname).to.eq('/admin');
-    });
+    cy.url().should('include', '/admin/cluster/dashboard');
+    cy.get('h1:contains(Cluster)');
   });
 });
