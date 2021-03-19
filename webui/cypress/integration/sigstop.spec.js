@@ -40,7 +40,7 @@ describe('Checking for situations when a connection is lost using SIGSTOP', () =
   function tryToSubmitTestZone() {
     cy.get('.meta-test__ServerDetailsModal button:contains(Select zone)').click();
     cy.get('button:contains(Add new zone)').click();
-    cy.get('.ZoneAddModal input[name="uri"]').type('Test');
+    cy.get('.ZoneAddModal input[name="zone_name"]').type('Test');
     cy.get('.meta-test__ZoneAddSubmitBtn').click();
   };
 

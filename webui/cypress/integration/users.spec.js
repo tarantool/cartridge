@@ -77,6 +77,7 @@ describe('Users', () => {
 
     //Add user form before changing
     cy.get('label:contains(Username)').parent('div').next().find('input')
+      .should('be.focused')
       .should('have.value', '');
     cy.get('label:contains(Password)').parent('div').next().find('input')
       .should('have.value', '');
@@ -138,8 +139,11 @@ describe('Users', () => {
 
     //login:
     cy.get('.meta-test__LoginBtn').click();
-    cy.get('.meta-test__LoginForm input[name="username"]').type('TestUserName');
-    cy.get('.meta-test__LoginForm input[name="password"]').type('userpassword');
+    cy.get('.meta-test__LoginForm input[name="username"]')
+      .should('be.focused')
+      .type('TestUserName');
+    cy.get('.meta-test__LoginForm input[name="password"]')
+      .type('userpassword');
     cy.get('.meta-test__LoginFormBtn').click();
 
     cy.get('.meta-test__LogoutBtn').children('span').should('contain', '');
@@ -162,6 +166,7 @@ describe('Users', () => {
     cy.get('h2:contains(Edit TestUserName)');
 
     cy.get('label:contains(New password)').parent('div').next().find('input')
+      .should('be.focused')
       .type('{selectall}{del}EditedPassword');
     cy.get('label:contains(Email)').parent('div').next().find('input')
       .type('{selectall}{del}ee@ee.ee');

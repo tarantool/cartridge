@@ -82,7 +82,9 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
 
     // Open create replicaset dialog
     cy.get('.meta-test__configureBtn').first().click();
-    cy.get('form input[name="alias"]').type('for-default-group-tests');
+    cy.get('form input[name="alias"]')
+      .should('be.focused')
+      .type('for-default-group-tests');
     cy.get('form input[value="default"]').should('be.disabled');
     cy.get('form input[name="weight"]').should('be.disabled');
     cy.get('.meta-test__CreateReplicaSetBtn').should('be.enabled');
@@ -138,6 +140,9 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
 
     // Disable myrole
     cy.get('#root').contains('unnamed').closest('li').find('button').contains('Edit').click();
+    cy.get('.meta-test__EditReplicasetModal input[name="alias"]')
+      .should('be.focused');
+
     cy.get('form input[value="myrole"]').uncheck({ force: true }).should('not.be.checked');
     cy.get('form input[value="myrole-dependency"]').should('be.enabled').should('not.be.checked');
 
@@ -179,7 +184,9 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     cy.get('.meta-test__configureBtn:visible').should('have.length', 2);
     cy.contains('dummy-2').closest('li').find('.meta-test__configureBtn').click();
 
-    cy.get('form input[name="alias"]').type('test-storage').should('have.value', 'test-storage');
+    cy.get('form input[name="alias"]')
+
+      .type('test-storage').should('have.value', 'test-storage');
 
     cy.get('form input[value="vshard-storage"]').check({ force: true });
     cy.get('form input[value="default"]').should('be.enabled').should('be.checked');

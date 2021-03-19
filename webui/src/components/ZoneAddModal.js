@@ -54,9 +54,10 @@ export const ZoneAddModal = () => {
     >
       <LabeledInput
         label='Name of zone'
-        name='uri'
+        name='zone_name'
         value={value}
         onChange={handleInputChange}
+        autoFocus
       />
       {error && (
         <Alert className={'ZoneAddModal_error'} type='error'>

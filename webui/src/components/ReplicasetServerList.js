@@ -2,7 +2,7 @@
 import * as React from 'react';
 import { defaultMemoize } from 'reselect';
 import { connect } from 'react-redux';
-import { FlatList } from './FlatList';
+import { FlatList } from '@tarantool.io/ui-kit';
 import ReplicasetServerListItem from 'src/components/ReplicasetServerListItem';
 import type { Replicaset } from 'src/generated/graphql-typing';
 

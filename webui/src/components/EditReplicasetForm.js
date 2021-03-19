@@ -179,6 +179,7 @@ EditReplicasetFormProps) => {
                     error={error}
                     message={error}
                     largeMargins
+                    autoFocus
                   />
                 )}
               </Field>

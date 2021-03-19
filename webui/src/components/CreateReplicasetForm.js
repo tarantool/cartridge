@@ -152,6 +152,7 @@ CreateReplicasetFormProps) => (
                   value={value}
                   error={!!error}
                   message={error}
+                  autoFocus
                 />
               )}
             </Field>

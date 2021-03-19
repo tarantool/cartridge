@@ -56,6 +56,7 @@ const PasswordInput = createComponent(
   passwordField,
   ({ error }, { change, $field: { value }, $disabled: disabled }) => (
     <LabeledInput
+      autoFocus
       label='New password'
       type='password'
       value={value}
