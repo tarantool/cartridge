@@ -64,7 +64,9 @@ describe('Server details', () => {
     cy.get('div').contains('You have no any zone,');
     cy.get('div').contains('please add one.');
     cy.get('button:contains(Add new zone)').click();
-    cy.get('.ZoneAddModal input[name="uri"]').type('Narnia');
+    cy.get('.ZoneAddModal input[name="zone_name"]')
+      .should('be.focused')
+      .type('Narnia');
     cy.get('.meta-test__ZoneAddSubmitBtn').click();
     cy.get('.ZoneAddModal').should('not.exist');
     cy.get('.meta-test__ServerDetailsModal').find('button:contains(Zone Narnia)');
@@ -80,7 +82,9 @@ describe('Server details', () => {
 
     //add new zone Mordor
     cy.get('button:contains(Add new zone)').click();
-    cy.get('.ZoneAddModal input[name="uri"]').type('Mordor');
+    cy.get('.ZoneAddModal input[name="zone_name"]')
+      .should('be.focused')
+      .type('Mordor');
     cy.get('.meta-test__ZoneAddSubmitBtn').click();
     cy.get('.ZoneAddModal').should('not.exist');
     cy.get('.meta-test__ServerDetailsModal').find('button:contains(Zone Mordor)');
@@ -150,7 +154,9 @@ describe('Server details', () => {
 
     cy.get('.meta-test__ServerDetailsModal button:contains(Zone Mordor)').click();
     cy.get('button:contains(Add new zone)').click();
-    cy.get('.ZoneAddModal input[name="uri"]').type('Moscow');
+    cy.get('.ZoneAddModal input[name="zone_name"]')
+      .should('be.focused')
+      .type('Moscow');
     cy.get('.meta-test__ZoneAddSubmitBtn').click();
     cy.get('.ZoneAddModal_error').find('span:contains("localhost:13302": Connection refused)');
     cy.get('h2:contains(Add name of zone)').next().click();
@@ -190,7 +196,9 @@ describe('Server details', () => {
 
     cy.get('.meta-test__ServerDetailsModal button:contains(Zone Mordor)').click();
     cy.get('button:contains(Add new zone)').click();
-    cy.get('.ZoneAddModal input[name="uri"]').type('Rostov');
+    cy.get('.ZoneAddModal input[name="zone_name"]')
+      .should('be.focused')
+      .type('Rostov');
     cy.get('.meta-test__ZoneAddSubmitBtn').click();
     cy.get('.meta-test__ServerDetailsModal').find('button:contains(Zone Rostov)');
 
