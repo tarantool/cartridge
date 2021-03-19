@@ -73,7 +73,7 @@
     "react": "16.14.0",
     "react-apollo": "^2.5.5",
     "react-codemirror2": "^5.0.4",
-    "react-dev-utils": "9.0.1",
+    "react-dev-utils": "11.0.4",
     "react-dom": "16.14.0",
     "react-drag-listview": "^0.1.4",
     "react-emotion": "^9.2.6",
