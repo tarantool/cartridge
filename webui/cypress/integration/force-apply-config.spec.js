@@ -14,7 +14,7 @@ describe('Disable server', () => {
             uuid = helpers.uuid('a'),
             alias = 'dummy',
             roles = {},
-            servers = {{http_port = 8080}},
+            servers = {{http_port = 8080}, {}, {}},
           }},
         })
 
