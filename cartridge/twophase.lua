@@ -733,4 +733,10 @@ return {
     set_schema = set_schema,
     patch_clusterwide = patch_clusterwide,
     force_reapply = force_reapply,
+    -- Cartridge supports backward compatibility but not the forward
+    -- one. Thus operations that modify clusterwide config should be
+    -- performed by instances with the lowest twophase version. This
+    -- principal is used in the rolling update scenario via
+    -- ansible-cartridge.
+    VERSION = 2,
 }

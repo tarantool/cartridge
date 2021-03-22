@@ -22,6 +22,9 @@ Added
 - Enhance error messages when they're transferred over network. Supply it
   with the connection URI.
 
+- ``twophase.VERSION`` for the rolling update scenario to meet requirements
+  of backward compatibility.
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
