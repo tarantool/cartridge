@@ -14,7 +14,7 @@ describe('Disable server', () => {
             uuid = helpers.uuid('a'),
             alias = 'dummy',
             roles = {},
-            servers = {{http_port = 8080}, {}, {}},
+            servers = {{http_port = 8080}, {}},
           }},
         })
 
@@ -35,8 +35,38 @@ describe('Disable server', () => {
     cy.task('tarantool', { code: `cleanup()` });
   });
 
-  it('Test: disable-server', () => {
+  it('Test: force-apply-config', () => {
     cy.visit('/admin/cluster/dashboard');
-    cy.get('#root').contains('OperationError');
+    cy.get('h1:contains(Cluster)');
+
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Inspect suggestion panel');
+    ////////////////////////////////////////////////////////////////////
+    cy.get('.meta-test__ClusterSuggestionsPanel').should('be.visible');
+    cy.get('.meta-test__ClusterSuggestionsPanel h5').contains('Force apply configuration');
+    cy.get('.meta-test__ClusterSuggestionsPanel span').contains(
+      'Some instances are misconfigured. ' +
+      'You can heal it by reapplying configuration forcefully.');
+    cy.get('.ServerLabelsHighlightingArea:contains(dummy-1)').should('contain', 'OperationError');
+    cy.get('.ServerLabelsHighlightingArea:contains(dummy-2)').should('not.contain', 'OperationError');
+
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Inspect suggestion modal');
+    ////////////////////////////////////////////////////////////////////
+    cy.get('.meta-test__ClusterSuggestionsPanel button').contains('Review').click();
+    cy.get('.meta-test__ForceApplySuggestionModal h2').contains('Force apply configuration');
+    cy.get('.meta-test__ForceApplySuggestionModal p').contains(
+      'Some instances are misconfigured. ' +
+      'You can heal it by reapplying configuration forcefully.');
+    cy.get('.meta-test__ForceApplySuggestionModal span').contains('Operation error');
+    cy.get('.meta-test__ForceApplySuggestionModal span button').contains('Deselect all');
+    cy.get('.meta-test__ForceApplySuggestionModal input[type="checkbox"]').should('be.checked');
+    cy.get('.meta-test__ForceApplySuggestionModal span').contains('localhost:13301 (dummy-1)');
+    cy.get('.meta-test__ForceApplySuggestionModal button').contains('Force apply').click();
+
+    ////////////////////////////////////////////////////////////////////
+    cy.log('OperationError is gone');
+    ////////////////////////////////////////////////////////////////////
+    cy.get('.ServerLabelsHighlightingArea:contains(dummy-1)').should('not.contain', 'OperationError');
   });
 });
