@@ -19,13 +19,6 @@ describe('Disable server', () => {
         })
 
         _G.cluster:start()
-        helpers.run_remotely(_G.cluster.main_server, function()
-          local confapplier = require('cartridge.confapplier')
-          confapplier.set_state('ConfiguringRoles')
-          confapplier.set_state('OperationError',
-            require('errors').new('ArtificialError', 'the cake is a lie')
-          )
-        end)
         return true
       `
     }).should('deep.eq', [true]);
@@ -35,9 +28,57 @@ describe('Disable server', () => {
     cy.task('tarantool', { code: `cleanup()` });
   });
 
+  function causeOperationError(alias) {
+    cy.task('tarantool', {
+      code: `
+        local srv = _G.cluster:server('${alias}')
+        return helpers.run_remotely(srv, function()
+          local confapplier = require('cartridge.confapplier')
+          local errors = require('errors')
+          local err = errors.new('ArtificialError', 'the cake is a lie')
+          confapplier.set_state('ConfiguringRoles')
+          confapplier.set_state('OperationError', err)
+        end)
+      `
+    });
+  }
+
+  function causeConfigLock(alias) {
+    cy.task('tarantool', {
+      code: `
+        local srv = _G.cluster:server('${alias}')
+        return helpers.run_remotely(srv, function()
+          local confapplier = require('cartridge.confapplier')
+          local cfg = confapplier.get_active_config():get_plaintext()
+          _G.__cartridge_clusterwide_config_prepare_2pc(cfg)
+        end)
+      `
+    });
+  }
+
+  function causeConfigMismatch(alias) {
+    cy.task('tarantool', {
+      code: `
+        local srv = _G.cluster:server('${alias}')
+        return helpers.run_remotely(srv, function()
+          local confapplier = require('cartridge.confapplier')
+          local cfg = confapplier.get_active_config():copy()
+          cfg:set_plaintext('todo1.txt', '- Test config mismatch')
+          cfg:lock()
+          confapplier.apply_config(cfg)
+        end)
+      `
+    });
+  }
+
   it('Test: force-apply-config', () => {
     cy.visit('/admin/cluster/dashboard');
     cy.get('h1:contains(Cluster)');
+
+    causeOperationError('dummy-1');
+    causeConfigMismatch('dummy-2');
+    causeConfigLock('dummy-2');
+    causeOperationError('dummy-2');
 
     ////////////////////////////////////////////////////////////////////
     cy.log('Inspect suggestion panel');
@@ -48,7 +89,7 @@ describe('Disable server', () => {
       'Some instances are misconfigured. ' +
       'You can heal it by reapplying configuration forcefully.');
     cy.get('.ServerLabelsHighlightingArea:contains(dummy-1)').should('contain', 'OperationError');
-    cy.get('.ServerLabelsHighlightingArea:contains(dummy-2)').should('not.contain', 'OperationError');
+    cy.get('.ServerLabelsHighlightingArea:contains(dummy-2)').should('contain', 'OperationError');
 
     ////////////////////////////////////////////////////////////////////
     cy.log('Inspect suggestion modal');
