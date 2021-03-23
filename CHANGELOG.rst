@@ -36,6 +36,10 @@ Fixed
 - Avoid WebUI and ``pool.map_call`` requests hanging because of network
   connection problems.
 
+- ``prepare_2pc`` calls ``get_state`` instead of ``wish_state``. When instance
+  hangs in ``ConfiguringRoles`` state it results in a proper error message
+  instead of unclear "timed out" error.
+
 -------------------------------------------------------------------------------
 [2.5.0] - 2021-03-05
 -------------------------------------------------------------------------------

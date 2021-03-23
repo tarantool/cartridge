@@ -87,7 +87,7 @@ local function prepare_2pc(upload_id)
         return nil, err
     end
 
-    local state = confapplier.wish_state('RolesConfigured')
+    local state = confapplier.get_state()
     if state ~= 'Unconfigured'
     and state ~= 'RolesConfigured'
     and state ~= 'OperationError'
