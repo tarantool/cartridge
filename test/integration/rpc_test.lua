@@ -13,7 +13,7 @@ g.before_all = function()
         replicasets = {
             {
                 uuid = helpers.uuid('a'),
-                roles = {},
+                roles = {'vshard-router'},
                 servers = {{
                     alias = 'A1',
                     instance_uuid = helpers.uuid('a', 'a', 1),
@@ -57,13 +57,14 @@ local function rpc_call(server, role_name, fn_name, args, kv_args)
 end
 
 function g.test_api()
-    local server = g.cluster:server('A1')
+    local A1 = g.cluster:server('A1')
+    local B1 = g.cluster:server('B1')
 
-    local res, err = rpc_call(server, 'myrole', 'get_state')
+    local res, err = rpc_call(A1, 'myrole', 'get_state')
     t.assert_not(err)
     t.assert_equals(res, 'initialized')
 
-    local res, err = rpc_call(server, 'myrole',
+    local res, err = rpc_call(A1, 'myrole',
         'fn_undefined', nil,
         {uri = "127.0.0.1:13303"}
     )
@@ -73,12 +74,31 @@ function g.test_api()
         err =  '"127.0.0.1:13303": Role "myrole" has no method "fn_undefined"'
     })
 
-    local res, err = rpc_call(server, 'unknown-role', 'fn_undefined')
+    local res, err = rpc_call(A1, 'unknown-role', 'fn_undefined')
     t.assert_not(res)
     t.assert_covers(err, {
         class_name = 'RemoteCallError',
         err = 'No remotes with role "unknown-role" available'
     })
+
+    -- restrict connections to vshard-router
+    A1.net_box:call('box.cfg', {{listen = box.NULL}})
+    B1.net_box:eval([[
+        local pool = require('cartridge.pool')
+        pool.connect(...):close()
+        local conn = pool.connect(...)
+        assert(conn:wait_connected() == false)
+    ]], {A1.advertise_uri, {wait_connected = false}})
+
+    local res, err = rpc_call(B1, 'vshard-router', 'bootstrap')
+    t.assert_not(res)
+    t.assert_covers(err, {
+        class_name = 'RemoteCallError',
+        err = '"localhost:13301": Connection refused'
+    })
+
+    -- restore box listen
+    A1.net_box:call('box.cfg', {{listen = A1.net_box_port}})
 end
 
 function g.test_errors()

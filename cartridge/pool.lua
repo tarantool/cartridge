@@ -140,7 +140,7 @@ end
 
 local function _gather_netbox_call(maps, uri, fn_name, args, opts)
     -- Perform a call, gather results and spread it across tables.
-    local conn, err = connect(uri)
+    local conn, err = connect(uri, {wait_connected = false})
 
     if conn == nil then
         return _pack_values(maps, uri,

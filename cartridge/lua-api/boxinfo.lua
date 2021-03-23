@@ -119,15 +119,14 @@ local function get_info(uri)
         return ret
     end
 
-    local conn, err = pool.connect(uri)
+    local conn, err = pool.connect(uri, {wait_connected = false})
     if not conn then
         return nil, err
     end
 
     return errors.netbox_call(
-        conn,
-        '_G.__cluster_admin_get_info',
-        {}, {timeout = 1}
+        conn, '_G.__cluster_admin_get_info',
+        nil, {timeout = 1}
     )
 end
 

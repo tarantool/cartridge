@@ -54,10 +54,11 @@ g.before_all(function()
         server_command = helpers.entrypoint('srv_basic'),
         use_vshard = true,
         cookie = require('digest').urandom(6):hex(),
-        replicasets = {
-            {alias = 'R', roles = {'vshard-router'}, servers = 1},
-            {alias = 'S', roles = {'vshard-storage'}, servers = 2},
-        }
+        replicasets = {{
+            alias = 'main',
+            roles = {'vshard-router', 'vshard-storage'},
+            servers = 2
+        }}
     })
     g.cluster:start()
 
@@ -118,21 +119,19 @@ function g.test_luaapi()
 
     -- Applying schema on a replica may take a while, so we don't check it
     -- See: https://github.com/tarantool/tarantool/issues/4668
-    for _, alias in pairs({'R-1', 'S-1'}) do
-        local srv = g.cluster:server(alias)
-        t.assert_equals(
-            {[srv.alias] = srv.net_box:eval([[
-                return require('ddl').get_schema().spaces.test_space
-            ]])},
-            {[srv.alias] = yaml.decode(_schema).spaces.test_space}
-        )
-    end
+    local srv = g.cluster:server('main-1')
+    t.assert_equals(
+        {[srv.alias] = srv.net_box:eval([[
+            return require('ddl').get_schema().spaces.test_space
+        ]])},
+        {[srv.alias] = yaml.decode(_schema).spaces.test_space}
+    )
 
     log.info('Patching with invalid schema...')
 
     t.assert_equals(
         {call('cartridge_set_schema', {'{}'})},
-        {box.NULL, '"localhost:13302": spaces: must be a table, got nil'}
+        {box.NULL, '"localhost:13301": spaces: must be a table, got nil'}
     )
 
     t.assert_equals(
@@ -233,4 +232,26 @@ function g.test_example_schema()
             )
         end)
     end
+end
+
+function g.test_no_instances_to_check_schema()
+    local s1 = g.cluster:server('main-1')
+    local s2 = g.cluster:server('main-2')
+
+    -- restrict connection to the leader
+    s1.net_box:call('box.cfg', {{listen = box.NULL}})
+    s2.net_box:eval([[
+        local pool = require('cartridge.pool')
+        pool.connect(...):close()
+        local conn = pool.connect(...)
+        assert(conn:wait_connected() == false)
+    ]], {s1.advertise_uri, {wait_connected = false}})
+
+    t.assert_error_msg_contains(
+        '"localhost:13301": Connection refused',
+        _check_schema, s2, _schema
+    )
+
+    -- resotore box listen
+    s1.net_box:call('box.cfg', {{listen = s1.net_box_port}})
 end

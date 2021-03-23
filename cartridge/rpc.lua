@@ -142,18 +142,20 @@ local function get_connection(role_name, opts)
         return netbox.self
     end
 
-    local conn, err
+    local uri, conn
     local num_candidates = #candidates
-    while conn == nil and num_candidates > 0 do
+    repeat
         local n = math.random(num_candidates)
-        local uri = table.remove(candidates, n)
         num_candidates = num_candidates - 1
 
-        conn, err = pool.connect(uri)
-    end
+        uri = table.remove(candidates, n)
+        conn = pool.connect(uri, {wait_connected = false})
+    until conn:wait_connected() or num_candidates == 0
 
-    if conn == nil then
-        return nil, err
+    if not conn:is_connected() then
+        return nil, RemoteCallError:new('%q: %s',
+            uri, conn.error or "Connection not established (yet)"
+        )
     end
 
     return conn
@@ -253,7 +255,7 @@ local function call_remote(role_name, fn_name, args, opts)
 
     local conn, err
     if opts.uri ~= nil then
-        conn, err = pool.connect(opts.uri)
+        conn, err = pool.connect(opts.uri, {wait_connected = false})
     else
         conn, err = get_connection(role_name, {
             prefer_local = prefer_local,

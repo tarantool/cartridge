@@ -134,11 +134,16 @@ local function validate_group_upgrade(group_name, topology_new, topology_old)
                 master_uuid = replicaset_old.master
             end
             local master_uri = servers_old[master_uuid].uri
-            local conn, err = pool.connect(master_uri)
-            if not conn then
+
+            local buckets_count, err = errors.netbox_call(
+                pool.connect(master_uri, {wait_connected = false}),
+                'vshard.storage.buckets_count', nil, {timeout = 1}
+            )
+
+            if buckets_count == nil then
                 error(err)
             end
-            local buckets_count = conn:call('vshard.storage.buckets_count')
+
             ValidateConfigError:assert(
                 buckets_count == 0,
                 "replicasets[%s] rebalancing isn't finished yet",
