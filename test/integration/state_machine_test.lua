@@ -685,3 +685,28 @@ function g.test_operation_error()
     local ok, err = g.master.net_box:eval(set_roles, {uA, {}})
     t.assert_equals({ok, err}, {true, nil})
 end
+
+function g.test_prepare_state_error()
+    local set_state = [[
+        require('cartridge.confapplier').set_state(...)
+    ]]
+    local set_timeout = [[
+        require('cartridge.vars').new('cartridge.confapplier').
+        state_notification_timeout = ...
+    ]]
+    g.slave.net_box:eval(set_state, {'ConfiguringRoles'})
+    g.slave.net_box:eval(set_timeout, {math.huge})
+
+    local res, err = g.master.net_box:call(
+        'package.loaded.cartridge.config_patch_clusterwide',
+        {{}}
+    )
+
+    -- prepare_2pc should return a wrong state error before it is
+    -- timed out.
+    t.assert_equals(res, nil)
+    t.assert_equals(err.err,
+        '\"localhost:13302\": Instance state is ConfiguringRoles,'..
+        ' can\'t apply config in this state'
+    )
+end

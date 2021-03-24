@@ -36,6 +36,9 @@ Fixed
 - Avoid WebUI and ``pool.map_call`` requests hanging because of network
   connection problems.
 
+- Fix unclear "Timeout exceeded" error. It affects v2.5.0 two-phase commit
+  when an instance is stuck in ``ConfiguringRoles`` state.
+
 -------------------------------------------------------------------------------
 [2.5.0] - 2021-03-05
 -------------------------------------------------------------------------------
