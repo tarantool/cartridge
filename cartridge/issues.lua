@@ -4,50 +4,50 @@
 --
 -- Replication:
 --
--- * "Replication from ... to ... isn't running" -
+-- * critical: "Replication from ... to ... isn't running" -
 --   when `box.info.replication.upstream == nil`;
--- * "Replication from ... to ... is stopped/orphan/etc. (...)";
--- * "Replication from ... to ...: high lag" -
+-- * critical: "Replication from ... to ... state "stopped"/"orphan"/etc. (...)";
+-- * warning: "Replication from ... to ...: high lag" -
 --   when `upstream.lag > box.cfg.replication_sync_lag`;
--- * "Replication from ... to ...: long idle" -
+-- * warning: "Replication from ... to ...: long idle" -
 --   when `upstream.idle > 2 * box.cfg.replication_timeout`;
 --
 -- Failover:
 --
--- * "Can't obtain failover coordinator (...)";
--- * "There is no active failover coordinator";
--- * "Failover is stuck on ...: Error fetching appointments (...)";
--- * "Failover is stuck on ...: Failover fiber is dead" -
+-- * warning: "Can't obtain failover coordinator (...)";
+-- * warning: "There is no active failover coordinator";
+-- * warning: "Failover is stuck on ...: Error fetching appointments (...)";
+-- * warning: "Failover is stuck on ...: Failover fiber is dead" -
 --   this is likely a bug;
 --
 -- Switchover:
 --
--- * "Consistency on ... isn't reached yet";
+-- * warning: "Consistency on ... isn't reached yet";
 --
 -- Clock:
 --
--- * "Clock difference between ... and ... exceed threshold"
+-- * warning: "Clock difference between ... and ... exceed threshold"
 --  `limits.clock_delta_threshold_warning`;
 --
 -- Memory:
 --
--- * "Running out of memory on ..." - when all 3 metrics
+-- * critical: "Running out of memory on ..." - when all 3 metrics
 --   `items_used_ratio`, `arena_used_ratio`, `quota_used_ratio` from
 --   `box.slab.info()` exceed `limits.fragmentation_threshold_critical`;
--- * "Memory is highly fragmented on ..." - when
+-- * warning: "Memory is highly fragmented on ..." - when
 --   `items_used_ratio > limits.fragmentation_threshold_warning` and
 --   both `arena_used_ratio`, `quota_used_ratio` exceed critical limit;
 --
 -- Configuration:
 --
--- * "Configuration checksum mismatch on ...";
--- * "Configuration is prepared and locked on ...";
--- * "Advertise URI (...) differs from clusterwide config (...)";
--- * "Configuring roles is stuck on ... and hangs for ... so far";
+-- * warning: "Configuration checksum mismatch on ...";
+-- * warning: "Configuration is prepared and locked on ...";
+-- * warning: "Advertise URI (...) differs from clusterwide config (...)";
+-- * warning: "Configuring roles is stuck on ... and hangs for ... so far";
 --
 -- Alien members:
 --
--- * "Instance ... with alien uuid is in the membership" -
+-- * warning: "Instance ... with alien uuid is in the membership" -
 --   when two separate clusters share the same cluster cookie;
 --
 -- @module cartridge.issues
@@ -133,7 +133,7 @@ local function list_on_instance(opts)
         local upstream = replication_info.upstream
         if upstream == nil then
             local issue = {
-                level = 'warning',
+                level = 'critical',
                 topic = 'replication',
                 replicaset_uuid = replicaset_uuid,
                 instance_uuid = instance_uuid,
@@ -146,12 +146,12 @@ local function list_on_instance(opts)
             table.insert(ret, issue)
         elseif upstream.status ~= 'follow' and upstream.status ~= 'sync' then
             local issue = {
-                level = 'warning',
+                level = 'critical',
                 topic = 'replication',
                 replicaset_uuid = replicaset_uuid,
                 instance_uuid = instance_uuid,
                 message = string.format(
-                    'Replication from %s to %s is %s (%s)',
+                    'Replication from %s to %s state %q (%s)',
                     describe(replica.uri),
                     describe(self_uri),
                     upstream.status,

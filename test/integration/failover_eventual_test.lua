@@ -649,7 +649,7 @@ g.test_sigstop = function()
     })
 
     t.assert_items_equals(helpers.list_cluster_issues(cluster.main_server), {{
-        level = 'warning',
+        level = 'critical',
         replicaset_uuid = replicaset_uuid,
         instance_uuid = storage_2_uuid,
         message =
@@ -657,7 +657,7 @@ g.test_sigstop = function()
             " to localhost:13303 (storage-2) isn't running",
         topic = 'replication',
     }, {
-        level = 'warning',
+        level = 'critical',
         replicaset_uuid = replicaset_uuid,
         instance_uuid = storage_3_uuid,
         message =

@@ -103,12 +103,12 @@ function g.test_broken_replica()
 
     local function issue_fmt(from, to)
         return {
-            level = 'warning',
+            level = 'critical',
             topic = 'replication',
             replicaset_uuid = g.cluster:server(to).replicaset_uuid,
             instance_uuid = g.cluster:server(to).instance_uuid,
             message = string.format("Replication" ..
-                " from %s (%s) to %s (%s) is stopped" ..
+                " from %s (%s) to %s (%s) state \"stopped\"" ..
                 " (Duplicate key exists in unique index" ..
                 " 'primary' in space '_space')",
                 g.cluster:server(from).advertise_uri, from,

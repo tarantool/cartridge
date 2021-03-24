@@ -57,7 +57,7 @@ describe('Checking for situations when a connection is lost using SIGSTOP', () =
     cy.get('.meta-test__ClusterIssuesButton').contains('Issues: 1');
     cy.get('.meta-test__ClusterIssuesButton').click();
     cy.get('.meta-test__ClusterIssuesModal').find('li')
-      .contains("warning: Replication from localhost:13302 (dummy-2) to localhost:13301 (dummy-1)");
+      .contains("critical: Replication from localhost:13302 (dummy-2) to localhost:13301 (dummy-1)");
     cy.get('.meta-test__ClusterIssuesModal button[type="button"]').click();
 
     //Check buckets
