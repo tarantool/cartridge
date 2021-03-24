@@ -92,6 +92,18 @@ describe('Disable server', () => {
     cy.get('.ServerLabelsHighlightingArea:contains(dummy-2)').should('contain', 'OperationError');
 
     ////////////////////////////////////////////////////////////////////
+    cy.log('Inspect issues');
+    ////////////////////////////////////////////////////////////////////
+    cy.get('.meta-test__ClusterIssuesButton').should('be.enabled');
+    cy.get('.meta-test__ClusterIssuesButton').contains('Issues: 2');
+    cy.get('.meta-test__ClusterIssuesButton').click();
+    cy.get('.meta-test__ClusterIssuesModal')
+      .contains('warning: Configuration checksum mismatch on localhost:13302 (dummy-2)');
+    cy.get('.meta-test__ClusterIssuesModal')
+      .contains('warning: Configuration is prepared and locked on localhost:13302 (dummy-2)');
+    cy.get('.meta-test__ClusterIssuesModal button[type="button"]').click();
+
+    ////////////////////////////////////////////////////////////////////
     cy.log('Inspect suggestion modal');
     ////////////////////////////////////////////////////////////////////
     cy.get('.meta-test__ClusterSuggestionsPanel button').contains('Review').click();
@@ -99,15 +111,74 @@ describe('Disable server', () => {
     cy.get('.meta-test__ForceApplySuggestionModal p').contains(
       'Some instances are misconfigured. ' +
       'You can heal it by reapplying configuration forcefully.');
-    cy.get('.meta-test__ForceApplySuggestionModal span').contains('Operation error');
-    cy.get('.meta-test__ForceApplySuggestionModal span button').contains('Deselect all');
-    cy.get('.meta-test__ForceApplySuggestionModal input[type="checkbox"]').should('be.checked');
-    cy.get('.meta-test__ForceApplySuggestionModal span').contains('localhost:13301 (dummy-1)');
-    cy.get('.meta-test__ForceApplySuggestionModal button').contains('Force apply').click();
+
+    cy.get('.meta-test__ForceApplySuggestionModal').find('.meta-test__errorField').eq(0).as('operErrorField');
+    cy.get('@operErrorField').find('span').contains('Operation error');
+    cy.get('@operErrorField').find('span button').contains('Deselect all');
+    cy.get('@operErrorField').contains('localhost:13301 (dummy-1)')
+      .find('input[type="checkbox"]').should('be.checked');
+    cy.get('@operErrorField').contains('localhost:13302 (dummy-2)')
+      .find('input[type="checkbox"]').should('be.checked');
+
+    cy.get('.meta-test__ForceApplySuggestionModal').find('.meta-test__errorField').eq(1).as('confErrorField');
+    cy.get('@confErrorField').find('span').contains('Configuration error');
+    cy.get('@confErrorField').find('span button').contains('Deselect all');
+    cy.get('@confErrorField').contains('localhost:13302 (dummy-2)')
+      .find('input[type="checkbox"]').should('be.checked');
 
     ////////////////////////////////////////////////////////////////////
-    cy.log('OperationError is gone');
+    cy.log('Uncheck localhost:13302 (dummy-2)');
     ////////////////////////////////////////////////////////////////////
-    cy.get('.ServerLabelsHighlightingArea:contains(dummy-1)').should('not.contain', 'OperationError');
+    cy.get('@operErrorField').contains('localhost:13302 (dummy-2)')
+      .find('input[type="checkbox"]').click({ force: true });
+    cy.get('@operErrorField').contains('localhost:13302 (dummy-2)')
+      .find('input[type="checkbox"]').should('not.be.checked');
+    cy.get('@confErrorField').contains('localhost:13302 (dummy-2)')
+      .find('input[type="checkbox"]').should('not.be.checked');
+
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Close suggestion modal and save checkbox value');
+    ////////////////////////////////////////////////////////////////////
+    //need to change next block after https://github.com/tarantool/cartridge/issues/1336
+    cy.get('h2:contains(Force apply configuration)').next().click();
+    cy.get('.meta-test__ForceApplySuggestionModal').should('not.exist');
+    cy.get('.meta-test__ClusterSuggestionsPanel button').contains('Review').click();
+    cy.get('@operErrorField').contains('localhost:13302 (dummy-2)')
+      .find('input[type="checkbox"]').should('not.be.checked');
+    cy.get('@confErrorField').contains('localhost:13302 (dummy-2)')
+      .find('input[type="checkbox"]').should('not.be.checked');
+
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Force apply 1 server: dummy-2');
+    ////////////////////////////////////////////////////////////////////
+    cy.get('@operErrorField').contains('localhost:13302 (dummy-2)')
+      .find('input[type="checkbox"]').click({ force: true });
+    cy.get('@operErrorField').contains('localhost:13301 (dummy-1)')
+      .find('input[type="checkbox"]').click({ force: true });
+    cy.get('.meta-test__ForceApplySuggestionModal button').contains('Force apply').click();
+    cy.get('.meta-test__ClusterSuggestionsPanel').should('be.visible');
+    cy.get('.ServerLabelsHighlightingArea:contains(dummy-1)').should('contain', 'OperationError');
+    cy.get('.ServerLabelsHighlightingArea:contains(dummy-2)').should('not.contain', 'OperationError');
+    cy.get('.meta-test__ClusterIssuesButton').should('be.disabled');
+    cy.get('.meta-test__ClusterIssuesButton').contains('Issues: 0');
+
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Inspect suggestion modal after force apply 1 server: dummy-2');
+    ////////////////////////////////////////////////////////////////////
+    cy.get('.meta-test__ClusterSuggestionsPanel button').contains('Review').click();
+    cy.get('.meta-test__ForceApplySuggestionModal h2').contains('Force apply configuration');
+    cy.get('.meta-test__ForceApplySuggestionModal p').contains(
+      'Some instances are misconfigured. ' +
+      'You can heal it by reapplying configuration forcefully.');
+
+    cy.get('.meta-test__ForceApplySuggestionModal').find('.meta-test__errorField').as('operErrorField');
+    cy.get('@operErrorField').find('span').contains('Operation error');
+    //need to delete next 1 click after https://github.com/tarantool/cartridge/issues/1336
+    cy.get('@operErrorField').contains('localhost:13301 (dummy-1)')
+      .find('input[type="checkbox"]').click({ force: true });
+    cy.get('@operErrorField').find('span button').contains('Deselect all');
+    cy.get('@operErrorField').contains('localhost:13301 (dummy-1)')
+      .find('input[type="checkbox"]').should('be.checked');
+    cy.get('@operErrorField').contains('localhost:13302 (dummy-2)').should('not.exist');
   });
 });

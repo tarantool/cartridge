@@ -96,6 +96,7 @@ export const ForceApplySuggestionModal = ({ serverList }: Props) => {
         return uuids.length
           ? (
             <FormField
+              className='meta-test__errorField'
               label={fieldLabels[reason]}
               key={reason}
               subTitle={(
