@@ -23,8 +23,9 @@ local function reload_myrole(fn)
 end
 
 g.before_all(function()
+    local tempdir = fio.tempdir()
     g.cluster = helpers.Cluster:new({
-        datadir = fio.tempdir(),
+        datadir = tempdir,
         use_vshard = false,
         server_command = helpers.entrypoint('srv_basic'),
         cookie = helpers.random_cookie(),
@@ -35,7 +36,7 @@ g.before_all(function()
         }},
     })
     g.srv = g.cluster:server('A-1')
-    g.srv.env['TARANTOOL_CONSOLE_SOCK'] = g.srv.workdir .. '/console.sock'
+    g.srv.env['TARANTOOL_CONSOLE_SOCK'] = fio.pathjoin(tempdir, 'console.sock')
     g.cluster:start()
 
     local ok, err = g.srv.net_box:eval([[
