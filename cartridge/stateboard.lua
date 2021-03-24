@@ -87,7 +87,7 @@ local function set_leaders_impl(leaders)
 
     box.on_commit(function()
         for _, leader in ipairs(leaders) do
-            log.info('New leader %s -> %s', leader[1], leader[2])
+            log.info('Replicaset %s: new leader %s', leader[1], leader[2])
         end
     end)
 
@@ -167,7 +167,7 @@ local function set_vclockkeeper_impl(replicaset_uuid, instance_uuid, ordinal, vc
     )
 
     box.on_commit(function()
-        log.info('New vclockkeeper %s -> %s%s',
+        log.info('Replicaset %s: new vclockkeeper %s%s',
             replicaset_uuid, instance_uuid,
             vclock == nil and ' (forceful)' or ''
         )
