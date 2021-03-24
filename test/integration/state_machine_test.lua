@@ -134,7 +134,7 @@ function g.test_failover()
     t.helpers.retrying({}, function()
         local issues = helpers.list_cluster_issues(g.slave)
         t.assert_covers(issues[1], {
-            level = 'warning',
+            level = 'critical',
             replicaset_uuid = helpers.uuid('a'),
             instance_uuid = helpers.uuid('a', 'a', 2),
             topic = 'replication',
@@ -142,7 +142,7 @@ function g.test_failover()
         t.assert_str_matches(
             issues[1].message,
             'Replication from localhost:13301 %(master%)' ..
-            ' to localhost:13302 %(slave%) is disconnected .+'
+            ' to localhost:13302 %(slave%) state "disconnected" .+'
         )
         t.assert_equals(issues[2], nil)
     end)
@@ -537,7 +537,7 @@ function g.test_orphan_connect_timeout()
 
     t.helpers.retrying({}, function()
         t.assert_equals(helpers.list_cluster_issues(g.master), {{
-            level = 'warning',
+            level = 'critical',
             replicaset_uuid = helpers.uuid('a'),
             instance_uuid = helpers.uuid('a', 'a', 1),
             message = "Replication from localhost:13302" ..

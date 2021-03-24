@@ -340,7 +340,7 @@ add('test_promotion_abortion', function(g)
             message = "Consistency on " .. B2.advertise_uri ..
                 " (B2) isn't reached yet",
         }, {
-            level = "warning",
+            level = "critical",
             topic = "replication",
             instance_uuid = uB2,
             replicaset_uuid = uB,
@@ -410,7 +410,7 @@ add('test_promotion_late', function(g)
             message = "Consistency on " .. B2.advertise_uri ..
                 " (B2) isn't reached yet",
         }, {
-            level = "warning",
+            level = "critical",
             topic = "replication",
             instance_uuid = uB2,
             replicaset_uuid = uB,

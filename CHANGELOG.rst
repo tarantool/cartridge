@@ -40,6 +40,8 @@ Fixed
 - Fix unclear "Timeout exceeded" error. It affects v2.5.0 two-phase commit
   when an instance is stuck in ``ConfiguringRoles`` state.
 
+- Make the "Replication isn't running" issue critical instead of a warning.
+
 -------------------------------------------------------------------------------
 [2.5.0] - 2021-03-05
 -------------------------------------------------------------------------------
