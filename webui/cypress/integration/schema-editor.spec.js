@@ -37,6 +37,8 @@ describe('Schema section', () => {
     ////////////////////////////////////////////////////////////////////
     cy.visit('/admin/cluster/schema');
     const selectAllKeys = Cypress.platform == 'darwin' ? '{cmd}a' : '{ctrl}a';
+    const commentKeys = Cypress.platform == 'darwin' ? '{cmd}/' : '{ctrl}/';
+
     const defaultText = '---\nspaces: []\n...\n';
 
     cy.get('.monaco-editor').contains('## Example:');
@@ -88,6 +90,19 @@ describe('Schema section', () => {
     cy.get('.monaco-editor').contains('---');
     cy.get('.monaco-editor').contains('spaces: []');
     cy.get('.monaco-editor').contains('...');
+
+    ////////////////////////////////////////////////////////////////////
+    cy.get('.monaco-editor').type(selectAllKeys + '{backspace}');
+    cy.get('button[type="button"]').contains('Apply').click();
+
+    //remove reload when https://github.com/tarantool/cartridge/issues/1203 is fixed
+    cy.get('button[type="button"]').contains('Reload').click();
+    cy.get('.monaco-editor').contains('## Example:');
+
+    cy.get('.monaco-editor').type(selectAllKeys + commentKeys);
+    cy.get('button[type="button"]').contains('Apply').click();
+    cy.get('span:contains(Success) + span:contains(Schema successfully applied)').click();
+    cy.task('tarantool', { code: `_G.cluster.main_server.net_box:eval('assert(box.space.customer)')` });
 
     ////////////////////////////////////////////////////////////////////
     cy.log('Tab title on Schema page');
