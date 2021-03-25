@@ -10,6 +10,7 @@ local checks = require('checks')
 local errors = require('errors')
 local netbox = require('net.box')
 
+local utils = require('cartridge.utils')
 local vars = require('cartridge.vars').new('cartridge.pool')
 local cluster_cookie = require('cartridge.cluster-cookie')
 
@@ -18,6 +19,9 @@ vars:new('connections', {})
 local FormatURIError = errors.new_class('FormatURIError')
 local NetboxConnectError = errors.new_class('NetboxConnectError')
 local NetboxMapCallError = errors.new_class('NetboxMapCallError')
+local NetboxCallError = errors.new_class('NetboxCallError')
+local NetboxWaitResultError = errors.new_class('NetboxWaitResultError')
+
 
 --- Enrich URI with credentials.
 -- Suitable to connect other cluster instances.
@@ -129,30 +133,6 @@ local function connect(uri, opts)
     return conn
 end
 
-local function _pack_values(maps, uri, ...)
-    -- Spread call results across tables
-    for i = 1, select('#', ...) do
-        local v = select(i, ...)
-        maps[i] = maps[i] or {}
-        maps[i][uri] = v
-    end
-end
-
-local function _gather_netbox_call(maps, uri, fn_name, args, opts)
-    -- Perform a call, gather results and spread it across tables.
-    local conn, err = connect(uri, {wait_connected = false})
-
-    if conn == nil then
-        return _pack_values(maps, uri,
-            nil, err
-        )
-    else
-        return _pack_values(maps, uri,
-            errors.netbox_call(conn, fn_name, args, opts)
-        )
-    end
-end
-
 --- Perform a remote call to multiple URIs and map results.
 --
 -- (**Added** in v1.2.0-17)
@@ -198,35 +178,99 @@ local function map_call(fn_name, args, opts)
         uri_map[uri] = true
     end
 
-    local maps = {}
-    local fibers = {}
-    for _, uri in pairs(opts.uri_list) do
-        local fiber = fiber.new(
-            _gather_netbox_call,
-            maps, uri, fn_name, args,
-            {timeout = opts.timeout}
-        )
-        fiber:name('netbox_map_call')
-        fiber:set_joinable(true)
-        fibers[uri] = fiber
-    end
+    local retmap = {}
+    local errmap = {}
+    local active_uris = {}
+    local future_map = {}
+    local served_uris = {}
+    local timeout = opts.timeout or 10
+    local deadline = fiber.clock() + timeout
 
-    for _, uri in pairs(opts.uri_list) do
-        local ok, err = fibers[uri]:join()
-        if not ok then
-            _pack_values(maps, uri,
-                nil, NetboxMapCallError:new(err)
-            )
+    do -- connect stage
+        local i = 0
+        while i < #opts.uri_list and (deadline - fiber.clock()) > 0 do
+            i = i + 1
+            local uri = opts.uri_list[i]
+            local conn, err = connect(uri, {
+                wait_connected = deadline - fiber.clock()
+            })
+            if conn == nil then
+                errmap[uri] = err
+            else
+                table.insert(active_uris, uri)
+            end
+        end
+
+        if deadline - fiber.clock() < 0 then
+            for _, uri in pairs(opts.uri_list) do
+                if errmap[uri] == nil then
+                    errmap[uri] = NetboxMapCallError:new("%q: %s",
+                        uri, "MapCall Connect timeout reached"
+                    )
+                end
+            end
+            goto process_results
         end
     end
 
-    local retmap, errmap = unpack(maps)
-    if errmap == nil then
+    do -- call stage
+        for _, uri in pairs(active_uris) do
+            local conn = connect(uri, {wait_connected = false})
+            local future, err = errors.netbox_call(
+                conn, fn_name, args, {is_async = true}
+            )
+            if err ~= nil then
+                errmap[uri] = err
+            else
+                future_map[uri] = future
+            end
+        end
+    end
+
+    do -- wait futures stage
+        for uri, future in pairs(future_map) do
+            if deadline - fiber.clock() < 0 then
+                break
+            end
+
+            -- check would be greater
+            -- wait_result may raise
+            local res, err = NetboxWaitResultError:pcall(
+                future.wait_result, future, deadline - fiber.clock()
+            )
+            if res ~= nil then
+                errmap[uri] = err
+            end
+            if res ~= nil then
+                local _res, _err = unpack(res)
+                if _err ~= nil then
+                    errmap[uri] = NetboxCallError:new('%q: %s', _err)
+                else
+                    retmap[uri] = _res
+                end
+            end
+            future:discard()
+            served_uris[uri] = true
+        end
+
+        for _, uri in pairs(active_uris) do
+            if served_uris[uri] == nil then
+                errmap[uri] = NetboxMapCallError:new('%q: %s',
+                    uri, 'Map call timed out'
+                )
+            end
+        end
+    end
+
+::process_results::
+
+    if utils.table_count(errmap) == 0 then
         return retmap
     end
 
     local err_classes = {}
     for _, v in pairs(errmap) do
+        require('log').info(v)
         if v.class_name then
             err_classes[v.class_name] = v
         end
