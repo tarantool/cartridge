@@ -50,6 +50,13 @@ g.before_all = function()
                 -- Discard all data, never reply
             end,
         })
+
+        local tcp_hanged = socket.tcp_server('0.0.0.0', 13311, {
+            name = 'hanged_server',
+            handler = function()
+                require('fiber').sleep(10)
+            end
+        })
     ]])
 
     cluster_cookie.init(g.cluster.datadir)
@@ -92,8 +99,26 @@ function g.test_timeout()
 
     t.assert_equals(retmap, {})
     assert_err_equals(errmap, 'localhost:13301',
-        'NetboxCallError: "localhost:13301":' ..
-        ' Connection is not established, state is "initial"'
+        'NetboxConnectError: "localhost:13301":' ..
+        ' Connection not established (yet)'
+    )
+
+    g.cluster.main_server.net_box:eval([[
+        _G.simple = function() return 5 end
+    ]])
+
+    local retmap, errmap = pool.map_call('_G.simple', nil, {
+        uri_list = {'localhost:13301', 'localhost:13311'},
+        timeout = 1
+    })
+    -- t.assert_equals(retmap, {})
+    require('log').info(errmap)
+    assert_err_equals(errmap, 'localhost:13311',
+        'NetboxConnectError: "localhost:13311":' ..
+        ' Connection not established (yet)'
+    )
+    assert_err_equals(errmap, 'localhost:13301',
+        'NetboxMapCallError: map_call connect timeout reached'
     )
 end
 
@@ -188,9 +213,9 @@ function g.test_negative()
     assert_err_equals(errmap, '!@#$%^&*()',      'FormatURIError: Invalid URI "!@#$%^&*()"')
     assert_err_equals(errmap, 'localhost:13301', 'NetboxCallError: "localhost:13301": Too long WAL write')
     assert_err_equals(errmap, 'localhost:13302', 'NetboxCallError: "localhost:13302": Too long WAL write')
-    assert_err_equals(errmap, 'localhost:13309', 'NetboxCallError: "localhost:13309": Invalid greeting')
+    assert_err_equals(errmap, 'localhost:13309', 'NetboxConnectError: "localhost:13309": Invalid greeting')
     assert_err_equals(errmap, 'localhost:9',
-        'NetboxCallError: "localhost:9": ' .. errno.strerror(errno.ECONNREFUSED),
+        'NetboxConnectError: "localhost:9": ' .. errno.strerror(errno.ECONNREFUSED),
         'NetboxCallError: "localhost:9": ' .. errno.strerror(errno.ENETUNREACH)
     )
 end
