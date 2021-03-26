@@ -180,42 +180,46 @@ local function map_call(fn_name, args, opts)
 
     local retmap = {}
     local errmap = {}
-    local active_uris = {}
-    local future_map = {}
+    local future_map =  {}
     local served_uris = {}
+
+    local active_uris = {}
     local timeout = opts.timeout or 10
     local deadline = fiber.clock() + timeout
-
     do -- connect stage
         local i = 0
-        while i < #opts.uri_list and (deadline - fiber.clock()) > 0 do
+        while i < #opts.uri_list do
             i = i + 1
             local uri = opts.uri_list[i]
+
+            local connect_timeout = deadline - fiber.clock()
+            if connect_timeout < 0 then
+                connect_timeout = 0
+            end
             local conn, err = connect(uri, {
-                wait_connected = deadline - fiber.clock()
+                wait_connected = connect_timeout
             })
-            if conn == nil then
+
+            if err ~= nil then
                 errmap[uri] = err
             else
                 table.insert(active_uris, uri)
             end
         end
 
-        if deadline - fiber.clock() < 0 then
-            for _, uri in pairs(opts.uri_list) do
-                if errmap[uri] == nil then
-                    errmap[uri] = NetboxMapCallError:new("%q: %s",
-                        uri, "MapCall Connect timeout reached"
-                    )
-                end
-            end
+        if deadline - fiber.clock() <= 0 then
             goto process_results
         end
     end
 
     do -- call stage
         for _, uri in pairs(active_uris) do
+            -- connections were established at previous stage
+            -- so there is no need to wait them
             local conn = connect(uri, {wait_connected = false})
+
+            -- but some connections could be broken after connect stage
+            -- due to network
             local future, err = errors.netbox_call(
                 conn, fn_name, args, {is_async = true}
             )
@@ -227,38 +231,36 @@ local function map_call(fn_name, args, opts)
         end
     end
 
-    do -- wait futures stage
+    do -- wait wait_result stage
         for uri, future in pairs(future_map) do
-            if deadline - fiber.clock() < 0 then
-                break
+            -- Map call timeout exceeded
+            local timeout = deadline - fiber.clock()
+            if timeout < 0 then
+                timeout = 0
             end
 
-            -- check would be greater
-            -- wait_result may raise
-            local res, err = NetboxWaitResultError:pcall(
-                future.wait_result, future, deadline - fiber.clock()
-            )
-            if res ~= nil then
-                errmap[uri] = err
-            end
-            if res ~= nil then
+            -- wait_result:
+            -- - may raise if timeout ~= number and timeout < 0
+            -- - return nil, err as string:
+            --   - if there is no result with fixed timeout (Timeout exceeded)
+            --   - peer closed
+            --   - error was raised in remote function
+            local res, err = future:wait_result(timeout)
+            if err ~= nil then
+                errmap[uri] = NetboxCallError:new('%q: %s', uri, err)
+            else
                 local _res, _err = unpack(res)
                 if _err ~= nil then
-                    errmap[uri] = NetboxCallError:new('%q: %s', _err)
+                    local errstr = _err
+                    if errors.is_error_object(_err) then
+                        errstr = _err.err
+                    end
+                    errmap[uri] = NetboxCallError:new('%q: %s', uri, errstr)
                 else
                     retmap[uri] = _res
                 end
             end
             future:discard()
-            served_uris[uri] = true
-        end
-
-        for _, uri in pairs(active_uris) do
-            if served_uris[uri] == nil then
-                errmap[uri] = NetboxMapCallError:new('%q: %s',
-                    uri, 'Map call timed out'
-                )
-            end
         end
     end
 
@@ -270,7 +272,6 @@ local function map_call(fn_name, args, opts)
 
     local err_classes = {}
     for _, v in pairs(errmap) do
-        require('log').info(v)
         if v.class_name then
             err_classes[v.class_name] = v
         end
