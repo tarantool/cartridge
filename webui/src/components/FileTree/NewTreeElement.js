@@ -1,57 +1,24 @@
 // @flow
 import * as React from 'react';
-import { css, cx } from 'emotion';
+import { cx } from 'emotion';
 import {
   IconChevron,
   IconFile,
   IconFolder,
-  Input
+  Input,
+  withTooltip
 } from '@tarantool.io/ui-kit';
+import { styles } from './styles';
 
-const styles = {
-  element: css`
-    position: relative;
-    display: flex;
-    flex-wrap: nowrap;
-    justify-content: flex-start;
-    align-items: center;
-    height: 34px;
-    padding-right: 8px;
-    user-select: none;
-    cursor: pointer;
-
-    &:hover {
-      background-color: #f6ebec;
-    }
-
-    .NewTreeElement__btns {
-      display: none;
-    }
-
-    &:hover > .NewTreeElement__btns {
-      display: flex;
-    }
-  `,
-  active: css`
-    background-color: #f6ebec;
-  `,
-  iconChevron: css`
-    margin: 4px;
-    fill: rgba(0, 0, 0, 0.65);
-  `,
-  iconChevronFile: css`
-    visibility: hidden;
-  `,
-  fileIcon: css`
-    margin: 4px;
-  `
-};
+const ListItemWithTooltip = withTooltip('li');
 
 type NewTreeElementProps = {
   active?: boolean,
   children?: React.Node,
   className?: string,
   expanded?: boolean,
+  filePaths: string[],
+  parentPath?: string,
   initialValue?: string,
   level?: number,
   type: 'file' | 'folder',
@@ -60,16 +27,22 @@ type NewTreeElementProps = {
 }
 
 type NewTreeElementState = {
-  value: string
+  value: string,
+  fileExistsError: boolean
 }
 
 export class NewTreeElement extends React.Component<NewTreeElementProps, NewTreeElementState> {
   constructor(props: NewTreeElementProps) {
     super(props);
 
-    this.state = {
-      value: (props.initialValue) || ''
-    }
+    const value = (props.initialValue) || '';
+    this.state = { value, fileExistsError: false };
+    this.state.fileExistsError = this.isFileExists(
+      value,
+      props.parentPath,
+      props.initialValue,
+      props.filePaths
+    );
   }
 
   inputRef = React.createRef<Input>()
@@ -82,12 +55,31 @@ export class NewTreeElement extends React.Component<NewTreeElementProps, NewTree
 
   enabledSymbolsRegEx = /^([A-Za-z0-9-._]){0,32}$/;
 
+  isFileExists = (
+    name: string,
+    parentPath: ?string,
+    initial: ?string,
+    paths: string[]
+  ) => !!name
+    && initial !== name
+    && paths.includes((parentPath ? (parentPath + '/') : '') + name);
+
   handleChange = (event: InputEvent) => {
     if (event.target instanceof HTMLInputElement) {
       const { value } = event.target;
 
       if (this.enabledSymbolsRegEx.test(value)) {
-        this.setState({ value });
+        const { initialValue, filePaths, parentPath } = this.props;
+
+        this.setState({
+          value,
+          fileExistsError: this.isFileExists(
+            value,
+            parentPath,
+            initialValue,
+            filePaths
+          )
+        });
       }
     }
   }
@@ -125,15 +117,16 @@ export class NewTreeElement extends React.Component<NewTreeElementProps, NewTree
       type
     } = this.props;
 
-    const { value } = this.state;
+    const { fileExistsError, value } = this.state;
 
     const Icon = type === 'folder' ? IconFolder : IconFile;
 
     return (
       <React.Fragment>
-        <li
+        <ListItemWithTooltip
           className={cx(
-            styles.element,
+            styles.row,
+            styles.newRow,
             { [styles.active]: active },
             className
           )}
@@ -141,12 +134,13 @@ export class NewTreeElement extends React.Component<NewTreeElementProps, NewTree
             paddingLeft: (level || 0) * 20
           }}
           title={initialValue}
+          tooltipContent={fileExistsError ? 'The name already exists' : undefined}
         >
           <IconChevron
             className={cx(
               styles.iconChevron,
               {
-                [styles.iconChevronFile]: type !== 'folder'
+                [styles.iconChevronHidden]: type !== 'folder'
                   || !children
                   || (children instanceof Array && !children.length)
               }
@@ -155,6 +149,7 @@ export class NewTreeElement extends React.Component<NewTreeElementProps, NewTree
           />
           <Icon className={styles.fileIcon} opened={expanded} />
           <Input
+            error={fileExistsError}
             ref={this.inputRef}
             value={value}
             onChange={this.handleChange}
@@ -162,7 +157,7 @@ export class NewTreeElement extends React.Component<NewTreeElementProps, NewTree
             onKeyDown={this.handleKeyPress}
             size='m'
           />
-        </li>
+        </ListItemWithTooltip>
         {expanded && children}
       </React.Fragment>
     );

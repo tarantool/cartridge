@@ -16,7 +16,11 @@ import {
 import MonacoEditor from 'src/components/MonacoEditor';
 import { PageLayout } from 'src/components/PageLayout';
 import { FileTree } from 'src/components/FileTree';
-import { selectFileTree, selectSelectedFile } from 'src/store/selectors/filesSelectors';
+import {
+  selectFileTree,
+  selectFilePaths,
+  selectSelectedFile
+} from 'src/store/selectors/filesSelectors';
 import { selectFile } from 'src/store/actions/editor.actions';
 import {
   applyFiles,
@@ -125,12 +129,12 @@ type CodeState = {
 type CodeProps = {
   fileTree: Array<TreeFileItem>,
   files: Array<FileItem>,
+  filePaths: Array<string>,
   fetchingConfigFiles: boolean,
   puttingConfigFiles: boolean,
   selectedFile: FileItem | null,
   dispatch: Function,
 }
-
 
 const IconSelectFile = () => (
   <svg
@@ -300,6 +304,7 @@ class Code extends React.Component<CodeProps, CodeState> {
   render() {
     const {
       fileTree = [],
+      filePaths,
       fetchingConfigFiles,
       puttingConfigFiles,
       selectedFile,
@@ -375,6 +380,7 @@ class Code extends React.Component<CodeProps, CodeState> {
               className={'meta-test__Code__FileTree'}
               initiallyExpanded
               tree={fileTree}
+              filePaths={filePaths}
               selectedFile={selectedFile}
               fileOperation={fileOperationType}
               operationObject={fileOperationObject}
@@ -457,6 +463,7 @@ class Code extends React.Component<CodeProps, CodeState> {
 
 const mapStateToProps = (state: State) => ({
   fileTree: selectFileTree(state.codeEditor.files),
+  filePaths: selectFilePaths(state.codeEditor.files),
   files: state.codeEditor.files,
   fetchingConfigFiles: state.ui.fetchingConfigFiles,
   puttingConfigFiles: state.ui.puttingConfigFiles,

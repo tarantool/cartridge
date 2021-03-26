@@ -1,6 +1,6 @@
 // @flow
 import * as React from 'react';
-import { css, cx } from 'emotion';
+import { cx } from 'emotion';
 import {
   Button,
   DotIndicator,
@@ -11,68 +11,10 @@ import {
   IconEdit,
   IconFile,
   IconFolder,
-  Text,
-  colors
+  Text
 } from '@tarantool.io/ui-kit';
 import type { TreeFileItem } from 'src/store/selectors/filesSelectors';
-
-const styles = {
-  row: css`
-    position: relative;
-    display: flex;
-    flex-wrap: nowrap;
-    justify-content: flex-start;
-    align-items: center;
-    height: 38px;
-    padding-right: 11px;
-    user-select: none;
-    cursor: pointer;
-
-    &:hover {
-      background-color: ${colors.dark10};
-    }
-
-    .FileTreeElement__btns {
-      display: none;
-    }
-
-    &:hover > .FileTreeElement__btns {
-      display: flex;
-    }
-  `,
-  active: css`
-    background-color: ${colors.dark10};
-  `,
-  deleted: css`
-    text-decoration: line-through;
-    color: #aaa;
-  `,
-  fileName: css`
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  `,
-  iconChevron: css`
-    margin: 4px;
-    fill: rgba(0, 0, 0, 0.65);
-  `,
-  iconChevronHidden: css`
-    visibility: hidden;
-  `,
-  fileIcon: css`
-    margin: 4px;
-  `,
-  buttonsPanel: css`
-    position: absolute;
-    top: calc(50% - 12px);
-    right: 8px;
-    display: flex;
-    flex-wrap: nowrap;
-  `,
-  fileActionBtn: css`
-    margin-left: 4px;
-  `
-};
+import { styles } from './styles';
 
 type FileTreeElementProps = {
   active?: boolean,
@@ -133,12 +75,7 @@ export const FileTreeElement = (
           direction={expanded ? 'down' : 'right' }
         />
         <Icon className={styles.fileIcon} opened={expanded} />
-        <Text
-          className={cx(
-            styles.fileName,
-            { [styles.deleted]: file.deleted }
-          )}
-        >{file.fileName}</Text>
+        <Text className={styles.fileName}>{file.fileName}</Text>
         {(!file.saved || (!!file.initialPath && file.initialPath !== file.path)) && (
           <DotIndicator state='bad' />
         )}

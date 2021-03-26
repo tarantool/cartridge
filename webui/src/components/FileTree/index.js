@@ -24,6 +24,7 @@ const styles = {
 
 type FileTreeProps = {
   className?: string,
+  filePaths: Array<string>,
   fileOperation?: 'rename' | 'createFile' | 'createFolder' | 'delete' | null,
   operationObject?: ?string,
   tree: Array<TreeFileItem>,
@@ -97,6 +98,7 @@ export class FileTree extends React.Component<FileTreeProps, FileTreeState> {
       className,
       initiallyExpanded,
       fileOperation,
+      filePaths,
       operationObject,
       tree = [],
       selectedFile,
@@ -120,6 +122,7 @@ export class FileTree extends React.Component<FileTreeProps, FileTreeState> {
       >
         {operationObject === '' && ['createFile', 'createFolder'].includes(fileOperation) && (
           <NewTreeElement
+            filePaths={filePaths}
             type={fileOperation === 'createFolder' ? 'folder' : 'file'}
             level={0}
             onCancel={onOperationCancel}
@@ -136,6 +139,8 @@ export class FileTree extends React.Component<FileTreeProps, FileTreeState> {
               return fileOperation === 'rename' && operationObject === item.path
                 ? (
                   <NewTreeElement
+                    filePaths={filePaths}
+                    parentPath={item.parentPath}
                     key={item.path}
                     initialValue={item.fileName}
                     active={selectedFile ? (selectedFile.path === item.path) : false}
@@ -173,11 +178,13 @@ export class FileTree extends React.Component<FileTreeProps, FileTreeState> {
                   >
                     {operationObject === item.path && ['createFile', 'createFolder'].includes(fileOperation) && (
                       <NewTreeElement
-                        type={fileOperation === 'createFolder' ? 'folder' : 'file'}
                         active={selectedFile ? (selectedFile.path === item.path) : false}
+                        filePaths={filePaths}
                         level={level + 1}
                         onCancel={onOperationCancel}
                         onConfirm={onOperationConfirm}
+                        parentPath={item.path}
+                        type={fileOperation === 'createFolder' ? 'folder' : 'file'}
                       />
                     )}
                     {children}
