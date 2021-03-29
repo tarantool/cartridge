@@ -44,7 +44,8 @@ describe('Schema section', () => {
     cy.get('.monaco-editor').contains('## Example:');
 
     ////////////////////////////////////////////////////////////////////
-    cy.get('.monaco-editor').type(selectAllKeys + '{backspace}');
+    cy.get('.monaco-editor').click();
+    cy.focused().type(selectAllKeys + '{backspace}');
     cy.get('.monaco-editor').type('spaces: incorrect-1');
     cy.get('.monaco-editor').contains('spaces: incorrect-1');
 
@@ -55,7 +56,8 @@ describe('Schema section', () => {
     cy.get('button[type="button"]').contains('Reload').click();
     cy.get('.monaco-editor').contains('## Example:');
 
-    cy.get('.monaco-editor').type(selectAllKeys + '{backspace}');
+    cy.get('.monaco-editor').click();
+    cy.focused().type(selectAllKeys + '{backspace}');
     cy.get('.monaco-editor').type('spaces: [] # Essentially the same');
 
     cy.get('button[type="button"]').contains('Validate').click();
@@ -66,7 +68,8 @@ describe('Schema section', () => {
     cy.get('span:contains(Success) + span:contains(Schema successfully applied)').click();
 
     ////////////////////////////////////////////////////////////////////
-    cy.get('.monaco-editor').type(selectAllKeys + '{backspace}');
+    cy.get('.monaco-editor').click();
+    cy.focused().type(selectAllKeys + '{backspace}');
     cy.get('.monaco-editor').type('spaces: incorrect-2');
     cy.get('.monaco-editor').contains('spaces: incorrect-2');
 
@@ -76,7 +79,8 @@ describe('Schema section', () => {
     cy.get('button[type="button"]').contains('Reload').click();
     cy.get('.monaco-editor').contains('spaces: [] # Essentially the same');
 
-    cy.get('.monaco-editor').type(selectAllKeys + '{backspace}');
+    cy.get('.monaco-editor').click();
+    cy.focused().type(selectAllKeys + '{backspace}');
     cy.get('.monaco-editor').type(defaultText);
     cy.get('.monaco-editor').contains('---');
     cy.get('.monaco-editor').contains('spaces: []');
@@ -92,14 +96,16 @@ describe('Schema section', () => {
     cy.get('.monaco-editor').contains('...');
 
     ////////////////////////////////////////////////////////////////////
-    cy.get('.monaco-editor').type(selectAllKeys + '{backspace}');
+    cy.get('.monaco-editor').click();
+    cy.focused().type(selectAllKeys + '{backspace}');
     cy.get('button[type="button"]').contains('Apply').click();
 
     //remove reload when https://github.com/tarantool/cartridge/issues/1203 is fixed
     cy.get('button[type="button"]').contains('Reload').click();
     cy.get('.monaco-editor').contains('## Example:');
 
-    cy.get('.monaco-editor').type(selectAllKeys + commentKeys);
+    cy.get('.monaco-editor').click();
+    cy.focused().type(selectAllKeys + commentKeys);
     cy.get('button[type="button"]').contains('Apply').click();
     cy.get('span:contains(Success) + span:contains(Schema successfully applied)').click();
     cy.task('tarantool', { code: `_G.cluster.main_server.net_box:eval('assert(box.space.customer)')` });
