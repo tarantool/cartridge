@@ -4,4 +4,4 @@ errors.deprecate(
     " Use `require('cartridge.funcall')` instead."
 )
 
-require('cartridge.funcall')
+return require('cartridge.funcall')
