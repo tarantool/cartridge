@@ -20,7 +20,6 @@ local FormatURIError = errors.new_class('FormatURIError')
 local NetboxConnectError = errors.new_class('NetboxConnectError')
 local NetboxMapCallError = errors.new_class('NetboxMapCallError')
 local NetboxCallError = errors.new_class('NetboxCallError')
-local NetboxWaitResultError = errors.new_class('NetboxWaitResultError')
 
 
 --- Enrich URI with credentials.
@@ -181,21 +180,17 @@ local function map_call(fn_name, args, opts)
     local retmap = {}
     local errmap = {}
     local future_map =  {}
-    local served_uris = {}
-
-    local active_uris = {}
+    local active_conns = {}
     local timeout = opts.timeout or 10
     local deadline = fiber.clock() + timeout
-    do -- connect stage
-        local i = 0
-        while i < #opts.uri_list do
-            i = i + 1
-            local uri = opts.uri_list[i]
 
+    do -- connect stage
+        for _, uri in ipairs(opts.uri_list) do
             local connect_timeout = deadline - fiber.clock()
             if connect_timeout < 0 then
                 connect_timeout = 0
             end
+
             local conn, err = connect(uri, {
                 wait_connected = connect_timeout
             })
@@ -203,26 +198,30 @@ local function map_call(fn_name, args, opts)
             if err ~= nil then
                 errmap[uri] = err
             else
-                table.insert(active_uris, uri)
+                table.insert(active_conns, conn)
             end
         end
 
         if deadline - fiber.clock() <= 0 then
+            for _, uri in ipairs(opts.uri_list) do
+                if errmap[uri] == nil then
+                    errmap[uri] = NetboxMapCallError:new(
+                        "map_call connect timeout reached"
+                    )
+                end
+            end
             goto process_results
         end
     end
 
     do -- call stage
-        for _, uri in pairs(active_uris) do
-            -- connections were established at previous stage
-            -- so there is no need to wait them
-            local conn = connect(uri, {wait_connected = false})
-
-            -- but some connections could be broken after connect stage
-            -- due to network
+        for _, conn in ipairs(active_conns) do
+            -- Some connections may breaks after connect stage
             local future, err = errors.netbox_call(
                 conn, fn_name, args, {is_async = true}
             )
+
+            local uri = ('%s:%s'):format(conn.host or "", conn.port)
             if err ~= nil then
                 errmap[uri] = err
             else
@@ -231,31 +230,36 @@ local function map_call(fn_name, args, opts)
         end
     end
 
-    do -- wait wait_result stage
+    do -- wait result stage
         for uri, future in pairs(future_map) do
-            -- Map call timeout exceeded
             local timeout = deadline - fiber.clock()
             if timeout < 0 then
+                -- Map call timeout exceeded
                 timeout = 0
             end
 
-            -- wait_result:
-            -- - may raise if timeout ~= number and timeout < 0
+            -- wait_result behaviour:
+            -- - may raise an error (if timeout ~= number or timeout < 0)
             -- - return nil, err as string:
-            --   - if there is no result with fixed timeout (Timeout exceeded)
-            --   - peer closed
-            --   - error was raised in remote function
-            local res, err = future:wait_result(timeout)
+            --     - if there is no result with fixed timeout (Timeout exceeded)
+            --     - peer closed
+            --     - error was raised in remote function
+            -- - return res as array:
+            --     - res[1] - result or nil
+            --     - res[2] - error or nil (error maybe as object or string)
+            local res, err = future:wait_result(timeout) -- wait_result(0) won't yeild
             if err ~= nil then
                 errmap[uri] = NetboxCallError:new('%q: %s', uri, err)
             else
-                local _res, _err = unpack(res)
+                local _res, _err = res[1], res[2]
                 if _err ~= nil then
-                    local errstr = _err
                     if errors.is_error_object(_err) then
-                        errstr = _err.err
+                        _err.err = ('%q: %s'):format(uri, _err.err)
+                        _err.str = ('%s: %s'):format(_err.class_name, _err.err)
+                    else
+                        _err = NetboxCallError:new('%q: %s', uri, _err)
                     end
-                    errmap[uri] = NetboxCallError:new('%q: %s', uri, errstr)
+                    errmap[uri] = _err
                 else
                     retmap[uri] = _res
                 end
