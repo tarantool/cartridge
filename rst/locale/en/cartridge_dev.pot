@@ -1,3 +1,20 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 
+# This file is distributed under the same license as the Cartridge package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Cartridge 2.1\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2021-03-30 08:01+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
 
 msgid "Developer's guide"
 msgstr ""
@@ -680,6 +697,18 @@ msgstr ""
 msgid "In the ``eventual`` mode, the leader isn't elected consistently. Instead, every instance in the cluster thinks that the leader is the first **healthy** instance in the failover priority list, while instance health is determined according to the membership status (the SWIM protocol)."
 msgstr ""
 
+msgid "The member is considered healthy if both are true:"
+msgstr ""
+
+msgid "It reports either ``ConfiguringRoles`` or ``RolesConfigured`` state;"
+msgstr ""
+
+msgid "Its SWIM status is either ``alive`` or ``suspect``."
+msgstr ""
+
+msgid "A ``suspect`` member becomes ``dead`` after the ``failover_timout`` expires."
+msgstr ""
+
 msgid "Leader election is done as follows. Suppose there are two replica sets in the cluster:"
 msgstr ""
 
@@ -728,7 +757,7 @@ msgstr ""
 msgid "If there is no leader appointed for the replica set, the coordinator appoints the first leader according to the failover priority, regardless of the SWIM status."
 msgstr ""
 
-msgid "If a leader becomes degraded, the coordinator makes a decision. A new leader is the first healthy instance from the failover priority list. If an old leader recovers, no leader change is made until the current leader down. Changing failover priority doesn't affect this."
+msgid "If a leader becomes ``dead``, the coordinator makes a decision. A new leader is the first healthy instance from the failover priority list. If an old leader recovers, no leader change is made until the current leader down. Changing failover priority doesn't affect this."
 msgstr ""
 
 msgid "Every appointment (self-made or fetched) is immune for a while (controlled by the ``IMMUNITY_TIMEOUT`` option)."
@@ -797,19 +826,25 @@ msgstr ""
 msgid "``state_provider``: \"tarantool\" / \"etcd\"."
 msgstr ""
 
+msgid "``failover_timeout`` -- time (in seconds) to mark ``suspect`` members as ``dead`` and trigger failover (default: 20)."
+msgstr ""
+
 msgid "``tarantool_params``: ``{uri = \"...\", password = \"...\"}``."
 msgstr ""
 
 msgid "``etcd2_params``: ``{endpoints = {...}, prefix = \"/\", lock_delay = 10, username = \"\", password = \"\"}``."
 msgstr ""
 
-msgid "``fencing_pause`` -- the period of performing the check;"
+msgid "``fencing_enabled``: ``true`` / ``false`` (default: false)."
 msgstr ""
 
-msgid "``fencing_timout`` -- time to actuate fencing after the check fails;"
+msgid "``fencing_timeout`` -- time to actuate fencing after the check fails (default: 10)."
 msgstr ""
 
-msgid "It's required that ``fencing_timeout > fencing_pause``."
+msgid "``fencing_pause`` -- the period of performing the check (default: 2)."
+msgstr ""
+
+msgid "It's required that ``failover_timeout > fencing_timeout >= fencing_pause``."
 msgstr ""
 
 msgid "Lua API"
@@ -1214,7 +1249,7 @@ msgstr ""
 msgid "``--cfg FILE``"
 msgstr ""
 
-msgid "Cartridge instances YAML configuration file. Defaults to ``TARANTOOL_CFG`` or ``./instances.yml``."
+msgid "Cartridge instances YAML configuration file. Defaults to ``TARANTOOL_CFG`` or ``./instances.yml``. The ``instances.yml`` file contains ``cartridge.cfg()`` parameters described in the :ref:`configuration section <cartridge-config-basic>` of this guide."
 msgstr ""
 
 msgid "``--foreground``"

@@ -1,0 +1,50 @@
+name: Update translation sources
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'rst/**.rst'
+jobs:
+  autocommit-pot-files:
+    runs-on: ubuntu-latest
+
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        ref: ${{ github.head_ref }}
+
+    - name: Setup tarantool
+      uses: tarantool/setup-tarantool@v1
+      with:
+        tarantool-version: '2.6'
+
+    - name: Setup Python environment
+      uses: actions/setup-python@v2
+
+    - name: Setup Python requirements
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r rst/requirements.txt
+
+    - name: Create Makefile
+      run: cmake .
+
+    - name: Update pot files
+      run: make update-pot
+
+    - name: Push Local Changes
+      uses: stefanzweifel/git-auto-commit-action@v4.9.2
+      with:
+        commit_message: "Update translation sources"
+        file_pattern: "*.pot"
+
+    - name: Push Pot-files to crowdin
+      uses: crowdin/github-action@1.1.0
+      with:
+        upload_sources: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
