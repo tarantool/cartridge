@@ -65,6 +65,9 @@ jobs:
       - run: tarantoolctl rocks make
 
       - run: ./frontend-test.sh
+      
+      # Cleanup cached paths
+      - run: tarantoolctl rocks remove cartridge
 
   cypress-test:
     strategy:
@@ -73,7 +76,7 @@ jobs:
         runs-on: [ubuntu-18.04, ubuntu-18.04]
     runs-on: ${{ matrix.runs-on }}
     needs: [frontend-test]
-    
+
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v1
