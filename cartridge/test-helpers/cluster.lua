@@ -10,6 +10,7 @@ local uuid = require('uuid')
 
 local luatest = require('luatest')
 local Server = require('cartridge.test-helpers.server')
+local Stateboard = require('cartridge.test-helpers.stateboard')
 
 -- Defaults.
 local Cluster = {
@@ -19,6 +20,7 @@ local Cluster = {
     cookie = 'test-cluster-cookie',
     base_http_port = 8080,
     base_advertise_port = 13300,
+    failover = 'disabled',
 }
 
 function Cluster:inherit(object)
@@ -35,6 +37,8 @@ end
 -- @int[opt] object.base_advertise_port Value to calculate server's advertise_port.
 -- @bool[opt] object.use_vshard bootstrap vshard after server is started.
 -- @tab object.replicasets Replicasets configuration. List of @{replicaset_config}
+-- @string[opt] object.failover Failover mode: disabled, eventual, or stateful.
+-- @string[opt] object.stateboard_entrypoint Command to run stateboard
 -- @return object
 function Cluster:new(object)
     checks('table', {
@@ -46,6 +50,8 @@ function Cluster:new(object)
         use_vshard = '?boolean',
         replicasets = 'table',
         env = '?table',
+        failover = '?string',
+        stateboard_entrypoint = '?string',
     })
     --- Replicaset config.
     -- @table @replicaset_config
@@ -74,6 +80,31 @@ end
 
 function Cluster:initialize()
     self.servers = {}
+
+    assert(
+        self.failover == 'disabled'
+        or self.failover == 'eventual'
+        or self.failover == 'stateful',
+        "failover must be 'disabled', 'eventual' or 'stateful'"
+    )
+
+    if self.failover == 'stateful' then
+        assert(self.stateboard_entrypoint ~= nil,
+            'stateboard_entrypoint required for stateful failover')
+        self.stateboard = Stateboard:new({
+            workdir = fio.pathjoin(self.datadir, 'stateboard'),
+            command = self.stateboard_entrypoint,
+            net_box_port = 14401,
+            net_box_credentials = {
+                user = 'client',
+                password = self.cookie,
+            },
+            env = {
+                TARANTOOL_PASSWORD = self.cookie,
+            }
+        })
+    end
+
     for _, replicaset_config in ipairs(self.replicasets) do
         replicaset_config.uuid = replicaset_config.uuid or uuid.str()
         if type(replicaset_config.servers) == 'number' then
@@ -89,6 +120,24 @@ function Cluster:initialize()
             table.insert(self.servers, self:build_server(server_config, replicaset_config, i))
         end
     end
+end
+
+function Cluster:configure_failover()
+    assert(self.main_server)
+
+    local failover_config = {mode = self.failover}
+    if failover_config.mode == 'stateful' then
+        failover_config.state_provider = 'tarantool'
+        failover_config.tarantool_params = {
+            uri = self.stateboard.net_box_uri,
+            password = self.stateboard.net_box_credentials.password
+        }
+    end
+
+    self.main_server.net_box:call(
+        'package.loaded.cartridge.failover_set_params',
+        {failover_config}
+    )
 end
 
 --- Find server by alias.
@@ -159,6 +208,12 @@ function Cluster:start()
     if self.running then
         return
     end
+    if self.failover == 'stateful' then
+        self.stateboard:start()
+        luatest.helpers.retrying({}, function()
+            self.stateboard:connect_net_box()
+        end)
+    end
     for _, server in ipairs(self.servers) do
         server:start()
     end
@@ -170,6 +225,9 @@ function Cluster:start()
         self:bootstrap()
         self.bootstrapped = true
     end
+    if self.failover ~= 'disabled' then
+        self:configure_failover()
+    end
     self.running = true
 end
 
@@ -177,6 +235,9 @@ end
 function Cluster:stop()
     for _, server in ipairs(self.servers) do
         server:stop()
+    end
+    if self.stateboard then
+        self.stateboard:stop()
     end
     self.running = nil
 end

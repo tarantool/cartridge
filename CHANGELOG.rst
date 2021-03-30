@@ -18,13 +18,18 @@ Added
 
 - Update vshard to 0.1.17.
   (`Changelog <https://github.com/tarantool/vshard/releases/tag/0.1.17>`_).
+
 - Update graphql to 0.1.1 which allows to return data and errors together.
+
+- New test helper: ``cartridge.test-helpers.stateboard``.
+
+- New ``failover`` option in the cluster test helper for easier failover setup.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- Fix unclear timeout errors in case of ``InitError`` and ``BootError`` states
+- Fix unclear timeout errors in case of ``InitError`` and ``BootError`` states.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Enhanced in WebUI

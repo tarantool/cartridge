@@ -12,13 +12,15 @@ g.before_all = function()
         datadir = fio.tempdir(),
         use_vshard = true,
         server_command = helpers.entrypoint('srv_basic'),
+        failover = 'stateful',
+        stateboard_entrypoint = helpers.entrypoint('srv_stateboard'),
         cookie = require('digest').urandom(6):hex(),
         base_http_port = 8080,
         base_advertise_port = 13300,
         replicasets = {
             {
                 alias = 'vshard',
-                roles = {'vshard-router', 'vshard-storage'},
+                roles = {'vshard-router', 'vshard-storage', 'failover-coordinator'},
                 servers = 1,
             },
             {
@@ -87,6 +89,42 @@ function g.test_replicaset_uuid_generation()
             uuids[uuid] = true
         end
     end
+end
+
+local function get_failover(cluster)
+    return cluster.main_server.net_box:call(
+        'package.loaded.cartridge.failover_get_params')
+end
+
+function g.test_failover()
+    t.assert_equals(get_failover(g.cluster).mode, 'stateful')
+    t.assert(g.cluster.stateboard)
+
+    local coordinator = g.cluster:server('vshard-1')
+    t.assert_equals(g.cluster.stateboard.net_box:call('get_coordinator'),
+        {uri = coordinator.advertise_uri, uuid = coordinator.instance_uuid})
+
+    t.assert_error_msg_contains(
+        "failover must be 'disabled', 'eventual' or 'stateful'",
+        build_cluster, {
+        replicasets = {{roles = {}, servers = 1, alias = ''}},
+        failover = 'thebest'
+    })
+
+    t.assert_error_msg_contains(
+        "stateboard_entrypoint required for stateful failover",
+        build_cluster, {
+        replicasets = {{roles = {}, servers = 1, alias = ''}},
+        failover = 'stateful',
+    })
+
+    -- t.assert_error_msg_contains(
+    --     "fake: no such stateboard_entrypoint",
+    --     build_cluster, {
+    --     replicasets = {{roles = {}, servers = 1, alias = ''}},
+    --     failover = 'stateful',
+    --     stateboard_entrypoint = 'fake'
+    -- })
 end
 
 function g.test_new_with_servers_count()

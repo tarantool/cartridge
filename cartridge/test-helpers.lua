@@ -20,4 +20,8 @@ helpers.Cluster = require('cartridge.test-helpers.cluster')
 -- @see cartridge.test-helpers.etcd
 helpers.Etcd = require('cartridge.test-helpers.etcd')
 
+--- Class to run and manage stateboard.
+-- @see cartridge.test-helpers.stateboard
+helpers.Stateboard = require('cartridge.test-helpers.stateboard')
+
 return helpers

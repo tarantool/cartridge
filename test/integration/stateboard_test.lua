@@ -14,7 +14,7 @@ g.before_each(function()
     local password = require('digest').urandom(6):hex()
 
     fio.mktree(fio.pathjoin(g.datadir, 'stateboard'))
-    g.stateboard = require('luatest.server'):new({
+    g.stateboard = helpers.Stateboard:new({
         command = helpers.entrypoint('srv_stateboard'),
         workdir = fio.pathjoin(g.datadir),
         net_box_port = 13301,
