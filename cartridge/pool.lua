@@ -133,26 +133,21 @@ local function connect(uri, opts)
 end
 
 
-local function conn_connect(conn, deadline, chan)
-    local uri = ('%s:%s'):format(conn.host or '', conn.port)
-    
+local function sync_connect(uri, deadline, out_chan)
     local timeout = deadline - fiber.clock()
     if timeout < 0 then
         timeout = 0
     end
-    
-    local response = {uri = uri}
-    if conn:wait_connected(timeout) then
-        response.data = conn
-    else
-        response.err = NetboxConnectError:new('%q: %s', uri, 
-            conn.error or 'Connection not established (yet)'
-        )
-    end
-    chan:put(response)
+
+    local conn, err = NetboxMapCallError:pcall(connect, uri, {wait_connected = timeout})
+    out_chan:put({
+        data = conn,
+        err = err,
+        uri = uri
+    })
 end
 
-local function wait_future(future, deadline, uri, wait_chan)
+local function wait_future(uri, deadline, future, out_chan)
     local timeout = deadline - fiber.clock()
     if timeout < 0 then
         timeout = 0
@@ -170,9 +165,9 @@ local function wait_future(future, deadline, uri, wait_chan)
     local res, err = future:wait_result(timeout) -- wait_result(0) won't yeild
     local response = {uri = uri}
     if err ~= nil then
-        response.err = NetboxCallError:new('%q: %s', uri, err)        
+        response.err = NetboxCallError:new('%q: %s', uri, err)
     else
-        local _res, _err = unpack(res)
+        local _res, _err = res[1], res[2]
         if _err ~= nil then
             if errors.is_error_object(_err) then
                 _err.err = ('%q: %s'):format(uri, _err.err)
@@ -186,7 +181,7 @@ local function wait_future(future, deadline, uri, wait_chan)
         end
     end
     future:discard()
-    wait_chan:put(response)
+    out_chan:put(response)
 end
 
 --- Perform a remote call to multiple URIs and map results.
@@ -239,101 +234,56 @@ local function map_call(fn_name, args, opts)
     local timeout = opts.timeout or 10
     local deadline = fiber.clock() + timeout
 
-    local conn_list = {}
-    local conn_chan = fiber.channel(1)
+    local wait_conn_chan = fiber.channel(1)
     do -- connect stage performs in fibers
         for _, uri in ipairs(opts.uri_list) do
-            local conn, err = connect(uri, { wait_connected = false })
-            if err ~= nil then
-                errmap[uri] = err
-            else
-                table.insert(conn_list, conn)
-            end
-        end
-
-        for _, conn in ipairs(conn_list) do
-            fiber.create(conn_connect, conn, deadline, conn_chan)
+            local fib = fiber.new(sync_connect, uri, deadline, wait_conn_chan)
+            fib:name('netbox_map_call_connect_worker')
         end
     end
 
-    local fiber_map = {}
-    local served_uris = {}
-    local wait_chan = fiber.channel(1)
-    do -- perform netbox calls in main fiber
-        local i = 0
-        local resp, timeout
-        local conn, future, err, fib
+    local count_futures = 0
+    local wait_future_chan = fiber.channel(1)
+    do -- perform netbox calls in main fiber and run wait_future in separate fiber
+        for _ = 1, #opts.uri_list do
+            local resp = wait_conn_chan:get()
 
-        -- maybe we don't need to use timeouts
-        require('log').info('\n\n\n%d', #conn_list)
-        while i < #conn_list do
-            timeout = deadline - fiber.clock()
-            if timeout < 0 then
-                timeout = 0
-            end
-            resp = conn_chan:get() --timeout)
-
-            require('log').info(resp)
-
-            -- seems it's unreachable
-            if resp == nil then
-                goto continue
-            end
-
-            served_uris[resp.uri] = true
-
-            conn, err = resp.data, resp.err
+            local uri = resp.uri
+            local conn, err = resp.data, resp.err
             if err ~= nil then
-                errmap[resp.uri] = err
+                errmap[uri] = err
                 goto continue
             end
 
-            future, err = errors.netbox_call(
+            local future, err = errors.netbox_call(
                 conn, fn_name, args, {is_async = true}
             )
             if err ~= nil then
-                errmap[resp.uri] = err
+                errmap[uri] = err
                 goto continue
             end
 
-            table.insert(fiber_map, 
-                fiber.new(wait_future, future, deadline, resp.uri, wait_chan)
+            local fib = fiber.new(
+                wait_future, uri, deadline, future, wait_future_chan
             )
+            fib:name('netbox_map_call_future_worker')
+            count_futures = count_futures + 1
 
             ::continue::
-
-            i = i + 1
         end
-        conn_chan:close()
+        wait_conn_chan:close()
     end
 
     do -- gather results
-        local i = 0
-        while i < #fiber_map do
-            local timeout = deadline - fiber.clock()
-            if timeout < 0 then
-                timeout = 0
-            end
-
-            local resp = wait_chan:get(timeout)
-            require('log').info(resp)
-
-            if resp then
-                if resp.err ~= nil then
-                    errmap[resp.uri] = resp.err
-                else
-                    retmap[resp.uri] = resp.data
-                end
-            end
-            i = i + 1
-        end
-        wait_chan:close()
-
-        for _, uri in ipairs(opts.uri_list) do
-            if served_uris[uri] == nil and errmap[uri] == nil then
-                errmap[uri] = NetboxMapCallError:new('%q: Unknown error', uri)
+        for _ = 1, count_futures do
+            local resp = wait_future_chan:get()
+            if resp.err ~= nil then
+                errmap[resp.uri] = resp.err
+            else
+                retmap[resp.uri] = resp.data
             end
         end
+        wait_future_chan:close()
     end
 
     if utils.table_count(errmap) == 0 then

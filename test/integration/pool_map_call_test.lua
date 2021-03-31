@@ -111,14 +111,10 @@ function g.test_timeout()
         uri_list = {'localhost:13301', 'localhost:13311'},
         timeout = 1
     })
-    -- t.assert_equals(retmap, {})
-    require('log').info(errmap)
+    t.assert_equals(retmap, {['localhost:13301'] = 5})
     assert_err_equals(errmap, 'localhost:13311',
         'NetboxConnectError: "localhost:13311":' ..
         ' Connection not established (yet)'
-    )
-    assert_err_equals(errmap, 'localhost:13301',
-        'NetboxMapCallError: map_call connect timeout reached'
     )
 end
 
