@@ -12,8 +12,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runs-on: [ubuntu-18.04]
-    runs-on: ${{ matrix.runs-on }}
+        script:
+          - frontend
+          - cypress-1
+          - cypress-2
+    runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v1
@@ -22,60 +25,70 @@ jobs:
         with:
           tarantool-version: '2.6'
 
+      ##################################################################
+      # Setup rocks
       - name: Cache rocks
         uses: actions/cache@v2
-        id: cache-webui-rocks
+        id: cache-rocks
         with:
           path: .rocks/
-          key: cache-webui-rocks-${{ matrix.runs-on }}
+          key: rocks-${{ hashFiles('cartridge-scm-1.rockspec') }}
+          restore-keys: rocks
       -
         run: tarantoolctl rocks install luatest 0.5.2
-        if: steps.cache-webui-rocks.outputs.cache-hit != 'true'
+        if: steps.cache-rocks.outputs.cache-hit != 'true'
 
+      ##################################################################
+      # Cachce node_modules
       - name: Cache node_modules
         uses: actions/cache@v2
         with:
           path: webui/node_modules/
-          key: >
-            cache-node-modules-${{ hashFiles(
-            'webui/package-lock.json'
-            ) }}
+          key: node-modules-${{ hashFiles('webui/package-lock.json') }}
 
+      ##################################################################
+      # Cachce webui bundle
       - name: Cache webui bundle
         uses: actions/cache@v2
         with:
           path: |
             webui/build/bundle.lua
             webui/build/bundle.md5
-          key: >
-            cache-webui-bundle-${{ hashFiles(
-            'webui/src/*',
-            'webui/config/*.prod.js',
-            'webui/flow-typed/*',
-            'webui/public/*',
-            'webui/.env',
-            'webui/.env.production',
-            'webui/.eslintrc',
-            'webui/.flowconfig',
-            'webui/codegen.yml',
-            'webui/scripts/build.js',
-            'webui/package-lock.json'
-            ) }}
+          key: webui-bundle
 
-      - run: tarantoolctl rocks make
-
+      ##################################################################
+      # Cache cypress
+      - run: echo node_modules/.bin/ >> $GITHUB_PATH
       - name: Cache cypress
+        if: startsWith(matrix.script, 'cypress')
         id: cache-cypress
         uses: actions/cache@v2
         with:
-          path: ~/.cache/Cypress
-          key: cypress-cache-${{ runner.os }}
+          path: |
+            ./node_modules
+            ~/.cache/Cypress
+          key: cypress-cache-6.2.0-${{ runner.os }}-1
+      -
+        run: |
+          npm install cypress@6.2.0
+          npx cypress verify
+        if: >
+          startsWith(matrix.script, 'cypress') &&
+          steps.cache-cypress.outputs.cache-hit != 'true'
 
-      - run: npm install cypress@6.2.0
-      - run: npx cypress cache list
+      ##################################################################
 
-      - run: ./cypress-test.sh run --record --key ${{ secrets.CYPRESS_RECORD_KEY }}
-      - run: ./frontend-test.sh
+      - run: tarantoolctl rocks make
 
+      - if: matrix.script == 'frontend'
+        run: ./frontend-test.sh
+
+      - if: startsWith(matrix.script, 'cypress')
+        run: ./cypress-test.sh run
+          --parallel
+          --record
+          --key ${{ secrets.CYPRESS_RECORD_KEY }}
+
+      ##################################################################
       # Cleanup cached paths
       - run: tarantoolctl rocks remove cartridge
