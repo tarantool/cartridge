@@ -128,6 +128,26 @@ add_custom_command(
   VERBATIM
 )
 
+add_custom_target(update-pot
+    COMMAND "${SPHINX}"
+        "${CMAKE_CURRENT_BINARY_DIR}/rst"
+        "${CMAKE_CURRENT_BINARY_DIR}/rst/locale/en/"
+        -c rst/
+        -d "${CMAKE_CURRENT_BINARY_DIR}/.doctrees"
+        -b gettext
+    COMMENT "Generate localization templates"
+)
+
+add_custom_target(update-po
+    COMMAND "sphinx-intl"
+        update
+        -p "${CMAKE_CURRENT_BINARY_DIR}/rst/locale/en/"
+        -d "${CMAKE_CURRENT_BINARY_DIR}/rst/locale/"
+        -l "ru"
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    COMMENT "Regenerate localization files from templates"
+)
+
 if(Ldoc_FOUND AND Sphinx_FOUND)
   add_custom_target(doc ALL
     DEPENDS "${DOC_OUTPUT}/index.html")

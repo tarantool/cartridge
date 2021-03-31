@@ -1,0 +1,24 @@
+# https://support.crowdin.com/configuration-file/
+# https://support.crowdin.com/cli-tool-v3/#configuration
+
+"project_id" : "447872"
+"base_path" : "./rst/locale"
+"base_url": "https://crowdin.com"
+"api_token_env": "CROWDIN_PERSONAL_TOKEN"
+
+
+"preserve_hierarchy": true
+
+files: [
+ {
+  "source" : "/en/**/*.pot",
+  "translation" : "/%locale_with_underscore%/LC_MESSAGES/**/%file_name%.po",
+  "update_option" : "update_as_unapproved",
+
+  "languages_mapping" : {
+    "locale_with_underscore" : {
+      "ru" : "ru",
+     }
+  },
+ }
+]
