@@ -129,22 +129,18 @@ local function connect(uri, opts)
     return conn
 end
 
-local function _gather_netbox_call(fiber_storage, retmap, errmap, uri, fn_name, args, opts)
+local function _gather_netbox_call(fiber_storage, retmap, errmap, uri, fn_name, args, deadline)
     local self_storage = fiber.self().storage
     for k, v in pairs(fiber_storage) do
         self_storage[k] = v
     end
 
-    -- Perform a call, gather results and spread it across tables.
-    local conn, err = connect(uri, {wait_connected = false})
-
-    if conn == nil then
-        errmap[uri] = err
-    else
-        local ret, err = errors.netbox_call(conn, fn_name, args, opts)
-        retmap[uri] = ret
-        errmap[uri] = err
-    end
+    local conn = connect(uri, {wait_connected = false})
+    local ret, err = errors.netbox_call(conn, fn_name, args, {
+        timeout = deadline - fiber.clock()
+    })
+    retmap[uri] = ret
+    errmap[uri] = err
 end
 
 --- Perform a remote call to multiple URIs and map results.
@@ -173,7 +169,7 @@ local function map_call(fn_name, args, opts)
     })
 
     local i = 0
-    local uri_map = {}
+    local uri_map = table.new(0, #opts.uri_list)
     for _, _ in pairs(opts.uri_list) do
         i = i + 1
         local uri = opts.uri_list[i]
@@ -193,23 +189,51 @@ local function map_call(fn_name, args, opts)
     end
 
     local retmap, errmap = {}, {}
-    local fibers = {}
-    for _, uri in pairs(opts.uri_list) do
-        local fiber = fiber.new(
-            _gather_netbox_call,
-            fiber.self().storage, retmap, errmap, uri, fn_name, args,
-            {timeout = opts.timeout}
-        )
-        fiber:name('netbox_map_call')
-        fiber:set_joinable(true)
-        fibers[uri] = fiber
+    local fibers = table.new(0, #opts.uri_list)
+    local futures = table.new(0, #opts.uri_list)
+
+    local timeout = opts.timeout or 10
+    local deadline = fiber.clock() + timeout
+
+    for _, uri in ipairs(opts.uri_list) do
+        local conn, err = connect(uri, {wait_connected = false})
+        if conn == nil then
+            errmap[uri] = err
+        elseif conn:is_connected() then
+            local future, err = errors.netbox_call(
+                conn, fn_name, args, {is_async = true}
+            )
+            if future == nil then
+                errmap[uri] = err
+            end
+            futures[uri] = future
+        else
+            local fiber = fiber.new(_gather_netbox_call,
+                fiber.self().storage, retmap, errmap, uri, fn_name, args, deadline
+            )
+            fiber:name('netbox_map_call')
+            fiber:set_joinable(true)
+            fibers[uri] = fiber
+        end
     end
 
-    for _, uri in pairs(opts.uri_list) do
-        local ok, err = fibers[uri]:join()
+    for uri, fiber in pairs(fibers) do
+        local ok, err = fiber:join()
         if not ok then
             errmap[uri] = NetboxMapCallError:new(err)
         end
+    end
+
+    for uri, future in pairs(futures) do
+        local timeout = deadline - fiber.clock()
+        if timeout < 0 then
+            timeout = 0
+        end
+
+        local ret, err = errors.netbox_wait_async(future, timeout)
+        retmap[uri] = ret
+        errmap[uri] = err
+        future:discard()
     end
 
     if next(errmap) == nil then
