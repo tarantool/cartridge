@@ -50,6 +50,13 @@ g.before_all = function()
                 -- Discard all data, never reply
             end,
         })
+
+        local tcp_hanged = socket.tcp_server('0.0.0.0', 13311, {
+            name = 'hanged_server',
+            handler = function()
+                require('fiber').sleep(10)
+            end
+        })
     ]])
 
     cluster_cookie.init(g.cluster.datadir)
@@ -93,6 +100,20 @@ function g.test_timeout()
     t.assert_equals(retmap, {})
     assert_err_equals(errmap, 'localhost:13301',
         'NetboxCallError: "localhost:13301":' ..
+        ' Connection is not established, state is "initial"'
+    )
+
+    g.cluster.main_server.net_box:eval([[
+        _G.simple = function() return 5 end
+    ]])
+
+    local retmap, errmap = pool.map_call('_G.simple', nil, {
+        uri_list = {'localhost:13301', 'localhost:13311'},
+        timeout = 1
+    })
+    t.assert_equals(retmap, {['localhost:13301'] = 5})
+    assert_err_equals(errmap, 'localhost:13311',
+        'NetboxCallError: "localhost:13311":' ..
         ' Connection is not established, state is "initial"'
     )
 end
