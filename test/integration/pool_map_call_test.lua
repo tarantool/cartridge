@@ -92,6 +92,21 @@ local function assert_err_equals(map, uri, expected1, expected2)
     end
 end
 
+-- check that all errors at NetboxMapCallError has errors metatable
+-- and tostring works fine (there is no error in log like: table: 0x41b7b968)
+local function assert_multiple_error_str_valid(err)
+    local lines = err.str:split('\n')
+    for _, line in ipairs(lines) do
+        if line:match('^%* table: 0[xX]%x+') then
+            local err = string.format(
+                'Unexpected error message %q at multiple error.\n' ..
+                'Seems there was lost error object metatable', line
+            )
+            error(err, 2)
+        end
+    end
+end
+
 function g.test_timeout()
     local retmap, errmap = pool.map_call('package.loaded.fiber.sleep', {1}, {
         uri_list = {'localhost:13301'},
@@ -117,6 +132,7 @@ function g.test_timeout()
         'NetboxCallError: "localhost:13311":' ..
         ' Connection is not established, state is "initial"'
     )
+    assert_multiple_error_str_valid(errmap)
 end
 
 
@@ -246,6 +262,7 @@ function g.test_negative()
         'NetboxCallError: "localhost:9": ' .. errno.strerror(errno.ECONNREFUSED),
         'NetboxCallError: "localhost:9": ' .. errno.strerror(errno.ENETUNREACH)
     )
+    assert_multiple_error_str_valid(errmap)
 end
 
 function g.test_errors_united()
@@ -279,6 +296,7 @@ function g.test_errors_united()
             '"localhost:13309": Invalid greeting',
         }
     )
+    assert_multiple_error_str_valid(err)
 end
 
 function g.test_positive()
