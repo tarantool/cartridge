@@ -15,10 +15,10 @@ function g.test_zero_timeout()
     local lsn = box.info.lsn
 
     -- Wait_lsn with zero timeout should never yield
-    local csw1 = fiber.info()[fiber.id()].csw
+    local csw1 = utils.fiber_csw()
     t.assert_equals(utils.wait_lsn(id, lsn,   0.1, 0), true)
     t.assert_equals(utils.wait_lsn(id, lsn+1, 0.1, 0), false)
-    local csw2 = fiber.info()[fiber.id()].csw
+    local csw2 = utils.fiber_csw()
 
     t.assert_equals(csw1, csw2, 'Unnecessary yield')
 end
@@ -28,9 +28,9 @@ function g.test_timings()
     local lsn = box.info.lsn
 
     -- 1. If condition is already met wait_lsn shouldn't yield
-    local csw1 = fiber.info()[fiber.id()].csw
+    local csw1 = utils.fiber_csw()
     t.assert_equals(utils.wait_lsn(id, lsn, 0.1, 1), true)
-    local csw2 = fiber.info()[fiber.id()].csw
+    local csw2 = utils.fiber_csw()
     t.assert_equals(csw1, csw2, 'Unnecessary yield')
 
     -- 2. False result shouldn't return until timeout expires

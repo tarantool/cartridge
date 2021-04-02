@@ -392,6 +392,14 @@ local function wait_lsn(id, lsn, pause, timeout)
     end
 end
 
+--- Get fiber context switches number.
+--
+-- @function fiber_csw
+-- @local
+-- @treturn number csw
+local function fiber_csw()
+    return fiber.info()[fiber.id()].csw
+end
 
 -- Set FD_CLOEXEC flag for the given file descriptor.
 --
@@ -460,5 +468,6 @@ return {
     http_read_body = http_read_body,
 
     wait_lsn = wait_lsn,
+    fiber_csw = fiber_csw,
     fd_cloexec = fd_cloexec,
 }
