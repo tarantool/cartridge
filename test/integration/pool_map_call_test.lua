@@ -3,6 +3,7 @@
 local log = require('log')
 local fio = require('fio')
 local errno = require('errno')
+local fiber = require('fiber')
 local t = require('luatest')
 local g = t.group()
 
@@ -154,6 +155,37 @@ function g.test_parallel()
     })
 end
 
+function g.test_fiber_storage()
+    local errors = require('errors')
+    local _netbox_call_original = errors.netbox_call
+    -- Test for https://github.com/tarantool/cartridge/issues/1293
+    -- pool.map_call spawns new fibers which doesn't preserve fiber
+    -- storage needed for TDG request context passing.
+    errors.netbox_call = function(conn, fn_name, _, opts)
+        local args = {fiber.self().storage.secret}
+        return _netbox_call_original(conn, fn_name, args, opts)
+    end
+
+    local srv = g.cluster.main_server
+    srv.net_box:eval('function _G.echo(...) return ... end')
+
+    local secret = '935052d0-deb5-49a8-995f-c139bfa9dc4f'
+    fiber.self().storage.secret = secret
+    local map = pool.map_call('_G.echo', nil, {
+        uri_list = {
+            'localhost:13301',
+            'localhost:13302',
+        },
+    })
+
+    t.assert_equals(map, {
+        ['localhost:13301'] = secret,
+        ['localhost:13302'] = secret,
+    })
+
+    -- Revert monkeypatch
+    errors.netbox_call = _netbox_call_original
+end
 
 function g.test_errors()
     t.assert_error_msg_contains(

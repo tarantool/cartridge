@@ -138,7 +138,12 @@ local function _pack_values(maps, uri, ...)
     end
 end
 
-local function _gather_netbox_call(maps, uri, fn_name, args, opts)
+local function _gather_netbox_call(fiber_storage, maps, uri, fn_name, args, opts)
+    local self_storage = fiber.self().storage
+    for k, v in pairs(fiber_storage) do
+        self_storage[k] = v
+    end
+
     -- Perform a call, gather results and spread it across tables.
     local conn, err = connect(uri, {wait_connected = false})
 
@@ -203,7 +208,7 @@ local function map_call(fn_name, args, opts)
     for _, uri in pairs(opts.uri_list) do
         local fiber = fiber.new(
             _gather_netbox_call,
-            maps, uri, fn_name, args,
+            fiber.self().storage, maps, uri, fn_name, args,
             {timeout = opts.timeout}
         )
         fiber:name('netbox_map_call')
