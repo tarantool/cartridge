@@ -544,7 +544,7 @@ local function failover_loop(args)
         local appointments, err = FailoverError:pcall(args.get_appointments)
         fiber.testcancel()
 
-        local csw1 = fiber.info()[fiber.id()].csw
+        local csw1 = utils.fiber_csw()
 
         if appointments == nil then
             log.warn('%s', err.err)
@@ -566,7 +566,7 @@ local function failover_loop(args)
         end
 
         ::continue::
-        local csw2 = fiber.info()[fiber.id()].csw
+        local csw2 = utils.fiber_csw()
         assert(csw1 == csw2, 'Unexpected yield')
     end
 end

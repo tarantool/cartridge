@@ -1,11 +1,11 @@
 #!/usr/bin/env tarantool
 
 local fio = require('fio')
-local fiber = require('fiber')
 local t = require('luatest')
 local g = t.group()
 
 local pool = require('cartridge.pool')
+local utils = require('cartridge.utils')
 local cluster_cookie = require('cartridge.cluster-cookie')
 local remote_control = require('cartridge.remote-control')
 
@@ -27,9 +27,9 @@ g.after_all(function()
 end)
 
 function g.test_identity()
-    local csw1 = fiber.info()[fiber.id()].csw
+    local csw1 = utils.fiber_csw()
     local conn, err = pool.connect('localhost:13301', {wait_connected = false})
-    local csw2 = fiber.info()[fiber.id()].csw
+    local csw2 = utils.fiber_csw()
 
     -- netbox.connect implicitly calls fiber.create(...)
     -- so there would be one context switch
@@ -42,7 +42,7 @@ function g.test_identity()
         password = g.cookie,
     })
     t.assert_is(pool.connect('localhost:13301'), conn)
-    local csw3 = fiber.info()[fiber.id()].csw
+    local csw3 = utils.fiber_csw()
     t.assert(csw3 > csw2)
 
     t.assert_covers(conn, {
@@ -59,9 +59,9 @@ function g.test_identity()
 end
 
 function g.test_errors()
-    local csw1 = fiber.info()[fiber.id()].csw
+    local csw1 = utils.fiber_csw()
     local conn, err = pool.connect('localhost:13301', {wait_connected = 0})
-    local csw2 = fiber.info()[fiber.id()].csw
+    local csw2 = utils.fiber_csw()
 
     -- netbox.connect implicitly calls fiber.create (+1 context switch)
     -- and calls cond:wait(0) (wait for connection active state) (+1 context switch)
@@ -83,12 +83,12 @@ end
 function g.test_async_call_not_yeilds()
     local conn = pool.connect('localhost:13301')
 
-    local csw1 = fiber.info()[fiber.id()].csw
+    local csw1 = utils.fiber_csw()
     local future = conn:call('math.abs', nil, {is_async = true})
     local res, err = future:wait_result(0)
 
     -- creating future and wait_result(0) won't yeild
-    t.assert_equals(csw1, fiber.info()[fiber.id()].csw)
+    t.assert_equals(csw1, utils.fiber_csw())
 
     t.assert_equals(res, nil)
     t.assert_equals(tostring(err), 'Timeout exceeded')
