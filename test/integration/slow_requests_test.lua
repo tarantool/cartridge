@@ -2,6 +2,7 @@ local fio = require('fio')
 local fiber = require('fiber')
 local errno = require('errno')
 local netbox = require('net.box')
+local utils = require('cartridge.utils')
 
 local t = require('luatest')
 local g = t.group()
@@ -32,6 +33,9 @@ end)
 
 g.before_each(function()
     g.s2.process:kill('STOP')
+    -- create config.prepare to check issues will be shown for available instances
+    -- (pool.map_call works correctly)
+    utils.file_write(fio.pathjoin(g.s1.workdir, 'config.prepare'), 'prepare')
     g.s1.net_box:eval([[
         require('cartridge.pool').connect(...):close()
     ]], {g.s2.advertise_uri, {wait_connected = false}})
@@ -43,38 +47,43 @@ end)
 
 local function graphql_bench(srv, args)
     local t1 = fiber.clock()
-    srv:graphql(args)
+    local resp = srv:graphql(args)
     local t2 = fiber.clock()
 
-    return t2 - t1
+    return t2 - t1, resp
 end
 
 function g.test_boxinfo()
-    local t = graphql_bench(g.s1, {
+    local time, resp = graphql_bench(g.s1, {
         query = '{servers {boxinfo {general {pid}}}}',
     })
-    helpers.assert_le(t, 2)
+    helpers.assert_le(time, 2)
+    t.assert_equals(#resp.data.servers, 2)
 end
 
 function g.test_stat()
-    local t = graphql_bench(g.s1, {
+    local time, resp = graphql_bench(g.s1, {
         query = [[query($uuid: String!) {
             servers(uuid: $uuid) {statistics {arena_size}}
         }]],
         variables = {uuid = g.s2.instance_uuid},
     })
-    helpers.assert_le(t, 2)
+    helpers.assert_le(time, 2)
+    t.assert_equals(resp.data.servers[1].statistics, box.NULL)
 end
 
 function g.test_issues()
-    local t = graphql_bench(g.s1, {
+    local time, resp = graphql_bench(g.s1, {
         query = '{cluster {issues {message}}}',
     })
-    helpers.assert_le(t, 2)
+    helpers.assert_le(time, 2)
+    t.assert_equals(resp.data.cluster.issues[1].message,
+        'Configuration is prepared and locked on localhost:13301 (main-1)'
+    )
 end
 
 function g.test_suggestions()
-    local t = graphql_bench(g.s1, {
+    local time, resp = graphql_bench(g.s1, {
         query = [[{
             cluster {suggestions {
                 force_apply {uuid}
@@ -83,7 +92,10 @@ function g.test_suggestions()
             }}
         }]],
     })
-    helpers.assert_le(t, 2)
+    helpers.assert_le(time, 2)
+    t.assert_equals(resp.data.cluster.suggestions.force_apply[1].uuid,
+        g.s1.instance_uuid
+    )
 end
 
 function g.test_netbox_timeouts()
