@@ -13,12 +13,18 @@ and this project adheres to
 -------------------------------------------------------------------------------
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Fixed
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Make remote-control accept connections even in the ``InitError`` state.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Enhanced in WebUI
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- Highlights if file name exists in file create/rename mode on Code page.
+- Highlight if file name exists in file create/rename mode on Code page.
 
-- Removed tooltip for replicaset alias on Cluster page.
+- Remove the replicaset alias tooltip on the Cluster page.
 
 -------------------------------------------------------------------------------
 [2.5.1] - 2021-03-24

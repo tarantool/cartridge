@@ -710,3 +710,22 @@ function g.test_prepare_state_error()
         ' can\'t apply config in this state'
     )
 end
+
+function g.test_init_error_remote_control()
+    -- Even if instance enters InitError state
+    -- remote-control should accept connections
+    g.cluster:stop()
+
+    local fio = require('fio')
+    local config = fio.pathjoin(g.cluster.datadir, 'localhost-13301', 'config')
+    local topology = fio.open(fio.pathjoin(config, 'topology.yml'), {'O_WRONLY'})
+    topology:write('42')
+    topology:close()
+    g.master:start()
+
+    helpers.wish_state(g.master, 'InitError')
+
+    local conn = require('net.box').connect('localhost:13301')
+    t.assert(conn:wait_connected())
+    t.assert_equals(conn.state, 'active')
+end
