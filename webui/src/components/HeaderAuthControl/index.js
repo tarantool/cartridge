@@ -4,12 +4,13 @@ import {
   Button,
   Dropdown,
   DropdownItem,
-  IconUser,
+  SVGImage,
   Text
 } from '@tarantool.io/ui-kit';
 import { css, cx } from 'emotion';
 import { ModalLogInForm } from 'src/components/LogInForm';
 import { showAuthModal, hideAuthModal } from 'src/store/actions/auth.actions';
+import userPic from './user.svg';
 
 const styles = {
   box: css`
@@ -60,7 +61,7 @@ class HeaderAuthControl extends React.Component {
             <DropdownItem onClick={this.sendLogOut}>Log out</DropdownItem>
           ]}
         >
-          <IconUser className={styles.authIcon} />
+          <SVGImage glyph={userPic} className={styles.authIcon} />
           <Text className={styles.userName}>{username}</Text>
         </Dropdown>
       )
