@@ -16,7 +16,7 @@ and this project adheres to
 Fixed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- Make remote-control accept connections even in the ``InitError`` state.
+- Fix unclear timeout errors in case of ``InitError`` and ``BootError`` states
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Enhanced in WebUI

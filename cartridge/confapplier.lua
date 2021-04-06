@@ -381,6 +381,12 @@ local function boot_instance(clusterwide_config)
                 " Bootstrap impossible, check advertise_uri correctness",
                 vars.advertise_uri
             )
+            -- box.cfg{listen = ...} will not be called
+            -- and remote-control should remain accepting connections
+            remote_control.accept({
+                username = cluster_cookie.username(),
+                password = cluster_cookie.cookie(),
+            })
             set_state('BootError', err)
             return nil, err
         end

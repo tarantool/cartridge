@@ -3,6 +3,8 @@ local t = require('luatest')
 local g = t.group()
 
 local log = require('log')
+local yaml = require('yaml')
+local utils = require('cartridge.utils')
 
 local helpers = require('test.helper')
 
@@ -712,20 +714,44 @@ function g.test_prepare_state_error()
 end
 
 function g.test_init_error_remote_control()
-    -- Even if instance enters InitError state
+    -- Even if instance enters InitError or BootError state
     -- remote-control should accept connections
     g.cluster:stop()
 
-    local fio = require('fio')
     local config = fio.pathjoin(g.cluster.datadir, 'localhost-13301', 'config')
-    local topology = fio.open(fio.pathjoin(config, 'topology.yml'), {'O_WRONLY'})
-    topology:write('42')
-    topology:close()
-    g.master:start()
+    local topolgy_path = fio.pathjoin(config, 'topology.yml')
 
+    -- InitError
+    utils.file_write(topolgy_path, '42')
+
+    g.master:start()
     helpers.wish_state(g.master, 'InitError')
 
-    local conn = require('net.box').connect('localhost:13301')
-    t.assert(conn:wait_connected())
-    t.assert_equals(conn.state, 'active')
+    local ok, err = g.master.net_box:call(
+        'package.loaded.cartridge.config_patch_clusterwide',
+        {{['new_entry.txt'] = '42'}}
+    )
+    t.assert_equals(ok, nil)
+    -- No timeout error
+    t.assert_str_contains(err.err,
+        "attempt to index local 'topology_cfg' (a number value)")
+
+    g.master:stop()
+
+    -- BootError
+    utils.file_write(topolgy_path, yaml.encode({replicasets = {}, servers = {}}))
+    local workdir = g.cluster.main_server.workdir
+    for _, f in pairs(fio.glob(fio.pathjoin(workdir, '*.snap'))) do
+        fio.unlink(f)
+    end
+
+    g.master:start()
+    helpers.wish_state(g.master, 'BootError')
+
+    local ok, _ = g.master.net_box:call(
+        'package.loaded.cartridge.config_patch_clusterwide',
+        {{['new_entry.txt'] = '42'}}
+    )
+    -- No timeout error
+    t.assert_equals(ok, true)
 end
