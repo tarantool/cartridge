@@ -70,8 +70,20 @@ local function prepare_2pc(upload_id)
         end
     end
 
-    local clusterwide_config = ClusterwideConfig.new(data):lock()
+    local state = confapplier.get_state()
+    if state ~= 'Unconfigured'
+    and state ~= 'RolesConfigured'
+    and state ~= 'OperationError'
+    then
+        local err = Prepare2pcError:new(
+            "Instance state is %s, can't apply config in this state",
+            state
+        )
+        log.warn('%s', err)
+        return nil, err
+    end
 
+    local clusterwide_config = ClusterwideConfig.new(data):lock()
     local ok, err = confapplier.validate_config(clusterwide_config)
     if not ok then
         log.warn('%s', err)
@@ -83,19 +95,6 @@ local function prepare_2pc(upload_id)
 
     if vars.prepared_config ~= nil then
         local err = Prepare2pcError:new('Two-phase commit is locked')
-        log.warn('%s', err)
-        return nil, err
-    end
-
-    local state = confapplier.get_state()
-    if state ~= 'Unconfigured'
-    and state ~= 'RolesConfigured'
-    and state ~= 'OperationError'
-    then
-        local err = Prepare2pcError:new(
-            "Instance state is %s, can't apply config in this state",
-            state
-        )
         log.warn('%s', err)
         return nil, err
     end

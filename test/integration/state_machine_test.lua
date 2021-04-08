@@ -3,7 +3,6 @@ local t = require('luatest')
 local g = t.group()
 
 local log = require('log')
-local yaml = require('yaml')
 local utils = require('cartridge.utils')
 
 local helpers = require('test.helper')
@@ -713,45 +712,83 @@ function g.test_prepare_state_error()
     )
 end
 
-function g.test_init_error_remote_control()
+local q_get_state = [[
+    local confapplier = require('cartridge.confapplier')
+    return confapplier.get_state()
+]]
+
+function g.test_init_error()
     -- Even if instance enters InitError or BootError state
     -- remote-control should accept connections
-    g.cluster:stop()
 
-    local config = fio.pathjoin(g.cluster.datadir, 'localhost-13301', 'config')
-    local topolgy_path = fio.pathjoin(config, 'topology.yml')
+    -- Cause InitError 1
+    utils.file_write(g.slave.workdir .. '/config/vshard_groups.yml', 'null')
+    g.slave:stop()
+    g.slave:start()
 
-    -- InitError
-    utils.file_write(topolgy_path, '42')
-
-    g.master:start()
-    helpers.wish_state(g.master, 'InitError')
+    local state, err = g.slave.net_box:eval(q_get_state)
+    t.assert_equals(state, 'InitError')
+    t.assert_covers(err, {
+        class_name = 'ValidateConfigError',
+        err = 'section vshard must be a table',
+    })
 
     local ok, err = g.master.net_box:call(
         'package.loaded.cartridge.config_patch_clusterwide',
         {{['new_entry.txt'] = '42'}}
     )
     t.assert_equals(ok, nil)
-    -- No timeout error
-    t.assert_str_contains(err.err,
-        "attempt to index local 'topology_cfg' (a number value)")
+    t.assert_covers(err, {
+        class_name = 'Prepare2pcError',
+        err = [["localhost:13302": Instance state is InitError,]] ..
+            [[ can't apply config in this state]]
+    })
 
-    g.master:stop()
+    -- Cause InitError 2
+    utils.file_write(g.slave.workdir .. '/config/topology.yml', '}{')
+    g.slave:stop()
+    g.slave:start()
 
-    -- BootError
-    utils.file_write(topolgy_path, yaml.encode({replicasets = {}, servers = {}}))
-    local workdir = g.cluster.main_server.workdir
-    for _, f in pairs(fio.glob(fio.pathjoin(workdir, '*.snap'))) do
-        fio.unlink(f)
-    end
+    local state, err = g.slave.net_box:eval(q_get_state)
+    t.assert_equals(state, 'InitError')
+    t.assert_covers(err, {
+        class_name = 'LoadConfigError',
+        err = 'Error parsing section "topology.yml": unexpected END event',
+    })
 
-    g.master:start()
-    helpers.wish_state(g.master, 'BootError')
-
-    local ok, _ = g.master.net_box:call(
+    local ok, err = g.master.net_box:call(
         'package.loaded.cartridge.config_patch_clusterwide',
         {{['new_entry.txt'] = '42'}}
     )
-    -- No timeout error
-    t.assert_equals(ok, true)
+    t.assert_equals(ok, nil)
+    t.assert_covers(err, {
+        class_name = 'Prepare2pcError',
+        err = [["localhost:13302": Instance state is InitError,]] ..
+            [[ can't apply config in this state]]
+    })
+end
+
+function g.test_boot_error()
+    utils.file_write(g.slave.workdir .. '/config/topology.yml', '{}')
+    g.slave:stop()
+    g.slave:start()
+
+    local state, err = g.slave.net_box:eval(q_get_state)
+    t.assert_equals(state, 'BootError')
+    t.assert_covers(err, {
+        class_name = 'BootError',
+        err = 'Server ' .. g.slave.instance_uuid ..
+            ' not in clusterwide config, no idea what to do now',
+    })
+
+    local ok, err = g.master.net_box:call(
+        'package.loaded.cartridge.config_patch_clusterwide',
+        {{['new_entry.txt'] = '42'}}
+    )
+    t.assert_equals(ok, nil)
+    t.assert_covers(err, {
+        class_name = 'Prepare2pcError',
+        err = [["localhost:13302": Instance state is BootError,]] ..
+            [[ can't apply config in this state]]
+    })
 end
