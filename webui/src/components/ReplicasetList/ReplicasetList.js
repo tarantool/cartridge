@@ -25,15 +25,12 @@ const styles = {
     align-items: baseline;
     padding-right: 103px;
   `,
-  aliasTooltip: css`
+  alias: css`
     flex-basis: 458px;
     flex-grow: 1;
     flex-shrink: 0;
     margin-right: 16px;
     margin-bottom: 8px;
-    overflow: hidden;
-  `,
-  alias: css`
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -176,9 +173,7 @@ class ReplicasetList extends React.PureComponent {
           {replicasetList.map(replicaset => (
             <TiledListItem key={replicaset.uuid} corners='soft'>
               <div className={styles.header}>
-                <Tooltip className={styles.aliasTooltip} content={replicaset.alias}>
-                  <Text className={styles.alias} variant='h3'>{replicaset.alias}</Text>
-                </Tooltip>
+                <Text className={styles.alias} variant='h3'>{replicaset.alias}</Text>
                 <div className={styles.statusGroup}>
                   <div className={styles.statusWrap}>
                     {

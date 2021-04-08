@@ -91,3 +91,16 @@ export const selectSelectedFile = createSelector(
     return null
   }
 )
+
+export const selectFilePaths = createSelector(
+  [
+    (files: Array<FileItem>) => files
+  ],
+  (files: Array<FileItem>): Array<string> => files.reduce(
+    (acc, file) => {
+      if (!file.deleted) acc.push(file.path);
+      return acc;
+    },
+    []
+  )
+);
