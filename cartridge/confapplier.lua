@@ -381,6 +381,12 @@ local function boot_instance(clusterwide_config)
                 " Bootstrap impossible, check advertise_uri correctness",
                 vars.advertise_uri
             )
+            -- box.cfg{listen = ...} will not be called
+            -- and remote-control should remain accepting connections
+            remote_control.accept({
+                username = cluster_cookie.username(),
+                password = cluster_cookie.cookie(),
+            })
             set_state('BootError', err)
             return nil, err
         end
@@ -616,6 +622,12 @@ local function init(opts)
         set_state('ConfigFound')
         local clusterwide_config, err = ClusterwideConfig.load(config_filename)
         if clusterwide_config == nil then
+            -- box.cfg{listen = ...} will not be called
+            -- and remote-control should remain accepting connections
+            remote_control.accept({
+                username = cluster_cookie.username(),
+                password = cluster_cookie.cookie(),
+            })
             set_state('InitError', err)
             return true
         end
@@ -625,6 +637,12 @@ local function init(opts)
         vars.clusterwide_config = clusterwide_config:lock()
         local ok, err = validate_config(clusterwide_config)
         if not ok then
+            -- box.cfg{listen = ...} will not be called
+            -- and remote-control should remain accepting connections
+            remote_control.accept({
+                username = cluster_cookie.username(),
+                password = cluster_cookie.cookie(),
+            })
             set_state('InitError', err)
             return true
         end
