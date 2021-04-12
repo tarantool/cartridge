@@ -129,10 +129,12 @@ function g.test_luaapi()
 
     log.info('Patching with invalid schema...')
 
-    t.assert_equals(
-        {call('cartridge_set_schema', {'{}'})},
-        {box.NULL, '"localhost:13301": spaces: must be a table, got nil'}
-    )
+    local ok, err = call('cartridge_set_schema', {'{}'})
+    t.assert_equals(ok, box.NULL)
+    t.assert_covers(err, {
+        class_name = 'CheckSchemaError',
+        err = '"localhost:13301": spaces: must be a table, got nil'
+    })
 
     t.assert_equals(
         _get_schema(g.cluster.main_server).as_yaml,
@@ -159,16 +161,35 @@ function g.test_replicas()
             {[srv.alias] = {error = box.NULL}}
         )
 
-        t.assert_equals(
-            {[srv.alias] = _check_schema(srv, '---\n...')},
-            {[srv.alias] = {error = 'Invalid schema (table expected, got string)'}}
-        )
     end
+    t.assert_equals(
+        _check_schema(g.cluster:server('main-1'), '---\n...'),
+        {
+            error = 'Invalid schema (table expected, got string)',
+        }
+    )
+
+    t.assert_equals(
+        _check_schema(g.cluster:server('main-2'), '---\n...'),
+        {
+            error = '"localhost:13301": Invalid schema' ..
+                ' (table expected, got string)',
+        }
+    )
 end
 
 function g.test_graphql_errors()
     local server = g.cluster.main_server
     _set_schema(server, _schema)
+
+    t.assert_equals(
+        _check_schema(server, ']['),
+        {error = 'Invalid YAML: unexpected END event'}
+    )
+    t.assert_error_msg_contains(
+        'Error parsing section "schema.yml": unexpected END event',
+        _set_schema, server, ']['
+    )
 
     local function _test(schema, expected_error)
         t.assert_equals(
@@ -181,7 +202,6 @@ function g.test_graphql_errors()
         )
     end
 
-    _test('][', 'unexpected END event')
     _test('42', 'Invalid schema (table expected, got number)')
     _test('{}', 'spaces: must be a table, got nil')
     _test('spaces: false', 'spaces: must be a table, got boolean')

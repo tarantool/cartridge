@@ -18,6 +18,7 @@ local utils = require('cartridge.utils')
 local upload = require('cartridge.upload')
 local topology = require('cartridge.topology')
 local confapplier = require('cartridge.confapplier')
+local service_registry = require('cartridge.service-registry')
 local ClusterwideConfig = require('cartridge.clusterwide-config')
 
 local AtomicCallError = errors.new_class('AtomicCallError')
@@ -728,13 +729,9 @@ local function get_schema()
             "Current instance isn't bootstrapped yet"
         )
     end
-    local schema_yml = confapplier.get_readonly('schema.yml')
 
-    if schema_yml == nil then
-        return '---\nspaces: {}\n...\n'
-    else
-        return schema_yml
-    end
+    local ddl_manager = assert(service_registry.get('ddl-manager'))
+    return ddl_manager.get_clusterwide_schema_yaml()
 end
 
 --- Apply clusterwide DDL schema.
@@ -747,14 +744,19 @@ end
 -- @treturn[2] table Error description
 local function set_schema(schema_yml)
     checks('string')
-
-    local patch = {['schema.yml'] = schema_yml}
-    local ok, err = patch_clusterwide(patch)
-    if not ok then
-        return nil, err.err
+    if confapplier.get_readonly() == nil then
+        return nil, GetSchemaError:new(
+            "Current instance isn't bootstrapped yet"
+        )
     end
 
-    return get_schema()
+    local ddl_manager = assert(service_registry.get('ddl-manager'))
+    local ok, err = ddl_manager.set_clusterwide_schema_yaml(schema_yml)
+    if ok == nil then
+        return nil, err
+    end
+
+    return ddl_manager.get_clusterwide_schema_yaml()
 end
 
 --- Set up trigger for for patch_clusterwide.

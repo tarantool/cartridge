@@ -29,6 +29,14 @@ vars:new('module_names')
 vars:new('roles_by_number', {})
 vars:new('roles_by_role_name', {})
 vars:new('roles_by_module_name', {})
+vars:new('implicit_roles')
+
+-- Don't put it as default var value to allow overriding
+-- after hot-reload (hypothetically)
+vars.implicit_roles = {
+    'cartridge.roles.ddl-manager',
+    'cartridge.roles.coordinator',
+}
 
 -- Register Lua module as a Cartridge Role.
 -- Role registration implies requiring the module and all its
@@ -142,9 +150,11 @@ local function cfg(module_names)
 
     vars.module_names = table.copy(module_names)
 
-    local ok, err = register_role(ctx, 'cartridge.roles.coordinator')
-    if not ok then
-        return nil, err
+    for _, role in ipairs(vars.implicit_roles) do
+        local ok, err = register_role(ctx, role)
+        if not ok then
+            return nil, err
+        end
     end
 
     for _, role in ipairs(module_names or {}) do
