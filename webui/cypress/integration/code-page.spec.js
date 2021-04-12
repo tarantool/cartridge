@@ -74,17 +74,16 @@ describe('Code page', () => {
     cy.get('.meta-test__enterName').focused().type('{enter}');
     cy.get('div:contains(The name already exists)').should('not.exist');
     cy.get('.meta-test__Code__FileTree').contains('file-in-tree1.yml');
-    //error when file already exists
+    //error when file with the same name already exists
     cy.get('.meta-test__addFileBtn').click();
     cy.get('.meta-test__enterName').focused().type('file-in-tree1.yml');
     cy.get('div:contains(The name already exists)');
     cy.get('.meta-test__enterName').focused().type('1');
     cy.get('div:contains(The name already exists)').should('not.exist');
-    //user can create file and folder with the same name
+    //error when folder with the same name already exists
     cy.get('.meta-test__addFolderBtn').click();
     cy.get('.meta-test__enterName').focused().type('file-in-tree1.yml');
-    //(bug in this check)
-    // cy.get('div:contains(The name already exists)').should('not.exist');
+    cy.get('div:contains(The name already exists)');
 
     reload();
     cy.get('.meta-test__Code__FileTree').contains('file-in-tree1.yml').should('not.exist');
