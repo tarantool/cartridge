@@ -68,6 +68,23 @@ describe('Code page', () => {
     cy.get('#root').contains('dummy-1').click();
     cy.get('.meta-test__Code__FileTree').contains('file-in-tree1.yml');
 
+    //file with the same name is not created
+    cy.get('.meta-test__addFileBtn').click();
+    cy.get('.meta-test__enterName').focused().type('file-in-tree1.yml');
+    cy.get('.meta-test__enterName').focused().type('{enter}');
+    cy.get('div:contains(The name already exists)').should('not.exist');
+    cy.get('.meta-test__Code__FileTree').contains('file-in-tree1.yml');
+    //error when file with the same name already exists
+    cy.get('.meta-test__addFileBtn').click();
+    cy.get('.meta-test__enterName').focused().type('file-in-tree1.yml');
+    cy.get('div:contains(The name already exists)');
+    cy.get('.meta-test__enterName').focused().type('1');
+    cy.get('div:contains(The name already exists)').should('not.exist');
+    //error when folder with the same name already exists
+    cy.get('.meta-test__addFolderBtn').click();
+    cy.get('.meta-test__enterName').focused().type('file-in-tree1.yml');
+    cy.get('div:contains(The name already exists)');
+
     reload();
     cy.get('.meta-test__Code__FileTree').contains('file-in-tree1.yml').should('not.exist');
 
