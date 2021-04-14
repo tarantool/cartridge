@@ -267,13 +267,47 @@ local function reapply(data)
     end
 end
 
+
+--- Execute two-phase commit algorithm on instances.
+-- This function implements two-phase commit algorithm with the following steps:
+--
+-- I. Executes the preparation phase (`opts.fn_prepare`) on every server
+-- (passed as opts.uri_list).
+--
+-- II. If any server reports an error, executes the abort phase (`opts.fn_abort`).
+-- All servers prepared so far are rolled back and unlocked.
+--
+-- III. Performs the commit phase (`opts.fn_commit`).
+-- In case the phase fails, an automatic rollback is impossible, the
+-- cluster should be repaired manually.
+--
+-- @function twophase_commit
+-- @tparam table  opts
+-- @param opts.upload_data
+--   data that will be shared through twophase_commit (any Lua object)
+-- @tparam table  opts.uri_list
+--   array of URIs for performing twophase_commit
+-- @tparam string opts.fn_prepare
+--   name of function that processes prepare phase of thowhase commit
+-- @tparam string opts.fn_commit
+--   name of function that processes commit phase of thowhase commit
+-- @tparam string opts.fn_prepare
+--   name of function that processes abort phase of thowhase commit
+-- @tparam ?string opts.activity_name
+--   name of executing activity with use of twophase commit
+--   (used to prettify log messages)
+--
+-- @treturn[1] boolean true
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 local function twophase_commit(opts)
     checks({
         uri_list = 'table',
         upload_data = '?',
         fn_prepare = 'string',
         fn_abort = 'string',
-        fn_commit = 'string'
+        fn_commit = 'string',
+        activity_name = '?string'
     })
 
     local i = 0
@@ -299,34 +333,38 @@ local function twophase_commit(opts)
 
     local _2pc_error
     local abortion_list = {}
-    
+    local activity_name = opts.activity_name or 'twophase_commit'
+
     goto prepare
 
 ::prepare::
     do
-        log.warn('(2PC) Upload stage...')
+        local data_to_upload = nil
+        if opts.upload_data then
+            log.warn('(2PC) Upload stage...')
 
-        local data = opts.upload_data
-        local upload_id, err = upload.upload(data, {
-            uri_list = uri_list,
-            netbox_call_timeout = vars.options.netbox_call_timeout,
-            transmission_timeout = vars.options.upload_config_timeout,
-        })
-        if not upload_id then
-            _2pc_error = err
-            goto finish
+            local upload_id, err = upload.upload(opts.upload_data, {
+                uri_list = uri_list,
+                netbox_call_timeout = vars.options.netbox_call_timeout,
+                transmission_timeout = vars.options.upload_config_timeout,
+            })
+            if not upload_id then
+                _2pc_error = err
+                goto finish
+            end
+            data_to_upload = {upload_id}
         end
 
         log.warn('(2PC) Preparation stage...')
 
-        local retmap, errmap = pool.map_call(opts.fn_prepare, {upload_id}, {
+        local retmap, errmap = pool.map_call(opts.fn_prepare, data_to_upload, {
             uri_list = uri_list,
             timeout = vars.options.netbox_call_timeout,
         })
 
         for _, uri in ipairs(uri_list) do
             if retmap[uri] then
-                log.warn('Prepared for config update at %s', uri)
+                log.warn('Prepared for %s at %s', activity_name, uri)
                 table.insert(abortion_list, uri)
             end
         end
@@ -336,7 +374,7 @@ local function twophase_commit(opts)
                 if err == nil then
                     err = Prepare2pcError:new('Unknown error at %s', uri)
                 end
-                log.error('Error preparing for config update at %s:\n%s', uri, err)
+                log.error('Error preparing for %s at %s:\n%s', activity_name, uri, err)
                 _2pc_error = err
             end
         end
@@ -359,13 +397,13 @@ local function twophase_commit(opts)
 
         for _, uri in ipairs(uri_list) do
             if retmap[uri] then
-                log.warn('Committed config at %s', uri)
+                log.warn('Committed %s at %s', activity_name, uri)
             end
         end
         for _, uri in ipairs(uri_list) do
             if retmap[uri] == nil then
                 local err = errmap and errmap[uri]
-                log.error('Error committing config at %s:\n%s', uri, err)
+                log.error('Error committing %s at %s:\n%s', activity_name, uri, err)
                 _2pc_error = err
             end
         end
@@ -384,10 +422,10 @@ local function twophase_commit(opts)
 
         for _, uri in ipairs(abortion_list) do
             if retmap[uri] then
-                log.warn('Aborted config update at %s', uri)
+                log.warn('Aborted %s at %s', activity_name, uri)
             else
                 local err = errmap and errmap[uri]
-                log.error('Error aborting config update at %s:\n%s', uri, err)
+                log.error('Error aborting %s at %s:\n%s', activity_name, uri, err)
             end
         end
 
@@ -395,13 +433,10 @@ local function twophase_commit(opts)
     end
 
 ::finish::
-    if _2pc_error == nil then
-        log.warn('Clusterwide config updated successfully')
-        return true
-    else
-        log.error('Clusterwide config update failed')
+    if _2pc_error ~= nil then
         return nil, _2pc_error
     end
+    return true
 end
 
 --- Edit the clusterwide configuration.
@@ -409,21 +444,15 @@ end
 -- To remove a top-level section, use
 -- `patch_clusterwide{key = box.NULL}`.
 --
--- The function uses a two-phase commit algorithm with the following steps:
+-- The function executes following steps:
 --
 -- I. Patches the current configuration.
 --
 -- II. Validates topology on the current server.
 --
--- III. Executes the preparation phase (`prepare_2pc`) on every server
+-- III. Executes two-phase commit (with use of `prepare_2pc`,
+-- `commit_2pc` and `abort_2pc` functions) on every server
 -- excluding expelled and disabled servers.
---
--- IV. If any server reports an error, executes the abort phase (`abort_2pc`).
--- All servers prepared so far are rolled back and unlocked.
---
--- V. Performs the commit phase (`commit_2pc`).
--- In case the phase fails, an automatic rollback is impossible, the
--- cluster should be repaired manually.
 --
 -- @function patch_clusterwide
 -- @tparam table patch
@@ -524,13 +553,22 @@ local function _clusterwide(patch)
     -- in real world it does not affect anything
     table.sort(uri_list)
 
-    return twophase_commit({
+    local _, err = twophase_commit({
         uri_list = uri_list,
         fn_prepare = '_G.__cartridge_clusterwide_config_prepare_2pc',
         fn_commit = '_G.__cartridge_clusterwide_config_commit_2pc',
         fn_abort = '_G.__cartridge_clusterwide_config_abort_2pc',
         upload_data = clusterwide_config_new:get_plaintext(),
+        activity_name = 'patch_clusterwide'
     })
+
+    if err == nil then
+        log.warn('Clusterwide config updated successfully')
+        return true
+    else
+        log.error('Clusterwide config update failed')
+        return nil, err
+    end
 end
 
 local function patch_clusterwide(patch)

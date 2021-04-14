@@ -25,6 +25,10 @@ Added
 
 - New ``failover`` option in the cluster test helper for easier failover setup.
 
+- Split ``_clusterwide`` function from ``cartridge.twophase`` in two separate
+  functions: ``_clusterwide`` and ``twophase_commit``. Also ``cartridge.twophase``
+  exports ``twophase_commit`` function.
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
