@@ -38,6 +38,7 @@ local confapplier = require('cartridge.confapplier')
 local vshard_utils = require('cartridge.vshard-utils')
 local cluster_cookie = require('cartridge.cluster-cookie')
 local service_registry = require('cartridge.service-registry')
+local eventloop_speedometer = require('cartridge.eventloop-speedometer')
 
 local lua_api_topology = require('cartridge.lua-api.topology')
 local lua_api_failover = require('cartridge.lua-api.failover')
@@ -746,6 +747,8 @@ local function cfg(opts, box_opts)
     if type(box.cfg) == 'function' then
         confapplier.log_bootinfo()
     end
+
+    eventloop_speedometer.init()
 
     return true
 end
