@@ -179,7 +179,7 @@ function g.test_api()
     t.assert_equals(res['data']['cluster']['vshard_known_groups'], {'cold', 'hot'})
     t.assert_equals(res['data']['cluster']['vshard_groups'], {
         {
-            ['collect_bucket_garbage_interval'] = 0.5,
+            ['collect_bucket_garbage_interval'] = box.NULL,
             ['collect_lua_garbage'] = false,
             ['rebalancer_disbalance_threshold'] = 1,
             ['rebalancer_max_receiving'] = 100,
@@ -188,7 +188,7 @@ function g.test_api()
             ['bucket_count'] = 2000,
             ['bootstrapped'] = false,
         }, {
-            ['collect_bucket_garbage_interval'] = 0.5,
+            ['collect_bucket_garbage_interval'] = box.NULL,
             ['collect_lua_garbage'] = false,
             ['rebalancer_disbalance_threshold'] = 1,
             ['rebalancer_max_receiving'] = 100,
@@ -284,7 +284,7 @@ function g.test_set_vshard_options_positive()
         rebalancer_max_receiving = 42
     })
     t.assert_equals(res['data']['cluster']['edit_vshard_options'], {
-        ['collect_bucket_garbage_interval'] = 0.5,
+        ['collect_bucket_garbage_interval'] = box.NULL,
         ['collect_lua_garbage'] = false,
         ['rebalancer_disbalance_threshold'] = 1,
         ['rebalancer_max_receiving'] = 42,
@@ -299,7 +299,7 @@ function g.test_set_vshard_options_positive()
         rebalancer_max_receiving = 44
     })
     t.assert_equals(res['data']['cluster']['edit_vshard_options'], {
-        ['collect_bucket_garbage_interval'] = 0.5,
+        ['collect_bucket_garbage_interval'] = box.NULL,
         ['collect_lua_garbage'] = false,
         ['rebalancer_disbalance_threshold'] = 1,
         ['rebalancer_max_receiving'] = 44,
@@ -312,7 +312,7 @@ function g.test_set_vshard_options_positive()
     local res = get_vshard_groups(g.cluster)
     t.assert_equals(res, {
         {
-            ['collect_bucket_garbage_interval'] = 0.5,
+            ['collect_bucket_garbage_interval'] = box.NULL,
             ['collect_lua_garbage'] = false,
             ['rebalancer_disbalance_threshold'] = 1,
             ['rebalancer_max_receiving'] = 42,
@@ -322,7 +322,7 @@ function g.test_set_vshard_options_positive()
             ['bootstrapped'] = true,
         },
         {
-            ['collect_bucket_garbage_interval'] = 0.5,
+            ['collect_bucket_garbage_interval'] = box.NULL,
             ['collect_lua_garbage'] = false,
             ['rebalancer_disbalance_threshold'] = 1,
             ['rebalancer_max_receiving'] = 44,

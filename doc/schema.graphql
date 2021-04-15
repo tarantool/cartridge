@@ -1,5 +1,5 @@
 # source: http://localhost:8081/admin/api
-# timestamp: Tue Mar 02 2021 20:36:01 GMT+0300 (Moscow Standard Time)
+# timestamp: Thu Apr 15 2021 15:30:49 GMT+0300 (Moscow Standard Time)
 
 """Cluster management"""
 type Apicluster {
@@ -253,7 +253,7 @@ type MutationApicluster {
 
   """Edit an existing user"""
   edit_user(password: String, username: String!, fullname: String, email: String): User
-  edit_vshard_options(rebalancer_max_receiving: Int, collect_bucket_garbage_interval: Float, collect_lua_garbage: Boolean, sync_timeout: Float, name: String!, rebalancer_disbalance_threshold: Float): VshardGroup!
+  edit_vshard_options(rebalancer_max_receiving: Int, sched_ref_quota: Long, collect_bucket_garbage_interval: Float, sync_timeout: Float, collect_lua_garbage: Boolean, rebalancer_disbalance_threshold: Float, name: String!, sched_move_quota: Long): VshardGroup!
 
   """Promote the instance to the leader of replicaset"""
   failover_promote(force_inconsistency: Boolean, replicaset_uuid: String!, instance_uuid: String!): Boolean!
@@ -579,16 +579,21 @@ type VshardGroup {
   """Virtual buckets count in the group"""
   bucket_count: Int!
 
-  """The interval between garbage collector actions, in seconds"""
-  collect_bucket_garbage_interval: Float!
-
-  """Whether the group is ready to operate"""
-  bootstrapped: Boolean!
-
   """
   If set to true, the Lua collectgarbage() function is called periodically
   """
   collect_lua_garbage: Boolean!
+
+  """
+  Timeout to wait for synchronization of the old master with replicas before demotion
+  """
+  sync_timeout: Float!
+
+  """Scheduler storage ref quota"""
+  sched_ref_quota: Long!
+
+  """Whether the group is ready to operate"""
+  bootstrapped: Boolean!
 
   """A maximum bucket disbalance threshold, in percent"""
   rebalancer_disbalance_threshold: Float!
@@ -596,8 +601,6 @@ type VshardGroup {
   """Group name"""
   name: String!
 
-  """
-  Timeout to wait for synchronization of the old master with replicas before demotion
-  """
-  sync_timeout: Float!
+  """Scheduler bucket move quota"""
+  sched_move_quota: Long!
 }
