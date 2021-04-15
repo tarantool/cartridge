@@ -228,6 +228,24 @@ vshard_groups:
     rebalancer_disbalance_threshold: -1
 ...]])
 
+check_config('vshard_groups["global"].sched_ref_quota must be non-negative',
+[[---
+vshard_groups:
+  global:
+    bucket_count: 200
+    bootstrapped: false
+    sched_ref_quota: -1
+...]])
+
+check_config('vshard_groups["global"].sched_move_quota must be non-negative',
+[[---
+vshard_groups:
+  global:
+    bucket_count: 200
+    bootstrapped: false
+    sched_move_quota: -1
+...]])
+
 check_config('vshard_groups["global"].bootstrapped must be true or false',
 [[---
 vshard_groups:

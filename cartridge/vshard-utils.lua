@@ -26,6 +26,8 @@ vars:new('known_groups', nil
     --        collect_bucket_garbage_interval = number,
     --        sync_timeout = number,
     --        rebalancer_disbalance_threshold = number,
+    --        sched_ref_quota = number,
+    --        sched_move_quota = number,
     --    }
     --}
 )
@@ -213,6 +215,26 @@ local function validate_vshard_group(field, vsgroup_new, vsgroup_old)
             '%s.rebalancer_disbalance_threshold must be non-negative', field
         )
     end
+    if vsgroup_new.sched_ref_quota ~= nil then
+        ValidateConfigError:assert(
+            type(vsgroup_new.sched_ref_quota) == 'number',
+            '%s.sched_ref_quota must be a number', field
+        )
+        ValidateConfigError:assert(
+            vsgroup_new.sched_ref_quota > 0,
+            '%s.sched_ref_quota must be non-negative', field
+        )
+    end
+    if vsgroup_new.sched_move_quota ~= nil then
+        ValidateConfigError:assert(
+            type(vsgroup_new.sched_move_quota) == 'number',
+            '%s.sched_move_quota must be a number', field
+        )
+        ValidateConfigError:assert(
+            vsgroup_new.sched_move_quota > 0,
+            '%s.sched_move_quota must be non-negative', field
+        )
+    end
     if vsgroup_old ~= nil then
         ValidateConfigError:assert(
             vsgroup_new.bucket_count == vsgroup_old.bucket_count,
@@ -231,6 +253,8 @@ local function validate_vshard_group(field, vsgroup_new, vsgroup_old)
         ['sync_timeout'] = true,
         ['collect_bucket_garbage_interval'] = true,
         ['rebalancer_disbalance_threshold'] = true,
+        ['sched_ref_quota'] = true,
+        ['sched_move_quota'] = true,
     }
     for k, _ in pairs(vsgroup_new) do
         ValidateConfigError:assert(
@@ -396,6 +420,14 @@ local function get_known_groups()
         if g.rebalancer_disbalance_threshold == nil then
             g.rebalancer_disbalance_threshold = vshard_consts.DEFAULT_REBALANCER_DISBALANCE_THRESHOLD
         end
+
+        if g.sched_ref_quota == nil then
+            g.sched_ref_quota = vshard_consts.DEFAULT_SCHED_REF_QUOTA
+        end
+
+        if g.sched_move_quota == nil then
+            g.sched_move_quota = vshard_consts.DEFAULT_SCHED_MOVE_QUOTA
+        end
     end
 
     return vshard_groups
@@ -469,6 +501,8 @@ local function get_vshard_config(group_name, conf)
     return {
         bucket_count = vshard_groups[group_name].bucket_count,
         rebalancer_max_receiving = vshard_groups[group_name].rebalancer_max_receiving,
+        sched_ref_quota = vshard_groups[group_name].sched_ref_quota,
+        sched_move_quota = vshard_groups[group_name].sched_move_quota,
         collect_lua_garbage = vshard_groups[group_name].collect_lua_garbage,
         sync_timeout = vshard_groups[group_name].sync_timeout,
         collect_bucket_garbage_interval = vshard_groups[group_name].collect_bucket_garbage_interval,
@@ -530,7 +564,9 @@ local function edit_vshard_options(group_name, vshard_options)
             collect_lua_garbage = '?boolean',
             sync_timeout = '?number',
             collect_bucket_garbage_interval = '?number',
-            rebalancer_disbalance_threshold = '?number'
+            rebalancer_disbalance_threshold = '?number',
+            sched_ref_quota = '?number',
+            sched_move_quota = '?number',
         }
     )
 

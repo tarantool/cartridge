@@ -34,12 +34,21 @@ local gql_type_vsgroup = gql_types.object({
             description = 'Timeout to wait for synchronization of the old master with replicas before demotion'
         },
         collect_bucket_garbage_interval = {
-            kind = gql_types.float.nonNull,
+            kind = gql_types.float,
+            deprecationReason = 'Has no effect anymore',
             description = 'The interval between garbage collector actions, in seconds'
         },
         rebalancer_disbalance_threshold = {
             kind = gql_types.float.nonNull,
             description = 'A maximum bucket disbalance threshold, in percent'
+        },
+        sched_ref_quota = {
+            kind = gql_types.long.nonNull,
+            description = 'Scheduler storage ref quota'
+        },
+        sched_move_quota = {
+            kind = gql_types.long.nonNull,
+            description = 'Scheduler bucket move quota'
         },
     }
 })
@@ -154,6 +163,8 @@ local function init(graphql)
             sync_timeout = gql_types.float,
             collect_bucket_garbage_interval = gql_types.float,
             rebalancer_disbalance_threshold = gql_types.float,
+            sched_ref_quota = gql_types.long,
+            sched_move_quota = gql_types.long,
         },
         kind = gql_type_vsgroup.nonNull,
         callback = module_name .. '.edit_vshard_options',
