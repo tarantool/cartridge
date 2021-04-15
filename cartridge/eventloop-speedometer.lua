@@ -11,8 +11,6 @@ vars:new('eventloop_speed_resolution', 0.2)
 vars:new('eventloop_speed_measure_every', 5)
 
 local function speedometer(resolution)
-    local log = require('log')
-
     resolution = resolution or 0.2
     local start = clock.monotonic64()
     fiber.sleep(resolution)
@@ -29,7 +27,7 @@ local function speedometer_fiber()
         membership.set_payload('slow', nil)
 
         local slow = false
-        for i=1,10 do
+        for _=1,10 do
             local err = speedometer(vars.eventloop_speed_resolution)
             if err > vars.eventloop_speed_threshold then
                 membership.set_payload('slow', true)
