@@ -26,3 +26,4 @@ luacov.*.out*
 /node_modules
 /package-lock.json
 *.mo
+.history
