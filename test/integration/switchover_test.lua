@@ -49,7 +49,7 @@ g_stateboard.before_all(function()
 
     fio.mktree(fio.pathjoin(g.datadir, 'stateboard'))
     g.kvpassword = require('digest').urandom(6):hex()
-    g.state_provider = require('luatest.server'):new({
+    g.state_provider = helpers.Stateboard:new({
         command = helpers.entrypoint('srv_stateboard'),
         workdir = fio.pathjoin(g.datadir, 'stateboard'),
         net_box_port = 14401,
@@ -65,6 +65,7 @@ g_stateboard.before_all(function()
             ),
         },
     })
+
     g.state_provider:start()
     helpers.retrying({}, function()
         g.state_provider:connect_net_box()

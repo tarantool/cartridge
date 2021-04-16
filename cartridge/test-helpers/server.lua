@@ -1,4 +1,4 @@
---- Extended luatest.Server class to run tarantool instance.
+--- Extended luatest.Server class to run a cartridge instance.
 --
 -- @classmod cartridge.test-helpers.server
 
