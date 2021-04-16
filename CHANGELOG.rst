@@ -16,7 +16,9 @@ and this project adheres to
 Added
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- Vshard is updated to 0.1.17
+- Update vshard to 0.1.17.
+  (`Changelog <https://github.com/tarantool/vshard/releases/tag/0.1.17>`_).
+- Update graphql to 0.1.1 which allows to return data and errors together.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
