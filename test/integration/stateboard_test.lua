@@ -166,11 +166,22 @@ function g.test_longpolling()
     t.assert_equals(chan:get(0.1), {{A = 'a2'}})
 
     local chan = async_longpoll()
-    -- there is no data in channel
-    t.assert_equals(chan:get(0.1), nil)
+    t.assert_equals(chan:get(0.1), nil) -- no data in channel yet
+    t.assert_equals(chan:get(0.2), {{}}) -- data recieved
 
-    -- data recieved
-    t.assert_equals(chan:get(0.2), {{}})
+    -- Reproduce https://github.com/tarantool/cartridge/issues/1375
+    c1:set_leaders({{'A', 'a3'}})
+    g.stateboard.process:kill('STOP')
+    local ok, err = client:longpoll(0)
+    t.assert_equals(ok, nil)
+    t.assert_covers(err, {
+        class_name = 'NetboxCallError',
+        err = '"localhost:13301": Timeout exceeded',
+    })
+
+    g.stateboard.process:kill('CONT')
+    c1:set_leaders({{'B', 'b3'}})
+    t.assert_equals(client:longpoll(0), {A = 'a3', B = 'b3'})
 end
 
 function g.test_passwd()
