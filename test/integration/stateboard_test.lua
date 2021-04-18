@@ -147,7 +147,6 @@ function g.test_longpolling()
         c1:acquire_lock({uuid = kid, uri = 'localhost:9'}),
         true
     )
-    c1:set_leaders({{'A', 'a1'}, {'B', 'b1'}})
 
     local client = create_client(g.stateboard)
     local function async_longpoll()
@@ -159,17 +158,29 @@ function g.test_longpolling()
         return chan
     end
 
-    t.assert_equals(client:longpoll(0), {A = 'a1', B = 'b1'})
-
+    -- Initial longpoll is instant even if there's no data yet
     local chan = async_longpoll()
-    c1:set_leaders({{'A', 'a2'}})
-    t.assert_equals(chan:get(0.1), {{A = 'a2'}})
+    t.assert_equals(chan:get(0.1), {{}})
 
+    -- Subsequent requests wait fairly
     local chan = async_longpoll()
     t.assert_equals(chan:get(0.1), nil) -- no data in channel yet
     t.assert_equals(chan:get(0.2), {{}}) -- data recieved
 
-    -- Reproduce https://github.com/tarantool/cartridge/issues/1375
+    -- New appointments arrive before the longpolling request
+    -- Stateboard replies immediately
+    c1:set_leaders({{'A', 'a1'}, {'B', 'b1'}})
+    t.assert_equals(client:longpoll(0), {A = 'a1', B = 'b1'})
+
+    -- The longpolling request arrives before new appointments
+    -- Stateboard replies as soon as it gets new appointments
+    local chan = async_longpoll()
+    t.assert_equals(chan:get(0.1), nil)
+    c1:set_leaders({{'A', 'a2'}})
+    t.assert_equals(chan:get(0.1), {{A = 'a2'}})
+
+    -- Stateboard client shouldn't miss appointments.
+    -- See https://github.com/tarantool/cartridge/issues/1375
     c1:set_leaders({{'A', 'a3'}})
     g.stateboard.process:kill('STOP')
     local ok, err = client:longpoll(0)
@@ -182,6 +193,9 @@ function g.test_longpolling()
     g.stateboard.process:kill('CONT')
     c1:set_leaders({{'B', 'b3'}})
     t.assert_equals(client:longpoll(0), {A = 'a3', B = 'b3'})
+    -- Before the fix it used to fail saying
+    -- expected: {A = "a3", B = "b3"}
+    -- actual: {B = "b3"}
 end
 
 function g.test_passwd()

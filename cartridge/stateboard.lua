@@ -107,29 +107,37 @@ local function get_leaders()
     return ret
 end
 
-local function longpoll(timeout)
-    checks('?number')
+local function longpoll(timeout, after_ordinal)
+    checks('?number', '?number')
     if timeout == nil then
         timeout = 1
+    end
+    if after_ordinal == nil then
+        after_ordinal = box.session.storage.ordinal
     end
 
     local latest_audit = box.space.leader_audit.index.ordinal:max()
     local latest_ordinal = latest_audit and latest_audit.ordinal or 0
-    local session = box.session.storage
 
-    if session.ordinal == nil then
-        session.ordinal = latest_ordinal
-        return _G.get_leaders()
-    elseif session.ordinal > latest_ordinal then
-        error('Impossibru! (session_ordinal > latest_ordinal)')
-    elseif session.ordinal == latest_ordinal then
+    if after_ordinal == nil or after_ordinal < 0 then
+        local ret = _G.get_leaders()
+        ret.ordinal = latest_ordinal
+        box.session.storage.ordinal = latest_ordinal
+        return ret
+    elseif after_ordinal > latest_ordinal then
+        error('Invalid request (after_ordinal > latest_ordinal)', 0)
+    elseif after_ordinal == latest_ordinal then
         notification:wait(timeout)
+    -- elseif after_ordinal < latest_ordinal then
+        -- respond immediately
     end
 
-    local ret = {}
-    for _, v in box.space.leader_audit:pairs({session.ordinal}, {iterator = 'GT'}) do
+    local ret = {ordinal = after_ordinal}
+    -- get everything > after_ordinal
+    for _, v in box.space.leader_audit:pairs({after_ordinal}, {iterator = 'GT'}) do
         ret[v.replicaset_uuid] = v.instance_uuid
-        session.ordinal = v.ordinal
+        ret.ordinal = v.ordinal
+        box.session.storage.ordinal = v.ordinal
     end
     return ret
 end

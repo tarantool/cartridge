@@ -213,6 +213,7 @@ local function get_session(client)
         lock_acquired = false,
         call_timeout = client.cfg.call_timeout,
         connection = connection,
+        longpoll_ordinal = -1,
     }
     client.session = setmetatable(session, session_mt)
     return client.session
@@ -236,11 +237,13 @@ local function longpoll(client, timeout)
         local timeout = deadline - fiber.clock()
 
         local ret, err = errors.netbox_call(session.connection,
-            'longpoll', {timeout},
+            'longpoll', {timeout, session.longpoll_ordinal},
             {timeout = timeout + client.cfg.call_timeout}
         )
 
         if ret ~= nil then
+            session.longpoll_ordinal = ret.ordinal
+            ret.ordinal = nil
             return ret
         end
 
