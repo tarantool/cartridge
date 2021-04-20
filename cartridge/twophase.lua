@@ -39,6 +39,7 @@ vars:new('on_patch_triggers', {})
 vars:new('options', {
     netbox_call_timeout = 1,
     upload_config_timeout = 30,
+    validate_config_timeout = 10,
     apply_config_timeout = 10,
 })
 
@@ -267,35 +268,63 @@ local function reapply(data)
     end
 end
 
-
---- Execute two-phase commit algorithm on instances.
--- This function implements two-phase commit algorithm with the following steps:
+--- Execute the two-phase commit algorithm.
 --
--- I. Executes the preparation phase (`opts.fn_prepare`) on every server
--- (passed as opts.uri_list).
+-- * (*upload*) If `opts.upload_data` isn't `nil`, spread it across
+-- the servers from `opts.uri_list`.
 --
--- II. If any server reports an error, executes the abort phase (`opts.fn_abort`).
--- All servers prepared so far are rolled back and unlocked.
+-- * (*prepare*) Run the `opts.fn_prepare` function.
 --
--- III. Performs the commit phase (`opts.fn_commit`).
--- In case the phase fails, an automatic rollback is impossible, the
--- cluster should be repaired manually.
+-- * (*commit*) If all the servers do `return true`,
+-- call `opts.fn_commit` on every server.
+--
+-- * (*abort*) Otherwise, if at least one server does `return nil, err`
+-- or throws an exception, call `opts.fn_abort` on servers which were
+-- prepared successfully.
 --
 -- @function twophase_commit
--- @tparam table  opts
+-- @tparam table opts
+-- @tparam {string,...} opts.uri_list
+--   array of URIs for performing twophase commit
 -- @param opts.upload_data
---   data that will be shared through twophase_commit (any Lua object)
--- @tparam table  opts.uri_list
---   array of URIs for performing twophase_commit
--- @tparam string opts.fn_prepare
---   name of function that processes prepare phase of thowhase commit
--- @tparam string opts.fn_commit
---   name of function that processes commit phase of thowhase commit
--- @tparam string opts.fn_prepare
---   name of function that processes abort phase of thowhase commit
+--   any Lua object to be uploaded
 -- @tparam ?string opts.activity_name
---   name of executing activity with use of twophase commit
---   (used to prettify log messages)
+--   understandable name of activity used for logging
+--   (default: "twophase_commit")
+-- @tparam string opts.fn_prepare
+-- @tparam string opts.fn_commit
+-- @tparam string opts.fn_abort
+--
+-- @usage
+--    local my_2pc_data = nil
+--
+--    function _G.my_2pc_prepare(upload_id)
+--        local data = upload.inbox[upload_id]
+--        upload.inbox[upload_id] = nil
+--        if my_2pc_data ~= nil then
+--            error('Two-phase commit is locked')
+--        end
+--        my_2pc_data = data
+--    end
+--
+--    function _G.my_2pc_commit()
+--        -- Apply my_2pc_data
+--        ...
+--    end
+--
+--    function _G.my_2pc_abort()
+--        twophase_data = nil
+--    end
+--
+-- @usage
+--    require('cartridge.twophase').twophase_commit({
+--        uri_list = {...},
+--        upload_data = ...,
+--        activity_name = 'my_2pc',
+--        fn_prepare = '_G.my_2pc_prepare',
+--        fn_commit = '_G.my_2pc_commit',
+--        fn_abort = '_G.my_2pc_abort',
+--    })
 --
 -- @treturn[1] boolean true
 -- @treturn[2] nil
@@ -312,10 +341,9 @@ local function twophase_commit(opts)
 
     local i = 0
     local uri_map = {}
-    local uri_list = opts.uri_list
-    for _, _ in pairs(uri_list) do
+    for _, _ in pairs(opts.uri_list) do
         i = i + 1
-        local uri = uri_list[i]
+        local uri = opts.uri_list[i]
         if type(uri) ~= 'string' then
             error('bad argument opts.uri_list' ..
                 ' to ' .. (debug.getinfo(1, 'nl').name or 'twophase_commit') ..
@@ -339,12 +367,12 @@ local function twophase_commit(opts)
 
 ::prepare::
     do
-        local data_to_upload = nil
+        local upload_id, err
         if opts.upload_data then
-            log.warn('(2PC) Upload stage...')
+            log.warn('(2PC) %s upload phase...', activity_name)
 
-            local upload_id, err = upload.upload(opts.upload_data, {
-                uri_list = uri_list,
+            upload_id, err = upload.upload(opts.upload_data, {
+                uri_list = opts.uri_list,
                 netbox_call_timeout = vars.options.netbox_call_timeout,
                 transmission_timeout = vars.options.upload_config_timeout,
             })
@@ -352,23 +380,22 @@ local function twophase_commit(opts)
                 _2pc_error = err
                 goto finish
             end
-            data_to_upload = {upload_id}
         end
 
-        log.warn('(2PC) Preparation stage...')
+        log.warn('(2PC) %s prepare phase...', activity_name)
 
-        local retmap, errmap = pool.map_call(opts.fn_prepare, data_to_upload, {
-            uri_list = uri_list,
-            timeout = vars.options.netbox_call_timeout,
+        local retmap, errmap = pool.map_call(opts.fn_prepare, {upload_id}, {
+            uri_list = opts.uri_list,
+            timeout = vars.options.validate_config_timeout,
         })
 
-        for _, uri in ipairs(uri_list) do
+        for _, uri in ipairs(opts.uri_list) do
             if retmap[uri] then
                 log.warn('Prepared for %s at %s', activity_name, uri)
                 table.insert(abortion_list, uri)
             end
         end
-        for _, uri in ipairs(uri_list) do
+        for _, uri in ipairs(opts.uri_list) do
             if retmap[uri] == nil then
                 local err = errmap and errmap[uri]
                 if err == nil then
@@ -388,19 +415,19 @@ local function twophase_commit(opts)
 
 ::apply::
     do
-        log.warn('(2PC) Commit stage...')
+        log.warn('(2PC) %s commit phase...', activity_name)
 
         local retmap, errmap = pool.map_call(opts.fn_commit, nil, {
-            uri_list = uri_list,
+            uri_list = opts.uri_list,
             timeout = vars.options.apply_config_timeout,
         })
 
-        for _, uri in ipairs(uri_list) do
+        for _, uri in ipairs(opts.uri_list) do
             if retmap[uri] then
                 log.warn('Committed %s at %s', activity_name, uri)
             end
         end
-        for _, uri in ipairs(uri_list) do
+        for _, uri in ipairs(opts.uri_list) do
             if retmap[uri] == nil then
                 local err = errmap and errmap[uri]
                 log.error('Error committing %s at %s:\n%s', activity_name, uri, err)
@@ -413,7 +440,7 @@ local function twophase_commit(opts)
 
 ::abort::
     do
-        log.warn('(2PC) Abort stage...')
+        log.warn('(2PC) %s abort phase...', activity_name)
 
         local retmap, errmap = pool.map_call(opts.fn_abort, nil,{
             uri_list = abortion_list,
@@ -450,9 +477,8 @@ end
 --
 -- II. Validates topology on the current server.
 --
--- III. Executes two-phase commit (with use of `prepare_2pc`,
--- `commit_2pc` and `abort_2pc` functions) on every server
--- excluding expelled and disabled servers.
+-- III. Executes two-phase commit on all servers in the cluster
+-- excluding expelled and disabled ones.
 --
 -- @function patch_clusterwide
 -- @tparam table patch

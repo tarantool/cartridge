@@ -23,9 +23,10 @@ local function cleanup_log_data()
 end
 
 local function call_twophase(server, arg)
-    return server.net_box:eval(
-        "return require('cartridge.twophase').twophase_commit(...)", {arg}
-    )
+    return server.net_box:eval([[
+        local twophase = require('cartridge.twophase')
+        return twophase.twophase_commit(...)
+    ]], {arg})
 end
 
 
@@ -70,26 +71,68 @@ g.before_each(function()
 end)
 
 
-function g.test_twophase_badness()
-    local twophase_args = {
-        uri_list = {uri1 = 'localhost:13301'},
-        fn_prepare = '_G.undefined'
-    }
+function g.test_errors()
     t.assert_error_msg_contains(
-        'bad argument opts.fn_abort to nil (string expected, got nil)',
-        call_twophase, g.s1, twophase_args
+        'bad argument opts.fn_abort to nil' ..
+        ' (string expected, got nil)',
+        call_twophase, g.s1, {
+            uri_list = {},
+            fn_prepare = '_G.undefined',
+            fn_commit = '_G.undefined',
+            fn_abort = nil,
+        }
     )
 
-    twophase_args.fn_commit = '_G.undefined'
-    twophase_args.fn_abort = '_G.undefined'
+    t.assert_error_msg_contains(
+        'bad argument opts.fn_commit to nil' ..
+        ' (string expected, got nil)',
+        call_twophase, g.s1, {
+            uri_list = {},
+            fn_prepare = '_G.undefined',
+            fn_commit = nil,
+            fn_abort = '_G.undefined',
+        }
+    )
+
+    t.assert_error_msg_contains(
+        'bad argument opts.fn_prepare to nil' ..
+        ' (string expected, got nil)',
+        call_twophase, g.s1, {
+            uri_list = {},
+            fn_prepare = nil,
+            fn_commit = '_G.undefined',
+            fn_abort = '_G.undefined',
+        }
+    )
+
     t.assert_error_msg_contains(
         'bad argument opts.uri_list to twophase_commit' ..
         ' (contiguous array of strings expected)',
-        call_twophase, g.s1, twophase_args
+        call_twophase, g.s1, {
+            uri_list = {k = 'v'},
+            fn_prepare = '_G.undefined',
+            fn_commit = '_G.undefined',
+            fn_abort = '_G.undefined',
+        }
     )
 
-    twophase_args.uri_list = {'localhost:13301'}
-    local ok, err = call_twophase(g.s1, twophase_args)
+    t.assert_error_msg_contains(
+        'bad argument opts.uri_list to twophase_commit' ..
+        ' (duplicates are prohibited)',
+        call_twophase, g.s1, {
+            uri_list = {'localhost:13301', 'localhost:13301'},
+            fn_prepare = '_G.undefined',
+            fn_commit = '_G.undefined',
+            fn_abort = '_G.undefined',
+        }
+    )
+
+    local ok, err = call_twophase(g.s1, {
+        uri_list = {'localhost:13301'},
+        fn_prepare = '_G.undefined',
+        fn_commit = '_G.undefined',
+        fn_abort = '_G.undefined',
+    })
     t.assert_equals(ok, nil)
     t.assert_covers(err, {
         class_name = 'NetboxCallError',
@@ -97,59 +140,59 @@ function g.test_twophase_badness()
     })
 end
 
-function g.test_twophase_ok()
-    g.s1.net_box:eval('_G.__prepare = function(data) assert(data == nil) return true end')
-
-    local twophase_args = {
+function g.test_success()
+    local ok, err = call_twophase(g.s1, {
+        uri_list = {'localhost:13302'},
         fn_prepare = '_G.__prepare',
-        fn_abort = '_G.__abort',
         fn_commit = '_G.__commit',
-        uri_list = {'localhost:13301', 'localhost:13302'}
-    }
-
-    local expeced_log_res = {
-        "(2PC) Preparation stage...",
-        "Prepared for twophase_commit at localhost:13301",
+        fn_abort = '_G.__abort',
+        upload_data = {'xyz'},
+    })
+    t.assert_equals({ok, err}, {true, nil})
+    t.assert_equals(g.s1.net_box:eval('return _G.__log_error'), {})
+    t.assert_equals(g.s1.net_box:eval('return _G.__log_warn'), {
+        "(2PC) twophase_commit upload phase...",
+        "(2PC) twophase_commit prepare phase...",
         "Prepared for twophase_commit at localhost:13302",
-        "(2PC) Commit stage...",
-        "Committed twophase_commit at localhost:13301",
+        "(2PC) twophase_commit commit phase...",
         "Committed twophase_commit at localhost:13302",
-    }
+    })
 
-    local ok, err = call_twophase(g.s1, twophase_args)
-    t.assert_equals(ok, true)
-    t.assert_equals(err, nil)
-    t.assert_equals(g.s1.net_box:eval('return _G.__log_error'), {})
-    t.assert_equals(g.s1.net_box:eval('return _G.__log_warn'), expeced_log_res)
-
-
-    -- check activity name changes log output
-    cleanup_log_data()
-    twophase_args.activity_name = 'simple_twophase'
-    for i, _ in ipairs(expeced_log_res) do
-        expeced_log_res[i] = (expeced_log_res[i]):gsub(
-            'twophase_commit', twophase_args.activity_name
-        )
+    local function get_inbox()
+        local upload = require('cartridge.upload')
+        local _, data = next(upload.inbox)
+        table.clear(upload.inbox)
+        return data
     end
+    t.assert_equals(helpers.run_remotely(g.s1, get_inbox), nil)
+    t.assert_equals(helpers.run_remotely(g.s2, get_inbox), {'xyz'})
+end
 
-    local ok, err = call_twophase(g.s1, twophase_args)
-    t.assert_equals(ok, true)
-    t.assert_equals(err, nil)
+function g.test_upload_skipped()
+    g.s1.net_box:eval([[
+        _G.__prepare = function(data)
+            assert(data == nil)
+            return true
+        end
+    ]])
+
+    local ok, err = call_twophase(g.s1, {
+        activity_name = 'my_2pc',
+        uri_list = {'localhost:13301', 'localhost:13302'},
+        fn_prepare = '_G.__prepare',
+        fn_commit = '_G.__commit',
+        fn_abort = '_G.__abort',
+    })
+    t.assert_equals({ok, err}, {true, nil})
     t.assert_equals(g.s1.net_box:eval('return _G.__log_error'), {})
-    t.assert_equals(g.s1.net_box:eval('return _G.__log_warn'), expeced_log_res)
-
-
-    -- check upload works
-    cleanup_log_data()
-    g.s1.net_box:eval('_G.__prepare = function(data) assert(data ~= nil) return true end')
-    twophase_args.upload_data = 'something'
-    table.insert(expeced_log_res, 1, '(2PC) Upload stage...')
-
-    local ok, err = call_twophase(g.s1, twophase_args)
-    t.assert_equals(ok, true)
-    t.assert_equals(err, nil)
-    t.assert_equals(g.s1.net_box:eval('return _G.__log_error'), {})
-    t.assert_equals(g.s1.net_box:eval('return _G.__log_warn'), expeced_log_res)
+    t.assert_equals(g.s1.net_box:eval('return _G.__log_warn'), {
+        "(2PC) my_2pc prepare phase...",
+        "Prepared for my_2pc at localhost:13301",
+        "Prepared for my_2pc at localhost:13302",
+        "(2PC) my_2pc commit phase...",
+        "Committed my_2pc at localhost:13301",
+        "Committed my_2pc at localhost:13302",
+    })
 end
 
 function g.test_prepare_fails()
@@ -165,9 +208,10 @@ function g.test_prepare_fails()
     local ok, err = call_twophase(g.s1, twophase_args)
     t.assert_equals(ok, nil)
     t.assert_covers(err, {
-        class_name = 'Err', err = '"localhost:13302": Error occured'
+        class_name = 'Err',
+        err = '"localhost:13302": Error occured',
     })
-    t.assert_items_include(g.s1.net_box:eval('return _G.__log_warn'),{
+    t.assert_items_include(g.s1.net_box:eval('return _G.__log_warn'), {
         'Aborted simple_twophase at localhost:13301'
     })
     local error_log = g.s1.net_box:eval('return _G.__log_error')
