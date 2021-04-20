@@ -31,6 +31,9 @@ Fixed
 
 - Fix unclear timeout errors in case of ``InitError`` and ``BootError`` states.
 
+- Fix inconsistency which could occur while longpolling stateboard in unstable
+  networks.
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Enhanced in WebUI
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
