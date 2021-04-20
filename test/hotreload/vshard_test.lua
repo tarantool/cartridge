@@ -155,9 +155,9 @@ function g.test_storage()
     end)
 
     local cnt = #g.insertions_passed
-    if not pcall(g.cluster.retrying, g.cluster, {timeout = 1}, function()
+    g.cluster:retrying({timeout = 1}, function()
         helpers.assert_ge(#g.insertions_passed, cnt+1)
-    end) then g.highload_fiber:cancel() fiber.sleep(10000) end
+    end)
 
     g.highload_fiber:cancel()
 
