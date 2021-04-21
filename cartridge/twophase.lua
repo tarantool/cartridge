@@ -39,6 +39,7 @@ vars:new('on_patch_triggers', {})
 vars:new('options', {
     netbox_call_timeout = 1,
     upload_config_timeout = 30,
+    validate_config_timeout = 10,
     apply_config_timeout = 10,
 })
 
@@ -267,26 +268,217 @@ local function reapply(data)
     end
 end
 
+--- Execute the two-phase commit algorithm.
+--
+-- * (*upload*) If `opts.upload_data` isn't `nil`, spread it across
+-- the servers from `opts.uri_list`.
+--
+-- * (*prepare*) Run the `opts.fn_prepare` function.
+--
+-- * (*commit*) If all the servers do `return true`,
+-- call `opts.fn_commit` on every server.
+--
+-- * (*abort*) Otherwise, if at least one server does `return nil, err`
+-- or throws an exception, call `opts.fn_abort` on servers which were
+-- prepared successfully.
+--
+-- @function twophase_commit
+-- @tparam table opts
+-- @tparam {string,...} opts.uri_list
+--   array of URIs for performing twophase commit
+-- @param opts.upload_data
+--   any Lua object to be uploaded
+-- @tparam ?string opts.activity_name
+--   understandable name of activity used for logging
+--   (default: "twophase_commit")
+-- @tparam string opts.fn_prepare
+-- @tparam string opts.fn_commit
+-- @tparam string opts.fn_abort
+--
+-- @usage
+--    local my_2pc_data = nil
+--
+--    function _G.my_2pc_prepare(upload_id)
+--        local data = upload.inbox[upload_id]
+--        upload.inbox[upload_id] = nil
+--        if my_2pc_data ~= nil then
+--            error('Two-phase commit is locked')
+--        end
+--        my_2pc_data = data
+--    end
+--
+--    function _G.my_2pc_commit()
+--        -- Apply my_2pc_data
+--        ...
+--    end
+--
+--    function _G.my_2pc_abort()
+--        twophase_data = nil
+--    end
+--
+-- @usage
+--    require('cartridge.twophase').twophase_commit({
+--        uri_list = {...},
+--        upload_data = ...,
+--        activity_name = 'my_2pc',
+--        fn_prepare = '_G.my_2pc_prepare',
+--        fn_commit = '_G.my_2pc_commit',
+--        fn_abort = '_G.my_2pc_abort',
+--    })
+--
+-- @treturn[1] boolean true
+-- @treturn[2] nil
+-- @treturn[2] table Error description
+local function twophase_commit(opts)
+    checks({
+        uri_list = 'table',
+        upload_data = '?',
+        fn_prepare = 'string',
+        fn_abort = 'string',
+        fn_commit = 'string',
+        activity_name = '?string'
+    })
+
+    local i = 0
+    local uri_map = {}
+    for _, _ in pairs(opts.uri_list) do
+        i = i + 1
+        local uri = opts.uri_list[i]
+        if type(uri) ~= 'string' then
+            error('bad argument opts.uri_list' ..
+                ' to ' .. (debug.getinfo(1, 'nl').name or 'twophase_commit') ..
+                ' (contiguous array of strings expected)', 2
+            )
+        end
+        if uri_map[uri] then
+            error('bad argument opts.uri_list' ..
+                ' to ' .. (debug.getinfo(1, 'nl').name or 'twophase_commit') ..
+                ' (duplicates are prohibited)', 2
+            )
+        end
+        uri_map[uri] = true
+    end
+
+    local _2pc_error
+    local abortion_list = {}
+    local activity_name = opts.activity_name or 'twophase_commit'
+
+    goto prepare
+
+::prepare::
+    do
+        local upload_id, err
+        if opts.upload_data then
+            log.warn('(2PC) %s upload phase...', activity_name)
+
+            upload_id, err = upload.upload(opts.upload_data, {
+                uri_list = opts.uri_list,
+                netbox_call_timeout = vars.options.netbox_call_timeout,
+                transmission_timeout = vars.options.upload_config_timeout,
+            })
+            if not upload_id then
+                _2pc_error = err
+                goto finish
+            end
+        end
+
+        log.warn('(2PC) %s prepare phase...', activity_name)
+
+        local retmap, errmap = pool.map_call(opts.fn_prepare, {upload_id}, {
+            uri_list = opts.uri_list,
+            timeout = vars.options.validate_config_timeout,
+        })
+
+        for _, uri in ipairs(opts.uri_list) do
+            if retmap[uri] then
+                log.warn('Prepared for %s at %s', activity_name, uri)
+                table.insert(abortion_list, uri)
+            end
+        end
+        for _, uri in ipairs(opts.uri_list) do
+            if retmap[uri] == nil then
+                local err = errmap and errmap[uri]
+                if err == nil then
+                    err = Prepare2pcError:new('Unknown error at %s', uri)
+                end
+                log.error('Error preparing for %s at %s:\n%s', activity_name, uri, err)
+                _2pc_error = err
+            end
+        end
+
+        if _2pc_error ~= nil then
+            goto abort
+        else
+            goto apply
+        end
+    end
+
+::apply::
+    do
+        log.warn('(2PC) %s commit phase...', activity_name)
+
+        local retmap, errmap = pool.map_call(opts.fn_commit, nil, {
+            uri_list = opts.uri_list,
+            timeout = vars.options.apply_config_timeout,
+        })
+
+        for _, uri in ipairs(opts.uri_list) do
+            if retmap[uri] then
+                log.warn('Committed %s at %s', activity_name, uri)
+            end
+        end
+        for _, uri in ipairs(opts.uri_list) do
+            if retmap[uri] == nil then
+                local err = errmap and errmap[uri]
+                log.error('Error committing %s at %s:\n%s', activity_name, uri, err)
+                _2pc_error = err
+            end
+        end
+
+        goto finish
+    end
+
+::abort::
+    do
+        log.warn('(2PC) %s abort phase...', activity_name)
+
+        local retmap, errmap = pool.map_call(opts.fn_abort, nil,{
+            uri_list = abortion_list,
+            timeout = vars.options.netbox_call_timeout,
+        })
+
+        for _, uri in ipairs(abortion_list) do
+            if retmap[uri] then
+                log.warn('Aborted %s at %s', activity_name, uri)
+            else
+                local err = errmap and errmap[uri]
+                log.error('Error aborting %s at %s:\n%s', activity_name, uri, err)
+            end
+        end
+
+        goto finish
+    end
+
+::finish::
+    if _2pc_error ~= nil then
+        return nil, _2pc_error
+    end
+    return true
+end
+
 --- Edit the clusterwide configuration.
 -- Top-level keys are merged with the current configuration.
 -- To remove a top-level section, use
 -- `patch_clusterwide{key = box.NULL}`.
 --
--- The function uses a two-phase commit algorithm with the following steps:
+-- The function executes following steps:
 --
 -- I. Patches the current configuration.
 --
 -- II. Validates topology on the current server.
 --
--- III. Executes the preparation phase (`prepare_2pc`) on every server
--- excluding expelled and disabled servers.
---
--- IV. If any server reports an error, executes the abort phase (`abort_2pc`).
--- All servers prepared so far are rolled back and unlocked.
---
--- V. Performs the commit phase (`commit_2pc`).
--- In case the phase fails, an automatic rollback is impossible, the
--- cluster should be repaired manually.
+-- III. Executes two-phase commit on all servers in the cluster
+-- excluding expelled and disabled ones.
 --
 -- @function patch_clusterwide
 -- @tparam table patch
@@ -375,11 +567,8 @@ local function _clusterwide(patch)
         return nil, err
     end
 
-    local _2pc_error
-
     -- Prepare a server group to be configured
     local uri_list = {}
-    local abortion_list = {}
     local refined_uri_list = topology.refine_servers_uri(topology_new)
     for _, uuid, _ in fun.filter(topology.not_disabled, topology_new.servers) do
         table.insert(uri_list, refined_uri_list[uuid])
@@ -390,116 +579,21 @@ local function _clusterwide(patch)
     -- in real world it does not affect anything
     table.sort(uri_list)
 
-    goto prepare
+    local _, err = twophase_commit({
+        uri_list = uri_list,
+        fn_prepare = '_G.__cartridge_clusterwide_config_prepare_2pc',
+        fn_commit = '_G.__cartridge_clusterwide_config_commit_2pc',
+        fn_abort = '_G.__cartridge_clusterwide_config_abort_2pc',
+        upload_data = clusterwide_config_new:get_plaintext(),
+        activity_name = 'patch_clusterwide'
+    })
 
-::prepare::
-    do
-        log.warn('(2PC) Upload stage...')
-
-        local data = clusterwide_config_new:get_plaintext()
-        local upload_id, err = upload.upload(data, {
-            uri_list = uri_list,
-            netbox_call_timeout = vars.options.netbox_call_timeout,
-            transmission_timeout = vars.options.upload_config_timeout,
-        })
-        if not upload_id then
-            _2pc_error = err
-            goto finish
-        end
-
-        log.warn('(2PC) Preparation stage...')
-
-        local retmap, errmap = pool.map_call(
-            '_G.__cartridge_clusterwide_config_prepare_2pc', {upload_id},
-            {
-                uri_list = uri_list,
-                timeout = vars.options.netbox_call_timeout,
-            }
-        )
-
-        for _, uri in ipairs(uri_list) do
-            if retmap[uri] then
-                log.warn('Prepared for config update at %s', uri)
-                table.insert(abortion_list, uri)
-            end
-        end
-        for _, uri in ipairs(uri_list) do
-            if retmap[uri] == nil then
-                local err = errmap and errmap[uri]
-                if err == nil then
-                    err = Prepare2pcError:new('Unknown error at %s', uri)
-                end
-                log.error('Error preparing for config update at %s:\n%s', uri, err)
-                _2pc_error = err
-            end
-        end
-
-        if _2pc_error ~= nil then
-            goto abort
-        else
-            goto apply
-        end
-    end
-
-::apply::
-    do
-        log.warn('(2PC) Commit stage...')
-
-        local retmap, errmap = pool.map_call(
-            '_G.__cartridge_clusterwide_config_commit_2pc', nil,
-            {
-                uri_list = uri_list,
-                timeout = vars.options.apply_config_timeout,
-            }
-        )
-
-        for _, uri in ipairs(uri_list) do
-            if retmap[uri] then
-                log.warn('Committed config at %s', uri)
-            end
-        end
-        for _, uri in ipairs(uri_list) do
-            if retmap[uri] == nil then
-                local err = errmap and errmap[uri]
-                log.error('Error committing config at %s:\n%s', uri, err)
-                _2pc_error = err
-            end
-        end
-
-        goto finish
-    end
-
-::abort::
-    do
-        log.warn('(2PC) Abort stage...')
-
-        local retmap, errmap = pool.map_call(
-            '_G.__cartridge_clusterwide_config_abort_2pc', nil,
-            {
-                uri_list = abortion_list,
-                timeout = vars.options.netbox_call_timeout,
-            }
-        )
-
-        for _, uri in ipairs(abortion_list) do
-            if retmap[uri] then
-                log.warn('Aborted config update at %s', uri)
-            else
-                local err = errmap and errmap[uri]
-                log.error('Error aborting config update at %s:\n%s', uri, err)
-            end
-        end
-
-        goto finish
-    end
-
-::finish::
-    if _2pc_error == nil then
+    if err == nil then
         log.warn('Clusterwide config updated successfully')
         return true
     else
         log.error('Clusterwide config update failed')
-        return nil, _2pc_error
+        return nil, err
     end
 end
 
@@ -732,6 +826,7 @@ return {
     set_schema = set_schema,
     patch_clusterwide = patch_clusterwide,
     force_reapply = force_reapply,
+    twophase_commit = twophase_commit,
     -- Cartridge supports backward compatibility but not the forward
     -- one. Thus operations that modify clusterwide config should be
     -- performed by instances with the lowest twophase version. This
