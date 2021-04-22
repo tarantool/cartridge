@@ -26,6 +26,16 @@ Added
 - New ``failover`` option in the cluster test helper for easier failover setup.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Changed
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Move DDL related code out of Cartridge and ship it as a permaent role in the
+  ddl rock. No observable functionality is affected. The roles remains
+  registered implicitly. Nonetheless it's recomended to add it explicitly to
+  ``cartridge.cfg({roles = {'cartridge.roles.ddl-manager'}})`` (if it's
+  actually used) as this implicity may be removed in future.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

@@ -156,7 +156,10 @@ for i, role in ipairs(vars.roles_by_number) do
     )
 end
 t.assert_equals(roles_order, {
-    'failover-coordinator', 'vshard-storage', 'vshard-router',
+    'ddl-manager',
+    'failover-coordinator',
+    'vshard-storage',
+    'vshard-router',
     'storage', 'role-c', 'role-d', 'role-b', 'role-a',
 })
 t.assert_equals(roles.get_role_dependencies('vshard-storage'), {})
@@ -179,6 +182,7 @@ local enabled_roles = roles.get_enabled_roles({
     ['role-a'] = false,
 })
 t.assert_equals(enabled_roles, {
+    ['ddl-manager'] = true,
     ['vshard-storage'] = true,
     ['storage'] = true,
 })

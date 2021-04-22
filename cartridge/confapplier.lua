@@ -20,7 +20,6 @@ local roles = require('cartridge.roles')
 local topology = require('cartridge.topology')
 local failover = require('cartridge.failover')
 local hotreload = require('cartridge.hotreload')
-local ddl_manager = require('cartridge.ddl-manager')
 local remote_control = require('cartridge.remote-control')
 local cluster_cookie = require('cartridge.cluster-cookie')
 local ClusterwideConfig = require('cartridge.clusterwide-config')
@@ -208,11 +207,6 @@ local function validate_config(clusterwide_config, _)
         conf_old = {}
     end
 
-    local ok, err = ddl_manager.validate_config(conf_new, conf_old)
-    if not ok then
-        return nil, err
-    end
-
     return roles.validate_config(conf_new, conf_old)
 end
 
@@ -254,14 +248,6 @@ local function apply_config(clusterwide_config)
     end
 
     local role_opts = {is_master = failover.is_leader()}
-
-    local ok, err = OperationError:pcall(ddl_manager.apply_config,
-        clusterwide_config:get_readonly(), role_opts
-    )
-    if not ok then
-        set_state('OperationError', err)
-        return nil, err
-    end
 
     local ok, err = roles.apply_config(
         clusterwide_config:get_readonly(), role_opts

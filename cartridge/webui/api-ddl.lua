@@ -1,17 +1,12 @@
 local errors = require('errors')
-local netbox = require('net.box')
-
-local pool = require('cartridge.pool')
-local failover = require('cartridge.failover')
-local twophase = require('cartridge.twophase')
-local confapplier = require('cartridge.confapplier')
-local ddl_manager = require('cartridge.ddl-manager')
 local gql_types = require('graphql.types')
+
+local confapplier = require('cartridge.confapplier')
+local service_registry = require('cartridge.service-registry')
 local module_name = 'cartridge.webui.api-ddl'
 
 local GetSchemaError = errors.new_class('GetSchemaError')
 local CheckSchemaError = errors.new_class('CheckSchemaError')
-local _section_name = ddl_manager._section_name
 
 local gql_type_schema = gql_types.object({
     name = 'DDLSchema',
@@ -39,25 +34,21 @@ local function graphql_get_schema()
             "Current instance isn't bootstrapped yet"
         )
     end
-    local schema_yml = confapplier.get_readonly(_section_name)
-    if schema_yml == nil or schema_yml == '' then
-        schema_yml = ddl_manager._example_schema
-    end
 
-    return {
-        as_yaml = schema_yml,
-    }
+    local ddl_manager = assert(service_registry.get('ddl-manager'))
+    return {as_yaml = ddl_manager.get_clusterwide_schema_yaml()}
 end
 
 local function graphql_set_schema(_, args)
     if confapplier.get_readonly() == nil then
-        return nil, GetSchemaError:new(
+        return nil, CheckSchemaError:new(
             "Current instance isn't bootstrapped yet"
         )
     end
-    local patch = {[_section_name] = args.as_yaml}
-    local ok, err = twophase.patch_clusterwide(patch)
-    if not ok then
+
+    local ddl_manager = assert(service_registry.get('ddl-manager'))
+    local ok, err = ddl_manager.set_clusterwide_schema_yaml(args.as_yaml)
+    if ok == nil then
         return nil, err
     end
 
@@ -65,55 +56,21 @@ local function graphql_set_schema(_, args)
 end
 
 local function graphql_check_schema(_, args)
-    local topology_cfg = confapplier.get_readonly('topology')
-    if topology_cfg == nil then
+    if confapplier.get_readonly() == nil then
         return nil, CheckSchemaError:new(
             "Current instance isn't bootstrapped yet"
         )
     end
 
-    local conf_new = {[_section_name] = args.as_yaml}
-    local conf_old = {[_section_name] = confapplier.get_readonly(_section_name)}
-
-    local active_leaders = failover.get_active_leaders()
-    local uri, conn
-    if active_leaders[box.info.cluster.uuid] == box.info.uuid then
-        conn = netbox.self
+    local ddl_manager = assert(service_registry.get('ddl-manager'))
+    local ok, err = ddl_manager.check_schema_yaml(args.as_yaml)
+    if ok then
+        return { error = box.NULL }
+    elseif err.class_name == ddl_manager.CheckSchemaError.name then
+        return { error = err.err }
     else
-        for _, leader_uuid in pairs(active_leaders) do
-            uri = topology_cfg.servers[leader_uuid].uri
-            conn = pool.connect(uri, {wait_connected = false})
-
-            if conn:wait_connected() then
-                break
-            end
-        end
-    end
-
-    if not conn:is_connected() then
-        return nil, CheckSchemaError:new('%q: %s',
-            uri, conn.error or "Connection not established (yet)"
-        )
-    end
-
-    local ret, err = errors.netbox_eval(conn,
-        [[
-            local ddl_manager = require('cartridge.ddl-manager')
-            local ok, err = ddl_manager.validate_config(...)
-            if ok then
-                return { error = box.NULL }
-            else
-                return { error = err.err }
-            end
-        ]],
-        {conf_new, conf_old}
-    )
-
-    if ret == nil then
         return nil, err
     end
-
-    return ret
 end
 
 local function init(graphql)

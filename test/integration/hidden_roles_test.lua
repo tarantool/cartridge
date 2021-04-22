@@ -179,7 +179,10 @@ function g.test_graphql_enable_none()
     set_graphql_roles({})
     t.assert_equals(
         get_config_roles(),
-        {['myrole-permanent'] = true}
+        {
+            ['ddl-manager'] = true,
+            ['myrole-permanent'] = true,
+        }
     )
 end
 
@@ -189,6 +192,7 @@ function g.test_graphql_enable_myrole()
     t.assert_equals(
         get_config_roles(),
         {
+            ['ddl-manager'] = true,
             ['myrole-dependency'] = true,
             ['myrole-permanent'] = true,
             ['myrole-hidden'] = true,
@@ -203,6 +207,7 @@ function g.test_graphql_enable_hidden()
     t.assert_equals(
         get_config_roles(),
         {
+            ['ddl-manager'] = true,
             ['myrole-permanent'] = true,
             ['myrole-hidden'] = true,
         }
@@ -215,6 +220,7 @@ function g.test_graphql_enable_permanent()
     t.assert_equals(
         get_config_roles(),
         {
+            ['ddl-manager'] = true,
             ['myrole-permanent'] = true,
         }
     )
