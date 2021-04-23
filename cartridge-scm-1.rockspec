@@ -12,7 +12,7 @@ dependencies = {
     'errors == 2.1.5-1',
     'vshard == 0.1.17-1',
     'membership == 2.3.1-1',
-    'frontend-core == 7.6.0-1',
+    'frontend-core == 7.7.0-1',
     'graphql == 0.1.1-1',
 }
 

@@ -387,11 +387,13 @@ export type MutationApiclusterEdit_UserArgs = {|
 /** Cluster management */
 export type MutationApiclusterEdit_Vshard_OptionsArgs = {|
   rebalancer_max_receiving?: ?$ElementType<Scalars, 'Int'>,
+  sched_ref_quota?: ?$ElementType<Scalars, 'Long'>,
   collect_bucket_garbage_interval?: ?$ElementType<Scalars, 'Float'>,
-  collect_lua_garbage?: ?$ElementType<Scalars, 'Boolean'>,
   sync_timeout?: ?$ElementType<Scalars, 'Float'>,
-  name: $ElementType<Scalars, 'String'>,
+  collect_lua_garbage?: ?$ElementType<Scalars, 'Boolean'>,
   rebalancer_disbalance_threshold?: ?$ElementType<Scalars, 'Float'>,
+  name: $ElementType<Scalars, 'String'>,
+  sched_move_quota?: ?$ElementType<Scalars, 'Long'>,
 |};
 
 
@@ -689,18 +691,20 @@ export type VshardGroup = {|
   rebalancer_max_receiving: $ElementType<Scalars, 'Int'>,
   /** Virtual buckets count in the group */
   bucket_count: $ElementType<Scalars, 'Int'>,
-  /** The interval between garbage collector actions, in seconds */
-  collect_bucket_garbage_interval: $ElementType<Scalars, 'Float'>,
-  /** Whether the group is ready to operate */
-  bootstrapped: $ElementType<Scalars, 'Boolean'>,
   /** If set to true, the Lua collectgarbage() function is called periodically */
   collect_lua_garbage: $ElementType<Scalars, 'Boolean'>,
+  /** Timeout to wait for synchronization of the old master with replicas before demotion */
+  sync_timeout: $ElementType<Scalars, 'Float'>,
+  /** Scheduler storage ref quota */
+  sched_ref_quota: $ElementType<Scalars, 'Long'>,
+  /** Whether the group is ready to operate */
+  bootstrapped: $ElementType<Scalars, 'Boolean'>,
   /** A maximum bucket disbalance threshold, in percent */
   rebalancer_disbalance_threshold: $ElementType<Scalars, 'Float'>,
   /** Group name */
   name: $ElementType<Scalars, 'String'>,
-  /** Timeout to wait for synchronization of the old master with replicas before demotion */
-  sync_timeout: $ElementType<Scalars, 'Float'>,
+  /** Scheduler bucket move quota */
+  sched_move_quota: $ElementType<Scalars, 'Long'>,
 |};
 
 type $Pick<Origin: Object, Keys: Object> = $ObjMapi<Keys, <Key>(k: Key) => $ElementType<Origin, Key>>;
@@ -1006,8 +1010,8 @@ export type ProbeMutation = ({
 });
 
 export type EditTopologyMutationVariables = {
-  replicasets?: ?Array<EditReplicasetInput>,
-  servers?: ?Array<EditServerInput>,
+  replicasets?: ?Array<EditReplicasetInput> | EditReplicasetInput,
+  servers?: ?Array<EditServerInput> | EditServerInput,
 };
 
 
@@ -1178,7 +1182,7 @@ export type Check_SchemaMutation = ({
 });
 
 export type Set_FilesMutationVariables = {
-  files?: ?Array<ConfigSectionInput>,
+  files?: ?Array<ConfigSectionInput> | ConfigSectionInput,
 };
 
 
@@ -1194,7 +1198,7 @@ export type Set_FilesMutation = ({
 });
 
 export type Disable_ServersMutationVariables = {
-  uuids?: ?Array<$ElementType<Scalars, 'String'>>,
+  uuids?: ?Array<$ElementType<Scalars, 'String'>> | $ElementType<Scalars, 'String'>,
 };
 
 
@@ -1210,7 +1214,7 @@ export type Disable_ServersMutation = ({
 });
 
 export type Config_Force_ReapplyMutationVariables = {
-  uuids?: ?Array<$ElementType<Scalars, 'String'>>,
+  uuids?: ?Array<$ElementType<Scalars, 'String'>> | $ElementType<Scalars, 'String'>,
 };
 
 
