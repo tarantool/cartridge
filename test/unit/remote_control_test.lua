@@ -154,6 +154,36 @@ function g.test_peer_uuid()
     t.assert_equals(conn.peer_uuid, "00000000-0000-0000-0000-000000000000")
 end
 
+function g.test_fiber_name()
+    local function check_conn(conn, fiber_name)
+        t.assert_not(conn.error)
+
+        t.assert_str_matches(
+            conn:eval('return package.loaded.fiber.name()'),
+            fiber_name
+        )
+
+        t.assert_str_matches(
+            conn:call('package.loaded.fiber.name'),
+            fiber_name
+        )
+
+        t.assert_not(conn.error)
+    end
+
+    rc_start(13301)
+    box.cfg({listen = box.NULL})
+    local conn_rc = assert(netbox.connect('superuser:3.141592@localhost:13301'))
+    check_conn(conn_rc, 'remote_control/.+:.+')
+    conn_rc:close()
+
+    remote_control.stop()
+    box.cfg({listen = '127.0.0.1:13302'})
+    local conn_box = assert(netbox.connect('superuser:3.141592@localhost:13302'))
+    check_conn(conn_box, 'main') -- Box doesn't care about netbox fiber names
+    conn_box:close()
+end
+
 function g.test_drop_connections()
     rc_start(13301)
     local conn_1 = assert(netbox.connect('superuser:3.141592@localhost:13301'))
@@ -656,19 +686,10 @@ function g.test_timeout()
             {timeout = 0.2}
         )
 
-        -- WARNING behavior differs here
-        if conn.peer_uuid == "00000000-0000-0000-0000-000000000000" then
-            -- connection handler is still blocked
-            t.assert_error_msg_contains(
-                "Timeout exceeded",
-                conn.call, conn, 'get_local_secret', nil, {timeout = 0.2}
-            )
-        else
-            t.assert_equals(
-                conn:call('get_local_secret', nil, {timeout = 0.2}),
-                secret
-            )
-        end
+        t.assert_equals(
+            conn:call('get_local_secret', nil, {timeout = 0.2}),
+            secret
+        )
 
         t.assert_equals(conn:call('math.pow', {2, 8}), 256)
 

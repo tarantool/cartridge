@@ -130,6 +130,35 @@ local function reply_err(s, sync, ecode, efmt, ...)
     s:write(mpenc_uint32(#header + #payload) .. header .. payload)
 end
 
+local function communicate_async(handler, s, sync, fn, ...)
+    local task = fiber.self()
+    task:name(handler:name())
+    task.storage.handler = handler
+    task.storage.session = handler.storage.session
+    handler.storage.tasks[task] = true
+
+    local ok, ret = fn(...)
+    if ok then
+        reply_ok(s, sync, ret)
+    elseif ffi.istype(error_t, ret) then
+        local code = ret.code
+        if code == nil and ret.errno ~= nil then
+            code = box.error.SYSTEM
+        end
+        reply_err(s, sync, code, ret.message)
+    else
+        reply_err(s, sync, box.error.PROC_LUA, tostring(ret))
+    end
+
+    handler.storage.tasks[task] = nil
+
+    -- The connection was dropped and the last response was sent.
+    -- Stop the communication and close the socket.
+    if vars.handlers[s] == nil and next(handler.storage.tasks) then
+        s:close() -- may raise, but nobody cares
+    end
+end
+
 local function communicate(s)
     local ok, buf = pcall(s.read, s, 5)
     if not ok or buf == nil or buf == '' then
@@ -215,21 +244,12 @@ local function communicate(s)
             return true
         end
 
-        local ok, ret = pcall(rc_eval, code, args)
-        if ok then
-            reply_ok(s, sync, ret)
-            return true
-        elseif ffi.istype(error_t, ret) then
-            local code = ret.code
-            if code == nil and ret.errno ~= nil then
-                code = box.error.SYSTEM
-            end
-            reply_err(s, sync, code, ret.message)
-            return true
-        else
-            reply_err(s, sync, box.error.PROC_LUA, tostring(ret))
-            return true
-        end
+        local handler = fiber.self()
+        fiber.create(communicate_async, handler, s, sync,
+            pcall, rc_eval, code, args
+        )
+
+        return true
 
     elseif iproto_code[code] == 'iproto_call' then
         local fn_name = body[0x22]
@@ -243,22 +263,12 @@ local function communicate(s)
             return true
         end
 
-        local ok, ret = rc_call(fn_name, unpack(fn_args))
-        if ok then
-            reply_ok(s, sync, ret)
-            return true
-        elseif ffi.istype(error_t, ret) then
-            local code = ret.code
-            if code == nil and ret.errno ~= nil then
-                code = box.error.SYSTEM
-            end
-            reply_err(s, sync, code, ret.message)
-            return true
-        else
-            reply_err(s, sync, box.error.PROC_LUA, tostring(ret))
-            return true
-        end
+        local handler = fiber.self()
+        fiber.create(communicate_async, handler, s, sync,
+            rc_call, fn_name, unpack(fn_args)
+        )
 
+        return true
 
     elseif iproto_code[code] == 'iproto_nop' then
         reply_ok(s, sync, nil)
@@ -290,6 +300,7 @@ local function rc_handle(s)
     )
 
     vars.handlers[s] = fiber.self()
+    vars.handlers[s].storage.tasks = {}
     s._client_user = 'guest'
     s._client_salt = salt
 
@@ -414,6 +425,9 @@ end
 
 --- Explicitly drop all established connections.
 --
+-- Close all the sockets except the one that triggered the function.
+-- The last socket will be closed when all requests are processed.
+--
 -- @function drop_connections
 -- @local
 local function drop_connections()
@@ -421,7 +435,7 @@ local function drop_connections()
     table.clear(vars.handlers)
 
     for s, handler in pairs(handlers) do
-        if handler ~= fiber.self() then
+        if handler ~= fiber.self().storage.handler then
             pcall(function() handler:cancel() end)
             pcall(function() s:close() end)
         end
