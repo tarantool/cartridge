@@ -12,6 +12,10 @@ and this project adheres to
 [Unreleased]
 -------------------------------------------------------------------------------
 
+-------------------------------------------------------------------------------
+[2.6.0] - 2021-04-26
+-------------------------------------------------------------------------------
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Added
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -19,7 +23,8 @@ Added
 - Update vshard to 0.1.17.
   (`Changelog <https://github.com/tarantool/vshard/releases/tag/0.1.17>`_).
 
-- Update graphql to 0.1.1 which allows to return data and errors together.
+- Update graphql to 0.1.1.
+  (`Changelog <https://github.com/tarantool/graphql/releases/tag/0.1.1>`_).
 
 - New test helper: ``cartridge.test-helpers.stateboard``.
 
@@ -44,13 +49,14 @@ Fixed
 - Fix inconsistency which could occur while longpolling stateboard in unstable
   networks.
 
+- Increase timeout for the ``validate_config`` stage from 1 to 10 seconds.
+  It afftected ``config_patch_clusterwide`` in v2.5, mostly on large clusters.
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Enhanced in WebUI
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 - Highlight if file name exists in file create/rename mode on Code page.
-
-- Remove the replicaset alias tooltip on the Cluster page.
 
 -------------------------------------------------------------------------------
 [2.5.1] - 2021-03-24
