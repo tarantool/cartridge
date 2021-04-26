@@ -154,7 +154,7 @@ local function communicate_async(handler, s, sync, fn, ...)
 
     -- The connection was dropped and the last response was sent.
     -- Stop the communication and close the socket.
-    if vars.handlers[s] == nil and next(handler.storage.tasks) then
+    if vars.handlers[s] == nil and next(handler.storage.tasks) == nil then
         s:close() -- may raise, but nobody cares
     end
 end
