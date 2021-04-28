@@ -114,6 +114,7 @@ jobs:
         if: steps.cache-luatest-rocks.outputs.cache-hit != 'true'
 
       - run: tarantoolctl rocks make
+      - run: tarantoolctl rocks list
       - run: .rocks/bin/luatest -v
 
       # Cleanup cached paths
