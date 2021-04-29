@@ -40,17 +40,17 @@ The following sections provide details for each of these steps.
 Installing Tarantool Cartridge
 --------------------------------------------------------------------------------
 
-#. `Install <https://github.com/tarantool/cartridge-cli#installation>`_
+#. `Install <https://github.com/tarantool/cartridge-cli#installation>`__
    ``cartridge-cli``, a command-line tool for developing, deploying, and
    managing Tarantool applications.
 
-#. `Install <https://git-scm.com/book/en/v2/Getting-Started-Installing-Git>`_
+#. `Install <https://git-scm.com/book/en/v2/Getting-Started-Installing-Git>`__
    ``git``, a version control system.
 
-#. `Install <https://www.npmjs.com/get-npm>`_
+#. `Install <https://www.npmjs.com/get-npm>`__
    ``npm``, a package manager for ``node.js``.
 
-#. `Install <https://linuxize.com/post/how-to-unzip-files-in-linux/>`_
+#. `Install <https://linuxize.com/post/how-to-unzip-files-in-linux/>`__
    the ``unzip`` utility.
 
 .. _cartridge-templates:
@@ -206,7 +206,7 @@ To implement a custom cluster role, do the following:
    .. code-block:: lua
 
       -- Implement a custom role in app/roles/custom-role.lua
-      #!/usr/bin/env tarantool
+      -- #!/usr/bin/env tarantool
       local role_name = 'custom-role'
 
       local function init()

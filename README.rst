@@ -102,9 +102,9 @@ To get a template application that uses Tarantool Cartridge and run it,
 you need to install several packages:
 
 * ``tarantool`` and ``tarantool-dev``
-  (see these `instructions <https://www.tarantool.io/en/download/>`_);
+  (see these `instructions <https://www.tarantool.io/en/download/>`__);
 * ``cartridge-cli``
-  (see these `instructions <https://github.com/tarantool/cartridge-cli#installation>`_)
+  (see these `instructions <https://github.com/tarantool/cartridge-cli#installation>`__)
 * ``git``, ``gcc``, ``cmake`` and ``make``.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -127,7 +127,6 @@ Admin Web UI:
 
 .. image:: https://user-images.githubusercontent.com/32142520/109290877-3d30a800-7839-11eb-8fcf-8b3de1237a3b.png
    :align: center
-   :scale: 100%
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Next steps

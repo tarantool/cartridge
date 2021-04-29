@@ -1,4 +1,4 @@
-.. _cartridge:
+.. _tarantool-cartridge:
 
 ********************************************************************************
 Tarantool Cartridge

@@ -416,7 +416,7 @@ Fixed
 
 - Properly handle nested input object in GraphQL:
 
-  .. code-block:: graphql
+  .. code-block:: text
 
       mutation($uuid: String!) {
         cluster { edit_topology(servers: [{uuid: $uuid ...}]) {} }
