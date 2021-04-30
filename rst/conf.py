@@ -19,6 +19,7 @@ exclude_patterns = [
     'images',
     'requirements.txt',
     'locale',
+    'cartridge_api/modules/cartridge.test-helpers.rst',
     'topics/*'
 ]
 
