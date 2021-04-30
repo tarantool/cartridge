@@ -206,7 +206,6 @@ To implement a custom cluster role, do the following:
    .. code-block:: lua
 
       -- Implement a custom role in app/roles/custom-role.lua
-      -- #!/usr/bin/env tarantool
       local role_name = 'custom-role'
 
       local function init()
@@ -316,16 +315,16 @@ is enabled.
 
 For example:
 
-   .. code-block:: lua
+.. code-block:: lua
 
-      -- Role dependencies defined in app/roles/custom-role.lua
-      local role_name = 'custom-role'
+  -- Role dependencies defined in app/roles/custom-role.lua
+  local role_name = 'custom-role'
+  ...
+  return {
+      role_name = role_name,
+      dependencies = {'cartridge.roles.vshard-router'},
       ...
-      return {
-          role_name = role_name,
-          dependencies = {'cartridge.roles.vshard-router'},
-          ...
-      }
+  }
 
 Here ``vshard-router`` role will be initialized automatically for every
 instance with ``custom-role`` enabled.
@@ -599,7 +598,6 @@ implementation:
 
 .. code-block:: lua
 
-   #!/usr/bin/env tarantool
    -- Custom role implementation
 
    local cartridge = require('cartridge')
@@ -1185,7 +1183,7 @@ the instances using :ref:`tarantool <cartridge-run-tarantool>`,
 .. _cartridge-run-tarantool:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Start/stop using ``tarantool``
+Start/stop using tarantool
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 With ``tarantool``, you can start only a single instance:
@@ -1202,7 +1200,7 @@ To stop the instance, use Ctrl+C.
 .. _cartridge-run-cartridge:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Start/stop using ``cartridge`` CLI
+Start/stop using cartridge CLI
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 With ``cartridge`` CLI, you can start one or multiple instances:
@@ -1278,7 +1276,7 @@ These options from the ``cartridge start`` command are supported:
 .. _cartridge-run-systemctl:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Start/stop using ``systemctl``
+Start/stop using systemctl
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 * To run a single instance:

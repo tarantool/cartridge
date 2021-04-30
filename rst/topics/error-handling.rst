@@ -58,11 +58,11 @@ For uniform error handling, ``errors`` provides the ``:pcall`` API:
     	.rocks/share/tarantool/errors.lua:139: in function 'pcall'
     	test.lua:15: in main chunk
 
-```lua
-print(DangerousError:pcall(error, 'what could possibly go wrong?'))
-```
-
 .. code-block:: lua
+
+   print(DangerousError:pcall(error, 'what could possibly go wrong?'))
+
+.. code-block:: text
 
     nil	DangerousError: what could possibly go wrong?
     stack traceback:
