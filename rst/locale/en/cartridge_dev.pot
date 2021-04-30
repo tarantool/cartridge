@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cartridge 2.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-03-30 08:01+0000\n"
+"POT-Creation-Date: 2021-04-30 06:53+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -52,16 +52,16 @@ msgstr ""
 msgid "Installing Tarantool Cartridge"
 msgstr ""
 
-msgid "`Install <https://github.com/tarantool/cartridge-cli#installation>`_ ``cartridge-cli``, a command-line tool for developing, deploying, and managing Tarantool applications."
+msgid "`Install <https://github.com/tarantool/cartridge-cli#installation>`__ ``cartridge-cli``, a command-line tool for developing, deploying, and managing Tarantool applications."
 msgstr ""
 
-msgid "`Install <https://git-scm.com/book/en/v2/Getting-Started-Installing-Git>`_ ``git``, a version control system."
+msgid "`Install <https://git-scm.com/book/en/v2/Getting-Started-Installing-Git>`__ ``git``, a version control system."
 msgstr ""
 
-msgid "`Install <https://www.npmjs.com/get-npm>`_ ``npm``, a package manager for ``node.js``."
+msgid "`Install <https://www.npmjs.com/get-npm>`__ ``npm``, a package manager for ``node.js``."
 msgstr ""
 
-msgid "`Install <https://linuxize.com/post/how-to-unzip-files-in-linux/>`_ the ``unzip`` utility."
+msgid "`Install <https://linuxize.com/post/how-to-unzip-files-in-linux/>`__ the ``unzip`` utility."
 msgstr ""
 
 msgid "Creating a project"
@@ -1198,7 +1198,7 @@ msgstr ""
 msgid "Depending on your :ref:`deployment method <cartridge-deploy>`, you can start/stop the instances using :ref:`tarantool <cartridge-run-tarantool>`, :ref:`cartridge CLI <cartridge-run-cartridge>`, or :ref:`systemctl <cartridge-run-systemctl>`."
 msgstr ""
 
-msgid "Start/stop using ``tarantool``"
+msgid "Start/stop using tarantool"
 msgstr ""
 
 msgid "With ``tarantool``, you can start only a single instance:"
@@ -1210,7 +1210,7 @@ msgstr ""
 msgid "To stop the instance, use Ctrl+C."
 msgstr ""
 
-msgid "Start/stop using ``cartridge`` CLI"
+msgid "Start/stop using cartridge CLI"
 msgstr ""
 
 msgid "With ``cartridge`` CLI, you can start one or multiple instances:"
@@ -1273,7 +1273,7 @@ msgstr ""
 msgid "These options from the ``cartridge start`` command are supported:"
 msgstr ""
 
-msgid "Start/stop using ``systemctl``"
+msgid "Start/stop using systemctl"
 msgstr ""
 
 msgid "To run a single instance:"
@@ -1334,9 +1334,6 @@ msgid "Error classes help to locate the problem's source. For this purpose, an e
 msgstr ""
 
 msgid "For uniform error handling, ``errors`` provides the ``:pcall`` API:"
-msgstr ""
-
-msgid "```lua print(DangerousError:pcall(error, 'what could possibly go wrong?')) ```"
 msgstr ""
 
 msgid "For ``errors.pcall`` there is no difference between the ``return nil, err`` and ``error()`` approaches."
