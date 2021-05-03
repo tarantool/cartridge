@@ -188,22 +188,65 @@ function g.test_drop_connections()
     rc_start(13301)
     local conn_1 = assert(netbox.connect('superuser:3.141592@localhost:13301'))
     local conn_2 = assert(netbox.connect('superuser:3.141592@localhost:13301'))
-    local conn_3 = assert(netbox.connect('superuser:3.141592@localhost:13301'))
-    conn_3:close()
-    remote_control.stop()
-
     t.assert_equals({conn_1.state, conn_1.error}, {"active"})
     t.assert_equals({conn_2.state, conn_2.error}, {"active"})
+    rawset(_G, 'conn_1', conn_1)
+    rawset(_G, 'conn_2', conn_2)
 
-    t.assert_equals(conn_1:eval([[
+    -- Check that the presence of a closed connection doesn't cause errors
+    netbox.connect('superuser:3.141592@localhost:13301'):close()
+
+    -- Check that remote-control server is able to handle requests asynchronously
+    local ch = fiber.channel(0)
+    rawset(_G, 'longrunning', function() ch:put(secret) end)
+    local future = conn_2:call('longrunning', {1}, {is_async=true})
+
+    local result = helpers.run_remotely({net_box = conn_1}, function()
+        local t = require('luatest')
         local remote_control = require('cartridge.remote-control')
-        remote_control.stop()
-        remote_control.drop_connections()
-        return get_local_secret()
-    ]]), secret)
 
+        t.assert_equals({_G.conn_1.state, _G.conn_1.error}, {"active"})
+        t.assert(_G.conn_1:ping({timeout = 0.1}))
+        t.assert(_G.conn_2:ping({timeout = 0.1}))
+
+        remote_control.stop()
+        package.loaded.fiber.yield()
+        remote_control.drop_connections()
+
+        --
+        t.assert_equals(_G.conn_2:ping(), false)
+        t.assert_covers(_G.conn_2, {
+            state = "error",
+            error = "Peer closed",
+        })
+
+        -- Our own connection should remain operable
+        -- until the last response is sent
+        t.assert(_G.conn_1:ping())
+        t.assert(_G.conn_1:eval('return true'))
+        return _G.conn_1:call('get_local_secret')
+    end)
+
+    -- Both connections are closed as soon as eval returns
     t.assert_equals({conn_1.state, conn_1.error}, {"error", "Peer closed"})
     t.assert_equals({conn_2.state, conn_2.error}, {"error", "Peer closed"})
+
+    -- conn_1 was able to get the response
+    t.assert_equals(result, secret)
+
+    -- conn_2 was dropped
+    t.assert_equals(future:is_ready(), true)
+    local ok, err = future:result()
+    t.assert_not(ok)
+    t.assert_equals(type(err), 'cdata')
+    t.assert_equals(err.message, 'Peer closed')
+    -- but its handler is still alive
+    t.assert_equals(ch:get(0), secret)
+
+    -- Cleanup globals
+    rawset(_G, 'conn_1', nil)
+    rawset(_G, 'conn_2', nil)
+    rawset(_G, 'longrunning', nil)
 end
 
 function g.test_late_accept()

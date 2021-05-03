@@ -245,6 +245,9 @@ local function communicate(s)
         end
 
         local handler = fiber.self()
+        -- It's important to use `fiber.create` and not `fiber.new`
+        -- because it reschedules the `handler` and doesn't affect
+        -- execution order unless the async call yields.
         fiber.create(communicate_async, handler, s, sync,
             pcall, rc_eval, code, args
         )
@@ -264,6 +267,9 @@ local function communicate(s)
         end
 
         local handler = fiber.self()
+        -- It's important to use `fiber.create` and not `fiber.new`
+        -- because it reschedules the `handler` and doesn't affect
+        -- execution order unless the async call yields.
         fiber.create(communicate_async, handler, s, sync,
             rc_call, fn_name, unpack(fn_args)
         )
@@ -299,8 +305,9 @@ local function rc_handle(s)
         digest.base64_encode(salt)
     )
 
-    vars.handlers[s] = fiber.self()
-    vars.handlers[s].storage.tasks = {}
+    local handler = fiber.self()
+    handler.storage.tasks = {}
+    vars.handlers[s] = handler
     s._client_user = 'guest'
     s._client_salt = salt
 
@@ -328,7 +335,7 @@ local function rc_handle(s)
 
     s:write(greeting)
 
-    while vars.handlers[s] do
+    while vars.handlers[s] ~= nil or next(handler.storage.tasks) ~= nil do
         local ok, err = RemoteControlError:pcall(communicate, s)
         if err ~= nil then
             log.error('%s', err)
@@ -436,6 +443,7 @@ local function drop_connections()
 
     for s, handler in pairs(handlers) do
         if handler ~= fiber.self().storage.handler then
+            pcall(function() log.info('dropping %s', s) end)
             pcall(function() handler:cancel() end)
             pcall(function() s:close() end)
         end
