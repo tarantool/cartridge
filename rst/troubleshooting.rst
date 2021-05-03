@@ -8,6 +8,31 @@ First of all, see a similar
 in the Tarantool manual. Below you can find other Cartridge-specific
 problems considered.
 
+..  contents::
+
+Problems with replica
+---------------------
+
+**Examples:**
+
+*   ``Missing .xlog file between LSN 5137088 {1: 240379, 2: 4750534, 5: 146175}
+    and 5137379 {1: 240379, 2: 4750825, 5: 146175} which means that master
+    lost one or more of their xlog files, please check it``
+
+*   ``Duplicate key exists in unique index "primary" in space "T1" with old tuple``
+
+**Solution:**
+
+If you have some replication conflicts and issues that you don't know how
+to deal with, try to rebootstrap the replica.
+
+**(!)** Make sure that you have your data safe on the master before rebootstrap.
+
+1.  Stop the instance
+2.  Delete snapshots and xlogs
+3.  Preserve cluster-wide config (``config`` dir)
+4.  Restart the instance
+
 Editing clusterwide configuration in WebUI returns an error
 -----------------------------------------------------------
 
@@ -241,7 +266,7 @@ continue operating as before.
     commit (e.g. via the WebUI or with the Lua API), the active configuration
     of an active instance will be spread across the cluster.
 
-Repairing cluster using Cartridge CLI `repair` command
+Repairing cluster using Cartridge CLI repair command
 ------------------------------------------------------
 
 Cartridge CLI has `repair <https://github.com/tarantool/cartridge-cli#repairing-a-cluster>`_
