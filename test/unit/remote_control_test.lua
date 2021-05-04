@@ -154,26 +154,99 @@ function g.test_peer_uuid()
     t.assert_equals(conn.peer_uuid, "00000000-0000-0000-0000-000000000000")
 end
 
+function g.test_fiber_name()
+    local function check_conn(conn, fiber_name)
+        t.assert_not(conn.error)
+
+        t.assert_str_matches(
+            conn:eval('return package.loaded.fiber.name()'),
+            fiber_name
+        )
+
+        t.assert_str_matches(
+            conn:call('package.loaded.fiber.name'),
+            fiber_name
+        )
+
+        t.assert_not(conn.error)
+    end
+
+    rc_start(13301)
+    box.cfg({listen = box.NULL})
+    local conn_rc = assert(netbox.connect('superuser:3.141592@localhost:13301'))
+    check_conn(conn_rc, 'remote_control/.+:.+')
+    conn_rc:close()
+
+    remote_control.stop()
+    box.cfg({listen = '127.0.0.1:13302'})
+    local conn_box = assert(netbox.connect('superuser:3.141592@localhost:13302'))
+    check_conn(conn_box, 'main') -- Box doesn't care about netbox fiber names
+    conn_box:close()
+end
+
 function g.test_drop_connections()
     rc_start(13301)
     local conn_1 = assert(netbox.connect('superuser:3.141592@localhost:13301'))
     local conn_2 = assert(netbox.connect('superuser:3.141592@localhost:13301'))
-    local conn_3 = assert(netbox.connect('superuser:3.141592@localhost:13301'))
-    conn_3:close()
-    remote_control.stop()
-
     t.assert_equals({conn_1.state, conn_1.error}, {"active"})
     t.assert_equals({conn_2.state, conn_2.error}, {"active"})
+    rawset(_G, 'conn_1', conn_1)
+    rawset(_G, 'conn_2', conn_2)
 
-    t.assert_equals(conn_1:eval([[
+    -- Check that the presence of a closed connection doesn't cause errors
+    netbox.connect('superuser:3.141592@localhost:13301'):close()
+
+    -- Check that remote-control server is able to handle requests asynchronously
+    local ch = fiber.channel(0)
+    rawset(_G, 'longrunning', function() ch:put(secret) end)
+    local future = conn_2:call('longrunning', {1}, {is_async = true})
+
+    local result = helpers.run_remotely({net_box = conn_1}, function()
+        local t = require('luatest')
         local remote_control = require('cartridge.remote-control')
-        remote_control.stop()
-        remote_control.drop_connections()
-        return get_local_secret()
-    ]]), secret)
 
+        t.assert_equals({_G.conn_1.state, _G.conn_1.error}, {"active"})
+        t.assert(_G.conn_1:ping({timeout = 0.1}))
+        t.assert(_G.conn_2:ping({timeout = 0.1}))
+
+        remote_control.stop()
+        package.loaded.fiber.yield()
+        remote_control.drop_connections()
+
+        --
+        t.assert_equals(_G.conn_2:ping(), false)
+        t.assert_covers(_G.conn_2, {
+            state = "error",
+            error = "Peer closed",
+        })
+
+        -- Our own connection should remain operable
+        -- until the last response is sent
+        t.assert(_G.conn_1:ping())
+        t.assert(_G.conn_1:eval('return true'))
+        return _G.conn_1:call('get_local_secret')
+    end)
+
+    -- Both connections are closed as soon as eval returns
     t.assert_equals({conn_1.state, conn_1.error}, {"error", "Peer closed"})
     t.assert_equals({conn_2.state, conn_2.error}, {"error", "Peer closed"})
+
+    -- conn_1 was able to get the response
+    t.assert_equals(result, secret)
+
+    -- conn_2 was dropped
+    t.assert_equals(future:is_ready(), true)
+    local ok, err = future:result()
+    t.assert_not(ok)
+    t.assert_equals(type(err), 'cdata')
+    t.assert_equals(err.message, 'Peer closed')
+    -- but its handler is still alive
+    t.assert_equals(ch:get(0), secret)
+
+    -- Cleanup globals
+    rawset(_G, 'conn_1', nil)
+    rawset(_G, 'conn_2', nil)
+    rawset(_G, 'longrunning', nil)
 end
 
 function g.test_late_accept()
@@ -341,13 +414,13 @@ end
 function g.test_async()
     rc_start(13301)
     local conn = assert(netbox.connect('superuser:3.141592@localhost:13301'))
-    local future = conn:call('get_local_secret', nil, {is_async=true})
+    local future = conn:call('get_local_secret', nil, {is_async = true})
     t.assert_equals(future:is_ready(), false)
     t.assert_equals(future:wait_result(), {secret})
     t.assert_equals(future:is_ready(), true)
     t.assert_equals(future:result(), {secret})
 
-    local future = conn:call('get_local_secret', nil, {is_async=true})
+    local future = conn:call('get_local_secret', nil, {is_async = true})
     t.assert_equals(conn:call('math.pow', {2, 6}), 64)
     t.assert_equals(future:wait_result(), {secret})
 end
@@ -656,19 +729,10 @@ function g.test_timeout()
             {timeout = 0.2}
         )
 
-        -- WARNING behavior differs here
-        if conn.peer_uuid == "00000000-0000-0000-0000-000000000000" then
-            -- connection handler is still blocked
-            t.assert_error_msg_contains(
-                "Timeout exceeded",
-                conn.call, conn, 'get_local_secret', nil, {timeout = 0.2}
-            )
-        else
-            t.assert_equals(
-                conn:call('get_local_secret', nil, {timeout = 0.2}),
-                secret
-            )
-        end
+        t.assert_equals(
+            conn:call('get_local_secret', nil, {timeout = 0.2}),
+            secret
+        )
 
         t.assert_equals(conn:call('math.pow', {2, 8}), 256)
 
