@@ -192,7 +192,7 @@ still appoints a new leader if the current one dies.
 Fencing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Neither eventual nor stateful failover modes don't protect a replicaset
+Neither ``eventual`` nor ``stateful`` failover mode protects a replicaset
 from the presence of multiple leaders when the network is partitioned.
 But fencing does. It enforces at-most-one leader policy in a replicaset.
 
