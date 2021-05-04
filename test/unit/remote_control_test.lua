@@ -199,7 +199,7 @@ function g.test_drop_connections()
     -- Check that remote-control server is able to handle requests asynchronously
     local ch = fiber.channel(0)
     rawset(_G, 'longrunning', function() ch:put(secret) end)
-    local future = conn_2:call('longrunning', {1}, {is_async=true})
+    local future = conn_2:call('longrunning', {1}, {is_async = true})
 
     local result = helpers.run_remotely({net_box = conn_1}, function()
         local t = require('luatest')
@@ -414,13 +414,13 @@ end
 function g.test_async()
     rc_start(13301)
     local conn = assert(netbox.connect('superuser:3.141592@localhost:13301'))
-    local future = conn:call('get_local_secret', nil, {is_async=true})
+    local future = conn:call('get_local_secret', nil, {is_async = true})
     t.assert_equals(future:is_ready(), false)
     t.assert_equals(future:wait_result(), {secret})
     t.assert_equals(future:is_ready(), true)
     t.assert_equals(future:result(), {secret})
 
-    local future = conn:call('get_local_secret', nil, {is_async=true})
+    local future = conn:call('get_local_secret', nil, {is_async = true})
     t.assert_equals(conn:call('math.pow', {2, 6}), 64)
     t.assert_equals(future:wait_result(), {secret})
 end
