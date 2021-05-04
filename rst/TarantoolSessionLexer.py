@@ -171,4 +171,4 @@ class TarantoolSessionLexer(Lexer):
                 yield item
 
 def setup(app):
-    app.add_lexer("tarantoolsession", TarantoolSessionLexer())
+    app.add_lexer("tarantoolsession", TarantoolSessionLexer)
