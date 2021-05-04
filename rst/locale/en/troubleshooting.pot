@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cartridge 2.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-03-30 08:01+0000\n"
+"POT-Creation-Date: 2021-05-03 12:29+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -20,6 +20,42 @@ msgid "Troubleshooting"
 msgstr ""
 
 msgid "First of all, see a similar `guide <https://www.tarantool.io/en/doc/latest/book/admin/troubleshoot/>`_ in the Tarantool manual. Below you can find other Cartridge-specific problems considered."
+msgstr ""
+
+msgid "Contents"
+msgstr ""
+
+msgid "Problems with replica"
+msgstr ""
+
+msgid "**Examples:**"
+msgstr ""
+
+msgid "``Missing .xlog file between LSN 5137088 {1: 240379, 2: 4750534, 5: 146175} and 5137379 {1: 240379, 2: 4750825, 5: 146175} which means that master lost one or more of their xlog files, please check it``"
+msgstr ""
+
+msgid "``Duplicate key exists in unique index \"primary\" in space \"T1\" with old tuple``"
+msgstr ""
+
+msgid "**Solution:**"
+msgstr ""
+
+msgid "If you have some replication conflicts and issues that you don't know how to deal with, try to rebootstrap the replica."
+msgstr ""
+
+msgid "**(!)** Make sure that you have your data safe on the master before rebootstrap."
+msgstr ""
+
+msgid "Stop the instance"
+msgstr ""
+
+msgid "Delete snapshots and xlogs"
+msgstr ""
+
+msgid "Preserve cluster-wide config (``config`` dir)"
+msgstr ""
+
+msgid "Restart the instance"
 msgstr ""
 
 msgid "Editing clusterwide configuration in WebUI returns an error"
@@ -112,13 +148,13 @@ msgstr ""
 msgid "If further configuration modifications are made with a two-phase commit (e.g. via the WebUI or with the Lua API), the active configuration of an active instance will be spread across the cluster."
 msgstr ""
 
-msgid "Repairing cluster using Cartridge CLI `repair` command"
+msgid "Repairing cluster using Cartridge CLI repair command"
 msgstr ""
 
 msgid "Cartridge CLI has `repair <https://github.com/tarantool/cartridge-cli#repairing-a-cluster>`_ command since version `2.3.0 <https://github.com/tarantool/cartridge-cli/releases/tag/2.3.0>`_."
 msgstr ""
 
-msgid "It can be used to get current topology, remove instance from cluster, change repicaset leader or change instance advertise URI."
+msgid "It can be used to get current topology, remove instance from cluster, change replicaset leader or change instance advertise URI."
 msgstr ""
 
 msgid "``cartridge repair`` patches the cluster-wide configuration files of application instances placed ON THE LOCAL MACHINE. It means that running ``cartridge repair`` on all machines is user responsibility."
@@ -139,7 +175,16 @@ msgstr ""
 msgid "Make sure instances are running and not stuck in the ConnectingFullmesh state (see :ref:`above <troubleshooting-stuck-connecting-fullmesh>`)."
 msgstr ""
 
-msgid "Get instance UUID: * open ``server details`` tab in WebUI; * call ``cartridge repair list-topology --name <app-name>`` and find desired instance UUID: * get instance ``box.info().uuid``:"
+msgid "Get instance UUID:"
+msgstr ""
+
+msgid "open ``server details`` tab in WebUI;"
+msgstr ""
+
+msgid "call ``cartridge repair list-topology --name <app-name>`` and find desired instance UUID:"
+msgstr ""
+
+msgid "get instance ``box.info().uuid``:"
 msgstr ""
 
 msgid "Now we need to update instance advertise URI in all instances cluster-wide configuration files on each machine. Run ``cartridge repair set-advertise-uri`` with ``--dry-run`` flag on each machine to check cluster-wide config changes computed  by ``cartridge-cli``:"
