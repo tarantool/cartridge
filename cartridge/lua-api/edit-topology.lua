@@ -348,12 +348,6 @@ local function edit_topology(args)
             local replicaset = topology_cfg.replicasets[replicaset_uuid]
             local leaders = topology.get_leaders_order(topology_cfg, replicaset_uuid)
 
-            if topology_cfg.servers[leaders[1]] == 'expelled' then
-                return nil, EditTopologyError:new(
-                    "Server %q is the leader and can't be expelled", leaders[1]
-                )
-            end
-
             -- filter out all expelled instances
             replicaset.master = {}
             for _, leader_uuid in pairs(leaders) do
