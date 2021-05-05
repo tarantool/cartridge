@@ -186,6 +186,19 @@ local function _get_appointments_stateful_mode(client, timeout)
     return client:longpoll(timeout)
 end
 
+local function describe(uuid)
+    local topology_cfg = vars.clusterwide_config:get_readonly('topology')
+    local servers = assert(topology_cfg.servers)
+
+    if uuid == vars.instance_uuid then
+        return string.format('%s (me)', uuid)
+    elseif servers[uuid] ~= nil then
+        return string.format('%s (%q)', uuid, servers[uuid].uri)
+    else
+        return uuid
+    end
+end
+
 --- Accept new appointments.
 --
 -- Get appointments wherever they come from and put them into cache.
@@ -215,12 +228,31 @@ local function accept_appointments(appointments)
         end
     end
 
-    if utils.deepcmp(vars.cache.active_leaders, active_leaders) then
-        return false
+    local changed = false
+
+    for replicaset_uuid, leader_uuid in pairs(active_leaders) do
+        local current_leader = vars.cache.active_leaders[replicaset_uuid]
+        if current_leader == leader_uuid then
+            goto continue
+        end
+
+        changed = true
+
+        log.info('Replicaset %s%s: new leader %s, was %s',
+            replicaset_uuid,
+            replicaset_uuid == vars.replicaset_uuid and ' (me)' or '',
+            describe(leader_uuid),
+            describe(current_leader)
+        )
+
+        ::continue::
     end
 
-    vars.cache.active_leaders = active_leaders
-    return true
+    if changed then
+        vars.cache.active_leaders = active_leaders
+    end
+
+    return changed
 end
 
 local function apply_config(mod)
@@ -456,7 +488,7 @@ local function constitute_oneself(active_leaders, opts)
     vars.cache.is_leader = true
     vars.cache.is_rw = true
 
-    log.info('Vclock persisted: %s',
+    log.info('Vclock persisted: %s. Consistent switchover succeeded',
         json.encode(setmetatable(vclock, {_serialize = 'sequence'}))
     )
 
@@ -470,13 +502,14 @@ function reconfigure_all(active_leaders)
 
     local t1 = fiber.clock()
     -- WARNING: implicit yield
-    local ok, _ = constitute_oneself(active_leaders, {
+    local ok, err = constitute_oneself(active_leaders, {
         timeout = vars.options.WAITLSN_TIMEOUT,
     })
     fiber.testcancel()
     local t2 = fiber.clock()
 
     if not ok then
+        log.info("Consistency isn't reached yet: %s", err.err)
         fiber.sleep(t1 + vars.options.WAITLSN_TIMEOUT - t2)
         goto start_over
     end
@@ -825,7 +858,9 @@ local function force_inconsistency(leaders)
 
     local err
     for replicaset_uuid, instance_uuid in pairs(leaders) do
-        local _ok, _err = session:set_vclockkeeper(replicaset_uuid, instance_uuid)
+        local _ok, _err = session:set_vclockkeeper(
+            replicaset_uuid, instance_uuid, nil
+        )
         if _ok == nil then
             err = _err
             log.warn(

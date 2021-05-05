@@ -24,6 +24,7 @@ Fixed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 - Leaders replaced during stateful failover can be expelled now.
+- Make failover logging more verbose.
 
 -------------------------------------------------------------------------------
 [2.6.0] - 2021-04-26
