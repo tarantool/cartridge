@@ -103,7 +103,7 @@ local function control_loop(session)
             local decision = make_decision(ctx, replicaset_uuid)
             if decision ~= nil then
                 table.insert(updates, {replicaset_uuid, decision.leader})
-                log.info('Appoint new leader %s -> %s (%q)',
+                log.info('Replicaset %s: appoint %s (%q)',
                     replicaset_uuid, decision.leader,
                     vars.topology_cfg.servers[decision.leader].uri
                 )
@@ -113,7 +113,7 @@ local function control_loop(session)
         local now = fiber.clock()
         if next(updates) ~= nil then
             for _, update in ipairs(updates) do
-                session:set_vclockkeeper(update[1], update[2])
+                session:set_vclockkeeper(update[1], update[2], nil)
             end
 
             local ok, err = session:set_leaders(updates)
@@ -370,6 +370,10 @@ local function appoint_leaders(leaders)
     for replicaset_uuid, leader_uuid in pairs(leaders) do
         local decision = pack_decision(leader_uuid)
         table.insert(updates, {replicaset_uuid, decision.leader})
+        log.info('Replicaset %s: appoint %s (%q) (manual)',
+            replicaset_uuid, decision.leader,
+            assert(servers[decision.leader]).uri
+        )
         session.ctx.decisions[replicaset_uuid] = decision
     end
 
