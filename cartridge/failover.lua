@@ -46,6 +46,9 @@ local ApplyConfigError = errors.new_class('ApplyConfigError')
 local ValidateConfigError = errors.new_class('ValidateConfigError')
 local StateProviderError = errors.new_class('StateProviderError')
 
+vars:new('all_roles')
+vars:new('instance_uuid')
+vars:new('replicaset_uuid')
 vars:new('membership_notification', membership.subscribe())
 vars:new('consistency_needed', false)
 vars:new('clusterwide_config')
@@ -263,13 +266,12 @@ local function fencing_healthcheck()
         return true
     end
 
-    local confapplier = require('cartridge.confapplier')
-    local replicaset_uuid = confapplier.get_replicaset_uuid()
-
-    local topology_cfg = confapplier.get_readonly('topology')
+    local topology_cfg = vars.clusterwide_config:get_readonly('topology')
 
     -- Otherwise check connectivity with replicas
-    local leaders_order = topology.get_leaders_order(topology_cfg, replicaset_uuid)
+    local leaders_order = topology.get_leaders_order(
+        topology_cfg, vars.replicaset_uuid
+    )
     for _, instance_uuid in ipairs(leaders_order) do
         local server = assert(topology_cfg.servers[instance_uuid])
         if not topology.not_disabled(instance_uuid, server) then
@@ -317,7 +319,7 @@ local function fencing_watch()
         end
     until fiber.clock() > deadline
 
-    if not accept_appointments({[box.info.cluster.uuid] = box.NULL}) then
+    if not accept_appointments({[vars.replicaset_uuid] = box.NULL}) then
         log.error('Assertion failed. Was fencing actuated twice?')
         return
     end
@@ -348,17 +350,13 @@ local function constitute_oneself(active_leaders, opts)
         timeout = 'number',
     })
 
-    local confapplier = require('cartridge.confapplier')
-    local instance_uuid = confapplier.get_instance_uuid()
-    local replicaset_uuid = confapplier.get_replicaset_uuid()
-
     local topology_cfg = vars.clusterwide_config:get_readonly('topology')
 
-    if active_leaders[replicaset_uuid] ~= instance_uuid then
+    if active_leaders[vars.replicaset_uuid] ~= vars.instance_uuid then
         -- I'm not a leader
         vars.cache.is_vclockkeeper = false
         vars.cache.is_leader = false
-        vars.cache.is_rw = topology_cfg.replicasets[replicaset_uuid].all_rw
+        vars.cache.is_rw = topology_cfg.replicasets[vars.replicaset_uuid].all_rw
         return true
     end
 
@@ -383,7 +381,7 @@ local function constitute_oneself(active_leaders, opts)
 
     -- Query current vclockkeeper
     -- WARNING: implicit yield
-    local vclockkeeper, err = session:get_vclockkeeper(replicaset_uuid)
+    local vclockkeeper, err = session:get_vclockkeeper(vars.replicaset_uuid)
     fiber.testcancel()
     if err ~= nil then
         return nil, SwitchoverError:new(err)
@@ -392,7 +390,7 @@ local function constitute_oneself(active_leaders, opts)
     if vclockkeeper == nil then
         -- It's absent, no need to wait anyone
         goto set_vclockkeeper
-    elseif vclockkeeper.instance_uuid == instance_uuid then
+    elseif vclockkeeper.instance_uuid == vars.instance_uuid then
         -- It's me already, but vclock still should be persisted
         goto set_vclockkeeper
     end
@@ -445,7 +443,7 @@ local function constitute_oneself(active_leaders, opts)
 
     -- WARNING: implicit yield
     local ok, err = session:set_vclockkeeper(
-        replicaset_uuid, instance_uuid, vclock
+        vars.replicaset_uuid, vars.instance_uuid, vclock
     )
     fiber.testcancel()
 
@@ -467,7 +465,6 @@ end
 
 function reconfigure_all(active_leaders)
     local confapplier = require('cartridge.confapplier')
-    local all_roles = require('cartridge.roles').get_all_roles()
 
 ::start_over::
 
@@ -510,7 +507,7 @@ function reconfigure_all(active_leaders)
             read_only = not vars.cache.is_rw,
         })
 
-        for _, role_name in ipairs(all_roles) do
+        for _, role_name in ipairs(vars.all_roles) do
             local mod = service_registry.get(role_name)
             local _, err = apply_config(mod)
             if err then
@@ -557,7 +554,6 @@ local function failover_loop(args)
         vars.failover_err = nil
 
         if accept_appointments(appointments) then
-            -- nothing changed
             local id = schedule_add()
             log.info(
                 'Failover triggered, reapply' ..
@@ -597,6 +593,11 @@ local function cfg(clusterwide_config)
 
     vars.failover_err = nil
 
+    local confapplier = require('cartridge.confapplier')
+    vars.replicaset_uuid = confapplier.get_replicaset_uuid()
+    vars.instance_uuid = confapplier.get_instance_uuid()
+    vars.all_roles = require('cartridge.roles').get_all_roles()
+
     vars.clusterwide_config = clusterwide_config
     local topology_cfg = clusterwide_config:get_readonly('topology')
     local failover_cfg = topology.get_failover_params(topology_cfg)
@@ -623,7 +624,7 @@ local function cfg(clusterwide_config)
         vars.failover_fiber:name('cartridge.eventual-failover')
 
     elseif failover_cfg.mode == 'stateful' then
-        local replicaset_uuid = box.info.cluster.uuid
+        local replicaset_uuid = vars.replicaset_uuid
         if topology_cfg.replicasets[replicaset_uuid].all_rw then
             -- Replicasets with all_rw flag imply that
             -- consistent switchover isn't necessary
@@ -803,7 +804,7 @@ local function get_error()
 end
 
 --- Force inconsistent leader switching.
--- Do it by resetting vclockkepers in state provider.
+-- Do it by resetting vclockkeepers in state provider.
 --
 -- @function force_inconsistency
 -- @local
@@ -841,7 +842,7 @@ local function force_inconsistency(leaders)
     return true
 end
 
---- Wait when promoted instances become vclockkepers.
+--- Wait when promoted instances become vclockkeepers.
 --
 -- @function wait_consistency
 -- @local
