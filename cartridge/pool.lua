@@ -130,8 +130,8 @@ local function connect(uri, opts)
 end
 
 local function _pack_values(maps, uri, res, err)
+    -- Spread call results across result map
     if res ~= nil then
-        maps[1] = maps[1] or {}
         maps[1][uri] = res
     elseif err ~= nil then
         maps[2] = maps[2] or {}
@@ -204,7 +204,7 @@ local function map_call(fn_name, args, opts)
         uri_map[uri] = true
     end
 
-    local maps = {}
+    local maps = {{}, nil}
     local fibers = {}
     for _, uri in pairs(opts.uri_list) do
         local fiber = fiber.new(
