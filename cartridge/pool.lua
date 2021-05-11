@@ -129,12 +129,13 @@ local function connect(uri, opts)
     return conn
 end
 
-local function _pack_values(maps, uri, ...)
-    -- Spread call results across tables
-    for i = 1, select('#', ...) do
-        local v = select(i, ...)
-        maps[i] = maps[i] or {}
-        maps[i][uri] = v
+local function _pack_values(maps, uri, res, err)
+    if res ~= nil then
+        maps[1] = maps[1] or {}
+        maps[1][uri] = res
+    elseif err ~= nil then
+        maps[2] = maps[2] or {}
+        maps[2][uri] = err
     end
 end
 
