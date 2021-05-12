@@ -214,7 +214,15 @@ function g.test_routes()
         httpd:route({method = 'ANY', path = '/route-a'}, echo)
         httpd:route({method = 'GET', path = '/route-b'}, echo)
 
-        return {role_name = 'myrole'}
+        return {
+            role_name = 'myrole',
+            stop = function()
+                -- Some external roles may remove routes improperly
+                -- and leave gaps in the routes table. Test that
+                -- cartridge can handle it.
+                httpd.routes[#httpd.routes-1] = nil
+            end,
+        }
     end)
 
     t.assert_covers(

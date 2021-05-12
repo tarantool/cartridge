@@ -112,7 +112,7 @@ local function save_state()
 
     local httpd = service_registry.get('httpd')
     if httpd ~= nil then
-        vars.routes_count = #httpd.routes
+        vars.routes_count = table.maxn(httpd.routes)
     else
         vars.routes_count = 0
     end
@@ -175,13 +175,19 @@ local function load_state()
 
     local httpd = service_registry.get('httpd')
     if httpd ~= nil then
-        for n = #httpd.routes, vars.routes_count + 1, -1 do
+        for n = table.maxn(httpd.routes), vars.routes_count + 1, -1 do
             local r = httpd.routes[n]
+            if r == nil then
+                goto continue
+            end
+
             log.info('Removing HTTP route %q (%s)', r.path, r.method)
             if httpd.iroutes[r.name] ~= nil then
                 httpd.iroutes[r.name] = nil
             end
             httpd.routes[n] = nil
+
+            ::continue::
         end
     end
 end
