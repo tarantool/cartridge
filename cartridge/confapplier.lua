@@ -17,6 +17,7 @@ local vars = require('cartridge.vars').new('cartridge.confapplier')
 local pool = require('cartridge.pool')
 local utils = require('cartridge.utils')
 local roles = require('cartridge.roles')
+local sentinel = require('cartridge.sentinel')
 local topology = require('cartridge.topology')
 local failover = require('cartridge.failover')
 local hotreload = require('cartridge.hotreload')
@@ -532,6 +533,8 @@ local function boot_instance(clusterwide_config)
         set_state('BootError', err)
         return nil, err
     end
+
+    sentinel.start()
 
     if box.info.status == 'orphan' then
         set_state('ConnectingFullmesh')
