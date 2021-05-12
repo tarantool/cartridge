@@ -115,6 +115,7 @@ jobs:
 
       - run: tarantoolctl rocks make
       - run: tarantoolctl rocks list
+      - run: cat .rocks/share/tarantool/errors.lua
       - run: .rocks/bin/luatest -v
 
       # Cleanup cached paths
