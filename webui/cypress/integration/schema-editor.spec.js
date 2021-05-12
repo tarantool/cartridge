@@ -23,7 +23,8 @@ describe('Schema section', () => {
       end
       _G.cluster:start()
       return true
-    `}).should('deep.eq', [true]);
+    `
+    }).should('deep.eq', [true]);
   });
 
   after(() => {
@@ -50,7 +51,7 @@ describe('Schema section', () => {
     cy.get('.monaco-editor').contains('spaces: incorrect-1');
 
     cy.get('button[type="button"]').contains('Validate').click();
-    cy.get('span:contains(Schema validation) + span:contains(Schema is valid)').click();
+    cy.get('span:contains(Schema validation) + span:contains(Schema is valid) + svg').click();
     cy.get('#root').contains('spaces: must be a table, got string');
 
     cy.get('button[type="button"]').contains('Reload').click();
@@ -62,10 +63,10 @@ describe('Schema section', () => {
 
     cy.get('button[type="button"]').contains('Validate').click();
     cy.get('#root').contains('Bad argument #1 to ddl.check_schema').should('not.exist');
-    cy.get('span:contains(Schema validation) + span:contains(Schema is valid)').click();
+    cy.get('span:contains(Schema validation) + span:contains(Schema is valid) + svg').click();
 
     cy.get('button[type="button"]').contains('Apply').click();
-    cy.get('span:contains(Success) + span:contains(Schema successfully applied)').click();
+    cy.get('span:contains(Success) + span:contains(Schema successfully applied) + svg').click();
 
     ////////////////////////////////////////////////////////////////////
     cy.get('.monaco-editor').click();
@@ -88,7 +89,7 @@ describe('Schema section', () => {
 
     cy.get('button[type="button"]').contains('Apply').click();
     cy.get('#root').contains('Bad argument #1 to ddl.check_schema').should('not.exist');
-    cy.get('span:contains(Success) + span:contains(Schema successfully applied)').click();
+    cy.get('span:contains(Success) + span:contains(Schema successfully applied) + svg').click();
 
     cy.get('button[type="button"]').contains('Reload').click();
     cy.get('.monaco-editor').contains('---');
@@ -107,7 +108,7 @@ describe('Schema section', () => {
     cy.get('.monaco-editor').click();
     cy.focused().type(selectAllKeys + commentKeys);
     cy.get('button[type="button"]').contains('Apply').click();
-    cy.get('span:contains(Success) + span:contains(Schema successfully applied)').click();
+    cy.get('span:contains(Success) + span:contains(Schema successfully applied) + svg').click();
     cy.task('tarantool', { code: `_G.cluster.main_server.net_box:eval('assert(box.space.customer)')` });
 
     ////////////////////////////////////////////////////////////////////

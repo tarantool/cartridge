@@ -23,7 +23,8 @@ describe('Code page', () => {
       end
       _G.cluster:start()
       return true
-    `}).should('deep.eq', [true]);
+    `
+    }).should('deep.eq', [true]);
   });
 
   after(() => {
@@ -58,7 +59,7 @@ describe('Code page', () => {
     ////////////////////////////////////////////////////////////////////
     cy.get('#root').contains('Please select a file');
     cy.get('button[type="button"]').contains('Apply').click();
-    cy.get('span:contains(Success) + span:contains(Files successfuly applied)').click();
+    cy.get('span:contains(Success) + span:contains(Files successfuly applied) + svg').click();
 
     ////////////////////////////////////////////////////////////////////
     cy.log('File in tree');
@@ -93,7 +94,7 @@ describe('Code page', () => {
     cy.get('.meta-test__Code__FileTree').contains('file-in-tree2.yml');
 
     apply();
-    cy.get('span:contains(Success) + span:contains(Files successfuly applied)').click();
+    cy.get('span:contains(Success) + span:contains(Files successfuly applied) + svg').click();
 
     cy.get('.meta-test__Code__FileTree').contains('file-in-tree2.yml');
     reload();
@@ -118,7 +119,7 @@ describe('Code page', () => {
     cy.get('.monaco-editor textarea').type('some test code2');
 
     apply();
-    cy.get('span:contains(Success) + span:contains(Files successfuly applied)').click();
+    cy.get('span:contains(Success) + span:contains(Files successfuly applied) + svg').click();
 
     reload();
     cy.get('.monaco-editor textarea').should('have.value', 'some test code2');
@@ -147,7 +148,7 @@ describe('Code page', () => {
     cy.get('.meta-test__editFolderInTreeBtn').eq(0).click({ force: true });
     cy.get('.meta-test__enterName').focused().clear().type('edited-file-name2{enter}');
     apply();
-    cy.get('span:contains(Success) + span:contains(Files successfuly applied)').click();
+    cy.get('span:contains(Success) + span:contains(Files successfuly applied) + svg').click();
 
     reload();
     cy.get('.meta-test__Code__FileTree').contains('edited-file-name2').click();
@@ -166,7 +167,7 @@ describe('Code page', () => {
     cy.get('.monaco-editor textarea').type('edit test code2');
 
     apply();
-    cy.get('span:contains(Success) + span:contains(Files successfuly applied)').click();
+    cy.get('span:contains(Success) + span:contains(Files successfuly applied) + svg').click();
 
     reload();
     cy.get('.monaco-editor textarea').should('have.value', 'edit test code2');
@@ -185,7 +186,7 @@ describe('Code page', () => {
     cy.get('.monaco-editor textarea').type(selectAllKeys + '{backspace}');
 
     apply();
-    cy.get('span:contains(Success) + span:contains(Files successfuly applied)').click();
+    cy.get('span:contains(Success) + span:contains(Files successfuly applied) + svg').click();
 
     reload();
     cy.get('.monaco-editor textarea').should('have.value', '');
@@ -202,7 +203,7 @@ describe('Code page', () => {
     cy.get('.meta-test__deleteModal button[type="button"]').contains('Ok').click();
 
     apply();
-    cy.get('span:contains(Success) + span:contains(Files successfuly applied)').click();
+    cy.get('span:contains(Success) + span:contains(Files successfuly applied) + svg').click();
 
     reload();
     cy.get('.meta-test__Code__FileTree').contains('edited-file-name2').should('not.exist');
@@ -237,7 +238,7 @@ describe('Code page', () => {
 
     //save changes and full reload code page
     apply();
-    cy.get('span:contains(Success) + span:contains(Files successfuly applied)').click();
+    cy.get('span:contains(Success) + span:contains(Files successfuly applied) + svg').click();
 
     cy.reload();
     cy.contains('Not loaded').should('not.exist');
@@ -252,7 +253,7 @@ describe('Code page', () => {
     cy.get('.meta-test__deleteModal button[type="button"]').contains('Ok').click();
 
     apply();
-    cy.get('span:contains(Success) + span:contains(Files successfuly applied)').click();
+    cy.get('span:contains(Success) + span:contains(Files successfuly applied) + svg').click();
 
     cy.get('.meta-test__Code__FileTree').contains('edited-folder-name').should('not.exist');
   });
