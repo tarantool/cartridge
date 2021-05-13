@@ -1,0 +1,65 @@
+name: Deploy-branch
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'rst/**.rst'
+jobs:
+  deploy-branch:
+    runs-on: ubuntu-latest
+    env:
+      AWS_ACCESS_KEY_ID: ${{secrets.AWS_ACCESS_KEY_ID}}
+      AWS_SECRET_ACCESS_KEY: ${{secrets.AWS_SECRET_ACCESS_KEY}}
+      AWS_DEFAULT_REGION: ${{secrets.AWS_DEFAULT_REGION}}
+      S3_ENDPOINT_URL: ${{secrets.S3_ENDPOINT_URL}}
+      S3_UPLOAD_PATH: ${{secrets.S3_UPLOAD_PATH}}
+      TARANTOOL_UPDATE_KEY: ${{secrets.TARANTOOL_UPDATE_KEY}}
+      TARANTOOL_UPDATE_URL: ${{secrets.TARANTOOL_DEV_UPDATE_URL}}
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.head_ref }}
+
+      - name: Set branch name from source branch
+        run: echo "BRANCH_NAME=${GITHUB_HEAD_REF##*/}" >> $GITHUB_ENV
+
+      - name: Start dev server deployment
+        uses: bobheadxi/deployments@v0.5.2
+        id: deployment
+        with:
+          step: start
+          token: ${{secrets.GITHUB_TOKEN}}
+          env: ${{env.BRANCH_NAME}}
+          ref: ${{github.head_ref}}
+
+      - name: Setup tarantool
+        uses: tarantool/setup-tarantool@v1.1.0
+        with:
+          tarantool-version: '2.6'
+
+      - name: Setup Python environment
+        uses: actions/setup-python@v2
+
+      - name: Setup Python requirements
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r rst/requirements.txt
+
+      - name: Create Makefile
+        run: cmake .
+
+      - run: make json-doc-en json-doc-ru
+      - run: curl ${{secrets.WAKEUP_URL}} --connect-timeout 300 --retry 3 --retry-delay 30 >> /dev/null
+      - run: bash upload_doc.sh
+
+      - name: update deployment status
+        uses: bobheadxi/deployments@v0.5.2
+        with:
+          step: finish
+          token: ${{secrets.GITHUB_TOKEN}}
+          status: ${{job.status}}
+          deployment_id: ${{steps.deployment.outputs.deployment_id}}
+          env_url: https://tarantool-develop.herokuapp.com/en/cartridge_doc/${{env.BRANCH_NAME}}

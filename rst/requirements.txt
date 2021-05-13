@@ -1,2 +1,3 @@
 Sphinx==3.0.4
 sphinx-intl==2.0.1
+awscli==1.19.72

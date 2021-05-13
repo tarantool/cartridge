@@ -27,3 +27,4 @@ luacov.*.out*
 /package-lock.json
 *.mo
 .history
+.docoutput

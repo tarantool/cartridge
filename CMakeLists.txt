@@ -121,7 +121,7 @@ add_custom_command(
   COMMAND ${SPHINX}
       "${CMAKE_CURRENT_BINARY_DIR}/build.rst"
       "${DOC_OUTPUT}"
-      -d "${CMAKE_CURRENT_BINARY_DIR}/.doctrees"
+      -d "${CMAKE_CURRENT_BINARY_DIR}/.docoutput/doctrees"
       -b html
   DEPENDS ${DOC_FILES} ${LUA_FILES}
   COMMENT "Building API documentation"
@@ -133,7 +133,7 @@ add_custom_target(update-pot
         "${CMAKE_CURRENT_BINARY_DIR}/rst"
         "${CMAKE_CURRENT_BINARY_DIR}/rst/locale/en/"
         -c rst/
-        -d "${CMAKE_CURRENT_BINARY_DIR}/.doctrees"
+        -d "${CMAKE_CURRENT_BINARY_DIR}/.docoutput/doctrees"
         -b gettext
     COMMENT "Generate localization templates"
 )
@@ -146,6 +146,27 @@ add_custom_target(update-po
         -l "ru"
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     COMMENT "Regenerate localization files from templates"
+)
+
+add_custom_target(json-doc-en
+    COMMAND "${SPHINX}"
+        "${CMAKE_CURRENT_BINARY_DIR}/rst"
+        "${CMAKE_CURRENT_BINARY_DIR}/.docoutput/json/_build_en/json"
+        -c rst/
+        -d "${CMAKE_CURRENT_BINARY_DIR}/.docoutput/doctrees"
+        -b json
+    COMMENT "Build json documentation En"
+)
+
+add_custom_target(json-doc-ru
+    COMMAND "${SPHINX}"
+        "${CMAKE_CURRENT_BINARY_DIR}/rst"
+        "${CMAKE_CURRENT_BINARY_DIR}/.docoutput/json/_build_ru/json"
+        -c rst/
+        -Dlanguage=ru
+        -d "${CMAKE_CURRENT_BINARY_DIR}/.docoutput/doctrees"
+        -b json
+    COMMENT "Build json documentation Ru"
 )
 
 if(Ldoc_FOUND AND Sphinx_FOUND)
