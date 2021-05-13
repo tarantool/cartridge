@@ -19,7 +19,8 @@ describe('Uninitialized', () => {
         _G.server:graphql({query = '{ servers { uri } }'})
       end)
       return true
-    `}).should('deep.eq', [true]);
+    `
+    }).should('deep.eq', [true]);
   });
 
   after(() => {
@@ -36,7 +37,7 @@ describe('Uninitialized', () => {
     cy.get('button[type="button"]:contains("Reload")').click();
     cy.get('body').contains('Are you sure you want to reload all the files?');
     cy.get('button[type="button"]:contains("Ok")').click();
-    cy.get('span:contains("Current instance isn\'t bootstrapped yet")').click();
+    cy.get('span:contains("Current instance isn\'t bootstrapped yet") + button + svg').click();
 
     // create file
     cy.get('.meta-test__addFileBtn').click();
@@ -45,7 +46,7 @@ describe('Uninitialized', () => {
 
     // file upload should fail too
     cy.get('button[type="button"]:contains("Apply")').click();
-    cy.get('span:contains("Current instance isn\'t bootstrapped yet")').click();
+    cy.get('span:contains("Current instance isn\'t bootstrapped yet") + button + svg').click();
 
     ////////////////////////////////////////////////////////////////////
     cy.log('Schema without bootstrap');

@@ -26,7 +26,8 @@ describe('Vshardless', () => {
       end)
 
       return true
-    `}).should('deep.eq', [true]);
+    `
+    }).should('deep.eq', [true]);
   });
 
   after(() => {
@@ -69,7 +70,7 @@ describe('Vshardless', () => {
     cy.get('button[type="button"]').contains('Deselect all').click();
     cy.get('.meta-test__EditReplicasetSaveBtn').should('be.enabled');
     cy.get('.meta-test__EditReplicasetSaveBtn').click();
-    cy.get('span:contains(Successful) + span:contains(Edit is OK. Please wait for list refresh...)').click();
+    cy.get('span:contains(Successful) + span:contains(Edit is OK. Please wait for list refresh...) + svg').click();
     cy.get('li').should('not.contain', 'failover-coordinator | myrole');
   });
 });

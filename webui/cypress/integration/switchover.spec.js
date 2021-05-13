@@ -54,7 +54,8 @@ describe('Leader promotion tests', () => {
         {{failover_timeout = 0}}
       )
       return true
-    `}).should('deep.eq', [true]);
+    `
+    }).should('deep.eq', [true]);
   });
 
   after(() => {
@@ -96,7 +97,7 @@ describe('Leader promotion tests', () => {
     cy.get('.meta-test__FailoverButton').click();
     cy.get('.meta-test__eventualRadioBtn').click();
     cy.get('.meta-test__SubmitButton').click();
-    cy.get('span:contains(Failover mode) + span:contains(eventual)').click();
+    cy.get('span:contains(Failover mode) + span:contains(eventual) + svg').click();
     cy.get('.meta-test__FailoverButton').contains('Failover: eventual');
 
     dropdownMenu('13301').contains('Promote a leader').should('not.exist');
@@ -113,7 +114,7 @@ describe('Leader promotion tests', () => {
     cy.get('.meta-test__stateboardURI input').type('{selectall}{backspace}localhost:14401');
     cy.get('.meta-test__stateboardPassword input').type('{selectall}{backspace}password');
     cy.get('.meta-test__SubmitButton').click();
-    cy.get('span:contains(Failover mode) + span:contains(stateful)').click();
+    cy.get('span:contains(Failover mode) + span:contains(stateful) + svg').click();
     cy.get('.meta-test__FailoverButton').contains('Failover: stateful');
 
     leaderFlag('13302').invoke('css', 'fill', greenIcon);
@@ -122,7 +123,7 @@ describe('Leader promotion tests', () => {
     dropdownMenu('13301').contains('Promote a leader').should('not.exist');
     dropdownMenu('13302').contains('Promote a leader').should('not.exist');
     dropdownMenu('13303').contains('Promote a leader').click();
-    cy.get('span:contains(Failover) + span:contains(Leader promotion successful)').click();
+    cy.get('span:contains(Failover) + span:contains(Leader promotion successful) + svg').click();
 
     leaderFlag('13302').should('not.exist');
     leaderFlag('13303').invoke('css', 'fill', greenIcon);
@@ -135,7 +136,7 @@ describe('Leader promotion tests', () => {
     cy.get('span:contains(Edit is OK. Please wait for list refresh...)').click();
 
     dropdownMenu('13302').contains('Promote a leader').click();
-    cy.get('span:contains(Failover) + span:contains(Leader promotion successful)').click();
+    cy.get('span:contains(Failover) + span:contains(Leader promotion successful) + svg').click();
 
     ////////////////////////////////////////////////////////////////////
     cy.log('There is no active coordinator error');
@@ -155,7 +156,7 @@ describe('Leader promotion tests', () => {
     leaderFlag('13303').should('not.exist');
 
     dropdownMenu('13303').contains('Promote a leader').click();
-    cy.get('span:contains(Leader promotion error) + span:contains(PromoteLeaderError: There is no active coordinator)')
+    cy.get('span:contains(Leader promotion error) + span:contains(PromoteLeaderError: There is no active coordinator) + button + svg')
       .click();
 
     cy.get('.meta-test__ClusterIssuesButton').should('be.enabled');
@@ -163,7 +164,7 @@ describe('Leader promotion tests', () => {
     cy.get('.meta-test__ClusterIssuesButton').click();
     cy.get('.meta-test__ClusterIssuesModal').contains('Issues: 1');
     cy.get('.meta-test__ClusterIssuesModal')
-      .contains("warning: There is no active failover coordinator");
+      .contains('warning: There is no active failover coordinator');
     cy.get('.meta-test__ClusterIssuesModal button[type="button"]').click();
     cy.get('.meta-test__ClusterIssuesModal').should('not.exist');
 
@@ -187,15 +188,17 @@ describe('Leader promotion tests', () => {
     cy.task('tarantool', {
       code: `
       _G.cluster:server('test-storage-1').env.TARANTOOL_CONSOLE_SOCK
-    `}).then((resp) => {
-        const sock = resp[0];
-        expect(sock).to.be.a('string');
-        cy.task('tarantool', {
-          host: 'unix/', port: sock, code: `
+    `
+    }).then(resp => {
+      const sock = resp[0];
+      expect(sock).to.be.a('string');
+      cy.task('tarantool', {
+        host: 'unix/', port: sock, code: `
         local failover = require('cartridge.failover')
         return failover.force_inconsistency({[box.info.cluster.uuid] = 'nobody2'})
-      `}).should('deep.eq', [true]);
-      });
+      `
+      }).should('deep.eq', [true]);
+    });
 
     leaderFlag('13302').invoke('css', 'fill', greenIcon);
     leaderFlag('13303').should('not.exist');
@@ -207,7 +210,7 @@ describe('Leader promotion tests', () => {
     cy.get('span:contains(Edit is OK. Please wait for list refresh...)').click();
 
     dropdownMenu('13303').contains('Promote a leader').click();
-    cy.get('span:contains(Failover) + span:contains(Leader promotion successful)').click();
+    cy.get('span:contains(Failover) + span:contains(Leader promotion successful) + svg').click();
 
     leaderFlag('13302').should('not.exist');
     leaderFlag('13303').invoke('css', 'fill', greenIcon);
@@ -220,7 +223,7 @@ describe('Leader promotion tests', () => {
 
     dropdownMenu('13302').contains('Promote a leader').click();
     cy.get('span:contains(Leader promotion error)' +
-      ' + span:contains(WaitRwError: "localhost:13302": timed out)').click();
+      ' + span:contains(WaitRwError: "localhost:13302": timed out) + button + svg').click();
 
     leaderFlag('13302').invoke('css', 'fill', orangeIcon);
     leaderFlag('13303').should('not.exist');
@@ -231,8 +234,8 @@ describe('Leader promotion tests', () => {
     cy.get('.meta-test__ClusterIssuesButton').click();
     cy.get('.meta-test__ClusterIssuesModal').contains('Issues: 1');
     cy.get('.meta-test__ClusterIssuesModal').contains(
-      "warning: Consistency on localhost:13302" +
-      " (test-storage-1) isn't reached yet"
+      'warning: Consistency on localhost:13302' +
+      ' (test-storage-1) isn\'t reached yet'
     );
     cy.get('.meta-test__ClusterIssuesModal button[type="button"]').click();
     cy.get('.meta-test__ClusterIssuesModal').should('not.exist');
@@ -241,7 +244,7 @@ describe('Leader promotion tests', () => {
     leaderFlag('13303').should('not.exist');
 
     dropdownMenu('13302').contains('Force promote a leader').click();
-    cy.get('span:contains(Failover) + span:contains(Leader promotion successful)').click();
+    cy.get('span:contains(Failover) + span:contains(Leader promotion successful) + svg').click();
 
     leaderFlag('13302').invoke('css', 'fill', greenIcon);
     leaderFlag('13303').should('not.exist');

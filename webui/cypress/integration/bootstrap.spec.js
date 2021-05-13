@@ -30,16 +30,18 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
       end)
 
       return _G.cluster:server('dummy-1').env.TARANTOOL_CONSOLE_SOCK
-    `}).then((resp) => {
-        const sock = resp[0];
-        expect(sock).to.be.a('string');
-        cy.task('tarantool', {
-          host: 'unix/', port: sock, code: `
+    `
+    }).then(resp => {
+      const sock = resp[0];
+      expect(sock).to.be.a('string');
+      cy.task('tarantool', {
+        host: 'unix/', port: sock, code: `
         package.loaded.mymodule.implies_router = true
         package.loaded.mymodule.implies_storage = true
         return true
-      `}).should('deep.eq', [true]);
-      });
+      `
+      }).should('deep.eq', [true]);
+    });
   });
 
   after(() => {
@@ -132,7 +134,7 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     cy.get('.meta-test__BootstrapPanel__vshard-router_enabled').should('exist');
     cy.get('.meta-test__BootstrapPanel__vshard-storage_enabled').should('exist');
 
-    cy.get('span:contains(GraphQL error) + span:contains(No remotes with role "vshard-router" available)').click();
+    cy.get('span:contains(GraphQL error) + span:contains(No remotes with role "vshard-router" available) + button + svg').click();
 
     ////////////////////////////////////////////////////////////////////
     cy.log('Configure vshard-router');
@@ -272,7 +274,7 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
 
     cy.get('.meta-test__EditReplicasetSaveBtn').click();
     cy.get('.meta-test__EditReplicasetModal').should('not.exist');
-    cy.get('span:contains(Successful) + span:contains(Edit is OK. Please wait for list refresh...)').click();
+    cy.get('span:contains(Successful) + span:contains(Edit is OK. Please wait for list refresh...) + svg').click();
 
     cy.get('#root').contains('edited-storage').closest('li')
       .find('.meta-test__ReplicasetList_allRw_enabled').should('not.exist');
@@ -284,7 +286,7 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     cy.get('.meta-test__ConfigureServerModal').contains('Join Replica Set').click();
     cy.get('form input[name="replicasetUuid"]').first().check({ force: true });
     cy.get('.meta-test__JoinReplicaSetBtn').click();
-    cy.get('span:contains(Successful) + span:contains(Join is OK. Please wait for list refresh...)').click();
+    cy.get('span:contains(Successful) + span:contains(Join is OK. Please wait for list refresh...) + svg').click();
 
     ////////////////////////////////////////////////////////////////////
     cy.log('Expel server');
