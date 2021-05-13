@@ -36,10 +36,10 @@ Added
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 - Update vshard to 0.1.17.
-  (`Changelog <https://github.com/tarantool/vshard/releases/tag/0.1.17>`_).
+  (`Changelog <https://github.com/tarantool/vshard/releases/tag/0.1.17>`__).
 
 - Update graphql to 0.1.1.
-  (`Changelog <https://github.com/tarantool/graphql/releases/tag/0.1.1>`_).
+  (`Changelog <https://github.com/tarantool/graphql/releases/tag/0.1.1>`__).
 
 - New test helper: ``cartridge.test-helpers.stateboard``.
 
@@ -431,7 +431,7 @@ Fixed
 
 - Properly handle nested input object in GraphQL:
 
-  .. code-block:: graphql
+  .. code-block:: text
 
       mutation($uuid: String!) {
         cluster { edit_topology(servers: [{uuid: $uuid ...}]) {} }

@@ -1,7 +1,7 @@
 import sys
 import os
 
-sys.path.insert(0, os.path.abspath('..'))
+sys.path.insert(0, os.path.abspath('.'))
 
 master_doc = 'index'
 
@@ -19,7 +19,12 @@ exclude_patterns = [
     'images',
     'requirements.txt',
     'locale',
+    'cartridge_api/modules/cartridge.test-helpers.rst',
     'topics/*'
+]
+
+extensions = [
+    'TarantoolSessionLexer',
 ]
 
 language = 'en'
