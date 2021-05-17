@@ -374,6 +374,31 @@ function g.test_auth_disabled()
         }), EMAIL1
     )
 
+    -- Check that editing self email (to the same) won't raise error
+    t.assert_equals(
+        edit_user({
+            username = USERNAME1,
+            email = EMAIL1
+        }), EMAIL1
+    )
+
+    -- Check that editing email (on existing) won't raise error
+    EMAIL1 = 'prefix' .. EMAIL1
+    t.assert_equals(
+        edit_user({
+            username = USERNAME1,
+            email = EMAIL1
+        }), EMAIL1
+    )
+
+    t.assert_error_msg_contains(
+        string.format("E-mail already in use: '%s'", EMAIL1),
+        edit_user, {
+            username = USERNAME2,
+            email = EMAIL1
+        }
+    )
+
     t.assert_error_msg_contains(
         "User not found: 'Invalid Username'",
         edit_user, {username = 'Invalid Username'}
