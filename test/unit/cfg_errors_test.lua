@@ -460,3 +460,55 @@ g.test_positive = function()
         })
     end)
 end
+
+g.test_webui_prefix = function()
+    helpers.run_remotely(g.server, mock)
+    helpers.run_remotely(g.server, function()
+        local t = require('luatest')
+        local fun = require('fun')
+        local membership = assert(package.loaded.membership)
+        membership.broadcast = function() error('Forbidden', 0) end
+
+        local opts = {
+            workdir = os.getenv('TARANTOOL_WORKDIR'),
+            advertise_uri = 'unused:0',
+            http_host = '127.0.0.1',
+            http_enabled = true,
+            webui_enabled = true,
+            webui_prefix = '/prefix',
+            swim_broadcast = false,
+            roles = {
+                'cartridge.roles.vshard-storage',
+                'cartridge.roles.vshard-router',
+            },
+        }
+
+        local ok, err = require('cartridge').cfg(opts)
+        t.assert(ok, err)
+
+        local service = require('cartridge.service-registry')
+        local httpd = service.get('httpd')
+        t.assert_equals(
+            setmetatable(httpd.tcp_server:name(), nil),
+            {
+                protocol = "tcp",
+                family = "AF_INET",
+                type = "SOCK_STREAM",
+                host = "127.0.0.1",
+                port = 8081,
+            }
+        )
+        t.assert_items_include(
+            fun.map(function(r) return r.path end, httpd.routes):totable(),
+            {"/prefix/login", "/prefix/logout", "/prefix/admin/api", "/prefix/admin/config"}
+        )
+
+        local ok, err = require('cartridge').cfg(opts)
+        t.assert_equals(ok, nil)
+        t.assert_covers(err, {
+            class_name = 'CartridgeCfgError',
+            err = 'Cluster is already initialized',
+        })
+    end)
+end
+

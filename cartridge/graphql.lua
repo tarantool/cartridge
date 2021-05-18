@@ -344,11 +344,12 @@ local function execute_graphql(req)
     return resp
 end
 
-local function init(httpd)
+local function init(httpd, opts)
+    local prefix = opts.prefix or ''
     httpd:route(
         {
             method = 'POST',
-            path = '/admin/api',
+            path = ('%s/admin/api'):format(prefix),
             public = true,
         },
         execute_graphql

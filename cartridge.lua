@@ -196,6 +196,20 @@ end
 --  env `TARANTOOL_HTTP_HOST`,
 --  args `--http-host`)
 --
+-- @tparam ?string opts.webui_prefix
+--  prefix to open administrative UI and API on
+--  (**Added** in v2.6.0-
+--  default: "", overridden by
+--  env `TARANTOOL_WEBUI_PREFIX`,
+--  args `--webui-prefix`)
+--
+-- @tparam ?boolean opts.webui_enforce_root_redirect
+--  respond on GET / with 302 Found redirecting to prefix .. "/admin".
+--  (**Added** in v2.6.0-,
+--  default: true, overridden by
+--  env `TARANTOOL_WEBUI_ENFORCE_ROOT_REDIRECT`,
+--  args `--webui-enforce-root-redirect`)
+--
 -- @tparam ?string opts.alias
 -- human-readable instance name that will be available in administrative UI
 --  (default: argparse instance name, overridden by
@@ -260,6 +274,8 @@ local function cfg(opts, box_opts)
         http_host = '?string',
         http_enabled = '?boolean',
         webui_enabled = '?boolean',
+        webui_prefix = '?string',
+        webui_enforce_root_redirect = '?boolean',
         alias = '?string',
         roles = 'table',
         auth_backend_name = '?string',
@@ -586,6 +602,17 @@ local function cfg(opts, box_opts)
         return nil, err
     end
 
+    local webui_opts = {
+        prefix = '',
+        enforce_root_redirect = opts.webui_enforce_root_redirect,
+    }
+    if opts.webui_prefix then
+        webui_opts.prefix = '/' .. opts.webui_prefix:gsub('/', '')
+    end
+    if opts.webui_enforce_root_redirect == nil then
+        webui_opts.enforce_root_redirect = true
+    end
+
     if opts.http_port == nil then
         if port_offset ~= nil then
             opts.http_port = 8080 + port_offset
@@ -615,15 +642,15 @@ local function cfg(opts, box_opts)
             return nil, err
         end
 
-        local ok, err = CartridgeCfgError:pcall(auth.init, httpd)
+        local ok, err = CartridgeCfgError:pcall(auth.init, httpd, webui_opts)
         if not ok then
             return nil, err
         end
 
-        graphql.init(httpd)
+        graphql.init(httpd, webui_opts)
 
         if opts.webui_enabled then
-            local ok, err = HttpInitError:pcall(webui.init, httpd)
+            local ok, err = HttpInitError:pcall(webui.init, httpd, webui_opts)
             if not ok then
                 return nil, err
             end

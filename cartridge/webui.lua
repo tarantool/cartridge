@@ -26,8 +26,8 @@ local function get_blacklist()
     return vars.blacklist
 end
 
-local function init(httpd)
-    front.init(httpd)
+local function init(httpd, opts)
+    front.init(httpd, opts)
     front.add('cluster', front_bundle)
 
     graphql.add_mutation_prefix('cluster', 'Cluster management')
@@ -37,7 +37,7 @@ local function init(httpd)
     api_auth.init(graphql)
 
     -- Config upload/download
-    api_config.init(graphql, httpd)
+    api_config.init(graphql, httpd, opts)
 
     api_ddl.init(graphql)
 

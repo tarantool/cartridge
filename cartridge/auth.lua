@@ -747,8 +747,9 @@ end
 -- Set up `login` and `logout` HTTP endpoints.
 -- @function init
 -- @local
-local function init(httpd)
-    checks('table')
+local function init(httpd, opts)
+    opts = opts or {}
+    checks('table', 'table')
 
     local function wipe_fiber_storage()
         local fiber_storage = fiber.self().storage
@@ -766,12 +767,13 @@ local function init(httpd)
         end
     end
 
+    local prefix = opts.prefix or ''
     httpd:route({
-        path = '/login',
+        path = ('%s/login'):format(prefix),
         method = 'POST'
     }, login)
     httpd:route({
-        path = '/logout',
+        path = ('%s/logout'):format(prefix),
         method = 'POST'
     }, logout)
 
