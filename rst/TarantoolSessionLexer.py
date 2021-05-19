@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
-
+import sphinx
 from pygments.lexer import Lexer, RegexLexer, include, bygroups, using, \
     default, words, combined, do_insertions
 from pygments.util import get_bool_opt, shebang_matches
 from pygments.token import Text, Comment, Operator, Keyword, Name, String, \
     Number, Punctuation, Generic, Other, Error
 from pygments import unistring as uni
+from sphinx.application import Sphinx
 
 from LuaLexer import LuaLexer
 from pygments.lexers import YamlLexer, BashSessionLexer
@@ -170,5 +171,8 @@ class TarantoolSessionLexer(Lexer):
             for item in shslexer.get_tokens_unprocessed(curshs):
                 yield item
 
-def setup(app):
-    app.add_lexer("tarantoolsession", TarantoolSessionLexer)
+def setup(app: Sphinx):
+    if sphinx.version_info < (3, 0, 0):
+        app.add_lexer("tarantoolsession", TarantoolSessionLexer())
+    else:
+        app.add_lexer("tarantoolsession", TarantoolSessionLexer)
