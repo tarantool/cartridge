@@ -26,6 +26,7 @@ Fixed
 - Leaders replaced during stateful failover can be expelled now.
 - Make failover logging more verbose.
 - Fix hotreload for roles who leave gaps in httpd routes.
+- Check user e-mail uniquness when editing.
 
 -------------------------------------------------------------------------------
 [2.6.0] - 2021-04-26
