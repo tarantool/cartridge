@@ -129,16 +129,7 @@ local function connect(uri, opts)
     return conn
 end
 
-local function _pack_values(maps, uri, ...)
-    -- Spread call results across tables
-    for i = 1, select('#', ...) do
-        local v = select(i, ...)
-        maps[i] = maps[i] or {}
-        maps[i][uri] = v
-    end
-end
-
-local function _gather_netbox_call(fiber_storage, maps, uri, fn_name, args, opts)
+local function _gather_netbox_call(fiber_storage, retmap, errmap, uri, fn_name, args, opts)
     local self_storage = fiber.self().storage
     for k, v in pairs(fiber_storage) do
         self_storage[k] = v
@@ -148,13 +139,11 @@ local function _gather_netbox_call(fiber_storage, maps, uri, fn_name, args, opts
     local conn, err = connect(uri, {wait_connected = false})
 
     if conn == nil then
-        return _pack_values(maps, uri,
-            nil, err
-        )
+        errmap[uri] = err
     else
-        return _pack_values(maps, uri,
-            errors.netbox_call(conn, fn_name, args, opts)
-        )
+        local ret, err = errors.netbox_call(conn, fn_name, args, opts)
+        retmap[uri] = ret
+        errmap[uri] = err
     end
 end
 
@@ -203,12 +192,12 @@ local function map_call(fn_name, args, opts)
         uri_map[uri] = true
     end
 
-    local maps = {}
+    local retmap, errmap = {}, {}
     local fibers = {}
     for _, uri in pairs(opts.uri_list) do
         local fiber = fiber.new(
             _gather_netbox_call,
-            fiber.self().storage, maps, uri, fn_name, args,
+            fiber.self().storage, retmap, errmap, uri, fn_name, args,
             {timeout = opts.timeout}
         )
         fiber:name('netbox_map_call')
@@ -219,14 +208,11 @@ local function map_call(fn_name, args, opts)
     for _, uri in pairs(opts.uri_list) do
         local ok, err = fibers[uri]:join()
         if not ok then
-            _pack_values(maps, uri,
-                nil, NetboxMapCallError:new(err)
-            )
+            errmap[uri] = NetboxMapCallError:new(err)
         end
     end
 
-    local retmap, errmap = unpack(maps)
-    if errmap == nil then
+    if next(errmap) == nil then
         return retmap
     end
 
