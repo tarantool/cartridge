@@ -6,6 +6,11 @@ local uuid = require('uuid')
 local digest = require('digest')
 local utils = require('cartridge.utils')
 
+local AddUserError = errors.new_class('AddUserError')
+local GetUserError = errors.new_class('GetUserError')
+local EditUserError = errors.new_class('EditUserError')
+local RemoveUserError = errors.new_class('RemoveUserError')
+
 local SALT_LENGTH = 16
 
 local function generate_salt(length)
@@ -83,7 +88,7 @@ local function get_user(username)
 
     local user = find_user_by_username(username)
     if user == nil then
-        return nil, errors.new('GetUserError', "User not found: '%s'", username)
+        return nil, GetUserError:new("User not found: '%s'", username)
     end
 
     return user
@@ -93,9 +98,9 @@ local function add_user(username, password, fullname, email)
     checks('string', 'string', '?string', '?string')
 
     if find_user_by_username(username) then
-        return nil, errors.new('AddUserError', "User already exists: '%s'", username)
+        return nil, AddUserError:new("User already exists: '%s'", username)
     elseif find_user_by_email(email) then
-        return nil, errors.new('AddUserError', "E-mail already in use: '%s'", email)
+        return nil, AddUserError:new("E-mail already in use: '%s'", email)
     end
 
     if email ~= nil and email:strip() ~= '' then
@@ -136,7 +141,7 @@ local function edit_user(username, password, fullname, email)
 
     local user, uid = find_user_by_username(username)
     if user == nil then
-        return nil, errors.new('EditUserError', "User not found: '%s'", username)
+        return nil, EditUserError:new("User not found: '%s'", username)
     end
 
     local users_acl = cartridge.config_get_deepcopy('users_acl')
@@ -150,6 +155,11 @@ local function edit_user(username, password, fullname, email)
         local valid, err = utils.is_email_valid(email)
         if not valid then
             return nil, err
+        end
+
+        local existing_user = find_user_by_email(email)
+        if existing_user and existing_user.username ~= user.username then
+            return nil, EditUserError:new("E-mail already in use: '%s'", email)
         end
 
         user.email = email
@@ -196,9 +206,9 @@ local function remove_user(username)
 
     local user, uid = find_user_by_username(username)
     if user == nil then
-        return nil, errors.new('RemoveUserError', "User not found: '%s'", username)
+        return nil, RemoveUserError:new("User not found: '%s'", username)
     elseif uid == nil then
-        return nil, errors.new('RemoveUserError', "Can't remove user '%s'", username)
+        return nil, RemoveUserError:new("Can't remove user '%s'", username)
     end
 
     local users_acl = cartridge.config_get_deepcopy('users_acl')
