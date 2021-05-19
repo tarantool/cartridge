@@ -26,15 +26,6 @@ jobs:
       - name: Set branch name from source branch
         run: echo "BRANCH_NAME=${GITHUB_HEAD_REF##*/}" >> $GITHUB_ENV
 
-      - name: Start dev server deployment
-        uses: bobheadxi/deployments@v0.5.2
-        id: deployment
-        with:
-          step: start
-          token: ${{secrets.GITHUB_TOKEN}}
-          env: ${{env.BRANCH_NAME}}
-          ref: ${{github.head_ref}}
-
       - name: Setup tarantool
         uses: tarantool/setup-tarantool@v1.1.0
         with:
@@ -55,11 +46,5 @@ jobs:
       - run: curl ${{secrets.WAKEUP_URL}} --connect-timeout 300 --retry 3 --retry-delay 30 >> /dev/null
       - run: bash upload_doc.sh
 
-      - name: update deployment status
-        uses: bobheadxi/deployments@v0.5.2
-        with:
-          step: finish
-          token: ${{secrets.GITHUB_TOKEN}}
-          status: ${{job.status}}
-          deployment_id: ${{steps.deployment.outputs.deployment_id}}
-          env_url: https://tarantool-develop.herokuapp.com/en/cartridge_doc/${{env.BRANCH_NAME}}
+      - run: |
+          echo "::warning ::https://tarantool-develop.herokuapp.com/en/cartridge_doc/${BRANCH_NAME}"
