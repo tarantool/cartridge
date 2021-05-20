@@ -1,6 +1,7 @@
 import React, { Suspense } from 'react';
 import { Provider } from 'react-redux';
 import { Router, Switch, Route } from 'react-router-dom';
+import './publicPath';
 import App from 'src/app';
 import { isNetworkError } from 'src/misc/isNetworkError';
 import { AUTH_ACCESS_DENIED } from 'src/store/actionTypes';

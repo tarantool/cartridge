@@ -19,7 +19,7 @@ export async function logIn(params) {
 
   try {
     await rest.post(
-      '/login',
+      process.env.REACT_APP_LOGIN_API_ENDPOINT,
       `username=${username}&password=${password}`,
       { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
     );
@@ -50,7 +50,7 @@ export async function logIn(params) {
 }
 
 export async function logOut() {
-  await rest.post('/logout');
+  await rest.post(process.env.REACT_APP_LOGOUT_API_ENDPOINT);
   return {
     authorized: false,
     error: null

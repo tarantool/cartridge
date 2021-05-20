@@ -1,7 +1,8 @@
 import axios from 'axios';
 import { get as _get } from 'lodash';
 
-const axiosInstance = axios.create()
+const apiPrefix = window.__tarantool_admin_prefix || '';
+const axiosInstance = axios.create({ baseURL: apiPrefix })
 
 window.tarantool_enterprise_core.apiMethods.axiosWizard(axiosInstance)
 
