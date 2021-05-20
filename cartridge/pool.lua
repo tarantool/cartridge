@@ -14,6 +14,9 @@ local vars = require('cartridge.vars').new('cartridge.pool')
 local cluster_cookie = require('cartridge.cluster-cookie')
 
 vars:new('connections', {})
+vars:new('options', {
+    MAP_CALL_TIMEOUT = 10,
+})
 
 local FormatURIError = errors.new_class('FormatURIError')
 local NetboxConnectError = errors.new_class('NetboxConnectError')
@@ -129,13 +132,18 @@ local function connect(uri, opts)
     return conn
 end
 
-local function _gather_netbox_call(fiber_storage, retmap, errmap, uri, fn_name, args, deadline)
+local function _gather_netbox_call(
+    fiber_storage,
+    retmap, errmap,
+    conn, uri,
+    fn_name, args,
+    deadline
+)
     local self_storage = fiber.self().storage
     for k, v in pairs(fiber_storage) do
         self_storage[k] = v
     end
 
-    local conn = connect(uri, {wait_connected = false})
     local ret, err = errors.netbox_call(conn, fn_name, args, {
         timeout = deadline - fiber.clock()
     })
@@ -192,13 +200,14 @@ local function map_call(fn_name, args, opts)
     local fibers = table.new(0, #opts.uri_list)
     local futures = table.new(0, #opts.uri_list)
 
-    local timeout = opts.timeout or 10
+    local timeout = opts.timeout or vars.options.MAP_CALL_TIMEOUT
     local deadline = fiber.clock() + timeout
 
     for _, uri in ipairs(opts.uri_list) do
         local conn, err = connect(uri, {wait_connected = false})
         if conn == nil then
-            errmap[uri] = err
+            err = err or 'Unknown error'
+            errmap[uri] = NetboxConnectError:new('%q: %s', uri, err)
         elseif conn:is_connected() then
             local future, err = errors.netbox_call(
                 conn, fn_name, args, {is_async = true}
@@ -209,7 +218,11 @@ local function map_call(fn_name, args, opts)
             futures[uri] = future
         else
             local fiber = fiber.new(_gather_netbox_call,
-                fiber.self().storage, retmap, errmap, uri, fn_name, args, deadline
+                fiber.self().storage,
+                retmap, errmap,
+                conn, uri,
+                fn_name, args,
+                deadline
             )
             fiber:name('netbox_map_call')
             fiber:set_joinable(true)

@@ -19,6 +19,7 @@ Changed
 - Replicaset leaders can be expelled. New leaders will be appointed
   according to the leader order from topology.
 - Update ``errors`` dependency to 2.2.0.
+- Add default ``pool.map_call`` timeout 10 seconds.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
