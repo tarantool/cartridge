@@ -212,11 +212,14 @@ local function map_call(fn_name, args, opts)
             local future, err = errors.netbox_call(
                 conn, fn_name, args, {is_async = true}
             )
-            if future == nil then
-                errmap[uri] = err
-            end
             futures[uri] = future
+            errmap[uri] = err
         else
+            -- We can't do an async request unless conn:is_connected().
+            -- And we can't block the main fiber to wait when the
+            -- connection is established. That's why we start new
+            -- fibers. Otherwise, it'll affect other calls and we risk
+            -- catching unnecessary timeouts.
             local fiber = fiber.new(_gather_netbox_call,
                 fiber.self().storage,
                 retmap, errmap,
