@@ -18,6 +18,20 @@ Added
 
 - Roles are stopped with ``on_shutdown`` trigger.
 
+- New ``cartridge.cfg`` option ``webui_prefix`` (default: ``''``) which set
+  custom frontend-core routes for requests:
+
+  - ``GET /myprefix/admin`` - admin panel index
+  - ``GET /myprefix/admin/*any`` - other admin pages
+    (routed by frontend-core internally)
+  - ``GET /myprefix/static/*`` - frontend-core static content
+  - ``GET /`` - redirect to ``/myprefix/admin``
+    (unless ``enforce_root_redirect`` is disabled)
+
+- New ``cartridge.cfg`` option ``webui_enforce_root_redirect``
+  (default: ``true``) to respond on ``GET /`` with ``302 Found``
+  redirecting to ``prefix .. "/admin"``.
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Changed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
