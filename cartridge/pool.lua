@@ -206,8 +206,7 @@ local function map_call(fn_name, args, opts)
     for _, uri in ipairs(opts.uri_list) do
         local conn, err = connect(uri, {wait_connected = false})
         if conn == nil then
-            err = err or 'Unknown error'
-            errmap[uri] = NetboxConnectError:new('%q: %s', uri, err)
+            errmap[uri] = err
         elseif conn:is_connected() then
             local future, err = errors.netbox_call(
                 conn, fn_name, args, {is_async = true}
