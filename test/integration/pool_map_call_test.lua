@@ -18,20 +18,11 @@ g.before_all = function()
         server_command = helpers.entrypoint('srv_basic'),
         cookie = require('digest').urandom(6):hex(),
         use_vshard = false,
-        replicasets = {
-            {
-                uuid = helpers.uuid('a'),
-                roles = {},
-                servers = {
-                    {
-                        alias = 'main',
-                        http_port = 8081,
-                        net_box_port = 13301,
-                        instance_uuid = helpers.uuid('a', 'a', 1)
-                    }
-                },
-            },
-        },
+        replicasets = {{
+            alias = 'main',
+            roles = {},
+            servers = 1,
+        }},
     })
 
     g.cluster:start()
@@ -92,6 +83,21 @@ local function assert_err_equals(map, uri, expected1, expected2)
     end
 end
 
+-- check that all errors at NetboxMapCallError has errors metatable
+-- and tostring works fine (there is no error in log like: table: 0x41b7b968)
+local function assert_multiple_error_str_valid(err)
+    local lines = err.str:split('\n')
+    for _, line in ipairs(lines) do
+        if line:match('^%* table: 0[xX]%x+') then
+            local err = string.format(
+                'Unexpected error message %q at multiple error.\n' ..
+                'Seems there was lost error object metatable', line
+            )
+            error(err, 2)
+        end
+    end
+end
+
 function g.test_timeout()
     local retmap, errmap = pool.map_call('package.loaded.fiber.sleep', {1}, {
         uri_list = {'localhost:13301'},
@@ -117,6 +123,7 @@ function g.test_timeout()
         'NetboxCallError: "localhost:13311":' ..
         ' Connection is not established, state is "initial"'
     )
+    assert_multiple_error_str_valid(errmap)
 end
 
 
@@ -246,6 +253,7 @@ function g.test_negative()
         'NetboxCallError: "localhost:9": ' .. errno.strerror(errno.ECONNREFUSED),
         'NetboxCallError: "localhost:9": ' .. errno.strerror(errno.ENETUNREACH)
     )
+    assert_multiple_error_str_valid(errmap)
 end
 
 function g.test_errors_united()
@@ -279,6 +287,7 @@ function g.test_errors_united()
             '"localhost:13309": Invalid greeting',
         }
     )
+    assert_multiple_error_str_valid(err)
 end
 
 function g.test_positive()
@@ -294,4 +303,39 @@ function g.test_positive()
         ['localhost:13302'] = 16,
     })
     t.assert_equals(errmap, nil)
+end
+
+function g.test_futures()
+    -- Make sure 3301 is connected and uses a future
+    pool.connect('localhost:13301')
+
+    -- Make sure map_call doesn't spawn new fibers
+    local fiber_new_original = fiber.new
+    fiber.new = function()
+        fiber.new = fiber_new_original
+        error('Fiber creation temporarily forbidden', 2)
+    end
+
+    local retmap, errmap = pool.map_call('math.abs', {-1}, {
+        uri_list = {'localhost:13301'},
+    })
+    t.assert_equals(retmap, {['localhost:13301'] = 1})
+    t.assert_equals(errmap, nil)
+
+    fiber.new = fiber_new_original
+
+    -- Make sure that hanging connection doesn't affect other requests
+    local retmap, errmap = pool.map_call('math.abs', {-2}, {
+        timeout = 1,
+        uri_list = {
+            'localhost:13311',
+            'localhost:13301',
+        },
+    })
+
+    t.assert_equals(retmap, {['localhost:13301'] = 2})
+    assert_err_equals(errmap, 'localhost:13311',
+        'NetboxCallError: "localhost:13311":' ..
+        ' Connection is not established, state is "initial"'
+    )
 end
