@@ -47,6 +47,7 @@ local lua_api_deprecated = require('cartridge.lua-api.deprecated')
 local ConsoleListenError = errors.new_class('ConsoleListenError')
 local CartridgeCfgError = errors.new_class('CartridgeCfgError')
 local HttpInitError = errors.new_class('HttpInitError')
+local StopRoleError = errors.new_class('StopRoleError')
 
 local DEFAULT_CLUSTER_COOKIE = 'secret-cluster-cookie'
 
@@ -728,6 +729,30 @@ local function cfg(opts, box_opts)
     local ok, err = roles.cfg(opts.roles)
     if not ok then
         return nil, err
+    end
+
+    -- Stop roles on shutdown
+    if box.ctl.on_shutdown ~= nil then
+        box.ctl.on_shutdown(function()
+            local all_roles = roles.get_all_roles()
+            local opts = {is_master = require('cartridge.failover').is_leader()}
+
+            for _, role_name in pairs(all_roles) do
+                if service_registry.get(role_name) ~= nil then
+                    local role = roles.get_role(role_name)
+
+                    if type(role.stop) == 'function' then
+                        local _, err = StopRoleError:pcall(role.stop, opts)
+                        if err ~= nil then
+                            log.error('%s', err)
+                        end
+                    end
+                end
+
+                service_registry.set(role_name, nil)
+            end
+
+        end)
     end
 
     local ok, err = confapplier.init({
