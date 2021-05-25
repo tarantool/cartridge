@@ -43,7 +43,7 @@ g.before_all = function()
                 }
             }, {
                 uuid = helpers.uuid('c'),
-                roles = {'myrole'},
+                roles = {},
                 servers = {
                     {
                         alias = 'expelled',
@@ -60,7 +60,7 @@ g.before_all = function()
     g.cluster:server('expelled').net_box:eval([[
         local last_will_path = ...
         last_will_path = require('fio').pathjoin(last_will_path, 'last_will.txt')
-        package.loaded['mymodule'].stop = function()
+        package.loaded['mymodule-permanent'].stop = function()
             require('cartridge.utils').file_write(last_will_path,
 
                 "In the name of God, amen! I Expelled in perfect health"..
