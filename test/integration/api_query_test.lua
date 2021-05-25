@@ -55,8 +55,27 @@ g.before_all = function()
             }
         }
     })
-
     g.cluster:start()
+
+    g.cluster:server('expelled').net_box:eval([[
+        local last_will_path = ...
+        last_will_path = require('fio').pathjoin(last_will_path, 'last_will.txt')
+        package.loaded['mymodule-permanent'].stop = function()
+            require('cartridge.utils').file_write(last_will_path,
+
+                "In the name of God, amen! I Expelled in perfect health"..
+                "and memorie, God be praysed, doe make and ordayne this"..
+                "my last will and testament in manner and forme"..
+                "followeing, that ys to saye, first, I comend my soule"..
+                "into the handes of God my Creator, hoping and"..
+                "assuredlie beleeving, through thonelie merites of Jesus"..
+                "Christe my Saviour, to be made partaker of lyfe"..
+                "everlastinge, and my bodye to the earth whereof yt ys"..
+                "made.")
+
+        end
+    ]], {g.cluster.datadir})
+
     g.cluster:server('expelled'):stop()
     g.cluster:server('router'):graphql({
         query = [[
@@ -699,4 +718,18 @@ function g.test_issues()
         ' exceed threshold %(.+ > 0%)'
     )
     t.assert_not(next(issues, 1))
+end
+
+function g.test_stop_roles_on_shutdown()
+    t.skip_if(box.ctl.on_shutdown == nil,
+        'box.ctl.on_shutdown is not supported' ..
+        ' in Tarantool ' .. _TARANTOOL
+    )
+
+    local last_will_path = fio.pathjoin(g.cluster.datadir, 'last_will.txt')
+
+    t.assert_equals(
+        fio.path.exists(last_will_path),
+        true
+    )
 end

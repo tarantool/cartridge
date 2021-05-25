@@ -24,6 +24,7 @@ local RegisterRoleError = errors.new_class('RegisterRoleError')
 local ValidateConfigError = errors.new_class('ValidateConfigError')
 local ApplyConfigError = errors.new_class('ApplyConfigError')
 local ReloadError = errors.new_class('HotReloadError')
+local StopRoleError = errors.new_class('StopRoleError')
 
 vars:new('module_names')
 vars:new('roles_by_number', {})
@@ -402,6 +403,25 @@ local function apply_config(conf, opts)
     return true
 end
 
+--- Stop all roles.
+local function stop()
+    local failover = require('cartridge.failover')
+    local opts = {is_master = failover.is_leader()}
+
+    for _, role in ipairs(vars.roles_by_number) do
+        if (service_registry.get(role.role_name) ~= nil)
+        and (type(role.M.stop) == 'function')
+        then
+            local _, err = StopRoleError:pcall(role.M.stop, opts)
+            if err ~= nil then
+                log.error('%s', err)
+            end
+        end
+
+        service_registry.set(role.role_name, nil)
+    end
+end
+
 --- Perform hot-reload of cartridge roles code.
 --
 -- This is an experimental feature, it's only allowed if the application
@@ -444,24 +464,10 @@ local function reload()
         return nil, ReloadError:new('Inappropriate state %q', state)
     end
 
-    local failover = require('cartridge.failover')
-    local opts = {is_master = failover.is_leader()}
-
     log.warn('Reloading roles ...')
     confapplier.set_state('ReloadingRoles')
 
-    for _, role in ipairs(vars.roles_by_number) do
-        if (service_registry.get(role.role_name) ~= nil)
-        and (type(role.M.stop) == 'function')
-        then
-            local _, err = ReloadError:pcall(role.M.stop, opts)
-            if err ~= nil then
-                log.error('%s', err)
-            end
-        end
-
-        service_registry.set(role.role_name, nil)
-    end
+    stop()
 
     hotreload.load_state()
 
@@ -501,4 +507,5 @@ return {
     validate_config = validate_config,
     apply_config = apply_config,
     reload = reload,
+    stop = stop,
 }

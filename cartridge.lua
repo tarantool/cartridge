@@ -730,6 +730,11 @@ local function cfg(opts, box_opts)
         return nil, err
     end
 
+    -- Stop roles on shutdown
+    if box.ctl.on_shutdown ~= nil then
+        box.ctl.on_shutdown(roles.stop)
+    end
+
     local ok, err = confapplier.init({
         workdir = opts.workdir,
         box_opts = box_opts,
