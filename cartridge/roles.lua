@@ -24,6 +24,7 @@ local RegisterRoleError = errors.new_class('RegisterRoleError')
 local ValidateConfigError = errors.new_class('ValidateConfigError')
 local ApplyConfigError = errors.new_class('ApplyConfigError')
 local ReloadError = errors.new_class('HotReloadError')
+local StopRoleError = errors.new_class('StopRoleError')
 
 vars:new('module_names')
 vars:new('roles_by_number', {})
@@ -411,7 +412,7 @@ local function stop()
         if (service_registry.get(role.role_name) ~= nil)
         and (type(role.M.stop) == 'function')
         then
-            local _, err = ReloadError:pcall(role.M.stop, opts)
+            local _, err = StopRoleError:pcall(role.M.stop, opts)
             if err ~= nil then
                 log.error('%s', err)
             end
