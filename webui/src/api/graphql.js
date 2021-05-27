@@ -2,13 +2,13 @@ import { ApolloClient } from 'apollo-client'
 import { HttpLink } from 'apollo-link-http'
 import { from } from 'apollo-link'
 import { InMemoryCache } from 'apollo-cache-inmemory'
+import { getApiEndpoint } from 'src/apiEndpoints'
+
 // import { withClientState } from 'apollo-link-state'
 // import { ApolloLink } from 'apollo-link'
 
-const apiPrefix = window.__tarantool_admin_prefix || '';
-
 const httpLink = new HttpLink({
-  uri: apiPrefix + process.env.REACT_APP_GRAPHQL_API_ENDPOINT,
+  uri: getApiEndpoint('GRAPHQL_API_ENDPOINT'),
   credentials: 'include'
 });
 
