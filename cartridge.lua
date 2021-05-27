@@ -191,21 +191,21 @@ end
 --
 -- @tparam ?string opts.http_host
 --  host to open administrative UI and API on
---  (**Added** in v2.4.0-42
+--  (**Added** in v2.4.0-42,
 --  default: "0.0.0.0", overridden by
 --  env `TARANTOOL_HTTP_HOST`,
 --  args `--http-host`)
 --
 -- @tparam ?string opts.webui_prefix
---  prefix to open administrative UI and API on
---  (**Added** in v2.6.0-
+--  modify WebUI and cartridge HTTP API routes
+--  (**Added** in v2.6.0-18,
 --  default: "", overridden by
 --  env `TARANTOOL_WEBUI_PREFIX`,
 --  args `--webui-prefix`)
 --
 -- @tparam ?boolean opts.webui_enforce_root_redirect
---  respond on GET / with 302 Found redirecting to prefix .. "/admin".
---  (**Added** in v2.6.0-,
+--  respond on `GET /` with a redirect to `<WEBUI_PREFIX>/admin`.
+--  (**Added** in v2.6.0-18,
 --  default: true, overridden by
 --  env `TARANTOOL_WEBUI_ENFORCE_ROOT_REDIRECT`,
 --  args `--webui-enforce-root-redirect`)

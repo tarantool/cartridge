@@ -18,25 +18,21 @@ Added
 
 - Roles are stopped with ``on_shutdown`` trigger.
 
-- New ``cartridge.cfg`` option ``webui_prefix`` (default: ``''``) which set
-  custom frontend-core routes for requests:
+- New ``cartridge.cfg`` options:
 
-  - ``GET /myprefix/admin`` - admin panel index
-  - ``GET /myprefix/admin/*any`` - other admin pages
-    (routed by frontend-core internally)
-  - ``GET /myprefix/static/*`` - frontend-core static content
-  - ``GET /myprefix`` - redirect to ``/myprefix/admin``
-    (unless ``enforce_root_redirect`` is disabled)
-  - ``GET /`` - redirect to ``/myprefix/admin``
-    (unless ``enforce_root_redirect`` is disabled)
-  - ``POST /myprefix/login`` -  login endpoint
-  - ``POST /myprefix/logout`` - logout endpoint
-  - ``PUT /myprefix/admin/config`` - upload config endpoint
-  - ``GET /myprefix/admin/config`` - download config endpoint
+  - ``webui_prefix`` (default: ``""``) allows to modify WebUI routes.
+  - ``webui_enforce_root_redirect`` (default: ``true``) manage redirection.
 
-- New ``cartridge.cfg`` option ``webui_enforce_root_redirect``
-  (default: ``true``) to respond on ``GET /`` with ``302 Found``
-  redirecting to ``prefix .. "/admin"``.
+  To sum up, now they look as follows:
+
+  - ``<PREFIX>/admin/``;
+  - ``<PREFIX>/admin/api``;
+  - ``<PREFIX>/admin/config``;
+  - ``<PREFIX>/admin/cluster/*``;
+  - ``<PREFIX>/static/*``;
+  - ``<PREFIX>/login``;
+  - ``<PREFIX>/logout``;
+  - ``/`` and ``<PREFIX>/`` redirect to ``/<PREFIX>/admin`` (if enabled).
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Changed

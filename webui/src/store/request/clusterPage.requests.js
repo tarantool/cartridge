@@ -19,8 +19,6 @@ import type {
   FailoverApi
 } from 'src/generated/graphql-typing'
 
-const apiPrefix = window.__tarantool_admin_prefix || '';
-
 const filterServerStat = response => {
   const serverStat
     = response.serverStat.filter(
@@ -219,7 +217,7 @@ export function editReplicaset(
 type UploadConfigParams = { data: FormData };
 
 export async function uploadConfig(params: UploadConfigParams) {
-  return rest.put(apiPrefix + process.env.REACT_APP_CONFIG_ENDPOINT, params.data, {
+  return rest.put(process.env.REACT_APP_CONFIG_ENDPOINT, params.data, {
     headers: { 'Content-Type': 'application/yaml;charset=UTF-8' }
   });
 }
