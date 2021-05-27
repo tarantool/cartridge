@@ -602,15 +602,15 @@ local function cfg(opts, box_opts)
         return nil, err
     end
 
-    local webui_opts = {
-        prefix = '',
-        enforce_root_redirect = opts.webui_enforce_root_redirect,
-    }
-    if opts.webui_prefix then
-        webui_opts.prefix = '/' .. opts.webui_prefix:gsub('/', '')
+    local webui_prefix = opts.webui_prefix or ''
+    if webui_prefix ~= '' then
+        webui_prefix = webui_prefix:gsub('/+', '/')  -- delete duplicate '/''
+        webui_prefix = '/' .. webui_prefix:match('^/*(.-)/*$') -- trim '/'
     end
+
+    local webui_enforce_root_redirect = opts.webui_enforce_root_redirect
     if opts.webui_enforce_root_redirect == nil then
-        webui_opts.enforce_root_redirect = true
+        webui_enforce_root_redirect = true
     end
 
     if opts.http_port == nil then
@@ -642,15 +642,18 @@ local function cfg(opts, box_opts)
             return nil, err
         end
 
-        local ok, err = CartridgeCfgError:pcall(auth.init, httpd, webui_opts)
+        local ok, err = CartridgeCfgError:pcall(auth.init, httpd, {prefix = webui_prefix})
         if not ok then
             return nil, err
         end
 
-        graphql.init(httpd, webui_opts)
+        graphql.init(httpd, {prefix = webui_prefix})
 
         if opts.webui_enabled then
-            local ok, err = HttpInitError:pcall(webui.init, httpd, webui_opts)
+            local ok, err = HttpInitError:pcall(webui.init, httpd, {
+                prefix = webui_prefix,
+                enforce_root_redirect = webui_enforce_root_redirect,
+            })
             if not ok then
                 return nil, err
             end
