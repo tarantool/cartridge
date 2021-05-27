@@ -25,8 +25,14 @@ Added
   - ``GET /myprefix/admin/*any`` - other admin pages
     (routed by frontend-core internally)
   - ``GET /myprefix/static/*`` - frontend-core static content
+  - ``GET /myprefix`` - redirect to ``/myprefix/admin``
+    (unless ``enforce_root_redirect`` is disabled)
   - ``GET /`` - redirect to ``/myprefix/admin``
     (unless ``enforce_root_redirect`` is disabled)
+  - ``POST /myprefix/login`` -  login endpoint
+  - ``POST /myprefix/logout`` - logout endpoint
+  - ``PUT /myprefix/admin/config`` - upload config endpoint
+  - ``GET /myprefix/admin/config`` - download config endpoint
 
 - New ``cartridge.cfg`` option ``webui_enforce_root_redirect``
   (default: ``true``) to respond on ``GET /`` with ``302 Found``
