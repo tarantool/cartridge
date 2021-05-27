@@ -741,7 +741,7 @@ end
 
 --- Set up trigger for for patch_clusterwide.
 --
--- It will be executed **before** new new config applied.
+-- It will be executed **before** new config applied.
 --
 -- If the parameters are `(nil, old_trigger)`, then the old trigger is
 -- deleted.

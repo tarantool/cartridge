@@ -80,7 +80,7 @@ end
 -- Neither `topology_cfg` nor `new_order` tables are modified.
 -- New order validity is ignored too.
 --
--- @function get_leaders_orded
+-- @function get_leaders_order
 -- @local
 -- @tparam table topology_cfg
 -- @tparam string replicaset_uuid
@@ -890,7 +890,7 @@ local function find_server_by_uri(topology_cfg, uri)
     return nil
 end
 
---- Merge servers URIs form topology_cfg with fresh membership status.
+--- Merge servers URIs from topology_cfg with fresh membership status.
 --
 -- This function sustains cartridge operability in case of
 -- advertise_uri change. The uri map is composed basing on
