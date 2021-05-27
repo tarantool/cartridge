@@ -952,5 +952,3 @@ Please see the
 `backups section <https://www.tarantool.io/en/doc/latest/book/admin/backups/>`_
 in the Tarantool manual.
 
-.. |nbsp| unicode:: 0xA0
-   :trim:
