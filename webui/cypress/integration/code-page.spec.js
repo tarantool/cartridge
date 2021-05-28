@@ -20,6 +20,7 @@ describe('Code page', () => {
 
       for _, srv in pairs(_G.cluster.servers) do
         srv.env.TARANTOOL_INSTANCE_NAME = srv.alias
+        srv.env.TARANTOOL_WEBUI_PREFIX = '/' --[[ should be ignored ]]
       end
       _G.cluster:start()
       return true

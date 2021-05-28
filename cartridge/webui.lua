@@ -1,4 +1,5 @@
 local front = require('frontend-core')
+local checks = require('checks')
 
 local vars = require('cartridge.vars').new('cartridge.webui')
 local graphql = require('cartridge.graphql')
@@ -26,8 +27,16 @@ local function get_blacklist()
     return vars.blacklist
 end
 
-local function init(httpd)
-    front.init(httpd)
+local function init(httpd, opts)
+    checks('table', {
+        prefix = 'string',
+        enforce_root_redirect = 'boolean',
+    })
+
+    front.init(httpd, {
+        prefix = opts.prefix,
+        enforce_root_redirect = opts.enforce_root_redirect,
+    })
     front.add('cluster', front_bundle)
 
     graphql.add_mutation_prefix('cluster', 'Cluster management')
@@ -37,7 +46,9 @@ local function init(httpd)
     api_auth.init(graphql)
 
     -- Config upload/download
-    api_config.init(graphql, httpd)
+    api_config.init(graphql, httpd, {
+        prefix = opts.prefix,
+    })
 
     api_ddl.init(graphql)
 

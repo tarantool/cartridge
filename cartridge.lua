@@ -191,10 +191,24 @@ end
 --
 -- @tparam ?string opts.http_host
 --  host to open administrative UI and API on
---  (**Added** in v2.4.0-42
+--  (**Added** in v2.4.0-42,
 --  default: "0.0.0.0", overridden by
 --  env `TARANTOOL_HTTP_HOST`,
 --  args `--http-host`)
+--
+-- @tparam ?string opts.webui_prefix
+--  modify WebUI and cartridge HTTP API routes
+--  (**Added** in v2.6.0-18,
+--  default: "", overridden by
+--  env `TARANTOOL_WEBUI_PREFIX`,
+--  args `--webui-prefix`)
+--
+-- @tparam ?boolean opts.webui_enforce_root_redirect
+--  respond on `GET /` with a redirect to `<WEBUI_PREFIX>/admin`.
+--  (**Added** in v2.6.0-18,
+--  default: true, overridden by
+--  env `TARANTOOL_WEBUI_ENFORCE_ROOT_REDIRECT`,
+--  args `--webui-enforce-root-redirect`)
 --
 -- @tparam ?string opts.alias
 -- human-readable instance name that will be available in administrative UI
@@ -260,6 +274,8 @@ local function cfg(opts, box_opts)
         http_host = '?string',
         http_enabled = '?boolean',
         webui_enabled = '?boolean',
+        webui_prefix = '?string',
+        webui_enforce_root_redirect = '?boolean',
         alias = '?string',
         roles = 'table',
         auth_backend_name = '?string',
@@ -615,15 +631,35 @@ local function cfg(opts, box_opts)
             return nil, err
         end
 
-        local ok, err = CartridgeCfgError:pcall(auth.init, httpd)
+        if opts.webui_prefix == nil then
+            opts.webui_prefix = ''
+        else
+            -- Add leading '/' for frontend-core
+            if not opts.webui_prefix:startswith('/') then
+                opts.webui_prefix = '/' .. opts.webui_prefix
+            end
+            -- Remove trailing '/' because frontend-core can't handle it
+            opts.webui_prefix = opts.webui_prefix:gsub('/$', '')
+        end
+
+        if opts.webui_enforce_root_redirect == nil then
+            opts.webui_enforce_root_redirect = true
+        end
+
+        local ok, err = CartridgeCfgError:pcall(auth.init, httpd, {
+            prefix = opts.webui_prefix
+        })
         if not ok then
             return nil, err
         end
 
-        graphql.init(httpd)
+        graphql.init(httpd, {prefix = opts.webui_prefix})
 
         if opts.webui_enabled then
-            local ok, err = HttpInitError:pcall(webui.init, httpd)
+            local ok, err = HttpInitError:pcall(webui.init, httpd, {
+                prefix = opts.webui_prefix,
+                enforce_root_redirect = opts.webui_enforce_root_redirect,
+            })
             if not ok then
                 return nil, err
             end

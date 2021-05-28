@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { get as _get } from 'lodash';
+import { getApiEndpoint } from 'src/apiEndpoints';
 
 const axiosInstance = axios.create()
 
@@ -16,7 +17,7 @@ export default {
     return axiosInstance.get(...args);
   },
   soap(object) {
-    return axiosInstance.post(process.env.REACT_APP_SOAP_API_ENDPOINT, object, {
+    return axiosInstance.post(getApiEndpoint('SOAP_API_ENDPOINT'), object, {
       headers: { 'Content-Type': 'application/json;charset=UTF-8' }
     });
   }

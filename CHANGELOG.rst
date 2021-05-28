@@ -18,6 +18,22 @@ Added
 
 - Roles are stopped with ``on_shutdown`` trigger.
 
+- New ``cartridge.cfg`` options:
+
+  - ``webui_prefix`` (default: ``""``) allows to modify WebUI routes.
+  - ``webui_enforce_root_redirect`` (default: ``true``) manage redirection.
+
+  To sum up, now they look as follows:
+
+  - ``<PREFIX>/admin/``;
+  - ``<PREFIX>/admin/api``;
+  - ``<PREFIX>/admin/config``;
+  - ``<PREFIX>/admin/cluster/*``;
+  - ``<PREFIX>/static/*``;
+  - ``<PREFIX>/login``;
+  - ``<PREFIX>/logout``;
+  - ``/`` and ``<PREFIX>/`` redirect to ``/<PREFIX>/admin`` (if enabled).
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Changed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

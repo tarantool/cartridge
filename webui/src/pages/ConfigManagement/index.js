@@ -15,6 +15,7 @@ import {
 import { PageLayout } from 'src/components/PageLayout';
 import { useStore } from 'effector-react';
 import { $configForm, dropFiles, configPageMount } from '../../store/effector/configUpload';
+import { getApiEndpoint } from 'src/apiEndpoints';
 
 const { AppTitle } = window.tarantool_enterprise_core.components;
 
@@ -65,7 +66,7 @@ const ConfigManagement = ({ isDemoPanelPresent }: ConfigManagementProps) => {
     <PageLayout
       heading='Configuration Management'
       topRightControls={[
-        <a href={process.env.REACT_APP_CONFIG_ENDPOINT}>
+        <a href={getApiEndpoint('CONFIG_ENDPOINT')}>
           <Button
             className='meta-test__DownloadBtn'
             icon={IconDownload}

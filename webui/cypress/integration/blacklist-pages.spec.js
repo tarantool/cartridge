@@ -10,7 +10,11 @@ describe('Blacklist pages', () => {
         server_command = helpers.entrypoint('srv_basic'),
         use_vshard = false,
         cookie = helpers.random_cookie(),
-        env = {TARANTOOL_WEBUI_BLACKLIST = '/cluster/configuration'},
+        env = {
+          TARANTOOL_WEBUI_PREFIX = 'abc/',
+          TARANTOOL_WEBUI_BLACKLIST = '/cluster/configuration',
+          TARANTOOL_WEBUI_ENFORCE_ROOT_REDIRECT = 'false',
+        },
         replicasets = {{
           roles = {},
           alias = 'test-replicaset',
@@ -32,16 +36,22 @@ describe('Blacklist pages', () => {
     ////////////////////////////////////////////////////////////////////
     cy.log('Blacklisted pages are not listed in menu');
     ////////////////////////////////////////////////////////////////////
-    cy.visit('/admin/cluster/dashboard');
+    cy.visit('/abc/admin/cluster/dashboard');
     cy.contains('Not loaded').should('not.exist');
     cy.contains('test-replicaset');
-    cy.get('a[href="/admin/cluster/dashboard"]').should('exist');
-    cy.get('a[href="/admin/cluster/configuration"]').should('not.exist');
+    cy.get('a[href="/abc/admin/cluster/dashboard"]').should('exist');
+    cy.get('a[href="/abc/admin/cluster/configuration"]').should('not.exist');
 
     ////////////////////////////////////////////////////////////////////
     cy.log('Blacklisted pages cant be visited');
     ////////////////////////////////////////////////////////////////////
-    cy.visit('/admin/cluster/configuration');
+    cy.visit('/abc/admin/cluster/configuration');
     cy.contains('Not loaded').should('exist');
+
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Redirects are disabled');
+    ////////////////////////////////////////////////////////////////////
+    cy.request({url: '/', failOnStatusCode: false}).its('status').should('equal', 404);
+    cy.request({url: '/abc', failOnStatusCode: false}).its('status').should('equal', 404);
   });
 });

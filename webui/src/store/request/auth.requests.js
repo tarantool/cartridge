@@ -1,5 +1,6 @@
 import graphql from 'src/api/graphql';
 import rest from 'src/api/rest';
+import { getApiEndpoint } from 'src/apiEndpoints';
 import { authQuery, turnAuthMutation } from './queries.graphql';
 
 export async function getAuthState() {
@@ -19,7 +20,7 @@ export async function logIn(params) {
 
   try {
     await rest.post(
-      '/login',
+      getApiEndpoint('LOGIN_API_ENDPOINT'),
       `username=${username}&password=${password}`,
       { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
     );
@@ -50,7 +51,7 @@ export async function logIn(params) {
 }
 
 export async function logOut() {
-  await rest.post('/logout');
+  await rest.post(getApiEndpoint('LOGOUT_API_ENDPOINT'));
   return {
     authorized: false,
     error: null

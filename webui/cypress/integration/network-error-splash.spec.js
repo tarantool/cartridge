@@ -10,6 +10,9 @@ describe('Network error panel', () => {
         server_command = helpers.entrypoint('srv_basic'),
         use_vshard = false,
         cookie = helpers.random_cookie(),
+        env = {
+          TARANTOOL_WEBUI_PREFIX = 'jkl',
+        },
         replicasets = {{
           alias = 'test-replicaset',
           roles = {},
@@ -31,7 +34,7 @@ describe('Network error panel', () => {
     ////////////////////////////////////////////////////////////////////
     cy.log('Check presence');
     ////////////////////////////////////////////////////////////////////
-    cy.visit('/');
+    cy.visit('/jkl');
 
     // It's fine yet
     cy.get('.meta-test__ProbeServerBtn');
@@ -43,26 +46,26 @@ describe('Network error panel', () => {
     cy.get('.meta-test__NetworkErrorSplash').should('exist')
       .contains('Network connection problem or server disconnected');
 
-    cy.get('a[href="/admin/cluster/users"]').click();
+    cy.get('a[href="/jkl/admin/cluster/users"]').click();
     cy.get('h1:contains(Users)');
     cy.get('#root').contains('The list is empty').should('exist');
     cy.get('#root').contains('LOADING').should('not.exist');
     cy.get('.meta-test__NetworkErrorSplash').should('exist');
 
-    cy.get('a[href="/admin/cluster/dashboard"]').click();
+    cy.get('a[href="/jkl/admin/cluster/dashboard"]').click();
     cy.get('#root').contains('Network problem').should('exist');
 
-    cy.get('a[href="/admin/cluster/configuration"]').click();
+    cy.get('a[href="/jkl/admin/cluster/configuration"]').click();
     cy.get('#root').contains('Configuration Management').should('exist');
     cy.get('.meta-test__NetworkErrorSplash').should('exist');
 
-    cy.get('a[href="/admin/cluster/code"]').click();
+    cy.get('a[href="/jkl/admin/cluster/code"]').click();
     cy.get('#root').contains('Loading...').should('not.exist');
     cy.get('#root').contains('Error loading component').should('exist');
     cy.get('button:contains(Retry)').should('exist');
     cy.get('.meta-test__NetworkErrorSplash').should('exist');
 
-    cy.get('a[href="/admin/cluster/schema"]').click();
+    cy.get('a[href="/jkl/admin/cluster/schema"]').click();
     cy.get('#root').contains('Loading...').should('not.exist');
     cy.get('#root').contains('Error loading component').should('exist');
     cy.get('button:contains(Retry)').should('exist');

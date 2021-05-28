@@ -1,6 +1,7 @@
 // @flow
 import graphql from 'src/api/graphql';
 import rest from 'src/api/rest';
+import { getApiEndpoint } from 'src/apiEndpoints';
 import { getClusterSelf } from 'src/store/request/app.requests';
 import {
   bootstrapMutation,
@@ -217,7 +218,7 @@ export function editReplicaset(
 type UploadConfigParams = { data: FormData };
 
 export async function uploadConfig(params: UploadConfigParams) {
-  return rest.put(process.env.REACT_APP_CONFIG_ENDPOINT, params.data, {
+  return rest.put(getApiEndpoint('CONFIG_ENDPOINT'), params.data, {
     headers: { 'Content-Type': 'application/yaml;charset=UTF-8' }
   });
 }
