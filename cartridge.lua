@@ -602,17 +602,6 @@ local function cfg(opts, box_opts)
         return nil, err
     end
 
-    local webui_prefix = opts.webui_prefix or ''
-    if webui_prefix ~= '' then
-        webui_prefix = webui_prefix:gsub('/+', '/')  -- delete duplicate '/''
-        webui_prefix = '/' .. webui_prefix:match('^/*(.-)/*$') -- trim '/'
-    end
-
-    local webui_enforce_root_redirect = opts.webui_enforce_root_redirect
-    if opts.webui_enforce_root_redirect == nil then
-        webui_enforce_root_redirect = true
-    end
-
     if opts.http_port == nil then
         if port_offset ~= nil then
             opts.http_port = 8080 + port_offset
@@ -642,17 +631,34 @@ local function cfg(opts, box_opts)
             return nil, err
         end
 
-        local ok, err = CartridgeCfgError:pcall(auth.init, httpd, {prefix = webui_prefix})
+        if opts.webui_prefix == nil then
+            opts.webui_prefix = ''
+        else
+            -- Remove trailing '/' because frontend-core can't handle it
+            opts.webui_prefix = opts.webui_prefix:gsub('/$', '')
+            -- Add leading '/' for the same reason
+            if not opts.webui_prefix:startswith('/') then
+                opts.webui_prefix = '/' .. opts.webui_prefix
+            end
+        end
+
+        if opts.webui_enforce_root_redirect == nil then
+            opts.webui_enforce_root_redirect = true
+        end
+
+        local ok, err = CartridgeCfgError:pcall(auth.init, httpd, {
+            prefix = opts.webui_prefix
+        })
         if not ok then
             return nil, err
         end
 
-        graphql.init(httpd, {prefix = webui_prefix})
+        graphql.init(httpd, {prefix = opts.webui_prefix})
 
         if opts.webui_enabled then
             local ok, err = HttpInitError:pcall(webui.init, httpd, {
-                prefix = webui_prefix,
-                enforce_root_redirect = webui_enforce_root_redirect,
+                prefix = opts.webui_prefix,
+                enforce_root_redirect = opts.webui_enforce_root_redirect,
             })
             if not ok then
                 return nil, err

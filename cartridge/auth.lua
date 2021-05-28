@@ -748,8 +748,9 @@ end
 -- @function init
 -- @local
 local function init(httpd, opts)
-    opts = opts or {}
-    checks('table', 'table')
+    checks('table', {
+        prefix = 'string',
+    })
 
     local function wipe_fiber_storage()
         local fiber_storage = fiber.self().storage
@@ -767,13 +768,12 @@ local function init(httpd, opts)
         end
     end
 
-    local prefix = opts.prefix or ''
     httpd:route({
-        path = ('%s/login'):format(prefix),
+        path = opts.prefix .. '/login',
         method = 'POST'
     }, login)
     httpd:route({
-        path = ('%s/logout'):format(prefix),
+        path = opts.prefix .. '/logout',
         method = 'POST'
     }, logout)
 

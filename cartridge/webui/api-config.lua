@@ -270,6 +270,9 @@ local function force_reapply(_, args)
 end
 
 local function init(graphql, httpd, opts)
+    checks('table', 'table', {
+        prefix = 'string',
+    })
     graphql.add_callback({
         prefix = 'cluster',
         name = 'config',
@@ -303,13 +306,12 @@ local function init(graphql, httpd, opts)
         callback = module_name .. '.force_reapply',
     })
 
-    local prefix = opts.prefix or ''
     httpd:route({
-        path = ('%s/admin/config'):format(prefix),
+        path = opts.prefix .. '/admin/config',
         method = 'PUT'
     }, upload_config_handler)
     httpd:route({
-        path = ('%s/admin/config'):format(prefix),
+        path = opts.prefix .. '/admin/config',
         method = 'GET'
     }, download_config_handler)
 
