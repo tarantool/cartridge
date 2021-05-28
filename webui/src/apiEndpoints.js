@@ -1,7 +1,9 @@
 const apiPrefix = window.__tarantool_admin_prefix || ''
 
-// eslint-disable-next-line no-undef
-__webpack_public_path__ = apiPrefix + '/'
+if (!navigator.userAgent.includes('jsdom')) {
+  // eslint-disable-next-line no-undef
+  __webpack_public_path__ = apiPrefix + '/'
+}
 
 const apiEndpoints = {
   LSP_ENDPOINT: apiPrefix + process.env.REACT_APP_LSP_ENDPOINT,
