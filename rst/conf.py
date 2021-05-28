@@ -31,3 +31,10 @@ language = 'en'
 locale_dirs = ['./locale']
 gettext_compact = False
 gettext_location = False
+
+rst_epilog = """
+
+.. |nbsp| unicode:: 0xA0
+   :trim:
+   
+"""
