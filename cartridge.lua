@@ -634,12 +634,12 @@ local function cfg(opts, box_opts)
         if opts.webui_prefix == nil then
             opts.webui_prefix = ''
         else
-            -- Remove trailing '/' because frontend-core can't handle it
-            opts.webui_prefix = opts.webui_prefix:gsub('/$', '')
-            -- Add leading '/' for the same reason
+            -- Add leading '/' for frontend-core
             if not opts.webui_prefix:startswith('/') then
                 opts.webui_prefix = '/' .. opts.webui_prefix
             end
+            -- Remove trailing '/' because frontend-core can't handle it
+            opts.webui_prefix = opts.webui_prefix:gsub('/$', '')
         end
 
         if opts.webui_enforce_root_redirect == nil then

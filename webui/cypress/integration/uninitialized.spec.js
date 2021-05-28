@@ -13,6 +13,9 @@ describe('Uninitialized', () => {
         http_port = 8080,
         advertise_port = 13300,
         cluster_cookie = helpers.random_cookie(),
+        env = {
+          TARANTOOL_WEBUI_PREFIX = 'xyz',
+        },
       })
       _G.server:start()
       helpers.retrying({timeout = 5}, function()
@@ -28,11 +31,22 @@ describe('Uninitialized', () => {
   });
 
   it('Test: uninitialized', () => {
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Redirects are enabled');
+    ////////////////////////////////////////////////////////////////////
+
+    let checkRedirect = (response) => {
+      expect(response.status).to.be.equal(302)
+      expect(response.headers['location']).to.be.equal('/xyz/admin')
+    }
+    cy.request({url: '/', followRedirect: false}).then(checkRedirect);
+    cy.request({url: '/xyz', followRedirect: false}).then(checkRedirect);
 
     ////////////////////////////////////////////////////////////////////
     cy.log('Code without bootstrap');
     ////////////////////////////////////////////////////////////////////
-    cy.visit('/admin/cluster/code');
+    cy.visit('/xyz/admin/cluster/code');
+
     // files reload should fail
     cy.get('button[type="button"]:contains("Reload")').click();
     cy.get('body').contains('Are you sure you want to reload all the files?');
@@ -51,7 +65,7 @@ describe('Uninitialized', () => {
     ////////////////////////////////////////////////////////////////////
     cy.log('Schema without bootstrap');
     ////////////////////////////////////////////////////////////////////
-    cy.get('a[href="/admin/cluster/schema"]').click();
+    cy.get('a[href="/xyz/admin/cluster/schema"]').click();
 
     cy.get('button[type="button"]:contains("Validate")').click();
     cy.get('#root').contains('Current instance isn\'t bootstrapped yet');
@@ -65,7 +79,7 @@ describe('Uninitialized', () => {
     ////////////////////////////////////////////////////////////////////
     cy.log('Try to add user without bootstrap');
     ////////////////////////////////////////////////////////////////////
-    cy.get('a[href="/admin/cluster/users"]').click();
+    cy.get('a[href="/xyz/admin/cluster/users"]').click();
 
     cy.get('.meta-test__addUserBtn').click({ force: true });
     cy.get('label:contains(Username)').parent('div').next().find('input')

@@ -4,6 +4,7 @@
 
 local fun = require('fun')
 local log = require('log')
+local fio = require('fio')
 local luatest = require('luatest')
 local yaml = require('yaml')
 local checks = require('checks')
@@ -178,7 +179,10 @@ function Server:graphql(request, http_options)
         query = request.query,
         variables = request.variables,
     }
-    local response = self:http_request('post', '/admin/api', http_options)
+
+    local webui_prefix = self.env and self.env.TARANTOOL_WEBUI_PREFIX or ''
+    local api_endpoint = fio.pathjoin('/', webui_prefix, 'admin/api')
+    local response = self:http_request('post', api_endpoint, http_options)
 
     local errors = response.json and response.json.errors
     if errors and request.raise then
