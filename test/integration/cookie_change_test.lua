@@ -1,33 +1,30 @@
-local fio = require('fio')
 local t = require('luatest')
+local h = require('test.helper')
 local g = t.group()
 
-local helpers = require('test.helper')
+local fio = require('fio')
 
-g.before_all = function()
-    g.cluster = helpers.Cluster:new({
+g.before_all(function()
+    g.cluster = h.Cluster:new({
         datadir = fio.tempdir(),
-        server_command = helpers.entrypoint('srv_basic'),
-        replicasets = {
-            {
-                alias = 'A',
-                uuid = helpers.uuid('a'),
-                roles = {},
-                servers = 3,
-            },
-        },
+        server_command = h.entrypoint('srv_basic'),
+        replicasets = {{
+            alias = 'A',
+            uuid = h.uuid('a'),
+            roles = {},
+            servers = 3,
+        }},
     })
     g.cluster:start()
     for _, server in pairs(g.cluster.servers) do
         server.env['TARANTOOL_CLUSTER_COOKIE'] = nil
     end
-end
+end)
 
-
-g.after_all = function()
+g.after_all(function()
     g.cluster:stop()
     fio.rmtree(g.cluster.datadir)
-end
+end)
 
 local q_set_cookie = [[
     local cluster_cookie = require('cartridge.cluster-cookie')
@@ -58,8 +55,8 @@ local function set_cookie_clusterwide(cluster, cookie)
     for _, server in pairs(cluster.servers) do
         local new_cookie = server.net_box:eval(q_get_cookie)
         t.assert_equals(new_cookie, cookie)
-        t.helpers.retrying({}, function()
-            t.assert_equals(#helpers.list_cluster_issues(server), 0)
+        h.retrying({}, function()
+            t.assert_equals(#h.list_cluster_issues(server), 0)
         end)
     end
 end
@@ -88,7 +85,7 @@ function g.test_server_restart()
     local cookie = target.net_box:eval(q_get_cookie)
     t.assert_equals(cookie, new_cookie)
 
-    t.helpers.retrying({}, function()
+    h.retrying({}, function()
         local issues = target.net_box:call('_G.__cartridge_issues_list_on_instance')
         t.assert_equals(#issues, 0)
     end)
