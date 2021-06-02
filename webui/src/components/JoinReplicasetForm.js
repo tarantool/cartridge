@@ -1,6 +1,6 @@
 // @flow
 import React from 'react';
-import { css, cx } from 'react-emotion';
+import { css, cx } from '@emotion/css';
 import { Formik } from 'formik';
 
 import SelectedServersList from 'src/components/SelectedServersList';

@@ -4,7 +4,7 @@ import { connect } from 'react-redux'
 import type { State } from '../store/rootReducer'
 import { Panel } from './Panel'
 import { css, cx } from '@emotion/css'
-import styled from 'react-emotion'
+import styled from '@emotion/styled';
 import {
   Button,
   Modal,

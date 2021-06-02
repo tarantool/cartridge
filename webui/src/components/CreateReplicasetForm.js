@@ -1,6 +1,6 @@
 // @flow
 import React from 'react';
-import { css } from 'react-emotion';
+import { css } from '@emotion/css';
 import { uniq } from 'ramda';
 import { Form, Field, FormSpy } from 'react-final-form';
 import {

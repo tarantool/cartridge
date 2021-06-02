@@ -1,7 +1,7 @@
 // @flow
 // TODO: split and move to uikit
 import React from 'react';
-import { css, cx } from 'react-emotion';
+import { css, cx } from '@emotion/css';
 import { Text, UriLabel } from '@tarantool.io/ui-kit';
 import type { Server } from 'src/generated/graphql-typing';
 

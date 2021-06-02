@@ -1,7 +1,7 @@
 // @flow
 import { PROJECT_NAME } from './constants';
 import * as React from 'react';
-import { css } from 'react-emotion';
+import { css } from '@emotion/css';
 import {
   IconCluster,
   IconCode,

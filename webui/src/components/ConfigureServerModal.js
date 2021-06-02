@@ -1,6 +1,6 @@
 // @flow
 import React from 'react';
-import { css } from 'react-emotion';
+import { css } from '@emotion/css';
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
 import { Modal, Tabbed } from '@tarantool.io/ui-kit';

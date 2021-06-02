@@ -2,7 +2,7 @@
 import { connect } from 'react-redux';
 import { Route, Switch } from 'react-router-dom';
 import * as React from 'react';
-import { css, cx } from 'react-emotion';
+import { css, cx } from '@emotion/css';
 import type { RouterHistory, Location } from 'react-router';
 import { PageSection } from '@tarantool.io/ui-kit';
 import {

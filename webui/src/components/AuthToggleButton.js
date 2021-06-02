@@ -2,7 +2,7 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { css } from '@emotion/css';
-import styled from 'react-emotion';
+import styled from '@emotion/styled';
 import {
   ConfirmModal,
   IconCancel,

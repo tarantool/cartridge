@@ -1,7 +1,7 @@
 // @flow
 // TODO: split and move to uikit
 import React from 'react';
-import { css, cx } from 'react-emotion';
+import { css, cx } from '@emotion/css';
 import type { Replicaset } from 'src/generated/graphql-typing';
 import { HealthStatus, Text } from '@tarantool.io/ui-kit';
 

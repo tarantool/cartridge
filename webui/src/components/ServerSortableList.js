@@ -1,6 +1,6 @@
 import React from 'react';
 import { sortableContainer, sortableElement } from 'react-sortable-hoc';
-import { css, cx } from 'react-emotion';
+import { css, cx } from '@emotion/css';
 import arrayMove from 'array-move';
 import { connect } from 'react-redux';
 import {
