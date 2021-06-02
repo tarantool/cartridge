@@ -1,6 +1,6 @@
 // @flow
 import * as React from 'react';
-import { cx, css } from 'emotion';
+import { cx, css } from '@emotion/css';
 import { connect } from 'react-redux';
 import {
   Button,

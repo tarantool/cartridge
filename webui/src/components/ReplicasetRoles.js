@@ -2,7 +2,7 @@
 // TODO: move to uikit
 import React from 'react';
 import { Text } from '@tarantool.io/ui-kit';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 
 const styles = {
   roles: css`

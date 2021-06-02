@@ -2,7 +2,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { Text, colors } from '@tarantool.io/ui-kit';
 import CollapsibleJSONRenderer from './CollapsibleJSONRenderer';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
 const styles = {
   wrap: css`

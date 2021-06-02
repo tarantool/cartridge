@@ -1,5 +1,5 @@
 import React from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { useStore } from 'effector-react';
 import { Alert, ConfirmModal, Text } from '@tarantool.io/ui-kit';
 import { $userRemoveModal, hideModal, removeUserFx } from 'src/store/effector/users';

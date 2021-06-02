@@ -1,6 +1,6 @@
 // @flow
 import React from 'react';
-import { css } from 'emotion'
+import { css } from '@emotion/css'
 import { useStore } from 'effector-react';
 import {
   Alert,

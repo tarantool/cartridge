@@ -1,7 +1,7 @@
 // @flow
 
 import React, { useEffect } from 'react'
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { Panel } from '../../components/Panel'
 import {
   Alert,

@@ -1,7 +1,7 @@
 // @flow
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { getGraphqlErrorMessage } from 'src/api/graphql';
 import { changeFailover, setVisibleFailoverModal } from 'src/store/actions/clusterPage.actions';
 import {

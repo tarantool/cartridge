@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
 import React from 'react';
 import { defaultMemoize } from 'reselect';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { withRouter } from 'react-router-dom';
 import {
   Button,

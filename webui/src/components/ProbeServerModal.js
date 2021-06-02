@@ -1,7 +1,7 @@
 // @flow
 import React from 'react';
 import { connect } from 'react-redux';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { Formik } from 'formik';
 import {
   Alert,
