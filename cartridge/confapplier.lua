@@ -17,6 +17,7 @@ local vars = require('cartridge.vars').new('cartridge.confapplier')
 local pool = require('cartridge.pool')
 local utils = require('cartridge.utils')
 local roles = require('cartridge.roles')
+local sentinel = require('cartridge.sentinel')
 local topology = require('cartridge.topology')
 local failover = require('cartridge.failover')
 local hotreload = require('cartridge.hotreload')
@@ -531,6 +532,11 @@ local function boot_instance(clusterwide_config)
     if err ~= nil then
         set_state('BootError', err)
         return nil, err
+    end
+
+    sentinel.start()
+    if box.ctl.on_shutdown ~= nil then
+        box.ctl.on_shutdown(function() pcall(sentinel.stop()) end)
     end
 
     if box.info.status == 'orphan' then
