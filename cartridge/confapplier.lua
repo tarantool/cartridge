@@ -535,6 +535,9 @@ local function boot_instance(clusterwide_config)
     end
 
     sentinel.start()
+    if box.ctl.on_shutdown ~= nil then
+        box.ctl.on_shutdown(function() pcall(sentinel.stop()) end)
+    end
 
     if box.info.status == 'orphan' then
         set_state('ConnectingFullmesh')
