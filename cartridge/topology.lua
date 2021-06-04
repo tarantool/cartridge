@@ -86,6 +86,93 @@ local function not_disabled(uuid, srv)
     return not_expelled(uuid, srv) and not srv.disabled
 end
 
+--- Get instances.
+--
+-- @function get_instances
+-- @local
+-- @tparam ClusterwideConfig
+-- @tparam boolean use_uuid
+-- @treturn table
+--
+-- {
+--     ['instance-uuid-1' | 'instance-name-1'] = 'expelled',
+--     ['instance-uuid-2' | 'instance-name-2'] = {
+--         uri = 'localhost:3301',
+--         disabled = false,
+--         replicaset_uuid = 'replicaset-uuid-2',
+--         zone = nil | string,
+--     },
+-- },
+local function get_instances(clusterwide_config, use_uuid)
+    checks('ClusterwideConfig', '?boolean')
+    if use_uuid == nil then
+        use_uuid = false
+    end
+    local instances = {}
+    if vars.is_remote_topology then
+        local topology_obj = clusterwide_config:get_topology_obj()
+        assert(topology_obj ~= nil)
+        local topology_opts = topology_obj:get_topology_options()
+        for _, replicaset_name in pairs(topology_opts.replicasets) do
+            local replicaset_opts = topology_obj:get_replicaset_options(replicaset_name)
+            for _, replica_name in pairs(replicaset_opts.replicas) do
+                assert(replica_name ~= nil)
+                local instance_opts = topology_obj:get_instance_options(replica_name)
+                local uuid = instance_opts.box_cfg.instance_uuid
+                assert(uuid)
+                instance_opts.replicaset_name = replicaset_name
+                instance_opts.replicaset_uuid = replicaset_opts.cluster_uuid
+                -- Make instance status compatible with Cartridge
+                if instance_opts.status == 'reachable' then
+                    instance_opts.disabled = false
+                elseif instance_opts.status == 'unreachable' then
+                    instance_opts.disabled = true
+                end
+                if instance_opts.status == 'expelled' then
+                    instance_opts = 'expelled'
+                end
+                if use_uuid == true then
+                    instances[uuid] = instance_opts
+                else
+                    instances[replica_name] = instance_opts
+                end
+            end
+        end
+    end
+
+    return instances
+end
+
+--- Get replicasets.
+--
+-- @function get_replicasets
+-- @local
+-- @tparam ClusterwideConfig
+-- @tparam boolean use_replicaset_name
+-- @treturn table
+local function get_replicasets(clusterwide_config, use_uuid)
+    checks('ClusterwideConfig', '?boolean')
+    local replicasets = {}
+    if use_uuid == nil then
+        use_uuid = false
+    end
+    if vars.is_remote_topology == true then
+        local topology_obj = clusterwide_config:get_topology_obj()
+        local topology_opts = topology_obj:get_topology_options()
+        for _, replicaset_name in pairs(topology_opts.replicasets) do
+            if use_uuid == true then
+                local replicaset_opts = topology_obj:get_replicaset_options(replicaset_name)
+                local replicaset_uuid = replicaset_opts.cluster_uuid
+                replicasets[replicaset_uuid] = replicaset_opts
+            else
+                replicasets[replicaset_name] = topology_obj:get_replicaset_options(replicaset_name)
+            end
+        end
+    end
+
+    return replicasets
+end
+
 --- Get full list of replicaset leaders.
 --
 -- Full list is composed of:
@@ -1100,6 +1187,9 @@ return {
 
     not_expelled = not_expelled,
     not_disabled = not_disabled,
+
+    get_instances = get_instances,
+    get_replicasets = get_replicasets,
 
     get_failover_params = get_failover_params,
     get_leaders_order = get_leaders_order,
