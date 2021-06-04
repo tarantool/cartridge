@@ -1167,21 +1167,36 @@ end
 --
 -- @function get_fullmesh_replication
 -- @local
--- @tparam table topology_cfg
+-- @tparam ClusterwideConfig
 -- @tparam string replicaset_uuid
 -- @tparam string instance_uuid
 -- @tparam string advertise_uri
 -- @treturn table
-local function get_fullmesh_replication(topology_cfg, replicaset_uuid, instance_uuid, advertise_uri)
-    checks('table', 'string', 'string', 'nil|string')
+local function get_fullmesh_replication(clusterwide_config, replicaset_uuid, instance_uuid, advertise_uri)
+    checks('ClusterwideConfig', 'string', 'string', 'nil|string')
+
+    -- remote topology
+    local replication = {}
+    if vars.is_remote_topology then
+        local instances = get_instances(clusterwide_config)
+        for _, instance in pairs(instances) do
+	    if instance.replicaset_uuid == replicaset_uuid then
+                local uri = instance.advertise_uri
+                table.insert(replication, uri and pool.format_uri(uri))
+	    end
+        end
+
+        return replication
+    end
+
+    -- local topology
+    local topology_cfg = clusterwide_config:get_readonly('topology')
     if topology_cfg.__type == 'ClusterwideConfig' then
         local err = "Bad argument #1 to get_fullmesh_replication" ..
             " (table expected, got ClusterwideConfig)"
         error(err, 2)
     end
     assert(topology_cfg.servers ~= nil)
-
-    local replication = {}
 
     for _it, uuid, server in fun.filter(not_disabled, topology_cfg.servers) do
         if server.replicaset_uuid == replicaset_uuid then

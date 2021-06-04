@@ -258,7 +258,7 @@ local function apply_config(clusterwide_config)
     box.cfg({replication_connect_quorum = 0})
     box.cfg({
         replication = topology.get_fullmesh_replication(
-            clusterwide_config:get_readonly('topology'), vars.replicaset_uuid,
+            clusterwide_config, vars.replicaset_uuid,
             vars.instance_uuid, vars.advertise_uri
         ),
     })
@@ -405,7 +405,7 @@ local function boot_instance(clusterwide_config)
         box_opts.replicaset_uuid = assert(replicaset_uuid)
         box_opts.replication_connect_quorum = 1
         box_opts.replication = topology.get_fullmesh_replication(
-            topology_cfg, replicaset_uuid,
+            clusterwide_config, replicaset_uuid,
             -- Workaround for https://github.com/tarantool/tarantool/issues/3760
             -- Due to the bug box_opts.replication_connect_quorum was ignored
             -- and box.cfg used to hang
@@ -548,7 +548,7 @@ local function boot_instance(clusterwide_config)
 
     local _, err = BoxError:pcall(box.cfg, {
         replication = topology.get_fullmesh_replication(
-            topology_cfg, vars.replicaset_uuid,
+            clusterwide_config, vars.replicaset_uuid,
             vars.instance_uuid, vars.advertise_uri
         ),
     })
