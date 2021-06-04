@@ -5,15 +5,32 @@
 -- @module cartridge.topology
 
 local fun = require('fun')
--- local log = require('log')
+local log = require('log')
 local checks = require('checks')
 local errors = require('errors')
 local membership = require('membership')
 
+local vars = require('cartridge.vars').new('cartridge.topology')
+local argparse = require('cartridge.argparse')
 local pool = require('cartridge.pool')
 local roles = require('cartridge.roles')
 local utils = require('cartridge.utils')
 local label_utils = require('cartridge.label-utils')
+
+local topology_opts, err = argparse.get_cluster_opts({
+    remote_topology_name = 'string',
+    remote_topology_storage = 'string',
+    remote_topology_endpoint = 'string',
+})
+vars:new('topology_name', topology_opts.remote_topology_name)
+vars:new('topology_storage', topology_opts.remote_topology_storage)
+vars:new('topology_endpoint', topology_opts.remote_topology_endpoint)
+vars:new('is_remote_topology', false)
+if vars.topology_name ~= nil and
+   vars.topology_storage ~= nil and
+   vars.topology_endpoint ~= nil then
+    vars.is_remote_topology = true
+end
 
 local e_config = errors.new_class('Invalid cluster topology config')
 --[[ topology_cfg: {
@@ -130,6 +147,8 @@ local function get_leaders_order(topology_cfg, replicaset_uuid, new_order)
 end
 
 local function validate_schema(field, topology)
+    -- With remote topology function call is disabled in validate()
+    -- TODO (sergeyb@): review checks one by one.
     checks('string', 'table')
     local servers = topology.servers or {}
     local replicasets = topology.replicasets or {}
@@ -325,7 +344,8 @@ local function validate_schema(field, topology)
 end
 
 local function validate_failover_schema(field, topology)
-
+    -- With remote topology function call is disabled in validate()
+    -- TODO (sergeyb@): review checks one by one.
     if type(topology.failover) == 'table' then
         e_config:assert(
             topology.failover.mode == nil or
@@ -589,6 +609,8 @@ local function validate_failover_schema(field, topology)
 end
 
 local function validate_consistency(topology)
+    -- With remote topology function call is disabled in validate()
+    -- TODO (sergeyb@): review checks one by one.
     checks('table')
     local servers = topology.servers or {}
     local replicasets = topology.replicasets or {}
@@ -639,8 +661,9 @@ local function validate_consistency(topology)
 end
 
 local function validate_availability(topology)
+    -- With remote topology function call is disabled in validate()
+    -- TODO (sergeyb@): review checks one by one.
     checks('table')
-
     local myself = membership.myself()
     local myself_uuid = myself.payload.uuid
     if myself_uuid ~= nil then
@@ -661,6 +684,8 @@ local function validate_availability(topology)
 end
 
 local function validate_upgrade(topology_new, topology_old)
+    -- With remote topology function call is disabled in validate()
+    -- TODO (sergeyb@): review checks one by one.
     checks('table', 'table')
     local servers_new = topology_new.servers or {}
     local servers_old = topology_old.servers or {}
@@ -718,6 +743,17 @@ end
 -- @treturn[2] nil
 -- @treturn[2] table Error description
 local function validate(topology_new, topology_old)
+    -- remote topology
+    -- NOTE: With topology module many validation checks cannot be implemented
+    -- because we couldn't get access to raw tables. Right now all of them disabled
+    -- and validation always passed.
+    -- TODO (sergeyb@): review checks one by one.
+    if vars.is_remote_topology then
+        log.warn('validate() is not implemented')
+        return true
+    end
+
+    -- local topology
     topology_old = topology_old or {}
     e_config:assert(
         type(topology_new) == 'table',
