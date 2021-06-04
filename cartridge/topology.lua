@@ -989,11 +989,31 @@ end
 --
 -- @function find_server_by_uri
 -- @local
--- @tparam table topology_cfg
+-- @tparam ClusterwideConfig clusterwide_config
 -- @tparam string uri
 -- @treturn nil|string `instance_uuid` found
-local function find_server_by_uri(topology_cfg, uri)
-    checks('table', 'string')
+local function find_server_by_uri(clusterwide_config, uri)
+    checks('ClusterwideConfig', 'string')
+
+    -- remote topology
+    if vars.is_remote_topology then
+        local topology_obj = clusterwide_config:get_topology_obj()
+        assert(topology_obj ~= nil)
+        local topology_opts = topology_obj:get_topology_options()
+        for _, replicaset_name in pairs(topology_opts.replicasets) do
+            local replicaset_opts = topology_obj:get_replicaset_options(replicaset_name)
+            for _, replica_name in pairs(replicaset_opts.replicas) do
+                local instance_opts = topology_obj:get_instance_options(replica_name)
+                if instance_opts.box_cfg.listen == uri then
+                    return instance_opts.box_cfg.instance_uuid
+                end
+            end
+        end
+    end
+
+    -- local topology
+    local conf = clusterwide_config:get_readonly()
+    local topology_cfg = conf.topology
     if topology_cfg.__type == 'ClusterwideConfig' then
         local err = "Bad argument #1 to find_server_by_uri" ..
             " (table expected, got ClusterwideConfig)"

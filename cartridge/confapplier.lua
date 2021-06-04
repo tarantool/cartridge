@@ -217,7 +217,7 @@ local function validate_config(clusterwide_config, _)
     end
     if conf_old == nil then
         local instance_uuid = topology.find_server_by_uri(
-            conf_new.topology, vars.advertise_uri
+            clusterwide_config, vars.advertise_uri
         )
         if instance_uuid == nil then
             local err = BootError:new(
@@ -356,7 +356,7 @@ local function boot_instance(clusterwide_config)
         -- When snapshots are absent the only way to do it
         -- is to find myself by uri.
         instance_uuid = topology.find_server_by_uri(
-            topology_cfg, vars.advertise_uri
+            clusterwide_config, vars.advertise_uri
         )
     end
 
