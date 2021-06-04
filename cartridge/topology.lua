@@ -1026,6 +1026,8 @@ end
 -- @local
 -- @tparam table topology_cfg
 -- @tparam string replicaset_uuid
+-- @tparam string instance_uuid
+-- @tparam string advertise_uri
 -- @treturn table
 local function get_fullmesh_replication(topology_cfg, replicaset_uuid, instance_uuid, advertise_uri)
     checks('table', 'string', 'string', 'nil|string')
