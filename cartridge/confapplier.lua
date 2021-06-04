@@ -705,6 +705,10 @@ local function get_deepcopy(section)
     return vars.clusterwide_config:get_deepcopy(section)
 end
 
+local function get_topology_obj()
+    return vars.clusterwide_config:get_topology_obj()
+end
+
 return {
     init = init,
     boot_instance = boot_instance,
@@ -715,6 +719,7 @@ return {
     get_active_config = get_active_config,
     get_readonly = get_readonly,
     get_deepcopy = get_deepcopy,
+    get_topology_obj = get_topology_obj,
 
     set_state = set_state,
     wish_state = wish_state,
