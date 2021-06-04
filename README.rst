@@ -95,6 +95,48 @@ Getting started
 --------------------------------------------------------------------------------
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Bootstrap with topology from remote configuration storage
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Clone topology module: ``git clone https://github.com/tarantool/topology``
+* Install topology module: ``tarantoolctl rocks install topology/topology-scm-1.rockspec``
+* Install Cartridge: ``tarantoolctl rocks make``
+* Start ``etcd`` instance and put topology configuration to it:
+  ``ETCD_URI=http://localhost:2379 ETCD_DATA_DIR=etcd_data ETCD_LISTEN_CLIENT_URLS=${ETCD_URI} ETCD_ADVERTISE_CLIENT_URLS=${ETCD_URI} etcd``
+  ``tarantool topology_cartridge.lua``
+* Start instance 2: ``./test/entrypoint/srv_basic.lua --instance_name 'cartridge-srv-2' --http-port 8082 --remote_topology_name 'cartridge' --remote_topology_storage 'etcd' --remote_topology_endpoint 'localhost:2379'``
+* Start instance 3: ``./test/entrypoint/srv_basic.lua --instance_name 'cartridge-srv-3' --http-port 8082 --remote_topology_name 'cartridge' --remote_topology_storage 'etcd' --remote_topology_endpoint 'localhost:2379'``
+
+TODO:
+
+- [x] create topology that describes configuration described in default YAML file
+- [x] pass topology conn parameters via YAML
+- [x] embedd topology object to ``ClusterwideConfig`` object
+- [x] disable all topology validation checks
+- [x] disable vshard conf validation
+- [x] use topology api in ``topology.get_fullmesh_replication()``
+- [x] use topology api in ``topology.find_server_by_uri()``
+- [x] ``topology.cluster_is_healthy()`` -- skipped, because it is used in tests only
+- [x] use topology api in ``vshard-utils.get_vshard_config()``
+- [x] add support of vshard storage groups in topology module api
+- [x] use topology api in ``topology.get_leaders_order()``
+- [x] use topology api in ``vshard-utils.can_bootstrap()``
+- [x] use topology api in ``vshard-utils.edit_vshard_options()``
+- [x] add ``topology.get_instances()`` helper
+- [x] add ``topology.get_replicasets()`` helper
+- [x] use topology api in ``vshard-utils.get_known_groups()``
+- [x] use topology api in ``vshard-utils.set_known_groups()``
+- [x] use topology api in ``topology.refine_servers_uri()``
+- [x] add ``get_instance_box_cfg()`` to topology module API (required for ``boot_instance()``)
+- [x] rewrite ``confapplier.boot_instance()``
+- use topology api in ``topology.get_failover_params()``
+- use topology api in ``vshard-utils.patch_zone_distances()``
+- rewrite all places where used ``get_readonly('topology')``
+- rewrite all places where used raw tables like ``topology_old`` and ``topology_new``
+- rewrite all places where used raw tables like ``confapplier.get_deepcopy('topology')``
+- rewrite all places where used raw tables like  ``get_readonly('vshard_groups')``
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Prerequisites
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
