@@ -181,18 +181,38 @@ end
 --  2. Initial order from topology_cfg (with no repetitions)
 --  3. All other servers in the replicaset, sorted by uuid, ascending
 --
--- Neither `topology_cfg` nor `new_order` tables are modified.
+-- Neither `clusterwide_config` nor `new_order` tables are modified.
 -- New order validity is ignored too.
 --
 -- @function get_leaders_order
 -- @local
--- @tparam table topology_cfg
+-- @tparam ClusterwideConfig clusterwide_config
 -- @tparam string replicaset_uuid
 -- @tparam ?table new_order
 -- @treturn {string,...} array of leaders uuids
-local function get_leaders_order(topology_cfg, replicaset_uuid, new_order)
-    checks('table', 'string', 'nil|table')
+local function get_leaders_order(clusterwide_config, replicaset_uuid, new_order)
+    checks('ClusterwideConfig', 'string', 'nil|table')
 
+    -- remote topology
+    if vars.is_remote_topology then
+        local topology_obj = clusterwide_config:get_topology_obj()
+        local topology_opts = topology_obj:get_topology_options()
+        local leaders = {}
+        for _, replicaset_name in pairs(topology_opt.replicasets) do
+            local replicaset_opt = t:get_replicaset_options(replicaset_name)
+            for _, instance_name in pairs(replicaset_opt.replicas) do
+                local instance_opt = t:get_instance_options(instance_name)
+                if instance_opt.is_master then
+                    table.insert(leaders, instance_name)
+                end
+            end
+        end
+
+        return leaders
+    end
+
+    -- local topology
+    local topology_cfg = clusterwide_config:get_readonly('topology') or {}
     local servers = topology_cfg.servers
     local replicasets = topology_cfg.replicasets
     local ret = table.copy(new_order) or {}

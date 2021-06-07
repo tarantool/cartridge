@@ -40,6 +40,8 @@ local service_registry = require('cartridge.service-registry')
 local stateboard_client = require('cartridge.stateboard-client')
 local etcd2_client = require('cartridge.etcd2-client')
 
+local ClusterwideConfig = require('cartridge.clusterwide-config')
+
 local FailoverError = errors.new_class('FailoverError')
 local SwitchoverError = errors.new_class('SwitchoverError')
 local ApplyConfigError = errors.new_class('ApplyConfigError')
@@ -122,15 +124,16 @@ end
 -- Used in 'disabled' failover mode.
 -- @function _get_appointments_disabled_mode
 -- @local
-local function _get_appointments_disabled_mode(topology_cfg)
-    checks('table')
+local function _get_appointments_disabled_mode(clusterwide_config)
+    checks('ClusterwideConfig')
+    local topology_cfg = clusterwide_config:get_readonly('topology')
     local replicasets = assert(topology_cfg.replicasets)
 
     local appointments = {}
 
     for replicaset_uuid, _ in pairs(replicasets) do
         local leaders = topology.get_leaders_order(
-            topology_cfg, replicaset_uuid
+            clusterwide_config, replicaset_uuid
         )
         appointments[replicaset_uuid] = leaders[1]
     end
@@ -142,15 +145,16 @@ end
 -- Used in 'eventual' failover mode.
 -- @function _get_appointments_eventual_mode
 -- @local
-local function _get_appointments_eventual_mode(topology_cfg)
-    checks('table')
+local function _get_appointments_eventual_mode(clusterwide_config)
+    checks(ClusterwideConfig)
+    local topology_cfg = clusterwide_config:get_readonly('topology')
     local replicasets = assert(topology_cfg.replicasets)
 
     local appointments = {}
 
     for replicaset_uuid, _ in pairs(replicasets) do
         local leaders = topology.get_leaders_order(
-            topology_cfg, replicaset_uuid
+            clusterwide_config, replicaset_uuid
         )
 
         for _, instance_uuid in ipairs(leaders) do
@@ -640,18 +644,18 @@ local function cfg(clusterwide_config)
         log.info('Failover disabled')
         vars.fencing_enabled = false
         vars.consistency_needed = false
-        first_appointments = _get_appointments_disabled_mode(topology_cfg)
+        first_appointments = _get_appointments_disabled_mode(clusterwide_config)
 
     elseif failover_cfg.mode == 'eventual' then
         log.info('Eventual failover enabled')
         vars.fencing_enabled = false
         vars.consistency_needed = false
-        first_appointments = _get_appointments_eventual_mode(topology_cfg)
+        first_appointments = _get_appointments_eventual_mode(clusterwide_config)
 
         vars.failover_fiber = fiber.new(failover_loop, {
             get_appointments = function()
                 vars.membership_notification:wait()
-                return _get_appointments_eventual_mode(topology_cfg)
+                return _get_appointments_eventual_mode(clusterwide_config)
             end,
         })
         vars.failover_fiber:name('cartridge.eventual-failover')

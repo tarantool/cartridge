@@ -292,9 +292,8 @@ local function cartridge_schema_upgrade(clusterwide_config)
     --  * We run upgrade only on the "leader" instance to prevent replication conflicts
     --  * We run upgrade as soon as possible to avoid Tarantool upgrade bugs:
     --    (https://github.com/tarantool/tarantool/issues/4691)
-    local topology_cfg = clusterwide_config:get_readonly('topology') or {}
     local leaders_order = errors.pcall('E',
-        topology.get_leaders_order, topology_cfg, box.info.cluster.uuid
+        topology.get_leaders_order, clusterwide_config, box.info.cluster.uuid
     )
 
     if leaders_order == nil then
@@ -437,7 +436,7 @@ local function boot_instance(clusterwide_config)
         box_opts.replicaset_uuid = replicaset_uuid
 
         local leaders_order = topology.get_leaders_order(
-            topology_cfg, replicaset_uuid
+            clusterwide_config, replicaset_uuid
         )
         local leader_uuid = leaders_order[1]
         local leader = topology_cfg.servers[leader_uuid]

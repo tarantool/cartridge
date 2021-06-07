@@ -132,7 +132,8 @@ local function get_topology()
         end
 
         leaders_order[replicaset_uuid] = topology.get_leaders_order(
-            topology_cfg, replicaset_uuid
+            -- FIXME: clusterwide_config is not declared
+            clusterwide_config, replicaset_uuid
         )
     end
 
