@@ -509,6 +509,11 @@ end
 local function get_vshard_config(group_name, conf)
     checks('string', 'table')
 
+    if vars.is_remote_topology then
+	local topology_obj = confapplier.get_topology_obj()
+	return topology_obj.get_vshard_config(group_name)
+    end
+
     local sharding = {}
     local topology_cfg = confapplier.get_readonly('topology')
     assert(topology_cfg ~= nil)
