@@ -657,6 +657,15 @@ local function edit_vshard_options(group_name, vshard_options)
         }
     )
 
+    -- remote topology
+    if vars.is_remote_topology then
+        local topology_obj = confapplier.get_topology_obj()
+        topology_obj:set_topology_options(vshard_options)
+
+        return true
+    end
+
+    -- local topology
     local patch = {
         vshard_groups = confapplier.get_deepcopy('vshard_groups'),
         vshard = confapplier.get_deepcopy('vshard')
