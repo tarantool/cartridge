@@ -456,7 +456,7 @@ test_remotely('test_patch_clusterwide', function()
     })
     t.assert_equals(ok, nil)
     t.assert_covers(err, {
-        class_name = 'PatchClusterwideError',
+        class_name = 'PatchConfigError',
         err = 'Ambiguous sections "conflict" and "conflict.yml"',
     })
 end)

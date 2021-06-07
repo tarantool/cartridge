@@ -69,6 +69,7 @@ yaml.cfg({
 
 local LoadConfigError = errors.new_class('LoadConfigError')
 local SaveConfigError = errors.new_class('SaveConfigError')
+local PatchConfigError = errors.new_class('PatchConfigError')
 local RemoveConfigError = errors.new_class('RemoveConfigError')
 
 local function generate_checksum(clusterwide_config)
@@ -247,6 +248,36 @@ clusterwide_config_mt = {
             end
 
             return self._checksum
+        end,
+
+        patch_copy = function(self, patch)
+            checks('ClusterwideConfig', 'table')
+
+            local new_config = self:copy()
+            for k, v in pairs(patch) do
+                if patch[k] ~= nil and patch[k .. '.yml'] ~= nil then
+                    local err = PatchConfigError:new(
+                        'Ambiguous sections %q and %q',
+                        k, k .. '.yml'
+                    )
+                    return nil, err
+                end
+                if v == nil then
+                    new_config:set_plaintext(k, v)
+                    new_config:set_plaintext(k .. '.yml', patch[k .. '.yml'])
+                elseif type(v) == 'string' then
+                    new_config:set_plaintext(k, v)
+                else
+                    if not string.endswith(k, '.yml') then
+                        new_config:set_plaintext(k, box.NULL)
+                        k = k .. '.yml'
+                    end
+
+                    new_config:set_plaintext(k, yaml.encode(v))
+                end
+            end
+
+            return new_config
         end,
 
         update_luatables = update_luatables,
