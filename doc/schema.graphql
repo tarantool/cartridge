@@ -1,32 +1,35 @@
 # source: http://localhost:8081/admin/api
-# timestamp: Thu Apr 15 2021 15:30:49 GMT+0300 (Moscow Standard Time)
+# timestamp: Wed Jun 09 2021 12:28:07 GMT+0300 (Moscow Standard Time)
 
 """Cluster management"""
 type Apicluster {
+  """List issues in cluster"""
+  issues: [Issue!]
+
   """Some information about current server"""
   self: ServerShortInfo
 
   """Clusterwide DDL schema"""
   schema: DDLSchema!
 
-  """List issues in cluster"""
-  issues: [Issue!]
+  """Get current failover state. (Deprecated since v2.0.2-2)"""
+  failover: Boolean!
 
   """Get automatic failover configuration."""
   failover_params: FailoverAPI!
 
-  """Get current failover state. (Deprecated since v2.0.2-2)"""
-  failover: Boolean!
-
   """Show suggestions to resolve operation problems"""
   suggestions: Suggestions
+  auth_params: UserManagementAPI!
 
   """List authorized users"""
   users(username: String): [User!]
 
-  """Whether it is reasonble to call bootstrap_vshard mutation"""
-  can_bootstrap_vshard: Boolean!
-  auth_params: UserManagementAPI!
+  """Virtual buckets count in cluster"""
+  vshard_bucket_count: Int!
+
+  """Get list of all registered roles and their dependencies."""
+  known_roles: [Role!]!
 
   """Get list of known vshard storage groups."""
   vshard_known_groups: [String!]!
@@ -35,11 +38,11 @@ type Apicluster {
   webui_blacklist: [String!]
   vshard_groups: [VshardGroup!]!
 
-  """Get list of all registered roles and their dependencies."""
-  known_roles: [Role!]!
+  """Validate config"""
+  validate_config(sections: [ConfigSectionInput]): ValidateConfigResult!
 
-  """Virtual buckets count in cluster"""
-  vshard_bucket_count: Int!
+  """Whether it is reasonble to call bootstrap_vshard mutation"""
+  can_bootstrap_vshard: Boolean!
 
   """Get cluster config sections"""
   config(sections: [String!]): [ConfigSection]!
@@ -567,6 +570,12 @@ type UserManagementAPI {
   username: String
   implements_get_user: Boolean!
   implements_check_password: Boolean!
+}
+
+"""Result of config validation"""
+type ValidateConfigResult {
+  """Error details if validation fails, null otherwise"""
+  error: String
 }
 
 """Group of replicasets sharding the same dataset"""

@@ -13,7 +13,7 @@ g.before_all(function()
         replicasets = {
             {
                 uuid = helpers.uuid('a'),
-                roles = {},
+                roles = {'myrole-permanent'},
                 servers = {
                     {
                         alias = 'master',
@@ -26,6 +26,19 @@ g.before_all(function()
         },
     })
     g.cluster:start()
+
+    g.cluster.main_server.net_box:eval([[
+        package.loaded['mymodule-permanent'].validate_config = function(conf_new, conf_old)
+            local yaml = require('yaml')
+            local tmp = yaml.encode(conf_new)
+            tmp = yaml.decode(tmp)
+            if tmp['myrole-section'] then
+                return false
+            end
+
+            return true
+        end
+    ]])
 
     -- Make sure auth section exists in clusterwide config.
     -- It shouldn't be available for downloading via HTTP API
@@ -67,6 +80,19 @@ local function get_sections(sections)
         }]],
         variables = {sections = sections}
     }).data.cluster.config
+end
+
+local function validate_config(sections)
+    return g.cluster.main_server:graphql({query = [[
+        query($sections: [ConfigSectionInput!]) {
+            cluster {
+                validate_config(sections: $sections) {
+                    error
+                }
+            }
+        }]],
+        variables = {sections = sections}
+    }).data.cluster.validate_config.error
 end
 
 function g.test_upload_good()
@@ -213,6 +239,45 @@ function g.test_upload_fail()
     ]])
 end
 
+function g.test_validate()
+    local content = "['a', 'b', {c: \"d\"}] ###"
+    t.assert_equals(
+        validate_config({{filename = 'test.yml', content = content}}),
+        box.NULL
+    )
+
+    -- ddl validation
+    t.assert_equals(
+        validate_config({{filename = 'schema.yml', content = '42'}}),
+        "Invalid schema (table expected, got number)"
+    )
+    t.assert_equals(
+        validate_config({{filename = 'schema.yml', content = '{}'}}),
+        "spaces: must be a table, got nil"
+    )
+    t.assert_equals(
+        validate_config({{filename = 'schema.yml', content = 'spaces: false'}}),
+        "spaces: must be a table, got boolean"
+    )
+
+    -- topology validation
+    t.assert_equals(
+        validate_config({{filename = 'topology.yml', content = 'servers: {}'}}),
+        "Current instance \"localhost:13301\" is not listed in config"
+    )
+
+    -- vshard validation
+    t.assert_equals(
+        validate_config({{filename = 'vshard_groups.yml', content = 'vhsard_groups:'}}),
+        "section vshard_groups[\"vhsard_groups\"] must be a table"
+    )
+
+    -- confapplier validation
+    t.assert_equals(
+        validate_config({{filename = 'myrole-section', content = 'do it'}}),
+        "Role \"myrole-permanent\" method validate_config() returned false"
+    )
+end
 
 function g.test_rollback()
     -- hack utils to throw error on file_write
