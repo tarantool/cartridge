@@ -600,6 +600,23 @@ local function can_bootstrap_group(group_name, vsgroup)
 end
 
 local function can_bootstrap()
+    -- remote topology
+    if vars.is_remote_topology then
+        local topology_obj = confapplier.get_topology_obj()
+        local topology_opts = topology_obj.get_topology_options()
+        if topology_opts.vshard_groups == nil then
+            return false
+        end
+        for group in topology_opts.vshard_groups do
+            if can_bootstrap_group(group) then
+                return true
+            end
+        end
+
+        return false
+    end
+
+    -- local topology
     if roles.get_role('vshard-router') == nil then
         return false
     end
