@@ -7,7 +7,7 @@ import {
   SVGImage,
   Text
 } from '@tarantool.io/ui-kit';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { ModalLogInForm } from 'src/components/LogInForm';
 import { showAuthModal, hideAuthModal } from 'src/store/actions/auth.actions';
 import userPic from './user.svg';

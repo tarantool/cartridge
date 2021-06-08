@@ -1,7 +1,7 @@
 // @flow
 import React from 'react';
 import { connect } from 'react-redux';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import {
   Button,
   ConfirmModal,

@@ -1,6 +1,6 @@
 // @flow
 import React, { useEffect } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { useStore } from 'effector-react';
 import { Alert, IconRefresh, Button } from '@tarantool.io/ui-kit';
 import SchemaEditor from 'src/components/SchemaEditor';

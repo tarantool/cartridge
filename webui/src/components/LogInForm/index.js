@@ -1,6 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { logIn } from 'src/store/actions/auth.actions';
 import { Formik, Form } from 'formik'
 import * as yup from 'yup'

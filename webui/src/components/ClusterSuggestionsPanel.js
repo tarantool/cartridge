@@ -1,6 +1,6 @@
 // @flow
 import React from 'react';
-import { css, cx } from 'emotion'
+import { css, cx } from '@emotion/css'
 import { useStore } from 'effector-react';
 import { Button, Text } from '@tarantool.io/ui-kit';
 import {

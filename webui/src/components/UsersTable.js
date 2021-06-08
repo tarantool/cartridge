@@ -1,7 +1,7 @@
 // @flow
 import React, { useEffect } from 'react';
 import { useStore } from 'effector-react';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { memoizeWith, identity } from 'ramda';
 import {
   Button,

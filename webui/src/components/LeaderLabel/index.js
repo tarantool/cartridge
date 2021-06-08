@@ -1,7 +1,7 @@
 // @flow
 
 import * as React from 'react'
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { rgba } from 'emotion-rgba';
 import {
   SVGImage,

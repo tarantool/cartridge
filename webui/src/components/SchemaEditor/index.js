@@ -1,4 +1,4 @@
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import PropTypes from 'prop-types';
 import React from 'react';
 import { noop, throttle } from 'lodash';

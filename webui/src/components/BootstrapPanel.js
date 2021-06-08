@@ -1,7 +1,7 @@
 // @flow
 import React from 'react';
 import { connect } from 'react-redux';
-import { css, cx } from 'emotion'
+import { css, cx } from '@emotion/css'
 import { setVisibleBootstrapVshardPanel } from '../store/actions/clusterPage.actions';
 import { isBootstrapped, isRouterEnabled, isStorageEnabled } from '../store/selectors/clusterPage';
 import { IconCancel, IconOk, PageCard, Text } from '@tarantool.io/ui-kit';

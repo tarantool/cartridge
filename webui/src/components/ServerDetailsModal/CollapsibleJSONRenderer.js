@@ -4,7 +4,7 @@ import {
   CodeBlock,
   IconChevron
 } from '@tarantool.io/ui-kit';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
 const styles = {
   collapse: css`

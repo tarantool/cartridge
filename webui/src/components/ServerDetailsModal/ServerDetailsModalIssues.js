@@ -1,7 +1,7 @@
 // @flow
 import React from 'react';
 import { Text } from '@tarantool.io/ui-kit';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import type { Issue } from 'src/generated/graphql-typing';
 
 const styles = {
