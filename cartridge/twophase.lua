@@ -550,7 +550,7 @@ local function _clusterwide(patch)
 
     -- Prepare a server group to be configured
     local uri_list = {}
-    local refined_uri_list = topology.refine_servers_uri(topology_new)
+    local refined_uri_list = topology.refine_servers_uri(clusterwide_config_new)
     for _, uuid, _ in fun.filter(topology.not_disabled, topology_new.servers) do
         table.insert(uri_list, refined_uri_list[uuid])
     end
@@ -622,7 +622,7 @@ local function _force_reapply(uuids)
 
     -- Prepare a server group to be configured
     local uri_list = {}
-    local refined_uri_list = topology.refine_servers_uri(current_topology)
+    local refined_uri_list = topology.refine_servers_uri(clusterwide_config)
     for _, uuid in ipairs(uuids) do
         local srv = current_topology.servers[uuid]
         if not srv then

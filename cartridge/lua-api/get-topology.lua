@@ -139,7 +139,7 @@ local function get_topology()
     end
 
     local active_leaders = failover.get_active_leaders()
-    local refined_uri = topology.refine_servers_uri(topology_cfg)
+    local refined_uri = topology.refine_servers_uri(clusterwide_config)
 
     for _, instance_uuid, server in fun.filter(topology.not_expelled, topology_cfg.servers) do
         local uri = assert(refined_uri[instance_uuid])

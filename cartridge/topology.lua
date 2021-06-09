@@ -1103,26 +1103,40 @@ end
 --
 -- @function refine_servers_uri
 -- @local
--- @tparam table topology_cfg
+-- @tparam ClusterwideConfig
 -- @treturn {[uuid] = uri} with all servers except expelled ones.
-local function refine_servers_uri(topology_cfg)
-    checks('table')
+local function refine_servers_uri(clusterwide_config)
+    checks('ClusterwideConfig')
+
+    local members_fresh = membership.members()
+    local members_known = {}
+    local ret = {}
+
+    local topology_cfg = clusterwide_config:get_readonly('topology')
     if topology_cfg.__type == 'ClusterwideConfig' then
         local err = "Bad argument #1 to find_server_by_uri" ..
             " (table expected, got ClusterwideConfig)"
         error(err, 2)
     end
 
-    local members_fresh = membership.members()
-    local members_known = {}
-    local ret = {}
-
     -- Step 1: get URIs from topology_cfg as is.
-    for _, uuid, srv in fun.filter(not_expelled, topology_cfg.servers) do
-        ret[uuid] = assert(srv.uri)
-        -- Mark members we already processed
-        members_known[srv.uri] = members_fresh[srv.uri]
-        members_fresh[srv.uri] = nil
+    if vars.is_remote_topology then
+        -- remote topology
+        local instances = get_instances(clusterwide_config)
+        for instance in pairs(instances) do
+	    ret[instance.box_cfg.uuid] = assert(instance.advertise_uri)
+	    -- Mark members we already processed
+	    members_known[instance.advertise_uri] = members_fresh[instance.advertise_uri]
+	    members_fresh[instance.advertise_uri] = nil
+        end
+    else
+	-- local topology
+	for _, uuid, srv in fun.filter(not_expelled, topology_cfg.servers) do
+	    ret[uuid] = assert(srv.uri)
+	    -- Mark members we already processed
+	    members_known[srv.uri] = members_fresh[srv.uri]
+	    members_fresh[srv.uri] = nil
+	end
     end
 
     -- Step 2: Try to find another member among the unprocessed.
