@@ -34,6 +34,8 @@ Added
   - ``<PREFIX>/logout``;
   - ``/`` and ``<PREFIX>/`` redirect to ``/<PREFIX>/admin`` (if enabled).
 
+- New validate_config method in GraphQL API.
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Changed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -21,10 +21,12 @@ local DecodeYamlError = errors.new_class('DecodeYamlError')
 local DownloadConfigError = errors.new_class('Config download failed')
 local UploadConfigError = errors.new_class('Config upload failed')
 local ForceReapplyError = errors.new_class('Config reapply failed')
+local ValidateConfigError = errors.new_class('Config validate failed')
 
 local auth = require('cartridge.auth')
 local twophase = require('cartridge.twophase')
 local confapplier = require('cartridge.confapplier')
+local service_registry = require('cartridge.service-registry')
 local ClusterwideConfig = require('cartridge.clusterwide-config')
 
 local system_sections = {
@@ -55,6 +57,18 @@ local gql_type_section_input = gql_types.inputObject({
     fields = {
         filename = gql_types.string.nonNull,
         content = gql_types.string
+    }
+})
+
+local gql_type_validate_result = gql_types.object({
+    name = 'ValidateConfigResult',
+    description = 'Result of config validation',
+    fields = {
+        error = {
+            kind = gql_types.string,
+            description = 'Error details if validation fails,' ..
+                ' null otherwise',
+        },
     }
 })
 
@@ -252,6 +266,68 @@ local function set_sections(_, args)
     return get_sections(nil, {sections = query_sections})
 end
 
+local function validate_config(_, args)
+    if confapplier.get_readonly() == nil then
+        return nil, ValidateConfigError:new(
+            "Current instance isn't bootstrapped yet"
+        )
+    end
+
+    if args.sections == nil then
+        args.sections = {}
+    end
+
+    local patch = {}
+    for _, input in ipairs(args.sections) do
+        patch[input.filename] = input.content or box.NULL
+    end
+
+    -- Check schema if present. However, it is done in
+    -- confapplier.validate_config as well but only for leaders. The
+    -- following is used to perform the validation on non-leader instances.
+    if patch['schema.yml'] and not require('cartridge.failover').is_leader() then
+        local ddl_manager = assert(service_registry.get('ddl-manager'))
+        local ok, err = ddl_manager.check_schema_yaml(args.as_yaml)
+        if not ok then
+            if err.class_name == ddl_manager.CheckSchemaError.name then
+                return { error = err.err }
+            else
+                return nil, err
+            end
+        end
+    end
+
+    local active_config = confapplier.get_active_config()
+    local draft_config = active_config:copy_and_patch(patch)
+    draft_config:lock()
+
+    -- Check topology
+    local active_topology = draft_config:get_readonly('topology')
+    local draft_topology = draft_config:get_readonly('topology')
+    local _, err = require('cartridge.topology').validate(draft_topology, active_topology)
+    if err then
+        return { error = err.err }
+
+    end
+
+    -- Check vshard
+    local _, err = require('cartridge.vshard-utils').validate_config(
+        active_config:get_readonly(),
+        draft_config:get_readonly()
+    )
+    if err then
+        return { error = err.err }
+    end
+
+    -- Let confapplier to validate it too, why not
+    local _, err = confapplier.validate_config(draft_config)
+    if err then
+        return { error = err.err }
+    end
+
+    return { error = box.NULL }
+end
+
 local function force_reapply(_, args)
     checks('?', {uuids = '?table'})
     if confapplier.get_readonly() == nil then
@@ -295,6 +371,17 @@ local function init(graphql, httpd, opts)
         callback = module_name .. '.set_sections',
     })
 
+    graphql.add_callback({
+        prefix = 'cluster',
+        name = 'validate_config',
+        doc = 'Validate config',
+        args = {
+            sections = gql_types.list(gql_type_section_input)
+        },
+        kind = gql_type_validate_result.nonNull,
+        callback = module_name .. '.validate_config',
+    })
+
     graphql.add_mutation({
         prefix = 'cluster',
         name = 'config_force_reapply',
@@ -322,6 +409,7 @@ return {
     init = init,
     get_sections = get_sections,
     set_sections = set_sections,
+    validate_config = validate_config,
     force_reapply = force_reapply,
 
     upload_config = upload_config,

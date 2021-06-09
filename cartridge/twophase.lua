@@ -507,29 +507,9 @@ local function _clusterwide(patch)
         }):lock()
     end
 
-    local clusterwide_config_new = clusterwide_config_old:copy()
-    for k, v in pairs(patch) do
-        if patch[k] ~= nil and patch[k .. '.yml'] ~= nil then
-            local err = PatchClusterwideError:new(
-                'Ambiguous sections %q and %q',
-                k, k .. '.yml'
-            )
-            log.error('%s', err)
-            return nil, err
-        end
-        if v == nil then
-            clusterwide_config_new:set_plaintext(k, v)
-            clusterwide_config_new:set_plaintext(k .. '.yml', patch[k .. '.yml'])
-        elseif type(v) == 'string' then
-            clusterwide_config_new:set_plaintext(k, v)
-        else
-            if not string.endswith(k, '.yml') then
-                clusterwide_config_new:set_plaintext(k, box.NULL)
-                k = k .. '.yml'
-            end
-
-            clusterwide_config_new:set_plaintext(k, yaml.encode(v))
-        end
+    local clusterwide_config_new, err = clusterwide_config_old:copy_and_patch(patch)
+    if err then
+        return nil, err
     end
 
     for trigger, _ in pairs(vars.on_patch_triggers) do
