@@ -25,8 +25,9 @@ exclude_patterns = [
 
 extensions = [
     'TarantoolSessionLexer',
+    'sphinxcontrib.plantuml',
 ]
-
+plantuml = 'java -jar /path/to/plantuml.jar'
 language = 'en'
 locale_dirs = ['./locale']
 gettext_additional_targets = ['literal-block']

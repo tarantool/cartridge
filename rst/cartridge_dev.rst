@@ -1482,3 +1482,4 @@ When running instances with ``systemctl``, keep these practices in mind:
     and other related options.
 
 .. include:: topics/error-handling.rst
+.. include:: topics/state-machine.rst
