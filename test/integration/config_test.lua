@@ -27,19 +27,6 @@ g.before_all(function()
     })
     g.cluster:start()
 
-    g.cluster.main_server.net_box:eval([[
-        package.loaded['mymodule-permanent'].validate_config = function(conf_new, conf_old)
-            local yaml = require('yaml')
-            local tmp = yaml.encode(conf_new)
-            tmp = yaml.decode(tmp)
-            if tmp['myrole-section'] then
-                return false
-            end
-
-            return true
-        end
-    ]])
-
     -- Make sure auth section exists in clusterwide config.
     -- It shouldn't be available for downloading via HTTP API
     g.cluster.main_server.net_box:eval([[
@@ -47,6 +34,16 @@ g.before_all(function()
         local res, err = auth.add_user(...)
         assert(res, tostring(err))
     ]], {'guest', 'guest'})
+
+    g.cluster.main_server.net_box:eval([[
+        local mymodule = package.loaded['mymodule-permanent']
+        mymodule.validate_config = function(conf)
+            if conf.throw then
+                error('Config rejected: ' .. conf.throw, 0)
+            end
+            return true
+        end
+    ]])
 end)
 
 g.after_all(function()
@@ -274,8 +271,8 @@ function g.test_validate()
 
     -- confapplier validation
     t.assert_equals(
-        validate_config({{filename = 'myrole-section', content = 'do it'}}),
-        "Role \"myrole-permanent\" method validate_config() returned false"
+        validate_config({{filename = 'throw', content = 'Go away'}}),
+        "Config rejected: Go away"
     )
 end
 
