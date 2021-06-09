@@ -740,6 +740,15 @@ end
 
 
 local function patch_zone_distances(config_new, _)
+    -- remote topology
+    if vars.is_remote_topology then
+        local topology_obj = confapplier.get_topology_obj()
+        local topology_opts = topology_obj:get_topology_options()
+        -- FIXME: patch zone distances
+        return
+    end
+
+    -- local topology
     if config_new:get_readonly('zone_distances') ~= nil then
         return
     end
