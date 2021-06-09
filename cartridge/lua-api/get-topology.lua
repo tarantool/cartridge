@@ -93,7 +93,8 @@ local function get_topology()
     local replicasets = {}
     local known_roles = roles.get_known_roles()
     local leaders_order = {}
-    local failover_cfg = topology.get_failover_params(topology_cfg)
+    local clusterwide_config = confapplier:get_active_config()
+    local failover_cfg = topology.get_failover_params(clusterwide_config)
 
     for replicaset_uuid, replicaset in pairs(topology_cfg.replicasets) do
         replicasets[replicaset_uuid] = {

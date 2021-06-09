@@ -881,9 +881,48 @@ local function validate(topology_new, topology_old)
     return true
 end
 
-local function get_failover_params(topology_cfg)
-    checks('?table')
+local function get_failover_params(clusterwide_config)
+    checks('?ClusterwideConfig')
+    -- remote topology
+    if vars.is_remote_topology then
+        --[[
+        failover = nil | boolean | {
+            -- mode = 'disabled' | 'eventual' | 'stateful',
+            -- state_provider = nil | 'tarantool' | 'etcd2',
+            -- failover_timeout = nil | number,
+            -- tarantool_params = nil | {
+            --     uri = string,
+            --     password = string,
+            -- },
+            -- etcd2_params = nil | {
+            --     prefix = nil | string,
+            --     lock_delay = nil | number,
+            --     endpoints = nil | {string,...},
+            --     username = nil | string,
+            --     password = nil | string,
+            -- },
+            -- fencing_enabled = nil | boolean,
+            -- fencing_timeout = nil | number,
+            -- fencing_pause = nil | number,
+        },
+        ]]
+	log.warn('get_failover_params() to be implemented')
+        local ret = {
+            mode = 'disabled',
+            failover_timeout = 3,
+            fencing_enabled = false,
+            fencing_timeout = 3,
+            fencing_pause = 2,
+        }
+        return ret
+    end
+
+    -- local topology
+    local topology_cfg
     local ret
+    if clusterwide_config ~= nil then
+        topology_cfg = clusterwide_config:get_readonly('topology')
+    end
     if topology_cfg == nil then
         ret = {
             mode = 'disabled',
