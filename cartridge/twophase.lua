@@ -507,7 +507,7 @@ local function _clusterwide(patch)
         }):lock()
     end
 
-    local clusterwide_config_new, err = clusterwide_config_old:patch_copy(patch)
+    local clusterwide_config_new, err = clusterwide_config_old:copy_and_patch(patch)
     if err then
         return nil, err
     end

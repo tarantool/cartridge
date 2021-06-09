@@ -250,7 +250,7 @@ clusterwide_config_mt = {
             return self._checksum
         end,
 
-        patch_copy = function(self, patch)
+        copy_and_patch = function(self, patch)
             checks('ClusterwideConfig', 'table')
 
             local new_config = self:copy()

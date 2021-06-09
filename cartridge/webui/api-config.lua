@@ -298,7 +298,7 @@ local function validate_config(_, args)
     end
 
     local active_config = confapplier.get_active_config()
-    local draft_config = active_config:patch_copy(patch)
+    local draft_config = active_config:copy_and_patch(patch)
     draft_config:lock()
 
     -- Check topology
