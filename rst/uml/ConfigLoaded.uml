@@ -1,0 +1,2 @@
+[ConfigFound]->[ConfigLoaded]
+[ConfigLoaded]->[BootstrappingBox or RecoveringSnapshot]

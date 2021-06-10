@@ -18,6 +18,9 @@ cartridge instance binds TCP (iproto) and UDP sockets
 (SWIM), checks working directory and depending on enters one
 of the following states:
 
+..  uml::  ../doc/rst/uml/InitialState.uml
+
+
 .. // .. image:: ../doc/images/state-machine/InitialState.svg
 
 Unconfigured
@@ -32,6 +35,8 @@ cluster (to create replicaset or join the existing one).
 
 After that, the instance moves to ``BootstrappingBox`` state.
 
+..  uml::  ../doc/rst/uml/Unconfigured.uml
+
 ..  // .. image:: ../doc/images/state-machine/Unconfigured.svg
 
 ConfigFound
@@ -43,6 +48,9 @@ Config is to be downloaded and validated. If no errors occurred during these
 phases, the state is set to ``ConfigLoaded``  state.
 Otherwise, it will move to ``InitError`` state.
 
+..  uml::  ../doc/rst/uml/ConfigFound.uml
+
+
 .. // .. image:: ../doc/images/state-machine/ConfigFound.svg
 
 ConfigLoaded
@@ -53,6 +61,9 @@ configuring. If there are any snapshots, the instance will change its
 state to ``RecoveringSnapshot``. Otherwise, it will move to
 ``BootstrappingBox`` state. By default, all instances start in read-only mode
 and don’t start listening until bootstrap/recovery finishes.
+
+..  uml::  ../doc/rst/uml/ConfigLoaded.uml
+
 
 .. // .. image:: ../doc/images/state-machine/ConfigLoaded.svg
 
@@ -79,6 +90,9 @@ state to ``BootError``. If there is no replicaset in clusterwide
 config, the instance will set the state to ``BootError``. If
 everything is ok, the instance is set to ``ConnectingFullmesh``.
 
+..  uml::  ../doc/rst/uml/Recovery.uml
+
+
 .. // .. image:: ../doc/images/state-machine/Recovery.svg
 
 RecoveringSnapshot
@@ -104,6 +118,9 @@ During this state, a configuration of servers and replicasets is being
 performed. Eventually, cluster topology, which is described in config, is
 implemented. But in case of an error instance the state is changed to
 ``BootError``. Otherwise, it proceeds to configuring roles.
+
+..  uml::  ../doc/rst/uml/ConnectingFullmesh.uml
+
 
 .. // .. image:: ../doc/images/state-machine/ConnectingFullmesh.svg
 
