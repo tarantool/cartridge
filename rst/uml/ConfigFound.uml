@@ -1,0 +1,3 @@
+[*]->[ConfigFound]
+[ConfigFound]->[ConfigLoaded]
+[ConfigFound]->[InitError]
