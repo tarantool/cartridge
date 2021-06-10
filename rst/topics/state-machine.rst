@@ -1,11 +1,11 @@
-.. _cartridge-state-machine:
+..  _cartridge-state-machine:
 
 
 Cluster instance lifecycle.
 ===========================
 
-Every instance in the cluster possesses an internal state machine. It helps to
-manage cluster operation and makes describing a distributed system
+Every instance in the cluster has an internal state machine. It helps to
+manage cluster operation and describe a distributed system
 simpler.
 
 ..  uml::  ../doc/rst/uml/state-machine.uml
@@ -13,10 +13,10 @@ simpler.
 
 .. //  .. image:: ../doc/images/state-machine/state-machine.svg
 
-Instance lifecycle starts from ``cartridge.cfg`` call. Cartridge
-instance during initialization binds TCP (iproto) and UDP sockets
-(SWIM), checks working directory and depending on circumstances
-continues to one of the following states:
+Instance lifecycle starts from ``cartridge.cfg`` call. During initialization
+cartridge instance binds TCP (iproto) and UDP sockets
+(SWIM), checks working directory and depending on enters one
+of the following states:
 
 .. // .. image:: ../doc/images/state-machine/InitialState.svg
 
@@ -26,7 +26,7 @@ Unconfigured
 If the working directory is clean and neither snapshots nor clusterwide
 configuration files exist, the instance enters ``Unconfigured`` state.
 
-The instance starts accepting iproto requests (Tarantool binary
+The instance starts to accept iproto requests (Tarantool binary
 protocol) and remains in the state until the user decides to join it to the
 cluster (to create replicaset or join the existing one).
 
@@ -37,20 +37,21 @@ After that, the instance moves to ``BootstrappingBox`` state.
 ConfigFound
 -----------
 
-``ConfigFound`` informs that all configuration files and snapshots are
-found. They are not loaded, though. Config is to be downloaded and
-validated. If during these phases error occurs, then state is set to
-``InitError`` state. Otherwise, it will move to ``ConfigLoaded`` state.
+The instance enters ``ConfigFound`` state if all configuration files and
+snapshots are found. The files and snapshots are not loaded.
+Config is to be downloaded and validated. If no errors occurred during these
+phases, the state is set to ``ConfigLoaded``  state.
+Otherwise, it will move to ``InitError`` state.
 
 .. // .. image:: ../doc/images/state-machine/ConfigFound.svg
 
 ConfigLoaded
 ------------
 
-Config is found, loaded and validated. The next step is an instance
-configuring. If snapshots are present, then the instance will change its
-state to ``RecoveringSnapshot``. In another case, it will move to
-``BootstrappingBox``. By default, all instances start in read-only mode
+Config is found, loaded and validated. The next step is instance
+configuring. If there are any snapshots, the instance will change its
+state to ``RecoveringSnapshot``. Otherwise, it will move to
+``BootstrappingBox`` state. By default, all instances start in read-only mode
 and don’t start listening until bootstrap/recovery finishes.
 
 .. // .. image:: ../doc/images/state-machine/ConfigLoaded.svg
@@ -58,24 +59,24 @@ and don’t start listening until bootstrap/recovery finishes.
 InitError
 ---------
 
-Instance initialization error – a state caused by the following:
+Instance initialization error can be caused by the following events:
 
--  Error occurred during ``cartridge.remote-control``\ ’s connection to
+*  Error occurred during ``cartridge.remote-control``\ ’s connection to
    binary port
--  Missing ``config.yml`` from workdir (``tmp/``), while snapshots are
+*  Missing ``config.yml`` from workdir (``tmp/``), while snapshots are
    present
--  Error loading configuration from disk
--  Invalid config - Server is not present in the cluster configuration
+*  Error while loading configuration from disk
+*  Invalid config - Server is not present in the cluster configuration
 
 BootstrappingBox
 ----------------
 
-Configuring arguments for ``box.cfg``, if snapshots or config files are
+Configuring arguments for ``box.cfg`` if snapshots or config files are
 not present. ``box.cfg`` execution. Setting up users and stopping
 ``remote-control``. The instance will try to start listening to full-featured
 iproto protocol. In case of failed attempt instance will change its
-state to ``BootError``. If replicaset is not present in clusterwide
-config, then the instance will set the state to ``BootError``. If
+state to ``BootError``. If there is no replicaset in clusterwide
+config, the instance will set the state to ``BootError``. If
 everything is ok, the instance is set to ``ConnectingFullmesh``.
 
 .. // .. image:: ../doc/images/state-machine/Recovery.svg
@@ -89,12 +90,12 @@ After that, the process is similar to ``BootstrappingBox``.
 BootError
 ---------
 
-This state can be caused by following:
+This state can be caused by following events:
 
--  Failed binding to binary port for iproto usage
--  Server is missing in clusterwide config
--  Replicaset is missing in clusterwide config
--  Failed replication configuration
+*  Failed binding to binary port for iproto usage
+*  Server is missing in clusterwide config
+*  Replicaset is missing in clusterwide config
+*  Failed replication configuration
 
 ConnectingFullmesh
 ------------------
