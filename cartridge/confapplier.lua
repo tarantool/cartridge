@@ -13,6 +13,7 @@ local errors = require('errors')
 local checks = require('checks')
 local membership = require('membership')
 
+local argparse = require('cartridge.argparse')
 local vars = require('cartridge.vars').new('cartridge.confapplier')
 local pool = require('cartridge.pool')
 local utils = require('cartridge.utils')
@@ -49,6 +50,21 @@ vars:new('replicaset_uuid')
 
 vars:new('box_opts', nil)
 vars:new('upgrade_schema', nil)
+
+local topology_opts, err = argparse.get_cluster_opts({
+    remote_topology_name = 'string',
+    remote_topology_storage = 'string',
+    remote_topology_endpoint = 'string',
+})
+vars:new('topology_name', topology_opts.remote_topology_name)
+vars:new('topology_storage', topology_opts.remote_topology_storage)
+vars:new('topology_endpoint', topology_opts.remote_topology_endpoint)
+vars:new('is_remote_topology', false)
+if vars.topology_name ~= nil and
+   vars.topology_storage ~= nil and
+   vars.topology_endpoint ~= nil then
+    vars.is_remote_topology = true
+end
 
 local state_transitions = {
 -- init()
@@ -186,6 +202,14 @@ local function validate_config(clusterwide_config, _)
     checks('ClusterwideConfig', 'nil')
     assert(clusterwide_config.locked)
 
+    -- TODO (sergeyb@): review checks one by one.
+    -- remote topology
+    if vars.is_remote_topology then
+	log.warn('validate_config() to be implemented')
+	return true, nil
+    end
+
+    -- local topology
     local conf_new = clusterwide_config:get_readonly()
     local conf_old
     if vars.clusterwide_config then
