@@ -331,11 +331,21 @@ local function boot_instance(clusterwide_config)
         or vars.state == 'ConfigLoaded', -- bootstraping from snapshot
         'Unexpected state ' .. vars.state
     )
-
+    local topology_obj
+    local box_opts
     local topology_cfg = clusterwide_config:get_readonly('topology') or {}
+    if vars.is_remote_topology == true then
+        assert(clusterwide_config ~= nil)
+        local use_uuid = true
+        local instances = topology.get_instances(clusterwide_config, use_uuid)
+        topology_cfg.servers = instances
+        local replicasets = topology.get_replicasets(clusterwide_config, use_uuid)
+        topology_cfg.replicasets = replicasets
+    end
+
     for _, server in pairs(topology_cfg.servers or {}) do
         if server ~= 'expelled' then
-            membership.add_member(server.uri)
+            membership.add_member(server.uri or server.box_cfg.listen)
         end
     end
 
@@ -364,7 +374,10 @@ local function boot_instance(clusterwide_config)
     if instance_uuid ~= nil then
 
         local server = topology_cfg.servers[instance_uuid]
-        replicaset_uuid = server.replicaset_uuid
+        replicaset_uuid = server.box_cfg.replicaset_uuid
+        if vars.is_remote_topology then
+            replicaset_uuid = box_opts.replicaset_uuid
+        end
     end
 
     -- There could be three options:
