@@ -437,29 +437,6 @@ end
 -- @local
 -- @treturn {[string]=table,...}
 local function get_known_groups()
-    -- remote topology
-    if vars.is_remote_topology then
-        local topology_obj = confapplier.get_topology_obj()
-        local topology_opts = topology_obj:get_topology_options()
-        vshard_groups = {}
-        for name, g in pairs(topology_opts.vshard_groups) do
-            vshard_groups[name] = {
-                bucket_count = g.bucket_count or vars.default_bucket_count,
-                bootstrapped = false,
-            }
-        end
-        -- FIXME: code above requires support in topology module
-        vshard_groups = {
-            default = {
-                bucket_count = vars.default_bucket_count,
-                bootstrapped = false,
-            }
-        }
-
-        return vshard_groups
-    end
-
-    -- local topology
     if roles.get_role('vshard-router') == nil then
         return {}
     end
