@@ -419,29 +419,6 @@ end
 
 local function set_known_groups(vshard_groups, default_bucket_count)
     checks('nil|table', 'nil|number')
-    -- remote topology
-    if vars.is_remote_topology then
-        local topology_obj = confapplier.get_topology_obj()
-        local topology_opts = topology_obj:get_topology_options()
-        vshard_groups = {}
-        for name, g in pairs(topology_opts.vshard_groups) do
-            vshard_groups[name] = {
-                bucket_count = g.bucket_count or vars.default_bucket_count,
-                bootstrapped = false,
-            }
-        end
-        -- FIXME: code above requires support in topology module
-        vshard_groups = {
-            default = {
-                bucket_count = vars.default_bucket_count,
-                bootstrapped = false,
-            }
-        }
-
-        return vshard_groups
-    end
-
-    -- remote topology
     vars.known_groups = vshard_groups
     vars.default_bucket_count = default_bucket_count
 end
