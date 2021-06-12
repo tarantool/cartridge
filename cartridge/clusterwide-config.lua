@@ -60,7 +60,26 @@ local digest = require('digest')
 local errno = require('errno')
 local errors = require('errors')
 
+local conf_lib = require('conf')
+local topology_lib = require('topology')
+local argparse = require('cartridge.argparse')
+local vars = require('cartridge.vars').new('cartridge.clusterwide-config')
 local utils = require('cartridge.utils')
+
+local topology_opts, err = argparse.get_cluster_opts({
+    remote_topology_name = 'string',
+    remote_topology_storage = 'string',
+    remote_topology_endpoint = 'string',
+})
+vars:new('topology_name', topology_opts.remote_topology_name)
+vars:new('topology_storage', topology_opts.remote_topology_storage)
+vars:new('topology_endpoint', topology_opts.remote_topology_endpoint)
+vars:new('is_remote_topology', false)
+if vars.topology_name ~= nil and
+   vars.topology_storage ~= nil and
+   vars.topology_endpoint ~= nil then
+    vars.is_remote_topology = true
+end
 
 yaml.cfg({
     encode_load_metatables = false,
@@ -280,6 +299,20 @@ clusterwide_config_mt = {
             return new_config
         end,
 
+        get_topology_obj = function(self)
+            checks('ClusterwideConfig')
+            local topology_obj
+            if self._topology == nil then
+                local urls = { vars.topology_endpoint }
+                local conf_client = conf_lib.new({ driver = vars.topology_storage, endpoints = urls })
+                assert(conf_client  ~= nil)
+                topology_obj = topology_lib.new(conf_client, vars.topology_name, false)
+                assert(topology_obj ~= nil)
+            end
+
+            return topology_obj
+        end,
+
         update_luatables = update_luatables,
         generate_checksum = generate_checksum,
     }
@@ -311,9 +344,19 @@ local function new(data)
 
     end
 
+    local t_obj = nil
+    if vars.is_remote_topology then
+        local urls = { vars.topology_endpoint }
+        local conf_client = conf_lib.new({ driver = vars.topology_storage, endpoints = urls })
+        assert(conf_client  ~= nil)
+        local t_obj = topology_lib.new(conf_client, vars.topology_name, false)
+        assert(t_obj ~= nil)
+    end
+
     local cfg = setmetatable({
         _plaintext = utils.table_setro(data),
-        locked = false
+        locked = false,
+        _topology = t_obj,
     }, clusterwide_config_mt)
 
     return cfg:update_luatables()
@@ -480,6 +523,11 @@ end
 -- @treturn[2] table Error description
 local function save(clusterwide_config, path)
     checks('ClusterwideConfig', 'string')
+    if vars.is_remote_topology then
+        local t_obj = clusterwide_config.get_topology()
+        t_obj:commit()
+    end
+
     local random_path = utils.randomize_path(path)
 
     local ok, err = utils.mktree(random_path)
