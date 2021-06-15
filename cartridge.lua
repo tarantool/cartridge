@@ -38,11 +38,14 @@ local confapplier = require('cartridge.confapplier')
 local vshard_utils = require('cartridge.vshard-utils')
 local cluster_cookie = require('cartridge.cluster-cookie')
 local service_registry = require('cartridge.service-registry')
+local vars = require('cartridge.vars').new('cartridge.cartridge')
 
 local lua_api_topology = require('cartridge.lua-api.topology')
 local lua_api_failover = require('cartridge.lua-api.failover')
 local lua_api_vshard = require('cartridge.lua-api.vshard')
 local lua_api_deprecated = require('cartridge.lua-api.deprecated')
+
+local ClusterwideConfig = require('cartridge.clusterwide-config')
 
 local ConsoleListenError = errors.new_class('ConsoleListenError')
 local CartridgeCfgError = errors.new_class('CartridgeCfgError')
@@ -54,6 +57,21 @@ local _ = require('cartridge.feedback')
 local ok, VERSION = pcall(require, 'cartridge.VERSION')
 if not ok then
     VERSION = 'unknown'
+end
+
+local topology_opts, err = argparse.get_cluster_opts({
+    remote_topology_name = 'string',
+    remote_topology_storage = 'string',
+    remote_topology_endpoint = 'string',
+})
+vars:new('topology_name', topology_opts.remote_topology_name)
+vars:new('topology_storage', topology_opts.remote_topology_storage)
+vars:new('topology_endpoint', topology_opts.remote_topology_endpoint)
+vars:new('is_remote_topology', false)
+if vars.topology_name ~= nil and
+   vars.topology_storage ~= nil and
+   vars.topology_endpoint ~= nil then
+    vars.is_remote_topology = true
 end
 
 --- Vshard storage group configuration.
@@ -289,6 +307,35 @@ local function cfg(opts, box_opts)
         upload_prefix = '?string',
     }, '?table')
 
+    box_opts = nil or {}
+    local args, err = argparse.parse()
+    if args == nil then
+        return nil, err
+    end
+
+    if vars.is_remote_topology == true then
+        local instance_name = args.instance_name
+        assert(instance_name)
+        local clusterwide_config = ClusterwideConfig.new()
+        assert(clusterwide_config ~= nil)
+        local topology_obj = clusterwide_config:get_topology_obj()
+        local instance_opts = topology_obj:get_instance_options(instance_name)
+        log.warn(instance_name)
+        local inspect = require('inspect')
+        print(inspect.inspect(instance_opts))
+        assert(instance_opts ~= nil)
+        assert(instance_opts.box_cfg ~= nil)
+        local _box_opts = instance_opts.box_cfg
+        for k, v in pairs(_box_opts) do
+            box_opts[k] = v
+        end
+        instance_opts.workdir = instance_opts.box_cfg.work_dir
+        instance_opts.box_cfg = nil
+        for k, v in pairs(instance_opts) do
+            opts[k] = v
+        end
+    end
+
     if opts.webui_blacklist ~= nil then
         local i = 0
         for _, _ in pairs(opts.webui_blacklist) do
@@ -301,10 +348,6 @@ local function cfg(opts, box_opts)
         end
     end
 
-    local args, err = argparse.parse()
-    if args == nil then
-        return nil, err
-    end
     local _cluster_opts, err = argparse.get_cluster_opts()
     if _cluster_opts == nil then
         return nil, err
@@ -318,9 +361,6 @@ local function cfg(opts, box_opts)
         opts[k] = v
     end
 
-    if box_opts == nil then
-        box_opts = {}
-    end
     for k, v in pairs(_box_opts) do
         box_opts[k] = v
     end
