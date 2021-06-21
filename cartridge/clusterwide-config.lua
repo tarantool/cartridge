@@ -345,6 +345,10 @@ local function load_from_file(filename)
         return nil, LoadConfigError:new(
             'Error loading %q: File is empty', filename
         )
+    elseif type(data) ~= 'table' then
+        return nil, LoadConfigError:new(
+            'Error loading %q: Config must be a table', filename
+        )
     end
 
     local _plaintext = {}
