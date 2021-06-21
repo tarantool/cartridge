@@ -181,6 +181,20 @@ function g.test_oldstyle_err()
         err = 'Error loading section "side_config":' ..
         ' inclusion "not_existing.txt" not found'
     })
+
+    write_tree({['config.yml'] = [[---
+        local my_var = 123
+        ...
+    ]]})
+    local cfg, err = ClusterwideConfig.load(g.tempdir .. '/config.yml')
+    t.assert_equals(cfg, nil)
+    t.assert_covers(err, {
+        class_name = 'LoadConfigError',
+        err = string.format(
+            'Error loading %q: Config must be a table',
+            fio.pathjoin(g.tempdir, 'config.yml')
+        ),
+    })
 end
 
 function g.test_preserving_plaintext()
