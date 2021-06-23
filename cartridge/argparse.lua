@@ -287,6 +287,9 @@ local function parse_file(filename, search_name)
         table.insert(section_names, section_name)
     end
 
+    package.loaded.log.info(file_sections)
+    package.loaded.log.info(section_names)
+
     local ret = {}
     for section_index, section_name in ipairs(section_names) do
         local content = file_sections[section_name]

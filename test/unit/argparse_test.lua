@@ -77,6 +77,10 @@ function g:test_sections()
                 x = '@custom.sub.sub',
                 y_subsub = true,
             },
+            ['custom.x.y.z'] = {
+                x = '@custom.x.y.z',
+                y_xyz = true,
+            },
         })
     )
 
@@ -104,11 +108,14 @@ function g:test_sections()
         y_default = 0,
     })
 
-    check('--instance-name unknown', {
-        instance_name = 'unknown',
-        x = '@default',
-        y_default = 0,
-    })
+    t.assert_error_msg_contains(
+        'ParseConfigError: Missing section name: unknown',
+        check, '--instance-name unknown', {
+            instance_name = 'unknown',
+            x = '@default',
+            y_default = 0,
+        }
+    )
 
     check('--instance-name custom', {
         instance_name = 'custom',
@@ -116,6 +123,16 @@ function g:test_sections()
         y_default = 0,
         y_custom = '$',
     })
+
+    t.assert_error_msg_contains(
+        'ParseConfigError: Missing section name: custom.bad',
+        check, '--instance-name custom.bad', {
+            instance_name = 'custom.bad',
+            x = '@custom',
+            y_default = 0,
+            y_custom = '$',
+        }
+    )
 
     check('--instance-name custom.sub', {
         instance_name = 'custom.sub',
@@ -132,6 +149,14 @@ function g:test_sections()
         y_custom = '$',
         y_sub = 3.14,
         y_subsub = true,
+    })
+
+    check('--instance_name custom.x.y.z', {
+        instance_name = 'custom.x.y.z',
+        x = '@custom.x.y.z',
+        y_default = 0,
+        y_custom = '$',
+        y_xyz = true,
     })
 end
 
