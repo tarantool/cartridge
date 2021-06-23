@@ -288,9 +288,19 @@ local function parse_file(filename, search_name)
     end
 
     local ret = {}
+    for section_index, section_name in ipairs(section_names) do
+        local content = file_sections[section_name]
 
-    for _, section_name in ipairs(section_names) do
-        local content = file_sections[section_name] or {}
+        -- When instance's name can't be found in file_sections it shouldn't be started.
+        -- Such behavior prevents this:
+        -- https://github.com/tarantool/cartridge/issues/1437
+        if section_index > 2 -- {'default', 'app_name', | 'invalid_instance_name'}
+        and not section_name:endswith('.') -- myapp == myapp.
+        and content == nil then
+            return nil, ParseConfigError:new('Missing section name: %s', section_name)
+        end
+        content = content or {}
+
         for argname, argvalue in pairs(content) do
             ret[argname:lower()] = argvalue
         end

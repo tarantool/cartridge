@@ -117,13 +117,6 @@ function g:test_sections()
         y_custom = '$',
     })
 
-    check('--instance-name custom.bad', {
-        instance_name = 'custom.bad',
-        x = '@custom',
-        y_default = 0,
-        y_custom = '$',
-    })
-
     check('--instance-name custom.sub', {
         instance_name = 'custom.sub',
         x = '@custom.sub',
@@ -297,6 +290,17 @@ function g:test_badfile()
     )
     local ret = self:run('--cfg tarantool.yml', {}, {ignore_errors = true})
     t.assert_str_contains(ret.err, 'DecodeYamlError: tarantool.yml: unexpected END event')
+
+    utils.file_write(
+        fio.pathjoin(self.tempdir, 'tarantool.yml'),
+        yaml.encode({['app_name.instance_name'] = {x = 'sup'}})
+    )
+    local ret = self:run(
+        '--cfg tarantool.yml' ..
+        ' --app_name app_name' ..
+        ' --instance_name harry',
+        {}, {ignore_errors = true})
+    t.assert_str_contains(ret.err, 'ParseConfigError: Missing section name: app_name.harry')
 end
 
 function g:test_box_opts()
