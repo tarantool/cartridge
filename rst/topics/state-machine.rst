@@ -11,8 +11,6 @@ simpler.
 ..  uml::  ../doc/rst/uml/state-machine.uml
 
 
-.. //  .. image:: ../doc/images/state-machine/state-machine.svg
-
 Instance lifecycle starts from ``cartridge.cfg`` call. During initialization
 cartridge instance binds TCP (iproto) and UDP sockets
 (SWIM), checks working directory and depending on enters one
@@ -20,8 +18,6 @@ of the following states:
 
 ..  uml::  ../doc/rst/uml/InitialState.uml
 
-
-.. // .. image:: ../doc/images/state-machine/InitialState.svg
 
 Unconfigured
 ------------
@@ -37,7 +33,6 @@ After that, the instance moves to ``BootstrappingBox`` state.
 
 ..  uml::  ../doc/rst/uml/Unconfigured.uml
 
-..  // .. image:: ../doc/images/state-machine/Unconfigured.svg
 
 ConfigFound
 -----------
@@ -51,8 +46,6 @@ Otherwise, it will move to ``InitError`` state.
 ..  uml::  ../doc/rst/uml/ConfigFound.uml
 
 
-.. // .. image:: ../doc/images/state-machine/ConfigFound.svg
-
 ConfigLoaded
 ------------
 
@@ -64,8 +57,6 @@ and don’t start listening until bootstrap/recovery finishes.
 
 ..  uml::  ../doc/rst/uml/ConfigLoaded.uml
 
-
-.. // .. image:: ../doc/images/state-machine/ConfigLoaded.svg
 
 InitError
 ---------
@@ -91,9 +82,6 @@ config, the instance will set the state to ``BootError``. If
 everything is ok, the instance is set to ``ConnectingFullmesh``.
 
 ..  uml::  ../doc/rst/uml/Recovery.uml
-
-
-.. // .. image:: ../doc/images/state-machine/Recovery.svg
 
 RecoveringSnapshot
 ------------------
@@ -122,8 +110,6 @@ implemented. But in case of an error instance the state is changed to
 ..  uml::  ../doc/rst/uml/ConnectingFullmesh.uml
 
 
-.. // .. image:: ../doc/images/state-machine/ConnectingFullmesh.svg
-
 BoxConfigured
 -------------
 
@@ -137,10 +123,8 @@ The state of role configuration. Instance can be set to this state while
 initial setup, after failover trigger(``failover.lua``) or after
 altering clusterwide config(``twophase.lua``).
 
-.. // .. figure:: ../doc/images/state-machine/ConfiguringRoles.svg
-.. //   :alt: confRoles
+..  uml:: ../doc/rst/uml/ConfiguringRoles.uml
 
-.. //   confRoles
 
 RolesConfigured
 ---------------
