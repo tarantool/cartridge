@@ -27,7 +27,8 @@ extensions = [
     'TarantoolSessionLexer',
     'sphinxcontrib.plantuml',
 ]
-plantuml = 'java -jar /path/to/plantuml.jar'
+
+plantuml_output_format = 'svg_img'
 language = 'en'
 locale_dirs = ['./locale']
 gettext_additional_targets = ['literal-block']
