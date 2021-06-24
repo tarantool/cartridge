@@ -1,0 +1,60 @@
+name: Pull translations
+
+on:
+  workflow_dispatch:
+    branches:
+      - '!master'
+
+jobs:
+  pull-translations:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          token: "${{ secrets.TARANTOOLBOT_TOKEN }}"
+
+      - name: Set branch name from source branch
+        run: echo "BRANCH_NAME=${GITHUB_REF##*/}" >> $GITHUB_ENV
+
+      - name: Setup tarantool
+        uses: tarantool/setup-tarantool@v1
+        with:
+          tarantool-version: '2.6'
+
+      - name: Setup Python environment
+        uses: actions/setup-python@v2
+
+      - name: Setup Python requirements
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r rst/requirements.txt
+
+      - name: Create Makefile
+        run: cmake .
+
+      - name: Update pot files
+        run: make update-pot
+
+      - name: Pull translations from Crowdin
+        uses: crowdin/github-action@1.0.21
+        with:
+          upload_sources: false
+          upload_translations: false
+          push_translations: false
+          download_translations: true
+          download_language: 'ru'
+          crowdin_branch_name: "${{ env.BRANCH_NAME }}"
+          debug_mode: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
+
+      - name: Cleanup translation files
+        run: make cleanup-po
+
+      - name: Commit translation files
+        uses: stefanzweifel/git-auto-commit-action@v4.1.2
+        with:
+          commit_message: "Update translations"
+          file_pattern: "*.po"

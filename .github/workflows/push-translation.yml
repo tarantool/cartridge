@@ -1,0 +1,62 @@
+name: Push translation sources to a Crowdin branch
+
+on:
+  pull_request:
+    paths:
+      - 'rst/**.rst'
+jobs:
+  push-translation-sources:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set branch name from source branch
+        run: echo "BRANCH_NAME=${GITHUB_HEAD_REF##*/}" >> $GITHUB_ENV
+
+      - name: Start translation service deployment
+        uses: bobheadxi/deployments@v0.5.2
+        id: translation
+        with:
+          step: start
+          token: ${{secrets.GITHUB_TOKEN}}
+          env: "translation-${{env.BRANCH_NAME}}"
+          ref: ${{github.head_ref}}
+
+      - name: Setup tarantool
+        uses: tarantool/setup-tarantool@v1
+        with:
+          tarantool-version: '2.6'
+
+      - name: Setup Python environment
+        uses: actions/setup-python@v2
+
+      - name: Setup Python requirements
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r rst/requirements.txt
+
+      - name: Create Makefile
+        run: cmake .
+
+      - name: Update pot files
+        run: make update-pot
+
+      - name: Push POT files to crowdin
+        uses: crowdin/github-action@1.0.21
+        with:
+          upload_sources: true
+          upload_translations: false
+          crowdin_branch_name: "${{ env.BRANCH_NAME }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
+
+      - name: update deployment status
+        uses: bobheadxi/deployments@v0.5.2
+        with:
+          step: finish
+          token: ${{secrets.GITHUB_TOKEN}}
+          status: ${{job.status}}
+          deployment_id: ${{steps.translation.outputs.deployment_id}}
+          env_url: https://crowdin.com/project/tarantool-cartridge-docs/ru#/${{env.BRANCH_NAME}}

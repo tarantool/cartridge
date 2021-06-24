@@ -1,10 +1,11 @@
 name: Update translation sources
 
 on:
-  workflow_dispatch:
-  pull_request:
+  push:
     paths:
       - 'rst/**.rst'
+    branches:
+      - master
 jobs:
   autocommit-pot-files:
     runs-on: ubuntu-latest
@@ -13,8 +14,6 @@ jobs:
 
     - name: Checkout
       uses: actions/checkout@v2
-      with:
-        ref: ${{ github.head_ref }}
 
     - name: Setup tarantool
       uses: tarantool/setup-tarantool@v1
@@ -35,16 +34,12 @@ jobs:
     - name: Update pot files
       run: make update-pot
 
-    - name: Push Local Changes
-      uses: stefanzweifel/git-auto-commit-action@v4.9.2
-      with:
-        commit_message: "Update translation sources"
-        file_pattern: "*.pot"
-
     - name: Push Pot-files to crowdin
       uses: crowdin/github-action@1.1.0
       with:
         upload_sources: true
+        upload_translations: true
+        import_eq_suggestions: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
