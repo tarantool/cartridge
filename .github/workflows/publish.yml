@@ -4,11 +4,7 @@ on:
   push:
     branches: [master]
     tags: ['*']
-    paths-ignore:
-      - 'rst/*'
-      - '.github/workflows/pull-translation.yml'
-      - '.github/workflows/push-translation.yml'
-      - '.github/workflows/upload-translation.yml'
+
 jobs:
   publish-scm-1:
     if: github.ref == 'refs/heads/master'

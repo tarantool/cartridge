@@ -3,10 +3,8 @@ name: Frontend Test
 on:
   push:
     paths-ignore:
-      - 'rst/*'
-      - '.github/workflows/pull-translation.yml'
-      - '.github/workflows/push-translation.yml'
-      - '.github/workflows/upload-translation.yml'
+      - 'rst/**'
+      - '.github/workflows/*-translation.yml'
   workflow_dispatch:
 
 env:
