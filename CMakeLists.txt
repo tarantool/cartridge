@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
 
 project(cartridge C)
 
+set(PYTHON3_EXECUTABLE "python3")
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 set(CMAKE_SKIP_INSTALL_ALL_DEPENDENCY TRUE)
 
@@ -146,6 +147,14 @@ add_custom_target(update-po
         -l "ru"
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     COMMENT "Regenerate localization files from templates"
+)
+
+add_custom_target(cleanup-po
+    COMMAND "${PYTHON3_EXECUTABLE}"
+        cleanup.py
+        po
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/rst/locale
+    COMMENT "Cleanup and rearrange PO files"
 )
 
 if(Ldoc_FOUND AND Sphinx_FOUND)
