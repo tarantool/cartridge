@@ -268,6 +268,7 @@ end
 
 local function parse_file(filename, app_name, instance_name)
     checks('string', '?string', '?string')
+
     local file_sections, err
 
     if filename:endswith('/') then
@@ -282,35 +283,35 @@ local function parse_file(filename, app_name, instance_name)
 
     local section_names = {'default'}
 
-    local search_name = instance_name or ''
-    if app_name ~= nil then
-        if app_name:find('%.') then
-            require('log').warn('Complex app-name may corrupt yml parsing: %s', app_name)
+    do -- generate section names to be parsed
+        app_name = app_name and string.strip(app_name) or ''
+        if app_name ~= '' then
+            table.insert(section_names, app_name)
         end
 
-        search_name = app_name .. '.' .. search_name
-        if search_name:endswith('.') then
-            search_name = search_name:sub(1, #search_name - 1)
-        end
-    end
-
-    if search_name ~= '' then
-        local search_name_parts = search_name:split('.')
-        for n = 1, #search_name_parts do
-            local section_name = table.concat(search_name_parts, '.', 1, n)
-            table.insert(section_names, section_name)
+        instance_name = instance_name and string.strip(instance_name) or ''
+        if instance_name ~= '' then
+            local parts = instance_name:split('.')
+            for n = 1, #parts do
+                local section_name = table.concat(parts, '.', 1, n)
+                if app_name ~= '' then
+                    section_name = app_name .. '.' .. section_name
+                end
+                table.insert(section_names, section_name)
+            end
         end
     end
 
     local ret = {}
     for _, section_name in ipairs(section_names) do
         local content = file_sections[section_name]
-        -- When instance's name can't be found in file_sections it shouldn't be started.
-        -- Such behavior prevents this:
-        -- https://github.com/tarantool/cartridge/issues/1437
+
         if section_name ~= 'default'
         and section_name ~= app_name
         and content == nil then
+            -- When instance's name can't be found in file_sections it
+            -- shouldn't be started. Such behavior violates
+            -- https://github.com/tarantool/cartridge/issues/1437
             return nil, ParseConfigError:new('Missing section: %s', section_name)
         end
         content = content or {}

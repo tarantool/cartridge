@@ -114,11 +114,7 @@ function g:test_sections()
 
     t.assert_error_msg_contains(
         'ParseConfigError: Missing section: unknown',
-        check, '--instance-name unknown', {
-            instance_name = 'unknown',
-            x = '@default',
-            y_default = 0,
-        }
+        check, '--instance-name unknown'
     )
 
     check('--instance-name custom', {
@@ -130,12 +126,7 @@ function g:test_sections()
 
     t.assert_error_msg_contains(
         'ParseConfigError: Missing section: custom.bad',
-        check, '--instance-name custom.bad', {
-            instance_name = 'custom.bad',
-            x = '@custom',
-            y_default = 0,
-            y_custom = '$',
-        }
+        check, '--instance-name custom.bad'
     )
 
     check('--instance-name custom.sub', {
@@ -171,13 +162,7 @@ function g:test_sections()
 
     t.assert_error_msg_contains(
         'ParseConfigError: Missing section: custom.x\n',
-        check, '--instance-name custom.x.y.z', {
-            instance_name = 'custom.bad',
-            x = '@custom.x.y.z',
-            y_default = 0,
-            y_custom = '$',
-            y_xyz = true,
-        }
+        check, '--instance-name custom.x.y.z'
     )
 end
 
