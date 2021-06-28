@@ -81,6 +81,10 @@ function g:test_sections()
                 x = '@custom.x.y.z',
                 y_xyz = true,
             },
+            ['myapp.instance'] = {
+                x = '@myapp.instance',
+                y_instance = true,
+            }
         })
     )
 
@@ -109,7 +113,7 @@ function g:test_sections()
     })
 
     t.assert_error_msg_contains(
-        'ParseConfigError: Missing section name: unknown',
+        'ParseConfigError: Missing section: unknown',
         check, '--instance-name unknown', {
             instance_name = 'unknown',
             x = '@default',
@@ -125,7 +129,7 @@ function g:test_sections()
     })
 
     t.assert_error_msg_contains(
-        'ParseConfigError: Missing section name: custom.bad',
+        'ParseConfigError: Missing section: custom.bad',
         check, '--instance-name custom.bad', {
             instance_name = 'custom.bad',
             x = '@custom',
@@ -142,6 +146,20 @@ function g:test_sections()
         y_sub = 3.14,
     })
 
+    check('--app-name myapp', {
+        app_name = 'myapp',
+        x = '@default',
+        y_default = 0,
+    })
+
+    check('--app-name myapp --instance-name instance', {
+        app_name = 'myapp',
+        instance_name = 'instance',
+        x = '@myapp.instance',
+        y_default = 0,
+        y_instance = true,
+    })
+
     check('--instance_name custom.sub.sub', {
         instance_name = 'custom.sub.sub',
         x = '@custom.sub.sub',
@@ -151,13 +169,16 @@ function g:test_sections()
         y_subsub = true,
     })
 
-    check('--instance_name custom.x.y.z', {
-        instance_name = 'custom.x.y.z',
-        x = '@custom.x.y.z',
-        y_default = 0,
-        y_custom = '$',
-        y_xyz = true,
-    })
+    t.assert_error_msg_contains(
+        'ParseConfigError: Missing section: custom.x\n',
+        check, '--instance-name custom.x.y.z', {
+            instance_name = 'custom.bad',
+            x = '@custom.x.y.z',
+            y_default = 0,
+            y_custom = '$',
+            y_xyz = true,
+        }
+    )
 end
 
 function g:test_priority()
@@ -190,7 +211,6 @@ function g:test_priority()
 
     check('--instance-name custom',             {'TARANTOOL_CFG=./x.yml'}, '@custom')
     check('', {'TARANTOOL_INSTANCE_NAME=custom', 'TARANTOOL_CFG=./x.yml'}, '@custom')
-    check('', {'TARANTOOL_INSTANCE_NAME=CUSTOM', 'TARANTOOL_CFG=./x.yml'}, '@default')
 
     check('--cfg ./cfg.yml',   {'TARANTOOL_CFG=./x.yml'}, '@cfg-default')
     check('',              {'TARANTOOL_CFG="./cfg.yml"'}, '@cfg-default')
@@ -325,7 +345,7 @@ function g:test_badfile()
         ' --app_name app_name' ..
         ' --instance_name harry',
         {}, {ignore_errors = true})
-    t.assert_str_contains(ret.err, 'ParseConfigError: Missing section name: app_name.harry')
+    t.assert_str_contains(ret.err, 'ParseConfigError: Missing section: app_name.harry')
 end
 
 function g:test_box_opts()

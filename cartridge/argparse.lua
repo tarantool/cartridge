@@ -266,8 +266,8 @@ local function parse_env()
     return ret
 end
 
-local function parse_file(filename, search_name)
-    checks('string', 'string')
+local function parse_file(filename, app_name, instance_name)
+    checks('string', '?string', '?string')
     local file_sections, err
 
     if filename:endswith('/') then
@@ -281,26 +281,37 @@ local function parse_file(filename, search_name)
     end
 
     local section_names = {'default'}
-    local search_name_parts = search_name:split('.')
-    for n = 1, #search_name_parts do
-        local section_name = table.concat(search_name_parts, '.', 1, n)
-        table.insert(section_names, section_name)
+
+    local search_name = instance_name or ''
+    if app_name ~= nil then
+        if app_name:find('%.') then
+            require('log').warn('Complex app-name may corrupt yml parsing: %s', app_name)
+        end
+
+        search_name = app_name .. '.' .. search_name
+        if search_name:endswith('.') then
+            search_name = search_name:sub(1, #search_name - 1)
+        end
     end
 
-    package.loaded.log.info(file_sections)
-    package.loaded.log.info(section_names)
+    if search_name ~= '' then
+        local search_name_parts = search_name:split('.')
+        for n = 1, #search_name_parts do
+            local section_name = table.concat(search_name_parts, '.', 1, n)
+            table.insert(section_names, section_name)
+        end
+    end
 
     local ret = {}
-    for section_index, section_name in ipairs(section_names) do
+    for _, section_name in ipairs(section_names) do
         local content = file_sections[section_name]
-
         -- When instance's name can't be found in file_sections it shouldn't be started.
         -- Such behavior prevents this:
         -- https://github.com/tarantool/cartridge/issues/1437
-        if section_index > 2 -- {'default', 'app_name', | 'invalid_instance_name'}
-        and not section_name:endswith('.') -- myapp == myapp.
+        if section_name ~= 'default'
+        and section_name ~= app_name
         and content == nil then
-            return nil, ParseConfigError:new('Missing section name: %s', section_name)
+            return nil, ParseConfigError:new('Missing section: %s', section_name)
         end
         content = content or {}
 
@@ -350,12 +361,7 @@ local function _parse()
         args.cfg = args.cfg .. '/'
     end
 
-    local search_name = args.instance_name or ''
-    if args.app_name ~= nil then
-        search_name = args.app_name .. '.' .. search_name
-    end
-
-    local cfg, err = parse_file(args.cfg, search_name)
+    local cfg, err = parse_file(args.cfg, args.app_name, args.instance_name)
     if not cfg then
         return nil, err
     else
