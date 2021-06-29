@@ -44,7 +44,7 @@ Changed
   according to the leader order from topology.
 - Update ``errors`` dependency to 2.2.0.
 - Add default ``pool.map_call`` timeout 10 seconds.
-- Update ``frontend-core`` dependency to 7.8.0.
+- Update ``frontend-core`` dependency to 7.9.1.
 - Argparse throws an error when it encouters ``instance_name`` missing in
   instances.yml.
 
