@@ -132,6 +132,26 @@ function* refreshListsSaga(requestNum = 0) {
         serverStat: response.serverStat.filter(stat => stat.uuid)
       };
     }
+
+    if (response.failover) {
+      response = {
+        ...response,
+        failoverMode: response.failover.failover_params.mode
+      }
+    }
+
+    const { failoverMode, showFailoverModal } = yield select(
+      ({ clusterPage, ui }) => ({
+        failoverMode: clusterPage.failoverMode,
+        showFailoverModal: ui.showFailoverModal
+      })
+    );
+
+    if (failoverMode && !showFailoverModal && failoverMode !== response.failoverMode) {
+      const clusterSelfResponse = yield call(getClusterSelf);
+      yield put({ type: CLUSTER_SELF_UPDATE, payload: clusterSelfResponse });
+    }
+
     yield put({ type: CLUSTER_PAGE_REFRESH_LISTS_REQUEST_SUCCESS, payload: response, requestPayload: {} });
   }
 }

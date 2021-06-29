@@ -37,9 +37,9 @@ const FailoverButton = (
   );
 };
 
-export default connect(({ app, ui }) => {
+export default connect(({ app, ui, clusterPage: { failoverMode } }) => {
   return {
-    mode: app.failover_params.mode,
+    mode: failoverMode ? failoverMode : app.failover_params.mode,
     showFailoverModal: ui.showFailoverModal,
     visible: !!(app.clusterSelf && app.clusterSelf.configured)
   }

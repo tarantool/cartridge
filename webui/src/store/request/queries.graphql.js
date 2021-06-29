@@ -291,6 +291,11 @@ export const instanceDataQuery = gql`
 
 export const listQuery = gql`
 query serverList ($withStats: Boolean!) {
+  failover: cluster {
+      failover_params {
+          mode
+      }
+  }
   serverList: servers {
     uuid
     alias
