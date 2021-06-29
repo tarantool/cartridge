@@ -35,6 +35,8 @@ Added
   - ``/`` and ``<PREFIX>/`` redirect to ``/<PREFIX>/admin`` (if enabled).
 
 - New validate_config method in GraphQL API.
+- Add ``zone`` and ``zone_distances`` parameters to server and cluster helpers
+  respectively.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Changed

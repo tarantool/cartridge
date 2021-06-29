@@ -1,6 +1,6 @@
 local fio = require('fio')
 local t = require('luatest')
-local g = t.group()
+local g = t.group('integration.zones')
 
 local helpers = require('test.helper')
 
@@ -226,4 +226,54 @@ function g.test_validation()
     t.assert_equals(err.err,
         'Distance of own zone z2 must be either nil or 0, got 2'
     )
+end
+
+local h = t.group('integration.zones.helpers')
+
+h.before_all(function()
+    h.distances = {
+        z1 = {z1 = 0, z2 = 200, z3 = 100},
+        z2 = {z1 = 1, z2 = nil, z3 = 100},
+        z3 = {z1 = 2, z2 =  50, z3 = box.NULL},
+        z4 = {--[[defaults to 0]]},
+    }
+
+    h.cluster = helpers.Cluster:new({
+        datadir = fio.tempdir(),
+        use_vshard = true,
+        server_command = helpers.entrypoint('srv_basic'),
+        cookie = require('digest').urandom(6):hex(),
+        replicasets = {{
+            alias = 'A',
+            roles = {'vshard-router', 'vshard-storage'},
+            servers = {{zone = 'z1'}, {zone = 'z2'}, {}},
+        }},
+        zone_distances = h.distances,
+    })
+    h.cluster:start()
+
+    h.A1 = h.cluster:server('A-1')
+    h.A2 = h.cluster:server('A-2')
+    h.A3 = h.cluster:server('A-3')
+end)
+
+h.after_all(function()
+    h.cluster:stop()
+    fio.rmtree(h.cluster.datadir)
+end)
+
+function h.test_zones_distances()
+    t.assert_items_equals(
+        h.A1:graphql({query = '{servers {uuid zone}}'}).data.servers,
+        {
+            {uuid = h.A1.instance_uuid, zone = 'z1'},
+            {uuid = h.A2.instance_uuid, zone = 'z2'},
+            {uuid = h.A3.instance_uuid, zone = box.NULL},
+        }
+    )
+
+    local distances = h.cluster.main_server.net_box:call(
+        'package.loaded.cartridge.config_get_readonly', {'zone_distances'}
+    )
+    t.assert_items_equals(distances, h.distances)
 end
