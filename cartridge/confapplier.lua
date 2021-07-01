@@ -7,6 +7,7 @@
 
 local log = require('log')
 local fio = require('fio')
+local fun = require('fun')
 local yaml = require('yaml').new()
 local fiber = require('fiber')
 local errors = require('errors')
@@ -231,13 +232,20 @@ local function apply_config(clusterwide_config)
     vars.clusterwide_config = clusterwide_config
     set_state('ConfiguringRoles')
 
+    local topology_cfg = clusterwide_config:get_readonly('topology')
     box.cfg({replication_connect_quorum = 0})
     box.cfg({
         replication = topology.get_fullmesh_replication(
-            clusterwide_config:get_readonly('topology'), vars.replicaset_uuid,
+            topology_cfg, vars.replicaset_uuid,
             vars.instance_uuid, vars.advertise_uri
         ),
     })
+
+    if failover.is_leader() then
+        for _, uuid, _ in fun.filter(topology.expelled, topology_cfg.servers) do
+            box.space._cluster.index.uuid:delete(uuid)
+        end
+    end
 
     local ok, err = OperationError:pcall(failover.cfg,
         clusterwide_config
