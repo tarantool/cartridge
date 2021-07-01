@@ -591,7 +591,7 @@ export const getFilesQuery = gql`
 `;
 
 export const getFailoverParams = gql`
-    query configFiles {
+    query getFailoverParams {
         cluster {
             failover_params {
                 failover_timeout

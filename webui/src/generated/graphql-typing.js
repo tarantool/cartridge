@@ -17,32 +17,34 @@ export type Scalars = {|
 /** Cluster management */
 export type Apicluster = {|
   __typename?: 'Apicluster',
+  /** List issues in cluster */
+  issues?: ?Array<Issue>,
   /** Some information about current server */
   self?: ?ServerShortInfo,
   /** Clusterwide DDL schema */
   schema: DdlSchema,
-  /** List issues in cluster */
-  issues?: ?Array<Issue>,
-  /** Get automatic failover configuration. */
-  failover_params: FailoverApi,
   /** Get current failover state. (Deprecated since v2.0.2-2) */
   failover: $ElementType<Scalars, 'Boolean'>,
+  /** Get automatic failover configuration. */
+  failover_params: FailoverApi,
   /** Show suggestions to resolve operation problems */
   suggestions?: ?Suggestions,
+  auth_params: UserManagementApi,
   /** List authorized users */
   users?: ?Array<User>,
-  /** Whether it is reasonble to call bootstrap_vshard mutation */
-  can_bootstrap_vshard: $ElementType<Scalars, 'Boolean'>,
-  auth_params: UserManagementApi,
+  /** Virtual buckets count in cluster */
+  vshard_bucket_count: $ElementType<Scalars, 'Int'>,
+  /** Get list of all registered roles and their dependencies. */
+  known_roles: Array<Role>,
   /** Get list of known vshard storage groups. */
   vshard_known_groups: Array<$ElementType<Scalars, 'String'>>,
   /** List of pages to be hidden in WebUI */
   webui_blacklist?: ?Array<$ElementType<Scalars, 'String'>>,
   vshard_groups: Array<VshardGroup>,
-  /** Get list of all registered roles and their dependencies. */
-  known_roles: Array<Role>,
-  /** Virtual buckets count in cluster */
-  vshard_bucket_count: $ElementType<Scalars, 'Int'>,
+  /** Validate config */
+  validate_config: ValidateConfigResult,
+  /** Whether it is reasonble to call bootstrap_vshard mutation */
+  can_bootstrap_vshard: $ElementType<Scalars, 'Boolean'>,
   /** Get cluster config sections */
   config: Array<?ConfigSection>,
 |};
@@ -51,6 +53,12 @@ export type Apicluster = {|
 /** Cluster management */
 export type ApiclusterUsersArgs = {|
   username?: ?$ElementType<Scalars, 'String'>,
+|};
+
+
+/** Cluster management */
+export type ApiclusterValidate_ConfigArgs = {|
+  sections?: ?Array<?ConfigSectionInput>,
 |};
 
 
@@ -684,6 +692,13 @@ export type UserManagementApi = {|
   implements_check_password: $ElementType<Scalars, 'Boolean'>,
 |};
 
+/** Result of config validation */
+export type ValidateConfigResult = {|
+  __typename?: 'ValidateConfigResult',
+  /** Error details if validation fails, null otherwise */
+  error?: ?$ElementType<Scalars, 'String'>,
+|};
+
 /** Group of replicasets sharding the same dataset */
 export type VshardGroup = {|
   __typename?: 'VshardGroup',
@@ -920,7 +935,13 @@ export type ServerListQueryVariables = {
 
 export type ServerListQuery = ({
     ...{ __typename?: 'Query' },
-  ...{| serverList?: ?Array<?({
+  ...{| failover?: ?({
+      ...{ __typename?: 'Apicluster' },
+    ...{| failover_params: ({
+        ...{ __typename?: 'FailoverAPI' },
+      ...$Pick<FailoverApi, {| mode: * |}>
+    }) |}
+  }), serverList?: ?Array<?({
       ...{ __typename?: 'Server' },
     ...$Pick<Server, {| uuid: *, alias?: *, disabled?: *, uri: *, zone?: *, status: *, message: * |}>,
     ...{| boxinfo?: ?({
@@ -1238,5 +1259,26 @@ export type ConfigFilesQuery = ({
       ...$Pick<ConfigSection, {| content: * |}>,
       ...{| path: $ElementType<ConfigSection, 'filename'> |}
     })> |}
+  }) |}
+});
+
+export type GetFailoverParamsQueryVariables = {};
+
+
+export type GetFailoverParamsQuery = ({
+    ...{ __typename?: 'Query' },
+  ...{| cluster?: ?({
+      ...{ __typename?: 'Apicluster' },
+    ...{| failover_params: ({
+        ...{ __typename?: 'FailoverAPI' },
+      ...$Pick<FailoverApi, {| failover_timeout: *, fencing_enabled: *, fencing_timeout: *, fencing_pause: *, mode: *, state_provider?: * |}>,
+      ...{| etcd2_params?: ?({
+          ...{ __typename?: 'FailoverStateProviderCfgEtcd2' },
+        ...$Pick<FailoverStateProviderCfgEtcd2, {| password: *, lock_delay: *, endpoints: *, username: *, prefix: * |}>
+      }), tarantool_params?: ?({
+          ...{ __typename?: 'FailoverStateProviderCfgTarantool' },
+        ...$Pick<FailoverStateProviderCfgTarantool, {| uri: *, password: * |}>
+      }) |}
+    }) |}
   }) |}
 });
