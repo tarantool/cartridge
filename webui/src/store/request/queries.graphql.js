@@ -589,3 +589,30 @@ export const getFilesQuery = gql`
     }
   }
 `;
+
+export const getFailoverParams = gql`
+    query configFiles {
+        cluster {
+            failover_params {
+                failover_timeout
+                fencing_enabled
+                fencing_timeout
+                fencing_pause
+                etcd2_params {
+                    password
+                    lock_delay
+                    endpoints
+                    username
+                    prefix
+                }
+                tarantool_params {
+                    uri
+                    password
+                }
+                mode
+                state_provider
+            }
+        }
+    }
+`;
+

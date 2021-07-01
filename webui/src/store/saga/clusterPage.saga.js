@@ -49,7 +49,10 @@ import {
   CLUSTER_DISABLE_INSTANCE_REQUEST_SUCCESS,
   CLUSTER_DISABLE_INSTANCE_REQUEST_ERROR,
   CLUSTER_SELF_UPDATE,
-  CLUSTER_PAGE_ZONE_UPDATE
+  CLUSTER_PAGE_ZONE_UPDATE,
+  CLUSTER_PAGE_FAILOVER_REQUEST,
+  CLUSTER_PAGE_FAILOVER_REQUEST_SUCCESS,
+  CLUSTER_PAGE_FAILOVER_REQUEST_ERROR
 } from 'src/store/actionTypes';
 import { baseSaga, getRequestSaga, getSignalRequestSaga } from 'src/store/commonRequest';
 import { getClusterSelf } from 'src/store/request/app.requests';
@@ -66,7 +69,8 @@ import {
   expelServer,
   editReplicaset,
   uploadConfig,
-  changeFailover
+  changeFailover,
+  getFailover
 } from 'src/store/request/clusterPage.requests';
 import { statsResponseSuccess, statsResponseError } from 'src/store/effector/cluster';
 import { graphqlErrorNotification } from 'src/misc/graphqlErrorNotification';
@@ -138,18 +142,6 @@ function* refreshListsSaga(requestNum = 0) {
         ...response,
         failoverMode: response.failover.failover_params.mode
       }
-    }
-
-    const { failoverMode, showFailoverModal } = yield select(
-      ({ clusterPage, ui }) => ({
-        failoverMode: clusterPage.failoverMode,
-        showFailoverModal: ui.showFailoverModal
-      })
-    );
-
-    if (failoverMode && !showFailoverModal && failoverMode !== response.failoverMode) {
-      const clusterSelfResponse = yield call(getClusterSelf);
-      yield put({ type: CLUSTER_SELF_UPDATE, payload: clusterSelfResponse });
     }
 
     yield put({ type: CLUSTER_PAGE_REFRESH_LISTS_REQUEST_SUCCESS, payload: response, requestPayload: {} });
@@ -346,7 +338,15 @@ const updateListsOnTopologyEdit = function* () {
   yield takeLatest(topologyEditTokens, function* () {
     yield refreshListsSaga();
   });
-}
+};
+
+
+const getFailoverParamsRequestSaga = getRequestSaga(
+  CLUSTER_PAGE_FAILOVER_REQUEST,
+  CLUSTER_PAGE_FAILOVER_REQUEST_SUCCESS,
+  CLUSTER_PAGE_FAILOVER_REQUEST_ERROR,
+  getFailover
+);
 
 export const saga = baseSaga(
   failoverPromoteRequestSaga,
@@ -362,5 +362,6 @@ export const saga = baseSaga(
   uploadConfigRequestSaga,
   changeFailoverRequestSaga,
   updateClusterSelfOnBootstrap,
-  updateListsOnTopologyEdit
+  updateListsOnTopologyEdit,
+  getFailoverParamsRequestSaga
 );

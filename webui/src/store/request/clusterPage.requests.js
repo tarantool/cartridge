@@ -12,7 +12,8 @@ import {
   listQuery,
   probeMutation,
   promoteFailoverLeaderMutation,
-  serverStatQuery
+  serverStatQuery,
+  getFailoverParams
 } from './queries.graphql';
 import type {
   EditTopologyMutationVariables,
@@ -241,3 +242,7 @@ export const configForceReapply = (uuids: Array<string>) => graphql.mutate(
   configForceReapplyMutation,
   { uuids }
 );
+
+export async function getFailover() {
+  return await graphql.fetch(getFailoverParams);
+}
