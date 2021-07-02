@@ -42,7 +42,10 @@ import {
   CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_ERROR,
   CLUSTER_PAGE_STATE_RESET,
   SET_PROBE_SERVER_MODAL_VISIBLE,
-  SET_FAILOVER_MODAL_VISIBLE
+  SET_FAILOVER_MODAL_VISIBLE,
+  CLUSTER_PAGE_FAILOVER_REQUEST,
+  CLUSTER_PAGE_FAILOVER_REQUEST_SUCCESS,
+  CLUSTER_PAGE_FAILOVER_REQUEST_ERROR
 } from 'src/store/actionTypes';
 import {
   baseReducer,
@@ -52,7 +55,9 @@ import {
   getRequestReducer
 } from 'src/store/commonRequest';
 import type { RequestStatusType } from 'src/store/commonTypes';
-import type { Issue, Replicaset, Server, ServerStat } from 'src/generated/graphql-typing';
+import type {
+  FailoverApi, Issue, Replicaset, Server, ServerStat
+} from 'src/generated/graphql-typing';
 import { getErrorMessage } from 'src/api';
 
 export type ServerStatWithUUID = {
@@ -72,6 +77,15 @@ export type ClusterPageState = {
   selectedReplicasetUuid: ?string,
   serverList: ?Server[],
   replicasetList: ?Replicaset[],
+
+  failoverMode: ?string,
+  failoverDataRequestStatus: RequestStatusType,
+  failover_params: {
+    mode: $PropertyType<FailoverApi, 'mode'>,
+    tarantool_params: $PropertyType<FailoverApi, 'tarantool_params'>,
+    state_provider: $PropertyType<FailoverApi, 'state_provider'>
+  },
+
   serverStat: ?ServerStatWithUUID[],
   bootstrapVshardRequestStatus: RequestStatusType,
   // bootstrapVshardResponse: null,
@@ -104,6 +118,15 @@ export const initialState: ClusterPageState = {
   serverList: null,
   replicasetList: null,
   serverStat: null,
+
+  failoverMode: null,
+  failoverDataRequestStatus: getInitialRequestStatus(),
+  failover_params: {
+    mode: 'disabled',
+    tarantool_params: null,
+    state_provider: null
+  },
+
   bootstrapVshardRequestStatus: getInitialRequestStatus(),
   bootstrapVshardResponse: null,
   probeServerError: null,
@@ -195,6 +218,13 @@ const changeFailoverRequestReducer = getRequestReducer(
   'changeFailoverRequestStatus'
 );
 
+const getFailoverRequestReducer = getRequestReducer(
+  CLUSTER_PAGE_FAILOVER_REQUEST,
+  CLUSTER_PAGE_FAILOVER_REQUEST_SUCCESS,
+  CLUSTER_PAGE_FAILOVER_REQUEST_ERROR,
+  'failoverDataRequestStatus'
+);
+
 const pageStateResetReducer = getReducer(CLUSTER_PAGE_STATE_RESET, initialState);
 
 export const reducer = baseReducer(
@@ -210,7 +240,8 @@ export const reducer = baseReducer(
   uploadConfigRequestReducer,
   applyTestConfigRequestReducer,
   changeFailoverRequestReducer,
-  pageStateResetReducer
+  pageStateResetReducer,
+  getFailoverRequestReducer
 )(
   (state: ClusterPageState, action): ClusterPageState => {
     switch (action.type) {
@@ -245,7 +276,7 @@ export const reducer = baseReducer(
         return {
           ...state,
           probeServerError: null
-        }
+        };
 
       case SET_FAILOVER_MODAL_VISIBLE:
         return {
@@ -254,7 +285,7 @@ export const reducer = baseReducer(
             ...state.changeFailoverRequestStatus,
             error: null
           }
-        }
+        };
 
       case CLUSTER_PAGE_SERVER_LIST_ROW_SELECT:
         return {
@@ -278,6 +309,12 @@ export const reducer = baseReducer(
         return {
           ...state,
           selectedReplicasetUuid: null
+        };
+
+      case CLUSTER_PAGE_FAILOVER_REQUEST_SUCCESS:
+        return {
+          ...state,
+          failover_params: action.payload.cluster.failover_params
         };
 
       default:

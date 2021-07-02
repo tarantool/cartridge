@@ -21,7 +21,8 @@ import {
   CLUSTER_PAGE_STATE_RESET,
   SET_BOOSTRAP_VSHARD_PANEL_VISIBLE,
   SET_FAILOVER_MODAL_VISIBLE,
-  SET_PROBE_SERVER_MODAL_VISIBLE
+  SET_PROBE_SERVER_MODAL_VISIBLE,
+  CLUSTER_PAGE_FAILOVER_REQUEST
 } from 'src/store/actionTypes';
 import { getActionCreator } from 'src/store/commonRequest';
 import { HIDE_EXPEL_MODAL, SHOW_EXPEL_MODAL } from '../actionTypes';
@@ -173,6 +174,9 @@ export type ResetPageStateAction = { type: 'CLUSTER_PAGE_STATE_RESET' };
 export type ResetPageStateActionCreator = () => ResetPageStateAction;
 export const resetPageState = getActionCreator(CLUSTER_PAGE_STATE_RESET);
 
+
+export const getFailoverData = () => ({ type: CLUSTER_PAGE_FAILOVER_REQUEST });
+export type getFailoverDataActionCreator = typeof getFailoverData;
 
 export const changeFailover = (payload: FailoverApi) => ({ type: CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST, payload });
 
