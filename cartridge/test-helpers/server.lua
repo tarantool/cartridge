@@ -25,6 +25,7 @@ local checks = require('checks')
 -- @string object.cluster_cookie Value to be passed in `TARANTOOL_CLUSTER_COOKIE` and used as default net_box password.
 -- @string[opt] object.instance_uuid Server identifier.
 -- @string[opt] object.replicaset_uuid Replicaset identifier.
+-- @string[opt] object.zone Vshard zone.
 -- @return input object
 local Server = luatest.Server:inherit({})
 
@@ -36,7 +37,8 @@ Server.constructor_checks = fun.chain(Server.constructor_checks, {
 
     instance_uuid = '?string',
     replicaset_uuid = '?string',
-    labels = '?table'
+    labels = '?table',
+    zone = '?string'
 }):tomap()
 
 function Server:initialize()

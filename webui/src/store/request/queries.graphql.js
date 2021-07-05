@@ -291,6 +291,11 @@ export const instanceDataQuery = gql`
 
 export const listQuery = gql`
 query serverList ($withStats: Boolean!) {
+  failover: cluster {
+      failover_params {
+          mode
+      }
+  }
   serverList: servers {
     uuid
     alias
@@ -584,3 +589,30 @@ export const getFilesQuery = gql`
     }
   }
 `;
+
+export const getFailoverParams = gql`
+    query getFailoverParams {
+        cluster {
+            failover_params {
+                failover_timeout
+                fencing_enabled
+                fencing_timeout
+                fencing_pause
+                etcd2_params {
+                    password
+                    lock_delay
+                    endpoints
+                    username
+                    prefix
+                }
+                tarantool_params {
+                    uri
+                    password
+                }
+                mode
+                state_provider
+            }
+        }
+    }
+`;
+

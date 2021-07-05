@@ -309,6 +309,7 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     cy.get('.meta-test__ExpelServerModal button[type="button"]').contains('Expel').click();
     cy.get('span:contains(Current instance "localhost:13301" can not be expelled)');
     cy.get('button[type="button"]:contains(Error details)').click();
+    cy.get('span:contains(Current instance "localhost:13301" can not be expelled)').click();
     checksForErrorDetails();
 
     ////////////////////////////////////////////////////////////////////

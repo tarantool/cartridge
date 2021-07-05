@@ -38,7 +38,8 @@ end
 -- @bool[opt] object.use_vshard bootstrap vshard after server is started.
 -- @tab object.replicasets Replicasets configuration. List of @{replicaset_config}
 -- @string[opt] object.failover Failover mode: disabled, eventual, or stateful.
--- @string[opt] object.stateboard_entrypoint Command to run stateboard
+-- @string[opt] object.stateboard_entrypoint Command to run stateboard.
+-- @tab[opt] object.zone_distances Vshard distances between zones.
 -- @return object
 function Cluster:new(object)
     checks('table', {
@@ -52,6 +53,7 @@ function Cluster:new(object)
         env = '?table',
         failover = '?string',
         stateboard_entrypoint = '?string',
+        zone_distances = '?table'
     })
     --- Replicaset config.
     -- @table @replicaset_config
@@ -168,6 +170,7 @@ function Cluster:apply_topology()
             uri = server.advertise_uri,
             uuid = server.instance_uuid,
             labels = server.labels,
+            zone = server.zone,
         })
     end
 
@@ -183,10 +186,22 @@ function Cluster:apply_topology()
     })
 end
 
+function Cluster:apply_zone_distances()
+    assert(self.main_server)
+
+    if self.zone_distances ~= nil then
+        self.main_server.net_box:call(
+            'package.loaded.cartridge.config_patch_clusterwide',
+            {{zone_distances = self.zone_distances}}
+        )
+    end
+end
+
 -- Configure replicasets and bootstrap vshard if required.
 function Cluster:bootstrap()
     self.main_server = self.servers[1]
     self:apply_topology()
+    self:apply_zone_distances()
 
     for _, server in ipairs(self.servers) do
         self:wait_until_healthy(server)
