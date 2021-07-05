@@ -61,12 +61,20 @@ local e_config = errors.new_class('Invalid cluster topology config')
 }]]
 
 -- to be used in fun.filter
+local function expelled(_, srv)
+    return srv == 'expelled'
+end
+
+local function disabled(uuid, srv)
+    return expelled(uuid, srv) or srv.disabled
+end
+
 local function not_expelled(_, srv)
-    return srv ~= 'expelled'
+    return not expelled(_, srv)
 end
 
 local function not_disabled(uuid, srv)
-    return not_expelled(uuid, srv) and not srv.disabled
+    return not disabled(uuid, srv)
 end
 
 --- Get full list of replicaset leaders.
@@ -1060,6 +1068,8 @@ return {
         return e_config:pcall(validate, ...)
     end,
 
+    expelled = expelled,
+    disabled = disabled,
     not_expelled = not_expelled,
     not_disabled = not_disabled,
 
