@@ -46,6 +46,11 @@ describe('Disable server', () => {
     cy.get('.ServerLabelsHighlightingArea:contains(dummy-3)')
       .should('have.css', 'background-color', 'rgb(255, 255, 255)');
 
+    ///////////////////////////////////////////////////////////////////
+    cy.log('Information about healthy and unhealthy server count before disabling server 2 and 3');
+    ////////////////////////////////////////////////////////////////////
+    cy.get('span.css-1dhlryp').contains('1 total | 0 unhealthy | 3 servers')
+
     ////////////////////////////////////////////////////////////////////
     cy.log('Kill servers 2 and 3');
     ////////////////////////////////////////////////////////////////////
@@ -87,6 +92,11 @@ describe('Disable server', () => {
       .should('have.css', 'background-color', 'rgb(250, 250, 250)');
     cy.get('.ServerLabelsHighlightingArea:contains(dummy-3)')
       .should('have.css', 'background-color', 'rgb(250, 250, 250)');
+
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Inspect correct information for healthy and unhealthy server count after server 2 and 3 have been disabled')
+    ////////////////////////////////////////////////////////////////////
+    cy.get('span.css-1dhlryp').contains('1 total | 1 unhealthy | 3 servers')
 
     ////////////////////////////////////////////////////////////////////
     cy.log('Try to enable dead server via dropdown button');
@@ -147,5 +157,10 @@ describe('Disable server', () => {
       .should('have.css', 'background-color', 'rgb(255, 255, 255)');
     cy.get('.ServerLabelsHighlightingArea:contains(dummy-3)')
       .should('have.css', 'background-color', 'rgb(255, 255, 255)');
+
+    ///////////////////////////////////////////////////////////////////
+    cy.log('Information about healthy and unhealthy server count after enableing server 2 and 3');
+    ////////////////////////////////////////////////////////////////////
+    cy.get('span.css-1dhlryp').contains('1 total | 0 unhealthy | 3 servers')
   });
 });
