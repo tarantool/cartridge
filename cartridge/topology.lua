@@ -5,15 +5,32 @@
 -- @module cartridge.topology
 
 local fun = require('fun')
--- local log = require('log')
+local log = require('log')
 local checks = require('checks')
 local errors = require('errors')
 local membership = require('membership')
 
+local vars = require('cartridge.vars').new('cartridge.topology')
+local argparse = require('cartridge.argparse')
 local pool = require('cartridge.pool')
 local roles = require('cartridge.roles')
 local utils = require('cartridge.utils')
 local label_utils = require('cartridge.label-utils')
+
+local topology_opts, err = argparse.get_cluster_opts({
+    remote_topology_name = 'string',
+    remote_topology_storage = 'string',
+    remote_topology_endpoint = 'string',
+})
+vars:new('topology_name', topology_opts.remote_topology_name)
+vars:new('topology_storage', topology_opts.remote_topology_storage)
+vars:new('topology_endpoint', topology_opts.remote_topology_endpoint)
+vars:new('is_remote_topology', false)
+if vars.topology_name ~= nil and
+   vars.topology_storage ~= nil and
+   vars.topology_endpoint ~= nil then
+    vars.is_remote_topology = true
+end
 
 local e_config = errors.new_class('Invalid cluster topology config')
 --[[ topology_cfg: {
@@ -69,6 +86,93 @@ local function not_disabled(uuid, srv)
     return not_expelled(uuid, srv) and not srv.disabled
 end
 
+--- Get instances.
+--
+-- @function get_instances
+-- @local
+-- @tparam ClusterwideConfig
+-- @tparam boolean use_uuid
+-- @treturn table
+--
+-- {
+--     ['instance-uuid-1' | 'instance-name-1'] = 'expelled',
+--     ['instance-uuid-2' | 'instance-name-2'] = {
+--         uri = 'localhost:3301',
+--         disabled = false,
+--         replicaset_uuid = 'replicaset-uuid-2',
+--         zone = nil | string,
+--     },
+-- },
+local function get_instances(clusterwide_config, use_uuid)
+    checks('ClusterwideConfig', '?boolean')
+    if use_uuid == nil then
+        use_uuid = false
+    end
+    local instances = {}
+    if vars.is_remote_topology then
+        local topology_obj = clusterwide_config:get_topology_obj()
+        assert(topology_obj ~= nil)
+        local topology_opts = topology_obj:get_topology_options()
+        for _, replicaset_name in pairs(topology_opts.replicasets) do
+            local replicaset_opts = topology_obj:get_replicaset_options(replicaset_name)
+            for _, replica_name in pairs(replicaset_opts.replicas) do
+                assert(replica_name ~= nil)
+                local instance_opts = topology_obj:get_instance_options(replica_name)
+                local uuid = instance_opts.box_cfg.instance_uuid
+                assert(uuid)
+                instance_opts.replicaset_name = replicaset_name
+                instance_opts.replicaset_uuid = replicaset_opts.cluster_uuid
+                -- Make instance status compatible with Cartridge
+                if instance_opts.status == 'reachable' then
+                    instance_opts.disabled = false
+                elseif instance_opts.status == 'unreachable' then
+                    instance_opts.disabled = true
+                end
+                if instance_opts.status == 'expelled' then
+                    instance_opts = 'expelled'
+                end
+                if use_uuid == true then
+                    instances[uuid] = instance_opts
+                else
+                    instances[replica_name] = instance_opts
+                end
+            end
+        end
+    end
+
+    return instances
+end
+
+--- Get replicasets.
+--
+-- @function get_replicasets
+-- @local
+-- @tparam ClusterwideConfig
+-- @tparam boolean use_replicaset_name
+-- @treturn table
+local function get_replicasets(clusterwide_config, use_uuid)
+    checks('ClusterwideConfig', '?boolean')
+    local replicasets = {}
+    if use_uuid == nil then
+        use_uuid = false
+    end
+    if vars.is_remote_topology == true then
+        local topology_obj = clusterwide_config:get_topology_obj()
+        local topology_opts = topology_obj:get_topology_options()
+        for _, replicaset_name in pairs(topology_opts.replicasets) do
+            if use_uuid == true then
+                local replicaset_opts = topology_obj:get_replicaset_options(replicaset_name)
+                local replicaset_uuid = replicaset_opts.cluster_uuid
+                replicasets[replicaset_uuid] = replicaset_opts
+            else
+                replicasets[replicaset_name] = topology_obj:get_replicaset_options(replicaset_name)
+            end
+        end
+    end
+
+    return replicasets
+end
+
 --- Get full list of replicaset leaders.
 --
 -- Full list is composed of:
@@ -77,18 +181,38 @@ end
 --  2. Initial order from topology_cfg (with no repetitions)
 --  3. All other servers in the replicaset, sorted by uuid, ascending
 --
--- Neither `topology_cfg` nor `new_order` tables are modified.
+-- Neither `clusterwide_config` nor `new_order` tables are modified.
 -- New order validity is ignored too.
 --
--- @function get_leaders_orded
+-- @function get_leaders_order
 -- @local
--- @tparam table topology_cfg
+-- @tparam ClusterwideConfig clusterwide_config
 -- @tparam string replicaset_uuid
 -- @tparam ?table new_order
 -- @treturn {string,...} array of leaders uuids
-local function get_leaders_order(topology_cfg, replicaset_uuid, new_order)
-    checks('table', 'string', 'nil|table')
+local function get_leaders_order(clusterwide_config, replicaset_uuid, new_order)
+    checks('ClusterwideConfig', 'string', 'nil|table')
 
+    -- remote topology
+    if vars.is_remote_topology then
+        local topology_obj = clusterwide_config:get_topology_obj()
+        local topology_opts = topology_obj:get_topology_options()
+        local leaders = {}
+        for _, replicaset_name in pairs(topology_opt.replicasets) do
+            local replicaset_opt = t:get_replicaset_options(replicaset_name)
+            for _, instance_name in pairs(replicaset_opt.replicas) do
+                local instance_opt = t:get_instance_options(instance_name)
+                if instance_opt.is_master then
+                    table.insert(leaders, instance_name)
+                end
+            end
+        end
+
+        return leaders
+    end
+
+    -- local topology
+    local topology_cfg = clusterwide_config:get_readonly('topology') or {}
     local servers = topology_cfg.servers
     local replicasets = topology_cfg.replicasets
     local ret = table.copy(new_order) or {}
@@ -130,6 +254,8 @@ local function get_leaders_order(topology_cfg, replicaset_uuid, new_order)
 end
 
 local function validate_schema(field, topology)
+    -- With remote topology function call is disabled in validate()
+    -- TODO (sergeyb@): review checks one by one.
     checks('string', 'table')
     local servers = topology.servers or {}
     local replicasets = topology.replicasets or {}
@@ -325,7 +451,8 @@ local function validate_schema(field, topology)
 end
 
 local function validate_failover_schema(field, topology)
-
+    -- With remote topology function call is disabled in validate()
+    -- TODO (sergeyb@): review checks one by one.
     if type(topology.failover) == 'table' then
         e_config:assert(
             topology.failover.mode == nil or
@@ -589,6 +716,8 @@ local function validate_failover_schema(field, topology)
 end
 
 local function validate_consistency(topology)
+    -- With remote topology function call is disabled in validate()
+    -- TODO (sergeyb@): review checks one by one.
     checks('table')
     local servers = topology.servers or {}
     local replicasets = topology.replicasets or {}
@@ -639,8 +768,9 @@ local function validate_consistency(topology)
 end
 
 local function validate_availability(topology)
+    -- With remote topology function call is disabled in validate()
+    -- TODO (sergeyb@): review checks one by one.
     checks('table')
-
     local myself = membership.myself()
     local myself_uuid = myself.payload.uuid
     if myself_uuid ~= nil then
@@ -661,6 +791,8 @@ local function validate_availability(topology)
 end
 
 local function validate_upgrade(topology_new, topology_old)
+    -- With remote topology function call is disabled in validate()
+    -- TODO (sergeyb@): review checks one by one.
     checks('table', 'table')
     local servers_new = topology_new.servers or {}
     local servers_old = topology_old.servers or {}
@@ -718,6 +850,17 @@ end
 -- @treturn[2] nil
 -- @treturn[2] table Error description
 local function validate(topology_new, topology_old)
+    -- remote topology
+    -- NOTE: With topology module many validation checks cannot be implemented
+    -- because we couldn't get access to raw tables. Right now all of them disabled
+    -- and validation always passed.
+    -- TODO (sergeyb@): review checks one by one.
+    if vars.is_remote_topology then
+        log.warn('validate() is not implemented')
+        return true
+    end
+
+    -- local topology
     topology_old = topology_old or {}
     e_config:assert(
         type(topology_new) == 'table',
@@ -738,9 +881,48 @@ local function validate(topology_new, topology_old)
     return true
 end
 
-local function get_failover_params(topology_cfg)
-    checks('?table')
+local function get_failover_params(clusterwide_config)
+    checks('?ClusterwideConfig')
+    -- remote topology
+    if vars.is_remote_topology then
+        --[[
+        failover = nil | boolean | {
+            -- mode = 'disabled' | 'eventual' | 'stateful',
+            -- state_provider = nil | 'tarantool' | 'etcd2',
+            -- failover_timeout = nil | number,
+            -- tarantool_params = nil | {
+            --     uri = string,
+            --     password = string,
+            -- },
+            -- etcd2_params = nil | {
+            --     prefix = nil | string,
+            --     lock_delay = nil | number,
+            --     endpoints = nil | {string,...},
+            --     username = nil | string,
+            --     password = nil | string,
+            -- },
+            -- fencing_enabled = nil | boolean,
+            -- fencing_timeout = nil | number,
+            -- fencing_pause = nil | number,
+        },
+        ]]
+	log.warn('get_failover_params() to be implemented')
+        local ret = {
+            mode = 'disabled',
+            failover_timeout = 3,
+            fencing_enabled = false,
+            fencing_timeout = 3,
+            fencing_pause = 2,
+        }
+        return ret
+    end
+
+    -- local topology
+    local topology_cfg
     local ret
+    if clusterwide_config ~= nil then
+        topology_cfg = clusterwide_config:get_readonly('topology')
+    end
     if topology_cfg == nil then
         ret = {
             mode = 'disabled',
@@ -866,11 +1048,31 @@ end
 --
 -- @function find_server_by_uri
 -- @local
--- @tparam table topology_cfg
+-- @tparam ClusterwideConfig clusterwide_config
 -- @tparam string uri
 -- @treturn nil|string `instance_uuid` found
-local function find_server_by_uri(topology_cfg, uri)
-    checks('table', 'string')
+local function find_server_by_uri(clusterwide_config, uri)
+    checks('ClusterwideConfig', 'string')
+
+    -- remote topology
+    if vars.is_remote_topology then
+        local topology_obj = clusterwide_config:get_topology_obj()
+        assert(topology_obj ~= nil)
+        local topology_opts = topology_obj:get_topology_options()
+        for _, replicaset_name in pairs(topology_opts.replicasets) do
+            local replicaset_opts = topology_obj:get_replicaset_options(replicaset_name)
+            for _, replica_name in pairs(replicaset_opts.replicas) do
+                local instance_opts = topology_obj:get_instance_options(replica_name)
+                if instance_opts.box_cfg.listen == uri then
+                    return instance_opts.box_cfg.instance_uuid
+                end
+            end
+        end
+    end
+
+    -- local topology
+    local conf = clusterwide_config:get_readonly()
+    local topology_cfg = conf.topology
     if topology_cfg.__type == 'ClusterwideConfig' then
         local err = "Bad argument #1 to find_server_by_uri" ..
             " (table expected, got ClusterwideConfig)"
@@ -890,7 +1092,7 @@ local function find_server_by_uri(topology_cfg, uri)
     return nil
 end
 
---- Merge servers URIs form topology_cfg with fresh membership status.
+--- Merge servers URIs from topology_cfg with fresh membership status.
 --
 -- This function sustains cartridge operability in case of
 -- advertise_uri change. The uri map is composed basing on
@@ -901,26 +1103,40 @@ end
 --
 -- @function refine_servers_uri
 -- @local
--- @tparam table topology_cfg
+-- @tparam ClusterwideConfig
 -- @treturn {[uuid] = uri} with all servers except expelled ones.
-local function refine_servers_uri(topology_cfg)
-    checks('table')
+local function refine_servers_uri(clusterwide_config)
+    checks('ClusterwideConfig')
+
+    local members_fresh = membership.members()
+    local members_known = {}
+    local ret = {}
+
+    local topology_cfg = clusterwide_config:get_readonly('topology')
     if topology_cfg.__type == 'ClusterwideConfig' then
         local err = "Bad argument #1 to find_server_by_uri" ..
             " (table expected, got ClusterwideConfig)"
         error(err, 2)
     end
 
-    local members_fresh = membership.members()
-    local members_known = {}
-    local ret = {}
-
     -- Step 1: get URIs from topology_cfg as is.
-    for _, uuid, srv in fun.filter(not_expelled, topology_cfg.servers) do
-        ret[uuid] = assert(srv.uri)
-        -- Mark members we already processed
-        members_known[srv.uri] = members_fresh[srv.uri]
-        members_fresh[srv.uri] = nil
+    if vars.is_remote_topology then
+        -- remote topology
+        local instances = get_instances(clusterwide_config)
+        for instance in pairs(instances) do
+	    ret[instance.box_cfg.uuid] = assert(instance.advertise_uri)
+	    -- Mark members we already processed
+	    members_known[instance.advertise_uri] = members_fresh[instance.advertise_uri]
+	    members_fresh[instance.advertise_uri] = nil
+        end
+    else
+	-- local topology
+	for _, uuid, srv in fun.filter(not_expelled, topology_cfg.servers) do
+	    ret[uuid] = assert(srv.uri)
+	    -- Mark members we already processed
+	    members_known[srv.uri] = members_fresh[srv.uri]
+	    members_fresh[srv.uri] = nil
+	end
     end
 
     -- Step 2: Try to find another member among the unprocessed.
@@ -1024,19 +1240,36 @@ end
 --
 -- @function get_fullmesh_replication
 -- @local
--- @tparam table topology_cfg
+-- @tparam ClusterwideConfig
 -- @tparam string replicaset_uuid
+-- @tparam string instance_uuid
+-- @tparam string advertise_uri
 -- @treturn table
-local function get_fullmesh_replication(topology_cfg, replicaset_uuid, instance_uuid, advertise_uri)
-    checks('table', 'string', 'string', 'nil|string')
+local function get_fullmesh_replication(clusterwide_config, replicaset_uuid, instance_uuid, advertise_uri)
+    checks('ClusterwideConfig', 'string', 'string', 'nil|string')
+
+    -- remote topology
+    local replication = {}
+    if vars.is_remote_topology then
+        local instances = get_instances(clusterwide_config)
+        for _, instance in pairs(instances) do
+	    if instance.replicaset_uuid == replicaset_uuid then
+                local uri = instance.advertise_uri
+                table.insert(replication, uri and pool.format_uri(uri))
+	    end
+        end
+
+        return replication
+    end
+
+    -- local topology
+    local topology_cfg = clusterwide_config:get_readonly('topology')
     if topology_cfg.__type == 'ClusterwideConfig' then
         local err = "Bad argument #1 to get_fullmesh_replication" ..
             " (table expected, got ClusterwideConfig)"
         error(err, 2)
     end
     assert(topology_cfg.servers ~= nil)
-
-    local replication = {}
 
     for _it, uuid, server in fun.filter(not_disabled, topology_cfg.servers) do
         if server.replicaset_uuid == replicaset_uuid then
@@ -1062,6 +1295,9 @@ return {
 
     not_expelled = not_expelled,
     not_disabled = not_disabled,
+
+    get_instances = get_instances,
+    get_replicasets = get_replicasets,
 
     get_failover_params = get_failover_params,
     get_leaders_order = get_leaders_order,

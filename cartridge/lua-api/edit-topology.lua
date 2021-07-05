@@ -26,8 +26,8 @@ local topology_cfg_checker = {
     replicasets = 'table',
 }
 
-local function __join_server(topology_cfg, params)
-    checks(topology_cfg_checker, {
+local function __join_server(clusterwide_config, params)
+    checks(ClusterwideConfig, {
         uri = 'string',
         uuid = 'string',
         zone = '?string',
@@ -35,6 +35,8 @@ local function __join_server(topology_cfg, params)
         replicaset_uuid = 'string',
     })
 
+    local topology_cfg = clusterwide_config:get_readonly('topology')
+    checks(topology_cfg_checker, topology_cfg)
     if topology_cfg.servers[params.uuid] ~= nil then
         return nil, EditTopologyError:new(
             "Server %q is already joined",
@@ -43,9 +45,8 @@ local function __join_server(topology_cfg, params)
     end
 
     local replicaset = topology_cfg.replicasets[params.replicaset_uuid]
-
     replicaset.master = topology.get_leaders_order(
-        topology_cfg, params.replicaset_uuid
+        clusterwide_config, params.replicaset_uuid
     )
     table.insert(replicaset.master, params.uuid)
 
@@ -65,8 +66,8 @@ local function __join_server(topology_cfg, params)
     return true
 end
 
-local function __edit_server(topology_cfg, params)
-    checks(topology_cfg_checker, {
+local function __edit_server(clusterwide_config, params)
+    checks(ClusterwideConfig, {
         uuid = 'string',
         uri = '?string',
         zone = '?string',
@@ -75,6 +76,8 @@ local function __edit_server(topology_cfg, params)
         expelled = '?boolean',
     })
 
+    local topology_cfg = clusterwide_config:get_readonly('topology')
+    checks(topology_cfg_checker, topology_cfg)
     local server = topology_cfg.servers[params.uuid]
     if server == nil then
         return nil, EditTopologyError:new('Server %q not in config', params.uuid)
@@ -109,8 +112,8 @@ local function __edit_server(topology_cfg, params)
     return true
 end
 
-local function __edit_replicaset(topology_cfg, params)
-    checks(topology_cfg_checker, {
+local function __edit_replicaset(clusterwide_config, params)
+    checks(ClusterwideConfig, {
         uuid = 'string',
         alias = '?string',
         all_rw = '?boolean',
@@ -121,6 +124,8 @@ local function __edit_replicaset(topology_cfg, params)
         join_servers = '?table',
     })
 
+    local topology_cfg = clusterwide_config:get_readonly('topology')
+    checks(topology_cfg_checker, topology_cfg)
     local replicaset = topology_cfg.replicasets[params.uuid]
 
     if replicaset == nil then
@@ -164,7 +169,7 @@ local function __edit_replicaset(topology_cfg, params)
 
     if params.failover_priority ~= nil then
         replicaset.master = topology.get_leaders_order(
-            topology_cfg, params.uuid,
+            clusterwide_config, params.uuid,
             params.failover_priority
         )
     end
@@ -291,6 +296,7 @@ local function edit_topology(args)
     end
 
     local args = table.deepcopy(args)
+    local clusterwide_config = confapplier.get_active_config()
     local topology_cfg = confapplier.get_deepcopy('topology')
     if topology_cfg == nil then
         topology_cfg = {
@@ -309,7 +315,7 @@ local function edit_topology(args)
             )
         end
 
-        local ok, err = __edit_server(topology_cfg, srv)
+        local ok, err = __edit_server(clusterwide_config, srv)
         if ok == nil then
             return nil, err
         end
@@ -346,7 +352,8 @@ local function edit_topology(args)
             topology_cfg.replicasets[replicaset_uuid] = nil
         else
             local replicaset = topology_cfg.replicasets[replicaset_uuid]
-            local leaders = topology.get_leaders_order(topology_cfg, replicaset_uuid)
+            local clusterwide_config = confapplier.get_active_config()
+            local leaders = topology.get_leaders_order(clusterwide_config, replicaset_uuid)
 
             -- filter out all expelled instances
             replicaset.master = {}

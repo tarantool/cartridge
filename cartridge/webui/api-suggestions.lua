@@ -54,7 +54,8 @@ local function refine_uri(_, _, info)
 
     local cache = info.context.request_cache
     if cache.refined_uri == nil then
-        cache.refined_uri = topology.refine_servers_uri(topology_cfg)
+        local clusterwide_config = confapplier.get_active_config()
+        cache.refined_uri = topology.refine_servers_uri(clusterwide_config)
     end
 
     local ret = {}
@@ -101,7 +102,8 @@ local function force_apply(_, _, info)
     end
 
     if cache.refined_uri == nil then
-        cache.refined_uri = topology.refine_servers_uri(topology_cfg)
+        local clusterwide_config = confapplier.get_active_config()
+        cache.refined_uri = topology.refine_servers_uri(clusterwide_config)
     end
 
     for _, uuid, _ in fun.filter(topology.not_disabled, topology_cfg.servers) do
@@ -151,7 +153,8 @@ local function disable_servers(_, _, info)
     end
 
     if cache.refined_uri == nil then
-        cache.refined_uri = topology.refine_servers_uri(topology_cfg)
+        local clusterwide_config = confapplier.get_active_config()
+        cache.refined_uri = topology.refine_servers_uri(clusterwide_config)
     end
 
     for _, uuid, _ in fun.filter(topology.not_disabled, topology_cfg.servers) do

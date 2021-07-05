@@ -4,6 +4,7 @@ local fun = require('fun')
 local checks = require('checks')
 local errors = require('errors')
 
+local argparse = require('cartridge.argparse')
 local vars = require('cartridge.vars').new('cartridge.vshard-utils')
 local pool = require('cartridge.pool')
 local utils = require('cartridge.utils')
@@ -32,8 +33,33 @@ vars:new('known_groups', nil
     --}
 )
 
+local topology_opts, err = argparse.get_cluster_opts({
+    remote_topology_name = 'string',
+    remote_topology_storage = 'string',
+    remote_topology_endpoint = 'string',
+})
+vars:new('topology_name', topology_opts.remote_topology_name)
+vars:new('topology_storage', topology_opts.remote_topology_storage)
+vars:new('topology_endpoint', topology_opts.remote_topology_endpoint)
+vars:new('is_remote_topology', false)
+if vars.topology_name ~= nil and
+   vars.topology_storage ~= nil and
+   vars.topology_endpoint ~= nil then
+    vars.is_remote_topology = true
+end
+
 local function validate_group_weights(group_name, topology)
     checks('string', 'table')
+
+    -- remote topology
+    -- With remote topology function call is disabled in validate_config()
+    -- TODO (sergeyb@): review checks one by one.
+    if vars.is_remote_topology then
+	log.warn('To be implemented')
+	return
+    end
+
+    -- local topology
     local num_storages = 0
     local total_weight = 0
 
@@ -60,6 +86,14 @@ local function validate_group_weights(group_name, topology)
 end
 
 local function validate_distances(zone_distances)
+
+    -- remote topology
+    if vars.is_remote_topology then
+	log.warn('To be implemented')
+	return
+    end
+
+    -- local topology
     if zone_distances == nil then
         return
     end
@@ -111,6 +145,16 @@ end
 
 local function validate_group_upgrade(group_name, topology_new, topology_old)
     checks('string', 'table', 'table')
+
+    -- remote topology
+    -- With remote topology function call is disabled in validate_config()
+    -- TODO (sergeyb@): review checks one by one.
+    if vars.is_remote_topology then
+	log.warn('To be implemented')
+	return
+    end
+
+    -- local topology
     local replicasets_new = topology_new.replicasets or {}
     local replicasets_old = topology_old.replicasets or {}
     local servers_old = topology_old.servers or {}
@@ -157,6 +201,15 @@ local function validate_group_upgrade(group_name, topology_new, topology_old)
 end
 
 local function validate_vshard_group(field, vsgroup_new, vsgroup_old)
+    -- remote topology
+    -- With remote topology function call is disabled in validate_config()
+    -- TODO (sergeyb@): review checks one by one.
+    if vars.is_remote_topology then
+	log.warn('validate_vshard_group() is not implemented')
+	return
+    end
+
+    -- local topology
     ValidateConfigError:assert(
         type(vsgroup_new) == 'table',
         'section %s must be a table', field
@@ -266,6 +319,18 @@ end
 
 local function validate_config(conf_new, conf_old)
     checks('table', 'table')
+
+    -- remote topology
+    -- NOTE: With topology module many validation checks cannot be implemented
+    -- because we couldn't get access to raw tables. Right now all of them disabled
+    -- and validation always passed.
+    -- TODO (sergeyb@): review checks one by one.
+    if vars.is_remote_topology then
+	log.warn('validate_config() is not implemented')
+	return true
+    end
+
+    -- local topology
     if conf_new.__type == 'ClusterwideConfig' then
         local err = "Bad argument #1 to validate_config" ..
             " (table expected, got ClusterwideConfig)"
@@ -444,6 +509,11 @@ end
 local function get_vshard_config(group_name, conf)
     checks('string', 'table')
 
+    if vars.is_remote_topology then
+	local topology_obj = confapplier.get_topology_obj()
+	return topology_obj.get_vshard_config(group_name)
+    end
+
     local sharding = {}
     local topology_cfg = confapplier.get_readonly('topology')
     assert(topology_cfg ~= nil)
@@ -530,6 +600,23 @@ local function can_bootstrap_group(group_name, vsgroup)
 end
 
 local function can_bootstrap()
+    -- remote topology
+    if vars.is_remote_topology then
+        local topology_obj = confapplier.get_topology_obj()
+        local topology_opts = topology_obj.get_topology_options()
+        if topology_opts.vshard_groups == nil then
+            return false
+        end
+        for group in topology_opts.vshard_groups do
+            if can_bootstrap_group(group) then
+                return true
+            end
+        end
+
+        return false
+    end
+
+    -- local topology
     if roles.get_role('vshard-router') == nil then
         return false
     end
@@ -570,6 +657,15 @@ local function edit_vshard_options(group_name, vshard_options)
         }
     )
 
+    -- remote topology
+    if vars.is_remote_topology then
+        local topology_obj = confapplier.get_topology_obj()
+        topology_obj:set_topology_options(vshard_options)
+
+        return true
+    end
+
+    -- local topology
     local patch = {
         vshard_groups = confapplier.get_deepcopy('vshard_groups'),
         vshard = confapplier.get_deepcopy('vshard')
@@ -598,6 +694,15 @@ end
 
 
 local function patch_zone_distances(config_new, _)
+    -- remote topology
+    if vars.is_remote_topology then
+        local topology_obj = confapplier.get_topology_obj()
+        local topology_opts = topology_obj:get_topology_options()
+        -- FIXME: patch zone distances
+        return
+    end
+
+    -- local topology
     if config_new:get_readonly('zone_distances') ~= nil then
         return
     end

@@ -93,7 +93,8 @@ local function get_topology()
     local replicasets = {}
     local known_roles = roles.get_known_roles()
     local leaders_order = {}
-    local failover_cfg = topology.get_failover_params(topology_cfg)
+    local clusterwide_config = confapplier:get_active_config()
+    local failover_cfg = topology.get_failover_params(clusterwide_config)
 
     for replicaset_uuid, replicaset in pairs(topology_cfg.replicasets) do
         replicasets[replicaset_uuid] = {
@@ -132,12 +133,13 @@ local function get_topology()
         end
 
         leaders_order[replicaset_uuid] = topology.get_leaders_order(
-            topology_cfg, replicaset_uuid
+            -- FIXME: clusterwide_config is not declared
+            clusterwide_config, replicaset_uuid
         )
     end
 
     local active_leaders = failover.get_active_leaders()
-    local refined_uri = topology.refine_servers_uri(topology_cfg)
+    local refined_uri = topology.refine_servers_uri(clusterwide_config)
 
     for _, instance_uuid, server in fun.filter(topology.not_expelled, topology_cfg.servers) do
         local uri = assert(refined_uri[instance_uuid])

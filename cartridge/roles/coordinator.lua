@@ -68,8 +68,9 @@ local function make_decision(ctx, replicaset_uuid)
         end
     end
 
+    local clusterwide_config = confapplier:get_active_config()
     local candidates = topology.get_leaders_order(
-        vars.topology_cfg, replicaset_uuid
+        clusterwide_config, replicaset_uuid
     )
 
     if current_decision == nil then

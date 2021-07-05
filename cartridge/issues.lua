@@ -362,12 +362,13 @@ local function list_on_cluster()
     local ret = {}
     local uri_list = {}
     local topology_cfg = confapplier.get_readonly('topology')
+    local clusterwide_config = confapplier.get_clusterwide_config()
 
     if topology_cfg == nil then
         return ret
     end
 
-    local refined_uri_list = topology.refine_servers_uri(topology_cfg)
+    local refined_uri_list = topology.refine_servers_uri(clusterwide_config)
     for _, uuid, _ in fun.filter(topology.not_disabled, topology_cfg.servers) do
         table.insert(uri_list, refined_uri_list[uuid])
     end

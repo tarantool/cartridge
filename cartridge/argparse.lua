@@ -96,6 +96,9 @@ local cluster_opts = {
     upgrade_schema = 'boolean', -- **boolean**
     swim_broadcast = 'boolean', -- **boolean**
     upload_prefix = 'string', -- **string**
+    remote_topology_name = 'string', -- **string**
+    remote_topology_storage = 'string', -- **string**
+    remote_topology_endpoint = 'string', -- **string**
 }
 
 --- Common [box.cfg](https://www.tarantool.io/en/doc/latest/reference/configuration/) tuning options.

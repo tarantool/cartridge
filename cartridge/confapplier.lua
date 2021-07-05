@@ -13,6 +13,7 @@ local errors = require('errors')
 local checks = require('checks')
 local membership = require('membership')
 
+local argparse = require('cartridge.argparse')
 local vars = require('cartridge.vars').new('cartridge.confapplier')
 local pool = require('cartridge.pool')
 local utils = require('cartridge.utils')
@@ -49,6 +50,21 @@ vars:new('replicaset_uuid')
 
 vars:new('box_opts', nil)
 vars:new('upgrade_schema', nil)
+
+local topology_opts, err = argparse.get_cluster_opts({
+    remote_topology_name = 'string',
+    remote_topology_storage = 'string',
+    remote_topology_endpoint = 'string',
+})
+vars:new('topology_name', topology_opts.remote_topology_name)
+vars:new('topology_storage', topology_opts.remote_topology_storage)
+vars:new('topology_endpoint', topology_opts.remote_topology_endpoint)
+vars:new('is_remote_topology', false)
+if vars.topology_name ~= nil and
+   vars.topology_storage ~= nil and
+   vars.topology_endpoint ~= nil then
+    vars.is_remote_topology = true
+end
 
 local state_transitions = {
 -- init()
@@ -186,6 +202,14 @@ local function validate_config(clusterwide_config, _)
     checks('ClusterwideConfig', 'nil')
     assert(clusterwide_config.locked)
 
+    -- TODO (sergeyb@): review checks one by one.
+    -- remote topology
+    if vars.is_remote_topology then
+	log.warn('validate_config() to be implemented')
+	return true, nil
+    end
+
+    -- local topology
     local conf_new = clusterwide_config:get_readonly()
     local conf_old
     if vars.clusterwide_config then
@@ -193,7 +217,7 @@ local function validate_config(clusterwide_config, _)
     end
     if conf_old == nil then
         local instance_uuid = topology.find_server_by_uri(
-            conf_new.topology, vars.advertise_uri
+            clusterwide_config, vars.advertise_uri
         )
         if instance_uuid == nil then
             local err = BootError:new(
@@ -234,7 +258,7 @@ local function apply_config(clusterwide_config)
     box.cfg({replication_connect_quorum = 0})
     box.cfg({
         replication = topology.get_fullmesh_replication(
-            clusterwide_config:get_readonly('topology'), vars.replicaset_uuid,
+            clusterwide_config, vars.replicaset_uuid,
             vars.instance_uuid, vars.advertise_uri
         ),
     })
@@ -268,9 +292,8 @@ local function cartridge_schema_upgrade(clusterwide_config)
     --  * We run upgrade only on the "leader" instance to prevent replication conflicts
     --  * We run upgrade as soon as possible to avoid Tarantool upgrade bugs:
     --    (https://github.com/tarantool/tarantool/issues/4691)
-    local topology_cfg = clusterwide_config:get_readonly('topology') or {}
     local leaders_order = errors.pcall('E',
-        topology.get_leaders_order, topology_cfg, box.info.cluster.uuid
+        topology.get_leaders_order, clusterwide_config, box.info.cluster.uuid
     )
 
     if leaders_order == nil then
@@ -307,11 +330,21 @@ local function boot_instance(clusterwide_config)
         or vars.state == 'ConfigLoaded', -- bootstraping from snapshot
         'Unexpected state ' .. vars.state
     )
-
+    local topology_obj
+    local box_opts
     local topology_cfg = clusterwide_config:get_readonly('topology') or {}
+    if vars.is_remote_topology == true then
+        assert(clusterwide_config ~= nil)
+        local use_uuid = true
+        local instances = topology.get_instances(clusterwide_config, use_uuid)
+        topology_cfg.servers = instances
+        local replicasets = topology.get_replicasets(clusterwide_config, use_uuid)
+        topology_cfg.replicasets = replicasets
+    end
+
     for _, server in pairs(topology_cfg.servers or {}) do
         if server ~= 'expelled' then
-            membership.add_member(server.uri)
+            membership.add_member(server.uri or server.box_cfg.listen)
         end
     end
 
@@ -332,7 +365,7 @@ local function boot_instance(clusterwide_config)
         -- When snapshots are absent the only way to do it
         -- is to find myself by uri.
         instance_uuid = topology.find_server_by_uri(
-            topology_cfg, vars.advertise_uri
+            clusterwide_config, vars.advertise_uri
         )
     end
 
@@ -340,7 +373,10 @@ local function boot_instance(clusterwide_config)
     if instance_uuid ~= nil then
 
         local server = topology_cfg.servers[instance_uuid]
-        replicaset_uuid = server.replicaset_uuid
+        replicaset_uuid = server.box_cfg.replicaset_uuid
+        if vars.is_remote_topology then
+            replicaset_uuid = box_opts.replicaset_uuid
+        end
     end
 
     -- There could be three options:
@@ -381,7 +417,7 @@ local function boot_instance(clusterwide_config)
         box_opts.replicaset_uuid = assert(replicaset_uuid)
         box_opts.replication_connect_quorum = 1
         box_opts.replication = topology.get_fullmesh_replication(
-            topology_cfg, replicaset_uuid,
+            clusterwide_config, replicaset_uuid,
             -- Workaround for https://github.com/tarantool/tarantool/issues/3760
             -- Due to the bug box_opts.replication_connect_quorum was ignored
             -- and box.cfg used to hang
@@ -400,7 +436,7 @@ local function boot_instance(clusterwide_config)
         box_opts.replicaset_uuid = replicaset_uuid
 
         local leaders_order = topology.get_leaders_order(
-            topology_cfg, replicaset_uuid
+            clusterwide_config, replicaset_uuid
         )
         local leader_uuid = leaders_order[1]
         local leader = topology_cfg.servers[leader_uuid]
@@ -524,7 +560,7 @@ local function boot_instance(clusterwide_config)
 
     local _, err = BoxError:pcall(box.cfg, {
         replication = topology.get_fullmesh_replication(
-            topology_cfg, vars.replicaset_uuid,
+            clusterwide_config, vars.replicaset_uuid,
             vars.instance_uuid, vars.advertise_uri
         ),
     })
@@ -681,6 +717,10 @@ local function get_deepcopy(section)
     return vars.clusterwide_config:get_deepcopy(section)
 end
 
+local function get_topology_obj()
+    return vars.clusterwide_config:get_topology_obj()
+end
+
 return {
     init = init,
     boot_instance = boot_instance,
@@ -691,6 +731,7 @@ return {
     get_active_config = get_active_config,
     get_readonly = get_readonly,
     get_deepcopy = get_deepcopy,
+    get_topology_obj = get_topology_obj,
 
     set_state = set_state,
     wish_state = wish_state,

@@ -15,6 +15,7 @@ local log = require('log')
 local checks = require('checks')
 local errors = require('errors')
 
+local argparse = require('cartridge.argparse')
 local vars = require('cartridge.vars').new('cartridge.roles')
 local utils = require('cartridge.utils')
 local hotreload = require('cartridge.hotreload')
@@ -38,6 +39,21 @@ vars.implicit_roles = {
     'cartridge.roles.ddl-manager',
     'cartridge.roles.coordinator',
 }
+
+local topology_opts, err = argparse.get_cluster_opts({
+    name = 'string',
+    storage = 'string',
+    endpoint = 'string',
+})
+vars:new('topology_name', topology_opts.name)
+vars:new('topology_storage', topology_opts.storage)
+vars:new('topology_endpoint', topology_opts.endpoint)
+vars:new('is_remote_topology', false)
+if vars.topology_name ~= nil and
+   vars.topology_storage ~= nil and
+   vars.topology_endpoint ~= nil then
+    vars.is_remote_topology = true
+end
 
 -- Register Lua module as a Cartridge Role.
 -- Role registration implies requiring the module and all its
@@ -290,6 +306,17 @@ end
 -- @treturn[2] nil
 -- @treturn[2] table Error description
 local function validate_config(conf_new, conf_old)
+    -- remote topology
+    -- NOTE: With topology module many validation checks cannot be implemented
+    -- because we couldn't get access to raw tables. Right now all of them disabled
+    -- and validation always passed.
+    -- TODO (sergeyb@): review checks one by one.
+    if vars.is_remote_topology then
+        log.warn('validate() is not implemented')
+        return true, nil
+    end
+
+    -- local topology
     checks('table', 'table')
     if conf_new.__type == 'ClusterwideConfig' then
         local err = "Bad argument #1 to validate_config" ..
