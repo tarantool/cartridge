@@ -41,6 +41,18 @@ describe('Failover', () => {
     cy.get('label:contains(Password)').should('not.exist');
   }
 
+  function modeDisable() {
+    cy.task('tarantool', {
+      code: `
+      _G.cluster.main_server.net_box:call(
+        'package.loaded.cartridge.failover_set_params',
+        {{mode = 'disabled', failover_timeout = 5}}
+      )
+      return true
+    `
+    }).should('deep.eq', [true]);
+  }
+
   it('Test: failover', () => {
 
     ////////////////////////////////////////////////////////////////////
@@ -91,6 +103,25 @@ describe('Failover', () => {
     cy.get('span:contains(Failover mode) + span:contains(disabled) + svg').click();
     cy.get('.meta-test__FailoverButton').contains('Failover: disabled');
     cy.get('.meta-test__ClusterIssuesButton').should('be.disabled');
+
+    //Update failover cypress tests #1456
+    cy.task('tarantool', {
+      code: `
+      _G.cluster.main_server.net_box:call(
+        'package.loaded.cartridge.failover_set_params',
+        {{mode = 'eventual', failover_timeout = 10}}
+      )
+      return true
+    `
+    }).should('deep.eq', [true]);
+    cy.get('.meta-test__FailoverButton').contains('eventual');
+
+    cy.get('.meta-test__FailoverButton').click();
+    cy.get('.meta-test__eventualRadioBtn input').should('be.checked');
+    cy.get('.meta-test__failoverTimeout input').should('have.value', '10');
+    cy.get('.meta-test__CancelButton').click();
+
+    modeDisable();
 
     ////////////////////////////////////////////////////////////////////
     cy.log('Failover Eventual');
