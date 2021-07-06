@@ -104,7 +104,7 @@ describe('Auth', () => {
     cy.get('.meta-test__LoginFormBtn').click();
     cy.get('.meta-test__LoginForm').contains('Authentication failed');
     //check button X in the auth form
-    cy.get('.css-mzwhr0').click();
+    cy.get('.meta-test__LoginForm > svg').click();
 
     ////////////////////////////////////////////////////////////////////
     cy.log('Login and Enable Auth');
