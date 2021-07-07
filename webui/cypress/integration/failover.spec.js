@@ -75,7 +75,31 @@ describe('Failover', () => {
           fencing_enabled = true,
           fencing_timeout = 5,
           fencing_pause = 1,
-          tarantool_params = {uri = 'tcp://localhost:4402', password = '123456'},
+          tarantool_params = {uri = 'tcp://localhost:4402', 
+                              password = '123456'},
+          failover_timeout = 10}}
+      )
+      return true
+    `
+    }).should('deep.eq', [true]);
+  }
+
+  function modeStatefulEtcd2() {
+    cy.task('tarantool', {
+      code:
+          `
+      _G.cluster.main_server.net_box:call(
+        'package.loaded.cartridge.failover_set_params',
+        {{mode = 'stateful', 
+          fencing_enabled = true,
+          fencing_timeout = 5,
+          fencing_pause = 1,
+          state_provider = 'etcd2',
+          etcd2_params = {lock_delay = 1,
+                          prefix = '/*',
+                          username = 'admin', 
+                          password = '123456',
+                          endpoints = {'http://127.0.0.1:4002'}},
           failover_timeout = 10}}
       )
       return true
@@ -343,7 +367,9 @@ describe('Failover', () => {
     //X button to close window
     cy.get('.meta-test__FailoverModal > svg').click();
 
-    //Update faileover cypress tests #1456 for Stateful mode from console
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Update faileover cypress tests #1456 for Stateful Tarantool-provider  mode from console');
+    ////////////////////////////////////////////////////////////////////
     modeStatefulTarantool();
     cy.get('.meta-test__FailoverButton').contains('stateful');
     cy.get('.meta-test__FailoverButton').click();
@@ -358,6 +384,26 @@ describe('Failover', () => {
     cy.get('.meta-test__stateboardURI input').should('have.value', 'tcp://localhost:4402');
     cy.get('.meta-test__stateboardPassword svg').click();
     cy.get('.meta-test__stateboardPassword input').should('have.value', '123456');
+    //X button to close window
+    cy.get('.meta-test__FailoverModal > svg').click();
+
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Update faileover cypress tests #1456 for Stateful Etcd-provider  mode from console');
+    ////////////////////////////////////////////////////////////////////
+    modeStatefulEtcd2();
+    cy.get('.meta-test__FailoverButton').contains('stateful');
+    cy.get('.meta-test__FailoverButton').click();
+    cy.get('.meta-test__statefulRadioBtn input').should('be.checked');
+    cy.get('.meta-test__failoverTimeout input').should('have.value', '10');
+    cy.get('.meta-test__FailoverModal [type=\'checkbox\']').should('be.checked', 'Enabled');
+    cy.get('.meta-test__inlineError').should('not.exist');
+    cy.get('.meta-test__etcd2LockDelay input').should('have.value', '1');
+    cy.get('.meta-test__stateProviderChoice button').contains('Etcd');
+    cy.get('.meta-test__etcd2Endpoints textarea').should('have.value', 'http://127.0.0.1:4002');
+    cy.get('.meta-test__etcd2Prefix input').should('have.value', '/*');
+    cy.get('.meta-test__etcd2Username input').should('have.value', 'admin');
+    cy.get('.meta-test__etcd2Password svg').click();
+    cy.get('.meta-test__etcd2Password input').should('have.value', '123456');
     //X button to close window
     cy.get('.meta-test__FailoverModal > svg').click();
   });
