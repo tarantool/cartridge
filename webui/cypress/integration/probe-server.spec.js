@@ -42,8 +42,8 @@ describe('Probe server', () => {
 
     cy.get('.ProbeServerModal_error').contains('Probe "unreachable" failed: ping was not sent');
     //check if X button  works correclty
-    cy.get('.css-mzwhr0').click();
-    cy.get('h2.css-34jfdi').should('not.exist');
+    cy.get('.ProbeServerModal svg').click();
+    cy.get('.ProbeServerModal').should('not.exist');
 
     //Try to enter empty and press Enter
     cy.get('.meta-test__ProbeServerBtn').click();
