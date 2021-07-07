@@ -46,6 +46,15 @@ local disable_servers_suggestion = gql_types.object({
     }
 })
 
+local restart_replication_suggestion = gql_types.object({
+    name = 'RestartReplicationSuggestion',
+    description =
+        'A suggestion to restart malfunctioning replications',
+    fields = {
+        uuid = gql_types.string.nonNull,
+    }
+})
+
 local function refine_uri(_, _, info)
     local topology_cfg = confapplier.get_readonly('topology')
     if topology_cfg == nil then
@@ -167,11 +176,49 @@ local function disable_servers(_, _, info)
     return ret
 end
 
+local function restart_replication(_, _, info)
+    local topology_cfg = confapplier.get_readonly('topology')
+    if topology_cfg == nil then
+        return nil
+    end
+
+    local ret = {}
+
+    local cache = info.context.request_cache
+    if cache.issues == nil then
+        cache.issues, cache.issues_err = issues.list_on_cluster()
+    end
+
+    if cache.refined_uri == nil then
+        cache.refined_uri = topology.refine_servers_uri(topology_cfg)
+    end
+
+    local is_replication_topic = function(issue)
+        return issue.topic == 'replication' and cache.refined_uri[issue.instance_uuid] ~= nil
+    end
+
+    local instances = {}
+    for _, issue in fun.filter(is_replication_topic, cache.issues) do
+        instances[issue.instance_uuid] = true
+    end
+
+    for uuid, _ in pairs(instances) do
+        table.insert(ret, {uuid = uuid})
+    end
+
+    if next(ret) == nil then
+        return nil
+    end
+
+    return ret
+end
+
 local function get_suggestions(_, _, info)
     return {
         refine_uri = refine_uri(nil, nil, info),
         force_apply = force_apply(nil, nil, info),
-        disable_servers = disable_servers(nil, nil, info)
+        disable_servers = disable_servers(nil, nil, info),
+        restart_replication = restart_replication(nil, nil, info)
     }
 end
 
@@ -187,7 +234,9 @@ local function init(graphql)
                 refine_uri = gql_types.list(refine_uri_suggestion.nonNull),
                 force_apply = gql_types.list(force_apply_suggestion.nonNull),
                 disable_servers =
-                    gql_types.list(disable_servers_suggestion.nonNull)
+                    gql_types.list(disable_servers_suggestion.nonNull),
+                restart_replication =
+                    gql_types.list(restart_replication_suggestion.nonNull)
             }
         }),
         callback = module_name .. '.get_suggestions',
