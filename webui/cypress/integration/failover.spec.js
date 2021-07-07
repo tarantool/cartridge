@@ -372,7 +372,7 @@ describe('Failover', () => {
     ////////////////////////////////////////////////////////////////////
     modeStatefulTarantool();
     cy.get('.meta-test__FailoverButton').contains('stateful');
-    cy.get('.meta-test__FailoverButton').click();
+    cy.get('.meta-test__FailoverButton').click({ force: true });
     cy.get('.meta-test__statefulRadioBtn input').should('be.checked');
     cy.get('.meta-test__failoverTimeout input').should('have.value', '10');
     cy.get('.meta-test__FailoverModal [type=\'checkbox\']').should('be.checked', 'Enabled');
@@ -392,7 +392,7 @@ describe('Failover', () => {
     ////////////////////////////////////////////////////////////////////
     modeStatefulEtcd2();
     cy.get('.meta-test__FailoverButton').contains('stateful');
-    cy.get('.meta-test__FailoverButton').click();
+    cy.get('.meta-test__FailoverButton').click({ force: true });
     cy.get('.meta-test__statefulRadioBtn input').should('be.checked');
     cy.get('.meta-test__failoverTimeout input').should('have.value', '10');
     cy.get('.meta-test__FailoverModal [type=\'checkbox\']').should('be.checked', 'Enabled');

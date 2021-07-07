@@ -1,5 +1,5 @@
 cartridge:
-    cluster_cookie: "123456"
+    cluster_cookie: ""
     replication_connect_quorum: 1
 
 cartridge.srv-1:
