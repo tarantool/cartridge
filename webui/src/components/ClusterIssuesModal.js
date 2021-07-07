@@ -1,17 +1,28 @@
 // @flow
 import * as React from 'react';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import {
   Button,
   Modal,
-  Text
+  Text,
+  colors
 } from '@tarantool.io/ui-kit';
 import type { Issue } from 'src/generated/graphql-typing';
 
 const styles = {
   list: css`
     padding: 0;
-    list-style-position: inside;
+  `,
+  title: css`
+    color: ${colors.dark40};
+  `,
+  issueContent: css`
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid ${colors.intentBase};
+  `,
+  titleCritical: css`
+    color: ${colors.intentWarningAccent};
   `
 };
 
@@ -28,7 +39,7 @@ export const ClusterIssuesModal = (
     className='meta-test__ClusterIssuesModal'
     visible={visible}
     onClose={onClose}
-    title={`Issues: ${issues.length}`}
+    title={<div>Issues: <span className={styles.title}>{issues.length}</span></div>}
     footerControls={[
       <Button
         className='meta-test__closeClusterIssuesModal'
@@ -39,10 +50,13 @@ export const ClusterIssuesModal = (
       </Button>
     ]}
   >
-    <ul className={styles.list}>
+    <div className={styles.list}>
       {issues.map(({ level, message }) => (
-        <Text tag='li'><b>{level}:</b> {message}</Text>
+        <div className={styles.issueContent}>
+          <Text className={cx({ [styles.titleCritical]: level === 'critical' })} variant='h5'>{level}</Text>
+          <Text>{message}</Text>
+        </div>
       ))}
-    </ul>
+    </div>
   </Modal>
 );
