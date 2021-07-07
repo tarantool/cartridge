@@ -404,6 +404,7 @@ describe('Failover', () => {
     cy.get('.meta-test__etcd2Username input').should('have.value', 'admin');
     cy.get('.meta-test__etcd2Password svg').click();
     cy.get('.meta-test__etcd2Password input').should('have.value', '123456');
+
     //X button to close window
     cy.get('.meta-test__FailoverModal > svg').click();
   });
