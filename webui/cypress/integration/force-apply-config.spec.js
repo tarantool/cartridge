@@ -97,10 +97,12 @@ describe('Disable server', () => {
     cy.get('.meta-test__ClusterIssuesButton').should('be.enabled');
     cy.get('.meta-test__ClusterIssuesButton').contains('Issues: 2');
     cy.get('.meta-test__ClusterIssuesButton').click();
+    cy.get('.meta-test__ClusterIssuesModal').contains('warning');
     cy.get('.meta-test__ClusterIssuesModal')
-      .contains('warning: Configuration checksum mismatch on localhost:13302 (dummy-2)');
+      .contains('Configuration checksum mismatch on localhost:13302 (dummy-2)');
+    cy.get('.meta-test__ClusterIssuesModal').contains('warning');
     cy.get('.meta-test__ClusterIssuesModal')
-      .contains('warning: Configuration is prepared and locked on localhost:13302 (dummy-2)');
+      .contains('Configuration is prepared and locked on localhost:13302 (dummy-2)');
     cy.get('.meta-test__ClusterIssuesModal button[type="button"]').click();
 
     ////////////////////////////////////////////////////////////////////

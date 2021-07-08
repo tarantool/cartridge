@@ -55,8 +55,9 @@ describe('Change advertise uri', () => {
     cy.get('.meta-test__ClusterIssuesButton').should('be.enabled');
     cy.get('.meta-test__ClusterIssuesButton').contains('Issues: 1');
     cy.get('.meta-test__ClusterIssuesButton').click();
+    cy.get('.meta-test__ClusterIssuesModal').contains('warning');
     cy.get('.meta-test__ClusterIssuesModal')
-      .contains('warning: Advertise URI (localhost:13312) differs from clusterwide config (localhost:13301)');
+      .contains('Advertise URI (localhost:13312) differs from clusterwide config (localhost:13301)');
     cy.get('.meta-test__ClusterIssuesModal button[type="button"]').click();
     cy.get('.meta-test__ClusterIssuesModal').should('not.exist');
 

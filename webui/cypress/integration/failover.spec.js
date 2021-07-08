@@ -262,14 +262,17 @@ describe('Failover', () => {
     cy.get('.meta-test__ClusterIssuesButton').click();
 
     cy.get('.meta-test__ClusterIssuesModal')
-      .contains('warning: Can\'t obtain failover coordinator: ');
+      .contains('warning');
+    cy.get('.meta-test__ClusterIssuesModal')
+      .contains('Can\'t obtain failover coordinator: ');
     cy.get('.meta-test__ClusterIssuesModal button[type="button"]').click();
     cy.get('.meta-test__ClusterIssuesModal').should('not.exist');
 
     cy.get('.meta-test__haveIssues').click();
     cy.get('.meta-test__ClusterIssuesModal').contains('Issues: 1');
+    cy.get('.meta-test__ClusterIssuesModal').contains('warning');
     cy.get('.meta-test__ClusterIssuesModal').contains(
-      'warning: Consistency on localhost:13301 (dummy-1) isn\'t reached yet'
+      'Consistency on localhost:13301 (dummy-1) isn\'t reached yet'
     );
   });
 });
