@@ -12,7 +12,7 @@ simpler.
 
 
 Instance lifecycle starts from ``cartridge.cfg`` call. During initialization
-cartridge instance binds TCP (iproto) and UDP sockets
+Cartridge instance binds TCP (iproto) and UDP sockets
 (SWIM), checks working directory and depending on enters one
 of the following states:
 
