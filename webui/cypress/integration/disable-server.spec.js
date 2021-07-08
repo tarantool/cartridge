@@ -96,7 +96,7 @@ describe('Disable server', () => {
     ////////////////////////////////////////////////////////////////////
     cy.log('Inspect correct information for healthy and unhealthy server count after server 2 and 3 have been disabled')
     ////////////////////////////////////////////////////////////////////
-    cy.get('.meta-tarantool-app .css-1dhlryp').contains('1 total | 1 unhealthy | 3 servers')
+    cy.get('section:contains(1 total | 1 unhealthy | 3 servers)').should('be.exist')
 
     ////////////////////////////////////////////////////////////////////
     cy.log('Try to enable dead server via dropdown button');
@@ -161,6 +161,6 @@ describe('Disable server', () => {
     ///////////////////////////////////////////////////////////////////
     cy.log('Information about healthy and unhealthy server count after enableing server 2 and 3');
     ////////////////////////////////////////////////////////////////////
-    cy.get('.meta-tarantool-app .css-1dhlryp').contains('1 total | 0 unhealthy | 3 servers')
+    cy.get('section:contains(1 total | 0 unhealthy | 3 servers)').should('be.exist')
   });
 });
