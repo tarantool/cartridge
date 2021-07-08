@@ -163,8 +163,9 @@ describe('Leader promotion tests', () => {
     cy.get('.meta-test__ClusterIssuesButton').contains('Issues: 1');
     cy.get('.meta-test__ClusterIssuesButton').click();
     cy.get('.meta-test__ClusterIssuesModal').contains('Issues: 1');
+    cy.get('.meta-test__ClusterIssuesModal').contains('warning');
     cy.get('.meta-test__ClusterIssuesModal')
-      .contains('warning: There is no active failover coordinator');
+      .contains('There is no active failover coordinator');
     cy.get('.meta-test__ClusterIssuesModal button[type="button"]').click();
     cy.get('.meta-test__ClusterIssuesModal').should('not.exist');
 
@@ -233,8 +234,9 @@ describe('Leader promotion tests', () => {
     cy.get('.meta-test__ClusterIssuesButton').contains('Issues: 1');
     cy.get('.meta-test__ClusterIssuesButton').click();
     cy.get('.meta-test__ClusterIssuesModal').contains('Issues: 1');
+    cy.get('.meta-test__ClusterIssuesModal').contains('warning');
     cy.get('.meta-test__ClusterIssuesModal').contains(
-      'warning: Consistency on localhost:13302' +
+      'Consistency on localhost:13302' +
       ' (test-storage-1) isn\'t reached yet'
     );
     cy.get('.meta-test__ClusterIssuesModal button[type="button"]').click();
