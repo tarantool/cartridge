@@ -38,9 +38,10 @@ g.before_all(function()
             uuid = ...,
             expelled = true,
         }}})
-
-        box.space._cluster.index.uuid:delete(...)
     ]], {expelled.instance_uuid})
+
+    g.A1.net_box:call('package.loaded.cartridge.admin_edit_topology',
+        {{servers = {{uuid = expelled.instance_uuid, expelled = true}}}})
 
 end)
 
@@ -84,4 +85,10 @@ function g.test_api()
             downstream_status = box.NULL,
         },
     })
+
+    -- Check explicitly that expelled leader is not in _cluster. Just in case.
+    t.assert_items_equals(
+        g.A1.net_box.space._cluster:select(),
+        {{1, g.r1_uuid}, {3, g.r3_uuid}}
+    )
 end

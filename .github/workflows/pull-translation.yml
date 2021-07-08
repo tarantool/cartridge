@@ -51,7 +51,9 @@ jobs:
           CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
 
       - name: Cleanup translation files
-        run: make cleanup-po
+        run: |
+          sudo chown -R runner:docker rst/locale/ru/LC_MESSAGES
+          make cleanup-po
 
       - name: Commit translation files
         uses: stefanzweifel/git-auto-commit-action@v4.1.2
