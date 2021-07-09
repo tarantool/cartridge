@@ -49,7 +49,7 @@ describe('Disable server', () => {
     ///////////////////////////////////////////////////////////////////
     cy.log('Information about healthy and unhealthy server count before disabling server 2 and 3');
     ////////////////////////////////////////////////////////////////////
-    cy.get('.meta-tarantool-app .css-1dhlryp').contains('1 total | 0 unhealthy | 3 servers')
+    cy.get('section:contains("1 total | 0 unhealthy | 3 servers")').should('exist');
 
     ////////////////////////////////////////////////////////////////////
     cy.log('Kill servers 2 and 3');
