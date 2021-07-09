@@ -29,7 +29,7 @@ describe('Probe server', () => {
   it('Test: probe-server', () => {
 
     ////////////////////////////////////////////////////////////////////
-    cy.log('Shows probing errors');
+    cy.log('Shows probing errors and close modal window with X button in it');
     ////////////////////////////////////////////////////////////////////
     cy.visit('/admin/cluster/dashboard');
     cy.get('.meta-test__ProbeServerBtn').click();
@@ -41,8 +41,15 @@ describe('Probe server', () => {
     cy.get('.meta-test__ProbeServerSubmitBtn').click();
 
     cy.get('.ProbeServerModal_error').contains('Probe "unreachable" failed: ping was not sent');
+    //check if X button  works correclty
+    cy.get('.ProbeServerModal svg').click();
+    cy.get('.ProbeServerModal').should('not.exist');
 
     //Try to enter empty and press Enter
+    cy.get('.meta-test__ProbeServerBtn').click();
+    cy.get('.ProbeServerModal input[name="uri"]')
+        .should('be.focused')
+        .should('have.attr', 'placeholder', 'Server URI, e.g. localhost:3301');
     cy.get('.ProbeServerModal input[name="uri"]').type('{selectall}{backspace}').type(' ');
     cy.get('.ProbeServerModal input[name="uri"]').type('{enter}');
     cy.get('.ProbeServerModal_error').contains('Probe " " failed: parse error');

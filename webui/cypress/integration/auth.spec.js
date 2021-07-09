@@ -35,6 +35,50 @@ describe('Auth', () => {
     cy.get('.meta-test__ProbeServerBtn').should('exist');
     cy.get('.meta-test__AuthToggle').should('not.exist');
 
+    ///////////////////////////////////////////////////////////////////
+    cy.log('Login window close by  ESC');
+    ////////////////////////////////////////////////////////////////////
+    cy.get('.meta-test__LoginBtn').click();
+    cy.get('.meta-test__LoginForm').type('{esc}').should('not.exist');
+
+    ///////////////////////////////////////////////////////////////////
+    cy.log('Login empty username and login');
+    ////////////////////////////////////////////////////////////////////
+    cy.get('.meta-test__LoginBtn').click();
+    cy.get('.meta-test__LoginForm input[name="username"]')
+        .should('have.value', '');
+    cy.get('.meta-test__LoginForm input[name="password"]')
+        .should('have.value', '');
+    cy.get('.meta-test__LoginFormBtn').click();
+    cy.get('.meta-test__LoginForm').contains('username is a required field');
+    cy.get('.meta-test__LoginForm').contains('password is a required field');
+    cy.get('.meta-test__LoginForm button[type="button"]').contains('Cancel').click();
+
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Login empty username');
+    ////////////////////////////////////////////////////////////////////
+    cy.get('.meta-test__LoginBtn').click();
+    cy.get('.meta-test__LoginForm input[name="username"]')
+        .should('have.value', '');
+    cy.get('.meta-test__LoginForm input[name="password"]')
+        .type('test-cluster-cookie');
+    cy.get('.meta-test__LoginFormBtn').click();
+    cy.get('.meta-test__LoginForm').contains('username is a required field');
+    cy.get('.meta-test__LoginForm button[type="button"]').contains('Cancel').click();
+
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Login empty pw');
+    ////////////////////////////////////////////////////////////////////
+    cy.get('.meta-test__LoginBtn').click();
+    cy.get('.meta-test__LoginForm input[name="username"]')
+        .type('admin')
+        .should('have.value', 'admin');
+    cy.get('.meta-test__LoginForm input[name="password"]')
+        .should('have.value', '');
+    cy.get('.meta-test__LoginFormBtn').click();
+    cy.get('.meta-test__LoginForm').contains('password is a required field');
+    cy.get('.meta-test__LoginForm button[type="button"]').contains('Cancel').click();
+
     ////////////////////////////////////////////////////////////////////
     cy.log('Login error');
     ////////////////////////////////////////////////////////////////////
@@ -47,6 +91,20 @@ describe('Auth', () => {
     cy.get('.meta-test__LoginFormBtn').click();
     cy.get('.meta-test__LoginForm').contains('Authentication failed');
     cy.get('.meta-test__LoginForm button[type="button"]').contains('Cancel').click();
+
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Login password wrong');
+    ////////////////////////////////////////////////////////////////////
+    cy.get('.meta-test__LoginBtn').click();
+    cy.get('.meta-test__LoginForm input[name="username"]')
+        .type('admin')
+        .should('have.value', 'admin');
+    cy.get('.meta-test__LoginForm input[name="password"]')
+        .type('incorrect password');
+    cy.get('.meta-test__LoginFormBtn').click();
+    cy.get('.meta-test__LoginForm').contains('Authentication failed');
+    //check button X in the auth form
+    cy.get('.meta-test__LoginForm > svg').click();
 
     ////////////////////////////////////////////////////////////////////
     cy.log('Login and Enable Auth');
