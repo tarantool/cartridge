@@ -74,6 +74,7 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
       .closest('li').find('.meta-test__youAreHereIcon');
     cy.get('.meta-tarantool-app').contains('Unconfigured servers');
     cy.get('.meta-tarantool-app').contains('3 unconfigured servers');
+    cy.get('.meta-test__UnconfiguredServerList li').should('have.length', 3);
     cy.get('.meta-test__UnconfiguredServerList li').eq(0).contains('Unconfigured');
     cy.get('.meta-test__UnconfiguredServerList li').eq(1).contains('Unconfigured');
     cy.get('.meta-test__UnconfiguredServerList li').eq(2).contains('Unconfigured');
