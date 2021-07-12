@@ -1,8 +1,8 @@
 ..  _cartridge-state-machine:
 
-
-Cluster instance lifecycle.
-===========================
+--------------------------
+Cluster instance lifecycle
+--------------------------
 
 Every instance in the cluster has an internal state machine. It helps to
 manage cluster operation and describe a distributed system
@@ -18,9 +18,9 @@ of the following states:
 
 ..  uml::  ../doc/rst/uml/InitialState.uml
 
-
+~~~~~~~~~~~~
 Unconfigured
-------------
+~~~~~~~~~~~~
 
 If the working directory is clean and neither snapshots nor clusterwide
 configuration files exist, the instance enters ``Unconfigured`` state.
@@ -34,8 +34,10 @@ After that, the instance moves to ``BootstrappingBox`` state.
 ..  uml::  ../doc/rst/uml/Unconfigured.uml
 
 
+~~~~~~~~~~~
 ConfigFound
------------
+~~~~~~~~~~~
+
 
 The instance enters ``ConfigFound`` state if all configuration files and
 snapshots are found. The files and snapshots are not loaded.
@@ -46,8 +48,10 @@ Otherwise, it will move to ``InitError`` state.
 ..  uml::  ../doc/rst/uml/ConfigFound.uml
 
 
+~~~~~~~~~~~~
 ConfigLoaded
-------------
+~~~~~~~~~~~~
+
 
 Config is found, loaded and validated. The next step is instance
 configuring. If there are any snapshots, the instance will change its
@@ -58,8 +62,10 @@ and don’t start listening until bootstrap/recovery finishes.
 ..  uml::  ../doc/rst/uml/ConfigLoaded.uml
 
 
+~~~~~~~~~
 InitError
----------
+~~~~~~~~~
+
 
 Instance initialization error can be caused by the following events:
 
@@ -70,8 +76,10 @@ Instance initialization error can be caused by the following events:
 *  Error while loading configuration from disk
 *  Invalid config - Server is not present in the cluster configuration
 
+~~~~~~~~~~~~~~~~
 BootstrappingBox
-----------------
+~~~~~~~~~~~~~~~~
+
 
 Configuring arguments for ``box.cfg`` if snapshots or config files are
 not present. ``box.cfg`` execution. Setting up users and stopping
@@ -83,14 +91,18 @@ everything is ok, the instance is set to ``ConnectingFullmesh``.
 
 ..  uml::  ../doc/rst/uml/Recovery.uml
 
+~~~~~~~~~~~~~~~~~~
 RecoveringSnapshot
-------------------
+~~~~~~~~~~~~~~~~~~
+
 
 If snapshots are present, ``box.cfg`` will start a recovery process.
 After that, the process is similar to ``BootstrappingBox``.
 
+~~~~~~~~~
 BootError
----------
+~~~~~~~~~
+
 
 This state can be caused by following events:
 
@@ -99,8 +111,10 @@ This state can be caused by following events:
 *  Replicaset is missing in clusterwide config
 *  Failed replication configuration
 
+~~~~~~~~~~~~~~~~~~
 ConnectingFullmesh
-------------------
+~~~~~~~~~~~~~~~~~~
+
 
 During this state, a configuration of servers and replicasets is being
 performed. Eventually, cluster topology, which is described in config, is
@@ -110,14 +124,18 @@ implemented. But in case of an error instance the state is changed to
 ..  uml::  ../doc/rst/uml/ConnectingFullmesh.uml
 
 
+~~~~~~~~~~~~~
 BoxConfigured
--------------
+~~~~~~~~~~~~~
+
 
 This state follows the successful configuration of replicasets and cluster
 topology. The next step is a role configuration.
 
+~~~~~~~~~~~~~~~~
 ConfiguringRoles
-----------------
+~~~~~~~~~~~~~~~~
+
 
 The state of role configuration. Instance can be set to this state while
 initial setup, after failover trigger(``failover.lua``) or after
@@ -126,12 +144,14 @@ altering clusterwide config(``twophase.lua``).
 ..  uml:: ../doc/rst/uml/ConfiguringRoles.uml
 
 
+~~~~~~~~~~~~~~~
 RolesConfigured
----------------
+~~~~~~~~~~~~~~~
 
 Successful role configuration.
 
+~~~~~~~~~~~~~~
 OperationError
---------------
+~~~~~~~~~~~~~~
 
 Error while role configuration.
