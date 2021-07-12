@@ -4,14 +4,15 @@
 Cluster instance lifecycle
 --------------------------
 
-Every instance in the cluster has an internal state machine. It helps to
-manage cluster operation and describe a distributed system
+Every instance in the cluster has an internal state machine.
+It helps manage cluster operation and describe a distributed system
 simpler.
 
 ..  uml::  ./uml/state-machine.puml
 
 
-Instance lifecycle starts from ``cartridge.cfg`` call. During initialization
+Instance lifecycle starts with a ``cartridge.cfg`` call.
+During the initialization,
 Cartridge instance binds TCP (iproto) and UDP sockets
 (SWIM), checks working directory and depending on enters one
 of the following states:
@@ -22,7 +23,7 @@ of the following states:
 Unconfigured
 ~~~~~~~~~~~~
 
-If the working directory is clean and neither snapshots nor clusterwide
+If the working directory is clean and neither snapshots nor cluster-wide
 configuration files exist, the instance enters ``Unconfigured`` state.
 
 The instance starts to accept iproto requests (Tarantool binary
@@ -85,7 +86,7 @@ Configuring arguments for ``box.cfg`` if snapshots or config files are
 not present. ``box.cfg`` execution. Setting up users and stopping
 ``remote-control``. The instance will try to start listening to full-featured
 iproto protocol. In case of failed attempt instance will change its
-state to ``BootError``. If there is no replicaset in clusterwide
+state to ``BootError``. If there is no replicaset in cluster-wide
 config, the instance will set the state to ``BootError``. If
 everything is ok, the instance is set to ``ConnectingFullmesh``.
 
@@ -107,8 +108,8 @@ BootError
 This state can be caused by following events:
 
 *  Failed binding to binary port for iproto usage
-*  Server is missing in clusterwide config
-*  Replicaset is missing in clusterwide config
+*  Server is missing in cluster-wide config
+*  Replicaset is missing in cluster-wide config
 *  Failed replication configuration
 
 ~~~~~~~~~~~~~~~~~~
@@ -139,7 +140,7 @@ ConfiguringRoles
 
 The state of role configuration. Instance can be set to this state while
 initial setup, after failover trigger(``failover.lua``) or after
-altering clusterwide config(``twophase.lua``).
+altering cluster-wide config(``twophase.lua``).
 
 ..  uml:: ./uml/ConfiguringRoles.puml
 
