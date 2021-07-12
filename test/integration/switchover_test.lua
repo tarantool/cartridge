@@ -350,6 +350,10 @@ add('test_promotion_abortion', function(g)
                 " to " .. B2.advertise_uri .. " (B2) isn't running",
         }}
     )
+    t.assert_items_equals(
+        helpers.get_suggestions(A1).restart_replication,
+        {{uuid = uB2}}
+    )
 
     -- Revert B1 leadership
     t.assert(g.session:set_leaders({{uB, uB1}}))
