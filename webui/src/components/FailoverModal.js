@@ -7,19 +7,17 @@ import { changeFailover, setVisibleFailoverModal, getFailoverData } from 'src/st
 import {
   Alert,
   Button,
-  DropdownItem,
   FormField,
-  IconChevron,
   InputPassword,
   LabeledInput,
   Modal,
-  RadioButton,
   Text,
   TextArea,
   colors,
-  withDropdown,
   Checkbox,
-  Spin
+  Spin,
+  Tabbed,
+  Select
 } from '@tarantool.io/ui-kit';
 import { FAILOVER_STATE_PROVIDERS } from 'src/constants';
 import type { FailoverApi, MutationApiclusterFailover_ParamsArgs } from 'src/generated/graphql-typing.js';
@@ -39,16 +37,6 @@ const styles = {
     margin-right: 16px;
     box-sizing: border-box;
   `,
-  selectBox: css`
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-  `,
-  selectBoxIcon: css`
-    fill: ${colors.intentBase};
-    transform: rotate(180deg);
-  `,
   infoTooltip: css`
     color: inherit;
     font-size: inherit;
@@ -58,55 +46,32 @@ const styles = {
     display: block;
     min-height: 20px;
     margin-bottom: 10px;
+  `,
+  failoverInfo: css`
+    color: ${colors.dark65};
+    margin-top: 5px;
+  `,
+  select: css`
+    width: 100%;
   `
-}
-
+};
+const tabs = ['disabled', 'eventual', 'stateful'];
 /* eslint-disable max-len */
+const failoverModesInfo = {
+  disabled: 'The leader is the first instance according to topology configuration. No automatic decisions are taken.',
+  eventual: 'The leader isn’t elected consistently. Every instance thinks the leader is the first healthy server in the replicaset. The instance health is determined according to the membership status (the SWIM protocol).',
+  stateful: 'Leader appoimtments are polled from the external state provider. Descisions are taken by one of the instances with the failover-coordinator role enabled.'
+};
+
 const messages = {
   failoverTimeout: 'Timeout in seconds to mark suspect members as dead and trigger failover',
   fencingEnabled: 'A leader will go read-only when both the state provider and one of replicas are unreachable',
   fencingTimeout: 'Time in seconds to actuate the fencing after the health check fails',
   fencingPause: 'The period in seconds of performing the health check',
   lockDelayInfo: 'Expiration time of a lock that the failover-coordinator role acquires',
-  failoverModesInfo: <>
-    <Text tag='b' className={styles.infoTooltip}>{`Disabled:`}</Text>
-    <Text tag='p' className={styles.infoTooltip}>{`The leader is the first instance according to topology configuration. No automatic decisions are taken.`}</Text>
-    <br/>
-    <Text tag='b' className={styles.infoTooltip}>{`Eventual:`}</Text>
-    <Text tag='p' className={styles.infoTooltip}>{`The leader isn't elected consistently. Every instance thinks the leader is the first healthy server in the replicaset. The instance health is determined according to the membership status (the SWIM protocol).`}</Text>
-    <br/>
-    <Text tag='b' className={styles.infoTooltip}>{`Stateful:`}</Text>
-    <Text tag='p' className={styles.infoTooltip}>{`Leader appointments are polled from the external state provider. Decisions are taken by one of the instances with the failover-coordinator role enabled.`}</Text>
-  </>,
   invalidFloat: 'Field accepts number, ex: 0, 1, 2.43...'
 };
 /* eslint-enable max-len */
-
-const DropdownButton = withDropdown(Button);
-
-const SelectBox = ({
-  className,
-  values = [],
-  value,
-  onChange,
-  disabled
-}) => {
-  const currentItem = values.find(([v, displayName]) => v === value);
-
-  return (
-    <DropdownButton
-      label='State provider'
-      className={cx(styles.selectBox, className)}
-      disabled={disabled}
-      iconRight={() => <IconChevron className={styles.selectBoxIcon} />}
-      text={currentItem ? currentItem[1] : (values[0][1] || '')}
-      items={values.map(([value, displayName]) => (
-        <DropdownItem onClick={() => onChange(value)}>{displayName}</DropdownItem>
-      ))}
-      popoverClassName='meta-test__StateProvider__Dropdown'
-    />
-  );
-};
 
 type FailoverModalProps = FailoverApi & {
   dispatch: (action: FSA) => void,
@@ -311,31 +276,26 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
         <Spin enable={failoverDataRequestStatus.loading}>
           <FormField
             label='Failover mode'
-            info={messages.failoverModesInfo}
           >
-            {[
-              <RadioButton
-                className='meta-test__disableRadioBtn'
-                checked={mode === 'disabled'}
-                onChange={() => this.handleModeChange('disabled')}
-              >
-              Disabled
-              </RadioButton>,
-              <RadioButton
-                className='meta-test__eventualRadioBtn'
-                checked={mode === 'eventual'}
-                onChange={() => this.handleModeChange('eventual')}
-              >
-              Eventual
-              </RadioButton>,
-              <RadioButton
-                className='meta-test__statefulRadioBtn'
-                checked={mode === 'stateful'}
-                onChange={() => this.handleModeChange('stateful')}
-              >
-              Stateful
-              </RadioButton>
-            ]}
+            <Tabbed
+              size="small"
+              activeTab={tabs.findIndex(tab => tab === mode)}
+              handleTabChange={idx => this.handleModeChange(tabs[idx])}
+              tabs={[
+                {
+                  label: 'Disabled',
+                  content: <Text variant='p' className={styles.failoverInfo}>{failoverModesInfo[mode]}</Text>
+                },
+                {
+                  label: 'Eventual',
+                  content: <Text variant='p' className={styles.failoverInfo}>{failoverModesInfo[mode]}</Text>
+                },
+                {
+                  label: 'Statefull',
+                  content: <Text variant='p' className={styles.failoverInfo}>{failoverModesInfo[mode]}</Text>
+                }
+              ]}
+            />
           </FormField>
           <LabeledInput
             label='Failover timeout'
@@ -381,8 +341,9 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
             <LabeledInput
               label='State provider'
               className='meta-test__stateProviderChoice'
-              inputComponent={SelectBox}
-              values={FAILOVER_STATE_PROVIDERS}
+              inputClassName={styles.select}
+              inputComponent={Select}
+              options={FAILOVER_STATE_PROVIDERS}
               value={state_provider}
               onChange={this.handleStateProviderChange}
             />
