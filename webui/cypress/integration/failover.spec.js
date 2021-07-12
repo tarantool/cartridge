@@ -158,7 +158,7 @@ describe('Failover', () => {
     modeEventual();
     cy.get('.meta-test__FailoverButton').contains('eventual');
     cy.get('.meta-test__FailoverButton').click();
-    cy.get('.meta-test__eventualRadioBtn input').should('be.checked');
+    checkFailoverTabMode('Eventual', true);
     cy.get('.meta-test__failoverTimeout input').should('have.value', '10');
     cy.get('.meta-test__CancelButton').click();
 
@@ -166,7 +166,7 @@ describe('Failover', () => {
     modeDisable();
     cy.get('.meta-test__FailoverButton').contains('disabled');
     cy.get('.meta-test__FailoverButton').click();
-    cy.get('.meta-test__disableRadioBtn input').should('be.checked');
+    checkFailoverTabMode('Disabled', true);
     cy.get('.meta-test__failoverTimeout input').should('have.value', '5');
     //X button
     cy.get('.meta-test__FailoverModal > svg').click();
@@ -363,7 +363,7 @@ describe('Failover', () => {
 
     cy.get('.meta-test__FailoverButton').contains('disabled');
     cy.get('.meta-test__FailoverButton').click();
-    cy.get('.meta-test__disableRadioBtn input').should('be.checked');
+    checkFailoverTabMode('Disabled', true);
     cy.get('.meta-test__failoverTimeout input').should('have.value', '5');
     //X button to close window
     cy.get('.meta-test__FailoverModal > svg').click();
@@ -374,12 +374,12 @@ describe('Failover', () => {
     modeStatefulTarantool();
     cy.get('.meta-test__FailoverButton').contains('stateful');
     cy.get('.meta-test__FailoverButton').click({ force: true });
-    cy.get('.meta-test__statefulRadioBtn input').should('be.checked');
+    checkFailoverTabMode('Statefull', true);
     cy.get('.meta-test__failoverTimeout input').should('have.value', '10');
     cy.get('.meta-test__FailoverModal [type=\'checkbox\']').should('be.checked', 'Enabled');
     cy.get('.meta-test__fencingTimeout input').should('have.value', '5');
     cy.get('.meta-test__fencingPause input').should('have.value', '1');
-    cy.get('.meta-test__stateProviderChoice button').contains('Tarantool (stateboard)');
+    cy.get('.meta-test__stateProviderChoice input').should('have.value', 'Tarantool (stateboard)');
     cy.get('.meta-test__stateboardURI input').should('have.value', 'tcp://localhost:4402');
     cy.get('.meta-test__stateboardPassword svg').click();
     cy.get('.meta-test__stateboardPassword input').should('have.value', '123456');
@@ -391,12 +391,12 @@ describe('Failover', () => {
     modeStatefulEtcd2();
     cy.get('.meta-test__FailoverButton').contains('stateful');
     cy.get('.meta-test__FailoverButton').click({ force: true });
-    cy.get('.meta-test__statefulRadioBtn input').should('be.checked');
+    checkFailoverTabMode('Statefull', true);
     cy.get('.meta-test__failoverTimeout input').should('have.value', '10');
     cy.get('.meta-test__FailoverModal [type=\'checkbox\']').should('be.checked', 'Enabled');
     cy.get('.meta-test__fencingTimeout input').should('have.value', '5');
     cy.get('.meta-test__fencingPause input').should('have.value', '1');
-    cy.get('.meta-test__stateProviderChoice button').contains('Etcd');
+    cy.get('.meta-test__stateProviderChoice input').should('have.value', 'Etcd');
     cy.get('.meta-test__etcd2Username input').scrollIntoView().should('be.visible')
     cy.get('.meta-test__etcd2LockDelay input').should('have.value', '1');
     cy.get('.meta-test__etcd2Endpoints textarea').should('have.value', 'http://127.0.0.1:4002');
