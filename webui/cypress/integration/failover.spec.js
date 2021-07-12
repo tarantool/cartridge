@@ -107,6 +107,15 @@ describe('Failover', () => {
     }).should('deep.eq', [true]);
   }
 
+  function checkFailoverTabMode(mode, isActive) {
+    cy.log(mode, isActive);
+    cy.get(`.meta-test__failover-tabs button:contains(${mode})`).should(
+      isActive ? 'have.css' : 'not.have.css',
+      'background-color',
+      'rgb(255, 255, 255)'
+    )
+  }
+
   it('Test: failover', () => {
 
     ////////////////////////////////////////////////////////////////////
@@ -121,11 +130,11 @@ describe('Failover', () => {
     ////////////////////////////////////////////////////////////////////
     cy.get('.meta-test__FailoverButton').click();
 
-    statefulInputsShouldNotExist;
+    statefulInputsShouldNotExist();
 
-    cy.get('.meta-test__disableRadioBtn input').should('be.checked');
-    cy.get('.meta-test__eventualRadioBtn input').should('not.be.checked');
-    cy.get('.meta-test__statefulRadioBtn input').should('not.be.checked');
+    checkFailoverTabMode('Disabled', true);
+    checkFailoverTabMode('Eventual', false);
+    checkFailoverTabMode('Statefull', false);
 
     //change Failover timeout
     cy.get('.meta-test__failoverTimeout input').should('have.value', '0');
@@ -138,19 +147,6 @@ describe('Failover', () => {
     //Failover timeout tooltip
     cy.get('label:contains(Failover timeout)').next().trigger('mouseover');
     cy.get('div').contains('Timeout in seconds to mark suspect members as dead and trigger failover');
-
-    //Failover mode tooltip
-    cy.get('span:contains(Failover mode)').next().trigger('mouseover');
-    cy.get('div').contains('Disabled');
-    cy.get('div').contains('The leader is the first instance according to topology configuration. ' +
-      'No automatic decisions are taken.');
-    cy.get('div').contains('Eventual');
-    cy.get('div').contains('The leader isn\'t elected consistently. Every instance thinks the leader' +
-      ' is the first healthy server in the replicaset. The instance health is determined according to' +
-      ' the membership status (the SWIM protocol).');
-    cy.get('div').contains('Stateful:');
-    cy.get('div').contains('Leader appointments are polled from the external state provider. ' +
-      'Decisions are taken by one of the instances with the failover-coordinator role enabled.');
 
     cy.get('.meta-test__SubmitButton').click();
     cy.get('.meta-test__FailoverModal').should('not.exist');
@@ -179,13 +175,13 @@ describe('Failover', () => {
     cy.log('Failover Eventual from UI');
     ////////////////////////////////////////////////////////////////////
     cy.get('.meta-test__FailoverButton').click();
-    cy.get('.meta-test__eventualRadioBtn').click();
+    cy.get('.meta-test__failover-tabs button:contains(Eventual)').click();
 
     statefulInputsShouldNotExist();
 
-    cy.get('.meta-test__disableRadioBtn input').should('not.be.checked');
-    cy.get('.meta-test__eventualRadioBtn input').should('be.checked');
-    cy.get('.meta-test__statefulRadioBtn input').should('not.be.checked');
+    checkFailoverTabMode('Disabled', false);
+    checkFailoverTabMode('Eventual', true);
+    checkFailoverTabMode('Statefull', false);
 
     cy.get('.meta-test__failoverTimeout input').should('have.value', '5');
 
@@ -199,11 +195,11 @@ describe('Failover', () => {
     ////////////////////////////////////////////////////////////////////
     cy.get('.meta-test__FailoverButton').click();
 
-    cy.get('.meta-test__statefulRadioBtn').click();
+    cy.get('.meta-test__failover-tabs button:contains(Statefull)').click();
 
-    cy.get('.meta-test__disableRadioBtn input').should('not.be.checked');
-    cy.get('.meta-test__eventualRadioBtn input').should('not.be.checked');
-    cy.get('.meta-test__statefulRadioBtn input').should('be.checked');
+    checkFailoverTabMode('Disabled', false);
+    checkFailoverTabMode('Eventual', false);
+    checkFailoverTabMode('Statefull', true);
 
     //Fencing tooltip
     cy.get('span:contains(Fencing)').next().trigger('mouseover');
@@ -242,7 +238,8 @@ describe('Failover', () => {
     cy.get('.meta-test__fencingPause p:contains(Field accepts number)').should('not.exist');
 
     //State provider: Tarantool (stateboard)
-    cy.get('button[label="State provider"]').contains('Tarantool (stateboard)').click();
+    cy.get('.meta-test__stateProviderChoice input').should('have.value', 'Tarantool (stateboard)');
+    cy.get('.meta-test__stateProviderChoice input').click();
     cy.get('.meta-test__StateProvider__Dropdown *:contains(Tarantool (stateboard))');
     cy.get('.meta-test__StateProvider__Dropdown *:contains(Etcd)');
     cy.get('.meta-test__stateboardURI input').should('have.value', 'tcp://localhost:4401');
@@ -283,7 +280,7 @@ describe('Failover', () => {
 
     cy.get('.meta-test__inlineError').should('not.exist');
 
-    cy.get('.meta-test__statefulRadioBtn').click();
+    cy.get('.meta-test__failover-tabs button:contains(Statefull)').click();
     cy.get('.meta-test__fencingEnableCheckbox input').click({ force: true });
     cy.get('.meta-test__fencingTimeout input').type('{selectAll}{del}4');
 
@@ -297,10 +294,11 @@ describe('Failover', () => {
     cy.log('Failover Stateful - ETCD: success');
     ////////////////////////////////////////////////////////////////////
     cy.get('.meta-test__FailoverButton').click();
-    cy.get('.meta-test__statefulRadioBtn').click();
-    cy.get('button[label="State provider"]').contains('Tarantool (stateboard)').click();
+    cy.get('.meta-test__failover-tabs button:contains(Statefull)').click();
+    cy.get('.meta-test__stateProviderChoice input').should('have.value', 'Tarantool (stateboard)');
+    cy.get('.meta-test__stateProviderChoice input').click();
     cy.get('.meta-test__StateProvider__Dropdown *:contains(Etcd)').click();
-    cy.get('button[label="State provider"]').contains('Etcd')
+    cy.get('.meta-test__stateProviderChoice input').should('have.value', 'Etcd');
 
     cy.get('.meta-test__etcd2Endpoints textarea')
       .should('have.text', 'http://127.0.0.1:4001\nhttp://127.0.0.1:2379');
@@ -321,7 +319,7 @@ describe('Failover', () => {
     cy.log('Failover Stateful - ETCD: errors from UI');
     ////////////////////////////////////////////////////////////////////
     cy.get('.meta-test__FailoverButton').click();
-    cy.get('.meta-test__statefulRadioBtn').click();
+    cy.get('.meta-test__failover-tabs button:contains(Statefull)').click();
 
     cy.get('.meta-test__etcd2Endpoints textarea').type('{selectAll}{del}qq');
     cy.get('.meta-test__SubmitButton').click();

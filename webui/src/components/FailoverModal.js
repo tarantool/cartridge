@@ -278,7 +278,8 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
             label='Failover mode'
           >
             <Tabbed
-              size="small"
+              size='small'
+              className='meta-test__failover-tabs'
               activeTab={tabs.findIndex(tab => tab === mode)}
               handleTabChange={idx => this.handleModeChange(tabs[idx])}
               tabs={[
@@ -343,6 +344,7 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
               className='meta-test__stateProviderChoice'
               inputClassName={styles.select}
               inputComponent={Select}
+              dropdownClassName='meta-test__StateProvider__Dropdown'
               options={FAILOVER_STATE_PROVIDERS}
               value={state_provider}
               onChange={this.handleStateProviderChange}
