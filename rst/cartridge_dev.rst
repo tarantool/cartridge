@@ -930,101 +930,223 @@ exceptions relative to the rest of the templates does not matter, while in
 
 .. _cartridge-deploy:
 
---------------------------------------------------------------------------------
+------------------------
 Deploying an application
---------------------------------------------------------------------------------
+------------------------
 
-After you've developed your application locally, you can deploy
+After you've developed your Tarantool Cartridge application locally, you can deploy
 it to a test or production environment.
 
-"Deploy" includes packing the application into a specific distribution format,
-installing to the target system, and running the application.
+Deploying includes:
+
+*   packing the application into a specific distribution format
+*   installing it to the target server
+*   running the application.
 
 You have four options to deploy a Tarantool Cartridge application:
 
-* as an :ref:`rpm <cartridge-deploy-rpm>` package (for production);
-* as a :ref:`deb <cartridge-deploy-deb>` package (for production);
-* as a :ref:`tar+gz <cartridge-deploy-tgz>` archive (for testing,
-  or as a workaround for production if root access is unavailable).
-* :ref:`from sources <cartridge-deploy-rock>` (for local testing only).
+*   as an :ref:`RPM <cartridge-deploy-rpm>` package (for production)
+*   as a :ref:`DEB <cartridge-deploy-deb>` package (for production)
+*   as a :ref:`tar+gz <cartridge-deploy-tgz>` archive (for testing
+    or as a workaround for production if root access is unavailable)
+*   :ref:`from sources <cartridge-deploy-rock>` (for local testing only).
 
 .. _cartridge-deploy-rpm:
 .. _cartridge-deploy-deb:
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Deploying as an rpm or deb package
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Deploying as an RPM or DEB package
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The choice between DEB and RPM depends on the package manager of the target OS.
-For example, DEB is native for Debian Linux, and RPM -- for CentOS.
+DEB is used for Debian Linux and its derivatives, and RPM—for CentOS/RHEL and
+other RPM-based `Linux distributions <https://en.wikipedia.org/wiki/List_of_Linux_distributions>`_.
 
-#. Pack the application into a distributable:
+..  important::
 
-   .. code-block:: console
+    If you use the `Tarantool Community Edition <https://www.tarantool.io/en/developers/>`_
+    while packing the application, the package will have a dependency
+    on this version of Tarantool.
 
-       $ cartridge pack rpm APP_NAME
-       # -- OR --
-       $ cartridge pack deb APP_NAME
+    In this case, on a target server, add the Tarantool repository for
+    the version equal or later than the one used for packing the application.
+    This lets a package manager install the dependency correctly.
+    See details for your OS on the
+    `Download <https://www.tarantool.io/en/download/>`_ page.
 
-   This will create an RPM package (e.g. ``./my_app-0.1.0-1.rpm``) or
-   a DEB package (e.g. ``./my_app-0.1.0-1.deb``).
+For a production environment, it is recommended to use the ``systemd`` subsystem
+for managing the application instances and accessing log entries.
 
-#. Upload the package to target servers, with ``systemctl`` supported.
+To deploy your Tarantool Cartridge application:
 
-#. Install:
+#.  Pack the application into a deliverable:
 
-   .. code-block:: console
+    .. code-block:: console
 
-       $ yum install APP_NAME-VERSION.rpm
-       # -- OR --
-       $ dpkg -i APP_NAME-VERSION.deb
+       $ cartridge pack rpm [APP_PATH] [--use-docker]
+       $ # -- OR --
+       $ cartridge pack deb [APP_PATH] [--use-docker]
 
-#. Configure the instance(s).
-   Create a file called ``/etc/tarantool/conf.d/instances.yml``.
-   For example:
+    where
 
-   .. code-block:: yaml
+    *   ``APP_PATH``—a path to the application directory. Defaults to ``.``
+        (the current directory).
+    *   ``--use-docker``---the flag to use if packing the application
+        on a different Linux distribution or on macOS.
+        It ensures the resulting artifact contains the Linux compatible
+        external modules and executables.
 
-       my_app:
-         cluster_cookie: secret-cookie
+    This creates an RPM or DEB package with the following naming:
+    ``<APP_NAME>-<VERSION>.{rpm,deb}``. For example, ``./my_app-0.1.0-1-g8c57dcb.rpm``
+    or ``./my_app-0.1.0-1-g8c57dcb.deb``. For more details on the format and
+    usage of the ``cartridge pack`` command, refer to the
+    `command description <https://www.tarantool.io/en/doc/latest/book/cartridge/cartridge_cli/#packing-an-application>`_.
 
-       my_app.instance-1:
-         http_port: 8081
-         advertise_uri: localhost:3301
+#.  Upload the generated package to a target server.
 
-       my_app.instance-2:
-         http_port: 8082
-         advertise_uri: localhost:3302
+#.  Install the application:
 
-   See details :ref:`here <cartridge-config>`.
+    .. code-block:: console
 
-#. Start Tarantool instances with the corresponding services.
-   You can do it using :ref:`systemctl <cartridge-run-systemctl>`, for example:
+       $ sudo yum install <APP_NAME>-<VERSION>.rpm
+       $ # -- OR --
+       $ sudo dpkg -i <APP_NAME>-<VERSION>.deb
 
-   .. code-block:: console
+#.  Configure the application instances.
 
-       # starts a single instance
-       $ systemctl start my_app
+    The configuration is stored in the ``/etc/tarantool/conf.d/instances.yml``
+    file. Create the file and specify parameters of the instances.
+    For details, refer to :ref:`cartridge-config`.
 
-       # starts multiple instances
-       $ systemctl start my_app@router
-       $ systemctl start my_app@storage_A
-       $ systemctl start my_app@storage_B
+    For example:
 
-#. In case it is a cluster-aware application, proceed to
-   :ref:`deploying the cluster <cartridge-deployment>`.
+    ..  code-block:: yaml
 
-   .. NOTE::
+        my_app:
+          cluster_cookie: secret-cookie
+
+        my_app.router:
+          advertise_uri: localhost:3301
+          http_port: 8081
+
+        my_app.storage-master:
+          advertise_uri: localhost:3302
+          http_port: 8082
+
+        my_app.storage-replica:
+          advertise_uri: localhost:3303
+          http_port: 8083
+
+    ..  NOTE::
+
+        Do not specify working directories of the instances in this configuration.
+        They are defined via the ``TARANTOOL_WORKDIR`` environmental variable
+        in the instantiated unit file (``/etc/systemd/system/<APP_NAME>@.service``).
+
+#.  Start the application instances by using ``systemctl``.
+
+    For more details, see :ref:`cartridge-run-systemctl`.
+
+    ..  code-block:: console
+
+        $ sudo systemctl start my_app@router
+        $ sudo systemctl start my_app@storage-master
+        $ sudo systemctl start my_app@storage-replica
+
+#.  In case of a cluster-aware application, proceed to :ref:`deploying the cluster <cartridge-deployment>`.
+
+    .. NOTE::
 
        If you're migrating your application from local test environment to
        production, you can re-use your test configuration at this step:
 
-       1. In the cluster web interface of the test environment, click
-          **Configuration files > Download**
-          to save the test configuration.
-       2. In the cluster web interface of the production environment, click
-          **Configuration files > Upload**
-          to upload the saved configuration.
+       1.   In the cluster web interface of the test environment, click
+            **Configuration files > Download**
+            to save the test configuration.
+       2.   In the cluster web interface of the production environment, click
+            **Configuration files > Upload**
+            to upload the saved configuration.
+
+You can further manage the running instances by using the standard operations of
+the ``systemd`` utilities:
+
+*   ``systemctl`` for stopping, re-starting, checking the status of the instances,
+    and so on
+*   ``journalctl`` for collecting logs of the instances.
+
+.. _cartridge-deploy-add:
+
+************************************
+Entities created during installation
+************************************
+
+During the installation of a Tarantool Cartridge application, the following
+entities are additionally created:
+
+*   The ``tarantool`` user group.
+*   The ``tarantool`` system user. All the application instances start under this
+    user. The ``tarantool`` user group is the main group for the ``tarantool`` user.
+    The user is created with the option ``-s /sbin/nologin``.
+*   Directories and files listed in the table below
+    (``<APP_NAME>`` is the application name, ``%i`` is the instance name):
+
+..  container:: table
+
+    ..  list-table::
+        :widths: 100 50 50 100
+        :header-rows: 1
+
+        *   -   Path
+            -   Access Rights
+            -   Owner:Group
+            -   Description
+
+        *   -   ``/etc/systemd/system/<APP_NAME>.service``
+            -   ``-rw-r--r--``
+            -   ``root:root``
+            -   systemd unit file for the <APP_NAME> service
+
+        *   -   ``/etc/systemd/system/<APP_NAME>@.service``
+            -   ``-rw-r--r--``
+            -   ``root:root``
+            -   systemd instantiated unit file for the <APP_NAME> service
+
+        *   -   ``/usr/share/tarantool/<APP_NAME>/``
+            -   ``drwxr-xr-x``
+            -   ``root:root``
+            -   Directory. Contains executable files of the application.
+
+        *   -   ``/etc/tarantool/conf.d/``
+            -   ``drwxr-xr-x``
+            -   ``root:root``
+            -   Directory for YAML files with the configuration of the application instances,
+                such as ``instances.yml``.
+
+        *   -   ``/var/lib/tarantool/<APP_NAME>.%i/``
+            -   ``drwxr-xr-x``
+            -   ``tarantool:tarantool``
+            -   Working directories of the application instances.
+                Each directory contains the instance data, namely, the
+                WAL and snapshot files, and also the application configuration
+                YAML files.
+
+        *   -   ``/var/run/tarantool/``
+            -   ``drwxr-xr-x``
+            -   ``tarantool:tarantool``
+            -   Directory. Contains the following files for each instance:
+                ``<APP_NAME>.%i.pid`` and ``<APP_NAME>.%i.control``.
+
+        *   -   ``/var/run/tarantool/<APP_NAME>.%i.pid``
+            -   ``-rw-r--r--``
+            -   ``tarantool:tarantool``
+            -   Contains the process ID.
+
+        *   -   ``/var/run/tarantool/<APP_NAME>.%i.control``
+            -   ``srwxr-xr-x``
+            -   ``tarantool:tarantool``
+            -   Unix socket to connect to the instance via the
+                `tarantoolctl <https://www.tarantool.io/en/doc/latest/reference/tarantoolctl/>`_
+                utility.
 
 .. _cartridge-deploy-tgz:
 
