@@ -8,7 +8,7 @@ Every instance in the cluster has an internal state machine. It helps to
 manage cluster operation and describe a distributed system
 simpler.
 
-..  uml::  ../doc/rst/uml/state-machine.uml
+..  uml::  ./uml/state-machine.puml
 
 
 Instance lifecycle starts from ``cartridge.cfg`` call. During initialization
@@ -16,7 +16,7 @@ Cartridge instance binds TCP (iproto) and UDP sockets
 (SWIM), checks working directory and depending on enters one
 of the following states:
 
-..  uml::  ../doc/rst/uml/InitialState.uml
+..  uml::  ./uml/InitialState.puml
 
 ~~~~~~~~~~~~
 Unconfigured
@@ -31,7 +31,7 @@ cluster (to create replicaset or join the existing one).
 
 After that, the instance moves to ``BootstrappingBox`` state.
 
-..  uml::  ../doc/rst/uml/Unconfigured.uml
+..  uml::  ./uml/Unconfigured.puml
 
 
 ~~~~~~~~~~~
@@ -45,7 +45,7 @@ Config is to be downloaded and validated. If no errors occurred during these
 phases, the state is set to ``ConfigLoaded``  state.
 Otherwise, it will move to ``InitError`` state.
 
-..  uml::  ../doc/rst/uml/ConfigFound.uml
+..  uml::  ./uml/ConfigFound.puml
 
 
 ~~~~~~~~~~~~
@@ -59,7 +59,7 @@ state to ``RecoveringSnapshot``. Otherwise, it will move to
 ``BootstrappingBox`` state. By default, all instances start in read-only mode
 and don’t start listening until bootstrap/recovery finishes.
 
-..  uml::  ../doc/rst/uml/ConfigLoaded.uml
+..  uml::  ./uml/ConfigLoaded.puml
 
 
 ~~~~~~~~~
@@ -89,7 +89,7 @@ state to ``BootError``. If there is no replicaset in clusterwide
 config, the instance will set the state to ``BootError``. If
 everything is ok, the instance is set to ``ConnectingFullmesh``.
 
-..  uml::  ../doc/rst/uml/Recovery.uml
+..  uml::  ./uml/Recovery.puml
 
 ~~~~~~~~~~~~~~~~~~
 RecoveringSnapshot
@@ -121,7 +121,7 @@ performed. Eventually, cluster topology, which is described in config, is
 implemented. But in case of an error instance the state is changed to
 ``BootError``. Otherwise, it proceeds to configuring roles.
 
-..  uml::  ../doc/rst/uml/ConnectingFullmesh.uml
+..  uml::  ./uml/ConnectingFullmesh.puml
 
 
 ~~~~~~~~~~~~~
@@ -141,7 +141,7 @@ The state of role configuration. Instance can be set to this state while
 initial setup, after failover trigger(``failover.lua``) or after
 altering clusterwide config(``twophase.lua``).
 
-..  uml:: ../doc/rst/uml/ConfiguringRoles.uml
+..  uml:: ./uml/ConfiguringRoles.puml
 
 
 ~~~~~~~~~~~~~~~
