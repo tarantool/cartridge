@@ -60,6 +60,8 @@ Fixed
 - Check user e-mail uniquness when editing.
 - Expelled instances are removed from ``_cluster`` space.
 - Fix ``get_enabled_roles`` to work w/o args
+- Don't default to syslog driver unless ``/dev/log`` or
+  ``/var/run/syslog`` are available.
 
 -------------------------------------------------------------------------------
 [2.6.0] - 2021-04-26

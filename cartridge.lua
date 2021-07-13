@@ -21,6 +21,7 @@ local membership = require('membership')
 local membership_network = require('membership.network')
 local http = require('http.server')
 local fiber = require('fiber')
+local socket = require('socket')
 
 local rpc = require('cartridge.rpc')
 local auth = require('cartridge.auth')
@@ -329,11 +330,20 @@ local function cfg(opts, box_opts)
     -- makes it possible to filter by severity with
     -- systemctl
     if utils.under_systemd() and box_opts.log == nil then
-        local identity = table.concat({
-            args.app_name or 'tarantool',
-            args.instance_name
-        }, '.')
-        box_opts.log = string.format('syslog:identity=%s', identity)
+        local syslog, _ = socket.connect('unix/', '/dev/log')
+        if not syslog then
+            syslog, _ = socket.connect('unix/', '/var/run/syslog')
+        end
+
+        if syslog then
+            syslog:close()
+
+            local identity = table.concat({
+                args.app_name or 'tarantool',
+                args.instance_name
+            }, '.')
+            box_opts.log = string.format('syslog:identity=%s', identity)
+        end
     end
 
     if log.cfg ~= nil then
