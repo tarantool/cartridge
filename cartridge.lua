@@ -329,11 +329,19 @@ local function cfg(opts, box_opts)
     -- makes it possible to filter by severity with
     -- systemctl
     if utils.under_systemd() and box_opts.log == nil then
-        local identity = table.concat({
-            args.app_name or 'tarantool',
-            args.instance_name
-        }, '.')
-        box_opts.log = string.format('syslog:identity=%s', identity)
+        local syslog = '/dev/log' -- for Linux
+        if not fio.path.exists(syslog) then
+            syslog = '/var/run/syslog' -- for Mac
+        end
+
+        if fio.path.exists(syslog)
+        and bit.band(fio.stat(syslog).mode, fio.c.mode.S_IWUSR) ~= 0 then
+            local identity = table.concat({
+                args.app_name or 'tarantool',
+                args.instance_name
+            }, '.')
+            box_opts.log = string.format('syslog:identity=%s', identity)
+        end
     end
 
     if log.cfg ~= nil then

@@ -59,6 +59,8 @@ Fixed
 - Fix hotreload for roles who leave gaps in httpd routes.
 - Check user e-mail uniquness when editing.
 - Expelled instances are removed from ``_cluster`` space.
+- Syslog driver will not be used if ``/dev/log`` or ``/var/run/syslog`` are
+  not available
 
 -------------------------------------------------------------------------------
 [2.6.0] - 2021-04-26
