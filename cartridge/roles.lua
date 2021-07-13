@@ -226,7 +226,10 @@ end
 -- @treturn {[string]=boolean,...}
 local function get_enabled_roles(roles)
     checks('?table')
-    roles = roles or {}
+    -- roles = roles or {}
+    if roles == nil then
+        return {}
+    end
 
     local ret = {}
 
