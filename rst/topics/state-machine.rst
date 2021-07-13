@@ -27,7 +27,7 @@ If the working directory is clean and neither snapshots nor cluster-wide
 configuration files exist, the instance enters ``Unconfigured`` state.
 
 The instance starts to accept iproto requests (Tarantool binary
-protocol) and remains in the state until the user decides to join it to the
+protocol) and remains in the state until the user decides to join it to a
 cluster (to create replicaset or join the existing one).
 
 After that, the instance moves to ``BootstrappingBox`` state.
@@ -40,11 +40,11 @@ ConfigFound
 ~~~~~~~~~~~
 
 
-The instance enters ``ConfigFound`` state if all configuration files and
+The instance enters the ``ConfigFound`` state if all configuration files and
 snapshots are found. The files and snapshots are not loaded.
-Config is to be downloaded and validated. If no errors occurred during these
-phases, the state is set to ``ConfigLoaded``  state.
-Otherwise, it will move to ``InitError`` state.
+Config is to be downloaded and validated. On success,
+the state enters the ``ConfigLoaded`` state.
+On failure, it will move to the ``InitError`` state.
 
 ..  uml::  ./uml/ConfigFound.puml
 
@@ -70,7 +70,7 @@ InitError
 
 Instance initialization error can be caused by the following events:
 
-*  Error occurred during ``cartridge.remote-control``\ ’s connection to
+*  Error occurred during ``cartridge.remote-control``’s connection to
    binary port
 *  Missing ``config.yml`` from workdir (``tmp/``), while snapshots are
    present
