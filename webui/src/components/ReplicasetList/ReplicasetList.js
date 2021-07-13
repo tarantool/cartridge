@@ -172,7 +172,7 @@ class ReplicasetList extends React.PureComponent {
         >
           {replicasetList.map(replicaset => (
             <TiledListItem key={replicaset.uuid} corners='soft'>
-              <div className={styles.header}>
+              <div className={styles.header} data-cy='meta-test__replicaSetSection'>
                 <Text className={styles.alias} variant='h3'>{replicaset.alias}</Text>
                 <div className={styles.statusGroup}>
                   <div className={styles.statusWrap}>

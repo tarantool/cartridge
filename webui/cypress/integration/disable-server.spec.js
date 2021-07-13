@@ -50,6 +50,10 @@ describe('Disable server', () => {
     cy.log('Information about healthy and unhealthy server count before disabling server 2 and 3');
     ////////////////////////////////////////////////////////////////////
     cy.get('section:contains("1 total | 0 unhealthy | 3 servers")').should('exist');
+    cy.get('[data-cy=meta-test__replicaSetSection]').contains('healthy');
+    cy.get('.ServerLabelsHighlightingArea').eq(0).contains('healthy');
+    cy.get('.ServerLabelsHighlightingArea').eq(1).contains('healthy');
+    cy.get('.ServerLabelsHighlightingArea').eq(2).contains('healthy');
 
     ////////////////////////////////////////////////////////////////////
     cy.log('Kill servers 2 and 3');
@@ -70,6 +74,14 @@ describe('Disable server', () => {
       'Some instances are malfunctioning' +
       ' and impede editing clusterwide configuration.' +
       ' Disable them temporarily if you want to operate topology.');
+
+    //Check health state for Servers and  ReplicaSet
+    cy.get('section:contains("1 total | 1 unhealthy | 3 servers")').should('exist');
+    cy.get('[data-cy=meta-test__replicaSetSection]').contains('have issues');
+    cy.get('.ServerLabelsHighlightingArea').eq(0).contains('healthy');
+    cy.get('.ServerLabelsHighlightingArea').eq(1).contains('Server status is "dead"');
+    cy.get('.ServerLabelsHighlightingArea').eq(2).contains('Server status is "dead"');
+    ////////////////////////////////////////////////////////////////////
 
     ////////////////////////////////////////////////////////////////////
     cy.log('Inspect suggestion modal');
@@ -97,6 +109,7 @@ describe('Disable server', () => {
     cy.log('Inspect correct information for healthy and unhealthy server count after server 2 and 3 have been disabled')
     ////////////////////////////////////////////////////////////////////
     cy.get('section:contains(1 total | 1 unhealthy | 3 servers)').should('exist')
+    cy.get('[data-cy=meta-test__replicaSetSection]').contains('unhealthy');
 
     ////////////////////////////////////////////////////////////////////
     cy.log('Try to enable dead server via dropdown button');
@@ -133,6 +146,8 @@ describe('Disable server', () => {
     cy.get('.ServerLabelsHighlightingArea:contains(dummy-2)')
       .should('have.css', 'background-color', 'rgb(255, 255, 255)');
     cy.get('.meta-test__ClusterSuggestionsPanel').should('not.exist');
+    cy.get('.ServerLabelsHighlightingArea').eq(1).contains('healthy');
+    cy.get('[data-cy=meta-test__replicaSetSection]').contains('unhealthy');
 
     ////////////////////////////////////////////////////////////////////
     cy.log('Enable server 3 via server details');
@@ -162,5 +177,10 @@ describe('Disable server', () => {
     cy.log('Information about healthy and unhealthy server count after enableing server 2 and 3');
     ////////////////////////////////////////////////////////////////////
     cy.get('section:contains(1 total | 0 unhealthy | 3 servers)').should('exist')
+    cy.get('[data-cy=meta-test__replicaSetSection]').contains('healthy');
+    cy.get('.ServerLabelsHighlightingArea').eq(0).contains('healthy');
+    cy.get('.ServerLabelsHighlightingArea').eq(1).contains('healthy');
+    cy.get('.ServerLabelsHighlightingArea').eq(2).contains('healthy');
+
   });
 });
