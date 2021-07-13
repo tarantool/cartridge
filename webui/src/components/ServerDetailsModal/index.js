@@ -70,6 +70,24 @@ const styles = {
   `,
   zoneAddBtn: css`
     margin: 12px 20px;
+  `,
+  zone: css`
+    position: relative;
+    padding-left: 32px;
+  `,
+  activeZone: css`
+    &:before {
+      position: absolute;
+      display: block;
+      top: 50%;
+      transform: translateY(-50%);
+      content: '';
+      height: 6px;
+      width: 6px;
+      border-radius: 50%;
+      margin-left: -16px;
+      background-color: ${colors.intentPrimary};
+    }
   `
 };
 
@@ -210,7 +228,11 @@ class ServerDetailsModal extends React.Component<
                     <DropdownItem
                       key={zoneName}
                       onClick={() => setInstanceZoneFx({ uuid: instanceUUID, zone: zone === zoneName ? '' : zoneName })}
-                      className='meta-test__ZoneListItem'
+                      className={cx(
+                        'meta-test__ZoneListItem',
+                        styles.zone,
+                        { [styles.activeZone]: zone === zoneName }
+                      )}
                     >
                       {zoneName}
                     </DropdownItem>
