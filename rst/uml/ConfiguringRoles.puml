@@ -1,8 +1,10 @@
 @startuml
 
-[BoxConfigured] --> [ConfiguringRoles]
-[ConfiguringRoles] --> [RolesConfigured]
-[ConfiguringRoles] --> [OperationError]
-[RolesConfigured] --> [ConfiguringRoles]
+hide empty description
+
+BoxConfigured --> ConfiguringRoles
+ConfiguringRoles --> RolesConfigured
+ConfiguringRoles --> OperationError
+RolesConfigured --> ConfiguringRoles
 
 @enduml
