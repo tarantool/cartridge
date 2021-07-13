@@ -1,8 +1,10 @@
 @startuml
 
-[BootstrappingBox or RecoveringSnapshot] --> [ConnectingFullmesh]
-[ConnectingFullmesh] --> [BoxConfigured]
-[ConnectingFullmesh] --> [ConnectingFullmesh]
-[ConnectingFullmesh] --> [BootError]
+hide empty description
+state "BootstrappingBox or RecoveringSnapshot" as BootstrappingBox
+BootstrappingBox --> ConnectingFullmesh
+ConnectingFullmesh --> BoxConfigured
+ConnectingFullmesh --> ConnectingFullmesh
+ConnectingFullmesh --> BootError
 
 @enduml

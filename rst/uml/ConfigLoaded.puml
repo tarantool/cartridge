@@ -1,6 +1,9 @@
 @startuml
 
-[ConfigFound] --> [ConfigLoaded]
-[ConfigLoaded] --> [BootstrappingBox or RecoveringSnapshot]
+hide empty description
+state "BootstrappingBox or RecoveringSnapshot" as BootstrappingBox
+
+ConfigFound --> ConfigLoaded
+ConfigLoaded --> BootstrappingBox
 
 @enduml

@@ -1,5 +1,6 @@
 @startuml
 
+hide empty description
 [*] --> Unconfigured
 [*] --> ConfigFound
 
