@@ -141,6 +141,50 @@ function g.test_broken_replica()
     end)
 end
 
+function g.test_replication_idle()
+    local master = g.cluster.main_server
+    local replica1 = g.cluster:server('replica1')
+    local replica2 = g.cluster:server('replica2')
+
+    master.net_box:call('box.cfg', {{replication_timeout = 0.5}})
+    replica1.process:kill('STOP')
+    replica2.process:kill('STOP')
+
+    local resp
+
+    t.helpers.retrying({delay = 0 --[[ issues query hangs itself ]]}, function()
+        resp = master:graphql({query = [[{
+            cluster {
+                issues { level topic instance_uuid replicaset_uuid }
+                issues_msg: issues { message }
+            }
+        }]]}).data.cluster
+
+        local _i = {
+            level = 'warning',
+            topic = 'replication',
+            instance_uuid = master.instance_uuid,
+            replicaset_uuid = master.replicaset_uuid,
+        }
+
+        -- there're two similar issues for each replica
+        t.assert_equals(resp.issues, {_i, _i})
+    end)
+
+    t.assert_str_matches(
+        resp.issues_msg[1].message,
+        'Replication from localhost:1330. %(replica.%)' ..
+        ' to localhost:13301 %(master%): long idle .+'
+    )
+
+    replica1.process:kill('CONT')
+    replica2.process:kill('CONT')
+
+    t.helpers.retrying({}, function()
+        t.assert_equals(helpers.list_cluster_issues(master), {})
+    end)
+end
+
 function g.test_config_mismatch()
     local master = g.cluster.main_server
     local replica2 = g.cluster:server('replica2')
