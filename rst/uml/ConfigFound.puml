@@ -1,3 +1,7 @@
-[*]->[ConfigFound]
-[ConfigFound]->[ConfigLoaded]
-[ConfigFound]->[InitError]
+@startuml
+
+[*] --> [ConfigFound]
+[ConfigFound] --> [ConfigLoaded]
+[ConfigFound] --> [InitError]
+
+@enduml

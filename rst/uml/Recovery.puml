@@ -1,4 +1,8 @@
-[Unconfigured]->[BootstrappingBox or RecoveringSnapshot]
-[ConfigLoaded]->[BootstrappingBox or RecoveringSnapshot]
-[BootstrappingBox or RecoveringSnapshot]->[ConnectingFullmesh]
-[BootstrappingBox or RecoveringSnapshot]->[BootError]
+@startuml
+
+[Unconfigured] --> [BootstrappingBox or RecoveringSnapshot]
+[ConfigLoaded] --> [BootstrappingBox or RecoveringSnapshot]
+[BootstrappingBox or RecoveringSnapshot] --> [ConnectingFullmesh]
+[BootstrappingBox or RecoveringSnapshot] --> [BootError]
+
+@enduml

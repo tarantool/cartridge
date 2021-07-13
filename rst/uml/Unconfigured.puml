@@ -1,2 +1,6 @@
-[*]->[Unconfigured]
-[Unconfigured]->[BootstrappingBox or RecoveringSnapshot]
+@startuml
+
+[*] --> [Unconfigured]
+[Unconfigured] --> [BootstrappingBox or RecoveringSnapshot]
+
+@enduml
