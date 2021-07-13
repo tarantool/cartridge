@@ -141,6 +141,64 @@ function g.test_broken_replica()
     end)
 end
 
+function g.test_replication_idle()
+    local master = g.cluster.main_server
+    local replica1 = g.cluster:server('replica1')
+    local replica2 = g.cluster:server('replica2')
+
+    -- Set up network partitioning to avoid request hanging.
+    -- Without it, the issues query does pool.map_call
+    -- and waits for timeout on stopped replicas.
+    -- With this hack, pool.map_call returns "Connection refused"
+    -- immediately.
+    replica1.net_box:call('box.cfg', {{listen = box.NULL}})
+    replica2.net_box:call('box.cfg', {{listen = box.NULL}})
+    master.net_box:eval([[
+        local pool = require('cartridge.pool')
+        pool.connect('localhost:13302', {wait_connected = false}):close()
+        pool.connect('localhost:13303', {wait_connected = false}):close()
+    ]])
+
+    replica1.process:kill('STOP')
+    replica2.process:kill('STOP')
+
+    local resp
+
+    t.helpers.retrying({}, function()
+        resp = master:graphql({query = [[{
+            cluster {
+                issues { level topic instance_uuid replicaset_uuid }
+                issues_msg: issues { message }
+            }
+        }]]}).data.cluster
+
+        -- there're two similar issues for each replica
+        local _i = {
+            level = 'warning',
+            topic = 'replication',
+            instance_uuid = master.instance_uuid,
+            replicaset_uuid = master.replicaset_uuid,
+        }
+        t.assert_equals(resp.issues, {_i, _i})
+    end)
+
+    t.assert_str_matches(
+        resp.issues_msg[1].message,
+        'Replication from localhost:1330[23] %(replica[12]%)' ..
+        ' to localhost:13301 %(master%): long idle %(.+ > 1%)'
+    )
+
+    -- Revert all the hacks
+    replica1.process:kill('CONT')
+    replica2.process:kill('CONT')
+    g.cluster:stop()
+    g.cluster:start()
+
+    t.helpers.retrying({}, function()
+        t.assert_equals(helpers.list_cluster_issues(master), {})
+    end)
+end
+
 function g.test_config_mismatch()
     local master = g.cluster.main_server
     local replica2 = g.cluster:server('replica2')
