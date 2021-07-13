@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'rst/**.rst'
+      - 'rst/conf.py'
 jobs:
   push-translation-sources:
     runs-on: ubuntu-latest
