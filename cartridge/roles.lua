@@ -217,7 +217,7 @@ end
 
 --- Roles to be enabled on the server.
 -- This function returns all roles that will be enabled
--- including their dependencies (bot hidden and not)
+-- including their dependencies (both hidden and not)
 -- and permanent roles.
 --
 -- @function get_enabled_roles
@@ -226,10 +226,7 @@ end
 -- @treturn {[string]=boolean,...}
 local function get_enabled_roles(roles)
     checks('?table')
-
-    if roles == nil then
-        return {}
-    end
+    roles = roles or {}
 
     local ret = {}
 

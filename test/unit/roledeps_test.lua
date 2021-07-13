@@ -188,3 +188,54 @@ t.assert_equals(enabled_roles, {
 })
 
 end
+
+local function prepare_roles_with_deps()
+    package.preload['myrole'] = function()
+        return { role_name = 'myrole', dependencies = {'myrole-dependency', 'myrole-hidden', 'myrole-permanent'} }
+    end
+    package.preload['myrole-dependency'] = function()
+        return { role_name = 'myrole-dependency' }
+    end
+    package.preload['myrole-hidden'] = function()
+        return { role_name = 'myrole-hidden', hidden = true }
+    end
+    package.preload['myrole-permanent'] = function()
+        return { role_name = 'myrole-permanent', permanent = true }
+    end
+
+    local ok, err = register_roles('myrole')
+    t.assert(ok, err)
+end
+
+g.test_get_enabled_roles_without_args = function()
+    prepare_roles_with_deps()
+    local roles_list = roles.get_enabled_roles()
+
+    t.assert_equals(roles_list, {
+        ['ddl-manager'] = true,
+        ['myrole-permanent'] = true,
+    })
+end
+
+g.test_get_enabled_roles_with_dependencies = function()
+    prepare_roles_with_deps()
+    local roles_list = roles.get_enabled_roles({'myrole'})
+
+    t.assert_equals(roles_list, {
+        ['ddl-manager'] = true,
+        ['myrole'] = true,
+        ['myrole-hidden'] = true,
+        ['myrole-dependency'] = true,
+        ['myrole-permanent'] = true,
+    })
+
+    roles_list = roles.get_enabled_roles({myrole = true})
+
+    t.assert_equals(roles_list, {
+        ['ddl-manager'] = true,
+        ['myrole'] = true,
+        ['myrole-hidden'] = true,
+        ['myrole-dependency'] = true,
+        ['myrole-permanent'] = true,
+    })
+end
