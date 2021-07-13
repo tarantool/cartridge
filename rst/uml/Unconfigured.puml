@@ -1,6 +1,7 @@
 @startuml
 
-[*] --> [Unconfigured]
-[Unconfigured] --> [BootstrappingBox or RecoveringSnapshot]
+state "BootstrappingBox or RecoveringSnapshot" as BootstrappingBox
+[*] --> Unconfigured
+Unconfigured --> BootstrappingBox
 
 @enduml
