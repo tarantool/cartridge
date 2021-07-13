@@ -25,8 +25,10 @@ exclude_patterns = [
 
 extensions = [
     'TarantoolSessionLexer',
+    'sphinxcontrib.plantuml',
 ]
 
+plantuml_output_format = 'svg_img'
 language = 'en'
 locale_dirs = ['./locale']
 gettext_compact = False

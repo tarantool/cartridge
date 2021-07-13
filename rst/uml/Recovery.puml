@@ -1,0 +1,12 @@
+@startuml
+
+
+hide empty description
+state "BootstrappingBox or RecoveringSnapshot" as BootstrappingBox
+
+Unconfigured --> BootstrappingBox
+ConfigLoaded --> BootstrappingBox
+BootstrappingBox --> ConnectingFullmesh
+BootstrappingBox --> BootError
+
+@enduml

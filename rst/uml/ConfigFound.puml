@@ -1,0 +1,8 @@
+@startuml
+
+hide empty description
+[*] --> ConfigFound
+ConfigFound --> ConfigLoaded
+ConfigFound --> InitError
+
+@enduml

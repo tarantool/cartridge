@@ -1,0 +1,8 @@
+@startuml
+
+hide empty description
+state "BootstrappingBox or RecoveringSnapshot" as BootstrappingBox
+[*] --> Unconfigured
+Unconfigured --> BootstrappingBox
+
+@enduml
