@@ -4,7 +4,7 @@ export const STAT_REQUEST_PERIOD = 3;
 export const DEFAULT_VSHARD_GROUP_NAME = 'default'; // indicates vshard groups are disabled
 export const LS_CODE_EDITOR_OPENED_FILE = 'tarantool_cartridge_editor_opened_file';
 export const FAILOVER_STATE_PROVIDERS = [
-  ['tarantool', 'Tarantool (stateboard)'],
-  ['etcd2', 'Etcd']
+  { value: 'tarantool', label: 'Tarantool (stateboard)' },
+  { value: 'etcd2', label: 'Etcd' }
 ];
 export const BUILT_IN_USERS = ['admin'];
