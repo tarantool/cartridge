@@ -59,6 +59,7 @@ Fixed
 - Fix hotreload for roles who leave gaps in httpd routes.
 - Check user e-mail uniquness when editing.
 - Expelled instances are removed from ``_cluster`` space.
+- Fix ``get_enabled_roles`` to work w/o args
 
 -------------------------------------------------------------------------------
 [2.6.0] - 2021-04-26

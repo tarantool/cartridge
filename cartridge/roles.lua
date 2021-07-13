@@ -217,7 +217,7 @@ end
 
 --- Roles to be enabled on the server.
 -- This function returns all roles that will be enabled
--- including their dependencies (bot hidden and not)
+-- including their dependencies (both hidden and not)
 -- and permanent roles.
 --
 -- @function get_enabled_roles
