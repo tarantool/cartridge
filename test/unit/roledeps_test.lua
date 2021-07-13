@@ -229,7 +229,7 @@ g.test_get_enabled_roles_with_dependencies = function()
         ['myrole-permanent'] = true,
     })
 
-    local roles_list = roles.get_enabled_roles({myrole = true})
+    roles_list = roles.get_enabled_roles({myrole = true})
 
     t.assert_equals(roles_list, {
         ['ddl-manager'] = true,
