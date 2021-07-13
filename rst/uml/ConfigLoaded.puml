@@ -1,2 +1,6 @@
-[ConfigFound]->[ConfigLoaded]
-[ConfigLoaded]->[BootstrappingBox or RecoveringSnapshot]
+@startuml
+
+[ConfigFound] --> [ConfigLoaded]
+[ConfigLoaded] --> [BootstrappingBox or RecoveringSnapshot]
+
+@enduml

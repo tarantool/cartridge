@@ -1,2 +1,6 @@
-[*]->[Unconfigured]
-[*]->[ConfigFound]
+@startuml
+
+[*] --> [Unconfigured]
+[*] --> [ConfigFound]
+
+@enduml
