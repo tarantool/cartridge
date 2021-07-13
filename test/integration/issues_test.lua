@@ -32,6 +32,10 @@ g.before_all(function()
     })
     g.cluster:start()
 
+    g.master = g.cluster:server('master')
+    g.replica1 = g.cluster:server('replica1')
+    g.replica2 = g.cluster:server('replica2')
+
     g.alien = helpers.Server:new({
         alias = 'alien',
         workdir = fio.pathjoin(g.cluster.datadir, 'alien'),
@@ -78,24 +82,20 @@ function g.test_issues_limits()
 end
 
 function g.test_broken_replica()
-    local master = g.cluster.main_server
-    local replica1 = g.cluster:server('replica1')
-    local replica2 = g.cluster:server('replica2')
-
-    master.net_box:eval([[
+    g.master.net_box:eval([[
         __replication = box.cfg.replication
         box.cfg{replication = box.NULL}
     ]])
 
-    replica1.net_box:eval([[
+    g.replica1.net_box:eval([[
         box.cfg{read_only = false}
         box.schema.space.create('test')
     ]])
     t.helpers.retrying({}, function()
-        replica2.net_box:eval('assert(box.space.test)')
+        g.replica2.net_box:eval('assert(box.space.test)')
     end)
 
-    master.net_box:eval([[
+    g.master.net_box:eval([[
         box.schema.space.create('test')
         pcall(box.cfg, {replication = __replication})
         __replication = nil
@@ -118,26 +118,46 @@ function g.test_broken_replica()
     end
 
     t.helpers.retrying({}, function()
-        t.assert_items_equals(helpers.list_cluster_issues(master), {
+        t.assert_items_equals(helpers.list_cluster_issues(g.master), {
             issue_fmt('master', 'replica1'),
             issue_fmt('master', 'replica2'),
             issue_fmt('replica1', 'master'),
             issue_fmt('replica2', 'master'),
         })
+
+        t.assert_items_equals(
+            helpers.get_suggestions(g.master).restart_replication, {
+            {uuid = g.cluster:server('master').instance_uuid},
+            {uuid = g.cluster:server('replica1').instance_uuid},
+            {uuid = g.cluster:server('replica2').instance_uuid},
+        })
     end)
 
-    for _, srv in ipairs({master, replica1, replica2}) do
+    for _, srv in ipairs({g.master, g.replica1, g.replica2}) do
         srv.net_box:eval([[
             box.cfg({replication_skip_conflict = true})
-            __replication = box.cfg.replication
-            pcall(box.cfg, {replication = box.NULL})
-            pcall(box.cfg, {replication = __replication})
-            __replication = nil
         ]])
     end
 
+    -- Test restart_replication API
+    g.master:graphql({
+        query = [[
+            mutation ($uuids : [String!]) {
+                cluster {
+                    restart_replication(uuids: $uuids)
+                }
+            }
+        ]],
+        variables = {uuids = {
+            g.master.instance_uuid,
+            g.replica1.instance_uuid,
+            g.replica2.instance_uuid
+        }}
+    })
+
+
     t.helpers.retrying({}, function()
-        t.assert_equals(helpers.list_cluster_issues(master), {})
+        t.assert_equals(helpers.list_cluster_issues(g.master), {})
     end)
 end
 
@@ -268,6 +288,13 @@ function g.test_aliens()
     local master = g.cluster.main_server
 
     g.alien:start()
+
+    -- Test restart_replication API
+    local _, err = g.alien.net_box:eval([[
+        return require('cartridge.confapplier').restart_replication()
+    ]])
+    t.assert_equals(err.err, 'box.cfg unconfigured')
+
     helpers.run_remotely(g.alien, function()
         local membership = require('membership')
         membership.set_payload('uuid', '( OO )')

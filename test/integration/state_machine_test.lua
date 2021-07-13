@@ -146,6 +146,11 @@ function g.test_failover()
             ' to localhost:13302 %(slave%) state "disconnected" .+'
         )
         t.assert_equals(issues[2], nil)
+
+        t.assert_items_equals(
+            helpers.get_suggestions(g.slave).restart_replication,
+            {{uuid = helpers.uuid('a', 'a', 2)}}
+        )
     end)
 
     --------------------------------------------------------------------

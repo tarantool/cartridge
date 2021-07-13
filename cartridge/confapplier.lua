@@ -35,6 +35,7 @@ local InitError = errors.new_class('InitError')
 local BootError = errors.new_class('BootError')
 local StateError = errors.new_class('StateError')
 local OperationError = errors.new_class('OperationError')
+local RestartReplicationError = errors.new_class('RestartReplicationError')
 
 vars:new('state', '')
 vars:new('error')
@@ -209,6 +210,25 @@ local function validate_config(clusterwide_config, _)
     end
 
     return roles.validate_config(conf_new, conf_old)
+end
+
+--- Restart replication from topology on the current node.
+-- @function restart_replication
+-- @local
+local function restart_replication()
+    if type(box.cfg) == 'function' then
+        return nil, RestartReplicationError:new('box.cfg unconfigured')
+    end
+
+    local topology_cfg = vars.clusterwide_config:get_readonly('topology')
+    box.cfg({replication = {}})
+    box.cfg({
+        replication = topology.get_fullmesh_replication(
+            topology_cfg, vars.replicaset_uuid,
+            vars.instance_uuid, vars.advertise_uri
+        ),
+    })
+    return true
 end
 
 
@@ -689,12 +709,15 @@ local function get_deepcopy(section)
     return vars.clusterwide_config:get_deepcopy(section)
 end
 
+_G.__restart_replication = restart_replication
+
 return {
     init = init,
     boot_instance = boot_instance,
     log_bootinfo = log_bootinfo,
     apply_config = apply_config,
     validate_config = validate_config,
+    restart_replication = restart_replication,
 
     get_active_config = get_active_config,
     get_readonly = get_readonly,

@@ -77,6 +77,9 @@ function helpers.get_suggestions(server)
                 disable_servers  {
                     uuid
                 }
+                restart_replication  {
+                    uuid
+                }
             }}
         }]]
     }).data.cluster.suggestions
