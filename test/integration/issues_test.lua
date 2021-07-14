@@ -139,6 +139,10 @@ function g.test_broken_replica()
     t.helpers.retrying({}, function()
         t.assert_equals(helpers.list_cluster_issues(master), {})
     end)
+
+    master.net_box:eval([[
+        box.space.test:drop()
+    ]])
 end
 
 function g.test_replication_idle()
