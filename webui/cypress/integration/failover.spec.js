@@ -134,7 +134,7 @@ describe('Failover', () => {
 
     checkFailoverTabMode('Disabled', true);
     checkFailoverTabMode('Eventual', false);
-    checkFailoverTabMode('Statefull', false);
+    checkFailoverTabMode('Stateful', false);
 
     //change Failover timeout
     cy.get('.meta-test__failoverTimeout input').should('have.value', '0');
@@ -181,7 +181,7 @@ describe('Failover', () => {
 
     checkFailoverTabMode('Disabled', false);
     checkFailoverTabMode('Eventual', true);
-    checkFailoverTabMode('Statefull', false);
+    checkFailoverTabMode('Stateful', false);
 
     cy.get('.meta-test__failoverTimeout input').should('have.value', '5');
 
@@ -195,11 +195,11 @@ describe('Failover', () => {
     ////////////////////////////////////////////////////////////////////
     cy.get('.meta-test__FailoverButton').click();
 
-    cy.get('.meta-test__failover-tabs button:contains(Statefull)').click();
+    cy.get('.meta-test__failover-tabs button:contains(Stateful)').click();
 
     checkFailoverTabMode('Disabled', false);
     checkFailoverTabMode('Eventual', false);
-    checkFailoverTabMode('Statefull', true);
+    checkFailoverTabMode('Stateful', true);
 
     //Fencing tooltip
     cy.get('span:contains(Fencing)').next().trigger('mouseover');
@@ -280,7 +280,7 @@ describe('Failover', () => {
 
     cy.get('.meta-test__inlineError').should('not.exist');
 
-    cy.get('.meta-test__failover-tabs button:contains(Statefull)').click();
+    cy.get('.meta-test__failover-tabs button:contains(Stateful)').click();
     cy.get('.meta-test__fencingEnableCheckbox input').click({ force: true });
     cy.get('.meta-test__fencingTimeout input').type('{selectAll}{del}4');
 
@@ -294,7 +294,7 @@ describe('Failover', () => {
     cy.log('Failover Stateful - ETCD: success');
     ////////////////////////////////////////////////////////////////////
     cy.get('.meta-test__FailoverButton').click();
-    cy.get('.meta-test__failover-tabs button:contains(Statefull)').click();
+    cy.get('.meta-test__failover-tabs button:contains(Stateful)').click();
     cy.get('.meta-test__stateProviderChoice input').should('have.value', 'Tarantool (stateboard)');
     cy.get('.meta-test__stateProviderChoice input').click();
     cy.get('.meta-test__StateProvider__Dropdown *:contains(Etcd)').click();
@@ -319,7 +319,7 @@ describe('Failover', () => {
     cy.log('Failover Stateful - ETCD: errors from UI');
     ////////////////////////////////////////////////////////////////////
     cy.get('.meta-test__FailoverButton').click();
-    cy.get('.meta-test__failover-tabs button:contains(Statefull)').click();
+    cy.get('.meta-test__failover-tabs button:contains(Stateful)').click();
 
     cy.get('.meta-test__etcd2Endpoints textarea').type('{selectAll}{del}qq');
     cy.get('.meta-test__SubmitButton').click();
@@ -374,7 +374,7 @@ describe('Failover', () => {
     modeStatefulTarantool();
     cy.get('.meta-test__FailoverButton').contains('stateful');
     cy.get('.meta-test__FailoverButton').click({ force: true });
-    checkFailoverTabMode('Statefull', true);
+    checkFailoverTabMode('Stateful', true);
     cy.get('.meta-test__failoverTimeout input').should('have.value', '10');
     cy.get('.meta-test__FailoverModal [type=\'checkbox\']').should('be.checked', 'Enabled');
     cy.get('.meta-test__fencingTimeout input').should('have.value', '5');
@@ -391,7 +391,7 @@ describe('Failover', () => {
     modeStatefulEtcd2();
     cy.get('.meta-test__FailoverButton').contains('stateful');
     cy.get('.meta-test__FailoverButton').click({ force: true });
-    checkFailoverTabMode('Statefull', true);
+    checkFailoverTabMode('Stateful', true);
     cy.get('.meta-test__failoverTimeout input').should('have.value', '10');
     cy.get('.meta-test__FailoverModal [type=\'checkbox\']').should('be.checked', 'Enabled');
     cy.get('.meta-test__fencingTimeout input').should('have.value', '5');
