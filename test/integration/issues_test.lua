@@ -48,6 +48,15 @@ g.after_all(function()
     fio.rmtree(g.cluster.datadir)
 end)
 
+g.before_each(function()
+    helpers.retrying({}, function()
+        t.assert_equals(
+            helpers.list_cluster_issues(g.cluster.main_server),
+            {}
+        )
+    end)
+end)
+
 function g.test_issues_limits()
     local server = g.cluster:server('master')
     t.assert_equals(
