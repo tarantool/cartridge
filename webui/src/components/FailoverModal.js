@@ -292,7 +292,7 @@ class FailoverModal extends React.Component<FailoverModalProps, FailoverModalSta
                   content: <Text variant='p' className={styles.failoverInfo}>{failoverModesInfo[mode]}</Text>
                 },
                 {
-                  label: 'Statefull',
+                  label: 'Stateful',
                   content: <Text variant='p' className={styles.failoverInfo}>{failoverModesInfo[mode]}</Text>
                 }
               ]}

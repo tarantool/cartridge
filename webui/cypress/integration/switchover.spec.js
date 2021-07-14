@@ -110,7 +110,7 @@ describe('Leader promotion tests', () => {
 
     // Enable stateful failover mode
     cy.get('.meta-test__FailoverButton').click();
-    cy.get('.meta-test__failover-tabs button:contains(Statefull)').click();
+    cy.get('.meta-test__failover-tabs button:contains(Stateful)').click();
     cy.get('.meta-test__stateboardURI input').type('{selectall}{backspace}localhost:14401');
     cy.get('.meta-test__stateboardPassword input').type('{selectall}{backspace}password');
     cy.get('.meta-test__SubmitButton').click();
