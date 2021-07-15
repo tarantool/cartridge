@@ -36,7 +36,7 @@ g.after_all(function()
     fio.rmtree(g.cluster.datadir)
 end)
 
-function g.test_api()
+function g.test_suggestion()
     -- Trigger replication issue
     g.A1.net_box:call('box.cfg', {{replication = box.NULL}})
 
@@ -85,7 +85,7 @@ function g.test_api()
     end)
 end
 
-function g.test_restart_replication_errors()
+function g.test_errors()
     local _, err = g.A1.net_box:call(
         'package.loaded.cartridge.admin_restart_replication',
         {{'1-0-1-0'}}

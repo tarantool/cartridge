@@ -198,6 +198,7 @@ function g.test_replication_idle()
             cluster {
                 issues { level topic instance_uuid replicaset_uuid }
                 issues_msg: issues { message }
+                suggestions { restart_replication {uuid} }
             }
         }]]}).data.cluster
 
@@ -215,6 +216,12 @@ function g.test_replication_idle()
         resp.issues_msg[1].message,
         'Replication from localhost:1330[23] %(replica[12]%)' ..
         ' to localhost:13301 %(master%): long idle %(.+ > 1%)'
+    )
+
+    -- Warning isn't a reason for showing suggestion
+    t.assert_equals(
+        resp.suggestions,
+        {restart_replication = box.NULL}
     )
 
     -- Revert all the hacks
