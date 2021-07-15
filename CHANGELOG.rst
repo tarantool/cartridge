@@ -37,6 +37,7 @@ Added
 - New validate_config method in GraphQL API.
 - Add ``zone`` and ``zone_distances`` parameters to server and cluster helpers
   respectively.
+- New restart_replication method in GraphQL API and corresponding suggestion.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Changed

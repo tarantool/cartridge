@@ -896,6 +896,11 @@ return {
     admin_disable_servers = lua_api_topology.disable_servers,
 
     --- .
+    -- @refer cartridge.lua-api.topology.restart_replication
+    -- @function admin_bootstrap_vshard
+    admin_restart_replication = lua_api_topology.restart_replication,
+
+    --- .
     -- @refer cartridge.lua-api.vshard.bootstrap_vshard
     -- @function admin_bootstrap_vshard
     admin_bootstrap_vshard = lua_api_vshard.bootstrap_vshard,

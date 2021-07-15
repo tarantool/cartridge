@@ -608,6 +608,7 @@ g.test_sigstop = function()
     -- See: https://github.com/tarantool/tarantool/issues/4668
     t.helpers.retrying({}, function()
         t.assert_equals(helpers.list_cluster_issues(cluster.main_server), {})
+        t.assert_equals(helpers.get_suggestions(cluster.main_server), {})
     end)
 
     set_failover(true)
@@ -656,6 +657,8 @@ g.test_sigstop = function()
         topic = 'replication',
     }})
 
+    t.assert_equals(helpers.get_suggestions(cluster.main_server).restart_replication, box.NULL)
+
     -- Send SIGCONT to server1
     cluster:server('storage-1').process:kill('CONT') -- SIGCONT
     cluster:wait_until_healthy()
@@ -680,5 +683,6 @@ g.test_sigstop = function()
 
     t.helpers.retrying({}, function()
         t.assert_equals(helpers.list_cluster_issues(cluster.main_server), {})
+        t.assert_equals(helpers.get_suggestions(cluster.main_server), {})
     end)
 end

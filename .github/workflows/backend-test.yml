@@ -31,7 +31,7 @@ jobs:
         id: cache-misc-venv
         with:
           path: ./venv
-          key: cache-misc-venv-${{ matrix.runs-on }}-00
+          key: cache-misc-venv-${{ matrix.runs-on }}-${{ hashFiles('rst/requirements.txt') }}-06
       -
         run: |
           python -m venv ./venv && . ./venv/bin/activate
@@ -123,8 +123,7 @@ jobs:
         id: cache-pytest
         with:
           path: ./pytest-venv
-          key: cache-pytest-venv-${{ matrix.runs-on }}-${{ hashFiles('test/integration/requirements.txt') }}
-          restore-keys: cache-pytest-venv-${{ matrix.runs-on }}
+          key: cache-pytest-venv-${{ matrix.runs-on }}-${{ hashFiles('test/integration/requirements.txt') }}-06
       -
         run: |
           python -m venv ./pytest-venv && . ./pytest-venv/bin/activate
