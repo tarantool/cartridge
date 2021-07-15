@@ -287,38 +287,46 @@ export type MutationExpel_ServerArgs = {|
 /** Cluster management */
 export type MutationApicluster = {|
   __typename?: 'MutationApicluster',
-  /** Remove user */
-  remove_user?: ?User,
+  /** Disable listed servers by uuid */
+  disable_servers?: ?Array<?Server>,
+  /** Applies DDL schema on cluster */
+  schema: DdlSchema,
   /** Enable or disable automatic failover. Returns new state. (Deprecated since v2.0.2-2) */
   failover: $ElementType<Scalars, 'Boolean'>,
   /** Configure automatic failover. */
   failover_params: FailoverApi,
-  /** Applies updated config on cluster */
-  config: Array<?ConfigSection>,
+  /** Remove user */
+  remove_user?: ?User,
   /** Checks that schema can be applied on cluster */
   check_schema: DdlCheckResult,
+  /** Restart replication on specified by uuid servers */
+  restart_replication?: ?$ElementType<Scalars, 'Boolean'>,
+  edit_vshard_options: VshardGroup,
+  auth_params: UserManagementApi,
   /** Create a new user */
   add_user?: ?User,
-  /** Reapplies config on the specified nodes */
-  config_force_reapply: $ElementType<Scalars, 'Boolean'>,
-  auth_params: UserManagementApi,
-  /** Edit cluster topology */
-  edit_topology?: ?EditTopologyResult,
   /** Edit an existing user */
   edit_user?: ?User,
-  edit_vshard_options: VshardGroup,
+  /** Edit cluster topology */
+  edit_topology?: ?EditTopologyResult,
   /** Promote the instance to the leader of replicaset */
   failover_promote: $ElementType<Scalars, 'Boolean'>,
-  /** Applies DDL schema on cluster */
-  schema: DdlSchema,
-  /** Disable listed servers by uuid */
-  disable_servers?: ?Array<?Server>,
+  /** Reapplies config on the specified nodes */
+  config_force_reapply: $ElementType<Scalars, 'Boolean'>,
+  /** Applies updated config on cluster */
+  config: Array<?ConfigSection>,
 |};
 
 
 /** Cluster management */
-export type MutationApiclusterRemove_UserArgs = {|
-  username: $ElementType<Scalars, 'String'>,
+export type MutationApiclusterDisable_ServersArgs = {|
+  uuids?: ?Array<$ElementType<Scalars, 'String'>>,
+|};
+
+
+/** Cluster management */
+export type MutationApiclusterSchemaArgs = {|
+  as_yaml: $ElementType<Scalars, 'String'>,
 |};
 
 
@@ -342,8 +350,8 @@ export type MutationApiclusterFailover_ParamsArgs = {|
 
 
 /** Cluster management */
-export type MutationApiclusterConfigArgs = {|
-  sections?: ?Array<?ConfigSectionInput>,
+export type MutationApiclusterRemove_UserArgs = {|
+  username: $ElementType<Scalars, 'String'>,
 |};
 
 
@@ -354,41 +362,8 @@ export type MutationApiclusterCheck_SchemaArgs = {|
 
 
 /** Cluster management */
-export type MutationApiclusterAdd_UserArgs = {|
-  password: $ElementType<Scalars, 'String'>,
-  username: $ElementType<Scalars, 'String'>,
-  fullname?: ?$ElementType<Scalars, 'String'>,
-  email?: ?$ElementType<Scalars, 'String'>,
-|};
-
-
-/** Cluster management */
-export type MutationApiclusterConfig_Force_ReapplyArgs = {|
-  uuids?: ?Array<?$ElementType<Scalars, 'String'>>,
-|};
-
-
-/** Cluster management */
-export type MutationApiclusterAuth_ParamsArgs = {|
-  cookie_max_age?: ?$ElementType<Scalars, 'Long'>,
-  enabled?: ?$ElementType<Scalars, 'Boolean'>,
-  cookie_renew_age?: ?$ElementType<Scalars, 'Long'>,
-|};
-
-
-/** Cluster management */
-export type MutationApiclusterEdit_TopologyArgs = {|
-  replicasets?: ?Array<?EditReplicasetInput>,
-  servers?: ?Array<?EditServerInput>,
-|};
-
-
-/** Cluster management */
-export type MutationApiclusterEdit_UserArgs = {|
-  password?: ?$ElementType<Scalars, 'String'>,
-  username: $ElementType<Scalars, 'String'>,
-  fullname?: ?$ElementType<Scalars, 'String'>,
-  email?: ?$ElementType<Scalars, 'String'>,
+export type MutationApiclusterRestart_ReplicationArgs = {|
+  uuids?: ?Array<$ElementType<Scalars, 'String'>>,
 |};
 
 
@@ -406,6 +381,39 @@ export type MutationApiclusterEdit_Vshard_OptionsArgs = {|
 
 
 /** Cluster management */
+export type MutationApiclusterAuth_ParamsArgs = {|
+  cookie_max_age?: ?$ElementType<Scalars, 'Long'>,
+  enabled?: ?$ElementType<Scalars, 'Boolean'>,
+  cookie_renew_age?: ?$ElementType<Scalars, 'Long'>,
+|};
+
+
+/** Cluster management */
+export type MutationApiclusterAdd_UserArgs = {|
+  password: $ElementType<Scalars, 'String'>,
+  username: $ElementType<Scalars, 'String'>,
+  fullname?: ?$ElementType<Scalars, 'String'>,
+  email?: ?$ElementType<Scalars, 'String'>,
+|};
+
+
+/** Cluster management */
+export type MutationApiclusterEdit_UserArgs = {|
+  password?: ?$ElementType<Scalars, 'String'>,
+  username: $ElementType<Scalars, 'String'>,
+  fullname?: ?$ElementType<Scalars, 'String'>,
+  email?: ?$ElementType<Scalars, 'String'>,
+|};
+
+
+/** Cluster management */
+export type MutationApiclusterEdit_TopologyArgs = {|
+  replicasets?: ?Array<?EditReplicasetInput>,
+  servers?: ?Array<?EditServerInput>,
+|};
+
+
+/** Cluster management */
 export type MutationApiclusterFailover_PromoteArgs = {|
   force_inconsistency?: ?$ElementType<Scalars, 'Boolean'>,
   replicaset_uuid: $ElementType<Scalars, 'String'>,
@@ -414,14 +422,14 @@ export type MutationApiclusterFailover_PromoteArgs = {|
 
 
 /** Cluster management */
-export type MutationApiclusterSchemaArgs = {|
-  as_yaml: $ElementType<Scalars, 'String'>,
+export type MutationApiclusterConfig_Force_ReapplyArgs = {|
+  uuids?: ?Array<?$ElementType<Scalars, 'String'>>,
 |};
 
 
 /** Cluster management */
-export type MutationApiclusterDisable_ServersArgs = {|
-  uuids?: ?Array<$ElementType<Scalars, 'String'>>,
+export type MutationApiclusterConfigArgs = {|
+  sections?: ?Array<?ConfigSectionInput>,
 |};
 
 export type Query = {|
@@ -488,6 +496,12 @@ export type ReplicaStatus = {|
   upstream_status?: ?$ElementType<Scalars, 'String'>,
   uuid: $ElementType<Scalars, 'String'>,
   downstream_message?: ?$ElementType<Scalars, 'String'>,
+|};
+
+/** A suggestion to restart malfunctioning replications */
+export type RestartReplicationSuggestion = {|
+  __typename?: 'RestartReplicationSuggestion',
+  uuid: $ElementType<Scalars, 'String'>,
 |};
 
 export type Role = {|
@@ -661,6 +675,7 @@ export type ServerStat = {|
 export type Suggestions = {|
   __typename?: 'Suggestions',
   force_apply?: ?Array<ForceApplySuggestion>,
+  restart_replication?: ?Array<RestartReplicationSuggestion>,
   refine_uri?: ?Array<RefineUriSuggestion>,
   disable_servers?: ?Array<DisableServerSuggestion>,
 |};
