@@ -31,7 +31,7 @@ jobs:
         id: cache-misc-venv
         with:
           path: ./venv
-          key: cache-misc-venv-${{ matrix.runs-on }}-02
+          key: cache-misc-venv-${{ matrix.runs-on }}-00
       -
         run: |
           python -m venv ./venv && . ./venv/bin/activate

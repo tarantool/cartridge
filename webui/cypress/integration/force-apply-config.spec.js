@@ -141,7 +141,6 @@ describe('Disable server', () => {
     ////////////////////////////////////////////////////////////////////
     cy.log('Close suggestion modal and save checkbox value');
     ////////////////////////////////////////////////////////////////////
-    //need to change next block after https://github.com/tarantool/cartridge/issues/1336
     cy.get('h2:contains(Force apply configuration)').next().click();
     cy.get('.meta-test__ForceApplySuggestionModal').should('not.exist');
     cy.get('.meta-test__ClusterSuggestionsPanel button').contains('Review').click();
@@ -175,7 +174,6 @@ describe('Disable server', () => {
 
     cy.get('.meta-test__ForceApplySuggestionModal').find('.meta-test__errorField').as('operErrorField');
     cy.get('@operErrorField').find('span').contains('Operation error');
-    //need to delete next 1 click after https://github.com/tarantool/cartridge/issues/1336
     cy.get('@operErrorField').contains('localhost:13301 (dummy-1)')
       .find('input[type="checkbox"]').click({ force: true });
     cy.get('@operErrorField').find('span button').contains('Deselect all');
