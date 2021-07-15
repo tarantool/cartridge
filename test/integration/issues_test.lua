@@ -32,6 +32,10 @@ g.before_all(function()
     })
     g.cluster:start()
 
+    g.master = g.cluster:server('master')
+    g.replica1 = g.cluster:server('replica1')
+    g.replica2 = g.cluster:server('replica2')
+
     g.alien = helpers.Server:new({
         alias = 'alien',
         workdir = fio.pathjoin(g.cluster.datadir, 'alien'),
@@ -87,24 +91,20 @@ function g.test_issues_limits()
 end
 
 function g.test_broken_replica()
-    local master = g.cluster.main_server
-    local replica1 = g.cluster:server('replica1')
-    local replica2 = g.cluster:server('replica2')
-
-    master.net_box:eval([[
+    g.master.net_box:eval([[
         __replication = box.cfg.replication
         box.cfg{replication = box.NULL}
     ]])
 
-    replica1.net_box:eval([[
+    g.replica1.net_box:eval([[
         box.cfg{read_only = false}
         box.schema.space.create('test')
     ]])
     t.helpers.retrying({}, function()
-        replica2.net_box:eval('assert(box.space.test)')
+        g.replica2.net_box:eval('assert(box.space.test)')
     end)
 
-    master.net_box:eval([[
+    g.master.net_box:eval([[
         box.schema.space.create('test')
         pcall(box.cfg, {replication = __replication})
         __replication = nil
@@ -127,58 +127,74 @@ function g.test_broken_replica()
     end
 
     t.helpers.retrying({}, function()
-        t.assert_items_equals(helpers.list_cluster_issues(master), {
+        t.assert_items_equals(helpers.list_cluster_issues(g.master), {
             issue_fmt('master', 'replica1'),
             issue_fmt('master', 'replica2'),
             issue_fmt('replica1', 'master'),
             issue_fmt('replica2', 'master'),
         })
+
+        t.assert_items_equals(
+            helpers.get_suggestions(g.master).restart_replication, {
+            {uuid = g.cluster:server('master').instance_uuid},
+            {uuid = g.cluster:server('replica1').instance_uuid},
+            {uuid = g.cluster:server('replica2').instance_uuid},
+        })
     end)
 
-    for _, srv in ipairs({master, replica1, replica2}) do
+    for _, srv in ipairs({g.master, g.replica1, g.replica2}) do
         srv.net_box:eval([[
             box.cfg({replication_skip_conflict = true})
-            __replication = box.cfg.replication
-            pcall(box.cfg, {replication = box.NULL})
-            pcall(box.cfg, {replication = __replication})
-            __replication = nil
         ]])
     end
 
+    -- Test restart_replication API
+    g.master:graphql({
+        query = [[
+            mutation ($uuids : [String!]) {
+                cluster {
+                    restart_replication(uuids: $uuids)
+                }
+            }
+        ]],
+        variables = {uuids = {
+            g.master.instance_uuid,
+            g.replica1.instance_uuid,
+            g.replica2.instance_uuid
+        }}
+    })
+
+
     t.helpers.retrying({}, function()
-        t.assert_equals(helpers.list_cluster_issues(master), {})
+        t.assert_equals(helpers.list_cluster_issues(g.master), {})
     end)
 
-    master.net_box:eval([[
+    g.master.net_box:eval([[
         box.space.test:drop()
     ]])
 end
 
 function g.test_replication_idle()
-    local master = g.cluster.main_server
-    local replica1 = g.cluster:server('replica1')
-    local replica2 = g.cluster:server('replica2')
-
     -- Set up network partitioning to avoid request hanging.
     -- Without it, the issues query does pool.map_call
     -- and waits for timeout on stopped replicas.
     -- With this hack, pool.map_call returns "Connection refused"
     -- immediately.
-    replica1.net_box:call('box.cfg', {{listen = box.NULL}})
-    replica2.net_box:call('box.cfg', {{listen = box.NULL}})
-    master.net_box:eval([[
+    g.replica1.net_box:call('box.cfg', {{listen = box.NULL}})
+    g.replica2.net_box:call('box.cfg', {{listen = box.NULL}})
+    g.master.net_box:eval([[
         local pool = require('cartridge.pool')
         pool.connect('localhost:13302', {wait_connected = false}):close()
         pool.connect('localhost:13303', {wait_connected = false}):close()
     ]])
 
-    replica1.process:kill('STOP')
-    replica2.process:kill('STOP')
+    g.replica1.process:kill('STOP')
+    g.replica2.process:kill('STOP')
 
     local resp
 
     t.helpers.retrying({}, function()
-        resp = master:graphql({query = [[{
+        resp = g.master:graphql({query = [[{
             cluster {
                 issues { level topic instance_uuid replicaset_uuid }
                 issues_msg: issues { message }
@@ -189,8 +205,8 @@ function g.test_replication_idle()
         local _i = {
             level = 'warning',
             topic = 'replication',
-            instance_uuid = master.instance_uuid,
-            replicaset_uuid = master.replicaset_uuid,
+            instance_uuid = g.master.instance_uuid,
+            replicaset_uuid = g.master.replicaset_uuid,
         }
         t.assert_equals(resp.issues, {_i, _i})
     end)
@@ -202,20 +218,18 @@ function g.test_replication_idle()
     )
 
     -- Revert all the hacks
-    replica1.process:kill('CONT')
-    replica2.process:kill('CONT')
+    g.replica1.process:kill('CONT')
+    g.replica2.process:kill('CONT')
     g.cluster:stop()
     g.cluster:start()
 
     t.helpers.retrying({}, function()
-        t.assert_equals(helpers.list_cluster_issues(master), {})
+        t.assert_equals(helpers.list_cluster_issues(g.master), {})
     end)
 end
 
 function g.test_config_mismatch()
-    local master = g.cluster.main_server
-    local replica2 = g.cluster:server('replica2')
-    replica2.net_box:eval([[
+    g.replica2.net_box:eval([[
         local confapplier = require('cartridge.confapplier')
         local cfg = confapplier.get_active_config():copy()
         cfg:set_plaintext('todo1.txt', '- Test config mismatch')
@@ -224,7 +238,7 @@ function g.test_config_mismatch()
     ]])
 
     t.assert_items_include(
-        helpers.list_cluster_issues(master),
+        helpers.list_cluster_issues(g.master),
         {{
             level = 'warning',
             topic = 'config_mismatch',
@@ -235,7 +249,7 @@ function g.test_config_mismatch()
         }}
     )
 
-    replica2.net_box:eval([[
+    g.replica2.net_box:eval([[
         local confapplier = require('cartridge.confapplier')
         local cfg = confapplier.get_active_config():copy()
         cfg:set_plaintext('todo1.txt', nil)
@@ -243,18 +257,15 @@ function g.test_config_mismatch()
         confapplier.apply_config(cfg)
     ]])
 
-    t.assert_equals(helpers.list_cluster_issues(master), {})
+    t.assert_equals(helpers.list_cluster_issues(g.master), {})
 end
 
 function g.test_twophase_config_locked()
-    local master = g.cluster.main_server
-    local replica1 = g.cluster:server('replica1')
-    local replica2 = g.cluster:server('replica2')
-    t.assert_equals(helpers.list_cluster_issues(master), {})
-    t.assert_equals(helpers.list_cluster_issues(replica1), {})
+    t.assert_equals(helpers.list_cluster_issues(g.master), {})
+    t.assert_equals(helpers.list_cluster_issues(g.replica1), {})
 
     -- Make validate_config hang on replica2
-    replica2.net_box:eval([[
+    g.replica2.net_box:eval([[
         _G.inf_sleep = true
         local prepare_2pc = _G.__cartridge_clusterwide_config_prepare_2pc
         _G.__cartridge_clusterwide_config_prepare_2pc = function(...)
@@ -265,44 +276,41 @@ function g.test_twophase_config_locked()
         end
     ]])
 
-    local future = master.net_box:call(
+    local future = g.master.net_box:call(
         'package.loaded.cartridge.config_patch_clusterwide',
         {{['todo2.txt'] = '- Test 2pc lock'}},
         {is_async = true}
     )
 
     t.helpers.retrying({}, function()
-        t.assert_equals(fio.path.exists(master.workdir .. '/config.prepare'), true)
-        t.assert_equals(fio.path.exists(replica1.workdir .. '/config.prepare'), true)
-        t.assert_equals(fio.path.exists(replica2.workdir .. '/config.prepare'), false)
+        t.assert_equals(fio.path.exists(g.master.workdir .. '/config.prepare'), true)
+        t.assert_equals(fio.path.exists(g.replica1.workdir .. '/config.prepare'), true)
+        t.assert_equals(fio.path.exists(g.replica2.workdir .. '/config.prepare'), false)
     end)
 
     -- It's not an issue when config is locked while 2pc is in progress
-    t.assert_equals(helpers.list_cluster_issues(master), {})
+    t.assert_equals(helpers.list_cluster_issues(g.master), {})
 
     -- But it's an issue from replicas point of view
-    t.assert_items_include(helpers.list_cluster_issues(replica1), {{
+    t.assert_items_include(helpers.list_cluster_issues(g.replica1), {{
         level = 'warning',
         topic = 'config_locked',
-        instance_uuid = master.instance_uuid,
-        replicaset_uuid = master.replicaset_uuid,
+        instance_uuid = g.master.instance_uuid,
+        replicaset_uuid = g.master.replicaset_uuid,
         message = 'Configuration is prepared and locked'..
             ' on localhost:13301 (master)',
     }})
 
     t.assert_equals(future:is_ready(), false)
-    replica2.net_box:eval('_G.inf_sleep = nil')
+    g.replica2.net_box:eval('_G.inf_sleep = nil')
     t.assert_equals(future:wait_result(), {true})
 
     t.helpers.retrying({}, function()
-        t.assert_equals(helpers.list_cluster_issues(master), {})
+        t.assert_equals(helpers.list_cluster_issues(g.master), {})
     end)
 end
 
 function g.test_state_hangs()
-    local master = g.cluster.main_server
-    local replica1 = g.cluster:server('replica1')
-
     local set_state = [[
         require('cartridge.confapplier').set_state(...)
     ]]
@@ -311,17 +319,17 @@ function g.test_state_hangs()
         state_notification_timeout = ...
     ]]
 
-    t.assert_equals(helpers.list_cluster_issues(master), {})
+    t.assert_equals(helpers.list_cluster_issues(g.master), {})
 
-    replica1.net_box:eval(set_timeout, {0.1})
-    replica1.net_box:eval(set_state, {'ConfiguringRoles'})
+    g.replica1.net_box:eval(set_timeout, {0.1})
+    g.replica1.net_box:eval(set_state, {'ConfiguringRoles'})
 
     t.helpers.retrying({}, function()
-        t.assert_equals(helpers.list_cluster_issues(master), {{
+        t.assert_equals(helpers.list_cluster_issues(g.master), {{
             level = 'warning',
             topic = 'state_stuck',
-            instance_uuid = replica1.instance_uuid,
-            replicaset_uuid = replica1.replicaset_uuid,
+            instance_uuid = g.replica1.instance_uuid,
+            replicaset_uuid = g.replica1.replicaset_uuid,
             message = 'Configuring roles is stuck'..
                 ' on localhost:13302 (replica1)' ..
                 ' and hangs for 1s so far',
@@ -329,23 +337,28 @@ function g.test_state_hangs()
     end)
 
     -- nil will restore default timeout value
-    replica1.net_box:eval(set_timeout, {})
-    replica1.net_box:eval(set_state, {'RolesConfigured'})
+    g.replica1.net_box:eval(set_timeout, {})
+    g.replica1.net_box:eval(set_state, {'RolesConfigured'})
 
-    t.assert_equals(helpers.list_cluster_issues(master), {})
+    t.assert_equals(helpers.list_cluster_issues(g.master), {})
 end
 
 function g.test_aliens()
-    local master = g.cluster.main_server
-
     g.alien:start()
+
+    -- Test restart_replication API
+    local _, err = g.alien.net_box:eval([[
+        return require('cartridge.confapplier').restart_replication()
+    ]])
+    t.assert_equals(err.err, "Current instance isn't bootstrapped yet")
+
     helpers.run_remotely(g.alien, function()
         local membership = require('membership')
         membership.set_payload('uuid', '( OO )')
         membership.probe_uri('localhost:13301')
     end)
 
-    t.assert_equals(helpers.list_cluster_issues(master), {{
+    t.assert_equals(helpers.list_cluster_issues(g.master), {{
         level = 'warning',
         topic = 'aliens',
         message = 'Instance localhost:13309 (alien)' ..
@@ -354,6 +367,6 @@ function g.test_aliens()
 
     g.alien:stop()
     t.helpers.retrying({}, function()
-        t.assert_equals(helpers.list_cluster_issues(master), {})
+        t.assert_equals(helpers.list_cluster_issues(g.master), {})
     end)
 end
