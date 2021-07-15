@@ -6,11 +6,14 @@ local checks = require('checks')
 local errors = require('errors')
 local membership = require('membership')
 
+local pool = require('cartridge.pool')
+local topology = require('cartridge.topology')
 local confapplier = require('cartridge.confapplier')
 local lua_api_get_topology = require('cartridge.lua-api.get-topology')
 local lua_api_edit_topology = require('cartridge.lua-api.edit-topology')
 
 local ProbeServerError = errors.new_class('ProbeServerError')
+local RestartReplicationError = errors.new_class('RestartReplicationError')
 
 --- Get alias, uri and uuid of current instance.
 -- @function get_self
@@ -144,6 +147,62 @@ local function disable_servers(uuids)
     return __set_servers_disabled_state(uuids, true)
 end
 
+--- Restart replication on specified instances.
+--
+-- (added in v2.6.0-43)
+--
+-- @function restart_replication
+-- @tparam {string, ...} uuids
+-- @treturn[1] boolean true
+-- @treturn[2] nil
+-- @treturn[2] table Error description
+local function restart_replication(uuids)
+    checks('table')
+    local topology_cfg = confapplier.get_readonly('topology')
+
+    if topology_cfg == nil then
+        return nil, RestartReplicationError:new(
+            "Current instance isn't bootstrapped yet"
+        )
+    end
+
+    -- Prepare a server group to be operated
+    local uri_list = {}
+    local refined_uri_list = topology.refine_servers_uri(topology_cfg)
+    for _, uuid in ipairs(uuids) do
+        local srv = topology_cfg.servers[uuid]
+        if not srv then
+            return nil, RestartReplicationError:new(
+                'Server %s not in clusterwide config', uuid
+            )
+        elseif topology.disabled(uuid, srv) then
+            return nil, RestartReplicationError:new(
+                'Server %s is disabled, not suitable' ..
+                ' for restarting replication', uuid
+            )
+        end
+
+        table.insert(uri_list, refined_uri_list[uuid])
+    end
+
+    local retmap, errmap = pool.map_call(
+        '_G.__cartridge_confapplier_restart_replication',
+        {}, { uri_list = uri_list }
+    )
+
+    for _, uri in ipairs(uri_list) do
+        if retmap[uri] == nil then
+            local err = errmap and errmap[uri]
+            if err == nil then
+                err = RestartReplicationError:new('Unknown error at %s', uri)
+            end
+            return nil, err
+        end
+    end
+
+    return true
+end
+
 return {
     get_self = get_self,
     get_servers = get_servers,
@@ -154,4 +213,5 @@ return {
     probe_server = probe_server,
     enable_servers = enable_servers,
     disable_servers = disable_servers,
+    restart_replication = restart_replication,
 }

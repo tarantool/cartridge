@@ -137,6 +137,7 @@ local function list_on_instance(opts)
                 topic = 'replication',
                 replicaset_uuid = replicaset_uuid,
                 instance_uuid = instance_uuid,
+                upstream_uuid = replication_info.uuid,
                 message = string.format(
                     "Replication from %s to %s isn't running",
                     describe(replica.uri),
@@ -150,6 +151,7 @@ local function list_on_instance(opts)
                 topic = 'replication',
                 replicaset_uuid = replicaset_uuid,
                 instance_uuid = instance_uuid,
+                upstream_uuid = replication_info.uuid,
                 message = string.format(
                     'Replication from %s to %s state %q (%s)',
                     describe(replica.uri),
