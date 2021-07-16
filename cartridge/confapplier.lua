@@ -454,6 +454,9 @@ local function boot_instance(clusterwide_config)
     -- But imitate it is logged from the same fiber
     fiber.new(log_bootinfo):name(fiber.name())
 
+    -- There is no need in unnecessary suspicions
+    require('membership.options').SUSPICIOUSNESS = false
+
     log.warn('Calling box.cfg()...')
     -- This operation may be long
     -- It recovers snapshot
@@ -462,6 +465,8 @@ local function boot_instance(clusterwide_config)
     box.cfg(box_opts)
     local snap2 = hotreload.snap_fibers()
     hotreload.whitelist_fibers(hotreload.diff(snap1, snap2))
+
+    require('membership.options').SUSPICIOUSNESS = true
 
     local username = cluster_cookie.username()
     local password = cluster_cookie.cookie()

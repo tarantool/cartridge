@@ -39,6 +39,9 @@ Added
   respectively.
 - New restart_replication method in GraphQL API and corresponding suggestion.
 
+- Instance will not produce suspects during ``RecoveringSnapshot`` and
+  ``BootstrappingBox``.
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Changed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -50,6 +53,7 @@ Changed
 - Update ``frontend-core`` dependency to 7.9.1.
 - Argparse throws an error when it encouters ``instance_name`` missing in
   instances.yml.
+- Update ``membership`` dependency to 2.4.0
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
