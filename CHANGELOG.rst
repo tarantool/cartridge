@@ -39,6 +39,9 @@ Added
   respectively.
 - New restart_replication method in GraphQL API and corresponding suggestion.
 
+- Instance will not produce suspects during ``RecoveringSnapshot`` and
+  ``BootstrappingBox``.
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Changed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
