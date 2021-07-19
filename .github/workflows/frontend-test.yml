@@ -79,10 +79,10 @@ jobs:
           path: |
             ./node_modules
             ~/.cache/Cypress
-          key: cypress-cache-6.2.0-${{ runner.os }}-1
+          key: cypress-cache-7.7.0-${{ runner.os }}-1
       -
         run: |
-          npm install cypress@6.2.0
+          npm install cypress@7.7.0
           npx cypress verify
         if: >
           startsWith(matrix.script, 'cypress') &&
