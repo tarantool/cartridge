@@ -15,6 +15,9 @@
 // Import commands.js using ES2015 syntax:
 import './commands'
 
+//Import cypress-file-upload
+import 'cypress-file-upload';
+
 // Alternatively you can use CommonJS syntax:
 // require('./commands')
 
