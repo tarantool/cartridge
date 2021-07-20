@@ -42,6 +42,9 @@ Added
 - Instance will not produce suspects during ``RecoveringSnapshot`` and
   ``BootstrappingBox``.
 
+- ``rst/BuildImages.cmake`` to generate images based on uml diagrams
+  from ``rst/uml``.
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Changed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

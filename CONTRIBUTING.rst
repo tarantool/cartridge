@@ -136,6 +136,19 @@ If the GraphQL API is changed, the ``doc/schema.graphql`` should be updated:
     npm install graphql-cli@3.0.14
     ./fetch-schema.sh
 
+If the uml diagrams at ``rst/uml`` are changed, corresponding images
+should be updated. Install PlantUML:
+
+.. code-block:: bash
+
+    sudo apt install plantuml
+
+And then just run the script:
+
+.. code-block:: bash
+
+    cmake -P rst/BuildImages.cmake
+
 .. |--| unicode:: U+2013   .. en dash
 .. |---| unicode:: U+2014  .. em dash, trimming surrounding whitespace
    :trim:
