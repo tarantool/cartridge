@@ -41,10 +41,10 @@ describe('Configuration file page', () => {
         ///////////////////////////////////////////////////////////////////
         cy.log('Upload conf file');
         ////////////////////////////////////////////////////////////////////
-        const filepath = 'files/config_for_upload.yml';
+        const filepath = 'files/config.yml';
         cy.get('input[type="file"]').attachFile(filepath);
         cy.get('[data-cy="test_uploadZone"]').contains('New configuration uploaded successfully.');
-        cy.get('[data-cy="test_uploadZone"]').contains('config_for_upload.yml');
+        cy.get('[data-cy="test_uploadZone"]').contains('config.yml');
   });
 
     it('Test: unsuccessful upload config file', () => {
@@ -62,7 +62,7 @@ describe('Configuration file page', () => {
         ///////////////////////////////////////////////////////////////////
         cy.log('Upload conf file not in yml format');
         ////////////////////////////////////////////////////////////////////
-        const filepath = 'files/config_for_upload.zip';
+        const filepath = 'files/config.zip';
         cy.get('input[type="file"]').attachFile(filepath);
         cy.get('[data-cy="test_uploadZone"]').contains('DecodeYamlError: control characters are not allowed at document: 0');
     });
