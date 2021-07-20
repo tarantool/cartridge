@@ -1,0 +1,10 @@
+---
+notifier:
+  mail_server:
+    password: a00004
+    timeout: 30
+    url: a00001.com
+    username: a00003
+    skip_verify_host: true
+    from: a00002
+...
