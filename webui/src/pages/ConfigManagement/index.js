@@ -78,7 +78,7 @@ const ConfigManagement = ({ isDemoPanelPresent }: ConfigManagementProps) => {
       ]}
     >
       <AppTitle title='Configuration files'/>
-      <Panel className={styles.panel}>
+      <Panel className={styles.panel} data-cy='test_uploadZone'>
         <Text variant='h2'>Upload configuration</Text>
         <Text className={styles.panelNote} tag='p'>New configuration can be uploaded here.</Text>
         {error && (
