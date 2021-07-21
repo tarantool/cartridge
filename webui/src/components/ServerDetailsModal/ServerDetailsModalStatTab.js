@@ -16,7 +16,7 @@ const styles = {
     padding: 8px 20px;
 
     &:nth-child(2n) {
-      background-color: #fafafa; 
+      background-color: #fafafa;
     }
   `,
   leftCol: css`

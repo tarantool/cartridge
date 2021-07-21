@@ -118,7 +118,7 @@ type ServerDetailsModalProps = {
   history: History,
   ro?: boolean,
   zone: ?string,
-  zoneList: string[]
+  zoneList: string[],
 }
 
 type ServerDetailsModalState = {
@@ -138,7 +138,10 @@ class ServerDetailsModal extends React.Component<
     'cartridge',
     'replication',
     'storage',
-    'network'
+    'network',
+    'membership',
+    // 'vshard_router',
+    // 'vshard_storage',
   ];
 
   componentDidMount() {
@@ -172,7 +175,7 @@ class ServerDetailsModal extends React.Component<
       uri,
       ro,
       zone,
-      zoneList
+      zoneList,
     } = this.props
 
     const activeMaster = instanceUUID === activeMasterUUID;
@@ -299,9 +302,17 @@ class ServerDetailsModal extends React.Component<
                 content: (<ServerDetailsModalStatTab sectionName={section}/>)
               })),
               {
+                label: 'Vshard-Router',
+                content: (<ServerDetailsModalStatTab sectionName={'vshard_router'} />)
+              },
+              {
+                label: 'Vshard-Storage',
+                content: (<ServerDetailsModalStatTab sectionName={'vshard_storage'} />)
+              },
+              {
                 label: 'Issues ' + issues.length,
                 content: <ServerDetailsModalIssues issues={issues} />
-              }
+              },
             ]
           }
         />

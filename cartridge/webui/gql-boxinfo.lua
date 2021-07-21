@@ -222,6 +222,92 @@ local boxinfo_schema = {
                     }
                 }
             }).nonNull,
+            membership = gql_types.object({
+                name = 'ServerInfoMembership',
+                fields = {
+                    status = {
+                        kind = gql_types.string,
+                        description = 'Status of the instance',
+                    },
+                    incarnation = {
+                        kind = gql_types.int,
+                        description = 'Value incremented every time the instance ' ..
+                            'became a suspect, dead, or updates its payload',
+                    },
+                    PROTOCOL_PERIOD_SECONDS = {
+                        kind = gql_types.float,
+                        description = 'Direct ping period',
+                    },
+                    ACK_TIMEOUT_SECONDS = {
+                        kind = gql_types.float,
+                        description = 'ACK message wait time',
+                    },
+                    ANTI_ENTROPY_PERIOD_SECONDS = {
+                        kind = gql_types.float,
+                        description = 'Anti-entropy synchronization period',
+                    },
+                    SUSPECT_TIMEOUT_SECONDS = {
+                        kind = gql_types.float,
+                        description = 'Timeout to mark a suspect dead',
+                    },
+                    NUM_FAILURE_DETECTION_SUBGROUPS = {
+                        kind = gql_types.int,
+                        description = 'Number of members to ping a suspect indirectly',
+                    },
+                }
+            }).nonNull,
+            vshard_router = gql_types.object({
+                name = 'ServerInfoVshardRouter',
+                fields = {
+                    buckets_unreachable = {
+                        kind = gql_types.int,
+                        description = 'The number of buckets whose replica sets are not known to the router',
+                    },
+                    buckets_available_ro = {
+                        kind = gql_types.int,
+                        description = 'The number of buckets known to the router and available ' ..
+                            'for read requests',
+                    },
+                    buckets_unknown = {
+                        kind = gql_types.int,
+                        description = 'The number of buckets unknown to the router',
+                    },
+                    buckets_available_rw = {
+                        kind = gql_types.int,
+                        description = 'The number of buckets known to the router and available ' ..
+                            'for read and write requests',
+                    },
+                }
+            }),
+            vshard_storage = gql_types.object({
+                name = 'ServerInfoVshardStorage',
+                fields = {
+                    buckets_receiving = {
+                        kind = gql_types.int,
+                        description = 'The number of buckets that are receiving at this time',
+                    },
+                    buckets_active = {
+                        kind = gql_types.int,
+                        description = 'The number of active buckets on the storage',
+                    },
+                    buckets_total = {
+                        kind = gql_types.int,
+                        description = 'Total number of buckets on the storage',
+                    },
+                    buckets_garbage = {
+                        kind = gql_types.int,
+                        description = 'The number of buckets that are waiting to be collected by GC',
+                    },
+                    buckets_pinned = {
+                        kind = gql_types.int,
+                        description = 'The number of pinned buckets on the storage',
+                    },
+                    buckets_sending = {
+                        kind = gql_types.int,
+                        description = 'The number of buckets that are sending at this time',
+                    },
+                }
+            }),
         }
     }),
     arguments = {},

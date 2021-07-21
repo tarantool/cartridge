@@ -540,11 +540,14 @@ export type Server = {|
 /** Server information and configuration. */
 export type ServerInfo = {|
   __typename?: 'ServerInfo',
+  membership: ServerInfoMembership,
   cartridge: ServerInfoCartridge,
+  replication: ServerInfoReplication,
   storage: ServerInfoStorage,
   network: ServerInfoNetwork,
   general: ServerInfoGeneral,
-  replication: ServerInfoReplication,
+  vshard_storage?: ?ServerInfoVshardStorage,
+  vshard_router?: ?ServerInfoVshardRouter,
 |};
 
 export type ServerInfoCartridge = {|
@@ -586,6 +589,24 @@ export type ServerInfoGeneral = {|
   replicaset_uuid: $ElementType<Scalars, 'String'>,
   /** A directory where memtx stores snapshot (.snap) files */
   memtx_dir?: ?$ElementType<Scalars, 'String'>,
+|};
+
+export type ServerInfoMembership = {|
+  __typename?: 'ServerInfoMembership',
+  /** Direct ping period */
+  PROTOCOL_PERIOD_SECONDS?: ?$ElementType<Scalars, 'Float'>,
+  /** Number of members to ping a suspect indirectly */
+  NUM_FAILURE_DETECTION_SUBGROUPS?: ?$ElementType<Scalars, 'Int'>,
+  /** Value incremented every time the instance became a suspect, dead, or updates its payload */
+  incarnation?: ?$ElementType<Scalars, 'Int'>,
+  /** Status of the instance */
+  status?: ?$ElementType<Scalars, 'String'>,
+  /** ACK message wait time */
+  ACK_TIMEOUT_SECONDS?: ?$ElementType<Scalars, 'Float'>,
+  /** Timeout to mark a suspect dead */
+  SUSPECT_TIMEOUT_SECONDS?: ?$ElementType<Scalars, 'Float'>,
+  /** Anti-entropy synchronization period */
+  ANTI_ENTROPY_PERIOD_SECONDS?: ?$ElementType<Scalars, 'Float'>,
 |};
 
 export type ServerInfoNetwork = {|
@@ -630,6 +651,34 @@ export type ServerInfoStorage = {|
   vinyl_write_threads?: ?$ElementType<Scalars, 'Int'>,
   vinyl_read_threads?: ?$ElementType<Scalars, 'Int'>,
   wal_dir_rescan_delay?: ?$ElementType<Scalars, 'Float'>,
+|};
+
+export type ServerInfoVshardRouter = {|
+  __typename?: 'ServerInfoVshardRouter',
+  /** The number of buckets unknown to the router */
+  buckets_unknown?: ?$ElementType<Scalars, 'Int'>,
+  /** The number of buckets known to the router and available for read and write requests */
+  buckets_available_rw?: ?$ElementType<Scalars, 'Int'>,
+  /** The number of buckets known to the router and available for read requests */
+  buckets_available_ro?: ?$ElementType<Scalars, 'Int'>,
+  /** The number of buckets whose replica sets are not known to the router */
+  buckets_unreachable?: ?$ElementType<Scalars, 'Int'>,
+|};
+
+export type ServerInfoVshardStorage = {|
+  __typename?: 'ServerInfoVshardStorage',
+  /** The number of buckets that are sending at this time */
+  buckets_sending?: ?$ElementType<Scalars, 'Int'>,
+  /** The number of buckets that are waiting to be collected by GC */
+  buckets_garbage?: ?$ElementType<Scalars, 'Int'>,
+  /** Total number of buckets on the storage */
+  buckets_total?: ?$ElementType<Scalars, 'Int'>,
+  /** The number of active buckets on the storage */
+  buckets_active?: ?$ElementType<Scalars, 'Int'>,
+  /** The number of pinned buckets on the storage */
+  buckets_pinned?: ?$ElementType<Scalars, 'Int'>,
+  /** The number of buckets that are receiving at this time */
+  buckets_receiving?: ?$ElementType<Scalars, 'Int'>,
 |};
 
 /** A short server information */
@@ -870,6 +919,24 @@ export type InstanceDataQuery = ({
       ...{ __typename?: 'Server' },
     ...ServerDetailsFieldsFragment
   })>, descriptionCartridge?: ?({
+      ...{ __typename?: '__Type' },
+    ...{| fields?: ?Array<({
+        ...{ __typename?: '__Field' },
+      ...$Pick<__Field, {| name: *, description?: * |}>
+    })> |}
+  }), descriptionMembership?: ?({
+      ...{ __typename?: '__Type' },
+    ...{| fields?: ?Array<({
+        ...{ __typename?: '__Field' },
+      ...$Pick<__Field, {| name: *, description?: * |}>
+    })> |}
+  }), descriptionVshardRouter?: ?({
+      ...{ __typename?: '__Type' },
+    ...{| fields?: ?Array<({
+        ...{ __typename?: '__Field' },
+      ...$Pick<__Field, {| name: *, description?: * |}>
+    })> |}
+  }), descriptionVshardStorage?: ?({
       ...{ __typename?: '__Type' },
     ...{| fields?: ?Array<({
         ...{ __typename?: '__Field' },

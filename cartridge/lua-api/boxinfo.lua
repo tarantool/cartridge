@@ -39,6 +39,39 @@ local function get_info(uri)
             end
         end
 
+        local membership_myself = require('membership').myself()
+        local membership_options = require('membership.options')
+
+        local vshard = require('vshard')
+
+        local ok, router_info = pcall(vshard.router.info)
+
+        if ok then
+            router_info = {
+                buckets_unreachable = router_info.bucket.unreachable,
+                buckets_available_ro = router_info.bucket.available_ro,
+                buckets_unknown = router_info.bucket.unknown,
+                buckets_available_rw = router_info.bucket.available_rw,
+            }
+        else
+            router_info = box.NULL
+        end
+
+        local ok, storage_info = pcall(vshard.storage.info)
+
+        if ok then
+            storage_info = {
+                buckets_receiving = storage_info.bucket.receiving,
+                buckets_active = storage_info.bucket.active,
+                buckets_total = storage_info.bucket.total,
+                buckets_garbage = storage_info.bucket.garbage,
+                buckets_pinned = storage_info.bucket.pinned,
+                buckets_sending = storage_info.bucket.sending,
+            }
+        else
+            storage_info = box.NULL
+        end
+
         local ret = {
             general = {
                 version = box_info.version,
@@ -97,7 +130,18 @@ local function get_info(uri)
                 version = require('cartridge').VERSION,
                 state = server_state,
                 error = server_error,
-            }
+            },
+            membership = {
+                status = membership_myself.status,
+                incarnation = membership_myself.incarnation,
+                PROTOCOL_PERIOD_SECONDS = membership_options.PROTOCOL_PERIOD_SECONDS,
+                ACK_TIMEOUT_SECONDS = membership_options.ACK_TIMEOUT_SECONDS,
+                ANTI_ENTROPY_PERIOD_SECONDS = membership_options.ANTI_ENTROPY_PERIOD_SECONDS,
+                SUSPECT_TIMEOUT_SECONDS = membership_options.SUSPECT_TIMEOUT_SECONDS,
+                NUM_FAILURE_DETECTION_SUBGROUPS = membership_options.NUM_FAILURE_DETECTION_SUBGROUPS,
+            },
+            vshard_router = router_info,
+            vshard_storage = storage_info,
         }
 
         for i = 1, table.maxn(box_info.replication) do

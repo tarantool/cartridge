@@ -45,6 +45,9 @@ describe('Server details', () => {
     cy.get('.meta-test__ServerDetailsModal button').contains('Storage').click();
     cy.get('.meta-test__ServerDetailsModal button').contains('Network').click();
     cy.get('.meta-test__ServerDetailsModal button').contains('General').click();
+    cy.get('.meta-test__ServerDetailsModal button').contains('Membership').click();
+    cy.get('.meta-test__ServerDetailsModal button').contains('Vshard-Router').click();
+    cy.get('.meta-test__ServerDetailsModal button').contains('Vshard-Storage').click();
     cy.get('.meta-test__ServerDetailsModal button').contains('Issues 0').click();
   };
 
