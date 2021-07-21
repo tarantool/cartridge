@@ -17,7 +17,7 @@
     "@graphql-codegen/flow-resolvers": "1.17.13",
     "@graphql-codegen/introspection": "1.18.2",
     "@graphql-codegen/typescript-compatibility": "2.1.0",
-    "@tarantool.io/frontend-core": "7.9.1",
+    "@tarantool.io/frontend-core": "7.10.0",
     "@tarantool.io/lua-bundler-webpack-plugin": "^1.0.1",
     "@tarantool.io/ui-kit": "0.39.1",
     "apollo-boost": "0.4.0",

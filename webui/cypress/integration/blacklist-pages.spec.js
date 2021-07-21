@@ -12,7 +12,7 @@ describe('Blacklist pages', () => {
         cookie = helpers.random_cookie(),
         env = {
           TARANTOOL_WEBUI_PREFIX = 'abc/',
-          TARANTOOL_WEBUI_BLACKLIST = '/cluster/configuration',
+          TARANTOOL_WEBUI_BLACKLIST = '/cluster/configuration:/test/repair/jobs',
           TARANTOOL_WEBUI_ENFORCE_ROOT_REDIRECT = 'false',
         },
         replicasets = {{
@@ -24,7 +24,8 @@ describe('Blacklist pages', () => {
 
       _G.cluster:start()
       return true
-    `}).should('deep.eq', [true]);
+    `
+    }).should('deep.eq', [true]);
   });
 
   after(() => {
@@ -51,7 +52,42 @@ describe('Blacklist pages', () => {
     ////////////////////////////////////////////////////////////////////
     cy.log('Redirects are disabled');
     ////////////////////////////////////////////////////////////////////
-    cy.request({url: '/', failOnStatusCode: false}).its('status').should('equal', 404);
-    cy.request({url: '/abc', failOnStatusCode: false}).its('status').should('equal', 404);
+    cy.request({ url: '/', failOnStatusCode: false }).its('status').should('equal', 404);
+    cy.request({ url: '/abc', failOnStatusCode: false }).its('status').should('equal', 404);
+  });
+
+  it('Test:hide-menu-subitems', () => {
+    cy.visit('/abc/admin/cluster/users');
+    cy.window()
+      .then(win => {
+        const projectName = 'test';
+        win.tarantool_enterprise_core.register(projectName, [
+          {
+            label: 'Repair Queues',
+            path: `/${projectName}/repair`,
+            expanded: true,
+            items: [
+              {
+                label: 'Input',
+                path: `/${projectName}/repair/input`
+              },
+              {
+                label: 'Output',
+                path: `/${projectName}/repair/output`
+              },      {
+                label: 'Jobs',
+                path: `/${projectName}/repair/jobs`
+              }
+            ]
+          }
+        ], null, 'react');
+        return Promise.resolve();
+      })
+      .then(() => {
+        cy.get('a[href="/abc/admin/test/repair"]').should('exist').click();
+        cy.get('a[href="/test/repair/input"]').should('exist');
+        cy.get('a[href="/test/repair/output"]').should('exist');
+        cy.get('a[href="/test/repair/jobs"]').should('not.exist');
+      });
   });
 });
