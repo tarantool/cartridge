@@ -1,8 +1,8 @@
 describe('Configuration file page', () => {
 
-    before(() => {
-        cy.task('tarantool', {
-            code: `
+  before(() => {
+    cy.task('tarantool', {
+      code: `
       cleanup()
 
       _G.cluster = helpers.Cluster:new({
@@ -19,51 +19,40 @@ describe('Configuration file page', () => {
 
       _G.cluster:start()
       return true
-    `}).should('deep.eq', [true]);
-    });
-
-    after(() => {
-        cy.task('tarantool', { code: `cleanup()` });
-    });
-
-    it('Test: successfull upload config file', () => {
-
-        ////////////////////////////////////////////////////////////////////
-        cy.log('Open WebUI');
-        ////////////////////////////////////////////////////////////////////
-        cy.visit('/admin/cluster/configuration');
-        cy.get('.test__Header').contains('/Configuration files');
-        cy.get('[data-cy="test_uploadZone"]').contains('Upload configuration');
-        cy.get('[data-cy="test_uploadZone"]').contains('New configuration can be uploaded here.');
-        cy.get('[data-cy="test_uploadZone"]').contains('Click or drag file to this area to upload');
-        cy.get('.meta-test__DownloadBtn').should('exist');
-
-        ///////////////////////////////////////////////////////////////////
-        cy.log('Upload conf file');
-        ////////////////////////////////////////////////////////////////////
-        const filepath = 'files/config.yml';
-        cy.get('input[type="file"]').attachFile(filepath);
-        cy.get('[data-cy="test_uploadZone"]').contains('New configuration uploaded successfully.');
-        cy.get('[data-cy="test_uploadZone"]').contains('config.yml');
+    `
+    }).should('deep.eq', [true]);
   });
 
-    it('Test: unsuccessful upload config file', () => {
+  after(() => {
+    cy.task('tarantool', { code: `cleanup()` });
+  });
 
-        ////////////////////////////////////////////////////////////////////
-        cy.log('Open WebUI');
-        ////////////////////////////////////////////////////////////////////
-        cy.visit('/admin/cluster/configuration');
-        cy.get('.test__Header').contains('/Configuration files');
-        cy.get('[data-cy="test_uploadZone"]').contains('Upload configuration');
-        cy.get('[data-cy="test_uploadZone"]').contains('New configuration can be uploaded here.');
-        cy.get('[data-cy="test_uploadZone"]').contains('Click or drag file to this area to upload');
-        cy.get('.meta-test__DownloadBtn').should('exist');
+  it('Test: successfull upload config file', () => {
 
-        ///////////////////////////////////////////////////////////////////
-        cy.log('Upload conf file not in yml format');
-        ////////////////////////////////////////////////////////////////////
-        const filepath = 'files/config.zip';
-        cy.get('input[type="file"]').attachFile(filepath);
-        cy.get('[data-cy="test_uploadZone"]').contains('DecodeYamlError: control characters are not allowed at document: 0');
-    });
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Open WebUI');
+    ////////////////////////////////////////////////////////////////////
+    cy.visit('/admin/cluster/configuration');
+    cy.get('.test__Header').contains('/Configuration files');
+    cy.get('[data-cy="test_uploadZone"]').contains('Upload configuration');
+    cy.get('[data-cy="test_uploadZone"]').contains('New configuration can be uploaded here.');
+    cy.get('[data-cy="test_uploadZone"]').contains('Click or drag file to this area to upload');
+    cy.get('.meta-test__DownloadBtn').should('exist');
+
+    ///////////////////////////////////////////////////////////////////
+    cy.log('Upload conf file');
+    ////////////////////////////////////////////////////////////////////
+    let filepath = 'files/config.good.yml';
+    cy.get('input[type="file"]').attachFile(filepath);
+    cy.get('[data-cy="test_uploadZone"]').contains('New configuration uploaded successfully.');
+    cy.get('[data-cy="test_uploadZone"]').contains('config.good.yml');
+
+    ///////////////////////////////////////////////////////////////////
+    cy.log('Upload conf file not in yml format');
+    ////////////////////////////////////////////////////////////////////
+    filepath = 'files/config.bad.yml';
+    cy.get('input[type="file"]').attachFile(filepath);
+    cy.get('[data-cy="test_uploadZone"]').contains('Config upload failed: uploading system section ' +
+      '"topology" is forbidden');
+  });
 });
