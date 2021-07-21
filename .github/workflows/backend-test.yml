@@ -79,6 +79,7 @@ jobs:
           CMAKE_LDOC_FIND_REQUIRED: 'YES'
           CMAKE_SPHINX_FIND_REQUIRED: 'YES'
       - run: ./fetch-schema.sh
+      - run: cmake -DJUST_CHECK=YES -P rst/BuildUML.cmake
 
       # Cleanup cached paths
       - run: tarantoolctl rocks remove cartridge
