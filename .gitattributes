@@ -2,3 +2,4 @@
 *.snap binary
 *.xlog binary
 *.png binary
+*.svg binary

@@ -42,6 +42,8 @@ Added
 - Instance will not produce suspects during ``RecoveringSnapshot`` and
   ``BootstrappingBox``.
 
+- New script ``rst/BuildUML.cmake`` for rendering UML diagrams from the doc.
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Changed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
