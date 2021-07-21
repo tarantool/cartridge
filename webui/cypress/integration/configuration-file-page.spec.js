@@ -52,5 +52,11 @@ describe('Configuration file page', () => {
     cy.get('input[type="file"]').attachFile('files/config.bad.yml');
     cy.get('[data-cy="test_uploadZone"]').contains('Config upload failed: uploading system section ' +
       '"topology" is forbidden');
+
+    ///////////////////////////////////////////////////////////////////
+    cy.log('Download current conf file');
+    ////////////////////////////////////////////////////////////////////
+    cy.downloadFile('/admin/config', 'cypress/fixtures/Download', 'config_downloaded.yml')
+    //cy.readFile('cypress/fixtures/Download/test.txt').should('contain', 'Lorem ipsum dolor sit amet')
   });
 });

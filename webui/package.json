@@ -12,6 +12,7 @@
     "@emotion/react": "11.4.0",
     "@emotion/styled": "11.3.0",
     "@graphql-codegen/cli": "1.21.4",
+    "@graphql-codegen/cli": "1.21.4",
     "@graphql-codegen/flow": "1.19.0",
     "@graphql-codegen/flow-operations": "1.18.8",
     "@graphql-codegen/flow-resolvers": "1.17.13",
