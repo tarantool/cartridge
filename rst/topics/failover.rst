@@ -214,6 +214,8 @@ reestablishes; replica connection isn't a must for recovery. Recovery is
 performed according to the rules of consistent switchover unless some
 other instance has already been promoted to a new leader.
 
+..  _failover-configuration:
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Failover configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -252,6 +254,9 @@ Use your favorite GraphQL client (e.g.
 - ``query {cluster{failover_params{}}}``,
 - ``mutation {cluster{failover_params(){}}}``,
 - ``mutation {cluster{failover_promote()}}``.
+
+
+..  _stateboard-configuration:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Stateboard configuration
