@@ -585,7 +585,7 @@ export const getFailoverParams = gql`
 `;
 
 export const validateFilesQuery = gql`
-    query turnAuth ($sections: [ConfigSectionInput!]) {
+    query validateConfig ($sections: [ConfigSectionInput!]) {
         cluster {
             validate_config(sections: $sections) {
                 error
