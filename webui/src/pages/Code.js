@@ -37,6 +37,7 @@ import { getLanguageByFileName, getFileIdForMonaco } from 'src/misc/monacoModelS
 import type { TreeFileItem } from 'src/store/selectors/filesSelectors';
 import type { FileItem } from 'src/store/reducers/files.reducer';
 import { type State } from 'src/store/rootReducer';
+import { validateConfigFiles } from '../store/actions/files.actions';
 
 const options = {
   fixedOverflowWidgets: true,
@@ -301,6 +302,12 @@ class Code extends React.Component<CodeProps, CodeState> {
     dispatch(setIsContentChanged(fileId, isChanged));
   }
 
+  validateCode = () => {
+    const { dispatch } = this.props;
+
+    dispatch(validateConfigFiles());
+  }
+
   render() {
     const {
       fileTree = [],
@@ -337,6 +344,12 @@ class Code extends React.Component<CodeProps, CodeState> {
             onClick={this.handleReloadClick}
             icon={IconRefresh}
             intent='base'
+          />,
+          <Button
+            text='Validate'
+            intent='base'
+            size='l'
+            onClick={this.validateCode}
           />,
           <Button
             onClick={this.handleApplyClick}

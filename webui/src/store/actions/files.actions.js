@@ -7,10 +7,11 @@ import {
   RENAME_FILE,
   RENAME_FOLDER,
   DELETE_FILE,
-  DELETE_FOLDER
+  DELETE_FOLDER,
+  VALIDATE_CODE_FILES
 } from '../actionTypes'
 
-export const fetchConfigFiles = (initial?: bool = false) => ({ type: FETCH_CONFIG_FILES, payload: { initial } });
+export const fetchConfigFiles = (initial: boolean = false) => ({ type: FETCH_CONFIG_FILES, payload: { initial } });
 
 export const setIsContentChanged = (fileId: string, isChanged: boolean) => ({
   type: SET_IS_CONTENT_CHANGED,
@@ -45,3 +46,7 @@ export const deleteFolder = ({ id }) => ({
   type: DELETE_FOLDER,
   payload: { id }
 })
+
+export const validateConfigFiles = () => ({
+  type: VALIDATE_CODE_FILES
+});

@@ -46,8 +46,7 @@ describe('Code page', () => {
     cy.get('.meta-test__Code__apply_idle').should('exist');
   }
 
-  it('Test: code-page', () => {
-
+  it('Test: open-code-page', () => {
     ////////////////////////////////////////////////////////////////////
     cy.log('Open WebUI');
     ////////////////////////////////////////////////////////////////////
@@ -61,7 +60,35 @@ describe('Code page', () => {
     cy.get('#root').contains('Please select a file');
     cy.get('button[type="button"]').contains('Apply').click();
     cy.get('span:contains(Success) + span:contains(Files successfuly applied) + svg').click();
+  });
 
+  it('Test: schema', () => {
+    ////////////////////////////////////////////////////////////////////
+    cy.log('File in tree');
+    ////////////////////////////////////////////////////////////////////
+    cy.get('.meta-test__addFileBtn').click();
+    cy.get('.meta-test__enterName').focused().type('schema.yml');
+    cy.get('#root').contains('dummy-1').click();
+    cy.get('.meta-test__Code__FileTree').contains('schema.yml').click();
+
+    // Type incorrect
+    cy.get('.monaco-editor').click();
+    cy.focused().type(selectAllKeys + '{backspace}');
+    cy.get('.monaco-editor').type('spaces: incorrect-1');
+    cy.get('.monaco-editor').contains('spaces: incorrect-1');
+    cy.get('button[type="button"]').contains('Validate').click();
+    cy.get('#root').contains('spaces: must be a table, got string').should('exist').click();
+
+    // Type correct
+    cy.get('.monaco-editor').click();
+    cy.focused().type(selectAllKeys + '{backspace}');
+    cy.get('.monaco-editor').type('spaces: [] # Essentially the same');
+    cy.get('button[type="button"]').contains('Validate').click();
+    cy.get('#root').contains('The code is valid').should('exist').click();
+
+  });
+
+  it('Test: code-page', () => {
     ////////////////////////////////////////////////////////////////////
     cy.log('File in tree');
     ////////////////////////////////////////////////////////////////////

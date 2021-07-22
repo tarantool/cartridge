@@ -49,10 +49,6 @@ describe('Demo panel', () => {
     cy.get('.meta-test__Code__apply_idle').should('exist');
     cy.get('.meta-test__DemoInfo').should('not.exist');
 
-    cy.get('a[href="/admin/cluster/schema"]').click();
-    cy.get('.monaco-editor textarea').should('exist');
-    cy.get('.meta-test__DemoInfo').should('not.exist');
-
     ////////////////////////////////////////////////////////////////////
     cy.log('Restart with demo uri');
     ////////////////////////////////////////////////////////////////////
@@ -92,10 +88,6 @@ describe('Demo panel', () => {
 
     cy.get('a[href="/admin/cluster/code"]').click();
     cy.url().should('include', '/admin/cluster/code');
-    cy.get('.meta-test__DemoInfo').should('exist');
-
-    cy.get('a[href="/admin/cluster/schema"]').click();
-    cy.url().should('include', '/admin/cluster/schema');
     cy.get('.meta-test__DemoInfo').should('exist');
 
     cy.get('.meta-test__DemoInfo button[type="button"]:contains(Reset configuration)').click();
