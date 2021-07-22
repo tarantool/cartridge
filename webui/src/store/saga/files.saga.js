@@ -7,9 +7,12 @@ import {
   FETCH_CONFIG_FILES_FAIL,
   PUT_CONFIG_FILES_CONTENT,
   PUT_CONFIG_FILES_CONTENT_DONE,
-  PUT_CONFIG_FILES_CONTENT_FAIL
+  PUT_CONFIG_FILES_CONTENT_FAIL,
+  VALIDATE_CODE_FILES,
+  VALIDATE_CODE_FILES_DONE,
+  VALIDATE_CODE_FILES_FAIL
 } from 'src/store/actionTypes';
-import { applyFiles, getFiles } from 'src/store/request/files.requests';
+import { applyFiles, getFiles, validateFiles } from 'src/store/request/files.requests';
 import { baseSaga } from 'src/store/commonRequest';
 import { getModelValueByFile, getFileIdForMonaco, setModelValueByFile } from 'src/misc/monacoModelStorage';
 
@@ -121,9 +124,58 @@ function* fetchFilesSaga({ payload: { initial } = {} } = {}) {
   }
 }
 
+function* validateFilesSaga() {
+  try {
+    const { codeEditor: { files } } = yield select();
+    const filesArr = [];
+
+    for (let i = 0; i < files.length; i++) {
+      const {
+        fileId,
+        deleted,
+        initialContent,
+        path,
+        type
+      } = files[i];
+
+      // We don't keep all content in Redux store anymore. Get it from Monaco models:
+      const contentIfEdited = getModelValueByFile(getFileIdForMonaco(fileId));
+      const content = (contentIfEdited !== null ? contentIfEdited : initialContent) || '';
+
+      if (type === 'file') {
+        if (!deleted) {
+          filesArr.push({ filename: path, content });
+        }
+      }
+    }
+
+    const { error } = yield call(validateFiles, filesArr);
+    if (error) {
+      yield put({ type: VALIDATE_CODE_FILES_FAIL });
+      window.tarantool_enterprise_core.notify({
+        title: 'Code validation failed',
+        message: error,
+        type: 'error',
+        timeout: 5000
+      });
+    } else {
+      yield put({ type: VALIDATE_CODE_FILES_DONE });
+      window.tarantool_enterprise_core.notify({
+        title: 'The code is valid',
+        type: 'success',
+        timeout: 5000
+      });
+    }
+  } catch (error) {
+    yield put({ type: VALIDATE_CODE_FILES_FAIL });
+    graphqlErrorNotification(error);
+  }
+}
+
 function* filesSaga() {
   yield takeEvery(FETCH_CONFIG_FILES, fetchFilesSaga);
   yield takeEvery(PUT_CONFIG_FILES_CONTENT, applyFilesSaga);
+  yield takeEvery(VALIDATE_CODE_FILES, validateFilesSaga);
 }
 
 export const saga = baseSaga(

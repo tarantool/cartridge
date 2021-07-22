@@ -160,9 +160,8 @@ export const DELETE_FOLDER = 'DELETE_FOLDER'
 export const RENAME_FILE = 'RENAME_FILE'
 export const RENAME_FOLDER = 'RENAME_FOLDER'
 
-// export const createFile = types(CREATE_FILE)
-// export const createFolder = types(CREATE_FOLDER)
-// export const deleteFile = types(DELETE_FILE)
-// export const deleteFolder = types(DELETE_FOLDER)
-// export const renameFile = types(RENAME_FILE)
-// export const renameFolder = types(RENAME_FOLDER)
+/* Validate scheme */
+export const VALIDATE_CODE_FILES = 'VALIDATE_CODE_FILES';
+export const VALIDATE_CODE_FILES_DONE = 'VALIDATE_CODE_FILES_DONE';
+export const VALIDATE_CODE_FILES_FAIL = 'VALIDATE_CODE_FILES_FAIL';
+
