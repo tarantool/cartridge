@@ -48,7 +48,7 @@ describe('Configuration file page', () => {
     cy.get('[data-cy="test_uploadZone"]').contains('config.good.yml');
 
     ///////////////////////////////////////////////////////////////////
-    cy.log('Upload conf file not in yml format');
+    cy.log('Upload incorrect yml conf file');
     ////////////////////////////////////////////////////////////////////
     filepath = 'files/config.bad.yml';
     cy.get('input[type="file"]').attachFile(filepath);
