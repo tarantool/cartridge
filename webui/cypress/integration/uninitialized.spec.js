@@ -62,19 +62,8 @@ describe('Uninitialized', () => {
     cy.get('button[type="button"]:contains("Apply")').click();
     cy.get('span:contains("Current instance isn\'t bootstrapped yet") + button + svg').click();
 
-    ////////////////////////////////////////////////////////////////////
-    cy.log('Schema without bootstrap');
-    ////////////////////////////////////////////////////////////////////
-    cy.get('a[href="/xyz/admin/cluster/schema"]').click();
-
     cy.get('button[type="button"]:contains("Validate")').click();
-    cy.get('#root').contains('Current instance isn\'t bootstrapped yet');
-
-    cy.get('button[type="button"]:contains("Reload")').click();
-    cy.get('.monaco-editor textarea').should('have.value', '');
-
-    cy.get('button[type="button"]:contains("Apply")').click();
-    cy.get('#root').contains('Current instance isn\'t bootstrapped yet');
+    cy.get('#root').contains('Current instance isn\'t bootstrapped yet').click();
 
     ////////////////////////////////////////////////////////////////////
     cy.log('Try to add user without bootstrap');
