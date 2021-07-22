@@ -28,7 +28,6 @@ import { SectionPreloader } from '@tarantool.io/ui-kit';
 import { createLazySection } from 'src/misc/lazySection';
 
 const Code = createLazySection(() => import('src/pages/Code'));
-const Schema = createLazySection(() => import('src/pages/Schema'));
 
 const { tarantool_enterprise_core } = window;
 
@@ -45,7 +44,6 @@ class Root extends React.Component {
               <Route path={projectPath('configuration')} component={ConfigManagement} />
               <Route path={projectPath('users')} component={Users} />
               <Route path={projectPath('code')} component={Code} />
-              <Route path={projectPath('schema')} component={Schema} />
             </Switch>
             <NetworkErrorSplash />
           </Suspense>

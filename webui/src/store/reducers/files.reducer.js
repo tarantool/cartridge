@@ -42,7 +42,7 @@ type UpdateObj = {
 }
 
 
-const ignoreFiles = ['schema.yml']
+const ignoreFiles = []
 
 const enrichFileList = (files: Array<ApiFileItem>, prevState: Array<FileItem> = []) => {
   const pathFileMap = {};

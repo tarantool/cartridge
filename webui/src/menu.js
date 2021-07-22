@@ -6,7 +6,6 @@ import {
   IconCluster,
   IconCode,
   IconGear,
-  IconSchema,
   IconUsers,
   type MenuItemType
 } from '@tarantool.io/ui-kit';
@@ -58,14 +57,6 @@ const menuItems = {
         expanded: false,
         loading: false,
         icon: <IconCode className={css`width: 14px; height: 14px; fill: #fff;`} />
-      },
-      {
-        label: 'Schema',
-        path: `/${PROJECT_NAME}/schema`,
-        selected: false,
-        expanded: false,
-        loading: false,
-        icon: <IconSchema className={css`width: 14px; height: 14px; fill: #fff;`} />
       }
     ]
   }

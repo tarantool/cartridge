@@ -10,9 +10,8 @@ import {
   DELETE_FOLDER,
   VALIDATE_CODE_FILES
 } from '../actionTypes'
-import type { ConfigSectionInput } from 'src/generated/graphql-typing';
 
-export const fetchConfigFiles = (initial?: bool = false) => ({ type: FETCH_CONFIG_FILES, payload: { initial } });
+export const fetchConfigFiles = (initial: boolean = false) => ({ type: FETCH_CONFIG_FILES, payload: { initial } });
 
 export const setIsContentChanged = (fileId: string, isChanged: boolean) => ({
   type: SET_IS_CONTENT_CHANGED,
