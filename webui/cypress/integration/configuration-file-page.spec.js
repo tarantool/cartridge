@@ -42,8 +42,7 @@ describe('Configuration file page', () => {
     ///////////////////////////////////////////////////////////////////
     cy.log('Upload conf file');
     ////////////////////////////////////////////////////////////////////
-    let filepath = 'files/config.good.yml';
-    cy.get('input[type="file"]').attachFile(filepath);
+    cy.get('input[type="file"]').attachFile('files/config.good.yml');
     cy.get('[data-cy="test_uploadZone"]').contains('New configuration uploaded successfully.');
     cy.get('[data-cy="test_uploadZone"]').contains('config.good.yml');
 
