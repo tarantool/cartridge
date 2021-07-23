@@ -49,8 +49,7 @@ describe('Configuration file page', () => {
     ///////////////////////////////////////////////////////////////////
     cy.log('Upload incorrect yml conf file');
     ////////////////////////////////////////////////////////////////////
-    filepath = 'files/config.bad.yml';
-    cy.get('input[type="file"]').attachFile(filepath);
+    cy.get('input[type="file"]').attachFile('files/config.bad.yml');
     cy.get('[data-cy="test_uploadZone"]').contains('Config upload failed: uploading system section ' +
       '"topology" is forbidden');
   });
