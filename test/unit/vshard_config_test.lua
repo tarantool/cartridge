@@ -165,6 +165,15 @@ vshard_groups:
     rebalancer_max_receiving: 0
 ...]])
 
+check_config('vshard_groups["global"].rebalancer_max_sending must be positive',
+[[---
+vshard_groups:
+  global:
+    bucket_count: 200
+    bootstrapped: false
+    rebalancer_max_sending: 0
+...]])
+
 check_config('vshard_groups["global"].collect_lua_garbage must be a boolean',
 [[---
 vshard_groups:

@@ -1171,52 +1171,6 @@ export type RemoveUserMutation = ({
   }) |}
 });
 
-export type Get_SchemaQueryVariables = {};
-
-
-export type Get_SchemaQuery = ({
-    ...{ __typename?: 'Query' },
-  ...{| cluster?: ?({
-      ...{ __typename?: 'Apicluster' },
-    ...{| schema: ({
-        ...{ __typename?: 'DDLSchema' },
-      ...$Pick<DdlSchema, {| as_yaml: * |}>
-    }) |}
-  }) |}
-});
-
-export type Set_SchemaMutationVariables = {
-  yaml: $ElementType<Scalars, 'String'>,
-};
-
-
-export type Set_SchemaMutation = ({
-    ...{ __typename?: 'Mutation' },
-  ...{| cluster?: ?({
-      ...{ __typename?: 'MutationApicluster' },
-    ...{| schema: ({
-        ...{ __typename?: 'DDLSchema' },
-      ...$Pick<DdlSchema, {| as_yaml: * |}>
-    }) |}
-  }) |}
-});
-
-export type Check_SchemaMutationVariables = {
-  yaml: $ElementType<Scalars, 'String'>,
-};
-
-
-export type Check_SchemaMutation = ({
-    ...{ __typename?: 'Mutation' },
-  ...{| cluster?: ?({
-      ...{ __typename?: 'MutationApicluster' },
-    ...{| check_schema: ({
-        ...{ __typename?: 'DDLCheckResult' },
-      ...$Pick<DdlCheckResult, {| error?: * |}>
-    }) |}
-  }) |}
-});
-
 export type Set_FilesMutationVariables = {
   files?: ?Array<ConfigSectionInput> | ConfigSectionInput,
 };
@@ -1294,6 +1248,22 @@ export type GetFailoverParamsQuery = ({
           ...{ __typename?: 'FailoverStateProviderCfgTarantool' },
         ...$Pick<FailoverStateProviderCfgTarantool, {| uri: *, password: * |}>
       }) |}
+    }) |}
+  }) |}
+});
+
+export type ValidateConfigQueryVariables = {
+  sections?: ?Array<ConfigSectionInput> | ConfigSectionInput,
+};
+
+
+export type ValidateConfigQuery = ({
+    ...{ __typename?: 'Query' },
+  ...{| cluster?: ?({
+      ...{ __typename?: 'Apicluster' },
+    ...{| validate_config: ({
+        ...{ __typename?: 'ValidateConfigResult' },
+      ...$Pick<ValidateConfigResult, {| error?: * |}>
     }) |}
   }) |}
 });

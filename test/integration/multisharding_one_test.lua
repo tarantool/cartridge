@@ -57,6 +57,7 @@ local function get_vshard_groups(cluster)
                     bucket_count
                     bootstrapped
                     rebalancer_max_receiving
+                    rebalancer_max_sending
                     collect_lua_garbage
                     sync_timeout
                     collect_bucket_garbage_interval
@@ -72,6 +73,7 @@ local function edit_vshard_group(cluster, kv_args)
     local res = cluster.main_server:graphql({query = [[
         mutation(
             $rebalancer_max_receiving: Int
+            $rebalancer_max_sending: Int
             $group: String!
             $collect_lua_garbage: Boolean
             $sync_timeout: Float
@@ -82,6 +84,7 @@ local function edit_vshard_group(cluster, kv_args)
                 edit_vshard_options(
                     name: $group
                     rebalancer_max_receiving: $rebalancer_max_receiving
+                    rebalancer_max_sending: $rebalancer_max_sending
                     collect_lua_garbage: $collect_lua_garbage
                     sync_timeout: $sync_timeout
                     collect_bucket_garbage_interval: $collect_bucket_garbage_interval
@@ -91,6 +94,7 @@ local function edit_vshard_group(cluster, kv_args)
                     bucket_count
                     bootstrapped
                     rebalancer_max_receiving
+                    rebalancer_max_sending
                     collect_lua_garbage
                     sync_timeout
                     collect_bucket_garbage_interval
@@ -116,6 +120,7 @@ function g.test_api()
                 bucket_count
                 bootstrapped
                 rebalancer_max_receiving
+                rebalancer_max_sending
                 collect_lua_garbage
                 sync_timeout
                 collect_bucket_garbage_interval
@@ -151,6 +156,7 @@ function g.test_api()
             ['collect_lua_garbage'] = false,
             ['rebalancer_disbalance_threshold'] = 1,
             ['rebalancer_max_receiving'] = 100,
+            ['rebalancer_max_sending'] = 1,
             ['sync_timeout'] = 1,
             ['name'] = 'default',
             ['bucket_count'] = 3000,
@@ -187,6 +193,7 @@ function g.test_set_vshard_options_positive()
     local res = edit_vshard_group(g.cluster, {
         group = "default",
         rebalancer_max_receiving = 42,
+        rebalancer_max_sending = 1,
         collect_lua_garbage = true,
         sync_timeout = 24,
         rebalancer_disbalance_threshold = 14
@@ -196,6 +203,7 @@ function g.test_set_vshard_options_positive()
         ['collect_lua_garbage'] = true,
         ['rebalancer_disbalance_threshold'] = 14,
         ['rebalancer_max_receiving'] = 42,
+        ['rebalancer_max_sending'] = 1,
         ['sync_timeout'] = 24,
         ['name'] = 'default',
         ['bucket_count'] = 3000,
@@ -205,6 +213,7 @@ function g.test_set_vshard_options_positive()
     local res = edit_vshard_group(g.cluster, {
         group = "default",
         rebalancer_max_receiving = nil,
+        rebalancer_max_sending = nil,
         sync_timeout = 25,
     })
     t.assert_equals(res['data']['cluster']['edit_vshard_options'], {
@@ -212,6 +221,7 @@ function g.test_set_vshard_options_positive()
         ['collect_lua_garbage'] = true,
         ['rebalancer_disbalance_threshold'] = 14,
         ['rebalancer_max_receiving'] = 42,
+        ['rebalancer_max_sending'] = 1,
         ['sync_timeout'] = 25,
         ['name'] = 'default',
         ['bucket_count'] = 3000,
@@ -225,6 +235,7 @@ function g.test_set_vshard_options_positive()
             ['collect_lua_garbage'] = true,
             ['rebalancer_disbalance_threshold'] = 14,
             ['rebalancer_max_receiving'] = 42,
+            ['rebalancer_max_sending'] = 1,
             ['sync_timeout'] = 25,
             ['name'] = 'default',
             ['bucket_count'] = 3000,
@@ -243,6 +254,11 @@ function g.test_set_vshard_options_negative()
     t.assert_error_msg_contains(
         [[vshard_groups["default"].rebalancer_max_receiving must be positive]],
         edit_vshard_group, g.cluster, {group = "default", rebalancer_max_receiving = -42}
+    )
+
+    t.assert_error_msg_contains(
+        [[vshard_groups["default"].rebalancer_max_sending must be positive]],
+        edit_vshard_group, g.cluster, {group = "default", rebalancer_max_sending = -42}
     )
 
     t.assert_error_msg_contains(

@@ -1,5 +1,5 @@
 # source: http://localhost:8081/admin/api
-# timestamp: Mon Jul 12 2021 03:57:45 GMT+0300 (Moscow Standard Time)
+# timestamp: Mon Jul 26 2021 16:55:54 GMT+0300 (Москва, стандартное время)
 
 """Cluster management"""
 type Apicluster {
@@ -249,7 +249,7 @@ type MutationApicluster {
 
   """Restart replication on specified by uuid servers"""
   restart_replication(uuids: [String!]): Boolean
-  edit_vshard_options(rebalancer_max_receiving: Int, sched_ref_quota: Long, collect_bucket_garbage_interval: Float, sync_timeout: Float, collect_lua_garbage: Boolean, rebalancer_disbalance_threshold: Float, name: String!, sched_move_quota: Long): VshardGroup!
+  edit_vshard_options(rebalancer_max_receiving: Int, collect_bucket_garbage_interval: Float, collect_lua_garbage: Boolean, sched_ref_quota: Long, rebalancer_max_sending: Int, sync_timeout: Float, rebalancer_disbalance_threshold: Float, name: String!, sched_move_quota: Long): VshardGroup!
   auth_params(cookie_max_age: Long, enabled: Boolean, cookie_renew_age: Long): UserManagementAPI!
 
   """Create a new user"""
@@ -607,11 +607,16 @@ type VshardGroup {
   """
   sync_timeout: Float!
 
+  """Whether the group is ready to operate"""
+  bootstrapped: Boolean!
+
   """Scheduler storage ref quota"""
   sched_ref_quota: Long!
 
-  """Whether the group is ready to operate"""
-  bootstrapped: Boolean!
+  """
+  The maximum number of buckets that can be sent in parallel by a single replica set in the storage group
+  """
+  rebalancer_max_sending: Int!
 
   """A maximum bucket disbalance threshold, in percent"""
   rebalancer_disbalance_threshold: Float!

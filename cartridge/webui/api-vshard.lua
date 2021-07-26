@@ -25,6 +25,12 @@ local gql_type_vsgroup = gql_types.object({
                 'The maximum number of buckets that can be received in parallel by a single replica set ' ..
                 'in the storage group'
         },
+        rebalancer_max_sending = {
+            kind = gql_types.int.nonNull,
+            description =
+                'The maximum number of buckets that can be sent in parallel by a single replica set ' ..
+                'in the storage group'
+        },
         collect_lua_garbage = {
             kind = gql_types.boolean.nonNull,
             description = 'If set to true, the Lua collectgarbage() function is called periodically'
@@ -159,6 +165,7 @@ local function init(graphql)
         args = {
             name = gql_types.string.nonNull,
             rebalancer_max_receiving = gql_types.int,
+            rebalancer_max_sending = gql_types.int,
             collect_lua_garbage = gql_types.boolean,
             sync_timeout = gql_types.float,
             collect_bucket_garbage_interval = gql_types.float,
