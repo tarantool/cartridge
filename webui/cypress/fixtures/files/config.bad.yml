@@ -1,0 +1,3 @@
+topology: {}
+# Uploading this config will fail with the error:
+# "uploading system section is forbidden"
