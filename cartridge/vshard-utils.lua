@@ -22,6 +22,7 @@ vars:new('known_groups', nil
     --    [group_name] = {
     --        bucket_count = number,
     --        rebalancer_max_receiving = number,
+    --        rebalancer_max_sending = number,
     --        collect_lua_garbage = boolean,
     --        collect_bucket_garbage_interval = number,
     --        sync_timeout = number,
@@ -179,6 +180,16 @@ local function validate_vshard_group(field, vsgroup_new, vsgroup_old)
             '%s.rebalancer_max_receiving must be positive', field
         )
     end
+    if vsgroup_new.rebalancer_max_sending ~= nil then
+        ValidateConfigError:assert(
+            type(vsgroup_new.rebalancer_max_sending) == 'number',
+            '%s.rebalancer_max_sending must be a number', field
+        )
+        ValidateConfigError:assert(
+            vsgroup_new.rebalancer_max_sending > 0,
+            '%s.rebalancer_max_sending must be positive', field
+        )
+    end
     if vsgroup_new.collect_lua_garbage ~= nil then
         ValidateConfigError:assert(
             type(vsgroup_new.collect_lua_garbage) == 'boolean',
@@ -249,6 +260,7 @@ local function validate_vshard_group(field, vsgroup_new, vsgroup_old)
         ['bucket_count'] = true,
         ['bootstrapped'] = true,
         ['rebalancer_max_receiving'] = true,
+        ['rebalancer_max_sending'] = true,
         ['collect_lua_garbage'] = true,
         ['sync_timeout'] = true,
         ['collect_bucket_garbage_interval'] = true,
@@ -405,6 +417,10 @@ local function get_known_groups()
             g.rebalancer_max_receiving = vshard_consts.DEFAULT_REBALANCER_MAX_RECEIVING
         end
 
+        if g.rebalancer_max_sending == nil then
+            g.rebalancer_max_sending = vshard_consts.DEFAULT_REBALANCER_MAX_SENDING
+        end
+
         if g.collect_lua_garbage == nil then
             g.collect_lua_garbage = false
         end
@@ -501,6 +517,7 @@ local function get_vshard_config(group_name, conf)
     return {
         bucket_count = vshard_groups[group_name].bucket_count,
         rebalancer_max_receiving = vshard_groups[group_name].rebalancer_max_receiving,
+        rebalancer_max_sending = vshard_groups[group_name].rebalancer_max_sending,
         sched_ref_quota = vshard_groups[group_name].sched_ref_quota,
         sched_move_quota = vshard_groups[group_name].sched_move_quota,
         collect_lua_garbage = vshard_groups[group_name].collect_lua_garbage,
@@ -561,6 +578,7 @@ local function edit_vshard_options(group_name, vshard_options)
         'string',
         {
             rebalancer_max_receiving = '?number',
+            rebalancer_max_sending = '?number',
             collect_lua_garbage = '?boolean',
             sync_timeout = '?number',
             collect_bucket_garbage_interval = '?number',

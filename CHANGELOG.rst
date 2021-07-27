@@ -44,6 +44,8 @@ Added
 
 - New script ``rst/BuildUML.cmake`` for rendering UML diagrams from the doc.
 
+- New vshard option ``rebalancer_max_sending``
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Changed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
