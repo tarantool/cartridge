@@ -23,4 +23,6 @@
 //
 // -- This will overwrite an existing command --
 // Cypress.Commands.overwrite("visit", (originalFn, url, options) => { ... })
+
+// https://www.npmjs.com/package/cypress-file-upload
 import 'cypress-file-upload';
