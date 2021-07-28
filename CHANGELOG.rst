@@ -71,6 +71,7 @@ Fixed
 - Fix ``get_enabled_roles`` to work w/o args
 - Don't default to syslog driver unless ``/dev/log`` or
   ``/var/run/syslog`` are available.
+- Fix inappropriate consistency timeout.
 
 -------------------------------------------------------------------------------
 [2.6.0] - 2021-04-26

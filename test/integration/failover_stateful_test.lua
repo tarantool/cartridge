@@ -602,3 +602,73 @@ add('test_issues', function(g)
         t.assert_equals(helpers.list_cluster_issues(S1), {})
     end)
 end)
+
+add('test_force_promote_timeout', function(g)
+    -- Failover may sleep waiting for a vclockkeeper.
+    -- For example, old vclockkeeper was stopped
+    -- and current instance was promoted consistently.
+    -- And it will attempt to get old vclockkeeper's info.
+    -- However, it should react fast enough to
+    -- the change of the vclockkeeper (e.g. force_inconsistency = true).
+    --
+    -- |       constitute_oneself + fiber_sleep (~7s) ||       constitut...
+    -- |*get_vclockkeeper|get_lsn|wait_lsn|fiber_sleep||*get_vclockkeepe...
+    -- ++++++++++++++++++++++++++++++++++++++++++++++++++------------------
+    --               | =========================== (>3s) |
+    -- ++++++++++++++------------------------------------------------------
+    --             |inconsistent promote (~3s)|
+    --             |*set_vclockkeeper |wait_rw|
+    --
+    -- In the example above instance gets unresponsive vclockkeeper.
+    -- Before the fix it would wait for ~7 seconds before fetching
+    -- correct vclockkeeper.
+    -- However, if during this wait user initiates inconsistent promote
+    -- with timeout of 3 seconds wait_rw will fail with this timeout.
+    -- That's why constitute_oneself + fiber_sleep should have the same
+    -- period/timeout as wait_rw, which is WAITLSN_TIMEOUT=3.
+    --
+    -- |       constitute_oneself + fiber_sleep (~3s) ||       constitut...
+    -- |*get_vclockkeeper|get_lsn|wait_lsn|fiber_sleep||*get_vclockkeepe...
+    -- ++++++++++++++++++++++++++++++++++++++++++++++++++------------------
+    --                    | ====================== (<3s) |
+    -- +++++++++++++++++++-------------------------------------------------
+    --             |          inconsistent promote (~3s)          |
+    --             |     *set_vclockkeeper     |      wait_rw     |
+    --
+    -- When constitute_oneself + fiber_sleep have 3s period the gap when
+    -- instance deals with two different vclockkeepers is less then 3s.
+    -- As a result wait_rw will not fail before constitute_oneself gets
+    -- actual vclockkeeper and sets instance to rw.
+    S2.net_box:eval([[
+        local failover_options = require('cartridge.vars').new('cartridge.failover').options
+        _G.old_waitlsn = failover_options.WAITLSN_TIMEOUT
+        failover_options.WAITLSN_TIMEOUT = 0.5
+    ]])
+
+    S1.process:kill('STOP')
+
+    local res, err = S2.net_box:call('package.loaded.cartridge.failover_promote', {
+        {[g.cluster.replicasets[2].uuid] = S2.instance_uuid},
+        {force_inconsistency = false}
+    })
+
+    t.assert_equals(res, nil)
+    t.assert_equals(err.str, 'WaitRwError: \"localhost:13303\": timed out')
+
+    require('fiber').sleep(0.3)
+
+    local res, err = S2.net_box:call('package.loaded.cartridge.failover_promote', {
+        {[g.cluster.replicasets[2].uuid] = S2.instance_uuid},
+        {force_inconsistency = true}
+    })
+
+    t.assert_equals(err, nil)
+    t.assert_equals(res, true)
+
+    S1.process:kill('CONT')
+    S2.net_box:eval([[
+        local failover_options = require('cartridge.vars').new('cartridge.failover').options
+        failover_options.WAITLSN_TIMEOUT = _G.old_waitlsn
+        _G.old_waitlsn = nil
+    ]])
+end)

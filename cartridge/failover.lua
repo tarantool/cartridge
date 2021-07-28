@@ -444,7 +444,7 @@ local function constitute_oneself(active_leaders, opts)
         local vclockkeeper_info, err = errors.netbox_call(
             pool.connect(vclockkeeper_uri, {wait_connected = false}),
             '__cartridge_failover_get_lsn', {timeout},
-            {timeout = timeout + vars.options.NETBOX_CALL_TIMEOUT}
+            {timeout = vars.options.NETBOX_CALL_TIMEOUT}
         )
         fiber.testcancel()
 
