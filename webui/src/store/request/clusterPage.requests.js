@@ -13,7 +13,8 @@ import {
   probeMutation,
   promoteFailoverLeaderMutation,
   serverStatQuery,
-  getFailoverParams
+  getFailoverParams,
+  restartReplicationMutation
 } from './queries.graphql';
 import type {
   EditTopologyMutationVariables,
@@ -235,6 +236,11 @@ export async function promoteFailoverLeader(params: FailoverApi) {
 
 export const disableServers = (uuids: Array<string>) => graphql.mutate(
   disableServersMutation,
+  { uuids }
+);
+
+export const restartReplications = (uuids: Array<string>) => graphql.mutate(
+  restartReplicationMutation,
   { uuids }
 );
 

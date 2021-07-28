@@ -349,6 +349,9 @@ query serverList ($withStats: Boolean!) {
       disable_servers {
         uuid
       }
+      restart_replication {
+          uuid
+      }
       force_apply {
         config_mismatch
         config_locked
@@ -535,6 +538,14 @@ export const disableServersMutation = gql`
         uuid
         disabled
       }
+    }
+  }
+`;
+
+export const restartReplicationMutation = gql`
+  mutation restart_replication($uuids: [String!]) {
+    cluster {
+      restart_replication(uuids: $uuids) 
     }
   }
 `;

@@ -7,12 +7,14 @@ import {
   $panelsVisibility,
   advertiseURIDetailsClick,
   disableServersDetailsClick,
-  forceApplyConfDetailsClick
+  forceApplyConfDetailsClick,
+  restartReplicationsDetailsClick
 } from 'src/store/effector/clusterSuggestions';
 import { Panel } from './Panel';
 import { AdvertiseURISuggestionModal } from './AdvertiseURISuggestionModal';
 import DisableServersSuggestionModal from './DisableServersSuggestionModal';
 import ForceApplySuggestionModal from './ForceApplySuggestionModal';
+import RestartReplicationsSuggestionModal from './RestartReplicationsSuggestionModal';
 
 const styles = {
   wrap: css`
@@ -30,7 +32,7 @@ const styles = {
 };
 
 export const ClusterSuggestionsPanel = () => {
-  const { advertiseURI, disableServers, forceApply } = useStore($panelsVisibility);
+  const { advertiseURI, disableServers, forceApply, restartReplication } = useStore($panelsVisibility);
 
   return (
     <div className={styles.wrap}>
@@ -76,6 +78,20 @@ export const ClusterSuggestionsPanel = () => {
             </div>
             <Button text='Review' onClick={forceApplyConfDetailsClick} intent='primary' size='l' />
             <ForceApplySuggestionModal />
+          </Panel>
+        )
+        : null}
+      {restartReplication
+        ? (
+          <Panel className={cx(styles.panel, 'meta-test__ClusterSuggestionsPanel')}>
+            <div>
+              <Text className={styles.heading} variant='h5'>Restart replication</Text>
+              <Text>
+                The replication isn't all right. Restart it, maybe it helps.
+              </Text>
+            </div>
+            <Button text='Review' onClick={restartReplicationsDetailsClick} intent='primary' size='l' />
+            <RestartReplicationsSuggestionModal />
           </Panel>
         )
         : null}
