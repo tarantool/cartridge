@@ -165,7 +165,8 @@ const $forceApplyModalCheckedServers: Store<CheckedServers> = createStore({})
 type PanelsVisibility = {
   advertiseURI: bool,
   disableServers: bool,
-  forceApply: bool
+  forceApply: bool,
+  restartReplication: bool,
 };
 
 export const $panelsVisibility: Store<PanelsVisibility> = combine(
