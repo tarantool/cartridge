@@ -12,7 +12,8 @@ import { equals } from 'ramda';
 import {
   disableServers,
   editServers,
-  configForceReapply
+  configForceReapply,
+  restartReplications
 } from '../request/clusterPage.requests';
 import { getErrorMessage } from '../../api';
 import {
@@ -24,13 +25,16 @@ import type {
   DisableServerSuggestion,
   EditServerInput,
   ForceApplySuggestion,
-  RefineUriSuggestion
+  RefineUriSuggestion,
+  RestartReplicationSuggestion
 } from 'src/generated/graphql-typing';
 
 export const advertiseURIApplyClick = createEvent<mixed>('advertise URI apply click');
 export const advertiseURIDetailsClick = createEvent<mixed>('advertise URI details click');
 export const disableServersApplyClick = createEvent<mixed>('disable servers apply click');
 export const disableServersDetailsClick = createEvent<mixed>('disable servers details click');
+export const restartReplicationsApplyClick = createEvent<mixed>('restart replications apply click');
+export const restartReplicationsDetailsClick = createEvent<mixed>('restart replications details click');
 export const forceApplyConfApplyClick = createEvent<mixed>('force apply config apply click');
 export const forceApplyConfDetailsClick = createEvent<mixed>('force apply config details click');
 export const forceApplyInstanceCheck = createEvent<string>('force apply check instance');
@@ -54,6 +58,15 @@ const submitDisableServersFx: Effect<
 > = createEffect(
   'submit disable servers',
   { handler: uuids => disableServers(uuids) }
+);
+
+const submitRestartReplicationFx: Effect<
+  Array<string>,
+  void,
+  Error
+> = createEffect(
+  'submit restart replications servers',
+  { handler: uuids => restartReplications(uuids) }
 );
 
 const submitForceApplyFx: Effect<
@@ -92,6 +105,18 @@ const $forceApplySuggestion: Store<?ForceApplySuggestion[]> = createStore(null)
     statsResponseSuccess,
     (prev, { suggestions }) => {
       const next = (suggestions && suggestions.force_apply) || null;
+      return equals(prev, next) ? prev : next;
+    }
+  )
+  .reset(statsResponseError)
+  .reset(clusterPageMount);
+
+
+const $restartReplicationSuggestion: Store<?RestartReplicationSuggestion[]> = createStore(null)
+  .on(
+    statsResponseSuccess,
+    (prev, { suggestions }) => {
+      const next = (suggestions && suggestions.restart_replication) || null;
       return equals(prev, next) ? prev : next;
     }
   )
@@ -140,19 +165,22 @@ const $forceApplyModalCheckedServers: Store<CheckedServers> = createStore({})
 type PanelsVisibility = {
   advertiseURI: bool,
   disableServers: bool,
-  forceApply: bool
+  forceApply: bool,
+  restartReplication: bool,
 };
 
 export const $panelsVisibility: Store<PanelsVisibility> = combine(
   {
     advertiseURI: $advertiseURISuggestion,
     disableServers: $disableServersSuggestion,
-    forceApply: $forceApplySuggestion
+    forceApply: $forceApplySuggestion,
+    restartReplication: $restartReplicationSuggestion
   },
-  ({ advertiseURI, disableServers, forceApply }) => ({
+  ({ advertiseURI, disableServers, forceApply, restartReplication }) => ({
     advertiseURI: !!advertiseURI,
     disableServers: !!(disableServers && disableServers.length),
-    forceApply: !!(forceApply && forceApply.length)
+    forceApply: !!(forceApply && forceApply.length),
+    restartReplication: !!(restartReplication && restartReplication.length)
   })
 );
 
@@ -165,6 +193,12 @@ const $advertiseURIModalVisible: Store<bool> = createStore(false)
 const $disableServerModalVisible: Store<bool> = createStore(false)
   .on(disableServersDetailsClick, () => true)
   .reset(submitDisableServersFx.done)
+  .reset(detailsClose)
+  .reset(clusterPageMount);
+
+const $restartReplicationsModalVisible: Store<bool> = createStore(false)
+  .on(restartReplicationsDetailsClick, () => true)
+  .reset(submitRestartReplicationFx.done)
   .reset(detailsClose)
   .reset(clusterPageMount);
 
@@ -185,6 +219,13 @@ const $disableServersError: Store<?string> = createStore(null)
   .on(submitDisableServersFx.failData, (_, error) => getErrorMessage(error))
   .reset(submitDisableServersFx)
   .reset(submitDisableServersFx.done)
+  .reset(detailsClose)
+  .reset(clusterPageMount);
+
+const $restartReplicationsError: Store<?string> = createStore(null)
+  .on(submitRestartReplicationFx.failData, (_, error) => getErrorMessage(error))
+  .reset(submitRestartReplicationFx)
+  .reset(submitRestartReplicationFx.done)
   .reset(detailsClose)
   .reset(clusterPageMount);
 
@@ -209,6 +250,13 @@ export const $disableServersModal = createStoreObject({
   pending: submitDisableServersFx.pending
 })
 
+export const $restartReplicationsModal = createStoreObject({
+  visible: $restartReplicationsModalVisible,
+  suggestions: $restartReplicationSuggestion,
+  error: $restartReplicationsError,
+  pending: submitRestartReplicationFx.pending
+})
+
 export const $forceApplyModal = createStoreObject({
   visible: $forceApplyModalVisible,
   suggestions: $forceApplySuggestionByReason,
@@ -229,6 +277,13 @@ sample({
   clock: disableServersApplyClick,
   fn: servers => (servers || []).map(({ uuid }) => uuid),
   target: submitDisableServersFx
+});
+
+sample({
+  source: $restartReplicationSuggestion,
+  clock: restartReplicationsApplyClick,
+  fn: servers => (servers || []).map(({ uuid }) => uuid),
+  target: submitRestartReplicationFx
 });
 
 sample({
