@@ -604,41 +604,61 @@ add('test_issues', function(g)
 end)
 
 add('test_force_promote_timeout', function(g)
-    -- Failover may sleep waiting for a vclockkeeper.
-    -- For example, old vclockkeeper was stopped
-    -- and current instance was promoted consistently.
-    -- And it will attempt to get old vclockkeeper's info.
-    -- However, it should react fast enough to
-    -- the change of the vclockkeeper (e.g. force_inconsistency = true).
+    -- Failover may sleep waiting for a vclockkeeper. If an old vclockkeeper
+    -- was stopped and the current instance was promoted consistently, it'll
+    -- attempt to get old vclockkeepers info and subsequently fail. However,
+    -- it should react fast enough to the change of the vclockkeeper
+    -- (e.g. `force_inconsistency = true`).
     --
-    -- |       constitute_oneself + fiber_sleep (~7s) ||       constitut...
-    -- |*get_vclockkeeper|get_lsn|wait_lsn|fiber_sleep||*get_vclockkeepe...
-    -- ++++++++++++++++++++++++++++++++++++++++++++++++++------------------
-    --               | =========================== (>3s) |
-    -- ++++++++++++++------------------------------------------------------
-    --             |inconsistent promote (~3s)|
-    --             |*set_vclockkeeper |wait_rw|
+    -- ## Before the patch
+
+    --                            reconfigure_all():
+    -- [------ 4 sec ------]        constitute_oneself():
+    -- |                              get_vsckockkeeper
+    -- [===================]          get_lsn
     --
-    -- In the example above instance gets unresponsive vclockkeeper.
-    -- Before the fix it would wait for ~7 seconds before fetching
-    -- correct vclockkeeper.
-    -- However, if during this wait user initiates inconsistent promote
-    -- with timeout of 3 seconds wait_rw will fail with this timeout.
-    -- That's why constitute_oneself + fiber_sleep should have the same
-    -- period/timeout as wait_rw, which is WAITLSN_TIMEOUT=3.
+    -- 0----1----2----3----4----5---- (t)
+    --                   ^
+    --   [---- 3 sec ----]        promote({force_inconsistency = true}):
+    --   |                          get_coordinator (~0 sec)
+    --   |                          force_inconsistency (~0 sec)
+    --   [===============]          wait_rw (3 sec)
+    --                   X          "WaitRwError: timed out"
     --
-    -- |       constitute_oneself + fiber_sleep (~3s) ||       constitut...
-    -- |*get_vclockkeeper|get_lsn|wait_lsn|fiber_sleep||*get_vclockkeepe...
-    -- ++++++++++++++++++++++++++++++++++++++++++++++++++------------------
-    --                    | ====================== (<3s) |
-    -- +++++++++++++++++++-------------------------------------------------
-    --             |          inconsistent promote (~3s)          |
-    --             |     *set_vclockkeeper     |      wait_rw     |
+    -- In the example above the vclockkeeper is unresponsive. Before the fix,
+    -- it would wait for ~7 seconds before fetching the correct vclockkeeper.
+    -- However, if during this wait user initiates inconsistent promotion with
+    -- a timeout of 3 seconds, `wait_rw` will fail with this timeout.
+    -- That's why `constitute_oneself + fiber_sleep` should have the same
+    -- period/timeout as `wait_rw`, which is `WAITLSN_TIMEOUT=3`.
     --
-    -- When constitute_oneself + fiber_sleep have 3s period the gap when
-    -- instance deals with two different vclockkeepers is less then 3s.
-    -- As a result wait_rw will not fail before constitute_oneself gets
-    -- actual vclockkeeper and sets instance to rw.
+    -- ## After the patch (change get_lsn timeout calculus)
+    --
+    --                            reconfigure_all():
+    --
+    -- [---- 3 sec ---]             constitute_oneself():
+    -- []                             get_vsckockkeeper (~0 sec)
+    --  [=============]               get_lsn (till the deadline)
+    --
+    --                [-]           constitute_oneself()
+    --                []              get_vsckockkeeper (~0 sec)
+    --                 []             set_vclockkeeper (~0 sec)
+    --                  ^             become rw
+    --
+    -- 0----1----2----3----4----5---- (t)
+    --
+    --   [---- 3 sec ----]        promote({force_inconsistency = true}):
+    --   |                          get_coordinator (~0 sec)
+    --   |                          force_inconsistency (~0 sec)
+    --   [===============]          wait_rw (3 sec)
+    --                  ^           "ok"
+    --
+    -- When `constitute_oneself + fiber_sleep` has a 3s period the gap when
+    -- instance deals with two different vclockkeepers is less than 3s. As a
+    -- result, `wait_rw` won't fail anymore since `constitute_oneself` gets
+    -- the actual vclockkeeper and sets instance to rw.
+
+
     S2.net_box:eval([[
         local failover_options = require('cartridge.vars').new('cartridge.failover').options
         _G.old_waitlsn = failover_options.WAITLSN_TIMEOUT
