@@ -6,7 +6,7 @@ import { isRestErrorResponse, isRestAccessDeniedError } from 'src/api/rest';
 import { getErrorMessage } from 'src/api';
 import ClusterPage from 'src/pages/Cluster';
 import {
-  SplashErrorFatal
+  SplashError
 } from '@tarantool.io/ui-kit';
 
 class App extends React.Component {
@@ -48,7 +48,7 @@ class App extends React.Component {
     const description = getErrorMessage(error);
 
     return (
-      <SplashErrorFatal
+      <SplashError
         title={title}
         description={description}
       />
