@@ -306,8 +306,7 @@ To populate the cluster with more nodes, do the following:
         click **Configure** next to an unconfigured server, click **Join replica set**
         tab, select a replica set, and click **Join replica set**.
 
-    If necessary, repeat this for more instances to reach the desired
-        redundancy level.
+    If necessary, repeat this for more instances to reach the desired redundancy level.
 
 #.  In case you are deploying a new ``vshard-storage`` replica set, populate it
     with data when you are ready:
