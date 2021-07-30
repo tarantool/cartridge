@@ -8,22 +8,20 @@ g.before_all = function()
     g.cluster = helpers.Cluster:new({
         datadir = fio.tempdir(),
         server_command = helpers.entrypoint('srv_vshardless'),
-        cookie = require('digest').urandom(6):hex(),
+        cookie = helpers.random_cookie(),
         use_vshard = false,
-        replicasets = {
-            {
-                uuid = helpers.uuid('a'),
-                roles = {},
-                servers = {
-                    {
-                        alias = 'main',
-                        instance_uuid = helpers.uuid('a', 'a', 1)
-                    }
-                },
-            },
-        },
+        replicasets = {{
+            alias = 'main',
+            roles = {},
+            servers = 1,
+        }},
     })
     g.cluster:start()
+    g.cluster.main_server:eval([[
+        package.preload['vshard'] = function()
+            error('Requiring vshard is prohibited in this test', 0)
+        end
+    ]])
 end
 
 g.after_all = function()
@@ -35,7 +33,7 @@ function g.test_edit_replicaset()
     local replica_uuid = g.cluster.replicasets[1].uuid
 
     local edit_replicaset = function(roles)
-        g.cluster:server('main'):graphql({
+        g.cluster.main_server:graphql({
             query = [[
                 mutation(
                     $uuid: String!
@@ -69,14 +67,14 @@ function g.test_edit_replicaset()
 end
 
 function g.test_package_loaded()
-    g.cluster:server('main').net_box:eval([[
+    g.cluster.main_server.net_box:eval([[
         assert( package.loaded['cartridge.roles.vshard-router'] == nil )
         assert( package.loaded['cartridge.roles.vshard-storage'] == nil )
     ]])
 end
 
 function g.test_config()
-    local server_conn = g.cluster:server('main').net_box
+    local server_conn = g.cluster.main_server.net_box
     local resp = server_conn:eval([[
         local cartridge = require('cartridge')
         return cartridge.config_get_readonly('vshard_groups')
@@ -92,21 +90,27 @@ function g.test_config()
 end
 
 function g.test_api()
-    local resp = g.cluster:server('main'):graphql({
-        query = [[
-            {
-                cluster {
-                    can_bootstrap_vshard
-                    vshard_bucket_count
-                    vshard_known_groups
-                    vshard_groups {
-                        name
-                        bucket_count
-                        bootstrapped
-                    }
+    local resp = g.cluster.main_server:graphql({
+        query = [[{
+            cluster {
+                can_bootstrap_vshard
+                vshard_bucket_count
+                vshard_known_groups
+                vshard_groups {
+                    name
+                    bucket_count
+                    bootstrapped
                 }
             }
-        ]]
+            servers {
+                uuid
+                boxinfo {
+                    general {instance_uuid}
+                    vshard_router {buckets_unreachable}
+                    vshard_storage {buckets_total}
+                }
+            }
+        }]]
     })
 
     t.assert_equals(resp['data']['cluster'], {
@@ -115,6 +119,14 @@ function g.test_api()
         vshard_known_groups = {},
         vshard_groups = {},
     })
+    t.assert_equals(resp['data']['servers'], {{
+        uuid = g.cluster.main_server.instance_uuid,
+        boxinfo = {
+            general = {instance_uuid = g.cluster.main_server.instance_uuid},
+            vshard_router = box.NULL,
+            vshard_storage = box.NULL,
+        }
+    }})
 
     local _, err = g.cluster.main_server.net_box:call(
         'package.loaded.cartridge.admin_bootstrap_vshard'

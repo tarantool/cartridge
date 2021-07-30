@@ -42,10 +42,9 @@ local function get_info(uri)
         local membership_myself = require('membership').myself()
         local membership_options = require('membership.options')
 
-        local vshard = require('vshard')
+        local vshard = package.loaded.vshard
 
-        local ok, router_info = pcall(vshard.router.info)
-
+        local ok, router_info = pcall(vshard and vshard.router.info)
         if ok then
             router_info = {
                 buckets_unreachable = router_info.bucket.unreachable,
@@ -57,7 +56,7 @@ local function get_info(uri)
             router_info = box.NULL
         end
 
-        local ok, storage_info = pcall(vshard.storage.info)
+        local ok, storage_info = pcall(vshard and vshard.storage.info)
 
         if ok then
             storage_info = {
