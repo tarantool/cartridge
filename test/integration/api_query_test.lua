@@ -188,6 +188,7 @@ function g.test_suggestions()
                 refine_uri { uuid }
                 force_apply { uuid }
                 disable_servers { uuid }
+                restart_replication { uuid }
             }}
         }]]
     }).data.cluster.suggestions
@@ -196,6 +197,7 @@ function g.test_suggestions()
         refine_uri = box.NULL,
         force_apply = box.NULL,
         disable_servers = box.NULL,
+        restart_replication = box.NULL,
     })
 end
 

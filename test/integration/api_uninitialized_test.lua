@@ -51,6 +51,7 @@ function g.test_uninitialized()
                         refine_uri { uuid }
                         force_apply { uuid }
                         disable_servers { uuid }
+                        restart_replication { uuid }
                     }
                     can_bootstrap_vshard
                     vshard_bucket_count
@@ -85,6 +86,7 @@ function g.test_uninitialized()
         refine_uri = box.NULL,
         force_apply = box.NULL,
         disable_servers = box.NULL,
+        restart_replication = box.NULL,
     })
 
     t.assert_equals(resp['data']['cluster']['can_bootstrap_vshard'], false)
