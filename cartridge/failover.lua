@@ -71,7 +71,7 @@ do
 end
 vars:new('options', {
     WAITLSN_PAUSE = 0.2,
-    WAITLSN_TIMEOUT = 3,
+    WAITLSN_TIMEOUT = 3, -- One may treat it as WAIT_CONSISTENCY_TIMEOUT
     LONGPOLL_TIMEOUT = 30,
     NETBOX_CALL_TIMEOUT = 1,
 })
@@ -443,8 +443,10 @@ local function constitute_oneself(active_leaders, opts)
         -- WARNING: implicit yield
         local vclockkeeper_info, err = errors.netbox_call(
             pool.connect(vclockkeeper_uri, {wait_connected = false}),
-            '__cartridge_failover_get_lsn', {timeout},
-            {timeout = timeout + vars.options.NETBOX_CALL_TIMEOUT}
+            -- get_lsn timeout may be negative. It's ok.
+            '__cartridge_failover_get_lsn', {timeout - vars.options.NETBOX_CALL_TIMEOUT},
+            -- wake up strictly before the deadline.
+            {timeout = timeout}
         )
         fiber.testcancel()
 
