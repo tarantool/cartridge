@@ -632,7 +632,7 @@ add('test_force_promote_timeout', function(g)
     -- That's why `constitute_oneself + fiber_sleep` should have the same
     -- period/timeout as `wait_rw`, which is `WAITLSN_TIMEOUT=3`.
     --
-    -- ## After the patch (change get_lsn timeout calculus)
+    -- ## After the patch (change get_lsn timeout calculation)
     --
     --                            reconfigure_all():
     --
@@ -658,14 +658,13 @@ add('test_force_promote_timeout', function(g)
     -- result, `wait_rw` won't fail anymore since `constitute_oneself` gets
     -- the actual vclockkeeper and sets instance to rw.
 
-
-    S2.net_box:eval([[
-        local failover_options = require('cartridge.vars').new('cartridge.failover').options
-        _G.old_waitlsn = failover_options.WAITLSN_TIMEOUT
-        failover_options.WAITLSN_TIMEOUT = 0.5
-    ]])
-
     S1.process:kill('STOP')
+
+    -- Speed up the test
+    S2.net_box:eval([[
+        local vars = require('cartridge.vars').new('cartridge.failover')
+        vars.options.WAITLSN_TIMEOUT = 0.5
+    ]])
 
     local res, err = S2.net_box:call('package.loaded.cartridge.failover_promote', {
         {[g.cluster.replicasets[2].uuid] = S2.instance_uuid},
@@ -675,7 +674,7 @@ add('test_force_promote_timeout', function(g)
     t.assert_equals(res, nil)
     t.assert_equals(err.str, 'WaitRwError: \"localhost:13303\": timed out')
 
-    require('fiber').sleep(0.3)
+    require('fiber').sleep(1) -- NETBOX_CALL_TIMEOUT
 
     local res, err = S2.net_box:call('package.loaded.cartridge.failover_promote', {
         {[g.cluster.replicasets[2].uuid] = S2.instance_uuid},
@@ -686,9 +685,4 @@ add('test_force_promote_timeout', function(g)
     t.assert_equals(res, true)
 
     S1.process:kill('CONT')
-    S2.net_box:eval([[
-        local failover_options = require('cartridge.vars').new('cartridge.failover').options
-        failover_options.WAITLSN_TIMEOUT = _G.old_waitlsn
-        _G.old_waitlsn = nil
-    ]])
 end)
