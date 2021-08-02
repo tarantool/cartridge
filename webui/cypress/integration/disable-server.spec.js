@@ -58,12 +58,14 @@ describe('Disable server', () => {
     ////////////////////////////////////////////////////////////////////
     cy.log('Kill servers 2 and 3');
     ////////////////////////////////////////////////////////////////////
-    cy.task('tarantool', { code: `
+    cy.task('tarantool', {
+      code: `
       _G.cluster:server('dummy-2').process:kill('KILL')
       _G.cluster:server('dummy-3').process:kill('KILL')
       _G.cluster:server('dummy-2').process = nil
       _G.cluster:server('dummy-3').process = nil
-    ` });
+    `
+    });
 
     ////////////////////////////////////////////////////////////////////
     cy.log('Inspect suggestion panel');

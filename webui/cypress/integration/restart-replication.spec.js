@@ -43,9 +43,11 @@ describe('Disable server', () => {
     ////////////////////////////////////////////////////////////////////
     cy.log('Add issue');
     ////////////////////////////////////////////////////////////////////
-    cy.task('tarantool', { code: `
+    cy.task('tarantool', {
+      code: `
       _G.cluster:server('dummy-2').net_box:call('box.cfg', {{replication = box.NULL}})
-    ` });
+    `
+    });
 
     ////////////////////////////////////////////////////////////////////
     cy.log('Inspect suggestion panel');

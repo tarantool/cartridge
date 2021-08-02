@@ -149,7 +149,9 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     cy.get('[data-cy=meta-test__replicaSetSection]').eq(0).contains('healthy');
     cy.get('.ServerLabelsHighlightingArea').eq(0).contains('healthy');
 
-    cy.get('span:contains(GraphQL error) + span:contains(No remotes with role "vshard-router" available) + button + svg').click();
+    cy.get('span:contains(GraphQL error) + ' +
+      'span:contains(No remotes with role "vshard-router" available) + button + svg')
+      .click();
 
     ////////////////////////////////////////////////////////////////////
     cy.log('Configure vshard-router');

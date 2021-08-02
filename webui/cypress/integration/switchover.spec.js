@@ -156,7 +156,8 @@ describe('Leader promotion tests', () => {
     leaderFlag('13303').should('not.exist');
 
     dropdownMenu('13303').contains('Promote a leader').click();
-    cy.get('span:contains(Leader promotion error) + span:contains(PromoteLeaderError: There is no active coordinator) + button + svg')
+    cy.get('span:contains(Leader promotion error) + ' +
+      'span:contains(PromoteLeaderError: There is no active coordinator) + button + svg')
       .click();
 
     cy.get('.meta-test__ClusterIssuesButton').should('be.enabled');

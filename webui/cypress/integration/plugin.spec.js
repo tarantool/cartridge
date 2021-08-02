@@ -1,10 +1,12 @@
 describe('Test the plugin', () => {
 
   it('return result', () => {
-    cy.task('tarantool', {code: `
+    cy.task('tarantool', {
+      code: `
       print('Hello, Tarantool!')
       return 1, 2, 3
-    `}).should('deep.eq', [1, 2, 3]);
+    `
+    }).should('deep.eq', [1, 2, 3]);
   });
 
   it.skip('tarantool raises', () => {
@@ -14,8 +16,10 @@ describe('Test the plugin', () => {
   });
 
   it.skip('connection refused', () => {
-    cy.task('tarantool', {host: 'unix/', port: '/dev/null', code: `
+    cy.task('tarantool', {
+      host: 'unix/', port: '/dev/null', code: `
       return true
-    `});
+    `
+    });
   });
 });
