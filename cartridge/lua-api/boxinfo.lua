@@ -51,6 +51,9 @@ local function get_info(uri)
             for group, router in pairs(routers) do
                 router_info.routers = {}
                 local info = router:info()
+                if group == '_static_router' then
+                    group = 'default'
+                end
                 table.insert(router_info.routers, {
                     vshard_group = group,
                     buckets_unreachable = info.bucket.unreachable,
@@ -58,9 +61,6 @@ local function get_info(uri)
                     buckets_unknown = info.bucket.unknown,
                     buckets_available_rw = info.bucket.available_rw,
                 })
-                if #router_info == 1 then
-                    router_info[1].vshard_group = 'default'
-                end
             end
         else
             router_info = box.NULL
