@@ -123,7 +123,7 @@ function g.test_api()
         uuid = g.cluster.main_server.instance_uuid,
         boxinfo = {
             general = {instance_uuid = g.cluster.main_server.instance_uuid},
-            vshard_router = { routers = box.NULL },
+            vshard_router = box.NULL,
             vshard_storage = box.NULL,
         }
     }})

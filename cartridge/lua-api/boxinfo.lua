@@ -47,10 +47,11 @@ local function get_info(uri)
 
         local routers = vshard and vshard.router.internal.routers or {}
         local router_info = {}
-        if next(routers) then
+        if next(routers) ~= nil then
             for group, router in pairs(routers) do
+                router_info.routers = {}
                 local info = router:info()
-                table.insert(router_info, {
+                table.insert(router_info.routers, {
                     vshard_group = group,
                     buckets_unreachable = info.bucket.unreachable,
                     buckets_available_ro = info.bucket.available_ro,
@@ -152,9 +153,7 @@ local function get_info(uri)
                 SUSPECT_TIMEOUT_SECONDS = membership_options.SUSPECT_TIMEOUT_SECONDS,
                 NUM_FAILURE_DETECTION_SUBGROUPS = membership_options.NUM_FAILURE_DETECTION_SUBGROUPS,
             },
-            vshard_router = {
-                routers = router_info
-            },
+            vshard_router = router_info,
             vshard_storage = storage_info,
         }
 

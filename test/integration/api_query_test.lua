@@ -392,7 +392,7 @@ function g.test_servers()
             boxinfo = {
                 cartridge = {error = box.NULL, state = "RolesConfigured"},
                 membership = {status = 'alive'},
-                vshard_router = {routers = box.NULL},
+                vshard_router = box.NULL,
                 vshard_storage = {buckets_active = 3000},
             },
         }, {
@@ -407,7 +407,7 @@ function g.test_servers()
             boxinfo = {
                 cartridge = {error = box.NULL, state = "RolesConfigured"},
                 membership = {status = 'alive'},
-                vshard_router = {routers = box.NULL},
+                vshard_router = box.NULL,
                 vshard_storage = {buckets_active = 3000},
             },
         }, {
