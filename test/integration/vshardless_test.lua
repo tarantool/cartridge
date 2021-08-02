@@ -17,7 +17,7 @@ g.before_all = function()
         }},
     })
     g.cluster:start()
-    g.cluster.main_server:eval([[
+    g.cluster.main_server.net_box:eval([[
         package.preload['vshard'] = function()
             error('Requiring vshard is prohibited in this test', 0)
         end
@@ -106,7 +106,7 @@ function g.test_api()
                 uuid
                 boxinfo {
                     general {instance_uuid}
-                    vshard_router {buckets_unreachable}
+                    vshard_router { routers {buckets_unreachable}}
                     vshard_storage {buckets_total}
                 }
             }
@@ -123,7 +123,7 @@ function g.test_api()
         uuid = g.cluster.main_server.instance_uuid,
         boxinfo = {
             general = {instance_uuid = g.cluster.main_server.instance_uuid},
-            vshard_router = box.NULL,
+            vshard_router = { routers = box.NULL },
             vshard_storage = box.NULL,
         }
     }})

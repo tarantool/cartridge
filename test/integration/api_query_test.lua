@@ -259,9 +259,6 @@ function g.test_server_info_schema()
             cartridge_fields: __type(name: "ServerInfoCartridge") {
                 fields { name }
             }
-            vshard_router_fields: __type(name: "ServerInfoVshardRouter") {
-                fields { name }
-            }
             vshard_storage_fields: __type(name: "ServerInfoVshardStorage") {
                 fields { name }
             }
@@ -360,7 +357,7 @@ function g.test_servers()
                     boxinfo {
                         cartridge { state error { message class_name } }
                         membership { status }
-                        vshard_router { buckets_unreachable }
+                        vshard_router { routers { buckets_unreachable } }
                         vshard_storage { buckets_active }
                     }
                 }
@@ -380,7 +377,7 @@ function g.test_servers()
             boxinfo = {
                 cartridge = {error = box.NULL, state = "RolesConfigured"},
                 membership = {status = 'alive'},
-                vshard_router = {buckets_unreachable = 0},
+                vshard_router = {routers = {{buckets_unreachable = 0}}},
                 vshard_storage = box.NULL,
             },
         }, {
@@ -395,7 +392,7 @@ function g.test_servers()
             boxinfo = {
                 cartridge = {error = box.NULL, state = "RolesConfigured"},
                 membership = {status = 'alive'},
-                vshard_router = box.NULL,
+                vshard_router = {routers = box.NULL},
                 vshard_storage = {buckets_active = 3000},
             },
         }, {
@@ -410,7 +407,7 @@ function g.test_servers()
             boxinfo = {
                 cartridge = {error = box.NULL, state = "RolesConfigured"},
                 membership = {status = 'alive'},
-                vshard_router = box.NULL,
+                vshard_router = {routers = box.NULL},
                 vshard_storage = {buckets_active = 3000},
             },
         }, {
