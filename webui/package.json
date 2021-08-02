@@ -117,7 +117,7 @@
     "lint": "eslint ./src",
     "lint-fix": "eslint --fix ./src",
     "lint:test": "eslint ./cypress",
-    "lint:test-fix": "eslint --fix ./cypress.json",
+    "lint:test-fix": "eslint --fix ./cypress",
     "cy:dev": "CYPRESS_baseUrl=http://localhost:3000 cypress open"
   },
   "jest": {
