@@ -277,7 +277,6 @@ function g.test_server_info_schema()
     local field_name_network = fields_from_map(data['network_fields'], 'name')
     local field_name_replica = fields_from_map(data['replication_fields'], 'name')
     local field_name_cartridge = fields_from_map(data['cartridge_fields'], 'name')
-    local field_name_vshard_router = fields_from_map(data['vshard_router_fields'], 'name')
     local field_name_vshard_storage = fields_from_map(data['vshard_storage_fields'], 'name')
     local field_name_membership = fields_from_map(data['membership_fields'], 'name')
 
@@ -291,7 +290,6 @@ function g.test_server_info_schema()
                             network { %s }
                             replication { %s }
                             cartridge { %s }
-                            vshard_router { %s }
                             vshard_storage { %s }
                             membership { %s }
                         }
@@ -303,7 +301,6 @@ function g.test_server_info_schema()
             table.concat(field_name_network, ' '),
             table.concat(field_name_replica, ' '),
             table.concat(field_name_cartridge, ' '),
-            table.concat(field_name_vshard_router, ' '),
             table.concat(field_name_vshard_storage, ' '),
             table.concat(field_name_membership, ' '))
             -- workaround composite graphql type

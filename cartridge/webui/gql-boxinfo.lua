@@ -27,6 +27,17 @@ local gql_replica_status = gql_types.object({
     },
 })
 
+local gql_vshard_router = gql_types.object({
+    name = 'VshardRouter',
+    fields = {
+        vshard_group = gql_types.string,
+        buckets_unreachable = gql_types.int,
+        buckets_available_ro = gql_types.int,
+        buckets_unknown = gql_types.int,
+        buckets_available_rw = gql_types.int,
+    }
+})
+
 local boxinfo_schema = {
     kind = gql_types.object({
         name = 'ServerInfo',
@@ -259,29 +270,16 @@ local boxinfo_schema = {
             vshard_router = gql_types.object({
                 name = 'ServerInfoVshardRouter',
                 fields = {
-                    buckets_unreachable = {
-                        kind = gql_types.int,
-                        description = 'The number of buckets whose replica sets are not known to the router',
-                    },
-                    buckets_available_ro = {
-                        kind = gql_types.int,
-                        description = 'The number of buckets known to the router and available ' ..
-                            'for read requests',
-                    },
-                    buckets_unknown = {
-                        kind = gql_types.int,
-                        description = 'The number of buckets unknown to the router',
-                    },
-                    buckets_available_rw = {
-                        kind = gql_types.int,
-                        description = 'The number of buckets known to the router and available ' ..
-                            'for read and write requests',
-                    },
+                    routers = gql_types.list(gql_vshard_router),
                 }
             }),
             vshard_storage = gql_types.object({
                 name = 'ServerInfoVshardStorage',
                 fields = {
+                    vshard_group = {
+                        kind = gql_types.string,
+                        description = 'Vshard group',
+                    },
                     buckets_receiving = {
                         kind = gql_types.int,
                         description = 'The number of buckets that are receiving at this time',

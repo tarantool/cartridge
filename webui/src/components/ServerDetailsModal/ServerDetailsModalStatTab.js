@@ -38,7 +38,8 @@ const styles = {
 const fieldsDisplayTypes = {
   replication_info: 'json',
   ro: 'boolean',
-  replication_skip_conflict: 'boolean'
+  replication_skip_conflict: 'boolean',
+  routers: 'json',
 };
 
 const renderers = {

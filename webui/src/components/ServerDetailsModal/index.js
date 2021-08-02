@@ -140,8 +140,6 @@ class ServerDetailsModal extends React.Component<
     'storage',
     'network',
     'membership',
-    // 'vshard_router',
-    // 'vshard_storage',
   ];
 
   componentDidMount() {

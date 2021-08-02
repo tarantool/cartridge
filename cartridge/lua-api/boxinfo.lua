@@ -42,24 +42,37 @@ local function get_info(uri)
         local membership_myself = require('membership').myself()
         local membership_options = require('membership.options')
 
+
         local vshard = package.loaded.vshard
 
-        local ok, router_info = pcall(vshard and vshard.router.info)
-        if ok then
-            router_info = {
-                buckets_unreachable = router_info.bucket.unreachable,
-                buckets_available_ro = router_info.bucket.available_ro,
-                buckets_unknown = router_info.bucket.unknown,
-                buckets_available_rw = router_info.bucket.available_rw,
-            }
+        local routers = vshard and vshard.router.internal.routers or {}
+        local router_info = {}
+        if next(routers) then
+            for group, router in pairs(routers) do
+                local info = router:info()
+                table.insert(router_info, {
+                    vshard_group = group,
+                    buckets_unreachable = info.bucket.unreachable,
+                    buckets_available_ro = info.bucket.available_ro,
+                    buckets_unknown = info.bucket.unknown,
+                    buckets_available_rw = info.bucket.available_rw,
+                })
+                if #router_info == 1 then
+                    router_info[1].vshard_group = 'default'
+                end
+            end
         else
             router_info = box.NULL
         end
 
+        local topology_cfg = confapplier.get_readonly('topology')
+        local rs_uuid = box_info.cluster.uuid
+        local vshard_group = topology_cfg.replicasets[rs_uuid].vshard_group or 'default'
         local ok, storage_info = pcall(vshard and vshard.storage.info)
 
         if ok then
             storage_info = {
+                vshard_group = vshard_group,
                 buckets_receiving = storage_info.bucket.receiving,
                 buckets_active = storage_info.bucket.active,
                 buckets_total = storage_info.bucket.total,
@@ -139,7 +152,9 @@ local function get_info(uri)
                 SUSPECT_TIMEOUT_SECONDS = membership_options.SUSPECT_TIMEOUT_SECONDS,
                 NUM_FAILURE_DETECTION_SUBGROUPS = membership_options.NUM_FAILURE_DETECTION_SUBGROUPS,
             },
-            vshard_router = router_info,
+            vshard_router = {
+                routers = router_info
+            },
             vshard_storage = storage_info,
         }
 

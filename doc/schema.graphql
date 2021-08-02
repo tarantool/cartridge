@@ -1,5 +1,5 @@
 # source: http://localhost:8081/admin/api
-# timestamp: Fri Jul 30 2021 15:57:49 GMT+0300 (Moscow Standard Time)
+# timestamp: Mon Aug 02 2021 16:34:34 GMT+0300 (Москва, стандартное время)
 
 """Cluster management"""
 type Apicluster {
@@ -514,21 +514,7 @@ type ServerInfoStorage {
 }
 
 type ServerInfoVshardRouter {
-  """The number of buckets unknown to the router"""
-  buckets_unknown: Int
-
-  """
-  The number of buckets known to the router and available for read and write requests
-  """
-  buckets_available_rw: Int
-
-  """
-  The number of buckets known to the router and available for read requests
-  """
-  buckets_available_ro: Int
-
-  """The number of buckets whose replica sets are not known to the router"""
-  buckets_unreachable: Int
+  routers: [VshardRouter]
 }
 
 type ServerInfoVshardStorage {
@@ -541,11 +527,14 @@ type ServerInfoVshardStorage {
   """Total number of buckets on the storage"""
   buckets_total: Int
 
-  """The number of active buckets on the storage"""
-  buckets_active: Int
+  """Vshard group"""
+  vshard_group: String
 
   """The number of pinned buckets on the storage"""
   buckets_pinned: Int
+
+  """The number of active buckets on the storage"""
+  buckets_active: Int
 
   """The number of buckets that are receiving at this time"""
   buckets_receiving: Int
@@ -692,4 +681,12 @@ type VshardGroup {
 
   """Scheduler bucket move quota"""
   sched_move_quota: Long!
+}
+
+type VshardRouter {
+  buckets_unknown: Int
+  buckets_available_rw: Int
+  vshard_group: String
+  buckets_available_ro: Int
+  buckets_unreachable: Int
 }

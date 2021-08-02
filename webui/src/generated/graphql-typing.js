@@ -655,14 +655,7 @@ export type ServerInfoStorage = {|
 
 export type ServerInfoVshardRouter = {|
   __typename?: 'ServerInfoVshardRouter',
-  /** The number of buckets unknown to the router */
-  buckets_unknown?: ?$ElementType<Scalars, 'Int'>,
-  /** The number of buckets known to the router and available for read and write requests */
-  buckets_available_rw?: ?$ElementType<Scalars, 'Int'>,
-  /** The number of buckets known to the router and available for read requests */
-  buckets_available_ro?: ?$ElementType<Scalars, 'Int'>,
-  /** The number of buckets whose replica sets are not known to the router */
-  buckets_unreachable?: ?$ElementType<Scalars, 'Int'>,
+  routers?: ?Array<?VshardRouter>,
 |};
 
 export type ServerInfoVshardStorage = {|
@@ -673,10 +666,12 @@ export type ServerInfoVshardStorage = {|
   buckets_garbage?: ?$ElementType<Scalars, 'Int'>,
   /** Total number of buckets on the storage */
   buckets_total?: ?$ElementType<Scalars, 'Int'>,
-  /** The number of active buckets on the storage */
-  buckets_active?: ?$ElementType<Scalars, 'Int'>,
+  /** Vshard group */
+  vshard_group?: ?$ElementType<Scalars, 'String'>,
   /** The number of pinned buckets on the storage */
   buckets_pinned?: ?$ElementType<Scalars, 'Int'>,
+  /** The number of active buckets on the storage */
+  buckets_active?: ?$ElementType<Scalars, 'Int'>,
   /** The number of buckets that are receiving at this time */
   buckets_receiving?: ?$ElementType<Scalars, 'Int'>,
 |};
@@ -787,6 +782,15 @@ export type VshardGroup = {|
   name: $ElementType<Scalars, 'String'>,
   /** Scheduler bucket move quota */
   sched_move_quota: $ElementType<Scalars, 'Long'>,
+|};
+
+export type VshardRouter = {|
+  __typename?: 'VshardRouter',
+  buckets_unknown?: ?$ElementType<Scalars, 'Int'>,
+  buckets_available_rw?: ?$ElementType<Scalars, 'Int'>,
+  vshard_group?: ?$ElementType<Scalars, 'String'>,
+  buckets_available_ro?: ?$ElementType<Scalars, 'Int'>,
+  buckets_unreachable?: ?$ElementType<Scalars, 'Int'>,
 |};
 
 type $Pick<Origin: Object, Keys: Object> = $ObjMapi<Keys, <Key>(k: Key) => $ElementType<Origin, Key>>;
