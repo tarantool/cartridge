@@ -2,8 +2,7 @@ import React from 'react';
 import { css } from '@emotion/css';
 import { getErrorMessage, isNetworkError } from 'src/api';
 import {
-  SplashErrorNetwork,
-  SplashErrorFatal
+  SplashError
 } from '@tarantool.io/ui-kit';
 
 const style = css`
@@ -19,17 +18,10 @@ class PageDataErrorMessage extends React.PureComponent {
 
     return (
       <div className={style}>
-        {isNetworkError(error)
-          ?
-          <SplashErrorNetwork
-            description={errorMessage}
-          />
-          :
-          <SplashErrorFatal
-            title={errorMessage}
-            description=''
-          />
-        }
+        <SplashError
+          title={isNetworkError(error) ? 'Network problem' : errorMessage}
+          description={isNetworkError(error) ?  errorMessage : ''}
+        />
       </div>
     );
   }
