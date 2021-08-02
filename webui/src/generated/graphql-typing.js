@@ -370,10 +370,11 @@ export type MutationApiclusterRestart_ReplicationArgs = {|
 /** Cluster management */
 export type MutationApiclusterEdit_Vshard_OptionsArgs = {|
   rebalancer_max_receiving?: ?$ElementType<Scalars, 'Int'>,
-  sched_ref_quota?: ?$ElementType<Scalars, 'Long'>,
   collect_bucket_garbage_interval?: ?$ElementType<Scalars, 'Float'>,
-  sync_timeout?: ?$ElementType<Scalars, 'Float'>,
   collect_lua_garbage?: ?$ElementType<Scalars, 'Boolean'>,
+  sched_ref_quota?: ?$ElementType<Scalars, 'Long'>,
+  rebalancer_max_sending?: ?$ElementType<Scalars, 'Int'>,
+  sync_timeout?: ?$ElementType<Scalars, 'Float'>,
   rebalancer_disbalance_threshold?: ?$ElementType<Scalars, 'Float'>,
   name: $ElementType<Scalars, 'String'>,
   sched_move_quota?: ?$ElementType<Scalars, 'Long'>,
@@ -725,10 +726,12 @@ export type VshardGroup = {|
   collect_lua_garbage: $ElementType<Scalars, 'Boolean'>,
   /** Timeout to wait for synchronization of the old master with replicas before demotion */
   sync_timeout: $ElementType<Scalars, 'Float'>,
-  /** Scheduler storage ref quota */
-  sched_ref_quota: $ElementType<Scalars, 'Long'>,
   /** Whether the group is ready to operate */
   bootstrapped: $ElementType<Scalars, 'Boolean'>,
+  /** Scheduler storage ref quota */
+  sched_ref_quota: $ElementType<Scalars, 'Long'>,
+  /** The maximum number of buckets that can be sent in parallel by a single replica set in the storage group */
+  rebalancer_max_sending: $ElementType<Scalars, 'Int'>,
   /** A maximum bucket disbalance threshold, in percent */
   rebalancer_disbalance_threshold: $ElementType<Scalars, 'Float'>,
   /** Group name */
@@ -1002,6 +1005,9 @@ export type ServerListQuery = ({
       ...{| disable_servers?: ?Array<({
           ...{ __typename?: 'DisableServerSuggestion' },
         ...$Pick<DisableServerSuggestion, {| uuid: * |}>
+      })>, restart_replication?: ?Array<({
+          ...{ __typename?: 'RestartReplicationSuggestion' },
+        ...$Pick<RestartReplicationSuggestion, {| uuid: * |}>
       })>, force_apply?: ?Array<({
           ...{ __typename?: 'ForceApplySuggestion' },
         ...$Pick<ForceApplySuggestion, {| config_mismatch: *, config_locked: *, uuid: *, operation_error: * |}>
@@ -1200,6 +1206,19 @@ export type Disable_ServersMutation = ({
         ...{ __typename?: 'Server' },
       ...$Pick<Server, {| uuid: *, disabled?: * |}>
     })> |}
+  }) |}
+});
+
+export type Restart_ReplicationMutationVariables = {
+  uuids?: ?Array<$ElementType<Scalars, 'String'>> | $ElementType<Scalars, 'String'>,
+};
+
+
+export type Restart_ReplicationMutation = ({
+    ...{ __typename?: 'Mutation' },
+  ...{| cluster?: ?({
+      ...{ __typename?: 'MutationApicluster' },
+    ...$Pick<MutationApicluster, {| restart_replication?: * |}>
   }) |}
 });
 
