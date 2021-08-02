@@ -42,6 +42,7 @@
     "eslint": "7.27.0",
     "eslint-config-react-app": "6.0.0",
     "eslint-loader": "4.0.2",
+    "eslint-plugin-cypress": "^2.11.3",
     "eslint-plugin-flowtype": "5.7.2",
     "eslint-plugin-import": "2.23.4",
     "eslint-plugin-jsx-a11y": "6.4.1",
@@ -115,6 +116,8 @@
     "flow": "flow",
     "lint": "eslint ./src",
     "lint-fix": "eslint --fix ./src",
+    "lint:test": "eslint ./cypress",
+    "lint:test-fix": "eslint --fix ./cypress.json",
     "cy:dev": "CYPRESS_baseUrl=http://localhost:3000 cypress open"
   },
   "jest": {

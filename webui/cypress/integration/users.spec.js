@@ -35,7 +35,8 @@ describe('Users', () => {
         {{failover_timeout = 0}}
       )
       return _G.cluster.datadir
-    `});
+    `
+    });
   });
 
   after(() => {
@@ -59,7 +60,7 @@ describe('Users', () => {
     cy.get('button:contains(Add user)').should('be.enabled');
 
     cy.get('thead th').each((tHeadRow, index) => {
-      const headings = ["Username", "Full name", "E-mail", "Actions"];
+      const headings = ['Username', 'Full name', 'E-mail', 'Actions'];
       cy.wrap(tHeadRow).should('contain', headings[index]);
     });
 
@@ -119,7 +120,7 @@ describe('Users', () => {
     cy.get('tbody tr[role="row"]').should('have.length', 2);
 
     //checks for new user in list:
-    cy.get('a:contains(TestUserName)').parents('tr').then((TestUserRow) => {
+    cy.get('a:contains(TestUserName)').parents('tr').then(TestUserRow => {
       cy.wrap(TestUserRow).find('td').eq(0).find('a:contains(TestUserName)');
       cy.wrap(TestUserRow).find('td').eq(2).contains('testuser@qq.qq');
       cy.wrap(TestUserRow).find('td').eq(3).find('button').eq(0).should('be.enabled');
@@ -174,7 +175,7 @@ describe('Users', () => {
       .type('{selectall}{del}Edited Full Name');
     cy.get('button:contains(Save)').click();
 
-    cy.get('a:contains(TestUserName)').parents('tr').then((TestUserRow) => {
+    cy.get('a:contains(TestUserName)').parents('tr').then(TestUserRow => {
       cy.wrap(TestUserRow).find('td').eq(1).contains('Edited Full Name');
       cy.wrap(TestUserRow).find('td').eq(2).contains('ee@ee.ee');
       cy.wrap(TestUserRow).find('td').eq(3).find('button').eq(0).should('be.enabled');

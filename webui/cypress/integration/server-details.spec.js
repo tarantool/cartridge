@@ -24,7 +24,8 @@ describe('Server details', () => {
           {{failover_timeout = 0}}
         )
         return true
-      `}).should('deep.eq', [true]);
+      `
+    }).should('deep.eq', [true]);
   });
 
   after(() => {

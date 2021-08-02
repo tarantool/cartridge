@@ -45,7 +45,8 @@ describe('Replicaset filtering', () => {
       _G.server:start()
 
       return true
-    `}).should('deep.eq', [true])
+    `
+    }).should('deep.eq', [true])
   });
 
   after(() => {

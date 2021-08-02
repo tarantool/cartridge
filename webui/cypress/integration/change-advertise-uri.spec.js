@@ -27,7 +27,8 @@ describe('Change advertise uri', () => {
       _G.cluster.main_server.net_box_uri = 'localhost:13312'
       _G.cluster.main_server:start()
       return true
-    `}).should('deep.eq', [true]);
+    `
+    }).should('deep.eq', [true]);
   });
 
   after(() => {
@@ -70,7 +71,8 @@ describe('Change advertise uri', () => {
     cy.get('.meta-test__ClusterSuggestionsPanel').find('button:contains(Review changes)').click();
 
     cy.get('.meta-test__AdvertiseURISuggestionModal').contains('Change advertise URI');
-    cy.get('.meta-test__AdvertiseURISuggestionModal').contains('One or more servers were restarted with a new advertise uri');
+    cy.get('.meta-test__AdvertiseURISuggestionModal')
+      .contains('One or more servers were restarted with a new advertise uri');
     cy.get('.meta-test__AdvertiseURISuggestionModal').contains('localhost:13301 -> localhost:13312');
     cy.get('.meta-test__AdvertiseURISuggestionModal').find('button:contains(Update)').click();
     cy.get('.meta-test__AdvertiseURISuggestionModal').should('not.exist');

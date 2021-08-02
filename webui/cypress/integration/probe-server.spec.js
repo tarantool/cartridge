@@ -19,7 +19,8 @@ describe('Probe server', () => {
 
       _G.cluster:start()
       return true
-    `}).should('deep.eq', [true]);
+    `
+    }).should('deep.eq', [true]);
   });
 
   after(() => {
@@ -48,8 +49,8 @@ describe('Probe server', () => {
     //Try to enter empty and press Enter
     cy.get('.meta-test__ProbeServerBtn').click();
     cy.get('.ProbeServerModal input[name="uri"]')
-        .should('be.focused')
-        .should('have.attr', 'placeholder', 'Server URI, e.g. localhost:3301');
+      .should('be.focused')
+      .should('have.attr', 'placeholder', 'Server URI, e.g. localhost:3301');
     cy.get('.ProbeServerModal input[name="uri"]').type('{selectall}{backspace}').type(' ');
     cy.get('.ProbeServerModal input[name="uri"]').type('{enter}');
     cy.get('.ProbeServerModal_error').contains('Probe " " failed: parse error');

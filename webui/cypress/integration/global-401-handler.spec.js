@@ -22,12 +22,14 @@ describe('Global 401 handler', () => {
 
       _G.cluster:start()
       return _G.cluster.datadir
-    `}).then((resp) => {
-        const workdir = resp[0];
-        expect(workdir).to.be.a('string');
-        cy.task('tarantool', {
-          host: 'unix/', port: workdir + '/control.sock',
-          code: `
+    `
+    }).then(resp => {
+      const workdir = resp[0];
+      expect(workdir).to.be.a('string');
+      cy.task('tarantool', {
+        host: 'unix/',
+        port: workdir + '/control.sock',
+        code: `
           local fun = require('fun')
           local cartridge = require('cartridge')
           local httpd = cartridge.service_get('httpd')
@@ -45,8 +47,9 @@ describe('Global 401 handler', () => {
           end
 
           return true
-        `}).should('deep.eq', [true]);
-      });
+        `
+      }).should('deep.eq', [true]);
+    });
   });
 
   after(() => {

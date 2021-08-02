@@ -19,7 +19,8 @@ describe('Auth', () => {
 
       _G.cluster:start()
       return true
-    `}).should('deep.eq', [true]);
+    `
+    }).should('deep.eq', [true]);
   });
 
   after(() => {
@@ -46,9 +47,9 @@ describe('Auth', () => {
     ////////////////////////////////////////////////////////////////////
     cy.get('.meta-test__LoginBtn').click();
     cy.get('.meta-test__LoginForm input[name="username"]')
-        .should('have.value', '');
+      .should('have.value', '');
     cy.get('.meta-test__LoginForm input[name="password"]')
-        .should('have.value', '');
+      .should('have.value', '');
     cy.get('.meta-test__LoginFormBtn').click();
     cy.get('.meta-test__LoginForm').contains('username is a required field');
     cy.get('.meta-test__LoginForm').contains('password is a required field');
@@ -59,9 +60,9 @@ describe('Auth', () => {
     ////////////////////////////////////////////////////////////////////
     cy.get('.meta-test__LoginBtn').click();
     cy.get('.meta-test__LoginForm input[name="username"]')
-        .should('have.value', '');
+      .should('have.value', '');
     cy.get('.meta-test__LoginForm input[name="password"]')
-        .type('test-cluster-cookie');
+      .type('test-cluster-cookie');
     cy.get('.meta-test__LoginFormBtn').click();
     cy.get('.meta-test__LoginForm').contains('username is a required field');
     cy.get('.meta-test__LoginForm button[type="button"]').contains('Cancel').click();
@@ -71,10 +72,10 @@ describe('Auth', () => {
     ////////////////////////////////////////////////////////////////////
     cy.get('.meta-test__LoginBtn').click();
     cy.get('.meta-test__LoginForm input[name="username"]')
-        .type('admin')
-        .should('have.value', 'admin');
+      .type('admin')
+      .should('have.value', 'admin');
     cy.get('.meta-test__LoginForm input[name="password"]')
-        .should('have.value', '');
+      .should('have.value', '');
     cy.get('.meta-test__LoginFormBtn').click();
     cy.get('.meta-test__LoginForm').contains('password is a required field');
     cy.get('.meta-test__LoginForm button[type="button"]').contains('Cancel').click();
@@ -97,10 +98,10 @@ describe('Auth', () => {
     ////////////////////////////////////////////////////////////////////
     cy.get('.meta-test__LoginBtn').click();
     cy.get('.meta-test__LoginForm input[name="username"]')
-        .type('admin')
-        .should('have.value', 'admin');
+      .type('admin')
+      .should('have.value', 'admin');
     cy.get('.meta-test__LoginForm input[name="password"]')
-        .type('incorrect password');
+      .type('incorrect password');
     cy.get('.meta-test__LoginFormBtn').click();
     cy.get('.meta-test__LoginForm').contains('Authentication failed');
     //check button X in the auth form
@@ -153,7 +154,8 @@ describe('Auth', () => {
       _G.cluster.main_server.command = helpers.entrypoint('srv_woauth')
       _G.cluster.main_server:start()
       return true
-    `}).should('deep.eq', [true]);
+    `
+    }).should('deep.eq', [true]);
     cy.get('a[href="/admin/cluster/dashboard"]').click();
     cy.reload();
 

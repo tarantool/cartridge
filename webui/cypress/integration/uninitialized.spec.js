@@ -35,12 +35,12 @@ describe('Uninitialized', () => {
     cy.log('Redirects are enabled');
     ////////////////////////////////////////////////////////////////////
 
-    let checkRedirect = (response) => {
+    let checkRedirect = response => {
       expect(response.status).to.be.equal(302)
       expect(response.headers['location']).to.be.equal('/xyz/admin')
     }
-    cy.request({url: '/', followRedirect: false}).then(checkRedirect);
-    cy.request({url: '/xyz', followRedirect: false}).then(checkRedirect);
+    cy.request({ url: '/', followRedirect: false }).then(checkRedirect);
+    cy.request({ url: '/xyz', followRedirect: false }).then(checkRedirect);
 
     ////////////////////////////////////////////////////////////////////
     cy.log('Code without bootstrap');

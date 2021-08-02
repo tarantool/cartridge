@@ -19,7 +19,8 @@ describe('Demo panel', () => {
 
       _G.cluster:start()
       return true
-    `}).should('deep.eq', [true]);
+    `
+    }).should('deep.eq', [true]);
   });
 
   after(() => {
