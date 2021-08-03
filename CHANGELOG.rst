@@ -72,6 +72,8 @@ Fixed
 - Don't default to syslog driver unless ``/dev/log`` or
   ``/var/run/syslog`` are available.
 - Fix inappropriate consistency timeout.
+- Support automatic parsing of Tarantool Enterprise box options `audit_log` and
+  `audit_nonblock`.
 
 -------------------------------------------------------------------------------
 [2.6.0] - 2021-04-26
