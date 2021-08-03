@@ -818,53 +818,45 @@ export type GetClusterQuery = ({
   }) |}
 });
 
-export type BoxInfoQueryVariables = {
-  uuid?: ?$ElementType<Scalars, 'String'>,
-};
-
-
-export type BoxInfoQuery = ({
-    ...{ __typename?: 'Query' },
-  ...{| servers?: ?Array<?({
-      ...{ __typename?: 'Server' },
-    ...$Pick<Server, {| alias?: *, status: *, message: *, uri: * |}>,
-    ...{| replicaset?: ?({
-        ...{ __typename?: 'Replicaset' },
-      ...$Pick<Replicaset, {| roles?: * |}>,
-      ...{| active_master: ({
-          ...{ __typename?: 'Server' },
-        ...$Pick<Server, {| uuid: * |}>
-      }), master: ({
-          ...{ __typename?: 'Server' },
-        ...$Pick<Server, {| uuid: * |}>
-      }) |}
-    }), labels?: ?Array<?({
-        ...{ __typename?: 'Label' },
-      ...$Pick<Label, {| name: *, value: * |}>
-    })>, boxinfo?: ?({
-        ...{ __typename?: 'ServerInfo' },
-      ...{| cartridge: ({
-          ...{ __typename?: 'ServerInfoCartridge' },
-        ...$Pick<ServerInfoCartridge, {| version: * |}>
-      }), network: ({
-          ...{ __typename?: 'ServerInfoNetwork' },
-        ...$Pick<ServerInfoNetwork, {| io_collect_interval?: *, net_msg_max?: *, readahead?: * |}>
-      }), general: ({
-          ...{ __typename?: 'ServerInfoGeneral' },
-        ...$Pick<ServerInfoGeneral, {| instance_uuid: *, uptime: *, version: *, ro: * |}>
-      }), replication: ({
-          ...{ __typename?: 'ServerInfoReplication' },
-        ...$Pick<ServerInfoReplication, {| replication_connect_quorum?: *, replication_connect_timeout?: *, replication_sync_timeout?: *, replication_skip_conflict?: *, replication_sync_lag?: *, vclock?: *, replication_timeout?: * |}>,
-        ...{| replication_info?: ?Array<?({
-            ...{ __typename?: 'ReplicaStatus' },
-          ...$Pick<ReplicaStatus, {| downstream_status?: *, id?: *, upstream_peer?: *, upstream_idle?: *, upstream_message?: *, lsn?: *, upstream_lag?: *, upstream_status?: *, uuid: *, downstream_message?: * |}>
-        })> |}
-      }), storage: ({
-          ...{ __typename?: 'ServerInfoStorage' },
-        ...$Pick<ServerInfoStorage, {| wal_max_size?: *, vinyl_run_count_per_level?: *, rows_per_wal?: *, vinyl_cache?: *, vinyl_range_size?: *, vinyl_timeout?: *, memtx_min_tuple_size?: *, vinyl_bloom_fpr?: *, vinyl_page_size?: *, memtx_max_tuple_size?: *, vinyl_run_size_ratio?: *, wal_mode?: *, memtx_memory?: *, vinyl_memory?: *, too_long_threshold?: *, vinyl_max_tuple_size?: *, vinyl_write_threads?: *, vinyl_read_threads?: *, wal_dir_rescan_delay?: * |}>
-      }) |}
+export type ServerDetailsFieldsFragment = ({
+    ...{ __typename?: 'Server' },
+  ...$Pick<Server, {| alias?: *, status: *, message: *, uri: * |}>,
+  ...{| replicaset?: ?({
+      ...{ __typename?: 'Replicaset' },
+    ...$Pick<Replicaset, {| roles?: * |}>,
+    ...{| active_master: ({
+        ...{ __typename?: 'Server' },
+      ...$Pick<Server, {| uuid: * |}>
+    }), master: ({
+        ...{ __typename?: 'Server' },
+      ...$Pick<Server, {| uuid: * |}>
     }) |}
-  })> |}
+  }), labels?: ?Array<?({
+      ...{ __typename?: 'Label' },
+    ...$Pick<Label, {| name: *, value: * |}>
+  })>, boxinfo?: ?({
+      ...{ __typename?: 'ServerInfo' },
+    ...{| cartridge: ({
+        ...{ __typename?: 'ServerInfoCartridge' },
+      ...$Pick<ServerInfoCartridge, {| version: * |}>
+    }), network: ({
+        ...{ __typename?: 'ServerInfoNetwork' },
+      ...$Pick<ServerInfoNetwork, {| io_collect_interval?: *, net_msg_max?: *, readahead?: * |}>
+    }), general: ({
+        ...{ __typename?: 'ServerInfoGeneral' },
+      ...$Pick<ServerInfoGeneral, {| instance_uuid: *, uptime: *, version: *, ro: * |}>
+    }), replication: ({
+        ...{ __typename?: 'ServerInfoReplication' },
+      ...$Pick<ServerInfoReplication, {| replication_connect_quorum?: *, replication_connect_timeout?: *, replication_sync_timeout?: *, replication_skip_conflict?: *, replication_sync_lag?: *, vclock?: *, replication_timeout?: * |}>,
+      ...{| replication_info?: ?Array<?({
+          ...{ __typename?: 'ReplicaStatus' },
+        ...$Pick<ReplicaStatus, {| downstream_status?: *, id?: *, upstream_peer?: *, upstream_idle?: *, upstream_message?: *, lsn?: *, upstream_lag?: *, upstream_status?: *, uuid: *, downstream_message?: * |}>
+      })> |}
+    }), storage: ({
+        ...{ __typename?: 'ServerInfoStorage' },
+      ...$Pick<ServerInfoStorage, {| wal_max_size?: *, vinyl_run_count_per_level?: *, rows_per_wal?: *, vinyl_cache?: *, vinyl_range_size?: *, vinyl_timeout?: *, memtx_min_tuple_size?: *, vinyl_bloom_fpr?: *, vinyl_page_size?: *, memtx_max_tuple_size?: *, vinyl_run_size_ratio?: *, wal_mode?: *, memtx_memory?: *, vinyl_memory?: *, too_long_threshold?: *, vinyl_max_tuple_size?: *, vinyl_write_threads?: *, vinyl_read_threads?: *, wal_dir_rescan_delay?: * |}>
+    }) |}
+  }) |}
 });
 
 export type InstanceDataQueryVariables = {
@@ -876,43 +868,7 @@ export type InstanceDataQuery = ({
     ...{ __typename?: 'Query' },
   ...{| servers?: ?Array<?({
       ...{ __typename?: 'Server' },
-    ...$Pick<Server, {| alias?: *, status: *, message: *, uri: * |}>,
-    ...{| replicaset?: ?({
-        ...{ __typename?: 'Replicaset' },
-      ...$Pick<Replicaset, {| roles?: * |}>,
-      ...{| active_master: ({
-          ...{ __typename?: 'Server' },
-        ...$Pick<Server, {| uuid: * |}>
-      }), master: ({
-          ...{ __typename?: 'Server' },
-        ...$Pick<Server, {| uuid: * |}>
-      }) |}
-    }), labels?: ?Array<?({
-        ...{ __typename?: 'Label' },
-      ...$Pick<Label, {| name: *, value: * |}>
-    })>, boxinfo?: ?({
-        ...{ __typename?: 'ServerInfo' },
-      ...{| cartridge: ({
-          ...{ __typename?: 'ServerInfoCartridge' },
-        ...$Pick<ServerInfoCartridge, {| version: * |}>
-      }), network: ({
-          ...{ __typename?: 'ServerInfoNetwork' },
-        ...$Pick<ServerInfoNetwork, {| io_collect_interval?: *, net_msg_max?: *, readahead?: * |}>
-      }), general: ({
-          ...{ __typename?: 'ServerInfoGeneral' },
-        ...$Pick<ServerInfoGeneral, {| instance_uuid: *, uptime: *, version: *, ro: * |}>
-      }), replication: ({
-          ...{ __typename?: 'ServerInfoReplication' },
-        ...$Pick<ServerInfoReplication, {| replication_connect_quorum?: *, replication_connect_timeout?: *, replication_sync_timeout?: *, replication_skip_conflict?: *, replication_sync_lag?: *, vclock?: *, replication_timeout?: * |}>,
-        ...{| replication_info?: ?Array<?({
-            ...{ __typename?: 'ReplicaStatus' },
-          ...$Pick<ReplicaStatus, {| downstream_status?: *, id?: *, upstream_peer?: *, upstream_idle?: *, upstream_message?: *, lsn?: *, upstream_lag?: *, upstream_status?: *, uuid: *, downstream_message?: * |}>
-        })> |}
-      }), storage: ({
-          ...{ __typename?: 'ServerInfoStorage' },
-        ...$Pick<ServerInfoStorage, {| wal_max_size?: *, vinyl_run_count_per_level?: *, rows_per_wal?: *, vinyl_cache?: *, vinyl_range_size?: *, vinyl_timeout?: *, memtx_min_tuple_size?: *, vinyl_bloom_fpr?: *, vinyl_page_size?: *, memtx_max_tuple_size?: *, vinyl_run_size_ratio?: *, wal_mode?: *, memtx_memory?: *, vinyl_memory?: *, too_long_threshold?: *, vinyl_max_tuple_size?: *, vinyl_write_threads?: *, vinyl_read_threads?: *, wal_dir_rescan_delay?: * |}>
-      }) |}
-    }) |}
+    ...ServerDetailsFieldsFragment
   })>, descriptionCartridge?: ?({
       ...{ __typename?: '__Type' },
     ...{| fields?: ?Array<({
@@ -944,6 +900,19 @@ export type InstanceDataQuery = ({
       ...$Pick<__Field, {| name: *, description?: * |}>
     })> |}
   }) |}
+});
+
+export type BoxInfoQueryVariables = {
+  uuid?: ?$ElementType<Scalars, 'String'>,
+};
+
+
+export type BoxInfoQuery = ({
+    ...{ __typename?: 'Query' },
+  ...{| servers?: ?Array<?({
+      ...{ __typename?: 'Server' },
+    ...ServerDetailsFieldsFragment
+  })> |}
 });
 
 export type ServerListQueryVariables = {
