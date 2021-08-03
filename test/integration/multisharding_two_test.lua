@@ -155,7 +155,7 @@ function g.test_api()
         servers {
             alias
             boxinfo {
-                vshard_router { routers {vshard_group}}
+                vshard_router { vshard_group }
             }
         }
     }]]}
@@ -174,7 +174,7 @@ function g.test_api()
         {alias = 'storage-cold-1', boxinfo = {vshard_router = box.NULL}},
         {
             alias = 'router-1',
-            boxinfo = {vshard_router = {routers = {{vshard_group = "cold"}, {vshard_group = "hot"}}}},
+            boxinfo = {vshard_router = {{vshard_group = "cold"}, {vshard_group = "hot"}}},
         },
     })
 

@@ -547,7 +547,8 @@ export type ServerInfo = {|
   network: ServerInfoNetwork,
   general: ServerInfoGeneral,
   vshard_storage?: ?ServerInfoVshardStorage,
-  vshard_router?: ?ServerInfoVshardRouter,
+  /** List of vshard router parameters */
+  vshard_router?: ?Array<?VshardRouter>,
 |};
 
 export type ServerInfoCartridge = {|
@@ -651,11 +652,6 @@ export type ServerInfoStorage = {|
   vinyl_write_threads?: ?$ElementType<Scalars, 'Int'>,
   vinyl_read_threads?: ?$ElementType<Scalars, 'Int'>,
   wal_dir_rescan_delay?: ?$ElementType<Scalars, 'Float'>,
-|};
-
-export type ServerInfoVshardRouter = {|
-  __typename?: 'ServerInfoVshardRouter',
-  routers?: ?Array<?VshardRouter>,
 |};
 
 export type ServerInfoVshardStorage = {|

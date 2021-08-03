@@ -1,5 +1,5 @@
 # source: http://localhost:8081/admin/api
-# timestamp: Mon Aug 02 2021 16:34:34 GMT+0300 (Москва, стандартное время)
+# timestamp: Tue Aug 03 2021 16:33:22 GMT+0300 (Москва, стандартное время)
 
 """Cluster management"""
 type Apicluster {
@@ -388,7 +388,9 @@ type ServerInfo {
   network: ServerInfoNetwork!
   general: ServerInfoGeneral!
   vshard_storage: ServerInfoVshardStorage
-  vshard_router: ServerInfoVshardRouter
+
+  """List of vshard router parameters"""
+  vshard_router: [VshardRouter]
 }
 
 type ServerInfoCartridge {
@@ -511,10 +513,6 @@ type ServerInfoStorage {
   vinyl_write_threads: Int
   vinyl_read_threads: Int
   wal_dir_rescan_delay: Float
-}
-
-type ServerInfoVshardRouter {
-  routers: [VshardRouter]
 }
 
 type ServerInfoVshardStorage {

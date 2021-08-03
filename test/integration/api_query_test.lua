@@ -357,7 +357,7 @@ function g.test_servers()
                     boxinfo {
                         cartridge { state error { message class_name } }
                         membership { status }
-                        vshard_router { routers { buckets_unreachable } }
+                        vshard_router { buckets_unreachable }
                         vshard_storage { buckets_active }
                     }
                 }
@@ -377,7 +377,7 @@ function g.test_servers()
             boxinfo = {
                 cartridge = {error = box.NULL, state = "RolesConfigured"},
                 membership = {status = 'alive'},
-                vshard_router = {routers = {{buckets_unreachable = 0}}},
+                vshard_router = {{ buckets_unreachable = 0 }},
                 vshard_storage = box.NULL,
             },
         }, {

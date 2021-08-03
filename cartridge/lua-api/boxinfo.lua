@@ -48,13 +48,12 @@ local function get_info(uri)
         local routers = vshard and vshard.router.internal.routers or {}
         local router_info = {}
         if next(routers) ~= nil then
-            router_info.routers = {}
             for group, router in pairs(routers) do
                 local info = router:info()
                 if group == '_static_router' then
                     group = 'default'
                 end
-                table.insert(router_info.routers, {
+                table.insert(router_info, {
                     vshard_group = group,
                     buckets_unreachable = info.bucket.unreachable,
                     buckets_available_ro = info.bucket.available_ro,

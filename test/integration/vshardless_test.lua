@@ -106,8 +106,8 @@ function g.test_api()
                 uuid
                 boxinfo {
                     general {instance_uuid}
-                    vshard_router { routers {buckets_unreachable}}
-                    vshard_storage {buckets_total}
+                    vshard_router { buckets_unreachable }
+                    vshard_storage { buckets_total }
                 }
             }
         }]]

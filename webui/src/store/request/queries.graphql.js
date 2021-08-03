@@ -127,13 +127,11 @@ export const serverDetailsFields = gql`
           NUM_FAILURE_DETECTION_SUBGROUPS
         }
         vshard_router {
-          routers {
-            vshard_group
-            buckets_unreachable
-            buckets_available_ro
-            buckets_unknown
-            buckets_available_rw
-          }
+          vshard_group
+          buckets_unreachable
+          buckets_available_ro
+          buckets_unknown
+          buckets_available_rw
         }
         vshard_storage {
           vshard_group

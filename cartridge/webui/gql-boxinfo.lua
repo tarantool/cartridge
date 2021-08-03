@@ -267,12 +267,10 @@ local boxinfo_schema = {
                     },
                 }
             }).nonNull,
-            vshard_router = gql_types.object({
-                name = 'ServerInfoVshardRouter',
-                fields = {
-                    routers = gql_types.list(gql_vshard_router),
-                }
-            }),
+            vshard_router = {
+                kind = gql_types.list(gql_vshard_router),
+                description = 'List of vshard router parameters',
+            },
             vshard_storage = gql_types.object({
                 name = 'ServerInfoVshardStorage',
                 fields = {
