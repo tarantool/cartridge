@@ -126,7 +126,9 @@ local box_opts = {
     vinyl_bloom_fpr          = 'number', -- **number**
 
     log                      = 'string', -- **string**
+    audit_log                = 'string', -- **string**
     log_nonblock             = 'boolean', -- **boolean**
+    audit_nonblock           = 'boolean', -- **boolean**
     log_level                = 'number', -- **number**
     log_format               = 'string', -- **string**
     io_collect_interval      = 'number', -- **number**
