@@ -1,5 +1,5 @@
 import graphql from 'src/api/graphql';
-import { boxInfoQuery, instanceDataQuery } from './queries.graphql';
+import { firstServerDetailsQuery, nextServerDetailsQuery } from './queries.graphql';
 
 const descriptionsByName = ({ fields = [] } = {}) => fields.reduce((acc, item) => {
   acc[item.name] = item.description;
@@ -8,7 +8,7 @@ const descriptionsByName = ({ fields = [] } = {}) => fields.reduce((acc, item) =
 
 export function getInstanceData({ instanceUUID }) {
 
-  return graphql.fetch(instanceDataQuery, { uuid: instanceUUID })
+  return graphql.fetch(firstServerDetailsQuery, { uuid: instanceUUID })
     .then(({
       servers,
       descriptionCartridge,
@@ -57,7 +57,7 @@ export function getInstanceData({ instanceUUID }) {
 }
 
 export function refreshInstanceData({ instanceUUID }) {
-  return graphql.fetch(boxInfoQuery, { uuid: instanceUUID })
+  return graphql.fetch(nextServerDetailsQuery, { uuid: instanceUUID })
     .then(({ servers }) => ({
       boxinfo: servers[0].boxinfo || {},
       labels: servers[0].labels || []

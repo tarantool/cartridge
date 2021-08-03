@@ -94,9 +94,8 @@ export const getClusterQuery = gql`
   }
 `;
 
-export const boxInfoQuery = gql`
-  query boxInfo ($uuid: String){ 
-    servers(uuid: $uuid) {
+export const serverDetailsFields = gql`
+  fragment serverDetailsFields on Server {
       alias
       status
       message
@@ -172,88 +171,13 @@ export const boxInfoQuery = gql`
           wal_dir_rescan_delay
         }
       }
-    }
   }
 `;
 
-export const instanceDataQuery = gql`
+export const firstServerDetailsQuery = gql`
   query instanceData($uuid: String){
     servers(uuid: $uuid) {
-      alias
-      status
-      message
-      uri
-      replicaset {
-        roles
-        active_master {
-          uuid
-        }
-        master {
-          uuid
-        }
-      }
-      labels {
-        name
-        value
-      }
-      boxinfo {
-        cartridge {
-          version
-        }
-        network {
-          io_collect_interval
-          net_msg_max
-          readahead
-        }
-        general {
-          instance_uuid
-          uptime
-          version
-          ro
-        }
-        replication {
-          replication_connect_quorum
-          replication_connect_timeout
-          replication_sync_timeout
-          replication_skip_conflict
-          replication_sync_lag
-          replication_info {
-            downstream_status
-            id
-            upstream_peer
-            upstream_idle
-            upstream_message
-            lsn
-            upstream_lag
-            upstream_status
-            uuid
-            downstream_message
-          }
-          vclock
-          replication_timeout
-        }
-        storage {
-          wal_max_size
-          vinyl_run_count_per_level
-          rows_per_wal
-          vinyl_cache
-          vinyl_range_size
-          vinyl_timeout
-          memtx_min_tuple_size
-          vinyl_bloom_fpr
-          vinyl_page_size
-          memtx_max_tuple_size
-          vinyl_run_size_ratio
-          wal_mode
-          memtx_memory
-          vinyl_memory
-          too_long_threshold
-          vinyl_max_tuple_size
-          vinyl_write_threads
-          vinyl_read_threads
-          wal_dir_rescan_delay
-        }
-      }
+      ...serverDetailsFields
     }
     
     descriptionCartridge: __type(name: "ServerInfoCartridge") {
@@ -287,6 +211,16 @@ export const instanceDataQuery = gql`
       }
     }
   }
+  ${serverDetailsFields}
+`;
+
+export const nextServerDetailsQuery = gql`
+  query boxInfo ($uuid: String){
+    servers(uuid: $uuid) {
+      ...serverDetailsFields
+    }
+  }
+  ${serverDetailsFields}
 `;
 
 export const listQuery = gql`
