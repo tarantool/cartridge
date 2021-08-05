@@ -5,9 +5,10 @@ local g = t.group()
 
 local helpers = require('test.helper')
 
-local function move(srv, uri)
-    srv.env['TARANTOOL_ADVERTISE_URI'] = uri
-    srv.net_box_uri = uri
+local function move(srv, port)
+    srv.net_box_port = nil
+    srv.advertise_uri = nil
+    srv.advertise_port = port
 end
 
 g.before_all(function()
@@ -42,18 +43,18 @@ g.before_all(function()
     g.B1 = g.cluster:server('B-1')
     g.B2 = g.cluster:server('B-2')
 
-    g.cluster.main_server.net_box:call(
+    g.cluster.main_server:call(
         'package.loaded.cartridge.failover_set_params',
         {{failover_timeout = 0}}
     )
 
     fun.foreach(function(s) s:stop() end, g.cluster.servers)
-    move(g.A1, 'localhost:13311')
-    move(g.B1, 'localhost:13312')
+    move(g.A1, 13311)
+    move(g.B1, 13312)
     fun.foreach(function(s) s:start() end, g.cluster.servers)
 
     helpers.retrying({}, function()
-        g.cluster.main_server.net_box:eval([[
+        g.cluster.main_server:eval([[
             local m = require('membership')
             assert(m.get_member('localhost:13301').status == 'dead')
             assert(m.get_member('localhost:13302').status == 'dead')
@@ -125,20 +126,22 @@ function g.test_suggestion()
     }})
 end
 
-function g.test_2pc()
-    local query = [[ mutation($servers: [EditServerInput]) {
-      cluster{ edit_topology(servers: $servers){ servers { uri } } }
+g.before_test('test_2pc', function()
+    g.query = [[ mutation($servers: [EditServerInput]) {
+        cluster{ edit_topology(servers: $servers){ servers { uri } } }
     }]]
+end)
 
+function g.test_2pc()
     g.cluster.main_server:graphql({
-        query = query,
+        query = g.query,
         variables = {servers = {
             {uuid = g.A1.instance_uuid, uri = g.A1.net_box_uri},
         }},
     })
 
     g.cluster.main_server:graphql({
-        query = query,
+        query = g.query,
         variables = {servers = {
             {uuid = g.B1.instance_uuid, uri = g.B1.net_box_uri},
         }},
@@ -154,26 +157,30 @@ function g.test_2pc()
             restart_replication = box.NULL,
         })
     end)
+end
 
+g.after_test('test_2pc', function()
     g.cluster.main_server:graphql({
-        query = query,
+        query = g.query,
         variables = {servers = {
             {uuid = g.A1.instance_uuid, uri = 'localhost:13301'},
             {uuid = g.B1.instance_uuid, uri = 'localhost:13302'},
         }},
     })
-end
+    g.query = nil
+end)
 
-function g.test_failover()
-    -- Test for https://github.com/tarantool/cartridge/issues/1029
-
-    local ok, err = g.A1.net_box:call(
+g.before_test('test_failover', function()
+    local ok, err = g.A1:call(
         'package.loaded.cartridge.failover_set_params',
         {{mode = 'eventual'}}
     )
     t.assert_equals({ok, err}, {true, nil})
+end)
 
-    local ok, err = g.B1.net_box:call(
+function g.test_failover()
+    -- Test for https://github.com/tarantool/cartridge/issues/1029
+    local ok, err = g.B1:call(
         'package.loaded.cartridge.admin_probe_server',
         {g.B2.advertise_uri}
     )
@@ -195,10 +202,12 @@ function g.test_failover()
         uuid = g.B2.instance_uuid,
         boxinfo = {general = {listen = '13303', ro = false}},
     }})
+end
 
-    local ok, err = g.A1.net_box:call(
+g.after_test('test_failover', function()
+    local ok, err = g.A1:call(
         'package.loaded.cartridge.failover_set_params',
         {{mode = 'disabled'}}
     )
     t.assert_equals({ok, err}, {true, nil})
-end
+end)
