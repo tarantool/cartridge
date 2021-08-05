@@ -30,6 +30,7 @@ import {
 import store from 'src/store/instance';
 import { failoverPromoteLeader } from 'src/store/actions/clusterPage.actions';
 import ServerDetailsModalStatTab from './ServerDetailsModalStatTab'
+import ServerDetailsModalVshardRouterTab from './ServerDetailsModalVshardRouterTab'
 import { ServerDetailsModalIssues } from './ServerDetailsModalIssues'
 import { HealthStatus } from '../HealthStatus';
 import { ServerDropdown } from '../ServerDropdown';
@@ -43,6 +44,9 @@ const styles = {
     display: flex;
     justify-content: space-between;
     margin-bottom: 21px;
+  `,
+  modal: css`
+    max-width: 1050px;
   `,
   flag: css`
     margin-left: 20px;
@@ -183,7 +187,7 @@ class ServerDetailsModal extends React.Component<
 
     return (
       <Modal
-        className='meta-test__ServerDetailsModal'
+        className={cx('meta-test__ServerDetailsModal', styles.modal)}
         title={<>
           <span className={styles.headingWidthLimit}>{alias || instanceUUID}</span>
           {(master || activeMaster) && (
@@ -301,7 +305,7 @@ class ServerDetailsModal extends React.Component<
               })),
               {
                 label: 'Vshard-Router',
-                content: (<ServerDetailsModalStatTab sectionName={'vshard_router'} />)
+                content: (<ServerDetailsModalVshardRouterTab sectionName={'vshard_router'} />)
               },
               {
                 label: 'Vshard-Storage',
