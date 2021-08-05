@@ -1,5 +1,5 @@
 # source: http://localhost:8081/admin/api
-# timestamp: Tue Aug 03 2021 16:33:22 GMT+0300 (Москва, стандартное время)
+# timestamp: Thu Aug 05 2021 14:38:50 GMT+0300 (Moscow Standard Time)
 
 """Cluster management"""
 type Apicluster {
@@ -682,9 +682,24 @@ type VshardGroup {
 }
 
 type VshardRouter {
+  """The number of buckets whose replica sets are not known to the router"""
   buckets_unknown: Int
+
+  """
+  The number of buckets known to the router and available for read and write requests
+  """
   buckets_available_rw: Int
+
+  """Vshard group"""
   vshard_group: String
-  buckets_available_ro: Int
+
+  """
+  The number of buckets known to the router but unavailable for any requests
+  """
   buckets_unreachable: Int
+
+  """
+  The number of buckets known to the router and available for read requests
+  """
+  buckets_available_ro: Int
 }

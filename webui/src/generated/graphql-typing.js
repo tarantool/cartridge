@@ -782,11 +782,16 @@ export type VshardGroup = {|
 
 export type VshardRouter = {|
   __typename?: 'VshardRouter',
+  /** The number of buckets whose replica sets are not known to the router */
   buckets_unknown?: ?$ElementType<Scalars, 'Int'>,
+  /** The number of buckets known to the router and available for read and write requests */
   buckets_available_rw?: ?$ElementType<Scalars, 'Int'>,
+  /** Vshard group */
   vshard_group?: ?$ElementType<Scalars, 'String'>,
-  buckets_available_ro?: ?$ElementType<Scalars, 'Int'>,
+  /** The number of buckets known to the router but unavailable for any requests */
   buckets_unreachable?: ?$ElementType<Scalars, 'Int'>,
+  /** The number of buckets known to the router and available for read requests */
+  buckets_available_ro?: ?$ElementType<Scalars, 'Int'>,
 |};
 
 type $Pick<Origin: Object, Keys: Object> = $ObjMapi<Keys, <Key>(k: Key) => $ElementType<Origin, Key>>;
@@ -888,6 +893,15 @@ export type ServerDetailsFieldsFragment = ({
     ...{| cartridge: ({
         ...{ __typename?: 'ServerInfoCartridge' },
       ...$Pick<ServerInfoCartridge, {| version: * |}>
+    }), membership: ({
+        ...{ __typename?: 'ServerInfoMembership' },
+      ...$Pick<ServerInfoMembership, {| status?: *, incarnation?: *, PROTOCOL_PERIOD_SECONDS?: *, ACK_TIMEOUT_SECONDS?: *, ANTI_ENTROPY_PERIOD_SECONDS?: *, SUSPECT_TIMEOUT_SECONDS?: *, NUM_FAILURE_DETECTION_SUBGROUPS?: * |}>
+    }), vshard_router?: ?Array<?({
+        ...{ __typename?: 'VshardRouter' },
+      ...$Pick<VshardRouter, {| vshard_group?: *, buckets_unreachable?: *, buckets_available_ro?: *, buckets_unknown?: *, buckets_available_rw?: * |}>
+    })>, vshard_storage?: ?({
+        ...{ __typename?: 'ServerInfoVshardStorage' },
+      ...$Pick<ServerInfoVshardStorage, {| vshard_group?: *, buckets_receiving?: *, buckets_active?: *, buckets_total?: *, buckets_garbage?: *, buckets_pinned?: *, buckets_sending?: * |}>
     }), network: ({
         ...{ __typename?: 'ServerInfoNetwork' },
       ...$Pick<ServerInfoNetwork, {| io_collect_interval?: *, net_msg_max?: *, readahead?: * |}>

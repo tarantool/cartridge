@@ -55,10 +55,10 @@ local function get_info(uri)
                 end
                 table.insert(router_info, {
                     vshard_group = group,
-                    buckets_unreachable = info.bucket.unreachable,
                     buckets_available_ro = info.bucket.available_ro,
-                    buckets_unknown = info.bucket.unknown,
                     buckets_available_rw = info.bucket.available_rw,
+                    buckets_unreachable = info.bucket.unreachable,
+                    buckets_unknown = info.bucket.unknown,
                 })
 
             end

@@ -217,7 +217,7 @@ export const firstServerDetailsQuery = gql`
         description
       }
     }
-    descriptionVshardRouter: __type(name: "ServerInfoVshardRouter") {
+    descriptionVshardRouter: __type(name: "VshardRouter") {
       fields {
         name
         description
