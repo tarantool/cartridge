@@ -1,6 +1,7 @@
 // @flow
-import React from 'react';
+import React, { useEffect } from 'react';
 import { connect } from 'react-redux';
+import { useStore } from 'effector-react';
 import { Button } from '@tarantool.io/ui-kit';
 import { PageLayout } from 'src/components/PageLayout';
 import { UsersTable } from '../../components/UsersTable';
@@ -8,7 +9,10 @@ import { UserAddModal } from 'src/components/UserAddModal';
 import { UserEditModal } from 'src/components/UserEditModal';
 import { UserRemoveModal } from 'src/components/UserRemoveModal';
 import AuthToggleButton from 'src/components/AuthToggleButton';
-import { showUserAddModal } from 'src/store/effector/users';
+import {
+  $usersListFetchError, fetchUsersListFx, resetUsersList, showUserAddModal
+} from 'src/store/effector/users';
+import PageDataErrorMessage from '../../components/PageDataErrorMessage';
 
 const { AppTitle } = window.tarantool_enterprise_core.components;
 
@@ -26,36 +30,53 @@ const Users = ({
   implements_edit_user,
   implements_remove_user,
   showToggleAuth
-}: UsersProps) => (
-  <PageLayout
-    heading='Users'
-    topRightControls={[
-      showToggleAuth && <AuthToggleButton />,
-      implements_add_user && (
-        <Button
-          className='meta-test__addUserBtn'
-          text='Add user'
-          intent='primary'
-          onClick={showUserAddModal}
-          size='l'
-        >
-          Add user
-        </Button>
-      )
-    ]}
-  >
-    <AppTitle title='Users' />
-    {implements_list_users && (
-      <UsersTable
-        implements_edit_user={implements_edit_user}
-        implements_remove_user={implements_remove_user}
-      />
-    )}
-    <UserRemoveModal />
-    {implements_add_user && <UserAddModal />}
-    <UserEditModal />
-  </PageLayout>
-);
+}: UsersProps) => {
+  useEffect(
+    () => {
+      fetchUsersListFx();
+      return resetUsersList;
+    },
+    []
+  );
+  const usersListFetchError = useStore($usersListFetchError);
+
+  if (usersListFetchError) {
+    return (
+      <PageDataErrorMessage error={usersListFetchError} />
+    )
+  }
+
+  return (
+    <PageLayout
+      heading='Users'
+      topRightControls={[
+        showToggleAuth && <AuthToggleButton />,
+        implements_add_user && (
+          <Button
+            className='meta-test__addUserBtn'
+            text='Add user'
+            intent='primary'
+            onClick={showUserAddModal}
+            size='l'
+          >
+            Add user
+          </Button>
+        )
+      ]}
+    >
+      <AppTitle title='Users' />
+      {implements_list_users && (
+        <UsersTable
+          implements_edit_user={implements_edit_user}
+          implements_remove_user={implements_remove_user}
+        />
+      )}
+      <UserRemoveModal />
+      {implements_add_user && <UserAddModal />}
+      <UserEditModal />
+    </PageLayout>
+  )
+};
 
 const mapStateToProps = ({
   app: {

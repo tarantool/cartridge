@@ -1,5 +1,5 @@
 // @flow
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useStore } from 'effector-react';
 import { css, cx } from '@emotion/css';
 import { memoizeWith, identity } from 'ramda';
@@ -15,7 +15,6 @@ import {
 import {
   showUserEditModal,
   showUserRemoveModal,
-  resetUsersList,
   fetchUsersListFx,
   $usersList
 } from 'src/store/effector/users';
@@ -32,6 +31,20 @@ const styles = {
     td {
       overflow: hidden;
       text-overflow: ellipsis;
+    }
+  `,
+  loading: css`
+    background: white;
+    height: 200px;
+    thead {
+      background: #f0f2f5;
+    }
+  `,
+  noDataState: css`
+  
+    height: calc(100vh - 175px);
+    th {
+      display: none;
     }
   `,
   tableLink: css`
@@ -131,21 +144,15 @@ export const UsersTable = (
     implements_remove_user
   }: UsersTableProps
 ) => {
-  useEffect(
-    () => {
-      fetchUsersListFx();
-      return resetUsersList;
-    },
-    []
-  );
-
   const items = useStore($usersList);
 
   const fetching = useStore(fetchUsersListFx.pending);
 
+  const noData = !fetching && !items.length;
+
   return (
     <Table
-      className={styles.table}
+      className={cx(styles.table, { [styles.noDataState]: noData, [styles.loading]: fetching })}
       columns={tableColumns(
         implements_edit_user,
         implements_remove_user
