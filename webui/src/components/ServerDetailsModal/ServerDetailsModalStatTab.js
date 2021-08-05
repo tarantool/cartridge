@@ -16,7 +16,7 @@ const styles = {
     padding: 8px 20px;
 
     &:nth-child(2n) {
-      background-color: #fafafa; 
+      background-color: #fafafa;
     }
   `,
   leftCol: css`
@@ -38,7 +38,8 @@ const styles = {
 const fieldsDisplayTypes = {
   replication_info: 'json',
   ro: 'boolean',
-  replication_skip_conflict: 'boolean'
+  replication_skip_conflict: 'boolean',
+  routers: 'json',
 };
 
 const renderers = {

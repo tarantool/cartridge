@@ -39,6 +39,52 @@ local function get_info(uri)
             end
         end
 
+        local membership_myself = require('membership').myself()
+        local membership_options = require('membership.options')
+
+
+        local vshard = package.loaded.vshard
+
+        local routers = vshard and vshard.router.internal.routers or {}
+        local router_info = {}
+        if next(routers) ~= nil then
+            for group, router in pairs(routers) do
+                local info = router:info()
+                if group == '_static_router' then
+                    group = 'default'
+                end
+                table.insert(router_info, {
+                    vshard_group = group,
+                    buckets_available_ro = info.bucket.available_ro,
+                    buckets_available_rw = info.bucket.available_rw,
+                    buckets_unreachable = info.bucket.unreachable,
+                    buckets_unknown = info.bucket.unknown,
+                })
+
+            end
+        else
+            router_info = box.NULL
+        end
+
+        local topology_cfg = confapplier.get_readonly('topology')
+        local rs_uuid = box_info.cluster.uuid
+        local vshard_group = topology_cfg.replicasets[rs_uuid].vshard_group or 'default'
+        local ok, storage_info = pcall(vshard and vshard.storage.info)
+
+        if ok then
+            storage_info = {
+                vshard_group = vshard_group,
+                buckets_receiving = storage_info.bucket.receiving,
+                buckets_active = storage_info.bucket.active,
+                buckets_total = storage_info.bucket.total,
+                buckets_garbage = storage_info.bucket.garbage,
+                buckets_pinned = storage_info.bucket.pinned,
+                buckets_sending = storage_info.bucket.sending,
+            }
+        else
+            storage_info = box.NULL
+        end
+
         local ret = {
             general = {
                 version = box_info.version,
@@ -97,7 +143,18 @@ local function get_info(uri)
                 version = require('cartridge').VERSION,
                 state = server_state,
                 error = server_error,
-            }
+            },
+            membership = {
+                status = membership_myself.status,
+                incarnation = membership_myself.incarnation,
+                PROTOCOL_PERIOD_SECONDS = membership_options.PROTOCOL_PERIOD_SECONDS,
+                ACK_TIMEOUT_SECONDS = membership_options.ACK_TIMEOUT_SECONDS,
+                ANTI_ENTROPY_PERIOD_SECONDS = membership_options.ANTI_ENTROPY_PERIOD_SECONDS,
+                SUSPECT_TIMEOUT_SECONDS = membership_options.SUSPECT_TIMEOUT_SECONDS,
+                NUM_FAILURE_DETECTION_SUBGROUPS = membership_options.NUM_FAILURE_DETECTION_SUBGROUPS,
+            },
+            vshard_router = router_info,
+            vshard_storage = storage_info,
         }
 
         for i = 1, table.maxn(box_info.replication) do

@@ -540,11 +540,15 @@ export type Server = {|
 /** Server information and configuration. */
 export type ServerInfo = {|
   __typename?: 'ServerInfo',
+  membership: ServerInfoMembership,
   cartridge: ServerInfoCartridge,
+  replication: ServerInfoReplication,
   storage: ServerInfoStorage,
   network: ServerInfoNetwork,
   general: ServerInfoGeneral,
-  replication: ServerInfoReplication,
+  vshard_storage?: ?ServerInfoVshardStorage,
+  /** List of vshard router parameters */
+  vshard_router?: ?Array<?VshardRouter>,
 |};
 
 export type ServerInfoCartridge = {|
@@ -586,6 +590,24 @@ export type ServerInfoGeneral = {|
   replicaset_uuid: $ElementType<Scalars, 'String'>,
   /** A directory where memtx stores snapshot (.snap) files */
   memtx_dir?: ?$ElementType<Scalars, 'String'>,
+|};
+
+export type ServerInfoMembership = {|
+  __typename?: 'ServerInfoMembership',
+  /** Direct ping period */
+  PROTOCOL_PERIOD_SECONDS?: ?$ElementType<Scalars, 'Float'>,
+  /** Number of members to ping a suspect indirectly */
+  NUM_FAILURE_DETECTION_SUBGROUPS?: ?$ElementType<Scalars, 'Int'>,
+  /** Value incremented every time the instance became a suspect, dead, or updates its payload */
+  incarnation?: ?$ElementType<Scalars, 'Int'>,
+  /** Status of the instance */
+  status?: ?$ElementType<Scalars, 'String'>,
+  /** ACK message wait time */
+  ACK_TIMEOUT_SECONDS?: ?$ElementType<Scalars, 'Float'>,
+  /** Timeout to mark a suspect dead */
+  SUSPECT_TIMEOUT_SECONDS?: ?$ElementType<Scalars, 'Float'>,
+  /** Anti-entropy synchronization period */
+  ANTI_ENTROPY_PERIOD_SECONDS?: ?$ElementType<Scalars, 'Float'>,
 |};
 
 export type ServerInfoNetwork = {|
@@ -630,6 +652,24 @@ export type ServerInfoStorage = {|
   vinyl_write_threads?: ?$ElementType<Scalars, 'Int'>,
   vinyl_read_threads?: ?$ElementType<Scalars, 'Int'>,
   wal_dir_rescan_delay?: ?$ElementType<Scalars, 'Float'>,
+|};
+
+export type ServerInfoVshardStorage = {|
+  __typename?: 'ServerInfoVshardStorage',
+  /** The number of buckets that are sending at this time */
+  buckets_sending?: ?$ElementType<Scalars, 'Int'>,
+  /** The number of buckets that are waiting to be collected by GC */
+  buckets_garbage?: ?$ElementType<Scalars, 'Int'>,
+  /** Total number of buckets on the storage */
+  buckets_total?: ?$ElementType<Scalars, 'Int'>,
+  /** Vshard group */
+  vshard_group?: ?$ElementType<Scalars, 'String'>,
+  /** The number of pinned buckets on the storage */
+  buckets_pinned?: ?$ElementType<Scalars, 'Int'>,
+  /** The number of active buckets on the storage */
+  buckets_active?: ?$ElementType<Scalars, 'Int'>,
+  /** The number of buckets that are receiving at this time */
+  buckets_receiving?: ?$ElementType<Scalars, 'Int'>,
 |};
 
 /** A short server information */
@@ -740,6 +780,20 @@ export type VshardGroup = {|
   sched_move_quota: $ElementType<Scalars, 'Long'>,
 |};
 
+export type VshardRouter = {|
+  __typename?: 'VshardRouter',
+  /** The number of buckets whose replica sets are not known to the router */
+  buckets_unknown?: ?$ElementType<Scalars, 'Int'>,
+  /** The number of buckets known to the router and available for read and write requests */
+  buckets_available_rw?: ?$ElementType<Scalars, 'Int'>,
+  /** Vshard group */
+  vshard_group?: ?$ElementType<Scalars, 'String'>,
+  /** The number of buckets known to the router but unavailable for any requests */
+  buckets_unreachable?: ?$ElementType<Scalars, 'Int'>,
+  /** The number of buckets known to the router and available for read requests */
+  buckets_available_ro?: ?$ElementType<Scalars, 'Int'>,
+|};
+
 type $Pick<Origin: Object, Keys: Object> = $ObjMapi<Keys, <Key>(k: Key) => $ElementType<Origin, Key>>;
 
 export type ServerStatFieldsFragment = ({
@@ -839,6 +893,15 @@ export type ServerDetailsFieldsFragment = ({
     ...{| cartridge: ({
         ...{ __typename?: 'ServerInfoCartridge' },
       ...$Pick<ServerInfoCartridge, {| version: * |}>
+    }), membership: ({
+        ...{ __typename?: 'ServerInfoMembership' },
+      ...$Pick<ServerInfoMembership, {| status?: *, incarnation?: *, PROTOCOL_PERIOD_SECONDS?: *, ACK_TIMEOUT_SECONDS?: *, ANTI_ENTROPY_PERIOD_SECONDS?: *, SUSPECT_TIMEOUT_SECONDS?: *, NUM_FAILURE_DETECTION_SUBGROUPS?: * |}>
+    }), vshard_router?: ?Array<?({
+        ...{ __typename?: 'VshardRouter' },
+      ...$Pick<VshardRouter, {| vshard_group?: *, buckets_unreachable?: *, buckets_available_ro?: *, buckets_unknown?: *, buckets_available_rw?: * |}>
+    })>, vshard_storage?: ?({
+        ...{ __typename?: 'ServerInfoVshardStorage' },
+      ...$Pick<ServerInfoVshardStorage, {| vshard_group?: *, buckets_receiving?: *, buckets_active?: *, buckets_total?: *, buckets_garbage?: *, buckets_pinned?: *, buckets_sending?: * |}>
     }), network: ({
         ...{ __typename?: 'ServerInfoNetwork' },
       ...$Pick<ServerInfoNetwork, {| io_collect_interval?: *, net_msg_max?: *, readahead?: * |}>
@@ -870,6 +933,24 @@ export type InstanceDataQuery = ({
       ...{ __typename?: 'Server' },
     ...ServerDetailsFieldsFragment
   })>, descriptionCartridge?: ?({
+      ...{ __typename?: '__Type' },
+    ...{| fields?: ?Array<({
+        ...{ __typename?: '__Field' },
+      ...$Pick<__Field, {| name: *, description?: * |}>
+    })> |}
+  }), descriptionMembership?: ?({
+      ...{ __typename?: '__Type' },
+    ...{| fields?: ?Array<({
+        ...{ __typename?: '__Field' },
+      ...$Pick<__Field, {| name: *, description?: * |}>
+    })> |}
+  }), descriptionVshardRouter?: ?({
+      ...{ __typename?: '__Type' },
+    ...{| fields?: ?Array<({
+        ...{ __typename?: '__Field' },
+      ...$Pick<__Field, {| name: *, description?: * |}>
+    })> |}
+  }), descriptionVshardStorage?: ?({
       ...{ __typename?: '__Type' },
     ...{| fields?: ?Array<({
         ...{ __typename?: '__Field' },

@@ -259,6 +259,12 @@ function g.test_server_info_schema()
             cartridge_fields: __type(name: "ServerInfoCartridge") {
                 fields { name }
             }
+            vshard_storage_fields: __type(name: "ServerInfoVshardStorage") {
+                fields { name }
+            }
+            membership_fields: __type(name: "ServerInfoMembership") {
+                fields { name }
+            }
         }]]
     })
 
@@ -268,6 +274,8 @@ function g.test_server_info_schema()
     local field_name_network = fields_from_map(data['network_fields'], 'name')
     local field_name_replica = fields_from_map(data['replication_fields'], 'name')
     local field_name_cartridge = fields_from_map(data['cartridge_fields'], 'name')
+    local field_name_vshard_storage = fields_from_map(data['vshard_storage_fields'], 'name')
+    local field_name_membership = fields_from_map(data['membership_fields'], 'name')
 
     local query = string.format(
             [[
@@ -279,6 +287,8 @@ function g.test_server_info_schema()
                             network { %s }
                             replication { %s }
                             cartridge { %s }
+                            vshard_storage { %s }
+                            membership { %s }
                         }
                     }
                 }
@@ -287,7 +297,9 @@ function g.test_server_info_schema()
             table.concat(field_name_storage, ' '),
             table.concat(field_name_network, ' '),
             table.concat(field_name_replica, ' '),
-            table.concat(field_name_cartridge, ' '))
+            table.concat(field_name_cartridge, ' '),
+            table.concat(field_name_vshard_storage, ' '),
+            table.concat(field_name_membership, ' '))
             -- workaround composite graphql type
                 :gsub('error', 'error { message }')
                 :gsub('replication_info', 'replication_info { id }')
@@ -342,7 +354,12 @@ function g.test_servers()
                     priority
                     replicaset { roles }
                     statistics { vshard_buckets_count }
-                    boxinfo { cartridge { state error { message class_name } } }
+                    boxinfo {
+                        cartridge { state error { message class_name } }
+                        membership { status }
+                        vshard_router { buckets_unreachable }
+                        vshard_storage { buckets_active }
+                    }
                 }
             }
         ]]
@@ -357,7 +374,12 @@ function g.test_servers()
             disabled = false,
             statistics = {vshard_buckets_count = box.NULL},
             replicaset = {roles = {'vshard-router'}},
-            boxinfo = {cartridge = {error = box.NULL, state = "RolesConfigured"}},
+            boxinfo = {
+                cartridge = {error = box.NULL, state = "RolesConfigured"},
+                membership = {status = 'alive'},
+                vshard_router = {{ buckets_unreachable = 0 }},
+                vshard_storage = box.NULL,
+            },
         }, {
             uri = 'localhost:13302',
             uuid = helpers.uuid('b', 'b', 1),
@@ -367,7 +389,12 @@ function g.test_servers()
             disabled = false,
             statistics = {vshard_buckets_count = 3000},
             replicaset = {roles = {'vshard-storage'}},
-            boxinfo = {cartridge = {error = box.NULL, state = "RolesConfigured"}},
+            boxinfo = {
+                cartridge = {error = box.NULL, state = "RolesConfigured"},
+                membership = {status = 'alive'},
+                vshard_router = box.NULL,
+                vshard_storage = {buckets_active = 3000},
+            },
         }, {
             uri = 'localhost:13304',
             uuid = helpers.uuid('b', 'b', 2),
@@ -377,7 +404,12 @@ function g.test_servers()
             disabled = false,
             statistics = {vshard_buckets_count = 3000},
             replicaset = {roles = {'vshard-storage'}},
-            boxinfo = {cartridge = {error = box.NULL, state = "RolesConfigured"}},
+            boxinfo = {
+                cartridge = {error = box.NULL, state = "RolesConfigured"},
+                membership = {status = 'alive'},
+                vshard_router = box.NULL,
+                vshard_storage = {buckets_active = 3000},
+            },
         }, {
             uri = 'localhost:13303',
             uuid = '',

@@ -15,7 +15,10 @@ export function getInstanceData({ instanceUUID }) {
       descriptionGeneral,
       descriptionNetwork,
       descriptionReplication,
-      descriptionStorage
+      descriptionStorage,
+      descriptionMembership,
+      descriptionVshardRouter,
+      descriptionVshardStorage,
     }) => {
       const {
         alias,
@@ -50,7 +53,10 @@ export function getInstanceData({ instanceUUID }) {
           general: descriptionsByName(descriptionGeneral),
           network: descriptionsByName(descriptionNetwork),
           replication: descriptionsByName(descriptionReplication),
-          storage: descriptionsByName(descriptionStorage)
+          storage: descriptionsByName(descriptionStorage),
+          membership: descriptionsByName(descriptionMembership),
+          vshard_router: descriptionsByName(descriptionVshardRouter),
+          vshard_storage: descriptionsByName(descriptionVshardStorage),
         }
       }
     });

@@ -152,6 +152,12 @@ function g.test_api()
                 rebalancer_disbalance_threshold
             }
         }
+        servers {
+            alias
+            boxinfo {
+                vshard_router { vshard_group }
+            }
+        }
     }]]}
 
     local res = g.cluster:server('router-1'):graphql(request)
@@ -161,6 +167,16 @@ function g.test_api()
     t.assert_equals(data['vshard_bucket_count'], 32000)
     t.assert_equals(data['vshard_known_groups'], {'cold', 'hot'})
     t.assert_equals(#data['vshard_groups'], 2)
+
+    local groups = res['data']['servers']
+    t.assert_equals(groups, {
+        {alias = 'storage-hot-1', boxinfo = {vshard_router = box.NULL}},
+        {alias = 'storage-cold-1', boxinfo = {vshard_router = box.NULL}},
+        {
+            alias = 'router-1',
+            boxinfo = {vshard_router = {{vshard_group = "cold"}, {vshard_group = "hot"}}},
+        },
+    })
 
     local expected_map = {
         ['name'] = 'cold',
@@ -206,7 +222,6 @@ function g.test_api()
         }
     })
 end
-
 
 function g.test_mutations()
     local ruuid_cold = g.cluster:server('storage-cold-1').replicaset_uuid

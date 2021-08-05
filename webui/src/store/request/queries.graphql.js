@@ -117,6 +117,31 @@ export const serverDetailsFields = gql`
         cartridge {
           version
         }
+        membership {
+          status
+          incarnation
+          PROTOCOL_PERIOD_SECONDS
+          ACK_TIMEOUT_SECONDS
+          ANTI_ENTROPY_PERIOD_SECONDS
+          SUSPECT_TIMEOUT_SECONDS
+          NUM_FAILURE_DETECTION_SUBGROUPS
+        }
+        vshard_router {
+          vshard_group
+          buckets_unreachable
+          buckets_available_ro
+          buckets_unknown
+          buckets_available_rw
+        }
+        vshard_storage {
+          vshard_group
+          buckets_receiving
+          buckets_active
+          buckets_total
+          buckets_garbage
+          buckets_pinned
+          buckets_sending
+        }
         network {
           io_collect_interval
           net_msg_max
@@ -179,8 +204,26 @@ export const firstServerDetailsQuery = gql`
     servers(uuid: $uuid) {
       ...serverDetailsFields
     }
-    
+
     descriptionCartridge: __type(name: "ServerInfoCartridge") {
+      fields {
+        name
+        description
+      }
+    }
+    descriptionMembership: __type(name: "ServerInfoMembership") {
+      fields {
+        name
+        description
+      }
+    }
+    descriptionVshardRouter: __type(name: "VshardRouter") {
+      fields {
+        name
+        description
+      }
+    }
+    descriptionVshardStorage: __type(name: "ServerInfoVshardStorage") {
       fields {
         name
         description
@@ -291,7 +334,7 @@ query serverList ($withStats: Boolean!) {
         config_locked
         uuid
         operation_error
-      } 
+      }
       refine_uri {
         uuid
         uri_old
@@ -461,7 +504,7 @@ export const setFilesMutation = gql`
         filename
         content
       }
-    }  
+    }
   }
 `;
 
@@ -479,7 +522,7 @@ export const disableServersMutation = gql`
 export const restartReplicationMutation = gql`
   mutation restart_replication($uuids: [String!]) {
     cluster {
-      restart_replication(uuids: $uuids) 
+      restart_replication(uuids: $uuids)
     }
   }
 `;

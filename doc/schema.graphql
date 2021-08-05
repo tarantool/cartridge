@@ -1,5 +1,5 @@
 # source: http://localhost:8081/admin/api
-# timestamp: Mon Jul 26 2021 16:55:54 GMT+0300 (Москва, стандартное время)
+# timestamp: Thu Aug 05 2021 14:38:50 GMT+0300 (Moscow Standard Time)
 
 """Cluster management"""
 type Apicluster {
@@ -381,11 +381,16 @@ type Server {
 
 """Server information and configuration."""
 type ServerInfo {
+  membership: ServerInfoMembership!
   cartridge: ServerInfoCartridge!
+  replication: ServerInfoReplication!
   storage: ServerInfoStorage!
   network: ServerInfoNetwork!
   general: ServerInfoGeneral!
-  replication: ServerInfoReplication!
+  vshard_storage: ServerInfoVshardStorage
+
+  """List of vshard router parameters"""
+  vshard_router: [VshardRouter]
 }
 
 type ServerInfoCartridge {
@@ -440,6 +445,31 @@ type ServerInfoGeneral {
   memtx_dir: String
 }
 
+type ServerInfoMembership {
+  """Direct ping period"""
+  PROTOCOL_PERIOD_SECONDS: Float
+
+  """Number of members to ping a suspect indirectly"""
+  NUM_FAILURE_DETECTION_SUBGROUPS: Int
+
+  """
+  Value incremented every time the instance became a suspect, dead, or updates its payload
+  """
+  incarnation: Int
+
+  """Status of the instance"""
+  status: String
+
+  """ACK message wait time"""
+  ACK_TIMEOUT_SECONDS: Float
+
+  """Timeout to mark a suspect dead"""
+  SUSPECT_TIMEOUT_SECONDS: Float
+
+  """Anti-entropy synchronization period"""
+  ANTI_ENTROPY_PERIOD_SECONDS: Float
+}
+
 type ServerInfoNetwork {
   io_collect_interval: Float
   readahead: Long
@@ -483,6 +513,29 @@ type ServerInfoStorage {
   vinyl_write_threads: Int
   vinyl_read_threads: Int
   wal_dir_rescan_delay: Float
+}
+
+type ServerInfoVshardStorage {
+  """The number of buckets that are sending at this time"""
+  buckets_sending: Int
+
+  """The number of buckets that are waiting to be collected by GC"""
+  buckets_garbage: Int
+
+  """Total number of buckets on the storage"""
+  buckets_total: Int
+
+  """Vshard group"""
+  vshard_group: String
+
+  """The number of pinned buckets on the storage"""
+  buckets_pinned: Int
+
+  """The number of active buckets on the storage"""
+  buckets_active: Int
+
+  """The number of buckets that are receiving at this time"""
+  buckets_receiving: Int
 }
 
 """A short server information"""
@@ -626,4 +679,27 @@ type VshardGroup {
 
   """Scheduler bucket move quota"""
   sched_move_quota: Long!
+}
+
+type VshardRouter {
+  """The number of buckets whose replica sets are not known to the router"""
+  buckets_unknown: Int
+
+  """
+  The number of buckets known to the router and available for read and write requests
+  """
+  buckets_available_rw: Int
+
+  """Vshard group"""
+  vshard_group: String
+
+  """
+  The number of buckets known to the router but unavailable for any requests
+  """
+  buckets_unreachable: Int
+
+  """
+  The number of buckets known to the router and available for read requests
+  """
+  buckets_available_ro: Int
 }
