@@ -50,7 +50,7 @@ jobs:
         id: cache-compatibility-rocks
         with:
           path: .rocks/
-          key: cache-compatibility-rocks-${{ matrix.runs-on }}-${{ hashFiles('cartridge-scm-1.rockspec') }}
+          key: cache-compatibility-054-rocks-${{ matrix.runs-on }}-${{ hashFiles('cartridge-scm-1.rockspec') }}
           restore-keys: cache-compatibility-rocks-${{ matrix.runs-on }}
       -
         run: tarantoolctl rocks install luatest 0.5.4

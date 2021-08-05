@@ -112,7 +112,7 @@ jobs:
         id: cache-luatest-rocks
         with:
           path: .rocks/
-          key: cache-luatest-rocks-${{ matrix.runs-on }}-${{ hashFiles('cartridge-scm-1.rockspec') }}
+          key: cache-luatest-054-rocks-${{ matrix.runs-on }}-${{ hashFiles('cartridge-scm-1.rockspec') }}
           restore-keys: cache-luatest-rocks-${{ matrix.runs-on }}
       -
         run: tarantoolctl rocks install luatest 0.5.4
