@@ -47,7 +47,7 @@ jobs:
           key: rocks-${{ hashFiles('cartridge-scm-1.rockspec') }}
           restore-keys: rocks
       -
-        run: tarantoolctl rocks install luatest 0.5.2
+        run: tarantoolctl rocks install luatest 0.5.4
         if: steps.cache-rocks.outputs.cache-hit != 'true'
 
       ##################################################################

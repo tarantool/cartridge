@@ -53,7 +53,7 @@ jobs:
           key: cache-compatibility-rocks-${{ matrix.runs-on }}-${{ hashFiles('cartridge-scm-1.rockspec') }}
           restore-keys: cache-compatibility-rocks-${{ matrix.runs-on }}
       -
-        run: tarantoolctl rocks install luatest 0.5.2
+        run: tarantoolctl rocks install luatest 0.5.4
         if: steps.cache-compatibility-rocks.outputs.cache-hit != 'true'
 
       - run: tarantoolctl rocks make
