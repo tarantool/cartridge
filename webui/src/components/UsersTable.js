@@ -37,7 +37,7 @@ const styles = {
     background: white;
     height: 200px;
     thead {
-      background: #f0f2f5;
+      background: ${colors.baseBg};
     }
   `,
   noDataState: css`
