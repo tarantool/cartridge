@@ -10,20 +10,20 @@ local function init_remote_funcs(servers, fn_names, fn_body)
     for _, server in pairs(servers) do
         for _, fn_name in ipairs(fn_names) do
             local eval_str = ('%s = %s'):format(fn_name, fn_body)
-            server.net_box:eval(eval_str)
+            server:eval(eval_str)
         end
     end
 end
 
 local function cleanup_log_data()
-    g.s1.net_box:eval([[
+    g.s1:eval([[
         _G.__log_warn = {}
         _G.__log_error = {}
     ]])
 end
 
 local function call_twophase(server, arg)
-    return server.net_box:eval([[
+    return server:eval([[
         local twophase = require('cartridge.twophase')
         return twophase.twophase_commit(...)
     ]], {arg})
@@ -52,7 +52,7 @@ g.before_all(function()
         return nil, require('errors').new('Err', 'Error occured')
     end]]
 
-    g.s1.net_box:eval([[
+    g.s1:eval([[
         _G.__log_warn = {}
         _G.__log_error = {}
         package.loaded['log'].warn = function(...) table.insert(_G.__log_warn, string.format(...)) end
@@ -149,8 +149,8 @@ function g.test_success()
         upload_data = {'xyz'},
     })
     t.assert_equals({ok, err}, {true, nil})
-    t.assert_equals(g.s1.net_box:eval('return _G.__log_error'), {})
-    t.assert_equals(g.s1.net_box:eval('return _G.__log_warn'), {
+    t.assert_equals(g.s1:eval('return _G.__log_error'), {})
+    t.assert_equals(g.s1:eval('return _G.__log_warn'), {
         "(2PC) twophase_commit upload phase...",
         "(2PC) twophase_commit prepare phase...",
         "Prepared for twophase_commit at localhost:13302",
@@ -169,7 +169,7 @@ function g.test_success()
 end
 
 function g.test_upload_skipped()
-    g.s1.net_box:eval([[
+    g.s1:eval([[
         _G.__prepare = function(data)
             assert(data == nil)
             return true
@@ -184,8 +184,8 @@ function g.test_upload_skipped()
         fn_abort = '_G.__abort',
     })
     t.assert_equals({ok, err}, {true, nil})
-    t.assert_equals(g.s1.net_box:eval('return _G.__log_error'), {})
-    t.assert_equals(g.s1.net_box:eval('return _G.__log_warn'), {
+    t.assert_equals(g.s1:eval('return _G.__log_error'), {})
+    t.assert_equals(g.s1:eval('return _G.__log_warn'), {
         "(2PC) my_2pc prepare phase...",
         "Prepared for my_2pc at localhost:13301",
         "Prepared for my_2pc at localhost:13302",
@@ -211,10 +211,10 @@ function g.test_prepare_fails()
         class_name = 'Err',
         err = '"localhost:13302": Error occured',
     })
-    t.assert_items_include(g.s1.net_box:eval('return _G.__log_warn'), {
+    t.assert_items_include(g.s1:eval('return _G.__log_warn'), {
         'Aborted simple_twophase at localhost:13301'
     })
-    local error_log = g.s1.net_box:eval('return _G.__log_error')
+    local error_log = g.s1:eval('return _G.__log_error')
     t.assert_str_contains(error_log[1],
         'Error preparing for simple_twophase at localhost:13302'
     )
@@ -235,10 +235,10 @@ function g.test_commit_fails()
     t.assert_covers(err, {
         class_name = 'Err', err = '"localhost:13302": Error occured'
     })
-    t.assert_items_include(g.s1.net_box:eval('return _G.__log_warn'),{
+    t.assert_items_include(g.s1:eval('return _G.__log_warn'),{
         'Committed simple_twophase at localhost:13301'
     })
-    local error_log = g.s1.net_box:eval('return _G.__log_error')
+    local error_log = g.s1:eval('return _G.__log_error')
     t.assert_str_contains(error_log[1],
         'Error committing simple_twophase at localhost:13302'
     )
@@ -260,7 +260,7 @@ function g.test_abort_fails()
     t.assert_covers(err, {
         class_name = 'Err', err = '"localhost:13302": Error occured'
     })
-    local error_log = g.s1.net_box:eval('return _G.__log_error')
+    local error_log = g.s1:eval('return _G.__log_error')
     t.assert_str_contains(error_log[1],
         'Error preparing for simple_twophase at localhost:13302'
     )

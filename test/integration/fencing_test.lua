@@ -46,7 +46,7 @@ local function setup_cluster(g)
     B1 = g.cluster:server('B1')
     B2 = g.cluster:server('B2')
 
-    g.cluster.main_server.net_box:call(
+    g.cluster.main_server:call(
         'package.loaded.cartridge.failover_set_params',
         {{
             failover_timeout = 3,
@@ -92,8 +92,8 @@ g_stateboard.before_all(function()
 
     setup_cluster(g)
 
-    B1.net_box:call('box.schema.sequence.create', {'test'})
-    B1.net_box:call('package.loaded.cartridge.failover_set_params', {{
+    B1:call('box.schema.sequence.create', {'test'})
+    B1:call('package.loaded.cartridge.failover_set_params', {{
         mode = 'stateful',
         state_provider = 'tarantool',
         tarantool_params = {
@@ -128,8 +128,8 @@ g_etcd2.before_all(function()
 
     setup_cluster(g)
 
-    B1.net_box:call('box.schema.sequence.create', {'test'})
-    t.assert(A1.net_box:call(
+    B1:call('box.schema.sequence.create', {'test'})
+    t.assert(A1:call(
         'package.loaded.cartridge.failover_set_params',
         {{
             mode = 'stateful',
@@ -196,52 +196,52 @@ local q_leadership = [[
 add('test_basics', function(g)
     t.assert(g.session:set_leaders({{uB, uB1}}))
     helpers.retrying({}, function()
-        t.assert_equals(A1.net_box:eval(q_leadership, {uB}), uB1)
-        t.assert_equals(B1.net_box:eval(q_leadership, {uB}), uB1)
+        t.assert_equals(A1:eval(q_leadership, {uB}), uB1)
+        t.assert_equals(B1:eval(q_leadership, {uB}), uB1)
     end)
 
-    A1.net_box:eval(q_set_fencing_params, {0.1, 0.1})
-    B1.net_box:eval(q_set_fencing_params, {0.1, 0.1})
+    A1:eval(q_set_fencing_params, {0.1, 0.1})
+    B1:eval(q_set_fencing_params, {0.1, 0.1})
 
     -- State provider is unavailable
     g.state_provider:stop()
 
     helpers.retrying({}, function()
-        t.assert_equals(B1.net_box:eval(q_is_vclockkeeper), true)
-        t.assert_equals(B1.net_box:eval(q_readonliness), false)
-        t.assert_equals(B1.net_box:eval(q_leadership, {uB}), uB1)
+        t.assert_equals(B1:eval(q_is_vclockkeeper), true)
+        t.assert_equals(B1:eval(q_readonliness), false)
+        t.assert_equals(B1:eval(q_leadership, {uB}), uB1)
     end)
 
-    t.assert_equals(A1.net_box:eval(q_is_vclockkeeper), false)
-    t.assert_equals(A1.net_box:eval(q_readonliness), false)
-    t.assert_equals(A1.net_box:eval(q_leadership, {uA}), uA1)
+    t.assert_equals(A1:eval(q_is_vclockkeeper), false)
+    t.assert_equals(A1:eval(q_readonliness), false)
+    t.assert_equals(A1:eval(q_leadership, {uA}), uA1)
 
     -- Replica is down
     B2:stop()
 
     -- Fencing is triggered, B1 goes read-only
     helpers.retrying({}, function()
-        t.assert_equals(B1.net_box:eval(q_is_vclockkeeper), false)
-        t.assert_equals(B1.net_box:eval(q_readonliness), true)
-        t.assert_equals(B1.net_box:eval(q_leadership, {uB}), nil)
+        t.assert_equals(B1:eval(q_is_vclockkeeper), false)
+        t.assert_equals(B1:eval(q_readonliness), true)
+        t.assert_equals(B1:eval(q_leadership, {uB}), nil)
         -- A1 isn't affected
-        t.assert_equals(B1.net_box:eval(q_leadership, {uA}), uA1)
+        t.assert_equals(B1:eval(q_leadership, {uA}), uA1)
     end)
 
     -- A1 still thinks B1 is a leader
-    t.assert_equals(A1.net_box:eval(q_leadership, {uB}), uB1)
+    t.assert_equals(A1:eval(q_leadership, {uB}), uB1)
 
     -- A1 is a single-instance replicaset and never goes ro
-    t.assert_equals(A1.net_box:eval(q_leadership, {uA}), uA1)
-    t.assert_equals(A1.net_box:eval(q_is_vclockkeeper), false)
-    t.assert_equals(A1.net_box:eval(q_readonliness), false)
+    t.assert_equals(A1:eval(q_leadership, {uA}), uA1)
+    t.assert_equals(A1:eval(q_is_vclockkeeper), false)
+    t.assert_equals(A1:eval(q_readonliness), false)
 
     -- Everything is back to normal
     g.state_provider:start()
 
     helpers.retrying({}, function()
-        t.assert_equals(B1.net_box:eval(q_is_vclockkeeper), true)
-        t.assert_equals(B1.net_box:eval(q_readonliness), false)
-        t.assert_equals(B1.net_box:eval(q_leadership, {uB}), uB1)
+        t.assert_equals(B1:eval(q_is_vclockkeeper), true)
+        t.assert_equals(B1:eval(q_readonliness), false)
+        t.assert_equals(B1:eval(q_leadership, {uB}), uB1)
     end)
 end)

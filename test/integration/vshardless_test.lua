@@ -17,7 +17,7 @@ g.before_all = function()
         }},
     })
     g.cluster:start()
-    g.cluster.main_server.net_box:eval([[
+    g.cluster.main_server:eval([[
         package.preload['vshard'] = function()
             error('Requiring vshard is prohibited in this test', 0)
         end
@@ -67,7 +67,7 @@ function g.test_edit_replicaset()
 end
 
 function g.test_package_loaded()
-    g.cluster.main_server.net_box:eval([[
+    g.cluster.main_server:eval([[
         assert( package.loaded['cartridge.roles.vshard-router'] == nil )
         assert( package.loaded['cartridge.roles.vshard-storage'] == nil )
     ]])
@@ -128,7 +128,7 @@ function g.test_api()
         }
     }})
 
-    local _, err = g.cluster.main_server.net_box:call(
+    local _, err = g.cluster.main_server:call(
         'package.loaded.cartridge.admin_bootstrap_vshard'
     )
 

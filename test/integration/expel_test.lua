@@ -23,9 +23,9 @@ g.before_all(function()
         t.assert_equals(helpers.list_cluster_issues(g.A1), {})
     end)
 
-    g.r1_uuid = g.A1.net_box:eval('return box.space._cluster:get(1).uuid')
-    g.r2_uuid = g.A1.net_box:eval('return box.space._cluster:get(2).uuid')
-    g.r3_uuid = g.A1.net_box:eval('return box.space._cluster:get(3).uuid')
+    g.r1_uuid = g.A1:eval('return box.space._cluster:get(1).uuid')
+    g.r2_uuid = g.A1:eval('return box.space._cluster:get(2).uuid')
+    g.r3_uuid = g.A1:eval('return box.space._cluster:get(3).uuid')
 
     -- Expel the second server, the gap is important for the test.
     local expelled = helpers.table_find_by_attr(
@@ -33,14 +33,14 @@ g.before_all(function()
     )
 
     expelled:stop()
-    g.A1.net_box:eval([[
+    g.A1:eval([[
         package.loaded.cartridge.admin_edit_topology({servers = {{
             uuid = ...,
             expelled = true,
         }}})
     ]], {expelled.instance_uuid})
 
-    g.A1.net_box:call('package.loaded.cartridge.admin_edit_topology',
+    g.A1:call('package.loaded.cartridge.admin_edit_topology',
         {{servers = {{uuid = expelled.instance_uuid, expelled = true}}}})
 
 end)
@@ -51,7 +51,7 @@ g.after_all(function()
 end)
 
 function g.test_api()
-    local ret = g.A1.net_box:eval('return box.info.replication')
+    local ret = g.A1:eval('return box.info.replication')
     t.assert_covers(ret[1], {id = 1, uuid = g.r1_uuid}, ret)
     t.assert_covers(ret[3], {id = 3, uuid = g.r3_uuid}, ret)
     t.assert_equals(ret[2], nil, ret)

@@ -188,31 +188,31 @@ function g.test_uninitialized()
     )
 
     t.assert_equals(
-        g.server.net_box:eval([[return require('title').get()]]),
+        g.server:eval([[return require('title').get()]]),
         'tarantool srv_basic.lua: test-title',
         "Instance's title wasn't set")
 end
 
 function g.test_membership_options()
     t.assert_equals(
-        g.server.net_box:eval([[return require('membership.options').PROTOCOL_PERIOD_SECONDS]]),
+        g.server:eval([[return require('membership.options').PROTOCOL_PERIOD_SECONDS]]),
         0.2
     )
 
     t.assert_equals(
-        g.server.net_box:eval([[return require('membership.options').SUSPECT_TIMEOUT_SECONDS]]),
+        g.server:eval([[return require('membership.options').SUSPECT_TIMEOUT_SECONDS]]),
         100
     )
 end
 
 function g.test_rpc()
-    local candidates = g.server.net_box:call(
+    local candidates = g.server:call(
         'package.loaded.cartridge.rpc_get_candidates',
         {'myrole-permanent'}
     )
     t.assert_equals(candidates, {})
 
-    local _, err = g.server.net_box:call(
+    local _, err = g.server:call(
         'package.loaded.cartridge.rpc_call',
         {'myrole-permanent', 'unknown'}
     )

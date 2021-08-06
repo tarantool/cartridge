@@ -46,11 +46,11 @@ g.before_all = function()
         }},
         sharding_key = {'record_id'},
     }
-    g.cluster.main_server.net_box:call('cartridge_set_schema',
+    g.cluster.main_server:call('cartridge_set_schema',
         {require('yaml').encode({spaces = {test = test_schema}})}
     )
 
-    g.cluster.main_server.net_box:eval([[
+    g.cluster.main_server:eval([[
         for i = 1, 300 do
             vshard.router.callrw(
                 i, 'box.space.test:insert',
@@ -97,19 +97,19 @@ local function expel_sA1()
 end
 
 local function get(srv, i)
-    return srv.net_box:eval(
+    return srv:eval(
         'return require("vshard").router.callro(...)',
         {i, 'box.space.test:get', {i}}
     )
 end
 
 function g.test()
-    t.assert_equals(g.sA1.net_box:call('box.space.test:len'), 150)
-    t.assert_equals(g.sB1.net_box:call('box.space.test:len'), 150)
+    t.assert_equals(g.sA1:call('box.space.test:len'), 150)
+    t.assert_equals(g.sB1:call('box.space.test:len'), 150)
 
     -- Rebalancer runs on sA1
-    g.sA1.net_box:eval([[assert(vshard.storage.internal.rebalancer_fiber ~= nil)]])
-    g.sB1.net_box:eval([[assert(vshard.storage.internal.rebalancer_fiber == nil)]])
+    g.sA1:eval([[assert(vshard.storage.internal.rebalancer_fiber ~= nil)]])
+    g.sB1:eval([[assert(vshard.storage.internal.rebalancer_fiber == nil)]])
 
     -- Can't disable vshard-storage role with non-zero weight
     t.assert_error_msg_contains(
@@ -125,7 +125,7 @@ function g.test()
         expel_sA1
     )
 
-    g.sA1.net_box:call('vshard.storage.rebalancer_disable')
+    g.sA1:call('vshard.storage.rebalancer_disable')
     set_weight(g.sA1, 0)
 
     -- Can't disable vshard-storage role until rebalancing finishes
@@ -142,14 +142,14 @@ function g.test()
         expel_sA1
     )
 
-    g.sA1.net_box:call('vshard.storage.rebalancer_enable')
+    g.sA1:call('vshard.storage.rebalancer_enable')
     helpers.retrying({}, function()
-        g.sA1.net_box:call('vshard.storage.rebalancer_wakeup')
+        g.sA1:call('vshard.storage.rebalancer_wakeup')
 
-        t.assert_equals(g.sA1.net_box:call('vshard.storage.buckets_count'), 0)
-        t.assert_equals(g.sB1.net_box:call('vshard.storage.buckets_count'), 300)
-        t.assert_equals(g.sA1.net_box:call('box.space.test:len'), 0)
-        t.assert_equals(g.sB1.net_box:call('box.space.test:len'), 300)
+        t.assert_equals(g.sA1:call('vshard.storage.buckets_count'), 0)
+        t.assert_equals(g.sB1:call('vshard.storage.buckets_count'), 300)
+        t.assert_equals(g.sA1:call('box.space.test:len'), 0)
+        t.assert_equals(g.sB1:call('box.space.test:len'), 300)
     end)
 
     set_roles(g.sA1, {'myrole'})
@@ -166,7 +166,7 @@ function g.test()
     t.assert_equals(get(g.sB1, 1), {1, 1, 'i0001'})
     t.assert_equals(get(g.sB1, 300), {300, 300, 'i0300'})
 
-    helpers.retrying({}, function() g.sA1.net_box:eval([[
+    helpers.retrying({}, function() g.sA1:eval([[
         for _, f in pairs(require('fiber').info()) do
             if f.name:startswith('vshard.') then
                 error('Fiber ' .. f.name .. ' still alive', 0)
@@ -175,11 +175,11 @@ function g.test()
     ]]) end)
 
     -- sB1 remains the only storage, rebalancer should be there.
-    g.sB1.net_box:eval([[
+    g.sB1:eval([[
         assert(vshard.storage.internal.rebalancer_fiber ~= nil)
     ]])
     -- And not on sA1.
-    g.sA1.net_box:eval([[
+    g.sA1:eval([[
         assert(rawget(_G, 'vshard') == nil)
         assert(_G.__module_vshard_storage.rebalancer_fiber == nil)
         assert(not box.info.ro)
@@ -190,14 +190,14 @@ function g.test()
     set_weight(g.sA1, 2)
 
     helpers.retrying({}, function()
-        t.assert_equals(g.sA1.net_box:call('vshard.storage.buckets_count'), 200)
-        t.assert_equals(g.sB1.net_box:call('vshard.storage.buckets_count'), 100)
+        t.assert_equals(g.sA1:call('vshard.storage.buckets_count'), 200)
+        t.assert_equals(g.sB1:call('vshard.storage.buckets_count'), 100)
     end)
 
-    t.assert_equals(g.sA1.net_box:call('vshard.router.bucket_count'), 300)
-    t.assert_equals(g.sB1.net_box:call('vshard.router.bucket_count'), 300)
-    t.assert_equals(g.sA1.net_box:call('box.space.test:len'), 200)
-    t.assert_equals(g.sB1.net_box:call('box.space.test:len'), 100)
+    t.assert_equals(g.sA1:call('vshard.router.bucket_count'), 300)
+    t.assert_equals(g.sB1:call('vshard.router.bucket_count'), 300)
+    t.assert_equals(g.sA1:call('box.space.test:len'), 200)
+    t.assert_equals(g.sB1:call('box.space.test:len'), 100)
 
     t.assert_equals(get(g.sA1, 1), {1, 1, 'i0001'})
     t.assert_equals(get(g.sB1, 1), {1, 1, 'i0001'})

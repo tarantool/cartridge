@@ -64,7 +64,7 @@ end)
 function g.test_issues_limits()
     local server = g.cluster:server('master')
     t.assert_equals(
-        server.net_box:eval("return require('cartridge.vars').new('cartridge.issues').limits"),
+        server:eval("return require('cartridge.vars').new('cartridge.issues').limits"),
         {
             clock_delta_threshold_warning = 100000000,
             fragmentation_threshold_warning = 100000000,
@@ -73,13 +73,13 @@ function g.test_issues_limits()
     )
 
     -- restore to defaults by calling set_limits
-    server.net_box:eval([[require("cartridge.issues").set_limits({
+    server:eval([[require("cartridge.issues").set_limits({
         clock_delta_threshold_warning = 5,
         fragmentation_threshold_warning = 0.6,
         fragmentation_threshold_critical = 0.9
     })]])
     t.assert_equals(
-        server.net_box:eval("return require('cartridge.vars').new('cartridge.issues').limits"),
+        server:eval("return require('cartridge.vars').new('cartridge.issues').limits"),
         {
             clock_delta_threshold_warning = 5,
             fragmentation_threshold_warning = 0.6,
@@ -91,20 +91,20 @@ function g.test_issues_limits()
 end
 
 function g.test_broken_replica()
-    g.master.net_box:eval([[
+    g.master:eval([[
         __replication = box.cfg.replication
         box.cfg{replication = box.NULL}
     ]])
 
-    g.replica1.net_box:eval([[
+    g.replica1:eval([[
         box.cfg{read_only = false}
         box.schema.space.create('test')
     ]])
     t.helpers.retrying({}, function()
-        g.replica2.net_box:eval('assert(box.space.test)')
+        g.replica2:eval('assert(box.space.test)')
     end)
 
-    g.master.net_box:eval([[
+    g.master:eval([[
         box.schema.space.create('test')
         pcall(box.cfg, {replication = __replication})
         __replication = nil
@@ -159,7 +159,7 @@ function g.test_broken_replica()
     end)
 
     for _, srv in ipairs({g.master, g.replica1, g.replica2}) do
-        srv.net_box:eval([[
+        srv:eval([[
             box.cfg({replication_skip_conflict = true})
         ]])
     end
@@ -185,7 +185,7 @@ function g.test_broken_replica()
         t.assert_equals(helpers.list_cluster_issues(g.master), {})
     end)
 
-    g.master.net_box:eval([[
+    g.master:eval([[
         box.space.test:drop()
     ]])
 end
@@ -196,9 +196,9 @@ function g.test_replication_idle()
     -- and waits for timeout on stopped replicas.
     -- With this hack, pool.map_call returns "Connection refused"
     -- immediately.
-    g.replica1.net_box:call('box.cfg', {{listen = box.NULL}})
-    g.replica2.net_box:call('box.cfg', {{listen = box.NULL}})
-    g.master.net_box:eval([[
+    g.replica1:call('box.cfg', {{listen = box.NULL}})
+    g.replica2:call('box.cfg', {{listen = box.NULL}})
+    g.master:eval([[
         local pool = require('cartridge.pool')
         pool.connect('localhost:13302', {wait_connected = false}):close()
         pool.connect('localhost:13303', {wait_connected = false}):close()
@@ -239,7 +239,9 @@ function g.test_replication_idle()
         resp.suggestions,
         {restart_replication = box.NULL}
     )
+end
 
+g.after_test('test_replication_idle', function()
     -- Revert all the hacks
     g.replica1.process:kill('CONT')
     g.replica2.process:kill('CONT')
@@ -249,10 +251,10 @@ function g.test_replication_idle()
     t.helpers.retrying({}, function()
         t.assert_equals(helpers.list_cluster_issues(g.master), {})
     end)
-end
+end)
 
 function g.test_config_mismatch()
-    g.replica2.net_box:eval([[
+    g.replica2:eval([[
         local confapplier = require('cartridge.confapplier')
         local cfg = confapplier.get_active_config():copy()
         cfg:set_plaintext('todo1.txt', '- Test config mismatch')
@@ -272,7 +274,7 @@ function g.test_config_mismatch()
         }}
     )
 
-    g.replica2.net_box:eval([[
+    g.replica2:eval([[
         local confapplier = require('cartridge.confapplier')
         local cfg = confapplier.get_active_config():copy()
         cfg:set_plaintext('todo1.txt', nil)
@@ -288,7 +290,7 @@ function g.test_twophase_config_locked()
     t.assert_equals(helpers.list_cluster_issues(g.replica1), {})
 
     -- Make validate_config hang on replica2
-    g.replica2.net_box:eval([[
+    g.replica2:eval([[
         _G.inf_sleep = true
         local prepare_2pc = _G.__cartridge_clusterwide_config_prepare_2pc
         _G.__cartridge_clusterwide_config_prepare_2pc = function(...)
@@ -299,7 +301,7 @@ function g.test_twophase_config_locked()
         end
     ]])
 
-    local future = g.master.net_box:call(
+    local future = g.master:call(
         'package.loaded.cartridge.config_patch_clusterwide',
         {{['todo2.txt'] = '- Test 2pc lock'}},
         {is_async = true}
@@ -325,7 +327,7 @@ function g.test_twophase_config_locked()
     }})
 
     t.assert_equals(future:is_ready(), false)
-    g.replica2.net_box:eval('_G.inf_sleep = nil')
+    g.replica2:eval('_G.inf_sleep = nil')
     t.assert_equals(future:wait_result(), {true})
 
     t.helpers.retrying({}, function()
@@ -344,8 +346,8 @@ function g.test_state_hangs()
 
     t.assert_equals(helpers.list_cluster_issues(g.master), {})
 
-    g.replica1.net_box:eval(set_timeout, {0.1})
-    g.replica1.net_box:eval(set_state, {'ConfiguringRoles'})
+    g.replica1:eval(set_timeout, {0.1})
+    g.replica1:eval(set_state, {'ConfiguringRoles'})
 
     t.helpers.retrying({}, function()
         t.assert_equals(helpers.list_cluster_issues(g.master), {{
@@ -360,8 +362,8 @@ function g.test_state_hangs()
     end)
 
     -- nil will restore default timeout value
-    g.replica1.net_box:eval(set_timeout, {})
-    g.replica1.net_box:eval(set_state, {'RolesConfigured'})
+    g.replica1:eval(set_timeout, {})
+    g.replica1:eval(set_state, {'RolesConfigured'})
 
     t.assert_equals(helpers.list_cluster_issues(g.master), {})
 end
@@ -370,7 +372,7 @@ function g.test_aliens()
     g.alien:start()
 
     -- Test restart_replication API
-    local _, err = g.alien.net_box:eval([[
+    local _, err = g.alien:eval([[
         return require('cartridge.confapplier').restart_replication()
     ]])
     t.assert_equals(err.err, "Current instance isn't bootstrapped yet")
@@ -387,9 +389,11 @@ function g.test_aliens()
         message = 'Instance localhost:13309 (alien)' ..
             ' with alien uuid is in the membership',
     }})
+end
 
+g.after_test('test_aliens', function()
     g.alien:stop()
     t.helpers.retrying({}, function()
         t.assert_equals(helpers.list_cluster_issues(g.master), {})
     end)
-end
+end)

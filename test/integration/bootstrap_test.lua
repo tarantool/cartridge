@@ -70,7 +70,7 @@ function g.test_cookie_change()
     end)
     log.warn('Cluster restarted')
 
-    local cookie = master.net_box:eval([[
+    local cookie = master:eval([[
         local cluster_cookie = require('cartridge.cluster-cookie')
         return cluster_cookie.cookie()
     ]])

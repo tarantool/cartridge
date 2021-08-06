@@ -69,7 +69,7 @@ g.after_all = function()
 end
 
 g.setup = function()
-    g.cluster.main_server.net_box:eval([[
+    g.cluster.main_server:eval([[
         local cartridge = require('cartridge')
         local ok, err = cartridge.config_patch_clusterwide({users_acl = box.NULL})
         assert(ok, err)
@@ -77,7 +77,7 @@ g.setup = function()
 end
 
 local function set_auth_enabled_internal(cluster, enabled)
-    cluster.main_server.net_box:eval([[
+    cluster.main_server:eval([[
         local log = require('log')
         local auth = require('cartridge.auth')
         local enabled = ...
@@ -115,7 +115,7 @@ local function _login(server, username, password)
 end
 
 local function _remove_user(server, username)
-    server.net_box:eval([[
+    server:eval([[
         local auth = require('cartridge.auth')
         local res, err = auth.remove_user(...)
         assert(res, tostring(err))
@@ -123,7 +123,7 @@ local function _remove_user(server, username)
 end
 
 local function _add_user(server, username, password, fullname)
-    server.net_box:eval([[
+    server:eval([[
         local auth = require('cartridge.auth')
         local res, err = auth.add_user(...)
         assert(res, tostring(err))
@@ -131,7 +131,7 @@ local function _add_user(server, username, password, fullname)
 end
 
 local function _edit_user(server, username, password, fullname)
-    server.net_box:eval([[
+    server:eval([[
         local auth = require('cartridge.auth')
         local res, err = auth.edit_user(...)
         assert(res, tostring(err))

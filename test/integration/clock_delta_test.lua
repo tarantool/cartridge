@@ -29,7 +29,7 @@ g.before_all = function()
         t.helpers.retrying({timeout = 5}, function()
             server:connect_net_box()
         end)
-        server.net_box:eval([[
+        server:eval([[
             local fiber = require('fiber')
             local _time64 = fiber.time64
             local delta = tonumber(os.getenv('CLOCK_DELTA'))
@@ -48,7 +48,7 @@ g.after_all = function()
 end
 
 function g.test_clock_delta()
-    g.servers[1].net_box:eval([[
+    g.servers[1]:eval([[
         local membership = require('membership')
         for _, uri in pairs({...}) do
             assert(membership.probe_uri(uri))
@@ -75,7 +75,7 @@ function g.test_clock_delta()
                 resp, 'uri', peer.advertise_uri
             ).clock_delta
             if clock_delta == nil then
-                observer.net_box:eval([[
+                observer:eval([[
                     local membership = require('membership')
                     assert(membership.probe_uri(...))
                 ]], {peer.advertise_uri})

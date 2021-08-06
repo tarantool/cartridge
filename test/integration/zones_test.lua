@@ -33,7 +33,7 @@ local function set_zones(zones)
     for k, v in pairs(zones) do
         table.insert(servers, {uuid = k, zone = v})
     end
-    return g.cluster.main_server.net_box:eval([[
+    return g.cluster.main_server:eval([[
         local servers = ...
         local ret, err = require('cartridge').admin_edit_topology({
             servers = servers,
@@ -46,14 +46,14 @@ local function set_zones(zones)
 end
 
 local function set_distances(distances)
-    return g.cluster.main_server.net_box:call(
+    return g.cluster.main_server:call(
         'package.loaded.cartridge.config_patch_clusterwide',
         {{zone_distances = distances}}
     )
 end
 
 local function get_config(...)
-    return g.cluster.main_server.net_box:call(
+    return g.cluster.main_server:call(
         'package.loaded.cartridge.config_get_readonly', {...}
     )
 end
@@ -164,15 +164,15 @@ function g.test_distances()
     local uuid = g.cluster.main_server.replicaset_uuid
 
     t.assert_equals(
-        g.A1.net_box:eval(q_get_priority, {uuid}),
+        g.A1:eval(q_get_priority, {uuid}),
         {'z1', 'z3', 'z2'}
     )
     t.assert_equals(
-        g.A2.net_box:eval(q_get_priority, {uuid}),
+        g.A2:eval(q_get_priority, {uuid}),
         {'z2', 'z1', 'z3'}
     )
     t.assert_equals(
-        g.A3.net_box:eval(q_get_priority, {uuid}),
+        g.A3:eval(q_get_priority, {uuid}),
         {'z3', 'z1', 'z2'}
     )
 
@@ -180,7 +180,7 @@ function g.test_distances()
     -- omit it before calling vshard.cfg()
     distances.z3.z3 = nil
 
-    local a1_cfg = g.A1.net_box:eval([[
+    local a1_cfg = g.A1:eval([[
         local conf = require('cartridge').config_get_readonly()
         local utils = require('cartridge.vshard-utils')
         return utils.get_vshard_config('default', conf)
@@ -272,7 +272,7 @@ function h.test_zones_distances()
         }
     )
 
-    local distances = h.cluster.main_server.net_box:call(
+    local distances = h.cluster.main_server:call(
         'package.loaded.cartridge.config_get_readonly', {'zone_distances'}
     )
     t.assert_items_equals(distances, h.distances)

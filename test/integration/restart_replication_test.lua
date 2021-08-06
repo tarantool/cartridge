@@ -19,26 +19,16 @@ g.before_all(function()
     g.cluster:start()
     g.A1 = g.cluster:server('A-1')
     g.A2 = g.cluster:server('A-2')
-
-    g.unconfigured = h.Server:new({
-        alias = 'unconfigured',
-        workdir = fio.pathjoin(g.cluster.datadir, 'unconfigured'),
-        command = h.entrypoint('srv_basic'),
-        cluster_cookie = g.cluster.cookie,
-        advertise_port = 13309,
-        http_port = 8089,
-    })
 end)
 
 g.after_all(function()
     g.cluster:stop()
-    g.unconfigured:stop()
     fio.rmtree(g.cluster.datadir)
 end)
 
 function g.test_suggestion()
     -- Trigger replication issue
-    g.A1.net_box:call('box.cfg', {{replication = box.NULL}})
+    g.A1:call('box.cfg', {{replication = box.NULL}})
 
     local replication_issue = {
         level = 'critical',
@@ -85,17 +75,32 @@ function g.test_suggestion()
     end)
 end
 
+g.after_test('test_suggestion', function()
+    g.A2.process:kill('CONT')
+end)
+
+g.before_test('test_errors', function()
+    g.unconfigured = h.Server:new({
+        alias = 'unconfigured',
+        workdir = fio.pathjoin(g.cluster.datadir, 'unconfigured'),
+        command = h.entrypoint('srv_basic'),
+        cluster_cookie = g.cluster.cookie,
+        advertise_port = 13309,
+        http_port = 8089,
+    })
+end)
+
 function g.test_errors()
-    local _, err = g.A1.net_box:call(
+    local _, err = g.A1:call(
         'package.loaded.cartridge.admin_restart_replication',
         {{'1-0-1-0'}}
     )
     t.assert_covers(err, {err = 'Server 1-0-1-0 not in clusterwide config'})
 
-    g.A1.net_box:eval([[
+    g.A1:eval([[
         package.loaded.cartridge.admin_disable_servers({...})
     ]], {g.A2.instance_uuid})
-    local _, err = g.A1.net_box:call(
+    local _, err = g.A1:call(
         'package.loaded.cartridge.admin_restart_replication',
         {{g.A2.instance_uuid}}
     )
@@ -104,14 +109,18 @@ function g.test_errors()
             ' not suitable for restarting replication',
     })
 
-    g.A1.net_box:eval([[
+    g.A1:eval([[
         package.loaded.cartridge.admin_enable_servers({...})
     ]], {g.A2.instance_uuid})
 
     g.unconfigured:start()
-    local _, err = g.unconfigured.net_box:call(
+    local _, err = g.unconfigured:call(
         'package.loaded.cartridge.admin_restart_replication',
         {{g.unconfigured.instance_uuid}}
     )
     t.assert_covers(err, {err = 'Current instance isn\'t bootstrapped yet'})
 end
+
+g.after_test('test_errors', function()
+    g.unconfigured:stop()
+end)

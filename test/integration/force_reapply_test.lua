@@ -33,12 +33,12 @@ end)
 
 function g.test_twophase_config_locked()
     -- Let's put a spoke in two-phases wheel
-    local config = g.A1.net_box:eval([[
+    local config = g.A1:eval([[
         local confapplier = require('cartridge.confapplier')
         return confapplier.get_active_config():get_plaintext()
     ]])
     config['hey.txt'] = 'Hello, locks'
-    g.A2.net_box:call(
+    g.A2:call(
         '_G.__cartridge_clusterwide_config_prepare_2pc', {config}
     )
 
@@ -55,7 +55,7 @@ function g.test_twophase_config_locked()
     }})
 
     -- Obviously, 2pc is locked
-    local ok, err = g.A1.net_box:call(
+    local ok, err = g.A1:call(
         'package.loaded.cartridge.config_patch_clusterwide',
         {{['bye.txt'] = 'Goodbye, locks'}}
     )
@@ -66,7 +66,7 @@ function g.test_twophase_config_locked()
     })
 
     -- But force reapply comes to the rescue!
-    local ok, err = g.A1.net_box:call(
+    local ok, err = g.A1:call(
         'package.loaded.cartridge.config_force_reapply',
         {{g.A2.instance_uuid}}
     )
@@ -76,7 +76,7 @@ function g.test_twophase_config_locked()
     t.assert_equals(fio.path.exists(g.A2.workdir .. '/config.prepare'), false)
 
     -- And patch_clusterwide succeeds
-    local ok, err = g.A1.net_box:call(
+    local ok, err = g.A1:call(
         'package.loaded.cartridge.config_patch_clusterwide',
         {{['bye.txt'] = 'Goodbye, locks'}}
     )
@@ -105,7 +105,7 @@ function g.test_graphql_api()
     )
 
     for _, srv in pairs(g.cluster.servers) do
-        srv.net_box:eval([[
+        srv:eval([[
             local cartridge = require('cartridge')
             local myrole = cartridge.service_get('myrole-permanent')
             myrole.apply_config = function()
@@ -120,26 +120,26 @@ function g.test_graphql_api()
     t.assert(force_reapply({g.A1.instance_uuid, g.A2.instance_uuid, g.A3.instance_uuid}))
 
     local q_get_counter = 'return _G.counter'
-    t.assert_equals(g.A1.net_box:eval(q_get_counter), 3)
-    t.assert_equals(g.A2.net_box:eval(q_get_counter), 2)
-    t.assert_equals(g.A3.net_box:eval(q_get_counter), 1)
+    t.assert_equals(g.A1:eval(q_get_counter), 3)
+    t.assert_equals(g.A2:eval(q_get_counter), 2)
+    t.assert_equals(g.A3:eval(q_get_counter), 1)
 end
 
 function g.test_suggestions()
     -- Wreak some havoc
 
     -- Trigger config_lock issue
-    local config = g.A1.net_box:eval([[
+    local config = g.A1:eval([[
         local confapplier = require('cartridge.confapplier')
         return confapplier.get_active_config():get_plaintext()
     ]])
     config['hey.txt'] = 'Hello, locks'
-    g.A2.net_box:call(
+    g.A2:call(
         '_G.__cartridge_clusterwide_config_prepare_2pc', {config}
     )
 
     -- Add config_mismatch as well
-    g.A2.net_box:eval([[
+    g.A2:eval([[
         local confapplier = require('cartridge.confapplier')
         local cfg = confapplier.get_active_config():copy()
         cfg:set_plaintext('todo.txt', '- Trigger config mismatch')
@@ -148,7 +148,7 @@ function g.test_suggestions()
     ]])
 
     -- OperationError also should be mentioned in suggestions if present
-    g.A3.net_box:eval([[
+    g.A3:eval([[
         package.loaded['mymodule-permanent'].apply_config = function()
             error('Artificial Error', 0)
         end
@@ -159,7 +159,7 @@ function g.test_suggestions()
     )
 
     -- Speed up memebership payload dissemination
-    g.A1.net_box:call(
+    g.A1:call(
         'package.loaded.membership.probe_uri',
         {g.A3.advertise_uri}
     )
@@ -181,7 +181,7 @@ function g.test_suggestions()
     )
 
     -- Go back where it was
-    g.A3.net_box:eval([[
+    g.A3:eval([[
         package.loaded['mymodule-permanent'].apply_config = nil
     ]])
     t.assert(force_reapply({g.A2.instance_uuid, g.A3.instance_uuid}))

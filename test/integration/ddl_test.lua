@@ -94,7 +94,7 @@ spaces:
 
 function g.test_luaapi()
     local function call(...)
-        return g.cluster.main_server.net_box:call(...)
+        return g.cluster.main_server:call(...)
     end
 
     log.info('Applying valid schema...')
@@ -121,7 +121,7 @@ function g.test_luaapi()
     -- See: https://github.com/tarantool/tarantool/issues/4668
     local srv = g.cluster:server('main-1')
     t.assert_equals(
-        {[srv.alias] = srv.net_box:eval([[
+        {[srv.alias] = srv:eval([[
             return require('ddl').get_schema().spaces.test_space
         ]])},
         {[srv.alias] = yaml.decode(_schema).spaces.test_space}
@@ -259,8 +259,8 @@ function g.test_no_instances_to_check_schema()
     local s2 = g.cluster:server('main-2')
 
     -- restrict connection to the leader
-    s1.net_box:call('box.cfg', {{listen = box.NULL}})
-    s2.net_box:eval([[
+    s1:call('box.cfg', {{listen = box.NULL}})
+    s2:eval([[
         local pool = require('cartridge.pool')
         pool.connect(...):close()
         local conn = pool.connect(...)
@@ -271,7 +271,10 @@ function g.test_no_instances_to_check_schema()
         '"localhost:13301": Connection refused',
         _check_schema, s2, _schema
     )
-
-    -- resotore box listen
-    s1.net_box:call('box.cfg', {{listen = s1.net_box_port}})
 end
+
+g.after_test('test_no_instances_to_check_schema', function()
+    -- restore box listen
+    local s1 = g.cluster:server('main-1')
+    s1:call('box.cfg', {{listen = s1.net_box_port}})
+end)

@@ -105,7 +105,7 @@ local function check_all_box_rw()
     for _, server in pairs(cluster.servers) do
         if server.net_box ~= nil then
             t.assert_equals(
-                {[server.alias] = server.net_box:eval('return box.cfg.read_only')},
+                {[server.alias] = server:eval('return box.cfg.read_only')},
                 {[server.alias] = false}
             )
         end
@@ -209,7 +209,7 @@ end
 
 local function check_active_master(expected_uuid)
     -- Make sure active master uuid equals to the given uuid
-    local response = cluster.main_server.net_box:eval([[
+    local response = cluster.main_server:eval([[
         return require('vshard').router.callrw(1, 'get_uuid')
     ]])
     t.assert_equals(response, expected_uuid)
@@ -253,7 +253,7 @@ end
 
 g.test_api_failover = function()
     local function _call(name, ...)
-        return cluster.main_server.net_box:call(
+        return cluster.main_server:call(
             'package.loaded.cartridge.' .. name, {...}
         )
     end
@@ -312,7 +312,7 @@ g.test_api_failover = function()
     )
     t.assert_covers(get_failover_params(), {failover_timeout = 0})
     t.assert_equals(
-        cluster.main_server.net_box:eval([[
+        cluster.main_server:eval([[
             return require('membership.options').SUSPECT_TIMEOUT_SECONDS
         ]]), 0
     )
@@ -535,7 +535,7 @@ g.test_switchover = function()
     t.assert_equals(get_master(replicaset_uuid), {storage_2_uuid, storage_2_uuid})
 
     -- Promotion is not available for disabled failover
-    local ok, err = cluster.main_server.net_box:eval([[
+    local ok, err = cluster.main_server:eval([[
         return require('cartridge').failover_promote(...)
     ]], {{[replicaset_uuid] = storage_1_uuid}})
     t.assert_equals(ok, nil)
@@ -545,7 +545,7 @@ g.test_switchover = function()
     })
 
     set_failover(true)
-    local ok, err = cluster.main_server.net_box:eval([[
+    local ok, err = cluster.main_server:eval([[
         return require('cartridge').failover_promote(...)
     ]], {{[replicaset_uuid] = storage_1_uuid}})
     t.assert_equals(ok, nil)
@@ -686,3 +686,8 @@ g.test_sigstop = function()
         t.assert_equals(helpers.get_suggestions(cluster.main_server), {})
     end)
 end
+
+g.after_test('test_sigstop', function()
+    cluster:server('storage-1').process:kill('CONT') -- SIGCONT
+    cluster:wait_until_healthy()
+end)
