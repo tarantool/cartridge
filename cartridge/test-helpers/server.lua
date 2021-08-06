@@ -34,6 +34,7 @@ Server.constructor_checks = fun.chain(Server.constructor_checks, {
     cluster_cookie = 'string',
 
     advertise_port = 'number',
+    advertise_uri = '?string',
 
     instance_uuid = '?string',
     replicaset_uuid = '?string',
@@ -44,7 +45,7 @@ Server.constructor_checks = fun.chain(Server.constructor_checks, {
 function Server:initialize()
     self.net_box_port = self.net_box_port or self.advertise_port
     self.net_box_uri = 'localhost:' .. self.net_box_port
-    self.advertise_uri = self.net_box_uri
+    self.advertise_uri = self.advertise_uri or self.net_box_uri
     self.net_box_credentials = self.net_box_credentials or {
         user = 'admin',
         password = self.cluster_cookie,
