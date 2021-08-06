@@ -30,13 +30,9 @@ end)
 g.after_each(function()
     g.cluster:stop()
     fio.rmtree(g.cluster.datadir)
-    if g.server ~= nil then
-        g.server:stop()
-        fio.rmtree(g.server.workdir)
-    end
 end)
 
-function g.test_rebootstrap()
+g.before_test('test_rebootstrap', function()
     g.server = helpers.Server:new({
         workdir = g.cluster.datadir .. '/13303',
         alias = 'spare',
@@ -53,7 +49,9 @@ function g.test_rebootstrap()
     t.helpers.retrying({timeout = 5}, function()
         g.server:graphql({query = '{ servers { uri } }'})
     end)
+end)
 
+function g.test_rebootstrap()
     local err = t.assert_error(function() g.cluster:join_server(g.server) end)
 
     -- Retrying was added because of process can be a Zombie
@@ -76,7 +74,7 @@ function g.test_rebootstrap()
     -- Before the fix it used to fail with an assertion
     -- "invalid transition Unconfigured -> InitError".
     -- Now it correctly reports BootError.
-    g.server.env['TARANTOOL_ADVERTISE_URI'] = 'localhost:13304'
+    g.server.advertise_uri = 'localhost:13304'
     t.Server.start(g.server)
     t.helpers.retrying({}, function()
         t.assert_items_include(
@@ -95,14 +93,20 @@ function g.test_rebootstrap()
 
     -- Heal the server and restart
     log.info('--------------------------------------------------------')
-    g.server.env['TARANTOOL_ADVERTISE_URI'] = 'localhost:13303'
+    g.server.advertise_uri = 'localhost:13303'
     g.server.env['TARANTOOL_MEMTX_MEMORY'] = nil
     g.server:start()
     g.cluster:wait_until_healthy()
 end
 
+g.after_test('test_rebootstrap', function()
+    g.server:stop()
+    fio.rmtree(g.server.workdir)
+    g.server = nil
+end)
+
 local function test_rejoin(srv)
-    g.cluster.main_server.net_box:eval([[
+    g.cluster.main_server:eval([[
         box.schema.space.create('test')
         box.space.test:create_index('pk', {parts = {1, 'string'}})
         box.space.test:insert({'victim', ...})
@@ -119,7 +123,7 @@ local function test_rejoin(srv)
     g.cluster:wait_until_healthy()
 
     t.assert_equals(
-        srv.net_box:call('box.space.test:get', {'victim'}),
+        srv:call('box.space.test:get', {'victim'}),
         {'victim', srv.alias}
     )
 end
