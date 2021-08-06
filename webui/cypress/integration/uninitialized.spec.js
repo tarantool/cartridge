@@ -47,7 +47,6 @@ describe('Uninitialized', () => {
     ////////////////////////////////////////////////////////////////////
     cy.visit('/xyz/admin/cluster/code');
 
-    // files reload should fail
     cy.get('#root').contains('Current instance isn\'t bootstrapped yet').should('exist');
 
     ////////////////////////////////////////////////////////////////////
