@@ -49,7 +49,8 @@ describe('Network error panel', () => {
 
     cy.get('a[href="/jkl/admin/cluster/users"]').click();
     cy.get('h1:contains(Users)');
-    cy.get('#root').contains('The list is empty').should('exist');
+    cy.get('#root').contains('Network problem').should('exist');
+    cy.get('#root').contains('Failed to fetch').should('exist');
     cy.get('#root').contains('LOADING').should('not.exist');
     cy.get('.meta-test__NetworkErrorSplash').should('exist');
 

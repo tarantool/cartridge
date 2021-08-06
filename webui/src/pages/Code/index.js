@@ -9,11 +9,10 @@ import {
   IconCreateFile,
   IconRefresh,
   Text,
-  NonIdealState,
-  colors,
-  splashSelectFileSvg
+  colors
 } from '@tarantool.io/ui-kit';
 import MonacoEditor from 'src/components/MonacoEditor';
+import PageDataErrorMessage from 'src/components/PageDataErrorMessage';
 import { PageLayout } from 'src/components/PageLayout';
 import { FileTree } from 'src/components/FileTree';
 import {
@@ -37,7 +36,8 @@ import { getLanguageByFileName, getFileIdForMonaco } from 'src/misc/monacoModelS
 import type { TreeFileItem } from 'src/store/selectors/filesSelectors';
 import type { FileItem } from 'src/store/reducers/files.reducer';
 import { type State } from 'src/store/rootReducer';
-import { validateConfigFiles } from '../store/actions/files.actions';
+import { validateConfigFiles } from '../../store/actions/files.actions';
+import noFileIcon from './no-file.png';
 
 const options = {
   fixedOverflowWidgets: true,
@@ -112,11 +112,17 @@ const styles = {
     flex-grow: 1;
     align-items: center;
     justify-content: center;
+    flex-direction: column;
   `,
   selectFileIcon: css`
-    width: 80px;
-    height: 112px;
-    margin-bottom: 24px;
+    width: 120px;
+    height: 96px;
+    margin-bottom: 20px;
+  `,
+  selectFileText: css`
+    font-size: 14px;
+    font-weight: 400;
+    color: ${colors.dark65};
   `
 };
 
@@ -135,17 +141,8 @@ type CodeProps = {
   puttingConfigFiles: boolean,
   selectedFile: FileItem | null,
   dispatch: Function,
+  error: any
 }
-
-const IconSelectFile = () => (
-  <svg
-    viewBox={splashSelectFileSvg.viewBox}
-    className={styles.selectFileIcon}
-  >
-    <use xlinkHref={`#${splashSelectFileSvg.id}`}/>
-  </svg>
-);
-
 
 class Code extends React.Component<CodeProps, CodeState> {
   state = {
@@ -315,7 +312,8 @@ class Code extends React.Component<CodeProps, CodeState> {
       fetchingConfigFiles,
       puttingConfigFiles,
       selectedFile,
-      dispatch
+      dispatch,
+      error
     } = this.props;
 
     const {
@@ -326,6 +324,12 @@ class Code extends React.Component<CodeProps, CodeState> {
     } = this.state;
 
     const operableFile = this.getFileById(fileOperationObject);
+
+    if (error) {
+      return (
+        <PageDataErrorMessage error={error} />
+      )
+    }
 
     return (
       <PageLayout
@@ -429,11 +433,10 @@ class Code extends React.Component<CodeProps, CodeState> {
                 />
               )
               : (
-                <NonIdealState
-                  icon={IconSelectFile}
-                  title='Please select a file'
-                  className={styles.splash}
-                />
+                <div className={styles.splash}>
+                  <img className={styles.selectFileIcon} src={noFileIcon} alt="No selected file" />
+                  <Text className={styles.selectFileText}>Please select a file</Text>
+                </div>
               )
             }
           </div>
@@ -480,7 +483,8 @@ const mapStateToProps = (state: State) => ({
   files: state.codeEditor.files,
   fetchingConfigFiles: state.ui.fetchingConfigFiles,
   puttingConfigFiles: state.ui.puttingConfigFiles,
-  selectedFile: selectSelectedFile(state.codeEditor)
+  selectedFile: selectSelectedFile(state.codeEditor),
+  error: state.codeEditor.editor.error
 });
 
 export default connect(mapStateToProps)(Code)

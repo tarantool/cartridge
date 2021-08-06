@@ -1,16 +1,19 @@
 // @flow
 
-import { SELECT_FILE } from '../actionTypes';
+import { FETCH_CONFIG_FILES_FAIL, SELECT_FILE, FETCH_CONFIG_FILES } from '../actionTypes';
 
 export type EditorState = {
   selectedFile: ?string,
+  error: any
 }
 
 const initialState: EditorState = {
-  selectedFile: null
+  selectedFile: null,
+  error: null
 }
 
-export default (state: EditorState = initialState, { type, payload }: FSA): EditorState => {
+// eslint-disable-next-line import/no-anonymous-default-export
+export default (state: EditorState = initialState, { type, payload, error }: FSA): EditorState => {
   switch (type) {
     case SELECT_FILE: {
       if (payload) {
@@ -20,6 +23,20 @@ export default (state: EditorState = initialState, { type, payload }: FSA): Edit
         }
       }
       return state
+    }
+
+    case FETCH_CONFIG_FILES_FAIL: {
+      return {
+        ...state,
+        error
+      }
+    }
+
+    case FETCH_CONFIG_FILES: {
+      return {
+        ...state,
+        error: null
+      }
     }
   }
   return state

@@ -25,7 +25,7 @@ $usersList
   .reset(resetUsersList);
 
 $usersListFetchError
-  .on(fetchUsersListFx.failData, (_, error) => getGraphqlErrorMessage(error))
+  .on(fetchUsersListFx.failData, (_, error) => error)
   .reset(fetchUsersListFx.done)
   .reset(resetUsersList);
 

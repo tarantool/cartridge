@@ -22,7 +22,8 @@ describe('When the selected file gets deleted', () => {
 
   const state: CodeEditorState = {
     editor: {
-      selectedFile: '1'
+      selectedFile: '1',
+      error: null
     },
     files: [
       { ..._fileBlank, fileId: '1', path: 'folder/file.txt' },
@@ -36,7 +37,8 @@ describe('When the selected file gets deleted', () => {
       reducer(state, deleteFile({ id: 'folder/file.txt' }))
     ).toEqual({
       editor: {
-        selectedFile: null
+        selectedFile: null,
+        error: null
       },
       files: [
         { ..._fileBlank, fileId: '1', path: 'folder/file.txt', deleted: true },
@@ -51,7 +53,8 @@ describe('When the selected file gets deleted', () => {
       reducer(state, deleteFolder({ id: 'folder' }))
     ).toEqual({
       editor: {
-        selectedFile: null
+        selectedFile: null,
+        error: null
       },
       files: [
         { ..._fileBlank, fileId: '1', path: 'folder/file.txt', deleted: true },
