@@ -141,6 +141,7 @@ type CodeProps = {
   puttingConfigFiles: boolean,
   selectedFile: FileItem | null,
   dispatch: Function,
+  error: any
 }
 
 class Code extends React.Component<CodeProps, CodeState> {
