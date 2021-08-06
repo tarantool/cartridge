@@ -62,7 +62,17 @@ g.before_all = function()
 
     g.server:start()
     t.helpers.retrying({}, function()
-        g.server:graphql({query = '{ servers { uri } }'})
+        local main = g.cluster.main_server
+        -- wait for all servers to be discovered
+        t.assert_items_equals(
+            main:graphql({query = '{ servers { alias } }'}).data.servers,
+            {
+                {alias = 'storage-hot-1'},
+                {alias = 'storage-cold-1'},
+                {alias = 'router-1'},
+                {alias = 'spare'},
+            }
+        )
     end)
 end
 
@@ -131,8 +141,6 @@ local function edit_vshard_group(cluster, kv_args)
     return res
 end
 
-
-
 function g.test_api()
     local request = {query = [[{
         cluster {
@@ -156,6 +164,7 @@ function g.test_api()
             alias
             boxinfo {
                 vshard_router { vshard_group }
+                vshard_storage { vshard_group }
             }
         }
     }]]}
@@ -168,15 +177,29 @@ function g.test_api()
     t.assert_equals(data['vshard_known_groups'], {'cold', 'hot'})
     t.assert_equals(#data['vshard_groups'], 2)
 
-    local groups = res['data']['servers']
-    t.assert_equals(groups, {
-        {alias = 'storage-hot-1', boxinfo = {vshard_router = box.NULL}},
-        {alias = 'storage-cold-1', boxinfo = {vshard_router = box.NULL}},
-        {
-            alias = 'router-1',
-            boxinfo = {vshard_router = {{vshard_group = "cold"}, {vshard_group = "hot"}}},
+    local servers = res['data']['servers']
+    t.assert_items_equals(servers, {{
+        alias = 'storage-hot-1',
+        boxinfo = {
+            vshard_router = box.NULL,
+            vshard_storage = {vshard_group = 'hot'},
         },
-    })
+    }, {
+        alias = 'storage-cold-1',
+        boxinfo = {
+            vshard_router = box.NULL,
+            vshard_storage = {vshard_group = 'cold'},
+        },
+    }, {
+        alias = 'router-1',
+        boxinfo = {
+            vshard_router = {{vshard_group = "cold"}, {vshard_group = "hot"}},
+            vshard_storage = box.NULL,
+        },
+    }, {
+        alias = 'spare',
+        boxinfo = box.NULL,
+    }})
 
     local expected_map = {
         ['name'] = 'cold',
