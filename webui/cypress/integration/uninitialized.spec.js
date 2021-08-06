@@ -48,22 +48,7 @@ describe('Uninitialized', () => {
     cy.visit('/xyz/admin/cluster/code');
 
     // files reload should fail
-    cy.get('button[type="button"]:contains("Reload")').click();
-    cy.get('body').contains('Are you sure you want to reload all the files?');
-    cy.get('button[type="button"]:contains("Ok")').click();
-    cy.get('span:contains("Current instance isn\'t bootstrapped yet") + button + svg').click();
-
-    // create file
-    cy.get('.meta-test__addFileBtn').click();
-    cy.get('.meta-test__enterName').focused().type('file-in-tree\n');
-    cy.get('.meta-test__Code__FileTree').contains('file-in-tree');
-
-    // file upload should fail too
-    cy.get('button[type="button"]:contains("Apply")').click();
-    cy.get('span:contains("Current instance isn\'t bootstrapped yet") + button + svg').click();
-
-    cy.get('button[type="button"]:contains("Validate")').click();
-    cy.get('#root').contains('Current instance isn\'t bootstrapped yet').click();
+    cy.get('#root').contains('Current instance isn\'t bootstrapped yet').should('exist');
 
     ////////////////////////////////////////////////////////////////////
     cy.log('Try to add user without bootstrap');
