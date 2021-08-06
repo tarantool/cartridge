@@ -80,7 +80,7 @@ package.loaded['cartridge.pool'] = {
         return fn()
     end
     g[fn_name] = function()
-        g.server.net_box:eval([[
+        g.server:eval([[
             local test = require('test.unit.vshard_config_test')
             test[...]()
         ]], {fn_name})

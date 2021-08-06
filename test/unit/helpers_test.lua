@@ -92,7 +92,7 @@ function g.test_replicaset_uuid_generation()
 end
 
 local function get_failover(cluster)
-    return cluster.main_server.net_box:call(
+    return cluster.main_server:call(
         'package.loaded.cartridge.failover_get_params')
 end
 
@@ -101,7 +101,7 @@ function g.test_failover()
     t.assert(g.cluster.stateboard)
 
     local coordinator = g.cluster:server('vshard-1')
-    t.assert_equals(g.cluster.stateboard.net_box:call('get_coordinator'),
+    t.assert_equals(g.cluster.stateboard:call('get_coordinator'),
         {uri = coordinator.advertise_uri, uuid = coordinator.instance_uuid})
 
     t.assert_error_msg_contains(
