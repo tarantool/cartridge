@@ -60,6 +60,8 @@ Changed
 - Argparse throws an error when it encouters ``instance_name`` missing in
   instances.yml.
 - Update ``membership`` dependency to 2.4.0
+- Update ``vshard`` to 0.1.18
+  (`Changelog <https://github.com/tarantool/vshard/releases/tag/0.1.18>`__).
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
