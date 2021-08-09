@@ -83,7 +83,7 @@ function g.test_twophase_config_locked()
     t.assert_equals({ok, err}, {true, nil})
 
     t.assert_equals(helpers.list_cluster_issues(g.A1), {})
-    t.assert_equals(
+    t.assert_covers(
         g.cluster:download_config(),
         {['bye.txt'] = 'Goodbye, locks'}
     )

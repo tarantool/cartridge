@@ -27,6 +27,15 @@ g.before_all(function()
     })
     g.cluster:start()
 
+    -- Disable on_patch_trigger for the ddl-manager role
+    g.cluster.main_server.net_box:eval([[
+        require('cartridge.twophase').on_patch(nil,
+            _G._cluster_vars_values
+            ['cartridge.roles.ddl-manager']
+            .on_patch_trigger
+        )
+    ]])
+
     -- Make sure auth section exists in clusterwide config.
     -- It shouldn't be available for downloading via HTTP API
     g.cluster.main_server.net_box:eval([[

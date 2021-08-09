@@ -53,10 +53,10 @@ end
 
 function g.test_config_management()
     g.cluster:upload_config({some_section = 'some_value'})
-    t.assert_equals(g.cluster:download_config(), {some_section = 'some_value'})
+    t.assert_covers(g.cluster:download_config(), {some_section = 'some_value'})
 
     g.cluster:upload_config(yaml.encode({another_section = 'some_value2'}))
-    t.assert_equals(g.cluster:download_config(), {another_section = 'some_value2'})
+    t.assert_covers(g.cluster:download_config(), {another_section = 'some_value2'})
 end
 
 function g.test_servers_access()

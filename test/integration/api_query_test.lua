@@ -603,12 +603,10 @@ function g.test_operation_error()
         _G.apply_config_original = nil
     end)
 
-    t.assert_equals(
-        g.cluster.main_server:graphql({
-            query = '{cluster {config {filename content}}}'
-        }),
-        {data = {cluster = {config = {txt}}}}
-    )
+    local resp = g.cluster.main_server:graphql({
+        query = '{cluster {config {filename content}}}'
+    })
+    t.assert_items_include(resp.data.cluster.config, {txt})
 
     -- An attempt to reapply the same config shouldn't
     -- be skipped in the OperationError state
