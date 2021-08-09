@@ -62,17 +62,7 @@ g.before_all = function()
 
     g.server:start()
     t.helpers.retrying({}, function()
-        local main = g.cluster.main_server
-        -- wait for all servers to be discovered
-        t.assert_items_equals(
-            main:graphql({query = '{ servers { alias } }'}).data.servers,
-            {
-                {alias = 'storage-hot-1'},
-                {alias = 'storage-cold-1'},
-                {alias = 'router-1'},
-                {alias = 'spare'},
-            }
-        )
+        g.server:graphql({query = '{ servers { uri } }'})
     end)
 end
 
@@ -169,6 +159,11 @@ function g.test_api()
         }
     }]]}
 
+    -- Force spare server discovery
+    g.cluster:server('router-1').net_box:call(
+        'package.loaded.membership.probe_uri',
+        {g.server.advertise_uri}
+    )
     local res = g.cluster:server('router-1'):graphql(request)
     local data = res['data']['cluster']
     t.assert_equals(data['self']['uuid'], g.cluster:server('router-1').instance_uuid)
