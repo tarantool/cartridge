@@ -271,7 +271,7 @@ describe('Code page', () => {
     cy.reload();
     cy.contains('Not loaded').should('not.exist');
     cy.get('.meta-test__Code__FileTree').contains('folder-in-folder').should('not.exist');
-    cy.get('.meta-test__Code__FileTree').contains('file-in-folder').should('exist');
+    cy.get('.meta-test__Code__FileTree').contains('file-in-folder').should('exist').click();
     cy.get('.meta-test__Code').contains('edited-folder-name / file-in-folder');
     cy.get('.monaco-editor textarea').should('have.value', 'new test code');
 
