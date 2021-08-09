@@ -111,11 +111,19 @@ function g.test_broken_replica()
     ]])
 
     local function issue_fmt(from, to)
-        return {
-            level = 'critical',
-            topic = 'replication',
-            replicaset_uuid = g.cluster:server(to).replicaset_uuid,
-            instance_uuid = g.cluster:server(to).instance_uuid,
+        local message
+        if helpers.tarantool_version_ge('2.8.0') then
+            message = string.format("Replication" ..
+                " from %s (%s) to %s (%s) state \"stopped\"" ..
+                " (Duplicate key exists in unique index" ..
+                " \"primary\" in space \"_space\"" ..
+                " with old tuple - [512, 1, \"test\"," ..
+                " \"memtx\", 0, {}, []] and new tuple -"..
+                " [512, 1, \"test\", \"memtx\", 0, {}, []])",
+                g.cluster:server(from).advertise_uri, from,
+                g.cluster:server(to).advertise_uri, to
+            )
+        else
             message = string.format("Replication" ..
                 " from %s (%s) to %s (%s) state \"stopped\"" ..
                 " (Duplicate key exists in unique index" ..
@@ -123,6 +131,14 @@ function g.test_broken_replica()
                 g.cluster:server(from).advertise_uri, from,
                 g.cluster:server(to).advertise_uri, to
             )
+        end
+
+        return {
+            level = 'critical',
+            topic = 'replication',
+            replicaset_uuid = g.cluster:server(to).replicaset_uuid,
+            instance_uuid = g.cluster:server(to).instance_uuid,
+            message = message
         }
     end
 
