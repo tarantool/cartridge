@@ -1377,11 +1377,11 @@ starts all defined instances:
 
     $ # in application directory
     $ cartridge start # starts all instances
-    $ cartridge start .router_1 # start single instance
+    $ cartridge start .router_1 # starts a single instance
 
     $ # in multi-application environment
     $ cartridge start my_app # starts all instances of my_app
-    $ cartridge start my_app.router # start a single instance
+    $ cartridge start my_app.router # starts a single instance
 
 To stop the instances, run:
 
