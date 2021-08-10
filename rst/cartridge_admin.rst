@@ -7,10 +7,10 @@ Administrator's guide
 This guide explains how to deploy and manage a Tarantool cluster with Tarantool
 Cartridge.
 
-.. NOTE::
+..  note::
 
     For more information on managing Tarantool instances, see the
-    `server administration section <https://www.tarantool.io/en/doc/latest/book/admin/>`_
+    `server administration section <https://www.tarantool.io/en/doc/latest/book/admin/>`__
     of the Tarantool manual.
 
 Before deploying the cluster, familiarize yourself with the notion of
@@ -27,7 +27,7 @@ Deploying the cluster
 To deploy the cluster, first, :ref:`configure <cartridge-config>` your
 Tarantool instances according to the desired cluster topology, for example:
 
-.. code-block:: yaml
+..  code-block:: yaml
 
     my_app.router: {"advertise_uri": "localhost:3301", "http_port": 8080, "workdir": "./tmp/router"}
     my_app.storage_A_master: {"advertise_uri": "localhost:3302", "http_enabled": False, "workdir": "./tmp/storage-a-master"}
@@ -38,9 +38,9 @@ Tarantool instances according to the desired cluster topology, for example:
 Then :ref:`start the instances <cartridge-run>`, for example using
 ``cartridge`` CLI:
 
-.. code-block:: console
+..  code-block:: console
 
-    cartridge start my_app --cfg demo.yml --run_dir ./tmp/run --foreground
+    $ cartridge start my_app --cfg demo.yml --run_dir ./tmp/run --foreground
 
 And bootstrap the cluster.
 You can do this via the Web interface which is available at
@@ -49,144 +49,144 @@ You can do this via the Web interface which is available at
 
 In the web interface, do the following:
 
-#. Depending on the authentication state:
+#.  Depending on the authentication state:
 
-   * If enabled (in production), enter your credentials and click
-     **Login**:
+    *   If enabled (in production), enter your credentials and click
+        **Login**:
 
-     .. image:: images/auth_creds-border-5px.png
+        ..  image:: images/auth_creds-border-5px.png
+            :align: left
+            :scale: 40%
+
+        |nbsp|
+
+    *   If disabled (for easier testing), simply proceed to configuring the
+        cluster.
+
+#.  Click **Сonfigure** next to the first unconfigured server to create the first
+    replica set -- solely for the router (intended for *compute-intensive* workloads).
+
+    ..  image:: images/unconfigured-router-border-5px.png
         :align: left
         :scale: 40%
 
-     |nbsp|
+    |nbsp|
 
-   * If disabled (for easier testing), simply proceed to configuring the
-     cluster.
+    In the pop-up window, check the ``vshard-router`` role---or any custom role
+    that has ``vshard-router`` as a dependent role (in this example, this is
+    a custom role named ``app.roles.api``).
 
-#. Click **Сonfigure** next to the first unconfigured server to create the first
-   replica set -- solely for the router (intended for *compute-intensive* workloads).
+    (Optional) Specify a display name for the replica set, for example ``router``.
 
-   .. image:: images/unconfigured-router-border-5px.png
-      :align: left
-      :scale: 40%
+    ..  image:: images/create-router-border-5px.png
+        :align: left
+        :scale: 40%
 
-   |nbsp|
+    |nbsp|
 
-   In the pop-up window, check the ``vshard-router`` role -- or any custom role
-   that has ``vshard-router`` as a dependent role (in this example, this is
-   a custom role named ``app.roles.api``).
+    ..  NOTE::
 
-   (Optional) Specify a display name for the replica set, for example ``router``.
+        As described in the :ref:`built-in roles section <cartridge-built-in-roles>`,
+        it is a good practice to enable workload-specific cluster roles on
+        instances running on physical servers with workload-specific hardware.
 
-   .. image:: images/create-router-border-5px.png
-      :align: left
-      :scale: 40%
+    Click **Create replica set** and see the newly-created replica set
+    in the web interface:
 
-   |nbsp|
+    ..  image:: images/router-replica-set-border-5px.png
+        :align: left
+        :scale: 40%
 
-   .. NOTE::
+    |nbsp|
 
-       As described in the :ref:`built-in roles section <cartridge-built-in-roles>`,
-       it is a good practice to enable workload-specific cluster roles on
-       instances running on physical servers with workload-specific hardware.
+    ..  WARNING::
 
-   Click **Create replica set** and see the newly-created replica set
-   in the web interface:
+        Be careful: after an instance joins a replica set, you **CAN NOT** revert
+        this or make the instance join any other replica set.
 
-   .. image:: images/router-replica-set-border-5px.png
-      :align: left
-      :scale: 40%
+#.  Create another replica set for a master storage node (intended for
+    *transaction-intensive* workloads).
 
-   |nbsp|
+    Check the ``vshard-storage`` role---or any custom role
+    that has ``vshard-storage`` as a dependent role (in this example, this is
+    a custom role named ``app.roles.storage``).
 
-   .. WARNING::
+    (Optional) Check a specific group, for example ``hot``.
+    Replica sets with ``vshard-storage`` roles can belong to different groups.
+    In our example, these are ``hot`` or ``cold`` groups meant to process
+    hot and cold data independently. These groups are specified in the cluster's
+    :ref:`configuration file <cartridge-vshard-groups>`; by default, a cluster has
+    no groups.
 
-       Be careful: after an instance joins a replica set, you **CAN NOT** revert
-       this or make the instance join any other replica set.
+    (Optional) Specify a display name for the replica set, for example ``hot-storage``.
 
-#. Create another replica set -- for a master storage node (intended for
-   *transaction-intensive* workloads).
+    Click **Create replica set**.
 
-   Check the ``vshard-storage`` role -- or any custom role
-   that has ``vshard-storage`` as a dependent role (in this example, this is
-   a custom role named ``app.roles.storage``).
+    ..  image:: images/create-storage-border-5px.png
+        :align: left
+        :scale: 40%
 
-   (Optional) Check a specific group, for example ``hot``.
-   Replica sets with ``vshard-storage`` roles can belong to different groups.
-   In our example, these are ``hot`` or ``cold`` groups meant to process
-   hot and cold data independently. These groups are specified in the cluster's
-   :ref:`configuration file <cartridge-vshard-groups>`; by default, a cluster has
-   no groups.
+    |nbsp|
 
-   (Optional) Specify a display name for the replica set, for example ``hot-storage``.
+#.  (Optional) If required by topology, populate the second replica set
+    with more storage nodes:
 
-   Click **Create replica set**.
+    #.  Click **Configure** next to another unconfigured server dedicated for
+        *transaction-intensive* workloads.
 
-   .. image:: images/create-storage-border-5px.png
-      :align: left
-      :scale: 40%
+    #.  Click **Join Replica Set** tab.
 
-   |nbsp|
+    #.  Select the second replica set, and click **Join replica set** to
+        add the server to it.
 
-#. (Optional) If required by topology, populate the second replica set
-   with more storage nodes:
+        ..  image:: images/join-storage-border-5px.png
+            :align: left
+            :scale: 40%
 
-   #. Click **Configure** next to another unconfigured server dedicated for
-      *transaction-intensive* workloads.
+        |nbsp|
 
-   #. Click **Join Replica Set** tab.
+#.  Depending on cluster topology:
 
-   #. Select the second replica set, and click **Join replica set** to
-      add the server to it.
+    *   add more instances to the first or second replica sets, or
+    *   create more replica sets and populate them with instances meant to handle
+        a specific type of workload (compute or transactions).
 
-      .. image:: images/join-storage-border-5px.png
-         :align: left
-         :scale: 40%
+    For example:
 
-      |nbsp|
+    ..  image:: images/final-cluster-border-5px.png
+        :align: left
+        :scale: 40%
 
-#. Depending on cluster topology:
+    |nbsp|
 
-   * add more instances to the first or second replica sets, or
-   * create more replica sets and populate them with instances meant to handle
-     a specific type of workload (compute or transactions).
+#.  (Optional) By default, all new ``vshard-storage`` replica sets get a weight
+    of ``1`` before the ``vshard`` bootstrap in the next step.
 
-   For example:
+   ..   NOTE::
 
-   .. image:: images/final-cluster-border-5px.png
-      :align: left
-      :scale: 40%
+        In case you add a new replica set after ``vshard`` bootstrap, as described
+        in the :ref:`topology change section <cartridge-change-cluster-topology>`,
+        it will get a weight of 0 by default.
 
-   |nbsp|
+    To make different replica sets store different numbers of buckets, click
+    **Edit** next to a replica set, change its default weight, and click
+    **Save**:
 
-#. (Optional) By default, all new ``vshard-storage`` replica sets get a weight
-   of ``1`` before the ``vshard`` bootstrap in the next step.
+    ..  image:: images/change-weight-border-5px.png
+        :align: left
+        :scale: 40%
 
-   .. NOTE::
+    |nbsp|
 
-       In case you add a new replica set after ``vshard`` bootstrap, as described
-       in the :ref:`topology change section <cartridge-change-cluster-topology>`,
-       it will get a weight of 0 by default.
+    For more information on buckets and replica set's weights, see the
+    `vshard module documentation <https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/>`__.
 
-   To make different replica sets store different numbers of buckets, click
-   **Edit** next to a replica set, change its default weight, and click
-   **Save**:
+#.  Bootstrap ``vshard`` by clicking the corresponding button, or by saying
+    ``cartridge.admin.boostrap_vshard()`` over the administrative console.
 
-   .. image:: images/change-weight-border-5px.png
-      :align: left
-      :scale: 40%
+    This command creates virtual buckets and distributes them among storages.
 
-   |nbsp|
-
-   For more information on buckets and replica set's weights, see the
-   `vshard module documentation <https://www.tarantool.io/en/doc/latest/reference/reference_rock/vshard/>`_.
-
-#. Bootstrap ``vshard`` by clicking the corresponding button, or by saying
-   ``cartridge.admin.boostrap_vshard()`` over the administrative console.
-
-   This command creates virtual buckets and distributes them among storages.
-
-   From now on, all cluster configuration can be done via the web interface.
+    From now on, all cluster configuration can be done via the web interface.
 
 .. _cartridge-ui-configuration:
 
@@ -205,23 +205,23 @@ and distributes **automatically** across the cluster.
 
 To update the configuration:
 
-#. Click **Configuration files** tab.
+#.  Click **Configuration files** tab.
 
-#. (Optional) Click **Downloaded** to get hold of the current configuration file.
+#.  (Optional) Click **Downloaded** to get hold of the current configuration file.
 
-#. Update the configuration file.
+#.  Update the configuration file.
 
-   You can add/change/remove any sections except system ones:
-   ``topology``, ``vshard``, and ``vshard_groups``.
+    You can add/change/remove any sections except system ones:
+    ``topology``, ``vshard``, and ``vshard_groups``.
 
-   To remove a section, simply remove it from the configuration file.
+    To remove a section, simply remove it from the configuration file.
 
-#. Compress the configuration file as a ``.zip`` archive and
-   click **Upload configuration** button to upload it.
+#.  Compress the configuration file as a ``.zip`` archive and
+    click **Upload configuration** button to upload it.
 
-   You will see a message in the lower part of the screen saying whether
-   configuration was uploaded successfully, and an error description if the
-   new configuration was not applied.
+    You will see a message in the lower part of the screen saying whether
+    configuration was uploaded successfully, and an error description if the
+    new configuration was not applied.
 
 .. _cartridge-change-manage-cluster:
 
@@ -245,23 +245,23 @@ Changing the cluster topology
 
 Upon adding a newly deployed instance to a new or existing replica set:
 
-#. The cluster validates the configuration update by checking if the new instance
-   is available using the `membership module <https://www.tarantool.io/en/doc/1.10/reference/reference_rock/membership/>`_.
+#.  The cluster validates the configuration update by checking if the new instance
+    is available using the `membership module <https://www.tarantool.io/en/doc/1.10/reference/reference_rock/membership/>`_.
 
-   .. NOTE::
+    ..  note::
 
-       The ``membership`` module works over the UDP protocol and can operate before
-       the ``box.cfg`` function is called.
+        The ``membership`` module works over the UDP protocol and can operate before
+        the ``box.cfg`` function is called.
 
-   All the nodes in the cluster must be healthy for validation success.
+    All the nodes in the cluster must be healthy for validation success.
 
-#. The new instance waits until another instance in the cluster receives the
-   configuration update and discovers it, again, using the ``membership`` module.
-   On this step, the new instance does not have a UUID yet.
+#.  The new instance waits until another instance in the cluster receives the
+    configuration update and discovers it, again, using the ``membership`` module.
+    On this step, the new instance does not have a UUID yet.
 
-#. Once the instance realizes its presence is known to the cluster, it calls
-   the `box.cfg <https://www.tarantool.io/en/doc/latest/reference/reference_lua/box_cfg/>`_
-   function and starts living its life.
+#.  Once the instance realizes its presence is known to the cluster, it calls
+    the `box.cfg <https://www.tarantool.io/en/doc/latest/reference/reference_lua/box_cfg/>`__
+    function and starts living its life.
 
 An optimal strategy for connecting new nodes to the cluster is to deploy a new
 zero-weight replica set instance by instance, and then increase the weight.
@@ -270,88 +270,87 @@ change, buckets start migrating to new nodes.
 
 To populate the cluster with more nodes, do the following:
 
-#. Deploy new Tarantool instances as described in the
-   :ref:`deployment section <cartridge-deploy>`.
+#.  Deploy new Tarantool instances as described in the
+    :ref:`deployment section <cartridge-deploy>`.
 
-   If new nodes do not appear in the Web interface, click **Probe server** and
-   specify their URIs manually.
+    If new nodes do not appear in the Web interface, click **Probe server** and
+    specify their URIs manually.
 
-   .. image:: images/probe-server-border-5px.png
-      :align: left
-      :scale: 40%
+    ..  image:: images/probe-server-border-5px.png
+        :align: left
+        :scale: 40%
 
-   |nbsp|
+    |nbsp|
 
-   If a node is accessible, it will appear in the list.
+    If a node is accessible, it will appear in the list.
 
-#. In the Web interface:
+#.  In the Web interface:
 
-   * Create a new replica set with one of the new instances:
-     click **Configure** next to an unconfigured server,
-     check the necessary roles, and click **Create replica set**:
+    *   Create a new replica set with one of the new instances:
+        click **Configure** next to an unconfigured server,
+        check the necessary roles, and click **Create replica set**:
 
-     .. NOTE::
+        ..  note::
 
-         In case you are adding a new ``vshard-storage`` instance, remember that
-         all such instances get a ``0`` weight by default after the ``vshard``
-         bootstrap which happened during the initial cluster deployment.
+            In case you are adding a new ``vshard-storage`` instance, remember that
+            all such instances get a ``0`` weight by default after the ``vshard``
+            bootstrap which happened during the initial cluster deployment.
 
-         .. image:: images/zero-border-5px.png
-            :align: left
-            :scale: 40%
+            ..  image:: images/zero-border-5px.png
+                :align: left
+                :scale: 40%
 
-         |nbsp|
+            |nbsp|
 
-   * Or add the instances to existing replica sets:
-     click **Configure** next to an unconfigured server, click **Join replica set**
-     tab, select a replica set, and click **Join replica set**.
+    *   Or add the instances to existing replica sets:
+        click **Configure** next to an unconfigured server, click **Join replica set**
+        tab, select a replica set, and click **Join replica set**.
 
-   If necessary, repeat this for more instances to reach the desired
-   redundancy level.
+    If necessary, repeat this for more instances to reach the desired redundancy level.
 
-#. In case you are deploying a new ``vshard-storage`` replica set, populate it
-   with data when you are ready:
-   click **Edit** next to the replica set in question, increase its weight, and
-   click **Save** to start :ref:`data rebalancing <cartridge-rebalance-data>`.
+#.  In case you are deploying a new ``vshard-storage`` replica set, populate it
+    with data when you are ready:
+    click **Edit** next to the replica set in question, increase its weight, and
+    click **Save** to start :ref:`data rebalancing <cartridge-rebalance-data>`.
 
 As an alternative to the web interface, you can view and change cluster topology
 via GraphQL. The cluster's endpoint for serving GraphQL queries is ``/admin/api``.
 You can use any third-party GraphQL client like
-`GraphiQL <https://github.com/graphql/graphiql>`_ or
-`Altair <https://altair.sirmuel.design>`_.
+`GraphiQL <https://github.com/graphql/graphiql>`__ or
+`Altair <https://altair.sirmuel.design>`__.
 
 Examples:
 
-* listing all servers in the cluster:
+*   listing all servers in the cluster:
 
-  .. code-block:: javascript
+    ..  code-block:: javascript
 
-     query {
-         servers { alias uri uuid }
-     }
+        query {
+            servers { alias uri uuid }
+        }
 
-* listing all replica sets with their servers:
+*   listing all replica sets with their servers:
 
-  .. code-block:: javascript
+    ..  code-block:: javascript
 
-     query {
-         replicasets {
-             uuid
-             roles
-             servers { uri uuid }
-         }
-     }
+        query {
+            replicasets {
+                uuid
+                roles
+                servers { uri uuid }
+            }
+        }
 
-* joining a server to a new replica set with a storage role enabled:
+*   joining a server to a new replica set with a storage role enabled:
 
-  .. code-block:: javascript
+    ..  code-block:: javascript
 
-     mutation {
-         join_server(
-             uri: "localhost:33003"
-             roles: ["vshard-storage"]
-         )
-     }
+        mutation {
+            join_server(
+                uri: "localhost:33003"
+                roles: ["vshard-storage"]
+            )
+        }
 
 .. _cartridge-rebalance-data:
 
@@ -373,7 +372,7 @@ continues until the data is distributed evenly among all replica sets.
 To monitor the current number of buckets, connect to any Tarantool instance over
 the :ref:`administrative console <cartridge-manage-sharding-cli>`, and say:
 
-.. code-block:: tarantoolsession
+..  code-block:: tarantoolsession
 
     tarantool> vshard.storage.info().bucket
     ---
@@ -401,19 +400,19 @@ to move all of its buckets to other sets.
 
 To deactivate a set, do the following:
 
-#. Click **Edit** next to the set in question.
+#.  Click **Edit** next to the set in question.
 
-#. Set its weight to ``0`` and click **Save**:
+#.  Set its weight to ``0`` and click **Save**:
 
-   .. image:: images/zero-weight-border-5px.png
-      :align: left
-      :scale: 40%
+    ..  image:: images/zero-weight-border-5px.png
+        :align: left
+        :scale: 40%
 
-   |nbsp|
+    |nbsp|
 
-#. Wait for the rebalancing process to finish migrating all the set's buckets
-   away. You can monitor the current bucket number as described in the
-   :ref:`data rebalancing section <cartridge-rebalance-data>`.
+#.  Wait for the rebalancing process to finish migrating all the set's buckets
+    away. You can monitor the current bucket number as described in the
+    :ref:`data rebalancing section <cartridge-rebalance-data>`.
 
 .. _cartridge-expelling-instances:
 
@@ -430,19 +429,19 @@ every instance will reject it.
 To expel an instance, click **...** next to it, then click **Expel server** and
 **Expel**:
 
-.. image:: images/expelling-instance-border-5px.png
-   :align: left
-   :scale: 40%
+..  image:: images/expelling-instance-border-5px.png
+    :align: left
+    :scale: 40%
 
 |nbsp|
 
-.. NOTE::
+..  note::
 
     There are two restrictions:
 
-    * You can't expel a leader if it has a replica. Switch leadership first.
-    * You can't expel a vshard-storage if it has buckets. Set the weight to zero
-      and wait until rebalancing is completed.
+    *   You can't expel a leader if it has a replica. Switch leadership first.
+    *   You can't expel a vshard-storage if it has buckets. Set the weight to zero
+        and wait until rebalancing is completed.
 
 .. _cartridge-node-failure:
 
@@ -459,47 +458,47 @@ for any roles.
 
 To set the priority in a replica set:
 
-#. Click **Edit** next to the replica set in question.
+#.  Click **Edit** next to the replica set in question.
 
-#. Scroll to the bottom of the **Edit replica set** box to see the list of
-   servers.
+#.  Scroll to the bottom of the **Edit replica set** box to see the list of
+    servers.
 
-#. Drag replicas to their place in the priority list, and click **Save**:
+#.  Drag replicas to their place in the priority list, and click **Save**:
 
-   .. image:: images/failover-priority-border-5px.png
-      :align: left
-      :scale: 40%
+    ..  image:: images/failover-priority-border-5px.png
+        :align: left
+        :scale: 40%
 
-   |nbsp|
+    |nbsp|
 
 The failover is disabled by default. To enable it:
 
-#. Click **Failover**:
+#.  Click **Failover**:
 
-   .. image:: images/failover-border-5px.png
-      :align: left
-      :scale: 40%
+    ..  image:: images/failover-border-5px.png
+        :align: left
+        :scale: 40%
 
-   |nbsp|
+    |nbsp|
 
-#. In the **Failover control** box, click **Enable**:
+#.  In the **Failover control** box, click **Enable**:
 
-   .. image:: images/failover-control-border-5px.png
-      :align: left
-      :scale: 40%
+    ..  image:: images/failover-control-border-5px.png
+        :align: left
+        :scale: 40%
 
-   |nbsp|
+    |nbsp|
 
 The failover status will change to enabled:
 
-.. image:: images/enabled-failover-border-5px.png
-   :align: left
-   :scale: 40%
+..  image:: images/enabled-failover-border-5px.png
+    :align: left
+    :scale: 40%
 
 |nbsp|
 
 For more information, see the
-`replication section <https://www.tarantool.io/en/doc/latest/book/replication/>`_
+`replication section <https://www.tarantool.io/en/doc/latest/book/replication/>`__
 of the Tarantool manual.
 
 .. _cartridge-switch-master:
@@ -510,24 +509,24 @@ Switching the replica set's master
 
 To manually switch the master in a replica set:
 
-#. Click the **Edit** button next to the replica set in question:
+#.  Click the **Edit** button next to the replica set in question:
 
-   .. image:: images/edit-replica-set-border-5px.png
-      :align: left
-      :scale: 40%
+    ..  image:: images/edit-replica-set-border-5px.png
+        :align: left
+        :scale: 40%
 
-   |nbsp|
+    |nbsp|
 
-#. Scroll to the bottom of the **Edit replica set** box to see the list of
-   servers. The server on the top is the master.
+#.  Scroll to the bottom of the **Edit replica set** box to see the list of
+    servers. The server on the top is the master.
 
-   .. image:: images/switch-master-border-5px.png
-      :align: left
-      :scale: 40%
+    ..  image:: images/switch-master-border-5px.png
+        :align: left
+        :scale: 40%
 
-   |nbsp|
+    |nbsp|
 
-#. Drag a required server to the top position and click **Save**.
+#.  Drag a required server to the top position and click **Save**.
 
 The new master will automatically enter the read/write mode, while the ex-master
 will become read-only. This works for any roles.
@@ -541,9 +540,9 @@ Managing users
 On the **Users** tab, you can enable/disable authentication as well as add,
 remove, edit, and view existing users who can access the web interface.
 
-.. image:: images/users-tab-border-5px.png
-   :align: left
-   :scale: 60%
+..  image:: images/users-tab-border-5px.png
+    :align: left
+    :scale: 60%
 
 |nbsp|
 
@@ -552,7 +551,7 @@ interface is :ref:`implemented <cartridge-auth-enable>`.
 
 Also, some features (like deleting users) can be disabled in the cluster
 configuration; this is regulated by the
-`auth_backend_name <https://www.tarantool.io/en/rocks/cluster/1.0/modules/cluster/#cfg-opts-box-opts>`_
+`auth_backend_name <https://www.tarantool.io/en/rocks/cluster/1.0/modules/cluster/#cfg-opts-box-opts>`__
 option passed to ``cartridge.cfg()``.
 
 .. _cartridge-resolve-conflicts:
@@ -585,7 +584,7 @@ ensure consistency, we also store the last modification time in each tuple of th
 table and set the ``space.before_replace`` trigger, which gives preference to
 newer tuples. Below is the code in Lua:
 
-.. code-block:: lua
+..  code-block:: lua
 
     fiber = require('fiber')
     -- define a function that will modify the function test_replace(tuple)
@@ -623,7 +622,7 @@ Each Tarantool node (``router``/``storage``) provides an administrative console
 console acts as a Lua interpreter and displays the result in the human-readable
 YAML format. To connect to a Tarantool instance via the console, say:
 
-.. code-block:: bash
+..  code-block:: console
 
     $ tarantoolctl connect <instance_hostname>:<port>
 
@@ -643,7 +642,7 @@ Use ``vshard.storage.info()`` to obtain information on storage nodes.
 Output example
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-.. code-block:: tarantoolsession
+..  code-block:: tarantoolsession
 
     tarantool> vshard.storage.info()
     ---
@@ -675,10 +674,10 @@ Output example
 Status list
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-.. container:: table
+..  container:: table
 
-    .. rst-class:: left-align-column-1
-    .. rst-class:: left-align-column-2
+    ..  rst-class:: left-align-column-1
+    ..  rst-class:: left-align-column-2
 
     +----------+--------------------+-----------------------------------------+
     | **Code** | **Critical level** | **Description**                         |
@@ -701,108 +700,108 @@ Status list
 Potential issues
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-* ``MISSING_MASTER`` — No master node in the replica set configuration.
+*   ``MISSING_MASTER``---No master node in the replica set configuration.
 
-  **Critical level:** Orange.
+    **Critical level:** Orange.
 
-  **Cluster condition:** Service is degraded for data-change requests to the
-  replica set.
+    **Cluster condition:** Service is degraded for data-change requests to the
+    replica set.
 
-  **Solution:** Set the master node for the replica set in the configuration using API.
+    **Solution:** Set the master node for the replica set in the configuration using API.
 
-* ``UNREACHABLE_MASTER`` — No connection between the master and the replica.
+*   ``UNREACHABLE_MASTER``---No connection between the master and the replica.
 
-  **Critical level:**
+    **Critical level:**
 
-  * If idle value doesn’t exceed T1 threshold (1 s.) — Yellow,
-  * If idle value doesn’t exceed T2 threshold (5 s.) — Orange,
-  * If idle value exceeds T3 threshold (10 s.) — Red.
+    *   If idle value doesn’t exceed T1 threshold (1 s.)---Yellow,
+    *   If idle value doesn’t exceed T2 threshold (5 s.)---Orange,
+    *   If idle value exceeds T3 threshold (10 s.)---Red.
 
-  **Cluster condition:** For read requests to replica, the data may be obsolete
-  compared with the data on master.
+    **Cluster condition:** For read requests to replica, the data may be obsolete
+    compared with the data on master.
 
-  **Solution:** Reconnect to the master: fix the network issues, reset the current
-  master, switch to another master.
+    **Solution:** Reconnect to the master: fix the network issues, reset the current
+    master, switch to another master.
 
-* ``LOW_REDUNDANCY`` — Master has access to a single replica only.
+*   ``LOW_REDUNDANCY``---Master has access to a single replica only.
 
-  **Critical level:** Yellow.
+    **Critical level:** Yellow.
 
-  **Cluster condition:** The data storage redundancy factor is equal to 2. It
-  is lower than the minimal recommended value for production usage.
+    **Cluster condition:** The data storage redundancy factor is equal to 2. It
+    is lower than the minimal recommended value for production usage.
 
-  **Solution:** Check cluster configuration:
+    **Solution:** Check cluster configuration:
 
-  * If only one master and one replica are specified in the configuration,
-    it is recommended to add at least one more replica to reach the redundancy
-    factor of 3.
-  * If three or more replicas are specified in the configuration, consider
-    checking the replicas' states and network connection among the replicas.
+    *   If only one master and one replica are specified in the configuration,
+        it is recommended to add at least one more replica to reach the redundancy
+        factor of 3.
+    *   If three or more replicas are specified in the configuration, consider
+        checking the replicas' states and network connection among the replicas.
 
-* ``INVALID_REBALANCING`` — Rebalancing invariant was violated. During migration,
-  a storage node can either send or receive buckets. So it shouldn’t be the case
-  that a replica set sends buckets to one replica set and receives buckets from
-  another replica set at the same time.
+*   ``INVALID_REBALANCING``---Rebalancing invariant was violated. During migration,
+    a storage node can either send or receive buckets. So it shouldn’t be the case
+    that a replica set sends buckets to one replica set and receives buckets from
+    another replica set at the same time.
 
-  **Critical level:** Yellow.
+    **Critical level:** Yellow.
 
-  **Cluster condition:** Rebalancing is on hold.
+    **Cluster condition:** Rebalancing is on hold.
 
-  **Solution:** There are two possible reasons for invariant violation:
+    **Solution:** There are two possible reasons for invariant violation:
 
-  * The ``rebalancer`` has crashed.
-  * Bucket states were changed manually.
+    *   The ``rebalancer`` has crashed.
+    *   Bucket states were changed manually.
 
-  Either way, please contact Tarantool support.
+    Either way, please contact Tarantool support.
 
-* ``HIGH_REPLICATION_LAG`` — Replica’s lag exceeds T1 threshold (1 sec.).
+*   ``HIGH_REPLICATION_LAG``---Replica’s lag exceeds T1 threshold (1 sec.).
 
-  **Critical level:**
+    **Critical level:**
 
-  * If the lag doesn’t exceed T1 threshold (1 sec.) — Yellow;
-  * If the lag exceeds T2 threshold (5 sec.) — Orange.
+    *   If the lag doesn’t exceed T1 threshold (1 sec.)---Yellow;
+    *   If the lag exceeds T2 threshold (5 sec.)---Orange.
 
-  **Cluster condition:** For read-only requests to the replica, the data may
-  be obsolete compared with the data on the master.
+    **Cluster condition:** For read-only requests to the replica, the data may
+    be obsolete compared with the data on the master.
 
-  **Solution:** Check the replication status of the replica. Further instructions
-  are given in the
-  `Tarantool troubleshooting guide <https://www.tarantool.io/en/doc/latest/book/admin/troubleshoot/>`_.
+    **Solution:** Check the replication status of the replica. Further instructions
+    are given in the
+    `Tarantool troubleshooting guide <https://www.tarantool.io/en/doc/latest/book/admin/troubleshoot/>`_.
 
-* ``OUT_OF_SYNC`` — Mal-synchronization occured. The lag exceeds T3 threshold (10 sec.).
+*   ``OUT_OF_SYNC``---Mal-synchronization occurred. The lag exceeds T3 threshold (10 sec.).
 
-  **Critical level:** Red.
+    **Critical level:** Red.
 
-  **Cluster condition:** For read-only requests to the replica, the data may be
-  obsolete compared with the data on the master.
+    **Cluster condition:** For read-only requests to the replica, the data may be
+    obsolete compared with the data on the master.
 
-  **Solution:** Check the replication status of the replica. Further instructions
-  are given in the
-  `Tarantool troubleshooting guide <https://www.tarantool.io/en/doc/latest/book/admin/troubleshoot/>`_.
+    **Solution:** Check the replication status of the replica. Further instructions
+    are given in the
+    `Tarantool troubleshooting guide <https://www.tarantool.io/en/doc/latest/book/admin/troubleshoot/>`_.
 
 .. _unreachable_replica:
 
-* ``UNREACHABLE_REPLICA`` — One or multiple replicas are unreachable.
+*   ``UNREACHABLE_REPLICA``---One or multiple replicas are unreachable.
 
-  **Critical level:** Yellow.
+    **Critical level:** Yellow.
 
-  **Cluster condition:** Data storage redundancy factor for the given replica
-  set is less than the configured factor. If the replica is next in the queue for
-  rebalancing (in accordance with the weight configuration), the requests are
-  forwarded to the replica that is still next in the queue.
+    **Cluster condition:** Data storage redundancy factor for the given replica
+    set is less than the configured factor. If the replica is next in the queue for
+    rebalancing (in accordance with the weight configuration), the requests are
+    forwarded to the replica that is still next in the queue.
 
-  **Solution:** Check the error message and find out which replica is unreachable.
-  If a replica is disabled, enable it. If this doesn’t help, consider checking
-  the network.
+    **Solution:** Check the error message and find out which replica is unreachable.
+    If a replica is disabled, enable it. If this doesn’t help, consider checking
+    the network.
 
-* ``UNREACHABLE_REPLICASET`` — All replicas except for the current one are unreachable.
-  **Critical level:** Red.
+*   ``UNREACHABLE_REPLICASET``---All replicas except for the current one are unreachable.
+    **Critical level:** Red.
 
-  **Cluster condition:** The replica stores obsolete data.
+    **Cluster condition:** The replica stores obsolete data.
 
-  **Solution:** Check if the other replicas are enabled. If all replicas are
-  enabled, consider checking network issues on the master. If the replicas are
-  disabled, check them first: the master might be working properly.
+    **Solution:** Check if the other replicas are enabled. If all replicas are
+    enabled, consider checking network issues on the master. If the replicas are
+    disabled, check them first: the master might be working properly.
 
 .. _cartridge-monitor-router:
 
@@ -818,7 +817,7 @@ Use ``vshard.router.info()`` to obtain information on the router.
 Output example
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-.. code-block:: tarantoolsession
+..  code-block:: tarantoolsession
 
     tarantool> vshard.router.info()
     ---
@@ -847,17 +846,17 @@ Output example
 Status list
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-.. container:: table
+..  container:: table
 
-    .. rst-class:: left-align-column-1
-    .. rst-class:: left-align-column-2
+    ..  rst-class:: left-align-column-1
+    ..  rst-class:: left-align-column-2
 
     +----------+--------------------+-----------------------------------------+
     | **Code** | **Critical level** | **Description**                         |
     +----------+--------------------+-----------------------------------------+
     | 0        | Green              | The ``router`` works in a regular way.  |
     +----------+--------------------+-----------------------------------------+
-    | 1        | Yellow             | Some replicas sre unreachable (affects  |
+    | 1        | Yellow             | Some replicas are unreachable (affects  |
     |          |                    | the speed of executing read requests).  |
     +----------+--------------------+-----------------------------------------+
     | 2        | Orange             | Service is degraded for changing data.  |
@@ -871,50 +870,50 @@ Status list
 Potential issues
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-.. NOTE::
+..  note::
 
     Depending on the nature of the issue, use either the UUID of a replica,
     or the UUID of a replica set.
 
-* ``MISSING_MASTER`` — The master in one or multiple replica sets is not
-  specified in the configuration.
+*   ``MISSING_MASTER``---The master in one or multiple replica sets is not
+    specified in the configuration.
 
-  **Critical level:** Orange.
+    **Critical level:** Orange.
 
-  **Cluster condition:** Partial degrade for data-change requests.
+    **Cluster condition:** Partial degrade for data-change requests.
 
-  **Solution:** Specify the master in the configuration.
+    **Solution:** Specify the master in the configuration.
 
-* ``UNREACHABLE_MASTER`` — The ``router`` lost connection with the master of
-  one or multiple replica sets.
+*   ``UNREACHABLE_MASTER``---The ``router`` lost connection with the master of
+    one or multiple replica sets.
 
-  **Critical level:** Orange.
+    **Critical level:** Orange.
 
-  **Cluster condition:** Partial degrade for data-change requests.
+    **Cluster condition:** Partial degrade for data-change requests.
 
-  **Solution:** Restore connection with the master. First, check if the master
-  is enabled. If it is, consider checking the network.
+    **Solution:** Restore connection with the master. First, check if the master
+    is enabled. If it is, consider checking the network.
 
-* ``SUBOPTIMAL_REPLICA`` — There is a replica for read-only requests, but this
-  replica is not optimal according to the configured weights. This means that
-  the optimal replica is unreachable.
+*   ``SUBOPTIMAL_REPLICA``---There is a replica for read-only requests, but this
+    replica is not optimal according to the configured weights. This means that
+    the optimal replica is unreachable.
 
-  **Critical level:** Yellow.
+    **Critical level:** Yellow.
 
-  **Cluster condition:** Read-only requests are forwarded to a backup replica.
+    **Cluster condition:** Read-only requests are forwarded to a backup replica.
 
-  **Solution:** Check the status of the optimal replica and its network connection.
+    **Solution:** Check the status of the optimal replica and its network connection.
 
-* ``UNREACHABLE_REPLICASET`` — A replica set is unreachable for both read-only
-  and data-change requests.
+*   ``UNREACHABLE_REPLICASET``---A replica set is unreachable for both read-only
+    and data-change requests.
 
-  **Critical Level:** Red.
+    **Critical Level:** Red.
 
-  **Cluster condition:** Partial degrade for read-only and data-change requests.
+    **Cluster condition:** Partial degrade for read-only and data-change requests.
 
-  **Solution:** The replica set has an unreachable master and replica. Check the
-  error message to detect this replica set. Then fix the issue in the same way
-  as for :ref:`UNREACHABLE_REPLICA <unreachable_replica>`.
+    **Solution:** The replica set has an unreachable master and replica. Check the
+    error message to detect this replica set. Then fix the issue in the same way
+    as for :ref:`UNREACHABLE_REPLICA <unreachable_replica>`.
 
 .. _cartridge-upgrading_schema:
 
@@ -924,9 +923,9 @@ Upgrading schema
 
 When upgrading Tarantool to a newer version, please don't forget to:
 
-1. Stop the cluster
-2. Make sure that ``upgrade_schema`` :ref:`option <cartridge.cfg>` is enabled
-3. Start the cluster again
+1.  Stop the cluster
+2.  Make sure that ``upgrade_schema`` :ref:`option <cartridge.cfg>` is enabled
+3.  Start the cluster again
 
 This will automatically apply `box.schema.upgrade()
 <https://www.tarantool.io/en/doc/latest/book/admin/upgrades/#admin-upgrades>`_
