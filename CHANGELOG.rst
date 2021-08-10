@@ -12,11 +12,22 @@ and this project adheres to
 [Unreleased]
 -------------------------------------------------------------------------------
 
+-------------------------------------------------------------------------------
+[2.7.0] - 2021-08-10
+-------------------------------------------------------------------------------
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Added
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- Roles are stopped with ``on_shutdown`` trigger.
+- New suggestion to restart replication. Whenever the replication isn't running
+  and the reason isn't in the dead upstream, Cartridge will show the
+  corresponding banner in WebUI.
+
+- More server details in WebUI: membership, vshard-router, and vshard-storage.
+
+- Roles are stopped with the ``on_shutdown`` trigger where it's supported
+  (in Tarantool 2.8+).
 
 - New ``cartridge.cfg`` options:
 
@@ -34,52 +45,77 @@ Added
   - ``<PREFIX>/logout``;
   - ``/`` and ``<PREFIX>/`` redirect to ``/<PREFIX>/admin`` (if enabled).
 
-- New validate_config method in GraphQL API.
-- Add ``zone`` and ``zone_distances`` parameters to server and cluster helpers
-  respectively.
-- New restart_replication method in GraphQL API and corresponding suggestion.
+- New ``validate_config`` method in GraphQL API.
 
-- Instance will not produce suspects during ``RecoveringSnapshot`` and
-  ``BootstrappingBox``.
+- Add ``zone`` and ``zone_distances`` parameters to test helpers.
 
-- New script ``rst/BuildUML.cmake`` for rendering UML diagrams from the doc.
-
-- New vshard option ``rebalancer_max_sending``.
-
-- More server details in WebUI: membership, vshard-router and vshard-storage.
+- Support ``rebalancer_max_sending`` vshard option.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Changed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- Replicaset leaders can be expelled. New leaders will be appointed
-  according to the leader order from topology.
-- Update ``errors`` dependency to 2.2.0.
+- Merge "Schema" and "Code" pages. Also, allow validating all files, not only
+  the ``schema.yml``.
+
+- Allow expelling a leader. Cartridge will appoint a new leader according to the
+  failover priority from the topology.
+
 - Add default ``pool.map_call`` timeout 10 seconds.
-- Update ``frontend-core`` dependency to 7.10.0.
-- Argparse throws an error when it encouters ``instance_name`` missing in
-  instances.yml.
+
+- Forbid starting an instance absent in ``instances.yml``.
+
+- Update ``errors`` dependency to 2.2.0 with a new method
+  ``errors.netbox_wait_async`` to wait for ``netbox.future`` result.
+
 - Update ``membership`` dependency to 2.4.0
-- Update ``ddl`` dependency to 1.5.0.
-  (`Changelog <https://github.com/tarantool/ddl/releases/tag/1.5.0>`__).
+  (`Changelog <https://github.com/tarantool/membership/releases/tag/2.4.0>`__).
+
+- Update ``ddl`` dependency to 1.5.0 which supplements the clusterwide config
+  with an example schema (`Changelog <https://github.com/tarantool/ddl/releases/tag/1.5.0>`__).
+
 - Update ``vshard`` to 0.1.18
   (`Changelog <https://github.com/tarantool/vshard/releases/tag/0.1.18>`__).
+
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 - Leaders replaced during stateful failover can be expelled now.
+
 - Make failover logging more verbose.
-- Fix hotreload for roles who leave gaps in httpd routes.
-- Check user e-mail uniquness when editing.
-- Expelled instances are removed from ``_cluster`` space.
-- Fix ``get_enabled_roles`` to work w/o args
-- Don't default to syslog driver unless ``/dev/log`` or
-  ``/var/run/syslog`` are available.
-- Fix inappropriate consistency timeout.
-- Support automatic parsing of Tarantool Enterprise box options `audit_log` and
-  `audit_nonblock`.
+
+- Fix hot-reload for roles that leave gaps in httpd routes.
+
+- Check user e-mail uniqueness when editing.
+
+- Expelled instances are removed from the ``_cluster`` space.
+
+- Fix ``get_enabled_roles`` to work without arguments.
+
+- Don't default to syslog driver unless ``/dev/log`` or ``/var/run/syslog`` are
+  available.
+
+- Fix inappropriate consistency timeout that led to "Timed out" error during
+  forceful leader promotion.
+
+- Support automatic parsing of Tarantool Enterprise box options ``audit_log``
+  and ``audit_nonblock``.
+
+- Instance won't suspect any members during ``RecoveringSnapshot`` and
+  ``BootstrappingBox``.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Enhanced in WebUI
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Allow to blacklist subpages for complex modules.
+
+- Fix notifications displaying. Close it by clicking anywhere. Keep it open
+  while the mouse is over.
+
+- Various styles enhancements.
 
 -------------------------------------------------------------------------------
 [2.6.0] - 2021-04-26
@@ -271,7 +307,7 @@ Hot-reload:
   ``cartridge.reload_roles``. The feature is experimental and should be
   enabled explicitly: ``cartridge.cfg({roles_reload_allowed = true})``.
 
-Miscellanous:
+Miscellaneous:
 
 - New ``cartridge.cfg`` option ``swim_broadcast`` to manage
   instances auto-discovery on start. Default: true.
