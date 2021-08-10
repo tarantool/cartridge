@@ -56,35 +56,37 @@ function g.test_api()
     t.assert_covers(ret[3], {id = 3, uuid = g.r3_uuid}, ret)
     t.assert_equals(ret[2], nil, ret)
 
-    local ret = g.A1:graphql({
-        query = [[ query($uuid: String!) {
-            servers(uuid: $uuid) {
-                boxinfo { replication { replication_info {
-                    id
-                    upstream_peer
-                    upstream_status
-                    downstream_status
-                }}}
-            }
-        }]],
-        variables = {uuid = g.r3_uuid},
-    }).data.servers[1].boxinfo.replication.replication_info
+    t.helpers.retrying({}, function()
+        local ret = g.A1:graphql({
+            query = [[ query($uuid: String!) {
+                servers(uuid: $uuid) {
+                    boxinfo { replication { replication_info {
+                        id
+                        upstream_peer
+                        upstream_status
+                        downstream_status
+                    }}}
+                }
+            }]],
+            variables = {uuid = g.r3_uuid},
+        }).data.servers[1].boxinfo.replication.replication_info
 
-    t.assert_equals(ret, {
-        [1] = {
-            id = 1,
-            upstream_peer = "admin@" .. g.A1.advertise_uri,
-            upstream_status = "follow",
-            downstream_status = "follow",
-        },
-        [2] = box.NULL,
-        [3] = {
-            id = 3,
-            upstream_peer = box.NULL,
-            upstream_status = box.NULL,
-            downstream_status = box.NULL,
-        },
-    })
+        t.assert_equals(ret, {
+            [1] = {
+                id = 1,
+                upstream_peer = "admin@" .. g.A1.advertise_uri,
+                upstream_status = "follow",
+                downstream_status = "follow",
+            },
+            [2] = box.NULL,
+            [3] = {
+                id = 3,
+                upstream_peer = box.NULL,
+                upstream_status = box.NULL,
+                downstream_status = box.NULL,
+            },
+        })
+    end)
 
     -- Check explicitly that expelled leader is not in _cluster. Just in case.
     t.assert_items_equals(
