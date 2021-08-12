@@ -133,11 +133,14 @@ function g.test_appointments()
 
     local ok, err = c:set_leaders({{'A', 'a2'}, {'A', 'a3'}})
     t.assert_equals(ok, nil)
-    t.assert_covers(err, {
-        class_name = 'NetboxCallError',
-        err = '"localhost:13301": Duplicate key exists' ..
-        " in unique index 'ordinal' in space 'leader_audit'"
-    })
+    t.assert_equals(err.class_name, 'NetboxCallError')
+    if helpers.tarantool_version_ge('2.8.0') then
+        t.assert_str_contains(err.err, '"localhost:13301": Duplicate key exists' ..
+            ' in unique index "ordinal" in space "leader_audit"')
+    else
+        t.assert_str_contains(err.err, "\"localhost:13301\": Duplicate key exists" ..
+            " in unique index 'ordinal' in space 'leader_audit'")
+    end
 end
 
 function g.test_longpolling()

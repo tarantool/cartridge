@@ -175,4 +175,27 @@ function helpers.run_remotely(srv, fn)
     return ret
 end
 
+function helpers.tarantool_version_ge(version)
+    local function parse_version(version)
+        local version = version:split('-')[1]:split('.')
+        for ind, val in ipairs(version) do
+            version[ind] = tonumber(val)
+        end
+        return version
+    end
+
+    local tarantool_version = parse_version(_G._TARANTOOL)
+    local requested_version = parse_version(version)
+
+    for ind=1,3 do
+        if tarantool_version[ind] > requested_version[ind] then
+            return true
+        elseif tarantool_version[ind] < requested_version[ind] then
+            return false
+        end
+    end
+
+    return true
+end
+
 return helpers
