@@ -355,6 +355,35 @@ local function list_on_instance(opts)
         end
     end
 
+
+    -- Vshard issues
+    local vshard = package.loaded.vshard
+
+    if vshard then
+        local routers = vshard and vshard.router.internal.routers or {}
+        if next(routers) ~= nil then
+            for _, router in pairs(routers) do
+                local alerts = router:info().alerts
+                for _, alert in ipairs(alerts) do
+                    if alert[1] == 'UNKNOWN_BUCKETS'
+                    or alert[1] == 'INVALID_CFG'
+                    then
+                        local issue = {
+                            level = 'warning',
+                            topic = 'vshard',
+                            replicaset_uuid = replicaset_uuid,
+                            instance_uuid = instance_uuid,
+                            message = alert[2]
+                        }
+                        table.insert(ret, issue)
+                    end
+                end
+            end
+        end
+    end
+
+
+
     return ret
 end
 

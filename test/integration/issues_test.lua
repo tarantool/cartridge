@@ -7,7 +7,7 @@ local helpers = require('test.helper')
 g.before_all(function()
     g.cluster = helpers.Cluster:new({
         datadir = fio.tempdir(),
-        use_vshard = false,
+        use_vshard = true,
         server_command = helpers.entrypoint('srv_basic'),
         cookie = require('digest').urandom(6):hex(),
         replicasets = {{
@@ -22,6 +22,20 @@ g.before_all(function()
             }, {
                 alias = 'replica2',
                 instance_uuid = helpers.uuid('a', 'a', 3)
+            }},
+        }, {
+            uuid = helpers.uuid('b'),
+            roles = {'vshard-storage'},
+            servers = {{
+                alias = 'master1',
+                instance_uuid = helpers.uuid('b', 'b', 1)
+            }}
+        }, {
+            uuid = helpers.uuid('c'),
+            roles = {'vshard-router'},
+            servers = {{
+                alias = 'router',
+                instance_uuid = helpers.uuid('c', 'c', 1)
             }},
         }},
         env = {
@@ -395,4 +409,47 @@ g.after_test('test_aliens', function()
     t.helpers.retrying({}, function()
         t.assert_equals(helpers.list_cluster_issues(g.master), {})
     end)
+end)
+
+function g.test_vshard_buckets_invalid_cfg()
+    g.cluster:server('router').net_box:eval([[
+        __module_vshard_router.routers._static_router.known_bucket_count = 3500
+    ]])
+
+    t.assert_covers(helpers.list_cluster_issues(g.master), {{
+        level = "warning",
+        message = "Invalid configuration: "..
+            "probably router's cfg.bucket_count is different from storages' one, difference is 500",
+        topic = "vshard",
+        instance_uuid = g.cluster:server('router').instance_uuid,
+        replicaset_uuid = g.cluster:server('router').replicaset_uuid,
+    }})
+
+end
+
+g.after_test('test_vshard_buckets_invalid_cfg', function()
+    g.cluster:server('router').net_box:eval([[
+        __module_vshard_router.routers._static_router.known_bucket_count = 3000
+    ]])
+end)
+
+function g.test_vshard_buckets_not_discovered()
+    g.cluster.main_server.net_box:eval([[
+        require('cartridge').admin_disable_servers({...})
+    ]], {g.cluster:server('master1').instance_uuid})
+
+    t.assert_covers(helpers.list_cluster_issues(g.master), {{
+        level = "warning",
+        message = "3000 buckets are not discovered",
+        topic = "vshard",
+        instance_uuid = g.cluster:server('router').instance_uuid,
+        replicaset_uuid = g.cluster:server('router').replicaset_uuid,
+    }})
+
+end
+
+g.after_test('test_vshard_buckets_not_discovered', function()
+    g.cluster.main_server.net_box:eval([[
+        require('cartridge').admin_enable_servers({...})
+    ]], {g.cluster:server('master1').instance_uuid})
 end)
