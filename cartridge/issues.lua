@@ -93,6 +93,9 @@ local limits_ranges = {
 
 vars:new('limits', default_limits)
 
+vars:new('custom_instance_issues', {})
+vars:new('custom_cluster_issues', {})
+
 local function describe(uri)
     local member = membership.get_member(uri)
     if member ~= nil and member.payload.alias ~= nil then
@@ -355,6 +358,20 @@ local function list_on_instance(opts)
         end
     end
 
+    for key, issue in ipairs(vars.custom_instance_issues) do
+        if not issue.end_time or os.time() < issue.end_time then
+            table.insert(ret, {
+                level = issue.level,
+                topic = issue.topic or 'custom',
+                instance_uuid = instance_uuid,
+                replicaset_uuid = replicaset_uuid,
+                message = issue.message,
+            })
+        elseif issue.end_time and os.time() >= issue.end_time then
+            vars.custom_instance_issues[key] = nil
+        end
+    end
+
     return ret
 end
 
@@ -464,6 +481,17 @@ local function list_on_cluster()
         end
     end
 
+    for key, issue in pairs(vars.custom_cluster_issues) do
+        if not issue.end_time or os.time() < issue.end_time then
+            table.insert(ret, {
+                level = issue.level,
+                topic = issue.topic or 'custom',
+                message = issue.message,
+            })
+        elseif issue.end_time and os.time() >= issue.end_time then
+            vars.custom_cluster_issues[key] = nil
+        end
+    end
 
     -- Get each instance issues (replication, failover, memory usage)
 
@@ -548,6 +576,21 @@ local function set_limits(limits)
     return true
 end
 
+local add_custom_issue = function(level, type, message, name, topic, timeout)
+    assert(level)
+    assert(message)
+    vars['custom_' .. type .. '_issues'][name or level .. message .. (topic or '')] = {
+        level = level,
+        topic = topic,
+        message = message,
+        end_time = timeout and (os.time() + timeout),
+    })
+end
+
+local remove_custom_issue = function(type, name, level, message, topic)
+    vars['custom_' .. type .. '_issues'][name or level .. message .. (topic or '')] = nil
+end
+
 _G.__cartridge_issues_list_on_instance = list_on_instance
 
 return {
@@ -555,4 +598,12 @@ return {
     default_limits = default_limits,
     validate_limits = validate_limits,
     set_limits = set_limits,
+    warn = function(...) return add_custom_issue('warning', 'instance', ...) end,
+    crit = function(...) return add_custom_issue('critical', 'instance', ...) end,
+    info = function(...) return add_custom_issue('information', 'instance', ...) end,
+    warn_cluster = function(...) return add_custom_issue('warning', 'cluster', ...) end,
+    crit_cluster = function(...) return add_custom_issue('critical', 'cluster', ...) end,
+    info_cluster = function(...) return add_custom_issue('information', 'cluster', ...) end,
+    remove_issue = function() return remove_custom_issue('instance', ...) end,
+    remove_issue_cluster = function() return remove_custom_issue('cluster', ...) end,
 }
