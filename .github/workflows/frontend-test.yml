@@ -44,8 +44,7 @@ jobs:
         id: cache-rocks
         with:
           path: .rocks/
-          key: rocks-054-${{ hashFiles('cartridge-scm-1.rockspec') }}
-          restore-keys: rocks
+          key: webui-rocks-${{ hashFiles('*.rockspec') }}-02
       -
         run: tarantoolctl rocks install luatest 0.5.4
         if: steps.cache-rocks.outputs.cache-hit != 'true'
@@ -79,7 +78,7 @@ jobs:
           path: |
             ./node_modules
             ~/.cache/Cypress
-          key: cypress-cache-7.7.0-${{ runner.os }}-1
+          key: cypress-7.7.0-${{ runner.os }}-02
       -
         run: |
           npm install cypress@7.7.0

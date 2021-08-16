@@ -35,7 +35,7 @@ function g.test_cfg()
 
     print()
     g.server:start()
-    g.servecall('package.loaded.log.info', {'Info message'})
+    g.server:call('package.loaded.log.info', {'Info message'})
     g.server:call('package.loaded.log.error', {'Error message'})
     g.server:stop()
 
