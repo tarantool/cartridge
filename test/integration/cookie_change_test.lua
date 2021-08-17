@@ -50,8 +50,9 @@ local q_get_cookie = [[
 ]]
 
 local function set_cookie(server, cookie)
-    server.net_box:eval(q_set_cookie, {cookie})
+    server:eval(q_set_cookie, {cookie})
     server.net_box_credentials.password = cookie
+    server.cluster_cookie = nil
 end
 
 local function set_cookie_clusterwide(cluster, cookie)
@@ -59,7 +60,7 @@ local function set_cookie_clusterwide(cluster, cookie)
         set_cookie(server, cookie)
     end
     for _, server in pairs(cluster.servers) do
-        local ok, err = server.net_box:eval([[
+        local ok, err = server:eval([[
             local confapplier = require('cartridge.confapplier')
             local clusterwide_config = confapplier.get_active_config()
             return confapplier.apply_config(clusterwide_config)
@@ -68,7 +69,7 @@ local function set_cookie_clusterwide(cluster, cookie)
         t.assert_equals({ok, err}, {true, nil})
     end
     for _, server in pairs(cluster.servers) do
-        local new_cookie = server.net_box:eval(q_get_cookie)
+        local new_cookie = server:eval(q_get_cookie)
         t.assert_equals(new_cookie, cookie)
         h.retrying({}, function()
             t.assert_equals(h.list_cluster_issues(server), {})
@@ -84,7 +85,7 @@ function g.test_cluster_restart()
     g.cluster:start()
 
     for _, server in pairs(g.cluster.servers) do
-        local cookie = server.net_box:eval(q_get_cookie)
+        local cookie = server:eval(q_get_cookie)
         t.assert_equals(cookie, new_cookie)
     end
     h.retrying({}, function()
@@ -100,7 +101,7 @@ function g.test_server_restart()
     target:stop()
     target:start()
 
-    local cookie = target.net_box:eval(q_get_cookie)
+    local cookie = target:eval(q_get_cookie)
     t.assert_equals(cookie, new_cookie)
 
     h.retrying({}, function()
