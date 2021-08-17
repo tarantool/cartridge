@@ -153,9 +153,10 @@ function g.test_upgrade()
     end
     local highload_cnt = 0
 
+    local highload_enabled = true
     local highload_fiber = fiber.new(function()
         log.warn('Highload started ----------')
-        while true do
+        while highload_enabled do
             highload_cnt = highload_cnt + 1
             local ok, err = errors.pcall('E', _insert, highload_cnt)
             if ok == nil then
@@ -165,6 +166,7 @@ function g.test_upgrade()
         end
     end)
     highload_fiber:name('test.highload')
+    highload_fiber:set_joinable(true)
 
     g.cluster:retrying({}, function()
         t.assert_equals(
@@ -253,7 +255,8 @@ function g.test_upgrade()
     t.assert_equals(version(replica), 'scm-1')
     t.assert_equals(upstream_info(leader), {status = 'follow'})
 
-    highload_fiber:cancel()
+    highload_enabled = false
+    highload_fiber:join()
     t.assert_equals(
         g.cluster.main_server.net_box:call(
             'package.loaded.vshard.router.callrw', {
