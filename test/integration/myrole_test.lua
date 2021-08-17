@@ -77,12 +77,12 @@ function g.test_myrole()
         }]]
     })
 
-    g.cluster.main_server.net_box:eval([[
+    g.cluster.main_server:eval([[
         local service_registry = require('cartridge.service-registry')
         assert(service_registry.get('myrole') ~= nil)
     ]])
 
-    g.cluster.main_server.net_box:eval([[
+    g.cluster.main_server:eval([[
         assert(package.loaded['mymodule'].get_state() == 'initialized')
     ]])
 
@@ -106,12 +106,12 @@ function g.test_myrole()
         }]]
     })
 
-    g.cluster.main_server.net_box:eval([[
+    g.cluster.main_server:eval([[
         local service_registry = require('cartridge.service-registry')
         assert(service_registry.get('myrole') == nil)
     ]])
 
-    g.cluster.main_server.net_box:eval([[
+    g.cluster.main_server:eval([[
         assert(package.loaded['mymodule'].get_state() == 'stopped')
     ]])
 end
@@ -126,7 +126,7 @@ function g.test_dependencies()
         }]]
     })
 
-    g.cluster.main_server.net_box:eval([[
+    g.cluster.main_server:eval([[
         local service_registry = require('cartridge.service-registry')
         assert(service_registry.get('myrole-dependency') ~= nil)
     ]])

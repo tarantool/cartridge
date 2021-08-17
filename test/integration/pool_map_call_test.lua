@@ -9,6 +9,7 @@ local g = t.group()
 
 local helpers = require('test.helper')
 
+local errors = require('errors')
 local pool = require('cartridge.pool')
 local cluster_cookie = require('cartridge.cluster-cookie')
 
@@ -26,7 +27,7 @@ g.before_all = function()
     })
 
     g.cluster:start()
-    g.cluster.main_server.net_box:eval([[
+    g.cluster.main_server:eval([[
         local remote_control = require('cartridge.remote-control')
         local cluster_cookie = require('cartridge.cluster-cookie')
         remote_control.bind('0.0.0.0', 13302)
@@ -110,7 +111,7 @@ function g.test_timeout()
         ' Connection is not established, state is "initial"'
     )
 
-    g.cluster.main_server.net_box:eval([[
+    g.cluster.main_server:eval([[
         _G.simple = function() return 5 end
     ]])
 
@@ -129,7 +130,7 @@ end
 
 function g.test_parallel()
     local srv = g.cluster.main_server
-    srv.net_box:eval([[
+    srv:eval([[
         local fiber = require('fiber')
         _G._test_channel = fiber.channel(0)
 
@@ -162,19 +163,21 @@ function g.test_parallel()
     })
 end
 
+g.before_test('test_fiber_storage', function()
+    g._netbox_call_original = errors.netbox_call
+end)
+
 function g.test_fiber_storage()
-    local errors = require('errors')
-    local _netbox_call_original = errors.netbox_call
     -- Test for https://github.com/tarantool/cartridge/issues/1293
     -- pool.map_call spawns new fibers which doesn't preserve fiber
     -- storage needed for TDG request context passing.
     errors.netbox_call = function(conn, fn_name, _, opts)
         local args = {fiber.self().storage.secret}
-        return _netbox_call_original(conn, fn_name, args, opts)
+        return g._netbox_call_original(conn, fn_name, args, opts)
     end
 
     local srv = g.cluster.main_server
-    srv.net_box:eval('function _G.echo(...) return ... end')
+    srv:eval('function _G.echo(...) return ... end')
 
     local secret = '935052d0-deb5-49a8-995f-c139bfa9dc4f'
     fiber.self().storage.secret = secret
@@ -189,10 +192,15 @@ function g.test_fiber_storage()
         ['localhost:13301'] = secret,
         ['localhost:13302'] = secret,
     })
-
-    -- Revert monkeypatch
-    errors.netbox_call = _netbox_call_original
 end
+
+g.after_test('test_fiber_storage', function()
+    -- Revert monkeypatch
+    if g._netbox_call_original then
+        errors.netbox_call = g._netbox_call_original
+    end
+    g._netbox_call_original = nil
+end)
 
 function g.test_errors()
     t.assert_error_msg_contains(
@@ -227,7 +235,7 @@ end
 
 function g.test_negative()
     local srv = g.cluster.main_server
-    srv.net_box:eval([[
+    srv:eval([[
         function _G.raise_error()
             error('Too long WAL write', 0)
         end
@@ -258,7 +266,7 @@ end
 
 function g.test_errors_united()
     local srv = g.cluster.main_server
-    srv.net_box:eval([[
+    srv:eval([[
         local errors = require('errors')
         function _G.return_error()
             return nil, errors.new('E', 'Segmentation fault')

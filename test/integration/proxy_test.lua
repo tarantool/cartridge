@@ -32,7 +32,7 @@ g.before_each(function()
     g.unconfigured:start()
     t.helpers.retrying({}, function()
         g.unconfigured:graphql({query = '{ servers {uri} }'})
-        local probe = g.unconfigured.net_box:call(
+        local probe = g.unconfigured:call(
             'package.loaded.membership.probe_uri',
             {g.main_server.advertise_uri}
         )
@@ -99,7 +99,7 @@ function g.test_alive_destination()
 end
 
 function g.test_dead_destination()
-    g.main_server.net_box:call('box.cfg', {{
+    g.main_server:call('box.cfg', {{
         listen = box.NULL, -- restrict connections
         replication = box.NULL, -- produce an issue
     }})
@@ -145,7 +145,7 @@ end
 
 function g.test_issues()
     -- Check that issue are proxied
-    g.main_server.net_box:eval([[
+    g.main_server:eval([[
         local workdir = require('cartridge.confapplier').get_workdir()
         require('fio').mktree(workdir .. '/config.prepare/lock')
     ]])

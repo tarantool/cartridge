@@ -67,7 +67,7 @@ function g.test_join_server()
     t.assert_equals(resp['data']['probe_server'], true)
 
     local function get_peer_uuid(uri)
-        return main.net_box:eval([[
+        return main:eval([[
             local errors = require('errors')
             local pool = require('cartridge.pool')
             local conn, err = errors.assert('E', pool.connect(...))
@@ -164,7 +164,7 @@ function g.test_join_server()
     end)
 
     t.helpers.retrying({timeout = 5, delay = 0.1}, function()
-        main.net_box:eval([[
+        main:eval([[
             local cartridge = package.loaded['cartridge']
             return assert(cartridge) and assert(cartridge.is_healthy())
         ]])

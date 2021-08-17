@@ -57,7 +57,7 @@ g.before_all = function()
     })
     g.cluster:start()
 
-    g.cluster:server('expelled').net_box:eval([[
+    g.cluster:server('expelled'):eval([[
         local last_will_path = ...
         last_will_path = require('fio').pathjoin(last_will_path, 'last_will.txt')
         package.loaded['mymodule-permanent'].stop = function()
@@ -174,7 +174,7 @@ function g.test_self()
     t.assert_equals(_get_demo_uri(), box.NULL)
 
     local demo_uri = 'http://try-cartridge.tarantool.io'
-    router_server.net_box:eval([[
+    router_server:eval([[
         os.setenv('TARANTOOL_DEMO_URI', ...)
     ]], {demo_uri})
 
@@ -512,7 +512,7 @@ function g.test_topology_caching()
     -- In this test we protect `admin.get_topology` function from being
     -- executed twice in the same request and query same data with
     -- different aliases
-    g.cluster.main_server.net_box:eval([[
+    g.cluster.main_server:eval([[
         local fiber = require('fiber')
         local lua_api_topology = require('cartridge.lua-api.topology')
         local __get_topology = lua_api_topology.get_topology
@@ -663,7 +663,7 @@ function g.test_membership_leave()
     )
 
     t.assert_equals(
-        g.cluster.main_server.net_box:eval([[
+        g.cluster.main_server:eval([[
             local membership = require('membership')
             local member = membership.members()[...]
             return member.status
@@ -679,7 +679,7 @@ function g.test_issues()
     -----------------------------------------------------------------------------
     -- memory usage issues
     local server = g.cluster:server('storage')
-    server.net_box:eval([[
+    server:eval([[
         _G._old_slab_info = box.slab.info
         _G._slab_data = {
             items_used = 6.1,
@@ -708,7 +708,7 @@ function g.test_issues()
             instance_uuid = server.instance_uuid,
         }}
     )
-    server.net_box:eval([[
+    server:eval([[
         _G._slab_data.items_size = 10
         _G._slab_data.items_used_ratio = '61.00%'
    ]])
@@ -724,16 +724,16 @@ function g.test_issues()
         }}
     )
 
-    server.net_box:eval('box.slab.info = _G._old_slab_info')
+    server:eval('box.slab.info = _G._old_slab_info')
     t.assert_equals(helpers.list_cluster_issues(g.cluster.main_server), {})
 
     -----------------------------------------------------------------------------
     -- clock desync issues
-    g.cluster.main_server.net_box:eval([[
+    g.cluster.main_server:eval([[
         require('cartridge.issues').set_limits({clock_delta_threshold_warning = 0})
     ]])
     local issues = helpers.list_cluster_issues(g.cluster.main_server)
-    g.cluster.main_server.net_box:eval([[
+    g.cluster.main_server:eval([[
         local vars = require('cartridge.vars').new('cartridge.issues')
         vars.limits = nil -- reset default values
     ]])

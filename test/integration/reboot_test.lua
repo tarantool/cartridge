@@ -72,7 +72,7 @@ function g.test_oldstyle_config()
     g.cluster:start()
 
 
-    g.cluster.main_server.net_box:eval([[
+    g.cluster.main_server:eval([[
         local vshard = require('vshard')
         local cartridge = require('cartridge')
         local router_role = assert(cartridge.service_get('vshard-router'))
@@ -99,7 +99,7 @@ function g.test_absent_config()
 
     g.cluster:retrying({}, function()
         srv:connect_net_box()
-        local state, err = srv.net_box:eval([[
+        local state, err = srv:eval([[
             local confapplier = require('cartridge.confapplier')
             return confapplier.get_state()
         ]])
@@ -150,7 +150,7 @@ function g.test_absent_snapshot()
     end)
     g.cluster:wait_until_healthy()
 
-    local state, err = g.cluster.main_server.net_box:eval([[
+    local state, err = g.cluster.main_server:eval([[
         local confapplier = require('cartridge.confapplier')
         return confapplier.get_state()
     ]])
@@ -185,7 +185,7 @@ function g.test_invalid_config()
         srv:connect_net_box()
     end)
 
-    local state, err = g.cluster.main_server.net_box:eval([[
+    local state, err = g.cluster.main_server:eval([[
         local confapplier = require('cartridge.confapplier')
         return confapplier.get_state()
     ]])
@@ -201,7 +201,7 @@ end
 
 function g.test_advertise_change()
     local master = g.cluster.main_server
-    master.net_box:call('box.schema.sequence.create', {'test'})
+    master:call('box.schema.sequence.create', {'test'})
     master:stop()
 
     master.env['TARANTOOL_ADVERTISE_URI'] = '127.0.0.1:13310'
@@ -209,5 +209,5 @@ function g.test_advertise_change()
     master:start()
 
     helpers.wish_state(master, 'RolesConfigured', 1)
-    t.assert(master.net_box:call('box.sequence.test:next'))
+    t.assert(master:call('box.sequence.test:next'))
 end

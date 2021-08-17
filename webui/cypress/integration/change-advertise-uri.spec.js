@@ -23,8 +23,9 @@ describe('Change advertise uri', () => {
       )
       _G.cluster.main_server:stop()
 
-      _G.cluster.main_server.env['TARANTOOL_ADVERTISE_URI'] = 'localhost:13312'
-      _G.cluster.main_server.net_box_uri = 'localhost:13312'
+      _G.cluster.main_server.net_box_port = nil
+      _G.cluster.main_server.advertise_uri = nil
+      _G.cluster.main_server.advertise_port = 13312
       _G.cluster.main_server:start()
       return true
     `

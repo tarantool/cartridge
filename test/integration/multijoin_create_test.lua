@@ -61,7 +61,7 @@ g.after_all = function()
 end
 
 g.test_patch_topology = function()
-    cluster.main_server.net_box:eval([[
+    cluster.main_server:eval([[
         local args = ...
 
         local errors = require('errors')

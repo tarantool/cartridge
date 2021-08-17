@@ -79,8 +79,8 @@ g_stateboard.before_all(function()
 
     setup_cluster(g)
 
-    B1.net_box:call('box.schema.sequence.create', {'test'})
-    B1.net_box:call('package.loaded.cartridge.failover_set_params', {{
+    B1:call('box.schema.sequence.create', {'test'})
+    B1:call('package.loaded.cartridge.failover_set_params', {{
         mode = 'stateful',
         state_provider = 'tarantool',
         tarantool_params = {
@@ -115,8 +115,8 @@ g_etcd2.before_all(function()
 
     setup_cluster(g)
 
-    B1.net_box:call('box.schema.sequence.create', {'test'})
-    t.assert(A1.net_box:call(
+    B1:call('box.schema.sequence.create', {'test'})
+    t.assert(A1:call(
         'package.loaded.cartridge.failover_set_params',
         {{
             mode = 'stateful',
@@ -197,25 +197,25 @@ add('test_2pc_forceful', function(g)
     t.assert(g.session:set_vclockkeeper(uB, 'nobody'))
     t.assert(g.session:set_leaders({{uB, 'nobody'}}))
     helpers.retrying({}, function()
-        t.assert_equals(B1.net_box:eval(q_leadership, {uB}), 'nobody')
+        t.assert_equals(B1:eval(q_leadership, {uB}), 'nobody')
     end)
 
-    t.assert_equals(B1.net_box:eval(q_readonliness), true)
-    t.assert_equals(B1.net_box:eval(q_is_vclockkeeper), false)
+    t.assert_equals(B1:eval(q_readonliness), true)
+    t.assert_equals(B1:eval(q_is_vclockkeeper), false)
 
     -- Promote B1
     t.assert(g.session:set_leaders({{uB, uB1}}))
     helpers.retrying({}, function()
-        t.assert_equals(B1.net_box:eval(q_leadership, {uB}), uB1)
+        t.assert_equals(B1:eval(q_leadership, {uB}), uB1)
     end)
-    t.assert_equals(B1.net_box:eval(q_readonliness), true)
-    t.assert_equals(B1.net_box:eval(q_is_vclockkeeper), false)
+    t.assert_equals(B1:eval(q_readonliness), true)
+    t.assert_equals(B1:eval(q_is_vclockkeeper), false)
 
-    A1.net_box:eval(q_set_wait_lsn_timeout, {0.1})
+    A1:eval(q_set_wait_lsn_timeout, {0.1})
 
     -- Trigger apply_config
     -- An attempt to constitute_oneself fails
-    local ok, err = B1.net_box:eval([[
+    local ok, err = B1:eval([[
         local confapplier = require('cartridge.confapplier')
         local active_config = confapplier.get_active_config()
         require('log').warn('Triggering apply_config')
@@ -226,8 +226,8 @@ add('test_2pc_forceful', function(g)
     t.assert_equals({ok, err}, {true, nil})
 
     -- But B1 still waits LSN from "nobody" (forever)
-    t.assert_equals(B1.net_box:eval(q_readonliness), true)
-    t.assert_equals(B1.net_box:eval(q_is_vclockkeeper), false)
+    t.assert_equals(B1:eval(q_readonliness), true)
+    t.assert_equals(B1:eval(q_is_vclockkeeper), false)
     t.assert_items_equals(
         helpers.list_cluster_issues(B1),
         {{
@@ -245,8 +245,8 @@ add('test_2pc_forceful', function(g)
 
     -- Expect it to become rw
     helpers.retrying({}, function()
-        t.assert_equals(B1.net_box:eval(q_readonliness), false)
-        t.assert_equals(B1.net_box:eval(q_is_vclockkeeper), true)
+        t.assert_equals(B1:eval(q_readonliness), false)
+        t.assert_equals(B1:eval(q_is_vclockkeeper), true)
     end)
 end)
 
@@ -256,22 +256,22 @@ add('test_promotion_forceful', function(g)
     -- 2. B2 gets promoted but can't accomplish wait_lsn
     -- 3. B2 becomes a vclockkeeper through a force promotion
 
-    B2.net_box:eval(q_set_wait_lsn_timeout, {0.2})
-    t.assert_equals(B2.net_box:eval(q_leadership, {uB}), uB1)
-    t.assert_equals(B2.net_box:eval(q_readonliness), true)
+    B2:eval(q_set_wait_lsn_timeout, {0.2})
+    t.assert_equals(B2:eval(q_leadership, {uB}), uB1)
+    t.assert_equals(B2:eval(q_readonliness), true)
 
     -- Prevent wait_lsn from accomplishing successfully
     B1.process:kill('STOP')
 
     t.assert(g.session:set_leaders({{uB, uB2}}))
     t.assert_error_msg_equals("timed out",
-        function() B2.net_box:call('box.ctl.wait_rw', {0.1}) end
+        function() B2:call('box.ctl.wait_rw', {0.1}) end
     )
 
     -- B2 stucks on wait_lsn
-    t.assert_equals(B2.net_box:eval(q_leadership, {uB}), uB2)
-    t.assert_equals(B2.net_box:eval(q_readonliness), true)
-    t.assert_equals(B2.net_box:eval(q_is_vclockkeeper), false)
+    t.assert_equals(B2:eval(q_leadership, {uB}), uB2)
+    t.assert_equals(B2:eval(q_readonliness), true)
+    t.assert_equals(B2:eval(q_is_vclockkeeper), false)
         t.assert_covers(g.session:get_vclockkeeper(uB), {
         replicaset_uuid = uB,
         instance_uuid = uB1,
@@ -282,8 +282,8 @@ add('test_promotion_forceful', function(g)
 
     -- Expect it to become rw
     helpers.retrying({}, function()
-        t.assert_equals(B2.net_box:eval(q_readonliness), false)
-        t.assert_equals(B2.net_box:eval(q_is_vclockkeeper), true)
+        t.assert_equals(B2:eval(q_readonliness), false)
+        t.assert_equals(B2:eval(q_is_vclockkeeper), true)
     end)
 
     -- Revert all hacks in fixtures
@@ -301,32 +301,32 @@ add('test_promotion_abortion', function(g)
 
     t.assert(g.session:set_leaders({{uB, uB1}}))
     helpers.retrying({}, function()
-        t.assert_equals(B1.net_box:eval(q_is_vclockkeeper), true)
-        t.assert_equals(B2.net_box:eval(q_is_vclockkeeper), false)
+        t.assert_equals(B1:eval(q_is_vclockkeeper), true)
+        t.assert_equals(B2:eval(q_is_vclockkeeper), false)
     end)
 
     -- Protect B2 from becoming rw
     helpers.protect_from_rw(B2)
 
     -- Prevent wait_lsn from accomplishing successfully
-    B2.net_box:eval([[
+    B2:eval([[
         _r = box.cfg.replication
         box.cfg({replication = {}})
     ]])
-    B1.net_box:call('box.sequence.test:next')
+    B1:call('box.sequence.test:next')
 
     -- Promote B2
     t.assert(g.session:set_leaders({{uB, uB2}}))
     t.assert_error_msg_equals("timed out",
-        function() B2.net_box:call('box.ctl.wait_rw', {0.2}) end
+        function() B2:call('box.ctl.wait_rw', {0.2}) end
     )
 
-    t.assert_equals(B1.net_box:eval(q_leadership, {uB}), uB2)
-    t.assert_equals(B2.net_box:eval(q_leadership, {uB}), uB2)
-    t.assert_equals(B1.net_box:eval(q_readonliness), true)
-    t.assert_equals(B2.net_box:eval(q_readonliness), true)
-    t.assert_equals(B1.net_box:eval(q_is_vclockkeeper), false)
-    t.assert_equals(B1.net_box:eval(q_is_vclockkeeper), false)
+    t.assert_equals(B1:eval(q_leadership, {uB}), uB2)
+    t.assert_equals(B2:eval(q_leadership, {uB}), uB2)
+    t.assert_equals(B1:eval(q_readonliness), true)
+    t.assert_equals(B2:eval(q_readonliness), true)
+    t.assert_equals(B1:eval(q_is_vclockkeeper), false)
+    t.assert_equals(B1:eval(q_is_vclockkeeper), false)
     t.assert_covers(g.session:get_vclockkeeper(uB), {
         replicaset_uuid = uB,
         instance_uuid = uB1,
@@ -360,14 +360,14 @@ add('test_promotion_abortion', function(g)
 
     -- Expect it to become rw
     helpers.retrying({}, function()
-        t.assert_equals(B1.net_box:eval(q_readonliness), false)
-        t.assert_equals(B2.net_box:eval(q_readonliness), true)
+        t.assert_equals(B1:eval(q_readonliness), false)
+        t.assert_equals(B2:eval(q_readonliness), true)
     end)
 
     -- Revert all hacks in fixtures
-    B2.net_box:eval('box.cfg({replication = _r})')
+    B2:eval('box.cfg({replication = _r})')
     t.assert_error_msg_equals("timed out",
-        function() B2.net_box:call('box.ctl.wait_rw', {0.2}) end
+        function() B2:call('box.ctl.wait_rw', {0.2}) end
     )
 
     helpers.unprotect(B2)
@@ -380,27 +380,27 @@ add('test_promotion_late', function(g)
     -- 3. wait_lsn succeeds and B2 finally becomes a vclockkeeper
     t.assert(g.session:set_leaders({{uB, uB1}}))
     helpers.retrying({}, function()
-        t.assert_equals(B1.net_box:eval(q_is_vclockkeeper), true)
-        t.assert_equals(B2.net_box:eval(q_is_vclockkeeper), false)
+        t.assert_equals(B1:eval(q_is_vclockkeeper), true)
+        t.assert_equals(B2:eval(q_is_vclockkeeper), false)
     end)
 
     -- Prevent wait_lsn from accomplishing successfully
-    B2.net_box:eval([[
+    B2:eval([[
         _r = box.cfg.replication
         box.cfg({replication = {}})
     ]])
-    B1.net_box:call('box.sequence.test:next')
+    B1:call('box.sequence.test:next')
 
     -- Promote B2
     t.assert(g.session:set_leaders({{uB, uB2}}))
     t.assert_error_msg_equals("timed out",
-        function() B2.net_box:call('box.ctl.wait_rw', {0.1}) end
+        function() B2:call('box.ctl.wait_rw', {0.1}) end
     )
 
-    t.assert_equals(B1.net_box:eval(q_leadership, {uB}), uB2)
-    t.assert_equals(B2.net_box:eval(q_leadership, {uB}), uB2)
-    t.assert_equals(B1.net_box:eval(q_readonliness), true)
-    t.assert_equals(B2.net_box:eval(q_readonliness), true)
+    t.assert_equals(B1:eval(q_leadership, {uB}), uB2)
+    t.assert_equals(B2:eval(q_leadership, {uB}), uB2)
+    t.assert_equals(B1:eval(q_readonliness), true)
+    t.assert_equals(B2:eval(q_readonliness), true)
     t.assert_covers(g.session:get_vclockkeeper(uB), {
         replicaset_uuid = uB,
         instance_uuid = uB1,
@@ -426,12 +426,12 @@ add('test_promotion_late', function(g)
     )
 
     -- Repair replication
-    B2.net_box:eval('box.cfg({replication = _r})')
+    B2:eval('box.cfg({replication = _r})')
 
     -- Expect it to become rw
     helpers.retrying({}, function()
-        t.assert_equals(B1.net_box:eval(q_readonliness), true)
-        t.assert_equals(B2.net_box:eval(q_readonliness), false)
+        t.assert_equals(B1:eval(q_readonliness), true)
+        t.assert_equals(B2:eval(q_readonliness), false)
     end)
 end)
 
@@ -443,12 +443,12 @@ add('test_vclockkeeper_caching', function(g)
     -- 4. But B1 is unable to get info about vclockkeeper
     -- 5. apply_config is still triggered
 
-    t.assert_equals(B1.net_box:eval(q_leadership, {uB}), uB1)
-    t.assert_equals(B1.net_box:eval(q_readonliness), false)
-    t.assert_equals(B1.net_box:eval(q_is_vclockkeeper), true)
+    t.assert_equals(B1:eval(q_leadership, {uB}), uB1)
+    t.assert_equals(B1:eval(q_readonliness), false)
+    t.assert_equals(B1:eval(q_is_vclockkeeper), true)
 
 
-    B1.net_box:eval([[
+    B1:eval([[
         local vars = require('cartridge.vars').new('cartridge.failover')
         _get_vclockkeeper_backup = vars.client.session.get_vclockkeeper
         vars.client.session.get_vclockkeeper = function()
@@ -457,7 +457,7 @@ add('test_vclockkeeper_caching', function(g)
     ]])
 
     -- Monkeypatch apply_config to count reconfiguration events
-    B1.net_box:eval('loadstring(...)()', {
+    B1:eval('loadstring(...)()', {
         string.dump(function()
             local myrole = require('mymodule-permanent')
 
@@ -470,17 +470,17 @@ add('test_vclockkeeper_caching', function(g)
         end)
     })
 
-    t.assert_equals(B1.net_box:eval('return config_incarnation'), 0)
+    t.assert_equals(B1:eval('return config_incarnation'), 0)
 
     t.assert(g.session:set_leaders({{uA, 'someone-else'}}))
     helpers.retrying({}, function()
-        t.assert_equals(B1.net_box:eval(q_leadership, {uA}), 'someone-else')
+        t.assert_equals(B1:eval(q_leadership, {uA}), 'someone-else')
     end)
 
-    t.assert_equals(B1.net_box:eval('return config_incarnation'), 1)
+    t.assert_equals(B1:eval('return config_incarnation'), 1)
 
     -- Revert all hacks in fixtures
-    B1.net_box:eval([[
+    B1:eval([[
         local vars = require('cartridge.vars').new('cartridge.failover')
         vars.client.session.get_vclockkeeper = _get_vclockkeeper_backup
     ]])
@@ -495,8 +495,8 @@ add('test_enabling', function(g)
     -- 5. B1 persists his vclock
     -- 6. Enable failover-coordinator role, it shouldn't spoil vclock value
 
-    A1.net_box:eval(q_set_wait_lsn_timeout, {0.2})
-    B1.net_box:eval(q_set_wait_lsn_timeout, {0.2})
+    A1:eval(q_set_wait_lsn_timeout, {0.2})
+    B1:eval(q_set_wait_lsn_timeout, {0.2})
 
     -- State provider is unavailable
     g.state_provider:stop()
@@ -507,13 +507,13 @@ add('test_enabling', function(g)
         local cartridge = require("cartridge")
         return cartridge.failover_set_params(...)
     ]]
-    A1.net_box:eval(q_set_failover_params, {{mode = 'disabled'}})
-    A1.net_box:eval(q_set_failover_params, {{mode = 'stateful'}})
+    A1:eval(q_set_failover_params, {{mode = 'disabled'}})
+    A1:eval(q_set_failover_params, {{mode = 'stateful'}})
 
     -- Constituting oneself fails, but it remains writable
-    t.assert_equals(B1.net_box:eval(q_leadership, {uB}), uB1)
-    t.assert_equals(B1.net_box:eval(q_readonliness), false)
-    t.assert_equals(B1.net_box:eval(q_is_vclockkeeper), false)
+    t.assert_equals(B1:eval(q_leadership, {uB}), uB1)
+    t.assert_equals(B1:eval(q_readonliness), false)
+    t.assert_equals(B1:eval(q_is_vclockkeeper), false)
     t.assert_items_include(
         helpers.list_cluster_issues(A1),
         {{
@@ -559,19 +559,19 @@ add('test_enabling', function(g)
     -- B1 becomes a legitimate vclockkeeper
     t.assert_equals(g.session:get_leaders(), {})
     helpers.retrying({}, function()
-        t.assert_equals(B1.net_box:eval(q_is_vclockkeeper), true)
+        t.assert_equals(B1:eval(q_is_vclockkeeper), true)
     end)
 
     t.assert_equals(g.session:get_leaders(), {})
     t.assert_equals(g.session:get_vclockkeeper(uB), {
         replicaset_uuid = uB,
         instance_uuid = uB1,
-        vclock = B1.net_box:eval('return box.info.vclock'),
+        vclock = B1:eval('return box.info.vclock'),
     })
 
 
     -- Enable coordinator
-    A1.net_box:eval(
+    A1:eval(
         [[require("cartridge").admin_edit_topology(...)]],
         {{replicasets = {{uuid = uA, roles = {'failover-coordinator'}}}}}
     )
@@ -583,17 +583,17 @@ add('test_enabling', function(g)
     t.assert_equals(g.session:get_vclockkeeper(uB), {
         replicaset_uuid = uB,
         instance_uuid = uB1,
-        vclock = B1.net_box:eval('return box.info.vclock'),
+        vclock = B1:eval('return box.info.vclock'),
     })
 
     -- Everything is fine now
-    t.assert_equals(B1.net_box:eval(q_leadership, {uB}), uB1)
-    t.assert_equals(B1.net_box:eval(q_readonliness), false)
-    t.assert_equals(B1.net_box:eval(q_is_vclockkeeper), true)
+    t.assert_equals(B1:eval(q_leadership, {uB}), uB1)
+    t.assert_equals(B1:eval(q_readonliness), false)
+    t.assert_equals(B1:eval(q_is_vclockkeeper), true)
     t.assert_equals(helpers.list_cluster_issues(A1), {})
 
     -- Revert all hacks in fixtures
-    A1.net_box:eval(
+    A1:eval(
         [[require("cartridge").admin_edit_topology(...)]],
         {{replicasets = {{uuid = uA, roles = {}}}}}
     )
@@ -605,11 +605,11 @@ add('test_api', function(g)
     g.client:drop_session()
     g.session = g.client:get_session()
     t.assert_equals(g.session:get_coordinator(), box.NULL)
-    A1.net_box:eval(q_set_wait_lsn_timeout, {0.2})
-    B2.net_box:eval(q_set_wait_lsn_timeout, {0.2})
+    A1:eval(q_set_wait_lsn_timeout, {0.2})
+    B2:eval(q_set_wait_lsn_timeout, {0.2})
     helpers.protect_from_rw(B2)
 
-    A1.net_box:eval(
+    A1:eval(
         [[require("cartridge").admin_edit_topology(...)]],
         {{replicasets = {{uuid = uA, roles = {'failover-coordinator'}}}}}
     )
@@ -636,7 +636,7 @@ add('test_api', function(g)
     t.assert(g.session:set_vclockkeeper(uB, 'nobody'))
 
     -- Hack set_vclockkeeper (inconcistency forcing) to fail
-    A1.net_box:eval([[
+    A1:eval([[
         local vars = require('cartridge.vars').new('cartridge.failover')
         vars.client.session.set_vclockkeeper = function()
             return nil, require('errors').new('ArtificialError', 'Boo')
@@ -656,9 +656,9 @@ add('test_api', function(g)
 
     -- Check intermediate state: B2 is a leader, but can't sync up
     helpers.retrying({}, function()
-        t.assert_equals(B2.net_box:eval(q_leadership, {uB}), uB2)
+        t.assert_equals(B2:eval(q_leadership, {uB}), uB2)
     end)
-    t.assert_equals(B2.net_box:eval(q_is_vclockkeeper), false)
+    t.assert_equals(B2:eval(q_is_vclockkeeper), false)
     t.assert_equals(
         helpers.list_cluster_issues(A1),
         {{
@@ -672,7 +672,7 @@ add('test_api', function(g)
     )
 
     -- Revert the hack
-    A1.net_box:eval([[
+    A1:eval([[
         local vars = require('cartridge.vars').new('cartridge.failover')
         vars.client:drop_session()
         vars.client:get_session()
@@ -703,17 +703,17 @@ add('test_api', function(g)
     t.assert_type(resp['data'], 'table')
     t.assert_equals(resp.data, {cluster = {failover_promote = true}})
     helpers.retrying({}, function()
-        t.assert_equals(B2.net_box:eval(q_is_vclockkeeper), true)
+        t.assert_equals(B2:eval(q_is_vclockkeeper), true)
     end)
     t.assert_equals(helpers.list_cluster_issues(A1), {})
     t.assert_equals(g.session:get_vclockkeeper(uB), {
         replicaset_uuid = uB,
         instance_uuid = uB2,
-        vclock = B2.net_box:eval('return box.info.vclock'),
+        vclock = B2:eval('return box.info.vclock'),
     })
 
     -- Revert all hacks in fixtures
-    A1.net_box:eval(
+    A1:eval(
         [[require("cartridge").admin_edit_topology(...)]],
         {{replicasets = {{uuid = uA, roles = {}}}}}
     )
@@ -726,17 +726,17 @@ add('test_all_rw', function(g)
     -- Make sure that B1 is a leader
     t.assert(g.session:set_leaders({{uB, uB1}}))
     helpers.retrying({}, function()
-        t.assert_equals(A1.net_box:eval(q_leadership, {uB}), uB1)
-        t.assert_equals(B1.net_box:eval(q_leadership, {uB}), uB1)
+        t.assert_equals(A1:eval(q_leadership, {uB}), uB1)
+        t.assert_equals(B1:eval(q_leadership, {uB}), uB1)
     end)
 
     -- Leader is rw, replica is ro
-    t.assert_equals(B1.net_box:eval(q_is_vclockkeeper), true)
-    t.assert_equals(B1.net_box:eval(q_readonliness), false)
-    t.assert_equals(B2.net_box:eval(q_readonliness), true)
+    t.assert_equals(B1:eval(q_is_vclockkeeper), true)
+    t.assert_equals(B1:eval(q_readonliness), false)
+    t.assert_equals(B2:eval(q_readonliness), true)
 
     local function set_all_rw(yesno)
-        A1.net_box:eval(
+        A1:eval(
             'require("cartridge").admin_edit_topology(...)',
             {{replicasets = {{uuid = uB, all_rw = yesno}}}}
         )
@@ -744,15 +744,15 @@ add('test_all_rw', function(g)
 
     -- B: all_rw = true
     set_all_rw(true)
-    t.assert_equals(B1.net_box:eval(q_is_vclockkeeper), false)
-    t.assert_equals(B1.net_box:eval(q_readonliness), false)
-    t.assert_equals(B2.net_box:eval(q_readonliness), false)
+    t.assert_equals(B1:eval(q_is_vclockkeeper), false)
+    t.assert_equals(B1:eval(q_readonliness), false)
+    t.assert_equals(B2:eval(q_readonliness), false)
 
     -- Promote B1 (inconsistently)
     -- wait_ro is doomed to fail, but it won't be executed
     t.assert(g.session:set_leaders({{uB, uB2}}))
     helpers.retrying({}, function()
-        t.assert_equals(B2.net_box:eval(q_leadership, {uB}), uB2)
+        t.assert_equals(B2:eval(q_leadership, {uB}), uB2)
     end)
 
     t.assert_equals(helpers.list_cluster_issues(A1), {})
@@ -764,9 +764,9 @@ end)
 add('test_alone_instance', function(g)
     -- Single-instance replicaset doesn't need consistency.
 
-    t.assert_equals(A1.net_box:eval(q_readonliness), false)
-    t.assert_equals(A1.net_box:eval(q_is_vclockkeeper), false)
-    t.assert_equals(A1.net_box:eval(q_leadership, {uA}), uA1)
+    t.assert_equals(A1:eval(q_readonliness), false)
+    t.assert_equals(A1:eval(q_is_vclockkeeper), false)
+    t.assert_equals(A1:eval(q_leadership, {uA}), uA1)
     t.assert_equals(g.session:get_vclockkeeper(uA), {
         replicaset_uuid = uA,
         instance_uuid = uA1,

@@ -64,7 +64,7 @@ function g.test_call()
     t.assert_equals(res['data']['join_server'], true)
 
     t.helpers.retrying({}, function() g.server:connect_net_box() end)
-    local res, err = g.cluster.main_server.net_box:eval([[
+    local res, err = g.cluster.main_server:eval([[
         local rpc = require('cartridge.rpc')
         return rpc.call(...)
     ]], {'myrole', 'get_state'})

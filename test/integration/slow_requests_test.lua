@@ -36,7 +36,7 @@ g.before_each(function()
     -- create config.prepare to check issues will be shown for available instances
     -- (pool.map_call works correctly)
     utils.file_write(fio.pathjoin(g.s1.workdir, 'config.prepare'), 'prepare')
-    g.s1.net_box:eval([[
+    g.s1:eval([[
         require('cartridge.pool').connect(...):close()
     ]], {g.s2.advertise_uri, {wait_connected = false}})
 end)

@@ -35,8 +35,8 @@ function g.test_cfg()
 
     print()
     g.server:start()
-    g.server.net_box:call('package.loaded.log.info', {'Info message'})
-    g.server.net_box:call('package.loaded.log.error', {'Error message'})
+    g.server:call('package.loaded.log.info', {'Info message'})
+    g.server:call('package.loaded.log.error', {'Error message'})
     g.server:stop()
 
     local txt, err = utils.file_read(g.tempdir .. '/log.txt')
@@ -56,7 +56,7 @@ function g.test_content_unconfigured()
     g.server.env['TARANTOOL_LOG_FORMAT'] = 'json'
 
     g.server:start()
-    g.server.net_box:call('package.loaded.log.info', {'Info message'})
+    g.server:call('package.loaded.log.info', {'Info message'})
     g.server:stop()
 
     local txt, err = utils.file_read(g.tempdir .. '/log.txt')
@@ -95,7 +95,7 @@ function g.test_content_bootstrapped()
     g.server:start()
 
     -- Fake init script
-    g.server.net_box:eval('arg[0] = ...', {g.tempdir .. '/init.lua'})
+    g.server:eval('arg[0] = ...', {g.tempdir .. '/init.lua'})
     -- Fake VERSION file produced by cartridge pack
     utils.file_write(g.tempdir .. '/VERSION', 'pi=3.14.15-g9265358979')
     -- Bootstrap

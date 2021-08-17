@@ -48,20 +48,20 @@ g.after_each(function()
 end)
 
 local function is_master(srv)
-    return srv.net_box:eval([[
+    return srv:eval([[
         return package.loaded['mymodule'].is_master()
     ]])
 end
 
 local function get_leader(srv)
-    return srv.net_box:eval([[
+    return srv:eval([[
         local failover = require('cartridge.failover')
         return failover.get_active_leaders()[box.info.cluster.uuid]
     ]])
 end
 
 local function rpc_get_candidate(srv)
-    return srv.net_box:eval([[
+    return srv:eval([[
         local get_candidates = require('cartridge').rpc_get_candidates
         local candidates = get_candidates('myrole', {leader_only = true})
         if #candidates == 0 then
@@ -177,7 +177,7 @@ function g.test_confapplier_race()
     -- m  : RolesConfigured
     -- m  : apply_config
 
-    g.master.net_box:eval('f, arg = ...; loadstring(f)(arg)', {
+    g.master:eval('f, arg = ...; loadstring(f)(arg)', {
         string.dump(function(uri)
             local myrole = require('mymodule')
 
@@ -228,7 +228,7 @@ function g.test_leader_death()
     --   s: Trigger failover
 
     -- Monkeypatch apply_config on master to faint death
-    g.master.net_box:eval('loadstring(...)()', {
+    g.master:eval('loadstring(...)()', {
         string.dump(function()
             local myrole = require('mymodule')
             myrole.apply_config = function()
@@ -245,7 +245,7 @@ function g.test_leader_death()
     })
 
     -- Monkeypatch apply_config on slave to be slow
-    g.slave.net_box:eval('loadstring(...)()', {
+    g.slave:eval('loadstring(...)()', {
         string.dump(function()
             local myrole = require('mymodule')
 
@@ -289,7 +289,7 @@ function g.test_blinking_slow()
     --   s: Trigger failover
 
     -- Monkeypatch apply_config on slave to be slow
-    g.slave.net_box:eval('loadstring(...)()', {
+    g.slave:eval('loadstring(...)()', {
         string.dump(function()
             local myrole = require('mymodule')
 
@@ -305,7 +305,7 @@ function g.test_blinking_slow()
     })
 
     -- Simulate master death
-    g.slave.net_box:eval('loadstring(...)()', {
+    g.slave:eval('loadstring(...)()', {
         string.dump(function()
             local events = require('membership.events')
             local opts = require('membership.options')
@@ -333,7 +333,7 @@ function g.test_blinking_fast()
 
     helpers.protect_from_rw(g.slave)
 
-    g.slave.net_box:eval('loadstring(...)()', {
+    g.slave:eval('loadstring(...)()', {
         string.dump(function()
             local log = require('log')
             local fiber = require('fiber')
@@ -374,7 +374,7 @@ function g.test_blinking_fast()
     })
 
     t.assert_error_msg_equals("timed out",
-        function() g.slave.net_box:call('box.ctl.wait_rw', {1}) end
+        function() g.slave:call('box.ctl.wait_rw', {1}) end
     )
     helpers.unprotect(g.slave)
 end
@@ -392,12 +392,12 @@ function g.test_fiber_cancel()
     -- m  : repairs
     --   s: Trigger failover (is_leader = false)
 
-    local future = g.slave.net_box:eval(
+    local future = g.slave:eval(
         'return pcall(box.ctl.wait_rw)', nil,
         {is_async = true}
     )
 
-    g.slave.net_box:eval('loadstring(...)()', {
+    g.slave:eval('loadstring(...)()', {
         string.dump(function()
             local log = require('log')
             local fiber = require('fiber')
@@ -450,7 +450,7 @@ function g.test_leader_recovery()
     -- Old leader shouldn't take its role until recovery is finished
     -- Simulate long recovery by temporarily disabling iproto on a slave
     g.master:stop()
-    g.slave.net_box:eval("box.cfg({listen = box.NULL})")
+    g.slave:eval("box.cfg({listen = box.NULL})")
 
     log.info('--------------------------------------------------------')
     g.master:start()
@@ -484,7 +484,7 @@ function g.test_leader_recovery()
 
     helpers.unprotect(g.master)
     -- Simulate the end of recovery (successfull)
-    g.slave.net_box:eval("box.cfg({listen = ...})", {g.slave.net_box_port})
+    g.slave:eval("box.cfg({listen = ...})", {g.slave.net_box_port})
     g.cluster:wait_until_healthy(g.slave)
 
     t.assert_equals(
@@ -652,7 +652,7 @@ function g.test_restart_both()
 end
 
 function g.test_operation_error()
-    g.slave.net_box:eval([[
+    g.slave:eval([[
         local mymodule = package.loaded['mymodule']
         mymodule.apply_config = function()
             error('Artificial Error', 0)
@@ -673,17 +673,17 @@ function g.test_operation_error()
         return true
     ]]
 
-    local ok, err = g.master.net_box:eval(set_roles, {uA, {}})
+    local ok, err = g.master:eval(set_roles, {uA, {}})
     t.assert_equals({ok, err}, {true, nil})
 
-    local ok, err = g.master.net_box:eval(set_roles, {uA, {'myrole'}})
+    local ok, err = g.master:eval(set_roles, {uA, {'myrole'}})
     t.assert_equals(ok, nil)
     t.assert_covers(err, {
         class_name = 'ApplyConfigError',
         err = '"localhost:13302": Artificial Error',
     })
 
-    local ok, err = g.master.net_box:eval(set_roles, {uA, {}})
+    local ok, err = g.master:eval(set_roles, {uA, {}})
     t.assert_equals({ok, err}, {true, nil})
 end
 
@@ -695,10 +695,10 @@ function g.test_prepare_state_error()
         require('cartridge.vars').new('cartridge.confapplier').
         state_notification_timeout = ...
     ]]
-    g.slave.net_box:eval(set_state, {'ConfiguringRoles'})
-    g.slave.net_box:eval(set_timeout, {math.huge})
+    g.slave:eval(set_state, {'ConfiguringRoles'})
+    g.slave:eval(set_timeout, {math.huge})
 
-    local res, err = g.master.net_box:call(
+    local res, err = g.master:call(
         'package.loaded.cartridge.config_patch_clusterwide',
         {{}}
     )
@@ -726,14 +726,14 @@ function g.test_init_error()
     g.slave:stop()
     g.slave:start()
 
-    local state, err = g.slave.net_box:eval(q_get_state)
+    local state, err = g.slave:eval(q_get_state)
     t.assert_equals(state, 'InitError')
     t.assert_covers(err, {
         class_name = 'ValidateConfigError',
         err = 'section vshard must be a table',
     })
 
-    local ok, err = g.master.net_box:call(
+    local ok, err = g.master:call(
         'package.loaded.cartridge.config_patch_clusterwide',
         {{['new_entry.txt'] = '42'}}
     )
@@ -749,14 +749,14 @@ function g.test_init_error()
     g.slave:stop()
     g.slave:start()
 
-    local state, err = g.slave.net_box:eval(q_get_state)
+    local state, err = g.slave:eval(q_get_state)
     t.assert_equals(state, 'InitError')
     t.assert_covers(err, {
         class_name = 'LoadConfigError',
         err = 'Error parsing section "topology.yml": unexpected END event',
     })
 
-    local ok, err = g.master.net_box:call(
+    local ok, err = g.master:call(
         'package.loaded.cartridge.config_patch_clusterwide',
         {{['new_entry.txt'] = '42'}}
     )
@@ -773,7 +773,7 @@ function g.test_boot_error()
     g.slave:stop()
     g.slave:start()
 
-    local state, err = g.slave.net_box:eval(q_get_state)
+    local state, err = g.slave:eval(q_get_state)
     t.assert_equals(state, 'BootError')
     t.assert_covers(err, {
         class_name = 'BootError',
@@ -781,7 +781,7 @@ function g.test_boot_error()
             ' not in clusterwide config, no idea what to do now',
     })
 
-    local ok, err = g.master.net_box:call(
+    local ok, err = g.master:call(
         'package.loaded.cartridge.config_patch_clusterwide',
         {{['new_entry.txt'] = '42'}}
     )

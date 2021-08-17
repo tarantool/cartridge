@@ -21,7 +21,7 @@ function g.setup()
 
     g.server:start()
     helpers.retrying({}, t.Server.connect_net_box, g.server)
-    g.server.net_box:eval([[
+    g.server:eval([[
         _G.test = require('test.unit.rpc_candidates_test')
     ]])
 end
@@ -35,7 +35,7 @@ local M = {}
 local function test_remotely(fn_name, fn)
     M[fn_name] = fn
     g[fn_name] = function()
-        g.server.net_box:eval([[
+        g.server:eval([[
             local test = require('test.unit.rpc_candidates_test')
             local ok, err = pcall(test[...])
             if not ok then

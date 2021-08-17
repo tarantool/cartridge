@@ -201,6 +201,10 @@ function g.test_longpolling()
     -- actual: {B = "b3"}
 end
 
+g.after_test('test_longpolling', function()
+    g.stateboard.process:kill('CONT')
+end)
+
 function g.test_passwd()
     local new_password = require('digest').urandom(6):hex()
 

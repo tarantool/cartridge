@@ -25,7 +25,7 @@ local M = {}
 local function test_remotely(fn_name, fn)
     M[fn_name] = fn
     g[fn_name] = function()
-        g.server.net_box:eval([[
+        g.server:eval([[
             local test = require('test.unit.cartridge_failover_test')
             test[...]()
         ]], {fn_name})

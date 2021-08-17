@@ -49,7 +49,7 @@ end
 
 
 local function rpc_call(server, role_name, fn_name, args, kv_args)
-    local res, err = server.net_box:eval([[
+    local res, err = server:eval([[
         local rpc = require('cartridge.rpc')
         return rpc.call(...)
     ]], {role_name, fn_name, args, kv_args})
@@ -82,8 +82,8 @@ function g.test_api()
     })
 
     -- restrict connections to vshard-router
-    A1.net_box:call('box.cfg', {{listen = box.NULL}})
-    B1.net_box:eval([[
+    A1:call('box.cfg', {{listen = box.NULL}})
+    B1:eval([[
         local pool = require('cartridge.pool')
         pool.connect(...):close()
         local conn = pool.connect(...)
@@ -96,10 +96,13 @@ function g.test_api()
         class_name = 'RemoteCallError',
         err = '"localhost:13301": Connection refused'
     })
-
-    -- restore box listen
-    A1.net_box:call('box.cfg', {{listen = A1.net_box_port}})
 end
+
+g.after_test('test_api', function()
+    -- restore box listen
+    local A1 = g.cluster:server('A1')
+    A1:call('box.cfg', {{listen = A1.net_box_port}})
+end)
 
 function g.test_errors()
     local res, err = rpc_call(
@@ -128,7 +131,7 @@ function g.test_routing()
     local B2 = g.cluster:server('B2')
     for _, srv in pairs({B1, B2}) do
         -- inject new role method `get_session`
-        srv.net_box:eval([[
+        srv:eval([[
             local myrole = require('mymodule')
             function myrole.get_session()
                 return {
@@ -148,7 +151,7 @@ function g.test_routing()
     )
     t.assert_not(err)
     t.assert_equals(res.uuid, B2.instance_uuid)
-    t.assert_equals(res.peer, B2.net_box:call('box.session.peer'))
+    t.assert_equals(res.peer, B2:call('box.session.peer'))
 
     -- Test opts.leader_only and opts.prefer_local
     --------------------------------------------------------------------
@@ -159,7 +162,7 @@ function g.test_routing()
     )
     t.assert_not(err)
     t.assert_equals(res.uuid, B1.instance_uuid)
-    t.assert_not_equals(res.peer, B1.net_box:call('box.session.peer'))
+    t.assert_not_equals(res.peer, B1:call('box.session.peer'))
 
     -- Test opts.leader_only
     --------------------------------------------------------------------
@@ -186,7 +189,7 @@ function g.test_routing()
     )
     t.assert_not(err)
     t.assert_equals(res.uuid, B2.instance_uuid)
-    t.assert_not_equals(res.peer, B2.net_box:call('box.session.peer'))
+    t.assert_not_equals(res.peer, B2:call('box.session.peer'))
 
     local res, err = rpc_call(B2,
         'myrole', 'void', nil,
@@ -224,7 +227,7 @@ end
 
 function g.test_push()
     local function rpc_call(server, role_name, fn_name, args, kv_args)
-        local res, err = server.net_box:eval([[
+        local res, err = server:eval([[
             local role_name, fn_name, args, kv_args = ...
             local rpc = require('cartridge.rpc')
             local result = {}

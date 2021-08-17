@@ -51,7 +51,7 @@ function g.test_graphql_known_roles()
 end
 
 local function get_config_roles()
-    return g.cluster.main_server.net_box:eval([[
+    return g.cluster.main_server:eval([[
         local uuid = ...
         local cartridge = require('cartridge')
         local topology = cartridge.config_get_readonly('topology')
@@ -63,7 +63,7 @@ local function set_config_roles(roles)
     -- disable dependencies and permanent roles
     -- to make sure they are still enabled
     -- so it doesn't affect GraphQL and RPC
-    local ok, err = g.cluster.main_server.net_box:eval([[
+    local ok, err = g.cluster.main_server:eval([[
         local uuid, roles = ...
         local cartridge = require('cartridge')
         local topology = cartridge.config_get_deepcopy('topology')
@@ -118,7 +118,7 @@ function g.test_rpc()
     set_config_roles({['myrole'] = true})
 
     local function soundcheck(role_name, fn_name, expected)
-        local ret, err = g.cluster.main_server.net_box:eval([[
+        local ret, err = g.cluster.main_server:eval([[
             local cartridge = require('cartridge')
             return cartridge.rpc_call(...)
         ]], {role_name, fn_name, nil})

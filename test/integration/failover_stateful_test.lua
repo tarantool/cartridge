@@ -54,14 +54,14 @@ local function setup_cluster(g)
     S3 = g.cluster:server('storage-3')
 
     g.cluster:start()
-    R1.net_box:eval([[
+    R1:eval([[
         local vars = require('cartridge.vars').new('cartridge.roles.coordinator')
         vars.options.IMMUNITY_TIMEOUT = 1
         vars.options.RECONNECT_PERIOD = 1
         require('log').info('Coordinator options updated')
     ]])
 
-    g.cluster.main_server.net_box:call(
+    g.cluster.main_server:call(
         'package.loaded.cartridge.failover_set_params',
         {{failover_timeout = 0}}
     )
@@ -95,7 +95,7 @@ g_stateboard.before_all(function()
 
     setup_cluster(g)
 
-    t.assert(g.cluster.main_server.net_box:call(
+    t.assert(g.cluster.main_server:call(
         'package.loaded.cartridge.failover_set_params',
         {{
             mode = 'stateful',
@@ -134,7 +134,7 @@ g_etcd2.before_all(function()
 
     setup_cluster(g)
 
-    t.assert(g.cluster.main_server.net_box:call(
+    t.assert(g.cluster.main_server:call(
         'package.loaded.cartridge.failover_set_params',
         {{
             mode = 'stateful',
@@ -196,7 +196,7 @@ add('test_state_provider_restart', function(g)
     g.state_provider:stop()
 
     helpers.retrying({}, function()
-        local res, err = R1.net_box:eval([[
+        local res, err = R1:eval([[
             return require('cartridge.failover').get_coordinator()
         ]])
         t.assert_not(res)
@@ -227,7 +227,7 @@ add('test_state_provider_restart', function(g)
 
     helpers.retrying({}, function()
         t.assert_equals(
-            R1.net_box:eval("return require('cartridge.failover').get_coordinator()"), {
+            R1:eval("return require('cartridge.failover').get_coordinator()"), {
                 uri = 'localhost:13301',
                 uuid = 'aaaaaaaa-aaaa-0000-0000-000000000001'
             }
@@ -236,19 +236,19 @@ add('test_state_provider_restart', function(g)
     end)
 
     helpers.retrying({}, function()
-        t.assert_equals(R1.net_box:eval(q_leadership), storage_1_uuid)
-        t.assert_equals(S1.net_box:eval(q_leadership), storage_1_uuid)
-        t.assert_equals(S2.net_box:eval(q_leadership), storage_1_uuid)
-        t.assert_equals(S3.net_box:eval(q_leadership), storage_1_uuid)
+        t.assert_equals(R1:eval(q_leadership), storage_1_uuid)
+        t.assert_equals(S1:eval(q_leadership), storage_1_uuid)
+        t.assert_equals(S2:eval(q_leadership), storage_1_uuid)
+        t.assert_equals(S3:eval(q_leadership), storage_1_uuid)
     end)
 
-    t.assert_equals(S1.net_box:eval(q_readonliness), false)
-    t.assert_equals(S2.net_box:eval(q_readonliness), true)
-    t.assert_equals(S3.net_box:eval(q_readonliness), true)
+    t.assert_equals(S1:eval(q_readonliness), false)
+    t.assert_equals(S2:eval(q_readonliness), true)
+    t.assert_equals(S3:eval(q_readonliness), true)
 end)
 
 add('test_coordinator_restart', function(g)
-    R1.net_box:eval([[
+    R1:eval([[
         local cartridge = require('cartridge')
         local coordinator = cartridge.service_get('failover-coordinator')
         return coordinator.stop()
@@ -258,7 +258,7 @@ add('test_coordinator_restart', function(g)
         t.assert_equals(g.client:get_session():get_coordinator(), nil)
     end)
 
-    R1.net_box:eval([[
+    R1:eval([[
         local confapplier = require('cartridge.confapplier')
         local state = confapplier.wish_state('RolesConfigured')
         assert(state == 'RolesConfigured', state)
@@ -289,15 +289,15 @@ add('test_leader_restart', function(g)
     end)
 
     helpers.retrying({}, function()
-        t.assert_equals(R1.net_box:eval(q_leadership), storage_2_uuid)
-        t.assert_equals(S2.net_box:eval(q_leadership), storage_2_uuid)
-        t.assert_equals(S3.net_box:eval(q_leadership), storage_2_uuid)
+        t.assert_equals(R1:eval(q_leadership), storage_2_uuid)
+        t.assert_equals(S2:eval(q_leadership), storage_2_uuid)
+        t.assert_equals(S3:eval(q_leadership), storage_2_uuid)
     end)
 
     helpers.retrying({}, function()
-        t.assert_equals(R1.net_box:eval(q_readonliness), false)
-        t.assert_equals(S2.net_box:eval(q_readonliness), false)
-        t.assert_equals(S3.net_box:eval(q_readonliness), true)
+        t.assert_equals(R1:eval(q_readonliness), false)
+        t.assert_equals(S2:eval(q_readonliness), false)
+        t.assert_equals(S3:eval(q_readonliness), true)
     end)
 
     -----------------------------------------------------
@@ -307,15 +307,15 @@ add('test_leader_restart', function(g)
 
     g.cluster:wait_until_healthy(g.cluster.main_server)
 
-    t.assert_equals(R1.net_box:eval(q_leadership), storage_2_uuid)
-    t.assert_equals(S1.net_box:eval(q_leadership), storage_2_uuid)
-    t.assert_equals(S2.net_box:eval(q_leadership), storage_2_uuid)
-    t.assert_equals(S3.net_box:eval(q_leadership), storage_2_uuid)
+    t.assert_equals(R1:eval(q_leadership), storage_2_uuid)
+    t.assert_equals(S1:eval(q_leadership), storage_2_uuid)
+    t.assert_equals(S2:eval(q_leadership), storage_2_uuid)
+    t.assert_equals(S3:eval(q_leadership), storage_2_uuid)
 
-    t.assert_equals(R1.net_box:eval(q_readonliness), false)
-    t.assert_equals(S1.net_box:eval(q_readonliness), true)
-    t.assert_equals(S2.net_box:eval(q_readonliness), false)
-    t.assert_equals(S3.net_box:eval(q_readonliness), true)
+    t.assert_equals(R1:eval(q_readonliness), false)
+    t.assert_equals(S1:eval(q_readonliness), true)
+    t.assert_equals(S2:eval(q_readonliness), false)
+    t.assert_equals(S3:eval(q_readonliness), true)
 
     -----------------------------------------------------
     -- And even applying config doesn't change leadership
@@ -337,10 +337,10 @@ add('test_leader_restart', function(g)
         },
     })
 
-    t.assert_equals(R1.net_box:eval(q_leadership), storage_2_uuid)
-    t.assert_equals(S1.net_box:eval(q_leadership), storage_2_uuid)
-    t.assert_equals(S2.net_box:eval(q_leadership), storage_2_uuid)
-    t.assert_equals(S3.net_box:eval(q_leadership), storage_2_uuid)
+    t.assert_equals(R1:eval(q_leadership), storage_2_uuid)
+    t.assert_equals(S1:eval(q_leadership), storage_2_uuid)
+    t.assert_equals(S2:eval(q_leadership), storage_2_uuid)
+    t.assert_equals(S3:eval(q_leadership), storage_2_uuid)
 
     helpers.unprotect(S1)
     -----------------------------------------------------
@@ -348,7 +348,7 @@ add('test_leader_restart', function(g)
 
     log.info('--------------------------------------------------------')
     g.cluster:wait_until_healthy(g.cluster.main_server)
-    local ok, err = R1.net_box:eval([[
+    local ok, err = R1:eval([[
         local cartridge = require('cartridge')
         local coordinator = cartridge.service_get('failover-coordinator')
         return coordinator.appoint_leaders(...)
@@ -356,10 +356,10 @@ add('test_leader_restart', function(g)
     t.assert_equals({ok, err}, {true, nil})
 
     helpers.retrying({}, function()
-        t.assert_equals(R1.net_box:eval(q_leadership), storage_1_uuid)
-        t.assert_equals(S1.net_box:eval(q_leadership), storage_1_uuid)
-        t.assert_equals(S2.net_box:eval(q_leadership), storage_1_uuid)
-        t.assert_equals(S3.net_box:eval(q_leadership), storage_1_uuid)
+        t.assert_equals(R1:eval(q_leadership), storage_1_uuid)
+        t.assert_equals(S1:eval(q_leadership), storage_1_uuid)
+        t.assert_equals(S2:eval(q_leadership), storage_1_uuid)
+        t.assert_equals(S3:eval(q_leadership), storage_1_uuid)
     end)
 end)
 
@@ -396,43 +396,43 @@ add('test_leader_promote', function(g)
     t.assert_equals(resp['data']['cluster']['failover_promote'], true)
 
     helpers.retrying({}, function()
-        t.assert_equals(R1.net_box:eval(q_leadership), storage_2_uuid)
-        t.assert_equals(S1.net_box:eval(q_leadership), storage_2_uuid)
-        t.assert_equals(S2.net_box:eval(q_leadership), storage_2_uuid)
-        t.assert_equals(S3.net_box:eval(q_leadership), storage_2_uuid)
+        t.assert_equals(R1:eval(q_leadership), storage_2_uuid)
+        t.assert_equals(S1:eval(q_leadership), storage_2_uuid)
+        t.assert_equals(S2:eval(q_leadership), storage_2_uuid)
+        t.assert_equals(S3:eval(q_leadership), storage_2_uuid)
     end)
 
     S2:stop()
     log.info('------------------------------------------------------')
     helpers.retrying({}, function()
         t.assert(g.client:get_session():get_coordinator())
-        t.assert_equals(R1.net_box:eval(q_leadership), storage_1_uuid)
-        t.assert_equals(S1.net_box:eval(q_leadership), storage_1_uuid)
-        t.assert_equals(S3.net_box:eval(q_leadership), storage_1_uuid)
+        t.assert_equals(R1:eval(q_leadership), storage_1_uuid)
+        t.assert_equals(S1:eval(q_leadership), storage_1_uuid)
+        t.assert_equals(S3:eval(q_leadership), storage_1_uuid)
     end)
 
     S2:start()
     helpers.retrying({}, function()
-        t.assert_equals(S2.net_box:eval(q_leadership), storage_1_uuid)
+        t.assert_equals(S2:eval(q_leadership), storage_1_uuid)
     end)
 
     -------------------------------------------------------
 
-    local ok, err = S1.net_box:eval(q_promote, {{[storage_uuid] = 'invalid_uuid'}})
+    local ok, err = S1:eval(q_promote, {{[storage_uuid] = 'invalid_uuid'}})
     t.assert_equals(ok, nil)
     t.assert_covers(err, {
         class_name = 'AppointmentError',
         err = [["localhost:13301": Server "invalid_uuid" doesn't exist]],
     })
 
-    local ok, err = S1.net_box:eval(q_promote, {{['invalid_uuid'] = storage_1_uuid}})
+    local ok, err = S1:eval(q_promote, {{['invalid_uuid'] = storage_1_uuid}})
     t.assert_equals(ok, nil)
     t.assert_covers(err, {
         class_name = 'AppointmentError',
         err = [["localhost:13301": Replicaset "invalid_uuid" doesn't exist]],
     })
 
-    local ok, err = S1.net_box:eval(q_promote, {{[router_uuid] = storage_1_uuid}})
+    local ok, err = S1:eval(q_promote, {{[router_uuid] = storage_1_uuid}})
     t.assert_equals(ok, nil)
     t.assert_covers(err, {
         class_name = 'AppointmentError',
@@ -446,7 +446,7 @@ add('test_leader_promote', function(g)
 
     g.state_provider:stop()
     helpers.retrying({}, function()
-        local ok, err = S1.net_box:eval(q_promote, {{[router_uuid] = storage_1_uuid}})
+        local ok, err = S1:eval(q_promote, {{[router_uuid] = storage_1_uuid}})
         t.assert_equals(ok, nil)
         t.assert_covers(err, {
             class_name = 'StateProviderError',
@@ -466,7 +466,7 @@ add('test_leader_promote', function(g)
         t.assert_equals(g.client:get_session():get_coordinator(), nil)
     end)
 
-    local ok, err = S1.net_box:eval(q_promote, {{[router_uuid] = storage_1_uuid}})
+    local ok, err = S1:eval(q_promote, {{[router_uuid] = storage_1_uuid}})
     t.assert_equals(ok, nil)
     t.assert_covers(err, {
         class_name = 'PromoteLeaderError',
@@ -488,17 +488,17 @@ add('test_leaderless', function(g)
     -----------------------------------------------------
     -- Check that replicaset without leaders can exist
     g.cluster:wait_until_healthy(g.cluster.main_server)
-    t.assert_equals(R1.net_box:eval(q_leadership), box.NULL)
-    t.assert_equals(S1.net_box:eval(q_leadership), box.NULL)
-    t.assert_equals(S2.net_box:eval(q_leadership), storage_1_uuid)
-    t.assert_equals(S3.net_box:eval(q_leadership), storage_1_uuid)
+    t.assert_equals(R1:eval(q_leadership), box.NULL)
+    t.assert_equals(S1:eval(q_leadership), box.NULL)
+    t.assert_equals(S2:eval(q_leadership), storage_1_uuid)
+    t.assert_equals(S3:eval(q_leadership), storage_1_uuid)
 
-    t.assert_equals(R1.net_box:eval(q_readonliness), true)
-    t.assert_equals(S1.net_box:eval(q_readonliness), true)
-    t.assert_equals(S2.net_box:eval(q_readonliness), true)
-    t.assert_equals(S3.net_box:eval(q_readonliness), true)
+    t.assert_equals(R1:eval(q_readonliness), true)
+    t.assert_equals(S1:eval(q_readonliness), true)
+    t.assert_equals(S2:eval(q_readonliness), true)
+    t.assert_equals(S3:eval(q_readonliness), true)
 
-    local ret, err = R1.net_box:call(
+    local ret, err = R1:call(
         'package.loaded.vshard.router.callrw',
         {1, 'box.space.test:insert', {{1, 'one'}}}
     )
@@ -537,18 +537,18 @@ add('test_leaderless', function(g)
     g.state_provider:start()
     local q_waitrw = 'return {pcall(box.ctl.wait_rw, 3)}'
 
-    t.assert_equals(R1.net_box:eval(q_waitrw), {true})
-    t.assert_equals(S1.net_box:eval(q_waitrw), {true})
+    t.assert_equals(R1:eval(q_waitrw), {true})
+    t.assert_equals(S1:eval(q_waitrw), {true})
 
-    t.assert_equals(R1.net_box:eval(q_leadership), storage_1_uuid)
-    t.assert_equals(S1.net_box:eval(q_leadership), storage_1_uuid)
-    t.assert_equals(S2.net_box:eval(q_leadership), storage_1_uuid)
-    t.assert_equals(S3.net_box:eval(q_leadership), storage_1_uuid)
+    t.assert_equals(R1:eval(q_leadership), storage_1_uuid)
+    t.assert_equals(S1:eval(q_leadership), storage_1_uuid)
+    t.assert_equals(S2:eval(q_leadership), storage_1_uuid)
+    t.assert_equals(S3:eval(q_leadership), storage_1_uuid)
 
-    t.assert_equals(R1.net_box:eval(q_readonliness), false)
-    t.assert_equals(S1.net_box:eval(q_readonliness), false)
-    t.assert_equals(S2.net_box:eval(q_readonliness), true)
-    t.assert_equals(S3.net_box:eval(q_readonliness), true)
+    t.assert_equals(R1:eval(q_readonliness), false)
+    t.assert_equals(S1:eval(q_readonliness), false)
+    t.assert_equals(S2:eval(q_readonliness), true)
+    t.assert_equals(S3:eval(q_readonliness), true)
     t.helpers.retrying({}, function()
         t.assert_equals(helpers.list_cluster_issues(R1), {})
     end)
@@ -556,13 +556,13 @@ end)
 
 add('test_issues', function(g)
     -- kill coordinator
-    R1.net_box:eval([[
+    R1:eval([[
         local cartridge = require('cartridge')
         local coordinator = cartridge.service_get('failover-coordinator')
         coordinator.stop()
     ]])
     -- kill failover fiber on storage
-    S3.net_box:eval([[
+    S3:eval([[
         local vars = require('cartridge.vars').new('cartridge.failover')
         vars.client:drop_session()
         vars.failover_fiber:cancel()
@@ -661,12 +661,12 @@ add('test_force_promote_timeout', function(g)
     S1.process:kill('STOP')
 
     -- Speed up the test
-    S2.net_box:eval([[
+    S2:eval([[
         local vars = require('cartridge.vars').new('cartridge.failover')
         vars.options.WAITLSN_TIMEOUT = 0.5
     ]])
 
-    local res, err = S2.net_box:call('package.loaded.cartridge.failover_promote', {
+    local res, err = S2:call('package.loaded.cartridge.failover_promote', {
         {[g.cluster.replicasets[2].uuid] = S2.instance_uuid},
         {force_inconsistency = false}
     })
@@ -676,7 +676,7 @@ add('test_force_promote_timeout', function(g)
 
     require('fiber').sleep(1) -- NETBOX_CALL_TIMEOUT
 
-    local res, err = S2.net_box:call('package.loaded.cartridge.failover_promote', {
+    local res, err = S2:call('package.loaded.cartridge.failover_promote', {
         {[g.cluster.replicasets[2].uuid] = S2.instance_uuid},
         {force_inconsistency = true}
     })

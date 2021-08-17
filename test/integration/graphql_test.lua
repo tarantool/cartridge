@@ -34,7 +34,7 @@ end
 g.test_simple = function()
     local server = cluster.main_server
 
-    server.net_box:eval([[
+    server:eval([[
         package.loaded['test'] = package.loaded['test'] or {}
         package.loaded['test']['test'] = function(root, args)
             return args[1].value
@@ -61,7 +61,7 @@ g.test_simple = function()
         ).data.test, 'A'
     )
 
-    server.net_box:eval([[
+    server:eval([[
         package.loaded['test']['test'] = function(root, args)
             local result = ''
             for _, tuple in ipairs(getmetatable(args).__index) do
@@ -75,7 +75,7 @@ end
 g.test_errors_in_handlers = function()
     local server = cluster.main_server
 
-    server.net_box:eval([[
+    server:eval([[
         package.loaded['test']['test'] = function(root, args)
             error('Error C', 0)
         end
@@ -85,7 +85,7 @@ g.test_errors_in_handlers = function()
         {query = '{ test(arg: "TEST") }'}
     )
 
-    server.net_box:eval([[
+    server:eval([[
         package.loaded['test']['test'] = function(root, args)
             error({Error = 'D'})
         end
@@ -95,7 +95,7 @@ g.test_errors_in_handlers = function()
         {query = '{ test(arg: "TEST") }'}
     )
 
-    server.net_box:eval([[
+    server:eval([[
         package.loaded['test']['test'] = function(root, args)
             return nil, 'Error E'
         end
@@ -105,7 +105,7 @@ g.test_errors_in_handlers = function()
         {query = '{ test(arg: "TEST") }'}
     )
 
-    server.net_box:eval([[
+    server:eval([[
         package.loaded['test']['test'] = function(root, args)
             return nil, require('errors').new('CustomError', 'Error F')
         end
@@ -115,7 +115,7 @@ g.test_errors_in_handlers = function()
         {query = '{ test(arg: "TEST") }'}
     )
 
-    server.net_box:eval([[
+    server:eval([[
         package.loaded['test']['test'] = function(root, args)
             return nil, {Error = "G"}
         end
@@ -125,7 +125,7 @@ g.test_errors_in_handlers = function()
         {query = '{ test(arg: "TEST") }'}
     )
 
-    server.net_box:eval([[
+    server:eval([[
         package.loaded['test']['test'] = function(root, args)
             return nil, require('errors').new('CustomError', {Error = "H"})
         end
@@ -167,7 +167,7 @@ end
 g.test_reread_request = function()
     local server = cluster.main_server
 
-    server.net_box:eval([[
+    server:eval([[
         local httpd = require('cartridge').service_get('httpd')
         httpd:hook('before_dispatch', function(self, req)
             req:read_cached()
@@ -231,7 +231,7 @@ function g.test_middleware()
     local server = cluster.main_server
 
     -- GraphQL execution can be interrupted by raising error in trigger
-    server.net_box:eval([[
+    server:eval([[
         local errors = require('errors')
         graphql = require('cartridge.graphql')
         function raise()
@@ -255,7 +255,7 @@ function g.test_middleware()
     t.assert_equals(extensions['code'], 403)
 
     -- GraphQL callbacks exections can be tracked
-    server.net_box:eval([[
+    server:eval([[
         graphql.on_resolve(nil, raise)
         graphql.on_resolve(require('log').warn)
 
@@ -281,7 +281,7 @@ function g.test_middleware()
     ]], variables = {uri = server.advertise_uri}})
 
     t.assert_equals(
-        server.net_box:eval('return tracks'),
+        server:eval('return tracks'),
         {
             {'query',    'servers'},
             {'query',    'cluster.self'},

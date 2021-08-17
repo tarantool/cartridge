@@ -38,13 +38,13 @@ g.before_all(function()
 
     -- Make sure auth section exists in clusterwide config.
     -- It shouldn't be available for downloading via HTTP API
-    g.cluster.main_server.net_box:eval([[
+    g.cluster.main_server:eval([[
         local auth = require('cartridge.auth')
         local res, err = auth.add_user(...)
         assert(res, tostring(err))
     ]], {'guest', 'guest'})
 
-    g.cluster.main_server.net_box:eval([[
+    g.cluster.main_server:eval([[
         local mymodule = package.loaded['mymodule-permanent']
         mymodule.validate_config = function(conf)
             if conf.throw then
@@ -111,7 +111,7 @@ function g.test_upload_good()
     g.cluster:upload_config({['custom_config.yml'] = '{spoiled: true}'})
     g.cluster:upload_config(custom_config)
 
-    g.cluster.main_server.net_box:eval([[
+    g.cluster.main_server:eval([[
         local confapplier = package.loaded['cartridge.confapplier']
 
         local custom_config = confapplier.get_readonly('custom_config')
@@ -287,7 +287,7 @@ end
 
 function g.test_rollback()
     -- hack utils to throw error on file_write
-    g.cluster.main_server.net_box:eval([[
+    g.cluster.main_server:eval([[
         local utils = package.loaded["cartridge.utils"]
         local e_file_write = require('errors').new_class("Artificial error")
         _G._utils_file_write = utils.file_write
@@ -306,7 +306,7 @@ function g.test_rollback()
     end)
 
     -- restore utils.file_write
-    g.cluster.main_server.net_box:eval([[
+    g.cluster.main_server:eval([[
         local utils = package.loaded["cartridge.utils"]
         utils.file_write = _G._utils_file_write
         _G._utils_file_write = nil
@@ -377,7 +377,7 @@ function g.test_formatting()
 end
 
 function g.test_on_patch_trigger()
-    g.cluster.main_server.net_box:eval([[
+    g.cluster.main_server:eval([[
         _G.__trigger = function(conf_new, conf_old)
             error(conf_new:get_readonly('e.txt'), 0)
         end
@@ -389,7 +389,7 @@ function g.test_on_patch_trigger()
         set_sections, {{filename = 'e.txt', content = 'Boom!'}}
     )
 
-    g.cluster.main_server.net_box:eval([[
+    g.cluster.main_server:eval([[
         require("cartridge.twophase").on_patch(nil, __trigger)
 
         _G.__trigger = function(conf_new, conf_old)
@@ -421,7 +421,7 @@ local M = {}
 local function test_remotely(fn_name, fn)
     M[fn_name] = fn
     g[fn_name] = function()
-        g.cluster.main_server.net_box:eval([[
+        g.cluster.main_server:eval([[
             local test = require('test.integration.config_test')
             test[...]()
         ]], {fn_name})

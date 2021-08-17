@@ -48,7 +48,7 @@ end)
 function g.test_begining_failure()
     g.s2.process:kill('STOP')
 
-    local future = g.s1.net_box:call(
+    local future = g.s1:call(
         'package.loaded.cartridge.config_patch_clusterwide',
         {{['todo_list.txt'] = 'gotta go fast'}},
         {is_async = true}
@@ -78,16 +78,22 @@ function g.test_begining_failure()
     t.assert_equals(fio.listdir(g.upload_path_2), {})
 end
 
-function g.test_transmission_failure()
-    g.s3.net_box:eval([[
+g.after_test('test_begining_failure', function()
+    g.s2.process:kill('CONT')
+end)
+
+g.before_test('test_transmission_failure', function()
+    g.s3:eval([[
         _G.upload_transmit_original = _G.__cartridge_upload_transmit
         _G.__cartridge_upload_transmit = function()
             require('fiber').sleep(0.3)
             error('Artificial transmission failure', 0)
         end
     ]])
+end)
 
-    local future = g.s1.net_box:call(
+function g.test_transmission_failure()
+    local future = g.s1:call(
         'package.loaded.cartridge.config_patch_clusterwide',
         {{['todo_list.txt'] = 'gotta go faster'}},
         {is_async = true}
@@ -108,15 +114,17 @@ function g.test_transmission_failure()
     -- prefix should be cleaned up even if upload_transmit fails
     t.assert_equals(fio.listdir(g.upload_path_1), {})
     t.assert_equals(fio.listdir(g.upload_path_2), {})
-
-    -- Revert all hacks
-    g.s3.net_box:eval([[
-        _G.__cartridge_upload_transmit = _G.upload_transmit_original
-    ]])
 end
 
-function g.test_finish_failure()
-    g.s1.net_box:eval([[
+g.after_test('test_transmission_failure', function()
+    -- Revert all hacks
+    g.s3:eval([[
+        _G.__cartridge_upload_transmit = _G.upload_transmit_original
+    ]])
+end)
+
+g.before_test('test_finish_failure', function()
+    g.s1:eval([[
         local twophase_vars = require('cartridge.vars').new('cartridge.twophase')
         twophase_vars.options.netbox_call_timeout = 0.1
         _G.upload_finish_original = _G.__cartridge_upload_finish
@@ -125,8 +133,10 @@ function g.test_finish_failure()
             return _G.upload_finish_original
         end
     ]])
+end)
 
-    local future = g.s1.net_box:call(
+function g.test_finish_failure()
+    local future = g.s1:call(
         'package.loaded.cartridge.config_patch_clusterwide',
         {{['todo_list.txt'] =
             'The only problem with ' ..
@@ -151,11 +161,13 @@ function g.test_finish_failure()
     -- prefix should be cleaned up even if upload_transmit fails
     t.assert_equals(fio.listdir(g.upload_path_1), {})
     t.assert_equals(fio.listdir(g.upload_path_2), {})
+end
 
+g.after_test('test_finish_failure', function()
     -- Revert all hacks
-    g.s1.net_box:eval([[
+    g.s1:eval([[
         local twophase_vars = require('cartridge.vars').new('cartridge.twophase')
         twophase_vars.options.netbox_call_timeout = 0.1
         _G.__cartridge_upload_finish = _G.upload_finish_original
     ]])
-end
+end)

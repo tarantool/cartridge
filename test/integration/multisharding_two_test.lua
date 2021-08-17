@@ -299,7 +299,7 @@ end
 
 
 function g.test_router_role()
-    local res = g.cluster:server('router-1').net_box:eval([[
+    local res = g.cluster:server('router-1'):eval([[
         local cartridge = require('cartridge')
         local router_role = assert(cartridge.service_get('vshard-router'))
 
