@@ -23,6 +23,8 @@ local Cluster = {
     failover = 'disabled',
 }
 
+DEFAULT_LOG_PATTERN = '>E'
+
 function Cluster:inherit(object)
     setmetatable(object, self)
     self.__index = self
@@ -64,6 +66,7 @@ function Cluster:new(object)
     -- @tparam ?boolan all_rw Make all replicas writable.
     -- @tparam table|number servers List of objects to build `Server`s with or
     --      number of servers in replicaset.
+    -- @tparam ?string log_pattern Pattern for searching errors in Tarantool log.
     for _, replicaset in pairs(object.replicasets) do
         (function(_) checks({
             alias = '?string',
@@ -72,6 +75,7 @@ function Cluster:new(object)
             vshard_group = '?string',
             servers = 'table|number',
             all_rw = '?boolean',
+            log_pattern = '?string',
         }) end)(replicaset)
     end
 
@@ -103,6 +107,8 @@ function Cluster:initialize()
             },
             env = {
                 TARANTOOL_PASSWORD = self.cookie,
+                TARANTOOL_LOG = fio.pathjoin(workdir,
+                    string.format('tarantool-%s.log', self.alias)),
             }
         })
     end
@@ -246,15 +252,38 @@ function Cluster:start()
     self.running = true
 end
 
+local function check_log_errors(log_file, pattern)
+    if log_file == nil then
+        return false
+    end
+    local f = io.open(log_file, "r")
+    if f then
+        f:close()
+        return false
+    end
+    for line in io.lines(f) do
+      i, j = string.find(line, pattern)
+    end
+    f:close()
+end
+
 --- Stop all servers.
 function Cluster:stop()
+    local rc = true
     for _, server in ipairs(self.servers) do
         server:stop()
+        local tarantool_log = server.env['TARANTOOL_LOG']
+        local pattern = self.log_pattern or DEFAULT_LOG_PATTERN
+        if check_log_errors(tarantool_log, pattern) == true then
+            rc = false
+        end
     end
     if self.stateboard then
         self.stateboard:stop()
     end
     self.running = nil
+
+    return rc
 end
 
 function Cluster:build_server(config, replicaset_config, sn)
