@@ -82,6 +82,10 @@ function g.test_upgrade()
     local tuple = {1, 0.1, 'str', {a = 'a'}, {1, 2}}
     storage_1.space.test:insert(tuple)
 
-    local storage2_tuple = storage_2:eval('return box.space.test:get({1})')
-    t.assert_equals(storage2_tuple, tuple)
+    helpers.retrying({}, function()
+        t.assert_equals(
+            storage_2:eval('return box.space.test:get({1})'),
+            tuple
+        )
+    end)
 end
