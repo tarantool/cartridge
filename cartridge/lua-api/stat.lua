@@ -24,7 +24,7 @@ local function get_stat(uri)
 
         local vshard_buckets_count
         if service_registry.get('vshard-storage') then
-            vshard_buckets_count = _G.vshard.storage.buckets_count()
+            vshard_buckets_count = package.loaded.vshard.storage:info().bucket.total
         end
 
         local slab_info = box.slab.info()
