@@ -80,6 +80,15 @@ local default_limits = {
     fragmentation_threshold_warning  = 0.6, -- number: *default*: 0.6.
     clock_delta_threshold_warning    = 5, -- number: *default*: 5.
 }
+
+-- Min and max values for issues_limits theshold
+-- range[1] <= value <= range[2]
+local limits_ranges = {
+    fragmentation_threshold_warning = {0, 1},
+    fragmentation_threshold_critical = {0, 1},
+    clock_delta_threshold_warning = {0, nil},
+}
+
 vars:new('limits', default_limits)
 
 local function describe(uri)
@@ -476,12 +485,33 @@ local function list_on_cluster()
     return ret, err
 end
 
-local function set_limits(limits)
+local function validate_limits(limits)
     checks({
         fragmentation_threshold_critical = '?number',
         fragmentation_threshold_warning = '?number',
         clock_delta_threshold_warning = '?number',
     })
+
+    -- Nothing to change
+    if limits == nil or not next(limits) then
+        return true
+    end
+
+    for name, value in pairs(limits) do
+        local range = limits_ranges[name]
+        assert(
+            (range[1] == nil or value >= range[1]) and (range[2] == nil or value <= range[2]),
+            string.format('Error setting limits.%s = %s: limits are (%s, %s)',
+                name, value, range[1], range[2]))
+    end
+
+    return true
+end
+
+local function set_limits(limits)
+    -- Validate limits
+    validate_limits(limits)
+
     vars.limits = fun.chain(vars.limits, limits):tomap()
     return true
 end
@@ -490,5 +520,7 @@ _G.__cartridge_issues_list_on_instance = list_on_instance
 
 return {
     list_on_cluster = list_on_cluster,
+    default_limits = default_limits,
+    validate_limits = validate_limits,
     set_limits = set_limits,
 }
