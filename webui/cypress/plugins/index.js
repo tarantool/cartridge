@@ -15,7 +15,7 @@
 /**
  * @type {Cypress.PluginConfig}
  */
-const { downloadFile } = require('cypress-downloadfile/lib/addPlugin.js');
+const { downloadFile } = require('cypress-downloadfile/lib/addPlugin');
 const net = require('net');
 const yaml = require('js-yaml');
 const cache = {};
