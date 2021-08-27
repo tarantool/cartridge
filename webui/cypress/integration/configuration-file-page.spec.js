@@ -1,3 +1,4 @@
+/// <reference types="cypress-downloadfile"/>
 describe('Configuration file page', () => {
 
   before(() => {
