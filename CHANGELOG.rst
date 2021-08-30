@@ -26,6 +26,8 @@ Fixed
 - Eliminate unnecessary transactions after the restart before the replication
   sync. This reduces the chance the hardware restart leads to WAL corruption
   ([#1546](https://github.com/tarantool/cartridge/issues/1546)).
+- Extend GraphQL ``issues`` API with ``vshard`` topic which reflects vshard
+  router alerts.
 
 -------------------------------------------------------------------------------
 [2.7.1] - 2021-08-18
