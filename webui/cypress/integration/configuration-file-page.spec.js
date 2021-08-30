@@ -61,7 +61,7 @@ describe('Configuration file page', () => {
     ////////////////////////////////////////////////////////////////////
     cy.visit('/admin/cluster/configuration');
     cy.get('[data-cy="downloadButton"]').should('have.attr', 'href')
-      .then((href) => {
+      .then(href => {
 
         cy.downloadFile(Cypress.config('baseUrl') + href, 'cypress/downloads', 'config_downloaded.yml');
         cy.readFile('cypress/downloads/config_downloaded.yml').should('contain',
