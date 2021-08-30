@@ -60,11 +60,13 @@ describe('Configuration file page', () => {
     cy.log('Download current conf file');
     ////////////////////////////////////////////////////////////////////
     cy.visit('/admin/cluster/configuration');
-    cy.downloadFile('http://localhost:8080/admin/cluster/config', 'cypress/downloads',
-      'config_downloaded.yml');
-    cy.readFile('cypress/downloads/config_downloaded.yml').should('contain',
-      '<!doctype html><html><head><title>Tarantool Cartridge</title><script>window.__tarantool_admin_prefix = "";' +
-      'window.__tarantool_variables = {"cartridge_refresh_interval":500,"cartridge_stat_period":2};' +
-      '</script></head><body><div id="root"></div>')
+    cy.get('[data-cy="downloadButton"]').should('have.attr', 'href')
+      .then((href) => {
+
+        cy.downloadFile(Cypress.config('baseUrl') + href, 'cypress/downloads', 'config_downloaded.yml');
+        cy.readFile('cypress/downloads/config_downloaded.yml').should('contain',
+          'custom_section: []')
+      })
   });
+
 });

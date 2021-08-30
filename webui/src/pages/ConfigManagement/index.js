@@ -66,7 +66,7 @@ const ConfigManagement = ({ isDemoPanelPresent }: ConfigManagementProps) => {
     <PageLayout
       heading='Configuration Management'
       topRightControls={[
-        <a href={getApiEndpoint('CONFIG_ENDPOINT')}>
+        <a href={getApiEndpoint('CONFIG_ENDPOINT')} data-cy='downloadButton'>
           <Button
             className='meta-test__DownloadBtn'
             icon={IconDownload}
