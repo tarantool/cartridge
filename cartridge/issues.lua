@@ -29,6 +29,11 @@
 -- * warning: "Clock difference between ... and ... exceed threshold"
 --  `limits.clock_delta_threshold_warning`;
 --
+-- VShard:
+--
+-- * warning: "VShard alert on ...: X buckets are not discovered"
+-- * warning: "VShard alert on ...: Invalid configuration: ..."
+--
 -- Memory:
 --
 -- * critical: "Running out of memory on ..." - when all 3 metrics
@@ -355,34 +360,43 @@ local function list_on_instance(opts)
         end
     end
 
-
     -- Vshard issues
-    local vshard = package.loaded.vshard
+    do
+        local vshard = package.loaded.vshard
+        if not vshard then
+            goto continue
+        end
 
-    if vshard then
-        local routers = vshard and vshard.router.internal.routers or {}
-        if next(routers) ~= nil then
-            for _, router in pairs(routers) do
-                local alerts = router:info().alerts
-                for _, alert in ipairs(alerts) do
-                    if alert[1] == 'UNKNOWN_BUCKETS'
-                    or alert[1] == 'INVALID_CFG'
-                    then
-                        local issue = {
-                            level = 'warning',
-                            topic = 'vshard',
-                            replicaset_uuid = replicaset_uuid,
-                            instance_uuid = instance_uuid,
-                            message = alert[2]
-                        }
-                        table.insert(ret, issue)
-                    end
+        local routers = vshard.router.internal.routers
+        if routers == nil or next(routers) == nil then
+            goto continue
+        end
+
+        for _, router in pairs(routers) do
+            local alerts = router:info().alerts
+            for _, alert in ipairs(alerts) do
+                local type, message = alert[1], alert[2]
+                log.info(require('yaml').encode(alert))
+                if type == 'UNKNOWN_BUCKETS'
+                or type == 'INVALID_CFG'
+                then
+                    local issue = {
+                        level = 'warning',
+                        topic = 'vshard',
+                        replicaset_uuid = replicaset_uuid,
+                        instance_uuid = instance_uuid,
+                        message = string.format(
+                            "VShard alert on %s: %s",
+                            describe(self_uri),
+                            message
+                        )
+                    }
+                    table.insert(ret, issue)
                 end
             end
         end
+        ::continue::
     end
-
-
 
     return ret
 end

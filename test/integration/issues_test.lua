@@ -417,12 +417,14 @@ function g.test_vshard_buckets_invalid_cfg()
     ]])
 
     t.assert_covers(helpers.list_cluster_issues(g.master), {{
-        level = "warning",
-        message = "Invalid configuration: "..
-            "probably router's cfg.bucket_count is different from storages' one, difference is 500",
-        topic = "vshard",
+        level = 'warning',
+        topic = 'vshard',
         instance_uuid = g.cluster:server('router').instance_uuid,
         replicaset_uuid = g.cluster:server('router').replicaset_uuid,
+        message = 'VShard alert on localhost:13305 (router):' ..
+            " Invalid configuration:"..
+            " probably router's cfg.bucket_count is different" ..
+            " from storages' one, difference is 500",
     }})
 
 end
@@ -439,11 +441,12 @@ function g.test_vshard_buckets_not_discovered()
     ]], {g.cluster:server('master1').instance_uuid})
 
     t.assert_covers(helpers.list_cluster_issues(g.master), {{
-        level = "warning",
-        message = "3000 buckets are not discovered",
-        topic = "vshard",
+        level = 'warning',
+        topic = 'vshard',
         instance_uuid = g.cluster:server('router').instance_uuid,
         replicaset_uuid = g.cluster:server('router').replicaset_uuid,
+        message = 'VShard alert on localhost:13305 (router):' ..
+            ' 3000 buckets are not discovered',
     }})
 
 end
