@@ -28,7 +28,7 @@ describe('Configuration file page', () => {
     cy.task('tarantool', { code: `cleanup()` });
   });
 
-  it('Test: successfull upload config file', () => {
+  it('Test: successfull upload config file ', () => {
 
     ////////////////////////////////////////////////////////////////////
     cy.log('Open WebUI');
