@@ -119,6 +119,12 @@ g.before_all = function()
     end)
 end
 
+g.before_each(function()
+    helpers.retrying({}, function()
+        t.assert_equals(helpers.list_cluster_issues(g.cluster.main_server), {})
+    end)
+end)
+
 g.after_all = function()
     g.cluster:stop()
     g.server:stop()
@@ -674,8 +680,6 @@ end
 
 
 function g.test_issues()
-    t.assert_equals(helpers.list_cluster_issues(g.cluster.main_server), {})
-
     -----------------------------------------------------------------------------
     -- memory usage issues
     local server = g.cluster:server('storage')
