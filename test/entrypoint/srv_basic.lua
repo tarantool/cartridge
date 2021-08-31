@@ -17,6 +17,7 @@ if frontend and frontend.set_variable then
     -- which doesn't support it yet.
     frontend.set_variable('cartridge_refresh_interval', 500)
     frontend.set_variable('cartridge_stat_period', 2)
+    frontend.set_variable('cartridge_hide_all_rw', false)
 end
 
 package.preload['mymodule'] = function()

@@ -138,6 +138,7 @@ EditReplicasetFormProps) => {
         const activeDependencies = getRolesDependencies(values.roles, knownRoles)
         const VShardGroupInputDisabled = isVShardGroupInputDisabled(values.roles, replicaset);
         const rolesColumns = (knownRoles && knownRoles.length > 6) ? 3 : 2;
+        const { cartridge_hide_all_rw } = (window.__tarantool_variables || {});
 
         return (
           <form onSubmit={handleSubmit}>
@@ -281,24 +282,26 @@ EditReplicasetFormProps) => {
                   </FormField>
                 )}
               </Field>
-              <Field name='all_rw'>
-                {({ input: { name: fieldName, value, onChange } }) => (
-                  <FormField
-                    className={styles.field}
-                    label='All writable'
-                    info={allRwTooltipInfo}
-                    largeMargins
-                  >
-                    <Checkbox
-                      onChange={onChange}
-                      name={fieldName}
-                      checked={value}
+              {cartridge_hide_all_rw !== true && (
+                <Field name='all_rw'>
+                  {({ input: { name: fieldName, value, onChange } }) => (
+                    <FormField
+                      className={styles.field}
+                      label='All writable'
+                      info={allRwTooltipInfo}
+                      largeMargins
                     >
-                      Make all instances writeable
-                    </Checkbox>
-                  </FormField>
-                )}
-              </Field>
+                      <Checkbox
+                        onChange={onChange}
+                        name={fieldName}
+                        checked={value}
+                      >
+                        Make all instances writeable
+                      </Checkbox>
+                    </FormField>
+                  )}
+                </Field>
+              )}
               <Field name='master'>
                 {({ input: { name, value, onChange }, meta: { error } }) => (
                   <LabeledInput

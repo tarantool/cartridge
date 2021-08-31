@@ -12,6 +12,9 @@ and this project adheres to
 [Unreleased]
 -------------------------------------------------------------------------------
 
+- 'Make all instances writeable' configuration field can be hidden via
+  frontend-core's ``set_variable`` feature or at runtime.
+
 -------------------------------------------------------------------------------
 [2.7.1] - 2021-08-18
 -------------------------------------------------------------------------------

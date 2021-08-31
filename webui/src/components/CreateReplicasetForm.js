@@ -116,6 +116,7 @@ CreateReplicasetFormProps) => (
       const activeDependencies = getRolesDependencies(values.roles, knownRoles)
       const VShardGroupInputDisabled = isVShardGroupInputDisabled(values.roles);
       const rolesColumns = (knownRoles && knownRoles.length > 6) ? 3 : 2;
+      const { cartridge_hide_all_rw } = (window.__tarantool_variables || {});
 
       return (
         <form onSubmit={handleSubmit}>
@@ -247,19 +248,21 @@ CreateReplicasetFormProps) => (
                 </FormField>
               )}
             </Field>
-            <Field name='all_rw'>
-              {({ input: { name: fieldName, value, onChange } }) => (
-                <FormField className={styles.field} label='All writable' info={allRwTooltipInfo}>
-                  <Checkbox
-                    onChange={onChange}
-                    name={fieldName}
-                    checked={value}
-                  >
-                    Make all instances writeable
-                  </Checkbox>
-                </FormField>
-              )}
-            </Field>
+            {cartridge_hide_all_rw !== true && (
+              <Field name='all_rw'>
+                {({ input: { name: fieldName, value, onChange } }) => (
+                  <FormField className={styles.field} label='All writable' info={allRwTooltipInfo}>
+                    <Checkbox
+                      onChange={onChange}
+                      name={fieldName}
+                      checked={value}
+                    >
+                      Make all instances writeable
+                    </Checkbox>
+                  </FormField>
+                )}
+              </Field>
+            )}
           </div>
           <PopupFooter
             controls={([
