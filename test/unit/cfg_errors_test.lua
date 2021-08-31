@@ -197,6 +197,35 @@ g.test_http = function()
     end)
 end
 
+-- issues_limits --------------------------------------------------------------
+-------------------------------------------------------------------------------
+
+g.test_issues_limits = function()
+    helpers.run_remotely(g.server, function()
+        local t = require('luatest')
+        os.setenv('TARANTOOL_CLOCK_DELTA_THRESHOLD_WARNING', '-1')
+
+        local ok, err = require('cartridge').cfg({
+            swim_broadcast = false,
+            advertise_uri = 'localhost:13301',
+            http_enabled = false,
+            workdir = os.getenv('TARANTOOL_WORKDIR'),
+            roles = {},
+        })
+
+        t.assert_equals(ok, nil)
+        t.assert_covers(err, {
+            class_name = 'ValidateConfigError',
+            err = 'limits.clock_delta_threshold_warning must be in range [0, inf]',
+        })
+    end)
+end
+g.after_test('test_issues_limits', function()
+    helpers.run_remotely(g.server, function()
+        os.setenv('TARANTOOL_CLOCK_DELTA_THRESHOLD_WARNING', nil)
+    end)
+end)
+
 -- roles ----------------------------------------------------------------------
 -------------------------------------------------------------------------------
 g.test_roles = function()

@@ -25,9 +25,9 @@ g.before_all(function()
             }},
         }},
         env = {
-            TARANTOOL_CLOCK_DELTA_THRESHOLD_WARNING = 5,
-            TARANTOOL_FRAGMENTATION_THRESHOLD_WARNING = .6,
-            TARANTOOL_FRAGMENTATION_THRESHOLD_CRITICAL = .9,
+            TARANTOOL_CLOCK_DELTA_THRESHOLD_WARNING = math.huge,
+            TARANTOOL_FRAGMENTATION_THRESHOLD_WARNING = 1,
+            TARANTOOL_FRAGMENTATION_THRESHOLD_CRITICAL = 1,
         }
     })
     g.cluster:start()
@@ -64,66 +64,26 @@ end)
 function g.test_issues_limits()
     local server = g.cluster:server('master')
 
-    local set_limits = function(limits)
-        server:eval([[
-            local limits = ...
-            require('cartridge.issues').set_limits(limits)
-        ]], {limits})
-    end
-
-    -- Check ranges
-    t.assert_error_msg_contains(
-        'Error setting limits.clock_delta_threshold_warning',
-        set_limits,
-        {clock_delta_threshold_warning = 0 - 1e-7}
+    t.assert_equals(
+        server:eval("return require('cartridge.vars').new('cartridge.issues').limits"),
+        {
+            clock_delta_threshold_warning = math.huge,
+            fragmentation_threshold_warning = 1,
+            fragmentation_threshold_critical = 1,
+        }
     )
 
-    t.assert_error_msg_contains(
-        'Error setting limits.fragmentation_threshold_warning',
-        set_limits,
-        {fragmentation_threshold_warning = 1 + 1e-7}
-    )
-
-    t.assert_error_msg_contains(
-        'Error setting limits.fragmentation_threshold_warning',
-        set_limits,
-        {fragmentation_threshold_warning = 0 - 1e-7}
-    )
-
-    t.assert_error_msg_contains(
-        'Error setting limits.fragmentation_threshold_critical',
-        set_limits,
-        {fragmentation_threshold_critical = 1 + 1e-7}
-    )
-
-    t.assert_error_msg_contains(
-        'Error setting limits.fragmentation_threshold_critical',
-        set_limits,
-        {fragmentation_threshold_critical = 0 - 1e-7}
-    )
-
-    -- load valid config and check it has been applied
-    local valid_config = {
-        clock_delta_threshold_warning = 5,
-        fragmentation_threshold_warning = .4,
-        fragmentation_threshold_critical = .8,
-    }
-
-    set_limits(valid_config)
-    local applied_limits = server:eval([[
-        return require('cartridge.vars').new('cartridge.issues').limits
-    ]])
-    t.assert_equals(valid_config, applied_limits)
-
-
-    -- restore to defaults by calling set_limits
     server:eval([[
         local cartridge_issues = require("cartridge.issues")
         cartridge_issues.set_limits(cartridge_issues.default_limits)
     ]])
     t.assert_equals(
         server:eval("return require('cartridge.vars').new('cartridge.issues').limits"),
-        server:eval("return require('cartridge.issues').default_limits")
+        {
+            clock_delta_threshold_warning = 5,
+            fragmentation_threshold_warning = 0.6,
+            fragmentation_threshold_critical = 0.9
+        }
     )
 
     t.assert_equals(helpers.list_cluster_issues(server), {})
