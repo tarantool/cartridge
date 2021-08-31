@@ -32,7 +32,7 @@ describe('Code page', () => {
     cy.task('tarantool', { code: `cleanup()` });
   });
 
-  const selectAllKeys = Cypress.platform == 'darwin' ? '{cmd}a' : '{ctrl}a';
+  const selectAllKeys = Cypress.platform === 'darwin' ? '{cmd}a' : '{ctrl}a';
 
   function reload() {
     cy.get('.meta-test__Code__reload_idle').click({ force: true });

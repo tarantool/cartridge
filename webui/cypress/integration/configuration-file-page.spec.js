@@ -53,4 +53,20 @@ describe('Configuration file page', () => {
     cy.get('[data-cy="test_uploadZone"]').contains('Config upload failed: uploading system section ' +
       '"topology" is forbidden');
   });
+
+  it('Test: download config file', () => {
+
+    ///////////////////////////////////////////////////////////////////
+    cy.log('Download current conf file');
+    ////////////////////////////////////////////////////////////////////
+    cy.visit('/admin/cluster/configuration');
+    cy.get('[data-cy="downloadButton"]').should('have.attr', 'href')
+      .then(href => {
+
+        cy.downloadFile(Cypress.config('baseUrl') + href, 'cypress/downloads', 'config_downloaded.yml');
+        cy.readFile('cypress/downloads/config_downloaded.yml').should('contain',
+          'custom_section: []')
+      })
+  });
+
 });
