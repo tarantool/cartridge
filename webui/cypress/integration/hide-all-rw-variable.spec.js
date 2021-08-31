@@ -53,7 +53,9 @@ describe('Test the cartridge_hide_all_rw frontend core variable', () => {
   function hideAllRW(value) {
     cy.get('@main_server').then(srv => {
       cy.task('tarantool', {
-        host: 'unix/', port: srv.sock, code: `
+        host: 'unix/',
+        port: srv.sock,
+        code: `
         local frontend = package.loaded['frontend-core']
         frontend.set_variable("cartridge_hide_all_rw", ${value})
         return true
@@ -88,7 +90,7 @@ describe('Test the cartridge_hide_all_rw frontend core variable', () => {
   });
 
   it('Test: EditReplicasetForm', function () {
-    cy.task('tarantool', {code: '_G.cluster:bootstrap()'});
+    cy.task('tarantool', { code: '_G.cluster:bootstrap()' });
 
     ////////////////////////////////////////////////////////////////////
     cy.log('cartridge_hide_all_rw is unset');
