@@ -58,7 +58,7 @@ local fio = require('fio')
 local log = require('log')
 local fun = require('fun')
 local fiber = require('fiber')
-local checks = require('checks')
+local errors = require('errors')
 local membership = require('membership')
 
 local pool = require('cartridge.pool')
@@ -66,6 +66,8 @@ local topology = require('cartridge.topology')
 local failover = require('cartridge.failover')
 local confapplier = require('cartridge.confapplier')
 local lua_api_proxy = require('cartridge.lua-api.proxy')
+
+local ValidateConfigError = errors.new_class('ValidateConfigError')
 
 local vars = require('cartridge.vars').new(mod_name)
 
@@ -80,6 +82,15 @@ local default_limits = {
     fragmentation_threshold_warning  = 0.6, -- number: *default*: 0.6.
     clock_delta_threshold_warning    = 5, -- number: *default*: 5.
 }
+
+-- Min and max values for issues_limits theshold
+-- range[1] <= value <= range[2]
+local limits_ranges = {
+    fragmentation_threshold_warning = {0, 1},
+    fragmentation_threshold_critical = {0, 1},
+    clock_delta_threshold_warning = {0, math.huge},
+}
+
 vars:new('limits', default_limits)
 
 local function describe(uri)
@@ -476,12 +487,63 @@ local function list_on_cluster()
     return ret, err
 end
 
+--- Validate limits configuration.
+--
+-- @function validate_limits
+-- @local
+-- @tparam table limits
+-- @treturn[1] boolean true
+-- @treturn[2] nil
+-- @treturn[2] table Error description
+local function validate_limits(limits)
+    if type(limits) ~= 'table' then
+        return nil, ValidateConfigError:new(
+            'limits must be a table, got %s', type(limits)
+        )
+    end
+
+    for name, value in pairs(limits) do
+        if type(name) ~= 'string' then
+            return nil, ValidateConfigError:new(
+                'limits table keys must be string, got %s', type(name)
+            )
+        end
+
+        local range = limits_ranges[name]
+        if range == nil then
+            return nil, ValidateConfigError:new(
+                'unknown limits key %q', name
+            )
+        elseif type(value) ~= 'number' then
+            return nil, ValidateConfigError:new(
+                'limits.%s must be a number, got %s',
+                name, type(value)
+            )
+        elseif not (value >= range[1] and value <= range[2]) then
+            return nil, ValidateConfigError:new(
+                'limits.%s must be in range [%g, %g]',
+                name, range[1], range[2]
+            )
+        end
+    end
+
+    return true
+end
+
+--- Update limits configuration.
+--
+-- @function set_limits
+-- @local
+-- @tparam table limits
+-- @treturn[1] boolean true
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 local function set_limits(limits)
-    checks({
-        fragmentation_threshold_critical = '?number',
-        fragmentation_threshold_warning = '?number',
-        clock_delta_threshold_warning = '?number',
-    })
+    local ok, err = validate_limits(limits)
+    if not ok then
+        return nil, err
+    end
+
     vars.limits = fun.chain(vars.limits, limits):tomap()
     return true
 end
@@ -490,5 +552,7 @@ _G.__cartridge_issues_list_on_instance = list_on_instance
 
 return {
     list_on_cluster = list_on_cluster,
+    default_limits = default_limits,
+    validate_limits = validate_limits,
     set_limits = set_limits,
 }

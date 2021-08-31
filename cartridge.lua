@@ -706,6 +706,11 @@ local function cfg(opts, box_opts)
         return nil, err
     end
 
+    local ok, err = issues.validate_limits(issue_limits)
+    if not ok then
+        return nil, err
+    end
+
     issues.set_limits(issue_limits)
 
     if opts.upload_prefix ~= nil then

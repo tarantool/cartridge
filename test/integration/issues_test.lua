@@ -25,9 +25,9 @@ g.before_all(function()
             }},
         }},
         env = {
-            TARANTOOL_CLOCK_DELTA_THRESHOLD_WARNING = 100000000,
-            TARANTOOL_FRAGMENTATION_THRESHOLD_WARNING = 100000000,
-            TARANTOOL_FRAGMENTATION_THRESHOLD_CRITICAL = 100000000,
+            TARANTOOL_CLOCK_DELTA_THRESHOLD_WARNING = math.huge,
+            TARANTOOL_FRAGMENTATION_THRESHOLD_WARNING = 1,
+            TARANTOOL_FRAGMENTATION_THRESHOLD_CRITICAL = 1,
         }
     })
     g.cluster:start()
@@ -63,21 +63,20 @@ end)
 
 function g.test_issues_limits()
     local server = g.cluster:server('master')
+
     t.assert_equals(
         server:eval("return require('cartridge.vars').new('cartridge.issues').limits"),
         {
-            clock_delta_threshold_warning = 100000000,
-            fragmentation_threshold_warning = 100000000,
-            fragmentation_threshold_critical = 100000000
+            clock_delta_threshold_warning = math.huge,
+            fragmentation_threshold_warning = 1,
+            fragmentation_threshold_critical = 1,
         }
     )
 
-    -- restore to defaults by calling set_limits
-    server:eval([[require("cartridge.issues").set_limits({
-        clock_delta_threshold_warning = 5,
-        fragmentation_threshold_warning = 0.6,
-        fragmentation_threshold_critical = 0.9
-    })]])
+    server:eval([[
+        local cartridge_issues = require("cartridge.issues")
+        cartridge_issues.set_limits(cartridge_issues.default_limits)
+    ]])
     t.assert_equals(
         server:eval("return require('cartridge.vars').new('cartridge.issues').limits"),
         {
