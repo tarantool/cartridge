@@ -226,6 +226,7 @@ class ReplicasetList extends React.PureComponent {
                   intent='secondary'
                   onClick={() => this.handleEditReplicasetRequest(replicaset)}
                   text='Edit'
+                  data-cy='meta-test__editBtn'
                 />
               </div>
               <ReplicasetRoles className={styles.roles} roles={replicaset.roles}/>
