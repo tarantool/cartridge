@@ -504,11 +504,21 @@ local function boot_instance(clusterwide_config)
             cartridge_schema_upgrade(clusterwide_config)
         end
 
-        BoxError:pcall(
-            box.schema.user.passwd,
-            username, password
-        )
+        local user = box.space[box.schema.USER_ID].index.name:get(username)
+        local change_passwd = true
+        if user ~= nil then
+            local old_passwd = user[5]['chap-sha1']
+            if old_passwd == box.schema.user.password(password) then
+                change_passwd = false
+            end
+        end
 
+        if change_passwd then
+            BoxError:pcall(
+                box.schema.user.passwd,
+                username, password
+            )
+        end
         box.cfg({read_only = read_only})
     end
 
