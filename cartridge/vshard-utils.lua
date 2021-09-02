@@ -675,6 +675,24 @@ end
 
 twophase.on_patch(patch_zone_distances)
 
+local function is_bootstrapped()
+    if vars.bootstrapped ~= nil then
+        return vars.bootstrapped
+    end
+    if roles.get_role('vshard-router') == nil then
+        vars.bootstrapped = false
+        return false
+    end
+    local bootstrapped = true
+    for _, group in pairs(get_known_groups()) do
+        bootstrapped = bootstrapped and (group.bootstrapped == true)
+    end
+    if bootstrapped == true then
+        vars.bootstrapped = true
+    end
+    return vars.bootstrapped
+end
+
 return {
     validate_config = function(...)
         return ValidateConfigError:pcall(validate_config, ...)
@@ -685,6 +703,7 @@ return {
 
     get_vshard_config = get_vshard_config,
     can_bootstrap = can_bootstrap,
+    is_bootstrapped = is_bootstrapped,
     edit_vshard_options = edit_vshard_options,
     patch_zone_distances = patch_zone_distances,
 }

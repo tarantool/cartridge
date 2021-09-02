@@ -71,6 +71,7 @@ local topology = require('cartridge.topology')
 local failover = require('cartridge.failover')
 local confapplier = require('cartridge.confapplier')
 local lua_api_proxy = require('cartridge.lua-api.proxy')
+local vshard_utils = require('cartridge.vshard-utils')
 
 local ValidateConfigError = errors.new_class('ValidateConfigError')
 
@@ -369,6 +370,10 @@ local function list_on_instance(opts)
 
         local routers = vshard.router.internal.routers
         if routers == nil or next(routers) == nil then
+            goto continue
+        end
+
+        if not vshard_utils.is_bootstrapped() then
             goto continue
         end
 
