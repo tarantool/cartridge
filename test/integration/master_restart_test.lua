@@ -1,34 +1,27 @@
-local fio = require('fio')
 local t = require('luatest')
+local h = require('test.helper')
 local g = t.group()
 
-local helpers = require('test.helper')
+local fio = require('fio')
 
 g.before_each(function()
-    g.cluster = helpers.Cluster:new({
+    g.cluster = h.Cluster:new({
         datadir = fio.tempdir(),
-        server_command = helpers.entrypoint('srv_basic'),
-        cookie = require('digest').urandom(6):hex(),
+        server_command = h.entrypoint('srv_basic'),
+        cookie = h.random_cookie(),
         replicasets = {
             {
-                uuid = helpers.uuid('a'),
                 roles = {},
                 servers = {
-                    {
-                        alias = 'master',
-                        instance_uuid = helpers.uuid('a', 'a', 1),
-                        -- advertise_port = 13301,
-                    },
-                    {
-                        alias = 'replica',
-                        instance_uuid = helpers.uuid('a', 'a', 2),
-                        -- advertise_port = 13301,
-                    }
+                    { alias = 'master' },
+                    { alias = 'replica' },
                 },
             },
         },
     })
     g.cluster:start()
+    g.master = g.cluster:server('master')
+    g.replica = g.cluster:server('replica')
 end)
 
 g.after_all(function()
@@ -37,7 +30,7 @@ g.after_all(function()
 end)
 
 function g.test_master_restart_with_missing_xlog()
-    g.cluster:server('master').net_box:eval([[
+    g.master.net_box:eval([[
         -- create space
         box.schema.create_space('test')
         box.space.test:create_index('primary')
@@ -53,31 +46,35 @@ function g.test_master_restart_with_missing_xlog()
     ]])
 
     -- check that data replicated
-    local content = g.cluster:server('replica').net_box:eval([[
-        return box.space.test:select()
-    ]])
-    t.assert_equals(content, {{1}, {2}, {3}})
+    t.helpers.retrying({}, function()
+        local content = g.replica.net_box:eval([[
+            return box.space.test:select()
+        ]])
+        t.assert_equals(content, {{1}, {2}, {3}})
+    end)
 
     -- stop master and remove xlogs
-    g.cluster:server('master'):stop()
-    for _, name in ipairs(fio.glob(g.cluster:server('master').workdir .. '/*.xlog')) do
+    g.master:stop()
+    for _, name in ipairs(fio.glob(g.master.workdir .. '/*.xlog')) do
         t.assert(fio.unlink(name))
     end
-    g.cluster:server('master'):start()
+    g.master:start()
 
     -- check that data still on replica
-    local content = g.cluster:server('replica').net_box:eval([[
+    local content = g.replica.net_box:eval([[
         return box.space.test:select()
     ]])
     t.assert_equals(content, {{1}, {2}, {3}})
 
-    local info_replication = g.cluster:server('master').net_box:eval([[
-        return box.info.replication
-    ]])
+    t.helpers.retrying({}, function()
+        local info_replication = g.master.net_box:eval([[
+            return box.info.replication
+        ]])
 
-    -- check that data restored on master
-    local content = g.cluster:server('master').net_box:eval([[
-        return box.space.test:select()
-    ]])
-    t.assert_equals(content, {{1}, {2}, {3}}, info_replication[2].upstream.message)
+        -- check that data restored on master
+        local content = g.master.net_box:eval([[
+            return box.space.test:select()
+        ]])
+        t.assert_equals(content, {{1}, {2}, {3}}, info_replication[2].upstream.message)
+    end)
 end

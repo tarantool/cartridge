@@ -504,16 +504,14 @@ local function boot_instance(clusterwide_config)
             cartridge_schema_upgrade(clusterwide_config)
         end
 
-        local user = box.space[box.schema.USER_ID].index.name:get(username)
-        local change_passwd = true
-        if user ~= nil then
-            local old_passwd = user[5]['chap-sha1']
-            if old_passwd == box.schema.user.password(password) then
-                change_passwd = false
-            end
-        end
 
-        if change_passwd then
+        local user = box.space[box.schema.USER_ID].index.name:get(username)
+
+        if user == nil
+        or user[5]['chap-sha1'] ~= box.schema.user.password(password)
+        -- check that password is changed
+        -- https://github.com/tarantool/tarantool/blob/ed7da7e638f4b6d56c32fcaae5a7fb04a813eb5b/src/box/lua/schema.lua#L2752-L2757
+        then
             BoxError:pcall(
                 box.schema.user.passwd,
                 username, password
