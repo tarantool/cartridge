@@ -38,25 +38,30 @@ function g.test_suggestion()
         message = "Replication from localhost:13302 (A-2)" ..
             " to localhost:13301 (A-1) isn't running",
     }
-
-    t.assert_equals(h.list_cluster_issues(g.A1), {replication_issue})
-    t.assert_items_equals(
-        h.get_suggestions(g.A1).restart_replication,
-        {{uuid = g.A1.instance_uuid}}
-    )
+    t.helpers.retrying({}, function()
+        t.assert_equals(h.list_cluster_issues(g.A1), {replication_issue})
+        t.assert_items_equals(
+            h.get_suggestions(g.A1).restart_replication,
+            {{uuid = g.A1.instance_uuid}}
+        )
+    end)
 
     g.A2.process:kill('STOP')
 
-    t.assert_equals(h.list_cluster_issues(g.A1), {replication_issue})
-    t.assert_equals(h.get_suggestions(g.A1).restart_replication, nil)
+    t.helpers.retrying({}, function()
+        t.assert_equals(h.list_cluster_issues(g.A1), {replication_issue})
+        t.assert_equals(h.get_suggestions(g.A1).restart_replication, nil)
+    end)
 
     g.A2.process:kill('CONT')
 
-    t.assert_equals(h.list_cluster_issues(g.A1), {replication_issue})
-    t.assert_items_equals(
-        h.get_suggestions(g.A1).restart_replication,
-        {{uuid = g.A1.instance_uuid}}
-    )
+    t.helpers.retrying({}, function()
+        t.assert_equals(h.list_cluster_issues(g.A1), {replication_issue})
+        t.assert_items_equals(
+            h.get_suggestions(g.A1).restart_replication,
+            {{uuid = g.A1.instance_uuid}}
+        )
+    end)
 
     g.A1:graphql({
         query = [[
