@@ -507,11 +507,9 @@ local function boot_instance(clusterwide_config)
 
         local user = box.space[box.schema.USER_ID].index.name:get(username)
 
-        if user == nil
-        or user[5]['chap-sha1'] ~= box.schema.user.password(password)
-        -- check that password is changed
-        -- https://github.com/tarantool/tarantool/blob/ed7da7e638f4b6d56c32fcaae5a7fb04a813eb5b/src/box/lua/schema.lua#L2752-L2757
-        then
+        -- https://github.com/tarantool/tarantool/blob/2.7.3/src/box/lua/schema.lua#L2719-L2724
+        -- Don't commit anything if it's already ok.
+        if user == nil or user.auth['chap-sha1'] ~= box.schema.user.password(password) then
             BoxError:pcall(
                 box.schema.user.passwd,
                 username, password
