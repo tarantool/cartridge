@@ -14,6 +14,7 @@ and this project adheres to
 
 - 'Make all instances writeable' configuration field can be hidden via
   frontend-core's ``set_variable`` feature or at runtime.
+- Don't change password on restart
 
 -------------------------------------------------------------------------------
 [2.7.1] - 2021-08-18
