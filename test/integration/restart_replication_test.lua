@@ -38,7 +38,7 @@ function g.test_suggestion()
         message = "Replication from localhost:13302 (A-2)" ..
             " to localhost:13301 (A-1) isn't running",
     }
-    t.helpers.retrying({}, function()
+    h.retrying({}, function()
         t.assert_equals(h.list_cluster_issues(g.A1), {replication_issue})
         t.assert_items_equals(
             h.get_suggestions(g.A1).restart_replication,
@@ -53,7 +53,7 @@ function g.test_suggestion()
 
     g.A2.process:kill('CONT')
 
-    t.helpers.retrying({}, function()
+    h.retrying({}, function()
         t.assert_equals(h.list_cluster_issues(g.A1), {replication_issue})
         t.assert_items_equals(
             h.get_suggestions(g.A1).restart_replication,
@@ -72,7 +72,7 @@ function g.test_suggestion()
         variables = {uuids = {g.A1.instance_uuid}}
     })
 
-    t.helpers.retrying({}, function()
+    h.retrying({}, function()
         t.assert_equals(h.list_cluster_issues(g.A1), {})
         t.assert_equals(h.get_suggestions(g.A1).restart_replication, nil)
     end)
