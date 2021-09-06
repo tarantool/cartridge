@@ -70,11 +70,13 @@ function g.test_master_restart_with_missing_xlog()
         local info_replication = g.master.net_box:eval([[
             return box.info.replication
         ]])
+        t.assert_covers(info_replication[2].downstream, { status = 'follow' })
+        t.assert_covers(info_replication[2].upstream, { status = 'follow' })
 
         -- check that data restored on master
         local content = g.master.net_box:eval([[
             return box.space.test:select()
         ]])
-        t.assert_equals(content, {{1}, {2}, {3}}, info_replication[2].upstream.message)
+        t.assert_equals(content, {{1}, {2}, {3}})
     end)
 end
