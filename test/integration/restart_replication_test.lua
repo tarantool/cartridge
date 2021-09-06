@@ -48,8 +48,8 @@ function g.test_suggestion()
 
     g.A2.process:kill('STOP')
 
-t.assert_equals(h.list_cluster_issues(g.A1), {replication_issue})
-t.assert_equals(h.get_suggestions(g.A1).restart_replication, nil)
+    t.assert_equals(h.list_cluster_issues(g.A1), {replication_issue})
+    t.assert_equals(h.get_suggestions(g.A1).restart_replication, nil)
 
     g.A2.process:kill('CONT')
 
