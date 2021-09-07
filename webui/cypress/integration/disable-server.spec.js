@@ -120,7 +120,7 @@ describe('Disable server', () => {
       .find('.meta-test__ReplicasetServerListItem__dropdownBtn').click();
     cy.get('.meta-test__ReplicasetServerListItem__dropdown *').contains('Enable server').click();
     cy.get('span:contains(Disabled state setting error) +' +
-      'span:contains(NetboxCallError: "localhost:13302": Connection refused)').click();
+      'span:contains(NetboxCallError: "localhost:13302":)').click();
     cy.get('.ServerLabelsHighlightingArea:contains(dummy-2)')
       .should('have.css', 'background-color', 'rgb(250, 250, 250)');
 
@@ -131,7 +131,7 @@ describe('Disable server', () => {
     cy.get('.meta-test__ServerDetailsModal .meta-test__ReplicasetServerListItem__dropdownBtn').click();
     cy.get('.meta-test__ReplicasetServerListItem__dropdown div').contains('Enable server').click();
     cy.get('span:contains(Disabled state setting error) +' +
-      'span:contains(NetboxCallError: "localhost:13303": Connection refused)').click();
+      'span:contains(NetboxCallError: "localhost:13303":)').click();
     cy.get('.meta-test__ServerDetailsModal span:contains(Disabled)').should('exist');
     cy.get('.meta-test__ServerDetailsModal button').contains('Close').click();
 
