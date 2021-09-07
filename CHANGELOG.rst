@@ -12,8 +12,20 @@ and this project adheres to
 [Unreleased]
 -------------------------------------------------------------------------------
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Added
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 - 'Make all instances writeable' configuration field can be hidden via
   frontend-core's ``set_variable`` feature or at runtime.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Fixed
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Eliminate unnecessary transactions after the restart before the replication
+  sync. This reduces the chance the hardware restart leads to WAL corruption
+  ([#1546](https://github.com/tarantool/cartridge/issues/1546)).
 
 -------------------------------------------------------------------------------
 [2.7.1] - 2021-08-18

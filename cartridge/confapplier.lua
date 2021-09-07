@@ -491,23 +491,29 @@ local function boot_instance(clusterwide_config)
     end
 
     do
-        log.info('Setting password for user %q ...', username)
+        local read_only = box.cfg.read_only
+
+        if vars.upgrade_schema then
+            log.info('Upgrading schema ...')
+            box.cfg({read_only = false})
+            cartridge_schema_upgrade(clusterwide_config)
+        end
+
         -- To be sure netbox is operable, password should always be
         -- equal to the cluster_cookie.
         -- Function `passwd` is safe to be called on multiple replicas,
         -- it never cause replication conflict
-
-        local read_only = box.cfg.read_only
-        box.cfg({read_only = false})
-
-        if vars.upgrade_schema then
-            cartridge_schema_upgrade(clusterwide_config)
+        -- But don't commit anything if it's already ok.
+        local user = box.space[box.schema.USER_ID].index.name:get(username)
+        -- https://github.com/tarantool/tarantool/blob/2.7.3/src/box/lua/schema.lua#L2719-L2724
+        if user == nil or user.auth['chap-sha1'] ~= box.schema.user.password(password) then
+            log.info('Setting password for user %q ...', username)
+            box.cfg({read_only = false})
+            BoxError:pcall(
+                box.schema.user.passwd,
+                username, password
+            )
         end
-
-        BoxError:pcall(
-            box.schema.user.passwd,
-            username, password
-        )
 
         box.cfg({read_only = read_only})
     end

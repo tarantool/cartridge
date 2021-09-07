@@ -263,14 +263,16 @@ h.after_all(function()
 end)
 
 function h.test_zones_distances()
-    t.assert_items_equals(
-        h.A1:graphql({query = '{servers {uuid zone}}'}).data.servers,
-        {
-            {uuid = h.A1.instance_uuid, zone = 'z1'},
-            {uuid = h.A2.instance_uuid, zone = 'z2'},
-            {uuid = h.A3.instance_uuid, zone = box.NULL},
-        }
-    )
+    helpers.retrying({}, function()
+        t.assert_items_equals(
+            h.A1:graphql({query = '{servers {uuid zone}}'}).data.servers,
+            {
+                {uuid = h.A1.instance_uuid, zone = 'z1'},
+                {uuid = h.A2.instance_uuid, zone = 'z2'},
+                {uuid = h.A3.instance_uuid, zone = box.NULL},
+            }
+        )
+    end)
 
     local distances = h.cluster.main_server:call(
         'package.loaded.cartridge.config_get_readonly', {'zone_distances'}
