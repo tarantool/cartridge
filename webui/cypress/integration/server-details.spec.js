@@ -144,7 +144,12 @@ describe('Server details', () => {
     ////////////////////////////////////////////////////////////////////
     cy.log('Dead server');
     ////////////////////////////////////////////////////////////////////
-    cy.task('tarantool', { code: `_G.cluster:server('dummy-2').process:kill('KILL')` });
+    cy.task('tarantool', {
+      code: `
+      _G.cluster:server('dummy-2').process:kill('KILL')
+      _G.cluster:server('dummy-2').process = nil
+    `
+    });
 
     cy.get('.ServerLabelsHighlightingArea').contains('dummy-2')
       .closest('li').should('contain', 'Server status is "dead"');
@@ -154,7 +159,7 @@ describe('Server details', () => {
 
     cy.get('div').contains('Mordor').should('exist');
     cy.get('.meta-test__ZoneListItem').contains('Mordor').click();
-    cy.get('span:contains(NetboxCallError: "localhost:13302": Connection refused)').click();
+    cy.get('span:contains(NetboxCallError: "localhost:13302":)').click();
 
     cy.get('.meta-test__ServerDetailsModal button:contains(Zone Mordor)').click();
     cy.get('button:contains(Add new zone)').click();
@@ -162,7 +167,7 @@ describe('Server details', () => {
       .should('be.focused')
       .type('Moscow');
     cy.get('.meta-test__ZoneAddSubmitBtn').click();
-    cy.get('.ZoneAddModal_error').find('span:contains("localhost:13302": Connection refused)');
+    cy.get('.ZoneAddModal_error').find('span:contains("localhost:13302":)');
     cy.get('h2:contains(Add name of zone)').next().click();
     cy.get('.ZoneAddModal').should('not.exist');
 
@@ -187,7 +192,7 @@ describe('Server details', () => {
       .click();
     cy.get('.meta-test__ReplicasetServerListItem__dropdown div')
       .contains('Enable server').click();
-    cy.get('span:contains(NetboxCallError: "localhost:13302": Connection refused)')
+    cy.get('span:contains(NetboxCallError: "localhost:13302":)')
       .click();
     cy.get('.meta-test__ServerDetailsModal span:contains(Disabled)').should('exist');
     cy.get('.meta-test__ServerDetailsModal button').contains('Close').click();
