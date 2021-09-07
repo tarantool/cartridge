@@ -537,5 +537,7 @@ function g.test_quorum()
     t.assert_equals(client:check_quorum(), false)
 
     g.etcd_a.process:kill('CONT')
-    t.assert_equals(client:check_quorum(), true)
+    t.helpers.retrying({}, function()
+        t.assert_equals(client:check_quorum(), true)
+    end)
 end
