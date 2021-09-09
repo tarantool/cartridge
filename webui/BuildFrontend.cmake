@@ -40,9 +40,7 @@ check_hash(${HASH_FILE} "${BASE_DIR}/package-lock.json")
 if (REBUILD)
     message(STATUS "Installing node_modules")
     execute_process(
-        COMMAND ${CMAKE_COMMAND} -E
-            env NODE_ENV=production
-            npm ci  --no-audit --no-progress --prefer-offline
+        COMMAND npm ci --no-audit --no-progress --prefer-offline
         WORKING_DIRECTORY "${BASE_DIR}"
         RESULT_VARIABLE _result
     )
@@ -67,11 +65,16 @@ file(GLOB_RECURSE FRONTEND_FILES
 list(APPEND FRONTEND_FILES
     "${BASE_DIR}/.env"
     "${BASE_DIR}/.env.production"
-    "${BASE_DIR}/.eslintrc"
+    "${BASE_DIR}/.eslintignore"
+    "${BASE_DIR}/.eslintrc.js"
+    "${BASE_DIR}/.prettierignore"
+    "${BASE_DIR}/.prettierrc.js"
+    "${BASE_DIR}/.importsortrc.js"
     "${BASE_DIR}/.flowconfig"
     "${BASE_DIR}/codegen.yml"
     "${BASE_DIR}/scripts/build.js"
     "${BASE_DIR}/package-lock.json"
+    "${BASE_DIR}/tsconfig.json"
 )
 check_hash(${HASH_FILE} "${FRONTEND_FILES}")
 

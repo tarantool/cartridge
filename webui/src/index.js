@@ -1,37 +1,34 @@
+import '@tarantool.io/frontend-core';
+import './misc/analytics';
+import './apiEndpoints';
+
 import React, { Suspense } from 'react';
 import { Provider } from 'react-redux';
-import { Router, Switch, Route } from 'react-router-dom';
-import './apiEndpoints';
-import App from 'src/app';
-import { isNetworkError } from 'src/misc/isNetworkError';
-import { AUTH_ACCESS_DENIED } from 'src/store/actionTypes';
-import Users from 'src/pages/Users';
-import HeaderAuthControl from 'src/components/HeaderAuthControl';
-import NetworkErrorSplash from 'src/components/NetworkErrorSplash';
-import LogInForm from 'src/components/LogInForm';
-import store from 'src/store/instance'
-import { isGraphqlAccessDeniedError } from 'src/api/graphql';
-import {
-  appDidMount,
-  setConnectionState
-} from 'src/store/actions/app.actions';
-import {
-  logOut,
-  expectWelcomeMessage,
-  setWelcomeMessage
-} from 'src/store/actions/auth.actions';
-import { PROJECT_NAME } from './constants';
-import { menuReducer, menuFilter } from './menu';
-import ConfigManagement from 'src/pages/ConfigManagement';
-import './misc/analytics';
+import { Route, Router, Switch } from 'react-router-dom';
 import { SectionPreloader } from '@tarantool.io/ui-kit';
+
+import { isGraphqlAccessDeniedError } from 'src/api/graphql';
+import App from 'src/app';
+import HeaderAuthControl from 'src/components/HeaderAuthControl';
+import LogInForm from 'src/components/LogInForm';
+import NetworkErrorSplash from 'src/components/NetworkErrorSplash';
+import { isNetworkError } from 'src/misc/isNetworkError';
 import { createLazySection } from 'src/misc/lazySection';
+import ConfigManagement from 'src/pages/ConfigManagement';
+import Users from 'src/pages/Users';
+import { appDidMount, setConnectionState } from 'src/store/actions/app.actions';
+import { expectWelcomeMessage, logOut, setWelcomeMessage } from 'src/store/actions/auth.actions';
+import { AUTH_ACCESS_DENIED } from 'src/store/actionTypes';
+import store from 'src/store/instance';
+
+import { PROJECT_NAME } from './constants';
+import { menuFilter, menuReducer } from './menu';
 
 const Code = createLazySection(() => import('src/pages/Code'));
 
 const { tarantool_enterprise_core } = window;
 
-const projectPath = path => `/${PROJECT_NAME}/${path}`;
+const projectPath = (path) => `/${PROJECT_NAME}/${path}`;
 
 class Root extends React.Component {
   render() {
@@ -49,19 +46,13 @@ class Root extends React.Component {
           </Suspense>
         </Router>
       </Provider>
-    )
+    );
   }
 }
 
-menuFilter.hideAll()
+menuFilter.hideAll();
 
-tarantool_enterprise_core.register(
-  PROJECT_NAME,
-  menuReducer,
-  Root,
-  'react',
-  null
-);
+tarantool_enterprise_core.register(PROJECT_NAME, menuReducer, Root, 'react', null);
 
 tarantool_enterprise_core.subscribe('cluster:logout', () => {
   store.dispatch(logOut());
@@ -75,7 +66,7 @@ tarantool_enterprise_core.subscribe('cluster:expect_welcome_message', () => {
   store.dispatch(expectWelcomeMessage(true));
 });
 
-tarantool_enterprise_core.subscribe('cluster:set_welcome_message', text => {
+tarantool_enterprise_core.subscribe('cluster:set_welcome_message', (text) => {
   store.dispatch(setWelcomeMessage(text));
   store.dispatch(expectWelcomeMessage(false));
 });
@@ -92,7 +83,9 @@ tarantool_enterprise_core.setHeaderComponent(
 );
 
 function graphQLConnectionErrorHandler(response, next) {
-  const { app: { connectionAlive } } = store.getState();
+  const {
+    app: { connectionAlive },
+  } = store.getState();
   if (connectionAlive && response.networkError) {
     store.dispatch(setConnectionState(false));
   } else if (!connectionAlive && !response.networkError) {
@@ -103,11 +96,8 @@ function graphQLConnectionErrorHandler(response, next) {
 }
 
 function graphQLAuthErrorHandler(response, next) {
-  if (
-    (response.networkError && response.networkError.statusCode === 401)
-    || isGraphqlAccessDeniedError(response)
-  ) {
-    store.dispatch({ type: AUTH_ACCESS_DENIED })
+  if ((response.networkError && response.networkError.statusCode === 401) || isGraphqlAccessDeniedError(response)) {
+    store.dispatch({ type: AUTH_ACCESS_DENIED });
   }
 
   return next(response);
@@ -118,7 +108,9 @@ tarantool_enterprise_core.apiMethods.registerApolloHandler('onError', graphQLCon
 tarantool_enterprise_core.apiMethods.registerApolloHandler('onError', graphQLAuthErrorHandler);
 
 function axiosConnectionErrorHandler(response, next) {
-  const { app: { connectionAlive } } = store.getState();
+  const {
+    app: { connectionAlive },
+  } = store.getState();
 
   if (isNetworkError(response)) {
     if (connectionAlive) {
@@ -133,7 +125,7 @@ function axiosConnectionErrorHandler(response, next) {
 
 function axiosAuthErrorHandler(error, next) {
   if (error.response && error.response.status === 401) {
-    store.dispatch({ type: AUTH_ACCESS_DENIED })
+    store.dispatch({ type: AUTH_ACCESS_DENIED });
   }
 
   return next(error);

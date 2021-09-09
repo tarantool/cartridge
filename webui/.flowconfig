@@ -1,13 +1,18 @@
 [ignore]
+*.ts
+*.tsx
 .*broken.json.*
+
 [include]
 
 [libs]
 .*flow-typed.*
+
 [lints]
 
 [options]
 module.system.node.resolve_dirname=node_modules
 module.system.node.resolve_dirname=.
 module.name_mapper.extension='svg' -> '<PROJECT_ROOT>/src/helpers/SVGModule.js'
+
 [strict]

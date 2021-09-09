@@ -1,7 +1,7 @@
-import { isGraphqlErrorResponse, getGraphqlErrorMessage } from 'src/api/graphql';
-import { isRestErrorResponse, getRestErrorMessage, isAxiosError, getAxiosErrorMessage } from 'src/api/rest';
+import { getGraphqlErrorMessage, isGraphqlErrorResponse } from 'src/api/graphql';
+import { getAxiosErrorMessage, getRestErrorMessage, isAxiosError, isRestErrorResponse } from 'src/api/rest';
 
-export const getErrorMessage = error => {
+export const getErrorMessage = (error) => {
   switch (true) {
     case isGraphqlErrorResponse(error):
       return getGraphqlErrorMessage(error);
@@ -16,16 +16,17 @@ export const getErrorMessage = error => {
   }
 };
 
-export const isDeadServerError = error => {
-  return isRestErrorResponse(error)
-    && (error.responseText === '' || /^Proxy error:.+ECONNREFUSED/.test(error.response));
+export const isDeadServerError = (error) => {
+  return (
+    isRestErrorResponse(error) && (error.responseText === '' || /^Proxy error:.+ECONNREFUSED/.test(error.response))
+  );
 };
 
-export const isNetworkError = error => {
+export const isNetworkError = (error) => {
   return !!error.networkError;
 };
 
-export const getNetworkErrorMessage = error => {
+export const getNetworkErrorMessage = (error) => {
   return error.networkError.bodyText || error.networkError.message;
 };
 
