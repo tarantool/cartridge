@@ -1,9 +1,10 @@
+// @flow
 
 const allowedFileExtensionsRegEx = /\.((lua)|(yml))$/;
 
 export const validateFileNameExtension = (filename: string) => {
   return allowedFileExtensionsRegEx.test(filename);
-}
+};
 
 /**
  *

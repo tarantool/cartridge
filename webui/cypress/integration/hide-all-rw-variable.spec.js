@@ -24,7 +24,7 @@ describe('Test the cartridge_hide_all_rw frontend core variable', () => {
       server:start()
 
       return true
-    `
+    `,
     }).should('deep.eq', [true]);
   });
 
@@ -37,21 +37,21 @@ describe('Test the cartridge_hide_all_rw frontend core variable', () => {
         advertise_uri = server.advertise_uri,
         replicaset_uuid = server.replicaset_uuid,
       }
-    `
+    `,
     }).then(([ret]) => {
       expect(ret.sock).to.be.a('string');
       expect(ret.advertise_uri).to.be.a('string');
       expect(ret.replicaset_uuid).to.be.a('string');
       cy.wrap(ret).as('main_server');
     });
-  })
+  });
 
   after(() => {
     cy.task('tarantool', { code: `cleanup()` });
   });
 
   function hideAllRW(value) {
-    cy.get('@main_server').then(srv => {
+    cy.get('@main_server').then((srv) => {
       cy.task('tarantool', {
         host: 'unix/',
         port: srv.sock,
@@ -59,9 +59,9 @@ describe('Test the cartridge_hide_all_rw frontend core variable', () => {
         local frontend = package.loaded['frontend-core']
         frontend.set_variable("cartridge_hide_all_rw", ${value})
         return true
-      `
+      `,
       }).should('deep.eq', [true]);
-    })
+    });
   }
 
   it('Test CreateReplicasetForm', function () {
@@ -74,8 +74,8 @@ describe('Test the cartridge_hide_all_rw frontend core variable', () => {
 
     ////////////////////////////////////////////////////////////////////
     cy.log('cartridge_hide_all_rw is true');
-    hideAllRW('true')
-    cy.reload()
+    hideAllRW('true');
+    cy.reload();
 
     cy.get('.meta-test__ConfigureServerModal').contains('dummy-1');
     cy.get('.meta-test__ConfigureServerModal input[name="all_rw"]').should('not.exist');
@@ -83,10 +83,9 @@ describe('Test the cartridge_hide_all_rw frontend core variable', () => {
     ////////////////////////////////////////////////////////////////////
     cy.log('cartridge_hide_all_rw is false');
     hideAllRW('false');
-    cy.reload()
+    cy.reload();
 
     cy.get('.meta-test__ConfigureServerModal input[name="all_rw"]').should('exist');
-
   });
 
   it('Test: EditReplicasetForm', function () {
@@ -101,8 +100,8 @@ describe('Test the cartridge_hide_all_rw frontend core variable', () => {
 
     ////////////////////////////////////////////////////////////////////
     cy.log('cartridge_hide_all_rw is true');
-    hideAllRW('true')
-    cy.reload()
+    hideAllRW('true');
+    cy.reload();
 
     cy.get('.meta-test__EditReplicasetModal').contains('dummy');
     cy.get('.meta-test__EditReplicasetModal input[name="all_rw"]').should('not.exist');
@@ -110,7 +109,7 @@ describe('Test the cartridge_hide_all_rw frontend core variable', () => {
     ////////////////////////////////////////////////////////////////////
     cy.log('cartridge_hide_all_rw is false');
     hideAllRW('false');
-    cy.reload()
+    cy.reload();
 
     cy.get('.meta-test__EditReplicasetModal input[name="all_rw"]').should('exist');
   });

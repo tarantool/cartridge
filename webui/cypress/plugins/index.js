@@ -34,15 +34,15 @@ function connect(host, port) {
     conn.setEncoding('utf8');
 
     // Fetch the greeting
-    const _on_data = data => {
+    const _on_data = () => {
       conn.off('data', _on_data);
       resolve(conn);
-    }
+    };
 
-    const _on_error = error => {
+    const _on_error = (error) => {
       conn.off('error', _on_error);
       reject(error);
-    }
+    };
 
     conn.on('data', _on_data);
     conn.on('error', _on_error);
@@ -50,39 +50,35 @@ function connect(host, port) {
 }
 
 function communicate(conn, text) {
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     conn.write(text);
     const chunks = [];
 
-    const _on_data = data => {
+    const _on_data = (data) => {
       chunks.push(data);
       if (data.endsWith('\n...\n')) {
         conn.off('data', _on_data);
-        const resp = chunks.join('')
+        const resp = chunks.join('');
         resolve(resp);
       }
-    }
+    };
     conn.on('data', _on_data);
-  })
+  });
 }
 
 module.exports = (on, config) => {
   on('task', {
-    async tarantool({
-      host = config.env.launcherHost,
-      port = config.env.launcherPort,
-      code
-    }) {
+    async tarantool({ host = config.env.launcherHost, port = config.env.launcherPort, code }) {
       const conn = await connect(host, port);
       const fcmd = code.split('\n').join(' ') + '\n';
       const resp = yaml.safeLoad(await communicate(conn, fcmd));
 
       if (resp && resp[0] && resp[0].error) {
-        throw new Error(resp[0].error)
+        throw new Error(resp[0].error);
       }
 
       return resp;
     },
-    downloadFile
-  })
-}
+    downloadFile,
+  });
+};

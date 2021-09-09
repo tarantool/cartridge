@@ -1,5 +1,4 @@
 describe('Auth', () => {
-
   before(() => {
     cy.task('tarantool', {
       code: `
@@ -19,7 +18,7 @@ describe('Auth', () => {
 
       _G.cluster:start()
       return true
-    `
+    `,
     }).should('deep.eq', [true]);
   });
 
@@ -28,7 +27,6 @@ describe('Auth', () => {
   });
 
   it('Test: auth', () => {
-
     ////////////////////////////////////////////////////////////////////
     cy.log('Open WebUI');
     ////////////////////////////////////////////////////////////////////
@@ -46,10 +44,8 @@ describe('Auth', () => {
     cy.log('Login empty username and login');
     ////////////////////////////////////////////////////////////////////
     cy.get('.meta-test__LoginBtn').click();
-    cy.get('.meta-test__LoginForm input[name="username"]')
-      .should('have.value', '');
-    cy.get('.meta-test__LoginForm input[name="password"]')
-      .should('have.value', '');
+    cy.get('.meta-test__LoginForm input[name="username"]').should('have.value', '');
+    cy.get('.meta-test__LoginForm input[name="password"]').should('have.value', '');
     cy.get('.meta-test__LoginFormBtn').click();
     cy.get('.meta-test__LoginForm').contains('username is a required field');
     cy.get('.meta-test__LoginForm').contains('password is a required field');
@@ -59,10 +55,8 @@ describe('Auth', () => {
     cy.log('Login empty username');
     ////////////////////////////////////////////////////////////////////
     cy.get('.meta-test__LoginBtn').click();
-    cy.get('.meta-test__LoginForm input[name="username"]')
-      .should('have.value', '');
-    cy.get('.meta-test__LoginForm input[name="password"]')
-      .type('test-cluster-cookie');
+    cy.get('.meta-test__LoginForm input[name="username"]').should('have.value', '');
+    cy.get('.meta-test__LoginForm input[name="password"]').type('test-cluster-cookie');
     cy.get('.meta-test__LoginFormBtn').click();
     cy.get('.meta-test__LoginForm').contains('username is a required field');
     cy.get('.meta-test__LoginForm button[type="button"]').contains('Cancel').click();
@@ -71,11 +65,8 @@ describe('Auth', () => {
     cy.log('Login empty pw');
     ////////////////////////////////////////////////////////////////////
     cy.get('.meta-test__LoginBtn').click();
-    cy.get('.meta-test__LoginForm input[name="username"]')
-      .type('admin')
-      .should('have.value', 'admin');
-    cy.get('.meta-test__LoginForm input[name="password"]')
-      .should('have.value', '');
+    cy.get('.meta-test__LoginForm input[name="username"]').type('admin').should('have.value', 'admin');
+    cy.get('.meta-test__LoginForm input[name="password"]').should('have.value', '');
     cy.get('.meta-test__LoginFormBtn').click();
     cy.get('.meta-test__LoginForm').contains('password is a required field');
     cy.get('.meta-test__LoginForm button[type="button"]').contains('Cancel').click();
@@ -84,11 +75,8 @@ describe('Auth', () => {
     cy.log('Login error');
     ////////////////////////////////////////////////////////////////////
     cy.get('.meta-test__LoginBtn').click();
-    cy.get('.meta-test__LoginForm input[name="username"]')
-      .type('error')
-      .should('have.value', 'error');
-    cy.get('.meta-test__LoginForm input[name="password"]')
-      .type('test-cluster-cookie');
+    cy.get('.meta-test__LoginForm input[name="username"]').type('error').should('have.value', 'error');
+    cy.get('.meta-test__LoginForm input[name="password"]').type('test-cluster-cookie');
     cy.get('.meta-test__LoginFormBtn').click();
     cy.get('.meta-test__LoginForm').contains('Authentication failed');
     cy.get('.meta-test__LoginForm button[type="button"]').contains('Cancel').click();
@@ -97,11 +85,8 @@ describe('Auth', () => {
     cy.log('Login password wrong');
     ////////////////////////////////////////////////////////////////////
     cy.get('.meta-test__LoginBtn').click();
-    cy.get('.meta-test__LoginForm input[name="username"]')
-      .type('admin')
-      .should('have.value', 'admin');
-    cy.get('.meta-test__LoginForm input[name="password"]')
-      .type('incorrect password');
+    cy.get('.meta-test__LoginForm input[name="username"]').type('admin').should('have.value', 'admin');
+    cy.get('.meta-test__LoginForm input[name="password"]').type('incorrect password');
     cy.get('.meta-test__LoginFormBtn').click();
     cy.get('.meta-test__LoginForm').contains('Authentication failed');
     //check button X in the auth form
@@ -112,15 +97,12 @@ describe('Auth', () => {
     ////////////////////////////////////////////////////////////////////
     cy.get('.meta-test__LoginBtn').click();
 
-    cy.get('.meta-test__LoginForm input[name="username"]')
-      .type('admin')
-      .should('have.value', 'admin');
-    cy.get('.meta-test__LoginForm input[name="password"]')
-      .type('test-cluster-cookie');
+    cy.get('.meta-test__LoginForm input[name="username"]').type('admin').should('have.value', 'admin');
+    cy.get('.meta-test__LoginForm input[name="password"]').type('test-cluster-cookie');
     cy.get('.meta-test__LoginFormBtn').click();
 
     cy.get('a[href="/admin/cluster/users"]').click();
-    cy.get('.meta-test__AuthToggle input').should('not.be.checked')
+    cy.get('.meta-test__AuthToggle input').should('not.be.checked');
     cy.get('.meta-test__AuthToggle').click();
     cy.get('.meta-test__ConfirmModal').contains('Enable').click();
 
@@ -154,7 +136,7 @@ describe('Auth', () => {
       _G.cluster.main_server.command = helpers.entrypoint('srv_woauth')
       _G.cluster.main_server:start()
       return true
-    `
+    `,
     }).should('deep.eq', [true]);
     cy.get('a[href="/admin/cluster/dashboard"]').click();
     cy.reload();

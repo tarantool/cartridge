@@ -1,28 +1,18 @@
 import React from 'react';
 import { Route, Switch } from 'react-router-dom';
+import { SplashError } from '@tarantool.io/ui-kit';
 
-import { isGraphqlErrorResponse, isGraphqlAccessDeniedError } from 'src/api/graphql';
-import { isRestErrorResponse, isRestAccessDeniedError } from 'src/api/rest';
 import { getErrorMessage } from 'src/api';
+import { isGraphqlAccessDeniedError, isGraphqlErrorResponse } from 'src/api/graphql';
+import { isRestAccessDeniedError, isRestErrorResponse } from 'src/api/rest';
 import ClusterPage from 'src/pages/Cluster';
-import {
-  SplashError
-} from '@tarantool.io/ui-kit';
 
 class App extends React.Component {
   render() {
-    const {
-      appDataRequestStatus,
-      appDataRequestError,
-      authorizationRequired
-    } = this.props;
+    const { appDataRequestStatus, appDataRequestError, authorizationRequired } = this.props;
     const isLoading = !appDataRequestStatus.loaded;
 
-    return isLoading || authorizationRequired
-      ? null
-      : appDataRequestError
-        ? this.renderError()
-        : this.renderApp();
+    return isLoading || authorizationRequired ? null : appDataRequestError ? this.renderError() : this.renderApp();
   }
 
   renderApp = () => {
@@ -47,25 +37,18 @@ class App extends React.Component {
 
     const description = getErrorMessage(error);
 
-    return (
-      <SplashError
-        title={title}
-        description={description}
-      />
-    );
+    return <SplashError title={title} description={description} />;
   };
 }
 
-const isNotAccessError = error => {
+const isNotAccessError = (error) => {
   if (
-    (isRestErrorResponse(error) && !isRestAccessDeniedError(error))
-    ||
+    (isRestErrorResponse(error) && !isRestAccessDeniedError(error)) ||
     (isGraphqlErrorResponse(error) && !isGraphqlAccessDeniedError(error))
   ) {
     return true;
   }
   return false;
 };
-
 
 export default App;

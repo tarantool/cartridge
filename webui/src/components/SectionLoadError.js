@@ -1,10 +1,7 @@
 // @flow
 import * as React from 'react';
 import { css, cx } from '@emotion/css';
-import {
-  NonIdealStateAction,
-  splashGenericErrorSvg
-} from '@tarantool.io/ui-kit';
+import { NonIdealStateAction, splashGenericErrorSvg } from '@tarantool.io/ui-kit';
 
 const styles = {
   block: css`
@@ -14,20 +11,17 @@ const styles = {
     width: 80px;
     height: 80px;
     margin-bottom: 24px;
-  `
+  `,
 };
 
 type SectionLoadErrorProps = {
   className?: string,
-  onClick: () => void
+  onClick: () => void,
 };
 
 const IconGenericError = () => (
-  <svg
-    viewBox={splashGenericErrorSvg.viewBox}
-    className={styles.icon}
-  >
-    <use xlinkHref={`#${splashGenericErrorSvg.id}`}/>
+  <svg viewBox={splashGenericErrorSvg.viewBox} className={styles.icon}>
+    <use xlinkHref={`#${splashGenericErrorSvg.id}`} />
   </svg>
 );
 
@@ -35,8 +29,8 @@ export const SectionLoadError = ({ className, onClick }: SectionLoadErrorProps) 
   <NonIdealStateAction
     className={cx(styles.block, className)}
     icon={IconGenericError}
-    title='Error loading component'
-    actionText='Retry'
+    title="Error loading component"
+    actionText="Retry"
     onActionClick={onClick}
   />
 );

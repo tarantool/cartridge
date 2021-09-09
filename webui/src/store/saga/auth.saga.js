@@ -1,25 +1,20 @@
-import {
-  takeLatest,
-  call,
-  put,
-  select
-} from 'redux-saga/effects';
-import { menuFilter } from 'src/menu';
-import { baseSaga, getRequestSaga } from 'src/store/commonRequest';
-import { logIn, logOut, turnAuth } from 'src/store/request/auth.requests';
+import { call, put, select, takeLatest } from 'redux-saga/effects';
 
+import { menuFilter } from 'src/menu';
 import {
   APP_DID_MOUNT,
-  AUTH_TURN_REQUEST,
-  AUTH_TURN_REQUEST_SUCCESS,
-  AUTH_TURN_REQUEST_ERROR,
   AUTH_LOG_IN_REQUEST,
-  AUTH_LOG_IN_REQUEST_SUCCESS,
   AUTH_LOG_IN_REQUEST_ERROR,
+  AUTH_LOG_IN_REQUEST_SUCCESS,
   AUTH_LOG_OUT_REQUEST,
+  AUTH_LOG_OUT_REQUEST_ERROR,
   AUTH_LOG_OUT_REQUEST_SUCCESS,
-  AUTH_LOG_OUT_REQUEST_ERROR
+  AUTH_TURN_REQUEST,
+  AUTH_TURN_REQUEST_ERROR,
+  AUTH_TURN_REQUEST_SUCCESS,
 } from 'src/store/actionTypes';
+import { baseSaga, getRequestSaga } from 'src/store/commonRequest';
+import { logIn, logOut, turnAuth } from 'src/store/request/auth.requests';
 
 function* logInSaga() {
   yield takeLatest(AUTH_LOG_IN_REQUEST, function* ({ payload }) {
@@ -29,7 +24,7 @@ function* logInSaga() {
       const response = yield call(logIn, { username, password });
       yield put({
         type: AUTH_LOG_IN_REQUEST_SUCCESS,
-        payload: response
+        payload: response,
       });
 
       if (response.authorized) {
@@ -39,7 +34,7 @@ function* logInSaga() {
     } catch (error) {
       yield put({
         type: AUTH_LOG_IN_REQUEST_ERROR,
-        error
+        error,
       });
       return;
     }
@@ -48,7 +43,9 @@ function* logInSaga() {
 
 function* logOutSaga() {
   yield takeLatest(AUTH_LOG_OUT_REQUEST, function* () {
-    const { auth: { authorizationEnabled } } = yield select();
+    const {
+      auth: { authorizationEnabled },
+    } = yield select();
 
     try {
       const response = yield call(logOut);
@@ -65,17 +62,8 @@ function* logOutSaga() {
       return;
     }
   });
-};
+}
 
-const turnAuthSaga = getRequestSaga(
-  AUTH_TURN_REQUEST,
-  AUTH_TURN_REQUEST_SUCCESS,
-  AUTH_TURN_REQUEST_ERROR,
-  turnAuth
-);
+const turnAuthSaga = getRequestSaga(AUTH_TURN_REQUEST, AUTH_TURN_REQUEST_SUCCESS, AUTH_TURN_REQUEST_ERROR, turnAuth);
 
-export const saga = baseSaga(
-  logInSaga,
-  logOutSaga,
-  turnAuthSaga
-);
+export const saga = baseSaga(logInSaga, logOutSaga, turnAuthSaga);

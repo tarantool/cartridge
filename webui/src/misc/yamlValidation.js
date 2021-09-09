@@ -1,7 +1,7 @@
 import yaml from 'js-yaml';
 import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
 
-const convertYAMLExceptionToMonacoMarker = exception => {
+const convertYAMLExceptionToMonacoMarker = (exception) => {
   const { mark, message } = exception;
   if (!mark) {
     return null;
@@ -13,11 +13,11 @@ const convertYAMLExceptionToMonacoMarker = exception => {
     message,
     startColumn: mark.column + 1,
     startLineNumber: mark.line + 1,
-    severity: monaco.MarkerSeverity.Error
-  }
+    severity: monaco.MarkerSeverity.Error,
+  };
 };
 
-export const getYAMLError = (data: string) => {
+export const getYAMLError = (data) => {
   try {
     yaml.safeLoad(data);
     return null;

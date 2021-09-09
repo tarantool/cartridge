@@ -1,57 +1,46 @@
 // @flow
-import { filter, allPass, path } from 'ramda';
-import {
-  createSelector,
-  createSelectorCreator,
-  defaultMemoize
-} from 'reselect';
 import isEqual from 'lodash/isEqual';
-import type { State } from 'src/store/rootReducer';
+import { allPass, filter, path } from 'ramda';
+import { createSelector, createSelectorCreator, defaultMemoize } from 'reselect';
+
+import type { Replicaset, Role, Server } from 'src/generated/graphql-typing';
+import { calculateMemoryFragmentationLevel } from 'src/misc/memoryStatistics';
+import type { FragmentationLevel, MemoryUsageRatios } from 'src/misc/memoryStatistics';
 import type { ServerStatWithUUID } from 'src/store/reducers/clusterPage.reducer';
-import type { Replicaset, Server, Role } from 'src/generated/graphql-typing';
-import {
-  calculateMemoryFragmentationLevel,
-  type FragmentationLevel,
-  type MemoryUsageRatios
-} from 'src/misc/memoryStatistics';
+import type { State } from 'src/store/rootReducer';
 
+const prepareReplicasetList = (replicasetList: Replicaset[], serverStat: ?(ServerStatWithUUID[])): Replicaset[] =>
+  replicasetList.map((replicaset) => {
+    const servers = replicaset.servers.map((server) => {
+      const stat = (serverStat || []).find((stat) => stat.uuid === server.uuid);
 
-const prepareReplicasetList = (
-  replicasetList: Replicaset[],
-  serverStat: ?ServerStatWithUUID[]
-): Replicaset[] => replicasetList.map(replicaset => {
-  const servers = replicaset.servers.map(server => {
-    const stat = (serverStat || []).find(stat => stat.uuid === server.uuid);
+      return {
+        ...server,
+        statistics: stat ? stat.statistics : null,
+      };
+    });
 
     return {
-      ...server,
-      statistics: stat ? stat.statistics : null
+      ...replicaset,
+      servers,
     };
   });
 
-  return {
-    ...replicaset,
-    servers
-  };
-});
+const selectServerStat = (state: State): ?(ServerStatWithUUID[]) => state.clusterPage.serverStat;
 
-const selectServerStat = (state: State): ?ServerStatWithUUID[] => state.clusterPage.serverStat;
+const selectReplicasetList = (state: State): ?(Replicaset[]) => state.clusterPage.replicasetList;
 
-const selectReplicasetList = (state: State): ?Replicaset[] => state.clusterPage.replicasetList;
-
-const selectServerList = (state: State): ?Server[] => state.clusterPage.serverList;
+const selectServerList = (state: State): ?(Server[]) => state.clusterPage.serverList;
 
 export const selectServerByUri = (state: State, uri: string): ?Server => {
-  if (Array.isArray(state.clusterPage.serverList))
-    return state.clusterPage.serverList.find(x => x.uri === uri)
-  return null
-}
+  if (Array.isArray(state.clusterPage.serverList)) return state.clusterPage.serverList.find((x) => x.uri === uri);
+  return null;
+};
 
 export const selectReplicasetListWithStat: (s: State) => Replicaset[] = createSelector(
   [selectReplicasetList, selectServerStat],
-  (replicasetList: ?Replicaset[], serverStat: ?ServerStatWithUUID[]): Replicaset[] => (
+  (replicasetList: ?(Replicaset[]), serverStat: ?(ServerStatWithUUID[])): Replicaset[] =>
     replicasetList ? prepareReplicasetList(replicasetList, serverStat) : []
-  )
 );
 
 const selectKnownRoles = (s: State) => {
@@ -65,31 +54,28 @@ const selectKnownRoles = (s: State) => {
 type VshardRolesNames = { router: string[], storage: string[] };
 type SelectVshardRolesNames = (s: State) => VshardRolesNames;
 
-export const selectVshardRolesNames: SelectVshardRolesNames = createSelector(
-  selectKnownRoles,
-  (roles: Role[]) => {
-    let router = [], storage = [];
+export const selectVshardRolesNames: SelectVshardRolesNames = createSelector(selectKnownRoles, (roles: Role[]) => {
+  let router = [],
+    storage = [];
 
-    try {
-      roles.forEach(({ name, implies_storage, implies_router }) => {
-        if (implies_router) router.push(name);
-        if (implies_storage) storage.push(name);
-      });
-    } catch (e) {}
-
-    return { router, storage };
+  try {
+    roles.forEach(({ name, implies_storage, implies_router }) => {
+      if (implies_router) router.push(name);
+      if (implies_storage) storage.push(name);
+    });
+  } catch (e) {
+    // no-empty
   }
-);
+
+  return { router, storage };
+});
 
 type IsRoleAvailableSelector = (s: State) => boolean;
 
-export const isRoleAvailableSelectorCreator =
-  (roleType: 'storage' | 'router'): IsRoleAvailableSelector => createSelector(
-    selectVshardRolesNames,
-    (vshardRolesNames: VshardRolesNames): boolean => {
-      return !!vshardRolesNames[roleType].length;
-    }
-  );
+export const isRoleAvailableSelectorCreator = (roleType: 'storage' | 'router'): IsRoleAvailableSelector =>
+  createSelector(selectVshardRolesNames, (vshardRolesNames: VshardRolesNames): boolean => {
+    return !!vshardRolesNames[roleType].length;
+  });
 
 export const isStorageAvailable = isRoleAvailableSelectorCreator('storage');
 export const isRouterAvailable = isRoleAvailableSelectorCreator('router');
@@ -97,14 +83,14 @@ export const isVshardAvailable = (s: State) => isStorageAvailable(s) && isRouter
 
 type IsRoleEnabledSelector = (s: State) => boolean;
 
-export const isRoleEnabledSelectorCreator =
-  (roleType: 'storage' | 'router'): IsRoleEnabledSelector => createSelector(
+export const isRoleEnabledSelectorCreator = (roleType: 'storage' | 'router'): IsRoleEnabledSelector =>
+  createSelector(
     [selectReplicasetList, selectVshardRolesNames],
-    (replicasetList: ?Replicaset[], vshardRolesNames: VshardRolesNames): boolean => {
+    (replicasetList: ?(Replicaset[]), vshardRolesNames: VshardRolesNames): boolean => {
       if (replicasetList) {
         for (let i = 0; i < replicasetList.length; i++) {
           const { roles } = replicasetList[i];
-          if (roles && roles.some(role => vshardRolesNames[roleType].includes(role))) {
+          if (roles && roles.some((role) => vshardRolesNames[roleType].includes(role))) {
             return true;
           }
         }
@@ -119,28 +105,28 @@ export const isRouterEnabled = isRoleEnabledSelectorCreator('router');
 
 type SearchableServer = {
   ...$Exact<Server>,
-  searchString: string
+  searchString: string,
 };
 
 type WithSearchStringAndServersType = {
   servers: SearchableServer[],
-  searchString: string
-}
+  searchString: string,
+};
 
 type SearchableReplicaset = {
   ...$Exact<Replicaset>,
-  ...$Exact<WithSearchStringAndServersType>
+  ...$Exact<WithSearchStringAndServersType>,
 };
 
 type SearchTokenObject = {
   value: string,
   asSubstring: boolean,
-  not: boolean
+  not: boolean,
 };
 
 type TokensByPrefix = {
   all: Array<string>,
-  [prefix: string]: Array<SearchTokenObject>
+  [prefix: string]: Array<SearchTokenObject>,
 };
 
 export const selectSearchableReplicasetList: (s: State) => SearchableReplicaset[] = createSelector(
@@ -149,10 +135,10 @@ export const selectSearchableReplicasetList: (s: State) => SearchableReplicaset[
     return replicasetList.map(({ servers, ...replicaSet }) => {
       let replicaSetSearchIndex = [replicaSet.alias, ...(replicaSet.roles || [])];
 
-      const searchableServers: SearchableServer[] = servers.map(server => {
-        const serverSearchIndex = [server.uri, (server.alias || '')];
+      const searchableServers: SearchableServer[] = servers.map((server) => {
+        const serverSearchIndex = [server.uri, server.alias || ''];
 
-        (server.labels || []).forEach(label => {
+        (server.labels || []).forEach((label) => {
           if (label) {
             serverSearchIndex.push(`${label.name}:`, label.value);
           }
@@ -162,7 +148,7 @@ export const selectSearchableReplicasetList: (s: State) => SearchableReplicaset[
 
         const searchableServer: SearchableServer = {
           ...server,
-          searchString: serverSearchIndex.join(' ').toLowerCase()
+          searchString: serverSearchIndex.join(' ').toLowerCase(),
         };
 
         return searchableServer;
@@ -171,30 +157,23 @@ export const selectSearchableReplicasetList: (s: State) => SearchableReplicaset[
       return {
         ...replicaSet,
         searchString: replicaSetSearchIndex.join(' ').toLowerCase(),
-        servers: searchableServers
+        servers: searchableServers,
       };
     });
-  });
+  }
+);
 
 export const getFilterData = (filterQuery: string): Object => {
-
   // @TODO respect quotes (") and backslashes (\)
-  let tokenizedQuery = filterQuery.toLowerCase().split(' ').map(x => x.trim()).filter(x => !!x);
+  let tokenizedQuery = filterQuery
+    .toLowerCase()
+    .split(' ')
+    .map((x) => x.trim())
+    .filter((x) => !!x);
 
   const prefixes = {
-    replicaSet: [
-      'uuid',
-      'roles',
-      'alias',
-      'status'
-    ],
-    server: [
-      'uri',
-      'uuid',
-      'alias',
-      'labels',
-      'status'
-    ]
+    replicaSet: ['uuid', 'roles', 'alias', 'status'],
+    server: ['uri', 'uuid', 'alias', 'labels', 'status'],
   };
 
   const SEPARATOR = ':';
@@ -225,7 +204,7 @@ export const getFilterData = (filterQuery: string): Object => {
       const tokenObject: SearchTokenObject = {
         value,
         asSubstring: modifier === '*',
-        not: modifier === '!'
+        not: modifier === '!',
       };
 
       // Some mapping
@@ -235,11 +214,7 @@ export const getFilterData = (filterQuery: string): Object => {
       }
 
       // treat unknown prefixes as just part of the value
-      if (
-        prefixes.replicaSet.indexOf(prefix) === -1
-        &&
-        prefixes.server.indexOf(prefix) === -1
-      ) {
+      if (prefixes.replicaSet.indexOf(prefix) === -1 && prefixes.server.indexOf(prefix) === -1) {
         prefix = 'all';
         value = tokenString;
       } else {
@@ -260,51 +235,48 @@ export const getFilterData = (filterQuery: string): Object => {
 
   return {
     tokensByPrefix,
-    tokenizedQuery
+    tokenizedQuery,
   };
-}
+};
 
 export const filterReplicasetList = (state: State, filterQuery: string): Replicaset[] => {
   const { tokensByPrefix, tokenizedQuery } = getFilterData(filterQuery);
 
   const filterByTokens = filter(
-    allPass(
-      tokensByPrefix.all.map(token => r => r.searchString.includes(token) || r.uuid.startsWith(token))
-    )
+    allPass(tokensByPrefix.all.map((token) => (r) => r.searchString.includes(token) || r.uuid.startsWith(token)))
   );
 
-  const filterServerByTokens = allPass(
-    tokenizedQuery.map(token => searchString => searchString.includes(token))
-  );
+  const filterServerByTokens = allPass(tokenizedQuery.map((token) => (searchString) => searchString.includes(token)));
 
   const filteredReplicasetList = filterByTokens(selectSearchableReplicasetList(state));
 
   const isInProperty = (property, searchSrting, asSubstring = false) => {
     if (Array.isArray(property)) {
       if (asSubstring) {
-        return property.some(propValue => {
+        return property.some((propValue) => {
           // deny if not string
-          return (typeof propValue === 'string') && propValue.indexOf(searchSrting) !== -1
-        })
+          return typeof propValue === 'string' && propValue.indexOf(searchSrting) !== -1;
+        });
       }
       return property.indexOf(searchSrting) !== -1;
     } else {
       if (asSubstring) {
         // deny if not string
-        return (typeof property === 'string') && property.indexOf(searchSrting) !== -1
+        return typeof property === 'string' && property.indexOf(searchSrting) !== -1;
       }
       return property === searchSrting;
     }
   };
 
-  const filterByProperty = (list, property, tokensForProperty: SearchTokenObject[]) => list.filter(item => (
-    tokensForProperty.every(token => {
-      if (token.not) {
-        return !isInProperty(item[property], token.value);
-      }
-      return isInProperty(item[property], token.value, token.asSubstring);
-    })
-  ));
+  const filterByProperty = (list, property, tokensForProperty: SearchTokenObject[]) =>
+    list.filter((item) =>
+      tokensForProperty.every((token) => {
+        if (token.not) {
+          return !isInProperty(item[property], token.value);
+        }
+        return isInProperty(item[property], token.value, token.asSubstring);
+      })
+    );
 
   let filteredByProperties = filteredReplicasetList;
   Object.entries(tokensByPrefix).forEach(([property, tokensForProperty]) => {
@@ -317,10 +289,10 @@ export const filterReplicasetList = (state: State, filterQuery: string): Replica
     }
   });
 
-  const preparedReplicasetList = filteredByProperties.map(replicaSet => {
+  return filteredByProperties.map((replicaSet) => {
     let matchingServersCount = 0;
 
-    const servers = replicaSet.servers.map(server => {
+    const servers = replicaSet.servers.map((server) => {
       const filterMatching = filterServerByTokens(server.searchString);
 
       if (filterMatching) {
@@ -329,17 +301,16 @@ export const filterReplicasetList = (state: State, filterQuery: string): Replica
 
       return {
         ...server,
-        filterMatching
-      }
+        filterMatching,
+      };
     });
 
     return {
       ...replicaSet,
       matchingServersCount,
-      servers
-    }
+      servers,
+    };
   });
-  return preparedReplicasetList;
 };
 
 export const filterReplicasetListSelector = (state: State): Replicaset[] => {
@@ -360,14 +331,15 @@ export type ServerCounts = {
 
 export const getServerCounts: (s: State) => ServerCounts = createSelector(
   selectServerList,
-  (serverList: ?Server[]): ServerCounts => (serverList || []).reduce(
-    (acc, server) => {
-      acc.total++;
-      server.replicaset ? acc.configured++ : acc.unconfigured++;
-      return acc;
-    },
-    { configured: 0, total: 0, unconfigured: 0 }
-  )
+  (serverList: ?(Server[])): ServerCounts =>
+    (serverList || []).reduce(
+      (acc, server) => {
+        acc.total++;
+        server.replicaset ? acc.configured++ : acc.unconfigured++;
+        return acc;
+      },
+      { configured: 0, total: 0, unconfigured: 0 }
+    )
 );
 
 export type ReplicasetCounts = {
@@ -377,7 +349,7 @@ export type ReplicasetCounts = {
 
 export const getReplicasetCounts: (s: State) => ReplicasetCounts = createSelector(
   selectReplicasetList,
-  (replicasetList: ?Replicaset[]): ReplicasetCounts => {
+  (replicasetList: ?(Replicaset[])): ReplicasetCounts => {
     return (replicasetList || []).reduce(
       (acc, replicaset) => {
         acc.total++;
@@ -385,23 +357,16 @@ export const getReplicasetCounts: (s: State) => ReplicasetCounts = createSelecto
         return acc;
       },
       { total: 0, unhealthy: 0 }
-    )
+    );
   }
 );
 
 export const getSectionsNames = (state: State): Array<string> => Object.keys(state.clusterInstancePage.boxinfo || {});
 
-export const isBootstrapped = (state: State) => (
-  path(['app', 'clusterSelf', 'vshard_groups', '0', 'bootstrapped'], state) || false
-)
-
+export const isBootstrapped = (state: State) =>
+  path(['app', 'clusterSelf', 'vshard_groups', '0', 'bootstrapped'], state) || false;
 
 const createDeepEqualSelector = createSelectorCreator(defaultMemoize, isEqual);
 
-export const getMemoryFragmentationLevel
-  : (statistics: MemoryUsageRatios) => FragmentationLevel = createDeepEqualSelector(
-    [
-      statistics => statistics
-    ],
-    calculateMemoryFragmentationLevel
-  );
+export const getMemoryFragmentationLevel: (statistics: MemoryUsageRatios) => FragmentationLevel =
+  createDeepEqualSelector([(statistics) => statistics], calculateMemoryFragmentationLevel);

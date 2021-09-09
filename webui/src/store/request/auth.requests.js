@@ -1,6 +1,7 @@
 import graphql from 'src/api/graphql';
 import rest from 'src/api/rest';
 import { getApiEndpoint } from 'src/apiEndpoints';
+
 import { authQuery, turnAuthMutation } from './queries.graphql';
 
 export async function getAuthState() {
@@ -19,21 +20,19 @@ export async function logIn(params) {
   let result;
 
   try {
-    await rest.post(
-      getApiEndpoint('LOGIN_API_ENDPOINT'),
-      `username=${username}&password=${password}`,
-      { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
-    );
+    await rest.post(getApiEndpoint('LOGIN_API_ENDPOINT'), `username=${username}&password=${password}`, {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    });
 
     result = {
       authorized: true,
-      error: null
+      error: null,
     };
   } catch (error) {
     if (error.response.status === 403) {
       return {
         authorized: false,
-        error: 'Authentication failed'
+        error: 'Authentication failed',
       };
     }
     throw error;
@@ -43,8 +42,8 @@ export async function logIn(params) {
     const authStateResponse = await getAuthState();
     result = {
       ...result,
-      ...authStateResponse
-    }
+      ...authStateResponse,
+    };
   }
 
   return result;
@@ -54,7 +53,7 @@ export async function logOut() {
   await rest.post(getApiEndpoint('LOGOUT_API_ENDPOINT'));
   return {
     authorized: false,
-    error: null
+    error: null,
   };
 }
 

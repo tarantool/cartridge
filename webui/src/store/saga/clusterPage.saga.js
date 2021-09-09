@@ -1,111 +1,103 @@
 import { delay } from 'redux-saga';
+import { call, cancel, fork, put, select, take, takeEvery, takeLatest } from 'redux-saga/effects';
+
+import { REFRESH_LIST_INTERVAL, STAT_REQUEST_PERIOD } from 'src/constants';
+import { graphqlErrorNotification } from 'src/misc/graphqlErrorNotification';
 import {
-  call,
-  cancel,
-  fork,
-  put,
-  select,
-  take,
-  takeLatest,
-  takeEvery
-} from 'redux-saga/effects';
-import {
-  CLUSTER_PAGE_DID_MOUNT,
-  CLUSTER_PAGE_DATA_REQUEST,
-  CLUSTER_PAGE_DATA_REQUEST_SUCCESS,
-  CLUSTER_PAGE_DATA_REQUEST_ERROR,
-  CLUSTER_PAGE_REFRESH_LISTS_REQUEST,
-  CLUSTER_PAGE_REFRESH_LISTS_REQUEST_SUCCESS,
-  CLUSTER_PAGE_REFRESH_LISTS_REQUEST_ERROR,
-  CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST,
-  CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST_SUCCESS,
-  CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST_ERROR,
-  CLUSTER_PAGE_PROBE_SERVER_REQUEST,
-  CLUSTER_PAGE_PROBE_SERVER_REQUEST_SUCCESS,
-  CLUSTER_PAGE_PROBE_SERVER_REQUEST_ERROR,
-  CLUSTER_PAGE_JOIN_SERVER_REQUEST,
-  CLUSTER_PAGE_JOIN_SERVER_REQUEST_SUCCESS,
-  CLUSTER_PAGE_JOIN_SERVER_REQUEST_ERROR,
-  CLUSTER_PAGE_CREATE_REPLICASET_REQUEST,
-  CLUSTER_PAGE_CREATE_REPLICASET_REQUEST_SUCCESS,
-  CLUSTER_PAGE_CREATE_REPLICASET_REQUEST_ERROR,
-  CLUSTER_PAGE_EXPEL_SERVER_REQUEST,
-  CLUSTER_PAGE_EXPEL_SERVER_REQUEST_SUCCESS,
-  CLUSTER_PAGE_EXPEL_SERVER_REQUEST_ERROR,
-  CLUSTER_PAGE_REPLICASET_EDIT_REQUEST,
-  CLUSTER_PAGE_REPLICASET_EDIT_REQUEST_SUCCESS,
-  CLUSTER_PAGE_REPLICASET_EDIT_REQUEST_ERROR,
-  CLUSTER_PAGE_UPLOAD_CONFIG_REQUEST,
-  CLUSTER_PAGE_UPLOAD_CONFIG_REQUEST_SUCCESS,
-  CLUSTER_PAGE_UPLOAD_CONFIG_REQUEST_ERROR,
-  CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST,
-  CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_SUCCESS,
-  CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_ERROR,
-  CLUSTER_PAGE_FAILOVER_PROMOTE_REQUEST,
-  CLUSTER_PAGE_FAILOVER_PROMOTE_REQUEST_SUCCESS,
-  CLUSTER_PAGE_FAILOVER_PROMOTE_REQUEST_ERROR,
-  CLUSTER_PAGE_STATE_RESET,
   CLUSTER_DISABLE_INSTANCE_REQUEST,
-  CLUSTER_DISABLE_INSTANCE_REQUEST_SUCCESS,
   CLUSTER_DISABLE_INSTANCE_REQUEST_ERROR,
-  CLUSTER_SELF_UPDATE,
-  CLUSTER_PAGE_ZONE_UPDATE,
+  CLUSTER_DISABLE_INSTANCE_REQUEST_SUCCESS,
+  CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST,
+  CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST_ERROR,
+  CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST_SUCCESS,
+  CLUSTER_PAGE_CREATE_REPLICASET_REQUEST,
+  CLUSTER_PAGE_CREATE_REPLICASET_REQUEST_ERROR,
+  CLUSTER_PAGE_CREATE_REPLICASET_REQUEST_SUCCESS,
+  CLUSTER_PAGE_DATA_REQUEST,
+  CLUSTER_PAGE_DATA_REQUEST_ERROR,
+  CLUSTER_PAGE_DATA_REQUEST_SUCCESS,
+  CLUSTER_PAGE_DID_MOUNT,
+  CLUSTER_PAGE_EXPEL_SERVER_REQUEST,
+  CLUSTER_PAGE_EXPEL_SERVER_REQUEST_ERROR,
+  CLUSTER_PAGE_EXPEL_SERVER_REQUEST_SUCCESS,
+  CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST,
+  CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_ERROR,
+  CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_SUCCESS,
+  CLUSTER_PAGE_FAILOVER_PROMOTE_REQUEST,
+  CLUSTER_PAGE_FAILOVER_PROMOTE_REQUEST_ERROR,
+  CLUSTER_PAGE_FAILOVER_PROMOTE_REQUEST_SUCCESS,
   CLUSTER_PAGE_FAILOVER_REQUEST,
+  CLUSTER_PAGE_FAILOVER_REQUEST_ERROR,
   CLUSTER_PAGE_FAILOVER_REQUEST_SUCCESS,
-  CLUSTER_PAGE_FAILOVER_REQUEST_ERROR
+  CLUSTER_PAGE_JOIN_SERVER_REQUEST,
+  CLUSTER_PAGE_JOIN_SERVER_REQUEST_ERROR,
+  CLUSTER_PAGE_JOIN_SERVER_REQUEST_SUCCESS,
+  CLUSTER_PAGE_PROBE_SERVER_REQUEST,
+  CLUSTER_PAGE_PROBE_SERVER_REQUEST_ERROR,
+  CLUSTER_PAGE_PROBE_SERVER_REQUEST_SUCCESS,
+  CLUSTER_PAGE_REFRESH_LISTS_REQUEST,
+  CLUSTER_PAGE_REFRESH_LISTS_REQUEST_ERROR,
+  CLUSTER_PAGE_REFRESH_LISTS_REQUEST_SUCCESS,
+  CLUSTER_PAGE_REPLICASET_EDIT_REQUEST,
+  CLUSTER_PAGE_REPLICASET_EDIT_REQUEST_ERROR,
+  CLUSTER_PAGE_REPLICASET_EDIT_REQUEST_SUCCESS,
+  CLUSTER_PAGE_STATE_RESET,
+  CLUSTER_PAGE_UPLOAD_CONFIG_REQUEST,
+  CLUSTER_PAGE_UPLOAD_CONFIG_REQUEST_ERROR,
+  CLUSTER_PAGE_UPLOAD_CONFIG_REQUEST_SUCCESS,
+  CLUSTER_PAGE_ZONE_UPDATE,
+  CLUSTER_SELF_UPDATE,
 } from 'src/store/actionTypes';
 import { baseSaga, getRequestSaga, getSignalRequestSaga } from 'src/store/commonRequest';
+import { statsResponseError, statsResponseSuccess } from 'src/store/effector/cluster';
 import { getClusterSelf } from 'src/store/request/app.requests';
 import {
-  disableServer,
-  getPageData,
-  refreshLists,
-  getServerStat,
   bootstrapVshard,
+  changeFailover,
+  createReplicaset,
+  disableServer,
+  editReplicaset,
+  expelServer,
+  getFailover,
+  getPageData,
+  getServerStat,
+  joinServer,
   probeServer,
   promoteFailoverLeader,
-  joinServer,
-  createReplicaset,
-  expelServer,
-  editReplicaset,
+  refreshLists,
   uploadConfig,
-  changeFailover,
-  getFailover
 } from 'src/store/request/clusterPage.requests';
-import { statsResponseSuccess, statsResponseError } from 'src/store/effector/cluster';
-import { graphqlErrorNotification } from 'src/misc/graphqlErrorNotification';
-import { REFRESH_LIST_INTERVAL, STAT_REQUEST_PERIOD } from 'src/constants';
 
 const pageDataRequestSaga = getSignalRequestSaga(
   CLUSTER_PAGE_DID_MOUNT,
   CLUSTER_PAGE_DATA_REQUEST,
   CLUSTER_PAGE_DATA_REQUEST_SUCCESS,
   CLUSTER_PAGE_DATA_REQUEST_ERROR,
-  () => getPageData().then(data => {
-    statsResponseSuccess(data);
-    return data;
-  })
+  () =>
+    getPageData().then((data) => {
+      statsResponseSuccess(data);
+      return data;
+    })
 );
 
 function* refreshListsTaskSaga() {
   let requestNum = 0;
 
   while (true) {
-    const { cartridge_refresh_interval } = (window.__tarantool_variables || {});
+    const { cartridge_refresh_interval } = window.__tarantool_variables || {};
     yield delay(parseInt(cartridge_refresh_interval || REFRESH_LIST_INTERVAL));
     requestNum++;
     yield refreshListsSaga(requestNum);
   }
-};
+}
 
 function* refreshListsSaga(requestNum = 0) {
   yield put({ type: CLUSTER_PAGE_REFRESH_LISTS_REQUEST });
 
   let response;
   try {
-    const { cartridge_stat_period } = (window.__tarantool_variables || {});
-    const shouldRequestStat =
-      requestNum % parseInt(cartridge_stat_period || STAT_REQUEST_PERIOD) === 0;
+    const { cartridge_stat_period } = window.__tarantool_variables || {};
+    const shouldRequestStat = requestNum % parseInt(cartridge_stat_period || STAT_REQUEST_PERIOD) === 0;
     if (shouldRequestStat) {
       response = yield call(refreshLists, { shouldRequestStat: true });
       statsResponseSuccess(response);
@@ -113,16 +105,17 @@ function* refreshListsSaga(requestNum = 0) {
       const listsResponse = yield call(refreshLists);
 
       let serverStatResponse;
-      const serverStat = yield select(state => state.clusterPage.serverStat);
-      const unknownServerExists = listsResponse.serverList
-        .some(server => server.replicaset && !serverStat.find(stat => stat.uuid === server.uuid));
+      const serverStat = yield select((state) => state.clusterPage.serverStat);
+      const unknownServerExists = listsResponse.serverList.some(
+        (server) => server.replicaset && !serverStat.find((stat) => stat.uuid === server.uuid)
+      );
       if (unknownServerExists) {
         serverStatResponse = yield call(getServerStat);
       }
 
       response = {
         ...listsResponse,
-        ...serverStatResponse
+        ...serverStatResponse,
       };
     }
   } catch (error) {
@@ -133,15 +126,15 @@ function* refreshListsSaga(requestNum = 0) {
     if (response.serverStat) {
       response = {
         ...response,
-        serverStat: response.serverStat.filter(stat => stat.uuid)
+        serverStat: response.serverStat.filter((stat) => stat.uuid),
       };
     }
 
     if (response.failover) {
       response = {
         ...response,
-        failoverMode: response.failover.failover_params.mode
-      }
+        failoverMode: response.failover.failover_params.mode,
+      };
     }
 
     yield put({ type: CLUSTER_PAGE_REFRESH_LISTS_REQUEST_SUCCESS, payload: response, requestPayload: {} });
@@ -166,10 +159,7 @@ const bootstrapVshardRequestSaga = getRequestSaga(
 
 const probeServerRequestSaga = function* () {
   yield takeLatest(CLUSTER_PAGE_PROBE_SERVER_REQUEST, function* load(action) {
-    const {
-      payload: requestPayload = {},
-      __payload: { successMessage } = {}
-    } = action;
+    const { payload: requestPayload = {}, __payload: { successMessage } = {} } = action;
 
     try {
       const response = yield call(probeServer, requestPayload);
@@ -177,13 +167,13 @@ const probeServerRequestSaga = function* () {
       yield put({
         type: CLUSTER_PAGE_PROBE_SERVER_REQUEST_SUCCESS,
         payload: response,
-        __successMessage: successMessage
+        __successMessage: successMessage,
       });
     } catch (error) {
       yield put({
         type: CLUSTER_PAGE_PROBE_SERVER_REQUEST_ERROR,
         payload: error,
-        error: true
+        error: true,
       });
       return;
     }
@@ -200,13 +190,13 @@ const failoverPromoteRequestSaga = function* () {
         title: 'Failover',
         message: 'Leader promotion successful',
         type: 'success',
-        timeout: 5000
+        timeout: 5000,
       });
     } catch (error) {
       yield put({
         type: CLUSTER_PAGE_FAILOVER_PROMOTE_REQUEST_ERROR,
         payload: error,
-        error: true
+        error: true,
       });
       graphqlErrorNotification(error, 'Leader promotion error');
     }
@@ -222,7 +212,7 @@ const disableInstanceSaga = function* () {
       yield put({
         type: CLUSTER_DISABLE_INSTANCE_REQUEST_ERROR,
         payload: error,
-        error: true
+        error: true,
       });
       graphqlErrorNotification(error, 'Disabled state setting error');
     }
@@ -247,7 +237,7 @@ function* createReplicasetRequestSaga() {
 
       response = {
         ...createReplicasetResponse,
-        ...clusterSelfResponse
+        ...clusterSelfResponse,
       };
 
       yield put({ type: CLUSTER_PAGE_CREATE_REPLICASET_REQUEST_SUCCESS, payload: response, requestPayload });
@@ -256,13 +246,13 @@ function* createReplicasetRequestSaga() {
         type: CLUSTER_PAGE_CREATE_REPLICASET_REQUEST_ERROR,
         error,
         requestPayload,
-        __errorMessage: true
+        __errorMessage: true,
       });
 
       return;
     }
   });
-};
+}
 
 function* changeFailoverRequestSaga() {
   yield takeLatest(CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST, function* ({ payload: requestPayload = {} }) {
@@ -275,17 +265,17 @@ function* changeFailoverRequestSaga() {
         title: 'Failover mode',
         message: response.failover_params.mode,
         type: 'success',
-        timeout: 5000
+        timeout: 5000,
       });
     } catch (error) {
       yield put({
         type: CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_ERROR,
-        error
+        error,
       });
       return;
     }
   });
-};
+}
 
 const expelServerRequestSaga = getRequestSaga(
   CLUSTER_PAGE_EXPEL_SERVER_REQUEST,
@@ -332,14 +322,13 @@ const updateListsOnTopologyEdit = function* () {
     CLUSTER_PAGE_REPLICASET_EDIT_REQUEST_SUCCESS,
     CLUSTER_PAGE_PROBE_SERVER_REQUEST_SUCCESS,
     CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_SUCCESS,
-    CLUSTER_PAGE_ZONE_UPDATE
+    CLUSTER_PAGE_ZONE_UPDATE,
   ];
 
   yield takeLatest(topologyEditTokens, function* () {
     yield refreshListsSaga();
   });
 };
-
 
 const getFailoverParamsRequestSaga = getRequestSaga(
   CLUSTER_PAGE_FAILOVER_REQUEST,

@@ -1,12 +1,8 @@
 // @flow
-import * as React from 'react';
+import React from 'react';
 import { css, cx } from '@emotion/css';
-import {
-  Button,
-  Modal,
-  Text,
-  colors
-} from '@tarantool.io/ui-kit';
+import { Button, Modal, Text, colors } from '@tarantool.io/ui-kit';
+
 import type { Issue } from 'src/generated/graphql-typing';
 
 const styles = {
@@ -23,37 +19,37 @@ const styles = {
   `,
   titleCritical: css`
     color: ${colors.intentWarningAccent};
-  `
+  `,
 };
 
 type ClusterIssuesModalProps = {
   issues: Issue[],
   onClose: (e: MouseEvent) => void,
   visible: boolean,
-}
+};
 
-export const ClusterIssuesModal = (
-  { issues, visible, onClose }: ClusterIssuesModalProps
-) => (
+export const ClusterIssuesModal = ({ issues, visible, onClose }: ClusterIssuesModalProps) => (
   <Modal
-    className='meta-test__ClusterIssuesModal'
+    className="meta-test__ClusterIssuesModal"
     visible={visible}
     onClose={onClose}
-    title={<div>Issues: <span className={styles.title}>{issues.length}</span></div>}
+    title={
+      <div>
+        Issues: <span className={styles.title}>{issues.length}</span>
+      </div>
+    }
     footerControls={[
-      <Button
-        className='meta-test__closeClusterIssuesModal'
-        onClick={onClose}
-        size='l'
-      >
+      <Button key="Close" className="meta-test__closeClusterIssuesModal" onClick={onClose} size="l">
         Close
-      </Button>
+      </Button>,
     ]}
   >
     <div className={styles.list}>
-      {issues.map(({ level, message }) => (
-        <div className={styles.issueContent}>
-          <Text className={cx({ [styles.titleCritical]: level === 'critical' })} variant='h5'>{level}</Text>
+      {issues.map(({ level, message }, index) => (
+        <div key={index} className={styles.issueContent}>
+          <Text className={cx({ [styles.titleCritical]: level === 'critical' })} variant="h5">
+            {level}
+          </Text>
           <Text>{message}</Text>
         </div>
       ))}

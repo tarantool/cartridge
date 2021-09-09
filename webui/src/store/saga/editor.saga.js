@@ -1,23 +1,27 @@
 import { put, select, takeLatest } from 'redux-saga/effects';
-import { FETCH_CONFIG_FILES_DONE, SELECT_FILE } from 'src/store/actionTypes';
+
 import { LS_CODE_EDITOR_OPENED_FILE } from 'src/constants';
+import { FETCH_CONFIG_FILES_DONE, SELECT_FILE } from 'src/store/actionTypes';
 
 let initiallyOpened = false;
 
-const getDepth = str => (str.match(/\//g) || []).length;
+const getDepth = (str) => (str.match(/\//g) || []).length;
 
-const getFileToOpen = (files = []) => (
+const getFileToOpen = (files = []) =>
   files
     .sort((a, b) => {
-      if (getDepth(a.path) === getDepth(b.path))
-        return a.path < b.path ? -1 : 1;
+      if (getDepth(a.path) === getDepth(b.path)) return a.path < b.path ? -1 : 1;
       return getDepth(a.path) < getDepth(b.path) ? -1 : 1;
     })
-    .find(({ type }) => type === 'file')
-);
+    .find(({ type }) => type === 'file');
 
 function* openFirstFileSaga() {
-  const { codeEditor: { files, editor: { selectedFile } } } = yield select();
+  const {
+    codeEditor: {
+      files,
+      editor: { selectedFile },
+    },
+  } = yield select();
 
   if (selectedFile === null && files && files.length > 0) {
     let file;
@@ -25,19 +29,23 @@ function* openFirstFileSaga() {
 
     if (storedPath !== null) {
       file = files.find(({ type, path }) => type === 'file' && path === storedPath);
-      if (!file)
-        file = getFileToOpen(files)
+      if (!file) file = getFileToOpen(files);
     } else {
-      file = getFileToOpen(files)
+      file = getFileToOpen(files);
     }
 
     yield put({ type: SELECT_FILE, payload: file.fileId });
     initiallyOpened = true;
   }
-};
+}
 
 function* storeOpenedFileSaga() {
-  const { codeEditor: { files, editor: { selectedFile } } } = yield select();
+  const {
+    codeEditor: {
+      files,
+      editor: { selectedFile },
+    },
+  } = yield select();
   if (initiallyOpened) {
     const { path } = files.find(({ fileId }) => selectedFile === fileId);
 

@@ -1,5 +1,4 @@
 describe('Global 401 handler', () => {
-
   before(() => {
     cy.task('tarantool', {
       code: `
@@ -22,8 +21,8 @@ describe('Global 401 handler', () => {
 
       _G.cluster:start()
       return _G.cluster.datadir
-    `
-    }).then(resp => {
+    `,
+    }).then((resp) => {
       const workdir = resp[0];
       expect(workdir).to.be.a('string');
       cy.task('tarantool', {
@@ -47,7 +46,7 @@ describe('Global 401 handler', () => {
           end
 
           return true
-        `
+        `,
       }).should('deep.eq', [true]);
     });
   });
@@ -57,7 +56,6 @@ describe('Global 401 handler', () => {
   });
 
   it('Test: global-401-handler', () => {
-
     ////////////////////////////////////////////////////////////////////
     cy.log('Open WebUI');
     ////////////////////////////////////////////////////////////////////

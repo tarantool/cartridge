@@ -1,35 +1,36 @@
+// @flow
 import {
-  SET_BOOSTRAP_VSHARD_PANEL_VISIBLE,
-  SET_FAILOVER_MODAL_VISIBLE,
-  CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_SUCCESS,
+  APP_DATA_REQUEST,
+  APP_DATA_REQUEST_ERROR,
+  APP_DATA_REQUEST_SUCCESS,
+  AUTH_ACCESS_DENIED,
+  AUTH_LOG_IN_REQUEST,
+  AUTH_LOG_IN_REQUEST_ERROR,
+  AUTH_LOG_IN_REQUEST_SUCCESS,
+  AUTH_LOG_OUT_REQUEST,
+  AUTH_LOG_OUT_REQUEST_ERROR,
+  AUTH_LOG_OUT_REQUEST_SUCCESS,
+  AUTH_TURN_REQUEST,
+  AUTH_TURN_REQUEST_ERROR,
+  AUTH_TURN_REQUEST_SUCCESS,
   CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST,
   CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST_ERROR,
   CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST_SUCCESS,
-  CLUSTER_PAGE_PROBE_SERVER_REQUEST_SUCCESS,
-  AUTH_ACCESS_DENIED,
-  APP_DATA_REQUEST_SUCCESS,
-  AUTH_LOG_IN_REQUEST_SUCCESS,
-  AUTH_LOG_OUT_REQUEST_SUCCESS,
-  AUTH_TURN_REQUEST_SUCCESS,
-  AUTH_LOG_IN_REQUEST_ERROR,
-  AUTH_LOG_OUT_REQUEST_ERROR,
-  AUTH_TURN_REQUEST_ERROR,
-  APP_DATA_REQUEST_ERROR,
-  AUTH_LOG_IN_REQUEST,
-  AUTH_LOG_OUT_REQUEST,
-  AUTH_TURN_REQUEST,
-  APP_DATA_REQUEST,
-  SET_PROBE_SERVER_MODAL_VISIBLE,
-  SHOW_EXPEL_MODAL,
-  HIDE_EXPEL_MODAL,
-  CLUSTER_PAGE_EXPEL_SERVER_REQUEST_SUCCESS,
   CLUSTER_PAGE_EXPEL_SERVER_REQUEST_ERROR,
+  CLUSTER_PAGE_EXPEL_SERVER_REQUEST_SUCCESS,
+  CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_SUCCESS,
+  CLUSTER_PAGE_PROBE_SERVER_REQUEST_SUCCESS,
   FETCH_CONFIG_FILES,
   FETCH_CONFIG_FILES_DONE,
   FETCH_CONFIG_FILES_FAIL,
+  HIDE_EXPEL_MODAL,
   PUT_CONFIG_FILES_CONTENT,
   PUT_CONFIG_FILES_CONTENT_DONE,
-  PUT_CONFIG_FILES_CONTENT_FAIL
+  PUT_CONFIG_FILES_CONTENT_FAIL,
+  SET_BOOSTRAP_VSHARD_PANEL_VISIBLE,
+  SET_FAILOVER_MODAL_VISIBLE,
+  SET_PROBE_SERVER_MODAL_VISIBLE,
+  SHOW_EXPEL_MODAL,
 } from '../actionTypes';
 
 export type UIState = {
@@ -41,7 +42,7 @@ export type UIState = {
   fetchingAuth: boolean,
   fetchingConfigFiles: boolean,
   puttingConfigFiles: boolean,
-  expelModal: ?string
+  expelModal: ?string,
 };
 
 const initialState: UIState = {
@@ -53,66 +54,59 @@ const initialState: UIState = {
   fetchingAuth: false,
   fetchingConfigFiles: false,
   puttingConfigFiles: false,
-  expelModal: null
+  expelModal: null,
 };
 
-export const reducer = (state: UIState = initialState, { type, payload, error }: FSA): UIState => {
+export const reducer = (state: UIState = initialState, { type, payload }: FSA): UIState => {
   switch (type) {
     case SET_BOOSTRAP_VSHARD_PANEL_VISIBLE: {
       return {
         ...state,
-        bootstrapPanelVisible: payload
-      }
+        bootstrapPanelVisible: payload,
+      };
     }
 
     case SET_FAILOVER_MODAL_VISIBLE: {
       return {
         ...state,
-        showFailoverModal: payload
-      }
+        showFailoverModal: payload,
+      };
     }
 
     case SET_PROBE_SERVER_MODAL_VISIBLE:
       return {
         ...state,
-        probeServerModalVisible: payload
-      }
+        probeServerModalVisible: payload,
+      };
 
     case CLUSTER_PAGE_PROBE_SERVER_REQUEST_SUCCESS:
       return {
         ...state,
-        probeServerModalVisible: false
+        probeServerModalVisible: false,
       };
 
     case CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_SUCCESS: {
       return {
         ...state,
-        showFailoverModal: false
-      }
+        showFailoverModal: false,
+      };
     }
 
     case CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST: {
       return {
         ...state,
         bootstrapPanelVisible: false,
-        requestingBootstrapVshard: true
-      }
+        requestingBootstrapVshard: true,
+      };
     }
 
+    case CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST_SUCCESS:
     case CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST_ERROR: {
       return {
         ...state,
         bootstrapPanelVisible: true,
-        requestingBootstrapVshard: false
-      }
-    }
-
-    case CLUSTER_PAGE_BOOTSTRAP_VSHARD_REQUEST_SUCCESS: {
-      return {
-        ...state,
-        bootstrapPanelVisible: true,
-        requestingBootstrapVshard: false
-      }
+        requestingBootstrapVshard: false,
+      };
     }
 
     case AUTH_ACCESS_DENIED:
@@ -126,7 +120,7 @@ export const reducer = (state: UIState = initialState, { type, payload, error }:
     case APP_DATA_REQUEST_ERROR:
       return {
         ...state,
-        fetchingAuth: false
+        fetchingAuth: false,
       };
 
     case AUTH_LOG_IN_REQUEST:
@@ -135,40 +129,40 @@ export const reducer = (state: UIState = initialState, { type, payload, error }:
     case APP_DATA_REQUEST:
       return {
         ...state,
-        fetchingAuth: true
+        fetchingAuth: true,
       };
 
     case FETCH_CONFIG_FILES:
       return {
         ...state,
-        fetchingConfigFiles: true
+        fetchingConfigFiles: true,
       };
 
     case FETCH_CONFIG_FILES_DONE:
     case FETCH_CONFIG_FILES_FAIL:
       return {
         ...state,
-        fetchingConfigFiles: false
+        fetchingConfigFiles: false,
       };
 
     case PUT_CONFIG_FILES_CONTENT:
       return {
         ...state,
-        puttingConfigFiles: true
-      }
+        puttingConfigFiles: true,
+      };
 
     case PUT_CONFIG_FILES_CONTENT_DONE:
     case PUT_CONFIG_FILES_CONTENT_FAIL:
       return {
         ...state,
-        puttingConfigFiles: false
-      }
+        puttingConfigFiles: false,
+      };
 
     case SHOW_EXPEL_MODAL: {
       return {
         ...state,
-        expelModal: payload
-      }
+        expelModal: payload,
+      };
     }
 
     case HIDE_EXPEL_MODAL:
@@ -176,8 +170,8 @@ export const reducer = (state: UIState = initialState, { type, payload, error }:
     case CLUSTER_PAGE_EXPEL_SERVER_REQUEST_SUCCESS: {
       return {
         ...state,
-        expelModal: null
-      }
+        expelModal: null,
+      };
     }
 
     default: {

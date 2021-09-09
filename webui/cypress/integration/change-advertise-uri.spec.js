@@ -1,5 +1,4 @@
 describe('Change advertise uri', () => {
-
   before(() => {
     cy.task('tarantool', {
       code: `
@@ -28,7 +27,7 @@ describe('Change advertise uri', () => {
       _G.cluster.main_server.advertise_port = 13312
       _G.cluster.main_server:start()
       return true
-    `
+    `,
     }).should('deep.eq', [true]);
   });
 
@@ -37,7 +36,6 @@ describe('Change advertise uri', () => {
   });
 
   it('Test: change-advertise-uri', () => {
-
     ////////////////////////////////////////////////////////////////////
     cy.log('Open WebUI');
     ////////////////////////////////////////////////////////////////////
@@ -58,8 +56,9 @@ describe('Change advertise uri', () => {
     cy.get('.meta-test__ClusterIssuesButton').contains('Issues: 1');
     cy.get('.meta-test__ClusterIssuesButton').click();
     cy.get('.meta-test__ClusterIssuesModal').contains('warning');
-    cy.get('.meta-test__ClusterIssuesModal')
-      .contains('Advertise URI (localhost:13312) differs from clusterwide config (localhost:13301)');
+    cy.get('.meta-test__ClusterIssuesModal').contains(
+      'Advertise URI (localhost:13312) differs from clusterwide config (localhost:13301)'
+    );
     cy.get('.meta-test__ClusterIssuesModal button[type="button"]').click();
     cy.get('.meta-test__ClusterIssuesModal').should('not.exist');
 
@@ -67,13 +66,15 @@ describe('Change advertise uri', () => {
     cy.log('Cluster Suggestions Panel');
     ////////////////////////////////////////////////////////////////////
     cy.get('.meta-test__ClusterSuggestionsPanel').contains('Change advertise URI');
-    cy.get('.meta-test__ClusterSuggestionsPanel').contains('Seems that some instances were restarted with' +
-      ' a different advertise_uri. Update configuration to fix it.');
+    cy.get('.meta-test__ClusterSuggestionsPanel').contains(
+      'Seems that some instances were restarted with' + ' a different advertise_uri. Update configuration to fix it.'
+    );
     cy.get('.meta-test__ClusterSuggestionsPanel').find('button:contains(Review changes)').click();
 
     cy.get('.meta-test__AdvertiseURISuggestionModal').contains('Change advertise URI');
-    cy.get('.meta-test__AdvertiseURISuggestionModal')
-      .contains('One or more servers were restarted with a new advertise uri');
+    cy.get('.meta-test__AdvertiseURISuggestionModal').contains(
+      'One or more servers were restarted with a new advertise uri'
+    );
     cy.get('.meta-test__AdvertiseURISuggestionModal').contains('localhost:13301 -> localhost:13312');
     cy.get('.meta-test__AdvertiseURISuggestionModal').find('button:contains(Update)').click();
     cy.get('.meta-test__AdvertiseURISuggestionModal').should('not.exist');

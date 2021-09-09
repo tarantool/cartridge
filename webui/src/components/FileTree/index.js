@@ -2,15 +2,17 @@
 import React from 'react';
 import { css, cx } from '@emotion/css';
 import { genericStyles } from '@tarantool.io/ui-kit';
-import type { TreeFileItem } from 'src/store/selectors/filesSelectors';
+
 import type { FileItem } from 'src/store/reducers/files.reducer';
+import type { TreeFileItem } from 'src/store/selectors/filesSelectors';
+
 import { FileTreeElement } from './FileTreeElement';
 import { NewTreeElement } from './NewTreeElement';
 
 const renderTree = (treeNode: Object, prop: string, render: Function, level: number = 0) => {
-  const children = (treeNode[prop] || []).map(x => renderTree(x, prop, render, level + 1))
-  return render(treeNode, children, level)
-}
+  const children = (treeNode[prop] || []).map((x) => renderTree(x, prop, render, level + 1));
+  return render(treeNode, children, level);
+};
 
 const styles = {
   tree: css`
@@ -19,7 +21,7 @@ const styles = {
     list-style: none;
     overflow-x: hidden;
     overflow-y: auto;
-  `
+  `,
 };
 
 type FileTreeProps = {
@@ -36,18 +38,18 @@ type FileTreeProps = {
   onFolderCreate: (parentPath: string) => void,
   onRename: (id: string) => void,
   onOperationConfirm: (value: string) => void,
-  onOperationCancel: () => void
+  onOperationCancel: () => void,
 };
 
 type FileTreeState = {
   collapsedEntries: string[],
-  expandedEntries: string[]
+  expandedEntries: string[],
 };
 
 export class FileTree extends React.Component<FileTreeProps, FileTreeState> {
   state = {
     collapsedEntries: [],
-    expandedEntries: []
+    expandedEntries: [],
   };
 
   // TODO: по componentWillUpdate убрать из списка файлы, которые были удалены
@@ -57,41 +59,41 @@ export class FileTree extends React.Component<FileTreeProps, FileTreeState> {
     if (this.props.initiallyExpanded) {
       if (expand !== true && (expand === false || !collapsedEntries.includes(id))) {
         this.setState({
-          collapsedEntries: [...collapsedEntries, id]
+          collapsedEntries: [...collapsedEntries, id],
         });
       } else {
         if (collapsedEntries.includes(id)) {
           this.setState({
-            collapsedEntries: collapsedEntries.filter(i => i !== id)
+            collapsedEntries: collapsedEntries.filter((i) => i !== id),
           });
         }
       }
     } else {
       if (expand !== true && (expand === false || expandedEntries.includes(id))) {
         this.setState({
-          expandedEntries: expandedEntries.filter(i => i !== id)
+          expandedEntries: expandedEntries.filter((i) => i !== id),
         });
       } else {
         if (!expandedEntries.includes(id)) {
           this.setState({
-            expandedEntries: [...expandedEntries, id]
+            expandedEntries: [...expandedEntries, id],
           });
         }
       }
     }
-  }
+  };
 
   handleFolderCreate = (file: TreeFileItem) => {
     const { fileId, path } = file;
     this.expandEntry(fileId, true);
     this.props.onFolderCreate(path);
-  }
+  };
 
   handleFileCreate = (file: TreeFileItem) => {
     const { fileId, path } = file;
     this.expandEntry(fileId, true);
     this.props.onFileCreate(path);
-  }
+  };
 
   render() {
     const {
@@ -106,20 +108,13 @@ export class FileTree extends React.Component<FileTreeProps, FileTreeState> {
       onFileOpen,
       onRename,
       onOperationConfirm,
-      onOperationCancel
+      onOperationCancel,
     } = this.props;
 
     const { collapsedEntries, expandedEntries } = this.state;
 
     return (
-      <ul
-        className={cx(
-          styles.tree,
-          genericStyles.scrollbars,
-          className,
-          'meta-test__enterName'
-        )}
-      >
+      <ul className={cx(styles.tree, genericStyles.scrollbars, className, 'meta-test__enterName')}>
         {operationObject === '' && ['createFile', 'createFolder'].includes(fileOperation) && (
           <NewTreeElement
             filePaths={filePaths}
@@ -129,69 +124,59 @@ export class FileTree extends React.Component<FileTreeProps, FileTreeState> {
             onConfirm={onOperationConfirm}
           />
         )}
-        {tree.map(
-          x => renderTree(
-            x,
-            'items',
-            (item, children, level) => {
-              if (item.deleted) return null;
+        {tree.map((x) =>
+          renderTree(x, 'items', (item, children, level) => {
+            if (item.deleted) return null;
 
-              return fileOperation === 'rename' && operationObject === item.path
-                ? (
+            return fileOperation === 'rename' && operationObject === item.path ? (
+              <NewTreeElement
+                filePaths={filePaths}
+                parentPath={item.parentPath}
+                key={item.path}
+                initialValue={item.fileName}
+                active={selectedFile ? selectedFile.path === item.path : false}
+                type={item.type}
+                level={level}
+                childsCount={item.items && item.items.length}
+                expanded={
+                  initiallyExpanded ? !collapsedEntries.includes(item.fileId) : expandedEntries.includes(item.fileId)
+                }
+                onCancel={onOperationCancel}
+                onConfirm={onOperationConfirm}
+              >
+                {children}
+              </NewTreeElement>
+            ) : (
+              <FileTreeElement
+                key={item.path}
+                file={item}
+                active={selectedFile ? selectedFile.path === item.path : false}
+                level={level}
+                expanded={
+                  initiallyExpanded ? !collapsedEntries.includes(item.fileId) : expandedEntries.includes(item.fileId)
+                }
+                onDelete={onDelete}
+                onExpand={this.expandEntry}
+                onFileCreate={this.handleFileCreate}
+                onFileOpen={onFileOpen}
+                onFolderCreate={this.handleFolderCreate}
+                onRename={onRename}
+              >
+                {operationObject === item.path && ['createFile', 'createFolder'].includes(fileOperation) && (
                   <NewTreeElement
+                    active={selectedFile ? selectedFile.path === item.path : false}
                     filePaths={filePaths}
-                    parentPath={item.parentPath}
-                    key={item.path}
-                    initialValue={item.fileName}
-                    active={selectedFile ? (selectedFile.path === item.path) : false}
-                    type={item.type}
-                    level={level}
-                    childsCount={item.items && item.items.length}
-                    expanded={(
-                      initiallyExpanded
-                        ? !collapsedEntries.includes(item.fileId)
-                        : expandedEntries.includes(item.fileId)
-                    )}
+                    level={level + 1}
                     onCancel={onOperationCancel}
                     onConfirm={onOperationConfirm}
-                  >
-                    {children}
-                  </NewTreeElement>
-                )
-                : (
-                  <FileTreeElement
-                    key={item.path}
-                    file={item}
-                    active={selectedFile ? (selectedFile.path === item.path) : false}
-                    level={level}
-                    expanded={(
-                      initiallyExpanded
-                        ? !collapsedEntries.includes(item.fileId)
-                        : expandedEntries.includes(item.fileId)
-                    )}
-                    onDelete={onDelete}
-                    onExpand={this.expandEntry}
-                    onFileCreate={this.handleFileCreate}
-                    onFileOpen={onFileOpen}
-                    onFolderCreate={this.handleFolderCreate}
-                    onRename={onRename}
-                  >
-                    {operationObject === item.path && ['createFile', 'createFolder'].includes(fileOperation) && (
-                      <NewTreeElement
-                        active={selectedFile ? (selectedFile.path === item.path) : false}
-                        filePaths={filePaths}
-                        level={level + 1}
-                        onCancel={onOperationCancel}
-                        onConfirm={onOperationConfirm}
-                        parentPath={item.path}
-                        type={fileOperation === 'createFolder' ? 'folder' : 'file'}
-                      />
-                    )}
-                    {children}
-                  </FileTreeElement>
-                )
-            }
-          )
+                    parentPath={item.path}
+                    type={fileOperation === 'createFolder' ? 'folder' : 'file'}
+                  />
+                )}
+                {children}
+              </FileTreeElement>
+            );
+          })
         )}
       </ul>
     );

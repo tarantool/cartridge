@@ -1,16 +1,10 @@
-import {
-  all,
-  call,
-  put,
-  takeEvery,
-  takeLatest
-} from 'redux-saga/effects';
+import { all, call, put, takeEvery, takeLatest } from 'redux-saga/effects';
 
 export function getInitialRequestStatus() {
   return {
     loading: false,
     loaded: false,
-    error: null
+    error: null,
   };
 }
 
@@ -18,7 +12,7 @@ export function getLoadedRequestStatus() {
   return {
     loading: false,
     loaded: true,
-    error: null
+    error: null,
   };
 }
 
@@ -28,12 +22,12 @@ export function getActionCreator(ACTION, payloadInject, __payloadInject) {
       type: ACTION,
       payload: {
         ...(payloadInject || {}),
-        ...(payload || {})
+        ...(payload || {}),
       },
       __payload: {
         ...(__payloadInject || {}),
-        ...(_payload || {})
-      }
+        ...(_payload || {}),
+      },
     };
   };
 }
@@ -44,14 +38,15 @@ export function getPageMountActionCreator(ACTION, payloadInject, __payloadInject
 
 export function getReducer(ACTION, stateReducer) {
   return function reducer(state, action) {
+    // eslint-disable-next-line sonarjs/no-small-switch
     switch (action.type) {
       case ACTION:
         return typeof stateReducer === 'function'
           ? stateReducer(state, action)
           : {
-            ...state,
-            ...stateReducer
-          };
+              ...state,
+              ...stateReducer,
+            };
 
       default:
         return state;
@@ -61,11 +56,12 @@ export function getReducer(ACTION, stateReducer) {
 
 export function getPageMountReducer(PAGE_MOUNT) {
   return function resetStateReducer(state, action) {
+    // eslint-disable-next-line sonarjs/no-small-switch
     switch (action.type) {
       case PAGE_MOUNT:
         return {
           ...state,
-          pageMount: true
+          pageMount: true,
         };
 
       default:
@@ -83,8 +79,8 @@ export function getRequestReducer(REQUEST, REQUEST_SUCCESS, REQUEST_ERROR, statu
           [statusKey]: {
             ...state[statusKey],
             loading: true,
-            error: null
-          }
+            error: null,
+          },
         };
 
       case REQUEST_SUCCESS:
@@ -94,8 +90,8 @@ export function getRequestReducer(REQUEST, REQUEST_SUCCESS, REQUEST_ERROR, statu
           [statusKey]: {
             ...state[statusKey],
             loading: false,
-            loaded: true
-          }
+            loaded: true,
+          },
         };
 
       case REQUEST_ERROR:
@@ -105,8 +101,8 @@ export function getRequestReducer(REQUEST, REQUEST_SUCCESS, REQUEST_ERROR, statu
             ...state[statusKey],
             loading: false,
             loaded: true,
-            error: action.error
-          }
+            error: action.error,
+          },
         };
 
       default:
@@ -119,7 +115,8 @@ export function baseReducer(initialState, ...reducers) {
   return function createBaseReducer(customReducer) {
     return function baseReducers(state = initialState, action) {
       return reducers.reduce(
-        (state, reducer) => reducer(state, action), customReducer ? customReducer(state, action) : state
+        (state, reducer) => reducer(state, action),
+        customReducer ? customReducer(state, action) : state
       );
     };
   };
@@ -128,13 +125,7 @@ export function baseReducer(initialState, ...reducers) {
 const createSaga = (effect, SIGNAL, REQUEST, REQUEST_SUCCESS, REQUEST_ERROR, request) => {
   return function* sagaFlow() {
     yield effect(SIGNAL || REQUEST, function* load(action) {
-      const {
-        payload: requestPayload = {},
-        __payload: {
-          noErrorMessage,
-          successMessage
-        } = {}
-      } = action;
+      const { payload: requestPayload = {}, __payload: { noErrorMessage, successMessage } = {} } = action;
 
       if (SIGNAL) {
         yield put({ type: REQUEST, payload: requestPayload });
@@ -148,14 +139,17 @@ const createSaga = (effect, SIGNAL, REQUEST, REQUEST_SUCCESS, REQUEST_ERROR, req
           type: REQUEST_ERROR,
           error,
           requestPayload,
-          __errorMessage: !noErrorMessage
+          __errorMessage: !noErrorMessage,
         });
 
         return;
       }
 
       yield put({
-        type: REQUEST_SUCCESS, payload: response, requestPayload, __successMessage: successMessage
+        type: REQUEST_SUCCESS,
+        payload: response,
+        requestPayload,
+        __successMessage: successMessage,
       });
     });
   };
@@ -179,6 +173,6 @@ export function getConcurentSignalRequestSaga(SIGNAL, REQUEST, REQUEST_SUCCESS, 
 
 export function baseSaga(...sagas) {
   return function* baseSaga() {
-    yield all(sagas.map(saga => saga()));
+    yield all(sagas.map((saga) => saga()));
   };
 }

@@ -1,28 +1,30 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import { css, cx } from '@emotion/css';
-import { logIn } from 'src/store/actions/auth.actions';
-import { Formik, Form } from 'formik'
-import * as yup from 'yup'
+import { Form, Formik } from 'formik';
+import * as yup from 'yup';
 import {
   Alert,
   Button,
-  SplashModal,
-  InputPassword,
   Checkbox,
   InputGroup,
+  InputPassword,
   LabeledInput,
   Modal,
-  Text,
   Spin,
-  genericStyles
+  SplashModal,
+  Text,
+  genericStyles,
 } from '@tarantool.io/ui-kit';
+
+import { logIn } from 'src/store/actions/auth.actions';
+
 import logo from '../../assets/tarantool-logo-full.svg';
 
 const schema = yup.object().shape({
   username: yup.string().required(),
-  password: yup.string().required()
-})
+  password: yup.string().required(),
+});
 
 const styles = {
   error: css`
@@ -48,7 +50,7 @@ const styles = {
   `,
   emptySpaceUnderSpin: css`
     height: 60px;
-  `
+  `,
 };
 
 class LogInForm extends React.Component {
@@ -56,31 +58,28 @@ class LogInForm extends React.Component {
     try {
       await this.props.logIn(values);
     } catch (e) {
-      actions.setFieldError('common', e.message)
+      actions.setFieldError('common', e.message);
     } finally {
-      actions.setSubmitting(false)
+      actions.setSubmitting(false);
     }
   };
 
-  renderWelcomeMessage = (welcomeMessage, values, handleChange) => (<>
-    <div className={cx(styles.welcomeMessage, genericStyles.scrollbars)}>
-      <Text variant="p">{welcomeMessage}</Text>
-    </div>
-    <br />
-    <InputGroup>
-      <Checkbox checked={values['isAgreeChecked']} name="isAgreeChecked" onChange={handleChange}>
-        I agree
-      </Checkbox>
-    </InputGroup>
-  </>);
+  renderWelcomeMessage = (welcomeMessage, values, handleChange) => (
+    <>
+      <div className={cx(styles.welcomeMessage, genericStyles.scrollbars)}>
+        <Text variant="p">{welcomeMessage}</Text>
+      </div>
+      <br />
+      <InputGroup>
+        <Checkbox checked={values['isAgreeChecked']} name="isAgreeChecked" onChange={handleChange}>
+          I agree
+        </Checkbox>
+      </InputGroup>
+    </>
+  );
 
   render() {
-    const {
-      error,
-      welcomeMessageExpected,
-      welcomeMessage,
-      onClose
-    } = this.props;
+    const { error, welcomeMessageExpected, welcomeMessage, onClose } = this.props;
 
     return (
       <Formik
@@ -89,39 +88,39 @@ class LogInForm extends React.Component {
         initialValues={{
           username: '',
           password: '',
-          isAgreeChecked: false
+          isAgreeChecked: false,
         }}
       >
-        {({
-          values,
-          errors,
-          touched,
-          handleChange,
-          handleBlur
-        }) => {
-          const isLoginEnabled = welcomeMessage
-            ? values['isAgreeChecked']
-            : !welcomeMessageExpected;
+        {({ values, errors, touched, handleChange, handleBlur }) => {
+          const isLoginEnabled = welcomeMessage ? values['isAgreeChecked'] : !welcomeMessageExpected;
 
           return (
             <Form>
               <LabeledInput
                 autoFocus
-                label={<>Username<Text className={styles.requiredStar}>*</Text></>}
+                label={
+                  <>
+                    Username<Text className={styles.requiredStar}>*</Text>
+                  </>
+                }
                 value={values.username}
                 onBlur={handleBlur}
                 onChange={handleChange}
-                name='username'
+                name="username"
                 error={touched.username && !!errors.username}
                 message={touched.username && errors.username}
               />
               <LabeledInput
-                label={<>Password<Text className={styles.requiredStar}>*</Text></>}
+                label={
+                  <>
+                    Password<Text className={styles.requiredStar}>*</Text>
+                  </>
+                }
                 value={values.password}
                 onBlur={handleBlur}
                 onChange={handleChange}
                 inputComponent={InputPassword}
-                name='password'
+                name="password"
                 error={touched.password && !!errors.password}
                 message={touched.password && errors.password}
               />
@@ -131,26 +130,28 @@ class LogInForm extends React.Component {
                 </Alert>
               ) : null}
 
-              {(welcomeMessageExpected || welcomeMessage) ? (
+              {welcomeMessageExpected || welcomeMessage ? (
                 <Spin enable={!welcomeMessage}>
-                  {welcomeMessage ?
+                  {welcomeMessage ? (
                     this.renderWelcomeMessage(welcomeMessage, values, handleChange)
-                    :
+                  ) : (
                     <div className={styles.emptySpaceUnderSpin}></div>
-                  }
+                  )}
                 </Spin>
               ) : null}
 
               <div className={styles.actionButtons}>
                 {onClose && (
-                  <Button onClick={onClose} className={styles.cancelButton} size='l'>Cancel</Button>
+                  <Button onClick={onClose} className={styles.cancelButton} size="l">
+                    Cancel
+                  </Button>
                 )}
                 <Button
-                  className='meta-test__LoginFormBtn'
+                  className="meta-test__LoginFormBtn"
                   intent="primary"
                   type="submit"
                   disabled={!isLoginEnabled}
-                  size='l'
+                  size="l"
                 >
                   Login
                 </Button>
@@ -165,57 +166,39 @@ class LogInForm extends React.Component {
 
 const mapStateToProps = ({
   app: {
-    appDataRequestStatus: {
-      loaded
-    },
-    authParams: {
-      implements_check_password
-    }
+    appDataRequestStatus: { loaded },
+    authParams: { implements_check_password },
   },
-  auth: {
-    authorizationEnabled,
-    authorized,
-    error,
-    welcomeMessageExpected,
-    welcomeMessage
-  },
-  ui: {
-    fetchingAuth
-  }
+  auth: { authorizationEnabled, authorized, error, welcomeMessageExpected, welcomeMessage },
+  ui: { fetchingAuth },
 }) => ({
   authorizationRequired: implements_check_password && authorizationEnabled && !authorized,
   loaded,
   error,
   welcomeMessageExpected,
   welcomeMessage,
-  fetchingAuth
+  fetchingAuth,
 });
 
 const ConnectedLogInForm = connect(mapStateToProps, { logIn })(LogInForm);
 
-const SplashLogInForm = ({
-  authorizationRequired,
-  loaded,
-  ...props
-}) => {
-  return loaded && authorizationRequired
-    ? (
-      <SplashModal
-        className='meta-test__LoginFormSplash'
-        title='Authorization'
-        subTitle='Please, input your credentials'
-        logo={logo}
-      >
-        <LogInForm {...props} />
-      </SplashModal>
-    )
-    : null;
+const SplashLogInForm = ({ authorizationRequired, loaded, ...props }) => {
+  return loaded && authorizationRequired ? (
+    <SplashModal
+      className="meta-test__LoginFormSplash"
+      title="Authorization"
+      subTitle="Please, input your credentials"
+      logo={logo}
+    >
+      <LogInForm {...props} />
+    </SplashModal>
+  ) : null;
 };
 
 export const ModalLogInForm = ({ onCancel, visible, ...props }) => (
   <Modal
-    className='meta-test__LoginForm'
-    title='Authorization'
+    className="meta-test__LoginForm"
+    title="Authorization"
     visible={visible}
     footer={null}
     onClose={onCancel}
@@ -223,6 +206,6 @@ export const ModalLogInForm = ({ onCancel, visible, ...props }) => (
   >
     <ConnectedLogInForm {...props} onClose={onCancel} />
   </Modal>
-)
+);
 
 export default connect(mapStateToProps, { logIn })(SplashLogInForm);

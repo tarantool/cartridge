@@ -1,4 +1,3 @@
-import '@tarantool.io/frontend-core';
 import './misc/analytics';
 import './apiEndpoints';
 

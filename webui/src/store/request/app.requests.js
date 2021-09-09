@@ -1,5 +1,6 @@
 // @flow
 import graphql from 'src/api/graphql';
+
 import { getClusterQuery } from './queries.graphql';
 
 export async function getClusterSelf() {
@@ -13,7 +14,7 @@ export async function getClusterSelf() {
     vshard_bucket_count,
     vshard_groups,
     authParams,
-    MenuBlacklist
+    MenuBlacklist,
   } = response.cluster;
 
   return {
@@ -24,10 +25,10 @@ export async function getClusterSelf() {
       knownRoles,
       can_bootstrap_vshard,
       vshard_bucket_count,
-      vshard_groups
+      vshard_groups,
     },
     MenuBlacklist,
     authParams,
-    failover_params
+    failover_params,
   };
 }

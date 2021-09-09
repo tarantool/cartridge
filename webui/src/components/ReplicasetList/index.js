@@ -1,3 +1,1 @@
-import ReplicasetList from './ReplicasetList';
-
-export default ReplicasetList;
+export { default } from './ReplicasetList';

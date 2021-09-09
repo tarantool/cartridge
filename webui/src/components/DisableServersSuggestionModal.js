@@ -1,22 +1,13 @@
 // @flow
 import React from 'react';
-import { css } from '@emotion/css'
-import { useStore } from 'effector-react';
 import { connect } from 'react-redux';
-import {
-  Alert,
-  Button,
-  Modal,
-  Text,
-  colors
-} from '@tarantool.io/ui-kit';
+import { css } from '@emotion/css';
+import { useStore } from 'effector-react';
+import { Alert, Button, Modal, Text, colors } from '@tarantool.io/ui-kit';
+
 import type { Server } from 'src/generated/graphql-typing';
+import { $disableServersModal, detailsClose, disableServersApplyClick } from 'src/store/effector/clusterSuggestions';
 import type { State } from 'src/store/rootReducer';
-import {
-  $disableServersModal,
-  disableServersApplyClick,
-  detailsClose
-} from 'src/store/effector/clusterSuggestions';
 
 const styles = {
   msg: css`
@@ -34,51 +25,61 @@ const styles = {
     &:last-child {
       margin-bottom: 0;
     }
-  `
+  `,
 };
 
-const msg = 'Some instances are malfunctioning and impede \
+const msg =
+  'Some instances are malfunctioning and impede \
 editing clusterwide configuration. Disable them temporarily \
 if you want to operate topology.';
 
 type Props = {
-  serverList?: Server[]
-}
+  serverList?: Server[],
+};
 
-export const DisableServersSuggestionModal = ({ serverList }: Props) => {
-  const {
-    visible,
-    error,
-    pending,
-    suggestions
-  } = useStore($disableServersModal);
+const DisableServersSuggestionModal = ({ serverList }: Props) => {
+  const { visible, error, pending, suggestions } = useStore($disableServersModal);
 
-  if (!visible)
-    return null;
+  if (!visible) return null;
 
-  const richSuggestions = suggestions && serverList && suggestions.map(
-    ({ uuid }) => {
-      const instance = serverList.find(instance => instance.uuid === uuid);
-      return instance
-        ? `${instance.uri}${instance.alias ? ` (${instance.alias})` : ''}`
-        : uuid;
-    }
-  );
+  const richSuggestions =
+    suggestions &&
+    serverList &&
+    suggestions.map(({ uuid }) => {
+      const instance = serverList.find((instance) => instance.uuid === uuid);
+      if (!instance) {
+        return uuid;
+      }
+
+      return '' + instance.uri + (instance.alias ? ` (${instance.alias})` : '');
+    });
 
   return (
     <Modal
-      className='meta-test__DisableServersSuggestionModal'
+      className="meta-test__DisableServersSuggestionModal"
       footerControls={[
-        <Button intent='primary' size='l' text='Disable' onClick={disableServersApplyClick} loading={pending} />
+        <Button
+          key={0}
+          intent="primary"
+          size="l"
+          text="Disable"
+          onClick={disableServersApplyClick}
+          loading={pending}
+        />,
       ]}
       onClose={detailsClose}
-      title='Disable instances'
+      title="Disable instances"
     >
-      <Text className={styles.msg} tag='p'>{msg}</Text>
-      <Text className={styles.list} tag='ul'>
-        {richSuggestions && richSuggestions.map(row => (
-          <li className={styles.listItem} key={row}>{row}</li>
-        ))}
+      <Text className={styles.msg} tag="p">
+        {msg}
+      </Text>
+      <Text className={styles.list} tag="ul">
+        {richSuggestions &&
+          richSuggestions.map((row) => (
+            <li className={styles.listItem} key={row}>
+              {row}
+            </li>
+          ))}
       </Text>
       {error && (
         <Alert type="error">

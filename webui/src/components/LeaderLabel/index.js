@@ -1,12 +1,9 @@
 // @flow
-
-import * as React from 'react'
+import React from 'react';
 import { css, cx } from '@emotion/css';
 import { rgba } from 'emotion-rgba';
-import {
-  SVGImage,
-  colors
-} from '@tarantool.io/ui-kit';
+import { SVGImage, colors } from '@tarantool.io/ui-kit';
+
 import { Label } from '../Label';
 import crownPicture from './crown-gray.svg';
 
@@ -18,7 +15,7 @@ const styles = {
   imgLight: css`
     fill: #fff;
     fill-opacity: 0.65;
-  `
+  `,
 };
 
 const intentions = {
@@ -31,23 +28,17 @@ const intentions = {
   `,
   warning: css`
     background-color: ${colors.intentWarning};
-  `
+  `,
 };
 
 type Props = {
   className?: string,
-  state: 'warning' | 'good' | 'bad'
+  state: 'warning' | 'good' | 'bad',
 };
 
 export const LeaderLabel = ({ className, state = 'bad' }: Props) => (
-  <Label variant='h5' tag='span' className={cx(intentions[state], className)}>
-    <SVGImage
-      glyph={crownPicture}
-      className={cx(
-        styles.img,
-        { [styles.imgLight]: state === 'bad' }
-      )}
-    />
+  <Label variant="h5" tag="span" className={cx(intentions[state], className)}>
+    <SVGImage glyph={crownPicture} className={cx(styles.img, { [styles.imgLight]: state === 'bad' })} />
     Leader
   </Label>
 );

@@ -1,5 +1,4 @@
 describe('Failover', () => {
-
   before(() => {
     cy.task('tarantool', {
       code: `
@@ -23,7 +22,7 @@ describe('Failover', () => {
         {{failover_timeout = 0}}
       )
       return true
-    `
+    `,
     }).should('deep.eq', [true]);
   });
 
@@ -49,7 +48,7 @@ describe('Failover', () => {
         {{mode = 'disabled', failover_timeout = 5}}
       )
       return true
-    `
+    `,
     }).should('deep.eq', [true]);
   }
 
@@ -61,7 +60,7 @@ describe('Failover', () => {
         {{mode = 'eventual', failover_timeout = 10}}
       )
       return true
-    `
+    `,
     }).should('deep.eq', [true]);
   }
 
@@ -80,14 +79,13 @@ describe('Failover', () => {
           failover_timeout = 10}}
       )
       return true
-    `
+    `,
     }).should('deep.eq', [true]);
   }
 
   function modeStatefulEtcd2() {
     cy.task('tarantool', {
-      code:
-          `
+      code: `
       _G.cluster.main_server.net_box:call(
         'package.loaded.cartridge.failover_set_params',
         {{mode = 'stateful', 
@@ -103,7 +101,7 @@ describe('Failover', () => {
           failover_timeout = 10}}
       )
       return true
-    `
+    `,
     }).should('deep.eq', [true]);
   }
 
@@ -113,11 +111,10 @@ describe('Failover', () => {
       isActive ? 'have.css' : 'not.have.css',
       'background-color',
       'rgb(255, 255, 255)'
-    )
+    );
   }
 
   it('Test: failover', () => {
-
     ////////////////////////////////////////////////////////////////////
     cy.log('Open WebUI');
     ////////////////////////////////////////////////////////////////////
@@ -203,8 +200,9 @@ describe('Failover', () => {
 
     //Fencing tooltip
     cy.get('span:contains(Fencing)').next().trigger('mouseover');
-    cy.get('div').contains('A leader will go read-only when both the state provider ' +
-      'and one of replicas are unreachable');
+    cy.get('div').contains(
+      'A leader will go read-only when both the state provider ' + 'and one of replicas are unreachable'
+    );
 
     //Fencing disable
     cy.get('.meta-test__fencingEnableCheckbox input').should('not.be.checked');
@@ -246,21 +244,24 @@ describe('Failover', () => {
     cy.get('.meta-test__stateboardPassword input').should('have.value', '');
     //error failover_timeout must be greater than fencing_timeout
     cy.get('.meta-test__SubmitButton').click();
-    cy.get('.meta-test__inlineError span').should('have.text',
+    cy.get('.meta-test__inlineError span').should(
+      'have.text',
       'topology_new.failover.failover_timeout must be greater than fencing_timeout'
     );
     //error Invalid URI ""
     cy.get('.meta-test__stateboardURI input').type('{selectAll}{del}');
     cy.get('.meta-test__fencingTimeout input').type('{selectAll}{del}4');
     cy.get('.meta-test__SubmitButton').click();
-    cy.get('.meta-test__inlineError span').should('have.text',
+    cy.get('.meta-test__inlineError span').should(
+      'have.text',
       'topology_new.failover.tarantool_params.uri: Invalid URI ""'
     );
     //error Invalid URI "" (missing port)
     cy.get('.meta-test__stateboardURI input').type('qq');
     cy.get('.meta-test__stateboardURI input').should('have.value', 'qq');
     cy.get('.meta-test__SubmitButton').click();
-    cy.get('.meta-test__inlineError span').should('have.text',
+    cy.get('.meta-test__inlineError span').should(
+      'have.text',
       'topology_new.failover.tarantool_params.uri: Invalid URI "qq" (missing port)'
     );
 
@@ -300,8 +301,7 @@ describe('Failover', () => {
     cy.get('.meta-test__StateProvider__Dropdown *:contains(Etcd)').click();
     cy.get('.meta-test__stateProviderChoice input').should('have.value', 'Etcd');
 
-    cy.get('.meta-test__etcd2Endpoints textarea')
-      .should('have.text', 'http://127.0.0.1:4001\nhttp://127.0.0.1:2379');
+    cy.get('.meta-test__etcd2Endpoints textarea').should('have.text', 'http://127.0.0.1:4001\nhttp://127.0.0.1:2379');
     cy.get('.meta-test__etcd2LockDelay input').should('have.value', '10');
     cy.get('.meta-test__etcd2Prefix input').should('have.value', '/');
     cy.get('.meta-test__etcd2Username input').should('have.value', '');
@@ -323,7 +323,8 @@ describe('Failover', () => {
 
     cy.get('.meta-test__etcd2Endpoints textarea').type('{selectAll}{del}qq');
     cy.get('.meta-test__SubmitButton').click();
-    cy.get('.meta-test__inlineError span').should('have.text',
+    cy.get('.meta-test__inlineError span').should(
+      'have.text',
       'topology_new.failover.etcd2_params.endpoints[1]: Invalid URI "qq" (missing port)'
     );
 
@@ -342,19 +343,15 @@ describe('Failover', () => {
     cy.get('.meta-test__ClusterIssuesButton').contains('Issues: 4');
     cy.get('.meta-test__ClusterIssuesButton').click();
 
-    cy.get('.meta-test__ClusterIssuesModal')
-      .contains('warning');
-    cy.get('.meta-test__ClusterIssuesModal')
-      .contains('Can\'t obtain failover coordinator: ');
+    cy.get('.meta-test__ClusterIssuesModal').contains('warning');
+    cy.get('.meta-test__ClusterIssuesModal').contains("Can't obtain failover coordinator: ");
     cy.get('.meta-test__ClusterIssuesModal button[type="button"]').click();
     cy.get('.meta-test__ClusterIssuesModal').should('not.exist');
 
     cy.get('.meta-test__haveIssues').click();
     cy.get('.meta-test__ClusterIssuesModal').contains('Issues: 1');
     cy.get('.meta-test__ClusterIssuesModal').contains('warning');
-    cy.get('.meta-test__ClusterIssuesModal').contains(
-      'Consistency on localhost:13301 (dummy-1) isn\'t reached yet'
-    );
+    cy.get('.meta-test__ClusterIssuesModal').contains("Consistency on localhost:13301 (dummy-1) isn't reached yet");
 
     cy.get('.meta-test__ClusterIssuesModal > svg').click();
 
@@ -376,7 +373,7 @@ describe('Failover', () => {
     cy.get('.meta-test__FailoverButton').click({ force: true });
     checkFailoverTabMode('Stateful', true);
     cy.get('.meta-test__failoverTimeout input').should('have.value', '10');
-    cy.get('.meta-test__FailoverModal [type=\'checkbox\']').should('be.checked', 'Enabled');
+    cy.get(".meta-test__FailoverModal [type='checkbox']").should('be.checked', 'Enabled');
     cy.get('.meta-test__fencingTimeout input').should('have.value', '5');
     cy.get('.meta-test__fencingPause input').should('have.value', '1');
     cy.get('.meta-test__stateProviderChoice input').should('have.value', 'Tarantool (stateboard)');
@@ -393,11 +390,11 @@ describe('Failover', () => {
     cy.get('.meta-test__FailoverButton').click({ force: true });
     checkFailoverTabMode('Stateful', true);
     cy.get('.meta-test__failoverTimeout input').should('have.value', '10');
-    cy.get('.meta-test__FailoverModal [type=\'checkbox\']').should('be.checked', 'Enabled');
+    cy.get(".meta-test__FailoverModal [type='checkbox']").should('be.checked', 'Enabled');
     cy.get('.meta-test__fencingTimeout input').should('have.value', '5');
     cy.get('.meta-test__fencingPause input').should('have.value', '1');
     cy.get('.meta-test__stateProviderChoice input').should('have.value', 'Etcd');
-    cy.get('.meta-test__etcd2Username input').scrollIntoView().should('be.visible')
+    cy.get('.meta-test__etcd2Username input').scrollIntoView().should('be.visible');
     cy.get('.meta-test__etcd2LockDelay input').should('have.value', '1');
     cy.get('.meta-test__etcd2Endpoints textarea').should('have.value', 'http://127.0.0.1:4002');
     cy.get('.meta-test__etcd2Prefix input').should('have.value', '/*');

@@ -1,32 +1,27 @@
+import type { FailoverApi, Role } from 'src/generated/graphql-typing';
 // @flow
 import {
-  APP_DID_MOUNT,
-  APP_DATA_REQUEST,
-  APP_DATA_REQUEST_SUCCESS,
-  APP_DATA_REQUEST_ERROR,
   APP_CONNECTION_STATE_CHANGE,
+  APP_CREATE_MESSAGE,
+  APP_DATA_REQUEST,
+  APP_DATA_REQUEST_ERROR,
+  APP_DATA_REQUEST_SUCCESS,
+  APP_DID_MOUNT,
+  APP_SET_MESSAGE_DONE,
   AUTH_ACCESS_DENIED,
   CLUSTER_PAGE_CREATE_REPLICASET_REQUEST_SUCCESS,
   CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_SUCCESS,
-  APP_CREATE_MESSAGE,
-  APP_SET_MESSAGE_DONE,
-  CLUSTER_SELF_UPDATE
+  CLUSTER_SELF_UPDATE,
 } from 'src/store/actionTypes';
-import {
-  baseReducer,
-  getInitialRequestStatus,
-  getReducer,
-  getRequestReducer
-} from 'src/store/commonRequest';
+import { baseReducer, getInitialRequestStatus, getReducer, getRequestReducer } from 'src/store/commonRequest';
 import type { RequestStatusType } from 'src/store/commonTypes';
-import type { Role, FailoverApi } from 'src/generated/graphql-typing';
 
 type AppMessage = {
   content: {
     type: string,
-    text: string
+    text: string,
   },
-  done: boolean
+  done: boolean,
 };
 
 export type AppState = {
@@ -37,7 +32,7 @@ export type AppState = {
     uri: ?string,
     uuid: ?string,
     configured: ?boolean,
-    knownRoles: ?Role[],
+    knownRoles: ?(Role[]),
     can_bootstrap_vshard: ?boolean,
     vshard_bucket_count: ?number,
     demo_uri: ?string,
@@ -46,7 +41,7 @@ export type AppState = {
   failover_params: {
     mode: $PropertyType<FailoverApi, 'mode'>,
     tarantool_params: $PropertyType<FailoverApi, 'tarantool_params'>,
-    state_provider: $PropertyType<FailoverApi, 'state_provider'>
+    state_provider: $PropertyType<FailoverApi, 'state_provider'>,
   },
   messages: AppMessage[],
   authParams: {
@@ -56,7 +51,7 @@ export type AppState = {
     implements_list_users?: boolean,
     implements_edit_user?: boolean,
     implements_remove_user?: boolean,
-    username?: ?string
+    username?: ?string,
   },
 };
 
@@ -69,10 +64,10 @@ const initialState: AppState = {
   failover_params: {
     mode: 'disabled',
     tarantool_params: null,
-    state_provider: null
+    state_provider: null,
   },
   messages: [],
-  authParams: {}
+  authParams: {},
 };
 
 const appMountReducer = getReducer(APP_DID_MOUNT, { appMount: true });
@@ -88,64 +83,62 @@ export const reducer = baseReducer(
   initialState,
   appMountReducer,
   appDataRequestReducer
-)(
-  (state: AppState, action): AppState => {
-    switch (action.type) {
-      case APP_DATA_REQUEST:
-        return {
-          ...state,
-          appDataRequestError: null
-        };
+)((state: AppState, action): AppState => {
+  switch (action.type) {
+    case APP_DATA_REQUEST:
+      return {
+        ...state,
+        appDataRequestError: null,
+      };
 
-      case APP_DATA_REQUEST_ERROR: {
-        const { error } = action;
+    case APP_DATA_REQUEST_ERROR: {
+      const { error } = action;
 
-        return {
-          ...state,
-          appDataRequestError: error
-        };
-      }
-
-      case CLUSTER_SELF_UPDATE:
-      case CLUSTER_PAGE_CREATE_REPLICASET_REQUEST_SUCCESS:
-      case CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_SUCCESS:
-        return {
-          ...state,
-          clusterSelf: action.payload.clusterSelf,
-          failover_params: action.payload.failover_params
-        };
-
-      case APP_CREATE_MESSAGE:
-        return {
-          ...state,
-          messages: [...state.messages, { ...action.payload, done: false }]
-        };
-
-      case APP_SET_MESSAGE_DONE:
-        return {
-          ...state,
-          messages: state.messages.map(
-            message => message.content === action.payload.content ? { ...message, done: true } : message
-          )
-        };
-
-      case AUTH_ACCESS_DENIED:
-        return {
-          ...state,
-          authParams: {
-            ...state.authParams,
-            implements_check_password: true
-          }
-        };
-
-      case APP_CONNECTION_STATE_CHANGE:
-        return {
-          ...state,
-          connectionAlive: action.payload
-        };
-
-      default:
-        return state;
+      return {
+        ...state,
+        appDataRequestError: error,
+      };
     }
+
+    case CLUSTER_SELF_UPDATE:
+    case CLUSTER_PAGE_CREATE_REPLICASET_REQUEST_SUCCESS:
+    case CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_SUCCESS:
+      return {
+        ...state,
+        clusterSelf: action.payload.clusterSelf,
+        failover_params: action.payload.failover_params,
+      };
+
+    case APP_CREATE_MESSAGE:
+      return {
+        ...state,
+        messages: [...state.messages, { ...action.payload, done: false }],
+      };
+
+    case APP_SET_MESSAGE_DONE:
+      return {
+        ...state,
+        messages: state.messages.map((message) =>
+          message.content === action.payload.content ? { ...message, done: true } : message
+        ),
+      };
+
+    case AUTH_ACCESS_DENIED:
+      return {
+        ...state,
+        authParams: {
+          ...state.authParams,
+          implements_check_password: true,
+        },
+      };
+
+    case APP_CONNECTION_STATE_CHANGE:
+      return {
+        ...state,
+        connectionAlive: action.payload,
+      };
+
+    default:
+      return state;
   }
-);
+});

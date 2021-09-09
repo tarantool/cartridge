@@ -1,8 +1,9 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { Text, colors } from '@tarantool.io/ui-kit';
-import CollapsibleJSONRenderer from './CollapsibleJSONRenderer';
 import { css } from '@emotion/css';
+import { Text, colors } from '@tarantool.io/ui-kit';
+
+// import CollapsibleJSONRenderer from './CollapsibleJSONRenderer';
 
 const styles = {
   wrap: css`
@@ -35,35 +36,33 @@ const styles = {
   `,
   description: css`
     color: ${colors.dark40};
-  `
+  `,
 };
 
-const renderers = value => (
+const renderers = (value) => (
   <div className={styles.rightCol}>
-    <Text variant='basic'>
-      {value instanceof Array ? `[${value.join(', ')}]` : value}
-    </Text>
+    <Text variant="basic">{value instanceof Array ? `[${value.join(', ')}]` : value}</Text>
   </div>
 );
 
 const ServerDetailsModalStatTab = ({ descriptions = {}, paramsArr = [] }) => {
   return (
     <div className={styles.wrap}>
-      {paramsArr.map(({ name, params }) => (
-        <div>
-          <Text className={styles.subtitle} variant='h5'>vshard group: {name}</Text>
+      {paramsArr.map(({ name, params }, index1) => (
+        <div key={index1}>
+          <Text className={styles.subtitle} variant="h5">
+            vshard group: {name}
+          </Text>
           <div>
-            {params.map(({ name, value }) => (
-              <div className={styles.listItem}>
+            {params.map(({ name, value }, index2) => (
+              <div key={index2} className={styles.listItem}>
                 <div className={styles.leftCol}>
-                  <Text variant='basic'>{name}</Text>
-                  {descriptions[name]
-                    ? (
-                      <Text variant='basic' className={styles.description}>
-                        {descriptions[name]}
-                      </Text>
-                    )
-                    : null}
+                  <Text variant="basic">{name}</Text>
+                  {descriptions[name] ? (
+                    <Text variant="basic" className={styles.description}>
+                      {descriptions[name]}
+                    </Text>
+                  ) : null}
                 </div>
                 {renderers(value)}
               </div>
@@ -75,30 +74,20 @@ const ServerDetailsModalStatTab = ({ descriptions = {}, paramsArr = [] }) => {
   );
 };
 
-const mapStateToProps = (
-  {
-    clusterInstancePage: {
-      boxinfo,
-      descriptions
-    }
-  },
-  { sectionName }
-) => {
+const mapStateToProps = ({ clusterInstancePage: { boxinfo, descriptions } }, { sectionName }) => {
   const section = (boxinfo && boxinfo[sectionName]) || [];
 
   return {
     descriptions: descriptions[sectionName],
-    paramsArr: Object.entries(section)
-      .map(([ _, sec ]) => {
-        return {
-          name: sec.vshard_group,
-          params: Object.entries(sec)
-            .filter(([ name ]) => name !== 'vshard_group')
-            .map(([name, value]) => ({ name, value }))
-        }
-      })
-  }
+    paramsArr: Object.entries(section).map(([, sec]) => {
+      return {
+        name: sec.vshard_group,
+        params: Object.entries(sec)
+          .filter(([name]) => name !== 'vshard_group')
+          .map(([name, value]) => ({ name, value })),
+      };
+    }),
+  };
 };
 
 export default connect(mapStateToProps)(ServerDetailsModalStatTab);
-

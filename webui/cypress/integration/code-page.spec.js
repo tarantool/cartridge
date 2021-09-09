@@ -1,5 +1,4 @@
 describe('Code page', () => {
-
   before(() => {
     cy.task('tarantool', {
       code: `
@@ -24,7 +23,7 @@ describe('Code page', () => {
       end
       _G.cluster:start()
       return true
-    `
+    `,
     }).should('deep.eq', [true]);
   });
 
@@ -85,7 +84,6 @@ describe('Code page', () => {
     cy.get('.monaco-editor').type('spaces: [] # Essentially the same');
     cy.get('button[type="button"]').contains('Validate').click();
     cy.get('#root').contains('The code is valid').should('exist').click();
-
   });
 
   it('Test: code-page', () => {
@@ -155,11 +153,12 @@ describe('Code page', () => {
     //wrong yaml error
     cy.get('.monaco-editor textarea').type(selectAllKeys + '{backspace}');
     cy.get('.monaco-editor textarea').type('some: [] test code2');
-    apply()
-    cy.get('#root').contains(
-      'LoadConfigError: Error parsing section "file-in-tree2.yml":' +
-      ' did not find expected key at document'
-    ).click();
+    apply();
+    cy.get('#root')
+      .contains(
+        'LoadConfigError: Error parsing section "file-in-tree2.yml":' + ' did not find expected key at document'
+      )
+      .click();
     reload();
     cy.get('.monaco-editor textarea').should('have.value', 'some test code2');
 
@@ -169,7 +168,7 @@ describe('Code page', () => {
     cy.get('.meta-test__Code__FileTree').contains('edited-file-name');
 
     //reload
-    reload()
+    reload();
     cy.get('.meta-test__Code__FileTree').contains('edited-file-name').should('not.exist');
 
     //apply

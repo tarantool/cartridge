@@ -1,5 +1,4 @@
 describe('Blacklist pages', () => {
-
   before(() => {
     cy.task('tarantool', {
       code: `
@@ -24,7 +23,7 @@ describe('Blacklist pages', () => {
 
       _G.cluster:start()
       return true
-    `
+    `,
     }).should('deep.eq', [true]);
   });
 
@@ -33,7 +32,6 @@ describe('Blacklist pages', () => {
   });
 
   it('Test: blacklist-pages', () => {
-
     ////////////////////////////////////////////////////////////////////
     cy.log('Blacklisted pages are not listed in menu');
     ////////////////////////////////////////////////////////////////////
@@ -59,28 +57,34 @@ describe('Blacklist pages', () => {
   it('Test:hide-menu-subitems', () => {
     cy.visit('/abc/admin/cluster/users');
     cy.window()
-      .then(win => {
+      .then((win) => {
         const projectName = 'test';
-        win.tarantool_enterprise_core.register(projectName, [
-          {
-            label: 'Repair Queues',
-            path: `/${projectName}/repair`,
-            expanded: true,
-            items: [
-              {
-                label: 'Input',
-                path: `/${projectName}/repair/input`
-              },
-              {
-                label: 'Output',
-                path: `/${projectName}/repair/output`
-              },      {
-                label: 'Jobs',
-                path: `/${projectName}/repair/jobs`
-              }
-            ]
-          }
-        ], null, 'react');
+        win.tarantool_enterprise_core.register(
+          projectName,
+          [
+            {
+              label: 'Repair Queues',
+              path: `/${projectName}/repair`,
+              expanded: true,
+              items: [
+                {
+                  label: 'Input',
+                  path: `/${projectName}/repair/input`,
+                },
+                {
+                  label: 'Output',
+                  path: `/${projectName}/repair/output`,
+                },
+                {
+                  label: 'Jobs',
+                  path: `/${projectName}/repair/jobs`,
+                },
+              ],
+            },
+          ],
+          null,
+          'react'
+        );
         return Promise.resolve();
       })
       .then(() => {

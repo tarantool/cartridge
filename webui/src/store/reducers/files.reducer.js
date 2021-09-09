@@ -1,21 +1,21 @@
 // @flow
+import { isDescendant } from 'src/misc/files.utils';
 
 import {
-  FETCH_CONFIG_FILES_DONE,
-  SET_IS_CONTENT_CHANGED,
   CREATE_FILE,
   CREATE_FOLDER,
   DELETE_FILE,
   DELETE_FOLDER,
+  FETCH_CONFIG_FILES_DONE,
   RENAME_FILE,
-  RENAME_FOLDER
+  RENAME_FOLDER,
+  SET_IS_CONTENT_CHANGED,
 } from '../actionTypes';
-import { isDescendant } from 'src/misc/files.utils';
 
 export type ApiFileItem = {
   path: string,
   content: string,
-}
+};
 
 export type FileItem = {
   fileId: string,
@@ -31,22 +31,22 @@ export type FileItem = {
   line?: 0,
   scrollPosition?: 0,
   deleted?: boolean,
-}
+};
 
 export type FileList = Array<FileItem>;
 
 type UpdateObj = {
   loading?: boolean,
   content?: string,
-  saved?: boolean | (FileItem, Object) => boolean,
-}
+  saved?: boolean | ((FileItem, Object) => boolean),
+};
 
-
-const ignoreFiles = []
+const ignoreFiles = [];
 
 const enrichFileList = (files: Array<ApiFileItem>, prevState: Array<FileItem> = []) => {
   const pathFileMap = {};
-  files.forEach(file => {
+  files.forEach((file) => {
+    // eslint-disable-next-line sonarjs/no-empty-collection
     if (ignoreFiles.includes(file.path)) return;
     const parts = file.path.split('/');
 
@@ -59,13 +59,12 @@ const enrichFileList = (files: Array<ApiFileItem>, prevState: Array<FileItem> = 
 
       let item = pathFileMap[currentItemPath];
       if (!item) {
-        const localFile = prevState.find(localFile => !localFile.deleted && localFile.path === currentItemPath);
+        const localFile = prevState.find((localFile) => !localFile.deleted && localFile.path === currentItemPath);
 
-        const propsToCopy = {};
-        propsToCopy.saved = true;
-        if (localFile) {
-          propsToCopy.fileId = localFile.fileId;
-        }
+        const propsToCopy = {
+          saved: true,
+          ...(localFile ? { fileId: localFile.fileId } : {}),
+        };
 
         item = makeFile(parentPath, itemName, isFolder, file.content, propsToCopy);
         pathFileMap[currentItemPath] = item;
@@ -75,25 +74,20 @@ const enrichFileList = (files: Array<ApiFileItem>, prevState: Array<FileItem> = 
   return Object.values(pathFileMap);
 };
 
-const updateFile = (
-  fileList: FileList,
-  fileId: string,
-  updateObj: UpdateObj,
-  payload: Object = {}
-): FileList => {
-  const updatedItems: FileList = fileList.map(file => {
-    const obj = {}
+const updateFile = (fileList: FileList, fileId: string, updateObj: UpdateObj, payload: Object = {}): FileList => {
+  const updatedItems: FileList = fileList.map((file) => {
+    const obj = {};
     for (const p in updateObj) {
       if (typeof updateObj[p] === 'function') {
-        obj[p] = updateObj[p](file, payload)
+        obj[p] = updateObj[p](file, payload);
       } else {
-        obj[p] = updateObj[p]
+        obj[p] = updateObj[p];
       }
     }
-    return file.fileId === fileId ? { ...file, ...obj } : file
+    return file.fileId === fileId ? { ...file, ...obj } : file;
   });
-  return updatedItems
-}
+  return updatedItems;
+};
 
 const makePath = (parentPath, name) => `${parentPath}${name}`;
 
@@ -103,7 +97,11 @@ const getUniqueId = (() => {
 })();
 
 const makeFile = (
-  parentPath: string, name: string, isFolder = false, initialContent = '', prevFileProps = {}
+  parentPath: string,
+  name: string,
+  isFolder = false,
+  initialContent = '',
+  prevFileProps = {}
 ): FileItem => {
   const selfPath = `${parentPath}${parentPath ? '/' : ''}${name}`;
 
@@ -114,14 +112,14 @@ const makeFile = (
     parentPath: parentPath,
     path: selfPath,
     fileName: name,
-    type: isFolder ? 'folder' : 'file'
+    type: isFolder ? 'folder' : 'file',
   };
 
   if (isFolder) {
     return {
       initialContent: null,
       items: [],
-      ...commonProps
+      ...commonProps,
     };
   } else {
     return {
@@ -130,13 +128,13 @@ const makeFile = (
       column: 0,
       line: 0,
       scrollPosition: 0,
-      ...commonProps
+      ...commonProps,
     };
   }
 };
 
 const validatePathName = (list: Array<FileItem>, path: string) => {
-  if (list.some(file => file.path === path && !file.deleted)) {
+  if (list.some((file) => file.path === path && !file.deleted)) {
     return false;
   }
   return true;
@@ -149,23 +147,17 @@ const addFileOrFolder = (list: Array<FileItem>, parentPath: string, name: string
     return list;
   }
 
-  return [
-    ...list,
-    makeFile(parentPath || '', name, type === CREATE_FOLDER, null)
-  ];
-}
+  return [...list, makeFile(parentPath || '', name, type === CREATE_FOLDER, null)];
+};
 
-const getFileNameFromPath = path => path.split('/').pop();
+const getFileNameFromPath = (path) => path.split('/').pop();
 
 const getRenamedPath = (oldPath, newName) => {
   const oldName = getFileNameFromPath(oldPath);
   if (oldName === newName) {
     return oldPath;
   }
-  return makePath(
-    oldPath.slice(0, -oldName.length),
-    newName
-  );
+  return makePath(oldPath.slice(0, -oldName.length), newName);
 };
 
 const renameFile = (list: Array<FileItem>, oldPath, newName): Array<FileItem> => {
@@ -178,13 +170,13 @@ const renameFile = (list: Array<FileItem>, oldPath, newName): Array<FileItem> =>
     return list;
   }
 
-  return list.map(file => {
+  return list.map((file) => {
     if (file.path === oldPath) {
       return {
         initialPath: file.path,
         ...file,
         path: newPath,
-        fileName: newName
+        fileName: newName,
       };
     }
     return file;
@@ -206,34 +198,32 @@ const renameFolder = (list: FileList, oldFolderPath: string, newName: string): F
     return list;
   }
 
-  return list.map(file => {
+  return list.map((file) => {
     if (file.path === oldFolderPath) {
       return {
         initialPath: file.path,
         ...file,
         path: newFolderPath,
-        fileName: newName
-      }
+        fileName: newName,
+      };
     } else if (isDescendant(file.path, oldFolderPath)) {
       return {
         initialPath: file.path,
         ...file,
         path: replacePrefix(file.path, oldFolderPath, newFolderPath),
-        parentPath: replacePrefix(file.parentPath, oldFolderPath, newFolderPath)
-      }
+        parentPath: replacePrefix(file.parentPath, oldFolderPath, newFolderPath),
+      };
     }
 
     return file;
   });
 };
 
-const deleteFile = (list: Array<FileItem>, path): Array<FileItem> => (
-  list.map(file => file.path === path ? { ...file, deleted: true } : file)
-);
+const deleteFile = (list: Array<FileItem>, path): Array<FileItem> =>
+  list.map((file) => (file.path === path ? { ...file, deleted: true } : file));
 
-const deleteFolder = (list: Array<FileItem>, path): Array<FileItem> => (
-  list.map(file => file.path === path || isDescendant(file.path, path) ? { ...file, deleted: true } : file)
-);
+const deleteFolder = (list: Array<FileItem>, path): Array<FileItem> =>
+  list.map((file) => (file.path === path || isDescendant(file.path, path) ? { ...file, deleted: true } : file));
 
 // const commitFilesChanges = (list: Array<FileItem>, filesForApi: Array<ApiFileItem> = []): Array<FileItem> => {
 //   const newList = [];
@@ -259,9 +249,8 @@ const deleteFolder = (list: Array<FileItem>, path): Array<FileItem> => (
 export default (state: Array<FileItem> = [], { type, payload }: FSA) => {
   switch (type) {
     case FETCH_CONFIG_FILES_DONE: {
-      if (Array.isArray(payload))
-        return enrichFileList(payload, state)
-      return state
+      if (Array.isArray(payload)) return enrichFileList(payload, state);
+      return state;
     }
 
     // case PUT_CONFIG_FILES_CONTENT_DONE: {
@@ -277,10 +266,10 @@ export default (state: Array<FileItem> = [], { type, payload }: FSA) => {
           state,
           payload.fileId,
           {
-            saved: !payload.isChanged
+            saved: !payload.isChanged,
           },
           payload
-        )
+        );
       }
       break;
 
@@ -293,40 +282,26 @@ export default (state: Array<FileItem> = [], { type, payload }: FSA) => {
 
     case RENAME_FILE:
       if (payload && payload.name && payload.id) {
-        return renameFile(
-          state,
-          payload.id,
-          payload.name
-        )
+        return renameFile(state, payload.id, payload.name);
       }
       break;
 
     case RENAME_FOLDER:
       if (payload && payload.name && payload.id) {
-        return renameFolder(
-          state,
-          payload.id,
-          payload.name
-        )
+        return renameFolder(state, payload.id, payload.name);
       }
       break;
 
     case DELETE_FILE:
       if (payload && payload.id) {
-        return deleteFile(
-          state,
-          payload.id
-        )
+        return deleteFile(state, payload.id);
       }
       break;
     case DELETE_FOLDER:
       if (payload && payload.id) {
-        return deleteFolder(
-          state,
-          payload.id
-        )
+        return deleteFolder(state, payload.id);
       }
       break;
   }
-  return state
-}
+  return state;
+};

@@ -3,16 +3,16 @@ import React, { useEffect } from 'react';
 import { connect } from 'react-redux';
 import { useStore } from 'effector-react';
 import { Button } from '@tarantool.io/ui-kit';
+
+import AuthToggleButton from 'src/components/AuthToggleButton';
 import { PageLayout } from 'src/components/PageLayout';
-import { UsersTable } from '../../components/UsersTable';
 import { UserAddModal } from 'src/components/UserAddModal';
 import { UserEditModal } from 'src/components/UserEditModal';
 import { UserRemoveModal } from 'src/components/UserRemoveModal';
-import AuthToggleButton from 'src/components/AuthToggleButton';
-import {
-  $usersListFetchError, fetchUsersListFx, resetUsersList, showUserAddModal
-} from 'src/store/effector/users';
+import { $usersListFetchError, fetchUsersListFx, resetUsersList, showUserAddModal } from 'src/store/effector/users';
+
 import PageDataErrorMessage from '../../components/PageDataErrorMessage';
+import { UsersTable } from '../../components/UsersTable';
 
 const { AppTitle } = window.tarantool_enterprise_core.components;
 
@@ -21,7 +21,7 @@ type UsersProps = {
   implements_list_users: boolean,
   implements_remove_user: boolean,
   implements_edit_user: boolean,
-  showToggleAuth: boolean
+  showToggleAuth: boolean,
 };
 
 const Users = ({
@@ -29,53 +29,45 @@ const Users = ({
   implements_list_users,
   implements_edit_user,
   implements_remove_user,
-  showToggleAuth
+  showToggleAuth,
 }: UsersProps) => {
-  useEffect(
-    () => {
-      fetchUsersListFx();
-      return resetUsersList;
-    },
-    []
-  );
+  useEffect(() => {
+    fetchUsersListFx();
+    return resetUsersList;
+  }, []);
   const usersListFetchError = useStore($usersListFetchError);
 
   if (usersListFetchError) {
-    return (
-      <PageDataErrorMessage error={usersListFetchError} />
-    )
+    return <PageDataErrorMessage error={usersListFetchError} />;
   }
 
   return (
     <PageLayout
-      heading='Users'
+      heading="Users"
       topRightControls={[
         showToggleAuth && <AuthToggleButton />,
         implements_add_user && (
           <Button
-            className='meta-test__addUserBtn'
-            text='Add user'
-            intent='primary'
+            className="meta-test__addUserBtn"
+            text="Add user"
+            intent="primary"
             onClick={showUserAddModal}
-            size='l'
+            size="l"
           >
             Add user
           </Button>
-        )
+        ),
       ]}
     >
-      <AppTitle title='Users' />
+      <AppTitle title="Users" />
       {implements_list_users && (
-        <UsersTable
-          implements_edit_user={implements_edit_user}
-          implements_remove_user={implements_remove_user}
-        />
+        <UsersTable implements_edit_user={implements_edit_user} implements_remove_user={implements_remove_user} />
       )}
       <UserRemoveModal />
       {implements_add_user && <UserAddModal />}
       <UserEditModal />
     </PageLayout>
-  )
+  );
 };
 
 const mapStateToProps = ({
@@ -85,15 +77,15 @@ const mapStateToProps = ({
       implements_check_password,
       implements_list_users,
       implements_remove_user,
-      implements_edit_user
-    }
-  }
+      implements_edit_user,
+    },
+  },
 }) => ({
   implements_add_user,
   showToggleAuth: implements_check_password && (implements_add_user || implements_list_users),
   implements_list_users,
   implements_remove_user,
-  implements_edit_user
+  implements_edit_user,
 });
 
 export default connect(mapStateToProps)(Users);

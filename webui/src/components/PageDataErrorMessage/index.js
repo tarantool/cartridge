@@ -1,3 +1,1 @@
-import PageDataErrorMessage from './PageDataErrorMessage';
-
-export default PageDataErrorMessage;
+export { default } from './PageDataErrorMessage';

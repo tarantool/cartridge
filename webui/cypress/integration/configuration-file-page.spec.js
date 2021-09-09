@@ -1,5 +1,4 @@
 describe('Configuration file page', () => {
-
   before(() => {
     cy.task('tarantool', {
       code: `
@@ -19,7 +18,7 @@ describe('Configuration file page', () => {
 
       _G.cluster:start()
       return true
-    `
+    `,
     }).should('deep.eq', [true]);
   });
 
@@ -28,7 +27,6 @@ describe('Configuration file page', () => {
   });
 
   it('Test: successfull upload config file', () => {
-
     ////////////////////////////////////////////////////////////////////
     cy.log('Open WebUI');
     ////////////////////////////////////////////////////////////////////
@@ -50,23 +48,21 @@ describe('Configuration file page', () => {
     cy.log('Upload incorrect yml conf file');
     ////////////////////////////////////////////////////////////////////
     cy.get('input[type="file"]').attachFile('files/config.bad.yml');
-    cy.get('[data-cy="test_uploadZone"]').contains('Config upload failed: uploading system section ' +
-      '"topology" is forbidden');
+    cy.get('[data-cy="test_uploadZone"]').contains(
+      'Config upload failed: uploading system section ' + '"topology" is forbidden'
+    );
   });
 
   it('Test: download config file', () => {
-
     ///////////////////////////////////////////////////////////////////
     cy.log('Download current conf file');
     ////////////////////////////////////////////////////////////////////
     cy.visit('/admin/cluster/configuration');
-    cy.get('[data-cy="downloadButton"]').should('have.attr', 'href')
-      .then(href => {
-
+    cy.get('[data-cy="downloadButton"]')
+      .should('have.attr', 'href')
+      .then((href) => {
         cy.downloadFile(Cypress.config('baseUrl') + href, 'cypress/downloads', 'config_downloaded.yml');
-        cy.readFile('cypress/downloads/config_downloaded.yml').should('contain',
-          'custom_section: []')
-      })
+        cy.readFile('cypress/downloads/config_downloaded.yml').should('contain', 'custom_section: []');
+      });
   });
-
 });

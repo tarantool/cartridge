@@ -1,12 +1,17 @@
 // @flow
 import React from 'react';
 import { connect } from 'react-redux';
-import { css, cx } from '@emotion/css'
-import { setVisibleBootstrapVshardPanel } from '../store/actions/clusterPage.actions';
-import { isBootstrapped, isRouterEnabled, isStorageEnabled } from '../store/selectors/clusterPage';
+import { css, cx } from '@emotion/css';
 import { IconCancel, IconOk, PageCard, Text } from '@tarantool.io/ui-kit';
+
+import { setVisibleBootstrapVshardPanel } from 'src/store/actions/clusterPage.actions';
 import type { State } from 'src/store/rootReducer';
-import { selectVshardRolesNames } from 'src/store/selectors/clusterPage';
+import {
+  isBootstrapped,
+  isRouterEnabled,
+  isStorageEnabled,
+  selectVshardRolesNames,
+} from 'src/store/selectors/clusterPage';
 
 const styles = {
   iconMargin: css`
@@ -16,57 +21,58 @@ const styles = {
     display: flex;
     align-items: center;
     margin-bottom: 16px;
-  `
+  `,
 };
 
 type Props = {
-  bootstrapPanelVisible: bool,
-  isBootstrapped: bool,
-  requestingBootstrapVshard: bool,
-  routerPresent: bool,
-  storagePresent: bool,
-  setVisibleBootstrapVshardPanel: (v: bool) => void,
+  bootstrapPanelVisible: boolean,
+  isBootstrapped: boolean,
+  requestingBootstrapVshard: boolean,
+  routerPresent: boolean,
+  storagePresent: boolean,
+  setVisibleBootstrapVshardPanel: (v: boolean) => void,
   storageRolesNames: string[],
-  routerRolesNames: string[]
+  routerRolesNames: string[],
 };
 
-const BootstrapPanel = (
-  {
-    bootstrapPanelVisible,
-    isBootstrapped,
-    requestingBootstrapVshard,
-    routerPresent,
-    storagePresent,
-    setVisibleBootstrapVshardPanel,
-    storageRolesNames,
-    routerRolesNames
-  }: Props
-) => {
-  if (!bootstrapPanelVisible || requestingBootstrapVshard || isBootstrapped)
-    return null;
+const BootstrapPanel = ({
+  bootstrapPanelVisible,
+  isBootstrapped,
+  requestingBootstrapVshard,
+  routerPresent,
+  storagePresent,
+  setVisibleBootstrapVshardPanel,
+  storageRolesNames,
+  routerRolesNames,
+}: Props) => {
+  if (!bootstrapPanelVisible || requestingBootstrapVshard || isBootstrapped) return null;
 
   return (
     <PageCard
-      className='meta-test__BootstrapPanel'
+      className="meta-test__BootstrapPanel"
       title="Bootstrap vshard"
       onClose={() => setVisibleBootstrapVshardPanel(false)}
       showCorner
     >
-      <Text className={styles.row} variant='h4'>
+      <Text className={styles.row} variant="h4">
         After you complete editing the topology, you need to bootstrap vshard to render storages operable.
       </Text>
       <Text className={styles.row}>
-        {routerPresent
-          ? <IconOk className={cx(styles.iconMargin, 'meta-test__BootstrapPanel__vshard-router_enabled')} />
-          : <IconCancel className={cx(styles.iconMargin, 'meta-test__BootstrapPanel__vshard-router_disabled')} />}
+        {routerPresent ? (
+          <IconOk className={cx(styles.iconMargin, 'meta-test__BootstrapPanel__vshard-router_enabled')} />
+        ) : (
+          <IconCancel className={cx(styles.iconMargin, 'meta-test__BootstrapPanel__vshard-router_disabled')} />
+        )}
         {routerRolesNames.length === 1
           ? `One role ${routerRolesNames[0]} enabled`
           : `One role from ${routerRolesNames.join(' or ')} enabled`}
       </Text>
       <Text className={styles.row}>
-        {storagePresent
-          ? <IconOk className={cx(styles.iconMargin, 'meta-test__BootstrapPanel__vshard-storage_enabled')} />
-          : <IconCancel className={cx(styles.iconMargin, 'meta-test__BootstrapPanel__vshard-storage_disabled')} />}
+        {storagePresent ? (
+          <IconOk className={cx(styles.iconMargin, 'meta-test__BootstrapPanel__vshard-storage_enabled')} />
+        ) : (
+          <IconCancel className={cx(styles.iconMargin, 'meta-test__BootstrapPanel__vshard-storage_disabled')} />
+        )}
         {storageRolesNames.length === 1
           ? `One role ${storageRolesNames[0]} enabled`
           : `One role from ${storageRolesNames.join(' or ')} enabled`}
@@ -78,10 +84,7 @@ const BootstrapPanel = (
 
 const mapStateToProps = (state: State) => {
   const {
-    ui: {
-      requestingBootstrapVshard,
-      bootstrapPanelVisible
-    }
+    ui: { requestingBootstrapVshard, bootstrapPanelVisible },
   } = state;
   const rolesNames = selectVshardRolesNames(state);
 
@@ -92,8 +95,8 @@ const mapStateToProps = (state: State) => {
     routerPresent: isRouterEnabled(state),
     storagePresent: isStorageEnabled(state),
     storageRolesNames: rolesNames.storage,
-    routerRolesNames: rolesNames.router
-  }
+    routerRolesNames: rolesNames.router,
+  };
 };
 
 const mapDispatchToProps = { setVisibleBootstrapVshardPanel };

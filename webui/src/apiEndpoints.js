@@ -1,8 +1,8 @@
-const apiPrefix = window.__tarantool_admin_prefix || ''
+const apiPrefix = window.__tarantool_admin_prefix || '';
 
 if (!navigator.userAgent.includes('jsdom')) {
   // eslint-disable-next-line no-undef
-  __webpack_public_path__ = apiPrefix + '/'
+  __webpack_public_path__ = apiPrefix + '/';
 }
 
 const apiEndpoints = {
@@ -12,9 +12,9 @@ const apiEndpoints = {
   SOAP_API_ENDPOINT: apiPrefix + process.env.REACT_APP_SOAP_API_ENDPOINT,
   LOGIN_API_ENDPOINT: apiPrefix + process.env.REACT_APP_LOGIN_API_ENDPOINT,
   LOGOUT_API_ENDPOINT: apiPrefix + process.env.REACT_APP_LOGOUT_API_ENDPOINT,
-  GRAPHQL_API_ENDPOINT: apiPrefix + process.env.REACT_APP_GRAPHQL_API_ENDPOINT
-}
+  GRAPHQL_API_ENDPOINT: apiPrefix + process.env.REACT_APP_GRAPHQL_API_ENDPOINT,
+};
 
-export const getApiEndpoint = alias => {
-  return apiEndpoints[alias]
-}
+export const getApiEndpoint = (alias) => {
+  return apiEndpoints[alias];
+};

@@ -15,6 +15,14 @@ module.exports = {
       ],
     },
   },
+  overrides: [
+    {
+      files: ['*.test.js', '*.spec.js'],
+      rules: {
+        'sonarjs/no-duplicate-string': 'off',
+      },
+    },
+  ],
   rules: {
     'sonarjs/cognitive-complexity': 'off',
   },

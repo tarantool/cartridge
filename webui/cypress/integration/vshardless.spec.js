@@ -1,5 +1,4 @@
 describe('Vshardless', () => {
-
   before(() => {
     cy.task('tarantool', {
       code: `
@@ -26,7 +25,7 @@ describe('Vshardless', () => {
       end)
 
       return true
-    `
+    `,
     }).should('deep.eq', [true]);
   });
 
@@ -35,7 +34,6 @@ describe('Vshardless', () => {
   });
 
   it('Test: vshardless', () => {
-
     ////////////////////////////////////////////////////////////////////
     cy.log('Vshardless: Configure Server Modal');
     ////////////////////////////////////////////////////////////////////
@@ -55,13 +53,12 @@ describe('Vshardless', () => {
 
     cy.get('.meta-test__CreateReplicaSetBtn').click();
     cy.get('.meta-test__configureBtn').should('not.exist');
-    cy.get('li').contains('failover-coordinator | myrole')
+    cy.get('li').contains('failover-coordinator | myrole');
 
     ////////////////////////////////////////////////////////////////////
     cy.log('Vshardless: Edit Replicaset Modal');
     ////////////////////////////////////////////////////////////////////
-    cy.get('li').contains('failover-coordinator | myrole').closest('li')
-      .find('button').contains('Edit').click();
+    cy.get('li').contains('failover-coordinator | myrole').closest('li').find('button').contains('Edit').click();
     cy.get('.meta-test__EditReplicasetSaveBtn').should('be.enabled');
     cy.get('form input[value="vshard-storage"]').should('not.exist');
     cy.get('form input[name="weight"]').should('be.disabled');

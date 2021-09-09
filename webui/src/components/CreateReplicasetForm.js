@@ -1,30 +1,19 @@
 // @flow
 import React from 'react';
+import { Field, Form, FormSpy } from 'react-final-form';
 import { css } from '@emotion/css';
 import { uniq } from 'ramda';
-import { Form, Field, FormSpy } from 'react-final-form';
-import {
-  Button,
-  Checkbox,
-  FormField,
-  LabeledInput,
-  PopupFooter,
-  RadioButton
-} from '@tarantool.io/ui-kit';
+import { Button, Checkbox, FormField, LabeledInput, PopupFooter, RadioButton } from '@tarantool.io/ui-kit';
+
 import SelectedServersList from 'src/components/SelectedServersList';
-import type {
-  Server,
-  Role,
-  Replicaset,
-  VshardGroup
-} from 'src/generated/graphql-typing';
-import type { CreateReplicasetArgs } from 'src/store/request/clusterPage.requests';
+import type { Replicaset, Role, Server, VshardGroup } from 'src/generated/graphql-typing';
 import {
   getDependenciesString,
   getRolesDependencies,
   isVShardGroupInputDisabled,
-  validateForm
+  validateForm,
 } from 'src/misc/replicasetFormFunctions';
+import type { CreateReplicasetArgs } from 'src/store/request/clusterPage.requests';
 
 const styles = {
   wrap: css`
@@ -57,10 +46,14 @@ const styles = {
     flex-grow: 1;
     margin-left: 16px;
     margin-right: 16px;
-  `
-}
+  `,
+};
 
-const vshardTooltipInfo = <span>Group disabled not yet included the role of "<b>vshard-storage</b>"</span>;
+const vshardTooltipInfo = (
+  <span>
+    Group disabled not yet included the role of &quot;<b>vshard-storage</b>&quot;
+  </span>
+);
 const allRwTooltipInfo = 'Otherwise only leader in the replicaset is writeable';
 
 const initialValues = {
@@ -68,7 +61,7 @@ const initialValues = {
   all_rw: false,
   roles: [],
   vshard_group: null,
-  weight: null
+  weight: null,
 };
 
 type CreateReplicasetFormProps = {
@@ -79,7 +72,7 @@ type CreateReplicasetFormProps = {
   replicasetList?: Replicaset[],
   selectedServers?: Server[],
   storageRolesNames: string[],
-  vshard_groups?: VshardGroup[]
+  vshard_groups?: VshardGroup[],
 };
 
 const CreateReplicasetForm = ({
@@ -88,35 +81,28 @@ const CreateReplicasetForm = ({
   onCancel,
   onSubmit,
   vshard_groups,
-  replicasetList,
+  // replicasetList,
   selectedServers,
-  storageRolesNames
-}:
-CreateReplicasetFormProps) => (
+  storageRolesNames,
+}: CreateReplicasetFormProps) => (
   <Form
     initialValues={initialValues}
     keepDirtyOnReinitialize
     validate={validateForm}
-    onSubmit={values => {
+    onSubmit={(values) => {
       onSubmit({
         ...values,
         alias: values.alias || null,
         uri: (selectedServers && selectedServers[0] && selectedServers[0].uri) || '',
-        weight: parseFloat(values.weight)
+        weight: parseFloat(values.weight),
       });
     }}
   >
-    {({
-      errors = {},
-      form,
-      handleSubmit,
-      initialValues,
-      values = {}
-    }) => {
-      const activeDependencies = getRolesDependencies(values.roles, knownRoles)
+    {({ errors = {}, form, handleSubmit, initialValues, values = {} }) => {
+      const activeDependencies = getRolesDependencies(values.roles, knownRoles);
       const VShardGroupInputDisabled = isVShardGroupInputDisabled(values.roles);
-      const rolesColumns = (knownRoles && knownRoles.length > 6) ? 3 : 2;
-      const { cartridge_hide_all_rw } = (window.__tarantool_variables || {});
+      const rolesColumns = knownRoles && knownRoles.length > 6 ? 3 : 2;
+      const { cartridge_hide_all_rw } = window.__tarantool_variables || {};
 
       return (
         <form onSubmit={handleSubmit}>
@@ -126,7 +112,7 @@ CreateReplicasetFormProps) => (
               subscription={{ values: true }}
               onChange={({ values }) => {
                 if (!values) return;
-                const vshardStorageRoleChecked = values.roles.some(role => storageRolesNames.includes(role));
+                const vshardStorageRoleChecked = values.roles.some((role) => storageRolesNames.includes(role));
 
                 if (!vshardStorageRoleChecked && typeof values.weight === 'string') {
                   form.change('weight', initialValues && initialValues.weight);
@@ -143,11 +129,11 @@ CreateReplicasetFormProps) => (
                 }
               }}
             />
-            <Field name='alias'>
+            <Field name="alias">
               {({ input: { name, value, onChange }, meta: { error } }) => (
                 <LabeledInput
                   className={styles.field}
-                  label='Replica set name'
+                  label="Replica set name"
                   name={name}
                   onChange={onChange}
                   value={value}
@@ -157,48 +143,43 @@ CreateReplicasetFormProps) => (
                 />
               )}
             </Field>
-            <Field name='roles'>
-              {({ input: { name: fieldName, value, onChange } }) => (
+            <Field name="roles">
+              {({ input: { name: fieldName, value } }) => (
                 <FormField
                   className={styles.wideField}
                   columns={rolesColumns}
-                  label='Roles'
-                  subTitle={(
+                  label="Roles"
+                  subTitle={
                     <Button
-                      intent='plain'
+                      intent="plain"
                       onClick={() => {
                         form.change(
                           fieldName,
-                          !knownRoles || (value.length === knownRoles.length)
-                            ? []
-                            : knownRoles.map(({ name }) => name)
+                          !knownRoles || value.length === knownRoles.length ? [] : knownRoles.map(({ name }) => name)
                         );
                       }}
-                      size='xs'
+                      size="xs"
                       text={value.length === (knownRoles && knownRoles.length) ? 'Deselect all' : 'Select all'}
                     />
-                  )}
+                  }
                   verticalSort
                 >
-                  {knownRoles && knownRoles.reduceRight(
-                    (acc, { name, dependencies }) => {
+                  {knownRoles &&
+                    knownRoles.reduceRight((acc, { name, dependencies }) => {
                       acc.push(
                         <Checkbox
                           onChange={() => {
                             const activeRoles = value.includes(name)
-                              ? value.filter(x => x !== name)
-                              : value.concat([name])
+                              ? value.filter((x) => x !== name)
+                              : value.concat([name]);
 
                             const prevDependencies = getRolesDependencies(value, knownRoles);
                             const rolesWithoutDependencies = activeRoles.filter(
-                              role => !prevDependencies.includes(role)
+                              (role) => !prevDependencies.includes(role)
                             );
                             const newDependencies = getRolesDependencies(rolesWithoutDependencies, knownRoles);
 
-                            form.change(
-                              fieldName,
-                              uniq([...newDependencies, ...rolesWithoutDependencies])
-                            )
+                            form.change(fieldName, uniq([...newDependencies, ...rolesWithoutDependencies]));
                           }}
                           name={fieldName}
                           value={name}
@@ -209,54 +190,50 @@ CreateReplicasetFormProps) => (
                         </Checkbox>
                       );
                       return acc;
-                    },
-                    []
-                  )}
+                    }, [])}
                 </FormField>
               )}
             </Field>
-            <Field name='weight'>
+            <Field name="weight">
               {({ input: { name, value, onChange }, meta: { error } }) => (
                 <LabeledInput
                   className={styles.field}
-                  label='Replica set weight'
+                  label="Replica set weight"
                   inputClassName={styles.weightInput}
                   name={name}
                   error={error}
                   value={value}
                   onChange={onChange}
-                  disabled={!values.roles.some(role => storageRolesNames.includes(role))}
-                  placeholder='Auto'
+                  disabled={!values.roles.some((role) => storageRolesNames.includes(role))}
+                  placeholder="Auto"
                   message={error}
                 />
               )}
             </Field>
-            <Field name='vshard_group'>
+            <Field name="vshard_group">
               {({ input: { name: fieldName, value, onChange } }) => (
-                <FormField className={styles.field} label='Vshard group' info={vshardTooltipInfo}>
-                  {vshard_groups && vshard_groups.map(({ name }) => (
-                    <RadioButton
-                      onChange={onChange}
-                      name={fieldName}
-                      value={name}
-                      checked={name === value}
-                      disabled={VShardGroupInputDisabled}
-                    >
-                      {name}
-                    </RadioButton>
-                  ))}
+                <FormField className={styles.field} label="Vshard group" info={vshardTooltipInfo}>
+                  {vshard_groups &&
+                    vshard_groups.map(({ name }, index) => (
+                      <RadioButton
+                        key={index}
+                        onChange={onChange}
+                        name={fieldName}
+                        value={name}
+                        checked={name === value}
+                        disabled={VShardGroupInputDisabled}
+                      >
+                        {name}
+                      </RadioButton>
+                    ))}
                 </FormField>
               )}
             </Field>
             {cartridge_hide_all_rw !== true && (
-              <Field name='all_rw'>
+              <Field name="all_rw">
                 {({ input: { name: fieldName, value, onChange } }) => (
-                  <FormField className={styles.field} label='All writable' info={allRwTooltipInfo}>
-                    <Checkbox
-                      onChange={onChange}
-                      name={fieldName}
-                      checked={value}
-                    >
+                  <FormField className={styles.field} label="All writable" info={allRwTooltipInfo}>
+                    <Checkbox onChange={onChange} name={fieldName} checked={value}>
                       Make all instances writeable
                     </Checkbox>
                   </FormField>
@@ -265,21 +242,24 @@ CreateReplicasetFormProps) => (
             )}
           </div>
           <PopupFooter
-            controls={([
-              <Button type='button' onClick={onCancel} size='l'>Cancel</Button>,
+            controls={[
+              <Button key="Cancel" type="button" onClick={onCancel} size="l">
+                Cancel
+              </Button>,
               <Button
-                className='meta-test__CreateReplicaSetBtn'
-                intent='primary'
-                type='submit'
+                key="Create"
+                className="meta-test__CreateReplicaSetBtn"
+                intent="primary"
+                type="submit"
                 disabled={Object.keys(errors).length > 0}
-                size='l'
+                size="l"
               >
                 Create replica set
-              </Button>
-            ])}
+              </Button>,
+            ]}
           />
         </form>
-      )
+      );
     }}
   </Form>
 );

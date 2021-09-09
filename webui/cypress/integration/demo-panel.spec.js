@@ -1,5 +1,4 @@
 describe('Demo panel', () => {
-
   before(() => {
     cy.task('tarantool', {
       code: `
@@ -19,7 +18,7 @@ describe('Demo panel', () => {
 
       _G.cluster:start()
       return true
-    `
+    `,
     }).should('deep.eq', [true]);
   });
 
@@ -28,7 +27,6 @@ describe('Demo panel', () => {
   });
 
   it('Test: demo-panel', () => {
-
     ////////////////////////////////////////////////////////////////////
     cy.log('Check absence');
     ////////////////////////////////////////////////////////////////////
@@ -60,7 +58,7 @@ describe('Demo panel', () => {
         'admin:password@try-cartridge.tarantool.io:26333'
       _G.cluster.main_server:start()
       return true
-    `
+    `,
     }).should('deep.eq', [true]);
 
     ////////////////////////////////////////////////////////////////////

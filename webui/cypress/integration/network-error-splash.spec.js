@@ -1,5 +1,4 @@
 describe('Network error panel', () => {
-
   before(() => {
     cy.task('tarantool', {
       code: `
@@ -22,7 +21,7 @@ describe('Network error panel', () => {
 
       _G.cluster:start()
       return true
-    `
+    `,
     }).should('deep.eq', [true]);
   });
 
@@ -31,7 +30,6 @@ describe('Network error panel', () => {
   });
 
   it('Test: network-error-splash', () => {
-
     ////////////////////////////////////////////////////////////////////
     cy.log('Check presence');
     ////////////////////////////////////////////////////////////////////
@@ -44,7 +42,8 @@ describe('Network error panel', () => {
     // Now kill the server
     cy.task('tarantool', { code: `_G.cluster.main_server:stop()` });
 
-    cy.get('.meta-test__NetworkErrorSplash').should('exist')
+    cy.get('.meta-test__NetworkErrorSplash')
+      .should('exist')
       .contains('Network connection problem or server disconnected');
 
     cy.get('a[href="/jkl/admin/cluster/users"]').click();
