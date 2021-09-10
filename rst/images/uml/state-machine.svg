@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentScriptType="application/ecmascript" contentStyleType="text/css" height="761px" preserveAspectRatio="none" style="width:388px;height:761px;background:#FFFFFF;" version="1.1" viewBox="0 0 388 761" width="388px" zoomAndPan="magnify"><defs><filter height="300%" id="f1sqm8f7upqaxq" width="300%" x="-1" y="-1"><feGaussianBlur result="blurOut" stdDeviation="2.0"/><feColorMatrix in="blurOut" result="blurOut2" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .4 0"/><feOffset dx="4.0" dy="4.0" in="blurOut2" result="blurOut3"/><feBlend in="SourceGraphic" in2="blurOut3" mode="normal"/></filter></defs><g><text fill="#000000" font-family="sans-serif" font-size="18" lengthAdjust="spacing" textLength="267" x="54" y="17.4023">Cartridge instance state model</text><ellipse cx="180.5" cy="37.1992" fill="#000000" filter="url(#f1sqm8f7upqaxq)" rx="10" ry="10" style="stroke:none;stroke-width:1.0;"/><rect fill="#FEFECE" filter="url(#f1sqm8f7upqaxq)" height="40" rx="12.5" ry="12.5" style="stroke:#A80036;stroke-width:1.5;" width="104" x="60.5" y="107.1992"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="94" x="65.5" y="132.4902">Unconfigured</text><rect fill="#FEFECE" filter="url(#f1sqm8f7upqaxq)" height="40" rx="12.5" ry="12.5" style="stroke:#A80036;stroke-width:1.5;" width="100" x="199.5" y="107.1992"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="90" x="204.5" y="132.4902">ConfigFound</text><rect fill="#FEFECE" filter="url(#f1sqm8f7upqaxq)" height="40" rx="12.5" ry="12.5" style="stroke:#A80036;stroke-width:1.5;" width="296" x="17.5" y="307.1992"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="286" x="22.5" y="332.4902">BootstrappingBox or RecoveringSnapshot</text><rect fill="#FEFECE" filter="url(#f1sqm8f7upqaxq)" height="40" rx="12.5" ry="12.5" style="stroke:#A80036;stroke-width:1.5;" width="106" x="165.5" y="207.1992"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="96" x="170.5" y="232.4902">ConfigLoaded</text><rect fill="#FEFECE" filter="url(#f1sqm8f7upqaxq)" height="40" rx="12.5" ry="12.5" style="stroke:#A80036;stroke-width:1.5;" width="67" x="307" y="207.1992"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="57" x="312" y="232.4902">InitError</text><rect fill="#FEFECE" filter="url(#f1sqm8f7upqaxq)" height="40" rx="12.5" ry="12.5" style="stroke:#A80036;stroke-width:1.5;" width="151" x="7" y="407.1992"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="141" x="12" y="432.4902">ConnectingFullmesh</text><rect fill="#FEFECE" filter="url(#f1sqm8f7upqaxq)" height="40" rx="12.5" ry="12.5" style="stroke:#A80036;stroke-width:1.5;" width="76" x="211.5" y="407.1992"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="66" x="216.5" y="432.4902">BootError</text><rect fill="#FEFECE" filter="url(#f1sqm8f7upqaxq)" height="40" rx="12.5" ry="12.5" style="stroke:#A80036;stroke-width:1.5;" width="114" x="25.5" y="507.1992"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="104" x="30.5" y="532.4902">BoxConfigured</text><rect fill="#FEFECE" filter="url(#f1sqm8f7upqaxq)" height="40" rx="12.5" ry="12.5" style="stroke:#A80036;stroke-width:1.5;" width="130" x="17.5" y="607.1992"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="120" x="22.5" y="632.4902">ConfiguringRoles</text><rect fill="#FEFECE" filter="url(#f1sqm8f7upqaxq)" height="40" rx="12.5" ry="12.5" style="stroke:#A80036;stroke-width:1.5;" width="125" x="20" y="707.1992"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="115" x="25" y="732.4902">RolesConfigured</text><rect fill="#FEFECE" filter="url(#f1sqm8f7upqaxq)" height="40" rx="12.5" ry="12.5" style="stroke:#A80036;stroke-width:1.5;" width="114" x="180.5" y="707.1992"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="104" x="185.5" y="732.4902">OperationError</text><!--MD5=[18d8a430c959116615b36156a8b5d700]
+link *start to Unconfigured--><path d="M174.7,45.6992 C165.03,58.2192 145.21,83.8692 130.53,102.8692 " fill="none" id="*start-to-Unconfigured" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="127.29,107.0592,135.9577,102.3826,130.3468,103.1025,129.6269,97.4916,127.29,107.0592" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[671b3513b5367d0e14d4c3f5cd198d5d]
+link *start to ConfigFound--><path d="M186.38,45.6992 C196.2,58.2192 216.31,83.8692 231.21,102.8692 " fill="none" id="*start-to-ConfigFound" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="234.49,107.0592,232.0764,97.5107,231.4015,103.1271,225.7851,102.4522,234.49,107.0592" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[ff120a06e1eb5c39bf13024a1bb5f20a]
+link Unconfigured to BootstrappingBox--><path d="M117.68,147.5492 C127.4,183.8692 148.36,262.1692 159.01,301.9492 " fill="none" id="Unconfigured-to-BootstrappingBox" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="160.38,307.0692,161.9027,297.3388,159.0801,302.2411,154.1778,299.4186,160.38,307.0692" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[c52ef10385620f7b84cc5c45869543cc]
+link ConfigFound to ConfigLoaded--><path d="M243.38,147.5592 C238.45,163.1292 231.5,185.0992 226.2,201.8592 " fill="none" id="ConfigFound-to-ConfigLoaded" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="224.61,206.8792,231.1451,199.5109,226.1225,202.1135,223.5199,197.0909,224.61,206.8792" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[1d5f855ab92c75f1d943b23ccbfc67c8]
+link ConfigFound to InitError--><path d="M267.48,147.5592 C282.31,163.5292 303.39,186.2392 319.09,203.1492 " fill="none" id="ConfigFound-to-InitError" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="322.56,206.8792,319.3602,197.5647,319.155,203.2178,313.5019,203.0126,322.56,206.8792" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[65a97557bd5a35e08a0dc2c04f81f9f1]
+link ConfigLoaded to BootstrappingBox--><path d="M208.03,247.5592 C199.54,263.2692 187.52,285.4792 178.43,302.2892 " fill="none" id="ConfigLoaded-to-BootstrappingBox" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="175.95,306.8792,183.7411,300.8544,178.3222,302.4778,176.6988,297.0589,175.95,306.8792" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[5a9244cddd5e066a78abfd564afcf211]
+link BootstrappingBox to ConnectingFullmesh--><path d="M149.1,347.5592 C135.69,363.3992 116.67,385.8592 102.39,402.7192 " fill="none" id="BootstrappingBox-to-ConnectingFullmesh" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="98.86,406.8792,107.7277,402.594,102.0904,403.0628,101.6215,397.4254,98.86,406.8792" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[64b5f6fbc9317e5068f693987c3f1443]
+link BootstrappingBox to BootError--><path d="M182.1,347.5592 C195.67,363.3992 214.92,385.8592 229.37,402.7192 " fill="none" id="BootstrappingBox-to-BootError" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="232.94,406.8792,230.1023,397.448,229.679,403.089,224.038,402.6656,232.94,406.8792" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[6f88950feb8873eaddbfbd91b8e02486]
+link ConnectingFullmesh to BoxConfigured--><path d="M82.5,447.5592 C82.5,463.1292 82.5,485.0992 82.5,501.8592 " fill="none" id="ConnectingFullmesh-to-BoxConfigured" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="82.5,506.8792,86.5,497.8792,82.5,501.8792,78.5,497.8792,82.5,506.8792" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[7c00f94d1cdf6dc266705efb2c5c19c3]
+reverse link ConnectingFullmesh to ConnectingFullmesh--><path d="M163.16,409.0292 C180.47,410.8292 193,416.8892 193,427.1992 C193,438.4792 178,444.6692 158.16,445.7692 " fill="none" id="ConnectingFullmesh-backto-ConnectingFullmesh" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="158.16,408.6292,166.8113,413.3362,163.144,409.0291,167.4511,405.3618,158.16,408.6292" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[6c87a797f1ce5c4a64c815ba1eec1132]
+link ConnectingFullmesh to BootError--><path d="M158.17,427.1992 C174.09,427.1992 190.01,427.1992 205.93,427.1992 " fill="none" id="ConnectingFullmesh-to-BootError" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="211.33,427.1992,202.33,423.1992,206.33,427.1992,202.33,431.1992,211.33,427.1992" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[b12b1219d0445bfa5687d69e80f9f0c6]
+link BoxConfigured to ConfiguringRoles--><path d="M82.5,547.5592 C82.5,563.1292 82.5,585.0992 82.5,601.8592 " fill="none" id="BoxConfigured-to-ConfiguringRoles" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="82.5,606.8792,86.5,597.8792,82.5,601.8792,78.5,597.8792,82.5,606.8792" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[a97c018a37b2e7bf7689d0d70dd33c5c]
+link ConfiguringRoles to RolesConfigured--><path d="M72.1,647.5592 C69.26,663.1292 68.99,685.0992 71.31,701.8592 " fill="none" id="ConfiguringRoles-to-RolesConfigured" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="72.11,706.8792,74.6475,697.3629,71.3251,701.9412,66.7467,698.6188,72.11,706.8792" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[b344ed22edc514ccbebad65d8f093837]
+link RolesConfigured to ConfiguringRoles--><path d="M93.5,706.8792 C96.52,691.3192 96.8,669.3592 94.36,652.5892 " fill="none" id="RolesConfigured-to-ConfiguringRoles" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="93.51,647.5592,91.0575,657.0978,94.3389,652.49,98.9467,655.7715,93.51,647.5592" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[9bdec0819d02b2412e69ec004f11bb47]
+link ConfiguringRoles to OperationError--><path d="M112.75,647.3292 C138.68,663.7192 176.01,687.3192 203.07,704.4292 " fill="none" id="ConfiguringRoles-to-OperationError" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="207.32,707.1192,201.8476,698.9306,203.0929,704.4487,197.5748,705.694,207.32,707.1192" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[7bf154beb9a1dc6f4abe2353a2c23b4a]
+@startuml
+
+hide empty description
+title Cartridge instance state model
+
+[*] - -> Unconfigured
+[*] - -> ConfigFound
+
+Unconfigured - -> BootstrappingBox
+
+ConfigFound - -> ConfigLoaded
+ConfigFound - -> InitError
+
+state "BootstrappingBox or RecoveringSnapshot" as BootstrappingBox
+ConfigLoaded - -> BootstrappingBox
+
+BootstrappingBox - -> ConnectingFullmesh
+BootstrappingBox - -> BootError
+
+ConnectingFullmesh - -> BoxConfigured
+ConnectingFullmesh -left-> ConnectingFullmesh
+ConnectingFullmesh -> BootError
+
+BoxConfigured - -> ConfiguringRoles
+
+ConfiguringRoles - -> RolesConfigured
+ConfiguringRoles - -> OperationError
+RolesConfigured - -> ConfiguringRoles
+
+@enduml
+
+PlantUML version 1.2021.10(Mon Aug 30 16:43:48 MSK 2021)
+(GPL source distribution)
+Java Runtime: OpenJDK Runtime Environment
+JVM: OpenJDK 64-Bit Server VM
+Default Encoding: UTF-8
+Language: ru
+Country: RU
+--></g></svg>
+
+<!-- _UML_SOURCE rst/uml/state-machine.puml -->
+<!-- _UML_SOURCE_MD5 0222070b97675f2a3a0fe7dfaa607ca0 -->
