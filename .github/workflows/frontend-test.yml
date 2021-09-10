@@ -32,6 +32,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v1
+        with:
+          node-version: '16.8.0'
 
       - uses: tarantool/setup-tarantool@v1
         with:
