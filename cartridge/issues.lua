@@ -91,6 +91,12 @@ local limits_ranges = {
     clock_delta_threshold_warning = {0, math.huge},
 }
 
+local allowed_levels = {
+    critical = true,
+    warning = true,
+    info = true,
+}
+
 vars:new('limits', default_limits)
 
 local function describe(uri)
