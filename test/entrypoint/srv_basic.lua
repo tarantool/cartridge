@@ -188,3 +188,5 @@ function _G.get_uuid()
     -- to check vshard routing
     return box.info().uuid
 end
+
+require'console'.start()

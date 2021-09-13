@@ -9,7 +9,7 @@ g.before_all(function()
         datadir = fio.tempdir(),
         use_vshard = false,
         server_command = helpers.entrypoint('srv_basic'),
-        cookie = require('digest').urandom(6):hex(),
+        cookie = 'secret',--require('digest').urandom(6):hex(),
         replicasets = {{
             uuid = helpers.uuid('a'),
             roles = {},
@@ -44,6 +44,7 @@ g.before_all(function()
         advertise_port = 13309,
         http_port = 8089,
     })
+    -- require'fiber'.sleep(math.huge)
 end)
 
 g.after_all(function()
@@ -365,6 +366,7 @@ function g.test_state_hangs()
     g.replica1:eval(set_state, {'RolesConfigured'})
 
     t.assert_equals(helpers.list_cluster_issues(g.master), {})
+
 end
 
 function g.test_aliens()
@@ -396,3 +398,48 @@ g.after_test('test_aliens', function()
         t.assert_equals(helpers.list_cluster_issues(g.master), {})
     end)
 end)
+
+function g.test_custom_issues()
+    g.master.net_box:eval([[
+        local cartridge = require('cartridge')
+        cartridge.service_set('custom_role_with_issues', {
+            get_issues = function()
+                return {
+                    {
+                        level = 'warning',
+                        topic = 'custom_topic',
+                        message = 'custom message',
+                    },
+                    {
+                        level = 'critical',
+                        topic = nil,
+                        message = 'critical message',
+                    },
+                }
+            end,
+        })
+    ]])
+    t.helpers.retrying({}, function()
+        t.assert_equals(helpers.list_cluster_issues(g.master), {
+            {
+                level = 'warning',
+                topic = 'custom_topic',
+                message = 'custom message',
+                instance_uuid = g.master.instance_uuid,
+                replicaset_uuid = g.master.replicaset_uuid,
+            },
+            {
+                level = 'critical',
+                topic = 'custom',
+                message = 'critical message',
+                instance_uuid = g.master.instance_uuid,
+                replicaset_uuid = g.master.replicaset_uuid,
+            }
+        })
+    end)
+
+    g.master.net_box:eval([[
+        local cartridge = require('cartridge')
+        cartridge.service_set('custom_role_with_issues', nil)
+    ]])
+end
