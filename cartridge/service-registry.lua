@@ -35,12 +35,11 @@ local function get(name)
     return vars.registry[name]
 end
 
---- Get an iterator over modules from registry.
+--- Get a list with modules from registry.
 --
--- @function pairs
--- @tparam string module_name
+-- @function list
 -- @treturn[1] nil
--- @treturn[2] table iterator
+-- @treturn[2] table all modules
 local function list()
     return vars.registry
 end

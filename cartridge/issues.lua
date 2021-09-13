@@ -102,12 +102,6 @@ local function describe(uri)
     end
 end
 
-local allowed_levels = {
-    critical = true,
-    warning = true,
-    info = true,
-}
-
 local function list_on_instance(opts)
     local enabled_servers = {}
     local topology_cfg = confapplier.get_readonly('topology')
@@ -366,7 +360,6 @@ local function list_on_instance(opts)
     for role_name, role in pairs(registry.list()) do
         if role.get_issues ~= nil then
             for _, issue in ipairs(role.get_issues()) do
-                -- error(issue)
                 if issue.level ~= nil and allowed_levels[issue.level] and issue.message ~= nil then
                     table.insert(ret, {
                         level = issue.level,
@@ -576,7 +569,6 @@ local function set_limits(limits)
 end
 
 _G.__cartridge_issues_list_on_instance = list_on_instance
-_G.__allowed_issue_levels = allowed_levels
 
 return {
     list_on_cluster = list_on_cluster,

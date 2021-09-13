@@ -9,7 +9,7 @@ g.before_all(function()
         datadir = fio.tempdir(),
         use_vshard = false,
         server_command = helpers.entrypoint('srv_basic'),
-        cookie = 'secret',--require('digest').urandom(6):hex(),
+        cookie = require('digest').urandom(6):hex(),
         replicasets = {{
             uuid = helpers.uuid('a'),
             roles = {},
@@ -44,7 +44,6 @@ g.before_all(function()
         advertise_port = 13309,
         http_port = 8089,
     })
-    -- require'fiber'.sleep(math.huge)
 end)
 
 g.after_all(function()
