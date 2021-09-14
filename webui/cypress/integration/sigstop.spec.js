@@ -1,5 +1,4 @@
 describe('Checking for situations when a connection is lost using SIGSTOP', () => {
-
   before(() => {
     cy.task('tarantool', {
       code: `
@@ -23,7 +22,7 @@ describe('Checking for situations when a connection is lost using SIGSTOP', () =
           {{failover_timeout = 0}}
         )
         return true
-      `
+      `,
     }).should('deep.eq', [true]);
   });
 
@@ -32,21 +31,18 @@ describe('Checking for situations when a connection is lost using SIGSTOP', () =
   });
 
   function openServerDetailsModal(serverAlias) {
-    cy.get('li').contains(serverAlias).closest('li')
-      .find('.meta-test__ReplicasetServerListItem__dropdownBtn').click();
-    cy.get('.meta-test__ReplicasetServerListItem__dropdown *')
-      .contains('Server details').click();
-  };
+    cy.get('li').contains(serverAlias).closest('li').find('.meta-test__ReplicasetServerListItem__dropdownBtn').click();
+    cy.get('.meta-test__ReplicasetServerListItem__dropdown *').contains('Server details').click();
+  }
 
   function tryToSubmitTestZone() {
     cy.get('.meta-test__ServerDetailsModal button:contains(Select zone)').click();
     cy.get('button:contains(Add new zone)').click();
     cy.get('.ZoneAddModal input[name="zone_name"]').type('Test');
     cy.get('.meta-test__ZoneAddSubmitBtn').click();
-  };
+  }
 
   it('Test: sigstop', () => {
-
     ////////////////////////////////////////////////////////////////////
     cy.log('Stop server');
     ////////////////////////////////////////////////////////////////////
@@ -58,8 +54,9 @@ describe('Checking for situations when a connection is lost using SIGSTOP', () =
     cy.get('.meta-test__ClusterIssuesButton').contains('Issues: 1');
     cy.get('.meta-test__ClusterIssuesButton').click();
     cy.get('.meta-test__ClusterIssuesModal').contains('critical');
-    cy.get('.meta-test__ClusterIssuesModal')
-      .contains('Replication from localhost:13302 (dummy-2) to localhost:13301 (dummy-1)');
+    cy.get('.meta-test__ClusterIssuesModal').contains(
+      'Replication from localhost:13302 (dummy-2) to localhost:13301 (dummy-1)'
+    );
     cy.get('.meta-test__ClusterIssuesModal button[type="button"]').click();
 
     //Check buckets

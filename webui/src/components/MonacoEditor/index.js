@@ -1,12 +1,12 @@
-import PropTypes from 'prop-types';
 import React from 'react';
 import { noop, throttle } from 'lodash';
+import PropTypes from 'prop-types';
+
 import monaco from '../../misc/initMonacoEditor';
 import { getModelByFile, setModelByFile } from '../../misc/monacoModelStorage';
 import { getYAMLError } from '../../misc/yamlValidation';
 
-
-const DEF_CURSOR = {}
+const DEF_CURSOR = {};
 
 export default class MonacoEditor extends React.Component {
   static propTypes = {
@@ -23,7 +23,7 @@ export default class MonacoEditor extends React.Component {
     setIsContentChanged: PropTypes.func,
     styles: PropTypes.object,
     className: PropTypes.string,
-    cursor: PropTypes.object
+    cursor: PropTypes.object,
   };
 
   static defaultProps = {
@@ -39,13 +39,13 @@ export default class MonacoEditor extends React.Component {
     setIsContentChanged: noop,
     styles: {},
     className: '',
-    cursor: DEF_CURSOR
+    cursor: DEF_CURSOR,
   };
 
   state = {
     width: 0,
-    height: 0
-  }
+    height: 0,
+  };
 
   containerElement = null;
   editor = null;
@@ -58,22 +58,19 @@ export default class MonacoEditor extends React.Component {
 
   adjustEditorSize() {
     if (this.containerElement && this.editor) {
-      const { width, height } = this.state
-      const { clientWidth, clientHeight } = this.containerElement
+      const { width, height } = this.state;
+      const { clientWidth, clientHeight } = this.containerElement;
       if (width !== clientWidth && height !== clientHeight) {
         this.setState({
           height: clientHeight,
-          width: clientWidth
-        })
+          width: clientWidth,
+        });
       }
     }
   }
 
   setValidationError = () => {
-    const {
-      language,
-      fileId
-    } = this.props;
+    const { language, fileId } = this.props;
 
     if (language !== 'yaml') return;
 
@@ -82,35 +79,27 @@ export default class MonacoEditor extends React.Component {
 
     const yamlError = getYAMLError(editor.getValue());
 
-    monaco.editor.setModelMarkers(
-      model,
-      'jsyaml',
-      [
-        ...(yamlError ? [getYAMLError(editor.getValue())] : [])
-      ]
-    );
+    monaco.editor.setModelMarkers(model, 'jsyaml', [...(yamlError ? [getYAMLError(editor.getValue())] : [])]);
 
     this.validationError = yamlError;
-  }
+  };
 
-  throttledSetValidationError = throttle(this.setValidationError, 1000, { leading: false })
+  throttledSetValidationError = throttle(this.setValidationError, 1000, { leading: false });
 
   componentDidUpdate(prevProps) {
-    const {
-      initialValue, language, fileId, theme, cursor, options
-    } = this.props;
+    const { initialValue, language, fileId, theme, cursor, options } = this.props;
 
     const { editor } = this;
 
     if (fileId) {
       let model = getModelByFile(fileId);
       if (!model) {
-        model = setModelByFile(fileId, language, initialValue)
+        model = setModelByFile(fileId, language, initialValue);
       }
 
       if (editor.getModel() !== model) {
         editor.setModel(model);
-        editor.focus()
+        editor.focus();
       }
 
       if (prevProps.language !== language) {
@@ -126,8 +115,8 @@ export default class MonacoEditor extends React.Component {
       editor.updateOptions(options);
     }
     if (prevProps.cursor !== cursor) {
-      editor.setSelection(cursor)
-      editor.revealLine(this.props.cursor.startLineNumber)
+      editor.setSelection(cursor);
+      editor.revealLine(this.props.cursor.startLineNumber);
     }
   }
 
@@ -135,7 +124,7 @@ export default class MonacoEditor extends React.Component {
     this.destroyMonaco();
   }
 
-  assignRef = component => {
+  assignRef = (component) => {
     this.containerElement = component;
   };
 
@@ -149,9 +138,7 @@ export default class MonacoEditor extends React.Component {
   }
 
   initMonaco() {
-    const {
-      initialValue, language, theme, options, overrideServices
-    } = this.props;
+    const { initialValue, language, theme, options, overrideServices } = this.props;
     if (this.containerElement) {
       // Before initializing monaco editor
       Object.assign(options, this.editorWillMount());
@@ -162,11 +149,10 @@ export default class MonacoEditor extends React.Component {
           value: initialValue,
           language: language || 'javascript',
           ...options,
-          ...(theme ? { theme } : {})
+          ...(theme ? { theme } : {}),
         },
         overrideServices
       );
-
 
       // After initializing monaco editor
       this.editorDidMount(this.editor);
@@ -185,19 +171,15 @@ export default class MonacoEditor extends React.Component {
     this.adjustEditorSize();
 
     if (this.props.cursor !== DEF_CURSOR) {
-      editor.setSelection(this.props.cursor)
-      editor.revealLine(this.props.cursor.startLineNumber)
+      editor.setSelection(this.props.cursor);
+      editor.revealLine(this.props.cursor.startLineNumber);
     }
 
     this._subscription = editor.onDidChangeModelContent(() => {
       if (!this._prevent_trigger_change_event) {
         const currentValue = editor.getValue();
 
-        const {
-          initialValue,
-          isContentChanged: wasChanged,
-          setIsContentChanged
-        } = this.props;
+        const { initialValue, isContentChanged: wasChanged, setIsContentChanged } = this.props;
 
         const isChangedNow = currentValue !== initialValue;
 
@@ -216,12 +198,6 @@ export default class MonacoEditor extends React.Component {
   render() {
     const { styles: styleObj, className } = this.props;
 
-    return (
-      <div
-        ref={this.assignRef}
-        style={styleObj}
-        className={className}
-      />
-    );
+    return <div ref={this.assignRef} style={styleObj} className={className} />;
   }
 }

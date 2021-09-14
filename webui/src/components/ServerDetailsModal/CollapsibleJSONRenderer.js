@@ -1,10 +1,6 @@
 import React from 'react';
-import {
-  Button,
-  CodeBlock,
-  IconChevron
-} from '@tarantool.io/ui-kit';
 import { css } from '@emotion/css';
+import { Button, CodeBlock, IconChevron } from '@tarantool.io/ui-kit';
 
 const styles = {
   collapse: css`
@@ -30,12 +26,12 @@ const styles = {
   `,
   contentWrap: css`
     width: 100%;
-  `
+  `,
 };
 
 class CollapsibleJSONRenderer extends React.Component {
   state = {
-    opened: false
+    opened: false,
   };
 
   render() {
@@ -48,32 +44,20 @@ class CollapsibleJSONRenderer extends React.Component {
           <Button
             className={styles.collapseButton}
             onClick={this.handleCollapseClick}
-            size='m'
-            intent='plain'
-            title='Expand'
-            icon={({ className }) => (
-              <IconChevron
-                className={className}
-                direction={opened ? 'up' : 'down'}
-              />
-            )}
+            size="m"
+            intent="plain"
+            title="Expand"
+            icon={({ className }) => <IconChevron className={className} direction={opened ? 'up' : 'down'} />}
           />
         </div>
         {opened && (
-          <div className={styles.contentWrap}>
-            {!!value && (
-              <CodeBlock
-                text={JSON.stringify(value, null, 2)}
-              />
-            )}
-          </div>
+          <div className={styles.contentWrap}>{!!value && <CodeBlock text={JSON.stringify(value, null, 2)} />}</div>
         )}
       </>
     );
-  };
+  }
 
   handleCollapseClick = () => this.setState(({ opened }) => ({ opened: !opened }));
-};
+}
 
 export default CollapsibleJSONRenderer;
-

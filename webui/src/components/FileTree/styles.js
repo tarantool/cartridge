@@ -56,5 +56,5 @@ export const styles = {
   `,
   fileActionBtn: css`
     margin-left: 4px;
-  `
+  `,
 };

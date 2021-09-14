@@ -1,5 +1,4 @@
 describe('Probe server', () => {
-
   before(() => {
     cy.task('tarantool', {
       code: `
@@ -19,7 +18,7 @@ describe('Probe server', () => {
 
       _G.cluster:start()
       return true
-    `
+    `,
     }).should('deep.eq', [true]);
   });
 
@@ -28,7 +27,6 @@ describe('Probe server', () => {
   });
 
   it('Test: probe-server', () => {
-
     ////////////////////////////////////////////////////////////////////
     cy.log('Shows probing errors and close modal window with X button in it');
     ////////////////////////////////////////////////////////////////////

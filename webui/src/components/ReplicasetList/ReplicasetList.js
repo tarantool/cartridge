@@ -1,21 +1,14 @@
-import PropTypes from 'prop-types';
 import React from 'react';
-import { defaultMemoize } from 'reselect';
-import { css, cx } from '@emotion/css';
 import { withRouter } from 'react-router-dom';
-import {
-  Button,
-  HealthStatus,
-  IconEdit,
-  Text,
-  TiledList,
-  TiledListItem,
-  Tooltip
-} from '@tarantool.io/ui-kit';
+import { css, cx } from '@emotion/css';
+import PropTypes from 'prop-types';
+import { defaultMemoize } from 'reselect';
+import { Button, HealthStatus, IconEdit, Text, TiledList, TiledListItem, Tooltip } from '@tarantool.io/ui-kit';
+
+import { ClusterIssuesModal } from 'src/components/ClusterIssuesModal';
 import ReplicasetRoles from 'src/components/ReplicasetRoles';
 import ReplicasetServerList from 'src/components/ReplicasetServerList';
 import { addSearchParams } from 'src/misc/url';
-import { ClusterIssuesModal } from 'src/components/ClusterIssuesModal';
 
 const styles = {
   header: css`
@@ -114,47 +107,41 @@ const styles = {
     margin-top: 16px;
     margin-bottom: 12px;
     background-color: #e8e8e8;
-  `
+  `,
 };
 
-const prepareReplicasetList = dataSource => [...dataSource].sort((a, b) => {
-  let aValue = a.alias || '';
-  let bValue = b.alias || '';
+const prepareReplicasetList = (dataSource) =>
+  [...dataSource].sort((a, b) => {
+    let aValue = a.alias || '';
+    let bValue = b.alias || '';
 
-  if (aValue === bValue) {
-    aValue = a.servers[0].alias || '';
-    bValue = b.servers[0].alias || '';
-  }
+    if (aValue === bValue) {
+      aValue = a.servers[0].alias || '';
+      bValue = b.servers[0].alias || '';
+    }
 
-  if (aValue === bValue) {
-    aValue = a.uuid;
-    bValue = b.uuid;
-  }
+    if (aValue === bValue) {
+      aValue = a.uuid;
+      bValue = b.uuid;
+    }
 
-  return aValue < bValue ? -1 : 1;
-});
+    return aValue < bValue ? -1 : 1;
+  });
 
 class ReplicasetList extends React.PureComponent {
   state = {
-    showReplicasetIssues: null
+    showReplicasetIssues: null,
   };
 
   hideIssuesModal = () => this.setState({ showReplicasetIssues: null });
 
-  showIssuesModal = replicasetUUID => this.setState({ showReplicasetIssues: replicasetUUID });
+  showIssuesModal = (replicasetUUID) => this.setState({ showReplicasetIssues: replicasetUUID });
 
   prepareReplicasetList = defaultMemoize(prepareReplicasetList);
 
   render() {
-    const {
-      className,
-      clusterSelf,
-      editReplicaset,
-      issues,
-      joinServer,
-      createReplicaset,
-      onServerLabelClick
-    } = this.props;
+    const { className, clusterSelf, editReplicaset, issues, joinServer, createReplicaset, onServerLabelClick } =
+      this.props;
 
     const { showReplicasetIssues } = this.state;
 
@@ -166,54 +153,47 @@ class ReplicasetList extends React.PureComponent {
 
     return (
       <>
-        <TiledList
-          className={className}
-          outer={false}
-        >
-          {replicasetList.map(replicaset => (
-            <TiledListItem key={replicaset.uuid} corners='soft'>
-              <div className={styles.header} data-cy='meta-test__replicaSetSection'>
-                <Text className={styles.alias} variant='h3'>{replicaset.alias}</Text>
+        <TiledList className={className} outer={false}>
+          {replicasetList.map((replicaset) => (
+            <TiledListItem key={replicaset.uuid} corners="soft">
+              <div className={styles.header} data-cy="meta-test__replicaSetSection">
+                <Text className={styles.alias} variant="h3">
+                  {replicaset.alias}
+                </Text>
                 <div className={styles.statusGroup}>
                   <div className={styles.statusWrap}>
-                    {
-                      replicasetsWithIssues.includes(replicaset.uuid)
-                        ? (
-                          <Button
-                            className={cx(styles.statusButton, 'meta-test__haveIssues')}
-                            intent='plain'
-                            size='s'
-                            onClick={() => this.showIssuesModal(replicaset.uuid)}
-                          >
-                            <HealthStatus
-                              className={cx(styles.status, styles.statusWarning)}
-                              message='have issues'
-                              status='bad'
-                            />
-                          </Button>
-                        )
-                        : (
-                          <HealthStatus
-                            className={styles.status}
-                            message={replicaset.message}
-                            status={replicaset.status}
-                          />
-                        )
-                    }
+                    {replicasetsWithIssues.includes(replicaset.uuid) ? (
+                      <Button
+                        className={cx(styles.statusButton, 'meta-test__haveIssues')}
+                        intent="plain"
+                        size="s"
+                        onClick={() => this.showIssuesModal(replicaset.uuid)}
+                      >
+                        <HealthStatus
+                          className={cx(styles.status, styles.statusWarning)}
+                          message="have issues"
+                          status="bad"
+                        />
+                      </Button>
+                    ) : (
+                      <HealthStatus className={styles.status} message={replicaset.message} status={replicaset.status} />
+                    )}
                   </div>
-                  <Text className={styles.vshard} variant='p' tag='div' upperCase>
-                    {(replicaset.vshard_group || replicaset.weight) && [
-                      <Tooltip className={styles.vshardTooltip} content='Storage group'>
-                        {replicaset.vshard_group}
-                      </Tooltip>,
-                      <Tooltip className={styles.vshardTooltip} content='Replica set weight'>
-                        {replicaset.weight}
-                      </Tooltip>
-                    ]}
+                  <Text className={styles.vshard} variant="p" tag="div" upperCase>
+                    {(replicaset.vshard_group || replicaset.weight) && (
+                      <>
+                        <Tooltip className={styles.vshardTooltip} content="Storage group">
+                          {replicaset.vshard_group}
+                        </Tooltip>
+                        <Tooltip className={styles.vshardTooltip} content="Replica set weight">
+                          {replicaset.weight}
+                        </Tooltip>
+                      </>
+                    )}
                     {replicaset.all_rw && (
                       <Tooltip
                         className={cx(styles.vshardTooltip, 'meta-test__ReplicasetList_allRw_enabled')}
-                        content='All instances in the replicaset writeable'
+                        content="All instances in the replicaset writeable"
                       >
                         all rw
                       </Tooltip>
@@ -223,13 +203,13 @@ class ReplicasetList extends React.PureComponent {
                 <Button
                   className={styles.editBtn}
                   icon={IconEdit}
-                  intent='secondary'
+                  intent="secondary"
                   onClick={() => this.handleEditReplicasetRequest(replicaset)}
-                  text='Edit'
-                  data-cy='meta-test__editBtn'
+                  text="Edit"
+                  data-cy="meta-test__editBtn"
                 />
               </div>
-              <ReplicasetRoles className={styles.roles} roles={replicaset.roles}/>
+              <ReplicasetRoles className={styles.roles} roles={replicaset.roles} />
               <div className={styles.divider} />
               <ReplicasetServerList
                 clusterSelf={clusterSelf}
@@ -256,23 +236,25 @@ class ReplicasetList extends React.PureComponent {
     return this.prepareReplicasetList(dataSource);
   };
 
-  handleEditReplicasetRequest = (replicaset: Replicaset) => {
+  handleEditReplicasetRequest = (replicaset) => {
     const { history, location } = this.props;
     history.push({
-      search: addSearchParams(location.search, { r: replicaset.uuid })
+      search: addSearchParams(location.search, { r: replicaset.uuid }),
     });
   };
 }
 
 ReplicasetList.propTypes = {
   clusterSelf: PropTypes.any,
-  dataSource: PropTypes.arrayOf(PropTypes.shape({
-    uuid: PropTypes.string
-  })).isRequired,
+  dataSource: PropTypes.arrayOf(
+    PropTypes.shape({
+      uuid: PropTypes.string,
+    })
+  ).isRequired,
   editReplicaset: PropTypes.func.isRequired,
   joinServer: PropTypes.func.isRequired,
   createReplicaset: PropTypes.func.isRequired,
-  onServerLabelClick: PropTypes.func
+  onServerLabelClick: PropTypes.func,
 };
 
 export default withRouter(ReplicasetList);

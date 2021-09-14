@@ -1,25 +1,26 @@
 // @flow
 // TODO: move to uikit
-import * as React from 'react';
+import React from 'react';
+import { Link, withRouter } from 'react-router-dom';
 import { css, cx } from '@emotion/css';
 import {
   FlatListItem,
   HealthStatus,
   IconBucket,
   IconChip,
-  IconChipWarning,
   IconChipDanger,
+  IconChipWarning,
   LeaderFlag,
   ProgressBar,
   Text,
   Tooltip,
-  UriLabel
+  UriLabel,
 } from '@tarantool.io/ui-kit';
-import { withRouter, Link } from 'react-router-dom';
-import { type MemoryUsageRatios } from 'src/misc/memoryStatistics';
-import { getMemoryFragmentationLevel } from 'src/store/selectors/clusterPage';
+
 import { ServerDropdown } from 'src/components/ServerDropdown';
-import { type Label } from 'src/components/ServerLabels';
+import type { Label } from 'src/components/ServerLabels';
+import type { MemoryUsageRatios } from 'src/misc/memoryStatistics';
+import { getMemoryFragmentationLevel } from 'src/store/selectors/clusterPage';
 
 const SERVER_LABELS_HIGHLIGHTING_CLASS = 'ServerLabelsHighlightingArea';
 
@@ -127,19 +128,18 @@ const styles = {
     position: absolute;
     top: 12px;
     right: 12px;
-  `
+  `,
 };
 
 const byteUnits = ['KiB', 'MiB', 'GiB', 'TiB', 'PiB'];
 
-const getReadableBytes = size => {
+const getReadableBytes = (size) => {
   let bytes = size;
   let i = -1;
   do {
     bytes = bytes / 1024;
     i++;
-  }
-  while (bytes > 1024);
+  } while (bytes > 1024);
 
   return Math.max(bytes, 0.1).toFixed(1) + ' ' + byteUnits[i];
 };
@@ -148,14 +148,14 @@ type ServerAction = {
   onClick?: (MouseEvent) => void,
   color?: string,
   text?: string,
-}
+};
 
 type Server = {
   selfURI?: string,
   statistics?: {
     arenaUsed: number,
     bucketsCount: number,
-    quotaSize: number
+    quotaSize: number,
   } & MemoryUsageRatios,
   status: string,
   uri: string,
@@ -178,17 +178,17 @@ type ReplicasetServerListItemProps = {
   replicasetUUID: string,
   showFailoverPromote?: boolean,
   totalBucketsCount?: number,
-  ro?: boolean
+  ro?: boolean,
 };
 
 type ReplicasetServerListItemState = {
-  hovered: boolean
-}
+  hovered: boolean,
+};
 
 class ReplicasetServerListItem extends React.PureComponent<
   ReplicasetServerListItemProps,
   ReplicasetServerListItemState
-  > {
+> {
   render() {
     const {
       activeMaster,
@@ -206,15 +206,13 @@ class ReplicasetServerListItem extends React.PureComponent<
       totalBucketsCount,
       history,
       uuid,
-      ro
+      ro,
     } = this.props;
 
     const usageText = statistics
       ? `Memory usage: ${getReadableBytes(statistics.arenaUsed)} / ${getReadableBytes(statistics.quotaSize)}`
       : '';
-    const percentage = statistics
-      ? Math.max(1, statistics.arenaUsed / statistics.quotaSize * 100)
-      : 1;
+    const percentage = statistics ? Math.max(1, (statistics.arenaUsed / statistics.quotaSize) * 100) : 1;
 
     return (
       <FlatListItem
@@ -226,14 +224,14 @@ class ReplicasetServerListItem extends React.PureComponent<
         )}
       >
         <div className={cx(styles.row, { [styles.disabledRow]: disabled })}>
-          {(master || activeMaster) &&
+          {(master || activeMaster) && (
             <LeaderFlag
               className={cx(styles.leaderFlag, 'meta-test_leaderFlag')}
               state={status !== 'healthy' ? 'bad' : ro === false ? 'good' : 'warning'}
             />
-          }
+          )}
           <div className={styles.heading}>
-            <Text variant='h4' className={styles.alias}>
+            <Text variant="h4" className={styles.alias}>
               <Link className={styles.aliasLink} to={`/cluster/dashboard/instance/${uuid}`}>
                 {alias}
               </Link>
@@ -249,35 +247,32 @@ class ReplicasetServerListItem extends React.PureComponent<
             <div className={cx(styles.stats, 'meta-test__bucketIcon')}>
               {statistics && (
                 <React.Fragment>
-                  {typeof statistics.bucketsCount === 'number'
-                    ? (
-                      <Tooltip
-                        className={styles.bucketsCount}
-                        content={(
-                          <React.Fragment>
-                            {'Total buckets: '}
-                            <b>{typeof totalBucketsCount === 'number' ? totalBucketsCount : '-'}</b>
-                          </React.Fragment>
-                        )}
-                      >
-                        <IconBucket className={styles.iconMargin} />
-                        <Text className={styles.statsText} variant='p' tag='span'>
-                          Buckets: <b>{(statistics && statistics.bucketsCount) || '-'}</b>
-                        </Text>
-                      </Tooltip>
-                    )
-                    : <div className={styles.bucketsCount} />
-                  }
+                  {typeof statistics.bucketsCount === 'number' ? (
+                    <Tooltip
+                      className={styles.bucketsCount}
+                      content={
+                        <React.Fragment>
+                          {'Total buckets: '}
+                          <b>{typeof totalBucketsCount === 'number' ? totalBucketsCount : '-'}</b>
+                        </React.Fragment>
+                      }
+                    >
+                      <IconBucket className={styles.iconMargin} />
+                      <Text className={styles.statsText} variant="p" tag="span">
+                        Buckets: <b>{(statistics && statistics.bucketsCount) || '-'}</b>
+                      </Text>
+                    </Tooltip>
+                  ) : (
+                    <div className={styles.bucketsCount} />
+                  )}
                   <div className={styles.memStats}>
                     <div>
                       <MemoryIcon {...statistics} className={styles.iconMargin} />
-                      <Text className={styles.statsText} variant='p' tag='span'>{usageText}</Text>
+                      <Text className={styles.statsText} variant="p" tag="span">
+                        {usageText}
+                      </Text>
                     </div>
-                    <ProgressBar
-                      className={styles.memProgress}
-                      percents={percentage}
-                      statusColors
-                    />
+                    <ProgressBar className={styles.memProgress} percents={percentage} statusColors />
                   </div>
                 </React.Fragment>
               )}
@@ -296,10 +291,9 @@ class ReplicasetServerListItem extends React.PureComponent<
           uuid={uuid}
         />
       </FlatListItem>
-    )
+    );
   }
 }
-
 
 const MemoryIcon = (statistics: $PropertyType<Server, 'statistics'>) => {
   if (statistics) {
@@ -307,13 +301,13 @@ const MemoryIcon = (statistics: $PropertyType<Server, 'statistics'>) => {
     switch (fragmentationLevel) {
       case 'high':
         return (
-          <Tooltip tag='span' content="Running out of memory">
+          <Tooltip tag="span" content="Running out of memory">
             <IconChipDanger className={styles.iconMargin} />
           </Tooltip>
         );
       case 'medium':
         return (
-          <Tooltip tag='span' content="Memory is highly fragmented">
+          <Tooltip tag="span" content="Memory is highly fragmented">
             <IconChipWarning className={styles.iconMargin} />
           </Tooltip>
         );
@@ -321,6 +315,5 @@ const MemoryIcon = (statistics: $PropertyType<Server, 'statistics'>) => {
   }
   return <IconChip className={styles.iconMargin} />;
 };
-
 
 export default withRouter(ReplicasetServerListItem);

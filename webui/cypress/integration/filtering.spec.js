@@ -1,5 +1,4 @@
 describe('Replicaset filtering', () => {
-
   before(() => {
     cy.task('tarantool', {
       code: `
@@ -45,8 +44,8 @@ describe('Replicaset filtering', () => {
       _G.server:start()
 
       return true
-    `
-    }).should('deep.eq', [true])
+    `,
+    }).should('deep.eq', [true]);
   });
 
   after(() => {
@@ -54,7 +53,6 @@ describe('Replicaset filtering', () => {
   });
 
   it('Test: filtering', () => {
-
     ////////////////////////////////////////////////////////////////////
     cy.log('Open WebUI');
     ////////////////////////////////////////////////////////////////////
@@ -97,40 +95,32 @@ describe('Replicaset filtering', () => {
     ////////////////////////////////////////////////////////////////////
     cy.log('Join server dialog filtering');
     ////////////////////////////////////////////////////////////////////
-    cy.get('li').contains('spare').closest('li').find('button')
-      .contains('Configure').click();
+    cy.get('li').contains('spare').closest('li').find('button').contains('Configure').click();
     cy.get('.meta-test__ConfigureServerModal').contains('Join Replica Set').click();
 
     // Healthy
     cy.get('.meta-test__ConfigureServerModal button[type="button"]:contains(Filter)').click();
     cy.get('.meta-test__Filter__Dropdown *:contains(Healthy)').click({ force: true });
-    cy.get('.meta-test__ConfigureServerModal .meta-test__Filter input')
-      .should('have.value', 'status:healthy');
-    cy.get('.meta-test__ConfigureServerModal').contains('test-storage')
-      .should('not.exist');
+    cy.get('.meta-test__ConfigureServerModal .meta-test__Filter input').should('have.value', 'status:healthy');
+    cy.get('.meta-test__ConfigureServerModal').contains('test-storage').should('not.exist');
 
     // Unhealthy
     cy.get('.meta-test__ConfigureServerModal button[type="button"]:contains(Filter)').click();
     cy.get('.meta-test__Filter__Dropdown *:contains(Unhealthy)').click({ force: true });
-    cy.get('.meta-test__ConfigureServerModal .meta-test__Filter input')
-      .should('have.value', 'status:unhealthy');
-    cy.get('.meta-test__ConfigureServerModal').contains('test-router')
-      .should('not.exist');
+    cy.get('.meta-test__ConfigureServerModal .meta-test__Filter input').should('have.value', 'status:unhealthy');
+    cy.get('.meta-test__ConfigureServerModal').contains('test-router').should('not.exist');
 
     // Role
     cy.get('.meta-test__ConfigureServerModal button[type="button"]:contains(Filter)').click();
     cy.get('.meta-test__Filter__Dropdown *:contains(vshard-router)').click({ force: true });
-    cy.get('.meta-test__ConfigureServerModal .meta-test__Filter input')
-      .should('have.value', 'role:vshard-router');
-    cy.get('.meta-test__ConfigureServerModal').contains('test-storage')
-      .should('not.exist');
+    cy.get('.meta-test__ConfigureServerModal .meta-test__Filter input').should('have.value', 'role:vshard-router');
+    cy.get('.meta-test__ConfigureServerModal').contains('test-storage').should('not.exist');
 
     // Clear filter
     cy.get('.meta-test__ConfigureServerModal .meta-test__Filter svg').eq(1).click();
 
     // Search
-    cy.get('.meta-test__ConfigureServerModal .meta-test__Filter').find('input')
-      .type('test-storage');
+    cy.get('.meta-test__ConfigureServerModal .meta-test__Filter').find('input').type('test-storage');
     cy.get('.meta-test__ConfigureServerModal').contains('test-storage');
     cy.get('.meta-test__ConfigureServerModal').contains('test-router').should('not.exist');
 

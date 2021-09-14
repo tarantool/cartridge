@@ -1,16 +1,10 @@
 // @flow
 // TODO: move to uikit
-import * as React from 'react';
+import React from 'react';
 import { css, cx } from '@emotion/css';
 import { defaultMemoize } from 'reselect';
-import {
-  Button,
-  HealthStatus,
-  Text,
-  TiledList,
-  TiledListItem,
-  UriLabel
-} from '@tarantool.io/ui-kit';
+import { Button, HealthStatus, Text, TiledList, TiledListItem, UriLabel } from '@tarantool.io/ui-kit';
+
 import type { Server } from 'src/generated/graphql-typing';
 
 const styles = {
@@ -50,16 +44,15 @@ const styles = {
   `,
   hiddenButton: css`
     visibility: hidden;
-  `
+  `,
 };
 
 const prepareDataSource = (dataSource, clusterSelf) => {
-  if (clusterSelf.configure)
-    return [...dataSource];
+  if (clusterSelf.configure) return [...dataSource];
   return [...dataSource].sort((a, b) => {
-    return a.uri === clusterSelf.uri ? -1 : (b.uri === clusterSelf.uri ? 1 : 0)
+    return a.uri === clusterSelf.uri ? -1 : b.uri === clusterSelf.uri ? 1 : 0;
   });
-}
+};
 
 type UnconfiguredServerListProps = {
   className?: string,
@@ -68,54 +61,47 @@ type UnconfiguredServerListProps = {
     uuid: ?string,
   },
   dataSource: Server[],
-  onServerConfigure: (Server) => void
+  onServerConfigure: (Server) => void,
 };
 
 class UnconfiguredServerList extends React.PureComponent<UnconfiguredServerListProps> {
   render() {
-    const { uri, uuid } = (this.props.clusterSelf || {});
+    const { uri, uuid } = this.props.clusterSelf || {};
     const dataSource = this.getDataSource();
 
     return (
-      <TiledList
-        className={cx(
-          this.props.className,
-          'meta-test__UnconfiguredServerList'
-        )}
-        outer={false}
-      >
-        {dataSource.map(item => (
-          <TiledListItem className={styles.row} itemKey={item.uri}>
+      <TiledList className={cx(this.props.className, 'meta-test__UnconfiguredServerList')} outer={false}>
+        {dataSource.map((item, index) => (
+          <TiledListItem key={index} className={styles.row} itemKey={item.uri}>
             {/* <Checkbox
               className={styles.checkBox}
               checked={false}
               disabled
             /> */}
             <div className={styles.heading}>
-              <Text variant='h4' tag='span'>{item.alias}</Text>
+              <Text variant="h4" tag="span">
+                {item.alias}
+              </Text>
               <UriLabel
                 uri={item.uri}
                 weAreHere={uri && item.uri === uri}
                 className={uri && item.uri === uri && 'meta-test__youAreHereIcon'}
               />
             </div>
-            <HealthStatus
-              className={styles.status}
-              status={item.status}
-              message={item.message}
-            />
+            <HealthStatus className={styles.status} status={item.status} message={item.message} />
             <Button
-              className={cx(styles.configureBtn,'meta-test__configureBtn',
-                { [styles.hiddenButton]: !(uuid || (uri === item.uri)) } )}
-              intent='secondary'
+              className={cx(styles.configureBtn, 'meta-test__configureBtn', {
+                [styles.hiddenButton]: !(uuid || uri === item.uri),
+              })}
+              intent="secondary"
               onClick={() => this.props.onServerConfigure(item)}
-              text='Configure'
+              text="Configure"
             />
           </TiledListItem>
         ))}
       </TiledList>
     );
-  };
+  }
 
   getDataSource = () => {
     const { dataSource } = this.props;

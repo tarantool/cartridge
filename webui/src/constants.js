@@ -5,6 +5,6 @@ export const DEFAULT_VSHARD_GROUP_NAME = 'default'; // indicates vshard groups a
 export const LS_CODE_EDITOR_OPENED_FILE = 'tarantool_cartridge_editor_opened_file';
 export const FAILOVER_STATE_PROVIDERS = [
   { value: 'tarantool', label: 'Tarantool (stateboard)' },
-  { value: 'etcd2', label: 'Etcd' }
+  { value: 'etcd2', label: 'Etcd' },
 ];
 export const BUILT_IN_USERS = ['admin'];

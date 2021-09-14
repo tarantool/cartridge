@@ -4,30 +4,29 @@ import { TagsList } from '@tarantool.io/ui-kit';
 
 export type Label = {
   name: string,
-  value: string
+  value: string,
 };
 
 export type ServerLabelsProps = {
   className?: string,
   labels?: Label[],
   onLabelClick?: (label: Label) => void,
-  highlightingOnHover?: string
+  highlightingOnHover?: string,
 };
 
 const ServerLabels = ({ className, highlightingOnHover, labels, onLabelClick }: ServerLabelsProps) => {
-  if (!labels || !labels.length)
-    return null;
+  if (!labels || !labels.length) return null;
 
   return (
     <TagsList
       className={className}
-      heading='Tags'
+      heading="Tags"
       highlightingOnHover={highlightingOnHover}
       values={labels}
       renderItem={({ name, value }) => `${name}: ${value}`}
       onTagClick={onLabelClick}
     />
   );
-}
+};
 
 export default ServerLabels;

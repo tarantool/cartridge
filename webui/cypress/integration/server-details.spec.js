@@ -1,5 +1,4 @@
 describe('Server details', () => {
-
   before(() => {
     cy.task('tarantool', {
       code: `
@@ -24,7 +23,7 @@ describe('Server details', () => {
           {{failover_timeout = 0}}
         )
         return true
-      `
+      `,
     }).should('deep.eq', [true]);
   });
 
@@ -33,11 +32,9 @@ describe('Server details', () => {
   });
 
   function openServerDetailsModal(serverAlias) {
-    cy.get('li').contains(serverAlias).closest('li')
-      .find('.meta-test__ReplicasetServerListItem__dropdownBtn').click();
-    cy.get('.meta-test__ReplicasetServerListItem__dropdown *')
-      .contains('Server details').click();
-  };
+    cy.get('li').contains(serverAlias).closest('li').find('.meta-test__ReplicasetServerListItem__dropdownBtn').click();
+    cy.get('.meta-test__ReplicasetServerListItem__dropdown *').contains('Server details').click();
+  }
 
   function checkServerDetailsTabs() {
     cy.get('.meta-test__ServerDetailsModal button').contains('Cartridge').click();
@@ -49,10 +46,9 @@ describe('Server details', () => {
     cy.get('.meta-test__ServerDetailsModal button').contains('Vshard-Router').click();
     cy.get('.meta-test__ServerDetailsModal button').contains('Vshard-Storage').click();
     cy.get('.meta-test__ServerDetailsModal button').contains('Issues 0').click();
-  };
+  }
 
   it('Test: serever-details', () => {
-
     ////////////////////////////////////////////////////////////////////
     cy.log('Alive server');
     ////////////////////////////////////////////////////////////////////
@@ -68,9 +64,7 @@ describe('Server details', () => {
     cy.get('div').contains('You have no any zone,');
     cy.get('div').contains('please add one.');
     cy.get('button:contains(Add new zone)').click();
-    cy.get('.ZoneAddModal input[name="zone_name"]')
-      .should('be.focused')
-      .type('Narnia');
+    cy.get('.ZoneAddModal input[name="zone_name"]').should('be.focused').type('Narnia');
     cy.get('.meta-test__ZoneAddSubmitBtn').click();
     cy.get('.ZoneAddModal').should('not.exist');
     cy.get('.meta-test__ServerDetailsModal').find('button:contains(Zone Narnia)');
@@ -86,9 +80,7 @@ describe('Server details', () => {
 
     //add new zone Mordor
     cy.get('button:contains(Add new zone)').click();
-    cy.get('.ZoneAddModal input[name="zone_name"]')
-      .should('be.focused')
-      .type('Mordor');
+    cy.get('.ZoneAddModal input[name="zone_name"]').should('be.focused').type('Mordor');
     cy.get('.meta-test__ZoneAddSubmitBtn').click();
     cy.get('.ZoneAddModal').should('not.exist');
     cy.get('.meta-test__ServerDetailsModal').find('button:contains(Zone Mordor)');
@@ -112,31 +104,26 @@ describe('Server details', () => {
 
     // Enable/disable servers
     openServerDetailsModal('dummy-1');
-    cy.get('.meta-test__ServerDetailsModal .meta-test__ReplicasetServerListItem__dropdownBtn')
-      .click();
+    cy.get('.meta-test__ServerDetailsModal .meta-test__ReplicasetServerListItem__dropdownBtn').click();
 
     // Disable leader: will fail
-    cy.get('.meta-test__ReplicasetServerListItem__dropdown div')
-      .contains('Disable server').click();
-    cy.get('span:contains(Invalid cluster topology config: Current instance "localhost:13301" can not be disabled)')
-      .click();
+    cy.get('.meta-test__ReplicasetServerListItem__dropdown div').contains('Disable server').click();
+    cy.get(
+      'span:contains(Invalid cluster topology config: Current instance "localhost:13301" can not be disabled)'
+    ).click();
     cy.get('.meta-test__ServerDetailsModal  span:contains(Disabled)').should('not.exist');
     cy.get('.meta-test__ServerDetailsModal button').contains('Close').click();
 
     openServerDetailsModal('dummy-2');
 
     // Disable replica: will succeed
-    cy.get('.meta-test__ServerDetailsModal .meta-test__ReplicasetServerListItem__dropdownBtn')
-      .click();
-    cy.get('.meta-test__ReplicasetServerListItem__dropdown div')
-      .contains('Disable server').click();
+    cy.get('.meta-test__ServerDetailsModal .meta-test__ReplicasetServerListItem__dropdownBtn').click();
+    cy.get('.meta-test__ReplicasetServerListItem__dropdown div').contains('Disable server').click();
     cy.get('.meta-test__ServerDetailsModal span:contains(Disabled)').should('exist');
 
     // Enable replica back: will succeed
-    cy.get('.meta-test__ServerDetailsModal .meta-test__ReplicasetServerListItem__dropdownBtn')
-      .click();
-    cy.get('.meta-test__ReplicasetServerListItem__dropdown div')
-      .contains('Enable server').click();
+    cy.get('.meta-test__ServerDetailsModal .meta-test__ReplicasetServerListItem__dropdownBtn').click();
+    cy.get('.meta-test__ReplicasetServerListItem__dropdown div').contains('Enable server').click();
     cy.get('.meta-test__ServerDetailsModal span:contains(Disabled)').should('not.exist');
 
     cy.get('.meta-test__ServerDetailsModal button').contains('Close').click();
@@ -148,11 +135,13 @@ describe('Server details', () => {
       code: `
       _G.cluster:server('dummy-2').process:kill('KILL')
       _G.cluster:server('dummy-2').process = nil
-    `
+    `,
     });
 
-    cy.get('.ServerLabelsHighlightingArea').contains('dummy-2')
-      .closest('li').should('contain', 'Server status is "dead"');
+    cy.get('.ServerLabelsHighlightingArea')
+      .contains('dummy-2')
+      .closest('li')
+      .should('contain', 'Server status is "dead"');
 
     openServerDetailsModal('dummy-2');
     cy.get('.meta-test__ServerDetailsModal button:contains(Zone Mordor)').click();
@@ -163,9 +152,7 @@ describe('Server details', () => {
 
     cy.get('.meta-test__ServerDetailsModal button:contains(Zone Mordor)').click();
     cy.get('button:contains(Add new zone)').click();
-    cy.get('.ZoneAddModal input[name="zone_name"]')
-      .should('be.focused')
-      .type('Moscow');
+    cy.get('.ZoneAddModal input[name="zone_name"]').should('be.focused').type('Moscow');
     cy.get('.meta-test__ZoneAddSubmitBtn').click();
     cy.get('.ZoneAddModal_error').find('span:contains("localhost:13302":)');
     cy.get('h2:contains(Add name of zone)').next().click();
@@ -181,19 +168,14 @@ describe('Server details', () => {
     openServerDetailsModal('dummy-2');
 
     // Disable dead replica: will succeed
-    cy.get('.meta-test__ServerDetailsModal .meta-test__ReplicasetServerListItem__dropdownBtn')
-      .click();
-    cy.get('.meta-test__ReplicasetServerListItem__dropdown div')
-      .contains('Disable server').click();
+    cy.get('.meta-test__ServerDetailsModal .meta-test__ReplicasetServerListItem__dropdownBtn').click();
+    cy.get('.meta-test__ReplicasetServerListItem__dropdown div').contains('Disable server').click();
     cy.get('.meta-test__ServerDetailsModal span:contains(Disabled)').should('exist');
 
     // Enable dead replica: will fail
-    cy.get('.meta-test__ServerDetailsModal .meta-test__ReplicasetServerListItem__dropdownBtn')
-      .click();
-    cy.get('.meta-test__ReplicasetServerListItem__dropdown div')
-      .contains('Enable server').click();
-    cy.get('span:contains(NetboxCallError: "localhost:13302":)')
-      .click();
+    cy.get('.meta-test__ServerDetailsModal .meta-test__ReplicasetServerListItem__dropdownBtn').click();
+    cy.get('.meta-test__ReplicasetServerListItem__dropdown div').contains('Enable server').click();
+    cy.get('span:contains(NetboxCallError: "localhost:13302":)').click();
     cy.get('.meta-test__ServerDetailsModal span:contains(Disabled)').should('exist');
     cy.get('.meta-test__ServerDetailsModal button').contains('Close').click();
     // Enable/disable servers - end
@@ -205,17 +187,14 @@ describe('Server details', () => {
 
     cy.get('.meta-test__ServerDetailsModal button:contains(Zone Mordor)').click();
     cy.get('button:contains(Add new zone)').click();
-    cy.get('.ZoneAddModal input[name="zone_name"]')
-      .should('be.focused')
-      .type('Rostov');
+    cy.get('.ZoneAddModal input[name="zone_name"]').should('be.focused').type('Rostov');
     cy.get('.meta-test__ZoneAddSubmitBtn').click();
     cy.get('.meta-test__ServerDetailsModal').find('button:contains(Zone Rostov)');
 
-    cy.task('tarantool', { code: `return _G.cluster:server('dummy-2').instance_uuid` })
-      .then(resp => {
-        const uuid = resp[0];
-        cy.get('.meta-test__ServerDetailsModal').contains(uuid);
-      });
+    cy.task('tarantool', { code: `return _G.cluster:server('dummy-2').instance_uuid` }).then((resp) => {
+      const uuid = resp[0];
+      cy.get('.meta-test__ServerDetailsModal').contains(uuid);
+    });
 
     cy.get('.meta-test__ServerDetailsModal button').contains('Close').click();
   });

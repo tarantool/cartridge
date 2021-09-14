@@ -1,22 +1,22 @@
-import { isGraphqlAccessDeniedError, getGraphqlErrorMessage } from 'src/api/graphql';
 import { isNil } from 'ramda';
 
+import { getGraphqlErrorMessage, isGraphqlAccessDeniedError } from 'src/api/graphql';
 import {
   APP_DATA_REQUEST_ERROR,
   APP_DATA_REQUEST_SUCCESS,
   AUTH_ACCESS_DENIED,
   AUTH_LOG_IN_REQUEST,
-  AUTH_LOG_IN_REQUEST_SUCCESS,
   AUTH_LOG_IN_REQUEST_ERROR,
+  AUTH_LOG_IN_REQUEST_SUCCESS,
   AUTH_LOG_OUT_REQUEST,
-  AUTH_LOG_OUT_REQUEST_SUCCESS,
   AUTH_LOG_OUT_REQUEST_ERROR,
-  AUTH_TURN_REQUEST_ERROR,
+  AUTH_LOG_OUT_REQUEST_SUCCESS,
   AUTH_TURN_REQUEST,
+  AUTH_TURN_REQUEST_ERROR,
   AUTH_TURN_REQUEST_SUCCESS,
-  SET_AUTH_MODAL_VISIBLE,
   EXPECT_WELCOME_MESSAGE,
-  SET_WELCOME_MESSAGE
+  SET_AUTH_MODAL_VISIBLE,
+  SET_WELCOME_MESSAGE,
 } from 'src/store/actionTypes';
 
 const initialState = {
@@ -27,7 +27,7 @@ const initialState = {
   error: null,
   authModalVisible: false,
   welcomeMessageExpected: false,
-  welcomeMessage: null
+  welcomeMessage: null,
 };
 
 export function reducer(state = initialState, { type, payload, error }) {
@@ -39,7 +39,7 @@ export function reducer(state = initialState, { type, payload, error }) {
         authorized: !isNil(payload.authParams.username),
         username: payload.authParams.username,
         loading: false,
-        error: null
+        error: null,
       };
 
     case AUTH_LOG_IN_REQUEST:
@@ -48,8 +48,8 @@ export function reducer(state = initialState, { type, payload, error }) {
       return {
         ...state,
         loading: true,
-        error: null
-      }
+        error: null,
+      };
 
     case AUTH_LOG_IN_REQUEST_ERROR:
     case AUTH_LOG_OUT_REQUEST_ERROR:
@@ -58,7 +58,7 @@ export function reducer(state = initialState, { type, payload, error }) {
       return {
         ...state,
         loading: false,
-        error: isGraphqlAccessDeniedError(error) ? null : (getGraphqlErrorMessage(error) || 'Request error')
+        error: isGraphqlAccessDeniedError(error) ? null : getGraphqlErrorMessage(error) || 'Request error',
       };
 
     case AUTH_LOG_IN_REQUEST_SUCCESS:
@@ -68,7 +68,7 @@ export function reducer(state = initialState, { type, payload, error }) {
         username: payload.username,
         loading: false,
         error: payload.error || null,
-        authModalVisible: state.authModalVisible && !payload.authorized
+        authModalVisible: state.authModalVisible && !payload.authorized,
       };
 
     case AUTH_LOG_OUT_REQUEST_SUCCESS:
@@ -77,7 +77,7 @@ export function reducer(state = initialState, { type, payload, error }) {
         authorized: false,
         username: null,
         loading: false,
-        error: null
+        error: null,
       };
 
     case AUTH_TURN_REQUEST_SUCCESS:
@@ -85,7 +85,7 @@ export function reducer(state = initialState, { type, payload, error }) {
         ...state,
         authorizationEnabled: payload.enabled,
         loading: false,
-        error: error || null
+        error: error || null,
       };
 
     case AUTH_ACCESS_DENIED:
@@ -93,26 +93,26 @@ export function reducer(state = initialState, { type, payload, error }) {
         ...state,
         authorizationEnabled: true,
         authorized: false,
-        username: null
+        username: null,
       };
 
     case SET_AUTH_MODAL_VISIBLE:
       return {
         ...state,
         error: null,
-        authModalVisible: payload.visible
+        authModalVisible: payload.visible,
       };
 
     case EXPECT_WELCOME_MESSAGE:
       return {
         ...state,
-        welcomeMessageExpected: payload.doExpect
+        welcomeMessageExpected: payload.doExpect,
       };
 
     case SET_WELCOME_MESSAGE:
       return {
         ...state,
-        welcomeMessage: payload.text
+        welcomeMessage: payload.text,
       };
 
     default:

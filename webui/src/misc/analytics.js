@@ -6,6 +6,7 @@ if (!Element.prototype.matches) {
 
 if (!Element.prototype.closest) {
   Element.prototype.closest = function (s) {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     var el = this;
 
     do {
@@ -16,43 +17,48 @@ if (!Element.prototype.closest) {
   };
 }
 
-const isButton = el => el.tagName === 'BUTTON' || !!el.closest('button')
+const isButton = (el) => el.tagName === 'BUTTON' || !!el.closest('button');
 
-const isLink = el => el.tagName === 'A' || !!el.closest('a')
+const isLink = (el) => el.tagName === 'A' || !!el.closest('a');
 
-const metaClassNameSearch = /meta/
+const metaClassNameSearch = /meta/;
 
-const getMetaClassName = el => {
-  const classList = el.classList
+const getMetaClassName = (el) => {
+  const classList = el.classList;
   for (let i = 0; i < classList.length; i++) {
-    const className = classList.item(i)
+    const className = classList.item(i);
     if (className.match(metaClassNameSearch)) {
-      return className
+      return className;
     }
   }
-  return null
-}
+  return null;
+};
 
-window.addEventListener('click', e => {
-  const target = e.target
-  if (isButton(target)) {
-    const metaClass = getMetaClassName(target)
-    if (metaClass) {
+window.addEventListener(
+  'click',
+  (e) => {
+    const target = e.target;
+    if (isButton(target)) {
+      const metaClass = getMetaClassName(target);
+      if (metaClass) {
+        tarantool_enterprise_core.analyticModule.sendEvent({
+          type: 'action',
+          action: metaClass,
+          category: 'click',
+        });
+      }
+      return;
+    }
+    if (isLink(target)) {
+      const link = target.closest('a');
       tarantool_enterprise_core.analyticModule.sendEvent({
         type: 'action',
-        action: metaClass,
-        category: 'click'
-      })
+        action: link.getAttribute('href'),
+        category: 'link',
+      });
+      // eslint-disable-next-line sonarjs/no-redundant-jump
+      return;
     }
-    return
-  }
-  if (isLink(target)) {
-    const link = target.closest('a')
-    tarantool_enterprise_core.analyticModule.sendEvent({
-      type: 'action',
-      action: link.getAttribute('href'),
-      category: 'link'
-    })
-    return
-  }
-}, true)
+  },
+  true
+);

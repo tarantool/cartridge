@@ -1,22 +1,18 @@
 // @flow
 import React from 'react';
-import { css } from '@emotion/css'
-import { useStore } from 'effector-react';
 import { connect } from 'react-redux';
+import { css } from '@emotion/css';
+import { useStore } from 'effector-react';
+import { Alert, Button, Modal, Text, colors } from '@tarantool.io/ui-kit';
+
 import {
-  Alert,
-  Button,
-  Modal,
-  Text,
-  colors
-} from '@tarantool.io/ui-kit';
-import {
-  detailsClose,
   $restartReplicationsModal,
-  restartReplicationsApplyClick
+  detailsClose,
+  restartReplicationsApplyClick,
 } from 'src/store/effector/clusterSuggestions';
-import type { State } from '../store/rootReducer';
+
 import type { Server } from '../generated/graphql-typing';
+import type { State } from '../store/rootReducer';
 
 const styles = {
   msg: css`
@@ -34,48 +30,57 @@ const styles = {
     &:last-child {
       margin-bottom: 0;
     }
-  `
+  `,
 };
 
 const msg = `The replication isn't all right. Restart it, maybe it helps.`;
 type Props = {
-  serverList?: Server[]
-}
+  serverList?: Server[],
+};
 
 const RestartReplicationsSuggestionModal = ({ serverList }: Props) => {
-  const {
-    visible,
-    error,
-    pending,
-    suggestions
-  } = useStore($restartReplicationsModal);
+  const { visible, error, pending, suggestions } = useStore($restartReplicationsModal);
 
-  if (!visible)
-    return null;
+  if (!visible) return null;
 
-  const richSuggestions = suggestions && serverList && suggestions.map(
-    ({ uuid }) => {
-      const instance = serverList.find(instance => instance.uuid === uuid);
-      return instance
-        ? `${instance.uri}${instance.alias ? ` (${instance.alias})` : ''}`
-        : uuid;
-    }
-  );
+  const richSuggestions =
+    suggestions &&
+    serverList &&
+    suggestions.map(({ uuid }) => {
+      const instance = serverList.find((instance) => instance.uuid === uuid);
+      if (!instance) {
+        return uuid;
+      }
+
+      return '' + instance.uri + (instance.alias ? ` (${instance.alias})` : '');
+    });
 
   return (
     <Modal
-      className='meta-test__RestartReplicationSuggestionModal'
+      className="meta-test__RestartReplicationSuggestionModal"
       footerControls={[
-        <Button intent='primary' size='l' text='Restart' onClick={restartReplicationsApplyClick} loading={pending} />
+        <Button
+          key={0}
+          intent="primary"
+          size="l"
+          text="Restart"
+          onClick={restartReplicationsApplyClick}
+          loading={pending}
+        />,
       ]}
       onClose={detailsClose}
-      title='Restart replication'
+      title="Restart replication"
     >
-      <Text className={styles.msg} tag='p'>{msg}</Text>
-      <Text className={styles.list} tag='ul'>
-        {richSuggestions && richSuggestions.map(row => (
-          <li className={styles.listItem} key={row}>{row}</li>
-        ))}
+      <Text className={styles.msg} tag="p">
+        {msg}
+      </Text>
+      <Text className={styles.list} tag="ul">
+        {richSuggestions &&
+          richSuggestions.map((row) => (
+            <li className={styles.listItem} key={row}>
+              {row}
+            </li>
+          ))}
       </Text>
       {error && (
         <Alert type="error">

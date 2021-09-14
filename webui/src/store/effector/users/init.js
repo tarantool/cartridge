@@ -1,23 +1,24 @@
 // @flow
 import { forward } from 'effector';
+
 import { getGraphqlErrorMessage } from 'src/api/graphql';
 
 import {
+  $userMutationError,
   $usernameToMutate,
-  $visibleModal,
   $usersList,
   $usersListFetchError,
-  $userMutationError,
+  $visibleModal,
+  addUserFx,
+  editUserFx,
+  fetchUsersListFx,
   hideModal,
+  removeUserFx,
+  resetUsersList,
   showUserAddModal,
   showUserEditModal,
   showUserRemoveModal,
-  fetchUsersListFx,
-  addUserFx,
-  editUserFx,
-  removeUserFx,
-  resetUsersList
-} from './state'
+} from './state';
 
 $usersList
   .on(fetchUsersListFx.doneData, (_, items) => items)

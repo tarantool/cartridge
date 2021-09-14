@@ -1,35 +1,27 @@
 // @flow
-import * as React from 'react'
-import { connect } from 'react-redux'
-import type { State } from '../store/rootReducer'
-import { Panel } from './Panel'
-import { css, cx } from '@emotion/css'
+import React from 'react';
+import { connect } from 'react-redux';
+import { css, cx } from '@emotion/css';
 import styled from '@emotion/styled';
-import {
-  Button,
-  Modal,
-  CopyToClipboard,
-  Markdown,
-  PopupBody,
-  PopupFooter,
-  Tabbed,
-  Text
-} from '@tarantool.io/ui-kit'
-import { validateTarantoolUri } from '../misc/decomposeTarantoolUri';
+import { Button, CopyToClipboard, Markdown, Modal, PopupBody, PopupFooter, Tabbed, Text } from '@tarantool.io/ui-kit';
 
-const uriDecompose = uri => {
-  const [credentials, server] = uri.split('@')
-  const [user, password] = credentials.split(':')
-  const [host, port] = server.split(':')
+import { validateTarantoolUri } from '../misc/decomposeTarantoolUri';
+import type { State } from '../store/rootReducer';
+import { Panel } from './Panel';
+
+const uriDecompose = (uri) => {
+  const [credentials, server] = uri.split('@');
+  const [user, password] = credentials.split(':');
+  const [host, port] = server.split(':');
   return {
     user,
     password,
     host,
-    port
-  }
-}
+    port,
+  };
+};
 
-const connectInfoMap: {[key: string]: {markdown: string, decomposed: boolean}} = {
+const connectInfoMap: { [key: string]: { markdown: string, decomposed: boolean } } = {
   Python: {
     markdown: `
 ## Connect to Tarantool Cartridge using [python client](https://github.com/tarantool/tarantool-python)
@@ -62,7 +54,7 @@ print(results)
 python3 example.py
 \`\`\`
 `,
-    decomposed: true
+    decomposed: true,
   },
   PHP: {
     markdown: `
@@ -99,9 +91,9 @@ print_r($result);
 php example.php
 \`\`\`
 `,
-    decomposed: false
-  }
-}
+    decomposed: false,
+  },
+};
 
 const styles = {
   wrap: css`
@@ -116,179 +108,156 @@ const styles = {
   copyBtn: css`
     flex-shrink: 0;
     margin-left: 2px;
-  `
-}
+  `,
+};
 
 const DemoContext = styled(Panel)`
   margin: 24px 16px;
   padding: 16px;
   display: flex;
-`
+`;
 
 const Bold = styled.span`
   font-weight: bold;
   white-space: pre;
-`
+`;
 
 const MainContent = styled.div`
   flex-shrink: 1;
   display: flex;
   align-items: center;
-`
+`;
 
-const formatUri = (text: string, uri: string) => text.replace(':demo_uri:', uri)
+const formatUri = (text: string, uri: string) => text.replace(':demo_uri:', uri);
 const formatDecomposeUri = (text: string, uri: string) => {
-  const { user, password, host, port } = uriDecompose(uri)
-  return text.replace(':port:', port)
-    .replace(':user:', user)
-    .replace(':password:', password)
-    .replace(':host:', host)
-}
+  const { user, password, host, port } = uriDecompose(uri);
+  return text.replace(':port:', port).replace(':user:', user).replace(':password:', password).replace(':host:', host);
+};
 
 type DemoInfoProps = {
   className: ?string,
-  uri: ?string
-}
+  uri: ?string,
+};
 
 type DemoInfoState = {
   isShowReset: boolean,
   isShowConnectInfo: boolean,
-}
+};
 
 class DemoInfo extends React.Component<DemoInfoProps, DemoInfoState> {
   state = {
     isShowReset: false,
-    isShowConnectInfo: false
-  }
+    isShowConnectInfo: false,
+  };
 
   showResetModal = () => {
-    this.setState(() => ({ isShowReset: true }))
-  }
+    this.setState(() => ({ isShowReset: true }));
+  };
   hideResetModal = () => {
-    this.setState(() => ({ isShowReset: false }))
-  }
+    this.setState(() => ({ isShowReset: false }));
+  };
   showConnectInfo = () => {
-    this.setState(() => ({ isShowConnectInfo: true }))
-  }
+    this.setState(() => ({ isShowConnectInfo: true }));
+  };
   hideConnectInfo = () => {
-    this.setState(() => ({ isShowConnectInfo: false }))
-  }
+    this.setState(() => ({ isShowConnectInfo: false }));
+  };
 
   makeReset = () => {
-    setTimeout(
-      () => window.location.href = '/?flush_session=1',
-      1000
-    );
-  }
+    setTimeout(() => (window.location.href = '/?flush_session=1'), 1000);
+  };
 
   render() {
-    const { className, uri } = this.props
-    const { isShowReset, isShowConnectInfo } = this.state
-    if (!uri)
-      return null
+    const { className, uri } = this.props;
+    const { isShowReset, isShowConnectInfo } = this.state;
+    if (!uri) return null;
 
-    const isValidUri = validateTarantoolUri(uri)
+    const isValidUri = validateTarantoolUri(uri);
 
-    if (!isValidUri)
-      return null
+    if (!isValidUri) return null;
 
-    const tabStyles = css`padding: 24px 0 0;`;
+    const tabStyles = css`
+      padding: 24px 0 0;
+    `;
 
-    const tabs = []
+    const tabs = [];
 
     try {
-
       for (const lang in connectInfoMap) {
-        const { markdown, decomposed } = connectInfoMap[lang]
+        const { markdown, decomposed } = connectInfoMap[lang];
         tabs.push({
           label: lang,
-          content: <PopupBody className={tabStyles}>
-            <Markdown text={decomposed ? formatDecomposeUri(markdown, uri) : formatUri(markdown, uri)}/>
-          </PopupBody>
-        })
+          content: (
+            <PopupBody className={tabStyles}>
+              <Markdown text={decomposed ? formatDecomposeUri(markdown, uri) : formatUri(markdown, uri)} />
+            </PopupBody>
+          ),
+        });
       }
-    } catch(e) {
-
+    } catch (e) {
+      // no-empty
     }
 
-    return <React.Fragment>
-      {
-        isShowReset &&
-        <Modal
-          footerControls={[
-            <Button
-              onClick={this.hideResetModal}
-              text='Cancel'
-              size='l'
-            />,
-            <Button
-              className='meta_TryCartridge_ResetConfig'
-              intent='primary'
-              onClick={this.makeReset}
-              size='l'
-              text='Reset'
-            />
-          ]}
-          title='Reset configuration'
-          visible={isShowReset}
-          onClose={this.hideResetModal}
-        >
-          <Text tag='p'>Do you really want to reset your settings?</Text>
-          <Text tag='p'>This action will result in data loss.</Text>
-        </Modal>
-      }
-      {
-        isShowConnectInfo &&
-        <Modal
-          visible={isShowConnectInfo}
-          title='Connect info'
-          onClose={this.hideConnectInfo}
-          className='meta-test__DemoInfo_modal'
-          wide
-        >
-          <Tabbed tabs={tabs}/>
-          <PopupFooter
-            controls={[
-              <Button text='Close' onClick={this.hideConnectInfo} size='l' />
+    return (
+      <React.Fragment>
+        {isShowReset && (
+          <Modal
+            footerControls={[
+              <Button key="Cancel" onClick={this.hideResetModal} text="Cancel" size="l" />,
+              <Button
+                key="Reset"
+                className="meta_TryCartridge_ResetConfig"
+                intent="primary"
+                onClick={this.makeReset}
+                size="l"
+                text="Reset"
+              />,
             ]}
-          />
-        </Modal>
-      }
-      <DemoContext className={cx(styles.wrap, 'meta-test__DemoInfo', className)}>
-        <MainContent>
-          <Text>
-            {'Your demo server is created. Temporary address of your server: '}
-            <Bold>
-              {uri}
-              <CopyToClipboard
-                className={styles.copyBtn}
-                content={uri}
-                intent='plain'
-                size='s'
-              />
-            </Bold>
-          </Text>
-          <Button
-            className={cx(styles.btn, 'meta_TryCartridge_HowToConnect')}
-            text='How to connect?'
-            intent='secondary'
-            onClick={this.showConnectInfo}
-          />
-        </MainContent>
-        <Button
-          className={styles.btn}
-          text='Reset configuration'
-          intent='secondary'
-          onClick={this.showResetModal}
-        />
-      </DemoContext>
-    </React.Fragment>
+            title="Reset configuration"
+            visible={isShowReset}
+            onClose={this.hideResetModal}
+          >
+            <Text tag="p">Do you really want to reset your settings?</Text>
+            <Text tag="p">This action will result in data loss.</Text>
+          </Modal>
+        )}
+        {isShowConnectInfo && (
+          <Modal
+            visible={isShowConnectInfo}
+            title="Connect info"
+            onClose={this.hideConnectInfo}
+            className="meta-test__DemoInfo_modal"
+            wide
+          >
+            <Tabbed tabs={tabs} />
+            <PopupFooter controls={[<Button key="Close" text="Close" onClick={this.hideConnectInfo} size="l" />]} />
+          </Modal>
+        )}
+        <DemoContext className={cx(styles.wrap, 'meta-test__DemoInfo', className)}>
+          <MainContent>
+            <Text>
+              {'Your demo server is created. Temporary address of your server: '}
+              <Bold>
+                {uri}
+                <CopyToClipboard className={styles.copyBtn} content={uri} intent="plain" size="s" />
+              </Bold>
+            </Text>
+            <Button
+              className={cx(styles.btn, 'meta_TryCartridge_HowToConnect')}
+              text="How to connect?"
+              intent="secondary"
+              onClick={this.showConnectInfo}
+            />
+          </MainContent>
+          <Button className={styles.btn} text="Reset configuration" intent="secondary" onClick={this.showResetModal} />
+        </DemoContext>
+      </React.Fragment>
+    );
   }
 }
 
-
 export default connect(({ app: { clusterSelf } }: State) => {
   return {
-    uri: (clusterSelf && clusterSelf.demo_uri) || null
-  }
-})(DemoInfo)
+    uri: (clusterSelf && clusterSelf.demo_uri) || null,
+  };
+})(DemoInfo);

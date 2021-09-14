@@ -1,13 +1,10 @@
 import {
-  APP_DID_MOUNT,
+  APP_CONNECTION_STATE_CHANGE,
   APP_CREATE_MESSAGE,
+  APP_DID_MOUNT,
   APP_SET_MESSAGE_DONE,
-  APP_CONNECTION_STATE_CHANGE
 } from 'src/store/actionTypes';
-import {
-  getActionCreator,
-  getPageMountActionCreator
-} from 'src/store/commonRequest';
+import { getActionCreator, getPageMountActionCreator } from 'src/store/commonRequest';
 
 export const appDidMount = getPageMountActionCreator(APP_DID_MOUNT);
 
@@ -25,4 +22,4 @@ export const createMessage = getActionCreator(APP_CREATE_MESSAGE);
  */
 export const setMessageDone = getActionCreator(APP_SET_MESSAGE_DONE);
 
-export const setConnectionState = (alive: bool) => ({ type: APP_CONNECTION_STATE_CHANGE, payload: alive });
+export const setConnectionState = (alive) => ({ type: APP_CONNECTION_STATE_CHANGE, payload: alive });

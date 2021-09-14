@@ -2,12 +2,16 @@
 import { combineReducers } from 'redux';
 
 // module path A-Z sorted
-import { reducer as appReducer, type AppState } from 'src/store/reducers/app.reducer';
+import type { AppState } from 'src/store/reducers/app.reducer';
+import { reducer as appReducer } from 'src/store/reducers/app.reducer';
 import { reducer as authReducer } from 'src/store/reducers/auth.reducer';
-import { reducer as clusterPageReducer, type ClusterPageState } from 'src/store/reducers/clusterPage.reducer';
 import { reducer as clusterInstancePageReducer } from 'src/store/reducers/clusterInstancePage.reducer';
-import { default as codeEditorReducer, type CodeEditorState } from 'src/store/reducers/codeEditor.reducer';
-import { reducer as ui, type UIState } from 'src/store/reducers/ui.reducer';
+import type { ClusterPageState } from 'src/store/reducers/clusterPage.reducer';
+import { reducer as clusterPageReducer } from 'src/store/reducers/clusterPage.reducer';
+import type { CodeEditorState } from 'src/store/reducers/codeEditor.reducer';
+import { default as codeEditorReducer } from 'src/store/reducers/codeEditor.reducer';
+import type { UIState } from 'src/store/reducers/ui.reducer';
+import { reducer as ui } from 'src/store/reducers/ui.reducer';
 
 export type State = {
   app: AppState,
@@ -24,7 +28,7 @@ const rootReducer = combineReducers({
   clusterPage: clusterPageReducer,
   clusterInstancePage: clusterInstancePageReducer,
   ui,
-  codeEditor: codeEditorReducer
+  codeEditor: codeEditorReducer,
 });
 
 export default rootReducer;

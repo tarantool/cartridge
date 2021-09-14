@@ -5,21 +5,18 @@ import { css, cx } from '@emotion/css';
 import {
   Button,
   ConfirmModal,
-  IconCreateFolder,
   IconCreateFile,
+  IconCreateFolder,
   IconRefresh,
   Text,
-  colors
+  colors,
 } from '@tarantool.io/ui-kit';
+
+import { FileTree } from 'src/components/FileTree';
 import MonacoEditor from 'src/components/MonacoEditor';
 import PageDataErrorMessage from 'src/components/PageDataErrorMessage';
 import { PageLayout } from 'src/components/PageLayout';
-import { FileTree } from 'src/components/FileTree';
-import {
-  selectFileTree,
-  selectFilePaths,
-  selectSelectedFile
-} from 'src/store/selectors/filesSelectors';
+import { getFileIdForMonaco, getLanguageByFileName } from 'src/misc/monacoModelStorage';
 import { selectFile } from 'src/store/actions/editor.actions';
 import {
   applyFiles,
@@ -28,21 +25,22 @@ import {
   deleteFile,
   deleteFolder,
   fetchConfigFiles,
-  renameFolder,
   renameFile,
-  setIsContentChanged
+  renameFolder,
+  setIsContentChanged,
+  validateConfigFiles,
 } from 'src/store/actions/files.actions';
-import { getLanguageByFileName, getFileIdForMonaco } from 'src/misc/monacoModelStorage'
-import type { TreeFileItem } from 'src/store/selectors/filesSelectors';
 import type { FileItem } from 'src/store/reducers/files.reducer';
-import { type State } from 'src/store/rootReducer';
-import { validateConfigFiles } from '../../store/actions/files.actions';
+import type { State } from 'src/store/rootReducer';
+import { selectFilePaths, selectFileTree, selectSelectedFile } from 'src/store/selectors/filesSelectors';
+import type { TreeFileItem } from 'src/store/selectors/filesSelectors';
+
 import noFileIcon from './no-file.png';
 
 const options = {
   fixedOverflowWidgets: true,
   automaticLayout: true,
-  selectOnLineNumbers: true
+  selectOnLineNumbers: true,
 };
 
 const styles = {
@@ -123,7 +121,7 @@ const styles = {
     font-size: 14px;
     font-weight: 400;
     color: ${colors.dark65};
-  `
+  `,
 };
 
 type CodeState = {
@@ -131,7 +129,7 @@ type CodeState = {
   fileOperationType: 'createFile' | 'createFolder' | 'rename' | 'delete' | null,
   fileOperationObject: ?string,
   isReloadConfirmOpened: boolean,
-}
+};
 
 type CodeProps = {
   fileTree: Array<TreeFileItem>,
@@ -141,21 +139,21 @@ type CodeProps = {
   puttingConfigFiles: boolean,
   selectedFile: FileItem | null,
   dispatch: Function,
-  error: any
-}
+  error: any,
+};
 
 class Code extends React.Component<CodeProps, CodeState> {
   state = {
     loading: false,
     fileOperationType: null,
     fileOperationObject: null,
-    isReloadConfirmOpened: false
-  }
+    isReloadConfirmOpened: false,
+  };
 
   static getDerivedStateFromProps(nextProps, prevState) {
     if (prevState.loading === true && nextProps.fetchingConfigFiles === false) {
       return {
-        loading: false
+        loading: false,
       };
     }
     return null;
@@ -171,12 +169,13 @@ class Code extends React.Component<CodeProps, CodeState> {
     this.setState({ loading: true });
   }
 
-  getFileById = (id: ?string) => this.props.files.find(file => file.path === id);
+  getFileById = (id: ?string) => this.props.files.find((file) => file.path === id);
 
-  handleFileDeleteClick = (id: string) => this.setState({
-    fileOperationType: 'delete',
-    fileOperationObject: id
-  });
+  handleFileDeleteClick = (id: string) =>
+    this.setState({
+      fileOperationType: 'delete',
+      fileOperationObject: id,
+    });
 
   handleFileDeleteConfirm = () => {
     const { dispatch } = this.props;
@@ -193,23 +192,25 @@ class Code extends React.Component<CodeProps, CodeState> {
 
       this.setState({
         fileOperationType: null,
-        fileOperationObject: null
+        fileOperationObject: null,
       });
     }
-  }
+  };
 
-  handleFileRenameClick = (id: string) => this.setState({
-    fileOperationType: 'rename',
-    fileOperationObject: id
-  });
+  handleFileRenameClick = (id: string) =>
+    this.setState({
+      fileOperationType: 'rename',
+      fileOperationObject: id,
+    });
 
-  handleReloadClick = () => this.setState({
-    isReloadConfirmOpened: true
-  })
+  handleReloadClick = () =>
+    this.setState({
+      isReloadConfirmOpened: true,
+    });
 
   handleApplyClick = () => {
     this.props.dispatch(applyFiles());
-  }
+  };
 
   handleFileRenameConfirm = (name: string) => {
     const { dispatch } = this.props;
@@ -226,15 +227,16 @@ class Code extends React.Component<CodeProps, CodeState> {
 
       this.setState({
         fileOperationType: null,
-        fileOperationObject: null
+        fileOperationObject: null,
       });
     }
-  }
+  };
 
-  handleFileCreateClick = (id: string) => this.setState({
-    fileOperationType: 'createFile',
-    fileOperationObject: id
-  });
+  handleFileCreateClick = (id: string) =>
+    this.setState({
+      fileOperationType: 'createFile',
+      fileOperationObject: id,
+    });
 
   handleFileCreateConfirm = (name: string) => {
     const { dispatch } = this.props;
@@ -244,14 +246,15 @@ class Code extends React.Component<CodeProps, CodeState> {
 
     this.setState({
       fileOperationType: null,
-      fileOperationObject: null
+      fileOperationObject: null,
     });
-  }
+  };
 
-  handleFolderCreateClick = (id: string) => this.setState({
-    fileOperationType: 'createFolder',
-    fileOperationObject: id
-  });
+  handleFolderCreateClick = (id: string) =>
+    this.setState({
+      fileOperationType: 'createFolder',
+      fileOperationObject: id,
+    });
 
   handleFolderCreateConfirm = (name: string) => {
     const { dispatch } = this.props;
@@ -261,14 +264,15 @@ class Code extends React.Component<CodeProps, CodeState> {
 
     this.setState({
       fileOperationType: null,
-      fileOperationObject: null
+      fileOperationObject: null,
     });
-  }
+  };
 
-  handleFileOperationCancel = () => this.setState({
-    fileOperationType: null,
-    fileOperationObject: null
-  });
+  handleFileOperationCancel = () =>
+    this.setState({
+      fileOperationType: null,
+      fileOperationObject: null,
+    });
 
   handleFileOperationConfirm = (name: string) => {
     const { fileOperationType } = this.state;
@@ -283,13 +287,10 @@ class Code extends React.Component<CodeProps, CodeState> {
       case 'createFolder':
         return this.handleFolderCreateConfirm(name);
     }
-  }
+  };
 
   handleSetIsContentChanged = (isChanged: boolean) => {
-    const {
-      selectedFile,
-      dispatch
-    } = this.props;
+    const { selectedFile, dispatch } = this.props;
 
     if (!selectedFile) {
       return;
@@ -297,13 +298,13 @@ class Code extends React.Component<CodeProps, CodeState> {
     const fileId = selectedFile.fileId;
 
     dispatch(setIsContentChanged(fileId, isChanged));
-  }
+  };
 
   validateCode = () => {
     const { dispatch } = this.props;
 
     dispatch(validateConfigFiles());
-  }
+  };
 
   render() {
     const {
@@ -313,83 +314,67 @@ class Code extends React.Component<CodeProps, CodeState> {
       puttingConfigFiles,
       selectedFile,
       dispatch,
-      error
+      error,
     } = this.props;
 
-    const {
-      fileOperationType,
-      fileOperationObject,
-      isReloadConfirmOpened,
-      loading
-    } = this.state;
+    const { fileOperationType, fileOperationObject, isReloadConfirmOpened, loading } = this.state;
 
     const operableFile = this.getFileById(fileOperationObject);
 
     if (error) {
-      return (
-        <PageDataErrorMessage error={error} />
-      )
+      return <PageDataErrorMessage error={error} />;
     }
 
     return (
       <PageLayout
-        heading='Code'
+        heading="Code"
         wide
         topRightControls={[
           <Button
-            text='Reload'
-            size='l'
+            key="Reload"
+            text="Reload"
+            size="l"
             className={
-              !loading && fetchingConfigFiles
-                ? 'meta-test__Code__reload_loading'
-                : 'meta-test__Code__reload_idle'
+              !loading && fetchingConfigFiles ? 'meta-test__Code__reload_loading' : 'meta-test__Code__reload_idle'
             }
             loading={!loading && fetchingConfigFiles}
             onClick={this.handleReloadClick}
             icon={IconRefresh}
-            intent='base'
+            intent="base"
           />,
+          <Button key="Validate" text="Validate" intent="base" size="l" onClick={this.validateCode} />,
           <Button
-            text='Validate'
-            intent='base'
-            size='l'
-            onClick={this.validateCode}
-          />,
-          <Button
+            key="Apply"
             onClick={this.handleApplyClick}
-            className={
-              puttingConfigFiles
-                ? 'meta-test__Code__apply_loading'
-                : 'meta-test__Code__apply_idle'
-            }
-            text='Apply'
-            intent='primary'
+            className={puttingConfigFiles ? 'meta-test__Code__apply_loading' : 'meta-test__Code__apply_idle'}
+            text="Apply"
+            intent="primary"
             loading={puttingConfigFiles}
-            size='l'
+            size="l"
             disabled={false}
-          />
+          />,
         ]}
       >
         <div className={cx('meta-test__Code', styles.area)}>
           <div className={styles.sidePanel}>
             <div className={styles.sidePanelHeading}>
-              <Text variant='h4'>Files</Text>
+              <Text variant="h4">Files</Text>
               <div className={styles.buttonsPanel}>
                 <Button
                   className={cx(styles.fileActionBtn, 'meta-test__addFolderBtn')}
-                  intent='plain'
-                  size='m'
+                  intent="plain"
+                  size="m"
                   icon={IconCreateFolder}
                   onClick={() => this.handleFolderCreateClick('')}
-                  title='Create folder'
+                  title="Create folder"
                 />
                 <Button
                   className={cx(styles.fileActionBtn, 'meta-test__addFileBtn')}
-                  intent='plain'
-                  size='m'
+                  intent="plain"
+                  size="m"
                   icon={IconCreateFile}
                   onClick={() => this.handleFileCreateClick('')}
-                  title='Create file'
+                  title="Create file"
                 />
               </div>
             </div>
@@ -403,7 +388,7 @@ class Code extends React.Component<CodeProps, CodeState> {
               operationObject={fileOperationObject}
               onOperationConfirm={this.handleFileOperationConfirm}
               onOperationCancel={this.handleFileOperationCancel}
-              onFileOpen={id => dispatch(selectFile(id))}
+              onFileOpen={(id) => dispatch(selectFile(id))}
               onFileCreate={this.handleFileCreateClick}
               onFolderCreate={this.handleFolderCreateClick}
               onDelete={this.handleFileDeleteClick}
@@ -411,39 +396,35 @@ class Code extends React.Component<CodeProps, CodeState> {
             />
           </div>
           <div className={styles.mainContent}>
-
             <div className={styles.panel}>
-              <Text className={styles.currentPath} variant='p' tag='span'>
+              <Text className={styles.currentPath} variant="p" tag="span">
                 {selectedFile && selectedFile.path.replace(/\//g, ' / ')}
               </Text>
             </div>
-            {selectedFile
-              ? (
-                <MonacoEditor
-                  className={styles.editor}
-                  language={(selectedFile && getLanguageByFileName(selectedFile.fileName)) || null}
-                  options={{
-                    ...options,
-                    readOnly: !selectedFile
-                  }}
-                  fileId={selectedFile ? getFileIdForMonaco(selectedFile.fileId) : null}
-                  initialValue={selectedFile ? selectedFile.initialContent : 'Select or add a file'}
-                  isContentChanged={selectedFile ? !selectedFile.saved : null}
-                  setIsContentChanged={this.handleSetIsContentChanged}
-                />
-              )
-              : (
-                <div className={styles.splash}>
-                  <img className={styles.selectFileIcon} src={noFileIcon} alt="No selected file" />
-                  <Text className={styles.selectFileText}>Please select a file</Text>
-                </div>
-              )
-            }
+            {selectedFile ? (
+              <MonacoEditor
+                className={styles.editor}
+                language={(selectedFile && getLanguageByFileName(selectedFile.fileName)) || null}
+                options={{
+                  ...options,
+                  readOnly: !selectedFile,
+                }}
+                fileId={selectedFile ? getFileIdForMonaco(selectedFile.fileId) : null}
+                initialValue={selectedFile ? selectedFile.initialContent : 'Select or add a file'}
+                isContentChanged={selectedFile ? !selectedFile.saved : null}
+                setIsContentChanged={this.handleSetIsContentChanged}
+              />
+            ) : (
+              <div className={styles.splash}>
+                <img className={styles.selectFileIcon} src={noFileIcon} alt="No selected file" />
+                <Text className={styles.selectFileText}>Please select a file</Text>
+              </div>
+            )}
           </div>
           {operableFile && typeof operableFile.type === 'string' && (
             <ConfirmModal
               title={`Delete ${operableFile.type}`}
-              className='meta-test__deleteModal'
+              className="meta-test__deleteModal"
               visible={fileOperationType === 'delete'}
               onCancel={this.handleFileOperationCancel}
               onConfirm={this.handleFileDeleteConfirm}
@@ -457,7 +438,7 @@ class Code extends React.Component<CodeProps, CodeState> {
           )}
           {isReloadConfirmOpened && (
             <ConfirmModal
-              title='Reload files'
+              title="Reload files"
               onCancel={() => this.setState({ isReloadConfirmOpened: false })}
               onConfirm={() => {
                 this.props.dispatch(fetchConfigFiles());
@@ -484,7 +465,7 @@ const mapStateToProps = (state: State) => ({
   fetchingConfigFiles: state.ui.fetchingConfigFiles,
   puttingConfigFiles: state.ui.puttingConfigFiles,
   selectedFile: selectSelectedFile(state.codeEditor),
-  error: state.codeEditor.editor.error
+  error: state.codeEditor.editor.error,
 });
 
-export default connect(mapStateToProps)(Code)
+export default connect(mapStateToProps)(Code);

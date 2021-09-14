@@ -1,11 +1,7 @@
 // @flow
-
-import * as React from 'react'
+import React from 'react';
 import { css, cx } from '@emotion/css';
-import {
-  Text,
-  colors
-} from '@tarantool.io/ui-kit';
+import { Text, colors } from '@tarantool.io/ui-kit';
 
 const styles = {
   label: css`
@@ -16,16 +12,16 @@ const styles = {
     color: ${colors.dark65};
     background-color: ${colors.intentBase};
     text-transform: uppercase;
-  `
+  `,
 };
 
 type Props = {
   className?: string,
-  children?: React.Node
+  children?: React$Node,
 };
 
 export const Label = ({ className, children }: Props) => (
-  <Text variant='h5' tag='span' className={cx(styles.label, className)}>
+  <Text variant="h5" tag="span" className={cx(styles.label, className)}>
     {children}
   </Text>
 );

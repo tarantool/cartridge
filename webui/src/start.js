@@ -1,2 +1,2 @@
-import core from '@tarantool.io/frontend-core'
-import index from './index'
+import '@tarantool.io/frontend-core';
+import './index';

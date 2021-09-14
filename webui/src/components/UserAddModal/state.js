@@ -1,32 +1,21 @@
 // @flow
-import {
-  combine,
-  createEffect,
-  createEvent,
-  createStore,
-  guard,
-  sample,
-  forward
-} from 'effector';
-import * as Yup from 'yup';
+import { combine, createEffect, createEvent, createStore, forward, guard, sample } from 'effector';
 import { pickAll } from 'ramda';
+import * as Yup from 'yup';
+
 import { createField } from 'src/misc/effectorForms';
-import {
-  showUserAddModal,
-  hideModal,
-  addUserFx
-} from 'src/store/effector/users';
+import { addUserFx, hideModal, showUserAddModal } from 'src/store/effector/users';
 
-type initFormProps = ?{ fullname?: string, email?: string };
+// type InitFormProps = ?{ fullname?: string, email?: string };
 
-type formValuesType = ?{
+type FormValuesType = ?{
   username: string | null,
   password: string | null,
   fullname: string | null,
-  email: string | null
+  email: string | null,
 };
 
-export const createFormStore = (values: initFormProps) => {
+export const createFormStore = () => {
   // store
   const emailField = createField('email', '');
   const fullnameField = createField('fullname', '');
@@ -34,8 +23,8 @@ export const createFormStore = (values: initFormProps) => {
   const passwordField = createField('password', '');
 
   const $errors = createStore<Object | null>(null);
-  const $isFormValid = $errors.map<bool>(errors => !errors);
-  const $showAllErrors = createStore<bool>(false);
+  const $isFormValid = $errors.map<boolean>((errors) => !errors);
+  const $showAllErrors = createStore<boolean>(false);
 
   const resetForm = createEvent<mixed>('Reset form');
   const submitForm = createEvent<mixed>('Submit form');
@@ -46,7 +35,7 @@ export const createFormStore = (values: initFormProps) => {
     fullnameField.reset();
     passwordField.reset();
     usernameField.reset();
-  })
+  });
 
   forward({ from: addUserFx.done, to: resetForm });
   forward({ from: hideModal, to: resetForm });
@@ -59,59 +48,50 @@ export const createFormStore = (values: initFormProps) => {
         passwordField.$value,
         emailField.$value,
         $errors,
-        (
+        (username, fullname, password, email, errors) => ({
           username,
           fullname,
           password,
           email,
-          errors
-        ) => ({
-          username,
-          fullname,
-          password,
-          email,
-          errors
+          errors,
         })
       ),
       clock: submitForm,
-      fn: values => {
-        const obj = pickAll(['email', 'fullname', 'username'], values)
+      fn: (values) => {
+        const obj = pickAll(['email', 'fullname', 'username'], values);
         if (values.password) {
           obj.password = values.password;
         }
         return obj;
-      }
+      },
     }),
     filter: $isFormValid,
-    target: addUserFx
+    target: addUserFx,
   });
 
   // helpers
   const handleSubmit = (e: Event) => {
     e.preventDefault();
     submitForm();
-  }
+  };
 
   const schema = Yup.object().shape({
     username: Yup.string().required(),
     fullname: Yup.string(),
     email: Yup.string().email(),
-    password: Yup.string().required()
-  })
+    password: Yup.string().required(),
+  });
 
-  const validateFx = createEffect<formValuesType, void, { [string]: string }>({
-    handler: values => new Promise((resolve, reject) => {
-      schema.validate(values, { abortEarly: false })
-        .then(
-          resolve,
-          ({ inner }) => {
-            const result = {};
-            inner.forEach(({ message, path }) => result[path] = message);
-            reject(result);
-          }
-        );
-    })
-  })
+  const validateFx = createEffect<FormValuesType, void, { [string]: string }>({
+    handler: (values) =>
+      new Promise((resolve, reject) => {
+        schema.validate(values, { abortEarly: false }).then(resolve, ({ inner }) => {
+          const result = {};
+          inner.forEach(({ message, path }) => (result[path] = message));
+          reject(result);
+        });
+      }),
+  });
 
   // $FlowFixMe
   sample({
@@ -120,26 +100,15 @@ export const createFormStore = (values: initFormProps) => {
       fullnameField.$value,
       passwordField.$value,
       emailField.$value,
-      (
+      (username, fullname, password, email) => ({
         username,
         fullname,
         password,
-        email
-      ) => ({
-        username,
-        fullname,
-        password,
-        email
+        email,
       })
     ),
-    clock: [
-      usernameField.$value,
-      fullnameField.$value,
-      passwordField.$value,
-      emailField.$value,
-      showUserAddModal
-    ],
-    target: validateFx
+    clock: [usernameField.$value, fullnameField.$value, passwordField.$value, emailField.$value, showUserAddModal],
+    target: validateFx,
   });
 
   $errors
@@ -147,9 +116,7 @@ export const createFormStore = (values: initFormProps) => {
     .reset(validateFx.done)
     .reset(resetForm);
 
-  $showAllErrors
-    .on(submitForm, () => true)
-    .reset(resetForm);
+  $showAllErrors.on(submitForm, () => true).reset(resetForm);
 
   return {
     emailField,
@@ -160,8 +127,8 @@ export const createFormStore = (values: initFormProps) => {
     $errors,
     $isFormValid,
     $showAllErrors,
-    handleSubmit
+    handleSubmit,
   };
-}
+};
 
 export default createFormStore();
