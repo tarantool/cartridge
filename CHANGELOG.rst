@@ -27,6 +27,8 @@ Fixed
   sync. This reduces the chance the hardware restart leads to WAL corruption
   ([#1546](https://github.com/tarantool/cartridge/issues/1546)).
 
+- Fix net.box clients compatibility with future tarantool 2.10 versions.
+
 -------------------------------------------------------------------------------
 [2.7.1] - 2021-08-18
 -------------------------------------------------------------------------------

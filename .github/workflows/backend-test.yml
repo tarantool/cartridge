@@ -29,7 +29,7 @@ jobs:
         id: cache-venv
         with:
           path: ./venv
-          key: misc-venv-${{ hashFiles('rst/requirements.txt') }}-02
+          key: misc-venv-${{ hashFiles('rst/requirements.txt') }}-03
       -
         run: |
           python -m venv ./venv && . ./venv/bin/activate
@@ -118,7 +118,7 @@ jobs:
         id: cache-pytest
         with:
           path: ./pytest-venv
-          key: test-venv-${{ hashFiles('test/integration/requirements.txt') }}-02
+          key: test-venv-${{ hashFiles('test/integration/requirements.txt') }}-03
       -
         run: |
           python -m venv ./pytest-venv && . ./pytest-venv/bin/activate
