@@ -1,0 +1,10 @@
+@startuml
+
+hide empty description
+
+BoxConfigured --> ConfiguringRoles
+ConfiguringRoles --> RolesConfigured
+ConfiguringRoles --> OperationError
+RolesConfigured --> ConfiguringRoles
+
+@enduml
