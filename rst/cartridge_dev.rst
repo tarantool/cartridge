@@ -16,7 +16,7 @@ go on with the Cartridge developer's guide.
 Introduction
 --------------------------------------------------------------------------------
 
-To develop and start an application, in short, you need to go through the
+To develop and start an application, you need to go through the
 following steps:
 
 #. :ref:`Install <cartridge-install-dev>` Tarantool Cartridge and other
