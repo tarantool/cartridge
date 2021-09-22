@@ -116,8 +116,8 @@ describe('Server details', () => {
     openServerDetailsModal('dummy-1');
     cy.get('.meta-test__ServerDetailsModal').find('button:contains(Zone Narnia)').click();
     cy.get('div').contains('Mordor');
-    //checkRedCircleBeforeSelectedZone(1,'Narnia','rgb(245, 34, 45)');
-   // checkRedCircleBeforeSelectedZone(0,'Mordor','rgba(0, 0, 0, 0)');
+    checkRedCircleBeforeSelectedZone('Narnia','rgb(245, 34, 45)');
+    checkRedCircleBeforeSelectedZone('Mordor','rgba(0, 0, 0, 0)');
     cy.get('.meta-test__ZoneListItem:contains(Narnia)').click();
     cy.get('.meta-test__ServerDetailsModal button:contains(Select zone)').click();
     cy.get('button:contains(Add new zone)').should('be.enabled');
