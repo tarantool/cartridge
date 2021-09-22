@@ -94,7 +94,7 @@ describe('Server details', () => {
     cy.get('div').contains('You have no any zone,').should('not.exist');
 
     //check red circle is not before not elected zone
-    checkRedCircleBeforeSelectedZone('Narnia','rgba(0, 0, 0, 0)');
+    checkRedCircleBeforeSelectedZone('Narnia', 'rgba(0, 0, 0, 0)');
     cy.get('.meta-test__ZoneListItem:contains(Narnia)').click();
     cy.get('.meta-test__ServerDetailsModal button:contains(Zone Narnia)').click();
     checkRedCircleBeforeSelectedZone('Narnia', 'rgb(245, 34, 45)');
@@ -124,7 +124,7 @@ describe('Server details', () => {
     cy.get('button:contains(Add new zone)').should('be.enabled');
     cy.get('div').contains('Mordor');
     cy.get('div').contains('Narnia').should('not.exist');
-    checkRedCircleBeforeSelectedZone('Mordor','rgba(0, 0, 0, 0)');
+    checkRedCircleBeforeSelectedZone('Mordor', 'rgba(0, 0, 0, 0)');
     cy.get('.meta-test__ServerDetailsModal button').contains('Close').click();
     openServerDetailsModal('dummy-2');
     cy.get('.meta-test__ServerDetailsModal button:contains(Zone Mordor)').click();
