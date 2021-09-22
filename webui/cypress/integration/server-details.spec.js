@@ -50,13 +50,13 @@ describe('Server details', () => {
 
   function checkRedCircleBeforeSelectedZone(itemName, color) {
     cy.get('.meta-test__ZoneListItem').contains(itemName)
-      .then($els => {
-        const win = $els[0].ownerDocument.defaultView
+      .then(($els) => {
+        const win = $els[0].ownerDocument.defaultView;
         // read the pseudo selector
-        const before = win.getComputedStyle($els[0], 'before')
+        const before = win.getComputedStyle($els[0], 'before');
         // read the value of the content CSS property
-        const contentValue = before.getPropertyValue('background-color')
-        expect(contentValue).to.eq(color)
+        const contentValue = before.getPropertyValue('background-color');
+        expect(contentValue).to.eq(color);
       })
   }
 
