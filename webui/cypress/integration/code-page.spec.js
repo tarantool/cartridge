@@ -21,8 +21,8 @@ describe('Code page', () => {
         srv.env.TARANTOOL_INSTANCE_NAME = srv.alias
         srv.env.TARANTOOL_WEBUI_PREFIX = '/' --[[ should be ignored ]]
       end
-      _G.cluster:start()
-      return true
+    _G.cluster:start()
+    return true
     `,
     }).should('deep.eq', [true]);
   });
@@ -283,5 +283,36 @@ describe('Code page', () => {
     cy.get('span:contains(Success) + span:contains(Files successfuly applied) + svg').click();
 
     cy.get('.meta-test__Code__FileTree').contains('edited-folder-name').should('not.exist');
+  });
+
+  it(`Check there is single notification in WebUI schema page #1201`, () => {
+    const pages = ['/admin/cluster/code'];
+    const sizes = ['macbook-15', 'macbook-13'];
+
+    let testOs = Cypress.platform.toString();
+    let headlessMode = Cypress.browser.isHeadless;
+    let mode;
+    if (headlessMode) {
+      mode = 'Headless';
+    } else {
+      mode = 'Window';
+    }
+
+    sizes.forEach((size) => {
+      pages.forEach((page) => {
+        cy.visit(page);
+        cy.viewport(size);
+
+        cy.get('[data-cy=meta-test__Validate]');
+        cy.get('.meta-test__Code__FileTree').contains('schema.yml').click();
+        cy.get('.meta-test__editFolderInTreeBtn');
+        cy.get('.monaco-editor').click();
+        cy.focused().type(selectAllKeys + '{backspace}');
+        cy.get('.monaco-editor').type('spaces: false;');
+        cy.get('[data-cy=meta-test__Validate').click();
+
+        cy.matchImageSnapshot(`Single failed error message when ${size} resolution in OS ${testOs} mode is ${mode}`);
+      });
+    });
   });
 });

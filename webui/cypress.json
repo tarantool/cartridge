@@ -6,7 +6,24 @@
   "viewportHeight": 768,
   "env": {
     "launcherHost": "127.0.0.1",
-    "launcherPort": 3333
+    "launcherPort": 3333,
+    "cypress-plugin-snapshots": {
+        "autopassNewSnapshots": true,
+        "imageConfig": {
+            "createDiffImage": true,
+            "threshhold": 0.01,
+            "thresholdType": "percent"
+        },
+        "screenshotConfig": {
+            "blackout": [],
+            "capture": "fullPage",
+            "scale": false,
+            "timeout": 30000
+        },
+        "updateSnapshots": false,
+        "backgroundBlend": "difference",
+        "failOnSnapshotDiff": true
+    }
   },
   "projectId": "icijqq"
 }

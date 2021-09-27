@@ -26,4 +26,8 @@
 
 // https://www.npmjs.com/package/cypress-file-upload
 import 'cypress-file-upload';
+
+import { addMatchImageSnapshotCommand } from 'cypress-image-snapshot/command';
+
 require('cypress-downloadfile/lib/downloadFileCommand');
+addMatchImageSnapshotCommand();
