@@ -62,8 +62,7 @@ local function set_enabled(enabled)
     checks('boolean')
     if confapplier.get_readonly() ~= nil then
         return nil, errors.new('AuthSetEnabledError',
-            'Cluster is already bootstrapped. Use cluster.auth_set_params' ..
-            ' to modify clusterwide config'
+            'Current instance is already bootstrapped'
         )
     end
 
@@ -97,7 +96,7 @@ end
 --
 -- Can't be used before the bootstrap.
 -- Affects all cluster instances.
--- Triggers `cluster.config_patch_clusterwide`.
+-- Triggers `cartridge.config_patch_clusterwide`.
 --
 -- @function set_params
 -- @within Configuration
