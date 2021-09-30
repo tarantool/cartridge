@@ -33,6 +33,8 @@ Fixed
 
 - Fix net.box clients compatibility with future tarantool 2.10 versions.
 
+- Fix vshard rebalancer broken by roles reload.
+
 -------------------------------------------------------------------------------
 [2.7.1] - 2021-08-18
 -------------------------------------------------------------------------------

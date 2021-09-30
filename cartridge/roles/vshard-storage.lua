@@ -67,6 +67,11 @@ local function stop()
             }},
         }}
     }, instance_uuid)
+
+    -- Fake empty config drops all replicas except the current one.
+    -- We have to clean it up manually.
+    vshard.storage.internal.this_replica:detach_conn()
+
     vars.vshard_cfg = nil
     rawset(_G, 'vshard', _G_vshard_backup)
     _G_vshard_backup = nil
