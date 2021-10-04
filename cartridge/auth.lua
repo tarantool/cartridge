@@ -31,8 +31,7 @@ local DEFAULT_COOKIE_RENEW_AGE = 3600*24 -- in seconds
 
 local ADMIN_USER = {
     username = cluster_cookie.username(),
-    fullname = 'Cartridge Administrator',
-    disabled = false,
+    fullname = 'Cartridge Administrator'
 }
 
 local e_check_cookie = errors.new_class('Checking cookie failed')
@@ -105,7 +104,6 @@ end
 -- @tparam ?boolean opts.enabled (*Added* in v0.11)
 -- @tparam ?number opts.cookie_max_age
 -- @tparam ?number opts.cookie_renew_age (*Added* in v0.11)
--- @tparam ?boolean opts.admin_disabled
 -- @treturn[1] boolean `true`
 -- @treturn[2] nil
 -- @treturn[2] table Error description
@@ -114,7 +112,6 @@ local function set_params(opts)
         enabled = '?boolean',
         cookie_max_age = '?number',
         cookie_renew_age = '?number',
-        admin_disabled = '?boolean',
     })
 
     if confapplier.get_readonly() == nil then
@@ -133,7 +130,6 @@ local function set_params(opts)
         auth_cfg = {
             enabled = confapplier.get_readonly('topology').auth or false,
             cookie_max_age = DEFAULT_COOKIE_MAX_AGE,
-            admin_disabled = false,
         }
     end
 
@@ -149,10 +145,6 @@ local function set_params(opts)
         auth_cfg.cookie_renew_age = opts.cookie_renew_age
     end
 
-    if opts.admin_disabled ~= nil then
-        auth_cfg.admin_disabled = opts.admin_disabled
-    end
-
     local patch = {
         auth = auth_cfg
     }
@@ -163,14 +155,6 @@ local function set_params(opts)
     end
 
     return twophase.patch_clusterwide(patch)
-end
-
-local function admin_disabled()
-    local auth_cfg = confapplier.get_readonly('auth')
-    if auth_cfg then
-        return auth_cfg.admin_disabled
-    end
-    return ADMIN_USER.disabled
 end
 
 --- Retrieve authentication params.
@@ -184,15 +168,13 @@ local function get_params()
     --- Authentication params.
     -- @table AuthParams
     -- @within Configuration
-    -- @tfield boolean enabled Whether unauthenticated access is forbidden
+    -- @tfield boolean enabled Wether unauthenticated access is forbidden
     -- @tfield number cookie_max_age Number of seconds until the authentication cookie expires
     -- @tfield number cookie_renew_age Update provided cookie if it's older then this age (in seconds)
-    -- @tfield boolean admin_disabled Whether admin access is disabled
     return {
         enabled = get_enabled(),
         cookie_max_age = auth_cfg and auth_cfg.cookie_max_age or DEFAULT_COOKIE_MAX_AGE,
         cookie_renew_age = auth_cfg and auth_cfg.cookie_renew_age or DEFAULT_COOKIE_RENEW_AGE,
-        admin_disabled = admin_disabled() or false
     }
 end
 
@@ -287,7 +269,7 @@ local function get_basic_auth_uid(auth)
         return nil
     end
 
-    if not admin_disabled() and username == ADMIN_USER.username then
+    if username == ADMIN_USER.username then
         local ok = password == cluster_cookie.cookie()
         if ok then
             return username
@@ -340,7 +322,8 @@ local function login(req)
     local username = req:param('username')
     local password = req:param('password')
 
-    if not admin_disabled() and username == ADMIN_USER.username then
+    -- First check for built-in admin user
+    if username == ADMIN_USER.username then
         if password == cluster_cookie.cookie() then
             return {
                 status = 200,
@@ -767,7 +750,6 @@ end
 local function init(httpd, opts)
     checks('table', {
         prefix = 'string',
-        admin_disabled = 'boolean'
     })
 
     local function wipe_fiber_storage()
@@ -785,8 +767,6 @@ local function init(httpd, opts)
             return before_dispatch_original(...)
         end
     end
-
-    ADMIN_USER.disabled = opts.admin_disabled
 
     httpd:route({
         path = opts.prefix .. '/login',
