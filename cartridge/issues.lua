@@ -374,19 +374,31 @@ local function list_on_instance(opts)
 
     -- add custom issues from each role
     local registry = require('cartridge.service-registry')
-    for _, role in pairs(registry.list()) do
+    for role_name, role in pairs(registry.list()) do
         if type(role.get_issues) == 'function' then
             local ok, custom_issues = pcall(role.get_issues)
-            if ok then
-                for _, issue in ipairs(custom_issues) do
-                    table.insert(ret, {
-                        level = issue.level or '',
-                        message = issue.message or '',
-                        topic = issue.topic or role_name,
-                        instance_uuid = instance_uuid,
-                        replicaset_uuid = replicaset_uuid,
-                    })
+            if ok ~= true then
+                if custom_issues == nil then
+                    custom_issues = {{
+                        level = 'warning',
+                        message = 'get_issues() raised an error',
+                    }}
+                else
+                    custom_issues = {{
+                        level = 'warning',
+                        message = tostring(custom_issues),
+                    }}
                 end
+            end
+
+            for _, issue in ipairs(custom_issues) do
+                table.insert(ret, {
+                    level = issue.level or '',
+                    message = issue.message or '',
+                    topic = issue.topic or role_name,
+                    instance_uuid = instance_uuid,
+                    replicaset_uuid = replicaset_uuid,
+                })
             end
         end
     end
@@ -499,6 +511,7 @@ local function list_on_cluster()
             })
         end
     end
+
 
     -- Get each instance issues (replication, failover, memory usage)
 

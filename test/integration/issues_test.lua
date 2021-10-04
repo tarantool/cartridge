@@ -365,7 +365,6 @@ function g.test_state_hangs()
     g.replica1:eval(set_state, {'RolesConfigured'})
 
     t.assert_equals(helpers.list_cluster_issues(g.master), {})
-
 end
 
 function g.test_aliens()
@@ -420,12 +419,15 @@ function g.test_custom_issues()
                 }
             end,
         })
-        cartridge.service_set('custom_role_with_issues_error', {
+        cartridge.service_set('custom_role_with_issues_empty_error', {
             get_issues = error
+        })
+        cartridge.service_set('custom_role_with_issues_error_msg', {
+            get_issues = function() error('Error!', 0) end
         })
     ]])
 
-    t.assert_equals(helpers.list_cluster_issues(g.master), {
+    t.assert_items_include(helpers.list_cluster_issues(g.master), {
         {
             level = 'warning',
             topic = 'custom_topic',
@@ -435,20 +437,32 @@ function g.test_custom_issues()
         },
         {
             level = 'critical',
-            topic = 'custom',
+            topic = 'custom_role_with_issues',
             message = 'critical message',
             instance_uuid = g.master.instance_uuid,
             replicaset_uuid = g.master.replicaset_uuid,
         },
         {
             level = '',
-            topic = 'custom',
+            topic = 'custom_role_with_issues',
             message = '',
             instance_uuid = g.master.instance_uuid,
             replicaset_uuid = g.master.replicaset_uuid,
-        }
-        -- since custom_role_with_issues_error.get_issues() returns an error,
-        -- there will be no issues from that role in list
+        },
+        {
+            level = 'warning',
+            topic = 'custom_role_with_issues_empty_error',
+            message = 'get_issues() raised an error',
+            instance_uuid = g.master.instance_uuid,
+            replicaset_uuid = g.master.replicaset_uuid,
+        },
+        {
+            level = 'warning',
+            topic = 'custom_role_with_issues_error_msg',
+            message = 'Error!',
+            instance_uuid = g.master.instance_uuid,
+            replicaset_uuid = g.master.replicaset_uuid,
+        },
     })
 end
 
@@ -456,6 +470,7 @@ g.after_test('test_custom_issues', function()
     g.master.net_box:eval([[
         local cartridge = require('cartridge')
         cartridge.service_set('custom_role_with_issues', nil)
-        cartridge.service_set('custom_role_with_issues_error', nil)
+        cartridge.service_set('custom_role_with_issues_empty_error', nil)
+        cartridge.service_set('custom_role_with_issues_error_msg', nil)
     ]])
 end)
