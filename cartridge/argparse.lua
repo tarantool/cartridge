@@ -92,7 +92,6 @@ local cluster_opts = {
     cluster_cookie = 'string', -- **string**
     console_sock = 'string', -- **string**
     auth_enabled = 'boolean', -- **boolean**
-    admin_disabled = 'boolean', -- **boolean**
     bucket_count = 'number', -- **number**
     upgrade_schema = 'boolean', -- **boolean**
     swim_broadcast = 'boolean', -- **boolean**

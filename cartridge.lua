@@ -281,7 +281,6 @@ local function cfg(opts, box_opts)
         roles = 'table',
         auth_backend_name = '?string',
         auth_enabled = '?boolean',
-        admin_disabled = '?boolean',
         vshard_groups = '?table',
         console_sock = '?string',
         webui_blacklist = '?table',
@@ -658,8 +657,7 @@ local function cfg(opts, box_opts)
         end
 
         local ok, err = CartridgeCfgError:pcall(auth.init, httpd, {
-            prefix = opts.webui_prefix,
-            admin_disabled = opts.admin_disabled or false,
+            prefix = opts.webui_prefix
         })
         if not ok then
             return nil, err

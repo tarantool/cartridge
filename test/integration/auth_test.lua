@@ -12,7 +12,6 @@ g.before_all = function()
         datadir = fio.tempdir(),
         server_command = helpers.entrypoint('srv_basic'),
         cookie = require('digest').urandom(6):hex(),
-        env = {TARANTOOL_ADMIN_DISABLED = 'true'},
         replicasets = {
             {
                 uuid = helpers.uuid('a'),
@@ -45,20 +44,20 @@ g.before_all = function()
         cluster_cookie = 'cluster-cookies-for-the-cluster-monster',
         advertise_port = 13303,
         env = {
-            ['TARANTOOL_AUTH_ENABLED'] = 'true',
+            ['TARANTOOL_AUTH_ENABLED'] = 'true'
         }
     })
     g.server:start()
 
     g.server_user = 'admin'
-    g.server.auth_b64 = digest.base64_encode(
+    local auth_b64 = digest.base64_encode(
         g.server_user .. ':' .. g.server.cluster_cookie
     )
 
     t.helpers.retrying({timeout = 5}, function()
         g.server:graphql(
             {query = '{ servers { uri } }'},
-            {http = {headers = {authorization = 'Basic ' .. g.server.auth_b64}}}
+            {http = {headers = {authorization = 'Basic ' .. auth_b64}}}
         )
     end)
 end
@@ -599,7 +598,6 @@ function g.test_set_params_graphql()
                         username
                         enabled
                         cookie_max_age
-                        admin_disabled
                     }
                 }
             }]]}, {
@@ -608,29 +606,25 @@ function g.test_set_params_graphql()
         )['data']['cluster']['auth_params']
     end
 
-    local function set_auth_params(enabled, cookie_max_age, admin_disabled)
+    local function set_auth_params(enabled, cookie_max_age)
         return g.cluster.main_server:graphql({query = [[
             mutation(
                 $enabled: Boolean
                 $cookie_max_age: Long
-                $admin_disabled: Boolean
             ) {
                 cluster {
                     auth_params(
                         enabled: $enabled
                         cookie_max_age: $cookie_max_age
-                        admin_disabled: $admin_disabled
                     ){
                         enabled
                         cookie_max_age
-                        admin_disabled
                     }
                 }
             }]],
             variables = {
                 enabled = enabled,
                 cookie_max_age = cookie_max_age,
-                admin_disabled = admin_disabled,
             }},
             {http = {headers = {cookie = cookie_lsid}}}
         )['data']['cluster']['auth_params']
@@ -690,46 +684,6 @@ function g.test_set_params_graphql()
     t.assert_equals(
         get_auth_params(g.cluster:server('replica'))['username'],
         FULLNAME
-    )
-    t.assert_equals(
-        get_auth_params(g.cluster:server('master'))['admin_disabled'],
-        true
-    )
-    t.assert_equals(
-        _login(g.cluster:server('master'), 'admin', g.cluster.cookie).status,
-        403
-    )
-    t.assert_equals(
-        _login(g.cluster:server('replica'), 'admin', g.cluster.cookie).status,
-        403
-    )
-    t.assert_equals(
-        set_auth_params(nil, nil, false)['admin_disabled'],
-        false
-    )
-    t.assert_equals(
-        get_auth_params(g.cluster:server('master'))['admin_disabled'],
-        false
-    )
-    t.assert_equals(
-        get_auth_params(g.cluster:server('replica'))['admin_disabled'],
-        false
-    )
-    t.assert_equals(
-        _login(g.cluster:server('master'), 'admin', g.cluster.cookie).status,
-        200
-    )
-    t.assert_equals(
-        _login(g.cluster:server('replica'), 'admin', g.cluster.cookie).status,
-        200
-    )
-    t.assert_equals(
-        set_auth_params(nil, nil, true)['admin_disabled'],
-        true
-    )
-    t.assert_equals(
-        _login(g.cluster:server('master'), 'admin', g.cluster.cookie).status,
-        403
     )
 
     local function login(alias)
@@ -864,32 +818,3 @@ function g.test_invalidate_cookie_on_password_change()
     local cookie = resp.headers['set-cookie']
     check_200(server, {headers = {cookie = cookie}})
 end
-
-g.before_test('test_admin_disabled', function()
-    g.server:stop()
-    g.server.env['TARANTOOL_ADMIN_DISABLED'] = 'true'
-end)
-
-g.test_admin_disabled = function()
-    g.server:start()
-
-    t.helpers.retrying({}, function()
-        t.assert_error_msg_contains('Unauthorized', function()
-            g.server:graphql(
-                {query = '{ servers { uri } }'},
-                {http = {headers = {authorization = 'Basic ' .. g.server.auth_b64}}}
-            )
-        end)
-    end)
-
-    t.assert_equals(
-        _login(g.server, 'admin', g.server.cluster_cookie).status,
-        403
-    )
-end
-
-g.after_test('test_admin_disabled', function()
-    g.server:stop()
-    g.server.env['TARANTOOL_ADMIN_DISABLED'] = 'false'
-    g.server:start()
-end)
