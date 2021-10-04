@@ -19,9 +19,7 @@ Added
 - 'Make all instances writeable' configuration field can be hidden via
   frontend-core's ``set_variable`` feature or at runtime.
 
-- Add a new option to disable admin user in the built-in auth module:
-  ``admin_disabled``. It can be set in both ``cartridge.cfg()`` and via
-  ``argparse``.
+- New ``admin_disabled`` option to disable admin user in the built-in auth module.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
