@@ -60,6 +60,8 @@
 --             level = 'custom-level',
 --             topic = 'custom-topic',
 --             message = 'custom message',
+--             -- all mentioned fields are optional,
+--             -- other fields are ignored
 --         },
 --     }
 -- end
@@ -380,7 +382,7 @@ local function list_on_instance(opts)
                     table.insert(ret, {
                         level = issue.level or '',
                         message = issue.message or '',
-                        topic = issue.topic or 'custom',
+                        topic = issue.topic or role_name,
                         instance_uuid = instance_uuid,
                         replicaset_uuid = replicaset_uuid,
                     })
