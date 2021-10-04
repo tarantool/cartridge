@@ -6,12 +6,36 @@ local uuid = require('uuid')
 local digest = require('digest')
 local utils = require('cartridge.utils')
 
+local argparse = require('cartridge.argparse')
+local cluster_cookie = require('cartridge.cluster-cookie')
+
 local AddUserError = errors.new_class('AddUserError')
 local GetUserError = errors.new_class('GetUserError')
 local EditUserError = errors.new_class('EditUserError')
 local RemoveUserError = errors.new_class('RemoveUserError')
 
 local SALT_LENGTH = 16
+
+local ADMIN_USER = {
+    username = cluster_cookie.username(),
+    fullname = 'Cartridge Administrator',
+}
+
+local admin_disabled = argparse.get_opts({
+    admin_disabled = 'boolean'
+}).admin_disabled or false
+
+local function get_admin_username()
+    return (not admin_disabled) and ADMIN_USER.username or false
+end
+
+local function disable_admin()
+    admin_disabled = true
+end
+
+local function is_admin_disabled()
+    return admin_disabled
+end
 
 local function generate_salt(length)
     return digest.base64_encode(
@@ -86,6 +110,13 @@ end
 local function get_user(username)
     checks('string')
 
+    if get_admin_username() == username then
+        return {
+            username = ADMIN_USER.username,
+            fullname = ADMIN_USER.fullname,
+        }
+    end
+
     local user = find_user_by_username(username)
     if user == nil then
         return nil, GetUserError:new("User not found: '%s'", username)
@@ -96,6 +127,13 @@ end
 
 local function add_user(username, password, fullname, email)
     checks('string', 'string', '?string', '?string')
+
+    if get_admin_username() == username then
+        return nil, EditUserError:new(
+            "add_user() can't override integrated superuser '%s'",
+            username
+        )
+    end
 
     if find_user_by_username(username) then
         return nil, AddUserError:new("User already exists: '%s'", username)
@@ -138,6 +176,13 @@ end
 
 local function edit_user(username, password, fullname, email)
     checks('string', '?string', '?string', '?string')
+
+    if get_admin_username() == username then
+        return nil, EditUserError:new(
+            "edit_user() can't change integrated superuser '%s'",
+            username
+        )
+    end
 
     local user, uid = find_user_by_username(username)
     if user == nil then
@@ -193,6 +238,13 @@ end
 local function list_users()
     local result = {}
 
+    if get_admin_username() ~= false then
+        table.insert(result, {
+            username = ADMIN_USER.username,
+            fullname = ADMIN_USER.fullname
+        })
+    end
+
     local users_acl = cartridge.config_get_readonly('users_acl')
     for _, user in pairs(users_acl or {}) do
         table.insert(result, user)
@@ -203,6 +255,10 @@ end
 
 local function remove_user(username)
     checks('string')
+
+    if get_admin_username() == username then
+        return nil, RemoveUserError:new("remove_user() can't delete integrated superuser '%s'", username)
+    end
 
     local user, uid = find_user_by_username(username)
     if user == nil then
@@ -225,6 +281,10 @@ end
 local function check_password(username, password)
     checks('string', 'string')
 
+    if get_admin_username() == username then
+        return cluster_cookie.cookie() == password
+    end
+
     local user = find_user_by_username(username)
     if user == nil then
         return false
@@ -242,4 +302,9 @@ return {
     list_users = list_users,
     remove_user = remove_user,
     check_password = check_password,
+
+    custom = {
+        disable_admin = disable_admin,
+        is_admin_disabled = is_admin_disabled
+    }
 }

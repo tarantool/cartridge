@@ -12,6 +12,7 @@ g.before_all = function()
         datadir = fio.tempdir(),
         server_command = helpers.entrypoint('srv_basic'),
         cookie = require('digest').urandom(6):hex(),
+        env = {TARANTOOL_ADMIN_DISABLED = 'false'},
         replicasets = {
             {
                 uuid = helpers.uuid('a'),
@@ -50,14 +51,14 @@ g.before_all = function()
     g.server:start()
 
     g.server_user = 'admin'
-    local auth_b64 = digest.base64_encode(
+    g.auth_b64 = digest.base64_encode(
         g.server_user .. ':' .. g.server.cluster_cookie
     )
 
     t.helpers.retrying({timeout = 5}, function()
         g.server:graphql(
             {query = '{ servers { uri } }'},
-            {http = {headers = {authorization = 'Basic ' .. auth_b64}}}
+            {http = {headers = {authorization = 'Basic ' .. g.auth_b64}}}
         )
     end)
 end
@@ -106,6 +107,18 @@ local function get_lsid_max_age(resp)
     local max_age_part = cookie[2][2]
     local max_age = max_age_part:split('=')[2]
     return tonumber(max_age)
+end
+
+local function disable_admin(server)
+    server:eval([[
+        require('cartridge.auth-backend').custom.disable_admin()
+    ]])
+end
+
+local function is_admin_disabled(server)
+    return server:eval([[
+        return require('cartridge.auth-backend').custom.is_admin_disabled()
+    ]])
 end
 
 local function _login(server, username, password)
@@ -818,3 +831,53 @@ function g.test_invalidate_cookie_on_password_change()
     local cookie = resp.headers['set-cookie']
     check_200(server, {headers = {cookie = cookie}})
 end
+
+g.test_admin_disabled = function()
+    t.assert_equals(is_admin_disabled(g.cluster.main_server), false)
+    t.assert_equals(
+        _login(g.cluster.main_server, 'admin', g.cluster.main_server.cluster_cookie).status,
+        200
+    )
+
+    disable_admin(g.cluster.main_server)
+    t.assert_equals(is_admin_disabled(g.cluster.main_server), true)
+
+    t.helpers.retrying({}, function()
+        t.assert_error_msg_contains('Unauthorized', function()
+            g.cluster.main_server:graphql(
+                {query = '{ servers { uri } }'},
+                {http = {headers = {authorization = 'Basic ' .. g.auth_b64}}}
+            )
+        end)
+    end)
+
+    t.assert_equals(
+        _login(g.cluster.main_server, 'admin', g.cluster.main_server.cluster_cookie).status,
+        403
+    )
+
+    local users = g.cluster.main_server:eval([[
+        return require('cartridge.auth').list_users()
+    ]])
+    t.assert_equals(users, {})
+
+    local _, err = g.cluster.main_server:eval([[
+        return require('cartridge.auth').remove_user('admin')
+    ]])
+    t.assert_equals(err.err, "User not found: 'admin'")
+
+    local _, err = g.cluster.main_server:eval([[
+        return require('cartridge.auth').edit_user('admin', '111')
+    ]])
+    t.assert_equals(err.err, "User not found: 'admin'")
+
+    local user, err = g.cluster.main_server:eval([[
+        return require('cartridge.auth').add_user('admin', '111')
+    ]])
+    t.assert_equals(err, nil)
+    t.assert_covers(user, {username = 'admin'})
+end
+
+g.after_test('test_admin_disabled', function()
+    g.cluster.main_server:restart()
+end)

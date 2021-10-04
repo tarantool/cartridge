@@ -299,33 +299,8 @@ g.test_auth_backend = function()
             auth_backend_name = 'myauth',
         })
 
-        t.assert_equals(ok, nil)
-        t.assert_covers(err, {class_name = 'CartridgeCfgError'})
-        t.assert_str_matches(err.err, '.+: unexpected' ..
-            ' argument callbacks.unknown_method to set_callbacks'
-        )
-    end)
-
-    helpers.run_remotely(g.server, function()
-        local t = require('luatest')
-
-        package.loaded.myauth = nil
-        package.preload['myauth'] = function()
-            return { check_password = 'not-a-function' }
-        end
-        local ok, err = require('cartridge').cfg({
-            advertise_uri = 'unused:0',
-            workdir = os.getenv('TARANTOOL_WORKDIR'),
-            roles = {},
-            auth_backend_name = 'myauth',
-        })
-
-        t.assert_equals(ok, nil)
-        t.assert_covers(err, {class_name = 'CartridgeCfgError'})
-        t.assert_str_matches(err.err, '.+: bad argument' ..
-            ' callbacks.check_password to set_callbacks' ..
-            ' %(%?function expected, got string%)'
-        )
+        t.assert_equals(err, nil)
+        t.assert_equals(ok, true)
     end)
 end
 
