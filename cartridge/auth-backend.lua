@@ -6,12 +6,46 @@ local uuid = require('uuid')
 local digest = require('digest')
 local utils = require('cartridge.utils')
 
+local argparse = require('cartridge.argparse')
+local cluster_cookie = require('cartridge.cluster-cookie')
+
 local AddUserError = errors.new_class('AddUserError')
 local GetUserError = errors.new_class('GetUserError')
 local EditUserError = errors.new_class('EditUserError')
 local RemoveUserError = errors.new_class('RemoveUserError')
 
 local SALT_LENGTH = 16
+
+local ADMIN_USER = {
+    username = cluster_cookie.username(),
+    fullname = 'Cartridge Administrator',
+    enabled = true,
+}
+
+do
+    local opts, err = argparse.get_opts({
+        auth_builtin_admin_enabled = 'boolean'
+    })
+
+    if opts == nil then
+        -- `require()` doesn't support `return nil, err` notation
+        -- so we have to raise an exception instead.
+        error(err, 0)
+    end
+
+    if opts.auth_builtin_admin_enabled ~= nil then
+        ADMIN_USER.enabled = opts.auth_builtin_admin_enabled
+    end
+end
+
+local function set_builtin_admin_enabled(enabled)
+    checks('boolean')
+    ADMIN_USER.enabled = enabled
+end
+
+local function is_builtin_admin_enabled()
+    return ADMIN_USER.enabled
+end
 
 local function generate_salt(length)
     return digest.base64_encode(
@@ -86,6 +120,13 @@ end
 local function get_user(username)
     checks('string')
 
+    if ADMIN_USER.enabled and username == ADMIN_USER.username then
+        return {
+            username = ADMIN_USER.username,
+            fullname = ADMIN_USER.fullname,
+        }
+    end
+
     local user = find_user_by_username(username)
     if user == nil then
         return nil, GetUserError:new("User not found: '%s'", username)
@@ -96,6 +137,15 @@ end
 
 local function add_user(username, password, fullname, email)
     checks('string', 'string', '?string', '?string')
+
+    if username == ADMIN_USER.username
+    and is_builtin_admin_enabled()
+    then
+        return nil, EditUserError:new(
+            "add_user() can't override built-in superuser '%s'",
+            username
+        )
+    end
 
     if find_user_by_username(username) then
         return nil, AddUserError:new("User already exists: '%s'", username)
@@ -138,6 +188,15 @@ end
 
 local function edit_user(username, password, fullname, email)
     checks('string', '?string', '?string', '?string')
+
+    if username == ADMIN_USER.username
+    and is_builtin_admin_enabled()
+    then
+        return nil, EditUserError:new(
+            "edit_user() can't change built-in superuser '%s'",
+            username
+        )
+    end
 
     local user, uid = find_user_by_username(username)
     if user == nil then
@@ -193,6 +252,13 @@ end
 local function list_users()
     local result = {}
 
+    if is_builtin_admin_enabled() then
+        table.insert(result, {
+            username = ADMIN_USER.username,
+            fullname = ADMIN_USER.fullname
+        })
+    end
+
     local users_acl = cartridge.config_get_readonly('users_acl')
     for _, user in pairs(users_acl or {}) do
         table.insert(result, user)
@@ -203,6 +269,15 @@ end
 
 local function remove_user(username)
     checks('string')
+
+    if username == ADMIN_USER.username
+    and is_builtin_admin_enabled()
+    then
+        return nil, RemoveUserError:new(
+            "remove_user() can't delete built-in superuser '%s'",
+            username
+        )
+    end
 
     local user, uid = find_user_by_username(username)
     if user == nil then
@@ -225,6 +300,12 @@ end
 local function check_password(username, password)
     checks('string', 'string')
 
+    if username == ADMIN_USER.username
+    and is_builtin_admin_enabled()
+    then
+        return cluster_cookie.cookie() == password
+    end
+
     local user = find_user_by_username(username)
     if user == nil then
         return false
@@ -242,4 +323,7 @@ return {
     list_users = list_users,
     remove_user = remove_user,
     check_password = check_password,
+
+    set_builtin_admin_enabled = set_builtin_admin_enabled,
+    is_builtin_admin_enabled = is_builtin_admin_enabled,
 }

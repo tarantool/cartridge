@@ -29,11 +29,6 @@ vars:new('callbacks', {})
 local DEFAULT_COOKIE_MAX_AGE = 3600*24*30 -- in seconds
 local DEFAULT_COOKIE_RENEW_AGE = 3600*24 -- in seconds
 
-local ADMIN_USER = {
-    username = cluster_cookie.username(),
-    fullname = 'Cartridge Administrator'
-}
-
 local e_check_cookie = errors.new_class('Checking cookie failed')
 local e_check_header = errors.new_class('Checking auth headers failed')
 local e_callback = errors.new_class('Auth callback failed')
@@ -61,8 +56,7 @@ local function set_enabled(enabled)
     checks('boolean')
     if confapplier.get_readonly() ~= nil then
         return nil, errors.new('AuthSetEnabledError',
-            'Cluster is already bootstrapped. Use cluster.auth_set_params' ..
-            ' to modify clusterwide config'
+            'Current instance is already bootstrapped'
         )
     end
 
@@ -96,7 +90,7 @@ end
 --
 -- Can't be used before the bootstrap.
 -- Affects all cluster instances.
--- Triggers `cluster.config_patch_clusterwide`.
+-- Triggers `cartridge.config_patch_clusterwide`.
 --
 -- @function set_params
 -- @within Configuration
@@ -168,7 +162,7 @@ local function get_params()
     --- Authentication params.
     -- @table AuthParams
     -- @within Configuration
-    -- @tfield boolean enabled Wether unauthenticated access is forbidden
+    -- @tfield boolean enabled Whether unauthenticated access is forbidden
     -- @tfield number cookie_max_age Number of seconds until the authentication cookie expires
     -- @tfield number cookie_renew_age Update provided cookie if it's older then this age (in seconds)
     return {
@@ -269,15 +263,6 @@ local function get_basic_auth_uid(auth)
         return nil
     end
 
-    if username == ADMIN_USER.username then
-        local ok = password == cluster_cookie.cookie()
-        if ok then
-            return username
-        else
-            return nil
-        end
-    end
-
     local ok = vars.callbacks.check_password(username, password)
     if type(ok) ~= 'boolean' then
         local err = e_callback:new('check_password() must return boolean')
@@ -321,22 +306,6 @@ end
 local function login(req)
     local username = req:param('username')
     local password = req:param('password')
-
-    -- First check for built-in admin user
-    if username == ADMIN_USER.username then
-        if password == cluster_cookie.cookie() then
-            return {
-                status = 200,
-                headers = {
-                    ['set-cookie'] = create_cookie(username),
-                }
-            }
-        else
-            return {
-                status = 403,
-            }
-        end
-    end
 
     if vars.callbacks.check_password == nil then
         return {
@@ -433,12 +402,6 @@ end
 -- @treturn[2] table Error description
 local function add_user(username, password, fullname, email)
     checks('string', 'string', '?string', '?string')
-    if username == ADMIN_USER.username then
-        return nil, e_callback:new(
-            "add_user() can't override integrated superuser '%s'",
-            username
-        )
-    end
 
     if vars.callbacks.add_user == nil then
         return nil, e_callback:new("add_user() callback isn't set")
@@ -473,10 +436,6 @@ end
 -- @treturn[2] table Error description
 local function get_user(username)
     checks('string')
-
-    if username == ADMIN_USER.username then
-        return coerce_user(ADMIN_USER)
-    end
 
     if vars.callbacks.get_user == nil then
         return nil, e_callback:new("get_user() callback isn't set")
@@ -515,12 +474,6 @@ end
 -- @treturn[2] table Error description
 local function edit_user(username, password, fullname, email)
     checks('string', '?string', '?string', '?string')
-    if username == ADMIN_USER.username then
-        return nil, e_callback:new(
-            "edit_user() can't change integrated superuser '%s'",
-            username
-        )
-    end
 
     if vars.callbacks.edit_user == nil then
         return nil, e_callback:new("edit_user() callback isn't set")
@@ -559,7 +512,7 @@ end
 -- @treturn[2] table Error description
 local function list_users()
     if vars.callbacks.list_users == nil then
-        return {coerce_user(ADMIN_USER)}
+        return {}
     end
 
     return e_list_users:pcall(function()
@@ -568,7 +521,7 @@ local function list_users()
             return nil, e_list_users:new(err)
         end
 
-        local ret = {coerce_user(ADMIN_USER)}
+        local ret = {}
         local i = 1
         for _ in pairs(users) do
             local user = users[i]
@@ -581,7 +534,7 @@ local function list_users()
                 local err = e_callback:new('list_users() must return array of user objects')
                 return nil, err
             end
-            ret[i+1] = user
+            ret[i] = user
             i = i + 1
         end
 
@@ -606,12 +559,6 @@ local function remove_user(username)
 
     if username == get_session_username() then
         return nil, e_remove_user:new('user can not remove himself')
-    end
-
-    if username == ADMIN_USER.username then
-        return nil, e_callback:new(
-            "remove_user() can't delete integrated superuser '%s'",
-            username)
     end
 
     if vars.callbacks.remove_user == nil then
@@ -793,17 +740,28 @@ end
 -- @tparam function callbacks.check_password
 -- @treturn boolean `true`
 local function set_callbacks(callbacks)
-    checks({
-        add_user = '?function',
-        get_user = '?function',
-        edit_user = '?function',
-        list_users = '?function',
-        remove_user = '?function',
+    checks('table')
 
-        check_password = '?function',
-    })
+    for _, k in ipairs({
+        'add_user',
+        'get_user',
+        'edit_user',
+        'list_users',
+        'remove_user',
+        'check_password',
+    }) do
+        if callbacks[k] ~= nil
+        and type(callbacks[k]) ~= 'function'
+        then
+            error(string.format(
+                "Invalid auth callback '%s'" ..
+                " (function expected, got %s)",
+                k, type(callbacks[k])
+            ), 2)
+        end
+    end
 
-    vars.callbacks = callbacks or {}
+    vars.callbacks = callbacks
     return true
 end
 
