@@ -420,6 +420,9 @@ function g.test_custom_issues()
                 }
             end,
         })
+        cartridge.service_set('custom_role_with_issues_error', {
+            get_issues = error
+        })
     ]])
 
     t.assert_equals(helpers.list_cluster_issues(g.master), {
@@ -444,6 +447,8 @@ function g.test_custom_issues()
             instance_uuid = g.master.instance_uuid,
             replicaset_uuid = g.master.replicaset_uuid,
         }
+        -- since custom_role_with_issues_error.get_issues() returns an error,
+        -- there will be no issues from that role in list
     })
 end
 
@@ -451,24 +456,6 @@ g.after_test('test_custom_issues', function()
     g.master.net_box:eval([[
         local cartridge = require('cartridge')
         cartridge.service_set('custom_role_with_issues', nil)
-    ]])
-end)
-
-function g.test_custom_issues_error()
-    g.master.net_box:eval([[
-        local cartridge = require('cartridge')
-        cartridge.service_set('custom_role_with_issues', {
-            get_issues = error
-        })
-    ]])
-
-    -- no issues in list
-    t.assert_equals(helpers.list_cluster_issues(g.master), {})
-end
-
-g.after_test('test_custom_issues_error', function()
-    g.master.net_box:eval([[
-        local cartridge = require('cartridge')
-        cartridge.service_set('custom_role_with_issues', nil)
+        cartridge.service_set('custom_role_with_issues_error', nil)
     ]])
 end)
