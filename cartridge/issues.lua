@@ -50,6 +50,21 @@
 -- * warning: "Instance ... with alien uuid is in the membership" -
 --   when two separate clusters share the same cluster cookie;
 --
+-- Custom issues (defined by user):
+-- Collected from role callback `get_issues`. It should return table with
+-- issues parameters:
+-- ```lua
+-- function get_issues()
+--     return {
+--         {
+--             level = 'custom-level',
+--             topic = 'custom-topic',
+--             message = 'custom message',
+--         },
+--     }
+-- end
+-- ```
+--
 -- @module cartridge.issues
 -- @local
 local mod_name = 'cartridge.issues'
@@ -357,7 +372,7 @@ local function list_on_instance(opts)
 
     -- add custom issues from each role
     local registry = require('cartridge.service-registry')
-    for role_name, role in pairs(registry.list()) do
+    for _, role in pairs(registry.list()) do
         if type(role.get_issues) == 'function' then
             local ok, custom_issues = pcall(role.get_issues)
             if ok then
