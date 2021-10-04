@@ -28,10 +28,3 @@ luacov.*.out*
 *.mo
 .history
 rst/locale/en/
-
-# testing
-/coverage
-**/*.mp4
-**/*.png
-!cypress/snapshots/**/*.png
-cypress/snapshots/**/__diff_output__
