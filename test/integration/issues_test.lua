@@ -414,31 +414,61 @@ function g.test_custom_issues()
                         topic = nil,
                         message = 'critical message',
                     },
+                    {
+                        -- empty issue
+                    },
                 }
             end,
         })
     ]])
-    t.helpers.retrying({}, function()
-        t.assert_equals(helpers.list_cluster_issues(g.master), {
-            {
-                level = 'warning',
-                topic = 'custom_topic',
-                message = 'custom message',
-                instance_uuid = g.master.instance_uuid,
-                replicaset_uuid = g.master.replicaset_uuid,
-            },
-            {
-                level = 'critical',
-                topic = 'custom',
-                message = 'critical message',
-                instance_uuid = g.master.instance_uuid,
-                replicaset_uuid = g.master.replicaset_uuid,
-            }
-        })
-    end)
 
+    t.assert_equals(helpers.list_cluster_issues(g.master), {
+        {
+            level = 'warning',
+            topic = 'custom_topic',
+            message = 'custom message',
+            instance_uuid = g.master.instance_uuid,
+            replicaset_uuid = g.master.replicaset_uuid,
+        },
+        {
+            level = 'critical',
+            topic = 'custom',
+            message = 'critical message',
+            instance_uuid = g.master.instance_uuid,
+            replicaset_uuid = g.master.replicaset_uuid,
+        },
+        {
+            level = '',
+            topic = 'custom',
+            message = '',
+            instance_uuid = g.master.instance_uuid,
+            replicaset_uuid = g.master.replicaset_uuid,
+        }
+    })
+end
+
+g.after_test('test_custom_issues', function()
     g.master.net_box:eval([[
         local cartridge = require('cartridge')
         cartridge.service_set('custom_role_with_issues', nil)
     ]])
+end)
+
+function g.test_custom_issues_error()
+    g.master.net_box:eval([[
+        local cartridge = require('cartridge')
+        cartridge.service_set('custom_role_with_issues', {
+            get_issues = error
+        })
+    ]])
+
+    -- no issues in list
+    t.assert_equals(helpers.list_cluster_issues(g.master), {})
 end
+
+g.after_test('test_custom_issues_error', function()
+    g.master.net_box:eval([[
+        local cartridge = require('cartridge')
+        cartridge.service_set('custom_role_with_issues', nil)
+    ]])
+end)

@@ -91,12 +91,6 @@ local limits_ranges = {
     clock_delta_threshold_warning = {0, math.huge},
 }
 
-local allowed_levels = {
-    critical = true,
-    warning = true,
-    info = true,
-}
-
 vars:new('limits', default_limits)
 
 local function describe(uri)
@@ -364,19 +358,17 @@ local function list_on_instance(opts)
     -- add custom issues from each role
     local registry = require('cartridge.service-registry')
     for role_name, role in pairs(registry.list()) do
-        if role.get_issues ~= nil then
-            for _, issue in ipairs(role.get_issues()) do
-                if issue.level ~= nil and allowed_levels[issue.level] and issue.message ~= nil then
+        if type(role.get_issues) == 'function' then
+            local ok, custom_issues = pcall(role.get_issues)
+            if ok then
+                for _, issue in ipairs(custom_issues) do
                     table.insert(ret, {
-                        level = issue.level,
-                        message = issue.message,
+                        level = issue.level or '',
+                        message = issue.message or '',
                         topic = issue.topic or 'custom',
                         instance_uuid = instance_uuid,
                         replicaset_uuid = replicaset_uuid,
                     })
-                else
-                    log.error(('Got issue with wrong format from role %s: level = %s, topic = %s, message = %s'):
-                        format(role_name, tostring(issue.level), tostring(issue.topic), tostring(issue.message)))
                 end
             end
         end
