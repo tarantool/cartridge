@@ -19,13 +19,27 @@ Added
 - 'Make all instances writeable' configuration field can be hidden via
   frontend-core's ``set_variable`` feature or at runtime.
 
+- Allow disabling built-in HTTP "admin" user:
+
+  * by specifying ``auth_builtin_admin_enabled: false`` in the ``instances.yml``;
+
+  * using ``TARANTOOL_AUTH_BUILTIN_ADMIN_ENABLED=false`` environment variable;
+
+  * permanently in ``init.lua``:
+
+
+    .. code-block:: lua
+
+        -- init.lua
+        require('cartridge.auth-backend').set_builtin_admin_enabled(false)
+        cartridge.cfg({auth_backend_name = 'cartridge.auth-backend', ...})
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Changed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- Move the default admin to the ``auth-backend`` module. It can be disabled with
-  a ``TARANTOOL_ADMIN_DISABLED`` env variable or a ``.custom.admin_disable()``
-  method.
+- Make built-in HTTP "admin" user a part of default auth backend. Custom
+  backends are free of it now.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed

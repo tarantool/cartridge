@@ -740,7 +740,28 @@ end
 -- @tparam function callbacks.check_password
 -- @treturn boolean `true`
 local function set_callbacks(callbacks)
-    vars.callbacks = callbacks or {}
+    checks('table')
+
+    for _, k in ipairs({
+        'add_user',
+        'get_user',
+        'edit_user',
+        'list_users',
+        'remove_user',
+        'check_password',
+    }) do
+        if callbacks[k] ~= nil
+        and type(callbacks[k]) ~= 'function'
+        then
+            error(string.format(
+                "Invalid auth callback '%s'" ..
+                " (function expected, got %s)",
+                k, type(callbacks[k])
+            ), 2)
+        end
+    end
+
+    vars.callbacks = callbacks
     return true
 end
 

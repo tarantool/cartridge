@@ -79,7 +79,7 @@ function g.test_api()
     end
 
     t.assert_error_msg_contains(
-        "add_user() can't override integrated superuser",
+        "add_user() can't override built-in superuser",
         add_user, ADMIN_USERNAME, 'qwerty'
     )
 
@@ -104,7 +104,7 @@ function g.test_api()
     end
 
     t.assert_error_msg_contains(
-        "edit_user() can't change integrated superuser",
+        "edit_user() can't change built-in superuser",
         edit_user, ADMIN_USERNAME, 'qwerty'
     )
 

@@ -19,22 +19,32 @@ local SALT_LENGTH = 16
 local ADMIN_USER = {
     username = cluster_cookie.username(),
     fullname = 'Cartridge Administrator',
+    enabled = true,
 }
 
-local admin_disabled = argparse.get_opts({
-    admin_disabled = 'boolean'
-}).admin_disabled or false
+do
+    local opts, err = argparse.get_opts({
+        auth_builtin_admin_enabled = 'boolean'
+    })
 
-local function get_admin_username()
-    return (not admin_disabled) and ADMIN_USER.username or false
+    if opts == nil then
+        -- `require()` doesn't support `return nil, err` notation
+        -- so we have to raise an exception instead.
+        error(err, 0)
+    end
+
+    if opts.auth_builtin_admin_enabled ~= nil then
+        ADMIN_USER.enabled = opts.auth_builtin_admin_enabled
+    end
 end
 
-local function disable_admin()
-    admin_disabled = true
+local function set_builtin_admin_enabled(enabled)
+    checks('boolean')
+    ADMIN_USER.enabled = enabled
 end
 
-local function is_admin_disabled()
-    return admin_disabled
+local function is_builtin_admin_enabled()
+    return ADMIN_USER.enabled
 end
 
 local function generate_salt(length)
@@ -110,7 +120,7 @@ end
 local function get_user(username)
     checks('string')
 
-    if get_admin_username() == username then
+    if ADMIN_USER.enabled and username == ADMIN_USER.username then
         return {
             username = ADMIN_USER.username,
             fullname = ADMIN_USER.fullname,
@@ -128,9 +138,11 @@ end
 local function add_user(username, password, fullname, email)
     checks('string', 'string', '?string', '?string')
 
-    if get_admin_username() == username then
+    if username == ADMIN_USER.username
+    and is_builtin_admin_enabled()
+    then
         return nil, EditUserError:new(
-            "add_user() can't override integrated superuser '%s'",
+            "add_user() can't override built-in superuser '%s'",
             username
         )
     end
@@ -177,9 +189,11 @@ end
 local function edit_user(username, password, fullname, email)
     checks('string', '?string', '?string', '?string')
 
-    if get_admin_username() == username then
+    if username == ADMIN_USER.username
+    and is_builtin_admin_enabled()
+    then
         return nil, EditUserError:new(
-            "edit_user() can't change integrated superuser '%s'",
+            "edit_user() can't change built-in superuser '%s'",
             username
         )
     end
@@ -238,7 +252,7 @@ end
 local function list_users()
     local result = {}
 
-    if get_admin_username() ~= false then
+    if is_builtin_admin_enabled() then
         table.insert(result, {
             username = ADMIN_USER.username,
             fullname = ADMIN_USER.fullname
@@ -256,8 +270,13 @@ end
 local function remove_user(username)
     checks('string')
 
-    if get_admin_username() == username then
-        return nil, RemoveUserError:new("remove_user() can't delete integrated superuser '%s'", username)
+    if username == ADMIN_USER.username
+    and is_builtin_admin_enabled()
+    then
+        return nil, RemoveUserError:new(
+            "remove_user() can't delete built-in superuser '%s'",
+            username
+        )
     end
 
     local user, uid = find_user_by_username(username)
@@ -281,7 +300,9 @@ end
 local function check_password(username, password)
     checks('string', 'string')
 
-    if get_admin_username() == username then
+    if username == ADMIN_USER.username
+    and is_builtin_admin_enabled()
+    then
         return cluster_cookie.cookie() == password
     end
 
@@ -303,8 +324,6 @@ return {
     remove_user = remove_user,
     check_password = check_password,
 
-    custom = {
-        disable_admin = disable_admin,
-        is_admin_disabled = is_admin_disabled
-    }
+    set_builtin_admin_enabled = set_builtin_admin_enabled,
+    is_builtin_admin_enabled = is_builtin_admin_enabled,
 }

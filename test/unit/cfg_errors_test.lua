@@ -247,7 +247,7 @@ end
 -- auth_backend ---------------------------------------------------------------
 -------------------------------------------------------------------------------
 
-g.test_auth_backend = function()
+g.test_custom_auth_backend = function()
     helpers.run_remotely(g.server, mock)
     helpers.run_remotely(g.server, function()
         local t = require('luatest')
@@ -289,6 +289,47 @@ g.test_auth_backend = function()
         local t = require('luatest')
 
         package.loaded.myauth = nil
+        package.preload['myauth'] = function() return '' end
+        local ok, err = require('cartridge').cfg({
+            advertise_uri = 'unused:0',
+            workdir = os.getenv('TARANTOOL_WORKDIR'),
+            roles = {},
+            auth_backend_name = 'myauth',
+        })
+
+        t.assert_equals(ok, nil)
+        t.assert_covers(err, {
+            class_name = 'CartridgeCfgError',
+            err = 'Auth backend must export a table, got string',
+        })
+    end)
+
+    helpers.run_remotely(g.server, function()
+        local t = require('luatest')
+
+        package.loaded.myauth = nil
+        package.preload['myauth'] = function()
+            return { check_password = 'not-a-function' }
+        end
+        local ok, err = require('cartridge').cfg({
+            advertise_uri = 'unused:0',
+            workdir = os.getenv('TARANTOOL_WORKDIR'),
+            roles = {},
+            auth_backend_name = 'myauth',
+        })
+
+        t.assert_equals(ok, nil)
+        t.assert_covers(err, {class_name = 'CartridgeCfgError'})
+        t.assert_equals(err.err,
+            "Invalid auth callback 'check_password'" ..
+            " (function expected, got string)"
+        )
+    end)
+
+    helpers.run_remotely(g.server, function()
+        local t = require('luatest')
+
+        package.loaded.myauth = nil
         package.preload['myauth'] = function()
             return { unknown_method = function() end }
         end
@@ -301,6 +342,29 @@ g.test_auth_backend = function()
 
         t.assert_equals(err, nil)
         t.assert_equals(ok, true)
+    end)
+end
+
+g.test_default_auth_backend = function()
+    helpers.run_remotely(g.server, mock)
+    helpers.run_remotely(g.server, function()
+        local t = require('luatest')
+
+        -- Invalidate argparse cache before modifying environment
+        require('cartridge.vars').new('cartridge.argparse').args = nil
+        os.setenv('TARANTOOL_AUTH_BUILTIN_ADMIN_ENABLED', 'abracadabra')
+
+        local ok, err = require('cartridge').cfg({
+            advertise_uri = 'unused:0',
+            workdir = os.getenv('TARANTOOL_WORKDIR'),
+            roles = {},
+        })
+
+        t.assert_equals(ok, nil)
+        t.assert_covers(err, {class_name = 'TypeCastError'})
+        t.assert_equals(err.err, "can't typecast" ..
+            " auth_builtin_admin_enabled=\"abracadabra\" to boolean"
+        )
     end)
 end
 

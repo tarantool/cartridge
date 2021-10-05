@@ -110,15 +110,17 @@ local function get_lsid_max_age(resp)
 end
 
 local function disable_admin(server)
-    server:eval([[
-        require('cartridge.auth-backend').custom.disable_admin()
-    ]])
+    helpers.run_remotely(server, function()
+        local auth = require('cartridge.auth-backend')
+        auth.set_builtin_admin_enabled(false)
+    end)
 end
 
-local function is_admin_disabled(server)
-    return server:eval([[
-        return require('cartridge.auth-backend').custom.is_admin_disabled()
-    ]])
+local function is_admin_enabled(server)
+    return helpers.run_remotely(server, function()
+        local auth = require('cartridge.auth-backend')
+        return auth.is_builtin_admin_enabled()
+    end)
 end
 
 local function _login(server, username, password)
@@ -239,7 +241,7 @@ local function _test_login(alias, auth)
             {http = {headers = {cookie = cookie_lsid}}})
         end
         t.assert_error_msg_contains(
-            "remove_user() can't delete integrated superuser 'admin'",
+            "remove_user() can't delete built-in superuser 'admin'",
             remove_admin
         )
 
@@ -521,7 +523,7 @@ function g.test_uninitialized()
     )
 
     t.assert_error_msg_contains(
-        "edit_user() can't change integrated superuser 'admin'",
+        "edit_user() can't change built-in superuser 'admin'",
         _edit_user, g.server, g.server_user, 'password11'
     )
 end
@@ -833,14 +835,14 @@ function g.test_invalidate_cookie_on_password_change()
 end
 
 g.test_admin_disabled = function()
-    t.assert_equals(is_admin_disabled(g.cluster.main_server), false)
+    t.assert_equals(is_admin_enabled(g.cluster.main_server), true)
     t.assert_equals(
         _login(g.cluster.main_server, 'admin', g.cluster.main_server.cluster_cookie).status,
         200
     )
 
     disable_admin(g.cluster.main_server)
-    t.assert_equals(is_admin_disabled(g.cluster.main_server), true)
+    t.assert_equals(is_admin_enabled(g.cluster.main_server), false)
 
     t.helpers.retrying({}, function()
         t.assert_error_msg_contains('Unauthorized', function()
