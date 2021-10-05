@@ -416,14 +416,14 @@ function g.test_custom_issues()
                     {
                         -- empty issue
                     },
+                    {
+                        -- issue with bad types
+                        level = 5,
+                        topic = 42,
+                        message = 0,
+                    },
                 }
             end,
-        })
-        cartridge.service_set('custom_role_with_issues_empty_error', {
-            get_issues = error
-        })
-        cartridge.service_set('custom_role_with_issues_error_msg', {
-            get_issues = function() error('Error!', 0) end
         })
     ]])
 
@@ -450,12 +450,56 @@ function g.test_custom_issues()
             replicaset_uuid = g.master.replicaset_uuid,
         },
         {
+            level = '5',
+            topic = '42',
+            message = '0',
+            instance_uuid = g.master.instance_uuid,
+            replicaset_uuid = g.master.replicaset_uuid,
+        },
+    })
+end
+
+g.after_test('test_custom_issues', function()
+    g.master.net_box:eval([[
+        require('cartridge').service_set('custom_role_with_issues', nil)
+    ]])
+end)
+
+function g.test_custom_issues_empty_error()
+    g.master.net_box:eval([[
+        local cartridge = require('cartridge')
+        cartridge.service_set('custom_role_with_issues_empty_error', {
+            get_issues = error
+        })
+    ]])
+
+    t.assert_items_include(helpers.list_cluster_issues(g.master), {
+        {
             level = 'warning',
             topic = 'custom_role_with_issues_empty_error',
             message = 'get_issues() raised an error',
             instance_uuid = g.master.instance_uuid,
             replicaset_uuid = g.master.replicaset_uuid,
         },
+    })
+end
+
+
+g.after_test('test_custom_issues_empty_error', function()
+    g.master.net_box:eval([[
+        require('cartridge').service_set('custom_role_with_issues_empty_error', nil)
+    ]])
+end)
+
+function g.test_custom_issues_error_message()
+    g.master.net_box:eval([[
+        local cartridge = require('cartridge')
+        cartridge.service_set('custom_role_with_issues_error_msg', {
+            get_issues = function() error('Error!', 0) end
+        })
+    ]])
+
+    t.assert_items_include(helpers.list_cluster_issues(g.master), {
         {
             level = 'warning',
             topic = 'custom_role_with_issues_error_msg',
@@ -466,11 +510,155 @@ function g.test_custom_issues()
     })
 end
 
-g.after_test('test_custom_issues', function()
+g.after_test('test_custom_issues_error_message', function()
+    g.master.net_box:eval([[
+        require('cartridge').service_set('custom_role_with_issues_error_msg', nil)
+    ]])
+end)
+
+function g.test_custom_issues_get_issues_return_non_table()
     g.master.net_box:eval([[
         local cartridge = require('cartridge')
-        cartridge.service_set('custom_role_with_issues', nil)
-        cartridge.service_set('custom_role_with_issues_empty_error', nil)
-        cartridge.service_set('custom_role_with_issues_error_msg', nil)
+        cartridge.service_set('custom_role_with_issues_return_string', {
+            get_issues = function() return 'something happened' end
+        })
+        cartridge.service_set('custom_role_with_issues_return_number', {
+            get_issues = function() return 0 end
+        })
+        cartridge.service_set('custom_role_with_issues_return_boolean', {
+            get_issues = function() return true end
+        })
+        cartridge.service_set('custom_role_with_issues_return_nil', {
+            get_issues = function() return nil end
+        })
+    ]])
+
+    t.assert_items_include(helpers.list_cluster_issues(g.master), {
+        {
+            level = '',
+            topic = 'custom_role_with_issues_return_string',
+            message = 'something happened',
+            instance_uuid = g.master.instance_uuid,
+            replicaset_uuid = g.master.replicaset_uuid,
+        },
+        {
+            level = '',
+            topic = 'custom_role_with_issues_return_number',
+            message = '0',
+            instance_uuid = g.master.instance_uuid,
+            replicaset_uuid = g.master.replicaset_uuid,
+        },
+        {
+            level = '',
+            topic = 'custom_role_with_issues_return_boolean',
+            message = 'true',
+            instance_uuid = g.master.instance_uuid,
+            replicaset_uuid = g.master.replicaset_uuid,
+        },
+        {
+            level = '',
+            topic = 'custom_role_with_issues_return_nil',
+            message = '',
+            instance_uuid = g.master.instance_uuid,
+            replicaset_uuid = g.master.replicaset_uuid,
+        },
+    })
+end
+
+g.after_test('test_custom_issues_get_issues_return_non_table', function()
+    g.master.net_box:eval([[
+        local cartridge = require('cartridge')
+        cartridge.service_set('custom_role_with_issues_return_string', nil)
+        cartridge.service_set('custom_role_with_issues_return_number', nil)
+        cartridge.service_set('custom_role_with_issues_return_boolean', nil)
+        cartridge.service_set('custom_role_with_issues_return_nil', nil)
+    ]])
+end)
+
+
+function g.test_custom_issues_get_issues_return_list_of_strings()
+    g.master.net_box:eval([[
+        local cartridge = require('cartridge')
+        cartridge.service_set('custom_role_with_issues_return_list_of_strings', {
+            get_issues = function()
+                return {
+                    'issue1',
+                    'issue2',
+                }
+            end
+        })
+    ]])
+
+    t.assert_items_include(helpers.list_cluster_issues(g.master), {
+        {
+            level = '',
+            topic = 'custom_role_with_issues_return_list_of_strings',
+            message = 'issue1',
+            instance_uuid = g.master.instance_uuid,
+            replicaset_uuid = g.master.replicaset_uuid,
+        },
+        {
+            level = '',
+            topic = 'custom_role_with_issues_return_list_of_strings',
+            message = 'issue2',
+            instance_uuid = g.master.instance_uuid,
+            replicaset_uuid = g.master.replicaset_uuid,
+        },
+    })
+end
+
+g.after_test('test_custom_issues_get_issues_return_list_of_strings', function()
+    g.master.net_box:eval([[
+        require('cartridge').service_set('custom_role_with_issues_return_list_of_strings', nil)
+    ]])
+end)
+
+function g.test_custom_issues_get_issues_return_one_issue()
+    g.master.net_box:eval([[
+        local cartridge = require('cartridge')
+        cartridge.service_set('custom_role_with_issues_return_one_issue', {
+            get_issues = function()
+                return {
+                    level = 'warning',
+                    message = 'something happened',
+                }
+            end
+        })
+    ]])
+
+    t.assert_items_include(helpers.list_cluster_issues(g.master), {
+        {
+            level = 'warning',
+            topic = 'custom_role_with_issues_return_one_issue',
+            message = 'something happened',
+            instance_uuid = g.master.instance_uuid,
+            replicaset_uuid = g.master.replicaset_uuid,
+        },
+    })
+end
+
+
+g.after_test('test_custom_issues_get_issues_return_one_issue', function()
+    g.master.net_box:eval([[
+        require('cartridge').service_set('custom_role_with_issues_return_one_issue', nil)
+    ]])
+end)
+
+
+function g.test_custom_issues_get_issues_return_empty_table()
+    g.master.net_box:eval([[
+        local cartridge = require('cartridge')
+        cartridge.service_set('custom_role_with_issues_return_empty_table', {
+            get_issues = function() return {} end
+        })
+    ]])
+
+    t.assert_items_include(helpers.list_cluster_issues(g.master), {})
+end
+
+
+g.after_test('test_custom_issues_get_issues_return_empty_table', function()
+    g.master.net_box:eval([[
+        require('cartridge').service_set('custom_role_with_issues_return_empty_table', nil)
     ]])
 end)

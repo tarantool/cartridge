@@ -119,6 +119,43 @@ local function describe(uri)
     end
 end
 
+local function process_custom_issues(get_issues)
+    local ok, custom_issues = pcall(get_issues)
+    if ok ~= true then
+        if custom_issues == nil then
+            return {{
+                level = 'warning',
+                message = 'get_issues() raised an error',
+            }}
+        else
+            return {{
+                level = 'warning',
+                message = custom_issues,
+            }}
+        end
+    else
+        if type(custom_issues) ~= 'table' then
+            return {{
+                message = custom_issues,
+            }}
+        elseif custom_issues.level ~= nil
+        or custom_issues.message ~= nil
+        or custom_issues.topic ~= nil
+        then
+            return {{
+                level = custom_issues.level,
+                message = custom_issues.message,
+                topic = custom_issues.topic,
+            }}
+        elseif type(custom_issues[1]) ~= 'table' then
+            return fun.iter(custom_issues):map(function(x)
+                return { message = x }
+            end):totable()
+        end
+    end
+    return custom_issues
+end
+
 local function list_on_instance(opts)
     local enabled_servers = {}
     local topology_cfg = confapplier.get_readonly('topology')
@@ -376,26 +413,13 @@ local function list_on_instance(opts)
     local registry = require('cartridge.service-registry')
     for role_name, role in pairs(registry.list()) do
         if type(role.get_issues) == 'function' then
-            local ok, custom_issues = pcall(role.get_issues)
-            if ok ~= true then
-                if custom_issues == nil then
-                    custom_issues = {{
-                        level = 'warning',
-                        message = 'get_issues() raised an error',
-                    }}
-                else
-                    custom_issues = {{
-                        level = 'warning',
-                        message = tostring(custom_issues),
-                    }}
-                end
-            end
+            local custom_issues = process_custom_issues(role.get_issues)
 
             for _, issue in ipairs(custom_issues) do
                 table.insert(ret, {
-                    level = issue.level or '',
-                    message = issue.message or '',
-                    topic = issue.topic or role_name,
+                    level = issue.level ~= nil and tostring(issue.level) or '',
+                    message = issue.message ~= nil and tostring(issue.message) or '',
+                    topic = issue.topic ~= nil and tostring(issue.topic) or role_name,
                     instance_uuid = instance_uuid,
                     replicaset_uuid = replicaset_uuid,
                 })
