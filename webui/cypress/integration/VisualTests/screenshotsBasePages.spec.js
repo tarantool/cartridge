@@ -26,45 +26,39 @@ describe('Screenshots', () => {
     cy.task('tarantool', { code: `cleanup()` });
   });
 
-  const pages = ['cluster/dashboard', 'cluster/users', 'cluster/configuration', 'cluster/code'];
+  const pages = ['dashboard', 'users', 'configuration', 'code'];
   const indicator = [
     '.meta-test__ProbeServerBtn',
     '.meta-test__addUserBtn',
     '.meta-test__DownloadBtn',
     '.meta-test__Code__FileTree',
   ];
-  const sizes = ['macbook-15', 'macbook-13'];
+  const sizes = ['macbook-15', 'macbook-13', [1920, 1080]];
 
   const prepareTest = (page, size) => {
-    cy.visit('/admin/' + page);
-    cy.viewport(size);
+    cy.visit('/admin/cluster/' + page);
+    cy.setResolution(size);
     // eslint-disable-next-line cypress/no-unnecessary-waiting
     cy.wait(1000);
   };
 
-  let testOs = Cypress.platform.toString();
-  let headlessMode = Cypress.browser.isHeadless;
-  let mode;
-  if (headlessMode) {
-    mode = 'Headless';
-  } else {
-    mode = 'Window';
-  }
+  const os = Cypress.platform.toString();
+  let mode = Cypress.browser.isHeadless ? 'headless' : 'windowed';
 
   sizes.forEach((size) => {
     let i = 0;
     pages.forEach((page) => {
-      it(`Should match previous screenshot '${page} Page' When '${size}' resolution in Os: ${testOs} mode is ${mode}`, () => {
+      it(`bp.${os}.${mode}.${size}.${page}`, () => {
         prepareTest(page, size);
         cy.get(indicator[i]);
         if (i == 3) {
           //just this element is in need of bluring
-          cy.focused().blur();
+          cy.focused().blur({ force: true });
         }
         // eslint-disable-next-line cypress/no-unnecessary-waiting
         cy.wait(1000);
+        cy.matchImageSnapshot(`bp.${os}.${mode}.${size}.${page}`);
         i++;
-        cy.matchImageSnapshot();
       });
     });
   });
