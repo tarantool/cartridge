@@ -38,6 +38,10 @@ jobs:
       - uses: tarantool/setup-tarantool@v1
         with:
           tarantool-version: '2.6'
+      - uses: actions/upload-artifact@v2
+        with:
+          name: my-artifact
+          path: webui/cypress/snapshots/
 
       ##################################################################
       # Setup rocks
