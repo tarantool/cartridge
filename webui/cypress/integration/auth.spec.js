@@ -137,7 +137,7 @@ describe('Auth', () => {
       _G.cluster.main_server:start()
       return true
     `,
-    }).should('deep.eq', [true]);
+    }).should('deep.eq', [false]);
     cy.get('a[href="/admin/cluster/dashboard"]').click();
     cy.reload();
 
