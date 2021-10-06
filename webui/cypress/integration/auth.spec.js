@@ -141,7 +141,8 @@ describe('Auth', () => {
     cy.get('a[href="/admin/cluster/dashboard"]').click();
     cy.reload();
 
-    cy.get('.meta-test__AuthToggle').should('exist');
+    //cy.get('.meta-test__AuthToggle').should('exist');
+    cy.get('.meta-test__AuthToggle').should('not.exist');
     cy.get('a[href="/admin/cluster/users"]').should('not.exist');
   });
 });
