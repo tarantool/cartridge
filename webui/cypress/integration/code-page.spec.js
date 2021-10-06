@@ -71,8 +71,8 @@ describe('Code page', () => {
     cy.get('.meta-test__Code__FileTree').contains('schema.yml').click();
 
     // Type incorrect
-    //const sizes = ['macbook-15', 'macbook-13', [1920, 1080]];
-    const sizes = [[1410, 900]];
+    const sizes = ['macbook-15', 'macbook-13', [1920, 1080]];
+
     const os = Cypress.platform.toString();
     let mode = Cypress.browser.isHeadless ? 'headless' : 'windowed';
     sizes.forEach((size) => {
