@@ -12,6 +12,10 @@ and this project adheres to
 [Unreleased]
 -------------------------------------------------------------------------------
 
+-------------------------------------------------------------------------------
+[2.7.2] - 2021-10-08
+-------------------------------------------------------------------------------
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Added
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -35,8 +39,12 @@ Added
     .. code-block:: lua
 
         -- init.lua
+
         require('cartridge.auth-backend').set_builtin_admin_enabled(false)
-        cartridge.cfg({auth_backend_name = 'cartridge.auth-backend', ...})
+        cartridge.cfg({
+            auth_backend_name = 'cartridge.auth-backend',
+            ...
+        })
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Changed
@@ -51,7 +59,7 @@ Fixed
 
 - Eliminate unnecessary transactions after the restart before the replication
   sync. This reduces the chance the hardware restart leads to WAL corruption
-  ([#1546](https://github.com/tarantool/cartridge/issues/1546)).
+  (`#1546 <https://github.com/tarantool/cartridge/issues/1546>`__).
 
 - Fix net.box clients compatibility with future tarantool 2.10 versions.
 
