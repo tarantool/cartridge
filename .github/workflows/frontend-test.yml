@@ -110,9 +110,9 @@ jobs:
 
       - name: Create upload folder for snapshots
         uses: actions/upload-artifact@v2
-          with:
-            name: snapshots-from-server
-            path: webui/cypress/snapshots/
+        with:
+          name: snapshots-from-server
+          path: webui/cypress/snapshots/
 
       ##################################################################
       # Cleanup cached paths
