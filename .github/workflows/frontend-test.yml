@@ -106,11 +106,11 @@ jobs:
 
       ##################################################################
       # Create upload pngs
-      - name: Create avaliable for download pngs
-        uses: actions/upload-artifact@v2
-            with:
-              name: snapshots-from-server
-              path: webui/cypress/snapshots/
+#      - name: Create avaliable for download pngs
+#        uses: actions/upload-artifact@v2
+#            with:
+#              name: snapshots-from-server
+#              path: webui/cypress/snapshots/
       ##################################################################
       # Cleanup cached paths
       - run: tarantoolctl rocks remove cartridge
