@@ -88,6 +88,7 @@ jobs:
         if: >
           startsWith(matrix.script, 'cypress') &&
           steps.cache-cypress.outputs.cache-hit != 'true'
+
 #      - name: Create upload folder for snapshots
 #        uses: actions/upload-artifact@v2
 #          with:
@@ -112,6 +113,7 @@ jobs:
           with:
             name: snapshots-from-server
             path: webui/cypress/snapshots/
+
       ##################################################################
       # Cleanup cached paths
       - run: tarantoolctl rocks remove cartridge
