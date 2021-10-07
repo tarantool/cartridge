@@ -106,7 +106,7 @@ jobs:
 
       ##################################################################
       # Create upload pngs
-      - name: Create avaliable for download pnns
+      - name: Create avaliable for download pngs
         uses: actions/upload-artifact@v2
             with:
               name: snapshots-from-server
