@@ -487,7 +487,7 @@ function g.test_custom_issues()
     test({}, {})
 
     --------------------------------------------------------------------
-    helpers.run_remotely(g.master, function()
+    g.master:exec(function()
         local cartridge = require('cartridge')
         cartridge.service_set('custom_role_with_issues', {
             get_issues = error,
