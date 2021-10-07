@@ -41,7 +41,7 @@ jobs:
       - uses: actions/upload-artifact@v2
         with:
           name: my-artifact
-          path: webui/cypress/snashots/
+          path: webui/cypress/snapshots/
 
       ##################################################################
       # Setup rocks
