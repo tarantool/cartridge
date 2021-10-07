@@ -20,6 +20,8 @@ Added
   frontend-core's ``set_variable`` feature or at runtime.
 
 - New ``get_issues`` callback in role API to collect user-defined issues.
+  The issues are gathered from the enabled roles only (present in
+  ``service-registry``).
 
 - Allow disabling built-in HTTP "admin" user:
 
