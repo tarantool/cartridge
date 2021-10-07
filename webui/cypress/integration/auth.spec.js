@@ -76,7 +76,8 @@ describe('Auth', () => {
     ////////////////////////////////////////////////////////////////////
     cy.get('.meta-test__LoginBtn').click();
     cy.get('.meta-test__LoginForm input[name="username"]').type('error').should('have.value', 'error');
-    cy.get('.meta-test__LoginForm input[name="password"]').type('test-cluster-cookie');
+    cy.get('.meta-test__LoginForm input[name="password"]').type('test-cluster-cookie').blur();
+    cy.get('.meta-test__LoginForm').matchImageSnapshot('LoginForm');
     cy.get('.meta-test__LoginFormBtn').click();
     cy.get('.meta-test__LoginForm').contains('Authentication failed');
     cy.get('.meta-test__LoginForm button[type="button"]').contains('Cancel').click();
@@ -103,6 +104,7 @@ describe('Auth', () => {
 
     cy.get('a[href="/admin/cluster/users"]').click();
     cy.get('.meta-test__AuthToggle input').should('not.be.checked');
+    cy.testScreenshots('UsersPage');
     cy.get('.meta-test__AuthToggle').click();
     cy.get('.meta-test__ConfirmModal').contains('Enable').click();
 
@@ -118,7 +120,8 @@ describe('Auth', () => {
     cy.get('.meta-test__LoginFormSplash').should('exist');
 
     cy.get('input[name="username"]').type('admin');
-    cy.get('input[name="password"]').type('test-cluster-cookie');
+    cy.get('input[name="password"]').type('test-cluster-cookie').blur();
+    cy.get('.meta-test__LoginFormSplash').matchImageSnapshot('LoginSplash');
     cy.get('.meta-test__LoginFormBtn').click();
 
     cy.get('a[href="/admin/cluster/users"]').click();
