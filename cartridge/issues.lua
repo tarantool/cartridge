@@ -51,21 +51,9 @@
 --   when two separate clusters share the same cluster cookie;
 --
 -- Custom issues (defined by user):
--- Collected from role callback `get_issues`. It should return table with
--- issues parameters:
--- ```lua
--- function get_issues()
---     return {
---         {
---             level = 'custom-level',
---             topic = 'custom-topic',
---             message = 'custom message',
---             -- all mentioned fields are optional,
---             -- other fields are ignored
---         },
---     }
--- end
--- ```
+--
+-- * Custom roles can announce more issues with their own level, topic
+--   and message. See `custom-role.get_issues`.
 --
 -- @module cartridge.issues
 -- @local
@@ -119,41 +107,34 @@ local function describe(uri)
     end
 end
 
-local function process_custom_issues(get_issues)
-    local ok, custom_issues = pcall(get_issues)
-    if ok ~= true then
-        if custom_issues == nil then
-            return {{
-                level = 'warning',
-                message = 'get_issues() raised an error',
-            }}
-        else
-            return {{
-                level = 'warning',
-                message = custom_issues,
-            }}
-        end
-    else
-        if type(custom_issues) ~= 'table' then
-            return {{
-                message = custom_issues,
-            }}
-        elseif custom_issues.level ~= nil
-        or custom_issues.message ~= nil
-        or custom_issues.topic ~= nil
-        then
-            return {{
-                level = custom_issues.level,
-                message = custom_issues.message,
-                topic = custom_issues.topic,
-            }}
-        elseif type(custom_issues[1]) ~= 'table' then
-            return fun.iter(custom_issues):map(function(x)
-                return { message = x }
-            end):totable()
-        end
+local function gather_role_issues(ret, role_name, M)
+    if type(M.get_issues) ~= 'function' then
+        return
     end
-    return custom_issues
+
+    local custom_issues = M.get_issues()
+
+    if type(custom_issues) ~= 'table' then
+        error(string.format(
+            'malformed return: %s', custom_issues
+        ), 0)
+    end
+
+    for i, issue in pairs(custom_issues) do
+        if type(i) ~= 'number' or type(issue) ~= 'table' then
+            error(string.format(
+                'malformed return: [%s] = %s', i, issue
+            ), 0)
+        end
+
+        table.insert(ret, {
+            level = tostring(issue.level or 'warning'),
+            topic = tostring(issue.topic or role_name),
+            message = tostring(issue.message),
+            instance_uuid = box.info.uuid,
+            replicaset_uuid = box.info.cluster.uuid,
+        })
+    end
 end
 
 local function list_on_instance(opts)
@@ -411,19 +392,19 @@ local function list_on_instance(opts)
 
     -- add custom issues from each role
     local registry = require('cartridge.service-registry')
-    for role_name, role in pairs(registry.list()) do
-        if type(role.get_issues) == 'function' then
-            local custom_issues = process_custom_issues(role.get_issues)
-
-            for _, issue in ipairs(custom_issues) do
-                table.insert(ret, {
-                    level = issue.level ~= nil and tostring(issue.level) or '',
-                    message = issue.message ~= nil and tostring(issue.message) or '',
-                    topic = issue.topic ~= nil and tostring(issue.topic) or role_name,
-                    instance_uuid = instance_uuid,
-                    replicaset_uuid = replicaset_uuid,
-                })
-            end
+    for role_name, M in pairs(registry.list()) do
+        local ok, err = pcall(gather_role_issues, ret, role_name, M)
+        if not ok then
+            table.insert(ret, {
+                level = 'warning',
+                topic = role_name,
+                instance_uuid = instance_uuid,
+                replicaset_uuid = replicaset_uuid,
+                message = string.format(
+                    'Role %s get_issues() failed: %s',
+                    role_name, err
+                ),
+            })
         end
     end
 
