@@ -88,11 +88,11 @@ jobs:
         if: >
           startsWith(matrix.script, 'cypress') &&
           steps.cache-cypress.outputs.cache-hit != 'true'
-      - name: Create upload folder for snapshots
-        uses: actions/upload-artifact@v2
-        with:
-          name: snapshots-from-server
-          path: webui/cypress/snapshots/
+#      - name: Create upload folder for snapshots
+#        uses: actions/upload-artifact@v2
+#        with:
+#          name: snapshots-from-server
+#          path: webui/cypress/snapshots/
       ##################################################################
 
       - run: tarantoolctl rocks make
@@ -106,7 +106,11 @@ jobs:
           --record
           --key ${{ secrets.CYPRESS_RECORD_KEY }}
           --ci-build-id ${{ needs.set-build-id.outputs.build-id }}
-
+      - name: Create upload folder for snapshots
+          uses: actions/upload-artifact@v2
+          with:
+            name: snapshots-from-server
+            path: webui/cypress/snapshots/
       ##################################################################
       # Cleanup cached paths
       - run: tarantoolctl rocks remove cartridge
