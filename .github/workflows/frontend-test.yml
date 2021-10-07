@@ -39,11 +39,6 @@ jobs:
         with:
           tarantool-version: '2.6'
 
-      - uses: actions/upload-artifact@v2
-          with:
-            name: snapshots-from-server
-            path: webui/cypress/
-
       ##################################################################
       # Setup rocks
       - name: Cache rocks
@@ -109,6 +104,13 @@ jobs:
           --key ${{ secrets.CYPRESS_RECORD_KEY }}
           --ci-build-id ${{ needs.set-build-id.outputs.build-id }}
 
+      ##################################################################
+      # Create upload pngs
+      - name: Create avaliable for download pnns
+        uses: actions/upload-artifact@v2
+            with:
+              name: snapshots-from-server
+              path: webui/cypress/snapshots/
       ##################################################################
       # Cleanup cached paths
       - run: tarantoolctl rocks remove cartridge
