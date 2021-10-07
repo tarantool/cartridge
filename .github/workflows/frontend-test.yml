@@ -89,6 +89,7 @@ jobs:
           startsWith(matrix.script, 'cypress') &&
           steps.cache-cypress.outputs.cache-hit != 'true'
 
+
       ##################################################################
 
       - run: tarantoolctl rocks make
@@ -102,6 +103,11 @@ jobs:
           --record
           --key ${{ secrets.CYPRESS_RECORD_KEY }}
           --ci-build-id ${{ needs.set-build-id.outputs.build-id }}
+
+      - uses: actions/upload-artifact@v2
+          with:
+            name: snapshots-from-server
+            path: webui/cypress/snapshots/
 
       ##################################################################
       # Cleanup cached paths
