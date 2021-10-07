@@ -151,6 +151,13 @@ And then just run the script:
 
     cmake -P rst/BuildUML.cmake
 
+Cypress tests imply snapshot testing. It compares WebUI images visually.
+In order to update reference snapshots, run:
+
+.. code-block:: bash
+
+    ./cypress-test.sh --env failOnSnapshotDiff=false
+
 .. |--| unicode:: U+2013   .. en dash
 .. |---| unicode:: U+2014  .. em dash, trimming surrounding whitespace
    :trim:

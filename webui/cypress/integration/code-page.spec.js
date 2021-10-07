@@ -71,27 +71,13 @@ describe('Code page', () => {
     cy.get('.meta-test__Code__FileTree').contains('schema.yml').click();
 
     // Type incorrect
-    const sizes = ['macbook-15', 'macbook-13', [1920, 1080]];
-
-    const os = Cypress.platform.toString();
-    let mode = Cypress.browser.isHeadless ? 'headless' : 'windowed';
-    sizes.forEach((size) => {
-      cy.get('.monaco-editor').click();
-      cy.focused().type(selectAllKeys + '{backspace}');
-      cy.get('.monaco-editor').type('spaces: incorrect-1');
-      cy.get('.monaco-editor').contains('spaces: incorrect-1');
-      cy.get('button[type="button"]').contains('Validate').click();
-
-      cy.get('#root').contains('spaces: must be a table, got string').should('exist');
-
-      cy.setResolution(size);
-      // eslint-disable-next-line cypress/no-unnecessary-waiting
-      cy.wait(1000);
-      cy.log(Cypress.env('cypress-image-snapshots'));
-      cy.matchImageSnapshot(`gh-1201.${os}.${mode}.${size}`);
-      cy.reload(true); //need to return all page elements to the basic state
-    });
-
+    cy.get('.monaco-editor').click();
+    cy.focused().type(selectAllKeys + '{backspace}');
+    cy.get('.monaco-editor').type('spaces: incorrect-1');
+    cy.get('.monaco-editor').contains('spaces: incorrect-1');
+    cy.get('button[type="button"]').contains('Validate').click();
+    cy.get('#root').contains('spaces: must be a table, got string').should('exist');
+    cy.matchImageSnapshot('gh-1201');
     cy.get('#root').contains('spaces: must be a table, got string').click();
 
     // Type correct

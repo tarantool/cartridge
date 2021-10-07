@@ -30,18 +30,30 @@ import 'cypress-file-upload';
 import { addMatchImageSnapshotCommand } from 'cypress-image-snapshot/command';
 
 addMatchImageSnapshotCommand({
-  failureThreshold: 0.0, // threshold for entire image
-  failureThresholdType: 'percent', // percent of image or number of pixels
-  customDiffConfig: { threshold: 0.0 }, // threshold for each pixel
-  capture: 'viewport', // capture viewport in screenshot
+  // Doc: https://github.com/americanexpress/jest-image-snapshot
+  capture: 'viewport',
+
+  // We use high per-pixel threshold to ignore color difference.
+  comparisonMethod: 'pixelmatch',
+  customDiffConfig: {threshold: 0.10}, // 10%
+
+  // But the failure threshold is low to catch a single pixel.
+  failureThresholdType: 'percent',
+  failureThreshold: 0.00, // 0%
 });
 
 require('cypress-downloadfile/lib/downloadFileCommand');
 
 Cypress.Commands.add('setResolution', (size) => {
-  if (Cypress._.isArray(size)) {
-    cy.viewport(size[0], size[1]);
-  } else {
-    cy.viewport(size);
-  }
+  const [w, h] = size.split('x');
+  cy.viewport(parseInt(w), parseInt(h));
 });
+
+const sizes = ['1280x720', '1440x900', '1920x1080'];
+Cypress.Commands.add('testScreenshots', (name) => {
+  sizes.forEach((size) => {
+    cy.setResolution(size);
+    cy.matchImageSnapshot(`${name}.${size}`);
+  })
+});
+
