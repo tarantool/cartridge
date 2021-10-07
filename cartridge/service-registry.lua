@@ -35,7 +35,17 @@ local function get(name)
     return vars.registry[name]
 end
 
+--- Get a list with modules from registry.
+--
+-- @function list
+-- @treturn[1] nil
+-- @treturn[2] table all modules
+local function list()
+    return vars.registry
+end
+
 return {
     get = get,
     set = set,
+    list = list,
 }

@@ -19,6 +19,10 @@ Added
 - 'Make all instances writeable' configuration field can be hidden via
   frontend-core's ``set_variable`` feature or at runtime.
 
+- New ``get_issues`` callback in role API to collect user-defined issues.
+  The issues are gathered from the enabled roles only (present in
+  ``service-registry``).
+
 - Allow disabling built-in HTTP "admin" user:
 
   * by specifying ``auth_builtin_admin_enabled: false`` in the ``instances.yml``;
