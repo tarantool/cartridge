@@ -22,6 +22,7 @@ local membership_network = require('membership.network')
 local http = require('http.server')
 local fiber = require('fiber')
 local socket = require('socket')
+local json = require('json')
 
 local rpc = require('cartridge.rpc')
 local auth = require('cartridge.auth')
@@ -809,6 +810,9 @@ local function cfg(opts, box_opts)
     if type(box.cfg) == 'function' then
         confapplier.log_bootinfo()
     end
+
+    log.info('Tarantool options: %s', json.encode(box_opts))
+    log.info('Cartridge options: %s', json.encode(opts))
 
     return true
 end
