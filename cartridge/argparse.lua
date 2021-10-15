@@ -41,6 +41,13 @@
 -- In this case, all files in the directory are parsed.
 -- To avoid conflicts, the same section mustn't repeat across different files.
 --
+-- For example, running an application as following:
+--    TARANTOOL_MY_CUSTOM_ARG='value' ./init.lua --alias router --memtx-memory 100
+-- results in:
+--    argparse.parse()            -> {memtx_memory = "100", alias = "router", my_custom_arg = "value"}
+--    argparse.get_cluster_opts() -> {alias = "router"} -- a string
+--    argparse.get_box_opts()     -> {memtx_memory = 100} -- a number
+--
 -- @module cartridge.argparse
 
 local fio = require('fio')
@@ -98,7 +105,7 @@ local cluster_opts = {
     upload_prefix = 'string', -- **string**
 }
 
---- Common [box.cfg](https://www.tarantool.io/en/doc/latest/reference/configuration/) tuning options.
+--- Common `box.cfg <https://www.tarantool.io/en/doc/latest/reference/configuration/>`_ tuning options.
 -- @table box_opts
 local box_opts = {
     listen                   = 'string', -- **string**
@@ -339,6 +346,17 @@ end
 
 --- Parse command line arguments, environment variables, and configuration files.
 --
+-- For example, running an application as following:
+--    TARANTOOL_MY_CUSTOM_ARG='value' ./init.lua --alias router --memtx-memory 100
+-- results in:
+--    local argparse = require('cartridge.argparse')
+--    argparse.parse()
+--    ---
+--    - memtx_memory: '100'
+--      my_custom_arg: value
+--      alias: router
+--    ...
+--
 -- @function parse
 -- @treturn {argname=value,...}
 local function _parse()
@@ -394,11 +412,19 @@ end
 -- specified in the filter.
 --
 -- For example, running an application as following:
---    ./init.lua --alias router --memtx-memory 100
+--    TARANTOOL_ARG1='value' tarantool ./init.lua --arg2 100 --arg3 true
 -- results in:
---    parse()            -> {memtx_memory = "100", alias = "router"}
---    get_cluster_opts() -> {alias = "router"} -- a string
---    get_box_opts()     -> {memtx_memory = 100} -- a number
+--    local opts, err = argparse.get_opts({
+--        arg1 = 'string',
+--        arg2 = 'number',
+--        arg3 = 'boolean'
+--        missing_arg = 'string', -- no such arg, argparse returns nothing for this arg
+--    })
+--    ---
+--    - arg1: value
+--      arg2: 100
+--      arg3: true
+--    ...
 --
 -- @function get_opts
 -- @tparam {argname=type,...} filter
