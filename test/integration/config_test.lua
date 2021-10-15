@@ -245,45 +245,101 @@ function g.test_upload_fail()
     ]])
 end
 
+g.before_test('test_validate', function()
+    g.cluster.main_server:eval([[
+        local mymodule = package.loaded['mymodule-permanent']
+        _G._apply_config = mymodule.apply_config
+        mymodule.apply_config = function(conf)
+            if conf.boom == 'Kaboom!' then
+                error('Config rejected: ' .. conf.boom, 0)
+            end
+            return true
+        end
+
+        local hidden = package.loaded['mymodule-hidden']
+        hidden.validate_config = function()
+            error('Validation shouldn\'t be called because this role isn\'t enabled')
+        end
+    ]])
+end)
+
 function g.test_validate()
-    local content = "['a', 'b', {c: \"d\"}] ###"
-    t.assert_equals(
-        validate_config({{filename = 'test.yml', content = content}}),
-        box.NULL
-    )
+    local function run_validations()
+        local content = "['a', 'b', {c: \"d\"}] ###"
+        t.assert_equals(
+            validate_config({{filename = 'test.yml', content = content}}),
+            box.NULL
+        )
 
-    -- ddl validation
-    t.assert_equals(
-        validate_config({{filename = 'schema.yml', content = '42'}}),
-        "Invalid schema (table expected, got number)"
-    )
-    t.assert_equals(
-        validate_config({{filename = 'schema.yml', content = '{}'}}),
-        "spaces: must be a table, got nil"
-    )
-    t.assert_equals(
-        validate_config({{filename = 'schema.yml', content = 'spaces: false'}}),
-        "spaces: must be a table, got boolean"
-    )
+        -- ddl validation
+        t.assert_equals(
+            validate_config({{filename = 'schema.yml', content = '42'}}),
+            "Invalid schema (table expected, got number)"
+        )
+        t.assert_equals(
+            validate_config({{filename = 'schema.yml', content = '{}'}}),
+            "spaces: must be a table, got nil"
+        )
+        t.assert_equals(
+            validate_config({{filename = 'schema.yml', content = 'spaces: false'}}),
+            "spaces: must be a table, got boolean"
+        )
 
-    -- topology validation
-    t.assert_equals(
-        validate_config({{filename = 'topology.yml', content = 'servers: {}'}}),
-        "Current instance \"localhost:13301\" is not listed in config"
-    )
+        -- topology validation
+        t.assert_equals(
+            validate_config({{filename = 'topology.yml', content = 'servers: {}'}}),
+            "Current instance \"localhost:13301\" is not listed in config"
+        )
 
-    -- vshard validation
-    t.assert_equals(
-        validate_config({{filename = 'vshard_groups.yml', content = 'vhsard_groups:'}}),
-        "section vshard_groups[\"vhsard_groups\"] must be a table"
-    )
+        -- vshard validation
+        t.assert_equals(
+            validate_config({{filename = 'vshard_groups.yml', content = 'vhsard_groups:'}}),
+            "section vshard_groups[\"vhsard_groups\"] must be a table"
+        )
 
-    -- confapplier validation
-    t.assert_equals(
-        validate_config({{filename = 'throw', content = 'Go away'}}),
-        "Config rejected: Go away"
+        -- confapplier validation
+        t.assert_equals(
+            validate_config({{filename = 'throw', content = 'Go away'}}),
+            "Config rejected: Go away"
+        )
+    end
+
+    -- RolesConfigured
+    run_validations()
+
+    -- Drive instance into OperationError state.
+    -- Still validation should be called only for enabled roles.
+    t.assert_error_msg_contains(
+        "Config rejected: Kaboom!",
+        function()
+            set_sections({{filename = 'boom', content = 'Kaboom!'}})
+        end
     )
+    local state = g.cluster.main_server:eval([[
+        return require('cartridge.confapplier').get_state()
+    ]])
+    t.assert_equals(state, 'OperationError')
+
+    -- OperationError
+    run_validations()
 end
+
+g.after_test('test_validate', function()
+    set_sections({{filename = 'boom', content = 'Nope'}})
+    local state = g.cluster.main_server:eval([[
+        return require('cartridge.confapplier').get_state()
+    ]])
+    t.assert_equals(state, 'RolesConfigured')
+
+    g.cluster.main_server:eval([[
+        local mymodule = package.loaded['mymodule-permanent']
+        mymodule.apply_config = _G._apply_config
+        _G._apply_config = nil
+
+        hidden = package.loaded['mymodule-hidden']
+        hidden.validate_config = nil
+    ]])
+end)
 
 function g.test_rollback()
     -- hack utils to throw error on file_write
