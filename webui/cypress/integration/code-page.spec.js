@@ -242,7 +242,7 @@ describe('Code page', () => {
     cy.get('.monaco-editor textarea').should('have.value', '');
 
     cy.get('.meta-test__deleteFolderInTreeBtn').eq(0).click({ force: true });
-    cy.get('.meta-test__deleteModal').testScreenshots('DeleteFileModalWindow');
+    cy.testElementScreenshots('DeleteFileModalWindow', 'div.meta-test__deleteModal');
     cy.get('.meta-test__deleteModal button[type="button"]').contains('Ok').click();
     cy.get('.meta-test__Code__FileTree').contains('edited-file-name2').should('not.exist');
 
