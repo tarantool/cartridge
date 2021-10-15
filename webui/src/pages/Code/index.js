@@ -448,6 +448,7 @@ class Code extends React.Component<CodeProps, CodeState> {
           {isReloadConfirmOpened && (
             <ConfirmModal
               title="Reload files"
+              className="meta-test__ReloadFileModal"
               onCancel={() => this.setState({ isReloadConfirmOpened: false })}
               onConfirm={() => {
                 this.props.dispatch(fetchConfigFiles());

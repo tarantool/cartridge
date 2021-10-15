@@ -35,11 +35,11 @@ addMatchImageSnapshotCommand({
 
   // We use high per-pixel threshold to ignore color difference.
   comparisonMethod: 'pixelmatch',
-  customDiffConfig: {threshold: 0.10}, // 10%
+  customDiffConfig: { threshold: 0.1 }, // 10%
 
   // But the failure threshold is low to catch a single pixel.
   failureThresholdType: 'percent',
-  failureThreshold: 0.00, // 0%
+  failureThreshold: 0.001, // 0%
 });
 
 require('cypress-downloadfile/lib/downloadFileCommand');
@@ -53,7 +53,17 @@ const sizes = ['1280x720', '1440x900', '1920x1080'];
 Cypress.Commands.add('testScreenshots', (name) => {
   sizes.forEach((size) => {
     cy.setResolution(size);
+    // eslint-disable-next-line cypress/no-unnecessary-waiting
+    cy.wait(1000);
     cy.matchImageSnapshot(`${name}.${size}`);
-  })
+  });
 });
 
+Cypress.Commands.add('testElementScreenshots', (name, cssSelector) => {
+  sizes.forEach((size) => {
+    cy.setResolution(size);
+    // eslint-disable-next-line cypress/no-unnecessary-waiting
+    cy.wait(1000);
+    cy.get(cssSelector).matchImageSnapshot(`${name}.${size}`);
+  });
+});

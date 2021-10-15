@@ -83,6 +83,7 @@ describe('Disable server', () => {
     cy.log('Inspect suggestion panel');
     ////////////////////////////////////////////////////////////////////
     cy.get('.meta-test__ClusterSuggestionsPanel').should('be.visible');
+    cy.testElementScreenshots('ClusterSuggestionsPanel', 'div.meta-test__ClusterSuggestionsPanel');
     cy.get('.meta-test__ClusterSuggestionsPanel h5').contains('Force apply configuration');
     cy.get('.meta-test__ClusterSuggestionsPanel span').contains(
       'Some instances are misconfigured. ' + 'You can heal it by reapplying configuration forcefully.'
@@ -181,6 +182,7 @@ describe('Disable server', () => {
     cy.get('.meta-test__ForceApplySuggestionModal p').contains(
       'Some instances are misconfigured. ' + 'You can heal it by reapplying configuration forcefully.'
     );
+    cy.testElementScreenshots('ClusterSuggestionsModal', 'div.meta-test__ForceApplySuggestionModal');
 
     cy.get('.meta-test__ForceApplySuggestionModal').find('.meta-test__errorField').as('operErrorField');
     cy.get('@operErrorField').find('span').contains('Operation error');

@@ -32,9 +32,15 @@ describe('Probe server', () => {
     ////////////////////////////////////////////////////////////////////
     cy.visit('/admin/cluster/dashboard');
     cy.get('.meta-test__ProbeServerBtn').click();
-    cy.get('.ProbeServerModal input[name="uri"]')
-      .should('be.focused')
-      .should('have.attr', 'placeholder', 'Server URI, e.g. localhost:3301');
+    cy.get('.ProbeServerModal input[name="uri"]').should('be.focused');
+    cy.focused().blur();
+    cy.testElementScreenshots('ProbeServerModal', 'form.ProbeServerModal');
+    cy.get('.ProbeServerModal input[name="uri"]').focus();
+    cy.get('.ProbeServerModal input[name="uri"]').should(
+      'have.attr',
+      'placeholder',
+      'Server URI, ' + 'e.g. localhost:3301'
+    );
     cy.get('.ProbeServerModal input[name="uri"]').type('unreachable').should('have.value', 'unreachable');
 
     cy.get('.meta-test__ProbeServerSubmitBtn').click();

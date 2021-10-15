@@ -76,6 +76,7 @@ describe('Disable server', () => {
     cy.log('Inspect suggestion panel');
     ////////////////////////////////////////////////////////////////////
     cy.get('.meta-test__ClusterSuggestionsPanel').should('be.visible');
+    cy.testElementScreenshots('ClusterSuggestionsPanel', '.meta-test__ClusterSuggestionsPanel');
     cy.get('.meta-test__ClusterSuggestionsPanel h5').contains('Disable instances');
     cy.get('.meta-test__ClusterSuggestionsPanel span').contains(
       'Some instances are malfunctioning' +
@@ -103,6 +104,8 @@ describe('Disable server', () => {
     );
     cy.get('.meta-test__DisableServersSuggestionModal li').contains('localhost:13302 (dummy-2)');
     cy.get('.meta-test__DisableServersSuggestionModal li').contains('localhost:13303 (dummy-3)');
+    //need to add mock to allow see the same order of list items
+    //cy.testElementScreenshots('DisableInstancesWindow', 'div.meta-test__DisableServersSuggestionModal');
     cy.get('.meta-test__DisableServersSuggestionModal button').contains('Disable').click();
 
     ////////////////////////////////////////////////////////////////////
@@ -154,6 +157,7 @@ describe('Disable server', () => {
       'span:contains(Disabled state setting error) +' + 'span:contains(NetboxCallError: "localhost:13303":)'
     ).click();
     cy.get('.meta-test__ServerDetailsModal span:contains(Disabled)').should('exist');
+    cy.testElementScreenshots('ServerDetailsModalServerDead', 'div.meta-test__ServerDetailsModal');
     cy.get('.meta-test__ServerDetailsModal button').contains('Close').click();
 
     ////////////////////////////////////////////////////////////////////

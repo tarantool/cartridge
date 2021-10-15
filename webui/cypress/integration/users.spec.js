@@ -48,6 +48,7 @@ describe('Users', () => {
     ////////////////////////////////////////////////////////////////////
     cy.visit('/admin/cluster/dashboard');
     cy.get('a[href="/admin/cluster/users"]').click();
+    cy.testScreenshots('UsersPage');
     cy.title().should('eq', 'cartridge-testing.r1: Users');
 
     ////////////////////////////////////////////////////////////////////
@@ -73,9 +74,13 @@ describe('Users', () => {
     ////////////////////////////////////////////////////////////////////
     cy.get('button:contains(Add user)').click();
     cy.get('h2:contains(Add a new user)');
+    cy.get('label:contains(Username)').parent('div').next().find('input').should('be.focused');
+    cy.focused().blur();
+    cy.testElementScreenshots('LoginSplash', 'form.meta-test__UserAddForm');
+    cy.get('label:contains(Username)').parent('div').next().find('input').focus();
 
     //Add user form before changing
-    cy.get('label:contains(Username)').parent('div').next().find('input').should('be.focused').should('have.value', '');
+    cy.get('label:contains(Username)').parent('div').next().find('input').should('have.value', '');
     cy.get('label:contains(Password)').parent('div').next().find('input').should('have.value', '');
     cy.get('label:contains(Email)').parent('div').next().find('input').should('have.value', '');
     cy.get('label:contains(Full name)').parent('div').next().find('input').should('have.value', '');
@@ -128,7 +133,11 @@ describe('Users', () => {
 
     //login:
     cy.get('.meta-test__LoginBtn').click();
-    cy.get('.meta-test__LoginForm input[name="username"]').should('be.focused').type('TestUserName');
+    cy.get('.meta-test__LoginForm input[name="username"]').should('be.focused');
+    cy.focused().blur();
+    cy.testElementScreenshots('LoginForm', 'div.meta-test__LoginForm');
+    cy.get('.meta-test__LoginForm input[name="username"]').focus();
+    cy.get('.meta-test__LoginForm input[name="username"]').type('TestUserName');
     cy.get('.meta-test__LoginForm input[name="password"]').type('userpassword');
     cy.get('.meta-test__LoginFormBtn').click();
 
@@ -138,8 +147,10 @@ describe('Users', () => {
     //User cant delete himself
     cy.get('a:contains(TestUserName)').parents('tr').find('td').eq(3).find('button').eq(1).click();
     cy.get('.meta-test__UserRemoveModal button:contains(Remove)').click();
+    cy.testElementScreenshots('UserRemoveModal', 'div.meta-test__UserRemoveModal');
     cy.get('span:contains(user can not remove himself)');
     cy.get('.meta-test__UserRemoveModal button:contains(Cancel)').click();
+
 
     //logout:
     cy.get('.meta-test__LogoutBtn').click();
@@ -150,12 +161,22 @@ describe('Users', () => {
     ////////////////////////////////////////////////////////////////////
     cy.get('a:contains(TestUserName)').parents('tr').find('td').eq(3).find('button').eq(0).click();
     cy.get('h2:contains(Edit TestUserName)');
-
     cy.get('label:contains(New password)')
       .parent('div')
       .next()
       .find('input')
-      .should('be.focused')
+      .should('be.focused');
+    cy.focused().blur();
+    cy.testElementScreenshots('EditUserForm', 'form.meta-test__UserEditModal');
+    cy.get('label:contains(New password)')
+      .parent('div')
+      .next()
+      .find('input')
+      .focus();
+    cy.get('label:contains(New password)')
+      .parent('div')
+      .next()
+      .find('input')
       .type('{selectall}{del}EditedPassword');
     cy.get('label:contains(Email)').parent('div').next().find('input').type('{selectall}{del}ee@ee.ee');
     cy.get('label:contains(Full name)').parent('div').next().find('input').type('{selectall}{del}Edited Full Name');

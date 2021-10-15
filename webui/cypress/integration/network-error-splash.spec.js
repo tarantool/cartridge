@@ -45,6 +45,7 @@ describe('Network error panel', () => {
     cy.get('.meta-test__NetworkErrorSplash')
       .should('exist')
       .contains('Network connection problem or server disconnected');
+    cy.testScreenshots('NetworkProblemsCluster');
 
     cy.get('a[href="/jkl/admin/cluster/users"]').click();
     cy.get('h1:contains(Users)');
@@ -52,6 +53,7 @@ describe('Network error panel', () => {
     cy.get('#root').contains('Failed to fetch').should('exist');
     cy.get('#root').contains('LOADING').should('not.exist');
     cy.get('.meta-test__NetworkErrorSplash').should('exist');
+    cy.testScreenshots('NetworkProblemsUsers');
 
     cy.get('a[href="/jkl/admin/cluster/dashboard"]').click();
     cy.get('#root').contains('Network problem').should('exist');
@@ -59,12 +61,14 @@ describe('Network error panel', () => {
     cy.get('a[href="/jkl/admin/cluster/configuration"]').click();
     cy.get('#root').contains('Configuration Management').should('exist');
     cy.get('.meta-test__NetworkErrorSplash').should('exist');
+    cy.testScreenshots('NetworkProblemsConfFile');
 
     cy.get('a[href="/jkl/admin/cluster/code"]').click();
     cy.get('#root').contains('Loading...').should('not.exist');
     cy.get('#root').contains('Error loading component').should('exist');
     cy.get('button:contains(Retry)').should('exist');
     cy.get('.meta-test__NetworkErrorSplash').should('exist');
+    cy.testScreenshots('NetworkProblemsCode');
 
     // Repair the server
     cy.task('tarantool', { code: `_G.cluster.main_server:start()` });

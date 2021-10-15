@@ -36,16 +36,52 @@ describe('Server details', () => {
     cy.get('.meta-test__ReplicasetServerListItem__dropdown *').contains('Server details').click();
   }
 
-  function checkServerDetailsTabs() {
+  function checkServerDetailsTabs(index) {
     cy.get('.meta-test__ServerDetailsModal button').contains('Cartridge').click();
+    if (index === 1) {
+      cy.testElementScreenshots('ServerDetailsModalCartridge' + index.toString(), 'div.meta-test__ServerDetailsModal');
+    }
     cy.get('.meta-test__ServerDetailsModal button').contains('Replication').click();
+    if (index === 1) {
+      cy.testElementScreenshots(
+        'ServerDetailsModalReplication' + index.toString(),
+        'div.meta-test__ServerDetailsModal'
+      );
+    }
     cy.get('.meta-test__ServerDetailsModal button').contains('Storage').click();
+    if (index === 1) {
+      cy.testElementScreenshots('ServerDetailsModalStorage' + index.toString(), 'div.meta-test__ServerDetailsModal');
+    }
     cy.get('.meta-test__ServerDetailsModal button').contains('Network').click();
+    if (index === 1) {
+      cy.testElementScreenshots('ServerDetailsModalNetwork' + index.toString(), 'div.meta-test__ServerDetailsModal');
+    }
     cy.get('.meta-test__ServerDetailsModal button').contains('General').click();
+    if (index === 1) {
+      cy.testElementScreenshots('ServerDetailsModalGeneral' + index.toString(), 'div.meta-test__ServerDetailsModal');
+    }
     cy.get('.meta-test__ServerDetailsModal button').contains('Membership').click();
+    if (index === 1) {
+      cy.testElementScreenshots('ServerDetailsModalMembership' + index.toString(), 'div.meta-test__ServerDetailsModal');
+    }
     cy.get('.meta-test__ServerDetailsModal button').contains('Vshard-Router').click();
+    if (index === 1) {
+      cy.testElementScreenshots(
+        'ServerDetailsModalVshard-Router' + index.toString(),
+        'div.meta-test__ServerDetailsModal'
+      );
+    }
     cy.get('.meta-test__ServerDetailsModal button').contains('Vshard-Storage').click();
+    if (index === 1) {
+      cy.testElementScreenshots(
+        'ServerDetailsModalVshard-Storage' + index.toString(),
+        'div.meta-test__ServerDetailsModal'
+      );
+    }
     cy.get('.meta-test__ServerDetailsModal button').contains('Issues 0').click();
+    if (index === 1) {
+      cy.testElementScreenshots('ServerDetailsModalIssues' + index.toString(), 'div.meta-test__ServerDetailsModal');
+    }
   }
 
   function checkRedCircleBeforeSelectedZone(itemName, color) {
@@ -74,9 +110,14 @@ describe('Server details', () => {
 
     //add new zone Narnia
     cy.get('.meta-test__ServerDetailsModal button:contains(Select zone)').click();
+    cy.testElementScreenshots('EmptyZoneSection', '.meta-test__ZoneListItemsPlusButton');
     cy.get('div').contains('You have no any zone,');
     cy.get('div').contains('please add one.');
     cy.get('button:contains(Add new zone)').click();
+    cy.get('.ZoneAddModal input[name="zone_name"]').should('be.focused');
+    cy.focused().blur();
+    cy.testElementScreenshots('ZoneAddModal', 'form.ZoneAddModal');
+    cy.get('.ZoneAddModal input[name="zone_name"]').focus();
     cy.get('.ZoneAddModal input[name="zone_name"]').should('be.focused').type('Narnia');
     cy.get('.meta-test__ZoneAddSubmitBtn').click();
     cy.get('.ZoneAddModal').should('not.exist');
@@ -84,6 +125,7 @@ describe('Server details', () => {
 
     cy.get('.meta-test__ServerDetailsModal button:contains(Zone Narnia)').click();
     checkRedCircleBeforeSelectedZone('Narnia', 'rgb(245, 34, 45)');
+    cy.testElementScreenshots('ActiveZoneSection', '.meta-test__ZoneListItemsPlusButton');
     cy.get('.meta-test__ServerDetailsModal button').contains('Close').click();
     cy.get('.meta-test__ServerDetailsModal').should('not.exist');
 
@@ -192,7 +234,7 @@ describe('Server details', () => {
     cy.get('.meta-test__ServerDetailsModal').contains('Server status is "dead"');
     cy.get('.meta-test__ServerDetailsModal').contains('instance_uuid').should('not.exist');
 
-    checkServerDetailsTabs();
+    checkServerDetailsTabs(1);
     cy.get('.meta-test__ServerDetailsModal button').contains('Close').click();
 
     // Enable/disable servers

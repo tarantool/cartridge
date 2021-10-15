@@ -32,7 +32,7 @@ describe('Code page', () => {
   });
 
   const selectAllKeys = Cypress.platform === 'darwin' ? '{cmd}a' : '{ctrl}a';
-
+  const sizes = ['1280x720', '1440x900', '1920x1080'];
   function reload() {
     cy.get('.meta-test__Code__reload_idle').click({ force: true });
     cy.get('button[type="button"]').contains('Ok').click();
@@ -57,8 +57,18 @@ describe('Code page', () => {
     cy.log('Empty code page');
     ////////////////////////////////////////////////////////////////////
     cy.get('#root').contains('Please select a file');
-    cy.get('button[type="button"]').contains('Apply').click();
-    cy.get('span:contains(Success) + span:contains(Files successfuly applied) + svg').click();
+    sizes.forEach((size) => {
+      cy.setResolution(size);
+      // eslint-disable-next-line cypress/no-unnecessary-waiting
+      cy.wait(1000);
+      cy.get('.meta-test__Code__FileTree').contains('schema.yml').click();
+      // eslint-disable-next-line cypress/no-unnecessary-waiting
+      cy.wait(500); //to allow scroll disappear
+      cy.matchImageSnapshot(`BaseCodePage.${size}`);
+      cy.get('button[type="button"]').contains('Apply').click();
+      cy.get('span:contains(Success) + span:contains(Files successfuly applied) + svg').click();
+      cy.reload();
+    });
   });
 
   it('Test: schema', () => {
@@ -114,7 +124,18 @@ describe('Code page', () => {
     cy.get('.meta-test__enterName').focused().type('file-in-tree1.yml');
     cy.get('div:contains(The name already exists)');
 
-    reload();
+    //reload();
+    sizes.forEach((size) => {
+      cy.get('.meta-test__Code__reload_idle').click({ force: true });
+      cy.setResolution(size);
+      // eslint-disable-next-line cypress/no-unnecessary-waiting
+      cy.wait(1000);
+      cy.get('.meta-test__ReloadFileModal').matchImageSnapshot(`ReloadFilesWindow.${size}`);
+      cy.get('button[type="button"]').contains('Ok').click();
+      cy.get('.meta-test__Code__reload_loading').should('not.exist');
+      cy.get('.meta-test__Code__reload_idle').should('exist');
+    });
+
     cy.get('.meta-test__Code__FileTree').contains('file-in-tree1.yml').should('not.exist');
 
     cy.get('.meta-test__addFileBtn').click();
@@ -221,6 +242,7 @@ describe('Code page', () => {
     cy.get('.monaco-editor textarea').should('have.value', '');
 
     cy.get('.meta-test__deleteFolderInTreeBtn').eq(0).click({ force: true });
+    cy.get('.meta-test__deleteModal').testScreenshots('DeleteFileModalWindow');
     cy.get('.meta-test__deleteModal button[type="button"]').contains('Ok').click();
     cy.get('.meta-test__Code__FileTree').contains('edited-file-name2').should('not.exist');
 

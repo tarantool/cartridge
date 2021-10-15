@@ -210,7 +210,7 @@ class ServerDetailsModal extends React.Component<ServerDetailsModalProps, Server
                 text={zone ? 'Zone ' + zone : 'Select zone'}
                 size="l"
                 iconRight={IconChevronDown}
-                popoverClassName={styles.popover}
+                popoverClassName={cx('meta-test__ZoneListItemsPlusButton', styles.popover)}
                 // TODO: add loading state while applying
                 popoverContent={
                   <>
@@ -230,7 +230,12 @@ class ServerDetailsModal extends React.Component<ServerDetailsModalProps, Server
                     {zoneList.length ? (
                       <DropdownDivider />
                     ) : (
-                      <Text className={styles.noZoneLabel} variant="p" tag="div" onClick={(e) => e.stopPropagation()}>
+                      <Text
+                        className={cx('meta-test__AddNewZone', styles.noZoneLabel)}
+                        variant="p"
+                        tag="div"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         {'You have no any zone,\nplease add one.'}
                       </Text>
                     )}

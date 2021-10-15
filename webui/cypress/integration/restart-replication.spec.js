@@ -51,6 +51,7 @@ describe('Disable server', () => {
     cy.log('Inspect suggestion panel');
     ////////////////////////////////////////////////////////////////////
     cy.get('.meta-test__ClusterSuggestionsPanel').should('be.visible');
+    cy.testElementScreenshots('ClusterSuggestionsPanel', 'div.meta-test__ClusterSuggestionsPanel');
     cy.get('.meta-test__ClusterSuggestionsPanel h5').contains('Restart replication');
     cy.get('.meta-test__ClusterSuggestionsPanel span').contains(
       `The replication isn't all right. Restart it, maybe it helps.`
@@ -67,6 +68,7 @@ describe('Disable server', () => {
     cy.log('Inspect suggestion modal');
     ////////////////////////////////////////////////////////////////////
     cy.get('.meta-test__ClusterSuggestionsPanel button').contains('Review').click();
+    cy.testElementScreenshots('RestartReplicationSuggestionModal', 'div.meta-test__RestartReplicationSuggestionModal');
     cy.get('.meta-test__RestartReplicationSuggestionModal h2').contains('Restart replication');
     cy.get('.meta-test__RestartReplicationSuggestionModal p').contains(
       "The replication isn't all right. Restart it, maybe it helps."
