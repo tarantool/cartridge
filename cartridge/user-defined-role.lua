@@ -34,6 +34,7 @@
 
 
 --- Validate clusterwide configuration callback.
+-- Called when role is enabled on an instance.
 --
 -- @function validate_config
 -- @tparam table conf_new
