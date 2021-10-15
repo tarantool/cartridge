@@ -13,7 +13,7 @@ g.before_all(function()
         replicasets = {
             {
                 uuid = helpers.uuid('a'),
-                roles = {'myrole-permanent'},
+                roles = {'myrole-permanent', 'vshard-router'},
                 servers = {
                     {
                         alias = 'master',

@@ -312,10 +312,6 @@ local function validate_config(conf_new, conf_old)
                 disabled_roles[role.role_name] = true
             end
         end
-
-        -- vshrad-router performs vshard config validation and shouldn't
-        -- be skipped
-        disabled_roles['vshard-router'] = nil
     end
 
     for _, role in ipairs(vars.roles_by_number) do
