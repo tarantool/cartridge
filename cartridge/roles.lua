@@ -299,8 +299,28 @@ local function validate_config(conf_new, conf_old)
         error(err, 2)
     end
 
+    -- disabled_roles doesn't include enabled roles, their dependencies
+    -- (both hidden or not) and permanent roles.
+    local disabled_roles = {}
+    local state = require('cartridge.confapplier').get_state()
+    if state == 'RolesConfigured' or state == 'OperationError' then
+        local my_replicaset = conf_new.topology.replicasets[box.info.cluster.uuid]
+        local enabled_roles = get_enabled_roles(my_replicaset.roles)
+
+        for _, role in ipairs(vars.roles_by_number) do
+            if not enabled_roles[role.role_name] then
+                disabled_roles[role.role_name] = true
+            end
+        end
+
+        -- vshrad-router performs vshard config validation and shouldn't
+        -- be skipped
+        disabled_roles['vshard-router'] = nil
+    end
+
     for _, role in ipairs(vars.roles_by_number) do
-        if type(role.M.validate_config) == 'function' then
+        if not disabled_roles[role.role_name]
+        and type(role.M.validate_config) == 'function' then
             local ok, err = ValidateConfigError:pcall(
                 role.M.validate_config, conf_new, conf_old
             )
