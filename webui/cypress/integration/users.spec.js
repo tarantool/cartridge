@@ -151,7 +151,6 @@ describe('Users', () => {
     cy.get('span:contains(user can not remove himself)');
     cy.get('.meta-test__UserRemoveModal button:contains(Cancel)').click();
 
-
     //logout:
     cy.get('.meta-test__LogoutBtn').click();
     cy.get('.meta-test__LogoutDropdown *').contains('Log out').click();
@@ -161,23 +160,11 @@ describe('Users', () => {
     ////////////////////////////////////////////////////////////////////
     cy.get('a:contains(TestUserName)').parents('tr').find('td').eq(3).find('button').eq(0).click();
     cy.get('h2:contains(Edit TestUserName)');
-    cy.get('label:contains(New password)')
-      .parent('div')
-      .next()
-      .find('input')
-      .should('be.focused');
+    cy.get('label:contains(New password)').parent('div').next().find('input').should('be.focused');
     cy.focused().blur();
     cy.testElementScreenshots('EditUserForm', 'form.meta-test__UserEditModal');
-    cy.get('label:contains(New password)')
-      .parent('div')
-      .next()
-      .find('input')
-      .focus();
-    cy.get('label:contains(New password)')
-      .parent('div')
-      .next()
-      .find('input')
-      .type('{selectall}{del}EditedPassword');
+    cy.get('label:contains(New password)').parent('div').next().find('input').focus();
+    cy.get('label:contains(New password)').parent('div').next().find('input').type('{selectall}{del}EditedPassword');
     cy.get('label:contains(Email)').parent('div').next().find('input').type('{selectall}{del}ee@ee.ee');
     cy.get('label:contains(Full name)').parent('div').next().find('input').type('{selectall}{del}Edited Full Name');
     cy.get('button:contains(Save)').click();
