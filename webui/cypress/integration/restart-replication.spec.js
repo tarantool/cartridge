@@ -56,6 +56,7 @@ describe('Disable server', () => {
     cy.get('.meta-test__ClusterSuggestionsPanel span').contains(
       `The replication isn't all right. Restart it, maybe it helps.`
     );
+
     //Check health state for Servers and  ReplicaSet
     cy.get('section:contains("1 total | 0 unhealthy | 3 servers")').should('exist');
     cy.get('[data-cy=meta-test__replicaSetSection]').contains('have issues');
