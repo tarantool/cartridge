@@ -52,8 +52,7 @@ describe('Disable server', () => {
     ////////////////////////////////////////////////////////////////////
     cy.get('.meta-test__ClusterSuggestionsPanel').should('be.visible');
     cy.testElementScreenshots('ClusterSuggestionsPanel', 'div.meta-test__ClusterSuggestionsPanel');
-    cy.get('.meta-test__ClusterSuggestionsPanel h5').contains(
-      'Restart replication');
+    cy.get('.meta-test__ClusterSuggestionsPanel h5').contains('Restart replication');
     cy.get('.meta-test__ClusterSuggestionsPanel span').contains(
       `The replication isn't all right. Restart it, maybe it helps.`
     );
