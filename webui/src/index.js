@@ -1,5 +1,6 @@
 import './misc/analytics';
 import './apiEndpoints';
+import './models/init';
 
 import React, { Suspense } from 'react';
 import { Provider } from 'react-redux';
@@ -7,13 +8,14 @@ import { Route, Router, Switch } from 'react-router-dom';
 import { SectionPreloader } from '@tarantool.io/ui-kit';
 
 import { isGraphqlAccessDeniedError } from 'src/api/graphql';
-import App from 'src/app';
 import HeaderAuthControl from 'src/components/HeaderAuthControl';
 import LogInForm from 'src/components/LogInForm';
 import NetworkErrorSplash from 'src/components/NetworkErrorSplash';
 import { isNetworkError } from 'src/misc/isNetworkError';
 import { createLazySection } from 'src/misc/lazySection';
+import { app } from 'src/models';
 import ConfigManagement from 'src/pages/ConfigManagement';
+import Dashboard from 'src/pages/Dashboard';
 import Users from 'src/pages/Users';
 import { appDidMount, setConnectionState } from 'src/store/actions/app.actions';
 import { expectWelcomeMessage, logOut, setWelcomeMessage } from 'src/store/actions/auth.actions';
@@ -26,25 +28,29 @@ import { menuFilter, menuReducer } from './menu';
 const Code = createLazySection(() => import('src/pages/Code'));
 
 const { tarantool_enterprise_core } = window;
+const { AppGate } = app;
 
 const projectPath = (path) => `/${PROJECT_NAME}/${path}`;
 
 class Root extends React.Component {
   render() {
     return (
-      <Provider store={store}>
-        <Router history={tarantool_enterprise_core.history}>
-          <Suspense fallback={<SectionPreloader />}>
-            <Switch>
-              <Route path={projectPath('dashboard')} component={App} />
-              <Route path={projectPath('configuration')} component={ConfigManagement} />
-              <Route path={projectPath('users')} component={Users} />
-              <Route path={projectPath('code')} component={Code} />
-            </Switch>
-            <NetworkErrorSplash />
-          </Suspense>
-        </Router>
-      </Provider>
+      <>
+        <AppGate />
+        <Provider store={store}>
+          <Router history={tarantool_enterprise_core.history}>
+            <Suspense fallback={<SectionPreloader />}>
+              <Switch>
+                <Route path={projectPath('dashboard')} component={Dashboard} />
+                <Route path={projectPath('configuration')} component={ConfigManagement} />
+                <Route path={projectPath('users')} component={Users} />
+                <Route path={projectPath('code')} component={Code} />
+              </Switch>
+              <NetworkErrorSplash />
+            </Suspense>
+          </Router>
+        </Provider>
+      </>
     );
   }
 }

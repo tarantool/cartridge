@@ -27,6 +27,21 @@ cartridge.srv-5:
     advertise_uri: localhost:3305
     http_port: 8085
 
+cartridge.srv-6:
+    workdir: ./dev/3306
+    advertise_uri: localhost:3306
+    http_port: 8086
+
+cartridge.srv-7:
+    workdir: ./dev/3307
+    advertise_uri: localhost:3307
+    http_port: 8087
+
+cartridge.srv-8:
+    workdir: ./dev/3308
+    advertise_uri: localhost:3308
+    http_port: 8088
+
 cartridge-stateboard:
     workdir: ./dev/stateboard
     password: ''

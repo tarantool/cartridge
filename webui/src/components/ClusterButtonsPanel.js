@@ -12,20 +12,26 @@ import type { State } from 'src/store/rootReducer';
 import { isBootstrapped, isVshardAvailable } from 'src/store/selectors/clusterPage';
 
 type ClusterButtonsPanelProps = {
+  implements_check_password: boolean,
   showBootstrap: boolean,
   setProbeServerModalVisible: () => void,
   showFailover: boolean,
   showToggleAuth: boolean,
 };
 
-const ClusterButtonsPanel = ({ showBootstrap, showFailover, showToggleAuth }: ClusterButtonsPanelProps) => {
+const ClusterButtonsPanel = ({
+  showBootstrap,
+  showFailover,
+  showToggleAuth,
+  implements_check_password,
+}: ClusterButtonsPanelProps) => {
   return (
     <ControlsPanel
       className="meta-test__ButtonsPanel"
       controls={[
         <ClusterIssuesButton key={0} />,
         <ProbeServerModal key={1} />,
-        showToggleAuth && <AuthToggleButton key={2} />,
+        showToggleAuth && <AuthToggleButton key={2} implements_check_password={implements_check_password} />,
         showFailover && <FailoverButton key={3} />,
         showBootstrap && <BootstrapButton key={4} />,
       ].filter(Boolean)}
@@ -41,6 +47,7 @@ const mapStateToProps = (state: State) => {
   } = state.app;
 
   return {
+    implements_check_password: !!implements_check_password,
     showFailover: !!(clusterSelf && clusterSelf.configured),
     showBootstrap: !!(clusterSelf && clusterSelf.configured) && isVshardAvailable(state) && !isBootstrapped(state),
     showToggleAuth: !implements_add_user && !implements_list_users && implements_check_password,

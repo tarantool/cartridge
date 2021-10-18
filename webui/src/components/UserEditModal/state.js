@@ -46,20 +46,13 @@ export const createFormStore = (values: initFormProps) => {
 
   guard({
     source: sample({
-      source: combine(
-        $usernameToMutate,
-        fullnameField.$value,
-        passwordField.$value,
-        emailField.$value,
-        $errors,
-        (username, fullname, password, email, errors) => ({
-          username,
-          fullname,
-          password,
-          email,
-          errors,
-        })
-      ),
+      source: combine({
+        username: $usernameToMutate,
+        fullname: fullnameField.$value,
+        password: passwordField.$value,
+        email: emailField.$value,
+        errors: $errors,
+      }),
       clock: submitForm,
       fn: (values) => {
         const obj = pickAll(['email', 'fullname', 'username'], values);
@@ -98,11 +91,11 @@ export const createFormStore = (values: initFormProps) => {
 
   // $FlowFixMe
   sample({
-    source: combine(fullnameField.$value, passwordField.$value, emailField.$value, (fullname, password, email) => ({
-      fullname,
-      password,
-      email,
-    })),
+    source: combine({
+      fullname: fullnameField.$value,
+      password: passwordField.$value,
+      email: emailField.$value,
+    }),
     clock: [fullnameField.$value, passwordField.$value, emailField.$value, showUserEditModal],
     target: validateFx,
   });

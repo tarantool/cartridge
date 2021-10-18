@@ -103,8 +103,7 @@ export const isRoleEnabledSelectorCreator = (roleType: 'storage' | 'router'): Is
 export const isStorageEnabled = isRoleEnabledSelectorCreator('storage');
 export const isRouterEnabled = isRoleEnabledSelectorCreator('router');
 
-type SearchableServer = {
-  ...$Exact<Server>,
+type SearchableServer = $Exact<Server> & {
   searchString: string,
 };
 
@@ -113,10 +112,7 @@ type WithSearchStringAndServersType = {
   searchString: string,
 };
 
-type SearchableReplicaset = {
-  ...$Exact<Replicaset>,
-  ...$Exact<WithSearchStringAndServersType>,
-};
+type SearchableReplicaset = $Exact<Replicaset> & $Exact<WithSearchStringAndServersType>;
 
 type SearchTokenObject = {
   value: string,

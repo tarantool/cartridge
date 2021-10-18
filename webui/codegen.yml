@@ -2,10 +2,26 @@ overwrite: true
 schema: "../doc/schema.graphql"
 documents: "**/*.graphql.js"
 generates:
-  src/generated/graphql-typing.js:
+  src/generated/graphql-typing-flow.js:
     plugins:
       - "flow"
       - "flow-operations"
+  src/generated/graphql-typing-ts.ts:
+    hooks:
+      afterOneFileWrite:
+        - prettier --write
+    plugins:
+      - "typescript"
+      - "typescript-operations"
+    config:
+      skipTypename: false
+      withHooks: true
+      withHOC: false
+      withComponent: false
+      documentMode: documentNode
+      dedupeOperationSuffix: true
+      pureMagicComment: true
+      useTypeImports: true
   ./graphql.schema.json:
     plugins:
       - "introspection"

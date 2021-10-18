@@ -1,2 +1,3 @@
-node_modules
-src/generated
+/node_modules
+/src/generated/*
+!/src/generated/graphql-typing-ts.ts
