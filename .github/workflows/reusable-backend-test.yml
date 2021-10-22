@@ -29,10 +29,6 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: ${{ inputs.artifact_name }}
-      # TODO(ylobankov): Just in case remove tarantool that could be previously
-      # installed on the runner. Relevant to self-hosted runners. Remove this
-      # step when only GitHub-hosted runners are used for integration testing.
-      - run: sudo apt-get -y purge 'tarantool*'
       - name: 'Install tarantool'
         # TODO(ylobankov): Install package dependencies. Now we're lucky: all
         # dependencies are already there.
@@ -74,13 +70,3 @@ jobs:
         run: |
           source ./pytest-venv/bin/activate
           pytest -v
-
-      # TODO(ylobankov): Relevant to self-hosted runners. Remove this step
-      # when only GitHub-hosted runners are used for integration testing.
-      - if: always()
-        run: rm -rf .rocks pytest-venv
-
-      # TODO(ylobankov): Relevant to self-hosted runners. Remove this step
-      # when only GitHub-hosted runners are used for integration testing.
-      - if: always()
-        run: sudo apt-get -y purge 'tarantool*'
