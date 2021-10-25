@@ -2,11 +2,11 @@ import { forward, guard, sample } from 'effector';
 
 import { app } from 'src/models';
 
-import { clusterPageClosedEvent } from '../page';
-import { refreshServerListAndSetDirtyEvent } from '../server-list';
+import { clusterPageCloseEvent } from '../page';
+import { refreshServerListAndClusterEvent } from '../server-list';
 import { editReplicasetFx, synchronizeReplicasetConfigureLocationFx } from './effects';
 import {
-  $isReplicasetConfigureModalOpen,
+  $replicasetConfigureModalVisible,
   $selectedReplicasetConfigureUuid,
   ClusterReplicasetConfigureGate,
   editReplicasetEvent,
@@ -15,11 +15,11 @@ import {
 } from '.';
 
 const { notifySuccessEvent, notifyErrorEvent } = app;
-const { not, mapModalOpenedClosedEventPayload } = app.utils;
+const { not, mapModalOpenedClosedEventPayload, passResultPathOnEvent } = app.utils;
 
 guard({
   source: ClusterReplicasetConfigureGate.open,
-  filter: $isReplicasetConfigureModalOpen.map(not),
+  filter: $replicasetConfigureModalVisible.map(not),
   target: replicasetConfigureModalOpenEvent,
 });
 
@@ -39,14 +39,14 @@ forward({
 });
 
 sample({
-  source: $selectedReplicasetConfigureUuid.map((uuid) => ({ props: { uuid }, open: false })),
+  source: $selectedReplicasetConfigureUuid.map((uuid) => ({ uuid })).map(mapModalOpenedClosedEventPayload(false)),
   clock: replicasetConfigureModalCloseEvent,
   target: synchronizeReplicasetConfigureLocationFx,
 });
 
 forward({
   from: editReplicasetFx.done,
-  to: [replicasetConfigureModalCloseEvent, refreshServerListAndSetDirtyEvent],
+  to: [replicasetConfigureModalCloseEvent, refreshServerListAndClusterEvent],
 });
 
 forward({
@@ -60,6 +60,6 @@ forward({
 });
 
 $selectedReplicasetConfigureUuid
-  .on(replicasetConfigureModalOpenEvent, (_, { uuid }) => uuid)
+  .on(replicasetConfigureModalOpenEvent, passResultPathOnEvent('uuid'))
   .reset(replicasetConfigureModalCloseEvent)
-  .reset(clusterPageClosedEvent);
+  .reset(clusterPageCloseEvent);

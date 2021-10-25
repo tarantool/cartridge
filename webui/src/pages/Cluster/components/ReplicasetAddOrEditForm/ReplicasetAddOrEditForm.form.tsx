@@ -1,10 +1,9 @@
 import { FormikProps, withFormik } from 'formik';
-import * as yup from 'yup';
 
 import { GetClusterRole, KnownRolesNamesResult, Maybe, ServerListReplicaset, ServerListServer, app } from 'src/models';
 
 export interface ReplicasetAddOrEditValues {
-  alias: string;
+  alias: string | null;
   all_rw: boolean;
   roles: string[];
   vshard_group: string | null;
@@ -25,62 +24,59 @@ export interface ReplicasetAddOrEditFormProps {
   server?: ServerListServer;
 }
 
-const { tryCatchWithNotify } = app;
+const { tryCatchWithNotify, yup } = app;
 
-const validationSchema = yup
-  .object<ReplicasetAddOrEditValues>({
-    alias: yup.string().required(app.messages.errors.REQUIRED),
-    all_rw: yup.boolean(),
-    roles: yup.array(yup.string()),
-    vshard_group: yup.string().nullable(),
-    failover_priority: yup.array(yup.string()),
-    weight: yup.number().typeError(app.messages.errors.NUMBER_FLOAT).nullable().default(null),
-  })
-  .required();
+const validationSchemaCreator = ({ knownRolesNames }: Pick<ReplicasetAddOrEditFormProps, 'knownRolesNames'>) =>
+  yup
+    .object<ReplicasetAddOrEditValues>({
+      alias: yup
+        .string()
+        .nullable()
+        .max(63, 'Alias must not exceed 63 character')
+        .test('allowed', 'Allowed symbols are: a-z, A-Z, 0-9, _ . -', (value: string) => {
+          if (!value || value.length === 0) {
+            return true;
+          }
+
+          return /^[a-zA-Z0-9-_.]+$/.test(value);
+        }),
+      all_rw: yup.boolean(),
+      roles: yup.array(yup.string()),
+      vshard_group: yup
+        .string()
+        .nullable()
+        .test('required', 'Group is required for some roles', function (value) {
+          if (!value && (this.parent.roles || []).some((role: string) => knownRolesNames.storage.includes(role))) {
+            return this.createError({
+              path: 'vshard_group',
+              message: `Group is required for ${knownRolesNames.storage.join(' or ')} role`,
+            });
+          }
+
+          return true;
+        }),
+      failover_priority: yup.array(yup.string()),
+      weight: yup.number().typeError(app.messages.errors.NUMBER_FLOAT).nullable().default(null),
+    })
+    .required();
 
 export type WithReplicasetAddOrEditFormWithFormikProps = FormikProps<ReplicasetAddOrEditValues> &
   ReplicasetAddOrEditFormProps;
 
 export const withReplicasetAddOrEditForm = withFormik<ReplicasetAddOrEditFormProps, ReplicasetAddOrEditValues>({
   displayName: 'ReplicasetAddOrEditForm',
-  validationSchema,
+  validationSchema: validationSchemaCreator,
   mapPropsToValues: ({ replicaset }) => ({
-    alias: replicaset?.alias ?? '',
+    alias: replicaset?.alias ?? null,
     all_rw: replicaset?.all_rw ?? false,
     roles: replicaset?.roles ?? [],
-    vshard_group: replicaset?.vshard_group ?? '',
+    vshard_group: replicaset?.vshard_group ?? null,
     failover_priority: replicaset?.servers.map(({ uuid }) => uuid) ?? [],
     weight: replicaset?.weight ?? null,
   }),
-  handleSubmit: (values, { props: { onSubmit, replicaset, knownRolesNames, vshardGroupsNames } }) => {
-    if (!replicaset) {
-      return;
-    }
-
+  handleSubmit: (values, { props: { onSubmit, knownRolesNames } }) => {
     tryCatchWithNotify(() => {
-      const storageRoleChecked = values.roles.some((role) => knownRolesNames.storage.includes(role));
-      if (!storageRoleChecked && typeof replicaset.weight === 'number') {
-        values.weight = replicaset.weight;
-      }
-
-      if (values.vshard_group && vshardGroupsNames.length === 1) {
-        if (storageRoleChecked && !values.vshard_group) {
-          values.vshard_group = vshardGroupsNames[0] ?? null;
-        }
-
-        if (!storageRoleChecked && !replicaset?.vshard_group && values.vshard_group) {
-          values.vshard_group = null;
-        }
-      }
-
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      //@ts-ignore
-      if (values.weight === '') {
-        // TODO: formik types issue
-        values.weight = null;
-      }
-
-      const casted = validationSchema.cast(values, {
+      const casted = validationSchemaCreator({ knownRolesNames }).cast(values, {
         abortEarly: true,
         stripUnknown: true,
       });

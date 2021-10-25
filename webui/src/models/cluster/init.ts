@@ -7,3 +7,4 @@ import './server-expel/init';
 import './server-probe/init';
 import './failover/init';
 import './zones/init';
+import './suggestions/init';

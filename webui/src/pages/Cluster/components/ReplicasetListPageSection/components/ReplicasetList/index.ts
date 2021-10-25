@@ -1,1 +1,2 @@
-export { default, ReplicasetListProps } from './ReplicasetList';
+export { default } from './ReplicasetList';
+export type { ReplicasetListProps } from './ReplicasetList';

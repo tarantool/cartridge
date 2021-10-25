@@ -1,1 +1,1 @@
-export { default, BootstrapButtonProps } from './BootstrapButton';
+export { default } from './BootstrapButton';

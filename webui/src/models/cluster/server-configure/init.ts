@@ -2,12 +2,12 @@ import { forward, guard, sample } from 'effector';
 
 import { app } from 'src/models';
 
-import { clusterPageClosedEvent } from '../page';
-import { refreshServerListAndSetDirtyEvent } from '../server-list';
+import { clusterPageCloseEvent } from '../page';
+import { refreshServerListAndClusterEvent } from '../server-list';
 import { createReplicasetFx, joinReplicasetFx, synchronizeServerConfigureLocationFx } from './effects';
 import {
-  $isServerConfigureModalOpen,
   $selectedServerConfigureUri,
+  $serverConfigureModalVisible,
   ClusterServerConfigureGate,
   createReplicasetEvent,
   joinReplicasetEvent,
@@ -16,11 +16,11 @@ import {
 } from '.';
 
 const { notifyErrorEvent, notifySuccessEvent } = app;
-const { not, mapModalOpenedClosedEventPayload } = app.utils;
+const { not, mapModalOpenedClosedEventPayload, passResultPathOnEvent } = app.utils;
 
 guard({
   source: ClusterServerConfigureGate.open,
-  filter: $isServerConfigureModalOpen.map(not),
+  filter: $serverConfigureModalVisible.map(not),
   target: serverConfigureModalOpenedEvent,
 });
 
@@ -52,7 +52,7 @@ sample({
 
 forward({
   from: [createReplicasetFx.done, joinReplicasetFx.done],
-  to: [serverConfigureModalClosedEvent, refreshServerListAndSetDirtyEvent],
+  to: [serverConfigureModalClosedEvent, refreshServerListAndClusterEvent],
 });
 
 forward({
@@ -72,6 +72,6 @@ forward({
 
 // stories
 $selectedServerConfigureUri
-  .on(serverConfigureModalOpenedEvent, (_, { uri }) => uri)
+  .on(serverConfigureModalOpenedEvent, passResultPathOnEvent('uri'))
   .reset(serverConfigureModalClosedEvent)
-  .reset(clusterPageClosedEvent);
+  .reset(clusterPageCloseEvent);

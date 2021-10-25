@@ -37,7 +37,6 @@ endfunction()
 set(HASH_FILE "${BASE_DIR}/node_modules/package-lock.md5")
 check_hash(${HASH_FILE} "${BASE_DIR}/package-lock.json")
 
-set(REBUILD 0)
 if (REBUILD)
     message(STATUS "Installing node_modules")
     execute_process(
@@ -64,6 +63,7 @@ file(GLOB_RECURSE FRONTEND_FILES
     "${BASE_DIR}/public/*"
 )
 list(APPEND FRONTEND_FILES
+    "${BASE_DIR}/.babelrc.js"
     "${BASE_DIR}/.browserslistrc"
     "${BASE_DIR}/.env"
     "${BASE_DIR}/.env.production"
@@ -74,14 +74,15 @@ list(APPEND FRONTEND_FILES
     "${BASE_DIR}/.importsortrc.js"
     "${BASE_DIR}/.flowconfig"
     "${BASE_DIR}/codegen.yml"
-    "${BASE_DIR}/scripts/build.js"
     "${BASE_DIR}/package-lock.json"
+    "${BASE_DIR}/package.json"
+    "${BASE_DIR}/webpack.config.dev.js"
     "${BASE_DIR}/webpack.config.js"
+    "${BASE_DIR}/webpack.config.prod.js"
     "${BASE_DIR}/tsconfig.json"
 )
 check_hash(${HASH_FILE} "${FRONTEND_FILES}")
 
-set(REBUILD 0)
 if (REBUILD)
     message(STATUS "Building WebUI bundle")
     execute_process(

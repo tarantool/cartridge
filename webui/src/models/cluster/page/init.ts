@@ -1,20 +1,31 @@
 import { forward } from 'effector';
 
 import { app } from 'src/models';
+import { passResultOnEvent } from 'src/models/app/utils';
 
-import { $isClusterPageOpen, ClusterPageGate, clusterPageClosedEvent, clusterPageOpenedEvent } from '.';
+import { queryClusterErrorEvent, queryServerListErrorEvent } from '../server-list';
+import {
+  $clusterPageError,
+  $clusterPageVisible,
+  ClusterPageGate,
+  clusterPageCloseEvent,
+  clusterPageOpenEvent,
+} from '.';
 
 const { trueL } = app.utils;
 
 forward({
   from: ClusterPageGate.open,
-  to: clusterPageOpenedEvent,
+  to: clusterPageOpenEvent,
 });
 
 forward({
   from: ClusterPageGate.close,
-  to: clusterPageClosedEvent,
+  to: clusterPageCloseEvent,
 });
 
 // stores
-$isClusterPageOpen.on(clusterPageOpenedEvent, trueL).reset(clusterPageClosedEvent);
+$clusterPageVisible.on(clusterPageOpenEvent, trueL).reset(clusterPageCloseEvent);
+
+$clusterPageError.on(queryClusterErrorEvent, passResultOnEvent).reset(clusterPageCloseEvent);
+$clusterPageError.on(queryServerListErrorEvent, passResultOnEvent).reset(clusterPageCloseEvent);

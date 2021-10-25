@@ -33,6 +33,10 @@ const VshardRouterTab = () => {
     [section]
   );
 
+  if (result.length === 0) {
+    return null;
+  }
+
   return (
     <div className={styles.wrap}>
       {result.map(({ name, params }, index1) => (

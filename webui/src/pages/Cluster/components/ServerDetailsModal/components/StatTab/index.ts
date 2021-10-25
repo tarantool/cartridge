@@ -1,1 +1,2 @@
-export { default, StatTabProps } from './StatTab';
+export { default } from './StatTab';
+export type { StatTabProps } from './StatTab';

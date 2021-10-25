@@ -3,9 +3,9 @@ import React, { memo, useCallback, useState } from 'react';
 // @ts-ignore
 import { Button, IconCancel } from '@tarantool.io/ui-kit';
 
-import { ClusterIssuesModal } from 'src/components/ClusterIssuesModal';
 import type { ServerListServerClusterIssue } from 'src/models';
 
+import ClusterIssuesModal from '../ClusterIssuesModal';
 import IconOkContrast from './components/IconOkContrast';
 
 export interface IssuesButtonProps {

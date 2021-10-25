@@ -130,8 +130,8 @@ class Cluster extends React.Component<ClusterProps> {
     const unlinkedServers = this.getUnlinkedServers();
 
     return (
-      <PageLayout heading="Cluster" headingContent={<ClusterButtonsPanel />}>
-        <AppTitle title="Cluster" />
+      <PageLayout heading="Cluster Legacy" headingContent={<ClusterButtonsPanel />}>
+        <AppTitle title="Cluster Legacy" />
         <Switch>
           <Route
             path={`/cluster/dashboard/instance/:instanceUUID`}

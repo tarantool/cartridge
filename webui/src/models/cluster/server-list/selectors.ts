@@ -76,8 +76,11 @@ const isRoleEnabledSelectorCreator =
     const { replicasetList } = serverList || {};
     if (replicasetList) {
       const names = knownRolesNames(cluster);
-      if (replicasetList.find((item) => item?.roles?.some((role) => names[type].includes(role)))) {
-        return true;
+      for (let i = 0; i < replicasetList.length; i++) {
+        const { roles } = replicasetList[i] ?? {};
+        if (roles && roles.some((role) => names[type].includes(role))) {
+          return true;
+        }
       }
     }
 

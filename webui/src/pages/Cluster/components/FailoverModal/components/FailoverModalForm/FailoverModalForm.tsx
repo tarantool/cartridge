@@ -5,7 +5,7 @@ import { useStore } from 'effector-react';
 import { useFormikContext } from 'formik';
 // @ts-ignore
 // prettier-ignore
-import { Button, Checkbox, FormField, InputPassword, LabeledInput, Modal, Select, Spin, Tabbed, Text, TextArea } from '@tarantool.io/ui-kit';
+import { Alert, Button, Checkbox, FormField, InputPassword, LabeledInput, Modal, Select, Spin, Tabbed, Text, TextArea } from '@tarantool.io/ui-kit';
 
 import { FAILOVER_STATE_PROVIDERS } from 'src/constants';
 import { cluster } from 'src/models';
@@ -38,9 +38,9 @@ const FAILOVER_TABS: [FailoverMode, FailoverMode, FailoverMode] = ['disabled', '
 export type FailoverModalFormProps = FailoverFormFormikProps;
 
 const FailoverModalForm = ({ handleSubmit }: FailoverModalFormProps) => {
-  const { loading, pending } = useStore($failoverModal);
+  const { loading, pending, error } = useStore($failoverModal);
 
-  const { setFieldValue, handleChange, values, errors, touched } = useFormikContext<FailoverFormValues>();
+  const { setFieldValue, handleChange, values, errors } = useFormikContext<FailoverFormValues>();
 
   const handleTabChange = useCallback(
     (index: number) => setFieldValue('mode', toFailoverMode(FAILOVER_TABS[index])),
@@ -72,7 +72,7 @@ const FailoverModalForm = ({ handleSubmit }: FailoverModalFormProps) => {
         Apply
       </Button>,
     ],
-    [handleClose, pending]
+    [handleClose, loading, pending]
   );
 
   const tabs = useMemo(
@@ -128,8 +128,8 @@ const FailoverModalForm = ({ handleSubmit }: FailoverModalFormProps) => {
           name="failover_timeout"
           label="Failover timeout"
           className="meta-test__failoverTimeout"
-          error={touched.failover_timeout && errors.failover_timeout}
-          message={touched.failover_timeout && errors.failover_timeout}
+          error={errors.failover_timeout}
+          message={errors.failover_timeout}
           value={values.failover_timeout}
           onChange={handleChange}
           info={INFOS.failoverTimeout}
@@ -152,8 +152,8 @@ const FailoverModalForm = ({ handleSubmit }: FailoverModalFormProps) => {
                 label="Fencing timeout"
                 className={cx(styles.inputField, 'meta-test__fencingTimeout')}
                 disabled={!values.fencing_enabled}
-                error={touched.fencing_timeout && errors.fencing_timeout}
-                message={touched.fencing_timeout && errors.fencing_timeout}
+                error={errors.fencing_timeout}
+                message={errors.fencing_timeout}
                 info={INFOS.fencingTimeout}
                 value={values.fencing_timeout}
                 onChange={handleChange}
@@ -163,8 +163,8 @@ const FailoverModalForm = ({ handleSubmit }: FailoverModalFormProps) => {
                 label="Fencing pause"
                 className={cx(styles.inputField, 'meta-test__fencingPause')}
                 disabled={!values.fencing_enabled}
-                error={touched.fencing_pause && errors.fencing_pause}
-                message={touched.fencing_pause && errors.fencing_pause}
+                error={errors.fencing_pause}
+                message={errors.fencing_pause}
                 info={INFOS.fencingPause}
                 value={values.fencing_pause}
                 onChange={handleChange}
@@ -188,8 +188,8 @@ const FailoverModalForm = ({ handleSubmit }: FailoverModalFormProps) => {
                   className={styles.inputField}
                   label="URI"
                   inputClassName="meta-test__stateboardURI"
-                  error={touched.tarantool_params?.uri && errors.tarantool_params?.uri}
-                  message={touched.tarantool_params?.uri && errors.tarantool_params?.uri}
+                  error={errors.tarantool_params?.uri}
+                  message={errors.tarantool_params?.uri}
                   value={values.tarantool_params.uri}
                   onChange={handleChange}
                 />
@@ -199,8 +199,8 @@ const FailoverModalForm = ({ handleSubmit }: FailoverModalFormProps) => {
                   label="Password"
                   inputComponent={InputPassword}
                   inputClassName="meta-test__stateboardPassword"
-                  error={touched.tarantool_params?.password && errors.tarantool_params?.password}
-                  message={touched.tarantool_params?.password && errors.tarantool_params?.password}
+                  error={errors.tarantool_params?.password}
+                  message={errors.tarantool_params?.password}
                   value={values.tarantool_params.password}
                   onChange={handleChange}
                 />
@@ -213,8 +213,8 @@ const FailoverModalForm = ({ handleSubmit }: FailoverModalFormProps) => {
                   label="Endpoints"
                   className="meta-test__etcd2Endpoints"
                   inputComponent={TextArea}
-                  error={touched.etcd2_params?.endpoints && errors.etcd2_params?.endpoints}
-                  message={touched.etcd2_params?.endpoints && errors.etcd2_params?.endpoints}
+                  error={errors.etcd2_params?.endpoints}
+                  message={errors.etcd2_params?.endpoints}
                   value={values.etcd2_params.endpoints}
                   rows={2}
                   onChange={handleChange}
@@ -225,8 +225,8 @@ const FailoverModalForm = ({ handleSubmit }: FailoverModalFormProps) => {
                     className={styles.inputField}
                     label="Lock delay"
                     info={INFOS.lockDelayInfo}
-                    error={touched.etcd2_params?.lock_delay && errors.etcd2_params?.lock_delay}
-                    message={touched.etcd2_params?.lock_delay && errors.etcd2_params?.lock_delay}
+                    error={errors.etcd2_params?.lock_delay}
+                    message={errors.etcd2_params?.lock_delay}
                     inputClassName="meta-test__etcd2LockDelay"
                     value={values.etcd2_params.lock_delay}
                     onChange={handleChange}
@@ -236,8 +236,8 @@ const FailoverModalForm = ({ handleSubmit }: FailoverModalFormProps) => {
                     className={styles.inputField}
                     label="Prefix"
                     inputClassName="meta-test__etcd2Prefix"
-                    error={touched.etcd2_params?.prefix && errors.etcd2_params?.prefix}
-                    message={touched.etcd2_params?.prefix && errors.etcd2_params?.prefix}
+                    error={errors.etcd2_params?.prefix}
+                    message={errors.etcd2_params?.prefix}
                     value={values.etcd2_params.prefix}
                     onChange={handleChange}
                   />
@@ -246,8 +246,8 @@ const FailoverModalForm = ({ handleSubmit }: FailoverModalFormProps) => {
                     className={styles.inputField}
                     label="Username"
                     inputClassName="meta-test__etcd2Username"
-                    error={touched.etcd2_params?.username && errors.etcd2_params?.username}
-                    message={touched.etcd2_params?.username && errors.etcd2_params?.username}
+                    error={errors.etcd2_params?.username}
+                    message={errors.etcd2_params?.username}
                     value={values.etcd2_params.username}
                     onChange={handleChange}
                   />
@@ -257,8 +257,8 @@ const FailoverModalForm = ({ handleSubmit }: FailoverModalFormProps) => {
                     label="Password"
                     inputClassName="meta-test__etcd2Password"
                     inputComponent={InputPassword}
-                    error={touched.etcd2_params?.password && errors.etcd2_params?.password}
-                    message={touched.etcd2_params?.password && errors.etcd2_params?.password}
+                    error={errors.etcd2_params?.password}
+                    message={errors.etcd2_params?.password}
                     value={values.etcd2_params.password}
                     onChange={handleChange}
                   />
@@ -266,6 +266,11 @@ const FailoverModalForm = ({ handleSubmit }: FailoverModalFormProps) => {
               </>
             )}
           </>
+        )}
+        {error && (
+          <Alert type="error" className="meta-test__inlineError">
+            <Text variant="basic">{error}</Text>
+          </Alert>
         )}
       </Spin>
     </Modal>

@@ -4,8 +4,6 @@ import { cx } from '@emotion/css';
 // @ts-ignore
 import { Button, HealthStatus, IconEdit, Text, TiledList, TiledListItem, Tooltip } from '@tarantool.io/ui-kit';
 
-import { ClusterIssuesModal } from 'src/components/ClusterIssuesModal';
-import ReplicasetRoles from 'src/components/ReplicasetRoles';
 import * as models from 'src/models';
 import type {
   GetClusterCluster,
@@ -15,6 +13,8 @@ import type {
   ServerListServerStat,
 } from 'src/models';
 
+import ClusterIssuesModal from '../../../ClusterIssuesModal';
+import ReplicasetRoles from '../../../ReplicasetRoles';
 import ReplicasetServerList from '../ReplicasetServerList';
 
 import { styles } from './ReplicasetList.styles';
@@ -50,7 +50,7 @@ const ReplicasetList = ({
 
   const issuesSelected = useMemo(
     () => issues.filter(({ replicaset_uuid }) => replicaset_uuid === issuedReplicasetUuid),
-    [issues]
+    [issues, issuedReplicasetUuid]
   );
 
   const handleClusterIssuesModalClick = useCallback(() => {

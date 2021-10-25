@@ -2,13 +2,13 @@ import { forward, guard, sample } from 'effector';
 
 import { app } from 'src/models';
 
-import { clusterPageClosedEvent } from '../page';
+import { clusterPageCloseEvent } from '../page';
 import { queryServerDetailsBoxInfoFx, queryServerDetailsFx, synchronizeServerDetailsLocationFx } from './effects';
 import { mapServerDetailsToDescriptions } from './selectors';
 import {
-  $isServerDetailsModalOpen,
   $selectedServerDetailsUuid,
   $serverDetails,
+  $serverDetailsModalVisible,
   ClusterServerDetailsGate,
   queryServerDetailsBoxInfoSuccessEvent,
   queryServerDetailsSuccessEvent,
@@ -16,11 +16,11 @@ import {
   serverDetailsModalOpenedEvent,
 } from '.';
 
-const { not, voidL, createTimeoutFx, mapModalOpenedClosedEventPayload } = app.utils;
+const { not, createTimeoutFx, mapModalOpenedClosedEventPayload, passResultPathOnEvent } = app.utils;
 
 guard({
   source: ClusterServerDetailsGate.open,
-  filter: $isServerDetailsModalOpen.map(not),
+  filter: $serverDetailsModalVisible.map(not),
   target: serverDetailsModalOpenedEvent,
 });
 
@@ -42,19 +42,19 @@ sample({
 
 guard({
   source: queryServerDetailsFx.doneData,
-  filter: $isServerDetailsModalOpen,
+  filter: $serverDetailsModalVisible,
   target: queryServerDetailsSuccessEvent,
 });
 
 guard({
   source: queryServerDetailsBoxInfoFx.doneData,
-  filter: $isServerDetailsModalOpen,
+  filter: $serverDetailsModalVisible,
   target: queryServerDetailsBoxInfoSuccessEvent,
 });
 
 createTimeoutFx('ServerDetailsTimeoutFx', {
   startEvent: serverDetailsModalOpenedEvent,
-  stopEvent: serverDetailsModalClosedEvent.map(voidL),
+  stopEvent: serverDetailsModalClosedEvent,
   timeout: (): number => app.variables.cartridge_refresh_interval(),
   effect: async (counter, props): Promise<void> => {
     if (props) {
@@ -69,9 +69,9 @@ createTimeoutFx('ServerDetailsTimeoutFx', {
 
 // stores
 $selectedServerDetailsUuid
-  .on(serverDetailsModalOpenedEvent, (_, { uuid }) => uuid)
+  .on(serverDetailsModalOpenedEvent, passResultPathOnEvent('uuid'))
   .reset(serverDetailsModalClosedEvent)
-  .reset(clusterPageClosedEvent);
+  .reset(clusterPageCloseEvent);
 
 $serverDetails
   .on(queryServerDetailsSuccessEvent, (_, result) => {
@@ -96,4 +96,6 @@ $serverDetails
       server,
     };
   })
-  .reset(clusterPageClosedEvent);
+  .reset(serverDetailsModalClosedEvent)
+  .reset(serverDetailsModalOpenedEvent)
+  .reset(clusterPageCloseEvent);

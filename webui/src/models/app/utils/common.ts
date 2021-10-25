@@ -1,7 +1,7 @@
 import type { SyntheticEvent } from 'react';
-import { compose, groupBy, map, not, omit, pipe, prop, uniq } from 'ramda';
+import { compose, equals, groupBy, map, not, omit, pipe, prop, uniq } from 'ramda';
 
-export { uniq, prop, groupBy, compose, map, not, pipe, omit };
+export { uniq, prop, groupBy, equals, compose, map, not, pipe, omit };
 
 export const noop = (): void => void 0;
 
@@ -14,6 +14,8 @@ export const zeroL = (): number => 0;
 export const trueL = (): boolean => true;
 
 export const falseL = (): boolean => false;
+
+export const exists = <T>(value: T | null | undefined): value is T => value !== undefined && value !== null;
 
 export const compact = <T>(list: (T | undefined | null | false)[]): T[] => list.filter(Boolean) as T[];
 

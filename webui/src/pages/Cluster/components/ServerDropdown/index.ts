@@ -1,1 +1,2 @@
-export { default, ServerDropdownProps } from './ServerDropdown';
+export { default } from './ServerDropdown';
+export type { ServerDropdownProps } from './ServerDropdown';

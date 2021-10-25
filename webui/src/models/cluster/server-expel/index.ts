@@ -4,7 +4,7 @@ import graphql from 'src/api/graphql';
 import { Maybe, app } from 'src/models';
 import { editTopologyMutation } from 'src/store/request/queries.graphql';
 
-import { $serverList, $serverListIsDirty, selectors } from '../server-list';
+import { $serverList, selectors } from '../server-list';
 
 // events
 export const serverExpelModalOpenEvent = app.domain.createEvent<{ uri: string }>('expel server modal open event');
@@ -33,5 +33,5 @@ export const serverExpelFx = app.domain.createEffect<Maybe<{ uuid?: string }>, v
 export const $serverExpelModal = combine({
   value: $selectedServerExpelModalServer,
   visible: $selectedServerExpelModalServer.map(Boolean),
-  pending: combine([serverExpelFx.pending, $serverListIsDirty]).map((state) => state.some(Boolean)),
+  pending: serverExpelFx.pending,
 });

@@ -11,7 +11,16 @@ export const createReplicasetFx = app.domain.createEffect<CreateReplicasetProps,
   {
     handler: ({ alias, roles, weight, all_rw, vshard_group, join_servers }) =>
       graphql.fetch(editTopologyMutation, {
-        replicasets: [{ alias, roles, weight, all_rw, vshard_group, join_servers }],
+        replicasets: [
+          {
+            alias: alias || null,
+            roles,
+            weight: weight || null,
+            all_rw,
+            vshard_group: vshard_group || null,
+            join_servers,
+          },
+        ],
       }),
   }
 );

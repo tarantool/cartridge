@@ -2,7 +2,7 @@ import { REFRESH_LIST_INTERVAL, STAT_REQUEST_PERIOD } from 'src/constants';
 
 import { parseIntSafe } from './utils';
 
-export const wtv = () => window['__tarantool_variables'] || {};
+const wtv = () => window['__tarantool_variables'] || {};
 
 export const cartridge_refresh_interval = (): number =>
   parseIntSafe(wtv().cartridge_refresh_interval, REFRESH_LIST_INTERVAL);

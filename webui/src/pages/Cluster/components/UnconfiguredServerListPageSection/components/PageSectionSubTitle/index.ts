@@ -1,1 +1,2 @@
-export { default, PageSectionSubTitleProps } from './PageSectionSubTitle';
+export { default } from './PageSectionSubTitle';
+export type { PageSectionSubTitleProps } from './PageSectionSubTitle';

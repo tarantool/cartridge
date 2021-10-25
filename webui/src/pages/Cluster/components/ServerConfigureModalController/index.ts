@@ -1,1 +1,2 @@
-export { default, ServerConfigureModalControllerProps } from './ServerConfigureModalController';
+export { default } from './ServerConfigureModalController';
+export type { ServerConfigureModalControllerProps } from './ServerConfigureModalController';

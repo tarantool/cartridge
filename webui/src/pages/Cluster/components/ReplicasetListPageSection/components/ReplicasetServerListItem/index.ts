@@ -1,1 +1,2 @@
-export { default, ReplicasetServerListItemProps } from './ReplicasetServerListItem';
+export { default } from './ReplicasetServerListItem';
+export type { ReplicasetServerListItemProps } from './ReplicasetServerListItem';

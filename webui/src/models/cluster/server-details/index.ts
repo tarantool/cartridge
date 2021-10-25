@@ -28,5 +28,5 @@ export const serverDetailsModalClosedEvent = app.domain.createEvent('server deta
 
 // stores
 export const $selectedServerDetailsUuid = app.domain.createStore<string>('');
-export const $isServerDetailsModalOpen = $selectedServerDetailsUuid.map(Boolean);
+export const $serverDetailsModalVisible = $selectedServerDetailsUuid.map(Boolean);
 export const $serverDetails = app.domain.createStore<ServerDetails | null>(null);

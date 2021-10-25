@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import { FormikProps, withFormik } from 'formik';
-import * as yup from 'yup';
 
 import { app, cluster } from 'src/models';
 
@@ -9,7 +8,7 @@ export interface ProbeServerFormValues {
 }
 
 const { serverProbeEvent } = cluster.serverProbe;
-const { tryCatchWithNotify, messages } = app;
+const { tryCatchWithNotify, messages, yup } = app;
 
 const validationSchema = yup
   .object<ProbeServerFormValues>({

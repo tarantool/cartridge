@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { cx } from '@emotion/css';
 // @ts-ignore
 import { Button, Checkbox, FormField, LabeledInput, Modal, RadioButton } from '@tarantool.io/ui-kit';
 
-import ServerSortableList from 'src/components/ServerSortableList';
 import { GetClusterRole, Maybe, ServerListReplicasetServer, app } from 'src/models';
 
+import ServerSortableList from './components/ServerSortableList';
 import {
   WithReplicasetAddOrEditFormWithFormikProps,
   withReplicasetAddOrEditForm,
@@ -48,10 +48,10 @@ const ReplicasetAddOrEditForm = ({
   handleSubmit,
   handleReset,
   handleChange,
+  handleBlur,
   setFieldValue,
   values,
   errors,
-  touched,
   replicaset,
   knownRolesNames,
   clusterSelfUri,
@@ -60,6 +60,7 @@ const ReplicasetAddOrEditForm = ({
   failoverParamsMode,
   pending,
   onClose,
+  isValid,
 }: ReplicasetConfigureModalFormProps) => {
   const isStorageRoleSelected = useMemo(
     () => values.roles.some((role) => knownRolesNames.storage.includes(role)),
@@ -88,6 +89,44 @@ const ReplicasetAddOrEditForm = ({
 
   const serverMap = useMemo(() => serverMapCompose(replicaset?.servers || []), [replicaset?.servers]);
 
+  const storageRoleChecked = useMemo(
+    () => values.roles.some((role) => knownRolesNames.storage.includes(role)),
+    [values.roles, knownRolesNames.storage]
+  );
+
+  useEffect(() => {
+    if (!storageRoleChecked && typeof replicaset?.weight === 'number') {
+      setFieldValue('weight', replicaset.weight);
+    }
+  }, [setFieldValue, storageRoleChecked, replicaset?.weight]);
+
+  useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    //@ts-ignore
+    if (values.weight === '') {
+      setFieldValue('weight', null);
+    }
+  }, [setFieldValue, values.weight]);
+
+  useEffect(() => {
+    let vshard_group = values.vshard_group;
+    if (vshardGroupsNames.length === 1) {
+      if (storageRoleChecked) {
+        if (!vshard_group) {
+          vshard_group = vshardGroupsNames[0] ?? null;
+        }
+      } else {
+        if (vshard_group && (!replicaset || !replicaset.vshard_group)) {
+          vshard_group = null;
+        }
+      }
+
+      if (vshard_group !== values.vshard_group) {
+        setFieldValue('vshard_group', vshard_group);
+      }
+    }
+  }, [setFieldValue, storageRoleChecked, vshardGroupsNames, replicaset, values.vshard_group]);
+
   return (
     <form onSubmit={handleSubmit} onReset={handleReset} noValidate>
       <div className={styles.wrap}>
@@ -96,9 +135,10 @@ const ReplicasetAddOrEditForm = ({
           label="Replica set name"
           name="alias"
           onChange={handleChange}
+          onBlur={handleBlur}
           value={values.alias}
-          error={touched.alias && errors.alias}
-          message={touched.alias && errors.alias}
+          error={errors.alias}
+          message={errors.alias}
           largeMargins
           autoFocus
         />
@@ -142,8 +182,8 @@ const ReplicasetAddOrEditForm = ({
           label="Replica set weight"
           inputClassName={styles.weightInput}
           name="weight"
-          error={touched.weight && errors.weight}
-          message={touched.weight && errors.weight}
+          error={errors.weight}
+          message={errors.weight}
           value={values.weight}
           onChange={handleChange}
           disabled={!isStorageRoleSelected}
@@ -173,7 +213,7 @@ const ReplicasetAddOrEditForm = ({
             </RadioButton>
           ))}
         </FormField>
-        {app.variables.cartridge_hide_all_rw() && (
+        {!app.variables.cartridge_hide_all_rw() && (
           <FormField
             className={styles.field}
             label="All writable"
@@ -189,11 +229,11 @@ const ReplicasetAddOrEditForm = ({
           <LabeledInput
             name="failover_priority"
             className={cx('ser', styles.wideField)}
-            itemClassName={styles.radioWrap}
             label="Failover priority"
-            inputComponent={ServerSortableList}
             value={values.failover_priority}
             onChange={handleFailoverPriorityChange}
+            inputComponent={ServerSortableList}
+            itemClassName={styles.radioWrap}
             replicaset={replicaset}
             serverMap={serverMap}
             selfURI={clusterSelfUri}
@@ -212,6 +252,7 @@ const ReplicasetAddOrEditForm = ({
             intent="primary"
             type="submit"
             loading={pending}
+            disabled={!isValid}
             size="l"
           />,
         ]}

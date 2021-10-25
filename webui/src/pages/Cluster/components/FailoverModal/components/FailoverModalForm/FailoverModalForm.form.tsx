@@ -1,9 +1,8 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import { FormikProps, withFormik } from 'formik';
-import * as yup from 'yup';
-import type { NumberSchema, ObjectSchema, StringSchema } from 'yup';
 
-import { Failover, app, cluster } from 'src/models';
+import { app, cluster } from 'src/models';
+import type { Failover, NumberSchema, ObjectSchema, StringSchema } from 'src/models';
 
 import {
   FailoverMode,
@@ -39,7 +38,7 @@ export interface FailoverFormValues {
 }
 
 const { changeFailoverEvent } = cluster.failover;
-const { tryCatchWithNotify, messages } = app;
+const { tryCatchWithNotify, messages, yup } = app;
 
 const reqString = (mode: FailoverMode, fencing_enabled: boolean, schema: StringSchema) => {
   return mode === 'stateful' && fencing_enabled ? schema.required(messages.errors.NUMBER_FLOAT) : schema.notRequired();

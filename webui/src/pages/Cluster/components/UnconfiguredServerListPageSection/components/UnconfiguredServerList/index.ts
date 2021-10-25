@@ -1,1 +1,2 @@
-export { default, UnconfiguredServerListProps } from './UnconfiguredServerList';
+export { default } from './UnconfiguredServerList';
+export type { UnconfiguredServerListProps } from './UnconfiguredServerList';

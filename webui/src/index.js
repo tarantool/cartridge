@@ -17,7 +17,7 @@ import { app } from 'src/models';
 import ConfigManagement from 'src/pages/ConfigManagement';
 import Dashboard from 'src/pages/Dashboard';
 import Users from 'src/pages/Users';
-import { appDidMount, setConnectionState } from 'src/store/actions/app.actions';
+import { appDidMount } from 'src/store/actions/app.actions';
 import { expectWelcomeMessage, logOut, setWelcomeMessage } from 'src/store/actions/auth.actions';
 import { AUTH_ACCESS_DENIED } from 'src/store/actionTypes';
 import store from 'src/store/instance';
@@ -28,7 +28,7 @@ import { menuFilter, menuReducer } from './menu';
 const Code = createLazySection(() => import('src/pages/Code'));
 
 const { tarantool_enterprise_core } = window;
-const { AppGate } = app;
+const { AppGate, setConnectionAliveEvent, setConnectionDeadEvent, authAccessDeniedEvent } = app;
 
 const projectPath = (path) => `/${PROJECT_NAME}/${path}`;
 
@@ -88,13 +88,10 @@ tarantool_enterprise_core.setHeaderComponent(
 );
 
 function graphQLConnectionErrorHandler(response, next) {
-  const {
-    app: { connectionAlive },
-  } = store.getState();
-  if (connectionAlive && response.networkError) {
-    store.dispatch(setConnectionState(false));
-  } else if (!connectionAlive && !response.networkError) {
-    store.dispatch(setConnectionState(true));
+  if (response.networkError) {
+    setConnectionDeadEvent();
+  } else {
+    setConnectionAliveEvent();
   }
 
   return next(response);
@@ -103,6 +100,7 @@ function graphQLConnectionErrorHandler(response, next) {
 function graphQLAuthErrorHandler(response, next) {
   if ((response.networkError && response.networkError.statusCode === 401) || isGraphqlAccessDeniedError(response)) {
     store.dispatch({ type: AUTH_ACCESS_DENIED });
+    authAccessDeniedEvent();
   }
 
   return next(response);
@@ -113,16 +111,10 @@ tarantool_enterprise_core.apiMethods.registerApolloHandler('onError', graphQLCon
 tarantool_enterprise_core.apiMethods.registerApolloHandler('onError', graphQLAuthErrorHandler);
 
 function axiosConnectionErrorHandler(response, next) {
-  const {
-    app: { connectionAlive },
-  } = store.getState();
-
   if (isNetworkError(response)) {
-    if (connectionAlive) {
-      store.dispatch(setConnectionState(false));
-    }
-  } else if (!connectionAlive) {
-    store.dispatch(setConnectionState(true));
+    setConnectionDeadEvent();
+  } else {
+    setConnectionAliveEvent();
   }
 
   return next(response);
@@ -131,6 +123,7 @@ function axiosConnectionErrorHandler(response, next) {
 function axiosAuthErrorHandler(error, next) {
   if (error.response && error.response.status === 401) {
     store.dispatch({ type: AUTH_ACCESS_DENIED });
+    authAccessDeniedEvent();
   }
 
   return next(error);

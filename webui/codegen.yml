@@ -15,9 +15,6 @@ generates:
       - "typescript-operations"
     config:
       skipTypename: false
-      withHooks: true
-      withHOC: false
-      withComponent: false
       documentMode: documentNode
       dedupeOperationSuffix: true
       pureMagicComment: true

@@ -1,4 +1,4 @@
-import { combine, restore } from 'effector';
+import { combine } from 'effector';
 
 import graphql from 'src/api/graphql';
 import type {
@@ -11,16 +11,18 @@ import { changeFailoverMutation, getFailoverParams } from 'src/store/request/que
 
 import type { Failover } from './types';
 
+const { some } = app.utils;
+
 // events
 export const failoverModalOpenEvent = app.domain.createEvent('failover modal open event');
 export const failoverModalCloseEvent = app.domain.createEvent('failover modal close event');
 
-export const queryGetFailoverSuccessEvent = app.domain.createEvent<Failover>('query get failover success event');
 export const changeFailoverEvent = app.domain.createEvent<ChangeFailoverMutationVariables>('change failover event');
 
 // stores
-export const $isFailoverModalOpen = app.domain.createStore(false);
-export const $failover = restore(queryGetFailoverSuccessEvent, null);
+export const $failoverModalVisible = app.domain.createStore(false);
+export const $failoverModalError = app.domain.createStore<string>('');
+export const $failover = app.domain.createStore<Failover>(null);
 
 // effects
 export const getFailoverFx = app.domain.createEffect<void, GetFailoverParamsQuery>('get failover', {
@@ -36,7 +38,8 @@ export const changeFailoverFx = app.domain.createEffect<ChangeFailoverMutationVa
 
 // computed
 export const $failoverModal = combine({
-  visible: $isFailoverModalOpen,
-  loading: combine([getFailoverFx.pending]).map((state) => state.some(Boolean)),
-  pending: combine([getFailoverFx.pending, changeFailoverFx.pending]).map((state) => state.some(Boolean)),
+  visible: $failoverModalVisible,
+  error: $failoverModalError,
+  loading: getFailoverFx.pending,
+  pending: combine([getFailoverFx.pending, changeFailoverFx.pending]).map(some),
 });

@@ -134,11 +134,7 @@ const ReplicasetServerListItem = (props: ReplicasetServerListItemProps) => {
         </div>
       </div>
       <ServerDropdown
-        // activeMaster={activeMaster}
         className={styles.configureBtn}
-        // disabled={Boolean(disabled)}
-        // replicasetUUID={replicasetUUID}
-        // uri={uri}
         uuid={uuid}
         showServerDetails
         showFailoverPromote={showFailoverPromote}

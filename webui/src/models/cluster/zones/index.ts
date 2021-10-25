@@ -4,9 +4,7 @@ import graphql from 'src/api/graphql';
 import { Maybe, app } from 'src/models';
 import { editTopologyMutation } from 'src/store/request/queries.graphql';
 
-import { $serverListIsDirty } from '../server-list';
-
-const { not } = app.utils;
+const { not, some } = app.utils;
 
 // events
 export const setServerZoneEvent = app.domain.createEvent<{ uuid: string; zone?: string }>('set server sone click');
@@ -16,7 +14,7 @@ export const zoneAddModalSetValueEvent = app.domain.createEvent<string>('zone ad
 export const zoneAddModalSubmitEvent = app.domain.createEvent('add server zone modal submit');
 
 // stores
-export const $zoneAddModalError = app.domain.createStore<Error | null>(null);
+export const $zoneAddModalError = app.domain.createStore<string>('');
 export const $zoneAddModalValue = restore(zoneAddModalSetValueEvent, '');
 export const $zoneAddModalUuid = app.domain.createStore<string | null>(null);
 
@@ -60,6 +58,6 @@ export const setZoneFailEvent = guard<Error>({
 export const $zoneAddModal = combine({
   value: $zoneAddModalValue,
   visible: $zoneAddModalUuid.map(Boolean),
-  pending: combine([setZoneFx.pending, addZoneFx.pending, $serverListIsDirty]).map((state) => state.some(Boolean)),
-  error: $zoneAddModalError.map((error) => error?.message),
+  pending: combine([setZoneFx.pending, addZoneFx.pending]).map(some),
+  error: $zoneAddModalError,
 });

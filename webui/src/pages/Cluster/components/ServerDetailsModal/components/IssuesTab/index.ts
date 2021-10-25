@@ -1,1 +1,2 @@
-export { default, IssuesTabProps } from './IssuesTab';
+export { default } from './IssuesTab';
+export type { IssuesTabProps } from './IssuesTab';

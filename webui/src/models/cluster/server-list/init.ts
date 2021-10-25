@@ -1,30 +1,41 @@
 import { forward, guard } from 'effector';
+import { produce } from 'immer';
 
 import { app } from 'src/models';
 
-import { $isClusterPageOpen, clusterPageClosedEvent, clusterPageOpenedEvent } from '../page';
-import { disableOrEnableServerFx, promoteServerToLeaderFx, queryClusterFx, queryServerListFx } from './effects';
+import { changeFailoverEvent } from '../failover';
+import { $clusterPageVisible, clusterPageCloseEvent, clusterPageOpenEvent } from '../page';
 import {
+  disableOrEnableServerFx,
+  promoteServerToLeaderFx,
+  queryClusterFx,
+  queryServerListFx,
+  requestBootstrapFx,
+} from './effects';
+import {
+  $bootstrapPanelVisible,
   $cluster,
   $serverList,
-  $serverListIsDirty,
   disableOrEnableServerEvent,
+  hideBootstrapPanelEvent,
   promoteServerToLeaderEvent,
+  queryClusterErrorEvent,
   queryClusterSuccessEvent,
+  queryServerListErrorEvent,
   queryServerListSuccessEvent,
-  refreshClusterEvent,
-  refreshServerListAndSetDirtyEvent,
-  refreshServerListEvent,
-  setServerListIsDirtyEvent,
+  refreshServerListAndClusterEvent,
+  requestBootstrapEvent,
+  selectors,
+  showBootstrapPanelEvent,
 } from '.';
 
-const { notifyErrorEvent } = app;
-const { createTimeoutFx, voidL, falseL, trueL, combineResultOnEvent, passResultOnEvent } = app.utils;
+const { notifyErrorEvent, notifyEvent, notifySuccessEvent, authAccessDeniedEvent } = app;
+const { createTimeoutFx, exists, voidL, trueL, combineResultOnEvent, passResultOnEvent, mapErrorWithTitle } = app.utils;
 
 const mapWithStat = () => ({ withStats: true });
 
 forward({
-  from: clusterPageOpenedEvent,
+  from: clusterPageOpenEvent,
   to: queryClusterFx,
 });
 
@@ -39,30 +50,48 @@ forward({
 });
 
 forward({
-  from: refreshServerListEvent.map(mapWithStat),
+  from: refreshServerListAndClusterEvent.map(mapWithStat),
   to: queryServerListFx,
 });
 
 forward({
-  from: refreshClusterEvent,
+  from: refreshServerListAndClusterEvent,
   to: queryClusterFx,
 });
 
 forward({
-  from: refreshServerListAndSetDirtyEvent.map(mapWithStat),
-  to: queryServerListFx,
+  from: requestBootstrapEvent,
+  to: requestBootstrapFx,
 });
 
 guard({
   source: queryServerListFx.doneData,
-  filter: $isClusterPageOpen,
+  filter: $clusterPageVisible,
   target: queryServerListSuccessEvent,
 });
 
 guard({
+  source: queryServerListFx.failData,
+  filter: $clusterPageVisible,
+  target: queryServerListErrorEvent,
+});
+
+guard({
   source: queryClusterFx.doneData,
-  filter: $isClusterPageOpen,
+  filter: $clusterPageVisible,
   target: queryClusterSuccessEvent,
+});
+
+guard({
+  source: queryClusterFx.failData,
+  filter: $clusterPageVisible,
+  target: queryClusterErrorEvent,
+});
+
+guard({
+  source: requestBootstrapFx.finally,
+  filter: $clusterPageVisible,
+  target: refreshServerListAndClusterEvent,
 });
 
 // notifications
@@ -71,42 +100,120 @@ forward({
     title: 'Failover',
     message: 'Leader promotion successful',
   })),
-  to: app.notifyEvent,
+  to: notifyEvent,
 });
 
 forward({
-  from: promoteServerToLeaderFx.failData.map((error) => ({
-    error,
-    title: 'Leader promotion error',
-  })),
+  from: requestBootstrapFx.done.map(() => 'VShard bootstrap is OK. Please wait for list refresh...'),
+  to: notifySuccessEvent,
+});
+
+forward({
+  from: promoteServerToLeaderFx.failData.map(mapErrorWithTitle('Leader promotion error')),
   to: notifyErrorEvent,
 });
 
 forward({
-  from: disableOrEnableServerFx.failData.map((error) => ({
-    error,
-    title: 'Disabled state setting error',
-  })),
+  from: disableOrEnableServerFx.failData.map(mapErrorWithTitle('Disabled state setting error')),
+  to: notifyErrorEvent,
+});
+
+forward({
+  from: requestBootstrapFx.failData,
   to: notifyErrorEvent,
 });
 
 createTimeoutFx('ServerListTimeoutFx', {
-  startEvent: clusterPageOpenedEvent,
-  stopEvent: clusterPageClosedEvent,
+  startEvent: clusterPageOpenEvent,
+  stopEvent: clusterPageCloseEvent,
+  source: $serverList.map((state) => selectors.unConfiguredServerList(state).length > 0),
   timeout: (): number => app.variables.cartridge_refresh_interval(),
-  effect: (counter: number): Promise<void> =>
-    queryServerListFx({
-      withStats: counter % app.variables.cartridge_stat_period() === 0,
-    }).then(voidL),
+  effect: (counter: number, _, hasUnConfiguredServers): Promise<void> => {
+    return queryServerListFx({
+      withStats: counter % app.variables.cartridge_stat_period() === 0 || Boolean(hasUnConfiguredServers),
+    }).then(voidL);
+  },
+});
+
+createTimeoutFx('QueryClusterTimeoutFx', {
+  startEvent: requestBootstrapFx.done,
+  stopEvent: queryClusterFx.done,
+  timeout: 2000,
+  effect: (): Promise<void> => queryClusterFx().then(voidL),
 });
 
 // stores
-$serverList.on(queryServerListSuccessEvent, combineResultOnEvent).reset(clusterPageClosedEvent);
+$serverList.on(queryServerListSuccessEvent, combineResultOnEvent).reset(clusterPageCloseEvent);
 
-$serverListIsDirty
-  .on(setServerListIsDirtyEvent, trueL)
-  .on(refreshServerListAndSetDirtyEvent, trueL)
-  .on(queryServerListSuccessEvent, falseL)
-  .reset(clusterPageClosedEvent);
+$cluster
+  .on(queryClusterSuccessEvent, passResultOnEvent)
+  .on(authAccessDeniedEvent, (state) => {
+    return produce(state, (draft) => {
+      if (draft?.cluster) {
+        draft.cluster.authParams.implements_check_password = true;
+      }
+    });
+  })
+  .on(changeFailoverEvent, (prev, next) => {
+    if (!prev || !prev.cluster) {
+      return;
+    }
 
-$cluster.on(queryClusterSuccessEvent, passResultOnEvent).reset(clusterPageClosedEvent);
+    return produce(prev, (draft) => {
+      if (draft.cluster) {
+        const { failover_params } = draft.cluster;
+        const {
+          failover_timeout,
+          fencing_enabled,
+          fencing_timeout,
+          fencing_pause,
+          mode,
+          state_provider,
+          etcd2_params,
+          tarantool_params,
+        } = next;
+
+        exists(failover_timeout) && (failover_params.failover_timeout = failover_timeout);
+        exists(fencing_enabled) && (failover_params.fencing_enabled = fencing_enabled);
+        exists(fencing_timeout) && (failover_params.fencing_timeout = fencing_timeout);
+        exists(fencing_pause) && (failover_params.fencing_pause = fencing_pause);
+        exists(mode) && (failover_params.mode = mode);
+        exists(state_provider) && (failover_params.state_provider = state_provider);
+        // etcd2_params
+        if (failover_params.etcd2_params && etcd2_params) {
+          const { password, lock_delay, endpoints, username, prefix } = etcd2_params;
+          exists(password) && (failover_params.etcd2_params.password = password);
+          exists(lock_delay) && (failover_params.etcd2_params.lock_delay = lock_delay);
+          exists(endpoints) && (failover_params.etcd2_params.endpoints = endpoints);
+          exists(username) && (failover_params.etcd2_params.username = username);
+          exists(prefix) && (failover_params.etcd2_params.prefix = prefix);
+        }
+        // tarantool_params
+        if (failover_params.tarantool_params && tarantool_params) {
+          const { password, uri } = tarantool_params;
+          exists(password) && (failover_params.tarantool_params.password = password);
+          exists(uri) && (failover_params.tarantool_params.uri = uri);
+        }
+      }
+    });
+  })
+  .on(queryServerListSuccessEvent, (prev, next) => {
+    if (!prev || !prev.cluster || !next.failover?.failover_params.mode) {
+      return;
+    }
+
+    const mode = next.failover.failover_params.mode;
+    return produce(prev, (draft) => {
+      if (draft.cluster) {
+        draft.cluster.failover_params.mode = mode;
+      }
+    });
+  })
+  .reset(clusterPageCloseEvent);
+
+$bootstrapPanelVisible
+  .on(showBootstrapPanelEvent, trueL)
+  .on(requestBootstrapFx.finally, trueL)
+  .reset(requestBootstrapFx)
+  .reset(hideBootstrapPanelEvent)
+  .reset(clusterPageCloseEvent);

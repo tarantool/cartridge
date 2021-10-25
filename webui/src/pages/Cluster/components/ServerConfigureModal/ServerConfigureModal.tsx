@@ -5,22 +5,25 @@ import { useStore } from 'effector-react';
 import { Modal, Tabbed } from '@tarantool.io/ui-kit';
 
 import SelectedServersList from 'src/components/SelectedServersList';
-import { cluster } from 'src/models';
+import { app, cluster } from 'src/models';
 
-import JoinReplicasetForm from '../JoinReplicasetForm';
+import JoinReplicasetForm, { JoinReplicasetValues } from '../JoinReplicasetForm';
 import ReplicasetAddOrEditForm, { ReplicasetAddOrEditValues } from '../ReplicasetAddOrEditForm';
 
 import { styles } from './ServerConfigureModal.styles';
 
+const { compact } = app.utils;
 const { $cluster, selectors, $serverList } = cluster.serverList;
 
-const { $serverConfigureModal, serverConfigureModalClosedEvent, createReplicasetEvent } = cluster.serverConfigure;
+const { $serverConfigureModal, serverConfigureModalClosedEvent, joinReplicasetEvent, createReplicasetEvent } =
+  cluster.serverConfigure;
 
 const ServerConfigureModal = () => {
   const clusterStore = useStore($cluster);
   const serverListStore = useStore($serverList);
   const { visible, pending, uri, loading } = useStore($serverConfigureModal);
 
+  const replicasetList = useMemo(() => selectors.replicasetList(serverListStore), [serverListStore]);
   const clusterSelfUri = useMemo(() => selectors.clusterSelfUri(clusterStore), [clusterStore]);
   const server = useMemo(() => selectors.serverGetByUri(serverListStore, uri), [uri, serverListStore]);
 
@@ -40,6 +43,18 @@ const ServerConfigureModal = () => {
     [uri]
   );
 
+  const handleJoinSubmit = useCallback(
+    ({ replicasetUuid }: JoinReplicasetValues) => {
+      if (uri && replicasetUuid) {
+        joinReplicasetEvent({
+          uri,
+          uuid: replicasetUuid,
+        });
+      }
+    },
+    [uri]
+  );
+
   const serverNode = useMemo(
     () =>
       server ? <SelectedServersList className={styles.splash} serverList={[server]} selfURI={clusterSelfUri} /> : null,
@@ -47,27 +62,28 @@ const ServerConfigureModal = () => {
   );
 
   const tabs = useMemo(
-    () => [
-      {
-        label: 'Create Replica Set',
-        content: (
-          <div className={styles.tabContent}>
-            {serverNode}
-            <ReplicasetAddOrEditForm onSubmit={handleCreateSubmit} onClose={handleClose} pending={pending} />
-          </div>
-        ),
-      },
-      {
-        label: 'Join Replica Set',
-        content: (
-          <div className={styles.tabContent}>
-            {serverNode}
-            <JoinReplicasetForm onClose={handleClose} />
-          </div>
-        ),
-      },
-    ],
-    [handleCreateSubmit, handleClose, pending, serverNode]
+    () =>
+      compact([
+        {
+          label: 'Create Replica Set',
+          content: (
+            <div className={styles.tabContent}>
+              {serverNode}
+              <ReplicasetAddOrEditForm onSubmit={handleCreateSubmit} onClose={handleClose} pending={pending} />
+            </div>
+          ),
+        },
+        replicasetList.length > 0 && {
+          label: 'Join Replica Set',
+          content: (
+            <div className={styles.tabContent}>
+              {serverNode}
+              <JoinReplicasetForm onSubmit={handleJoinSubmit} onClose={handleClose} pending={pending} />
+            </div>
+          ),
+        },
+      ]),
+    [handleCreateSubmit, handleJoinSubmit, handleClose, pending, serverNode, replicasetList.length]
   );
 
   if (!visible) {

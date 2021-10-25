@@ -4,10 +4,10 @@ import { useStore } from 'effector-react';
 // @ts-ignore
 import { Modal } from '@tarantool.io/ui-kit';
 
-import SelectedReplicaset from 'src/components/SelectedReplicaset';
 import { cluster } from 'src/models';
 
 import ReplicasetAddOrEditForm from '../ReplicasetAddOrEditForm';
+import SelectedReplicaset from '../SelectedReplicaset';
 
 import { styles } from './ReplicasetConfigureModal.styles';
 

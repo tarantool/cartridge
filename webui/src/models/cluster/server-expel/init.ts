@@ -2,8 +2,8 @@ import { forward, guard } from 'effector';
 
 import { app } from 'src/models';
 
-import { clusterPageClosedEvent } from '../page';
-import { refreshServerListAndSetDirtyEvent } from '../server-list';
+import { clusterPageCloseEvent } from '../page';
+import { refreshServerListAndClusterEvent } from '../server-list';
 import {
   $selectedServerExpelModalServer,
   $selectedServerExpelModalUri,
@@ -14,6 +14,7 @@ import {
 } from '.';
 
 const { notifyErrorEvent, notifySuccessEvent } = app;
+const { passResultPathOnEvent } = app.utils;
 
 guard({
   source: $selectedServerExpelModalServer,
@@ -24,7 +25,7 @@ guard({
 
 forward({
   from: serverExpelFx.done,
-  to: refreshServerListAndSetDirtyEvent,
+  to: refreshServerListAndClusterEvent,
 });
 
 forward({
@@ -47,6 +48,6 @@ forward({
 
 // stores
 $selectedServerExpelModalUri
-  .on(serverExpelModalOpenEvent, (_, { uri }) => uri)
+  .on(serverExpelModalOpenEvent, passResultPathOnEvent('uri'))
   .reset(serverExpelModalCloseEvent)
-  .reset(clusterPageClosedEvent);
+  .reset(clusterPageCloseEvent);

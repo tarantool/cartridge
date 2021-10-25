@@ -1,2 +1,2 @@
 export { default } from './ReplicasetAddOrEditForm.connector';
-export type { ReplicasetAddOrEditValues } from './ReplicasetAddOrEditForm.form';
+export type { ReplicasetAddOrEditValues, ReplicasetAddOrEditFormProps } from './ReplicasetAddOrEditForm.form';

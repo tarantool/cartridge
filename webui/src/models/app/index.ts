@@ -17,11 +17,19 @@ export { utils, variables, domain, yup, messages };
 // gates
 export const AppGate = createGate('AppGate');
 
+// stores
+export const $connectionAlive = domain.createStore(true);
+
 // events
 export const appOpenedEvent = domain.createEvent('app opened event');
 export const appClosedEvent = domain.createEvent('app closed event');
 
+export const setConnectionAliveEvent = domain.createEvent<boolean>('set connection alive event');
+export const setConnectionDeadEvent = domain.createEvent<boolean>('set connection dead event');
+export const authAccessDeniedEvent = domain.createEvent('auth access denied event');
+
 export const notifyEvent = domain.createEvent<Maybe<AppNotifyPayload>>('notify event');
+export const consoleLogEvent = domain.createEvent<unknown>('console.log event');
 
 export const notifyErrorEvent = notifyEvent.prepend<AppNotifyErrorPayload>((props) => {
   const { error, title, timeout }: AppNotifyErrorPayloadProps = utils.isError(props) ? { error: props } : props;
@@ -54,25 +62,8 @@ export const notifySuccessEvent = notifyEvent.prepend<string>((message) => ({
   message,
 }));
 
-// effects
-export const notifyFx = domain.createEffect<Maybe<AppNotifyPayload>, void>('notify', {
-  handler: (props) => {
-    if (!props) {
-      return;
-    }
-
-    const { title, message, type = 'success', timeout = 5000 } = props;
-    window.tarantool_enterprise_core.notify({
-      title,
-      message,
-      type,
-      timeout,
-    });
-  },
-});
-
 // other
-export const tryCatchWithNotify = (callback: () => unknown) => {
+export const tryCatchWithNotify = (callback: () => void) => {
   try {
     callback();
   } catch (error) {

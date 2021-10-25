@@ -1,13 +1,12 @@
 import { forward } from 'effector';
 
-import { getErrorMessage } from 'src/api';
 import { app } from 'src/models';
 
-import { clusterPageClosedEvent } from '../page';
-import { refreshServerListAndSetDirtyEvent } from '../server-list';
+import { clusterPageCloseEvent } from '../page';
+import { refreshServerListAndClusterEvent } from '../server-list';
 import {
-  $isServerProveModalOpen,
   $serverProbeModalError,
+  $serverProbeModalVisible,
   serverProbeEvent,
   serverProbeFx,
   serverProbeModalCloseEvent,
@@ -15,7 +14,7 @@ import {
 } from '.';
 
 const { notifySuccessEvent } = app;
-const { trueL } = app.utils;
+const { trueL, passErrorMessageOnEvent } = app.utils;
 
 forward({
   from: serverProbeEvent,
@@ -24,7 +23,7 @@ forward({
 
 forward({
   from: serverProbeFx.done,
-  to: [refreshServerListAndSetDirtyEvent, serverProbeModalCloseEvent],
+  to: [refreshServerListAndClusterEvent, serverProbeModalCloseEvent],
 });
 
 forward({
@@ -33,13 +32,14 @@ forward({
 });
 
 // stores
-$isServerProveModalOpen
+$serverProbeModalVisible
   .on(serverProbeModalOpenEvent, trueL)
   .reset(serverProbeModalCloseEvent)
-  .reset(clusterPageClosedEvent);
+  .reset(clusterPageCloseEvent);
 
 $serverProbeModalError
-  .on(serverProbeFx.failData, (_, error) => getErrorMessage(error))
+  .on(serverProbeFx.failData, passErrorMessageOnEvent)
   .reset(serverProbeFx)
+  .reset(serverProbeModalOpenEvent)
   .reset(serverProbeModalCloseEvent)
-  .reset(clusterPageClosedEvent);
+  .reset(clusterPageCloseEvent);

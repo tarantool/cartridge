@@ -4,3 +4,4 @@ export * from './server-details/types';
 export * from './server-expel/types';
 export * from './server-list/types';
 export * from './failover/types';
+export * from './suggestions/types';

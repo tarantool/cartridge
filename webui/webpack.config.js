@@ -5,23 +5,30 @@ const { namespace } = require('./module-config');
 
 const env = initEnv();
 
-const proxy = require('./config/proxy.config');
-
 const root = __dirname;
 const entry = process.env.WEBPACK_APP_ENTRY || 'index.js';
+
+const isProd = env.NODE_ENV === 'production';
 
 module.exports = createWebpackConfiguration({
   namespace,
   root,
   entry: join(root, 'src', entry),
-  htmlTemplate: env.NODE_ENV !== 'production' ? join(root, 'public', 'index.html') : undefined,
-  analyze: false,
+  htmlTemplate: !isProd ? join(root, 'public', 'index.html') : undefined,
   lua: true,
+  lint: true,
+  emotion: true,
   env,
-  sourceMap: true,
-  proxy: process.env.WEBPACK_DEV_SERVER_PROXY === 'true' ? proxy : undefined,
+  sourceMap: process.env.GENERATE_SOURCEMAP === 'true',
+  proxy: process.env.WEBPACK_DEV_SERVER_PROXY === 'true' ? require('./config/proxy.config') : undefined,
   externals: {
     react: 'react',
     'react-dom': 'reactDom',
   },
+  middleware: isProd
+    ? (cfg) => {
+        cfg.cache = false;
+        return cfg;
+      }
+    : undefined,
 });

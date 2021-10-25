@@ -1,22 +1,22 @@
-import { forward, guard } from 'effector';
+import { forward } from 'effector';
 
 import { app } from 'src/models';
 
-import { clusterPageClosedEvent } from '../page';
-import { refreshClusterEvent } from '../server-list';
+import { clusterPageCloseEvent } from '../page';
+import { refreshServerListAndClusterEvent } from '../server-list';
 import {
   $failover,
-  $isFailoverModalOpen,
+  $failoverModalError,
+  $failoverModalVisible,
   changeFailoverEvent,
   changeFailoverFx,
   failoverModalCloseEvent,
   failoverModalOpenEvent,
   getFailoverFx,
-  queryGetFailoverSuccessEvent,
 } from '.';
 
-const { notifyErrorEvent } = app;
-const { trueL } = app.utils;
+const { notifyEvent, notifyErrorEvent } = app;
+const { trueL, passResultOnEvent, passErrorMessageOnEvent } = app.utils;
 
 forward({
   from: failoverModalOpenEvent,
@@ -28,15 +28,17 @@ forward({
   to: changeFailoverFx,
 });
 
-guard({
-  source: getFailoverFx.doneData,
-  filter: $isFailoverModalOpen,
-  target: queryGetFailoverSuccessEvent,
+forward({
+  from: changeFailoverFx.done,
+  to: [refreshServerListAndClusterEvent, failoverModalCloseEvent],
 });
 
 forward({
-  from: changeFailoverFx.done,
-  to: [refreshClusterEvent, failoverModalCloseEvent],
+  from: changeFailoverFx.done.map((value) => ({
+    title: 'Failover mode',
+    message: value.result.cluster?.failover_params.mode ?? '',
+  })),
+  to: notifyEvent,
 });
 
 forward({
@@ -45,6 +47,16 @@ forward({
 });
 
 // stores
-$failover.reset(failoverModalCloseEvent).reset(clusterPageClosedEvent);
+$failover
+  .on(getFailoverFx.doneData, passResultOnEvent)
+  .reset(failoverModalOpenEvent)
+  .reset(failoverModalCloseEvent)
+  .reset(clusterPageCloseEvent);
 
-$isFailoverModalOpen.on(failoverModalOpenEvent, trueL).reset(failoverModalCloseEvent).reset(clusterPageClosedEvent);
+$failoverModalError
+  .on(changeFailoverFx.failData, passErrorMessageOnEvent)
+  .reset(failoverModalOpenEvent)
+  .reset(failoverModalCloseEvent)
+  .reset(clusterPageCloseEvent);
+
+$failoverModalVisible.on(failoverModalOpenEvent, trueL).reset(failoverModalCloseEvent).reset(clusterPageCloseEvent);

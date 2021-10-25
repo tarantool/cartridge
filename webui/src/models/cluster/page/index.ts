@@ -13,12 +13,15 @@ export { paths };
 export const ClusterPageGate = createGate('ClusterPageGate');
 
 // events
-export const clusterPageOpenedEvent = app.domain.createEvent('cluster page opened');
-export const clusterPageClosedEvent = app.domain.createEvent('cluster page closed');
+export const clusterPageOpenEvent = app.domain.createEvent('cluster page open event');
+export const clusterPageCloseEvent = app.domain.createEvent('cluster page close event');
 
 // stores
-export const $isClusterPageOpen = app.domain.createStore(false);
+export const $clusterPageVisible = app.domain.createStore(false);
+export const $clusterPageError = app.domain.createStore<Error | null>(null);
 
-export const $isClusterPageReady = combine([$serverList, $cluster], ([serverList, cluster]) =>
-  Boolean(serverList && cluster)
-);
+export const $clusterPage = combine({
+  visible: $clusterPageVisible,
+  error: $clusterPageError,
+  ready: combine([$serverList, $cluster], ([serverList, cluster]) => Boolean(serverList && cluster)),
+});

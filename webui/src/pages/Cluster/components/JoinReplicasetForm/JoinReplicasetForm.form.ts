@@ -1,31 +1,39 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import { FormikProps, withFormik } from 'formik';
-import * as yup from 'yup';
 
 import { app } from 'src/models';
 
+export interface JoinReplicasetValues {
+  replicasetUuid: string;
+}
 export interface JoinReplicasetProps {
+  pending: boolean;
   onClose: () => void;
+  onSubmit: (values: JoinReplicasetValues) => void;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface JoinReplicasetValues {}
+const { tryCatchWithNotify, yup } = app;
 
-const { tryCatchWithNotify } = app;
-
-const validationSchema = yup.object<JoinReplicasetValues>({}).required();
+const validationSchema = yup
+  .object<JoinReplicasetValues>({
+    replicasetUuid: yup.string().required(),
+  })
+  .required();
 
 export type JoinReplicasetFormikProps = FormikProps<JoinReplicasetValues> & JoinReplicasetProps;
 
 export const withJoinReplicasetForm = withFormik<JoinReplicasetProps, JoinReplicasetValues>({
   displayName: 'JoinReplicasetForm',
   validationSchema,
-  handleSubmit: () => {
+  validateOnMount: true,
+  handleSubmit: (values, { props: { onSubmit } }) => {
     tryCatchWithNotify(() => {
-      //   const casted = validationSchema.cast(values, {
-      //     abortEarly: true,
-      //     stripUnknown: true,
-      //   });
+      const casted = validationSchema.cast(values, {
+        abortEarly: true,
+        stripUnknown: true,
+      });
+
+      onSubmit(casted);
     });
   },
 });

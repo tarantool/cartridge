@@ -1,10 +1,9 @@
 import { combine, forward, sample } from 'effector';
 
-import { getErrorMessage } from 'src/api';
 import { app } from 'src/models';
 
-import { clusterPageClosedEvent } from '../page';
-import { refreshServerListAndSetDirtyEvent } from '../server-list';
+import { clusterPageCloseEvent } from '../page';
+import { refreshServerListAndClusterEvent } from '../server-list';
 import {
   $zoneAddModalError,
   $zoneAddModalUuid,
@@ -19,6 +18,7 @@ import {
 } from '.';
 
 const { notifyErrorEvent } = app;
+const { passErrorMessageOnEvent, mapErrorWithTitle, passResultPathOnEvent } = app.utils;
 
 sample({
   source: combine({
@@ -36,7 +36,7 @@ forward({
 
 forward({
   from: [setZoneFx.done, addZoneFx.done],
-  to: refreshServerListAndSetDirtyEvent,
+  to: refreshServerListAndClusterEvent,
 });
 
 forward({
@@ -45,23 +45,21 @@ forward({
 });
 
 forward({
-  from: setZoneFailEvent.map((error) => ({
-    error,
-    title: 'Zone change error',
-  })),
+  from: setZoneFailEvent.map(mapErrorWithTitle('Zone change error')),
   to: notifyErrorEvent,
 });
 
 // stores
-$zoneAddModalValue.reset(zoneAddModalOpenEvent).reset(zoneAddModalCloseEvent).reset(clusterPageClosedEvent);
+$zoneAddModalValue.reset(zoneAddModalOpenEvent).reset(zoneAddModalCloseEvent).reset(clusterPageCloseEvent);
 
 $zoneAddModalUuid
-  .on(zoneAddModalOpenEvent, (_, { uuid }) => uuid)
+  .on(zoneAddModalOpenEvent, passResultPathOnEvent('uuid'))
   .reset(zoneAddModalCloseEvent)
-  .reset(clusterPageClosedEvent);
+  .reset(clusterPageCloseEvent);
 
 $zoneAddModalError
-  .on(addZoneFx.failData, (_, error) => getErrorMessage(error))
+  .on(addZoneFx.failData, passErrorMessageOnEvent)
   .reset(addZoneFx)
+  .reset(zoneAddModalOpenEvent)
   .reset(zoneAddModalCloseEvent)
-  .reset(clusterPageClosedEvent);
+  .reset(clusterPageCloseEvent);

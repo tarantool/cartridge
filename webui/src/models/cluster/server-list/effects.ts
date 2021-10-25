@@ -2,6 +2,7 @@ import graphql from 'src/api/graphql';
 import type { GetClusterQuery, ServerListQuery, ServerListQueryVariables } from 'src/generated/graphql-typing-ts';
 import { app } from 'src/models';
 import {
+  bootstrapMutation,
   editTopologyMutation,
   getClusterQuery,
   listQuery,
@@ -43,3 +44,7 @@ export const disableOrEnableServerFx = app.domain.createEffect<DisableOrEnableSe
       }),
   }
 );
+
+export const requestBootstrapFx = app.domain.createEffect('request bootstrap', {
+  handler: () => graphql.mutate(bootstrapMutation),
+});

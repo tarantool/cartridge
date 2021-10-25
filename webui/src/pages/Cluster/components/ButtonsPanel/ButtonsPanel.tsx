@@ -5,13 +5,9 @@ import { useStore } from 'effector-react';
 import { ControlsPanel } from '@tarantool.io/ui-kit';
 
 import AuthToggleButton from 'src/components/AuthToggleButton';
-import BootstrapButton from 'src/components/BootstrapButton';
-// import FailoverButton from 'src/components/FailoverButton';
 import { app, cluster } from 'src/models';
-// @ts-ignore
-// eslint-disable-next-line import/namespace
-import { isBootstrapped, isVshardAvailable } from 'src/store/selectors/clusterPage';
 
+import BootstrapButton from '../BootstrapButton';
 import FailoverButton from '../FailoverButton';
 import IssuesButton from '../IssuesButton';
 import ProbeServerButton from '../ProbeServerButton';
@@ -33,7 +29,7 @@ const ButtonsPanel = () => {
 
     const { implements_add_user, implements_check_password, implements_list_users } = authParams;
     return {
-      showBootstrap: isConfigured(clusterStore) && isVshardAvailable(clusterStore) && isBootstrapped(clusterStore),
+      showBootstrap: isConfigured(clusterStore) && isVshardAvailable(clusterStore) && !isBootstrapped(clusterStore),
       showToggleAuth: !implements_add_user && !implements_list_users && implements_check_password, // TODO: move to selectors
     };
   }, [clusterStore, authParams]);
@@ -54,10 +50,10 @@ const ButtonsPanel = () => {
             params.showBootstrap && <BootstrapButton key="BootstrapButton" />,
           ])
         : undefined,
-    [params]
+    [issues, params, authParams]
   );
 
-  if (!controls || controls.length === 0) {
+  if ((controls?.length ?? 0) === 0) {
     return null;
   }
 

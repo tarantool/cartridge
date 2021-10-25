@@ -5,9 +5,9 @@ import { useStore } from 'effector-react';
 // @ts-ignore
 import { PageSection } from '@tarantool.io/ui-kit';
 
-import ReplicasetFilterInput from 'src/components/ReplicasetFilterInput';
 import * as models from 'src/models';
 
+import ReplicasetFilterInput from '../ReplicasetFilterInput';
 import PageSectionSubTitle from './components/PageSectionSubTitle';
 import ReplicasetList from './components/ReplicasetList';
 

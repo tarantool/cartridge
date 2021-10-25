@@ -6,6 +6,7 @@ import * as serverDetails from './server-details';
 import * as serverExpel from './server-expel';
 import * as serverList from './server-list';
 import * as serverProbe from './server-probe';
+import * as suggestions from './suggestions';
 import * as zones from './zones';
 
 export {
@@ -18,4 +19,5 @@ export {
   serverProbe,
   failover,
   zones,
+  suggestions,
 };

@@ -3,10 +3,12 @@ import React, { memo, useMemo } from 'react';
 // @ts-ignore
 import { FlatList } from '@tarantool.io/ui-kit';
 
-import * as models from 'src/models';
+import { cluster } from 'src/models';
 import type { GetClusterCluster, GetClusterClusterSelf, ServerListReplicaset, ServerListServerStat } from 'src/models';
 
 import ReplicasetServerListItem, { ReplicasetServerListItemProps } from '../ReplicasetServerListItem';
+
+const { selectors } = cluster.serverList;
 
 export interface ReplicasetServerListProps {
   cluster: GetClusterCluster;
@@ -30,13 +32,13 @@ const ReplicasetServerList = (props: ReplicasetServerListProps) => {
           activeMaster: server.uuid === replicaset.active_master.uuid,
           replicasetUUID: replicaset.uuid,
           selfURI: clusterSelf?.uri ?? undefined,
-          ro: models.cluster.serverList.selectors.replicasetServerRo(server),
+          ro: selectors.replicasetServerRo(server),
           statistics: stat?.statistics,
           totalBucketsCount: cluster?.vshard_bucket_count ?? undefined,
         },
       };
     });
-  }, [replicaset, clusterSelf]);
+  }, [replicaset, cluster, clusterSelf, serverStat]);
 
   if (!servers || servers.length === 0) {
     return null;

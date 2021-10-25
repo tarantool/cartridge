@@ -4,7 +4,7 @@ import { createGate } from 'effector-react';
 import { EditReplicasetInput } from 'src/generated/graphql-typing-ts';
 import { app } from 'src/models';
 
-import { $serverList, $serverListIsDirty, selectors } from '../server-list';
+import { $serverList, selectors } from '../server-list';
 import { editReplicasetFx } from './effects';
 import type { ClusterReplicasetConfigureGateProps } from './types';
 
@@ -28,11 +28,11 @@ export const $selectedReplicasetConfigureReplicaset = sample({
   fn: ([serverList, uuid]) => selectors.replicasetGetByUuid(serverList, uuid) ?? null,
 });
 
-export const $isReplicasetConfigureModalOpen = $selectedReplicasetConfigureReplicaset.map(Boolean);
+export const $replicasetConfigureModalVisible = $selectedReplicasetConfigureReplicaset.map(Boolean);
 
 // computed
 export const $replicasetConfigureModal = combine({
   replicaset: $selectedReplicasetConfigureReplicaset,
-  visible: $isReplicasetConfigureModalOpen,
-  pending: combine([editReplicasetFx.pending, $serverListIsDirty]).map((state) => state.some(Boolean)),
+  visible: $replicasetConfigureModalVisible,
+  pending: editReplicasetFx.pending,
 });

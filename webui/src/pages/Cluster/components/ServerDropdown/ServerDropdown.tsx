@@ -36,7 +36,10 @@ const ServerDropdown = ({
 
   const server = useMemo(() => selectors.serverGetByUuid(serverList, uuid), [uuid, serverList]);
 
-  const replicaset = useMemo(() => selectors.replicasetGetByUuid(serverList, server?.replicaset?.uuid), [serverList]);
+  const replicaset = useMemo(
+    () => selectors.replicasetGetByUuid(serverList, server?.replicaset?.uuid),
+    [serverList, server?.replicaset?.uuid]
+  );
 
   const isActiveMaster = useMemo(() => selectors.isActiveMaster(replicaset, server?.uuid), [replicaset, server?.uuid]);
 
@@ -97,7 +100,17 @@ const ServerDropdown = ({
           Expel server
         </DropdownItem>,
       ]),
-    [handleServerDetails]
+    [
+      handleServerDetails,
+      handlePromoteLeader,
+      handleEnableOrDisableServer,
+      handleShowExpelModal,
+      server,
+      replicaset,
+      showServerDetails,
+      showFailoverPromote,
+      isActiveMaster,
+    ]
   );
 
   if (items.length === 0) {

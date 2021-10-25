@@ -6,10 +6,10 @@ import { useStore } from 'effector-react';
 // @ts-ignore
 import { Button, ControlsPanel, DropdownDivider, DropdownItem, IconChevronDown, Modal, Spin, Tabbed, Text, UriLabel, withPopover } from '@tarantool.io/ui-kit';
 
-import { HealthStatus } from 'src/components/HealthStatus';
 import { app, cluster } from 'src/models';
 
 import ServerDropdown from '../ServerDropdown';
+import HealthStatus from './components/HealthStatus';
 import IssuesTab from './components/IssuesTab';
 import ModalTitle from './components/ModalTitle';
 import StatTab from './components/StatTab';
@@ -17,7 +17,7 @@ import VshardRouterTab from './components/VshardRouterTab';
 
 import { styles } from './ServerDetailsModal.styles';
 
-const { upFirst, stopPropagation, isLike, compact } = app.utils;
+const { upFirst, stopPropagation, compact } = app.utils;
 const { $cluster, $serverList, selectors, promoteServerToLeaderEvent } = cluster.serverList;
 const { zoneAddModalOpenEvent, $zoneAddModal, setServerZoneEvent } = cluster.zones;
 const { serverDetailsModalClosedEvent, $serverDetails, $selectedServerDetailsUuid } = cluster.serverDetails;
@@ -73,8 +73,8 @@ const ServerDetailsModal = () => {
   );
 
   const handleAddZone = useCallback(
-    (_, pass: unknown) => {
-      if (server && isLike<string>(pass)) {
+    (_, pass?: string) => {
+      if (server && pass) {
         zoneAddModalOpenEvent({ uuid: pass });
       }
     },
@@ -90,7 +90,7 @@ const ServerDetailsModal = () => {
       });
       handleClosePopup();
     }
-  }, [server, replicaset, isActiveMaster, showFailoverPromote]);
+  }, [server, replicaset, isActiveMaster, showFailoverPromote, handleClosePopup]);
 
   const controls = useMemo(
     () =>
@@ -109,7 +109,6 @@ const ServerDetailsModal = () => {
                 <DropdownItem
                   key={zoneName}
                   onClick={(_) => handleZoneSelect(_, zoneName)}
-                  pass={zoneName}
                   className={cx('meta-test__ZoneListItem', styles.zone, {
                     [styles.activeZone]: server?.zone === zoneName,
                   })}
@@ -148,7 +147,17 @@ const ServerDetailsModal = () => {
           : []),
         server && <ServerDropdown key={1} intent="secondary" size="l" uuid={server.uuid} />,
       ]),
-    [server, replicaset, isActiveMaster, pending, showFailoverPromote]
+    [
+      zones,
+      server,
+      replicaset,
+      isActiveMaster,
+      pending,
+      showFailoverPromote,
+      handleZoneSelect,
+      handleAddZone,
+      handlePromoteLeader,
+    ]
   );
 
   const tabs = useMemo(

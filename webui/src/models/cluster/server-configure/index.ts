@@ -3,11 +3,11 @@ import { createGate } from 'effector-react';
 
 import { app } from 'src/models';
 
-import { $isClusterPageReady } from '../page';
+import { $clusterPage } from '../page';
 import { createReplicasetFx, joinReplicasetFx } from './effects';
 import type { ClusterServeConfigureGateProps, CreateReplicasetProps, JoinReplicasetProps } from './types';
 
-const { not, some } = app.utils;
+const { some } = app.utils;
 
 // gates
 export const ClusterServerConfigureGate = createGate<ClusterServeConfigureGateProps>('ClusterServeConfigureGate');
@@ -23,12 +23,12 @@ export const joinReplicasetEvent = app.domain.createEvent<JoinReplicasetProps>('
 // stores
 export const $selectedServerConfigureUri = app.domain.createStore<string>('');
 export const $selectedServerConfigureReplicaset = app.domain.createStore<string | null>(null);
-export const $isServerConfigureModalOpen = $selectedServerConfigureUri.map(Boolean);
+export const $serverConfigureModalVisible = $selectedServerConfigureUri.map(Boolean);
 
 // computed
 export const $serverConfigureModal = combine({
   uri: $selectedServerConfigureUri,
-  visible: $isServerConfigureModalOpen,
+  visible: $serverConfigureModalVisible,
   pending: combine([createReplicasetFx.pending, joinReplicasetFx.pending]).map(some),
-  loading: $isClusterPageReady.map(not),
+  loading: $clusterPage.map(({ ready }) => !ready),
 });

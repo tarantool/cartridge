@@ -1,11 +1,15 @@
-import type { Event } from 'effector';
+import type { Event, Store } from 'effector';
+import type { NumberSchema, ObjectSchema, StringSchema } from 'yup';
 
 export type Maybe<T> = T | null | undefined;
+export type { NumberSchema, ObjectSchema, StringSchema };
 
-export interface CreateTimeoutFxConfig<T extends unknown = void> {
+export interface CreateTimeoutFxConfig<T extends unknown = void, S extends unknown = void> {
   startEvent: Event<T>;
-  stopEvent: Event<void>;
-  effect: (counter: number, props: T | undefined | null) => Promise<void>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  stopEvent: Event<any>;
+  source?: Store<S>;
+  effect: (counter: number, props: T | undefined | null, store: S | null) => Promise<void>;
   timeout: number | (() => number);
 }
 
