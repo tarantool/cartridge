@@ -18,6 +18,9 @@ Changed
 
 - Disabled role's ``validate_config`` is not called during config validation.
 
+- Update @tarantool.io/ui-kit and frontend-core dependencies to support
+  the new design style.
+
 -------------------------------------------------------------------------------
 [2.7.2] - 2021-10-08
 -------------------------------------------------------------------------------
