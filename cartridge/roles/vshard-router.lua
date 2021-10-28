@@ -31,6 +31,8 @@ vars:new('routers', {
     -- [router_name] = vshard.router.new(),
 })
 
+vars:new('issues', {})
+
 -- Human readable router name for logging
 -- Isn't exposed in public API
 local function router_name(group_name)
@@ -190,6 +192,7 @@ local function bootstrap()
 
     local err = nil
 
+    vars.issues = {}
     if patch.vshard_groups == nil then
         local ok, _err = bootstrap_group('default', patch.vshard)
         if ok then
@@ -203,7 +206,13 @@ local function bootstrap()
             if ok then
                 vsgroup.bootstrapped = true
             else
-                err = _err
+                table.insert(vars.issues, {
+                    level = 'warning',
+                    topic = 'vshard',
+                    message = ([[Group "%s" wasn't bootstrapped: %s. ]] ..
+                        [[Maybe you have no instances with such group?]]):format(name, _err.err),
+                })
+                log.error(_err)
             end
         end
     end
@@ -235,6 +244,7 @@ return {
     validate_config = vshard_utils.validate_config,
     apply_config = apply_config,
     stop = stop,
+    get_issues = function() return vars.issues end,
 
     get = get,
     bootstrap = bootstrap,
