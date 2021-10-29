@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentScriptType="application/ecmascript" contentStyleType="text/css" height="261px" preserveAspectRatio="none" style="width:317px;height:261px;background:#FFFFFF;" version="1.1" viewBox="0 0 317 261" width="317px" zoomAndPan="magnify"><defs><filter height="300%" id="f1fbs27shfhuvp" width="300%" x="-1" y="-1"><feGaussianBlur result="blurOut" stdDeviation="2.0"/><feColorMatrix in="blurOut" result="blurOut2" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .4 0"/><feOffset dx="4.0" dy="4.0" in="blurOut2" result="blurOut3"/><feBlend in="SourceGraphic" in2="blurOut3" mode="normal"/></filter></defs><g><rect fill="#FEFECE" filter="url(#f1fbs27shfhuvp)" height="40" rx="12.5" ry="12.5" style="stroke:#A80036;stroke-width:1.5;" width="296" x="7" y="7"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="286" x="12" y="32.291">BootstrappingBox or RecoveringSnapshot</text><rect fill="#FEFECE" filter="url(#f1fbs27shfhuvp)" height="40" rx="12.5" ry="12.5" style="stroke:#A80036;stroke-width:1.5;" width="151" x="79.5" y="107"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="141" x="84.5" y="132.291">ConnectingFullmesh</text><rect fill="#FEFECE" filter="url(#f1fbs27shfhuvp)" height="40" rx="12.5" ry="12.5" style="stroke:#A80036;stroke-width:1.5;" width="114" x="33" y="207"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="104" x="38" y="232.291">BoxConfigured</text><rect fill="#FEFECE" filter="url(#f1fbs27shfhuvp)" height="40" rx="12.5" ry="12.5" style="stroke:#A80036;stroke-width:1.5;" width="76" x="182" y="207"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="66" x="187" y="232.291">BootError</text><!--MD5=[5a9244cddd5e066a78abfd564afcf211]
+link BootstrappingBox to ConnectingFullmesh--><path d="M155,47.36 C155,62.93 155,84.9 155,101.66 " fill="none" id="BootstrappingBox-to-ConnectingFullmesh" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="155,106.68,159,97.68,155,101.68,151,97.68,155,106.68" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[6f88950feb8873eaddbfbd91b8e02486]
+link ConnectingFullmesh to BoxConfigured--><path d="M142.16,147.36 C131.74,163.07 117.01,185.28 105.86,202.09 " fill="none" id="ConnectingFullmesh-to-BoxConfigured" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="102.82,206.68,111.1322,201.3972,105.5869,202.5154,104.4687,196.9701,102.82,206.68" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[b231b24125eea120b56237c2a0679cb6]
+link ConnectingFullmesh to ConnectingFullmesh--><path d="M230.66,108.43 C250.5,109.53 265.5,115.72 265.5,127 C265.5,137.31 252.97,143.37 235.66,145.17 " fill="none" id="ConnectingFullmesh-to-ConnectingFullmesh" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="230.66,145.57,239.9511,148.8374,235.644,145.1701,239.3113,140.8631,230.66,145.57" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[6c87a797f1ce5c4a64c815ba1eec1132]
+link ConnectingFullmesh to BootError--><path d="M167.84,147.36 C178.26,163.07 192.99,185.28 204.14,202.09 " fill="none" id="ConnectingFullmesh-to-BootError" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="207.18,206.68,205.5313,196.9701,204.4131,202.5154,198.8678,201.3972,207.18,206.68" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[7ca44b729fe66ecfeb402fba2cd6db51]
+@startuml
+
+hide empty description
+state "BootstrappingBox or RecoveringSnapshot" as BootstrappingBox
+BootstrappingBox - -> ConnectingFullmesh
+ConnectingFullmesh - -> BoxConfigured
+ConnectingFullmesh - -> ConnectingFullmesh
+ConnectingFullmesh - -> BootError
+
+@enduml
+
+PlantUML version 1.2021.10(Mon Aug 30 16:43:48 MSK 2021)
+(GPL source distribution)
+Java Runtime: OpenJDK Runtime Environment
+JVM: OpenJDK 64-Bit Server VM
+Default Encoding: UTF-8
+Language: ru
+Country: RU
+--></g></svg>
+
+<!-- _UML_SOURCE rst/uml/ConnectingFullmesh.puml -->
+<!-- _UML_SOURCE_MD5 6ec40f9437b604600afc350232780366 -->

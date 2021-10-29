@@ -593,12 +593,14 @@ local function cfg(opts, box_opts)
     local auth_backend, err = CartridgeCfgError:pcall(require, opts.auth_backend_name)
     if not auth_backend then
         return nil, err
+    elseif type(auth_backend) ~= 'table' then
+        return nil, CartridgeCfgError:new(
+            "Auth backend must export a table, got %s",
+            type(auth_backend)
+        )
     end
 
-    local ok, err = CartridgeCfgError:pcall(function()
-        local ok = auth.set_callbacks(auth_backend)
-        return ok
-    end)
+    local ok, err = CartridgeCfgError:pcall(auth.set_callbacks, auth_backend)
     if not ok then
         return nil, err
     end

@@ -1,3 +1,5 @@
+const ACTION_COLOR = 'rgb(0, 119, 255)';
+
 describe('Server details', () => {
   before(() => {
     cy.task('tarantool', {
@@ -48,6 +50,19 @@ describe('Server details', () => {
     cy.get('.meta-test__ServerDetailsModal button').contains('Issues 0').click();
   }
 
+  function checkRedCircleBeforeSelectedZone(itemName, color) {
+    cy.get('.meta-test__ZoneListItem')
+      .contains(itemName)
+      .then(($els) => {
+        const win = $els[0].ownerDocument.defaultView;
+        // read the pseudo selector
+        const before = win.getComputedStyle($els[0], 'before');
+        // read the value of the content CSS property
+        const contentValue = before.getPropertyValue('background-color');
+        expect(contentValue).to.eq(color);
+      });
+  }
+
   it('Test: serever-details', () => {
     ////////////////////////////////////////////////////////////////////
     cy.log('Alive server');
@@ -68,15 +83,24 @@ describe('Server details', () => {
     cy.get('.meta-test__ZoneAddSubmitBtn').click();
     cy.get('.ZoneAddModal').should('not.exist');
     cy.get('.meta-test__ServerDetailsModal').find('button:contains(Zone Narnia)');
+
+    cy.get('.meta-test__ServerDetailsModal button:contains(Zone Narnia)').click();
+    checkRedCircleBeforeSelectedZone('Narnia', ACTION_COLOR);
     cy.get('.meta-test__ServerDetailsModal button').contains('Close').click();
     cy.get('.meta-test__ServerDetailsModal').should('not.exist');
 
     //checks for dummy-2
+    cy.log('checks for dummy-2');
     openServerDetailsModal('dummy-2');
     cy.get('.meta-test__ServerDetailsModal button:contains(Select zone)').click();
     cy.get('div').contains('You have no any zone,').should('not.exist');
+
+    //check red circle is not before not elected zone
+    checkRedCircleBeforeSelectedZone('Narnia', 'rgba(0, 0, 0, 0)');
     cy.get('.meta-test__ZoneListItem:contains(Narnia)').click();
-    cy.get('.meta-test__ServerDetailsModal').find('button:contains(Zone Narnia)').click();
+    cy.get('.meta-test__ServerDetailsModal button:contains(Zone Narnia)').click();
+    checkRedCircleBeforeSelectedZone('Narnia', ACTION_COLOR);
+    // cy.get('.meta-test__ServerDetailsModal').find('button:contains(Zone Narnia)').click();
 
     //add new zone Mordor
     cy.get('button:contains(Add new zone)').click();
@@ -84,21 +108,30 @@ describe('Server details', () => {
     cy.get('.meta-test__ZoneAddSubmitBtn').click();
     cy.get('.ZoneAddModal').should('not.exist');
     cy.get('.meta-test__ServerDetailsModal').find('button:contains(Zone Mordor)');
+
+    //check red circle is before new zone
+    cy.get('.meta-test__ServerDetailsModal').find('button:contains(Zone Mordor)').click();
+    checkRedCircleBeforeSelectedZone('Narnia', 'rgba(0, 0, 0, 0)');
+    checkRedCircleBeforeSelectedZone('Mordor', ACTION_COLOR);
     cy.get('.meta-test__ServerDetailsModal button').contains('Close').click();
 
     //delete zone Narnia
     openServerDetailsModal('dummy-1');
     cy.get('.meta-test__ServerDetailsModal').find('button:contains(Zone Narnia)').click();
     cy.get('div').contains('Mordor');
+    checkRedCircleBeforeSelectedZone('Narnia', ACTION_COLOR);
+    checkRedCircleBeforeSelectedZone('Mordor', 'rgba(0, 0, 0, 0)');
     cy.get('.meta-test__ZoneListItem:contains(Narnia)').click();
     cy.get('.meta-test__ServerDetailsModal button:contains(Select zone)').click();
     cy.get('button:contains(Add new zone)').should('be.enabled');
     cy.get('div').contains('Mordor');
     cy.get('div').contains('Narnia').should('not.exist');
+    checkRedCircleBeforeSelectedZone('Mordor', 'rgba(0, 0, 0, 0)');
     cy.get('.meta-test__ServerDetailsModal button').contains('Close').click();
     openServerDetailsModal('dummy-2');
     cy.get('.meta-test__ServerDetailsModal button:contains(Zone Mordor)').click();
     cy.get('div').contains('Mordor');
+    checkRedCircleBeforeSelectedZone('Mordor', ACTION_COLOR);
     cy.get('div').contains('Narnia').should('not.exist');
     cy.get('.meta-test__ServerDetailsModal button').contains('Close').click();
 

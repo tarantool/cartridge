@@ -100,7 +100,7 @@ class LogInForm extends React.Component {
                 autoFocus
                 label={
                   <>
-                    Username<Text className={styles.requiredStar}>*</Text>
+                    Login<Text className={styles.requiredStar}>*</Text>
                   </>
                 }
                 value={values.username}

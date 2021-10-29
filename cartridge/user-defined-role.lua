@@ -34,6 +34,7 @@
 
 
 --- Validate clusterwide configuration callback.
+-- Called when role is enabled on an instance.
 --
 -- @function validate_config
 -- @tparam table conf_new
@@ -44,3 +45,22 @@
 -- @tparam table conf Clusterwide configuration
 -- @tparam table opts
 -- @tparam boolean opts.is_master
+
+--- Announce issues to be shown in the Cartridge WebUI.
+--
+-- The callback should return an array of issues, where every issue is
+-- a table with fields `level`, `topic, and `message`. Like following:
+--
+--     -- myrole.lua
+--
+--     local function get_issues()
+--         return {{
+--             level = 'warning',
+--             topic = 'myrole',
+--             message = 'custom issue description',
+--         }}
+--     end
+--
+-- All fields are optional. Extra fields are ignored.
+--
+-- @function get_issues

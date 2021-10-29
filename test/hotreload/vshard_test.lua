@@ -53,6 +53,8 @@ g.before_all(function()
     g.R1 = assert(g.cluster:server('R-1'))
     g.SA1 = assert(g.cluster:server('SA-1'))
     g.SA2 = assert(g.cluster:server('SA-2'))
+    g.SB1 = assert(g.cluster:server('SB-1'))
+    g.SB2 = assert(g.cluster:server('SB-2'))
 
     g.insertions_passed = {}
     g.insertions_failed = {}
@@ -86,10 +88,11 @@ local function highload_loop(label)
     fiber.name('test.highload')
     log.warn('Highload started ----------')
     while true do
-        highload_cnt = highload_cnt + 1
         local ok, err = errors.pcall('E', _insert, highload_cnt, label)
         if ok == nil then
             log.error('CNT %d: %s', highload_cnt, err)
+        else
+            highload_cnt = highload_cnt + 1
         end
         fiber.sleep(0.001)
     end
@@ -168,4 +171,28 @@ function g.test_storage()
         ),
         g.insertions_passed
     )
+end
+
+function g.test_rebalancer()
+    -- See https://github.com/tarantool/cartridge/issues/1562
+    local rebalancer = g.SA1.instance_uuid < g.SB1.instance_uuid and
+        g.SA1 or g.SB1
+    reload(g.SA1)
+    reload(g.SB1)
+
+    g.cluster.main_server:graphql({query = [[
+        mutation ($uuid: String!){
+            edit_replicaset(
+                uuid: $uuid
+                weight: 2
+            )
+        }
+    ]], variables = {uuid = g.SA1.replicaset_uuid}})
+
+    helpers.retrying({}, function()
+        rebalancer:call('vshard.storage.rebalancer_wakeup')
+        t.assert_equals(g.SA1:call('vshard.storage.buckets_count'), 2000)
+        t.assert_equals(g.SB1:call('vshard.storage.buckets_count'), 1000)
+    end)
+
 end

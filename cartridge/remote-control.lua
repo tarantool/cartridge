@@ -20,7 +20,6 @@ local errors = require('errors')
 local socket = require('socket')
 local digest = require('digest')
 local pickle = require('pickle')
-local uuid_lib = require('uuid')
 local msgpack = require('msgpack')
 local utils = require('cartridge.utils')
 local vars = require('cartridge.vars').new('cartridge.remote-control')
@@ -185,9 +184,8 @@ local function communicate(s)
     local sync = header[0x01]
 
     if iproto_code[code] == nil then
-        -- reply_err(s, sync or 0, box.error.UNKNOWN,
-        --     "Unknown iproto code 0x%02x", code
-        -- )
+        -- Don't talk to strangers, it may confuse them.
+        -- See https://github.com/tarantool/tarantool/issues/6451
         return false
 
     elseif iproto_code[code] == 'iproto_select' then
@@ -285,9 +283,8 @@ local function communicate(s)
         return true
 
     else
-        -- reply_err(s, sync, box.error.UNSUPPORTED,
-        --     "Remote Control doesn't support %s", iproto_code[code]
-        -- )
+        -- Don't talk to strangers, it may confuse them.
+        -- See https://github.com/tarantool/tarantool/issues/6451
         return false
     end
 end
@@ -295,13 +292,11 @@ end
 local function rc_handle(s)
     utils.fd_cloexec(s:fd())
 
-    local version = string.match(_TARANTOOL, "^([%d%.]+)") or '???'
     local salt = digest.urandom(32)
 
     local greeting = string.format(
         '%-63s\n%-63s\n',
-        'Tarantool ' .. version .. ' (Binary) ' .. uuid_lib.NULL:str(),
-        -- 'Tarantool 1.10.3 (Binary) f1f1ab41-eae1-475b-b4bd-3fa8dd067f4d',
+        'Tarantool 1.10.0 (Binary) 00000000-0000-0000-0000-000000000000',
         digest.base64_encode(salt)
     )
 

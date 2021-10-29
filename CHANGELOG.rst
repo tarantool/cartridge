@@ -12,6 +12,23 @@ and this project adheres to
 [Unreleased]
 -------------------------------------------------------------------------------
 
+-------------------------------------------------------------------------------
+[2.7.3] - 2021-10-27
+-------------------------------------------------------------------------------
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Changed
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Disabled role's ``validate_config`` is not called during config validation.
+
+- Update @tarantool.io/ui-kit and frontend-core dependencies to support
+  the new design style.
+
+-------------------------------------------------------------------------------
+[2.7.2] - 2021-10-08
+-------------------------------------------------------------------------------
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Added
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -19,13 +36,47 @@ Added
 - 'Make all instances writeable' configuration field can be hidden via
   frontend-core's ``set_variable`` feature or at runtime.
 
+- New ``get_issues`` callback in role API to collect user-defined issues.
+  The issues are gathered from the enabled roles only (present in
+  ``service-registry``).
+
+- Allow disabling built-in HTTP "admin" user:
+
+  * by specifying ``auth_builtin_admin_enabled: false`` in the ``instances.yml``;
+
+  * using ``TARANTOOL_AUTH_BUILTIN_ADMIN_ENABLED=false`` environment variable;
+
+  * permanently in ``init.lua``:
+
+
+    .. code-block:: lua
+
+        -- init.lua
+
+        require('cartridge.auth-backend').set_builtin_admin_enabled(false)
+        cartridge.cfg({
+            auth_backend_name = 'cartridge.auth-backend',
+            ...
+        })
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Changed
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Make built-in HTTP "admin" user a part of default auth backend. Custom
+  backends are free of it now.
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 - Eliminate unnecessary transactions after the restart before the replication
   sync. This reduces the chance the hardware restart leads to WAL corruption
-  ([#1546](https://github.com/tarantool/cartridge/issues/1546)).
+  (`#1546 <https://github.com/tarantool/cartridge/issues/1546>`__).
+
+- Fix net.box clients compatibility with future tarantool 2.10 versions.
+
+- Fix vshard rebalancer broken by roles reload.
 
 -------------------------------------------------------------------------------
 [2.7.1] - 2021-08-18

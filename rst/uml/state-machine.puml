@@ -1,0 +1,30 @@
+@startuml
+
+hide empty description
+title Cartridge instance state model
+
+[*] --> Unconfigured
+[*] --> ConfigFound
+
+Unconfigured --> BootstrappingBox
+
+ConfigFound --> ConfigLoaded
+ConfigFound --> InitError
+
+state "BootstrappingBox or RecoveringSnapshot" as BootstrappingBox
+ConfigLoaded --> BootstrappingBox
+
+BootstrappingBox --> ConnectingFullmesh
+BootstrappingBox --> BootError
+
+ConnectingFullmesh --> BoxConfigured
+ConnectingFullmesh -left-> ConnectingFullmesh
+ConnectingFullmesh -> BootError
+
+BoxConfigured --> ConfiguringRoles
+
+ConfiguringRoles --> RolesConfigured
+ConfiguringRoles --> OperationError
+RolesConfigured --> ConfiguringRoles
+
+@enduml

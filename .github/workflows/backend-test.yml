@@ -29,7 +29,7 @@ jobs:
         id: cache-venv
         with:
           path: ./venv
-          key: misc-venv-${{ hashFiles('rst/requirements.txt') }}-02
+          key: misc-venv-${{ hashFiles('rst/requirements.txt') }}-03
       -
         run: |
           python -m venv ./venv && . ./venv/bin/activate
@@ -107,9 +107,9 @@ jobs:
         id: cache-rocks
         with:
           path: .rocks/
-          key: test-rocks-${{ hashFiles('*.rockspec') }}-02
+          key: test-rocks-${{ hashFiles('*.rockspec') }}-03
       -
-        run: tarantoolctl rocks install luatest 0.5.4
+        run: tarantoolctl rocks install luatest 0.5.6
         if: steps.cache-rocks.outputs.cache-hit != 'true'
 
       # Setup pytest
@@ -118,7 +118,7 @@ jobs:
         id: cache-pytest
         with:
           path: ./pytest-venv
-          key: test-venv-${{ hashFiles('test/integration/requirements.txt') }}-02
+          key: test-venv-${{ hashFiles('test/integration/requirements.txt') }}-03
       -
         run: |
           python -m venv ./pytest-venv && . ./pytest-venv/bin/activate

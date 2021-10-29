@@ -16,7 +16,7 @@ go on with the Cartridge developer's guide.
 Introduction
 --------------------------------------------------------------------------------
 
-To develop and start an application, in short, you need to go through the
+To develop and start an application, you need to go through the
 following steps:
 
 #. :ref:`Install <cartridge-install-dev>` Tarantool Cartridge and other
@@ -373,7 +373,7 @@ If you have no roles specified, you can access a static router as before
 
 ..  code-block:: lua
 
-    local vhsard = require('vshard')
+    local vshard = require('vshard')
     vshard.router.call(...)
 
 However, when using the current group-aware API, you must call a static router
@@ -1482,3 +1482,4 @@ When running instances with ``systemctl``, keep these practices in mind:
     and other related options.
 
 .. include:: topics/error-handling.rst
+.. include:: topics/state-machine.rst

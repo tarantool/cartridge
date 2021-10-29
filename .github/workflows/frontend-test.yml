@@ -46,9 +46,9 @@ jobs:
         id: cache-rocks
         with:
           path: .rocks/
-          key: webui-rocks-${{ hashFiles('*.rockspec') }}-02
+          key: webui-rocks-${{ hashFiles('*.rockspec') }}-03
       -
-        run: tarantoolctl rocks install luatest 0.5.4
+        run: tarantoolctl rocks install luatest 0.5.6
         if: steps.cache-rocks.outputs.cache-hit != 'true'
 
       ##################################################################

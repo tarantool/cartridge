@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentScriptType="application/ecmascript" contentStyleType="text/css" height="240px" preserveAspectRatio="none" style="width:229px;height:240px;background:#FFFFFF;" version="1.1" viewBox="0 0 229 240" width="229px" zoomAndPan="magnify"><defs><filter height="300%" id="f77vbu10mhubq" width="300%" x="-1" y="-1"><feGaussianBlur result="blurOut" stdDeviation="2.0"/><feColorMatrix in="blurOut" result="blurOut2" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .4 0"/><feOffset dx="4.0" dy="4.0" in="blurOut2" result="blurOut3"/><feBlend in="SourceGraphic" in2="blurOut3" mode="normal"/></filter></defs><g><ellipse cx="121" cy="16" fill="#000000" filter="url(#f77vbu10mhubq)" rx="10" ry="10" style="stroke:none;stroke-width:1.0;"/><rect fill="#FEFECE" filter="url(#f77vbu10mhubq)" height="40" rx="12.5" ry="12.5" style="stroke:#A80036;stroke-width:1.5;" width="100" x="71" y="86"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="90" x="76" y="111.291">ConfigFound</text><rect fill="#FEFECE" filter="url(#f77vbu10mhubq)" height="40" rx="12.5" ry="12.5" style="stroke:#A80036;stroke-width:1.5;" width="106" x="7" y="186"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="96" x="12" y="211.291">ConfigLoaded</text><rect fill="#FEFECE" filter="url(#f77vbu10mhubq)" height="40" rx="12.5" ry="12.5" style="stroke:#A80036;stroke-width:1.5;" width="67" x="148.5" y="186"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="57" x="153.5" y="211.291">InitError</text><!--MD5=[671b3513b5367d0e14d4c3f5cd198d5d]
+link *start to ConfigFound--><path d="M121,26.09 C121,38.82 121,62.45 121,80.54 " fill="none" id="*start-to-ConfigFound" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="121,85.96,125,76.96,121,80.96,117,76.96,121,85.96" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[c52ef10385620f7b84cc5c45869543cc]
+link ConfigFound to ConfigLoaded--><path d="M108.95,126.36 C99.17,142.07 85.35,164.28 74.88,181.09 " fill="none" id="ConfigFound-to-ConfigLoaded" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="72.03,185.68,80.1836,180.1557,74.6736,181.436,73.3932,175.9259,72.03,185.68" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[1d5f855ab92c75f1d943b23ccbfc67c8]
+link ConfigFound to InitError--><path d="M133.05,126.36 C142.83,142.07 156.65,164.28 167.12,181.09 " fill="none" id="ConfigFound-to-InitError" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="169.97,185.68,168.6068,175.9259,167.3264,181.436,161.8164,180.1557,169.97,185.68" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[f1dc2dc121fd57efa2f719d89faf5f3a]
+@startuml
+
+hide empty description
+[*] - -> ConfigFound
+ConfigFound - -> ConfigLoaded
+ConfigFound - -> InitError
+
+@enduml
+
+PlantUML version 1.2021.10(Mon Aug 30 16:43:48 MSK 2021)
+(GPL source distribution)
+Java Runtime: OpenJDK Runtime Environment
+JVM: OpenJDK 64-Bit Server VM
+Default Encoding: UTF-8
+Language: ru
+Country: RU
+--></g></svg>
+
+<!-- _UML_SOURCE rst/uml/ConfigFound.puml -->
+<!-- _UML_SOURCE_MD5 626464ce5112bab872ac7d4aa85beea3 -->
