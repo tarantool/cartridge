@@ -4,7 +4,6 @@ module.exports = {
     '@tarantool.io/eslint-config/react',
     '@tarantool.io/eslint-config/emotion',
     '@tarantool.io/eslint-config/cypress',
-    'plugin:react-hooks/recommended',
   ],
   settings: {
     'import/resolver': {

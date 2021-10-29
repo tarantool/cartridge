@@ -2,6 +2,7 @@
 *.ts
 *.tsx
 .*broken.json.*
+.*/node_modules/tiny-invariant/.*
 
 [include]
 

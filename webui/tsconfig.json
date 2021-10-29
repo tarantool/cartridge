@@ -7,8 +7,6 @@
     "noImplicitAny": false, // TODO: Remove after all migrations (flow -> typescript)
     "outDir": "./build",
     "sourceMap": true,
-    "preserveConstEnums": true,
-    "isolatedModules": false,
     "paths": {
       "src/*": ["src/*"]
     }
