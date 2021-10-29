@@ -63,6 +63,7 @@ file(GLOB_RECURSE FRONTEND_FILES
     "${BASE_DIR}/public/*"
 )
 list(APPEND FRONTEND_FILES
+    "${BASE_DIR}/.babelrc.js"
     "${BASE_DIR}/.browserslistrc"
     "${BASE_DIR}/.env"
     "${BASE_DIR}/.env.production"
