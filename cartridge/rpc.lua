@@ -51,6 +51,14 @@ local function member_is_healthy(uri, instance_uuid)
     )
 end
 
+local function member_has_same_topology(uri, local_checksum)
+    local member = membership.get_member(uri)
+    return (
+        (member ~= nil)
+        and (member.payload.topology_checksum == local_checksum)
+    )
+end
+
 
 --- List instances suitable for performing a remote call.
 --
@@ -60,6 +68,11 @@ end
 -- @tparam[opt] table opts
 -- @tparam ?boolean opts.leader_only
 --   Filter instances which are leaders now.
+--   (default: **false**)
+-- @tparam ?boolean opts.same_topology
+--   Perform a call only on the replica with the same topology. Topology
+--   is compared using checksum extracted from membership which may
+--   contain outdated information.
 --   (default: **false**)
 -- @tparam ?boolean opts.healthy_only
 --   The member is considered healthy if
@@ -76,9 +89,11 @@ local function get_candidates(role_name, opts)
 
     checks('string', {
         leader_only = '?boolean',
-        healthy_only = '?boolean'
+        healthy_only = '?boolean',
+        same_topology = '?boolean',
     })
 
+    local topology_checksum = confapplier.get_checksum('topology')
     local topology_cfg = confapplier.get_readonly('topology')
     if topology_cfg == nil then
         return {}
@@ -97,8 +112,12 @@ local function get_candidates(role_name, opts)
         local replicaset = replicasets[replicaset_uuid]
 
         if roles.get_enabled_roles(replicaset.roles)[role_name]
-        and (not opts.healthy_only or member_is_healthy(server.uri, instance_uuid))
-        and (not opts.leader_only or active_leaders[replicaset_uuid] == instance_uuid)
+        and (not opts.healthy_only
+            or member_is_healthy(server.uri, instance_uuid))
+        and (not opts.same_topology
+            or member_has_same_topology(server.uri, topology_checksum))
+        and (not opts.leader_only
+            or active_leaders[replicaset_uuid] == instance_uuid)
         then
             table.insert(candidates, server.uri)
         end
@@ -115,6 +134,11 @@ end
 -- @tparam string role_name
 -- @tparam[opt] table opts
 -- @tparam ?boolean opts.prefer_local
+-- @tparam ?boolean opts.same_topology
+--   Perform a call only on the replica with the same topology. Topology
+--   is compared using checksum extracted from membership which may
+--   contain outdated information.
+--   (default: **false**)
 -- @tparam ?boolean opts.leader_only
 --
 -- @return[1] `net.box` connection
@@ -125,9 +149,14 @@ local function get_connection(role_name, opts)
     checks('string', {
         prefer_local = '?boolean',
         leader_only = '?boolean',
+        same_topology = '?boolean'
+
     })
 
-    local candidates = get_candidates(role_name, {leader_only = opts.leader_only})
+    local candidates = get_candidates(role_name, {
+        leader_only = opts.leader_only,
+        same_topology = opts.same_topology
+    })
     if next(candidates) == nil then
         return nil, RemoteCallError:new('No remotes with role %q available', role_name)
     end
@@ -192,6 +221,11 @@ end
 --   disabled it never tries to perform call locally and always uses
 --   netbox connection, even to connect self.
 --   (default: **true**)
+-- @tparam ?boolean opts.same_topology
+--   Perform a call only on the replica with the same topology. Topology
+--   is compared using checksum extracted from membership which may
+--   contain outdated information.
+--   (default: **false**)
 -- @tparam ?boolean opts.leader_only
 --   Perform a call only on the replica set leaders.
 --   (default: **false**)
@@ -213,6 +247,7 @@ local function call_remote(role_name, fn_name, args, opts)
     opts = opts or {}
     checks('string', 'string', '?table', {
         prefer_local = '?boolean',
+        same_topology = '?boolean',
         leader_only = '?boolean',
         remote_only = '?boolean', -- deprecated
         uri = '?string',
@@ -253,6 +288,11 @@ local function call_remote(role_name, fn_name, args, opts)
         leader_only = false
     end
 
+    local same_topology = opts.same_topology
+    if same_topology == nil then
+        same_topology = false
+    end
+
     local conn, err
     if opts.uri ~= nil then
         conn, err = pool.connect(opts.uri, {wait_connected = false})
@@ -260,6 +300,7 @@ local function call_remote(role_name, fn_name, args, opts)
         conn, err = get_connection(role_name, {
             prefer_local = prefer_local,
             leader_only = leader_only,
+            same_topology = same_topology,
         })
     end
 

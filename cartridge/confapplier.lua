@@ -252,6 +252,10 @@ local function apply_config(clusterwide_config)
     )
 
     vars.clusterwide_config = clusterwide_config
+    membership.set_payload(
+        'topology_checksum',
+        vars.clusterwide_config:get_checksum('topology.yml')
+    )
     set_state('ConfiguringRoles')
 
     local topology_cfg = clusterwide_config:get_readonly('topology')
@@ -722,6 +726,22 @@ local function get_deepcopy(section)
     return vars.clusterwide_config:get_deepcopy(section)
 end
 
+--- Get a checksum of the clusterwide configuration.
+--
+-- Returns either checksum of specified section or entire configuration.
+-- Specified section must be present in configuration
+-- or it will result in assertion error.
+-- @function get_checksum
+-- @tparam[opt] string section_name
+-- @return number
+local function get_config_checksum(section)
+    checks('?string')
+    if vars.clusterwide_config == nil then
+        return nil
+    end
+    return vars.clusterwide_config:get_checksum(section)
+end
+
 _G.__cartridge_confapplier_restart_replication = restart_replication
 
 return {
@@ -735,6 +755,7 @@ return {
     get_active_config = get_active_config,
     get_readonly = get_readonly,
     get_deepcopy = get_deepcopy,
+    get_checksum = get_config_checksum,
 
     set_state = set_state,
     wish_state = wish_state,
