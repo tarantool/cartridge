@@ -23,6 +23,10 @@ Changed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 - Update ``http`` dependency to 1.1.1
+- ``config_checksum`` is added to membership payload. It is used to detect
+  config mismatch.
+- Members with config checksum mismatch are not returned as a result of
+  ``cartridge.rpc.get_candidates`` when ``opts.healthy_only`` is ``true``.
 
 -------------------------------------------------------------------------------
 [2.7.3] - 2021-10-27
