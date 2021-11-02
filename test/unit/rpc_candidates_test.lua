@@ -80,6 +80,7 @@ local function apply_mocks(topology_draft)
                     payload = {
                         uuid = srv.uuid,
                         state = srv.state,
+                        config_checksum = srv.config_checksum,
                     }
                 }
             end
@@ -104,6 +105,9 @@ local function apply_mocks(topology_draft)
 
     package.loaded['membership'].get_member = function(uri)
         return members[uri]
+    end
+    package.loaded['cartridge.confapplier'].get_checksum = function()
+        return '1'
     end
 end
 
@@ -141,11 +145,13 @@ local draft = {
             uuid = 'a1',
             status = 'alive',
             state = 'RolesConfigured',
+            config_checksum = '1',
         },
         [2] = {
             uuid = 'a2',
             status = 'alive',
             state = 'RolesConfigured',
+            config_checksum = '1',
         },
     },
     [2] = {
@@ -156,11 +162,13 @@ local draft = {
             uuid = 'b1',
             status = 'alive',
             state = 'RolesConfigured',
+            config_checksum = '1',
         },
         [2] = {
             uuid = 'b2',
             status = 'alive',
             state = 'RolesConfigured',
+            config_checksum = '1',
         },
     }
 }
@@ -183,6 +191,21 @@ test_candidates('+leader',
     draft, {'target-role', {leader_only = true}},
     {'a1'}
 )
+-------------------------------------------------------------------------------
+draft[1][1].config_checksum = '2'
+log.info('a1 leader config checksum mismatch')
+
+test_candidates('-leader +healthy',
+    draft, {'target-role'},
+    {'a2'}
+)
+
+test_candidates('+leader +healthy',
+    draft, {'target-role', {leader_only = true}},
+    {}
+)
+draft[1][1].config_checksum = '1'
+log.info('a1 leader restored')
 
 -------------------------------------------------------------------------------
 draft[1][1].status = 'suspect'
