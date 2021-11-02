@@ -60,7 +60,9 @@ local function member_has_same_topology(uri, local_checksum)
 end
 
 
---- List instances suitable for performing a remote call.
+--- List candidates suitable for performing a remote call.
+--  Candidates are deduced from a local config and membership, so there is a
+--  chance that some of them are not valid (e.g. during `patch_clusterwide`).
 --
 -- @function get_candidates
 --
@@ -76,7 +78,8 @@ end
 --   (default: **false**)
 -- @tparam ?boolean opts.healthy_only
 --   The member is considered healthy if
---   it reports either `ConfiguringRoles` or `RolesConfigured` state
+--   it reports either `ConfiguringRoles` or `RolesConfigured` state,
+--   its config checksum is equal to the local one
 --   and its SWIM status is either `alive` or `suspect`
 --   (added in v1.1.0-11, default: **true**)
 --
@@ -127,6 +130,8 @@ local function get_candidates(role_name, opts)
 end
 
 --- Connect to an instance with an enabled role.
+--  Candidates are deduced from a local config and membership, so there is a
+--  chance that some of them are not valid (e.g. during `patch_clusterwide`).
 --
 -- @function get_connection
 -- @local
