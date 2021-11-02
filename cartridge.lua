@@ -810,6 +810,22 @@ local function cfg(opts, box_opts)
     if type(box.cfg) == 'function' then
         confapplier.log_bootinfo()
     end
+    local crg_opts_to_logs = table.deepcopy(opts)
+    crg_opts_to_logs.cluster_cookie = nil -- remove cluster_cookie from logs
+
+    local box_opts_to_logs = table.deepcopy(box_opts)
+    -- remove password and login from logs:
+
+    if type(box_opts_to_logs.replication) == 'string' then
+        box_opts_to_logs.replication = { box_opts_to_logs.replication }
+    end
+
+    local replication = {}
+    for _, v in ipairs(box_opts_to_logs.replication or {}) do
+        local uri = v:split('@')[2]
+        table.insert(replication, uri or v)
+    end
+    box_opts_to_logs.replication = replication
 
     log.info('Tarantool options: %s', json.encode(box_opts))
     log.info('Cartridge options: %s', json.encode(opts))
