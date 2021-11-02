@@ -52,7 +52,10 @@ local function member_is_healthy(uri, instance_uuid)
 end
 
 
---- List instances suitable for performing a remote call.
+--- List candidates suitable for performing a remote call.
+-- Candidates are deduced from a local config and membership, which may
+-- differ from replica to replica (e.g. during `patch_clusterwide`). It
+-- may produce invalid candidates.
 --
 -- @function get_candidates
 --
@@ -108,6 +111,9 @@ local function get_candidates(role_name, opts)
 end
 
 --- Connect to an instance with an enabled role.
+-- Candidates to connect are deduced from a local config and membership,
+-- which may differ from replica to replica (e.g. during `patch_clusterwide`).
+-- It may produce invalid candidates.
 --
 -- @function get_connection
 -- @local
