@@ -25,7 +25,7 @@ export const synchronizeReplicasetConfigureLocationFx = app.domain.createEffect<
 
     if (open) {
       if (!search.includes(props.uuid)) {
-        history.push(paths.replicasetConfigure(props, search));
+        history.push(paths.replicasetConfigure(props));
       }
     } else {
       if (search.includes(props.uuid)) {

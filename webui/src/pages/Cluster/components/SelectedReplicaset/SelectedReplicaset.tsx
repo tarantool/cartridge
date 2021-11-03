@@ -1,16 +1,16 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import React from 'react';
+import React, { memo } from 'react';
 import { cx } from '@emotion/css';
 // @ts-ignore
 import { HealthStatus, Text } from '@tarantool.io/ui-kit';
 
-import type { Replicaset } from 'src/generated/graphql-typing';
+import type { Maybe } from 'src/models';
 
 import { styles } from './SelectedReplicaset.styles';
 
 export interface SelectedReplicasetProps {
   className?: string;
-  replicaset?: Replicaset;
+  replicaset: Maybe<{ alias: string; status: string; uuid: string }>;
 }
 
 const SelectedReplicaset = ({ className, replicaset }: SelectedReplicasetProps) => {
@@ -29,4 +29,4 @@ const SelectedReplicaset = ({ className, replicaset }: SelectedReplicasetProps) 
   );
 };
 
-export default SelectedReplicaset;
+export default memo(SelectedReplicaset);

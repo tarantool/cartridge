@@ -1,12 +1,12 @@
-import React, { createElement } from 'react';
+import React from 'react';
 import { SplashError } from '@tarantool.io/ui-kit';
 
 import { getErrorMessage } from 'src/api';
 import { isGraphqlAccessDeniedError, isGraphqlErrorResponse } from 'src/api/graphql';
 import { isRestAccessDeniedError, isRestErrorResponse } from 'src/api/rest';
-import { USE_LEGACY_CLUSTER_PAGE } from 'src/constants';
 import Cluster from 'src/pages/Cluster';
-import ClusterLegacy from 'src/pages/ClusterLegacy';
+
+// import Cluster from 'src/pages/ClusterLegacy';
 
 class Dashboard extends React.Component {
   render() {
@@ -21,7 +21,7 @@ class Dashboard extends React.Component {
   }
 
   renderApp(location, history) {
-    return createElement(USE_LEGACY_CLUSTER_PAGE ? ClusterLegacy : Cluster, { location, history });
+    return <Cluster location={location} history={history} />;
   }
 
   renderError(error) {

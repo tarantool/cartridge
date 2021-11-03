@@ -4,11 +4,11 @@ import { useStore } from 'effector-react';
 // @ts-ignore
 import { Modal, Tabbed } from '@tarantool.io/ui-kit';
 
-import SelectedServersList from 'src/components/SelectedServersList';
 import { app, cluster } from 'src/models';
 
 import JoinReplicasetForm, { JoinReplicasetValues } from '../JoinReplicasetForm';
 import ReplicasetAddOrEditForm, { ReplicasetAddOrEditValues } from '../ReplicasetAddOrEditForm';
+import SelectedServersList from '../SelectedServersList';
 
 import { styles } from './ServerConfigureModal.styles';
 

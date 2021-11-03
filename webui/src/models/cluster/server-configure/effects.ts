@@ -44,7 +44,7 @@ export const synchronizeServerConfigureLocationFx = app.domain.createEffect<
 
     if (open) {
       if (!search.includes(props.uri)) {
-        history.push(paths.serverConfigure(props, search));
+        history.push(paths.serverConfigure(props));
       }
     } else {
       if (search.includes(props.uri)) {

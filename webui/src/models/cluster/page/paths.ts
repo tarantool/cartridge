@@ -6,12 +6,10 @@ export const root = () => path('dashboard');
 
 export const serverDetails = ({ uuid }: { uuid: string }) => path(`dashboard/instance/${uuid}`);
 
-export const replicasetConfigure = ({ uuid }: { uuid: string }, locationSearch: string) => {
-  void locationSearch;
+export const replicasetConfigure = ({ uuid }: { uuid: string }) => {
   return path(`dashboard?r=${uuid}`);
 };
 
-export const serverConfigure = ({ uri }: { uri: string }, locationSearch: string) => {
-  void locationSearch;
+export const serverConfigure = ({ uri }: { uri: string }) => {
   return path(`dashboard?s=${uri}`);
 };

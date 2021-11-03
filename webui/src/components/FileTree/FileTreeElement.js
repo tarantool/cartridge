@@ -1,5 +1,5 @@
 // @flow
-import React from 'react';
+import React, { memo } from 'react';
 import { cx } from '@emotion/css';
 import {
   Button,
@@ -32,6 +32,8 @@ type FileTreeElementProps = {
   onFolderCreate: (file: TreeFileItem) => void,
   onRename: (id: string) => void,
 };
+
+const DotIndicatorActive = memo(() => <DotIndicator className={styles.dotActive} />);
 
 export const FileTreeElement = ({
   active,
@@ -67,7 +69,7 @@ export const FileTreeElement = ({
         />
         <Icon className={styles.fileIcon} opened={expanded} />
         <Text className={styles.fileName}>{file.fileName}</Text>
-        {(!file.saved || (!!file.initialPath && file.initialPath !== file.path)) && <DotIndicator state="bad" />}
+        {(!file.saved || (!!file.initialPath && file.initialPath !== file.path)) && <DotIndicatorActive />}
         <div className={cx(styles.buttonsPanel, 'FileTreeElement__btns')}>
           {file.type === 'folder' && (
             <React.Fragment>

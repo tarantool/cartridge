@@ -79,7 +79,7 @@
     "@tarantool.io/lua-bundler-webpack-plugin": "^1.0.1",
     "@tarantool.io/prettier-config": "^1.0.3",
     "@tarantool.io/typescript": "^1.0.3",
-    "@tarantool.io/webpack-config": "^1.0.0",
+    "@tarantool.io/webpack-config": "^1.0.1",
     "@types/ramda": "^0.27.45",
     "@types/react": "^16.0.0",
     "@types/react-dom": "^16.0.0",

@@ -16,10 +16,9 @@ const ProbeServerModalForm = ({
   handleSubmit,
   handleChange,
   handleBlur,
+  handleReset,
   values,
   errors,
-  handleReset,
-  touched,
 }: ProbeServerFormProps) => {
   const { error, pending } = useStore($serverProbeModal);
 
@@ -49,8 +48,8 @@ const ProbeServerModalForm = ({
         onChange={handleChange}
         onBlur={handleBlur}
         disabled={pending}
-        error={touched.uri && errors.uri}
-        message={touched.uri && errors.uri}
+        error={errors.uri}
+        message={errors.uri}
         placeholder="Server URI, e.g. localhost:3301"
       />
       {error && (

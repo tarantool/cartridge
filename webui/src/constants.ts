@@ -14,5 +14,3 @@ export const FAILOVER_STATE_PROVIDERS = [
 ];
 
 export const BUILT_IN_USERS = ['admin'];
-
-export const USE_LEGACY_CLUSTER_PAGE = false;
