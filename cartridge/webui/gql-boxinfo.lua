@@ -115,6 +115,10 @@ local boxinfo_schema = {
                         kind = gql_types.string,
                         description = 'The binary protocol URI',
                     },
+                    http_port = {
+                        kind = gql_types.int,
+                        description = 'HTTP port',
+                    },
                     ro = {
                         kind = gql_types.boolean.nonNull,
                         description = 'Current read-only state',
