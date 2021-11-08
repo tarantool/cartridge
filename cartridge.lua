@@ -159,12 +159,17 @@ end
 --
 -- @tparam ?number opts.bucket_count
 --  bucket count for vshard cluster. See vshard doc for more details.
+--  Could be set only **once**, before first cartridge start and coundn't be
+--  changed after that.
 --  (default: 30000, overridden by
 --  env `TARANTOOL_BUCKET_COUNT`,
 --  args `--bucket-count`)
 --
--- @tparam ?{[string]=VshardGroup,...} opts.vshard_groups
---  vshard storage groups, table keys used as names
+-- @tparam ?table opts.vshard_groups
+--  vshard storage groups.
+--  `{group_name = VshardGroup, ...}`, `{'group1', 'group2', ...}` or
+--  `{group1 = VshardGroup, 'group2', ...}`.
+--  default group name: `default`
 --
 -- @tparam ?boolean opts.http_enabled
 --  whether http server should be started
