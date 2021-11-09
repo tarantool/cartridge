@@ -159,7 +159,7 @@ end
 --
 -- @tparam ?number opts.bucket_count
 --  bucket count for vshard cluster. See vshard doc for more details.
---  Could be set only **once**, before first cartridge start and coundn't be
+--  Can be set only **once**, before the first run of Cartridge application, and can't be
 --  changed after that.
 --  (default: 30000, overridden by
 --  env `TARANTOOL_BUCKET_COUNT`,
