@@ -814,7 +814,8 @@ local function cfg(opts, box_opts)
     crg_opts_to_logs.cluster_cookie = nil -- remove cluster_cookie from logs
 
     local box_opts_to_logs = table.deepcopy(box_opts)
-    -- remove password and login from logs:
+
+    -- remove password from logs:
 
     if type(box_opts_to_logs.replication) == 'string' then
         box_opts_to_logs.replication = { box_opts_to_logs.replication }
@@ -822,8 +823,9 @@ local function cfg(opts, box_opts)
 
     local replication = {}
     for _, v in ipairs(box_opts_to_logs.replication or {}) do
-        local uri = v:split('@')[2]
-        table.insert(replication, uri or v)
+        local uri = uri.parse(v)
+        uri.password = nil
+        table.insert(replication, uri.format(uri))
     end
     box_opts_to_logs.replication = replication
 
