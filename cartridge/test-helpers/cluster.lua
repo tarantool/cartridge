@@ -40,6 +40,7 @@ end
 -- @string[opt] object.failover Failover mode: disabled, eventual, or stateful.
 -- @string[opt] object.stateboard_entrypoint Command to run stateboard.
 -- @tab[opt] object.zone_distances Vshard distances between zones.
+-- @number[opt] object.swim_period SWIM protocol period in seconds.
 -- @return object
 function Cluster:new(object)
     checks('table', {
@@ -53,7 +54,8 @@ function Cluster:new(object)
         env = '?table',
         failover = '?string',
         stateboard_entrypoint = '?string',
-        zone_distances = '?table'
+        zone_distances = '?table',
+        swim_period = '?number',
     })
     --- Replicaset config.
     -- @table @replicaset_config
@@ -269,6 +271,7 @@ function Cluster:build_server(config, replicaset_config, sn)
         cluster_cookie = self.cookie,
         http_port = self.base_http_port and (self.base_http_port + server_id),
         advertise_port = advertise_port,
+        swim_period = self.swim_period,
     }
     for key, value in pairs(config) do
         server_config[key] = value
