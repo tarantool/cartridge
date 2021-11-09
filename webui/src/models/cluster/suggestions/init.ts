@@ -1,15 +1,16 @@
 import { forward, sample } from 'effector';
 
+import graphql from 'src/api/graphql';
 import { app } from 'src/models';
+import {
+  configForceReapplyMutation,
+  disableServersMutation,
+  editTopologyMutation,
+  restartReplicationMutation,
+} from 'src/store/request/queries.graphql';
 
 import { clusterPageCloseEvent } from '../page';
 import { $serverList, queryServerListErrorEvent, refreshServerListAndClusterEvent } from '../server-list';
-import {
-  submitAdvertiseUriFx,
-  submitDisableServersFx,
-  submitForceApplyFx,
-  submitRestartReplicationFx,
-} from './effects';
 import type { CheckedServers, ForceApplySuggestionByReason } from './types';
 import {
   $advertiseURIError,
@@ -38,6 +39,10 @@ import {
   forceApplyReasonUncheck,
   restartReplicationsApplyClick,
   restartReplicationsDetailsClick,
+  submitAdvertiseUriFx,
+  submitDisableServersFx,
+  submitForceApplyFx,
+  submitRestartReplicationFx,
 } from '.';
 
 const { trueL, equals, passErrorMessageOnEvent } = app.utils;
@@ -209,3 +214,12 @@ $forceApplyError
   .reset(submitForceApplyFx.done)
   .reset(detailsClose)
   .reset(clusterPageCloseEvent);
+
+// effects
+submitAdvertiseUriFx.use((servers) => graphql.mutate(editTopologyMutation, { servers }));
+
+submitDisableServersFx.use((uuids) => graphql.mutate(disableServersMutation, { uuids }));
+
+submitRestartReplicationFx.use((uuids) => graphql.mutate(restartReplicationMutation, { uuids }));
+
+submitForceApplyFx.use((uuids) => graphql.mutate(configForceReapplyMutation, { uuids }));

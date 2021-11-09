@@ -1,17 +1,20 @@
 import { forward, guard, sample } from 'effector';
 
+import graphql from 'src/api/graphql';
 import { app } from 'src/models';
+import { editTopologyMutation } from 'src/store/request/queries.graphql';
 
-import { clusterPageCloseEvent } from '../page';
+import { clusterPageCloseEvent, paths } from '../page';
 import { refreshServerListAndClusterEvent } from '../server-list';
-import { editReplicasetFx, synchronizeReplicasetConfigureLocationFx } from './effects';
 import {
   $replicasetConfigureModalVisible,
   $selectedReplicasetConfigureUuid,
   ClusterReplicasetConfigureGate,
   editReplicasetEvent,
+  editReplicasetFx,
   replicasetConfigureModalCloseEvent,
   replicasetConfigureModalOpenEvent,
+  synchronizeReplicasetConfigureLocationFx,
 } from '.';
 
 const { notifySuccessEvent, notifyErrorEvent } = app;
@@ -63,3 +66,27 @@ $selectedReplicasetConfigureUuid
   .on(replicasetConfigureModalOpenEvent, passResultPathOnEvent('uuid'))
   .reset(replicasetConfigureModalCloseEvent)
   .reset(clusterPageCloseEvent);
+
+// effects
+editReplicasetFx.use(({ uuid, alias, roles, weight, all_rw, vshard_group, failover_priority, join_servers }) =>
+  graphql.fetch(editTopologyMutation, {
+    replicasets: [{ uuid, alias, roles, weight, all_rw, vshard_group, failover_priority, join_servers }],
+  })
+);
+
+synchronizeReplicasetConfigureLocationFx.use(({ props, open }) => {
+  const { history } = window.tarantool_enterprise_core;
+  const {
+    location: { search },
+  } = history;
+
+  if (open) {
+    if (!search.includes(props.uuid)) {
+      history.push(paths.replicasetConfigure(props));
+    }
+  } else {
+    if (search.includes(props.uuid)) {
+      history.push(paths.root());
+    }
+  }
+});

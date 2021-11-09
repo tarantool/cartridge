@@ -2,18 +2,13 @@ import { combine } from 'effector';
 
 import type {
   DisableServerSuggestion,
+  EditServerInput,
   ForceApplySuggestion,
   RefineUriSuggestion,
   RestartReplicationSuggestion,
 } from 'src/generated/graphql-typing-ts';
 import { app } from 'src/models';
 
-import {
-  submitAdvertiseUriFx,
-  submitDisableServersFx,
-  submitForceApplyFx,
-  submitRestartReplicationFx,
-} from './effects';
 import type { CheckedServers, ForceApplySuggestionByReason, SuggestionsPanelsVisibility } from './types';
 
 // events
@@ -56,6 +51,17 @@ export const $disableServersError = app.domain.createStore<string | null>(null);
 export const $restartReplicationsError = app.domain.createStore<string | null>(null);
 
 export const $forceApplyError = app.domain.createStore<string | null>(null);
+
+// effects
+export const submitAdvertiseUriFx = app.domain.createEffect<EditServerInput[], void>('submit servers uri changes');
+
+export const submitDisableServersFx = app.domain.createEffect<string[], void>('submit disable servers effect');
+
+export const submitRestartReplicationFx = app.domain.createEffect<string[], void>(
+  'submit restart replications servers'
+);
+
+export const submitForceApplyFx = app.domain.createEffect<string[], void>('submit disable servers');
 
 // computed
 export const $forceApplySuggestionByReason = $forceApplySuggestion.map((state) => {

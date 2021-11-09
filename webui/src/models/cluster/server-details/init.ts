@@ -1,19 +1,23 @@
 import { forward, guard, sample } from 'effector';
 
+import graphql from 'src/api/graphql';
 import { app } from 'src/models';
+import { firstServerDetailsQuery, nextServerDetailsQuery } from 'src/store/request/queries.graphql';
 
-import { clusterPageCloseEvent } from '../page';
-import { queryServerDetailsBoxInfoFx, queryServerDetailsFx, synchronizeServerDetailsLocationFx } from './effects';
+import { clusterPageCloseEvent, paths } from '../page';
 import { mapServerDetailsToDescriptions } from './selectors';
 import {
   $selectedServerDetailsUuid,
   $serverDetails,
   $serverDetailsModalVisible,
   ClusterServerDetailsGate,
+  queryServerDetailsBoxInfoFx,
   queryServerDetailsBoxInfoSuccessEvent,
+  queryServerDetailsFx,
   queryServerDetailsSuccessEvent,
   serverDetailsModalClosedEvent,
   serverDetailsModalOpenedEvent,
+  synchronizeServerDetailsLocationFx,
 } from '.';
 
 const { not, createTimeoutFx, mapModalOpenedClosedEventPayload, passResultPathOnEvent } = app.utils;
@@ -99,3 +103,26 @@ $serverDetails
   .reset(serverDetailsModalClosedEvent)
   .reset(serverDetailsModalOpenedEvent)
   .reset(clusterPageCloseEvent);
+
+// effects
+queryServerDetailsFx.use(({ uuid }) => graphql.fetch(firstServerDetailsQuery, { uuid }));
+
+queryServerDetailsBoxInfoFx.use(({ uuid }) => graphql.fetch(nextServerDetailsQuery, { uuid }));
+
+synchronizeServerDetailsLocationFx.use(({ props, open }) => {
+  const { history } = window.tarantool_enterprise_core;
+  const {
+    location: { pathname },
+  } = history;
+
+  // eslint-disable-next-line no-console
+  if (open) {
+    if (!pathname.includes(props.uuid)) {
+      history.push(paths.serverDetails(props));
+    }
+  } else {
+    if (pathname.includes(props.uuid)) {
+      history.push(paths.root());
+    }
+  }
+});

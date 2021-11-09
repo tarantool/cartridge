@@ -1,15 +1,15 @@
-import { Event, Store, guard } from 'effector';
+import { createEffect, createEvent, createStore, guard } from 'effector';
+import type { Event, Store } from 'effector';
 
-import { getErrorMessage } from 'src/api';
+import { getErrorMessage } from 'src/api/utils';
 
-import { domain } from '../domain';
-import { CreateTimeoutFxConfig } from '../types';
+import type { CreateTimeoutFxConfig } from '../types';
 import { delay, not, trueL, voidL } from './common';
 
 export const passResultOnEvent = <T>(_: unknown, pass: T): T => pass;
 
 // eslint-disable-next-line @typescript-eslint/ban-types
-export const passResultPathOnEvent = <T extends object, K extends keyof T>(path: K) => {
+export const passResultPathOnEvent = <T extends object, K extends keyof T = keyof T>(path: K) => {
   return (_: unknown, pass: T): T[K] => pass[path];
 };
 
@@ -27,29 +27,26 @@ export const createTimeoutFx = <T extends unknown = void, S extends unknown = vo
   name: string,
   { startEvent, stopEvent, effect, timeout, source }: CreateTimeoutFxConfig<T, S>
 ): [Store<boolean>, Event<void>] => {
-  const tickEvent = domain.createEvent(`${name}.tick`);
+  const tickEvent = createEvent(`${name}.tick`);
 
-  const $counter = domain
-    .createStore(0, { name: `${name}.counter` })
+  const $counter = createStore(0, { name: `${name}.counter` })
     .on(tickEvent, (state) => state + 1)
     .reset([startEvent, stopEvent]);
 
-  const $props = domain
-    .createStore<T | null>(null, { name: `${name}.props` })
+  const $props = createStore<T | null>(null, { name: `${name}.props` })
     .on(startEvent, (_, payload) => payload)
     .reset(stopEvent);
 
-  const $isOn = domain
-    .createStore(false, { name: `${name}.isOn` })
+  const $isOn = createStore(false, { name: `${name}.isOn` })
     .on(startEvent, trueL)
     .reset(stopEvent);
 
-  const timerFx = domain
-    .createEffect<{ $counter: number; $props: T | null; source?: S }, void>(`${name}.timer`)
-    .use(async ({ $counter, $props, source }): Promise<void> => {
+  const timerFx = createEffect<{ $counter: number; $props: T | null; source?: S }, void>(`${name}.timer`).use(
+    async ({ $counter, $props, source }): Promise<void> => {
       await effect($counter - 1, $props, source ?? null);
       await delay(typeof timeout === 'function' ? timeout() : timeout);
-    });
+    }
+  );
 
   guard({
     clock: tickEvent,

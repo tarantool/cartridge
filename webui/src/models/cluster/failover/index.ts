@@ -1,13 +1,11 @@
 import { combine } from 'effector';
 
-import graphql from 'src/api/graphql';
 import type {
   ChangeFailoverMutation,
   ChangeFailoverMutationVariables,
   GetFailoverParamsQuery,
 } from 'src/generated/graphql-typing-ts';
 import { app } from 'src/models';
-import { changeFailoverMutation, getFailoverParams } from 'src/store/request/queries.graphql';
 
 import type { Failover } from './types';
 
@@ -25,15 +23,9 @@ export const $failoverModalError = app.domain.createStore<string>('');
 export const $failover = app.domain.createStore<Failover>(null);
 
 // effects
-export const getFailoverFx = app.domain.createEffect<void, GetFailoverParamsQuery>('get failover', {
-  handler: () => graphql.fetch(getFailoverParams),
-});
-
+export const getFailoverFx = app.domain.createEffect<void, GetFailoverParamsQuery>('get failover');
 export const changeFailoverFx = app.domain.createEffect<ChangeFailoverMutationVariables, ChangeFailoverMutation>(
-  'change failover',
-  {
-    handler: (params) => graphql.fetch(changeFailoverMutation, params),
-  }
+  'change failover'
 );
 
 // computed

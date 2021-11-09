@@ -1,8 +1,6 @@
 import { combine, sample } from 'effector';
 
-import graphql from 'src/api/graphql';
 import { Maybe, app } from 'src/models';
-import { editTopologyMutation } from 'src/store/request/queries.graphql';
 
 import { $serverList, selectors } from '../server-list';
 
@@ -19,15 +17,7 @@ export const $selectedServerExpelModalServer = sample({
 });
 
 // effects
-export const serverExpelFx = app.domain.createEffect<Maybe<{ uuid?: string }>, void>('expel server', {
-  handler: async (props) => {
-    if (props?.uuid) {
-      await graphql.mutate(editTopologyMutation, {
-        servers: [{ uuid: props.uuid, expelled: true }],
-      });
-    }
-  },
-});
+export const serverExpelFx = app.domain.createEffect<Maybe<{ uuid?: string }>, void>('expel server');
 
 // computed
 export const $serverExpelModal = combine({

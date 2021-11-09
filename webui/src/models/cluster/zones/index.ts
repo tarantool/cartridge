@@ -1,8 +1,6 @@
 import { combine, guard, restore } from 'effector';
 
-import graphql from 'src/api/graphql';
 import { Maybe, app } from 'src/models';
-import { editTopologyMutation } from 'src/store/request/queries.graphql';
 
 const { not, some } = app.utils;
 
@@ -20,33 +18,11 @@ export const $zoneAddModalUuid = app.domain.createStore<string | null>(null);
 
 // effect
 export const setZoneFx = app.domain.createEffect<{ uuid?: Maybe<string>; zone?: Maybe<string> }, void, Error>(
-  'set server zone',
-  {
-    handler: async ({ uuid, zone }) => {
-      if (!uuid) {
-        throw new Error('Invalid server UUID');
-      }
-
-      await graphql.mutate(editTopologyMutation, {
-        servers: [{ uuid, zone: zone || '' }],
-      });
-    },
-  }
+  'set server zone'
 );
 
 export const addZoneFx = app.domain.createEffect<{ uuid?: Maybe<string>; zone?: Maybe<string> }, void, Error>(
-  'add server zone',
-  {
-    handler: async ({ uuid, zone }) => {
-      if (!uuid) {
-        throw new Error('Invalid zone name');
-      }
-
-      await graphql.mutate(editTopologyMutation, {
-        servers: [{ uuid, zone: zone || '' }],
-      });
-    },
-  }
+  'add server zone'
 );
 
 // computed

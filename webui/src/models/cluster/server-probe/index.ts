@@ -1,8 +1,6 @@
 import { combine } from 'effector';
 
-import graphql from 'src/api/graphql';
 import { app } from 'src/models';
-import { probeMutation } from 'src/store/request/queries.graphql';
 
 // events
 export const serverProbeModalOpenEvent = app.domain.createEvent('server probe modal open event');
@@ -14,9 +12,7 @@ export const $serverProbeModalVisible = app.domain.createStore(false);
 export const $serverProbeModalError = app.domain.createStore<string | null>(null);
 
 // effects
-export const serverProbeFx = app.domain.createEffect<{ uri: string }, void>('expel server', {
-  handler: ({ uri }) => graphql.mutate(probeMutation, { uri }),
-});
+export const serverProbeFx = app.domain.createEffect<{ uri: string }, void>('expel server');
 
 // computed
 export const $serverProbeModal = combine({

@@ -1,6 +1,8 @@
 import { combine, forward, sample } from 'effector';
 
+import graphql from 'src/api/graphql';
 import { app } from 'src/models';
+import { editTopologyMutation } from 'src/store/request/queries.graphql';
 
 import { clusterPageCloseEvent } from '../page';
 import { refreshServerListAndClusterEvent } from '../server-list';
@@ -63,3 +65,24 @@ $zoneAddModalError
   .reset(zoneAddModalOpenEvent)
   .reset(zoneAddModalCloseEvent)
   .reset(clusterPageCloseEvent);
+
+// effect
+setZoneFx.use(async ({ uuid, zone }) => {
+  if (!uuid) {
+    throw new Error('Invalid server UUID');
+  }
+
+  await graphql.mutate(editTopologyMutation, {
+    servers: [{ uuid, zone: zone || '' }],
+  });
+});
+
+addZoneFx.use(async ({ uuid, zone }) => {
+  if (!uuid) {
+    throw new Error('Invalid zone name');
+  }
+
+  await graphql.mutate(editTopologyMutation, {
+    servers: [{ uuid, zone: zone || '' }],
+  });
+});

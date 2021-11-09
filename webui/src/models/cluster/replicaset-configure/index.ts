@@ -1,11 +1,10 @@
 import { combine, sample } from 'effector';
 import { createGate } from 'effector-react';
 
-import { EditReplicasetInput } from 'src/generated/graphql-typing-ts';
+import { EditReplicasetInput, EditTopologyMutation } from 'src/generated/graphql-typing-ts';
 import { app } from 'src/models';
 
 import { $serverList, selectors } from '../server-list';
-import { editReplicasetFx } from './effects';
 import type { ClusterReplicasetConfigureGateProps } from './types';
 
 // gates
@@ -29,6 +28,13 @@ export const $selectedReplicasetConfigureReplicaset = sample({
 });
 
 export const $replicasetConfigureModalVisible = $selectedReplicasetConfigureReplicaset.map(Boolean);
+
+// effects
+export const editReplicasetFx = app.domain.createEffect<EditReplicasetInput, EditTopologyMutation>('edit replicaset');
+export const synchronizeReplicasetConfigureLocationFx = app.domain.createEffect<
+  { props: ClusterReplicasetConfigureGateProps; open: boolean },
+  void
+>('synchronize replicaset configure location effect');
 
 // computed
 export const $replicasetConfigureModal = combine({

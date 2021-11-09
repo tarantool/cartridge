@@ -62,6 +62,10 @@ export const notifySuccessEvent = notifyEvent.prepend<string>((message) => ({
   message,
 }));
 
+// effects
+export const notifyFx = domain.createEffect<Maybe<AppNotifyPayload>, void>('notify');
+export const consoleLogFx = domain.createEffect<unknown, void>('console.log');
+
 // other
 export const tryCatchWithNotify = (callback: () => void) => {
   try {

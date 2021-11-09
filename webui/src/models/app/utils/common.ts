@@ -21,7 +21,7 @@ export const compact = <T>(list: (T | undefined | null | false)[]): T[] => list.
 
 export const some = (list: unknown[]): boolean => list.some(Boolean);
 
-export const delay = (ms: number): Promise<void> => new Promise((resolve) => void setTimeout(resolve, ms));
+export const delay = (ms: number): Promise<void> => new Promise((resolve) => void setTimeout(() => resolve(), ms));
 
 export const parseIntSafe = (value: unknown | undefined | null, def = 0, radix = 10): number => {
   const result = parseInt(`${value}` || `${def}`, radix);

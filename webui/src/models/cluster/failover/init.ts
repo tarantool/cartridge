@@ -1,6 +1,8 @@
 import { forward } from 'effector';
 
+import graphql from 'src/api/graphql';
 import { app } from 'src/models';
+import { changeFailoverMutation, getFailoverParams } from 'src/store/request/queries.graphql';
 
 import { clusterPageCloseEvent } from '../page';
 import { refreshServerListAndClusterEvent } from '../server-list';
@@ -42,8 +44,13 @@ forward({
 });
 
 forward({
-  from: changeFailoverFx.failData,
+  from: getFailoverFx.failData,
   to: notifyErrorEvent,
+});
+
+forward({
+  from: getFailoverFx.fail,
+  to: failoverModalCloseEvent,
 });
 
 // stores
@@ -60,3 +67,8 @@ $failoverModalError
   .reset(clusterPageCloseEvent);
 
 $failoverModalVisible.on(failoverModalOpenEvent, trueL).reset(failoverModalCloseEvent).reset(clusterPageCloseEvent);
+
+// effects
+getFailoverFx.use(() => graphql.fetch(getFailoverParams));
+
+changeFailoverFx.use((params) => graphql.fetch(changeFailoverMutation, params));

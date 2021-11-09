@@ -1,6 +1,8 @@
 import { forward } from 'effector';
 
+import graphql from 'src/api/graphql';
 import { app } from 'src/models';
+import { probeMutation } from 'src/store/request/queries.graphql';
 
 import { clusterPageCloseEvent } from '../page';
 import { refreshServerListAndClusterEvent } from '../server-list';
@@ -43,3 +45,6 @@ $serverProbeModalError
   .reset(serverProbeModalOpenEvent)
   .reset(serverProbeModalCloseEvent)
   .reset(clusterPageCloseEvent);
+
+// effects
+serverProbeFx.use(({ uri }) => graphql.mutate(probeMutation, { uri }));

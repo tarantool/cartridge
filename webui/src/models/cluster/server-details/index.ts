@@ -1,6 +1,11 @@
 import { createGate } from 'effector-react';
 
-import type { BoxInfoQuery, InstanceDataQuery } from 'src/generated/graphql-typing-ts';
+import type {
+  BoxInfoQuery,
+  BoxInfoQueryVariables,
+  InstanceDataQuery,
+  InstanceDataQueryVariables,
+} from 'src/generated/graphql-typing-ts';
 import { app } from 'src/models';
 
 import * as selectors from './selectors';
@@ -30,3 +35,17 @@ export const serverDetailsModalClosedEvent = app.domain.createEvent('server deta
 export const $selectedServerDetailsUuid = app.domain.createStore<string>('');
 export const $serverDetailsModalVisible = $selectedServerDetailsUuid.map(Boolean);
 export const $serverDetails = app.domain.createStore<ServerDetails | null>(null);
+
+// effects
+export const queryServerDetailsFx = app.domain.createEffect<InstanceDataQueryVariables, InstanceDataQuery>(
+  'query server details effect'
+);
+
+export const queryServerDetailsBoxInfoFx = app.domain.createEffect<BoxInfoQueryVariables, BoxInfoQuery>(
+  'query server details box info effect'
+);
+
+export const synchronizeServerDetailsLocationFx = app.domain.createEffect<
+  { props: ClusterServerDetailsGateProps; open: boolean },
+  void
+>('synchronize server details location effect');

@@ -1,7 +1,6 @@
 {
   "extends": "@tarantool.io/typescript/configs/web",
   "include": ["./src"],
-  "exclude": ["**/*.js", "**/*.spec.*", "**/*.test.*"],
   "compilerOptions": {
     "baseUrl": ".",
     "noImplicitAny": false, // TODO: Remove after all migrations (flow -> typescript)

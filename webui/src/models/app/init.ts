@@ -1,7 +1,6 @@
 /* eslint-disable no-console */
 import { forward, guard } from 'effector';
 
-import { consoleLogFx, notifyFx } from './effects';
 import { not } from './utils';
 import {
   $connectionAlive,
@@ -9,8 +8,10 @@ import {
   appClosedEvent,
   appOpenedEvent,
   consoleLogEvent,
+  consoleLogFx,
   domain,
   notifyEvent,
+  notifyFx,
   setConnectionAliveEvent,
   setConnectionDeadEvent,
 } from '.';
@@ -48,3 +49,21 @@ guard({
   filter: $connectionAlive,
   target: $connectionAlive,
 });
+
+// effects
+notifyFx.use((props) => {
+  if (!props) {
+    return;
+  }
+
+  const { title, message, type = 'success', timeout = 5000, details } = props;
+  window.tarantool_enterprise_core.notify({
+    title,
+    message,
+    type,
+    timeout,
+    details,
+  });
+});
+
+consoleLogFx.use((props) => void console.log(props));

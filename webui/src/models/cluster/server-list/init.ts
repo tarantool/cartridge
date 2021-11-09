@@ -1,30 +1,36 @@
 import { forward, guard } from 'effector';
 import { produce } from 'immer';
 
+import graphql from 'src/api/graphql';
 import { app } from 'src/models';
+import {
+  bootstrapMutation,
+  editTopologyMutation,
+  getClusterQuery,
+  listQuery,
+  promoteFailoverLeaderMutation,
+} from 'src/store/request/queries.graphql';
 
 import { changeFailoverEvent } from '../failover';
 import { $clusterPageVisible, clusterPageCloseEvent, clusterPageOpenEvent } from '../page';
-import {
-  disableOrEnableServerFx,
-  promoteServerToLeaderFx,
-  queryClusterFx,
-  queryServerListFx,
-  requestBootstrapFx,
-} from './effects';
 import {
   $bootstrapPanelVisible,
   $cluster,
   $serverList,
   disableOrEnableServerEvent,
+  disableOrEnableServerFx,
   hideBootstrapPanelEvent,
   promoteServerToLeaderEvent,
+  promoteServerToLeaderFx,
   queryClusterErrorEvent,
+  queryClusterFx,
   queryClusterSuccessEvent,
   queryServerListErrorEvent,
+  queryServerListFx,
   queryServerListSuccessEvent,
   refreshServerListAndClusterEvent,
   requestBootstrapEvent,
+  requestBootstrapFx,
   selectors,
   showBootstrapPanelEvent,
 } from '.';
@@ -217,3 +223,24 @@ $bootstrapPanelVisible
   .reset(requestBootstrapFx)
   .reset(hideBootstrapPanelEvent)
   .reset(clusterPageCloseEvent);
+
+// effects
+queryServerListFx.use(({ withStats }) => graphql.fetch(listQuery, { withStats }));
+
+queryClusterFx.use(() => graphql.fetch(getClusterQuery));
+
+promoteServerToLeaderFx.use(({ instanceUuid, replicasetUuid, force }) =>
+  graphql.mutate(promoteFailoverLeaderMutation, {
+    replicaset_uuid: replicasetUuid,
+    instance_uuid: instanceUuid,
+    force_inconsistency: force,
+  })
+);
+
+disableOrEnableServerFx.use(({ uuid, disable }) =>
+  graphql.mutate(editTopologyMutation, {
+    servers: [{ uuid, disabled: disable }],
+  })
+);
+
+requestBootstrapFx.use(() => graphql.mutate(bootstrapMutation));

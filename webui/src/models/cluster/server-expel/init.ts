@@ -1,6 +1,8 @@
 import { forward, guard } from 'effector';
 
+import graphql from 'src/api/graphql';
 import { app } from 'src/models';
+import { editTopologyMutation } from 'src/store/request/queries.graphql';
 
 import { clusterPageCloseEvent } from '../page';
 import { refreshServerListAndClusterEvent } from '../server-list';
@@ -51,3 +53,12 @@ $selectedServerExpelModalUri
   .on(serverExpelModalOpenEvent, passResultPathOnEvent('uri'))
   .reset(serverExpelModalCloseEvent)
   .reset(clusterPageCloseEvent);
+
+// effects
+serverExpelFx.use(async (props) => {
+  if (props?.uuid) {
+    await graphql.mutate(editTopologyMutation, {
+      servers: [{ uuid: props.uuid, expelled: true }],
+    });
+  }
+});

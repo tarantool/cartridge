@@ -1,9 +1,8 @@
 import { combine } from 'effector';
 
-import type { GetClusterQuery, ServerListQuery } from 'src/generated/graphql-typing-ts';
+import type { GetClusterQuery, ServerListQuery, ServerListQueryVariables } from 'src/generated/graphql-typing-ts';
 import { app } from 'src/models';
 
-import { requestBootstrapFx } from './effects';
 import * as filters from './filters';
 import * as selectors from './selectors';
 import type {
@@ -41,6 +40,23 @@ export const $serverList = app.domain.createStore<ServerList>(null);
 export const $cluster = app.domain.createStore<GetCluster>(null);
 
 export const $bootstrapPanelVisible = app.domain.createStore(false);
+
+// effects
+export const queryServerListFx = app.domain.createEffect<ServerListQueryVariables, ServerListQuery>(
+  'query server list effect'
+);
+
+export const queryClusterFx = app.domain.createEffect<void, GetClusterQuery>('query cluster effect');
+
+export const promoteServerToLeaderFx = app.domain.createEffect<PromoteServerToLeaderEventPayload, void>(
+  'promote server to leader'
+);
+
+export const disableOrEnableServerFx = app.domain.createEffect<DisableOrEnableServerEventPayload, void>(
+  'disable or enable server'
+);
+
+export const requestBootstrapFx = app.domain.createEffect('request bootstrap');
 
 // computed
 export const $failoverParamsMode = $cluster.map((state) => selectors.failoverParamsMode(state) ?? null);
