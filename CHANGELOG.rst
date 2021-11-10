@@ -17,6 +17,7 @@ Added
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 - Add ``swim_period`` argument to the test-helpers.
+- Add ``http_port`` to graphql.
 
 - Add unit tests for the Failover modal.
 
