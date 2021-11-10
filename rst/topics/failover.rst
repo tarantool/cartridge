@@ -92,7 +92,7 @@ that yet. So, both S1 and S2 consider themselves as leaders.
 Moreover, SWIM protocol isn't perfect and still can produce
 false-negative gossips (announce the instance is dead when it's not).
 
-..  _cartridge-stateful-failover:
+..  _cartridge-stateful_failover:
 
 *******************************************************************************
 Stateful failover
