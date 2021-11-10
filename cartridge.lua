@@ -686,6 +686,7 @@ local function cfg(opts, box_opts)
 
         local srv_name = httpd.tcp_server:name()
         log.info('Listening HTTP on %s:%s', srv_name.host, srv_name.port)
+        rawset(_G, '__instance_http_port', srv_name.port)
         service_registry.set('httpd', httpd)
     end
 

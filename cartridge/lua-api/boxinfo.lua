@@ -8,7 +8,6 @@ local errors = require('errors')
 
 local pool = require('cartridge.pool')
 local confapplier = require('cartridge.confapplier')
-local argparse = require('cartridge.argparse')
 
 --- Retrieve `box.cfg` and `box.info` of a remote server.
 -- @function get_info
@@ -85,7 +84,7 @@ local function get_info(uri)
         else
             storage_info = box.NULL
         end
-        local cartridge_opts = argparse.get_cluster_opts()
+
         local ret = {
             general = {
                 version = box_info.version,
@@ -99,7 +98,7 @@ local function get_info(uri)
                 wal_dir = box_cfg.wal_dir,
                 worker_pool_threads = box_cfg.worker_pool_threads,
                 listen = box_cfg.listen and tostring(box_cfg.listen),
-                http_port = cartridge_opts.http_port,
+                http_port = rawget(_G, '__instance_http_port'),
                 ro = box_info.ro,
             },
             storage = {
