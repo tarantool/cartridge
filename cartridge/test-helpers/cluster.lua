@@ -156,6 +156,62 @@ function Cluster:server(alias)
     error('Server ' .. alias .. ' not found', 2)
 end
 
+-- function Cluster:server_by_role(role_name)
+--     for _, replicaset in ipairs(self.replicasets) do
+--         for _, role in ipairs(replicaset.roles) do
+--             if role == role_name then
+--                 for _, server in ipairs(self.servers) do
+--                     if server.replicaset_uuid == replicaset.uuid then
+--                         return server
+--                     end
+--                 end
+--             end
+--         end
+--     end
+-- end
+
+function Cluster:replica_uuid_with_role(role_name)
+    local replica = fun.head(fun.filter(
+        function (replica)
+            return fun.any(function (role)
+                return role == role_name
+            end, replica.roles)
+        end,
+        self.replicasets
+    ))
+
+    if replica then
+        return replica.uuid
+    end
+end
+
+function Cluster:server_by_role(role_name)
+    return fun.head(
+        fun.filter(
+            function(server)
+                if server.replicaset_uuid == fun.head(
+                    fun.filter(
+                        function (replica)
+                            return fun.any(
+                                function(role)
+                                    return role == role_name
+                                end,
+                                replica.roles
+                            )
+                        end,
+                        self.replicasets
+                    )
+                ).uuid then
+                    return true
+                else
+                    return false
+                end
+            end,
+            self.servers
+        )
+    )
+end
+
 --- Execute `edit_topology` GraphQL request to setup replicasets, apply roles
 -- join servers to replicasets.
 function Cluster:apply_topology()
