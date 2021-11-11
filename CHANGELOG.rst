@@ -24,7 +24,7 @@ Added
 Changed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- Update ``http`` dependency to 1.1.1
+- Update ``http`` dependency to 1.2.0
 
 - Allow to bootstrap vshard groups partially.
 
