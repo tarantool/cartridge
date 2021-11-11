@@ -49,7 +49,7 @@
 --- Announce issues to be shown in the Cartridge WebUI.
 --
 -- The callback should return an array of issues, where every issue is
--- a table with fields `level`, `topic, and `message`. Like following:
+-- a table with fields `level`, `topic`, and `message`. Like the following:
 --
 --     -- myrole.lua
 --
