@@ -12,6 +12,12 @@ and this project adheres to
 [Unreleased]
 -------------------------------------------------------------------------------
 
+- Use effector for business logic and storing Cluster page data (models folder).
+
+- Rewrite all Cluster page components using typescript.
+
+- Add unit tests for the Failover modal.
+
 -------------------------------------------------------------------------------
 [2.7.3] - 2021-10-27
 -------------------------------------------------------------------------------
