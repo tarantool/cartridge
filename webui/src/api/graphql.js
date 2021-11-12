@@ -52,11 +52,23 @@ export const isGraphqlErrorResponse = (error) => {
   return !!(gqlError && 'message' in gqlError);
 };
 
-export const getGraphqlErrorMessage = (error) => {
-  const gqlError = getGraphqlError(error);
-  return (gqlError && gqlError.message) || 'GraphQL error with empty message';
+export const isNetworkErrorError = (error) => {
+  return Boolean(error && error.message === 'Network Error');
 };
 
 export const isGraphqlAccessDeniedError = (error) =>
   (isGraphqlErrorResponse(error) && getGraphqlErrorMessage(error) === 'Unauthorized') ||
   (error.networkError && error.networkError.statusCode === 401);
+
+export const getGraphqlErrorMessage = (error) => {
+  if (isNetworkErrorError(error)) {
+    return 'Cannot connect to server. Please try again later.';
+  }
+
+  const gqlError = getGraphqlError(error);
+  if (gqlError && gqlError.message) {
+    return gqlError.message;
+  }
+
+  return 'GraphQL error with empty message';
+};
