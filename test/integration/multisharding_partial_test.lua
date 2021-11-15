@@ -11,87 +11,87 @@ g.before_each(function()
         cookie = h.random_cookie(),
         replicasets = {
             {
+                alias = 'router',
+                roles = {},
+                servers = 1
+            },
+            {
                 alias = 'storage-hot',
-                roles = {'vshard-storage'},
-                vshard_group = 'hot',
+                roles = {},
+                servers = 1
+            },
+            {
+                alias = 'storage-cold',
+                roles = {},
                 servers = 1
             },
         },
     })
 
-    g.router = h.Server:new({
-        alias = 'router',
-        workdir = fio.pathjoin(g.cluster.datadir, 'router'),
-        command = h.entrypoint('srv_multisharding'),
-        replicaset_uuid = h.uuid('c'),
-        instance_uuid = h.uuid('c', 'c', 1),
-        http_port = 8084,
-        cluster_cookie = g.cluster.cookie,
-        advertise_port = 13304,
-    })
-
-    g.storage = h.Server:new({
-        alias = 'storage-cold',
-        workdir = fio.pathjoin(g.cluster.datadir, 'storage-cold'),
-        command = h.entrypoint('srv_multisharding'),
-        replicaset_uuid = h.uuid('d'),
-        instance_uuid = h.uuid('d', 'd', 1),
-        http_port = 8085,
-        cluster_cookie = g.cluster.cookie,
-        advertise_port = 13305,
-    })
-
     g.cluster:start()
-    g.storage:start()
-    g.router:start()
+    g.storage_hot = g.cluster:server('storage-hot-1')
+    g.storage_cold = g.cluster:server('storage-cold-1')
 end)
 
 g.after_each(function()
+    -- g.storage_cold:stop()
+    -- g.storage_hot:stop()
     g.cluster:stop()
-    g.storage:stop()
-    g.router:stop()
     fio.rmtree(g.cluster.datadir)
 end)
+
+local function build_issue_msg(main, group)
+    return {
+        level = 'warning',
+        topic = 'vshard',
+        message = ([[Group "%s" wasn't bootstrapped: Sharding config is empty. ]] ..
+            [[Maybe you have no instances with such group?]]):format(group),
+        instance_uuid = main.instance_uuid,
+        replicaset_uuid = main.replicaset_uuid,
+    }
+end
 
 g.test_bootstrap_vshard_by_group = function()
     local main = g.cluster.main_server
 
-    -- try to bootsrap vshard without router
+    -- try to bootsrap vshard without vshard-router
     t.assert_error_msg_contains('No remotes with role "vshard-router" available',
-        g.cluster.bootstrap_vshard, g.cluster)
+    g.cluster.bootstrap_vshard, g.cluster)
 
-    -- join router
-    g.cluster:join_server(g.router)
-    g.router:setup_replicaset({
+    -- setup vshard-router
+    main:setup_replicaset({
         roles = {'vshard-router'},
-        uuid = g.router.replicaset_uuid,
-        alias = 'router',
-        master = {g.router.instance_uuid},
+        uuid = main.replicaset_uuid,
+    })
+
+    -- bootstrap without storages
+    g.cluster:bootstrap_vshard()
+
+    t.assert_equals(h.list_cluster_issues(main), {
+        build_issue_msg(main, 'cold'),
+        build_issue_msg(main, 'hot'),
+    })
+
+    -- setup storage-hot
+    main:setup_replicaset({
+        roles = {'vshard-storage'},
+        vshard_group = 'hot',
+        uuid = g.storage_hot.replicaset_uuid,
+        weight = 1,
     })
 
     -- bootstrap only hot group
     g.cluster:bootstrap_vshard()
 
-    t.assert_equals(h.list_cluster_issues(main), {{
-        level = 'warning',
-        topic = 'vshard',
-        message = [[Group "cold" wasn't bootstrapped: Sharding config is empty. ]] ..
-            [[Maybe you have no instances with such group?]],
-        instance_uuid = g.router.instance_uuid,
-        replicaset_uuid = g.router.replicaset_uuid,
-    }})
+    t.assert_equals(h.list_cluster_issues(main), {
+        build_issue_msg(main, 'cold')
+    })
 
-    -- try to bootstrap again
-    t.assert_error_msg_contains('already bootstrapped', g.cluster.bootstrap_vshard, g.cluster)
-
-    -- join server with cold group
-    g.cluster:join_server(g.storage)
-    g.storage:setup_replicaset({
+    -- setup server with cold group
+    g.storage_cold:setup_replicaset({
         roles = {'vshard-storage'},
         vshard_group = 'cold',
-        uuid = g.storage.replicaset_uuid,
-        alias = 'storage-cold',
-        master = {g.storage.instance_uuid},
+        uuid = g.storage_cold.replicaset_uuid,
         weight = 1,
     })
 

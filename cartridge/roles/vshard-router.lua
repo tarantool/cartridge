@@ -32,6 +32,7 @@ vars:new('routers', {
 })
 
 vars:new('issues', {})
+vars:new('bootstrapped_groups', {})
 
 -- Human readable router name for logging
 -- Isn't exposed in public API
@@ -193,6 +194,9 @@ local function bootstrap()
     local err = nil
 
     vars.issues = {}
+
+    local skip_already_bootstrapped = false
+
     if patch.vshard_groups == nil then
         local ok, _err = bootstrap_group('default', patch.vshard)
         if ok then
@@ -205,7 +209,8 @@ local function bootstrap()
             local ok, _err = bootstrap_group(name, vsgroup)
             if ok then
                 vsgroup.bootstrapped = true
-            else
+            elseif _err.err == 'Sharding config is empty' then
+                log.error(vsgroup.bootstrapped)
                 table.insert(vars.issues, {
                     level = 'warning',
                     topic = 'vshard',
@@ -213,6 +218,9 @@ local function bootstrap()
                         [[Maybe you have no instances with such group?]]):format(name, _err.err),
                 })
                 log.error(_err)
+                skip_already_bootstrapped = true
+            else
+                err = _err
             end
         end
     end
@@ -224,7 +232,7 @@ local function bootstrap()
         return nil, err
     end
 
-    if utils.deepcmp(conf, patch) then
+    if skip_already_bootstrapped ~= true and utils.deepcmp(conf, patch) then
         -- Everyting is already bootstrapped
         return nil, e_bootstrap_vshard:new("already bootstrapped")
     end
