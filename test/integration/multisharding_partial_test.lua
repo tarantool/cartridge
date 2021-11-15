@@ -49,6 +49,7 @@ end)
 g.after_each(function()
     g.cluster:stop()
     g.storage:stop()
+    g.router:stop()
     fio.rmtree(g.cluster.datadir)
 end)
 
