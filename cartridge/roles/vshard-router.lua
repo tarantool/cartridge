@@ -32,7 +32,6 @@ vars:new('routers', {
 })
 
 vars:new('issues', {})
-vars:new('bootstrapped_groups', {})
 
 -- Human readable router name for logging
 -- Isn't exposed in public API
