@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
-import { forward, guard } from 'effector';
+import { forward } from 'effector';
 
-import { not } from './utils';
+import { falseL, trueL } from './utils';
 import {
   $connectionAlive,
   AppGate,
@@ -9,7 +9,6 @@ import {
   appOpenedEvent,
   consoleLogEvent,
   consoleLogFx,
-  domain,
   notifyEvent,
   notifyFx,
   setConnectionAliveEvent,
@@ -36,19 +35,7 @@ forward({
   to: consoleLogFx,
 });
 
-guard({
-  clock: setConnectionAliveEvent,
-  source: domain.createStore(true),
-  filter: $connectionAlive.map(not),
-  target: $connectionAlive,
-});
-
-guard({
-  clock: setConnectionDeadEvent,
-  source: domain.createStore(false),
-  filter: $connectionAlive,
-  target: $connectionAlive,
-});
+$connectionAlive.on(setConnectionAliveEvent, trueL).on(setConnectionDeadEvent, falseL);
 
 // effects
 notifyFx.use((props) => {
