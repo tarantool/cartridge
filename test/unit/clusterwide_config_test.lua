@@ -429,8 +429,12 @@ function g.test_checksum()
     -- checksum as well
     cfg1:set_plaintext('b', 'Hello there')
     t.assert_not_equals(cfg1:get_checksum(), cfg2:get_checksum())
+    t.assert_equals(cfg1:get_checksum('a'), cfg2:get_checksum('a'))
+    t.assert_not_equals(cfg1:get_checksum('b'), cfg2:get_checksum('b'))
     cfg2:set_plaintext('b', 'Hello there')
     t.assert_equals(cfg1:get_checksum(), cfg2:get_checksum())
+    t.assert_equals(cfg1:get_checksum('a'), cfg2:get_checksum('a'))
+    t.assert_equals(cfg1:get_checksum('b'), cfg2:get_checksum('b'))
 
     -- Sections and their content should be hashed separatly
     t.assert_not_equals(

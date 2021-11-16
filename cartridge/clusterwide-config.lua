@@ -239,9 +239,15 @@ clusterwide_config_mt = {
             end
         end,
 
-        get_checksum = function(self)
-            checks('ClusterwideConfig')
+        get_checksum = function(self, section_name)
+            checks('ClusterwideConfig', '?string')
             assert(self._plaintext ~= nil)
+
+            if section_name then
+                local checksum = digest.crc32.new()
+                checksum:update(self._plaintext[section_name] or '')
+                return checksum:result()
+            end
 
             if self._checksum == nil then
                 self:generate_checksum()
