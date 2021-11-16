@@ -34,8 +34,6 @@ g.before_each(function()
 end)
 
 g.after_each(function()
-    -- g.storage_cold:stop()
-    -- g.storage_hot:stop()
     g.cluster:stop()
     fio.rmtree(g.cluster.datadir)
 end)
