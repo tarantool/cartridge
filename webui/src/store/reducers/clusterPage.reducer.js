@@ -95,7 +95,7 @@ export type ClusterPageState = {
   createReplicasetRequestStatus: RequestStatusType,
   // createReplicasetResponse: null,
   expelServerRequestStatus: RequestStatusType,
-  // expelSerrverResponse: null,
+  // expelSerrerResponse: null,
   editReplicasetRequestStatus: RequestStatusType,
   // editReplicasetResponse: null,
   uploadConfigRequestStatus: RequestStatusType,
@@ -135,7 +135,7 @@ export const initialState: ClusterPageState = {
   createReplicasetRequestStatus: getInitialRequestStatus(),
   createReplicasetResponse: null,
   expelServerRequestStatus: getInitialRequestStatus(),
-  expelSerrverResponse: null,
+  expelServerResponse: null,
   editReplicasetRequestStatus: getInitialRequestStatus(),
   editReplicasetResponse: null,
   uploadConfigRequestStatus: getInitialRequestStatus(),
@@ -185,7 +185,7 @@ const expelServerRequestReducer = getRequestReducer(
   CLUSTER_PAGE_EXPEL_SERVER_REQUEST,
   CLUSTER_PAGE_EXPEL_SERVER_REQUEST_SUCCESS,
   CLUSTER_PAGE_EXPEL_SERVER_REQUEST_ERROR,
-  'joinServerRequestStatus'
+  'expelServerRequestStatus'
 );
 
 const editReplicasetRequestReducer = getRequestReducer(

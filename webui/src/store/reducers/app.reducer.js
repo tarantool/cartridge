@@ -1,7 +1,6 @@
 import type { FailoverApi, Role } from 'src/generated/graphql-typing';
 // @flow
 import {
-  APP_CONNECTION_STATE_CHANGE,
   APP_CREATE_MESSAGE,
   APP_DATA_REQUEST,
   APP_DATA_REQUEST_ERROR,
@@ -37,7 +36,6 @@ export type AppState = {
     vshard_bucket_count: ?number,
     demo_uri: ?string,
   },
-  connectionAlive: boolean,
   failover_params: {
     mode: $PropertyType<FailoverApi, 'mode'>,
     tarantool_params: $PropertyType<FailoverApi, 'tarantool_params'>,
@@ -60,7 +58,6 @@ const initialState: AppState = {
   appDataRequestStatus: getInitialRequestStatus(),
   appDataRequestError: null,
   clusterSelf: {},
-  connectionAlive: true,
   failover_params: {
     mode: 'disabled',
     tarantool_params: null,
@@ -130,12 +127,6 @@ export const reducer = baseReducer(
           ...state.authParams,
           implements_check_password: true,
         },
-      };
-
-    case APP_CONNECTION_STATE_CHANGE:
-      return {
-        ...state,
-        connectionAlive: action.payload,
       };
 
     default:

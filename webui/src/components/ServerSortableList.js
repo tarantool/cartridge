@@ -1,5 +1,4 @@
 import React from 'react';
-import { connect } from 'react-redux';
 import { sortableContainer, sortableElement } from 'react-sortable-hoc';
 import { css, cx } from '@emotion/css';
 import arrayMove from 'array-move';
@@ -103,10 +102,4 @@ const ServerSortableList = ({ failoverMode, itemClassName, onChange, value, key,
   );
 };
 
-const mapStateToProps = ({
-  app: {
-    failover_params: { mode: failoverMode },
-  },
-}) => ({ failoverMode });
-
-export default connect(mapStateToProps)(ServerSortableList);
+export default ServerSortableList;

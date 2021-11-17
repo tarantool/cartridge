@@ -18,11 +18,17 @@ Added
 
 - Add ``swim_period`` argument to the test-helpers.
 
+- Add unit tests for the Failover modal.
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Changed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 - Update ``http`` dependency to 1.1.1
+
+- Use effector for business logic and storing Cluster page data (models folder).
+
+- Rewrite all Cluster page components using typescript.
 
 -------------------------------------------------------------------------------
 [2.7.3] - 2021-10-27

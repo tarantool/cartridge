@@ -1,5 +1,5 @@
 // @flow
-import { combine, createEffect, createEvent, createStore, createStoreObject, sample } from 'effector';
+import { combine, createEffect, createEvent, createStore, sample } from 'effector';
 import type { Effect, Store } from 'effector';
 import { equals } from 'ramda';
 
@@ -180,28 +180,28 @@ const $forceApplyError: Store<?string> = createStore(null)
   .reset(detailsClose)
   .reset(clusterPageMount);
 
-export const $advertiseURIModal = createStoreObject({
+export const $advertiseURIModal = combine({
   visible: $advertiseURIModalVisible,
   suggestions: $advertiseURISuggestion,
   error: $advertiseURIError,
   pending: submitAdvertiseURIFx.pending,
 });
 
-export const $disableServersModal = createStoreObject({
+export const $disableServersModal = combine({
   visible: $disableServerModalVisible,
   suggestions: $disableServersSuggestion,
   error: $disableServersError,
   pending: submitDisableServersFx.pending,
 });
 
-export const $restartReplicationsModal = createStoreObject({
+export const $restartReplicationsModal = combine({
   visible: $restartReplicationsModalVisible,
   suggestions: $restartReplicationSuggestion,
   error: $restartReplicationsError,
   pending: submitRestartReplicationFx.pending,
 });
 
-export const $forceApplyModal = createStoreObject({
+export const $forceApplyModal = combine({
   visible: $forceApplyModalVisible,
   suggestions: $forceApplySuggestionByReason,
   error: $forceApplyError,
