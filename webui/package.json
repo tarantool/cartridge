@@ -46,7 +46,7 @@
     "object-assign": "^4.1.1",
     "promise": "^8.1.0",
     "prop-types": "^15.7.2",
-    "property-expr": "^2.0.3",
+    "property-expr": "^2.0.4",
     "raf": "^3.4.1",
     "ramda": "^0.27.1",
     "react": "^16.14.0",
@@ -64,7 +64,7 @@
     "vscode-json-languageservice": "3.4.1",
     "vscode-ws-jsonrpc": "0.1.1",
     "whatwg-fetch": "2.0.3",
-    "yup": "^0.27.0"
+    "yup": "^0.29.3"
   },
   "devDependencies": {
     "@graphql-codegen/cli": "2.2.0",
