@@ -10,11 +10,9 @@ const { AppTitle } = window['tarantool_enterprise_core']?.components ?? {};
 const { page } = cluster;
 const { ClusterPageGate } = page;
 
-const CLUSTER_PAGE_TITLE = 'Cluster';
-
-export const ClusterControllers = () => (
+export const ClusterControllers = ({ title }: { title: string }) => (
   <>
-    {AppTitle ? <AppTitle title={CLUSTER_PAGE_TITLE} /> : null}
+    {AppTitle ? <AppTitle title={title} /> : null}
     <ClusterPageGate />
     <ServerDetailsModalController />
     <ServerConfigureModalController />

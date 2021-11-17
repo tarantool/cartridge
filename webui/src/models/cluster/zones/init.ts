@@ -16,11 +16,17 @@ import {
   setZoneFx,
   zoneAddModalCloseEvent,
   zoneAddModalOpenEvent,
+  zoneAddModalSetValueEvent,
   zoneAddModalSubmitEvent,
 } from '.';
 
 const { notifyErrorEvent } = app;
 const { passErrorMessageOnEvent, mapErrorWithTitle, passResultPathOnEvent } = app.utils;
+
+forward({
+  from: zoneAddModalSetValueEvent,
+  to: $zoneAddModalValue,
+});
 
 sample({
   source: combine({

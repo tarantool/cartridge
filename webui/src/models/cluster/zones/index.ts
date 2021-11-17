@@ -1,4 +1,4 @@
-import { combine, guard, restore } from 'effector';
+import { combine, guard } from 'effector';
 
 import { Maybe, app } from 'src/models';
 
@@ -13,7 +13,7 @@ export const zoneAddModalSubmitEvent = app.domain.createEvent('add server zone m
 
 // stores
 export const $zoneAddModalError = app.domain.createStore<string>('');
-export const $zoneAddModalValue = restore(zoneAddModalSetValueEvent, '');
+export const $zoneAddModalValue = app.domain.createStore<string>('');
 export const $zoneAddModalUuid = app.domain.createStore<string | null>(null);
 
 // effect

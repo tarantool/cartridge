@@ -34,7 +34,7 @@ const Cluster = () => {
 
   return (
     <>
-      <ClusterControllers />
+      <ClusterControllers title={CLUSTER_PAGE_TITLE} />
       <ClusterModals />
       <PageLayout heading={CLUSTER_PAGE_TITLE} headingContent={<ButtonsPanel />}>
         <ClusterPanels />
