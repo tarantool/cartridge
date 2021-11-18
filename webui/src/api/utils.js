@@ -8,9 +8,21 @@ export const isGraphqlErrorResponse = (error) => {
   return !!(gqlError && 'message' in gqlError);
 };
 
+export const isNetworkErrorError = (error) => {
+  return Boolean(error && error.message === 'Network Error');
+};
+
 export const getGraphqlErrorMessage = (error) => {
+  if (isNetworkErrorError(error)) {
+    return 'Cannot connect to server. Please try again later.';
+  }
+
   const gqlError = getGraphqlError(error);
-  return (gqlError && gqlError.message) || 'GraphQL error with empty message';
+  if (gqlError && gqlError.message) {
+    return gqlError.message;
+  }
+
+  return 'GraphQL error with empty message';
 };
 
 export const isGraphqlAccessDeniedError = (error) =>

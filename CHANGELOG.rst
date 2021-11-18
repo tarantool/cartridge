@@ -30,6 +30,8 @@ Changed
 
 - Rewrite all Cluster page components using typescript.
 
+- Improve the error message in login dialog.
+
 -------------------------------------------------------------------------------
 [2.7.3] - 2021-10-27
 -------------------------------------------------------------------------------
