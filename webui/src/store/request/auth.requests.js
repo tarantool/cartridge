@@ -35,7 +35,6 @@ export async function logIn(params) {
         error: 'Authentication failed',
       };
     }
-
     throw error;
   }
 
