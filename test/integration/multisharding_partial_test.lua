@@ -43,7 +43,7 @@ local function build_issue_msg(main, group)
         level = 'warning',
         topic = 'vshard',
         message = ([[Group "%s" wasn't bootstrapped: Sharding config is empty. ]] ..
-            [[Maybe you have no instances with such group?]]):format(group),
+            [[There may be no instances in this group.]]):format(group),
         instance_uuid = main.instance_uuid,
         replicaset_uuid = main.replicaset_uuid,
     }

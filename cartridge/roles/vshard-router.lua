@@ -220,7 +220,7 @@ local function bootstrap()
                     level = 'warning',
                     topic = 'vshard',
                     message = ([[Group "%s" wasn't bootstrapped: %s. ]] ..
-                        [[Maybe you have no instances with such group?]]):format(name, _err.err),
+                        [[There may be no instances in this group.]]):format(name, _err.err),
                 })
                 log.error(_err)
                 skip_already_bootstrapped = true
