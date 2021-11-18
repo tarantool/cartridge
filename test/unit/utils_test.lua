@@ -34,3 +34,42 @@ function g.test_randomize_path()
 
     digest.urandom = urandom_original
 end
+
+function g.test_http_read_body()
+    local body = '--c187dde3e9318fcc6509f45f76a89424\r\n'..
+    'Content-Disposition: form-data; name="file"; filename="sample.txt"\r\n' ..
+    'Content-Type: text/plain\r\n' ..
+    '\r\n' ..
+    'Content file\r\n' ..
+    '--c187dde3e9318fcc6509f45f76a89424--'
+    local req = {
+        read = function()
+            return body
+        end,
+        headers = {
+            ['content-type'] = 'multipart/form-data; boundary=c187dde3e9318fcc6509f45f76a89424',
+        }
+    }
+    local payload, err, meta = utils.http_read_body(req)
+    t.assert_equals(payload, 'Content file')
+    t.assert_not(err)
+    t.assert_equals(meta, {filename = 'sample.txt'})
+
+    local body = '--c187dde3e9318fcc6509f45f76a89424\r\n'..
+    '\r\n' ..
+    '\r\n' ..
+    'Content file\r\n' ..
+    '--c187dde3e9318fcc6509f45f76a89424--'
+    local req = {
+        read = function()
+            return body
+        end,
+        headers = {
+            ['content-type'] = 'multipart/form-data; boundary=c187dde3e9318fcc6509f45f76a89424',
+        }
+    }
+    local payload, err, meta = utils.http_read_body(req)
+    t.assert_equals(payload, 'Content file')
+    t.assert_not(err)
+    t.assert_equals(meta, {})
+end
