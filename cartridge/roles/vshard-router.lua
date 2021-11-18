@@ -194,11 +194,13 @@ local function bootstrap()
 
     vars.issues = {}
 
-    -- In partial bootstrapping case when one or several vshard groups
-    -- are missing, we'll get an error 'Sharding config is empty'.
-    -- But if we try to bootstrap cluster without vshard groups again,
-    -- we'll get an error 'already bootstrapped' because config didn't change.
-    -- So, we skip 'already bootstrapped' error if get 'Sharding config is empty'.
+    -- In the case of partial bootstrapping, when one or several vshard groups
+    -- are missing, we'll get the error 'Sharding config is empty'.
+    -- But if we try bootstrapping the cluster without vshard groups again,
+    -- we'll get the error 'Already bootstrapped'
+    -- because the config hasn't changed.
+    -- So we skip the 'Already bootstrapped' error
+    -- if we get 'Sharding config is empty'.
     local skip_already_bootstrapped = false
 
     if patch.vshard_groups == nil then
