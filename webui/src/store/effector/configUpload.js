@@ -1,5 +1,5 @@
 // @flow
-import { createEffect, createEvent, createStore, createStoreObject, sample } from 'effector';
+import { combine, createEffect, createEvent, createStore, sample } from 'effector';
 import type { Effect, Store } from 'effector';
 
 import { getErrorMessage } from '../../api';
@@ -43,7 +43,7 @@ export const $successfulFileName: Store<?string> = createStore(null)
   .reset(dropFiles)
   .reset(configPageMount);
 
-export const $configForm = createStoreObject({
+export const $configForm = combine({
   files: $files,
   error: $error,
   successfulFileName: $successfulFileName,

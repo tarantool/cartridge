@@ -70,17 +70,7 @@ class AuthToggleButton extends React.Component<AuthToggleButtonProps, { visible:
   }
 }
 
-const mapStateToProps = (
-  {
-    app: {
-      authParams: { implements_check_password },
-    },
-    auth: { authorizationEnabled },
-    ui: { fetchingAuth },
-  },
-  { className }
-) => ({
-  implements_check_password,
+const mapStateToProps = ({ auth: { authorizationEnabled }, ui: { fetchingAuth } }, { className }) => ({
   authorizationEnabled,
   fetchingAuth,
   className,

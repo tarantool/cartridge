@@ -1,0 +1,10 @@
+import './page/init';
+import './server-list/init';
+import './server-details/init';
+import './server-configure/init';
+import './replicaset-configure/init';
+import './server-expel/init';
+import './server-probe/init';
+import './failover/init';
+import './zones/init';
+import './suggestions/init';

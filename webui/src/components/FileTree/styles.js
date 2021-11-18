@@ -26,6 +26,9 @@ export const styles = {
       display: flex;
     }
   `,
+  dotActive: css`
+    background-color: ${colors.activeAction};
+  `,
   newRow: css`
     padding-right: 8px;
   `,

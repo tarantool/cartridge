@@ -1,3 +1,4 @@
-node_modules
-webui/node_modules
-webui/src/generated
+/node_modules
+/webui/node_modules
+/webui/src/generated/*
+!/webui/src/generated/graphql-typing-ts.ts
