@@ -1,54 +1,47 @@
 --- Gather configuration options.
 --
--- The module tries to read configuration options from multiple sources
--- and then merge them together according to the priority of the source:
+--  The module tries to read configuration options from multiple sources
+--  and then merge the options together according to source priority:
 --
--- 1. `--<VARNAME>` command line arguments
--- 2. `TARANTOOL_<VARNAME>` environment variables
--- 3. configuration files
+--  1. `--<VARNAME>` command line arguments.
+--  2. `TARANTOOL_<VARNAME>` environment variables.
+--  3. Configuration files.
 --
--- You can specify a configuration file using the `--cfg <CONFIG_FILE>` option
--- or the `TARANTOOL_CFG=<CONFIG_FILE>` environment variable.
+--  To specify a configuration file, use the `--cfg <CONFIG_FILE>` option
+--  or the `TARANTOOL_CFG=<CONFIG_FILE>` environment variable.
 --
--- Configuration files are `yaml` files, divided into
--- sections like the following:
+--  Configuration files are `.yaml` files, divided into
+--  sections like the following:
 --
---    default:
---      memtx_memory: 10000000
---      some_option: "default value"
---    myapp.router:
---      memtx_memory: 1024000000
---      some_option: "router specific value"
+--      default:
+--        memtx_memory: 10000000
+--        some_option: "default value"
+--      myapp.router:
+--        memtx_memory: 1024000000
+--        some_option: "router-specific value"
 --
--- Within the configuration file, `argparse` looks for multiple matching sections:
+--  Within the configuration file, `argparse` looks for multiple matching sections:
 --
--- 1. The section named `<APP_NAME>.<INSTANCE_NAME>` is parsed first.
---   Application name is derived automatically from the rockspec filename in the
---   project directory. Or it can be can be specified manually with the `--app-name`
---   command line argument or the `TARANTOOL_APP_NAME` environment variable.
---   Instance name can be specified the same way, either as `--instance-name`
---   or `TARANTOOL_INSTANCE_NAME`.
--- 2. The common `<APP_NAME>` section is parsed next.
--- 3. Finally, the section `[default]` with global configuration is parsed
---   with the lowest priority.
+--  1. The section named `<APP_NAME>.<INSTANCE_NAME>` is parsed first.
+--     The application name is derived automatically from the rockspec filename in the
+--     project directory. Alternatively, you can specify it manually via the `--app-name`
+--     command line argument or the `TARANTOOL_APP_NAME` environment variable.
+--     The instance name can be specified the same way, either as `--instance-name`
+--     or `TARANTOOL_INSTANCE_NAME`.
+--  2. The common `<APP_NAME>` section is parsed next.
+--  3. Finally, the section `[default]` with the global configuration is parsed
+--     with the lowest priority.
 
--- Instance name may consist of multiple period-separated parts
--- (e.g. `--app-name "myapp" --instance-name "router.1"`).
--- In this case, sections named after parts are also parsed:
--- first `[myapp.router.1]`, then `[myapp.router]`, then `[myapp]`.
+--  An instance name may consist of multiple period-separated parts,
+--  for example, `--app-name "myapp" --instance-name "router.1"`.
+--  In this case, sections with names that include these parts are also parsed:
+--  first `[myapp.router.1]`, then `[myapp.router]`, then `[myapp]`.
 --
--- Instead of a single configuration file, you can use a directory.
--- In this case, all files in the directory are parsed.
--- To avoid conflicts, the same section mustn't repeat across different files.
+--  Instead of a single configuration file, you can use a directory.
+--  In this case, all files in the directory are parsed.
+--  To avoid conflicts, the same section mustn't repeat across different files.
 --
--- For example, running an application as following:
---    TARANTOOL_MY_CUSTOM_ARG='value' ./init.lua --alias router --memtx-memory 100
--- results in:
---    argparse.parse()            -> {memtx_memory = "100", alias = "router", my_custom_arg = "value"}
---    argparse.get_cluster_opts() -> {alias = "router"} -- a string
---    argparse.get_box_opts()     -> {memtx_memory = 100} -- a number
---
--- @module cartridge.argparse
+--  @module cartridge.argparse
 
 local fio = require('fio')
 local yaml = require('yaml')
@@ -82,10 +75,10 @@ end
 
 --- Common `cartridge.cfg` options.
 --
--- Options which are not listed below (like `roles`)
--- can't be modified with `argparse` and should be configured in code.
+--  Any options not listed below (like the `roles` option)
+--  can't be modified with `argparse` and should be configured in code.
 --
--- @table cluster_opts
+--  @table cluster_opts
 local cluster_opts = {
     alias = 'string', -- **string**
     workdir = 'string', -- **string**
@@ -106,7 +99,7 @@ local cluster_opts = {
 }
 
 --- Common `box.cfg <https://www.tarantool.io/en/doc/latest/reference/configuration/>`_ tuning options.
--- @table box_opts
+--  @table box_opts
 local box_opts = {
     listen                   = 'string', -- **string**
     memtx_memory             = 'number', -- **number**
@@ -318,8 +311,8 @@ local function parse_file(filename, app_name, instance_name)
         if section_name ~= 'default'
         and section_name ~= app_name
         and content == nil then
-            -- When instance's name can't be found in file_sections it
-            -- shouldn't be started. Such behavior violates
+            -- When an instance's name can't be found in file_sections,
+            -- the instance shouldn't be started. Such behavior would violate
             -- https://github.com/tarantool/cartridge/issues/1437
             return nil, ParseConfigError:new('Missing section: %s', section_name)
         end
@@ -346,19 +339,19 @@ end
 
 --- Parse command line arguments, environment variables, and configuration files.
 --
--- For example, running an application as following:
---    TARANTOOL_MY_CUSTOM_ARG='value' ./init.lua --alias router --memtx-memory 100
--- results in:
---    local argparse = require('cartridge.argparse')
---    argparse.parse()
---    ---
---    - memtx_memory: '100'
---      my_custom_arg: value
---      alias: router
---    ...
+--  For example, running an application as follows:
+--     TARANTOOL_MY_CUSTOM_ARG='value' ./init.lua --alias router --memtx-memory 100
+--  results in:
+--     local argparse = require('cartridge.argparse')
+--     argparse.parse()
+--     ---
+--     - memtx_memory: '100'
+--       my_custom_arg: value
+--       alias: router
+--     ...
 --
--- @function parse
--- @treturn {argname=value,...}
+--  @function parse
+--  @treturn {argname=value,...}
 local function _parse()
     local args = {}
 
@@ -408,27 +401,27 @@ end
 
 --- Filter the results of parsing and cast variables to a given type.
 --
--- From all configuration options gathered by `parse`, select only those
--- specified in the filter.
+--  From all the configuration options gathered by `parse`, select only those
+--  specified in the filter.
 --
--- For example, running an application as following:
---    TARANTOOL_ARG1='value' tarantool ./init.lua --arg2 100 --arg3 true
--- results in:
---    local opts, err = argparse.get_opts({
---        arg1 = 'string',
---        arg2 = 'number',
---        arg3 = 'boolean'
---        missing_arg = 'string', -- no such arg, argparse returns nothing for this arg
---    })
---    ---
---    - arg1: value
---      arg2: 100
---      arg3: true
---    ...
+--  For example, running an application as follows:
+--     TARANTOOL_ARG1='value' tarantool ./init.lua --arg2 100 --arg3 true
+--  results in:
+--     local opts, err = argparse.get_opts({
+--         arg1 = 'string',
+--         arg2 = 'number',
+--         arg3 = 'boolean'
+--         missing_arg = 'string', -- no such arg, argparse returns nothing for this arg
+--     })
+--     ---
+--     - arg1: value
+--       arg2: 100
+--       arg3: true
+--     ...
 --
--- @function get_opts
--- @tparam {argname=type,...} filter
--- @treturn {argname=value,...}
+--  @function get_opts
+--  @tparam {argname=type,...} filter
+--  @treturn {argname=value,...}
 local function get_opts(opts)
     local args = parse()
 
@@ -479,13 +472,13 @@ return {
     get_opts = get_opts,
 
     --- Shorthand for `get_opts(box_opts)`.
-    -- @function get_box_opts
+    --  @function get_box_opts
     get_box_opts = function()
         return get_opts(box_opts)
     end,
 
     --- Shorthand for `get_opts(cluster_opts)`.
-    -- @function get_cluster_opts
+    --  @function get_cluster_opts
     get_cluster_opts = function()
         return get_opts(cluster_opts)
     end,
