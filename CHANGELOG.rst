@@ -25,6 +25,7 @@ Changed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 - Update ``http`` dependency to 1.1.1
+- Allow to bootstrap vshard groups partially.
 
 - Use effector for business logic and storing Cluster page data (models folder).
 
