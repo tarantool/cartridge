@@ -1,7 +1,7 @@
 --- Gather configuration options.
 --
---  The module tries to read configuration options from multiple sources
---  and then merge the options together according to source priority:
+--  The module reads configuration options from multiple sources
+--  and then merges the options together according to source priority:
 --
 --  1. `--<VARNAME>` command line arguments.
 --  2. `TARANTOOL_<VARNAME>` environment variables.
@@ -23,14 +23,14 @@
 --  Within the configuration file, `argparse` looks for multiple matching sections:
 --
 --  1. The section named `<APP_NAME>.<INSTANCE_NAME>` is parsed first.
---     The application name is derived automatically from the rockspec filename in the
---     project directory. Alternatively, you can specify it manually via the `--app-name`
---     command line argument or the `TARANTOOL_APP_NAME` environment variable.
---     The instance name can be specified the same way, either as `--instance-name`
---     or `TARANTOOL_INSTANCE_NAME`.
+--    The application name is derived automatically from the rockspec filename in the
+--    project directory. Alternatively, you can specify it manually via the `--app-name`
+--    command line argument or the `TARANTOOL_APP_NAME` environment variable.
+--    The instance name can be specified the same way, either as `--instance-name`
+--    or `TARANTOOL_INSTANCE_NAME`.
 --  2. The common `<APP_NAME>` section is parsed next.
 --  3. Finally, the section `[default]` with the global configuration is parsed
---     with the lowest priority.
+--    with the lowest priority.
 
 --  An instance name may consist of multiple period-separated parts,
 --  for example, `--app-name "myapp" --instance-name "router.1"`.
