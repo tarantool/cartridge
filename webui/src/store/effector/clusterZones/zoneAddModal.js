@@ -1,5 +1,5 @@
 // @flow
-import { createEffect, createEvent, createStore, createStoreObject, sample } from 'effector';
+import { combine, createEffect, createEvent, createStore, sample } from 'effector';
 import type { Effect, Store } from 'effector';
 
 import { getErrorMessage } from '../../../api';
@@ -29,7 +29,7 @@ export const $zoneName: Store<string> = createStore('')
   .reset(submitZoneFx.done)
   .reset(zoneAddModalClose);
 
-export const $zoneAddModal = createStoreObject({
+export const $zoneAddModal = combine({
   visible: $zoneAddModalVisible,
   value: $zoneName,
   error: $error,
@@ -43,7 +43,7 @@ $error
   .reset(zoneAddModalClose);
 
 sample({
-  source: createStoreObject({
+  source: combine({
     zone: $zoneName,
     uuid: $zoneAddForInstance,
   }),

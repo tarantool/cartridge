@@ -29,7 +29,7 @@ export async function logIn(params) {
       error: null,
     };
   } catch (error) {
-    if (error.response.status === 403) {
+    if (error && error.response && error.response.status === 403) {
       return {
         authorized: false,
         error: 'Authentication failed',

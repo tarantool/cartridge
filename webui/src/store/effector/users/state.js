@@ -1,5 +1,5 @@
 // @flow
-import { createEffect, createEvent, createStore, createStoreObject } from 'effector';
+import { combine, createEffect, createEvent, createStore } from 'effector';
 import type { Store } from 'effector';
 
 import type { AddUserMutationVariables, EditUserMutationVariables, User } from 'src/generated/graphql-typing';
@@ -22,18 +22,18 @@ export const $userMutationError = createStore<null | string>(null);
 export const $usernameToMutate = createStore<null | string>(null);
 export const $visibleModal = createStore<VisibleModalType>(null);
 
-export const $userAddModal = createStoreObject({
+export const $userAddModal = combine({
   visible: $visibleModal.map((f) => f === 'add'),
   error: $userMutationError,
 });
 
-export const $userEditModal = createStoreObject({
+export const $userEditModal = combine({
   username: $usernameToMutate,
   visible: $visibleModal.map((f) => f === 'edit'),
   error: $userMutationError,
 });
 
-export const $userRemoveModal = createStoreObject({
+export const $userRemoveModal = combine({
   username: $usernameToMutate,
   visible: $visibleModal.map((f) => f === 'remove'),
   error: $userMutationError,

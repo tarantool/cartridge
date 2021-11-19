@@ -20,7 +20,7 @@
 --       memtx_memory: 1024000000
 --       some_option: "router-specific value"
 --
--- Within the configuration file, `argparse` looks for multiple matching sections:
+--  Within the configuration file, `argparse` looks for multiple matching sections:
 --
 -- 1. The section named `<APP_NAME>.<INSTANCE_NAME>` is parsed first.
 --   The application name is derived automatically from the rockspec filename in the
@@ -37,11 +37,11 @@
 -- In this case, sections with names that include these parts are also parsed:
 -- first `[myapp.router.1]`, then `[myapp.router]`, then `[myapp]`.
 --
--- Instead of a single configuration file, you can use a directory.
--- In this case, all files in the directory are parsed.
--- To avoid conflicts, the same section mustn't repeat across different files.
+--  Instead of a single configuration file, you can use a directory.
+--  In this case, all files in the directory are parsed.
+--  To avoid conflicts, the same section mustn't repeat across different files.
 --
--- @module cartridge.argparse
+--  @module cartridge.argparse
 
 local fio = require('fio')
 local yaml = require('yaml')
@@ -78,7 +78,7 @@ end
 -- Any options not listed below (like the `roles` option)
 -- can't be modified with `argparse` and should be configured in code.
 --
--- @table cluster_opts
+--  @table cluster_opts
 local cluster_opts = {
     alias = 'string', -- **string**
     workdir = 'string', -- **string**
@@ -419,9 +419,9 @@ end
 --      arg3: true
 --    ...
 --
--- @function get_opts
--- @tparam {argname=type,...} filter
--- @treturn {argname=value,...}
+--  @function get_opts
+--  @tparam {argname=type,...} filter
+--  @treturn {argname=value,...}
 local function get_opts(opts)
     local args = parse()
 
@@ -472,13 +472,13 @@ return {
     get_opts = get_opts,
 
     --- Shorthand for `get_opts(box_opts)`.
-    -- @function get_box_opts
+    --  @function get_box_opts
     get_box_opts = function()
         return get_opts(box_opts)
     end,
 
     --- Shorthand for `get_opts(cluster_opts)`.
-    -- @function get_cluster_opts
+    --  @function get_cluster_opts
     get_cluster_opts = function()
         return get_opts(cluster_opts)
     end,

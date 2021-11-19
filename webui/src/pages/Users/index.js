@@ -29,6 +29,7 @@ const Users = ({
   implements_list_users,
   implements_edit_user,
   implements_remove_user,
+  implements_check_password,
   showToggleAuth,
 }: UsersProps) => {
   useEffect(() => {
@@ -45,9 +46,10 @@ const Users = ({
     <PageLayout
       heading="Users"
       topRightControls={[
-        showToggleAuth && <AuthToggleButton />,
+        showToggleAuth && <AuthToggleButton key="auth" implements_check_password={implements_check_password} />,
         implements_add_user && (
           <Button
+            key="add"
             className="meta-test__addUserBtn"
             text="Add user"
             intent="primary"
@@ -86,6 +88,7 @@ const mapStateToProps = ({
   implements_list_users,
   implements_remove_user,
   implements_edit_user,
+  implements_check_password,
 });
 
 export default connect(mapStateToProps)(Users);

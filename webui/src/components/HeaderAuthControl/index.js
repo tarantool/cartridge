@@ -28,6 +28,8 @@ const styles = {
   `,
   authIcon: css`
     margin-right: 8px;
+    height: 24px;
+    width: 24px;
   `,
 };
 

@@ -17,6 +17,7 @@ g.before_all = function()
         cookie = require('digest').urandom(6):hex(),
         base_http_port = 8080,
         base_advertise_port = 13300,
+        swim_period = 0.314,
         replicasets = {
             {
                 alias = 'vshard',
@@ -186,4 +187,12 @@ function g.test_errno()
         "errno 'ENOSUCHERRNO' is not declared",
         function() return errno.ENOSUCHERRNO end
     )
+end
+
+function g.test_swim_period()
+    local period = g.cluster.main_server:eval([[
+        return package.loaded['membership.options'].PROTOCOL_PERIOD_SECONDS
+    ]])
+
+    t.assert_equals(period, 0.314)
 end

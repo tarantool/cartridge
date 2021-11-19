@@ -12,6 +12,40 @@ and this project adheres to
 [Unreleased]
 -------------------------------------------------------------------------------
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Added
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Add ``swim_period`` argument to the test-helpers.
+
+- Add unit tests for the Failover modal.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Changed
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Update ``http`` dependency to 1.1.1
+- Allow to bootstrap vshard groups partially.
+
+- Use effector for business logic and storing Cluster page data (models folder).
+
+- Rewrite all Cluster page components using typescript.
+
+- Improve the error message in login dialog.
+
+-------------------------------------------------------------------------------
+[2.7.3] - 2021-10-27
+-------------------------------------------------------------------------------
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Changed
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Disabled role's ``validate_config`` is not called during config validation.
+
+- Update @tarantool.io/ui-kit and frontend-core dependencies to support
+  the new design style.
+
 -------------------------------------------------------------------------------
 [2.7.2] - 2021-10-08
 -------------------------------------------------------------------------------

@@ -5,6 +5,10 @@ import { HttpLink } from 'apollo-link-http';
 
 import { getApiEndpoint } from 'src/apiEndpoints';
 
+import { getGraphqlError, getGraphqlErrorMessage, isGraphqlAccessDeniedError, isGraphqlErrorResponse } from './utils';
+
+export { getGraphqlError, getGraphqlErrorMessage, isGraphqlAccessDeniedError, isGraphqlErrorResponse };
+
 const httpLink = new HttpLink({
   uri: getApiEndpoint('GRAPHQL_API_ENDPOINT'),
   credentials: 'include',
@@ -43,20 +47,3 @@ export default {
     return client.mutate({ mutation, variables: variables }).then((r) => r.data);
   },
 };
-
-export const getGraphqlError = (error) =>
-  (Array.isArray(error.graphQLErrors) && error.graphQLErrors.length > 0 && error.graphQLErrors[0]) || null;
-
-export const isGraphqlErrorResponse = (error) => {
-  const gqlError = getGraphqlError(error);
-  return !!(gqlError && 'message' in gqlError);
-};
-
-export const getGraphqlErrorMessage = (error) => {
-  const gqlError = getGraphqlError(error);
-  return (gqlError && gqlError.message) || 'GraphQL error with empty message';
-};
-
-export const isGraphqlAccessDeniedError = (error) =>
-  (isGraphqlErrorResponse(error) && getGraphqlErrorMessage(error) === 'Unauthorized') ||
-  (error.networkError && error.networkError.statusCode === 401);
