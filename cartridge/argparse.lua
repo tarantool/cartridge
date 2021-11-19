@@ -31,17 +31,17 @@
 -- 2. The common `<APP_NAME>` section is parsed next.
 -- 3. Finally, the section `[default]` with the global configuration is parsed
 --   with the lowest priority.
-
+--
 -- An instance name may consist of multiple period-separated parts,
 -- for example, `--app-name "myapp" --instance-name "router.1"`.
 -- In this case, sections with names that include these parts are also parsed:
 -- first `[myapp.router.1]`, then `[myapp.router]`, then `[myapp]`.
 --
---  Instead of a single configuration file, you can use a directory.
---  In this case, all files in the directory are parsed.
---  To avoid conflicts, the same section mustn't repeat across different files.
+-- Instead of a single configuration file, you can use a directory.
+-- In this case, all files in the directory are parsed.
+-- To avoid conflicts, the same section mustn't repeat across different files.
 --
---  @module cartridge.argparse
+-- @module cartridge.argparse
 
 local fio = require('fio')
 local yaml = require('yaml')
@@ -78,7 +78,7 @@ end
 -- Any options not listed below (like the `roles` option)
 -- can't be modified with `argparse` and should be configured in code.
 --
---  @table cluster_opts
+-- @table cluster_opts
 local cluster_opts = {
     alias = 'string', -- **string**
     workdir = 'string', -- **string**
@@ -419,9 +419,9 @@ end
 --      arg3: true
 --    ...
 --
---  @function get_opts
---  @tparam {argname=type,...} filter
---  @treturn {argname=value,...}
+-- @function get_opts
+-- @tparam {argname=type,...} filter
+-- @treturn {argname=value,...}
 local function get_opts(opts)
     local args = parse()
 
@@ -472,13 +472,13 @@ return {
     get_opts = get_opts,
 
     --- Shorthand for `get_opts(box_opts)`.
-    --  @function get_box_opts
+    -- @function get_box_opts
     get_box_opts = function()
         return get_opts(box_opts)
     end,
 
     --- Shorthand for `get_opts(cluster_opts)`.
-    --  @function get_cluster_opts
+    -- @function get_cluster_opts
     get_cluster_opts = function()
         return get_opts(cluster_opts)
     end,
