@@ -4,6 +4,7 @@ import { connect } from 'react-redux';
 import type { Location, RouterHistory } from 'react-router-dom';
 import { Route, Switch } from 'react-router-dom';
 import { css, cx } from '@emotion/css';
+import core from '@tarantool.io/frontend-core';
 import { PageSection } from '@tarantool.io/ui-kit';
 
 import BootstrapPanel from 'src/components/BootstrapPanel';
@@ -53,7 +54,7 @@ import ExpelServerModal from '../../components/ExpelServerModal';
 import ServerDetailsModal from '../../components/ServerDetailsModal';
 import { ZoneAddModal } from '../../components/ZoneAddModal';
 
-const { AppTitle } = window.tarantool_enterprise_core.components;
+const { AppTitle } = core.components;
 
 const styles = {
   clusterFilter: css`

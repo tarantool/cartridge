@@ -1,5 +1,6 @@
 /* eslint-disable no-console */
 import { forward } from 'effector';
+import core from '@tarantool.io/frontend-core';
 
 import { falseL, trueL } from './utils';
 import {
@@ -44,7 +45,7 @@ notifyFx.use((props) => {
   }
 
   const { title, message, type = 'success', timeout = 5000, details } = props;
-  window.tarantool_enterprise_core.notify({
+  core.notify({
     title,
     message,
     type,

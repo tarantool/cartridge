@@ -75,7 +75,7 @@
     "@graphql-codegen/typescript-operations": "2.1.4",
     "@tarantool.io/babel-config": "^1.0.0",
     "@tarantool.io/eslint-config": "^1.0.6",
-    "@tarantool.io/frontend-core": "7.12.0",
+    "@tarantool.io/frontend-core": "7.12.1",
     "@tarantool.io/import-sort-style": "^1.0.3",
     "@tarantool.io/lua-bundler-webpack-plugin": "^1.0.1",
     "@tarantool.io/prettier-config": "^1.0.3",

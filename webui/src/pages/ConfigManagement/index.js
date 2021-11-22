@@ -2,6 +2,7 @@
 import React, { useEffect } from 'react';
 import { css } from '@emotion/css';
 import { useStore } from 'effector-react';
+import core from '@tarantool.io/frontend-core';
 import { Alert, Button, IconAttach, IconDownload, Text, UploadZone, colors } from '@tarantool.io/ui-kit';
 
 import { getApiEndpoint } from 'src/apiEndpoints';
@@ -10,7 +11,7 @@ import { PageLayout } from 'src/components/PageLayout';
 import { Panel } from '../../components/Panel';
 import { $configForm, configPageMount, dropFiles } from '../../store/effector/configUpload';
 
-const { AppTitle } = window.tarantool_enterprise_core.components;
+const { AppTitle } = core.components;
 
 const styles = {
   panel: css`

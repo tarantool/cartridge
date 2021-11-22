@@ -1,5 +1,6 @@
 import { delay } from 'redux-saga';
 import { call, cancel, fork, put, select, take } from 'redux-saga/effects';
+import core from '@tarantool.io/frontend-core';
 
 import { REFRESH_LIST_INTERVAL } from 'src/constants';
 import {
@@ -25,7 +26,7 @@ const pageDataRequestSaga = getSignalRequestSaga(
 
 function* refreshInstanceStatsSaga() {
   while (true) {
-    const { cartridge_refresh_interval } = window.__tarantool_variables || {};
+    const { cartridge_refresh_interval } = core.variables;
     yield delay(parseInt(cartridge_refresh_interval || REFRESH_LIST_INTERVAL));
     yield put({ type: CLUSTER_INSTANCE_REFRESH_REQUEST });
 

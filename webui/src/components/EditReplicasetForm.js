@@ -3,6 +3,7 @@ import React from 'react';
 import { Field, Form, FormSpy } from 'react-final-form';
 import { css, cx } from '@emotion/css';
 import { compose, groupBy, map, prop, uniq } from 'ramda';
+import core from '@tarantool.io/frontend-core';
 import { Button, Checkbox, FormField, LabeledInput, PopupFooter, RadioButton } from '@tarantool.io/ui-kit';
 
 import SelectedReplicaset from 'src/components/SelectedReplicaset';
@@ -121,7 +122,7 @@ const EditReplicasetForm = ({
         const activeDependencies = getRolesDependencies(values.roles, knownRoles);
         const VShardGroupInputDisabled = isVShardGroupInputDisabled(values.roles, replicaset);
         const rolesColumns = knownRoles && knownRoles.length > 6 ? 3 : 2;
-        const { cartridge_hide_all_rw } = window.__tarantool_variables || {};
+        const { cartridge_hide_all_rw } = core.variables;
 
         return (
           <form onSubmit={handleSubmit}>

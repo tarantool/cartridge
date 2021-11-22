@@ -1,5 +1,6 @@
 import { delay } from 'redux-saga';
 import { call, cancel, fork, put, select, take, takeEvery, takeLatest } from 'redux-saga/effects';
+import core from '@tarantool.io/frontend-core';
 
 import { REFRESH_LIST_INTERVAL, STAT_REQUEST_PERIOD } from 'src/constants';
 import { graphqlErrorNotification } from 'src/misc/graphqlErrorNotification';
@@ -84,7 +85,7 @@ function* refreshListsTaskSaga() {
   let requestNum = 0;
 
   while (true) {
-    const { cartridge_refresh_interval } = window.__tarantool_variables || {};
+    const { cartridge_refresh_interval } = core.variables;
     yield delay(parseInt(cartridge_refresh_interval || REFRESH_LIST_INTERVAL));
     requestNum++;
     yield refreshListsSaga(requestNum);
@@ -96,7 +97,7 @@ function* refreshListsSaga(requestNum = 0) {
 
   let response;
   try {
-    const { cartridge_stat_period } = window.__tarantool_variables || {};
+    const { cartridge_stat_period } = core.variables;
     const shouldRequestStat = requestNum % parseInt(cartridge_stat_period || STAT_REQUEST_PERIOD) === 0;
     if (shouldRequestStat) {
       response = yield call(refreshLists, { shouldRequestStat: true });
@@ -186,7 +187,7 @@ const failoverPromoteRequestSaga = function* () {
       yield call(promoteFailoverLeader, payload);
       yield put({ type: CLUSTER_PAGE_FAILOVER_PROMOTE_REQUEST_SUCCESS });
 
-      window.tarantool_enterprise_core.notify({
+      core.notify({
         title: 'Failover',
         message: 'Leader promotion successful',
         type: 'success',
@@ -261,7 +262,7 @@ function* changeFailoverRequestSaga() {
 
       yield put({ type: CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_SUCCESS, payload: response });
 
-      window.tarantool_enterprise_core.notify({
+      core.notify({
         title: 'Failover mode',
         message: response.failover_params.mode,
         type: 'success',

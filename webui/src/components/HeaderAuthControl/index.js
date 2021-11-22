@@ -1,6 +1,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import { css, cx } from '@emotion/css';
+import core from '@tarantool.io/frontend-core';
 import { Button, Dropdown, DropdownItem, SVGImage, Text } from '@tarantool.io/ui-kit';
 
 import { ModalLogInForm } from 'src/components/LogInForm';
@@ -34,7 +35,7 @@ const styles = {
 };
 
 class HeaderAuthControl extends React.Component {
-  sendLogOut = () => window.tarantool_enterprise_core.dispatch('cluster:logout');
+  sendLogOut = () => core.dispatch('cluster:logout');
 
   render() {
     const { implements_check_password, username, authorized, authModalVisible, showAuthModal, hideAuthModal } =

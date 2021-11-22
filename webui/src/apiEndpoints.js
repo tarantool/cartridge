@@ -1,4 +1,6 @@
-const apiPrefix = window.__tarantool_admin_prefix || '';
+import core from '@tarantool.io/frontend-core';
+
+const apiPrefix = core.adminPrefix;
 
 if (!navigator.userAgent.includes('jsdom')) {
   // eslint-disable-next-line no-undef
