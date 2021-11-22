@@ -1,5 +1,6 @@
 import { delay } from 'redux-saga';
 import { call, put, select, take, takeEvery, takeLatest } from 'redux-saga/effects';
+import core from '@tarantool.io/frontend-core';
 
 import { SERVER_NOT_REACHABLE_ERROR_TYPE, getErrorMessage as getApiErrorMessage, isDeadServerError } from 'src/api';
 import { menuFilter } from 'src/menu';
@@ -27,19 +28,19 @@ function* appDataRequestSaga() {
       const { app_name, instance_name } = clusterSelfResponse.clusterSelf;
 
       if (app_name || instance_name) {
-        window.tarantool_enterprise_core.dispatch('setAppName', [app_name, instance_name].filter((i) => i).join('.'));
+        core.dispatch('setAppName', [app_name, instance_name].filter((i) => i).join('.'));
       }
 
       const { implements_add_user, implements_list_users } = clusterSelfResponse.authParams;
 
       menuFilter.set(clusterSelfResponse.MenuBlacklist);
-      window.tarantool_enterprise_core.dispatch('dispatchToken', { type: '' });
+      core.dispatch('dispatchToken', { type: '' });
 
       if (implements_add_user || implements_list_users) {
-        window.tarantool_enterprise_core.dispatch('dispatchToken', {
+        core.dispatch('dispatchToken', {
           type: 'ADD_CLUSTER_USERS_MENU_ITEM',
           payload: {
-            location: window.tarantool_enterprise_core.history.location,
+            location: core.history.location,
           },
         });
       }
@@ -109,7 +110,7 @@ function* appMessageSaga() {
       };
       yield put({ type: APP_CREATE_MESSAGE, payload: messagePayload });
 
-      window.tarantool_enterprise_core.notify({
+      core.notify({
         title: 'Successful!',
         message: messageText,
         type: messageType,

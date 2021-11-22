@@ -24,6 +24,7 @@ module.exports = createWebpackConfiguration({
   externals: {
     react: 'react',
     'react-dom': 'reactDom',
+    '@tarantool.io/frontend-core': 'tarantool_enterprise_core',
   },
   middleware: isProd
     ? (cfg) => {

@@ -3,6 +3,7 @@ import React from 'react';
 import { Field, Form, FormSpy } from 'react-final-form';
 import { css } from '@emotion/css';
 import { uniq } from 'ramda';
+import core from '@tarantool.io/frontend-core';
 import { Button, Checkbox, FormField, LabeledInput, PopupFooter, RadioButton } from '@tarantool.io/ui-kit';
 
 import SelectedServersList from 'src/components/SelectedServersList';
@@ -102,7 +103,7 @@ const CreateReplicasetForm = ({
       const activeDependencies = getRolesDependencies(values.roles, knownRoles);
       const VShardGroupInputDisabled = isVShardGroupInputDisabled(values.roles);
       const rolesColumns = knownRoles && knownRoles.length > 6 ? 3 : 2;
-      const { cartridge_hide_all_rw } = window.__tarantool_variables || {};
+      const { cartridge_hide_all_rw } = core.variables;
 
       return (
         <form onSubmit={handleSubmit}>

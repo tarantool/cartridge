@@ -2,6 +2,7 @@
 import React, { useEffect } from 'react';
 import { connect } from 'react-redux';
 import { useStore } from 'effector-react';
+import core from '@tarantool.io/frontend-core';
 import { Button } from '@tarantool.io/ui-kit';
 
 import AuthToggleButton from 'src/components/AuthToggleButton';
@@ -14,7 +15,7 @@ import { $usersListFetchError, fetchUsersListFx, resetUsersList, showUserAddModa
 import PageDataErrorMessage from '../../components/PageDataErrorMessage';
 import { UsersTable } from '../../components/UsersTable';
 
-const { AppTitle } = window.tarantool_enterprise_core.components;
+const { AppTitle } = core.components;
 
 type UsersProps = {
   implements_add_user: boolean,
