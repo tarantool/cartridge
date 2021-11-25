@@ -46,6 +46,20 @@ local function build_cluster(config)
     return helpers.Cluster:new(config)
 end
 
+function g.test_server_by_role()
+    local cluster = build_cluster({replicasets = {
+        {roles = {'vshard-router', 'vshard-storage'}, alias = 'vshard', servers = 1},
+        {roles = {'my-role'}, alias = 'myrole', servers = {
+            {alias = 'custom-alias'},
+            {},
+        }},
+    }})
+
+    t.assert_equals(cluster:server_by_role('vshard-router'), cluster.servers[1])
+    t.assert_equals(cluster:server_by_role('vshard-storage'), cluster.servers[1])
+    t.assert_equals(cluster:server_by_role('my-role'), cluster.servers[2])
+end
+
 function g.test_cluster_bootstrap()
     for i, server in ipairs(g.cluster.servers) do
         t.assert_equals(type(server.process.pid), 'number', 'Server ' .. i .. ' not started')

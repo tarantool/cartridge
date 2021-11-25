@@ -156,6 +156,25 @@ function Cluster:server(alias)
     error('Server ' .. alias .. ' not found', 2)
 end
 
+function Cluster:server_by_role(role_name)
+    local replicasets_with_role = fun.iter(self.replicasets)
+        :filter(function(rs)
+            return fun.iter(rs.roles)
+                :filter(function(role)
+                    return role == role_name
+                end)
+                :nth(1)
+        end)
+        :map(function(rs) return rs.uuid, true end)
+        :tomap()
+
+    return fun.iter(self.servers)
+        :filter(function(server)
+            return replicasets_with_role[server.replicaset_uuid]
+        end)
+        :nth(1)
+end
+
 --- Execute `edit_topology` GraphQL request to setup replicasets, apply roles
 -- join servers to replicasets.
 function Cluster:apply_topology()
