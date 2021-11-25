@@ -156,6 +156,9 @@ function Cluster:server(alias)
     error('Server ' .. alias .. ' not found', 2)
 end
 
+--- Find server by role name.
+-- @string role_name
+-- @return @{cartridge.test-helpers.server}
 function Cluster:server_by_role(role_name)
     local replicasets_with_role = fun.iter(self.replicasets)
         :filter(function(rs)
