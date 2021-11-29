@@ -1,4 +1,4 @@
-import core from '@tarantool.io/frontend-core';
+import { core } from '@tarantool.io/frontend-core';
 
 const apiPrefix = core.adminPrefix;
 

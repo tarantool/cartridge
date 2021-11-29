@@ -1,6 +1,6 @@
 import { delay } from 'redux-saga';
 import { call, cancel, fork, put, select, take, takeEvery, takeLatest } from 'redux-saga/effects';
-import core from '@tarantool.io/frontend-core';
+import { core } from '@tarantool.io/frontend-core';
 
 import { REFRESH_LIST_INTERVAL, STAT_REQUEST_PERIOD } from 'src/constants';
 import { graphqlErrorNotification } from 'src/misc/graphqlErrorNotification';

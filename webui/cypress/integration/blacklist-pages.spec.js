@@ -59,9 +59,9 @@ describe('Blacklist pages', () => {
     cy.window()
       .then((win) => {
         const projectName = 'test';
-        win.tarantool_enterprise_core.register(
-          projectName,
-          [
+        return win.tarantool_enterprise_core.registerModule({
+          namespace: projectName,
+          menu: [
             {
               label: 'Repair Queues',
               path: `/${projectName}/repair`,
@@ -82,10 +82,8 @@ describe('Blacklist pages', () => {
               ],
             },
           ],
-          null,
-          'react'
-        );
-        return Promise.resolve();
+          RootComponent: () => null,
+        });
       })
       .then(() => {
         cy.get('a[href="/abc/admin/test/repair"]').should('exist').click();

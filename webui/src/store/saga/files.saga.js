@@ -1,6 +1,6 @@
 import { difference } from 'ramda';
 import { call, put, select, takeEvery } from 'redux-saga/effects';
-import core from '@tarantool.io/frontend-core';
+import { core } from '@tarantool.io/frontend-core';
 
 import { graphqlErrorNotification } from 'src/misc/graphqlErrorNotification';
 import { getFileIdForMonaco, getModelValueByFile, setModelValueByFile } from 'src/misc/monacoModelStorage';

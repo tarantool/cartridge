@@ -1,7 +1,7 @@
 import '../../init';
 
 import { allSettled, fork } from 'effector';
-import core from '@tarantool.io/frontend-core';
+import { core } from '@tarantool.io/frontend-core';
 
 import { domain } from '../../app';
 import { queryClusterFx, queryServerListFx } from '../server-list';

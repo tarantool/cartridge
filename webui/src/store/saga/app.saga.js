@@ -1,6 +1,6 @@
 import { delay } from 'redux-saga';
 import { call, put, select, take, takeEvery, takeLatest } from 'redux-saga/effects';
-import core from '@tarantool.io/frontend-core';
+import { core } from '@tarantool.io/frontend-core';
 
 import { SERVER_NOT_REACHABLE_ERROR_TYPE, getErrorMessage as getApiErrorMessage, isDeadServerError } from 'src/api';
 import { menuFilter } from 'src/menu';

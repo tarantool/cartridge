@@ -1,12 +1,11 @@
 // @flow
 import React from 'react';
 import { css } from '@emotion/css';
+import { core } from '@tarantool.io/frontend-core';
 import { IconCluster, IconCode, IconGear, IconUsers } from '@tarantool.io/ui-kit';
 import type { MenuItemType } from '@tarantool.io/ui-kit';
 
 import { PROJECT_NAME } from './constants';
-
-const { tarantool_enterprise_core } = window;
 
 const matchPath = (path, link) => {
   if (path.length === 0) return false;
@@ -116,7 +115,7 @@ const createMenuFilter = () => {
   let unregisterCurrentFilter = null;
 
   const changeFilter = (filter: Function) => {
-    const unregisterFilter = tarantool_enterprise_core.pageFilter.registerFilter(filter);
+    const unregisterFilter = core.pageFilter.registerFilter(filter);
     // dispose current filter
     if (unregisterCurrentFilter) {
       unregisterCurrentFilter();

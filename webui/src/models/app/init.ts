@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 import { forward } from 'effector';
-import core from '@tarantool.io/frontend-core';
+import { core } from '@tarantool.io/frontend-core';
 
 import { falseL, trueL } from './utils';
 import {

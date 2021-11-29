@@ -4,7 +4,7 @@ import { connect } from 'react-redux';
 import type { Location, RouterHistory } from 'react-router-dom';
 import { Route, Switch } from 'react-router-dom';
 import { css, cx } from '@emotion/css';
-import core from '@tarantool.io/frontend-core';
+import { core } from '@tarantool.io/frontend-core';
 import { PageSection } from '@tarantool.io/ui-kit';
 
 import BootstrapPanel from 'src/components/BootstrapPanel';

@@ -2,7 +2,7 @@
 import React, { useEffect } from 'react';
 import { css } from '@emotion/css';
 import { useStore } from 'effector-react';
-import core from '@tarantool.io/frontend-core';
+import { core } from '@tarantool.io/frontend-core';
 import { Alert, Button, IconAttach, IconDownload, Text, UploadZone, colors } from '@tarantool.io/ui-kit';
 
 import { getApiEndpoint } from 'src/apiEndpoints';
