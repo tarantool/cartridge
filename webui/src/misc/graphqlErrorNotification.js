@@ -1,5 +1,5 @@
 // @flow
-import core from '@tarantool.io/frontend-core';
+import { core } from '@tarantool.io/frontend-core';
 
 import { getGraphqlError, isGraphqlErrorResponse } from 'src/api/graphql';
 import { isNetworkError } from 'src/misc/isNetworkError';

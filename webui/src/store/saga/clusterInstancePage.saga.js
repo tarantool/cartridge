@@ -1,6 +1,6 @@
 import { delay } from 'redux-saga';
 import { call, cancel, fork, put, select, take } from 'redux-saga/effects';
-import core from '@tarantool.io/frontend-core';
+import { core } from '@tarantool.io/frontend-core';
 
 import { REFRESH_LIST_INTERVAL } from 'src/constants';
 import {

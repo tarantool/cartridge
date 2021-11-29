@@ -21,11 +21,18 @@ module.exports = createWebpackConfiguration({
   env,
   sourceMap: process.env.GENERATE_SOURCEMAP === 'true',
   proxy: process.env.WEBPACK_DEV_SERVER_PROXY === 'true' ? require('./config/proxy.config') : undefined,
-  externals: {
-    react: 'react',
-    'react-dom': 'reactDom',
-    '@tarantool.io/frontend-core': 'tarantool_enterprise_core',
-  },
+  externals: isProd
+    ? {
+        react: 'react',
+        'react-dom': 'reactDom',
+        '@tarantool.io/frontend-core': 'tarantool_frontend_core_module',
+        '@tarantool.io/ui-kit': 'tarantool_frontend_ui_kit_module',
+      }
+    : {
+        react: 'react',
+        'react-dom': 'reactDom',
+        '@tarantool.io/ui-kit': 'tarantool_frontend_ui_kit_module',
+      },
   middleware: isProd
     ? (cfg) => {
         cfg.cache = false;

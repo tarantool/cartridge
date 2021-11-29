@@ -1,5 +1,5 @@
 import { forward, guard, sample } from 'effector';
-import core from '@tarantool.io/frontend-core';
+import { core } from '@tarantool.io/frontend-core';
 
 import graphql from 'src/api/graphql';
 import { app } from 'src/models';

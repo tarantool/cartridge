@@ -2,7 +2,7 @@ import { InMemoryCache } from 'apollo-cache-inmemory';
 import { ApolloClient } from 'apollo-client';
 import { from } from 'apollo-link';
 import { HttpLink } from 'apollo-link-http';
-import core from '@tarantool.io/frontend-core';
+import { core } from '@tarantool.io/frontend-core';
 
 import { getApiEndpoint } from 'src/apiEndpoints';
 

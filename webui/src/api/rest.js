@@ -1,5 +1,5 @@
 import axios from 'axios';
-import core from '@tarantool.io/frontend-core';
+import { core } from '@tarantool.io/frontend-core';
 
 import { getApiEndpoint } from 'src/apiEndpoints';
 

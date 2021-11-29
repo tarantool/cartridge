@@ -5,6 +5,7 @@ import './models/init';
 import React, { Suspense } from 'react';
 import { Provider } from 'react-redux';
 import { Route, Router, Switch } from 'react-router-dom';
+import { core } from '@tarantool.io/frontend-core';
 import { SectionPreloader } from '@tarantool.io/ui-kit';
 
 import { isGraphqlAccessDeniedError } from 'src/api/graphql';
@@ -27,18 +28,17 @@ import { menuFilter, menuReducer } from './menu';
 
 const Code = createLazySection(() => import('src/pages/Code'));
 
-const { tarantool_enterprise_core } = window;
 const { AppGate, setConnectionAliveEvent, setConnectionDeadEvent, authAccessDeniedEvent } = app;
 
 const projectPath = (path) => `/${PROJECT_NAME}/${path}`;
 
-class Root extends React.Component {
+class RootComponent extends React.Component {
   render() {
     return (
       <>
         <AppGate />
         <Provider store={store}>
-          <Router history={tarantool_enterprise_core.history}>
+          <Router history={core.history}>
             <Suspense fallback={<SectionPreloader />}>
               <Switch>
                 <Route path={projectPath('dashboard')} component={Dashboard} />
@@ -57,33 +57,37 @@ class Root extends React.Component {
 
 menuFilter.hideAll();
 
-tarantool_enterprise_core.register(PROJECT_NAME, menuReducer, Root, 'react', null);
+core.registerModule({
+  namespace: PROJECT_NAME,
+  menu: menuReducer,
+  RootComponent,
+});
 
-tarantool_enterprise_core.subscribe('cluster:logout', () => {
+core.subscribe('cluster:logout', () => {
   store.dispatch(logOut());
 });
 
-tarantool_enterprise_core.subscribe('cluster:post_authorize_hooks', () => {
+core.subscribe('cluster:post_authorize_hooks', () => {
   store.dispatch(appDidMount());
 });
 
-tarantool_enterprise_core.subscribe('cluster:expect_welcome_message', () => {
+core.subscribe('cluster:expect_welcome_message', () => {
   store.dispatch(expectWelcomeMessage(true));
 });
 
-tarantool_enterprise_core.subscribe('cluster:set_welcome_message', (text) => {
+core.subscribe('cluster:set_welcome_message', (text) => {
   store.dispatch(setWelcomeMessage(text));
   store.dispatch(expectWelcomeMessage(false));
 });
 
 store.dispatch(appDidMount());
 
-tarantool_enterprise_core.setHeaderComponent(
+core.setHeaderComponent(
   <Provider store={store}>
-    <React.Fragment>
+    <>
       <HeaderAuthControl />
       <LogInForm />
-    </React.Fragment>
+    </>
   </Provider>
 );
 
@@ -106,9 +110,9 @@ function graphQLAuthErrorHandler(response, next) {
   return next(response);
 }
 
-tarantool_enterprise_core.apiMethods.registerApolloHandler('afterware', graphQLConnectionErrorHandler);
-tarantool_enterprise_core.apiMethods.registerApolloHandler('onError', graphQLConnectionErrorHandler);
-tarantool_enterprise_core.apiMethods.registerApolloHandler('onError', graphQLAuthErrorHandler);
+core.apiMethods.registerApolloHandler('afterware', graphQLConnectionErrorHandler);
+core.apiMethods.registerApolloHandler('onError', graphQLConnectionErrorHandler);
+core.apiMethods.registerApolloHandler('onError', graphQLAuthErrorHandler);
 
 function axiosConnectionErrorHandler(response, next) {
   if (isNetworkError(response)) {
@@ -129,8 +133,8 @@ function axiosAuthErrorHandler(error, next) {
   return next(error);
 }
 
-tarantool_enterprise_core.apiMethods.registerAxiosHandler('responseError', axiosAuthErrorHandler);
-tarantool_enterprise_core.apiMethods.registerAxiosHandler('responseError', axiosConnectionErrorHandler);
-tarantool_enterprise_core.apiMethods.registerAxiosHandler('response', axiosConnectionErrorHandler);
+core.apiMethods.registerAxiosHandler('responseError', axiosAuthErrorHandler);
+core.apiMethods.registerAxiosHandler('responseError', axiosConnectionErrorHandler);
+core.apiMethods.registerAxiosHandler('response', axiosConnectionErrorHandler);
 
-tarantool_enterprise_core.install();
+core.install();

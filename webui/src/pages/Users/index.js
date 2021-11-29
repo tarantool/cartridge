@@ -2,7 +2,7 @@
 import React, { useEffect } from 'react';
 import { connect } from 'react-redux';
 import { useStore } from 'effector-react';
-import core from '@tarantool.io/frontend-core';
+import { core } from '@tarantool.io/frontend-core';
 import { Button } from '@tarantool.io/ui-kit';
 
 import AuthToggleButton from 'src/components/AuthToggleButton';

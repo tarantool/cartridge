@@ -3,7 +3,7 @@ import React from 'react';
 import { Field, Form, FormSpy } from 'react-final-form';
 import { css, cx } from '@emotion/css';
 import { compose, groupBy, map, prop, uniq } from 'ramda';
-import core from '@tarantool.io/frontend-core';
+import { core } from '@tarantool.io/frontend-core';
 import { Button, Checkbox, FormField, LabeledInput, PopupFooter, RadioButton } from '@tarantool.io/ui-kit';
 
 import SelectedReplicaset from 'src/components/SelectedReplicaset';
