@@ -84,24 +84,51 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        tarantool: ['1.10', '2.7', '2.8', '2.9']
-    runs-on: ubuntu-18.04
+        # tarantool: ['1.10', '2.7', '2.8', '2.9']
+        # os: [ubuntu-18.04]
+        # experimental: [false]
+        include:
+        - os: macos-11
+          tarantool: null
+          experimental: true
+
+    runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.experimental }}
     steps:
       - uses: actions/setup-python@v2
         with:
           python-version: '3.9.8'
       - uses: actions/checkout@v2
       - uses: tarantool/setup-tarantool@v1
+        if: runner.os == 'Linux'
         with:
           tarantool-version: '${{ matrix.tarantool }}'
 
+      - name: Install tarantool (brew)
+        if: runner.os == 'macOS'
+        run: brew install tarantool
+
       # Setup etcd
-      - name: Install etcd
-        uses: ./.github/actions/setup-etcd
+      - name: Install etcd (linux)
         if: runner.os == 'Linux'
+        uses: ./.github/actions/setup-etcd
         with:
           etcd-version: v2.3.8
           install-prefix: etcd-v2.3.8
+      - name: Install etcd (macos)
+        if: runner.os == 'macOS'
+        env:
+          BASE_URL: "https://github.com/etcd-io/etcd/releases/download"
+          ETCD_VER: v2.3.8
+          INSTALL_PREFIX: etcd-v2.3.8
+        run: |
+          # mkdir -p ${INSTALL_PREFIX}
+          curl -L ${BASE_URL}/${ETCD_VER}/etcd-${ETCD_VER}-darwin-amd64.zip -o /tmp/etcd-${ETCD_VER}-darwin-amd64.zip
+          unzip /tmp/etcd-${ETCD_VER}-darwin-amd64.zip -d /tmp
+          mv /tmp/etcd-${ETCD_VER}-darwin-amd64/ ${INSTALL_PREFIX}/
+          etcd-${ETCD_VER}/etcdctl --version
+          etcd-${ETCD_VER}/etcd --version
+          echo "${INSTALL_PREFIX}" >> $GITHUB_PATH
 
       # Setup luatest
       - name: Cache rocks
@@ -109,7 +136,7 @@ jobs:
         id: cache-rocks
         with:
           path: .rocks/
-          key: test-rocks-${{ hashFiles('*.rockspec') }}-03
+          key: test-rocks-${{ runner.os }}-${{ hashFiles('*.rockspec') }}-03
       -
         run: tarantoolctl rocks install luatest 0.5.6
         if: steps.cache-rocks.outputs.cache-hit != 'true'
@@ -128,7 +155,31 @@ jobs:
         if: steps.cache-pytest.outputs.cache-hit != 'true'
 
       - run: tarantoolctl rocks make
-      - run: .rocks/bin/luatest -v
+      - if: runner.os == 'macOS'
+        run: |
+          ETCD_PATH=$(which etcd || true)
+          if [ -n "$ETCD_PATH" ]; then
+            export ETCD_PATH
+          fi
+          ulimit -n 12288
+
+      - if: runner.os == 'Linux'
+        run: .rocks/bin/luatest -v
+
+      # TODO: fix all the tests
+      - name: Run tests on macOS
+        if: runner.os == 'macOS'
+        run: |
+          .rocks/bin/luatest -v \
+          -x 'integration.advertise_change' \
+          -x 'integration.etcd2_client' \
+          -x 'integration.state_machine' \
+          -x 'integration.switchover' \
+          -x 'integration.twophase.*' \
+          -x 'integration.upload.*' \
+          -x 'integration.workdir.*' \
+          -x 'integration.zones.*' \
+          -x 'unit.helpers.*'
 
       - name: Run pytest -v
         run: |

@@ -131,7 +131,7 @@ function g.test_netbox_timeouts()
     )
     local t2 = fiber.clock()
     t.assert_covers(conn, {state = 'initial'})
-    t.assert_almost_equals(t2-t1, 0.3, 0.03)
+    t.assert_almost_equals(t2-t1, 0.3, 0.15)
 
     -- check that connection have status error after connect_timeout
     -- perform nb call -> remote_methods:_request ->
@@ -146,5 +146,5 @@ function g.test_netbox_timeouts()
         error = errno.strerror(errno.ETIMEDOUT),
     })
 
-    t.assert_almost_equals(fiber.clock()-t0, 1, 0.1)
+    t.assert_almost_equals(fiber.clock()-t0, 1, 0.3)
 end
