@@ -64,10 +64,10 @@ const styles = {
 
 const vshardTooltipInfo = (
   <span>
-    Group disabled not yet included the role of &quot;<b>vshard-storage</b>&quot;
+    Group choice is available only if the role &quot;<b>vshard-storage</b> is enabled&quot;
   </span>
 );
-const allRwTooltipInfo = 'Otherwise only leader in the replicaset is writeable';
+const allRwTooltipInfo = 'If disabled, only the leader of the replica set is writeable';
 
 type EditReplicasetFormProps = {
   knownRoles?: Role[],
