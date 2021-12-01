@@ -50,6 +50,11 @@
 -- * warning: "Instance ... with alien uuid is in the membership" -
 --   when two separate clusters share the same cluster cookie;
 --
+-- Custom issues (defined by user):
+--
+-- * Custom roles can announce more issues with their own level, topic
+--   and message. See `custom-role.get_issues`.
+--
 -- @module cartridge.issues
 -- @local
 local mod_name = 'cartridge.issues'
@@ -99,6 +104,36 @@ local function describe(uri)
         return string.format('%s (%s)', uri, member.payload.alias)
     else
         return uri
+    end
+end
+
+local function gather_role_issues(ret, role_name, M)
+    if type(M.get_issues) ~= 'function' then
+        return
+    end
+
+    local custom_issues = M.get_issues()
+
+    if type(custom_issues) ~= 'table' then
+        error(string.format(
+            'malformed return: %s', custom_issues
+        ), 0)
+    end
+
+    for i, issue in pairs(custom_issues) do
+        if type(i) ~= 'number' or type(issue) ~= 'table' then
+            error(string.format(
+                'malformed return: [%s] = %s', i, issue
+            ), 0)
+        end
+
+        table.insert(ret, {
+            level = tostring(issue.level or 'warning'),
+            topic = tostring(issue.topic or role_name),
+            message = tostring(issue.message),
+            instance_uuid = box.info.uuid,
+            replicaset_uuid = box.info.cluster.uuid,
+        })
     end
 end
 
@@ -350,6 +385,24 @@ local function list_on_instance(opts)
                     'Configuring roles is stuck on %s' ..
                     ' and hangs for %ds so far',
                     describe(self_uri), elapsed
+                ),
+            })
+        end
+    end
+
+    -- add custom issues from each role
+    local registry = require('cartridge.service-registry')
+    for role_name, M in pairs(registry.list()) do
+        local ok, err = pcall(gather_role_issues, ret, role_name, M)
+        if not ok then
+            table.insert(ret, {
+                level = 'warning',
+                topic = role_name,
+                instance_uuid = instance_uuid,
+                replicaset_uuid = replicaset_uuid,
+                message = string.format(
+                    'Role %s get_issues() failed: %s',
+                    role_name, err
                 ),
             })
         end

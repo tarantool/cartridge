@@ -159,12 +159,17 @@ end
 --
 -- @tparam ?number opts.bucket_count
 --  bucket count for vshard cluster. See vshard doc for more details.
+--  Can be set only **once**, before the first run of Cartridge application, and can't be
+--  changed after that.
 --  (default: 30000, overridden by
 --  env `TARANTOOL_BUCKET_COUNT`,
 --  args `--bucket-count`)
 --
--- @tparam ?{[string]=VshardGroup,...} opts.vshard_groups
---  vshard storage groups, table keys used as names
+-- @tparam ?table opts.vshard_groups
+--  vshard storage groups.
+--  `{group_name = VshardGroup, ...}`, `{'group1', 'group2', ...}` or
+--  `{group1 = VshardGroup, 'group2', ...}`.
+--  default group name: `default`
 --
 -- @tparam ?boolean opts.http_enabled
 --  whether http server should be started
@@ -281,7 +286,6 @@ local function cfg(opts, box_opts)
         roles = 'table',
         auth_backend_name = '?string',
         auth_enabled = '?boolean',
-        admin_disabled = '?boolean',
         vshard_groups = '?table',
         console_sock = '?string',
         webui_blacklist = '?table',
@@ -594,12 +598,14 @@ local function cfg(opts, box_opts)
     local auth_backend, err = CartridgeCfgError:pcall(require, opts.auth_backend_name)
     if not auth_backend then
         return nil, err
+    elseif type(auth_backend) ~= 'table' then
+        return nil, CartridgeCfgError:new(
+            "Auth backend must export a table, got %s",
+            type(auth_backend)
+        )
     end
 
-    local ok, err = CartridgeCfgError:pcall(function()
-        local ok = auth.set_callbacks(auth_backend)
-        return ok
-    end)
+    local ok, err = CartridgeCfgError:pcall(auth.set_callbacks, auth_backend)
     if not ok then
         return nil, err
     end
@@ -658,8 +664,7 @@ local function cfg(opts, box_opts)
         end
 
         local ok, err = CartridgeCfgError:pcall(auth.init, httpd, {
-            prefix = opts.webui_prefix,
-            admin_disabled = opts.admin_disabled or false,
+            prefix = opts.webui_prefix
         })
         if not ok then
             return nil, err

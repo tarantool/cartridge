@@ -127,7 +127,11 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     cy.get('.meta-test__configureBtn:visible').should('have.length', 1).click();
     cy.get('.meta-test__ConfigureServerModal').contains('Join Replica Set').should('not.exist');
 
-    cy.get('form').contains('dummy-1').closest('li').find('.meta-test__youAreHereIcon').should('exist');
+    cy.get('.meta-test__ConfigureServerModal')
+      .contains('dummy-1')
+      .closest('li')
+      .find('.meta-test__youAreHereIcon')
+      .should('exist');
 
     // Open create replicaset dialog
     cy.get('form input[name="weight"]').should('be.disabled');
@@ -215,11 +219,7 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     cy.get('.meta-test__configureBtn:visible').should('have.length', 2);
     cy.contains('dummy-2').closest('li').find('.meta-test__configureBtn').click();
 
-    cy.get('form input[name="alias"]')
-
-      .type('test-storage')
-      .should('have.value', 'test-storage');
-
+    cy.get('form input[name="alias"]').type('test-storage').should('have.value', 'test-storage');
     cy.get('form input[value="vshard-storage"]').check({ force: true });
     cy.get('form input[value="default"]').should('be.enabled').should('be.checked');
 

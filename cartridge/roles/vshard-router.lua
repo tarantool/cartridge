@@ -31,6 +31,8 @@ vars:new('routers', {
     -- [router_name] = vshard.router.new(),
 })
 
+vars:new('issues', {})
+
 -- Human readable router name for logging
 -- Isn't exposed in public API
 local function router_name(group_name)
@@ -190,6 +192,17 @@ local function bootstrap()
 
     local err = nil
 
+    vars.issues = {}
+
+    -- In the case of partial bootstrapping, when one or several vshard groups
+    -- are missing, we'll get the error 'Sharding config is empty'.
+    -- But if we try bootstrapping the cluster without vshard groups again,
+    -- we'll get the error 'Already bootstrapped'
+    -- because the config hasn't changed.
+    -- So we skip the 'Already bootstrapped' error
+    -- if we get 'Sharding config is empty'.
+    local skip_already_bootstrapped = false
+
     if patch.vshard_groups == nil then
         local ok, _err = bootstrap_group('default', patch.vshard)
         if ok then
@@ -202,6 +215,15 @@ local function bootstrap()
             local ok, _err = bootstrap_group(name, vsgroup)
             if ok then
                 vsgroup.bootstrapped = true
+            elseif _err.err == 'Sharding config is empty' then
+                table.insert(vars.issues, {
+                    level = 'warning',
+                    topic = 'vshard',
+                    message = ([[Group "%s" wasn't bootstrapped: %s. ]] ..
+                        [[There may be no instances in this group.]]):format(name, _err.err),
+                })
+                log.error(_err)
+                skip_already_bootstrapped = true
             else
                 err = _err
             end
@@ -215,7 +237,7 @@ local function bootstrap()
         return nil, err
     end
 
-    if utils.deepcmp(conf, patch) then
+    if skip_already_bootstrapped ~= true and utils.deepcmp(conf, patch) then
         -- Everyting is already bootstrapped
         return nil, e_bootstrap_vshard:new("already bootstrapped")
     end
@@ -235,6 +257,7 @@ return {
     validate_config = vshard_utils.validate_config,
     apply_config = apply_config,
     stop = stop,
+    get_issues = function() return vars.issues end,
 
     get = get,
     bootstrap = bootstrap,

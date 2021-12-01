@@ -1,5 +1,3 @@
-const { join } = require('path');
-
 module.exports = {
   extends: [
     '@tarantool.io/eslint-config',
@@ -9,10 +7,10 @@ module.exports = {
   ],
   settings: {
     'import/resolver': {
-      alias: [
-        ['src', join(__dirname, 'src')],
-        ['~', join(__dirname, 'src')],
-      ],
+      node: {
+        extensions: ['.js', '.jsx', '.ts', '.tsx'],
+        moduleDirectory: ['node_modules', '.'],
+      },
     },
   },
   overrides: [
@@ -25,5 +23,6 @@ module.exports = {
   ],
   rules: {
     'sonarjs/cognitive-complexity': 'off',
+    'no-console': 'off',
   },
 };

@@ -1,5 +1,5 @@
 # source: http://localhost:8081/admin/api
-# timestamp: Mon Sep 20 2021 06:11:11 GMT+0300 (Moscow Standard Time)
+# timestamp: Mon Oct 04 2021 17:36:12 GMT+0300 (Moscow Standard Time)
 
 """Cluster management"""
 type Apicluster {
@@ -250,7 +250,7 @@ type MutationApicluster {
   """Restart replication on specified by uuid servers"""
   restart_replication(uuids: [String!]): Boolean
   edit_vshard_options(rebalancer_max_receiving: Int, collect_bucket_garbage_interval: Float, collect_lua_garbage: Boolean, sched_ref_quota: Long, rebalancer_max_sending: Int, sync_timeout: Float, rebalancer_disbalance_threshold: Float, name: String!, sched_move_quota: Long): VshardGroup!
-  auth_params(cookie_max_age: Long, enabled: Boolean, cookie_renew_age: Long, admin_disabled: Boolean): UserManagementAPI!
+  auth_params(cookie_max_age: Long, enabled: Boolean, cookie_renew_age: Long): UserManagementAPI!
 
   """Create a new user"""
   add_user(password: String!, username: String!, fullname: String, email: String): User
@@ -623,9 +623,6 @@ type UserManagementAPI {
 
   """Update provided cookie if it's older then this age."""
   cookie_renew_age: Long!
-
-  """Whether admin access is disabled."""
-  admin_disabled: Boolean!
   implements_list_users: Boolean!
 
   """Whether authentication is enabled."""

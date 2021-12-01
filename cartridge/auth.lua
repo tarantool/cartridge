@@ -29,12 +29,6 @@ vars:new('callbacks', {})
 local DEFAULT_COOKIE_MAX_AGE = 3600*24*30 -- in seconds
 local DEFAULT_COOKIE_RENEW_AGE = 3600*24 -- in seconds
 
-local ADMIN_USER = {
-    username = cluster_cookie.username(),
-    fullname = 'Cartridge Administrator',
-    disabled = false,
-}
-
 local e_check_cookie = errors.new_class('Checking cookie failed')
 local e_check_header = errors.new_class('Checking auth headers failed')
 local e_callback = errors.new_class('Auth callback failed')
@@ -104,7 +98,6 @@ end
 -- @tparam ?boolean opts.enabled (*Added* in v0.11)
 -- @tparam ?number opts.cookie_max_age
 -- @tparam ?number opts.cookie_renew_age (*Added* in v0.11)
--- @tparam ?boolean opts.admin_disabled
 -- @treturn[1] boolean `true`
 -- @treturn[2] nil
 -- @treturn[2] table Error description
@@ -113,7 +106,6 @@ local function set_params(opts)
         enabled = '?boolean',
         cookie_max_age = '?number',
         cookie_renew_age = '?number',
-        admin_disabled = '?boolean',
     })
 
     if confapplier.get_readonly() == nil then
@@ -132,7 +124,6 @@ local function set_params(opts)
         auth_cfg = {
             enabled = confapplier.get_readonly('topology').auth or false,
             cookie_max_age = DEFAULT_COOKIE_MAX_AGE,
-            admin_disabled = false,
         }
     end
 
@@ -148,10 +139,6 @@ local function set_params(opts)
         auth_cfg.cookie_renew_age = opts.cookie_renew_age
     end
 
-    if opts.admin_disabled ~= nil then
-        auth_cfg.admin_disabled = opts.admin_disabled
-    end
-
     local patch = {
         auth = auth_cfg
     }
@@ -162,14 +149,6 @@ local function set_params(opts)
     end
 
     return twophase.patch_clusterwide(patch)
-end
-
-local function admin_disabled()
-    local auth_cfg = confapplier.get_readonly('auth')
-    if auth_cfg then
-        return auth_cfg.admin_disabled
-    end
-    return ADMIN_USER.disabled
 end
 
 --- Retrieve authentication params.
@@ -186,12 +165,10 @@ local function get_params()
     -- @tfield boolean enabled Whether unauthenticated access is forbidden
     -- @tfield number cookie_max_age Number of seconds until the authentication cookie expires
     -- @tfield number cookie_renew_age Update provided cookie if it's older then this age (in seconds)
-    -- @tfield boolean admin_disabled Whether admin access is disabled
     return {
         enabled = get_enabled(),
         cookie_max_age = auth_cfg and auth_cfg.cookie_max_age or DEFAULT_COOKIE_MAX_AGE,
         cookie_renew_age = auth_cfg and auth_cfg.cookie_renew_age or DEFAULT_COOKIE_RENEW_AGE,
-        admin_disabled = admin_disabled() or false
     }
 end
 
@@ -286,15 +263,6 @@ local function get_basic_auth_uid(auth)
         return nil
     end
 
-    if not admin_disabled() and username == ADMIN_USER.username then
-        local ok = password == cluster_cookie.cookie()
-        if ok then
-            return username
-        else
-            return nil
-        end
-    end
-
     local ok = vars.callbacks.check_password(username, password)
     if type(ok) ~= 'boolean' then
         local err = e_callback:new('check_password() must return boolean')
@@ -338,21 +306,6 @@ end
 local function login(req)
     local username = req:param('username')
     local password = req:param('password')
-
-    if not admin_disabled() and username == ADMIN_USER.username then
-        if password == cluster_cookie.cookie() then
-            return {
-                status = 200,
-                headers = {
-                    ['set-cookie'] = create_cookie(username),
-                }
-            }
-        else
-            return {
-                status = 403,
-            }
-        end
-    end
 
     if vars.callbacks.check_password == nil then
         return {
@@ -449,12 +402,6 @@ end
 -- @treturn[2] table Error description
 local function add_user(username, password, fullname, email)
     checks('string', 'string', '?string', '?string')
-    if username == ADMIN_USER.username then
-        return nil, e_callback:new(
-            "add_user() can't override integrated superuser '%s'",
-            username
-        )
-    end
 
     if vars.callbacks.add_user == nil then
         return nil, e_callback:new("add_user() callback isn't set")
@@ -489,10 +436,6 @@ end
 -- @treturn[2] table Error description
 local function get_user(username)
     checks('string')
-
-    if username == ADMIN_USER.username then
-        return coerce_user(ADMIN_USER)
-    end
 
     if vars.callbacks.get_user == nil then
         return nil, e_callback:new("get_user() callback isn't set")
@@ -531,12 +474,6 @@ end
 -- @treturn[2] table Error description
 local function edit_user(username, password, fullname, email)
     checks('string', '?string', '?string', '?string')
-    if username == ADMIN_USER.username then
-        return nil, e_callback:new(
-            "edit_user() can't change integrated superuser '%s'",
-            username
-        )
-    end
 
     if vars.callbacks.edit_user == nil then
         return nil, e_callback:new("edit_user() callback isn't set")
@@ -575,7 +512,7 @@ end
 -- @treturn[2] table Error description
 local function list_users()
     if vars.callbacks.list_users == nil then
-        return {coerce_user(ADMIN_USER)}
+        return {}
     end
 
     return e_list_users:pcall(function()
@@ -584,7 +521,7 @@ local function list_users()
             return nil, e_list_users:new(err)
         end
 
-        local ret = {coerce_user(ADMIN_USER)}
+        local ret = {}
         local i = 1
         for _ in pairs(users) do
             local user = users[i]
@@ -597,7 +534,7 @@ local function list_users()
                 local err = e_callback:new('list_users() must return array of user objects')
                 return nil, err
             end
-            ret[i+1] = user
+            ret[i] = user
             i = i + 1
         end
 
@@ -622,12 +559,6 @@ local function remove_user(username)
 
     if username == get_session_username() then
         return nil, e_remove_user:new('user can not remove himself')
-    end
-
-    if username == ADMIN_USER.username then
-        return nil, e_callback:new(
-            "remove_user() can't delete integrated superuser '%s'",
-            username)
     end
 
     if vars.callbacks.remove_user == nil then
@@ -766,7 +697,6 @@ end
 local function init(httpd, opts)
     checks('table', {
         prefix = 'string',
-        admin_disabled = 'boolean'
     })
 
     local function wipe_fiber_storage()
@@ -784,8 +714,6 @@ local function init(httpd, opts)
             return before_dispatch_original(...)
         end
     end
-
-    ADMIN_USER.disabled = opts.admin_disabled
 
     httpd:route({
         path = opts.prefix .. '/login',
@@ -812,17 +740,28 @@ end
 -- @tparam function callbacks.check_password
 -- @treturn boolean `true`
 local function set_callbacks(callbacks)
-    checks({
-        add_user = '?function',
-        get_user = '?function',
-        edit_user = '?function',
-        list_users = '?function',
-        remove_user = '?function',
+    checks('table')
 
-        check_password = '?function',
-    })
+    for _, k in ipairs({
+        'add_user',
+        'get_user',
+        'edit_user',
+        'list_users',
+        'remove_user',
+        'check_password',
+    }) do
+        if callbacks[k] ~= nil
+        and type(callbacks[k]) ~= 'function'
+        then
+            error(string.format(
+                "Invalid auth callback '%s'" ..
+                " (function expected, got %s)",
+                k, type(callbacks[k])
+            ), 2)
+        end
+    end
 
-    vars.callbacks = callbacks or {}
+    vars.callbacks = callbacks
     return true
 end
 

@@ -78,6 +78,7 @@ type EditReplicasetFormProps = {
   vshard_groups?: VshardGroup[],
   selfURI?: string,
   storageRolesNames: string[],
+  failoverMode?: string,
 };
 
 const EditReplicasetForm = ({
@@ -89,6 +90,7 @@ const EditReplicasetForm = ({
   replicaset,
   selfURI,
   storageRolesNames,
+  failoverMode,
 }: EditReplicasetFormProps) => {
   if (!replicaset) {
     return 'Replicaset not found';
@@ -280,6 +282,7 @@ const EditReplicasetForm = ({
                       groupBy(prop('uuid'))
                     )(replicaset.servers || [])}
                     selfURI={selfURI}
+                    failoverMode={failoverMode}
                     largeMargins
                   />
                 )}

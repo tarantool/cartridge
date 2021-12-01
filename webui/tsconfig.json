@@ -1,9 +1,13 @@
 {
   "extends": "@tarantool.io/typescript/configs/web",
   "include": ["./src"],
-  "exclude": ["**/*.js", "**/*.spec.*", "**/*.test.*"],
   "compilerOptions": {
+    "baseUrl": ".",
     "noImplicitAny": false, // TODO: Remove after all migrations (flow -> typescript)
-    "outDir": "./build"
+    "outDir": "./build",
+    "sourceMap": true,
+    "paths": {
+      "src/*": ["src/*"]
+    }
   }
 }

@@ -1,7 +1,16 @@
 import axios from 'axios';
-import { get as _get } from 'lodash';
 
 import { getApiEndpoint } from 'src/apiEndpoints';
+
+import {
+  getAxiosErrorMessage,
+  getRestErrorMessage,
+  isAxiosError,
+  isRestAccessDeniedError,
+  isRestErrorResponse,
+} from './utils';
+
+export { isRestErrorResponse, getAxiosErrorMessage, isAxiosError, isRestAccessDeniedError, getRestErrorMessage };
 
 const axiosInstance = axios.create();
 
@@ -23,16 +32,3 @@ export default {
     });
   },
 };
-
-export const isRestErrorResponse = (error) => error instanceof XMLHttpRequest;
-
-export const getRestErrorMessage = (error) => error.responseText || 'XMLHttpRequest error with empty message';
-
-export const isRestAccessDeniedError = (error) => isRestErrorResponse(error) && error.status === 401;
-
-export const isAxiosError = (error) => !!_get(error, 'config.adapter', false);
-
-export const getAxiosErrorMessage = (error) =>
-  _get(error, 'response.data.class_name', false) && _get(error, 'response.data.err', false)
-    ? `${_get(error, 'response.data.class_name')}: ${_get(error, 'response.data.err')}`
-    : error.message;

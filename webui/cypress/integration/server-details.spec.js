@@ -1,3 +1,5 @@
+const ACTION_COLOR = 'rgb(0, 119, 255)';
+
 describe('Server details', () => {
   before(() => {
     cy.task('tarantool', {
@@ -124,7 +126,7 @@ describe('Server details', () => {
     cy.get('.meta-test__ServerDetailsModal').find('button:contains(Zone Narnia)');
 
     cy.get('.meta-test__ServerDetailsModal button:contains(Zone Narnia)').click();
-    checkRedCircleBeforeSelectedZone('Narnia', 'rgb(245, 34, 45)');
+    checkRedCircleBeforeSelectedZone('Narnia', ACTION_COLOR);
     cy.testElementScreenshots('ActiveZoneSection', '.meta-test__ZoneListItemsPlusButton');
     cy.get('.meta-test__ServerDetailsModal button').contains('Close').click();
     cy.get('.meta-test__ServerDetailsModal').should('not.exist');
@@ -139,7 +141,7 @@ describe('Server details', () => {
     checkRedCircleBeforeSelectedZone('Narnia', 'rgba(0, 0, 0, 0)');
     cy.get('.meta-test__ZoneListItem:contains(Narnia)').click();
     cy.get('.meta-test__ServerDetailsModal button:contains(Zone Narnia)').click();
-    checkRedCircleBeforeSelectedZone('Narnia', 'rgb(245, 34, 45)');
+    checkRedCircleBeforeSelectedZone('Narnia', ACTION_COLOR);
     // cy.get('.meta-test__ServerDetailsModal').find('button:contains(Zone Narnia)').click();
 
     //add new zone Mordor
@@ -152,14 +154,14 @@ describe('Server details', () => {
     //check red circle is before new zone
     cy.get('.meta-test__ServerDetailsModal').find('button:contains(Zone Mordor)').click();
     checkRedCircleBeforeSelectedZone('Narnia', 'rgba(0, 0, 0, 0)');
-    checkRedCircleBeforeSelectedZone('Mordor', 'rgb(245, 34, 45)');
+    checkRedCircleBeforeSelectedZone('Mordor', ACTION_COLOR);
     cy.get('.meta-test__ServerDetailsModal button').contains('Close').click();
 
     //delete zone Narnia
     openServerDetailsModal('dummy-1');
     cy.get('.meta-test__ServerDetailsModal').find('button:contains(Zone Narnia)').click();
     cy.get('div').contains('Mordor');
-    checkRedCircleBeforeSelectedZone('Narnia', 'rgb(245, 34, 45)');
+    checkRedCircleBeforeSelectedZone('Narnia', ACTION_COLOR);
     checkRedCircleBeforeSelectedZone('Mordor', 'rgba(0, 0, 0, 0)');
     cy.get('.meta-test__ZoneListItem:contains(Narnia)').click();
     cy.get('.meta-test__ServerDetailsModal button:contains(Select zone)').click();
@@ -171,7 +173,7 @@ describe('Server details', () => {
     openServerDetailsModal('dummy-2');
     cy.get('.meta-test__ServerDetailsModal button:contains(Zone Mordor)').click();
     cy.get('div').contains('Mordor');
-    checkRedCircleBeforeSelectedZone('Mordor', 'rgb(245, 34, 45)');
+    checkRedCircleBeforeSelectedZone('Mordor', ACTION_COLOR);
     cy.get('div').contains('Narnia').should('not.exist');
     cy.get('.meta-test__ServerDetailsModal button').contains('Close').click();
 

@@ -26,6 +26,7 @@ local checks = require('checks')
 -- @string[opt] object.instance_uuid Server identifier.
 -- @string[opt] object.replicaset_uuid Replicaset identifier.
 -- @string[opt] object.zone Vshard zone.
+-- @number[opt] object.swim_period SWIM protocol period in seconds.
 -- @return input object
 local Server = luatest.Server:inherit({})
 
@@ -39,7 +40,8 @@ Server.constructor_checks = fun.chain(Server.constructor_checks, {
     instance_uuid = '?string',
     replicaset_uuid = '?string',
     labels = '?table',
-    zone = '?string'
+    zone = '?string',
+    swim_period = '?number',
 }):tomap()
 
 function Server:initialize()
@@ -67,7 +69,7 @@ function Server:build_env()
         TARANTOOL_ADVERTISE_URI = self.advertise_uri,
         TARANTOOL_CLUSTER_COOKIE = self.cluster_cookie,
         -- speedup tests by amplifying membership message exchange
-        TARANTOOL_SWIM_PROTOCOL_PERIOD_SECONDS = 0.2,
+        TARANTOOL_SWIM_PROTOCOL_PERIOD_SECONDS = self.swim_period or 0.2,
     }
 end
 

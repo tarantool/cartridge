@@ -16,12 +16,76 @@ and this project adheres to
 Added
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+- Add ``swim_period`` argument to the test-helpers.
+
+- Add unit tests for the Failover modal.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Changed
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Update ``http`` dependency to 1.1.1
+- Allow to bootstrap vshard groups partially.
+
+- Use effector for business logic and storing Cluster page data (models folder).
+
+- Rewrite all Cluster page components using typescript.
+
+- Improve the error message in login dialog.
+
+-------------------------------------------------------------------------------
+[2.7.3] - 2021-10-27
+-------------------------------------------------------------------------------
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Changed
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Disabled role's ``validate_config`` is not called during config validation.
+
+- Update @tarantool.io/ui-kit and frontend-core dependencies to support
+  the new design style.
+
+-------------------------------------------------------------------------------
+[2.7.2] - 2021-10-08
+-------------------------------------------------------------------------------
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Added
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 - 'Make all instances writeable' configuration field can be hidden via
   frontend-core's ``set_variable`` feature or at runtime.
 
-- Add a new option to disable admin user in the built-in auth module:
-  ``admin_disabled``. It can be set in both ``cartridge.cfg()`` and via
-  ``argparse``.
+- New ``get_issues`` callback in role API to collect user-defined issues.
+  The issues are gathered from the enabled roles only (present in
+  ``service-registry``).
+
+- Allow disabling built-in HTTP "admin" user:
+
+  * by specifying ``auth_builtin_admin_enabled: false`` in the ``instances.yml``;
+
+  * using ``TARANTOOL_AUTH_BUILTIN_ADMIN_ENABLED=false`` environment variable;
+
+  * permanently in ``init.lua``:
+
+
+    .. code-block:: lua
+
+        -- init.lua
+
+        require('cartridge.auth-backend').set_builtin_admin_enabled(false)
+        cartridge.cfg({
+            auth_backend_name = 'cartridge.auth-backend',
+            ...
+        })
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Changed
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Make built-in HTTP "admin" user a part of default auth backend. Custom
+  backends are free of it now.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
@@ -29,7 +93,7 @@ Fixed
 
 - Eliminate unnecessary transactions after the restart before the replication
   sync. This reduces the chance the hardware restart leads to WAL corruption
-  ([#1546](https://github.com/tarantool/cartridge/issues/1546)).
+  (`#1546 <https://github.com/tarantool/cartridge/issues/1546>`__).
 
 - Fix net.box clients compatibility with future tarantool 2.10 versions.
 

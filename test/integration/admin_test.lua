@@ -19,7 +19,7 @@ g.before_all = function()
     g.server = helpers.Server:new({
         alias = 'master',
         workdir = fio.tempdir(),
-        command = helpers.entrypoint('srv_woauth'),
+        command = helpers.entrypoint('srv_basic'),
         advertise_port = 13301,
         http_port = 8081,
         cluster_cookie = ADMIN_PASSWORD,
@@ -79,12 +79,12 @@ function g.test_api()
     end
 
     t.assert_error_msg_contains(
-        "add_user() can't override integrated superuser",
+        "add_user() can't override built-in superuser",
         add_user, ADMIN_USERNAME, 'qwerty'
     )
 
     t.assert_error_msg_contains(
-        "add_user() callback isn't set",
+        "Current instance isn't bootstrapped yet",
         add_user, 'guest', 'qwerty'
     )
 
@@ -104,12 +104,12 @@ function g.test_api()
     end
 
     t.assert_error_msg_contains(
-        "edit_user() can't change integrated superuser",
+        "edit_user() can't change built-in superuser",
         edit_user, ADMIN_USERNAME, 'qwerty'
     )
 
     t.assert_error_msg_contains(
-        "edit_user() callback isn't set",
+        "User not found: 'guest'",
         edit_user, 'guest', 'qwerty'
     )
 
@@ -135,7 +135,7 @@ function g.test_api()
     t.assert_equals(resp['data']['cluster']['users'], {{username = ADMIN_USERNAME}})
 
     t.assert_error_msg_contains(
-        "get_user() callback isn't set",
+        "User not found: 'guest'",
         list_users, 'guest'
     )
 end

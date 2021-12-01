@@ -22,12 +22,21 @@ type EditReplicasetModalProps = {
   history: History,
   location: Location,
   selfURI?: string,
+  failoverMode?: string,
 };
 
 class EditReplicasetModal extends React.Component<EditReplicasetModalProps> {
   render() {
-    const { knownRoles, loading, vshard_groups, replicasetList, selectedReplicasetUuid, selfURI, storageRolesNames } =
-      this.props;
+    const {
+      knownRoles,
+      loading,
+      failoverMode,
+      vshard_groups,
+      replicasetList,
+      selectedReplicasetUuid,
+      selfURI,
+      storageRolesNames,
+    } = this.props;
 
     const selectedReplicaset =
       (replicasetList && replicasetList.find(({ uuid }) => selectedReplicasetUuid === uuid)) || null;
@@ -51,6 +60,7 @@ class EditReplicasetModal extends React.Component<EditReplicasetModalProps> {
             loading={!!loading}
             selfURI={selfURI}
             storageRolesNames={storageRolesNames}
+            failoverMode={failoverMode}
           />
         )}
       </Modal>
@@ -74,6 +84,7 @@ const mapStateToProps = (state) => {
   const {
     app: {
       clusterSelf: { knownRoles, vshard_groups, uri: selfURI },
+      failover_params: { mode: failoverMode },
     },
     clusterPage: { pageDataRequestStatus, replicasetList, selectedReplicasetUuid },
   } = state;
@@ -86,6 +97,7 @@ const mapStateToProps = (state) => {
     selfURI,
     storageRolesNames: selectVshardRolesNames(state).storage,
     loading: !pageDataRequestStatus.loaded || pageDataRequestStatus.loading,
+    failoverMode,
   };
 };
 

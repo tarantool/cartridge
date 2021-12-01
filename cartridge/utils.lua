@@ -337,6 +337,20 @@ local function is_email_valid(str)
     return true
 end
 
+--- Read HTTP request body from request object.
+-- There are two cases:
+--   * Text body
+--   * File body
+-- In the first case this function returns text as is.
+-- In the second case file content should be additionally
+-- processed and file itself should be separated from
+-- its headers.
+-- @function http_read_body
+-- @local
+-- @tparam table req A HTTP request object.
+-- @treturn[1] table The same table `tbl`.
+-- @treturn[1] nil.
+-- @treturn[1] table File properties (e.g. filename).
 local function http_read_body(req)
     local req_body = req:read()
     local content_type = req.headers['content-type'] or ''
@@ -356,13 +370,21 @@ local function http_read_body(req)
     -- that have a special meaning with % to escape them.
     -- A list of special characters is ().+-*?[]^$%
     local boundary_line = string.gsub('--'..boundary, "[%(%)%.%+%-%*%?%[%]%^%$%%]", "%%%1")
-    local _, form_body = req_body:match(
+    local payload_headers, form_body = req_body:match(
         boundary_line .. '\r\n' ..
         '(.-\r\n)' .. '\r\n' .. -- headers
         '(.-)' .. '\r\n' .. -- body
         boundary_line
     )
-    return form_body
+
+    local filename, _
+    if payload_headers ~= nil then
+        _, filename = payload_headers:match('Content%-Disposition%: form%-data; name="(.-)"; filename="([^"]-)"')
+    end
+
+    return form_body, nil, {
+        filename = filename,
+    }
 end
 
 --- Wait for box.info.vclock[id] to reach desired LSN.
