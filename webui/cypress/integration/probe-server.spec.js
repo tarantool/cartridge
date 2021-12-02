@@ -34,7 +34,7 @@ describe('Probe server', () => {
     cy.get('.meta-test__ProbeServerBtn').click();
     cy.get('.ProbeServerModal input[name="uri"]').should('be.focused');
     cy.focused().blur();
-    cy.testElementScreenshots('ProbeServerModal', 'form.ProbeServerModal');
+    cy.testElementScreenshots('ProbeServerModal', 'form.meta-test___ProbeServerModal');
     cy.get('.ProbeServerModal input[name="uri"]').focus();
     cy.get('.ProbeServerModal input[name="uri"]').should(
       'have.attr',
