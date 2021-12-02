@@ -28,6 +28,7 @@
     "array-move": "^2.1.0",
     "axios": "^0.21.4",
     "core-js": "^3.17.3",
+    "cypress-image-snapshot": "^4.0.1",
     "dayjs": "^1.10.6",
     "effector": "^21.8.0",
     "effector-react": "^21.0.0",
