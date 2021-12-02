@@ -156,26 +156,37 @@ function Cluster:server(alias)
     error('Server ' .. alias .. ' not found', 2)
 end
 
+--- Return iterator for cluster server's with enabled role
+local function iter_servers_by_role(cluster, role_name)
+    local replicasets_with_role = fun.iter(cluster.replicasets)
+    :filter(function(rs)
+        return fun.iter(rs.roles)
+            :filter(function(role)
+                return role == role_name
+            end)
+            :nth(1)
+    end)
+    :map(function(rs) return rs.uuid, true end)
+    :tomap()
+
+    return fun.iter(cluster.servers)
+        :filter(function(server)
+            return replicasets_with_role[server.replicaset_uuid]
+        end)
+end
+
 --- Find server by role name.
 -- @string role_name
 -- @return @{cartridge.test-helpers.server}
 function Cluster:server_by_role(role_name)
-    local replicasets_with_role = fun.iter(self.replicasets)
-        :filter(function(rs)
-            return fun.iter(rs.roles)
-                :filter(function(role)
-                    return role == role_name
-                end)
-                :nth(1)
-        end)
-        :map(function(rs) return rs.uuid, true end)
-        :tomap()
+    return iter_servers_by_role(self, role_name):nth(1)
+end
 
-    return fun.iter(self.servers)
-        :filter(function(server)
-            return replicasets_with_role[server.replicaset_uuid]
-        end)
-        :nth(1)
+--- Return list of servers with enabled role by role name
+-- @string role_name
+-- @return @{cartridge.test-helpers.server}
+function Cluster:servers_by_role(role_name)
+    return iter_servers_by_role(self, role_name):totable()
 end
 
 --- Execute `edit_topology` GraphQL request to setup replicasets, apply roles
