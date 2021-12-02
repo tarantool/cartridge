@@ -327,6 +327,12 @@ export const listQuery = gql`
       ...serverStatFields
     }
     cluster @include(if: $withStats) {
+      known_roles {
+        name
+        dependencies
+        implies_storage
+        implies_router
+      }
       suggestions {
         disable_servers {
           uuid

@@ -43,8 +43,13 @@ export const createTimeoutFx = <T extends unknown = void, S extends unknown = vo
 
   const timerFx = createEffect<{ $counter: number; $props: T | null; source?: S }, void>(`${name}.timer`).use(
     async ({ $counter, $props, source }): Promise<void> => {
-      await effect($counter - 1, $props, source ?? null);
-      await delay(typeof timeout === 'function' ? timeout() : timeout);
+      try {
+        await effect($counter - 1, $props, source ?? null);
+      } catch {
+        // no-empty
+      } finally {
+        await delay(typeof timeout === 'function' ? timeout() : timeout);
+      }
     }
   );
 

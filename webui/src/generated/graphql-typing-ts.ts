@@ -1424,6 +1424,13 @@ export type ServerListQuery = {
   >;
   cluster?: Maybe<{
     __typename?: 'Apicluster';
+    known_roles: Array<{
+      __typename?: 'Role';
+      name: string;
+      dependencies?: Maybe<Array<string>>;
+      implies_storage: boolean;
+      implies_router: boolean;
+    }>;
     suggestions?: Maybe<{
       __typename?: 'Suggestions';
       disable_servers?: Maybe<Array<{ __typename?: 'DisableServerSuggestion'; uuid: string }>>;
