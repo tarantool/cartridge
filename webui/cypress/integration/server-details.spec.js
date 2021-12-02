@@ -109,7 +109,6 @@ describe('Server details', () => {
     checkServerDetailsTabs();
 
     cy.get('.meta-test__ServerDetailsModal').closest('div').find('.meta-test__youAreHereIcon');
-
     //add new zone Narnia
     cy.get('.meta-test__ServerDetailsModal button:contains(Select zone)').click();
     cy.testElementScreenshots('EmptyZoneSection', '.meta-test__ZoneListItemsPlusButton');
