@@ -1,4 +1,4 @@
-const { tarantool_enterprise_core } = window;
+import { core } from '@tarantool.io/frontend-core';
 
 if (!Element.prototype.matches) {
   Element.prototype.matches = Element.prototype.msMatchesSelector || Element.prototype.webkitMatchesSelector;
@@ -41,7 +41,7 @@ window.addEventListener(
     if (isButton(target)) {
       const metaClass = getMetaClassName(target);
       if (metaClass) {
-        tarantool_enterprise_core.analyticModule.sendEvent({
+        core.analyticModule.sendEvent({
           type: 'action',
           action: metaClass,
           category: 'click',
@@ -51,7 +51,7 @@ window.addEventListener(
     }
     if (isLink(target)) {
       const link = target.closest('a');
-      tarantool_enterprise_core.analyticModule.sendEvent({
+      core.analyticModule.sendEvent({
         type: 'action',
         action: link.getAttribute('href'),
         category: 'link',

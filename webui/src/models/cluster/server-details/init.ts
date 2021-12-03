@@ -1,4 +1,5 @@
 import { forward, guard, sample } from 'effector';
+import { core } from '@tarantool.io/frontend-core';
 
 import graphql from 'src/api/graphql';
 import { app } from 'src/models';
@@ -110,7 +111,7 @@ queryServerDetailsFx.use(({ uuid }) => graphql.fetch(firstServerDetailsQuery, { 
 queryServerDetailsBoxInfoFx.use(({ uuid }) => graphql.fetch(nextServerDetailsQuery, { uuid }));
 
 synchronizeServerDetailsLocationFx.use(({ props, open }) => {
-  const { history } = window.tarantool_enterprise_core;
+  const { history } = core;
   const {
     location: { pathname },
   } = history;

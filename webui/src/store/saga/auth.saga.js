@@ -1,4 +1,5 @@
 import { call, put, select, takeLatest } from 'redux-saga/effects';
+import { core } from '@tarantool.io/frontend-core';
 
 import { menuFilter } from 'src/menu';
 import {
@@ -28,7 +29,7 @@ function* logInSaga() {
       });
 
       if (response.authorized) {
-        window.tarantool_enterprise_core.dispatch('cluster:login:done', response);
+        core.dispatch('cluster:login:done', response);
         yield put({ type: APP_DID_MOUNT });
       }
     } catch (error) {
@@ -51,11 +52,11 @@ function* logOutSaga() {
       const response = yield call(logOut);
 
       yield put({ type: AUTH_LOG_OUT_REQUEST_SUCCESS, payload: response });
-      window.tarantool_enterprise_core.dispatch('cluster:logout:done');
+      core.dispatch('cluster:logout:done');
 
       if (authorizationEnabled) {
         menuFilter.hideAll();
-        window.tarantool_enterprise_core.dispatch('dispatchToken', { type: '' });
+        core.dispatch('dispatchToken', { type: '' });
       }
     } catch (error) {
       yield put({ type: AUTH_LOG_OUT_REQUEST_ERROR, error });

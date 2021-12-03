@@ -1,4 +1,5 @@
 import React from 'react';
+import { core } from '@tarantool.io/frontend-core';
 
 import { cluster } from 'src/models';
 
@@ -6,7 +7,7 @@ import ReplicasetConfigureModalController from './components/ReplicasetConfigure
 import ServerConfigureModalController from './components/ServerConfigureModalController';
 import ServerDetailsModalController from './components/ServerDetailsModalController';
 
-const { AppTitle } = window['tarantool_enterprise_core']?.components ?? {};
+const { AppTitle } = core.components;
 const { page } = cluster;
 const { ClusterPageGate } = page;
 

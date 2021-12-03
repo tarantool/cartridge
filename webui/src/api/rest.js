@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { core } from '@tarantool.io/frontend-core';
 
 import { getApiEndpoint } from 'src/apiEndpoints';
 
@@ -14,7 +15,7 @@ export { isRestErrorResponse, getAxiosErrorMessage, isAxiosError, isRestAccessDe
 
 const axiosInstance = axios.create();
 
-window.tarantool_enterprise_core.apiMethods.axiosWizard(axiosInstance);
+core.apiMethods.axiosWizard(axiosInstance);
 
 export default {
   post(...args) {

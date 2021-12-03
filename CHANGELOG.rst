@@ -25,6 +25,7 @@ Changed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 - Update ``http`` dependency to 1.1.1
+
 - Allow to bootstrap vshard groups partially.
 
 - Use effector for business logic and storing Cluster page data (models folder).
@@ -32,6 +33,10 @@ Changed
 - Rewrite all Cluster page components using typescript.
 
 - Improve the error message in login dialog.
+
+- Use core as a node module instead of a window scope object.
+
+- Update ``frontend-core`` to 8.0.0.
 
 -------------------------------------------------------------------------------
 [2.7.3] - 2021-10-27

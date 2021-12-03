@@ -1,5 +1,3 @@
-import '@tarantool.io/frontend-core';
-
 import { getGraphqlError, isGraphqlErrorResponse } from './graphql';
 
 const makeGraphQLError = (message, extensions = undefined) => ({

@@ -1,4 +1,5 @@
 import { forward, guard, sample } from 'effector';
+import { core } from '@tarantool.io/frontend-core';
 
 import graphql from 'src/api/graphql';
 import { app } from 'src/models';
@@ -75,7 +76,7 @@ editReplicasetFx.use(({ uuid, alias, roles, weight, all_rw, vshard_group, failov
 );
 
 synchronizeReplicasetConfigureLocationFx.use(({ props, open }) => {
-  const { history } = window.tarantool_enterprise_core;
+  const { history } = core;
   const {
     location: { search },
   } = history;

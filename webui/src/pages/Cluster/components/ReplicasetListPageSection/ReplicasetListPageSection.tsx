@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import React, { memo, useMemo, useState } from 'react';
+import React, { memo, useEffect, useMemo, useState } from 'react';
 import { cx } from '@emotion/css';
 import { useStore } from 'effector-react';
+import { useCore } from '@tarantool.io/frontend-core';
 // @ts-ignore
 import { PageSection } from '@tarantool.io/ui-kit';
 
@@ -16,10 +17,17 @@ import { styles } from './ReplicasetListPageSection.styles';
 const { $serverList, $cluster, selectors, filters } = models.cluster.serverList;
 
 const ReplicasetListPageSection = () => {
+  const core = useCore();
   const serverListStore = useStore($serverList);
   const clusterStore = useStore($cluster);
 
-  const [filter, setFilter] = useState('');
+  const [filter, setFilter] = useState(core ? core.ss.get('cluster_filter') || '' : '');
+
+  useEffect(() => {
+    if (core) {
+      core.ss.set('cluster_filter', filter);
+    }
+  }, [core, filter]);
 
   const [{ configured }, { total, unhealthy }, issues, replicasetList, serverStat] = useMemo(
     () => [
