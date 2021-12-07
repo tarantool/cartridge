@@ -170,7 +170,7 @@ jobs:
       - name: Run tests on macOS
         if: runner.os == 'macOS'
         run: |
-          ulimit -n 12288
+          ulimit -S -n 20480
           ulimit -n
           .rocks/bin/luatest -v \
           -x 'integration.advertise_change' \
@@ -180,8 +180,7 @@ jobs:
           -x 'integration.twophase.*' \
           -x 'integration.upload.*' \
           -x 'integration.workdir.*' \
-          -x 'integration.zones.*' \
-          -x 'unit.helpers.*'
+          -x 'integration.zones.*'
 
       - name: Run pytest -v
         run: |
