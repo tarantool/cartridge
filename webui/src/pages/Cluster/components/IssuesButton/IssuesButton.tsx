@@ -3,13 +3,13 @@ import React, { memo, useCallback, useState } from 'react';
 // @ts-ignore
 import { Button, IconCancel } from '@tarantool.io/ui-kit';
 
-import type { ServerListServerClusterIssue } from 'src/models';
+import type { ServerListClusterIssue } from 'src/models';
 
 import ClusterIssuesModal from '../ClusterIssuesModal';
 import IconOkContrast from './components/IconOkContrast';
 
 export interface IssuesButtonProps {
-  issues?: ServerListServerClusterIssue[];
+  issues?: ServerListClusterIssue[];
 }
 
 const IssuesButton = ({ issues }: IssuesButtonProps) => {

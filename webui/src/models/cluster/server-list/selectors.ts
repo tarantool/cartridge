@@ -11,11 +11,11 @@ import type {
   GetClusterVshardGroup,
   KnownRolesNamesResult,
   ServerList,
+  ServerListClusterIssue,
   ServerListReplicaset,
   ServerListReplicasetSearchable,
   ServerListReplicasetServer,
   ServerListServer,
-  ServerListServerClusterIssue,
   ServerListServerStat,
 } from './types';
 
@@ -107,7 +107,7 @@ export const serverList = (data: ServerList): ServerListServer[] => compact(data
 
 export const serverStat = (data: ServerList): ServerListServerStat[] => compact(data?.serverStat ?? []);
 
-export const issues = (data: ServerList): ServerListServerClusterIssue[] => compact(data?.cluster?.issues ?? []);
+export const issues = (data: ServerList): ServerListClusterIssue[] => compact(data?.cluster?.issues ?? []);
 
 export const zones = (data: ServerList): string[] =>
   pipe(
@@ -117,7 +117,7 @@ export const zones = (data: ServerList): string[] =>
     uniq
   )(data);
 
-export const issuesFilteredByInstanceUuid = (data: ServerList, uuid: Maybe<string>): ServerListServerClusterIssue[] =>
+export const issuesFilteredByInstanceUuid = (data: ServerList, uuid: Maybe<string>): ServerListClusterIssue[] =>
   uuid ? issues(data).filter(({ instance_uuid }) => instance_uuid === uuid) : [];
 
 export const replicasetList = (data: ServerList): ServerListReplicaset[] => compact(data?.replicasetList ?? []);

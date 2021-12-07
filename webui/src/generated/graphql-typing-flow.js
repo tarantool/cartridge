@@ -1145,7 +1145,10 @@ export type ServerListQuery = ({
     }) |}
   })>, cluster?: ?({
       ...{ __typename?: 'Apicluster' },
-    ...{| suggestions?: ?({
+    ...{| known_roles: Array<({
+        ...{ __typename?: 'Role' },
+      ...$Pick<Role, {| name: *, dependencies?: *, implies_storage: *, implies_router: * |}>
+    })>, suggestions?: ?({
         ...{ __typename?: 'Suggestions' },
       ...{| disable_servers?: ?Array<({
           ...{ __typename?: 'DisableServerSuggestion' },

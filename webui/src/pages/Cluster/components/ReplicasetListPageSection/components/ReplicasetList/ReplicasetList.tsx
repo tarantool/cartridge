@@ -8,8 +8,8 @@ import * as models from 'src/models';
 import type {
   GetClusterCluster,
   GetClusterClusterSelf,
+  ServerListClusterIssue,
   ServerListReplicaset,
-  ServerListServerClusterIssue,
   ServerListServerStat,
 } from 'src/models';
 
@@ -27,7 +27,7 @@ export interface ReplicasetListProps {
   cluster: GetClusterCluster;
   clusterSelf: GetClusterClusterSelf;
   replicasetList: ServerListReplicaset[];
-  issues: ServerListServerClusterIssue[];
+  issues: ServerListClusterIssue[];
   serverStat: ServerListServerStat[];
   failoverParamsMode?: string;
   className?: string;

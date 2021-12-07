@@ -4,12 +4,12 @@ import { cx } from '@emotion/css';
 // @ts-ignore
 import { Button, Modal, Text } from '@tarantool.io/ui-kit';
 
-import type { ServerListServerClusterIssue } from 'src/models';
+import type { ServerListClusterIssue } from 'src/models';
 
 import { styles } from './ClusterIssuesModal.styles';
 
 export interface ClusterIssuesModalProps {
-  issues: ServerListServerClusterIssue[];
+  issues: ServerListClusterIssue[];
   onClose: () => void;
   visible: boolean;
 }
