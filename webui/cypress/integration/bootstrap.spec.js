@@ -1,3 +1,5 @@
+import { sizes } from '../support/commands.js';
+
 describe('Replicaset configuration & Bootstrap Vshard', () => {
   before(() => {
     cy.task('tarantool', {
@@ -49,7 +51,6 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     cy.task('tarantool', { code: `cleanup()` });
   });
 
-  const sizes = ['1280x720', '1440x900', '1920x1080'];
   function checksForErrorDetails() {
     cy.contains('Invalid cluster topology config');
     cy.get('div').contains('stack traceback:');
