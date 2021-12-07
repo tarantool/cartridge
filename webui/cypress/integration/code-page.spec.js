@@ -1,3 +1,5 @@
+import { sizes } from '../support/commands.js';
+
 describe('Code page', () => {
   before(() => {
     cy.task('tarantool', {
@@ -32,7 +34,7 @@ describe('Code page', () => {
   });
 
   const selectAllKeys = Cypress.platform === 'darwin' ? '{cmd}a' : '{ctrl}a';
-  const sizes = ['1280x720', '1440x900', '1920x1080'];
+
   function reload() {
     cy.get('.meta-test__Code__reload_idle').click({ force: true });
     cy.get('button[type="button"]').contains('Ok').click();
