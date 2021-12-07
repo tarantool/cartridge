@@ -49,7 +49,9 @@ Cypress.Commands.add('setResolution', (size) => {
   cy.viewport(parseInt(w), parseInt(h));
 });
 
-const sizes = ['1280x720', '1440x900', '1920x1080'];
+const sizes = ['1260x760', '1280x720', '1440x900', '1920x1080'];
+module.exports = { sizes };
+
 Cypress.Commands.add('testScreenshots', (name) => {
   sizes.forEach((size) => {
     cy.setResolution(size);
