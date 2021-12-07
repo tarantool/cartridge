@@ -170,6 +170,8 @@ jobs:
       - name: Run tests on macOS
         if: runner.os == 'macOS'
         run: |
+          ulimit -n 12288
+          ulimit -n
           .rocks/bin/luatest -v \
           -x 'integration.advertise_change' \
           -x 'integration.etcd2_client' \
