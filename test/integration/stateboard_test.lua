@@ -167,7 +167,7 @@ function g.test_longpolling()
 
     -- Subsequent requests wait fairly
     local chan = async_longpoll()
-    t.assert_equals(chan:get(0.1), nil) -- no data in channel yet
+    t.assert_equals(chan:get(0.05), nil) -- no data in channel yet
     t.assert_equals(chan:get(0.2), {{}}) -- data recieved
 
     -- New appointments arrive before the longpolling request
