@@ -173,6 +173,7 @@ jobs:
           ulimit -S -n 20480
           ulimit -n
           .rocks/bin/luatest -v \
+          -x 'integration.state_machine' \
           -x 'integration.switchover' \
           -x 'integration.twophase.*' \
           -x 'integration.upload.*' \
