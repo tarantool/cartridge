@@ -55,7 +55,7 @@ the failover priority. No automatic switching is performed. When it's dead,
 it's dead.
 
 *******************************************************************************
-Eventual failover
+Eventual failover (deprecated)
 *******************************************************************************
 
 In the ``eventual`` mode, the leader isn't elected consistently. Instead, every

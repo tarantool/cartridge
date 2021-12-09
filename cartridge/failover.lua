@@ -4,7 +4,7 @@
 --
 -- * In `disabled` mode the leader is the first server configured in
 --   `topology.replicasets[].master` array.
--- * In `eventual` mode the leader isn't elected consistently.
+-- * In `eventual` mode (**deprecated**)the leader isn't elected consistently.
 --   Instead, every instance in cluster thinks the leader is the
 --   first **healthy** server in replicaset, while instance health is
 --   determined according to membership status (the SWIM protocol).
@@ -645,6 +645,7 @@ local function cfg(clusterwide_config)
         first_appointments = _get_appointments_disabled_mode(topology_cfg)
 
     elseif failover_cfg.mode == 'eventual' then
+        errors.deprecate('Eventual failover is deprecated, use stateful failover instead')
         log.info('Eventual failover enabled')
         vars.fencing_enabled = false
         vars.consistency_needed = false
