@@ -1,5 +1,5 @@
 describe('Auth', () => {
-  before(() => {
+  beforeEach(() => {
     cy.task('tarantool', {
       code: `
       cleanup()
@@ -22,7 +22,7 @@ describe('Auth', () => {
     }).should('deep.eq', [true]);
   });
 
-  after(() => {
+  afterEach(() => {
     cy.task('tarantool', { code: `cleanup()` });
   });
 
@@ -143,5 +143,55 @@ describe('Auth', () => {
 
     cy.get('.meta-test__AuthToggle').should('exist');
     cy.get('a[href="/admin/cluster/users"]').should('not.exist');
+  });
+
+  it('Test: auth', () => {
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Open WebUI');
+    ////////////////////////////////////////////////////////////////////
+    cy.visit('/admin/cluster/dashboard');
+
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Login successfully');
+    ////////////////////////////////////////////////////////////////////
+    cy.get('.meta-test__LoginBtn').click();
+
+    cy.get('.meta-test__LoginForm input[name="username"]').type('admin').should('have.value', 'admin');
+    cy.get('.meta-test__LoginForm input[name="password"]').type('test-cluster-cookie');
+    cy.get('.meta-test__LoginFormBtn').click();
+
+    cy.get('a[href="/admin/cluster/users"]').click();
+    cy.get('.meta-test__AuthToggle input').should('not.be.checked');
+
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Enable auth');
+    ////////////////////////////////////////////////////////////////////
+    cy.get('.meta-test__AuthToggle').click();
+    cy.get('.meta-test__ConfirmModal').contains('Enable').click();
+
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Logout');
+    ////////////////////////////////////////////////////////////////////
+    cy.get('.meta-test__LogoutBtn').click();
+    cy.get('.meta-test__LogoutDropdown').click();
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Shut down cluster');
+    ////////////////////////////////////////////////////////////////////
+    cy.task('tarantool', {
+      code: `
+      _G.cluster:stop()
+      return true
+    `,
+    }).should('deep.eq', [true]);
+
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Try to log on');
+    ////////////////////////////////////////////////////////////////////
+
+    cy.get('input[name="username"]').type('admin').should('have.value', 'admin');
+    cy.get('input[name="password"]').type('test-cluster-cookie');
+    cy.get('.meta-test__LoginFormBtn').click();
+
+    cy.get('.meta-test__LoginFormSplash form').contains('Cannot connect to server. Please try again later.');
   });
 });
