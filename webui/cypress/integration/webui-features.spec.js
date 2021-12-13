@@ -147,7 +147,8 @@ describe('Web UI features testing', () => {
     for (let i = 1; i <= 7; i++) {
       it(`Check ${filterValue.get(i)} ${filteredValue.get(i)} `, () => {
         cy.get('button[type="button"]:contains(Filter)').click();
-        cy.get('.meta-test__Filter__Dropdown *').contains(new RegExp('^' + filterValue.get(i) + '$'))
+        cy.get('.meta-test__Filter__Dropdown *')
+          .contains(new RegExp('^' + filterValue.get(i) + '$'))
           .click({ force: true });
         cy.get('.meta-test__Filter input').should('have.value', `${filteredValue.get(i)}`);
         cy.reload(true);
