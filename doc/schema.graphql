@@ -1,4 +1,4 @@
-# source: http://localhost:8081/admin/api
+# source: http://127.0.0.1:8081/admin/api
 # timestamp: Mon Oct 04 2021 17:36:12 GMT+0300 (Moscow Standard Time)
 
 """Cluster management"""
