@@ -63,7 +63,7 @@ Creating a project
 To set up your development environment, create a project using the
 Tarantool Cartridge project template. In any directory, run:
 
-.. code-block:: shell
+.. code-block:: bash
 
    $ cartridge create --name <app_name> /path/to/
 
@@ -827,7 +827,7 @@ For example, if your application has version 1.2.1, tag your current branch with
 
 To retrieve the current version from Git, run:
 
-..  code-block:: shell
+..  code-block:: bash
 
     $ git describe --long --tags
     1.2.1-12-g74864f2
@@ -977,7 +977,7 @@ To deploy your Tarantool Cartridge application:
 
 #.  Pack the application into a deliverable:
 
-    ..  code-block:: shell
+    ..  code-block:: bash
 
         $ cartridge pack rpm [APP_PATH] [--use-docker]
         $ # -- OR --
@@ -1002,7 +1002,7 @@ To deploy your Tarantool Cartridge application:
 
 #.  Install the application:
 
-    ..  code-block:: shell
+    ..  code-block:: bash
 
         $ sudo yum install <APP_NAME>-<VERSION>.rpm
         $ # -- OR --
@@ -1043,7 +1043,7 @@ To deploy your Tarantool Cartridge application:
 
     For more details, see :ref:`cartridge-run-systemctl`.
 
-    ..  code-block:: shell
+    ..  code-block:: bash
 
         $ sudo systemctl start my_app@router
         $ sudo systemctl start my_app@storage-master
@@ -1152,7 +1152,7 @@ Deploying as a tar+gz archive
 
 #.  Pack the application into a distributable:
 
-    ..  code-block:: shell
+    ..  code-block:: bash
 
         $ cartridge pack tgz APP_NAME
 
@@ -1163,7 +1163,7 @@ Deploying as a tar+gz archive
 
 #.  Extract the archive:
 
-    ..  code-block:: shell
+    ..  code-block:: bash
 
         $ tar -xzvf APP_NAME-VERSION.tgz
 
@@ -1190,13 +1190,13 @@ Deploying as a tar+gz archive
 
     *   :ref:`tarantool <cartridge-run-tarantool>`, for example:
 
-        ..  code-block:: shell
+        ..  code-block:: bash
 
             $ tarantool init.lua # starts a single instance
 
     *   or :ref:`cartridge <cartridge-run-cartridge>`, for example:
 
-        ..  code-block:: shell
+        ..  code-block:: bash
 
             $ # in application directory
             $ cartridge start # starts all instances
@@ -1231,7 +1231,7 @@ This deployment method is intended for local testing only.
 
 #.  Pull all dependencies to the ``.rocks`` directory:
 
-    ..  code-block:: shell
+    ..  code-block:: bash
 
         $ tarantoolctl rocks make
 
@@ -1258,13 +1258,13 @@ This deployment method is intended for local testing only.
 
     *   :ref:`tarantool <cartridge-run-tarantool>`, for example:
 
-        ..  code-block:: shell
+        ..  code-block:: bash
 
             $ tarantool init.lua # starts a single instance
 
     *   or :ref:`cartridge <cartridge-run-cartridge>`, for example:
 
-        ..  code-block:: shell
+        ..  code-block:: bash
 
             $ # in application directory
             $ cartridge start # starts all instances
@@ -1308,7 +1308,7 @@ Start/stop using tarantool
 
 With ``tarantool``, you can start only a single instance:
 
-..  code-block:: shell
+..  code-block:: bash
 
     # the simplest command
     $ tarantool init.lua
@@ -1326,7 +1326,7 @@ Start/stop using cartridge CLI
 
 With ``cartridge`` CLI, you can start one or multiple instances:
 
-..  code-block:: shell
+..  code-block:: bash
 
     $ cartridge start [APP_NAME[.INSTANCE_NAME]] [options]
 
@@ -1360,7 +1360,7 @@ The options are:
 
 For example:
 
-..  code-block:: shell
+..  code-block:: bash
 
     $ cartridge start my_app --cfg demo.yml --run_dir ./tmp/run --foreground
 
@@ -1373,7 +1373,7 @@ filename.
 When ``INSTANCE_NAME`` is not provided, ``cartridge`` reads ``cfg`` file and
 starts all defined instances:
 
-.. code-block:: shell
+.. code-block:: bash
 
     $ # in application directory
     $ cartridge start # starts all instances
@@ -1385,7 +1385,7 @@ starts all defined instances:
 
 To stop the instances, run:
 
-.. code-block:: shell
+.. code-block:: bash
 
     $ cartridge stop [APP_NAME[.INSTANCE_NAME]] [options]
 
@@ -1402,7 +1402,7 @@ Start/stop using systemctl
 
 *   To run a single instance:
 
-    ..  code-block:: shell
+    ..  code-block:: bash
 
         $ systemctl start APP_NAME
 
@@ -1412,7 +1412,7 @@ Start/stop using systemctl
 
 *   To run multiple instances on one or multiple servers:
 
-    ..  code-block:: shell
+    ..  code-block:: bash
 
         $ systemctl start APP_NAME@INSTANCE_1
         $ systemctl start APP_NAME@INSTANCE_2
@@ -1427,7 +1427,7 @@ Start/stop using systemctl
 *   To stop all services on a server, use the ``systemctl stop`` command
     and specify instance names one by one. For example:
 
-    ..  code-block:: shell
+    ..  code-block:: bash
 
         $ systemctl stop APP_NAME@INSTANCE_1 APP_NAME@INSTANCE_2 ... APP_NAME@INSTANCE_<N>
 
@@ -1468,7 +1468,7 @@ When running instances with ``systemctl``, keep these practices in mind:
 *   The default tool for querying logs is `journalctl <https://www.freedesktop.org/software/systemd/man/journalctl.html>`_.
     For example:
 
-    ..  code-block:: shell
+    ..  code-block:: bash
 
         $ # show log messages for a systemd unit named APP_NAME.INSTANCE_1
         $ journalctl -u APP_NAME.INSTANCE_1
