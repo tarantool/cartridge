@@ -83,7 +83,7 @@ If you start instances with ``tarantool init.lua``,
 you need to pass other configuration options as command-line parameters and
 environment variables, for example:
 
-.. code-block:: console
+.. code-block:: shell
 
     $ tarantool init.lua --alias router --memtx-memory 100 --workdir "~/db/3301" --advertise_uri "localhost:3301" --http_port "8080"
 
@@ -177,7 +177,7 @@ when there are only few sections needed.
 
 Example:
 
-.. code-block:: console
+.. code-block:: shell
 
     cat > config.yml << CONFIG
     ---
@@ -187,13 +187,13 @@ Example:
 
 Upload new config:
 
-.. code-block:: console
+.. code-block:: shell
 
     curl -v "localhost:8081/admin/config" -X PUT --data-binary @config.yml
 
 Download it:
 
-.. code-block:: console
+.. code-block:: shell
 
     curl -v "localhost:8081/admin/config" -o config.yml
 

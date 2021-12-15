@@ -38,7 +38,7 @@ Tarantool instances according to the desired cluster topology, for example:
 Then :ref:`start the instances <cartridge-run>`, for example using
 ``cartridge`` CLI:
 
-..  code-block:: console
+..  code-block:: shell
 
     $ cartridge start my_app --cfg demo.yml --run_dir ./tmp/run --foreground
 
@@ -622,7 +622,7 @@ Each Tarantool node (``router``/``storage``) provides an administrative console
 console acts as a Lua interpreter and displays the result in the human-readable
 YAML format. To connect to a Tarantool instance via the console, say:
 
-..  code-block:: console
+..  code-block:: shell
 
     $ tarantoolctl connect <instance_hostname>:<port>
 
