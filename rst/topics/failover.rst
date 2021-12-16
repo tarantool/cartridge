@@ -275,7 +275,7 @@ options:
 Similarly to other ``argparse`` options, they can be passed via
 command-line arguments or via environment variables, e.g.:
 
-.. code-block:: bash
+..  code-block:: bash
 
     .rocks/bin/stateboard --workdir ./dev/stateboard --listen 4401 --password qwerty
 
