@@ -187,7 +187,7 @@ Example:
 
 Upload new config:
 
-.. code-block:: bash
+..  code-block:: bash
 
     curl -v "localhost:8081/admin/config" -X PUT --data-binary @config.yml
 
