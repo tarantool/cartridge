@@ -63,9 +63,9 @@ Creating a project
 To set up your development environment, create a project using the
 Tarantool Cartridge project template. In any directory, run:
 
-.. code-block:: bash
+..  code-block:: bash
 
-   $ cartridge create --name <app_name> /path/to/
+    $ cartridge create --name <app_name> /path/to/
 
 This will automatically set up a Git repository in a new ``/path/to/<app_name>/``
 directory, tag it with :ref:`version <cartridge-versioning>` ``0.1.0``,
