@@ -177,7 +177,7 @@ when there are only few sections needed.
 
 Example:
 
-.. code-block:: bash
+..  code-block:: bash
 
     cat > config.yml << CONFIG
     ---
