@@ -94,7 +94,7 @@ function Etcd:stop()
     if process == nil then
         return
     end
-    self.process:kill()
+    self.process:kill(9)
     luatest.helpers.retrying({}, function()
         luatest.assert_not(process:is_alive(),
             'etcd-%s is still running', self.name

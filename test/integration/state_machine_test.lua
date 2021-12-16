@@ -27,14 +27,16 @@ g.before_each(function()
     })
     g.cluster:start()
 
-    g.cluster.main_server:graphql({query = [[
-        mutation { cluster {
-            failover_params(
-                mode: "eventual"
-                failover_timeout: 3
-            ) { failover_timeout }
-        }}
-    ]]})
+    helpers.retrying({}, function()
+        g.cluster.main_server:graphql({query = [[
+            mutation { cluster {
+                failover_params(
+                    mode: "eventual"
+                    failover_timeout: 3
+                ) { failover_timeout }
+            }}
+        ]]})
+    end)
 
     log.warn('Failover enabled')
 
