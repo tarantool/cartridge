@@ -60,9 +60,9 @@ end
 
 function g.test_two_clusters()
     local res, err = g.cluster.main_server:graphql({query = [[
-            mutation { join_server(uri: "127.0.0.1:13302") }
+            mutation { join_server(uri: "localhost:13302") }
         ]],
         raise=false
     })
-    t.assert_str_contains(res.errors[1].message, "Upload not found")
+    t.assert_str_contains(res.errors[1].message, "collision with another server")
 end
