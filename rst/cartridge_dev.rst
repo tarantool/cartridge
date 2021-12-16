@@ -1373,7 +1373,7 @@ filename.
 When ``INSTANCE_NAME`` is not provided, ``cartridge`` reads ``cfg`` file and
 starts all defined instances:
 
-.. code-block:: bash
+..  code-block:: bash
 
     $ # in application directory
     $ cartridge start # starts all instances
