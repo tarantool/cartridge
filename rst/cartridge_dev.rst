@@ -1385,7 +1385,7 @@ starts all defined instances:
 
 To stop the instances, run:
 
-.. code-block:: bash
+..  code-block:: bash
 
     $ cartridge stop [APP_NAME[.INSTANCE_NAME]] [options]
 
