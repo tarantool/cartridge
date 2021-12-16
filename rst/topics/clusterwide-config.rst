@@ -193,7 +193,7 @@ Upload new config:
 
 Download it:
 
-.. code-block:: bash
+..  code-block:: bash
 
     curl -v "localhost:8081/admin/config" -o config.yml
 
