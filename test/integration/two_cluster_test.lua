@@ -4,16 +4,12 @@ local g = t.group()
 
 local helpers = require('test.helper')
 
-local utils = require('cartridge.utils')
-local yaml = require('yaml')
-local log = require('log')
-
 g.before_all = function()
-    local kuka = require('digest').urandom(6):hex()
-    g.cluster = helpers.Cluster:new({
+    local cookie = helpers.random_cookie()
+    g.cluster1 = helpers.Cluster:new({
         datadir = fio.tempdir(),
         server_command = helpers.entrypoint('srv_basic'),
-        cookie = kuka,
+        cookie = cookie,
         replicasets = {
             {
                 alias = 'master',
@@ -28,12 +24,12 @@ g.before_all = function()
         },
     })
 
-    g.cluster:start()
+    g.cluster1:start()
 
     g.cluster2 = helpers.Cluster:new({
         datadir = fio.tempdir(),
         server_command = helpers.entrypoint('srv_basic'),
-        cookie = kuka,
+        cookie = cookie,
         replicasets = {
             {
                 alias = 'master',
@@ -52,17 +48,17 @@ g.before_all = function()
 end
 
 g.after_all = function()
-    g.cluster:stop()
-    fio.rmtree(g.cluster.datadir)
+    g.cluster1:stop()
+    fio.rmtree(g.cluster1.datadir)
     g.cluster2:stop()
     fio.rmtree(g.cluster2.datadir)
 end
 
 function g.test_two_clusters()
-    local res, err = g.cluster.main_server:graphql({query = [[
+    local res = g.cluster1.main_server:graphql({query = [[
             mutation { join_server(uri: "localhost:13302") }
         ]],
-        raise=false
+        raise = false,
     })
     t.assert_str_contains(res.errors[1].message, "collision with another server")
 end
