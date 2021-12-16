@@ -83,7 +83,7 @@ If you start instances with ``tarantool init.lua``,
 you need to pass other configuration options as command-line parameters and
 environment variables, for example:
 
-.. code-block:: bash
+..  code-block:: bash
 
     $ tarantool init.lua --alias router --memtx-memory 100 --workdir "~/db/3301" --advertise_uri "localhost:3301" --http_port "8080"
 
