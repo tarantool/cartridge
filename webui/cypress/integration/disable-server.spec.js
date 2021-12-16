@@ -54,7 +54,8 @@ describe('Disable server', () => {
     ///////////////////////////////////////////////////////////////////
     cy.log('Information about healthy and unhealthy server count before disabling server 2 and 3');
     ////////////////////////////////////////////////////////////////////
-    cy.get('section:contains("1 total | 0 unhealthy | 3 servers")').should('exist');
+    cy.get('[data-component=ReplicasetListHeader]').contains('Healthy1');
+    cy.get('[data-component=ReplicasetListHeader]').contains('Unhealthy0');
     cy.get('[data-cy=meta-test__replicaSetSection]').contains('healthy');
     cy.get('.ServerLabelsHighlightingArea').eq(0).contains('healthy');
     cy.get('.ServerLabelsHighlightingArea').eq(1).contains('healthy');
@@ -84,11 +85,22 @@ describe('Disable server', () => {
     );
 
     //Check health state for Servers and  ReplicaSet
-    cy.get('section:contains("1 total | 1 unhealthy | 3 servers")').should('exist');
+    cy.get('[data-component=ReplicasetListHeader]').contains('Healthy0');
+    cy.get('[data-component=ReplicasetListHeader]').contains('Unhealthy1');
     cy.get('[data-cy=meta-test__replicaSetSection]').contains('have issues');
     cy.get('.ServerLabelsHighlightingArea').eq(0).contains('healthy');
-    cy.get('.ServerLabelsHighlightingArea').eq(1).contains('Server status is "dead"');
-    cy.get('.ServerLabelsHighlightingArea').eq(2).contains('Server status is "dead"');
+    cy.get('.ServerLabelsHighlightingArea').eq(1).contains('unreachable');
+    cy.get('.ServerLabelsHighlightingArea')
+      .eq(1)
+      .find('[data-component=ReplicasetListStatus]')
+      .invoke('attr', 'data-message')
+      .should('eq', 'Server status is "dead"');
+    cy.get('.ServerLabelsHighlightingArea').eq(2).contains('unreachable');
+    cy.get('.ServerLabelsHighlightingArea')
+      .eq(2)
+      .find('[data-component=ReplicasetListStatus]')
+      .invoke('attr', 'data-message')
+      .should('eq', 'Server status is "dead"');
     ////////////////////////////////////////////////////////////////////
 
     ////////////////////////////////////////////////////////////////////
@@ -125,7 +137,8 @@ describe('Disable server', () => {
       'Inspect correct information for healthy and unhealthy server count after server 2 and 3 have been disabled'
     );
     ////////////////////////////////////////////////////////////////////
-    cy.get('section:contains(1 total | 1 unhealthy | 3 servers)').should('exist');
+    cy.get('[data-component=ReplicasetListHeader]').contains('Healthy0');
+    cy.get('[data-component=ReplicasetListHeader]').contains('Unhealthy1');
     cy.get('[data-cy=meta-test__replicaSetSection]').contains('unhealthy');
 
     ////////////////////////////////////////////////////////////////////
@@ -209,7 +222,8 @@ describe('Disable server', () => {
     ///////////////////////////////////////////////////////////////////
     cy.log('Information about healthy and unhealthy server count after enableing server 2 and 3');
     ////////////////////////////////////////////////////////////////////
-    cy.get('section:contains(1 total | 0 unhealthy | 3 servers)').should('exist');
+    cy.get('[data-component=ReplicasetListHeader]').contains('Healthy1');
+    cy.get('[data-component=ReplicasetListHeader]').contains('Unhealthy0');
     cy.get('[data-cy=meta-test__replicaSetSection]').contains('healthy');
     cy.get('.ServerLabelsHighlightingArea').eq(0).contains('healthy');
     cy.get('.ServerLabelsHighlightingArea').eq(1).contains('healthy');

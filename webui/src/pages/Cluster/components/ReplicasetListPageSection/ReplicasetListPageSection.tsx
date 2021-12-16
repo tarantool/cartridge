@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import React, { memo, useEffect, useMemo, useState } from 'react';
-import { cx } from '@emotion/css';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useStore } from 'effector-react';
 import { useCore } from '@tarantool.io/frontend-core';
 // @ts-ignore
@@ -8,9 +7,8 @@ import { PageSection } from '@tarantool.io/ui-kit';
 
 import * as models from 'src/models';
 
-import ReplicasetFilterInput from '../ReplicasetFilterInput';
-import PageSectionSubTitle from './components/PageSectionSubTitle';
 import ReplicasetList from './components/ReplicasetList';
+import ReplicasetListHeader from './components/ReplicasetListHeader';
 
 import { styles } from './ReplicasetListPageSection.styles';
 
@@ -21,18 +19,14 @@ const ReplicasetListPageSection = () => {
   const serverListStore = useStore($serverList);
   const clusterStore = useStore($cluster);
 
-  const [filter, setFilter] = useState(core ? core.ss.get('cluster_filter') || '' : '');
+  const [filter, setFilter] = useState(core?.ss.get('cluster_filter') || '');
 
   useEffect(() => {
-    if (core) {
-      core.ss.set('cluster_filter', filter);
-    }
+    core?.ss.set('cluster_filter', filter);
   }, [core, filter]);
 
-  const [{ configured }, { total, unhealthy }, issues, replicasetList, serverStat] = useMemo(
+  const [issues, replicasetList, serverStat] = useMemo(
     () => [
-      selectors.serverListCounts(serverListStore),
-      selectors.replicasetCounts(serverListStore),
       selectors.issues(serverListStore),
       selectors.replicasetList(serverListStore),
       selectors.serverStat(serverListStore),
@@ -40,9 +34,8 @@ const ReplicasetListPageSection = () => {
     [serverListStore]
   );
 
-  const [knownRoles, cluster, clusterSelf, failoverParamsMode] = useMemo(
+  const [cluster, clusterSelf, failoverParamsMode] = useMemo(
     () => [
-      selectors.knownRoles(clusterStore),
       selectors.cluster(clusterStore),
       selectors.clusterSelf(clusterStore),
       selectors.failoverParamsMode(clusterStore),
@@ -62,27 +55,8 @@ const ReplicasetListPageSection = () => {
   }
 
   return (
-    <PageSection
-      title="Replica sets"
-      subTitle={
-        <PageSectionSubTitle
-          configured={configured}
-          total={total}
-          unhealthy={unhealthy}
-          filter={filter}
-          length={filteredSearchableReplicasetList.length}
-        />
-      }
-      topRightControls={[
-        <ReplicasetFilterInput
-          key={0}
-          className={cx(styles.clusterFilter, 'meta-test__Filter')}
-          value={filter}
-          setValue={setFilter}
-          roles={knownRoles}
-        />,
-      ]}
-    >
+    <PageSection title="Replica Sets" titleCounter={replicasetList.length}>
+      <ReplicasetListHeader filter={filter} onFilterChange={setFilter} />
       {filteredSearchableReplicasetList.length ? (
         <ReplicasetList
           cluster={cluster}
@@ -93,10 +67,10 @@ const ReplicasetListPageSection = () => {
           failoverParamsMode={failoverParamsMode}
         />
       ) : (
-        <div>No replicaset found</div>
+        <div className={styles.notFound}>No replicaset found</div>
       )}
     </PageSection>
   );
 };
 
-export default memo(ReplicasetListPageSection);
+export default ReplicasetListPageSection;

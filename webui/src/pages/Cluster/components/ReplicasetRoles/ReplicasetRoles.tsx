@@ -13,12 +13,11 @@ export interface ReplicasetRolesProps {
 
 const ReplicasetRoles = ({ className, roles }: ReplicasetRolesProps) =>
   roles && roles.length ? (
-    <Text className={cx(styles.roles, className)} tag="div">
-      <b className={styles.rolesHeading}>Role:</b>
-      {roles.join(' | ')}
+    <Text className={cx(styles.root, className)} tag="div">
+      Role: {roles.join(' | ')}
     </Text>
   ) : (
-    <Text className={cx(styles.roles, className)} tag="div">
+    <Text className={cx(styles.root, className)} tag="div">
       No roles
     </Text>
   );

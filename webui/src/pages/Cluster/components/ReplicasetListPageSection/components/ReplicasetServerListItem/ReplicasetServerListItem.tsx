@@ -1,23 +1,20 @@
-/* eslint-disable import/no-duplicates */
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import React, { memo, useMemo } from 'react';
+import React, { memo } from 'react';
 import { Link } from 'react-router-dom';
 import { cx } from '@emotion/css';
 import isEqual from 'lodash/isEqual';
 // @ts-ignore
-import { FlatListItem, HealthStatus, IconBucket, LeaderFlag, ProgressBar, Tooltip } from '@tarantool.io/ui-kit';
-// @ts-ignore
-import { Text, UriLabel } from '@tarantool.io/ui-kit';
+import { LeaderFlag, Text, Tooltip, UriLabel } from '@tarantool.io/ui-kit';
 
-import { app, cluster } from 'src/models';
+import { cluster } from 'src/models';
 import type { Maybe } from 'src/models';
 
 import ServerDropdown from '../../../ServerDropdown';
-import MemoryIcon from '../MemoryIcon';
+import ReplicasetListBuckets from '../ReplicasetListBuckets';
+import ReplicasetListMemStat from '../ReplicasetListMemStat';
+import ReplicasetListStatus from '../ReplicasetListStatus';
 
 import { styles } from './ReplicasetServerListItem.styles';
-
-const { getReadableBytes } = app.utils;
 
 export interface ReplicasetServerListItemStatistic {
   arenaUsed: number;
@@ -51,7 +48,6 @@ export interface ReplicasetServerListItemProps {
   server: ReplicasetServerListItemServer;
   additional: ReplicasetServerListItemServerAdditional;
   showFailoverPromote: boolean;
-  className?: string;
 }
 
 const ReplicasetServerListItem = (props: ReplicasetServerListItemProps) => {
@@ -59,24 +55,10 @@ const ReplicasetServerListItem = (props: ReplicasetServerListItemProps) => {
     server: { uuid, uri, alias, status, disabled = false, message },
     additional: { master, activeMaster, selfURI, totalBucketsCount, ro, statistics },
     showFailoverPromote,
-    className,
   } = props;
 
-  const [usageText, percentage] = useMemo((): [string, number] => {
-    if (!statistics) {
-      return ['', 1];
-    }
-
-    return [
-      `Memory usage: ${getReadableBytes(statistics.arenaUsed)} / ${getReadableBytes(statistics.quotaSize)}`,
-      Math.max(1, (statistics.arenaUsed / statistics.quotaSize) * 100),
-    ];
-  }, [statistics]);
-
   return (
-    <FlatListItem
-      className={cx(styles.rowWrap, { [styles.disabledRowWrap]: disabled }, 'ServerLabelsHighlightingArea', className)}
-    >
+    <div className={cx(styles.root, { [styles.disabledRowWrap]: disabled }, 'ServerLabelsHighlightingArea')}>
       <div className={cx(styles.row, { [styles.disabledRow]: disabled })}>
         {(master || activeMaster) && (
           <LeaderFlag
@@ -84,68 +66,53 @@ const ReplicasetServerListItem = (props: ReplicasetServerListItemProps) => {
             state={status !== 'healthy' ? 'bad' : ro === false ? 'good' : 'warning'}
           />
         )}
-        <div className={styles.heading}>
-          <Text variant="h4" className={styles.alias}>
-            <Link className={styles.aliasLink} to={cluster.page.paths.serverDetails({ uuid })}>
-              {alias}
-            </Link>
-          </Text>
-          <UriLabel
-            uri={uri}
-            weAreHere={selfURI && uri === selfURI}
-            className={selfURI && uri === selfURI && 'meta-test__youAreHereIcon'}
-          />
-        </div>
-        <div className={styles.statusGroup}>
-          <HealthStatus className={styles.status} status={status} message={message} />
-          <div className={cx(styles.stats, 'meta-test__bucketIcon')}>
-            {statistics && (
-              <React.Fragment>
-                {typeof statistics.bucketsCount === 'number' ? (
-                  <Tooltip
-                    className={styles.bucketsCount}
-                    content={
-                      <>
-                        {'Total buckets: '}
-                        <b>{typeof totalBucketsCount === 'number' ? totalBucketsCount : '-'}</b>
-                      </>
-                    }
-                  >
-                    <IconBucket className={styles.iconMargin} />
-                    <Text className={styles.statsText} variant="p" tag="span">
-                      Buckets: <b>{(statistics && statistics.bucketsCount) || '-'}</b>
-                    </Text>
-                  </Tooltip>
-                ) : (
-                  <div className={styles.bucketsCount} />
-                )}
-                <div className={styles.memStats}>
-                  <div>
-                    {statistics && <MemoryIcon {...statistics} />}
-                    <Text className={styles.statsText} variant="p" tag="span">
-                      {usageText}
-                    </Text>
-                  </div>
-                  <ProgressBar className={styles.memProgress} percents={percentage} statusColors />
-                </div>
-              </React.Fragment>
-            )}
+        <div className={styles.head}>
+          <div className={styles.aliasWrp}>
+            <div className={styles.sign}>
+              {selfURI && uri === selfURI && (
+                <Tooltip content="WebUI operates here">
+                  <UriLabel weAreHere className="meta-test__youAreHereIcon" />
+                </Tooltip>
+              )}
+            </div>
+            <Text variant="h4" className={styles.alias}>
+              <Link className={styles.aliasLink} to={cluster.page.paths.serverDetails({ uuid })}>
+                {alias}
+              </Link>
+            </Text>
+          </div>
+          <div className={styles.labelWrp}>
+            <UriLabel uri={uri} className={styles.label} />
           </div>
         </div>
+        <div className={cx(styles.div, styles.grow)} />
+        <div className={styles.status}>
+          <ReplicasetListStatus status={status} message={message} />
+        </div>
+        <div className={styles.div} />
+        <div className={styles.buckets}>
+          <ReplicasetListBuckets
+            className="meta-test__bucketIcon"
+            count={statistics?.bucketsCount}
+            total={totalBucketsCount}
+          />
+        </div>
+        <div className={styles.div} />
+        <div className={styles.mem}>{statistics && <ReplicasetListMemStat {...statistics} />}</div>
+        <div className={styles.div} />
+        <ServerDropdown
+          className={cx(styles.configureBtn, 'no-opacity')}
+          uuid={uuid}
+          showServerDetails
+          showFailoverPromote={showFailoverPromote}
+        />
       </div>
-      <ServerDropdown
-        className={styles.configureBtn}
-        uuid={uuid}
-        showServerDetails
-        showFailoverPromote={showFailoverPromote}
-      />
-    </FlatListItem>
+    </div>
   );
 };
 
 export default memo(ReplicasetServerListItem, (prevProps, nextProps) => {
   return (
-    prevProps.className === nextProps.className &&
     prevProps.showFailoverPromote === nextProps.showFailoverPromote &&
     isEqual(prevProps.server, nextProps.server) &&
     isEqual(prevProps.additional, nextProps.additional)

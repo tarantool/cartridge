@@ -87,8 +87,8 @@ describe('Disable server', () => {
     cy.get('.meta-test__ClusterSuggestionsPanel span').contains(
       'Some instances are misconfigured. ' + 'You can heal it by reapplying configuration forcefully.'
     );
-    cy.get('.ServerLabelsHighlightingArea:contains(dummy-1)').should('contain', 'OperationError');
-    cy.get('.ServerLabelsHighlightingArea:contains(dummy-2)').should('contain', 'OperationError');
+    cy.get('.ServerLabelsHighlightingArea:contains(dummy-1)').should('contain', 'error');
+    cy.get('.ServerLabelsHighlightingArea:contains(dummy-2)').should('contain', 'error');
 
     ////////////////////////////////////////////////////////////////////
     cy.log('Inspect issues');
@@ -168,8 +168,8 @@ describe('Disable server', () => {
       .click({ force: true });
     cy.get('.meta-test__ForceApplySuggestionModal button').contains('Force apply').click();
     cy.get('.meta-test__ClusterSuggestionsPanel').should('be.visible');
-    cy.get('.ServerLabelsHighlightingArea:contains(dummy-1)').should('contain', 'OperationError');
-    cy.get('.ServerLabelsHighlightingArea:contains(dummy-2)').should('not.contain', 'OperationError');
+    cy.get('.ServerLabelsHighlightingArea:contains(dummy-1)').should('contain', 'error');
+    cy.get('.ServerLabelsHighlightingArea:contains(dummy-2)').should('not.contain', 'error');
     cy.get('.meta-test__ClusterIssuesButton').should('be.disabled');
     cy.get('.meta-test__ClusterIssuesButton').contains('Issues: 0');
 
