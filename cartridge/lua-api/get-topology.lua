@@ -239,7 +239,7 @@ local function get_topology()
     }
 end
 
-function get_servers()
+local function get_servers()
     local servers = {}
     local topology, err = get_topology()
     if topology == nil then
@@ -256,7 +256,7 @@ function get_servers()
     return servers
 end
 
-function get_replicasets()
+local function get_replicasets()
     local replicasets = {}
     local topology, err = get_topology()
     if topology == nil then
