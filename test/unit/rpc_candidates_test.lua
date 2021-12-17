@@ -62,6 +62,7 @@ g.before_all(function()
             vars.clusterwide_config = ClusterwideConfig.new({
                 ['topology.yml'] = yaml.encode(topology_cfg)
             }):lock()
+            require('membership').set_payload = function() end
             local failover = require('cartridge.failover')
             _G.box = {
                 cfg = function() end,
