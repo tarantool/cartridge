@@ -184,7 +184,7 @@ describe('Server details', () => {
       .contains('dummy-2')
       .closest('.ServerLabelsHighlightingArea')
       .find('[data-component=ReplicasetListStatus]')
-      .invoke('attr', 'data-message')
+      .invoke('attr', 'data-value-message')
       .should('eq', 'Server status is "dead"');
 
     openServerDetailsModal('dummy-2');

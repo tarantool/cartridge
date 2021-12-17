@@ -37,8 +37,8 @@ const ReplicasetListStatus = ({ status, statusMessage, message }: ReplicasetList
     <div
       className={cx(styles.root, states[state])}
       data-component="ReplicasetListStatus"
-      data-status={status}
-      data-message={message}
+      data-value-status={status}
+      data-value-message={message}
     >
       <span className={styles.label}>{label}</span>
       {message && (

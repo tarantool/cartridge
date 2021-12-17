@@ -15,17 +15,22 @@ const Container = withTooltip('div');
 export interface ReplicasetListBucketsProps {
   total?: Maybe<number>;
   count?: Maybe<number>;
-  className?: string;
 }
 
-const ReplicasetListBuckets = ({ total, count, className }: ReplicasetListBucketsProps) => {
+const ReplicasetListBuckets = ({ total, count }: ReplicasetListBucketsProps) => {
   if (isMaybe(count)) {
     return null;
   }
 
   return (
-    <Container className={cx(styles.root, className)} tooltipContent={`Total bucket: ${isMaybe(total) ? '-' : total}`}>
-      <IconBucket className={styles.icon} />
+    <Container
+      className={styles.root}
+      tooltipContent={`Total bucket: ${isMaybe(total) ? '-' : total}`}
+      data-component="ReplicasetListBuckets"
+      data-value-total={total}
+      data-value-count={count}
+    >
+      <IconBucket className={cx(styles.icon, 'meta-test__bucketIcon')} />
       <span className={styles.label}>{count}</span>
     </Container>
   );

@@ -93,13 +93,13 @@ describe('Disable server', () => {
     cy.get('.ServerLabelsHighlightingArea')
       .eq(1)
       .find('[data-component=ReplicasetListStatus]')
-      .invoke('attr', 'data-message')
+      .invoke('attr', 'data-value-message')
       .should('eq', 'Server status is "dead"');
     cy.get('.ServerLabelsHighlightingArea').eq(2).contains('unreachable');
     cy.get('.ServerLabelsHighlightingArea')
       .eq(2)
       .find('[data-component=ReplicasetListStatus]')
-      .invoke('attr', 'data-message')
+      .invoke('attr', 'data-value-message')
       .should('eq', 'Server status is "dead"');
     ////////////////////////////////////////////////////////////////////
 

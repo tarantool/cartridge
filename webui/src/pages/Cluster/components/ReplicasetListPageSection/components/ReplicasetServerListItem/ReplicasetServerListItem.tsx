@@ -58,7 +58,13 @@ const ReplicasetServerListItem = (props: ReplicasetServerListItemProps) => {
   } = props;
 
   return (
-    <div className={cx(styles.root, { [styles.disabledRowWrap]: disabled }, 'ServerLabelsHighlightingArea')}>
+    <div
+      className={cx(styles.root, { [styles.disabledRowWrap]: disabled }, 'ServerLabelsHighlightingArea')}
+      data-component="ReplicasetServerListItem"
+      data-value-disabled={disabled ? 'true' : 'false'}
+      data-value-status={status}
+      data-value-message={message}
+    >
       <div className={cx(styles.row, { [styles.disabledRow]: disabled })}>
         {(master || activeMaster) && (
           <LeaderFlag
@@ -91,11 +97,7 @@ const ReplicasetServerListItem = (props: ReplicasetServerListItemProps) => {
         </div>
         <div className={styles.div} />
         <div className={styles.buckets}>
-          <ReplicasetListBuckets
-            className="meta-test__bucketIcon"
-            count={statistics?.bucketsCount}
-            total={totalBucketsCount}
-          />
+          <ReplicasetListBuckets count={statistics?.bucketsCount} total={totalBucketsCount} />
         </div>
         <div className={styles.div} />
         <div className={styles.mem}>{statistics && <ReplicasetListMemStat {...statistics} />}</div>

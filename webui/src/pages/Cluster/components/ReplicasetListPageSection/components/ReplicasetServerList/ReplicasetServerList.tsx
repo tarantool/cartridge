@@ -43,7 +43,7 @@ const ReplicasetServerList = (props: ReplicasetServerListProps) => {
   }
 
   return (
-    <div className="meta-test__ReplicasetServerList">
+    <div className="meta-test__ReplicasetServerList" data-component="ReplicasetServerList">
       {servers.map(({ server, additional }) => (
         <ReplicasetServerListItem
           key={server.uuid}

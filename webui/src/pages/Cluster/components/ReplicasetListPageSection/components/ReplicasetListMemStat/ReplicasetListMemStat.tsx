@@ -2,7 +2,7 @@
 import React, { memo, useMemo } from 'react';
 import { cx } from '@emotion/css';
 // @ts-ignore
-import { ProgressBar, withTooltip } from '@tarantool.io/ui-kit';
+import { ProgressBar, Tooltip } from '@tarantool.io/ui-kit';
 
 import { Maybe, app } from 'src/models';
 
@@ -11,8 +11,6 @@ import MemoryIcon from '../MemoryIcon';
 import { styles } from './ReplicasetListMemStat.styles';
 
 const { getReadableBytes } = app.utils;
-
-const Container = withTooltip('div');
 
 export interface ReplicasetListStatistics {
   arenaUsed: number;
@@ -48,10 +46,17 @@ const ReplicasetListMemStat = ({
   }, [arenaUsed, quotaSize]);
 
   return (
-    <Container className={cx(styles.root, className)} tooltipContent={usageText}>
+    <div
+      className={cx(styles.root, className)}
+      data-component="ReplicasetListMemStat"
+      data-value-percentage={percentage}
+      data-value-tooltip={usageText}
+    >
       <MemoryIcon {...{ arena_used_ratio, quota_used_ratio, items_used_ratio }} />
-      <ProgressBar className={styles.progress} percents={percentage} statusColors />
-    </Container>
+      <Tooltip content={usageText}>
+        <ProgressBar className={styles.progress} percents={percentage} statusColors />
+      </Tooltip>
+    </div>
   );
 };
 
