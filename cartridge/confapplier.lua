@@ -432,7 +432,26 @@ local function boot_instance(clusterwide_config)
         local leaders_order = topology.get_leaders_order(
             topology_cfg, replicaset_uuid
         )
-        local leader_uuid = leaders_order[1]
+
+        -- if other instances report that they have a leader
+        -- then use leader_uuid from membership
+        local leader_uuid
+        for _, instance_uuid in ipairs(leaders_order) do
+            local server = topology_cfg.servers[instance_uuid]
+            if not server.disabled then
+                local member = membership.get_member(server.uri)
+                if member.status == 'alive'
+                and member.payload.leader_uuid ~= nil
+                then
+                    leader_uuid = member.payload.leader_uuid
+                    break
+                end
+            end
+        end
+
+        if not leader_uuid then
+            leader_uuid = leaders_order[1]
+        end
         local leader = topology_cfg.servers[leader_uuid]
 
         -- Set up 'star' replication for the bootstrap
