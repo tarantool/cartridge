@@ -647,7 +647,7 @@ local function init(opts)
     )
     if addrinfo == nil then
         set_state('InitError', err)
-        return nil, InitError:new("Couldnot resolve advertise uri %s %s", parts.host, parts.service)
+        return nil, InitError:new("Could not resolve advertise uri %s %s", parts.host, parts.service)
     end
 
     log.info(addrinfo[1].host)
@@ -656,7 +656,7 @@ local function init(opts)
         set_state('InitError', err)
         return nil, err
     else
-        log.info('Remote control bound to %s:%d', addrinfo[1], vars.binary_port)
+        log.info('Remote control bound to %s:%d', addrinfo[1].host, vars.binary_port)
     end
 
     local config_filename = fio.pathjoin(vars.workdir, 'config')
