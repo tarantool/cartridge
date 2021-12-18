@@ -436,8 +436,7 @@ local function boot_instance(clusterwide_config)
         -- if other instances report that they have a leader
         -- then use leader_uuid from membership
         local leader_uuid
-        local instances = topology_cfg.replicasets[replicaset_uuid].master
-        for _, instance_uuid in ipairs(instances) do
+        for _, instance_uuid in ipairs(leaders_order) do
             local server = topology_cfg.servers[instance_uuid]
             if not server.disabled then
                 local member = membership.get_member(server.uri)
