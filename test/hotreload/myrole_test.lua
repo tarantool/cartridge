@@ -302,7 +302,7 @@ function g.test_routes()
     local ok, resp = f:join()
     t.assert_equals(ok, true)
     t.assert_covers(resp, {status = 500})
-    t.assert_str_matches(resp.body, 'Unhandled error: fiber is cancelled\n.+')
+    t.assert_str_matches(resp.body, 'Internal Error')
 
     t.assert_covers(
         httpc.get('localhost:8081/sleep'),
