@@ -8,6 +8,18 @@ local errors = require('errors')
 
 local pool = require('cartridge.pool')
 local confapplier = require('cartridge.confapplier')
+local service_registry = require('cartridge.service-registry')
+local vars = require('cartridge.vars').new('cartridge.boxinfo')
+
+vars:new('webui_prefix', nil)
+
+local function set_webui_prefix(prefix)
+    vars.webui_prefix = prefix
+end
+
+local function get_webui_prefix()
+    return vars.webui_prefix
+end
 
 --- Retrieve `box.cfg` and `box.info` of a remote server.
 -- @function get_info
@@ -85,6 +97,8 @@ local function get_info(uri)
             storage_info = box.NULL
         end
 
+        local httpd = assert(service_registry.get('httpd'))
+        local srv_name = httpd.tcp_server:name()
         local ret = {
             general = {
                 version = box_info.version,
@@ -98,7 +112,9 @@ local function get_info(uri)
                 wal_dir = box_cfg.wal_dir,
                 worker_pool_threads = box_cfg.worker_pool_threads,
                 listen = box_cfg.listen and tostring(box_cfg.listen),
-                http_port = rawget(_G, '__instance_http_port'),
+                http_host = srv_name.host,
+                http_port = srv_name.port,
+                webui_prefix = vars.webui_prefix,
                 ro = box_info.ro,
             },
             storage = {
@@ -192,4 +208,7 @@ _G.__cluster_admin_get_info = get_info
 
 return {
     get_info = get_info,
+
+    set_webui_prefix = set_webui_prefix,
+    get_webui_prefix = get_webui_prefix,
 }

@@ -53,17 +53,17 @@ function g.test_http_port()
     local router = g.cluster.main_server
     local resp = router:graphql({
         query = [[
-            { servers { boxinfo { general { http_port } } } }
+            { servers { boxinfo { general { http_port http_host webui_prefix } } } }
         ]]
     })
 
     t.assert_items_equals(resp['data']['servers'], {{
             boxinfo = {
-                general = { http_port = 8081 },
+                general = { http_port = 8081, http_host = "0.0.0.0", webui_prefix = "" },
             },
         }, {
             boxinfo = {
-                general = { http_port = box.NULL },
+                general = { http_port = box.NULL, http_host = box.NULL, webui_prefix = box.NULL },
             },
         },
     })

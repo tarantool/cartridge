@@ -641,6 +641,12 @@ type ServerInfoGeneral {
   """HTTP port"""
   http_port: Int
 
+  """HTTP host"""
+  http_host: String
+
+  """webui prefix"""
+  webui_prefix: String
+
   """The number of seconds since the instance started"""
   uptime: Float!
 

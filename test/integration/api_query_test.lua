@@ -365,7 +365,11 @@ function g.test_servers()
                         membership { status }
                         vshard_router { buckets_unreachable }
                         vshard_storage { buckets_active }
-                        general { http_port }
+                        general {
+                            http_port
+                            http_host
+                            webui_prefix
+                        }
                     }
                 }
             }
@@ -386,7 +390,7 @@ function g.test_servers()
                 membership = {status = 'alive'},
                 vshard_router = {{ buckets_unreachable = 0 }},
                 vshard_storage = box.NULL,
-                general = { http_port = 8081 },
+                general = { http_port = 8081, http_host = "0.0.0.0", webui_prefix = "" },
             },
         }, {
             uri = 'localhost:13302',
@@ -402,7 +406,7 @@ function g.test_servers()
                 membership = {status = 'alive'},
                 vshard_router = box.NULL,
                 vshard_storage = {buckets_active = 3000},
-                general = { http_port = 8082 },
+                general = { http_port = 8082, http_host = "0.0.0.0", webui_prefix = "" },
             },
         }, {
             uri = 'localhost:13304',
@@ -418,7 +422,7 @@ function g.test_servers()
                 membership = {status = 'alive'},
                 vshard_router = box.NULL,
                 vshard_storage = {buckets_active = 3000},
-                general = { http_port = 8084 },
+                general = { http_port = 8084, http_host = "0.0.0.0", webui_prefix = "" },
             },
         }, {
             uri = 'localhost:13303',

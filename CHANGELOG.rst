@@ -18,6 +18,8 @@ Added
 
 - Add ``swim_period`` argument to the test-helpers.
 - Add ``http_port`` to graphql.
+- Add ``http_host`` to graphql.
+- Add ``webui_prefix`` to graphql.
 
 - Add unit tests for the Failover modal.
 

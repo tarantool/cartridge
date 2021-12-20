@@ -44,6 +44,7 @@ local lua_api_topology = require('cartridge.lua-api.topology')
 local lua_api_failover = require('cartridge.lua-api.failover')
 local lua_api_vshard = require('cartridge.lua-api.vshard')
 local lua_api_deprecated = require('cartridge.lua-api.deprecated')
+local lua_api_boxinfo = require('cartridge.lua-api.boxinfo')
 
 local ConsoleListenError = errors.new_class('ConsoleListenError')
 local CartridgeCfgError = errors.new_class('CartridgeCfgError')
@@ -671,6 +672,7 @@ local function cfg(opts, box_opts)
         end
 
         graphql.init(httpd, {prefix = opts.webui_prefix})
+        lua_api_boxinfo.set_webui_prefix(opts.webui_prefix)
 
         if opts.webui_enabled then
             local ok, err = HttpInitError:pcall(webui.init, httpd, {
@@ -686,7 +688,6 @@ local function cfg(opts, box_opts)
 
         local srv_name = httpd.tcp_server:name()
         log.info('Listening HTTP on %s:%s', srv_name.host, srv_name.port)
-        rawset(_G, '__instance_http_port', srv_name.port)
         service_registry.set('httpd', httpd)
     end
 
