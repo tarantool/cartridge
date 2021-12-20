@@ -34,7 +34,7 @@ local function mock()
         subscribe = function() return fiber.cond() end,
         myself = function()
             return {
-                uri = 'unused:0',
+                uri = '127.0.0.1:0',
                 status = 1,
                 incarnation = 1,
                 payload = {},
@@ -57,7 +57,7 @@ g.test_workdir = function()
         os.setenv('TARANTOOL_WORKDIR', nil)
         -- Test malformed opts.workdir
         local ok, err = require('cartridge').cfg({
-            advertise_uri = 'unused:0',
+            advertise_uri = '127.0.0.1:0',
             workdir = '/dev/null',
             roles = {},
         })
@@ -253,7 +253,7 @@ g.test_custom_auth_backend = function()
         local t = require('luatest')
 
         local ok, err = require('cartridge').cfg({
-            advertise_uri = 'unused:0',
+            advertise_uri = '127.0.0.1:0',
             workdir = os.getenv('TARANTOOL_WORKDIR'),
             roles = {},
             auth_backend_name = 'unknown-auth',
@@ -272,7 +272,7 @@ g.test_custom_auth_backend = function()
             error('My auth can not be loaded', 0)
         end
         local ok, err = require('cartridge').cfg({
-            advertise_uri = 'unused:0',
+            advertise_uri = '127.0.0.1:0',
             workdir = os.getenv('TARANTOOL_WORKDIR'),
             roles = {},
             auth_backend_name = 'myauth',
@@ -291,7 +291,7 @@ g.test_custom_auth_backend = function()
         package.loaded.myauth = nil
         package.preload['myauth'] = function() return '' end
         local ok, err = require('cartridge').cfg({
-            advertise_uri = 'unused:0',
+            advertise_uri = '127.0.0.1:0',
             workdir = os.getenv('TARANTOOL_WORKDIR'),
             roles = {},
             auth_backend_name = 'myauth',
@@ -312,7 +312,7 @@ g.test_custom_auth_backend = function()
             return { check_password = 'not-a-function' }
         end
         local ok, err = require('cartridge').cfg({
-            advertise_uri = 'unused:0',
+            advertise_uri = '127.0.0.1:0',
             workdir = os.getenv('TARANTOOL_WORKDIR'),
             roles = {},
             auth_backend_name = 'myauth',
@@ -334,7 +334,7 @@ g.test_custom_auth_backend = function()
             return { unknown_method = function() end }
         end
         local ok, err = require('cartridge').cfg({
-            advertise_uri = 'unused:0',
+            advertise_uri = '127.0.0.1:0',
             workdir = os.getenv('TARANTOOL_WORKDIR'),
             roles = {},
             auth_backend_name = 'myauth',
@@ -355,7 +355,7 @@ g.test_default_auth_backend = function()
         os.setenv('TARANTOOL_AUTH_BUILTIN_ADMIN_ENABLED', 'abracadabra')
 
         local ok, err = require('cartridge').cfg({
-            advertise_uri = 'unused:0',
+            advertise_uri = '127.0.0.1:0',
             workdir = os.getenv('TARANTOOL_WORKDIR'),
             roles = {},
         })
@@ -380,7 +380,7 @@ g.test_console_sock_enobufs = function()
         fio.mktree(sock_dir)
 
         local ok, err = require('cartridge').cfg({
-            advertise_uri = 'unused:0',
+            advertise_uri = '127.0.0.1:0',
             http_enabled = false,
             workdir = workdir,
             roles = {},
@@ -404,7 +404,7 @@ g.test_console_sock_enoent = function()
         local errno = require('errno')
 
         local ok, err = require('cartridge').cfg({
-            advertise_uri = 'unused:0',
+            advertise_uri = '127.0.0.1:0',
             http_enabled = false,
             workdir = os.getenv('TARANTOOL_WORKDIR'),
             roles = {},
@@ -437,7 +437,7 @@ g.test_dns_resolve_timeout = function()
 
         local start_time = fiber.clock()
         local ok, err = require('cartridge').cfg({
-            advertise_uri = 'unused:0',
+            advertise_uri = '127.0.0.1:0',
             http_enabled = false,
             workdir = os.getenv('TARANTOOL_WORKDIR'),
             roles = {},
@@ -466,7 +466,7 @@ g.test_dns_resolve_timeout = function()
         end)
 
         local ok, err = require('cartridge').cfg({
-            advertise_uri = 'unused:0',
+            advertise_uri = '127.0.0.1:0',
             http_enabled = false,
             workdir = os.getenv('TARANTOOL_WORKDIR'),
             roles = {},
@@ -489,7 +489,7 @@ g.test_positive = function()
 
         local opts = {
             workdir = os.getenv('TARANTOOL_WORKDIR'),
-            advertise_uri = 'unused:0',
+            advertise_uri = '127.0.0.1:0',
             http_host = '127.0.0.1',
             http_enabled = true,
             webui_enabled = false,
@@ -539,7 +539,7 @@ g.test_webui_prefix = function()
 
         local opts = {
             workdir = os.getenv('TARANTOOL_WORKDIR'),
-            advertise_uri = 'unused:0',
+            advertise_uri = '127.0.0.1:0',
             http_host = '127.0.0.1',
             http_enabled = true,
             webui_enabled = true,
@@ -580,3 +580,38 @@ g.test_webui_prefix = function()
     end)
 end
 
+g.test_advertise_uri_error = function()
+    helpers.run_remotely(g.server, mock)
+
+    helpers.run_remotely(g.server, function()
+        local t = require('luatest')
+
+        local ok, err = require('cartridge').cfg({
+            workdir = os.getenv('TARANTOOL_WORKDIR'),
+            advertise_uri = '',
+            roles = {},
+        })
+        t.assert_equals(ok, nil)
+        t.assert_covers(err, {
+            class_name = 'CartridgeCfgError',
+            err = 'Invalid advertise_uri ""',
+        })
+        local getaddrinfo = package.loaded.socket.getaddrinfo
+
+        package.loaded.socket.getaddrinfo = function()
+            return nil, 'error'
+        end
+
+        local ok, err = require('cartridge').cfg({
+            workdir = os.getenv('TARANTOOL_WORKDIR'),
+            advertise_uri = '127.0.0.1:0',
+            roles = {},
+        })
+        t.assert_equals(ok, nil)
+        t.assert_covers(err, {
+            class_name = 'InitError',
+            err = 'Could not resolve advertise uri 127.0.0.1:0'
+        })
+        package.loaded.socket.getaddrinfo = getaddrinfo
+    end)
+end

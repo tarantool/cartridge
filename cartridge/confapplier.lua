@@ -13,6 +13,8 @@ local fiber = require('fiber')
 local errors = require('errors')
 local checks = require('checks')
 local membership = require('membership')
+local uri_tools = require('uri')
+local socket = require('socket')
 
 local vars = require('cartridge.vars').new('cartridge.confapplier')
 local pool = require('cartridge.pool')
@@ -632,12 +634,22 @@ local function init(opts)
     vars.advertise_uri = opts.advertise_uri
     vars.upgrade_schema = opts.upgrade_schema
 
-    local ok, err = remote_control.bind('0.0.0.0', vars.binary_port)
+    local parts = uri_tools.parse(opts.advertise_uri)
+    local addrinfo, err = socket.getaddrinfo(
+        parts.host, parts.service,
+        {family='AF_INET', type='SOCK_STREAM'}
+    )
+    if addrinfo == nil then
+        set_state('InitError', err)
+        return nil, InitError:new("Could not resolve advertise uri %s", opts.advertise_uri)
+    end
+
+    local ok, err = remote_control.bind(addrinfo[1].host, vars.binary_port)
     if not ok then
         set_state('InitError', err)
         return nil, err
     else
-        log.info('Remote control bound to 0.0.0.0:%d', vars.binary_port)
+        log.info('Remote control bound to %s:%d', addrinfo[1].host, vars.binary_port)
     end
 
     local config_filename = fio.pathjoin(vars.workdir, 'config')
