@@ -26,7 +26,7 @@ Added
 Changed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- Update ``http`` dependency to 1.2.0
+- Update ``http`` dependency to 1.2.0.
 
 - Allow to bootstrap vshard groups partially.
 
@@ -38,7 +38,7 @@ Changed
 
 - Use core as a node module instead of a window scope object.
 
-- Update ``frontend-core`` to 8.0.0.
+- Update ``frontend-core`` to 8.0.1.
 
 - Update ``graphql`` to 0.1.2.
 
