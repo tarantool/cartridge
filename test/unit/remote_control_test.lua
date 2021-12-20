@@ -773,11 +773,8 @@ function g.test_switch_box_to_rc()
     local conn_2 = assert(netbox.connect(uri))
     t.assert_equals(conn_2.state, "error")
     t.assert_equals(conn_2.peer_uuid, nil)
-    local valid_errors = {
-        ["Connection refused"] = true,
-        ["Network is unreachable"] = true, -- inside docker
-    }
-    t.assert(conn_2.error, "Connection refused")
+
+    t.assert_str_matches(conn_2.error, ".*Connection refused.*")
 
     -- conn_1 is still alive and useful
     t.assert_not(conn_1.error)

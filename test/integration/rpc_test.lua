@@ -3,7 +3,6 @@ local t = require('luatest')
 local g = t.group()
 
 local helpers = require('test.helper')
-local errno = require('errno')
 
 g.before_all = function()
     g.cluster = helpers.Cluster:new({

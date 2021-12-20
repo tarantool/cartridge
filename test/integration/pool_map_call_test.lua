@@ -284,7 +284,7 @@ function g.test_negative()
     else
         assert_err_matches(errmap, 'localhost:13309', 'NetboxCallError: "localhost:13309": Invalid greeting')
     end
-    
+
     assert_err_matches(errmap, 'localhost:9',
         'NetboxCallError: "localhost:9":.*' .. errno.strerror(errno.ECONNREFUSED),
         'NetboxCallError: "localhost:9": ' .. errno.strerror(errno.ENETUNREACH)

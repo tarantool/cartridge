@@ -1,6 +1,5 @@
 local fio = require('fio')
 local fiber = require('fiber')
-local errno = require('errno')
 local netbox = require('net.box')
 local utils = require('cartridge.utils')
 
@@ -143,7 +142,6 @@ function g.test_netbox_timeouts()
     )
     t.assert_covers(conn, {
         state = 'error',
-        
     })
     t.assert_str_matches(conn.error, ".*timed out")
 
