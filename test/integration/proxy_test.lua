@@ -112,8 +112,8 @@ function g.test_dead_destination()
         t.assert_equals(ok, nil)
         t.assert_covers(err, {
             class_name = 'NetboxConnectError',
-            err = '"localhost:13301": Connection refused',
         })
+        t.assert_str_matches(err.err, '"localhost:13301":.*Connection refused')
 
         -- But it's alive in membership and suitable for proxying
         local proxy = require('cartridge.lua-api.proxy')
@@ -131,15 +131,15 @@ function g.test_dead_destination()
     -- Todo check alien issue in scope of
     -- https://github.com/tarantool/cartridge/issues/1301
 
-    t.assert_covers(
+    t.assert_str_matches(
         edit_replicasets(g.unconfigured, {{
             uuid = g.unconfigured.replicaset_uuid,
             join_servers = {{
                 uuid = g.unconfigured.instance_uuid,
                 uri = g.unconfigured.advertise_uri,
             }}
-        }}).errors[1],
-        {message = '"localhost:13301": Connection refused'}
+        }}).errors[1].message,
+        '"localhost:13301":.*Connection refused'
     )
 end
 

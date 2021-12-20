@@ -267,8 +267,8 @@ function g.test_no_instances_to_check_schema()
         assert(conn:wait_connected() == false)
     ]], {s1.advertise_uri, {wait_connected = false}})
 
-    t.assert_error_msg_contains(
-        '"localhost:13301": Connection refused',
+    t.assert_error_msg_matches(
+        '.*"localhost:13301":.*Connection refused',
         _check_schema, s2, _schema
     )
 end

@@ -1,6 +1,5 @@
 local fio = require('fio')
 local fiber = require('fiber')
-local errno = require('errno')
 local netbox = require('net.box')
 local utils = require('cartridge.utils')
 
@@ -137,14 +136,14 @@ function g.test_netbox_timeouts()
     -- perform nb call -> remote_methods:_request ->
     -- wait_state('active', TIMEOUT_INF) -> establish_connection will
     -- fail after connect timeout
-    t.assert_error_msg_equals(
-        errno.strerror(errno.ETIMEDOUT),
+    t.assert_error_msg_matches(
+        ".*timed out",
         conn.eval, conn, "return 'something'", nil
     )
     t.assert_covers(conn, {
         state = 'error',
-        error = errno.strerror(errno.ETIMEDOUT),
     })
+    t.assert_str_matches(conn.error, ".*timed out")
 
     t.assert_almost_equals(fiber.clock()-t0, 1, 0.3)
 end
