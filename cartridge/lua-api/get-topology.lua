@@ -239,6 +239,39 @@ local function get_topology()
     }
 end
 
+local function get_servers()
+    local servers = {}
+    local topology, err = get_topology()
+    if topology == nil then
+        return nil, err
+    end
+
+    for _, server in pairs(topology.servers) do
+        if server.replicaset ~= nil then
+            server.replicaset_uuid = server.replicaset.uuid
+        end
+        server.replicaset = nil
+        table.insert(servers, server)
+    end
+    return servers
+end
+
+local function get_replicasets()
+    local replicasets = {}
+    local topology, err = get_topology()
+    if topology == nil then
+        return nil, err
+    end
+
+    for _, replicaset in pairs(topology.replicasets) do
+        replicasets.servers = nil
+        table.insert(replicasets, replicaset)
+    end
+    return replicasets
+end
+
 return {
     get_topology = get_topology,
+    get_servers = get_servers,
+    get_replicasets = get_replicasets,
 }
