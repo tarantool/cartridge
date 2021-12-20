@@ -94,8 +94,8 @@ function g.test_api()
     t.assert_not(res)
     t.assert_covers(err, {
         class_name = 'RemoteCallError',
-        err = '"localhost:13301": Connection refused'
     })
+    t.assert_str_matches(err.err, '"localhost:13301":.*Connection refused')
 end
 
 g.after_test('test_api', function()
@@ -196,25 +196,14 @@ function g.test_routing()
         {uri = 'localhost:0'}
     )
     t.assert_not(res)
-    t.assert_items_include(
-        {
-            '"localhost:0": ' .. errno.strerror(errno.ECONNREFUSED),
-            '"localhost:0": ' .. errno.strerror(errno.ENETUNREACH),
-            '"localhost:0": ' .. errno.strerror(errno.EADDRNOTAVAIL),
-        }, {err.err}
-    )
+    t.assert_str_matches(err.err, '"localhost:0":.*')
 
     local res, err = rpc_call(B2,
         'myrole', 'void', nil,
         {uri = 'localhost:9'}
     )
     t.assert_not(res)
-    t.assert_items_include(
-        {
-            '"localhost:9": ' .. errno.strerror(errno.ECONNREFUSED),
-            '"localhost:9": ' .. errno.strerror(errno.ENETUNREACH),
-        }, {err.err}
-    )
+    t.assert_str_matches(err.err, '"localhost:9":.*')
 
     t.assert_error_msg_contains(
         'bad argument opts.uri to rpc_call' ..

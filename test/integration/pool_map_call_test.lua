@@ -84,6 +84,29 @@ local function assert_err_equals(map, uri, expected1, expected2)
     end
 end
 
+local function assert_err_matches(map, uri, expected1, expected2)
+    if map[uri] == nil then
+        local err = string.format(
+            "No error for %q:\n" ..
+            "expected: %s",
+            uri, expected1
+        )
+        error(err, 2)
+    end
+
+    local actual = map[uri].class_name .. ': ' .. map[uri].err
+    if actual:match(expected1) == nil and actual:match(expected2) == nil then
+        log.error('%s', map[uri])
+        local err = string.format(
+            "Unexpected error for %q:\n" ..
+            "expected: %s\n" ..
+            "  actual: %s\n",
+            uri, expected1, actual
+        )
+        error(err, 2)
+    end
+end
+
 -- check that all errors at NetboxMapCallError has errors metatable
 -- and tostring works fine (there is no error in log like: table: 0x41b7b968)
 local function assert_multiple_error_str_valid(err)
@@ -256,9 +279,14 @@ function g.test_negative()
     assert_err_equals(errmap, '!@#$%^&*()',      'FormatURIError: Invalid URI "!@#$%^&*()"')
     assert_err_equals(errmap, 'localhost:13301', 'NetboxCallError: "localhost:13301": Too long WAL write')
     assert_err_equals(errmap, 'localhost:13302', 'NetboxCallError: "localhost:13302": Too long WAL write')
-    assert_err_equals(errmap, 'localhost:13309', 'NetboxCallError: "localhost:13309": Invalid greeting')
-    assert_err_equals(errmap, 'localhost:9',
-        'NetboxCallError: "localhost:9": ' .. errno.strerror(errno.ECONNREFUSED),
+    if helpers.tarantool_version_ge('2.10.0') then
+        assert_err_matches(errmap, 'localhost:13309', 'NetboxCallError: "localhost:13309": unexpected EOF.*')
+    else
+        assert_err_matches(errmap, 'localhost:13309', 'NetboxCallError: "localhost:13309": Invalid greeting')
+    end
+    
+    assert_err_matches(errmap, 'localhost:9',
+        'NetboxCallError: "localhost:9":.*' .. errno.strerror(errno.ECONNREFUSED),
         'NetboxCallError: "localhost:9": ' .. errno.strerror(errno.ENETUNREACH)
     )
     assert_multiple_error_str_valid(errmap)
@@ -287,14 +315,16 @@ function g.test_errors_united()
 
     t.assert_equals(err.class_name, 'NetboxMapCallError')
     t.assert_equals(#err.err:split('\n'), 3)
-    t.assert_items_equals(
-        err.err:split('\n'),
-        {
-            'Invalid URI ")(*&^%$#@!"',
-            '"localhost:13302": Segmentation fault',
-            '"localhost:13309": Invalid greeting',
-        }
-    )
+    local errs = err.err:split('\n')
+
+    t.assert_equals(errs[1], 'Invalid URI ")(*&^%$#@!"')
+    if helpers.tarantool_version_ge('2.10.0') then
+        t.assert_str_matches(errs[2], '"localhost:13309": unexpected EOF.*')
+    else
+        t.assert_str_matches(errs[2], '"localhost:13309": Invalid greeting')
+    end
+    t.assert_equals(errs[3], '"localhost:13302": Segmentation fault')
+
     assert_multiple_error_str_valid(err)
 end
 
