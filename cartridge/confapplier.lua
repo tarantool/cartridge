@@ -635,19 +635,13 @@ local function init(opts)
     vars.upgrade_schema = opts.upgrade_schema
 
     local parts = uri_tools.parse(opts.advertise_uri)
-    if not parts then
-        local err = InitError:new("Incorrect advertise uri %s", opts.advertise_uri)
-        set_state('InitError', err)
-        return nil, err
-    end
-
     local addrinfo, err = socket.getaddrinfo(
         parts.host, parts.service,
         {family='AF_INET', type='SOCK_STREAM'}
     )
     if addrinfo == nil then
         set_state('InitError', err)
-        return nil, InitError:new("Could not resolve advertise uri %s %s", parts.host, parts.service)
+        return nil, InitError:new("Could not resolve advertise uri %s", opts.advertise_uri)
     end
 
     local ok, err = remote_control.bind(addrinfo[1].host, vars.binary_port)

@@ -580,3 +580,38 @@ g.test_webui_prefix = function()
     end)
 end
 
+g.test_advertise_uri_error = function()
+    helpers.run_remotely(g.server, mock)
+
+    helpers.run_remotely(g.server, function()
+        local t = require('luatest')
+
+        local ok, err = require('cartridge').cfg({
+            workdir = os.getenv('TARANTOOL_WORKDIR'),
+            advertise_uri = '',
+            roles = {},
+        })
+        t.assert_equals(ok, nil)
+        t.assert_covers(err, {
+            class_name = 'CartridgeCfgError',
+            err = 'Invalid advertise_uri ""',
+        })
+        local getaddrinfo = package.loaded.socket.getaddrinfo
+
+        package.loaded.socket.getaddrinfo = function()
+            return nil, 'error'
+        end
+
+        local ok, err = require('cartridge').cfg({
+            workdir = os.getenv('TARANTOOL_WORKDIR'),
+            advertise_uri = '127.0.0.1:0',
+            roles = {},
+        })
+        t.assert_equals(ok, nil)
+        t.assert_covers(err, {
+            class_name = 'InitError',
+            err = 'Could not resolve advertise uri 127.0.0.1:0'
+        })
+        package.loaded.socket.getaddrinfo = getaddrinfo
+    end)
+end
