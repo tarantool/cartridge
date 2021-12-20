@@ -650,7 +650,6 @@ local function init(opts)
         return nil, InitError:new("Could not resolve advertise uri %s %s", parts.host, parts.service)
     end
 
-    log.info(addrinfo[1].host)
     local ok, err = remote_control.bind(addrinfo[1].host, vars.binary_port)
     if not ok then
         set_state('InitError', err)
