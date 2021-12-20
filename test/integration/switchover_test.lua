@@ -514,39 +514,48 @@ add('test_enabling', function(g)
     t.assert_equals(B1:eval(q_leadership, {uB}), uB1)
     t.assert_equals(B1:eval(q_readonliness), false)
     t.assert_equals(B1:eval(q_is_vclockkeeper), false)
-    t.assert_items_include(
-        helpers.list_cluster_issues(A1),
-        {{
-            level = "warning",
-            topic = "failover",
-            instance_uuid = box.NULL,
-            replicaset_uuid = box.NULL,
-            message = "Can't obtain failover coordinator: " ..(
-                g.name == 'integration.switchover.etcd2' and
-                g.state_provider.client_url .. "/v2/members:" ..
-                " Couldn't connect to server" or
-                "State provider unavailable"),
-        }, {
-            level = "warning",
-            topic = "failover",
-            instance_uuid = uA1,
-            replicaset_uuid = box.NULL  ,
-            message = "Failover is stuck on " .. A1.advertise_uri ..
-                " (A1): Error fetching first appointments: " ..(
-                g.name == 'integration.switchover.etcd2' and
-                g.state_provider.client_url .. "/v2/members:" ..
-                " Couldn't connect to server" or
-                '"127.0.0.1:14401": Connection refused'),
-        }, {
-            level = "warning",
-            topic = "switchover",
-            instance_uuid = uB1,
-            replicaset_uuid = uB,
-            message = "Consistency on " .. B1.advertise_uri .. " (B1)" ..
-                " isn't reached yet",
-        }}
-    )
-
+    if helpers.tarantool_version_ge('2.10.0') then
+        local issues = helpers.list_cluster_issues(A1)
+        t.assert_str_matches(issues[1].message, "Can't obtain failover coordinator:.*")
+        t.assert_equals(issues[1].level, "warning")
+        t.assert_str_matches(issues[2].message, "Failover is stuck on.*")
+        t.assert_str_matches(issues[3].message, "Failover is stuck on.*")
+        t.assert_str_matches(issues[4].message, "Failover is stuck on.*")
+        t.assert_str_matches(issues[5].message, "Consistency on .* isn't reached yet")
+    else
+        t.assert_items_include(
+            helpers.list_cluster_issues(A1),
+            {{
+                level = "warning",
+                topic = "failover",
+                instance_uuid = box.NULL,
+                replicaset_uuid = box.NULL,
+                message = "Can't obtain failover coordinator: " ..(
+                    g.name == 'integration.switchover.etcd2' and
+                    g.state_provider.client_url .. "/v2/members:" ..
+                    " Couldn't connect to server" or
+                    "State provider unavailable"),
+            }, {
+                level = "warning",
+                topic = "failover",
+                instance_uuid = uA1,
+                replicaset_uuid = box.NULL  ,
+                message = "Failover is stuck on " .. A1.advertise_uri ..
+                    " (A1): Error fetching first appointments: " ..(
+                    g.name == 'integration.switchover.etcd2' and
+                    g.state_provider.client_url .. "/v2/members:" ..
+                    " Couldn't connect to server" or
+                    '"127.0.0.1:14401": Connection refused'),
+            }, {
+                level = "warning",
+                topic = "switchover",
+                instance_uuid = uB1,
+                replicaset_uuid = uB,
+                message = "Consistency on " .. B1.advertise_uri .. " (B1)" ..
+                    " isn't reached yet",
+            }}
+        )
+    end
 
     -- Repair state provider (empty)
     fio.rmtree(g.state_provider.workdir)
