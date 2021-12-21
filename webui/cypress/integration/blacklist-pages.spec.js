@@ -87,9 +87,9 @@ describe('Blacklist pages', () => {
       })
       .then(() => {
         cy.get('a[href="/abc/admin/test/repair"]').should('exist').click();
-        cy.get('a[href="/test/repair/input"]').should('exist');
-        cy.get('a[href="/test/repair/output"]').should('exist');
-        cy.get('a[href="/test/repair/jobs"]').should('not.exist');
+        cy.get('a[href="/abc/admin/test/repair/input"]').should('exist');
+        cy.get('a[href="/abc/admin/test/repair/output"]').should('exist');
+        cy.get('a[href="/abc/admin/test/repair/jobs"]').should('not.exist');
       });
   });
 });
