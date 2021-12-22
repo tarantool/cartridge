@@ -190,12 +190,14 @@ export const replicasetCounts = (data: ServerList) =>
         acc.total++;
         if (item.status !== 'healthy') {
           acc.unhealthy++;
+        } else {
+          acc.healthy++;
         }
       }
 
       return acc;
     },
-    { total: 0, unhealthy: 0 }
+    { total: 0, healthy: 0, unhealthy: 0 }
   );
 
 // search

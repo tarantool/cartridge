@@ -179,6 +179,7 @@ export const filterSearchableReplicasetList = (
       meta: {
         searchString: replicaSet.meta?.searchString ?? '',
         matchingServersCount,
+        totalServersCount: replicaSet.servers.length,
       },
     };
   });

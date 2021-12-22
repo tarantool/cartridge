@@ -1,35 +1,26 @@
 import { css } from '@emotion/css';
 
 export const styles = {
-  rowWrap: css`
+  root: css`
     position: relative;
-    padding-left: 32px;
+    background-color: #fff;
+    border-top: 1px solid #e6e7e8;
+    height: 56px;
+    padding: 0 20px;
   `,
   disabledRowWrap: css`
     background-color: #fafafa;
   `,
+  disabledRow: css`
+    > *:not(.no-opacity) {
+      opacity: 0.4;
+    }
+  `,
   row: css`
     display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    padding-right: 31px;
-    margin-bottom: -8px;
-  `,
-  disabledRow: css`
-    opacity: 0.4;
-  `,
-  heading: css`
-    flex-basis: 415px;
-    flex-grow: 1;
-    flex-shrink: 0;
-    margin-right: 16px;
-    margin-bottom: 8px;
-    overflow: hidden;
-  `,
-  alias: css`
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    flex-wrap: nowrap;
+    align-items: center;
+    height: 100%;
   `,
   aliasLink: css`
     color: #000;
@@ -46,63 +37,85 @@ export const styles = {
   leaderFlag: css`
     position: absolute;
     top: 0;
-    left: 3px;
+    left: 0;
   `,
-  iconMargin: css`
-    margin-right: 4px;
-  `,
-  statusGroup: css`
+  head: css`
+    flex: 0 0 auto;
     display: flex;
-    flex-basis: 576px;
-    flex-shrink: 0;
-    flex-grow: 1;
-    align-items: flex-start;
-    margin-bottom: 8px;
+    flex-direction: row;
+    @media (max-width: 1200px) {
+      flex-direction: column;
+    }
   `,
-  memStats: css`
-    flex-shrink: 0;
-    width: 246px;
-  `,
-  memStatsRow: css`
+  aliasWrp: css`
     display: flex;
     align-items: center;
+
+    flex: 0 0 240px;
+    width: 240px;
+
+    @media (max-width: 1200px) {
+      flex-basis: auto;
+      width: auto;
+    }
   `,
-  statsText: css`
+  labelWrp: css`
+    display: flex;
+    align-items: center;
+
+    flex: 0 1 auto;
+    margin-left: 30px;
+    @media (max-width: 1200px) {
+      margin-left: 20px;
+    }
+  `,
+  div: css`
+    flex: 0 0 30px;
+    width: 30px;
+    @media (max-width: 1200px) {
+      flex: 0 0 20px;
+      width: 20px;
+    }
+  `,
+  grow: css`
+    flex-grow: 1 !important;
+  `,
+  sign: css`
+    flex: 0 0 20px;
+    width: 20px;
+  `,
+  alias: css`
+    flex: 0 0 220px;
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 220px;
+
+    @media (max-width: 1200px) {
+      flex-basis: auto;
+      width: auto;
+    }
   `,
-  memProgress: css`
-    width: auto;
-    margin-left: 20px;
+  label: css`
+    flex: 0 1 auto;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+  `,
+  mem: css`
+    width: 90px;
+  `,
+  buckets: css`
+    width: 70px;
   `,
   status: css`
-    flex-basis: 193px;
-    flex-shrink: 0;
-    margin-top: 1px;
-    margin-right: 16px;
-    margin-left: -8px;
-  `,
-  stats: css`
-    position: absolute;
-    right: 46px;
-    display: flex;
-    flex-shrink: 0;
-    align-items: stretch;
-    margin-left: auto;
-    width: 384px;
-  `,
-  bucketsCount: css`
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    width: 122px;
-    margin-right: 16px;
-  `,
-  tags: css`
-    margin-top: 8px;
+    width: 140px;
   `,
   configureBtn: css`
-    position: absolute;
-    top: 12px;
-    right: 12px;
+    width: 32px;
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: center;
   `,
 };

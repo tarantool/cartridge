@@ -23,6 +23,7 @@ export type ServerListReplicasetSearchable = Omit<ServerListReplicaset, 'servers
   meta?: {
     searchString: string;
     matchingServersCount?: number;
+    totalServersCount?: number;
   };
 };
 

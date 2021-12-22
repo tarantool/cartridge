@@ -34,7 +34,11 @@ describe('Server details', () => {
   });
 
   function openServerDetailsModal(serverAlias) {
-    cy.get('li').contains(serverAlias).closest('li').find('.meta-test__ReplicasetServerListItem__dropdownBtn').click();
+    cy.get('.ServerLabelsHighlightingArea')
+      .contains(serverAlias)
+      .closest('.ServerLabelsHighlightingArea')
+      .find('.meta-test__ReplicasetServerListItem__dropdownBtn')
+      .click();
     cy.get('.meta-test__ReplicasetServerListItem__dropdown *').contains('Server details').click();
   }
 
@@ -173,8 +177,15 @@ describe('Server details', () => {
 
     cy.get('.ServerLabelsHighlightingArea')
       .contains('dummy-2')
-      .closest('li')
-      .should('contain', 'Server status is "dead"');
+      .closest('.ServerLabelsHighlightingArea')
+      .should('contain', 'unreachable');
+
+    cy.get('.ServerLabelsHighlightingArea')
+      .contains('dummy-2')
+      .closest('.ServerLabelsHighlightingArea')
+      .find('[data-component=ReplicasetListStatus]')
+      .invoke('attr', 'data-value-message')
+      .should('eq', 'Server status is "dead"');
 
     openServerDetailsModal('dummy-2');
     cy.get('.meta-test__ServerDetailsModal button:contains(Zone Mordor)').click();

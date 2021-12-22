@@ -1,64 +1,71 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-// TODO: move to uikit
-import React, { MouseEvent, memo, useCallback, useMemo } from 'react';
+import React, { MouseEvent, useCallback, useMemo } from 'react';
 import { cx } from '@emotion/css';
+import { useStore } from 'effector-react';
 // @ts-ignore
-import { Button, HealthStatus, Text, TiledList, TiledListItem, UriLabel } from '@tarantool.io/ui-kit';
+import { Button, Text, TiledList, TiledListItem, Tooltip, UriLabel } from '@tarantool.io/ui-kit';
 
-import { GetClusterClusterSelf, ServerListServer, app, cluster } from 'src/models';
+import { ServerListServer, cluster } from 'src/models';
 
 import { styles } from './UnconfiguredServerList.styles';
 
-const { isLike } = app.utils;
-const { selectors } = cluster.serverList;
+const { selectors, $cluster } = cluster.serverList;
 const { serverConfigureModalOpenedEvent } = cluster.serverConfigure;
 
 export interface UnconfiguredServerListProps {
-  className?: string;
-  clusterSelf?: GetClusterClusterSelf;
   servers: ServerListServer[];
 }
 
-const UnconfiguredServerList = ({ className, servers, clusterSelf }: UnconfiguredServerListProps) => {
+const UnconfiguredServerList = ({ servers }: UnconfiguredServerListProps) => {
+  const clusterStore = useStore($cluster);
+
+  const clusterSelf = useMemo(() => selectors.clusterSelf(clusterStore), [clusterStore]);
+
   const sortedServersList = useMemo(
     () => selectors.sortUnConfiguredServerList(servers, clusterSelf),
     [servers, clusterSelf]
   );
 
-  const handleConfigureButtonClick = useCallback((_: MouseEvent<HTMLButtonElement>, pass?: unknown) => {
-    if (isLike<ServerListServer>(pass)) {
+  const handleConfigureButtonClick = useCallback((_: MouseEvent<HTMLButtonElement>, pass?: ServerListServer) => {
+    if (pass) {
       serverConfigureModalOpenedEvent({ uri: pass.uri });
     }
   }, []);
 
   return (
-    <TiledList className={cx(className, 'meta-test__UnconfiguredServerList')} outer={false}>
+    <TiledList className="meta-test__UnconfiguredServerList" outer={false}>
       {sortedServersList.map((item) => (
-        <TiledListItem key={item.uuid} className={styles.row} itemKey={item.uri}>
-          <div className={styles.heading}>
-            <Text variant="h4" tag="span">
-              {item.alias}
-            </Text>
-            <UriLabel
-              uri={item.uri}
-              weAreHere={clusterSelf?.uri && item.uri === clusterSelf.uri}
-              className={clusterSelf?.uri && item.uri === clusterSelf.uri && 'meta-test__youAreHereIcon'}
-            />
+        <TiledListItem key={item.uuid} className={styles.row} corners="soft">
+          <div className={styles.sign}>
+            {clusterSelf?.uri && item.uri === clusterSelf.uri && (
+              <Tooltip content="WebUI operates here">
+                <UriLabel weAreHere className="meta-test__youAreHereIcon" />
+              </Tooltip>
+            )}
           </div>
-          <HealthStatus className={styles.status} status={item.status} message={item.message} />
-          <Button
-            className={cx(styles.configureBtn, 'meta-test__configureBtn', {
-              [styles.hiddenButton]: !(clusterSelf?.uuid || clusterSelf?.uri === item.uri),
-            })}
-            intent="secondary"
-            onClick={handleConfigureButtonClick}
-            text="Configure"
-            pass={item}
-          />
+          <Text variant="h4" tag="span" className={styles.alias}>
+            {item.alias}
+          </Text>
+          <div className={styles.div} />
+          <div className={styles.label}>
+            <UriLabel uri={item.uri} />
+          </div>
+          {(clusterSelf?.uuid || clusterSelf?.uri === item.uri) && (
+            <>
+              <div className={cx(styles.div, styles.grow)} />
+              <Button
+                className={cx(styles.actions, 'meta-test__configureBtn')}
+                intent="secondary"
+                onClick={handleConfigureButtonClick}
+                text="Configure"
+                pass={item}
+              />
+            </>
+          )}
         </TiledListItem>
       ))}
     </TiledList>
   );
 };
 
-export default memo(UnconfiguredServerList);
+export default UnconfiguredServerList;

@@ -2,7 +2,7 @@
 import React, { MouseEvent, memo, useCallback, useMemo, useState } from 'react';
 import { cx } from '@emotion/css';
 // @ts-ignore
-import { Button, HealthStatus, IconEdit, Text, TiledList, TiledListItem, Tooltip } from '@tarantool.io/ui-kit';
+import { Button, IconEdit, Text, TiledList, TiledListItem, withTooltip } from '@tarantool.io/ui-kit';
 
 import * as models from 'src/models';
 import type {
@@ -15,13 +15,17 @@ import type {
 
 import ClusterIssuesModal from '../../../ClusterIssuesModal';
 import ReplicasetRoles from '../../../ReplicasetRoles';
+import ReplicasetListStatus from '../ReplicasetListStatus';
+import ReplicasetListTag from '../ReplicasetListTag';
 import ReplicasetServerList from '../ReplicasetServerList';
 
 import { styles } from './ReplicasetList.styles';
 
-const { isLike, compact } = models.app.utils;
+const { compact } = models.app.utils;
 const { replicasetConfigureModalOpenEvent } = models.cluster.replicasetConfigure;
 const { selectors } = models.cluster.serverList;
+
+const ButtonWithTooltip = withTooltip(Button);
 
 export interface ReplicasetListProps {
   cluster: GetClusterCluster;
@@ -30,7 +34,6 @@ export interface ReplicasetListProps {
   issues: ServerListClusterIssue[];
   serverStat: ServerListServerStat[];
   failoverParamsMode?: string;
-  className?: string;
 }
 
 const ReplicasetList = ({
@@ -40,7 +43,6 @@ const ReplicasetList = ({
   issues,
   serverStat,
   failoverParamsMode,
-  className,
 }: ReplicasetListProps) => {
   const [issuedReplicasetUuid, setIssuedReplicasetUuid] = useState('');
 
@@ -63,8 +65,8 @@ const ReplicasetList = ({
     }
   }, []);
 
-  const handleEditButtonClick = useCallback((_: MouseEvent<HTMLButtonElement>, pass?: unknown) => {
-    if (isLike<ServerListReplicaset>(pass)) {
+  const handleEditButtonClick = useCallback((_: MouseEvent<HTMLButtonElement>, pass?: ServerListReplicaset) => {
+    if (pass) {
       replicasetConfigureModalOpenEvent({ uuid: pass.uuid });
     }
   }, []);
@@ -75,66 +77,60 @@ const ReplicasetList = ({
 
   return (
     <>
-      <TiledList className={className} outer={false}>
+      <TiledList className={styles.root} outer={false}>
         {replicasetListSorted.map((replicaset) => (
-          <TiledListItem key={replicaset.uuid} corners="soft">
-            <div className={styles.header} data-cy="meta-test__replicaSetSection">
-              <Text className={styles.alias} variant="h3">
-                {replicaset.alias}
-              </Text>
-              <div className={styles.statusGroup}>
-                <div className={styles.statusWrap}>
+          <TiledListItem key={replicaset.uuid} corners="soft" className={styles.row}>
+            <div className={styles.replicaset}>
+              <div className={styles.header} data-cy="meta-test__replicaSetSection">
+                <Text className={styles.alias} variant="h3">
+                  {replicaset.alias}
+                </Text>
+                <div className={cx(styles.div, styles.grow)} />
+                <div className={styles.status}>
                   {issuesReplicasetUuids.includes(replicaset.uuid) ? (
                     <Button
                       className={cx(styles.statusButton, 'meta-test__haveIssues')}
-                      intent="plain"
+                      intent="base"
                       size="s"
                       onClick={handleHealthStatusButtonClick}
                       pass={replicaset.uuid}
                     >
-                      <HealthStatus
-                        className={cx(styles.status, styles.statusWarning)}
-                        message="have issues"
-                        status="bad"
-                      />
+                      <ReplicasetListStatus status="bad" statusMessage="have issues" />
                     </Button>
                   ) : (
-                    <HealthStatus className={styles.status} status={replicaset.status} />
+                    <ReplicasetListStatus status={replicaset.status} />
                   )}
                 </div>
-                <Text className={styles.vshard} variant="p" tag="div" upperCase>
-                  {(replicaset.vshard_group || replicaset.weight) && (
-                    <>
-                      <Tooltip className={styles.vshardTooltip} content="Storage group">
-                        {replicaset.vshard_group}
-                      </Tooltip>
-                      <Tooltip className={styles.vshardTooltip} content="Replica set weight">
-                        {replicaset.weight}
-                      </Tooltip>
-                    </>
+                <div className={styles.div} />
+                <div className={styles.tags}>
+                  {replicaset.vshard_group && (
+                    <ReplicasetListTag title="Storage group">{replicaset.vshard_group}</ReplicasetListTag>
+                  )}
+                  {typeof replicaset.weight === 'number' && (
+                    <ReplicasetListTag title="Replica set weight">{replicaset.weight}</ReplicasetListTag>
                   )}
                   {replicaset.all_rw && (
-                    <Tooltip
-                      className={cx(styles.vshardTooltip, 'meta-test__ReplicasetList_allRw_enabled')}
-                      content="All instances in the replicaset writeable"
+                    <ReplicasetListTag
+                      className="meta-test__ReplicasetList_allRw_enabled"
+                      title="All instances in the replicaset writeable"
                     >
                       all rw
-                    </Tooltip>
+                    </ReplicasetListTag>
                   )}
-                </Text>
+                </div>
+                <div className={styles.div} />
+                <ButtonWithTooltip
+                  className={styles.editBtn}
+                  icon={IconEdit}
+                  intent="secondary"
+                  onClick={handleEditButtonClick}
+                  data-cy="meta-test__editBtn"
+                  pass={replicaset}
+                  tooltipContent="Edit replica set"
+                />
               </div>
-              <Button
-                className={styles.editBtn}
-                icon={IconEdit}
-                intent="secondary"
-                onClick={handleEditButtonClick}
-                text="Edit"
-                data-cy="meta-test__editBtn"
-                pass={replicaset}
-              />
+              <ReplicasetRoles className={styles.roles} roles={replicaset.roles} />
             </div>
-            <ReplicasetRoles className={styles.roles} roles={replicaset.roles} />
-            <div className={styles.divider} />
             <ReplicasetServerList
               cluster={cluster}
               clusterSelf={clusterSelf}

@@ -1,7 +1,5 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import React, { memo, useMemo } from 'react';
-// @ts-ignore
-import { FlatList } from '@tarantool.io/ui-kit';
 
 import { cluster } from 'src/models';
 import type { GetClusterCluster, GetClusterClusterSelf, ServerListReplicaset, ServerListServerStat } from 'src/models';
@@ -45,7 +43,7 @@ const ReplicasetServerList = (props: ReplicasetServerListProps) => {
   }
 
   return (
-    <FlatList className="meta-test__ReplicasetServerList">
+    <div className="meta-test__ReplicasetServerList" data-component="ReplicasetServerList">
       {servers.map(({ server, additional }) => (
         <ReplicasetServerListItem
           key={server.uuid}
@@ -54,7 +52,7 @@ const ReplicasetServerList = (props: ReplicasetServerListProps) => {
           showFailoverPromote={servers && servers.length > 1 && failoverParamsMode === 'stateful'}
         />
       ))}
-    </FlatList>
+    </div>
   );
 };
 

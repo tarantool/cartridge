@@ -26,12 +26,12 @@ module.exports = createWebpackConfiguration({
         react: 'react',
         'react-dom': 'reactDom',
         '@tarantool.io/frontend-core': 'tarantool_frontend_core_module',
-        '@tarantool.io/ui-kit': 'tarantool_frontend_ui_kit_module',
+        // '@tarantool.io/ui-kit': 'tarantool_frontend_ui_kit_module',
       }
     : {
         react: 'react',
         'react-dom': 'reactDom',
-        '@tarantool.io/ui-kit': 'tarantool_frontend_ui_kit_module',
+        // '@tarantool.io/ui-kit': 'tarantool_frontend_ui_kit_module',
       },
   middleware: isProd
     ? (cfg) => {

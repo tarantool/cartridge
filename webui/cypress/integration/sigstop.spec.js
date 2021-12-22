@@ -31,7 +31,11 @@ describe('Checking for situations when a connection is lost using SIGSTOP', () =
   });
 
   function openServerDetailsModal(serverAlias) {
-    cy.get('li').contains(serverAlias).closest('li').find('.meta-test__ReplicasetServerListItem__dropdownBtn').click();
+    cy.get('.ServerLabelsHighlightingArea')
+      .contains(serverAlias)
+      .closest('.ServerLabelsHighlightingArea')
+      .find('.meta-test__ReplicasetServerListItem__dropdownBtn')
+      .click();
     cy.get('.meta-test__ReplicasetServerListItem__dropdown *').contains('Server details').click();
   }
 
@@ -59,13 +63,24 @@ describe('Checking for situations when a connection is lost using SIGSTOP', () =
     );
     cy.get('.meta-test__ClusterIssuesModal button[type="button"]').click();
 
-    //Check buckets
-    cy.contains('dummy-1').closest('li').find('.meta-test__bucketIcon').should('be.visible');
-    cy.contains('dummy-2').closest('li').find('.meta-test__bucketIcon').should('not.be.visible');
+    //Check mem stats
+    cy.contains('dummy-1')
+      .closest('[data-component=ReplicasetServerListItem]')
+      .find('[data-component=ReplicasetListMemStat]')
+      .should('be.visible');
+    cy.contains('dummy-2')
+      .closest('[data-component=ReplicasetServerListItem]')
+      .find('[data-component=ReplicasetListMemStat]')
+      .should('not.exist');
 
     //Check server status
-    cy.contains('dummy-1').closest('li').contains('healthy');
-    cy.contains('dummy-2').closest('li').contains('Server status is "dead"');
+    cy.contains('dummy-1').closest('[data-component=ReplicasetServerListItem]').contains('healthy');
+    cy.contains('dummy-2').closest('[data-component=ReplicasetServerListItem]').contains('unreachable');
+    cy.contains('dummy-2')
+      .closest('[data-component=ReplicasetServerListItem]')
+      .find('[data-component=ReplicasetListStatus]')
+      .invoke('attr', 'data-value-message')
+      .should('eq', 'Server status is "dead"');
 
     //Try to add new zone in server details
     openServerDetailsModal('dummy-2');
@@ -85,13 +100,19 @@ describe('Checking for situations when a connection is lost using SIGSTOP', () =
     tryToSubmitTestZone();
     cy.get('.meta-test__ServerDetailsModal button:contains(Close)').click();
 
-    //Cluster page: Check buckets
-    cy.contains('dummy-1').closest('li').find('.meta-test__bucketIcon').should('be.visible');
-    cy.contains('dummy-2').closest('li').find('.meta-test__bucketIcon').should('be.visible');
+    //Cluster page: Check mem stats
+    cy.contains('dummy-1')
+      .closest('[data-component=ReplicasetServerListItem]')
+      .find('[data-component=ReplicasetListMemStat]')
+      .should('be.visible');
+    cy.contains('dummy-2')
+      .closest('[data-component=ReplicasetServerListItem]')
+      .find('[data-component=ReplicasetListMemStat]')
+      .should('be.visible');
 
     //Check server status
-    cy.contains('dummy-1').closest('li').contains('healthy');
-    cy.contains('dummy-2').closest('li').contains('healthy');
+    cy.contains('dummy-1').closest('[data-component=ReplicasetServerListItem]').contains('healthy');
+    cy.contains('dummy-2').closest('[data-component=ReplicasetServerListItem]').contains('healthy');
 
     //Cluster page: Check Issue
     cy.get('.meta-test__ClusterIssuesButton').contains('Issues: 0');
