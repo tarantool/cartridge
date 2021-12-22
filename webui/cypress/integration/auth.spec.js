@@ -26,7 +26,7 @@ describe('Auth', () => {
     cy.task('tarantool', { code: `cleanup()` });
   });
 
-  it('Test: auth', () => {
+  it('Test: auth 1', () => {
     ////////////////////////////////////////////////////////////////////
     cy.log('Open WebUI');
     ////////////////////////////////////////////////////////////////////
@@ -35,7 +35,7 @@ describe('Auth', () => {
     cy.get('.meta-test__AuthToggle').should('not.exist');
 
     ///////////////////////////////////////////////////////////////////
-    cy.log('Login window close by  ESC');
+    cy.log('Login window close by ESC');
     ////////////////////////////////////////////////////////////////////
     cy.get('.meta-test__LoginBtn').click();
     cy.get('.meta-test__LoginForm').type('{esc}').should('not.exist');
@@ -101,6 +101,9 @@ describe('Auth', () => {
     cy.get('.meta-test__LoginForm input[name="password"]').type('test-cluster-cookie');
     cy.get('.meta-test__LoginFormBtn').click();
 
+    // eslint-disable-next-line cypress/no-unnecessary-waiting
+    cy.wait(100); // wait for a react re-render.
+
     cy.get('a[href="/admin/cluster/users"]').click();
     cy.get('.meta-test__AuthToggle input').should('not.be.checked');
     cy.get('.meta-test__AuthToggle').click();
@@ -145,7 +148,7 @@ describe('Auth', () => {
     cy.get('a[href="/admin/cluster/users"]').should('not.exist');
   });
 
-  it('Test: auth', () => {
+  it('Test: auth 2', () => {
     ////////////////////////////////////////////////////////////////////
     cy.log('Open WebUI');
     ////////////////////////////////////////////////////////////////////
@@ -159,6 +162,9 @@ describe('Auth', () => {
     cy.get('.meta-test__LoginForm input[name="username"]').type('admin').should('have.value', 'admin');
     cy.get('.meta-test__LoginForm input[name="password"]').type('test-cluster-cookie');
     cy.get('.meta-test__LoginFormBtn').click();
+
+    // eslint-disable-next-line cypress/no-unnecessary-waiting
+    cy.wait(100); // wait for a react re-render.
 
     cy.get('a[href="/admin/cluster/users"]').click();
     cy.get('.meta-test__AuthToggle input').should('not.be.checked');
