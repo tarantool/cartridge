@@ -696,7 +696,7 @@ local function boot_instance(clusterwide_config)
                 for i, v in ipairs(replication or {}) do
                     local uri = uri_tools.parse(v)
                     uri.password = nil
-                    replication[i] = uri.format(uri)
+                    replication[i] = uri_tools.format(uri)
                 end
 
                 log.info('replication = %s', replication)
