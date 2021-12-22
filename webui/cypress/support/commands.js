@@ -26,4 +26,5 @@
 
 // https://www.npmjs.com/package/cypress-file-upload
 import 'cypress-file-upload';
+import 'cypress-localstorage-commands';
 require('cypress-downloadfile/lib/downloadFileCommand');
