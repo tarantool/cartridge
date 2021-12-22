@@ -810,27 +810,42 @@ local function cfg(opts, box_opts)
     if type(box.cfg) == 'function' then
         confapplier.log_bootinfo()
     end
+
     local crg_opts_to_logs = table.deepcopy(opts)
-    crg_opts_to_logs.cluster_cookie = nil -- remove cluster_cookie from logs
 
-    local box_opts_to_logs = table.deepcopy(box_opts)
+    local crg_log_whitelist = {
+        'advertise_uri',
+        'alias',
+        'auth_backend_name',
+        'auth_enabled',
+        'bucket_count',
+        'console_sock',
+        'http_enabled',
+        'http_host',
+        'http_port',
+        'roles',
+        'roles_reload_allowed',
+        'swim_broadcast',
+        'upgrade_schema',
+        'upload_prefix',
+        'vshard_groups',
+        'webui_blacklist',
+        'webui_enabled',
+        'webui_enforce_root_redirect',
+        'webui_prefix',
+        'workdir',
+    }
 
-    -- remove password from logs:
+    log.info('Cartridge options:')
 
-    if type(box_opts_to_logs.replication) == 'string' then
-        box_opts_to_logs.replication = { box_opts_to_logs.replication }
+    for _, option in ipairs(crg_log_whitelist) do
+        local opt_value = crg_opts_to_logs[option]
+        if type(opt_value) == 'table' then
+            log.info('%s = %s', option, json.encode(opt_value))
+        else
+            log.info('%s = %s', option, opt_value)
+        end
     end
-
-    local replication = {}
-    for _, v in ipairs(box_opts_to_logs.replication or {}) do
-        local uri = uri.parse(v)
-        uri.password = nil
-        table.insert(replication, uri.format(uri))
-    end
-    box_opts_to_logs.replication = replication
-
-    log.info('Tarantool options: %s', json.encode(box_opts))
-    log.info('Cartridge options: %s', json.encode(opts))
 
     return true
 end
