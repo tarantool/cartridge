@@ -91,6 +91,10 @@ core.setHeaderComponent(
   </Provider>
 );
 
+function authReloadCallback() {
+  core.dispatch('core:updateReactTreeKey');
+}
+
 function graphQLConnectionErrorHandler(response, next) {
   if (response.networkError) {
     setConnectionDeadEvent();
@@ -136,5 +140,8 @@ function axiosAuthErrorHandler(error, next) {
 core.apiMethods.registerAxiosHandler('responseError', axiosAuthErrorHandler);
 core.apiMethods.registerAxiosHandler('responseError', axiosConnectionErrorHandler);
 core.apiMethods.registerAxiosHandler('response', axiosConnectionErrorHandler);
+
+core.subscribe('cluster:login:done', authReloadCallback);
+core.subscribe('cluster:logout:done', authReloadCallback);
 
 core.install();
