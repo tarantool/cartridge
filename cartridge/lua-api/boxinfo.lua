@@ -97,8 +97,16 @@ local function get_info(uri)
             storage_info = box.NULL
         end
 
-        local httpd = assert(service_registry.get('httpd'))
-        local srv_name = httpd.tcp_server:name()
+        local httpd = package.loaded.cartridge.service_get('httpd')
+        local srv_name = {}
+        local srv_name = {}
+
+        if httpd ~= nil then
+            srv_name = httpd.tcp_server:name()
+        else
+            vars.webui_prefix = nil
+        end
+
         local ret = {
             general = {
                 version = box_info.version,

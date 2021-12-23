@@ -18,6 +18,9 @@ g.before_all = function()
                     {
                         advertise_port = 13301,
                         http_port = 8081,
+                        env = {
+                            TARANTOOL_WEBUI_PREFIX = 'def_prefix',
+                        },
                     }
                 }
             }, {
@@ -29,6 +32,7 @@ g.before_all = function()
                         http_port = 8082,
                         env = {
                             TARANTOOL_HTTP_ENABLED = 'false',
+                            TARANTOOL_WEBUI_PREFIX = 'def_prefix',
                         },
                     },
                 }
@@ -59,7 +63,7 @@ function g.test_http_port()
 
     t.assert_items_equals(resp['data']['servers'], {{
             boxinfo = {
-                general = { http_port = 8081, http_host = "0.0.0.0", webui_prefix = "" },
+                general = { http_port = 8081, http_host = "0.0.0.0", webui_prefix = "/def_prefix" },
             },
         }, {
             boxinfo = {
