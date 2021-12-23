@@ -22,6 +22,7 @@ local membership_network = require('membership.network')
 local http = require('http.server')
 local fiber = require('fiber')
 local socket = require('socket')
+local json = require('json')
 
 local rpc = require('cartridge.rpc')
 local auth = require('cartridge.auth')
@@ -39,6 +40,7 @@ local confapplier = require('cartridge.confapplier')
 local vshard_utils = require('cartridge.vshard-utils')
 local cluster_cookie = require('cartridge.cluster-cookie')
 local service_registry = require('cartridge.service-registry')
+local logging_whitelist = require('cartridge.logging_whitelist')
 
 local lua_api_topology = require('cartridge.lua-api.topology')
 local lua_api_failover = require('cartridge.lua-api.failover')
@@ -808,6 +810,21 @@ local function cfg(opts, box_opts)
     -- Otherwise it's logged by confapplier.boot_instance
     if type(box.cfg) == 'function' then
         confapplier.log_bootinfo()
+    end
+
+    local crg_opts_to_logs = table.deepcopy(opts)
+
+    local crg_log_whitelist = logging_whitelist.cartridge_opts
+
+    log.info('Cartridge options:')
+
+    for _, option in ipairs(crg_log_whitelist) do
+        local opt_value = crg_opts_to_logs[option]
+        if type(opt_value) == 'table' then
+            log.info('%s = %s', option, json.encode(opt_value))
+        else
+            log.info('%s = %s', option, opt_value)
+        end
     end
 
     return true

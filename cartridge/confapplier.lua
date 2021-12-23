@@ -15,6 +15,7 @@ local checks = require('checks')
 local membership = require('membership')
 local uri_tools = require('uri')
 local socket = require('socket')
+local json = require('json')
 
 local vars = require('cartridge.vars').new('cartridge.confapplier')
 local pool = require('cartridge.pool')
@@ -26,6 +27,7 @@ local hotreload = require('cartridge.hotreload')
 local remote_control = require('cartridge.remote-control')
 local cluster_cookie = require('cartridge.cluster-cookie')
 local ClusterwideConfig = require('cartridge.clusterwide-config')
+local logging_whitelist = require('cartridge.logging_whitelist')
 
 yaml.cfg({
     encode_load_metatables = false,
@@ -614,6 +616,34 @@ local function boot_instance(clusterwide_config)
         return nil, BoxError:new(estr)
     else
         set_state('BoxConfigured')
+
+        local box_log_whitelist = logging_whitelist.box_opts
+        log.info('Tarantool options:')
+        for _, option in ipairs(box_log_whitelist) do
+            if option == 'replication' then
+                -- remove password from logs:
+                local replication
+
+                if type(box.cfg.replication) == 'string' then
+                    replication = { box.cfg.replication }
+                else
+                    replication = table.deepcopy(box.cfg.replication)
+                end
+
+                for i, v in ipairs(replication or {}) do
+                    local uri = uri_tools.parse(v)
+                    uri.password = nil
+                    replication[i] = uri_tools.format(uri)
+                end
+
+                log.info('replication = %s', replication)
+            elseif type(box.cfg[option]) == 'table' then
+                log.info('%s = %s', option, json.encode(box.cfg[option]))
+            else
+                log.info('%s = %s', option, box.cfg[option])
+            end
+        end
+
         return apply_config(clusterwide_config)
     end
 end
