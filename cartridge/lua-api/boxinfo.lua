@@ -13,14 +13,9 @@ local vars = require('cartridge.vars').new('cartridge.boxinfo')
 vars:new('webui_prefix', nil)
 vars:new('http_host', nil)
 vars:new('http_port', nil)
-vars:new('http_cached', nil)
 
 local function set_webui_prefix(prefix)
     vars.webui_prefix = prefix
-end
-
-local function get_webui_prefix()
-    return vars.webui_prefix
 end
 
 --- Retrieve `box.cfg` and `box.info` of a remote server.
@@ -99,7 +94,7 @@ local function get_info(uri)
             storage_info = box.NULL
         end
 
-        if vars.http_cached == nil then
+        if vars.http_port == nil then
             local httpd = package.loaded.cartridge.service_get('httpd')
             local srv_name = {}
 
@@ -108,9 +103,9 @@ local function get_info(uri)
             else
                 vars.webui_prefix = nil
             end
+
             vars.http_host = srv_name.host
             vars.http_port = srv_name.port
-            vars.http_cached = true
         end
 
         local ret = {
@@ -224,5 +219,4 @@ return {
     get_info = get_info,
 
     set_webui_prefix = set_webui_prefix,
-    get_webui_prefix = get_webui_prefix,
 }
