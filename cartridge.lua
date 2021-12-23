@@ -40,6 +40,7 @@ local confapplier = require('cartridge.confapplier')
 local vshard_utils = require('cartridge.vshard-utils')
 local cluster_cookie = require('cartridge.cluster-cookie')
 local service_registry = require('cartridge.service-registry')
+local logging_whitelist = require('cartridge.logging_whitelist')
 
 local lua_api_topology = require('cartridge.lua-api.topology')
 local lua_api_failover = require('cartridge.lua-api.failover')
@@ -813,28 +814,7 @@ local function cfg(opts, box_opts)
 
     local crg_opts_to_logs = table.deepcopy(opts)
 
-    local crg_log_whitelist = {
-        'advertise_uri',
-        'alias',
-        'auth_backend_name',
-        'auth_enabled',
-        'bucket_count',
-        'console_sock',
-        'http_enabled',
-        'http_host',
-        'http_port',
-        'roles',
-        'roles_reload_allowed',
-        'swim_broadcast',
-        'upgrade_schema',
-        'upload_prefix',
-        'vshard_groups',
-        'webui_blacklist',
-        'webui_enabled',
-        'webui_enforce_root_redirect',
-        'webui_prefix',
-        'workdir',
-    }
+    local crg_log_whitelist = logging_whitelist.cartridge_opts
 
     log.info('Cartridge options:')
 

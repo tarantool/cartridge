@@ -27,6 +27,7 @@ local hotreload = require('cartridge.hotreload')
 local remote_control = require('cartridge.remote-control')
 local cluster_cookie = require('cartridge.cluster-cookie')
 local ClusterwideConfig = require('cartridge.clusterwide-config')
+local logging_whitelist = require('cartridge.logging_whitelist')
 
 yaml.cfg({
     encode_load_metatables = false,
@@ -616,72 +617,7 @@ local function boot_instance(clusterwide_config)
     else
         set_state('BoxConfigured')
 
-        local box_log_whitelist = {
-            'background',
-            'checkpoint_count',
-            'checkpoint_interval',
-            'checkpoint_wal_threshold',
-            'custom_proc_title',
-            'election_mode',
-            'election_timeout',
-            'feedback_enabled',
-            'feedback_host',
-            'feedback_interval',
-            'force_recovery',
-            'hot_standby',
-            'instance_uuid',
-            'io_collect_interval',
-            'iproto_threads',
-            'listen',
-            'log',
-            'log_format',
-            'log_level',
-            'log_nonblock',
-            'memtx_dir',
-            'memtx_max_tuple_size',
-            'memtx_memory',
-            'memtx_min_tuple_size',
-            'memtx_use_mvcc_engine',
-            'net_msg_max',
-            'pid_file',
-            'read_only',
-            'readahead',
-            'replicaset_uuid',
-            'replication',
-            'replication_anon',
-            'replication_connect_quorum',
-            'replication_connect_timeout',
-            'replication_skip_conflict',
-            'replication_sync_lag',
-            'replication_sync_timeout',
-            'replication_synchro_quorum',
-            'replication_synchro_timeout',
-            'replication_timeout',
-            'slab_alloc_factor',
-            'snap_io_rate_limit',
-            'sql_cache_size',
-            'strip_core',
-            'too_long_threshold',
-            'username',
-            'vinyl_bloom_fpr',
-            'vinyl_cache',
-            'vinyl_dir',
-            'vinyl_max_tuple_size',
-            'vinyl_memory',
-            'vinyl_page_size',
-            'vinyl_range_size',
-            'vinyl_read_threads',
-            'vinyl_run_count_per_level',
-            'vinyl_run_size_ratio',
-            'vinyl_timeout',
-            'vinyl_write_threads',
-            'wal_dir',
-            'wal_dir_rescan_delay',
-            'wal_max_size',
-            'wal_mode',
-            'work_dir',
-            'worker_pool_threads',
-        }
+        box_log_whitelist = logging_whitelist.box_opts
         log.info('Tarantool options:')
         for _, option in ipairs(box_log_whitelist) do
             if option == 'replication' then
