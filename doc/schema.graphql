@@ -1,5 +1,11 @@
 # source: http://127.0.0.1:8081/admin/api
-# timestamp: Thu Dec 23 2021 15:20:39 GMT+0300 (Москва, стандартное время)
+# timestamp: Thu Dec 23 2021 18:51:13 GMT+0300 (Москва, стандартное время)
+
+"""Custom scalar specification."""
+directive @specifiedBy(
+  """Scalar specification URL."""
+  url: String!
+) on SCALAR
 
 """Cluster management"""
 type Apicluster {
@@ -23,7 +29,14 @@ type Apicluster {
   auth_params: UserManagementAPI!
 
   """List authorized users"""
-  users(username: String): [User!]
+  users(
+    """
+    The `String` scalar type represents textual data, represented as UTF-8
+    character sequences. The String type is most often used by GraphQL to
+    represent free-form human-readable text.
+    """
+    username: String
+  ): [User!]
 
   """Virtual buckets count in cluster"""
   vshard_bucket_count: Int!
@@ -211,14 +224,86 @@ type Mutation {
   cluster: MutationApicluster
 
   """Deprecated. Use `cluster{edit_topology()}` instead."""
-  edit_server(uuid: String!, uri: String, labels: [LabelInput]): Boolean
+  edit_server(
+    uuid: String!
+
+    """
+    The `String` scalar type represents textual data, represented as UTF-8
+    character sequences. The String type is most often used by GraphQL to
+    represent free-form human-readable text.
+    """
+    uri: String
+    labels: [LabelInput]
+  ): Boolean
   probe_server(uri: String!): Boolean
 
   """Deprecated. Use `cluster{edit_topology()}` instead."""
-  edit_replicaset(weight: Float, master: [String!], alias: String, roles: [String!], uuid: String!, all_rw: Boolean, vshard_group: String): Boolean
+  edit_replicaset(
+    weight: Float
+    master: [String!]
+
+    """
+    The `String` scalar type represents textual data, represented as UTF-8
+    character sequences. The String type is most often used by GraphQL to
+    represent free-form human-readable text.
+    """
+    alias: String
+    roles: [String!]
+    uuid: String!
+
+    """The `Boolean` scalar type represents `true` or `false`."""
+    all_rw: Boolean
+
+    """
+    The `String` scalar type represents textual data, represented as UTF-8
+    character sequences. The String type is most often used by GraphQL to
+    represent free-form human-readable text.
+    """
+    vshard_group: String
+  ): Boolean
 
   """Deprecated. Use `cluster{edit_topology()}` instead."""
-  join_server(instance_uuid: String, timeout: Float, zone: String, uri: String!, vshard_group: String, labels: [LabelInput], replicaset_alias: String, replicaset_uuid: String, roles: [String!], replicaset_weight: Float): Boolean
+  join_server(
+    """
+    The `String` scalar type represents textual data, represented as UTF-8
+    character sequences. The String type is most often used by GraphQL to
+    represent free-form human-readable text.
+    """
+    instance_uuid: String
+    timeout: Float
+
+    """
+    The `String` scalar type represents textual data, represented as UTF-8
+    character sequences. The String type is most often used by GraphQL to
+    represent free-form human-readable text.
+    """
+    zone: String
+    uri: String!
+
+    """
+    The `String` scalar type represents textual data, represented as UTF-8
+    character sequences. The String type is most often used by GraphQL to
+    represent free-form human-readable text.
+    """
+    vshard_group: String
+    labels: [LabelInput]
+
+    """
+    The `String` scalar type represents textual data, represented as UTF-8
+    character sequences. The String type is most often used by GraphQL to
+    represent free-form human-readable text.
+    """
+    replicaset_alias: String
+
+    """
+    The `String` scalar type represents textual data, represented as UTF-8
+    character sequences. The String type is most often used by GraphQL to
+    represent free-form human-readable text.
+    """
+    replicaset_uuid: String
+    roles: [String!]
+    replicaset_weight: Float
+  ): Boolean
   bootstrap_vshard: Boolean
 
   """Deprecated. Use `cluster{edit_topology()}` instead."""
@@ -239,7 +324,33 @@ type MutationApicluster {
   failover(enabled: Boolean!): Boolean!
 
   """Configure automatic failover."""
-  failover_params(fencing_enabled: Boolean, fencing_timeout: Float, failover_timeout: Float, mode: String, state_provider: String, tarantool_params: FailoverStateProviderCfgInputTarantool, fencing_pause: Float, etcd2_params: FailoverStateProviderCfgInputEtcd2): FailoverAPI!
+  failover_params(
+    """The `Boolean` scalar type represents `true` or `false`."""
+    fencing_enabled: Boolean
+    fencing_timeout: Float
+    failover_timeout: Float
+
+    """
+    The `String` scalar type represents textual data, represented as UTF-8
+    character sequences. The String type is most often used by GraphQL to
+    represent free-form human-readable text.
+    """
+    mode: String
+
+    """
+    The `String` scalar type represents textual data, represented as UTF-8
+    character sequences. The String type is most often used by GraphQL to
+    represent free-form human-readable text.
+    """
+    state_provider: String
+
+    """State provider configuration (Tarantool)"""
+    tarantool_params: FailoverStateProviderCfgInputTarantool
+    fencing_pause: Float
+
+    """State provider configuration (etcd-v2)"""
+    etcd2_params: FailoverStateProviderCfgInputEtcd2
+  ): FailoverAPI!
 
   """Remove user"""
   remove_user(username: String!): User
@@ -249,20 +360,110 @@ type MutationApicluster {
 
   """Restart replication on specified by uuid servers"""
   restart_replication(uuids: [String!]): Boolean
-  edit_vshard_options(rebalancer_max_receiving: Int, collect_bucket_garbage_interval: Float, collect_lua_garbage: Boolean, sched_ref_quota: Long, rebalancer_max_sending: Int, sync_timeout: Float, rebalancer_disbalance_threshold: Float, name: String!, sched_move_quota: Long): VshardGroup!
-  auth_params(cookie_max_age: Long, enabled: Boolean, cookie_renew_age: Long): UserManagementAPI!
+  edit_vshard_options(
+    """
+    The `Int` scalar type represents non-fractional signed whole numeric values.
+    Int can represent values from -(2^31) to 2^31 - 1, inclusive.
+    """
+    rebalancer_max_receiving: Int
+    collect_bucket_garbage_interval: Float
+
+    """The `Boolean` scalar type represents `true` or `false`."""
+    collect_lua_garbage: Boolean
+
+    """
+    The `Long` scalar type represents non-fractional signed whole numeric
+    values. Long can represent values from -(2^52) to 2^52 - 1, inclusive.
+    """
+    sched_ref_quota: Long
+
+    """
+    The `Int` scalar type represents non-fractional signed whole numeric values.
+    Int can represent values from -(2^31) to 2^31 - 1, inclusive.
+    """
+    rebalancer_max_sending: Int
+    sync_timeout: Float
+    rebalancer_disbalance_threshold: Float
+    name: String!
+
+    """
+    The `Long` scalar type represents non-fractional signed whole numeric
+    values. Long can represent values from -(2^52) to 2^52 - 1, inclusive.
+    """
+    sched_move_quota: Long
+  ): VshardGroup!
+  auth_params(
+    """
+    The `Long` scalar type represents non-fractional signed whole numeric
+    values. Long can represent values from -(2^52) to 2^52 - 1, inclusive.
+    """
+    cookie_max_age: Long
+
+    """The `Boolean` scalar type represents `true` or `false`."""
+    enabled: Boolean
+
+    """
+    The `Long` scalar type represents non-fractional signed whole numeric
+    values. Long can represent values from -(2^52) to 2^52 - 1, inclusive.
+    """
+    cookie_renew_age: Long
+  ): UserManagementAPI!
 
   """Create a new user"""
-  add_user(password: String!, username: String!, fullname: String, email: String): User
+  add_user(
+    password: String!
+    username: String!
+
+    """
+    The `String` scalar type represents textual data, represented as UTF-8
+    character sequences. The String type is most often used by GraphQL to
+    represent free-form human-readable text.
+    """
+    fullname: String
+
+    """
+    The `String` scalar type represents textual data, represented as UTF-8
+    character sequences. The String type is most often used by GraphQL to
+    represent free-form human-readable text.
+    """
+    email: String
+  ): User
 
   """Edit an existing user"""
-  edit_user(password: String, username: String!, fullname: String, email: String): User
+  edit_user(
+    """
+    The `String` scalar type represents textual data, represented as UTF-8
+    character sequences. The String type is most often used by GraphQL to
+    represent free-form human-readable text.
+    """
+    password: String
+    username: String!
+
+    """
+    The `String` scalar type represents textual data, represented as UTF-8
+    character sequences. The String type is most often used by GraphQL to
+    represent free-form human-readable text.
+    """
+    fullname: String
+
+    """
+    The `String` scalar type represents textual data, represented as UTF-8
+    character sequences. The String type is most often used by GraphQL to
+    represent free-form human-readable text.
+    """
+    email: String
+  ): User
 
   """Edit cluster topology"""
   edit_topology(replicasets: [EditReplicasetInput], servers: [EditServerInput]): EditTopologyResult
 
   """Promote the instance to the leader of replicaset"""
-  failover_promote(force_inconsistency: Boolean, replicaset_uuid: String!, instance_uuid: String!): Boolean!
+  failover_promote(
+    """The `Boolean` scalar type represents `true` or `false`."""
+    force_inconsistency: Boolean
+    replicaset_uuid: String!
+    instance_uuid: String!
+  ): Boolean!
 
   """Reapplies config on the specified nodes"""
   config_force_reapply(uuids: [String]): Boolean!
@@ -274,8 +475,22 @@ type MutationApicluster {
 type Query {
   """Cluster management"""
   cluster: Apicluster
-  servers(uuid: String): [Server]
-  replicasets(uuid: String): [Replicaset]
+  servers(
+    """
+    The `String` scalar type represents textual data, represented as UTF-8
+    character sequences. The String type is most often used by GraphQL to
+    represent free-form human-readable text.
+    """
+    uuid: String
+  ): [Server]
+  replicasets(
+    """
+    The `String` scalar type represents textual data, represented as UTF-8
+    character sequences. The String type is most often used by GraphQL to
+    represent free-form human-readable text.
+    """
+    uuid: String
+  ): [Replicaset]
 }
 
 """
@@ -658,6 +873,9 @@ type VshardGroup {
 
   """Virtual buckets count in the group"""
   bucket_count: Int!
+
+  """The interval between garbage collector actions, in seconds"""
+  collect_bucket_garbage_interval: Float @deprecated(reason: "Has no effect anymore")
 
   """
   If set to true, the Lua collectgarbage() function is called periodically
