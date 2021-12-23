@@ -1,7 +1,9 @@
 import { css } from '@emotion/css';
 
 export const styles = {
-  root: css``,
+  root: css`
+    margin-top: 14px;
+  `,
   row: css`
     padding: 0;
     overflow: hidden;
