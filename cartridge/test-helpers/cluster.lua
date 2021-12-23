@@ -9,6 +9,7 @@ local log = require('log')
 local uuid = require('uuid')
 
 local luatest = require('luatest')
+local utils = require('cartridge.utils')
 local Server = require('cartridge.test-helpers.server')
 local Stateboard = require('cartridge.test-helpers.stateboard')
 
@@ -159,15 +160,9 @@ end
 --- Return iterator for cluster server's with enabled role
 local function iter_servers_by_role(cluster, role_name)
     local replicasets_with_role = fun.iter(cluster.replicasets)
-    :filter(function(rs)
-        return fun.iter(rs.roles)
-            :filter(function(role)
-                return role == role_name
-            end)
-            :nth(1)
-    end)
-    :map(function(rs) return rs.uuid, true end)
-    :tomap()
+        :map(function(rs) return rs.uuid, rs.roles end)
+        :map(function(rs_uuid, roles) return rs_uuid, utils.table_find(roles, role_name) ~= nil end)
+        :tomap()
 
     return fun.iter(cluster.servers)
         :filter(function(server)
