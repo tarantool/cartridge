@@ -8,7 +8,6 @@ local errors = require('errors')
 
 local pool = require('cartridge.pool')
 local confapplier = require('cartridge.confapplier')
-local service_registry = require('cartridge.service-registry')
 local vars = require('cartridge.vars').new('cartridge.boxinfo')
 
 vars:new('webui_prefix', nil)
@@ -98,7 +97,6 @@ local function get_info(uri)
         end
 
         local httpd = package.loaded.cartridge.service_get('httpd')
-        local srv_name = {}
         local srv_name = {}
 
         if httpd ~= nil then
