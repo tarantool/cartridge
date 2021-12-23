@@ -7,29 +7,25 @@ g.before_all = function()
     g.cluster = h.Cluster:new({
         datadir = fio.tempdir(),
         server_command = h.entrypoint('srv_basic'),
-        use_vshard = true,
+        use_vshard = false,
         cookie = h.random_cookie(),
 
         replicasets = {
             {
-                roles = {'vshard-router'},
-                alias = 'router',
+                roles = {},
+                alias = 'A',
                 servers = {
                     {
-                        advertise_port = 13301,
-                        http_port = 8081,
                         env = {
                             TARANTOOL_WEBUI_PREFIX = 'def_prefix',
                         },
                     }
                 }
             }, {
-                roles = {'vshard-storage'},
-                alias = 'storage',
+                roles = {},
+                alias = 'B',
                 servers = {
                     {
-                        advertise_port = 13302,
-                        http_port = 8082,
                         env = {
                             TARANTOOL_HTTP_ENABLED = 'false',
                             TARANTOOL_WEBUI_PREFIX = 'def_prefix',
