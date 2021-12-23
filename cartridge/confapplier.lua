@@ -15,6 +15,7 @@ local checks = require('checks')
 local membership = require('membership')
 local uri_tools = require('uri')
 local socket = require('socket')
+local json = require('json')
 
 local vars = require('cartridge.vars').new('cartridge.confapplier')
 local pool = require('cartridge.pool')
