@@ -11,6 +11,9 @@ local confapplier = require('cartridge.confapplier')
 local vars = require('cartridge.vars').new('cartridge.boxinfo')
 
 vars:new('webui_prefix', nil)
+vars:new('http_host', nil)
+vars:new('http_port', nil)
+vars:new('http_cached', nil)
 
 local function set_webui_prefix(prefix)
     vars.webui_prefix = prefix
@@ -96,13 +99,18 @@ local function get_info(uri)
             storage_info = box.NULL
         end
 
-        local httpd = package.loaded.cartridge.service_get('httpd')
-        local srv_name = {}
+        if vars.http_cached == nil then
+            local httpd = package.loaded.cartridge.service_get('httpd')
+            local srv_name = {}
 
-        if httpd ~= nil then
-            srv_name = httpd.tcp_server:name()
-        else
-            vars.webui_prefix = nil
+            if httpd ~= nil then
+                srv_name = httpd.tcp_server:name()
+            else
+                vars.webui_prefix = nil
+            end
+            vars.http_host = srv_name.host
+            vars.http_port = srv_name.port
+            vars.http_cached = true
         end
 
         local ret = {
@@ -118,8 +126,8 @@ local function get_info(uri)
                 wal_dir = box_cfg.wal_dir,
                 worker_pool_threads = box_cfg.worker_pool_threads,
                 listen = box_cfg.listen and tostring(box_cfg.listen),
-                http_host = srv_name.host,
-                http_port = srv_name.port,
+                http_host = vars.http_host,
+                http_port = vars.http_port,
                 webui_prefix = vars.webui_prefix,
                 ro = box_info.ro,
             },
