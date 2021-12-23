@@ -617,7 +617,7 @@ local function boot_instance(clusterwide_config)
     else
         set_state('BoxConfigured')
 
-        box_log_whitelist = logging_whitelist.box_opts
+        local box_log_whitelist = logging_whitelist.box_opts
         log.info('Tarantool options:')
         for _, option in ipairs(box_log_whitelist) do
             if option == 'replication' then
