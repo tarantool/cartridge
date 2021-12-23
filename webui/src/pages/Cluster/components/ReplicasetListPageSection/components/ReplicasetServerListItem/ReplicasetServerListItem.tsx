@@ -72,20 +72,22 @@ const ReplicasetServerListItem = (props: ReplicasetServerListItemProps) => {
             state={status !== 'healthy' ? 'bad' : ro === false ? 'good' : 'warning'}
           />
         )}
+        <div className={cx(styles.sign, alias && styles.signWithAlias)}>
+          {selfURI && uri === selfURI && (
+            <Tooltip content="WebUI operates here">
+              <UriLabel weAreHere className="meta-test__youAreHereIcon" />
+            </Tooltip>
+          )}
+        </div>
         <div className={styles.head}>
           <div className={styles.aliasWrp}>
-            <div className={styles.sign}>
-              {selfURI && uri === selfURI && (
-                <Tooltip content="WebUI operates here">
-                  <UriLabel weAreHere className="meta-test__youAreHereIcon" />
-                </Tooltip>
-              )}
-            </div>
-            <Text variant="h4" className={styles.alias}>
-              <Link className={styles.aliasLink} to={cluster.page.paths.serverDetails({ uuid })}>
-                {alias}
-              </Link>
-            </Text>
+            {alias && (
+              <Text variant="h4" className={styles.alias}>
+                <Link className={styles.aliasLink} to={cluster.page.paths.serverDetails({ uuid })}>
+                  {alias}
+                </Link>
+              </Text>
+            )}
           </div>
           <div className={styles.labelWrp}>
             <UriLabel uri={uri} className={styles.label} />

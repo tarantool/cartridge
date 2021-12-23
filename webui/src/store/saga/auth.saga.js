@@ -57,6 +57,8 @@ function* logOutSaga() {
       if (authorizationEnabled) {
         menuFilter.hideAll();
         core.dispatch('dispatchToken', { type: '' });
+      } else {
+        yield put({ type: APP_DID_MOUNT });
       }
     } catch (error) {
       yield put({ type: AUTH_LOG_OUT_REQUEST_ERROR, error });
