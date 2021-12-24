@@ -274,8 +274,10 @@ function h.test_zones_distances()
         )
     end)
 
-    local distances = h.cluster.main_server:call(
-        'package.loaded.cartridge.config_get_readonly', {'zone_distances'}
-    )
-    t.assert_items_equals(distances, h.distances)
+    helpers.retrying({}, function()
+        local distances = h.cluster.main_server:call(
+            'package.loaded.cartridge.config_get_readonly', {'zone_distances'}
+        )
+        t.assert_items_equals(distances, h.distances)
+    end)
 end
