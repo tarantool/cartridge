@@ -443,10 +443,11 @@ add('test_vclockkeeper_caching', function(g)
     -- 4. But B1 is unable to get info about vclockkeeper
     -- 5. apply_config is still triggered
 
-    t.assert_equals(B1:eval(q_leadership, {uB}), uB1)
-    t.assert_equals(B1:eval(q_readonliness), false)
-    t.assert_equals(B1:eval(q_is_vclockkeeper), true)
-
+    helpers.retrying({}, function()
+        t.assert_equals(B1:eval(q_leadership, {uB}), uB1)
+        t.assert_equals(B1:eval(q_readonliness), false)
+        t.assert_equals(B1:eval(q_is_vclockkeeper), true)
+    end)
 
     B1:eval([[
         local vars = require('cartridge.vars').new('cartridge.failover')
