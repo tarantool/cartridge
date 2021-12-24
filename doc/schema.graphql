@@ -1,5 +1,5 @@
 # source: http://127.0.0.1:8081/admin/api
-# timestamp: Wed Dec 15 2021 15:20:20 GMT+0300 (Moscow Standard Time)
+# timestamp: Thu Dec 23 2021 18:51:13 GMT+0300 (Москва, стандартное время)
 
 """Custom scalar specification."""
 directive @specifiedBy(
@@ -620,14 +620,41 @@ type ServerInfoCartridge {
 }
 
 type ServerInfoGeneral {
+  """Current working directory of a process"""
+  work_dir: String
+
   """A globally unique identifier of the instance"""
   instance_uuid: String!
+
+  """HTTP webui prefix"""
+  webui_prefix: String
 
   """Current read-only state"""
   ro: Boolean!
 
+  """The number of seconds since the instance started"""
+  uptime: Float!
+
   """A directory where vinyl files or subdirectories will be stored"""
   vinyl_dir: String
+
+  """The process ID"""
+  pid: Int!
+
+  """HTTP port"""
+  http_port: Int
+
+  """The Tarantool version"""
+  version: String!
+
+  """A directory where memtx stores snapshot (.snap) files"""
+  memtx_dir: String
+
+  """A directory where write-ahead log (.xlog) files are stored"""
+  wal_dir: String
+
+  """The binary protocol URI"""
+  listen: String
 
   """
   The maximum number of threads to use during execution of certain internal
@@ -635,29 +662,11 @@ type ServerInfoGeneral {
   """
   worker_pool_threads: Int
 
-  """Current working directory of a process"""
-  work_dir: String
-
-  """The number of seconds since the instance started"""
-  uptime: Float!
-
-  """A directory where write-ahead log (.xlog) files are stored"""
-  wal_dir: String
-
-  """The Tarantool version"""
-  version: String!
-
-  """The binary protocol URI"""
-  listen: String
-
-  """The process ID"""
-  pid: Int!
-
   """The UUID of the replica set"""
   replicaset_uuid: String!
 
-  """A directory where memtx stores snapshot (.snap) files"""
-  memtx_dir: String
+  """HTTP host"""
+  http_host: String
 }
 
 type ServerInfoMembership {
