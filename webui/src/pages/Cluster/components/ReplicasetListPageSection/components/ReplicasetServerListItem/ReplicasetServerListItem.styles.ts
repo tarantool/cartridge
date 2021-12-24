@@ -64,10 +64,6 @@ export const styles = {
     align-items: center;
 
     flex: 0 1 auto;
-    margin-left: 30px;
-    @media (max-width: 1200px) {
-      margin-left: 20px;
-    }
   `,
   div: css`
     flex: 0 0 30px;
@@ -83,6 +79,11 @@ export const styles = {
   sign: css`
     flex: 0 0 20px;
     width: 20px;
+  `,
+  signWithAlias: css`
+    @media (max-width: 1200px) {
+      padding-bottom: 16px;
+    }
   `,
   alias: css`
     flex: 0 0 220px;
