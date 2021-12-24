@@ -740,10 +740,11 @@ add('test_all_rw', function(g)
     end)
 
     -- Leader is rw, replica is ro
-    t.assert_equals(B1:eval(q_is_vclockkeeper), true)
-    t.assert_equals(B1:eval(q_readonliness), false)
-    t.assert_equals(B2:eval(q_readonliness), true)
-
+    helpers.retrying({}, function()
+        t.assert_equals(B1:eval(q_is_vclockkeeper), true)
+        t.assert_equals(B1:eval(q_readonliness), false)
+        t.assert_equals(B2:eval(q_readonliness), true)
+    end)
     local function set_all_rw(yesno)
         A1:eval(
             'require("cartridge").admin_edit_topology(...)',
