@@ -76,8 +76,13 @@ function g.test_issues()
         query = '{cluster {issues {message}}}',
     })
     helpers.assert_le(time, 2)
-    t.assert_equals(resp.data.cluster.issues[1].message,
-        'Configuration is prepared and locked on localhost:13301 (main-1)'
+
+    local messages = {}
+    for _, issue in ipairs(resp.data.cluster.issues) do
+        table.insert(messages, issue.message)
+    end
+    t.assert_items_include(messages,
+        {'Configuration is prepared and locked on localhost:13301 (main-1)'}
     )
 end
 
