@@ -597,10 +597,12 @@ add('test_enabling', function(g)
     })
 
     -- Everything is fine now
-    t.assert_equals(B1:eval(q_leadership, {uB}), uB1)
-    t.assert_equals(B1:eval(q_readonliness), false)
-    t.assert_equals(B1:eval(q_is_vclockkeeper), true)
-    t.assert_equals(helpers.list_cluster_issues(A1), {})
+    helpers.retrying({}, function()
+        t.assert_equals(B1:eval(q_leadership, {uB}), uB1)
+        t.assert_equals(B1:eval(q_readonliness), false)
+        t.assert_equals(B1:eval(q_is_vclockkeeper), true)
+        t.assert_equals(helpers.list_cluster_issues(A1), {})
+    end)
 
     -- Revert all hacks in fixtures
     A1:eval(
