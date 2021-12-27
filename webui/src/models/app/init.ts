@@ -4,16 +4,20 @@ import { core } from '@tarantool.io/frontend-core';
 
 import { falseL, trueL } from './utils';
 import {
+  $authSessionChangeModalVisibility,
   $connectionAlive,
   AppGate,
   appClosedEvent,
   appOpenedEvent,
+  changeAuthSessionEvent,
+  changeAuthSessionFx,
   consoleLogEvent,
   consoleLogFx,
   notifyEvent,
   notifyFx,
   setConnectionAliveEvent,
   setConnectionDeadEvent,
+  showAuthSessionChangeModalEvent,
 } from '.';
 
 forward({
@@ -36,7 +40,13 @@ forward({
   to: consoleLogFx,
 });
 
+forward({
+  from: changeAuthSessionEvent,
+  to: changeAuthSessionFx,
+});
+
 $connectionAlive.on(setConnectionAliveEvent, trueL).on(setConnectionDeadEvent, falseL);
+$authSessionChangeModalVisibility.on(showAuthSessionChangeModalEvent, trueL);
 
 // effects
 notifyFx.use((props) => {
@@ -55,3 +65,5 @@ notifyFx.use((props) => {
 });
 
 consoleLogFx.use((props) => void console.log(props));
+
+changeAuthSessionFx.use(() => void window.location.reload());

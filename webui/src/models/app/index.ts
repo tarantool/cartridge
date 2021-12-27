@@ -19,6 +19,7 @@ export const AppGate = createGate('AppGate');
 
 // stores
 export const $connectionAlive = domain.createStore(true);
+export const $authSessionChangeModalVisibility = domain.createStore(false);
 
 // events
 export const appOpenedEvent = domain.createEvent('app opened event');
@@ -30,6 +31,9 @@ export const authAccessDeniedEvent = domain.createEvent('auth access denied even
 
 export const notifyEvent = domain.createEvent<Maybe<AppNotifyPayload>>('notify event');
 export const consoleLogEvent = domain.createEvent<unknown>('console.log event');
+
+export const showAuthSessionChangeModalEvent = domain.createEvent('show auth session change event');
+export const changeAuthSessionEvent = domain.createEvent('change auth session event');
 
 export const notifyErrorEvent = notifyEvent.prepend<AppNotifyErrorPayload>((props) => {
   const { error, title, timeout }: AppNotifyErrorPayloadProps = utils.isError(props) ? { error: props } : props;
@@ -65,6 +69,7 @@ export const notifySuccessEvent = notifyEvent.prepend<string>((message) => ({
 // effects
 export const notifyFx = domain.createEffect<Maybe<AppNotifyPayload>, void>('notify');
 export const consoleLogFx = domain.createEffect<unknown, void>('console.log');
+export const changeAuthSessionFx = domain.createEffect('change auth session');
 
 // other
 export const tryCatchWithNotify = (callback: () => void) => {

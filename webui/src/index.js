@@ -9,6 +9,7 @@ import { core } from '@tarantool.io/frontend-core';
 import { SectionPreloader } from '@tarantool.io/ui-kit';
 
 import { isGraphqlAccessDeniedError } from 'src/api/graphql';
+import { AuthSessionChangeModal } from 'src/components/AuthSessionChangeModal';
 import HeaderAuthControl from 'src/components/HeaderAuthControl';
 import LogInForm from 'src/components/LogInForm';
 import NetworkErrorSplash from 'src/components/NetworkErrorSplash';
@@ -25,6 +26,7 @@ import store from 'src/store/instance';
 
 import { PROJECT_NAME } from './constants';
 import { menuFilter, menuReducer } from './menu';
+import * as localStorageAuthSessionChangeDetector from './misc/localStorageAuthSessionChangeDetector';
 
 const Code = createLazySection(() => import('src/pages/Code'));
 
@@ -87,11 +89,13 @@ core.setHeaderComponent(
     <>
       <HeaderAuthControl />
       <LogInForm />
+      <AuthSessionChangeModal />
     </>
   </Provider>
 );
 
 function authReloadCallback() {
+  localStorageAuthSessionChangeDetector.trigger();
   core.dispatch('core:updateReactTreeKey');
 }
 
@@ -136,6 +140,8 @@ function axiosAuthErrorHandler(error, next) {
 
   return next(error);
 }
+
+localStorageAuthSessionChangeDetector.init();
 
 core.apiMethods.registerAxiosHandler('responseError', axiosAuthErrorHandler);
 core.apiMethods.registerAxiosHandler('responseError', axiosConnectionErrorHandler);
