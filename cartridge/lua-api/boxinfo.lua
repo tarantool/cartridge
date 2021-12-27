@@ -108,9 +108,15 @@ local function get_info(uri)
             vars.http_port = srv_name.port
         end
 
+        local ok, app_version = pcall(require, 'VERSION')
+        if not ok then
+            app_version = box.NULL
+        end
+
         local ret = {
             general = {
                 version = box_info.version,
+                app_version = app_version,
                 pid = box_info.pid,
                 uptime = box_info.uptime,
                 instance_uuid = box_info.uuid,

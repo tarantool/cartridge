@@ -20,6 +20,10 @@ if frontend and frontend.set_variable then
     frontend.set_variable('cartridge_hide_all_rw', false)
 end
 
+package.preload['VERSION'] = function()
+    return 'app_version_test_value'
+end
+
 package.preload['mymodule'] = function()
     local state = nil
     local master = nil
