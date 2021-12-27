@@ -26,11 +26,17 @@ import store from 'src/store/instance';
 
 import { PROJECT_NAME } from './constants';
 import { menuFilter, menuReducer } from './menu';
-import * as localStorageAuthSessionChangeDetector from './misc/localStorageAuthSessionChangeDetector';
 
 const Code = createLazySection(() => import('src/pages/Code'));
 
-const { AppGate, setConnectionAliveEvent, setConnectionDeadEvent, authAccessDeniedEvent } = app;
+const {
+  AppGate,
+  setConnectionAliveEvent,
+  setConnectionDeadEvent,
+  authAccessDeniedEvent,
+  initAuthSessionChangeEvent,
+  triggerAuthSessionChangeEvent,
+} = app;
 
 const projectPath = (path) => `/${PROJECT_NAME}/${path}`;
 
@@ -82,8 +88,6 @@ core.subscribe('cluster:set_welcome_message', (text) => {
   store.dispatch(expectWelcomeMessage(false));
 });
 
-store.dispatch(appDidMount());
-
 core.setHeaderComponent(
   <Provider store={store}>
     <>
@@ -94,11 +98,7 @@ core.setHeaderComponent(
   </Provider>
 );
 
-function authReloadCallback() {
-  localStorageAuthSessionChangeDetector.trigger();
-  core.dispatch('core:updateReactTreeKey');
-}
-
+// graphql handlers
 function graphQLConnectionErrorHandler(response, next) {
   if (response.networkError) {
     setConnectionDeadEvent();
@@ -122,6 +122,7 @@ core.apiMethods.registerApolloHandler('afterware', graphQLConnectionErrorHandler
 core.apiMethods.registerApolloHandler('onError', graphQLConnectionErrorHandler);
 core.apiMethods.registerApolloHandler('onError', graphQLAuthErrorHandler);
 
+// axios handlers
 function axiosConnectionErrorHandler(response, next) {
   if (isNetworkError(response)) {
     setConnectionDeadEvent();
@@ -141,13 +142,21 @@ function axiosAuthErrorHandler(error, next) {
   return next(error);
 }
 
-localStorageAuthSessionChangeDetector.init();
-
 core.apiMethods.registerAxiosHandler('responseError', axiosAuthErrorHandler);
 core.apiMethods.registerAxiosHandler('responseError', axiosConnectionErrorHandler);
 core.apiMethods.registerAxiosHandler('response', axiosConnectionErrorHandler);
+
+// auth handlers
+function authReloadCallback() {
+  triggerAuthSessionChangeEvent();
+  core.dispatch('core:updateReactTreeKey');
+}
 
 core.subscribe('cluster:login:done', authReloadCallback);
 core.subscribe('cluster:logout:done', authReloadCallback);
 
 core.install();
+
+// init
+store.dispatch(appDidMount());
+initAuthSessionChangeEvent();
