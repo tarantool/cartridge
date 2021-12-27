@@ -55,8 +55,8 @@ const StatTab = ({ sectionName }: StatTabProps) => {
 
   return (
     <div className={styles.wrap}>
-      {params.map(({ name, value, displayAs }, index) => (
-        <div key={index} className={styles.listItem}>
+      {params.map(({ name, value, displayAs }) => (
+        <div key={name} className={styles.listItem}>
           <div className={styles.leftCol}>
             <Text variant="basic">{name}</Text>
             {descriptions?.[name] ? (
