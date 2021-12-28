@@ -102,6 +102,16 @@ g.test_bucket_ref_on_replica_prevent_bucket_move = function()
     -- ref bucket on replica
     local some_bucket_id = g.cluster:server('storage-2'):exec(function()
         assert(box.info.ro)
+
+        local attempts = 3
+        while box.space.test == nil do
+            require('fiber').sleep(1)
+            attempts = attempts - 1
+            if attempts == 0 then
+                error('Space test does not exists')
+            end
+        end
+
         local some_bucket_id = box.space.test:pairs():nth(1).bucket_id
         local vshard_storage = require('vshard.storage')
         vshard_storage.bucket_ref(some_bucket_id, 'read')
