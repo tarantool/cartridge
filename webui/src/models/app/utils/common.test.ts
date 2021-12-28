@@ -12,6 +12,7 @@ import {
   parseIntSafe,
   some,
   trueL,
+  tryNoCatch,
   undefinedL,
   upCase,
   upFirst,
@@ -108,5 +109,18 @@ describe('models.app.utils', () => {
   });
   it('delay', async () => {
     await expect(delay(1)).resolves.toBeUndefined();
+  });
+  it('tryNoCatch', () => {
+    const throwable = () => {
+      throw new Error();
+    };
+
+    expect(() => {
+      tryNoCatch(throwable);
+    }).not.toThrowError();
+
+    expect(() => {
+      throwable();
+    }).toThrowError();
   });
 });

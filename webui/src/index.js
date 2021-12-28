@@ -9,6 +9,7 @@ import { core } from '@tarantool.io/frontend-core';
 import { SectionPreloader } from '@tarantool.io/ui-kit';
 
 import { isGraphqlAccessDeniedError } from 'src/api/graphql';
+import { AuthSessionChangeModal } from 'src/components/AuthSessionChangeModal';
 import HeaderAuthControl from 'src/components/HeaderAuthControl';
 import LogInForm from 'src/components/LogInForm';
 import NetworkErrorSplash from 'src/components/NetworkErrorSplash';
@@ -28,7 +29,14 @@ import { menuFilter, menuReducer } from './menu';
 
 const Code = createLazySection(() => import('src/pages/Code'));
 
-const { AppGate, setConnectionAliveEvent, setConnectionDeadEvent, authAccessDeniedEvent } = app;
+const {
+  AppGate,
+  setConnectionAliveEvent,
+  setConnectionDeadEvent,
+  authAccessDeniedEvent,
+  initAuthSessionChangeEvent,
+  triggerAuthSessionChangeEvent,
+} = app;
 
 const projectPath = (path) => `/${PROJECT_NAME}/${path}`;
 
@@ -80,21 +88,17 @@ core.subscribe('cluster:set_welcome_message', (text) => {
   store.dispatch(expectWelcomeMessage(false));
 });
 
-store.dispatch(appDidMount());
-
 core.setHeaderComponent(
   <Provider store={store}>
     <>
       <HeaderAuthControl />
       <LogInForm />
+      <AuthSessionChangeModal />
     </>
   </Provider>
 );
 
-function authReloadCallback() {
-  core.dispatch('core:updateReactTreeKey');
-}
-
+// graphql handlers
 function graphQLConnectionErrorHandler(response, next) {
   if (response.networkError) {
     setConnectionDeadEvent();
@@ -118,6 +122,7 @@ core.apiMethods.registerApolloHandler('afterware', graphQLConnectionErrorHandler
 core.apiMethods.registerApolloHandler('onError', graphQLConnectionErrorHandler);
 core.apiMethods.registerApolloHandler('onError', graphQLAuthErrorHandler);
 
+// axios handlers
 function axiosConnectionErrorHandler(response, next) {
   if (isNetworkError(response)) {
     setConnectionDeadEvent();
@@ -141,7 +146,17 @@ core.apiMethods.registerAxiosHandler('responseError', axiosAuthErrorHandler);
 core.apiMethods.registerAxiosHandler('responseError', axiosConnectionErrorHandler);
 core.apiMethods.registerAxiosHandler('response', axiosConnectionErrorHandler);
 
+// auth handlers
+function authReloadCallback() {
+  triggerAuthSessionChangeEvent();
+  core.dispatch('core:updateReactTreeKey');
+}
+
 core.subscribe('cluster:login:done', authReloadCallback);
 core.subscribe('cluster:logout:done', authReloadCallback);
 
 core.install();
+
+// init
+store.dispatch(appDidMount());
+initAuthSessionChangeEvent();

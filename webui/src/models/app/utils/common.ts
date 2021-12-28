@@ -74,3 +74,11 @@ export const lowCase = (value: string | number | null | undefined) => {
 export const preventDefault = (e: SyntheticEvent) => void e.preventDefault();
 
 export const stopPropagation = (e: SyntheticEvent) => void e.stopPropagation();
+
+export const tryNoCatch = (callback: () => unknown) => {
+  try {
+    callback();
+  } catch {
+    // no-empty
+  }
+};

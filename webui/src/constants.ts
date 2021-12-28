@@ -14,3 +14,5 @@ export const FAILOVER_STATE_PROVIDERS = [
 ];
 
 export const BUILT_IN_USERS = ['admin'];
+
+export const AUTH_TRIGGER_SESSION_KEY = 'tt.auth.trigger';
