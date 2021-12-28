@@ -44,27 +44,29 @@ g.after_all(function()
 end)
 
 g.test_join_third_storage = function()
-    g.cluster.main_server:graphql({
-        query = [[
-            mutation(
-                $replicaset_uuid: String!
-                $instance_uuid: String!
-                $force: Boolean
-            ) {
-            cluster {
-                failover_promote(
-                    replicaset_uuid: $replicaset_uuid
-                    instance_uuid: $instance_uuid
-                    force_inconsistency: $force
-                )
-            }
-        }]],
-        variables = {
-            replicaset_uuid = helpers.uuid('a'),
-            instance_uuid = g.cluster.servers[2].instance_uuid,
-            force = true,
-        },
-    })
+    helpers.retrying({}, function()
+        g.cluster.main_server:graphql({
+            query = [[
+                mutation(
+                    $replicaset_uuid: String!
+                    $instance_uuid: String!
+                    $force: Boolean
+                ) {
+                cluster {
+                    failover_promote(
+                        replicaset_uuid: $replicaset_uuid
+                        instance_uuid: $instance_uuid
+                        force_inconsistency: $force
+                    )
+                }
+            }]],
+            variables = {
+                replicaset_uuid = helpers.uuid('a'),
+                instance_uuid = g.cluster.servers[2].instance_uuid,
+                force = true,
+            },
+        })
+    end)
     g.cluster:join_server(g.server)
     helpers.retrying({}, function()
         t.assert_equals(helpers.list_cluster_issues(g.cluster.main_server), {})
