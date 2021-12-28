@@ -31,6 +31,9 @@ export const serverRo = (server: ServerListServer): boolean | undefined => serve
 export const replicasetServerRo = (server: ServerListReplicasetServer): boolean | undefined =>
   server.boxinfo?.general?.ro;
 
+export const clusterVshardGroups = (cluster: Maybe<GetClusterCluster>): GetClusterVshardGroup[] =>
+  compact(cluster?.vshard_groups ?? []);
+
 // get-cluster
 export const cluster = (data: GetCluster): GetClusterCluster | undefined => data?.cluster ?? undefined;
 
@@ -41,7 +44,7 @@ export const clusterSelfUri = (data: GetCluster): string | undefined => clusterS
 
 export const knownRoles = (data: GetCluster): GetClusterRole[] => compact(data?.cluster?.knownRoles ?? []);
 
-export const vshardGroups = (data: GetCluster): GetClusterVshardGroup[] => compact(data?.cluster?.vshard_groups ?? []);
+export const vshardGroups = (data: GetCluster): GetClusterVshardGroup[] => clusterVshardGroups(data?.cluster);
 
 export const vshardGroupsNames = (data: GetCluster): string[] => vshardGroups(data).map(({ name }) => name);
 

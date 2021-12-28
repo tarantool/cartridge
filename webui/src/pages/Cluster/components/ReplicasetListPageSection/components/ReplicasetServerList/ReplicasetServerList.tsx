@@ -21,6 +21,10 @@ const ReplicasetServerList = (props: ReplicasetServerListProps) => {
   const { cluster, clusterSelf, replicaset, serverStat, failoverParamsMode } = props;
 
   const servers = useMemo(() => {
+    const vshardGroupBucketsCount = selectors
+      .clusterVshardGroups(cluster)
+      .find(({ name }) => name === replicaset.vshard_group)?.bucket_count;
+
     return replicaset.servers.map((server): Pick<ReplicasetServerListItemProps, 'server' | 'additional'> => {
       const stat = serverStat.find(({ uuid }) => server.uuid === uuid);
       return {
@@ -32,7 +36,7 @@ const ReplicasetServerList = (props: ReplicasetServerListProps) => {
           selfURI: clusterSelf?.uri ?? undefined,
           ro: selectors.replicasetServerRo(server),
           statistics: stat?.statistics,
-          totalBucketsCount: cluster?.vshard_bucket_count ?? undefined,
+          vshardGroupBucketsCount,
         },
       };
     });
