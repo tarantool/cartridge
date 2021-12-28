@@ -563,6 +563,10 @@ export type ServerInfoCartridge = {|
 
 export type ServerInfoGeneral = {|
   __typename?: 'ServerInfoGeneral',
+  /** HTTP host */
+  http_host?: ?$ElementType<Scalars, 'String'>,
+  /** HTTP port */
+  http_port?: ?$ElementType<Scalars, 'Int'>,
   /** A globally unique identifier of the instance */
   instance_uuid: $ElementType<Scalars, 'String'>,
   /** The binary protocol URI */
@@ -583,6 +587,8 @@ export type ServerInfoGeneral = {|
   vinyl_dir?: ?$ElementType<Scalars, 'String'>,
   /** A directory where write-ahead log (.xlog) files are stored */
   wal_dir?: ?$ElementType<Scalars, 'String'>,
+  /** HTTP webui prefix */
+  webui_prefix?: ?$ElementType<Scalars, 'String'>,
   /** Current working directory of a process */
   work_dir?: ?$ElementType<Scalars, 'String'>,
   /**
@@ -762,6 +768,8 @@ export type VshardGroup = {|
   bootstrapped: $ElementType<Scalars, 'Boolean'>,
   /** Virtual buckets count in the group */
   bucket_count: $ElementType<Scalars, 'Int'>,
+  /** The interval between garbage collector actions, in seconds */
+  collect_bucket_garbage_interval?: ?$ElementType<Scalars, 'Float'>,
   /** If set to true, the Lua collectgarbage() function is called periodically */
   collect_lua_garbage: $ElementType<Scalars, 'Boolean'>,
   /** Group name */

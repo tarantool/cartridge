@@ -153,6 +153,9 @@ export const serverDetailsFields = gql`
         uptime
         version
         ro
+        http_port
+        http_host
+        webui_prefix
       }
       replication {
         replication_connect_quorum

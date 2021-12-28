@@ -539,6 +539,10 @@ export type ServerInfoCartridge = {
 
 export type ServerInfoGeneral = {
   __typename?: 'ServerInfoGeneral';
+  /** HTTP host */
+  http_host?: Maybe<Scalars['String']>;
+  /** HTTP port */
+  http_port?: Maybe<Scalars['Int']>;
   /** A globally unique identifier of the instance */
   instance_uuid: Scalars['String'];
   /** The binary protocol URI */
@@ -559,6 +563,8 @@ export type ServerInfoGeneral = {
   vinyl_dir?: Maybe<Scalars['String']>;
   /** A directory where write-ahead log (.xlog) files are stored */
   wal_dir?: Maybe<Scalars['String']>;
+  /** HTTP webui prefix */
+  webui_prefix?: Maybe<Scalars['String']>;
   /** Current working directory of a process */
   work_dir?: Maybe<Scalars['String']>;
   /**
@@ -738,6 +744,11 @@ export type VshardGroup = {
   bootstrapped: Scalars['Boolean'];
   /** Virtual buckets count in the group */
   bucket_count: Scalars['Int'];
+  /**
+   * The interval between garbage collector actions, in seconds
+   * @deprecated Has no effect anymore
+   */
+  collect_bucket_garbage_interval?: Maybe<Scalars['Float']>;
   /** If set to true, the Lua collectgarbage() function is called periodically */
   collect_lua_garbage: Scalars['Boolean'];
   /** Group name */
