@@ -208,6 +208,6 @@ function g.test_advertise_change()
     master.net_box_uri = '127.0.0.1:13310'
     master:start()
 
-    helpers.wish_state(master, 'RolesConfigured', 2)
+    helpers.wish_state(master, 'RolesConfigured', 5)
     t.assert(master:call('box.sequence.test:next'))
 end
