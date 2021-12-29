@@ -270,12 +270,16 @@ end
 
 --- Upload application config.
 -- @tparam string|table config - table will be encoded as yaml and posted to /admin/config.
-function Server:upload_config(config)
-    checks('table', 'string|table')
+function Server:upload_config(config, opts)
+    checks('table', 'string|table', 'table|nil')
     if type(config) == 'table' then
         config = yaml.encode(config)
     end
-    return self:http_request('put', '/admin/config', {body = config})
+    if opts == nil then
+        opts = {}
+    end
+    opts.body = config
+    return self:http_request('put', '/admin/config', opts)
 end
 
 --- Download application config.
