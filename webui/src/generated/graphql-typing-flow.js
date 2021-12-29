@@ -563,6 +563,8 @@ export type ServerInfoCartridge = {|
 
 export type ServerInfoGeneral = {|
   __typename?: 'ServerInfoGeneral',
+  /** The Application version */
+  app_version?: ?$ElementType<Scalars, 'String'>,
   /** HTTP host */
   http_host?: ?$ElementType<Scalars, 'String'>,
   /** HTTP port */
@@ -915,7 +917,7 @@ export type ServerDetailsFieldsFragment = ({
       ...$Pick<ServerInfoNetwork, {| io_collect_interval?: *, net_msg_max?: *, readahead?: * |}>
     }), general: ({
         ...{ __typename?: 'ServerInfoGeneral' },
-      ...$Pick<ServerInfoGeneral, {| instance_uuid: *, uptime: *, version: *, ro: * |}>
+      ...$Pick<ServerInfoGeneral, {| instance_uuid: *, uptime: *, version: *, ro: *, http_port?: *, http_host?: *, webui_prefix?: * |}>
     }), replication: ({
         ...{ __typename?: 'ServerInfoReplication' },
       ...$Pick<ServerInfoReplication, {| replication_connect_quorum?: *, replication_connect_timeout?: *, replication_sync_timeout?: *, replication_skip_conflict?: *, replication_sync_lag?: *, vclock?: *, replication_timeout?: * |}>,
@@ -972,7 +974,7 @@ export type InstanceDataQuery = ({
         ...$Pick<ServerInfoNetwork, {| io_collect_interval?: *, net_msg_max?: *, readahead?: * |}>
       }), general: ({
           ...{ __typename?: 'ServerInfoGeneral' },
-        ...$Pick<ServerInfoGeneral, {| instance_uuid: *, uptime: *, version: *, ro: * |}>
+        ...$Pick<ServerInfoGeneral, {| instance_uuid: *, uptime: *, version: *, ro: *, http_port?: *, http_host?: *, webui_prefix?: * |}>
       }), replication: ({
           ...{ __typename?: 'ServerInfoReplication' },
         ...$Pick<ServerInfoReplication, {| replication_connect_quorum?: *, replication_connect_timeout?: *, replication_sync_timeout?: *, replication_skip_conflict?: *, replication_sync_lag?: *, vclock?: *, replication_timeout?: * |}>,
@@ -1078,7 +1080,7 @@ export type BoxInfoQuery = ({
         ...$Pick<ServerInfoNetwork, {| io_collect_interval?: *, net_msg_max?: *, readahead?: * |}>
       }), general: ({
           ...{ __typename?: 'ServerInfoGeneral' },
-        ...$Pick<ServerInfoGeneral, {| instance_uuid: *, uptime: *, version: *, ro: * |}>
+        ...$Pick<ServerInfoGeneral, {| instance_uuid: *, uptime: *, version: *, ro: *, http_port?: *, http_host?: *, webui_prefix?: * |}>
       }), replication: ({
           ...{ __typename?: 'ServerInfoReplication' },
         ...$Pick<ServerInfoReplication, {| replication_connect_quorum?: *, replication_connect_timeout?: *, replication_sync_timeout?: *, replication_skip_conflict?: *, replication_sync_lag?: *, vclock?: *, replication_timeout?: * |}>,
