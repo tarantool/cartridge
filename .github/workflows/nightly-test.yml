@@ -15,15 +15,20 @@ jobs:
   run-tests:
     strategy:
       fail-fast: false
-      matrix:
-        tarantool: ['1.10', '2.7', '2.8', '2.9']
+      # matrix:
+      #   tarantool: ['1.10', '2.7', '2.8', '2.9']
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
-      - uses: tarantool/setup-tarantool@v1
-        with:
-          tarantool-version: '${{ matrix.tarantool }}'
-          nightly-build: true
+      # - uses: tarantool/setup-tarantool@v1
+      #   with:
+      #     tarantool-version: '${{ matrix.tarantool }}'
+      #     nightly-build: true
+
+      - name: Install latest pre-release Tarantool 2.x
+        run: |
+          curl -L https://tarantool.io/pre-release/2/installer.sh | bash
+          sudo apt-get -y install tarantool
 
       # Setup etcd
       - name: Install etcd
