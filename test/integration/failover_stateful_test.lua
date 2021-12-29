@@ -191,6 +191,24 @@ local function add(name, fn)
     g_etcd2[name] = fn
 end
 
+local function after_each(g)
+    g.cluster:wait_until_healthy(g.cluster.main_server)
+    local ok, err = R1:eval([[
+        local cartridge = require('cartridge')
+        local coordinator = cartridge.service_get('failover-coordinator')
+        return coordinator.appoint_leaders(...)
+    ]], {{[storage_uuid] = storage_1_uuid}})
+    t.assert_equals({ok, err}, {true, nil})
+
+    helpers.retrying({}, function()
+        t.assert_equals(R1:eval(q_leadership), storage_1_uuid)
+        t.assert_equals(S1:eval(q_leadership), storage_1_uuid)
+        t.assert_equals(S2:eval(q_leadership), storage_1_uuid)
+        t.assert_equals(S3:eval(q_leadership), storage_1_uuid)
+    end)
+end
+g_stateboard.after_each(function() after_each(g_stateboard) end)
+g_etcd2.after_each(function() after_each(g_etcd2) end)
 
 add('test_state_provider_restart', function(g)
     g.state_provider:stop()
@@ -343,24 +361,55 @@ add('test_leader_restart', function(g)
     t.assert_equals(S3:eval(q_leadership), storage_2_uuid)
 
     helpers.unprotect(S1)
-    -----------------------------------------------------
-    -- Switching leadership is accomplished by the coordinator rpc
+end)
 
-    log.info('--------------------------------------------------------')
-    g.cluster:wait_until_healthy(g.cluster.main_server)
-    local ok, err = R1:eval([[
-        local cartridge = require('cartridge')
-        local coordinator = cartridge.service_get('failover-coordinator')
-        return coordinator.appoint_leaders(...)
-    ]], {{[storage_uuid] = storage_1_uuid}})
-    t.assert_equals({ok, err}, {true, nil})
+add('test_leader_in_operation_error', function(g)
+    g.client:longpoll(0)
+
+    S1:exec(function()
+        local membership = require('membership')
+        membership.set_payload('state', 'OperationError')
+    end)
+    helpers.retrying({}, function()
+        t.assert_covers(
+            g.client:longpoll(3),
+            {[storage_uuid] = storage_2_uuid}
+        )
+    end)
 
     helpers.retrying({}, function()
-        t.assert_equals(R1:eval(q_leadership), storage_1_uuid)
-        t.assert_equals(S1:eval(q_leadership), storage_1_uuid)
-        t.assert_equals(S2:eval(q_leadership), storage_1_uuid)
-        t.assert_equals(S3:eval(q_leadership), storage_1_uuid)
+        t.assert_equals(R1:eval(q_leadership), storage_2_uuid)
+        t.assert_equals(S2:eval(q_leadership), storage_2_uuid)
+        t.assert_equals(S3:eval(q_leadership), storage_2_uuid)
     end)
+
+    helpers.retrying({}, function()
+        t.assert_equals(R1:eval(q_readonliness), false)
+        t.assert_equals(S2:eval(q_readonliness), false)
+        t.assert_equals(S3:eval(q_readonliness), true)
+    end)
+
+    -----------------------------------------------------
+    -- After old s1 recovers it doesn't take leadership
+    S1:exec(function()
+        local membership = require('membership')
+        membership.set_payload('state', 'RolesConfigured')
+    end)
+    helpers.protect_from_rw(S1)
+
+    g.cluster:wait_until_healthy(g.cluster.main_server)
+
+    t.assert_equals(R1:eval(q_leadership), storage_2_uuid)
+    t.assert_equals(S1:eval(q_leadership), storage_2_uuid)
+    t.assert_equals(S2:eval(q_leadership), storage_2_uuid)
+    t.assert_equals(S3:eval(q_leadership), storage_2_uuid)
+
+    t.assert_equals(R1:eval(q_readonliness), false)
+    t.assert_equals(S1:eval(q_readonliness), true)
+    t.assert_equals(S2:eval(q_readonliness), false)
+    t.assert_equals(S3:eval(q_readonliness), true)
+
+    helpers.unprotect(S1)
 end)
 
 local q_promote = [[
@@ -688,98 +737,4 @@ add('test_force_promote_timeout', function(g)
         t.assert_equals(res, true)
     end)
     S1.process:kill('CONT')
-end)
-
-
-add('test_leader_in_operation_error', function(g)
-    -----------------------------------------------------
-    g.client:longpoll(0)
-
-    S1:exec(function()
-        local membership = require('membership')
-        membership.set_payload('state', 'OperationError')
-    end)
-    helpers.retrying({}, function()
-        t.assert_covers(
-            g.client:longpoll(3),
-            {[storage_uuid] = storage_2_uuid}
-        )
-    end)
-
-    helpers.retrying({}, function()
-        t.assert_equals(R1:eval(q_leadership), storage_2_uuid)
-        t.assert_equals(S2:eval(q_leadership), storage_2_uuid)
-        t.assert_equals(S3:eval(q_leadership), storage_2_uuid)
-    end)
-
-    helpers.retrying({}, function()
-        t.assert_equals(R1:eval(q_readonliness), false)
-        t.assert_equals(S2:eval(q_readonliness), false)
-        t.assert_equals(S3:eval(q_readonliness), true)
-    end)
-
-    -----------------------------------------------------
-    -- After old s1 recovers it doesn't take leadership
-    S1:exec(function()
-        local membership = require('membership')
-        membership.set_payload('state', 'RolesConfigured')
-    end)
-    helpers.protect_from_rw(S1)
-
-    g.cluster:wait_until_healthy(g.cluster.main_server)
-
-    t.assert_equals(R1:eval(q_leadership), storage_2_uuid)
-    t.assert_equals(S1:eval(q_leadership), storage_2_uuid)
-    t.assert_equals(S2:eval(q_leadership), storage_2_uuid)
-    t.assert_equals(S3:eval(q_leadership), storage_2_uuid)
-
-    t.assert_equals(R1:eval(q_readonliness), false)
-    t.assert_equals(S1:eval(q_readonliness), true)
-    t.assert_equals(S2:eval(q_readonliness), false)
-    t.assert_equals(S3:eval(q_readonliness), true)
-
-    -----------------------------------------------------
-    -- And even applying config doesn't change leadership
-    g.cluster.main_server:graphql({
-        query = [[
-            mutation(
-                $uuid: String!
-                $master_uuid: [String!]!
-            ) {
-                edit_replicaset(
-                    uuid: $uuid
-                    master: $master_uuid
-                )
-            }
-        ]],
-        variables = {
-            uuid = storage_uuid,
-            master_uuid = {storage_1_uuid, storage_2_uuid, storage_3_uuid},
-        },
-    })
-
-    t.assert_equals(R1:eval(q_leadership), storage_2_uuid)
-    t.assert_equals(S1:eval(q_leadership), storage_2_uuid)
-    t.assert_equals(S2:eval(q_leadership), storage_2_uuid)
-    t.assert_equals(S3:eval(q_leadership), storage_2_uuid)
-
-    helpers.unprotect(S1)
-    -----------------------------------------------------
-    -- Switching leadership is accomplished by the coordinator rpc
-
-    log.info('--------------------------------------------------------')
-    g.cluster:wait_until_healthy(g.cluster.main_server)
-    local ok, err = R1:eval([[
-        local cartridge = require('cartridge')
-        local coordinator = cartridge.service_get('failover-coordinator')
-        return coordinator.appoint_leaders(...)
-    ]], {{[storage_uuid] = storage_1_uuid}})
-    t.assert_equals({ok, err}, {true, nil})
-
-    helpers.retrying({}, function()
-        t.assert_equals(R1:eval(q_leadership), storage_1_uuid)
-        t.assert_equals(S1:eval(q_leadership), storage_1_uuid)
-        t.assert_equals(S2:eval(q_leadership), storage_1_uuid)
-        t.assert_equals(S3:eval(q_leadership), storage_1_uuid)
-    end)
 end)
