@@ -69,6 +69,10 @@ local boxinfo_schema = {
                         kind = gql_types.string.nonNull,
                         description = 'The Tarantool version',
                     },
+                    app_version = {
+                        kind = gql_types.string,
+                        description = 'The Application version',
+                    },
                     pid = {
                         kind = gql_types.int.nonNull,
                         description = 'The process ID',
