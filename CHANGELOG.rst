@@ -28,6 +28,8 @@ Added
 
 - Add ``app_version`` field to graphql and webui. It filled from ``VERSION.lua`` file in the root of cartridge app. 
 
+- Add param ``opts`` to ``Server:upload_config`` in ``test-helpers`` and pass it to ``http_request``.
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Changed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
