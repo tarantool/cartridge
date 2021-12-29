@@ -156,6 +156,7 @@ export const serverDetailsFields = gql`
         http_port
         http_host
         webui_prefix
+        app_version
       }
       replication {
         replication_connect_quorum

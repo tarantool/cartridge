@@ -539,6 +539,8 @@ export type ServerInfoCartridge = {
 
 export type ServerInfoGeneral = {
   __typename?: 'ServerInfoGeneral';
+  /** The Application version */
+  app_version?: Maybe<Scalars['String']>;
   /** HTTP host */
   http_host?: Maybe<Scalars['String']>;
   /** HTTP port */
@@ -1031,7 +1033,16 @@ export type ServerDetailsFieldsFragment = {
       net_msg_max?: Maybe<number>;
       readahead?: Maybe<number>;
     };
-    general: { __typename?: 'ServerInfoGeneral'; instance_uuid: string; uptime: number; version: string; ro: boolean };
+    general: {
+      __typename?: 'ServerInfoGeneral';
+      instance_uuid: string;
+      uptime: number;
+      version: string;
+      ro: boolean;
+      http_port?: Maybe<number>;
+      http_host?: Maybe<string>;
+      webui_prefix?: Maybe<string>;
+    };
     replication: {
       __typename?: 'ServerInfoReplication';
       replication_connect_quorum?: Maybe<number>;
@@ -1152,6 +1163,9 @@ export type InstanceDataQuery = {
             uptime: number;
             version: string;
             ro: boolean;
+            http_port?: Maybe<number>;
+            http_host?: Maybe<string>;
+            webui_prefix?: Maybe<string>;
           };
           replication: {
             __typename?: 'ServerInfoReplication';
@@ -1308,6 +1322,9 @@ export type BoxInfoQuery = {
             uptime: number;
             version: string;
             ro: boolean;
+            http_port?: Maybe<number>;
+            http_host?: Maybe<string>;
+            webui_prefix?: Maybe<string>;
           };
           replication: {
             __typename?: 'ServerInfoReplication';
