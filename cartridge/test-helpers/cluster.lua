@@ -345,8 +345,8 @@ end
 
 --- Upload application config, shortcut for `cluster.main_server:upload_config(config)`.
 --  @see cartridge.test-helpers.server:upload_config
-function Cluster:upload_config(config)
-    return self.main_server:upload_config(config)
+function Cluster:upload_config(config, opts)
+    return self.main_server:upload_config(config, opts)
 end
 
 --- Download application config, shortcut for `cluster.main_server:download_config()`.

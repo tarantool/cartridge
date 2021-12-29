@@ -85,6 +85,11 @@ function g.test_config_management()
     t.assert_covers(g.cluster:download_config(), {another_section = 'some_value2'})
 end
 
+function g.test_invalid_config()
+    local response = g.cluster:upload_config("", { raise = false })
+    t.assert_equals(response.status, 400)
+end
+
 function g.test_servers_access()
     local cluster = build_cluster({replicasets = {
         {roles = {}, alias = 'vshard', servers = 1},
