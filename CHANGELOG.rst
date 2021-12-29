@@ -56,6 +56,8 @@ Fixed
 
 - Fix joining an instance when leader is not the first instance from leaders_order
 
+- Fix the incorrect number of total buckets on the replication server in webui.
+
 -------------------------------------------------------------------------------
 [2.7.3] - 2021-10-27
 -------------------------------------------------------------------------------

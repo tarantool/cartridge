@@ -39,7 +39,7 @@ export interface ReplicasetServerListItemServerAdditional {
   activeMaster: boolean;
   replicasetUUID: string;
   selfURI?: string;
-  totalBucketsCount?: number;
+  vshardGroupBucketsCount?: number;
   ro?: boolean;
   statistics?: Maybe<ReplicasetServerListItemStatistic>;
 }
@@ -53,7 +53,7 @@ export interface ReplicasetServerListItemProps {
 const ReplicasetServerListItem = (props: ReplicasetServerListItemProps) => {
   const {
     server: { uuid, uri, alias, status, disabled = false, message },
-    additional: { master, activeMaster, selfURI, totalBucketsCount, ro, statistics },
+    additional: { master, activeMaster, selfURI, vshardGroupBucketsCount, ro, statistics },
     showFailoverPromote,
   } = props;
 
@@ -99,7 +99,7 @@ const ReplicasetServerListItem = (props: ReplicasetServerListItemProps) => {
         </div>
         <div className={styles.div} />
         <div className={styles.buckets}>
-          <ReplicasetListBuckets count={statistics?.bucketsCount} total={totalBucketsCount} />
+          <ReplicasetListBuckets count={statistics?.bucketsCount} total={vshardGroupBucketsCount} />
         </div>
         <div className={styles.div} />
         <div className={styles.mem}>{statistics && <ReplicasetListMemStat {...statistics} />}</div>
