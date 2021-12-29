@@ -26,7 +26,7 @@ Added
 
 - Add logging of configuration options on start and boot instance.
 
-- Add ``app_version`` field to graphql. It filled from ``VERSION.lua`` file in the root of cartridge app. 
+- Add ``app_version`` field to graphql and webui. It filled from ``VERSION.lua`` file in the root of cartridge app. 
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Changed
