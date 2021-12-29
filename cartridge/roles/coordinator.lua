@@ -40,10 +40,10 @@ vars:new('healthcheck', function(members, instance_uuid)
     if member ~= nil
     and (member.status == 'alive' or member.status == 'suspect')
     and (member.payload.uuid == instance_uuid)
-    -- and (
-    --     member.payload.state == 'ConfiguringRoles' or
-    --     member.payload.state == 'RolesConfigured'
-    -- )
+    and (
+        member.payload.state == 'ConfiguringRoles' or
+        member.payload.state == 'RolesConfigured'
+    )
     then
         return true
     end
