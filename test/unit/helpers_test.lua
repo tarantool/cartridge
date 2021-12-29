@@ -86,8 +86,8 @@ function g.test_config_management()
 end
 
 function g.test_invalid_config()
-    g.cluster:upload_config({invalid_section = 'some_value'}, { raise = false })
-    t.assert_covers(g.cluster:download_config(), {invalid_section = 'some_value'})
+    local response = g.cluster:upload_config("", { raise = false })
+    t.assert_equals(response.status, 400)
 end
 
 function g.test_servers_access()
