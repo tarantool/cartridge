@@ -44,6 +44,38 @@ vars:new('options', {
     apply_config_timeout = 10,
 })
 
+local function set_netbox_call_timeout(timeout)
+    vars.options.netbox_call_timeout = timeout
+end
+
+local function get_netbox_call_timeout()
+    return vars.options.netbox_call_timeout
+end
+
+local function set_upload_config_timeout(timeout)
+    vars.options.upload_config_timeout = timeout
+end
+
+local function get_upload_config_timeout()
+    return vars.options.upload_config_timeout
+end
+
+local function set_validate_config_timeout(timeout)
+    vars.options.validate_config_timeout = timeout
+end
+
+local function get_validate_config_timeout()
+    return vars.options.validate_config_timeout
+end
+
+local function set_apply_config_timeout(timeout)
+    vars.options.apply_config_timeout = timeout
+end
+
+local function get_apply_config_timeout()
+    return vars.options.apply_config_timeout
+end
+
 --- Two-phase commit - preparation stage.
 --
 -- Validate the configuration and acquire a lock setting local variable
@@ -809,6 +841,14 @@ return {
     patch_clusterwide = patch_clusterwide,
     force_reapply = force_reapply,
     twophase_commit = twophase_commit,
+    set_netbox_call_timeout = set_netbox_call_timeout,
+    get_netbox_call_timeout = get_netbox_call_timeout,
+    set_upload_config_timeout = set_upload_config_timeout,
+    get_upload_config_timeout = get_upload_config_timeout,
+    set_validate_config_timeout = set_validate_config_timeout,
+    get_validate_config_timeout = get_validate_config_timeout,
+    set_apply_config_timeout = set_apply_config_timeout,
+    get_apply_config_timeout = get_apply_config_timeout,
     -- Cartridge supports backward compatibility but not the forward
     -- one. Thus operations that modify clusterwide config should be
     -- performed by instances with the lowest twophase version. This
