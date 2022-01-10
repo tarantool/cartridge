@@ -55,7 +55,7 @@ g.test_timeouts = function()
     helpers.run_remotely(g.server, function()
 
         local t = require('luatest')
-        local ok, err = require('cartridge').cfg({
+        local ok, _ = require('cartridge').cfg({
             advertise_uri = '127.0.0.1:0',
             roles = {},
         })
