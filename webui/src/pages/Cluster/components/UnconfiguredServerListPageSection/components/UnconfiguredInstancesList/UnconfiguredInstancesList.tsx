@@ -7,16 +7,16 @@ import { Button, Text, TiledList, TiledListItem, Tooltip, UriLabel } from '@tara
 
 import { ServerListServer, cluster } from 'src/models';
 
-import { styles } from './UnconfiguredServerList.styles';
+import { styles } from './UnconfiguredInstancesList.styles';
 
 const { selectors, $cluster } = cluster.serverList;
 const { serverConfigureModalOpenedEvent } = cluster.serverConfigure;
 
-export interface UnconfiguredServerListProps {
+export interface UnconfiguredInstancesListProps {
   servers: ServerListServer[];
 }
 
-const UnconfiguredServerList = ({ servers }: UnconfiguredServerListProps) => {
+const UnconfiguredInstancesList = ({ servers }: UnconfiguredInstancesListProps) => {
   const clusterStore = useStore($cluster);
 
   const clusterSelf = useMemo(() => selectors.clusterSelf(clusterStore), [clusterStore]);
@@ -68,4 +68,4 @@ const UnconfiguredServerList = ({ servers }: UnconfiguredServerListProps) => {
   );
 };
 
-export default UnconfiguredServerList;
+export default UnconfiguredInstancesList;

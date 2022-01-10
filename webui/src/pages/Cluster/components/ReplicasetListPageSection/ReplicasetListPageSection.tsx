@@ -55,7 +55,7 @@ const ReplicasetListPageSection = () => {
   }
 
   return (
-    <PageSection title="Replica Sets" titleCounter={replicasetList.length}>
+    <PageSection title="Replicasets">
       <ReplicasetListHeader filter={filter} onFilterChange={setFilter} />
       {filteredSearchableReplicasetList.length ? (
         <ReplicasetList

@@ -20,7 +20,7 @@ export interface ReplicasetFilterInputProps {
 
 const ReplicasetFilterInput = ({ value, setValue, roles, className }: ReplicasetFilterInputProps) => (
   <Input
-    className={cx(styles.clusterFilter, className)}
+    className={cx(styles.root, className)}
     placeholder={'Filter by uri, uuid, role, alias or labels'}
     value={value}
     onChange={(e) => setValue(e.target.value)}
