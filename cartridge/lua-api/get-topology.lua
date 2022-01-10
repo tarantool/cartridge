@@ -264,7 +264,15 @@ local function get_replicasets()
     end
 
     for _, replicaset in pairs(topology.replicasets) do
-        replicasets.servers = nil
+        if replicaset.master ~= nil then
+            replicaset.master.replicaset = nil
+        end
+        if replicaset.active_master ~= nil then
+            replicaset.active_master.replicaset = nil
+        end
+        for _, server in ipairs(replicaset.servers) do
+            server.replicaset = nil
+        end
         table.insert(replicasets, replicaset)
     end
     return replicasets
