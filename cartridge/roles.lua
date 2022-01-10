@@ -636,6 +636,27 @@ local function is_reload_forbidden()
     return vars.pause == true
 end
 
+local function on_apply_config(conf, state)
+    checks('table', 'string')
+    if conf.__type == 'ClusterwideConfig' then
+        local err = "Bad argument #1 to apply_config" ..
+            " (table expected, got ClusterwideConfig)"
+        error(err, 2)
+    end
+
+    local my_replicaset = conf.topology.replicasets[box.info.cluster.uuid]
+    local enabled_roles = get_enabled_roles(my_replicaset.roles)
+    for _, role in ipairs(vars.roles_by_number) do
+        if enabled_roles[role.role_name] then
+            if type(role.M.on_apply_config) == 'function' then
+                ApplyConfigError:pcall(role.M.on_apply_config, conf, state)
+            end
+        end
+    end
+
+    return true
+end
+
 return {
     cfg = cfg,
     get_role = get_role,
@@ -647,6 +668,7 @@ return {
 
     validate_config = validate_config,
     apply_config = apply_config,
+    on_apply_config = on_apply_config,
     reload = reload,
     stop = stop,
 

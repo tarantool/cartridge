@@ -286,16 +286,16 @@ local function apply_config(clusterwide_config)
 
     local role_opts = {is_master = failover.is_leader()}
 
-    local ok, err = roles.apply_config(
-        clusterwide_config:get_readonly(), role_opts
-    )
+    local config = clusterwide_config:get_readonly()
+    local ok, err = roles.apply_config(config, role_opts)
+    local state = 'RolesConfigured'
     if not ok then
-        set_state('OperationError', err)
-        return nil, err
+        state = 'OperationError'
     end
+    set_state(state, err)
+    roles.on_apply_config(config, state)
 
-    set_state('RolesConfigured')
-    return true
+    return ok, err
 end
 
 local function cartridge_schema_upgrade(clusterwide_config)
