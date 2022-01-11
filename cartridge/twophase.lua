@@ -45,6 +45,7 @@ vars:new('options', {
 })
 
 local function set_netbox_call_timeout(timeout)
+    checks('number')
     vars.options.netbox_call_timeout = timeout
 end
 
@@ -53,6 +54,7 @@ local function get_netbox_call_timeout()
 end
 
 local function set_upload_config_timeout(timeout)
+    checks('number')
     vars.options.upload_config_timeout = timeout
 end
 
@@ -61,6 +63,7 @@ local function get_upload_config_timeout()
 end
 
 local function set_validate_config_timeout(timeout)
+    checks('number')
     vars.options.validate_config_timeout = timeout
 end
 
@@ -69,6 +72,7 @@ local function get_validate_config_timeout()
 end
 
 local function set_apply_config_timeout(timeout)
+    checks('number')
     vars.options.apply_config_timeout = timeout
 end
 
