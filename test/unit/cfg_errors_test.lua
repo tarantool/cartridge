@@ -50,7 +50,6 @@ end
 
 -- workdir --------------------------------------------------------------------
 -------------------------------------------------------------------------------
-
 g.test_workdir = function()
     helpers.run_remotely(g.server, mock)
     helpers.run_remotely(g.server, function()

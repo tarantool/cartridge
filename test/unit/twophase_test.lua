@@ -21,47 +21,12 @@ g.after_each(function()
     fio.rmtree(g.server.workdir)
 end)
 
-local function mock()
-    local fiber = require('fiber')
-    local fn_true = function() return true end
-
-    package.loaded['membership'] = {
-        init = fn_true,
-        probe_uri = fn_true,
-        broadcast = fn_true,
-        set_payload = fn_true,
-        set_encryption_key = fn_true,
-        subscribe = function() return fiber.cond() end,
-        myself = function()
-            return {
-                uri = '127.0.0.1:0',
-                status = 1,
-                incarnation = 1,
-                payload = {},
-            }
-        end,
-    }
-
-    package.loaded['cartridge.remote-control'] = {
-        bind = fn_true,
-        accept = fn_true,
-    }
-end
-
 -- timeouts -------------------------------------------------------------------
 -------------------------------------------------------------------------------
 
 g.test_timeouts = function()
-    helpers.run_remotely(g.server, mock)
-    helpers.run_remotely(g.server, function()
-
+    g.server:exec(function()
         local t = require('luatest')
-                local ok, _ = require('cartridge').cfg({
-                    advertise_uri = '127.0.0.1:0',
-                    roles = {},
-                })
-                t.assert_equals(ok, true)
-
         local twophase = require('cartridge.twophase')
 
         twophase.set_netbox_call_timeout(222)
