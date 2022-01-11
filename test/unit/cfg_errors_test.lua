@@ -48,37 +48,9 @@ local function mock()
     }
 end
 
--- timeouts -------------------------------------------------------------------
--------------------------------------------------------------------------------
-g.test_timeouts = function()
-    helpers.run_remotely(g.server, mock)
-    helpers.run_remotely(g.server, function()
-
-        local t = require('luatest')
-        local ok, _ = require('cartridge').cfg({
-            advertise_uri = '127.0.0.1:0',
-            roles = {},
-        })
-        t.assert_equals(ok, true)
-
-        local twophase = require('cartridge.twophase')
-
-        twophase.set_netbox_call_timeout(222)
-        t.assert_equals(twophase.get_netbox_call_timeout(), 222)
-
-        twophase.set_upload_config_timeout(123)
-        t.assert_equals(twophase.get_upload_config_timeout(), 123)
-
-        twophase.set_validate_config_timeout(654)
-        t.assert_equals(twophase.get_validate_config_timeout(), 654)
-
-        twophase.set_apply_config_timeout(111)
-        t.assert_equals(twophase.get_apply_config_timeout(), 111)
-    end)
-end
-
 -- workdir --------------------------------------------------------------------
 -------------------------------------------------------------------------------
+
 g.test_workdir = function()
     helpers.run_remotely(g.server, mock)
     helpers.run_remotely(g.server, function()
