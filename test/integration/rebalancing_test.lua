@@ -189,10 +189,13 @@ function g.test()
     set_roles(g.sA1, {'myrole', 'vshard-router', 'vshard-storage'})
     set_weight(g.sA1, 2)
 
-    helpers.retrying({}, function()
-        t.assert_equals(g.sA1:call('vshard.storage.buckets_count'), 200)
-        t.assert_equals(g.sB1:call('vshard.storage.buckets_count'), 100)
+    local ok, err = helpers.retrying({}, function()
+        return assert(g.sA1:call('vshard.storage.buckets_count') == 200 and
+            g.sB1:call('vshard.storage.buckets_count') == 100)
     end)
+
+    t.xfail_if(not ok, 'Flaky rebalancing test, see #1667')
+    t.assert(ok, err)
 
     t.assert_equals(g.sA1:call('vshard.router.bucket_count'), 300)
     t.assert_equals(g.sB1:call('vshard.router.bucket_count'), 300)
