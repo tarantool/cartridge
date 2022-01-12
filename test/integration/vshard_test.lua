@@ -101,7 +101,7 @@ g.test_bucket_ref_on_replica_prevent_bucket_move = function()
     t.xfail('Test fails until tarantool/vshard#173 will be fixed')
     -- ref bucket on replica
     local some_bucket_id = nil
-    
+
     h.retrying({}, function()
         some_bucket_id = g.cluster:server('storage-2'):exec(function()
             assert(box.info.ro)
