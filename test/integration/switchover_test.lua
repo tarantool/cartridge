@@ -609,7 +609,9 @@ add('test_enabling', function(g)
         [[require("cartridge").admin_edit_topology(...)]],
         {{replicasets = {{uuid = uA, roles = {}}}}}
     )
-    t.assert_equals(g.session:get_coordinator(), box.NULL)
+    helpers.retrying({}, function()
+        t.assert_equals(g.session:get_coordinator(), box.NULL)
+    end)
 end)
 
 add('test_api', function(g)
