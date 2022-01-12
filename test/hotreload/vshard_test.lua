@@ -191,7 +191,7 @@ function g.test_rebalancer()
 
     local ok, err = pcall(helpers.retrying, {}, function()
         rebalancer:call('vshard.storage.rebalancer_wakeup')
-        assert(g.SA1:call('vshard.storage.buckets_count') == 2000
+        return assert(g.SA1:call('vshard.storage.buckets_count') == 2000
             and g.SB1:call('vshard.storage.buckets_count') == 1000)
     end)
 
