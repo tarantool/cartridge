@@ -30,6 +30,9 @@ Added
 
 - Add param ``opts`` to ``Server:upload_config`` in ``test-helpers`` and pass it to ``http_request``.
 
+- Add setters ans getters for timeout options in ``twophase.lua``:
+  ``netbox_call_timeout``, ``upload_config_timeout``, ``validate_config_timeout``, ``apply_config_timeout``.
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Changed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
