@@ -268,3 +268,22 @@ function g.test_abort_fails()
         'Error aborting simple_twophase at localhost:13301'
     )
 end
+
+function g.test_timeouts()
+    g.s1:exec(function()
+        local t = require('luatest')
+        local twophase = require('cartridge.twophase')
+
+        twophase.set_netbox_call_timeout(222)
+        t.assert_equals(twophase.get_netbox_call_timeout(), 222)
+
+        twophase.set_upload_config_timeout(123)
+        t.assert_equals(twophase.get_upload_config_timeout(), 123)
+
+        twophase.set_validate_config_timeout(654)
+        t.assert_equals(twophase.get_validate_config_timeout(), 654)
+
+        twophase.set_apply_config_timeout(111)
+        t.assert_equals(twophase.get_apply_config_timeout(), 111)
+    end)
+end
