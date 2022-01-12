@@ -76,7 +76,7 @@ local function get_auth_params()
 
     local username = auth.get_session_username()
     local user = username and auth.get_user(username)
-    if user ~= nil and user.fullname ~= nil then
+    if user ~= nil and user.fullname ~= nil and #user.fullname > 0 then
         username = user.fullname
     end
     return {

@@ -67,6 +67,8 @@ Fixed
 
 - Fix the incorrect number of total buckets on the replication server in webui.
 
+- Fix GraphQL query ``auth_params.username`` returns empty string instead of ``username``.
+
 -------------------------------------------------------------------------------
 [2.7.3] - 2021-10-27
 -------------------------------------------------------------------------------
