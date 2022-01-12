@@ -7,18 +7,18 @@ local yaml = require('yaml')
 local checks = require('checks')
 local utils = require('cartridge.utils')
 
-function g:setup()
-    self.tempdir = fio.tempdir()
+g.before_each(function()
+    g.tempdir = fio.tempdir()
 
     utils.file_write(
-        fio.pathjoin(self.tempdir, 'getargs.lua'),
+        fio.pathjoin(g.tempdir, 'getargs.lua'),
         [[
             local log = require('log')
             local fio = require('fio')
             local yaml = require('yaml')
             local errors = require('errors')
             local argparse = require('cartridge.argparse')
-            fio.chdir("]] .. self.tempdir .. [[")
+            fio.chdir("]] .. g.tempdir .. [[")
             local args, err = errors.pcall('ArgparseError', argparse.parse)
             if args == nil then
                 print(yaml.encode({err = tostring(err)}))
@@ -31,19 +31,19 @@ function g:setup()
             }))
         ]]
     )
-end
+end)
 
-function g:teardown()
-    fio.rmtree(self.tempdir)
-end
+g.after_each(function ()
+    fio.rmtree(g.tempdir)
+end)
 
-function g:run(cmd_args, env_vars, opts)
-    checks('?', '?string', '?table', {
+function g.run(cmd_args, env_vars, opts)
+    checks('?string', '?table', {
         ignore_errors = '?boolean',
     })
     local cmd =
         ('env -i %s'):format(table.concat(env_vars or {}, ' ')) ..
-        (' %s %q '):format(arg[-1], fio.pathjoin(self.tempdir, 'getargs.lua')) ..
+        (' %s %q '):format(arg[-1], fio.pathjoin(g.tempdir, 'getargs.lua')) ..
         (cmd_args or '')
     local raw = io.popen(cmd):read('*all')
     local ret = yaml.decode(raw)
@@ -57,9 +57,9 @@ function g:run(cmd_args, env_vars, opts)
     return ret
 end
 
-function g:test_sections()
+g.test_sections = function()
     utils.file_write(
-        fio.pathjoin(self.tempdir, 'tarantool.yml'),
+        fio.pathjoin(g.tempdir, 'tarantool.yml'),
         yaml.encode({
             ['default'] = {
                 x = '@default',
@@ -89,7 +89,7 @@ function g:test_sections()
     )
 
     local function check(cmd_args, expected)
-        local ret = self:run(cmd_args, {'TARANTOOL_CFG=./tarantool.yml'})
+        local ret = g.run(cmd_args, {'TARANTOOL_CFG=./tarantool.yml'})
         t.assert_equals(ret.args['cfg'], './tarantool.yml')
         ret.args['cfg'] = nil
         t.assert_equals(ret.args, expected)
@@ -166,16 +166,16 @@ function g:test_sections()
     )
 end
 
-function g:test_priority()
+function g.test_priority()
     utils.file_write(
-        fio.pathjoin(self.tempdir, 'x.yml'),
+        fio.pathjoin(g.tempdir, 'x.yml'),
         yaml.encode({
             ['default'] = {x = '@default'},
             ['custom'] = {x = '@custom'},
         })
     )
     utils.file_write(
-        fio.pathjoin(self.tempdir, 'cfg.yml'),
+        fio.pathjoin(g.tempdir, 'cfg.yml'),
         yaml.encode({
             ['default'] = {x = '@cfg-default'},
             ['custom'] = {x = '@cfg-custom'},
@@ -183,7 +183,7 @@ function g:test_priority()
     )
 
     local function check(cmd_args, env_vars, expected)
-        local args = self:run(cmd_args, env_vars).args
+        local args = g.run(cmd_args, env_vars).args
         t.assert_equals(args.x, expected)
     end
 
@@ -204,9 +204,9 @@ function g:test_priority()
 
 end
 
-function g:test_overrides()
+g.test_overrides = function()
     utils.file_write(
-        fio.pathjoin(self.tempdir, 'tarantool.yml'),
+        fio.pathjoin(g.tempdir, 'tarantool.yml'),
         yaml.encode({
             ['default'] = {
                 a1 = 1.1,
@@ -217,7 +217,7 @@ function g:test_overrides()
 
     local function check(cmd_args, env_vars, expected)
         table.insert(env_vars, 'TARANTOOL_CFG=./tarantool.yml')
-        local ret = self:run(cmd_args, env_vars)
+        local ret = g.run(cmd_args, env_vars)
         t.assert_equals(ret.args['cfg'], './tarantool.yml')
         ret.args['cfg'] = nil
         t.assert_equals(ret.args, expected)
@@ -232,9 +232,9 @@ function g:test_overrides()
     check('', {"TARANTOOL_A1=O1", "TARANTOOL_A1=O2"}, {a1 = 'O2', b2 = 2.2})
 end
 
-function g:test_appname()
+function g.test_appname()
     utils.file_write(
-        fio.pathjoin(self.tempdir, 'cfg.yml'),
+        fio.pathjoin(g.tempdir, 'cfg.yml'),
         yaml.encode({
             ['myapp'] = {
                 x = '@myapp',
@@ -246,12 +246,12 @@ function g:test_appname()
     )
 
     utils.file_write(
-        fio.pathjoin(self.tempdir, 'myapp-scm-1.rockspec'),
+        fio.pathjoin(g.tempdir, 'myapp-scm-1.rockspec'),
         ''
     )
 
     local function check(cmd_args, expected)
-        local ret = self:run(cmd_args, {'TARANTOOL_CFG=./cfg.yml'})
+        local ret = g.run(cmd_args, {'TARANTOOL_CFG=./cfg.yml'})
         t.assert_equals(ret.args['cfg'], './cfg.yml')
         ret.args['cfg'] = nil
         t.assert_equals(ret.args, expected)
@@ -261,8 +261,8 @@ function g:test_appname()
     check('--app-name otherapp', {app_name = 'otherapp', y = '@otherapp'})
 end
 
-function g:test_confdir()
-    local confd = fio.pathjoin(self.tempdir, 'conf.d')
+function g.test_confdir()
+    local confd = fio.pathjoin(g.tempdir, 'conf.d')
     fio.mkdir(confd)
     utils.file_write(
         fio.pathjoin(confd, '0-default.yml'),
@@ -274,7 +274,7 @@ function g:test_confdir()
     )
 
     local function check(cmd_args, expected)
-        local args = self:run(cmd_args, {'TARANTOOL_CFG=./conf.d'}).args
+        local args = g.run(cmd_args, {'TARANTOOL_CFG=./conf.d'}).args
         t.assert_equals(args.cfg, './conf.d/')
         t.assert_equals(args.x, expected)
     end
@@ -282,7 +282,7 @@ function g:test_confdir()
     check('--instance-name default', '@default')
     check('--instance-name custom', '@custom')
 
-    local confd = fio.pathjoin(self.tempdir, 'conflict.d')
+    local confd = fio.pathjoin(g.tempdir, 'conflict.d')
     fio.mkdir(confd)
     utils.file_write(
         fio.pathjoin(confd, '0-default.yml'),
@@ -293,39 +293,39 @@ function g:test_confdir()
         yaml.encode({['other'] = {y = '@custom'}})
     )
 
-    local ret = self:run('--cfg ./conflict.d', {}, {ignore_errors = true})
+    local ret = g.run('--cfg ./conflict.d', {}, {ignore_errors = true})
     t.assert_str_contains(ret.err, 'ParseConfigError: collision of section "other"' ..
         ' in ./conflict.d/ between 0-default.yml and 1-custom.yaml'
     )
 end
 
-function g:test_badfile()
+g.test_badfile = function()
     utils.file_write(
-        fio.pathjoin(self.tempdir, 'cfg.txt'),
+        fio.pathjoin(g.tempdir, 'cfg.txt'),
         'x = whatever'
     )
 
-    local ret = self:run('--cfg ./cfg.txt', {}, {ignore_errors = true})
+    local ret = g.run('--cfg ./cfg.txt', {}, {ignore_errors = true})
     t.assert_str_contains(ret.err, 'ParseConfigError: ./cfg.txt: Unsupported file type')
 
-    local ret = self:run('--cfg /dev/null', {}, {ignore_errors = true})
+    local ret = g.run('--cfg /dev/null', {}, {ignore_errors = true})
     t.assert_str_contains(ret.err, 'ParseConfigError: /dev/null: Unsupported file type')
 
-    local ret = self:run('--cfg /no/such/file.yml', {}, {ignore_errors = true})
+    local ret = g.run('--cfg /no/such/file.yml', {}, {ignore_errors = true})
     t.assert_str_contains(ret.err, 'OpenFileError: /no/such/file.yml: No such file or directory')
 
     utils.file_write(
-        fio.pathjoin(self.tempdir, 'tarantool.yml'),
+        fio.pathjoin(g.tempdir, 'tarantool.yml'),
         '}'
     )
-    local ret = self:run('--cfg tarantool.yml', {}, {ignore_errors = true})
+    local ret = g.run('--cfg tarantool.yml', {}, {ignore_errors = true})
     t.assert_str_contains(ret.err, 'DecodeYamlError: tarantool.yml: unexpected END event')
 
     utils.file_write(
-        fio.pathjoin(self.tempdir, 'tarantool.yml'),
+        fio.pathjoin(g.tempdir, 'tarantool.yml'),
         yaml.encode({['app_name.instance_name'] = {x = 'sup'}})
     )
-    local ret = self:run(
+    local ret = g.run(
         '--cfg tarantool.yml' ..
         ' --app_name app_name' ..
         ' --instance_name harry',
@@ -333,9 +333,9 @@ function g:test_badfile()
     t.assert_str_contains(ret.err, 'ParseConfigError: Missing section: app_name.harry')
 end
 
-function g:test_box_opts()
+function g.test_box_opts()
     utils.file_write(
-        fio.pathjoin(self.tempdir, 'cfg.yml'),
+        fio.pathjoin(g.tempdir, 'cfg.yml'),
         yaml.encode({
             default = {
                 username = 'alice',        -- string -> string
@@ -360,7 +360,7 @@ function g:test_box_opts()
         })
     )
 
-    local box_opts, err = unpack(self:run('--cfg ./cfg.yml').box_opts)
+    local box_opts, err = unpack(g.run('--cfg ./cfg.yml').box_opts)
     t.assert_not(err)
     t.assert_equals(box_opts, {
         username = 'alice',
@@ -372,7 +372,7 @@ function g:test_box_opts()
     })
 
     local function check_err(cmd_args, expected)
-        local ok, err = unpack(self:run(cmd_args).box_opts)
+        local ok, err = unpack(g.run(cmd_args).box_opts)
         t.assert_not(ok)
         t.assert_str_contains(err, expected)
     end
