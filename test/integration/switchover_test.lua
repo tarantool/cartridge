@@ -654,17 +654,19 @@ add('test_api', function(g)
             return nil, require('errors').new('ArtificialError', 'Boo')
         end
     ]])
-    t.assert_error_msg_equals(
-        "Promotion succeeded, but inconsistency wasn't forced: Boo",
-        A1.graphql, A1, {
-            query = query,
-            variables = {
-                replicaset_uuid = uB,
-                instance_uuid = uB2,
-                force = true,
-            },
-        }
-    )
+    helpers.retrying({}, function()
+        t.assert_error_msg_equals(
+            "Promotion succeeded, but inconsistency wasn't forced: Boo",
+            A1.graphql, A1, {
+                query = query,
+                variables = {
+                    replicaset_uuid = uB,
+                    instance_uuid = uB2,
+                    force = true,
+                },
+            }
+        )
+    end)
 
     -- Check intermediate state: B2 is a leader, but can't sync up
     helpers.retrying({}, function()
