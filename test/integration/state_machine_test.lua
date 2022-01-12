@@ -335,45 +335,46 @@ function g.test_blinking_fast()
 
     helpers.protect_from_rw(g.slave)
 
-    g.slave:eval('loadstring(...)()', {
-        string.dump(function()
-            local log = require('log')
-            local fiber = require('fiber')
-            local myrole = require('mymodule')
-            local confapplier = require('cartridge.confapplier')
+    local ok, err = pcall(g.slave.exec, g.slave, function()
+        local log = require('log')
+        local fiber = require('fiber')
+        local myrole = require('mymodule')
+        local confapplier = require('cartridge.confapplier')
 
-            -- 1. Make apply_config yield
-            myrole._apply_config_backup = myrole.apply_config
-            myrole.apply_config = function(conf, opts)
-                fiber.sleep(0)
-                return myrole._apply_config_backup(conf, opts)
-            end
-
-            -- 2. Prevent triggering failover yet
-            log.info('Fake set_state -> ConfiguringRoles')
-            confapplier.set_state('ConfiguringRoles')
-
-            local opts = require('membership.options')
-            local events = require('membership.events')
-            local membership = require('membership')
-            local m = membership.get_member('localhost:13301')
-
-            -- 3. Produce an event, make failover fiber to wish state
-            log.info('Produce false rumor (master death)')
-            events.generate(m.uri, opts.DEAD, m.incarnation, m.payload)
+        -- 1. Make apply_config yield
+        myrole._apply_config_backup = myrole.apply_config
+        myrole.apply_config = function(conf, opts)
             fiber.sleep(0)
-            log.info('Produce false rumor (master resurrected)')
-            events.generate(m.uri, opts.ALIVE, m.incarnation+1, m.payload)
-            fiber.sleep(0)
+            return myrole._apply_config_backup(conf, opts)
+        end
 
-            log.info('Fake set_state -> RolesConfigured')
-            confapplier.set_state('RolesConfigured')
+        -- 2. Prevent triggering failover yet
+        log.info('Fake set_state -> ConfiguringRoles')
+        confapplier.set_state('ConfiguringRoles')
 
-            -- 4. Wait when failover step
-            assert(confapplier.wish_state('ConfiguringRoles') == 'ConfiguringRoles')
+        local opts = require('membership.options')
+        local events = require('membership.events')
+        local membership = require('membership')
+        local m = membership.get_member('localhost:13301')
+
+        -- 3. Produce an event, make failover fiber to wish state
+        log.info('Produce false rumor (master death)')
+        events.generate(m.uri, opts.DEAD, m.incarnation, m.payload)
+        fiber.sleep(0)
+        log.info('Produce false rumor (master resurrected)')
+        events.generate(m.uri, opts.ALIVE, m.incarnation+1, m.payload)
+        fiber.sleep(0)
+
+        log.info('Fake set_state -> RolesConfigured')
+        confapplier.set_state('RolesConfigured')
+
+        -- 4. Wait when failover step
+        return assert(confapplier.wish_state('ConfiguringRoles') == 'ConfiguringRoles') and
             assert(confapplier.wish_state('RolesConfigured') == 'RolesConfigured')
-        end)
-    })
+    end)
+
+    t.xfail_if(not ok, "Don't rely on eventual failover")
+    t.assert(ok, err)
 
     t.assert_error_msg_equals("timed out",
         function() g.slave:call('box.ctl.wait_rw', {1}) end
