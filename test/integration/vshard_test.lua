@@ -100,22 +100,19 @@ end)
 g.test_bucket_ref_on_replica_prevent_bucket_move = function()
     t.xfail('Test fails until tarantool/vshard#173 will be fixed')
     -- ref bucket on replica
-    local some_bucket_id = g.cluster:server('storage-2'):exec(function()
-        assert(box.info.ro)
+    local some_bucket_id = nil
 
-        local attempts = 3
-        while box.space.test == nil do
-            require('fiber').sleep(1)
-            attempts = attempts - 1
-            if attempts == 0 then
-                error('Space test does not exists')
-            end
-        end
+    h.retrying({}, function()
+        some_bucket_id = g.cluster:server('storage-2'):exec(function()
+            assert(box.info.ro)
 
-        local some_bucket_id = box.space.test:pairs():nth(1).bucket_id
-        local vshard_storage = require('vshard.storage')
-        vshard_storage.bucket_ref(some_bucket_id, 'read')
-        return some_bucket_id
+            local test_space = box.space.test
+            local tupl = test_space:pairs():nth(1)
+            local some_bucket_id = tupl.bucket_id
+            local vshard_storage = require('vshard.storage')
+            vshard_storage.bucket_ref(some_bucket_id, 'read')
+            return some_bucket_id
+        end)
     end)
 
     g.cluster.main_server:setup_replicaset({
