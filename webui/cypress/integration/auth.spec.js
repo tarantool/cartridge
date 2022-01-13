@@ -32,21 +32,16 @@ describe('Auth', () => {
   const fullname = '';
 
   function addUserWithAPI(username, fullname, email, password) {
-    cy.request(
-      {
-        method: 'POST',
-        url: 'http://localhost:8080/admin/api',
-        headers: {
-          'Content-Type': 'application/json',
-          'schema': 'admin'
-        },
-        body: {
-          variables: { 'email': email,
-            'fullname': fullname,
-            'password': password,
-            'username': username
-          },
-          query: `
+    cy.request({
+      method: 'POST',
+      url: 'http://localhost:8080/admin/api',
+      headers: {
+        'Content-Type': 'application/json',
+        schema: 'admin',
+      },
+      body: {
+        variables: { email: email, fullname: fullname, password: password, username: username },
+        query: `
            mutation addUser($username: String!, $password: String!, $email: String!, $fullname: String!) {
                  cluster {
                     add_user(
@@ -62,27 +57,22 @@ describe('Auth', () => {
                   }
                  }
            }
-          `
-        }
-      })
+          `,
+      },
+    });
   }
 
   function editUserWithAPI(username, fullname, email, password) {
-    cy.request(
-      {
-        method: 'POST',
-        url: 'http://localhost:8080/admin/api',
-        headers: {
-          'Content-Type': 'application/json',
-          'schema': 'admin'
-        },
-        body: {
-          variables: { 'email': email,
-            'fullname': fullname,
-            'password': password,
-            'username': username
-          },
-          query: `
+    cy.request({
+      method: 'POST',
+      url: 'http://localhost:8080/admin/api',
+      headers: {
+        'Content-Type': 'application/json',
+        schema: 'admin',
+      },
+      body: {
+        variables: { email: email, fullname: fullname, password: password, username: username },
+        query: `
            mutation editUser($username: String!, $password: String, $email: String, $fullname: String) {
                  cluster {
                     edit_user(
@@ -98,9 +88,9 @@ describe('Auth', () => {
                   }
                  }
            }
-          `
-        }
-      })
+          `,
+      },
+    });
     cy.reload();
   }
 
