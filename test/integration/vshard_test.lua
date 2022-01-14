@@ -48,7 +48,7 @@ g.before_all = function()
 
     g.cluster.main_server:setup_replicaset({
         roles = {'vshard-storage'},
-        weight = 0,
+        weight = 1,
         uuid = single_replicaset_uuid,
     })
 
@@ -89,16 +89,19 @@ end)
 g.before_test('test_bucket_ref_on_replica_prevent_bucket_move', function()
     g.cluster.main_server:exec(function()
         local vshard_router = require('vshard.router')
-        local key = 'key'
-        local bucket_id = vshard_router:bucket_id_strcrc32(key)
-        vshard_router.callrw(bucket_id, 'box.space.test:insert',
-            {{bucket_id, key, {}}})
+        for i = 1, 300 do 
+            local key = 'key'
+            local bucket_id = i --vshard_router:bucket_id_strcrc32(key)
+            vshard_router.callrw(bucket_id, 'box.space.test:insert',
+                {{bucket_id, key .. tostring(i), {}}})
+        end
     end)
 end)
 
 -- see https://github.com/tarantool/vshard/issues/173 for details
 g.test_bucket_ref_on_replica_prevent_bucket_move = function()
     t.xfail('Test fails until tarantool/vshard#173 will be fixed')
+
     -- ref bucket on replica
     local some_bucket_id = nil
 
@@ -114,11 +117,6 @@ g.test_bucket_ref_on_replica_prevent_bucket_move = function()
             return some_bucket_id
         end)
     end)
-
-    g.cluster.main_server:setup_replicaset({
-        weight = 1,
-        uuid = single_replicaset_uuid,
-    })
 
     -- send bucket to another storage
     g.cluster:server('storage-1'):exec(function(bucket_id, replicaset_uuid)
@@ -145,10 +143,3 @@ g.test_bucket_ref_on_replica_prevent_bucket_move = function()
         vshard_storage.bucket_unref(some_bucket_id, 'read')
     end, {some_bucket_id})
 end
-
-g.after_test('test_bucket_ref_on_replica_prevent_bucket_move', function()
-    g.cluster.main_server:setup_replicaset({
-        weight = 0,
-        uuid = single_replicaset_uuid,
-    })
-end)
