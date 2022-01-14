@@ -123,7 +123,8 @@ g.test_bucket_ref_on_replica_prevent_bucket_move = function()
         assert(not box.info.ro)
         local vshard_storage = require('vshard.storage')
 
-        vshard_storage.bucket_send(bucket_id, replicaset_uuid)
+        local ok, err = vshard_storage.bucket_send(bucket_id, replicaset_uuid)
+        assert(not ok and err.message)
     end, {some_bucket_id, single_replicaset_uuid})
 
     h.retrying({}, function()
