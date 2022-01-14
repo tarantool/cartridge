@@ -9,7 +9,7 @@ import ClusterIssuesButton from 'src/components/ClusterIssuesButton';
 import FailoverButton from 'src/components/FailoverButton';
 import ProbeServerModal from 'src/components/ProbeServerModal';
 import type { State } from 'src/store/rootReducer';
-import { isBootstrapped, isVshardAvailable } from 'src/store/selectors/clusterPage';
+import { isVshardAvailable, isVshardBootstrapped } from 'src/store/selectors/clusterPage';
 
 type ClusterButtonsPanelProps = {
   implements_check_password: boolean,
@@ -49,7 +49,8 @@ const mapStateToProps = (state: State) => {
   return {
     implements_check_password: !!implements_check_password,
     showFailover: !!(clusterSelf && clusterSelf.configured),
-    showBootstrap: !!(clusterSelf && clusterSelf.configured) && isVshardAvailable(state) && !isBootstrapped(state),
+    showBootstrap:
+      !!(clusterSelf && clusterSelf.configured) && isVshardAvailable(state) && !isVshardBootstrapped(state),
     showToggleAuth: !implements_add_user && !implements_list_users && implements_check_password,
   };
 };

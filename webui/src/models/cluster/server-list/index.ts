@@ -48,6 +48,8 @@ export const queryServerListFx = app.domain.createEffect<ServerListQueryVariable
 
 export const queryClusterFx = app.domain.createEffect<void, GetClusterQuery>('query cluster effect');
 
+export const queryClusterLegacyFx = app.domain.createEffect<void, void>('query cluster legacy effect');
+
 export const promoteServerToLeaderFx = app.domain.createEffect<PromoteServerToLeaderEventPayload, void>(
   'promote server to leader'
 );

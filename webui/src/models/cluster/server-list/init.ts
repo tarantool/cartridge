@@ -1,5 +1,6 @@
 import { forward, guard } from 'effector';
 import { produce } from 'immer';
+import { core } from '@tarantool.io/frontend-core';
 
 import graphql from 'src/api/graphql';
 import { app } from 'src/models';
@@ -24,6 +25,7 @@ import {
   promoteServerToLeaderFx,
   queryClusterErrorEvent,
   queryClusterFx,
+  queryClusterLegacyFx,
   queryClusterSuccessEvent,
   queryServerListErrorEvent,
   queryServerListFx,
@@ -62,7 +64,7 @@ forward({
 
 forward({
   from: refreshServerListAndClusterEvent,
-  to: queryClusterFx,
+  to: [queryClusterFx, queryClusterLegacyFx],
 });
 
 forward({
@@ -231,6 +233,8 @@ $bootstrapPanelVisible
 queryServerListFx.use(({ withStats }) => graphql.fetch(listQuery, { withStats }));
 
 queryClusterFx.use(() => graphql.fetch(getClusterQuery));
+
+queryClusterLegacyFx.use(() => void core.dispatch('cluster:reload_cluster_self', null));
 
 promoteServerToLeaderFx.use(({ instanceUuid, replicasetUuid, force }) =>
   graphql.mutate(promoteFailoverLeaderMutation, {

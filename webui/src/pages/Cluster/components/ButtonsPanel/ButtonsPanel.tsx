@@ -13,7 +13,7 @@ import IssuesButton from '../IssuesButton';
 import ProbeServerButton from '../ProbeServerButton';
 
 const { compact } = app.utils;
-const { isConfigured, isVshardAvailable, isBootstrapped } = cluster.serverList.selectors;
+const { isConfigured, isVshardAvailable, isVshardBootstrapped } = cluster.serverList.selectors;
 
 const ButtonsPanel = () => {
   const serverListStore = useStore(cluster.serverList.$serverList);
@@ -29,7 +29,8 @@ const ButtonsPanel = () => {
 
     const { implements_add_user, implements_check_password, implements_list_users } = authParams;
     return {
-      showBootstrap: isConfigured(clusterStore) && isVshardAvailable(clusterStore) && !isBootstrapped(clusterStore),
+      showBootstrap:
+        isConfigured(clusterStore) && isVshardAvailable(clusterStore) && !isVshardBootstrapped(clusterStore),
       showToggleAuth: !implements_add_user && !implements_list_users && implements_check_password, // TODO: move to selectors
     };
   }, [clusterStore, authParams]);

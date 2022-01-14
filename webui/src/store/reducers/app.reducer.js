@@ -1,11 +1,12 @@
-import type { FailoverApi, Role } from 'src/generated/graphql-typing';
 // @flow
+import type { FailoverApi, Role } from 'src/generated/graphql-typing';
 import {
   APP_CREATE_MESSAGE,
   APP_DATA_REQUEST,
   APP_DATA_REQUEST_ERROR,
   APP_DATA_REQUEST_SUCCESS,
   APP_DID_MOUNT,
+  APP_RELOAD_CLUSTER_SELF_SUCCESS,
   APP_SET_MESSAGE_DONE,
   AUTH_ACCESS_DENIED,
   CLUSTER_PAGE_CREATE_REPLICASET_REQUEST_SUCCESS,
@@ -98,6 +99,7 @@ export const reducer = baseReducer(
     }
 
     case CLUSTER_SELF_UPDATE:
+    case APP_RELOAD_CLUSTER_SELF_SUCCESS:
     case CLUSTER_PAGE_CREATE_REPLICASET_REQUEST_SUCCESS:
     case CLUSTER_PAGE_FAILOVER_CHANGE_REQUEST_SUCCESS:
       return {

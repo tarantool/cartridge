@@ -359,7 +359,10 @@ export const getReplicasetCounts: (s: State) => ReplicasetCounts = createSelecto
 
 export const getSectionsNames = (state: State): Array<string> => Object.keys(state.clusterInstancePage.boxinfo || {});
 
-export const isBootstrapped = (state: State) =>
+export const isClusterSelfBootstrapped = (state: State) =>
+  Boolean(path(['app', 'clusterSelf', 'uuid'], state) || false);
+
+export const isVshardBootstrapped = (state: State) =>
   path(['app', 'clusterSelf', 'vshard_groups', '0', 'bootstrapped'], state) || false;
 
 const createDeepEqualSelector = createSelectorCreator(defaultMemoize, isEqual);
