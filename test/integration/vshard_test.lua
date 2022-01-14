@@ -89,7 +89,7 @@ end)
 g.before_test('test_bucket_ref_on_replica_prevent_bucket_move', function()
     g.cluster.main_server:exec(function()
         local vshard_router = require('vshard.router')
-        for i = 1, 300 do 
+        for i = 1, 300 do
             local key = 'key'
             local bucket_id = i --vshard_router:bucket_id_strcrc32(key)
             vshard_router.callrw(bucket_id, 'box.space.test:insert',
