@@ -13,6 +13,9 @@ local fiber = require('fiber')
 local errors = require('errors')
 local checks = require('checks')
 local membership = require('membership')
+local uri_tools = require('uri')
+local socket = require('socket')
+local json = require('json')
 
 local vars = require('cartridge.vars').new('cartridge.confapplier')
 local pool = require('cartridge.pool')
@@ -24,6 +27,7 @@ local hotreload = require('cartridge.hotreload')
 local remote_control = require('cartridge.remote-control')
 local cluster_cookie = require('cartridge.cluster-cookie')
 local ClusterwideConfig = require('cartridge.clusterwide-config')
+local logging_whitelist = require('cartridge.logging_whitelist')
 
 yaml.cfg({
     encode_load_metatables = false,
@@ -432,7 +436,26 @@ local function boot_instance(clusterwide_config)
         local leaders_order = topology.get_leaders_order(
             topology_cfg, replicaset_uuid
         )
-        local leader_uuid = leaders_order[1]
+
+        -- if other instances report that they have a leader
+        -- then use leader_uuid from membership
+        local leader_uuid
+        for _, instance_uuid in ipairs(leaders_order) do
+            local server = topology_cfg.servers[instance_uuid]
+            if not server.disabled then
+                local member = membership.get_member(server.uri)
+                if member.status == 'alive'
+                and member.payload.leader_uuid ~= nil
+                then
+                    leader_uuid = member.payload.leader_uuid
+                    break
+                end
+            end
+        end
+
+        if not leader_uuid then
+            leader_uuid = leaders_order[1]
+        end
         local leader = topology_cfg.servers[leader_uuid]
 
         -- Set up 'star' replication for the bootstrap
@@ -593,6 +616,34 @@ local function boot_instance(clusterwide_config)
         return nil, BoxError:new(estr)
     else
         set_state('BoxConfigured')
+
+        local box_log_whitelist = logging_whitelist.box_opts
+        log.info('Tarantool options:')
+        for _, option in ipairs(box_log_whitelist) do
+            if option == 'replication' then
+                -- remove password from logs:
+                local replication
+
+                if type(box.cfg.replication) == 'string' then
+                    replication = { box.cfg.replication }
+                else
+                    replication = table.deepcopy(box.cfg.replication)
+                end
+
+                for i, v in ipairs(replication or {}) do
+                    local uri = uri_tools.parse(v)
+                    uri.password = nil
+                    replication[i] = uri_tools.format(uri)
+                end
+
+                log.info('replication = %s', replication)
+            elseif type(box.cfg[option]) == 'table' then
+                log.info('%s = %s', option, json.encode(box.cfg[option]))
+            else
+                log.info('%s = %s', option, box.cfg[option])
+            end
+        end
+
         return apply_config(clusterwide_config)
     end
 end
@@ -613,12 +664,22 @@ local function init(opts)
     vars.advertise_uri = opts.advertise_uri
     vars.upgrade_schema = opts.upgrade_schema
 
-    local ok, err = remote_control.bind('0.0.0.0', vars.binary_port)
+    local parts = uri_tools.parse(opts.advertise_uri)
+    local addrinfo, err = socket.getaddrinfo(
+        parts.host, parts.service,
+        {family='AF_INET', type='SOCK_STREAM'}
+    )
+    if addrinfo == nil then
+        set_state('InitError', err)
+        return nil, InitError:new("Could not resolve advertise uri %s", opts.advertise_uri)
+    end
+
+    local ok, err = remote_control.bind(addrinfo[1].host, vars.binary_port)
     if not ok then
         set_state('InitError', err)
         return nil, err
     else
-        log.info('Remote control bound to 0.0.0.0:%d', vars.binary_port)
+        log.info('Remote control bound to %s:%d', addrinfo[1].host, vars.binary_port)
     end
 
     local config_filename = fio.pathjoin(vars.workdir, 'config')

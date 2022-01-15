@@ -47,14 +47,38 @@ export const getReadableBytes = (size: number): string => {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const isLike = <T>(data: any): data is T => Boolean(data);
+export const isMaybe = (data: any): data is undefined | null => data === undefined || data === null;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const isError = (data: any): data is Error => Boolean(data) && 'message' in data;
+export const isError = (data: any): data is Error => data instanceof Error;
 
 export const upFirst = (value: string) =>
   value.length > 0 ? value.substring(0, 1).toUpperCase() + value.substring(1) : value;
 
+export const upCase = (value: string | number | null | undefined) => {
+  if (isMaybe(value)) {
+    return '';
+  }
+
+  return `${value}`.toUpperCase();
+};
+
+export const lowCase = (value: string | number | null | undefined) => {
+  if (isMaybe(value)) {
+    return '';
+  }
+
+  return `${value}`.toLowerCase();
+};
+
 export const preventDefault = (e: SyntheticEvent) => void e.preventDefault();
 
 export const stopPropagation = (e: SyntheticEvent) => void e.stopPropagation();
+
+export const tryNoCatch = (callback: () => unknown) => {
+  try {
+    callback();
+  } catch {
+    // no-empty
+  }
+};

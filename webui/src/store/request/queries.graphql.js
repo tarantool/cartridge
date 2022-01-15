@@ -153,6 +153,10 @@ export const serverDetailsFields = gql`
         uptime
         version
         ro
+        http_port
+        http_host
+        webui_prefix
+        app_version
       }
       replication {
         replication_connect_quorum
@@ -327,6 +331,12 @@ export const listQuery = gql`
       ...serverStatFields
     }
     cluster @include(if: $withStats) {
+      known_roles {
+        name
+        dependencies
+        implies_storage
+        implies_router
+      }
       suggestions {
         disable_servers {
           uuid

@@ -1,6 +1,5 @@
 local fio = require('fio')
 local fiber = require('fiber')
-local errno = require('errno')
 local netbox = require('net.box')
 local utils = require('cartridge.utils')
 
@@ -77,8 +76,13 @@ function g.test_issues()
         query = '{cluster {issues {message}}}',
     })
     helpers.assert_le(time, 2)
-    t.assert_equals(resp.data.cluster.issues[1].message,
-        'Configuration is prepared and locked on localhost:13301 (main-1)'
+
+    local messages = {}
+    for _, issue in ipairs(resp.data.cluster.issues) do
+        table.insert(messages, issue.message)
+    end
+    t.assert_items_include(messages,
+        {'Configuration is prepared and locked on localhost:13301 (main-1)'}
     )
 end
 
@@ -131,20 +135,20 @@ function g.test_netbox_timeouts()
     )
     local t2 = fiber.clock()
     t.assert_covers(conn, {state = 'initial'})
-    t.assert_almost_equals(t2-t1, 0.3, 0.03)
+    t.assert_almost_equals(t2-t1, 0.3, 0.15)
 
     -- check that connection have status error after connect_timeout
     -- perform nb call -> remote_methods:_request ->
     -- wait_state('active', TIMEOUT_INF) -> establish_connection will
     -- fail after connect timeout
-    t.assert_error_msg_equals(
-        errno.strerror(errno.ETIMEDOUT),
+    t.assert_error_msg_matches(
+        ".*timed out",
         conn.eval, conn, "return 'something'", nil
     )
     t.assert_covers(conn, {
         state = 'error',
-        error = errno.strerror(errno.ETIMEDOUT),
     })
+    t.assert_str_matches(conn.error, ".*timed out")
 
-    t.assert_almost_equals(fiber.clock()-t0, 1, 0.1)
+    t.assert_almost_equals(fiber.clock()-t0, 1, 0.3)
 end

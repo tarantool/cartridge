@@ -263,14 +263,22 @@ function g.test_late_accept()
     t.assert_equals({conn_1.state, conn_1.error}, {"initial", nil})
 
     local conn_2 = netbox.connect(url, {connect_timeout = 0.2})
-    t.assert_equals({conn_2.state, conn_2.error}, {"error", errno.strerror(errno.ETIMEDOUT)})
+    t.assert_equals(conn_2.state, "error")
+    t.assert_str_matches(conn_2.error, ".*timed out.*")
 
     remote_control.drop_connections()
 
     local ok, conn_3 = f:join()
     t.assert_equals(ok, true)
-    t.assert_equals({conn_1.state, conn_1.error}, {"error", "Invalid greeting"})
-    t.assert_equals({conn_3.state, conn_3.error}, {"error", "Invalid greeting"})
+    t.assert_equals(conn_1.state, "error")
+    t.assert_equals(conn_3.state, "error")
+    if helpers.tarantool_version_ge('2.10.0') then
+        t.assert_str_matches(conn_1.error, "unexpected EOF.*")
+        t.assert_str_matches(conn_3.error, "unexpected EOF.*")
+    else
+        t.assert_str_matches(conn_1.error, "Invalid greeting")
+        t.assert_str_matches(conn_3.error, "Invalid greeting")
+    end
 
     --------------------------------------------------------------------
     local conn_4 = netbox.connect(url, {wait_connected = false})
@@ -765,11 +773,8 @@ function g.test_switch_box_to_rc()
     local conn_2 = assert(netbox.connect(uri))
     t.assert_equals(conn_2.state, "error")
     t.assert_equals(conn_2.peer_uuid, nil)
-    local valid_errors = {
-        ["Connection refused"] = true,
-        ["Network is unreachable"] = true, -- inside docker
-    }
-    t.assert(valid_errors[conn_2.error])
+
+    t.assert_str_matches(conn_2.error, ".*Connection refused.*")
 
     -- conn_1 is still alive and useful
     t.assert_not(conn_1.error)
@@ -825,10 +830,7 @@ function g.test_reconnect()
 
     helpers.retrying({}, function()
         t.assert_covers(conn, {state = 'error_reconnect'})
-        t.assert_covers({
-            [errno.strerror(errno.ECONNREFUSED)] = true,
-            [errno.strerror(errno.ENETUNREACH)] = true,
-        }, {[conn.error] = true})
+        t.assert_str_matches(conn.error, ".*Connection refused")
     end)
 
     rc_start(13301)

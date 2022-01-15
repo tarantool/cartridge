@@ -215,7 +215,8 @@ function g.test_errors()
         err = 'Too long filename (max 100)',
     })
 
-    local unpacked, err = tar.unpack(digest.urandom(BLOCKSIZE))
+    local invalid_magic_bytes = string.rep(digest.sha512('random'), 8)
+    local unpacked, err = tar.unpack(invalid_magic_bytes)
     t.assert_equals(unpacked, nil)
     t.assert_covers(err, {
         class_name = 'UnpackTarError',

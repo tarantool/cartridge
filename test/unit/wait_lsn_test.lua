@@ -38,7 +38,7 @@ function g.test_timings()
     t.assert_equals(utils.wait_lsn(id, lsn+1, 0.1, 0.2), false)
     local t1 = fiber.time()
 
-    helpers.assert_ge(t1-t0, 0.2, 'Too early wake up (wait_lsn == false)')
+    t.assert_ge(t1-t0, 0.2, 'Too early wake up (wait_lsn == false)')
 
     -- 3. True result should return asap
     fiber.new(function()
@@ -50,7 +50,7 @@ function g.test_timings()
     t.assert_equals(utils.wait_lsn(id, lsn+1, 0.01, 1), true)
     local t1 = fiber.time()
 
-    helpers.assert_le(t1-t0, 0.21, 'Too late wake up (wait_lsn == true)')
+    t.assert_le(t1-t0, 0.5, 'Too late wake up (wait_lsn == true)')
 end
 
 function g.test_absent_lsn()

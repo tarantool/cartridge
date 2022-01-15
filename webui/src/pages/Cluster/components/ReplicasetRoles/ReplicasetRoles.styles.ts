@@ -1,14 +1,12 @@
 import { css } from '@emotion/css';
+import { baseFontFamily, colors } from '@tarantool.io/ui-kit';
 
 export const styles = {
-  roles: css`
-    display: flex;
-    margin-top: 12px;
-    opacity: 0.7;
-  `,
-  rolesHeading: css`
-    margin-right: 4px;
-    opacity: 0.85;
-    font-weight: 1000;
+  root: css`
+    font-family: ${baseFontFamily};
+    font-size: 14px;
+    line-height: 24px;
+
+    color: ${colors.dark65};
   `,
 };

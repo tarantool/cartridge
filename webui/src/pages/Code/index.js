@@ -41,6 +41,9 @@ const options = {
   fixedOverflowWidgets: true,
   automaticLayout: true,
   selectOnLineNumbers: true,
+  minimap: {
+    enabled: false,
+  },
 };
 
 const styles = {

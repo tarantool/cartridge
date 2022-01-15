@@ -195,7 +195,7 @@ const ReplicasetAddOrEditForm = ({
           label="Vshard group"
           info={
             <span>
-              Group disabled not yet included the role of &quot;<b>vshard-storage</b>&quot;
+              Group choice is available only if the role &quot;<b>vshard-storage</b> is enabled&quot;
             </span>
           }
           largeMargins
@@ -217,7 +217,7 @@ const ReplicasetAddOrEditForm = ({
           <FormField
             className={styles.field}
             label="All writable"
-            info="Otherwise only leader in the replicaset is writeable"
+            info="If disabled, only the leader of the replica set is writeable"
             largeMargins
           >
             <Checkbox name="all_rw" onChange={handleChange} checked={values.all_rw}>

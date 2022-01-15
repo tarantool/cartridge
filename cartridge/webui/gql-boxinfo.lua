@@ -69,6 +69,10 @@ local boxinfo_schema = {
                         kind = gql_types.string.nonNull,
                         description = 'The Tarantool version',
                     },
+                    app_version = {
+                        kind = gql_types.string,
+                        description = 'The Application version',
+                    },
                     pid = {
                         kind = gql_types.int.nonNull,
                         description = 'The process ID',
@@ -114,6 +118,18 @@ local boxinfo_schema = {
                     listen = {
                         kind = gql_types.string,
                         description = 'The binary protocol URI',
+                    },
+                    http_port = {
+                        kind = gql_types.int,
+                        description = 'HTTP port',
+                    },
+                    http_host = {
+                        kind = gql_types.string,
+                        description = 'HTTP host',
+                    },
+                    webui_prefix = {
+                        kind = gql_types.string,
+                        description = 'HTTP webui prefix',
                     },
                     ro = {
                         kind = gql_types.boolean.nonNull,

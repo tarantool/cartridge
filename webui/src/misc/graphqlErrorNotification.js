@@ -1,4 +1,6 @@
 // @flow
+import { core } from '@tarantool.io/frontend-core';
+
 import { getGraphqlError, isGraphqlErrorResponse } from 'src/api/graphql';
 import { isNetworkError } from 'src/misc/isNetworkError';
 
@@ -40,7 +42,7 @@ export const graphqlErrorNotification = (error: Error, title?: string) => {
 
   const { errorStack, message, markdown } = formatGraphqlError(error);
 
-  window.tarantool_enterprise_core.notify({
+  core.notify({
     title: title || 'GraphQL error',
     message,
     details: errorStack ? markdown : null,

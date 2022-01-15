@@ -443,10 +443,11 @@ add('test_vclockkeeper_caching', function(g)
     -- 4. But B1 is unable to get info about vclockkeeper
     -- 5. apply_config is still triggered
 
-    t.assert_equals(B1:eval(q_leadership, {uB}), uB1)
-    t.assert_equals(B1:eval(q_readonliness), false)
-    t.assert_equals(B1:eval(q_is_vclockkeeper), true)
-
+    helpers.retrying({}, function()
+        t.assert_equals(B1:eval(q_leadership, {uB}), uB1)
+        t.assert_equals(B1:eval(q_readonliness), false)
+        t.assert_equals(B1:eval(q_is_vclockkeeper), true)
+    end)
 
     B1:eval([[
         local vars = require('cartridge.vars').new('cartridge.failover')
@@ -514,39 +515,48 @@ add('test_enabling', function(g)
     t.assert_equals(B1:eval(q_leadership, {uB}), uB1)
     t.assert_equals(B1:eval(q_readonliness), false)
     t.assert_equals(B1:eval(q_is_vclockkeeper), false)
-    t.assert_items_include(
-        helpers.list_cluster_issues(A1),
-        {{
-            level = "warning",
-            topic = "failover",
-            instance_uuid = box.NULL,
-            replicaset_uuid = box.NULL,
-            message = "Can't obtain failover coordinator: " ..(
-                g.name == 'integration.switchover.etcd2' and
-                g.state_provider.client_url .. "/v2/members:" ..
-                " Couldn't connect to server" or
-                "State provider unavailable"),
-        }, {
-            level = "warning",
-            topic = "failover",
-            instance_uuid = uA1,
-            replicaset_uuid = box.NULL  ,
-            message = "Failover is stuck on " .. A1.advertise_uri ..
-                " (A1): Error fetching first appointments: " ..(
-                g.name == 'integration.switchover.etcd2' and
-                g.state_provider.client_url .. "/v2/members:" ..
-                " Couldn't connect to server" or
-                '"127.0.0.1:14401": Connection refused'),
-        }, {
-            level = "warning",
-            topic = "switchover",
-            instance_uuid = uB1,
-            replicaset_uuid = uB,
-            message = "Consistency on " .. B1.advertise_uri .. " (B1)" ..
-                " isn't reached yet",
-        }}
-    )
-
+    if helpers.tarantool_version_ge('2.10.0') then
+        local issues = helpers.list_cluster_issues(A1)
+        t.assert_str_matches(issues[1].message, "Can't obtain failover coordinator:.*")
+        t.assert_equals(issues[1].level, "warning")
+        t.assert_str_matches(issues[2].message, "Failover is stuck on.*")
+        t.assert_str_matches(issues[3].message, "Failover is stuck on.*")
+        t.assert_str_matches(issues[4].message, "Failover is stuck on.*")
+        t.assert_str_matches(issues[5].message, "Consistency on .* isn't reached yet")
+    else
+        t.assert_items_include(
+            helpers.list_cluster_issues(A1),
+            {{
+                level = "warning",
+                topic = "failover",
+                instance_uuid = box.NULL,
+                replicaset_uuid = box.NULL,
+                message = "Can't obtain failover coordinator: " ..(
+                    g.name == 'integration.switchover.etcd2' and
+                    g.state_provider.client_url .. "/v2/members:" ..
+                    " Couldn't connect to server" or
+                    "State provider unavailable"),
+            }, {
+                level = "warning",
+                topic = "failover",
+                instance_uuid = uA1,
+                replicaset_uuid = box.NULL  ,
+                message = "Failover is stuck on " .. A1.advertise_uri ..
+                    " (A1): Error fetching first appointments: " ..(
+                    g.name == 'integration.switchover.etcd2' and
+                    g.state_provider.client_url .. "/v2/members:" ..
+                    " Couldn't connect to server" or
+                    '"127.0.0.1:14401": Connection refused'),
+            }, {
+                level = "warning",
+                topic = "switchover",
+                instance_uuid = uB1,
+                replicaset_uuid = uB,
+                message = "Consistency on " .. B1.advertise_uri .. " (B1)" ..
+                    " isn't reached yet",
+            }}
+        )
+    end
 
     -- Repair state provider (empty)
     fio.rmtree(g.state_provider.workdir)
@@ -587,17 +597,21 @@ add('test_enabling', function(g)
     })
 
     -- Everything is fine now
-    t.assert_equals(B1:eval(q_leadership, {uB}), uB1)
-    t.assert_equals(B1:eval(q_readonliness), false)
-    t.assert_equals(B1:eval(q_is_vclockkeeper), true)
-    t.assert_equals(helpers.list_cluster_issues(A1), {})
+    helpers.retrying({}, function()
+        t.assert_equals(B1:eval(q_leadership, {uB}), uB1)
+        t.assert_equals(B1:eval(q_readonliness), false)
+        t.assert_equals(B1:eval(q_is_vclockkeeper), true)
+        t.assert_equals(helpers.list_cluster_issues(A1), {})
+    end)
 
     -- Revert all hacks in fixtures
     A1:eval(
         [[require("cartridge").admin_edit_topology(...)]],
         {{replicasets = {{uuid = uA, roles = {}}}}}
     )
-    t.assert_equals(g.session:get_coordinator(), box.NULL)
+    helpers.retrying({}, function()
+        t.assert_equals(g.session:get_coordinator(), box.NULL)
+    end)
 end)
 
 add('test_api', function(g)
@@ -642,17 +656,19 @@ add('test_api', function(g)
             return nil, require('errors').new('ArtificialError', 'Boo')
         end
     ]])
-    t.assert_error_msg_equals(
-        "Promotion succeeded, but inconsistency wasn't forced: Boo",
-        A1.graphql, A1, {
-            query = query,
-            variables = {
-                replicaset_uuid = uB,
-                instance_uuid = uB2,
-                force = true,
-            },
-        }
-    )
+    helpers.retrying({}, function()
+        t.assert_error_msg_equals(
+            "Promotion succeeded, but inconsistency wasn't forced: Boo",
+            A1.graphql, A1, {
+                query = query,
+                variables = {
+                    replicaset_uuid = uB,
+                    instance_uuid = uB2,
+                    force = true,
+                },
+            }
+        )
+    end)
 
     -- Check intermediate state: B2 is a leader, but can't sync up
     helpers.retrying({}, function()
@@ -731,10 +747,11 @@ add('test_all_rw', function(g)
     end)
 
     -- Leader is rw, replica is ro
-    t.assert_equals(B1:eval(q_is_vclockkeeper), true)
-    t.assert_equals(B1:eval(q_readonliness), false)
-    t.assert_equals(B2:eval(q_readonliness), true)
-
+    helpers.retrying({}, function()
+        t.assert_equals(B1:eval(q_is_vclockkeeper), true)
+        t.assert_equals(B1:eval(q_readonliness), false)
+        t.assert_equals(B2:eval(q_readonliness), true)
+    end)
     local function set_all_rw(yesno)
         A1:eval(
             'require("cartridge").admin_edit_topology(...)',

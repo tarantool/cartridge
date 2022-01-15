@@ -62,16 +62,20 @@ describe('Leader promotion tests', () => {
   });
 
   function dropdownMenu(port) {
-    cy.get('li')
+    cy.get('.ServerLabelsHighlightingArea')
       .contains(port)
-      .closest('li')
+      .closest('.ServerLabelsHighlightingArea')
       .find('.meta-test__ReplicasetServerListItem__dropdownBtn')
       .click({ force: true });
     return cy.get('.meta-test__ReplicasetServerListItem__dropdown *');
   }
 
   function leaderFlag(port) {
-    return cy.get('.ServerLabelsHighlightingArea').contains(port).closest('li').find('.meta-test_leaderFlag use');
+    return cy
+      .get('.ServerLabelsHighlightingArea')
+      .contains(port)
+      .closest('.ServerLabelsHighlightingArea')
+      .find('.meta-test_leaderFlag use');
   }
 
   it('Test: switchover', () => {
@@ -80,7 +84,7 @@ describe('Leader promotion tests', () => {
     ////////////////////////////////////////////////////////////////////
     cy.visit(Cypress.config('baseUrl') + '/admin/cluster/dashboard');
     cy.testScreenshots('Dashboard');
-    cy.contains('Replica sets');
+    cy.contains('Replica Sets');
     cy.get('.meta-test__FailoverButton').should('be.visible');
     cy.get('.meta-test__FailoverButton').contains('Failover: disabled');
 
@@ -132,7 +136,7 @@ describe('Leader promotion tests', () => {
     leaderFlag('13302').should('not.exist');
     leaderFlag('13303').invoke('css', 'fill', greenIcon);
 
-    cy.get('li').contains('test-storage').closest('li').find('button').contains('Edit').click();
+    cy.get('li').contains('test-storage').closest('li').find('[data-cy=meta-test__editBtn]').click();
     cy.get('.meta-test__FailoverServerList:contains(13303)').closest('div').find('.meta-test__LeaderFlag');
     cy.get('.meta-test__FailoverServerList:contains(13302)')
       .closest('div')
@@ -150,7 +154,7 @@ describe('Leader promotion tests', () => {
     cy.get('.meta-test__FailoverButton').contains('Failover: stateful');
 
     // Disable the failover-coordinator
-    cy.get('li').contains('test-router').closest('li').find('button').contains('Edit').click();
+    cy.get('li').contains('test-router').closest('li').find('[data-cy=meta-test__editBtn]').click();
     cy.get('.meta-test__EditReplicasetModal input[name="roles"][value="failover-coordinator"]').uncheck({
       force: true,
     });
@@ -179,7 +183,7 @@ describe('Leader promotion tests', () => {
     cy.get('.meta-test__ClusterIssuesModal').should('not.exist');
 
     // Re-enable failover-coordinator
-    cy.get('li').contains('test-router').closest('li').find('button').contains('Edit').click();
+    cy.get('li').contains('test-router').closest('li').find('[data-cy=meta-test__editBtn]').click();
     cy.get('.meta-test__EditReplicasetModal input[name="roles"][value="failover-coordinator"]').check({ force: true });
     cy.get('.meta-test__EditReplicasetModal input[name="roles"][value="failover-coordinator"]').should('be.checked');
     cy.get('.meta-test__EditReplicasetSaveBtn').click();
@@ -214,7 +218,7 @@ describe('Leader promotion tests', () => {
     leaderFlag('13303').should('not.exist');
 
     // Enable all-rw mode
-    cy.get('li').contains('test-storage').closest('li').find('button').contains('Edit').click();
+    cy.get('li').contains('test-storage').closest('li').find('[data-cy=meta-test__editBtn]').click();
     cy.get('.meta-test__EditReplicasetModal input[name="all_rw"]').check({ force: true });
     cy.get('.meta-test__EditReplicasetSaveBtn').click();
     cy.get('span:contains(Edit is OK. Please wait for list refresh...)').click();
@@ -226,7 +230,7 @@ describe('Leader promotion tests', () => {
     leaderFlag('13303').invoke('css', 'fill', greenIcon);
 
     // Disable all-rw mode
-    cy.get('li').contains('test-storage').closest('li').find('button').contains('Edit').click();
+    cy.get('li').contains('test-storage').closest('li').find('[data-cy=meta-test__editBtn]').click();
     cy.get('.meta-test__EditReplicasetModal input[name="all_rw"]').uncheck({ force: true });
     cy.get('.meta-test__EditReplicasetSaveBtn').click();
     cy.get('span:contains(Edit is OK. Please wait for list refresh...)').click();

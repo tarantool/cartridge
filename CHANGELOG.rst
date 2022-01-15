@@ -18,13 +18,27 @@ Added
 
 - Add ``swim_period`` argument to the test-helpers.
 
+- Add ``http_port``, ``http_host`` and ``webui_prefix`` to graphql and webui.
+
 - Add unit tests for the Failover modal.
+
+- Add ``get_servers`` and ``get_replicasets`` API
+
+- Add logging of configuration options on start and boot instance.
+
+- Add ``app_version`` field to graphql and webui. It filled from ``VERSION.lua`` file in the root of cartridge app. 
+
+- Add param ``opts`` to ``Server:upload_config`` in ``test-helpers`` and pass it to ``http_request``.
+
+- Add setters ans getters for timeout options in ``twophase.lua``:
+  ``netbox_call_timeout``, ``upload_config_timeout``, ``validate_config_timeout``, ``apply_config_timeout``.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Changed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- Update ``http`` dependency to 1.1.1
+- Update ``http`` dependency to 1.2.0.
+
 - Allow to bootstrap vshard groups partially.
 
 - Use effector for business logic and storing Cluster page data (models folder).
@@ -32,6 +46,28 @@ Changed
 - Rewrite all Cluster page components using typescript.
 
 - Improve the error message in login dialog.
+
+- Use core as a node module instead of a window scope object.
+
+- Update ``frontend-core`` to 8.0.2.
+
+- Update ``graphql`` to 0.1.2.
+
+- Bind remote control socket to advertise_uri.
+
+- The new compact design of the Cluster page.
+
+- Update ``vshard`` to 0.1.19.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Fixed
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Fix joining an instance when leader is not the first instance from leaders_order
+
+- Fix the incorrect number of total buckets on the replication server in webui.
+
+- Fix GraphQL query ``auth_params.username`` returns empty string instead of ``username``.
 
 -------------------------------------------------------------------------------
 [2.7.3] - 2021-10-27

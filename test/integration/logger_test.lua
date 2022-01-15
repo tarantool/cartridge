@@ -78,7 +78,7 @@ function g.test_content_unconfigured()
         'Membership encryption enabled',
         'Membership BROADCAST sent to 127.0.0.1:3301',
         'Listening HTTP on 0.0.0.0:8081',
-        'Remote control bound to 0.0.0.0:13301',
+        'Remote control bound to 127.0.0.1:13301',
         'Remote control ready to accept connections',
         'Instance state changed:  -> Unconfigured',
         'Info message',

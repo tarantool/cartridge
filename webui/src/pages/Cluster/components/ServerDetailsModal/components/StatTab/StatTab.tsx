@@ -39,24 +39,54 @@ const StatTab = ({ sectionName }: StatTabProps) => {
     [serverDetails, sectionName]
   );
 
-  const params = useMemo(
+  const { http_address, params } = useMemo(
     () =>
-      Object.entries(section ?? {}).map(
-        ([name, value]: [string, unknown]): { name: string; value: unknown; displayAs: DisplayAs } => {
-          return {
+      Object.entries(section ?? {}).reduce(
+        (acc, [name, value]: [string, unknown]) => {
+          if (name === 'http_host' || name === 'http_port' || name === 'webui_prefix') {
+            acc.http_address[name] = `${value}`;
+            return acc;
+          }
+
+          acc.params.push({
             name,
             value,
             displayAs: FIELDS_DISPLAY_TYPES[name] ?? 'string',
-          };
+          });
+
+          return acc;
+        },
+        {
+          http_address: {
+            http_host: '',
+            http_port: '',
+            webui_prefix: '',
+          },
+          params: [] as { name: string; value: unknown; displayAs: DisplayAs }[],
         }
       ),
     [section]
   );
 
+  const items = useMemo(() => {
+    if (!http_address.http_host) {
+      return params;
+    }
+
+    return [
+      ...params,
+      {
+        name: 'http_address',
+        value: `${http_address.http_host}:${http_address.http_port}${http_address.webui_prefix}/`,
+        displayAs: 'string' as DisplayAs,
+      },
+    ];
+  }, [params, http_address]);
+
   return (
     <div className={styles.wrap}>
-      {params.map(({ name, value, displayAs }, index) => (
-        <div key={index} className={styles.listItem}>
+      {items.map(({ name, value, displayAs }) => (
+        <div key={name} className={styles.listItem}>
           <div className={styles.leftCol}>
             <Text variant="basic">{name}</Text>
             {descriptions?.[name] ? (

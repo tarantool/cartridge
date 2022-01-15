@@ -5,12 +5,12 @@ local g = t.group()
 local helpers = require('test.helper')
 local log = require('log')
 
-g.before_all = function()
+g.before_all(function()
     g.cluster = helpers.Cluster:new({
         datadir = fio.tempdir(),
         server_command = helpers.entrypoint('srv_basic'),
         use_vshard = true,
-        cookie = require('digest').urandom(6):hex(),
+        cookie = helpers.random_cookie(),
 
         replicasets = {
             {
@@ -117,7 +117,7 @@ g.before_all = function()
             variables = {uri = g.server.advertise_uri},
         })
     end)
-end
+end)
 
 g.before_each(function()
     helpers.retrying({}, function()
@@ -125,12 +125,12 @@ g.before_each(function()
     end)
 end)
 
-g.after_all = function()
+g.after_all(function()
     g.cluster:stop()
     g.server:stop()
     fio.rmtree(g.cluster.datadir)
     fio.rmtree(g.server.workdir)
-end
+end)
 
 local function fields_from_map(map, field_key)
     local data_arr = {}
@@ -347,6 +347,7 @@ end
 
 function g.test_servers()
     local router = g.cluster:server('router')
+    local app_version = 'app_version_test_value'
 
     local resp = router:graphql({
         query = [[
@@ -365,6 +366,12 @@ function g.test_servers()
                         membership { status }
                         vshard_router { buckets_unreachable }
                         vshard_storage { buckets_active }
+                        general {
+                            app_version
+                            http_port
+                            http_host
+                            webui_prefix
+                        }
                     }
                 }
             }
@@ -385,6 +392,7 @@ function g.test_servers()
                 membership = {status = 'alive'},
                 vshard_router = {{ buckets_unreachable = 0 }},
                 vshard_storage = box.NULL,
+                general = { app_version = app_version, http_port = 8081, http_host = "0.0.0.0", webui_prefix = "" },
             },
         }, {
             uri = 'localhost:13302',
@@ -400,6 +408,7 @@ function g.test_servers()
                 membership = {status = 'alive'},
                 vshard_router = box.NULL,
                 vshard_storage = {buckets_active = 3000},
+                general = { app_version = app_version, http_port = 8082, http_host = "0.0.0.0", webui_prefix = "" },
             },
         }, {
             uri = 'localhost:13304',
@@ -415,6 +424,7 @@ function g.test_servers()
                 membership = {status = 'alive'},
                 vshard_router = box.NULL,
                 vshard_storage = {buckets_active = 3000},
+                general = { app_version = app_version, http_port = 8084, http_host = "0.0.0.0", webui_prefix = "" },
             },
         }, {
             uri = 'localhost:13303',
@@ -768,4 +778,50 @@ function g.test_stop_roles_on_shutdown()
         fio.path.exists(last_will_path),
         true
     )
+end
+
+function g.test_cartridge_get_topology_iproto()
+    local res = g.cluster:server('router'):exec(function()
+        require('membership').probe_uri('localhost:13303')
+        return require('cartridge.lua-api.get-topology').get_servers()
+    end)
+
+    local expected = {{
+            alias = "router",
+            disabled = false,
+            labels = {},
+            priority = 1,
+            status = "healthy",
+            replicaset_uuid = "aaaaaaaa-0000-0000-0000-000000000000",
+            uri = "localhost:13301",
+            uuid = "aaaaaaaa-aaaa-0000-0000-000000000001",
+        }, {
+            alias = "storage",
+            disabled = false,
+            labels = {},
+            priority = 1,
+            replicaset_uuid = "bbbbbbbb-0000-0000-0000-000000000000",
+            uri = "localhost:13302",
+            uuid = "bbbbbbbb-bbbb-0000-0000-000000000001",
+        }, {
+            alias = "spare",
+            uri = "localhost:13303",
+            uuid = "",
+        }, {
+            alias = "storage-2",
+            disabled = false,
+            labels = {},
+            priority = 2,
+            replicaset_uuid = "bbbbbbbb-0000-0000-0000-000000000000",
+            uri = "localhost:13304",
+            uuid = "bbbbbbbb-bbbb-0000-0000-000000000002",
+    }}
+
+    t.assert_equals(#expected, #res)
+
+    table.sort(expected, function(a,b) return a.uri < b.uri end)
+    table.sort(res, function(a,b) return a.uri < b.uri end)
+    for i, exp_server in ipairs(expected) do
+        t.assert_covers(res[i], exp_server)
+    end
 end

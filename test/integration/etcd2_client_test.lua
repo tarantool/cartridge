@@ -183,7 +183,7 @@ function g.test_longpolling()
 
     local chan = async_longpoll()
     t.assert(c1:set_leaders({{'A', 'a2'}}), true)
-    t.assert_equals(chan:get(0.1), {{A = 'a2', B = 'b1'}})
+    t.assert_equals(chan:get(0.2), {{A = 'a2', B = 'b1'}})
 
     local chan = async_longpoll()
     -- there is no data in channel
@@ -253,7 +253,7 @@ function g.test_event_cleared()
     -- Check that longpoll_index is updated despite leaders aren't modified
     local old_index = client2.session.longpoll_index
     httpc:put(URI .. '/v2/keys/foo?value=buzz')
-    t.assert_equals(client2:longpoll(0.1), {})
+    t.assert_equals(client2:longpoll(0.2), {})
     t.assert_equals(client2.session.longpoll_index, old_index + 1)
 end
 

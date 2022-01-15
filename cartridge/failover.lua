@@ -250,6 +250,7 @@ local function accept_appointments(appointments)
 
     if changed then
         vars.cache.active_leaders = active_leaders
+        membership.set_payload('leader_uuid', active_leaders[vars.replicaset_uuid])
     end
 
     return changed

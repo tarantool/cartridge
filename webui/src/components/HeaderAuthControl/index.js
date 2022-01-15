@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { connect } from 'react-redux';
 import { css, cx } from '@emotion/css';
+import { useCore } from '@tarantool.io/frontend-core';
 import { Button, Dropdown, DropdownItem, SVGImage, Text } from '@tarantool.io/ui-kit';
 
 import { ModalLogInForm } from 'src/components/LogInForm';
@@ -33,42 +34,43 @@ const styles = {
   `,
 };
 
-class HeaderAuthControl extends React.Component {
-  sendLogOut = () => window.tarantool_enterprise_core.dispatch('cluster:logout');
+const HeaderAuthControl = (props) => {
+  const { implements_check_password, username, authorized, authModalVisible, showAuthModal, hideAuthModal } = props;
 
-  render() {
-    const { implements_check_password, username, authorized, authModalVisible, showAuthModal, hideAuthModal } =
-      this.props;
+  const core = useCore();
 
-    if (!implements_check_password) return null;
+  const sendLogOut = useCallback(() => {
+    core && core.dispatch('cluster:logout');
+  }, [core]);
 
-    if (authorized) {
-      return (
-        <Dropdown
-          className={cx(styles.box, styles.dropdown, 'meta-test__LogoutBtn')}
-          popoverClassName="meta-test__LogoutDropdown"
-          items={[
-            <DropdownItem key={0} onClick={this.sendLogOut}>
-              Log out
-            </DropdownItem>,
-          ]}
-        >
-          <SVGImage glyph={userPic} className={styles.authIcon} />
-          <Text className={styles.userName}>{username}</Text>
-        </Dropdown>
-      );
-    }
+  if (!implements_check_password) return null;
 
+  if (authorized) {
     return (
-      <div className={styles.box}>
-        {!authorized && (
-          <Button className="meta-test__LoginBtn" text="Log in" intent="base" onClick={() => showAuthModal()} />
-        )}
-        <ModalLogInForm visible={authModalVisible} onCancel={hideAuthModal} />
-      </div>
+      <Dropdown
+        className={cx(styles.box, styles.dropdown, 'meta-test__LogoutBtn')}
+        popoverClassName="meta-test__LogoutDropdown"
+        items={[
+          <DropdownItem key={0} onClick={sendLogOut}>
+            Log out
+          </DropdownItem>,
+        ]}
+      >
+        <SVGImage glyph={userPic} className={styles.authIcon} />
+        <Text className={styles.userName}>{username}</Text>
+      </Dropdown>
     );
   }
-}
+
+  return (
+    <div className={styles.box}>
+      {!authorized && (
+        <Button className="meta-test__LoginBtn" text="Log in" intent="base" onClick={() => showAuthModal()} />
+      )}
+      <ModalLogInForm visible={authModalVisible} onCancel={hideAuthModal} />
+    </div>
+  );
+};
 
 const mapStateToProps = ({
   app: {

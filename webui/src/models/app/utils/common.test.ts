@@ -5,12 +5,16 @@ import {
   falseL,
   getReadableBytes,
   isError,
+  isMaybe,
+  lowCase,
   noop,
   parseFloatSafe,
   parseIntSafe,
   some,
   trueL,
+  tryNoCatch,
   undefinedL,
+  upCase,
   upFirst,
   voidL,
   zeroL,
@@ -61,11 +65,36 @@ describe('models.app.utils', () => {
     expect(parseFloatSafe('', 1)).toBe(1);
   });
   it('isError', () => {
-    expect(isError(null)).toBeFalsy();
     expect(isError(new Error())).toBeTruthy();
+    expect(isError(new Error(''))).toBeTruthy();
+    expect(isError(new Error('message'))).toBeTruthy();
+
+    expect(isError('')).toBeFalsy();
+    expect(isError(0)).toBeFalsy();
+    expect(isError(null)).toBeFalsy();
+    expect(isError(undefined)).toBeFalsy();
+    expect(isError(false)).toBeFalsy();
+    expect(isError(true)).toBeFalsy();
+    expect(isError('false')).toBeFalsy();
+    expect(isError('true')).toBeFalsy();
+    expect(isError('0')).toBeFalsy();
   });
-  it('upFirst', () => {
+  it('isMaybe', () => {
+    expect(isMaybe(null)).toBeTruthy();
+    expect(isMaybe(undefined)).toBeTruthy();
+  });
+  it('upFirst/upCase/lowCase', () => {
     expect(upFirst('abc')).toBe('Abc');
+    expect(upFirst('Abc')).toBe('Abc');
+    expect(upFirst('aBC')).toBe('ABC');
+
+    expect(upCase('abc')).toBe('ABC');
+    expect(upCase('ABC')).toBe('ABC');
+    expect(upCase('AbC')).toBe('ABC');
+
+    expect(lowCase('ABC')).toBe('abc');
+    expect(lowCase('abc')).toBe('abc');
+    expect(lowCase('AbC')).toBe('abc');
   });
   it('getReadableBytes', () => {
     expect(getReadableBytes(1)).toBe('0.1 KiB');
@@ -80,5 +109,18 @@ describe('models.app.utils', () => {
   });
   it('delay', async () => {
     await expect(delay(1)).resolves.toBeUndefined();
+  });
+  it('tryNoCatch', () => {
+    const throwable = () => {
+      throw new Error();
+    };
+
+    expect(() => {
+      tryNoCatch(throwable);
+    }).not.toThrowError();
+
+    expect(() => {
+      throwable();
+    }).toThrowError();
   });
 });

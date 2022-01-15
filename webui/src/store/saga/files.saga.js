@@ -1,5 +1,6 @@
 import { difference } from 'ramda';
 import { call, put, select, takeEvery } from 'redux-saga/effects';
+import { core } from '@tarantool.io/frontend-core';
 
 import { graphqlErrorNotification } from 'src/misc/graphqlErrorNotification';
 import { getFileIdForMonaco, getModelValueByFile, setModelValueByFile } from 'src/misc/monacoModelStorage';
@@ -67,7 +68,7 @@ function* applyFilesSaga() {
     }
 
     yield put({ type: PUT_CONFIG_FILES_CONTENT_DONE });
-    window.tarantool_enterprise_core.notify({
+    core.notify({
       title: 'Success',
       message: 'Files successfuly applied',
       type: 'success',
@@ -143,7 +144,7 @@ function* validateFilesSaga() {
     const { error } = yield call(validateFiles, filesArr);
     if (error) {
       yield put({ type: VALIDATE_CODE_FILES_FAIL });
-      window.tarantool_enterprise_core.notify({
+      core.notify({
         title: 'Code validation failed',
         message: error,
         type: 'error',
@@ -151,7 +152,7 @@ function* validateFilesSaga() {
       });
     } else {
       yield put({ type: VALIDATE_CODE_FILES_DONE });
-      window.tarantool_enterprise_core.notify({
+      core.notify({
         title: 'The code is valid',
         type: 'success',
         timeout: 5000,

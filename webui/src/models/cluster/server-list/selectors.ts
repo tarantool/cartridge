@@ -11,11 +11,11 @@ import type {
   GetClusterVshardGroup,
   KnownRolesNamesResult,
   ServerList,
+  ServerListClusterIssue,
   ServerListReplicaset,
   ServerListReplicasetSearchable,
   ServerListReplicasetServer,
   ServerListServer,
-  ServerListServerClusterIssue,
   ServerListServerStat,
 } from './types';
 
@@ -31,6 +31,9 @@ export const serverRo = (server: ServerListServer): boolean | undefined => serve
 export const replicasetServerRo = (server: ServerListReplicasetServer): boolean | undefined =>
   server.boxinfo?.general?.ro;
 
+export const clusterVshardGroups = (cluster: Maybe<GetClusterCluster>): GetClusterVshardGroup[] =>
+  compact(cluster?.vshard_groups ?? []);
+
 // get-cluster
 export const cluster = (data: GetCluster): GetClusterCluster | undefined => data?.cluster ?? undefined;
 
@@ -41,7 +44,7 @@ export const clusterSelfUri = (data: GetCluster): string | undefined => clusterS
 
 export const knownRoles = (data: GetCluster): GetClusterRole[] => compact(data?.cluster?.knownRoles ?? []);
 
-export const vshardGroups = (data: GetCluster): GetClusterVshardGroup[] => compact(data?.cluster?.vshard_groups ?? []);
+export const vshardGroups = (data: GetCluster): GetClusterVshardGroup[] => clusterVshardGroups(data?.cluster);
 
 export const vshardGroupsNames = (data: GetCluster): string[] => vshardGroups(data).map(({ name }) => name);
 
@@ -107,7 +110,7 @@ export const serverList = (data: ServerList): ServerListServer[] => compact(data
 
 export const serverStat = (data: ServerList): ServerListServerStat[] => compact(data?.serverStat ?? []);
 
-export const issues = (data: ServerList): ServerListServerClusterIssue[] => compact(data?.cluster?.issues ?? []);
+export const issues = (data: ServerList): ServerListClusterIssue[] => compact(data?.cluster?.issues ?? []);
 
 export const zones = (data: ServerList): string[] =>
   pipe(
@@ -117,7 +120,7 @@ export const zones = (data: ServerList): string[] =>
     uniq
   )(data);
 
-export const issuesFilteredByInstanceUuid = (data: ServerList, uuid: Maybe<string>): ServerListServerClusterIssue[] =>
+export const issuesFilteredByInstanceUuid = (data: ServerList, uuid: Maybe<string>): ServerListClusterIssue[] =>
   uuid ? issues(data).filter(({ instance_uuid }) => instance_uuid === uuid) : [];
 
 export const replicasetList = (data: ServerList): ServerListReplicaset[] => compact(data?.replicasetList ?? []);
@@ -190,12 +193,14 @@ export const replicasetCounts = (data: ServerList) =>
         acc.total++;
         if (item.status !== 'healthy') {
           acc.unhealthy++;
+        } else {
+          acc.healthy++;
         }
       }
 
       return acc;
     },
-    { total: 0, unhealthy: 0 }
+    { total: 0, healthy: 0, unhealthy: 0 }
   );
 
 // search

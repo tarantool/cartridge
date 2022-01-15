@@ -28,3 +28,4 @@ luacov.*.out*
 *.mo
 .history
 rst/locale/en/
+sandbox.lua

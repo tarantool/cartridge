@@ -666,23 +666,26 @@ add('test_force_promote_timeout', function(g)
         vars.options.WAITLSN_TIMEOUT = 0.5
     ]])
 
-    local res, err = S2:call('package.loaded.cartridge.failover_promote', {
-        {[g.cluster.replicasets[2].uuid] = S2.instance_uuid},
-        {force_inconsistency = false}
-    })
+    helpers.retrying({}, function()
+        local res, err = S2:call('package.loaded.cartridge.failover_promote', {
+            {[g.cluster.replicasets[2].uuid] = S2.instance_uuid},
+            {force_inconsistency = false}
+        })
 
-    t.assert_equals(res, nil)
-    t.assert_equals(err.str, 'WaitRwError: \"localhost:13303\": timed out')
+        t.assert_equals(res, nil)
+        t.assert_equals(err.str, 'WaitRwError: \"localhost:13303\": timed out')
+    end)
 
     require('fiber').sleep(1) -- NETBOX_CALL_TIMEOUT
 
-    local res, err = S2:call('package.loaded.cartridge.failover_promote', {
-        {[g.cluster.replicasets[2].uuid] = S2.instance_uuid},
-        {force_inconsistency = true}
-    })
+    helpers.retrying({}, function()
+        local res, err = S2:call('package.loaded.cartridge.failover_promote', {
+            {[g.cluster.replicasets[2].uuid] = S2.instance_uuid},
+            {force_inconsistency = true}
+        })
 
-    t.assert_equals(err, nil)
-    t.assert_equals(res, true)
-
+        t.assert_equals(err, nil)
+        t.assert_equals(res, true)
+    end)
     S1.process:kill('CONT')
 end)

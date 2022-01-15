@@ -2,6 +2,7 @@ import { InMemoryCache } from 'apollo-cache-inmemory';
 import { ApolloClient } from 'apollo-client';
 import { from } from 'apollo-link';
 import { HttpLink } from 'apollo-link-http';
+import { core } from '@tarantool.io/frontend-core';
 
 import { getApiEndpoint } from 'src/apiEndpoints';
 
@@ -20,9 +21,9 @@ const cache = new InMemoryCache({
 
 const client = new ApolloClient({
   link: from([
-    window.tarantool_enterprise_core.apiMethods.apolloLinkOnError,
-    window.tarantool_enterprise_core.apiMethods.apolloLinkAfterware,
-    window.tarantool_enterprise_core.apiMethods.apolloLinkMiddleware,
+    core.apiMethods.apolloLinkOnError,
+    core.apiMethods.apolloLinkAfterware,
+    core.apiMethods.apolloLinkMiddleware,
     httpLink,
   ]),
   cache,

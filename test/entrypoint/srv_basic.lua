@@ -20,12 +20,17 @@ if frontend and frontend.set_variable then
     frontend.set_variable('cartridge_hide_all_rw', false)
 end
 
+package.preload['VERSION'] = function()
+    return 'app_version_test_value'
+end
+
 package.preload['mymodule'] = function()
     local state = nil
     local master = nil
     local service_registry = require('cartridge.service-registry')
     local httpd = service_registry.get('httpd')
     local validated = false
+    local master_switches = {}
 
     if httpd ~= nil then
         httpd:route(
@@ -65,6 +70,7 @@ package.preload['mymodule'] = function()
         },
         get_state = function() return state end,
         is_master = function() return master end,
+        get_master_switches = function() return master_switches end,
         validate_config = function()
             validated = true
             return true
@@ -78,6 +84,7 @@ package.preload['mymodule'] = function()
                 assert(box.info().ro == false)
             end
             state = 'initialized'
+            table.insert(master_switches, opts.is_master)
         end,
         apply_config = function(_, opts)
             assert(opts.is_master ~= nil)

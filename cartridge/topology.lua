@@ -88,7 +88,7 @@ end
 -- Neither `topology_cfg` nor `new_order` tables are modified.
 -- New order validity is ignored too.
 --
--- @function get_leaders_orded
+-- @function get_leaders_order
 -- @local
 -- @tparam table topology_cfg
 -- @tparam string replicaset_uuid

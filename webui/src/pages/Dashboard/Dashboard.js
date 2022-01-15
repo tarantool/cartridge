@@ -6,8 +6,6 @@ import { isGraphqlAccessDeniedError, isGraphqlErrorResponse } from 'src/api/grap
 import { isRestAccessDeniedError, isRestErrorResponse } from 'src/api/rest';
 import Cluster from 'src/pages/Cluster';
 
-// import Cluster from 'src/pages/ClusterLegacy';
-
 class Dashboard extends React.Component {
   render() {
     const { appDataRequestStatus, appDataRequestError, authorizationRequired, location, history } = this.props;

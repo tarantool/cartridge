@@ -3,12 +3,13 @@ import type { Maybe } from 'src/models';
 
 export type ServerList = Maybe<ServerListQuery>;
 export type ServerListServer = NonNullable<NonNullable<NonNullable<ServerList>['serverList']>[number]>;
-export type ServerListServerCluster = NonNullable<NonNullable<ServerList>['cluster']>;
-export type ServerListServerClusterIssue = NonNullable<ServerListServerCluster['issues']>[number];
+export type ServerListCluster = NonNullable<NonNullable<ServerList>['cluster']>;
+export type ServerListClusterIssue = NonNullable<ServerListCluster['issues']>[number];
 export type ServerListReplicaset = NonNullable<NonNullable<NonNullable<ServerList>['replicasetList']>[number]>;
 export type ServerListReplicasetServer = NonNullable<ServerListReplicaset['servers']>[number];
 export type ServerListServerStat = NonNullable<NonNullable<NonNullable<ServerList>['serverStat']>[number]>;
 export type ServerListServerStatStatistics = NonNullable<ServerListServerStat['statistics']>;
+export type ServerListClusterRole = NonNullable<NonNullable<ServerListCluster['known_roles']>[number]>;
 
 export type ServerListReplicasetServerSearchable = ServerListReplicasetServer & {
   meta?: {
@@ -22,6 +23,7 @@ export type ServerListReplicasetSearchable = Omit<ServerListReplicaset, 'servers
   meta?: {
     searchString: string;
     matchingServersCount?: number;
+    totalServersCount?: number;
   };
 };
 

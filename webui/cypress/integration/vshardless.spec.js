@@ -58,7 +58,7 @@ describe('Vshardless', () => {
     ////////////////////////////////////////////////////////////////////
     cy.log('Vshardless: Edit Replicaset Modal');
     ////////////////////////////////////////////////////////////////////
-    cy.get('li').contains('failover-coordinator | myrole').closest('li').find('button').contains('Edit').click();
+    cy.get('li').contains('failover-coordinator | myrole').closest('li').find('[data-cy=meta-test__editBtn]').click();
     cy.get('.meta-test__EditReplicasetSaveBtn').should('be.enabled');
     cy.get('form input[value="vshard-storage"]').should('not.exist');
     cy.get('form input[name="weight"]').should('be.disabled');

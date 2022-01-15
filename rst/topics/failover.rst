@@ -202,7 +202,7 @@ Fencing operates as a fiber that occasionally checks connectivity with
 the state provider and with replicas. Fencing fiber runs on
 vclockkeepers; it starts right after consistent promotion succeeds.
 Replicasets which don't need consistency (single-instance and
-``all_rw``) don't defense, though.
+``all_rw``) don't defend, though.
 
 The condition for fencing actuation is the loss of both the state
 provider quorum and at least one replica. Otherwise, if either state
@@ -275,7 +275,7 @@ options:
 Similarly to other ``argparse`` options, they can be passed via
 command-line arguments or via environment variables, e.g.:
 
-.. code-block:: console
+..  code-block:: bash
 
     .rocks/bin/stateboard --workdir ./dev/stateboard --listen 4401 --password qwerty
 

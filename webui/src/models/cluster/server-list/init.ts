@@ -204,14 +204,17 @@ $cluster
     });
   })
   .on(queryServerListSuccessEvent, (prev, next) => {
-    if (!prev || !prev.cluster || !next.failover?.failover_params.mode) {
+    if (!prev || !prev.cluster) {
       return;
     }
 
-    const mode = next.failover.failover_params.mode;
     return produce(prev, (draft) => {
-      if (draft.cluster) {
-        draft.cluster.failover_params.mode = mode;
+      if (draft.cluster && next.failover?.failover_params.mode) {
+        draft.cluster.failover_params.mode = next.failover.failover_params.mode;
+      }
+
+      if (draft.cluster && next.cluster?.known_roles) {
+        draft.cluster.knownRoles = next.cluster.known_roles;
       }
     });
   })

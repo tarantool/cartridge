@@ -74,12 +74,8 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     cy.title().should('eq', 'dummy-1: Cluster');
     cy.testScreenshots('3UnconfiguredServers');
     cy.get('.meta-test__UnconfiguredServerList').contains(':13301').closest('li').find('.meta-test__youAreHereIcon');
-    cy.get('.meta-tarantool-app').contains('Unconfigured servers');
-    cy.get('.meta-tarantool-app').contains('3 unconfigured servers');
+    cy.get('.meta-tarantool-app').contains('Unconfigured Servers 3');
     cy.get('.meta-test__UnconfiguredServerList li').should('have.length', 3);
-    cy.get('.meta-test__UnconfiguredServerList li').eq(0).contains('Unconfigured');
-    cy.get('.meta-test__UnconfiguredServerList li').eq(1).contains('Unconfigured');
-    cy.get('.meta-test__UnconfiguredServerList li').eq(2).contains('Unconfigured');
 
     ////////////////////////////////////////////////////////////////////
     cy.log('Bootstrap vshard on unconfigured cluster');
@@ -154,11 +150,10 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     cy.get('.meta-test__BootstrapPanel__vshard-storage_enabled').should('exist');
 
     // Check health state
-    cy.get('section').eq(0).contains('2 unconfigured servers');
-    cy.get('.meta-test__UnconfiguredServerList li').eq(0).contains('Unconfigured');
-    cy.get('.meta-test__UnconfiguredServerList li').eq(1).contains('Unconfigured');
+    cy.get('.meta-tarantool-app').contains('Unconfigured Servers 2');
+    cy.get('.meta-test__UnconfiguredServerList li').should('have.length', 2);
 
-    cy.get('section').eq(1).contains('1 total | 0 unhealthy | 1 server');
+    // cy.get('.meta-tarantool-app').contains('Healthy 1');
     cy.get('[data-cy=meta-test__replicaSetSection]').eq(0).contains('healthy');
     cy.get('.ServerLabelsHighlightingArea').eq(0).contains('healthy');
 
@@ -171,7 +166,7 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     ////////////////////////////////////////////////////////////////////
 
     // Disable myrole
-    cy.get('#root').contains('unnamed').closest('li').find('button').contains('Edit').click();
+    cy.get('#root').contains('unnamed').closest('li').find('[data-cy=meta-test__editBtn]').click();
     cy.get('.meta-test__EditReplicasetModal input[name="alias"]').should('be.focused');
 
     cy.get('form input[value="myrole"]').uncheck({ force: true }).should('not.be.checked');
@@ -199,7 +194,7 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
 
     cy.get('.ServerLabelsHighlightingArea')
       .contains('dummy-1')
-      .closest('li')
+      .closest('.ServerLabelsHighlightingArea')
       .find('.meta-test__youAreHereIcon')
       .should('exist');
 
@@ -256,10 +251,9 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     cy.get('.meta-test__ReplicasetList_allRw_enabled').should('have.length', 2);
 
     // Check health state
+    cy.get('section').eq(0).contains('Unconfigured Servers 1');
     cy.get('.meta-test__UnconfiguredServerList').should('have.length', 1);
-    cy.get('section').eq(0).contains('1 unconfigured server');
-    cy.get('.meta-test__UnconfiguredServerList li').eq(0).contains('Unconfigured');
-    cy.get('section').eq(1).contains('2 total | 0 unhealthy | 2 servers');
+    cy.get('[data-component=ReplicasetListHeader]').contains('Healthy2');
     cy.get('[data-cy=meta-test__replicaSetSection]').eq(0).contains('healthy');
     cy.get('.ServerLabelsHighlightingArea').eq(0).contains('healthy');
     cy.get('.ServerLabelsHighlightingArea').eq(1).contains('healthy');
@@ -278,7 +272,7 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     //////////////////////////////////////////////////////////////////
     cy.log('Edit vshard-storage');
     ////////////////////////////////////////////////////////////////////
-    cy.get('li').contains('test-storage').closest('li').find('button').contains('Edit').click();
+    cy.get('li').contains('test-storage').closest('li').find('[data-cy=meta-test__editBtn]').click();
 
     // Try to enter empty alias
     cy.get('.meta-test__EditReplicasetModal input[name="alias"]').type(' ');
@@ -343,8 +337,8 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     cy.get('.meta-test__JoinReplicaSetBtn').click();
     cy.get('span:contains(Successful) + span:contains(Join is OK. Please wait for list refresh...) + svg').click();
 
-    // Check health state
-    cy.get('.meta-tarantool-app').contains('2 total | 0 unhealthy | 3 servers');
+    //Check health state
+    cy.get('[data-component=ReplicasetListHeader]').contains('Healthy2');
     cy.get('[data-cy=meta-test__replicaSetSection]').eq(0).contains('healthy');
     cy.get('.ServerLabelsHighlightingArea').eq(0).contains('healthy');
     cy.get('[data-cy=meta-test__replicaSetSection]').eq(1).contains('healthy');
@@ -362,7 +356,11 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
       cy.get('.meta-test__ReplicasetServerListItem__dropdown').matchImageSnapshot(`ReplicaserServerDropdown.${size}`);
       cy.get('li').contains('dummy-3').closest('li').find('.meta-test__ReplicasetServerListItem__dropdownBtn').click();
     });
-    cy.get('li').contains('dummy-3').closest('li').find('.meta-test__ReplicasetServerListItem__dropdownBtn').click();
+    cy.get('li')
+      .contains('dummy-3')
+      .closest('.ServerLabelsHighlightingArea')
+      .find('.meta-test__ReplicasetServerListItem__dropdownBtn')
+      .click();
     cy.get('.meta-test__ReplicasetServerListItem__dropdown').contains('Expel server').click({ force: true });
     cy.testElementScreenshots('ExpelServer', 'div.meta-test__ExpelServerModal');
     cy.get('.meta-test__ExpelServerModal button[type="button"]').contains('Expel').click();
@@ -374,7 +372,11 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     ////////////////////////////////////////////////////////////////////
     cy.get('button.meta-test__LoginBtn').parent('div').parent('div').prev().click();
     cy.get('button:contains(Clear)').click();
-    cy.get('li').contains('dummy-1').closest('li').find('.meta-test__ReplicasetServerListItem__dropdownBtn').click();
+    cy.get('.ServerLabelsHighlightingArea')
+      .contains('dummy-1')
+      .closest('.ServerLabelsHighlightingArea')
+      .find('.meta-test__ReplicasetServerListItem__dropdownBtn')
+      .click();
     cy.get('.meta-test__ReplicasetServerListItem__dropdown *').contains('Expel server').click();
     cy.get('.meta-test__ExpelServerModal button[type="button"]').contains('Expel').click();
     cy.get('span:contains(Current instance "localhost:13301" can not be expelled)');
@@ -398,7 +400,7 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     cy.get('span').contains('No notifications');
 
     //Check health state
-    cy.get('.meta-tarantool-app').contains('2 total | 0 unhealthy | 2 servers');
+    cy.get('[data-component=ReplicasetListHeader]').contains('Healthy2');
     cy.get('[data-cy=meta-test__replicaSetSection]').eq(0).contains('healthy');
     cy.get('.ServerLabelsHighlightingArea').eq(0).contains('healthy');
     cy.get('[data-cy=meta-test__replicaSetSection]').eq(1).contains('healthy');

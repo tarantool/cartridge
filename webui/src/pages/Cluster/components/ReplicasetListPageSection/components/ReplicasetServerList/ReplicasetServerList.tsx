@@ -1,7 +1,5 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import React, { memo, useMemo } from 'react';
-// @ts-ignore
-import { FlatList } from '@tarantool.io/ui-kit';
 
 import { cluster } from 'src/models';
 import type { GetClusterCluster, GetClusterClusterSelf, ServerListReplicaset, ServerListServerStat } from 'src/models';
@@ -23,6 +21,10 @@ const ReplicasetServerList = (props: ReplicasetServerListProps) => {
   const { cluster, clusterSelf, replicaset, serverStat, failoverParamsMode } = props;
 
   const servers = useMemo(() => {
+    const vshardGroupBucketsCount = selectors
+      .clusterVshardGroups(cluster)
+      .find(({ name }) => name === replicaset.vshard_group)?.bucket_count;
+
     return replicaset.servers.map((server): Pick<ReplicasetServerListItemProps, 'server' | 'additional'> => {
       const stat = serverStat.find(({ uuid }) => server.uuid === uuid);
       return {
@@ -34,7 +36,7 @@ const ReplicasetServerList = (props: ReplicasetServerListProps) => {
           selfURI: clusterSelf?.uri ?? undefined,
           ro: selectors.replicasetServerRo(server),
           statistics: stat?.statistics,
-          totalBucketsCount: cluster?.vshard_bucket_count ?? undefined,
+          vshardGroupBucketsCount,
         },
       };
     });
@@ -45,7 +47,7 @@ const ReplicasetServerList = (props: ReplicasetServerListProps) => {
   }
 
   return (
-    <FlatList className="meta-test__ReplicasetServerList">
+    <div className="meta-test__ReplicasetServerList" data-component="ReplicasetServerList">
       {servers.map(({ server, additional }) => (
         <ReplicasetServerListItem
           key={server.uuid}
@@ -54,7 +56,7 @@ const ReplicasetServerList = (props: ReplicasetServerListProps) => {
           showFailoverPromote={servers && servers.length > 1 && failoverParamsMode === 'stateful'}
         />
       ))}
-    </FlatList>
+    </div>
   );
 };
 
