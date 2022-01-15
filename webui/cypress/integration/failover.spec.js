@@ -130,7 +130,7 @@ describe('Failover', () => {
     statefulInputsShouldNotExist();
 
     checkFailoverTabMode('Disabled', true);
-    cy.testElementScreenshots('FailoverControlDisabled', 'form.meta-test__FailoverModal');
+    cy.testElementScreenshots('FailoverControlDisabled', '.meta-test__FailoverModal');
     checkFailoverTabMode('Eventual', false);
     checkFailoverTabMode('Stateful', false);
 
@@ -179,7 +179,7 @@ describe('Failover', () => {
 
     checkFailoverTabMode('Disabled', false);
     checkFailoverTabMode('Eventual', true);
-    cy.testElementScreenshots('FailoverControlEvantual', 'form.meta-test__FailoverModal');
+    cy.testElementScreenshots('FailoverControlEvantual', '.meta-test__FailoverModal');
     checkFailoverTabMode('Stateful', false);
 
     cy.get('.meta-test__failoverTimeout input').should('have.value', '5');
@@ -199,7 +199,7 @@ describe('Failover', () => {
     checkFailoverTabMode('Disabled', false);
     checkFailoverTabMode('Eventual', false);
     checkFailoverTabMode('Stateful', true);
-    cy.testElementScreenshots('FailoverModalStatefulTarantoolMode', 'form.meta-test__FailoverModal');
+    cy.testElementScreenshots('FailoverModalStatefulTarantoolMode', '.meta-test__FailoverModal');
 
     //Fencing tooltip
     cy.get('span:contains(Fencing)').next().trigger('mouseover');
@@ -309,7 +309,7 @@ describe('Failover', () => {
     cy.get('.meta-test__etcd2Prefix input').should('have.value', '/');
     cy.get('.meta-test__etcd2Username input').should('have.value', '');
     cy.get('.meta-test__etcd2Password input').should('have.value', '');
-    cy.testElementScreenshots('FailoverModalEvantualEtcd', 'form.meta-test__FailoverModal');
+    cy.testElementScreenshots('FailoverModalEvantualEtcd', '.meta-test__FailoverModal');
 
     cy.get('.meta-test__SubmitButton').click();
     cy.get('span:contains(Failover mode) + span:contains(stateful) + svg').click();

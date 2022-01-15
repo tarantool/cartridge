@@ -352,9 +352,18 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
       cy.setResolution(size);
       // eslint-disable-next-line cypress/no-unnecessary-waiting
       cy.wait(1000);
-      cy.get('li').contains('dummy-3').closest('li').find('.meta-test__ReplicasetServerListItem__dropdownBtn').click();
+      cy.get('li')
+        .contains('dummy-3')
+        .closest('.ServerLabelsHighlightingArea')
+        .find('.meta-test__ReplicasetServerListItem__dropdownBtn')
+        .click();
       cy.get('.meta-test__ReplicasetServerListItem__dropdown').matchImageSnapshot(`ReplicaserServerDropdown.${size}`);
-      cy.get('li').contains('dummy-3').closest('li').find('.meta-test__ReplicasetServerListItem__dropdownBtn').click();
+      cy.get('li').contains('dummy-3')
+        .closest('.ServerLabelsHighlightingArea')
+        .find('.meta-test__ReplicasetServerListItem__dropdownBtn')
+        .click();
+        //.closest('li')
+
     });
     cy.get('li')
       .contains('dummy-3')

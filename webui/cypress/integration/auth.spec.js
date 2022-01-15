@@ -103,7 +103,7 @@ describe('Auth', () => {
     cy.get('.meta-test__LoginFormBtn').click();
 
     // eslint-disable-next-line cypress/no-unnecessary-waiting
-    cy.wait(100); // wait for a react re-render.
+    cy.wait(500); // wait for a react re-render.
 
     cy.get('a[href="/admin/cluster/users"]').click();
     cy.get('.meta-test__AuthToggle input').should('not.be.checked');
@@ -167,7 +167,7 @@ describe('Auth', () => {
     cy.get('.meta-test__LoginFormBtn').click();
 
     // eslint-disable-next-line cypress/no-unnecessary-waiting
-    cy.wait(100); // wait for a react re-render.
+    cy.wait(500); // wait for a react re-render.
 
     cy.get('a[href="/admin/cluster/users"]').click();
     cy.get('.meta-test__AuthToggle input').should('not.be.checked');
