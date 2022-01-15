@@ -358,13 +358,13 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
         .find('.meta-test__ReplicasetServerListItem__dropdownBtn')
         .click();
       cy.get('.meta-test__ReplicasetServerListItem__dropdown').matchImageSnapshot(`ReplicaserServerDropdown.${size}`);
-      cy.get('li').contains('dummy-3')
+      cy.get('li')
+        .contains('dummy-3')
         .closest('.ServerLabelsHighlightingArea')
         .find('.meta-test__ReplicasetServerListItem__dropdownBtn')
         .click();
-        //.closest('li')
-
     });
+
     cy.get('li')
       .contains('dummy-3')
       .closest('.ServerLabelsHighlightingArea')
