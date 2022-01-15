@@ -154,6 +154,8 @@ describe('Users', () => {
     //logout:
     cy.get('.meta-test__LogoutBtn').click();
     cy.get('.meta-test__LogoutDropdown *').contains('Log out').click();
+    // eslint-disable-next-line cypress/no-unnecessary-waiting
+    cy.wait(500);
 
     ////////////////////////////////////////////////////////////////////
     cy.log('Edit user');
