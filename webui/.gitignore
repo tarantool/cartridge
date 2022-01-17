@@ -24,3 +24,5 @@ yarn-error.log*
 !/cypress/integration
 !/cypress/support
 !/cypress/fixtures
+!/cypress/snapshots
+cypress/snapshots/**/__diff_output__

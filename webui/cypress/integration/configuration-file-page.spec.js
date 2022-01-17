@@ -32,6 +32,7 @@ describe('Configuration file page', () => {
     ////////////////////////////////////////////////////////////////////
     cy.visit('/admin/cluster/configuration');
     cy.get('.test__Header').contains('/Configuration files');
+    cy.testScreenshots('ConfigurationFilePage');
     cy.get('[data-cy="test_uploadZone"]').contains('Upload configuration');
     cy.get('[data-cy="test_uploadZone"]').contains('New configuration can be uploaded here.');
     cy.get('[data-cy="test_uploadZone"]').contains('Click or drag file to this area to upload');

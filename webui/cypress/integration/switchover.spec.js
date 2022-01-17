@@ -83,6 +83,7 @@ describe('Leader promotion tests', () => {
     cy.log('Prepare for the test');
     ////////////////////////////////////////////////////////////////////
     cy.visit(Cypress.config('baseUrl') + '/admin/cluster/dashboard');
+    cy.testScreenshots('Dashboard');
     cy.contains('Replica Sets');
     cy.get('.meta-test__FailoverButton').should('be.visible');
     cy.get('.meta-test__FailoverButton').contains('Failover: disabled');
@@ -98,7 +99,9 @@ describe('Leader promotion tests', () => {
     cy.log('Leader promotion unavailable in eventual mode');
     ////////////////////////////////////////////////////////////////////
     cy.get('.meta-test__FailoverButton').click();
+    cy.testElementScreenshots('FailoverModalDisabled', '.meta-test__FailoverModal');
     cy.get('.meta-test__failover-tabs button:contains(Eventual)').click();
+    cy.testElementScreenshots('FailoverModalEventual', '.meta-test__FailoverModal');
     cy.get('.meta-test__SubmitButton').click();
     cy.get('span:contains(Failover mode) + span:contains(eventual) + svg').click();
     cy.get('.meta-test__FailoverButton').contains('Failover: eventual');
@@ -114,6 +117,8 @@ describe('Leader promotion tests', () => {
     // Enable stateful failover mode
     cy.get('.meta-test__FailoverButton').click();
     cy.get('.meta-test__failover-tabs button:contains(Stateful)').click();
+    cy.focused().blur();
+    cy.testElementScreenshots('FailoverModalStateful', '.meta-test__FailoverModal');
     cy.get('.meta-test__stateboardURI input').type('{selectall}{backspace}localhost:14401');
     cy.get('.meta-test__stateboardPassword input').type('{selectall}{backspace}password');
     cy.get('.meta-test__SubmitButton').click();

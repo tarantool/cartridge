@@ -102,7 +102,7 @@ const ServerDetailsModal = () => {
           size="l"
           iconRight={IconChevronDown}
           loading={pending}
-          popoverClassName={styles.popover}
+          popoverClassName={cx('meta-test__ZoneListItemsPlusButton', styles.popover)}
           popoverContent={
             <>
               {zones.map((zoneName) => (

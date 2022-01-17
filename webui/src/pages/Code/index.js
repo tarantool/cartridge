@@ -334,6 +334,7 @@ class Code extends React.Component<CodeProps, CodeState> {
         wide
         topRightControls={[
           <Button
+            data-cy={'meta-test__Reload'}
             key="Reload"
             text="Reload"
             size="l"
@@ -345,8 +346,16 @@ class Code extends React.Component<CodeProps, CodeState> {
             icon={IconRefresh}
             intent="base"
           />,
-          <Button key="Validate" text="Validate" intent="base" size="l" onClick={this.validateCode} />,
           <Button
+            data-cy={'meta-test__Validate'}
+            key="Validate"
+            text="Validate"
+            intent="base"
+            size="l"
+            onClick={this.validateCode}
+          />,
+          <Button
+            data-cy={'meta-test__Apply'}
             key="Apply"
             onClick={this.handleApplyClick}
             className={puttingConfigFiles ? 'meta-test__Code__apply_loading' : 'meta-test__Code__apply_idle'}
@@ -442,6 +451,7 @@ class Code extends React.Component<CodeProps, CodeState> {
           {isReloadConfirmOpened && (
             <ConfirmModal
               title="Reload files"
+              className="meta-test__ReloadFileModal"
               onCancel={() => this.setState({ isReloadConfirmOpened: false })}
               onConfirm={() => {
                 this.props.dispatch(fetchConfigFiles());

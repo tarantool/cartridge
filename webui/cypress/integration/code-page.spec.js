@@ -1,3 +1,5 @@
+import { sizes } from '../support/commands.js';
+
 describe('Code page', () => {
   before(() => {
     cy.task('tarantool', {
@@ -57,8 +59,18 @@ describe('Code page', () => {
     cy.log('Empty code page');
     ////////////////////////////////////////////////////////////////////
     cy.get('#root').contains('Please select a file');
-    cy.get('button[type="button"]').contains('Apply').click();
-    cy.get('span:contains(Success) + span:contains(Files successfuly applied) + svg').click();
+    sizes.forEach((size) => {
+      cy.setResolution(size);
+      // eslint-disable-next-line cypress/no-unnecessary-waiting
+      cy.wait(1000);
+      cy.get('.meta-test__Code__FileTree').contains('schema.yml').click();
+      // eslint-disable-next-line cypress/no-unnecessary-waiting
+      cy.wait(500); //to allow scroll disappear
+      cy.matchImageSnapshot(`BaseCodePage.${size}`);
+      cy.get('button[type="button"]').contains('Apply').click();
+      cy.get('span:contains(Success) + span:contains(Files successfuly applied) + svg').click();
+      cy.reload();
+    });
   });
 
   it('Test: schema', () => {
@@ -76,7 +88,9 @@ describe('Code page', () => {
     cy.get('.monaco-editor').type('spaces: incorrect-1');
     cy.get('.monaco-editor').contains('spaces: incorrect-1');
     cy.get('button[type="button"]').contains('Validate').click();
-    cy.get('#root').contains('spaces: must be a table, got string').should('exist').click();
+    cy.get('#root').contains('spaces: must be a table, got string').should('exist');
+    cy.matchImageSnapshot('gh-1201');
+    cy.get('#root').contains('spaces: must be a table, got string').click();
 
     // Type correct
     cy.get('.monaco-editor').click();
@@ -112,7 +126,18 @@ describe('Code page', () => {
     cy.get('.meta-test__enterName').focused().type('file-in-tree1.yml');
     cy.get('div:contains(The name already exists)');
 
-    reload();
+    //reload();
+    sizes.forEach((size) => {
+      cy.get('.meta-test__Code__reload_idle').click({ force: true });
+      cy.setResolution(size);
+      // eslint-disable-next-line cypress/no-unnecessary-waiting
+      cy.wait(1000);
+      cy.get('.meta-test__ReloadFileModal').matchImageSnapshot(`ReloadFilesWindow.${size}`);
+      cy.get('button[type="button"]').contains('Ok').click();
+      cy.get('.meta-test__Code__reload_loading').should('not.exist');
+      cy.get('.meta-test__Code__reload_idle').should('exist');
+    });
+
     cy.get('.meta-test__Code__FileTree').contains('file-in-tree1.yml').should('not.exist');
 
     cy.get('.meta-test__addFileBtn').click();
@@ -219,6 +244,7 @@ describe('Code page', () => {
     cy.get('.monaco-editor textarea').should('have.value', '');
 
     cy.get('.meta-test__deleteFolderInTreeBtn').eq(0).click({ force: true });
+    cy.testElementScreenshots('DeleteFileModalWindow', 'div.meta-test__deleteModal');
     cy.get('.meta-test__deleteModal button[type="button"]').contains('Ok').click();
     cy.get('.meta-test__Code__FileTree').contains('edited-file-name2').should('not.exist');
 

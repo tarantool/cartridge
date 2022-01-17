@@ -1,3 +1,5 @@
+import { sizes } from '../support/commands.js';
+
 describe('Replicaset configuration & Bootstrap Vshard', () => {
   before(() => {
     cy.task('tarantool', {
@@ -70,6 +72,7 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     ////////////////////////////////////////////////////////////////////
     cy.visit('/admin/cluster/dashboard');
     cy.title().should('eq', 'dummy-1: Cluster');
+    cy.testScreenshots('3UnconfiguredServers');
     cy.get('.meta-test__UnconfiguredServerList').contains(':13301').closest('li').find('.meta-test__youAreHereIcon');
     cy.get('.meta-tarantool-app').contains('Unconfigured Servers 3');
     cy.get('.meta-test__UnconfiguredServerList li').should('have.length', 3);
@@ -84,6 +87,16 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     ////////////////////////////////////////////////////////////////////
 
     // Open create replicaset dialog
+    sizes.forEach((size) => {
+      cy.setResolution(size);
+      // eslint-disable-next-line cypress/no-unnecessary-waiting
+      cy.wait(1000);
+      cy.get('.meta-test__configureBtn').first().click();
+      cy.focused().blur();
+      cy.get('.meta-test__ConfigureServerModal div').eq(1).matchImageSnapshot(`ConfigurationServer.${size}`);
+      cy.get('button').contains('Cancel').click();
+    });
+
     cy.get('.meta-test__configureBtn').first().click();
     cy.get('form input[name="alias"]').should('be.focused').type('for-default-group-tests');
     cy.get('form input[value="default"]').should('be.disabled');
@@ -136,7 +149,7 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     cy.get('.meta-test__BootstrapPanel__vshard-router_enabled').should('exist');
     cy.get('.meta-test__BootstrapPanel__vshard-storage_enabled').should('exist');
 
-    //Check health state
+    // Check health state
     cy.get('.meta-tarantool-app').contains('Unconfigured Servers 2');
     cy.get('.meta-test__UnconfiguredServerList li').should('have.length', 2);
 
@@ -217,7 +230,7 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     cy.get('.meta-test__ConfigureServerModal').contains('Field accepts number');
     cy.get('.meta-test__CreateReplicaSetBtn').should('be.disabled');
 
-    //Fix invalid weight
+    // Fix invalid weight
     cy.get('.meta-test__ConfigureServerModal input[name="weight"]')
       .type('{selectall}{backspace}')
       .type('1.35')
@@ -237,7 +250,7 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     cy.get('#root').contains('test-storage');
     cy.get('.meta-test__ReplicasetList_allRw_enabled').should('have.length', 2);
 
-    //Check health state
+    // Check health state
     cy.get('section').eq(0).contains('Unconfigured Servers 1');
     cy.get('.meta-test__UnconfiguredServerList').should('have.length', 1);
     cy.get('[data-component=ReplicasetListHeader]').contains('Healthy2');
@@ -256,7 +269,7 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     cy.get('.meta-test__BootstrapButton').should('not.exist');
     cy.get('.meta-test__BootstrapPanel').should('not.exist');
 
-    ////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////
     cy.log('Edit vshard-storage');
     ////////////////////////////////////////////////////////////////////
     cy.get('li').contains('test-storage').closest('li').find('[data-cy=meta-test__editBtn]').click();
@@ -307,6 +320,17 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     //////////////////////////////////////////////////////////////////
     cy.log('Join existing replicaset');
     ////////////////////////////////////////////////////////////////////
+    sizes.forEach((size) => {
+      cy.setResolution(size);
+      // eslint-disable-next-line cypress/no-unnecessary-waiting
+      cy.wait(1000);
+      cy.get('.meta-test__configureBtn').should('have.length', 1).click({ force: true });
+      cy.get('.meta-test__ConfigureServerModal').contains('Join Replica Set').click();
+      // need to add mock to save the same items order
+      // cy.focused().blur();
+      // cy.get('.meta-test__ConfigureServerModal div').eq(1).matchImageSnapshot(`JoinReplicasets.${size}`);
+      cy.get('button').contains('Cancel').click();
+    });
     cy.get('.meta-test__configureBtn').should('have.length', 1).click({ force: true });
     cy.get('.meta-test__ConfigureServerModal').contains('Join Replica Set').click();
     cy.get('form input[name="replicasetUuid"]').first().check({ force: true });
@@ -321,20 +345,38 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     cy.get('.ServerLabelsHighlightingArea').eq(1).contains('healthy');
     cy.get('.ServerLabelsHighlightingArea').eq(2).contains('healthy');
 
-    ////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////
     cy.log('Expel server');
     ////////////////////////////////////////////////////////////////////
+    sizes.forEach((size) => {
+      cy.setResolution(size);
+      // eslint-disable-next-line cypress/no-unnecessary-waiting
+      cy.wait(1000);
+      cy.get('li')
+        .contains('dummy-3')
+        .closest('.ServerLabelsHighlightingArea')
+        .find('.meta-test__ReplicasetServerListItem__dropdownBtn')
+        .click();
+      cy.get('.meta-test__ReplicasetServerListItem__dropdown').matchImageSnapshot(`ReplicaserServerDropdown.${size}`);
+      cy.get('li')
+        .contains('dummy-3')
+        .closest('.ServerLabelsHighlightingArea')
+        .find('.meta-test__ReplicasetServerListItem__dropdownBtn')
+        .click();
+    });
+
     cy.get('li')
       .contains('dummy-3')
       .closest('.ServerLabelsHighlightingArea')
       .find('.meta-test__ReplicasetServerListItem__dropdownBtn')
       .click();
-    cy.get('.meta-test__ReplicasetServerListItem__dropdown *').contains('Expel server').click();
+    cy.get('.meta-test__ReplicasetServerListItem__dropdown').contains('Expel server').click({ force: true });
+    cy.testElementScreenshots('ExpelServer', 'div.meta-test__ExpelServerModal');
     cy.get('.meta-test__ExpelServerModal button[type="button"]').contains('Expel').click();
 
     cy.get('span:contains(Expel is OK. Please wait for list refresh...)').click();
 
-    ////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////
     cy.log('Show expel error and error details');
     ////////////////////////////////////////////////////////////////////
     cy.get('button.meta-test__LoginBtn').parent('div').parent('div').prev().click();

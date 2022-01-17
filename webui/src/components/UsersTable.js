@@ -92,6 +92,7 @@ const tableColumns = memoizeWith(identity, (allowEdit, allowDelete) => [
           thin
           controls={[
             <Button
+              data-cy={'meta-test__Edit'}
               key="edit"
               onClick={() => showUserEditModal(values.username)}
               intent="secondary"
@@ -99,6 +100,7 @@ const tableColumns = memoizeWith(identity, (allowEdit, allowDelete) => [
               icon={IconEdit}
             />,
             <Button
+              data-cy={'meta-test__Bucket'}
               key="bucket"
               onClick={() => showUserRemoveModal(values.username)}
               intent="secondary"

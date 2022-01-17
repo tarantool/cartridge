@@ -16,6 +16,7 @@
  * @type {Cypress.PluginConfig}
  */
 const { downloadFile } = require('cypress-downloadfile/lib/addPlugin');
+const { addMatchImageSnapshotPlugin } = require('cypress-image-snapshot/plugin');
 const net = require('net');
 const yaml = require('js-yaml');
 const cache = {};
@@ -81,4 +82,5 @@ module.exports = (on, config) => {
     },
     downloadFile,
   });
+  addMatchImageSnapshotPlugin(on, config);
 };

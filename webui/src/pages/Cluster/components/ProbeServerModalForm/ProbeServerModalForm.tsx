@@ -38,7 +38,7 @@ const ProbeServerModalForm = ({
   );
 
   return (
-    <form onSubmit={handleSubmit} onReset={handleReset} noValidate>
+    <form className="meta-test___ProbeServerModal" onSubmit={handleSubmit} onReset={handleReset} noValidate>
       <Text className={styles.text}>{"Probe a server if it wasn't discovered automatically by UDP broadcast."}</Text>
       <LabeledInput
         autoFocus
