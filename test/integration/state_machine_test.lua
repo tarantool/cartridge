@@ -442,7 +442,7 @@ function g.test_fiber_cancel()
         end)
     })
 
-    t.assert_equals(future:wait_result(3), {true})
+    t.assert_equals(future:wait_result(5), {true})
     t.helpers.retrying({}, function()
         t.assert_equals(is_master(g.slave), false)
     end)
