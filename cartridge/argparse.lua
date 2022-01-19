@@ -160,7 +160,7 @@ local box_opts = {
     replication_connect_timeout = 'number', -- **number**
     replication_connect_quorum = 'number', -- **number**
     replication_skip_conflict = 'boolean', -- **boolean**
-    replication_synchro_quorum = 'number', -- **number**
+    replication_synchro_quorum = 'expression', -- **expression**
     replication_synchro_timeout = 'number', -- **number**
     feedback_enabled         = 'boolean', -- **boolean**
     feedback_host            = 'string', -- **string**
@@ -440,6 +440,11 @@ local function get_opts(opts)
                 _value = tonumber(value)
             elseif opttype == 'boolean' then
                 _value = toboolean(value)
+            elseif opttype == 'expression' then
+                _value = tonumber(value)
+                if _value == nil then
+                    _value = value
+                end
             else
                 return nil, TypeCastError:new(
                     "can't typecast %s to %s (unsupported type)",

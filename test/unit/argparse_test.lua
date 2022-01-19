@@ -409,3 +409,30 @@ function g.test_box_opts()
         [[TypeCastError: invalid configuration parameter readahead (number expected, got boolean)]]
     )
 end
+
+g.test_replication_quorum_opts = function()
+    utils.file_write(
+        fio.pathjoin(g.tempdir, 'cfg.yml'),
+        yaml.encode({
+            default = {
+                replication_synchro_quorum = 'N/3+5',
+            },
+        })
+    )
+
+    local box_opts, err = unpack(g.run('--cfg ./cfg.yml').box_opts)
+    t.assert_not(err)
+    t.assert_equals(box_opts, {
+        replication_synchro_quorum = 'N/3+5',
+    })
+
+    local function check(cmd_args, expected)
+        local ret = g.run(cmd_args, {'TARANTOOL_CFG=./cfg.yml'})
+        t.assert_equals(ret.args['cfg'], './cfg.yml')
+        ret.args['cfg'] = nil
+        t.assert_equals(ret.args, expected)
+    end
+
+    check('--replication-synchro-quorum 1', {replication_synchro_quorum = '1'})
+    check('--replication-synchro-quorum N/2+1', {replication_synchro_quorum = 'N/2+1'})
+end
