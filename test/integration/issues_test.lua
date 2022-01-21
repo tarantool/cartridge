@@ -252,6 +252,44 @@ g.after_test('test_replication_idle', function()
     end)
 end)
 
+function g.test_replication_high_lag()
+    g.master:exec(function()
+        rawset(_G, 'old_info_repl', box.info.replication)
+        local repl = table.deepcopy(_G.old_info_repl)
+        for _, v in ipairs(repl) do
+            if v.upstream then
+                v.upstream.lag = 50
+            end
+        end
+        rawset(box.info, 'replication', repl)
+    end)
+
+    t.assert_items_equals(helpers.list_cluster_issues(g.master), {
+        {
+            level = 'warning',
+            topic = 'replication',
+            message = 'Replication from localhost:13302 (replica1)' ..
+                ' to localhost:13301 (master): high lag (50 > 10)',
+            instance_uuid = g.master.instance_uuid,
+            replicaset_uuid = g.master.replicaset_uuid,
+        },
+        {
+            level = 'warning',
+            topic = 'replication',
+            message = 'Replication from localhost:13303 (replica2)' ..
+                ' to localhost:13301 (master): high lag (50 > 10)',
+            instance_uuid = g.master.instance_uuid,
+            replicaset_uuid = g.master.replicaset_uuid,
+        },
+    })
+end
+
+g.after_test('test_replication_high_lag', function()
+    g.master:exec(function()
+        rawset(box.info, 'replication', _G.old_info_repl)
+    end)
+end)
+
 function g.test_config_mismatch()
     g.replica2:eval([[
         local confapplier = require('cartridge.confapplier')
