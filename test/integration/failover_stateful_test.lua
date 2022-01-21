@@ -193,12 +193,14 @@ end
 
 local function after_each(g)
     g.cluster:wait_until_healthy(g.cluster.main_server)
-    local ok, err = R1:eval([[
-        local cartridge = require('cartridge')
-        local coordinator = cartridge.service_get('failover-coordinator')
-        return coordinator.appoint_leaders(...)
-    ]], {{[storage_uuid] = storage_1_uuid}})
-    t.assert_equals({ok, err}, {true, nil})
+    helpers.retrying({}, function()
+        local ok, err = R1:eval([[
+            local cartridge = require('cartridge')
+            local coordinator = cartridge.service_get('failover-coordinator')
+            return coordinator.appoint_leaders(...)
+        ]], {{[storage_uuid] = storage_1_uuid}})
+        t.assert_equals({ok, err}, {true, nil})
+    end)
 
     helpers.retrying({}, function()
         t.assert_equals(R1:eval(q_leadership), storage_1_uuid)
