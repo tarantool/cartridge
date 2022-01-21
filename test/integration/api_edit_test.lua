@@ -91,9 +91,9 @@ local function set_all_rw(replicaset_uuid, all_rw)
     })
 end
 
-g.setup = function()
+g.before_each(function()
     pcall(set_all_rw, helpers.uuid('b'), false)
-end
+end)
 
 function g.test_edit_server()
     local edit_server_req = function(vars)

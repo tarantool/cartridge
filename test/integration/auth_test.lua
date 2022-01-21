@@ -69,13 +69,13 @@ g.after_all = function()
     fio.rmtree(g.cluster.datadir)
 end
 
-g.setup = function()
+g.before_each(function()
     g.cluster.main_server:eval([[
         local cartridge = require('cartridge')
         local ok, err = cartridge.config_patch_clusterwide({users_acl = box.NULL})
         assert(ok, err)
     ]])
-end
+end)
 
 local function set_auth_enabled_internal(cluster, enabled)
     cluster.main_server:eval([[

@@ -4,7 +4,7 @@ local g = t.group()
 local helpers = require('test.helper')
 local fio = require('fio')
 
-function g.setup()
+g.before_each(function()
     g.server = t.Server:new({
         command = helpers.entrypoint('srv_empty'),
         workdir = fio.tempdir(),
@@ -14,12 +14,12 @@ function g.setup()
 
     g.server:start()
     helpers.retrying({}, t.Server.connect_net_box, g.server)
-end
+end)
 
-function g.teardown()
+g.after_each(function()
     g.server:stop()
     fio.rmtree(g.server.workdir)
-end
+end)
 
 local M = {}
 local function test_remotely(fn_name, fn)

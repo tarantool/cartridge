@@ -9,13 +9,13 @@ local errno = require('errno')
 local utils = require('cartridge.utils')
 local ClusterwideConfig = require('cartridge.clusterwide-config')
 
-g.setup = function()
+g.before_each(function()
     g.tempdir = fio.tempdir()
-end
+end)
 
-g.teardown = function()
+g.after_each(function()
     fio.rmtree(g.tempdir)
-end
+end)
 
 local function table_merge(t1, t2)
     local ret = table.copy(t1)
