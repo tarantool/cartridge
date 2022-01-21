@@ -4,10 +4,10 @@ local g = t.group()
 
 local helpers = require('test.helper')
 
-function g:setup()
-    self.datadir = fio.tempdir()
+g.before_each(function()
+    g.datadir = fio.tempdir()
 
-    self.servers = {}
+    g.servers = {}
 
     local cluster_cookie = require('digest').urandom(6):hex()
 
@@ -17,10 +17,10 @@ function g:setup()
         local advertise_port = 13310 + sn
         local alias = 'srv-' .. id
 
-        self.servers[id] = helpers.Server:new({
+        g.servers[id] = helpers.Server:new({
             alias = alias,
             command = helpers.entrypoint('srv_basic'),
-            workdir = fio.pathjoin(self.datadir, alias),
+            workdir = fio.pathjoin(g.datadir, alias),
             cluster_cookie = cluster_cookie,
             http_port = http_port,
             advertise_port = advertise_port,
@@ -34,28 +34,28 @@ function g:setup()
     add_server('b', 3)
     add_server('c', 4)
 
-    for _, server in pairs(self.servers) do
+    for _, server in pairs(g.servers) do
         server:start()
     end
 
-    for _, server in pairs(self.servers) do
+    for _, server in pairs(g.servers) do
         helpers.retrying({}, function() server:graphql({query = '{ servers { uri } }'}) end)
     end
-end
+end)
 
-function g:teardown()
-    for _, server in pairs(self.servers or {}) do
+g.after_each(function ()
+    for _, server in pairs(g.servers or {}) do
         server:stop()
     end
 
-    fio.rmtree(self.datadir)
-    self.servers = nil
-end
+    fio.rmtree(g.datadir)
+    g.servers = nil
+end)
 
-function g:test_bootstrap()
-    local a1 = self.servers['a1']
-    local b2 = self.servers['b2']
-    local b3 = self.servers['b3']
+function g.test_bootstrap()
+    local a1 = g.servers['a1']
+    local b2 = g.servers['b2']
+    local b3 = g.servers['b3']
 
     local response = a1:graphql({
         query = [[

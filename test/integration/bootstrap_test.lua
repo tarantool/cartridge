@@ -5,7 +5,7 @@ local g = t.group()
 
 local helpers = require('test.helper')
 
-g.teardown = function()
+g.after_each(function()
     if g.cluster then
         g.cluster:stop()
         g.cluster = nil
@@ -20,7 +20,7 @@ g.teardown = function()
         fio.rmtree(g.tempdir)
         g.tempdir = nil
     end
-end
+end)
 
 function g.test_cookie_change()
     g.tempdir = fio.tempdir()

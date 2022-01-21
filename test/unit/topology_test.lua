@@ -64,13 +64,13 @@ local function check_config(result, raw_new, raw_old)
     t.assert_equals(ok or err.err, result, 'Unexpected result')
 end
 
-function g.teardown()
+g.after_each(function ()
     membership.get_member = g.membership_backup.get_member
     membership.subscribe = g.membership_backup.subscribe
     membership.myself = g.membership_backup.myself
 
     pool.connect = g.pool_backup.connect
-end
+end)
 
 function g.mock_package()
     g.membership_backup.get_member = membership.get_member

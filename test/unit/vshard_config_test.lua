@@ -10,7 +10,7 @@ local helpers = require('test.helper')
 local t = require('luatest')
 local g = t.group()
 
-function g.setup()
+g.before_each(function ()
     g.server = t.Server:new({
         command = helpers.entrypoint('srv_empty'),
         workdir = fio.tempdir(),
@@ -20,12 +20,12 @@ function g.setup()
 
     g.server:start()
     helpers.retrying({}, t.Server.connect_net_box, g.server)
-end
+end)
 
-function g.teardown()
+g.after_each(function()
     g.server:stop()
     fio.rmtree(g.server.workdir)
-end
+end)
 
 local members = {
     ['localhost:3301'] = {
