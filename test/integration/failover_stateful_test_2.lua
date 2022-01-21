@@ -156,9 +156,6 @@ end
 g_stateboard.after_all(function() after_all(g_stateboard) end)
 g_etcd2.after_all(function() after_all(g_etcd2) end)
 
---g_stateboard.before_each(function() before_each(g_stateboard) end)
---g_etcd2.before_each(function() before_each(g_etcd2) end)
-
 local function add(name, fn)
     g_stateboard[name] = fn
     g_etcd2[name] = fn
