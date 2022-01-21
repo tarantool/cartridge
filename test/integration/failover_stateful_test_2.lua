@@ -62,9 +62,6 @@ local function setup_cluster(g)
     })
 
     C1 = g.cluster:server('core-1')
-    --S1 = g.cluster:server('storage-1')
-    --S2 = g.cluster:server('storage-2')
-    --S3 = g.cluster:server('storage-3')
 
     g.cluster:start()
 end
