@@ -86,16 +86,22 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        tarantool: ['1.10', '2.7', '2.8', '2.9']
+        tarantool: ['1.10', '2.7', '2.8', '2.9', 'latest']
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/setup-python@v2
         with:
           python-version: '3.9.8'
       - uses: actions/checkout@v2
-      - uses: tarantool/setup-tarantool@v1
+      - if: matrix.tarantool != 'latest'
+        uses: tarantool/setup-tarantool@v1
         with:
           tarantool-version: '${{ matrix.tarantool }}'
+
+      - if: matrix.tarantool == 'latest'
+        run: |
+          curl -L https://tarantool.io/fJPRtan/pre-release/2/installer.sh | bash
+          sudo apt-get -y install tarantool
 
       # Setup etcd
       - name: Install etcd
