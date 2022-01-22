@@ -372,12 +372,6 @@ add('test_leader_in_operation_error', function(g)
         local membership = require('membership')
         membership.set_payload('state', 'OperationError')
     end)
-    helpers.retrying({}, function()
-        t.assert_covers(
-            g.client:longpoll(3),
-            {[storage_uuid] = storage_2_uuid}
-        )
-    end)
 
     helpers.retrying({}, function()
         t.assert_equals(R1:eval(q_leadership), storage_2_uuid)
@@ -455,7 +449,7 @@ add('test_leader_promote', function(g)
 
     S2:stop()
     log.info('------------------------------------------------------')
-    helpers.retrying({}, function()
+    helpers.retrying({timeout = 15}, function()
         t.assert(g.client:get_session():get_coordinator())
         t.assert_equals(R1:eval(q_leadership), storage_1_uuid)
         t.assert_equals(S1:eval(q_leadership), storage_1_uuid)
