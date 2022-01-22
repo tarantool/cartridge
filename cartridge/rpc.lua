@@ -100,7 +100,7 @@ local function get_candidates(role_name, opts)
     local end_time = fiber.time() + opts.retry_timeout
     local patch_in_progress
     repeat
-        patch_in_progress = assert(twophase_vars.locks)['clusterwide']
+        patch_in_progress = (twophase_vars.locks or {})['clusterwide']
         if not patch_in_progress then
             break
         else

@@ -55,7 +55,7 @@ local fio = require('fio')
      fio.rmtree(g.cluster.datadir)
  end)
 
- g.test_config_mismatch = function()
+ g.test_get_candidates_config_locked = function()
      -- Assign role 'myrole' on B
      g.A1:call(
          'package.loaded.cartridge.admin_edit_topology',
