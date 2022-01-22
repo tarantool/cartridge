@@ -16,22 +16,24 @@ and this project adheres to
 Added
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- Add ``swim_period`` argument to the test-helpers.
+- ``swim_period`` argument to the test-helpers.
 
-- Add ``http_port``, ``http_host`` and ``webui_prefix`` to graphql and webui.
+- ``http_port``, ``http_host`` and ``webui_prefix`` to graphql and webui.
 
-- Add unit tests for the Failover modal.
+- Unit tests for the Failover modal.
 
-- Add ``get_servers`` and ``get_replicasets`` API
+- ``get_servers`` and ``get_replicasets`` API
 
-- Add logging of configuration options on start and boot instance.
+- Logging of configuration options on start and boot instance.
 
-- Add ``app_version`` field to graphql and webui. It filled from ``VERSION.lua`` file in the root of cartridge app.
+- ``app_version`` field to graphql and webui. It filled from ``VERSION.lua`` file in the root of cartridge app.
 
-- Add param ``opts`` to ``Server:upload_config`` in ``test-helpers`` and pass it to ``http_request``.
+- Parameter ``opts`` to ``Server:upload_config`` in ``test-helpers`` and pass it to ``http_request``.
 
-- Add setters ans getters for timeout options in ``twophase.lua``:
+- Setters ans getters for timeout options in ``twophase.lua``:
   ``netbox_call_timeout``, ``upload_config_timeout``, ``validate_config_timeout``, ``apply_config_timeout``.
+
+- ``retry_timeout`` and ``retry_delay`` to ``rpc.get_candidates``.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Changed
@@ -58,6 +60,8 @@ Changed
 - The new compact design of the Cluster page.
 
 - Update ``vshard`` to 0.1.19.
+
+- restrict RPC calls to work while clisterwide config.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed

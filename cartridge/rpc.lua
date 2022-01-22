@@ -7,6 +7,7 @@ local checks = require('checks')
 local errors = require('errors')
 local netbox = require('net.box')
 local membership = require('membership')
+local fiber = require('fiber')
 
 local pool = require('cartridge.pool')
 local utils = require('cartridge.utils')
@@ -15,6 +16,7 @@ local topology = require('cartridge.topology')
 local failover = require('cartridge.failover')
 local confapplier = require('cartridge.confapplier')
 local service_registry = require('cartridge.service-registry')
+local twophase_vars = require('cartridge.vars').new('cartridge.twophase')
 
 local RemoteCallError = errors.new_class('RemoteCallError')
 
@@ -76,15 +78,38 @@ local function get_candidates(role_name, opts)
     if opts.healthy_only == nil then
         opts.healthy_only = true
     end
+    if opts.retry_timeout == nil then
+        opts.retry_timeout = 3
+    end
+    if opts.retry_delay == nil then
+        opts.retry_delay = 0.1
+    end
 
     checks('string', {
         leader_only = '?boolean',
-        healthy_only = '?boolean'
+        healthy_only = '?boolean',
+        retry_delay = '?number',
+        retry_timeout = '?number',
     })
 
     local topology_cfg = confapplier.get_readonly('topology')
     if topology_cfg == nil then
         return {}
+    end
+
+    local end_time = fiber.time() + opts.retry_timeout
+    local patch_in_progress = true
+    repeat
+        patch_in_progress = assert(twophase_vars.locks)['clusterwide']
+        if not patch_in_progress then
+            break
+        else
+            fiber.sleep(opts.retry_delay)
+        end
+    until fiber.time() <= end_time
+
+    if patch_in_progress then
+        return nil, RemoteCallError:new('Twophase commit is in progress, try again later')
     end
 
     local servers = assert(topology_cfg.servers)
@@ -133,7 +158,10 @@ local function get_connection(role_name, opts)
         leader_only = '?boolean',
     })
 
-    local candidates = get_candidates(role_name, {leader_only = opts.leader_only})
+    local candidates, err = get_candidates(role_name, {leader_only = opts.leader_only})
+    if err then
+        return nil, err
+    end
     if next(candidates) == nil then
         return nil, RemoteCallError:new('No remotes with role %q available', role_name)
     end
