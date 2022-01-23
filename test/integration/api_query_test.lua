@@ -780,14 +780,14 @@ function g.test_stop_roles_on_shutdown()
     )
 end
 
-function g.test_get_top_level_roles()
+function g.test_get_enabled_roles_without_deps()
     local res = g.cluster:server('router'):exec(function()
-        return require('cartridge.lua-api.get-topology').get_top_level_roles()
+        return require('cartridge.lua-api.get-topology').get_enabled_roles_without_deps()
     end)
     t.assert_equals(res, {'vshard-router'})
 
     local res = g.cluster:server('storage'):exec(function()
-        return require('cartridge.lua-api.get-topology').get_top_level_roles()
+        return require('cartridge.lua-api.get-topology').get_enabled_roles_without_deps()
     end)
     t.assert_equals(res, {'vshard-storage'})
 end
