@@ -780,6 +780,18 @@ function g.test_stop_roles_on_shutdown()
     )
 end
 
+function g.test_get_top_level_roles()
+    local res = g.cluster:server('router'):exec(function()
+        return require('cartridge.lua-api.get-topology').get_top_level_roles()
+    end)
+    t.assert_equals(res, {'vshard-router'})
+
+    local res = g.cluster:server('storage'):exec(function()
+        return require('cartridge.lua-api.get-topology').get_top_level_roles()
+    end)
+    t.assert_equals(res, {'vshard-storage'})
+end
+
 function g.test_cartridge_get_topology_iproto()
     local res = g.cluster:server('router'):exec(function()
         require('membership').probe_uri('localhost:13303')

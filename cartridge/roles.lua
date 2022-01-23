@@ -217,21 +217,35 @@ end
 
 --- List top-level roles names.
 --
--- Dependencies of top-level roles, hidden roles are not listed as well as permanent ones.
+-- Dependencies of top-level roles of the replicaset,
+-- hidden roles are not listed as well as permanent ones.
 --
 -- @function get_enabled_roles_without_deps
 -- @local
 -- @treturn {string,..}
-local function get_enabled_roles_without_deps()
+local function get_enabled_roles_without_deps(roles)
+    checks('?table')
+    roles = roles or {}
+
     local list = {}
 
-    for _, role in ipairs(vars.roles_by_number) do
-        if not role.M.permanent
-        and not role.M.hidden
-        then
-            list[role.role_name] = true
-            for _, dep_role in ipairs(role.deps) do
-                list[dep_role.role_name] = nil
+    for k, v in pairs(roles) do
+        local role_name, enabled
+        if type(k) == 'number' and type(v) == 'string' then
+            role_name, enabled = v, true
+        else
+            role_name, enabled = k, v
+        end
+        if enabled then
+            local role = vars.roles_by_role_name[role_name]
+            if role ~= nil
+            and not role.M.permanent
+            and not role.M.hidden
+            then
+                list[role.role_name] = true
+                for _, dep_role in ipairs(role.deps) do
+                    list[dep_role.role_name] = nil
+                end
             end
         end
     end
