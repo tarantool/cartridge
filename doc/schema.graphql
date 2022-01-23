@@ -1,5 +1,5 @@
 # source: http://127.0.0.1:8081/admin/api
-# timestamp: Tue Dec 28 2021 15:43:30 GMT+0300 (Москва, стандартное время)
+# timestamp: Sun Jan 23 2022 18:13:12 GMT+0300 (Moscow Standard Time)
 
 """Custom scalar specification."""
 directive @specifiedBy(
@@ -551,10 +551,11 @@ type ReplicaStatus {
   upstream_idle: Float
   upstream_message: String
   lsn: Long
-  upstream_lag: Float
   upstream_status: String
+  upstream_lag: Float
   uuid: String!
   downstream_message: String
+  downstream_lag: Float
 }
 
 """A suggestion to restart malfunctioning replications"""
@@ -620,23 +621,14 @@ type ServerInfoCartridge {
 }
 
 type ServerInfoGeneral {
-  """Current working directory of a process"""
-  work_dir: String
-
-  """The number of seconds since the instance started"""
-  uptime: Float!
-
   """The Tarantool version"""
   version: String!
 
   """HTTP webui prefix"""
   webui_prefix: String
 
-  """HTTP host"""
-  http_host: String
-
-  """A globally unique identifier of the instance"""
-  instance_uuid: String!
+  """Current read-only state"""
+  ro: Boolean!
 
   """A directory where vinyl files or subdirectories will be stored"""
   vinyl_dir: String
@@ -650,14 +642,17 @@ type ServerInfoGeneral {
   """The Application version"""
   app_version: String
 
-  """A directory where memtx stores snapshot (.snap) files"""
-  memtx_dir: String
-
   """A directory where write-ahead log (.xlog) files are stored"""
   wal_dir: String
 
   """The binary protocol URI"""
   listen: String
+
+  """A globally unique identifier of the instance"""
+  instance_uuid: String!
+
+  """HTTP host"""
+  http_host: String
 
   """
   The maximum number of threads to use during execution of certain internal
@@ -665,11 +660,20 @@ type ServerInfoGeneral {
   """
   worker_pool_threads: Int
 
+  """Current read-only state reason"""
+  ro_reason: String
+
+  """The number of seconds since the instance started"""
+  uptime: Float!
+
+  """Current working directory of a process"""
+  work_dir: String
+
   """The UUID of the replica set"""
   replicaset_uuid: String!
 
-  """Current read-only state"""
-  ro: Boolean!
+  """A directory where memtx stores snapshot (.snap) files"""
+  memtx_dir: String
 }
 
 type ServerInfoMembership {
