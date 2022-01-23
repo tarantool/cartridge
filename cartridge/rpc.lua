@@ -14,6 +14,7 @@ local roles = require('cartridge.roles')
 local topology = require('cartridge.topology')
 local failover = require('cartridge.failover')
 local confapplier = require('cartridge.confapplier')
+local twophase = require('cartridge.twophase')
 local service_registry = require('cartridge.service-registry')
 
 local RemoteCallError = errors.new_class('RemoteCallError')
@@ -21,6 +22,16 @@ local RemoteCallError = errors.new_class('RemoteCallError')
 local function call_local(role_name, fn_name, args)
     checks('string', 'string', '?table')
     local role = service_registry.get(role_name)
+
+    if role == nil then
+        -- Optimistic approach.
+        -- Probably instance in apply config state so
+        -- we need to wait a bit until it finishes.
+        if twophase.wait_config_release()
+        and confapplier.wish_state('RolesConfigured') == 'RolesConfigured' then
+            role = service_registry.get(role_name)
+        end
+    end
 
     if role == nil then
         return nil, RemoteCallError:new('Role %q unavailable', role_name)
