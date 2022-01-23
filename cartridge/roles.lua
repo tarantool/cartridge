@@ -215,6 +215,34 @@ local function get_known_roles()
     return ret
 end
 
+--- List top-level roles names.
+--
+-- Dependencies of top-level roles, hidden roles are not listed as well as permanent ones.
+--
+-- @function get_enabled_roles_without_deps
+-- @local
+-- @treturn {string,..}
+local function get_enabled_roles_without_deps()
+    local list = {}
+
+    for _, role in ipairs(vars.roles_by_number) do
+        if not role.M.permanent
+        and not role.M.hidden
+        then
+            list[role.role_name] = true
+            for _, dep_role in ipairs(role.deps) do
+                list[dep_role.role_name] = nil
+            end
+        end
+    end
+
+    local ret = {}
+    for role_name, _ in pairs(list) do
+        table.insert(ret, role_name)
+    end
+    return ret
+end
+
 --- Roles to be enabled on the server.
 -- This function returns all roles that will be enabled
 -- including their dependencies (both hidden and not)
@@ -515,6 +543,7 @@ return {
     get_all_roles = get_all_roles,
     get_known_roles = get_known_roles,
     get_enabled_roles = get_enabled_roles,
+    get_enabled_roles_without_deps = get_enabled_roles_without_deps,
     get_role_dependencies = get_role_dependencies,
 
     validate_config = validate_config,

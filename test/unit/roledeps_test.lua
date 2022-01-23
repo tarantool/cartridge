@@ -158,6 +158,11 @@ function g.test_full_deps()
         'storage', 'role-c', 'role-d', 'role-b', 'role-a',
     })
 
+    local enabled_roles_wo_deps = roles.get_enabled_roles_without_deps()
+    t.assert_equals(enabled_roles_wo_deps, {
+        'failover-coordinator', 'storage', 'role-a', 'vshard-router',
+    })
+
     local enabled_roles = roles.get_enabled_roles({
         ['vshard-storage'] = false,
         ['storage'] = true,
