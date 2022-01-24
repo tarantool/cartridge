@@ -435,11 +435,7 @@ local function get_opts(opts)
         elseif type(value) == 'number' and opttype == 'string' then
             ret[optname] = tostring(value)
         elseif type(value) == 'string' then
-            local multi_types = opttype
-            if (string.find(opttype, '|') ~= nil) then
-                multi_types = string.gsub(opttype, ' ', '');
-            end
-
+            local multi_types = string.gsub(opttype, ' ', '');
             local continue = true
             local _value = nil
             local str_value = nil
