@@ -85,20 +85,22 @@ local function set_master(uuid, master_uuid)
 end
 
 local function set_all_rw(uuid, all_rw)
-    cluster.main_server:graphql({
-        query = [[
-            mutation(
-                $uuid: String!
-                $all_rw: Boolean!
-            ) {
-                edit_replicaset(
-                    uuid: $uuid
-                    all_rw: $all_rw
-                )
-            }
-        ]],
-        variables = {uuid = uuid, all_rw = all_rw}
-    })
+    helpers.retrying({}, function()
+        cluster.main_server:graphql({
+            query = [[
+                mutation(
+                    $uuid: String!
+                    $all_rw: Boolean!
+                ) {
+                    edit_replicaset(
+                        uuid: $uuid
+                        all_rw: $all_rw
+                    )
+                }
+            ]],
+            variables = {uuid = uuid, all_rw = all_rw}
+        })
+    end)
 end
 
 local function check_all_box_rw()
