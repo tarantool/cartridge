@@ -160,7 +160,7 @@ local box_opts = {
     replication_connect_timeout = 'number', -- **number**
     replication_connect_quorum = 'number', -- **number**
     replication_skip_conflict = 'boolean', -- **boolean**
-    replication_synchro_quorum = 'expression', -- **expression**
+    replication_synchro_quorum = 'string, number', -- **string, number**
     replication_synchro_timeout = 'number', -- **number**
     feedback_enabled         = 'boolean', -- **boolean**
     feedback_host            = 'string', -- **string**
@@ -435,28 +435,42 @@ local function get_opts(opts)
         elseif type(value) == 'number' and opttype == 'string' then
             ret[optname] = tostring(value)
         elseif type(value) == 'string' then
-            local _value
-            if opttype == 'number' then
-                _value = tonumber(value)
-            elseif opttype == 'boolean' then
-                _value = toboolean(value)
-            elseif opttype == 'expression' then
-                _value = tonumber(value)
-                if _value == nil then
-                    _value = value
+            local multi_types = opttype
+            if (string.find(opttype, ',') ~= nil) then
+                multi_types = string.gsub(opttype, ' ', '');
+            end
+
+            local continue = true
+            local _value = nil
+            local str_value = nil
+            for _opttype in string.gmatch(multi_types, "[^,]+") do
+                if continue then
+                    if _opttype == 'string' then
+                        str_value = tostring(value)
+                    elseif _opttype == 'number' then
+                        _value = tonumber(value)
+                    elseif _opttype == 'boolean' then
+                        _value = toboolean(value)
+                    else
+                        return nil, TypeCastError:new(
+                            "can't typecast %s to %s (unsupported type)",
+                            optname, _opttype
+                        )
+                    end
+                    if _value ~= nil then
+                        continue = false
+                    end
                 end
-            else
-                return nil, TypeCastError:new(
-                    "can't typecast %s to %s (unsupported type)",
-                    optname, opttype
-                )
             end
 
             if _value == nil then
-                return nil, TypeCastError:new(
-                    "can't typecast %s=%q to %s",
-                    optname, value, opttype
-                )
+                _value = str_value
+                if _value == nil then
+                    return nil, TypeCastError:new(
+                        "can't typecast %s=%q to %s",
+                        optname, value, opttype
+                    )
+                end
             end
 
             ret[optname] = _value

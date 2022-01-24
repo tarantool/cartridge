@@ -427,12 +427,10 @@ g.test_replication_quorum_opts = function()
     })
 
     local function check(cmd_args, expected)
-        local ret = g.run(cmd_args, {'TARANTOOL_CFG=./cfg.yml'})
-        t.assert_equals(ret.args['cfg'], './cfg.yml')
-        ret.args['cfg'] = nil
-        t.assert_equals(ret.args, expected)
+        local ret = g.run(cmd_args, {})
+        t.assert_equals(ret.box_opts, {expected})
     end
 
-    check('--replication-synchro-quorum 1', {replication_synchro_quorum = '1'})
+    check('--replication-synchro-quorum 1', {replication_synchro_quorum = 1})
     check('--replication-synchro-quorum N/2+1', {replication_synchro_quorum = 'N/2+1'})
 end
