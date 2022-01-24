@@ -436,7 +436,7 @@ local function get_opts(opts)
             ret[optname] = tostring(value)
         elseif type(value) == 'string' then
             local multi_types = opttype
-            if (string.find(opttype, ',') ~= nil) then
+            if (string.find(opttype, '|') ~= nil) then
                 multi_types = string.gsub(opttype, ' ', '');
             end
 
