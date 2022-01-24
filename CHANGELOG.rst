@@ -39,6 +39,10 @@ Added
 
 - Allow to extract filename from http request body (#1613).
 
+- Testing on Tarantool pre-release version.
+
+- box.info.ro_reason and box.info.replication.X.downstream.lag to boxinfo API.
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Changed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -74,8 +78,6 @@ Fixed
 - Fix the incorrect number of total buckets on the replication server in webui (#1176).
 
 - Fix GraphQL query ``auth_params.username`` returns empty string instead of ``username``.
-
-- Stateful failover triggers when instance is in OperationError state.
 
 - Flaky tests (#1538, #1569, #1590, #1594, #1599, #1602, #1656, #1657, #1658,
   #1664, #1671, #1681, #1682, #1683, #1703, #1709).
