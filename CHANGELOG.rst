@@ -43,6 +43,12 @@ Added
 
 - box.info.ro_reason and box.info.replication.X.downstream.lag to boxinfo API.
 
+- Add ability to set multiple types for Cartridge arguments.
+  Types are splitted by separator ``|``.
+  e.g. ``string | number``
+
+- Add string type for ``replication_synchro_quorum`` option to set quorum formula.
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Changed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
