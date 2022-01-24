@@ -308,7 +308,7 @@ function g.test_server_info_schema()
             table.concat(field_name_membership, ' '))
             -- workaround composite graphql type
                 :gsub('error', 'error { message }')
-                :gsub('replication_info', 'replication_info { id }')
+                :gsub('replication_info', 'replication_info { id upstream_lag downstream_lag }')
 
     local resp = router:graphql({
         query = query,

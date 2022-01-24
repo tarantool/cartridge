@@ -16,22 +16,32 @@ and this project adheres to
 Added
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- Add ``swim_period`` argument to the test-helpers.
+- ``swim_period`` argument to the test-helpers (#1592).
 
-- Add ``http_port``, ``http_host`` and ``webui_prefix`` to graphql and webui.
+- ``http_port``, ``http_host`` and ``webui_prefix`` to graphql and webui (#622, #1527).
 
-- Add unit tests for the Failover modal.
+- Unit tests for the Failover modal.
 
-- Add ``get_servers``, ``get_replicasets`` and ``get_enabled_roles_without_deps`` API.
+- Add ``get_servers``, ``get_replicasets`` and ``get_enabled_roles_without_deps`` API (#1624, #1722).
 
-- Add logging of configuration options on start and boot instance.
+- Logging of configuration options on start and boot instance (#1557).
 
-- Add ``app_version`` field to graphql and webui. It filled from ``VERSION.lua`` file in the root of cartridge app.
+- ``app_version`` field to graphql and webui. It filled from ``VERSION.lua`` file in the root of cartridge app (#1367).
 
-- Add param ``opts`` to ``Server:upload_config`` in ``test-helpers`` and pass it to ``http_request``.
+- Param ``opts`` to ``Server:upload_config`` in ``test-helpers`` and pass it to ``http_request`` (#1321).
 
-- Add setters ans getters for timeout options in ``twophase.lua``:
+- Setters ans getters for timeout options in ``twophase.lua`` (#1440):
   ``netbox_call_timeout``, ``upload_config_timeout``, ``validate_config_timeout``, ``apply_config_timeout``.
+
+- New tests cases (#892, #944, #1473).
+
+- ``test-helpers.cluster:server_by_role`` method (#1615).
+
+- Allow to extract filename from http request body (#1613).
+
+- Testing on Tarantool pre-release version.
+
+- box.info.ro_reason and box.info.replication.X.downstream.lag to boxinfo API.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Changed
@@ -39,7 +49,7 @@ Changed
 
 - Update ``http`` dependency to 1.2.0.
 
-- Allow to bootstrap vshard groups partially.
+- Allow to bootstrap vshard groups partially (#1148).
 
 - Use effector for business logic and storing Cluster page data (models folder).
 
@@ -53,7 +63,7 @@ Changed
 
 - Update ``graphql`` to 0.1.2.
 
-- Bind remote control socket to advertise_uri.
+- Bind remote control socket to ``advertise_uri`` (#1495).
 
 - The new compact design of the Cluster page.
 
@@ -63,13 +73,20 @@ Changed
 Fixed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- Fix joining an instance when leader is not the first instance from leaders_order.
+- Fix joining an instance when leader is not the first instance from leaders_order (#1204).
 
-- Fix the incorrect number of total buckets on the replication server in webui.
+- Fix the incorrect number of total buckets on the replication server in webui (#1176).
 
 - Fix GraphQL query ``auth_params.username`` returns empty string instead of ``username``.
 
-- Stateful failover triggers when instance is in OperationError state.
+- Flaky tests (#1538, #1569, #1590, #1594, #1599, #1602, #1656, #1657, #1658,
+  #1664, #1671, #1681, #1682, #1683, #1703, #1709).
+
+- Tests compatibility with tarantool/master (#1619).
+
+- Tests improvements on macOS (#1638).
+
+- ``fetch-schema`` script on macOS (#1628).
 
 -------------------------------------------------------------------------------
 [2.7.3] - 2021-10-27

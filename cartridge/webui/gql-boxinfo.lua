@@ -24,6 +24,7 @@ local gql_replica_status = gql_types.object({
         upstream_lag = gql_types.float,
         downstream_status = gql_types.string,
         downstream_message = gql_types.string,
+        downstream_lag = gql_types.float,
     },
 })
 
@@ -134,6 +135,10 @@ local boxinfo_schema = {
                     ro = {
                         kind = gql_types.boolean.nonNull,
                         description = 'Current read-only state',
+                    },
+                    ro_reason = {
+                        kind = gql_types.string,
+                        description = 'Current read-only state reason',
                     },
                 }
             }).nonNull,

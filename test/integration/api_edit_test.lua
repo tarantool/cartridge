@@ -266,7 +266,7 @@ local function test_all_rw(all_rw)
                 servers {
                     uuid
                     boxinfo {
-                        general { ro }
+                        general { ro ro_reason }
                     }
                 }
                 master {
@@ -285,8 +285,15 @@ local function test_all_rw(all_rw)
     for _, srv in pairs(replicaset['servers']) do
         if srv['uuid'] == replicaset['master']['uuid'] then
             t.assert_equals(srv['boxinfo']['general']['ro'], false)
+            -- https://github.com/tarantool/tarantool/issues/5568
+            if helpers.tarantool_version_ge('2.10.0') then
+                t.assert_equals(srv['boxinfo']['general']['ro_reason'], box.NULL)
+            end
         else
             t.assert_equals(srv['boxinfo']['general']['ro'], not all_rw)
+            if helpers.tarantool_version_ge('2.10.0') then
+                t.assert_equals(srv['boxinfo']['general']['ro_reason'], not all_rw and 'config' or box.NULL)
+            end
         end
     end
 end

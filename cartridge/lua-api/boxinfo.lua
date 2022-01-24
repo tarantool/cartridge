@@ -131,6 +131,7 @@ local function get_info(uri)
                 http_port = vars.http_port,
                 webui_prefix = vars.webui_prefix,
                 ro = box_info.ro,
+                ro_reason = box_info.ro_reason,
             },
             storage = {
                 -- wal
@@ -202,6 +203,7 @@ local function get_info(uri)
                 upstream_lag = replica.upstream and replica.upstream.lag,
                 downstream_status = replica.downstream and replica.downstream.status,
                 downstream_message = replica.downstream and replica.downstream.message,
+                downstream_lag = replica.downstream and replica.downstream.lag,
             } or box.NULL
         end
 
