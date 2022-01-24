@@ -26,7 +26,7 @@ Added
 
 - Add logging of configuration options on start and boot instance.
 
-- Add ``app_version`` field to graphql and webui. It filled from ``VERSION.lua`` file in the root of cartridge app.
+- Add ``app_version`` field to graphql and webui. It filled from ``VERSION.lua`` file in the root of cartridge app. 
 
 - Add param ``opts`` to ``Server:upload_config`` in ``test-helpers`` and pass it to ``http_request``.
 
@@ -34,6 +34,8 @@ Added
   ``netbox_call_timeout``, ``upload_config_timeout``, ``validate_config_timeout``, ``apply_config_timeout``.
 
 - Testing on Tarantool pre-release version.
+
+- box.info.ro_reason and box.info.replication.X.downstream.lag to boxinfo API.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Changed
@@ -65,13 +67,11 @@ Changed
 Fixed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- Fix joining an instance when leader is not the first instance from leaders_order.
+- Fix joining an instance when leader is not the first instance from leaders_order
 
 - Fix the incorrect number of total buckets on the replication server in webui.
 
 - Fix GraphQL query ``auth_params.username`` returns empty string instead of ``username``.
-
-- Stateful failover triggers when instance is in OperationError state.
 
 -------------------------------------------------------------------------------
 [2.7.3] - 2021-10-27
