@@ -22,7 +22,7 @@ Added
 
 - Unit tests for the Failover modal.
 
-- ``get_servers`` and ``get_replicasets`` API (#1624).
+- Add ``get_servers``, ``get_replicasets`` and ``get_enabled_roles_without_deps`` API (#1624, #1722).
 
 - Logging of configuration options on start and boot instance (#1557).
 

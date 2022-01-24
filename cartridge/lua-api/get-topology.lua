@@ -278,8 +278,26 @@ local function get_replicasets()
     return replicasets
 end
 
+local function get_enabled_roles_without_deps()
+    local vars = require('cartridge.vars').new('cartridge.confapplier')
+    local topology_cfg = confapplier.get_readonly('topology')
+    if topology_cfg == nil then
+        topology_cfg = {
+            replicasets = {},
+        }
+    end
+
+    local rs = topology_cfg.replicasets[vars.replicaset_uuid]
+    if rs ~= nil and rs.roles ~= nil then
+        return roles.get_enabled_roles_without_deps(rs.roles)
+    end
+
+    return {}
+end
+
 return {
     get_topology = get_topology,
     get_servers = get_servers,
     get_replicasets = get_replicasets,
+    get_enabled_roles_without_deps = get_enabled_roles_without_deps,
 }

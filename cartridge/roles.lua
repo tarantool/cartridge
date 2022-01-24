@@ -215,6 +215,48 @@ local function get_known_roles()
     return ret
 end
 
+--- List top-level roles names.
+--
+-- Dependencies of top-level roles of the replicaset,
+-- hidden roles are not listed as well as permanent ones.
+--
+-- @function get_enabled_roles_without_deps
+-- @local
+-- @treturn {string,..}
+local function get_enabled_roles_without_deps(roles)
+    checks('?table')
+    roles = roles or {}
+
+    local list = {}
+
+    for k, v in pairs(roles) do
+        local role_name, enabled
+        if type(k) == 'number' and type(v) == 'string' then
+            role_name, enabled = v, true
+        else
+            role_name, enabled = k, v
+        end
+        if enabled then
+            local role = vars.roles_by_role_name[role_name]
+            if role ~= nil
+            and not role.M.permanent
+            and not role.M.hidden
+            then
+                list[role.role_name] = true
+                for _, dep_role in ipairs(role.deps) do
+                    list[dep_role.role_name] = nil
+                end
+            end
+        end
+    end
+
+    local ret = {}
+    for role_name, _ in pairs(list) do
+        table.insert(ret, role_name)
+    end
+    return ret
+end
+
 --- Roles to be enabled on the server.
 -- This function returns all roles that will be enabled
 -- including their dependencies (both hidden and not)
@@ -515,6 +557,7 @@ return {
     get_all_roles = get_all_roles,
     get_known_roles = get_known_roles,
     get_enabled_roles = get_enabled_roles,
+    get_enabled_roles_without_deps = get_enabled_roles_without_deps,
     get_role_dependencies = get_role_dependencies,
 
     validate_config = validate_config,
