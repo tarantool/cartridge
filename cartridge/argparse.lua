@@ -160,7 +160,7 @@ local box_opts = {
     replication_connect_timeout = 'number', -- **number**
     replication_connect_quorum = 'number', -- **number**
     replication_skip_conflict = 'boolean', -- **boolean**
-    replication_synchro_quorum = 'string, number', -- **string, number**
+    replication_synchro_quorum = 'string|number', -- **string, number**
     replication_synchro_timeout = 'number', -- **number**
     feedback_enabled         = 'boolean', -- **boolean**
     feedback_host            = 'string', -- **string**
@@ -443,7 +443,7 @@ local function get_opts(opts)
             local continue = true
             local _value = nil
             local str_value = nil
-            for _opttype in string.gmatch(multi_types, "[^,]+") do
+            for _opttype in string.gmatch(multi_types, "[^|]+") do
                 if continue then
                     if _opttype == 'string' then
                         str_value = tostring(value)
