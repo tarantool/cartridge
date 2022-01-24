@@ -100,7 +100,7 @@ jobs:
 
       - if: matrix.tarantool == 'latest'
         run: |
-          curl -L https://tarantool.io/fJPRtan/pre-release/2/installer.sh | bash
+          curl -L https://tarantool.io/pre-release/2/installer.sh | bash
           sudo apt-get -y install tarantool
 
       # Setup etcd
