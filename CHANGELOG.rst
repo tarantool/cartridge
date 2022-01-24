@@ -33,6 +33,8 @@ Added
 - Add setters ans getters for timeout options in ``twophase.lua``:
   ``netbox_call_timeout``, ``upload_config_timeout``, ``validate_config_timeout``, ``apply_config_timeout``.
 
+- Testing on Tarantool pre-release version.
+
 - box.info.ro_reason and box.info.replication.X.downstream.lag to boxinfo API.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
