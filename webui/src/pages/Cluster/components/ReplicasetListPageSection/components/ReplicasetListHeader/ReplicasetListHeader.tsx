@@ -27,7 +27,7 @@ const ReplicasetListHeader = ({ filter, onFilterChange }: ReplicasetListHeaderPr
   return (
     <div className={styles.root} data-component="ReplicasetListHeader">
       <CountHeaderWrapper className={styles.counters}>
-        <CountHeader data-type="total-instances" counter={total.replicasets} />
+        <CountHeader data-type="total-replicasets" counter={total.replicasets} />
         <CountHeader data-type="unhealthy-replicasets" counter={unhealthy.replicasets} />
         <CountHeaderDelimiter />
         <CountHeader data-type="total-instances" counter={total.instances} />
