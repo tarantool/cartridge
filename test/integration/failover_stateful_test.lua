@@ -368,9 +368,15 @@ end)
 add('test_leader_in_operation_error', function(g)
     g.client:longpoll(0)
 
+    -- imitate OperationError
     S1:exec(function()
-        local membership = require('membership')
-        membership.set_payload('state', 'OperationError')
+        local confapplier = require('cartridge.confapplier')
+        confapplier.set_state('ConfiguringRoles')
+        local state = confapplier.wish_state('ConfiguringRoles')
+        assert(state == 'ConfiguringRoles', state)
+        confapplier.set_state('OperationError')
+        local state = confapplier.wish_state('OperationError')
+        assert(state == 'OperationError', state)
     end)
     helpers.retrying({}, function()
         t.assert_covers(
@@ -391,12 +397,18 @@ add('test_leader_in_operation_error', function(g)
         t.assert_equals(S3:eval(q_readonliness), true)
     end)
 
-    -----------------------------------------------------
-    -- After old s1 recovers it doesn't take leadership
-    S1:exec(function()
-        local membership = require('membership')
-        membership.set_payload('state', 'RolesConfigured')
-    end)
+    -- Since instance is in OperationError, we shoud force reapply config
+    g.cluster.main_server:graphql({
+        query = [[
+            mutation ($uuids: [String!]) {
+                cluster { config_force_reapply(uuids: $uuids) }
+            }
+        ]],
+        variables = {uuids = {
+            S1.instance_uuid,
+        }}
+    })
+
     helpers.protect_from_rw(S1)
 
     g.cluster:wait_until_healthy(g.cluster.main_server)
