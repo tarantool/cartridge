@@ -41,7 +41,10 @@ Added
 
 - Testing on Tarantool pre-release version.
 
-- box.info.ro_reason and box.info.replication.X.downstream.lag to boxinfo API.
+- ``box.info.ro_reason`` and ``box.info.replication.X.downstream.lag`` to boxinfo API (#1721).
+
+- Ability to set multiple types for Cartridge arguments.
+  Types are split by separator ``|``,  e.g. ``string|number`` (#1651).
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Changed
@@ -68,6 +71,8 @@ Changed
 - The new compact design of the Cluster page.
 
 - Update ``vshard`` to 0.1.19.
+
+- Change type of ``replication_synchro_quorum`` in argparse to ``string|number``.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
