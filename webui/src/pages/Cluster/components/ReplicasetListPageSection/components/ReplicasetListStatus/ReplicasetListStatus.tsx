@@ -15,18 +15,7 @@ export interface ReplicasetListStatusProps {
 }
 
 const ReplicasetListStatus = ({ status, statusMessage, message }: ReplicasetListStatusProps) => {
-  let state = 'bad';
-  switch (status.toLocaleLowerCase()) {
-    case 'loading':
-    case 'configuring roles':
-    case 'connecting fullmesh':
-      state = 'middle';
-      break;
-    case 'healthy':
-      state = 'good';
-      break;
-  }
-
+  const state = status.toLocaleLowerCase() === 'healthy' ? 'good' : 'bad';
   const label = statusMessage || status;
 
   if (!status || !label) {
