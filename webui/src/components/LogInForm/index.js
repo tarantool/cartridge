@@ -22,8 +22,8 @@ import { logIn } from 'src/store/actions/auth.actions';
 import logo from '../../assets/tarantool-logo-full.svg';
 
 const schema = yup.object().shape({
-  username: yup.string().required(),
-  password: yup.string().required(),
+  username: yup.string().required('Login is a required field'),
+  password: yup.string().required('Password is a required field'),
 });
 
 const styles = {
@@ -91,7 +91,7 @@ class LogInForm extends React.Component {
           isAgreeChecked: false,
         }}
       >
-        {({ values, errors, touched, handleChange, handleBlur }) => {
+        {({ values, errors, touched, handleChange }) => {
           const isLoginEnabled = welcomeMessage ? values['isAgreeChecked'] : !welcomeMessageExpected;
 
           return (
@@ -104,7 +104,6 @@ class LogInForm extends React.Component {
                   </>
                 }
                 value={values.username}
-                onBlur={handleBlur}
                 onChange={handleChange}
                 name="username"
                 error={touched.username && !!errors.username}
@@ -117,7 +116,6 @@ class LogInForm extends React.Component {
                   </>
                 }
                 value={values.password}
-                onBlur={handleBlur}
                 onChange={handleChange}
                 inputComponent={InputPassword}
                 name="password"
