@@ -93,6 +93,8 @@ Fixed
 
 - ``fetch-schema`` script on macOS (#1628).
 
+- Stateful failover triggers when instance is in OperationError state (#1139).
+
 - Fix ``rpc_call`` failure in case if the role hasn't been activated yet on target instance (#1575).
 
 -------------------------------------------------------------------------------

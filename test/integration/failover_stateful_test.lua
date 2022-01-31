@@ -191,6 +191,26 @@ local function add(name, fn)
     g_etcd2[name] = fn
 end
 
+local function after_each(g)
+    g.cluster:wait_until_healthy(g.cluster.main_server)
+    helpers.retrying({}, function()
+        local ok, err = R1:eval([[
+            local cartridge = require('cartridge')
+            local coordinator = cartridge.service_get('failover-coordinator')
+            return coordinator.appoint_leaders(...)
+        ]], {{[storage_uuid] = storage_1_uuid}})
+        t.assert_equals({ok, err}, {true, nil})
+    end)
+
+    helpers.retrying({}, function()
+        t.assert_equals(R1:eval(q_leadership), storage_1_uuid)
+        t.assert_equals(S1:eval(q_leadership), storage_1_uuid)
+        t.assert_equals(S2:eval(q_leadership), storage_1_uuid)
+        t.assert_equals(S3:eval(q_leadership), storage_1_uuid)
+    end)
+end
+g_stateboard.after_each(function() after_each(g_stateboard) end)
+g_etcd2.after_each(function() after_each(g_etcd2) end)
 
 add('test_state_provider_restart', function(g)
     g.state_provider:stop()
@@ -343,24 +363,67 @@ add('test_leader_restart', function(g)
     t.assert_equals(S3:eval(q_leadership), storage_2_uuid)
 
     helpers.unprotect(S1)
-    -----------------------------------------------------
-    -- Switching leadership is accomplished by the coordinator rpc
+end)
 
-    log.info('--------------------------------------------------------')
-    g.cluster:wait_until_healthy(g.cluster.main_server)
-    local ok, err = R1:eval([[
-        local cartridge = require('cartridge')
-        local coordinator = cartridge.service_get('failover-coordinator')
-        return coordinator.appoint_leaders(...)
-    ]], {{[storage_uuid] = storage_1_uuid}})
-    t.assert_equals({ok, err}, {true, nil})
+add('test_leader_in_operation_error', function(g)
+    g.client:longpoll(0)
+
+    -- imitate OperationError
+    S1:exec(function()
+        local confapplier = require('cartridge.confapplier')
+        confapplier.set_state('ConfiguringRoles')
+        local state = confapplier.wish_state('ConfiguringRoles')
+        assert(state == 'ConfiguringRoles', state)
+        confapplier.set_state('OperationError')
+        local state = confapplier.wish_state('OperationError')
+        assert(state == 'OperationError', state)
+    end)
+    helpers.retrying({}, function()
+        t.assert_covers(
+            g.client:longpoll(3),
+            {[storage_uuid] = storage_2_uuid}
+        )
+    end)
 
     helpers.retrying({}, function()
-        t.assert_equals(R1:eval(q_leadership), storage_1_uuid)
-        t.assert_equals(S1:eval(q_leadership), storage_1_uuid)
-        t.assert_equals(S2:eval(q_leadership), storage_1_uuid)
-        t.assert_equals(S3:eval(q_leadership), storage_1_uuid)
+        t.assert_equals(R1:eval(q_leadership), storage_2_uuid)
+        t.assert_equals(S2:eval(q_leadership), storage_2_uuid)
+        t.assert_equals(S3:eval(q_leadership), storage_2_uuid)
     end)
+
+    helpers.retrying({}, function()
+        t.assert_equals(R1:eval(q_readonliness), false)
+        t.assert_equals(S2:eval(q_readonliness), false)
+        t.assert_equals(S3:eval(q_readonliness), true)
+    end)
+
+    -- Since instance is in OperationError, we shoud force reapply config
+    g.cluster.main_server:graphql({
+        query = [[
+            mutation ($uuids: [String!]) {
+                cluster { config_force_reapply(uuids: $uuids) }
+            }
+        ]],
+        variables = {uuids = {
+            S1.instance_uuid,
+        }}
+    })
+
+    helpers.protect_from_rw(S1)
+
+    g.cluster:wait_until_healthy(g.cluster.main_server)
+
+    t.assert_equals(R1:eval(q_leadership), storage_2_uuid)
+    t.assert_equals(S1:eval(q_leadership), storage_2_uuid)
+    t.assert_equals(S2:eval(q_leadership), storage_2_uuid)
+    t.assert_equals(S3:eval(q_leadership), storage_2_uuid)
+
+    t.assert_equals(R1:eval(q_readonliness), false)
+    t.assert_equals(S1:eval(q_readonliness), true)
+    t.assert_equals(S2:eval(q_readonliness), false)
+    t.assert_equals(S3:eval(q_readonliness), true)
+
+    helpers.unprotect(S1)
 end)
 
 local q_promote = [[
