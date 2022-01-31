@@ -93,6 +93,8 @@ Fixed
 
 - ``fetch-schema`` script on macOS (#1628).
 
+- Fix ``rpc_call`` failure in case if the role hasn't been activated yet on target instance (#1575).
+
 -------------------------------------------------------------------------------
 [2.7.3] - 2021-10-27
 -------------------------------------------------------------------------------
