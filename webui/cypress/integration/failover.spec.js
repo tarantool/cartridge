@@ -342,7 +342,7 @@ describe('Failover', () => {
     ////////////////////////////////////////////////////////////////////
     cy.log('Check issues');
     ////////////////////////////////////////////////////////////////////
-    cy.contains('Replica Sets');
+    cy.contains('Replicasets');
     cy.get('.meta-test__ClusterIssuesButton').should('be.enabled');
     cy.get('.meta-test__ClusterIssuesButton').contains('Issues: 4');
     cy.get('.meta-test__ClusterIssuesButton').click();

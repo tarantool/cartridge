@@ -1,1 +1,1 @@
-export { default } from './UnconfiguredServerListPageSection';
+export { default } from './UnconfiguredInstancesListPageSection';

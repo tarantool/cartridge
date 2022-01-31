@@ -62,7 +62,7 @@ describe('Replicaset filtering', () => {
     ////////////////////////////////////////////////////////////////////
     cy.log('Dashboard filtering');
     ////////////////////////////////////////////////////////////////////
-    cy.contains('Replica Sets');
+    cy.contains('Replicasets');
 
     // Healthy
     cy.get('button[type="button"]:contains(Filter)').click();

@@ -74,7 +74,7 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     cy.title().should('eq', 'dummy-1: Cluster');
     cy.testScreenshots('3UnconfiguredServers');
     cy.get('.meta-test__UnconfiguredServerList').contains(':13301').closest('li').find('.meta-test__youAreHereIcon');
-    cy.get('.meta-tarantool-app').contains('Unconfigured Servers 3');
+    cy.get('.meta-tarantool-app').contains('Total unconfigured instances3');
     cy.get('.meta-test__UnconfiguredServerList li').should('have.length', 3);
 
     ////////////////////////////////////////////////////////////////////
@@ -150,7 +150,7 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     cy.get('.meta-test__BootstrapPanel__vshard-storage_enabled').should('exist');
 
     // Check health state
-    cy.get('.meta-tarantool-app').contains('Unconfigured Servers 2');
+    cy.get('.meta-tarantool-app').contains('Total unconfigured instances2');
     cy.get('.meta-test__UnconfiguredServerList li').should('have.length', 2);
 
     // cy.get('.meta-tarantool-app').contains('Healthy 1');
@@ -251,9 +251,9 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     cy.get('.meta-test__ReplicasetList_allRw_enabled').should('have.length', 2);
 
     // Check health state
-    cy.get('section').eq(0).contains('Unconfigured Servers 1');
+    cy.get('section').eq(0).contains('Total unconfigured instances1');
     cy.get('.meta-test__UnconfiguredServerList').should('have.length', 1);
-    cy.get('[data-component=ReplicasetListHeader]').contains('Healthy2');
+    cy.get('[data-component=ReplicasetListHeader]').contains('Total replicasets2');
     cy.get('[data-cy=meta-test__replicaSetSection]').eq(0).contains('healthy');
     cy.get('.ServerLabelsHighlightingArea').eq(0).contains('healthy');
     cy.get('.ServerLabelsHighlightingArea').eq(1).contains('healthy');
@@ -338,7 +338,7 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     cy.get('span:contains(Successful) + span:contains(Join is OK. Please wait for list refresh...) + svg').click();
 
     //Check health state
-    cy.get('[data-component=ReplicasetListHeader]').contains('Healthy2');
+    cy.get('[data-component=ReplicasetListHeader]').contains('Total replicasets2');
     cy.get('[data-cy=meta-test__replicaSetSection]').eq(0).contains('healthy');
     cy.get('.ServerLabelsHighlightingArea').eq(0).contains('healthy');
     cy.get('[data-cy=meta-test__replicaSetSection]').eq(1).contains('healthy');
@@ -409,7 +409,7 @@ describe('Replicaset configuration & Bootstrap Vshard', () => {
     cy.get('span').contains('No notifications');
 
     //Check health state
-    cy.get('[data-component=ReplicasetListHeader]').contains('Healthy2');
+    cy.get('[data-component=ReplicasetListHeader]').contains('Total replicasets2');
     cy.get('[data-cy=meta-test__replicaSetSection]').eq(0).contains('healthy');
     cy.get('.ServerLabelsHighlightingArea').eq(0).contains('healthy');
     cy.get('[data-cy=meta-test__replicaSetSection]').eq(1).contains('healthy');

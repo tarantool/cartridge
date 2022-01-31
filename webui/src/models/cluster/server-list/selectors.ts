@@ -188,19 +188,32 @@ export const serverListCounts = (data: ServerList) =>
 
 export const replicasetCounts = (data: ServerList) =>
   replicasetList(data).reduce(
-    (acc, item) => {
-      if (item) {
-        acc.total++;
-        if (item.status !== 'healthy') {
-          acc.unhealthy++;
+    (acc, replicaset) => {
+      if (replicaset) {
+        acc.total.replicasets++;
+        if (replicaset.status !== 'healthy') {
+          acc.unhealthy.replicasets++;
         } else {
-          acc.healthy++;
+          acc.healthy.replicasets++;
         }
+
+        replicaset.servers.forEach((instance) => {
+          acc.total.instances++;
+          if (instance.status !== 'healthy') {
+            acc.unhealthy.instances++;
+          } else {
+            acc.healthy.instances++;
+          }
+        });
       }
 
       return acc;
     },
-    { total: 0, healthy: 0, unhealthy: 0 }
+    {
+      total: { replicasets: 0, instances: 0 },
+      healthy: { replicasets: 0, instances: 0 },
+      unhealthy: { replicasets: 0, instances: 0 },
+    }
   );
 
 // search

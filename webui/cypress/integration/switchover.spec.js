@@ -84,7 +84,7 @@ describe('Leader promotion tests', () => {
     ////////////////////////////////////////////////////////////////////
     cy.visit(Cypress.config('baseUrl') + '/admin/cluster/dashboard');
     cy.testScreenshots('Dashboard');
-    cy.contains('Replica Sets');
+    cy.contains('Replicasets');
     cy.get('.meta-test__FailoverButton').should('be.visible');
     cy.get('.meta-test__FailoverButton').contains('Failover: disabled');
 

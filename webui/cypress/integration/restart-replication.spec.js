@@ -58,7 +58,7 @@ describe('Disable server', () => {
     );
 
     //Check health state for Servers and  ReplicaSet
-    cy.get('[data-component=ReplicasetListHeader]').contains('Healthy1');
+    cy.get('[data-component=ReplicasetListHeader]').contains('Total replicasets1');
     cy.get('[data-cy=meta-test__replicaSetSection]').contains('have issues');
     cy.get('.ServerLabelsHighlightingArea').eq(0).contains('healthy');
     cy.get('.ServerLabelsHighlightingArea').eq(1).contains('healthy');
