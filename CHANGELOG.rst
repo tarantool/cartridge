@@ -41,7 +41,10 @@ Added
 
 - Testing on Tarantool pre-release version.
 
-- box.info.ro_reason and box.info.replication.X.downstream.lag to boxinfo API.
+- ``box.info.ro_reason`` and ``box.info.replication.X.downstream.lag`` to boxinfo API (#1721).
+
+- Ability to set multiple types for Cartridge arguments.
+  Types are split by separator ``|``,  e.g. ``string|number`` (#1651).
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Changed
@@ -69,6 +72,8 @@ Changed
 
 - Update ``vshard`` to 0.1.19.
 
+- Change type of ``replication_synchro_quorum`` in argparse to ``string|number``.
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -89,6 +94,8 @@ Fixed
 - ``fetch-schema`` script on macOS (#1628).
 
 - Stateful failover triggers when instance is in OperationError state (#1139).
+
+- Fix ``rpc_call`` failure in case if the role hasn't been activated yet on target instance (#1575).
 
 -------------------------------------------------------------------------------
 [2.7.3] - 2021-10-27

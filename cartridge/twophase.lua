@@ -7,6 +7,7 @@
 local log = require('log')
 local fio = require('fio')
 local fun = require('fun')
+local fiber = require('fiber')
 local yaml = require('yaml').new()
 local errno = require('errno')
 local errors = require('errors')
@@ -35,6 +36,7 @@ yaml.cfg({
 
 vars:new('locks', {})
 vars:new('prepared_config', nil)
+vars:new('prepared_config_release_notification', fiber.cond())
 vars:new('on_patch_triggers', {})
 
 vars:new('options', {
@@ -43,6 +45,13 @@ vars:new('options', {
     validate_config_timeout = 10,
     apply_config_timeout = 10,
 })
+
+local function release_config_lock()
+    local prepared_config = vars.prepared_config
+    vars.prepared_config = nil
+    vars.prepared_config_release_notification:broadcast()
+    return prepared_config
+end
 
 local function set_netbox_call_timeout(timeout)
     checks('number')
@@ -78,6 +87,38 @@ end
 
 local function get_apply_config_timeout()
     return vars.options.apply_config_timeout
+end
+
+--- Wait until config won't released.
+--
+-- Two-phase commit starts with config preparation. It's just
+-- config pin into "vars.prepared_config". After it using this value
+-- we could determine is two-phase commit is started or not.
+-- This function allows to wait when two-phase commit will be
+-- finished (successfully or not).
+--
+-- @function wait_config_release
+-- @local
+-- @tparam number timeout
+-- @treturn[1] boolean true in case of success and false otherwise
+local function wait_config_release(timeout)
+    if timeout == nil then
+        timeout = vars.options.apply_config_timeout
+    end
+
+    local deadline = fiber.clock() + timeout
+    while fiber.clock() < deadline do
+        if vars.prepared_config == nil then
+            -- Released
+            break
+        end
+        local t = deadline - fiber.clock()
+        if t < 0 then
+            t = 0
+        end
+        vars.prepared_config_release_notification:wait(t)
+    end
+    return vars.prepared_config == nil
 end
 
 --- Two-phase commit - preparation stage.
@@ -185,16 +226,18 @@ local function commit_2pc()
         end
     end
 
-    -- Release the lock
-    local prepared_config = vars.prepared_config
-    vars.prepared_config = nil
-
+    local err
     local ok = fio.rename(path_prepare, path_active)
     if not ok then
-        local err = Commit2pcError:new(
+        err = Commit2pcError:new(
             "Can't move %q: %s", path_prepare, errno.strerror()
         )
         log.error('%s', err)
+    end
+
+    -- Release the lock
+    local prepared_config = release_config_lock()
+    if err ~= nil then
         return nil, err
     end
 
@@ -234,7 +277,7 @@ local function abort_2pc()
     local workdir = confapplier.get_workdir()
     local path_prepare = fio.pathjoin(workdir, 'config.prepare')
     ClusterwideConfig.remove(path_prepare)
-    vars.prepared_config = nil
+    release_config_lock()
     return true
 end
 
@@ -278,7 +321,7 @@ local function reapply(data)
         end
     end
 
-    vars.prepared_config = nil
+    release_config_lock()
 
     local ok = fio.rename(path_prepare, path_active)
     if not ok then
@@ -853,6 +896,7 @@ return {
     get_validate_config_timeout = get_validate_config_timeout,
     set_apply_config_timeout = set_apply_config_timeout,
     get_apply_config_timeout = get_apply_config_timeout,
+    wait_config_release = wait_config_release,
     -- Cartridge supports backward compatibility but not the forward
     -- one. Thus operations that modify clusterwide config should be
     -- performed by instances with the lowest twophase version. This

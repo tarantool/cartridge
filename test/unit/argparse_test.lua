@@ -166,7 +166,7 @@ g.test_sections = function()
     )
 end
 
-function g.test_priority()
+g.test_priority = function()
     utils.file_write(
         fio.pathjoin(g.tempdir, 'x.yml'),
         yaml.encode({
@@ -232,7 +232,7 @@ g.test_overrides = function()
     check('', {"TARANTOOL_A1=O1", "TARANTOOL_A1=O2"}, {a1 = 'O2', b2 = 2.2})
 end
 
-function g.test_appname()
+g.test_appname = function()
     utils.file_write(
         fio.pathjoin(g.tempdir, 'cfg.yml'),
         yaml.encode({
@@ -261,7 +261,7 @@ function g.test_appname()
     check('--app-name otherapp', {app_name = 'otherapp', y = '@otherapp'})
 end
 
-function g.test_confdir()
+g.test_confdir = function()
     local confd = fio.pathjoin(g.tempdir, 'conf.d')
     fio.mkdir(confd)
     utils.file_write(
@@ -333,7 +333,7 @@ g.test_badfile = function()
     t.assert_str_contains(ret.err, 'ParseConfigError: Missing section: app_name.harry')
 end
 
-function g.test_box_opts()
+g.test_box_opts = function()
     utils.file_write(
         fio.pathjoin(g.tempdir, 'cfg.yml'),
         yaml.encode({
@@ -408,4 +408,29 @@ function g.test_box_opts()
     check_err('--cfg ./cfg.yml --instance-name boolean_to_number',
         [[TypeCastError: invalid configuration parameter readahead (number expected, got boolean)]]
     )
+end
+
+g.test_replication_quorum_opts = function()
+    utils.file_write(
+        fio.pathjoin(g.tempdir, 'cfg.yml'),
+        yaml.encode({
+            default = {
+                replication_synchro_quorum = 'N/3+5',
+            },
+        })
+    )
+
+    local box_opts, err = unpack(g.run('--cfg ./cfg.yml').box_opts)
+    t.assert_not(err)
+    t.assert_equals(box_opts, {
+        replication_synchro_quorum = 'N/3+5',
+    })
+
+    local function check(cmd_args, expected)
+        local ret = g.run(cmd_args, {})
+        t.assert_equals(ret.box_opts, {expected})
+    end
+
+    check('--replication-synchro-quorum 1', {replication_synchro_quorum = 1})
+    check('--replication-synchro-quorum N/2+1', {replication_synchro_quorum = 'N/2+1'})
 end

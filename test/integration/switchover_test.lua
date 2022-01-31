@@ -729,11 +729,12 @@ add('test_api', function(g)
     })
 
     -- Revert all hacks in fixtures
-    A1:eval(
-        [[require("cartridge").admin_edit_topology(...)]],
-        {{replicasets = {{uuid = uA, roles = {}}}}}
-    )
-    t.assert_equals(g.session:get_coordinator(), box.NULL)
+    helpers.retrying({}, function()
+        A1:exec(function(...)
+            require("cartridge").admin_edit_topology(...)
+        end, {{replicasets = {{uuid = uA, roles = {}}}}})
+        t.assert_equals(g.session:get_coordinator(), box.NULL)
+    end)
 end)
 
 add('test_all_rw', function(g)
