@@ -26,6 +26,74 @@ describe('Auth', () => {
     cy.task('tarantool', { code: `cleanup()` });
   });
 
+  const email = 'testUser@mail.ru';
+  const password = '12345678_Ujl';
+  const username = 'testUser';
+  const fullname = '';
+
+  function addUserWithAPI(username, fullname, email, password) {
+    cy.request({
+      method: 'POST',
+      url: 'http://localhost:8080/admin/api',
+      headers: {
+        'Content-Type': 'application/json',
+        schema: 'admin',
+      },
+      body: {
+        variables: { email: email, fullname: fullname, password: password, username: username },
+        query: `
+           mutation addUser($username: String!, $password: String!, $email: String!, $fullname: String!) {
+                 cluster {
+                    add_user(
+                      username: $username
+                      password: $password
+                      email: $email
+                      fullname: $fullname
+                      )
+                   {
+                      username
+                      email
+                      fullname
+                  }
+                 }
+           }
+          `,
+      },
+    });
+  }
+
+  function editUserWithAPI(username, fullname, email, password) {
+    cy.request({
+      method: 'POST',
+      url: 'http://localhost:8080/admin/api',
+      headers: {
+        'Content-Type': 'application/json',
+        schema: 'admin',
+      },
+      body: {
+        variables: { email: email, fullname: fullname, password: password, username: username },
+        query: `
+           mutation editUser($username: String!, $password: String, $email: String, $fullname: String) {
+                 cluster {
+                    edit_user(
+                      username: $username
+                      password: $password
+                      email: $email
+                      fullname: $fullname
+                      )
+                   {
+                      username
+                      email
+                      fullname
+                  }
+                 }
+           }
+          `,
+      },
+    });
+    cy.reload();
+  }
+
   it('Test: auth 1', () => {
     ////////////////////////////////////////////////////////////////////
     cy.log('Open WebUI');
@@ -202,5 +270,31 @@ describe('Auth', () => {
     cy.get('.meta-test__LoginFormBtn').click();
 
     cy.get('.meta-test__LoginFormSplash form').contains('Cannot connect to server. Please try again later.');
+  });
+
+  it('Test: check fullname is empty and username is displaying when authorized', () => {
+    cy.log('Add user with API');
+    addUserWithAPI(username, fullname, email, password);
+
+    cy.log('Login with API created user with empty full');
+    cy.visit('/admin/cluster/dashboard');
+    cy.get('.meta-test__LoginBtn').click();
+    cy.get('.meta-test__LoginForm input[name="username"]').type('testUser');
+    cy.get('.meta-test__LoginForm input[name="password"]').type('12345678_Ujl');
+    cy.get('.meta-test__LoginFormBtn').click();
+
+    cy.log('Check there is username in the right top corner for the authorized user: fullname is empty');
+    cy.get('.meta-test__LogoutBtn span').contains(username);
+
+    const notEmptyFullname = 'testUserFullname';
+    editUserWithAPI(username, notEmptyFullname, email, password);
+
+    cy.log('Check there is fullname in the right top corner for the authorized user: fullname is not empty');
+    cy.get('.meta-test__LogoutBtn span').contains(notEmptyFullname);
+
+    editUserWithAPI(username, fullname, email, password);
+
+    cy.log('Check there is username in the right top corner for the authorized user: fullname is empty');
+    cy.get('.meta-test__LogoutBtn span').contains(username);
   });
 });
