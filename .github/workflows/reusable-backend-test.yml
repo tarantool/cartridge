@@ -43,7 +43,7 @@ jobs:
 
       # Setup luatest
       - name: 'Install luatest'
-        run: tarantoolctl rocks install luatest 0.5.6
+        run: tarantoolctl rocks install luatest 0.5.7
 
       # Setup pytest
       - uses: actions/setup-python@v2
