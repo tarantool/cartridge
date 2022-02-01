@@ -100,7 +100,7 @@ export const isRouterAvailable = isRoleAvailableSelectorCreator('router');
 
 export const isVshardAvailable = (data: GetCluster): boolean => isStorageAvailable(data) && isRouterAvailable(data);
 
-export const isBootstrapped = (data: GetCluster) => Boolean(cluster(data)?.vshard_groups?.[0]?.bootstrapped);
+export const isVshardBootstrapped = (data: GetCluster) => Boolean(cluster(data)?.vshard_groups?.[0]?.bootstrapped);
 
 export const canBootstrapVshard = (serverList: ServerList, cluster: GetCluster): boolean =>
   isRouterEnabled(serverList, cluster) && isStorageEnabled(serverList, cluster);

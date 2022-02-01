@@ -1,12 +1,16 @@
+/* eslint-disable jsx-a11y/anchor-is-valid */
 // @flow
 import React, { useEffect } from 'react';
+import { connect } from 'react-redux';
 import { css } from '@emotion/css';
 import { useStore } from 'effector-react';
 import { core } from '@tarantool.io/frontend-core';
 import { Alert, Button, IconAttach, IconDownload, Text, UploadZone, colors } from '@tarantool.io/ui-kit';
 
 import { getApiEndpoint } from 'src/apiEndpoints';
+import PageDataErrorMessage from 'src/components/PageDataErrorMessage';
 import { PageLayout } from 'src/components/PageLayout';
+import { isClusterSelfBootstrapped } from 'src/store/selectors/clusterPage';
 
 import { Panel } from '../../components/Panel';
 import { $configForm, configPageMount, dropFiles } from '../../store/effector/configUpload';
@@ -41,14 +45,18 @@ const styles = {
   `,
 };
 
-// type ConfigManagementProps = {
-//   isDemoPanelPresent?: boolean,
-// };
+type ConfigManagementProps = {
+  isClusterSelfBootstrapped: boolean,
+};
 
-const ConfigManagement = () => {
+const ConfigManagement = ({ isClusterSelfBootstrapped }: ConfigManagementProps) => {
   useEffect(configPageMount, []);
 
   const { files, error, successfulFileName, submitting } = useStore($configForm);
+
+  if (!isClusterSelfBootstrapped) {
+    return <PageDataErrorMessage error="Current instance isn't bootstrapped yet" />;
+  }
 
   return (
     <PageLayout
@@ -97,4 +105,10 @@ const ConfigManagement = () => {
   );
 };
 
-export default ConfigManagement;
+const mapStateToProps = (state: State) => {
+  return {
+    isClusterSelfBootstrapped: isClusterSelfBootstrapped(state),
+  };
+};
+
+export default connect(mapStateToProps)(ConfigManagement);

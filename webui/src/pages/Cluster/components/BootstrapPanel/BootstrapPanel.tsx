@@ -18,16 +18,16 @@ const BootstrapPanel = () => {
   const knownRolesNames = useStore($knownRolesNames);
   const { visible } = useStore($bootstrapPanel);
 
-  const [isRouterEnabled, isStorageEnabled, isBootstrapped] = useMemo(
+  const [isRouterEnabled, isStorageEnabled, isVshardBootstrapped] = useMemo(
     () => [
       selectors.isRouterEnabled(serverListStore, clusterStore),
       selectors.isStorageEnabled(serverListStore, clusterStore),
-      selectors.isBootstrapped(clusterStore),
+      selectors.isVshardBootstrapped(clusterStore),
     ],
     [serverListStore, clusterStore]
   );
 
-  if (!visible || isBootstrapped) {
+  if (!visible || isVshardBootstrapped) {
     return null;
   }
 

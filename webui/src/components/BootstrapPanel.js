@@ -7,9 +7,9 @@ import { IconCancel, IconOk, PageCard, Text } from '@tarantool.io/ui-kit';
 import { setVisibleBootstrapVshardPanel } from 'src/store/actions/clusterPage.actions';
 import type { State } from 'src/store/rootReducer';
 import {
-  isBootstrapped,
   isRouterEnabled,
   isStorageEnabled,
+  isVshardBootstrapped,
   selectVshardRolesNames,
 } from 'src/store/selectors/clusterPage';
 
@@ -26,7 +26,7 @@ const styles = {
 
 type Props = {
   bootstrapPanelVisible: boolean,
-  isBootstrapped: boolean,
+  isVshardBootstrapped: boolean,
   requestingBootstrapVshard: boolean,
   routerPresent: boolean,
   storagePresent: boolean,
@@ -37,7 +37,7 @@ type Props = {
 
 const BootstrapPanel = ({
   bootstrapPanelVisible,
-  isBootstrapped,
+  isVshardBootstrapped,
   requestingBootstrapVshard,
   routerPresent,
   storagePresent,
@@ -45,7 +45,7 @@ const BootstrapPanel = ({
   storageRolesNames,
   routerRolesNames,
 }: Props) => {
-  if (!bootstrapPanelVisible || requestingBootstrapVshard || isBootstrapped) return null;
+  if (!bootstrapPanelVisible || requestingBootstrapVshard || isVshardBootstrapped) return null;
 
   return (
     <PageCard
@@ -90,7 +90,7 @@ const mapStateToProps = (state: State) => {
 
   return {
     bootstrapPanelVisible,
-    isBootstrapped: isBootstrapped(state),
+    isVshardBootstrapped: isVshardBootstrapped(state),
     requestingBootstrapVshard,
     routerPresent: isRouterEnabled(state),
     storagePresent: isStorageEnabled(state),

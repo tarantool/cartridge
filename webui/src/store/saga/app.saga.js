@@ -11,10 +11,25 @@ import {
   APP_DATA_REQUEST_ERROR,
   APP_DATA_REQUEST_SUCCESS,
   APP_DID_MOUNT,
+  APP_RELOAD_CLUSTER_SELF,
+  APP_RELOAD_CLUSTER_SELF_ERROR,
+  APP_RELOAD_CLUSTER_SELF_SUCCESS,
   APP_SET_MESSAGE_DONE,
 } from 'src/store/actionTypes';
 import { baseSaga } from 'src/store/commonRequest';
 import { getClusterSelf } from 'src/store/request/app.requests';
+
+function* reloadClusterSelfRequestSaga() {
+  yield takeLatest(APP_RELOAD_CLUSTER_SELF, function* reload() {
+    try {
+      const response = yield call(getClusterSelf);
+
+      yield put({ type: APP_RELOAD_CLUSTER_SELF_SUCCESS, payload: response });
+    } catch (error) {
+      yield put({ type: APP_RELOAD_CLUSTER_SELF_ERROR, error });
+    }
+  });
+}
 
 function* appDataRequestSaga() {
   yield takeLatest(APP_DID_MOUNT, function* load(action) {
@@ -129,4 +144,4 @@ function* doneMessage() {
   });
 }
 
-export const saga = baseSaga(appDataRequestSaga, appMessageSaga, doneMessage);
+export const saga = baseSaga(appDataRequestSaga, appMessageSaga, doneMessage, reloadClusterSelfRequestSaga);

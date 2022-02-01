@@ -19,7 +19,7 @@ import { app } from 'src/models';
 import ConfigManagement from 'src/pages/ConfigManagement';
 import Dashboard from 'src/pages/Dashboard';
 import Users from 'src/pages/Users';
-import { appDidMount } from 'src/store/actions/app.actions';
+import { appDidMount, appReloadClusterSelf } from 'src/store/actions/app.actions';
 import { expectWelcomeMessage, logOut, setWelcomeMessage } from 'src/store/actions/auth.actions';
 import { AUTH_ACCESS_DENIED } from 'src/store/actionTypes';
 import store from 'src/store/instance';
@@ -86,6 +86,10 @@ core.subscribe('cluster:expect_welcome_message', () => {
 core.subscribe('cluster:set_welcome_message', (text) => {
   store.dispatch(setWelcomeMessage(text));
   store.dispatch(expectWelcomeMessage(false));
+});
+
+core.subscribe('cluster:reload_cluster_self', () => {
+  store.dispatch(appReloadClusterSelf());
 });
 
 core.setHeaderComponent(
