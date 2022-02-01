@@ -27,10 +27,10 @@ Added
 - Logging of configuration options on start and boot instance (#1557).
 
 - ``app_version`` field to graphql and webui. It filled from ``VERSION.lua``
-file in the root of cartridge app (#1367).
+  file in the root of cartridge app (#1367).
 
 - Param ``opts`` to ``Server:upload_config`` in ``test-helpers`` and pass it
-to ``http_request`` (#1321).
+  to ``http_request`` (#1321).
 
 - Setters ans getters for timeout options in ``twophase.lua`` (#1440):
   ``netbox_call_timeout``, ``upload_config_timeout``, ``validate_config_timeout``, ``apply_config_timeout``.
@@ -100,7 +100,7 @@ Fixed
 - Fix ``rpc_call`` failure in case if the role hasn't been activated yet on target instance (#1575).
 
 - Fixed the visibility of the configuration management page if the cluster
-is not bootstrapped yet (#1707).
+  is not bootstrapped yet (#1707).
 
 -------------------------------------------------------------------------------
 [2.7.3] - 2021-10-27
