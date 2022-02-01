@@ -87,8 +87,8 @@ describe('Users', () => {
 
     //Checks for compliance
     cy.get('.meta-test__UserAddForm button:contains(Add)').click();
-    cy.get('label:contains(Username)').parent('div').next().next().contains('Login is a required field');
-    cy.get('label:contains(Password)').parent('div').next().next().contains('Password is a required field');
+    cy.get('label:contains(Username)').parent('div').next().next().contains('username is a required field');
+    cy.get('label:contains(Password)').parent('div').next().next().contains('password is a required field');
 
     //Validation errors
     cy.get('label:contains(Email)').parent('div').next().find('input').type('q');
