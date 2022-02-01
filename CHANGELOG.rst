@@ -35,7 +35,7 @@ Added
 - Setters ans getters for timeout options in ``twophase.lua`` (#1440):
   ``netbox_call_timeout``, ``upload_config_timeout``, ``validate_config_timeout``, ``apply_config_timeout``.
 
-- New tests cases (#892, #944, #1473).
+- New tests cases (#892, #944, #1473, #1726).
 
 - ``test-helpers.cluster:server_by_role`` method (#1615).
 
