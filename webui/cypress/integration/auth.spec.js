@@ -47,8 +47,8 @@ describe('Auth', () => {
     cy.get('.meta-test__LoginForm input[name="username"]').should('have.value', '');
     cy.get('.meta-test__LoginForm input[name="password"]').should('have.value', '');
     cy.get('.meta-test__LoginFormBtn').click();
-    cy.get('.meta-test__LoginForm').contains('username is a required field');
-    cy.get('.meta-test__LoginForm').contains('password is a required field');
+    cy.get('.meta-test__LoginForm').contains('Login is a required field');
+    cy.get('.meta-test__LoginForm').contains('Password is a required field');
     cy.get('.meta-test__LoginForm button[type="button"]').contains('Cancel').click();
 
     ////////////////////////////////////////////////////////////////////
@@ -58,7 +58,7 @@ describe('Auth', () => {
     cy.get('.meta-test__LoginForm input[name="username"]').should('have.value', '');
     cy.get('.meta-test__LoginForm input[name="password"]').type('test-cluster-cookie');
     cy.get('.meta-test__LoginFormBtn').click();
-    cy.get('.meta-test__LoginForm').contains('username is a required field');
+    cy.get('.meta-test__LoginForm').contains('Login is a required field');
     cy.get('.meta-test__LoginForm button[type="button"]').contains('Cancel').click();
 
     ////////////////////////////////////////////////////////////////////
@@ -68,7 +68,7 @@ describe('Auth', () => {
     cy.get('.meta-test__LoginForm input[name="username"]').type('admin').should('have.value', 'admin');
     cy.get('.meta-test__LoginForm input[name="password"]').should('have.value', '');
     cy.get('.meta-test__LoginFormBtn').click();
-    cy.get('.meta-test__LoginForm').contains('password is a required field');
+    cy.get('.meta-test__LoginForm').contains('Password is a required field');
     cy.get('.meta-test__LoginForm button[type="button"]').contains('Cancel').click();
 
     ////////////////////////////////////////////////////////////////////
