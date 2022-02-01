@@ -46,6 +46,8 @@ Added
 - Ability to set multiple types for Cartridge arguments.
   Types are split by separator ``|``,  e.g. ``string|number`` (#1651).
 
+- Downgrade test (#1397).
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Changed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
