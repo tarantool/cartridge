@@ -7,20 +7,6 @@ local g = t.group()
 
 local helpers = require('test.helper')
 
-g.before_all = function()
-    g.tempdir = fio.tempdir()
-end
-
-g.after_all = function()
-    if g.cluster ~= nil then
-        g.cluster:stop()
-    end
-    if g.tempdir ~= nil then
-        fio.rmtree(g.tempdir)
-        g.tempdir = nil
-    end
-end
-
 local function version(srv)
     local version = srv.net_box:call('require', {'cartridge.VERSION'})
     local cwd = srv.net_box:call('package.loaded.fio.cwd')
@@ -55,19 +41,19 @@ local function await_state(srv, desired_state)
     end)
 end
 
+local cartridge_older_path = os.getenv('CARTRIDGE_OLDER_PATH')
+
 --- Test upgrading form old version to the current one
-function g.test_upgrade()
-    local cartridge_older_path = os.getenv('CARTRIDGE_OLDER_PATH')
+local function change_version(old, new)
     t.skip_if(
         cartridge_older_path == nil,
         'No older version provided. Skipping'
     )
-
     ----------------------------------------------------------------------------
     -- Assemble cluster with old version
 
     g.cluster = helpers.Cluster:new({
-        datadir = g.tempdir,
+        datadir = fio.tempdir(),
         server_command = fio.abspath(helpers.entrypoint('srv_basic')),
         cookie = require('digest').urandom(6):hex(),
         use_vshard = true,
@@ -80,13 +66,13 @@ function g.test_upgrade()
                 instance_uuid = helpers.uuid('a', 'a', 1),
                 advertise_port = 13301,
                 http_port = 8081,
-                chdir = cartridge_older_path,
+                chdir = old,
             }, {
                 alias = 'replica',
                 instance_uuid = helpers.uuid('a', 'a', 2),
                 advertise_port = 13302,
                 http_port = 8082,
-                chdir = cartridge_older_path,
+                chdir = old,
             }},
         }},
     })
@@ -104,8 +90,13 @@ function g.test_upgrade()
     g.cluster:bootstrap_vshard()
     g.cluster:wait_until_healthy()
 
-    t.assert_not_equals(version(leader), 'scm-1')
-    t.assert_not_equals(version(replica), 'scm-1')
+    if old ~= nil then
+        t.assert_not_equals(version(leader), 'scm-1')
+        t.assert_not_equals(version(replica), 'scm-1')
+    else
+        t.assert_equals(version(leader), 'scm-1')
+        t.assert_equals(version(replica), 'scm-1')
+    end
 
     ----------------------------------------------------------------------------
     -- Setup data model
@@ -178,13 +169,19 @@ function g.test_upgrade()
     --------------------------------------------------------------------
     -- Upgrade replica
     replica:stop()
-    replica.chdir = nil
+    replica.chdir = new
     replica:start()
     g.cluster:retrying({}, function() replica:connect_net_box() end)
     await_state(replica, 'RolesConfigured')
 
-    t.assert_not_equals(version(leader), 'scm-1')
-    t.assert_equals(version(replica), 'scm-1')
+    if old ~= nil then
+        t.assert_not_equals(version(leader), 'scm-1')
+        t.assert_equals(version(replica), 'scm-1')
+    else
+        t.assert_equals(version(leader), 'scm-1')
+        t.assert_not_equals(version(replica), 'scm-1')
+    end
+
     t.assert_equals(upstream_info(replica), {status = 'follow'})
 
     g.cluster:retrying({}, function()
@@ -246,13 +243,19 @@ function g.test_upgrade()
     --------------------------------------------------------------------
     -- Upgrade leader
     leader:stop()
-    leader.chdir = nil
+    leader.chdir = new
     leader:start()
     g.cluster:retrying({}, function() leader:connect_net_box() end)
     g.cluster:wait_until_healthy()
 
-    t.assert_equals(version(leader), 'scm-1')
-    t.assert_equals(version(replica), 'scm-1')
+    if old ~= nil then
+        t.assert_equals(version(leader), 'scm-1')
+        t.assert_equals(version(replica), 'scm-1')
+    else
+        t.assert_not_equals(version(leader), 'scm-1')
+        t.assert_not_equals(version(replica), 'scm-1')
+    end
+
     t.assert_equals(upstream_info(leader), {status = 'follow'})
 
     highload_enabled = false
@@ -273,4 +276,18 @@ function g.test_upgrade()
     for _, e in ipairs(insertions_failed) do
         log.error('#%d: %s', e.cnt, e.err)
     end
+end
+
+g.after_each(function()
+    g.cluster:stop()
+    fio.rmtree(g.cluster.datadir)
+end)
+
+g.test_upgrade = function()
+    change_version(cartridge_older_path, nil)
+end
+
+g.test_downgrade = function()
+    t.skip_if(os.getenv('CARTRIDGE_DOWNGRADE') ~= 'true')
+    change_version(nil, cartridge_older_path)
 end
