@@ -1,5 +1,5 @@
 # source: http://127.0.0.1:8081/admin/api
-# timestamp: Sun Jan 23 2022 18:13:12 GMT+0300 (Moscow Standard Time)
+# timestamp: Tue Feb 01 2022 10:49:59 GMT+0300 (Moscow Standard Time)
 
 """Custom scalar specification."""
 directive @specifiedBy(
@@ -239,6 +239,9 @@ type Mutation {
 
   """Deprecated. Use `cluster{edit_topology()}` instead."""
   edit_replicaset(
+    """
+    The `Float` scalar type represents signed double-precision fractional values as specified by IEEE 754.
+    """
     weight: Float
     master: [String!]
 
@@ -270,6 +273,10 @@ type Mutation {
     represent free-form human-readable text.
     """
     instance_uuid: String
+
+    """
+    The `Float` scalar type represents signed double-precision fractional values as specified by IEEE 754.
+    """
     timeout: Float
 
     """
@@ -302,6 +309,10 @@ type Mutation {
     """
     replicaset_uuid: String
     roles: [String!]
+
+    """
+    The `Float` scalar type represents signed double-precision fractional values as specified by IEEE 754.
+    """
     replicaset_weight: Float
   ): Boolean
   bootstrap_vshard: Boolean
@@ -327,7 +338,15 @@ type MutationApicluster {
   failover_params(
     """The `Boolean` scalar type represents `true` or `false`."""
     fencing_enabled: Boolean
+
+    """
+    The `Float` scalar type represents signed double-precision fractional values as specified by IEEE 754.
+    """
     fencing_timeout: Float
+
+    """
+    The `Float` scalar type represents signed double-precision fractional values as specified by IEEE 754.
+    """
     failover_timeout: Float
 
     """
@@ -346,6 +365,10 @@ type MutationApicluster {
 
     """State provider configuration (Tarantool)"""
     tarantool_params: FailoverStateProviderCfgInputTarantool
+
+    """
+    The `Float` scalar type represents signed double-precision fractional values as specified by IEEE 754.
+    """
     fencing_pause: Float
 
     """State provider configuration (etcd-v2)"""
@@ -366,6 +389,10 @@ type MutationApicluster {
     Int can represent values from -(2^31) to 2^31 - 1, inclusive.
     """
     rebalancer_max_receiving: Int
+
+    """
+    The `Float` scalar type represents signed double-precision fractional values as specified by IEEE 754.
+    """
     collect_bucket_garbage_interval: Float
 
     """The `Boolean` scalar type represents `true` or `false`."""
@@ -382,7 +409,15 @@ type MutationApicluster {
     Int can represent values from -(2^31) to 2^31 - 1, inclusive.
     """
     rebalancer_max_sending: Int
+
+    """
+    The `Float` scalar type represents signed double-precision fractional values as specified by IEEE 754.
+    """
     sync_timeout: Float
+
+    """
+    The `Float` scalar type represents signed double-precision fractional values as specified by IEEE 754.
+    """
     rebalancer_disbalance_threshold: Float
     name: String!
 
