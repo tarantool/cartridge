@@ -22,8 +22,8 @@ import { logIn } from 'src/store/actions/auth.actions';
 import logo from '../../assets/tarantool-logo-full.svg';
 
 const schema = yup.object().shape({
-  username: yup.string().required(),
-  password: yup.string().required(),
+  username: yup.string().required('Login is a required field'),
+  password: yup.string().required('Password is a required field'),
 });
 
 const styles = {
@@ -85,6 +85,7 @@ class LogInForm extends React.Component {
       <Formik
         validationSchema={schema}
         onSubmit={this.handleSubmit}
+        validateOnBlur={false}
         initialValues={{
           username: '',
           password: '',
