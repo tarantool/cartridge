@@ -11,7 +11,7 @@ and this project adheres to
 -------------------------------------------------------------------------------
 [Unreleased]
 
-- Delete event onBlur and added error message validate yup (#1737)
+- Disable event onBlur and added error message validate yup (#1737)
 
 -------------------------------------------------------------------------------
 

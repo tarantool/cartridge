@@ -85,13 +85,14 @@ class LogInForm extends React.Component {
       <Formik
         validationSchema={schema}
         onSubmit={this.handleSubmit}
+        validateOnBlur={false}
         initialValues={{
           username: '',
           password: '',
           isAgreeChecked: false,
         }}
       >
-        {({ values, errors, touched, handleChange }) => {
+        {({ values, errors, touched, handleChange, handleBlur }) => {
           const isLoginEnabled = welcomeMessage ? values['isAgreeChecked'] : !welcomeMessageExpected;
 
           return (
@@ -104,6 +105,7 @@ class LogInForm extends React.Component {
                   </>
                 }
                 value={values.username}
+                onBlur={handleBlur}
                 onChange={handleChange}
                 name="username"
                 error={touched.username && !!errors.username}
@@ -116,6 +118,7 @@ class LogInForm extends React.Component {
                   </>
                 }
                 value={values.password}
+                onBlur={handleBlur}
                 onChange={handleChange}
                 inputComponent={InputPassword}
                 name="password"
