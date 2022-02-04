@@ -53,6 +53,7 @@ describe('Test cluster WEB_UI', () => {
     cy.visit('/admin/cluster/dashboard');
     cy.get('button:contains("Review")').click();
     cy.get('button:contains("Disable")').click();
+    // eslint-disable-next-line cypress/no-unnecessary-waiting
     cy.wait(1000);
 
     //Check tooltip on the page cluster
