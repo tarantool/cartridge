@@ -35,6 +35,7 @@ vars:new('known_groups', nil
 
 local function validate_group_weights(group_name, topology)
     checks('string', 'table')
+    roles.log('vshard-utils.validate_group_weights()')
     local num_storages = 0
     local total_weight = 0
 
@@ -384,6 +385,7 @@ end
 -- @local
 -- @treturn {[string]=table,...}
 local function get_known_groups()
+    roles.log('vshard-utils.get_known_groups()')
     if roles.get_role('vshard-router') == nil then
         return {}
     end
@@ -547,6 +549,7 @@ local function can_bootstrap_group(group_name, vsgroup)
 end
 
 local function can_bootstrap()
+    roles.log('vshard-utils.can_bootstrap()')
     if roles.get_role('vshard-router') == nil then
         return false
     end

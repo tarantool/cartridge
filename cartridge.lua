@@ -297,6 +297,7 @@ local function cfg(opts, box_opts)
         roles_reload_allowed = '?boolean',
         upload_prefix = '?string',
     }, '?table')
+    roles.log('cartridge.cfg()')
 
     if opts.webui_blacklist ~= nil then
         local i = 0

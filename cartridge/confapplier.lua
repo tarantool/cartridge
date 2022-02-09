@@ -190,6 +190,7 @@ end
 -- @treturn[2] table Error description
 local function validate_config(clusterwide_config, _)
     checks('ClusterwideConfig', 'nil')
+    roles.log('confapplier.validate_config()')
     assert(clusterwide_config.locked)
 
     local conf_new = clusterwide_config:get_readonly()
@@ -247,6 +248,7 @@ end
 -- @treturn[2] table Error description
 local function apply_config(clusterwide_config)
     checks('ClusterwideConfig')
+    roles.log('confapplier.apply_config()')
     assert(clusterwide_config.locked)
     assert(
         vars.state == 'BoxConfigured'

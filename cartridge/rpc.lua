@@ -83,6 +83,7 @@ end
 --
 -- @treturn[1] {string,...} URIs
 local function get_candidates(role_name, opts)
+    roles.log('rpc.get_candidates()')
     opts = opts or {}
     if opts.healthy_only == nil then
         opts.healthy_only = true

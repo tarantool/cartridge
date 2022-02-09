@@ -5,6 +5,7 @@ local checks = require('checks')
 local vars = require('cartridge.vars').new('cartridge.roles.vshard-storage')
 local pool = require('cartridge.pool')
 local utils = require('cartridge.utils')
+local roles = require('cartridge.roles')
 local hotreload = require('cartridge.hotreload')
 local vshard_utils = require('cartridge.vshard-utils')
 
@@ -22,6 +23,7 @@ local _G_vshard_backup
 
 local function apply_config(conf, _)
     checks('table', {is_master = 'boolean'})
+    roles._log('vshard-storage.apply_config()')
 
     local my_replicaset = conf.topology.replicasets[box.info.cluster.uuid]
     local group_name = my_replicaset.vshard_group or 'default'
@@ -41,11 +43,13 @@ local function apply_config(conf, _)
 end
 
 local function init()
+    roles._log('vshard-storage.init()')
     _G_vshard_backup = rawget(_G, 'vshard')
     rawset(_G, 'vshard', vshard)
 end
 
 local function stop()
+    roles._log('vshard-storage.stop()')
     local confapplier = require('cartridge.confapplier')
     local advertise_uri = confapplier.get_advertise_uri()
     local instance_uuid = confapplier.get_instance_uuid()

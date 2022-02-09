@@ -6,6 +6,7 @@ local errors = require('errors')
 local vars = require('cartridge.vars').new('cartridge.roles.vshard-router')
 local pool = require('cartridge.pool')
 local utils = require('cartridge.utils')
+local roles = require('cartridge.roles')
 local twophase = require('cartridge.twophase')
 local hotreload = require('cartridge.hotreload')
 local confapplier = require('cartridge.confapplier')
@@ -46,6 +47,7 @@ end
 
 local function get(group_name)
     checks('?string')
+    roles._log('vshard-router.get()')
     if group_name == nil then
         group_name = 'default'
     end
@@ -55,6 +57,7 @@ end
 
 local function apply_config(conf)
     checks('table')
+    roles._log('vshard-router.apply_config()')
 
     local vshard_groups
     if conf.vshard_groups == nil then
@@ -99,6 +102,7 @@ local function apply_config(conf)
 end
 
 local function stop()
+    roles._log('vshard-router.stop()')
     local confapplier = require('cartridge.confapplier')
     local advertise_uri = confapplier.get_advertise_uri()
     local instance_uuid = confapplier.get_instance_uuid()
@@ -180,6 +184,7 @@ local function bootstrap_group(group_name, vsgroup)
 end
 
 local function bootstrap()
+    roles._log('vshard-router.bootstrap()')
     local conf = {
         vshard = confapplier.get_deepcopy('vshard'),
         vshard_groups = confapplier.get_deepcopy('vshard_groups'),

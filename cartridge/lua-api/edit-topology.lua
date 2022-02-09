@@ -120,6 +120,7 @@ local function __edit_replicaset(topology_cfg, params)
         vshard_group = '?string',
         join_servers = '?table',
     })
+    roles.log('edit-topology.__edit_replicaset()')
 
     local replicaset = topology_cfg.replicasets[params.uuid]
 
