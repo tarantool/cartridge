@@ -5,6 +5,7 @@ import { css, cx } from '@emotion/css';
 import {
   Button,
   ConfirmModal,
+  FileTree,
   IconCreateFile,
   IconCreateFolder,
   IconRefresh,
@@ -12,7 +13,6 @@ import {
   colors,
 } from '@tarantool.io/ui-kit';
 
-import { FileTree } from 'src/components/FileTree';
 import MonacoEditor from 'src/components/MonacoEditor';
 import PageDataErrorMessage from 'src/components/PageDataErrorMessage';
 import { PageLayout } from 'src/components/PageLayout';
