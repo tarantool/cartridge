@@ -26,16 +26,18 @@ local ApplyConfigError = errors.new_class('ApplyConfigError')
 local ReloadError = errors.new_class('HotReloadError')
 local StopRoleError = errors.new_class('StopRoleError')
 
+local log_tag = 'roles: '
+
 local function external_module_log(msg)
-    log.error('======================================== ' .. msg)
+    --log.info(log_tag .. msg)
 end
 
 local function in_role_log(msg)
-    log.error('---------------------------------------- ' .. msg)
+    log.info(log_tag .. msg)
 end
 
 local function log_line(msg)
-    log.error('++++++++++++++++++++++++++++++++++++++++ ' .. msg)
+    log.info(log_tag .. msg)
 end
 
 vars:new('module_names')
