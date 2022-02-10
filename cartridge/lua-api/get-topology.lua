@@ -279,7 +279,6 @@ local function get_replicasets()
 end
 
 local function get_enabled_roles_without_deps()
-    roles.log('get-topology.get_enabled_roles_without_deps()')
     local vars = require('cartridge.vars').new('cartridge.confapplier')
     local topology_cfg = confapplier.get_readonly('topology')
     if topology_cfg == nil then

@@ -547,7 +547,6 @@ local function can_bootstrap_group(group_name, vsgroup)
 end
 
 local function can_bootstrap()
-    roles.log('vshard-utils.can_bootstrap()')
     if roles.get_role('vshard-router') == nil then
         return false
     end

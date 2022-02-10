@@ -296,7 +296,6 @@ local function edit_replicaset(_, args)
 end
 
 local function get_known_roles(_, _)
-    roles.log('api-topology.get_known_roles()')
     local ret = {}
     for _, role_name in ipairs(roles.get_known_roles()) do
         local role = roles.get_role(role_name)
