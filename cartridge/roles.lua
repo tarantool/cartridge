@@ -26,18 +26,8 @@ local ApplyConfigError = errors.new_class('ApplyConfigError')
 local ReloadError = errors.new_class('HotReloadError')
 local StopRoleError = errors.new_class('StopRoleError')
 
-local log_tag = 'roles: '
-
-local function external_module_log(msg)
-    --log.info(log_tag .. msg)
-end
-
-local function in_role_log(msg)
-    log.info(log_tag .. msg)
-end
-
-local function log_line(msg)
-    log.info(log_tag .. msg)
+local function log_line(msg, role_name)
+    log.info((msg):format(role_name))
 end
 
 vars:new('module_names')
@@ -157,7 +147,7 @@ utils.assert_upvalues(register_role, {
 -- @treturn[2] table Error description
 local function cfg(module_names)
     checks('table')
-    log_line('roles.cfg() begin')
+    log_line('Load modules and register')
     local ctx = {
         roles_by_number = {},
         roles_by_role_name = {},
@@ -183,15 +173,12 @@ local function cfg(module_names)
     vars.roles_by_number = ctx.roles_by_number
     vars.roles_by_role_name = ctx.roles_by_role_name
     vars.roles_by_module_name = ctx.roles_by_module_name
-    log_line('roles.cfg() end')
     return true
 end
 
 local function get_role(role_name)
     checks('string')
-    log_line('roles.get_role() begin')
     local role = vars.roles_by_role_name[role_name]
-    log_line('roles.get_role() end')
     return role and role.M
 end
 
@@ -203,14 +190,13 @@ end
 -- @local
 -- @treturn {string,..}
 local function get_all_roles()
-    log_line('roles.get_all_roles() begin')
+    log_line('Get all roles')
     local ret = {}
 
     for _, role in ipairs(vars.roles_by_number) do
         table.insert(ret, role.role_name)
     end
 
-    log_line('roles.get_all_roles() end')
     return ret
 end
 
@@ -222,7 +208,7 @@ end
 -- @local
 -- @treturn {string,..}
 local function get_known_roles()
-    log_line('roles.get_known_roles() begin')
+    log_line('Get known roles')
     local ret = {}
 
     for _, role in ipairs(vars.roles_by_number) do
@@ -233,7 +219,6 @@ local function get_known_roles()
         end
     end
 
-    log_line('roles.get_known_roles() end')
     return ret
 end
 
@@ -247,7 +232,7 @@ end
 -- @treturn {string,..}
 local function get_enabled_roles_without_deps(roles)
     checks('?table')
-    log_line('roles.get_enabled_roles_without_deps() begin')
+    log_line('Get enabled roles without dependencies')
     roles = roles or {}
 
     local list = {}
@@ -277,7 +262,6 @@ local function get_enabled_roles_without_deps(roles)
     for role_name, _ in pairs(list) do
         table.insert(ret, role_name)
     end
-    log_line('roles.get_enabled_roles_without_deps() end')
     return ret
 end
 
@@ -292,7 +276,7 @@ end
 -- @treturn {[string]=boolean,...}
 local function get_enabled_roles(roles)
     checks('?table')
-    log_line('roles.get_enabled_roles() begin')
+    log_line('Get enabled roles')
     roles = roles or {}
 
     local ret = {}
@@ -322,7 +306,6 @@ local function get_enabled_roles(roles)
         end
     end
 
-    log_line('roles.get_enabled_roles() end')
     return ret
 end
 
@@ -335,7 +318,7 @@ end
 -- @treturn {string,..}
 local function get_role_dependencies(role_name)
     checks('?string')
-    log_line('roles.get_role_dependencies() begin')
+    log_line('Get "%s" role dependencies', role_name)
     local ret = {}
     local role = vars.roles_by_role_name[role_name]
     for _, dep_role in ipairs(role.deps) do
@@ -344,7 +327,6 @@ local function get_role_dependencies(role_name)
         end
     end
 
-    log_line('roles.get_role_dependencies() end')
     return ret
 end
 
@@ -358,7 +340,7 @@ end
 -- @treturn[2] table Error description
 local function validate_config(conf_new, conf_old)
     checks('table', 'table')
-    log_line('roles.validate_config() begin')
+    log_line('Validate roles configurations')
     if conf_new.__type == 'ClusterwideConfig' then
         local err = "Bad argument #1 to validate_config" ..
             " (table expected, got ClusterwideConfig)"
@@ -388,9 +370,11 @@ local function validate_config(conf_new, conf_old)
     for _, role in ipairs(vars.roles_by_number) do
         if not disabled_roles[role.role_name]
         and type(role.M.validate_config) == 'function' then
+            log_line('Validate config "%s" role', role.role_name)
             local ok, err = ValidateConfigError:pcall(
                 role.M.validate_config, conf_new, conf_old
             )
+            log_line('Successfully validated config "%s" role ', role.role_name)
             if not ok then
                 err = err or ValidateConfigError:new(
                     'Role %q method validate_config() returned %s',
@@ -401,7 +385,7 @@ local function validate_config(conf_new, conf_old)
         end
     end
 
-    log_line('roles.validate_config() end')
+    log_line('Roles configuration validation finished')
     return true
 end
 
@@ -418,7 +402,7 @@ local function apply_config(conf, opts)
     checks('table', {
         is_master = 'boolean',
     })
-    log_line('roles.apply_config() begin')
+    log_line('Start applying roles config')
     if conf.__type == 'ClusterwideConfig' then
         local err = "Bad argument #1 to apply_config" ..
             " (table expected, got ClusterwideConfig)"
@@ -432,6 +416,7 @@ local function apply_config(conf, opts)
     for _, role in ipairs(vars.roles_by_number) do
         if enabled_roles[role.role_name] then
             -- Start the role
+            log_line('Init "%s" role', role.role_name)
             if (service_registry.get(role.role_name) == nil)
             and (type(role.M.init) == 'function')
             then
@@ -448,7 +433,9 @@ local function apply_config(conf, opts)
             end
 
             service_registry.set(role.role_name, role.M)
+            log_line('Successfully initialized "%s" role ', role.role_name)
 
+            log_line('Appling "%s" role config', role.role_name)
             if type(role.M.apply_config) == 'function' then
                 local _, _err = ApplyConfigError:pcall(
                     role.M.apply_config, conf, opts
@@ -460,6 +447,7 @@ local function apply_config(conf, opts)
                     log.error('%s', _err)
                 end
             end
+            log_line('Successfully applied "%s" role config', role.role_name)
         else
             -- Stop the role
             if (service_registry.get(role.role_name) ~= nil)
@@ -486,13 +474,11 @@ local function apply_config(conf, opts)
     if err ~= nil then
         return nil, err
     end
-    log_line('roles.stop() end')
     return true
 end
 
 --- Stop all roles.
 local function stop()
-    log_line('roles.stop() begin')
     local failover = require('cartridge.failover')
     local opts = {is_master = failover.is_leader()}
 
@@ -500,15 +486,16 @@ local function stop()
         if (service_registry.get(role.role_name) ~= nil)
         and (type(role.M.stop) == 'function')
         then
+            log_line('Stop "%s" role', role.role_name)
             local _, err = StopRoleError:pcall(role.M.stop, opts)
             if err ~= nil then
                 log.error('%s', err)
             end
+            log_line('Successfully stopped "%s" role', role.role_name)
         end
 
         service_registry.set(role.role_name, nil)
     end
-    log_line('roles.stop() end')
 end
 
 --- Perform hot-reload of cartridge roles code.
@@ -538,7 +525,6 @@ end
 -- @treturn[2] nil
 -- @treturn[2] table Error description
 local function reload()
-    log_line('roles.reload() begin')
     if not hotreload.state_saved() then
         return nil, ReloadError:new(
             'This application forbids reloading roles'
@@ -583,7 +569,6 @@ local function reload()
     log.warn('Roles reloaded successfully')
     confapplier.set_state('BoxConfigured', err)
 
-    log_line('roles.reload() end')
     return confapplier.apply_config(clusterwide_config)
 end
 
@@ -600,6 +585,4 @@ return {
     apply_config = apply_config,
     reload = reload,
     stop = stop,
-    log  = external_module_log,
-    _log = in_role_log,
 }

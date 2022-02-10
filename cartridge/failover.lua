@@ -35,7 +35,6 @@ local membership = require('membership')
 local vars = require('cartridge.vars').new('cartridge.failover')
 local pool = require('cartridge.pool')
 local utils = require('cartridge.utils')
-local roles = require('cartridge.roles')
 local topology = require('cartridge.topology')
 local service_registry = require('cartridge.service-registry')
 local stateboard_client = require('cartridge.stateboard-client')
@@ -503,7 +502,6 @@ function reconfigure_all(active_leaders)
     local confapplier = require('cartridge.confapplier')
 
 ::start_over::
-    roles.log('failover.reconfigure_all()')
 
     local t1 = fiber.clock()
     -- WARNING: implicit yield
@@ -612,7 +610,6 @@ end
 -- @local
 local function cfg(clusterwide_config)
     checks('ClusterwideConfig')
-    roles.log('failover.cfg()')
 
     if vars.client then
         vars.client:drop_session()

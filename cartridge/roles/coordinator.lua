@@ -6,7 +6,6 @@ local membership = require('membership')
 
 local vars = require('cartridge.vars').new('cartridge.roles.coordinator')
 local utils = require('cartridge.utils')
-local roles = require('cartridge.roles')
 local topology = require('cartridge.topology')
 local confapplier = require('cartridge.confapplier')
 local stateboard_client = require('cartridge.stateboard-client')
@@ -236,7 +235,6 @@ local function take_control_loop(client)
 end
 
 local function stop()
-    roles.log('coordinator.stop()')
     if vars.connect_fiber ~= nil then
         pcall(fiber.cancel, vars.connect_fiber)
         vars.connect_fiber = nil
@@ -249,7 +247,6 @@ local function stop()
 end
 
 local function apply_config(conf, _)
-    roles.log('coordinator.apply_config()')
     vars.topology_cfg = conf.topology
     local failover_cfg = topology.get_failover_params(conf.topology)
 
@@ -329,7 +326,6 @@ end
 -- @treturn[2] table Error description
 local function appoint_leaders(leaders)
     checks('table')
-    roles.log('coordinator.appoint_leaders()')
 
     local servers = vars.topology_cfg.servers
     local replicasets = vars.topology_cfg.replicasets

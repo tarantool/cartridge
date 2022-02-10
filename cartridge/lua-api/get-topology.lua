@@ -67,7 +67,6 @@ local lua_api_proxy = require('cartridge.lua-api.proxy')
 -- @treturn[2] nil
 -- @treturn[2] table Error description
 local function get_topology()
-    roles.log('get-topology.get_topology()')
     local state, err = confapplier.get_state()
     if state == 'Unconfigured' and lua_api_proxy.can_call() then
         -- Try to proxy call

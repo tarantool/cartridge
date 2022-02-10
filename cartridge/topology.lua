@@ -670,7 +670,6 @@ end
 
 local function validate_upgrade(topology_new, topology_old)
     checks('table', 'table')
-    roles.log('topology.validate_upgrade()')
     local servers_new = topology_new.servers or {}
     local servers_old = topology_old.servers or {}
     local replicasets_new = topology_new.replicasets or {}
