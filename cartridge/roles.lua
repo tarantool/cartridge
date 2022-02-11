@@ -14,6 +14,7 @@
 local log = require('log')
 local checks = require('checks')
 local errors = require('errors')
+local fiber = require('fiber')
 
 local vars = require('cartridge.vars').new('cartridge.roles')
 local utils = require('cartridge.utils')
@@ -25,7 +26,6 @@ local ValidateConfigError = errors.new_class('ValidateConfigError')
 local ApplyConfigError = errors.new_class('ApplyConfigError')
 local ReloadError = errors.new_class('HotReloadError')
 local StopRoleError = errors.new_class('StopRoleError')
-
 
 vars:new('module_names')
 vars:new('roles_by_number', {})
@@ -363,6 +363,7 @@ local function validate_config(conf_new, conf_old)
         if not disabled_roles[role.role_name]
         and type(role.M.validate_config) == 'function' then
             log.info('Validate config "%s" role', role.role_name)
+            local start_time = fiber.time64()
             local ok, err = ValidateConfigError:pcall(
                 role.M.validate_config, conf_new, conf_old
             )
@@ -373,7 +374,7 @@ local function validate_config(conf_new, conf_old)
                 )
                 return nil, err
             end
-            log.info('Successfully validated config "%s" role ', role.role_name)
+            log.info('Successfully validated config "%s" role in %s us', role.role_name, tostring(fiber.time64() - start_time))
         end
     end
 
@@ -412,6 +413,7 @@ local function apply_config(conf, opts)
             and (type(role.M.init) == 'function')
             then
                 log.info('Init "%s" role', role.role_name)
+                local start_time = fiber.time64()
                 local _, _err = ApplyConfigError:pcall(
                     role.M.init, opts
                 )
@@ -422,13 +424,14 @@ local function apply_config(conf, opts)
                     log.error('%s', _err)
                     goto continue
                 end
-                log.info('Successfully initialized "%s" role ', role.role_name)
+                log.info('Successfully initialized "%s" role in %s us', role.role_name, tostring(fiber.time64() - start_time))
             end
 
             service_registry.set(role.role_name, role.M)
 
             if type(role.M.apply_config) == 'function' then
                 log.info('Appling "%s" role config', role.role_name)
+                local start_time = fiber.time64()
                 local _, _err = ApplyConfigError:pcall(
                     role.M.apply_config, conf, opts
                 )
@@ -438,7 +441,7 @@ local function apply_config(conf, opts)
                     end
                     log.error('%s', _err)
                 end
-                log.info('Successfully applied "%s" role config', role.role_name)
+                log.info('Successfully applied "%s" role config in %s us', role.role_name, tostring(fiber.time64() - start_time))
             end
         else
             -- Stop the role
@@ -479,11 +482,12 @@ local function stop()
         and (type(role.M.stop) == 'function')
         then
             log.info('Stop "%s" role', role.role_name)
+            local start_time = fiber.time64()
             local _, err = StopRoleError:pcall(role.M.stop, opts)
             if err ~= nil then
                 log.error('%s', err)
             end
-            log.info('Successfully stopped "%s" role', role.role_name)
+            log.info('Successfully stopped "%s" role in %f us', role.role_name, tostring(fiber.time64() - start_time))
         end
 
         service_registry.set(role.role_name, nil)
