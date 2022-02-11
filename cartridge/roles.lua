@@ -490,8 +490,8 @@ local function stop()
             if err ~= nil then
                 log.error('%s', err)
             end
-            log.info('Successfully stopped "%s" role in %s us', role.role_name,
-                tostring(fiber.time64() - start_time))
+            log.info('Successfully stopped "%s" role in %s us',
+                role.role_name, tostring(fiber.time64() - start_time))
         end
 
         service_registry.set(role.role_name, nil)
