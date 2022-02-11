@@ -490,7 +490,7 @@ local function stop()
             if err ~= nil then
                 log.error('%s', err)
             end
-            log.info('Successfully stopped "%s" role in %f us', role.role_name,
+            log.info('Successfully stopped "%s" role in %s us', role.role_name,
                 tostring(fiber.time64() - start_time))
         end
 
