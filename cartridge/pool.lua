@@ -98,7 +98,7 @@ local function connect(uri, opts)
         end
 
         conn, err = NetboxConnectError:pcall(netbox.connect,
-            _uri, {wait_connected = false}
+            _uri, {wait_connected = false, fetch_schema = false}
         )
         if err ~= nil then
             return nil, err
