@@ -374,7 +374,8 @@ local function validate_config(conf_new, conf_old)
                 )
                 return nil, err
             end
-            log.info('Successfully validated config "%s" role in %s us', role.role_name, tostring(fiber.time64() - start_time))
+            log.info('Successfully validated config "%s" role in %s us',
+                role.role_name, tostring(fiber.time64() - start_time))
         end
     end
 
@@ -424,7 +425,8 @@ local function apply_config(conf, opts)
                     log.error('%s', _err)
                     goto continue
                 end
-                log.info('Successfully initialized "%s" role in %s us', role.role_name, tostring(fiber.time64() - start_time))
+                log.info('Successfully initialized "%s" role in %s us',
+                    role.role_name, tostring(fiber.time64() - start_time))
             end
 
             service_registry.set(role.role_name, role.M)
@@ -441,7 +443,8 @@ local function apply_config(conf, opts)
                     end
                     log.error('%s', _err)
                 end
-                log.info('Successfully applied "%s" role config in %s us', role.role_name, tostring(fiber.time64() - start_time))
+                log.info('Successfully applied "%s" role config in %s us',
+                    role.role_name, tostring(fiber.time64() - start_time))
             end
         else
             -- Stop the role
