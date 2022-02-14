@@ -66,7 +66,7 @@ Changed
 
 - Use core as a node module instead of a window scope object.
 
-- Update ``frontend-core`` to 8.0.2.
+- Update ``frontend-core`` to 8.0.5.
 
 - Update ``graphql`` to 0.1.3.
 
