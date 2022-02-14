@@ -586,7 +586,7 @@ function g.test_quorum_one()
     log.info('--------------------------------------------------------')
     g.master.env['TARANTOOL_REPLICATION_CONNECT_QUORUM'] = 1
     g.master:start()
-    helpers.wish_state(g.master, 'RolesConfigured')
+    g.cluster:wait_until_healthy(g.master)
 
     t.assert_equals(rpc_get_candidate(g.master), g.master.advertise_uri)
     t.assert_equals(get_leader(g.master), g.master.instance_uuid)
