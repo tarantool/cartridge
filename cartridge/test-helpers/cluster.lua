@@ -64,7 +64,8 @@ function Cluster:new(object)
     -- @string[opt] uuid Replicaset uuid.
     -- @tparam {string} roles List of roles for servers in the replicaset.
     -- @tparam ?string vshard_group Name of vshard group.
-    -- @tparam ?boolan all_rw Make all replicas writable.
+    -- @tparam ?number weight Vshard group weight.
+    -- @tparam ?boolean all_rw Make all replicas writable.
     -- @tparam table|number servers List of objects to build `Server`s with or
     --      number of servers in replicaset.
     for _, replicaset in pairs(object.replicasets) do
@@ -73,6 +74,7 @@ function Cluster:new(object)
             uuid = '?string',
             roles = 'table',
             vshard_group = '?string',
+            weight = '?number',
             servers = 'table|number',
             all_rw = '?boolean',
         }) end)(replicaset)

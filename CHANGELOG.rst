@@ -37,7 +37,7 @@ Added
 
 - New tests cases (#892, #944, #1473, #1726).
 
-- ``test-helpers.cluster:server_by_role`` method (#1615).
+- ``test-helpers.Cluster:server_by_role`` method (#1615).
 
 - Allow to extract filename from http request body (#1613).
 
@@ -49,6 +49,8 @@ Added
   Types are split by separator ``|``,  e.g. ``string|number`` (#1651).
 
 - Downgrade test (#1397).
+
+- Vshard weight parameter to ``test-helpers.Cluster.replicasets`` (#1743).
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Changed

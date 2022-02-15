@@ -25,6 +25,12 @@ g.before_all = function()
                 servers = 1,
             },
             {
+                alias = 'vshard-2',
+                roles = {'vshard-storage'},
+                servers = 1,
+                weight = 2,
+            },
+            {
                 alias = 'myrole',
                 roles = {'myrole'},
                 servers = 2
@@ -148,14 +154,6 @@ function g.test_failover()
         replicasets = {{roles = {}, servers = 1, alias = ''}},
         failover = 'stateful',
     })
-
-    -- t.assert_error_msg_contains(
-    --     "fake: no such stateboard_entrypoint",
-    --     build_cluster, {
-    --     replicasets = {{roles = {}, servers = 1, alias = ''}},
-    --     failover = 'stateful',
-    --     stateboard_entrypoint = 'fake'
-    -- })
 end
 
 function g.test_new_with_servers_count()
@@ -225,4 +223,23 @@ function g.test_swim_period()
     ]])
 
     t.assert_equals(period, 0.314)
+end
+
+function g.test_vshard_weight()
+    local res = g.cluster.main_server:graphql({
+        query = [[
+            query(
+                $uuid: String!
+            ){
+                replicasets(uuid: $uuid) {
+                    weight
+                }
+            }
+        ]],
+        variables = {
+            uuid = g.cluster.replicasets[2].uuid,
+        }
+    })
+
+    t.assert_equals(res['data']['replicasets'][1]['weight'], 2)
 end
