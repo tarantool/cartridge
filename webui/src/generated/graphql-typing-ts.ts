@@ -438,6 +438,7 @@ export type RefineUriSuggestion = {
 /** Statistics for an instance in the replica set. */
 export type ReplicaStatus = {
   __typename?: 'ReplicaStatus';
+  downstream_lag?: Maybe<Scalars['Float']>;
   downstream_message?: Maybe<Scalars['String']>;
   downstream_status?: Maybe<Scalars['String']>;
   id?: Maybe<Scalars['Int']>;
@@ -557,6 +558,8 @@ export type ServerInfoGeneral = {
   replicaset_uuid: Scalars['String'];
   /** Current read-only state */
   ro: Scalars['Boolean'];
+  /** Current read-only state reason */
+  ro_reason?: Maybe<Scalars['String']>;
   /** The number of seconds since the instance started */
   uptime: Scalars['Float'];
   /** The Tarantool version */
@@ -1042,6 +1045,7 @@ export type ServerDetailsFieldsFragment = {
       http_port?: Maybe<number>;
       http_host?: Maybe<string>;
       webui_prefix?: Maybe<string>;
+      app_version?: Maybe<string>;
     };
     replication: {
       __typename?: 'ServerInfoReplication';
@@ -1166,6 +1170,7 @@ export type InstanceDataQuery = {
             http_port?: Maybe<number>;
             http_host?: Maybe<string>;
             webui_prefix?: Maybe<string>;
+            app_version?: Maybe<string>;
           };
           replication: {
             __typename?: 'ServerInfoReplication';
@@ -1325,6 +1330,7 @@ export type BoxInfoQuery = {
             http_port?: Maybe<number>;
             http_host?: Maybe<string>;
             webui_prefix?: Maybe<string>;
+            app_version?: Maybe<string>;
           };
           replication: {
             __typename?: 'ServerInfoReplication';

@@ -13,13 +13,12 @@ import {
   Modal,
   Spin,
   SplashModal,
+  TarantoolLogoFull,
   Text,
   genericStyles,
 } from '@tarantool.io/ui-kit';
 
 import { logIn } from 'src/store/actions/auth.actions';
-
-import logo from '../../assets/tarantool-logo-full.svg';
 
 const schema = yup.object().shape({
   username: yup.string().required('Login is a required field'),
@@ -189,7 +188,7 @@ const SplashLogInForm = ({ authorizationRequired, loaded, ...props }) => {
       className="meta-test__LoginFormSplash"
       title="Authorization"
       subTitle="Please, input your credentials"
-      logo={logo}
+      logo={TarantoolLogoFull}
     >
       <LogInForm {...props} />
     </SplashModal>

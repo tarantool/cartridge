@@ -462,6 +462,7 @@ export type RefineUriSuggestion = {|
 /** Statistics for an instance in the replica set. */
 export type ReplicaStatus = {|
   __typename?: 'ReplicaStatus',
+  downstream_lag?: ?$ElementType<Scalars, 'Float'>,
   downstream_message?: ?$ElementType<Scalars, 'String'>,
   downstream_status?: ?$ElementType<Scalars, 'String'>,
   id?: ?$ElementType<Scalars, 'Int'>,
@@ -581,6 +582,8 @@ export type ServerInfoGeneral = {|
   replicaset_uuid: $ElementType<Scalars, 'String'>,
   /** Current read-only state */
   ro: $ElementType<Scalars, 'Boolean'>,
+  /** Current read-only state reason */
+  ro_reason?: ?$ElementType<Scalars, 'String'>,
   /** The number of seconds since the instance started */
   uptime: $ElementType<Scalars, 'Float'>,
   /** The Tarantool version */
@@ -917,7 +920,7 @@ export type ServerDetailsFieldsFragment = ({
       ...$Pick<ServerInfoNetwork, {| io_collect_interval?: *, net_msg_max?: *, readahead?: * |}>
     }), general: ({
         ...{ __typename?: 'ServerInfoGeneral' },
-      ...$Pick<ServerInfoGeneral, {| instance_uuid: *, uptime: *, version: *, ro: *, http_port?: *, http_host?: *, webui_prefix?: * |}>
+      ...$Pick<ServerInfoGeneral, {| instance_uuid: *, uptime: *, version: *, ro: *, http_port?: *, http_host?: *, webui_prefix?: *, app_version?: * |}>
     }), replication: ({
         ...{ __typename?: 'ServerInfoReplication' },
       ...$Pick<ServerInfoReplication, {| replication_connect_quorum?: *, replication_connect_timeout?: *, replication_sync_timeout?: *, replication_skip_conflict?: *, replication_sync_lag?: *, vclock?: *, replication_timeout?: * |}>,
@@ -974,7 +977,7 @@ export type InstanceDataQuery = ({
         ...$Pick<ServerInfoNetwork, {| io_collect_interval?: *, net_msg_max?: *, readahead?: * |}>
       }), general: ({
           ...{ __typename?: 'ServerInfoGeneral' },
-        ...$Pick<ServerInfoGeneral, {| instance_uuid: *, uptime: *, version: *, ro: *, http_port?: *, http_host?: *, webui_prefix?: * |}>
+        ...$Pick<ServerInfoGeneral, {| instance_uuid: *, uptime: *, version: *, ro: *, http_port?: *, http_host?: *, webui_prefix?: *, app_version?: * |}>
       }), replication: ({
           ...{ __typename?: 'ServerInfoReplication' },
         ...$Pick<ServerInfoReplication, {| replication_connect_quorum?: *, replication_connect_timeout?: *, replication_sync_timeout?: *, replication_skip_conflict?: *, replication_sync_lag?: *, vclock?: *, replication_timeout?: * |}>,
@@ -1080,7 +1083,7 @@ export type BoxInfoQuery = ({
         ...$Pick<ServerInfoNetwork, {| io_collect_interval?: *, net_msg_max?: *, readahead?: * |}>
       }), general: ({
           ...{ __typename?: 'ServerInfoGeneral' },
-        ...$Pick<ServerInfoGeneral, {| instance_uuid: *, uptime: *, version: *, ro: *, http_port?: *, http_host?: *, webui_prefix?: * |}>
+        ...$Pick<ServerInfoGeneral, {| instance_uuid: *, uptime: *, version: *, ro: *, http_port?: *, http_host?: *, webui_prefix?: *, app_version?: * |}>
       }), replication: ({
           ...{ __typename?: 'ServerInfoReplication' },
         ...$Pick<ServerInfoReplication, {| replication_connect_quorum?: *, replication_connect_timeout?: *, replication_sync_timeout?: *, replication_skip_conflict?: *, replication_sync_lag?: *, vclock?: *, replication_timeout?: * |}>,
