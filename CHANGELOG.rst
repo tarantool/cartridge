@@ -52,6 +52,8 @@ Added
 
 - Vshard weight parameter to ``test-helpers.Cluster.replicasets`` (#1743).
 
+- Add logging for in`role machinery (#1745).
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Changed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

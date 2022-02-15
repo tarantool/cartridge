@@ -14,6 +14,7 @@
 local log = require('log')
 local checks = require('checks')
 local errors = require('errors')
+local clock = require('clock')
 
 local vars = require('cartridge.vars').new('cartridge.roles')
 local utils = require('cartridge.utils')
@@ -143,6 +144,7 @@ utils.assert_upvalues(register_role, {
 -- @treturn[2] table Error description
 local function cfg(module_names)
     checks('table')
+    log.info('Load modules and register')
     local ctx = {
         roles_by_number = {},
         roles_by_role_name = {},
@@ -330,6 +332,7 @@ end
 -- @treturn[2] table Error description
 local function validate_config(conf_new, conf_old)
     checks('table', 'table')
+    log.info('Validate roles configurations')
     if conf_new.__type == 'ClusterwideConfig' then
         local err = "Bad argument #1 to validate_config" ..
             " (table expected, got ClusterwideConfig)"
@@ -359,6 +362,8 @@ local function validate_config(conf_new, conf_old)
     for _, role in ipairs(vars.roles_by_number) do
         if not disabled_roles[role.role_name]
         and type(role.M.validate_config) == 'function' then
+            log.info('Validate config "%s" role', role.role_name)
+            local start_time = clock.monotonic()
             local ok, err = ValidateConfigError:pcall(
                 role.M.validate_config, conf_new, conf_old
             )
@@ -367,11 +372,17 @@ local function validate_config(conf_new, conf_old)
                     'Role %q method validate_config() returned %s',
                     role.role_name, ok
                 )
+                log.info('Failed to validate "%s" role config in %.6f sec',
+                        role.role_name, clock.monotonic() - start_time)
                 return nil, err
+            else
+                log.info('Successfully validated config "%s" role in %.6f sec',
+                    role.role_name, clock.monotonic() - start_time)
             end
         end
     end
 
+    log.info('Roles configuration validation finished')
     return true
 end
 
@@ -388,6 +399,7 @@ local function apply_config(conf, opts)
     checks('table', {
         is_master = 'boolean',
     })
+    log.info('Start applying roles config')
     if conf.__type == 'ClusterwideConfig' then
         local err = "Bad argument #1 to apply_config" ..
             " (table expected, got ClusterwideConfig)"
@@ -404,6 +416,8 @@ local function apply_config(conf, opts)
             if (service_registry.get(role.role_name) == nil)
             and (type(role.M.init) == 'function')
             then
+                log.info('Init "%s" role', role.role_name)
+                local start_time = clock.monotonic()
                 local _, _err = ApplyConfigError:pcall(
                     role.M.init, opts
                 )
@@ -412,13 +426,20 @@ local function apply_config(conf, opts)
                         err = _err
                     end
                     log.error('%s', _err)
+                    log.info('Failed to initialize "%s" role in %.6f sec',
+                        role.role_name, clock.monotonic() - start_time)
                     goto continue
+                else
+                    log.info('Successfully initialized "%s" role in %.6f sec',
+                        role.role_name, clock.monotonic() - start_time)
                 end
             end
 
             service_registry.set(role.role_name, role.M)
 
             if type(role.M.apply_config) == 'function' then
+                log.info('Appling "%s" role config', role.role_name)
+                local start_time = clock.monotonic()
                 local _, _err = ApplyConfigError:pcall(
                     role.M.apply_config, conf, opts
                 )
@@ -427,6 +448,11 @@ local function apply_config(conf, opts)
                         err = _err
                     end
                     log.error('%s', _err)
+                    log.info('Failed to apply "%s" role config in %.6f sec',
+                        role.role_name, clock.monotonic() - start_time)
+                else
+                    log.info('Successfully applied "%s" role config in %.6f sec',
+                        role.role_name, clock.monotonic() - start_time)
                 end
             end
         else
@@ -467,9 +493,16 @@ local function stop()
         if (service_registry.get(role.role_name) ~= nil)
         and (type(role.M.stop) == 'function')
         then
+            log.info('Stop "%s" role', role.role_name)
+            local start_time = clock.monotonic()
             local _, err = StopRoleError:pcall(role.M.stop, opts)
             if err ~= nil then
                 log.error('%s', err)
+                log.info('Failed to stop "%s" role in %.6f sec',
+                    role.role_name, clock.monotonic() - start_time)
+            else
+                log.info('Successfully stopped "%s" role in %.6f sec',
+                    role.role_name, clock.monotonic() - start_time)
             end
         end
 
