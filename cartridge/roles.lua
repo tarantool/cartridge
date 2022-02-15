@@ -372,12 +372,12 @@ local function validate_config(conf_new, conf_old)
                     'Role %q method validate_config() returned %s',
                     role.role_name, ok
                 )
-                log.info('Failed to validate "%s" role config in %s us',
-                        role.role_name, tostring(clock.monotonic() - start_time))
+                log.info('Failed to validate "%s" role config in %.6f sec',
+                        role.role_name, clock.monotonic() - start_time)
                 return nil, err
             end
-            log.info('Successfully validated config "%s" role in %s us',
-                role.role_name, tostring(clock.monotonic() - start_time))
+            log.info('Successfully validated config "%s" role in %.6f sec',
+                role.role_name, clock.monotonic() - start_time)
         end
     end
 
@@ -425,12 +425,12 @@ local function apply_config(conf, opts)
                         err = _err
                     end
                     log.error('%s', _err)
-                    log.info('Failed to initialize "%s" role in %s us',
-                        role.role_name, tostring(clock.monotonic() - start_time))
+                    log.info('Failed to initialize "%s" role in %.6f sec',
+                        role.role_name, clock.monotonic() - start_time)
                     goto continue
                 end
-                log.info('Successfully initialized "%s" role in %s us',
-                    role.role_name, tostring(clock.monotonic() - start_time))
+                log.info('Successfully initialized "%s" role in %.6f sec',
+                    role.role_name, clock.monotonic() - start_time)
             end
 
             service_registry.set(role.role_name, role.M)
@@ -446,11 +446,11 @@ local function apply_config(conf, opts)
                         err = _err
                     end
                     log.error('%s', _err)
-                    log.info('Failed to apply "%s" role config in %s us',
-                        role.role_name, tostring(clock.monotonic() - start_time))
+                    log.info('Failed to apply "%s" role config in %.6f sec',
+                        role.role_name, clock.monotonic() - start_time)
                 end
-                log.info('Successfully applied "%s" role config in %s us',
-                    role.role_name, tostring(clock.monotonic() - start_time))
+                log.info('Successfully applied "%s" role config in %.6f sec',
+                    role.role_name, clock.monotonic() - start_time)
             end
         else
             -- Stop the role
@@ -495,11 +495,11 @@ local function stop()
             local _, err = StopRoleError:pcall(role.M.stop, opts)
             if err ~= nil then
                 log.error('%s', err)
-                log.info('Failed to stop "%s" role in %s us',
-                    role.role_name, tostring(clock.monotonic() - start_time))
+                log.info('Failed to stop "%s" role in %.6f sec',
+                    role.role_name, clock.monotonic() - start_time)
             end
-            log.info('Successfully stopped "%s" role in %s us',
-                role.role_name, tostring(clock.monotonic() - start_time))
+            log.info('Successfully stopped "%s" role in %.6f sec',
+                role.role_name, clock.monotonic() - start_time)
         end
 
         service_registry.set(role.role_name, nil)

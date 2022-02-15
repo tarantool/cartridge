@@ -552,11 +552,11 @@ function reconfigure_all(active_leaders)
             if err then
                 log.error('Role %q failover failed', mod.role_name)
                 log.error('%s', err)
-                log.info('Failed to apply "%s" role config from failover in %s us',
-                    role_name, tostring(clock.monotonic() - start_time))
+                log.info('Failed to apply "%s" role config from failover in %.6f sec',
+                    role_name, clock.monotonic() - start_time)
             end
-            log.info('Successfully applied "%s" role config from failover in %s us',
-                role_name, tostring(clock.monotonic() - start_time))
+            log.info('Successfully applied "%s" role config from failover in %.6f sec',
+                role_name, clock.monotonic() - start_time)
         end
 
         return true
