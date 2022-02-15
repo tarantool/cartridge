@@ -28,6 +28,7 @@
 local log = require('log')
 local json = require('json')
 local fiber = require('fiber')
+local clock = require('clock')
 local checks = require('checks')
 local errors = require('errors')
 local membership = require('membership')
@@ -545,11 +546,17 @@ function reconfigure_all(active_leaders)
 
         for _, role_name in ipairs(vars.all_roles) do
             local mod = service_registry.get(role_name)
+            log.info('Appling "%s" role config from failover', role_name)
+            local start_time = clock.monotonic64()
             local _, err = apply_config(mod)
             if err then
                 log.error('Role %q failover failed', mod.role_name)
                 log.error('%s', err)
+                log.info('Failed to apply "%s" role config from failover in %s us',
+                    role.role_name, tostring(clock.monotonic64() - start_time))
             end
+            log.info('Successfully applied "%s" role config from failover in %s us',
+                role_name, tostring(clock.monotonic64() - start_time))
         end
 
         return true
