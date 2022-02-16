@@ -89,7 +89,7 @@ Fixed
 - Fix GraphQL query ``auth_params.username`` returns empty string instead of ``username``.
 
 - Flaky tests (#1538, #1569, #1590, #1594, #1599, #1602, #1656, #1657, #1658,
-  #1664, #1671, #1681, #1682, #1683, #1703, #1709).
+  #1664, #1671, #1681, #1682, #1683, #1703, #1709, #1756).
 
 - Tests compatibility with tarantool/master (#1619).
 
