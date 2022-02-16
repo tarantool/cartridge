@@ -58,11 +58,11 @@ function g.test_clock_delta()
         g.servers[3].advertise_uri,
     })
 
-    -- full mesh isn't established yet
+    -- full mesh couldn't be established yet
     local resp = g.servers[2]:graphql({
         query = [[{ servers { uri clock_delta } }]]
     }).data.servers
-    t.assert_equals(#resp, 2)
+    t.assert_ge(#resp, 2)
 
     for i, observer in pairs(g.servers) do
         ::retry::
