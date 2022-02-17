@@ -37,7 +37,7 @@ Added
 
 - New tests cases (#892, #944, #1473, #1726).
 
-- ``test-helpers.cluster:server_by_role`` method (#1615).
+- ``test-helpers.Cluster:server_by_role`` method (#1615).
 
 - Allow to extract filename from http request body (#1613).
 
@@ -49,6 +49,10 @@ Added
   Types are split by separator ``|``,  e.g. ``string|number`` (#1651).
 
 - Downgrade test (#1397).
+
+- Vshard weight parameter to ``test-helpers.Cluster.replicasets`` (#1743).
+
+- Add logging for in`role machinery (#1745).
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Changed
@@ -66,7 +70,7 @@ Changed
 
 - Use core as a node module instead of a window scope object.
 
-- Update ``frontend-core`` to 8.0.2.
+- Update ``frontend-core`` to 8.0.5.
 
 - Update ``graphql`` to 0.1.3.
 
@@ -89,7 +93,7 @@ Fixed
 - Fix GraphQL query ``auth_params.username`` returns empty string instead of ``username``.
 
 - Flaky tests (#1538, #1569, #1590, #1594, #1599, #1602, #1656, #1657, #1658,
-  #1664, #1671, #1681, #1682, #1683, #1703, #1709, #1756).
+  #1664, #1671, #1681, #1682, #1683, #1703, #1709, #1751, #1756).
 
 - Tests compatibility with tarantool/master (#1619).
 
