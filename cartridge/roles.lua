@@ -259,6 +259,9 @@ local function get_enabled_roles_without_deps(roles)
     return ret
 end
 
+-- Local cache to avoid recalculations for the same topology
+local enabled_roles_cache = setmetatable({}, {__mode = 'k'})
+
 --- Roles to be enabled on the server.
 -- This function returns all roles that will be enabled
 -- including their dependencies (both hidden and not)
@@ -272,7 +275,11 @@ local function get_enabled_roles(roles)
     checks('?table')
     roles = roles or {}
 
-    local ret = {}
+    local ret = enabled_roles_cache[roles]
+    if ret ~= nil then
+        return ret
+    end
+    ret = {}
 
     for _, role in ipairs(vars.roles_by_number) do
         if role.M.permanent then
@@ -298,6 +305,8 @@ local function get_enabled_roles(roles)
             end
         end
     end
+
+    enabled_roles_cache[roles] = ret
 
     return ret
 end
@@ -551,6 +560,8 @@ local function reload()
     then
         return nil, ReloadError:new('Inappropriate state %q', state)
     end
+
+    table.clear(enabled_roles_cache)
 
     log.warn('Reloading roles ...')
     confapplier.set_state('ReloadingRoles')
