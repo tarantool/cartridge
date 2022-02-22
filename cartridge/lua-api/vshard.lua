@@ -14,6 +14,11 @@ local function bootstrap_vshard()
     return rpc.call('vshard-router', 'bootstrap')
 end
 
+local function get_cfg()
+    return rpc.call('vshard-router', 'get_cfg')
+end
+
 return {
     bootstrap_vshard = bootstrap_vshard,
+    get_cfg = get_cfg,
 }

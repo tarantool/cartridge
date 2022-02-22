@@ -53,6 +53,10 @@ local function get(group_name)
     return vars.routers[router_name]
 end
 
+local function get_cfg()
+    return {}
+end
+
 local function apply_config(conf)
     checks('table')
 
@@ -261,4 +265,5 @@ return {
 
     get = get,
     bootstrap = bootstrap,
+    get_cfg = get_cfg,
 }
