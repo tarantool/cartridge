@@ -100,7 +100,7 @@ local cluster_opts = {
 
 --- Common `box.cfg <https://www.tarantool.io/en/doc/latest/reference/configuration/>`_ tuning options.
 -- @table box_opts
-local box_opts = {    
+local box_opts = {
     listen                   = 'string', -- **string**
     memtx_memory             = 'number', -- **number**
     memtx_allocator          = 'string', -- **string**
