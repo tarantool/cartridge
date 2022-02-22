@@ -138,10 +138,13 @@ local function get_info(uri)
                 too_long_threshold = box_cfg.too_long_threshold,
                 wal_dir_rescan_delay = box_cfg.wal_dir_rescan_delay,
                 wal_max_size = box_cfg.wal_max_size,
+                wal_queue_max_size = box_cfg.wal_queue_max_size,
+                wal_cleanup_delay = box_cfg.wal_cleanup_delay,
                 wal_mode = box_cfg.wal_mode,
                 rows_per_wal = box_cfg.rows_per_wal,
                 -- memtx
                 memtx_memory = box_cfg.memtx_memory,
+                memtx_allocator = box_cfg.memtx_allocator,
                 memtx_max_tuple_size = box_cfg.memtx_max_tuple_size,
                 memtx_min_tuple_size = box_cfg.memtx_min_tuple_size,
                 -- vinyl
@@ -169,6 +172,7 @@ local function get_info(uri)
                 replication_sync_lag = box_cfg.replication_sync_lag,
                 replication_sync_timeout = box_cfg.replication_sync_timeout,
                 replication_timeout = box_cfg.replication_timeout,
+                replication_threads = box_cfg.replication_threads,
                 vclock = box_info.vclock,
                 replication_info = {},
             },

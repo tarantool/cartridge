@@ -100,14 +100,16 @@ local cluster_opts = {
 
 --- Common `box.cfg <https://www.tarantool.io/en/doc/latest/reference/configuration/>`_ tuning options.
 -- @table box_opts
-local box_opts = {
+local box_opts = {    
     listen                   = 'string', -- **string**
     memtx_memory             = 'number', -- **number**
+    memtx_allocator          = 'string', -- **string**
     strip_core               = 'boolean', -- **boolean**
     memtx_min_tuple_size     = 'number', -- **number**
     memtx_max_tuple_size     = 'number', -- **number**
     memtx_use_mvcc_engine    = 'boolean', -- **boolean**
     slab_alloc_factor        = 'number', -- **number**
+    slab_alloc_granularity   = 'number', -- **number**
     work_dir                 = 'string', -- **string** (**deprecated**)
     memtx_dir                = 'string', -- **string**
     wal_dir                  = 'string', -- **string**
@@ -138,7 +140,9 @@ local box_opts = {
     wal_mode                 = 'string', -- **string**
     rows_per_wal             = 'number', -- **number**
     wal_max_size             = 'number', -- **number**
+    wal_queue_max_size       = 'number', -- **number**
     wal_dir_rescan_delay     = 'number', -- **number**
+    wal_cleanup_delay        = 'number', -- **number**
     force_recovery           = 'boolean', -- **boolean**
     replication              = 'string', -- **string**
     instance_uuid            = 'string', -- **string**
@@ -154,6 +158,7 @@ local box_opts = {
     read_only                = 'boolean', -- **boolean**
     hot_standby              = 'boolean', -- **boolean**
     worker_pool_threads      = 'number', -- **number**
+    replication_threads      = 'number', -- **number**
     replication_timeout      = 'number', -- **number**
     replication_sync_lag     = 'number', -- **number**
     replication_sync_timeout = 'number', -- **number**
@@ -165,7 +170,11 @@ local box_opts = {
     feedback_enabled         = 'boolean', -- **boolean**
     feedback_host            = 'string', -- **string**
     feedback_interval        = 'number', -- **number**
+    feedback_crashinfo       = 'boolean', -- **boolean**
     net_msg_max              = 'number', -- **number**
+    iproto_threads           = 'number', -- **number**
+    sql_cache_size           = 'number', -- **number**
+    txn_timeout              = 'number', -- **number**
 }
 
 local function load_file(filename)

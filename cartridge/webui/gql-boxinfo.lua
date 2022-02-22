@@ -158,6 +158,14 @@ local boxinfo_schema = {
                         kind = gql_types.long,
                         description = '',
                     },
+                    wal_queue_max_size = {
+                        kind = gql_types.long,
+                        description = '',
+                    },
+                    wal_cleanup_delay = {
+                        kind = gql_types.long,
+                        description = '',
+                    },
                     wal_mode = {
                         kind = gql_types.string,
                         description = '',
@@ -170,6 +178,10 @@ local boxinfo_schema = {
                     -- memtx
                     memtx_memory = {
                         kind = gql_types.long,
+                        description = '',
+                    },
+                    memtx_allocator = {
+                        kind = gql_types.string,
                         description = '',
                     },
                     memtx_max_tuple_size = {
@@ -236,6 +248,10 @@ local boxinfo_schema = {
                         description = '',
                     },
                     replication_timeout = {
+                        kind = gql_types.float,
+                        description = '',
+                    },
+                    replication_threads = {
                         kind = gql_types.float,
                         description = '',
                     },

@@ -1,5 +1,5 @@
 # source: http://127.0.0.1:8081/admin/api
-# timestamp: Tue Feb 01 2022 10:49:59 GMT+0300 (Moscow Standard Time)
+# timestamp: Tue Feb 22 2022 15:54:26 GMT+0300 (Москва, стандартное время)
 
 """Custom scalar specification."""
 directive @specifiedBy(
@@ -743,39 +743,43 @@ type ServerInfoNetwork {
 }
 
 type ServerInfoReplication {
-  replication_connect_quorum: Int
   replication_connect_timeout: Float
-  replication_sync_timeout: Float
   replication_skip_conflict: Boolean
   replication_sync_lag: Float
+
+  """The vector clock of replication log sequence numbers"""
+  vclock: [Long]
+  replication_timeout: Float
+  replication_connect_quorum: Int
 
   """
   Statistics for all instances in the replica set in regard to the current instance
   """
   replication_info: [ReplicaStatus]
-
-  """The vector clock of replication log sequence numbers"""
-  vclock: [Long]
-  replication_timeout: Float
+  replication_threads: Float
+  replication_sync_timeout: Float
 }
 
 type ServerInfoStorage {
   wal_max_size: Long
   vinyl_run_count_per_level: Int
   rows_per_wal: Long
+  wal_queue_max_size: Long
   vinyl_cache: Long
   vinyl_range_size: Long
   vinyl_timeout: Float
   memtx_min_tuple_size: Long
-  vinyl_bloom_fpr: Float
+  vinyl_max_tuple_size: Long
   vinyl_page_size: Long
   memtx_max_tuple_size: Long
-  vinyl_run_size_ratio: Float
+  wal_cleanup_delay: Long
   wal_mode: String
   memtx_memory: Long
-  vinyl_memory: Long
+  memtx_allocator: String
   too_long_threshold: Float
-  vinyl_max_tuple_size: Long
+  vinyl_bloom_fpr: Float
+  vinyl_memory: Long
+  vinyl_run_size_ratio: Float
   vinyl_write_threads: Int
   vinyl_read_threads: Int
   wal_dir_rescan_delay: Float
