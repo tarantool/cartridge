@@ -54,6 +54,7 @@ local function get(group_name)
 end
 
 local function get_cfg()
+    return vars.vshard_cfg[router_name]
     return {}
 end
 
