@@ -82,6 +82,9 @@ Changed
 
 - Change type of ``replication_synchro_quorum`` in argparse to ``string|number``.
 
+- Update ``ddl`` dependency to 1.6.0.
+   (`Changelog <https://github.com/tarantool/ddl/releases/tag/1.6.0>`__).
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
