@@ -148,37 +148,57 @@ local boxinfo_schema = {
                     -- wal
                     too_long_threshold = {
                         kind = gql_types.float,
-                        description = '',
+                        description = 'Warning in the WAL log if a transaction waits for quota' ..
+                            ' for more than `too_long_threshold` seconds',
                     },
                     wal_dir_rescan_delay = {
                         kind = gql_types.float,
-                        description = '',
+                        description = 'Background fiber restart delay to follow xlog changes.',
                     },
                     wal_max_size = {
                         kind = gql_types.long,
-                        description = '',
+                        description = 'The maximal size of a single write-ahead log file',
+                    },
+                    wal_queue_max_size = {
+                        kind = gql_types.long,
+                        description = 'Limit the pace at which replica submits new transactions to WAL',
+                    },
+                    wal_cleanup_delay = {
+                        kind = gql_types.long,
+                        description = 'Option to prevent early cleanup of `*.xlog` files' ..
+                            ' which are needed by replicas and lead to `XlogGapError`',
                     },
                     wal_mode = {
                         kind = gql_types.string,
-                        description = '',
+                        description =
+                            'Specify fiber-WAL-disk synchronization mode as:' ..
+                            ' "none": write-ahead log is not maintained;' ..
+                            ' "write": fibers wait for their data to be written to the write-ahead log;' ..
+                            ' "fsync": fibers wait for their data, fsync follows each write.',
                     },
                     rows_per_wal = {
                         kind = gql_types.long,
-                        description = '',
+                        description = 'Deprecated. See "wal_max_size"',
                     },
 
                     -- memtx
                     memtx_memory = {
                         kind = gql_types.long,
-                        description = '',
+                        description = 'How much memory Memtx engine allocates to actually store tuples, in bytes.',
+                    },
+                    memtx_allocator = {
+                        kind = gql_types.string,
+                        description = 'Allows to select the appropriate allocator for memtx tuples if necessary.',
                     },
                     memtx_max_tuple_size = {
                         kind = gql_types.long,
-                        description = '',
+                        description = 'Size of the largest allocation unit, in bytes.' ..
+                            ' It can be tuned up if it is necessary to store large tuples.',
                     },
                     memtx_min_tuple_size = {
                         kind = gql_types.long,
-                        description = '',
+                        description = 'Size of the smallest allocation unit, in bytes.' ..
+                            ' It can be tuned up if most of the tuples are not so small.',
                     },
 
                     -- vinyl
@@ -200,15 +220,17 @@ local boxinfo_schema = {
                 fields = {
                     net_msg_max = {
                         kind = gql_types.long,
-                        description = '',
+                        description = 'Since if the net_msg_max limit is reached,' ..
+                            ' we will stop processing incoming requests',
                     },
                     readahead = {
                         kind = gql_types.long,
-                        description = '',
+                        description = 'The size of the read-ahead buffer associated with a client connection',
                     },
                     io_collect_interval = {
                         kind = gql_types.float,
-                        description = '',
+                        description = 'The server will sleep for `io_collect_interval` seconds' ..
+                            ' between iterations of the event loop',
                     },
                 },
             }).nonNull,
@@ -217,27 +239,40 @@ local boxinfo_schema = {
                 fields = {
                     replication_connect_quorum = {
                         kind = gql_types.int,
-                        description = '',
+                        description =
+                            'Minimal number of replicas to sync for this instance to switch' ..
+                            ' to the write mode. If set to REPLICATION_CONNECT_QUORUM_ALL,' ..
+                            ' wait for all configured masters.',
                     },
                     replication_connect_timeout = {
                         kind = gql_types.float,
-                        description = '',
+                        description =
+                            'Maximal time box.cfg() may wait for connections to all configured' ..
+                            ' replicas to be established. If box.cfg() fails to connect to all' ..
+                            ' replicas within the timeout, it will either leave the instance in' ..
+                            ' the orphan mode (recovery) or fail (bootstrap, reconfiguration).',
                     },
                     replication_skip_conflict = {
                         kind = gql_types.boolean,
-                        description = '',
+                        description = 'Allows automatic skip of conflicting rows in replication' ..
+                            ' based on box.cfg configuration option.',
                     },
                     replication_sync_lag = {
                         kind = gql_types.float,
-                        description = '',
+                        description = 'Switch applier from "sync" to "follow" as soon as the replication' ..
+                            ' lag is less than the value of the following variable.',
                     },
                     replication_sync_timeout = {
                         kind = gql_types.float,
-                        description = '',
+                        description = 'Max time to wait for appliers to synchronize before entering the orphan mode.',
                     },
                     replication_timeout = {
                         kind = gql_types.float,
-                        description = '',
+                        description = 'Wait for the given period of time before trying to reconnect to a master.',
+                    },
+                    replication_threads = {
+                        kind = gql_types.float,
+                        description = 'How many threads to use for decoding incoming replication stream.',
                     },
                     vclock = {
                         kind = gql_types.list(gql_types.long),

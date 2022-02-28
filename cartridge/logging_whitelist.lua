@@ -32,6 +32,7 @@ local box_opts = {
     'feedback_enabled',
     'feedback_host',
     'feedback_interval',
+    'feedback_crashinfo',
     'force_recovery',
     'hot_standby',
     'instance_uuid',
@@ -45,6 +46,7 @@ local box_opts = {
     'memtx_dir',
     'memtx_max_tuple_size',
     'memtx_memory',
+    'memtx_allocator',
     'memtx_min_tuple_size',
     'memtx_use_mvcc_engine',
     'net_msg_max',
@@ -62,7 +64,9 @@ local box_opts = {
     'replication_synchro_quorum',
     'replication_synchro_timeout',
     'replication_timeout',
+    'replication_threads',
     'slab_alloc_factor',
+    'slab_alloc_granularity',
     'snap_io_rate_limit',
     'sql_cache_size',
     'strip_core',
@@ -83,9 +87,12 @@ local box_opts = {
     'wal_dir',
     'wal_dir_rescan_delay',
     'wal_max_size',
+    'wal_queue_max_size',
+    'wal_cleanup_delay',
     'wal_mode',
     'work_dir',
     'worker_pool_threads',
+    'txn_timeout',
 }
 
 return {
