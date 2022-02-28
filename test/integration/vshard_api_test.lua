@@ -65,9 +65,9 @@ function g.test_get_cfg()
         },
     }
 
-    local cfg = A1:call('vshard_get_cfg', {})
+    local cfg = A1:call('cartridge_vshard_get_config', {})
     t.assert_equals(cfg, expected_cfg)
 
-    local cfg = B1:call('vshard_get_cfg', {})
+    local cfg = B1:call('cartridge_vshard_get_config', {})
     t.assert_equals(cfg, expected_cfg)
 end

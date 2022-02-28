@@ -29,7 +29,7 @@ local function get_config()
     return result, nil
 end
 
-rawset(_G, 'vshard_get_cfg', get_config)
+rawset(_G, 'cartridge_vshard_get_config', get_config)
 
 --- Call `vshard.router.bootstrap()`.
 -- This function distributes all buckets across the replica sets.
