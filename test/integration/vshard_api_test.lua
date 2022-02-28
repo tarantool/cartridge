@@ -50,8 +50,7 @@ function g.test_get_cfg()
     local A1 = g.cluster:server('A1')
     local B1 = g.cluster:server('B1')
 
-    local cfg = A1:call('vshard_get_cfg', {})
-    t.assert_equals(cfg, {
+    local expected_cfg = {
         default = {
             bucket_count = 3000,
             collect_lua_garbage = false,
@@ -64,21 +63,11 @@ function g.test_get_cfg()
             sharding = {},
             sync_timeout = 1,
         },
-    })
+    }
+
+    local cfg = A1:call('vshard_get_cfg', {})
+    t.assert_equals(cfg, expected_cfg)
 
     local cfg = B1:call('vshard_get_cfg', {})
-    t.assert_equals(cfg, {
-        default = {
-            bucket_count = 3000,
-            collect_lua_garbage = false,
-            read_only = false,
-            rebalancer_disbalance_threshold = 1,
-            rebalancer_max_receiving = 100,
-            rebalancer_max_sending = 1,
-            sched_move_quota = 1,
-            sched_ref_quota = 300,
-            sharding = {},
-            sync_timeout = 1,
-        },
-    })
+    t.assert_equals(cfg, expected_cfg)
 end
