@@ -1,5 +1,5 @@
 # source: http://127.0.0.1:8081/admin/api
-# timestamp: Tue Feb 22 2022 15:54:26 GMT+0300 (Москва, стандартное время)
+# timestamp: Mon Feb 28 2022 14:32:56 GMT+0300 (Moscow Standard Time)
 
 """Custom scalar specification."""
 directive @specifiedBy(
@@ -737,51 +737,128 @@ type ServerInfoMembership {
 }
 
 type ServerInfoNetwork {
+  """
+  The server will sleep for `io_collect_interval` seconds between iterations of the event loop
+  """
   io_collect_interval: Float
+
+  """The size of the read-ahead buffer associated with a client connection"""
   readahead: Long
+
+  """
+  Since if the net_msg_max limit is reached, we will stop processing incoming requests
+  """
   net_msg_max: Long
 }
 
 type ServerInfoReplication {
+  """
+  Maximal time box.cfg() may wait for connections to all configured replicas to
+  be established. If box.cfg() fails to connect to all replicas within the
+  timeout, it will either leave the instance in the orphan mode (recovery) or
+  fail (bootstrap, reconfiguration).
+  """
   replication_connect_timeout: Float
+
+  """
+  Allows automatic skip of conflicting rows in replication based on box.cfg configuration option.
+  """
   replication_skip_conflict: Boolean
+
+  """
+  Switch applier from "sync" to "follow" as soon as the replication lag is less than the value of the following variable.
+  """
   replication_sync_lag: Float
 
   """The vector clock of replication log sequence numbers"""
   vclock: [Long]
+
+  """
+  Wait for the given period of time before trying to reconnect to a master.
+  """
   replication_timeout: Float
+
+  """
+  Minimal number of replicas to sync for this instance to switch to the write
+  mode. If set to REPLICATION_CONNECT_QUORUM_ALL, wait for all configured masters.
+  """
   replication_connect_quorum: Int
 
   """
   Statistics for all instances in the replica set in regard to the current instance
   """
   replication_info: [ReplicaStatus]
+
+  """How many threads to use for decoding incoming replication stream."""
   replication_threads: Float
+
+  """
+  Max time to wait for appliers to synchronize before entering the orphan mode.
+  """
   replication_sync_timeout: Float
 }
 
 type ServerInfoStorage {
+  """The maximal size of a single write-ahead log file"""
   wal_max_size: Long
   vinyl_run_count_per_level: Int
+
+  """
+  Deprecated. See "wal_max_size"
+  """
   rows_per_wal: Long
+
+  """Limit the pace at which replica submits new transactions to WAL"""
   wal_queue_max_size: Long
   vinyl_cache: Long
   vinyl_range_size: Long
   vinyl_timeout: Float
+
+  """
+  Size of the smallest allocation unit, in bytes. It can be tuned up if most of the tuples are not so small.
+  """
   memtx_min_tuple_size: Long
   vinyl_max_tuple_size: Long
   vinyl_page_size: Long
+
+  """
+  Size of the largest allocation unit, in bytes. It can be tuned up if it is necessary to store large tuples.
+  """
   memtx_max_tuple_size: Long
+
+  """
+  Option to prevent early cleanup of `*.xlog` files which are needed by replicas and lead to `XlogGapError`
+  """
   wal_cleanup_delay: Long
+
+  """
+  Specify fiber-WAL-disk synchronization mode as: "none": write-ahead log is not
+  maintained; "write": fibers wait for their data to be written to the
+  write-ahead log; "fsync": fibers wait for their data, fsync follows each write.
+  """
   wal_mode: String
+
+  """
+  How much memory Memtx engine allocates to actually store tuples, in bytes.
+  """
   memtx_memory: Long
+
+  """
+  Allows to select the appropriate allocator for memtx tuples if necessary.
+  """
   memtx_allocator: String
+
+  """
+  Warning in the WAL log if a transaction waits for quota for more than `too_long_threshold` seconds
+  """
   too_long_threshold: Float
   vinyl_bloom_fpr: Float
   vinyl_memory: Long
   vinyl_run_size_ratio: Float
   vinyl_write_threads: Int
   vinyl_read_threads: Int
+
+  """Background fiber restart delay to follow xlog changes."""
   wal_dir_rescan_delay: Float
 }
 
