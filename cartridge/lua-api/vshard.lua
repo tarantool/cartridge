@@ -3,6 +3,33 @@
 -- @module cartridge.lua-api.vshard
 
 local rpc = require('cartridge.rpc')
+local errors = require('errors')
+local confapplier = require('cartridge.confapplier')
+local vshard_utils = require('cartridge.vshard-utils')
+
+local e_vshard = errors.new_class('vshard api error')
+
+local function get_config()
+    local result = {}
+    local conf = confapplier.get_readonly()
+    if conf == nil then
+        error(e_vshard:new('not bootstrapped'))
+    end
+    local vshard_groups
+    if conf.vshard_groups == nil then
+        vshard_groups = {default = conf.vshard}
+    else
+        vshard_groups = conf.vshard_groups
+    end
+
+    for group_name, _ in pairs(vshard_groups) do
+        local vshard_cfg = vshard_utils.get_vshard_config(group_name, conf)
+        result[group_name] = vshard_cfg
+    end
+    return result, nil
+end
+
+rawset(_G, 'vshard_get_cfg', get_config)
 
 --- Call `vshard.router.bootstrap()`.
 -- This function distributes all buckets across the replica sets.
@@ -14,11 +41,6 @@ local function bootstrap_vshard()
     return rpc.call('vshard-router', 'bootstrap')
 end
 
-local function get_cfg()
-    return rpc.call('vshard-router', 'get_cfg')
-end
-
 return {
     bootstrap_vshard = bootstrap_vshard,
-    get_cfg = get_cfg,
 }
