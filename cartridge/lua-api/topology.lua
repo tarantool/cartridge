@@ -135,7 +135,7 @@ local function enable_servers(uuids)
     return __set_servers_disabled_state(uuids, false)
 end
 
---- Temporarily diable nodes.
+--- Temporarily disable nodes.
 --
 -- @function disable_servers
 -- @tparam {string,...} uuids
