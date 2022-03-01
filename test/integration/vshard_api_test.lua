@@ -4,6 +4,11 @@ local g = t.group()
 
 local helpers = require('test.helper')
 
+local function get_config()
+    local vshard = require('cartridge.lua-api.vshard')
+    return vshard.get_config()
+end
+
 g.before_test('test_get_cfg', function()
     g.cluster = helpers.Cluster:new({
         datadir = fio.tempdir(),
@@ -63,14 +68,14 @@ function g.test_get_cfg()
         },
     }
 
-    local cfg = g.A1:call('cartridge_vshard_get_config', {})
+    local cfg = g.A1:exec(get_config)
     t.assert_equals(cfg, expected_cfg)
 
-    local cfg = g.B1:call('cartridge_vshard_get_config', {})
+    local cfg = g.B1:exec(get_config)
     t.assert_equals(cfg, expected_cfg)
 
     expected_cfg.default.read_only = true
-    local cfg = g.B2:call('cartridge_vshard_get_config', {})
+    local cfg = g.B2:exec(get_config)
     t.assert_equals(cfg, expected_cfg)
 end
 
@@ -160,12 +165,12 @@ function g.test_get_cfg_multisharding()
         },
     }
 
-    local cfg = g.router:call('cartridge_vshard_get_config', {})
+    local cfg = g.router:exec(get_config)
     t.assert_equals(cfg, expected_cfg)
 
-    local cfg = g.storage_hot:call('cartridge_vshard_get_config', {})
+    local cfg = g.storage_hot:exec(get_config)
     t.assert_equals(cfg, expected_cfg)
 
-    local cfg = g.storage_cold:call('cartridge_vshard_get_config', {})
+    local cfg = g.storage_cold:exec(get_config)
     t.assert_equals(cfg, expected_cfg)
 end
