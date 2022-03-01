@@ -7,7 +7,7 @@ local errors = require('errors')
 local confapplier = require('cartridge.confapplier')
 local vshard_utils = require('cartridge.vshard-utils')
 
-local VshardApiError = errors.new_class('vshard api error')
+local VshardApiError = errors.new_class('VshardApiError')
 
 local function get_config()
     local result = {}
