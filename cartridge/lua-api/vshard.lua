@@ -7,13 +7,13 @@ local errors = require('errors')
 local confapplier = require('cartridge.confapplier')
 local vshard_utils = require('cartridge.vshard-utils')
 
-local e_vshard = errors.new_class('vshard api error')
+local VshardApiError = errors.new_class('vshard api error')
 
 local function get_config()
     local result = {}
     local conf = confapplier.get_readonly()
     if conf == nil then
-        error(e_vshard:new('not bootstrapped'))
+        error(VshardApiError:new('not bootstrapped'))
     end
     local vshard_groups
     if conf.vshard_groups == nil then
