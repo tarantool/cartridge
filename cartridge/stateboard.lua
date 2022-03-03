@@ -155,6 +155,12 @@ local function set_vclockkeeper_impl(replicaset_uuid, instance_uuid, ordinal, vc
 
     local vclockkeeper = box.space.vclockkeeper:get({replicaset_uuid})
     if ordinal ~= (vclockkeeper and vclockkeeper.ordinal) then
+        -- if vclockkeeper.instance_uuid == instance_uuid
+        -- and vclock == nil
+        -- then
+        --     -- No update needed
+        --     return true
+        -- end
         return nil, string.format(
             "Ordinal comparison failed (requested %s, current %s)",
             ordinal, (vclockkeeper and vclockkeeper.ordinal)
