@@ -5,8 +5,8 @@ local helpers = require('test.helper')
 local etcd2_client = require('cartridge.etcd2-client')
 local stateboard_client = require('cartridge.stateboard-client')
 
-local g_etcd2 = t.group('integration.failover_stateful.etcd2')
-local g_stateboard = t.group('integration.failover_stateful.stateboard')
+local g_etcd2 = t.group('integration.failover_stateful.etcd2_ordinal_changed')
+local g_stateboard = t.group('integration.failover_stateful.stateboard_ordinal_changed')
 
 local core_uuid = helpers.uuid('c')
 local C1; local core_1_uuid = helpers.uuid('c', 'c', 1)
