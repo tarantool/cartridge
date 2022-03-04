@@ -209,6 +209,11 @@ local function set_vclockkeeper(session, replicaset_uuid, instance_uuid, vclock)
     -- there must be no interventions between get_vclockkeeper and
     -- set_vclockkeeper during consistent switchover
 
+    -- for testing purpose only:
+    if rawget(_G, 'test_etcd2_client_ordinal_errnj') == true then
+        fiber.sleep(1)
+    end
+
     local vclockkeeper = json.encode({
         instance_uuid = instance_uuid,
         vclock = vclock and setmetatable(vclock, {_serialize = 'sequence'}),
@@ -220,6 +225,10 @@ local function set_vclockkeeper(session, replicaset_uuid, instance_uuid, vclock)
         '/vclockkeeper/'.. replicaset_uuid, request_args)
 
     if resp == nil then
+        if err.etcd_code == etcd2.EcodeTestFailed then
+            return true
+        end
+
         return nil, SessionError:new(err)
     end
 

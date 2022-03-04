@@ -184,6 +184,22 @@ g_stateboard.after_test('test_ordinal_changed', function()
     end
 end)
 
+g_etcd2.before_test('test_ordinal_changed', function()
+    for _, instance in ipairs(g_etcd2.cluster.servers) do
+        instance:exec(function()
+            rawset(_G, 'test_etcd2_client_ordinal_errnj', true)
+        end)
+    end
+end)
+
+g_etcd2.after_test('test_ordinal_changed', function()
+    for _, instance in ipairs(g_etcd2.cluster.servers) do
+        instance:exec(function()
+            rawset(_G, 'test_etcd2_client_ordinal_errnj', nil)
+        end)
+    end
+end)
+
 add('test_ordinal_changed', function()
     helpers.retrying({}, function()
         local ok, err = C1:eval(q_promote, {
