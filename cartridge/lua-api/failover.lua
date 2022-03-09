@@ -189,6 +189,8 @@ end
 -- @tparam[opt] table opts
 -- @tparam ?boolean opts.force_inconsistency
 --   (default: **false**)
+-- @tparam ?boolean opts.skip_error_on_change
+--   Skips etcd error if vclockkeeper was changed between calls (default: **false**)
 --
 -- @treturn[1] boolean true On success
 -- @treturn[2] nil
@@ -196,6 +198,7 @@ end
 local function promote(replicaset_leaders, opts)
     checks('table', {
         force_inconsistency = '?boolean',
+        skip_error_on_change = '?boolean',
     })
 
     local mode = get_params().mode
@@ -227,7 +230,7 @@ local function promote(replicaset_leaders, opts)
     end
 
     if opts ~= nil and opts.force_inconsistency == true then
-        local ok, err = failover.force_inconsistency(replicaset_leaders)
+        local ok, err = failover.force_inconsistency(replicaset_leaders, opts.skip_error_on_change)
         if ok == nil then
             return nil, PromoteLeaderError:new(
                 "Promotion succeeded, but inconsistency wasn't forced: %s",

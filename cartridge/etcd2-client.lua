@@ -3,6 +3,7 @@ local etcd2 = require('cartridge.etcd2')
 local fiber = require('fiber')
 local checks = require('checks')
 local errors = require('errors')
+local log = require('log')
 
 local ClientError  = errors.new_class('ClientError')
 local SessionError = errors.new_class('SessionError')
@@ -177,8 +178,8 @@ local function get_coordinator(session)
     end
 end
 
-local function set_vclockkeeper(session, replicaset_uuid, instance_uuid, vclock)
-    checks('etcd2_session', 'string', 'string', '?table')
+local function set_vclockkeeper(session, replicaset_uuid, instance_uuid, vclock, skip_error_on_change)
+    checks('etcd2_session', 'string', 'string', '?table', '?boolean')
     assert(session.connection ~= nil)
     local request_args = {}
 
@@ -226,7 +227,11 @@ local function set_vclockkeeper(session, replicaset_uuid, instance_uuid, vclock)
 
     if resp == nil then
         if err.etcd_code == etcd2.EcodeTestFailed then
-            return true
+            err.err = ('Vclockkeeper changed between calls - %s'):format(err.err)
+            if skip_error_on_change == true then
+                log.error(err.err)
+                return true
+            end
         end
 
         return nil, SessionError:new(err)

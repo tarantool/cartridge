@@ -857,7 +857,7 @@ end
 -- @treturn[1] boolean true
 -- @treturn[2] nil
 -- @treturn[2] table Error description
-local function force_inconsistency(leaders)
+local function force_inconsistency(leaders, skip_error_on_change)
     if vars.client == nil then
         return nil, StateProviderError:new("No state provider configured")
     end
@@ -870,7 +870,7 @@ local function force_inconsistency(leaders)
     local err
     for replicaset_uuid, instance_uuid in pairs(leaders) do
         local _ok, _err = session:set_vclockkeeper(
-            replicaset_uuid, instance_uuid, nil
+            replicaset_uuid, instance_uuid, nil, skip_error_on_change
         )
         if _ok == nil then
             err = _err

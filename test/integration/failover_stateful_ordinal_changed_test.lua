@@ -58,7 +58,7 @@ local function setup_cluster(g)
     })
 
     C1 = g.cluster:server('core-1')
-
+    C1.state_provider = 'etcd'
     g.cluster:start()
 end
 
@@ -215,7 +215,10 @@ add('test_ordinal_changed', function()
         {[core_uuid] = core_1_uuid,
         [storage1_uuid] = storage1_1_uuid,
         [storage2_uuid] = storage2_1_uuid},
-        {force_inconsistency = true}
+        {
+            force_inconsistency = true,
+            skip_error_on_change = C1.state_provider == 'etcd',
+        }
     })
     t.assert_equals(ok, true, err)
     t.assert_not(err)
