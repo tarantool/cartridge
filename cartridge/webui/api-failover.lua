@@ -162,6 +162,7 @@ local function init(graphql)
             replicaset_uuid = gql_types.string.nonNull,
             instance_uuid = gql_types.string.nonNull,
             force_inconsistency = gql_types.boolean,
+            skip_error_on_change = gql_types.boolean,
         },
         kind = gql_types.boolean.nonNull,
         callback = module_name .. '.promote',

@@ -190,7 +190,7 @@ end
 -- @tparam ?boolean opts.force_inconsistency
 --   (default: **false**)
 -- @tparam ?boolean opts.skip_error_on_change
---   Skips etcd error if vclockkeeper was changed between calls (default: **false**)
+--   Skip etcd error if vclockkeeper was changed between calls (default: **false**)
 --
 -- @treturn[1] boolean true On success
 -- @treturn[2] nil
