@@ -499,7 +499,7 @@ function g.test_vclockkeeper()
     t.assert_equals(ret2, nil)
     t.assert_equals(err2.class_name, 'EtcdError')
     t.assert_str_matches(err2.err,
-        'Compare failed %(%d+%): %[%d+ != %d+%]'
+        'Vclockkeeper changed between calls %- Compare failed %(%d+%): %[%d+ != %d+%]'
     )
 
     t.assert_equals(session:get_vclockkeeper('A'), vclockkeeper)
