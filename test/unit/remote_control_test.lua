@@ -731,11 +731,10 @@ function g.test_timeout()
     local function check_conn(conn)
         t.assert_not(conn.error)
 
-        t.assert_error_msg_contains(
-            "Timeout exceeded",
-            conn.eval, conn, 'require("fiber").sleep(1)', nil,
-            {timeout = 0.2}
-        )
+        local no_error, err = pcall(conn.eval, conn, 'require("fiber").sleep(1)', nil,
+        {timeout = 0.2})
+        t.assert(not no_error)
+        t.assert(helpers.is_timeout_error(err), tostring(err))
 
         t.assert_equals(
             conn:call('get_local_secret', nil, {timeout = 0.2}),

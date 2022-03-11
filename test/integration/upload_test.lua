@@ -61,10 +61,7 @@ function g.test_begining_failure()
 
     local res, err = unpack(future:wait_result())
     t.assert_equals(res, nil)
-    t.assert_covers(err, {
-        class_name = 'NetboxCallError',
-        err = '"localhost:13302": Timeout exceeded',
-    })
+    t.assert(helpers.is_timeout_error(err.err))
 
     -- prefix should be cleaned up even if upload_begin fails
     t.assert_equals(fio.listdir(g.upload_path_1), {})
