@@ -5,7 +5,7 @@
 Tarantool Cartridge
 ********************************************************************************
 
-Cluster management in Tarantool is powered by the Tarantool Cartridge
+**Cluster** management in Tarantool is powered by the Tarantool Cartridge
 framework.
 
 Here we explain how you can benefit with Tarantool Cartridge,
@@ -22,6 +22,6 @@ This documentation contains the following sections:
    cartridge_dev
    cartridge_admin
    troubleshooting
-   Cartridge API <cartridge_api/index>
-   Cartridge CLI <cartridge_cli/index>
+   Cartridge API<cartridge_api/index>
+   Cartridge CLI<cartridge_cli/index>
    Changelog <CHANGELOG>
