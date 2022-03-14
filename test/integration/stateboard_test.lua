@@ -188,10 +188,7 @@ function g.test_longpolling()
     g.stateboard.process:kill('STOP')
     local ok, err = client:longpoll(0)
     t.assert_equals(ok, nil)
-    t.assert_covers(err, {
-        class_name = 'NetboxCallError',
-        err = '"localhost:13301": Timeout exceeded',
-    })
+    t.assert(helpers.is_timeout_error(err.err))
 
     g.stateboard.process:kill('CONT')
     c1:set_leaders({{'B', 'b3'}})

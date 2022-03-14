@@ -9,6 +9,8 @@ local utils = require('cartridge.utils')
 local cluster_cookie = require('cartridge.cluster-cookie')
 local remote_control = require('cartridge.remote-control')
 
+local helpers = require('test.helper')
+
 g.before_all(function()
     g.datadir = fio.tempdir()
     g.cookie = require('digest').urandom(6):hex()
@@ -91,7 +93,7 @@ function g.test_async_call_not_yeilds()
     t.assert_equals(csw1, utils.fiber_csw())
 
     t.assert_equals(res, nil)
-    t.assert_equals(tostring(err), 'Timeout exceeded')
+    t.assert(helpers.is_timeout_error(err))
 end
 
 function g.test_async_call_wait_result_err()

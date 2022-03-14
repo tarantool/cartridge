@@ -198,4 +198,13 @@ function helpers.tarantool_version_ge(version)
     return true
 end
 
+-- Function to check if the error is a timeout error. The function
+-- works for old and new error type in net.box functions.
+function helpers.is_timeout_error(error_msg)
+    if type(error_msg) ~= "string" then
+        error_msg = tostring(error_msg)
+    end
+    return  string.find(error_msg, 'Timeout exceeded') ~= nil or  string.find(error_msg, 'timed out') ~= nil
+end
+
 return helpers
