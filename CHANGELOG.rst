@@ -56,6 +56,9 @@ Added
 
 - Export vshard config in Lua API (#1761).
 
+- New ``failover_promote`` option ``skip_error_on_change`` to skip etcd error
+  when vclockkeeper was changed between ``set_vclokkeeper`` calls.
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Changed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -112,6 +115,8 @@ Fixed
 
 - Fixed the visibility of the configuration management page if the cluster
   is not bootstrapped yet (#1707).
+
+- Error when vclockkeeper in stateboard was changed between ``failover_promote`` calls (#1399).
 
 -------------------------------------------------------------------------------
 [2.7.3] - 2021-10-27

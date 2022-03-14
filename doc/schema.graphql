@@ -1,5 +1,5 @@
 # source: http://127.0.0.1:8081/admin/api
-# timestamp: Mon Feb 28 2022 14:32:56 GMT+0300 (Moscow Standard Time)
+# timestamp: Thu Mar 10 2022 11:35:56 GMT+0300 (Moscow Standard Time)
 
 """Custom scalar specification."""
 directive @specifiedBy(
@@ -494,10 +494,14 @@ type MutationApicluster {
 
   """Promote the instance to the leader of replicaset"""
   failover_promote(
+    instance_uuid: String!
+
     """The `Boolean` scalar type represents `true` or `false`."""
     force_inconsistency: Boolean
+
+    """The `Boolean` scalar type represents `true` or `false`."""
+    skip_error_on_change: Boolean
     replicaset_uuid: String!
-    instance_uuid: String!
   ): Boolean!
 
   """Reapplies config on the specified nodes"""
