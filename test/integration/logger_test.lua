@@ -112,7 +112,9 @@ function g.test_content_bootstrapped()
 
     local messages = fun.iter(txt:split('\n'))
         :map(function(l) return l:match(' ([ECWI]> .+)$') end)
-        :drop_while(function(l) return not l:startswith('C> Tarantool') end)
+        :drop_while(function(l)
+            return not l:startswith('C> Tarantool') and not l:startswith('I> Tarantool')
+        end)
         :totable()
 
     t.assert_items_include(messages, {
