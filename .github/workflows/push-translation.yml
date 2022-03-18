@@ -1,7 +1,7 @@
 name: Push translation sources to a Crowdin branch
 
 on:
-  pull_request:
+  workflow_dispatch:
     paths:
       - 'rst/**.rst'
       - 'rst/conf.py'
