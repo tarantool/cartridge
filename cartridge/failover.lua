@@ -32,6 +32,7 @@ local clock = require('clock')
 local checks = require('checks')
 local errors = require('errors')
 local membership = require('membership')
+local fun = require('fun')
 
 local vars = require('cartridge.vars').new('cartridge.failover')
 local pool = require('cartridge.pool')
@@ -76,6 +77,7 @@ vars:new('options', {
     LONGPOLL_TIMEOUT = 30,
     NETBOX_CALL_TIMEOUT = 1,
 })
+vars:new('failover_paused', false)
 
 function _G.__cartridge_failover_get_lsn(timeout)
     box.ctl.wait_ro(timeout)
@@ -87,6 +89,14 @@ end
 
 function _G.__cartridge_failover_wait_rw(timeout)
     return errors.pcall('WaitRwError', box.ctl.wait_rw, timeout)
+end
+
+function _G.__cartridge_failover_pause()
+    vars.failover_paused = true
+end
+
+function _G.__cartridge_failover_resume()
+    vars.failover_paused = false
 end
 
 local reconfigure_all -- function implemented below
@@ -597,6 +607,11 @@ local function failover_loop(args)
 
         vars.failover_err = nil
 
+        if vars.failover_paused == true then
+            log.warn("Failover is paused, appointments doesn't apply")
+            goto continue
+        end
+
         if accept_appointments(appointments) then
             local id = schedule_add()
             log.info(
@@ -925,6 +940,54 @@ local function wait_consistency(leaders)
     return true
 end
 
+local function pause_failover()
+    local confapplier = require('cartridge.confapplier')
+    local uri_list = {}
+    local topology_cfg = confapplier.get_readonly('topology')
+
+    if topology_cfg == nil then
+        return nil
+    end
+
+    local refined_uri_list = topology.refine_servers_uri(topology_cfg)
+    for _, uuid, _ in fun.filter(topology.not_disabled, topology_cfg.servers) do
+        table.insert(uri_list, refined_uri_list[uuid])
+    end
+
+    local _, err = pool.map_call('_G.__cartridge_failover_pause', nil, { uri_list = uri_list })
+
+    if err ~= nil then
+        log.warn("Failover pausing failed: %s", err)
+        local _, err = next(err.suberrors)
+        return nil, err
+    end
+    return true
+end
+
+local function resume_failover()
+    local confapplier = require('cartridge.confapplier')
+    local uri_list = {}
+    local topology_cfg = confapplier.get_readonly('topology')
+
+    if topology_cfg == nil then
+        return nil
+    end
+
+    local refined_uri_list = topology.refine_servers_uri(topology_cfg)
+    for _, uuid, _ in fun.filter(topology.not_disabled, topology_cfg.servers) do
+        table.insert(uri_list, refined_uri_list[uuid])
+    end
+
+    local _, err = pool.map_call('_G.__cartridge_failover_resume', nil, { uri_list = uri_list })
+
+    if err ~= nil then
+        log.warn("Failover resuming failed: %s", err)
+        local _, err = next(err.suberrors)
+        return nil, err
+    end
+    return true
+end
+
 return {
     cfg = cfg,
     get_active_leaders = get_active_leaders,
@@ -938,4 +1001,7 @@ return {
 
     force_inconsistency = force_inconsistency,
     wait_consistency = wait_consistency,
+
+    pause_failover = pause_failover,
+    resume_failover = resume_failover,
 }

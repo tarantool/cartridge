@@ -693,3 +693,67 @@ g.after_test('test_sigstop', function()
     cluster:server('storage-1').process:kill('CONT') -- SIGCONT
     cluster:wait_until_healthy()
 end)
+
+local function failover_pause()
+    cluster.main_server:graphql({
+        query = [[
+            mutation {
+            cluster {
+                failover_pause
+            }
+        }]],
+    })
+end
+
+local function failover_resume()
+    cluster.main_server:graphql({
+        query = [[
+            mutation {
+            cluster {
+                failover_resume
+            }
+        }]],
+    })
+end
+
+g.test_failover_pause = function()
+    t.helpers.retrying({}, function()
+        t.assert_equals(helpers.list_cluster_issues(cluster.main_server), {})
+        t.assert_equals(helpers.get_suggestions(cluster.main_server), {})
+    end)
+
+    set_failover(true)
+    set_master(replicaset_uuid, storage_1_uuid)
+    cluster:wait_until_healthy()
+
+    failover_pause()
+
+    -- after pausing failover doesn't trigger, so
+    -- if we kill master, nobody can become a master
+    cluster:server('storage-1'):stop()
+
+    cluster:server('storage-2'):exec(function()
+        assert(box.info.ro)
+    end)
+    cluster:server('storage-3'):exec(function()
+        assert(box.info.ro)
+    end)
+
+    cluster:server('storage-1'):start()
+    cluster:wait_until_healthy()
+
+    failover_resume()
+
+    cluster:server('storage-1'):stop()
+
+    -- after failover resuming, if we kill master,
+    -- next storage in failover_priority will become a new master
+    cluster:server('storage-2'):exec(function()
+        assert(box.info.ro == false)
+    end)
+    cluster:server('storage-3'):exec(function()
+        assert(box.info.ro)
+    end)
+
+    cluster:server('storage-1'):start()
+end

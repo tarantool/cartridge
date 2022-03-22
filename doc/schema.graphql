@@ -1,5 +1,5 @@
 # source: http://127.0.0.1:8081/admin/api
-# timestamp: Thu Mar 10 2022 11:35:56 GMT+0300 (Moscow Standard Time)
+# timestamp: Tue Mar 22 2022 18:57:15 GMT+0300 (Москва, стандартное время)
 
 """Custom scalar specification."""
 directive @specifiedBy(
@@ -239,9 +239,6 @@ type Mutation {
 
   """Deprecated. Use `cluster{edit_topology()}` instead."""
   edit_replicaset(
-    """
-    The `Float` scalar type represents signed double-precision fractional values as specified by IEEE 754.
-    """
     weight: Float
     master: [String!]
 
@@ -273,10 +270,6 @@ type Mutation {
     represent free-form human-readable text.
     """
     instance_uuid: String
-
-    """
-    The `Float` scalar type represents signed double-precision fractional values as specified by IEEE 754.
-    """
     timeout: Float
 
     """
@@ -309,10 +302,6 @@ type Mutation {
     """
     replicaset_uuid: String
     roles: [String!]
-
-    """
-    The `Float` scalar type represents signed double-precision fractional values as specified by IEEE 754.
-    """
     replicaset_weight: Float
   ): Boolean
   bootstrap_vshard: Boolean
@@ -323,9 +312,6 @@ type Mutation {
 
 """Cluster management"""
 type MutationApicluster {
-  """Disable listed servers by uuid"""
-  disable_servers(uuids: [String!]): [Server]
-
   """Applies DDL schema on cluster"""
   schema(as_yaml: String!): DDLSchema!
 
@@ -338,15 +324,7 @@ type MutationApicluster {
   failover_params(
     """The `Boolean` scalar type represents `true` or `false`."""
     fencing_enabled: Boolean
-
-    """
-    The `Float` scalar type represents signed double-precision fractional values as specified by IEEE 754.
-    """
     fencing_timeout: Float
-
-    """
-    The `Float` scalar type represents signed double-precision fractional values as specified by IEEE 754.
-    """
     failover_timeout: Float
 
     """
@@ -365,68 +343,14 @@ type MutationApicluster {
 
     """State provider configuration (Tarantool)"""
     tarantool_params: FailoverStateProviderCfgInputTarantool
-
-    """
-    The `Float` scalar type represents signed double-precision fractional values as specified by IEEE 754.
-    """
     fencing_pause: Float
 
     """State provider configuration (etcd-v2)"""
     etcd2_params: FailoverStateProviderCfgInputEtcd2
   ): FailoverAPI!
 
-  """Remove user"""
-  remove_user(username: String!): User
-
-  """Checks that schema can be applied on cluster"""
-  check_schema(as_yaml: String!): DDLCheckResult!
-
-  """Restart replication on specified by uuid servers"""
-  restart_replication(uuids: [String!]): Boolean
-  edit_vshard_options(
-    """
-    The `Int` scalar type represents non-fractional signed whole numeric values.
-    Int can represent values from -(2^31) to 2^31 - 1, inclusive.
-    """
-    rebalancer_max_receiving: Int
-
-    """
-    The `Float` scalar type represents signed double-precision fractional values as specified by IEEE 754.
-    """
-    collect_bucket_garbage_interval: Float
-
-    """The `Boolean` scalar type represents `true` or `false`."""
-    collect_lua_garbage: Boolean
-
-    """
-    The `Long` scalar type represents non-fractional signed whole numeric
-    values. Long can represent values from -(2^52) to 2^52 - 1, inclusive.
-    """
-    sched_ref_quota: Long
-
-    """
-    The `Int` scalar type represents non-fractional signed whole numeric values.
-    Int can represent values from -(2^31) to 2^31 - 1, inclusive.
-    """
-    rebalancer_max_sending: Int
-
-    """
-    The `Float` scalar type represents signed double-precision fractional values as specified by IEEE 754.
-    """
-    sync_timeout: Float
-
-    """
-    The `Float` scalar type represents signed double-precision fractional values as specified by IEEE 754.
-    """
-    rebalancer_disbalance_threshold: Float
-    name: String!
-
-    """
-    The `Long` scalar type represents non-fractional signed whole numeric
-    values. Long can represent values from -(2^52) to 2^52 - 1, inclusive.
-    """
-    sched_move_quota: Long
-  ): VshardGroup!
+  """Pause failover"""
+  failover_pause: Boolean!
   auth_params(
     """
     The `Long` scalar type represents non-fractional signed whole numeric
@@ -443,10 +367,59 @@ type MutationApicluster {
     """
     cookie_renew_age: Long
   ): UserManagementAPI!
+  edit_vshard_options(
+    """
+    The `Int` scalar type represents non-fractional signed whole numeric values.
+    Int can represent values from -(2^31) to 2^31 - 1, inclusive.
+    """
+    rebalancer_max_receiving: Int
+    collect_bucket_garbage_interval: Float
 
-  """Create a new user"""
-  add_user(
-    password: String!
+    """The `Boolean` scalar type represents `true` or `false`."""
+    collect_lua_garbage: Boolean
+
+    """
+    The `Long` scalar type represents non-fractional signed whole numeric
+    values. Long can represent values from -(2^52) to 2^52 - 1, inclusive.
+    """
+    sched_ref_quota: Long
+
+    """
+    The `Int` scalar type represents non-fractional signed whole numeric values.
+    Int can represent values from -(2^31) to 2^31 - 1, inclusive.
+    """
+    rebalancer_max_sending: Int
+    sync_timeout: Float
+    rebalancer_disbalance_threshold: Float
+    name: String!
+
+    """
+    The `Long` scalar type represents non-fractional signed whole numeric
+    values. Long can represent values from -(2^52) to 2^52 - 1, inclusive.
+    """
+    sched_move_quota: Long
+  ): VshardGroup!
+
+  """Restart replication on specified by uuid servers"""
+  restart_replication(uuids: [String!]): Boolean
+
+  """Remove user"""
+  remove_user(username: String!): User
+
+  """Checks that schema can be applied on cluster"""
+  check_schema(as_yaml: String!): DDLCheckResult!
+
+  """Applies updated config on cluster"""
+  config(sections: [ConfigSectionInput]): [ConfigSection]!
+
+  """Edit an existing user"""
+  edit_user(
+    """
+    The `String` scalar type represents textual data, represented as UTF-8
+    character sequences. The String type is most often used by GraphQL to
+    represent free-form human-readable text.
+    """
+    password: String
     username: String!
 
     """
@@ -464,14 +437,12 @@ type MutationApicluster {
     email: String
   ): User
 
-  """Edit an existing user"""
-  edit_user(
-    """
-    The `String` scalar type represents textual data, represented as UTF-8
-    character sequences. The String type is most often used by GraphQL to
-    represent free-form human-readable text.
-    """
-    password: String
+  """Resume failover after pausing"""
+  failover_resume: Boolean!
+
+  """Create a new user"""
+  add_user(
+    password: String!
     username: String!
 
     """
@@ -507,8 +478,8 @@ type MutationApicluster {
   """Reapplies config on the specified nodes"""
   config_force_reapply(uuids: [String]): Boolean!
 
-  """Applies updated config on cluster"""
-  config(sections: [ConfigSectionInput]): [ConfigSection]!
+  """Disable listed servers by uuid"""
+  disable_servers(uuids: [String!]): [Server]
 }
 
 type Query {

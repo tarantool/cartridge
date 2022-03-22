@@ -91,6 +91,13 @@ local function set_failover_enabled(_, args)
     return lua_api_failover.set_failover_enabled(args.enabled)
 end
 
+local function pause_failover()
+    return lua_api_failover.pause_failover()
+end
+local function resume_failover()
+    return lua_api_failover.resume_failover()
+end
+
 local function promote(_, args)
     local replicaset_uuid = args['replicaset_uuid']
     local instance_uuid = args['instance_uuid']
@@ -167,6 +174,23 @@ local function init(graphql)
         kind = gql_types.boolean.nonNull,
         callback = module_name .. '.promote',
     })
+
+    graphql.add_mutation({
+        prefix = 'cluster',
+        name = 'failover_pause',
+        doc = 'Pause failover',
+        args = {},
+        kind = gql_types.boolean.nonNull,
+        callback = module_name .. '.pause_failover',
+    })
+    graphql.add_mutation({
+        prefix = 'cluster',
+        name = 'failover_resume',
+        doc = 'Resume failover after pausing',
+        args = {},
+        kind = gql_types.boolean.nonNull,
+        callback = module_name .. '.resume_failover',
+    })
 end
 
 return {
@@ -176,4 +200,6 @@ return {
     get_failover_params = get_failover_params,
     set_failover_params = set_failover_params,
     promote = promote,
+    pause_failover = pause_failover,
+    resume_failover = resume_failover,
 }

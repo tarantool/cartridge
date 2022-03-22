@@ -251,6 +251,8 @@ return {
     get_params = get_params,
     set_params = set_params,
     promote = promote,
+    pause_failover = failover.pause_failover,
+    resume_failover = failover.resume_failover,
     get_failover_enabled = get_failover_enabled, -- deprecated
     set_failover_enabled = set_failover_enabled, -- deprecated
 }
