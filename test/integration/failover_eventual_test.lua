@@ -697,22 +697,16 @@ end)
 local function failover_pause()
     cluster.main_server:graphql({
         query = [[
-            mutation {
-            cluster {
-                failover_pause
-            }
-        }]],
+            mutation { cluster { failover_pause } }
+        ]],
     })
 end
 
 local function failover_resume()
     cluster.main_server:graphql({
         query = [[
-            mutation {
-            cluster {
-                failover_resume
-            }
-        }]],
+            mutation { cluster { failover_resume } }
+        ]],
     })
 end
 
@@ -748,11 +742,13 @@ g.test_failover_pause = function()
 
     -- after failover resuming, if we kill master,
     -- next storage in failover_priority will become a new master
-    cluster:server('storage-2'):exec(function()
-        assert(box.info.ro == false)
-    end)
-    cluster:server('storage-3'):exec(function()
-        assert(box.info.ro)
+    helpers.retrying({}, function()
+        cluster:server('storage-2'):exec(function()
+            assert(box.info.ro == false)
+        end)
+        cluster:server('storage-3'):exec(function()
+            assert(box.info.ro)
+        end)
     end)
 
     cluster:server('storage-1'):start()

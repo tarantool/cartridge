@@ -32,7 +32,6 @@ local clock = require('clock')
 local checks = require('checks')
 local errors = require('errors')
 local membership = require('membership')
-local fun = require('fun')
 
 local vars = require('cartridge.vars').new('cartridge.failover')
 local pool = require('cartridge.pool')
@@ -826,6 +825,14 @@ local function is_vclockkeeper()
     return vars.cache.is_vclockkeeper
 end
 
+--- Check if failover paused on current instance.
+-- @function is_paused
+-- @local
+-- @treturn boolean true / false
+local function is_paused()
+    return vars.failover_paused
+end
+
 --- Check if current configuration implies consistent switchover.
 -- @function consistency_needed
 -- @local
@@ -940,54 +947,6 @@ local function wait_consistency(leaders)
     return true
 end
 
-local function pause_failover()
-    local confapplier = require('cartridge.confapplier')
-    local uri_list = {}
-    local topology_cfg = confapplier.get_readonly('topology')
-
-    if topology_cfg == nil then
-        return nil
-    end
-
-    local refined_uri_list = topology.refine_servers_uri(topology_cfg)
-    for _, uuid, _ in fun.filter(topology.not_disabled, topology_cfg.servers) do
-        table.insert(uri_list, refined_uri_list[uuid])
-    end
-
-    local _, err = pool.map_call('_G.__cartridge_failover_pause', nil, { uri_list = uri_list })
-
-    if err ~= nil then
-        log.warn("Failover pausing failed: %s", err)
-        local _, err = next(err.suberrors)
-        return nil, err
-    end
-    return true
-end
-
-local function resume_failover()
-    local confapplier = require('cartridge.confapplier')
-    local uri_list = {}
-    local topology_cfg = confapplier.get_readonly('topology')
-
-    if topology_cfg == nil then
-        return nil
-    end
-
-    local refined_uri_list = topology.refine_servers_uri(topology_cfg)
-    for _, uuid, _ in fun.filter(topology.not_disabled, topology_cfg.servers) do
-        table.insert(uri_list, refined_uri_list[uuid])
-    end
-
-    local _, err = pool.map_call('_G.__cartridge_failover_resume', nil, { uri_list = uri_list })
-
-    if err ~= nil then
-        log.warn("Failover resuming failed: %s", err)
-        local _, err = next(err.suberrors)
-        return nil, err
-    end
-    return true
-end
-
 return {
     cfg = cfg,
     get_active_leaders = get_active_leaders,
@@ -998,10 +957,8 @@ return {
     is_vclockkeeper = is_vclockkeeper,
     is_leader = is_leader,
     is_rw = is_rw,
+    is_paused = is_paused,
 
     force_inconsistency = force_inconsistency,
     wait_consistency = wait_consistency,
-
-    pause_failover = pause_failover,
-    resume_failover = resume_failover,
 }

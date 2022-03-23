@@ -91,6 +91,16 @@ that yet. So, both S1 and S2 consider themselves as leaders.
 
 Moreover, SWIM protocol isn't perfect and still can produce
 false-negative gossips (announce the instance is dead when it's not).
+It may cause "failover storms", when failover triggers too many times in minute
+under highload. You can pause failover at runtime using Lua API
+(``require('cartridge.lua-api.failover').pause()``) or GraphQL mutation
+(``mutation { cluster { failover_pause } }``). Those functions will pause
+failover at every instance it could reach. You could check if failover paused
+in logs and with function ``require('cartridge.failover').is_paused()``.
+Don't forget to resume failover using Lua API
+(``require('cartridge.lua-api.failover').resume()``) or GraphQL mutation
+(``mutation { cluster { failover_resume } }``)
+
 
 ..  _cartridge-stateful_failover:
 

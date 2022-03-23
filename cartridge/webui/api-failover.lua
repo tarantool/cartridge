@@ -181,7 +181,7 @@ local function init(graphql)
         doc = 'Pause failover',
         args = {},
         kind = gql_types.boolean.nonNull,
-        callback = module_name .. '.pause_failover',
+        callback = module_name .. '.pause',
     })
     graphql.add_mutation({
         prefix = 'cluster',
@@ -189,7 +189,7 @@ local function init(graphql)
         doc = 'Resume failover after pausing',
         args = {},
         kind = gql_types.boolean.nonNull,
-        callback = module_name .. '.resume_failover',
+        callback = module_name .. '.resume',
     })
 end
 
