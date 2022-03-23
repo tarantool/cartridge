@@ -59,7 +59,7 @@ Added
 - New ``failover_promote`` option ``skip_error_on_change`` to skip etcd error
   when vclockkeeper was changed between ``set_vclokkeeper`` calls (#1399).
 
-- Allow to pause failover at runtime, with lua API and GraphQL (#1763).
+- Allow to pause failover at runtime, with Lua API and GraphQL (#1763).
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Changed

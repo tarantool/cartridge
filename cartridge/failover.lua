@@ -607,7 +607,7 @@ local function failover_loop(args)
         vars.failover_err = nil
 
         if vars.failover_paused == true then
-            log.warn("Failover is paused, appointments doesn't apply")
+            log.warn("Failover is paused, appointments don't apply")
             goto continue
         end
 
