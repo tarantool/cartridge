@@ -420,7 +420,7 @@ local function init(graphql)
     graphql.add_mutation({
         prefix = 'cluster',
         name = 'restart_replication',
-        doc = 'Restart replication on specified by uuid servers',
+        doc = 'Restart replication on servers specified by uuid',
         args = {
             uuids = gql_types.list(gql_types.string.nonNull),
         },

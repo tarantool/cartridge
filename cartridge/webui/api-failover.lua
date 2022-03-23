@@ -91,11 +91,11 @@ local function set_failover_enabled(_, args)
     return lua_api_failover.set_failover_enabled(args.enabled)
 end
 
-local function pause_failover()
-    return lua_api_failover.pause_failover()
+local function pause()
+    return lua_api_failover.pause()
 end
-local function resume_failover()
-    return lua_api_failover.resume_failover()
+local function resume()
+    return lua_api_failover.resume()
 end
 
 local function promote(_, args)
@@ -200,6 +200,6 @@ return {
     get_failover_params = get_failover_params,
     set_failover_params = set_failover_params,
     promote = promote,
-    pause_failover = pause_failover,
-    resume_failover = resume_failover,
+    pause_failover = pause,
+    resume_failover = resume,
 }
