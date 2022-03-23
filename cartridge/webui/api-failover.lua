@@ -200,6 +200,6 @@ return {
     get_failover_params = get_failover_params,
     set_failover_params = set_failover_params,
     promote = promote,
-    pause_failover = pause,
-    resume_failover = resume,
+    pause = pause,
+    resume = resume,
 }
