@@ -97,7 +97,7 @@ local function init(graphql)
     graphql.add_mutation({
         prefix = 'cluster',
         name = 'check_schema',
-        doc = 'Checks that schema can be applied on cluster',
+        doc = 'Checks that the schema can be applied on the cluster',
         args = {
             as_yaml = gql_types.string.nonNull,
         },

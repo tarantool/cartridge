@@ -1,5 +1,5 @@
 # source: http://127.0.0.1:8081/admin/api
-# timestamp: Thu Mar 10 2022 11:35:56 GMT+0300 (Moscow Standard Time)
+# timestamp: Wed Mar 23 2022 18:11:53 GMT+0300 (Москва, стандартное время)
 
 """Custom scalar specification."""
 directive @specifiedBy(
@@ -323,9 +323,6 @@ type Mutation {
 
 """Cluster management"""
 type MutationApicluster {
-  """Disable listed servers by uuid"""
-  disable_servers(uuids: [String!]): [Server]
-
   """Applies DDL schema on cluster"""
   schema(as_yaml: String!): DDLSchema!
 
@@ -375,14 +372,24 @@ type MutationApicluster {
     etcd2_params: FailoverStateProviderCfgInputEtcd2
   ): FailoverAPI!
 
-  """Remove user"""
-  remove_user(username: String!): User
+  """Pause failover"""
+  failover_pause: Boolean!
+  auth_params(
+    """
+    The `Long` scalar type represents non-fractional signed whole numeric
+    values. Long can represent values from -(2^52) to 2^52 - 1, inclusive.
+    """
+    cookie_max_age: Long
 
-  """Checks that schema can be applied on cluster"""
-  check_schema(as_yaml: String!): DDLCheckResult!
+    """The `Boolean` scalar type represents `true` or `false`."""
+    enabled: Boolean
 
-  """Restart replication on specified by uuid servers"""
-  restart_replication(uuids: [String!]): Boolean
+    """
+    The `Long` scalar type represents non-fractional signed whole numeric
+    values. Long can represent values from -(2^52) to 2^52 - 1, inclusive.
+    """
+    cookie_renew_age: Long
+  ): UserManagementAPI!
   edit_vshard_options(
     """
     The `Int` scalar type represents non-fractional signed whole numeric values.
@@ -427,26 +434,27 @@ type MutationApicluster {
     """
     sched_move_quota: Long
   ): VshardGroup!
-  auth_params(
-    """
-    The `Long` scalar type represents non-fractional signed whole numeric
-    values. Long can represent values from -(2^52) to 2^52 - 1, inclusive.
-    """
-    cookie_max_age: Long
 
-    """The `Boolean` scalar type represents `true` or `false`."""
-    enabled: Boolean
+  """Restart replication on servers specified by uuid"""
+  restart_replication(uuids: [String!]): Boolean
 
-    """
-    The `Long` scalar type represents non-fractional signed whole numeric
-    values. Long can represent values from -(2^52) to 2^52 - 1, inclusive.
-    """
-    cookie_renew_age: Long
-  ): UserManagementAPI!
+  """Remove user"""
+  remove_user(username: String!): User
 
-  """Create a new user"""
-  add_user(
-    password: String!
+  """Checks that the schema can be applied on the cluster"""
+  check_schema(as_yaml: String!): DDLCheckResult!
+
+  """Applies updated config on the cluster"""
+  config(sections: [ConfigSectionInput]): [ConfigSection]!
+
+  """Edit an existing user"""
+  edit_user(
+    """
+    The `String` scalar type represents textual data, represented as UTF-8
+    character sequences. The String type is most often used by GraphQL to
+    represent free-form human-readable text.
+    """
+    password: String
     username: String!
 
     """
@@ -464,14 +472,12 @@ type MutationApicluster {
     email: String
   ): User
 
-  """Edit an existing user"""
-  edit_user(
-    """
-    The `String` scalar type represents textual data, represented as UTF-8
-    character sequences. The String type is most often used by GraphQL to
-    represent free-form human-readable text.
-    """
-    password: String
+  """Resume failover after pausing"""
+  failover_resume: Boolean!
+
+  """Create a new user"""
+  add_user(
+    password: String!
     username: String!
 
     """
@@ -507,8 +513,8 @@ type MutationApicluster {
   """Reapplies config on the specified nodes"""
   config_force_reapply(uuids: [String]): Boolean!
 
-  """Applies updated config on cluster"""
-  config(sections: [ConfigSectionInput]): [ConfigSection]!
+  """Disable listed servers by uuid"""
+  disable_servers(uuids: [String!]): [Server]
 }
 
 type Query {

@@ -57,7 +57,9 @@ Added
 - Export vshard config in Lua API (#1761).
 
 - New ``failover_promote`` option ``skip_error_on_change`` to skip etcd error
-  when vclockkeeper was changed between ``set_vclokkeeper`` calls.
+  when vclockkeeper was changed between ``set_vclokkeeper`` calls (#1399).
+
+- Allow to pause failover at runtime, with Lua API and GraphQL (#1763).
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Changed

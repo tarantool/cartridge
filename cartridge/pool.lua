@@ -164,7 +164,7 @@ end
 -- @tparam {string,...} opts.uri_list
 --   array of URIs for performing remote call
 -- @tparam ?number opts.timeout
---   passed to `net.box` `conn:call()`
+--   passed to `net.box` `conn:call()` (default: 10)
 --
 -- @treturn {URI=value,...}
 --   Call results mapping for every URI.

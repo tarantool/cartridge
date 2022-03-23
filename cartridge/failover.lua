@@ -76,6 +76,7 @@ vars:new('options', {
     LONGPOLL_TIMEOUT = 30,
     NETBOX_CALL_TIMEOUT = 1,
 })
+vars:new('failover_paused', false)
 
 function _G.__cartridge_failover_get_lsn(timeout)
     box.ctl.wait_ro(timeout)
@@ -87,6 +88,14 @@ end
 
 function _G.__cartridge_failover_wait_rw(timeout)
     return errors.pcall('WaitRwError', box.ctl.wait_rw, timeout)
+end
+
+function _G.__cartridge_failover_pause()
+    vars.failover_paused = true
+end
+
+function _G.__cartridge_failover_resume()
+    vars.failover_paused = false
 end
 
 local reconfigure_all -- function implemented below
@@ -597,6 +606,11 @@ local function failover_loop(args)
 
         vars.failover_err = nil
 
+        if vars.failover_paused == true then
+            log.warn("Failover is paused, appointments don't apply")
+            goto continue
+        end
+
         if accept_appointments(appointments) then
             local id = schedule_add()
             log.info(
@@ -811,6 +825,14 @@ local function is_vclockkeeper()
     return vars.cache.is_vclockkeeper
 end
 
+--- Check if failover paused on current instance.
+-- @function is_paused
+-- @local
+-- @treturn boolean true / false
+local function is_paused()
+    return vars.failover_paused
+end
+
 --- Check if current configuration implies consistent switchover.
 -- @function consistency_needed
 -- @local
@@ -935,6 +957,7 @@ return {
     is_vclockkeeper = is_vclockkeeper,
     is_leader = is_leader,
     is_rw = is_rw,
+    is_paused = is_paused,
 
     force_inconsistency = force_inconsistency,
     wait_consistency = wait_consistency,

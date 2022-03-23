@@ -4,15 +4,18 @@
 
 local checks = require('checks')
 local errors = require('errors')
+local fun = require('fun')
 
 local twophase = require('cartridge.twophase')
 local topology = require('cartridge.topology')
 local confapplier = require('cartridge.confapplier')
 local failover = require('cartridge.failover')
 local rpc = require('cartridge.rpc')
+local pool = require('cartridge.pool')
 
 local FailoverSetParamsError = errors.new_class('FailoverSetParamsError')
 local PromoteLeaderError = errors.new_class('PromoteLeaderError')
+local FailoverPauseError = errors.new_class('FailoverPauseError')
 
 --- Get failover configuration.
 --
@@ -247,10 +250,70 @@ local function promote(replicaset_leaders, opts)
     return true
 end
 
+--- Stops failover across cluster at runtime. Will be useful in case of "failover storms"
+-- when failover triggers too many times in minute.
+--
+-- @function pause
+--
+-- @treturn[1] boolean true On success
+-- @treturn[2] nil
+-- @treturn[2] table Error description
+local function pause()
+    local uri_list = {}
+    local topology_cfg = confapplier.get_readonly('topology')
+
+    if topology_cfg == nil then
+        return nil, FailoverSetParamsError:new("Current instance isn't bootstrapped yet")
+    end
+
+    local refined_uri_list = topology.refine_servers_uri(topology_cfg)
+    for _, uuid, _ in fun.filter(topology.not_disabled, topology_cfg.servers) do
+        table.insert(uri_list, refined_uri_list[uuid])
+    end
+
+    local _, err = pool.map_call('_G.__cartridge_failover_pause', nil, { uri_list = uri_list })
+
+    if err ~= nil then
+        return nil, FailoverPauseError:new("Failover pausing failed, probably some of instances are not healthy")
+    end
+    return true
+end
+
+--- Starts failover across cluster at runtime after ``pause``.
+-- Don't forget to resume your failover after pausing it.
+--
+-- @function resume
+--
+-- @treturn[1] boolean true On success
+-- @treturn[2] nil
+-- @treturn[2] table Error description
+local function resume()
+    local uri_list = {}
+    local topology_cfg = confapplier.get_readonly('topology')
+
+    if topology_cfg == nil then
+        return nil, FailoverSetParamsError:new("Current instance isn't bootstrapped yet")
+    end
+
+    local refined_uri_list = topology.refine_servers_uri(topology_cfg)
+    for _, uuid, _ in fun.filter(topology.not_disabled, topology_cfg.servers) do
+        table.insert(uri_list, refined_uri_list[uuid])
+    end
+
+    local _, err = pool.map_call('_G.__cartridge_failover_resume', nil, { uri_list = uri_list })
+
+    if err ~= nil then
+        return nil, FailoverPauseError:new("Failover resuming failed, probably some of instances are not healthy")
+    end
+    return true
+end
+
 return {
     get_params = get_params,
     set_params = set_params,
     promote = promote,
+    pause = pause,
+    resume = resume,
     get_failover_enabled = get_failover_enabled, -- deprecated
     set_failover_enabled = set_failover_enabled, -- deprecated
 }

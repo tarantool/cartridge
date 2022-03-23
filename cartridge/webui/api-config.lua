@@ -363,7 +363,7 @@ local function init(graphql, httpd, opts)
     graphql.add_mutation({
         prefix = 'cluster',
         name = 'config',
-        doc = 'Applies updated config on cluster',
+        doc = 'Applies updated config on the cluster',
         args = {
             sections = gql_types.list(gql_type_section_input)
         },
