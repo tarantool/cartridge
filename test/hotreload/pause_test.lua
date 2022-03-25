@@ -26,6 +26,8 @@ function g.test_errors()
             package.loaded['cartridge.roles'].forbid_reload()
     ]]
     )
+    t.assert_equals(ok, true)
+    t.assert_equals(err, nil)
 
     local ok, err = g.cluster.main_server.net_box:call(
         'package.loaded.cartridge.reload_roles'
@@ -41,10 +43,12 @@ function g.test_errors()
             package.loaded['cartridge.roles'].allow_reload()
     ]]
     )
+    t.assert_equals(ok, true)
+    t.assert_equals(err, nil)
 
     local ok, err = g.cluster.main_server.net_box:call(
         'package.loaded.cartridge.reload_roles'
     )
-
     t.assert_equals(ok, true)
+    t.assert_equals(err, nil)
 end
