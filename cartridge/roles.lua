@@ -612,6 +612,10 @@ local function allow_reload()
     vars.pause = false
 end
 
+local function is_reload_forbidden()
+    return vars.pause == true
+end
+
 return {
     cfg = cfg,
     get_role = get_role,
@@ -628,4 +632,5 @@ return {
 
     forbid_reload=forbid_reload,
     allow_reload=allow_reload,
+    is_reload_forbidden=is_reload_forbidden,
 }

@@ -22,12 +22,16 @@ g.after_all(function()
 end)
 
 function g.test_errors()
-    local ok, err = g.cluster.main_server.net_box:eval([[  
+    local _ = g.cluster.main_server.net_box:eval([[
             package.loaded['cartridge.roles'].forbid_reload()
     ]]
     )
+
+    local ok = g.cluster.main_server.net_box:eval([[
+        package.loaded['cartridge.roles'].is_reload_forbidden()
+    ]]
+    )
     t.assert_equals(ok, true)
-    t.assert_equals(err, nil)
 
     local ok, err = g.cluster.main_server.net_box:call(
         'package.loaded.cartridge.reload_roles'
@@ -39,12 +43,10 @@ function g.test_errors()
         err = 'Reloading roles forbidden',
     })
 
-    local ok, err = g.cluster.main_server.net_box:eval([[  
+    local _ = g.cluster.main_server.net_box:eval([[
             package.loaded['cartridge.roles'].allow_reload()
     ]]
     )
-    t.assert_equals(ok, true)
-    t.assert_equals(err, nil)
 
     local ok, err = g.cluster.main_server.net_box:call(
         'package.loaded.cartridge.reload_roles'
