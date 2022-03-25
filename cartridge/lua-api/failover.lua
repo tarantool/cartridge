@@ -279,7 +279,7 @@ local function pause()
     return true
 end
 
---- Starts failover across cluster at runtime after ``pause``.
+--- Starts failover across cluster at runtime after `pause`.
 -- Don't forget to resume your failover after pausing it.
 --
 -- @function resume
