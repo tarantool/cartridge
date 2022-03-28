@@ -430,7 +430,7 @@ end
 --
 -- Each option have a type: string, boolean, number.
 -- There is an ability to set multiple types for one option.
--- Types are split by separator ``|``,  e.g. ``string|number``.
+-- Types are split by separator `|`,  e.g. `string|number`.
 --
 -- @function get_opts
 -- @tparam {argname=type,...} filter

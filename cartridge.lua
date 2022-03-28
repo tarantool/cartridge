@@ -928,7 +928,7 @@ return {
 
     --- .
     -- @refer cartridge.lua-api.topology.restart_replication
-    -- @function admin_bootstrap_vshard
+    -- @function admin_restart_replication
     admin_restart_replication = lua_api_topology.restart_replication,
 
     --- .
