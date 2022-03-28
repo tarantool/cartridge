@@ -28,7 +28,7 @@ function g.test_errors()
     )
 
     local ok = g.cluster.main_server.net_box:eval([[
-        package.loaded['cartridge.roles'].is_reload_forbidden()
+        return package.loaded['cartridge.roles'].is_reload_forbidden()
     ]]
     )
     t.assert_equals(ok, true)
