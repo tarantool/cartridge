@@ -58,13 +58,13 @@ endif()
 set(HASH_FILE "${BASE_DIR}/build/bundle.md5")
 file(GLOB_RECURSE FRONTEND_FILES
     "${BASE_DIR}/src/*"
-    "${BASE_DIR}/config/*.prod.js"
     "${BASE_DIR}/flow-typed/*"
     "${BASE_DIR}/public/*"
 )
 list(APPEND FRONTEND_FILES
     "${BASE_DIR}/.babelrc.js"
     "${BASE_DIR}/.browserslistrc"
+    "${BASE_DIR}/.npmrc"
     "${BASE_DIR}/.env"
     "${BASE_DIR}/.env.production"
     "${BASE_DIR}/.eslintignore"
@@ -77,7 +77,6 @@ list(APPEND FRONTEND_FILES
     "${BASE_DIR}/package-lock.json"
     "${BASE_DIR}/package.json"
     "${BASE_DIR}/webpack.config.js"
-    "${BASE_DIR}/webpack.config.prod.js"
     "${BASE_DIR}/tsconfig.json"
 )
 check_hash(${HASH_FILE} "${FRONTEND_FILES}")

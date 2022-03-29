@@ -1,6 +1,5 @@
 import React from 'react';
 import { noop, throttle } from 'lodash';
-import PropTypes from 'prop-types';
 
 import monaco from '../../misc/initMonacoEditor';
 import { getModelByFile, setModelByFile } from '../../misc/monacoModelStorage';
@@ -9,22 +8,22 @@ import { getYAMLError } from '../../misc/yamlValidation';
 const DEF_CURSOR = {};
 
 export default class MonacoEditor extends React.Component {
-  static propTypes = {
-    fileId: PropTypes.string,
-    initialValue: PropTypes.string,
-    language: PropTypes.string,
-    theme: PropTypes.string,
-    options: PropTypes.object,
-    overrideServices: PropTypes.object,
-    editorDidMount: PropTypes.func,
-    editorWillMount: PropTypes.func,
-    onChange: PropTypes.func,
-    isContentChanged: PropTypes.bool,
-    setIsContentChanged: PropTypes.func,
-    styles: PropTypes.object,
-    className: PropTypes.string,
-    cursor: PropTypes.object,
-  };
+  // static propTypes = {
+  //   fileId: PropTypes.string,
+  //   initialValue: PropTypes.string,
+  //   language: PropTypes.string,
+  //   theme: PropTypes.string,
+  //   options: PropTypes.object,
+  //   overrideServices: PropTypes.object,
+  //   editorDidMount: PropTypes.func,
+  //   editorWillMount: PropTypes.func,
+  //   onChange: PropTypes.func,
+  //   isContentChanged: PropTypes.bool,
+  //   setIsContentChanged: PropTypes.func,
+  //   styles: PropTypes.object,
+  //   className: PropTypes.string,
+  //   cursor: PropTypes.object,
+  // };
 
   static defaultProps = {
     initialValue: '',

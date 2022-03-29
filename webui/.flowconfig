@@ -3,6 +3,7 @@
 *.tsx
 .*broken.json.*
 .*/node_modules/tiny-invariant/.*
+.*/malformed_package_json/package.json
 
 [include]
 

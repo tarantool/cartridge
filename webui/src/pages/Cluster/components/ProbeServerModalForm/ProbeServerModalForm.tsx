@@ -48,7 +48,7 @@ const ProbeServerModalForm = ({
         onChange={handleChange}
         onBlur={handleBlur}
         disabled={pending}
-        error={errors.uri}
+        error={Boolean(errors.uri)}
         message={errors.uri}
         placeholder="Server URI, e.g. localhost:3301"
       />

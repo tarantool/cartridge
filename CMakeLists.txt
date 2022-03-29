@@ -15,9 +15,10 @@ get_filename_component(WEB_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/webui" ABSOLUTE)
 
 file(GLOB_RECURSE FRONTEND_FILES
   "${CMAKE_CURRENT_SOURCE_DIR}/webui/src/*.js"
+  "${CMAKE_CURRENT_SOURCE_DIR}/webui/src/*.jsx"
+  "${CMAKE_CURRENT_SOURCE_DIR}/webui/src/*.ts"
+  "${CMAKE_CURRENT_SOURCE_DIR}/webui/src/*.tsx"
   "${CMAKE_CURRENT_SOURCE_DIR}/webui/src/*.svg"
-  "${CMAKE_CURRENT_SOURCE_DIR}/webui/config/*.prod.js"
-  "${CMAKE_CURRENT_SOURCE_DIR}/webui/scripts/build.js"
   "${CMAKE_CURRENT_SOURCE_DIR}/webui/src/*.css"
 )
 
