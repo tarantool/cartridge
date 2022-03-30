@@ -61,6 +61,8 @@ Added
 
 - Allow to pause failover at runtime, with Lua API and GraphQL (#1763).
 
+- Allow to block roles reload at runtime, with Lua API (#1219).
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Changed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
