@@ -542,6 +542,8 @@ end
 -- usual with `validate_config()`, `init()`, and `apply_config()`
 -- callbacks.
 --
+-- Hot-reload could be forbidden in runtime with `forbid_reload` function.
+--
 -- @function reload
 -- @treturn[1] boolean true
 -- @treturn[2] nil
@@ -602,16 +604,34 @@ local function reload()
     return confapplier.apply_config(clusterwide_config)
 end
 
+--- Forbid hot-reload of cartridge roles code.
+--
+-- @function forbid_reload
+-- @treturn[1] boolean true
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 local function forbid_reload()
     log.info('Forbid reload roles')
     vars.pause = true
 end
 
+--- Allow hot-reload of cartridge roles code.
+--
+-- @function allow_reload
+-- @treturn[1] boolean true
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 local function allow_reload()
     log.info('Allow reload roles')
     vars.pause = false
 end
 
+--- Returns true if hot-reload of cartridge roles code is forbidden.
+--
+-- @function is_reload_forbidden
+-- @treturn[1] boolean true
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 local function is_reload_forbidden()
     return vars.pause == true
 end
@@ -630,7 +650,7 @@ return {
     reload = reload,
     stop = stop,
 
-    forbid_reload=forbid_reload,
-    allow_reload=allow_reload,
-    is_reload_forbidden=is_reload_forbidden,
+    forbid_reload = forbid_reload,
+    allow_reload = allow_reload,
+    is_reload_forbidden = is_reload_forbidden,
 }
