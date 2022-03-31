@@ -1,3 +1,6 @@
+:noindex:
+:fullwidth:
+
 .. _tarantool-cartridge:
 
 
