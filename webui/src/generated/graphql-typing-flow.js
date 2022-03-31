@@ -290,9 +290,9 @@ export type MutationApicluster = {|
   /** Create a new user */
   add_user?: ?User,
   auth_params: UserManagementApi,
-  /** Checks that schema can be applied on cluster */
+  /** Checks that the schema can be applied on the cluster */
   check_schema: DdlCheckResult,
-  /** Applies updated config on cluster */
+  /** Applies updated config on the cluster */
   config: Array<?ConfigSection>,
   /** Reapplies config on the specified nodes */
   config_force_reapply: $ElementType<Scalars, 'Boolean'>,
@@ -307,11 +307,15 @@ export type MutationApicluster = {|
   failover: $ElementType<Scalars, 'Boolean'>,
   /** Configure automatic failover. */
   failover_params: FailoverApi,
+  /** Pause failover */
+  failover_pause: $ElementType<Scalars, 'Boolean'>,
   /** Promote the instance to the leader of replicaset */
   failover_promote: $ElementType<Scalars, 'Boolean'>,
+  /** Resume failover after pausing */
+  failover_resume: $ElementType<Scalars, 'Boolean'>,
   /** Remove user */
   remove_user?: ?User,
-  /** Restart replication on specified by uuid servers */
+  /** Restart replication on servers specified by uuid */
   restart_replication?: ?$ElementType<Scalars, 'Boolean'>,
   /** Applies DDL schema on cluster */
   schema: DdlSchema,
@@ -413,6 +417,7 @@ export type MutationApiclusterFailover_PromoteArgs = {|
   force_inconsistency?: ?$ElementType<Scalars, 'Boolean'>,
   instance_uuid: $ElementType<Scalars, 'String'>,
   replicaset_uuid: $ElementType<Scalars, 'String'>,
+  skip_error_on_change?: ?$ElementType<Scalars, 'Boolean'>,
 |};
 
 
@@ -623,20 +628,39 @@ export type ServerInfoMembership = {|
 
 export type ServerInfoNetwork = {|
   __typename?: 'ServerInfoNetwork',
+  /** The server will sleep for `io_collect_interval` seconds between iterations of the event loop */
   io_collect_interval?: ?$ElementType<Scalars, 'Float'>,
+  /** Since if the net_msg_max limit is reached, we will stop processing incoming requests */
   net_msg_max?: ?$ElementType<Scalars, 'Long'>,
+  /** The size of the read-ahead buffer associated with a client connection */
   readahead?: ?$ElementType<Scalars, 'Long'>,
 |};
 
 export type ServerInfoReplication = {|
   __typename?: 'ServerInfoReplication',
+  /**
+   * Minimal number of replicas to sync for this instance to switch to the write
+   * mode. If set to REPLICATION_CONNECT_QUORUM_ALL, wait for all configured masters.
+   */
   replication_connect_quorum?: ?$ElementType<Scalars, 'Int'>,
+  /**
+   * Maximal time box.cfg() may wait for connections to all configured replicas to
+   * be established. If box.cfg() fails to connect to all replicas within the
+   * timeout, it will either leave the instance in the orphan mode (recovery) or
+   * fail (bootstrap, reconfiguration).
+   */
   replication_connect_timeout?: ?$ElementType<Scalars, 'Float'>,
   /** Statistics for all instances in the replica set in regard to the current instance */
   replication_info?: ?Array<?ReplicaStatus>,
+  /** Allows automatic skip of conflicting rows in replication based on box.cfg configuration option. */
   replication_skip_conflict?: ?$ElementType<Scalars, 'Boolean'>,
+  /** Switch applier from "sync" to "follow" as soon as the replication lag is less than the value of the following variable. */
   replication_sync_lag?: ?$ElementType<Scalars, 'Float'>,
+  /** Max time to wait for appliers to synchronize before entering the orphan mode. */
   replication_sync_timeout?: ?$ElementType<Scalars, 'Float'>,
+  /** How many threads to use for decoding incoming replication stream. */
+  replication_threads?: ?$ElementType<Scalars, 'Float'>,
+  /** Wait for the given period of time before trying to reconnect to a master. */
   replication_timeout?: ?$ElementType<Scalars, 'Float'>,
   /** The vector clock of replication log sequence numbers */
   vclock?: ?Array<?$ElementType<Scalars, 'Long'>>,
@@ -644,10 +668,17 @@ export type ServerInfoReplication = {|
 
 export type ServerInfoStorage = {|
   __typename?: 'ServerInfoStorage',
+  /** Allows to select the appropriate allocator for memtx tuples if necessary. */
+  memtx_allocator?: ?$ElementType<Scalars, 'String'>,
+  /** Size of the largest allocation unit, in bytes. It can be tuned up if it is necessary to store large tuples. */
   memtx_max_tuple_size?: ?$ElementType<Scalars, 'Long'>,
+  /** How much memory Memtx engine allocates to actually store tuples, in bytes. */
   memtx_memory?: ?$ElementType<Scalars, 'Long'>,
+  /** Size of the smallest allocation unit, in bytes. It can be tuned up if most of the tuples are not so small. */
   memtx_min_tuple_size?: ?$ElementType<Scalars, 'Long'>,
+  /** Deprecated. See "wal_max_size" */
   rows_per_wal?: ?$ElementType<Scalars, 'Long'>,
+  /** Warning in the WAL log if a transaction waits for quota for more than `too_long_threshold` seconds */
   too_long_threshold?: ?$ElementType<Scalars, 'Float'>,
   vinyl_bloom_fpr?: ?$ElementType<Scalars, 'Float'>,
   vinyl_cache?: ?$ElementType<Scalars, 'Long'>,
@@ -660,9 +691,20 @@ export type ServerInfoStorage = {|
   vinyl_run_size_ratio?: ?$ElementType<Scalars, 'Float'>,
   vinyl_timeout?: ?$ElementType<Scalars, 'Float'>,
   vinyl_write_threads?: ?$ElementType<Scalars, 'Int'>,
+  /** Option to prevent early cleanup of `*.xlog` files which are needed by replicas and lead to `XlogGapError` */
+  wal_cleanup_delay?: ?$ElementType<Scalars, 'Long'>,
+  /** Background fiber restart delay to follow xlog changes. */
   wal_dir_rescan_delay?: ?$ElementType<Scalars, 'Float'>,
+  /** The maximal size of a single write-ahead log file */
   wal_max_size?: ?$ElementType<Scalars, 'Long'>,
+  /**
+   * Specify fiber-WAL-disk synchronization mode as: "none": write-ahead log is not
+   * maintained; "write": fibers wait for their data to be written to the
+   * write-ahead log; "fsync": fibers wait for their data, fsync follows each write.
+   */
   wal_mode?: ?$ElementType<Scalars, 'String'>,
+  /** Limit the pace at which replica submits new transactions to WAL */
+  wal_queue_max_size?: ?$ElementType<Scalars, 'Long'>,
 |};
 
 export type ServerInfoVshardStorage = {|

@@ -48,7 +48,7 @@ const ZoneAddModal = () => {
         label="Name of zone"
         name="zone_name"
         value={value}
-        disable={pending}
+        disabled={pending}
         onChange={handleInputChange}
         autoFocus
       />

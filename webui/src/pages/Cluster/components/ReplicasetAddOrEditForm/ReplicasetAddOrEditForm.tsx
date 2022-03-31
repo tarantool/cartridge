@@ -136,8 +136,8 @@ const ReplicasetAddOrEditForm = ({
           name="alias"
           onChange={handleChange}
           onBlur={handleBlur}
-          value={values.alias}
-          error={errors.alias}
+          value={`${values.alias ?? ''}`}
+          error={Boolean(errors.alias)}
           message={errors.alias}
           largeMargins
           autoFocus
@@ -182,9 +182,9 @@ const ReplicasetAddOrEditForm = ({
           label="Replica set weight"
           inputClassName={styles.weightInput}
           name="weight"
-          error={errors.weight}
+          error={Boolean(errors.weight)}
           message={errors.weight}
-          value={values.weight}
+          value={`${values.weight ?? ''}`}
           onChange={handleChange}
           disabled={!isStorageRoleSelected}
           placeholder="Auto"
@@ -230,9 +230,11 @@ const ReplicasetAddOrEditForm = ({
             name="failover_priority"
             className={cx('ser', styles.wideField)}
             label="Failover priority"
+            // @ts-ignore
             value={values.failover_priority}
+            // @ts-ignore
             onChange={handleFailoverPriorityChange}
-            inputComponent={ServerSortableList}
+            inputComponent={ServerSortableList} // TODO: improve LabeledInput types
             itemClassName={styles.radioWrap}
             replicaset={replicaset}
             serverMap={serverMap}

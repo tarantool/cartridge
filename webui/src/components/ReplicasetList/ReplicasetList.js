@@ -1,7 +1,6 @@
 import React from 'react';
 import { withRouter } from 'react-router-dom';
 import { css, cx } from '@emotion/css';
-import PropTypes from 'prop-types';
 import { defaultMemoize } from 'reselect';
 import { Button, HealthStatus, IconEdit, Text, TiledList, TiledListItem, Tooltip } from '@tarantool.io/ui-kit';
 
@@ -244,17 +243,17 @@ class ReplicasetList extends React.PureComponent {
   };
 }
 
-ReplicasetList.propTypes = {
-  clusterSelf: PropTypes.any,
-  dataSource: PropTypes.arrayOf(
-    PropTypes.shape({
-      uuid: PropTypes.string,
-    })
-  ).isRequired,
-  editReplicaset: PropTypes.func.isRequired,
-  joinServer: PropTypes.func.isRequired,
-  createReplicaset: PropTypes.func.isRequired,
-  onServerLabelClick: PropTypes.func,
-};
+// ReplicasetList.propTypes = {
+//   clusterSelf: PropTypes.any,
+//   dataSource: PropTypes.arrayOf(
+//     PropTypes.shape({
+//       uuid: PropTypes.string,
+//     })
+//   ).isRequired,
+//   editReplicaset: PropTypes.func.isRequired,
+//   joinServer: PropTypes.func.isRequired,
+//   createReplicaset: PropTypes.func.isRequired,
+//   onServerLabelClick: PropTypes.func,
+// };
 
 export default withRouter(ReplicasetList);

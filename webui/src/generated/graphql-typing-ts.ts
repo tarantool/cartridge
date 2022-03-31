@@ -1,4 +1,5 @@
 export type Maybe<T> = T | null;
+export type InputMaybe<T> = Maybe<T>;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
 export type MakeOptional<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]?: Maybe<T[SubKey]> };
 export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]: Maybe<T[SubKey]> };
@@ -53,17 +54,17 @@ export type Apicluster = {
 
 /** Cluster management */
 export type ApiclusterConfigArgs = {
-  sections?: Maybe<Array<Scalars['String']>>;
+  sections?: InputMaybe<Array<Scalars['String']>>;
 };
 
 /** Cluster management */
 export type ApiclusterUsersArgs = {
-  username?: Maybe<Scalars['String']>;
+  username?: InputMaybe<Scalars['String']>;
 };
 
 /** Cluster management */
 export type ApiclusterValidate_ConfigArgs = {
-  sections?: Maybe<Array<Maybe<ConfigSectionInput>>>;
+  sections?: InputMaybe<Array<InputMaybe<ConfigSectionInput>>>;
 };
 
 /** A section of clusterwide configuration */
@@ -75,7 +76,7 @@ export type ConfigSection = {
 
 /** A section of clusterwide configuration */
 export type ConfigSectionInput = {
-  content?: Maybe<Scalars['String']>;
+  content?: InputMaybe<Scalars['String']>;
   filename: Scalars['String'];
 };
 
@@ -100,24 +101,24 @@ export type DisableServerSuggestion = {
 
 /** Parameters for editing a replicaset */
 export type EditReplicasetInput = {
-  alias?: Maybe<Scalars['String']>;
-  all_rw?: Maybe<Scalars['Boolean']>;
-  failover_priority?: Maybe<Array<Scalars['String']>>;
-  join_servers?: Maybe<Array<Maybe<JoinServerInput>>>;
-  roles?: Maybe<Array<Scalars['String']>>;
-  uuid?: Maybe<Scalars['String']>;
-  vshard_group?: Maybe<Scalars['String']>;
-  weight?: Maybe<Scalars['Float']>;
+  alias?: InputMaybe<Scalars['String']>;
+  all_rw?: InputMaybe<Scalars['Boolean']>;
+  failover_priority?: InputMaybe<Array<Scalars['String']>>;
+  join_servers?: InputMaybe<Array<InputMaybe<JoinServerInput>>>;
+  roles?: InputMaybe<Array<Scalars['String']>>;
+  uuid?: InputMaybe<Scalars['String']>;
+  vshard_group?: InputMaybe<Scalars['String']>;
+  weight?: InputMaybe<Scalars['Float']>;
 };
 
 /** Parameters for editing existing server */
 export type EditServerInput = {
-  disabled?: Maybe<Scalars['Boolean']>;
-  expelled?: Maybe<Scalars['Boolean']>;
-  labels?: Maybe<Array<Maybe<LabelInput>>>;
-  uri?: Maybe<Scalars['String']>;
+  disabled?: InputMaybe<Scalars['Boolean']>;
+  expelled?: InputMaybe<Scalars['Boolean']>;
+  labels?: InputMaybe<Array<InputMaybe<LabelInput>>>;
+  uri?: InputMaybe<Scalars['String']>;
   uuid: Scalars['String'];
-  zone?: Maybe<Scalars['String']>;
+  zone?: InputMaybe<Scalars['String']>;
 };
 
 export type EditTopologyResult = {
@@ -160,11 +161,11 @@ export type FailoverStateProviderCfgEtcd2 = {
 
 /** State provider configuration (etcd-v2) */
 export type FailoverStateProviderCfgInputEtcd2 = {
-  endpoints?: Maybe<Array<Scalars['String']>>;
-  lock_delay?: Maybe<Scalars['Float']>;
-  password?: Maybe<Scalars['String']>;
-  prefix?: Maybe<Scalars['String']>;
-  username?: Maybe<Scalars['String']>;
+  endpoints?: InputMaybe<Array<Scalars['String']>>;
+  lock_delay?: InputMaybe<Scalars['Float']>;
+  password?: InputMaybe<Scalars['String']>;
+  prefix?: InputMaybe<Scalars['String']>;
+  username?: InputMaybe<Scalars['String']>;
 };
 
 /** State provider configuration (Tarantool) */
@@ -205,10 +206,10 @@ export type Issue = {
 
 /** Parameters for joining a new server */
 export type JoinServerInput = {
-  labels?: Maybe<Array<Maybe<LabelInput>>>;
+  labels?: InputMaybe<Array<InputMaybe<LabelInput>>>;
   uri: Scalars['String'];
-  uuid?: Maybe<Scalars['String']>;
-  zone?: Maybe<Scalars['String']>;
+  uuid?: InputMaybe<Scalars['String']>;
+  zone?: InputMaybe<Scalars['String']>;
 };
 
 /** Cluster server label */
@@ -241,18 +242,18 @@ export type Mutation = {
 };
 
 export type MutationEdit_ReplicasetArgs = {
-  alias?: Maybe<Scalars['String']>;
-  all_rw?: Maybe<Scalars['Boolean']>;
-  master?: Maybe<Array<Scalars['String']>>;
-  roles?: Maybe<Array<Scalars['String']>>;
+  alias?: InputMaybe<Scalars['String']>;
+  all_rw?: InputMaybe<Scalars['Boolean']>;
+  master?: InputMaybe<Array<Scalars['String']>>;
+  roles?: InputMaybe<Array<Scalars['String']>>;
   uuid: Scalars['String'];
-  vshard_group?: Maybe<Scalars['String']>;
-  weight?: Maybe<Scalars['Float']>;
+  vshard_group?: InputMaybe<Scalars['String']>;
+  weight?: InputMaybe<Scalars['Float']>;
 };
 
 export type MutationEdit_ServerArgs = {
-  labels?: Maybe<Array<Maybe<LabelInput>>>;
-  uri?: Maybe<Scalars['String']>;
+  labels?: InputMaybe<Array<InputMaybe<LabelInput>>>;
+  uri?: InputMaybe<Scalars['String']>;
   uuid: Scalars['String'];
 };
 
@@ -261,16 +262,16 @@ export type MutationExpel_ServerArgs = {
 };
 
 export type MutationJoin_ServerArgs = {
-  instance_uuid?: Maybe<Scalars['String']>;
-  labels?: Maybe<Array<Maybe<LabelInput>>>;
-  replicaset_alias?: Maybe<Scalars['String']>;
-  replicaset_uuid?: Maybe<Scalars['String']>;
-  replicaset_weight?: Maybe<Scalars['Float']>;
-  roles?: Maybe<Array<Scalars['String']>>;
-  timeout?: Maybe<Scalars['Float']>;
+  instance_uuid?: InputMaybe<Scalars['String']>;
+  labels?: InputMaybe<Array<InputMaybe<LabelInput>>>;
+  replicaset_alias?: InputMaybe<Scalars['String']>;
+  replicaset_uuid?: InputMaybe<Scalars['String']>;
+  replicaset_weight?: InputMaybe<Scalars['Float']>;
+  roles?: InputMaybe<Array<Scalars['String']>>;
+  timeout?: InputMaybe<Scalars['Float']>;
   uri: Scalars['String'];
-  vshard_group?: Maybe<Scalars['String']>;
-  zone?: Maybe<Scalars['String']>;
+  vshard_group?: InputMaybe<Scalars['String']>;
+  zone?: InputMaybe<Scalars['String']>;
 };
 
 export type MutationProbe_ServerArgs = {
@@ -283,9 +284,9 @@ export type MutationApicluster = {
   /** Create a new user */
   add_user?: Maybe<User>;
   auth_params: UserManagementApi;
-  /** Checks that schema can be applied on cluster */
+  /** Checks that the schema can be applied on the cluster */
   check_schema: DdlCheckResult;
-  /** Applies updated config on cluster */
+  /** Applies updated config on the cluster */
   config: Array<Maybe<ConfigSection>>;
   /** Reapplies config on the specified nodes */
   config_force_reapply: Scalars['Boolean'];
@@ -300,11 +301,15 @@ export type MutationApicluster = {
   failover: Scalars['Boolean'];
   /** Configure automatic failover. */
   failover_params: FailoverApi;
+  /** Pause failover */
+  failover_pause: Scalars['Boolean'];
   /** Promote the instance to the leader of replicaset */
   failover_promote: Scalars['Boolean'];
+  /** Resume failover after pausing */
+  failover_resume: Scalars['Boolean'];
   /** Remove user */
   remove_user?: Maybe<User>;
-  /** Restart replication on specified by uuid servers */
+  /** Restart replication on servers specified by uuid */
   restart_replication?: Maybe<Scalars['Boolean']>;
   /** Applies DDL schema on cluster */
   schema: DdlSchema;
@@ -312,17 +317,17 @@ export type MutationApicluster = {
 
 /** Cluster management */
 export type MutationApiclusterAdd_UserArgs = {
-  email?: Maybe<Scalars['String']>;
-  fullname?: Maybe<Scalars['String']>;
+  email?: InputMaybe<Scalars['String']>;
+  fullname?: InputMaybe<Scalars['String']>;
   password: Scalars['String'];
   username: Scalars['String'];
 };
 
 /** Cluster management */
 export type MutationApiclusterAuth_ParamsArgs = {
-  cookie_max_age?: Maybe<Scalars['Long']>;
-  cookie_renew_age?: Maybe<Scalars['Long']>;
-  enabled?: Maybe<Scalars['Boolean']>;
+  cookie_max_age?: InputMaybe<Scalars['Long']>;
+  cookie_renew_age?: InputMaybe<Scalars['Long']>;
+  enabled?: InputMaybe<Scalars['Boolean']>;
 };
 
 /** Cluster management */
@@ -332,44 +337,44 @@ export type MutationApiclusterCheck_SchemaArgs = {
 
 /** Cluster management */
 export type MutationApiclusterConfigArgs = {
-  sections?: Maybe<Array<Maybe<ConfigSectionInput>>>;
+  sections?: InputMaybe<Array<InputMaybe<ConfigSectionInput>>>;
 };
 
 /** Cluster management */
 export type MutationApiclusterConfig_Force_ReapplyArgs = {
-  uuids?: Maybe<Array<Maybe<Scalars['String']>>>;
+  uuids?: InputMaybe<Array<InputMaybe<Scalars['String']>>>;
 };
 
 /** Cluster management */
 export type MutationApiclusterDisable_ServersArgs = {
-  uuids?: Maybe<Array<Scalars['String']>>;
+  uuids?: InputMaybe<Array<Scalars['String']>>;
 };
 
 /** Cluster management */
 export type MutationApiclusterEdit_TopologyArgs = {
-  replicasets?: Maybe<Array<Maybe<EditReplicasetInput>>>;
-  servers?: Maybe<Array<Maybe<EditServerInput>>>;
+  replicasets?: InputMaybe<Array<InputMaybe<EditReplicasetInput>>>;
+  servers?: InputMaybe<Array<InputMaybe<EditServerInput>>>;
 };
 
 /** Cluster management */
 export type MutationApiclusterEdit_UserArgs = {
-  email?: Maybe<Scalars['String']>;
-  fullname?: Maybe<Scalars['String']>;
-  password?: Maybe<Scalars['String']>;
+  email?: InputMaybe<Scalars['String']>;
+  fullname?: InputMaybe<Scalars['String']>;
+  password?: InputMaybe<Scalars['String']>;
   username: Scalars['String'];
 };
 
 /** Cluster management */
 export type MutationApiclusterEdit_Vshard_OptionsArgs = {
-  collect_bucket_garbage_interval?: Maybe<Scalars['Float']>;
-  collect_lua_garbage?: Maybe<Scalars['Boolean']>;
+  collect_bucket_garbage_interval?: InputMaybe<Scalars['Float']>;
+  collect_lua_garbage?: InputMaybe<Scalars['Boolean']>;
   name: Scalars['String'];
-  rebalancer_disbalance_threshold?: Maybe<Scalars['Float']>;
-  rebalancer_max_receiving?: Maybe<Scalars['Int']>;
-  rebalancer_max_sending?: Maybe<Scalars['Int']>;
-  sched_move_quota?: Maybe<Scalars['Long']>;
-  sched_ref_quota?: Maybe<Scalars['Long']>;
-  sync_timeout?: Maybe<Scalars['Float']>;
+  rebalancer_disbalance_threshold?: InputMaybe<Scalars['Float']>;
+  rebalancer_max_receiving?: InputMaybe<Scalars['Int']>;
+  rebalancer_max_sending?: InputMaybe<Scalars['Int']>;
+  sched_move_quota?: InputMaybe<Scalars['Long']>;
+  sched_ref_quota?: InputMaybe<Scalars['Long']>;
+  sync_timeout?: InputMaybe<Scalars['Float']>;
 };
 
 /** Cluster management */
@@ -379,21 +384,22 @@ export type MutationApiclusterFailoverArgs = {
 
 /** Cluster management */
 export type MutationApiclusterFailover_ParamsArgs = {
-  etcd2_params?: Maybe<FailoverStateProviderCfgInputEtcd2>;
-  failover_timeout?: Maybe<Scalars['Float']>;
-  fencing_enabled?: Maybe<Scalars['Boolean']>;
-  fencing_pause?: Maybe<Scalars['Float']>;
-  fencing_timeout?: Maybe<Scalars['Float']>;
-  mode?: Maybe<Scalars['String']>;
-  state_provider?: Maybe<Scalars['String']>;
-  tarantool_params?: Maybe<FailoverStateProviderCfgInputTarantool>;
+  etcd2_params?: InputMaybe<FailoverStateProviderCfgInputEtcd2>;
+  failover_timeout?: InputMaybe<Scalars['Float']>;
+  fencing_enabled?: InputMaybe<Scalars['Boolean']>;
+  fencing_pause?: InputMaybe<Scalars['Float']>;
+  fencing_timeout?: InputMaybe<Scalars['Float']>;
+  mode?: InputMaybe<Scalars['String']>;
+  state_provider?: InputMaybe<Scalars['String']>;
+  tarantool_params?: InputMaybe<FailoverStateProviderCfgInputTarantool>;
 };
 
 /** Cluster management */
 export type MutationApiclusterFailover_PromoteArgs = {
-  force_inconsistency?: Maybe<Scalars['Boolean']>;
+  force_inconsistency?: InputMaybe<Scalars['Boolean']>;
   instance_uuid: Scalars['String'];
   replicaset_uuid: Scalars['String'];
+  skip_error_on_change?: InputMaybe<Scalars['Boolean']>;
 };
 
 /** Cluster management */
@@ -403,7 +409,7 @@ export type MutationApiclusterRemove_UserArgs = {
 
 /** Cluster management */
 export type MutationApiclusterRestart_ReplicationArgs = {
-  uuids?: Maybe<Array<Scalars['String']>>;
+  uuids?: InputMaybe<Array<Scalars['String']>>;
 };
 
 /** Cluster management */
@@ -420,11 +426,11 @@ export type Query = {
 };
 
 export type QueryReplicasetsArgs = {
-  uuid?: Maybe<Scalars['String']>;
+  uuid?: InputMaybe<Scalars['String']>;
 };
 
 export type QueryServersArgs = {
-  uuid?: Maybe<Scalars['String']>;
+  uuid?: InputMaybe<Scalars['String']>;
 };
 
 /** A suggestion to reconfigure cluster topology because  one or more servers were restarted with a new advertise uri */
@@ -599,20 +605,39 @@ export type ServerInfoMembership = {
 
 export type ServerInfoNetwork = {
   __typename?: 'ServerInfoNetwork';
+  /** The server will sleep for `io_collect_interval` seconds between iterations of the event loop */
   io_collect_interval?: Maybe<Scalars['Float']>;
+  /** Since if the net_msg_max limit is reached, we will stop processing incoming requests */
   net_msg_max?: Maybe<Scalars['Long']>;
+  /** The size of the read-ahead buffer associated with a client connection */
   readahead?: Maybe<Scalars['Long']>;
 };
 
 export type ServerInfoReplication = {
   __typename?: 'ServerInfoReplication';
+  /**
+   * Minimal number of replicas to sync for this instance to switch to the write
+   * mode. If set to REPLICATION_CONNECT_QUORUM_ALL, wait for all configured masters.
+   */
   replication_connect_quorum?: Maybe<Scalars['Int']>;
+  /**
+   * Maximal time box.cfg() may wait for connections to all configured replicas to
+   * be established. If box.cfg() fails to connect to all replicas within the
+   * timeout, it will either leave the instance in the orphan mode (recovery) or
+   * fail (bootstrap, reconfiguration).
+   */
   replication_connect_timeout?: Maybe<Scalars['Float']>;
   /** Statistics for all instances in the replica set in regard to the current instance */
   replication_info?: Maybe<Array<Maybe<ReplicaStatus>>>;
+  /** Allows automatic skip of conflicting rows in replication based on box.cfg configuration option. */
   replication_skip_conflict?: Maybe<Scalars['Boolean']>;
+  /** Switch applier from "sync" to "follow" as soon as the replication lag is less than the value of the following variable. */
   replication_sync_lag?: Maybe<Scalars['Float']>;
+  /** Max time to wait for appliers to synchronize before entering the orphan mode. */
   replication_sync_timeout?: Maybe<Scalars['Float']>;
+  /** How many threads to use for decoding incoming replication stream. */
+  replication_threads?: Maybe<Scalars['Float']>;
+  /** Wait for the given period of time before trying to reconnect to a master. */
   replication_timeout?: Maybe<Scalars['Float']>;
   /** The vector clock of replication log sequence numbers */
   vclock?: Maybe<Array<Maybe<Scalars['Long']>>>;
@@ -620,10 +645,17 @@ export type ServerInfoReplication = {
 
 export type ServerInfoStorage = {
   __typename?: 'ServerInfoStorage';
+  /** Allows to select the appropriate allocator for memtx tuples if necessary. */
+  memtx_allocator?: Maybe<Scalars['String']>;
+  /** Size of the largest allocation unit, in bytes. It can be tuned up if it is necessary to store large tuples. */
   memtx_max_tuple_size?: Maybe<Scalars['Long']>;
+  /** How much memory Memtx engine allocates to actually store tuples, in bytes. */
   memtx_memory?: Maybe<Scalars['Long']>;
+  /** Size of the smallest allocation unit, in bytes. It can be tuned up if most of the tuples are not so small. */
   memtx_min_tuple_size?: Maybe<Scalars['Long']>;
+  /** Deprecated. See "wal_max_size" */
   rows_per_wal?: Maybe<Scalars['Long']>;
+  /** Warning in the WAL log if a transaction waits for quota for more than `too_long_threshold` seconds */
   too_long_threshold?: Maybe<Scalars['Float']>;
   vinyl_bloom_fpr?: Maybe<Scalars['Float']>;
   vinyl_cache?: Maybe<Scalars['Long']>;
@@ -636,9 +668,20 @@ export type ServerInfoStorage = {
   vinyl_run_size_ratio?: Maybe<Scalars['Float']>;
   vinyl_timeout?: Maybe<Scalars['Float']>;
   vinyl_write_threads?: Maybe<Scalars['Int']>;
+  /** Option to prevent early cleanup of `*.xlog` files which are needed by replicas and lead to `XlogGapError` */
+  wal_cleanup_delay?: Maybe<Scalars['Long']>;
+  /** Background fiber restart delay to follow xlog changes. */
   wal_dir_rescan_delay?: Maybe<Scalars['Float']>;
+  /** The maximal size of a single write-ahead log file */
   wal_max_size?: Maybe<Scalars['Long']>;
+  /**
+   * Specify fiber-WAL-disk synchronization mode as: "none": write-ahead log is not
+   * maintained; "write": fibers wait for their data to be written to the
+   * write-ahead log; "fsync": fibers wait for their data, fsync follows each write.
+   */
   wal_mode?: Maybe<Scalars['String']>;
+  /** Limit the pace at which replica submits new transactions to WAL */
+  wal_queue_max_size?: Maybe<Scalars['Long']>;
 };
 
 export type ServerInfoVshardStorage = {
@@ -808,7 +851,7 @@ export type __Field = {
 
 /** Object and Interface types are described by a list of Fields, each of which has a name, potentially a list of arguments, and a return type. */
 export type __FieldArgsArgs = {
-  includeDeprecated?: Maybe<Scalars['Boolean']>;
+  includeDeprecated?: InputMaybe<Scalars['Boolean']>;
 };
 
 /** Arguments provided to Fields or Directives and the input fields of an InputObject are represented as Input Values which describe their type and optionally a default value. */
@@ -848,7 +891,7 @@ export type __Type = {
  * Depending on the kind of a type, certain fields describe information about that type. Scalar types provide no information beyond a name, description and optional `specifiedByUrl`, while Enum types provide their values. Object and Interface types provide the fields they describe. Abstract types, Union and Interface, provide the Object types possible at runtime. List and NonNull types compose other types.
  */
 export type __TypeFieldsArgs = {
-  includeDeprecated?: Maybe<Scalars['Boolean']>;
+  includeDeprecated?: InputMaybe<Scalars['Boolean']>;
 };
 
 /**
@@ -857,7 +900,7 @@ export type __TypeFieldsArgs = {
  * Depending on the kind of a type, certain fields describe information about that type. Scalar types provide no information beyond a name, description and optional `specifiedByUrl`, while Enum types provide their values. Object and Interface types provide the fields they describe. Abstract types, Union and Interface, provide the Object types possible at runtime. List and NonNull types compose other types.
  */
 export type __TypeEnumValuesArgs = {
-  includeDeprecated?: Maybe<Scalars['Boolean']>;
+  includeDeprecated?: InputMaybe<Scalars['Boolean']>;
 };
 
 /**
@@ -866,7 +909,7 @@ export type __TypeEnumValuesArgs = {
  * Depending on the kind of a type, certain fields describe information about that type. Scalar types provide no information beyond a name, description and optional `specifiedByUrl`, while Enum types provide their values. Object and Interface types provide the fields they describe. Abstract types, Union and Interface, provide the Object types possible at runtime. List and NonNull types compose other types.
  */
 export type __TypeInputFieldsArgs = {
-  includeDeprecated?: Maybe<Scalars['Boolean']>;
+  includeDeprecated?: InputMaybe<Scalars['Boolean']>;
 };
 
 /** An enum describing what kind of type a given `__Type` is. */
@@ -893,56 +936,56 @@ export type ServerStatFieldsFragment = {
   __typename?: 'Server';
   uuid: string;
   uri: string;
-  statistics?: Maybe<{
+  statistics?: {
     __typename?: 'ServerStat';
     quota_used_ratio: string;
     arena_used_ratio: string;
     items_used_ratio: string;
     quotaSize: number;
     arenaUsed: number;
-    bucketsCount?: Maybe<number>;
-  }>;
+    bucketsCount?: number | null;
+  } | null;
 };
 
 export type AuthQueryVariables = Exact<{ [key: string]: never }>;
 
 export type AuthQuery = {
   __typename?: 'Query';
-  cluster?: Maybe<{
+  cluster?: {
     __typename?: 'Apicluster';
-    authParams: { __typename?: 'UserManagementAPI'; enabled: boolean; username?: Maybe<string> };
-  }>;
+    authParams: { __typename?: 'UserManagementAPI'; enabled: boolean; username?: string | null };
+  } | null;
 };
 
 export type TurnAuthMutationVariables = Exact<{
-  enabled?: Maybe<Scalars['Boolean']>;
+  enabled?: InputMaybe<Scalars['Boolean']>;
 }>;
 
 export type TurnAuthMutation = {
   __typename?: 'Mutation';
-  cluster?: Maybe<{
+  cluster?: {
     __typename?: 'MutationApicluster';
     authParams: { __typename?: 'UserManagementAPI'; enabled: boolean };
-  }>;
+  } | null;
 };
 
 export type GetClusterQueryVariables = Exact<{ [key: string]: never }>;
 
 export type GetClusterQuery = {
   __typename?: 'Query';
-  cluster?: Maybe<{
+  cluster?: {
     __typename?: 'Apicluster';
     can_bootstrap_vshard: boolean;
     vshard_bucket_count: number;
-    MenuBlacklist?: Maybe<Array<string>>;
-    clusterSelf?: Maybe<{
+    MenuBlacklist?: Array<string> | null;
+    clusterSelf?: {
       __typename?: 'ServerShortInfo';
-      app_name?: Maybe<string>;
-      instance_name?: Maybe<string>;
-      demo_uri?: Maybe<string>;
+      app_name?: string | null;
+      instance_name?: string | null;
+      demo_uri?: string | null;
       uri: string;
-      uuid?: Maybe<string>;
-    }>;
+      uuid?: string | null;
+    } | null;
     failover_params: {
       __typename?: 'FailoverAPI';
       failover_timeout: number;
@@ -950,21 +993,21 @@ export type GetClusterQuery = {
       fencing_timeout: number;
       fencing_pause: number;
       mode: string;
-      state_provider?: Maybe<string>;
-      etcd2_params?: Maybe<{
+      state_provider?: string | null;
+      etcd2_params?: {
         __typename?: 'FailoverStateProviderCfgEtcd2';
         password: string;
         lock_delay: number;
         endpoints: Array<string>;
         username: string;
         prefix: string;
-      }>;
-      tarantool_params?: Maybe<{ __typename?: 'FailoverStateProviderCfgTarantool'; uri: string; password: string }>;
+      } | null;
+      tarantool_params?: { __typename?: 'FailoverStateProviderCfgTarantool'; uri: string; password: string } | null;
     };
     knownRoles: Array<{
       __typename?: 'Role';
       name: string;
-      dependencies?: Maybe<Array<string>>;
+      dependencies?: Array<string> | null;
       implies_storage: boolean;
       implies_router: boolean;
     }>;
@@ -977,64 +1020,60 @@ export type GetClusterQuery = {
       implements_list_users: boolean;
       implements_edit_user: boolean;
       implements_remove_user: boolean;
-      username?: Maybe<string>;
+      username?: string | null;
     };
-  }>;
+  } | null;
 };
 
 export type ServerDetailsFieldsFragment = {
   __typename?: 'Server';
-  alias?: Maybe<string>;
+  alias?: string | null;
   status: string;
   message: string;
   uri: string;
-  replicaset?: Maybe<{
+  replicaset?: {
     __typename?: 'Replicaset';
-    roles?: Maybe<Array<string>>;
+    roles?: Array<string> | null;
     active_master: { __typename?: 'Server'; uuid: string };
     master: { __typename?: 'Server'; uuid: string };
-  }>;
-  labels?: Maybe<Array<Maybe<{ __typename?: 'Label'; name: string; value: string }>>>;
-  boxinfo?: Maybe<{
+  } | null;
+  labels?: Array<{ __typename?: 'Label'; name: string; value: string } | null> | null;
+  boxinfo?: {
     __typename?: 'ServerInfo';
     cartridge: { __typename?: 'ServerInfoCartridge'; version: string };
     membership: {
       __typename?: 'ServerInfoMembership';
-      status?: Maybe<string>;
-      incarnation?: Maybe<number>;
-      PROTOCOL_PERIOD_SECONDS?: Maybe<number>;
-      ACK_TIMEOUT_SECONDS?: Maybe<number>;
-      ANTI_ENTROPY_PERIOD_SECONDS?: Maybe<number>;
-      SUSPECT_TIMEOUT_SECONDS?: Maybe<number>;
-      NUM_FAILURE_DETECTION_SUBGROUPS?: Maybe<number>;
+      status?: string | null;
+      incarnation?: number | null;
+      PROTOCOL_PERIOD_SECONDS?: number | null;
+      ACK_TIMEOUT_SECONDS?: number | null;
+      ANTI_ENTROPY_PERIOD_SECONDS?: number | null;
+      SUSPECT_TIMEOUT_SECONDS?: number | null;
+      NUM_FAILURE_DETECTION_SUBGROUPS?: number | null;
     };
-    vshard_router?: Maybe<
-      Array<
-        Maybe<{
-          __typename?: 'VshardRouter';
-          vshard_group?: Maybe<string>;
-          buckets_unreachable?: Maybe<number>;
-          buckets_available_ro?: Maybe<number>;
-          buckets_unknown?: Maybe<number>;
-          buckets_available_rw?: Maybe<number>;
-        }>
-      >
-    >;
-    vshard_storage?: Maybe<{
+    vshard_router?: Array<{
+      __typename?: 'VshardRouter';
+      vshard_group?: string | null;
+      buckets_unreachable?: number | null;
+      buckets_available_ro?: number | null;
+      buckets_unknown?: number | null;
+      buckets_available_rw?: number | null;
+    } | null> | null;
+    vshard_storage?: {
       __typename?: 'ServerInfoVshardStorage';
-      vshard_group?: Maybe<string>;
-      buckets_receiving?: Maybe<number>;
-      buckets_active?: Maybe<number>;
-      buckets_total?: Maybe<number>;
-      buckets_garbage?: Maybe<number>;
-      buckets_pinned?: Maybe<number>;
-      buckets_sending?: Maybe<number>;
-    }>;
+      vshard_group?: string | null;
+      buckets_receiving?: number | null;
+      buckets_active?: number | null;
+      buckets_total?: number | null;
+      buckets_garbage?: number | null;
+      buckets_pinned?: number | null;
+      buckets_sending?: number | null;
+    } | null;
     network: {
       __typename?: 'ServerInfoNetwork';
-      io_collect_interval?: Maybe<number>;
-      net_msg_max?: Maybe<number>;
-      readahead?: Maybe<number>;
+      io_collect_interval?: number | null;
+      net_msg_max?: number | null;
+      readahead?: number | null;
     };
     general: {
       __typename?: 'ServerInfoGeneral';
@@ -1042,349 +1081,321 @@ export type ServerDetailsFieldsFragment = {
       uptime: number;
       version: string;
       ro: boolean;
-      http_port?: Maybe<number>;
-      http_host?: Maybe<string>;
-      webui_prefix?: Maybe<string>;
-      app_version?: Maybe<string>;
+      http_port?: number | null;
+      http_host?: string | null;
+      webui_prefix?: string | null;
+      app_version?: string | null;
     };
     replication: {
       __typename?: 'ServerInfoReplication';
-      replication_connect_quorum?: Maybe<number>;
-      replication_connect_timeout?: Maybe<number>;
-      replication_sync_timeout?: Maybe<number>;
-      replication_skip_conflict?: Maybe<boolean>;
-      replication_sync_lag?: Maybe<number>;
-      vclock?: Maybe<Array<Maybe<number>>>;
-      replication_timeout?: Maybe<number>;
-      replication_info?: Maybe<
-        Array<
-          Maybe<{
-            __typename?: 'ReplicaStatus';
-            downstream_status?: Maybe<string>;
-            id?: Maybe<number>;
-            upstream_peer?: Maybe<string>;
-            upstream_idle?: Maybe<number>;
-            upstream_message?: Maybe<string>;
-            lsn?: Maybe<number>;
-            upstream_lag?: Maybe<number>;
-            upstream_status?: Maybe<string>;
-            uuid: string;
-            downstream_message?: Maybe<string>;
-          }>
-        >
-      >;
+      replication_connect_quorum?: number | null;
+      replication_connect_timeout?: number | null;
+      replication_sync_timeout?: number | null;
+      replication_skip_conflict?: boolean | null;
+      replication_sync_lag?: number | null;
+      vclock?: Array<number | null> | null;
+      replication_timeout?: number | null;
+      replication_info?: Array<{
+        __typename?: 'ReplicaStatus';
+        downstream_status?: string | null;
+        id?: number | null;
+        upstream_peer?: string | null;
+        upstream_idle?: number | null;
+        upstream_message?: string | null;
+        lsn?: number | null;
+        upstream_lag?: number | null;
+        upstream_status?: string | null;
+        uuid: string;
+        downstream_message?: string | null;
+      } | null> | null;
     };
     storage: {
       __typename?: 'ServerInfoStorage';
-      wal_max_size?: Maybe<number>;
-      vinyl_run_count_per_level?: Maybe<number>;
-      rows_per_wal?: Maybe<number>;
-      vinyl_cache?: Maybe<number>;
-      vinyl_range_size?: Maybe<number>;
-      vinyl_timeout?: Maybe<number>;
-      memtx_min_tuple_size?: Maybe<number>;
-      vinyl_bloom_fpr?: Maybe<number>;
-      vinyl_page_size?: Maybe<number>;
-      memtx_max_tuple_size?: Maybe<number>;
-      vinyl_run_size_ratio?: Maybe<number>;
-      wal_mode?: Maybe<string>;
-      memtx_memory?: Maybe<number>;
-      vinyl_memory?: Maybe<number>;
-      too_long_threshold?: Maybe<number>;
-      vinyl_max_tuple_size?: Maybe<number>;
-      vinyl_write_threads?: Maybe<number>;
-      vinyl_read_threads?: Maybe<number>;
-      wal_dir_rescan_delay?: Maybe<number>;
+      wal_max_size?: number | null;
+      vinyl_run_count_per_level?: number | null;
+      rows_per_wal?: number | null;
+      vinyl_cache?: number | null;
+      vinyl_range_size?: number | null;
+      vinyl_timeout?: number | null;
+      memtx_min_tuple_size?: number | null;
+      vinyl_bloom_fpr?: number | null;
+      vinyl_page_size?: number | null;
+      memtx_max_tuple_size?: number | null;
+      vinyl_run_size_ratio?: number | null;
+      wal_mode?: string | null;
+      memtx_memory?: number | null;
+      vinyl_memory?: number | null;
+      too_long_threshold?: number | null;
+      vinyl_max_tuple_size?: number | null;
+      vinyl_write_threads?: number | null;
+      vinyl_read_threads?: number | null;
+      wal_dir_rescan_delay?: number | null;
     };
-  }>;
+  } | null;
 };
 
 export type InstanceDataQueryVariables = Exact<{
-  uuid?: Maybe<Scalars['String']>;
+  uuid?: InputMaybe<Scalars['String']>;
 }>;
 
 export type InstanceDataQuery = {
   __typename?: 'Query';
-  servers?: Maybe<
-    Array<
-      Maybe<{
-        __typename?: 'Server';
-        alias?: Maybe<string>;
-        status: string;
-        message: string;
-        uri: string;
-        replicaset?: Maybe<{
-          __typename?: 'Replicaset';
-          roles?: Maybe<Array<string>>;
-          active_master: { __typename?: 'Server'; uuid: string };
-          master: { __typename?: 'Server'; uuid: string };
-        }>;
-        labels?: Maybe<Array<Maybe<{ __typename?: 'Label'; name: string; value: string }>>>;
-        boxinfo?: Maybe<{
-          __typename?: 'ServerInfo';
-          cartridge: { __typename?: 'ServerInfoCartridge'; version: string };
-          membership: {
-            __typename?: 'ServerInfoMembership';
-            status?: Maybe<string>;
-            incarnation?: Maybe<number>;
-            PROTOCOL_PERIOD_SECONDS?: Maybe<number>;
-            ACK_TIMEOUT_SECONDS?: Maybe<number>;
-            ANTI_ENTROPY_PERIOD_SECONDS?: Maybe<number>;
-            SUSPECT_TIMEOUT_SECONDS?: Maybe<number>;
-            NUM_FAILURE_DETECTION_SUBGROUPS?: Maybe<number>;
-          };
-          vshard_router?: Maybe<
-            Array<
-              Maybe<{
-                __typename?: 'VshardRouter';
-                vshard_group?: Maybe<string>;
-                buckets_unreachable?: Maybe<number>;
-                buckets_available_ro?: Maybe<number>;
-                buckets_unknown?: Maybe<number>;
-                buckets_available_rw?: Maybe<number>;
-              }>
-            >
-          >;
-          vshard_storage?: Maybe<{
-            __typename?: 'ServerInfoVshardStorage';
-            vshard_group?: Maybe<string>;
-            buckets_receiving?: Maybe<number>;
-            buckets_active?: Maybe<number>;
-            buckets_total?: Maybe<number>;
-            buckets_garbage?: Maybe<number>;
-            buckets_pinned?: Maybe<number>;
-            buckets_sending?: Maybe<number>;
-          }>;
-          network: {
-            __typename?: 'ServerInfoNetwork';
-            io_collect_interval?: Maybe<number>;
-            net_msg_max?: Maybe<number>;
-            readahead?: Maybe<number>;
-          };
-          general: {
-            __typename?: 'ServerInfoGeneral';
-            instance_uuid: string;
-            uptime: number;
-            version: string;
-            ro: boolean;
-            http_port?: Maybe<number>;
-            http_host?: Maybe<string>;
-            webui_prefix?: Maybe<string>;
-            app_version?: Maybe<string>;
-          };
-          replication: {
-            __typename?: 'ServerInfoReplication';
-            replication_connect_quorum?: Maybe<number>;
-            replication_connect_timeout?: Maybe<number>;
-            replication_sync_timeout?: Maybe<number>;
-            replication_skip_conflict?: Maybe<boolean>;
-            replication_sync_lag?: Maybe<number>;
-            vclock?: Maybe<Array<Maybe<number>>>;
-            replication_timeout?: Maybe<number>;
-            replication_info?: Maybe<
-              Array<
-                Maybe<{
-                  __typename?: 'ReplicaStatus';
-                  downstream_status?: Maybe<string>;
-                  id?: Maybe<number>;
-                  upstream_peer?: Maybe<string>;
-                  upstream_idle?: Maybe<number>;
-                  upstream_message?: Maybe<string>;
-                  lsn?: Maybe<number>;
-                  upstream_lag?: Maybe<number>;
-                  upstream_status?: Maybe<string>;
-                  uuid: string;
-                  downstream_message?: Maybe<string>;
-                }>
-              >
-            >;
-          };
-          storage: {
-            __typename?: 'ServerInfoStorage';
-            wal_max_size?: Maybe<number>;
-            vinyl_run_count_per_level?: Maybe<number>;
-            rows_per_wal?: Maybe<number>;
-            vinyl_cache?: Maybe<number>;
-            vinyl_range_size?: Maybe<number>;
-            vinyl_timeout?: Maybe<number>;
-            memtx_min_tuple_size?: Maybe<number>;
-            vinyl_bloom_fpr?: Maybe<number>;
-            vinyl_page_size?: Maybe<number>;
-            memtx_max_tuple_size?: Maybe<number>;
-            vinyl_run_size_ratio?: Maybe<number>;
-            wal_mode?: Maybe<string>;
-            memtx_memory?: Maybe<number>;
-            vinyl_memory?: Maybe<number>;
-            too_long_threshold?: Maybe<number>;
-            vinyl_max_tuple_size?: Maybe<number>;
-            vinyl_write_threads?: Maybe<number>;
-            vinyl_read_threads?: Maybe<number>;
-            wal_dir_rescan_delay?: Maybe<number>;
-          };
-        }>;
-      }>
-    >
-  >;
-  descriptionCartridge?: Maybe<{
+  servers?: Array<{
+    __typename?: 'Server';
+    alias?: string | null;
+    status: string;
+    message: string;
+    uri: string;
+    replicaset?: {
+      __typename?: 'Replicaset';
+      roles?: Array<string> | null;
+      active_master: { __typename?: 'Server'; uuid: string };
+      master: { __typename?: 'Server'; uuid: string };
+    } | null;
+    labels?: Array<{ __typename?: 'Label'; name: string; value: string } | null> | null;
+    boxinfo?: {
+      __typename?: 'ServerInfo';
+      cartridge: { __typename?: 'ServerInfoCartridge'; version: string };
+      membership: {
+        __typename?: 'ServerInfoMembership';
+        status?: string | null;
+        incarnation?: number | null;
+        PROTOCOL_PERIOD_SECONDS?: number | null;
+        ACK_TIMEOUT_SECONDS?: number | null;
+        ANTI_ENTROPY_PERIOD_SECONDS?: number | null;
+        SUSPECT_TIMEOUT_SECONDS?: number | null;
+        NUM_FAILURE_DETECTION_SUBGROUPS?: number | null;
+      };
+      vshard_router?: Array<{
+        __typename?: 'VshardRouter';
+        vshard_group?: string | null;
+        buckets_unreachable?: number | null;
+        buckets_available_ro?: number | null;
+        buckets_unknown?: number | null;
+        buckets_available_rw?: number | null;
+      } | null> | null;
+      vshard_storage?: {
+        __typename?: 'ServerInfoVshardStorage';
+        vshard_group?: string | null;
+        buckets_receiving?: number | null;
+        buckets_active?: number | null;
+        buckets_total?: number | null;
+        buckets_garbage?: number | null;
+        buckets_pinned?: number | null;
+        buckets_sending?: number | null;
+      } | null;
+      network: {
+        __typename?: 'ServerInfoNetwork';
+        io_collect_interval?: number | null;
+        net_msg_max?: number | null;
+        readahead?: number | null;
+      };
+      general: {
+        __typename?: 'ServerInfoGeneral';
+        instance_uuid: string;
+        uptime: number;
+        version: string;
+        ro: boolean;
+        http_port?: number | null;
+        http_host?: string | null;
+        webui_prefix?: string | null;
+        app_version?: string | null;
+      };
+      replication: {
+        __typename?: 'ServerInfoReplication';
+        replication_connect_quorum?: number | null;
+        replication_connect_timeout?: number | null;
+        replication_sync_timeout?: number | null;
+        replication_skip_conflict?: boolean | null;
+        replication_sync_lag?: number | null;
+        vclock?: Array<number | null> | null;
+        replication_timeout?: number | null;
+        replication_info?: Array<{
+          __typename?: 'ReplicaStatus';
+          downstream_status?: string | null;
+          id?: number | null;
+          upstream_peer?: string | null;
+          upstream_idle?: number | null;
+          upstream_message?: string | null;
+          lsn?: number | null;
+          upstream_lag?: number | null;
+          upstream_status?: string | null;
+          uuid: string;
+          downstream_message?: string | null;
+        } | null> | null;
+      };
+      storage: {
+        __typename?: 'ServerInfoStorage';
+        wal_max_size?: number | null;
+        vinyl_run_count_per_level?: number | null;
+        rows_per_wal?: number | null;
+        vinyl_cache?: number | null;
+        vinyl_range_size?: number | null;
+        vinyl_timeout?: number | null;
+        memtx_min_tuple_size?: number | null;
+        vinyl_bloom_fpr?: number | null;
+        vinyl_page_size?: number | null;
+        memtx_max_tuple_size?: number | null;
+        vinyl_run_size_ratio?: number | null;
+        wal_mode?: string | null;
+        memtx_memory?: number | null;
+        vinyl_memory?: number | null;
+        too_long_threshold?: number | null;
+        vinyl_max_tuple_size?: number | null;
+        vinyl_write_threads?: number | null;
+        vinyl_read_threads?: number | null;
+        wal_dir_rescan_delay?: number | null;
+      };
+    } | null;
+  } | null> | null;
+  descriptionCartridge?: {
     __typename?: '__Type';
-    fields?: Maybe<Array<{ __typename?: '__Field'; name: string; description?: Maybe<string> }>>;
-  }>;
-  descriptionMembership?: Maybe<{
+    fields?: Array<{ __typename?: '__Field'; name: string; description?: string | null }> | null;
+  } | null;
+  descriptionMembership?: {
     __typename?: '__Type';
-    fields?: Maybe<Array<{ __typename?: '__Field'; name: string; description?: Maybe<string> }>>;
-  }>;
-  descriptionVshardRouter?: Maybe<{
+    fields?: Array<{ __typename?: '__Field'; name: string; description?: string | null }> | null;
+  } | null;
+  descriptionVshardRouter?: {
     __typename?: '__Type';
-    fields?: Maybe<Array<{ __typename?: '__Field'; name: string; description?: Maybe<string> }>>;
-  }>;
-  descriptionVshardStorage?: Maybe<{
+    fields?: Array<{ __typename?: '__Field'; name: string; description?: string | null }> | null;
+  } | null;
+  descriptionVshardStorage?: {
     __typename?: '__Type';
-    fields?: Maybe<Array<{ __typename?: '__Field'; name: string; description?: Maybe<string> }>>;
-  }>;
-  descriptionGeneral?: Maybe<{
+    fields?: Array<{ __typename?: '__Field'; name: string; description?: string | null }> | null;
+  } | null;
+  descriptionGeneral?: {
     __typename?: '__Type';
-    fields?: Maybe<Array<{ __typename?: '__Field'; name: string; description?: Maybe<string> }>>;
-  }>;
-  descriptionNetwork?: Maybe<{
+    fields?: Array<{ __typename?: '__Field'; name: string; description?: string | null }> | null;
+  } | null;
+  descriptionNetwork?: {
     __typename?: '__Type';
-    fields?: Maybe<Array<{ __typename?: '__Field'; name: string; description?: Maybe<string> }>>;
-  }>;
-  descriptionReplication?: Maybe<{
+    fields?: Array<{ __typename?: '__Field'; name: string; description?: string | null }> | null;
+  } | null;
+  descriptionReplication?: {
     __typename?: '__Type';
-    fields?: Maybe<Array<{ __typename?: '__Field'; name: string; description?: Maybe<string> }>>;
-  }>;
-  descriptionStorage?: Maybe<{
+    fields?: Array<{ __typename?: '__Field'; name: string; description?: string | null }> | null;
+  } | null;
+  descriptionStorage?: {
     __typename?: '__Type';
-    fields?: Maybe<Array<{ __typename?: '__Field'; name: string; description?: Maybe<string> }>>;
-  }>;
+    fields?: Array<{ __typename?: '__Field'; name: string; description?: string | null }> | null;
+  } | null;
 };
 
 export type BoxInfoQueryVariables = Exact<{
-  uuid?: Maybe<Scalars['String']>;
+  uuid?: InputMaybe<Scalars['String']>;
 }>;
 
 export type BoxInfoQuery = {
   __typename?: 'Query';
-  servers?: Maybe<
-    Array<
-      Maybe<{
-        __typename?: 'Server';
-        alias?: Maybe<string>;
-        status: string;
-        message: string;
-        uri: string;
-        replicaset?: Maybe<{
-          __typename?: 'Replicaset';
-          roles?: Maybe<Array<string>>;
-          active_master: { __typename?: 'Server'; uuid: string };
-          master: { __typename?: 'Server'; uuid: string };
-        }>;
-        labels?: Maybe<Array<Maybe<{ __typename?: 'Label'; name: string; value: string }>>>;
-        boxinfo?: Maybe<{
-          __typename?: 'ServerInfo';
-          cartridge: { __typename?: 'ServerInfoCartridge'; version: string };
-          membership: {
-            __typename?: 'ServerInfoMembership';
-            status?: Maybe<string>;
-            incarnation?: Maybe<number>;
-            PROTOCOL_PERIOD_SECONDS?: Maybe<number>;
-            ACK_TIMEOUT_SECONDS?: Maybe<number>;
-            ANTI_ENTROPY_PERIOD_SECONDS?: Maybe<number>;
-            SUSPECT_TIMEOUT_SECONDS?: Maybe<number>;
-            NUM_FAILURE_DETECTION_SUBGROUPS?: Maybe<number>;
-          };
-          vshard_router?: Maybe<
-            Array<
-              Maybe<{
-                __typename?: 'VshardRouter';
-                vshard_group?: Maybe<string>;
-                buckets_unreachable?: Maybe<number>;
-                buckets_available_ro?: Maybe<number>;
-                buckets_unknown?: Maybe<number>;
-                buckets_available_rw?: Maybe<number>;
-              }>
-            >
-          >;
-          vshard_storage?: Maybe<{
-            __typename?: 'ServerInfoVshardStorage';
-            vshard_group?: Maybe<string>;
-            buckets_receiving?: Maybe<number>;
-            buckets_active?: Maybe<number>;
-            buckets_total?: Maybe<number>;
-            buckets_garbage?: Maybe<number>;
-            buckets_pinned?: Maybe<number>;
-            buckets_sending?: Maybe<number>;
-          }>;
-          network: {
-            __typename?: 'ServerInfoNetwork';
-            io_collect_interval?: Maybe<number>;
-            net_msg_max?: Maybe<number>;
-            readahead?: Maybe<number>;
-          };
-          general: {
-            __typename?: 'ServerInfoGeneral';
-            instance_uuid: string;
-            uptime: number;
-            version: string;
-            ro: boolean;
-            http_port?: Maybe<number>;
-            http_host?: Maybe<string>;
-            webui_prefix?: Maybe<string>;
-            app_version?: Maybe<string>;
-          };
-          replication: {
-            __typename?: 'ServerInfoReplication';
-            replication_connect_quorum?: Maybe<number>;
-            replication_connect_timeout?: Maybe<number>;
-            replication_sync_timeout?: Maybe<number>;
-            replication_skip_conflict?: Maybe<boolean>;
-            replication_sync_lag?: Maybe<number>;
-            vclock?: Maybe<Array<Maybe<number>>>;
-            replication_timeout?: Maybe<number>;
-            replication_info?: Maybe<
-              Array<
-                Maybe<{
-                  __typename?: 'ReplicaStatus';
-                  downstream_status?: Maybe<string>;
-                  id?: Maybe<number>;
-                  upstream_peer?: Maybe<string>;
-                  upstream_idle?: Maybe<number>;
-                  upstream_message?: Maybe<string>;
-                  lsn?: Maybe<number>;
-                  upstream_lag?: Maybe<number>;
-                  upstream_status?: Maybe<string>;
-                  uuid: string;
-                  downstream_message?: Maybe<string>;
-                }>
-              >
-            >;
-          };
-          storage: {
-            __typename?: 'ServerInfoStorage';
-            wal_max_size?: Maybe<number>;
-            vinyl_run_count_per_level?: Maybe<number>;
-            rows_per_wal?: Maybe<number>;
-            vinyl_cache?: Maybe<number>;
-            vinyl_range_size?: Maybe<number>;
-            vinyl_timeout?: Maybe<number>;
-            memtx_min_tuple_size?: Maybe<number>;
-            vinyl_bloom_fpr?: Maybe<number>;
-            vinyl_page_size?: Maybe<number>;
-            memtx_max_tuple_size?: Maybe<number>;
-            vinyl_run_size_ratio?: Maybe<number>;
-            wal_mode?: Maybe<string>;
-            memtx_memory?: Maybe<number>;
-            vinyl_memory?: Maybe<number>;
-            too_long_threshold?: Maybe<number>;
-            vinyl_max_tuple_size?: Maybe<number>;
-            vinyl_write_threads?: Maybe<number>;
-            vinyl_read_threads?: Maybe<number>;
-            wal_dir_rescan_delay?: Maybe<number>;
-          };
-        }>;
-      }>
-    >
-  >;
+  servers?: Array<{
+    __typename?: 'Server';
+    alias?: string | null;
+    status: string;
+    message: string;
+    uri: string;
+    replicaset?: {
+      __typename?: 'Replicaset';
+      roles?: Array<string> | null;
+      active_master: { __typename?: 'Server'; uuid: string };
+      master: { __typename?: 'Server'; uuid: string };
+    } | null;
+    labels?: Array<{ __typename?: 'Label'; name: string; value: string } | null> | null;
+    boxinfo?: {
+      __typename?: 'ServerInfo';
+      cartridge: { __typename?: 'ServerInfoCartridge'; version: string };
+      membership: {
+        __typename?: 'ServerInfoMembership';
+        status?: string | null;
+        incarnation?: number | null;
+        PROTOCOL_PERIOD_SECONDS?: number | null;
+        ACK_TIMEOUT_SECONDS?: number | null;
+        ANTI_ENTROPY_PERIOD_SECONDS?: number | null;
+        SUSPECT_TIMEOUT_SECONDS?: number | null;
+        NUM_FAILURE_DETECTION_SUBGROUPS?: number | null;
+      };
+      vshard_router?: Array<{
+        __typename?: 'VshardRouter';
+        vshard_group?: string | null;
+        buckets_unreachable?: number | null;
+        buckets_available_ro?: number | null;
+        buckets_unknown?: number | null;
+        buckets_available_rw?: number | null;
+      } | null> | null;
+      vshard_storage?: {
+        __typename?: 'ServerInfoVshardStorage';
+        vshard_group?: string | null;
+        buckets_receiving?: number | null;
+        buckets_active?: number | null;
+        buckets_total?: number | null;
+        buckets_garbage?: number | null;
+        buckets_pinned?: number | null;
+        buckets_sending?: number | null;
+      } | null;
+      network: {
+        __typename?: 'ServerInfoNetwork';
+        io_collect_interval?: number | null;
+        net_msg_max?: number | null;
+        readahead?: number | null;
+      };
+      general: {
+        __typename?: 'ServerInfoGeneral';
+        instance_uuid: string;
+        uptime: number;
+        version: string;
+        ro: boolean;
+        http_port?: number | null;
+        http_host?: string | null;
+        webui_prefix?: string | null;
+        app_version?: string | null;
+      };
+      replication: {
+        __typename?: 'ServerInfoReplication';
+        replication_connect_quorum?: number | null;
+        replication_connect_timeout?: number | null;
+        replication_sync_timeout?: number | null;
+        replication_skip_conflict?: boolean | null;
+        replication_sync_lag?: number | null;
+        vclock?: Array<number | null> | null;
+        replication_timeout?: number | null;
+        replication_info?: Array<{
+          __typename?: 'ReplicaStatus';
+          downstream_status?: string | null;
+          id?: number | null;
+          upstream_peer?: string | null;
+          upstream_idle?: number | null;
+          upstream_message?: string | null;
+          lsn?: number | null;
+          upstream_lag?: number | null;
+          upstream_status?: string | null;
+          uuid: string;
+          downstream_message?: string | null;
+        } | null> | null;
+      };
+      storage: {
+        __typename?: 'ServerInfoStorage';
+        wal_max_size?: number | null;
+        vinyl_run_count_per_level?: number | null;
+        rows_per_wal?: number | null;
+        vinyl_cache?: number | null;
+        vinyl_range_size?: number | null;
+        vinyl_timeout?: number | null;
+        memtx_min_tuple_size?: number | null;
+        vinyl_bloom_fpr?: number | null;
+        vinyl_page_size?: number | null;
+        memtx_max_tuple_size?: number | null;
+        vinyl_run_size_ratio?: number | null;
+        wal_mode?: string | null;
+        memtx_memory?: number | null;
+        vinyl_memory?: number | null;
+        too_long_threshold?: number | null;
+        vinyl_max_tuple_size?: number | null;
+        vinyl_write_threads?: number | null;
+        vinyl_read_threads?: number | null;
+        wal_dir_rescan_delay?: number | null;
+      };
+    } | null;
+  } | null> | null;
 };
 
 export type ServerListQueryVariables = Exact<{
@@ -1393,191 +1404,171 @@ export type ServerListQueryVariables = Exact<{
 
 export type ServerListQuery = {
   __typename?: 'Query';
-  failover?: Maybe<{ __typename?: 'Apicluster'; failover_params: { __typename?: 'FailoverAPI'; mode: string } }>;
-  serverList?: Maybe<
-    Array<
-      Maybe<{
-        __typename?: 'Server';
-        uuid: string;
-        alias?: Maybe<string>;
-        disabled?: Maybe<boolean>;
-        uri: string;
-        zone?: Maybe<string>;
-        status: string;
-        message: string;
-        boxinfo?: Maybe<{ __typename?: 'ServerInfo'; general: { __typename?: 'ServerInfoGeneral'; ro: boolean } }>;
-        replicaset?: Maybe<{ __typename?: 'Replicaset'; uuid: string }>;
-      }>
-    >
-  >;
-  replicasetList?: Maybe<
-    Array<
-      Maybe<{
-        __typename?: 'Replicaset';
-        alias: string;
-        all_rw: boolean;
-        uuid: string;
-        status: string;
-        roles?: Maybe<Array<string>>;
-        vshard_group?: Maybe<string>;
-        weight?: Maybe<number>;
-        master: { __typename?: 'Server'; uuid: string };
-        active_master: { __typename?: 'Server'; uuid: string };
-        servers: Array<{
-          __typename?: 'Server';
-          uuid: string;
-          alias?: Maybe<string>;
-          disabled?: Maybe<boolean>;
-          uri: string;
-          priority?: Maybe<number>;
-          status: string;
-          message: string;
-          boxinfo?: Maybe<{ __typename?: 'ServerInfo'; general: { __typename?: 'ServerInfoGeneral'; ro: boolean } }>;
-          replicaset?: Maybe<{ __typename?: 'Replicaset'; uuid: string }>;
-        }>;
-      }>
-    >
-  >;
-  serverStat?: Maybe<
-    Array<
-      Maybe<{
-        __typename?: 'Server';
-        uuid: string;
-        uri: string;
-        statistics?: Maybe<{
-          __typename?: 'ServerStat';
-          quota_used_ratio: string;
-          arena_used_ratio: string;
-          items_used_ratio: string;
-          quotaSize: number;
-          arenaUsed: number;
-          bucketsCount?: Maybe<number>;
-        }>;
-      }>
-    >
-  >;
-  cluster?: Maybe<{
+  failover?: { __typename?: 'Apicluster'; failover_params: { __typename?: 'FailoverAPI'; mode: string } } | null;
+  serverList?: Array<{
+    __typename?: 'Server';
+    uuid: string;
+    alias?: string | null;
+    disabled?: boolean | null;
+    uri: string;
+    zone?: string | null;
+    status: string;
+    message: string;
+    boxinfo?: { __typename?: 'ServerInfo'; general: { __typename?: 'ServerInfoGeneral'; ro: boolean } } | null;
+    replicaset?: { __typename?: 'Replicaset'; uuid: string } | null;
+  } | null> | null;
+  replicasetList?: Array<{
+    __typename?: 'Replicaset';
+    alias: string;
+    all_rw: boolean;
+    uuid: string;
+    status: string;
+    roles?: Array<string> | null;
+    vshard_group?: string | null;
+    weight?: number | null;
+    master: { __typename?: 'Server'; uuid: string };
+    active_master: { __typename?: 'Server'; uuid: string };
+    servers: Array<{
+      __typename?: 'Server';
+      uuid: string;
+      alias?: string | null;
+      disabled?: boolean | null;
+      uri: string;
+      priority?: number | null;
+      status: string;
+      message: string;
+      boxinfo?: { __typename?: 'ServerInfo'; general: { __typename?: 'ServerInfoGeneral'; ro: boolean } } | null;
+      replicaset?: { __typename?: 'Replicaset'; uuid: string } | null;
+    }>;
+  } | null> | null;
+  serverStat?: Array<{
+    __typename?: 'Server';
+    uuid: string;
+    uri: string;
+    statistics?: {
+      __typename?: 'ServerStat';
+      quota_used_ratio: string;
+      arena_used_ratio: string;
+      items_used_ratio: string;
+      quotaSize: number;
+      arenaUsed: number;
+      bucketsCount?: number | null;
+    } | null;
+  } | null> | null;
+  cluster?: {
     __typename?: 'Apicluster';
     known_roles: Array<{
       __typename?: 'Role';
       name: string;
-      dependencies?: Maybe<Array<string>>;
+      dependencies?: Array<string> | null;
       implies_storage: boolean;
       implies_router: boolean;
     }>;
-    suggestions?: Maybe<{
+    suggestions?: {
       __typename?: 'Suggestions';
-      disable_servers?: Maybe<Array<{ __typename?: 'DisableServerSuggestion'; uuid: string }>>;
-      restart_replication?: Maybe<Array<{ __typename?: 'RestartReplicationSuggestion'; uuid: string }>>;
-      force_apply?: Maybe<
-        Array<{
-          __typename?: 'ForceApplySuggestion';
-          config_mismatch: boolean;
-          config_locked: boolean;
-          uuid: string;
-          operation_error: boolean;
-        }>
-      >;
-      refine_uri?: Maybe<Array<{ __typename?: 'RefineUriSuggestion'; uuid: string; uri_old: string; uri_new: string }>>;
-    }>;
-    issues?: Maybe<
-      Array<{
-        __typename?: 'Issue';
-        level: string;
-        replicaset_uuid?: Maybe<string>;
-        instance_uuid?: Maybe<string>;
-        message: string;
-        topic: string;
-      }>
-    >;
-  }>;
+      disable_servers?: Array<{ __typename?: 'DisableServerSuggestion'; uuid: string }> | null;
+      restart_replication?: Array<{ __typename?: 'RestartReplicationSuggestion'; uuid: string }> | null;
+      force_apply?: Array<{
+        __typename?: 'ForceApplySuggestion';
+        config_mismatch: boolean;
+        config_locked: boolean;
+        uuid: string;
+        operation_error: boolean;
+      }> | null;
+      refine_uri?: Array<{ __typename?: 'RefineUriSuggestion'; uuid: string; uri_old: string; uri_new: string }> | null;
+    } | null;
+    issues?: Array<{
+      __typename?: 'Issue';
+      level: string;
+      replicaset_uuid?: string | null;
+      instance_uuid?: string | null;
+      message: string;
+      topic: string;
+    }> | null;
+  } | null;
 };
 
 export type ServerStatQueryVariables = Exact<{ [key: string]: never }>;
 
 export type ServerStatQuery = {
   __typename?: 'Query';
-  serverStat?: Maybe<
-    Array<
-      Maybe<{
-        __typename?: 'Server';
-        uuid: string;
-        uri: string;
-        statistics?: Maybe<{
-          __typename?: 'ServerStat';
-          quota_used_ratio: string;
-          arena_used_ratio: string;
-          items_used_ratio: string;
-          quotaSize: number;
-          arenaUsed: number;
-          bucketsCount?: Maybe<number>;
-        }>;
-      }>
-    >
-  >;
+  serverStat?: Array<{
+    __typename?: 'Server';
+    uuid: string;
+    uri: string;
+    statistics?: {
+      __typename?: 'ServerStat';
+      quota_used_ratio: string;
+      arena_used_ratio: string;
+      items_used_ratio: string;
+      quotaSize: number;
+      arenaUsed: number;
+      bucketsCount?: number | null;
+    } | null;
+  } | null> | null;
 };
 
 export type BootstrapMutationVariables = Exact<{ [key: string]: never }>;
 
-export type BootstrapMutation = { __typename?: 'Mutation'; bootstrapVshardResponse?: Maybe<boolean> };
+export type BootstrapMutation = { __typename?: 'Mutation'; bootstrapVshardResponse?: boolean | null };
 
 export type ProbeMutationVariables = Exact<{
   uri: Scalars['String'];
 }>;
 
-export type ProbeMutation = { __typename?: 'Mutation'; probeServerResponse?: Maybe<boolean> };
+export type ProbeMutation = { __typename?: 'Mutation'; probeServerResponse?: boolean | null };
 
 export type EditTopologyMutationVariables = Exact<{
-  replicasets?: Maybe<Array<EditReplicasetInput> | EditReplicasetInput>;
-  servers?: Maybe<Array<EditServerInput> | EditServerInput>;
+  replicasets?: InputMaybe<Array<EditReplicasetInput> | EditReplicasetInput>;
+  servers?: InputMaybe<Array<EditServerInput> | EditServerInput>;
 }>;
 
 export type EditTopologyMutation = {
   __typename?: 'Mutation';
-  cluster?: Maybe<{
+  cluster?: {
     __typename?: 'MutationApicluster';
-    edit_topology?: Maybe<{
+    edit_topology?: {
       __typename?: 'EditTopologyResult';
-      servers: Array<Maybe<{ __typename?: 'Server'; uuid: string }>>;
-    }>;
-  }>;
+      servers: Array<{ __typename?: 'Server'; uuid: string } | null>;
+    } | null;
+  } | null;
 };
 
 export type ChangeFailoverMutationVariables = Exact<{
-  failover_timeout?: Maybe<Scalars['Float']>;
-  fencing_enabled?: Maybe<Scalars['Boolean']>;
-  fencing_timeout?: Maybe<Scalars['Float']>;
-  fencing_pause?: Maybe<Scalars['Float']>;
+  failover_timeout?: InputMaybe<Scalars['Float']>;
+  fencing_enabled?: InputMaybe<Scalars['Boolean']>;
+  fencing_timeout?: InputMaybe<Scalars['Float']>;
+  fencing_pause?: InputMaybe<Scalars['Float']>;
   mode: Scalars['String'];
-  state_provider?: Maybe<Scalars['String']>;
-  etcd2_params?: Maybe<FailoverStateProviderCfgInputEtcd2>;
-  tarantool_params?: Maybe<FailoverStateProviderCfgInputTarantool>;
+  state_provider?: InputMaybe<Scalars['String']>;
+  etcd2_params?: InputMaybe<FailoverStateProviderCfgInputEtcd2>;
+  tarantool_params?: InputMaybe<FailoverStateProviderCfgInputTarantool>;
 }>;
 
 export type ChangeFailoverMutation = {
   __typename?: 'Mutation';
-  cluster?: Maybe<{ __typename?: 'MutationApicluster'; failover_params: { __typename?: 'FailoverAPI'; mode: string } }>;
+  cluster?: { __typename?: 'MutationApicluster'; failover_params: { __typename?: 'FailoverAPI'; mode: string } } | null;
 };
 
 export type PromoteFailoverLeaderMutationVariables = Exact<{
   replicaset_uuid: Scalars['String'];
   instance_uuid: Scalars['String'];
-  force_inconsistency?: Maybe<Scalars['Boolean']>;
+  force_inconsistency?: InputMaybe<Scalars['Boolean']>;
 }>;
 
 export type PromoteFailoverLeaderMutation = {
   __typename?: 'Mutation';
-  cluster?: Maybe<{ __typename?: 'MutationApicluster'; failover_promote: boolean }>;
+  cluster?: { __typename?: 'MutationApicluster'; failover_promote: boolean } | null;
 };
 
 export type FetchUsersQueryVariables = Exact<{ [key: string]: never }>;
 
 export type FetchUsersQuery = {
   __typename?: 'Query';
-  cluster?: Maybe<{
+  cluster?: {
     __typename?: 'Apicluster';
-    users?: Maybe<Array<{ __typename?: 'User'; username: string; fullname?: Maybe<string>; email?: Maybe<string> }>>;
-  }>;
+    users?: Array<{ __typename?: 'User'; username: string; fullname?: string | null; email?: string | null }> | null;
+  } | null;
 };
 
 export type AddUserMutationVariables = Exact<{
@@ -1589,25 +1580,25 @@ export type AddUserMutationVariables = Exact<{
 
 export type AddUserMutation = {
   __typename?: 'Mutation';
-  cluster?: Maybe<{
+  cluster?: {
     __typename?: 'MutationApicluster';
-    add_user?: Maybe<{ __typename?: 'User'; username: string; email?: Maybe<string>; fullname?: Maybe<string> }>;
-  }>;
+    add_user?: { __typename?: 'User'; username: string; email?: string | null; fullname?: string | null } | null;
+  } | null;
 };
 
 export type EditUserMutationVariables = Exact<{
   username: Scalars['String'];
-  password?: Maybe<Scalars['String']>;
-  email?: Maybe<Scalars['String']>;
-  fullname?: Maybe<Scalars['String']>;
+  password?: InputMaybe<Scalars['String']>;
+  email?: InputMaybe<Scalars['String']>;
+  fullname?: InputMaybe<Scalars['String']>;
 }>;
 
 export type EditUserMutation = {
   __typename?: 'Mutation';
-  cluster?: Maybe<{
+  cluster?: {
     __typename?: 'MutationApicluster';
-    edit_user?: Maybe<{ __typename?: 'User'; username: string; email?: Maybe<string>; fullname?: Maybe<string> }>;
-  }>;
+    edit_user?: { __typename?: 'User'; username: string; email?: string | null; fullname?: string | null } | null;
+  } | null;
 };
 
 export type RemoveUserMutationVariables = Exact<{
@@ -1616,69 +1607,69 @@ export type RemoveUserMutationVariables = Exact<{
 
 export type RemoveUserMutation = {
   __typename?: 'Mutation';
-  cluster?: Maybe<{
+  cluster?: {
     __typename?: 'MutationApicluster';
-    remove_user?: Maybe<{ __typename?: 'User'; username: string; email?: Maybe<string>; fullname?: Maybe<string> }>;
-  }>;
+    remove_user?: { __typename?: 'User'; username: string; email?: string | null; fullname?: string | null } | null;
+  } | null;
 };
 
 export type Set_FilesMutationVariables = Exact<{
-  files?: Maybe<Array<ConfigSectionInput> | ConfigSectionInput>;
+  files?: InputMaybe<Array<ConfigSectionInput> | ConfigSectionInput>;
 }>;
 
 export type Set_FilesMutation = {
   __typename?: 'Mutation';
-  cluster?: Maybe<{
+  cluster?: {
     __typename?: 'MutationApicluster';
-    config: Array<Maybe<{ __typename?: 'ConfigSection'; filename: string; content: string }>>;
-  }>;
+    config: Array<{ __typename?: 'ConfigSection'; filename: string; content: string } | null>;
+  } | null;
 };
 
 export type Disable_ServersMutationVariables = Exact<{
-  uuids?: Maybe<Array<Scalars['String']> | Scalars['String']>;
+  uuids?: InputMaybe<Array<Scalars['String']> | Scalars['String']>;
 }>;
 
 export type Disable_ServersMutation = {
   __typename?: 'Mutation';
-  cluster?: Maybe<{
+  cluster?: {
     __typename?: 'MutationApicluster';
-    disable_servers?: Maybe<Array<Maybe<{ __typename?: 'Server'; uuid: string; disabled?: Maybe<boolean> }>>>;
-  }>;
+    disable_servers?: Array<{ __typename?: 'Server'; uuid: string; disabled?: boolean | null } | null> | null;
+  } | null;
 };
 
 export type Restart_ReplicationMutationVariables = Exact<{
-  uuids?: Maybe<Array<Scalars['String']> | Scalars['String']>;
+  uuids?: InputMaybe<Array<Scalars['String']> | Scalars['String']>;
 }>;
 
 export type Restart_ReplicationMutation = {
   __typename?: 'Mutation';
-  cluster?: Maybe<{ __typename?: 'MutationApicluster'; restart_replication?: Maybe<boolean> }>;
+  cluster?: { __typename?: 'MutationApicluster'; restart_replication?: boolean | null } | null;
 };
 
 export type Config_Force_ReapplyMutationVariables = Exact<{
-  uuids?: Maybe<Array<Scalars['String']> | Scalars['String']>;
+  uuids?: InputMaybe<Array<Scalars['String']> | Scalars['String']>;
 }>;
 
 export type Config_Force_ReapplyMutation = {
   __typename?: 'Mutation';
-  cluster?: Maybe<{ __typename?: 'MutationApicluster'; config_force_reapply: boolean }>;
+  cluster?: { __typename?: 'MutationApicluster'; config_force_reapply: boolean } | null;
 };
 
 export type ConfigFilesQueryVariables = Exact<{ [key: string]: never }>;
 
 export type ConfigFilesQuery = {
   __typename?: 'Query';
-  cluster?: Maybe<{
+  cluster?: {
     __typename?: 'Apicluster';
-    config: Array<Maybe<{ __typename?: 'ConfigSection'; content: string; path: string }>>;
-  }>;
+    config: Array<{ __typename?: 'ConfigSection'; content: string; path: string } | null>;
+  } | null;
 };
 
 export type GetFailoverParamsQueryVariables = Exact<{ [key: string]: never }>;
 
 export type GetFailoverParamsQuery = {
   __typename?: 'Query';
-  cluster?: Maybe<{
+  cluster?: {
     __typename?: 'Apicluster';
     failover_params: {
       __typename?: 'FailoverAPI';
@@ -1687,28 +1678,28 @@ export type GetFailoverParamsQuery = {
       fencing_timeout: number;
       fencing_pause: number;
       mode: string;
-      state_provider?: Maybe<string>;
-      etcd2_params?: Maybe<{
+      state_provider?: string | null;
+      etcd2_params?: {
         __typename?: 'FailoverStateProviderCfgEtcd2';
         password: string;
         lock_delay: number;
         endpoints: Array<string>;
         username: string;
         prefix: string;
-      }>;
-      tarantool_params?: Maybe<{ __typename?: 'FailoverStateProviderCfgTarantool'; uri: string; password: string }>;
+      } | null;
+      tarantool_params?: { __typename?: 'FailoverStateProviderCfgTarantool'; uri: string; password: string } | null;
     };
-  }>;
+  } | null;
 };
 
 export type ValidateConfigQueryVariables = Exact<{
-  sections?: Maybe<Array<ConfigSectionInput> | ConfigSectionInput>;
+  sections?: InputMaybe<Array<ConfigSectionInput> | ConfigSectionInput>;
 }>;
 
 export type ValidateConfigQuery = {
   __typename?: 'Query';
-  cluster?: Maybe<{
+  cluster?: {
     __typename?: 'Apicluster';
-    validate_config: { __typename?: 'ValidateConfigResult'; error?: Maybe<string> };
-  }>;
+    validate_config: { __typename?: 'ValidateConfigResult'; error?: string | null };
+  } | null;
 };

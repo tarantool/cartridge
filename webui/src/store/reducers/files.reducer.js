@@ -134,10 +134,7 @@ const makeFile = (
 };
 
 const validatePathName = (list: Array<FileItem>, path: string) => {
-  if (list.some((file) => file.path === path && !file.deleted)) {
-    return false;
-  }
-  return true;
+  return !list.some((file) => file.path === path && !file.deleted);
 };
 
 const addFileOrFolder = (list: Array<FileItem>, parentPath: string, name: string, type) => {
