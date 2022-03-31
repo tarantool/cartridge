@@ -32,6 +32,7 @@ vars:new('roles_by_number', {})
 vars:new('roles_by_role_name', {})
 vars:new('roles_by_module_name', {})
 vars:new('implicit_roles')
+vars:new('pause', false)
 
 -- Don't put it as default var value to allow overriding
 -- after hot-reload (hypothetically)
@@ -541,6 +542,8 @@ end
 -- usual with `validate_config()`, `init()`, and `apply_config()`
 -- callbacks.
 --
+-- Hot-reload could be forbidden in runtime with `forbid_reload` function.
+--
 -- @function reload
 -- @treturn[1] boolean true
 -- @treturn[2] nil
@@ -549,6 +552,12 @@ local function reload()
     if not hotreload.state_saved() then
         return nil, ReloadError:new(
             'This application forbids reloading roles'
+        )
+    end
+
+    if vars.pause == true then
+        return nil, ReloadError:new(
+            'Reloading roles forbidden'
         )
     end
 
@@ -595,6 +604,38 @@ local function reload()
     return confapplier.apply_config(clusterwide_config)
 end
 
+--- Forbid hot-reload of cartridge roles code.
+--
+-- @function forbid_reload
+-- @treturn[1] boolean true
+-- @treturn[2] nil
+-- @treturn[2] table Error description
+local function forbid_reload()
+    log.info('Forbid reload roles')
+    vars.pause = true
+end
+
+--- Allow hot-reload of cartridge roles code.
+--
+-- @function allow_reload
+-- @treturn[1] boolean true
+-- @treturn[2] nil
+-- @treturn[2] table Error description
+local function allow_reload()
+    log.info('Allow reload roles')
+    vars.pause = false
+end
+
+--- Returns true if hot-reload of cartridge roles code is forbidden.
+--
+-- @function is_reload_forbidden
+-- @treturn[1] boolean true
+-- @treturn[2] nil
+-- @treturn[2] table Error description
+local function is_reload_forbidden()
+    return vars.pause == true
+end
+
 return {
     cfg = cfg,
     get_role = get_role,
@@ -608,4 +649,8 @@ return {
     apply_config = apply_config,
     reload = reload,
     stop = stop,
+
+    forbid_reload = forbid_reload,
+    allow_reload = allow_reload,
+    is_reload_forbidden = is_reload_forbidden,
 }
