@@ -158,6 +158,7 @@ local function load_state()
         or f.name:startswith('applierw/')
         or f.name:startswith('watchdog_')
         or f.name:startswith('box.watchable')
+        or f.name:endswith('(net.box)')
         then
             -- Ignore system fibers
             log.debug('Preserving system fiber %q (%d)', f.name, f.fid)
