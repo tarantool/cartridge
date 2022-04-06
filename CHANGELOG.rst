@@ -52,7 +52,7 @@ Added
 
 - Vshard weight parameter to ``test-helpers.Cluster.replicasets`` (#1743).
 
-- Add logging for in`role machinery (#1745).
+- Add logging for role machinery (#1745).
 
 - Export vshard config in Lua API (#1761).
 
@@ -92,7 +92,7 @@ Changed
 - Change type of ``replication_synchro_quorum`` in argparse to ``string|number``.
 
 - Update ``ddl`` dependency to 1.6.0.
-   (`Changelog <https://github.com/tarantool/ddl/releases/tag/1.6.0>`__).
+  (`Changelog <https://github.com/tarantool/ddl/releases/tag/1.6.0>`__).
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
