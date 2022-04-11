@@ -56,6 +56,8 @@ vars:new('replicaset_uuid')
 vars:new('box_opts', nil)
 vars:new('upgrade_schema', nil)
 
+vars:new('enable_failover_suppressing', nil)
+
 local state_transitions = {
 -- init()
     -- Initial state.
@@ -274,7 +276,8 @@ local function apply_config(clusterwide_config)
     end
 
     local ok, err = OperationError:pcall(failover.cfg,
-        clusterwide_config
+        clusterwide_config,
+        {enable_failover_suppressing = vars.enable_failover_suppressing}
     )
     if not ok then
         set_state('OperationError', err)
@@ -617,33 +620,34 @@ local function boot_instance(clusterwide_config)
     else
         set_state('BoxConfigured')
 
-        local box_log_whitelist = logging_whitelist.box_opts
-        log.info('Tarantool options:')
-        for _, option in ipairs(box_log_whitelist) do
-            if option == 'replication' then
-                -- remove password from logs:
-                local replication
+        if rawget(_G, '__TEST') ~= true then
+            local box_log_whitelist = logging_whitelist.box_opts
+            log.info('Tarantool options:')
+            for _, option in ipairs(box_log_whitelist) do
+                if option == 'replication' then
+                    -- remove password from logs:
+                    local replication
 
-                if type(box.cfg.replication) == 'string' then
-                    replication = { box.cfg.replication }
+                    if type(box.cfg.replication) == 'string' then
+                        replication = { box.cfg.replication }
+                    else
+                        replication = table.deepcopy(box.cfg.replication)
+                    end
+
+                    for i, v in ipairs(replication or {}) do
+                        local uri = uri_tools.parse(v)
+                        uri.password = nil
+                        replication[i] = uri_tools.format(uri)
+                    end
+
+                    log.info('replication = %s', replication)
+                elseif type(box.cfg[option]) == 'table' then
+                    log.info('%s = %s', option, json.encode(box.cfg[option]))
                 else
-                    replication = table.deepcopy(box.cfg.replication)
+                    log.info('%s = %s', option, box.cfg[option])
                 end
-
-                for i, v in ipairs(replication or {}) do
-                    local uri = uri_tools.parse(v)
-                    uri.password = nil
-                    replication[i] = uri_tools.format(uri)
-                end
-
-                log.info('replication = %s', replication)
-            elseif type(box.cfg[option]) == 'table' then
-                log.info('%s = %s', option, json.encode(box.cfg[option]))
-            else
-                log.info('%s = %s', option, box.cfg[option])
             end
         end
-
         return apply_config(clusterwide_config)
     end
 end
@@ -655,6 +659,7 @@ local function init(opts)
         binary_port = 'number',
         advertise_uri = 'string',
         upgrade_schema = '?boolean',
+        enable_failover_suppressing = '?boolean',
     })
 
     assert(vars.state == '', 'Unexpected state ' .. vars.state)
@@ -663,6 +668,7 @@ local function init(opts)
     vars.binary_port = opts.binary_port
     vars.advertise_uri = opts.advertise_uri
     vars.upgrade_schema = opts.upgrade_schema
+    vars.enable_failover_suppressing = opts.enable_failover_suppressing
 
     local parts = uri_tools.parse(opts.advertise_uri)
     local addrinfo, err = socket.getaddrinfo(

@@ -95,10 +95,21 @@ It may cause "failover storms", when failover triggers too many times per minute
 under a high load. You can pause failover at runtime using Lua API
 (``require('cartridge.lua-api.failover').pause()``) or GraphQL mutation
 (``mutation { cluster { failover_pause } }``). Those functions will pause
-failover on every instance they can reach. To see if failover is paused, check the logs or use the function ``require('cartridge.failover').is_paused()``.
+failover on every instance they can reach. To see if failover is paused,
+check the logs or use the function ``require('cartridge.failover').is_paused()``.
 Don't forget to resume failover using Lua API
 (``require('cartridge.lua-api.failover').resume()``) or GraphQL mutation
-(``mutation { cluster { failover_resume } }``)
+(``mutation { cluster { failover_resume } }``).
+
+You can also enable failover suppressing by ``cartridge.cfg`` parameter
+``enable_failover_suppressing``. It allows to automatically pause failover
+in runtime if failover triggers too many times per minute. It could be
+configured by argparse parameters ``failover_suppress_threshold``
+(count of times than failover triggers per ``failover_suppress_timeout`` to
+be suppressed) and ``failover_suppress_timeout`` (time in seconds, if failover
+triggers more than ``failover_suppress_threshold``, it'll be suppressed and
+released after ``failover_suppress_timeout`` sec).
+
 
 
 ..  _cartridge-stateful_failover:

@@ -296,6 +296,7 @@ local function cfg(opts, box_opts)
         swim_broadcast = '?boolean',
         roles_reload_allowed = '?boolean',
         upload_prefix = '?string',
+        enable_failover_suppressing = '?boolean',
     }, '?table')
 
     if opts.webui_blacklist ~= nil then
@@ -803,6 +804,7 @@ local function cfg(opts, box_opts)
         binary_port = advertise.service,
         advertise_uri = advertise_uri,
         upgrade_schema = opts.upgrade_schema,
+        enable_failover_suppressing = opts.enable_failover_suppressing,
     })
     if not ok then
         return nil, err
@@ -814,21 +816,22 @@ local function cfg(opts, box_opts)
         confapplier.log_bootinfo()
     end
 
-    local crg_opts_to_logs = table.deepcopy(opts)
+    if rawget(_G, '__TEST') ~= true then
+        local crg_opts_to_logs = table.deepcopy(opts)
 
-    local crg_log_whitelist = logging_whitelist.cartridge_opts
+        local crg_log_whitelist = logging_whitelist.cartridge_opts
 
-    log.info('Cartridge options:')
+        log.info('Cartridge options:')
 
-    for _, option in ipairs(crg_log_whitelist) do
-        local opt_value = crg_opts_to_logs[option]
-        if type(opt_value) == 'table' then
-            log.info('%s = %s', option, json.encode(opt_value))
-        else
-            log.info('%s = %s', option, opt_value)
+        for _, option in ipairs(crg_log_whitelist) do
+            local opt_value = crg_opts_to_logs[option]
+            if type(opt_value) == 'table' then
+                log.info('%s = %s', option, json.encode(opt_value))
+            else
+                log.info('%s = %s', option, opt_value)
+            end
         end
     end
-
     return true
 end
 

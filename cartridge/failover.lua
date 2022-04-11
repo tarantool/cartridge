@@ -41,6 +41,7 @@ local service_registry = require('cartridge.service-registry')
 local stateboard_client = require('cartridge.stateboard-client')
 local etcd2_client = require('cartridge.etcd2-client')
 local raft_failover = require('cartridge.failover.raft')
+local argparse = require('cartridge.argparse')
 
 local FailoverError = errors.new_class('FailoverError')
 local SwitchoverError = errors.new_class('SwitchoverError')
@@ -79,6 +80,14 @@ vars:new('options', {
     NETBOX_CALL_TIMEOUT = 1,
 })
 vars:new('failover_paused', false)
+
+-- suppressing vars
+vars:new('failover_suppressed', false)
+vars:new('failover_trigger_cnt', 0)
+vars:new('suppress_threshold', math.huge)
+vars:new('suppress_timeout', math.huge)
+vars:new('suppress_fiber', nil)
+
 
 function _G.__cartridge_failover_get_lsn(timeout)
     box.ctl.wait_ro(timeout)
@@ -512,7 +521,6 @@ end
 
 function reconfigure_all(active_leaders)
     local confapplier = require('cartridge.confapplier')
-
 ::start_over::
 
     local t1 = fiber.clock()
@@ -551,6 +559,7 @@ function reconfigure_all(active_leaders)
     end
 
     local ok, err = FailoverError:pcall(function()
+        vars.failover_trigger_cnt = vars.failover_trigger_cnt + 1
         box.cfg({
             read_only = not vars.cache.is_rw,
         })
@@ -582,6 +591,33 @@ function reconfigure_all(active_leaders)
     confapplier.set_state('RolesConfigured')
 end
 
+--- Lock failover if failover suppressing is on.
+-- @function check_suppressing_lock
+-- @local
+local function check_suppressing_lock()
+    while true do
+        vars.failover_trigger_cnt = 0
+        fiber.sleep(vars.suppress_timeout)
+        if vars.failover_suppressed == false then
+            if vars.failover_trigger_cnt > vars.suppress_threshold then
+                vars.failover_suppressed = true
+            end
+        elseif vars.failover_suppressed == true then
+            vars.failover_suppressed = false
+        end
+    end
+end
+
+local function suppressing_cancel()
+    if vars.suppress_fiber == nil then
+        return
+    end
+    if vars.suppress_fiber:status() ~= 'dead' then
+        vars.suppress_fiber:cancel()
+    end
+    vars.suppress_fiber = nil
+end
+
 --- Repeatedly fetch new appointments and reconfigure roles.
 --
 -- @function failover_loop
@@ -590,7 +626,6 @@ local function failover_loop(args)
     checks({
         get_appointments = 'function',
     })
-
     while true do
         -- WARNING: implicit yield
         local appointments, err = FailoverError:pcall(args.get_appointments)
@@ -613,6 +648,11 @@ local function failover_loop(args)
             goto continue
         end
 
+        if vars.failover_suppressed == true then
+            log.warn("Failover is suppressed, appointments don't apply")
+            goto continue
+        end
+
         if accept_appointments(appointments) then
             local id = schedule_add()
             log.info(
@@ -632,12 +672,24 @@ end
 --- Initialize the failover module.
 -- @function cfg
 -- @local
-local function cfg(clusterwide_config)
-    checks('ClusterwideConfig')
+local function cfg(clusterwide_config, opts)
+    checks('ClusterwideConfig', '?table')
 
     if vars.client then
         vars.client:drop_session()
         vars.client = nil
+    end
+
+    suppressing_cancel()
+    if opts and opts.enable_failover_suppressing then
+        local opts = argparse.get_opts{
+            failover_suppress_threshold = 'number',
+            failover_suppress_timeout = 'number',
+        }
+        vars.suppress_threshold = opts.failover_suppress_threshold or math.huge
+        vars.suppress_timeout = opts.failover_suppress_timeout or math.huge
+        vars.suppress_fiber = fiber.new(check_suppressing_lock)
+        vars.suppress_fiber:name('cartridge.suppress_failover')
     end
 
     fencing_cancel()
@@ -861,6 +913,14 @@ local function is_paused()
     return vars.failover_paused
 end
 
+--- Check if failover suppressed on current instance.
+-- @function failover_suppressed
+-- @local
+-- @treturn boolean true / false
+local function is_suppressed()
+    return vars.failover_suppressed
+end
+
 --- Check if current configuration implies consistent switchover.
 -- @function consistency_needed
 -- @local
@@ -986,6 +1046,7 @@ return {
     is_leader = is_leader,
     is_rw = is_rw,
     is_paused = is_paused,
+    is_suppressed = is_suppressed,
 
     force_inconsistency = force_inconsistency,
     wait_consistency = wait_consistency,

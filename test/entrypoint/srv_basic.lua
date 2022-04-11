@@ -2,7 +2,7 @@
 
 require('strict').on()
 _G.is_initialized = function() return false end
-
+_G.__TEST = true
 local log = require('log')
 local errors = require('errors')
 local cartridge = require('cartridge')
@@ -165,6 +165,11 @@ if not os.getenv('TARANTOOL_FORBID_HOTRELOAD') then
     roles_reload_allowed = true
 end
 
+local enable_failover_suppressing = nil
+if os.getenv('TARANTOOL_SUPPRESS_FAILOVER') then
+    enable_failover_suppressing = true
+end
+
 local ok, err = errors.pcall('CartridgeCfgError', cartridge.cfg, {
     advertise_uri = 'localhost:3301',
     http_port = 8081,
@@ -179,6 +184,7 @@ local ok, err = errors.pcall('CartridgeCfgError', cartridge.cfg, {
     },
     webui_blacklist = webui_blacklist,
     roles_reload_allowed = roles_reload_allowed,
+    enable_failover_suppressing = enable_failover_suppressing,
     -- Compatibility tests run on cartridge 1.2.0
     -- which doesn't support it yet.
     upload_prefix = package.loaded['cartridge.upload'] and '../upload',
