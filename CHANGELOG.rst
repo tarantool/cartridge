@@ -81,7 +81,7 @@ Changed
 
 - Update ``frontend-core`` to 8.1.0.
 
-- Update ``graphql`` to 0.1.3.
+- Update ``graphql`` to 0.1.4.
 
 - Bind remote control socket to ``advertise_uri`` (#1495).
 
