@@ -175,6 +175,7 @@ local box_opts = {
     iproto_threads           = 'number', -- **number**
     sql_cache_size           = 'number', -- **number**
     txn_timeout              = 'number', -- **number**
+    election_mode            = 'string', -- **string**
 }
 
 local function load_file(filename)
