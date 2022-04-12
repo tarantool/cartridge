@@ -537,6 +537,10 @@ local function list_on_cluster()
             table.insert(ret, issue)
         end
     end
+
+    -- to use this counter in tarantool/metrics
+    rawset(_G, '__cartridge_issues_cnt', #ret)
+
     return ret, err
 end
 
