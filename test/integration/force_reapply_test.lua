@@ -9,7 +9,7 @@ g.before_all(function()
         datadir = fio.tempdir(),
         use_vshard = false,
         server_command = helpers.entrypoint('srv_basic'),
-        cookie = require('digest').urandom(6):hex(),
+        cookie = helpers.random_cookie(),
         replicasets = {{
             alias = 'A',
             roles = {'myrole-permanent'},

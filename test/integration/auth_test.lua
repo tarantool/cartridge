@@ -11,7 +11,7 @@ g.before_all = function()
     g.cluster = helpers.Cluster:new({
         datadir = fio.tempdir(),
         server_command = helpers.entrypoint('srv_basic'),
-        cookie = require('digest').urandom(6):hex(),
+        cookie = helpers.random_cookie(),
         env = {TARANTOOL_ADMIN_DISABLED = 'false'},
         replicasets = {
             {

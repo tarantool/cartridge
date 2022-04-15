@@ -12,7 +12,7 @@ g.before_each(function()
         alias = 'srv',
         workdir = g.tempdir,
         command = helpers.entrypoint('srv_basic'),
-        cluster_cookie = require('digest').urandom(6):hex(),
+        cluster_cookie = helpers.random_cookie(),
         advertise_port = 13301,
         http_port = 8081,
     })

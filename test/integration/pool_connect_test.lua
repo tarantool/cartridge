@@ -13,7 +13,7 @@ local helpers = require('test.helper')
 
 g.before_all(function()
     g.datadir = fio.tempdir()
-    g.cookie = require('digest').urandom(6):hex()
+    g.cookie = helpers.random_cookie()
     cluster_cookie.init(g.datadir)
     cluster_cookie.set_cookie(g.cookie)
 

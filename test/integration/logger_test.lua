@@ -16,7 +16,7 @@ g.before_each(function()
         command = helpers.entrypoint('srv_basic'),
         instance_uuid = helpers.uuid('a', 'a', 1),
         replicaset_uuid = helpers.uuid('a'),
-        cluster_cookie = require('digest').urandom(6):hex(),
+        cluster_cookie = helpers.random_cookie(),
         advertise_port = 13301,
         http_port = 8081,
     })

@@ -19,7 +19,7 @@ g.before_all(function()
         datadir = datadir,
         server_command = helpers.entrypoint('srv_basic'),
         use_vshard = true,
-        cookie = require('digest').urandom(6):hex(),
+        cookie = helpers.random_cookie(),
         env = {
             TARANTOOL_UPGRADE_SCHEMA = 'true',
         },
