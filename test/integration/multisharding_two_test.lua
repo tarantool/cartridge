@@ -8,7 +8,7 @@ g.before_all = function()
     g.cluster = helpers.Cluster:new({
         datadir = fio.tempdir(),
         server_command = helpers.entrypoint('srv_multisharding'),
-        cookie = require('digest').urandom(6):hex(),
+        cookie = helpers.random_cookie(),
         use_vshard = true,
         replicasets = {
             {

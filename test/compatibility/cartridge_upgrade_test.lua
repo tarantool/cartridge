@@ -55,7 +55,7 @@ local function change_version(old, new)
     g.cluster = helpers.Cluster:new({
         datadir = fio.tempdir(),
         server_command = fio.abspath(helpers.entrypoint('srv_basic')),
-        cookie = require('digest').urandom(6):hex(),
+        cookie = helpers.random_cookie(),
         use_vshard = true,
         env = {TARANTOOL_FORBID_HOTRELOAD = 'true'},
         replicasets = {{

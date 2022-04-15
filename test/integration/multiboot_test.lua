@@ -9,7 +9,7 @@ g.before_each(function()
 
     g.servers = {}
 
-    local cluster_cookie = require('digest').urandom(6):hex()
+    local cluster_cookie = helpers.random_cookie()
 
     local function add_server(rn, sn)
         local id = string.format('%s%d', rn, sn)

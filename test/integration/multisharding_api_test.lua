@@ -10,7 +10,7 @@ g.before_all = function()
     cluster = helpers.Cluster:new({
         datadir = fio.tempdir(),
         server_command = helpers.entrypoint('srv_multisharding'),
-        cookie = require('digest').urandom(6):hex(),
+        cookie = helpers.random_cookie(),
         replicasets = {
             {
                 alias = 'hot-master',

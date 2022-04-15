@@ -9,7 +9,7 @@ g.before_all(function()
         datadir = fio.tempdir(),
         use_vshard = true,
         server_command = helpers.entrypoint('srv_basic'),
-        cookie = require('digest').urandom(6):hex(),
+        cookie = helpers.random_cookie(),
         replicasets = {{
             alias = 'A',
             roles = {'vshard-router', 'vshard-storage'},
@@ -242,7 +242,7 @@ h.before_all(function()
         datadir = fio.tempdir(),
         use_vshard = true,
         server_command = helpers.entrypoint('srv_basic'),
-        cookie = require('digest').urandom(6):hex(),
+        cookie = helpers.random_cookie(),
         replicasets = {{
             alias = 'A',
             roles = {'vshard-router', 'vshard-storage'},

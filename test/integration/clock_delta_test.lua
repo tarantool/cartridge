@@ -7,7 +7,7 @@ local helpers = require('test.helper')
 
 g.before_all = function()
     g.servers = {}
-    local cluster_cookie = require('digest').urandom(6):hex()
+    local cluster_cookie = helpers.random_cookie()
     for i = 1, 3 do
         g.servers[i] = helpers.Server:new({
             workdir = fio.tempdir(),

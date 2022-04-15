@@ -11,7 +11,7 @@ local helpers = require('test.helper')
 
 g.before_each(function()
     g.datadir = fio.tempdir()
-    local password = require('digest').urandom(6):hex()
+    local password = helpers.random_cookie()
 
     fio.mktree(fio.pathjoin(g.datadir, 'stateboard'))
     g.stateboard = helpers.Stateboard:new({
@@ -203,7 +203,7 @@ g.after_test('test_longpolling', function()
 end)
 
 function g.test_passwd()
-    local new_password = require('digest').urandom(6):hex()
+    local new_password = helpers.random_cookie()
 
     g.stateboard:stop()
     g.stateboard.env.TARANTOOL_PASSWORD = new_password

@@ -25,7 +25,7 @@ local function setup_cluster(g)
         datadir = g.datadir,
         use_vshard = true,
         server_command = helpers.entrypoint('srv_basic'),
-        cookie = require('digest').urandom(6):hex(),
+        cookie = helpers.random_cookie(),
         replicasets = {
             {
                 alias = 'core-1',
@@ -66,7 +66,7 @@ g_stateboard.before_all(function()
     local g = g_stateboard
     g.datadir = fio.tempdir()
 
-    g.kvpassword = require('digest').urandom(6):hex()
+    g.kvpassword = helpers.random_cookie()
     g.state_provider = helpers.Stateboard:new({
         command = helpers.entrypoint('srv_stateboard'),
         workdir = fio.pathjoin(g.datadir, 'stateboard'),
