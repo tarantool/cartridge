@@ -10,6 +10,11 @@ Almost all errors in Cartridge follow the ``return nil, err`` style, where
 doesn't raise errors except for bugs and functions contracts mismatch.
 Developing new roles should follow these guidelines as well.
 
+Note that in triggers (``cartridge.graphql.on_resolve`` and
+``cartridge.twophase.on_patch``) return values are ignored.
+So if you want to raise error from trigger function, you need to
+call ``error()`` explicitly.
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Error objects in Lua
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
