@@ -50,10 +50,10 @@ end
 -- @tparam string uri
 -- @tparam[opt] table opts
 -- @tparam ?boolean|number opts.wait_connected
---   by default, connection creation is blocked until the
---   connection is established, but passing `wait_connected=false`
---   makes it return immediately. Also, passing a timeout makes it
---   wait before returning (e.g. `wait_connected=1.5` makes it wait
+--   by default, connection creation is blocked until the 
+--   connection is established, but passing `wait_connected=false` 
+--   makes it return immediately. Also, passing a timeout makes it 
+--   wait before returning (e.g. `wait_connected=1.5` makes it wait 
 --   at most 1.5 seconds).
 -- @tparam ?number opts.connect_timeout (*deprecated*)
 --   Use `wait_connected` instead
@@ -164,7 +164,7 @@ end
 -- @tparam {string,...} opts.uri_list
 --   array of URIs for performing remote call
 -- @tparam ?number opts.timeout
---   passed to `net.box` `conn:call()` (default: 10)
+--   passed to `net.box` `conn:call()` (unit: seconds, default: 10)
 --
 -- @treturn {URI=value,...}
 --   Call results mapping for every URI.
