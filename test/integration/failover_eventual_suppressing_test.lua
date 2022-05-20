@@ -79,7 +79,7 @@ g.test_failover_suppressed = function()
 
     -- 1) stop server-1 -> server-2 becomes a leader
     g.cluster:server('storage-1'):stop()
-    helpers.retrying({}, function()
+    helpers.retrying({timeout = 10}, function()
         t.assert_not(g.cluster:server('storage-2'):exec(function()
             assert(box.info.ro == false)
         end))
@@ -88,7 +88,7 @@ g.test_failover_suppressed = function()
     -- 2) start server-1 -> server-1 returns leadership
     g.cluster:server('storage-1'):start()
     g.cluster:wait_until_healthy()
-    helpers.retrying({}, function()
+    helpers.retrying({timeout = 10}, function()
         g.cluster:server('storage-1'):exec(function()
             assert(box.info.ro == false)
         end)
