@@ -28,7 +28,7 @@ g.before_all = function()
     })
 
     g.cluster:server('storage-2').env.TARANTOOL_FAILOVER_SUPPRESS_THRESHOLD = 1
-    g.cluster:server('storage-2').env.TARANTOOL_FAILOVER_SUPPRESS_TIMEOUT = 5
+    g.cluster:server('storage-2').env.TARANTOOL_FAILOVER_SUPPRESS_TIMEOUT = 10
 
     g.cluster:start()
 end
@@ -79,10 +79,11 @@ g.test_failover_suppressed = function()
 
     -- 1) stop server-1 -> server-2 becomes a leader
     g.cluster:server('storage-1'):stop()
-    helpers.retrying({timeout = 10}, function()
-        t.assert_not(g.cluster:server('storage-2'):exec(function()
+    helpers.retrying({timeout = 15}, function()
+        g.cluster:server('storage-2'):exec(function()
+            box.ctl.wait_rw(10)
             assert(box.info.ro == false)
-        end))
+        end)
     end)
 
     -- 2) start server-1 -> server-1 returns leadership

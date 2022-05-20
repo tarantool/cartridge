@@ -597,7 +597,7 @@ end
 local function check_suppressing_lock()
     while true do
         vars.failover_trigger_cnt = 0
-        fiber.sleep(vars.suppress_timeout)
+        fiber.sleep(vars.suppress_timeout or math.huge)
         if vars.failover_suppressed == false then
             if vars.failover_trigger_cnt > vars.suppress_threshold then
                 vars.failover_suppressed = true
