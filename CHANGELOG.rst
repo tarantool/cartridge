@@ -22,7 +22,7 @@ Added
   the election mode of an instance by the argparse option ``TARANTOOL_ELECTION_MODE``
   or ``--election-mode``.
 
-- ``election_mode`` in argparse.
+- Tarantool Raft options are supported in argparse.
 
 -------------------------------------------------------------------------------
 [2.7.4] - 2021-04-11

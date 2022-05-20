@@ -176,6 +176,7 @@ local box_opts = {
     sql_cache_size           = 'number', -- **number**
     txn_timeout              = 'number', -- **number**
     election_mode            = 'string', -- **string**
+    election_fencing_enabled = 'boolean', -- **boolean**
 }
 
 local function load_file(filename)
