@@ -174,6 +174,7 @@ local function before_each(g)
             }
         )
     end)
+    g.cluster:wait_until_healthy()
 end
 g_stateboard.before_each(function() before_each(g_stateboard) end)
 g_etcd2.before_each(function() before_each(g_etcd2) end)
