@@ -130,7 +130,7 @@ type FailoverAPI {
   fencing_timeout: Float!
   failover_timeout: Float!
 
-  """Supported modes are "disabled", "eventual" and "stateful"."""
+  """Supported modes are "disabled", "eventual", "stateful" or "raft"."""
   mode: String!
 
   """

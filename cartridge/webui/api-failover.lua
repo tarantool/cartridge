@@ -53,7 +53,7 @@ local gql_type_userapi = gql_types.object({
         mode = {
             kind = gql_types.string.nonNull,
             description = 'Supported modes are "disabled",' ..
-                ' "eventual" and "stateful".',
+                ' "eventual", "stateful" or "raft".',
         },
         state_provider = {
             kind = gql_types.string,

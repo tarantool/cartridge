@@ -330,32 +330,9 @@ local function appoint_leaders(leaders)
     local servers = vars.topology_cfg.servers
     local replicasets = vars.topology_cfg.replicasets
 
-    for k, v in pairs(leaders) do
-        if type(k) ~= 'string' or type(v) ~= 'string' then
-            error('bad argument #1 to appoint_leaders' ..
-                ' (keys and values must be strings)', 2
-            )
-        end
-
-        local replicaset = replicasets[k]
-        if replicaset == nil then
-            return nil, AppointmentError:new(
-                "Replicaset %q doesn't exist", k
-            )
-        end
-
-        local server = servers[v]
-        if server == nil then
-            return nil, AppointmentError:new(
-                "Server %q doesn't exist", v
-            )
-        end
-
-        if server.replicaset_uuid ~= k then
-            return nil, AppointmentError:new(
-                "Server %q doesn't belong to replicaset %q", v, k
-            )
-        end
+    local uri_list, err = utils.appoint_leaders_check(leaders, servers, replicasets)
+    if uri_list == nil then
+        return nil, err
     end
 
     if vars.client == nil then

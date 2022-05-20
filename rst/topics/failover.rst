@@ -216,6 +216,13 @@ and for single-instance replicasets. In these two cases an instance doesn't
 even try to query `vclockkeeper` and to perform `wait_lsn`. But the coordinator
 still appoints a new leader if the current one dies.
 
+In the Raft failover mode, the user can also use the promotion API:
+:ref:`cartridge.failover_promote <cartridge.failover_promote>` in Lua or
+``mutation {cluster{failover_promote()}}`` in GraphQL,
+which calls ``box.ctl.promote`` on the specified instances.
+Note that ``box.ctl.promote`` starts fair elections, so some other instance may
+become the leader in the replicaset.
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fencing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

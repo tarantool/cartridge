@@ -13,6 +13,8 @@ local failover = require('cartridge.failover')
 local rpc = require('cartridge.rpc')
 local pool = require('cartridge.pool')
 
+local raft_failover = require('cartridge.failover.raft')
+
 local FailoverSetParamsError = errors.new_class('FailoverSetParamsError')
 local PromoteLeaderError = errors.new_class('PromoteLeaderError')
 local FailoverPauseError = errors.new_class('FailoverPauseError')
@@ -28,7 +30,7 @@ local function get_params()
     -- (**Added** in v2.0.2-2)
     -- @table FailoverParams
     -- @tfield string mode
-    --   Supported modes are "disabled", "eventual" and "stateful"
+    --   Supported modes are "disabled", "eventual", "stateful" or "raft"
     -- @tfield ?string state_provider
     --   Supported state providers are "tarantool" and "etcd2".
     -- @tfield number failover_timeout
@@ -205,29 +207,33 @@ local function promote(replicaset_leaders, opts)
     })
 
     local mode = get_params().mode
-    if mode ~= 'stateful' then
+    if mode ~= 'stateful' and mode ~= 'raft' then
         return nil, PromoteLeaderError:new(
-            'Promotion only works with stateful failover,' ..
+            'Promotion only works with stateful or raft failover,' ..
             ' not in %q mode', mode
         )
     end
 
-    local coordinator, err = failover.get_coordinator()
-    if err ~= nil then
-        return nil, err
-    end
+    local coordinator, ok, err
+    if mode == 'raft' then
+        return raft_failover.promote(replicaset_leaders, opts)
+    elseif mode == 'stateful' then
+        coordinator, err = failover.get_coordinator()
+        if err ~= nil then
+            return nil, err
+        end
 
-    if coordinator == nil then
-        return nil, PromoteLeaderError:new('There is no active coordinator')
-    end
+        if coordinator == nil then
+            return nil, PromoteLeaderError:new('There is no active coordinator')
+        end
 
-    local ok, err = rpc.call(
+        ok, err = rpc.call(
             'failover-coordinator',
             'appoint_leaders',
             {replicaset_leaders},
             { uri = coordinator.uri }
-    )
-
+        )
+    end
     if ok == nil then
         return nil, err
     end
