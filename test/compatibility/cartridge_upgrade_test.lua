@@ -8,14 +8,14 @@ local g = t.group()
 local helpers = require('test.helper')
 
 local function version(srv)
-    local version = srv.net_box:call('require', {'cartridge.VERSION'})
-    local cwd = srv.net_box:call('package.loaded.fio.cwd')
+    local version = srv:call('require', {'cartridge.VERSION'})
+    local cwd = srv:call('package.loaded.fio.cwd')
     log.info('Check %s version: %s (from %s)', srv.alias, version, cwd)
     return version
 end
 
 local function upstream_info(srv)
-    local info = srv.net_box:call('box.info')
+    local info = srv:call('box.info')
     for _, v in pairs(info.replication) do
         if v.uuid ~= srv.instance_uuid then
             return {
@@ -28,7 +28,7 @@ end
 
 local function await_state(srv, desired_state)
     g.cluster:retrying({}, function()
-        srv.net_box:eval([[
+        srv:eval([[
             local confapplier = require('cartridge.confapplier')
             local desired_state = ...
             local state = confapplier.wish_state(desired_state)
@@ -100,7 +100,7 @@ local function change_version(old, new)
 
     ----------------------------------------------------------------------------
     -- Setup data model
-    leader.net_box:eval([[
+    leader:eval([[
         box.schema.space.create('test', {
             format = {
                 {name = 'bucket_id', type = 'unsigned', is_nullable = false},
@@ -123,7 +123,7 @@ local function change_version(old, new)
     local insertions_passed = {}
     local insertions_failed = {}
     local function _insert(cnt)
-        local ret, err = g.cluster.main_server.net_box:eval([[
+        local ret, err = g.cluster.main_server:eval([[
             local ret, err = package.loaded.vshard.router.callrw(
                 1, 'box.space.test:insert', {{1, ...}}
             )
@@ -261,7 +261,7 @@ local function change_version(old, new)
     highload_enabled = false
     highload_fiber:join()
     t.assert_equals(
-        g.cluster.main_server.net_box:call(
+        g.cluster.main_server:call(
             'package.loaded.vshard.router.callrw', {
                 1, 'box.space.test:select'
             }
