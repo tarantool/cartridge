@@ -6,12 +6,12 @@ local fun = require('fun')
 local topology = require('cartridge.topology')
 local pool = require('cartridge.pool')
 local argparse = require('cartridge.argparse')
+local utils = require('cartridge.utils')
 
 local vars = require('cartridge.vars').new('cartridge.failover')
 local errors = require('errors')
 
 local PromoteLeaderError = errors.new_class('PromoteLeaderError')
-local AppointmentError = errors.new_class('AppointmentError')
 
 vars:new('leader_uuid')
 vars:new('raft_trigger')
@@ -123,8 +123,32 @@ local function disable()
     vars.leader_uuid = nil
 end
 
+local function promote(replicaset_leaders)
+    local topology_cfg = package.loaded['cartridge.confapplier'].get_readonly('topology')
+
+    if topology_cfg == nil then
+        return nil, PromoteLeaderError:new('Unable to get topology')
+    end
+
+    local servers_list = fun.filter(topology.not_disabled, topology_cfg.servers):tomap()
+    local replicasets = topology_cfg.replicasets
+
+    local uri_list, err = utils.appoint_leaders_check(replicaset_leaders, servers_list, replicasets)
+    if uri_list == nil then
+        return nil, err
+    end
+
+    local _, err = pool.map_call('box.ctl.promote', nil, {uri_list = uri_list})
+    if err ~= nil then
+        return nil, PromoteLeaderError:new('Leader promotion failed')
+    end
+
+    return true
+end
+
 return {
     cfg = cfg,
     disable = disable,
     get_appointments = get_appointments,
+    promote = promote,
 }

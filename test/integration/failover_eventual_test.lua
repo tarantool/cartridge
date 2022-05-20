@@ -543,7 +543,7 @@ g.test_switchover = function()
     t.assert_equals(ok, nil)
     t.assert_covers(err, {
         class_name = 'PromoteLeaderError',
-        err = 'Promotion only works with stateful failover, not in "disabled" mode',
+        err = 'Promotion only works with stateful or raft failover, not in "disabled" mode',
     })
 
     set_failover(true)
@@ -553,7 +553,7 @@ g.test_switchover = function()
     t.assert_equals(ok, nil)
     t.assert_covers(err, {
         class_name = 'PromoteLeaderError',
-        err = 'Promotion only works with stateful failover, not in "eventual" mode',
+        err = 'Promotion only works with stateful or raft failover, not in "eventual" mode',
     })
 end
 

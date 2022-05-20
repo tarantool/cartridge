@@ -330,6 +330,73 @@ g.test_kill_master = function()
     t.assert_equals(before_2pc, after_2pc)
 end
 
+local q_leadership = string.format([[
+    local failover = require('cartridge.failover')
+    return failover.get_active_leaders()[%q]
+]], replicaset_uuid)
+
+local q_promote = [[
+    return require('cartridge').failover_promote(...)
+]]
+
+g.test_promote = function()
+    -- since box.ctl.promote starts fair election, we need retrying in tests to promote a leader
+    h.retrying({timeout = 10}, function()
+        local resp = g.cluster.main_server:graphql({
+            query = [[
+                mutation(
+                    $replicaset_uuid: String!
+                    $instance_uuid: String!
+                ) {
+                cluster {
+                    failover_promote(
+                        replicaset_uuid: $replicaset_uuid
+                        instance_uuid: $instance_uuid
+                    )
+                }
+            }]],
+            variables = {
+                replicaset_uuid = replicaset_uuid,
+                instance_uuid = storage_2_uuid,
+            }
+        })
+        t.assert_type(resp['data'], 'table')
+        t.assert_equals(resp['data']['cluster']['failover_promote'], true)
+
+        t.assert_equals(g.cluster:server('storage-1'):eval(q_leadership), storage_2_uuid)
+        t.assert_equals(g.cluster:server('storage-2'):eval(q_leadership), storage_2_uuid)
+        t.assert_equals(g.cluster:server('storage-3'):eval(q_leadership), storage_2_uuid)
+        t.assert_equals(g.cluster:server('router-1'):eval(q_leadership), storage_2_uuid)
+        t.assert_equals(g.cluster:server('single-storage-1'):eval(q_leadership), storage_2_uuid)
+    end)
+end
+
+g.test_promote_errors = function()
+    local ok, err = g.cluster.main_server:eval(q_promote, {{[replicaset_uuid] = 'invalid_uuid'}})
+    t.assert_equals(ok, nil)
+    t.assert_covers(err, {
+        class_name = 'AppointmentError',
+        err = [[Server "invalid_uuid" doesn't exist]],
+    })
+
+    local ok, err = g.cluster.main_server:eval(q_promote, {{['invalid_uuid'] = storage_1_uuid}})
+    t.assert_equals(ok, nil)
+    t.assert_covers(err, {
+        class_name = 'AppointmentError',
+        err = [[Replicaset "invalid_uuid" doesn't exist]],
+    })
+
+    local ok, err = g.cluster.main_server:eval(q_promote, {{[single_replicaset_uuid] = storage_1_uuid}})
+    t.assert_equals(ok, nil)
+    t.assert_covers(err, {
+        class_name = 'AppointmentError',
+        err = string.format(
+            [[Server %q doesn't belong to replicaset %q]],
+            storage_1_uuid, single_replicaset_uuid
+        ),
+    })
+end
+
 local kvpassword = require('digest').urandom(6):hex()
 local failover_change = {
     {to = 'disabled', params = {}},

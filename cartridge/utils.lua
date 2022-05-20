@@ -461,6 +461,41 @@ local function fd_cloexec(fd)
     return true
 end
 
+local AppointmentError = errors.new_class('AppointmentError')
+
+local function appoint_leaders_check(leaders, servers, replicasets)
+    local uri_list = {}
+    for k, v in pairs(leaders) do
+        if type(k) ~= 'string' or type(v) ~= 'string' then
+            error('bad argument #1 to appoint_leaders' ..
+                ' (keys and values must be strings)', 2
+            )
+        end
+
+        local replicaset = replicasets[k]
+        if replicaset == nil then
+            return nil, AppointmentError:new(
+                "Replicaset %q doesn't exist", k
+            )
+        end
+
+        local server = servers[v]
+        if server == nil then
+            return nil, AppointmentError:new(
+                "Server %q doesn't exist", v
+            )
+        end
+
+        if server.replicaset_uuid ~= k then
+            return nil, AppointmentError:new(
+                "Server %q doesn't belong to replicaset %q", v, k
+            )
+        end
+        table.insert(uri_list, server.uri)
+    end
+    return uri_list
+end
+
 return {
     deepcmp = deepcmp,
     table_find = table_find,
@@ -492,4 +527,6 @@ return {
     wait_lsn = wait_lsn,
     fiber_csw = fiber_csw,
     fd_cloexec = fd_cloexec,
+
+    appoint_leaders_check = appoint_leaders_check,
 }

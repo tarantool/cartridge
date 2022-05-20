@@ -22,6 +22,13 @@ Added
   the election mode of an instance by the argparse option ``TARANTOOL_ELECTION_MODE``
   or ``--election-mode``.
 
+- Promotion API for Raft failover:
+  :ref:`cartridge.failover_promote <cartridge.failover_promote>` in Lua or
+  ``mutation {cluster{failover_promote()}}`` in GraphQL,
+  which calls ``box.ctl.promote`` on the specified instances.
+  Note that ``box.ctl.promote`` starts fair elections, so some other instance
+  may become the leader in the replicaset.
+
 - Tarantool Raft options are supported in argparse.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
