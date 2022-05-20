@@ -147,8 +147,25 @@ algorithm is slightly different from that in case of eventual failover:
 * Every appointment (self-made or fetched) is immune for a while
   (controlled by the ``IMMUNITY_TIMEOUT`` option).
 
+..  _cartridge-raft_failover:
+
+*******************************************************************************
+Raft failover (beta)
+*******************************************************************************
+
+Raft failover in Cartridge based on built-in Tarantool Raft failover, the
+``box.ctl.on_election`` trigger that was introduced in Tarantool 2.10.0, and
+eventual failover mechanisms. The replicaset leader is chosen by built-in Raft,
+then the other replicasets get information about leader change from membership.
+It's needed to use Cartridge RPC calls. The user can control an instance's
+election mode using the argparse option ``TARANTOOL_ELECTION_MODE`` or
+``--election-mode`` or use ``box.cfg{election_mode = ...}`` API in runtime.
+
+Note that Raft failover in Cartridge is in beta.
+Don't use it in production.
+
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-The case: external provider outage
+Case: external provider outage
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 In this case instances do nothing: the leader remains a leader,
@@ -157,7 +174,7 @@ external state provider outage, it composes an empty leadership map:
 it doesn't know who actually is a leader and thinks there is none.
 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-The case: coordinator outage
+Case: coordinator outage
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 An active coordinator may be absent in a cluster either because of a failure
@@ -233,7 +250,7 @@ Failover configuration
 
 These are clusterwide parameters:
 
-* ``mode``: "disabled" / "eventual" / "stateful".
+* ``mode``: "disabled" / "eventual" / "stateful" / "raft".
 * ``state_provider``: "tarantool" / "etcd".
 * ``failover_timeout`` -- time (in seconds) to mark ``suspect`` members
   as ``dead`` and trigger failover (default: 20).

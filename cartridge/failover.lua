@@ -40,6 +40,7 @@ local topology = require('cartridge.topology')
 local service_registry = require('cartridge.service-registry')
 local stateboard_client = require('cartridge.stateboard-client')
 local etcd2_client = require('cartridge.etcd2-client')
+local raft_failover = require('cartridge.failover.raft')
 
 local FailoverError = errors.new_class('FailoverError')
 local SwitchoverError = errors.new_class('SwitchoverError')
@@ -47,6 +48,7 @@ local ApplyConfigError = errors.new_class('ApplyConfigError')
 local ValidateConfigError = errors.new_class('ValidateConfigError')
 local StateProviderError = errors.new_class('StateProviderError')
 
+vars:new('mode')
 vars:new('all_roles')
 vars:new('instance_uuid')
 vars:new('replicaset_uuid')
@@ -661,6 +663,11 @@ local function cfg(clusterwide_config)
     local failover_cfg = topology.get_failover_params(topology_cfg)
     local first_appointments
 
+    -- disable raft if it was enabled
+    if vars.mode == 'raft' and failover_cfg.mode ~= 'raft' then
+        raft_failover.disable()
+    end
+
     if failover_cfg.mode == 'disabled' then
         log.info('Failover disabled')
         vars.fencing_enabled = false
@@ -753,6 +760,25 @@ local function cfg(clusterwide_config)
             end,
         })
         vars.failover_fiber:name('cartridge.stateful-failover')
+    elseif failover_cfg.mode == 'raft' then
+        local ok, err = ApplyConfigError:pcall(raft_failover.cfg)
+        if not ok then
+            return nil, err
+        end
+
+        vars.fencing_enabled = false
+        vars.consistency_needed = false
+        first_appointments = raft_failover.get_appointments(topology_cfg)
+
+        vars.failover_fiber = fiber.new(failover_loop, {
+            get_appointments = function()
+                vars.membership_notification:wait()
+                return raft_failover.get_appointments(topology_cfg)
+            end,
+        })
+        vars.failover_fiber:name('cartridge.raft-failover')
+
+        log.info('Raft failover enabled')
     else
         return nil, ApplyConfigError:new(
             'Unknown failover mode %q',
@@ -789,6 +815,8 @@ local function cfg(clusterwide_config)
     box.cfg({
         read_only = not vars.cache.is_rw,
     })
+
+    vars.mode = failover_cfg.mode
 
     return true
 end
