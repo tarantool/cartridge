@@ -194,12 +194,12 @@ local function get_topology()
         end
 
         if leaders_order[server.replicaset_uuid][1] == instance_uuid then
-            if failover_cfg.mode ~= 'stateful' then
+            if failover_cfg.mode ~= 'stateful' and failover_cfg.mode ~= 'raft' then
                 srv.replicaset.master = srv
             end
         end
         if active_leaders[server.replicaset_uuid] == instance_uuid then
-            if failover_cfg.mode == 'stateful' then
+            if failover_cfg.mode == 'stateful' or failover_cfg.mode == 'raft' then
                 srv.replicaset.master = srv
             end
             srv.replicaset.active_master = srv

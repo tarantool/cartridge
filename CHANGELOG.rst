@@ -16,6 +16,12 @@ and this project adheres to
 Added
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+- Introduced new failover mode: Raft-based failover. The replicaset leader is chosen by
+  built-in Raft, then the other replicasets get information about leader change
+  from membership. It's needed to use Cartridge RPC calls. The user can control
+  the election mode of an instance by the argparse option ``TARANTOOL_ELECTION_MODE``
+  or ``--election-mode``.
+
 - ``election_mode`` in argparse.
 
 -------------------------------------------------------------------------------

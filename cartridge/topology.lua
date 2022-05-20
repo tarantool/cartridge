@@ -19,7 +19,7 @@ local e_config = errors.new_class('Invalid cluster topology config')
 --[[ topology_cfg: {
     auth = false,
     failover = nil | boolean | {
-        -- mode = 'disabled' | 'eventual' | 'stateful',
+        -- mode = 'disabled' | 'eventual' | 'stateful' | 'raft',
         -- state_provider = nil | 'tarantool' | 'etcd2',
         -- failover_timeout = nil | number,
         -- tarantool_params = nil | {
@@ -345,7 +345,8 @@ local function validate_failover_schema(field, topology)
             topology.failover.mode == nil or
             topology.failover.mode == 'disabled' or
             topology.failover.mode == 'eventual' or
-            topology.failover.mode == 'stateful',
+            topology.failover.mode == 'stateful' or
+            topology.failover.mode == 'raft',
             '%s.failover unknown mode %q',
             field, topology.failover.mode
         )
