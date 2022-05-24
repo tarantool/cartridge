@@ -37,6 +37,11 @@ Changed
 
 - Update ``vshard`` to 0.1.20.
 
+- Failover suppressing. If enabled (by ``enable_failover_suppressing`` parameter
+  in ``cartridge.cfg``) then allows to automatically pause failover in runtime.
+  It configures with ``failover_suppress_threshold`` and
+  ``failover_suppress_timeout`` options of argparse.
+
 -------------------------------------------------------------------------------
 [2.7.4] - 2021-04-11
 -------------------------------------------------------------------------------
