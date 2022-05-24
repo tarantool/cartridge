@@ -231,11 +231,14 @@ function g.test_vshard_storage_disable_on_failover()
     -- Break replica instance
     inject_operation_error(g.storage_replica)
 
-    -- stop master to trigger failover
     g.storage_master:stop()
-    g.storage_replica:exec(function()
-        box.ctl.wait_rw(10)
+
+    helpers.retrying({timeout = 10}, function()
+        g.storage_replica:exec(function()
+            assert(box.info.ro == false)
+        end)
     end)
+
     local data, err = put(g.router, 2)
     t.assert_equals(data, box.NULL)
     t.assert_equals(err.message, 'Storage is disabled: storage is disabled explicitly')
