@@ -636,6 +636,13 @@ local function is_reload_forbidden()
     return vars.pause == true
 end
 
+--- Do additional job after the roles configuration applying.
+-- @function on_apply_config
+-- @param table conf
+-- @param string state
+-- @treturn[1] boolean true
+-- @treturn[2] nil
+-- @treturn[2] table Error description
 local function on_apply_config(conf, state)
     checks('table', 'string')
     if conf.__type == 'ClusterwideConfig' then

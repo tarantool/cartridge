@@ -4,6 +4,33 @@ local g = t.group()
 
 local helpers = require('test.helper')
 
+
+local function initialize_functions(srv)
+    return srv:exec(function()
+        local confapplier = require('cartridge.confapplier')
+        local function get(...)
+            if confapplier.get_state() == 'OperationError' then
+                error('Invalid state')
+            end
+            return box.space.test:get(...)
+        end
+        local function put(...)
+            if confapplier.get_state() == 'OperationError' then
+                error('Invalid state')
+            end
+            return box.space.test:put(...)
+        end
+        rawset(_G, 'get', get)
+        rawset(_G, 'put', put)
+    end)
+end
+
+local function setup_replica_backoff_interval(srv)
+    srv:exec(function()
+        require('vshard.consts').REPLICA_BACKOFF_INTERVAL = 0.1
+    end)
+end
+
 g.before_all = function()
     g.cluster = helpers.Cluster:new({
         datadir = fio.tempdir(),
@@ -53,6 +80,22 @@ g.before_all = function()
     g.cluster.main_server:call('cartridge_set_schema',
         {require('yaml').encode({spaces = {test = test_schema}})}
     )
+
+    g.cluster:wait_until_healthy()
+
+    initialize_functions(g.storage_master)
+    initialize_functions(g.storage_replica)
+    -- Just to speedup tests
+    setup_replica_backoff_interval(g.router)
+
+    -- Wait vshard will be OK and remote control will be stopped.
+    helpers.retrying({}, function()
+        local info = helpers.run_remotely(g.router, function()
+            local vshard = require('vshard')
+            return vshard.router.info()
+        end)
+        assert(#info.alerts == 0)
+    end)
 end
 
 g.after_all = function()
@@ -60,27 +103,9 @@ g.after_all = function()
     fio.rmtree(g.cluster.datadir)
 end
 
-local function initialize_functions(srv)
-    return srv:eval([[
-        local confapplier = require('cartridge.confapplier')
-        function get(...)
-            if confapplier.get_state() == 'OperationError' then
-                error('Invalid state')
-            end
-            return box.space.test:get(...)
-        end
-        function put(...)
-            if confapplier.get_state() == 'OperationError' then
-                error('Invalid state')
-            end
-            return box.space.test:put(...)
-        end
-    ]])
-end
-
-local function setup_replica_backoff_interval(srv)
-    helpers.run_remotely(srv, function()
-        require('vshard.consts').REPLICA_BACKOFF_INTERVAL = 0.1
+g.after_each = function()
+    g.storage_master:exec(function()
+        box.space.test:truncate()
     end)
 end
 
@@ -123,21 +148,6 @@ local function apply_config(srv)
 end
 
 function g.test_vshard_storage_disable()
-    initialize_functions(g.storage_master)
-    initialize_functions(g.storage_replica)
-
-    -- Just to speedup test
-    setup_replica_backoff_interval(g.router)
-
-    -- Wait vshard will be OK and remote control will be stopped.
-    helpers.retrying({}, function()
-        local info = helpers.run_remotely(g.router, function()
-            local vshard = require('vshard')
-            return vshard.router.info()
-        end)
-        assert(#info.alerts == 0)
-    end)
-
     -- Read/write data from/to healthy cluster
     t.assert_equals(put(g.router, 1), {1, 1, 'i0001'})
     t.assert_equals(get(g.router, 1), {1, 1, 'i0001'})
@@ -188,4 +198,62 @@ function g.test_vshard_storage_disable()
     for _ = 1, 1000 do
         t.assert_equals(get(g.router, 4), {4, 4, 'i0004'})
     end
+end
+
+local function set_failover(mode)
+    local response = g.cluster.main_server:graphql({
+        query = [[
+            mutation($mode: String) {
+                cluster {
+                    failover_params(
+                        mode: $mode
+                    ) {
+                        mode
+                    }
+                }
+            }
+        ]],
+        variables = { mode = mode },
+        raise = false,
+    })
+    if response.errors then
+        error(response.errors[1].message, 2)
+    end
+end
+
+function g.test_vshard_storage_disable_on_failover()
+    set_failover('eventual')
+
+    -- Read/write data from/to healthy cluster
+    t.assert_equals(put(g.router, 1), {1, 1, 'i0001'})
+    t.assert_equals(get(g.router, 1), {1, 1, 'i0001'})
+
+    -- Break replica instance
+    inject_operation_error(g.storage_replica)
+
+    -- stop master to trigger failover
+    g.storage_master:stop()
+    g.storage_replica:exec(function()
+        box.ctl.wait_rw(10)
+    end)
+    local data, err = put(g.router, 2)
+    t.assert_equals(data, box.NULL)
+    t.assert_equals(err.message, 'Storage is disabled: storage is disabled explicitly')
+
+    g.storage_master:start()
+    g.cluster:wait_until_healthy()
+    initialize_functions(g.storage_master)
+
+    -- Fix replica state
+    dismiss_operation_error(g.storage_replica)
+    apply_config(g.router)
+    t.assert_not_equals(get_state(g.storage_master), 'OperationError')
+    t.assert_not_equals(get_state(g.storage_replica), 'OperationError')
+
+    t.assert_equals(put(g.router, 2), {2, 2, 'i0002'})
+    for _ = 1, 1000 do
+        t.assert_equals(get(g.router, 2), {2, 2, 'i0002'})
+    end
+
+    set_failover('disabled')
 end
