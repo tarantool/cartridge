@@ -2988,7 +2988,7 @@ msgstr ""
 "(текущая директория)."
 
 msgid ""
-"``--use-docker``---the flag to use if packing the application on a different"
+"``--use-docker`` -- the flag to use if packing the application on a different"
 " Linux distribution or on macOS. It ensures the resulting artifact contains "
 "the Linux compatible external modules and executables."
 msgstr ""

@@ -700,7 +700,7 @@ Status list
 Potential issues
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-*   ``MISSING_MASTER``---No master node in the replica set configuration.
+*   ``MISSING_MASTER`` -- No master node in the replica set configuration.
 
     **Critical level:** Orange.
 
@@ -709,7 +709,7 @@ Potential issues
 
     **Solution:** Set the master node for the replica set in the configuration using API.
 
-*   ``UNREACHABLE_MASTER``---No connection between the master and the replica.
+*   ``UNREACHABLE_MASTER`` -- No connection between the master and the replica.
 
     **Critical level:**
 
@@ -723,7 +723,7 @@ Potential issues
     **Solution:** Reconnect to the master: fix the network issues, reset the current
     master, switch to another master.
 
-*   ``LOW_REDUNDANCY``---Master has access to a single replica only.
+*   ``LOW_REDUNDANCY`` -- Master has access to a single replica only.
 
     **Critical level:** Yellow.
 
@@ -738,7 +738,7 @@ Potential issues
     *   If three or more replicas are specified in the configuration, consider
         checking the replicas' states and network connection among the replicas.
 
-*   ``INVALID_REBALANCING``---Rebalancing invariant was violated. During migration,
+*   ``INVALID_REBALANCING`` -- Rebalancing invariant was violated. During migration,
     a storage node can either send or receive buckets. So it shouldn’t be the case
     that a replica set sends buckets to one replica set and receives buckets from
     another replica set at the same time.
@@ -754,7 +754,7 @@ Potential issues
 
     Either way, please contact Tarantool support.
 
-*   ``HIGH_REPLICATION_LAG``---Replica’s lag exceeds T1 threshold (1 sec.).
+*   ``HIGH_REPLICATION_LAG`` -- Replica’s lag exceeds T1 threshold (1 sec.).
 
     **Critical level:**
 
@@ -768,7 +768,7 @@ Potential issues
     are given in the
     `Tarantool troubleshooting guide <https://www.tarantool.io/en/doc/latest/book/admin/troubleshoot/>`_.
 
-*   ``OUT_OF_SYNC``---Mal-synchronization occurred. The lag exceeds T3 threshold (10 sec.).
+*   ``OUT_OF_SYNC`` -- Mal-synchronization occurred. The lag exceeds T3 threshold (10 sec.).
 
     **Critical level:** Red.
 
@@ -781,7 +781,7 @@ Potential issues
 
 .. _unreachable_replica:
 
-*   ``UNREACHABLE_REPLICA``---One or multiple replicas are unreachable.
+*   ``UNREACHABLE_REPLICA`` -- One or multiple replicas are unreachable.
 
     **Critical level:** Yellow.
 
@@ -794,7 +794,7 @@ Potential issues
     If a replica is disabled, enable it. If this doesn’t help, consider checking
     the network.
 
-*   ``UNREACHABLE_REPLICASET``---All replicas except for the current one are unreachable.
+*   ``UNREACHABLE_REPLICASET`` -- All replicas except for the current one are unreachable.
     **Critical level:** Red.
 
     **Cluster condition:** The replica stores obsolete data.
@@ -875,7 +875,7 @@ Potential issues
     Depending on the nature of the issue, use either the UUID of a replica,
     or the UUID of a replica set.
 
-*   ``MISSING_MASTER``---The master in one or multiple replica sets is not
+*   ``MISSING_MASTER`` -- The master in one or multiple replica sets is not
     specified in the configuration.
 
     **Critical level:** Orange.
@@ -884,7 +884,7 @@ Potential issues
 
     **Solution:** Specify the master in the configuration.
 
-*   ``UNREACHABLE_MASTER``---The ``router`` lost connection with the master of
+*   ``UNREACHABLE_MASTER`` -- The ``router`` lost connection with the master of
     one or multiple replica sets.
 
     **Critical level:** Orange.
@@ -894,7 +894,7 @@ Potential issues
     **Solution:** Restore connection with the master. First, check if the master
     is enabled. If it is, consider checking the network.
 
-*   ``SUBOPTIMAL_REPLICA``---There is a replica for read-only requests, but this
+*   ``SUBOPTIMAL_REPLICA`` -- There is a replica for read-only requests, but this
     replica is not optimal according to the configured weights. This means that
     the optimal replica is unreachable.
 
@@ -904,7 +904,7 @@ Potential issues
 
     **Solution:** Check the status of the optimal replica and its network connection.
 
-*   ``UNREACHABLE_REPLICASET``---A replica set is unreachable for both read-only
+*   ``UNREACHABLE_REPLICASET`` -- A replica set is unreachable for both read-only
     and data-change requests.
 
     **Critical Level:** Red.
