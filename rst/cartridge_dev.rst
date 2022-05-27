@@ -987,7 +987,7 @@ To deploy your Tarantool Cartridge application:
 
     *   ``APP_PATH``—a path to the application directory. Defaults to ``.``
         (the current directory).
-    *   ``--use-docker``---the flag to use if packing the application
+    *   ``--use-docker`` -- the flag to use if packing the application
         on a different Linux distribution or on macOS.
         It ensures the resulting artifact contains the Linux compatible
         external modules and executables.
