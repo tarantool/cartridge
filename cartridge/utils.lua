@@ -419,8 +419,19 @@ end
 -- @function fiber_csw
 -- @local
 -- @treturn number csw
-local function fiber_csw()
-    return fiber.info()[fiber.id()].csw
+local fiber_csw
+
+if fiber.self().info ~= nil then
+    -- Fast way available since 2.10
+    -- See https://github.com/tarantool/tarantool/issues/5799
+    fiber_csw = function()
+        return fiber.self().info().csw
+    end
+else
+    -- For versions that doesn't have fiber.self().info()
+    fiber_csw = function()
+        return fiber.info()[fiber.id()].csw
+    end
 end
 
 -- Set FD_CLOEXEC flag for the given file descriptor.
