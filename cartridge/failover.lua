@@ -315,7 +315,10 @@ local function on_apply_config(mod, state)
     local conf = vars.clusterwide_config:get_readonly()
 
     if type(mod.on_apply_config) == 'function' then
-        ApplyConfigError:pcall(mod.on_apply_config, conf, state)
+        local ok, err = ApplyConfigError:pcall(mod.on_apply_config, conf, state)
+        if not ok then
+            log.error('Role %q on_apply_config in failover failed', mod.role_name)
+        end
     end
 end
 
