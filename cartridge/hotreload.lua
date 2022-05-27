@@ -14,6 +14,10 @@ vars:new('routes_count', nil)
 -- @function snap_fibers
 -- @treturn {string=true,...} Set of fiber names
 local function snap_fibers()
+    if not vars.fibers then
+        return {}
+    end
+
     local ret = {}
 
     for _, f in pairs(fiber.info()) do
