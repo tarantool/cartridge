@@ -72,7 +72,7 @@ In the web interface, do the following:
 
     |nbsp|
 
-    In the pop-up window, check the ``vshard-router`` role---or any custom role
+    In the pop-up window, check the ``vshard-router`` role or any custom role
     that has ``vshard-router`` as a dependent role (in this example, this is
     a custom role named ``app.roles.api``).
 
@@ -107,7 +107,7 @@ In the web interface, do the following:
 #.  Create another replica set for a master storage node (intended for
     *transaction-intensive* workloads).
 
-    Check the ``vshard-storage`` role---or any custom role
+    Check the ``vshard-storage`` role or any custom role
     that has ``vshard-storage`` as a dependent role (in this example, this is
     a custom role named ``app.roles.storage``).
 
