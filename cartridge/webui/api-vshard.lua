@@ -32,7 +32,8 @@ local gql_type_vsgroup = gql_types.object({
                 'in the storage group'
         },
         collect_lua_garbage = {
-            kind = gql_types.boolean.nonNull,
+            kind = gql_types.boolean,
+            deprecationReason = 'Has no effect anymore',
             description = 'If set to true, the Lua collectgarbage() function is called periodically'
         },
         sync_timeout = {

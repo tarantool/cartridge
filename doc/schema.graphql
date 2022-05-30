@@ -1013,7 +1013,7 @@ type VshardGroup {
   """
   If set to true, the Lua collectgarbage() function is called periodically
   """
-  collect_lua_garbage: Boolean!
+  collect_lua_garbage: Boolean @deprecated(reason: "Has no effect anymore")
 
   """
   Timeout to wait for synchronization of the old master with replicas before demotion

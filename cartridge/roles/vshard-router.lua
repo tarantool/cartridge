@@ -65,6 +65,7 @@ local function apply_config(conf)
 
     for group_name, _ in pairs(vshard_groups) do
         local vshard_cfg = vshard_utils.get_vshard_config(group_name, conf)
+        vshard_cfg.collect_lua_garbage = nil
         local router_name = router_name(group_name)
 
         -- luacheck: ignore 542
@@ -161,6 +162,7 @@ local function bootstrap_group(group_name, vsgroup)
 
     local conf = confapplier.get_readonly()
     local vshard_cfg = vshard_utils.get_vshard_config(group_name, conf)
+    vshard_cfg.collect_lua_garbage = nil
 
     if next(vshard_cfg.sharding) == nil then
         return nil, e_bootstrap_vshard:new('Sharding config is empty')
