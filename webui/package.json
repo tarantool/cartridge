@@ -70,7 +70,7 @@
     "@tarantool.io/import-sort-style": "1.0.4",
     "@tarantool.io/prettier-config": "1.0.4",
     "@tarantool.io/typescript": "1.0.3",
-    "@tarantool.io/webpack-config": "2.0.4",
+    "@tarantool.io/webpack-config": "2.0.7",
     "@types/jest": "27.4.1",
     "@types/node": "17.0.23",
     "@types/ramda": "0.28.4",
