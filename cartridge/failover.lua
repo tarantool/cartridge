@@ -68,6 +68,7 @@ vars:new('cache', {
     is_vclockkeeper = false,
     is_leader = false,
     is_rw = false,
+    all_rw = false,
 })
 vars:new('fencing_fiber')
 do
@@ -540,10 +541,20 @@ local function constitute_oneself(active_leaders, opts)
     return true
 end
 
+local function synchro_promote()
+    if not vars.cache.all_rw
+    and vars.cache.is_leader
+    and box.ctl.promote ~= nil
+    then
+        box.ctl.promote()
+    end
+end
+
 function reconfigure_all(active_leaders)
     local confapplier = require('cartridge.confapplier')
 ::start_over::
 
+log.error('reconf all ')
     local t1 = fiber.clock()
     -- WARNING: implicit yield
     local ok, err = constitute_oneself(active_leaders, {
@@ -578,12 +589,15 @@ function reconfigure_all(active_leaders)
     then
         fencing_start()
     end
+    log.error('start to failover ')
 
     local ok, err = FailoverError:pcall(function()
         vars.failover_trigger_cnt = vars.failover_trigger_cnt + 1
         box.cfg({
             read_only = not vars.cache.is_rw,
         })
+        log.error(vars.cache)
+        synchro_promote()
 
         local state = 'RolesConfigured'
         for _, role_name in ipairs(vars.all_roles) do
@@ -744,6 +758,7 @@ local function cfg(clusterwide_config, opts)
     local failover_cfg = topology.get_failover_params(topology_cfg)
     local first_appointments
 
+    vars.cache.all_rw = topology_cfg.replicasets[vars.replicaset_uuid].all_rw == true
     -- disable raft if it was enabled
     if vars.mode == 'raft' and failover_cfg.mode ~= 'raft' then
         raft_failover.disable()
@@ -926,6 +941,7 @@ local function cfg(clusterwide_config, opts)
     box.cfg({
         read_only = not vars.cache.is_rw,
     })
+    synchro_promote()
 
     vars.mode = failover_cfg.mode
 
