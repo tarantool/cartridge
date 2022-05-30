@@ -234,7 +234,7 @@ function g.test_vshard_storage_disable_on_failover()
 
     g.storage_master:stop()
 
-    helpers.retrying({timeout = 10}, function()
+    helpers.retrying({timeout = 30}, function()
         g.storage_replica:exec(function()
             assert(box.info.ro == false)
         end)
