@@ -587,7 +587,7 @@ local function edit_vshard_options(group_name, vshard_options)
             sched_move_quota = '?number',
         }
     )
-
+    vshard_options.collect_lua_garbage = nil
     local patch = {
         vshard_groups = confapplier.get_deepcopy('vshard_groups'),
         vshard = confapplier.get_deepcopy('vshard')

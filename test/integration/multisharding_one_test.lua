@@ -200,7 +200,7 @@ function g.test_set_vshard_options_positive()
     })
     t.assert_equals(res['data']['cluster']['edit_vshard_options'], {
         ['collect_bucket_garbage_interval'] = box.NULL,
-        ['collect_lua_garbage'] = true,
+        ['collect_lua_garbage'] = false,
         ['rebalancer_disbalance_threshold'] = 14,
         ['rebalancer_max_receiving'] = 42,
         ['rebalancer_max_sending'] = 1,
@@ -218,7 +218,7 @@ function g.test_set_vshard_options_positive()
     })
     t.assert_equals(res['data']['cluster']['edit_vshard_options'], {
         ['collect_bucket_garbage_interval'] = box.NULL,
-        ['collect_lua_garbage'] = true,
+        ['collect_lua_garbage'] = false,
         ['rebalancer_disbalance_threshold'] = 14,
         ['rebalancer_max_receiving'] = 42,
         ['rebalancer_max_sending'] = 1,
@@ -232,7 +232,7 @@ function g.test_set_vshard_options_positive()
     t.assert_equals(res, {
         {
             ['collect_bucket_garbage_interval'] = box.NULL,
-            ['collect_lua_garbage'] = true,
+            ['collect_lua_garbage'] = false,
             ['rebalancer_disbalance_threshold'] = 14,
             ['rebalancer_max_receiving'] = 42,
             ['rebalancer_max_sending'] = 1,

@@ -28,6 +28,7 @@ local function apply_config(conf, _)
     local vshard_cfg = vshard_utils.get_vshard_config(group_name, conf)
     vshard_cfg.weights = nil
     vshard_cfg.zone = nil
+    vshard_cfg.collect_lua_garbage = nil
     vshard_cfg.listen = box.cfg.listen
 
     if utils.deepcmp(vshard_cfg, vars.vshard_cfg) then
