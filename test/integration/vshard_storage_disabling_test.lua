@@ -32,7 +32,7 @@ local function setup_replica_backoff_interval(srv)
 end
 
 g.before_all = function()
-    t.skip_if(not h.tarantool_version_ge('1.10.1'))
+    t.skip_if(not helpers.tarantool_version_ge('1.10.1'))
     g.cluster = helpers.Cluster:new({
         datadir = fio.tempdir(),
         server_command = helpers.entrypoint('srv_basic'),
