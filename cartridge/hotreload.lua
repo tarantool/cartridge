@@ -20,7 +20,8 @@ local function snap_fibers()
 
     local ret = {}
 
-    for _, f in pairs(fiber.info()) do
+    local fiber_info = fiber.info({backtrace = false})
+    for _, f in pairs(fiber_info) do
         ret[f.name] = true
     end
 
