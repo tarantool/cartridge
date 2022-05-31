@@ -305,6 +305,23 @@ local function apply_config(mod)
     )
 end
 
+
+local function on_apply_config(mod, state)
+    checks('?table', 'string')
+    if mod == nil then
+        return true
+    end
+
+    local conf = vars.clusterwide_config:get_readonly()
+
+    if type(mod.on_apply_config) == 'function' then
+        local ok, err = ApplyConfigError:pcall(mod.on_apply_config, conf, state)
+        if not ok then
+            log.error('Role %q on_apply_config in failover failed: %s', mod.role_name, err.err)
+        end
+    end
+end
+
 --- Perform the fencing healthcheck.
 --
 -- Fencing is actuated when the instance disconnects from both
@@ -564,6 +581,7 @@ function reconfigure_all(active_leaders)
             read_only = not vars.cache.is_rw,
         })
 
+        local state = 'RolesConfigured'
         for _, role_name in ipairs(vars.all_roles) do
             local mod = service_registry.get(role_name)
             log.info('Appling "%s" role config from failover', role_name)
@@ -574,10 +592,16 @@ function reconfigure_all(active_leaders)
                 log.error('%s', err)
                 log.info('Failed to apply "%s" role config from failover in %.6f sec',
                     role_name, clock.monotonic() - start_time)
+                state = 'OperationError'
             else
                 log.info('Successfully applied "%s" role config from failover in %.6f sec',
                     role_name, clock.monotonic() - start_time)
             end
+        end
+
+        for _, role_name in ipairs(vars.all_roles) do
+            local mod = service_registry.get(role_name)
+            on_apply_config(mod, state)
         end
 
         return true

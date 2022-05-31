@@ -46,6 +46,14 @@ local function init()
     rawset(_G, 'vshard', vshard)
 end
 
+local function on_apply_config(_, state)
+    if state == 'RolesConfigured' then
+        vshard.storage.enable()
+    else
+        vshard.storage.disable()
+    end
+end
+
 local function stop()
     local confapplier = require('cartridge.confapplier')
     local advertise_uri = confapplier.get_advertise_uri()
@@ -83,6 +91,7 @@ return {
     implies_storage = true,
 
     apply_config = apply_config,
+    on_apply_config = on_apply_config,
     init = init,
     stop = stop,
 }
