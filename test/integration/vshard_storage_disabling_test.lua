@@ -252,7 +252,8 @@ function g.test_vshard_storage_disable_on_failover()
 
     -- Fix replica state
     dismiss_operation_error(g.storage_replica)
-    apply_config(g.router)
+
+    g.cluster:wait_until_healthy()
     t.assert_not_equals(get_state(g.storage_master), 'OperationError')
     t.assert_not_equals(get_state(g.storage_replica), 'OperationError')
 
