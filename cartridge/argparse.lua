@@ -108,6 +108,7 @@ local box_opts = {
     memtx_min_tuple_size     = 'number', -- **number**
     memtx_max_tuple_size     = 'number', -- **number**
     memtx_use_mvcc_engine    = 'boolean', -- **boolean**
+    txn_isolation            = 'string|number', -- **string|number**
     slab_alloc_factor        = 'number', -- **number**
     slab_alloc_granularity   = 'number', -- **number**
     work_dir                 = 'string', -- **string** (**deprecated**)
@@ -121,6 +122,7 @@ local box_opts = {
     vinyl_read_threads       = 'number', -- **number**
     vinyl_write_threads      = 'number', -- **number**
     vinyl_timeout            = 'number', -- **number**
+    vinyl_defer_deletes      = 'boolean', -- **boolean**
     vinyl_run_count_per_level = 'number', -- **number**
     vinyl_run_size_ratio     = 'number', -- **number**
     vinyl_range_size         = 'number', -- **number**
@@ -128,11 +130,25 @@ local box_opts = {
     vinyl_bloom_fpr          = 'number', -- **number**
 
     log                      = 'string', -- **string**
-    audit_log                = 'string', -- **string**
     log_nonblock             = 'boolean', -- **boolean**
-    audit_nonblock           = 'boolean', -- **boolean**
-    log_level                = 'number', -- **number**
+    log_level                = 'string|number', -- **string|number**
     log_format               = 'string', -- **string**
+
+    audit_log                = 'string', -- **string**
+    audit_nonblock           = 'boolean', -- **boolean**
+    audit_format             = 'string', -- **string**
+    audit_filter             = 'string', -- **string**
+
+    flightrec_enabled        = 'boolean', -- **boolean**
+    flightrec_logs_size      = 'number', -- **number**
+    flightrec_logs_max_msg_size = 'number', -- **number**
+    flightrec_logs_log_level = 'number', -- **number**
+    flightrec_metrics_interval = 'number', -- **number**
+    flightrec_metrics_period = 'number', -- **number**
+    flightrec_requests_size = 'number', -- **number**
+    flightrec_requests_max_req_size = 'number', -- **number**
+    flightrec_requests_max_res_size = 'number', -- **number**
+
     io_collect_interval      = 'number', -- **number**
     readahead                = 'number', -- **number**
     snap_io_rate_limit       = 'number', -- **number**
@@ -176,6 +192,7 @@ local box_opts = {
     sql_cache_size           = 'number', -- **number**
     txn_timeout              = 'number', -- **number**
     election_mode            = 'string', -- **string**
+    election_timeout         = 'number', -- **number**
     election_fencing_enabled = 'boolean', -- **boolean**
 }
 

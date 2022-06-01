@@ -29,7 +29,7 @@ Added
   Note that ``box.ctl.promote`` starts fair elections, so some other instance
   may become the leader in the replicaset.
 
-- Tarantool Raft options are supported in argparse.
+- Tarantool Raft options and Tarantool 2.10 ``box.cfg`` options are supported in argparse.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Changed
