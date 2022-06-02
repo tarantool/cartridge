@@ -142,7 +142,7 @@ export type FailoverApi = {|
   fencing_enabled: $ElementType<Scalars, 'Boolean'>,
   fencing_pause: $ElementType<Scalars, 'Float'>,
   fencing_timeout: $ElementType<Scalars, 'Float'>,
-  /** Supported modes are "disabled", "eventual" and "stateful". */
+  /** Supported modes are "disabled", "eventual", "stateful" or "raft". */
   mode: $ElementType<Scalars, 'String'>,
   /** Type of external storage for the stateful failover mode. Supported types are "tarantool" and "etcd2". */
   state_provider?: ?$ElementType<Scalars, 'String'>,
