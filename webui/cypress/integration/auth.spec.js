@@ -168,12 +168,9 @@ describe('Auth', () => {
 
     cy.get('.meta-test__LoginForm input[name="username"]').type('admin').should('have.value', 'admin');
     cy.get('.meta-test__LoginForm input[name="password"]').type('test-cluster-cookie');
-    cy.get('.meta-test__LoginFormBtn').click();
+    cy.get('.meta-test__LoginFormBtn', { timeout: 10000 }).click();
 
-    // eslint-disable-next-line cypress/no-unnecessary-waiting
-    cy.wait(500); // wait for a react re-render.
-
-    cy.get('a[href="/admin/cluster/users"]').click();
+    cy.get('a[href="/admin/cluster/users"]', { timeout: 10000 }).click();
     cy.get('.meta-test__AuthToggle input').should('not.be.checked');
     cy.testScreenshots('UsersPage');
     cy.get('.meta-test__AuthToggle').click();
@@ -195,7 +192,7 @@ describe('Auth', () => {
     cy.testElementScreenshots('LoginSplash', '.meta-test__LoginFormSplash');
     cy.get('.meta-test__LoginFormBtn').click();
 
-    cy.get('a[href="/admin/cluster/users"]').click();
+    cy.get('a[href="/admin/cluster/users"]', { timeout: 10000 }).click();
     cy.get('.meta-test__AuthToggle input').should('be.checked');
     cy.get('.meta-test__AuthToggle').click();
     cy.get('.meta-test__ConfirmModal').contains('Disable').click();
@@ -216,7 +213,7 @@ describe('Auth', () => {
     cy.reload();
 
     cy.get('.meta-test__AuthToggle').should('exist');
-    cy.get('a[href="/admin/cluster/users"]').should('not.exist');
+    cy.get('a[href="/admin/cluster/users"]', { timeout: 10000 }).should('not.exist');
   });
 
   it('Test: auth 2', () => {
@@ -234,10 +231,7 @@ describe('Auth', () => {
     cy.get('.meta-test__LoginForm input[name="password"]').type('test-cluster-cookie');
     cy.get('.meta-test__LoginFormBtn').click();
 
-    // eslint-disable-next-line cypress/no-unnecessary-waiting
-    cy.wait(500); // wait for a react re-render.
-
-    cy.get('a[href="/admin/cluster/users"]').click();
+    cy.get('a[href="/admin/cluster/users"]', { timeout: 10000 }).click();
     cy.get('.meta-test__AuthToggle input').should('not.be.checked');
 
     ////////////////////////////////////////////////////////////////////

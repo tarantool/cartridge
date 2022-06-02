@@ -105,6 +105,18 @@ describe('Failover', () => {
     }).should('deep.eq', [true]);
   }
 
+  function modeRaft() {
+    cy.task('tarantool', {
+      code: `
+      _G.cluster.main_server.net_box:call(
+        'package.loaded.cartridge.failover_set_params',
+        {{mode = 'raft', failover_timeout = 20}}
+      )
+      return true
+    `,
+    }).should('deep.eq', [true]);
+  }
+
   function checkFailoverTabMode(mode, isActive) {
     cy.log(mode, isActive);
     cy.get(`.meta-test__failover-tabs button:contains(${mode})`).should(
@@ -133,6 +145,7 @@ describe('Failover', () => {
     cy.testElementScreenshots('FailoverControlDisabled', '.meta-test__FailoverModal');
     checkFailoverTabMode('Eventual', false);
     checkFailoverTabMode('Stateful', false);
+    checkFailoverTabMode('Raft', false);
 
     //change Failover timeout
     cy.get('.meta-test__failoverTimeout input').should('have.value', '0');
@@ -181,6 +194,7 @@ describe('Failover', () => {
     checkFailoverTabMode('Eventual', true);
     cy.testElementScreenshots('FailoverControlEvantual', '.meta-test__FailoverModal');
     checkFailoverTabMode('Stateful', false);
+    checkFailoverTabMode('Raft', false);
 
     cy.get('.meta-test__failoverTimeout input').should('have.value', '5');
 
@@ -199,6 +213,7 @@ describe('Failover', () => {
     checkFailoverTabMode('Disabled', false);
     checkFailoverTabMode('Eventual', false);
     checkFailoverTabMode('Stateful', true);
+    checkFailoverTabMode('Raft', false);
     cy.testElementScreenshots('FailoverModalStatefulTarantoolMode', '.meta-test__FailoverModal');
 
     //Fencing tooltip
@@ -406,6 +421,55 @@ describe('Failover', () => {
     cy.get('.meta-test__etcd2Username input').should('have.value', 'admin');
     cy.get('.meta-test__etcd2Password svg').click();
     cy.get('.meta-test__etcd2Password input').should('have.value', '123456');
+    cy.get('.meta-test__CancelButton').click();
+
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Failover RAFT - TARANTOOL: success from UI');
+    ////////////////////////////////////////////////////////////////////
+    cy.get('.meta-test__FailoverButton').click();
+
+    cy.get('.meta-test__inlineError').should('not.exist');
+
+    cy.get('.meta-test__failover-tabs button:contains(Raft)').click();
+    checkFailoverTabMode('Disabled', false);
+    checkFailoverTabMode('Eventual', false);
+    checkFailoverTabMode('Stateful', false);
+    checkFailoverTabMode('Raft', true);
+    cy.testElementScreenshots('FailoverControlRaft', '.meta-test__FailoverModal');
+
+    //change Failover timeout
+    cy.get('.meta-test__failoverTimeout input').should('have.value', '10');
+    cy.get('.meta-test__failoverTimeout input').type('{selectAll}{del}q');
+    cy.get('.meta-test__failoverTimeout p').contains('Field accepts number, ex: 0, 1, 2.43...');
+    cy.get('.meta-test__failoverTimeout input').type('{selectAll}{del}3');
+    cy.get('.meta-test__failoverTimeout p:contains(Field accepts number)').should('not.exist');
+    cy.get('.meta-test__failoverTimeout input').should('have.value', '3');
+
+    //Failover timeout tooltip
+    cy.get('label:contains(Failover timeout)').next().trigger('mouseover');
+    cy.get('div').contains('Timeout in seconds to mark suspect members as dead and trigger failover');
+
+    cy.get('.meta-test__SubmitButton').click();
+    cy.get('.meta-test__FailoverModal').should('not.exist');
+    //close successful window
+    cy.get('span:contains(Failover mode) + span:contains(raft) + svg').click();
+    cy.get('.meta-test__FailoverButton').contains('Failover: raft');
+    cy.get('.meta-test__ClusterIssuesButton').should('be.disabled');
+
+    modeDisable();
+    cy.get('.meta-test__FailoverButton').contains('disabled');
+    cy.get('.meta-test__FailoverButton').click();
+    checkFailoverTabMode('Disabled', true);
+    cy.get('.meta-test__CancelButton').click();
+
+    ////////////////////////////////////////////////////////////////////
+    cy.log('Update failover cypress for raft mode from console');
+    ////////////////////////////////////////////////////////////////////
+    modeRaft();
+    cy.get('.meta-test__FailoverButton').contains('raft');
+    cy.get('.meta-test__FailoverButton').click();
+    checkFailoverTabMode('Raft', true);
+    cy.get('.meta-test__failoverTimeout input').should('have.value', '20');
     cy.get('.meta-test__CancelButton').click();
   });
 });
