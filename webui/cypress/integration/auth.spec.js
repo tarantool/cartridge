@@ -165,12 +165,11 @@ describe('Auth', () => {
     cy.log('Login and Enable Auth');
     ////////////////////////////////////////////////////////////////////
     cy.get('.meta-test__LoginBtn').click();
-
     cy.get('.meta-test__LoginForm input[name="username"]').type('admin').should('have.value', 'admin');
     cy.get('.meta-test__LoginForm input[name="password"]').type('test-cluster-cookie');
-    cy.get('.meta-test__LoginFormBtn', { timeout: 10000 }).click();
+    cy.get('.meta-test__LoginFormBtn').click({ force: true });
 
-    cy.get('a[href="/admin/cluster/users"]', { timeout: 10000 }).click();
+    cy.get('a[href="/admin/cluster/users"]', { timeout: 10000 }).click({ force: true });
     cy.get('.meta-test__AuthToggle input').should('not.be.checked');
     cy.testScreenshots('UsersPage');
     cy.get('.meta-test__AuthToggle').click();
@@ -225,26 +224,26 @@ describe('Auth', () => {
     ////////////////////////////////////////////////////////////////////
     cy.log('Login successfully');
     ////////////////////////////////////////////////////////////////////
-    cy.get('.meta-test__LoginBtn').click();
+    cy.get('.meta-test__LoginBtn').click({ force: true });
 
     cy.get('.meta-test__LoginForm input[name="username"]').type('admin').should('have.value', 'admin');
     cy.get('.meta-test__LoginForm input[name="password"]').type('test-cluster-cookie');
-    cy.get('.meta-test__LoginFormBtn').click();
+    cy.get('.meta-test__LoginFormBtn').click({ force: true });
 
-    cy.get('a[href="/admin/cluster/users"]', { timeout: 10000 }).click();
+    cy.get('a[href="/admin/cluster/users"]', { timeout: 10000 }).click({ force: true });
     cy.get('.meta-test__AuthToggle input').should('not.be.checked');
 
     ////////////////////////////////////////////////////////////////////
     cy.log('Enable auth');
     ////////////////////////////////////////////////////////////////////
-    cy.get('.meta-test__AuthToggle').click();
-    cy.get('.meta-test__ConfirmModal').contains('Enable').click();
+    cy.get('.meta-test__AuthToggle input', { timeout: 10000 }).click({ force: true });
+    cy.get('.meta-test__ConfirmModal', { timeout: 15000 }).contains('Enable').click();
 
     ////////////////////////////////////////////////////////////////////
     cy.log('Logout');
     ////////////////////////////////////////////////////////////////////
-    cy.get('.meta-test__LogoutBtn').click();
-    cy.get('.meta-test__LogoutDropdown').click();
+    cy.get('.meta-test__LogoutBtn', { timeout: 10000 }).click();
+    cy.get('.meta-test__LogoutDropdown', { timeout: 10000 }).click();
     ////////////////////////////////////////////////////////////////////
     cy.log('Shut down cluster');
     ////////////////////////////////////////////////////////////////////
@@ -261,7 +260,7 @@ describe('Auth', () => {
 
     cy.get('input[name="username"]').type('admin').should('have.value', 'admin');
     cy.get('input[name="password"]').type('test-cluster-cookie');
-    cy.get('.meta-test__LoginFormBtn').click();
+    cy.get('.meta-test__LoginFormBtn').click({ force: true });
 
     cy.get('.meta-test__LoginFormSplash form').contains('Cannot connect to server. Please try again later.');
   });
@@ -275,7 +274,7 @@ describe('Auth', () => {
     cy.get('.meta-test__LoginBtn').click();
     cy.get('.meta-test__LoginForm input[name="username"]').type('testUser');
     cy.get('.meta-test__LoginForm input[name="password"]').type('12345678_Ujl');
-    cy.get('.meta-test__LoginFormBtn').click();
+    cy.get('.meta-test__LoginFormBtn').click({ force: true });
 
     cy.log('Check there is username in the right top corner for the authorized user: fullname is empty');
     cy.get('.meta-test__LogoutBtn span').contains(username);
