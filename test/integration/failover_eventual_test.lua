@@ -136,83 +136,6 @@ local function set_failover(enabled)
     return response.data.cluster.failover
 end
 
-local function get_failover_params()
-    return cluster.main_server:graphql({query = [[
-        {
-            cluster { failover_params {
-                mode
-                state_provider
-                failover_timeout
-                tarantool_params {uri password}
-                etcd2_params {
-                    prefix
-                    lock_delay
-                    endpoints
-                    username
-                    password
-                }
-                fencing_enabled
-                fencing_timeout
-                fencing_pause
-                leader_autoreturn
-                autoreturn_delay
-                check_cookie_hash
-            }}
-        }
-    ]]}).data.cluster.failover_params
-end
-
-local function set_failover_params(vars)
-    local response = cluster.main_server:graphql({
-        query = [[
-            mutation(
-                $mode: String
-                $state_provider: String
-                $failover_timeout: Float
-                $tarantool_params: FailoverStateProviderCfgInputTarantool
-                $etcd2_params: FailoverStateProviderCfgInputEtcd2
-                $fencing_enabled: Boolean
-                $fencing_timeout: Float
-                $fencing_pause: Float
-            ) {
-                cluster {
-                    failover_params(
-                        mode: $mode
-                        state_provider: $state_provider
-                        failover_timeout: $failover_timeout
-                        tarantool_params: $tarantool_params
-                        etcd2_params: $etcd2_params
-                        fencing_enabled: $fencing_enabled
-                        fencing_timeout: $fencing_timeout
-                        fencing_pause: $fencing_pause
-                    ) {
-                        mode
-                        state_provider
-                        failover_timeout
-                        tarantool_params {uri password}
-                        etcd2_params {
-                            prefix
-                            lock_delay
-                            endpoints
-                            username
-                            password
-                        }
-                        fencing_enabled
-                        fencing_timeout
-                        fencing_pause
-                    }
-                }
-            }
-        ]],
-        variables = vars,
-        raise = false,
-    })
-    if response.errors then
-        error(response.errors[1].message, 2)
-    end
-    return response.data.cluster.failover_params
-end
-
 local function check_active_master(expected_uuid)
     -- Make sure active master uuid equals to the given uuid
     local response = cluster.main_server:eval([[
@@ -270,14 +193,14 @@ g.test_api_failover = function()
     -- Set with deprecated GraphQL API
     t.assert_equals(set_failover(false), false)
     t.assert_equals(get_failover(), false)
-    t.assert_covers(get_failover_params(), {mode = 'disabled'})
+    t.assert_covers(helpers.get_failover_params(cluster), {mode = 'disabled'})
     t.assert_equals(_call('admin_get_failover'), false)
     t.assert_covers(_call('failover_get_params'), {mode = 'disabled'})
 
     -- Set with deprecated GraphQL API
     t.assert_equals(set_failover(true), true)
     t.assert_equals(get_failover(), true)
-    t.assert_covers(get_failover_params(), {mode = 'eventual'})
+    t.assert_covers(helpers.get_failover_params(cluster), {mode = 'eventual'})
     t.assert_equals(_call('admin_get_failover'), true)
     t.assert_covers(_call('failover_get_params'), {mode = 'eventual'})
 
@@ -286,60 +209,60 @@ g.test_api_failover = function()
     t.assert_equals(_call('admin_get_failover'), false)
     t.assert_covers(_call('failover_get_params'), {mode = 'disabled'})
     t.assert_equals(get_failover(), false)
-    t.assert_covers(get_failover_params(), {mode = 'disabled'})
+    t.assert_covers(helpers.get_failover_params(cluster), {mode = 'disabled'})
 
     -- Set with deprecated Lua API
     t.assert_equals(_call('admin_enable_failover'), true)
     t.assert_equals(_call('admin_get_failover'), true)
     t.assert_covers(_call('failover_get_params'), {mode = 'eventual'})
     t.assert_equals(get_failover(), true)
-    t.assert_covers(get_failover_params(), {mode = 'eventual'})
+    t.assert_covers(helpers.get_failover_params(cluster), {mode = 'eventual'})
 
     -- New failover API tests
     -------------------------
 
     -- Set with new GraphQL API
-    t.assert_covers(set_failover_params({mode = 'disabled'}), {mode = 'disabled'})
-    t.assert_covers(get_failover_params(), {mode = 'disabled'})
+    t.assert_covers(heplers.set_failover_params(cluster, {mode = 'disabled'}), {mode = 'disabled'})
+    t.assert_covers(helpers.get_failover_params(cluster), {mode = 'disabled'})
     t.assert_equals(get_failover(), false)
     t.assert_equals(_call('admin_get_failover'), false)
     t.assert_covers(_call('failover_get_params'), {mode = 'disabled'})
 
     -- Set with new GraphQL API
-    t.assert_covers(set_failover_params({mode = 'eventual'}), {mode = 'eventual'})
-    t.assert_covers(get_failover_params(), {mode = 'eventual'})
+    t.assert_covers(heplers.set_failover_params(cluster, {mode = 'eventual'}), {mode = 'eventual'})
+    t.assert_covers(helpers.get_failover_params(cluster), {mode = 'eventual'})
     t.assert_equals(get_failover(), true)
     t.assert_equals(_call('admin_get_failover'), true)
     t.assert_covers(_call('failover_get_params'), {mode = 'eventual'})
 
-    t.assert_covers(set_failover_params(
+    t.assert_covers(heplers.set_failover_params(cluster,
         {failover_timeout = 0}),
         {failover_timeout = 0}
     )
-    t.assert_covers(get_failover_params(), {failover_timeout = 0})
+    t.assert_covers(helpers.get_failover_params(cluster), {failover_timeout = 0})
     t.assert_equals(
         cluster.main_server:eval([[
             return require('membership.options').SUSPECT_TIMEOUT_SECONDS
         ]]), 0
     )
 
-    t.assert_covers(set_failover_params(
+    t.assert_covers(heplers.set_failover_params(cluster,
         {fencing_enabled = false}),
         {fencing_enabled = false}
     )
-    t.assert_covers(get_failover_params(), {fencing_enabled = false})
+    t.assert_covers(helpers.get_failover_params(cluster), {fencing_enabled = false})
 
-    t.assert_covers(set_failover_params(
+    t.assert_covers(heplers.set_failover_params(cluster,
         {fencing_pause = 2}),
         {fencing_pause = 2}
     )
-    t.assert_covers(get_failover_params(), {fencing_pause = 2})
+    t.assert_covers(helpers.get_failover_params(cluster), {fencing_pause = 2})
 
-    t.assert_covers(set_failover_params(
+    t.assert_covers(heplers.set_failover_params(cluster,
         {fencing_timeout = 4}),
         {fencing_timeout = 4}
     )
-    t.assert_covers(get_failover_params(), {fencing_timeout = 4})
+    t.assert_covers(helpers.get_failover_params(cluster), {fencing_timeout = 4})
 
     -- Set with new GraphQL API
     t.assert_error_msg_equals(
@@ -381,7 +304,7 @@ g.test_api_failover = function()
     }
 
     t.assert_equals(
-        set_failover_params({
+        heplers.set_failover_params(cluster, {
             etcd2_params = {lock_delay = 36.6, prefix = 'kv'},
         }), {
             mode = 'eventual',
@@ -403,7 +326,7 @@ g.test_api_failover = function()
         }
     )
     t.assert_equals(
-        set_failover_params({
+        heplers.set_failover_params(cluster, {
             etcd2_params = {endpoints = {'goo.gl:9'}},
         }), {
             mode = 'eventual',
@@ -417,7 +340,7 @@ g.test_api_failover = function()
     )
 
     t.assert_equals(
-        get_failover_params(),
+        helpers.get_failover_params(cluster),
         {
             mode = 'eventual',
             failover_timeout = 0,
@@ -435,7 +358,7 @@ g.test_api_failover = function()
     local tarantool_params = {uri = 'stateboard.com:8', password = 'xxx'}
     local tarantool_params_masked = {uri = 'stateboard.com:8', password = '******'}
     t.assert_equals(
-        set_failover_params({tarantool_params = tarantool_params}),
+        heplers.set_failover_params(cluster, {tarantool_params = tarantool_params}),
         {
             mode = 'eventual',
             failover_timeout = 0,
@@ -447,7 +370,7 @@ g.test_api_failover = function()
         }
     )
     t.assert_equals(
-        set_failover_params({mode = 'stateful', state_provider = 'tarantool'}),
+        heplers.set_failover_params(cluster, {mode = 'stateful', state_provider = 'tarantool'}),
         {
             mode = 'stateful',
             state_provider = 'tarantool',
@@ -461,7 +384,7 @@ g.test_api_failover = function()
     )
 
     t.assert_equals(
-        get_failover_params(),
+        helpers.get_failover_params(cluster),
         {
             mode = 'stateful',
             state_provider = 'tarantool',
@@ -524,7 +447,7 @@ g.test_api_failover = function()
     }
 
     t.assert_equals(
-        get_failover_params(),
+        helpers.get_failover_params(cluster),
         {
             mode = 'disabled',
             state_provider = 'tarantool',

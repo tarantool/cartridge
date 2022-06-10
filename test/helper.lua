@@ -344,4 +344,98 @@ function helpers.find_metrics_obs(t, metric_name, label_pairs, observations, com
         'Missing observation')
 end
 
+function helpers.get_failover_params(cluster)
+    return cluster.main_server:graphql({query = [[
+        {
+            cluster { failover_params {
+                mode
+                state_provider
+                failover_timeout
+                tarantool_params {uri password}
+                etcd2_params {
+                    prefix
+                    lock_delay
+                    endpoints
+                    username
+                    password
+                }
+                fencing_enabled
+                fencing_timeout
+                fencing_pause
+            }}
+        }
+    ]]}).data.cluster.failover_params
+end
+
+function helpers.set_failover_params(cluster, vars)
+    local response = cluster.main_server:graphql({
+        query = [[
+            mutation(
+                $mode: String
+                $state_provider: String
+                $failover_timeout: Float
+                $tarantool_params: FailoverStateProviderCfgInputTarantool
+                $etcd2_params: FailoverStateProviderCfgInputEtcd2
+                $fencing_enabled: Boolean
+                $fencing_timeout: Float
+                $fencing_pause: Float
+            ) {
+                cluster {
+                    failover_params(
+                        mode: $mode
+                        state_provider: $state_provider
+                        failover_timeout: $failover_timeout
+                        tarantool_params: $tarantool_params
+                        etcd2_params: $etcd2_params
+                        fencing_enabled: $fencing_enabled
+                        fencing_timeout: $fencing_timeout
+                        fencing_pause: $fencing_pause
+                    ) {
+                        mode
+                        state_provider
+                        failover_timeout
+                        tarantool_params {uri password}
+                        etcd2_params {
+                            prefix
+                            lock_delay
+                            endpoints
+                            username
+                            password
+                        }
+                        fencing_enabled
+                        fencing_timeout
+                        fencing_pause
+                    }
+                }
+            }
+        ]],
+        variables = vars,
+        raise = false,
+    })
+    if response.errors then
+        error(response.errors[1].message, 2)
+    end
+    return response.data.cluster.failover_params
+end
+
+function helpers.get_master(cluster, uuid)
+    local response = cluster.main_server:graphql({
+        query = [[
+            query(
+                $uuid: String!
+            ){
+                replicasets(uuid: $uuid) {
+                    master { uuid }
+                    active_master { uuid }
+                }
+            }
+        ]],
+        variables = {uuid = uuid}
+    })
+    local replicasets = response.data.replicasets
+    assert(#replicasets == 1)
+    local replicaset = replicasets[1]
+    return {replicaset.master.uuid, replicaset.active_master.uuid}
+end
+
 return helpers

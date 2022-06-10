@@ -775,7 +775,7 @@ local function cfg(clusterwide_config, opts)
         vars.fencing_enabled = false
         vars.consistency_needed = false
         first_appointments = _get_appointments_eventual_mode(topology_cfg)
-
+        box.cfg{election_mode = 'manual'}
         vars.failover_fiber = fiber.new(failover_loop, {
             get_appointments = function()
                 vars.membership_notification:wait()
