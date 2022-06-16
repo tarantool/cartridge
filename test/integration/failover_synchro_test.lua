@@ -1,5 +1,4 @@
 local fio = require('fio')
-local fun = require('fun')
 
 local t = require('luatest')
 local g = t.group()
@@ -12,8 +11,6 @@ local replicaset_uuid = h.uuid('b')
 local storage_1_uuid = h.uuid('b', 'b', 1)
 local storage_2_uuid = h.uuid('b', 'b', 2)
 local storage_3_uuid = h.uuid('b', 'b', 3)
-local single_replicaset_uuid = h.uuid('c')
-local single_storage_uuid = h.uuid('c', 'c', 1)
 
 g.before_all = function()
     t.skip_if(not h.tarantool_version_ge('2.6.1'))
@@ -57,7 +54,6 @@ g.before_all = function()
         },
         env = {
             TARANTOOL_REPLICATION_SYNCHRO_QUORUM = 'N/2 + 1',
-            TARANTOOL_REPLICATION_CONNECT_QUORUM = 2,
         }
     })
     g.cluster:start()
@@ -86,14 +82,8 @@ local function start_server(alias)
     g.cluster:server(alias):start()
 end
 
-local cnt = 0
-
 g.before_each(function()
-    cnt = cnt + 1
-    if cnt == 2 then
-
-    end
-    h.retrying({timeout = 20}, function()
+    h.retrying({timeout = 30}, function()
         t.assert_equals(h.list_cluster_issues(g.cluster.main_server), {})
     end)
     h.retrying({}, function()
@@ -110,86 +100,11 @@ g.before_each(function()
     end)
 end)
 
-g.before_test('test_kill_master_eventual', function()
+g.after_each(function()
     h.retrying({}, function()
-        t.assert_covers(h.set_failover_params(g.cluster, { mode = 'eventual' }), { mode = 'eventual' })
+        t.assert_covers(h.set_failover_params(g.cluster, { mode = 'disabled' }), { mode = 'disabled' })
     end)
 end)
-
-g.test_kill_master_eventual = function()
-    local res
-
-    -- insert and get sharded data
-    res = g.cluster.main_server:http_request('post', '/test?key=a', {json = {}, raise = false})
-    t.assert_equals(res.status, 200)
-    res = g.cluster.main_server:http_request('get', '/test?key=a', { raise = false })
-    t.assert_equals(res.json, {})
-
-    kill_server('storage-1')
-
-    h.retrying({timeout = 10}, function()
-        -- wait until leadeship
-        t.assert_equals(h.get_master(g.cluster, replicaset_uuid), {storage_1_uuid, storage_2_uuid})
-        g.cluster:server('storage-2'):exec(function()
-            assert(box.info.ro == false)
-        end)
-    end)
-
-    -- insert and get sharded data again
-    res = g.cluster.main_server:http_request('post', '/test?key=b', {json = {}, raise = false})
-    t.assert_equals(res.status, 200)
-
-    res = g.cluster.main_server:http_request('get', '/test?key=b', { raise = false })
-    t.assert_equals(res.json, {})
-
-    -- restart previous leader
-    start_server('storage-1')
-    g.cluster:wait_until_healthy()
-
-    h.retrying({}, function()
-        t.assert_equals(h.get_master(g.cluster, replicaset_uuid), {storage_1_uuid, storage_1_uuid})
-    end)
-
-    kill_server('storage-1')
-    kill_server('storage-3')
-    -- syncro quorum is broken now
-    h.retrying({}, function()
-        t.assert_equals(h.get_master(g.cluster, replicaset_uuid), {storage_1_uuid, storage_2_uuid})
-        g.cluster:server('storage-2'):exec(function()
-            assert(box.info.ro == false)
-        end)
-    end)
-
-    -- we can't write to storage
-    res = g.cluster.main_server:http_request('post', '/test?key=c', {json = {}, raise = false})
-    t.assert_equals(res.status, 500)
-
-    -- but still can read because master in vshard config is readable
-    res = g.cluster.main_server:http_request('get', '/test?key=a', { raise = false })
-    t.assert_equals(res.status, 200)
-    t.assert_equals(res.json, {})
-
-    start_server('storage-3')
-    kill_server('storage-2')
-
-    -- syncro quorum is broken now
-    -- we can't write
-    res = g.cluster.main_server:http_request('post', '/test?key=c', {json = {}, raise = false})
-    t.assert_equals(res.status, 500)
-
-    -- and can't read because vshard cfg send requests to killed storage-2
-    res = g.cluster.main_server:http_request('get', '/test?key=a', { raise = false })
-    t.assert_equals(res.status, 500)
-
-    -- require'fiber'.sleep(math.huge)
-    start_server('storage-2')
-
-    start_server('storage-1')
-    require'fiber'.sleep(math.huge)
-
-
-
-end
 
 local function find_alias_by_uuid(uuid)
     return ({
@@ -211,7 +126,6 @@ local function stateful_test()
     kill_server('storage-1')
 
     local current_master
-    -- require'fiber'.sleep(math.huge)
     h.retrying({timeout = 20}, function()
         -- wait until leadeship
         current_master = h.get_master(g.cluster, replicaset_uuid)[2]
@@ -266,7 +180,6 @@ local function stateful_test()
 
     start_server('storage-1')
     start_server('storage-2')
-    -- require'fiber'.sleep(math.huge)
 end
 
 g.before_test('test_kill_master_stateboard', function()

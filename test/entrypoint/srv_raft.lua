@@ -23,7 +23,7 @@ local ok, err = errors.pcall('CartridgeCfgError', cartridge.cfg, {
         'test.roles.api',
         'test.roles.storage',
     },
-}, {log_level = 3})
+})
 if not ok then
     log.error('%s', err)
     os.exit(1)

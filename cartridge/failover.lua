@@ -542,7 +542,8 @@ local function constitute_oneself(active_leaders, opts)
 end
 
 local function synchro_promote()
-    if not vars.cache.all_rw
+    if vars.mode == 'stateful'
+    and not vars.cache.all_rw
     and vars.cache.is_leader
     and box.ctl.promote ~= nil
     then
@@ -589,14 +590,12 @@ log.error('reconf all ')
     then
         fencing_start()
     end
-    log.error('start to failover ')
 
     local ok, err = FailoverError:pcall(function()
         vars.failover_trigger_cnt = vars.failover_trigger_cnt + 1
         box.cfg({
             read_only = not vars.cache.is_rw,
         })
-        log.error(vars.cache)
         synchro_promote()
 
         local state = 'RolesConfigured'
@@ -775,7 +774,6 @@ local function cfg(clusterwide_config, opts)
         vars.fencing_enabled = false
         vars.consistency_needed = false
         first_appointments = _get_appointments_eventual_mode(topology_cfg)
-        box.cfg{election_mode = 'manual'}
         vars.failover_fiber = fiber.new(failover_loop, {
             get_appointments = function()
                 vars.membership_notification:wait()
@@ -941,9 +939,9 @@ local function cfg(clusterwide_config, opts)
     box.cfg({
         read_only = not vars.cache.is_rw,
     })
-    synchro_promote()
-
     vars.mode = failover_cfg.mode
+
+    synchro_promote()
 
     return true
 end
