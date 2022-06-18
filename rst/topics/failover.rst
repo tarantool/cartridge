@@ -186,6 +186,10 @@ An active coordinator may be absent in a cluster either because of a failure
 or due to disabling the role on all instances. Just like in the previous case,
 instances do nothing about it: they keep fetching the leadership map from the
 state provider. But it will remain the same until a coordinator appears.
+Leader changing in this mode also calls ``box.ctl.promote``. It allows to use
+synchronous spaces. Note that it's restricted to use master-master replication
+(``ALL_RW`` option in Cartridge replicaset) and synchronous spaces in one
+replicaset.
 
 ..  _cartridge-raft_failover:
 

@@ -18,7 +18,7 @@ g.before_all = function()
         datadir = fio.tempdir(),
         use_vshard = true,
         server_command = h.entrypoint('srv_raft'),
-        cookie = 'secret',--h.random_cookie(),
+        cookie = h.random_cookie(),
         replicasets = {
             {
                 alias = 'router',
@@ -68,12 +68,6 @@ g.after_all = function()
     fio.rmtree(g.cluster.datadir)
 end
 
-local function set_master(instance_name)
-    g.cluster:server(instance_name):exec(function()
-        box.ctl.promote()
-    end)
-end
-
 local function kill_server(alias)
     g.cluster:server(alias):stop()
 end
@@ -87,9 +81,6 @@ g.before_each(function()
         t.assert_equals(h.list_cluster_issues(g.cluster.main_server), {})
     end)
     h.retrying({}, function()
-        -- call box.ctl.promote on storage-1
-        set_master('storage-1')
-
         t.assert_equals(h.get_master(g.cluster, replicaset_uuid), {storage_1_uuid, storage_1_uuid})
 
         g.cluster:server('storage-1'):exec(function()

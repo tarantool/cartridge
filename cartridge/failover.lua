@@ -555,7 +555,6 @@ function reconfigure_all(active_leaders)
     local confapplier = require('cartridge.confapplier')
 ::start_over::
 
-log.error('reconf all ')
     local t1 = fiber.clock()
     -- WARNING: implicit yield
     local ok, err = constitute_oneself(active_leaders, {
@@ -757,7 +756,11 @@ local function cfg(clusterwide_config, opts)
     local failover_cfg = topology.get_failover_params(topology_cfg)
     local first_appointments
 
-    vars.cache.all_rw = topology_cfg.replicasets[vars.replicaset_uuid].all_rw == true
+    if topology_cfg.replicasets ~= nil
+    and topology_cfg.replicasets[vars.replicaset_uuid] ~= nil
+    then
+        vars.cache.all_rw = topology_cfg.replicasets[vars.replicaset_uuid].all_rw == true
+    end
     -- disable raft if it was enabled
     if vars.mode == 'raft' and failover_cfg.mode ~= 'raft' then
         raft_failover.disable()

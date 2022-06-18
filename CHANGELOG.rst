@@ -243,6 +243,8 @@ Added
 - Tarantool Raft options and Tarantool 2.10 ``box.cfg`` options are supported in argparse
   (`#1826 <https://github.com/tarantool/cartridge/issues/1826>`_).
 
+- Support of synchronous spaces in Stateful Failover mode.
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Changed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
