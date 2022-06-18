@@ -267,19 +267,19 @@ g.test_api_failover = function()
     -- Set with new GraphQL API
     t.assert_error_msg_equals(
         'topology_new.failover missing state_provider for mode "stateful"',
-        helpers.set_failover_params, {mode = 'stateful'}
+        helpers.set_failover_params, cluster, {mode = 'stateful'}
     )
     t.assert_error_msg_equals(
         'topology_new.failover.tarantool_params.uri: Invalid URI "!@#$"',
-        helpers.set_failover_params, {tarantool_params = {uri = '!@#$', password = 'xxx'}}
+        helpers.set_failover_params, cluster, {tarantool_params = {uri = '!@#$', password = 'xxx'}}
     )
     t.assert_error_msg_contains(
         'Variable "tarantool_params.password" expected to be non-null',
-        helpers.set_failover_params, {tarantool_params = {uri = 'localhost:9'}}
+        helpers.set_failover_params, cluster, {tarantool_params = {uri = 'localhost:9'}}
     )
     t.assert_error_msg_contains(
         'topology_new.failover.etcd2_params.endpoints[1]: Invalid URI "%^&*"',
-        helpers.set_failover_params, {etcd2_params = {endpoints = {'%^&*'}}}
+        helpers.set_failover_params, cluster, {etcd2_params = {endpoints = {'%^&*'}}}
     )
 
     local tarantool_defaults = {

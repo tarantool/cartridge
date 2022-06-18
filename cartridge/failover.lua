@@ -68,7 +68,6 @@ vars:new('cache', {
     is_vclockkeeper = false,
     is_leader = false,
     is_rw = false,
-    all_rw = false,
 })
 vars:new('fencing_fiber')
 do
@@ -421,6 +420,23 @@ local function fencing_start()
     vars.fencing_fiber:name('cartridge.fencing')
 end
 
+vars.synchro_promote_cnt = 0
+
+local function synchro_promote()
+    if vars.mode == 'stateful'
+    and vars.consistency_needed
+    and vars.cache.is_leader
+    and vars.cache.is_rw
+    and not vars.failover_paused
+    and not vars.failover_suppressed
+    and box.ctl.promote ~= nil
+    then
+        box.ctl.promote()
+    end
+end
+
+_G.synchro_promote = synchro_promote
+
 local function constitute_oneself(active_leaders, opts)
     checks('table', {
         timeout = 'number',
@@ -534,6 +550,8 @@ local function constitute_oneself(active_leaders, opts)
     vars.cache.is_leader = true
     vars.cache.is_rw = true
 
+    synchro_promote()
+
     log.info('Vclock persisted: %s. Consistent switchover succeeded',
         json.encode(setmetatable(vclock, {_serialize = 'sequence'}))
     )
@@ -541,15 +559,6 @@ local function constitute_oneself(active_leaders, opts)
     return true
 end
 
-local function synchro_promote()
-    if vars.mode == 'stateful'
-    and not vars.cache.all_rw
-    and vars.cache.is_leader
-    and box.ctl.promote ~= nil
-    then
-        box.ctl.promote()
-    end
-end
 
 function reconfigure_all(active_leaders)
     local confapplier = require('cartridge.confapplier')
@@ -595,7 +604,7 @@ function reconfigure_all(active_leaders)
         box.cfg({
             read_only = not vars.cache.is_rw,
         })
-        synchro_promote()
+        -- synchro_promote()
 
         local state = 'RolesConfigured'
         for _, role_name in ipairs(vars.all_roles) do
@@ -756,11 +765,6 @@ local function cfg(clusterwide_config, opts)
     local failover_cfg = topology.get_failover_params(topology_cfg)
     local first_appointments
 
-    if topology_cfg.replicasets ~= nil
-    and topology_cfg.replicasets[vars.replicaset_uuid] ~= nil
-    then
-        vars.cache.all_rw = topology_cfg.replicasets[vars.replicaset_uuid].all_rw == true
-    end
     -- disable raft if it was enabled
     if vars.mode == 'raft' and failover_cfg.mode ~= 'raft' then
         raft_failover.disable()
@@ -798,6 +802,8 @@ local function cfg(clusterwide_config, opts)
         else
             vars.consistency_needed = true
         end
+
+        -- box.cfg{election_mode = 'manual'}
 
         if failover_cfg.state_provider == 'tarantool' then
             local params = assert(failover_cfg.tarantool_params)
