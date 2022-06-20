@@ -46,6 +46,7 @@ const ReplicasetListPageSection = () => {
   const replicasetListSearchable = useMemo(() => selectors.replicasetListSearchable(replicasetList), [replicasetList]);
 
   const filteredSearchableReplicasetList = useMemo(
+    //  Передаем массаи где искать и по каким критериям искать
     () => filters.filterSearchableReplicasetList(replicasetListSearchable, filter),
     [replicasetListSearchable, filter]
   );

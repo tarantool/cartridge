@@ -156,6 +156,7 @@ export const filterSearchableReplicasetList = (
 
   return filteredByProperties.map((replicaSet) => {
     let matchingServersCount = 0;
+    console.log('replicaSet', replicaSet);
 
     const servers = replicaSet.servers.map((server) => {
       const filterMatching = filterServerByTokens(server.meta?.searchString ?? '');

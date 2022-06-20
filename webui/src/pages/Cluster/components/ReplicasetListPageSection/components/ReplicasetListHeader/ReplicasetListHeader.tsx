@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { useStore } from 'effector-react';
+import { Checkbox } from '@tarantool.io/ui-kit';
 
 import * as models from 'src/models';
 
@@ -21,6 +22,8 @@ const ReplicasetListHeader = ({ filter, onFilterChange }: ReplicasetListHeaderPr
   const serverListStore = useStore($serverList);
   const clusterStore = useStore($cluster);
 
+  const [onlyLeader, setOnlyLeader] = React.useState(true);
+
   const { total, unhealthy } = useMemo(() => selectors.replicasetCounts(serverListStore), [serverListStore]);
   const knownRoles = useMemo(() => selectors.knownRoles(clusterStore), [clusterStore]);
 
@@ -41,6 +44,9 @@ const ReplicasetListHeader = ({ filter, onFilterChange }: ReplicasetListHeaderPr
           setValue={onFilterChange}
           roles={knownRoles}
         />
+        <Checkbox checked={onlyLeader} onChange={() => setOnlyLeader(!onlyLeader)}>
+          Only Leader
+        </Checkbox>
       </div>
     </div>
   );
