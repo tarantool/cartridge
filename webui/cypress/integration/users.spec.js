@@ -47,7 +47,7 @@ describe('Users', () => {
     cy.log('Tab title on Users page');
     ////////////////////////////////////////////////////////////////////
     cy.visit('/admin/cluster/dashboard');
-    cy.get('a[href="/admin/cluster/users"]').click( { force: true } );
+    cy.get('a[href="/admin/cluster/users"]').click({ force: true });
     cy.testScreenshots('UsersPage');
     cy.title().should('eq', 'cartridge-testing.r1: Users');
 
@@ -161,7 +161,7 @@ describe('Users', () => {
     cy.log('Edit user');
     ////////////////////////////////////////////////////////////////////
     cy.get('a:contains(TestUserName)').parents('tr').find('td').eq(3).find('button')
-      .eq(0).click( { force: true } );
+      .eq(0).click({ force: true });
     cy.get('h2:contains(Edit TestUserName)');
     cy.get('label:contains(New password)').parent('div').next().find('input').should('be.focused');
     cy.focused().blur();
@@ -224,10 +224,10 @@ describe('Users', () => {
     cy.log('Remove user');
     ////////////////////////////////////////////////////////////////////
     cy.get('a:contains(TestUserName)').parents('tr').find('td').eq(3).find('button')
-      .eq(1).click( { force: true } );
+      .eq(1).click({ force: true });
     cy.get('.meta-test__UserRemoveModal h2:contains(Please confirm)');
     cy.get('.meta-test__UserRemoveModal span:contains(Removing user TestUserName)');
-    cy.get('.meta-test__UserRemoveModal button:contains(Remove)').click( { force: true } );
+    cy.get('.meta-test__UserRemoveModal button:contains(Remove)').click({ force: true });
 
     cy.get('.meta-test__UserRemoveModal').should('not.exist');
     cy.contains('TestUserName').should('not.exist');

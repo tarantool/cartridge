@@ -47,7 +47,7 @@ describe('Network error panel', () => {
       .contains('Network connection problem or server disconnected');
     cy.testScreenshots('NetworkProblemsCluster');
 
-    cy.get('a[href="/jkl/admin/cluster/users"]').click( { force: true } );
+    cy.get('a[href="/jkl/admin/cluster/users"]').click({ force: true });
     cy.get('h1:contains(Users)', {timeout: 10000});
     cy.get('#root').contains('Network problem').should('exist');
     cy.get('#root').contains('Failed to fetch').should('exist');
