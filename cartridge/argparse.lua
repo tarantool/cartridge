@@ -321,14 +321,7 @@ local function parse_file(filename, app_name, instance_name)
 
         instance_name = instance_name and string.strip(instance_name) or ''
         if instance_name ~= '' then
-            local parts = instance_name:split('.')
-            for n = 1, #parts do
-                local section_name = table.concat(parts, '.', 1, n)
-                if app_name ~= '' then
-                    section_name = app_name .. '.' .. section_name
-                end
-                table.insert(section_names, section_name)
-            end
+            table.insert(section_names, app_name .. '.' .. instance_name)
         end
     end
 

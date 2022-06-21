@@ -42,6 +42,8 @@ Changed
   It configures with ``failover_suppress_threshold`` and
   ``failover_suppress_timeout`` options of argparse.
 
+- Remove config namespace feature. If instance name contains dot, the config validation failed.
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
