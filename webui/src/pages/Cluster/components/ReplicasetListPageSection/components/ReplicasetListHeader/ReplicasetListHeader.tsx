@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
-import { useStore } from 'effector-react';
-import { Checkbox } from '@tarantool.io/ui-kit';
+import { useEvent, useStore } from 'effector-react';
 
 import * as models from 'src/models';
+import ReplicasetFilter from 'src/pages/Cluster/components/ReplicasetFilter';
 
 import { CountHeader } from '../../../CountHeader';
 import { CountHeaderDelimiter } from '../../../CountHeaderDelimiter';
@@ -11,18 +11,17 @@ import ReplicasetFilterInput from '../../../ReplicasetFilterInput';
 
 import { styles } from './ReplicasetListHeader.styles';
 
-const { $cluster, selectors, $serverList } = models.cluster.serverList;
+const { $cluster, $rolesFilter, $serverList, $ratingFilter, setRolesFiltered, setRatingFiltered, selectors } =
+  models.cluster.serverList;
 
-export interface ReplicasetListHeaderProps {
-  filter: string;
-  onFilterChange: (value: string) => void;
-}
-
-const ReplicasetListHeader = ({ filter, onFilterChange }: ReplicasetListHeaderProps) => {
+const ReplicasetListHeader = () => {
   const serverListStore = useStore($serverList);
   const clusterStore = useStore($cluster);
+  const rolesFilter = useStore($rolesFilter);
+  const ratingFilter = useStore($ratingFilter);
 
-  const [onlyLeader, setOnlyLeader] = React.useState(true);
+  const setRolesFilter = useEvent(setRolesFiltered);
+  const setRatingFilter = useEvent(setRatingFiltered);
 
   const { total, unhealthy } = useMemo(() => selectors.replicasetCounts(serverListStore), [serverListStore]);
   const knownRoles = useMemo(() => selectors.knownRoles(clusterStore), [clusterStore]);
@@ -40,13 +39,19 @@ const ReplicasetListHeader = ({ filter, onFilterChange }: ReplicasetListHeaderPr
       <div className={styles.filter}>
         <ReplicasetFilterInput
           className="meta-test__Filter"
-          value={filter}
-          setValue={onFilterChange}
+          value={rolesFilter}
+          setValue={setRolesFilter}
           roles={knownRoles}
         />
-        <Checkbox checked={onlyLeader} onChange={() => setOnlyLeader(!onlyLeader)}>
-          Only Leader
-        </Checkbox>
+        <ReplicasetFilter
+          filters={[
+            { prefix: 'is', name: 'leader' },
+            { prefix: 'is', name: 'followers' },
+          ]}
+          className="meta-test__Filter"
+          value={ratingFilter}
+          setValue={setRatingFilter}
+        />
       </div>
     </div>
   );

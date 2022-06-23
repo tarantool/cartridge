@@ -34,8 +34,12 @@ export const disableOrEnableServerEvent = app.domain.createEvent<DisableOrEnable
 export const requestBootstrapEvent = app.domain.createEvent('request bootstrap event');
 export const showBootstrapPanelEvent = app.domain.createEvent('show bootstrap panel event');
 export const hideBootstrapPanelEvent = app.domain.createEvent('hide bootstrap panel event');
+export const setRolesFiltered = app.domain.createEvent<string>('set filtered roles event');
+export const setRatingFiltered = app.domain.createEvent<string>('set filtered rating event');
 
 // stores
+export const $rolesFilter = app.domain.createStore<string>('');
+export const $ratingFilter = app.domain.createStore<string>('');
 export const $serverList = app.domain.createStore<ServerList>(null);
 export const $cluster = app.domain.createStore<GetCluster>(null);
 
@@ -63,6 +67,21 @@ export const requestBootstrapFx = app.domain.createEffect('request bootstrap');
 // computed
 export const $failoverParamsMode = $cluster.map((state) => selectors.failoverParamsMode(state) ?? null);
 export const $knownRolesNames = $cluster.map(selectors.knownRolesNames);
+export const $replicasetsList = $serverList.map((state) => selectors.replicasetList(state) ?? null);
+
+$rolesFilter.on(setRolesFiltered, (_, payload) => payload);
+$ratingFilter.on(setRatingFiltered, (_, payload) => payload);
+
+export const $filteredReplicasetList = combine(
+  $replicasetsList,
+  $rolesFilter,
+  $ratingFilter,
+  (replicasetsList, rolesFilter, leaderFilter) => {
+    const filteredData = selectors.replicasetListSearchable(replicasetsList);
+    const filteredRoles = filters.filterSearchableReplicasetList(filteredData, rolesFilter);
+    return filters.filteredReplicaIsLeader(filteredRoles, leaderFilter);
+  }
+);
 
 export const $bootstrapPanel = combine({
   visible: $bootstrapPanelVisible,

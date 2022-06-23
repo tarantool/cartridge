@@ -6,7 +6,6 @@ export const styles = {
     input {
       width: 100%;
     }
-    margin-bottom: 10px;
   `,
   chevron: css`
     fill: rgba(245, 34, 45, 0.65);
