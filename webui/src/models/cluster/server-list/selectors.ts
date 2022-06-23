@@ -1,4 +1,4 @@
-import { app } from 'src/models';
+import { DataRatingServers, app } from 'src/models';
 import type { Maybe } from 'src/models';
 
 import type {
@@ -30,6 +30,9 @@ export const serverRo = (server: ServerListServer): boolean | undefined => serve
 
 export const replicasetServerRo = (server: ServerListReplicasetServer): boolean | undefined =>
   server.boxinfo?.general?.ro;
+
+export const replicasetServerIsLeader = (server: ServerListReplicasetServer): string | undefined =>
+  server.boxinfo?.general?.ro ? 'follower' : 'leader';
 
 export const clusterVshardGroups = (cluster: Maybe<GetClusterCluster>): GetClusterVshardGroup[] =>
   compact(cluster?.vshard_groups ?? []);
@@ -221,6 +224,24 @@ const replicasetServerSearchItems = ({ uri, alias }: ServerListReplicasetServer)
   return [uri, alias ?? ''].filter(Boolean);
 };
 
+const replicasetServerSearchAlias = ({ alias }: ServerListReplicasetServer): string[] => {
+  return [alias ?? ''].filter(Boolean);
+};
+
+const replicasetLeader = ({ servers }: ServerListReplicaset): DataRatingServers => {
+  return servers.reduce(
+    (acc, cur) => {
+      if (replicasetServerRo(cur) && cur.alias) {
+        acc.followers.push(cur.alias);
+      } else if (!replicasetServerRo(cur)) {
+        acc.leader = cur.alias || '';
+      }
+      return acc;
+    },
+    { leader: '', followers: [] } as DataRatingServers
+  );
+};
+
 const replicasetSearchItems = ({ alias, roles, servers }: ServerListReplicaset): string[] => {
   const tokens = servers.reduce((acc, item) => {
     replicasetServerSearchItems(item).forEach((value) => {
@@ -245,6 +266,9 @@ export const replicasetListSearchable = (items: ServerListReplicaset[]): ServerL
       ...server,
       meta: {
         searchString: searchStringItemsToString(replicasetServerSearchItems(server)),
+        searchLeaderString: `${searchStringItemsToString(
+          replicasetServerSearchAlias(server)
+        )} ${replicasetServerIsLeader(server)}`,
       },
     }));
 
@@ -253,6 +277,7 @@ export const replicasetListSearchable = (items: ServerListReplicaset[]): ServerL
       servers,
       meta: {
         searchString: searchStringItemsToString(replicasetSearchItems(replicaset)),
+        ratingServersInReplicaset: replicasetLeader(replicaset),
       },
     };
   });
