@@ -42,7 +42,8 @@ Changed
   It configures with ``failover_suppress_threshold`` and
   ``failover_suppress_timeout`` options of argparse.
 
-- Remove config namespace feature. If instance name contains dot, the config validation failed.
+- Revert argparse throws an error when it encouters ``instance_name`` missing in
+   instances.yml.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed

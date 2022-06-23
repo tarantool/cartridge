@@ -296,8 +296,8 @@ local function parse_env()
     return ret
 end
 
-local function parse_file(filename, app_name, instance_name)
-    checks('string', '?string', '?string')
+local function parse_file(filename, search_name)
+    checks('string', 'string')
 
     local file_sections, err
 
@@ -312,32 +312,15 @@ local function parse_file(filename, app_name, instance_name)
     end
 
     local section_names = {'default'}
-
-    do -- generate section names to be parsed
-        app_name = app_name and string.strip(app_name) or ''
-        if app_name ~= '' then
-            table.insert(section_names, app_name)
-        end
-
-        instance_name = instance_name and string.strip(instance_name) or ''
-        if instance_name ~= '' then
-            table.insert(section_names, app_name .. '.' .. instance_name)
-        end
+    local search_name_parts = search_name:split('.')
+     for n = 1, #search_name_parts do
+         local section_name = table.concat(search_name_parts, '.', 1, n)
+         table.insert(section_names, section_name)
     end
 
     local ret = {}
     for _, section_name in ipairs(section_names) do
-        local content = file_sections[section_name]
-
-        if section_name ~= 'default'
-        and section_name ~= app_name
-        and content == nil then
-            -- When an instance's name can't be found in file_sections,
-            -- the instance shouldn't be started. Such behavior would violate
-            -- https://github.com/tarantool/cartridge/issues/1437
-            return nil, ParseConfigError:new('Missing section: %s', section_name)
-        end
-        content = content or {}
+        local content = file_sections[section_name] or {}
 
         for argname, argvalue in pairs(content) do
             ret[argname:lower()] = argvalue
@@ -396,7 +379,12 @@ local function _parse()
         args.cfg = args.cfg .. '/'
     end
 
-    local cfg, err = parse_file(args.cfg, args.app_name, args.instance_name)
+    local search_name = args.instance_name or ''
+    if args.app_name ~= nil then
+        search_name = args.app_name .. '.' .. search_name
+    end
+
+    local cfg, err = parse_file(args.cfg, search_name)
     if not cfg then
         return nil, err
     else
