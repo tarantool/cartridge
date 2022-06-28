@@ -42,6 +42,9 @@ Changed
   It configures with ``failover_suppress_threshold`` and
   ``failover_suppress_timeout`` options of argparse.
 
+- Revert argparse throws an error when it encouters ``instance_name`` missing in
+   instances.yml.
+
 - Update ``ddl`` dependency to 1.6.1.
   (`Changelog <https://github.com/tarantool/ddl/releases/tag/1.6.1>`__).
 
