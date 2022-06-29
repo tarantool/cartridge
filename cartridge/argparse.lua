@@ -440,46 +440,59 @@ local function get_opts(opts)
 
     local ret = {}
     for optname, opttype in pairs(opts) do
+        local opttype_str = false
+        local opttype_num = false
+        local opttype_bool = false
+        local multi_types = string.gsub(opttype, ' ', '')
+        for _opttype in string.gmatch(multi_types, "[^|]+") do
+            if _opttype == 'string' then
+                opttype_str = true
+            elseif _opttype == 'number' then
+                opttype_num = true
+            elseif _opttype == 'boolean' then
+                opttype_bool = true
+            else
+                return nil, TypeCastError:new(
+                    "can't typecast %s to %s (unsupported type)",
+                    optname, _opttype
+                )
+            end
+        end
+
         local value = args[optname]
         if value == nil then -- luacheck: ignore 542
             -- ignore
         elseif type(value) == opttype then
             ret[optname] = value
-        elseif type(value) == 'number' and opttype == 'string' then
-            ret[optname] = tostring(value)
+        elseif type(value) == 'number' and ( opttype_num or opttype_str ) then
+            local _value = tostring(value)
+            if opttype_num then
+                _value = value
+            end
+            ret[optname] = _value
         elseif type(value) == 'string' then
-            local multi_types = string.gsub(opttype, ' ', '');
-            local continue = true
-            local _value = nil
-            local str_value = nil
-            for _opttype in string.gmatch(multi_types, "[^|]+") do
-                if continue then
-                    if _opttype == 'string' then
-                        str_value = tostring(value)
-                    elseif _opttype == 'number' then
-                        _value = tonumber(value)
-                    elseif _opttype == 'boolean' then
-                        _value = toboolean(value)
-                    else
-                        return nil, TypeCastError:new(
-                            "can't typecast %s to %s (unsupported type)",
-                            optname, _opttype
-                        )
-                    end
-                    if _value ~= nil then
-                        continue = false
-                    end
-                end
+            local _value
+
+            if opttype_num then
+                _value = tonumber(value)
+            elseif opttype_bool then
+                _value = toboolean(value)
+            else
+                return nil, TypeCastError:new(
+                    "can't typecast %s to %s (unsupported type)",
+                    optname, opttype
+                )
+            end
+
+            if _value == nil and opttype_str then
+                _value = value
             end
 
             if _value == nil then
-                _value = str_value
-                if _value == nil then
-                    return nil, TypeCastError:new(
-                        "can't typecast %s=%q to %s",
-                        optname, value, opttype
-                    )
-                end
+                return nil, TypeCastError:new(
+                    "can't typecast %s=%q to %s",
+                    optname, value, opttype
+                )
             end
 
             ret[optname] = _value

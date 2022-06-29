@@ -392,6 +392,21 @@ g.test_replication_quorum_opts = function()
         replication_synchro_quorum = 'N/3+5',
     })
 
+    utils.file_write(
+        fio.pathjoin(g.tempdir, 'cfg.yml'),
+        yaml.encode({
+            default = {
+                replication_synchro_quorum = 2,
+            },
+        })
+    )
+
+    local box_opts, err = unpack(g.run('--cfg ./cfg.yml').box_opts)
+    t.assert_not(err)
+    t.assert_equals(box_opts, {
+        replication_synchro_quorum = 2,
+    })
+
     local function check(cmd_args, expected)
         local ret = g.run(cmd_args, {})
         t.assert_equals(ret.box_opts, {expected})
