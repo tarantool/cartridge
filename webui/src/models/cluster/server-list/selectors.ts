@@ -31,7 +31,7 @@ export const serverRo = (server: ServerListServer): boolean | undefined => serve
 export const replicasetServerRo = (server: ServerListReplicasetServer): boolean | undefined =>
   server.boxinfo?.general?.ro;
 
-export const replicasetServerIsLeader = (server: ServerListReplicasetServer): string | undefined =>
+export const replicasetServerIsLeader = (server: ServerListReplicasetServer): string =>
   server.boxinfo?.general?.ro ? 'follower' : 'leader';
 
 export const clusterVshardGroups = (cluster: Maybe<GetClusterCluster>): GetClusterVshardGroup[] =>

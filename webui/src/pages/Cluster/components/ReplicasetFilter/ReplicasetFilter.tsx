@@ -5,7 +5,7 @@ import { cx } from '@emotion/css';
 // @ts-ignore
 import { Button, DropdownDivider, DropdownItem, IconChevron, IconSearch, Input, withDropdown, } from '@tarantool.io/ui-kit';
 
-import { styles } from 'src/pages/Cluster/components/ReplicasetFilter/ReplicasetFilter.styles';
+import { styles } from './ReplicasetFilter.styles';
 
 type DataFiltersType = Record<'prefix' | 'name', string>;
 
