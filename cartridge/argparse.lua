@@ -101,7 +101,7 @@ local cluster_opts = {
 --- Common `box.cfg <https://www.tarantool.io/en/doc/latest/reference/configuration/>`_ tuning options.
 -- @table box_opts
 local box_opts = {
-    listen                   = 'string', -- **string**
+    listen                   = 'string|number', -- **string|number**
     memtx_memory             = 'number', -- **number**
     memtx_allocator          = 'string', -- **string**
     strip_core               = 'boolean', -- **boolean**
@@ -443,7 +443,6 @@ local function get_opts(opts)
         local opttype_str = false
         local opttype_num = false
         local opttype_bool = false
-        local multi_types = string.gsub(opttype, ' ', '')
         for _, _opttype in pairs(string.split(opttype, '|')) do
             if _opttype == 'string' then
                 opttype_str = true
@@ -465,11 +464,7 @@ local function get_opts(opts)
         elseif type(value) == opttype then
             ret[optname] = value
         elseif type(value) == 'number' and ( opttype_num or opttype_str ) then
-            local _value = tostring(value)
-            if opttype_num then
-                _value = value
-            end
-            ret[optname] = _value
+            ret[optname] = value
         elseif type(value) == 'string' then
             local _value
 

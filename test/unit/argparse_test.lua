@@ -333,7 +333,7 @@ g.test_box_opts = function()
         slab_alloc_factor = 1.3,
         log_nonblock = false,
         memtx_memory = 100,
-        listen = '13301',
+        listen = 13301,
         read_only = true,
     })
 
