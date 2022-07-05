@@ -12,7 +12,7 @@ and this project adheres to
 [Unreleased]
 -------------------------------------------------------------------------------
 
-- Fix ``replication_synchro_quorum`` param.
+- Fix multitype argparser params.
 
 -------------------------------------------------------------------------------
 [2.7.5] - 2021-06-28
