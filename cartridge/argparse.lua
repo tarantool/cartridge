@@ -444,7 +444,7 @@ local function get_opts(opts)
         local opttype_num = false
         local opttype_bool = false
         local multi_types = string.gsub(opttype, ' ', '')
-        for _opttype in string.gmatch(multi_types, "[^|]+") do
+        for _, _opttype in pairs(string.split(opttype, '|')) do
             if _opttype == 'string' then
                 opttype_str = true
             elseif _opttype == 'number' then
