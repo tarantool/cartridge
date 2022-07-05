@@ -96,6 +96,14 @@ local cluster_opts = {
     upgrade_schema = 'boolean', -- **boolean**
     swim_broadcast = 'boolean', -- **boolean**
     upload_prefix = 'string', -- **string**
+    transport = 'string', -- **string**
+    ssl_ciphers = 'string', -- **string**
+    ssl_server_ca_file = 'string', -- **string**
+    ssl_server_cert_file = 'string', -- **string**
+    ssl_server_key_file = 'string', -- **string**
+    ssl_client_ca_file = 'string', -- **string**
+    ssl_client_cert_file = 'string', -- **string**
+    ssl_client_key_file = 'string', -- **string**
 }
 
 --- Common `box.cfg <https://www.tarantool.io/en/doc/latest/reference/configuration/>`_ tuning options.
@@ -312,11 +320,19 @@ local function parse_file(filename, search_name)
     end
 
     local section_names = {'default'}
-    local search_name_parts = search_name:split('.')
-     for n = 1, #search_name_parts do
-         local section_name = table.concat(search_name_parts, '.', 1, n)
-         table.insert(section_names, section_name)
+
+    do -- generate section names to be parsed
+        app_name = app_name and string.strip(app_name) or ''
+        if app_name ~= '' then
+            table.insert(section_names, app_name)
+        end
+
+        instance_name = instance_name and string.strip(instance_name) or ''
+        if instance_name ~= '' then
+            table.insert(section_names, app_name .. '.' .. instance_name)
+        end
     end
+
 
     local ret = {}
     for _, section_name in ipairs(section_names) do
