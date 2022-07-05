@@ -22,6 +22,7 @@ local digest = require('digest')
 local pickle = require('pickle')
 local msgpack = require('msgpack')
 local utils = require('cartridge.utils')
+local sslsocket = require('cartridge.sslsocket')
 local vars = require('cartridge.vars').new('cartridge.remote-control')
 
 vars:new('server')
@@ -91,6 +92,7 @@ local iproto_code = {
     [0x41] = "iproto_join",
     [0x42] = "iproto_subscribe",
     [0x43] = "iproto_request_vote",
+    [0x44] = "iproto_vote",
 }
 
 local function mpenc_uint32(n)
@@ -161,6 +163,7 @@ end
 local function communicate(s)
     local ok, buf = pcall(s.read, s, 5)
     if not ok or buf == nil or buf == '' then
+        log.info(buf)
         log.debug('Peer closed')
         return false
     end
@@ -175,6 +178,10 @@ local function communicate(s)
     end
 
     local header, pos = msgpack.decode(buf, pos)
+    if header == nil or type(header) ~= 'table' then
+        log.info("Invalid header in messagepack")
+        return false
+    end
     local body = nil
     if pos < #buf then
         body = msgpack.decode(buf, pos)
@@ -328,7 +335,10 @@ local function rc_handle(s)
         end
     end
 
-    s:write(greeting)
+    local ok, err = s:write(greeting)
+    if not ok then
+        log.info(err)
+    end
 
     while vars.handlers[s] ~= nil or next(handler.storage.tasks) ~= nil do
         local ok, err = RemoteControlError:pcall(communicate, s)
@@ -353,17 +363,68 @@ end
 -- @treturn[1] boolean true
 -- @treturn[2] nil
 -- @treturn[2] table Error description
-local function bind(host, port)
-    checks('string', 'string|number')
+local function bind(host, port, sslparams)
+    checks('string|table', 'string|number', '?table')
 
     if vars.server ~= nil then
         return nil, RemoteControlError:new('Already running')
     end
 
-    local server = socket.tcp_server(host, port, {
-        name = 'remote_control',
-        handler = rc_handle,
-    })
+    local server
+    if type(sslparams) == 'table' then
+        log.info("Remote control over sssl")
+        local ctx = sslsocket.ctx(ffi.C.TLS_server_method())
+        -- SSL_CTX_set_default_passwd_cb(ssl_ctx, passwd_cb);
+        -- SSL_CTX_set_min_proto_version(ssl_ctx, TLS1_2_VERSION) != 1 ||
+        -- SSL_CTX_set_max_proto_version(ssl_ctx, TLS1_2_VERSION) != 1) 
+
+        -- SSL_CTX_use_certificate_file(ssl_ctx, cert_file,
+        --			 SSL_FILETYPE_PEM)
+        --   OR   SSL_CTX_use_certificate_chain_file
+        -- SL_CTX_use_PrivateKey_file(ssl_ctx, key_file,
+        --			SSL_FILETYPE_PEM)
+        -- SSL_CTX_load_verify_locations(ssl_ctx, ca_file, NULL) != 1)
+        -- SSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_PEER |
+        --		   SSL_VERIFY_FAIL_IF_NO_PEER_CERT, NULL);
+        -- SSL_CTX_set_cipher_list(ssl_ctx, ciphers) != 1)
+        -- 
+        local rc = sslsocket.ctx_use_private_key_file(ctx, sslparams.ssl_key_file)
+        if rc == false then
+            log.info('Private key is invalid')
+            return
+        end
+        rc = sslsocket.ctx_use_certificate_file(ctx, sslparams.ssl_cert_file)
+        if rc == false then
+            log.info('Certificate is invalid')
+            return
+        end
+        if sslparams.ssl_ca_file ~= nil then
+            rc = sslsocket.ctx_load_verify_locations(ctx, sslparams.ssl_ca_file)
+            if rc == false then
+                log.info('CA file is invalid')
+                return
+            end
+
+            sslsocket.ctx_set_verify(ctx, 0x01 + 0x02)
+            -- SSL_VERIFY_PEER
+            -- SSL_VERIFY_FAIL_IF_NO_PEER_CERT
+        end
+        if sslparams.ssl_ciphers ~= nil then
+            rc = sslsocket.ctx_set_cipher_list(ctx, sslparams.ssl_ciphers)
+            if rc == false then
+                log.info('Ciphers is invalid')
+                return
+            end
+        end
+
+        server = sslsocket.tcp_server(host, port, 
+            rc_handle, sslparams.timeout, ctx)
+    else
+        server = socket.tcp_server(host, port, {
+            name = 'remote_control',
+            handler = rc_handle,
+        })
+    end
 
     if not server then
         local err = RemoteControlError:new(

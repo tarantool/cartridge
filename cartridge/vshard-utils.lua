@@ -32,6 +32,7 @@ vars:new('known_groups', nil
     --    }
     --}
 )
+vars:new('sslparams', {})
 
 local function validate_group_weights(group_name, topology)
     checks('string', 'table')
@@ -477,10 +478,38 @@ local function get_vshard_config(group_name, conf)
             end
 
             local replicas = sharding[replicaset_uuid].replicas
+            local listen_uri
+            if vars.sslparams.transport == 'ssl' then
+                listen_uri = {}
+                table.insert(listen_uri, {
+                    pool.format_uri(server.uri),
+                    params = {
+                        transport = vars.sslparams.transport,
+                        
+                        ssl_ca_file = vars.sslparams.ssl_server_ca_file,
+                        ssl_cert_file = vars.sslparams.ssl_server_cert_file,
+                        ssl_key_file = vars.sslparams.ssl_server_key_file,
+                    }})
+            end
+
+            local client_uri = pool.format_uri(server.uri)
+            if vars.sslparams.transport == 'ssl' then
+                client_uri = {
+                    pool.format_uri(server.uri),
+                    params = {
+                        transport = vars.sslparams.transport,
+                        
+                        ssl_ca_file = vars.sslparams.ssl_client_ca_file,
+                        ssl_cert_file = vars.sslparams.ssl_client_cert_file,
+                        ssl_key_file = vars.sslparams.ssl_client_key_file,
+                    }}
+            end
+
             replicas[instance_uuid] = {
                 name = server.uri,
                 zone = server.zone,
-                uri = pool.format_uri(server.uri),
+                listen = listen_uri,
+                uri = client_uri,
                 master = (active_leaders[replicaset_uuid] == instance_uuid),
             }
         end
@@ -675,6 +704,11 @@ end
 
 twophase.on_patch(patch_zone_distances)
 
+local function init(sslparams)
+    vars.sslparams = sslparams
+end
+
+
 return {
     validate_config = function(...)
         return ValidateConfigError:pcall(validate_config, ...)
@@ -687,4 +721,6 @@ return {
     can_bootstrap = can_bootstrap,
     edit_vshard_options = edit_vshard_options,
     patch_zone_distances = patch_zone_distances,
+
+    init = init,
 }

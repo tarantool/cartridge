@@ -58,6 +58,17 @@ vars:new('upgrade_schema', nil)
 
 vars:new('enable_failover_suppressing', nil)
 
+vars:new('transport', nil)
+vars:new('ssl_ciphers', nil)
+vars:new('ssl_server_ca_file', nil)
+vars:new('ssl_server_cert_file', nil)
+vars:new('ssl_server_key_file', nil)
+
+vars:new('ssl_client_ca_file', nil)
+vars:new('ssl_client_cert_file', nil)
+vars:new('ssl_client_key_file', nil)
+
+
 local state_transitions = {
 -- init()
     -- Initial state.
@@ -233,7 +244,13 @@ local function restart_replication()
     box.cfg({
         replication = topology.get_fullmesh_replication(
             topology_cfg, vars.replicaset_uuid,
-            vars.instance_uuid, vars.advertise_uri
+            vars.instance_uuid, vars.advertise_uri,
+            {
+                transport = vars.transport,
+                ssl_ca_file = vars.ssl_client_ca_file,
+                ssl_cert_file = vars.ssl_client_cert_file,
+                ssl_key_file = vars.ssl_client_key_file,
+            }
         ),
     })
     return true
@@ -265,7 +282,13 @@ local function apply_config(clusterwide_config)
     box.cfg({
         replication = topology.get_fullmesh_replication(
             topology_cfg, vars.replicaset_uuid,
-            vars.instance_uuid, vars.advertise_uri
+            vars.instance_uuid, vars.advertise_uri,
+            {
+                transport = vars.transport,
+                ssl_ca_file = vars.ssl_client_ca_file,
+                ssl_cert_file = vars.ssl_client_cert_file,
+                ssl_key_file = vars.ssl_client_key_file,
+            }
         ),
     })
 
@@ -422,7 +445,13 @@ local function boot_instance(clusterwide_config)
             -- Workaround for https://github.com/tarantool/tarantool/issues/3760
             -- Due to the bug box_opts.replication_connect_quorum was ignored
             -- and box.cfg used to hang
-            instance_uuid, nil
+            instance_uuid, nil,
+            {
+                transport = vars.transport,
+                ssl_ca_file = vars.ssl_client_ca_file,
+                ssl_cert_file = vars.ssl_client_cert_file,
+                ssl_key_file = vars.ssl_client_key_file,
+            }
         )
         if #box_opts.replication == 0 then
             box_opts.read_only = false
@@ -472,7 +501,20 @@ local function boot_instance(clusterwide_config)
             -- readonly.
             box_opts.replication_connect_quorum = 0
         else
-            box_opts.replication = {pool.format_uri(leader.uri)}
+            if vars.transport == 'ssl' then
+                local uri = {
+                    uri = pool.format_uri(leader.uri),
+                    params = {
+                        transport = 'ssl',
+                        ssl_ca_file = vars.ssl_client_ca_file,
+                        ssl_cert_file = vars.ssl_client_cert_file,
+                        ssl_key_file = vars.ssl_client_key_file,
+                    }
+                }
+                box_opts.replication = {uri}
+            else
+                box_opts.replication = {pool.format_uri(leader.uri)}
+            end
         end
     end
 
@@ -483,7 +525,7 @@ local function boot_instance(clusterwide_config)
     -- There is no need in unnecessary suspicions
     require('membership.options').SUSPICIOUSNESS = false
 
-    log.warn('Calling box.cfg()...')
+    log.warn('Calling box.cfg()... %s', require('json').encode(box_opts))
     -- This operation may be long
     -- It recovers snapshot
     -- Or bootstraps replication
@@ -547,8 +589,25 @@ local function boot_instance(clusterwide_config)
     -- Box is ready, start listening full-featured iproto protocol
     remote_control.stop()
     log.info('Remote control stopped')
+    
+    local listen_uri = vars.binary_port
+    if vars.transport == 'ssl' then
+        listen_uri = {}
+        table.insert(listen_uri, {
+            uri = vars.binary_port,
+            params = {
+                transport = vars.transport,
+                
+                ssl_ca_file = vars.ssl_server_ca_file,
+                ssl_cert_file = vars.ssl_server_cert_file,
+                ssl_key_file = vars.ssl_server_key_file,
+            }})
+        log.info('box cfg listen ssl')
+        log.info(require('json').encode(listen_uri))
+    end
+
     local _, err = BoxError:pcall(
-        box.cfg, {listen = vars.binary_port}
+        box.cfg, {listen = listen_uri}
     )
 
     if err ~= nil then
@@ -592,7 +651,13 @@ local function boot_instance(clusterwide_config)
     local _, err = BoxError:pcall(box.cfg, {
         replication = topology.get_fullmesh_replication(
             topology_cfg, vars.replicaset_uuid,
-            vars.instance_uuid, vars.advertise_uri
+            vars.instance_uuid, vars.advertise_uri,
+            {
+                transport = vars.transport,
+                ssl_ca_file = vars.ssl_client_ca_file,
+                ssl_cert_file = vars.ssl_client_cert_file,
+                ssl_key_file = vars.ssl_client_key_file,
+            }
         ),
     })
     if err ~= nil then
@@ -660,6 +725,16 @@ local function init(opts)
         advertise_uri = 'string',
         upgrade_schema = '?boolean',
         enable_failover_suppressing = '?boolean',
+
+        transport = '?string',
+        ssl_ciphers = '?string',
+        ssl_server_ca_file = '?string',
+        ssl_server_cert_file = '?string',
+        ssl_server_key_file = '?string',
+
+        ssl_client_ca_file = '?string',
+        ssl_client_cert_file = '?string',
+        ssl_client_key_file = '?string',
     })
 
     assert(vars.state == '', 'Unexpected state ' .. vars.state)
@@ -669,6 +744,14 @@ local function init(opts)
     vars.advertise_uri = opts.advertise_uri
     vars.upgrade_schema = opts.upgrade_schema
     vars.enable_failover_suppressing = opts.enable_failover_suppressing
+    vars.transport = opts.transport
+    vars.ssl_ciphers = opts.ssl_ciphers
+    vars.ssl_server_ca_file = opts.ssl_server_ca_file
+    vars.ssl_server_cert_file = opts.ssl_server_cert_file
+    vars.ssl_server_key_file = opts.ssl_server_key_file
+    vars.ssl_client_ca_file = opts.ssl_client_ca_file
+    vars.ssl_client_cert_file = opts.ssl_client_cert_file
+    vars.ssl_client_key_file = opts.ssl_client_key_file
 
     local parts = uri_tools.parse(opts.advertise_uri)
     local addrinfo, err = socket.getaddrinfo(
@@ -680,7 +763,15 @@ local function init(opts)
         return nil, InitError:new("Could not resolve advertise uri %s", opts.advertise_uri)
     end
 
-    local ok, err = remote_control.bind(addrinfo[1].host, vars.binary_port)
+    local ok, err = remote_control.bind(addrinfo[1].host, vars.binary_port, {
+        transport = vars.transport,
+        ssl_ciphers = vars.ssl_ciphers,
+        ssl_ca_file = vars.ssl_server_ca_file,
+        ssl_cert_file = vars.ssl_server_cert_file,
+        ssl_key_file = vars.ssl_server_key_file,
+        ssl_ciphers = vars.ssl_server_ciphers,
+        timeout = 10,
+    })
     if not ok then
         set_state('InitError', err)
         return nil, err

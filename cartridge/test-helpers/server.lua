@@ -42,6 +42,15 @@ Server.constructor_checks = fun.chain(Server.constructor_checks, {
     labels = '?table',
     zone = '?string',
     swim_period = '?number',
+
+    transport = '?string',
+    ssl_ciphers = '?string',
+    ssl_server_ca_file = '?string',
+    ssl_server_cert_file = '?string',
+    ssl_server_key_file = '?string',
+    ssl_client_ca_file = '?string',
+    ssl_client_cert_file = '?string',
+    ssl_client_key_file = '?string',
 }):tomap()
 
 function Server:initialize()
@@ -52,6 +61,7 @@ function Server:initialize()
         user = 'admin',
         password = self.cluster_cookie,
     }
+
     if self.instance_uuid == nil then
         self.instance_uuid = require('uuid').str()
     end
@@ -70,6 +80,15 @@ function Server:build_env()
         TARANTOOL_CLUSTER_COOKIE = self.cluster_cookie,
         -- speedup tests by amplifying membership message exchange
         TARANTOOL_SWIM_PROTOCOL_PERIOD_SECONDS = self.swim_period or 0.2,
+
+        TARANTOOL_TRANSPORT = self.transport,
+        TARANTOOL_SSL_CIPHERS = self.ssl_ciphers,
+        TARANTOOL_SSL_SERVER_CA_FILE = self.ssl_server_ca_file,
+        TARANTOOL_SSL_SERVER_CERT_FILE = self.ssl_server_cert_file,
+        TARANTOOL_SSL_SERVER_KEY_FILE = self.ssl_server_key_file,
+        TARANTOOL_SSL_CLIENT_CA_FILE = self.ssl_client_ca_file,
+        TARANTOOL_SSL_CLIENT_CERT_FILE = self.ssl_client_cert_file,
+        TARANTOOL_SSL_CLIENT_KEY_FILE = self.ssl_client_key_file,
     }
 end
 
@@ -81,9 +100,15 @@ local function reconnect(connection_old)
     )
     local fiber = require('fiber')
     fiber.new(function()
-        fiber.name(string.format('reconnect/%s', server.net_box_uri))
+        if type(server.net_box_uri) == 'string' then
+            fiber.name(string.format('reconnect/%s', server.net_box_uri))
+        elseif type(server.net_box_uri) == 'table' then
+            fiber.name(string.format('reconnect/%s', server.net_box_uri.uri))
+        end
+        local uri = server.net_box_uri
+
         local connection_new = require('net.box').connect(
-            server.net_box_uri, server.net_box_credentials
+            uri, server.net_box_credentials
         )
 
         if server.net_box ~= connection_old then
@@ -113,6 +138,22 @@ local function reconnect(connection_old)
 end
 
 function Server:connect_net_box()
+
+    if self.transport == 'ssl' then
+        if type(self.net_box_uri) == 'string' then
+            self.net_box_uri = {
+                uri = self.net_box_uri,
+                params = {
+                    transport = self.transport,
+                    ssl_ciphers = self.ssl_ciphers,
+                    ssl_cert_file = self.ssl_client_cert_file,
+                    ssl_key_file = self.ssl_client_key_file,
+                    ssl_ca_file = self.ssl_client_ca_file,
+                }
+            }
+        end
+    end
+
     getmetatable(getmetatable(self)).connect_net_box(self)
     self.net_box._server = self
     self.net_box:on_disconnect(reconnect)
