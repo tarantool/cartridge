@@ -101,7 +101,7 @@ local cluster_opts = {
 --- Common `box.cfg <https://www.tarantool.io/en/doc/latest/reference/configuration/>`_ tuning options.
 -- @table box_opts
 local box_opts = {
-    listen                   = 'string', -- **string**
+    listen                   = 'string|number', -- **string|number**
     memtx_memory             = 'number', -- **number**
     memtx_allocator          = 'string', -- **string**
     strip_core               = 'boolean', -- **boolean**
@@ -440,46 +440,56 @@ local function get_opts(opts)
 
     local ret = {}
     for optname, opttype in pairs(opts) do
+        local opttype_str = false
+        local opttype_num = false
+        local opttype_bool = false
+        for _, _opttype in pairs(string.split(opttype, '|')) do
+            if _opttype == 'string' then
+                opttype_str = true
+            elseif _opttype == 'number' then
+                opttype_num = true
+            elseif _opttype == 'boolean' then
+                opttype_bool = true
+            else
+                return nil, TypeCastError:new(
+                    "can't typecast %s to %s (unsupported type)",
+                    optname, _opttype
+                )
+            end
+        end
+
         local value = args[optname]
         if value == nil then -- luacheck: ignore 542
             -- ignore
         elseif type(value) == opttype then
             ret[optname] = value
-        elseif type(value) == 'number' and opttype == 'string' then
-            ret[optname] = tostring(value)
+        elseif type(value) == 'number' and ( opttype_num or opttype_str ) then
+            ret[optname] = value
         elseif type(value) == 'string' then
-            local multi_types = string.gsub(opttype, ' ', '');
-            local continue = true
-            local _value = nil
-            local str_value = nil
-            for _opttype in string.gmatch(multi_types, "[^|]+") do
-                if continue then
-                    if _opttype == 'string' then
-                        str_value = tostring(value)
-                    elseif _opttype == 'number' then
-                        _value = tonumber(value)
-                    elseif _opttype == 'boolean' then
-                        _value = toboolean(value)
-                    else
-                        return nil, TypeCastError:new(
-                            "can't typecast %s to %s (unsupported type)",
-                            optname, _opttype
-                        )
-                    end
-                    if _value ~= nil then
-                        continue = false
-                    end
-                end
+            local _value
+
+            if opttype_num then
+                _value = tonumber(value)
+            end
+            if _value == nil and opttype_bool then
+                _value = toboolean(value)
+            end
+            if _value == nil and opttype_str then
+                _value = value
+            end
+
+            if not opttype_num and not opttype_bool and not opttype_str then
+                return nil, TypeCastError:new(
+                    "can't typecast %s to %s (unsupported type)",
+                    optname, opttype
+                )
             end
 
             if _value == nil then
-                _value = str_value
-                if _value == nil then
-                    return nil, TypeCastError:new(
-                        "can't typecast %s=%q to %s",
-                        optname, value, opttype
-                    )
-                end
+                return nil, TypeCastError:new(
+                    "can't typecast %s=%q to %s",
+                    optname, value, opttype
+                )
             end
 
             ret[optname] = _value
@@ -498,6 +508,10 @@ return {
     parse = parse,
 
     get_opts = get_opts,
+
+    get_params = function()
+        return box_opts
+    end,
 
     --- Shorthand for `get_opts(box_opts)`.
     -- @function get_box_opts
