@@ -12,7 +12,7 @@ and this project adheres to
 [Unreleased]
 -------------------------------------------------------------------------------
 
-- Fix multitype argparser params.
+- Fix multitype argparse params.
 
 -------------------------------------------------------------------------------
 [2.7.5] - 2021-06-28
