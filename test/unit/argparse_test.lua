@@ -380,32 +380,42 @@ g.test_replication_quorum_opts = function()
     utils.file_write(
         fio.pathjoin(g.tempdir, 'cfg.yml'),
         yaml.encode({
-            default = {
+            quorum_is_string = {
                 replication_synchro_quorum = 'N/3+5',
             },
-        })
-    )
-
-    local box_opts, err = unpack(g.run('--cfg ./cfg.yml').box_opts)
-    t.assert_not(err)
-    t.assert_equals(box_opts, {
-        replication_synchro_quorum = 'N/3+5',
-    })
-
-    utils.file_write(
-        fio.pathjoin(g.tempdir, 'cfg.yml'),
-        yaml.encode({
-            default = {
+            quorum_is_number = {
                 replication_synchro_quorum = 2,
+            },
+            num_bool_is_num = {
+                testing_number_boolean = '123',
+            },
+            num_bool_is_bool = {
+                testing_number_boolean = 'False',
             },
         })
     )
 
-    local box_opts, err = unpack(g.run('--cfg ./cfg.yml').box_opts)
-    t.assert_not(err)
-    t.assert_equals(box_opts, {
-        replication_synchro_quorum = 2,
-    })
+    local function check_quorum(cmd_args, expected)
+        local box_opts, err = unpack(g.run(cmd_args).box_opts)
+        t.assert_not(err)
+        t.assert_equals(box_opts, {
+            replication_synchro_quorum = expected,
+        })
+    end
+
+    check_quorum('--cfg ./cfg.yml --instance-name quorum_is_string', 'N/3+5')
+    check_quorum('--cfg ./cfg.yml --instance-name quorum_is_number', 2)
+
+    local function check_num_bool(cmd_args, expected)
+        local box_opts, err = unpack(g.run(cmd_args).box_opts)
+        t.assert_not(err)
+        t.assert_equals(box_opts, {
+            testing_number_boolean = expected,
+        })
+    end
+
+    check_num_bool('--cfg ./cfg.yml --instance-name num_bool_is_num', 123)
+    check_num_bool('--cfg ./cfg.yml --instance-name num_bool_is_bool', false)
 
     local function check(cmd_args, expected)
         local ret = g.run(cmd_args, {})

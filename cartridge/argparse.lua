@@ -194,6 +194,7 @@ local box_opts = {
     election_mode            = 'string', -- **string**
     election_timeout         = 'number', -- **number**
     election_fencing_enabled = 'boolean', -- **boolean**
+    testing_number_boolean   = 'number|boolean', -- **number|boolean**
 }
 
 local function load_file(filename)
@@ -470,17 +471,19 @@ local function get_opts(opts)
 
             if opttype_num then
                 _value = tonumber(value)
-            elseif opttype_bool then
+            end
+            if _value == nil and opttype_bool then
                 _value = toboolean(value)
-            else
+            end
+            if _value == nil and opttype_str then
+                _value = value
+            end
+
+            if not opttype_num and not opttype_bool and not opttype_str then
                 return nil, TypeCastError:new(
                     "can't typecast %s to %s (unsupported type)",
                     optname, opttype
                 )
-            end
-
-            if _value == nil and opttype_str then
-                _value = value
             end
 
             if _value == nil then
