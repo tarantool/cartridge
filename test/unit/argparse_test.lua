@@ -24,6 +24,8 @@ g.before_each(function()
                 print(yaml.encode({err = tostring(err)}))
                 os.exit(1)
             end
+            local params = argparse.get_params()
+            params.testing_number_boolean = 'number|boolean' -- **number|boolean**
             local box_opts, err = argparse.get_box_opts()
             print(yaml.encode({
                 args = args,
@@ -308,7 +310,7 @@ g.test_box_opts = function()
                 slab_alloc_factor = '1.3', -- string -> number
                 log_nonblock = 'false',    -- string -> bool
                 memtx_memory = 100,        -- number -> number
-                listen = 13301,            -- number -> string
+                listen = 13301,            -- number -> number
                 read_only = true,          -- bool -> bool
             },
             boolean_to_string = {

@@ -194,7 +194,6 @@ local box_opts = {
     election_mode            = 'string', -- **string**
     election_timeout         = 'number', -- **number**
     election_fencing_enabled = 'boolean', -- **boolean**
-    testing_number_boolean   = 'number|boolean', -- **number|boolean**
 }
 
 local function load_file(filename)
@@ -509,6 +508,10 @@ return {
     parse = parse,
 
     get_opts = get_opts,
+
+    get_params = function()
+        return box_opts
+    end,
 
     --- Shorthand for `get_opts(box_opts)`.
     -- @function get_box_opts
