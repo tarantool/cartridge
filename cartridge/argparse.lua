@@ -344,12 +344,12 @@ end
 --- Parse command line arguments, environment variables, and configuration files.
 --
 -- For example, running an application as follows:
---    TARANTOOL_MY_CUSTOM_ARG='value' ./init.lua --alias router --memtx-memory 100
+--    TARANTOOL_MY_CUSTOM_ARG='value' ./init.lua --alias router --memtx-memory 33554432
 -- results in:
 --    local argparse = require('cartridge.argparse')
 --    argparse.parse()
 --    ---
---    - memtx_memory: '100'
+--    - memtx_memory: 33554432
 --      my_custom_arg: value
 --      alias: router
 --    ...
