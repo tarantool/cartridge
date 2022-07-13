@@ -15,36 +15,10 @@ ffi.cdef[[
  typedef struct SSL_CTX {} SSL_CTX;
  typedef struct SSL {} SSL;
 
- const SSL_METHOD *TLS_method(void);
  const SSL_METHOD *TLS_server_method(void);
  const SSL_METHOD *TLS_client_method(void);
 
- const SSL_METHOD *TLSv1_method(void);
- const SSL_METHOD *TLSv1_server_method(void);
- const SSL_METHOD *TLSv1_client_method(void);
-
- const SSL_METHOD *TLSv1_1_method(void);
- const SSL_METHOD *TLSv1_1_server_method(void);
- const SSL_METHOD *TLSv1_1_client_method(void);
-
- const SSL_METHOD *TLSv1_2_method(void);
- const SSL_METHOD *TLSv1_2_server_method(void);
- const SSL_METHOD *TLSv1_2_client_method(void);
-
- const SSL_METHOD *DTLS_method(void);
- const SSL_METHOD *DTLS_server_method(void);
- const SSL_METHOD *DTLS_client_method(void);
-
- const SSL_METHOD *DTLSv1_method(void);
- const SSL_METHOD *DTLSv1_server_method(void);
- const SSL_METHOD *DTLSv1_client_method(void);
-
- const SSL_METHOD *DTLSv1_2_method(void);
- const SSL_METHOD *DTLSv1_2_server_method(void);
- const SSL_METHOD *DTLSv1_2_client_method(void);
-
  SSL_CTX *SSL_CTX_new(const SSL_METHOD *method);
- int SSL_CTX_up_ref(SSL_CTX *ctx);
  void SSL_CTX_free(SSL_CTX *);
 
  int SSL_shutdown(SSL *ssl);
@@ -69,7 +43,6 @@ ffi.cdef[[
  int SSL_read(SSL *ssl, void *buf, int num);
 
  int SSL_pending(const SSL *ssl);
- int SSL_has_pending(const SSL *s);
 
  void ERR_clear_error(void);
  char *ERR_error_string(unsigned long e, char *buf);
@@ -84,7 +57,7 @@ ffi.cdef[[
  int setsockopt(int sockfd, int level, int optname,
                 const void *optval, socklen_t optlen);
 
-  void *memmem(const void *haystack, size_t haystacklen,
+void *memmem(const void *haystack, size_t haystacklen,
         const void *needle, size_t needlelen);
 ]]
 
