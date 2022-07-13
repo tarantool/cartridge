@@ -350,6 +350,9 @@ local function cfg(opts, box_opts)
     end
 
     if opts.transport == 'ssl' then 
+        if type(vshard_util.feature) ~= 'table' then
+            log.error('No SSL support for this tarantool version')
+        end
         if not vshard_util.feature.ssl then
             log.error('No SSL support for this tarantool version')
         end

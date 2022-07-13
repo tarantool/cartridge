@@ -4,6 +4,8 @@ local g = t.group()
 
 local helpers = require('test.helper')
 
+local vshard_util = require('vshard.util')
+
 local CERT_DIR = fio.pathjoin(fio.abspath(os.getenv('SOURCEDIR') or '.'),
                               'test/integration/ssl_cert')
 local CA_FILE = fio.pathjoin(CERT_DIR, 'ca.crt')
@@ -16,6 +18,14 @@ local GOST_KEY_FILE = fio.pathjoin(CERT_DIR, 'gost.key')
 local GOST_CERT_FILE = fio.pathjoin(CERT_DIR, 'gost.crt')
 
 g.before_all = function()
+    require('log').info(vshard_util)
+    if type(vshard_util.feature) ~= 'table' then
+        t.skip("No SSL support")
+    end
+    if not vshard_util.feature.ssl then
+        t.skip("No SSL support")
+    end
+    
     g.cluster = helpers.Cluster:new({
         datadir = fio.tempdir(),
         server_command = helpers.entrypoint('srv_basic'),
