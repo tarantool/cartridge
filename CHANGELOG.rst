@@ -15,6 +15,16 @@ and this project adheres to
 -------------------------------------------------------------------------------
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Fixed
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Fix multitype argparse params.
+
+-------------------------------------------------------------------------------
+[2.7.5] - 2021-06-28
+-------------------------------------------------------------------------------
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Added
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -31,7 +41,7 @@ Added
   Note that ``box.ctl.promote`` starts fair elections, so some other instance
   may become the leader in the replicaset.
 
-- Tarantool Raft options are supported in argparse.
+- Tarantool Raft options and Tarantool 2.10 ``box.cfg`` options are supported in argparse.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Changed
@@ -43,6 +53,12 @@ Changed
   in ``cartridge.cfg``) then allows to automatically pause failover in runtime.
   It configures with ``failover_suppress_threshold`` and
   ``failover_suppress_timeout`` options of argparse.
+
+- Revert argparse throws an error when it encouters ``instance_name`` missing in
+   instances.yml.
+
+- Update ``ddl`` dependency to 1.6.1.
+  (`Changelog <https://github.com/tarantool/ddl/releases/tag/1.6.1>`__).
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed

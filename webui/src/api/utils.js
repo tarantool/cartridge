@@ -29,7 +29,7 @@ export const isGraphqlAccessDeniedError = (error) =>
   (isGraphqlErrorResponse(error) && getGraphqlErrorMessage(error) === 'Unauthorized') ||
   (error.networkError && error.networkError.statusCode === 401);
 
-export const isRestErrorResponse = (error) => error instanceof XMLHttpRequest;
+export const isRestErrorResponse = (error) => typeof XMLHttpRequest !== 'undefined' && error instanceof XMLHttpRequest;
 
 export const getRestErrorMessage = (error) => error.responseText || 'XMLHttpRequest error with empty message';
 

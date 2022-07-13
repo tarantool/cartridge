@@ -101,13 +101,14 @@ local cluster_opts = {
 --- Common `box.cfg <https://www.tarantool.io/en/doc/latest/reference/configuration/>`_ tuning options.
 -- @table box_opts
 local box_opts = {
-    listen                   = 'string', -- **string**
+    listen                   = 'string|number', -- **string|number**
     memtx_memory             = 'number', -- **number**
     memtx_allocator          = 'string', -- **string**
     strip_core               = 'boolean', -- **boolean**
     memtx_min_tuple_size     = 'number', -- **number**
     memtx_max_tuple_size     = 'number', -- **number**
     memtx_use_mvcc_engine    = 'boolean', -- **boolean**
+    txn_isolation            = 'string|number', -- **string|number**
     slab_alloc_factor        = 'number', -- **number**
     slab_alloc_granularity   = 'number', -- **number**
     work_dir                 = 'string', -- **string** (**deprecated**)
@@ -121,6 +122,7 @@ local box_opts = {
     vinyl_read_threads       = 'number', -- **number**
     vinyl_write_threads      = 'number', -- **number**
     vinyl_timeout            = 'number', -- **number**
+    vinyl_defer_deletes      = 'boolean', -- **boolean**
     vinyl_run_count_per_level = 'number', -- **number**
     vinyl_run_size_ratio     = 'number', -- **number**
     vinyl_range_size         = 'number', -- **number**
@@ -128,11 +130,25 @@ local box_opts = {
     vinyl_bloom_fpr          = 'number', -- **number**
 
     log                      = 'string', -- **string**
-    audit_log                = 'string', -- **string**
     log_nonblock             = 'boolean', -- **boolean**
-    audit_nonblock           = 'boolean', -- **boolean**
-    log_level                = 'number', -- **number**
+    log_level                = 'string|number', -- **string|number**
     log_format               = 'string', -- **string**
+
+    audit_log                = 'string', -- **string**
+    audit_nonblock           = 'boolean', -- **boolean**
+    audit_format             = 'string', -- **string**
+    audit_filter             = 'string', -- **string**
+
+    flightrec_enabled        = 'boolean', -- **boolean**
+    flightrec_logs_size      = 'number', -- **number**
+    flightrec_logs_max_msg_size = 'number', -- **number**
+    flightrec_logs_log_level = 'number', -- **number**
+    flightrec_metrics_interval = 'number', -- **number**
+    flightrec_metrics_period = 'number', -- **number**
+    flightrec_requests_size = 'number', -- **number**
+    flightrec_requests_max_req_size = 'number', -- **number**
+    flightrec_requests_max_res_size = 'number', -- **number**
+
     io_collect_interval      = 'number', -- **number**
     readahead                = 'number', -- **number**
     snap_io_rate_limit       = 'number', -- **number**
@@ -176,6 +192,7 @@ local box_opts = {
     sql_cache_size           = 'number', -- **number**
     txn_timeout              = 'number', -- **number**
     election_mode            = 'string', -- **string**
+    election_timeout         = 'number', -- **number**
     election_fencing_enabled = 'boolean', -- **boolean**
 }
 
@@ -279,8 +296,8 @@ local function parse_env()
     return ret
 end
 
-local function parse_file(filename, app_name, instance_name)
-    checks('string', '?string', '?string')
+local function parse_file(filename, search_name)
+    checks('string', 'string')
 
     local file_sections, err
 
@@ -295,39 +312,15 @@ local function parse_file(filename, app_name, instance_name)
     end
 
     local section_names = {'default'}
-
-    do -- generate section names to be parsed
-        app_name = app_name and string.strip(app_name) or ''
-        if app_name ~= '' then
-            table.insert(section_names, app_name)
-        end
-
-        instance_name = instance_name and string.strip(instance_name) or ''
-        if instance_name ~= '' then
-            local parts = instance_name:split('.')
-            for n = 1, #parts do
-                local section_name = table.concat(parts, '.', 1, n)
-                if app_name ~= '' then
-                    section_name = app_name .. '.' .. section_name
-                end
-                table.insert(section_names, section_name)
-            end
-        end
+    local search_name_parts = search_name:split('.')
+     for n = 1, #search_name_parts do
+         local section_name = table.concat(search_name_parts, '.', 1, n)
+         table.insert(section_names, section_name)
     end
 
     local ret = {}
     for _, section_name in ipairs(section_names) do
-        local content = file_sections[section_name]
-
-        if section_name ~= 'default'
-        and section_name ~= app_name
-        and content == nil then
-            -- When an instance's name can't be found in file_sections,
-            -- the instance shouldn't be started. Such behavior would violate
-            -- https://github.com/tarantool/cartridge/issues/1437
-            return nil, ParseConfigError:new('Missing section: %s', section_name)
-        end
-        content = content or {}
+        local content = file_sections[section_name] or {}
 
         for argname, argvalue in pairs(content) do
             ret[argname:lower()] = argvalue
@@ -386,7 +379,12 @@ local function _parse()
         args.cfg = args.cfg .. '/'
     end
 
-    local cfg, err = parse_file(args.cfg, args.app_name, args.instance_name)
+    local search_name = args.instance_name or ''
+    if args.app_name ~= nil then
+        search_name = args.app_name .. '.' .. search_name
+    end
+
+    local cfg, err = parse_file(args.cfg, search_name)
     if not cfg then
         return nil, err
     else
@@ -442,46 +440,56 @@ local function get_opts(opts)
 
     local ret = {}
     for optname, opttype in pairs(opts) do
+        local opttype_str = false
+        local opttype_num = false
+        local opttype_bool = false
+        for _, _opttype in pairs(string.split(opttype, '|')) do
+            if _opttype == 'string' then
+                opttype_str = true
+            elseif _opttype == 'number' then
+                opttype_num = true
+            elseif _opttype == 'boolean' then
+                opttype_bool = true
+            else
+                return nil, TypeCastError:new(
+                    "can't typecast %s to %s (unsupported type)",
+                    optname, _opttype
+                )
+            end
+        end
+
         local value = args[optname]
         if value == nil then -- luacheck: ignore 542
             -- ignore
         elseif type(value) == opttype then
             ret[optname] = value
-        elseif type(value) == 'number' and opttype == 'string' then
-            ret[optname] = tostring(value)
+        elseif type(value) == 'number' and ( opttype_num or opttype_str ) then
+            ret[optname] = value
         elseif type(value) == 'string' then
-            local multi_types = string.gsub(opttype, ' ', '');
-            local continue = true
-            local _value = nil
-            local str_value = nil
-            for _opttype in string.gmatch(multi_types, "[^|]+") do
-                if continue then
-                    if _opttype == 'string' then
-                        str_value = tostring(value)
-                    elseif _opttype == 'number' then
-                        _value = tonumber(value)
-                    elseif _opttype == 'boolean' then
-                        _value = toboolean(value)
-                    else
-                        return nil, TypeCastError:new(
-                            "can't typecast %s to %s (unsupported type)",
-                            optname, _opttype
-                        )
-                    end
-                    if _value ~= nil then
-                        continue = false
-                    end
-                end
+            local _value
+
+            if opttype_num then
+                _value = tonumber(value)
+            end
+            if _value == nil and opttype_bool then
+                _value = toboolean(value)
+            end
+            if _value == nil and opttype_str then
+                _value = value
+            end
+
+            if not opttype_num and not opttype_bool and not opttype_str then
+                return nil, TypeCastError:new(
+                    "can't typecast %s to %s (unsupported type)",
+                    optname, opttype
+                )
             end
 
             if _value == nil then
-                _value = str_value
-                if _value == nil then
-                    return nil, TypeCastError:new(
-                        "can't typecast %s=%q to %s",
-                        optname, value, opttype
-                    )
-                end
+                return nil, TypeCastError:new(
+                    "can't typecast %s=%q to %s",
+                    optname, value, opttype
+                )
             end
 
             ret[optname] = _value
@@ -500,6 +508,10 @@ return {
     parse = parse,
 
     get_opts = get_opts,
+
+    get_params = function()
+        return box_opts
+    end,
 
     --- Shorthand for `get_opts(box_opts)`.
     -- @function get_box_opts

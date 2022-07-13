@@ -253,7 +253,7 @@ function g.test_event_cleared()
     -- Check that longpoll_index is updated despite leaders aren't modified
     local old_index = client2.session.longpoll_index
     httpc:put(URI .. '/v2/keys/foo?value=buzz')
-    t.assert_equals(client2:longpoll(0.2), {})
+    t.assert_equals(client2:longpoll(0.5), {})
     t.assert_equals(client2.session.longpoll_index, old_index + 1)
 end
 

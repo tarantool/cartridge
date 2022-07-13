@@ -579,7 +579,7 @@ g.test_sigkill = function()
 end
 
 g.test_all_rw_failover = function()
-    set_failover(true)
+    cluster:retrying({}, function() set_failover(true) end)
     set_all_rw(replicaset_uuid, true)
 
     check_all_box_rw()
