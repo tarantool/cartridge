@@ -146,17 +146,15 @@ describe('Web UI features testing', () => {
 
     for (let i = 1; i <= 7; i++) {
       it(`Check ${filterValue.get(i)} ${filteredValue.get(i)} `, () => {
-        let inputFilter = cy.get('input[placeholder="Filter by uri, uuid, role, alias "]');
-        let buttonFilter = inputFilter.prev('button[type="button"]:contains(Filter)');
-        buttonFilter.click();
+        cy.get('input[placeholder="Filter by uri, uuid, role, alias "]').prev('button').click();
         cy.get('.meta-test__Filter__Dropdown *')
           .contains(new RegExp('^' + filterValue.get(i) + '$'))
           .click({ force: true });
-        inputFilter = cy.get('input[placeholder="Filter by uri, uuid, role, alias "]');
-        inputFilter.should('have.value', `${filteredValue.get(i)}`);
+        let value = filteredValue.get(i);
+        cy.get('input[placeholder="Filter by uri, uuid, role, alias "]').should('have.value', `${value}`);
         cy.reload(true);
-        inputFilter = cy.get('input[placeholder="Filter by uri, uuid, role, alias "]');
-        inputFilter.should('have.value', `${filteredValue.get(i)}`);
+        value = filteredValue.get(i);
+        cy.get('input[placeholder="Filter by uri, uuid, role, alias "]').should('have.value', `${value}`);
       });
     }
   });
