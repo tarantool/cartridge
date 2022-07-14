@@ -65,20 +65,24 @@ describe('Replicaset filtering', () => {
     cy.contains('Replicasets');
 
     // Healthy
-    const inputFilter = cy.get('input[placeholder="Filter by uri, uuid, role, alias "]');
-    const buttonFilter = inputFilter.prev('button[type="button"]:contains(Filter)');
+    let inputFilter = cy.get('input[placeholder="Filter by uri, uuid, role, alias "]');
+    let buttonFilter = inputFilter.prev('button[type="button"]:contains(Filter)');
     buttonFilter.click();
     cy.get('.meta-test__Filter__Dropdown *:contains(Healthy)').click({ force: true });
     cy.get('.meta-test__Filter input').should('have.value', 'status:healthy');
     cy.get('.ServerLabelsHighlightingArea').contains('test-storage-1').should('not.exist');
 
     // Unhealthy
+    inputFilter = cy.get('input[placeholder="Filter by uri, uuid, role, alias "]');
+    buttonFilter = inputFilter.prev('button[type="button"]:contains(Filter)');
     buttonFilter.click();
     cy.get('.meta-test__Filter__Dropdown *:contains(Unhealthy)').click({ force: true });
     cy.get('.meta-test__Filter input').should('have.value', 'status:unhealthy');
     cy.get('.ServerLabelsHighlightingArea').contains('test-storage-1');
 
     // Role
+    inputFilter = cy.get('input[placeholder="Filter by uri, uuid, role, alias "]');
+    buttonFilter = inputFilter.prev('button[type="button"]:contains(Filter)');
     buttonFilter.click();
     cy.get('.meta-test__Filter__Dropdown').find('*:contains(vshard-storage)').click({ force: true });
     cy.get('.meta-test__Filter input').should('have.value', 'role:vshard-storage');
