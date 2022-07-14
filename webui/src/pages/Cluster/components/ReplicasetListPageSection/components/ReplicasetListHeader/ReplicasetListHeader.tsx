@@ -1,7 +1,9 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useEvent, useStore } from 'effector-react';
+import { useCore } from '@tarantool.io/frontend-core';
 
 import * as models from 'src/models';
+import { FilterGate } from 'src/models/cluster/server-list/gate';
 import ReplicasetFilter from 'src/pages/Cluster/components/ReplicasetFilter';
 
 import { CountHeader } from '../../../CountHeader';
@@ -15,10 +17,17 @@ const { $cluster, $rolesFilter, $serverList, $ratingFilter, setRolesFiltered, se
   models.cluster.serverList;
 
 const ReplicasetListHeader = () => {
+  const core = useCore();
+
   const serverListStore = useStore($serverList);
   const clusterStore = useStore($cluster);
   const rolesFilter = useStore($rolesFilter);
   const ratingFilter = useStore($ratingFilter);
+
+  useEffect(() => {
+    core?.ss.set('roles_filter', rolesFilter);
+    core?.ss.set('rating_filter', ratingFilter);
+  }, [core, rolesFilter, ratingFilter]);
 
   const setRolesFilter = useEvent(setRolesFiltered);
   const setRatingFilter = useEvent(setRatingFiltered);
@@ -28,6 +37,7 @@ const ReplicasetListHeader = () => {
 
   return (
     <div className={styles.root} data-component="ReplicasetListHeader">
+      <FilterGate rolesFilter={core?.ss.get('roles_filter') || ''} ratingFilter={core?.ss.get('rating_filter') || ''} />
       <CountHeaderWrapper className={styles.counters}>
         <CountHeader data-type="total-replicasets" counter={total.replicasets} />
         <CountHeader data-type="unhealthy-replicasets" counter={unhealthy.replicasets} />
