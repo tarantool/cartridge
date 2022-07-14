@@ -153,9 +153,9 @@ describe('Web UI features testing', () => {
         cy.get('.meta-test__Filter__Dropdown *')
           .contains(new RegExp('^' + filterValue.get(i) + '$'))
           .click({ force: true });
-        cy.get('input[placeholder="Filter by uri, uuid, role, alias "]').should('have.value', `${filteredValue.get(i)}`);
+        inputFilter.should('have.value', `${filteredValue.get(i)}`);
         cy.reload(true);
-        cy.get('input[placeholder="Filter by uri, uuid, role, alias "]').should('have.value', `${filteredValue.get(i)}`);
+        inputFilter.should('have.value', `${filteredValue.get(i)}`);
       });
     }
   });
