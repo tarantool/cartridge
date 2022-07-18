@@ -166,7 +166,8 @@ class ServerDetailsModal extends React.Component<ServerDetailsModalProps, Server
 
     const activeMaster = instanceUUID === activeMasterUUID;
     const master = instanceUUID === masterUUID;
-    const showFailoverPromote = replicaset.servers && replicaset.servers.length > 1 && failoverMode === 'stateful';
+    const showFailoverPromote =
+      replicaset.servers && replicaset.servers.length > 1 && (failoverMode === 'stateful' || failoverMode === 'raft');
 
     return (
       <Modal

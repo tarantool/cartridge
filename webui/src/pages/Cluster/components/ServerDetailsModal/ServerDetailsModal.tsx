@@ -54,7 +54,8 @@ const ServerDetailsModal = () => {
     [replicaset, server?.uuid]
   );
 
-  const showFailoverPromote = (replicaset?.servers.length ?? 0) > 1 && failoverParamsMode === 'stateful';
+  const showFailoverPromote =
+    (replicaset?.servers.length ?? 0) > 1 && (failoverParamsMode === 'stateful' || failoverParamsMode === 'raft');
 
   const handleClosePopup = useCallback(() => {
     serverDetailsModalClosedEvent();
