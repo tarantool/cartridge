@@ -24,6 +24,8 @@ g.before_each(function()
                 print(yaml.encode({err = tostring(err)}))
                 os.exit(1)
             end
+            local params = argparse.get_params()
+            params.testing_number_boolean = 'number|boolean' -- **number|boolean**
             local box_opts, err = argparse.get_box_opts()
             print(yaml.encode({
                 args = args,
@@ -308,7 +310,7 @@ g.test_box_opts = function()
                 slab_alloc_factor = '1.3', -- string -> number
                 log_nonblock = 'false',    -- string -> bool
                 memtx_memory = 100,        -- number -> number
-                listen = 13301,            -- number -> string
+                listen = 13301,            -- number -> number
                 read_only = true,          -- bool -> bool
             },
             boolean_to_string = {
@@ -333,7 +335,7 @@ g.test_box_opts = function()
         slab_alloc_factor = 1.3,
         log_nonblock = false,
         memtx_memory = 100,
-        listen = '13301',
+        listen = 13301,
         read_only = true,
     })
 
@@ -380,17 +382,42 @@ g.test_replication_quorum_opts = function()
     utils.file_write(
         fio.pathjoin(g.tempdir, 'cfg.yml'),
         yaml.encode({
-            default = {
+            quorum_is_string = {
                 replication_synchro_quorum = 'N/3+5',
+            },
+            quorum_is_number = {
+                replication_synchro_quorum = 2,
+            },
+            num_bool_is_num = {
+                testing_number_boolean = '123',
+            },
+            num_bool_is_bool = {
+                testing_number_boolean = 'False',
             },
         })
     )
 
-    local box_opts, err = unpack(g.run('--cfg ./cfg.yml').box_opts)
-    t.assert_not(err)
-    t.assert_equals(box_opts, {
-        replication_synchro_quorum = 'N/3+5',
-    })
+    local function check_quorum(cmd_args, expected)
+        local box_opts, err = unpack(g.run(cmd_args).box_opts)
+        t.assert_not(err)
+        t.assert_equals(box_opts, {
+            replication_synchro_quorum = expected,
+        })
+    end
+
+    check_quorum('--cfg ./cfg.yml --instance-name quorum_is_string', 'N/3+5')
+    check_quorum('--cfg ./cfg.yml --instance-name quorum_is_number', 2)
+
+    local function check_num_bool(cmd_args, expected)
+        local box_opts, err = unpack(g.run(cmd_args).box_opts)
+        t.assert_not(err)
+        t.assert_equals(box_opts, {
+            testing_number_boolean = expected,
+        })
+    end
+
+    check_num_bool('--cfg ./cfg.yml --instance-name num_bool_is_num', 123)
+    check_num_bool('--cfg ./cfg.yml --instance-name num_bool_is_bool', false)
 
     local function check(cmd_args, expected)
         local ret = g.run(cmd_args, {})
