@@ -289,7 +289,7 @@ local function is_email_valid(str)
     end
     local localPart = str:sub(1, (lastAt - 2)) -- Returns the substring before '@' symbol
     local domainPart = str:sub(lastAt, #str) -- Returns the substring after '@' symbol
-    -- we werent able to split the email properly
+    -- we weren't able to split the email properly
     if localPart == nil then
         return nil, "Local name is invalid"
     end
@@ -330,7 +330,7 @@ local function is_email_valid(str)
         return nil, "Too many periods in local part"
     end
     -- just a general match
-    if not str:match('[%w]*[%p]*%@+[%w]*[%.]?[%w]*') then
+    if not str:match('^[%w\'._+-]+%@[%w%.-]+%.%a+$') then
         return nil, "Email pattern test failed"
     end
     -- all our tests passed, so we are ok

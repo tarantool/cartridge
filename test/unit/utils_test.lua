@@ -73,3 +73,35 @@ function g.test_http_read_body()
     t.assert_not(err)
     t.assert_equals(meta, {})
 end
+
+function g.test_is_email_valid()
+    t.assert(utils.is_email_valid('simple@example.com'), 'correct email')
+    t.assert(utils.is_email_valid('very.common@example.com'), 'correct email')
+    t.assert(utils.is_email_valid('disposable.style.email.with+symbol@example.com'), 'correct email')
+    t.assert(utils.is_email_valid('other.email-with-hyphen@example.com'), 'correct email')
+    t.assert(utils.is_email_valid('fully-qualified-domain@example.com'), 'correct email')
+    t.assert(utils.is_email_valid('x@example.com'), 'one-letter local-part')
+    t.assert(utils.is_email_valid('example-indeed@strange-example.com'), 'correct email')
+    t.assert(utils.is_email_valid('example@s.example'), 'correct email')
+    t.assert(utils.is_email_valid('username@sub.example.org'), 'correct email')
+
+    local function is_email_valid_xc(value)
+        local _, err = utils.is_email_valid(value)
+        if err ~= nil then
+            error(err)
+        end
+    end
+
+    t.assert_error_msg_contains('No TLD found in domain', is_email_valid_xc, 'aaaaa')
+    t.assert_error_msg_contains('Email pattern test failed', is_email_valid_xc, 'aa.aa')
+    t.assert_error_msg_contains('No TLD found in domain', is_email_valid_xc, 'aa@aa')
+    t.assert_error_msg_contains('Email pattern test failed', is_email_valid_xc, '@a.a')
+    t.assert_error_msg_contains('Invalid @ symbol usage in local part', is_email_valid_xc, 'a@@@a.a')
+    t.assert_error_msg_contains('Email pattern test failed', is_email_valid_xc, 'some\xfe@mail.dmn')
+    t.assert_error_msg_contains('Email pattern test failed', is_email_valid_xc, 'some@.dmn')
+    t.assert_error_msg_contains('Email pattern test failed', is_email_valid_xc, 'some@`ls>/tmp/KITTY`.dmn')
+    t.assert_error_msg_contains('Email pattern test failed', is_email_valid_xc, 'some@$HOME/.profile.dmn')
+    t.assert_error_msg_contains('Email pattern test failed', is_email_valid_xc, 'some@%01%02%03%04%0a%0d%0aADSF.dmn')
+    t.assert_error_msg_contains('Email pattern test failed', is_email_valid_xc, 'some@mail/./././././././.')
+    t.assert_error_msg_contains('Symbol @ not found', is_email_valid_xc, '')
+end
