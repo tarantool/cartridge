@@ -39,7 +39,9 @@ class ReplicasetServerList extends React.PureComponent<ReplicasetServerListProps
             totalBucketsCount={clusterSelf && clusterSelf.vshard_bucket_count}
             replicasetUUID={replicaset.uuid}
             selfURI={clusterSelf && clusterSelf.uri}
-            showFailoverPromote={servers && servers.length > 1 && failoverMode === 'stateful'}
+            showFailoverPromote={
+              servers && servers.length > 1 && (failoverMode === 'stateful' || failoverMode === 'raft')
+            }
             {...server}
           />
         ))}

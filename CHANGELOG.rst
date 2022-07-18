@@ -10,6 +10,12 @@ and this project adheres to
 
 -------------------------------------------------------------------------------
 [Unreleased]
+Added
+
+- Add "Promote a leader" action in WebUI in Raft failover mode (#1853).
+
+
+Fixed
 
 - Added a filter by replicaset
 -------------------------------------------------------------------------------

@@ -53,7 +53,9 @@ const ReplicasetServerList = (props: ReplicasetServerListProps) => {
           key={server.uuid}
           server={server}
           additional={additional}
-          showFailoverPromote={servers && servers.length > 1 && failoverParamsMode === 'stateful'}
+          showFailoverPromote={
+            servers && servers.length > 1 && (failoverParamsMode === 'stateful' || failoverParamsMode === 'raft')
+          }
         />
       ))}
     </div>
