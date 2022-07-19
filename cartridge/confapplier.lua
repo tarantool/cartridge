@@ -589,7 +589,7 @@ local function boot_instance(clusterwide_config)
     -- Box is ready, start listening full-featured iproto protocol
     remote_control.stop()
     log.info('Remote control stopped')
-    
+
     local listen_uri = vars.binary_port
     if vars.transport == 'ssl' then
         listen_uri = {}
@@ -597,7 +597,7 @@ local function boot_instance(clusterwide_config)
             uri = vars.binary_port,
             params = {
                 transport = vars.transport,
-                
+
                 ssl_ca_file = vars.ssl_server_ca_file,
                 ssl_cert_file = vars.ssl_server_cert_file,
                 ssl_key_file = vars.ssl_server_key_file,
@@ -769,7 +769,6 @@ local function init(opts)
         ssl_ca_file = vars.ssl_server_ca_file,
         ssl_cert_file = vars.ssl_server_cert_file,
         ssl_key_file = vars.ssl_server_key_file,
-        ssl_ciphers = vars.ssl_server_ciphers,
         timeout = 10,
     })
     if not ok then

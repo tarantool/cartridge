@@ -485,7 +485,7 @@ local function get_vshard_config(group_name, conf)
                     pool.format_uri(server.uri),
                     params = {
                         transport = vars.sslparams.transport,
-                        
+
                         ssl_ca_file = vars.sslparams.ssl_server_ca_file,
                         ssl_cert_file = vars.sslparams.ssl_server_cert_file,
                         ssl_key_file = vars.sslparams.ssl_server_key_file,
@@ -498,7 +498,7 @@ local function get_vshard_config(group_name, conf)
                     pool.format_uri(server.uri),
                     params = {
                         transport = vars.sslparams.transport,
-                        
+
                         ssl_ca_file = vars.sslparams.ssl_client_ca_file,
                         ssl_cert_file = vars.sslparams.ssl_client_cert_file,
                         ssl_key_file = vars.sslparams.ssl_client_key_file,
