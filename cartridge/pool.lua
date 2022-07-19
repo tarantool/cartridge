@@ -100,10 +100,10 @@ local function connect(uri, opts)
         end
 
         if vars.sslparams.transport == 'ssl' then
-            _uri = {uri=_uri, 
+            _uri = {uri=_uri,
                 params={
-                    transport=vars.sslparams.transport, 
-                    ssl_cert_file=vars.sslparams.ssl_cert_file, 
+                    transport=vars.sslparams.transport,
+                    ssl_cert_file=vars.sslparams.ssl_cert_file,
                     ssl_key_file=vars.sslparams.ssl_key_file}}
         end
 

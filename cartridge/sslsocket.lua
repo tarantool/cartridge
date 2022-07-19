@@ -98,12 +98,10 @@ local function slice_wait(timeout, starttime)
 end
 
 local X509_FILETYPE_PEM       =1
-local X509_FILETYPE_ASN1      =2
-local X509_FILETYPE_DEFAULT   =3
+--local X509_FILETYPE_ASN1      =2
+--local X509_FILETYPE_DEFAULT   =3
 
 local function ctx(method)
-    method = method or methods['tlsv1']
-
     ffi.C.ERR_clear_error()
     local newctx =
         ffi.gc(ffi.C.SSL_CTX_new(method), ffi.C.SSL_CTX_free)
@@ -145,15 +143,15 @@ end
 
 local default_ctx = ctx(ffi.C.TLS_server_method())
 
-local SSL_ERROR_NONE                  =0
-local SSL_ERROR_SSL                   =1
+--local SSL_ERROR_NONE                  =0
+--local SSL_ERROR_SSL                   =1
 local SSL_ERROR_WANT_READ             =2
 local SSL_ERROR_WANT_WRITE            =3
-local SSL_ERROR_WANT_X509_LOOKUP      =4
+--local SSL_ERROR_WANT_X509_LOOKUP      =4
 local SSL_ERROR_SYSCALL               =5 -- look at error stack/return value/errno
 local SSL_ERROR_ZERO_RETURN           =6
-local SSL_ERROR_WANT_CONNECT          =7
-local SSL_ERROR_WANT_ACCEPT           =8
+--local SSL_ERROR_WANT_CONNECT          =7
+--local SSL_ERROR_WANT_ACCEPT           =8
 
 local sslsocket = {
     --__newindex = function(table, key, value)
@@ -401,7 +399,7 @@ local function read(self, limit, timeout, check, ...)
         end
     end
 
-    return nil
+    -- not reached
 end
 
 local function check_limit(self, limit)
@@ -421,7 +419,7 @@ local function check_delimiter(self, limit, eols)
     end
 
     local shortest
-    for i, eol in ipairs(eols) do
+    for _, eol in ipairs(eols) do
         local data = ffi.C.memmem(rbuf.rpos, rbuf:size(), eol, #eol)
         if data ~= nil then
             local len = ffi.cast('char *', data) - rbuf.rpos + #eol

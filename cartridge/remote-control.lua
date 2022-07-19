@@ -417,7 +417,7 @@ local function bind(host, port, sslparams)
             end
         end
 
-        server = sslsocket.tcp_server(host, port, 
+        server = sslsocket.tcp_server(host, port,
             rc_handle, sslparams.timeout, ctx)
     else
         server = socket.tcp_server(host, port, {

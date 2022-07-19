@@ -11,11 +11,11 @@ local CERT_DIR = fio.pathjoin(fio.abspath(os.getenv('SOURCEDIR') or '.'),
 local CA_FILE = fio.pathjoin(CERT_DIR, 'ca.crt')
 local SERVER_CERT_FILE = fio.pathjoin(CERT_DIR, 'server.crt')
 local SERVER_KEY_FILE = fio.pathjoin(CERT_DIR, 'server.key')
-local SERVER_KEY_FILE_ENC = fio.pathjoin(CERT_DIR, 'server.enc.key')
+--local SERVER_KEY_FILE_ENC = fio.pathjoin(CERT_DIR, 'server.enc.key')
 local CLIENT_CERT_FILE = fio.pathjoin(CERT_DIR, 'client.crt')
 local CLIENT_KEY_FILE = fio.pathjoin(CERT_DIR, 'client.key')
-local GOST_KEY_FILE = fio.pathjoin(CERT_DIR, 'gost.key')
-local GOST_CERT_FILE = fio.pathjoin(CERT_DIR, 'gost.crt')
+--local GOST_KEY_FILE = fio.pathjoin(CERT_DIR, 'gost.key')
+--local GOST_CERT_FILE = fio.pathjoin(CERT_DIR, 'gost.crt')
 
 g.before_all = function()
     require('log').info(vshard_util)
@@ -25,7 +25,7 @@ g.before_all = function()
     if not vshard_util.feature.ssl then
         t.skip("No SSL support")
     end
-    
+
     g.cluster = helpers.Cluster:new({
         datadir = fio.tempdir(),
         server_command = helpers.entrypoint('srv_basic'),
@@ -58,7 +58,7 @@ g.before_all = function()
                         instance_uuid = helpers.uuid('b', 'b', 1),
                         advertise_port = 13302,
                         http_port = 8082,
-                        
+
                         transport = 'ssl',
                         ssl_server_ca_file = CA_FILE,
                         ssl_server_cert_file = SERVER_CERT_FILE,
@@ -92,7 +92,7 @@ g.before_all = function()
                         instance_uuid = helpers.uuid('c', 'c', 1),
                         advertise_port = 13304,
                         http_port = 8084,
-                        
+
                         transport = 'ssl',
                         ssl_server_ca_file = CA_FILE,
                         ssl_server_cert_file = SERVER_CERT_FILE,
@@ -159,6 +159,6 @@ function g.test_ssl_rpc()
     t.assert_not(err)
     t.assert_equals(res, 'initialized')
 
-    local res, err = get_box_info_using_vshard(A1, 1)
-    t.assert_not(err) 
+    local _, err = get_box_info_using_vshard(A1, 1)
+    t.assert_not(err)
 end
