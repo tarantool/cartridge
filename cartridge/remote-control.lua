@@ -370,9 +370,10 @@ local function bind(host, port, sslparams)
         return nil, RemoteControlError:new('Already running')
     end
 
+    local usessl = type(sslparams) == 'table' and sslparams.transport == 'ssl'
     local server
-    if type(sslparams) == 'table' then
-        log.info("Remote control over sssl")
+    if usessl then
+        log.info("Remote control over ssl")
         local ctx = sslsocket.ctx(ffi.C.TLS_server_method())
         -- SSL_CTX_set_default_passwd_cb(ssl_ctx, passwd_cb);
         -- SSL_CTX_set_min_proto_version(ssl_ctx, TLS1_2_VERSION) != 1 ||
