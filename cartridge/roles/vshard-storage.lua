@@ -52,7 +52,6 @@ local function on_apply_config(_, state)
     else
         vshard.storage.disable()
     end
-    return true
 end
 
 local function stop()

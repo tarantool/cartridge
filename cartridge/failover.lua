@@ -317,7 +317,7 @@ local function on_apply_config(mod, state)
     if type(mod.on_apply_config) == 'function' then
         local ok, err = ApplyConfigError:pcall(mod.on_apply_config, conf, state)
         if not ok then
-            log.error('Role %q on_apply_config in failover failed: %s', mod.role_name, err and err.err or err)
+            log.error('Role %q on_apply_config in failover failed: %s', mod.role_name, err.err)
         end
     end
 end

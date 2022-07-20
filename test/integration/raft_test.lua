@@ -3,7 +3,6 @@ local fun = require('fun')
 
 local t = require('luatest')
 local g = t.group()
-local g_unsupported = t.group('integration.raft_unsupported')
 local h = require('test.helper')
 
 local replicaset_uuid = h.uuid('b')
@@ -13,8 +12,8 @@ local storage_3_uuid = h.uuid('b', 'b', 3)
 local single_replicaset_uuid = h.uuid('c')
 local single_storage_uuid = h.uuid('c', 'c', 1)
 
-local function set_failover_params(group, vars)
-    local response = group.cluster.main_server:graphql({
+local function set_failover_params(vars)
+    local response = g.cluster.main_server:graphql({
         query = [[
             mutation(
                 $mode: String
@@ -181,7 +180,7 @@ end
 
 g.before_each(function()
     h.retrying({}, function()
-        t.assert_equals(set_failover_params(g, { mode = 'raft' }), { mode = 'raft' })
+        t.assert_equals(set_failover_params({ mode = 'raft' }), { mode = 'raft' })
     end)
     h.retrying({}, function()
         t.assert_equals(h.list_cluster_issues(g.cluster.main_server), {})
@@ -473,31 +472,3 @@ g.after_test('test_change_raft_failover_to_stateful', function()
     g.state_provider:stop()
     fio.rmtree(g.state_provider.workdir)
 end)
-
-g_unsupported.before_all = function()
-    t.skip_if(h.tarantool_version_ge('2.10.0'))
-    g_unsupported.cluster = h.Cluster:new({
-        datadir = fio.tempdir(),
-        server_command = h.entrypoint('srv_raft'),
-        cookie = h.random_cookie(),
-        replicasets = {
-            {
-                alias = 'replicaset',
-                roles = {},
-                servers = 1,
-            },
-        }
-    })
-    g_unsupported.cluster:start()
-end
-
-g_unsupported.after_all = function()
-    g_unsupported.cluster:stop()
-    fio.rmtree(g_unsupported.cluster.datadir)
-end
-
-g_unsupported.test_tarantool_version_unsupported = function()
-    t.assert_error_msg_contains(
-        "Your Tarantool version doesn't support raft failover mode, need Tarantool 2.10 or higher",
-        set_failover_params, g_unsupported, { mode = 'raft' })
-end

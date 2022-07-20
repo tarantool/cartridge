@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        tarantool: ['1.10', '2.7', '2.8']
+        tarantool: ['1.10', '2.7', '2.8', '2.9']
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2

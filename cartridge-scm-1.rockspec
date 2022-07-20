@@ -6,13 +6,13 @@ source  = {
 }
 dependencies = {
     'lua >= 5.1',
-    'ddl == 1.6.1-1',
+    'ddl == 1.6.0-1',
     'http == 1.2.0-1',
     'checks == 3.1.0-1',
     'errors == 2.2.1-1',
     'vshard == 0.1.20-1',
     'membership == 2.4.0-1',
-    'frontend-core == 8.1.2-1',
+    'frontend-core == 8.1.1-1',
     'graphql == 0.1.4-1',
 }
 

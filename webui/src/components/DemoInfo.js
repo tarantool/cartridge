@@ -60,9 +60,10 @@ python3 example.py
     markdown: `
 ## Connect to Tarantool Cartridge using [PHP client](https://github.com/tarantool-php/client)
 
-**Install** *tarantool client* using *composer*:
+**Install** *messagepack* and *tarantool client* using *composer*:
 
 \`\`\`bash
+composer require rybakit/msgpack
 composer require tarantool/client
 \`\`\`
 

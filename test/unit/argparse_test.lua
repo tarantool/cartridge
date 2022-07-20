@@ -24,8 +24,6 @@ g.before_each(function()
                 print(yaml.encode({err = tostring(err)}))
                 os.exit(1)
             end
-            local params = argparse.get_params()
-            params.testing_number_boolean = 'number|boolean' -- **number|boolean**
             local box_opts, err = argparse.get_box_opts()
             print(yaml.encode({
                 args = args,
@@ -78,6 +76,14 @@ g.test_sections = function()
             ['custom.sub.sub'] = {
                 x = '@custom.sub.sub',
                 y_subsub = true,
+            },
+            ['custom.x.y.z'] = {
+                x = '@custom.x.y.z',
+                y_xyz = true,
+            },
+            ['myapp.instance'] = {
+                x = '@myapp.instance',
+                y_instance = true,
             }
         })
     )
@@ -106,11 +112,10 @@ g.test_sections = function()
         y_default = 0,
     })
 
-    check('--instance-name unknown', {
-        instance_name = 'unknown',
-        x = '@default',
-        y_default = 0,
-    })
+    t.assert_error_msg_contains(
+        'ParseConfigError: Missing section: unknown',
+        check, '--instance-name unknown'
+    )
 
     check('--instance-name custom', {
         instance_name = 'custom',
@@ -119,12 +124,10 @@ g.test_sections = function()
         y_custom = '$',
     })
 
-    check('--instance-name custom.bad', {
-        instance_name = 'custom.bad',
-        x = '@custom',
-        y_default = 0,
-        y_custom = '$',
-    })
+    t.assert_error_msg_contains(
+        'ParseConfigError: Missing section: custom.bad',
+        check, '--instance-name custom.bad'
+    )
 
     check('--instance-name custom.sub', {
         instance_name = 'custom.sub',
@@ -132,6 +135,20 @@ g.test_sections = function()
         y_default = 0,
         y_custom = '$',
         y_sub = 3.14,
+    })
+
+    check('--app-name myapp', {
+        app_name = 'myapp',
+        x = '@default',
+        y_default = 0,
+    })
+
+    check('--app-name myapp --instance-name instance', {
+        app_name = 'myapp',
+        instance_name = 'instance',
+        x = '@myapp.instance',
+        y_default = 0,
+        y_instance = true,
     })
 
     check('--instance_name custom.sub.sub', {
@@ -142,6 +159,11 @@ g.test_sections = function()
         y_sub = 3.14,
         y_subsub = true,
     })
+
+    t.assert_error_msg_contains(
+        'ParseConfigError: Missing section: custom.x\n',
+        check, '--instance-name custom.x.y.z'
+    )
 end
 
 g.test_priority = function()
@@ -174,7 +196,6 @@ g.test_priority = function()
 
     check('--instance-name custom',             {'TARANTOOL_CFG=./x.yml'}, '@custom')
     check('', {'TARANTOOL_INSTANCE_NAME=custom', 'TARANTOOL_CFG=./x.yml'}, '@custom')
-    check('', {'TARANTOOL_INSTANCE_NAME=CUSTOM', 'TARANTOOL_CFG=./x.yml'}, '@default')
 
     check('--cfg ./cfg.yml',   {'TARANTOOL_CFG=./x.yml'}, '@cfg-default')
     check('',              {'TARANTOOL_CFG="./cfg.yml"'}, '@cfg-default')
@@ -299,6 +320,17 @@ g.test_badfile = function()
     )
     local ret = g.run('--cfg tarantool.yml', {}, {ignore_errors = true})
     t.assert_str_contains(ret.err, 'DecodeYamlError: tarantool.yml: unexpected END event')
+
+    utils.file_write(
+        fio.pathjoin(g.tempdir, 'tarantool.yml'),
+        yaml.encode({['app_name.instance_name'] = {x = 'sup'}})
+    )
+    local ret = g.run(
+        '--cfg tarantool.yml' ..
+        ' --app_name app_name' ..
+        ' --instance_name harry',
+        {}, {ignore_errors = true})
+    t.assert_str_contains(ret.err, 'ParseConfigError: Missing section: app_name.harry')
 end
 
 g.test_box_opts = function()
@@ -310,7 +342,7 @@ g.test_box_opts = function()
                 slab_alloc_factor = '1.3', -- string -> number
                 log_nonblock = 'false',    -- string -> bool
                 memtx_memory = 100,        -- number -> number
-                listen = 13301,            -- number -> number
+                listen = 13301,            -- number -> string
                 read_only = true,          -- bool -> bool
             },
             boolean_to_string = {
@@ -335,7 +367,7 @@ g.test_box_opts = function()
         slab_alloc_factor = 1.3,
         log_nonblock = false,
         memtx_memory = 100,
-        listen = 13301,
+        listen = '13301',
         read_only = true,
     })
 
@@ -382,42 +414,17 @@ g.test_replication_quorum_opts = function()
     utils.file_write(
         fio.pathjoin(g.tempdir, 'cfg.yml'),
         yaml.encode({
-            quorum_is_string = {
+            default = {
                 replication_synchro_quorum = 'N/3+5',
-            },
-            quorum_is_number = {
-                replication_synchro_quorum = 2,
-            },
-            num_bool_is_num = {
-                testing_number_boolean = '123',
-            },
-            num_bool_is_bool = {
-                testing_number_boolean = 'False',
             },
         })
     )
 
-    local function check_quorum(cmd_args, expected)
-        local box_opts, err = unpack(g.run(cmd_args).box_opts)
-        t.assert_not(err)
-        t.assert_equals(box_opts, {
-            replication_synchro_quorum = expected,
-        })
-    end
-
-    check_quorum('--cfg ./cfg.yml --instance-name quorum_is_string', 'N/3+5')
-    check_quorum('--cfg ./cfg.yml --instance-name quorum_is_number', 2)
-
-    local function check_num_bool(cmd_args, expected)
-        local box_opts, err = unpack(g.run(cmd_args).box_opts)
-        t.assert_not(err)
-        t.assert_equals(box_opts, {
-            testing_number_boolean = expected,
-        })
-    end
-
-    check_num_bool('--cfg ./cfg.yml --instance-name num_bool_is_num', 123)
-    check_num_bool('--cfg ./cfg.yml --instance-name num_bool_is_bool', false)
+    local box_opts, err = unpack(g.run('--cfg ./cfg.yml').box_opts)
+    t.assert_not(err)
+    t.assert_equals(box_opts, {
+        replication_synchro_quorum = 'N/3+5',
+    })
 
     local function check(cmd_args, expected)
         local ret = g.run(cmd_args, {})

@@ -142,7 +142,7 @@ export type FailoverApi = {
   fencing_enabled: Scalars['Boolean'];
   fencing_pause: Scalars['Float'];
   fencing_timeout: Scalars['Float'];
-  /** Supported modes are "disabled", "eventual", "stateful" or "raft". */
+  /** Supported modes are "disabled", "eventual" and "stateful". */
   mode: Scalars['String'];
   /** Type of external storage for the stateful failover mode. Supported types are "tarantool" and "etcd2". */
   state_provider?: Maybe<Scalars['String']>;

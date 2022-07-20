@@ -1,5 +1,3 @@
-/** @jest-environment jsdom */
-
 import { getGraphqlError, isGraphqlErrorResponse } from './graphql';
 
 const makeGraphQLError = (message, extensions = undefined) => ({
