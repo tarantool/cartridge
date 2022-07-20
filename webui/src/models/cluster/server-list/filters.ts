@@ -167,7 +167,6 @@ export const filterSearchableReplicasetList = (
       return {
         ...server,
         meta: {
-          ...server.meta,
           searchString: server.meta?.searchString ?? '',
           filterMatching,
         },
@@ -178,31 +177,10 @@ export const filterSearchableReplicasetList = (
       ...replicaSet,
       servers,
       meta: {
-        ...replicaSet.meta,
         searchString: replicaSet.meta?.searchString ?? '',
         matchingServersCount,
         totalServersCount: replicaSet.servers.length,
       },
     };
   });
-};
-
-export const filteredReplicaIsLeader = (
-  list: ServerListReplicasetSearchable[],
-  filterQuery: string
-): ServerListReplicasetSearchable[] => {
-  if (!filterQuery) {
-    return list;
-  }
-  const [rating, alias] = filterQuery.toLowerCase().split(/[\s]+/);
-
-  if (rating?.includes('leader') && alias) {
-    return list.filter((replicaset) => replicaset.meta?.ratingServersInReplicaset?.leader.includes(alias));
-  }
-
-  if (rating?.includes('followers') && alias) {
-    return list.filter((replicaset) => replicaset.meta?.ratingServersInReplicaset?.followers.includes(alias));
-  }
-
-  return list;
 };

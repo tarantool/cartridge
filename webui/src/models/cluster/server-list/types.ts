@@ -18,18 +18,12 @@ export type ServerListReplicasetServerSearchable = ServerListReplicasetServer & 
   };
 };
 
-export type DataRatingServers = {
-  leader: string;
-  followers: string[];
-};
-
 export type ServerListReplicasetSearchable = Omit<ServerListReplicaset, 'servers'> & {
   servers: ServerListReplicasetServerSearchable[];
   meta?: {
     searchString: string;
     matchingServersCount?: number;
     totalServersCount?: number;
-    ratingServersInReplicaset?: DataRatingServers;
   };
 };
 

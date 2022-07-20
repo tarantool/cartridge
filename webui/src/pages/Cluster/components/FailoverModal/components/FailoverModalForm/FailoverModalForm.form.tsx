@@ -33,6 +33,7 @@ const FAILOVER_MODES_INFO: Record<FailoverMode, string> = {
     'The leader isn’t elected consistently. Every instance thinks the leader is the first healthy server in the replicaset. The instance health is determined according to the membership status (the SWIM protocol).',
   stateful:
     'Leader appointments are polled from the external state provider. Decisions are taken by one of the instances with the failover-coordinator role enabled.',
+  raft: 'The replicaset leader is chosen by built-in Raft, then the other replicasets get information about leader change from membership.',
 };
 
 const INFOS = {
@@ -43,7 +44,12 @@ const INFOS = {
   lockDelayInfo: 'Expiration time of a lock that the failover-coordinator role acquires',
 };
 
-const FAILOVER_TABS: [FailoverMode, FailoverMode, FailoverMode] = ['disabled', 'eventual', 'stateful'];
+const FAILOVER_TABS: [FailoverMode, FailoverMode, FailoverMode, FailoverMode] = [
+  'disabled',
+  'eventual',
+  'stateful',
+  'raft',
+];
 
 export interface FailoverFormValues {
   mode: FailoverMode;
@@ -81,7 +87,7 @@ const reqNumber = (mode: FailoverMode, fencing_enabled: boolean, schema: NumberS
 
 const validationSchema = yup
   .object<FailoverFormValues>({
-    mode: yup.string().oneOf(['disabled', 'eventual', 'stateful']).required(app.messages.errors.REQUIRED),
+    mode: yup.string().oneOf(['disabled', 'eventual', 'stateful', 'raft']).required(app.messages.errors.REQUIRED),
     failover_timeout: yup
       .number()
       .typeError(app.messages.errors.NUMBER_FLOAT)
@@ -243,6 +249,14 @@ const FailoverModalFormForm = ({
         content: (
           <Text variant="p" className={styles.failoverInfo}>
             {FAILOVER_MODES_INFO['stateful']}
+          </Text>
+        ),
+      },
+      {
+        label: 'Raft',
+        content: (
+          <Text variant="p" className={styles.failoverInfo}>
+            {FAILOVER_MODES_INFO['raft']}
           </Text>
         ),
       },

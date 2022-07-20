@@ -1,10 +1,9 @@
-import { forward, guard, sample } from 'effector';
+import { forward, guard } from 'effector';
 import { produce } from 'immer';
 import { core } from '@tarantool.io/frontend-core';
 
 import graphql from 'src/api/graphql';
 import { app } from 'src/models';
-import { FilterGate } from 'src/models/cluster/server-list/gate';
 import {
   bootstrapMutation,
   editTopologyMutation,
@@ -35,8 +34,6 @@ import {
   requestBootstrapEvent,
   requestBootstrapFx,
   selectors,
-  setRatingFiltered,
-  setRolesFiltered,
   showBootstrapPanelEvent,
 } from '.';
 
@@ -44,18 +41,6 @@ const { notifyErrorEvent, notifyEvent, notifySuccessEvent, authAccessDeniedEvent
 const { createTimeoutFx, exists, voidL, trueL, combineResultOnEvent, passResultOnEvent, mapErrorWithTitle } = app.utils;
 
 const mapWithStat = () => ({ withStats: true });
-
-sample({
-  clock: FilterGate.open,
-  fn: ({ rolesFilter }) => rolesFilter,
-  target: setRolesFiltered,
-});
-
-sample({
-  clock: FilterGate.open,
-  fn: ({ ratingFilter }) => ratingFilter,
-  target: setRatingFiltered,
-});
 
 forward({
   from: clusterPageOpenEvent,

@@ -1,3 +1,5 @@
+/** @jest-environment jsdom */
+
 import '../../init';
 
 import { allSettled, fork } from 'effector';

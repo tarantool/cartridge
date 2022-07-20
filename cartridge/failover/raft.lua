@@ -12,6 +12,7 @@ local vars = require('cartridge.vars').new('cartridge.failover')
 local errors = require('errors')
 
 local PromoteLeaderError = errors.new_class('PromoteLeaderError')
+local UnsupportedError = errors.new_class('UnsupportedError')
 
 vars:new('leader_uuid')
 vars:new('raft_trigger')
@@ -76,7 +77,11 @@ local function on_election_trigger()
 end
 
 local function cfg()
-    assert(box.ctl.on_election, "Your Tarantool version doesn't support raft failover mode")
+    if box.ctl.on_election == nil then
+       return nil, UnsupportedError:new(
+           "Your Tarantool version doesn't support raft failover mode, need Tarantool 2.10 or higher"
+        )
+    end
     log.warn('Raft failover is in beta-version')
     local box_opts = argparse.get_box_opts()
 
