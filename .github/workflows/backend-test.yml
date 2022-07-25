@@ -14,137 +14,137 @@ env:
   ETCD_PATH: etcd-v2.3.8/etcd
 
 jobs:
-  misc:
-    runs-on: ubuntu-18.04
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
-        with:
-          node-version: '16.8.0'
-      - uses: actions/setup-python@v2
-        with:
-          python-version: '3.10.0'
+#  misc:
+#    runs-on: ubuntu-18.04
+#    steps:
+#      - uses: actions/checkout@v2
+#      - uses: actions/setup-node@v1
+#        with:
+#          node-version: '16.8.0'
+#      - uses: actions/setup-python@v2
+#        with:
+#          python-version: '3.10.0'
+#
+#      # Setup sphinx
+#      - name: Cache pip packages
+#        uses: actions/cache@v2
+#        id: cache-venv
+#        with:
+#          path: ./venv
+#          key: misc-venv-${{ hashFiles('rst/requirements.txt') }}-03
+#      -
+#        run: |
+#          python -m venv ./venv && . ./venv/bin/activate
+#          pip install -r rst/requirements.txt
+#        if: steps.cache-venv.outputs.cache-hit != 'true'
+#
+#      # Setup tarantool
+#      - uses: tarantool/setup-tarantool@v1
+#        with:
+#          tarantool-version: '1.10'
+#
+#      # Setup luacheck and ldoc
+#      - name: Cache rocks
+#        uses: actions/cache@v2
+#        id: cache-rocks
+#        with:
+#          path: .rocks/
+#          key: misc-rocks-${{ hashFiles('*.rockspec') }}-02
+#      -
+#        run: |
+#          tarantoolctl rocks install luacheck
+#          tarantoolctl rocks install ldoc --server=https://tarantool.github.io/LDoc/
+#        if: steps.cache-rocks.outputs.cache-hit != 'true'
+#
+#      # Setup graphql cli
+#      - name: Cache npm
+#        uses: actions/cache@v2
+#        id: cache-npm
+#        with:
+#          path: node_modules
+#          key: npm-02
+#      -
+#        run: npm install graphql-cli@3.0.14
+#        if: steps.cache-npm.outputs.cache-hit != 'true'
+#
+#      # Run tests
+#      - run: .rocks/bin/luacheck .
+#      - name: Run tarantoolctl rocks make
+#        run: |
+#          . ./venv/bin/activate
+#          tarantoolctl rocks make
+#        env:
+#          CMAKE_LDOC_FIND_REQUIRED: 'YES'
+#          CMAKE_SPHINX_FIND_REQUIRED: 'YES'
+#      - run: ./fetch-schema.sh
+#      - run: cmake -DJUST_CHECK=YES -P rst/BuildUML.cmake
+#
+#      # Cleanup cached paths
+#      - run: tarantoolctl rocks remove cartridge
 
-      # Setup sphinx
-      - name: Cache pip packages
-        uses: actions/cache@v2
-        id: cache-venv
-        with:
-          path: ./venv
-          key: misc-venv-${{ hashFiles('rst/requirements.txt') }}-03
-      -
-        run: |
-          python -m venv ./venv && . ./venv/bin/activate
-          pip install -r rst/requirements.txt
-        if: steps.cache-venv.outputs.cache-hit != 'true'
-
-      # Setup tarantool
-      - uses: tarantool/setup-tarantool@v1
-        with:
-          tarantool-version: '1.10'
-
-      # Setup luacheck and ldoc
-      - name: Cache rocks
-        uses: actions/cache@v2
-        id: cache-rocks
-        with:
-          path: .rocks/
-          key: misc-rocks-${{ hashFiles('*.rockspec') }}-02
-      -
-        run: |
-          tarantoolctl rocks install luacheck
-          tarantoolctl rocks install ldoc --server=https://tarantool.github.io/LDoc/
-        if: steps.cache-rocks.outputs.cache-hit != 'true'
-
-      # Setup graphql cli
-      - name: Cache npm
-        uses: actions/cache@v2
-        id: cache-npm
-        with:
-          path: node_modules
-          key: npm-02
-      -
-        run: npm install graphql-cli@3.0.14
-        if: steps.cache-npm.outputs.cache-hit != 'true'
-
-      # Run tests
-      - run: .rocks/bin/luacheck .
-      - name: Run tarantoolctl rocks make
-        run: |
-          . ./venv/bin/activate
-          tarantoolctl rocks make
-        env:
-          CMAKE_LDOC_FIND_REQUIRED: 'YES'
-          CMAKE_SPHINX_FIND_REQUIRED: 'YES'
-      - run: ./fetch-schema.sh
-      - run: cmake -DJUST_CHECK=YES -P rst/BuildUML.cmake
-
-      # Cleanup cached paths
-      - run: tarantoolctl rocks remove cartridge
-
-  run-tests:
-    strategy:
-      fail-fast: false
-      matrix:
-        tarantool: ['1.10', '2.7', '2.8', 'latest']
-    runs-on: ubuntu-18.04
-    steps:
-      - uses: actions/setup-python@v2
-        with:
-          python-version: '3.9.8'
-      - uses: actions/checkout@v2
-      - if: matrix.tarantool != 'latest'
-        uses: tarantool/setup-tarantool@v1
-        with:
-          tarantool-version: '${{ matrix.tarantool }}'
-
-      - if: matrix.tarantool == 'latest'
-        run: |
-          curl -L https://tarantool.io/pre-release/2/installer.sh | bash
-          sudo apt-get -y install tarantool
-
-      # Setup etcd
-      - name: Install etcd
-        uses: ./.github/actions/setup-etcd
-        if: runner.os == 'Linux'
-        with:
-          etcd-version: v2.3.8
-          install-prefix: etcd-v2.3.8
-
-      # Setup luatest
-      - name: Cache rocks
-        uses: actions/cache@v2
-        id: cache-rocks
-        with:
-          path: .rocks/
-          key: test-rocks-${{ hashFiles('*.rockspec') }}-03
-      -
-        run: tarantoolctl rocks install luatest 0.5.7
-        if: steps.cache-rocks.outputs.cache-hit != 'true'
-
-      # Setup pytest
-      - name: Cache pytest
-        uses: actions/cache@v2
-        id: cache-pytest
-        with:
-          path: ./pytest-venv
-          key: test-venv-${{ hashFiles('test/integration/requirements.txt') }}-03
-      -
-        run: |
-          python -m venv ./pytest-venv && . ./pytest-venv/bin/activate
-          pip install -r test/integration/requirements.txt
-        if: steps.cache-pytest.outputs.cache-hit != 'true'
-
-      - run: tarantoolctl rocks make
-      - run: .rocks/bin/luatest -v
-
-      - name: Run pytest -v
-        run: |
-          . ./pytest-venv/bin/activate
-          pytest -v
-
-      # Cleanup cached paths
-      - run: tarantoolctl rocks remove cartridge
+#  run-tests:
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        tarantool: ['1.10', '2.7', '2.8', 'latest']
+#    runs-on: ubuntu-18.04
+#    steps:
+#      - uses: actions/setup-python@v2
+#        with:
+#          python-version: '3.9.8'
+#      - uses: actions/checkout@v2
+#      - if: matrix.tarantool != 'latest'
+#        uses: tarantool/setup-tarantool@v1
+#        with:
+#          tarantool-version: '${{ matrix.tarantool }}'
+#
+#      - if: matrix.tarantool == 'latest'
+#        run: |
+#          curl -L https://tarantool.io/pre-release/2/installer.sh | bash
+#          sudo apt-get -y install tarantool
+#
+#      # Setup etcd
+#      - name: Install etcd
+#        uses: ./.github/actions/setup-etcd
+#        if: runner.os == 'Linux'
+#        with:
+#          etcd-version: v2.3.8
+#          install-prefix: etcd-v2.3.8
+#
+#      # Setup luatest
+#      - name: Cache rocks
+#        uses: actions/cache@v2
+#        id: cache-rocks
+#        with:
+#          path: .rocks/
+#          key: test-rocks-${{ hashFiles('*.rockspec') }}-03
+#      -
+#        run: tarantoolctl rocks install luatest 0.5.7
+#        if: steps.cache-rocks.outputs.cache-hit != 'true'
+#
+#      # Setup pytest
+#      - name: Cache pytest
+#        uses: actions/cache@v2
+#        id: cache-pytest
+#        with:
+#          path: ./pytest-venv
+#          key: test-venv-${{ hashFiles('test/integration/requirements.txt') }}-03
+#      -
+#        run: |
+#          python -m venv ./pytest-venv && . ./pytest-venv/bin/activate
+#          pip install -r test/integration/requirements.txt
+#        if: steps.cache-pytest.outputs.cache-hit != 'true'
+#
+#      - run: tarantoolctl rocks make
+#      - run: .rocks/bin/luatest -v
+#
+#      - name: Run pytest -v
+#        run: |
+#          . ./pytest-venv/bin/activate
+#          pytest -v
+#
+#      # Cleanup cached paths
+#      - run: tarantoolctl rocks remove cartridge
 
   tests-ee:
     if: |
@@ -171,7 +171,7 @@ jobs:
         if: steps.cache-sdk.outputs.cache-hit != 'true'
         run: |
           ARCHIVE_NAME=tarantool-enterprise-bundle-${{ matrix.sdk-version }}.tar.gz
-          curl -O -L \
+          curl -v -O -L \
             https://tarantool:${{ secrets.SDK_DOWNLOAD_TOKEN }}@download.tarantool.io/enterprise/${ARCHIVE_NAME}
           tar -xzf ${ARCHIVE_NAME}
           rm -f ${ARCHIVE_NAME}
