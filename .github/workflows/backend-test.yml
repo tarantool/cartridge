@@ -149,7 +149,7 @@ jobs:
   tests-ee:
     if: |
       github.event_name == 'push'
-    runs-on: ubuntu-latest
+    runs-on: self-hosted, Linux, X64, cartridge
     strategy:
       matrix:
         sdk-version: ["2.11.0-entrypoint-6-g2b6d21d3b-r496-nogc64-linux-x86_64"]
