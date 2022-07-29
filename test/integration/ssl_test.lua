@@ -4,7 +4,7 @@ local g = t.group()
 
 local helpers = require('test.helper')
 
-local vshard_util = require('vshard.util')
+local cartridge_utils = require('cartridge.utils')
 
 local CERT_DIR = fio.pathjoin(fio.abspath(os.getenv('SOURCEDIR') or '.'),
                               'test/integration/ssl_cert')
@@ -18,11 +18,10 @@ local CLIENT_KEY_FILE = fio.pathjoin(CERT_DIR, 'client.key')
 --local GOST_CERT_FILE = fio.pathjoin(CERT_DIR, 'gost.crt')
 
 g.before_all = function()
-    require('log').info(vshard_util)
-    if type(vshard_util.feature) ~= 'table' then
+    if type(cartridge_utils.feature) ~= 'table' then
         t.skip("No SSL support")
     end
-    if not vshard_util.feature.ssl then
+    if not cartridge_utils.feature.ssl then
         t.skip("No SSL support")
     end
 
