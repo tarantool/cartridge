@@ -191,15 +191,8 @@ jobs:
           install-prefix: etcd-v2.3.8
 
       # Setup luatest
-      - name: Cache rocks
-        uses: actions/cache@v2
-        id: cache-rocks
-        with:
-          path: .rocks/
-          key: test-rocks-${{ hashFiles('*.rockspec') }}-03
       -
         run: tarantoolctl rocks install luatest 0.5.7
-        if: steps.cache-rocks.outputs.cache-hit != 'true'
 
       # Setup pytest
       - name: Cache pytest
