@@ -44,6 +44,7 @@ local cluster_cookie = require('cartridge.cluster-cookie')
 local service_registry = require('cartridge.service-registry')
 local logging_whitelist = require('cartridge.logging_whitelist')
 local pool = require('cartridge.pool')
+local cartridge_utils = require('cartridge.utils')
 
 local lua_api_topology = require('cartridge.lua-api.topology')
 local lua_api_failover = require('cartridge.lua-api.failover')
@@ -350,11 +351,13 @@ local function cfg(opts, box_opts)
     end
 
     if opts.transport == 'ssl' then
-        if type(vshard_util.feature) ~= 'table' then
+        if type(cartridge_utils.feature) ~= 'table' then
             log.error('No SSL support for this tarantool version')
+            return nil, CartridgeCfgError:new('No SSL support for this tarantool version')
         end
-        if not vshard_util.feature.ssl then
-            log.error('No SSL support for this tarantool version')
+        if not cartridge_utils.feature.ssl then
+            log.error('No SSL support for this tarantool version in feature list')
+            return nil, CartridgeCfgError:new('No SSL support for this tarantool version in feature list')
         end
     end
 

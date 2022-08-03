@@ -11,11 +11,8 @@ local CERT_DIR = fio.pathjoin(fio.abspath(os.getenv('SOURCEDIR') or '.'),
 local CA_FILE = fio.pathjoin(CERT_DIR, 'ca.crt')
 local SERVER_CERT_FILE = fio.pathjoin(CERT_DIR, 'server.crt')
 local SERVER_KEY_FILE = fio.pathjoin(CERT_DIR, 'server.key')
---local SERVER_KEY_FILE_ENC = fio.pathjoin(CERT_DIR, 'server.enc.key')
 local CLIENT_CERT_FILE = fio.pathjoin(CERT_DIR, 'client.crt')
 local CLIENT_KEY_FILE = fio.pathjoin(CERT_DIR, 'client.key')
---local GOST_KEY_FILE = fio.pathjoin(CERT_DIR, 'gost.key')
---local GOST_CERT_FILE = fio.pathjoin(CERT_DIR, 'gost.crt')
 
 g.before_all = function()
     if type(cartridge_utils.feature) ~= 'table' then
@@ -143,7 +140,7 @@ local function get_box_info_using_vshard(srv, bucket)
     )
 end
 
-function g.test_ssl_rpc()
+function g.test_ssl_rpc_vshard()
     local A1 = g.cluster:server('A1')
     local B1 = g.cluster:server('B1')
     local C1 = g.cluster:server('C1')
@@ -160,4 +157,8 @@ function g.test_ssl_rpc()
 
     local _, err = get_box_info_using_vshard(A1, 1)
     t.assert_not(err)
+
+    t.helpers.retrying({}, function()
+        t.assert_equals(helpers.list_cluster_issues(A1), {})
+    end)
 end

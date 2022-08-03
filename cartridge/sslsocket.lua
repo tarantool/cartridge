@@ -10,84 +10,59 @@ local buffer = require('buffer')
 local clock = require('clock')
 local errno = require('errno')
 
-ffi.cdef[[
- typedef struct SSL_METHOD {} SSL_METHOD;
- typedef struct SSL_CTX {} SSL_CTX;
- typedef struct SSL {} SSL;
-
- const SSL_METHOD *TLS_server_method(void);
- const SSL_METHOD *TLS_client_method(void);
-
- SSL_CTX *SSL_CTX_new(const SSL_METHOD *method);
- void SSL_CTX_free(SSL_CTX *);
-
- int SSL_shutdown(SSL *ssl);
-
- int SSL_CTX_use_certificate_file(SSL_CTX *ctx, const char *file, int type);
- int SSL_CTX_use_PrivateKey_file(SSL_CTX *ctx, const char *file, int type);
- int SSL_CTX_load_verify_locations(SSL_CTX *ctx, const char *CAfile,
-                                   const char *CApath);
- int SSL_CTX_set_cipher_list(SSL_CTX *ctx, const char *str);
- void SSL_CTX_set_verify(SSL_CTX *ctx, int mode,
-                         int (*verify_callback)(int, void *));
-
- SSL *SSL_new(SSL_CTX *ctx);
- void SSL_free(SSL *ssl);
-
- int SSL_set_fd(SSL *s, int fd);
-
- void SSL_set_connect_state(SSL *s);
- void SSL_set_accept_state(SSL *s);
-
- int SSL_write(SSL *ssl, const void *buf, int num);
- int SSL_read(SSL *ssl, void *buf, int num);
-
- int SSL_pending(const SSL *ssl);
-
- void ERR_clear_error(void);
- char *ERR_error_string(unsigned long e, char *buf);
- unsigned long ERR_peek_last_error(void);
-
- int SSL_get_error(const SSL *s, int ret_code);
-
- typedef socklen_t uint32;
- int getsockopt(int sockfd, int level, int optname, void *optval,
-                socklen_t *optlen);
-
- int setsockopt(int sockfd, int level, int optname,
-                const void *optval, socklen_t optlen);
-
-void *memmem(const void *haystack, size_t haystacklen,
-        const void *needle, size_t needlelen);
-]]
-
 pcall(
     function()
-        ffi.cdef([[
-          int SSL_library_init(void);
-          void SSL_load_error_strings(void);
+        ffi.cdef[[
+            typedef struct SSL_METHOD {} SSL_METHOD;
+            typedef struct SSL_CTX {} SSL_CTX;
+            typedef struct SSL {} SSL;
 
-          const SSL_METHOD *SSLv23_method(void);
-          const SSL_METHOD *SSLv23_server_method(void);
-          const SSL_METHOD *SSLv23_client_method(void);
+            const SSL_METHOD *TLS_server_method(void);
+            const SSL_METHOD *TLS_client_method(void);
 
-          const SSL_METHOD *SSLv3_method(void);
-          const SSL_METHOD *SSLv3_server_method(void);
-          const SSL_METHOD *SSLv3_client_method(void);
+            SSL_CTX *SSL_CTX_new(const SSL_METHOD *method);
+            void SSL_CTX_free(SSL_CTX *);
 
-        ]])
+            int SSL_shutdown(SSL *ssl);
 
-        ffi.C.SSL_library_init()
-        ffi.C.SSL_load_error_strings()
-end)
+            int SSL_CTX_use_certificate_file(SSL_CTX *ctx, const char *file, int type);
+            int SSL_CTX_use_PrivateKey_file(SSL_CTX *ctx, const char *file, int type);
+            int SSL_CTX_load_verify_locations(SSL_CTX *ctx, const char *CAfile,
+                                            const char *CApath);
+            int SSL_CTX_set_cipher_list(SSL_CTX *ctx, const char *str);
+            void SSL_CTX_set_verify(SSL_CTX *ctx, int mode,
+                                    int (*verify_callback)(int, void *));
 
+            SSL *SSL_new(SSL_CTX *ctx);
+            void SSL_free(SSL *ssl);
 
--- local methods = {
---     tlsv1 = ffi.C.TLSv1_method(),
---     tlsv11 = ffi.C.TLSv1_1_method(),
---     tlsv12 = ffi.C.TLSv1_2_method(),
--- }
+            int SSL_set_fd(SSL *s, int fd);
 
+            void SSL_set_connect_state(SSL *s);
+            void SSL_set_accept_state(SSL *s);
+
+            int SSL_write(SSL *ssl, const void *buf, int num);
+            int SSL_read(SSL *ssl, void *buf, int num);
+
+            int SSL_pending(const SSL *ssl);
+
+            void ERR_clear_error(void);
+            char *ERR_error_string(unsigned long e, char *buf);
+            unsigned long ERR_peek_last_error(void);
+
+            int SSL_get_error(const SSL *s, int ret_code);
+
+            typedef socklen_t uint32;
+            int getsockopt(int sockfd, int level, int optname, void *optval,
+                            socklen_t *optlen);
+
+            int setsockopt(int sockfd, int level, int optname,
+                            const void *optval, socklen_t optlen);
+
+            void *memmem(const void *haystack, size_t haystacklen,
+                    const void *needle, size_t needlelen);
+        ]]
+    end)
 
 local function slice_wait(timeout, starttime)
     if timeout == nil then
@@ -98,8 +73,6 @@ local function slice_wait(timeout, starttime)
 end
 
 local X509_FILETYPE_PEM       =1
---local X509_FILETYPE_ASN1      =2
---local X509_FILETYPE_DEFAULT   =3
 
 local function ctx(method)
     ffi.C.ERR_clear_error()
@@ -143,20 +116,12 @@ end
 
 local default_ctx = ctx(ffi.C.TLS_server_method())
 
---local SSL_ERROR_NONE                  =0
---local SSL_ERROR_SSL                   =1
 local SSL_ERROR_WANT_READ             =2
 local SSL_ERROR_WANT_WRITE            =3
---local SSL_ERROR_WANT_X509_LOOKUP      =4
 local SSL_ERROR_SYSCALL               =5 -- look at error stack/return value/errno
 local SSL_ERROR_ZERO_RETURN           =6
---local SSL_ERROR_WANT_CONNECT          =7
---local SSL_ERROR_WANT_ACCEPT           =8
 
 local sslsocket = {
-    --__newindex = function(table, key, value)
-        --error("Attempt to modify read-only sslsocket properties "..key)
-    --end,
 }
 sslsocket.__index = sslsocket
 
@@ -343,22 +308,16 @@ local function sysread(self, charptr, size, timeout)
     end
 end
 
+local function recv(self, limit)
+    local buffer = ffi.new('char[?]', limit)
+    local readsize = sysread(self, buffer, limit, 60)
+    return ffi.string(buffer, readsize)
+end
+
 local function read(self, limit, timeout, check, ...)
     assert(limit >= 0)
 
     local start = clock.time()
-
-    -- local data = ffi.new('char[?]', limit)
-    -- local res, err = sysread(self, data, limit, slice_wait(timeout, start))
-    -- if res == 0 then
-    --     return ''
-    -- end
-    -- if res ~= nil then
-    --     return ffi.string(data, res)
-    -- else
-    --     require('log').info(err)
-    --     return nil, err
-    -- end
 
     limit = math.min(limit, LIMIT_INFINITY)
     local rbuf = self.rbuf
@@ -436,6 +395,10 @@ local function check_delimiter(self, limit, eols)
     return nil
 end
 
+function sslsocket.recv(self, limit)
+    return recv(self, limit)
+end
+
 function sslsocket.read(self, opts, timeout)
     timeout = timeout or TIMEOUT_INFINITY
     if type(opts) == 'number' then
@@ -454,6 +417,10 @@ function sslsocket.read(self, opts, timeout)
         end
     end
     error('Usage: s:read(delimiter|chunk|{delimiter = x, chunk = x}, timeout)')
+end
+
+function sslsocket.readable(self, timeout)
+    return self.sock:readable(timeout)
 end
 
 local function tcp_connect(host, port, timeout, sslctx)
@@ -522,8 +489,10 @@ local function wrap_accepted_socket(sock, sslctx)
     return self
 end
 
-local function tcp_server(host, port, handler_function, timeout, sslctx)
+local function tcp_server(host, port, handler, timeout, sslctx)
     sslctx = sslctx or default_ctx
+
+    local handler_function = handler.handler
 
     local wrapper = function (sock, from)
         local self, err = wrap_accepted_socket(sock, sslctx)
@@ -534,7 +503,9 @@ local function tcp_server(host, port, handler_function, timeout, sslctx)
         end
     end
 
-    return socket.tcp_server(host, port, wrapper, timeout)
+    handler.handler = wrapper
+
+    return socket.tcp_server(host, port, handler, timeout)
 end
 
 local function accept(server, sslctx)

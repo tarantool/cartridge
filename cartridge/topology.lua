@@ -1060,10 +1060,12 @@ local function get_fullmesh_replication(topology_cfg, replicaset_uuid, instance_
         end
     end
 
+    table.sort(replication)
+
     params = params or {}
     if params.transport == 'ssl' then
         local sslreplication = {}
-        for _, uri in pairs(replication) do
+        for _, uri in ipairs(replication) do
             table.insert(sslreplication, {
                 uri = uri,
                 params = params,
@@ -1071,7 +1073,6 @@ local function get_fullmesh_replication(topology_cfg, replicaset_uuid, instance_
         end
         return sslreplication
     end
-    table.sort(replication)
     return replication
 end
 

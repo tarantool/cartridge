@@ -297,6 +297,7 @@ local function communicate(s)
 end
 
 local function rc_handle(s)
+    assert(s ~= nil, debug.traceback())
     utils.fd_cloexec(s:fd())
 
     local salt = digest.urandom(32)
@@ -329,6 +330,9 @@ local function rc_handle(s)
         --    release asap.
         -- 2. Server received data even before it has sent the greeting.
         --    This case doesn't conform to Tarantool iproto protocol.
+        if s == nil then
+            error("AAAAAA")
+        end
         if s:readable(0) then
             vars.handlers[s] = nil
             return
@@ -375,51 +379,59 @@ local function bind(host, port, sslparams)
     if usessl then
         log.info("Remote control over ssl")
         local ctx = sslsocket.ctx(ffi.C.TLS_server_method())
+        
+        -- TODO
         -- SSL_CTX_set_default_passwd_cb(ssl_ctx, passwd_cb);
         -- SSL_CTX_set_min_proto_version(ssl_ctx, TLS1_2_VERSION) != 1 ||
         -- SSL_CTX_set_max_proto_version(ssl_ctx, TLS1_2_VERSION) != 1) 
-
-        -- SSL_CTX_use_certificate_file(ssl_ctx, cert_file,
-        --			 SSL_FILETYPE_PEM)
-        --   OR   SSL_CTX_use_certificate_chain_file
-        -- SL_CTX_use_PrivateKey_file(ssl_ctx, key_file,
-        --			SSL_FILETYPE_PEM)
-        -- SSL_CTX_load_verify_locations(ssl_ctx, ca_file, NULL) != 1)
-        -- SSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_PEER |
-        --		   SSL_VERIFY_FAIL_IF_NO_PEER_CERT, NULL);
-        -- SSL_CTX_set_cipher_list(ssl_ctx, ciphers) != 1)
-        -- 
+        
         local rc = sslsocket.ctx_use_private_key_file(ctx, sslparams.ssl_key_file)
         if rc == false then
-            log.info('Private key is invalid')
-            return
+            local err = RemoteControlError:new(
+                "Can't start server on %s:%s: %s",
+                host, port, 'Private key is invalid'
+            )
+            return nil, err
         end
         rc = sslsocket.ctx_use_certificate_file(ctx, sslparams.ssl_cert_file)
         if rc == false then
-            log.info('Certificate is invalid')
-            return
+            local err = RemoteControlError:new(
+                "Can't start server on %s:%s: %s",
+                host, port, 'Certificate is invalid'
+            )
+            return nil, err
         end
         if sslparams.ssl_ca_file ~= nil then
             rc = sslsocket.ctx_load_verify_locations(ctx, sslparams.ssl_ca_file)
             if rc == false then
-                log.info('CA file is invalid')
-                return
+                local err = RemoteControlError:new(
+                    "Can't start server on %s:%s: %s",
+                    host, port, 'CA file is invalid'
+                )
+                return nil, err
             end
 
+            -- SSL_VERIFY_PEER = 0x01
+            -- SSL_VERIFY_FAIL_IF_NO_PEER_CERT = 0x02
             sslsocket.ctx_set_verify(ctx, 0x01 + 0x02)
-            -- SSL_VERIFY_PEER
-            -- SSL_VERIFY_FAIL_IF_NO_PEER_CERT
         end
         if sslparams.ssl_ciphers ~= nil then
             rc = sslsocket.ctx_set_cipher_list(ctx, sslparams.ssl_ciphers)
             if rc == false then
-                log.info('Ciphers is invalid')
-                return
+                local err = RemoteControlError:new(
+                    "Can't start server on %s:%s: %s",
+                    host, port, 'Ciphers is invalid'
+                )
+                return nil, err
             end
         end
 
-        server = sslsocket.tcp_server(host, port,
-            rc_handle, sslparams.timeout, ctx)
+        local timeout = sslparams.timeout or 60
+
+        server = sslsocket.tcp_server(host, port, {
+                name = 'remote_control',
+                handler = rc_handle,
+            }, timeout, ctx)
     else
         server = socket.tcp_server(host, port, {
             name = 'remote_control',

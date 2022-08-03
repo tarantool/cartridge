@@ -482,7 +482,7 @@ local function get_vshard_config(group_name, conf)
             if vars.sslparams.transport == 'ssl' then
                 listen_uri = {}
                 table.insert(listen_uri, {
-                    pool.format_uri(server.uri),
+                    uri = pool.format_uri(server.uri),
                     params = {
                         transport = vars.sslparams.transport,
 
@@ -495,7 +495,7 @@ local function get_vshard_config(group_name, conf)
             local client_uri = pool.format_uri(server.uri)
             if vars.sslparams.transport == 'ssl' then
                 client_uri = {
-                    pool.format_uri(server.uri),
+                    uri = pool.format_uri(server.uri),
                     params = {
                         transport = vars.sslparams.transport,
 

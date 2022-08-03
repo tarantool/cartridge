@@ -602,8 +602,6 @@ local function boot_instance(clusterwide_config)
                 ssl_cert_file = vars.ssl_server_cert_file,
                 ssl_key_file = vars.ssl_server_key_file,
             }})
-        log.info('box cfg listen ssl')
-        log.info(require('json').encode(listen_uri))
     end
 
     local _, err = BoxError:pcall(
@@ -764,7 +762,7 @@ local function init(opts)
     end
 
     local ok, err = remote_control.bind(addrinfo[1].host, vars.binary_port, {
-        transport = vars.transport,
+        transport = vars.transport, -- '' or 'ssl'
         ssl_ciphers = vars.ssl_ciphers,
         ssl_ca_file = vars.ssl_server_ca_file,
         ssl_cert_file = vars.ssl_server_cert_file,
