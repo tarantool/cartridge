@@ -14,6 +14,7 @@ local errno = require('errno')
 local fio = require('fio')
 local ffi = require('ffi')
 local sslsocket = require('cartridge.sslsocket')
+local cartridge_utils = require('cartridge.utils')
 
 local CERT_DIR = fio.pathjoin(fio.abspath(os.getenv('SOURCEDIR') or '.'),
                               'test/unit/ssl_cert')
@@ -50,6 +51,13 @@ function _G.object:method()
 end
 
 g.before_all(function()
+    if type(cartridge_utils.feature) ~= 'table' then
+        t.skip("No SSL support")
+    end
+    if not cartridge_utils.feature.ssl then
+        t.skip("No SSL support")
+    end
+
     helpers.box_cfg()
     box.schema.user.create(
         username,
