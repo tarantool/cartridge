@@ -4,7 +4,6 @@ local g = t.group('ssl-remote-control')
 local log = require('log')
 local fiber = require('fiber')
 local digest = require('digest')
-local socket = require('socket')
 local pickle = require('pickle')
 local netbox = require('net.box')
 local msgpack = require('msgpack')
@@ -245,7 +244,7 @@ function g.test_fiber_name()
     conn_rc:close()
 
     remote_control.stop()
-    
+
     box.cfg({listen = {uri = '127.0.0.1:13302', params = {
         transport = 'ssl',
         ssl_ca_file = CA_FILE,
@@ -280,7 +279,7 @@ function g.test_drop_connections()
     rawset(_G, 'conn_2', conn_2)
 
     -- Check that the presence of a closed connection doesn't cause errors
-    netbox.connect({uri='superuser:3.141592@127.0.0.1:13301', 
+    netbox.connect({uri='superuser:3.141592@127.0.0.1:13301',
     params={
         transport = 'ssl',
         ssl_ca_file = CA_FILE,
@@ -369,7 +368,7 @@ function g.test_late_accept()
             ssl_key_file=CLIENT_KEY_FILE}}, {wait_connected = false})
     t.assert_equals({conn_1.state, conn_1.error}, {"initial", nil})
 
-    local conn_2 = netbox.connect({uri=url, 
+    local conn_2 = netbox.connect({uri=url,
         params={
             transport='ssl',
             ssl_cert_file=CLIENT_CERT_FILE,
@@ -405,7 +404,7 @@ end
 
 function g.test_auth()
     rc_start(13301)
-    local conn = assert(netbox.connect( 
+    local conn = assert(netbox.connect(
         {uri='superuser:3.141592@127.0.0.1:13301',
          params={
             transport='ssl',
@@ -418,7 +417,7 @@ end
 function g.test_ping()
     rc_start(13301)
     local conn = assert(netbox.connect(
-        {uri='127.0.0.1:13301', 
+        {uri='127.0.0.1:13301',
          params={
             transport='ssl',
             ssl_cert_file=CLIENT_CERT_FILE,
@@ -640,7 +639,7 @@ function g.test_bad_username()
         ssl_key_file = SERVER_KEY_FILE,
         timeout = 10,
     }}})
-    local conn_box = assert(netbox.connect({uri='bad-user@127.0.0.1:13302', 
+    local conn_box = assert(netbox.connect({uri='bad-user@127.0.0.1:13302',
         params={
             transport = 'ssl',
             ssl_ca_file = CA_FILE,
@@ -660,7 +659,7 @@ function g.test_bad_password()
 
     rc_start(13301)
     box.cfg({listen = box.NULL})
-    local conn_rc = assert(netbox.connect({uri='superuser:bad-password@127.0.0.1:13301', 
+    local conn_rc = assert(netbox.connect({uri='superuser:bad-password@127.0.0.1:13301',
     params={
         transport = 'ssl',
         ssl_ca_file = CA_FILE,
@@ -679,7 +678,7 @@ function g.test_bad_password()
         ssl_key_file = SERVER_KEY_FILE,
         timeout = 10,
     }}})
-    local conn_box = assert(netbox.connect({uri='superuser:bad-password@127.0.0.1:13302', 
+    local conn_box = assert(netbox.connect({uri='superuser:bad-password@127.0.0.1:13302',
     params={
         transport = 'ssl',
         ssl_ca_file = CA_FILE,
@@ -728,7 +727,7 @@ function g.test_guest()
 
     rc_start(13301)
     box.cfg({listen = box.NULL})
-    local conn_rc = assert(netbox.connect({uri='127.0.0.1:13301', 
+    local conn_rc = assert(netbox.connect({uri='127.0.0.1:13301',
     params={
         transport = 'ssl',
         ssl_ca_file = CA_FILE,
@@ -747,7 +746,7 @@ function g.test_guest()
         ssl_key_file = SERVER_KEY_FILE,
         timeout = 10,
     }}})
-    local conn_box = assert(netbox.connect({uri='127.0.0.1:13302', 
+    local conn_box = assert(netbox.connect({uri='127.0.0.1:13302',
     params={
         transport = 'ssl',
         ssl_ca_file = CA_FILE,
@@ -885,7 +884,7 @@ function g.test_call()
 
     rc_start(13301)
     box.cfg({listen = box.NULL})
-    local conn_rc = assert(netbox.connect({uri='superuser:3.141592@127.0.0.1:13301', 
+    local conn_rc = assert(netbox.connect({uri='superuser:3.141592@127.0.0.1:13301',
     params={
         transport = 'ssl',
         ssl_ca_file = CA_FILE,
@@ -904,7 +903,7 @@ function g.test_call()
         ssl_key_file = SERVER_KEY_FILE,
         timeout = 10,
     }}})
-    local conn_box = assert(netbox.connect({uri='superuser:3.141592@127.0.0.1:13302', 
+    local conn_box = assert(netbox.connect({uri='superuser:3.141592@127.0.0.1:13302',
     params={
         transport = 'ssl',
         ssl_ca_file = CA_FILE,
@@ -976,7 +975,7 @@ function g.test_eval()
 
     rc_start(13301)
     box.cfg({listen = box.NULL})
-    local conn_rc = assert(netbox.connect({uri='superuser:3.141592@127.0.0.1:13301', 
+    local conn_rc = assert(netbox.connect({uri='superuser:3.141592@127.0.0.1:13301',
     params={
         transport = 'ssl',
         ssl_ca_file = CA_FILE,
@@ -995,7 +994,7 @@ function g.test_eval()
         ssl_key_file = SERVER_KEY_FILE,
         timeout = 10,
     }}})
-    local conn_box = assert(netbox.connect({uri='superuser:3.141592@127.0.0.1:13302', 
+    local conn_box = assert(netbox.connect({uri='superuser:3.141592@127.0.0.1:13302',
     params={
         transport = 'ssl',
         ssl_ca_file = CA_FILE,
@@ -1028,7 +1027,7 @@ function g.test_timeout()
 
     rc_start(13301)
     box.cfg({listen = box.NULL})
-    local conn_rc = assert(netbox.connect({uri='superuser:3.141592@127.0.0.1:13301', 
+    local conn_rc = assert(netbox.connect({uri='superuser:3.141592@127.0.0.1:13301',
     params={
         transport = 'ssl',
         ssl_ca_file = CA_FILE,
@@ -1047,7 +1046,7 @@ function g.test_timeout()
         ssl_key_file = SERVER_KEY_FILE,
         timeout = 10,
     }}})
-    local conn_box = assert(netbox.connect({uri='superuser:3.141592@127.0.0.1:13302', 
+    local conn_box = assert(netbox.connect({uri='superuser:3.141592@127.0.0.1:13302',
     params={
         transport = 'ssl',
         ssl_ca_file = CA_FILE,
@@ -1069,7 +1068,7 @@ function g.test_switch_box_to_rc()
         ssl_key_file = SERVER_KEY_FILE,
         timeout = 10,
     }}})
-    local conn_1 = assert(netbox.connect({uri=uri, 
+    local conn_1 = assert(netbox.connect({uri=uri,
     params={
         transport = 'ssl',
         ssl_ca_file = CA_FILE,
@@ -1082,7 +1081,7 @@ function g.test_switch_box_to_rc()
     t.assert_equals(conn_1.peer_uuid, box.info.uuid)
 
     box.cfg({listen = box.NULL})
-    local conn_2 = assert(netbox.connect({uri=uri, 
+    local conn_2 = assert(netbox.connect({uri=uri,
     params={
         transport = 'ssl',
         ssl_ca_file = CA_FILE,
@@ -1102,7 +1101,7 @@ function g.test_switch_box_to_rc()
 
     -- rc can be started on the same port
     rc_start(13301)
-    local conn_rc = assert(netbox.connect({uri=uri, 
+    local conn_rc = assert(netbox.connect({uri=uri,
     params={
         transport = 'ssl',
         ssl_ca_file = CA_FILE,
@@ -1120,7 +1119,7 @@ function g.test_switch_rc_to_box()
     local uri = 'superuser:3.141592@127.0.0.1:13301'
 
     rc_start(13301)
-    local conn_rc = assert(netbox.connect({uri=uri, 
+    local conn_rc = assert(netbox.connect({uri=uri,
     params={
         transport = 'ssl',
         ssl_ca_file = CA_FILE,
@@ -1153,7 +1152,7 @@ function g.test_switch_rc_to_box()
     t.assert_equals(conn_rc:call('get_local_secret'), secret)
 
     -- iproto connection can be established
-    local conn_box = assert(netbox.connect({uri=uri, 
+    local conn_box = assert(netbox.connect({uri=uri,
     params={
         transport = 'ssl',
         ssl_ca_file = CA_FILE,
@@ -1170,7 +1169,7 @@ end
 function g.test_reconnect()
     local uri = 'superuser:3.141592@127.0.0.1:13301'
 
-    local conn = assert(netbox.connect({uri=uri, 
+    local conn = assert(netbox.connect({uri=uri,
     params={
         transport = 'ssl',
         ssl_ca_file = CA_FILE,
@@ -1242,7 +1241,7 @@ function g.test_socket_gc()
         assert(rc == true, 'Private client key file is invalid')
         rc = sslsocket.ctx_use_certificate_file(ctx, CLIENT_CERT_FILE)
         assert(rc == true, 'Client certificate is invalid')
-        
+
         local s = sslsocket.tcp_connect('127.0.0.1', 13301, 10, ctx)
         t.assert(s, string.format('socket #%s: %s', i, errno.strerror()))
         s:close()

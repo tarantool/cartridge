@@ -379,12 +379,12 @@ local function bind(host, port, sslparams)
     if usessl then
         log.info("Remote control over ssl")
         local ctx = sslsocket.ctx(ffi.C.TLS_server_method())
-        
+
         -- TODO
         -- SSL_CTX_set_default_passwd_cb(ssl_ctx, passwd_cb);
         -- SSL_CTX_set_min_proto_version(ssl_ctx, TLS1_2_VERSION) != 1 ||
         -- SSL_CTX_set_max_proto_version(ssl_ctx, TLS1_2_VERSION) != 1) 
-        
+
         local rc = sslsocket.ctx_use_private_key_file(ctx, sslparams.ssl_key_file)
         if rc == false then
             local err = RemoteControlError:new(
