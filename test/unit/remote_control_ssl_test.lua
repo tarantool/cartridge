@@ -27,16 +27,16 @@ local CLIENT_KEY_FILE = fio.pathjoin(CERT_DIR, 'client.key')
 local username = 'superuser'
 local password = '3.141592'
 
-local secret = digest.urandom(32):hex()
-local function get_local_secret()
-    return secret
+local sslsecret = digest.urandom(32):hex()
+local function get_local_sslsecret()
+    return sslsecret
 end
 
-_G.get_local_secret = get_local_secret
-_G.indexed = setmetatable({}, {__index = {get_local_secret = get_local_secret}})
-_G.callable = setmetatable({}, {__call = get_local_secret})
-_G.uncallable = setmetatable({}, {__call = _G.callable})
-_G.multireturn = function()
+_G.get_local_sslsecret = get_local_sslsecret
+_G.sslindexed = setmetatable({}, {__index = {get_local_sslsecret = get_local_sslsecret}})
+_G.sslcallable = setmetatable({}, {__call = get_local_sslsecret})
+_G.unsslcallable = setmetatable({}, {__call = _G.sslcallable})
+_G.sslmultireturn = function()
     return nil, 'Artificial Error', 3
 end
 _G.varargs = function(...)
@@ -298,7 +298,7 @@ function g.test_drop_connections()
 
     -- Check that remote-control server is able to handle requests asynchronously
     local ch = fiber.channel(0)
-    rawset(_G, 'longrunning', function() ch:put(secret) end)
+    rawset(_G, 'longrunning', function() ch:put(sslsecret) end)
     local future = conn_2:call('longrunning', {1}, {is_async = true})
 
     local result = helpers.run_remotely({net_box = conn_1}, function()
@@ -324,7 +324,7 @@ function g.test_drop_connections()
         -- until the last response is sent
         t.assert(_G.conn_1:ping())
         t.assert(_G.conn_1:eval('return true'))
-        return _G.conn_1:call('get_local_secret')
+        return _G.conn_1:call('get_local_sslsecret')
     end)
 
     -- Both connections are closed as soon as eval returns
@@ -332,7 +332,7 @@ function g.test_drop_connections()
     t.assert_equals({conn_2.state, conn_2.error}, {"error", "Peer closed"})
 
     -- conn_1 was able to get the response
-    t.assert_equals(result, secret)
+    t.assert_equals(result, sslsecret)
 
     -- conn_2 was dropped
     t.assert_equals(future:is_ready(), true)
@@ -341,7 +341,7 @@ function g.test_drop_connections()
     t.assert_equals(type(err), 'cdata')
     t.assert_equals(err.message, 'Peer closed')
     -- but its handler is still alive
-    t.assert_equals(ch:get(0), secret)
+    t.assert_equals(ch:get(0), sslsecret)
 
     -- Cleanup globals
     rawset(_G, 'conn_1', nil)
@@ -610,15 +610,15 @@ function g.test_async()
         ssl_key_file = CLIENT_KEY_FILE,
         timeout = 10,
     }}))
-    local future = conn:call('get_local_secret', nil, {is_async = true})
+    local future = conn:call('get_local_sslsecret', nil, {is_async = true})
     t.assert_equals(future:is_ready(), false)
-    t.assert_equals(future:wait_result(), {secret})
+    t.assert_equals(future:wait_result(), {sslsecret})
     t.assert_equals(future:is_ready(), true)
-    t.assert_equals(future:result(), {secret})
+    t.assert_equals(future:result(), {sslsecret})
 
-    local future = conn:call('get_local_secret', nil, {is_async = true})
+    local future = conn:call('get_local_sslsecret', nil, {is_async = true})
     t.assert_equals(conn:call('math.pow', {2, 6}), 64)
-    t.assert_equals(future:wait_result(), {secret})
+    t.assert_equals(future:wait_result(), {sslsecret})
 end
 
 function g.test_bad_username()
@@ -708,14 +708,14 @@ function g.test_guest()
 
         t.assert_not(conn.error)
         t.assert_error_msg_contains(
-            "Execute access to function 'get_local_secret' is denied for user 'guest'",
-            conn.call, conn, 'get_local_secret'
+            "Execute access to function 'get_local_sslsecret' is denied for user 'guest'",
+            conn.call, conn, 'get_local_sslsecret'
         )
 
         t.assert_not(conn.error)
         t.assert_error_msg_contains(
-            "Execute access to function '_G.get_local_secret' is denied for user 'guest'",
-            conn.call, conn, '_G.get_local_secret'
+            "Execute access to function '_G.get_local_sslsecret' is denied for user 'guest'",
+            conn.call, conn, '_G.get_local_sslsecret'
         )
 
         t.assert_not(conn.error)
@@ -769,11 +769,11 @@ end
 function g.test_call()
     local function check_conn(conn)
         t.assert_not(conn.error)
-        t.assert_equals(conn:call('get_local_secret'), secret)
-        t.assert_equals(conn:call('_G.get_local_secret'), secret)
-        t.assert_equals(conn:call('_G._G.get_local_secret'), secret)
-        t.assert_equals(conn:call('indexed.get_local_secret'), secret)
-        t.assert_equals(conn:call('callable'), secret)
+        t.assert_equals(conn:call('get_local_sslsecret'), sslsecret)
+        t.assert_equals(conn:call('_G.get_local_sslsecret'), sslsecret)
+        t.assert_equals(conn:call('_G._G.get_local_sslsecret'), sslsecret)
+        t.assert_equals(conn:call('sslindexed.get_local_sslsecret'), sslsecret)
+        t.assert_equals(conn:call('sslcallable'), sslsecret)
         t.assert_equals(conn:call('object:method'), nil)
         t.assert_equals(conn:call('math.pow', {2, 4}), 16)
         t.assert_equals(conn:call('_G.math.pow', {2, 5}), 32)
@@ -800,7 +800,7 @@ function g.test_call()
 
         t.assert_error_msg_contains(
             "attempt to call a table value",
-            conn.call, conn, 'uncallable'
+            conn.call, conn, 'unsslcallable'
         )
 
         t.assert_error_msg_contains(
@@ -819,13 +819,13 @@ function g.test_call()
         )
 
         t.assert_error_msg_contains(
-            "Procedure '.get_local_secret' is not defined",
-            conn.call, conn, '.get_local_secret'
+            "Procedure '.get_local_sslsecret' is not defined",
+            conn.call, conn, '.get_local_sslsecret'
         )
 
         t.assert_error_msg_contains(
-            "Procedure '_G..get_local_secret' is not defined",
-            conn.call, conn, '_G..get_local_secret'
+            "Procedure '_G..get_local_sslsecret' is not defined",
+            conn.call, conn, '_G..get_local_sslsecret'
         )
 
         t.assert_error_msg_contains(
@@ -838,7 +838,7 @@ function g.test_call()
             conn.call, conn, 'object.method'
         )
 
-        t.assert_equals({conn:call('multireturn')}, {box.NULL, "Artificial Error", 3})
+        t.assert_equals({conn:call('sslmultireturn')}, {box.NULL, "Artificial Error", 3})
         t.assert_equals({conn:call('varargs')}, {})
         t.assert_equals({conn:call('varargs', {1, nil, 'nil-gap'})}, {1, box.NULL, 'nil-gap'})
         t.assert_equals({conn:call('varargs', {2, box.NULL, 'null-gap'})}, {2, box.NULL, 'null-gap'})
@@ -931,7 +931,7 @@ function g.test_eval()
         t.assert_equals({conn:eval('return nil, 1, nil')}, {box.NULL, 1, box.NULL})
         t.assert_equals({conn:eval('return 2 + 2')}, {4})
         t.assert_equals({conn:eval('return "multi", nil, false')}, {"multi", box.NULL, false})
-        t.assert_equals({conn:eval('return get_local_secret()')}, {secret})
+        t.assert_equals({conn:eval('return get_local_sslsecret()')}, {sslsecret})
         t.assert_equals({conn:eval('return ...', {1, nil, 'nil-gap'})}, {1, box.NULL, 'nil-gap'})
         t.assert_equals({conn:eval('return ...', {2, box.NULL, 'null-gap'})}, {2, box.NULL, 'null-gap'})
         t.assert_equals({conn:eval('return ...', {3, nil})}, {3})
@@ -1024,8 +1024,8 @@ function g.test_timeout()
         t.assert(helpers.is_timeout_error(err), tostring(err))
 
         t.assert_equals(
-            conn:call('get_local_secret', nil, {timeout = 0.2}),
-            secret
+            conn:call('get_local_sslsecret', nil, {timeout = 0.2}),
+            sslsecret
         )
 
         t.assert_equals(conn:call('math.pow', {2, 8}), 256)
@@ -1105,7 +1105,7 @@ function g.test_switch_box_to_rc()
     -- conn_1 is still alive and useful
     t.assert_not(conn_1.error)
     t.assert_equals(conn_1.state, "active")
-    t.assert_equals(conn_1:call('get_local_secret'), secret)
+    t.assert_equals(conn_1:call('get_local_sslsecret'), sslsecret)
 
     -- rc can be started on the same port
     rc_start(13301)
@@ -1119,7 +1119,7 @@ function g.test_switch_box_to_rc()
     }}))
     t.assert_not(conn_rc.error)
     t.assert_equals(conn_rc.state, "active")
-    t.assert_equals(conn_rc:call('get_local_secret'), secret)
+    t.assert_equals(conn_rc:call('get_local_sslsecret'), sslsecret)
     t.assert_equals(conn_rc.peer_uuid, "00000000-0000-0000-0000-000000000000")
 end
 
@@ -1157,7 +1157,7 @@ function g.test_switch_rc_to_box()
     -- remote control still works
     t.assert_not(conn_rc.error)
     t.assert_equals(conn_rc.state, "active")
-    t.assert_equals(conn_rc:call('get_local_secret'), secret)
+    t.assert_equals(conn_rc:call('get_local_sslsecret'), sslsecret)
 
     -- iproto connection can be established
     local conn_box = assert(netbox.connect({uri=uri,
@@ -1171,7 +1171,7 @@ function g.test_switch_rc_to_box()
     t.assert_not(conn_box.error)
     t.assert_equals(conn_box.state, "active")
     t.assert_equals(conn_box.peer_uuid, box.info.uuid)
-    t.assert_equals(conn_box:call('get_local_secret'), secret)
+    t.assert_equals(conn_box:call('get_local_sslsecret'), sslsecret)
 end
 
 function g.test_reconnect()
@@ -1195,7 +1195,7 @@ function g.test_reconnect()
     end)
 
     rc_start(13301)
-    t.assert_equals(conn:call('get_local_secret'), secret)
+    t.assert_equals(conn:call('get_local_sslsecret'), sslsecret)
 
     remote_control.stop()
     remote_control.drop_connections()
