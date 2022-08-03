@@ -382,7 +382,7 @@ function g.test_late_accept()
             ssl_cert_file=CLIENT_CERT_FILE,
             ssl_key_file=CLIENT_KEY_FILE}}, {connect_timeout = 0.2})
     t.assert_equals(conn_2.state, "error")
-    t.assert_str_matches(conn_2.error, ".*timed out.*")
+    t.assert_str_matches(conn_2.error, "unexpected EOF.*")
 
     remote_control.drop_connections()
 
@@ -392,7 +392,7 @@ function g.test_late_accept()
     t.assert_equals(conn_3.state, "error")
     if helpers.tarantool_version_ge('2.10.0') then
         t.assert_str_matches(conn_1.error, "unexpected EOF.*")
-        t.assert_str_matches(conn_3.error, "unexpected EOF.*")
+        t.assert_str_matches(conn_3.error, ".*Connection reset.*")
     else
         t.assert_str_matches(conn_1.error, "Invalid greeting")
         t.assert_str_matches(conn_3.error, "Invalid greeting")
