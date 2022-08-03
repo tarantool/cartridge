@@ -24,8 +24,6 @@ local fiber = require('fiber')
 local socket = require('socket')
 local json = require('json')
 
-local vshard_util = require('vshard.util')
-
 local rpc = require('cartridge.rpc')
 local auth = require('cartridge.auth')
 local utils = require('cartridge.utils')
