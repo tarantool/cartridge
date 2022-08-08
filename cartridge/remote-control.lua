@@ -297,7 +297,6 @@ local function communicate(s)
 end
 
 local function rc_handle(s)
-    assert(s ~= nil, debug.traceback())
     utils.fd_cloexec(s:fd())
 
     local salt = digest.urandom(32)
@@ -330,9 +329,6 @@ local function rc_handle(s)
         --    release asap.
         -- 2. Server received data even before it has sent the greeting.
         --    This case doesn't conform to Tarantool iproto protocol.
-        if s == nil then
-            error("AAAAAA")
-        end
         if s:readable(0) then
             vars.handlers[s] = nil
             return
