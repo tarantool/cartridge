@@ -163,8 +163,7 @@ end
 local function communicate(s)
     local ok, buf = pcall(s.read, s, 5)
     if not ok or buf == nil or buf == '' then
-        log.info(buf)
-        log.debug('Peer closed')
+        log.info('Peer closed when read packet size')
         return false
     end
 

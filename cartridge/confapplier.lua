@@ -59,6 +59,9 @@ vars:new('upgrade_schema', nil)
 vars:new('enable_failover_suppressing', nil)
 
 vars:new('transport', nil)
+vars:new('ssl_options', {
+    wait_read_timeout = 10,
+})
 vars:new('ssl_ciphers', nil)
 vars:new('ssl_server_ca_file', nil)
 vars:new('ssl_server_cert_file', nil)
@@ -525,7 +528,7 @@ local function boot_instance(clusterwide_config)
     -- There is no need in unnecessary suspicions
     require('membership.options').SUSPICIOUSNESS = false
 
-    log.warn('Calling box.cfg()... %s', require('json').encode(box_opts))
+    log.warn('Calling box.cfg()...')
     -- This operation may be long
     -- It recovers snapshot
     -- Or bootstraps replication
@@ -767,7 +770,7 @@ local function init(opts)
         ssl_ca_file = vars.ssl_server_ca_file,
         ssl_cert_file = vars.ssl_server_cert_file,
         ssl_key_file = vars.ssl_server_key_file,
-        timeout = 10,
+        timeout = vars.ssl_options.wait_read_timeout,
     })
     if not ok then
         set_state('InitError', err)

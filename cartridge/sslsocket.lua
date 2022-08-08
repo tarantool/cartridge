@@ -1,5 +1,3 @@
-#!/usr/bin/env tarantool
-
 local TIMEOUT_INFINITY      = 500 * 365 * 86400
 local LIMIT_INFINITY = 2147483647
 
@@ -72,7 +70,7 @@ local function slice_wait(timeout, starttime)
     return timeout - (clock.time() - starttime)
 end
 
-local X509_FILETYPE_PEM       =1
+local X509_FILETYPE_PEM       = 1
 
 local function ctx(method)
     ffi.C.ERR_clear_error()

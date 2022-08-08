@@ -1037,7 +1037,7 @@ end
 -- @tparam string replicaset_uuid
 -- @treturn table
 local function get_fullmesh_replication(topology_cfg, replicaset_uuid, instance_uuid, advertise_uri, params)
-    checks('table', 'string', 'string', 'nil|string', 'nil|table')
+    checks('table', 'string', 'string', '?string', '?table')
     if topology_cfg.__type == 'ClusterwideConfig' then
         local err = "Bad argument #1 to get_fullmesh_replication" ..
             " (table expected, got ClusterwideConfig)"
