@@ -12,6 +12,9 @@ local checks = require('checks')
 local errors = require('errors')
 local digest = require('digest')
 
+local tarantool = require('tarantool')
+local semver = require('cartridge.semver')
+
 local FcntlError = errors.new_class('FcntlError')
 local OpenFileError = errors.new_class('OpenFileError')
 local ReadFileError = errors.new_class('ReadFileError')
@@ -507,6 +510,27 @@ local function appoint_leaders_check(leaders, servers, replicasets)
     return uri_list
 end
 
+
+local is_enterprise = (tarantool.package == 'Tarantool Enterprise')
+local tnt_version = semver.parse(_TARANTOOL)
+local function version_is_at_least(...)
+    return tnt_version >= semver.new(...)
+end
+local feature = {
+    ssl = (function()
+        if not is_enterprise then
+            return false
+        end
+        -- Beforehand there is a bug which can kill replication on SSL reconfig.
+        -- Fixed in EE 2.11.0-entrypoint-2-gffeb093.
+        if version_is_at_least(2, 11, 0, 'entrypoint', 0, 0) then
+            return version_is_at_least(2, 11, 0, 'entrypoint', 0, 2)
+        end
+        -- Backported into 2.10 since EE 2.10.0-2-g6b29095.
+        return version_is_at_least(2, 10, 0, nil, 0, 2)
+    end)(),
+}
+
 return {
     deepcmp = deepcmp,
     table_find = table_find,
@@ -540,4 +564,6 @@ return {
     fd_cloexec = fd_cloexec,
 
     appoint_leaders_check = appoint_leaders_check,
+
+    feature = feature,
 }

@@ -22,6 +22,7 @@ local digest = require('digest')
 local pickle = require('pickle')
 local msgpack = require('msgpack')
 local utils = require('cartridge.utils')
+local sslsocket = require('cartridge.sslsocket')
 local vars = require('cartridge.vars').new('cartridge.remote-control')
 
 vars:new('server')
@@ -91,6 +92,7 @@ local iproto_code = {
     [0x41] = "iproto_join",
     [0x42] = "iproto_subscribe",
     [0x43] = "iproto_request_vote",
+    [0x44] = "iproto_vote",
 }
 
 local function mpenc_uint32(n)
@@ -161,7 +163,7 @@ end
 local function communicate(s)
     local ok, buf = pcall(s.read, s, 5)
     if not ok or buf == nil or buf == '' then
-        log.debug('Peer closed')
+        log.info('Peer closed when read packet size')
         return false
     end
 
@@ -175,6 +177,10 @@ local function communicate(s)
     end
 
     local header, pos = msgpack.decode(buf, pos)
+    if header == nil or type(header) ~= 'table' then
+        log.info("Invalid header in messagepack")
+        return false
+    end
     local body = nil
     if pos < #buf then
         body = msgpack.decode(buf, pos)
@@ -328,7 +334,10 @@ local function rc_handle(s)
         end
     end
 
-    s:write(greeting)
+    local ok, err = s:write(greeting)
+    if not ok then
+        log.info(err)
+    end
 
     while vars.handlers[s] ~= nil or next(handler.storage.tasks) ~= nil do
         local ok, err = RemoteControlError:pcall(communicate, s)
@@ -353,17 +362,77 @@ end
 -- @treturn[1] boolean true
 -- @treturn[2] nil
 -- @treturn[2] table Error description
-local function bind(host, port)
-    checks('string', 'string|number')
+local function bind(host, port, sslparams)
+    checks('string|table', 'string|number', '?table')
 
     if vars.server ~= nil then
         return nil, RemoteControlError:new('Already running')
     end
 
-    local server = socket.tcp_server(host, port, {
-        name = 'remote_control',
-        handler = rc_handle,
-    })
+    local usessl = type(sslparams) == 'table' and sslparams.transport == 'ssl'
+    local server
+    if usessl then
+        log.info("Remote control over ssl")
+        local ctx = sslsocket.ctx(ffi.C.TLS_server_method())
+
+        -- TODO
+        -- SSL_CTX_set_default_passwd_cb(ssl_ctx, passwd_cb);
+        -- SSL_CTX_set_min_proto_version(ssl_ctx, TLS1_2_VERSION) != 1 ||
+        -- SSL_CTX_set_max_proto_version(ssl_ctx, TLS1_2_VERSION) != 1) 
+
+        local rc = sslsocket.ctx_use_private_key_file(ctx, sslparams.ssl_key_file)
+        if rc == false then
+            local err = RemoteControlError:new(
+                "Can't start server on %s:%s: %s",
+                host, port, 'Private key is invalid'
+            )
+            return nil, err
+        end
+        rc = sslsocket.ctx_use_certificate_file(ctx, sslparams.ssl_cert_file)
+        if rc == false then
+            local err = RemoteControlError:new(
+                "Can't start server on %s:%s: %s",
+                host, port, 'Certificate is invalid'
+            )
+            return nil, err
+        end
+        if sslparams.ssl_ca_file ~= nil then
+            rc = sslsocket.ctx_load_verify_locations(ctx, sslparams.ssl_ca_file)
+            if rc == false then
+                local err = RemoteControlError:new(
+                    "Can't start server on %s:%s: %s",
+                    host, port, 'CA file is invalid'
+                )
+                return nil, err
+            end
+
+            -- SSL_VERIFY_PEER = 0x01
+            -- SSL_VERIFY_FAIL_IF_NO_PEER_CERT = 0x02
+            sslsocket.ctx_set_verify(ctx, 0x01 + 0x02)
+        end
+        if sslparams.ssl_ciphers ~= nil then
+            rc = sslsocket.ctx_set_cipher_list(ctx, sslparams.ssl_ciphers)
+            if rc == false then
+                local err = RemoteControlError:new(
+                    "Can't start server on %s:%s: %s",
+                    host, port, 'Ciphers is invalid'
+                )
+                return nil, err
+            end
+        end
+
+        local timeout = sslparams.timeout or 60
+
+        server = sslsocket.tcp_server(host, port, {
+                name = 'remote_control',
+                handler = rc_handle,
+            }, timeout, ctx)
+    else
+        server = socket.tcp_server(host, port, {
+            name = 'remote_control',
+            handler = rc_handle,
+        })
+    end
 
     if not server then
         local err = RemoteControlError:new(

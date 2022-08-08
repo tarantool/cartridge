@@ -18,6 +18,8 @@ vars:new('options', {
     MAP_CALL_TIMEOUT = 10,
 })
 
+vars:new('sslparams', {})
+
 local FormatURIError = errors.new_class('FormatURIError')
 local NetboxConnectError = errors.new_class('NetboxConnectError')
 local NetboxMapCallError = errors.new_class('NetboxMapCallError')
@@ -95,6 +97,14 @@ local function connect(uri, opts)
         local _uri, err = format_uri(uri)
         if err ~= nil then
             return nil, err
+        end
+
+        if vars.sslparams.transport == 'ssl' then
+            _uri = {uri=_uri,
+                params={
+                    transport=vars.sslparams.transport,
+                    ssl_cert_file=vars.sslparams.ssl_cert_file,
+                    ssl_key_file=vars.sslparams.ssl_key_file}}
         end
 
         conn, err = NetboxConnectError:pcall(netbox.connect,
@@ -291,8 +301,30 @@ local function map_call(fn_name, args, opts)
     return retmap, united_error
 end
 
+
+local function change_port(uri, new_port)
+    local parts = uri_lib.parse(uri)
+    if parts == nil then
+        return nil, FormatURIError:new('Invalid URI %q', uri)
+    elseif parts.service == nil then
+        return nil, FormatURIError:new('Invalid URI %q (missing port)', uri)
+    end
+    return uri_lib.format({
+        host = parts.host,
+        service = tostring(new_port),
+        login = cluster_cookie.username(),
+        password = cluster_cookie.cookie()
+    }, true)
+end
+
+local function init(sslparams)
+    vars.sslparams = sslparams
+end
+
 return {
     connect = connect,
     format_uri = format_uri,
     map_call = map_call,
+    change_port = change_port,
+    init = init,
 }

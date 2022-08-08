@@ -41,6 +41,8 @@ local vshard_utils = require('cartridge.vshard-utils')
 local cluster_cookie = require('cartridge.cluster-cookie')
 local service_registry = require('cartridge.service-registry')
 local logging_whitelist = require('cartridge.logging_whitelist')
+local pool = require('cartridge.pool')
+local cartridge_utils = require('cartridge.utils')
 
 local lua_api_topology = require('cartridge.lua-api.topology')
 local lua_api_failover = require('cartridge.lua-api.failover')
@@ -297,6 +299,17 @@ local function cfg(opts, box_opts)
         roles_reload_allowed = '?boolean',
         upload_prefix = '?string',
         enable_failover_suppressing = '?boolean',
+
+        transport = '?string',
+        ssl_ciphers = '?string',
+
+        ssl_server_ca_file = '?string',
+        ssl_server_cert_file = '?string',
+        ssl_server_key_file = '?string',
+
+        ssl_client_ca_file = '?string',
+        ssl_client_cert_file = '?string',
+        ssl_client_key_file = '?string',
     }, '?table')
 
     if opts.webui_blacklist ~= nil then
@@ -334,6 +347,36 @@ local function cfg(opts, box_opts)
     for k, v in pairs(_box_opts) do
         box_opts[k] = v
     end
+
+    if opts.transport == 'ssl' then
+        if type(cartridge_utils.feature) ~= 'table' then
+            log.error('No SSL support for this tarantool version')
+            return nil, CartridgeCfgError:new('No SSL support for this tarantool version')
+        end
+        if not cartridge_utils.feature.ssl then
+            log.error('No SSL support for this tarantool version in feature list')
+            return nil, CartridgeCfgError:new('No SSL support for this tarantool version in feature list')
+        end
+    end
+
+    pool.init({
+        transport = opts.transport,
+        ssl_ca_file = opts.ssl_client_ca_file,
+        ssl_cert_file = opts.ssl_client_cert_file,
+        ssl_key_file = opts.ssl_client_key_file,
+    })
+
+    vshard_utils.init({
+        transport = opts.transport,
+
+        ssl_server_ca_file = opts.ssl_server_ca_file,
+        ssl_server_cert_file = opts.ssl_server_cert_file,
+        ssl_server_key_file = opts.ssl_server_key_file,
+
+        ssl_client_ca_file = opts.ssl_client_ca_file,
+        ssl_client_cert_file = opts.ssl_client_cert_file,
+        ssl_client_key_file = opts.ssl_client_key_file,
+    })
 
     -- Using syslog driver when running under systemd
     -- makes it possible to filter by severity with
@@ -805,6 +848,16 @@ local function cfg(opts, box_opts)
         advertise_uri = advertise_uri,
         upgrade_schema = opts.upgrade_schema,
         enable_failover_suppressing = opts.enable_failover_suppressing,
+
+        transport = opts.transport,
+        ssl_ciphers = opts.ssl_ciphers,
+        ssl_server_ca_file = opts.ssl_server_ca_file,
+        ssl_server_cert_file = opts.ssl_server_cert_file,
+        ssl_server_key_file = opts.ssl_server_key_file,
+
+        ssl_client_ca_file = opts.ssl_client_ca_file,
+        ssl_client_cert_file = opts.ssl_client_cert_file,
+        ssl_client_key_file = opts.ssl_client_key_file,
     })
     if not ok then
         return nil, err

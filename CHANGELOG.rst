@@ -53,6 +53,8 @@ Added
 
 - Tarantool Raft options and Tarantool 2.10 ``box.cfg`` options are supported in argparse.
 
+- Introduced SSL support for Tarantool Enterprise from 2.10.2.
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Changed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
