@@ -7,13 +7,13 @@ import {
   Alert,
   Button,
   Checkbox,
+  IconTarantoolLogoFull,
   InputGroup,
   InputPassword,
   LabeledInput,
   Modal,
   Spin,
   SplashModal,
-  TarantoolLogoFull,
   Text,
   genericStyles,
 } from '@tarantool.io/ui-kit';
@@ -26,6 +26,9 @@ const schema = yup.object().shape({
 });
 
 const styles = {
+  logo: css`
+    color: white;
+  `,
   error: css`
     margin-bottom: 30px;
   `,
@@ -188,7 +191,7 @@ const SplashLogInForm = ({ authorizationRequired, loaded, ...props }) => {
       className="meta-test__LoginFormSplash"
       title="Authorization"
       subTitle="Please, input your credentials"
-      logo={TarantoolLogoFull}
+      logo={<IconTarantoolLogoFull className={styles.logo} />}
     >
       <LogInForm {...props} />
     </SplashModal>
