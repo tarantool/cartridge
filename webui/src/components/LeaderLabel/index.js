@@ -2,10 +2,9 @@
 import React from 'react';
 import { css, cx } from '@emotion/css';
 import { rgba } from 'emotion-rgba';
-import { SVGImage, colors } from '@tarantool.io/ui-kit';
+import { colors } from '@tarantool.io/ui-kit';
 
 import { Label } from '../Label';
-import crownPicture from './crown-gray.svg';
 
 const styles = {
   img: css`
@@ -38,7 +37,14 @@ type Props = {
 
 export const LeaderLabel = ({ className, state = 'bad' }: Props) => (
   <Label variant="h5" tag="span" className={cx(intentions[state], className)}>
-    <SVGImage glyph={crownPicture} className={cx(styles.img, { [styles.imgLight]: state === 'bad' })} />
+    <svg
+      width="8"
+      height="8"
+      xmlns="http://www.w3.org/2000/svg"
+      className={cx(styles.img, { [styles.imgLight]: state === 'bad' })}
+    >
+      <path d="M.889 5.867L0 0l2.444 3.733L4 0l1.556 3.733L8 0l-.889 5.867H.89zm6.222 1.6c0 .294-.199.533-.444.533H1.333C1.088 8 .89 7.761.89 7.467v-.534H7.11v.534z" />
+    </svg>
     Leader
   </Label>
 );
