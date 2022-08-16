@@ -12,6 +12,7 @@ local vars = require('cartridge.vars').new('cartridge.failover')
 local errors = require('errors')
 
 local PromoteLeaderError = errors.new_class('PromoteLeaderError')
+local UnsupportedError = errors.new_class('UnsupportedError')
 
 vars:new('leader_uuid')
 vars:new('raft_trigger')
@@ -76,7 +77,11 @@ local function on_election_trigger()
 end
 
 local function cfg()
-    assert(box.ctl.on_election, "Your Tarantool version doesn't support raft failover mode")
+    if box.ctl.on_election == nil then
+       return nil, UnsupportedError:new(
+           "Your Tarantool version doesn't support raft failover mode, need Tarantool 2.10 or higher"
+        )
+    end
     log.warn('Raft failover is in beta-version')
     local box_opts = argparse.get_box_opts()
 
@@ -97,11 +102,14 @@ local function cfg()
         -- Timeout between elections. Needed to restart elections when no leader
         -- emerges soon enough. Equals 4 * replication_timeout
         election_timeout = box_opts.election_timeout,
-        -- If set to `true`, fencing is on (default behaviour). If set to `false`, fencing is off
-        -- and the leader doesn't resign when it loses the quorum. If enabled
-        -- on the current leader when it doesn't have a quorum of alive connections,
-        -- the leader will immediately resign.
-        election_fencing_enabled = box_opts.election_fencing_enabled,
+        -- If set to `soft`, fencing is on (default behaviour).
+        -- If set to `strict`, fencing is on, and timeout for dead connection
+        -- on leader is set to 2 * replication timeout, this increases the
+        -- chances, there will be only one leader at a time.
+        -- If set to `off`, fencing is off and the leader doesn't resign when
+        -- it loses the quorum. If enabled on the current leader when it doesn't
+        -- have a quorum of alive connections, the leader will resign its leadership.
+        election_fencing_mode = box_opts.election_fencing_mode,
     }
 
     if vars.raft_trigger == nil then
