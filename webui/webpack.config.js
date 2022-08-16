@@ -25,7 +25,6 @@ module.exports = createWebpackConfiguration({
   lua: isProd && !isServe,
   lint: true,
   emotion: true,
-  svgSprite: true,
   env,
   sourceMap,
   proxy,

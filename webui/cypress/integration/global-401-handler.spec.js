@@ -70,7 +70,7 @@ describe('Global 401 handler', () => {
     cy.get('input[name="password"]').type('test-cluster-cookie{enter}');
 
     cy.get('.meta-test__LogoutBtn').contains('Cartridge Administrator').click();
-    cy.get('.meta-test__LogoutDropdown *:contains(Log out)').click();
+    cy.get('.meta-test__LogoutDropdown *').contains('Log out').click();
 
     cy.get('.meta-test__LoginFormSplash').should('be.visible');
   });

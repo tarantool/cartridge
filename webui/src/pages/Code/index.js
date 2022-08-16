@@ -2,6 +2,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import { css, cx } from '@emotion/css';
+import { core } from '@tarantool.io/frontend-core';
 import {
   Button,
   ConfirmModal,
@@ -45,6 +46,8 @@ const options = {
     enabled: false,
   },
 };
+
+const { AppTitle } = core.components;
 
 const styles = {
   area: css`
@@ -367,6 +370,7 @@ class Code extends React.Component<CodeProps, CodeState> {
           />,
         ]}
       >
+        <AppTitle title="Code" />
         <div className={cx('meta-test__Code', styles.area)}>
           <div className={styles.sidePanel}>
             <div className={styles.sidePanelHeading}>

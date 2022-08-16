@@ -301,7 +301,7 @@ describe('Failover', () => {
     cy.get('.meta-test__failover-tabs button:contains(Stateful)').click();
     cy.get('.meta-test__stateProviderChoice input').should('have.value', 'Tarantool (stateboard)');
     cy.get('.meta-test__stateProviderChoice input').click();
-    cy.get('.meta-test__StateProvider__Dropdown *:contains(Etcd)').click();
+    cy.get('.meta-test__StateProvider__Dropdown *').contains('Etcd').click();
     cy.get('.meta-test__stateProviderChoice input').should('have.value', 'Etcd');
 
     cy.get('.meta-test__etcd2Endpoints textarea').should('have.text', 'http://127.0.0.1:4001\nhttp://127.0.0.1:2379');

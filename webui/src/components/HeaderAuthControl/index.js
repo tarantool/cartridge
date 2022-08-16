@@ -2,7 +2,7 @@ import React, { useCallback } from 'react';
 import { connect } from 'react-redux';
 import { css, cx } from '@emotion/css';
 import { useCore } from '@tarantool.io/frontend-core';
-import { Button, Dropdown, DropdownItem, SVGImage, TarantoolLogoUser, Text } from '@tarantool.io/ui-kit';
+import { Button, Dropdown, DropdownItem, IconTarantoolUser, Text } from '@tarantool.io/ui-kit';
 
 import { ModalLogInForm } from 'src/components/LogInForm';
 import { hideAuthModal, showAuthModal } from 'src/store/actions/auth.actions';
@@ -54,7 +54,7 @@ const HeaderAuthControl = (props) => {
           </DropdownItem>,
         ]}
       >
-        <SVGImage glyph={TarantoolLogoUser} className={styles.authIcon} />
+        <IconTarantoolUser className={styles.authIcon} />
         <Text className={styles.userName}>{username}</Text>
       </Dropdown>
     );
