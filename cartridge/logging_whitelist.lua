@@ -31,7 +31,7 @@ local box_opts = {
     'checkpoint_interval',
     'checkpoint_wal_threshold',
     'custom_proc_title',
-    'election_fencing_enabled',
+    'election_fencing_mode',
     'election_mode',
     'election_timeout',
     'feedback_enabled',

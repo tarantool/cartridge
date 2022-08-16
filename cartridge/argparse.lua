@@ -201,7 +201,7 @@ local box_opts = {
     txn_timeout              = 'number', -- **number**
     election_mode            = 'string', -- **string**
     election_timeout         = 'number', -- **number**
-    election_fencing_enabled = 'boolean', -- **boolean**
+    election_fencing_mode    = 'string', -- **string**
 }
 
 local function load_file(filename)
