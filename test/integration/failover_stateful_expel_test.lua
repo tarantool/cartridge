@@ -139,13 +139,14 @@ end)
 
 local function after_all(g)
     g.cluster:stop()
-    g.state_provider:stop()
+    helpers.retrying({}, function()
+        g.state_provider:stop()
+    end)
     fio.rmtree(g.state_provider.workdir)
     fio.rmtree(g.datadir)
 end
 g_stateboard.after_all(function() after_all(g_stateboard) end)
 g_etcd2.after_all(function() after_all(g_etcd2) end)
-
 
 local q_expel = [[
     mutation($uuid: String!) {
@@ -167,6 +168,12 @@ local function add_new_instance(g)
     server:start()
 
     g.cluster:join_server(server)
+    return server
+end
+
+local function clean_server(server)
+    server:stop()
+    fio.rmtree(server.workdir)
 end
 
 local function add(name, fn)
@@ -178,10 +185,10 @@ add('test_expel_instances', function(g)
     local session = g.client:get_session()
     helpers.retrying({}, function()
         local res = session:get_leaders()
-        t.assert_equals(res[storage1_uuid], storage1_1_uuid)
+        t.assert(res[storage1_uuid])
 
         local res = session:get_vclockkeeper(storage1_uuid)
-        t.assert_equals(res.instance_uuid, storage1_1_uuid)
+        t.assert(res.instance_uuid)
     end)
 
     g.cluster.main_server:graphql({
@@ -194,10 +201,10 @@ add('test_expel_instances', function(g)
     -- nothing has changed
     helpers.retrying({}, function()
         local res = session:get_leaders()
-        t.assert_equals(res[storage1_uuid], storage1_1_uuid)
+        t.assert(res[storage1_uuid])
 
         local res = session:get_vclockkeeper(storage1_uuid)
-        t.assert_equals(res.instance_uuid, storage1_1_uuid)
+        t.assert(res.instance_uuid)
     end)
 
     g.cluster.main_server:graphql({
@@ -215,9 +222,11 @@ add('test_expel_instances', function(g)
         t.assert_not(res)
     end)
 
-    add_new_instance(g)
+    local server = add_new_instance(g)
 
     helpers.retrying({}, function()
         t.assert_equals(helpers.list_cluster_issues(g.cluster.main_server), {})
     end)
+
+    clean_server(server)
 end)
