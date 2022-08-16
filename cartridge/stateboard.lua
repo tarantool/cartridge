@@ -198,11 +198,14 @@ local function delete_replicasets(replicasets)
     checks('table')
     box.begin()
     for _, replicaset_uuid in ipairs(replicasets) do
-        box.space.leader:delete(replicaset_uuid)
+        local deleted = box.space.leader:delete(replicaset_uuid)
         box.space.vclockkeeper:delete(replicaset_uuid)
-        box.on_commit(function()
-            log.info('Replicaset %s removed', replicaset_uuid)
-        end)
+
+        if deleted ~= nil then
+            box.on_commit(function()
+                log.info('Replicaset %s removed', replicaset_uuid)
+            end)
+        end
     end
     box.commit()
 end

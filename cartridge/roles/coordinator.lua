@@ -313,31 +313,32 @@ local function apply_config(conf, _)
         vars.connect_fiber:name('failover-take-control')
     end
 
-    local rs_expelled = {}
+    if old_topology ~= nil then
+        local rs_expelled = {}
 
-    for rs_uuid, _ in pairs(old_topology.replicasets) do
-        if vars.topology_cfg.replicasets[rs_uuid] == nil
-        or vars.topology_cfg.replicasets[rs_uuid].master == nil
-        or #vars.topology_cfg.replicasets[rs_uuid].master == 0
-        then
-            if vars.client.session.ctx ~= nil
-            and vars.client.session.ctx.decisions ~= nil
+        for rs_uuid, _ in pairs(old_topology.replicasets) do
+            if vars.topology_cfg.replicasets[rs_uuid] == nil
+            or vars.topology_cfg.replicasets[rs_uuid].master == nil
+            or #vars.topology_cfg.replicasets[rs_uuid].master == 0
             then
-                vars.client.session.ctx.decisions[rs_uuid] = nil
+                if vars.client.session.ctx ~= nil
+                and vars.client.session.ctx.decisions ~= nil
+                then
+                    vars.client.session.ctx.decisions[rs_uuid] = nil
+                end
+                if vars.client.session.leaders ~= nil then
+                    vars.client.session.leaders[rs_uuid] = nil
+                end
+                table.insert(rs_expelled, rs_uuid)
             end
-            if vars.client.session.leaders ~= nil then
-                vars.client.session.leaders[rs_uuid] = nil
-            end
-            table.insert(rs_expelled, rs_uuid)
+        end
+
+        if #rs_expelled > 0 then
+            log.info('Removing replicasets from state provider:')
+            log.info(rs_expelled)
+            vars.client.session:delete_replicasets(rs_expelled)
         end
     end
-
-    if #rs_expelled > 0 then
-        log.info('Removing replicasets from state provider:')
-        log.info(rs_expelled)
-        vars.client.session:delete_replicasets(rs_expelled)
-    end
-
     vars.membership_notification:broadcast()
     return true
 end
