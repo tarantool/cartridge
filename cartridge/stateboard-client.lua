@@ -60,6 +60,21 @@ local function set_leaders(session, updates)
     return ok
 end
 
+local function delete_replicasets(session, replicasets)
+    checks('stateboard_session', 'table')
+    assert(session.connection ~= nil)
+
+    local ok, err = errors.netbox_call(session.connection,
+        'delete_replicasets', {replicasets},
+        {timeout = session.call_timeout}
+    )
+
+    if ok == nil then
+        return nil, SessionError:new(err)
+    end
+    return ok
+end
+
 local function get_leaders(session)
     checks('stateboard_session')
     assert(session.connection ~= nil)
@@ -192,6 +207,7 @@ local session_mt = {
         set_vclockkeeper = set_vclockkeeper,
         get_vclockkeeper = get_vclockkeeper,
         drop = drop,
+        delete_replicasets = delete_replicasets,
     },
 }
 
