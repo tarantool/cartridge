@@ -65,30 +65,45 @@ describe('Replicaset filtering', () => {
     cy.contains('Replicasets');
 
     // Healthy
-    cy.get('button[type="button"]:contains(Filter)').click();
+    cy.get('input[placeholder="Filter by uri, uuid, role, alias"]')
+      .prev('button[type="button"]:contains(Filter)')
+      .click();
     cy.get('.meta-test__Filter__Dropdown *').contains('Healthy').click({ force: true });
-    cy.get('.meta-test__Filter input').should('have.value', 'status:healthy');
+    cy.get('.meta-test__Filter input[placeholder="Filter by uri, uuid, role, alias"]').should(
+      'have.value',
+      'status:healthy'
+    );
     cy.get('.ServerLabelsHighlightingArea').contains('test-storage-1').should('not.exist');
 
     // Unhealthy
-    cy.get('button[type="button"]:contains(Filter)').click();
+    cy.get('input[placeholder="Filter by uri, uuid, role, alias"]')
+      .prev('button[type="button"]:contains(Filter)')
+      .click();
     cy.get('.meta-test__Filter__Dropdown *').contains('Unhealthy').click({ force: true });
-    cy.get('.meta-test__Filter input').should('have.value', 'status:unhealthy');
+    cy.get('.meta-test__Filter input[placeholder="Filter by uri, uuid, role, alias"]').should(
+      'have.value',
+      'status:unhealthy'
+    );
     cy.get('.ServerLabelsHighlightingArea').contains('test-storage-1');
 
     // Role
-    cy.get('button[type="button"]:contains(Filter)').click();
+    cy.get('input[placeholder="Filter by uri, uuid, role, alias"]')
+      .prev('button[type="button"]:contains(Filter)')
+      .click();
     cy.get('.meta-test__Filter__Dropdown *').contains('vshard-storage').click({ force: true });
-    cy.get('.meta-test__Filter input').should('have.value', 'role:vshard-storage');
+    cy.get('.meta-test__Filter input[placeholder="Filter by uri, uuid, role, alias"]').should(
+      'have.value',
+      'role:vshard-storage'
+    );
     cy.get('.ServerLabelsHighlightingArea').contains('test-storage-1');
     cy.get('#root').contains('test-storage');
     cy.get('#root').contains('test-router').should('not.exist');
 
     // Clear filter
-    cy.get('.meta-test__Filter svg').eq(1).click();
+    cy.get('.meta-test__Filter input[placeholder="Filter by uri, uuid, role, alias"] ~ div svg').click();
 
     // Search
-    cy.get('.meta-test__Filter').find('input').type('test-storage-1');
+    cy.get('.meta-test__Filter input[placeholder="Filter by uri, uuid, role, alias"]').type('test-storage-1');
     cy.get('#root').contains('test-storage');
     cy.get('#root').contains('test-router').should('not.exist');
 
@@ -118,10 +133,10 @@ describe('Replicaset filtering', () => {
     cy.get('.meta-test__ConfigureServerModal').contains('test-storage').should('not.exist');
 
     // Clear filter
-    cy.get('.meta-test__ConfigureServerModal .meta-test__Filter svg').eq(1).click();
+    cy.get('.meta-test__ConfigureServerModal .meta-test__Filter input ~ div svg').click();
 
     // Search
-    cy.get('.meta-test__ConfigureServerModal .meta-test__Filter').find('input').type('test-storage');
+    cy.get('.meta-test__ConfigureServerModal .meta-test__Filter input').type('test-storage');
     cy.get('.meta-test__ConfigureServerModal').contains('test-storage');
     cy.get('.meta-test__ConfigureServerModal').contains('test-router').should('not.exist');
 
