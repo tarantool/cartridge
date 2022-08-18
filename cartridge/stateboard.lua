@@ -194,6 +194,22 @@ local function set_vclockkeeper(...)
     return box.atomic(set_vclockkeeper_impl, ...)
 end
 
+local function delete_replicasets(replicasets)
+    checks('table')
+    box.begin()
+    for _, replicaset_uuid in ipairs(replicasets) do
+        local deleted = box.space.leader:delete(replicaset_uuid)
+        box.space.vclockkeeper:delete(replicaset_uuid)
+
+        if deleted ~= nil then
+            box.on_commit(function()
+                log.info('Replicaset %s removed', replicaset_uuid)
+            end)
+        end
+    end
+    box.commit()
+end
+
 local function get_vclockkeeper(replicaset_uuid)
     local vclockkeeper = box.space.vclockkeeper:get({replicaset_uuid})
     if vclockkeeper ~= nil then
@@ -260,6 +276,7 @@ local function cfg()
     rawset(_G, 'get_coordinator', get_coordinator)
     rawset(_G, 'set_vclockkeeper', set_vclockkeeper)
     rawset(_G, 'get_vclockkeeper', get_vclockkeeper)
+    rawset(_G, 'delete_replicasets', delete_replicasets)
 
     ------------------------------------------------------------------------
     box.schema.user.create('client', { if_not_exists = true })
@@ -274,6 +291,7 @@ local function cfg()
     box.schema.func.create('longpoll', { if_not_exists = true })
     box.schema.func.create('set_vclockkeeper', { if_not_exists = true })
     box.schema.func.create('get_vclockkeeper', { if_not_exists = true })
+    box.schema.func.create('delete_replicasets', { if_not_exists = true })
 
     ------------------------------------------------------------------------
     box.schema.sequence.create('coordinator_audit', {
@@ -396,6 +414,7 @@ local function cfg()
     box.schema.user.grant('client', 'execute', 'function', 'set_vclockkeeper', { if_not_exists = true })
     box.schema.user.grant('client', 'execute', 'function', 'get_vclockkeeper', { if_not_exists = true })
     box.schema.user.grant('client', 'execute', 'function', 'longpoll', { if_not_exists = true })
+    box.schema.user.grant('client', 'execute', 'function', 'delete_replicasets', { if_not_exists = true })
 
     -- Enable listen port only after all spaces are set up
     box.cfg({ listen = opts.listen })

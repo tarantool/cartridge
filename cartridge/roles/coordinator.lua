@@ -247,6 +247,7 @@ local function stop()
 end
 
 local function apply_config(conf, _)
+    local old_topology = vars.topology_cfg
     vars.topology_cfg = conf.topology
     local failover_cfg = topology.get_failover_params(conf.topology)
 
@@ -312,6 +313,32 @@ local function apply_config(conf, _)
         vars.connect_fiber:name('failover-take-control')
     end
 
+    if old_topology ~= nil then
+        local rs_expelled = {}
+
+        for rs_uuid, _ in pairs(old_topology.replicasets) do
+            if vars.topology_cfg.replicasets[rs_uuid] == nil
+            or vars.topology_cfg.replicasets[rs_uuid].master == nil
+            or #vars.topology_cfg.replicasets[rs_uuid].master == 0
+            then
+                if vars.client.session.ctx ~= nil
+                and vars.client.session.ctx.decisions ~= nil
+                then
+                    vars.client.session.ctx.decisions[rs_uuid] = nil
+                end
+                if vars.client.session.leaders ~= nil then
+                    vars.client.session.leaders[rs_uuid] = nil
+                end
+                table.insert(rs_expelled, rs_uuid)
+            end
+        end
+
+        if #rs_expelled > 0 then
+            log.info('Removing replicasets from state provider:')
+            log.info(rs_expelled)
+            vars.client.session:delete_replicasets(rs_expelled)
+        end
+    end
     vars.membership_notification:broadcast()
     return true
 end

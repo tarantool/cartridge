@@ -140,6 +140,55 @@ local function set_leaders(session, updates)
     return true
 end
 
+local function delete_replicasets(session, replicasets)
+    checks('etcd2_session', 'table')
+
+    if not session:is_locked() then
+        return nil, SessionError:new('You are not holding the lock')
+    end
+
+    if not session:is_alive() then
+        return nil, SessionError:new('Session is dropped')
+    end
+
+    assert(session.leaders ~= nil)
+    assert(session.leaders_index ~= nil)
+
+    local new_leaders = table.copy(session.leaders)
+
+    for _, replicaset_uuid in ipairs(replicasets) do
+        if new_leaders[replicaset_uuid] == nil then
+            new_leaders[replicaset_uuid] = nil
+        end
+    end
+
+    if session._set_leaders_mutex == nil then
+        session._set_leaders_mutex = fiber.channel(1)
+    end
+    session._set_leaders_mutex:put(box.NULL)
+
+    local resp, err = SessionError:pcall(function()
+        return session.connection:request('PUT', '/leaders', {
+            value = json.encode(new_leaders),
+            prevIndex = session.leaders_index,
+        })
+    end)
+    for _, replicaset_uuid in ipairs(replicasets) do
+        session.connection:request('DELETE', '/vclockkeeper/'..replicaset_uuid)
+    end
+
+    session._set_leaders_mutex:get()
+
+    if resp == nil then
+        return nil, err
+    end
+
+    session.leaders = new_leaders
+    session.leaders_index = resp.node.modifiedIndex
+
+    return true
+end
+
 local function get_leaders(session)
     checks('etcd2_session')
 
@@ -310,6 +359,7 @@ local session_mt = {
         set_vclockkeeper = set_vclockkeeper,
         get_vclockkeeper = get_vclockkeeper,
         drop = drop,
+        delete_replicasets = delete_replicasets,
     },
 }
 
