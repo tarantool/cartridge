@@ -55,6 +55,21 @@
 -- * Custom roles can announce more issues with their own level, topic
 --   and message. See `custom-role.get_issues`.
 --
+-- GraphQL request:
+--
+-- You can get info about cluster issues with GrapQL request:
+--    {
+--        cluster {
+--            issues {
+--                level
+--                message
+--                replicaset_uuid
+--                instance_uuid
+--                topic
+--             }
+--         }
+--     }
+
 -- @module cartridge.issues
 -- @local
 local mod_name = 'cartridge.issues'

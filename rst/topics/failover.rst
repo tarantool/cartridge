@@ -301,6 +301,22 @@ Use your favorite GraphQL client (e.g.
 - ``mutation {cluster{failover_params(){}}}``,
 - ``mutation {cluster{failover_promote()}}``.
 
+E.g. how to setup stateful failover:
+
+.. code-block:: graphql
+    mutation {
+      cluster { failover_params(
+        mode: "stateful"
+        failover_timeout: 20
+        state_provider: "etcd2"
+        etcd2_params: {
+            endpoints: ["http://127.0.0.1:4001"]
+            prefix: "etcd-prefix"
+        }) {
+            mode
+            }
+        }
+    }
 
 ..  _stateboard-configuration:
 
