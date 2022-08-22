@@ -18,6 +18,8 @@ Added
 
 - Add "Promote a leader" action in WebUI in Raft failover mode (#1853).
 
+- Introduced SSL support for Tarantool Enterprise from 2.10.2.
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -56,8 +58,6 @@ Added
   may become the leader in the replicaset.
 
 - Tarantool Raft options and Tarantool 2.10 ``box.cfg`` options are supported in argparse.
-
-- Introduced SSL support for Tarantool Enterprise from 2.10.2.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Changed
