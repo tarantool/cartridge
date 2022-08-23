@@ -34,6 +34,8 @@ Changed
 
 - Update ``http`` dependency to 1.3.0.
 
+- Update ``ddl`` dependency to 1.6.2.
+
 - Update frontend dependencies.
 
 -------------------------------------------------------------------------------
