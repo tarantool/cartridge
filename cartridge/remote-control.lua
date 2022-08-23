@@ -519,6 +519,12 @@ local function drop_connections()
     end
 end
 
+--- Pause to handle requests for all clients.
+--
+-- It doesn't interrupt any existing connections.
+--
+-- @function suspend
+-- @local
 local function suspend()
     if vars.server == nil or vars.accept == false then
         return
@@ -528,6 +534,12 @@ local function suspend()
     vars.suspend_cond:broadcast()
 end
 
+--- Resume to handle requests for all clients.
+--
+-- It doesn't interrupt any existing connections.
+--
+-- @function suspend
+-- @local
 local function resume()
     if vars.server == nil or vars.accept == false then
         return
