@@ -24,7 +24,6 @@ local msgpack = require('msgpack')
 local utils = require('cartridge.utils')
 local sslsocket = require('cartridge.sslsocket')
 local vars = require('cartridge.vars').new('cartridge.remote-control')
-local time = require('time')
 
 vars:new('server')
 vars:new('username')
@@ -33,6 +32,7 @@ vars:new('handlers', {})
 vars:new('accept', false)
 vars:new('accept_cond', fiber.cond())
 vars:new('suspend', false)
+vars:new('suspend_cond', fiber.cond())
 
 local RemoteControlError = errors.new_class('RemoteControlError')
 local error_t = ffi.typeof('struct error')
@@ -343,7 +343,7 @@ local function rc_handle(s)
 
     while vars.handlers[s] ~= nil or next(handler.storage.tasks) ~= nil do
         while vars.suspend do
-            time.sleep(1)
+            vars.suspend_cond:wait(1)
         end
         local ok, err = RemoteControlError:pcall(communicate, s)
         if err ~= nil then
@@ -525,6 +525,7 @@ local function suspend()
     end
 
     vars.suspend = true
+    vars.suspend_cond:broadcast()
 end
 
 local function resume()
@@ -533,6 +534,7 @@ local function resume()
     end
 
     vars.suspend = false
+    vars.suspend_cond:broadcast()
 end
 
 return {
