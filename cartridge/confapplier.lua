@@ -562,6 +562,7 @@ local function boot_instance(clusterwide_config)
     end
 
     do
+        remote_control.suspend()
         local read_only = box.cfg.read_only
 
         if vars.upgrade_schema then
@@ -587,6 +588,7 @@ local function boot_instance(clusterwide_config)
         end
 
         box.cfg({read_only = read_only})
+        remote_control.resume()
     end
 
     -- Box is ready, start listening full-featured iproto protocol
