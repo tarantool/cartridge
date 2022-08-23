@@ -24,6 +24,8 @@ Added
 
 - Introduced SSL support for Tarantool Enterprise from 2.10.2.
 
+- Introduced Remote Control Suspend/Resume methods to pause producing requests.
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
