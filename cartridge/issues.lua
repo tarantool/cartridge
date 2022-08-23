@@ -57,7 +57,7 @@
 --
 -- GraphQL request:
 --
--- You can get info about cluster issues with GrapQL request:
+-- You can get info about cluster issues using the following GrapQL request:
 --    {
 --        cluster {
 --            issues {

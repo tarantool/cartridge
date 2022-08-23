@@ -301,7 +301,7 @@ Use your favorite GraphQL client (e.g.
 - ``mutation {cluster{failover_params(){}}}``,
 - ``mutation {cluster{failover_promote()}}``.
 
-E.g. how to setup stateful failover:
+Here is an example of how to setup stateful failover:
 
 .. code-block:: graphql
     mutation {
