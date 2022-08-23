@@ -36,6 +36,8 @@ Changed
 
 - Update ``ddl`` dependency to 1.6.2.
 
+- Update ``vshard`` dependency to 0.1.21.
+
 - Update frontend dependencies.
 
 -------------------------------------------------------------------------------
