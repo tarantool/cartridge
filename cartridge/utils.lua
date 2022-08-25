@@ -13,7 +13,7 @@ local errors = require('errors')
 local digest = require('digest')
 
 local tarantool = require('tarantool')
-local semver = require('cartridge.semver')
+local semver = require('vshard.version')
 
 local FcntlError = errors.new_class('FcntlError')
 local OpenFileError = errors.new_class('OpenFileError')
