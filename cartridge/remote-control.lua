@@ -22,7 +22,7 @@ local digest = require('digest')
 local pickle = require('pickle')
 local msgpack = require('msgpack')
 local utils = require('cartridge.utils')
-local sslsocket = require('cartridge.sslsocket')
+local _, sslsocket = pcall(require, 'cartridge.sslsocket')
 local vars = require('cartridge.vars').new('cartridge.remote-control')
 
 vars:new('server')
@@ -372,13 +372,19 @@ local function bind(host, port, sslparams)
     local usessl = type(sslparams) == 'table' and sslparams.transport == 'ssl'
     local server
     if usessl then
+        if sslsocket == nil or sslsocket.ctx == nil then
+            return nil, RemoteControlError:new('Unable to load SSL socket')
+        end
         log.info("Remote control over ssl")
-        local ctx = sslsocket.ctx(ffi.C.TLS_server_method())
+        local ok, ctx = pcall(sslsocket.ctx, ffi.C.TLS_server_method())
+        if ok ~= true then
+            return nil, RemoteControlError:new(ctx)
+        end
 
         -- TODO
         -- SSL_CTX_set_default_passwd_cb(ssl_ctx, passwd_cb);
         -- SSL_CTX_set_min_proto_version(ssl_ctx, TLS1_2_VERSION) != 1 ||
-        -- SSL_CTX_set_max_proto_version(ssl_ctx, TLS1_2_VERSION) != 1) 
+        -- SSL_CTX_set_max_proto_version(ssl_ctx, TLS1_2_VERSION) != 1)
 
         local rc = sslsocket.ctx_use_private_key_file(ctx, sslparams.ssl_key_file)
         if rc == false then

@@ -13,7 +13,7 @@ local helpers = require('test.helper')
 local errno = require('errno')
 local fio = require('fio')
 local ffi = require('ffi')
-local sslsocket = require('cartridge.sslsocket')
+local sslsocket_available, sslsocket = pcall(require, 'cartridge.sslsocket')
 local cartridge_utils = require('cartridge.utils')
 
 local CERT_DIR = fio.pathjoin(fio.abspath(os.getenv('SOURCEDIR') or '.'),
@@ -55,6 +55,9 @@ g.before_all(function()
         t.skip("No SSL support")
     end
     if not cartridge_utils.feature.ssl then
+        t.skip("No SSL support")
+    end
+    if sslsocket_available ~= true then
         t.skip("No SSL support")
     end
 
