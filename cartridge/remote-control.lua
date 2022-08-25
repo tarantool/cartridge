@@ -188,6 +188,10 @@ local function communicate(s)
         body = msgpack.decode(buf, pos)
     end
 
+    while vars.suspend do
+        vars.suspend_cond:wait(1)
+    end
+
     local code = header[0x00]
     local sync = header[0x01]
 
@@ -342,9 +346,6 @@ local function rc_handle(s)
     end
 
     while vars.handlers[s] ~= nil or next(handler.storage.tasks) ~= nil do
-        while vars.suspend do
-            vars.suspend_cond:wait(1)
-        end
         local ok, err = RemoteControlError:pcall(communicate, s)
         if err ~= nil then
             log.error('%s', err)
