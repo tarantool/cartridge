@@ -152,7 +152,10 @@ jobs:
     runs-on: ubuntu-18.04
     strategy:
       matrix:
-        sdk-version: ["2.11.0-entrypoint-6-g2b6d21d3b-r496-nogc64-linux-x86_64"]
+        sdk-version: [
+          "2.10.1-0-g88b6f502c-r498-nogc64-linux-x86_64",
+          "2.11.0-entrypoint-6-g2b6d21d3b-r496-nogc64-linux-x86_64"
+          ]
       fail-fast: false
     steps:
       - uses: actions/setup-python@v2
@@ -181,7 +184,7 @@ jobs:
           SDK_PATH="$(realpath tarantool-enterprise)"
           echo "${SDK_PATH}" >> ${GITHUB_PATH}
           echo "TARANTOOL_SDK_PATH=${SDK_PATH}" >> ${GITHUB_ENV}
-          
+
       # Setup etcd
       - name: Install etcd
         uses: ./.github/actions/setup-etcd
