@@ -71,7 +71,7 @@ local function disabled(uuid, srv)
 end
 
 local function electable(_, srv)
-    return srv.electable
+    return srv ~= nil and srv.electable ~= nil and srv.electable or true
 end
 
 local function not_expelled(_, srv)
