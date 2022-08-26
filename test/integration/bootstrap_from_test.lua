@@ -70,13 +70,16 @@ g.before_all = function()
             {
                 alias = 'storage-B',
                 uuid = replicaset_uuid,
-                roles = {'vshard-router', 'vshard-storage'},
+                roles = {'vshard-storage'},
                 servers = {
                     {
                         instance_uuid = storage_3_uuid,
                         env = { TARANTOOL_BOOTSTRAP_FROM = 'admin:cookieA@localhost:3302' }
                     },
-                    {instance_uuid = storage_4_uuid},
+                    {
+                        instance_uuid = storage_4_uuid,
+                        env = { TARANTOOL_BOOTSTRAP_FROM = 'admin:cookieA@localhost:3302' }
+                    },
                 },
             },
         },
@@ -128,13 +131,13 @@ g.test_bootstrap_from = function()
         return box.info.replication
     end)):map(function(x) return x.uuid end):totable()
 
-    t.assert_equals(repl1, {storage_1_uuid, storage_2_uuid, storage_3_uuid})
+   t.assert_equals(repl1, {storage_1_uuid, storage_2_uuid, storage_3_uuid, storage_4_uuid})
 
     local repl2 = fun.iter(g.cluster1:server('storage-A-2'):exec(function()
         return box.info.replication
     end)):map(function(x) return x.uuid end):totable()
 
-    t.assert_equals(repl2, {storage_1_uuid, storage_2_uuid, storage_3_uuid})
+    t.assert_equals(repl2, {storage_1_uuid, storage_2_uuid, storage_3_uuid, storage_4_uuid})
 
     local repl3 = fun.iter(g.cluster2:server('storage-B-1'):exec(function()
         return box.info.replication

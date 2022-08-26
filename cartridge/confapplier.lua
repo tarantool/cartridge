@@ -406,8 +406,6 @@ local function boot_instance(clusterwide_config)
         replicaset_uuid = server.replicaset_uuid
     end
 
-    local bootstrap_from = require('cartridge.argparse').get_opts({bootstrap_from = 'string'}).bootstrap_from
-
     -- There could be three options:
     if vars.state == 'ConfigLoaded' and next(snapshots) ~= nil then
         -- Instance is being recovered after restart
@@ -496,7 +494,10 @@ local function boot_instance(clusterwide_config)
         local leader = topology_cfg.servers[leader_uuid]
 
         -- Set up 'star' replication for the bootstrap
-        if instance_uuid == leader_uuid then
+        local bootstrap_from = require('cartridge.argparse').get_opts({bootstrap_from = 'string'}).bootstrap_from
+        if bootstrap_from ~= nil then
+            box_opts.replication = {bootstrap_from}
+        elseif instance_uuid == leader_uuid then
             box_opts.replication = nil
             box_opts.read_only = false
             -- leader should be bootstrapped with quorum = 0, otherwise
@@ -516,21 +517,9 @@ local function boot_instance(clusterwide_config)
                         ssl_key_file = vars.ssl_client_key_file,
                     }
                 }
-                local bootstrap_from_uri
-                if bootstrap_from ~= nil then
-                    bootstrap_from_uri = {
-                        uri = bootstrap_from,
-                        params = {
-                            transport = 'ssl',
-                            ssl_ca_file = vars.ssl_client_ca_file,
-                            ssl_cert_file = vars.ssl_client_cert_file,
-                            ssl_key_file = vars.ssl_client_key_file,
-                        }
-                    }
-                end
-                box_opts.replication = {uri, bootstrap_from_uri}
+                box_opts.replication = {uri}
             else
-                box_opts.replication = {pool.format_uri(leader.uri), bootstrap_from}
+                box_opts.replication = {pool.format_uri(leader.uri)}
             end
         end
     end
@@ -547,11 +536,6 @@ local function boot_instance(clusterwide_config)
     -- It recovers snapshot
     -- Or bootstraps replication
     local snap1 = hotreload.snap_fibers()
-    if box_opts.replication == nil then
-        box_opts.replication = {bootstrap_from}
-    else
-        table.insert(box_opts.replication, bootstrap_from)
-    end
     box.cfg(box_opts)
     local snap2 = hotreload.snap_fibers()
     hotreload.whitelist_fibers(hotreload.diff(snap1, snap2))
