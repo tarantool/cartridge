@@ -47,6 +47,14 @@ You can do this via the Web interface which is available at
 ``http://<instance_hostname>:<instance_http_port>``
 (in this example, ``http://localhost:8080``).
 
+(Optional) You can bootstrap cluster from existing cluster (*original* cluster in example)
+via argparse option ``TARANTOOL_BOOTSTRAP_FROM`` or ``--bootstrap_from`` in form
+``TARANTOOL_BOOTSTRAP_FROM=admin:SECRET-ORIGINAL-CLUSTER-COOKIE@HOST:MASTER_PORT``.
+That option should be present on each instance in replicasets of the second cluster.
+Make sure that you prepared valid configuration for the second cluster.
+Valid topology should contain **same** replicasets uuids for each replicaset
+and **different** from original cluster instances uuids.
+
 In the web interface, do the following:
 
 #.  Depending on the authentication state:
