@@ -34,6 +34,8 @@ import {
   requestBootstrapEvent,
   requestBootstrapFx,
   selectors,
+  setElectableServerEvent,
+  setElectableServerFx,
   showBootstrapPanelEvent,
 } from '.';
 
@@ -50,6 +52,11 @@ forward({
 forward({
   from: promoteServerToLeaderEvent,
   to: promoteServerToLeaderFx,
+});
+
+forward({
+  from: setElectableServerEvent,
+  to: setElectableServerFx,
 });
 
 forward({
@@ -123,6 +130,11 @@ forward({
 
 forward({
   from: disableOrEnableServerFx.failData.map(mapErrorWithTitle('Disabled state setting error')),
+  to: notifyErrorEvent,
+});
+
+forward({
+  from: setElectableServerFx.failData.map(mapErrorWithTitle('Electable state setting error')),
   to: notifyErrorEvent,
 });
 
@@ -241,6 +253,12 @@ promoteServerToLeaderFx.use(({ instanceUuid, replicasetUuid, force }) =>
     replicaset_uuid: replicasetUuid,
     instance_uuid: instanceUuid,
     force_inconsistency: force,
+  })
+);
+
+setElectableServerFx.use(({ uuid, electable }) =>
+  graphql.mutate(editTopologyMutation, {
+    servers: [{ uuid, electable }],
   })
 );
 

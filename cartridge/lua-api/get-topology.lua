@@ -44,6 +44,7 @@ local lua_api_proxy = require('cartridge.lua-api.proxy')
 -- @tfield string uri
 -- @tfield string uuid
 -- @tfield boolean disabled
+-- @tfield boolean electable
 -- @tfield string status
 --   Instance health.
 -- @tfield string message
@@ -138,6 +139,7 @@ local function get_topology()
 
     local active_leaders = failover.get_active_leaders()
     local refined_uri = topology.refine_servers_uri(topology_cfg)
+    local replicaset_servers_tail = {}
 
     for _, instance_uuid, server in fun.filter(topology.not_expelled, topology_cfg.servers) do
         local uri = assert(refined_uri[instance_uuid])
@@ -148,6 +150,7 @@ local function get_topology()
             uri = uri,
             uuid = instance_uuid,
             disabled = not topology.not_disabled(instance_uuid, server),
+            electable = topology.electable(instance_uuid, server),
             zone = server.zone,
             alias = nil,
             status = nil,
@@ -156,6 +159,9 @@ local function get_topology()
             replicaset = replicasets[server.replicaset_uuid],
             clock_delta = nil,
         }
+        if replicaset_servers_tail[server.replicaset_uuid] == nil then
+            replicaset_servers_tail[server.replicaset_uuid] = {}
+        end
 
         if member ~= nil and member.payload ~= nil then
             srv.alias = member.payload.alias
@@ -212,10 +218,18 @@ local function get_topology()
             leaders_order[server.replicaset_uuid],
             instance_uuid
         )
+        if srv.priority ~= nil then
+            srv.replicaset.servers[srv.priority] = srv
+        else
+            table.insert(replicaset_servers_tail[server.replicaset_uuid], srv)
+        end
         srv.labels = server.labels or {}
-        srv.replicaset.servers[srv.priority] = srv
 
         servers[instance_uuid] = srv
+    end
+
+    for repllicaset_uuid, replicaset in pairs(replicasets) do
+        utils.table_append(replicaset.servers, replicaset_servers_tail[repllicaset_uuid])
     end
 
     for _, m in pairs(members) do

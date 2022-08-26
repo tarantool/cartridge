@@ -10,6 +10,7 @@ import type {
   GetCluster,
   PromoteServerToLeaderEventPayload,
   ServerList,
+  SetElectableServerEventPayload,
 } from './types';
 
 // exports
@@ -26,6 +27,9 @@ export const refreshServerListAndClusterEvent = app.domain.createEvent('refresh 
 export const promoteServerToLeaderEvent = app.domain.createEvent<PromoteServerToLeaderEventPayload>(
   'promote server to leader event'
 );
+
+export const setElectableServerEvent =
+  app.domain.createEvent<SetElectableServerEventPayload>('set electable server event');
 
 export const disableOrEnableServerEvent = app.domain.createEvent<DisableOrEnableServerEventPayload>(
   'disable or enable server event'
@@ -52,6 +56,10 @@ export const queryClusterLegacyFx = app.domain.createEffect<void, void>('query c
 
 export const promoteServerToLeaderFx = app.domain.createEffect<PromoteServerToLeaderEventPayload, void>(
   'promote server to leader'
+);
+
+export const setElectableServerFx = app.domain.createEffect<SetElectableServerEventPayload, void>(
+  'set electable server'
 );
 
 export const disableOrEnableServerFx = app.domain.createEffect<DisableOrEnableServerEventPayload, void>(

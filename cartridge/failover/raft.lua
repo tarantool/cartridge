@@ -85,6 +85,11 @@ local function cfg()
     log.warn('Raft failover is in beta-version')
     local box_opts = argparse.get_box_opts()
 
+    local topology_cfg = package.loaded['cartridge.confapplier'].get_readonly('topology')
+    if topology_cfg ~= nil and not topology_cfg.servers[box.info.uuid].electable then
+        box_opts.election_mode = 'voter'
+    end
+
     box.cfg{
         -- The instance is set to candidate, so it may become the leader
         -- as well as vote for other instances.
@@ -138,7 +143,8 @@ local function promote(replicaset_leaders)
         return nil, PromoteLeaderError:new('Unable to get topology')
     end
 
-    local servers_list = fun.filter(topology.not_disabled, topology_cfg.servers):tomap()
+    local servers_list = fun.filter(topology.not_disabled,
+                                    topology_cfg.servers):filter(topology.electable):tomap()
     local replicasets = topology_cfg.replicasets
 
     local uri_list, err = utils.appoint_leaders_check(replicaset_leaders, servers_list, replicasets)

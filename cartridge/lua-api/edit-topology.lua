@@ -58,6 +58,7 @@ local function __join_server(topology_cfg, params)
         zone = params.zone,
         labels = params.labels,
         disabled = false,
+        electable = true,
         replicaset_uuid = params.replicaset_uuid,
     }
 
@@ -72,6 +73,7 @@ local function __edit_server(topology_cfg, params)
         zone = '?string',
         labels = '?table',
         disabled = '?boolean',
+        electable = '?boolean',
         expelled = '?boolean',
     })
 
@@ -100,6 +102,10 @@ local function __edit_server(topology_cfg, params)
 
     if params.disabled ~= nil then
         server.disabled = params.disabled
+    end
+
+    if params.electable ~= nil then
+        server.electable = params.electable
     end
 
     if params.expelled == true then
@@ -269,6 +275,7 @@ end
 -- @tfield ?string zone
 -- @tfield ?table labels
 -- @tfield ?boolean disabled
+-- @tfield ?boolean electable
 -- @tfield ?boolean expelled
 --   Expelling an instance is permanent and can't be undone.
 --   It's suitable for situations when the hardware is destroyed,

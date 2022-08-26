@@ -107,6 +107,7 @@ input EditReplicasetInput {
 input EditServerInput {
   uri: String
   labels: [LabelInput]
+  electable: Boolean
   disabled: Boolean
   uuid: String!
   expelled: Boolean
@@ -627,6 +628,7 @@ type Server {
   uri: String!
   labels: [Label]
   message: String!
+  electable: Boolean
   disabled: Boolean
 
   """Failover priority within the replica set"""

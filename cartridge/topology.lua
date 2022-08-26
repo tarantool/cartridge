@@ -42,6 +42,7 @@ local e_config = errors.new_class('Invalid cluster topology config')
         -- ['instance-uuid-2'] = {
         --     uri = 'localhost:3301',
         --     disabled = false,
+        --     electable = true,
         --     replicaset_uuid = 'replicaset-uuid-2',
         --     zone = nil | string,
         -- },
@@ -69,12 +70,20 @@ local function disabled(uuid, srv)
     return expelled(uuid, srv) or srv.disabled
 end
 
+local function electable(_, srv)
+    return srv.electable
+end
+
 local function not_expelled(_, srv)
     return not expelled(_, srv)
 end
 
 local function not_disabled(uuid, srv)
     return not disabled(uuid, srv)
+end
+
+local function not_electable(_, srv)
+    return not electable(_, srv)
 end
 
 --- Get full list of replicaset leaders.
@@ -112,7 +121,9 @@ local function get_leaders_order(topology_cfg, replicaset_uuid, new_order)
         end
 
         for _, uuid in ipairs(initial_order) do
-            if not utils.table_find(ret, uuid) then
+            if electable(uuid, servers[uuid])
+            and not utils.table_find(ret, uuid)
+            then
                 table.insert(ret, uuid)
             end
         end
@@ -122,7 +133,9 @@ local function get_leaders_order(topology_cfg, replicaset_uuid, new_order)
 
     if servers ~= nil then
         local ret_tail = {}
-        for _, instance_uuid, server in fun.filter(not_expelled, servers) do
+        for _, instance_uuid, server
+        in fun.filter(not_expelled, servers):filter(electable)
+        do
             if server.replicaset_uuid == replicaset_uuid then
                 if not utils.table_find(ret, instance_uuid) then
                     table.insert(ret_tail, instance_uuid)
@@ -191,6 +204,10 @@ local function validate_schema(field, topology)
                 '%s.disabled must be true or false', field
             )
             e_config:assert(
+                type(server.electable or false) == 'boolean',
+                '%s.electable must be true or false', field
+            )
+            e_config:assert(
                 type(server.replicaset_uuid) == 'string',
                 '%s.replicaset_uuid must be a string, got %s', field, type(server.replicaset_uuid)
             )
@@ -210,6 +227,7 @@ local function validate_schema(field, topology)
             local known_keys = {
                 ['uri'] = true,
                 ['disabled'] = true,
+                ['electable'] = true,
                 ['replicaset_uuid'] = true,
                 ['labels'] = true,
                 ['zone'] = true,
@@ -1083,8 +1101,10 @@ return {
 
     expelled = expelled,
     disabled = disabled,
+    electable = electable,
     not_expelled = not_expelled,
     not_disabled = not_disabled,
+    not_electable = not_electable,
 
     get_failover_params = get_failover_params,
     get_leaders_order = get_leaders_order,

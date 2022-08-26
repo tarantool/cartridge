@@ -203,6 +203,47 @@ local function restart_replication(uuids)
     return true
 end
 
+local function __set_servers_electable_state(uuids, state)
+    checks('table', 'boolean')
+    local patch = {servers = {}}
+
+    for _, uuid in pairs(uuids) do
+        table.insert(patch.servers, {
+            uuid = uuid,
+            electable = state,
+        })
+    end
+
+    local topology, err = lua_api_edit_topology.edit_topology(patch)
+    if topology == nil then
+        return nil, err
+    end
+
+    return topology.servers
+end
+
+--- Make nodes electable after they were set unelectable.
+-- @function set_electable_servers
+-- @tparam {string,...} uuids
+-- @treturn[1] {ServerInfo,...}
+-- @treturn[2] nil
+-- @treturn[2] table Error description
+local function set_electable_servers(uuids)
+    checks('table')
+    return __set_servers_electable_state(uuids, true)
+end
+
+--- Temporarily make nodes unelectable as leaders.
+-- @function set_unelectable_servers
+-- @tparam {string,...} uuids
+-- @treturn[1] {ServerInfo,...}
+-- @treturn[2] nil
+-- @treturn[2] table Error description
+local function set_unelectable_servers(uuids)
+    checks('table')
+    return __set_servers_electable_state(uuids, false)
+end
+
 return {
     get_self = get_self,
     get_servers = get_servers,
@@ -213,5 +254,7 @@ return {
     probe_server = probe_server,
     enable_servers = enable_servers,
     disable_servers = disable_servers,
+    set_electable_servers = set_electable_servers,
+    set_unelectable_servers = set_unelectable_servers,
     restart_replication = restart_replication,
 }

@@ -46,6 +46,11 @@ export interface DisableOrEnableServerEventPayload {
   disable: boolean;
 }
 
+export interface SetElectableServerEventPayload {
+  uuid: string;
+  electable: boolean;
+}
+
 export interface KnownRolesNamesResult {
   router: string[];
   storage: string[];
