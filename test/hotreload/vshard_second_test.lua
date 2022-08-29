@@ -33,9 +33,11 @@ end)
 g.test_fackup = function()
     reload(g.cluster:server('R-1'))
 
-    local ok, err = g.cluster:server('R-1'):exec(function()
-        return _G.vshard.router.callrw(1, 'box.info')
-    end)
+    g.cluster:retrying({}, function()
+        local ok, err = g.cluster:server('R-1'):exec(function()
+            return _G.vshard.router.callrw(1, 'box.info')
+        end)
 
-    t.assert(ok, err)
+        t.assert(ok, err)
+    end)
 end
