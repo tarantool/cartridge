@@ -1,7 +1,4 @@
 local fio = require('fio')
-local log = require('log')
-local fiber = require('fiber')
-local errors = require('errors')
 local t = require('luatest')
 local g = t.group()
 
