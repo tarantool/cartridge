@@ -151,3 +151,17 @@ g.test_bootstrap_from = function()
 
     t.assert_equals(repl4, {storage_1_uuid, storage_2_uuid, storage_3_uuid, storage_4_uuid})
 end
+
+g.test_bootstrap_from_restart = function()
+    g.cluster2:stop()
+
+    g.cluster2:start()
+
+    g.cluster2:wait_until_healthy()
+
+    local repl = fun.iter(g.cluster2:server('storage-B-1'):exec(function()
+        return box.info.replication
+    end)):map(function(x) return x.uuid end):totable()
+
+    t.assert_equals(repl, {storage_1_uuid, storage_2_uuid, storage_3_uuid, storage_4_uuid})
+end
