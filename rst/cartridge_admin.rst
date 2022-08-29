@@ -54,8 +54,19 @@ That option should be present on each instance in replicasets of the target clus
 Make sure that you prepared valid configuration for the target cluster.
 Valid topology should contain **same** replicasets uuids for each replicaset
 and instances uuids that **differ** from original cluster.
-Note that you can bootstrap several replicasets from cluster
-(for example, data nodes only) instead of full cluster.
+
+Several notes:
+
+- You can bootstrap several replicasets from cluster
+  (for example, data nodes only) instead of full cluster.
+
+- Make sure you aren't trying to load data in target cluster while bootstrapping.
+  If you need to hot switch between original and target cluster, make original cluster
+  read-only before bootstraping target cluster.
+
+- Check logs and ``box.info.replication`` on target cluster after bootstrapping.
+  If something went wrong, try again.
+
 Example of valid data in ``edit_topology`` request:
 
 Original cluster topology:
