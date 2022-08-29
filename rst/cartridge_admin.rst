@@ -50,10 +50,80 @@ You can do this via the Web interface which is available at
 (Optional) You can bootstrap cluster from existing cluster (*original* cluster in example)
 via argparse option ``TARANTOOL_BOOTSTRAP_FROM`` or ``--bootstrap_from`` in form
 ``TARANTOOL_BOOTSTRAP_FROM=admin:SECRET-ORIGINAL-CLUSTER-COOKIE@HOST:MASTER_PORT``.
-That option should be present on each instance in replicasets of the second cluster.
-Make sure that you prepared valid configuration for the second cluster.
+That option should be present on each instance in replicasets of the target cluster.
+Make sure that you prepared valid configuration for the target cluster.
 Valid topology should contain **same** replicasets uuids for each replicaset
-and **different** from original cluster instances uuids.
+and instances uuids that **differ** from original cluster.
+Note that you can bootstrap several replicasets from cluster
+(for example, data nodes only) instead of full cluster.
+Example of valid data in ``edit_topology`` request:
+
+Original cluster topology:
+
+..  code-block:: javascript
+
+    {
+        "replicasets": [
+            {
+                "alias": "router-original",
+                "uuid": "aaaaaaaa-aaaa-0000-0000-000000000000",
+                "join_servers": [
+                    {
+                        "uri": "localhost:3301",
+                        "uuid": "aaaaaaaa-aaaa-0000-0000-000000000001"
+                    }
+                ],
+                "roles": ["vshard-router", "failover-coordinator"]
+            },
+            {
+                "alias": "storage-original",
+                "uuid": "bbbbbbbb-0000-0000-0000-000000000000",
+                "weight": 1,
+                "join_servers": [
+                    {
+                        "uri": "localhost:3302",
+                        "uuid": "bbbbbbbb-bbbb-0000-0000-000000000001"
+                    }
+                ],
+                "roles": ["vshard-storage"]
+            }
+        ]
+    }
+
+Target cluster topology:
+
+..  code-block:: javascript
+
+    {
+        "replicasets": [
+            {
+                "alias": "router-original",
+                "uuid": "cccccccc-cccc-0000-0000-000000000000", // <- this is dataless router,
+                // it's not necessary to bootstrap it from original cluster
+                "join_servers": [
+                    {
+                        "uri": "localhost:13301", // <- different uri
+                        "uuid": "cccccccc-cccc-0000-0000-000000000001"
+                    }
+                ],
+                "roles": ["vshard-router", "failover-coordinator"]
+            },
+            {
+                "alias": "storage-original",
+                "uuid": "bbbbbbbb-0000-0000-0000-000000000000", // replicaset_uuid is the same as in the original cluster
+                // that allows us bootstrap target cluster from original cluster
+                "weight": 1,
+                "join_servers": [
+                    {
+                        "uri": "localhost:13302", // <- different uri
+                        "uuid": "bbbbbbbb-bbbb-0000-0000-000000000002" // <- different instance_uuid
+                    }
+                ],
+                "roles": ["vshard-storage"]
+            }
+        ]
+    }
+
 
 In the web interface, do the following:
 
