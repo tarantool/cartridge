@@ -61,8 +61,8 @@ Several notes:
   (for example, data nodes only) instead of full cluster.
 
 - Make sure you aren't trying to load data in target cluster while bootstrapping.
-  If you need to hot switch between original and target cluster, make original cluster
-  read-only before bootstraping target cluster.
+  If you need to hot switch between original and target cluster, stop data loading
+  in original cluster before bootstraping target cluster.
 
 - Check logs and ``box.info.replication`` on target cluster after bootstrapping.
   If something went wrong, try again.
