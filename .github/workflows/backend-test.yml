@@ -44,12 +44,12 @@ jobs:
           tarantool-version: '1.10'
 
       # Setup luacheck and ldoc
-      #- name: Cache rocks
-      #  uses: actions/cache@v2
-      #  id: cache-rocks
-      #  with:
-      #    path: .rocks/
-      #    key: misc-rocks-${{ hashFiles('*.rockspec') }}-02
+      - name: Cache rocks
+        uses: actions/cache@v2
+        id: cache-rocks
+        with:
+          path: .rocks/
+          key: misc-rocks-${{ hashFiles('*.rockspec') }}-02
       -
         run: |
           tarantoolctl rocks install luacheck
@@ -86,7 +86,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        tarantool: ['1.10', '2.7', '2.8', 'latest']
+        tarantool: ['1.10', '2.7', '2.8', '2.10']
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/setup-python@v2
@@ -112,12 +112,12 @@ jobs:
           install-prefix: etcd-v2.3.8
 
       # Setup luatest
-      #- name: Cache rocks
-      #  uses: actions/cache@v2
-      #  id: cache-rocks
-      #  with:
-      #    path: .rocks/
-      #    key: test-rocks-${{ hashFiles('*.rockspec') }}-03
+      - name: Cache rocks
+        uses: actions/cache@v2
+        id: cache-rocks
+        with:
+          path: .rocks/
+          key: test-rocks-${{ hashFiles('*.rockspec') }}-03
       -
         run: tarantoolctl rocks install luatest 0.5.7
         if: steps.cache-rocks.outputs.cache-hit != 'true'
