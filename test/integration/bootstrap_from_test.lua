@@ -118,38 +118,38 @@ g.test_bootstrap_from = function()
         return box.cfg.replication
     end)
 
-    t.assert_equals(repl1, {"admin:cookieA@localhost:3302", "admin:cookieA@localhost:3303"})
+    t.assert_items_equals(repl1, {"admin:cookieA@localhost:3302", "admin:cookieA@localhost:3303"})
 
     local repl2 = g.cluster2:server('storage-B-1'):exec(function()
         return box.cfg.replication
     end)
 
-    t.assert_equals(repl2, {"admin:cookieB@localhost:13302", "admin:cookieB@localhost:13303"})
+    t.assert_items_equals(repl2, {"admin:cookieB@localhost:13302", "admin:cookieB@localhost:13303"})
 
 
     local repl1 = fun.iter(g.cluster1:server('storage-A-1'):exec(function()
         return box.info.replication
     end)):map(function(x) return x.uuid end):totable()
 
-   t.assert_equals(repl1, {storage_1_uuid, storage_2_uuid, storage_3_uuid, storage_4_uuid})
+   t.assert_items_equals(repl1, {storage_1_uuid, storage_2_uuid, storage_3_uuid, storage_4_uuid})
 
     local repl2 = fun.iter(g.cluster1:server('storage-A-2'):exec(function()
         return box.info.replication
     end)):map(function(x) return x.uuid end):totable()
 
-    t.assert_equals(repl2, {storage_1_uuid, storage_2_uuid, storage_3_uuid, storage_4_uuid})
+    t.assert_items_equals(repl2, {storage_1_uuid, storage_2_uuid, storage_3_uuid, storage_4_uuid})
 
     local repl3 = fun.iter(g.cluster2:server('storage-B-1'):exec(function()
         return box.info.replication
     end)):map(function(x) return x.uuid end):totable()
 
-    t.assert_equals(repl3, {storage_1_uuid, storage_2_uuid, storage_3_uuid, storage_4_uuid})
+    t.assert_items_equals(repl3, {storage_1_uuid, storage_2_uuid, storage_3_uuid, storage_4_uuid})
 
     local repl4 = fun.iter(g.cluster2:server('storage-B-2'):exec(function()
         return box.info.replication
     end)):map(function(x) return x.uuid end):totable()
 
-    t.assert_equals(repl4, {storage_1_uuid, storage_2_uuid, storage_3_uuid, storage_4_uuid})
+    t.assert_items_equals(repl4, {storage_1_uuid, storage_2_uuid, storage_3_uuid, storage_4_uuid})
 end
 
 g.test_bootstrap_from_restart = function()
@@ -163,5 +163,5 @@ g.test_bootstrap_from_restart = function()
         return box.info.replication
     end)):map(function(x) return x.uuid end):totable()
 
-    t.assert_equals(repl, {storage_1_uuid, storage_2_uuid, storage_3_uuid, storage_4_uuid})
+    t.assert_items_equals(repl, {storage_1_uuid, storage_2_uuid, storage_3_uuid, storage_4_uuid})
 end
