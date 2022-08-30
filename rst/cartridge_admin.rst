@@ -47,18 +47,19 @@ You can do this via the Web interface which is available at
 ``http://<instance_hostname>:<instance_http_port>``
 (in this example, ``http://localhost:8080``).
 
-(Optional) You can bootstrap cluster from existing cluster (*original* cluster in example)
-via argparse option ``TARANTOOL_BOOTSTRAP_FROM`` or ``--bootstrap_from`` in form
-``TARANTOOL_BOOTSTRAP_FROM=admin:SECRET-ORIGINAL-CLUSTER-COOKIE@HOST:MASTER_PORT``.
+(Optional) You can bootstrap a cluster from an existing cluster (*original* cluster in the example
+ below) via the argparse option ``TARANTOOL_BOOTSTRAP_FROM`` or ``--bootstrap_from``
+ in the following form: 
+ ``TARANTOOL_BOOTSTRAP_FROM=admin:SECRET-ORIGINAL-CLUSTER-COOKIE@HOST:MASTER_PORT``.
 That option should be present on each instance in replicasets of the target cluster.
-Make sure that you prepared valid configuration for the target cluster.
-Valid topology should contain **same** replicasets uuids for each replicaset
-and instances uuids that **differ** from original cluster.
+Make sure that you've prepared a valid configuration for the target cluster.
+A valid topology should contain the **same** *replicaset uuids* for each replicaset
+and *instance uuids* that **differ** from original cluster.
 
 Several notes:
 
-- You can bootstrap several replicasets from cluster
-  (for example, data nodes only) instead of full cluster.
+- You can bootstrap specific replicasets from a cluster
+  (for example, data nodes only) instead of the whole cluster.
 
 - Make sure you aren't trying to load data in target cluster while bootstrapping.
   If you need to hot switch between original and target cluster, stop data loading
