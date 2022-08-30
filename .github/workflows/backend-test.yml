@@ -86,7 +86,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        tarantool: ['1.10', '2.7', '2.8', 'latest']
+        tarantool: ['1.10', '2.7', '2.8', '2.10']
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/setup-python@v2
