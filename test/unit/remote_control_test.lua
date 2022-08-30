@@ -927,3 +927,32 @@ function g.test_fd_cloexec()
         err = 'fcntl(F_GETFD) failed: Bad file descriptor',
     })
 end
+
+function g.test_suspend()
+    rc_start(13301)
+    box.cfg({listen = box.NULL})
+    local conn = assert(netbox.connect('superuser:3.141592@localhost:13301'))
+    t.assert_not(conn.error)
+
+    local ok, ret = pcall(conn.call, conn, 'math.pow', {2, 8}, {timeout = 0.2})
+    t.assert(ok)
+    t.assert_equals(ret, 256)
+
+    remote_control.suspend()
+
+    ok, ret = pcall(conn.call, conn, 'math.pow', {2, 8}, {timeout = 1.2})
+    t.assert_not(ok)
+    t.assert(helpers.is_timeout_error(ret), tostring(ret))
+
+    local future = conn:call('get_local_secret', nil, {is_async = true})
+
+    remote_control.resume()
+
+    ok, ret = pcall(conn.call, conn, 'math.pow', {2, 7}, {timeout = 0.2})
+    t.assert(ok)
+    t.assert_equals(ret, 128)
+
+    t.assert_equals(future:wait_result(), {secret})
+
+    conn:close()
+end
