@@ -52,9 +52,9 @@ Bootstraping from an existing cluster (optional)
 -------------------------------------------------------------------------------
 
 You can bootstrap a cluster from an existing cluster (*original* cluster in the example
- below) via the argparse option ``TARANTOOL_BOOTSTRAP_FROM`` or ``--bootstrap_from``
- in the following form: 
- ``TARANTOOL_BOOTSTRAP_FROM=admin:SECRET-ORIGINAL-CLUSTER-COOKIE@HOST:MASTER_PORT``.
+below) via the argparse option ``TARANTOOL_BOOTSTRAP_FROM`` or ``--bootstrap_from``
+in the following form: 
+``TARANTOOL_BOOTSTRAP_FROM=admin:SECRET-ORIGINAL-CLUSTER-COOKIE@HOST:MASTER_PORT``.
 That option should be present on each instance in replicasets of the target cluster.
 Make sure that you've prepared a valid configuration for the target cluster.
 A valid topology should contain the **same** *replicaset uuids* for each replicaset
@@ -67,7 +67,7 @@ Several notes:
 
 - Don't load data in the target cluster while bootstrapping.
   If you need to hot switch between original and target cluster, stop data loading
-  in original cluster unless bootstrapping is completed.
+  in original cluster until bootstrapping is completed.
 
 - Check logs and ``box.info.replication`` on target cluster after bootstrapping.
   If something went wrong, try again.
