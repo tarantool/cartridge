@@ -13,6 +13,7 @@ import {
   editUserFx,
   fetchUsersListFx,
   hideModal,
+  reloadClusterSelfFx,
   removeUserFx,
   resetUsersList,
   showUserAddModal,
@@ -59,4 +60,5 @@ $visibleModal
 
 forward({ from: addUserFx.done, to: fetchUsersListFx });
 forward({ from: editUserFx.done, to: fetchUsersListFx });
+forward({ from: editUserFx.done, to: reloadClusterSelfFx });
 forward({ from: removeUserFx.done, to: fetchUsersListFx });
