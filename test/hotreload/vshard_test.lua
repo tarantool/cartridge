@@ -189,8 +189,9 @@ function g.test_rebalancer()
         }
     ]], variables = {uuid = g.SA1.replicaset_uuid}})
 
-    local ok, err = pcall(helpers.retrying, {}, function()
-        rebalancer:call('vshard.storage.rebalancer_wakeup')
+    rebalancer:call('vshard.storage.rebalancer_wakeup')
+
+    local ok, err = pcall(helpers.retrying, {timeout=30}, function()
         return assert(g.SA1:call('vshard.storage.buckets_count') == 2000
             and g.SB1:call('vshard.storage.buckets_count') == 1000)
     end)
