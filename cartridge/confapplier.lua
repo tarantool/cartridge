@@ -494,7 +494,10 @@ local function boot_instance(clusterwide_config)
         local leader = topology_cfg.servers[leader_uuid]
 
         -- Set up 'star' replication for the bootstrap
-        if instance_uuid == leader_uuid then
+        local bootstrap_from = require('cartridge.argparse').get_opts({bootstrap_from = 'string'}).bootstrap_from
+        if bootstrap_from ~= nil then
+            box_opts.replication = {bootstrap_from}
+        elseif instance_uuid == leader_uuid then
             box_opts.replication = nil
             box_opts.read_only = false
             -- leader should be bootstrapped with quorum = 0, otherwise
