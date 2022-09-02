@@ -87,6 +87,7 @@ local gql_type_server = gql_types.object {
         uuid = gql_types.string.nonNull,
         status = gql_types.string.nonNull,
         message = gql_types.string.nonNull,
+        electable = gql_types.boolean,
         disabled = gql_types.boolean,
         priority = {
             kind = gql_types.int,
@@ -115,6 +116,7 @@ local gql_type_edit_server_input = gql_types.inputObject {
         uuid = gql_types.string.nonNull,
         zone = gql_types.string,
         labels = gql_types.list(gql_type_label_input),
+        electable = gql_types.boolean,
         disabled = gql_types.boolean,
         expelled = gql_types.boolean,
     }

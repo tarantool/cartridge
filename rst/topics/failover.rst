@@ -234,6 +234,48 @@ which calls ``box.ctl.promote`` on the specified instances.
 Note that ``box.ctl.promote`` starts fair elections, so some other instance may
 become the leader in the replicaset.
 
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Unelectable nodes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You can restrict node to be elected in ``stateful`` failover mode by GraphQL
+or Lua API. "Unelectable" node can't become a leader in replicaset.
+
+In ``edit_topology``:
+
+.. code-block:: json
+
+   {
+      "replicasets": [
+        {
+            "alias": "storage",
+            "uuid": "aaaaaaaa-aaaa-0000-0000-000000000000",
+            "join_servers": [
+                {
+                    "uri": "localhost:3301",
+                    "uuid": "aaaaaaaa-aaaa-0000-0000-000000000001",
+                    "electable": false
+                }
+            ],
+            "roles": []
+        }
+      ]
+    }
+
+In Lua API:
+
+.. code-block:: lua
+
+   -- to make nodes unelectable:
+   require('cartridge.lua-api.topology').api_topology.set_unelectable_servers(uuids)
+   -- to make nodes electable:
+   require('cartridge.lua-api.topology').api_topology.set_electable_servers(uuids)
+
+You could also make node unelectable in WebUI:
+
+**ADD PICTURE**
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fencing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

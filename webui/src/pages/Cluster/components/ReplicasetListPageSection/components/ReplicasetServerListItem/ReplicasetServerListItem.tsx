@@ -10,6 +10,7 @@ import { cluster } from 'src/models';
 import type { Maybe } from 'src/models';
 
 import ServerDropdown from '../../../ServerDropdown';
+import { NonElectableFlag } from '../NonElectableFlag';
 import ReplicasetListBuckets from '../ReplicasetListBuckets';
 import ReplicasetListMemStat from '../ReplicasetListMemStat';
 import ReplicasetListStatus from '../ReplicasetListStatus';
@@ -32,6 +33,7 @@ export interface ReplicasetServerListItemServer {
   status: string;
   alias?: Maybe<string>;
   disabled?: Maybe<boolean>;
+  electable?: Maybe<boolean>;
 }
 
 export interface ReplicasetServerListItemServerAdditional {
@@ -52,7 +54,7 @@ export interface ReplicasetServerListItemProps {
 
 const ReplicasetServerListItem = (props: ReplicasetServerListItemProps) => {
   const {
-    server: { uuid, uri, alias, status, disabled = false, message },
+    server: { uuid, uri, alias, status, disabled = false, electable = true, message },
     additional: { master, activeMaster, selfURI, vshardGroupBucketsCount, ro, statistics },
     showFailoverPromote,
   } = props;
@@ -72,6 +74,7 @@ const ReplicasetServerListItem = (props: ReplicasetServerListItemProps) => {
             state={status !== 'healthy' ? 'bad' : ro === false ? 'good' : 'warning'}
           />
         )}
+        {!electable && <NonElectableFlag className={cx(styles.nonElectableFlag, 'meta-test_nonElectableFlag')} />}
         <div className={cx(styles.sign, alias && styles.signWithAlias)}>
           {selfURI && uri === selfURI && (
             <Tooltip content="WebUI operates here">

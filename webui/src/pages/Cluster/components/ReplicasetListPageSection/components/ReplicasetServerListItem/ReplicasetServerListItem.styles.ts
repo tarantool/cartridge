@@ -38,6 +38,13 @@ export const styles = {
     position: absolute;
     top: 0;
     left: 0;
+    z-index: 1;
+  `,
+  nonElectableFlag: css`
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    z-index: 0;
   `,
   head: css`
     flex: 0 0 auto;

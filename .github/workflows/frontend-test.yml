@@ -103,11 +103,22 @@ jobs:
           --key ${{ secrets.CYPRESS_RECORD_KEY }}
           --ci-build-id ${{ needs.set-build-id.outputs.build-id }}
 
-      - name: Create upload folder for snapshots
-        uses: actions/upload-artifact@v2
+      - name: Create upload folder for screenshots
+        uses: actions/upload-artifact@v3
+        if: failure() && startsWith(matrix.script, 'cypress')
         with:
-          name: snapshots-from-server
+          name: ${{ matrix.script }}-screenshots-from-server
+          path: webui/cypress/screenshots/
+          retention-days: 5
+          if-no-files-found: ignore
+
+      - name: Create upload folder for snapshots
+        uses: actions/upload-artifact@v3
+        if: always() && startsWith(matrix.script, 'cypress')
+        with:
+          name: ${{ matrix.script }}-snapshots-from-server
           path: webui/cypress/snapshots/
+          retention-days: 5
 
       ##################################################################
       # Cleanup cached paths

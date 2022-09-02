@@ -1,5 +1,5 @@
 # source: http://127.0.0.1:8081/admin/api
-# timestamp: Wed Mar 23 2022 18:11:53 GMT+0300 (Москва, стандартное время)
+# timestamp: Fri Aug 26 2022 20:04:52 GMT+0300 (Moscow Standard Time)
 
 """Custom scalar specification."""
 directive @specifiedBy(
@@ -105,6 +105,7 @@ input EditReplicasetInput {
 
 """Parameters for editing existing server"""
 input EditServerInput {
+  electable: Boolean
   uri: String
   labels: [LabelInput]
   disabled: Boolean
@@ -620,6 +621,7 @@ type Server {
   statistics: ServerStat
   boxinfo: ServerInfo
   status: String!
+  disabled: Boolean
   uuid: String!
   zone: String
   replicaset: Replicaset
@@ -627,10 +629,6 @@ type Server {
   uri: String!
   labels: [Label]
   message: String!
-  disabled: Boolean
-
-  """Failover priority within the replica set"""
-  priority: Int
 
   """
   Difference between remote clock and the current one. Obtained from the
@@ -638,6 +636,10 @@ type Server {
   of local, and vice versa. In seconds.
   """
   clock_delta: Float
+
+  """Failover priority within the replica set"""
+  priority: Int
+  electable: Boolean
 }
 
 """Server information and configuration."""

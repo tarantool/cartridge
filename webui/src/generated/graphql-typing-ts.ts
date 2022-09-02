@@ -114,6 +114,7 @@ export type EditReplicasetInput = {
 /** Parameters for editing existing server */
 export type EditServerInput = {
   disabled?: InputMaybe<Scalars['Boolean']>;
+  electable?: InputMaybe<Scalars['Boolean']>;
   expelled?: InputMaybe<Scalars['Boolean']>;
   labels?: InputMaybe<Array<InputMaybe<LabelInput>>>;
   uri?: InputMaybe<Scalars['String']>;
@@ -508,6 +509,7 @@ export type Server = {
    */
   clock_delta?: Maybe<Scalars['Float']>;
   disabled?: Maybe<Scalars['Boolean']>;
+  electable?: Maybe<Scalars['Boolean']>;
   labels?: Maybe<Array<Maybe<Label>>>;
   message: Scalars['String'];
   /** Failover priority within the replica set */
@@ -1410,6 +1412,7 @@ export type ServerListQuery = {
     uuid: string;
     alias?: string | null;
     disabled?: boolean | null;
+    electable?: boolean | null;
     uri: string;
     zone?: string | null;
     status: string;
@@ -1433,6 +1436,7 @@ export type ServerListQuery = {
       uuid: string;
       alias?: string | null;
       disabled?: boolean | null;
+      electable?: boolean | null;
       uri: string;
       priority?: number | null;
       status: string;

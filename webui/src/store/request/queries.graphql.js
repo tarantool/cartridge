@@ -282,6 +282,7 @@ export const listQuery = gql`
       uuid
       alias
       disabled
+      electable
       uri
       zone
       status
@@ -313,6 +314,7 @@ export const listQuery = gql`
         uuid
         alias
         disabled
+        electable
         uri
         priority
         status

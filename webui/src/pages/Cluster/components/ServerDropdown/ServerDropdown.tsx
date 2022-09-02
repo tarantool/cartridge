@@ -11,7 +11,8 @@ import { app, cluster } from 'src/models';
 import { styles } from './ServerDropdown.styles';
 
 const { compact } = app.utils;
-const { $serverList, promoteServerToLeaderEvent, disableOrEnableServerEvent, selectors } = cluster.serverList;
+const { $serverList, promoteServerToLeaderEvent, disableOrEnableServerEvent, setElectableServerEvent, selectors } =
+  cluster.serverList;
 const { serverDetailsModalOpenedEvent } = cluster.serverDetails;
 const { serverExpelModalOpenEvent } = cluster.serverExpel;
 
@@ -59,6 +60,15 @@ const ServerDropdown = ({
     }
   }, [server?.uuid, replicaset?.uuid, isActiveMaster]);
 
+  const handleSetElectableServer = useCallback(() => {
+    if (server?.uuid) {
+      setElectableServerEvent({
+        uuid: server.uuid,
+        electable: server?.electable === false,
+      });
+    }
+  }, [server?.uuid, server?.electable]);
+
   const handleEnableOrDisableServer = useCallback(() => {
     if (server?.uuid) {
       disableOrEnableServerEvent({
@@ -89,6 +99,9 @@ const ServerDropdown = ({
             {isActiveMaster ? 'Force promote a leader' : 'Promote a leader'}
           </DropdownItem>
         ),
+        <DropdownItem key="handleSetElectableServer" onClick={handleSetElectableServer}>
+          {server?.electable === false ? 'Set as electable' : 'Set as non-electable'}
+        </DropdownItem>,
         <DropdownItem key="handleEnableDisableServer" onClick={handleEnableOrDisableServer}>
           {server?.disabled ? 'Enable server' : 'Disable server'}
         </DropdownItem>,
@@ -103,6 +116,7 @@ const ServerDropdown = ({
     [
       handleServerDetails,
       handlePromoteLeader,
+      handleSetElectableServer,
       handleEnableOrDisableServer,
       handleShowExpelModal,
       server,

@@ -22,8 +22,13 @@ Changed
 Added
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+
+- Allow to make nodes unelectable (restrict it to become a leader) in WebUI,
+  GraphQL and Lua API.
+
 - Allow to bootstrap cartridge from existing cluster via argparse option
   ``TARANTOOL_BOOTSTRAP_FROM`` or ``--bootstrap_from``.
+
 
 -------------------------------------------------------------------------------
 [2.7.6] - 2022-08-22

@@ -65,8 +65,11 @@ local function make_decision(ctx, replicaset_uuid)
 
     local current_decision = ctx.decisions[replicaset_uuid]
     if current_decision ~= nil then
+        local current_leader_uuid = current_decision.leader
+        local current_leader = vars.topology_cfg.servers[current_leader_uuid]
         if fiber.clock() < current_decision.immunity
-        or vars.healthcheck(ctx.members, current_decision.leader)
+        or (topology.electable(current_leader_uuid, current_leader)
+            and vars.healthcheck(ctx.members, current_decision.leader))
         then
             return nil
         end
@@ -376,6 +379,10 @@ local function appoint_leaders(leaders)
 
     local updates = {}
     for replicaset_uuid, leader_uuid in pairs(leaders) do
+        if not servers[leader_uuid].electable then
+            return nil, AppointmentError:new("Cannot appoint non-electable instance")
+        end
+
         local decision = pack_decision(leader_uuid)
         table.insert(updates, {replicaset_uuid, decision.leader})
         log.info('Replicaset %s: appoint %s (%q) (manual)',

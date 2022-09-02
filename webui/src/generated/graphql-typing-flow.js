@@ -114,6 +114,7 @@ export type EditReplicasetInput = {|
 /** Parameters for editing existing server */
 export type EditServerInput = {|
   disabled?: ?$ElementType<Scalars, 'Boolean'>,
+  electable?: ?$ElementType<Scalars, 'Boolean'>,
   expelled?: ?$ElementType<Scalars, 'Boolean'>,
   labels?: ?Array<?LabelInput>,
   uri?: ?$ElementType<Scalars, 'String'>,
@@ -531,6 +532,7 @@ export type Server = {|
    */
   clock_delta?: ?$ElementType<Scalars, 'Float'>,
   disabled?: ?$ElementType<Scalars, 'Boolean'>,
+  electable?: ?$ElementType<Scalars, 'Boolean'>,
   labels?: ?Array<?Label>,
   message: $ElementType<Scalars, 'String'>,
   /** Failover priority within the replica set */
@@ -1156,7 +1158,7 @@ export type ServerListQuery = ({
     }) |}
   }), serverList?: ?Array<?({
       ...{ __typename?: 'Server' },
-    ...$Pick<Server, {| uuid: *, alias?: *, disabled?: *, uri: *, zone?: *, status: *, message: * |}>,
+    ...$Pick<Server, {| uuid: *, alias?: *, disabled?: *, electable?: *, uri: *, zone?: *, status: *, message: * |}>,
     ...{| boxinfo?: ?({
         ...{ __typename?: 'ServerInfo' },
       ...{| general: ({
@@ -1178,7 +1180,7 @@ export type ServerListQuery = ({
       ...$Pick<Server, {| uuid: * |}>
     }), servers: Array<({
         ...{ __typename?: 'Server' },
-      ...$Pick<Server, {| uuid: *, alias?: *, disabled?: *, uri: *, priority?: *, status: *, message: * |}>,
+      ...$Pick<Server, {| uuid: *, alias?: *, disabled?: *, electable?: *, uri: *, priority?: *, status: *, message: * |}>,
       ...{| boxinfo?: ?({
           ...{ __typename?: 'ServerInfo' },
         ...{| general: ({
