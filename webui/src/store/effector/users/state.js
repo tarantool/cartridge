@@ -1,6 +1,7 @@
 // @flow
 import { combine, createEffect, createEvent, createStore } from 'effector';
 import type { Store } from 'effector';
+import { core } from '@tarantool.io/frontend-core';
 
 import type { AddUserMutationVariables, EditUserMutationVariables, User } from 'src/generated/graphql-typing';
 import { addUser, editUser, getUserList, removeUser } from 'src/store/request/users.requests';
@@ -14,6 +15,7 @@ export const showUserAddModal = createEvent<void>('show user add modal');
 export const showUserEditModal = createEvent<string>('show user edit modal');
 export const showUserRemoveModal = createEvent<string>('show user remove modal');
 export const hideModal = createEvent<void>('hide user edit modal');
+export const reloadClusterSelf = createEvent<void>('reload clusterSelf');
 
 export const $usersList: Store<UsersList> = createStore<UsersList>([]);
 export const $usersListFetchError = createStore<null | string>(null);
@@ -55,4 +57,7 @@ export const addUserFx = createEffect<AddUserMutationVariables, void, string>({
 });
 export const editUserFx = createEffect<EditUserMutationVariables, void, string>({
   handler: async (user) => await editUser(user),
+});
+export const reloadClusterSelfFx = createEffect<void, void, unknown>({
+  handler: () => void core.dispatch('cluster:reload_cluster_self'),
 });

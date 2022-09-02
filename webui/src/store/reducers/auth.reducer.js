@@ -4,6 +4,7 @@ import { getGraphqlErrorMessage, isGraphqlAccessDeniedError } from 'src/api/grap
 import {
   APP_DATA_REQUEST_ERROR,
   APP_DATA_REQUEST_SUCCESS,
+  APP_RELOAD_CLUSTER_SELF_SUCCESS,
   AUTH_ACCESS_DENIED,
   AUTH_LOG_IN_REQUEST,
   AUTH_LOG_IN_REQUEST_ERROR,
@@ -114,6 +115,17 @@ export function reducer(state = initialState, { type, payload, error }) {
         ...state,
         welcomeMessage: payload.text,
       };
+
+    case APP_RELOAD_CLUSTER_SELF_SUCCESS: {
+      if (payload && payload.authParams && typeof payload.authParams.username === 'string') {
+        return {
+          ...state,
+          username: payload.authParams.username,
+        };
+      }
+
+      return state;
+    }
 
     default:
       return state;
