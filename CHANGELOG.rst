@@ -22,8 +22,13 @@ Changed
 Added
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+
 - Allow to make nodes unelectable (restrict it to become a leader) in WebUI,
   GraphQL and Lua API.
+
+- Allow to bootstrap cartridge from existing cluster via argparse option
+  ``TARANTOOL_BOOTSTRAP_FROM`` or ``--bootstrap_from``.
+
 
 -------------------------------------------------------------------------------
 [2.7.6] - 2022-08-22
@@ -36,6 +41,8 @@ Added
 - Add "Promote a leader" action in WebUI in Raft failover mode (#1853).
 
 - Introduced SSL support for Tarantool Enterprise from 2.10.2.
+
+- Introduced Remote Control Suspend/Resume methods to pause producing requests.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed

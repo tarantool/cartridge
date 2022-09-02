@@ -31,6 +31,8 @@ vars:new('password')
 vars:new('handlers', {})
 vars:new('accept', false)
 vars:new('accept_cond', fiber.cond())
+vars:new('suspend', false)
+vars:new('suspend_cond', fiber.cond())
 
 local RemoteControlError = errors.new_class('RemoteControlError')
 local error_t = ffi.typeof('struct error')
@@ -184,6 +186,10 @@ local function communicate(s)
     local body = nil
     if pos < #buf then
         body = msgpack.decode(buf, pos)
+    end
+
+    while vars.suspend do
+        vars.suspend_cond:wait(1)
     end
 
     local code = header[0x00]
@@ -520,9 +526,41 @@ local function drop_connections()
     end
 end
 
+--- Pause to handle requests for all clients.
+--
+-- It doesn't interrupt any existing connections.
+--
+-- @function suspend
+-- @local
+local function suspend()
+    if vars.server == nil or vars.accept == false then
+        return
+    end
+
+    vars.suspend = true
+    vars.suspend_cond:broadcast()
+end
+
+--- Resume to handle requests for all clients.
+--
+-- It doesn't interrupt any existing connections.
+--
+-- @function suspend
+-- @local
+local function resume()
+    if vars.server == nil or vars.accept == false then
+        return
+    end
+
+    vars.suspend = false
+    vars.suspend_cond:broadcast()
+end
+
 return {
     bind = bind,
     accept = accept,
     stop = stop,
     drop_connections = drop_connections,
+    suspend = suspend,
+    resume = resume,
 }
