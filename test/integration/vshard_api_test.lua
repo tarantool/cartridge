@@ -52,13 +52,13 @@ function g.test_get_cfg()
                     replicas = {
                         [g.B1.instance_uuid] = {
                             master = true,
-                            name = "127.0.0.1:13302",
-                            uri = "admin:qwerty123@127.0.0.1:13302",
+                            name = "localhost:13302",
+                            uri = "admin:qwerty123@localhost:13302",
                         },
                         [g.B2.instance_uuid] = {
                             master = false,
-                            name = "127.0.0.1:13303",
-                            uri = "admin:qwerty123@127.0.0.1:13303",
+                            name = "localhost:13303",
+                            uri = "admin:qwerty123@localhost:13303",
                         },
                     },
                     weight = 1,
@@ -131,8 +131,8 @@ function g.test_get_cfg_multisharding()
                     replicas = {
                         [g.storage_hot.instance_uuid] = {
                             master = true,
-                            name = "127.0.0.1:13302",
-                            uri = "admin:ytrewq321@127.0.0.1:13302",
+                            name = "localhost:13302",
+                            uri = "admin:ytrewq321@localhost:13302",
                         },
                     },
                     weight = 1,
@@ -154,8 +154,8 @@ function g.test_get_cfg_multisharding()
                     replicas = {
                         [g.storage_cold.instance_uuid] = {
                             master = true,
-                            name = "127.0.0.1:13303",
-                            uri = "admin:ytrewq321@127.0.0.1:13303",
+                            name = "localhost:13303",
+                            uri = "admin:ytrewq321@localhost:13303",
                         },
                     },
                     weight = 1,
