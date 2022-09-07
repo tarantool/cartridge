@@ -12,7 +12,7 @@ env:
 
 jobs:
   set-build-id:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
       - id: set-build-id
         run: echo "::set-output name=build-id::$(date +%s)"
@@ -27,7 +27,7 @@ jobs:
           - frontend
           - cypress-1
           - cypress-2
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     needs: set-build-id
     steps:
       - uses: actions/checkout@v2
@@ -92,6 +92,11 @@ jobs:
       ##################################################################
 
       - run: tarantoolctl rocks make
+
+      # Stop Mono server. This server starts and listens to 8084 port that is
+      # used for tests.
+      - name: 'Stop Mono server'
+        run: sudo kill -9 $(sudo lsof -t -i tcp:8084) || true
 
       - if: matrix.script == 'frontend'
         run: ./frontend-test.sh

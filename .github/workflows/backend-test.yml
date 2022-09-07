@@ -15,7 +15,7 @@ env:
 
 jobs:
   misc:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v1
@@ -87,7 +87,7 @@ jobs:
       fail-fast: false
       matrix:
         tarantool: ['1.10', '2.7', '2.8', '2.10']
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/setup-python@v2
         with:
@@ -136,6 +136,12 @@ jobs:
         if: steps.cache-pytest.outputs.cache-hit != 'true'
 
       - run: tarantoolctl rocks make
+
+      # Stop Mono server. This server starts and listens to 8084 port that is
+      # used for tests.
+      - name: 'Stop Mono server'
+        run: sudo kill -9 $(sudo lsof -t -i tcp:8084) || true
+
       - run: .rocks/bin/luatest -v
 
       - name: Run pytest -v
@@ -149,7 +155,7 @@ jobs:
   tests-ee:
     if: |
       github.event_name == 'push'
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     strategy:
       matrix:
         sdk-version: [
@@ -211,6 +217,12 @@ jobs:
         if: steps.cache-pytest.outputs.cache-hit != 'true'
 
       - run: tarantoolctl rocks make
+
+      # Stop Mono server. This server starts and listens to 8084 port that is
+      # used for tests.
+      - name: 'Stop Mono server'
+        run: sudo kill -9 $(sudo lsof -t -i tcp:8084) || true
+
       - run: .rocks/bin/luatest -v
 
       - name: Run pytest -v
