@@ -620,6 +620,17 @@ local function boot_instance(clusterwide_config)
             }})
     end
 
+    local parts = uri_tools.parse(vars.advertise_uri)
+    local addrinfo, err = socket.getaddrinfo(
+        parts.host, parts.service,
+        {family='AF_INET', type='SOCK_STREAM'}
+    )
+    if err ~= nil then
+        set_state('BootError', err)
+        return nil, err
+    end
+    local listen_uri_new = addrinfo[1].host .. ":" .. addrinfo[1].port
+    listen_uri = listen_uri_new
     local _, err = BoxError:pcall(
         box.cfg, {listen = listen_uri}
     )
