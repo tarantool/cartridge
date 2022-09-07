@@ -606,20 +606,6 @@ local function boot_instance(clusterwide_config)
     remote_control.stop()
     log.info('Remote control stopped')
 
-    local listen_uri = vars.binary_port
-    if vars.transport == 'ssl' then
-        listen_uri = {}
-        table.insert(listen_uri, {
-            uri = vars.binary_port,
-            params = {
-                transport = vars.transport,
-
-                ssl_ca_file = vars.ssl_server_ca_file,
-                ssl_cert_file = vars.ssl_server_cert_file,
-                ssl_key_file = vars.ssl_server_key_file,
-            }})
-    end
-
     local parts = uri_tools.parse(vars.advertise_uri)
     local addrinfo, err = socket.getaddrinfo(
         parts.host, parts.service,
@@ -629,8 +615,21 @@ local function boot_instance(clusterwide_config)
         set_state('BootError', err)
         return nil, err
     end
-    local listen_uri_new = addrinfo[1].host .. ":" .. addrinfo[1].port
-    listen_uri = listen_uri_new
+    local listen_uri = addrinfo[1].host .. ":" .. addrinfo[1].port --vars.binary_port
+
+    if vars.transport == 'ssl' then
+        listen_uri = {}
+        table.insert(listen_uri, {
+            uri = addrinfo[1].host .. ":" .. addrinfo[1].port,
+            params = {
+                transport = vars.transport,
+
+                ssl_ca_file = vars.ssl_server_ca_file,
+                ssl_cert_file = vars.ssl_server_cert_file,
+                ssl_key_file = vars.ssl_server_key_file,
+            }})
+    end
+
     local _, err = BoxError:pcall(
         box.cfg, {listen = listen_uri}
     )
