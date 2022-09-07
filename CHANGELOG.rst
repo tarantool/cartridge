@@ -29,6 +29,11 @@ Added
 - Allow to bootstrap cartridge from existing cluster via argparse option
   ``TARANTOOL_BOOTSTRAP_FROM`` or ``--bootstrap_from``.
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Fixed
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Fix tarantool binds to 0.0.0.0 despite advertise_uri settings.
 
 -------------------------------------------------------------------------------
 [2.7.6] - 2022-08-22
