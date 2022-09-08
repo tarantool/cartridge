@@ -18,24 +18,42 @@ export interface ReplicasetFilterInputProps {
   className: string;
 }
 
-const ReplicasetFilterInput = ({ value, setValue, roles, className }: ReplicasetFilterInputProps) => (
-  <Input
-    className={cx(styles.root, className)}
-    placeholder={'Filter by uri, uuid, role, alias or labels'}
-    value={value}
-    onChange={(e) => setValue(e.target.value)}
-    onClearClick={() => setValue('')}
-    rightIcon={<IconSearch />}
-    size="m"
-    leftElement={presetsDropdown(setValue, roles || [])}
-  />
-);
+const ReplicasetFilterInput = ({ value, setValue, roles, className }: ReplicasetFilterInputProps) => {
+  const handleDropdownSelectChange = (selected: string): void => {
+    const prefix = selected.replace(/^(is|status|role):.+$/, '$1');
+    if (!prefix) {
+      setValue(selected);
+      return;
+    }
+
+    if (value.indexOf(`${prefix}:`) > -1) {
+      setValue(value.replace(new RegExp(prefix + ':[^\\s]+'), selected).trim());
+    } else {
+      setValue(`${value.trim()} ${selected}`.trim());
+    }
+  };
+
+  return (
+    <Input
+      className={cx(styles.root, className)}
+      placeholder={'Filter by uri, uuid, role, alias or labels'}
+      value={value}
+      onChange={(e) => setValue(e.target.value)}
+      onClearClick={() => setValue('')}
+      rightIcon={<IconSearch />}
+      size="m"
+      leftElement={presetsDropdown(handleDropdownSelectChange, roles || [])}
+    />
+  );
+};
 
 const presetsDropdown = (setValue: (s: string) => void, roles: GetClusterRole[] = []) => (
   <DropdownButton
     items={[
       ...['Healthy', 'Unhealthy'].map(getDropdownOption('status', setValue)),
-      <DropdownDivider key="DropdownDivider" />,
+      <DropdownDivider key="DropdownDivider1" />,
+      ...['Leader', 'Follower'].map(getDropdownOption('is', setValue)),
+      <DropdownDivider key="DropdownDivider2" />,
       ...roles.map((role) => getDropdownOption('role', setValue)(role.name, -1)),
     ]}
     intent="dark"

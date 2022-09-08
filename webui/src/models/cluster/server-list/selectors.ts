@@ -154,8 +154,12 @@ export const sortUnConfiguredServerList = (
   return [...servers].sort((a, b) => (a.uri === clusterSelf?.uri ? -1 : b.uri === clusterSelf?.uri ? 1 : 0));
 };
 
-export const sortReplicasetList = (items: ServerListReplicaset[]): ServerListReplicaset[] =>
-  [...items].sort((a, b) => {
+export function sortReplicasetList(items: ServerListReplicasetSearchable[]): ServerListReplicasetSearchable[];
+export function sortReplicasetList(items: ServerListReplicaset[]): ServerListReplicaset[];
+export function sortReplicasetList(
+  items: (ServerListReplicaset | ServerListReplicasetSearchable)[]
+): (ServerListReplicaset | ServerListReplicasetSearchable)[] {
+  return [...items].sort((a, b) => {
     let aValue = a.alias || '';
     let bValue = b.alias || '';
 
@@ -171,6 +175,7 @@ export const sortReplicasetList = (items: ServerListReplicaset[]): ServerListRep
 
     return aValue < bValue ? -1 : 1;
   });
+}
 
 // counts
 export const serverListCounts = (data: ServerList) =>
@@ -217,8 +222,8 @@ export const replicasetCounts = (data: ServerList) =>
   );
 
 // search
-const replicasetServerSearchItems = ({ uri, alias }: ServerListReplicasetServer): string[] => {
-  return [uri, alias ?? ''].filter(Boolean);
+const replicasetServerSearchItems = ({ uri, alias, status, boxinfo }: ServerListReplicasetServer): string[] => {
+  return [uri, alias ?? '', `status:${status}`, boxinfo?.general.ro ? 'is:follower' : 'is:leader'].filter(Boolean);
 };
 
 const replicasetSearchItems = ({ alias, roles, servers }: ServerListReplicaset): string[] => {

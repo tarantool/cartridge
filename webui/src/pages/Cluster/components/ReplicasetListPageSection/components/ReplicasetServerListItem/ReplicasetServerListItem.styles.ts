@@ -11,6 +11,9 @@ export const styles = {
   disabledRowWrap: css`
     background-color: #fafafa;
   `,
+  filterIsNotMatching: css`
+    opacity: 0.3;
+  `,
   disabledRow: css`
     > *:not(.no-opacity) {
       opacity: 0.4;
