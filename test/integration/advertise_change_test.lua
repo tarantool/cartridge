@@ -104,12 +104,12 @@ function g.test_topology_query()
         uri = 'localhost:13311',
         uuid = g.A1.instance_uuid,
         alias = 'A-1',
-        boxinfo = {general = {listen = '13311', ro = false}},
+        boxinfo = {general = {listen = '127.0.0.1:13311', ro = false}},
     }, {
         uri = 'localhost:13312',
         uuid = g.B1.instance_uuid,
         alias = 'B-1',
-        boxinfo = {general = {listen = '13312', ro = false}},
+        boxinfo = {general = {listen = '127.0.0.1:13312', ro = false}},
     }})
 end
 
@@ -197,10 +197,10 @@ function g.test_failover()
 
     t.assert_items_include(servers, {{
         uuid = g.B1.instance_uuid,
-        boxinfo = {general = {listen = '13312', ro = true}},
+        boxinfo = {general = {listen = '127.0.0.1:13312', ro = true}},
     }, {
         uuid = g.B2.instance_uuid,
-        boxinfo = {general = {listen = '13303', ro = false}},
+        boxinfo = {general = {listen = '127.0.0.1:13303', ro = false}},
     }})
 end
 

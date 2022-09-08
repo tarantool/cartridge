@@ -606,11 +606,21 @@ local function boot_instance(clusterwide_config)
     remote_control.stop()
     log.info('Remote control stopped')
 
-    local listen_uri = vars.binary_port
+    local parts = uri_tools.parse(vars.advertise_uri)
+    local addrinfo, err = socket.getaddrinfo(
+        parts.host, parts.service,
+        {family='AF_INET', type='SOCK_STREAM'}
+    )
+    if err ~= nil then
+        set_state('BootError', err)
+        return nil, err
+    end
+    local listen_uri = addrinfo[1].host .. ":" .. addrinfo[1].port --vars.binary_port
+
     if vars.transport == 'ssl' then
         listen_uri = {}
         table.insert(listen_uri, {
-            uri = vars.binary_port,
+            uri = addrinfo[1].host .. ":" .. addrinfo[1].port,
             params = {
                 transport = vars.transport,
 
