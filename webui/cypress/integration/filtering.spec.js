@@ -65,24 +65,58 @@ describe('Replicaset filtering', () => {
     cy.contains('Replicasets');
 
     // Healthy
+    cy.get('.meta-test__Filter input').clear();
     cy.get('button[type="button"]:contains(Filter)').click();
     cy.get('.meta-test__Filter__Dropdown *').contains('Healthy').click({ force: true });
     cy.get('.meta-test__Filter input').should('have.value', 'status:healthy');
     cy.get('.ServerLabelsHighlightingArea').contains('test-storage-1').should('not.exist');
 
     // Unhealthy
+    cy.get('.meta-test__Filter input').clear();
     cy.get('button[type="button"]:contains(Filter)').click();
     cy.get('.meta-test__Filter__Dropdown *').contains('Unhealthy').click({ force: true });
     cy.get('.meta-test__Filter input').should('have.value', 'status:unhealthy');
     cy.get('.ServerLabelsHighlightingArea').contains('test-storage-1');
 
+    // Leader
+    cy.get('.meta-test__Filter input').clear();
+    cy.get('button[type="button"]:contains(Filter)').click();
+    cy.get('.meta-test__Filter__Dropdown *').contains('Leader').click({ force: true });
+    cy.get('.meta-test__Filter input').should('have.value', 'is:leader');
+
+    // Follower
+    cy.get('.meta-test__Filter input').clear();
+    cy.get('button[type="button"]:contains(Filter)').click();
+    cy.get('.meta-test__Filter__Dropdown *').contains('Follower').click({ force: true });
+    cy.get('.meta-test__Filter input').should('have.value', 'is:follower');
+
     // Role
+    cy.get('.meta-test__Filter input').clear();
     cy.get('button[type="button"]:contains(Filter)').click();
     cy.get('.meta-test__Filter__Dropdown *').contains('vshard-storage').click({ force: true });
     cy.get('.meta-test__Filter input').should('have.value', 'role:vshard-storage');
     cy.get('.ServerLabelsHighlightingArea').contains('test-storage-1');
     cy.get('#root').contains('test-storage');
     cy.get('#root').contains('test-router').should('not.exist');
+
+    // Multiple filters
+    cy.get('.meta-test__Filter input').clear();
+    cy.get('button[type="button"]:contains(Filter)').click();
+    cy.get('.meta-test__Filter__Dropdown *').contains('Healthy').click({ force: true });
+    cy.get('.meta-test__Filter input').should('have.value', 'status:healthy');
+    cy.get('button[type="button"]:contains(Filter)').click();
+    cy.get('.meta-test__Filter__Dropdown *').contains('Unhealthy').click({ force: true });
+    cy.get('.meta-test__Filter input').should('have.value', 'status:unhealthy');
+    cy.get('button[type="button"]:contains(Filter)').click();
+    cy.get('.meta-test__Filter__Dropdown *').contains('vshard-storage').click({ force: true });
+    cy.get('.meta-test__Filter input').should('have.value', 'status:unhealthy role:vshard-storage');
+
+    // Unhealthy
+    cy.get('.meta-test__Filter input').clear();
+    cy.get('button[type="button"]:contains(Filter)').click();
+    cy.get('.meta-test__Filter__Dropdown *').contains('Unhealthy').click({ force: true });
+    cy.get('.meta-test__Filter input').should('have.value', 'status:unhealthy');
+    cy.get('.ServerLabelsHighlightingArea').contains('test-storage-1');
 
     // Clear filter
     cy.get('.meta-test__Filter svg').eq(1).click();
@@ -99,6 +133,7 @@ describe('Replicaset filtering', () => {
     cy.get('.meta-test__ConfigureServerModal').contains('Join Replica Set').click();
 
     // Healthy
+    cy.get('.meta-test__ConfigureServerModal .meta-test__Filter input').clear();
     cy.get('.meta-test__ConfigureServerModal button[type="button"]:contains(Filter)').click();
     cy.get('.meta-test__Filter__Dropdown *').contains('Healthy').click({ force: true });
 
@@ -106,12 +141,14 @@ describe('Replicaset filtering', () => {
     cy.get('.meta-test__ConfigureServerModal').contains('test-storage').should('not.exist');
 
     // Unhealthy
+    cy.get('.meta-test__ConfigureServerModal .meta-test__Filter input').clear();
     cy.get('.meta-test__ConfigureServerModal button[type="button"]:contains(Filter)').click();
     cy.get('.meta-test__Filter__Dropdown *').contains('Unhealthy').click({ force: true });
     cy.get('.meta-test__ConfigureServerModal .meta-test__Filter input').should('have.value', 'status:unhealthy');
     cy.get('.meta-test__ConfigureServerModal').contains('test-router').should('not.exist');
 
     // Role
+    cy.get('.meta-test__ConfigureServerModal .meta-test__Filter input').clear();
     cy.get('.meta-test__ConfigureServerModal button[type="button"]:contains(Filter)').click();
     cy.get('.meta-test__Filter__Dropdown *').contains('vshard-router').click({ force: true });
     cy.get('.meta-test__ConfigureServerModal .meta-test__Filter input').should('have.value', 'role:vshard-router');
@@ -121,7 +158,8 @@ describe('Replicaset filtering', () => {
     cy.get('.meta-test__ConfigureServerModal .meta-test__Filter svg').eq(1).click();
 
     // Search
-    cy.get('.meta-test__ConfigureServerModal .meta-test__Filter').find('input').type('test-storage');
+    cy.get('.meta-test__ConfigureServerModal .meta-test__Filter input').clear();
+    cy.get('.meta-test__ConfigureServerModal .meta-test__Filter input').type('test-storage');
     cy.get('.meta-test__ConfigureServerModal').contains('test-storage');
     cy.get('.meta-test__ConfigureServerModal').contains('test-router').should('not.exist');
 

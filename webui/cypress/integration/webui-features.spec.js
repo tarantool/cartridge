@@ -124,36 +124,29 @@ describe('Web UI features testing', () => {
       cy.saveLocalStorage();
     });
 
-    const filterValue = new Map([
-      [1, 'Healthy'],
-      [2, 'Unhealthy'],
-      [3, 'failover-coordinator'],
-      [4, 'vshard-storage'],
-      [5, 'vshard-router'],
-      [6, 'myrole-dependency'],
-      [7, 'myrole'],
-    ]);
+    const filterValues = [
+      ['Healthy', 'status:healthy'],
+      ['Unhealthy', 'status:unhealthy'],
+      ['Leader', 'is:leader'],
+      ['Follower', 'is:follower'],
+      ['failover-coordinator', 'role:failover-coordinator'],
+      ['vshard-storage', 'role:vshard-storage'],
+      ['vshard-router', 'role:vshard-router'],
+      ['myrole-dependency', 'role:myrole-dependency'],
+      ['myrole', 'role:myrole'],
+    ];
 
-    const filteredValue = new Map([
-      [1, 'status:healthy'],
-      [2, 'status:unhealthy'],
-      [3, 'role:failover-coordinator'],
-      [4, 'role:vshard-storage'],
-      [5, 'role:vshard-router'],
-      [6, 'role:myrole-dependency'],
-      [7, 'role:myrole'],
-    ]);
-
-    for (let i = 1; i <= 7; i++) {
-      it(`Check ${filterValue.get(i)} ${filteredValue.get(i)} `, () => {
+    filterValues.forEach(([label, value]) => {
+      it(`Check ${label} ${value}`, () => {
+        cy.get('.meta-test__Filter input').clear();
         cy.get('button[type="button"]:contains(Filter)').click();
         cy.get('.meta-test__Filter__Dropdown *')
-          .contains(new RegExp('^' + filterValue.get(i) + '$'))
+          .contains(new RegExp(`^${label}$`))
           .click({ force: true });
-        cy.get('.meta-test__Filter input').should('have.value', `${filteredValue.get(i)}`);
+        cy.get('.meta-test__Filter input').should('have.value', value);
         cy.reload(true);
-        cy.get('.meta-test__Filter input').should('have.value', `${filteredValue.get(i)}`);
+        cy.get('.meta-test__Filter input').should('have.value', value);
       });
-    }
+    });
   });
 });
