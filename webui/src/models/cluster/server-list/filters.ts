@@ -136,6 +136,7 @@ export const filterSearchableReplicasetList = (
   }
 
   const { tokensByPrefix, tokenizedQuery } = getFilterData(filterQuery);
+  const tokenizedQueryWithoutReplicasetTokens = tokenizedQuery.filter((token) => !token.startsWith('role:'));
 
   const filterByTokens: (list: ServerListReplicasetSearchable[]) => ServerListReplicasetSearchable[] = filter(
     allPass(
@@ -147,7 +148,7 @@ export const filterSearchableReplicasetList = (
   );
 
   const filterServerByTokens: (value: string) => boolean = allPass(
-    tokenizedQuery.map((token: string) => (searchString: string) => searchString.includes(token))
+    tokenizedQueryWithoutReplicasetTokens.map((token: string) => (searchString: string) => searchString.includes(token))
   );
 
   const filteredByProperties = Object.entries(tokensByPrefix.other).reduce((acc, [property, tokensForProperty]) => {

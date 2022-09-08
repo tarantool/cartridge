@@ -2,7 +2,12 @@
 import React, { memo, useMemo } from 'react';
 
 import { cluster } from 'src/models';
-import type { GetClusterCluster, GetClusterClusterSelf, ServerListReplicaset, ServerListServerStat } from 'src/models';
+import type {
+  GetClusterCluster,
+  GetClusterClusterSelf,
+  ServerListReplicasetSearchable,
+  ServerListServerStat,
+} from 'src/models';
 
 import ReplicasetServerListItem, { ReplicasetServerListItemProps } from '../ReplicasetServerListItem';
 
@@ -11,7 +16,7 @@ const { selectors } = cluster.serverList;
 export interface ReplicasetServerListProps {
   cluster: GetClusterCluster;
   clusterSelf: GetClusterClusterSelf;
-  replicaset: ServerListReplicaset;
+  replicaset: ServerListReplicasetSearchable;
   serverStat: ServerListServerStat[];
   failoverParamsMode?: string;
   className?: string;
@@ -37,6 +42,7 @@ const ReplicasetServerList = (props: ReplicasetServerListProps) => {
           ro: selectors.replicasetServerRo(server),
           statistics: stat?.statistics,
           vshardGroupBucketsCount,
+          filterMatching: server.meta?.filterMatching,
         },
       };
     });

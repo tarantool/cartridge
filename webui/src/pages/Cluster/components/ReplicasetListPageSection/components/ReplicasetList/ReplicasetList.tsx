@@ -10,6 +10,7 @@ import type {
   GetClusterClusterSelf,
   ServerListClusterIssue,
   ServerListReplicaset,
+  ServerListReplicasetSearchable,
   ServerListServerStat,
 } from 'src/models';
 
@@ -30,7 +31,7 @@ const ButtonWithTooltip = withTooltip(Button);
 export interface ReplicasetListProps {
   cluster: GetClusterCluster;
   clusterSelf: GetClusterClusterSelf;
-  replicasetList: ServerListReplicaset[];
+  replicasetList: ServerListReplicasetSearchable[];
   issues: ServerListClusterIssue[];
   serverStat: ServerListServerStat[];
   failoverParamsMode?: string;

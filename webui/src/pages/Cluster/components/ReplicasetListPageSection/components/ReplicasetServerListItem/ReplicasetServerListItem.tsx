@@ -44,6 +44,7 @@ export interface ReplicasetServerListItemServerAdditional {
   vshardGroupBucketsCount?: number;
   ro?: boolean;
   statistics?: Maybe<ReplicasetServerListItemStatistic>;
+  filterMatching?: boolean;
 }
 
 export interface ReplicasetServerListItemProps {
@@ -55,19 +56,30 @@ export interface ReplicasetServerListItemProps {
 const ReplicasetServerListItem = (props: ReplicasetServerListItemProps) => {
   const {
     server: { uuid, uri, alias, status, disabled = false, electable = true, message },
-    additional: { master, activeMaster, selfURI, vshardGroupBucketsCount, ro, statistics },
+    additional: { master, activeMaster, selfURI, vshardGroupBucketsCount, ro, statistics, filterMatching },
     showFailoverPromote,
   } = props;
 
   return (
     <div
-      className={cx(styles.root, { [styles.disabledRowWrap]: disabled }, 'ServerLabelsHighlightingArea')}
+      className={cx(
+        styles.root,
+        {
+          [styles.disabledRowWrap]: disabled,
+        },
+        'ServerLabelsHighlightingArea'
+      )}
       data-component="ReplicasetServerListItem"
       data-value-disabled={disabled ? 'true' : 'false'}
       data-value-status={status}
       data-value-message={message}
     >
-      <div className={cx(styles.row, { [styles.disabledRow]: disabled })}>
+      <div
+        className={cx(styles.row, {
+          [styles.disabledRow]: disabled,
+          [styles.filterIsNotMatching]: filterMatching === false,
+        })}
+      >
         {(master || activeMaster) && (
           <LeaderFlag
             className={cx(styles.leaderFlag, 'meta-test_leaderFlag')}
