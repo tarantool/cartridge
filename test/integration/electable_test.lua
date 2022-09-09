@@ -154,6 +154,11 @@ local function is_leader()
     return require('cartridge.failover').is_leader()
 end
 
+local function is_electable()
+    local topology_api = require('cartridge.lua-api.topology')
+    return topology_api.get_servers(box.info.uuid)[1].electable
+end
+
 add('test_set_electable', function(g)
     g.cluster.main_server:exec(function(uuids)
         local api_topology = require('cartridge.lua-api.topology')
@@ -166,11 +171,15 @@ add('test_set_electable', function(g)
 
     t.assert_not(g.cluster:server('storage-1-replica-2'):exec(is_leader))
 
+    t.assert_not(g.cluster:server('storage-1-replica-2'):exec(is_electable))
+
 
     g.cluster.main_server:exec(function(uuids)
         local api_topology = require('cartridge.lua-api.topology')
         api_topology.set_electable_servers(uuids)
     end, {{storage1_3_uuid}})
+
+    t.assert(g.cluster:server('storage-1-replica-2'):exec(is_electable))
 
     local ok, err = g.cluster.main_server:eval(q_promote, { { [storage1_uuid] = storage1_3_uuid } })
 
