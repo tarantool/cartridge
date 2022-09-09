@@ -274,7 +274,19 @@ In Lua API:
 
 You could also make node unelectable in WebUI:
 
-**ADD PICTURE**
+..  image:: images/set_non_electable.png
+    :align: left
+    :scale: 40%
+
+|nbsp|
+
+If everything is ok, you will see crossed out crown to the left of instance name.
+
+..  image:: images/non_electable.png
+    :align: left
+    :scale: 40%
+
+|nbsp|
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fencing
