@@ -87,7 +87,10 @@ local gql_type_server = gql_types.object {
         uuid = gql_types.string.nonNull,
         status = gql_types.string.nonNull,
         message = gql_types.string.nonNull,
-        electable = gql_types.boolean,
+        electable = {
+            kind = gql_types.boolean,
+            description = 'Is allowed to elect this instance as leader',
+        },
         disabled = gql_types.boolean,
         priority = {
             kind = gql_types.int,
