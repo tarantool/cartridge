@@ -272,7 +272,7 @@ In Lua API:
    -- to make nodes electable:
    require('cartridge.lua-api.topology').api_topology.set_electable_servers(uuids)
 
-You could also make node unelectable in WebUI:
+You can also make a node unelectable in WebUI:
 
 ..  image:: images/set_non_electable.png
     :align: left
