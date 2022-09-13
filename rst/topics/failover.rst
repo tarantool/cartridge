@@ -280,7 +280,7 @@ You could also make node unelectable in WebUI:
 
 |nbsp|
 
-If everything is ok, you will see crossed out crown to the left of instance name.
+If everything is ok, you will see a crossed-out crown to the left of the instance name.
 
 ..  image:: images/non_electable.png
     :align: left
