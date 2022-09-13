@@ -239,8 +239,9 @@ become the leader in the replicaset.
 Unelectable nodes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You can restrict node to be elected in ``stateful`` failover mode by GraphQL
-or Lua API. "Unelectable" node can't become a leader in replicaset.
+You can restrict the election of a particular node in the ``stateful``
+failover mode by GraphQL or Lua API. An "unelectable" node can't become a
+leader in a replicaset.
 
 In ``edit_topology``:
 
