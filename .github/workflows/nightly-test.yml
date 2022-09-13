@@ -45,6 +45,12 @@ jobs:
         if: steps.cache-rocks.outputs.cache-hit != 'true'
 
       - run: tarantoolctl rocks make
+
+      # Stop Mono server. This server starts and listens to 8084 port that is
+      # used for tests.
+      - name: 'Stop Mono server'
+        run: sudo kill -9 $(sudo lsof -t -i tcp:8084) || true
+
       - run: .rocks/bin/luatest -v
 
       # Cleanup cached paths
