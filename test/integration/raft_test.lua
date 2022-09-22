@@ -44,7 +44,7 @@ g.before_all = function()
         datadir = fio.tempdir(),
         use_vshard = true,
         server_command = h.entrypoint('srv_raft'),
-        cookie = 'secret', --h.random_cookie(),
+        cookie = h.random_cookie(),
         replicasets = {
             {
                 alias = 'router',
