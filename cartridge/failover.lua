@@ -744,7 +744,14 @@ local function cfg(clusterwide_config, opts)
         raft_failover.disable()
     end
 
-    if failover_cfg.mode == 'disabled' then
+    local raft_not_enough_instances = failover_cfg.mode == 'raft' and
+        #topology.get_leaders_order(topology_cfg, vars.replicaset_uuid) < 3
+
+    if raft_not_enough_instances then
+        log.info('Not enough instances to enable Raft failover')
+    end
+
+    if failover_cfg.mode == 'disabled' or raft_not_enough_instances then
         log.info('Failover disabled')
         vars.fencing_enabled = false
         vars.consistency_needed = false

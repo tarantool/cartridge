@@ -4,6 +4,7 @@ local fun = require('fun')
 local t = require('luatest')
 local g = t.group()
 local g_unsupported = t.group('integration.raft_unsupported')
+local g_not_enough_instances = t.group('integration.raft_not_enough_instances')
 local h = require('test.helper')
 
 local replicaset_uuid = h.uuid('b')
@@ -474,6 +475,8 @@ g.after_test('test_change_raft_failover_to_stateful', function()
     fio.rmtree(g.state_provider.workdir)
 end)
 
+----------------------------------------------------------------
+
 g_unsupported.before_all = function()
     t.skip_if(h.tarantool_version_ge('2.10.0'))
     g_unsupported.cluster = h.Cluster:new({
@@ -500,4 +503,61 @@ g_unsupported.test_tarantool_version_unsupported = function()
     t.assert_error_msg_contains(
         "Your Tarantool version doesn't support raft failover mode, need Tarantool 2.10 or higher",
         set_failover_params, g_unsupported, { mode = 'raft' })
+end
+
+----------------------------------------------------------------
+
+g_not_enough_instances.before_all = function()
+    t.skip_if(not h.tarantool_version_ge('2.10.0'))
+    g_not_enough_instances.cluster = h.Cluster:new({
+        datadir = fio.tempdir(),
+        use_vshard = true,
+        server_command = h.entrypoint('srv_basic'),
+        cookie = h.random_cookie(),
+        replicasets = {
+            {
+                alias = 'router',
+                uuid = h.uuid('a'),
+                roles = {
+                    'vshard-router',
+                },
+                servers = 1,
+            },
+            {
+                alias = 'storage',
+                uuid = replicaset_uuid,
+                roles = {
+                    'vshard-storage',
+                },
+                servers = 2,
+            },
+        },
+        env = {
+            TARANTOOL_ELECTION_TIMEOUT = 1,
+            TARANTOOL_REPLICATION_TIMEOUT = 0.25,
+            TARANTOOL_SYNCHRO_TIMEOUT = 1,
+            TARANTOOL_REPLICATION_SYNCHRO_QUORUM = 'N/2 + 1',
+        }
+    })
+    g_not_enough_instances.cluster:start()
+end
+
+g_not_enough_instances.after_all = function()
+    g_not_enough_instances.cluster:stop()
+    fio.rmtree(g_not_enough_instances.cluster.datadir)
+end
+
+g_not_enough_instances.test_raft_is_disabled = function()
+    t.assert_equals(set_failover_params(g_not_enough_instances, { mode = 'raft' }), { mode = 'raft' })
+    t.assert_not(g_not_enough_instances.cluster:server('router-1'):exec(function()
+        return box.info.ro
+    end))
+
+    t.assert_not(g_not_enough_instances.cluster:server('storage-1'):exec(function()
+        return box.info.ro
+    end))
+
+    t.assert(g_not_enough_instances.cluster:server('storage-2'):exec(function()
+        return box.info.ro
+    end))
 end
