@@ -130,8 +130,8 @@ local function get_raft_info(alias)
     end)
 end
 
-local function get_election_cfg(alias)
-    return g.cluster:server(alias):exec(function()
+local function get_election_cfg(group, alias)
+    return group.cluster:server(alias):exec(function()
         return box.cfg.election_mode
     end)
 end
@@ -190,8 +190,11 @@ g.before_each(function()
     g.cluster:wait_until_healthy()
     t.assert_equals(set_failover_params(g, { mode = 'raft' }), { mode = 'raft' })
 
-    t.assert_equals(get_election_cfg('storage-1'), 'candidate')
-    t.assert_equals(get_election_cfg('storage-2'), 'candidate')
+    t.assert_equals(get_election_cfg(g, 'router-1'), 'off')
+    t.assert_equals(get_election_cfg(g, 'storage-1'), 'candidate')
+    t.assert_equals(get_election_cfg(g, 'storage-2'), 'candidate')
+    t.assert_equals(get_election_cfg(g, 'storage-3'), 'voter')
+    t.assert_equals(get_election_cfg(g, 'single-storage-1'), 'off')
 
     h.retrying({}, function()
         t.assert_equals(h.list_cluster_issues(g.cluster.main_server), {})
@@ -561,12 +564,15 @@ g_not_enough_instances.test_raft_is_disabled = function()
     t.assert_not(g_not_enough_instances.cluster:server('router-1'):exec(function()
         return box.info.ro
     end))
+    t.assert_equals(get_election_cfg(g_not_enough_instances, 'router-1'), 'off')
 
     t.assert_not(g_not_enough_instances.cluster:server('storage-1'):exec(function()
         return box.info.ro
     end))
+    t.assert_equals(get_election_cfg(g_not_enough_instances, 'storage-1'), 'off')
 
     t.assert(g_not_enough_instances.cluster:server('storage-2'):exec(function()
         return box.info.ro
     end))
+    t.assert_equals(get_election_cfg(g_not_enough_instances, 'storage-2'), 'off')
 end
