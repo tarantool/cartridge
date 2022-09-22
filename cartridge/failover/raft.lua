@@ -79,7 +79,7 @@ end
 local function check_version()
     if box.ctl.on_election == nil then
         return nil, UnsupportedError:new(
-        "Your Tarantool version doesn't support raft failover mode, need Tarantool 2.10 or higher"
+            "Your Tarantool version doesn't support raft failover mode, need Tarantool 2.10 or higher"
         )
     end
     return true

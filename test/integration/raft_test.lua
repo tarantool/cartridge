@@ -44,7 +44,7 @@ g.before_all = function()
         datadir = fio.tempdir(),
         use_vshard = true,
         server_command = h.entrypoint('srv_raft'),
-        cookie = h.random_cookie(),
+        cookie = 'secret', --h.random_cookie(),
         replicasets = {
             {
                 alias = 'router',
@@ -130,6 +130,12 @@ local function get_raft_info(alias)
     end)
 end
 
+local function get_election_cfg(alias)
+    return g.cluster:server(alias):exec(function()
+        return box.cfg.election_mode
+    end)
+end
+
 local function kill_server(alias)
     g.cluster:server(alias):stop()
 end
@@ -181,9 +187,12 @@ local function get_sharding_config()
 end
 
 g.before_each(function()
-    h.retrying({}, function()
-        t.assert_equals(set_failover_params(g, { mode = 'raft' }), { mode = 'raft' })
-    end)
+    g.cluster:wait_until_healthy()
+    t.assert_equals(set_failover_params(g, { mode = 'raft' }), { mode = 'raft' })
+
+    t.assert_equals(get_election_cfg('storage-1'), 'candidate')
+    t.assert_equals(get_election_cfg('storage-2'), 'candidate')
+
     h.retrying({}, function()
         t.assert_equals(h.list_cluster_issues(g.cluster.main_server), {})
     end)

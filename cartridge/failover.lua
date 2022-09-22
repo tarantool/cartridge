@@ -744,21 +744,7 @@ local function cfg(clusterwide_config, opts)
         raft_failover.disable()
     end
 
-    local raft_not_enough_instances
-    if failover_cfg.mode == 'raft' then
-        local ok, err = ApplyConfigError:pcall(raft_failover.check_version)
-        if not ok then
-            return nil, err
-        end
-
-        raft_not_enough_instances = #topology.get_leaders_order(topology_cfg, vars.replicaset_uuid) < 3
-
-        if raft_not_enough_instances then
-            log.warn('Not enough instances to enable Raft failover')
-        end
-    end
-
-    if failover_cfg.mode == 'disabled' or raft_not_enough_instances then
+    if failover_cfg.mode == 'disabled' then
         log.info('Failover disabled')
         vars.fencing_enabled = false
         vars.consistency_needed = false
@@ -851,14 +837,23 @@ local function cfg(clusterwide_config, opts)
         })
         vars.failover_fiber:name('cartridge.stateful-failover')
     elseif failover_cfg.mode == 'raft' then
-        local ok, err = ApplyConfigError:pcall(raft_failover.cfg)
+        local ok, err = ApplyConfigError:pcall(raft_failover.check_version)
         if not ok then
             return nil, err
         end
 
         vars.fencing_enabled = false
         vars.consistency_needed = false
-        first_appointments = raft_failover.get_appointments(topology_cfg)
+
+        if #topology.get_leaders_order(topology_cfg, vars.replicaset_uuid) < 3 then
+            first_appointments = _get_appointments_disabled_mode(topology_cfg)
+        else
+            local ok, err = ApplyConfigError:pcall(raft_failover.cfg)
+            if not ok then
+                return nil, err
+            end
+            first_appointments = raft_failover.get_appointments(topology_cfg)
+        end
 
         vars.failover_fiber = fiber.new(failover_loop, {
             get_appointments = function()
