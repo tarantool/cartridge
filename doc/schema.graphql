@@ -1,5 +1,5 @@
 # source: http://127.0.0.1:8081/admin/api
-# timestamp: Fri Aug 26 2022 20:04:52 GMT+0300 (Moscow Standard Time)
+# timestamp: Fri Sep 09 2022 15:23:40 GMT+0300 (Москва, стандартное время)
 
 """Custom scalar specification."""
 directive @specifiedBy(
@@ -639,6 +639,8 @@ type Server {
 
   """Failover priority within the replica set"""
   priority: Int
+
+  """Is allowed to elect this instance as leader"""
   electable: Boolean
 }
 

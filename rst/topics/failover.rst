@@ -241,8 +241,9 @@ become the leader in the replicaset.
 Unelectable nodes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You can restrict node to be elected in ``stateful`` failover mode by GraphQL
-or Lua API. "Unelectable" node can't become a leader in replicaset.
+You can restrict the election of a particular node in the ``stateful``
+failover mode by GraphQL or Lua API. An "unelectable" node can't become a
+leader in a replicaset.
 
 In ``edit_topology``:
 
@@ -274,9 +275,21 @@ In Lua API:
    -- to make nodes electable:
    require('cartridge.lua-api.topology').api_topology.set_electable_servers(uuids)
 
-You could also make node unelectable in WebUI:
+You can also make a node unelectable in WebUI:
 
-**ADD PICTURE**
+..  image:: ../images/set_non_electable.png
+    :align: left
+    :scale: 40%
+
+|nbsp|
+
+If everything is ok, you will see a crossed-out crown to the left of the instance name.
+
+..  image:: ../images/non_electable.png
+    :align: left
+    :scale: 40%
+
+|nbsp|
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fencing
