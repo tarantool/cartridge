@@ -837,14 +837,26 @@ local function cfg(clusterwide_config, opts)
         })
         vars.failover_fiber:name('cartridge.stateful-failover')
     elseif failover_cfg.mode == 'raft' then
-        local ok, err = ApplyConfigError:pcall(raft_failover.cfg)
+        local ok, err = ApplyConfigError:pcall(raft_failover.check_version)
         if not ok then
             return nil, err
         end
 
         vars.fencing_enabled = false
         vars.consistency_needed = false
-        first_appointments = raft_failover.get_appointments(topology_cfg)
+
+        -- Raft failover can be enabled only on replicasets of 3 or more instances
+        if #topology.get_leaders_order(topology_cfg, vars.replicaset_uuid) < 3 then
+            first_appointments = _get_appointments_disabled_mode(topology_cfg)
+            log.warn('Not enough instances to enable Raft failover')
+        else
+            local ok, err = ApplyConfigError:pcall(raft_failover.cfg)
+            if not ok then
+                return nil, err
+            end
+            first_appointments = raft_failover.get_appointments(topology_cfg)
+            log.info('Raft failover enabled')
+        end
 
         vars.failover_fiber = fiber.new(failover_loop, {
             get_appointments = function()
@@ -853,8 +865,6 @@ local function cfg(clusterwide_config, opts)
             end,
         })
         vars.failover_fiber:name('cartridge.raft-failover')
-
-        log.info('Raft failover enabled')
     else
         return nil, ApplyConfigError:new(
             'Unknown failover mode %q',

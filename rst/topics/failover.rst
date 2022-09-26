@@ -172,6 +172,8 @@ It's needed to use Cartridge RPC calls. The user can control an instance's
 election mode using the argparse option ``TARANTOOL_ELECTION_MODE`` or
 ``--election-mode`` or use ``box.cfg{election_mode = ...}`` API in runtime.
 
+Raft failover can be enabled only on replicasets of 3 or more instances.
+
 Note that Raft failover in Cartridge is in beta.
 Don't use it in production.
 

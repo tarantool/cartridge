@@ -76,12 +76,16 @@ local function on_election_trigger()
     membership.set_payload('raft_term', election.term)
 end
 
-local function cfg()
+local function check_version()
     if box.ctl.on_election == nil then
-       return nil, UnsupportedError:new(
-           "Your Tarantool version doesn't support raft failover mode, need Tarantool 2.10 or higher"
+        return nil, UnsupportedError:new(
+            "Your Tarantool version doesn't support raft failover mode, need Tarantool 2.10 or higher"
         )
     end
+    return true
+end
+
+local function cfg()
     log.warn('Raft failover is in beta-version')
     local box_opts = argparse.get_box_opts()
 
@@ -162,6 +166,7 @@ end
 
 return {
     cfg = cfg,
+    check_version = check_version,
     disable = disable,
     get_appointments = get_appointments,
     promote = promote,
