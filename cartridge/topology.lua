@@ -106,24 +106,27 @@ end
 -- New order validity is ignored too.
 --
 -- By default, get_leaders_order doesn't return unelectable nodes.
--- To fix it, use only_electable argument.
+-- To fix it, use only_electable argument of `opts`.
 --
 -- @function get_leaders_order
 -- @local
 -- @tparam table topology_cfg
 -- @tparam string replicaset_uuid
 -- @tparam ?table new_order
--- @tparam ?boolean only_electable
+-- @tparam ?table opts
 -- @treturn {string,...} array of leaders uuids
-local function get_leaders_order(topology_cfg, replicaset_uuid, new_order, only_electable)
-    checks('table', 'string', '?table', '?boolean')
+local function get_leaders_order(topology_cfg, replicaset_uuid, new_order, opts)
+    checks('table', 'string', '?table', '?table')
 
     local servers = topology_cfg.servers
     local replicasets = topology_cfg.replicasets
     local ret = table.copy(new_order) or {}
 
-    if only_electable == nil then
-        only_electable = true
+    if opts == nil then
+        opts = {}
+    end
+    if opts.only_electable == nil then
+        opts.only_electable = true
     end
 
     local replicaset = replicasets and replicasets[replicaset_uuid]
@@ -150,7 +153,7 @@ local function get_leaders_order(topology_cfg, replicaset_uuid, new_order, only_
     if servers ~= nil then
         local ret_tail = {}
         for _, instance_uuid, server in fun.filter(not_expelled, servers):
-            filter(only_electable and electable or every_node)
+            filter(opts.only_electable and electable or every_node)
         do
             if server.replicaset_uuid == replicaset_uuid then
                 if not utils.table_find(ret, instance_uuid) then
