@@ -515,6 +515,9 @@ g_unsupported.test_tarantool_version_unsupported = function()
     t.assert_error_msg_contains(
         "Your Tarantool version doesn't support raft failover mode, need Tarantool 2.10 or higher",
         set_failover_params, g_unsupported, { mode = 'raft' })
+    t.assert_equals(g_unsupported.cluster.main_server:exec(function()
+        return require('cartridge.confapplier').get_state()
+    end), 'RolesConfigured')
 end
 
 ----------------------------------------------------------------
