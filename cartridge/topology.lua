@@ -373,7 +373,8 @@ local function validate_failover_schema(field, topology)
         )
 
         if topology.failover.mode == 'raft' then
-            e_config:assert(package.loaded['cartridge.failover.raft'].check_version)
+            local ok, err = package.loaded['cartridge.failover.raft'].check_version()
+            e_config:assert(ok, err)
         end
 
         if topology.failover.failover_timeout ~= nil then
