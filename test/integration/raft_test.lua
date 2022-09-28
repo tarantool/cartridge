@@ -645,6 +645,5 @@ g_unelectable.test_raft_is_disabled = function()
         api_topology.set_unelectable_servers(uuids)
     end, {{storage_3_uuid}})
 
-    g_unelectable.cluster:retrying({}, function() t.assert_equals(get_election_cfg(g_unelectable, 'storage-3'), 'voter') end)
-
+    t.assert_equals(get_election_cfg(g_unelectable, 'storage-3'), 'voter')
 end
