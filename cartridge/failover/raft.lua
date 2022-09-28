@@ -90,8 +90,9 @@ local function cfg()
     local box_opts = argparse.get_box_opts()
 
     local topology_cfg = package.loaded['cartridge.confapplier'].get_readonly('topology')
-    if topology_cfg ~= nil and not topology_cfg.servers[box.info.uuid].electable then
+    if topology_cfg ~= nil and topology_cfg.servers[box.info.uuid].electable == false then
         box_opts.election_mode = 'voter'
+        log.info("This instance is unelectable and became voter")
     end
 
     box.cfg{

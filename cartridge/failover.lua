@@ -846,7 +846,7 @@ local function cfg(clusterwide_config, opts)
         vars.consistency_needed = false
 
         -- Raft failover can be enabled only on replicasets of 3 or more instances
-        if #topology.get_leaders_order(topology_cfg, vars.replicaset_uuid) < 3 then
+        if #topology.get_leaders_order(topology_cfg, vars.replicaset_uuid, nil, false) < 3 then
             first_appointments = _get_appointments_disabled_mode(topology_cfg)
             log.warn('Not enough instances to enable Raft failover')
         else
