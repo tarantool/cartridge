@@ -50,6 +50,7 @@ local ValidateConfigError = errors.new_class('ValidateConfigError')
 local StateProviderError = errors.new_class('StateProviderError')
 
 vars:new('mode')
+vars:new('all_rw')
 vars:new('all_roles')
 vars:new('instance_uuid')
 vars:new('replicaset_uuid')
@@ -743,6 +744,13 @@ local function cfg(clusterwide_config, opts)
     if vars.mode == 'raft' and failover_cfg.mode ~= 'raft' then
         raft_failover.disable()
     end
+    local all_rw_curr = topology_cfg.replicasets[vars.replicaset_uuid].all_rw
+    if vars.mode == 'raft' and all_rw_curr == true and vars.all_rw ~= all_rw_curr
+    and box.info.election.state == 'leader'
+    then
+        box.ctl.demote()
+    end
+    vars.all_rw = all_rw_curr
 
     if failover_cfg.mode == 'disabled' then
         log.info('Failover disabled')
@@ -849,6 +857,10 @@ local function cfg(clusterwide_config, opts)
         if #topology.get_leaders_order(topology_cfg, vars.replicaset_uuid) < 3 then
             first_appointments = _get_appointments_disabled_mode(topology_cfg)
             log.warn('Not enough instances to enable Raft failover')
+        elseif vars.all_rw then
+            raft_failover.disable()
+            first_appointments = _get_appointments_disabled_mode(topology_cfg)
+            log.warn('Replicaset is ALL_RW: Raft failover disabled')
         else
             local ok, err = ApplyConfigError:pcall(raft_failover.cfg)
             if not ok then

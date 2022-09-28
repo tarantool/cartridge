@@ -5,6 +5,7 @@ local t = require('luatest')
 local g = t.group()
 local g_unsupported = t.group('integration.raft_unsupported')
 local g_not_enough_instances = t.group('integration.raft_not_enough_instances')
+local g_all_rw = t.group('integration.raft_all_rw')
 local h = require('test.helper')
 
 local replicaset_uuid = h.uuid('b')
@@ -576,3 +577,107 @@ g_not_enough_instances.test_raft_is_disabled = function()
     end))
     t.assert_equals(get_election_cfg(g_not_enough_instances, 'storage-2'), 'off')
 end
+
+----------------------------------------------------------------
+
+g_all_rw.before_all = function()
+    t.skip_if(not h.tarantool_version_ge('2.10.0'))
+    g_all_rw.cluster = h.Cluster:new({
+        datadir = fio.tempdir(),
+        use_vshard = true,
+        server_command = h.entrypoint('srv_basic'),
+        cookie = 'secret', -- h.random_cookie(),
+        replicasets = {
+            {
+                alias = 'router',
+                uuid = h.uuid('a'),
+                roles = {
+                    'vshard-router',
+                },
+                servers = 1,
+            },
+            {
+                alias = 'storage',
+                uuid = replicaset_uuid,
+                roles = {
+                    'vshard-storage',
+                },
+                servers = 3,
+            },
+        },
+        env = {
+            TARANTOOL_ELECTION_TIMEOUT = 1,
+            TARANTOOL_REPLICATION_TIMEOUT = 0.25,
+            TARANTOOL_SYNCHRO_TIMEOUT = 1,
+            TARANTOOL_REPLICATION_SYNCHRO_QUORUM = 'N/2 + 1',
+        }
+    })
+    g_all_rw.cluster:start()
+end
+
+g_all_rw.after_all = function()
+    g_all_rw.cluster:stop()
+    fio.rmtree(g_all_rw.cluster.datadir)
+end
+
+local function set_all_rw(g, rs_uuid, all_rw)
+    g.cluster:server('router-1'):graphql({
+        query = [[
+            mutation($uuid: String!, $all_rw: Boolean!) {
+                edit_replicaset(
+                    uuid: $uuid
+                    all_rw: $all_rw
+                )
+            }
+        ]],
+        variables = {
+            uuid = rs_uuid,
+            all_rw = all_rw,
+        }
+    })
+end
+
+local function check_all_rw()
+    -- raft is off, all instances is rw
+    t.assert_not(g_all_rw.cluster:server('storage-1'):exec(function()
+        return box.info.ro
+    end))
+
+    t.assert_equals(get_election_cfg(g_all_rw, 'storage-1'), 'off')
+
+    t.assert_not(g_all_rw.cluster:server('storage-2'):exec(function()
+        return box.info.ro
+    end))
+    t.assert_equals(get_election_cfg(g_all_rw, 'storage-2'), 'off')
+
+    t.assert_not(g_all_rw.cluster:server('storage-3'):exec(function()
+        return box.info.ro
+    end))
+    t.assert_equals(get_election_cfg(g_all_rw, 'storage-3'), 'off')
+end
+
+-- 3 possible cases:
+-- all_rw = true + mode -> raft
+-- all_rw = true + raft -> mode
+-- mode -> raft + all_rw = true
+
+g_all_rw.test_raft_in_all_rw_mode = function()
+    -- set all_rw and enable raft
+    set_all_rw(g_all_rw, replicaset_uuid, true)
+    t.assert_equals(set_failover_params(g_all_rw, { mode = 'raft' }), { mode = 'raft' })
+
+    check_all_rw()
+
+    t.assert_equals(set_failover_params(g_all_rw, { mode = 'eventual' }), { mode = 'eventual' })
+
+    check_all_rw()
+
+    set_all_rw(g_all_rw, replicaset_uuid, false)
+
+    t.assert_equals(set_failover_params(g_all_rw, { mode = 'raft' }), { mode = 'raft' })
+
+    set_all_rw(g_all_rw, replicaset_uuid, true)
+
+    check_all_rw()
+end
+
