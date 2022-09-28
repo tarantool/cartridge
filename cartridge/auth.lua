@@ -197,7 +197,7 @@ local function create_cookie(uid, version)
     )
 
     return string.format(
-        'lsid=%q; Path=/; Max-Age=%d', lsid,
+        'lsid=%q; Path=/; httpOnly; Max-Age=%d', lsid,
         get_params().cookie_max_age
     )
 end
@@ -287,7 +287,7 @@ local function set_lsid_cookie(user)
     checks('?table')
     local fiber_storage = fiber.self().storage
     if user == nil then
-        fiber_storage['http_session_set_cookie'] = 'lsid=""; Path=/; Max-Age=0'
+        fiber_storage['http_session_set_cookie'] = 'lsid=""; Path=/; httpOnly; Max-Age=0'
     else
         fiber_storage['http_session_set_cookie'] = create_cookie(user.username, user.version)
     end
