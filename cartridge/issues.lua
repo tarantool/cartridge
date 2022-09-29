@@ -112,6 +112,8 @@ local limits_ranges = {
 }
 
 vars:new('limits', default_limits)
+vars:new('instance_uuid')
+vars:new('replicaset_uuid')
 
 local function describe(uri)
     local member = membership.get_member(uri)
@@ -146,8 +148,8 @@ local function gather_role_issues(ret, role_name, M)
             level = tostring(issue.level or 'warning'),
             topic = tostring(issue.topic or role_name),
             message = tostring(issue.message),
-            instance_uuid = box.info.uuid,
-            replicaset_uuid = box.info.cluster.uuid,
+            instance_uuid = vars.instance_uuid,
+            replicaset_uuid = vars.replicaset_uuid,
         })
     end
 end
@@ -160,8 +162,16 @@ local function list_on_instance(opts)
     end
 
     local ret = {}
-    local instance_uuid = box.info.uuid
-    local replicaset_uuid = box.info.cluster.uuid
+    local instance_uuid = vars.instance_uuid
+    local replicaset_uuid = vars.replicaset_uuid
+    if replicaset_uuid == nil or instance_uuid == nil then
+        local box_info = box.info
+        instance_uuid = box_info.uuid
+        replicaset_uuid = box_info.cluster.uuid
+        vars.instance_uuid = instance_uuid
+        vars.replicaset_uuid = replicaset_uuid
+    end
+
     local self_uri = enabled_servers[instance_uuid].uri
     local instance_uri = confapplier.get_advertise_uri()
 
@@ -453,12 +463,18 @@ local function list_on_cluster()
         table.insert(uri_list, refined_uri_list[uuid])
     end
 
+    if vars.replicaset_uuid == nil or vars.instance_uuid == nil then
+        local box_info = box.info
+        vars.instance_uuid = box_info.uuid
+        vars.replicaset_uuid = box_info.cluster.uuid
+    end
+
     -- Check clock desynchronization
 
     local min_delta = 0
     local max_delta = 0
-    local min_delta_uri = topology_cfg.servers[box.info.uuid].uri
-    local max_delta_uri = topology_cfg.servers[box.info.uuid].uri
+    local min_delta_uri = topology_cfg.servers[vars.instance_uuid].uri
+    local max_delta_uri = topology_cfg.servers[vars.instance_uuid].uri
     local members = membership.members()
     for _, server_uri in pairs(uri_list) do
         local member = members[server_uri]
