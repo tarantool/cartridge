@@ -33,6 +33,8 @@ Added
 - Allow to bootstrap cartridge from existing cluster via argparse option
   ``TARANTOOL_BOOTSTRAP_FROM`` or ``--bootstrap_from``.
 
+- ``election_state``, ``election_mode`` and ``synchro_queue_owner`` to GraphQL.
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

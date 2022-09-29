@@ -140,6 +140,19 @@ local boxinfo_schema = {
                         kind = gql_types.string,
                         description = 'Current read-only state reason',
                     },
+
+                    election_state = {
+                        kind = gql_types.string,
+                        description = 'State after Raft leader election',
+                    },
+                    election_mode = {
+                        kind = gql_types.string.nonNull,
+                        description = 'Instance election mode',
+                    },
+                    synchro_queue_owner = {
+                        kind = gql_types.int.nonNull,
+                        description = 'Id of current queue owner',
+                    },
                 }
             }).nonNull,
             storage = gql_types.object({

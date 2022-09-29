@@ -1,5 +1,5 @@
 # source: http://127.0.0.1:8081/admin/api
-# timestamp: Fri Sep 09 2022 15:23:40 GMT+0300 (Москва, стандартное время)
+# timestamp: Thu Sep 29 2022 17:24:12 GMT+0300 (Москва, стандартное время)
 
 """Custom scalar specification."""
 directive @specifiedBy(
@@ -691,8 +691,8 @@ type ServerInfoGeneral {
   """The Application version"""
   app_version: String
 
-  """A directory where write-ahead log (.xlog) files are stored"""
-  wal_dir: String
+  """A directory where memtx stores snapshot (.snap) files"""
+  memtx_dir: String
 
   """The binary protocol URI"""
   listen: String
@@ -700,8 +700,8 @@ type ServerInfoGeneral {
   """A globally unique identifier of the instance"""
   instance_uuid: String!
 
-  """HTTP host"""
-  http_host: String
+  """State after Raft leader election"""
+  election_state: String
 
   """
   The maximum number of threads to use during execution of certain internal
@@ -709,20 +709,29 @@ type ServerInfoGeneral {
   """
   worker_pool_threads: Int
 
-  """Current read-only state reason"""
-  ro_reason: String
-
   """The number of seconds since the instance started"""
   uptime: Float!
-
-  """Current working directory of a process"""
-  work_dir: String
 
   """The UUID of the replica set"""
   replicaset_uuid: String!
 
-  """A directory where memtx stores snapshot (.snap) files"""
-  memtx_dir: String
+  """Current working directory of a process"""
+  work_dir: String
+
+  """A directory where write-ahead log (.xlog) files are stored"""
+  wal_dir: String
+
+  """Current read-only state reason"""
+  ro_reason: String
+
+  """Id of current queue owner"""
+  synchro_queue_owner: Int!
+
+  """Instance election mode"""
+  election_mode: String!
+
+  """HTTP host"""
+  http_host: String
 }
 
 type ServerInfoMembership {
