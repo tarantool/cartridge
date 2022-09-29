@@ -654,7 +654,7 @@ end
 
 ----------------------------------------------------------------
 
-    g_all_rw.before_all = function()
+g_all_rw.before_all = function()
     t.skip_if(not h.tarantool_version_ge('2.10.0'))
     g_all_rw.cluster = h.Cluster:new({
         datadir = fio.tempdir(),
