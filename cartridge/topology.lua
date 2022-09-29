@@ -140,6 +140,7 @@ local function get_leaders_order(topology_cfg, replicaset_uuid, new_order, opts)
 
         for _, uuid in ipairs(initial_order) do
             if electable(uuid, servers[uuid])
+            and not_disabled(uuid, servers[uuid])
             and not utils.table_find(ret, uuid)
             then
                 table.insert(ret, uuid)
@@ -151,8 +152,9 @@ local function get_leaders_order(topology_cfg, replicaset_uuid, new_order, opts)
 
     if servers ~= nil then
         local ret_tail = {}
-        for _, instance_uuid, server in fun.filter(not_expelled, servers):
-            filter(opts.only_electable and electable or every_node)
+        for _, instance_uuid, server in fun.filter(not_expelled, servers)
+            :filter(not_disabled)
+            :filter(opts.only_electable and electable or every_node)
         do
             if server.replicaset_uuid == replicaset_uuid then
                 if not utils.table_find(ret, instance_uuid) then
