@@ -390,6 +390,10 @@ local function validate_failover_schema(field, topology)
         if topology.failover.mode == 'raft' then
             local ok, err = package.loaded['cartridge.failover.raft'].check_version()
             e_config:assert(ok, err)
+
+            for _, rs in pairs(topology.replicasets) do
+                e_config:assert(not rs.all_rw, "Raft failover can't be enabled with ALL_RW replicasets")
+            end
         end
 
         if topology.failover.failover_timeout ~= nil then
