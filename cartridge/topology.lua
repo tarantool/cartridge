@@ -5,7 +5,6 @@
 -- @module cartridge.topology
 
 local fun = require('fun')
--- local log = require('log')
 local checks = require('checks')
 local errors = require('errors')
 local membership = require('membership')
@@ -372,6 +371,11 @@ local function validate_failover_schema(field, topology)
             '%s.failover unknown mode %q',
             field, topology.failover.mode
         )
+
+        if topology.failover.mode == 'raft' then
+            local ok, err = package.loaded['cartridge.failover.raft'].check_version()
+            e_config:assert(ok, err)
+        end
 
         if topology.failover.failover_timeout ~= nil then
             e_config:assert(

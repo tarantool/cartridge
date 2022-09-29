@@ -757,3 +757,22 @@ add('test_force_promote_timeout', function(g)
     end)
     S1.process:kill('CONT')
 end)
+
+add('test_invalid_params', function(g)
+    local _, err = g.cluster.main_server:call(
+        'package.loaded.cartridge.failover_set_params',
+        {{
+            mode = 'stateful',
+            state_provider = 'etcd3',
+            etcd2_params = {
+                prefix = 'failover_stateful_test',
+                endpoints = {},
+                lock_delay = 3,
+            },
+        }}
+    )
+    t.assert_str_contains(err.err, 'unknown state_provider "etcd3"')
+    t.assert_equals(g.cluster.main_server:exec(function()
+        return require('cartridge.confapplier').get_state()
+    end), 'RolesConfigured')
+end)

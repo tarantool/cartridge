@@ -521,6 +521,11 @@ g.test_api_failover = function()
             fencing_pause = 2,
         }
     )
+
+    t.assert_error_msg_contains('failover unknown mode "unknown"', set_failover_params, {mode = 'unknown'})
+    t.assert_equals(cluster.main_server:exec(function()
+        return require('cartridge.confapplier').get_state()
+    end), 'RolesConfigured')
 end
 
 g.test_switchover = function()
