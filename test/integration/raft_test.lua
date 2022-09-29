@@ -5,6 +5,7 @@ local t = require('luatest')
 local g = t.group()
 local g_unsupported = t.group('integration.raft_unsupported')
 local g_not_enough_instances = t.group('integration.raft_not_enough_instances')
+local g_unelectable = t.group('integration.raft_unelectable')
 local h = require('test.helper')
 
 local replicaset_uuid = h.uuid('b')
@@ -578,4 +579,74 @@ g_not_enough_instances.test_raft_is_disabled = function()
         return box.info.ro
     end))
     t.assert_equals(get_election_cfg(g_not_enough_instances, 'storage-2'), 'off')
+end
+
+
+----------------------------------------------------------------
+
+g_unelectable.before_all = function()
+    t.skip_if(not h.tarantool_version_ge('2.10.0'))
+    g_unelectable.cluster = h.Cluster:new({
+        datadir = fio.tempdir(),
+        use_vshard = true,
+        server_command = h.entrypoint('srv_basic'),
+        cookie = h.random_cookie(),
+        replicasets = {
+            {
+                alias = 'router',
+                uuid = h.uuid('a'),
+                roles = {
+                    'vshard-router',
+                },
+                servers = 1,
+            },
+            {
+                alias = 'storage',
+                uuid = replicaset_uuid,
+                roles = {
+                    'vshard-storage',
+                },
+                servers = {
+                    {
+                        instance_uuid = storage_1_uuid,
+                    },
+                    {
+                        instance_uuid = storage_2_uuid,
+                    },
+                    {
+                        instance_uuid = storage_3_uuid,
+                    },
+                },
+            },
+        },
+        env = {
+            TARANTOOL_ELECTION_TIMEOUT = 1,
+            TARANTOOL_REPLICATION_TIMEOUT = 0.25,
+            TARANTOOL_SYNCHRO_TIMEOUT = 1,
+            TARANTOOL_REPLICATION_SYNCHRO_QUORUM = 'N/2 + 1',
+        }
+    })
+    g_unelectable.cluster:start()
+end
+
+g_unelectable.after_all = function()
+    g_unelectable.cluster:stop()
+    fio.rmtree(g_unelectable.cluster.datadir)
+end
+
+g_unelectable.test_raft_is_disabled = function()
+    t.assert_equals(set_failover_params(g_unelectable, { mode = 'raft' }), { mode = 'raft' })
+
+    t.assert_equals(get_election_cfg(g_unelectable, 'storage-1'), 'candidate')
+
+    t.assert_equals(get_election_cfg(g_unelectable, 'storage-2'), 'candidate')
+
+    t.assert_equals(get_election_cfg(g_unelectable, 'storage-3'), 'candidate')
+
+    g_unelectable.cluster.main_server:exec(function(uuids)
+        local api_topology = require('cartridge.lua-api.topology')
+        api_topology.set_unelectable_servers(uuids)
+    end, {{storage_3_uuid}})
+
+    t.assert_equals(get_election_cfg(g_unelectable, 'storage-3'), 'voter')
 end
