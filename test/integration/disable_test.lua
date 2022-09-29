@@ -8,7 +8,7 @@ g.before_each(function()
     g.cluster = helpers.Cluster:new({
         datadir = fio.tempdir(),
         server_command = helpers.entrypoint('srv_basic'),
-        cookie = 'secret',-- helpers.random_cookie(),
+        cookie = helpers.random_cookie(),
 
         replicasets = {
             {
