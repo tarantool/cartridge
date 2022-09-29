@@ -652,16 +652,15 @@ g_unelectable.test_raft_is_disabled = function()
     t.assert_equals(get_election_cfg(g_unelectable, 'storage-3'), 'voter')
 end
 
+----------------------------------------------------------------
 
- ----------------------------------------------------------------
-
- g_all_rw.before_all = function()
+    g_all_rw.before_all = function()
     t.skip_if(not h.tarantool_version_ge('2.10.0'))
     g_all_rw.cluster = h.Cluster:new({
         datadir = fio.tempdir(),
         use_vshard = true,
         server_command = h.entrypoint('srv_basic'),
-        cookie = 'secret', -- h.random_cookie(),
+        cookie = h.random_cookie(),
         replicasets = {
             {
                 alias = 'router',
