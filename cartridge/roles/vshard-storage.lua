@@ -18,12 +18,14 @@ hotreload.whitelist_globals({
 })
 
 vars:new('vshard_cfg')
+vars:new('instance_uuid')
+vars:new('replicaset_uuid')
 local _G_vshard_backup
 
 local function apply_config(conf, _)
     checks('table', {is_master = 'boolean'})
 
-    local my_replicaset = conf.topology.replicasets[box.info.cluster.uuid]
+    local my_replicaset = conf.topology.replicasets[vars.replicaset_uuid]
     local group_name = my_replicaset.vshard_group or 'default'
     local vshard_cfg = vshard_utils.get_vshard_config(group_name, conf)
     vshard_cfg.weights = nil
@@ -37,13 +39,16 @@ local function apply_config(conf, _)
     end
 
     log.info('Reconfiguring vshard.storage...')
-    vshard.storage.cfg(vshard_cfg, box.info.uuid)
+    vshard.storage.cfg(vshard_cfg, vars.instance_uuid)
     vars.vshard_cfg = vshard_cfg
 end
 
 local function init()
     _G_vshard_backup = rawget(_G, 'vshard')
     rawset(_G, 'vshard', vshard)
+    local box_info = box.info
+    vars.instance_uuid = box_info.uuid
+    vars.replicaset_uuid = box_info.cluster.uuid
 end
 
 local function on_apply_config(_, state)

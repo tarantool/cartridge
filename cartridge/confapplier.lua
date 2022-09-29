@@ -641,9 +641,10 @@ local function boot_instance(clusterwide_config)
         remote_control.drop_connections()
     end
 
-    vars.instance_uuid = box.info.uuid
-    vars.replicaset_uuid = box.info.cluster.uuid
-    membership.set_payload('uuid', box.info.uuid)
+    local box_info = box.info
+    vars.instance_uuid = box_info.uuid
+    vars.replicaset_uuid = box_info.cluster.uuid
+    membership.set_payload('uuid', box_info.uuid)
 
     if topology_cfg.servers == nil
     or topology_cfg.servers[vars.instance_uuid] == nil

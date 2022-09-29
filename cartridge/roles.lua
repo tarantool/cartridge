@@ -33,6 +33,7 @@ vars:new('roles_by_role_name', {})
 vars:new('roles_by_module_name', {})
 vars:new('implicit_roles')
 vars:new('pause', false)
+vars:new('replicaset_uuid')
 
 -- Don't put it as default var value to allow overriding
 -- after hot-reload (hypothetically)
@@ -153,6 +154,7 @@ local function cfg(module_names)
     }
 
     vars.module_names = table.copy(module_names)
+    vars.replicaset_uuid = box.info.cluster.uuid
 
     for _, role in ipairs(vars.implicit_roles) do
         local ok, err = register_role(ctx, role)
@@ -359,7 +361,7 @@ local function validate_config(conf_new, conf_old)
     local disabled_roles = {}
     local state = require('cartridge.confapplier').get_state()
     if state == 'RolesConfigured' or state == 'OperationError' then
-        local my_replicaset = conf_new.topology.replicasets[box.info.cluster.uuid]
+        local my_replicaset = conf_new.topology.replicasets[vars.replicaset_uuid]
         local enabled_roles = get_enabled_roles(my_replicaset.roles)
 
         for _, role in ipairs(vars.roles_by_number) do
@@ -416,7 +418,7 @@ local function apply_config(conf, opts)
         error(err, 2)
     end
 
-    local my_replicaset = conf.topology.replicasets[box.info.cluster.uuid]
+    local my_replicaset = conf.topology.replicasets[vars.replicaset_uuid]
 
     local err
     local enabled_roles = get_enabled_roles(my_replicaset.roles)
@@ -651,7 +653,7 @@ local function on_apply_config(conf, state)
         error(err, 2)
     end
 
-    local my_replicaset = conf.topology.replicasets[box.info.cluster.uuid]
+    local my_replicaset = conf.topology.replicasets[vars.replicaset_uuid]
     local enabled_roles = get_enabled_roles(my_replicaset.roles)
     for _, role in ipairs(vars.roles_by_number) do
         if enabled_roles[role.role_name] then

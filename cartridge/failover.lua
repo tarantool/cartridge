@@ -91,9 +91,10 @@ vars:new('suppress_fiber', nil)
 
 function _G.__cartridge_failover_get_lsn(timeout)
     box.ctl.wait_ro(timeout)
+    local box_info = box.info
     return {
-        id  = box.info.id,
-        lsn = box.info.lsn,
+        id  = box_info.id,
+        lsn = box_info.lsn,
     }
 end
 
