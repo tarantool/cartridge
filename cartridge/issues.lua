@@ -463,6 +463,12 @@ local function list_on_cluster()
         table.insert(uri_list, refined_uri_list[uuid])
     end
 
+    if vars.replicaset_uuid == nil or vars.instance_uuid == nil then
+        local box_info = box.info
+        vars.instance_uuid = box_info.uuid
+        vars.replicaset_uuid = box_info.cluster.uuid
+    end
+
     -- Check clock desynchronization
 
     local min_delta = 0
