@@ -63,6 +63,8 @@ g.before_all(function()
                 ['topology.yml'] = yaml.encode(topology_cfg)
             }):lock()
             require('membership').set_payload = function() end
+            local conf_vars = require('cartridge.vars').new('cartridge.confapplier')
+            conf_vars.replicaset_uuid = 'A'
             local failover = require('cartridge.failover')
             _G.box = {
                 cfg = function() end,
