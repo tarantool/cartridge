@@ -338,6 +338,9 @@ local function validate_schema(field, topology)
             '%s.all_rw must be a boolean, got %s', field, type(replicaset.all_rw)
         )
 
+        if topology.failover and topology.failover.mode == 'raft' then
+            e_config:assert(not replicaset.all_rw, "Raft failover can't be enabled with ALL_RW replicasets")
+        end
         local known_keys = {
             ['roles'] = true,
             ['master'] = true,

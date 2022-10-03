@@ -6,6 +6,7 @@ local g = t.group()
 local g_unsupported = t.group('integration.raft_unsupported')
 local g_not_enough_instances = t.group('integration.raft_not_enough_instances')
 local g_unelectable = t.group('integration.raft_unelectable')
+local g_all_rw = t.group('integration.raft_all_rw')
 local h = require('test.helper')
 
 local replicaset_uuid = h.uuid('b')
@@ -649,4 +650,56 @@ g_unelectable.test_raft_is_disabled = function()
     end, {{storage_3_uuid}})
 
     t.assert_equals(get_election_cfg(g_unelectable, 'storage-3'), 'voter')
+end
+
+----------------------------------------------------------------
+
+g_all_rw.before_all = function()
+    t.skip_if(not h.tarantool_version_ge('2.10.0'))
+    g_all_rw.cluster = h.Cluster:new({
+        datadir = fio.tempdir(),
+        use_vshard = true,
+        server_command = h.entrypoint('srv_basic'),
+        cookie = h.random_cookie(),
+        replicasets = {
+            {
+                alias = 'router',
+                uuid = h.uuid('a'),
+                roles = {
+                    'vshard-router',
+                },
+                servers = 1,
+            },
+            {
+                alias = 'storage',
+                uuid = replicaset_uuid,
+                roles = {
+                    'vshard-storage',
+                },
+                servers = 3,
+                all_rw = true,
+            },
+        },
+        env = {
+            TARANTOOL_ELECTION_TIMEOUT = 1,
+            TARANTOOL_REPLICATION_TIMEOUT = 0.25,
+            TARANTOOL_SYNCHRO_TIMEOUT = 1,
+            TARANTOOL_REPLICATION_SYNCHRO_QUORUM = 'N/2 + 1',
+        }
+    })
+    g_all_rw.cluster:start()
+end
+
+g_all_rw.after_all = function()
+    g_all_rw.cluster:stop()
+    fio.rmtree(g_all_rw.cluster.datadir)
+end
+
+g_all_rw.test_raft_in_all_rw_mode_fails = function()
+    t.assert_error_msg_contains(
+        "Raft failover can't be enabled with ALL_RW replicasets",
+        set_failover_params, g_all_rw, { mode = 'raft' })
+    t.assert_equals(g_all_rw.cluster.main_server:exec(function()
+        return require('cartridge.confapplier').get_state()
+    end), 'RolesConfigured')
 end
