@@ -266,7 +266,7 @@ local function test_all_rw(all_rw)
                 servers {
                     uuid
                     boxinfo {
-                        general { ro ro_reason }
+                        general { ro ro_reason election_state election_mode synchro_queue_owner}
                     }
                 }
                 master {
@@ -286,7 +286,12 @@ local function test_all_rw(all_rw)
         if srv['uuid'] == replicaset['master']['uuid'] then
             t.assert_equals(srv['boxinfo']['general']['ro'], false)
             -- https://github.com/tarantool/tarantool/issues/5568
+
+            t.assert_equals(srv['boxinfo']['general']['election_mode'], 'off')
+            t.assert_equals(srv['boxinfo']['general']['synchro_queue_owner'], 0)
+
             if helpers.tarantool_version_ge('2.10.0') then
+                t.assert_equals(srv['boxinfo']['general']['election_state'], 'follower')
                 t.assert_equals(srv['boxinfo']['general']['ro_reason'], box.NULL)
             end
         else

@@ -132,6 +132,9 @@ local function get_info(uri)
                 webui_prefix = vars.webui_prefix,
                 ro = box_info.ro,
                 ro_reason = box_info.ro_reason,
+                election_state = box_info.election and box_info.election.state,
+                election_mode = box.cfg.election_mode or "off",
+                synchro_queue_owner = box_info.synchro and box_info.synchro.queue.owner or 0,
             },
             storage = {
                 -- wal
