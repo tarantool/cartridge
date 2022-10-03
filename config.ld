@@ -31,6 +31,7 @@ file = {
     "cartridge/lua-api/failover.lua",
     "cartridge/lua-api/vshard.lua",
     "cartridge/lua-api/deprecated.lua",
+    "cartridge/lua-api/compression.lua",
 }
 
 -- luacheck: globals topics

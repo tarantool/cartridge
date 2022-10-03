@@ -1,10 +1,10 @@
-local mod_name = 'cartridge.lua-api.compression'
+local modul_name = 'cartridge.lua-api.compression'
 
-local function get_compression_info()
+local function get_cluster_compression_info()
     
     return {}
 end
 
 return {
-    get_compression_info = get_compression_info,
+    get_cluster_compression_info = get_cluster_compression_info,
 }
