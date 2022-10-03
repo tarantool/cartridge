@@ -109,8 +109,11 @@ end
 -- Neither `topology_cfg` nor `new_order` tables are modified.
 -- New order validity is ignored too.
 --
--- By default, get_leaders_order doesn't return unelectable nodes.
--- To fix it, use only_electable argument of `opts`.
+-- By default, `get_leaders_order` doesn't return unelectable nodes.
+-- To fix it, use `only_electable` argument of `opts`.
+--
+-- By default, `get_leaders_order` returns disabled nodes.
+-- To fix it, use `only_enabled` argument of `opts`.
 --
 -- @function get_leaders_order
 -- @local
