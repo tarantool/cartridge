@@ -669,6 +669,11 @@ local function patch_clusterwide(patch)
     vars.locks['clusterwide'] = false
 
     if not ok then
+        err.stack = nil
+        local _, f = err.err:find("^.*: ")
+        if f ~= nil then
+            err.err = err.err:sub(f + 1)
+        end
         return nil, err
     end
 
