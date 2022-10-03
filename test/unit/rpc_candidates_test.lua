@@ -39,6 +39,7 @@ g.before_all(function()
                     topology_cfg.servers[srv.uuid] = {
                         uri = uri,
                         disabled = srv.disabled or false,
+                        electable = srv.electable ~= false,
                         replicaset_uuid = rpl.uuid,
                     }
 
@@ -57,6 +58,7 @@ g.before_all(function()
                 end
             end
 
+            rawset(_G, 'topology_cfg', topology_cfg)
             local vars = require('cartridge.vars').new('cartridge.confapplier')
             local ClusterwideConfig = require('cartridge.clusterwide-config')
             vars.clusterwide_config = ClusterwideConfig.new({
@@ -211,6 +213,7 @@ g.test_disabled = function()
     draft[2].role = 'target-role'
     draft[2][1].state = 'BootError'
     draft[1][1].disabled = true
+    draft[1][2].electable = false
     apply_topology(draft)
 
     local candidates = get_candidates('target-role', {healthy_only = false})
