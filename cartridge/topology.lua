@@ -66,7 +66,12 @@ local function expelled(_, srv)
 end
 
 local function disabled(uuid, srv)
-    return expelled(uuid, srv) or srv.disabled
+    if expelled(uuid, srv) then
+        return true
+    elseif srv ~= nil then
+        return srv.disabled
+    end
+    return false
 end
 
 local function electable(_, srv)
@@ -127,9 +132,13 @@ local function get_leaders_order(topology_cfg, replicaset_uuid, new_order, opts)
     if opts.only_electable == nil then
         opts.only_electable = true
     end
+    if opts.only_enabled == nil then
+        opts.only_enabled = false
+    end
 
     local replicaset = replicasets and replicasets[replicaset_uuid]
 
+    local filter_disabled = opts.only_enabled and not_disabled or every_node
     if replicaset ~= nil then
         local initial_order
         if type(replicaset.master) == 'table' then
@@ -140,7 +149,7 @@ local function get_leaders_order(topology_cfg, replicaset_uuid, new_order, opts)
 
         for _, uuid in ipairs(initial_order) do
             if electable(uuid, servers[uuid])
-            and not_disabled(uuid, servers[uuid])
+            and filter_disabled(uuid, servers[uuid])
             and not utils.table_find(ret, uuid)
             then
                 table.insert(ret, uuid)
@@ -153,7 +162,7 @@ local function get_leaders_order(topology_cfg, replicaset_uuid, new_order, opts)
     if servers ~= nil then
         local ret_tail = {}
         for _, instance_uuid, server in fun.filter(not_expelled, servers)
-            :filter(not_disabled)
+            :filter(opts.only_enabled and not_disabled or every_node)
             :filter(opts.only_electable and electable or every_node)
         do
             if server.replicaset_uuid == replicaset_uuid then

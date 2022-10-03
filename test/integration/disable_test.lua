@@ -98,6 +98,6 @@ function g.test_leaders_order()
         local topology = require('cartridge.topology')
         local confapplier = require('cartridge.confapplier')
         local topology_cfg = confapplier.get_readonly('topology')
-        return topology.get_leaders_order(topology_cfg, box.info.cluster.uuid)
+        return topology.get_leaders_order(topology_cfg, box.info.cluster.uuid, nil, {only_enabled = true})
     end), {helpers.uuid('b', 'b', 2)})
 end
