@@ -58,7 +58,6 @@ g.before_all(function()
                 end
             end
 
-            rawset(_G, 'topology_cfg', topology_cfg)
             local vars = require('cartridge.vars').new('cartridge.confapplier')
             local ClusterwideConfig = require('cartridge.clusterwide-config')
             vars.clusterwide_config = ClusterwideConfig.new({
