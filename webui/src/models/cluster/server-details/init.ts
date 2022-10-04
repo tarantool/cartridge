@@ -80,7 +80,6 @@ $selectedServerDetailsUuid
 
 $serverDetails
   .on(queryServerDetailsSuccessEvent, (_, result) => {
-    console.log('effector server datails', result);
     const server = result?.servers?.[0];
     if (!server) {
       return;

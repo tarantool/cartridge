@@ -34,15 +34,10 @@ export interface StatTabProps {
 const StatTab = ({ sectionName }: StatTabProps) => {
   const serverDetails = useStore($serverDetails);
 
-  console.log('server details StatTab', serverDetails);
-
   const { descriptions, section } = useMemo(
     () => selectors.sectionAndDescriptionsBySectionName(serverDetails, sectionName),
     [serverDetails, sectionName]
   );
-
-  console.log('section', section);
-  console.log('descriptions', descriptions);
 
   const { http_address, params } = useMemo(
     () =>
@@ -96,9 +91,6 @@ const StatTab = ({ sectionName }: StatTabProps) => {
             <Text variant="basic">{name}</Text>
             {descriptions?.[name] ? (
               <Text variant="basic" className={styles.description}>
-                {/*
-                // внутриности таба
-                */}
                 {descriptions[name]}
               </Text>
             ) : null}
