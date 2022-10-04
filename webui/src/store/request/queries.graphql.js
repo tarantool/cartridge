@@ -157,6 +157,14 @@ export const serverDetailsFields = gql`
         http_host
         webui_prefix
         app_version
+        pid
+        replicaset_uuid
+        work_dir
+        memtx_dir
+        vinyl_dir
+        wal_dir
+        worker_pool_threads
+        listen
       }
       replication {
         replication_connect_quorum
