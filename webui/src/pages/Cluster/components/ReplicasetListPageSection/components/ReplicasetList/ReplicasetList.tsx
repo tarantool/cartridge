@@ -127,7 +127,7 @@ const ReplicasetList = ({
                   onClick={handleEditButtonClick}
                   data-cy="meta-test__editBtn"
                   pass={replicaset}
-                  tooltipContent="Edit replica set"
+                  tooltipContent="Edit replica set "
                 />
               </div>
               <ReplicasetRoles className={styles.roles} roles={replicaset.roles} />
