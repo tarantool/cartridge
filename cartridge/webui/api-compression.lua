@@ -106,28 +106,3 @@ return {
     init = init,
     get_compression_info = get_compression_info,
 }
-
-
---[[
-
-type FieldCompressionInfo {
-  field_name: String!
-  compression_percentage: Int!
-}
-
-type SpaceCompressionInfo {
-  space_name: String!
-  fields_be_compressed: [FieldCompressionInfo!]!
-}
-
-type InstanceCompressionInfo {
-  instance_id: String!
-  compression_info: [SpaceCompressionInfo!]!
-}
-
-type ClusterCompressionInfo {
-  cluster_id: String!
-  compression_info: [InstanceCompressionInfo!]!
-}
-
-]]--
