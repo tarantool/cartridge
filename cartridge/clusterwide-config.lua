@@ -502,7 +502,7 @@ local function save(clusterwide_config, path)
 
         ok, err = utils.file_write(
             abspath, content,
-            {'O_CREAT', 'O_EXCL', 'O_WRONLY'}
+            {'O_CREAT', 'O_EXCL', 'O_WRONLY', 'O_SYNC'}
         )
         if not ok then
             goto rollback
