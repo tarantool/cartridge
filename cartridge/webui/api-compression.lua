@@ -2,6 +2,7 @@ local module_name = 'cartridge.webui.api-compression'
 
 local gql_types = require('graphql.types')
 local lua_api_compression = require('cartridge.lua-api.compression')
+local log = require('log')
 
 --type FieldCompressionInfo {
 --  field_name: String!
@@ -84,13 +85,28 @@ local gql_cluster_compression_info = gql_types.object({
 })
 
 local function get_compression_info(_, _, info)
+    --[[
     local cache = info.context.request_cache
     if cache.compression ~= nil then
         return cache.compression
     end
     cache.compression, cache.compression_err = lua_api_compression.get_cluster_compression_info()
     return cache.compression
+    ]]--
+    local compression = lua_api_compression.get_cluster_compression_info()
+    return compression
 end
+
+--[[
+query {
+    cluster {
+        cluster_compression {
+            cluster_id
+            compression_info
+        }
+    }
+}
+]]--
 
 local function init(graphql)
     graphql.add_callback({

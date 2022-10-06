@@ -3,12 +3,9 @@ local log = require('log')
 
 local function get_cluster_compression_info()
     --local box_cfg = box.cfg
-    log.warn('********************')
-    log.warn('********************')
-    log.warn('********************')
-    log.warn('********************')
-    log.warn('********************')
-    log.warn('********************')
+    log.warn('<<<<<<<<<<<<<<<<<<<<<<<<')
+    log.warn('<<<<<<<<<<<<<<<<<<<<<<<<')
+
     local box_info = box.info()
 
     for i = 1, table.maxn(box_info.replication) do
@@ -28,7 +25,11 @@ local function get_cluster_compression_info()
         --    downstream_lag = replica.downstream and replica.downstream.lag,
         --} or box.NULL
     end
-    return {}
+    log.warn('>>>>>>>>>>>>>>>>>>>>>>>>>>')
+    log.warn('>>>>>>>>>>>>>>>>>>>>>>>>>>')
+    return {
+        cluster_id = '000000qwe',
+    }
 end
 
 return {

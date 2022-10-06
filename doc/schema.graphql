@@ -1,5 +1,5 @@
 # source: http://127.0.0.1:8081/admin/api
-# timestamp: Thu Sep 29 2022 17:24:12 GMT+0300 (Москва, стандартное время)
+# timestamp: Thu Oct 06 2022 20:33:37 GMT+0300 (Москва, стандартное время)
 
 """Custom scalar specification."""
 directive @specifiedBy(
@@ -9,9 +9,6 @@ directive @specifiedBy(
 
 """Cluster management"""
 type Apicluster {
-  """List issues in cluster"""
-  issues: [Issue!]
-
   """Some information about current server"""
   self: ServerShortInfo
 
@@ -21,12 +18,18 @@ type Apicluster {
   """Get current failover state. (Deprecated since v2.0.2-2)"""
   failover: Boolean!
 
-  """Get automatic failover configuration."""
-  failover_params: FailoverAPI!
+  """Whether it is reasonble to call bootstrap_vshard mutation"""
+  can_bootstrap_vshard: Boolean!
+  auth_params: UserManagementAPI!
+
+  """List of pages to be hidden in WebUI"""
+  webui_blacklist: [String!]
+
+  """List issues in cluster"""
+  issues: [Issue!]
 
   """Show suggestions to resolve operation problems"""
   suggestions: Suggestions
-  auth_params: UserManagementAPI!
 
   """List authorized users"""
   users(
@@ -44,21 +47,30 @@ type Apicluster {
   """Get list of all registered roles and their dependencies."""
   known_roles: [Role!]!
 
+  """Get automatic failover configuration."""
+  failover_params: FailoverAPI!
+
   """Get list of known vshard storage groups."""
   vshard_known_groups: [String!]!
-
-  """List of pages to be hidden in WebUI"""
-  webui_blacklist: [String!]
   vshard_groups: [VshardGroup!]!
 
   """Validate config"""
   validate_config(sections: [ConfigSectionInput]): ValidateConfigResult!
 
-  """Whether it is reasonble to call bootstrap_vshard mutation"""
-  can_bootstrap_vshard: Boolean!
+  """compression info about cluster"""
+  cluster_compression: ClusterCompressionInfo!
 
   """Get cluster config sections"""
   config(sections: [String!]): [ConfigSection]!
+}
+
+"""Compression info of all cluster instances"""
+type ClusterCompressionInfo {
+  """cluster id"""
+  cluster_id: String!
+
+  """cluster compression info"""
+  compression_info: [InstanceCompressionInfo!]!
 }
 
 """A section of clusterwide configuration"""
@@ -173,6 +185,15 @@ type FailoverStateProviderCfgTarantool {
   password: String!
 }
 
+"""Information about single field compression rate possibility"""
+type FieldCompressionInfo {
+  """field name"""
+  field_name: String!
+
+  """compression percentage"""
+  compression_percentage: Int!
+}
+
 """
 A suggestion to reapply configuration forcefully. There may be several reasons
 to do that: configuration checksum mismatch (config_mismatch); the locking of
@@ -184,6 +205,15 @@ type ForceApplySuggestion {
   config_locked: Boolean!
   uuid: String!
   operation_error: Boolean!
+}
+
+"""Combined info of all user spaces in the instance"""
+type InstanceCompressionInfo {
+  """instance id"""
+  instance_id: String!
+
+  """instance compression info"""
+  compression_info: [SpaceCompressionInfo!]!
 }
 
 type Issue {
@@ -966,6 +996,15 @@ type ServerStat {
   The efficient memory used for storing tuples and indexes together (omitting allocated, but currently free slabs)
   """
   arena_used: Long!
+}
+
+"""List of fields compression info"""
+type SpaceCompressionInfo {
+  """list of fields be compressed"""
+  fields_be_compressed: [FieldCompressionInfo!]!
+
+  """space name"""
+  space_name: String!
 }
 
 type Suggestions {
