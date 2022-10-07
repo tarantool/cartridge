@@ -136,6 +136,13 @@ If the GraphQL API is changed, the ``doc/schema.graphql`` should be updated:
     npm install graphql-cli@3.0.14
     ./fetch-schema.sh
 
+If you face some issues with script run, e.g.
+``doc/schema.graphql: No such file or directory``, try next:
+
+.. code-block:: bash
+
+    npm audit fix --force
+
 If the UML diagrams at ``rst/uml`` are changed, corresponding images
 should be updated. Install `PlantUML <https://plantuml.com/download>`_:
 
