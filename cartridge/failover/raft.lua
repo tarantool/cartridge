@@ -29,7 +29,7 @@ local function get_appointments(topology_cfg)
     local box_info = box.info()
     for replicaset_uuid, _ in pairs(replicasets) do
         local leaders = topology.get_leaders_order(
-            topology_cfg, replicaset_uuid
+            topology_cfg, replicaset_uuid, nil, {only_enabled = true}
         )
         if replicaset_uuid == vars.replicaset_uuid then
             local my_leader_id = box_info.election.leader
