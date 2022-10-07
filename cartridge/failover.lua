@@ -152,7 +152,7 @@ local function _get_appointments_disabled_mode(topology_cfg)
 
     for replicaset_uuid, _ in pairs(replicasets) do
         local leaders = topology.get_leaders_order(
-            topology_cfg, replicaset_uuid
+            topology_cfg, replicaset_uuid, nil, {only_enabled = true}
         )
         appointments[replicaset_uuid] = leaders[1]
     end
@@ -172,7 +172,7 @@ local function _get_appointments_eventual_mode(topology_cfg)
 
     for replicaset_uuid, _ in pairs(replicasets) do
         local leaders = topology.get_leaders_order(
-            topology_cfg, replicaset_uuid
+            topology_cfg, replicaset_uuid, nil, {only_enabled = true}
         )
 
         for _, instance_uuid in ipairs(leaders) do
@@ -342,7 +342,7 @@ local function fencing_healthcheck()
 
     -- Otherwise check connectivity with replicas
     local leaders_order = topology.get_leaders_order(
-        topology_cfg, vars.replicaset_uuid
+        topology_cfg, vars.replicaset_uuid, nil, {only_enabled = true}
     )
     for _, instance_uuid in ipairs(leaders_order) do
         local server = assert(topology_cfg.servers[instance_uuid])
@@ -771,7 +771,7 @@ local function cfg(clusterwide_config, opts)
             -- Replicasets with all_rw flag imply that
             -- consistent switchover isn't necessary
             vars.consistency_needed = false
-        elseif #topology.get_leaders_order(topology_cfg, replicaset_uuid) == 1 then
+        elseif #topology.get_leaders_order(topology_cfg, replicaset_uuid, nil, {only_enabled = true}) == 1 then
             -- Replicaset consists of a single server
             -- consistent switchover isn't necessary
             vars.consistency_needed = false
@@ -850,7 +850,9 @@ local function cfg(clusterwide_config, opts)
         vars.consistency_needed = false
 
         -- Raft failover can be enabled only on replicasets of 3 or more instances
-        if #topology.get_leaders_order(topology_cfg, vars.replicaset_uuid, nil, {only_electable=false}) < 3 then
+        if #topology.get_leaders_order(
+            topology_cfg, vars.replicaset_uuid, nil, {only_electable=false, only_enabled = true}) < 3
+        then
             first_appointments = _get_appointments_disabled_mode(topology_cfg)
             log.warn('Not enough instances to enable Raft failover')
         else

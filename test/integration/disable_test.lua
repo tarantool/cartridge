@@ -28,6 +28,11 @@ g.before_each(function()
                     instance_uuid = helpers.uuid('b', 'b', 1),
                     advertise_port = 13302,
                     http_port = 8082,
+                }, {
+                    alias = 'victim-brother',
+                    instance_uuid = helpers.uuid('b', 'b', 2),
+                    advertise_port = 13303,
+                    http_port = 8083,
                 }}
             }
         }
@@ -79,4 +84,24 @@ function g.test_suggestion()
     ]]})
     local suggestions = helpers.get_suggestions(g.cluster.main_server)
     t.assert_equals(suggestions.disable_servers, box.NULL)
+end
+
+
+function g.test_leaders_order()
+    g.cluster.main_server:graphql({query = [[
+        mutation {
+            cluster { disable_servers(uuids: ["bbbbbbbb-bbbb-0000-0000-000000000001"]) { uuid } }
+        }
+    ]]})
+
+    t.assert_equals(g.cluster:server('victim-brother'):exec(function()
+        local topology = require('cartridge.topology')
+        local confapplier = require('cartridge.confapplier')
+        local topology_cfg = confapplier.get_readonly('topology')
+        return topology.get_leaders_order(topology_cfg, box.info.cluster.uuid, nil, {only_enabled = true})
+    end), {helpers.uuid('b', 'b', 2)})
+
+    t.assert_equals(g.cluster:server('victim-brother'):exec(function()
+        return box.info.ro
+    end), false)
 end

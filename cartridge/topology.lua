@@ -66,7 +66,12 @@ local function expelled(_, srv)
 end
 
 local function disabled(uuid, srv)
-    return expelled(uuid, srv) or srv.disabled
+    if expelled(uuid, srv) then
+        return true
+    elseif srv ~= nil then
+        return srv.disabled
+    end
+    return false
 end
 
 local function electable(_, srv)
@@ -104,8 +109,11 @@ end
 -- Neither `topology_cfg` nor `new_order` tables are modified.
 -- New order validity is ignored too.
 --
--- By default, get_leaders_order doesn't return unelectable nodes.
--- To fix it, use only_electable argument of `opts`.
+-- By default, `get_leaders_order` doesn't return unelectable nodes.
+-- To fix it, use `only_electable` argument of `opts`.
+--
+-- By default, `get_leaders_order` returns disabled nodes.
+-- To fix it, use `only_enabled` argument of `opts`.
 --
 -- @function get_leaders_order
 -- @local
@@ -127,9 +135,13 @@ local function get_leaders_order(topology_cfg, replicaset_uuid, new_order, opts)
     if opts.only_electable == nil then
         opts.only_electable = true
     end
+    if opts.only_enabled == nil then
+        opts.only_enabled = false
+    end
 
     local replicaset = replicasets and replicasets[replicaset_uuid]
 
+    local filter_disabled = opts.only_enabled and not_disabled or every_node
     if replicaset ~= nil then
         local initial_order
         if type(replicaset.master) == 'table' then
@@ -140,6 +152,7 @@ local function get_leaders_order(topology_cfg, replicaset_uuid, new_order, opts)
 
         for _, uuid in ipairs(initial_order) do
             if electable(uuid, servers[uuid])
+            and filter_disabled(uuid, servers[uuid])
             and not utils.table_find(ret, uuid)
             then
                 table.insert(ret, uuid)
@@ -151,8 +164,9 @@ local function get_leaders_order(topology_cfg, replicaset_uuid, new_order, opts)
 
     if servers ~= nil then
         local ret_tail = {}
-        for _, instance_uuid, server in fun.filter(not_expelled, servers):
-            filter(opts.only_electable and electable or every_node)
+        for _, instance_uuid, server in fun.filter(not_expelled, servers)
+            :filter(opts.only_enabled and not_disabled or every_node)
+            :filter(opts.only_electable and electable or every_node)
         do
             if server.replicaset_uuid == replicaset_uuid then
                 if not utils.table_find(ret, instance_uuid) then
