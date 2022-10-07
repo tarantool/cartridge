@@ -39,6 +39,8 @@ Added
 
 - ``election_state``, ``election_mode`` and ``synchro_queue_owner`` to GraphQL.
 
+- ``O_SYNC`` flag for ClusterwideConfig.save.
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
