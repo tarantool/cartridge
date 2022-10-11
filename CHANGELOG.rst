@@ -47,7 +47,9 @@ Fixed
 
 - Fix tarantool binds to 0.0.0.0 despite advertise_uri settings.
 
-- Reduce count of ``box.info`` calls
+- Reduce count of ``box.info`` calls.
+
+- Incorrect calculation of Raft leader.
 
 -------------------------------------------------------------------------------
 [2.7.6] - 2022-08-22
