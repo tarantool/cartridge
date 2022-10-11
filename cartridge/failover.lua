@@ -855,6 +855,7 @@ local function cfg(clusterwide_config, opts)
         then
             first_appointments = _get_appointments_disabled_mode(topology_cfg)
             log.warn('Not enough instances to enable Raft failover')
+            raft_failover.disable()
         else
             local ok, err = ApplyConfigError:pcall(raft_failover.cfg)
             if not ok then
