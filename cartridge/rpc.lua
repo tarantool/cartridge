@@ -56,6 +56,7 @@ local function member_is_healthy(uri, instance_uuid)
         and (member.status == 'alive' or member.status == 'suspect')
         and (member.payload.uuid == instance_uuid)
         and (
+            member.payload.state_prev == nil or -- for backward compatibility with old versions
             member.payload.state_prev == 'RolesConfigured' or
             member.payload.state_prev == 'ConfiguringRoles'
         )
