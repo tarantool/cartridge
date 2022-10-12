@@ -4,7 +4,7 @@ local g = t.group()
 local helpers = require('test.helper')
 local fio = require('fio')
 
-g.before_each(function()
+g.before_all(function()
     g.server = t.Server:new({
         command = helpers.entrypoint('srv_empty'),
         workdir = fio.tempdir(),
@@ -16,7 +16,7 @@ g.before_each(function()
     helpers.retrying({}, t.Server.connect_net_box, g.server)
 end)
 
-g.after_each(function()
+g.after_all(function()
     g.server:stop()
     fio.rmtree(g.server.workdir)
 end)
@@ -28,10 +28,7 @@ g.before_test('test_raft_leaders_calculation', function()
         vars:new('instance_uuid', 'a') -- I'm "a"
         vars:new('leader_uuid', 'b') -- my leader is "b"
         vars:new('cache', {
-            active_leaders = {--[[ [replicaset_uuid] = leader_uuid ]]},
-            is_vclockkeeper = false,
             is_leader = false,
-            is_rw = false,
         })
 
         rawset(_G, 'old_box', box)
