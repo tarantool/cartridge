@@ -76,6 +76,8 @@ local function on_election_trigger()
     membership.set_payload('raft_term', election.term)
 end
 
+_G.__cartridge_on_election_trigger = on_election_trigger
+
 local function check_version()
     if box.ctl.on_election == nil then
         return nil, UnsupportedError:new(
