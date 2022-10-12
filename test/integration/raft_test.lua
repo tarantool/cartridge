@@ -6,6 +6,8 @@ local g = t.group()
 local g_unsupported = t.group('integration.raft_unsupported')
 local g_not_enough_instances = t.group('integration.raft_not_enough_instances')
 local g_unelectable = t.group('integration.raft_unelectable')
+local g_disable = t.group('integration.raft_disabled_instances')
+local g_expel = t.group('integration.raft_expelled_instances')
 local g_all_rw = t.group('integration.raft_all_rw')
 local h = require('test.helper')
 
@@ -524,45 +526,51 @@ end
 
 ----------------------------------------------------------------
 
-g_not_enough_instances.before_all = function()
-    t.skip_if(not h.tarantool_version_ge('2.10.0'))
-    g_not_enough_instances.cluster = h.Cluster:new({
-        datadir = fio.tempdir(),
-        use_vshard = true,
-        server_command = h.entrypoint('srv_basic'),
-        cookie = h.random_cookie(),
-        replicasets = {
-            {
-                alias = 'router',
-                uuid = h.uuid('a'),
-                roles = {
-                    'vshard-router',
-                },
-                servers = 1,
-            },
-            {
-                alias = 'storage',
-                uuid = replicaset_uuid,
-                roles = {
-                    'vshard-storage',
-                },
-                servers = 2,
-            },
-        },
-        env = {
-            TARANTOOL_ELECTION_TIMEOUT = 1,
-            TARANTOOL_REPLICATION_TIMEOUT = 0.25,
-            TARANTOOL_SYNCHRO_TIMEOUT = 1,
-            TARANTOOL_REPLICATION_SYNCHRO_QUORUM = 'N/2 + 1',
-        }
-    })
-    g_not_enough_instances.cluster:start()
+local function setup_group(g, replicasets)
+    g.before_all = function()
+        t.skip_if(not h.tarantool_version_ge('2.10.0'))
+        g.cluster = h.Cluster:new({
+            datadir = fio.tempdir(),
+            use_vshard = true,
+            server_command = h.entrypoint('srv_basic'),
+            cookie = h.random_cookie(),
+            replicasets = replicasets,
+            env = {
+                TARANTOOL_ELECTION_TIMEOUT = 1,
+                TARANTOOL_REPLICATION_TIMEOUT = 0.25,
+                TARANTOOL_SYNCHRO_TIMEOUT = 1,
+                TARANTOOL_REPLICATION_SYNCHRO_QUORUM = 'N/2 + 1',
+            }
+        })
+        g.cluster:start()
+    end
+
+    g.after_all = function()
+        g.cluster:stop()
+        fio.rmtree(g.cluster.datadir)
+    end
 end
 
-g_not_enough_instances.after_all = function()
-    g_not_enough_instances.cluster:stop()
-    fio.rmtree(g_not_enough_instances.cluster.datadir)
-end
+----------------------------------------------------------------
+
+setup_group(g_not_enough_instances, {
+    {
+        alias = 'router',
+        uuid = h.uuid('a'),
+        roles = {
+            'vshard-router',
+        },
+        servers = 1,
+    },
+    {
+        alias = 'storage',
+        uuid = replicaset_uuid,
+        roles = {
+            'vshard-storage',
+        },
+        servers = 2,
+    },
+})
 
 g_not_enough_instances.test_raft_is_disabled = function()
     t.assert_equals(set_failover_params(g_not_enough_instances, { mode = 'raft' }), { mode = 'raft' })
@@ -582,58 +590,36 @@ g_not_enough_instances.test_raft_is_disabled = function()
     t.assert_equals(get_election_cfg(g_not_enough_instances, 'storage-2'), 'off')
 end
 
-
 ----------------------------------------------------------------
 
-g_unelectable.before_all = function()
-    t.skip_if(not h.tarantool_version_ge('2.10.0'))
-    g_unelectable.cluster = h.Cluster:new({
-        datadir = fio.tempdir(),
-        use_vshard = true,
-        server_command = h.entrypoint('srv_basic'),
-        cookie = h.random_cookie(),
-        replicasets = {
+setup_group(g_unelectable, {
+    {
+        alias = 'router',
+        uuid = h.uuid('a'),
+        roles = {
+            'vshard-router',
+        },
+        servers = 1,
+    },
+    {
+        alias = 'storage',
+        uuid = replicaset_uuid,
+        roles = {
+            'vshard-storage',
+        },
+        servers = {
             {
-                alias = 'router',
-                uuid = h.uuid('a'),
-                roles = {
-                    'vshard-router',
-                },
-                servers = 1,
+                instance_uuid = storage_1_uuid,
             },
             {
-                alias = 'storage',
-                uuid = replicaset_uuid,
-                roles = {
-                    'vshard-storage',
-                },
-                servers = {
-                    {
-                        instance_uuid = storage_1_uuid,
-                    },
-                    {
-                        instance_uuid = storage_2_uuid,
-                    },
-                    {
-                        instance_uuid = storage_3_uuid,
-                    },
-                },
+                instance_uuid = storage_2_uuid,
+            },
+            {
+                instance_uuid = storage_3_uuid,
             },
         },
-        env = {
-            TARANTOOL_ELECTION_TIMEOUT = 1,
-            TARANTOOL_REPLICATION_TIMEOUT = 0.25,
-            TARANTOOL_SYNCHRO_TIMEOUT = 1,
-            TARANTOOL_REPLICATION_SYNCHRO_QUORUM = 'N/2 + 1',
-        }
-    })
-    g_unelectable.cluster:start()
-end
-
-g_unelectable.after_all = function()
-    g_unelectable.cluster:stop()
-    fio.rmtree(g_unelectable.cluster.datadir)
-end
+    },
+})
 
 g_unelectable.test_raft_is_disabled = function()
     t.assert_equals(set_failover_params(g_unelectable, { mode = 'raft' }), { mode = 'raft' })
@@ -649,51 +635,150 @@ g_unelectable.test_raft_is_disabled = function()
         api_topology.set_unelectable_servers(uuids)
     end, {{storage_3_uuid}})
 
+    t.assert_equals(get_election_cfg(g_unelectable, 'storage-1'), 'candidate')
+    t.assert_equals(get_election_cfg(g_unelectable, 'storage-2'), 'candidate')
     t.assert_equals(get_election_cfg(g_unelectable, 'storage-3'), 'voter')
 end
 
 ----------------------------------------------------------------
 
-g_all_rw.before_all = function()
-    t.skip_if(not h.tarantool_version_ge('2.10.0'))
-    g_all_rw.cluster = h.Cluster:new({
-        datadir = fio.tempdir(),
-        use_vshard = true,
-        server_command = h.entrypoint('srv_basic'),
-        cookie = h.random_cookie(),
-        replicasets = {
+setup_group(g_disable, {
+    {
+        alias = 'router',
+        uuid = h.uuid('a'),
+        roles = {
+            'vshard-router',
+        },
+        servers = 1,
+    },
+    {
+        alias = 'storage',
+        uuid = replicaset_uuid,
+        roles = {
+            'vshard-storage',
+        },
+        servers = {
             {
-                alias = 'router',
-                uuid = h.uuid('a'),
-                roles = {
-                    'vshard-router',
-                },
-                servers = 1,
+                instance_uuid = storage_1_uuid,
             },
             {
-                alias = 'storage',
-                uuid = replicaset_uuid,
-                roles = {
-                    'vshard-storage',
-                },
-                servers = 3,
-                all_rw = true,
+                instance_uuid = storage_2_uuid,
+            },
+            {
+                instance_uuid = storage_3_uuid,
             },
         },
-        env = {
-            TARANTOOL_ELECTION_TIMEOUT = 1,
-            TARANTOOL_REPLICATION_TIMEOUT = 0.25,
-            TARANTOOL_SYNCHRO_TIMEOUT = 1,
-            TARANTOOL_REPLICATION_SYNCHRO_QUORUM = 'N/2 + 1',
-        }
-    })
-    g_all_rw.cluster:start()
+    },
+})
+
+g_disable.test_raft_is_disabled = function()
+    t.assert_equals(set_failover_params(g_disable, { mode = 'raft' }), { mode = 'raft' })
+
+    t.assert_equals(get_election_cfg(g_disable, 'storage-1'), 'candidate')
+
+    t.assert_equals(get_election_cfg(g_disable, 'storage-2'), 'candidate')
+
+    t.assert_equals(get_election_cfg(g_disable, 'storage-3'), 'candidate')
+
+    -- g_disable.cluster.main_server:graphql({
+    --     query = [[
+    --         mutation($uuid: String!) {
+    --             expel_server(uuid: $uuid)
+    --         }
+    --     ]],
+    --     variables = {
+    --         uuid = storage_3_uuid,
+    --     }
+    -- })
+
+    g_disable.cluster.main_server:exec(function(uuid)
+        require('cartridge.lua-api.topology').disable_servers({uuid})
+    end, {storage_3_uuid})
+    t.assert_equals(get_election_cfg(g_disable, 'storage-1'), 'off')
+    t.assert_equals(get_election_cfg(g_disable, 'storage-2'), 'off')
 end
 
-g_all_rw.after_all = function()
-    g_all_rw.cluster:stop()
-    fio.rmtree(g_all_rw.cluster.datadir)
+
+----------------------------------------------------------------
+
+setup_group(g_expel, {
+    {
+        alias = 'router',
+        uuid = h.uuid('a'),
+        roles = {
+            'vshard-router',
+        },
+        servers = 1,
+    },
+    {
+        alias = 'storage',
+        uuid = replicaset_uuid,
+        roles = {
+            'vshard-storage',
+        },
+        servers = {
+            {
+                instance_uuid = storage_1_uuid,
+            },
+            {
+                instance_uuid = storage_2_uuid,
+            },
+            {
+                instance_uuid = storage_3_uuid,
+            },
+        },
+    },
+})
+
+g_expel.test_raft_is_disabled = function()
+    t.assert_equals(set_failover_params(g_expel, { mode = 'raft' }), { mode = 'raft' })
+
+    t.assert_equals(get_election_cfg(g_expel, 'storage-1'), 'candidate')
+
+    t.assert_equals(get_election_cfg(g_expel, 'storage-2'), 'candidate')
+
+    t.assert_equals(get_election_cfg(g_expel, 'storage-3'), 'candidate')
+
+    g_expel.cluster:server('storage-1'):call('box.ctl.promote')
+    -- here we call box.ctl.promote manually to promote rw instance
+
+    g_expel.cluster.main_server:exec(function(uuid)
+        require('cartridge.lua-api.topology').edit_topology({
+            servers = {{
+                uuid = uuid,
+                expelled = true,
+            }}
+        })
+    end, {storage_3_uuid})
+
+    g_expel.cluster:retrying({}, function()
+        t.assert_equals(get_election_cfg(g_expel, 'storage-1'), 'off')
+        t.assert_equals(get_election_cfg(g_expel, 'storage-2'), 'off')
+    end)
+
 end
+
+----------------------------------------------------------------
+
+setup_group(g_all_rw, {
+    {
+        alias = 'router',
+        uuid = h.uuid('a'),
+        roles = {
+            'vshard-router',
+        },
+        servers = 1,
+    },
+    {
+        alias = 'storage',
+        uuid = replicaset_uuid,
+        roles = {
+            'vshard-storage',
+        },
+        servers = 3,
+        all_rw = true,
+    },
+})
 
 g_all_rw.test_raft_in_all_rw_mode_fails = function()
     t.assert_error_msg_contains(
