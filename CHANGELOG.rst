@@ -49,6 +49,8 @@ Fixed
 
 - Reduce count of ``box.info`` calls
 
+- Fix ``member_is_healthy`` conditions to prevent send requests to non-role-configured node
+
 -------------------------------------------------------------------------------
 [2.7.6] - 2022-08-22
 -------------------------------------------------------------------------------
