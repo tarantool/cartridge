@@ -66,9 +66,9 @@ local function on_election_trigger()
     local box_info = box.info()
     local election = box_info.election
 
-    local leader = box_info.replication[election.leader] or {}
+    local leader = box_info.replication[election.leader]
 
-    if vars.leader_uuid ~= leader.uuid then
+    if leader ~= nil and vars.leader_uuid ~= leader.uuid then
         vars.leader_uuid = leader.uuid
         vars.cache.is_leader = vars.leader_uuid == vars.instance_uuid
         membership.set_payload('leader_uuid', vars.leader_uuid)
@@ -141,6 +141,11 @@ local function disable()
     end
     box.cfg{ election_mode = 'off' }
     vars.leader_uuid = nil
+
+    local box_info = box.info
+    if box_info.synchro.queue.owner == box_info.id then
+        box.ctl.demote()
+    end
 end
 
 local function promote(replicaset_leaders)
