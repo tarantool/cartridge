@@ -159,6 +159,7 @@ local function set_state(new_state, err)
         )
     end
 
+    membership.set_payload('state_prev', vars.state)
     membership.set_payload('state', new_state)
     vars.state = new_state
     vars.error = err

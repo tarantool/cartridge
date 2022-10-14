@@ -52,6 +52,7 @@ g.before_all(function()
                             payload = {
                                 uuid = srv.uuid,
                                 state = srv.state,
+                                state_prev = srv.state_prev,
                             }
                         }
                     end
@@ -103,7 +104,20 @@ g.before_each(function()
                 uuid = 'a2',
                 status = 'alive',
                 state = 'RolesConfigured',
+                state_prev = 'ConfiguringRoles'
             },
+            [3] = {
+                uuid = 'a3',
+                status = 'alive',
+                state = 'ConfiguringRoles',
+                state_prev = "BoxConfigured"
+            },
+            [4] = {
+                uuid = 'a4',
+                status = 'alive',
+                state = 'BoxConfigured',
+                state_prev = "ConnectingFullmesh"
+            }
         },
         [2] = {
             uuid = 'B',
@@ -118,7 +132,20 @@ g.before_each(function()
                 uuid = 'b2',
                 status = 'alive',
                 state = 'RolesConfigured',
+                state_prev = 'ConfiguringRoles'
             },
+            [3] = {
+                uuid = 'b3',
+                status = 'alive',
+                state = 'ConfiguringRoles',
+                state_prev = "BoxConfigured"
+            },
+            [4] = {
+                uuid = 'b4',
+                status = 'alive',
+                state = 'BoxConfigured',
+                state_prev = "ConnectingFullmesh"
+            }
         }
     }
 end)
@@ -145,6 +172,12 @@ g.test_all_alive = function()
 
     local candidates = get_candidates('target-role', {leader_only = true})
     t.assert_items_equals(candidates, {'a1'})
+
+    local candidates = get_candidates('some-other-role')
+    t.assert_items_equals(candidates, {'b1', 'b2'})
+
+    local candidates = get_candidates('some-other-role', {leader_only = true})
+    t.assert_items_equals(candidates, {'b1'})
 end
 
 g.test_failover = function()
@@ -152,7 +185,7 @@ g.test_failover = function()
     apply_topology(draft)
 
     local candidates = get_candidates('target-role', {healthy_only = false})
-    t.assert_items_equals(candidates, {'a1', 'a2'})
+    t.assert_items_equals(candidates, {'a1', 'a2', 'a3', 'a4'})
 
     local candidates = get_candidates('target-role')
     t.assert_items_equals(candidates, {'a2'})
@@ -167,7 +200,7 @@ g.test_failover = function()
     apply_topology(draft)
 
     local candidates = get_candidates('target-role', {healthy_only = false})
-    t.assert_items_equals(candidates, {'a1', 'a2'})
+    t.assert_items_equals(candidates, {'a1', 'a2', 'a3', 'a4'})
 
     local candidates = get_candidates('target-role')
     t.assert_items_equals(candidates, {'a2'})
@@ -196,7 +229,7 @@ g.test_error = function()
     apply_topology(draft)
 
     local candidates = get_candidates('target-role', {healthy_only = false})
-    t.assert_items_equals(candidates, {'a1', 'a2', 'b1', 'b2'})
+    t.assert_items_equals(candidates, {'a1', 'a2', 'a3', 'a4', 'b1', 'b2', 'b3', 'b4'})
 
     local candidates = get_candidates('target-role')
     t.assert_items_equals(candidates, {'a1', 'a2', 'b2'})
@@ -216,13 +249,13 @@ g.test_disabled = function()
     apply_topology(draft)
 
     local candidates = get_candidates('target-role', {healthy_only = false})
-    t.assert_items_equals(candidates, {'a2', 'b1', 'b2'})
+    t.assert_items_equals(candidates, {'a2', 'a3', 'a4', 'b1', 'b2', 'b3', 'b4'})
 
     local candidates = get_candidates('target-role')
     t.assert_items_equals(candidates, {'a2', 'b2'})
 
     local candidates = get_candidates('target-role', {leader_only = true, healthy_only = false})
-    t.assert_items_equals(candidates, {'b1'})
+    t.assert_items_equals(candidates, {'b1', 'a3'})
 
     local candidates = get_candidates('target-role', {leader_only = true})
     t.assert_items_equals(candidates, {})
