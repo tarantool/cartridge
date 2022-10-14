@@ -32,6 +32,7 @@ local function apply_config(conf, _)
     vshard_cfg.zone = nil
     vshard_cfg.collect_lua_garbage = nil
     vshard_cfg.listen = box.cfg.listen
+    vshard_cfg.replication = box.cfg.replication
 
     if utils.deepcmp(vshard_cfg, vars.vshard_cfg) then
         -- No reconfiguration required, skip it
