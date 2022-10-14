@@ -1,5 +1,6 @@
 local fio = require('fio')
 local t = require('luatest')
+local fun = require('fun')
 local g = t.group()
 
 local helpers = require('test.helper')
@@ -646,21 +647,17 @@ g.test_sigstop = function()
         {uri = cluster:server('router-1').advertise_uri, statistics={vshard_buckets_count = box.NULL}}
     })
 
-    t.assert_items_equals(helpers.list_cluster_issues(cluster.main_server), {{
+    t.assert_covers(fun.map(function(x) x.message = nil; return x end,
+        helpers.list_cluster_issues(cluster.main_server)):totable(),
+    {{
         level = 'critical',
         replicaset_uuid = replicaset_uuid,
         instance_uuid = storage_2_uuid,
-        message =
-            "Replication from localhost:13302 (storage-1)" ..
-            " to localhost:13303 (storage-2) isn't running",
         topic = 'replication',
     }, {
         level = 'critical',
         replicaset_uuid = replicaset_uuid,
         instance_uuid = storage_3_uuid,
-        message =
-            "Replication from localhost:13302 (storage-1)" ..
-            " to localhost:13304 (storage-3) isn't running",
         topic = 'replication',
     }})
 
