@@ -28,8 +28,7 @@ function* openFirstFileSaga() {
     const storedPath = localStorage.getItem(LS_CODE_EDITOR_OPENED_FILE);
 
     if (storedPath !== null) {
-      file = files.find(({ type, path }) => type === 'file' && path === storedPath);
-      if (!file) file = getFileToOpen(files);
+      file = files.find(({ type, path }) => type === 'file' && path === storedPath) || getFileToOpen(files);
     } else {
       file = getFileToOpen(files);
     }
@@ -47,8 +46,7 @@ function* storeOpenedFileSaga() {
     },
   } = yield select();
   if (initiallyOpened) {
-    const { path } = files.find(({ fileId }) => selectedFile === fileId);
-
+    const { path = '' } = files.find(({ fileId }) => selectedFile === fileId) || {};
     localStorage.setItem(LS_CODE_EDITOR_OPENED_FILE, path);
   }
 }
