@@ -1,11 +1,45 @@
 import React from 'react';
 import { noop, throttle } from 'lodash';
 
+import { SS_CODE_EDITOR_CURSOR_POSITION } from 'src/constants';
+
 import monaco from '../../misc/initMonacoEditor';
 import { getModelByFile, setModelByFile } from '../../misc/monacoModelStorage';
 import { getYAMLError } from '../../misc/yamlValidation';
 
-const DEF_CURSOR = {};
+const getCursorPosition = () => {
+  try {
+    const cursorPositionParsed = JSON.parse(sessionStorage.getItem(SS_CODE_EDITOR_CURSOR_POSITION));
+    if (
+      typeof cursorPositionParsed === 'object' &&
+      typeof cursorPositionParsed.fileId === 'string' &&
+      typeof cursorPositionParsed.lineNumber === 'number' &&
+      typeof cursorPositionParsed.column === 'number'
+    ) {
+      const { fileId, lineNumber, column } = cursorPositionParsed;
+      return { fileId, lineNumber, column };
+    }
+  } catch (error) {
+    // no-empty
+  }
+
+  return null;
+};
+
+const storeCursorPosition = (fileId, lineNumber, column) => {
+  try {
+    sessionStorage.setItem(
+      SS_CODE_EDITOR_CURSOR_POSITION,
+      JSON.stringify({
+        fileId: fileId,
+        lineNumber: lineNumber || 0,
+        column: column || 0,
+      })
+    );
+  } catch (error) {
+    // no-empty
+  }
+};
 
 export default class MonacoEditor extends React.Component {
   // static propTypes = {
@@ -22,7 +56,6 @@ export default class MonacoEditor extends React.Component {
   //   setIsContentChanged: PropTypes.func,
   //   styles: PropTypes.object,
   //   className: PropTypes.string,
-  //   cursor: PropTypes.object,
   // };
 
   static defaultProps = {
@@ -38,7 +71,6 @@ export default class MonacoEditor extends React.Component {
     setIsContentChanged: noop,
     styles: {},
     className: '',
-    cursor: DEF_CURSOR,
   };
 
   state = {
@@ -48,11 +80,22 @@ export default class MonacoEditor extends React.Component {
 
   containerElement = null;
   editor = null;
-  _subscription = null;
+  _subscriptions = [];
   _prevent_trigger_change_event = false;
 
   componentDidMount() {
     this.initMonaco();
+  }
+
+  focusAndFind() {
+    try {
+      if (this.editor) {
+        this.editor.focus();
+        this.editor.getAction('actions.find').run();
+      }
+    } catch (error) {
+      // no-empty
+    }
   }
 
   adjustEditorSize() {
@@ -86,7 +129,7 @@ export default class MonacoEditor extends React.Component {
   throttledSetValidationError = throttle(this.setValidationError, 1000, { leading: false });
 
   componentDidUpdate(prevProps) {
-    const { initialValue, language, fileId, theme, cursor, options } = this.props;
+    const { initialValue, language, fileId, theme, options } = this.props;
 
     const { editor } = this;
 
@@ -104,18 +147,23 @@ export default class MonacoEditor extends React.Component {
       if (prevProps.language !== language) {
         monaco.editor.setModelLanguage(model, language);
       }
+
+      if (prevProps.fileId !== fileId) {
+        storeCursorPosition(fileId);
+      } else {
+        const position = getCursorPosition();
+        if (position && position.fileId === fileId) {
+          editor.setPosition(position);
+        }
+      }
     }
 
-    if (prevProps.theme !== theme) {
+    if (theme && prevProps.theme !== theme) {
       monaco.editor.setTheme(theme);
     }
 
-    if (prevProps.options !== options) {
+    if (options && prevProps.options !== options) {
       editor.updateOptions(options);
-    }
-    if (prevProps.cursor !== cursor) {
-      editor.setSelection(cursor);
-      editor.revealLine(this.props.cursor.startLineNumber);
     }
   }
 
@@ -131,8 +179,8 @@ export default class MonacoEditor extends React.Component {
     if (this.editor) {
       this.editor.dispose();
     }
-    if (this._subscription) {
-      this._subscription.dispose();
+    if (this._subscriptions.length > 0) {
+      this._subscriptions.forEach((s) => s.dispose());
     }
   }
 
@@ -169,12 +217,15 @@ export default class MonacoEditor extends React.Component {
 
     this.adjustEditorSize();
 
-    if (this.props.cursor !== DEF_CURSOR) {
-      editor.setSelection(this.props.cursor);
-      editor.revealLine(this.props.cursor.startLineNumber);
-    }
+    const s1 = editor.onDidChangeCursorPosition((e) => {
+      if (!e || !e.position) {
+        return;
+      }
 
-    this._subscription = editor.onDidChangeModelContent(() => {
+      storeCursorPosition(this.props.fileId, e.position.lineNumber, e.position.column);
+    });
+
+    const s2 = editor.onDidChangeModelContent(() => {
       if (!this._prevent_trigger_change_event) {
         const currentValue = editor.getValue();
 
@@ -192,6 +243,13 @@ export default class MonacoEditor extends React.Component {
 
       this.throttledSetValidationError();
     });
+
+    this._subscriptions.push(s1, s2);
+
+    const position = getCursorPosition();
+    if (position && position.fileId === this.props.fileId) {
+      setTimeout(() => void editor.setPosition(position), 1);
+    }
   }
 
   render() {

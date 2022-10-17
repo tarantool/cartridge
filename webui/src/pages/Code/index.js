@@ -1,7 +1,8 @@
 // @flow
-import React from 'react';
+import React, { createRef } from 'react';
 import { connect } from 'react-redux';
 import { css, cx } from '@emotion/css';
+import { memoize } from 'lodash';
 import { core } from '@tarantool.io/frontend-core';
 import {
   Button,
@@ -38,14 +39,15 @@ import type { TreeFileItem } from 'src/store/selectors/filesSelectors';
 
 import noFileIcon from './no-file.png';
 
-const options = {
+const options = memoize((readOnly) => ({
+  readOnly,
   fixedOverflowWidgets: true,
   automaticLayout: true,
   selectOnLineNumbers: true,
   minimap: {
     enabled: false,
   },
-};
+}));
 
 const { AppTitle } = core.components;
 
@@ -149,6 +151,8 @@ type CodeProps = {
 };
 
 class Code extends React.Component<CodeProps, CodeState> {
+  editorRef = createRef();
+
   state = {
     loading: false,
     fileOperationType: null,
@@ -165,14 +169,20 @@ class Code extends React.Component<CodeProps, CodeState> {
     return null;
   }
 
-  async componentDidMount() {
+  componentDidMount() {
     const { dispatch, files } = this.props;
 
     if (files.length > 0) {
       return;
     }
+
     dispatch(fetchConfigFiles(true));
     this.setState({ loading: true });
+    window.addEventListener('keydown', this.handleCtrlF);
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('keydown', this.handleCtrlF);
   }
 
   getFileById = (id: ?string) => this.props.files.find((file) => file.path === id);
@@ -312,6 +322,19 @@ class Code extends React.Component<CodeProps, CodeState> {
     dispatch(validateConfigFiles());
   };
 
+  focusAndFind = () => {
+    if (this.editorRef.current && this.editorRef.current.focusAndFind) {
+      this.editorRef.current.focusAndFind();
+    }
+  };
+
+  handleCtrlF = (event: KeyboardEvent) => {
+    if ((event.ctrlKey || event.metaKey) && event.keyCode === 70) {
+      event.preventDefault();
+      this.focusAndFind();
+    }
+  };
+
   render() {
     const {
       fileTree = [],
@@ -419,12 +442,10 @@ class Code extends React.Component<CodeProps, CodeState> {
             </div>
             {selectedFile ? (
               <MonacoEditor
+                ref={this.editorRef}
                 className={styles.editor}
                 language={(selectedFile && getLanguageByFileName(selectedFile.fileName)) || null}
-                options={{
-                  ...options,
-                  readOnly: !selectedFile,
-                }}
+                options={options(!selectedFile)}
                 fileId={selectedFile ? getFileIdForMonaco(selectedFile.fileId) : null}
                 initialValue={selectedFile ? selectedFile.initialContent : 'Select or add a file'}
                 isContentChanged={selectedFile ? !selectedFile.saved : null}
