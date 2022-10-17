@@ -8,7 +8,7 @@ g.before_all(function()
     g.server = t.Server:new({
         command = helpers.entrypoint('srv_empty'),
         workdir = fio.tempdir(),
-        net_box_port = 13301,
+        net_box_port = 13300,
         net_box_credentials = {user = 'admin', password = ''},
     })
 

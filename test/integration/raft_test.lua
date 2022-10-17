@@ -680,17 +680,6 @@ g_disable.test_raft_is_disabled = function()
 
     t.assert_equals(get_election_cfg(g_disable, 'storage-3'), 'candidate')
 
-    -- g_disable.cluster.main_server:graphql({
-    --     query = [[
-    --         mutation($uuid: String!) {
-    --             expel_server(uuid: $uuid)
-    --         }
-    --     ]],
-    --     variables = {
-    --         uuid = storage_3_uuid,
-    --     }
-    -- })
-
     g_disable.cluster.main_server:exec(function(uuid)
         require('cartridge.lua-api.topology').disable_servers({uuid})
     end, {storage_3_uuid})
