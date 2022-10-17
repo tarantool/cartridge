@@ -680,24 +680,12 @@ g_disable.test_raft_is_disabled = function()
 
     t.assert_equals(get_election_cfg(g_disable, 'storage-3'), 'candidate')
 
-    -- g_disable.cluster.main_server:graphql({
-    --     query = [[
-    --         mutation($uuid: String!) {
-    --             expel_server(uuid: $uuid)
-    --         }
-    --     ]],
-    --     variables = {
-    --         uuid = storage_3_uuid,
-    --     }
-    -- })
-
     g_disable.cluster.main_server:exec(function(uuid)
         require('cartridge.lua-api.topology').disable_servers({uuid})
     end, {storage_3_uuid})
     t.assert_equals(get_election_cfg(g_disable, 'storage-1'), 'off')
     t.assert_equals(get_election_cfg(g_disable, 'storage-2'), 'off')
 end
-
 
 ----------------------------------------------------------------
 
@@ -739,8 +727,10 @@ g_expel.test_raft_is_disabled = function()
 
     t.assert_equals(get_election_cfg(g_expel, 'storage-3'), 'candidate')
 
-    g_expel.cluster:server('storage-1'):call('box.ctl.promote')
-    -- here we call box.ctl.promote manually to promote rw instance
+    g_expel.cluster:retrying({}, function()
+        g_expel.cluster:server('storage-1'):call('box.ctl.promote')
+        -- here we call box.ctl.promote manually to promote rw instance
+    end)
 
     g_expel.cluster.main_server:exec(function(uuid)
         require('cartridge.lua-api.topology').edit_topology({
