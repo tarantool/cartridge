@@ -2,6 +2,7 @@
 
 require('strict').on()
 _G.is_initialized = function() return false end
+_G.__TEST = true
 
 local log = require('log')
 local errors = require('errors')
