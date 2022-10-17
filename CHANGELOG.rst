@@ -53,6 +53,8 @@ Fixed
 
 - Fix ``member_is_healthy`` conditions to prevent send requests to non-role-configured node
 
+- ``vshard-storage`` ``apply_config`` won't change order in ``box.cfg.replication``
+
 -------------------------------------------------------------------------------
 [2.7.6] - 2022-08-22
 -------------------------------------------------------------------------------
