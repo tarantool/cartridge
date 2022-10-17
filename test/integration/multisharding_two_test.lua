@@ -9,7 +9,6 @@ g.before_all = function()
         datadir = fio.tempdir(),
         server_command = helpers.entrypoint('srv_multisharding'),
         cookie = helpers.random_cookie(),
-        use_vshard = true,
         replicasets = {
             {
                 alias = 'storage-hot',
@@ -60,6 +59,12 @@ g.before_all = function()
 
     g.cluster:start()
 
+    local ok, err = pcall(g.cluster.retrying, g.cluster, {}, function()
+        g.cluster:bootstrap_vshard()
+    end)
+    if not ok then
+        t.assert_str_contains(err, 'already bootstrapped')
+    end
     g.server:start()
     t.helpers.retrying({}, function()
         g.server:graphql({query = '{ servers { uri } }'})
