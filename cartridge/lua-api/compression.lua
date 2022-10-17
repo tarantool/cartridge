@@ -103,57 +103,54 @@ function _G.storageGetInfo(params)
 
             if (index ~= nil) and (index["unique"]) and (next(space_format) ~= nil) then
 
-                -- [{"name":"i","type":"number"},{"name":"b","type":"string"}]
-                --if field.type == string {
-                    -- чекаем филды в отдельных таблицах
-                for _, f in space_format:pairs() do
-                    log.info(f)
+                for format_k, format in pairs(space_format) do
+                    if format.type == "string" then
+                        log.error("STRING FIELD")
+
+                        local compressed_len = space_len
+                        if space_len > 10000 then
+                            compressed_len = 10000
+                        end
+
+                        if box.space[space_name..'_compressed'] ~=nil then
+                            log.error("DROP")
+                            box.space[space_name..'_compressed']:drop()
+                        end
+
+                        local compressed_space = box.schema.create_space(space_name..'_compressed', {
+                            temporary = true,
+                            format = space_format,
+                            if_not_exists = true,
+                        })
+
+                        compressed_space:create_index('tree', {
+                            unique = index["unique"],
+                            name = index["name"],
+                            type = index["type"],
+                            --parts = index["parts"], -- TODO
+                            -- Illegal parameters, options.parts[1]: field (name or number) is expected
+                        })
+
+                        compressed_space:format({
+                            {name = 'index', type = 'unsigned'},
+                            {name = 'data', type = 'string', compression = 'lz4'},
+                            -- компрессия только с ентерпрайсом
+                            -- cd ~/sdk
+                            -- . tarantool-enterprise/env.sh
+                        })
+
+                        math.randomseed(os.clock())
+                        for i = 1, space_len do
+                            local rndm = math.random(space_len)-1
+                            local r = index:random(rndm)
+                            log.info("random %d %s, %s", i, r)
+                        end
+
+                        for sk, sv in space:pairs() do
+                            log.info(sv)
+                        end
+                    end
                 end
-
-                local compressed_len = space_len
-                if space_len > 10000 then
-                    compressed_len = 10000
-                end
-
-                if box.space[space_name..'_compressed'] ~=nil then
-                    log.error("DROP")
-                    box.space[space_name..'_compressed']:drop()
-                end
-
-                local compressed_space = box.schema.create_space(space_name..'_compressed', {
-                    temporary = true,
-                    format = space_format,
-                    if_not_exists = true,
-                })
-
-                compressed_space:create_index('tree', {
-                    unique = index["unique"],
-                    name = index["name"],
-                    type = index["type"],
-                    --parts = index["parts"], -- TODO
-                    -- Illegal parameters, options.parts[1]: field (name or number) is expected
-                })
-
-                compressed_space:format({
-                    {name = 'index', type = 'unsigned'},
-                    {name = 'data', type = 'string', compression = 'lz4'},
-                    -- компрессия только с ентерпрайсом
-                    -- cd ~/sdk
-                    -- . tarantool-enterprise/env.sh
-                })
-
-                math.randomseed(os.clock())
-                for i = 1, space_len do
-                    local rndm = math.random(space_len)-1
-                    local r = index:random(rndm)
-                    log.info("random %d %s, %s", i, r)
-                end
-
-            end
-
-            for sk, sv in space:pairs() do
-                log.info(sv)
-
             end
         end
         ::continue::
