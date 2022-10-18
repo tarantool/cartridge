@@ -88,8 +88,20 @@ local function validate_schema_labels(field, object)
     return true
 end
 
+local function labels_match(subset_labels, labels)
+    local subset_included = true
+    for name, value in pairs(subset_labels) do
+        if labels[name] ~= value then
+            subset_included = false
+            break
+        end
+    end
+    return subset_included
+end
+
 return {
     validate_labels = function(...)
         return e_label_config:pcall(validate_schema_labels, ...)
-    end
+    end,
+    labels_match = labels_match,
 }

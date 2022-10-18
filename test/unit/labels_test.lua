@@ -61,3 +61,40 @@ function g.test_labels_error()
     check_error({labels = {["io.tarantool..vshard"] = "1234"}})
     check_error({labels = {["io.tarantool/vshard"] = "1234"}})
 end
+
+function g.test_labels_match()
+    t.assert_equals(
+        label_utils.labels_match({['msk']='dc'}, {['msk']='dc1'}),
+        false, "label value does not match"
+    )
+    t.assert_equals(
+        label_utils.labels_match({['msk1']='dc'}, {['msk2']='dc'}),
+        false, "label name does not match"
+    )
+
+    t.assert_equals(
+        label_utils.labels_match({['msk']='dc'}, {['msk']='dc', ['spb']='dc'}),
+        true, "the right subset of labels is included in the left set"
+    )
+
+    t.assert_equals(
+        label_utils.labels_match({['msk']='dc5'}, {['msk']='dc', ['spb']='dc'}),
+        false, "the right subset of labels is NOT included in the left set"
+    )
+
+    t.assert_equals(
+        label_utils.labels_match(
+            {['msk']='dc', ['spb']='dc', ['nsk']='dc'},
+            {['msk']='dc', ['spb']='dc'}
+        ),
+        false, "the right subset consisting of more label members than the left set"
+    )
+
+    t.assert_equals(
+        label_utils.labels_match(
+            {['msk']='dc', ['spb']='dc'},
+            {['msk']='dc', ['spb']='dc'}
+        ),
+        true, "the right subset of labels is equal to left set"
+    )
+end
