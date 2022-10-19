@@ -435,7 +435,10 @@ end
 
 function g.test_bad_username()
     local function check_conn(conn)
-        t.assert_equals(conn.error, "User 'bad-user' is not found")
+        assertStrOneOf(conn.error, {
+            "User 'bad-user' is not found",
+            "User not found or supplied credentials are invalid"
+        })
         t.assert_equals(conn.state, "error")
     end
 
@@ -454,7 +457,10 @@ end
 
 function g.test_bad_password()
     local function check_conn(conn)
-        t.assert_equals(conn.error, "Incorrect password supplied for user 'superuser'")
+        assertStrOneOf(conn.error, {
+            "Incorrect password supplied for user 'superuser'",
+            "User not found or supplied credentials are invalid"
+	})
         t.assert_equals(conn.state, "error")
     end
 
