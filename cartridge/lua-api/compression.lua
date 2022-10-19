@@ -42,6 +42,11 @@ function string.starts(String, Start)
     return string.sub(String, 1, string.len(Start)) == Start
  end
 
+function string:endswith(ending)
+    return ending == "" or self:sub(-#ending) == ending
+end
+
+
 function _G.storageGetInfo(params)
     log.info("storageGetInfo")
     log.info(params)
@@ -68,16 +73,31 @@ function _G.storageGetInfo(params)
 
             local space_name = space_info[space_info_name_pos]
             log.info(space_name)
+
             -- [myspace, newspace]
-            if space_name == "myspace" then goto continue end
+            --if space_name == "myspace" then
+                --goto continue
+            --end
+            if space_name:endswith('_compressed') then
+                log.error("DROP FROM PREV RUN")
+                box.space[space_name]:drop()
+                goto continue
+            end
+
             local space = box.space[space_name]
 
             local space_len = space:len()
-            log.info("space:len() %d", space_len)
+            log.info("space_len %d", space_len) -- myspace : 4
+            
+            local space_bsize = space:bsize()
+            log.info("space_bsize:")
+            log.error(space_bsize)
 
             local space_format = space:format()
+            log.info("space_format:")
             log.info(space_format)
             -- newspace - пустой формат
+            -- myspace : [{"name":"i","type":"number"},{"name":"b","type":"string"}]
 
             --[[
                 компрессия только с ентерпрайсом
@@ -99,13 +119,17 @@ function _G.storageGetInfo(params)
             ]]--
 
             local index = space.index[0]
-            log.info(space.index)
+            log.info("index:")
+            log.info(index)
+            -- {"unique":true,"parts":[{"type":"unsigned","is_nullable":false,"fieldno":1}],"hint":true,"id":0,"type":"TREE","name":"primary","space_id":513}
 
             if (index ~= nil) and (index["unique"]) and (next(space_format) ~= nil) then
-
+                log.info("iiiiiii")
                 for format_k, format in pairs(space_format) do
+                    log.info("ffffffff")
+                    log.info(format_k)
                     if format.type == "string" then
-                        log.error("STRING FIELD")
+                        log.info("sssssssssss")
 
                         local compressed_len = space_len
                         if space_len > 10000 then
@@ -117,38 +141,55 @@ function _G.storageGetInfo(params)
                             box.space[space_name..'_compressed']:drop()
                         end
 
+                        format.compression = 'lz4'
+                        --[{'name': 'i', 'type': 'number'}, {'name': 'b', 'type': 'string'}]]
+                        local compressed_format = {
+                            -- есть ли в формате описание индекса ?
+                            -- нужно ли в формат добавлять формат индекса
+                            space_format[1], -- тут формат индекса всегда?
+                            format
+                        }
+                        -- является ли первый элемент формата спейса - форматом для индекса[0] ?
+                        -- одинаков ли порядок айтемов в масссиве индексов и в формате?
+                        log.warn("compressed_format:")
+                        log.warn(compressed_format)
+                        -- [{"name":"i","type":"number"},{"name":"b","type":"string"}]
+
                         local compressed_space = box.schema.create_space(space_name..'_compressed', {
                             temporary = true,
-                            format = space_format,
+                            format = compressed_format,
                             if_not_exists = true,
                         })
+                        log.info("comressed space created")
 
-                        compressed_space:create_index('tree', {
+                        compressed_space:create_index(index["name"], {
                             unique = index["unique"],
-                            name = index["name"],
                             type = index["type"],
-                            --parts = index["parts"], -- TODO
-                            -- Illegal parameters, options.parts[1]: field (name or number) is expected
+                            parts = { {
+                                type = "unsigned",
+                                is_nullable = false,
+                                field = 1,
+                            } },
                         })
-
-                        compressed_space:format({
-                            {name = 'index', type = 'unsigned'},
-                            {name = 'data', type = 'string', compression = 'lz4'},
-                            -- компрессия только с ентерпрайсом
-                            -- cd ~/sdk
-                            -- . tarantool-enterprise/env.sh
-                        })
+                        log.info("index created %s", index["name"])
 
                         math.randomseed(os.clock())
                         for i = 1, space_len do
                             local rndm = math.random(space_len)-1
-                            local r = index:random(rndm)
-                            log.info("random %d %s, %s", i, r)
+                            local tuple = index:random(rndm)
+                            log.info("random %d %s", i, tuple)
+                            compressed_space:insert{i, tuple[format_k]}
+                            --compressed_space:insert(tuple)
+                            -- index no не равен оригинальному
                         end
 
-                        for sk, sv in space:pairs() do
-                            log.info(sv)
-                        end
+                        local compressed_space_bsize = compressed_space:bsize()
+                        log.info("compressed_space bsize:")
+                        log.error(compressed_space_bsize)
+
+                        --for sk, sv in space:pairs() do
+                        --    log.info(sv)
+                        --end
                     end
                 end
             end
