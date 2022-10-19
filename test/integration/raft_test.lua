@@ -728,8 +728,8 @@ g_expel.test_raft_is_disabled = function()
     t.assert_equals(get_election_cfg(g_expel, 'storage-3'), 'candidate')
 
     g_expel.cluster:retrying({}, function()
-        g_expel.cluster:server('storage-1'):call('box.ctl.promote')
-        -- here we call box.ctl.promote manually to promote rw instance
+        g_expel.cluster:server('storage-2'):call('box.ctl.promote')
+        -- here we call box.ctl.promote manually to change queue owner
     end)
 
     g_expel.cluster.main_server:exec(function(uuid)
@@ -741,11 +741,37 @@ g_expel.test_raft_is_disabled = function()
         })
     end, {storage_3_uuid})
 
+    -- after expelling, we have:
+    -- storage-1: new leader, failover disabled
+    -- storage-2: ex-leader, ex-queue-owner
+    -- storage-3: expelled
     g_expel.cluster:retrying({}, function()
         t.assert_equals(get_election_cfg(g_expel, 'storage-1'), 'off')
         t.assert_equals(get_election_cfg(g_expel, 'storage-2'), 'off')
+        t.assert(pcall(function()
+            g_expel.cluster:server('storage-1'):exec(function()
+                assert(box.info.ro == false)
+                assert(box.space._cluster:count() == 2)
+            end)
+        end))
     end)
 
+    g_expel.cluster:server('storage-1'):restart()
+    g_expel.cluster:server('storage-2'):restart()
+
+    g_expel.cluster:wait_until_healthy()
+
+    -- check that nothing has changed after restart
+    g_expel.cluster:retrying({}, function()
+        t.assert_equals(get_election_cfg(g_expel, 'storage-1'), 'off')
+        t.assert_equals(get_election_cfg(g_expel, 'storage-2'), 'off')
+        t.assert(pcall(function()
+            g_expel.cluster:server('storage-1'):exec(function()
+                assert(box.info.ro == false)
+                assert(box.space._cluster:count() == 2)
+            end)
+        end))
+    end)
 end
 
 ----------------------------------------------------------------
