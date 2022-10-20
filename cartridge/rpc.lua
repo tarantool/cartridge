@@ -87,8 +87,9 @@ end
 --   and its SWIM status is either `alive` or `suspect`
 --   (added in v1.1.0-11, default: **true**)
 -- @tparam ?table opts.labels
---   Filter instances that have the specified labels
---   Example: {['msk'] = 'dc'}
+--   Filter instances that have the specified labels. Adding labels is possible via the
+--   edit_topology method or via graphql
+--   Example: rpc.get_candidates('role', { labels = {['msk'] = 'dc'} })
 --
 -- @treturn[1] {string,...} URIs
 local function get_candidates(role_name, opts)
@@ -231,8 +232,9 @@ end
 --   Conflicts with `opts.leader_only = true`.
 --   (added in v1.2.0-63)
 -- @tparam ?table opts.labels
---   Filter instances that have the specified labels
---   Example: {['msk'] = 'dc'}
+--   Filter instances that have the specified labels. Adding labels is possible via the
+--   edit_topology method or via graphql.
+--   Example: rpc.call('role', 'func', {}, { labels = { ['msk'] = 'dc' } })
 -- @param opts.remote_only (*deprecated*) Use `prefer_local` instead.
 -- @param opts.timeout passed to `net.box` `conn:call` options.
 -- @param opts.buffer passed to `net.box` `conn:call` options.
