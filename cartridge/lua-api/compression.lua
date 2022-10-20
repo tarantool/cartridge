@@ -116,6 +116,7 @@ function _G.storageGetInfo(params)
 
 
                 tarantoolctl connect admin:@127.0.0.1:3302
+                box.space.myspace:insert{123, "qwe"}
             ]]--
 
             local index = space.index[0]
@@ -125,11 +126,37 @@ function _G.storageGetInfo(params)
 
             if (index ~= nil) and (index["unique"]) and (next(space_format) ~= nil) then
                 log.info("iiiiiii")
+
+                local index_format = {} -- формат сложного индекса
+                local index_parts = {} -- для индекса нового спейса в create_index
+                for part_k, part in pairs(index.parts) do
+                    table.insert(index_format, space_format[part.fieldno])
+
+                    table.insert(index_parts, {
+                        field = part_k,
+                        type = part.type,
+                    })
+                end
+                log.info("index_format:")
+                log.info(index_format)
+
+                log.info("index_parts:")
+                log.info(index_parts)
+
                 for format_k, format in pairs(space_format) do
                     log.info("ffffffff")
                     log.info(format_k)
-                    if format.type == "string" then
+                    local field_in_index = false
+                    for _, part in pairs(index.parts) do
+                        if part.fieldno == format_k then
+                            field_in_index = true
+                            log.warn("skip %d", format_k)
+                        end
+                    end
+
+                    if not field_in_index and format.type == "string" then
                         log.info("sssssssssss")
+                        format.compression = 'zstd' -- zstd lz4
 
                         local compressed_len = space_len
                         if space_len > 10000 then
@@ -137,23 +164,17 @@ function _G.storageGetInfo(params)
                         end
 
                         if box.space[space_name..'_compressed'] ~=nil then
-                            log.error("DROP")
+                            log.error("pre DROP")
                             box.space[space_name..'_compressed']:drop()
                         end
 
-                        format.compression = 'lz4'
-                        --[{'name': 'i', 'type': 'number'}, {'name': 'b', 'type': 'string'}]]
-                        local compressed_format = {
-                            -- есть ли в формате описание индекса ?
-                            -- нужно ли в формат добавлять формат индекса
-                            space_format[1], -- тут формат индекса всегда?
-                            format
-                        }
-                        -- является ли первый элемент формата спейса - форматом для индекса[0] ?
-                        -- одинаков ли порядок айтемов в масссиве индексов и в формате?
+                        local compressed_format = {}
+                        for _, f in pairs(index_format) do
+                            table.insert(compressed_format, f)
+                        end
+                        table.insert(compressed_format, format)
                         log.warn("compressed_format:")
                         log.warn(compressed_format)
-                        -- [{"name":"i","type":"number"},{"name":"b","type":"string"}]
 
                         local compressed_space = box.schema.create_space(space_name..'_compressed', {
                             temporary = true,
@@ -165,27 +186,32 @@ function _G.storageGetInfo(params)
                         compressed_space:create_index(index["name"], {
                             unique = index["unique"],
                             type = index["type"],
-                            parts = { {
-                                type = "unsigned",
-                                is_nullable = false,
-                                field = 1,
-                            } },
+                            parts = index_parts,
                         })
                         log.info("index created %s", index["name"])
+                        log.info(compressed_space.index[0])
 
-                        math.randomseed(os.clock())
-                        for i = 1, space_len do
-                            local rndm = math.random(space_len)-1
-                            local tuple = index:random(rndm)
-                            log.info("random %d %s", i, tuple)
-                            compressed_space:insert{i, tuple[format_k]}
-                            --compressed_space:insert(tuple)
-                            -- index no не равен оригинальному
+                        local seed = 0
+                        local compressed_i = 1
+                        while compressed_i <= compressed_len do
+                            seed = seed + 1
+                            local tuple = index:random(seed)
+                            local exist = compressed_space:get{tuple[1]}
+                            if exist == nil then
+                                log.info("insert %d %d", compressed_i, tuple[1])
+                                compressed_space:insert{tuple[1], tuple[format_k]}
+                                compressed_i = compressed_i+1
+                            end
                         end
 
                         local compressed_space_bsize = compressed_space:bsize()
                         log.info("compressed_space bsize:")
                         log.error(compressed_space_bsize)
+
+                        if box.space[space_name..'_compressed'] ~=nil then
+                            log.error("DROP after")
+                            box.space[space_name..'_compressed']:drop()
+                        end
 
                         --for sk, sv in space:pairs() do
                         --    log.info(sv)
