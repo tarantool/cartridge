@@ -28,11 +28,13 @@ g.before_all = function()
                         instance_uuid = helpers.uuid('b', 'b', 1),
                         advertise_port = 13302,
                         http_port = 8082,
+                        labels = {{name = 'spb', value = 'dc'}}
                     },{
                         alias = 'B2',
                         instance_uuid = helpers.uuid('b', 'b', 2),
                         advertise_port = 13303,
                         http_port = 8083,
+                        labels = {{name = 'spb', value = 'dc'}, {name = 'meta', value = 'runner'}}
                     }
                 }
             }
@@ -163,6 +165,34 @@ function g.test_routing()
     t.assert_equals(res.uuid, B1.instance_uuid)
     t.assert_not_equals(res.peer, B1:call('box.session.peer'))
 
+    -- Test opts.labels with one label
+    --------------------------------------------------------------------
+    local res, err = rpc_call(B1,
+        'myrole', 'get_session', nil,
+        {labels = {['meta'] = 'runner'}}
+    )
+    t.assert_not(err)
+    t.assert_equals(res.uuid, B2.instance_uuid)
+
+    -- Test opts.labels with two labels
+    --------------------------------------------------------------------
+    local res, err = rpc_call(B1,
+        'myrole', 'get_session', nil,
+        {labels = {['spb'] = 'dc', ['meta'] = 'runner'}}
+    )
+    t.assert_not(err)
+    t.assert_equals(res.uuid, B2.instance_uuid)
+
+    -- Test opts.leader_only and opts.labels
+    --------------------------------------------------------------------
+    local res, err = rpc_call(B2,
+        'myrole', 'get_session', nil,
+        {labels = {['spb'] = 'dc'}, leader_only = true}
+    )
+    t.assert_not(err)
+    t.assert_equals(res.master, true)
+    t.assert_equals(res.uuid, B1.instance_uuid)
+
     -- Test opts.leader_only
     --------------------------------------------------------------------
     local res, err = rpc_call(B2,
@@ -206,10 +236,18 @@ function g.test_routing()
 
     t.assert_error_msg_contains(
         'bad argument opts.uri to rpc_call' ..
-        ' (conflicts with opts.leader_only=true)',
+        ' (conflicts with opts.leader_only=true or opts.labels={...})',
         rpc_call, B2,
         'myrole', 'void', nil,
         {uri = B2.advertise_uri, leader_only = true}
+    )
+
+    t.assert_error_msg_contains(
+        'bad argument opts.uri to rpc_call' ..
+        ' (conflicts with opts.leader_only=true or opts.labels={...})',
+        rpc_call, B2,
+        'myrole', 'void', nil,
+        {uri = B2.advertise_uri, labels = {}}
     )
 end
 

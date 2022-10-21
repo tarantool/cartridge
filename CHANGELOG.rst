@@ -41,6 +41,14 @@ Added
 
 - ``O_SYNC`` flag for ClusterwideConfig.save.
 
+- Introduced way to filter instances by labels in rpc calls.
+  You can mark certain instances with the same role with different labels,
+  and then make an rpc call with label. Adding labels is possible via the
+  edit_topology method or via graphql.
+  ``rpc.call('role', 'func', {}, { labels = { ['msk'] = 'dc' } })``
+  ``rpc.get_candidates('role', { labels = { ['msk'] = 'dc', ['meta'] = 'runner' } })``
+  ``rpc.get_connection('role', { labels = { ['msk'] = 'dc' } })``
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Fixed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

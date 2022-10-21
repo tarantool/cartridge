@@ -16,6 +16,7 @@ local failover = require('cartridge.failover')
 local confapplier = require('cartridge.confapplier')
 local twophase = require('cartridge.twophase')
 local service_registry = require('cartridge.service-registry')
+local label_utils = require('cartridge.label-utils')
 
 local RemoteCallError = errors.new_class('RemoteCallError')
 
@@ -85,6 +86,10 @@ end
 --   it reports either `ConfiguringRoles` or `RolesConfigured` state
 --   and its SWIM status is either `alive` or `suspect`
 --   (added in v1.1.0-11, default: **true**)
+-- @tparam ?table opts.labels
+--   Filter instances that have the specified labels. Adding labels is possible via the
+--   edit_topology method or via graphql
+--   Example: rpc.get_candidates('role', { labels = {['msk'] = 'dc'} })
 --
 -- @treturn[1] {string,...} URIs
 local function get_candidates(role_name, opts)
@@ -95,7 +100,8 @@ local function get_candidates(role_name, opts)
 
     checks('string', {
         leader_only = '?boolean',
-        healthy_only = '?boolean'
+        healthy_only = '?boolean',
+        labels = '?table'
     })
 
     local topology_cfg = confapplier.get_readonly('topology')
@@ -118,6 +124,7 @@ local function get_candidates(role_name, opts)
         if roles.get_enabled_roles(replicaset.roles)[role_name]
         and (not opts.healthy_only or member_is_healthy(server.uri, instance_uuid))
         and (not opts.leader_only or active_leaders[replicaset_uuid] == instance_uuid)
+        and (not opts.labels or label_utils.labels_match(opts.labels, server.labels))
         then
             table.insert(candidates, server.uri)
         end
@@ -138,6 +145,7 @@ end
 -- @tparam[opt] table opts
 -- @tparam ?boolean opts.prefer_local
 -- @tparam ?boolean opts.leader_only
+-- @tparam ?table opts.labels
 --
 -- @return[1] `net.box` connection
 -- @treturn[2] nil
@@ -147,9 +155,10 @@ local function get_connection(role_name, opts)
     checks('string', {
         prefer_local = '?boolean',
         leader_only = '?boolean',
+        labels = '?table',
     })
 
-    local candidates = get_candidates(role_name, {leader_only = opts.leader_only})
+    local candidates = get_candidates(role_name, {leader_only = opts.leader_only, labels = opts.labels})
     if next(candidates) == nil then
         return nil, RemoteCallError:new('No remotes with role %q available', role_name)
     end
@@ -222,6 +231,10 @@ end
 --   Disregards member status and `opts.prefer_local`.
 --   Conflicts with `opts.leader_only = true`.
 --   (added in v1.2.0-63)
+-- @tparam ?table opts.labels
+--   Filter instances that have the specified labels. Adding labels is possible via the
+--   edit_topology method or via graphql.
+--   Example: rpc.call('role', 'func', {}, { labels = { ['msk'] = 'dc' } })
 -- @param opts.remote_only (*deprecated*) Use `prefer_local` instead.
 -- @param opts.timeout passed to `net.box` `conn:call` options.
 -- @param opts.buffer passed to `net.box` `conn:call` options.
@@ -236,6 +249,7 @@ local function call_remote(role_name, fn_name, args, opts)
     checks('string', 'string', '?table', {
         prefer_local = '?boolean',
         leader_only = '?boolean',
+        labels = '?table',
         remote_only = '?boolean', -- deprecated
         uri = '?string',
         timeout = '?', -- for net.box.call
@@ -244,9 +258,9 @@ local function call_remote(role_name, fn_name, args, opts)
         on_push_ctx = '?', -- for net.box.call
     })
 
-    if opts.uri ~= nil and opts.leader_only then
+    if opts.uri ~= nil and (opts.leader_only or opts.labels) then
         local err = "bad argument opts.uri to rpc_call" ..
-            " (conflicts with opts.leader_only=true)"
+            " (conflicts with opts.leader_only=true or opts.labels={...})"
         error(err, 2)
     end
 
@@ -282,6 +296,7 @@ local function call_remote(role_name, fn_name, args, opts)
         conn, err = get_connection(role_name, {
             prefer_local = prefer_local,
             leader_only = leader_only,
+            labels = opts.labels,
         })
     end
 
