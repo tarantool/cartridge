@@ -66,9 +66,12 @@ local function get_params()
     --   (added in v2.3.0-57)
     --   The period (in seconds) of performing the check
     --   (default: 2)
-    return topology.get_failover_params(
+    local failover_params = topology.get_failover_params(
         confapplier.get_readonly('topology')
     )
+    failover_params.tarantool_params.password = "******"
+    failover_params.etcd2_params.password = "******"
+    return failover_params
 end
 
 --- Configure automatic failover.

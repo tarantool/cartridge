@@ -244,7 +244,7 @@ describe('Failover', () => {
     cy.get('.meta-test__StateProvider__Dropdown *:contains(Tarantool (stateboard))');
     cy.get('.meta-test__StateProvider__Dropdown *:contains(Etcd)');
     cy.get('.meta-test__stateboardURI input').should('have.value', 'tcp://localhost:4401');
-    cy.get('.meta-test__stateboardPassword input').should('have.value', '');
+    cy.get('.meta-test__stateboardPassword input').should('have.value', '******');
     //error failover_timeout must be greater than fencing_timeout
     cy.get('.meta-test__SubmitButton').click();
     cy.get('.meta-test__inlineError span').should(
@@ -358,7 +358,7 @@ describe('Failover', () => {
     cy.get('.meta-test__ClusterIssuesModal').contains("Consistency on localhost:13301 (dummy-1) isn't reached yet");
     cy.testElementScreenshots('ClusterIssuesModal', 'div.meta-test__ClusterIssuesModal');
 
-    cy.get('.meta-test__ClusterIssuesModal > svg').click();
+    cy.get('.meta-test__ClusterIssuesModal').find('svg').click();
 
     //Update faileover cypress tests #1456 for disable mode from console
     modeDisable();
@@ -383,8 +383,7 @@ describe('Failover', () => {
     cy.get('.meta-test__fencingPause input').should('have.value', '1');
     cy.get('.meta-test__stateProviderChoice input').should('have.value', 'Tarantool (stateboard)');
     cy.get('.meta-test__stateboardURI input').should('have.value', 'tcp://localhost:4402');
-    cy.get('.meta-test__stateboardPassword svg').click();
-    cy.get('.meta-test__stateboardPassword input').should('have.value', '123456');
+    cy.get('.meta-test__stateboardPassword input').should('have.value', '******');
     cy.get('.meta-test__CancelButton').click();
 
     ////////////////////////////////////////////////////////////////////
@@ -404,8 +403,7 @@ describe('Failover', () => {
     cy.get('.meta-test__etcd2Endpoints textarea').should('have.value', 'http://127.0.0.1:4002');
     cy.get('.meta-test__etcd2Prefix input').should('have.value', '/*');
     cy.get('.meta-test__etcd2Username input').should('have.value', 'admin');
-    cy.get('.meta-test__etcd2Password svg').click();
-    cy.get('.meta-test__etcd2Password input').should('have.value', '123456');
+    cy.get('.meta-test__etcd2Password input').should('have.value', '******');
     cy.get('.meta-test__CancelButton').click();
   });
 });

@@ -5,7 +5,7 @@ import { useStore } from 'effector-react';
 import { FormikProps, withFormik } from 'formik';
 // @ts-ignore
 // prettier-ignore
-import { Alert, Button, Checkbox, FormField, InputPassword, LabeledInput, Modal, Select, Spin, Tabbed, Text, TextArea } from '@tarantool.io/ui-kit';
+import { Alert, Button, Checkbox, FormField, LabeledInput, Modal, Select, Spin, Tabbed, Text, TextArea } from '@tarantool.io/ui-kit';
 
 import { FAILOVER_STATE_PROVIDERS } from 'src/constants';
 import { app, cluster } from 'src/models';
@@ -350,11 +350,11 @@ const FailoverModalFormForm = ({
                   name="tarantool_params.password"
                   className={styles.inputField}
                   label="Password"
-                  inputComponent={InputPassword}
                   inputClassName="meta-test__stateboardPassword"
                   error={Boolean(errors.tarantool_params?.password)}
                   message={errors.tarantool_params?.password}
                   value={values.tarantool_params.password}
+                  type="password"
                   onChange={handleChange}
                 />
               </div>
