@@ -62,6 +62,8 @@ In the ``eventual`` mode, the leader isn't elected consistently. Instead, every
 instance in the cluster thinks that the leader is the first **healthy** instance
 in the failover priority list, while instance health is determined according to
 the membership status (the SWIM protocol).
+**Not recommended** to use on large clusters in production. If you have highload
+production cluster, use stateful failover with ``etcd`` instead.
 
 The member is considered healthy if both are true:
 
@@ -110,8 +112,6 @@ be suppressed) and ``failover_suppress_timeout`` (time in seconds, if failover
 triggers more than ``failover_suppress_threshold``, it'll be suppressed and
 released after ``failover_suppress_timeout`` sec).
 
-
-
 ..  _cartridge-stateful_failover:
 
 *******************************************************************************
@@ -158,6 +158,24 @@ algorithm is slightly different from that in case of eventual failover:
 * Every appointment (self-made or fetched) is immune for a while
   (controlled by the ``IMMUNITY_TIMEOUT`` option).
 
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Case: external provider outage
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In this case instances do nothing: the leader remains a leader,
+read-only instances remain read-only. If any instance restarts during an
+external state provider outage, it composes an empty leadership map:
+it doesn't know who actually is a leader and thinks there is none.
+
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Case: coordinator outage
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+An active coordinator may be absent in a cluster either because of a failure
+or due to disabling the role everywhere. Just like in the previous case,
+instances do nothing about it: they keep fetching the leadership map from the
+state provider. But it will remain the same until a coordinator appears.
+
 ..  _cartridge-raft_failover:
 
 *******************************************************************************
@@ -177,24 +195,6 @@ and can't be enabled with ``ALL_RW`` replicasets.
 
 Note that Raft failover in Cartridge is in beta.
 Don't use it in production.
-
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Case: external provider outage
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-In this case instances do nothing: the leader remains a leader,
-read-only instances remain read-only. If any instance restarts during an
-external state provider outage, it composes an empty leadership map:
-it doesn't know who actually is a leader and thinks there is none.
-
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Case: coordinator outage
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-An active coordinator may be absent in a cluster either because of a failure
-or due to disabling the role everywhere. Just like in the previous case,
-instances do nothing about it: they keep fetching the leadership map from the
-state provider. But it will remain the same until a coordinator appears.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Manual leader promotion
@@ -317,6 +317,9 @@ read-only. Subsequent recovery is only possible when the quorum
 reestablishes; replica connection isn't a must for recovery. Recovery is
 performed according to the rules of consistent switchover unless some
 other instance has already been promoted to a new leader.
+
+Raft failover supports fencing too. Check ``election_fencing_mode`` parameter
+of ``box.cfg{}``
 
 ..  _failover-configuration:
 

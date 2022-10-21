@@ -53,7 +53,7 @@ Bootstraping from an existing cluster (optional)
 
 You can bootstrap a cluster from an existing cluster (*original* cluster in the example
 below) via the argparse option ``TARANTOOL_BOOTSTRAP_FROM`` or ``--bootstrap_from``
-in the following form: 
+in the following form:
 ``TARANTOOL_BOOTSTRAP_FROM=admin:SECRET-ORIGINAL-CLUSTER-COOKIE@HOST:MASTER_PORT``.
 That option should be present on each instance in replicasets of the target cluster.
 Make sure that you've prepared a valid configuration for the target cluster.
@@ -152,7 +152,7 @@ In the web interface, do the following:
     *   If enabled (in production), enter your credentials and click
         **Login**:
 
-        ..  image:: images/auth_creds-border-5px.png
+        ..  image:: images/auth_creds.png
             :align: left
             :scale: 40%
 
@@ -164,7 +164,7 @@ In the web interface, do the following:
 #.  Click **Сonfigure** next to the first unconfigured server to create the first
     replica set -- solely for the router (intended for *compute-intensive* workloads).
 
-    ..  image:: images/unconfigured-router-border-5px.png
+    ..  image:: images/unconfigured-router.png
         :align: left
         :scale: 40%
 
@@ -176,7 +176,7 @@ In the web interface, do the following:
 
     (Optional) Specify a display name for the replica set, for example ``router``.
 
-    ..  image:: images/create-router-border-5px.png
+    ..  image:: images/create-router.png
         :align: left
         :scale: 40%
 
@@ -191,7 +191,7 @@ In the web interface, do the following:
     Click **Create replica set** and see the newly-created replica set
     in the web interface:
 
-    ..  image:: images/router-replica-set-border-5px.png
+    ..  image:: images/router-replica-set.png
         :align: left
         :scale: 40%
 
@@ -220,7 +220,7 @@ In the web interface, do the following:
 
     Click **Create replica set**.
 
-    ..  image:: images/create-storage-border-5px.png
+    ..  image:: images/create-storage.png
         :align: left
         :scale: 40%
 
@@ -237,7 +237,7 @@ In the web interface, do the following:
     #.  Select the second replica set, and click **Join replica set** to
         add the server to it.
 
-        ..  image:: images/join-storage-border-5px.png
+        ..  image:: images/join-storage.png
             :align: left
             :scale: 40%
 
@@ -251,7 +251,7 @@ In the web interface, do the following:
 
     For example:
 
-    ..  image:: images/final-cluster-border-5px.png
+    ..  image:: images/final-cluster.png
         :align: left
         :scale: 40%
 
@@ -270,7 +270,7 @@ In the web interface, do the following:
     **Edit** next to a replica set, change its default weight, and click
     **Save**:
 
-    ..  image:: images/change-weight-border-5px.png
+    ..  image:: images/change-weight.png
         :align: left
         :scale: 40%
 
@@ -285,6 +285,12 @@ In the web interface, do the following:
     This command creates virtual buckets and distributes them among storages.
 
     From now on, all cluster configuration can be done via the web interface.
+
+    ..  image:: images/bootstrap-vshard.png
+        :align: left
+        :scale: 40%
+
+    |nbsp|
 
 .. _cartridge-ui-configuration:
 
@@ -374,7 +380,7 @@ To populate the cluster with more nodes, do the following:
     If new nodes do not appear in the Web interface, click **Probe server** and
     specify their URIs manually.
 
-    ..  image:: images/probe-server-border-5px.png
+    ..  image:: images/probe-server.png
         :align: left
         :scale: 40%
 
@@ -394,7 +400,7 @@ To populate the cluster with more nodes, do the following:
             all such instances get a ``0`` weight by default after the ``vshard``
             bootstrap which happened during the initial cluster deployment.
 
-            ..  image:: images/zero-border-5px.png
+            ..  image:: images/zero.png
                 :align: left
                 :scale: 40%
 
@@ -502,7 +508,7 @@ To deactivate a set, do the following:
 
 #.  Set its weight to ``0`` and click **Save**:
 
-    ..  image:: images/zero-weight-border-5px.png
+    ..  image:: images/zero-weight.png
         :align: left
         :scale: 40%
 
@@ -527,7 +533,7 @@ every instance will reject it.
 To expel an instance, click **...** next to it, then click **Expel server** and
 **Expel**:
 
-..  image:: images/expelling-instance-border-5px.png
+..  image:: images/expelling-instance.png
     :align: left
     :scale: 40%
 
@@ -549,10 +555,44 @@ Enabling automatic failover
 
 In a master-replica cluster configuration with automatic failover enabled, if
 the user-specified master of any replica set fails, the cluster automatically
-chooses the next replica from the priority list and grants it the active master
-role (read/write). When the failed master comes back online, its role is
-restored and the active master, again, becomes a replica (read-only). This works
-for any roles.
+chooses one of replica from the priority list and grants it the active master
+role (read/write). To learn more about details of failover work, see **LINK**
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Failover disabled (default)
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+The leader is the first instance according to topology configuration.
+No automatic decisions are taken. You can manually change leader in failover
+priority list or call ``box.cfg{read_only = false}`` on any instance.
+
+To disable it:
+
+#.  Click **Failover**:
+
+    ..  image:: images/failover-button.png
+        :align: left
+        :scale: 40%
+
+    |nbsp|
+
+#.  In the **Failover control** box, click **Disabled**:
+
+    ..  image:: images/failover-disabled.png
+        :align: left
+        :scale: 40%
+
+    |nbsp|
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Eventual failover (not recommended for production)
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+The leader isn’t elected consistently. Every instance thinks the leader is the
+first healthy server in the replicaset. The instance health is determined
+according to the membership status (the SWIM protocol).
+**Not recommended** to use on large clusters in production. If you have highload
+production cluster, use stateful failover with ``etcd`` instead.
 
 To set the priority in a replica set:
 
@@ -563,53 +603,129 @@ To set the priority in a replica set:
 
 #.  Drag replicas to their place in the priority list, and click **Save**:
 
-    ..  image:: images/failover-priority-border-5px.png
+    ..  image:: images/failover-priority.png
         :align: left
         :scale: 40%
 
     |nbsp|
 
-The failover is disabled by default. To enable it:
+To enable it:
 
 #.  Click **Failover**:
 
-    ..  image:: images/failover-border-5px.png
+    ..  image:: images/failover-button.png
         :align: left
         :scale: 40%
 
     |nbsp|
 
-#.  In the **Failover control** box, click **Enable**:
+#.  In the **Failover control** box, click **Eventual**:
 
-    ..  image:: images/failover-control-border-5px.png
+    ..  image:: images/failover-eventual.png
         :align: left
         :scale: 40%
 
     |nbsp|
 
-The failover status will change to enabled:
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Stateful failover
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-..  image:: images/enabled-failover-border-5px.png
+Leader appointments are polled from the external state provider.
+Decisions are taken by one of the instances with the ``failover-coordinator``
+role enabled. There are two options of external state provider:
+
+- Tarantool Stateboard - you need to run instance of stateboard with command
+  ``tarantool stateboard.init.lua``. Not recommended to use on large clusters
+  in production. If you have highload production cluster, use stateful failover
+  with ``etcd`` instead.
+
+- etcd v2 - you need to run and configure etcd cluster. Note that **only etcd v2
+  is supported**.
+
+To enable it:
+
+#.  Run stateboard or etcd
+
+#.  Click **Failover**:
+
+    ..  image:: images/failover-button.png
+        :align: left
+        :scale: 40%
+
+    |nbsp|
+
+#.  In the **Failover control** box, click **Stateful**:
+
+    ..  image:: images/failover-stateful.png
+        :align: left
+        :scale: 40%
+
+    |nbsp|
+
+#.  Check necessary parameters.
+
+
+In this mode you can choose leader by "promote a leader" button in WebUI (or
+GraphQL request).
+
+..  image:: images/failover-promote.png
     :align: left
     :scale: 40%
 
 |nbsp|
 
-For more information, see the
-`replication section <https://www.tarantool.io/en/doc/latest/book/replication/>`__
-of the Tarantool manual.
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Raft failover (beta)
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+The replicaset leader is chosen by built-in Raft, then the other replicasets
+get information about leader change from membership.
+Raft parameters can be configured by environment variables.
+
+To enable it:
+
+#.  Make sure that your Tarantool version higher than 2.10.0
+
+#.  Click **Failover**:
+
+    ..  image:: images/failover-button.png
+        :align: left
+        :scale: 40%
+
+    |nbsp|
+
+#.  In the **Failover control** box, click **Raft**:
+
+    ..  image:: images/failover-raft.png
+        :align: left
+        :scale: 40%
+
+    |nbsp|
+
+#.  Check necessary parameters.
+
+
+In this mode you can choose leader by "promote a leader" button in WebUI (or
+GraphQL request or manual call ``box.ctl.promote``).
+
+..  image:: images/failover-promote.png
+    :align: left
+    :scale: 40%
+
+|nbsp|
 
 .. _cartridge-switch-master:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Switching the replica set's master
+Changing failover priority list
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To manually switch the master in a replica set:
+To change failover priority list:
 
 #.  Click the **Edit** button next to the replica set in question:
 
-    ..  image:: images/edit-replica-set-border-5px.png
+    ..  image:: images/edit-replica-set.png
         :align: left
         :scale: 40%
 
@@ -618,7 +734,7 @@ To manually switch the master in a replica set:
 #.  Scroll to the bottom of the **Edit replica set** box to see the list of
     servers. The server on the top is the master.
 
-    ..  image:: images/switch-master-border-5px.png
+    ..  image:: images/switch-master.png
         :align: left
         :scale: 40%
 
@@ -626,8 +742,8 @@ To manually switch the master in a replica set:
 
 #.  Drag a required server to the top position and click **Save**.
 
-The new master will automatically enter the read/write mode, while the ex-master
-will become read-only. This works for any roles.
+In case of eventual failover the new master will automatically enter the
+read/write mode, while the ex-master will become read-only. This works for any roles.
 
 .. _cartridge-users:
 
@@ -638,7 +754,7 @@ Managing users
 On the **Users** tab, you can enable/disable authentication as well as add,
 remove, edit, and view existing users who can access the web interface.
 
-..  image:: images/users-tab-border-5px.png
+..  image:: images/users-tab.png
     :align: left
     :scale: 60%
 
@@ -718,11 +834,19 @@ Connecting to nodes via CLI
 Each Tarantool node (``router``/``storage``) provides an administrative console
 (Command Line Interface) for debugging, monitoring, and troubleshooting. The
 console acts as a Lua interpreter and displays the result in the human-readable
-YAML format. To connect to a Tarantool instance via the console, say:
+YAML format. To connect to a Tarantool instance via the console, you can choose
+one of the commands:
 
 ..  code-block:: bash
 
+    # old-fashioned way
     $ tarantoolctl connect <instance_hostname>:<port>
+
+    # if you have cartridge-cli installed
+    $ cartridge connect <instance_hostname>:<port>
+
+    # if you ran Cartridge locally
+    $ cartridge enter <node_name>
 
 where the ``<instance_hostname>:<port>`` is the instance's URI.
 
