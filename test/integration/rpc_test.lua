@@ -165,6 +165,15 @@ function g.test_routing()
     t.assert_equals(res.uuid, B1.instance_uuid)
     t.assert_not_equals(res.peer, B1:call('box.session.peer'))
 
+    -- Test opts.labels with non-existent label
+    --------------------------------------------------------------------
+    local res, err = rpc_call(B1, 'myrole', 'void', nil, {labels = {['meta'] = 'unknown'}})
+    t.assert_not(res)
+    t.assert_covers(err, {
+        class_name = 'RemoteCallError',
+        err = 'No remotes with role "myrole" and labels {"meta":"unknown"} available'
+    })
+
     -- Test opts.labels with one label
     --------------------------------------------------------------------
     local res, err = rpc_call(B1,
