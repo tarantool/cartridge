@@ -46,7 +46,6 @@ function string:endswith(ending)
     return ending == "" or self:sub(-#ending) == ending
 end
 
-
 function _G.getStorageCompressionInfo(server_info)
     log.info("getStorageCompressionInfo")
     log.info(server_info)
@@ -60,7 +59,7 @@ function _G.getStorageCompressionInfo(server_info)
             log.warn(space_info)
 
             local space_name = space_info[space_info_name_pos]
-            if space_name:endswith('_compressed') then -- debug
+            if space_name:endswith('_compressed') or space_name:endswith('_uncompressed') then -- debug
                 log.error("DROP FROM PREV RUN")
                 box.space[space_name]:drop()
                 goto continue
@@ -75,15 +74,11 @@ function _G.getStorageCompressionInfo(server_info)
             end
 
             local space_format = space:format()
-            -- newspace - пустой формат
-            -- myspace : [{"name":"i","type":"number"},{"name":"b","type":"string"}]
             local index = space.index[0]
-            -- myspace: {"unique":true,"parts":[{"type":"unsigned","is_nullable":false,"fieldno":1}],"hint":true,"id":0,"type":"TREE","name":"primary","space_id":513}
 
             if (index ~= nil) and (index["unique"]) and (next(space_format) ~= nil) then
-                -- TODO нужно сделать две идентичные таблицы но одна сжатая
-                local index_format = {} -- формат сложного индекса
-                local index_parts = {} -- для индекса нового спейса в create_index
+                local index_format = {}
+                local index_parts = {}
                 for part_k, part in pairs(index.parts) do
                     table.insert(index_format, space_format[part.fieldno])
                     table.insert(index_parts, {
@@ -100,19 +95,32 @@ function _G.getStorageCompressionInfo(server_info)
                         end
                     end
 
-                    -- скипаем поля из индекса и не строковые поля
                     if not field_in_index and format.type == "string" then
-                        format.compression = 'zstd' -- zstd lz4
+                        if box.space[space_name..'_uncompressed'] ~=nil then
+                            box.space[space_name..'_uncompressed']:drop()
+                        end
 
                         if box.space[space_name..'_compressed'] ~=nil then
                             box.space[space_name..'_compressed']:drop()
                         end
 
+                        local uncompressed_space_format = {}
                         local compressed_space_format = {}
                         for _, f in pairs(index_format) do
+                            table.insert(uncompressed_space_format, f)
                             table.insert(compressed_space_format, f)
                         end
+
+                        local uncompressed_format = table.copy(format)
+                        table.insert(uncompressed_space_format, uncompressed_format)
+                        format.compression = 'zstd' -- zstd lz4
                         table.insert(compressed_space_format, format)
+
+                        local uncompressed_space = box.schema.create_space(space_name..'_uncompressed', {
+                            temporary = true,
+                            format = uncompressed_space_format,
+                            if_not_exists = true,
+                        })
 
                         local compressed_space = box.schema.create_space(space_name..'_compressed', {
                             temporary = true,
@@ -121,6 +129,12 @@ function _G.getStorageCompressionInfo(server_info)
                         })
 
                         -- создаем спейс из индексных полей и одного строкового поля
+                        uncompressed_space:create_index(index["name"], {
+                            unique = index["unique"],
+                            type = index["type"],
+                            parts = index_parts,
+                        })
+
                         compressed_space:create_index(index["name"], {
                             unique = index["unique"],
                             type = index["type"],
@@ -132,31 +146,32 @@ function _G.getStorageCompressionInfo(server_info)
                         while added <= compressed_len do
                             random_seed = random_seed + 1
                             local tuple = index:random(random_seed)
-                            --local multipart_key = {}
-                            --for part_k, part in pairs(index.parts) do
-                            --    local key_field = tuple[part.fieldno]
-                            --    table.insert(multipart_key, key_field)
-                                --multikey:update({{'=', part_k, key_field}})
-                                --multikey:transform(part_k, 1, key_field)
-                            --end
-                            --log.error("multipart_key:")
-                            --log.error(multipart_key)
-                            --local a = table:unpack(multipart_key)
-                            --log.error(a)
-                            --local key_tuple = box.tuple.new{ table.unpack(multipart_key) }
-                            --log.error(key_tuple)
-
-                            local exist = compressed_space:get{tuple[1]} -- ключ может быть составным и не на 1 месте!
+                            local multipart_key = {}
+                            for part_k, part in pairs(index.parts) do
+                                local key_field = tuple[part.fieldno]
+                                table.insert(multipart_key, key_field)
+                            end
+                            local exist = compressed_space:get(multipart_key)
                             if exist == nil then
-                                compressed_space:insert{tuple[1], tuple[format_k]}
+                                table.insert(multipart_key, tuple[format_k])
+                                uncompressed_space:insert(multipart_key)
+                                compressed_space:insert(multipart_key)
                                 added = added + 1
                             end
                         end
 
-                        table.insert(retval, {space_name, space:bsize(), compressed_space:bsize()})
+                        log.info(space:bsize())
+                        log.info(compressed_space:bsize())
+                        log.info(uncompressed_space:bsize())
+
+                        table.insert(retval, {space_name, space:bsize(), compressed_space:bsize(), uncompressed_space:bsize()})
 
                         if box.space[space_name..'_compressed'] ~=nil then
                             box.space[space_name..'_compressed']:drop()
+                        end
+
+                        if box.space[space_name..'_uncompressed'] ~=nil then
+                            box.space[space_name..'_uncompressed']:drop()
                         end
 
                         --for sk, sv in space:pairs() do
