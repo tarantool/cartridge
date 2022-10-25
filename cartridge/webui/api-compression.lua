@@ -38,7 +38,7 @@ local gql_space_compression_info = gql_types.object({
             description = 'space name',
         },
         fields_be_compressed = {
-            kind = gql_types.list(gql_field_compression_info.nonNull).nonNull,
+            kind = gql_types.list(gql_field_compression_info.nonNull),
             description = 'list of fields be compressed',
         },
     }
@@ -57,8 +57,8 @@ local gql_instance_compression_info = gql_types.object({
             kind = gql_types.string.nonNull,
             description = 'instance id',
         },
-        compression_info = {
-            kind = gql_types.list(gql_space_compression_info.nonNull).nonNull,
+        instance_compression_info = {
+            kind = gql_types.list(gql_space_compression_info),
             description = 'instance compression info',
         },
     }
@@ -77,22 +77,14 @@ local gql_cluster_compression_info = gql_types.object({
             kind = gql_types.string.nonNull,
             description = 'cluster id',
         },
-        compression_info = {
+        cluster_compression_info = {
             kind = gql_types.list(gql_instance_compression_info.nonNull).nonNull,
             description = 'cluster compression info',
         },
     }
 })
 
-local function get_compression_info(_, _, info)
-    --[[
-    local cache = info.context.request_cache
-    if cache.compression ~= nil then
-        return cache.compression
-    end
-    cache.compression, cache.compression_err = lua_api_compression.get_cluster_compression_info()
-    return cache.compression
-    ]]--
+local function get_cluster_compression_info(_, _, info)
     local compression = lua_api_compression.get_cluster_compression_info()
     return compression
 end
@@ -117,11 +109,11 @@ local function init(graphql)
         --    uuid = gql_types.string
         },
         kind = gql_cluster_compression_info.nonNull,
-        callback = module_name .. '.get_compression_info',
+        callback = module_name .. '.get_cluster_compression_info',
     })
 end
 
 return {
     init = init,
-    get_compression_info = get_compression_info,
+    get_cluster_compression_info = get_cluster_compression_info,
 }

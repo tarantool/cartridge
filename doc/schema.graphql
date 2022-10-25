@@ -1,5 +1,5 @@
 # source: http://127.0.0.1:8081/admin/api
-# timestamp: Thu Oct 06 2022 20:33:37 GMT+0300 (Москва, стандартное время)
+# timestamp: Tue Oct 25 2022 16:32:31 GMT+0300 (Москва, стандартное время)
 
 """Custom scalar specification."""
 directive @specifiedBy(
@@ -70,7 +70,7 @@ type ClusterCompressionInfo {
   cluster_id: String!
 
   """cluster compression info"""
-  compression_info: [InstanceCompressionInfo!]!
+  cluster_compression_info: [InstanceCompressionInfo!]!
 }
 
 """A section of clusterwide configuration"""
@@ -213,7 +213,7 @@ type InstanceCompressionInfo {
   instance_id: String!
 
   """instance compression info"""
-  compression_info: [SpaceCompressionInfo!]!
+  instance_compression_info: [SpaceCompressionInfo]
 }
 
 type Issue {
@@ -1001,7 +1001,7 @@ type ServerStat {
 """List of fields compression info"""
 type SpaceCompressionInfo {
   """list of fields be compressed"""
-  fields_be_compressed: [FieldCompressionInfo!]!
+  fields_be_compressed: [FieldCompressionInfo!]
 
   """space name"""
   space_name: String!

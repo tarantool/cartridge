@@ -11,30 +11,35 @@ local function get_cluster_compression_info()
         return nil, err
     end
 
+    local cluster_compression_info = {}
+
     for _, rpl in pairs(replicasets or {}) do
         for _, role in pairs(rpl.roles or {}) do
             if role == 'vshard-storage' then
                 local master = rpl["active_master"]
-                log.info(master)
 
-                log.info('>>>>>>>>>>>>>>>>>>')
-                local instance_compression, err = errors.netbox_call(
+                local storage_compression_info, err = errors.netbox_call(
                     pool.connect(master['uri'], {wait_connected = true}),
                     '_G.getStorageCompressionInfo', {master}, {timeout = 1}
                 )
-                if instance_compression == nil then
+                if storage_compression_info == nil then
                     error(err)
                 end
 
-                log.info('<><><><><><><><><>')
-                log.info(instance_compression)
-                log.info('<<<<<<<<<<<<<<<<<<')
+                log.error('>>>>>>>>>>>>>>>>>>')
+                log.error(storage_compression_info)
+                log.error('<<<<<<<<<<<<<<<<<<')
+
+                table.insert(cluster_compression_info, {
+                    instance_id = master['uri'],
+                    instance_compression_info = storage_compression_info})
             end
         end
     end
 
     return {
         cluster_id = '000000qwe',
+        cluster_compression_info = cluster_compression_info,
     }
 end
 
@@ -47,146 +52,127 @@ function string:endswith(ending)
 end
 
 function _G.getStorageCompressionInfo(server_info)
-    log.info("getStorageCompressionInfo")
-    log.info(server_info)
+    local storage_compression_info = {}
     local space_info_name_pos = 3
 
-    local retval = {}
-
     for _, space_info in box.space._space:pairs() do
+        local space_name = space_info[space_info_name_pos]
+        if space_name:endswith('_compressed') or
+        space_name:endswith('_uncompressed') then -- debug
+            log.error("DROP FROM PREV RUN")
+            box.space[space_name]:drop()
+            goto continue
+        end
+
+        local space_compression_info = {}
         if not string.starts(space_info[space_info_name_pos], "_") then
-            log.warn("-------------------------------------------")
-            log.warn(space_info)
-
-            local space_name = space_info[space_info_name_pos]
-            if space_name:endswith('_compressed') or space_name:endswith('_uncompressed') then -- debug
-                log.error("DROP FROM PREV RUN")
-                box.space[space_name]:drop()
-                goto continue
-            end
-
             local space = box.space[space_name]
-
-            local space_len = space:len()
-            local compressed_len = space_len
-            if space_len > 10000 then
-                compressed_len = 10000
-            end
-
             local space_format = space:format()
             local index = space.index[0]
 
-            if (index ~= nil) and (index["unique"]) and (next(space_format) ~= nil) then
-                local index_format = {}
-                local index_parts = {}
-                for part_k, part in pairs(index.parts) do
-                    table.insert(index_format, space_format[part.fieldno])
-                    table.insert(index_parts, {
-                        field = part_k,
-                        type = part.type,
-                    })
-                end
+            if (index ~= nil) and index["unique"] and (next(space_format) ~= nil) then
+                for field_format_key, field_format in pairs(space_format) do
 
-                for format_k, format in pairs(space_format) do
                     local field_in_index = false
-                    for _, part in pairs(index.parts) do
-                        if part.fieldno == format_k then
+                    for _, index_part in pairs(index.parts) do
+                        if index_part.fieldno == field_format_key then
                             field_in_index = true
                         end
                     end
 
-                    if not field_in_index and format.type == "string" then
-                        if box.space[space_name..'_uncompressed'] ~=nil then
-                            box.space[space_name..'_uncompressed']:drop()
-                        end
-
-                        if box.space[space_name..'_compressed'] ~=nil then
-                            box.space[space_name..'_compressed']:drop()
-                        end
-
-                        local uncompressed_space_format = {}
-                        local compressed_space_format = {}
-                        for _, f in pairs(index_format) do
-                            table.insert(uncompressed_space_format, f)
-                            table.insert(compressed_space_format, f)
-                        end
-
-                        local uncompressed_format = table.copy(format)
-                        table.insert(uncompressed_space_format, uncompressed_format)
-                        format.compression = 'zstd' -- zstd lz4
-                        table.insert(compressed_space_format, format)
-
-                        local uncompressed_space = box.schema.create_space(space_name..'_uncompressed', {
-                            temporary = true,
-                            format = uncompressed_space_format,
-                            if_not_exists = true,
-                        })
-
-                        local compressed_space = box.schema.create_space(space_name..'_compressed', {
-                            temporary = true,
-                            format = compressed_space_format,
-                            if_not_exists = true,
-                        })
-
-                        -- создаем спейс из индексных полей и одного строкового поля
-                        uncompressed_space:create_index(index["name"], {
-                            unique = index["unique"],
-                            type = index["type"],
-                            parts = index_parts,
-                        })
-
-                        compressed_space:create_index(index["name"], {
-                            unique = index["unique"],
-                            type = index["type"],
-                            parts = index_parts,
-                        })
+                    if (not field_in_index) and field_format.type == "string" then
+                        local uncompressed_space = create_test_space(space_name..'_uncompressed', space, field_format)
+                        field_format.compression = 'zstd' -- zstd lz4
+                        local compressed_space = create_test_space(space_name..'_compressed', space, field_format)
 
                         local random_seed = 0
                         local added = 1
-                        while added <= compressed_len do
+                        local temp_space_len = space:len()
+                        if temp_space_len > 10000 then
+                            temp_space_len = 10000
+                        end
+
+                        while added <= temp_space_len do
                             random_seed = random_seed + 1
                             local tuple = index:random(random_seed)
+
                             local multipart_key = {}
-                            for part_k, part in pairs(index.parts) do
-                                local key_field = tuple[part.fieldno]
+                            for _, index_part in pairs(index.parts) do
+                                local key_field = tuple[index_part.fieldno]
                                 table.insert(multipart_key, key_field)
                             end
-                            local exist = compressed_space:get(multipart_key)
-                            if exist == nil then
-                                table.insert(multipart_key, tuple[format_k])
+
+                            local exist_in_compressed_space = compressed_space:get(multipart_key)
+                            if exist_in_compressed_space == nil then
+                                table.insert(multipart_key, tuple[field_format_key])
                                 uncompressed_space:insert(multipart_key)
                                 compressed_space:insert(multipart_key)
                                 added = added + 1
                             end
                         end
 
-                        log.info(space:bsize())
-                        log.info(compressed_space:bsize())
-                        log.info(uncompressed_space:bsize())
+                        local field_compression_info = {
+                            field_name = field_format.name,
+                            compression_percentage = 
+                                compressed_space:bsize()*100 / uncompressed_space:bsize(),
+                        }
+                        table.insert(space_compression_info, field_compression_info)
 
-                        table.insert(retval, {space_name, space:bsize(), compressed_space:bsize(), uncompressed_space:bsize()})
-
-                        if box.space[space_name..'_compressed'] ~=nil then
-                            box.space[space_name..'_compressed']:drop()
-                        end
-
-                        if box.space[space_name..'_uncompressed'] ~=nil then
-                            box.space[space_name..'_uncompressed']:drop()
-                        end
-
-                        --for sk, sv in space:pairs() do
-                        --    log.info(sv)
-                        --end
+                        compressed_space:drop()
+                        uncompressed_space:drop()
                     end
                 end
             end
+
+            table.insert(storage_compression_info, {
+                space_name = space_name,
+                fields_be_compressed = space_compression_info})
         end
         ::continue::
     end
 
     return {
-        retval,
+        storage_compression_info[1],
     }
+end
+
+function create_test_space(space_name, orig_space, field_format)
+    if box.space[space_name] ~=nil then
+        box.space[space_name]:drop()
+    end
+
+    local orig_index = orig_space.index[0]
+    local orig_format = orig_space:format()
+
+    local index_format = {}
+    local index_parts = {}
+    for index_part_key, index_part in pairs(orig_index.parts) do
+        table.insert(index_format, orig_format[index_part.fieldno])
+        table.insert(index_parts, {
+            field = index_part_key,
+            type = index_part.type,
+        })
+    end
+
+    local space_format = {}
+    for _, f in pairs(index_format) do
+        table.insert(space_format, f)
+    end
+    table.insert(space_format, field_format)
+
+    local space = box.schema.create_space(space_name, {
+        temporary = true,
+        format = space_format,
+        if_not_exists = true,
+    })
+
+    space:create_index(orig_index["name"], {
+        unique = orig_index["unique"],
+        type = orig_index["type"],
+        parts = index_parts,
+    })
+
+    return space
 end
 
 return {
