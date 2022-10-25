@@ -4,6 +4,7 @@
 
 local fun = require('fun')
 local checks = require('checks')
+local json = require('json')
 local errors = require('errors')
 local netbox = require('net.box')
 local membership = require('membership')
@@ -124,7 +125,7 @@ local function get_candidates(role_name, opts)
         if roles.get_enabled_roles(replicaset.roles)[role_name]
         and (not opts.healthy_only or member_is_healthy(server.uri, instance_uuid))
         and (not opts.leader_only or active_leaders[replicaset_uuid] == instance_uuid)
-        and (not opts.labels or label_utils.labels_match(opts.labels, server.labels))
+        and (not (opts.labels and server.labels) or label_utils.labels_match(opts.labels, server.labels))
         then
             table.insert(candidates, server.uri)
         end
@@ -160,6 +161,10 @@ local function get_connection(role_name, opts)
 
     local candidates = get_candidates(role_name, {leader_only = opts.leader_only, labels = opts.labels})
     if next(candidates) == nil then
+        if opts.labels then
+            return nil, RemoteCallError:new('No remotes with role %q and labels %s available',
+                role_name, json.encode(opts.labels))
+        end
         return nil, RemoteCallError:new('No remotes with role %q available', role_name)
     end
 
