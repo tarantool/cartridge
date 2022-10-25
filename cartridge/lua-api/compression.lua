@@ -1,6 +1,6 @@
-local modul_name = 'cartridge.lua-api.compression'
-local log = require('log')
 local lua_api_get_topology = require('cartridge.lua-api.get-topology')
+
+local log = require('log')
 local pool = require('cartridge.pool')
 local errors = require('errors')
 
@@ -39,105 +39,7 @@ local function get_cluster_compression_info()
     }
 end
 
-function string.starts(String, Start)
-    return string.sub(String, 1, string.len(Start)) == Start
- end
-
-function string:endswith(ending)
-    return ending == "" or self:sub(-#ending) == ending
-end
-
-function _G.getStorageCompressionInfo(server_info)
-    local storage_compression_info = {}
-    local space_info_name_pos = 3
-
-    for _, space_info in box.space._space:pairs() do
-        local space_name = space_info[space_info_name_pos]
-        if space_name:endswith('_test_compressed') or
-        space_name:endswith('_test_uncompressed') or
-        space_name:endswith('_test_index') then -- debug
-            log.error("DROP FROM PREV RUN")
-            box.space[space_name]:drop()
-            goto continue
-        end
-
-        local space_compression_info = {}
-        if not string.starts(space_info[space_info_name_pos], "_") then
-            local space = box.space[space_name]
-            local space_format = space:format()
-            local index = space.index[0]
-
-            if (index ~= nil) and index["unique"] and (next(space_format) ~= nil) then
-                for field_format_key, field_format in pairs(space_format) do
-
-                    local field_in_index = false
-                    for _, index_part in pairs(index.parts) do
-                        if index_part.fieldno == field_format_key then
-                            field_in_index = true
-                        end
-                    end
-
-                    if (not field_in_index) and field_format.type == "string" then
-                        local uncompressed_space = create_test_space(space_name..'_test_uncompressed', space, field_format)
-                        field_format.compression = 'zstd' -- zstd lz4
-                        local compressed_space = create_test_space(space_name..'_test_compressed', space, field_format)
-                        local index_space = create_test_space(space_name..'_test_index', space, nil)
-
-                        local random_seed = 0
-                        local added = 1
-                        local temp_space_len = space:len()
-                        if temp_space_len > 10000 then
-                            temp_space_len = 10000
-                        end
-
-                        while added <= temp_space_len do
-                            random_seed = random_seed + 1
-                            local tuple = index:random(random_seed)
-
-                            local multipart_key = {}
-                            for _, index_part in pairs(index.parts) do
-                                local key_field = tuple[index_part.fieldno]
-                                table.insert(multipart_key, key_field)
-                            end
-
-                            local exist_in_compressed_space = compressed_space:get(multipart_key)
-                            if exist_in_compressed_space == nil then
-                                index_space:insert(multipart_key)
-                                table.insert(multipart_key, tuple[field_format_key])
-                                uncompressed_space:insert(multipart_key)
-                                compressed_space:insert(multipart_key)
-                                added = added + 1
-                            end
-                        end
-
-                        local field_compression_info = {
-                            field_name = field_format.name,
-                            compression_percentage = 
-                                (compressed_space:bsize() - index_space:bsize()) * 100 /
-                                (uncompressed_space:bsize() - index_space:bsize() + 1),
-                        }
-                        table.insert(space_compression_info, field_compression_info)
-
-                        compressed_space:drop()
-                        uncompressed_space:drop()
-                        index_space:drop()
-                    end
-                end
-            end
-
-            table.insert(storage_compression_info, {
-                space_name = space_name,
-                fields_be_compressed = space_compression_info})
-        end
-        ::continue::
-    end
-
-    return {
-        storage_compression_info[1],
-    }
-end
-
-function create_test_space(space_name, orig_space, field_format)
+local function create_test_space(space_name, orig_space, field_format)
     if box.space[space_name] ~=nil then
         box.space[space_name]:drop()
     end
@@ -176,6 +78,97 @@ function create_test_space(space_name, orig_space, field_format)
     })
 
     return space
+end
+
+function _G.getStorageCompressionInfo(_)
+    local storage_compression_info = {}
+
+    for _, space_info in box.space._space:pairs() do
+        local space_info_name_pos = 3
+        local space_name = space_info[space_info_name_pos]
+
+        if space_name:endswith('_test_compressed') or
+        space_name:endswith('_test_uncompressed') or
+        space_name:endswith('_test_index') then -- debug
+            box.space[space_name]:drop()
+            goto continue
+        end
+
+        local space_compression_info = {}
+        if not space_name:startswith("_") then
+            local space = box.space[space_name]
+            local space_format = space:format()
+            local index = space.index[0]
+
+            if (index ~= nil) and index["unique"] and (next(space_format) ~= nil) then
+                for field_format_key, field_format in pairs(space_format) do
+
+                    local field_in_index = false
+                    for _, index_part in pairs(index.parts) do
+                        if index_part.fieldno == field_format_key then
+                            field_in_index = true
+                        end
+                    end
+
+                    if (not field_in_index) and field_format.type == "string" then
+                        local uncompressed_space =
+                            create_test_space(space_name..'_test_uncompressed', space, field_format)
+                        field_format.compression = 'zstd' -- zstd lz4
+                        local compressed_space = create_test_space(space_name..'_test_compressed', space, field_format)
+                        local index_space = create_test_space(space_name..'_test_index', space, nil)
+
+                        local random_seed = 0
+                        local added = 1
+                        local temp_space_len = space:len()
+                        if temp_space_len > 10000 then
+                            temp_space_len = 10000
+                        end
+
+                        while added <= temp_space_len do
+                            random_seed = random_seed + 1
+                            local tuple = index:random(random_seed)
+
+                            local multipart_key = {}
+                            for _, index_part in pairs(index.parts) do
+                                local key_field = tuple[index_part.fieldno]
+                                table.insert(multipart_key, key_field)
+                            end
+
+                            local exist_in_compressed_space = compressed_space:get(multipart_key)
+                            if exist_in_compressed_space == nil then
+                                index_space:insert(multipart_key)
+                                table.insert(multipart_key, tuple[field_format_key])
+                                uncompressed_space:insert(multipart_key)
+                                compressed_space:insert(multipart_key)
+                                added = added + 1
+                            end
+                        end
+
+                        local field_compression_info = {
+                            field_name = field_format.name,
+                            compression_percentage =
+                                (compressed_space:bsize() - index_space:bsize()) * 100 /
+                                (uncompressed_space:bsize() - index_space:bsize() + 1),
+                        }
+                        table.insert(space_compression_info, field_compression_info)
+
+                        compressed_space:drop()
+                        uncompressed_space:drop()
+                        index_space:drop()
+                    end
+                end
+            end
+
+            table.insert(storage_compression_info, {
+                space_name = space_name,
+                fields_be_compressed = space_compression_info})
+        end
+        ::continue::
+    end
+
+    return {
+        storage_compression_info[1],
+    }
 end
 
 return {

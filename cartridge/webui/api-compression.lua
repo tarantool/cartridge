@@ -2,7 +2,7 @@ local module_name = 'cartridge.webui.api-compression'
 
 local gql_types = require('graphql.types')
 local lua_api_compression = require('cartridge.lua-api.compression')
-local log = require('log')
+
 
 --type FieldCompressionInfo {
 --  field_name: String!
@@ -24,6 +24,7 @@ local gql_field_compression_info = gql_types.object({
     }
 })
 
+
 --type SpaceCompressionInfo {
 --  space_name: String!
 --  fields_be_compressed: [FieldCompressionInfo!]!
@@ -43,6 +44,7 @@ local gql_space_compression_info = gql_types.object({
         },
     }
 })
+
 
 --type InstanceCompressionInfo {
 --  instance_id: String!
@@ -64,6 +66,7 @@ local gql_instance_compression_info = gql_types.object({
     }
 })
 
+
 --type ClusterCompressionInfo {
 --  compression_info: [InstanceCompressionInfo!]!
 --}
@@ -79,30 +82,18 @@ local gql_cluster_compression_info = gql_types.object({
     }
 })
 
-local function get_cluster_compression_info(_, _, info)
+
+local function get_cluster_compression_info(_, _, _)
     local compression = lua_api_compression.get_cluster_compression_info()
     return compression
 end
-
---[[
-query {
-    cluster {
-        cluster_compression {
-            cluster_id
-            compression_info
-        }
-    }
-}
-]]--
 
 local function init(graphql)
     graphql.add_callback({
         prefix = 'cluster',
         name = 'cluster_compression',
         doc = 'compression info about cluster',
-        args = {
-        --    uuid = gql_types.string
-        },
+        args = {},
         kind = gql_cluster_compression_info.nonNull,
         callback = module_name .. '.get_cluster_compression_info',
     })
@@ -125,7 +116,7 @@ query  {
         instance_compression_info {
           space_name
           fields_be_compressed {
-        		field_name
+            field_name
             compression_percentage
           }
         }
