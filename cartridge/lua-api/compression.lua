@@ -11,12 +11,12 @@ local function get_cluster_compression_info()
         return nil, err
     end
 
-    local cluster_compression_info = {}
+    local compression_info = {}
 
     for _, rpl in pairs(replicasets or {}) do
         for _, role in pairs(rpl.roles or {}) do
             if role == 'vshard-storage' then
-                local master = rpl["active_master"]
+                local master = rpl["master"]
 
                 local storage_compression_info, err = errors.netbox_call(
                     pool.connect(master['uri'], {wait_connected = true}),
@@ -26,20 +26,16 @@ local function get_cluster_compression_info()
                     error(err)
                 end
 
-                log.error('>>>>>>>>>>>>>>>>>>')
-                log.error(storage_compression_info)
-                log.error('<<<<<<<<<<<<<<<<<<')
-
-                table.insert(cluster_compression_info, {
-                    instance_id = master['uri'],
+                log.info(storage_compression_info)
+                table.insert(compression_info, {
+                    instance_id = master.uuid,
                     instance_compression_info = storage_compression_info})
             end
         end
     end
 
     return {
-        cluster_id = '000000qwe',
-        cluster_compression_info = cluster_compression_info,
+        compression_info = compression_info,
     }
 end
 
@@ -57,8 +53,9 @@ function _G.getStorageCompressionInfo(server_info)
 
     for _, space_info in box.space._space:pairs() do
         local space_name = space_info[space_info_name_pos]
-        if space_name:endswith('_compressed') or
-        space_name:endswith('_uncompressed') then -- debug
+        if space_name:endswith('_test_compressed') or
+        space_name:endswith('_test_uncompressed') or
+        space_name:endswith('_test_index') then -- debug
             log.error("DROP FROM PREV RUN")
             box.space[space_name]:drop()
             goto continue
@@ -81,9 +78,10 @@ function _G.getStorageCompressionInfo(server_info)
                     end
 
                     if (not field_in_index) and field_format.type == "string" then
-                        local uncompressed_space = create_test_space(space_name..'_uncompressed', space, field_format)
+                        local uncompressed_space = create_test_space(space_name..'_test_uncompressed', space, field_format)
                         field_format.compression = 'zstd' -- zstd lz4
-                        local compressed_space = create_test_space(space_name..'_compressed', space, field_format)
+                        local compressed_space = create_test_space(space_name..'_test_compressed', space, field_format)
+                        local index_space = create_test_space(space_name..'_test_index', space, nil)
 
                         local random_seed = 0
                         local added = 1
@@ -104,6 +102,7 @@ function _G.getStorageCompressionInfo(server_info)
 
                             local exist_in_compressed_space = compressed_space:get(multipart_key)
                             if exist_in_compressed_space == nil then
+                                index_space:insert(multipart_key)
                                 table.insert(multipart_key, tuple[field_format_key])
                                 uncompressed_space:insert(multipart_key)
                                 compressed_space:insert(multipart_key)
@@ -114,12 +113,14 @@ function _G.getStorageCompressionInfo(server_info)
                         local field_compression_info = {
                             field_name = field_format.name,
                             compression_percentage = 
-                                compressed_space:bsize()*100 / uncompressed_space:bsize(),
+                                (compressed_space:bsize() - index_space:bsize()) * 100 /
+                                (uncompressed_space:bsize() - index_space:bsize() + 1),
                         }
                         table.insert(space_compression_info, field_compression_info)
 
                         compressed_space:drop()
                         uncompressed_space:drop()
+                        index_space:drop()
                     end
                 end
             end
@@ -158,7 +159,9 @@ function create_test_space(space_name, orig_space, field_format)
     for _, f in pairs(index_format) do
         table.insert(space_format, f)
     end
-    table.insert(space_format, field_format)
+    if field_format ~= nil then
+        table.insert(space_format, field_format)
+    end
 
     local space = box.schema.create_space(space_name, {
         temporary = true,

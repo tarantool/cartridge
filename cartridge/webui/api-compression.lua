@@ -38,7 +38,7 @@ local gql_space_compression_info = gql_types.object({
             description = 'space name',
         },
         fields_be_compressed = {
-            kind = gql_types.list(gql_field_compression_info.nonNull),
+            kind = gql_types.list(gql_field_compression_info.nonNull).nonNull,
             description = 'list of fields be compressed',
         },
     }
@@ -58,14 +58,13 @@ local gql_instance_compression_info = gql_types.object({
             description = 'instance id',
         },
         instance_compression_info = {
-            kind = gql_types.list(gql_space_compression_info),
+            kind = gql_types.list(gql_space_compression_info.nonNull).nonNull,
             description = 'instance compression info',
         },
     }
 })
 
 --type ClusterCompressionInfo {
---  cluster_id: String!
 --  compression_info: [InstanceCompressionInfo!]!
 --}
 
@@ -73,11 +72,7 @@ local gql_cluster_compression_info = gql_types.object({
     name = 'ClusterCompressionInfo',
     description = 'Compression info of all cluster instances',
     fields = {
-        cluster_id = {
-            kind = gql_types.string.nonNull,
-            description = 'cluster id',
-        },
-        cluster_compression_info = {
+        compression_info = {
             kind = gql_types.list(gql_instance_compression_info.nonNull).nonNull,
             description = 'cluster compression info',
         },
@@ -117,3 +112,26 @@ return {
     init = init,
     get_cluster_compression_info = get_cluster_compression_info,
 }
+
+
+
+--[[
+
+query  {
+  cluster {
+    cluster_compression {
+      compression_info {
+        instance_id
+        instance_compression_info {
+          space_name
+          fields_be_compressed {
+        		field_name
+            compression_percentage
+          }
+        }
+      } 
+    }
+  }
+}
+
+]]--
