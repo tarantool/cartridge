@@ -125,7 +125,7 @@ local function get_candidates(role_name, opts)
         if roles.get_enabled_roles(replicaset.roles)[role_name]
         and (not opts.healthy_only or member_is_healthy(server.uri, instance_uuid))
         and (not opts.leader_only or active_leaders[replicaset_uuid] == instance_uuid)
-        and (not (opts.labels and server.labels) or label_utils.labels_match(opts.labels, server.labels))
+        and (not opts.labels or label_utils.labels_match(opts.labels, server.labels))
         then
             table.insert(candidates, server.uri)
         end
