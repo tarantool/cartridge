@@ -103,14 +103,48 @@ end)
 
 
 
-function g.test_get_enabled_roles_without_deps()
-    local res = g.cluster:server('router'):exec(function()
-        return require('cartridge.lua-api.get-topology').get_enabled_roles_without_deps()
-    end)
-    t.assert_equals(res, {'vshard-router'})
+function g.test_replicasets()
+    local resp = g.cluster:server('router'):graphql({
+        query = [[
+            {
+                replicasets {
+                    uuid
+                    alias
+                    roles
+                    status
+                    master { uuid }
+                    active_master { uuid }
+                    servers { uri priority }
+                    all_rw
+                    weight
+                }
+            }
+        ]]
+    })
 
-    local res = g.cluster:server('storage'):exec(function()
-        return require('cartridge.lua-api.get-topology').get_enabled_roles_without_deps()
-    end)
-    t.assert_equals(res, {'vshard-storage'})
+    t.assert_items_equals(resp.data.replicasets, {{
+            uuid = helpers.uuid('a'),
+            alias = 'unnamed',
+            roles = {'vshard-router'},
+            status = 'healthy',
+            master = {uuid = helpers.uuid('a', 'a', 1)},
+            active_master = {uuid = helpers.uuid('a', 'a', 1)},
+            servers = {{uri = 'localhost:13301', priority = 1}},
+            all_rw = false,
+            weight = box.NULL,
+        }, {
+            uuid = helpers.uuid('b'),
+            alias = 'unnamed',
+            roles = {'vshard-storage'},
+            status = 'healthy',
+            master = {uuid = helpers.uuid('b', 'b', 1)},
+            active_master = {uuid = helpers.uuid('b', 'b', 1)},
+            weight = 1,
+            all_rw = true,
+            servers = {
+                {uri = 'localhost:13302', priority = 1},
+                {uri = 'localhost:13304', priority = 2},
+            }
+        }
+    })
 end
