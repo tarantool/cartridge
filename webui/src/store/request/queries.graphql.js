@@ -165,6 +165,9 @@ export const serverDetailsFields = gql`
         wal_dir
         worker_pool_threads
         listen
+        election_state
+        election_mode
+        synchro_queue_owner
       }
       replication {
         replication_connect_quorum
