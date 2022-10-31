@@ -38,6 +38,7 @@ g.before_all(function()
                     local uri = srv.uuid
                     topology_cfg.servers[srv.uuid] = {
                         uri = uri,
+                        labels = srv.labels,
                         disabled = srv.disabled or false,
                         electable = srv.electable ~= false,
                         replicaset_uuid = rpl.uuid,
@@ -259,4 +260,28 @@ g.test_disabled = function()
 
     local candidates = get_candidates('target-role', {leader_only = true})
     t.assert_items_equals(candidates, {})
+end
+
+g.test_with_labels = function()
+    draft[1][2].labels = {msk = "dc", spb = 'dc'}
+    draft[2].role = "target-role"
+    draft[2][1].labels = {msk = "dc"}
+    draft[2][2].state = 'BootError'
+    draft[2][2].labels = {msk = "dc"}
+    apply_topology(draft)
+
+    local candidates = get_candidates('target-role', {labels = {msk = "dc"}})
+    t.assert_items_equals(candidates, {'a2', 'b1'})
+
+    local candidates = get_candidates('target-role', {labels = {msk = "dc"}, leader_only = true})
+    t.assert_items_equals(candidates, {'b1'})
+
+    local candidates = get_candidates('target-role', {labels = {spb = "dc"}})
+    t.assert_items_equals(candidates, {'a2'})
+
+    local candidates = get_candidates('target-role', {labels = {msk = "unknown"}})
+    t.assert_items_equals(candidates, {})
+
+    local candidates = get_candidates('target-role', {labels = {msk = "dc"}, healthy_only = false})
+    t.assert_items_equals(candidates, {'a2', 'b1', 'b2'})
 end

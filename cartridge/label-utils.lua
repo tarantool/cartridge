@@ -89,14 +89,17 @@ local function validate_schema_labels(field, object)
 end
 
 local function labels_match(subset_labels, labels)
-    local subset_included = true
-    for name, value in pairs(subset_labels) do
-        if labels[name] ~= value then
-            subset_included = false
-            break
+    if labels ~= nil then
+        local subset_included = true
+        for name, value in pairs(subset_labels) do
+            if labels[name] ~= value then
+                subset_included = false
+                break
+            end
         end
+        return subset_included
     end
-    return subset_included
+    return false
 end
 
 return {
